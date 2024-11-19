@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.3 2024/11/19 15:50:41 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.4 2024/11/19 16:13:20 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.3 2024/11/19 15:50:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.4 2024/11/19 16:13:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,12 @@ static inline void summitfb_wait_fifo(struct summitfb_softc *, uint32_t);
 #define VISFX_COLOR_MASK	0x800018
 #define VISFX_COLOR_INDEX	0x800020
 #define VISFX_COLOR_VALUE	0x800024
+
+#define VISFX_CURSOR_POS	0x400000
+#define VISFX_CURSOR_INDEX	0x400004
+#define VISFX_CURSOR_DATA	0x400008
+#define VISFX_CURSOR_COLOR	0x400010
+#define VISFX_CURSOR_ENABLE	0x80000000
 
 int
 summitfb_match(device_t parent, cfdata_t cf, void *aux)
@@ -366,16 +372,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
-
-	printf("pmask  %08x\n", summitfb_read4(sc, 0xa0084c));
-	printf("vmask  %08x\n", summitfb_read4(sc, 0xa0082c));
-	printf("status %08x\n", summitfb_read4(sc, 0x249000));
-	printf("stat   %08x\n", summitfb_read4(sc, 0x641400));
-	printf("size   %08x\n", summitfb_read4(sc, 0xac1054));
-	printf("mode   %08x\n", summitfb_read4(sc, VISFX_VRAM_WRITE_MODE));
-	printf("colour %08x\n", summitfb_read4(sc, 0xa00844));
-	printf("cursor %08x\n", summitfb_read4(sc, 0x400000));
-	printf("cindex %08x\n", summitfb_read4(sc, 0x800020));
 }
 
 /*
@@ -737,7 +733,7 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case GCID:
-		*(u_int *)data = STI_DD_EG;
+		*(u_int *)data = sc->sc_scr.scr_rom->rom_dd.dd_grid[0];
 		return 0;
 
 	/* PCI config read/write passthrough. */
@@ -780,10 +776,11 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				summitfb_setup(sc);
 				summitfb_restore_palette(sc);
-				glyphcache_wipe(&sc->sc_gc);
+				//glyphcache_wipe(&sc->sc_gc);
 				summitfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
+				summitfb_setup_fb(sc);
 				vcons_redraw_screen(ms);
 				summitfb_set_video(sc, 1);
 			}
@@ -857,7 +854,7 @@ summitfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    prot, BUS_SPACE_MAP_LINEAR);
 	} else if (offset >= 0x80000000 && offset < 0x80400000) {
 		/* blitter registers etc. */
-		pa = bus_space_mmap(rom->memt, rom->regh[2],
+		pa = bus_space_mmap(rom->memt, rom->regh[0],
 		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
 	}
 
@@ -1270,20 +1267,9 @@ summitfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 
-/*
- * cursor sprite handling
- * like most hw info, xf86 3.3 -> nglehdw.h was used as documentation
- * problem is, the PCI EG doesn't quite behave like an S9000_ID_ARTIST
- * the cursor position register bahaves like the one on HCRX while using
- * the same address as Artist, incuding the enable bit and weird handling
- * of negative coordinates. The rest of it, colour map, sprite image etc.,
- * behave like Artist.
- */
-
 static void
 summitfb_move_cursor(struct summitfb_softc *sc, int x, int y)
 {
-#if 0
 	uint32_t pos;
 
 	sc->sc_cursor_x = x;
@@ -1295,10 +1281,7 @@ summitfb_move_cursor(struct summitfb_softc *sc, int x, int y)
 	if (y < 0) y = 0x1000 - y;
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= 0x80000000;
-	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_17, pos);
-	gftfb_write4(sc, NGLE_REG_18, 0x80);
-#endif
+	summitfb_write4(sc, VISFX_CURSOR_POS, pos);
 }
 
 static int
@@ -1318,29 +1301,27 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 		summitfb_move_cursor(sc, cur->pos.x, cur->pos.y);
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
-		//uint32_t rgb;
+		uint32_t rgb;
 		uint8_t r[2], g[2], b[2];
 
 		copyin(cur->cmap.blue, b, 2);
 		copyin(cur->cmap.green, g, 2);
 		copyin(cur->cmap.red, r, 2);
 		mutex_enter(&sc->sc_hwlock);
-/* ... */
+		summitfb_write4(sc, VISFX_CURSOR_INDEX, 0);
+		rgb = r[0] << 16 | g[0] << 8 | b[0];
+		summitfb_write4(sc, VISFX_CURSOR_COLOR, rgb);
+		rgb = r[1] << 16 | g[1] << 8 | b[1];
+		summitfb_write4(sc, VISFX_CURSOR_COLOR + 4, rgb);
 		mutex_exit(&sc->sc_hwlock);
-
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
-#if 0
+
 		uint32_t buffer[128], latch, tmp;
 		int i;
 
 		copyin(cur->mask, buffer, 512);
-		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_14, 0x300);
-		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		gftfb_write4(sc, NGLE_REG_11,
-		    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0));
-		gftfb_write4(sc, NGLE_REG_3, 0);
+		summitfb_write4(sc, VISFX_CURSOR_INDEX, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1359,7 +1340,7 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_4, latch);
+			summitfb_write4(sc, VISFX_CURSOR_DATA, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1377,16 +1358,11 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_5, latch);
+			summitfb_write4(sc, VISFX_CURSOR_DATA, latch);
 		}
 
+		summitfb_write4(sc, VISFX_CURSOR_INDEX, 0x80);
 		copyin(cur->image, buffer, 512);
-		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_14, 0x300);
-		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		gftfb_write4(sc, NGLE_REG_11,
-		    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcursor, 0));
-		gftfb_write4(sc, NGLE_REG_3, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1405,7 +1381,7 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_4, latch);
+			summitfb_write4(sc, VISFX_CURSOR_DATA, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1423,10 +1399,9 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_5, latch);
+			summitfb_write4(sc, VISFX_CURSOR_DATA, latch);
 		}
-		gftfb_setup_fb(sc);
-#endif
+		summitfb_setup_fb(sc);
 	}
 
 	return 0;
