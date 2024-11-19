@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.26 2024/07/12 08:43:08 macallan Exp $
+#	$NetBSD: files.hppa,v 1.27 2024/11/19 12:13:38 macallan Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -278,10 +278,16 @@ file	arch/hppa/dev/gftfb.c		gftfb
 defflag opt_gftfb.h GFTFB_DEBUG
 
 # hyperdrive, aka HCRX
-device	hyperfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti
+device	hyperfb: wsemuldisplaydev, rasops8, vcons, sti
 attach	hyperfb at gedoens
 file	arch/hppa/dev/hyperfb.c		hyperfb
 defflag opt_hyperfb.h HYPERFB_DEBUG
+
+# Visualize FX4, aka Summit 
+device	summitfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti_pci, sti
+attach	summitfb at pci
+file	arch/hppa/dev/summitfb.c	summitfb
+defflag opt_summitfb.h SUMMITFB_DEBUG
 
 # Memory Disk
 file dev/md_root.c			memory_disk_hooks
