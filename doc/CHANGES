@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3114 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3115 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -590,3 +590,14 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ds2482ow: Driver for the Maxim DS2482-100 and DS2482-800 I2C
 		to 1-Wire bridge chip.  [brad 20241104]
 	tmux(1): Import version 3.5a. [wiz 20241109]
+	scsictl(8): Add 'identify vpd' to also report Vital Product Data
+		that identifies the device.  [mlelstv 20241109]
+	puc(4): Add support for various Brainboxes cards
+		(from Cameron Williams).  [msaitoh 20241111]
+	riscv: Initial StarFive JH7110 pin controller driver.  [skrll 20241111]
+	riscv: Add a StarFive JH7110 PCIe PHY driver.  [skrll 20241111]
+	riscv: Add a specific driver for the StarFive JH7110 STG system
+		controller.  [skrll 20241111]
+	lint(1): Handle _Noreturn attributes.  [rillig 20241113]
+	hppa: Initial summitfb driver for Visualize FX video cards.
+		[macallan 20241119]
