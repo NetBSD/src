@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 2024/08/04 08:16:25 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.7 2024/11/19 08:28:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 void *intr_establish(int, int, int, int (*)(void *), void *);
+void *intr_establish_xname(int, int, int, int (*)(void *), void *, const char *);
 void intr_disestablish(void *);
 
 #endif /* _KERNEL */

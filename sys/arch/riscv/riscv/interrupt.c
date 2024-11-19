@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2024/11/19 08:28:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: interrupt.c,v 1.2 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: interrupt.c,v 1.3 2024/11/19 08:28:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ cpu_intr(struct trapframe *tf, register_t epc, register_t status,
 }
 
 
-static void *
+void *
 intr_establish_xname(int irq, int ipl, int type, int (*func)(void *), void *arg,
     const char *xname)
 {
