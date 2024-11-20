@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.4 2024/11/19 16:13:20 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.5 2024/11/20 05:24:46 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.4 2024/11/19 16:13:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.5 2024/11/20 05:24:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.4 2024/11/19 16:13:20 macallan Exp $"
 #include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <dev/ic/stireg.h>
+#include <dev/ic/summitreg.h>
 #include <dev/ic/stivar.h>
 
 #include "opt_summitfb.h"
@@ -166,37 +167,6 @@ struct wsdisplay_accessops summitfb_accessops = {
 };
 
 static inline void summitfb_wait_fifo(struct summitfb_softc *, uint32_t);
-
-/*
- * register values, found by disassembling the ROM
- * some found by Sven Schnelle
- * ( see https://patchwork.kernel.org/project/linux-parisc/patch/20211031204952.25678-2-svens@stackframe.org/ )
- * some by me
- */
-
-#define VISFX_STATUS		0x641400	// zero when idle
-#define VISFX_VRAM_WRITE_MODE	0xa00808
-#define VISFX_PIXEL_MASK	0xa0082c
-#define VISFX_FG_COLOUR		0xa0083c
-#define VISFX_BG_COLOUR		0xa00844
-#define VISFX_PLANE_MASK	0xa0084c
-
-#define VISFX_WRITE_MODE_PLAIN	0x02000000
-#define VISFX_WRITE_MODE_EXPAND	0x050004c0
-#define VISFX_WRITE_MODE_FILL	0x050008c0
-
-#define VISFX_START		0xb3c000
-#define VISFX_SIZE		0xb3c808
-
-#define VISFX_COLOR_MASK	0x800018
-#define VISFX_COLOR_INDEX	0x800020
-#define VISFX_COLOR_VALUE	0x800024
-
-#define VISFX_CURSOR_POS	0x400000
-#define VISFX_CURSOR_INDEX	0x400004
-#define VISFX_CURSOR_DATA	0x400008
-#define VISFX_CURSOR_COLOR	0x400010
-#define VISFX_CURSOR_ENABLE	0x80000000
 
 int
 summitfb_match(device_t parent, cfdata_t cf, void *aux)
