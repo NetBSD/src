@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.41 2024/11/18 19:51:36 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.42 2024/11/20 14:10:32 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -643,4 +643,44 @@ external/cddl/osnet/dist/uts/common/fs/zfs/vdev.c 1.7
 
 	zfs: PR 58111: fix possible data corruption on FIOSEEKDATA/FIOSEEKHOLE.
 	[riastradh, ticket #1928]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.107 (patch)
+sys/ddb/db_xxx.c				1.72,1.73 (patch)
+sys/kern/kern_descrip.c				1.244,1.245,1.252 (patch)
+sys/kern/kern_event.c				1.106 (patch)
+sys/kern/kern_sig.c				1.383,1.384 (patch)
+sys/kern/subr_exec_fd.c				1.9,1.10 (patch)
+sys/kern/sys_aio.c				1.46 (patch)
+sys/kern/sys_descrip.c				1.36 (patch)
+sys/kern/sys_select.c				1.51 (patch)
+sys/kern/uipc_socket2.c				1.135,1.136 (patch)
+sys/kern/uipc_usrreq.c				1.195,1.196 (patch)
+sys/miscfs/fdesc/fdesc_vnops.c			1.132 (patch)
+sys/miscfs/procfs/procfs_vnops.c		1.208 (patch)
+
+	kern: Fix memory ordering around loads of struct filedesc::fd_dt
+	and struct fdfile::ff_file by using atomic_load_consume where
+	access is not already serialized by a mutex or an exclusive
+	reference count.  (This affects only MP Alpha.)
+
+	Fix memory ordering around decrement of struct fdfile::ff_refcnt
+	to avoid potential use-after-free.  (This affects all MP
+	architectures with relaxed memory ordering and without
+	__HAVE_ATOMIC_AS_MEMBAR.)
+	[riastradh, ticket #1921]
+
+lib/libc/arch/aarch64/gen/fpsetround.c		1.4
+tests/lib/libc/gen/t_fpsetround.c		1.7,1.8
+
+	aarch64 fpsetround(3): PR 58782: don't flip on flush-to-zero mode
+	when setting the floating-point rounding mode.
+	Add test for this.
+	[riastradh, ticket #1923]
+
+sys/kern/sys_select.c				1.67 (patch)
+tests/lib/libc/sys/t_select.c			1.5 (patch)
+
+	select(2): PR 57504: fail with EBADF, rather than hanging, on
+	very large fd_set inputs with bad file descriptors included.
+	[riastradh, ticket #1926]
 
