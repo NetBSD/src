@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.25 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.26 2024/11/20 23:01:52 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -18,8 +18,6 @@ extern const unsigned short *ctype_table;
 extern void println(const char *);
 
 
-
-
 /*
  * No matter whether the code is from a system header or not, the idiom
  * 'do { ... } while (0)' is well known, and using the integer constant 0
@@ -35,12 +33,12 @@ statement_macro(void)
 		println("nothing");
 	} while (/*CONSTCOND*/0);
 
-# 39 "d_c99_bool_strict_syshdr.c" 3 4
+# 37 "d_c99_bool_strict_syshdr.c" 3 4
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);
 
-# 44 "d_c99_bool_strict_syshdr.c"
+# 42 "d_c99_bool_strict_syshdr.c"
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);
@@ -74,29 +72,29 @@ strict_bool_system_header_ctype(int c)
 	 * All other combinations of type are safe from truncation.
 	 */
 	_Bool system_int_assigned_to_bool =
-# 78 "d_c99_bool_strict_syshdr.c" 3 4
+# 76 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 80 "d_c99_bool_strict_syshdr.c"
+# 78 "d_c99_bool_strict_syshdr.c"
 	;
 	/* expect-1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
 
 	int system_bool_assigned_to_int =
-# 85 "d_c99_bool_strict_syshdr.c" 3 4
+# 83 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 87 "d_c99_bool_strict_syshdr.c"
+# 85 "d_c99_bool_strict_syshdr.c"
 	;
 
 	if (
-# 91 "d_c99_bool_strict_syshdr.c" 3 4
+# 89 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 93 "d_c99_bool_strict_syshdr.c"
+# 91 "d_c99_bool_strict_syshdr.c"
 	)
 		println("system macro returning INT");
 
 	if (
-# 98 "d_c99_bool_strict_syshdr.c" 3 4
+# 96 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 100 "d_c99_bool_strict_syshdr.c"
+# 98 "d_c99_bool_strict_syshdr.c"
 	)
 		println("system macro returning BOOL");
 }
@@ -105,9 +103,9 @@ static inline _Bool
 ch_isspace_sys_int(char c)
 {
 	return
-# 109 "d_c99_bool_strict_syshdr.c" 3 4
+# 107 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[c] & 0x0040)
-# 111 "d_c99_bool_strict_syshdr.c"
+# 109 "d_c99_bool_strict_syshdr.c"
 	    != 0;
 }
 
@@ -120,9 +118,9 @@ static inline _Bool
 ch_isspace_sys_bool(char c)
 {
 	return
-# 124 "d_c99_bool_strict_syshdr.c" 3 4
+# 122 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[(unsigned char)c] & 0x0040) != 0
-# 126 "d_c99_bool_strict_syshdr.c"
+# 124 "d_c99_bool_strict_syshdr.c"
 	    != 0;
 }
 
@@ -147,7 +145,7 @@ ch_isspace_sys_bool(char c)
 extern int finite(double);
 # 1 "string.h" 3 4
 extern int strcmp(const char *, const char *);
-# 151 "d_c99_bool_strict_syshdr.c"
+# 149 "d_c99_bool_strict_syshdr.c"
 
 /*ARGSUSED*/
 _Bool
@@ -193,13 +191,13 @@ controlling_expression_with_comma_operator(void)
 	int c;
 
 	while (c = read_char(),
-# 197 "d_c99_bool_strict_syshdr.c" 3 4
+# 195 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((int)((ctype_table + 1)[(
-# 199 "d_c99_bool_strict_syshdr.c"
+# 197 "d_c99_bool_strict_syshdr.c"
 		c
-# 201 "d_c99_bool_strict_syshdr.c" 3 4
+# 199 "d_c99_bool_strict_syshdr.c" 3 4
 	    )] & 0x0040 /* Space     */))
-# 203 "d_c99_bool_strict_syshdr.c"
+# 201 "d_c99_bool_strict_syshdr.c"
 	    )
 		continue;
 }
@@ -223,28 +221,28 @@ pass_bool_to_function(void)
 
 	/* expect+5: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	take_bool(
-# 227 "d_c99_bool_strict_syshdr.c" 3 4
+# 225 "d_c99_bool_strict_syshdr.c" 3 4
 	    (/*CONSTCOND*/1)
-# 229 "d_c99_bool_strict_syshdr.c"
+# 227 "d_c99_bool_strict_syshdr.c"
 	);
 
 	take_bool(
-# 233 "d_c99_bool_strict_syshdr.c" 3 4
+# 231 "d_c99_bool_strict_syshdr.c" 3 4
 	    __lint_true
-# 235 "d_c99_bool_strict_syshdr.c"
+# 233 "d_c99_bool_strict_syshdr.c"
 	);
 
 	/* expect+5: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
 	take_bool(
-# 240 "d_c99_bool_strict_syshdr.c" 3 4
+# 238 "d_c99_bool_strict_syshdr.c" 3 4
 	    (/*CONSTCOND*/0)
-# 242 "d_c99_bool_strict_syshdr.c"
+# 240 "d_c99_bool_strict_syshdr.c"
 	);
 
 	take_bool(
-# 246 "d_c99_bool_strict_syshdr.c" 3 4
+# 244 "d_c99_bool_strict_syshdr.c" 3 4
 	    __lint_false
-# 248 "d_c99_bool_strict_syshdr.c"
+# 246 "d_c99_bool_strict_syshdr.c"
 	);
 }
 
@@ -262,27 +260,27 @@ if_pointer_or_int(void)
 {
 	/* if (NULL) */
 	if (
-# 266 "d_c99_bool_strict_syshdr.c" 3 4
+# 264 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((void *)0)
-# 268 "d_c99_bool_strict_syshdr.c"
+# 266 "d_c99_bool_strict_syshdr.c"
 		       )
 		/* expect+1: warning: 'return' statement not reached [193] */
 		return;
 
 	/* if (EXIT_SUCCESS) */
 	if (
-# 275 "d_c99_bool_strict_syshdr.c" 3 4
+# 273 "d_c99_bool_strict_syshdr.c" 3 4
 	    0
-# 277 "d_c99_bool_strict_syshdr.c"
+# 275 "d_c99_bool_strict_syshdr.c"
 		       )
 		/* expect+1: warning: 'return' statement not reached [193] */
 		return;
 
 	/* if (errno) */
 	if (
-# 284 "d_c99_bool_strict_syshdr.c" 3 4
+# 282 "d_c99_bool_strict_syshdr.c" 3 4
 	    (*errno_location())
-# 286 "d_c99_bool_strict_syshdr.c"
+# 284 "d_c99_bool_strict_syshdr.c"
 		       )
 		return;
 }
@@ -304,10 +302,10 @@ typedef struct stdio_file {
 int ferror(FILE *);
 FILE stdio_files[3];
 FILE *stdio_stdout;
-# 308 "d_c99_bool_strict_syshdr.c" 2
+# 306 "d_c99_bool_strict_syshdr.c" 2
 # 1 "string.h" 1 3 4
 int strcmp(const char *, const char *);
-# 311 "d_c99_bool_strict_syshdr.c" 2
+# 309 "d_c99_bool_strict_syshdr.c" 2
 
 void
 controlling_expression(FILE *f, const char *a, const char *b)
@@ -341,9 +339,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 345 "d_c99_bool_strict_syshdr.c" 3 4
+# 343 "d_c99_bool_strict_syshdr.c" 3 4
 	    &stdio_files[1]
-# 347 "d_c99_bool_strict_syshdr.c"
+# 345 "d_c99_bool_strict_syshdr.c"
 	    ))
 		return;
 
@@ -359,9 +357,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 363 "d_c99_bool_strict_syshdr.c" 3 4
+# 361 "d_c99_bool_strict_syshdr.c" 3 4
 	    stdio_stdout
-# 365 "d_c99_bool_strict_syshdr.c"
+# 363 "d_c99_bool_strict_syshdr.c"
 	    ))
 		return;
 
@@ -374,9 +372,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 378 "d_c99_bool_strict_syshdr.c" 3 4
+# 376 "d_c99_bool_strict_syshdr.c" 3 4
 	    (stdio_stdout)
-# 380 "d_c99_bool_strict_syshdr.c"
+# 378 "d_c99_bool_strict_syshdr.c"
 	    ))
 		return;
 
@@ -400,9 +398,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 404 "d_c99_bool_strict_syshdr.c" 3 4
+# 402 "d_c99_bool_strict_syshdr.c" 3 4
 	    stdio_stdout /* comment */
-# 406 "d_c99_bool_strict_syshdr.c"
+# 404 "d_c99_bool_strict_syshdr.c"
 	    ))
 		return;
 }

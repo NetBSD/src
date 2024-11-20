@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_056.c,v 1.6 2024/10/30 01:08:33 rillig Exp $	*/
+/*	$NetBSD: msg_056.c,v 1.7 2024/11/20 23:01:52 rillig Exp $	*/
 # 3 "msg_056.c"
 
 // Test for message: constant %s too large for 'int' [56]
@@ -28,7 +28,13 @@ enum {
 	S63_MIN = -0x7FFFFFFFFFFFFFFF - 1,
 
 	/* expect+1: warning: constant 0x7fffffffffffffff too large for 'int' [56] */
-	U63_MAX = 0x7FFFFFFFFFFFFFFF,
+	S63_MAX = 0x7FFFFFFFFFFFFFFF,
+
+	/* expect+1: warning: constant 0x7fffffffffffffff too large for 'int' [56] */
+	U63_MAX = 0x7FFFFFFFFFFFFFFFU,
+
+	/* expect+1: warning: constant 0x8000000000000000 too large for 'int' [56] */
+	U63_MAX_PLUS_1 = 0x8000000000000000U,
 
 	/* expect+1: warning: constant 0xffffffffffffffff too large for 'int' [56] */
 	U64_MAX = 0xFFFFFFFFFFFFFFFF,
