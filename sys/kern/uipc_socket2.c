@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.134.2.2 2021/10/02 11:07:55 martin Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.134.2.3 2024/11/20 14:01:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.134.2.2 2021/10/02 11:07:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.134.2.3 2024/11/20 14:01:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1622,13 +1622,13 @@ sofindproc(struct socket *so, int all, void (*pr)(const char *, ...))
 			pr("could not acquire fd_lock mutex\n");
 			continue;
 		}
-		dt = fdp->fd_dt;
+		dt = atomic_load_consume(&fdp->fd_dt);
 		for (i = 0; i < dt->dt_nfiles; i++) {
 			ff = dt->dt_ff[i];
 			if (ff == NULL)
 				continue;
 
-			fp = ff->ff_file;
+			fp = atomic_load_consume(&ff->ff_file);
 			if (fp == NULL)
 				continue;
 

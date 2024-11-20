@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.46.2.1 2024/11/20 14:01:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.46 2019/07/26 05:37:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.46.2.1 2024/11/20 14:01:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 
 	if (nd < 0)
 		return (EINVAL);
-	nf = curlwp->l_fd->fd_dt->dt_nfiles;
+	nf = atomic_load_consume(&curlwp->l_fd->fd_dt)->dt_nfiles;
 	if (nd > nf) {
 		/* forgiving; slightly wrong */
 		nd = nf;

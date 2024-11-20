@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364.2.9 2019/11/11 17:11:07 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.10 2024/11/20 14:01:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.9 2019/11/11 17:11:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.10 2024/11/20 14:01:59 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1065,11 +1065,11 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 
 		/* XXXSMP locking */
 		ksi->ksi_fd = -1;
-		dt = fdp->fd_dt;
+		dt = atomic_load_consume(&fdp->fd_dt);
 		for (fd = 0; fd < dt->dt_nfiles; fd++) {
 			if ((ff = dt->dt_ff[fd]) == NULL)
 				continue;
-			if ((fp = ff->ff_file) == NULL)
+			if ((fp = atomic_load_consume(&ff->ff_file)) == NULL)
 				continue;
 			if (fp->f_data == data) {
 				ksi->ksi_fd = fd;

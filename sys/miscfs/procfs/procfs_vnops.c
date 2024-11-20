@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.206.4.2 2022/06/17 15:25:21 martin Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.206.4.3 2024/11/20 14:01:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,9 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.206.4.2 2022/06/17 15:25:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.206.4.3 2024/11/20 14:01:59 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -1390,7 +1391,7 @@ procfs_readdir(void *v)
 			return ESRCH;
 		}
 
-		nfd = p->p_fd->fd_dt->dt_nfiles;
+		nfd = atomic_load_consume(&p->p_fd->fd_dt)->dt_nfiles;
 
 		lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
