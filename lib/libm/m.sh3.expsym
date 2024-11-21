@@ -4,8 +4,6 @@ ___dtors
 ___dtors_end
 __divxc3
 __mulxc3
-_fini
-_init
 fma
 fmaf
 fmal

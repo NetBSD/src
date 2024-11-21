@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.411 2024/11/02 14:24:59 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.412 2024/11/21 18:16:15 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -688,6 +688,39 @@ LIB_EXPSYM?=	${LIB}.${LIBC_MACHINE_CPU:U${MACHINE_CPU}}.expsym
 LIB_EXPSYM?=	${LIB}.expsym
 .endif
 
+# If we don't have a version map enumerating the exact symbols
+# exported, skip various machine-dependent crud that the linker
+# automatically exports (even though it appears to be unnecessary, as
+# demonstrated by libraries with version scripts which don't export
+# these symbols).
+#
+# This list has been gathered empirically -- I'm not sure it's written
+# down anywhere and I'm not sure there's any way to ask the linker to
+# simply not export the symbols.
+.if !empty(VERSION_MAP)
+_EXPSYM_PIPE_GREP=		# empty
+.else
+_EXPSYM_PIPE_GREP=		| grep -Fvx ${_EXPSYM_IGNORE:@_s_@-e ${_s_:Q}@}
+_EXPSYM_IGNORE+=		_end
+_EXPSYM_IGNORE+=		_fini
+_EXPSYM_IGNORE+=		_init
+_EXPSYM_IGNORE.aarch64+=	__bss_end__
+_EXPSYM_IGNORE.aarch64+=	__bss_start__
+_EXPSYM_IGNORE.aarch64+=	__end__
+_EXPSYM_IGNORE.aarch64+=	_bss_end__
+_EXPSYM_IGNORE.hppa+=		_GLOBAL_OFFSET_TABLE_
+_EXPSYM_IGNORE.powerpc64+=	._fini
+_EXPSYM_IGNORE.powerpc64+=	._init
+_EXPSYM_IGNORE.sh3+=		___ctors
+_EXPSYM_IGNORE.sh3+=		___ctors_end
+_EXPSYM_IGNORE.sh3+=		___dtors
+_EXPSYM_IGNORE.sh3+=		___dtors_end
+_EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_ARCH}}
+.  if ${MACHINE_ARCH} != ${MACHINE_CPU}
+_EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_CPU}}
+.  endif
+.endif
+
 .if !empty(LIB_EXPSYM) && ${MKPIC} != "no"
 realall: ${_LIB.so.full}.diffsym
 ${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
@@ -705,7 +738,7 @@ ${_LIB.so.full}.actsym: ${_LIB.so.full}
 	${_MKTARGET_CREATE}
 	${NM} --dynamic --extern-only --defined-only --with-symbol-versions \
 		${.ALLSRC} \
-	| cut -d' ' -f3 | LANG=C sort -u >${.TARGET}.tmp
+	| cut -d' ' -f3	${_EXPSYM_PIPE_GREP} | LC_ALL=C sort -u >${.TARGET}.tmp
 	${MV} ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	${_LIB.so.full}.actsym
 CLEANFILES+=	${_LIB.so.full}.actsym.tmp

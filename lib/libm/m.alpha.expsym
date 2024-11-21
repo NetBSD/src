@@ -8,8 +8,6 @@ _fegetexcept
 _feholdexcept
 _fesetenv
 _feupdateenv
-_fini
-_init
 fedisableexcept
 feenableexcept
 fegetenv

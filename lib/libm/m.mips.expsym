@@ -1,7 +1,5 @@
 __divxc3
 __mulxc3
-_fini
-_init
 fma
 fmaf
 fmal
