@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.22 2024/02/02 22:00:32 andvar Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.23 2024/11/21 07:15:00 skrll Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.22 2024/02/02 22:00:32 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.23 2024/11/21 07:15:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,8 +418,8 @@ again:
 	/* Configure Address Translation. */
 	rkpcie_atr_init(sc);
 
-	fdtbus_register_interrupt_controller(self, OF_child(sc->sc_phsc.sc_phandle),
-	            &rkpcie_intrfuncs);
+	fdtbus_register_interrupt_controller(self,
+	    OF_child(sc->sc_phsc.sc_phandle), &rkpcie_intrfuncs);
 
 	sc->sc_phsc.sc_type = PCIHOST_ECAM;
 	sc->sc_phsc.sc_pci_flags |= PCI_FLAGS_MSI_OKAY;
