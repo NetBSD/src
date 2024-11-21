@@ -1,0 +1,5 @@
+__posix_cerror
+chown
+fchown
+lchown
+rename
