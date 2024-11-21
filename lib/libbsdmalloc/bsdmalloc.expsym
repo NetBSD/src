@@ -1,0 +1,10 @@
+__realloc_srchlen
+_malloc_postfork
+_malloc_postfork_child
+_malloc_prefork
+aligned_alloc
+calloc
+free
+malloc
+posix_memalign
+realloc
