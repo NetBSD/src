@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.65 2024/11/22 07:20:05 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.66 2024/11/22 07:23:04 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.65 2024/11/22 07:20:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.66 2024/11/22 07:23:04 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -512,7 +512,6 @@ sbc_drq_intr(void *p)
 #undef W1
 			dh->dh_addr += dcount;
 			dh->dh_len -= dcount;
-			DELAY(100);
 		}
 
 		/*
@@ -543,7 +542,6 @@ sbc_drq_intr(void *p)
 #undef W1
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
-			DELAY(100);
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 		if (dcount >= MAX_DMA_LEN)
@@ -576,7 +574,6 @@ sbc_drq_intr(void *p)
 			}
 			dh->dh_addr += dcount;
 			dh->dh_len -= dcount;
-			DELAY(100);
 		}
 
 		/*
@@ -604,7 +601,6 @@ sbc_drq_intr(void *p)
 			}
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
-			DELAY(100);
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 	}
