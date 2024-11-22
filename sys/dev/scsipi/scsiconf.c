@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.305 2024/09/29 12:36:40 nat Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.306 2024/11/22 06:52:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.305 2024/09/29 12:36:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.306 2024/11/22 06:52:57 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,8 +379,7 @@ again:
 	if (error)
 		goto end;
 
-	if (sizeof(*rlr) + _4btol(rlr->length) > rlrlen &&
-	    sizeof(*rlr) + _4btol(rlr->length) <= 32) {
+	if (sizeof(*rlr) + _4btol(rlr->length) > rlrlen) {
 	    	const size_t old_rlrlen = rlrlen;
 		rlrlen = sizeof(*rlr) + uimin(_4btol(rlr->length),
 		    16383 * sizeof(*lunp));
