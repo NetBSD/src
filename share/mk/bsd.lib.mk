@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.412 2024/11/21 18:16:15 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.413 2024/11/22 02:43:21 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -746,6 +746,13 @@ CLEANFILES+=	${_LIB.so.full}.diffsym
 CLEANFILES+=	${_LIB.so.full}.diffsym.tmp
 update-symbols: .PHONY
 update-symbols: ${_LIB.so.full}.actsym
+	@if [ -f ${${LIB_EXPSYM}:P:Q} ] && \
+	    [ -n "`comm -23 ${${LIB_EXPSYM}:P:Q} ${.ALLSRC:Q}`" ]; then \
+		echo 'WARNING: Symbols deleted, major bump required!' >&2; \
+	elif [ -f ${${LIB_EXPSYM}:P:Q} ] && \
+	    [ -n "`comm -13 ${${LIB_EXPSYM}:P:Q} ${.ALLSRC:Q}`" ]; then \
+		echo 'WARNING: Symbols added, minor bump required!' >&2; \
+	fi
 	cp ${.ALLSRC} ${defined(NETBSDSRCDIR_RW):?${.CURDIR:C,^${NETBSDSRCDIR}/,${NETBSDSRCDIR_RW}/,}:${.CURDIR}}/${LIB_EXPSYM}
 .endif
 
