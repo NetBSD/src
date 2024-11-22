@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.10 2024/11/19 18:11:52 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.11 2024/11/22 08:37:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -91,13 +91,6 @@ db_addr_t	db_disasm_insn(uint32_t, db_addr_t, bool);
  */
 void 	kdb_kbd_trap(db_regs_t *);
 int 	kdb_trap(int, db_regs_t *);
-
-static inline void
-db_set_ddb_regs(int type, struct trapframe *tf)
-{
-	*curcpu()->ci_ddb_regs = *tf;
-}
-
 
 /*
  * Constants for KGDB.
