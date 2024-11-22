@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.13 2024/05/02 18:18:17 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.14 2024/11/22 20:01:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -74,12 +74,6 @@ static inline vaddr_t
 stack_align(vaddr_t sp)
 {
 	return sp & ~STACK_ALIGNBYTES;
-}
-
-static inline void
-userret(struct lwp *l)
-{
-	mi_userret(l);
 }
 
 static inline void

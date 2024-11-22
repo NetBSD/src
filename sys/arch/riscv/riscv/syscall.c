@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2023/10/05 19:41:05 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6 2024/11/22 20:01:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2023/10/05 19:41:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2024/11/22 20:01:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2023/10/05 19:41:05 ad Exp $");
 #include <sys/systm.h>
 
 #include <riscv/frame.h>
-#include <riscv/locore.h>
+#include <riscv/userret.h>
 
 #ifndef EMULNAME
 #define EMULNAME(x)	(x)

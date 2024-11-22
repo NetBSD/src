@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2024/08/04 08:16:26 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2024/11/22 20:01:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.27 2024/08/04 08:16:26 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.28 2024/11/22 20:01:04 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -47,9 +47,9 @@ __RCSID("$NetBSD: trap.c,v 1.27 2024/08/04 08:16:26 skrll Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/locore.h>
 #include <machine/machdep.h>
 #include <machine/db_machdep.h>
+#include <machine/userret.h>
 
 #define	MACHINE_ECALL_TRAP_MASK	(__BIT(CAUSE_MACHINE_ECALL))
 
