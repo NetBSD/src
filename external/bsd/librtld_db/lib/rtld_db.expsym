@@ -1,0 +1,12 @@
+rd_delete
+rd_errstr
+rd_event_addr
+rd_event_enable
+rd_event_getmsg
+rd_init
+rd_loadobj_iter
+rd_log
+rd_new
+rd_objpad_enable
+rd_plt_resolution
+rd_reset
