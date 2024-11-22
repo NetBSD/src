@@ -1,0 +1,7 @@
+hContext
+tpmUnsealFile
+tpmUnsealShred
+tpmUnsealStrerror
+tpm_errno
+tpm_error_buf
+tspi_error_strings
