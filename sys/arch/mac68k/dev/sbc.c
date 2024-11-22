@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.64 2024/11/22 07:16:01 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.65 2024/11/22 07:20:05 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.64 2024/11/22 07:16:01 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.65 2024/11/22 07:20:05 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -486,7 +486,7 @@ sbc_drq_intr(void *p)
 		return;
 	}
 
-#define CHECKMORE	if (sbc_ready(ncr_sc)) {			\
+#define CHECKMORE	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0) {	\
 				dh->dh_len -= dcount - count;		\
 				dh->dh_addr += dcount - count;		\
 				if (dh->dh_len)				\
