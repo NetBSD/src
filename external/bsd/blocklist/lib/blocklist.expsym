@@ -1,0 +1,13 @@
+bl_create
+bl_destroy
+bl_getfd
+bl_isconnected
+bl_recv
+bl_send
+blocklist
+blocklist_close
+blocklist_open
+blocklist_open2
+blocklist_r
+blocklist_sa
+blocklist_sa_r
