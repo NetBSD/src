@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.66 2024/11/22 07:23:04 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.67 2024/11/22 07:27:17 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.66 2024/11/22 07:23:04 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.67 2024/11/22 07:27:17 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -550,7 +550,8 @@ sbc_drq_intr(void *p)
 		 * Write an extra byte to handle last ack.
 		 * From NCR5380 Interface manual.
 		 */
-		*drq = 0;
+		if (*ncr_sc->sci_csr & SCI_CSR_ACK)
+			*drq = 0;
 
 		/*
 		 * XXX -- Read a byte from the SBC to trigger a /BERR.
