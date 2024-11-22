@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.63 2024/10/26 21:02:51 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.64 2024/11/22 07:16:01 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.63 2024/10/26 21:02:51 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.64 2024/11/22 07:16:01 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -443,6 +443,7 @@ sbc_drq_intr(void *p)
 		printf("%s: drq intr, dh_len=0x%x, dh_flags=0x%x\n",
 		    device_xname(ncr_sc->sc_dev), dh->dh_len, dh->dh_flags);
 #endif
+	mutex_enter(&sc->sc_drq_lock);
 	s = splbio();
 
 	/*
@@ -479,6 +480,8 @@ sbc_drq_intr(void *p)
 		m68k_fault_addr = 0;
 
 		splx(s);
+
+		mutex_exit(&sc->sc_drq_lock);
 
 		return;
 	}
@@ -615,6 +618,8 @@ no_more:
 	nofault = (label_t *)0;
 
 	splx(s);
+
+	mutex_exit(&sc->sc_drq_lock);
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & (SBC_DB_REG | SBC_DB_INTR))

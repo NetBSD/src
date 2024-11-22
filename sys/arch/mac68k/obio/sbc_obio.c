@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.25 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.26 2024/11/22 07:16:01 nat Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.25 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.26 2024/11/22 07:16:01 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,6 +207,8 @@ sbc_obio_attach(device_t parent, device_t self, void *aux)
 		ncr_sc->sc_dma_stop  = sbc_dma_stop;
 		via2_register_irq(VIA2_SCSIDRQ, sbc_drq_intr, ncr_sc);
 	}
+
+	mutex_init(&sc->sc_drq_lock, MUTEX_DEFAULT, IPL_SOFTBIO);
 
 	via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc);
 	sc->sc_clrintr = sbc_obio_clrintr;

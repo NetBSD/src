@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.14 2024/01/22 06:28:49 nat Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.15 2024/11/22 07:16:01 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -63,6 +63,7 @@ struct sbc_softc {
 	volatile int		sc_resid;
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
+	kmutex_t		sc_drq_lock;
 };
 
 /*
