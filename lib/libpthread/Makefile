@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2023/09/14 03:17:02 rin Exp $
+#	$NetBSD: Makefile,v 1.99 2024/11/22 15:51:34 riastradh Exp $
 #
 
 NOSANITIZER=	# defined
@@ -31,6 +31,23 @@ INCSDIR=/usr/include
 
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
+
+EXPSYM_SRCS+=	pthread_mi.expsym
+.  if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "hppa"
+# PTHREAD__ASM_RASOPS
+EXPSYM_SRCS+=	pthread_md.expsym
+.  else
+# !PTHREAD__ASM_RASOPS
+# XXX These really shouldn't be exported.
+EXPSYM_SRCS+=	pthread_ras.expsym
+.  endif
+
+LIB_EXPSYM=	pthread.expsym
+pthread.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} >${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	pthread.expsym pthread.expsym.tmp
 
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC -D_REENTRANT
 CPPFLAGS+=	-I${.CURDIR}/../libc/include

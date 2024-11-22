@@ -128,8 +128,6 @@ pthread__errno
 pthread__guardsize
 pthread__init
 pthread__lock_ops
-pthread__lock_ras_end
-pthread__lock_ras_start
 pthread__nspins
 pthread__pagesize
 pthread__sched_yield
