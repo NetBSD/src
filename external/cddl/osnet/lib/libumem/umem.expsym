@@ -1,0 +1,8 @@
+umem_alloc
+umem_cache_alloc
+umem_cache_create
+umem_cache_destroy
+umem_cache_free
+umem_free
+umem_nofail_callback
+umem_zalloc
