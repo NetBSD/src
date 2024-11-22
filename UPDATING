@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.367 2024/11/22 14:30:28 riastradh Exp $
+$NetBSD: UPDATING,v 1.368 2024/11/22 14:53:12 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,6 +20,11 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20241122:
+	Changes to libarchive's build options require cleaning its
+	objdir in update builds:
+
+	cd src/external/bsd/libarchive && $TOOLDIR/bin/nbmake-$ARCH cleandir
+
 	Changes to bsd.lib.mk to improve detecting differences in
 	shared library symbol exports may cause some .actsym files in
 	the objdir to become stale in update builds.
