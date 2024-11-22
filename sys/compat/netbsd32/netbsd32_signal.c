@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.54 2024/04/29 14:56:01 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.54 2024/04/29 14:56:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -214,8 +214,8 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 		if (!sigcontext_valid) {
 			return EINVAL;
 		}
-#else /* ! __HAVE_STRUCT_SIGCONTEXT */
-		return EINVAL;
+// #else /* ! __HAVE_STRUCT_SIGCONTEXT */
+// 		return EINVAL;
 #endif /* __HAVE_STRUCT_SIGCONTEXT */
 	}
 #endif /* __HAVE_MD_NETBSD32_SENDSIG */

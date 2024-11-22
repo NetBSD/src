@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.8 2021/12/02 04:26:09 ryo Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.9 2024/11/22 10:41:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.8 2021/12/02 04:26:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.9 2024/11/22 10:41:50 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -93,8 +93,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.8 2021/12/02 04:26:09 ryo Exp $");
 
 #include <compat/common/compat_mod.h>
 
-#if !defined(__amd64__) || defined(COMPAT_NETBSD32)
-#define COMPAT_SIGCONTEXT
+#ifdef COMPAT_NETBSD32
+# ifndef __aarch64__
+#  define COMPAT_SIGCONTEXT
+# endif
+#else /* COMPAT_NETBSD32 */
+# if !defined(__amd64__) && !defined(__arch64__)
+#  define COMPAT_SIGCONTEXT
+# endif
+#endif /* COMPAT_NETBSD32 */
+
+#ifdef COMPAT_SIGCONTEXT
 extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
 #endif
