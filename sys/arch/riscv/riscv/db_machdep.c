@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.12 2024/11/23 11:37:43 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13 2024/11/23 12:03:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.12 2024/11/23 11:37:43 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.13 2024/11/23 12:03:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -219,59 +219,4 @@ db_addr_t
 next_instr_address(db_addr_t pc, bool bdslot_p)
 {
 	return pc + (bdslot_p ? 0 : 4);
-}
-
-void
-db_read_bytes(db_addr_t addr, size_t len, char *data)
-{
-	const char *src = (char *)addr;
-	int err;
-
-	/* If asked to fetch from userspace, do it safely */
-	if ((intptr_t)addr >= 0) {
-		err = copyin(src, data, len);
-		if (err) {
-#ifdef DDB
-			db_printf("address %p is invalid\n", src);
-#endif
-			memset(data, 0, len);
-		}
-		return;
-	}
-
-	while (len--) {
-		*data++ = *src++;
-	}
-}
-
-/*
- * Write bytes to kernel address space for debugger.
- */
-void
-db_write_bytes(vaddr_t addr, size_t len, const char *data)
-{
-	int err;
-
-	/* If asked to fetch from userspace, do it safely */
-	if ((intptr_t)addr >= 0) {
-		err = copyout(data, (char *)addr, len);
-		if (err) {
-#ifdef DDB
-			db_printf("address %p is invalid\n", (char *)addr);
-#endif
-		}
-		return;
-	}
-
-	if (len == 8) {
-		*(uint64_t *)addr = *(const uint64_t *) data;
-	} else if (len == 4) {
-		*(uint32_t *)addr = *(const uint32_t *) data;
-	} else if (len == 2) {
-		*(uint16_t *)addr = *(const uint16_t *) data;
-	} else {
-		KASSERT(len == 1);
-		*(uint8_t *)addr = *(const uint8_t *) data;
-	}
-	__asm("fence rw,rw; fence.i");
 }
