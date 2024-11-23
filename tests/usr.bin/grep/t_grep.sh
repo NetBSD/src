@@ -1,6 +1,6 @@
-# $NetBSD: t_grep.sh,v 1.7 2022/09/09 22:14:29 wiz Exp $
+# $NetBSD: t_grep.sh,v 1.8 2024/11/23 09:38:02 rillig Exp $
 #
-# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009, 2021, 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -341,6 +341,24 @@ context2_body()
 	    grep -z -C1 cod test1 test2
 }
 
+atf_test_case pr_58849
+pr_58849_head()
+{
+	atf_set "descr" "Checks overlapping patterns in whole-line search"
+}
+pr_58849_body()
+{
+	printf '%s\n' __bss_start__ __bss_end__ hello > input
+
+	# The line '__bss_end__' must not occur in the output.
+	atf_check -o inline:'__bss_start__\nhello\n' \
+	    grep -Fvx -e _end -e __bss_end__ input
+
+	# Listing the most specific pattern first works around PR bin/58849.
+	atf_check -o inline:'__bss_start__\nhello\n' \
+	    grep -Fvx -e __bss_end__ -e _end input
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
@@ -363,4 +381,5 @@ atf_init_test_cases()
 	atf_add_test_case zgrep
 	atf_add_test_case nonexistent
 	atf_add_test_case context2
+	atf_add_test_case pr_58849
 }
