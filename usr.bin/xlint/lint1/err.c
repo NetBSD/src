@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.254 2024/11/23 00:01:48 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.255 2024/11/23 16:48:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.254 2024/11/23 00:01:48 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.255 2024/11/23 16:48:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -438,6 +438,7 @@ static const char *const msgs[] = {
 	"lossy conversion of %Lg to '%s', arg #%d",			// 380
 	"lossy conversion of %Lg to '%s'",				// 381
 	"constant assignment of type '%s' in operand of '!' always evaluates to '%s'", 	// 382
+	"passing '%s' to argument %d discards '%s'",			// 383
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
