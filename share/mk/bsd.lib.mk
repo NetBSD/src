@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.414 2024/11/22 16:08:43 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.415 2024/11/23 02:10:13 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -700,7 +700,7 @@ LIB_EXPSYM?=	${LIB}.expsym
 .if !empty(VERSION_MAP)
 _EXPSYM_PIPE_GREP=	# empty
 .else
-_EXPSYM_PIPE_GREP=	| ${TOOL_GREP} -Fvx ${_EXPSYM_IGNORE:@_s_@-e ${_s_:Q}@}
+_EXPSYM_PIPE_GREP=	| grep -Fvx ${_EXPSYM_IGNORE:@_s_@-e ${_s_:Q}@}
 _EXPSYM_IGNORE+=		_end
 _EXPSYM_IGNORE+=		_fini
 _EXPSYM_IGNORE+=		_init
