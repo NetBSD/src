@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2022/06/25 06:51:37 skrll Exp $
+# $NetBSD: Makefile,v 1.11 2024/11/23 13:41:01 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,19 @@ SRCS+=unwind_arm_ehabi_stub.c
 SRCS+=builtin.c
 .endif
 
+EXPSYM_SRCS+=	execinfo.common.expsym
+
 .if exists(${.CURDIR}/symbol_${LIBEXECINFO_MACHINE_ARCH}.c)
 SRCS+=symbol_${LIBEXECINFO_MACHINE_ARCH}.c
+EXPSYM_SRCS+=	execinfo.${LIBEXECINFO_MACHINE_ARCH}.expsym
 .endif
+
+LIB_EXPSYM=	execinfo.expsym
+execinfo.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} >${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	execinfo.expsym execinfo.expsym.tmp
 
 MLINKS+= backtrace.3 backtrace_symbols.3
 MLINKS+= backtrace.3 backtrace_symbols_fmt.3
