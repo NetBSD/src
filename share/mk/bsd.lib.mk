@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.415 2024/11/23 02:10:13 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.416 2024/11/23 04:07:37 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -753,7 +753,7 @@ update-symbols: ${_LIB.so.full}.actsym
 	    [ -n "`comm -13 ${${LIB_EXPSYM}:P:Q} ${.ALLSRC:Q}`" ]; then \
 		echo 'WARNING: Symbols added, minor bump required!' >&2; \
 	fi
-	cp ${.ALLSRC} ${defined(NETBSDSRCDIR_RW):?${.CURDIR:C,^${NETBSDSRCDIR}/,${NETBSDSRCDIR_RW}/,}:${.CURDIR}}/${LIB_EXPSYM}
+	cp ${.ALLSRC} ${defined(NETBSDSRCDIR_RW):?${${LIB_EXPSYM}:P:C,^${NETBSDSRCDIR}/,${NETBSDSRCDIR_RW}/,}:${${LIB_EXPSYM}:P}}
 .endif
 
 .if !empty(LOBJS)							# {
