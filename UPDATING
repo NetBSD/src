@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.373 2024/11/23 02:26:06 riastradh Exp $
+$NetBSD: UPDATING,v 1.374 2024/11/23 14:51:58 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -26,6 +26,13 @@ Recent changes:
 	cd external/bsd/file/lib && $TOOLDIR/bin/nbmake-$ARCH clean
 	cd external/bsd/libarchive/lib && $TOOLDIR/bin/nbmake-$ARCH clean
 	cd external/public-domain/xz/lib && $TOOLDIR/bin/nbmake-$ARCH clean
+
+	Also, for architectures with MKCOMPAT, it is necessary to clean
+	the compat objdirs too.  The easiest way is:
+
+	rm -rf OBJDIR/compat/*/*/external/bsd/file/lib
+	rm -rf OBJDIR/compat/*/*/external/bsd/libarchive/lib
+	rm -rf OBJDIR/compat/*/*/external/public-domain/xz/lib
 
 	Changes to bsd.lib.mk to improve detecting differences in
 	shared library symbol exports may cause some .actsym files in
