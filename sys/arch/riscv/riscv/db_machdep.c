@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.12 2024/11/23 11:37:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,9 +31,11 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.12 2024/11/23 11:37:43 skrll Exp $");
 
 #include <sys/param.h>
+
+#include <sys/cpu.h>
 
 #include <riscv/insn.h>
 #include <riscv/db_machdep.h>

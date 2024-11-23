@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2024/11/19 21:17:09 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2024/11/23 11:37:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.5 2024/11/19 21:17:09 skrll Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.6 2024/11/23 11:37:43 skrll Exp $");
 
 #include <sys/param.h>
+
 #include <sys/systm.h>
 
 #include <riscv/db_machdep.h>
