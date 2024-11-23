@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.372 2024/11/22 16:07:32 riastradh Exp $
+$NetBSD: UPDATING,v 1.373 2024/11/23 02:26:06 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,8 +20,8 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20241122:
-	Changes to various build options require cleaning their objdir
-	in update builds:
+	Changes to various libraries' build options require cleaning
+	their objdirs in update builds:
 
 	cd external/bsd/file/lib && $TOOLDIR/bin/nbmake-$ARCH clean
 	cd external/bsd/libarchive/lib && $TOOLDIR/bin/nbmake-$ARCH clean
