@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.658 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.659 2024/11/23 00:01:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.658 2024/11/13 04:32:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.659 2024/11/23 00:01:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2857,15 +2857,17 @@ check_assign_void_pointer_compat(op_t op, int arg,
 		return false;
 
 	/* compatible pointer types (qualifiers ignored) */
-	if (allow_c90 &&
-	    ((!lstp->t_const && rstp->t_const) ||
-	     (!lstp->t_volatile && rstp->t_volatile))) {
-		/* left side has not all qualifiers of right */
+	char qualifiers[32];
+	snprintf(qualifiers, sizeof(qualifiers), "%s%s",
+	    !lstp->t_const && rstp->t_const ? " const" : "",
+	    !lstp->t_volatile && rstp->t_volatile ? " volatile" : "");
+	if (allow_c90 && qualifiers[0] != '\0') {
 		switch (op) {
 		case INIT:
 		case RETURN:
-			/* incompatible pointer types to '%s' and '%s' */
-			warning(182, type_name(lstp), type_name(rstp));
+			/* '%s' discards '%s' from '%s' */
+			warning(182, op_name(op),
+			    qualifiers + 1, type_name(rtp));
 			break;
 		case FARG:
 			/* converting '%s' to incompatible '%s' ... */
@@ -2873,9 +2875,9 @@ check_assign_void_pointer_compat(op_t op, int arg,
 			    type_name(rtp), type_name(ltp), arg);
 			break;
 		default:
-			/* operands of '%s' have incompatible pointer ... */
+			/* operator '%s' discards '%s' from '%s' */
 			warning(128, op_name(op),
-			    type_name(lstp), type_name(rstp));
+			    qualifiers + 1, type_name(rtp));
 			break;
 		}
 	}

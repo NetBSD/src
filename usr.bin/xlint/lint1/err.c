@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.253 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.254 2024/11/23 00:01:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.253 2024/11/13 04:32:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.254 2024/11/23 00:01:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -183,7 +183,7 @@ static const char *const msgs[] = {
 	"pointers to functions can only be compared for equality",	// 125
 	"incompatible types '%s' and '%s' in conditional",		// 126
 	"'&' before array or function: ignored",			// 127
-	"operands of '%s' have incompatible pointer types to '%s' and '%s'", // 128
+	"operator '%s' discards '%s' from '%s'",			// 128
 	"expression has null effect",					// 129
 	"enum type mismatch: '%s' '%s' '%s'",				// 130
 	"conversion to '%s' may sign-extend incorrectly",		// 131
@@ -237,7 +237,7 @@ static const char *const msgs[] = {
 	"cannot initialize struct/union with no named member",		// 179
 	"bit-field initializer does not fit",				// 180
 	"{}-enclosed or constant initializer of type '%s' required",	// 181
-	"incompatible pointer types to '%s' and '%s'",			// 182
+	"'%s' discards '%s' from '%s'",					// 182
 	"illegal combination of %s '%s' and %s '%s'",			// 183
 	"illegal combination of '%s' and '%s'",				// 184
 	"cannot initialize '%s' from '%s'",				// 185

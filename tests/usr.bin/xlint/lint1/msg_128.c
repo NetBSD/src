@@ -1,15 +1,31 @@
-/*	$NetBSD: msg_128.c,v 1.8 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: msg_128.c,v 1.9 2024/11/23 00:01:48 rillig Exp $	*/
 # 3 "msg_128.c"
 
-// Test for message: operands of '%s' have incompatible pointer types to '%s' and '%s' [128]
+// Test for message: operator '%s' discards '%s' from '%s' [128]
 
 /* lint1-extra-flags: -X 351 */
 
+char *ptr;
+const char *cptr;
+volatile char *vptr;
+const volatile char *cvptr;
+
+const volatile int *cviptr;
+
 void
-conversion_to_unconst(const char *cstr)
+assign(void)
 {
-	char *str;
-	/* expect+2: warning: operands of '=' have incompatible pointer types to 'char' and 'const char' [128] */
-	/* expect+1: warning: 'str' set but not used in function 'conversion_to_unconst' [191] */
-	str = cstr;
+	/* expect+1: warning: operator '=' discards 'const volatile' from 'pointer to const volatile char' [128] */
+	ptr = cvptr;
+	/* expect+1: warning: operator '=' discards 'volatile' from 'pointer to const volatile char' [128] */
+	cptr = cvptr;
+	/* expect+1: warning: operator '=' discards 'const' from 'pointer to const volatile char' [128] */
+	vptr = cvptr;
+
+	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to const volatile int', op '=' [124] */
+	ptr = cviptr;
+	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to const volatile int', op '=' [124] */
+	cptr = cviptr;
+	/* expect+1: warning: illegal combination of 'pointer to volatile char' and 'pointer to const volatile int', op '=' [124] */
+	vptr = cviptr;
 }
