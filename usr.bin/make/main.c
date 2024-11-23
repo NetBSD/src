@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.635 2024/11/10 02:39:14 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.636 2024/11/23 22:59:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.635 2024/11/10 02:39:14 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.636 2024/11/23 22:59:51 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1392,7 +1392,8 @@ main_Init(int argc, char **argv)
 
 	/* Set some other useful variables. */
 	{
-		char buf[64], *ep = getenv(MAKE_LEVEL_ENV);
+		char buf[64];
+		const char *ep = getenv(MAKE_LEVEL_ENV);
 
 		makelevel = ep != NULL && ep[0] != '\0' ? atoi(ep) : 0;
 		if (makelevel < 0)

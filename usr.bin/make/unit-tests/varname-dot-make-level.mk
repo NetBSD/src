@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-make-level.mk,v 1.4 2024/11/23 22:48:09 rillig Exp $
+# $NetBSD: varname-dot-make-level.mk,v 1.5 2024/11/23 22:59:51 rillig Exp $
 #
 # Tests for the special .MAKE.LEVEL variable, which informs about the
 # recursion level.  It is related to the environment variable MAKELEVEL,
@@ -24,7 +24,6 @@ level_3: .PHONY
 .endif
 
 
-# FIXME: The error message "Cannot delete" is confusing.
-# expect: make: Cannot delete ".MAKE.LEVEL.ENV" as it is read-only
+# expect: make: Cannot override read-only global variable ".MAKE.LEVEL.ENV" with a command line variable
 set-env:
 	@${MAKE} -f /dev/null .MAKE.LEVEL.ENV=MAKELEVEL
