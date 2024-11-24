@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.40 2024/08/06 17:23:01 uwe Exp $
+.\"	$NetBSD: printf.1,v 1.41 2024/11/24 12:33:31 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 6, 2024
+.Dd November 24, 2024
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -42,25 +42,33 @@
 .Nm
 .Op Fl L
 .Ar format
-.Op Ar arguments  ...
+.Op Ar argument ...
 .Sh DESCRIPTION
 .Nm
-formats and prints its arguments, after the first, under control
-of the
-.Ar format  .
+formats and prints its
+.Ar argument Ns s ,
+under control of the
+.Ar format .
 The
 .Ar format
-is a character string which contains three types of objects: plain characters,
-which are simply copied to standard output, character escape sequences which
-are converted and copied to the standard output, and format specifications,
-each of which causes printing of the next successive
-.Ar argument  .
+is a character string which contains three types of objects:
+plain characters, which are simply copied to standard output,
+character escape sequences which are converted and copied to the
+standard output,
+and format specifications, each of which causes printing of the next
+successive
+.Ar argument .
+Each
+.Ar argument
+is used only once.
 .Pp
 If the first character of
 .Ar format
-is a dash,
+is a dash
+.Pq Sq Fl ,
 .Ar format
-must be preceded by a word consisting of two dashes
+must (and always may) be preceded by a word consisting of
+two dashes
 .Pq Sq Fl Fl
 to prevent it
 from being interpreted as an option string.
@@ -76,7 +84,7 @@ formats, rather than the default
 .Vt double .
 .Pp
 The
-.Ar arguments
+.Ar argument Ns s
 after the first are treated as strings if the corresponding format is
 either
 .Cm b ,
@@ -84,13 +92,16 @@ either
 .Cm c ,
 or
 .Cm s ;
-otherwise it is evaluated as a C\~constant, with the following extensions:
+otherwise each is evaluated as a C\~constant, with the following extensions:
 .Bl -bullet -offset indent
 .It
 A leading plus or minus sign is allowed.
 .It
-If the leading character is a single or double quote, the value is the
-code of the next character.
+If the leading character is a single or double quote,
+as part of the
+.Ar argument
+rather than just quoting it for the shell,
+the value is the code of the character following that quote character.
 No further characters are permitted.
 .El
 .Pp
@@ -149,23 +160,26 @@ Write a backslash character.
 Write an 8-bit character whose ASCII
 value is the 1-, 2-, or 3-digit octal number
 .Ar num .
-.It Cm \ex Ns Ar xx
+.It Cm \ex Ns Ar XX
 Write an 8-bit character whose ASCII
 value is the 1- or 2-digit hexadecimal number
-.Ar xx .
+.Ar XX .
 .El
 .Pp
 Each format specification is introduced by the percent character
 .Pq Ql \&% .
 To produce a literal percent
-.Pq Ql \&% 
+.Pq Ql \&%
 in the output, write the percent character twice:
 .Pq Ql \&%% .
-This is not a format conversion.
+This is not a format conversion,
+but a special escape sequence,
+and consumes no
+.Ar argument Ns s .
 The remainder of the format specification includes,
 in the following order:
 .Bl -tag -width 5n
-.It Zero or more of the following flags :
+.It Zero or more of the following unordered flags :
 .Bl -tag -width Cm
 .It Cm #
 A
@@ -182,8 +196,8 @@ and
 formats, this option has no effect.
 For the
 .Cm o
-format the precision of the number is increased to force the first
-character of the output string to a zero.
+format the precision of the number is increased to cause the first
+character of the numeric output string to be a zero.
 For the
 .Cm x
 .Pq Cm X
@@ -218,33 +232,50 @@ A minus sign which specifies
 of the output in the indicated field;
 .It Cm \&+
 A plus sign which specifies that there should always be
-a sign placed before the number when using signed formats.
+a sign
+.Po Sq Cm \&+
+or
+.Sq Cm \&\-
+.Pc
+placed before the number when using signed formats;
 .It Sq Cm \&\ \&
 A
 .Aq space
-character which specifies that a space should be left before
-a positive number for a signed format.
+character which specifies that a space should be left in the
+position a minus sign would otherwise appear, before
+a non-negative number for a signed format.
 A
-.Ql \&+
+.Ql Cm \&+
 overrides a
 .Aq space
 if both are used;
 .It Cm \&0
 A digit zero character which specifies that zero-padding should be used
-rather than space-padding.
+rather than space-padding to the left of right adjusted fields.
+In this case, a sign
+.Po Sq Cm \&+ ,
+.Sq Cm \&\-
+or
+.Sq Cm \&\ \&
+.Pc ,
+if included, precedes the padding.
+Padding to the right of left adjusted fields always uses spaces.
 A
 .Ql \-
 overrides a
 .Ql \&0
 if both are used;
 .El
+.Pp
+Specifying a flag more than once is not an error, but has no additional effect.
 .It Field Width :
 An optional digit string specifying a
 .Em field width ;
 if the output string has fewer bytes than the field width it will
-be space-padded on the left (or right, if the left-adjustment indicator
-has been given) to make up the field width (note that a leading zero
-is a flag, but an embedded zero is part of a field width);
+be padded on the left (or right, if the left-adjustment indicator
+has been given) to make up the field width
+(note that a leading zero is a flag,
+but a zero appearing after another digit is part of a field width);
 .It Precision :
 An optional period
 .Pq Ql \&. ,
@@ -273,9 +304,17 @@ A character which indicates the type of format to use (one of
 A field width or precision may be
 .Sq Cm \&*
 instead of a digit string.
-In this case an
-.Ar argument
+In this case the next
+.Ar argument ,
+preceding the value to be converted,
 supplies the field width or precision.
+It must be an unsigned integer constant.
+If both the field width and precision are
+.Sq Cm \&*
+then two
+.Ar argument Ns s
+are required, with the field width preceding the precision,
+and the value to be converted following those.
 .Pp
 The format characters and their meanings are:
 .Bl -tag -width Fl
@@ -366,7 +405,7 @@ The following additional backslash-escape sequences are supported:
 Causes
 .Nm
 to ignore any remaining characters in the string operand containing it,
-any remaining string operands, and any additional characters in
+any remaining operands, and any additional characters in
 the format operand.
 .It Cm \e0 Ns Ar num
 Write an 8-bit character whose ASCII value is the 1-, 2-, or
@@ -400,7 +439,7 @@ Write the character
 .Ar c
 with the 8th bit set.
 Generates characters
-.Sq \e241
+.Sq \e240
 through
 .Sq \e376 .
 .El
@@ -415,7 +454,7 @@ or
 .Sq Cm \eM\- Ns Ar c
 formats described above.
 .It Cm c
-The first character of
+The first character of the next
 .Ar argument
 is printed.
 .It Cm C
@@ -435,6 +474,16 @@ precision is omitted, all characters in the string are printed.
 In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
+.Pp
+If an argument required by a format string is present, but is not in
+a format expected by the format string conversion, a warning will be
+printed to standard error, identifying the argument by number
+.Pq 1 is the first after the format string
+and usually also by content.
+In such a case a value will still be produced, and printed,
+and processing will continue, but
+.Nm
+will eventually exit with a failure status.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
@@ -461,7 +510,7 @@ formats and the
 .Cm \e\(aq ,
 .Cm \e\*q ,
 .Cm \ee ,
-.Cm \e Ns Ar num ,
+.Cm \ex Ns Ar XX ,
 and
 .Cm \e Ns Oo Cm M Oc Ns Oo Cm \- Ns Li \&\(or Ns Cm ^ Oc Ns Ar c
 escape sequences are undefined in POSIX.
@@ -469,8 +518,8 @@ escape sequences are undefined in POSIX.
 Since the floating point numbers are translated from ASCII to
 floating-point and then back again, floating-point precision may be lost.
 .Pp
-Hexadecimal character constants are restricted to, and should be specified
-as, two character constants.
+Hexadecimal character constants given as escapes in strings are
+restricted to, and should be specified as, two hexadecimal characters.
 This is contrary to the ISO C standard but
 does guarantee detection of the end of the constant.
 .Sh NOTES
