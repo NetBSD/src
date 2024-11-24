@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.16 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.17 2024/11/24 11:07:03 mlelstv Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.16 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.17 2024/11/24 11:07:03 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -2596,6 +2596,7 @@ igc_get_buf(struct rx_ring *rxr, int id, bool strict)
 		IGC_QUEUE_EVENT(q, rx_no_mbuf, 1);
 		return ENOBUFS;
 	}
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if (__predict_false(!(m->m_flags & M_EXT))) {
