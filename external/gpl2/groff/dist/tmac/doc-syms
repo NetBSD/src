@@ -547,7 +547,7 @@
 .as doc-str-St--isoC-2011      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^11\*[doc-str-St]\*[Rq])
 .ds doc-str-St--isoC-2018      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2018
 .as doc-str-St--isoC-2018      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^18\*[doc-str-St]\*[Rq])
-.ds doc-str-St--isoC-2023      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2023
+.ds doc-str-St--isoC-2023      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2024
 .as doc-str-St--isoC-2023      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^23\*[doc-str-St]\*[Rq])
 .
 .\" POSIX Part 1: System API
