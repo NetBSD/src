@@ -1,0 +1,7 @@
+i386_get_ioperm
+i386_get_ldt
+i386_get_mtrr
+i386_iopl
+i386_set_ioperm
+i386_set_ldt
+i386_set_mtrr

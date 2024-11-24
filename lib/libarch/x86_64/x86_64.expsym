@@ -1,0 +1,3 @@
+x86_64_get_mtrr
+x86_64_iopl
+x86_64_set_mtrr
