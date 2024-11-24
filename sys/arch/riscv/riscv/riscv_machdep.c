@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.40 2024/11/23 18:13:04 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.41 2024/11/24 14:49:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.40 2024/11/23 18:13:04 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.41 2024/11/24 14:49:04 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -928,9 +928,12 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		if (va < data_start && (prot & VM_PROT_WRITE) != 0) {
 			return EFAULT;
 		}
-	} else if (IN_RANGE_P(va, RISCV_DIRECTMAP_START, RISCV_DIRECTMAP_END)) {
+	}
+#ifdef _LP64
+	 else if (IN_RANGE_P(va, RISCV_DIRECTMAP_START, RISCV_DIRECTMAP_END)) {
 		*handled = true;
 	}
+#endif
 
 	return 0;
 }
