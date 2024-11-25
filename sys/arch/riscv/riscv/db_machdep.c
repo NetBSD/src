@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13 2024/11/23 12:03:55 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14 2024/11/25 22:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,20 +31,26 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.13 2024/11/23 12:03:55 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.14 2024/11/25 22:04:14 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <riscv/insn.h>
 #include <riscv/db_machdep.h>
 
+#include <ddb/db_user.h>
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
+
+#ifndef _KERNEL
+#include <stddef.h>
+#endif
 
 static int db_rw_ddbreg(const struct db_variable *, db_expr_t *, int);
 
@@ -90,7 +96,7 @@ const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 int
 db_rw_ddbreg(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
-	struct trapframe * const tf = curcpu()->ci_ddb_regs;
+	struct trapframe * const tf = &ddb_regs;
 	const uintptr_t addr = (uintptr_t)tf + (uintptr_t)vp->valuep;
 	if (vp->modif != NULL && vp->modif[0] == 'i') {
 		if (rw == DB_VAR_GET) {
@@ -179,7 +185,6 @@ branch_taken(uint32_t insn, db_addr_t pc, db_regs_t *tf)
 		displacement |= i.type_j.j_imm11 << 11;
 		displacement |= i.type_j.j_imm10to1 << 1;
 	} else {
-		KASSERT(OPCODE_P(insn, BRANCH));
 		register_t rs1 = get_reg_value(tf, i.type_b.b_rs1);
 		register_t rs2 = get_reg_value(tf, i.type_b.b_rs2);
 		bool branch_p; // = false;

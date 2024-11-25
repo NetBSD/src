@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2024/11/23 11:37:43 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2024/11/25 22:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.29 2024/11/23 11:37:43 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.30 2024/11/25 22:04:14 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/kauth.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>

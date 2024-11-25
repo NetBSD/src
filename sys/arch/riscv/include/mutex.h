@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2023/07/12 12:50:13 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7 2024/11/25 22:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@ struct kmutex {
 struct kmutex {
 	volatile uintptr_t	mtx_owner;
 };
+
+#ifdef _KERNEL
 
 #ifdef _LP64
 #define MTX_ASMOP_SFX ".d"		// doubleword atomic op
@@ -112,6 +114,8 @@ riscv_mutex_spinbit_lock_unlock(kmutex_t *__mtx)
 		"amoand" MTX_ASMOP_SFX ".rl\tx0, %0, (%1)"
 	   ::	"r"(~MTX_LOCK), "r"(__mtx));
 }
+
+#endif /* _KERNEL */
 
 #if 0
 #define	__HAVE_MUTEX_STUBS		1

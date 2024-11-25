@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.12 2024/11/23 11:37:43 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.13 2024/11/25 22:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define	_RISCV_DB_MACHDEP_H_
 
 #include <riscv/frame.h>
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif /* _KERNEL */
 
 #define	DB_ELF_SYMBOLS
 

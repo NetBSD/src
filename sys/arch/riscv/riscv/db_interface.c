@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2023/12/22 08:41:59 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2024/11/25 22:04:14 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2023/12/22 08:41:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2024/11/25 22:04:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -71,16 +71,38 @@ int		db_active = 0;
 
 #ifdef _KERNEL
 db_regs_t	ddb_regs;
-#endif
 
 #ifdef MULTIPROCESSOR
 static void db_mach_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
+static void db_mach_reset_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 paddr_t kvtophys(vaddr_t);
+#endif
+
+
+const struct db_command db_machine_command_table[] = {
+#ifdef _KERNEL
+#ifdef MULTIPROCESSOR
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu_cmd,	0,
+	  "switch to another cpu", "cpu#", NULL) },
+#endif
+	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
+		"Print the physical address for a given kernel virtual address",
+		"address",
+		"   address:\tvirtual address to look up") },
+	{ DDB_ADD_CMD("reset",	db_mach_reset_cmd,	CS_NOREPEAT,
+		"Initiate hardware reset",
+		NULL, NULL) },
+	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
+		"Print out TLB entries. (only works with options DEBUG)",
+		NULL, NULL) },
+#endif
+	{ DDB_END_CMD },
+};
 
 #ifdef _KERNEL
 
@@ -174,24 +196,6 @@ db_mach_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 }
 
-
-const struct db_command db_machine_command_table[] = {
-#ifdef MULTIPROCESSOR
-	{ DDB_ADD_CMD("cpu",	db_mach_cpu_cmd,	0,
-	  "switch to another cpu", "cpu#", NULL) },
-#endif
-	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
-		"Print the physical address for a given kernel virtual address",
-		"address",
-		"   address:\tvirtual address to look up") },
-	{ DDB_ADD_CMD("reset", 	db_mach_reset_cmd,	CS_NOREPEAT,
-		"Initiate hardware reset",
-		NULL, NULL) },
-	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
-		"Print out TLB entries. (only works with options DEBUG)",
-		NULL, NULL) },
-	{ DDB_END_CMD },
-};
 #endif	/* !KGDB */
 
 #ifdef MULTIPROCESSOR
