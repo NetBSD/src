@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.188.2.1 2024/01/14 13:15:05 martin Exp $	*/
+/*	$NetBSD: eval.c,v 1.188.2.2 2024/11/25 10:24:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.188.2.1 2024/01/14 13:15:05 martin Exp $");
+__RCSID("$NetBSD: eval.c,v 1.188.2.2 2024/11/25 10:24:57 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1303,7 +1303,28 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	case CMDBUILTIN:
 		VXTRACE(DBG_EVAL, ("builtin command [%d]%s:  ", argc,
 		    vforked ? " VF" : ""), trargs(argv));
-		mode = (cmdentry.u.bltin == execcmd) ? 0 : REDIR_PUSH;
+
+		if (cmdentry.u.bltin == execcmd) {
+			char **ap;
+
+			for (ap = argv + 1; *ap != NULL; ap++) {
+				if (ap[0][0] != '-')
+					break;
+				if (ap[0][1] == '\0')
+					break;		/* or continue ?? */
+				if (ap[0][1] == '-' && ap[0][2] == '\0') {
+					ap++;
+					break;
+				}
+			}
+
+			if (*ap != NULL)
+				mode = REDIR_KEEP;	/* exec cmd < ... */
+			else
+				mode = 0;		/* exec < ... */
+		} else
+			mode = REDIR_PUSH;
+
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
 			memout.nextc = memout.buf;
