@@ -106,7 +106,6 @@ xdr_diropargs3
 xdr_diropokres
 xdr_diropres
 xdr_dirpath
-xdr_domainname
 xdr_entry
 xdr_entry3
 xdr_entryplus3
@@ -132,7 +131,6 @@ xdr_gqr_status
 xdr_groupnode
 xdr_groups
 xdr_ip_addr_t
-xdr_keydat
 xdr_klm_holder
 xdr_klm_lock
 xdr_klm_lockargs
