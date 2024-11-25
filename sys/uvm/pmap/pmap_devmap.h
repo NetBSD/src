@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_devmap.h,v 1.1 2023/04/20 08:28:02 skrll Exp $	*/
+/*	$NetBSD: pmap_devmap.h,v 1.2 2024/11/25 22:03:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #ifndef	_UVM_PMAP_DEVMAP_H_
 #define	_UVM_PMAP_DEVMAP_H_
 
+#ifdef _KERNEL
+
 typedef struct pmap_devmap {
 	vaddr_t		pd_va;		/* virtual address */
 	paddr_t		pd_pa;		/* physical address */
@@ -62,5 +64,7 @@ const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 	DEVMAP_ENTRY_FLAGS(va, pa, sz, DEVMAP_FLAGS)
 
 #define	DEVMAP_ENTRY_END	{ 0 }
+
+#endif /* _KERNEL */
 
 #endif	/* _UVM_PMAP_DEVMAP_H_ */
