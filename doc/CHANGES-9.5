@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.42 2024/11/20 14:10:32 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.43 2024/11/25 10:28:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -683,4 +683,10 @@ tests/lib/libc/sys/t_select.c			1.5 (patch)
 	select(2): PR 57504: fail with EBADF, rather than hanging, on
 	very large fd_set inputs with bad file descriptors included.
 	[riastradh, ticket #1926]
+
+usr.bin/getent/getent.c				1.20,1.21
+
+	getent(1): PR 58836: make sure all 3 colons are printed for group
+	database.
+	[kre, ticket #1929]
 
