@@ -1,4 +1,4 @@
-/*	$NetBSD: port.h,v 1.2 2024/11/25 21:20:46 gutteridge Exp $	*/
+/*	$NetBSD: port.h,v 1.3 2024/11/25 21:27:55 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -59,8 +59,10 @@
 #include <sys/types.h>
 
 extern char *__progname;
+
 static inline const char *
-getprogname(void) {
+getprogname(void)
+{
 	return __progname;
 }
 
