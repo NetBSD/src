@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.70 2024/11/18 19:49:34 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.71 2024/11/25 10:27:58 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3707,3 +3707,14 @@ external/cddl/osnet/dist/uts/common/fs/zfs/vdev.c 1.7
 	zfs: PR 58111: fix possible data corruption on FIOSEEKDATA/FIOSEEKHOLE.
 	[riastradh, ticket #1014]
 
+usr.bin/getent/getent.c				1.20,1.21
+
+	getent(1): PR 58836: make sure all 3 colons are printed for group
+	database.
+	[kre, ticket #1015]
+
+bin/sh/eval.c					(apply patch, part of
+						rev 1.195)
+
+	sh(1): fix "exec" builtin to not close-on-exec fd's >2 for "exec cmd"
+	[kre, ticket #1016]
