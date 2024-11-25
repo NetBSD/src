@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.19 2012/03/15 02:02:23 joerg Exp $	*/
+/*	$NetBSD: getent.c,v 1.19.42.1 2024/11/25 10:11:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.19 2012/03/15 02:02:23 joerg Exp $");
+__RCSID("$NetBSD: getent.c,v 1.19.42.1 2024/11/25 10:11:24 martin Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -252,7 +252,7 @@ group(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
-#define GROUPPRINT	printfmtstrings(gr->gr_mem, ":", ",", "%s:%s:%u", \
+#define GROUPPRINT	printfmtstrings(gr->gr_mem, "", ",", "%s:%s:%u:", \
 			    gr->gr_name, gr->gr_passwd, gr->gr_gid)
 
 	(void)setgroupent(1);
@@ -644,7 +644,7 @@ handlecap(const char *db, int argc, char *argv[])
 					if (cap) {
 						capprint(cap);
 						break;
-					} 
+					}
 				}
 				if (j == sizeof(sfx) - 1)
 					printf("false\n");
@@ -735,7 +735,7 @@ rpc(int argc, char *argv[])
 	struct rpcent	*re;
 	unsigned long	id;
 	int		i, rv;
-	
+
 	assert(argc > 1);
 	assert(argv != NULL);
 
