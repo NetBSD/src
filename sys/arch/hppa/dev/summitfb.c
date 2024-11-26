@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.6 2024/11/26 14:58:00 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.7 2024/11/26 15:49:50 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.6 2024/11/26 14:58:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.7 2024/11/26 15:49:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1097,7 +1097,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 	mask = 0xffffffff << (32 - wi);
 	summitfb_write4(sc, VISFX_PIXEL_MASK, mask);
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, 0x050000c0);
+	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_EXPAND);
 	/* not a tpyo, coordinates *are* backwards for this register */
 	summitfb_write4(sc, VISFX_VRAM_WRITE_DEST, (y << 16) | x);
 
