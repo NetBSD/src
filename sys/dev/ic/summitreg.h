@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.1 2024/11/20 05:21:14 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.2 2024/11/26 14:53:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -39,18 +39,36 @@
 #define SUMMITREG_H
 
 #define VISFX_STATUS		0x641400	// zero when idle
+#define VISFX_FIFO		0x641440	
 #define VISFX_VRAM_WRITE_MODE	0xa00808
+#define VISFX_VRAM_READ_MODE	0xa0080c	// this is a guess
 #define VISFX_PIXEL_MASK	0xa0082c
 #define VISFX_FG_COLOUR		0xa0083c
 #define VISFX_BG_COLOUR		0xa00844
 #define VISFX_PLANE_MASK	0xa0084c
+#define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
+#define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
+#define VISFX_VRAM_WRITE_DEST		0xac1000
 
 #define VISFX_WRITE_MODE_PLAIN	0x02000000
 #define VISFX_WRITE_MODE_EXPAND	0x050004c0
 #define VISFX_WRITE_MODE_FILL	0x050008c0
+#define VISFX_WRITE_MODE_TRANSPARENT	0x00000800
 
+#define VISFX_READ_MODE_COPY	0x02000400
+
+/* fill */
 #define VISFX_START		0xb3c000
-#define VISFX_SIZE		0xb3c808
+#define VISFX_SIZE		0xb3c808	/* start, FX4 uses 0xb3c908 */
+
+/* copy */
+#define VISFX_COPY_SRC		0xb3c010
+#define VISFX_COPY_WH		0xb3c008
+#define VISFX_COPY_DST		0xb3cc00
+/*
+ * looks like ORing 0x800 to the register address starts a command
+ * 0x100 and 0x400 seem to have functions as well
+ */
 
 #define VISFX_COLOR_MASK	0x800018
 #define VISFX_COLOR_INDEX	0x800020
