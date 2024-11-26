@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.2 2024/11/26 14:53:33 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.3 2024/11/26 15:43:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -53,7 +53,8 @@
 #define VISFX_WRITE_MODE_PLAIN	0x02000000
 #define VISFX_WRITE_MODE_EXPAND	0x050004c0
 #define VISFX_WRITE_MODE_FILL	0x050008c0
-#define VISFX_WRITE_MODE_TRANSPARENT	0x00000800
+#define VISFX_WRITE_MODE_TRANSPARENT	0x00000800	/* bg is tansparent */
+#define VISFX_WRITE_MODE_MASK		0x00000400	/* apply pixel mask */
 
 #define VISFX_READ_MODE_COPY	0x02000400
 
