@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.3 2024/11/01 10:08:13 martin Exp $
+#	$NetBSD: Makefile,v 1.14.2.4 2024/11/26 09:44:36 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -12,6 +12,16 @@ LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
 		expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
 		lzma	${NETBSDSRCDIR}/external/public-domain/xz/lib \
 		z	${NETBSDSRCDIR}/lib/libz
+
+# XXX Avoid exporting symbols of statically linked deps like zstd.
+# XXX Should do this in bsd.lib.mk, perhaps.
+.for _lib _dir in ${LIBDPLIBS}
+LDADD+=		-Wl,--exclude-libs,lib${_lib}
+.endfor
+
+# Avoid exporting private libarchive symbols.
+COPTS+=		-fvisibility=hidden
+CPPFLAGS+=	-D__LIBARCHIVE_ENABLE_VISIBILITY
 
 SRCS=		archive_acl.c \
 		archive_blake2sp_ref.c \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.6.3 2024/11/01 14:36:21 martin Exp $
+# $NetBSD: Makefile,v 1.5.6.4 2024/11/26 09:44:36 martin Exp $
 
 NOMAN=
 
@@ -18,7 +18,8 @@ CPPFLAGS+=-I${LIBARCHIVE}/libarchive/test -I${LIBARCHIVE}/../include
 
 DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
 	${LIBCRYPTO} ${LIBPTHREAD}
-LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread
+LDADD+=	-Wl,--push-state,-Bstatic,-larchive,--pop-state	# uses libarchive guts
+LDADD+=	-lexpat -lbz2 -llzma -lz -lcrypto -lpthread
 
 SRCS.h_libarchive= \
 test_main.c \
