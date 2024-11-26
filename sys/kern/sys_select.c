@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.67 2024/10/18 13:12:34 kre Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.68 2024/11/26 23:10:15 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.67 2024/10/18 13:12:34 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.68 2024/11/26 23:10:15 khorben Exp $");
 
 #include <sys/param.h>
 
@@ -395,7 +395,7 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 	 * Don't allow absurdly large numbers of fds to be selected.
 	 * (used to silently truncate, naughty naughty, no more ...)
 	 *
-	 * The additional FD_SETSISE allows for cases where the limit
+	 * The additional FD_SETSIZE allows for cases where the limit
 	 * is not a round binary number, but the fd_set wants to
 	 * include all the possible fds, as fd_sets are always
 	 * multiples of 32 bits (__NFDBITS extra would be enough).
