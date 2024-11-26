@@ -1,4 +1,4 @@
-.\"	$NetBSD: mopd.8,v 1.16 2014/03/18 18:20:47 riastradh Exp $
+.\"	$NetBSD: mopd.8,v 1.17 2024/11/26 00:42:56 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -42,7 +42,7 @@ Maintenance Operations Protocol
 .Pq Tn MOP
 Load requests on the Ethernet connected to
 .Ar interface
-or all interfaces if
+or all interfaces if the
 .Fl a
 option is given.
 .Pp
@@ -60,17 +60,17 @@ checks if the requested file exists in
 .Pa /tftpboot/mop
 (unless the
 .Fl s
-option is given, see below) the filename is normally uppercase and with an
+option is given, see below); the filename is normally uppercase and with an
 extension of
 .Pa .SYS .
-If the filename isn't given, the ethernet address of the target is used as
-filename, e.g.
-.Pa 08002b09f4de.SYS
+If the filename isn't given, the Ethernet address of the target is used as
+the filename, e.g.,
+.Pa 08002b09f4de.SYS ,
 and it might be a soft link to another file.
 .Pp
 .Nm
 supports two kinds of files.
-The first type that is check is if the file is in
+The first file type checked for is the
 .Xr a.out 5
 format.
 If not, a couple of Digital's formats are checked.
