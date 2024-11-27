@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.8 2024/11/27 11:11:21 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.9 2024/11/27 14:09:10 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.8 2024/11/27 11:11:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.9 2024/11/27 14:09:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa0081c, 0);	/* fx4 */
 #endif
 
-	summitfb_wait(sc);	
+	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
@@ -1093,14 +1093,16 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		uint8_t *data8 = data;
 		for (i = 0; i < he; i++) {
 			mask = *data8;
-			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY, mask << 24);	
+			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+			    mask << 24);
 			data8++;
 		}
 	} else {
 		uint16_t *data16 = data;
 		for (i = 0; i < he; i++) {
 			mask = *data16;
-			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY, mask << 16);	
+			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+			    mask << 16);
 			data16++;
 		}
 	}

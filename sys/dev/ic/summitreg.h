@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.4 2024/11/27 10:44:39 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.5 2024/11/27 14:09:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -39,7 +39,7 @@
 #define SUMMITREG_H
 
 #define VISFX_STATUS		0x641400	// zero when idle
-#define VISFX_FIFO		0x641440	
+#define VISFX_FIFO		0x641440
 #define VISFX_VRAM_WRITE_MODE	0xa00808
 #define VISFX_VRAM_READ_MODE	0xa0080c	// this is a guess
 #define VISFX_PIXEL_MASK	0xa0082c
@@ -83,4 +83,4 @@
 #define VISFX_CURSOR_COLOR	0x400010
 #define VISFX_CURSOR_ENABLE	0x80000000
 
-#endif
+#endif	/* SUMMITREG_H */
