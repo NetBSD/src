@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.19 2024/11/09 12:43:52 mlelstv Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.20 2024/11/27 17:19:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -136,19 +136,30 @@ doboottypemenu(void)
 	int choice;
 	char input[80];
 
-	printf("\n");
-	/* Display menu */
-	if (bootcfg_info.menuformat == MENUFORMAT_LETTER) {
-		for (choice = 0; choice < bootcfg_info.nummenu; choice++)
-			printf("    %c. %s\n", choice + 'A',
-			    bootcfg_info.desc[choice]);
-	} else {
-		/* Can't use %2d format string with libsa */
-		for (choice = 0; choice < bootcfg_info.nummenu; choice++)
-			printf("    %s%d. %s\n",
-			    (choice < 9) ?  " " : "",
-			    choice + 1,
-			    bootcfg_info.desc[choice]);
+	/*
+	 * If we have a single menu entry with empty description and
+	 * timeout = 0 we do not display any menu.
+	 */
+	if ((bootcfg_info.nummenu > 0 &&
+	     bootcfg_info.desc[0] != bootcfg_info.command[0] &&
+	     bootcfg_info.desc[0][0] != 0) || bootcfg_info.timeout > 0) {
+		printf("\n");
+
+		/* Display menu */
+		if (bootcfg_info.menuformat == MENUFORMAT_LETTER) {
+			for (choice = 0; choice < bootcfg_info.nummenu;
+			    choice++)
+				printf("    %c. %s\n", choice + 'A',
+				    bootcfg_info.desc[choice]);
+		} else {
+			/* Can't use %2d format string with libsa */
+			for (choice = 0; choice < bootcfg_info.nummenu;
+			    choice++)
+				printf("    %s%d. %s\n",
+				    (choice < 9) ?  " " : "",
+				    choice + 1,
+				    bootcfg_info.desc[choice]);
+		}
 	}
 	choice = -1;
 	for (;;) {
