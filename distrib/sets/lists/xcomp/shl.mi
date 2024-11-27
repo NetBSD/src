@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.60 2024/11/27 17:05:02 christos Exp $
+#	$NetBSD: shl.mi,v 1.61 2024/11/27 17:05:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -73,6 +73,7 @@
 ./usr/X11R7/lib/libxcb-aux_pic.a			xcomp-xcb-util-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-composite_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-damage_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxcb-dbe_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dpms_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dri2_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dri3_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
