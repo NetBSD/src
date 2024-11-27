@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.7 2024/11/26 15:49:50 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.8 2024/11/27 11:11:21 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.7 2024/11/26 15:49:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.8 2024/11/27 11:11:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,7 @@ struct	summitfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
-	uint32_t sc_hwmode;
-#define HW_FB	0
-#define HW_FILL	1
-#define HW_BLIT	2
+	uint32_t sc_write_mode;
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
@@ -168,6 +165,7 @@ struct wsdisplay_accessops summitfb_accessops = {
 };
 
 static inline void summitfb_wait_fifo(struct summitfb_softc *, uint32_t);
+static inline void summitfb_wait(struct summitfb_softc *);
 
 int
 summitfb_match(device_t parent, cfdata_t cf, void *aux)
@@ -248,6 +246,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
+	sc->sc_write_mode = 0xffffffff;
 
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
 	    sc->sc_width, sc->sc_height);
@@ -320,19 +319,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
-
-#if 0	
-	summitfb_rectfill(sc, 10, 850, 100, 100, 1);
-	summitfb_rectfill(sc, 120, 850, 10, 100, 1);
-	summitfb_rectfill(sc, 200, 840, 1000, 120, 14);
-	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xf0f0cc88);
-	summitfb_bitblt(sc, 0, 845, 205, 845, 150, 110,  0x00000830);
-	//summitfb_bitblt(sc, 0, 845, 405, 845, 150, 110,  0x04000000);
-	summitfb_bitblt(sc, 0, 845, 605, 845, 150, 110,  0x01000000);
-	//summitfb_bitblt(sc, 0, 845, 805, 845, 150, 110,  0x0000020c);
-	//summitfb_bitblt(sc, 0, 845, 1005, 845, 150, 110, 0x04000000);
-	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
-#endif
 }
 
 /*
@@ -637,20 +623,25 @@ summitfb_wait(struct summitfb_softc *sc)
 }
 
 static inline void
+summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
+{
+	if (sc->sc_write_mode == mode) return;
+	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
+	sc->sc_write_mode = mode;
+}
+
+static inline void
 summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
-	sc->sc_hwmode = HW_FB;
-	summitfb_wait(sc);
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_PLAIN);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 }
 
 void
 summitfb_setup(struct summitfb_softc *sc)
 {
 
-	sc->sc_hwmode = HW_FB;
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
 	sc->sc_enabled = 0;
@@ -676,8 +667,11 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa0081c, 0);	/* fx4 */
 #endif
 
+	summitfb_wait(sc);	
 	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
 
 	summitfb_setup_fb(sc);
 }
@@ -744,10 +738,10 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				summitfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
-				summitfb_setup_fb(sc);
 				vcons_redraw_screen(ms);
 				summitfb_set_video(sc, 1);
 			}
+			summitfb_setup_fb(sc);
 		}
 		return 0;
 	}
@@ -971,11 +965,8 @@ summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
     uint32_t bg)
 {
 
-	summitfb_wait(sc);
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_FILL);
-	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_FILL);
 	summitfb_write4(sc, VISFX_FG_COLOUR, bg);
-	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 	summitfb_write4(sc, VISFX_START, (x << 16) | y);
 	summitfb_write4(sc, VISFX_SIZE, (wi << 16) | he);
 }
@@ -987,11 +978,7 @@ summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	struct summitfb_softc *sc = cookie;
 
 	/* XXX no ROP support yet */
-	summitfb_wait(sc);
-	if ((rop == 3) || (rop == 0xc)) rop = 0;
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_PLAIN | rop);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
-	//summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
 	summitfb_write4(sc, VISFX_COPY_DST, (xd << 16) | yd);
@@ -1092,12 +1079,11 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 #endif
 
-	summitfb_wait(sc);	
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 	mask = 0xffffffff << (32 - wi);
 	summitfb_write4(sc, VISFX_PIXEL_MASK, mask);
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, VISFX_WRITE_MODE_EXPAND);
 	/* not a tpyo, coordinates *are* backwards for this register */
 	summitfb_write4(sc, VISFX_VRAM_WRITE_DEST, (y << 16) | x);
 
@@ -1161,7 +1147,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
-	if (sc->sc_hwmode != HW_FB) summitfb_setup_fb(sc);
+	summitfb_setup_fb(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
 
 	if (rv == GC_ADD)
