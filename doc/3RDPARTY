@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2061 2024/11/21 10:18:07 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2062 2024/11/28 01:23:50 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -464,7 +464,7 @@ Current Vers:	10.5.0/12.4.0/13.3.0/14.2.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	https://www.gnu.org/software/gcc/
-Date:		2026-06-30
+Date:		2024-06-30
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
