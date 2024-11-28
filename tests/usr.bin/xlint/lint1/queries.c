@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.30 2024/11/23 00:01:48 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.31 2024/11/28 22:32:53 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -17,6 +17,7 @@
 
 /* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 */
 /* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19,20 */
+/* lint1-extra-flags: -q 21,22,23,24 */
 /* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
@@ -369,9 +370,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 373 "queries.c" 3 4
+# 374 "queries.c" 3 4
 		((void *)0)
-# 375 "queries.c"
+# 376 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -543,3 +544,23 @@ Q20_void_pointer_conversion(void)
 
 	int_ptr = (void *)0;
 }
+
+/*
+ * Q21, Q22, Q23 and Q24 detect typedefs for struct and union types and
+ * pointers to them. By using the tagged types directly instead of their
+ * typedefs, it may be possible to save including some system headers.
+ */
+
+struct struct_tag {
+};
+union union_tag {
+};
+
+/* expect+2: typedef 'struct_typedef' of struct type 'struct struct_tag' [Q21] */
+/* expect+1: typedef 'struct_ptr' of pointer to struct type 'pointer to struct struct_tag' [Q23] */
+typedef struct struct_tag struct_typedef, *struct_ptr;
+/* expect+2: typedef 'union_typedef' of union type 'union union_tag' [Q22] */
+/* expect+1: typedef 'union_ptr' of pointer to union type 'pointer to union union_tag' [Q24] */
+typedef union union_tag union_typedef, *union_ptr;
+typedef int int_typedef, *int_pointer;
+typedef void (function_typedef)(int), (*function_ptr)(int);

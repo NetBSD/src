@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.408 2024/11/13 03:43:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.409 2024/11/28 22:32:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.408 2024/11/13 03:43:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.409 2024/11/28 22:32:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2022,6 +2022,24 @@ declare_extern(sym_t *dsym, bool has_initializer, const sbuf_t *renaming)
 		dsym->s_type = block_dup_type(dsym->s_type);
 		dsym->s_type->t_typedef = true;
 		set_first_typedef(dsym->s_type, dsym);
+		if (dsym->s_type->t_tspec == STRUCT)
+			/* typedef '%s' of struct type '%s' */
+			query_message(21, dsym->s_name,
+			    type_name(dsym->s_type));
+		else if (dsym->s_type->t_tspec == UNION)
+			/* typedef '%s' of union type '%s' */
+			query_message(22, dsym->s_name,
+			    type_name(dsym->s_type));
+		else if (dsym->s_type->t_tspec == PTR
+		    && dsym->s_type->t_subt->t_tspec == STRUCT)
+			/* typedef '%s' of pointer to struct type '%s' */
+			query_message(23, dsym->s_name,
+			    type_name(dsym->s_type));
+		else if (dsym->s_type->t_tspec == PTR
+		    && dsym->s_type->t_subt->t_tspec == UNION)
+			/* typedef '%s' of pointer to union type '%s' */
+			query_message(24, dsym->s_name,
+			    type_name(dsym->s_type));
 	}
 	debug_printf("%s: ", __func__);
 	debug_sym("", dsym, "\n");
