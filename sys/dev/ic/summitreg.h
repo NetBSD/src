@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.5 2024/11/27 14:09:10 riastradh Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.6 2024/11/28 12:29:55 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -46,9 +46,15 @@
 #define VISFX_FG_COLOUR		0xa0083c
 #define VISFX_BG_COLOUR		0xa00844
 #define VISFX_PLANE_MASK	0xa0084c
+/* this controls what we see in the FB aperture */
+#define VISFX_APERTURE_ACCESS	0xa00858
+	#define VISFX_DEPTH_8	0xb0
+	#define VISFX_DEPTH_32	0xd0
+
 #define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
 #define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
 #define VISFX_VRAM_WRITE_DEST		0xac1000
+
 #define VISFX_CLIP_TL		0xac1050	/* clipping rect, top/left */
 #define VISFX_CLIP_WH		0xac1054	/* clipping rect, w/h */
 
