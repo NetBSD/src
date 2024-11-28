@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.9 2024/11/27 14:09:10 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.10 2024/11/28 12:42:39 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -21,12 +21,13 @@
  */
 
 /*
- * a native driver for HP Visualize EG PCI graphics cards
+ * a native driver for HP Visualize FX graphics cards, so far tested only on
+ * my FX4
  * STI portions are from Miodrag Vallat's sti_pci.c
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.9 2024/11/27 14:09:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.10 2024/11/28 12:42:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +294,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 	    sc->sc_scr.fbheight - sc->sc_height - 5,
-	    sc->sc_scr.fbwidth,
+	    sc->sc_width/*sc->sc_scr.fbwidth*/,
 	    ri->ri_font->fontwidth,
 	    ri->ri_font->fontheight,
 	    defattr);
@@ -654,24 +655,28 @@ summitfb_setup(struct summitfb_softc *sc)
 #if 1
 	summitfb_write4(sc, 0xb08044, 0x1b);
 	summitfb_write4(sc, 0xb08048, 0x1b);
-	summitfb_write4(sc, 0x920860, 0xe4);
-	summitfb_write4(sc, 0xa00818, 0);
-	summitfb_write4(sc, 0xa00404, 0);
+
 	summitfb_write4(sc, 0x921110, 0);
-	summitfb_write4(sc, 0x9211d8, 0);
-	summitfb_write4(sc, 0xa0086c, 0);
 	summitfb_write4(sc, 0x921114, 0);
-	summitfb_write4(sc, 0xac1050, 0);
-	summitfb_write4(sc, 0xa00858, 0xb0);	/* 0 on fx4 */
-	summitfb_write4(sc, 0xa00850, 0);	/* fx4 */
+	summitfb_write4(sc, 0x9211d8, 0);
+
+	summitfb_write4(sc, 0xa00404, 0);
+	summitfb_write4(sc, 0xa00818, 0);
 	summitfb_write4(sc, 0xa0081c, 0);	/* fx4 */
+	summitfb_write4(sc, 0xa00850, 0);	/* fx4 */
+	summitfb_write4(sc, 0x920860, 0xe4);
+	summitfb_write4(sc, 0xa0086c, 0);
 #endif
 
 	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
 	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
+	summitfb_write4(sc, VISFX_CLIP_TL, 0);
+	summitfb_write4(sc, VISFX_CLIP_WH, 
+	    ((sc->sc_scr.fbwidth + 1) << 16) | (sc->sc_scr.fbheight + 1));
 
 	summitfb_setup_fb(sc);
 }
@@ -734,7 +739,7 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				summitfb_setup(sc);
 				summitfb_restore_palette(sc);
-				//glyphcache_wipe(&sc->sc_gc);
+				glyphcache_wipe(&sc->sc_gc);
 				summitfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -1052,6 +1057,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (!CHAR_IN_FONT(c, font))
 		return;
 
+	/* XXX as long as we use putchar() to draw the cursor */
 #if 0
 	if (row == ri->ri_crow && col == ri->ri_ccol) {
 		ri->ri_flg &= ~RI_CURSOR;
@@ -1150,6 +1156,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		return;
 
 	summitfb_setup_fb(sc);
+	summitfb_wait(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
 
 	if (rv == GC_ADD)
