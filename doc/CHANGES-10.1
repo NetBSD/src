@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.72 2024/11/26 09:46:06 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.73 2024/11/28 16:37:05 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3724,4 +3724,14 @@ tests/lib/libarchive/Makefile			1.16
 
 	libarchive: PR 58829: hide private symbols.
 	[riastradh, ticket #1017]
+
+sys/dev/pci/virtio_pci.c			1.55
+
+	virtio(4): PR 68680: fix big-endian 64-bit register access.
+	The access is supposed to be always little-endian, irrespective
+	of the host or guest's byte order.  This was previously implemented
+	correctly, but through a series of changes via the confusing name
+	bus_space_write_8 it was changed to be guest-endian instead of
+	little-endian.
+	[riastradh, ticket #1018]
 
