@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2024/07/17 08:19:56 macallan Exp $
+# $NetBSD: GENERIC,v 1.46 2024/11/29 14:51:56 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	32		# estimated number of users
 
@@ -287,6 +287,7 @@ sti*	at pci?			# EG-PCI, FX*
 # graphics with native drivers
 hyperfb* 	at uturn?	# hyperdrive / HCRX
 gftfb* 		at pci?		# PCI Visualize EG
+summitfb* 	at pci?		@ Visualize FX4
 
 # Human Interface Loop
 hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
