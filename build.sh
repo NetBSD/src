@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.379 2024/07/23 20:46:40 riastradh Exp $
+#	$NetBSD: build.sh,v 1.380 2024/11/29 16:55:24 riastradh Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -557,6 +557,7 @@ level of source directory"
 	do_sets=false
 	do_sourcesets=false
 	do_syspkgs=false
+	do_pkg=false
 	do_iso_image=false
 	do_iso_image_source=false
 	do_live_image=false
@@ -985,6 +986,18 @@ safe_unsetmakeenv()
 	unsetmakeenv "$1"
 }
 
+# Clear all variables defined in makeenv.  Used to run a subprocess
+# outside the usual NetBSD build's make environment.
+#
+clearmakeenv()
+{
+	local var
+
+	for var in ${makeenv}; do
+		unset ${var}
+	done
+}
+
 # Given a variable name in $1, modify the variable in place as follows:
 # For each space-separated word in the variable, call resolvepath.
 #
@@ -1078,6 +1091,7 @@ help()
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
+    pkg=CATEGORY/PKG    (EXPERIMENT) Build a package CATEGORY/PKG from pkgsrc.
     iso-image           Create CD-ROM image in RELEASEDIR/images.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/images.
     live-image          Create bootable live image in
@@ -1433,6 +1447,13 @@ parseoptions()
 
 			;;
 
+		pkg=*)
+			arg=${op#*=}
+			op=${op%%=*}
+			[ -n "${arg}" ] ||
+			    bomb "Must supply category/package with 'pkg=...'"
+			;;
+
 		install=*|installmodules=*)
 			arg=${op#*=}
 			op=${op%%=*}
@@ -1561,6 +1582,24 @@ sanitycheck()
 			break 2
 		done
 		bomb "Asked to build X11 but no xsrc"
+	done
+
+	while $do_pkg; do				# not really a loop
+		test -n "${PKGSRCDIR}" && {
+		    test -f "${PKGSRCDIR}/mk/bsd.pkg.mk" ||
+		    	bomb "PKGSRCDIR (${PKGSRCDIR}) does not exist"
+		    break
+		}
+		for _pd in \
+		    "${NETBSDSRCDIR%/*}/pkgsrc" \
+		    "${NETBSDSRCDIR}/pkgsrc" \
+		    /usr/pkgsrc
+		do
+		    test -f "${_pd}/mk/bsd.pkg.mk" &&
+			setmakeenv PKGSRCDIR "${_pd}" &&
+			break 2
+		done
+		bomb "Asked to build package but no pkgsrc"
 	done
 }
 
@@ -2031,7 +2070,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.379 2024/07/23 20:46:40 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.380 2024/11/29 16:55:24 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2243,6 +2282,103 @@ builddtb()
 	make_in_dir sys/dtb install
 
 	statusmsg "Successful build of devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
+}
+
+buildpkg()
+{
+	local catpkg
+	local pkgroot
+	local makejobsarg
+	local makejobsvar
+	local quiet
+	local opsys_version
+
+	catpkg="$1"
+
+	pkgroot="${TOP_objdir:-${TOP}}/pkgroot"
+	${runcmd} mkdir -p "${pkgroot}" ||
+	    bomb "Can't create package root" "${pkgroot}"
+
+	# Get a symlink-free absolute path to pkg -- pkgsrc wants this.
+	#
+	# XXX See TOP= above regarding pwd -P.
+	pkgroot=$(unset PWD; cd "${pkgroot}" &&
+		((exec pwd -P 2>/dev/null) || (exec pwd 2>/dev/null)))
+
+	case $parallel in
+	"-j "*)
+		makejobsarg="--make-jobs ${parallel#-j }"
+		makejobsvar="MAKE_JOBS=${parallel#-j }"
+		;;
+	*)	makejobsarg=""
+		makejobsvar=""
+		;;
+	esac
+
+	if [ "${MAKEVERBOSE}" -eq 0 ]; then
+		quiet="--quiet"
+	else
+		quiet=""
+	fi
+
+	# Derived from pkgsrc/mk/bsd.prefs.mk rev. 1.451.
+	opsys_version=$(echo "${DISTRIBVER}" |
+		awk -F. '{major=int($1); minor=int($2); if (minor>=100) minor=99; patch=int($3); if (patch>=100) patch=99; printf "%02d%02d%02d", major, minor, patch}')
+
+	# Bootstrap pkgsrc if needed.
+	#
+	# XXX Redo this if it's out-of-date, not just if it's missing.
+	if ! [ -x "${pkgroot}/pkg/bin/bmake" ]; then
+		statusmsg "Bootstrapping pkgsrc"
+
+		cat >"${pkgroot}/mk.conf-fragment" <<EOF
+USE_CROSS_COMPILE?=	no
+TOOLDIR=		${TOOLDIR}
+CROSS_DESTDIR=		${DESTDIR}
+CROSS_MACHINE_ARCH=	${MACHINE_ARCH}
+CROSS_OPSYS=		NetBSD
+CROSS_OS_VERSION=	${DISTRIBVER}
+CROSS_OPSYS_VERSION=	${opsys_version}
+CROSS_LOWER_OPSYS=	netbsd
+CROSS_LOWER_OPSYS_VERSUFFIX=	# empty
+CROSS_LOWER_OS_VARIANT=		# empty
+CROSS_LOWER_VARIANT_VERSION=	# empty
+CROSS_LOWER_VENDOR=		# empty
+CROSS_OBJECT_FMT=	ELF
+
+ALLOW_VULNERABLE_PACKAGES=	yes
+BINPKG_SITES=			# empty
+FAILOVER_FETCH=			yes
+FETCH_TIMEOUT=			1800
+PASSIVE_FETCH=			yes
+
+DISTDIR=		${pkgroot}/distfiles
+PACKAGES=		${pkgroot}/packages
+WRKOBJDIR=		${pkgroot}/work
+
+.-include "${MAKECONF}"
+
+MKDEBUG=		no	# interferes with pkgsrc builds
+EOF
+
+		# XXX Set --abi for mips and whatever else needs it?
+		# XXX Unprivileged native tools, privileged cross.
+		(cd "${PKGSRCDIR}" && clearmakeenv && ./bootstrap/bootstrap \
+			${makejobsarg} \
+			--mk-fragment "${pkgroot}/mk.conf-fragment" \
+			--prefix "${pkgroot}/pkg" \
+			${quiet} \
+			--unprivileged \
+			--workdir "${pkgroot}/bootwork") \
+		|| bomb "Failed to bootstrap pkgsrc"
+	fi
+
+	# Build the package.
+	(cd "${PKGSRCDIR}/${catpkg}" && clearmakeenv && \
+		"${pkgroot}/pkg/bin/bmake" package \
+			USE_CROSS_COMPILE=yes \
+			${makejobsvar}) \
+	|| bomb "Failed to build ${catpkg}"
 }
 
 installmodules()
@@ -2560,6 +2696,14 @@ main()
 
 		modules)
 			buildmodules
+			;;
+
+		pkg=*)
+			arg=${op#*=}
+			if ! [ -d "$PKGSRCDIR"/"$arg" ]; then
+				bomb "no such package ${arg}"
+			fi
+			buildpkg "${arg}"
 			;;
 
 		installmodules=*)
