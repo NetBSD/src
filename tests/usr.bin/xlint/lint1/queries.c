@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.31 2024/11/28 22:32:53 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.32 2024/11/29 20:02:36 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -330,7 +330,10 @@ Q8(void)
 {
 
 	u16 = 0;
+	/* expect+1: octal number '000000' [Q8] */
 	u16 = 000000;
+	u16 = 1;
+	u16 = 10;
 	/* expect+1: octal number '0644' [Q8] */
 	u16 = 0644;
 	/* expect+1: octal number '0000644' [Q8] */
@@ -370,9 +373,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 374 "queries.c" 3 4
+# 377 "queries.c" 3 4
 		((void *)0)
-# 376 "queries.c"
+# 379 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:

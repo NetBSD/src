@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.230 2024/11/29 06:57:43 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.231 2024/11/29 20:02:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.230 2024/11/29 06:57:43 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.231 2024/11/29 20:02:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -592,7 +592,7 @@ lex_integer_constant(const char *text, size_t len, int base)
 		warned = true;
 	}
 
-	if (base == 8 && ui != 0)
+	if (base == 8 && len > 1)
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
 
