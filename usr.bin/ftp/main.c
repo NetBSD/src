@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.133 2024/09/30 13:03:37 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.134 2024/11/29 05:40:14 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.133 2024/09/30 13:03:37 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.134 2024/11/29 05:40:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1080,8 +1080,8 @@ synopsis(FILE * stream)
 	const char * progname = getprogname();
 
 	fprintf(stream,
-"usage: %s [-46AadefginpRtVv] [-H HEADER] [-N NETRC] [-o OUTPUT] [-P PORT]\n"
-"           [-q QUITTIME] [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]]\n"
+"usage: %s [-46AadefginpRtVv] [-b BUFSIZE] [-H HEADER] [-N NETRC] [-o OUTPUT]\n"
+"           [-P PORT] [-q QUITTIME] [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]]\n"
 "	    [-x XFERSIZE]\n"
 "           [[USER@]HOST [PORT]]\n"
 "           [[USER@]HOST:[PATH][/]]\n"
@@ -1107,11 +1107,13 @@ usage_help(void)
 "  -6            Only use IPv6 addresses\n"
 "  -A            Force active mode\n"
 "  -a            Use anonymous login\n"
-"  -b BUFLEN     Use BUFLEN bytes for fetch buffer\n"
+"  -b BUFSIZE    Use BUFSIZE bytes for fetch buffer\n"
 "  -d            Enable debugging\n"
 "  -e            Disable command-line editing\n"
 "  -f            Force cache reload for FTP or HTTP proxy transfers\n"
 "  -g            Disable file name globbing\n"
+"  -H HEADER     Add custom HTTP header HEADER for HTTP transfers;\n"
+"                may be repeated for additional headers\n"
 "  -i            Disable interactive prompt during multiple file transfers\n"
 "  -N NETRC      Use NETRC instead of ~/.netrc\n"
 "  -n            Disable auto-login\n"
@@ -1121,15 +1123,15 @@ usage_help(void)
 "  -q QUITTIME   Quit if connection stalls for QUITTIME seconds\n"
 "  -R            Restart non-proxy auto-fetch\n"
 "  -r RETRY      Retry failed connection attempts after RETRY seconds\n"
-"  -s SRCADDR    Use source address SRCADDR\n"
+"  -s SRCADDR    Use IP source address SRCADDR\n"
 "  -t            Enable packet tracing\n"
 "  -T DIR,MAX[,INC]\n"
-"                Set maximum transfer rate for direction DIR to MAX bytes/s,\n"
-"                with optional increment INC bytes/s\n"
+"                Set maximum transfer rate for direction DIR (all, get, or put)\n"
+"                to MAX bytes/s, with optional increment INC bytes/s\n"
 "  -u URL        URL to upload file arguments to\n"
 "  -V            Disable verbose and progress\n"
 "  -v            Enable verbose and progress\n"
-"  -x XFERSIZE   Set socket send and receive size to XFERSIZE\n"
+"  -x XFERSIZE   Set socket send and receive size to XFERSIZE bytes\n"
 "  -?            Display this help and exit\n"
 		);
 #endif
