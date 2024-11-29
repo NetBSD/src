@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2063 2024/11/28 01:27:35 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2064 2024/11/29 09:02:04 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2170,10 +2170,11 @@ in src/usr.bin/grep, replacing FreeGrep
 
 Package:	groff
 Version:	1.19.2 (last GPLv2+ version)
-Current Vers:	1.22.4
+Current Vers:	1.23.0
 Maintainer:	Werner Lemberg/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Home Page:	http://www.gnu.org/software/groff/
+Date:		2024-11-29
 Mailing List:	bug-groff@gnu.org
 Responsible:
 License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
