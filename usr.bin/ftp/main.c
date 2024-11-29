@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.134 2024/11/29 05:40:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.135 2024/11/29 07:24:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.134 2024/11/29 05:40:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.135 2024/11/29 07:24:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ main(int volatile argc, char **volatile argv)
 	}
 
 	SLIST_INIT(&custom_headers);
-	while ((ch = getopt(argc, argv, ":46Aab:defgH:inN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
+	while ((ch = getopt(argc, argv, ":46Aab:defgH:iN:no:P:pq:Rr:s:T:tu:Vvx:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -329,15 +329,15 @@ main(int volatile argc, char **volatile argv)
 			interactive = 0;
 			break;
 
-		case 'n':
-			autologin = 0;
-			break;
-
 		case 'N':
 			if (strlcpy(netrc, optarg, sizeof(netrc))
 			    >= sizeof(netrc))
 				errx(1, "%s: %s", optarg,
 				    strerror(ENAMETOOLONG));
+			break;
+
+		case 'n':
+			autologin = 0;
 			break;
 
 		case 'o':
@@ -346,13 +346,13 @@ main(int volatile argc, char **volatile argv)
 				ttyout = stderr;
 			break;
 
+		case 'P':
+			ftpport = optarg;
+			break;
+
 		case 'p':
 			passivemode = 1;
 			activefallback = 0;
-			break;
-
-		case 'P':
-			ftpport = optarg;
 			break;
 
 		case 'q':
@@ -361,22 +361,18 @@ main(int volatile argc, char **volatile argv)
 				errx(1, "Bad quit value: %s", optarg);
 			break;
 
+		case 'R':
+			restartautofetch = 1;
+			break;
+
 		case 'r':
 			retry_connect = (int)strtol(optarg, &ep, 10);
 			if (retry_connect < 1 || *ep != '\0')
 				errx(1, "Bad retry value: %s", optarg);
 			break;
 
-		case 'R':
-			restartautofetch = 1;
-			break;
-
 		case 's':
 			src_addr = optarg;
-			break;
-
-		case 't':
-			trace = 1;
 			break;
 
 		case 'T':
@@ -408,6 +404,10 @@ main(int volatile argc, char **volatile argv)
 			break;
 		}
 
+		case 't':
+			trace = 1;
+			break;
+
 		case 'u':
 		{
 			isupload = 1;
@@ -417,12 +417,12 @@ main(int volatile argc, char **volatile argv)
 			break;
 		}
 
-		case 'v':
-			progress = verbose = 1;
-			break;
-
 		case 'V':
 			progress = verbose = 0;
+			break;
+
+		case 'v':
+			progress = verbose = 1;
 			break;
 
 		case 'x':
@@ -1124,10 +1124,10 @@ usage_help(void)
 "  -R            Restart non-proxy auto-fetch\n"
 "  -r RETRY      Retry failed connection attempts after RETRY seconds\n"
 "  -s SRCADDR    Use IP source address SRCADDR\n"
-"  -t            Enable packet tracing\n"
 "  -T DIR,MAX[,INC]\n"
 "                Set maximum transfer rate for direction DIR (all, get, or put)\n"
 "                to MAX bytes/s, with optional increment INC bytes/s\n"
+"  -t            Enable packet tracing\n"
 "  -u URL        URL to upload file arguments to\n"
 "  -V            Disable verbose and progress\n"
 "  -v            Enable verbose and progress\n"
