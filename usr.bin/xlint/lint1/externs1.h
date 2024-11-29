@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.235 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.236 2024/11/29 06:57:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -183,7 +183,6 @@ void debug_attribute_list(const attribute_list *);
 extern bool seen_error;
 extern bool seen_warning;
 extern int sytxerr;
-extern bool any_query_enabled;
 extern bool is_query_enabled[];
 
 void msglist(void);

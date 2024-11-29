@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.229 2024/11/13 03:43:00 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.230 2024/11/29 06:57:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -635,8 +635,7 @@ check_printf(const char *fmt, ...)
 #else
 #  define query_message(...)						\
 	do {								\
-		if (any_query_enabled)					\
-			(query_message)(__VA_ARGS__);			\
+		(query_message)(__VA_ARGS__);				\
 	} while (false)
 #endif
 

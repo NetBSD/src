@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.256 2024/11/28 22:32:53 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.257 2024/11/29 06:57:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.256 2024/11/28 22:32:53 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.257 2024/11/29 06:57:43 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -755,7 +755,6 @@ static const char *queries[] = {
 	"typedef '%s' of pointer to union type '%s'",			// Q24
 };
 
-bool any_query_enabled;		/* for optimizing non-query scenarios */
 bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
 
 void
@@ -788,7 +787,6 @@ enable_queries(const char *p)
 		    queries[id][0] == '\0')
 			break;
 
-		any_query_enabled = true;
 		is_query_enabled[id] = true;
 
 		if (*end == '\0')

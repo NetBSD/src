@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.660 2024/11/23 16:48:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.661 2024/11/29 06:57:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.660 2024/11/23 16:48:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.661 2024/11/29 06:57:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -708,7 +708,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	if (!is_integer(lt) || !is_integer(rt))
 		return;
 
-	if (any_query_enabled && !in_system_header) {
+	if (!in_system_header) {
 		if (lt == CHAR && rn->tn_op == CON &&
 		    !rn->u.value.v_char_constant) {
 			/* comparison '%s' of 'char' with plain integer %d */
@@ -1485,10 +1485,9 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	tspec_t lt = ln->tn_type->t_tspec;
 	tspec_t rt = rn->tn_type->t_tspec;
 
-	if (any_query_enabled && is_assignment(rn->tn_op)) {
+	if (is_assignment(rn->tn_op))
 		/* chained assignment with '%s' and '%s' */
 		query_message(10, op_name(op), op_name(rn->tn_op));
-	}
 
 	if ((op == ADDASS || op == SUBASS) && lt == PTR) {
 		lint_assert(is_integer(rt));
@@ -1527,14 +1526,13 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		rt = lt;
 	}
 
-	if (is_query_enabled[20]
-	    && lt == PTR && ln->tn_type->t_subt->t_tspec != VOID
+	if (lt == PTR && ln->tn_type->t_subt->t_tspec != VOID
 	    && rt == PTR && rn->tn_type->t_subt->t_tspec == VOID
 	    && !is_null_pointer(rn))
 		/* implicit narrowing conversion from void ... */
 		query_message(20, type_name(ln->tn_type));
 
-	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
+	if (rn->tn_op == CVT && rn->tn_cast &&
 	    types_compatible(ln->tn_type, rn->tn_type, false, false, NULL) &&
 	    is_cast_redundant(rn)) {
 		/* redundant cast from '%s' to '%s' before assignment */
@@ -1934,11 +1932,9 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		ntn = build_assignment(op, sys, ln, rn);
 		break;
 	case COMMA:
-		if (any_query_enabled) {
-			/* comma operator with types '%s' and '%s' */
-			query_message(12,
-			    type_name(ln->tn_type), type_name(rn->tn_type));
-		}
+		/* comma operator with types '%s' and '%s' */
+		query_message(12,
+		    type_name(ln->tn_type), type_name(rn->tn_type));
 		/* FALLTHROUGH */
 	case QUEST:
 		ntn = build_op(op, sys, rn->tn_type, ln, rn);
@@ -3583,7 +3579,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 		}
 	}
 
-	if (any_query_enabled && is_uinteger(nt) != is_uinteger(ot))
+	if (is_uinteger(nt) != is_uinteger(ot))
 		/* implicit conversion changes sign from '%s' to '%s' */
 		query_message(3, type_name(tn->tn_type), type_name(tp));
 }
@@ -4305,8 +4301,7 @@ cast(tnode_t *tn, bool sys, type_t *tp)
 	} else
 		goto invalid_cast;
 
-	if (any_query_enabled
-	    && types_compatible(tp, tn->tn_type, false, false, NULL))
+	if (types_compatible(tp, tn->tn_type, false, false, NULL))
 		/* no-op cast from '%s' to '%s' */
 		query_message(6, type_name(tn->tn_type), type_name(tp));
 

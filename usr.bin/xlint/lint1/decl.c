@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.409 2024/11/28 22:32:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.410 2024/11/29 06:57:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.409 2024/11/28 22:32:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.410 2024/11/29 06:57:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1454,8 +1454,7 @@ declarator_name(sym_t *sym)
 		dcs->d_redeclared_symbol = NULL;
 	} else {
 		dcs->d_redeclared_symbol = sym;
-		if (is_query_enabled[16]
-		    && sym->s_scl == STATIC && dcs->d_scl != STATIC) {
+		if (sym->s_scl == STATIC && dcs->d_scl != STATIC) {
 			/* '%s' was declared 'static', now non-'static' */
 			query_message(16, sym->s_name);
 			print_previous_declaration(sym);
@@ -1817,8 +1816,7 @@ check_extern_declaration(const sym_t *sym)
 		warning(351, sym->s_type->t_tspec == FUNC ? "" : " 'extern'",
 		    sym->s_name);
 	}
-	if (any_query_enabled &&
-	    sym->s_type->t_tspec == FUNC &&
+	if (sym->s_type->t_tspec == FUNC &&
 	    sym->s_scl == EXTERN &&
 	    sym->s_def == DECL &&
 	    !in_system_header)
@@ -2372,7 +2370,7 @@ declare_parameter(sym_t *sym, bool has_initializer)
 		/* parameter '%s' declared inline */
 		warning(269, sym->s_name);
 
-	if (any_query_enabled && sym->s_type->t_const
+	if (sym->s_type->t_const
 	    && (sym->s_scl == AUTO || sym->s_scl == REG)) {
 		/* const automatic variable '%s' */
 		query_message(18, sym->s_name);
@@ -2715,7 +2713,7 @@ declare_local(sym_t *dsym, bool has_initializer)
 		}
 	}
 
-	if (any_query_enabled && dsym->s_type->t_const
+	if (dsym->s_type->t_const
 	    && (dsym->s_scl == AUTO || dsym->s_scl == REG)) {
 		/* const automatic variable '%s' */
 		query_message(18, dsym->s_name);
@@ -2753,7 +2751,7 @@ declare_local(sym_t *dsym, bool has_initializer)
 		set_first_typedef(dsym->s_type, dsym);
 	}
 
-	if (dsym->s_scl == STATIC && any_query_enabled)
+	if (dsym->s_scl == STATIC)
 		/* static variable '%s' in function */
 		query_message(11, dsym->s_name);
 
