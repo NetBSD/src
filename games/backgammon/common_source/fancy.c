@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.19 2024/08/22 20:46:40 rillig Exp $	*/
+/*	$NetBSD: fancy.c,v 1.20 2024/11/29 21:48:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.19 2024/08/22 20:46:40 rillig Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.20 2024/11/29 21:48:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -593,7 +593,7 @@ clear(void)
 	int     i;
 
 	/* double space if can't clear */
-	if (CL == 0) {
+	if (CL == NULL) {
 		writel("\n\n");
 		return;
 	}
@@ -748,8 +748,11 @@ getcaps(const char *s)
 		lUP = (int)strlen(UP);
 	if (ND)
 		lND = (int)strlen(ND);
-	if (LI < 24 || CO < 72 || !(CL && UP && ND))
+	if (LI < 24 || CO < 72 || !(CL && UP && ND)) {
+		/* force CL to null because this is what's tested in clear() */
+		CL = NULL;
 		return (0);
+	}
 	linect = (int *) calloc(LI + 1, sizeof(int));
 	if (linect == NULL) {
 		write(2, "\r\nOut of memory!\r\n", 18);
