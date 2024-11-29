@@ -1,4 +1,4 @@
-/*      $NetBSD: cemacreg.h,v 1.7 2024/08/29 07:22:36 skrll Exp $	*/
+/*      $NetBSD: cemacreg.h,v 1.8 2024/11/29 17:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -155,13 +155,18 @@
 
 #define GEM_CFG_GEN	__BIT(10)
 #define GEM_CFG_CLK	__BITS(20, 18)
-#define  GEM_CFG_CLK_8	__SHIFTIN(0, GEM_CFG_CLK)
-#define  GEM_CFG_CLK_16	__SHIFTIN(1, GEM_CFG_CLK)
-#define  GEM_CFG_CLK_32	__SHIFTIN(2, GEM_CFG_CLK)
-#define  GEM_CFG_CLK_48	__SHIFTIN(3, GEM_CFG_CLK)
-#define  GEM_CFG_CLK_64	__SHIFTIN(4, GEM_CFG_CLK)
-#define  GEM_CFG_CLK_96	__SHIFTIN(5, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_8		__SHIFTIN(0, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_16		__SHIFTIN(1, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_32		__SHIFTIN(2, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_48		__SHIFTIN(3, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_64		__SHIFTIN(4, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_96		__SHIFTIN(5, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_128	__SHIFTIN(6, GEM_CFG_CLK)
+#define  GEM_CFG_CLK_224	__SHIFTIN(7, GEM_CFG_CLK)
 #define GEM_CFG_DBW	__BITS(22, 21)
+#define  GEM_CFG_DBW_32		__SHIFTIN(0, GEM_CFG_DBW)
+#define  GEM_CFG_DBW_64		__SHIFTIN(1, GEM_CFG_DBW)
+#define  GEM_CFG_DBW_128	__SHIFTIN(2, GEM_CFG_DBW)
 #define	GEM_CFG_RXCOEN	__BIT(24)
 
 /* Status Register bits: */
@@ -209,21 +214,20 @@
 
 /* PHY Maintenance Register bits: */
 #define	ETH_MAN_LOW	__BIT(31) /* must not be set			*/
-#define	ETH_MAN_HIGH	__BIT(30) /* must be set			*/
+#define	ETH_MAN_HIGH	__BIT(30) /* must be set for clause 22		*/
 
 #define	ETH_MAN_RW	__BITS(29, 28)
-#define	ETH_MAN_RW_RD	__BIT(29)
-#define	ETH_MAN_RW_WR	__BIT(28)
+#define	ETH_MAN_RW_RD	__SHIFTIN(2, ETH_MAN_RW)
+#define	ETH_MAN_RW_WR	__SHIFTIN(1, ETH_MAN_RW)
 
-#define	ETH_MAN_PHYA	0x0F800000U /* PHY address (normally 0)		*/
+#define	ETH_MAN_PHYA	__BITS(27, 23) /* PHY address (normally 0)	*/
 #define	ETH_MAN_PHYA_SHIFT 23U
-#define	ETH_MAN_REGA	0x007C0000U
+#define	ETH_MAN_REGA	__BITS(22, 18)
 #define	ETH_MAN_REGA_SHIFT 18U
-#define	ETH_MAN_CODE	0x00030000U /* must be 10			*/
+#define	ETH_MAN_CODE	__BITS(17, 16) /* must be 0b10			*/
 #define	ETH_MAN_CODE_IEEE802_3 \
-			0x00020000U
-#define	ETH_MAN_DATA	0x0000FFFFU /* data to be written to the PHY	*/
-
+			__SHIFTIN(2, ETH_MAN_CODE)
+#define	ETH_MAN_DATA	__BITS(15, 0) /* data to be written to the PHY	*/
 #define	ETH_MAN_VAL	(ETH_MAN_HIGH | ETH_MAN_CODE_IEEE802_3)
 
 
