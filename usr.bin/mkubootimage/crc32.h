@@ -1,3 +1,5 @@
+/* $NetBSD: crc32.h,v 1.2 2024/11/29 02:56:44 gutteridge Exp $ */
+
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
