@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.10 2024/11/28 12:42:39 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.11 2024/11/29 14:59:18 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.10 2024/11/28 12:42:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.11 2024/11/29 14:59:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
 	summitfb_write4(sc, VISFX_CLIP_TL, 0);
-	summitfb_write4(sc, VISFX_CLIP_WH, 
+	summitfb_write4(sc, VISFX_CLIP_WH,
 	    ((sc->sc_scr.fbwidth + 1) << 16) | (sc->sc_scr.fbheight + 1));
 
 	summitfb_setup_fb(sc);
