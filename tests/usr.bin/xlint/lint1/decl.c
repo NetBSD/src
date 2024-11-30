@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.31 2024/06/08 09:09:20 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.32 2024/11/30 10:43:49 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -299,4 +299,15 @@ type_name_as_member_name(void)
 			int y;
 		} fl;
 	};
+}
+
+
+// When query 16 is not enabled, don't produce a 'previous declaration' message
+// without a preceding main diagnostic.
+static void static_function(void) __attribute__((__used__));
+
+// The definition is without 'static'.
+void
+static_function(void)
+{
 }

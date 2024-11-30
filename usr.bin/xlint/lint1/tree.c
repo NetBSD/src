@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.661 2024/11/29 06:57:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.662 2024/11/30 10:43:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.661 2024/11/29 06:57:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.662 2024/11/30 10:43:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -708,7 +708,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	if (!is_integer(lt) || !is_integer(rt))
 		return;
 
-	if (!in_system_header) {
+	if (any_query_enabled && !in_system_header) {
 		if (lt == CHAR && rn->tn_op == CON &&
 		    !rn->u.value.v_char_constant) {
 			/* comparison '%s' of 'char' with plain integer %d */
@@ -1532,7 +1532,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		/* implicit narrowing conversion from void ... */
 		query_message(20, type_name(ln->tn_type));
 
-	if (rn->tn_op == CVT && rn->tn_cast &&
+	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
 	    types_compatible(ln->tn_type, rn->tn_type, false, false, NULL) &&
 	    is_cast_redundant(rn)) {
 		/* redundant cast from '%s' to '%s' before assignment */
@@ -4301,7 +4301,8 @@ cast(tnode_t *tn, bool sys, type_t *tp)
 	} else
 		goto invalid_cast;
 
-	if (types_compatible(tp, tn->tn_type, false, false, NULL))
+	if (any_query_enabled
+	    && types_compatible(tp, tn->tn_type, false, false, NULL))
 		/* no-op cast from '%s' to '%s' */
 		query_message(6, type_name(tn->tn_type), type_name(tp));
 

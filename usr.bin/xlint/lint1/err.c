@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.257 2024/11/29 06:57:43 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.258 2024/11/30 10:43:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.257 2024/11/29 06:57:43 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.258 2024/11/30 10:43:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -755,6 +755,10 @@ static const char *queries[] = {
 	"typedef '%s' of pointer to union type '%s'",			// Q24
 };
 
+// Omit any expensive computations in the default mode where none of the
+// queries are enabled.  Function calls in message details don't need to be
+// guarded by this flag, as that happens in the query_message macro already.
+bool any_query_enabled;
 bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
 
 void
@@ -787,6 +791,7 @@ enable_queries(const char *p)
 		    queries[id][0] == '\0')
 			break;
 
+		any_query_enabled = true;
 		is_query_enabled[id] = true;
 
 		if (*end == '\0')

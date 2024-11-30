@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.190 2024/11/29 06:57:43 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.191 2024/11/30 10:43:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.190 2024/11/29 06:57:43 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.191 2024/11/30 10:43:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -921,7 +921,7 @@ is_parenthesized(const tnode_t *tn)
 static void
 check_return_value(bool sys, tnode_t *tn)
 {
-	if (is_parenthesized(tn))
+	if (any_query_enabled && is_parenthesized(tn))
 		/* parenthesized return value */
 		query_message(9);
 
