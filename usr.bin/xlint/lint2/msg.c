@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.25 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.26 2024/11/30 18:17:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.25 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.26 2024/11/30 18:17:12 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -46,26 +46,26 @@ __RCSID("$NetBSD: msg.c,v 1.25 2023/12/03 18:17:41 rillig Exp $");
 
 #include "lint2.h"
 
-static const	char *msgs[] = {
-	"%s used( %s ), but not defined",			      /* 0 */
-	"%s defined( %s ), but never used",			      /* 1 */
-	"%s declared( %s ), but never used or defined",		      /* 2 */
-	"%s multiply defined  \t%s  ::  %s",			      /* 3 */
-	"%s value used inconsistently  \t%s  ::  %s",		      /* 4 */
-	"%s value declared inconsistently (%s != %s) \t%s  ::  %s",   /* 5 */
-	"%s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s]",	      /* 6 */
-	"%s: variable # of args  \t%s  ::  %s",			      /* 7 */
-	"%s returns value which is always ignored",		      /* 8 */
-	"%s returns value which is sometimes ignored",		      /* 9 */
-	"%s value is used( %s ), but none returned",		      /* 10 */
-	"%s, arg %d declared inconsistently (%s != %s)\t%s :: %s",    /* 11 */
-	"%s: variable # of args declared  \t%s  ::  %s",	      /* 12 */
-	"%s: malformed format string  \t%s",			      /* 13 */
-	"%s, arg %d inconsistent with format  \t%s",		      /* 14 */
-	"%s: too few args for format  \t%s",			      /* 15 */
-	"%s: too many args for format  \t%s",			      /* 16 */
-	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
-	"%s renamed multiple times  \t%s  ::  %s",		      /* 18 */
+static const char *msgs[] = {
+	"%s is used in %s but never defined",				// 0
+	"%s is defined in %s but never used",				// 1
+	"%s is declared in %s but never used or defined",		// 2
+	"%s has multiple definitions in %s and %s",			// 3
+	"%s has its return value used inconsistently by %s and %s",	// 4
+	"%s returns '%s' at %s, versus '%s' at %s",			// 5
+	"%s has argument %d with type '%s' at %s, versus '%s' at %s",	// 6
+	"%s has %d parameters in %s, versus %d arguments in %s",	// 7
+	"%s returns a value that is always ignored",			// 8
+	"%s returns a value that is sometimes ignored",			// 9
+	"%s has its return value used in %s but doesn't return one",	// 10
+	"%s has parameter %d declared as '%s' in %s, versus '%s' in %s", // 11
+	"%s has %d parameters in %s, versus %d in %s",			// 12
+	"%s is called with a malformed format string in %s",		// 13
+	"%s is called in %s with argument %d being incompatible with format string", // 14
+	"%s is called in %s with too few arguments for format string",	// 15
+	"%s is called in %s with too many arguments for format string",	// 16
+	"%s's return type in %s must be declared before use in %s",	// 17
+	"%s is renamed multiple times in %s and %s",			// 18
 };
 
 void
@@ -76,7 +76,7 @@ msg(int n, ...)
 	va_start(ap, n);
 
 	(void)vprintf(msgs[n], ap);
-	(void)printf("\n");
+	(void)printf(" [lint2:%03d]\n", n);
 
 	va_end(ap);
 }

@@ -1,1 +1,1 @@
-func value is used( msg_010.c?(30) ), but none returned
+func has its return value used in msg_010.c?(30) but doesn't return one [lint2:010]

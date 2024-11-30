@@ -1,4 +1,4 @@
-# $NetBSD: t_xlint.sh,v 1.4 2023/09/07 06:24:31 rillig Exp $
+# $NetBSD: t_xlint.sh,v 1.5 2024/11/30 18:17:12 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -109,7 +109,7 @@ run_lint2_body()
 	# Depending on whether the lint libraries are installed or not, there
 	# may be a warning 'cannot find llib-lc.ln' on stderr.
 	atf_check \
-	    -o 'inline:function defined( input.c(4) ), but never used\n' \
+	    -o 'inline:function is defined in input.c(4) but never used [lint2:001]\n' \
 	    -e 'ignore' \
 	    "$lint" -aabceghprSTxz input.ln
 }

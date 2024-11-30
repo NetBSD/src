@@ -1,1 +1,1 @@
-func returns value which is sometimes ignored
+func returns a value that is sometimes ignored [lint2:009]

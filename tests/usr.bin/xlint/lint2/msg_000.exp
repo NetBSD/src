@@ -1,2 +1,2 @@
-defined_not_used defined( msg_000.c(2) ), but never used
-used_not_defined used( msg_000.c(3) ), but not defined
+defined_not_used is defined in msg_000.c(2) but never used [lint2:001]
+used_not_defined is used in msg_000.c(3) but never defined [lint2:000]

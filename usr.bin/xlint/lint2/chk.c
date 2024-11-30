@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.67 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.68 2024/11/30 18:17:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.67 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.68 2024/11/30 18:17:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -140,10 +140,10 @@ check_used_not_defined(const hte_t *hte)
 		return;
 
 	if ((fcall = hte->h_calls) != NULL) {
-		/* %s used( %s ), but not defined */
+		/* %s is used in %s but never defined */
 		msg(0, hte->h_name, mkpos(&fcall->f_pos));
 	} else if ((usym = hte->h_usyms) != NULL) {
-		/* %s used( %s ), but not defined */
+		/* %s is used in %s but never defined */
 		msg(0, hte->h_name, mkpos(&usym->u_pos));
 	}
 }
@@ -161,7 +161,7 @@ check_defined_not_used(const hte_t *hte)
 
 	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym->s_def == DEF || sym->s_def == TDEF) {
-			/* %s defined( %s ), but never used */
+			/* %s is defined in %s but never used */
 			msg(1, hte->h_name, mkpos(&sym->s_pos));
 			break;
 		}
@@ -186,7 +186,7 @@ check_declared_not_used_or_defined(const hte_t *hte)
 
 	if (sym->s_def != DECL)
 		errx(1, "internal error: check_declared_not_used_or_defined");
-	/* %s declared( %s ), but never used or defined */
+	/* %s is declared in %s but never used or defined */
 	msg(2, hte->h_name, mkpos(&sym->s_pos));
 }
 
@@ -216,7 +216,7 @@ check_multiple_definitions(const hte_t *hte)
 			def1 = sym;
 			continue;
 		}
-		/* %s multiply defined  \t%s  ::  %s */
+		/* %s has multiple definitions in %s and %s */
 		msg(3, hte->h_name, mkpos(&def1->s_pos), mkpos(&sym->s_pos));
 	}
 }
@@ -255,28 +255,28 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 			/* no return value used */
 			if ((t1 == STRUCT || t1 == UNION) && !eq) {
 				/*
-				 * If a function returns a struct or union it
+				 * If a function returns a struct or union, it
 				 * must be declared to return a struct or
-				 * union, also if the return value is ignored.
+				 * union, even if the return value is ignored.
 				 * This is necessary because the caller must
 				 * allocate stack space for the return value.
 				 * If it does not, the return value would
 				 * overwrite other data.
 				 *
-				 * XXX Following message may be confusing
-				 * because it appears also if the return value
+				 * XXX: The following message may be confusing
+				 * because it occurs also if the return value
 				 * was declared inconsistently. But this
 				 * behavior matches pcc-based lint, so it is
 				 * accepted for now.
 				 */
-				/* %s function value must be declared ... */
+				/* %s's return type in %s must be decl... */
 				msg(17, hte->h_name,
 				    mkpos(&def->s_pos), mkpos(&call->f_pos));
 			}
 			continue;
 		}
 		if (!eq || (sflag && dowarn)) {
-			/* %s value used inconsistently  \t%s  ::  %s */
+			/* %s has its return value used inconsistently ... */
 			msg(4, hte->h_name,
 			    mkpos(&def->s_pos), mkpos(&call->f_pos));
 		}
@@ -315,11 +315,19 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 			    false, false, false, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
-			/* %s value declared inconsistently (%s != %s) \t... */
-			msg(5, hte->h_name, type_name(xt1), type_name(xt2),
-			    mkpos(&def->s_pos), mkpos(&sym->s_pos));
+			/* %s returns '%s' at %s, versus '%s' at %s */
+			msg(5, hte->h_name, type_name(xt1), mkpos(&def->s_pos),
+			    type_name(xt2), mkpos(&sym->s_pos));
 		}
 	}
+}
+
+static int
+total_args(int n, type_t **tpp)
+{
+	for (; *tpp != NULL; tpp++)
+		n++;
+	return n;
 }
 
 /*
@@ -396,8 +404,9 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 			 * prototype.
 			 */
 		} else {
-			/* %s: variable # of args  \t%s  ::  %s */
-			msg(7, hte->h_name, mkpos(pos1p), mkpos(&call->f_pos));
+			/* %s has %d parameters in %s, versus %d ... */
+			msg(7, hte->h_name, total_args(n, ap1), mkpos(pos1p),
+			    total_args(n, ap2), mkpos(&call->f_pos));
 			continue;
 		}
 
@@ -578,9 +587,9 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			return;
 	}
 
-	/* %s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s] */
-	msg(6, hte->h_name, n, mkpos(pos1p), type_name(arg1),
-	    mkpos(&call->f_pos), type_name(arg2));
+	/* %s has argument %d with type '%s' at %s, versus '%s' at %s */
+	msg(6, hte->h_name, n, type_name(arg1), mkpos(pos1p),
+	    type_name(arg2), mkpos(&call->f_pos));
 }
 
 /*
@@ -1009,7 +1018,7 @@ static void
 bad_format_string(const hte_t *hte, fcall_t *call)
 {
 
-	/* %s: malformed format string  \t%s */
+	/* %s is called with a malformed format string in %s */
 	msg(13, hte->h_name, mkpos(&call->f_pos));
 }
 
@@ -1017,15 +1026,15 @@ static void
 inconsistent_arguments(const hte_t *hte, fcall_t *call, int n)
 {
 
-	/* %s, arg %d inconsistent with format  \t%s */
-	msg(14, hte->h_name, n, mkpos(&call->f_pos));
+	/* %s is called in %s with argument %d being incompatible with ... */
+	msg(14, hte->h_name, mkpos(&call->f_pos), n);
 }
 
 static void
 too_few_arguments(const hte_t *hte, fcall_t *call)
 {
 
-	/* %s: too few args for format  \t%s */
+	/* %s is called in %s with too few arguments for format string */
 	msg(15, hte->h_name, mkpos(&call->f_pos));
 }
 
@@ -1033,7 +1042,7 @@ static void
 too_many_arguments(const hte_t *hte, fcall_t *call)
 {
 
-	/* %s: too many args for format  \t%s */
+	/* %s is called in %s with too many arguments for format string */
 	msg(16, hte->h_name, mkpos(&call->f_pos));
 }
 
@@ -1090,17 +1099,17 @@ check_return_values(const hte_t *hte, sym_t *def)
 			ignored |= !call->f_rused && !call->f_rdisc;
 		}
 		if (!used && ignored) {
-			/* %s returns value which is always ignored */
+			/* %s returns a value that is always ignored */
 			msg(8, hte->h_name);
 		} else if (used && ignored) {
-			/* %s returns value which is sometimes ignored */
+			/* %s returns a value that is sometimes ignored */
 			msg(9, hte->h_name);
 		}
 	} else {
 		/* function has no return value */
 		for (call = hte->h_calls; call != NULL; call = call->f_next) {
 			if (call->f_rused)
-				/* %s value is used( %s ), but none returned */
+				/* %s has its return value used in %s but doesn't return one */
 				msg(10, hte->h_name, mkpos(&call->f_pos));
 		}
 	}
@@ -1146,10 +1155,10 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 			eq = types_compatible(xt1 = *ap1, xt2 = *ap2,
 			    true, osdef, false, &dowarn);
 			if (!eq || dowarn) {
-				/* %s, arg %d declared inconsistently ... */
+				/* %s has parameter %d declared as '%s' ... */
 				msg(11, hte->h_name, n + 1,
-				    type_name(xt1), type_name(xt2),
-				    mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
+				    type_name(xt1), mkpos(&sym1->s_pos),
+				    type_name(xt2), mkpos(&sym->s_pos));
 			}
 			n++;
 			ap1++;
@@ -1165,8 +1174,10 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 				continue;
 			}
 		}
-		/* %s: variable # of args declared  \t%s  ::  %s */
-		msg(12, hte->h_name, mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
+		/* %s has %d parameters in %s, versus %d in %s */
+		msg(12, hte->h_name,
+		    total_args(n, ap1), mkpos(&sym1->s_pos),
+		    total_args(n, ap2), mkpos(&sym->s_pos));
 	}
 }
 
