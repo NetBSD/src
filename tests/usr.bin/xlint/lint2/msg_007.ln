@@ -1,6 +1,18 @@
-# $NetBSD: msg_007.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_007.ln,v 1.2 2024/11/30 16:52:19 rillig Exp $
 #
 # Test data for message 7 of lint2:
 #	%s: variable # of args  	%s  ::  %s
 #
-# TODO: add actual test data
+
+
+# # 11 "msg_007_params.c"
+# void params(void) {}
+# void params();
+# void params(double);
+# void params(double, double);
+0 s msg_007_params.c
+S msg_007_params.c
+11 d 0.11 d 6params F0     V
+12 d 0.12 e 6params F      V
+13 d 0.13 e 6params F1 D   V
+14 d 0.14 e 6params F2 D D V
