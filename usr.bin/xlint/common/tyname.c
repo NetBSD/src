@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.63 2024/11/13 03:43:00 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.64 2024/11/30 16:34:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.63 2024/11/13 03:43:00 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.64 2024/11/30 16:34:26 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -176,7 +176,7 @@ type_name_of_function(buffer *buf, const type_t *tp)
 		type_t **argtype;
 
 		argtype = tp->t_args;
-		if (argtype == NULL)
+		if (*argtype == NULL)
 			buf_add(buf, "void");
 		for (; *argtype != NULL; argtype++) {
 			buf_add(buf, sep), sep = ", ";

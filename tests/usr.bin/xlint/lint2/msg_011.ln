@@ -1,4 +1,4 @@
-# $NetBSD: msg_011.ln,v 1.4 2024/11/30 16:20:42 rillig Exp $
+# $NetBSD: msg_011.ln,v 1.5 2024/11/30 16:34:27 rillig Exp $
 #
 # Test data for message 11 of lint2:
 #	%s, arg %d declared inconsistently (%s != %s)	%s :: %s
@@ -16,10 +16,16 @@ S msg_011_call.c
 4 c 0.4 p1 p2 u 3add f2 I I I
 4 d 0.4 d r 4main F0 I
 
-0smsg_011_call_func.c
-Smsg_011_call_func.c
-11d0.11d10func_paramF1PF1CVV
-12d0.12e10func_paramF1PFVV
-13d0.13e10func_paramF1PF0VV
-14d0.14e10func_paramF1PF1DVV
-15d0.15e10func_paramF1PF2DDVV
+# # 11 "msg_011_call_func.c"
+# void func_param(void (*)(char)) {}
+# void func_param(void (*)());
+# void func_param(void (*)(void));
+# void func_param(void (*)(double));
+# void func_param(void (*)(double, double));
+0 s msg_011_call_func.c
+S msg_011_call_func.c
+11 d 0.11 d 10func_param F1 PF1 C   V V
+12 d 0.12 e 10func_param F1 PF      V V
+13 d 0.13 e 10func_param F1 PF0     V V
+14 d 0.14 e 10func_param F1 PF1 D   V V
+15 d 0.15 e 10func_param F1 PF2 D D V V
