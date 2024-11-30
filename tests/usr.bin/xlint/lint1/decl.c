@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.32 2024/11/30 10:43:49 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.33 2024/11/30 11:27:20 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -311,3 +311,12 @@ void
 static_function(void)
 {
 }
+
+
+typedef void (*fprint_function)(int, const char *, ...);
+typedef fprint_function (*change_logger)
+    (fprint_function, fprint_function, fprint_function, fprint_function);
+
+// Provoke a long type name to test reallocation in type_name.
+/* expect+1: error: redeclaration of 'static_function' with type 'function(pointer to function(pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void) returning pointer to function(int, pointer to const char, ...) returning void) returning void', expected 'function(void) returning void' [347] */
+void static_function(change_logger);

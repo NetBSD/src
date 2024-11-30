@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.7 2024/05/07 19:32:35 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.8 2024/11/30 11:27:20 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -164,6 +164,9 @@ void f2(double a[restrict][5]);
 /* expect+1: error: syntax error '3' [249] */
 void f3(double a[restrict 3][5]);
 void f4(double a[restrict static 3][5]);
+
+
+int _Alignas(double) int_aligned_as_double;
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.

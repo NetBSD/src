@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.15 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.16 2024/11/30 11:27:20 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
@@ -85,7 +85,7 @@ call_noreturn_c11(void)
 	noreturn_c11();
 }
 
-int
+inline int
 call_noreturn_c23(void)
 {
 	noreturn_c23();
@@ -108,3 +108,13 @@ call_noreturn_gnu_suffix(void)
 {
 	noreturn_gnu_suffix();
 }
+
+
+double *force_function_attributes_in_diagnostic[] = {
+	// Force the word 'noreturn' to occur in a diagnostic.
+	/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to noreturn function(void) returning void', op 'init' [124] */
+	noreturn_c23,
+	// The 'inline' does affect the type of the function.
+	/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to function(void) returning int', op 'init' [124] */
+	call_noreturn_c23,
+};
