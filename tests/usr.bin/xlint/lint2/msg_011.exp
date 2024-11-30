@@ -4,3 +4,8 @@ add, arg 1 used inconsistently  	msg_011_define.c(2)[double]  ::  msg_011_call.c
 add, arg 2 used inconsistently  	msg_011_define.c(2)[double]  ::  msg_011_call.c(4)[int]
 add, arg 1 declared inconsistently (double != int)	msg_011_define.c(2) :: msg_011_call.c(2)
 add, arg 2 declared inconsistently (double != int)	msg_011_define.c(2) :: msg_011_call.c(2)
+func_param defined( msg_011_call_func.c(11) ), but never used
+func_param, arg 1 declared inconsistently (pointer to function(char) returning void != pointer to function() returning void)	msg_011_call_func.c(11) :: msg_011_call_func.c(12)
+func_param, arg 1 declared inconsistently (pointer to function(char) returning void != pointer to function() returning void)	msg_011_call_func.c(11) :: msg_011_call_func.c(13)
+func_param, arg 1 declared inconsistently (pointer to function(char) returning void != pointer to function(double) returning void)	msg_011_call_func.c(11) :: msg_011_call_func.c(14)
+func_param, arg 1 declared inconsistently (pointer to function(char) returning void != pointer to function(double, double) returning void)	msg_011_call_func.c(11) :: msg_011_call_func.c(15)
