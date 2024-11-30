@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2481 2024/11/02 22:02:38 christos Exp $
+#	$NetBSD: mi,v 1.2482 2024/11/30 14:48:57 macallan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -647,6 +647,7 @@
 ./usr/include/dev/ic/smc93cx6var.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/st16650reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/stireg.h			comp-c-include
+./usr/include/dev/ic/summitreg.h		comp-c-include
 ./usr/include/dev/ic/tms320av110reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/tms320av110var.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/uhareg.h			comp-obsolete		obsolete
