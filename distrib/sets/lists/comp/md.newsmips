@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.35 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.newsmips,v 1.36 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
@@ -37,6 +37,7 @@
 ./usr/include/newsmips/limits.h			comp-c-include
 ./usr/include/newsmips/lock.h			comp-c-include
 ./usr/include/newsmips/locore.h			comp-c-include
+./usr/include/newsmips/lwp_private.h		comp-c-include
 ./usr/include/newsmips/machConst.h		comp-c-include
 ./usr/include/newsmips/math.h			comp-c-include
 ./usr/include/newsmips/mcontext.h		comp-c-include

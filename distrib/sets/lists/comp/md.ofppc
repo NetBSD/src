@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.20 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.ofppc,v 1.21 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ofppc				comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/ofppc/kcore.h			comp-c-include
 ./usr/include/ofppc/limits.h			comp-c-include
 ./usr/include/ofppc/lock.h			comp-c-include
+./usr/include/ofppc/lwp_private.h		comp-c-include
 ./usr/include/ofppc/math.h			comp-c-include
 ./usr/include/ofppc/mcontext.h			comp-c-include
 ./usr/include/ofppc/mutex.h			comp-c-include

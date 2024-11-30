@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.77 2024/08/06 20:26:45 riastradh Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.78 2024/11/30 01:04:05 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.77 2024/08/06 20:26:45 riastradh Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.78 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: mips_reloc.c,v 1.77 2024/08/06 20:26:45 riastradh Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 #ifdef __mips_o32
 #define SUPPORT_OLD_BROKEN_LD

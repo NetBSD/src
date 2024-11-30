@@ -1,14 +1,16 @@
-/*	$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.35 2024/11/30 01:04:05 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.35 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);

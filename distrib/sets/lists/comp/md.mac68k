@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.62 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.mac68k,v 1.63 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mac68k				comp-c-include
@@ -34,6 +34,7 @@
 ./usr/include/mac68k/keyboard.h			comp-c-include
 ./usr/include/mac68k/limits.h			comp-c-include
 ./usr/include/mac68k/lock.h			comp-c-include
+./usr/include/mac68k/lwp_private.h		comp-c-include
 ./usr/include/mac68k/math.h			comp-c-include
 ./usr/include/mac68k/mcontext.h			comp-c-include
 ./usr/include/mac68k/mutex.h			comp-c-include

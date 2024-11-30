@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.40 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.mvme68k,v 1.41 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvme68k				comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/mvme68k/kcore.h			comp-c-include
 ./usr/include/mvme68k/limits.h			comp-c-include
 ./usr/include/mvme68k/lock.h			comp-c-include
+./usr/include/mvme68k/lwp_private.h		comp-c-include
 ./usr/include/mvme68k/math.h			comp-c-include
 ./usr/include/mvme68k/mcontext.h		comp-c-include
 ./usr/include/mvme68k/mutex.h			comp-c-include

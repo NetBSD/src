@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.34 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.mmeye,v 1.35 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
@@ -34,6 +34,7 @@
 ./usr/include/mmeye/limits.h			comp-c-include
 ./usr/include/mmeye/loadfile_machdep.h		comp-obsolete		obsolete
 ./usr/include/mmeye/lock.h			comp-c-include
+./usr/include/mmeye/lwp_private.h		comp-c-include
 ./usr/include/mmeye/math.h			comp-c-include
 ./usr/include/mmeye/mcontext.h			comp-c-include
 ./usr/include/mmeye/mmeye.h			comp-c-include

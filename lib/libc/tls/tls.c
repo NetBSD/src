@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.15 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.16 2024/11/30 01:04:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.15 2024/01/20 14:52:49 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.16 2024/11/30 01:04:04 christos Exp $");
 
 #include "namespace.h"
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: tls.c,v 1.15 2024/01/20 14:52:49 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <machine/lwp_private.h>
 
 __dso_hidden void	__libc_static_tls_setup(void);
 

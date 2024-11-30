@@ -54,6 +54,7 @@
 #if SANITIZER_NETBSD
 #include <sys/sysctl.h>
 #include <sys/tls.h>
+#include <machine/lwp.h>
 #endif
 
 #if SANITIZER_SOLARIS

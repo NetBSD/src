@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.27 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.arc,v 1.28 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
@@ -29,6 +29,7 @@
 ./usr/include/arc/kdbparam.h			comp-c-include
 ./usr/include/arc/limits.h			comp-c-include
 ./usr/include/arc/lock.h			comp-c-include
+./usr/include/arc/lwp_private.h		comp-c-include
 ./usr/include/arc/math.h			comp-c-include
 ./usr/include/arc/mcontext.h			comp-c-include
 ./usr/include/arc/mips_opcode.h			comp-c-include

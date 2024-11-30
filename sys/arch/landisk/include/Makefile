@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/07/12 10:46:44 maxv Exp $
+#	$NetBSD: Makefile,v 1.7 2024/11/30 01:04:10 christos Exp $
 
 INCSDIR= /usr/include/landisk
 
@@ -12,7 +12,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
-	limits.h lock.h loadfile_machdep.h \
+	limits.h lock.h loadfile_machdep.h lwp_private.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.22 2024/07/23 22:00:00 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.23 2024/11/30 01:04:05 christos Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.22 2024/07/23 22:00:00 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.23 2024/11/30 01:04:05 christos Exp $");
 
 /*
  * Thread-local storage
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: tls.c,v 1.22 2024/07/23 22:00:00 riastradh Exp $");
 #include <string.h>
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 

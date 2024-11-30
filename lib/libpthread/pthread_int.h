@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.111 2023/05/25 14:30:03 riastradh Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.112 2024/11/30 01:04:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -49,6 +49,8 @@
 #include <lwp.h>
 #include <signal.h>
 #include <stdbool.h>
+
+#include <machine/lwp_private.h>
 
 #ifdef __GNUC__
 #define	PTHREAD_HIDE	__attribute__ ((visibility("hidden")))

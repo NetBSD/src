@@ -1,4 +1,4 @@
-# $NetBSD: md.evbcf,v 1.5 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.evbcf,v 1.6 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/evbcf				comp-c-include
 ./usr/include/evbcf/ansi.h			comp-c-include
@@ -26,6 +26,7 @@
 ./usr/include/evbcf/kcore.h			comp-c-include
 ./usr/include/evbcf/limits.h			comp-c-include
 ./usr/include/evbcf/lock.h			comp-c-include
+./usr/include/evbcf/lwp_private.h		comp-c-include
 ./usr/include/evbcf/math.h			comp-c-include
 ./usr/include/evbcf/mcontext.h			comp-c-include
 ./usr/include/evbcf/mutex.h			comp-c-include

@@ -1,12 +1,12 @@
-/*	$NetBSD: mdreloc.c,v 1.46 2024/11/04 15:46:45 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.47 2024/11/30 01:04:05 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.46 2024/11/04 15:46:45 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.47 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/ucontext.h>
+#include <machine/lwp_private.h>
 
 #include "debug.h"
 #include "rtld.h"

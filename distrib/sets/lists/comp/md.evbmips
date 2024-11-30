@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.25 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.evbmips,v 1.26 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
@@ -32,6 +32,7 @@
 ./usr/include/evbmips/limits.h			comp-c-include
 ./usr/include/evbmips/lock.h			comp-c-include
 ./usr/include/evbmips/locore.h			comp-c-include
+./usr/include/evbmips/lwp_private.h		comp-c-include
 ./usr/include/evbmips/math.h			comp-c-include
 ./usr/include/evbmips/mcontext.h		comp-c-include
 ./usr/include/evbmips/mips_opcode.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.sun2,v 1.24 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.sun2,v 1.25 2024/11/30 01:04:05 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun2				comp-c-include
@@ -36,6 +36,7 @@
 ./usr/include/sun2/leds.h			comp-c-include
 ./usr/include/sun2/limits.h			comp-c-include
 ./usr/include/sun2/lock.h			comp-c-include
+./usr/include/sun2/lwp_private.h		comp-c-include
 ./usr/include/sun2/math.h			comp-c-include
 ./usr/include/sun2/mcontext.h			comp-c-include
 ./usr/include/sun2/mon.h			comp-c-include

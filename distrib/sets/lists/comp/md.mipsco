@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.26 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.mipsco,v 1.27 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/mipsco/limits.h			comp-c-include
 ./usr/include/mipsco/lock.h			comp-c-include
 ./usr/include/mipsco/locore.h			comp-c-include
+./usr/include/mipsco/lwp_private.h		comp-c-include
 ./usr/include/mipsco/mainboard.h		comp-c-include
 ./usr/include/mipsco/math.h			comp-c-include
 ./usr/include/mipsco/mcontext.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.69 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.pmax,v 1.70 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/pmax/limits.h			comp-c-include
 ./usr/include/pmax/lock.h			comp-c-include
 ./usr/include/pmax/locore.h			comp-c-include
+./usr/include/pmax/lwp_private.h		comp-c-include
 ./usr/include/pmax/math.h			comp-c-include
 ./usr/include/pmax/mcontext.h			comp-c-include
 ./usr/include/pmax/mips_opcode.h		comp-c-include

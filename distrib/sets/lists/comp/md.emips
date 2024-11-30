@@ -1,4 +1,4 @@
-#	$NetBSD: md.emips,v 1.10 2024/07/11 20:41:07 riastradh Exp $
+#	$NetBSD: md.emips,v 1.11 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/emips				comp-c-include
 ./usr/include/emips/ansi.h			comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/emips/limits.h			comp-c-include
 ./usr/include/emips/lock.h			comp-c-include
 ./usr/include/emips/locore.h			comp-c-include
+./usr/include/emips/lwp_private.h		comp-c-include
 ./usr/include/emips/math.h			comp-c-include
 ./usr/include/emips/mcontext.h			comp-c-include
 ./usr/include/emips/mips_opcode.h		comp-c-include

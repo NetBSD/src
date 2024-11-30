@@ -1,4 +1,4 @@
-# $NetBSD: md.playstation2,v 1.16 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.playstation2,v 1.17 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/playstation2			comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/playstation2/limits.h		comp-c-include
 ./usr/include/playstation2/lock.h		comp-c-include
 ./usr/include/playstation2/locore.h		comp-c-include
+./usr/include/playstation2/lwp_private.h		comp-c-include
 ./usr/include/playstation2/math.h		comp-c-include
 ./usr/include/playstation2/mcontext.h		comp-c-include
 ./usr/include/playstation2/mips_opcode.h	comp-c-include

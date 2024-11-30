@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.217 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.sparc64,v 1.218 2024/11/30 01:04:05 christos Exp $
 #
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
@@ -62,6 +62,7 @@
 ./usr/include/sparc/kcore.h			comp-c-include
 ./usr/include/sparc/limits.h			comp-c-include
 ./usr/include/sparc/lock.h			comp-c-include
+./usr/include/sparc/lwp_private.h		comp-c-include
 ./usr/include/sparc/math.h			comp-c-include
 ./usr/include/sparc/mcontext.h			comp-c-include
 ./usr/include/sparc/mutex.h			comp-c-include
@@ -134,6 +135,7 @@
 ./usr/include/sparc64/kcore.h			comp-c-include
 ./usr/include/sparc64/limits.h			comp-c-include
 ./usr/include/sparc64/lock.h			comp-c-include
+./usr/include/sparc64/lwp_private.h		comp-c-include
 ./usr/include/sparc64/math.h			comp-c-include
 ./usr/include/sparc64/mcontext.h		comp-c-include
 ./usr/include/sparc64/mutex.h			comp-c-include

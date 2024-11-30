@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.62 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.amiga,v 1.63 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
@@ -31,6 +31,7 @@
 ./usr/include/amiga/kcore.h			comp-c-include
 ./usr/include/amiga/limits.h			comp-c-include
 ./usr/include/amiga/lock.h			comp-c-include
+./usr/include/amiga/lwp_private.h		comp-c-include
 ./usr/include/amiga/math.h			comp-c-include
 ./usr/include/amiga/mcontext.h			comp-c-include
 ./usr/include/amiga/mtpr.h			comp-obsolete		obsolete

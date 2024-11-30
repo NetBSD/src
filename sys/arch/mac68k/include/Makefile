@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2018/07/12 10:46:45 maxv Exp $
+#	$NetBSD: Makefile,v 1.26 2024/11/30 01:04:11 christos Exp $
 
 INCSDIR= /usr/include/mac68k
 
@@ -13,7 +13,7 @@ INCS=	adbsys.h ansi.h aout_machdep.h asm.h autoconf.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h iteioctl.h \
 	kcore.h keyboard.h \
-	limits.h lock.h \
+	limits.h lock.h lwp_private.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pio.h pmap.h proc.h profile.h psc.h psl.h \
 	pte.h ptrace.h \

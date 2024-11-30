@@ -28,10 +28,6 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
-#if SANITIZER_NETBSD
-#define _RTLD_SOURCE  // for __lwp_gettcb_fast() / __lwp_getprivate_fast()
-#endif
-
 #include <dlfcn.h>  // for dlsym()
 #include <link.h>
 #include <pthread.h>
@@ -59,6 +55,8 @@
 #include <sys/sysctl.h>
 #include <sys/tls.h>
 #include <lwp.h>
+// for __lwp_gettcb_fast() / __lwp_getprivate_fast()
+#include <machine/lwp_private.h>
 #endif
 
 #if SANITIZER_SOLARIS

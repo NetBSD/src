@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.306 2024/11/27 17:08:40 christos Exp $
+# $NetBSD: md.amd64,v 1.307 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/amd64/limits.h			comp-c-include
 ./usr/include/amd64/linux32_machdep.h		comp-c-include
 ./usr/include/amd64/lock.h			comp-c-include
+./usr/include/amd64/lwp_private.h		comp-c-include
 ./usr/include/amd64/math.h			comp-c-include
 ./usr/include/amd64/mcontext.h			comp-c-include
 ./usr/include/amd64/mtrr.h			comp-c-include
@@ -1303,6 +1304,7 @@
 ./usr/include/i386/kcore.h			comp-c-include
 ./usr/include/i386/limits.h			comp-c-include
 ./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/lwp_private.h		comp-c-include
 ./usr/include/i386/math.h			comp-c-include
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mtrr.h			comp-c-include
@@ -1423,6 +1425,7 @@
 ./usr/include/x86/intr.h			comp-c-include
 ./usr/include/x86/intrdefs.h			comp-c-include
 ./usr/include/x86/lock.h			comp-c-include
+./usr/include/x86/lwp_private.h			comp-c-include
 ./usr/include/x86/math.h			comp-c-include
 ./usr/include/x86/mtrr.h			comp-c-include
 ./usr/include/x86/mutex.h			comp-c-include

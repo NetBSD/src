@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.24 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.luna68k,v 1.25 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/luna68k				comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/luna68k/lcd.h			comp-c-include
 ./usr/include/luna68k/limits.h			comp-c-include
 ./usr/include/luna68k/lock.h			comp-c-include
+./usr/include/luna68k/lwp_private.h		comp-c-include
 ./usr/include/luna68k/math.h			comp-c-include
 ./usr/include/luna68k/mcontext.h		comp-c-include
 ./usr/include/luna68k/mutex.h			comp-c-include

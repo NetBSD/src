@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.42 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.bebox,v 1.43 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
@@ -37,6 +37,7 @@
 ./usr/include/bebox/kgdb.h			comp-obsolete		obsolete
 ./usr/include/bebox/limits.h			comp-c-include
 ./usr/include/bebox/lock.h			comp-c-include
+./usr/include/bebox/lwp_private.h		comp-c-include
 ./usr/include/bebox/math.h			comp-c-include
 ./usr/include/bebox/mcontext.h			comp-c-include
 ./usr/include/bebox/mouse.h			comp-obsolete		obsolete

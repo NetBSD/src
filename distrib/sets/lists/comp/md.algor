@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.19 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.algor,v 1.20 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
@@ -33,6 +33,7 @@
 ./usr/include/algor/limits.h			comp-c-include
 ./usr/include/algor/lock.h			comp-c-include
 ./usr/include/algor/locore.h			comp-c-include
+./usr/include/algor/lwp_private.h		comp-c-include
 ./usr/include/algor/math.h			comp-c-include
 ./usr/include/algor/mcontext.h			comp-c-include
 ./usr/include/algor/mips_opcode.h		comp-c-include

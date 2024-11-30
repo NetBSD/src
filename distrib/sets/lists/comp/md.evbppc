@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.19 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.evbppc,v 1.20 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
@@ -31,6 +31,7 @@
 ./usr/include/evbppc/kcore.h			comp-c-include
 ./usr/include/evbppc/limits.h			comp-c-include
 ./usr/include/evbppc/lock.h			comp-c-include
+./usr/include/evbppc/lwp_private.h		comp-c-include
 ./usr/include/evbppc/math.h			comp-c-include
 ./usr/include/evbppc/mcontext.h			comp-c-include
 ./usr/include/evbppc/mutex.h			comp-c-include

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2018/07/12 10:46:42 maxv Exp $
+#	$NetBSD: Makefile,v 1.34 2024/11/30 01:04:06 christos Exp $
 
 INCSDIR= /usr/include/arc
 
@@ -13,7 +13,7 @@ INCS=	ansi.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h kdbparam.h \
-	limits.h lock.h \
+	limits.h lock.h lwp_private.h \
 	math.h mcontext.h mips_opcode.h mouse.h mutex.h \
 	param.h pcb.h pccons.h pmap.h proc.h profile.h psl.h pte.h \
 	ptrace.h \

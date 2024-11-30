@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.55 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.56 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/aarch64/kcore.h			comp-c-include
 ./usr/include/aarch64/limits.h			comp-c-include
 ./usr/include/aarch64/lock.h			comp-c-include
+./usr/include/aarch64/lwp_private.h		comp-c-include
 ./usr/include/aarch64/math.h			comp-c-include
 ./usr/include/aarch64/mcontext.h		comp-c-include
 ./usr/include/aarch64/mutex.h			comp-c-include

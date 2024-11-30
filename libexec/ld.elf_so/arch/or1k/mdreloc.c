@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.5 2024/08/03 21:59:58 riastradh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.6 2024/11/30 01:04:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.5 2024/08/03 21:59:58 riastradh Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.6 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: mdreloc.c,v 1.5 2024/08/03 21:59:58 riastradh Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_bind_start(void);
 Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);

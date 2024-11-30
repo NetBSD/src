@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/07/12 10:46:42 maxv Exp $
+#	$NetBSD: Makefile,v 1.13 2024/11/30 01:04:07 christos Exp $
 
 INCSDIR= /usr/include/cesfic
 
@@ -11,7 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
-	limits.h lock.h \
+	limits.h lock.h lwp_private.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h setjmp.h signal.h trap.h types.h \

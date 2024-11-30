@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.21 2024/11/04 15:45:25 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.22 2024/11/30 01:04:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,23 +160,5 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PC] = (pc);			\
 	(uc)->uc_mcontext.__gregs[_REG_nPC] = (pc) + 4;			\
 } while (/*CONSTCOND*/0)
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
-    defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-
-__BEGIN_DECLS
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	register void *__tmp;
-
-	__asm volatile("mov %%g7, %0" : "=r" (__tmp));
-
-	return __tmp;
-}
-__END_DECLS
-
-#endif
 
 #endif	/* !_SPARC_MCONTEXT_H_ */

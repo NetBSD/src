@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.23 2024/11/04 15:45:23 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.24 2024/11/30 01:04:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,24 +83,6 @@ typedef struct {
 #define _UC_CLRSTACK	_UC_MD_BIT17
 
 #define	__UCONTEXT_SIZE	784
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
-    defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-
-__BEGIN_DECLS
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	void *__tmp;
-
-	__asm volatile("movq %%fs:0, %0" : "=r" (__tmp));
-
-	return __tmp;
-}
-__END_DECLS
-
-#endif
 
 #ifdef _KERNEL
 

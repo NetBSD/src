@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.65 2024/08/03 21:59:58 riastradh Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.66 2024/11/30 01:04:05 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.65 2024/08/03 21:59:58 riastradh Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.66 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -55,6 +55,8 @@ __RCSID("$NetBSD: ppc_reloc.c,v 1.65 2024/08/03 21:59:58 riastradh Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_powerpc_pltcall(Elf_Word);
 void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);

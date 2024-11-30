@@ -1,4 +1,4 @@
-# $NetBSD: md.next68k,v 1.35 2024/07/11 20:41:07 riastradh Exp $
+# $NetBSD: md.next68k,v 1.36 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/next68k				comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/next68k/kcore.h			comp-c-include
 ./usr/include/next68k/limits.h			comp-c-include
 ./usr/include/next68k/lock.h			comp-c-include
+./usr/include/next68k/lwp_private.h		comp-c-include
 ./usr/include/next68k/math.h			comp-c-include
 ./usr/include/next68k/mcontext.h		comp-c-include
 ./usr/include/next68k/mutex.h			comp-c-include

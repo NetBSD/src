@@ -1,4 +1,4 @@
-# $NetBSD: md.hppa,v 1.20 2024/11/04 15:45:23 christos Exp $
+# $NetBSD: md.hppa,v 1.21 2024/11/30 01:04:04 christos Exp $
 #
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
@@ -44,6 +44,7 @@
 ./usr/include/hp700/limits.h			comp-obsolete		obsolete
 ./usr/include/hp700/loadfile_machdep.h		comp-obsolete		obsolete
 ./usr/include/hp700/lock.h			comp-obsolete		obsolete
+./usr/include/hp700/lwp_private.h		comp-obsolete		obsolete
 ./usr/include/hp700/math.h			comp-obsolete		obsolete
 ./usr/include/hp700/mcontext.h			comp-obsolete		obsolete
 ./usr/include/hp700/mutex.h			comp-obsolete		obsolete
