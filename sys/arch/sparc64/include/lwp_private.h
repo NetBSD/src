@@ -1,3 +1,3 @@
-/*	$NetBSD: lwp_private.h,v 1.1 2024/11/30 01:04:14 christos Exp $	*/
+/*	$NetBSD: lwp_private.h,v 1.2 2024/11/30 14:42:42 uwe Exp $	*/
 
-// not implemented
+#include <sparc/lwp_private.h>
