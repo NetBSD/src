@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_strcat.c,v 1.2 2000/06/14 06:49:08 cgd Exp $ */
+/* $NetBSD: Lint_strcat.c,v 1.3 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 char *
-strcat(s, append)
-	char *s;
-	const char *append;
+strcat(char *s, const char *append)
 {
-	return (0);
+	return NULL;
 }

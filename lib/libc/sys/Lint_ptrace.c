@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_ptrace.c,v 1.4 2024/01/21 00:35:57 christos Exp $ */
+/* $NetBSD: Lint_ptrace.c,v 1.5 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -13,5 +13,5 @@
 int
 ptrace(int request, pid_t pid, void *addr, int data)
 {
-	return (0);
+	return 0;
 }

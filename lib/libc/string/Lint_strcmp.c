@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_strcmp.c,v 1.2 2000/06/14 06:49:09 cgd Exp $ */
+/* $NetBSD: Lint_strcmp.c,v 1.3 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 int
-strcmp(s1, s2)
-	const char *s1, *s2;
+strcmp(const char *s1, const char *s2)
 {
-	return (0);
+	return 0;
 }

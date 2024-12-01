@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_strrchr.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint_strrchr.c,v 1.3 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 char *
-strrchr(src, c)
-	const char *src;
-	int c;
+strrchr(const char *src, int c)
 {
-	return (0);
+	return NULL;
 }

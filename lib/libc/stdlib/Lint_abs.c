@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_abs.c,v 1.2 2000/06/14 06:49:07 cgd Exp $ */
+/* $NetBSD: Lint_abs.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 int
-abs(j)
-	int j;
+abs(int j)
 {
-	return (0);
+	return 0;
 }

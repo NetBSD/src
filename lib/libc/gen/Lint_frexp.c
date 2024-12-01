@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_frexp.c,v 1.2 1998/12/02 09:47:20 christos Exp $	*/
+/*	$NetBSD: Lint_frexp.c,v 1.3 2024/12/01 16:16:56 rillig Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 double
-frexp(value, eptr)
-	double value;
-	int *eptr;
+frexp(double value, int *eptr)
 {
-	return(0);
+	return 0.0;
 }

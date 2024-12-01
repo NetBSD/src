@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_ntohs.c,v 1.4 2001/08/22 07:42:09 itojun Exp $ */
+/* $NetBSD: Lint_ntohs.c,v 1.5 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -8,10 +8,9 @@
 #include <sys/types.h>
 #undef ntohs
 
-/*ARGSUSED*//*NOSTRICT*/
+/*ARGSUSED*/
 uint16_t
-ntohs(net16)
-	uint16_t net16;
+ntohs(uint16_t net16)
 {
-	return (0);
+	return 0;
 }

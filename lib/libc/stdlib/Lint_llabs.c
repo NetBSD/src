@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_llabs.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
+/*	$NetBSD: Lint_llabs.c,v 1.3 2024/12/01 16:16:56 rillig Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -7,10 +7,9 @@
 
 #include <stdlib.h>
 
-/* ARGSUSED */ /* LONGLONG */
+/* ARGSUSED */
 long long int
-llabs(j)
-	long long int j;
+llabs(long long int j)
 {
-	return (0);
+	return 0;
 }

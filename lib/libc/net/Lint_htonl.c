@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_htonl.c,v 1.4 2001/08/22 07:42:08 itojun Exp $ */
+/* $NetBSD: Lint_htonl.c,v 1.5 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -10,8 +10,7 @@
 
 /*ARGSUSED*/
 uint32_t
-htonl(host32)
-	uint32_t host32;
+htonl(uint32_t host32)
 {
-	return (0);
+	return 0;
 }

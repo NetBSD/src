@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_strlen.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint_strlen.c,v 1.3 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 size_t
-strlen(s)
-	const char *s;
+strlen(const char *s)
 {
-	return (0);
+	return 0;
 }

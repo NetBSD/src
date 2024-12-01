@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_swapcontext.c,v 1.2 2003/01/18 11:38:47 thorpej Exp $	*/
+/*	$NetBSD: Lint_swapcontext.c,v 1.3 2024/12/01 16:16:56 rillig Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,10 +9,7 @@
 
 /*ARGSUSED*/
 int
-swapcontext(oucp, ucp)
-	ucontext_t *oucp;
-	const ucontext_t *ucp;
+swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 {
-
-	return (0);
+	return 0;
 }

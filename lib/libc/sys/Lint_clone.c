@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_clone.c,v 1.3 2024/01/20 14:52:49 christos Exp $ */
+/* $NetBSD: Lint_clone.c,v 1.4 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -12,5 +12,5 @@
 pid_t
 clone(int (*func)(void *), void *stack, int flags, void *arg)
 {
-	return (0);
+	return 0;
 }

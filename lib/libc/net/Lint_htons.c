@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_htons.c,v 1.4 2001/08/22 07:42:09 itojun Exp $ */
+/* $NetBSD: Lint_htons.c,v 1.5 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -8,10 +8,9 @@
 #include <sys/types.h>
 #undef htons
 
-/*ARGSUSED*//*NOSTRICT*/
+/*ARGSUSED*/
 uint16_t
-htons(host16)
-	uint16_t host16;
+htons(uint16_t host16)
 {
-	return (0);
+	return 0;
 }

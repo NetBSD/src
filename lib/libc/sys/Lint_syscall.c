@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_syscall.c,v 1.4 2003/01/18 11:32:58 thorpej Exp $ */
+/* $NetBSD: Lint_syscall.c,v 1.5 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -12,5 +12,5 @@
 int
 syscall(int arg1, ...)
 {
-	return (0);
+	return 0;
 }

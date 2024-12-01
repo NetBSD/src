@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_bcmp.c,v 1.2 2000/06/14 06:49:07 cgd Exp $ */
+/* $NetBSD: Lint_bcmp.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 int
-bcmp(b1, b2, len)
-	const void *b1, *b2;
-	size_t len;
+bcmp(const void *b1, const void *b2, size_t len)
 {
-	return (0);
+	return 0;
 }

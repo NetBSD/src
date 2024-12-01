@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_strncat.c,v 1.1 1997/12/07 00:24:58 matthias Exp $	*/
+/*	$NetBSD: Lint_strncat.c,v 1.2 2024/12/01 16:16:57 rillig Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,10 +9,7 @@
 
 /*ARGSUSED*/
 char *
-strncat(dst, src, n)
-	char *dst;
-	const char *src;
-	size_t n;
+strncat(char *dst, const char *src, size_t n)
 {
-	return (0);
+	return NULL;
 }

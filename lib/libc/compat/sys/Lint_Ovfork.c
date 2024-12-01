@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_Ovfork.c,v 1.2 2024/01/20 14:52:46 christos Exp $ */
+/* $NetBSD: Lint_Ovfork.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -7,9 +7,8 @@
 
 #include <unistd.h>
 
-/*ARGSUSED*/
 pid_t
 vfork(void)
 {
-	return (0);
+	return 0;
 }

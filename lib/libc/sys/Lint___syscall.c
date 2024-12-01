@@ -1,4 +1,4 @@
-/* $NetBSD: Lint___syscall.c,v 1.3 2003/01/18 11:32:58 thorpej Exp $ */
+/* $NetBSD: Lint___syscall.c,v 1.4 2024/12/01 16:16:57 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -12,5 +12,5 @@
 quad_t
 __syscall(quad_t arg1, ...)
 {
-	return (0);
+	return 0;
 }

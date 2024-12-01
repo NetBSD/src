@@ -1,4 +1,4 @@
-/* $NetBSD: Lint__setjmp.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint__setjmp.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,16 +9,13 @@
 
 /*ARGSUSED*/
 int
-_setjmp(env)
-	jmp_buf env;
+_setjmp(jmp_buf env)
 {
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
 void
-_longjmp(env, val)
-	jmp_buf env;
-	int val;
+_longjmp(jmp_buf env, int val)
 {
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_ldiv.c,v 1.2 2000/06/14 06:49:07 cgd Exp $ */
+/* $NetBSD: Lint_ldiv.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,9 @@
 
 /*ARGSUSED*/
 ldiv_t
-ldiv(num, denom)
-	long num, denom;
+ldiv(long num, long denom)
 {
 	ldiv_t rv = { 0 };
-	return (rv);
+
+	return rv;
 }

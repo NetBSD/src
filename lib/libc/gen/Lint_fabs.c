@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_fabs.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint_fabs.c,v 1.3 2024/12/01 16:16:56 rillig Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 double
-fabs(x)
-	double x;
+fabs(double x)
 {
-	return (0.0);
+	return 0.0;
 }
