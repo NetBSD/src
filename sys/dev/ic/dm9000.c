@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.37 2024/09/07 06:17:37 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.38 2024/12/01 20:24:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -244,7 +244,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 			enaddr[5] = machi >> 8;
 		}
 	}
-	/* TODO: perform explicit EEPROM read op if it's availble */
+	/* TODO: perform explicit EEPROM read op if it's available */
 
 	dme_reset(sc);
 
