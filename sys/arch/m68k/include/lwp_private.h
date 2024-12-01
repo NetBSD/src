@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp_private.h,v 1.1 2024/11/30 01:04:11 christos Exp $	*/
+/*	$NetBSD: lwp_private.h,v 1.2 2024/12/01 08:44:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
 
 #include <lwp.h>
 
-__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
-__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
-
 #define	TLS_TP_OFFSET	0x7000
 #define	TLS_DTV_OFFSET	0x8000
+
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
 
 __BEGIN_DECLS
 
