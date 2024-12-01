@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.10 2024/07/22 23:11:05 riastradh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.11 2024/12/01 09:27:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.10 2024/07/22 23:11:05 riastradh Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.11 2024/12/01 09:27:12 skrll Exp $");
 #endif /* not lint */
 
 /*
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: mdreloc.c,v 1.10 2024/07/22 23:11:05 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <sys/tls.h>
+
+#include <machine/lwp_private.h>
 
 #include <stdlib.h>
 #include <string.h>
