@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.19 2024/06/23 20:47:17 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.20 2024/12/01 20:36:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.19 2024/06/23 20:47:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.20 2024/12/01 20:36:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -835,7 +835,7 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 
 		/*
 		 * Warn if we violate timecounter(9) contract: with a
-		 * k-bit timeocunter (here k = 32), and timecounter
+		 * k-bit timecounter (here k = 32), and timecounter
 		 * frequency f (here f = 1 GHz), the maximum period
 		 * between hardclock calls is 2^k / f.
 		 */
