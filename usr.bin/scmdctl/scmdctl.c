@@ -1,4 +1,4 @@
-/*	$NetBSD: scmdctl.c,v 1.2 2024/11/03 10:43:27 rillig Exp $	*/
+/*	$NetBSD: scmdctl.c,v 1.3 2024/12/01 10:32:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: scmdctl.c,v 1.2 2024/11/03 10:43:27 rillig Exp $");
+__RCSID("$NetBSD: scmdctl.c,v 1.3 2024/12/01 10:32:48 rillig Exp $");
 #endif
 
 /* Main userland program that knows how to talk to the Sparkfun
@@ -346,7 +346,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to motor: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to motor: %s\n\n", argv[2]);
@@ -469,7 +468,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to updaterate: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to updaterate: %s\n\n", argv[2]);
@@ -510,7 +508,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to expansion_bus: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to expansion_bus: %s\n\n", argv[2]);
@@ -552,7 +549,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to lock: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to lock: %s\n\n", argv[2]);
@@ -575,7 +571,6 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr,"Unknown handling of command: %d\n",valid);
 			exit(2);
-			break;
 		}
 
 		if (! error) {
@@ -624,7 +619,6 @@ main(int argc, char *argv[])
 			default:
 				fprintf(stderr,"Unknown printing of command: %d\n",valid);
 				exit(2);
-				break;
 			}
 		} else {
 			fprintf(stderr,"Error: %d\n", error);
