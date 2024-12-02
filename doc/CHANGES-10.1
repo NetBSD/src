@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.73 2024/11/28 16:37:05 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.74 2024/12/02 10:21:07 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3734,4 +3734,27 @@ sys/dev/pci/virtio_pci.c			1.55
 	bus_space_write_8 it was changed to be guest-endian instead of
 	little-endian.
 	[riastradh, ticket #1018]
+
+usr.bin/ftp/ftp.1				1.151 (fix for #970)
+
+	ftp(1): wording and formatting improvements
+	[lukem, ticket #1020]
+
+usr.bin/ftp/cmds.c				1.144
+usr.bin/ftp/extern.h				1.84
+usr.bin/ftp/fetch.c				1.242
+usr.bin/ftp/ftp.1				1.160
+usr.bin/ftp/ftp.c				1.178
+usr.bin/ftp/main.c				1.134,1.135
+usr.bin/ftp/progressbar.c			1.27
+usr.bin/ftp/ruserpass.c				1.35
+usr.bin/ftp/util.c				1.165
+usr.bin/ftp/version.h				1.99
+
+	ftp(1): PR 54713, PR 58281: update to version 20241129.
+	- if a http file size is known and the fetch finishes with less bytes
+	  transferred, exit non-zero.
+	- improve help
+	- various internal cleanup
+	[lukem, ticket #1021]
 
