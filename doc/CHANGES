@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3115 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3116 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -601,3 +601,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	lint(1): Handle _Noreturn attributes.  [rillig 20241113]
 	hppa: Initial summitfb driver for Visualize FX video cards.
 		[macallan 20241119]
+	amd64: add support for non-Xen PVH guests.  [bouyer 20241202]
