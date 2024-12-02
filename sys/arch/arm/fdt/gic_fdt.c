@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.25 2022/08/11 13:04:35 riastradh Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.26 2024/12/02 12:53:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.25 2022/08/11 13:04:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.26 2024/12/02 12:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,8 +165,8 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const bus_addr_t addr = uimin(addr_d, addr_c);
-	const bus_size_t end = uimax(addr_d + size_d, addr_c + size_c);
+	const bus_addr_t addr = ulmin(addr_d, addr_c);
+	const bus_size_t end = ulmax(addr_d + size_d, addr_c + size_c);
 	const bus_size_t size = end - addr;
 
 	error = bus_space_map(faa->faa_bst, addr, size, 0, &bsh);
