@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.235.2.3 2024/10/13 16:06:36 martin Exp $	*/
+/*	$NetBSD: fetch.c,v 1.235.2.4 2024/12/02 10:19:39 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.235.2.3 2024/10/13 16:06:36 martin Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.235.2.4 2024/12/02 10:19:39 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -1861,6 +1861,11 @@ chunkerror:
 	}
 	if (bytes > 0)
 		ptransfer(0);
+
+		/* fail if short transfer when filesize is known */
+	if (filesize >= 0 && (bytes + restart_point < filesize))
+		goto cleanup_fetch_url;
+
 	bytes = 0;
 
 	rval = 0;

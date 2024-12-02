@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.33.86.1 2024/10/13 16:06:36 martin Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.33.86.2 2024/12/02 10:19:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.33.86.1 2024/10/13 16:06:36 martin Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.33.86.2 2024/12/02 10:19:39 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,20 @@ static struct toktab {
 	{ NULL,		0 }
 };
 
+static int
+match_host_domain(const char *host, const char *domain, const char *tokv)
+{
+	const char *tmp;
+
+	if (strcasecmp(host, tokval) == 0)
+		return 1;
+
+	return (tmp = strchr(host, '.')) != NULL &&
+	    strcasecmp(tmp, domain) == 0 &&
+	    strncasecmp(host, tokv, tmp - host) == 0 &&
+	    tokv[tmp - host] == '\0';
+}
+
 int
 ruserpass(const char *host, char **aname, char **apass, char **aacct)
 {
@@ -119,19 +133,9 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 			 * or official hostname.  Also allow match of
 			 * incompletely-specified host in local domain.
 			 */
-			if (strcasecmp(host, tokval) == 0)
+			if (match_host_domain(hostname, mydomain, tokval))
 				goto match;
-			if (strcasecmp(hostname, tokval) == 0)
-				goto match;
-			if ((tmp = strchr(hostname, '.')) != NULL &&
-			    strcasecmp(tmp, mydomain) == 0 &&
-			    strncasecmp(hostname, tokval, tmp-hostname) == 0 &&
-			    tokval[tmp - hostname] == '\0')
-				goto match;
-			if ((tmp = strchr(host, '.')) != NULL &&
-			    strcasecmp(tmp, mydomain) == 0 &&
-			    strncasecmp(host, tokval, tmp - host) == 0 &&
-			    tokval[tmp - host] == '\0')
+			if (match_host_domain(host, mydomain, tokval))
 				goto match;
 			continue;
 		}

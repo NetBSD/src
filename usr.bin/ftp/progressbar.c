@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.24.6.1 2024/10/13 16:06:36 martin Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.24.6.2 2024/12/02 10:19:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.24.6.1 2024/10/13 16:06:36 martin Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.24.6.2 2024/12/02 10:19:39 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -123,12 +123,12 @@ static struct timeval lastupdate;
 void
 progressmeter(int flag)
 {
-	static off_t lastsize;
-	off_t cursize;
+	static uint64_t lastsize;
+	uint64_t cursize;
 	struct timeval now, wait;
 #ifndef NO_PROGRESS
 	struct timeval td;
-	off_t abbrevsize, bytespersec;
+	uint64_t abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, i, remaining, barlength;
 
@@ -261,7 +261,7 @@ progressmeter(int flag)
 	    suffixes[i]);
 
 	if (filesize > 0) {
-		if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
+		if (bytes <= 0 || elapsed <= 0.0 || cursize > (uint64_t)filesize) {
 			len += snprintf(buf + len, BUFLEFT, "   --:-- ETA");
 		} else if (wait.tv_sec >= STALLTIME) {
 			len += snprintf(buf + len, BUFLEFT, " - stalled -");

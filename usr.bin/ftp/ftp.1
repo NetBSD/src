@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.147.2.6 2024/12/02 09:05:18 martin Exp $
+.\" 	$NetBSD: ftp.1,v 1.147.2.7 2024/12/02 10:19:39 martin Exp $
 .\"
 .\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd September 30, 2024
+.Dd November 29, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Nd Internet file transfer program
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46AadefginpRtVv\&?
+.Op Fl 46AadefginpRtVv
 .Op Fl b Ar bufsize
 .Op Fl H Ar header
 .Op Fl N Ar netrc
@@ -158,6 +158,8 @@
 .Bk -words
 .Fl u Ar url Ar
 .Ek
+.Nm
+.Fl \&?
 .Sh DESCRIPTION
 .Nm
 is the user interface to the Internet standard File Transfer Protocol.
@@ -205,7 +207,8 @@ Causes
 to bypass normal login procedure, and use an anonymous login instead.
 .It Fl b Ar bufsize
 Change the input buffer size to
-.Ar bufsize .
+.Ar bufsize
+bytes.
 The default
 .Ar bufsize
 is
@@ -300,9 +303,9 @@ Quit if the connection has stalled for
 seconds.
 .It Fl R
 Restart all non-proxied auto-fetches.
-.It Fl r Ar wait
+.It Fl r Ar retry
 Retry the connection attempt if it failed, pausing for
-.Ar wait
+.Ar retry
 seconds.
 .It Fl s Ar srcaddr
 Uses
@@ -358,7 +361,8 @@ to show all responses from the remote server, as well
 as report on data transfer statistics.
 .It Fl x Ar xfersize
 Set the size of the socket send and receive buffers to
-.Ar xfersize .
+.Ar xfersize
+bytes.
 Refer to
 .Ic xferbuf
 for more information.

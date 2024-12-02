@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.82.10.1 2023/05/16 16:16:00 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.82.10.2 2024/12/02 10:19:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ char   *getoptionvalue(const char *);
 void	getremoteinfo(void);
 int	getreply(int);
 char   *globulize(const char *);
-char   *gunique(const char *);
+char   *gunique(char *);
 void	help(int, char **);
 char   *hookup(const char *, const char *);
 void	idlecmd(int, char **);
@@ -176,7 +176,7 @@ void	quit(int, char **);
 void	justquit(void) __dead;
 void	quote(int, char **);
 void	quote1(const char *, int, char **);
-void	recvrequest(const char *, const char *, const char *,
+void	recvrequest(const char *, char *, const char *,
 	    const char *, int, int);
 void	reget(int, char **);
 char   *remglob(char **, int, const char **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.141.6.1 2024/10/13 16:06:36 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.141.6.2 2024/12/02 10:19:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.141.6.1 2024/10/13 16:06:36 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.141.6.2 2024/12/02 10:19:39 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,10 +147,10 @@ __dead static void	mintr(int);
 static void	mabort(const char *);
 static void	set_type(const char *);
 
-static const char *doprocess(char *, size_t, const char *, int, int, int);
-static const char *domap(char *, size_t, const char *);
-static const char *docase(char *, size_t, const char *);
-static const char *dotrans(char *, size_t, const char *);
+static char *doprocess(char *, size_t, char *, int, int, int);
+static char *domap(char *, size_t, const char *);
+static char *docase(char *, size_t, const char *);
+static char *dotrans(char *, size_t, const char *);
 
 /*
  * Confirm if "cmd" is to be performed upon "file".
@@ -407,7 +407,7 @@ put(int argc, char *argv[])
 	const char *cmd;
 	int loc = 0;
 	char *locfile;
-	const char *remfile;
+	char *remfile;
 
 	if (argc == 2) {
 		argc++;
@@ -437,8 +437,8 @@ put(int argc, char *argv[])
 	free(locfile);
 }
 
-static const char *
-doprocess(char *dst, size_t dlen, const char *src,
+static char *
+doprocess(char *dst, size_t dlen, char *src,
     int casef, int transf, int mapf)
 {
 	if (casef)
@@ -576,8 +576,7 @@ int
 getit(int argc, char *argv[], int restartit, const char *gmode)
 {
 	int	loc, rval;
-	char	*remfile, *olocfile;
-	const char *locfile;
+	char	*remfile, *olocfile, *locfile;
 	char	buf[MAXPATHLEN];
 
 	loc = rval = 0;
@@ -684,8 +683,7 @@ mget(int argc, char *argv[])
 {
 	sigfunc oldintr;
 	int ointer;
-	char *cp;
-	const char *tp;
+	char *cp, *tp;
 	int volatile restartit;
 
 	if (argc == 0 ||
@@ -1290,13 +1288,11 @@ void
 ls(int argc, char *argv[])
 {
 	const char *cmd;
-	char *remdir, *locbuf;
-	const char *locfile;
+	char *remdir, *locbuf, *locfile;
 	int pagecmd, mlsdcmd;
 
 	remdir = NULL;
 	locbuf = NULL;
-	locfile = "-";
 	pagecmd = mlsdcmd = 0;
 			/*
 			 * the only commands that start with `p' are
@@ -1326,6 +1322,8 @@ ls(int argc, char *argv[])
 		remdir = argv[1];
 	if (argc > 2)
 		locfile = argv[2];
+	else
+		locfile = locbuf = ftp_strdup("-");
 	if (argc > 3 || ((pagecmd | mlsdcmd) && argc > 2)) {
  usage:
 		if (pagecmd || mlsdcmd)
@@ -1345,11 +1343,12 @@ ls(int argc, char *argv[])
 		if (EMPTYSTRING(p))
 			p = DEFAULTPAGER;
 		len = strlen(p) + 2;
+		free(locbuf);
 		locbuf = ftp_malloc(len);
 		locbuf[0] = '|';
 		(void)strlcpy(locbuf + 1, p, len - 1);
 		locfile = locbuf;
-	} else if ((strcmp(locfile, "-") != 0) && *locfile != '|') {
+	} else if (locfile != locbuf) { 
 		if ((locbuf = globulize(locfile)) == NULL ||
 		    !confirm("output to local-file:", locbuf)) {
 			code = -1;
@@ -1920,7 +1919,7 @@ setcase(int argc, char *argv[])
  * convert the given name to lower case if it's all upper case, into
  * a static buffer which is returned to the caller
  */
-static const char *
+static char *
 docase(char *dst, size_t dlen, const char *src)
 {
 	size_t i;
@@ -1973,7 +1972,14 @@ setntrans(int argc, char *argv[])
 	(void)strlcpy(ntout, argv[2], sizeof(ntout));
 }
 
-static const char *
+#define ADDC(x) 					\
+	do { 						\
+		*cp2++ = x; 				\
+		if (cp2 - dst >= (ptrdiff_t)(dlen - 1))	\
+			goto out;			\
+	} while (0)
+
+static char *
 dotrans(char *dst, size_t dlen, const char *src)
 {
 	const char *cp1;
@@ -1988,15 +1994,13 @@ dotrans(char *dst, size_t dlen, const char *src)
 			if (*cp1 == ntin[i]) {
 				found++;
 				if (i < ostop) {
-					*cp2++ = ntout[i];
-					if (cp2 - dst >= (ptrdiff_t)(dlen - 1))
-						goto out;
+					ADDC(ntout[i]);
 				}
 				break;
 			}
 		}
 		if (!found) {
-			*cp2++ = *cp1;
+			ADDC(*cp1);
 		}
 	}
 out:
@@ -2037,8 +2041,8 @@ setnmap(int argc, char *argv[])
 	(void)strlcpy(mapout, cp, MAXPATHLEN);
 }
 
-static const char *
-domap(char *dst, size_t dlen __unused, const char *src)
+static char *
+domap(char *dst, size_t dlen, const char *src)
 {
 	const char *cp1 = src;
 	char *cp2 = mapin;
@@ -2093,7 +2097,7 @@ domap(char *dst, size_t dlen __unused, const char *src)
 		switch (*cp1) {
 			case '\\':
 				if (*(cp1 + 1)) {
-					*cp2++ = *++cp1;
+					ADDC(*++cp1);
 				}
 				break;
 			case '[':
@@ -2104,7 +2108,7 @@ LOOP:
 						const char *cp3 = src;
 
 						while (*cp3) {
-							*cp2++ = *cp3++;
+							ADDC(*cp3++);
 						}
 						match = 1;
 					}
@@ -2112,7 +2116,7 @@ LOOP:
 						const char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {
-							*cp2++ = *cp3++;
+							ADDC(*cp3++);
 						}
 						match = 1;
 					}
@@ -2129,7 +2133,7 @@ LOOP:
 							   const char *cp3 = src;
 
 							   while (*cp3) {
-								*cp2++ = *cp3++;
+								ADDC(*cp3++);
 							   }
 							}
 							else if (toks[toknum =
@@ -2138,19 +2142,16 @@ LOOP:
 
 							   while (cp3 !=
 								  te[toknum]) {
-								*cp2++ = *cp3++;
+								ADDC(*cp3++);
 							   }
 							}
 						}
 						else if (*cp1) {
-							*cp2++ = *cp1++;
+							ADDC(*cp1++);
 						}
 					}
 					if (!*cp1) {
-						fputs(
-						"nmap: unbalanced brackets.\n",
-						    ttyout);
-						return (src);
+						goto unbalanced;
 					}
 					match = 1;
 					cp1--;
@@ -2162,10 +2163,7 @@ LOOP:
 					      }
 					}
 					if (!*cp1) {
-						fputs(
-						"nmap: unbalanced brackets.\n",
-						    ttyout);
-						return (src);
+						goto unbalanced;
 					}
 					break;
 				}
@@ -2185,27 +2183,34 @@ LOOP:
 						const char *cp3 = src;
 
 						while (*cp3) {
-							*cp2++ = *cp3++;
+							ADDC(*cp3++);
 						}
 					}
 					else if (toks[toknum = *cp1 - '1']) {
 						const char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {
-							*cp2++ = *cp3++;
+							ADDC(*cp3++);
 						}
 					}
 					break;
 				}
 				/* FALLTHROUGH */
 			default:
-				*cp2++ = *cp1;
+				ADDC(*cp1);
 				break;
 		}
 		cp1++;
 	}
+out:
 	*cp2 = '\0';
-	return *dst ? dst : src;
+	if (!*dst)
+		strlcpy(dst, src, dlen);
+	return dst;
+unbalanced:
+	fputs("nmap: unbalanced brackets.\n", ttyout);
+	*dst = '\0';
+	goto out;
 }
 
 void
