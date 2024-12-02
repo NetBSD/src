@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.147.2.5 2024/10/13 16:06:36 martin Exp $
+.\" 	$NetBSD: ftp.1,v 1.147.2.6 2024/12/02 09:05:18 martin Exp $
 .\"
 .\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Nd Internet file transfer program
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46AadefginpRtVv?
+.Op Fl 46AadefginpRtVv\&?
 .Op Fl b Ar bufsize
 .Op Fl H Ar header
 .Op Fl N Ar netrc
@@ -310,7 +310,7 @@ Uses
 as the local IP address for all connections.
 .It Fl t
 Enables packet tracing.
-.It Fl T Ar direction Ns Cm \&, Ns Ar maximum\| Ns Oo Cm \&, Ns Ar increment Oc
+.It Fl T Ar direction Ns Cm \&, Ns Ar maximum Ns Oo Cm \&, Ns Ar increment Oc
 Set the maximum transfer rate for
 .Ar direction
 to
@@ -413,24 +413,20 @@ or
 .Ic nmap
 setting.
 File transfer uses the current settings for
-.Ic type  ,
-.Ic format ,
-.Ic mode  ,
+.Ic type ,
+.Ic form ,
+.Ic mode ,
 and
-.Ic structure .
+.Ic struct .
 .It Ic ascii
-Set the file transfer
-.Ic type
-to network
-.Tn ASCII .
-This is the default type.
+A synonym for
+.Ic type Cm ascii .
 .It Ic bell
 Arrange that a bell be sounded after each file transfer
 command is completed.
 .It Ic binary
-Set the file transfer
-.Ic type
-to support binary image transfer.
+A synonym for
+.Ic type Cm binary .
 .It Ic bye
 Terminate the
 .Tn FTP
@@ -471,9 +467,12 @@ return to the command interpreter.
 Any defined macros are erased.
 .It Ic \&cr
 Toggle carriage return stripping during
-ascii type file retrieval.
+.Ic type Cm ascii
+file retrieval.
 Records are denoted by a carriage return/linefeed sequence
-during ascii type file transfer.
+during
+.Ic type Cm ascii
+file transfer.
 When
 .Ic \&cr
 is on (the default), carriage returns are stripped from this
@@ -484,7 +483,9 @@ delimiter.
 Records on
 .Pf non\- Ux
 remote systems may contain single linefeeds;
-when an ascii type transfer is made, these linefeeds may be
+when a
+.Ic type Cm ascii
+transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic \&cr
 is off.
@@ -562,12 +563,11 @@ Retrieve the files listed in
 .Ar localfile ,
 which has one line per filename.
 .It Ic form Ar format
-Set the file transfer
-.Ic form
-to
+Set the file transfer format control to
 .Ar format .
 The default (and only supported)
-format is
+.Ar format
+is
 .Ql non-print .
 .It Ic ftp Ar host Op Ar port
 A synonym for
@@ -600,27 +600,27 @@ If the local
 file name is not specified, it is given the same
 name it has on the remote machine, subject to
 alteration by the current
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 and
 .Ic nmap
 settings.
 The current settings for
-.Ic type  ,
+.Ic type ,
 .Ic form ,
-.Ic mode  ,
+.Ic mode ,
 and
-.Ic structure
+.Ic struct
 are used while transferring the file.
 .It Ic glob
 Toggle filename expansion for
-.Ic mdelete  ,
+.Ic mdelete ,
 .Ic mget ,
 .Ic mput ,
 and
 .Ic mreget .
 If globbing is turned off with
-.Ic glob  ,
+.Ic glob ,
 the file name arguments
 are taken literally and not expanded.
 Globbing for
@@ -651,7 +651,9 @@ entire directory subtrees of files.
 That can be done by
 transferring a
 .Xr tar 1
-archive of the subtree (in binary mode).
+archive of the subtree (in
+.Ic type Cm binary
+mode).
 .It Ic hash Op Ar size
 Toggle hash-sign
 .Pq Ql #
@@ -679,7 +681,7 @@ If
 is omitted, the current inactivity timer is printed.
 .It Ic image
 A synonym for
-.Ic binary .
+.Ic type Cm binary .
 .It Ic lcd Op Ar directory
 Change the working directory on the local machine.
 If
@@ -703,7 +705,7 @@ A synonym for
 .It Ic macdef Ar macro-name
 Define a macro.
 Subsequent lines are stored as the macro
-.Ar macro-name  ;
+.Ar macro-name ;
 a null line
 .Po
 consecutive newline characters in a file or carriage
@@ -761,7 +763,7 @@ Delete the
 on the remote machine.
 .It Ic mdir Ar remote-files local-file
 Like
-.Ic dir  ,
+.Ic dir ,
 except multiple remote files may be specified.
 If interactive prompting is on,
 .Nm
@@ -780,7 +782,7 @@ See
 .Ic glob
 for details on the filename expansion.
 Resulting file names will then be processed according to
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 and
 .Ic nmap
@@ -794,7 +796,7 @@ new local directories can be created with
 Make a directory on the remote machine.
 .It Ic mls Ar remote-files local-file
 Like
-.Ic ls  ,
+.Ic ls ,
 except multiple remote files may be specified,
 and the
 .Ar local-file
@@ -822,13 +824,12 @@ in a machine-parsable form, using
 The format of display can be changed with
 .Sq Ic remopts mlst Ar \&... .
 .It Ic mode Ar mode-name
-Set the file transfer
-.Ic mode
-to
+Set the file transfer transmission mode to
 .Ar mode-name .
 The default
 .Pq and only supported
-mode is
+.Ar mode-name
+is
 .Ql stream .
 .It Ic modtime Ar remote-file
 Show the last modification time of the file on the remote machine, in
@@ -975,7 +976,7 @@ and
 for the input filename
 .Ql \&.myfile .
 Spaces may be included in
-.Ar outpattern  ,
+.Ar outpattern ,
 as in the example:
 .Pp
 .Dl nmap $1 sed "s/  *$//" > $1
@@ -1017,7 +1018,7 @@ are replaced with the corresponding character in
 If the character's position in
 .Ar inchars
 is longer than the length of
-.Ar outchars  ,
+.Ar outchars ,
 the character is deleted from the file name.
 .It Ic open Ar host Op Ar port
 Establish a connection to the specified
@@ -1176,15 +1177,15 @@ servers for transferring files between the two servers.
 The first
 .Ic proxy
 command should be an
-.Ic open  ,
+.Ic open ,
 to establish the secondary control connection.
 Enter the command
-.Sq Li "proxy ?"
+.Sq Li "proxy \&?"
 to see other
 .Tn FTP
 commands executable on the secondary connection.
 The following commands behave differently when prefaced by
-.Ic proxy\^  :
+.Ic proxy\^ :
 .Ic open
 will not define new macros during the auto-login process,
 .Ic close
@@ -1194,7 +1195,7 @@ and
 .Ic mget
 transfer files from the host on the primary control connection
 to the host on the secondary control connection, and
-.Ic put  ,
+.Ic put ,
 .Ic mput ,
 and
 .Ic append
@@ -1218,11 +1219,11 @@ settings
 in naming the remote file.
 File transfer uses the
 current settings for
-.Ic type  ,
-.Ic format ,
-.Ic mode  ,
+.Ic type ,
+.Ic form ,
+.Ic mode ,
 and
-.Ic structure .
+.Ic struct .
 .It Ic pwd
 Print the name of the current working directory on the remote
 machine.
@@ -1278,7 +1279,9 @@ is not supplied, the current throttle rates are displayed.
 .Pp
 Note:
 .Ic rate
-is not yet implemented for ascii mode transfers.
+is not yet implemented for
+.Ic type Cm ascii
+transfers.
 .It Ic rcvbuf Ar size
 Set the size of the socket receive buffer to
 .Ar size .
@@ -1293,7 +1296,7 @@ except that if
 .Ar local-file
 exists and is
 smaller than
-.Ar remote-file  ,
+.Ar remote-file ,
 .Ar local-file
 is presumed to be
 a partially transferred copy of
@@ -1429,7 +1432,9 @@ If
 and
 .Ar value
 are not given, display all of the options and their values.
-The currently supported options are:
+The supported
+.Ar option
+values are:
 .Bl -tag -width ".Cm sslnoverify" -offset indent
 .It Cm anonpass
 Defaults to
@@ -1476,12 +1481,11 @@ Set the size of the socket send buffer to
 Show the current status of
 .Nm ftp .
 .It Ic struct Ar struct-name
-Set the file transfer
-.Ar structure
-to
+Set the file transfer data structures to
 .Ar struct-name .
 The default (and only supported)
-structure is
+.Ar struct-name
+is
 .Ql file .
 .It Ic sunique
 Toggle storing of files on remote machine under unique file names.
@@ -1498,24 +1502,40 @@ Default value is off.
 .It Ic system
 Show the type of operating system running on the remote machine.
 .It Ic tenex
-Set the file transfer type to that needed to
-talk to
-.Tn TENEX
-machines.
+A synonym for
+.Ic type Cm tenex .
 .It Ic throttle
 A synonym for
 .Ic rate .
 .It Ic trace
 Toggle packet tracing.
 .It Ic type Op Ar type-name
-Set the file transfer
-.Ic type
-to
+Set the file transfer data type to
 .Ar type-name .
 If no type is specified, the current type
 is printed.
-The default type is network
-.Tn ASCII .
+Supported
+.Ar type-name
+values are:
+.Bl -tag -width "binary" -offset indent
+.It Cm ascii
+Network ASCII.
+This is the default type.
+.It Cm binary
+8-bit byte binary transfer, without any transformations.
+.It Cm ebcdic
+EBCDIC transfer.
+Not implemented in
+.Nm .
+.It Cm image
+A synonym for
+.Ic type Cm binary .
+.It Cm tenex
+Set the file transfer type
+to that needed to binary transfer with
+.Tn TENEX
+machines, with local byte size 8.
+.El
 .It Ic umask Op Ar newmask
 Set the default umask on the remote server to
 .Ar newmask .
@@ -1692,8 +1712,12 @@ If a suffix of
 or
 .Ql \&;type=I
 is supplied, then the transfer type will take place as
-ascii or binary (respectively).
-The default transfer type is binary.
+.Ic type Cm ascii
+or
+.Ic type Cm binary
+(respectively).
+The default transfer type is
+.Ic type Cm binary .
 .Pp
 In order to be compliant with
 .Li RFC 3986 ,
@@ -1902,7 +1926,7 @@ A local URL, copied from
 .Pa / Ns Ar path
 on the local host.
 .\" about:
-.It Li about: Ns Ar topic
+.It Li about\&: Ns Ar topic
 Display information regarding
 .Ar topic ;
 no file is retrieved for this auto-fetched element.
@@ -2053,7 +2077,7 @@ command.
 If the
 .Nm
 command expects a single local file (e.g.
-.Ic put  ) ,
+.Ic put ) ,
 only the first filename generated by the globbing operation is used.
 .It
 For
@@ -2062,7 +2086,7 @@ commands and
 .Ic get
 commands with unspecified local file names, the local filename is
 the remote filename, which may be altered by a
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 or
 .Ic nmap
@@ -2088,30 +2112,33 @@ is on.
 .Sh FILE TRANSFER PARAMETERS
 The
 .Tn FTP
-specification specifies many parameters which may affect a file transfer.
-The
-.Ic type
-may be one of
-.Dq ascii ,
-.Dq image
-(binary),
-.Dq ebcdic ,
+specification in RFC 959
+specifies many parameters which may affect a file transfer.
+.Pp
+The file transfer parameter data type is specified as one of
+.Dq ASCII type ,
+.Dq EBCDIC type ,
+.Dq image type
+(also known as binary),
 and
-.Dq local byte size
+.Dq local type
 (for
 .Tn PDP Ns -10's
 and
 .Tn PDP Ns -20's
 mostly).
 .Nm
-supports the ascii and image types of file transfer,
-plus local byte size 8 for
-.Ic tenex
-mode transfers.
+only implements
+.Ic type Cm ascii ,
+.Ic type Cm binary ,
+.Ic type Cm image ,
+and
+.Ic type Cm tenex
+with local byte size 8.
 .Pp
 .Nm
 supports only the default values for the remaining
-file transfer parameters:
+file transfer parameters via commands:
 .Ic mode ,
 .Ic form ,
 and
@@ -2189,7 +2216,7 @@ Note that if this token is present in the
 .Pa .netrc
 file for any user other
 than
-.Ar anonymous  ,
+.Ar anonymous ,
 .Nm
 will abort the auto-login process if the
 .Pa .netrc
@@ -2289,7 +2316,7 @@ information:
 .It Li \&%/
 The current remote working directory.
 .\" %c[[0]n], %.[[0]n]
-.It Li \&%c Ns Oo Oo Li 0 Oc Ns Ar n Oc , Li \&%. Ns Oo Oo Li 0 Oc Ns Ar n Oc
+.It Li \&%c Ns Oo Oo Li 0 Oc Ns Ar n Oc , Li \&%\&. Ns Oo Oo Li 0 Oc Ns Ar n Oc
 The trailing component of the current remote working directory, or
 .Ar n
 trailing components if a digit
@@ -2314,7 +2341,7 @@ or
 .\" ``...trailing''
 .Dq Li \&... Ns Ar trailing
 (for
-.Ql \&%. ) .
+.Ql \&%\&. ) .
 .It Li \&%M
 The remote host name.
 .It Li \&%m
@@ -2338,7 +2365,7 @@ Defaults to
 .Dq Li \&\`whoami\`@ .
 .It Ev FTPMODE
 Overrides the default operation mode.
-Support values are:
+Supported values are:
 .Bl -tag -width "passive"
 .It Cm active
 active mode
@@ -2499,7 +2526,7 @@ attempts to be compliant with:
 .It Li RFC 2428
 .Em FTP Extensions for IPv6 and NATs
 .It Li RFC 2616
-.Em Hypertext Transfer Protocol -- HTTP/1.1
+.Em Hypertext Transfer Protocol \&-- HTTP/1.1
 .It Li RFC 2822
 .Em Internet Message Format
 .It Li RFC 3659
@@ -2537,13 +2564,16 @@ by the remote server.
 An error in the treatment of carriage returns
 in the
 .Bx 4.2
-ascii-mode transfer code
+.Ic type Cm ascii
+transfer code
 has been corrected.
 This correction may result in incorrect transfers of binary files
 to and from
 .Bx 4.2
-servers using the ascii type.
-Avoid this problem by using the binary image type.
+servers using
+.Ic type Cm ascii .
+Avoid this problem by using
+.Ic type Cm binary .
 .Pp
 .Nm
 assumes that all IPv4 mapped addresses
