@@ -52,6 +52,7 @@
 #include <sys/sysctl.h>
 #include <sys/tls.h>
 #include <lwp.h>
+#include <machine/lwp_private.h>
 #endif
 
 #if SANITIZER_SOLARIS
