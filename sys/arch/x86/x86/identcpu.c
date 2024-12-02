@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.130 2024/07/01 19:40:03 andvar Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.131 2024/12/02 13:31:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.130 2024/07/01 19:40:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.131 2024/12/02 13:31:32 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -1072,6 +1072,7 @@ static const struct vm_name_guest vm_bios_vendors[] = {
 	{ "BHYVE", VM_GUEST_VM },			/* bhyve */
 	{ "Seabios", VM_GUEST_VM },			/* KVM */
 	{ "innotek GmbH", VM_GUEST_VIRTUALBOX },	/* Oracle VirtualBox */
+	{ "Generic PVH", VM_GUEST_GENPVH},		/* Generic PVH */
 };
 
 static const struct vm_name_guest vm_system_products[] = {
@@ -1093,6 +1094,7 @@ identify_hypervisor(void)
 	switch (vm_guest) {
 	case VM_GUEST_XENPV:
 	case VM_GUEST_XENPVH:
+	case VM_GUEST_GENPVH:
 		/* guest type already known, no bios info */
 		return;
 	default:
