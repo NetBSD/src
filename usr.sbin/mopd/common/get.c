@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.7 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: get.c,v 1.8 2024/12/03 05:57:02 kalvisd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "port.h"
+#if defined (HAVE_NBTOOL_CONFIG_H)
+# include "nbtool_config.h"
+#else
+# include "port.h"
+#endif /* defined (HAVE_NBTOOL_CONFIG_H) */
 #ifndef lint
-__RCSID("$NetBSD: get.c,v 1.7 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: get.c,v 1.8 2024/12/03 05:57:02 kalvisd Exp $");
 #endif
 
 #include "os.h"
