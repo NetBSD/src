@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.11 2024/12/03 19:55:33 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.12 2024/12/03 22:11:38 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.11 2024/12/03 19:55:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.12 2024/12/03 22:11:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1106,29 +1106,44 @@ static int
 get_sdr_partial(struct ipmi_softc *sc, uint16_t recordId, uint16_t reserveId,
     uint8_t offset, uint8_t length, void *buffer, uint16_t *nxtRecordId)
 {
-	uint8_t	cmd[256 + 8];
+	union {
+		struct {
+			uint16_t	reserveId;
+			uint16_t	recordId;
+			uint8_t		offset;
+			uint8_t		length;
+		} __packed	cmd;
+		struct {
+			uint16_t	nxtRecordId;
+			uint8_t		data[262];
+		} __packed	msg;
+	}		u;
 	int		len;
 
-	((uint16_t *) cmd)[0] = reserveId;
-	((uint16_t *) cmd)[1] = recordId;
-	cmd[4] = offset;
-	cmd[5] = length;
+	__CTASSERT(sizeof(u) == 256 + 8);
+	__CTASSERT(sizeof(u.cmd) == 6);
+	__CTASSERT(offsetof(typeof(u.msg), data) == 2);
+
+	u.cmd.reserveId = reserveId;
+	u.cmd.recordId = recordId;
+	u.cmd.offset = offset;
+	u.cmd.length = length;
 	mutex_enter(&sc->sc_cmd_mtx);
-	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR, 6,
-	    cmd)) {
+	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR,
+		sizeof(u.cmd), &u.cmd)) {
 		mutex_exit(&sc->sc_cmd_mtx);
 		aprint_error_dev(sc->sc_dev, "%s: sendcmd fails\n", __func__);
 		return -1;
 	}
-	if (ipmi_recvcmd(sc, 8 + length, &len, cmd)) {
+	if (ipmi_recvcmd(sc, 8 + length, &len, &u.msg)) {
 		mutex_exit(&sc->sc_cmd_mtx);
 		aprint_error_dev(sc->sc_dev, "%s: recvcmd fails\n", __func__);
 		return -1;
 	}
 	mutex_exit(&sc->sc_cmd_mtx);
 	if (nxtRecordId)
-		*nxtRecordId = *(uint16_t *) cmd;
-	memcpy(buffer, cmd + 2, len - 2);
+		*nxtRecordId = u.msg.nxtRecordId;
+	memcpy(buffer, u.msg.data, len - offsetof(typeof(u.msg), data));
 
 	return 0;
 }
