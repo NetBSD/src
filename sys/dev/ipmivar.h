@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.3 2019/05/18 08:38:00 mlelstv Exp $ */
+/* $NetBSD: ipmivar.h,v 1.4 2024/12/03 19:55:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -101,8 +101,9 @@ struct ipmi_softc {
 	struct ipmi_bmc_args	*sc_iowait_args;
 
 	struct ipmi_sensor	*current_sensor;
-	volatile bool		sc_thread_running;
-	volatile bool		sc_tickle_due;
+	bool			sc_thread_running;
+	bool			sc_thread_ready;
+	bool			sc_tickle_due;
 	struct sysmon_wdog	sc_wdog;
 	struct sysmon_envsys	*sc_envsys;
 	envsys_data_t		*sc_sensor;

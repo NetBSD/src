@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.10 2023/03/22 13:00:54 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.11 2024/12/03 19:55:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.10 2023/03/22 13:00:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.11 2024/12/03 19:55:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1998,6 +1998,23 @@ ipmi_thread(void *cookie)
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
 
+	/* Setup Watchdog timer */
+	sc->sc_wdog.smw_name = device_xname(sc->sc_dev);
+	sc->sc_wdog.smw_cookie = sc;
+	sc->sc_wdog.smw_setmode = ipmi_watchdog_setmode;
+	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
+	sysmon_wdog_register(&sc->sc_wdog);
+
+	/* Set up a power handler so we can possibly sleep */
+	if (!pmf_device_register(self, ipmi_suspend, NULL))
+                aprint_error_dev(self, "couldn't establish a power handler\n");
+
+	/*
+	 * Allow boot to proceed -- we'll do the rest asynchronously
+	 * since it requires talking to the device.
+	 */
+	config_pending_decr(self);
+
 	memset(&id, 0, sizeof(id));
 	if (ipmi_get_device_id(sc, &id))
 		aprint_error_dev(self, "Failed to re-query device ID\n");
@@ -2098,20 +2115,9 @@ ipmi_thread(void *cookie)
 	/* setup flag to exclude iic */
 	ipmi_enabled = 1;
 
-	/* Setup Watchdog timer */
-	sc->sc_wdog.smw_name = device_xname(sc->sc_dev);
-	sc->sc_wdog.smw_cookie = sc;
-	sc->sc_wdog.smw_setmode = ipmi_watchdog_setmode;
-	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
-	sysmon_wdog_register(&sc->sc_wdog);
-
-	/* Set up a power handler so we can possibly sleep */
-	if (!pmf_device_register(self, ipmi_suspend, NULL))
-                aprint_error_dev(self, "couldn't establish a power handler\n");
-
-	config_pending_decr(self);
-
 	mutex_enter(&sc->sc_poll_mtx);
+	sc->sc_thread_ready = true;
+	cv_broadcast(&sc->sc_mode_cv);
 	while (sc->sc_thread_running) {
 		while (sc->sc_mode == IPMI_MODE_COMMAND)
 			cv_wait(&sc->sc_mode_cv, &sc->sc_poll_mtx);
@@ -2258,6 +2264,15 @@ ipmi_watchdog_setmode(struct sysmon_wdog *smwdog)
 		sc->sc_wdog.smw_period = 10;
 	else
 		sc->sc_wdog.smw_period = smwdog->smw_period;
+
+	/* Wait until the device is initialized */
+	rc = 0;
+	mutex_enter(&sc->sc_poll_mtx);
+	while (sc->sc_thread_ready)
+		rc = cv_wait_sig(&sc->sc_mode_cv, &sc->sc_poll_mtx);
+	mutex_exit(&sc->sc_poll_mtx);
+	if (rc)
+		return rc;
 
 	mutex_enter(&sc->sc_cmd_mtx);
 	/* see if we can properly task to the watchdog */
