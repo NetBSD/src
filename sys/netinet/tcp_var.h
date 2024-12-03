@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.198 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.199 2024/12/03 20:02:30 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -619,7 +619,7 @@ struct tcp_opt_info {
 					   shortage */
 #define	TCP_STAT_PMTUBLACKHOLE	17	/* PMTUD blackhole detected */
 #define	TCP_STAT_SNDTOTAL	18	/* total packets sent */
-#define	TCP_STAT_SNDPACK	19	/* data packlets sent */
+#define	TCP_STAT_SNDPACK	19	/* data packets sent */
 #define	TCP_STAT_SNDBYTE	20	/* data bytes sent */
 #define	TCP_STAT_SNDREXMITPACK	21	/* data packets retransmitted */
 #define	TCP_STAT_SNDREXMITBYTE	22	/* data bytes retransmitted */
