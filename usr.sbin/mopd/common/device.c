@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.13 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: device.c,v 1.14 2024/12/03 05:40:39 kalvisd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.13 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: device.c,v 1.14 2024/12/03 05:40:39 kalvisd Exp $");
 #endif
 
 #include "os.h"
@@ -91,6 +91,7 @@ deviceOpen(const char *ifname, u_short proto, int trans)
 
 	strlcpy(tmp.if_name, ifname, sizeof(tmp.if_name));
 	tmp.iopen   = pfInit;
+	tmp.fd      = -1;
 	
 	switch (proto) {
 	case MOP_K_PROTO_RC:
