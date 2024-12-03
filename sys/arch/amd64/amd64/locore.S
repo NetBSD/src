@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.226 2024/12/02 13:31:32 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.227 2024/12/03 15:16:42 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -283,7 +283,7 @@
 #include <xen/include/public/xen.h>
 
 #define ELFNOTE(name, type, desctype, descdata...) \
-.pushsection .note.name			;	\
+.pushsection .note.name, "a", @note	;	\
   .align 4				;	\
   .long 2f - 1f		/* namesz */	;	\
   .long 4f - 3f		/* descsz */	;	\
