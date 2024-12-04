@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.13 2024/12/04 15:25:12 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.14 2024/12/04 15:26:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.13 2024/12/04 15:25:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.14 2024/12/04 15:26:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1313,7 +1313,7 @@ static int64_t fixexp_a[] = {
 	0x0000000080000000ll /* 1.0/2.0 */,
 	0x000000002aaaaaabll /* 1.0/6.0 */,
 	0x000000000aaaaaabll /* 1.0/24.0 */,
-	0x0000000002222222ll /* 1.0/120.0 */, 
+	0x0000000002222222ll /* 1.0/120.0 */,
 	0x00000000005b05b0ll /* 1.0/720.0 */,
 	0x00000000000d00d0ll /* 1.0/5040.0 */,
 	0x000000000001a01all /* 1.0/40320.0 */
@@ -1331,7 +1331,7 @@ fixmul(int64_t x, int64_t y)
 		x = -x;
 		neg = !neg;
 	}
-	if (y < 0) { 
+	if (y < 0) {
 		y = -y;
 		neg = !neg;
 	}
@@ -1818,7 +1818,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-	
+
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%#.2x et:%#.2x sn:%#.2x "
@@ -2524,7 +2524,7 @@ ipmi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = EOPNOTSUPP;
 		break;
 	default:
-		error = ENODEV;	
+		error = ENODEV;
 		break;
 	}
 
