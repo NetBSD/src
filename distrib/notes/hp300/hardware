@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.28 2024/05/01 19:40:56 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.29 2024/12/04 15:43:10 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -268,7 +268,7 @@ Graphics Devices
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-parallel port, on 345, 362, 375, 380, 382, 382, and Series 400 workstations
+parallel port, on 345, 362, 375, 380, 382, 385, and Series 400 workstations
 .It
 EISA support, on Series 400 workstations
 .It
