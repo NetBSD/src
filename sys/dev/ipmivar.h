@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.4 2024/12/03 19:55:33 riastradh Exp $ */
+/* $NetBSD: ipmivar.h,v 1.5 2024/12/04 15:25:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -95,8 +95,6 @@ struct ipmi_softc {
 	kcondvar_t		sc_mode_cv;
 
 	kmutex_t		sc_cmd_mtx;
-	kmutex_t		sc_sleep_mtx;
-	kcondvar_t		sc_cmd_sleep;
 
 	struct ipmi_bmc_args	*sc_iowait_args;
 

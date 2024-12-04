@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.12 2024/12/03 22:11:38 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.13 2024/12/04 15:25:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.12 2024/12/03 22:11:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.13 2024/12/04 15:25:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -355,9 +355,7 @@ bmc_io_wait_sleep(struct ipmi_softc *sc, int offset, uint8_t mask,
 		v = bmc_read(sc, offset);
 		if ((v & mask) == value)
 			return v;
-		mutex_enter(&sc->sc_sleep_mtx);
-		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, 1);
-		mutex_exit(&sc->sc_sleep_mtx);
+		kpause("ipmicmd", /*intr*/false, /*timo*/1, /*mtx*/NULL);
 	}
 	return -1;
 }
@@ -1096,9 +1094,7 @@ ipmi_delay(struct ipmi_softc *sc, int ms)
 		delay(ms * 1000);
 		return;
 	}
-	mutex_enter(&sc->sc_sleep_mtx);
-	cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, mstohz(ms));
-	mutex_exit(&sc->sc_sleep_mtx);
+	kpause("ipmicmd", /*intr*/false, /*timo*/mstohz(ms), /*mtx*/NULL);
 }
 
 /* Read a partial SDR entry */
@@ -1982,12 +1978,10 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_if->probe(&sc);
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc.sc_cmd_sleep, "ipmimtch");
 
 	if (ipmi_get_device_id(&sc, NULL) == 0)
 		rv = 1;
 
-	cv_destroy(&sc.sc_cmd_sleep);
 	mutex_destroy(&sc.sc_cmd_mtx);
 	ipmi_unmap_regs(&sc);
 
@@ -2165,8 +2159,6 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
 	mutex_init(&sc->sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	mutex_init(&sc->sc_sleep_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc->sc_cmd_sleep, "ipmicmd");
 
 	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
@@ -2230,8 +2222,6 @@ ipmi_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_mode_cv);
 	cv_destroy(&sc->sc_poll_cv);
 	mutex_destroy(&sc->sc_poll_mtx);
-	cv_destroy(&sc->sc_cmd_sleep);
-	mutex_destroy(&sc->sc_sleep_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
 
 	return 0;
