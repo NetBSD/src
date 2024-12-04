@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.44 2024/02/16 15:40:09 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.45 2024/12/04 21:18:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1738,7 +1738,7 @@ bcmeth_txq_reset(
 	sc->sc_intmask |= XMTINT_0 | XMTUF;
 
 	/*
-	 * Restart the transmiter at the first descriptor
+	 * Restart the transmitter at the first descriptor
 	 */
 	bcmeth_write_4(sc, txq->txq_reg_xmtaddrlo,
 	    txq->txq_descmap->dm_segs->ds_addr);

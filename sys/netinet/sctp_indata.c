@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.16 2024/07/05 04:31:54 rin Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.17 2024/12/04 21:18:34 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.16 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.17 2024/12/04 21:18:34 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2800,7 +2800,7 @@ sctp_handle_segments(struct sctp_tcb *stcb, struct sctp_association *asoc,
 							sctp_total_flight_decrease(stcb, tp1);
 
 							if (tp1->snd_count < 2) {
-								/* True non-retransmited chunk */
+								/* True non-retransmitted chunk */
 								tp1->whoTo->net_ack2 +=
 								    tp1->send_size;
 
@@ -3682,7 +3682,7 @@ sctp_handle_sack(struct sctp_sack_chunk *ch, struct sctp_tcb *stcb,
 					sctp_total_flight_decrease(stcb, tp1);
 					tp1->whoTo->net_ack += tp1->send_size;
 					if (tp1->snd_count < 2) {
-						/* True non-retransmited chunk */
+						/* True non-retransmitted chunk */
 						tp1->whoTo->net_ack2 +=
 							tp1->send_size;
 						/* update RTO too? */
