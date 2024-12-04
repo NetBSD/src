@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.5 2024/12/04 15:25:12 riastradh Exp $ */
+/* $NetBSD: ipmivar.h,v 1.6 2024/12/04 15:25:45 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -24,16 +24,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
-
-#include <sys/mutex.h>
-#include <sys/condvar.h>
-
-#include <dev/sysmon/sysmonvar.h>
 
 #ifndef _IPMIVAR_H_
 #define _IPMIVAR_H_
+
+#include <sys/types.h>
+
+#include <sys/bus.h>
+#include <sys/condvar.h>
+#include <sys/ipmi.h>
+#include <sys/mutex.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #define IPMI_IF_KCS		1
 #define IPMI_IF_SMIC		2
@@ -107,7 +110,7 @@ struct ipmi_softc {
 	envsys_data_t		*sc_sensor;
 	int 		sc_nsensors; /* total number of sensors */
 
-	char		sc_buf[1024 + 3]; /* IPMI_MAX_RX + 3 */
+	char		sc_buf[IPMI_MAX_RX + 3];
 	bool		sc_buf_rsvd;
 
 	/* request busy */
