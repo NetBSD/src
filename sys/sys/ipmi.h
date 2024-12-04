@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.h,v 1.1 2019/05/18 08:38:00 mlelstv Exp $	*/
+/*	$NetBSD: ipmi.h,v 1.2 2024/12/04 15:25:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_IPMI_H_
 #define	_SYS_IPMI_H_
+
+#include <sys/ioccom.h>
 
 #define	IPMI_MAX_ADDR_SIZE		0x20
 #define IPMI_MAX_RX			1024
@@ -99,7 +101,7 @@ struct ipmi_ipmb_addr {
 #define IPMICTL_SET_GETS_EVENTS_CMD     _IOW('i', 16, int)
 #define IPMICTL_SET_MY_ADDRESS_CMD      _IOW('i', 17, unsigned int)
 #define IPMICTL_GET_MY_ADDRESS_CMD      _IOR('i', 18, unsigned int)
-#define IPMICTL_SET_MY_LUN_CMD          _IOW('i', 19, unsigned int) 
+#define IPMICTL_SET_MY_LUN_CMD          _IOW('i', 19, unsigned int)
 #define IPMICTL_GET_MY_LUN_CMD          _IOR('i', 20, unsigned int)
 
 #endif /* !_SYS_IPMI_H_ */
