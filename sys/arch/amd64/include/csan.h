@@ -1,4 +1,4 @@
-/*	$NetBSD: csan.h,v 1.4 2020/09/10 14:04:45 maxv Exp $	*/
+/*	$NetBSD: csan.h,v 1.5 2024/12/04 20:27:39 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -32,6 +32,8 @@
 #include <uvm/uvm.h>
 #include <amd64/pmap.h>
 #include <x86/cpufunc.h>
+
+#include <machine/pmap_private.h>
 
 static inline bool
 kcsan_md_unsupported(vaddr_t addr)
