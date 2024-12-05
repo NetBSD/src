@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.6 2024/11/28 12:29:55 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.7 2024/12/05 12:37:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -63,8 +63,17 @@
 #define VISFX_WRITE_MODE_FILL	0x050008c0
 #define VISFX_WRITE_MODE_TRANSPARENT	0x00000800	/* bg is tansparent */
 #define VISFX_WRITE_MODE_MASK		0x00000400	/* apply pixel mask */
+/* 0x00000200 - some pattern */
+/* looks like 0x000000c0 enables fb/bg colours to be applied */
 
 #define VISFX_READ_MODE_COPY	0x02000400
+
+/*
+ * for STI colour change mode:
+ * set VISFX_FG_COLOUR, VISFX_BG_COLOUR
+ * set VISFX_VRAM_READ_MODE 0x05000400
+ * set VISFX_VRAM_WRITE_MODE 0x050000c0
+ */
 
 /* fill */
 #define VISFX_START		0xb3c000
@@ -76,7 +85,14 @@
 #define VISFX_COPY_DST		0xb3cc00
 /*
  * looks like ORing 0x800 to the register address starts a command
- * 0x100 and 0x400 seem to have functions as well
+ * - 0x800 - fill
+ * - 0xc00 - copy
+ * 0x100 and 0x200 seem to have functions as well, not sure what though
+ * for example, the FX4 ROM uses 0xb3c908 to start a rectangle fill, but
+ * it also works with 0xb3c808 and 0xb3ca08
+ * same with copy, 0xc00 seems to be what matters, setting 0x100 or 0x200
+ * doesn't seem to make a difference
+ * 0x400 or 0x100 by themselves don't start a command either
  */
 
 #define VISFX_COLOR_MASK	0x800018
