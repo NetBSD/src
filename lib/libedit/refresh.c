@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.59 2024/06/30 17:11:27 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.60 2024/12/05 22:21:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.59 2024/06/30 17:11:27 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.60 2024/12/05 22:21:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -168,7 +168,7 @@ re_putliteral(EditLine *el, const wchar_t *begin, const wchar_t *end)
 	int i, w;
 
 	c = literal_add(el, begin, end, &w);
-	if (c == 0 || w <= 0)
+	if (c == 0 || w < 0)
 		return;
 	el->el_vdisplay[cur->v][cur->h] = c;
 
@@ -178,7 +178,7 @@ re_putliteral(EditLine *el, const wchar_t *begin, const wchar_t *end)
 	while (--i > 0)
 		el->el_vdisplay[cur->v][cur->h + i] = MB_FILL_CHAR;
 
-	cur->h += w;
+	cur->h += w ? w : 1;
 	if (cur->h >= sizeh) {
 		/* assure end of line */
 		el->el_vdisplay[cur->v][sizeh] = '\0';
@@ -212,7 +212,7 @@ re_putc(EditLine *el, wint_t c, int shift)
 	if (!shift)
 		return;
 
-	cur->h += w;	/* advance to next place */
+	cur->h += w ? w : 1;	/* advance to next place */
 	if (cur->h >= sizeh) {
 		/* assure end of line */
 		el->el_vdisplay[cur->v][sizeh] = '\0';
