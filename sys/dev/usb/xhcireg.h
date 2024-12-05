@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.24 2024/02/10 09:21:53 andvar Exp $ */
+/* $NetBSD: xhcireg.h,v 1.25 2024/12/05 21:59:11 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -103,7 +103,7 @@
 #define XHCI_HCCPARAMS2		0x1c	/* RO capability parameters 2 */
 #define	 XHCI_HCC2_U3C(x)	__SHIFTOUT((x), __BIT(0))	/* U3 Entry capable */
 #define	 XHCI_HCC2_CMC(x)	__SHIFTOUT((x), __BIT(1))	/* CEC MaxExLatTooLg */
-#define	 XHCI_HCC2_FSC(x)	__SHIFTOUT((x), __BIT(2))	/* Foce Save Context */
+#define	 XHCI_HCC2_FSC(x)	__SHIFTOUT((x), __BIT(2))	/* Force Save Context */
 #define	 XHCI_HCC2_CTC(x)	__SHIFTOUT((x), __BIT(3))	/* Compliance Transc */
 #define	 XHCI_HCC2_LEC(x)	__SHIFTOUT((x), __BIT(4))	/* Large ESIT Payload */
 #define	 XHCI_HCC2_CIC(x)	__SHIFTOUT((x), __BIT(5))	/* Configuration Inf */
