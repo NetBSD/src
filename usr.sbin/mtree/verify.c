@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.48 2023/12/02 13:34:48 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.49 2024/12/05 17:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.48 2023/12/02 13:34:48 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.49 2024/12/05 17:17:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ vwalk(void)
 	argv[0] = dot;
 	argv[1] = NULL;
 
-	if ((t = fts_open(argv, ftsoptions, NULL)) == NULL)
+	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	level = root;
 	specdepth = rval = 0;
@@ -180,7 +180,7 @@ miss(NODE *p, char *tail)
 	int create;
 	char *tp;
 	const char *type;
-	uint32_t flags;
+	u_long flags;
 
 	for (; p; p = p->next) {
 		if (p->flags & F_OPT && !(p->flags & F_VISIT))

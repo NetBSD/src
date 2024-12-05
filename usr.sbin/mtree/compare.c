@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.60 2021/04/03 13:37:18 simonb Exp $	*/
+/*	$NetBSD: compare.c,v 1.61 2024/12/05 17:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.60 2021/04/03 13:37:18 simonb Exp $");
+__RCSID("$NetBSD: compare.c,v 1.61 2024/12/05 17:17:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ typeerr:		LABEL;
 		    "%suser expected %lu found %lu" : "%suser (%lu, %lu",
 		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
 		if (uflag) {
-			if (lchown(p->fts_accpath, s->st_uid, -1))
+			if (lchown(p->fts_accpath, s->st_uid, (gid_t)-1))
 				printf(", not modified: %s%s\n",
 				    strerror(errno),
 				    flavor == F_FREEBSD9 ? "" : ")");
@@ -252,7 +252,7 @@ typeerr:		LABEL;
 		    "%sgid expected %lu found %lu" : "%sgid (%lu, %lu",
 		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
 		if (uflag) {
-			if (lchown(p->fts_accpath, -1, s->st_gid))
+			if (lchown(p->fts_accpath, (uid_t)-1, s->st_gid))
 				printf(", not modified: %s%s\n",
 				    strerror(errno),
 				    flavor == F_FREEBSD9 ? "" : ")");
@@ -576,7 +576,7 @@ const char *
 rlink(const char *name)
 {
 	static char lbuf[MAXPATHLEN];
-	int len;
+	ssize_t len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf) - 1)) == -1)
 		mtree_err("%s: %s", name, strerror(errno));

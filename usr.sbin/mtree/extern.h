@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.40 2021/03/18 20:02:18 cheusov Exp $	*/
+/*	$NetBSD: extern.h,v 1.41 2024/12/05 17:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,12 @@
 #include <netdb.h>
 #endif
 
+#if defined(__FreeBSD__) && !defined(HAVE_NBTOOL_CONFIG_H)
+#define    FTS_CONST const
+#else
+#define    FTS_CONST
+#endif
+
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
@@ -64,6 +70,7 @@ int	 check_excludes(const char *, const char *);
 int	 compare(NODE *, FTSENT *);
 int	 crc(int, uint32_t *, uint32_t *);
 void	 cwalk(FILE *);
+int	dcmp(const FTSENT *FTS_CONST *, const FTSENT *FTS_CONST *);
 void	 dump_nodes(FILE *, const char *, NODE *, int);
 void	 init_excludes(void);
 int	 matchtags(NODE *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.91 2024/11/04 15:39:17 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.92 2024/12/05 17:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.91 2024/11/04 15:39:17 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.92 2024/12/05 17:17:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -543,7 +543,8 @@ replacenode(NODE *cur, NODE *new)
 static void
 set(char *t, NODE *ip)
 {
-	int	type, value, len;
+	int	type, value;
+	size_t	len;
 	gid_t	gid;
 	uid_t	uid;
 	char	*kw, *val, *md, *ep;
@@ -842,7 +843,7 @@ addchild(NODE *pathparent, NODE *centry)
  *	directories sort after non-directories, but otherwise sort in
  *	strcmp() order.
  *
- * Keep this in sync with dcmp() in create.c.
+ * Keep this in sync with dcmp() below.
  */
 static int
 nodecmp(const NODE *a, const NODE *b)
@@ -851,7 +852,30 @@ nodecmp(const NODE *a, const NODE *b)
 	if ((a->type & F_DIR) != 0) {
 		if ((b->type & F_DIR) == 0)
 			return 1;
-	} else if ((b->type & F_DIR) != 0)
+	} else if ((b->type & F_DIR) != 0) {
 		return -1;
+	}
 	return strcmp(a->name, b->name);
+}
+
+/*
+ * dcmp --
+ *    used as a comparison function passed to fts_open() to control
+ *    the order in which fts_read() returns results.    We make
+ *    directories sort after non-directories, but otherwise sort in
+ *    strcmp() order.
+ *
+ * Keep this in sync with nodecmp() above.
+ */
+int
+dcmp(const FTSENT *FTS_CONST *a, const FTSENT *FTS_CONST *b)
+{
+
+	if (S_ISDIR((*a)->fts_statp->st_mode)) {
+		if (!S_ISDIR((*b)->fts_statp->st_mode))
+			return 1;
+	} else if (S_ISDIR((*b)->fts_statp->st_mode)) {
+		return -1;
+	}
+	return strcmp((*a)->fts_name, (*b)->fts_name);
 }
