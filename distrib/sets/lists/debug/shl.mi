@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.354 2024/11/03 19:59:46 riastradh Exp $
+# $NetBSD: shl.mi,v 1.355 2024/12/05 18:08:08 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -94,7 +94,7 @@
 ./usr/libdata/debug/usr/lib/libcrypto.so.14.1.debug		comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libcrypto.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30
 ./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,ctf
-./usr/libdata/debug/usr/lib/libcurses.so.9.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libcurses.so.9.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdes.so.12.0.debug			comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libdes.so.14.0.debug			comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libdes.so.15.0.debug			comp-crypto-debug	debug,compatfile,openssl=30
