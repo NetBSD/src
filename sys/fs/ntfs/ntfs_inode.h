@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.9 2014/11/13 16:51:53 hannken Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.10 2024/12/05 21:24:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -82,7 +82,7 @@ struct fnode {
 	struct genfs_node f_gnode;
 
 	LIST_ENTRY(fnode) f_fnlist;
-	struct vnode   *f_vp;		/* Associatied vnode */
+	struct vnode   *f_vp;		/* Associated vnode */
 	struct ntnode  *f_ip;		/* Associated ntnode */
 
 	ntfs_times_t	f_times;	/* $NAME/dirinfo */
