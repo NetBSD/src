@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.132 2024/05/17 23:32:50 uwe Exp $	*/
+/*	$NetBSD: curses.h,v 1.133 2024/12/05 04:08:12 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -561,6 +561,7 @@ int	 echochar(const chtype);
 int	 erase(void);
 int	 getch(void);
 int	 getnstr(char *, int);
+int	 getscrreg(int *, int *);
 int	 getstr(char *);
 chtype	 inch(void);
 int	 inchnstr(chtype *, int);
@@ -800,6 +801,7 @@ int	 wechochar(WINDOW *, const chtype);
 int	 werase(WINDOW *);
 int	 wgetch(WINDOW *);
 int	 wgetnstr(WINDOW *, char *, int);
+int	 wgetscrreg(WINDOW *, int *, int *);
 int	 wgetstr(WINDOW *, char *);
 int	 whline(WINDOW *, chtype, int);
 chtype	 winch(WINDOW *);

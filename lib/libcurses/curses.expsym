@@ -184,6 +184,7 @@ getn_wstr
 getnstr
 getparx
 getpary
+getscrreg
 getstr
 gettmode
 getwin
@@ -453,6 +454,7 @@ wgetbkgrnd
 wgetch
 wgetn_wstr
 wgetnstr
+wgetscrreg
 wgetstr
 whline
 whline_set

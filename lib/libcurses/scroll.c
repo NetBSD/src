@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.27 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: scroll.c,v 1.28 2024/12/05 04:08:12 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.27 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.28 2024/12/05 04:08:12 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,6 +74,17 @@ setscrreg(int top, int bottom)
 {
 
 	return wsetscrreg(stdscr, top, bottom);
+}
+
+/*
+ * getscrreg --
+ *	Get the top and bottom of the scrolling region for stdscr.
+ */
+int
+getscrreg(int *top, int *bottom)
+{
+
+	return wgetscrreg(stdscr, top, bottom);
 }
 
 #endif
@@ -120,6 +131,18 @@ wsetscrreg(WINDOW *win, int top, int bottom)
 		return ERR;
 	win->scr_t = top;
 	win->scr_b = bottom;
+	return OK;
+}
+
+/*
+ * wgetscrreg --
+ *	Get the top and bottom of the scrolling region for win.
+ */
+int
+wgetscrreg(WINDOW *win, int *top, int *bottom)
+{
+	*top = win->scr_t;
+	*bottom = win->scr_b;
 	return OK;
 }
 

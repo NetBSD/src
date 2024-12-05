@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_scroll.3,v 1.4 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_scroll.3,v 1.5 2024/12/05 04:08:12 blymn Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -35,17 +35,21 @@
 .Os
 .Sh NAME
 .Nm curses_scroll ,
+.Nm getscrreg ,
 .Nm scrl ,
 .Nm wscrl
 .Nm scroll ,
 .Nm scrollok ,
 .Nm setscrreg ,
+.Nm wgetscrreg
 .Nm wsetscrreg
 .Nd curses window scrolling routines
 .Sh LIBRARY
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft int
+.Fn getscrreg "int *top" "int *bottom"
 .Ft int
 .Fn scrl "int n"
 .Ft int
@@ -57,8 +61,16 @@
 .Ft int
 .Fn setscrreg "int top" "int bottom"
 .Ft int
+.Fn wgetscrreg "WINDOW *win" "int *top" "int *bottom"
+.Ft int
 .Fn wsetscrreg "WINDOW *win" "int top" "int bottom"
 .Sh DESCRIPTION
+The
+.Fn setscrreg
+function gets the software scrolling region lines on
+.Dv stdscr
+which defines a region of the screen that will be scrolled.
+.Pp
 These functions scroll areas on
 .Dv stdscr
 or on the specified window.
@@ -128,6 +140,14 @@ which will define a region of the screen that will be scrolled.
 The scrolling of this region is also controlled by the
 .Fn scrollok
 function.
+.Pp
+The
+.Fn wgetscrreg
+function does the same as the
+.Fn getscrreg
+function, except that the scrolling region is retrieved from the window
+specified by
+.Fa win .
 .Pp
 The
 .Fn wsetscrreg
