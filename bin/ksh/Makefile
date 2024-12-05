@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2024/12/05 22:40:02 rillig Exp $
+#	$NetBSD: Makefile,v 1.39 2024/12/05 22:45:20 rillig Exp $
 
 WARNS=			3
 CWARNFLAGS.clang+=	-Wno-error=cast-qual
@@ -6,6 +6,7 @@ CWARNFLAGS.clang+=	-Wno-error=cast-qual
 .include <bsd.own.mk>
 
 CPPFLAGS+=	-I.
+LINTFLAGS+=	-X 384	# function definition using identifier list
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
