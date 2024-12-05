@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259reg.h,v 1.5 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: i8259reg.h,v 1.6 2024/12/05 20:59:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 /*
  * Note a write to ICW1 starts an initialization cycle, and must be
- * followied by writes to ICW2, ICW3, and ICW4.
+ * followed by writes to ICW2, ICW3, and ICW4.
  */
 #define	PIC_ICW1	0x00	/* Initialization Command Word 1 (w) */
 #define	ICW1_IC4	(1U << 0)	/* ICW4 Write Required */
