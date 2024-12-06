@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.11 2024/11/29 14:59:18 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.12 2024/12/06 11:58:56 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.11 2024/11/29 14:59:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.12 2024/12/06 11:58:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ struct	summitfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
 	int sc_mode;
-	void (*sc_putchar)(void *, int, int, u_int, long);
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -89,8 +88,16 @@ struct	summitfb_softc {
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
+	/* font-in-vram */
+	struct wsdisplay_font *sc_font;
+	int sc_font_start;	/* x of font area */
+	int sc_cols;		/* chars per line in font area */
+
 	int sc_video_on;
+#ifdef SUMMITFB_ENABLE_GC
+	void (*sc_putchar)(void *, int, int, u_int, long);
 	glyphcache sc_gc;
+#endif
 };
 
 CFATTACH_DECL_NEW(summitfb, sizeof(struct summitfb_softc),
@@ -142,7 +149,11 @@ static void	summitfb_bitblt(void *, int, int, int, int, int,
 static void	summitfb_cursor(void *, int, int, int);
 #endif
 static void	summitfb_putchar(void *, int, int, u_int, long);
+static void	summitfb_putchar_fast(void *, int, int, u_int, long);
+static void	summitfb_loadfont(struct summitfb_softc *);
+#ifdef SUMMITFB_ENABLE_GC
 static void	summitfb_putchar_aa(void *, int, int, u_int, long);
+#endif
 static void	summitfb_copycols(void *, int, int, int, int);
 static void	summitfb_erasecols(void *, int, int, int, long);
 static void	summitfb_copyrows(void *, int, int, int);
@@ -251,10 +262,10 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
 	    sc->sc_width, sc->sc_height);
-	summitfb_setup(sc);
 
 #ifdef SUMMITFB_DEBUG
 	sc->sc_height -= 200;
+	sc->sc_width -= 200;
 #endif
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -275,14 +286,20 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &summitfb_accessops);
 	sc->vd.init_screen = summitfb_init_screen;
+#ifdef SUMMITFB_ENABLE_GC
 	sc->vd.show_screen_cookie = &sc->sc_gc;
 	sc->vd.show_screen_cb = glyphcache_adapt;
-
+#endif
 	ri = &sc->sc_console_screen.scr_ri;
 
+#ifdef SUMMITFB_ENABLE_GC
 	sc->sc_gc.gc_bitblt = summitfb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = RopSrc;
+#endif
+
+	summitfb_setup(sc);
+	summitfb_setup_fb(sc);
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -292,13 +309,25 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
-	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-	    sc->sc_scr.fbheight - sc->sc_height - 5,
-	    sc->sc_width/*sc->sc_scr.fbwidth*/,
+	/*
+	 * STI lies to us - it reports a 2048x2048 framebuffer but blitter
+	 * ops wrap around below 1024 and we seem to have only about 250
+	 * usable columns to the right. Should still be enough to cache 
+	 * a font or four.
+	 * So, the framebuffer seems to be 1536x1024, which is odd since the
+	 * FX4 is supposed to support resolutions higher than 1280x1024.
+	 * I guess video memory is allocated in 512x512 chunks
+	 */
+#ifdef SUMMITFB_ENABLE_GC
+	glyphcache_init_x(&sc->sc_gc, sc->sc_width, 0,
+	    sc->sc_height,
+	    1536 - sc->sc_width - 4,
 	    ri->ri_font->fontwidth,
 	    ri->ri_font->fontheight,
 	    defattr);
+#endif
 
+	summitfb_setup(sc);
 	summitfb_restore_palette(sc);
 	summitfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
@@ -637,6 +666,7 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
 }
 
 void
@@ -656,6 +686,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xb08044, 0x1b);
 	summitfb_write4(sc, 0xb08048, 0x1b);
 
+	summitfb_write4(sc, 0x920860, 0xe4);
 	summitfb_write4(sc, 0x921110, 0);
 	summitfb_write4(sc, 0x921114, 0);
 	summitfb_write4(sc, 0x9211d8, 0);
@@ -664,7 +695,6 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa00818, 0);
 	summitfb_write4(sc, 0xa0081c, 0);	/* fx4 */
 	summitfb_write4(sc, 0xa00850, 0);	/* fx4 */
-	summitfb_write4(sc, 0x920860, 0xe4);
 	summitfb_write4(sc, 0xa0086c, 0);
 #endif
 
@@ -739,7 +769,10 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				summitfb_setup(sc);
 				summitfb_restore_palette(sc);
+#ifdef SUMMITFB_ENABLE_GC
 				glyphcache_wipe(&sc->sc_gc);
+#endif
+				summitfb_loadfont(sc);
 				summitfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -835,8 +868,11 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB /*|
-		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA*/;
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB
+#ifdef SUMMITFB_ENABLE_GC
+	    | RI_ENABLE_ALPHA | RI_PREFER_ALPHA
+#endif
+	    ;
 
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
 	rasops_init(ri, 0, 0);
@@ -849,17 +885,31 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 
-	sc->sc_putchar = ri->ri_ops.putchar;
-
 	ri->ri_ops.copyrows = summitfb_copyrows;
 	ri->ri_ops.copycols = summitfb_copycols;
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
 	//ri->ri_ops.cursor = summitfb_cursor;
+#ifdef SUMMITFB_ENABLE_GC
+	sc->sc_putchar = ri->ri_ops.putchar;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = summitfb_putchar_aa;
 	} else
-		ri->ri_ops.putchar = summitfb_putchar;
+#endif
+	{
+		int fbwidth = (sc->sc_width + 511) & ~511;
+		int fcols = (fbwidth - sc->sc_width - 2) / ri->ri_font->fontwidth;
+		int frows = sc->sc_height / ri->ri_font->fontheight;
+		sc->sc_font_start = sc->sc_width + 2;
+		if ((fcols * frows) >= ri->ri_font->numchars) {
+			/* ok, we can do this */
+			sc->sc_cols = fcols;
+			sc->sc_font = ri->ri_font;
+			summitfb_loadfont(sc);
+			ri->ri_ops.putchar = summitfb_putchar_fast;
+		} else 
+			ri->ri_ops.putchar = summitfb_putchar;
+	}
 }
 
 static int
@@ -983,7 +1033,11 @@ summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	struct summitfb_softc *sc = cookie;
 
 	/* XXX no ROP support yet */
-	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	if (rop != RopSrc) {
+		summitfb_write_mode(sc, rop);
+	} else
+		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
 	summitfb_write4(sc, VISFX_COPY_DST, (xd << 16) | yd);
@@ -1048,7 +1102,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct summitfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he/*, rv = GC_NOPE*/;
+	int i, x, y, wi, he;
 	uint32_t bg, fg, mask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1079,12 +1133,6 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
-#if 0
-	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
-#endif
-
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
@@ -1112,12 +1160,109 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data16++;
 		}
 	}
-#if 0
-	if (rv == GC_ADD)
-		glyphcache_add(&sc->sc_gc, c, x, y);
-#endif
 }
 
+static void
+summitfb_loadfont(struct summitfb_softc *sc)
+{
+	int i, c, x, y;
+	uint8_t *data;
+	uint16_t *data16;
+	uint32_t mask;
+
+	summitfb_setup(sc);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
+
+	summitfb_write4(sc, VISFX_FG_COLOUR, 0xffffffff);
+	summitfb_write4(sc, VISFX_BG_COLOUR, 0);
+
+	mask = 0xffffffff << (32 - sc->sc_font->fontwidth);
+	summitfb_write4(sc, VISFX_PIXEL_MASK, mask);
+
+	for (c = 0; c < sc->sc_font->numchars; c++) {
+		x = sc->sc_font_start + (c % sc->sc_cols) * sc->sc_font->fontwidth;
+		y = (c / sc->sc_cols) * sc->sc_font->fontheight;
+		data = WSFONT_GLYPH(sc->sc_font->firstchar + c, sc->sc_font);
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DEST, (y << 16) | x);
+		if (sc->sc_font->stride == 1) {
+			for (i = 0; i < sc->sc_font->fontheight; i++) {
+				mask = *data;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 24);
+				data++;
+			}
+		} else {
+			data16 = (uint16_t *)data;
+			for (i = 0; i < sc->sc_font->fontheight; i++) {
+				mask = *data16;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 16);
+				data16++;
+			}
+		}
+	}
+}
+
+static void
+summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct summitfb_softc *sc = scr->scr_cookie;
+	int i, x, y, wi, he, xs, ys;
+	uint32_t bg, fg;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	/* for autogenerated line drawing characters */
+	if (font != sc->sc_font) {
+		summitfb_putchar(cookie, row, col, c, attr);
+		return;
+	}
+
+	/* XXX as long as we use putchar() to draw the cursor */
+#if 0
+	if (row == ri->ri_crow && col == ri->ri_ccol) {
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+#endif
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	/* if we're drawing a space we're done here */
+	if (c == 0x20) {
+		summitfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
+
+	summitfb_write_mode(sc, 0x050000c0);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE, 0x05000400);
+	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
+	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
+
+	i = c - font->firstchar;
+	xs = sc->sc_font_start + (i % sc->sc_cols) * sc->sc_font->fontwidth;
+	ys = (i / sc->sc_cols) * sc->sc_font->fontheight;
+
+	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
+	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
+	summitfb_write4(sc, VISFX_COPY_DST, (x << 16) | y);
+
+}
+
+#ifdef SUMMITFB_ENABLE_GC
 static void
 summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
@@ -1162,6 +1307,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 }
+#endif
 
 static void
 summitfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
