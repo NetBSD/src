@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.109 2023/03/30 15:58:21 riastradh Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.110 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,29 +32,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.109 2023/03/30 15:58:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.110 2024/12/06 18:36:31 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/protosw.h>
-#include <sys/domain.h>
-#include <sys/mbuf.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/callout.h>
-#include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/sysctl.h>
-#include <sys/un.h>
-#include <sys/unpcb.h>
+#include <sys/domain.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/un.h>
+#include <sys/unpcb.h>
 
-#include <netatalk/at.h>
 #include <net/if_dl.h>
+#include <netatalk/at.h>
 #include <netinet/in.h>
 
 MALLOC_DECLARE(M_SOCKADDR);

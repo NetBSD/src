@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.82 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,21 +61,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.82 2024/12/06 18:36:31 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
 #include <sys/mbuf.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
-#include <sys/proc.h>
-#include <sys/kauth.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>

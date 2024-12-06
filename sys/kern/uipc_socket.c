@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.310 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.311 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -71,44 +71,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.310 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.311 2024/12/06 18:36:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_sock_counters.h"
-#include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
-#include "opt_somaxkva.h"
 #include "opt_multiprocessor.h"	/* XXX */
-#include "opt_sctp.h"
 #include "opt_pipe.h"
+#include "opt_sctp.h"
+#include "opt_sock_counters.h"
+#include "opt_somaxkva.h"
+#include "opt_sosend_loan.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/compat_stub.h>
+#include <sys/condvar.h>
+#include <sys/domain.h>
+#include <sys/event.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/kmem.h>
-#include <sys/mbuf.h>
-#include <sys/domain.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mbuf.h>
+#include <sys/mutex.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/resourcevar.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/resourcevar.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
-#include <sys/event.h>
-#include <sys/poll.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/condvar.h>
-#include <sys/kthread.h>
-#include <sys/compat_stub.h>
 
-#include <compat/sys/time.h>
 #include <compat/sys/socket.h>
+#include <compat/sys/time.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_loan.h>

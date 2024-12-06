@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.144 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.144 2024/12/06 18:36:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -68,19 +68,21 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Ex
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/file.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/mbuf.h>
 #include <sys/poll.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/kauth.h>
-#include <sys/pool.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
 
 #ifdef DDB

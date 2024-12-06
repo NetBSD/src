@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.60 2020/12/14 23:12:12 chs Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.61 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,33 +60,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.60 2020/12/14 23:12:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.61 2024/12/06 18:36:31 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
-#include <sys/proc.h>
-#include <sys/lwp.h>
-#include <sys/ksem.h>
-#include <sys/syscall.h>
-#include <sys/stat.h>
-#include <sys/kmem.h>
+#include <sys/cprng.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/ksem.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/semaphore.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 #include <sys/uidinfo.h>
-#include <sys/cprng.h>
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
 

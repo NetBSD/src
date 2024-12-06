@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.13 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.14 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,26 +58,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.13 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.14 2024/12/06 18:36:31 riastradh Exp $");
 
 #define ACCEPT_FILTER_MOD
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/kmem.h>
+#include <sys/lock.h>
 #include <sys/mbuf.h>
-#include <sys/rwlock.h>
+#include <sys/module.h>
+#include <sys/once.h>
 #include <sys/protosw.h>
-#include <sys/sysctl.h>
+#include <sys/queue.h>
+#include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/queue.h>
-#include <sys/once.h>
-#include <sys/atomic.h>
-#include <sys/module.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 static krwlock_t accept_filter_lock;
 

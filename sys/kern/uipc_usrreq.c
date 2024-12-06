@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.203 2022/05/28 22:08:46 andvar Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.204 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,37 +96,39 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.203 2022/05/28 22:08:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.204 2024/12/06 18:36:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/filedesc.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/compat_stub.h>
 #include <sys/domain.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mbuf.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/unpcb.h>
-#include <sys/un.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/mbuf.h>
-#include <sys/kauth.h>
-#include <sys/kmem.h>
-#include <sys/atomic.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/compat_stub.h>
+#include <sys/un.h>
+#include <sys/unpcb.h>
+#include <sys/vnode.h>
 
-#include <compat/sys/socket.h>
 #include <compat/net/route_70.h>
+#include <compat/sys/socket.h>
 
 /*
  * Unix communications domain.

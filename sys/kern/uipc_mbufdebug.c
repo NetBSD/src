@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.8 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,26 +27,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.8 2024/12/06 18:36:31 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_arp.h>
 #include <net/if_ether.h>
 #include <net/ppp_defs.h>
-#include <net/if_arp.h>
 
+#include <netinet/icmp6.h>
+#include <netinet/if_inarp.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
 #include <netinet/ip6.h>
-#include <netinet/icmp6.h>
-#include <netinet/if_inarp.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 

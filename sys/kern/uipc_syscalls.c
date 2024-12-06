@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.212 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.213 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -60,39 +60,41 @@
  *	@(#)uipc_syscalls.c	8.6 (Berkeley) 2/14/95
  */
 
+#define MBUFTYPES
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.212 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.213 2024/12/06 18:36:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
 #include "opt_sctp.h"
 #endif
 
-#define MBUFTYPES
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/filedesc.h>
-#include <sys/proc.h>
-#include <sys/file.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/buf.h>
+#include <sys/event.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/ktrace.h>
 #include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
 #include <sys/un.h>
-#include <sys/ktrace.h>
-#include <sys/event.h>
-#include <sys/atomic.h>
-#include <sys/kauth.h>
 
 #ifdef SCTP
-#include <netinet/sctp_uio.h>
 #include <netinet/sctp_peeloff.h>
+#include <netinet/sctp_uio.h>
 #endif
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
 
 /*
  * System call interface to the socket abstraction.

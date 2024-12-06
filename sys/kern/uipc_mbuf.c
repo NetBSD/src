@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.252 2023/11/27 02:50:27 ozaki-r Exp $	*/
+
+/*	$NetBSD: uipc_mbuf.c,v 1.253 2024/12/06 18:36:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,29 +63,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.252 2023/11/27 02:50:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.253 2024/12/06 18:36:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
+#include "ether.h"
+#include "opt_ddb.h"
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
-#include "opt_ddb.h"
-#include "ether.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/cpu.h>
-#include <sys/proc.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
+#include <sys/kernel.h>
+#include <sys/mbuf.h>
 #include <sys/percpu.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 
