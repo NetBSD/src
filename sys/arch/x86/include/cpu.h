@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.137 2024/12/02 13:31:32 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.138 2024/12/06 10:53:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -540,6 +540,18 @@ vm_guest_is_xenpvh_or_pvhvm(void)
 	switch(vm_guest) {
 	case VM_GUEST_XENPVH:
 	case VM_GUEST_XENPVHVM:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static __inline bool __unused
+vm_guest_is_pvh(void)
+{
+	switch(vm_guest) {
+	case VM_GUEST_XENPVH:
+	case VM_GUEST_GENPVH:
 		return true;
 	default:
 		return false;

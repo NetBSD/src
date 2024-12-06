@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.97 2024/12/02 13:31:33 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.98 2024/12/06 10:53:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.97 2024/12/02 13:31:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.98 2024/12/06 10:53:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ void
 init_xen_early(void)
 {
 	const char *cmd_line;
-	if (vm_guest != VM_GUEST_XENPVH && vm_guest != VM_GUEST_GENPVH)
+	if (!vm_guest_is_pvh())
 		return;
 
 	hvm_start_info = (void *)((uintptr_t)hvm_start_paddr + KERNBASE);
