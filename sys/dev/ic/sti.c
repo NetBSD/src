@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.41 2024/12/06 12:00:48 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.42 2024/12/06 12:41:12 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.41 2024/12/06 12:00:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.42 2024/12/06 12:41:12 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -702,6 +702,7 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 		break;
 
 	case STI_DD_SUMMIT:
+	case STI_DD_LEGO:
 		scr->setupfb = summit_setupfb;
 		scr->putcmap = summit_putcmap;
 		scr->scr_bpp = 8;	/* for now */
@@ -712,7 +713,6 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	case STI_DD_EVRX:
 	case STI_DD_3X2V:
 	case STI_DD_DUAL_CRX:
-	case STI_DD_LEGO:
 	case STI_DD_PINNACLE:
 	default:
 		scr->setupfb = NULL;
@@ -1769,8 +1769,11 @@ summit_putcmap(struct sti_screen *scr, u_int idx, u_int count)
 	g = scr->scr_gcmap + idx;
 	b = scr->scr_bcmap + idx;
 
-	bus_space_write_stream_4(memt, memh, VISFX_COLOR_INDEX,
-	     0xc0005100 + idx);
+	if (rom->rom_dd.dd_grid[0] == STI_DD_LEGO) {
+		bus_space_write_stream_4(memt, memh, VISFX_COLOR_INDEX, idx);
+	} else
+		bus_space_write_stream_4(memt, memh, VISFX_COLOR_INDEX,
+		     0xc0005100 + idx);
 
 	while (count-- != 0) {
 		bus_space_write_stream_4(memt, memh,
