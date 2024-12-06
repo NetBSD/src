@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.60 2024/12/06 18:35:52 riastradh Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.61 2024/12/06 18:36:09 riastradh Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -761,7 +761,7 @@ static const char * const icmp6_code_timxceed[] = {
 
 static const char * const icmp6_code_paramprob[] = {
 	"hdr_field", "nxthdr_type", "option", NULL
-};      
+};
 
 /* not all informational icmps that have codes have a names array */
 #endif
