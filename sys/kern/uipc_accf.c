@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.14 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.15 2024/12/06 18:36:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.14 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.15 2024/12/06 18:36:47 riastradh Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -120,7 +120,7 @@ accept_filt_add(struct accept_filter *filt)
 			rw_exit(&accept_filter_lock);
 			return EEXIST;
 		}
-	}				
+	}
 	LIST_INSERT_HEAD(&accept_filtlsthd, filt, accf_next);
 	rw_exit(&accept_filter_lock);
 
@@ -187,7 +187,7 @@ accept_filter_init0(void)
 }
 
 /*
- * Initialization routine: This can also be replaced with 
+ * Initialization routine: This can also be replaced with
  * accept_filt_generic_mod_event for attaching new accept filter.
  */
 

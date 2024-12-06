@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.144 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.145 2024/12/06 18:36:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.144 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.145 2024/12/06 18:36:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -578,7 +578,7 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 		band = 0;
 #ifdef DIAGNOSTIC
 		printf("bad siginfo code %d in socket notification.\n", code);
-#endif 
+#endif
 		break;
 	}
 

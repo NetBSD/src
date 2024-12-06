@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.311 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.312 2024/12/06 18:36:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.311 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.312 2024/12/06 18:36:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -455,7 +455,7 @@ soinit(void)
 	/* Update the SCTP function hooks if necessary*/
 
         vec_sctp_add_ip_address = sctp_add_ip_address;
-        vec_sctp_delete_ip_address = sctp_delete_ip_address; 
+        vec_sctp_delete_ip_address = sctp_delete_ip_address;
 #endif
 
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
@@ -576,7 +576,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
  * Caller is responsible for calling fd_affix() for the returned *fpp once
  * it's socket initialization is finished successfully, or fd_abort() if it's
  * initialization fails.
- * 
+ *
  *
  * => On success, write file descriptor to *fdout and *fpp and return zero.
  * => On failure, return non-zero; *fdout and *fpp will be undefined.

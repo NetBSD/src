@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.204 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.205 2024/12/06 18:36:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.204 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.205 2024/12/06 18:36:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.204 2024/12/06 18:36:31 riastradh 
  *
  * o Stream sockets created via socket() start life with their own
  *   independent lock.
- * 
+ *
  * o Stream connections to a named endpoint are slightly more complicated.
  *   Sockets that have called listen() have their lock pointer mutated to
  *   the global uipc_lock.  When establishing a connection, the connecting
@@ -894,7 +894,7 @@ unp_stat(struct socket *so, struct stat *ub)
 	switch (so->so_type) {
 	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
-		if (unp->unp_conn == 0) 
+		if (unp->unp_conn == 0)
 			break;
 
 		so2 = unp->unp_conn->unp_socket;
@@ -1812,7 +1812,7 @@ unp_gc(file_t *dp)
 		/*
 		 * Ignore non-sockets.
 		 * Ignore dead sockets, or sockets with pending close.
-		 * Ignore sockets obviously referenced elsewhere. 
+		 * Ignore sockets obviously referenced elsewhere.
 		 * Ignore sockets marked as referenced by our scan.
 		 * Ignore new sockets that did not exist during the scan.
 		 */
