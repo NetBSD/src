@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.74 2024/12/02 10:21:07 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.75 2024/12/06 20:38:43 snj Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3757,4 +3757,33 @@ usr.bin/ftp/version.h				1.99
 	- improve help
 	- various internal cleanup
 	[lukem, ticket #1021]
+
+sys/dev/pci/pcidevs				1.504-1.506, 1.508-1.513
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Update pcidevs:
+	 - Add Zhaoxin devices, mainly from my TVS-675 NAS device, and
+	   some additional to fill the gaps from pci-ids database.
+	 - Add Phison PS5021 and PS5026.
+	 - Add some Intel Rapotr Lake graphics.
+	 - Add Realtek RTL8126.
+	 - Add the intel "arc" a-series of cards.
+	 - Add Areca ARC-1224.
+	 - Add some AMD devices.
+	 - Add Raspberry Pi5 Ethernet.
+	 - Add many Brainboxes devices. Reported in PR kern/55824
+	   by Cameron Williams.
+	[msaitoh, ticket #1024]
+
+share/man/man4/puc.4				1.46
+sys/dev/pci/pucdata.c				1.117
+
+	Add many Brainboxes devices. Reported in PR/kern 58824
+	[msaitoh, ticket #1025]
+
+share/man/man4/uftdi.4				1.24
+
+	Add Brainboxes devices to the supported list. PR/kern 55824
+	[msaitoh, ticket #1026]
 
