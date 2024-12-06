@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.33 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.34 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.33 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.34 2024/12/06 16:19:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.33 2024/12/06 16:18:41 riastradh Ex
 #include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
@@ -75,7 +76,7 @@ exec_ecoff_modcmd(modcmd_t cmd, void *arg)
 		return exec_remove(&exec_ecoff_execsw, 1);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
         }
 }
 
@@ -97,10 +98,10 @@ exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 	struct ecoff_exechdr *execp = epp->ep_hdr;
 
 	if (epp->ep_hdrvalid < ECOFF_HDR_SIZE)
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	if (ECOFF_BADMAG(execp))
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	error = (*epp->ep_esch->u.ecoff_probe_func)(l, epp);
 
@@ -130,7 +131,7 @@ exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 		   epp->ep_vp);
 		break;
 	default:
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	/* set up the stack */

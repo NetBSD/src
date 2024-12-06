@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.84 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.85 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.84 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.85 2024/12/06 16:19:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.84 2024/12/06 16:18:41 riastradh E
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #ifdef SETUIDSCRIPTS
 #include <sys/stat.h>
 #endif
@@ -97,10 +98,10 @@ exec_script_modcmd(modcmd_t cmd, void *arg)
 		 * often.  Return EBUSY here to prevent this module from
 		 * ping-ponging in and out of the kernel.
 		 */
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
 
@@ -141,7 +142,7 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	if ((epp->ep_flags & EXEC_INDIR) != 0 ||
 	    epp->ep_hdrvalid < EXEC_SCRIPT_MAGICLEN ||
 	    strncmp(hdrstr, EXEC_SCRIPT_MAGIC, EXEC_SCRIPT_MAGICLEN))
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	/*
 	 * Check that the shell spec is terminated by a newline, and that
@@ -156,14 +157,14 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 	if (cp >= hdrstr + hdrlinelen)
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	/* strip spaces before the shell name */
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; *cp == ' ' || *cp == '\t';
 	    cp++)
 		;
 	if (*cp == '\0')
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	shellarg = NULL;
 	shellarglen = 0;

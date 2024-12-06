@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.523 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.524 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.523 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.524 2024/12/06 16:19:41 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -407,7 +407,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 
 	/* check access and type */
 	if (vp->v_type != VREG) {
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto bad1;
 	}
 	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
@@ -420,7 +420,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 
 	/* Check mount point */
 	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto bad1;
 	}
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
@@ -467,7 +467,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 	 * set up the vmcmds for creation of the process
 	 * address space
 	 */
-	error = ENOEXEC;
+	error = nexecs == 0 ? SET_ERROR(ENOEXEC) : ENOEXEC;
 	for (i = 0; i < nexecs; i++) {
 		int newerror;
 
@@ -483,7 +483,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 					 __func__, (void *)epp->ep_entry,
 					 (void *)epp->ep_vm_maxaddr);
 #endif
-				error = ENOEXEC;
+				error = SET_ERROR(ENOEXEC);
 				break;
 			}
 			/* Seems ok: check that entry point is not too low */
@@ -494,7 +494,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 				     __func__, (void *)epp->ep_entry,
 				     (void *)epp->ep_vm_minaddr);
 #endif
-				error = ENOEXEC;
+				error = SET_ERROR(ENOEXEC);
 				break;
 			}
 
@@ -509,7 +509,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 				    (uintmax_t)epp->ep_tsize,
 				    (uintmax_t)MAXTSIZ);
 #endif
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				break;
 			}
 #endif
@@ -521,7 +521,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 				    (uintmax_t)epp->ep_dsize,
 				    (uintmax_t)dlimit);
 #endif
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				break;
 			}
 			return 0;
@@ -701,7 +701,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 
 	len++;
 	if (len + 1 >= MAXPATHLEN) {
-		error = ENAMETOOLONG;
+		error = SET_ERROR(ENAMETOOLONG);
 		goto err;
 	}
 	bp = path + MAXPATHLEN - len;
@@ -780,12 +780,12 @@ execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
  retry:
 	if (p->p_flag & PK_SUGID) {
 		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
-		     p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
-		     &p->p_rlimit[RLIMIT_NPROC],
-		     KAUTH_ARG(RLIMIT_NPROC)) != 0 &&
+			p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+			&p->p_rlimit[RLIMIT_NPROC],
+			KAUTH_ARG(RLIMIT_NPROC)) != 0 &&
 		    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
-		     p->p_rlimit[RLIMIT_NPROC].rlim_cur)
-		return EAGAIN;
+		    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+			return SET_ERROR(EAGAIN);
 	}
 
 	/*
@@ -886,7 +886,7 @@ execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
 	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
 		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto bad;
 	}
 	/* adjust "active stack depth" for process VSZ */
@@ -1067,7 +1067,7 @@ credexec(struct lwp *l, struct execve_data *data)
 			DPRINTF((
 			    "%s: not executing set[ug]id binary with no args\n",
 			    __func__));
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 
 		/* Make sure file descriptors 0..2 are in use. */
@@ -1642,7 +1642,7 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 				}
 				kmem_free(epp->ep_fa, epp->ep_fa_len);
 				epp->ep_flags &= ~EXEC_HASARGL;
-				return E2BIG;
+				return SET_ERROR(E2BIG);
 			}
 			ktrexecarg(fa->fa_arg, len - 1);
 			dp += len;
@@ -1661,7 +1661,7 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 
 	if (args == NULL) {
 		DPRINTF(("%s: null args\n", __func__));
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (epp->ep_flags & EXEC_SKIPARG)
 		args = (const void *)((const char *)args + fromptrsz(epp));
@@ -1718,7 +1718,7 @@ copyinargstrs(struct execve_data * restrict data, char * const *strs,
 			break;
 		if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
 			if (error == ENAMETOOLONG)
-				error = E2BIG;
+				error = SET_ERROR(E2BIG);
 			return error;
 		}
 		if (__predict_false(ktrace_on))
@@ -1835,7 +1835,7 @@ exec_add(struct execsw *esp, int count)
 			    esp[i].u.elf_probe_func &&
 			    it->ex_sw->es_emul == esp[i].es_emul) {
 				rw_exit(&exec_lock);
-				return EEXIST;
+				return SET_ERROR(EEXIST);
 			}
 		}
 	}
@@ -1893,7 +1893,7 @@ exec_remove(struct execsw *esp, int count)
 				if (p->p_execsw == &esp[i]) {
 					mutex_exit(&proc_lock);
 					rw_exit(&exec_lock);
-					return EBUSY;
+					return SET_ERROR(EBUSY);
 				}
 			}
 		}
@@ -2191,7 +2191,7 @@ handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
 			break;
 		case FAE_CLOSE:
 			if (fd_getfile(fae->fae_fildes) == NULL) {
-				return EBADF;
+				return SET_ERROR(EBADF);
 			}
 			error = fd_close(fae->fae_fildes);
 			break;
@@ -2477,7 +2477,7 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 
 	if (fa->len > lim) {
 		kmem_free(fa, sizeof(*fa));
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	fa->size = fa->len;
@@ -2537,7 +2537,7 @@ check_posix_spawn(struct lwp *l1)
 
 	if (error) {
 		atomic_dec_uint(&nprocs);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	/*
@@ -2550,7 +2550,7 @@ check_posix_spawn(struct lwp *l1)
 	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	return 0;
@@ -2601,7 +2601,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 */
 	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto error_exit;
 	}
 	
@@ -2613,7 +2613,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	p2 = proc_alloc();
 	if (p2 == NULL) {
 		/* We were unable to allocate a process ID. */
-		error = EAGAIN;
+		error = SET_ERROR(EAGAIN);
 		goto error_exit;
 	}
 

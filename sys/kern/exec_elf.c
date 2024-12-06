@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.106 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.107 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.106 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.107 2024/12/06 16:19:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.106 2024/12/06 16:18:41 riastradh Exp
 #include <sys/namei.h>
 #include <sys/pax.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -140,7 +141,7 @@ elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 	if ((offset & (align - 1)) != 0) {
 		DPRINTF("bad offset=%#jx align=%#jx",
 		    (uintmax_t)offset, (uintmax_t)align);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	for (i = 0; i < eh->e_phnum; i++)
@@ -292,7 +293,7 @@ elf_check_header(Elf_Ehdr *eh)
 		    "e_ident[EI_CLASS] %#x", eh->e_ident[EI_MAG0],
 		    eh->e_ident[EI_MAG1], eh->e_ident[EI_MAG2],
 		    eh->e_ident[EI_MAG3], eh->e_ident[EI_CLASS]);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	switch (eh->e_machine) {
@@ -301,17 +302,17 @@ elf_check_header(Elf_Ehdr *eh)
 
 	default:
 		DPRINTF("bad machine %#x", eh->e_machine);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	if (ELF_EHDR_FLAGS_OK(eh) == 0) {
 		DPRINTF("bad flags %#x", eh->e_flags);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_phnum > ELF_MAXPHNUM) {
 		DPRINTF("bad shnum/phnum %#x/%#x", eh->e_shnum, eh->e_phnum);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	return 0;
@@ -347,7 +348,7 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 			DPRINTF("bad alignment %#jx != %#jx\n",
 			    (uintptr_t)(*addr - diff),
 			    (uintptr_t)ELF_TRUNC(*addr, ph->p_align));
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		/*
 		 * But make sure to not map any pages before the start of the
@@ -462,7 +463,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	 * file, we don't allow it to be used.
 	 */
 	if (vp->v_type != VREG) {
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto bad;
 	}
 	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
@@ -474,7 +475,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	 * disallows execution or set-id-ness, we punt or kill the set-id.
 	 */
 	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto bad;
 	}
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
@@ -492,7 +493,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		goto bad;
 	if (eh.e_type != ET_DYN || eh.e_phnum == 0) {
 		DPRINTF("bad interpreter type %#x", eh.e_type);
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto bad;
 	}
 
@@ -538,7 +539,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 
 		if (base_ph == NULL) {
 			DPRINTF("no interpreter loadable sections");
-			error = ENOEXEC;
+			error = SET_ERROR(ENOEXEC);
 			goto bad;
 		}
 
@@ -659,7 +660,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr)) {
 		DPRINTF("small header %#x", epp->ep_hdrvalid);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 	if ((error = elf_check_header(eh)) != 0)
 		return error;
@@ -669,12 +670,12 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		is_dyn = true;
 	else if (eh->e_type != ET_EXEC) {
 		DPRINTF("bad type %#x", eh->e_type);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	if (eh->e_phnum == 0) {
 		DPRINTF("no program headers");
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	/* XXX only LK_EXCLUSIVE to match all others - allow spinning */
@@ -708,7 +709,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			if (pp->p_filesz < 2 || pp->p_filesz > MAXPATHLEN) {
 				DPRINTF("bad interpreter namelen %#jx",
 				    (uintmax_t)pp->p_filesz);
-				error = ENOEXEC;
+				error = SET_ERROR(ENOEXEC);
 				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
 			}
@@ -722,7 +723,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			/* Ensure interp is NUL-terminated and of the expected length */
 			if (strnlen(interp, pp->p_filesz) != pp->p_filesz - 1) {
 				DPRINTF("bad interpreter name");
-				error = ENOEXEC;
+				error = SET_ERROR(ENOEXEC);
 				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
 			}
@@ -820,7 +821,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		/* No VMCMD; there was no PT_LOAD section, or those
 		 * sections were empty */
 		DPRINTF("no vmcommands");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto bad;
 	}
 
@@ -844,7 +845,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		if (epp->ep_vmcmds.evs_used == nused) {
 			/* elf_load_interp() has not set up any new VMCMD */
 			DPRINTF("no vmcommands for interpreter");
-			error = ENOEXEC;
+			error = SET_ERROR(ENOEXEC);
 			goto bad;
 		}
 
@@ -910,7 +911,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 
 	if (eh->e_phnum > ELF_MAXPHNUM || eh->e_phnum == 0) {
 		DPRINTF("no signature %#x", eh->e_phnum);
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
@@ -969,7 +970,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	}
 	kmem_free(nbuf, ELF_MAXNOTESIZE);
 
-	error = isnetbsd ? 0 : ENOEXEC;
+	error = isnetbsd ? 0 : SET_ERROR(ENOEXEC);
 #ifdef DEBUG_ELF
 	if (error)
 		DPRINTF("not netbsd");

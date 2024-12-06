@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.42 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.43 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.42 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.43 2024/12/06 16:19:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.42 2024/12/06 16:18:41 riastradh Exp
 #include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
@@ -75,7 +76,7 @@ exec_aout_modcmd(modcmd_t cmd, void *arg)
 		return exec_remove(&exec_aout_execsw, 1);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
         }
 }
 
@@ -100,7 +101,7 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	struct exec *execp = epp->ep_hdr;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0x3ff;

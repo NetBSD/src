@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.89 2024/12/06 16:18:41 riastradh Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.90 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.89 2024/12/06 16:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.90 2024/12/06 16:19:41 riastradh Exp $");
 
 #include "opt_pax.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.89 2024/12/06 16:18:41 riastradh Exp
 #include <sys/pax.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
@@ -170,7 +171,7 @@ vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
 	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, extraprot, UVM_PROT_ALL);
 
 	if ((*prot & *maxprot) != *prot)
-		return EACCES;
+		return SET_ERROR(EACCES);
 	return PAX_MPROTECT_VALIDATE(l, *prot);
 }
 
@@ -192,11 +193,11 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (cmd->ev_len == 0)
 		return 0;
 	if (cmd->ev_offset & PAGE_MASK)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (cmd->ev_addr & PAGE_MASK)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (cmd->ev_len & PAGE_MASK)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
 		return error;
@@ -368,7 +369,7 @@ exec_read(struct lwp *l, struct vnode *vp, u_long off, void *bf, size_t size,
 	 * See if we got all of it
 	 */
 	if (resid != 0)
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	return 0;
 }
 

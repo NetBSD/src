@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.143 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.144 2024/12/06 16:19:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.143 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.144 2024/12/06 16:19:41 riastradh Exp $");
 
 #define	ELFSIZE	32
 
@@ -100,7 +100,7 @@ exec_elf32_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		return 0;
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 #else /* ARCH_ELFSIZE == 64 */
 	switch (cmd) {
@@ -113,7 +113,7 @@ exec_elf32_modcmd(modcmd_t cmd, void *arg)
 		    __arraycount(exec_elf32_execsw));
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
         }
 #endif /* ARCH_ELFSIZE == 64 */
 }
