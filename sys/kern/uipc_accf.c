@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.15 2024/12/06 18:36:47 riastradh Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.16 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.15 2024/12/06 18:36:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.16 2024/12/06 18:44:00 riastradh Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.15 2024/12/06 18:36:47 riastradh Exp
 #include <sys/protosw.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
@@ -118,7 +119,7 @@ accept_filt_add(struct accept_filter *filt)
 	LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
 		if (strcmp(p->accf_name, filt->accf_name) == 0)  {
 			rw_exit(&accept_filter_lock);
-			return EEXIST;
+			return SET_ERROR(EEXIST);
 		}
 	}
 	LIST_INSERT_HEAD(&accept_filtlsthd, filt, accf_next);
@@ -134,7 +135,7 @@ accept_filt_del(struct accept_filter *p)
 	rw_enter(&accept_filter_lock, RW_WRITER);
 	if (p->accf_refcnt != 0) {
 		rw_exit(&accept_filter_lock);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 	LIST_REMOVE(p, accf_next);
 	rw_exit(&accept_filter_lock);
@@ -208,11 +209,11 @@ accept_filt_getopt(struct socket *so, struct sockopt *sopt)
 	KASSERT(solocked(so));
 
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 	if ((so->so_options & SO_ACCEPTFILTER) == 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -239,7 +240,7 @@ accept_filt_clear(struct socket *so)
 	KASSERT(solocked(so));
 
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (so->so_accf != NULL) {
 		/* Break in-flight processing. */
@@ -304,7 +305,7 @@ accept_filt_setopt(struct socket *so, const struct sockopt *sopt)
 	afp = accept_filt_get(afa.af_name);
 	if (afp == NULL) {
 		solock(so);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	/*
 	 * Allocate the new accept filter instance storage.  We may
@@ -333,7 +334,7 @@ accept_filt_setopt(struct socket *so, const struct sockopt *sopt)
 	 */
 	solock(so);
 	if ((so->so_options & SO_ACCEPTCONN) == 0 || so->so_accf != NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -346,7 +347,7 @@ accept_filt_setopt(struct socket *so, const struct sockopt *sopt)
 		newaf->so_accept_filter_arg =
 		    (*afp->accf_create)(so, afa.af_arg);
 		if (newaf->so_accept_filter_arg == NULL) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 	}

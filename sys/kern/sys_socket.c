@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.83 2024/12/06 18:36:47 riastradh Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.84 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.83 2024/12/06 18:36:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.84 2024/12/06 18:44:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.83 2024/12/06 18:36:47 riastradh Ex
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -279,7 +280,7 @@ soo_fpathconf(struct file *fp, int name, register_t *retval)
 		*retval = PIPE_BUF;
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -287,5 +288,5 @@ static int
 soo_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
 {
 
-	return ESPIPE;
+	return SET_ERROR(ESPIPE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.61 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.62 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.61 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.62 2024/12/06 18:44:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.61 2024/12/06 18:36:31 riastradh Exp 
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/semaphore.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -256,7 +257,7 @@ ksem_sysfini(bool interface)
 		if (nsems_total) {
 			error = syscall_establish(NULL, ksem_syscalls);
 			KASSERT(error == 0);
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 	}
 	kauth_unlisten_scope(ksem_listener);
@@ -279,7 +280,7 @@ ksem_modcmd(modcmd_t cmd, void *arg)
 		return ksem_sysfini(true);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
 
@@ -307,7 +308,7 @@ ksem_perm(lwp_t *l, ksem_t *ks)
 	KASSERT(mutex_owned(&ks->ks_lock));
 
 	if (kauth_authorize_system(uc, KAUTH_SYSTEM_SEMAPHORE, 0, ks, NULL, NULL) != 0)
-		return EACCES;
+		return SET_ERROR(EACCES);
 
 	return 0;
 }
@@ -407,7 +408,7 @@ ksem_get(intptr_t id, ksem_t **ksret, int *fdp)
 		 */
 		ks = ksem_lookup_pshared(id);
 		if (ks == NULL)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		KASSERT(ks->ks_pshared_id == id);
 		KASSERT(ks->ks_pshared_proc != NULL);
 		fd = -1;
@@ -416,16 +417,16 @@ ksem_get(intptr_t id, ksem_t **ksret, int *fdp)
 		file_t *fp = fd_getfile(fd);
 
 		if (__predict_false(fp == NULL))
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if (__predict_false(fp->f_type != DTYPE_SEM)) {
 			fd_putfile(fd);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		ks = fp->f_ksem;
 		mutex_enter(&ks->ks_lock);
 		ks->ks_ref++;
 	} else {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	*ksret = ks;
@@ -446,21 +447,21 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 
 	/* Pre-check for the limit. */
 	if (nsems >= ksem_max) {
-		return ENFILE;
+		return SET_ERROR(ENFILE);
 	}
 
 	if (val > SEM_VALUE_MAX) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (name != NULL) {
 		len = strlen(name);
 		if (len > SEM_MAX_NAMELEN) {
-			return ENAMETOOLONG;
+			return SET_ERROR(ENAMETOOLONG);
 		}
 		/* Name must start with a '/' but not contain one. */
 		if (*name != '/' || len < 2 || strchr(name + 1, '/') != NULL) {
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		kname = kmem_alloc(++len, KM_SLEEP);
 		strlcpy(kname, name, len);
@@ -588,7 +589,7 @@ do_ksem_init(lwp_t *l, u_int val, intptr_t *idp, copyin_t docopyin,
 		 * would be bad.
 		 */
 		fd_abort(p, fp, fd);
-		return EMFILE;
+		return SET_ERROR(EMFILE);
 	}
 
 	/* Note the mode does not matter for anonymous semaphores. */
@@ -666,7 +667,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		 * would be bad.
 		 */
 		fd_abort(p, fp, fd);
-		return EMFILE;
+		return SET_ERROR(EMFILE);
 	}
 
 	/*
@@ -699,7 +700,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		/* Check for exclusive create. */
 		if (oflag & O_EXCL) {
 			mutex_exit(&ks->ks_lock);
-			error = EEXIST;
+			error = SET_ERROR(EEXIST);
 			goto err;
 		}
 		/*
@@ -719,14 +720,14 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		if ((oflag & O_CREAT) == 0) {
 			mutex_exit(&ksem_lock);
 			KASSERT(ksnew == NULL);
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			goto err;
 		}
 
 		/* Check for the limit locked. */
 		if (nsems >= ksem_max) {
 			mutex_exit(&ksem_lock);
-			error = ENFILE;
+			error = SET_ERROR(ENFILE);
 			goto err;
 		}
 
@@ -773,7 +774,7 @@ sys__ksem_close(struct lwp *l, const struct sys__ksem_close_args *uap,
 
 	/* This is only for named semaphores. */
 	if (ks->ks_name == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 	ksem_release(ks, -1);
 	if (error) {
@@ -873,7 +874,7 @@ sys__ksem_unlink(struct lwp *l, const struct sys__ksem_unlink_args *uap,
 	name_destroy(&name);
 	if (ks == NULL) {
 		mutex_exit(&ksem_lock);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	KASSERT(mutex_owned(&ks->ks_lock));
 
@@ -919,7 +920,7 @@ sys__ksem_post(struct lwp *l, const struct sys__ksem_post_args *uap,
 	}
 	KASSERT(mutex_owned(&ks->ks_lock));
 	if (ks->ks_value == SEM_VALUE_MAX) {
-		error = EOVERFLOW;
+		error = SET_ERROR(EOVERFLOW);
 		goto out;
 	}
 	ks->ks_value++;
@@ -952,7 +953,7 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try_p, struct timespec *abstime)
 		} else {
 			timeo = 0;
 		}
-		error = try_p ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
+		error = try_p ? SET_ERROR(EAGAIN) : cv_timedwait_sig(&ks->ks_cv,
 		    &ks->ks_lock, timeo);
 		ks->ks_waiters--;
 		if (error)
@@ -991,11 +992,11 @@ sys__ksem_timedwait(struct lwp *l, const struct sys__ksem_timedwait_args *uap,
 		return error;
 
 	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = do_ksem_wait(l, SCARG(uap, id), false, &ts);
 	if (error == EWOULDBLOCK)
-		error = ETIMEDOUT;
+		error = SET_ERROR(ETIMEDOUT);
 	return error;
 }
 
@@ -1053,12 +1054,12 @@ sys__ksem_destroy(struct lwp *l, const struct sys__ksem_destroy_args *uap,
 
 	/* Operation is only for unnamed semaphores. */
 	if (ks->ks_name != NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 	/* Cannot destroy if there are waiters. */
 	if (ks->ks_waiters) {
-		error = EBUSY;
+		error = SET_ERROR(EBUSY);
 		goto out;
 	}
 	if (KSEM_ID_IS_PSHARED(id)) {
@@ -1066,7 +1067,7 @@ sys__ksem_destroy(struct lwp *l, const struct sys__ksem_destroy_args *uap,
 		KASSERT(fd == -1);
 		KASSERT(ks->ks_pshared_proc != NULL);
 		if (ks->ks_pshared_proc != curproc) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 		fd = ks->ks_pshared_fd;

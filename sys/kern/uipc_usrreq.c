@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.205 2024/12/06 18:36:47 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.206 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.205 2024/12/06 18:36:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.206 2024/12/06 18:44:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.205 2024/12/06 18:36:47 riastradh 
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -350,7 +351,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 
 	/* XXX: server side closed the socket */
 	if (unp->unp_conn == NULL)
-		return ECONNREFUSED;
+		return SET_ERROR(ECONNREFUSED);
 	so2 = unp->unp_conn->unp_socket;
 
 	KASSERT(solocked(so2));
@@ -372,7 +373,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 		/* Don't call soroverflow because we're returning this
 		 * error directly to the sender. */
 		so2->so_rcv.sb_overflowed++;
-		return ENOBUFS;
+		return SET_ERROR(ENOBUFS);
 	} else {
 		sorwakeup(so2);
 		return 0;
@@ -452,7 +453,7 @@ unp_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
 	KASSERT(solocked(so));
 
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 static int
@@ -491,7 +492,7 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		KASSERT(so->so_lock == uipc_lock);
 		if (nam) {
 			if ((so->so_state & SS_ISCONNECTED) != 0)
-				error = EISCONN;
+				error = SET_ERROR(EISCONN);
 			else {
 				/*
 				 * Note: once connected, the
@@ -506,7 +507,7 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			}
 		} else {
 			if ((so->so_state & SS_ISCONNECTED) == 0)
-				error = ENOTCONN;
+				error = SET_ERROR(ENOTCONN);
 		}
 		if (error) {
 			unp_dispose(control);
@@ -525,7 +526,7 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
 		if (unp->unp_conn == NULL) {
-			error = ENOTCONN;
+			error = SET_ERROR(ENOTCONN);
 			break;
 		}
 		so2 = unp->unp_conn->unp_socket;
@@ -601,7 +602,7 @@ unp_sendoob(struct socket *so, struct mbuf *m, struct mbuf * control)
 	m_freem(m);
 	m_freem(control);
 
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 /*
@@ -616,14 +617,14 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	KASSERT(solocked(so));
 
 	if (sopt->sopt_level != SOL_LOCAL) {
-		error = ENOPROTOOPT;
+		error = SET_ERROR(ENOPROTOOPT);
 	} else switch (op) {
 
 	case PRCO_SETOPT:
 		switch (sopt->sopt_name) {
 		case LOCAL_OCREDS:
 			if (!compat70_ocreds_valid)  {
-				error = ENOPROTOOPT;
+				error = SET_ERROR(ENOPROTOOPT);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -653,7 +654,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #undef OPTSET
 
 		default:
-			error = ENOPROTOOPT;
+			error = SET_ERROR(ENOPROTOOPT);
 			break;
 		}
 		break;
@@ -666,7 +667,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				error = sockopt_set(sopt, &unp->unp_connid,
 				    sizeof(unp->unp_connid));
 			} else {
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 			}
 			break;
 		case LOCAL_CREDS:
@@ -684,7 +685,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #undef OPTBIT
 			/* FALLTHROUGH */
 		default:
-			error = ENOPROTOOPT;
+			error = SET_ERROR(ENOPROTOOPT);
 			break;
 		}
 		solock(so);
@@ -788,7 +789,7 @@ unp_detach(struct socket *so)
 		unp_disconnect1(unp);
 	while (unp->unp_refs) {
 		KASSERT(solocked2(so, unp->unp_refs->unp_socket));
-		if (unp_drop(unp->unp_refs, ECONNRESET)) {
+		if (unp_drop(unp->unp_refs, SET_ERROR(ECONNRESET))) {
 			solock(so);
 			goto retry;
 		}
@@ -820,7 +821,7 @@ unp_accept(struct socket *so, struct sockaddr *nam)
 
 	/* XXX code review required to determine if unp can ever be NULL */
 	if (unp == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	KASSERT(so->so_lock == uipc_lock);
 	/*
@@ -875,7 +876,7 @@ unp_accept(struct socket *so, struct sockaddr *nam)
 static int
 unp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 {
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 static int
@@ -888,7 +889,7 @@ unp_stat(struct socket *so, struct stat *ub)
 
 	unp = sotounpcb(so);
 	if (unp == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	ub->st_blksize = so->so_snd.sb_hiwat;
 	switch (so->so_type) {
@@ -972,13 +973,13 @@ unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	if (unp->unp_vnode != NULL)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	if ((unp->unp_flags & UNP_BUSY) != 0) {
 		/*
 		 * EALREADY may not be strictly accurate, but since this
 		 * is a major application error it's hardly a big deal.
 		 */
-		return (EALREADY);
+		return SET_ERROR(EALREADY);
 	}
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
@@ -988,7 +989,7 @@ unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto bad;
 	}
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, pb);
@@ -1007,7 +1008,7 @@ unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 			vput(nd.ni_dvp);
 		vrele(vp);
 		pathbuf_destroy(pb);
-		error = EADDRINUSE;
+		error = SET_ERROR(EADDRINUSE);
 		goto bad;
 	}
 	vattr_null(&vattr);
@@ -1053,7 +1054,7 @@ unp_listen(struct socket *so, struct lwp *l)
 	 */
 	unp_resetlock(so);
 	if (unp->unp_vnode == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	unp_connid(l, unp, UNP_EIDSBIND);
 	return 0;
@@ -1086,7 +1087,7 @@ unp_abort(struct socket *so)
 	KASSERT(solocked(so));
 	KASSERT(sotounpcb(so) != NULL);
 
-	(void)unp_drop(sotounpcb(so), ECONNABORTED);
+	(void)unp_drop(sotounpcb(so), SET_ERROR(ECONNABORTED));
 	KASSERT(so->so_head == NULL);
 	KASSERT(so->so_pcb != NULL);
 	unp_detach(so);
@@ -1100,7 +1101,7 @@ unp_connect1(struct socket *so, struct socket *so2, struct lwp *l)
 	struct unpcb *unp2;
 
 	if (so2->so_type != so->so_type)
-		return EPROTOTYPE;
+		return SET_ERROR(EPROTOTYPE);
 
 	/*
 	 * All three sockets involved must be locked by same lock:
@@ -1162,7 +1163,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		 * EALREADY may not be strictly accurate, but since this
 		 * is a major application error it's hardly a big deal.
 		 */
-		return (EALREADY);
+		return SET_ERROR(EALREADY);
 	}
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
@@ -1170,7 +1171,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	sun = makeun_sb(nam, &addrlen);
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto bad2;
 	}
 
@@ -1183,7 +1184,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 	if (vp->v_type != VSOCK) {
-		error = ENOTSOCK;
+		error = SET_ERROR(ENOTSOCK);
 		goto bad;
 	}
 	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
@@ -1193,12 +1194,12 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	so2 = vp->v_socket;
 	if (so2 == NULL) {
 		mutex_exit(vp->v_interlock);
-		error = ECONNREFUSED;
+		error = SET_ERROR(ECONNREFUSED);
 		goto bad;
 	}
 	if (so->so_type != so2->so_type) {
 		mutex_exit(vp->v_interlock);
-		error = EPROTOTYPE;
+		error = SET_ERROR(EPROTOTYPE);
 		goto bad;
 	}
 	solock(so);
@@ -1214,7 +1215,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    (so3 = sonewconn(so2, false)) == NULL) {
-			error = ECONNREFUSED;
+			error = SET_ERROR(ECONNREFUSED);
 			sounlock(so);
 			goto bad;
 		}
@@ -1424,7 +1425,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	for (size_t i = 0; i < nfds; i++) {
 		file_t * const fp = *rp++;
 		if (fp == NULL) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 		/*
@@ -1437,7 +1438,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 			vnode_t *vp = fp->f_vnode;
 			if ((vp->v_type == VDIR) &&
 			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
-				error = EPERM;
+				error = SET_ERROR(EPERM);
 				goto out;
 			}
 		}
@@ -1466,7 +1467,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 			 * been returned, and some callers may
 			 * expect it.
 			 */
-			error = EMSGSIZE;
+			error = SET_ERROR(EMSGSIZE);
 			goto out;
 		}
 	}
@@ -1552,7 +1553,7 @@ unp_internalize(struct mbuf **controlp)
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len > control->m_len ||
 	    cm->cmsg_len < CMSG_ALIGN(sizeof(*cm)))
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Verify that the file descriptors are valid, and acquire
@@ -1566,7 +1567,7 @@ unp_internalize(struct mbuf **controlp)
 		if (atomic_inc_uint_nv(&unp_rights) > maxmsg) {
 			atomic_dec_uint(&unp_rights);
 			nfds = i;
-			error = EAGAIN;
+			error = SET_ERROR(EAGAIN);
 			goto out;
 		}
 		if ((fp = fd_getfile(fd)) == NULL
@@ -1575,7 +1576,7 @@ unp_internalize(struct mbuf **controlp)
 		    		fd_putfile(fd);
 			atomic_dec_uint(&unp_rights);
 			nfds = i;
-			error = EBADF;
+			error = SET_ERROR(EBADF);
 			goto out;
 		}
 	}
@@ -1583,7 +1584,7 @@ unp_internalize(struct mbuf **controlp)
 	/* Allocate new space and copy header into it. */
 	newcm = malloc(CMSG_SPACE(nfds * sizeof(file_t *)), M_MBUF, M_WAITOK);
 	if (newcm == NULL) {
-		error = E2BIG;
+		error = SET_ERROR(E2BIG);
 		goto out;
 	}
 	memcpy(newcm, cm, sizeof(struct cmsghdr));

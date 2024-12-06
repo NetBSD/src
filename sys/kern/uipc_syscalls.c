@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.213 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.214 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define MBUFTYPES
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.213 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.214 2024/12/06 18:44:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.213 2024/12/06 18:36:31 riastrad
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -182,10 +183,10 @@ do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
 	short		wakeup_state = 0;
 
 	if ((fp = fd_getfile(sock)) == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 	if (fp->f_type != DTYPE_SOCKET) {
 		fd_putfile(sock);
-		return ENOTSOCK;
+		return SET_ERROR(ENOTSOCK);
 	}
 	if ((error = fd_allocfile(&fp2, &fd)) != 0) {
 		fd_putfile(sock);
@@ -199,24 +200,24 @@ do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
 		sigsuspendsetup(l, mask);
 
 	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto bad;
 	}
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto bad;
 	}
 	if ((so->so_state & SS_NBIO) && so->so_qlen == 0) {
-		error = EWOULDBLOCK;
+		error = SET_ERROR(EWOULDBLOCK);
 		goto bad;
 	}
 	while (so->so_qlen == 0 && so->so_error == 0) {
 		if (so->so_state & SS_CANTRCVMORE) {
-			so->so_error = ECONNABORTED;
+			so->so_error = SET_ERROR(ECONNABORTED);
 			break;
 		}
 		if (wakeup_state & SS_RESTARTSYS) {
-			error = ERESTART;
+			error = SET_ERROR(ERESTART);
 			goto bad;
 		}
 		error = sowait(so, true, 0);
@@ -226,7 +227,7 @@ do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
 		wakeup_state = so->so_state;
 	}
 	if (so->so_error) {
-		error = so->so_error;
+		error = SET_ERROR(so->so_error);
 		so->so_error = 0;
 		goto bad;
 	}
@@ -366,7 +367,7 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 	}
 	solock(so);
 	if ((so->so_state & SS_ISCONNECTING) != 0) {
-		error = EALREADY;
+		error = SET_ERROR(EALREADY);
 		goto out;
 	}
 
@@ -375,13 +376,13 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 		goto bad;
 	if ((so->so_state & (SS_NBIO|SS_ISCONNECTING)) ==
 	    (SS_NBIO|SS_ISCONNECTING)) {
-		error = EINPROGRESS;
+		error = SET_ERROR(EINPROGRESS);
 		goto out;
 	}
 	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
 		error = sowait(so, true, 0);
 		if (__predict_false((so->so_state & SS_ISABORTING) != 0)) {
-			error = EPIPE;
+			error = SET_ERROR(EPIPE);
 			interrupted = 1;
 			break;
 		}
@@ -392,14 +393,14 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 		}
 	}
 	if (error == 0) {
-		error = so->so_error;
+		error = SET_ERROR(so->so_error);
 		so->so_error = 0;
 	}
  bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
 	if (error == ERESTART)
-		error = EINTR;
+		error = SET_ERROR(EINTR);
  out:
 	sounlock(so);
 	fd_putfile(fd);
@@ -530,7 +531,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
 			if ((unsigned int)mp->msg_iovlen > IOV_MAX) {
-				error = EMSGSIZE;
+				error = SET_ERROR(EMSGSIZE);
 				goto bad;
 			}
 			iov = kmem_alloc(iovsz, KM_SLEEP);
@@ -560,7 +561,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 		 */
 		auio.uio_resid += tiov->iov_len;
 		if (tiov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto bad;
 		}
 	}
@@ -574,7 +575,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 
 	if (mp->msg_control) {
 		if (mp->msg_controllen < CMSG_ALIGN(sizeof(struct cmsghdr))) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto bad;
 		}
 		if (control == NULL) {
@@ -906,7 +907,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
 			if ((unsigned int)mp->msg_iovlen > IOV_MAX) {
-				error = EMSGSIZE;
+				error = SET_ERROR(EMSGSIZE);
 				goto out;
 			}
 			iov = kmem_alloc(iovsz, KM_SLEEP);
@@ -935,7 +936,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 		 */
 		auio.uio_resid += tiov->iov_len;
 		if (tiov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 	}
@@ -1014,7 +1015,7 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))) != 0)
 			return error;
 		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000L)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		getnanotime(&now);
 		if (timespecaddok(&now, &ts)) {
 			timespecadd(&now, &ts, &ts);
@@ -1032,7 +1033,7 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 	 * If so->so_rerror holds a deferred error return it now.
 	 */
 	if (so->so_rerror) {
-		error = so->so_rerror;
+		error = SET_ERROR(so->so_rerror);
 		so->so_rerror = 0;
 		fd_putfile(s);
 		return error;
@@ -1155,10 +1156,10 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap,
 
 	len = SCARG(uap, valsize);
 	if (len > 0 && SCARG(uap, val) == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (len > MCLBYTES)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return (error);
@@ -1201,7 +1202,7 @@ getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 		valsize = 0;
 
 	if (valsize > MCLBYTES)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return error;
@@ -1274,7 +1275,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	proc_t		*p = l->l_proc;
 
 	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (flags & O_CLOEXEC)
 		soflags |= SOCK_CLOEXEC;
 	if (flags & O_NONBLOCK)
@@ -1351,7 +1352,7 @@ do_sys_getpeername(int fd, struct sockaddr *nam)
 
 	solock(so);
 	if ((so->so_state & SS_ISCONNECTED) == 0)
-		error = ENOTCONN;
+		error = SET_ERROR(ENOTCONN);
 	else {
 		error = (*so->so_proto->pr_usrreqs->pr_peeraddr)(so, nam);
 	}
@@ -1436,7 +1437,7 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 	} else
 		len = *alen;
 	if (len < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (addr == NULL) {
 		len = 0;
@@ -1522,7 +1523,7 @@ sockargs_sb(struct sockaddr_big *sb, const void *name, socklen_t buflen)
 	 */
 	if (buflen > UCHAR_MAX ||
 	    buflen <= offsetof(struct sockaddr_big, sb_data))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = copyin(name, (void *)sb, buflen);
 	if (error)
@@ -1558,13 +1559,13 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, enum uio_seg seg,
 	 * length is just too much.
 	 */
 	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * length must greater than sizeof(sa_family) + sizeof(sa_len)
 	 */
 	if (type == MT_SONAME && buflen <= 2)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
@@ -1619,7 +1620,7 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, enum uio_seg seg,
 		}
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -1685,6 +1686,6 @@ do_sys_peeloff(struct socket *head, void *data)
 
 	return error;
 #else
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 #endif
 }

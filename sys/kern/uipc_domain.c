@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.110 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.111 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.110 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.111 2024/12/06 18:44:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.110 2024/12/06 18:36:31 riastradh 
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
@@ -563,14 +564,14 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (oldp != NULL) {
 		len = *oldlenp;
 		elem_size = name[2];
 		elem_count = name[3];
 		if (elem_size != sizeof(pcb))
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 	} else {
 		len = 0;
 		elem_size = sizeof(pcb);
@@ -582,7 +583,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	needed = 0;
 
 	if (name - oname != 4)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	pf = oname[1];
 	type = oname[2];
@@ -593,7 +594,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	if ((dfp = fgetdummy()) == NULL) {
 	 	sysctl_relock();
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	/*

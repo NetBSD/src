@@ -1,5 +1,5 @@
 
-/*	$NetBSD: uipc_mbuf.c,v 1.253 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.254 2024/12/06 18:44:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.253 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.254 2024/12/06 18:44:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ether.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.253 2024/12/06 18:36:31 riastradh Ex
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -296,21 +297,21 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		newval = nmbclusters_limit();
 		break;
 	default:
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 	}
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
 	if (newval < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	switch (node.sysctl_num) {
 	case MBUF_NMBCLUSTERS:
 		if (newval < nmbclusters)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if (newval > nmbclusters_limit())
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		nmbclusters = newval;
 		pool_cache_sethardlimit(mcl_cache, nmbclusters,
 		    mclpool_warnmsg, 60);
@@ -361,9 +362,9 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 	int error = 0;
 
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (newp != NULL)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	LIST_FOREACH(mo, &mowners, mo_link) {
 		struct mowner_user mo_user;
@@ -372,7 +373,7 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 
 		if (oldp != NULL) {
 			if (*oldlenp - len < sizeof(mo_user)) {
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				break;
 			}
 			error = copyout(&mo_user, (char *)oldp + len,
@@ -1716,7 +1717,7 @@ out:
 	return 0;
 
 enobufs:
-	return ENOBUFS;
+	return SET_ERROR(ENOBUFS);
 }
 
 /*
