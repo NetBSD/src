@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.524 2024/12/06 16:19:41 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.525 2024/12/06 16:48:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.524 2024/12/06 16:19:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.525 2024/12/06 16:48:13 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -310,7 +310,7 @@ static struct pool_allocator exec_palloc = {
 
 static void
 exec_path_free(struct execve_data *data)
-{              
+{
 	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
 	pathbuf_destroy(data->ed_pathbuf);
 	if (data->ed_resolvedname)
@@ -2224,7 +2224,7 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 	sigact._sa_u._sa_handler = SIG_DFL;
 	sigact.sa_flags = 0;
 
-	/* 
+	/*
 	 * set state to SSTOP so that this proc can be found by pid.
 	 * see proc_enterprp, do_sched_setparam below
 	 */
@@ -2443,7 +2443,7 @@ posix_spawn_fae_path(struct posix_spawn_file_actions_entry *fae)
 		return NULL;
 	}
 }
-    
+
 void
 posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 {
@@ -2604,7 +2604,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 		error = SET_ERROR(ENOMEM);
 		goto error_exit;
 	}
-	
+
 	/*
 	 * Allocate new proc. Borrow proc0 vmspace for it, we will
 	 * replace it with its own before returning to userland
@@ -2867,7 +2867,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 		syscallarg(const struct posix_spawnattr *) attrp;
 		syscallarg(char *const *) argv;
 		syscallarg(char *const *) envp;
-	} */	
+	} */
 
 	int error;
 	struct posix_spawn_file_actions *fa = NULL;
@@ -2954,7 +2954,7 @@ dump_vmcmds(const struct exec_package * const epp, size_t x, int error)
 	if (error == 0)
 		DPRINTF(("vmcmds %u\n", epp->ep_vmcmds.evs_used));
 	else
-		DPRINTF(("vmcmds %zu/%u, error %d\n", x, 
+		DPRINTF(("vmcmds %zu/%u, error %d\n", x,
 		    epp->ep_vmcmds.evs_used, error));
 
 	for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
