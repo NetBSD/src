@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.59 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.60 2024/12/06 18:35:52 riastradh Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -64,6 +64,10 @@
 
 #ifndef _NETINET_ICMP6_H_
 #define _NETINET_ICMP6_H_
+
+#include <sys/types.h>
+
+#include <netinet/in.h>
 
 #define ICMPV6_PLD_MAXLEN	1232	/* IPV6_MMTU - sizeof(struct ip6_hdr)
 					   - sizeof(struct icmp6_hdr) */
