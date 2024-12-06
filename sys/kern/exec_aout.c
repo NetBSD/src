@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.41 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.42 2024/12/06 16:18:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,16 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.41 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.42 2024/12/06 16:18:41 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
-#include <sys/resourcevar.h>
 #include <sys/module.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.105 2023/08/17 06:58:26 rin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.106 2024/12/06 16:18:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,32 +57,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.105 2023/08/17 06:58:26 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.106 2024/12/06 16:18:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/kmem.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/syscall.h>
-#include <sys/signalvar.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
 #include <sys/kauth.h>
-#include <sys/bitops.h>
+#include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/pax.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/vnode.h>
 
-#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/common/compat_util.h>
 
-#include <sys/pax.h>
 #include <uvm/uvm_param.h>
 
 #define elf_check_header	ELFNAME(check_header)

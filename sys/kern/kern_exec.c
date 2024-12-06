@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.522 2024/11/10 12:15:46 mlelstv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.523 2024/12/06 16:18:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,55 +62,56 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.522 2024/11/10 12:15:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.523 2024/12/06 16:18:41 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_modular.h"
+#include "opt_pax.h"
 #include "opt_syscall_debug.h"
 #include "veriexec.h"
-#include "opt_pax.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/ptrace.h>
-#include <sys/mount.h>
-#include <sys/kmem.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
+#include <sys/types.h>
+
 #include <sys/acct.h>
 #include <sys/atomic.h>
+#include <sys/cprng.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/futex.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/ktrace.h>
-#include <sys/uidinfo.h>
-#include <sys/wait.h>
+#include <sys/lwpctl.h>
 #include <sys/mman.h>
+#include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/pax.h>
+#include <sys/proc.h>
+#include <sys/prot.h>
+#include <sys/ptrace.h>
 #include <sys/ras.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
+#include <sys/spawn.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
-#include <sys/kauth.h>
-#include <sys/lwpctl.h>
-#include <sys/pax.h>
-#include <sys/cpu.h>
-#include <sys/module.h>
-#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
-#include <sys/vfs_syscalls.h>
+#include <sys/syscallvar.h>
+#include <sys/systm.h>
+#include <sys/uidinfo.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
-#include <sys/sdt.h>
-#include <sys/spawn.h>
-#include <sys/prot.h>
-#include <sys/cprng.h>
+#include <sys/vfs_syscalls.h>
+#include <sys/vnode.h>
+#include <sys/wait.h>
 
 #include <uvm/uvm_extern.h>
 

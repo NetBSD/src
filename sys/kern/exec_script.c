@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.83 2021/05/03 10:25:14 fcambus Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.84 2024/12/06 16:18:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.83 2021/05/03 10:25:14 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.84 2024/12/06 16:18:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -42,21 +42,23 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.83 2021/05/03 10:25:14 fcambus Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/kmem.h>
-#include <sys/vnode.h>
-#include <sys/namei.h>
+#include <sys/types.h>
+
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+#include <sys/exec_script.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #ifdef SETUIDSCRIPTS
 #include <sys/stat.h>
 #endif
-#include <sys/filedesc.h>
-#include <sys/exec.h>
-#include <sys/resourcevar.h>
-#include <sys/module.h>
-#include <sys/exec_script.h>
-#include <sys/exec_elf.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 MODULE(MODULE_CLASS_EXEC, exec_script, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.88 2023/11/21 14:35:36 riastradh Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.89 2024/12/06 16:18:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,21 +31,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.88 2023/11/21 14:35:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.89 2024/12/06 16:18:41 riastradh Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/kmem.h>
-#include <sys/vnode.h>
-#include <sys/filedesc.h>
-#include <sys/exec.h>
-#include <sys/mman.h>
-#include <sys/resourcevar.h>
+#include <sys/types.h>
+
 #include <sys/device.h>
+#include <sys/exec.h>
+#include <sys/filedesc.h>
+#include <sys/kmem.h>
+#include <sys/mman.h>
 #include <sys/pax.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
