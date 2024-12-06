@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.40 2024/11/20 05:23:15 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.41 2024/12/06 12:00:48 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.40 2024/11/20 05:23:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.41 2024/12/06 12:00:48 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -1620,13 +1620,16 @@ summit_setupfb(struct sti_screen *scr)
 	bus_space_write_stream_4(memt, memh, 0xa0086c, 0);
 	bus_space_write_stream_4(memt, memh, 0x921114, 0);
 	bus_space_write_stream_4(memt, memh, 0xac1050, 0);
-	bus_space_write_stream_4(memt, memh, 0xa00858, 0xb0);
+
+	bus_space_write_stream_4(memt, memh, VISFX_APERTURE_ACCESS,
+	    VISFX_DEPTH_8);
 
 	bus_space_write_stream_4(memt, memh, VISFX_PIXEL_MASK, 0xffffffff);
 	bus_space_write_stream_4(memt, memh, VISFX_PLANE_MASK, 0xffffffff);
 	bus_space_write_stream_4(memt, memh, VISFX_VRAM_WRITE_MODE,
 	    VISFX_WRITE_MODE_PLAIN);
-
+	bus_space_write_stream_4(memt, memh, VISFX_VRAM_READ_MODE,
+	    VISFX_READ_MODE_COPY);
 }
 
 void
