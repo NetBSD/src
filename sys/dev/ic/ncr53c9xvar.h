@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.57 2022/01/01 21:07:14 andvar Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.58 2024/12/06 23:29:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ struct ncr53c9x_tinfo {
 	uint8_t	offset;		/* Offset suggestion */
 	uint8_t	cfg3;		/* per target config 3  */
 	uint8_t	nextag;		/* Next available tag */
-	uint8_t	width;		/* width suggesion */
+	uint8_t	width;		/* width suggestion */
 	LIST_HEAD(lun_list, ncr53c9x_linfo) luns;
 	struct ncr53c9x_linfo *lun[NCR_NLUN]; /* For speedy lookups */
 };
