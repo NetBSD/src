@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.117 2024/12/06 19:17:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,54 +46,63 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.117 2024/12/06 19:17:44 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif /* defined(_KERNEL) && defined(_KERNEL_OPT) */
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
 #include <sys/hash.h>
 #include <sys/queue.h>
-#include <sys/bitops.h>
 
 #if defined(_KERNEL)
-#include <sys/systm.h>
-#include <sys/kernel.h>	/* hz */
+
+#include <sys/atomic.h>
 #include <sys/callout.h>
+#include <sys/kernel.h>	/* hz */
 #include <sys/kmem.h>
 #include <sys/pool.h>
+#include <sys/systm.h>
 #include <sys/vmem.h>
 #include <sys/vmem_impl.h>
 #include <sys/workqueue.h>
-#include <sys/atomic.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_km.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pdaemon.h>
+
 #else /* defined(_KERNEL) */
-#include <stdio.h>
-#include <errno.h>
+
 #include <assert.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../sys/vmem.h"
 #include "../sys/vmem_impl.h"
+
 #endif /* defined(_KERNEL) */
 
-
 #if defined(_KERNEL)
+
 #include <sys/evcnt.h>
+
 #define VMEM_EVCNT_DEFINE(name) \
 struct evcnt vmem_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
     "vmem", #name); \
-EVCNT_ATTACH_STATIC(vmem_evcnt_##name);
-#define VMEM_EVCNT_INCR(ev)	vmem_evcnt_##ev.ev_count++
-#define VMEM_EVCNT_DECR(ev)	vmem_evcnt_##ev.ev_count--
+EVCNT_ATTACH_STATIC(vmem_evcnt_##name)
+#define VMEM_EVCNT_INCR(ev)	(vmem_evcnt_##ev.ev_count++)
+#define VMEM_EVCNT_DECR(ev)	(vmem_evcnt_##ev.ev_count--)
 
-VMEM_EVCNT_DEFINE(static_bt_count)
-VMEM_EVCNT_DEFINE(static_bt_inuse)
+VMEM_EVCNT_DEFINE(static_bt_count);
+VMEM_EVCNT_DEFINE(static_bt_inuse);
 
 #define	VMEM_CONDVAR_INIT(vm, wchan)	cv_init(&vm->vm_cv, wchan)
 #define	VMEM_CONDVAR_DESTROY(vm)	cv_destroy(&vm->vm_cv)
@@ -102,31 +111,32 @@ VMEM_EVCNT_DEFINE(static_bt_inuse)
 
 #else /* defined(_KERNEL) */
 
-#define VMEM_EVCNT_INCR(ev)	/* nothing */
-#define VMEM_EVCNT_DECR(ev)	/* nothing */
+#define VMEM_EVCNT_INCR(ev)	__nothing
+#define VMEM_EVCNT_DECR(ev)	__nothing
 
-#define	VMEM_CONDVAR_INIT(vm, wchan)	/* nothing */
-#define	VMEM_CONDVAR_DESTROY(vm)	/* nothing */
-#define	VMEM_CONDVAR_WAIT(vm)		/* nothing */
-#define	VMEM_CONDVAR_BROADCAST(vm)	/* nothing */
+#define	VMEM_CONDVAR_INIT(vm, wchan)	__nothing
+#define	VMEM_CONDVAR_DESTROY(vm)	__nothing
+#define	VMEM_CONDVAR_WAIT(vm)		__nothing
+#define	VMEM_CONDVAR_BROADCAST(vm)	__nothing
 
 #define	UNITTEST
 #define	KASSERT(a)		assert(a)
 #define	KASSERTMSG(a, m, ...)	assert(a)
-#define	mutex_init(a, b, c)	/* nothing */
-#define	mutex_destroy(a)	/* nothing */
-#define	mutex_enter(a)		/* nothing */
+#define	mutex_init(a, b, c)	__nothing
+#define	mutex_destroy(a)	__nothing
+#define	mutex_enter(a)		__nothing
 #define	mutex_tryenter(a)	true
-#define	mutex_exit(a)		/* nothing */
+#define	mutex_exit(a)		__nothing
 #define	mutex_owned(a)		true
-#define	ASSERT_SLEEPABLE()	/* nothing */
-#define	panic(...)		printf(__VA_ARGS__); abort()
+#define	ASSERT_SLEEPABLE()	__nothing
+#define	panic(...)		(printf(__VA_ARGS__), abort())
+
 #endif /* defined(_KERNEL) */
 
 #if defined(VMEM_SANITY)
 static void vmem_check(vmem_t *);
 #else /* defined(VMEM_SANITY) */
-#define vmem_check(vm)	/* nothing */
+#define vmem_check(vm)	__nothing
 #endif /* defined(VMEM_SANITY) */
 
 #define	VMEM_HASHSIZE_MIN	1	/* XXX */
@@ -174,7 +184,7 @@ static void vmem_xfree_bt(vmem_t *, bt_t *);
 #define	xfree(p, sz)		free(p)
 #define	bt_alloc(vm, flags)	malloc(sizeof(bt_t))
 #define	bt_free(vm, bt)		free(bt)
-#define	bt_freetrim(vm, l)	/* nothing */
+#define	bt_freetrim(vm, l)	__nothing
 #else /* defined(_KERNEL) */
 
 #define	xmalloc(sz, flags) \
