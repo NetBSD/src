@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.6 2023/06/08 05:48:41 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.7 2024/12/06 11:46:11 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -50,6 +50,7 @@ typedef struct _glyphcache {
 	int gc_cellheight;
 	int gc_cellsperline;
 	int gc_firstline;	/* first line in vram to use for glyphs */
+	int gc_firstcol;	/* first column */
 	int gc_lines;
 	int gc_width;
 	int gc_fontcookie;
@@ -72,6 +73,9 @@ typedef struct _glyphcache {
 
 /* first line, lines, width, cellwidth, cellheight, attr */
 int glyphcache_init(glyphcache *, int, int, int, int, int, long);
+
+/* first x, y, lines, width, cellwidth, cellheight, attr */
+int glyphcache_init_x(glyphcache *, int, int, int, int, int, int, long);
 
 /* first line, lines, width, cellwidth, cellheight, attr, alignment */
 int glyphcache_init_align(glyphcache *, int, int, int, int, int, long, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.13 2024/02/20 09:53:16 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.14 2024/12/06 11:46:11 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -75,8 +75,33 @@ glyphcache_init_align(glyphcache *gc, int first, int lines, int width,
 	gc->gc_cellwidth = -1;
 	gc->gc_cellheight = -1;
 	gc->gc_firstline = first;
+	gc->gc_firstcol = 0;
 	gc->gc_lines = lines;
 	gc->gc_cellalign = alignment;
+	gc->gc_buckets = NULL;
+	gc->gc_numbuckets = 0;
+	// XXX: Never free?
+	gc->gc_buckets = kmem_alloc(sizeof(*gc->gc_buckets) * NBUCKETS,
+	    KM_SLEEP);
+	gc->gc_nbuckets = NBUCKETS;
+	return glyphcache_reconfig(gc, cellwidth, cellheight, attr);
+
+}
+
+int
+glyphcache_init_x(glyphcache *gc, int x, int y, int lines, int width,
+    int cellwidth, int cellheight, long attr)
+{
+
+	/* first the geometry stuff */
+	if (lines < 0) lines = 0;
+	gc->gc_width = width;
+	gc->gc_cellwidth = -1;
+	gc->gc_cellheight = -1;
+	gc->gc_firstline = y;
+	gc->gc_firstcol = x;
+	gc->gc_lines = lines;
+	gc->gc_cellalign = 0;
 	gc->gc_buckets = NULL;
 	gc->gc_numbuckets = 0;
 	// XXX: Never free?
@@ -223,7 +248,8 @@ glyphcache_add(glyphcache *gc, int c, int x, int y)
 	cell += b->gb_firstcell;
 	cy = gc->gc_firstline +
 	    (cell / gc->gc_cellsperline) * gc->gc_cellheight;
-	cx = (cell % gc->gc_cellsperline) * gc->gc_cellstride;
+	cx = gc->gc_firstcol +
+	    (cell % gc->gc_cellsperline) * gc->gc_cellstride;
 	b->gb_map[c - 33] = (cx << 16) | cy;
 	gc->gc_bitblt(gc->gc_blitcookie, x, y, cx, cy,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
