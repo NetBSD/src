@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.116 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.117 2024/12/07 15:10:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.116 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.117 2024/12/07 15:10:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,6 +92,8 @@ static inline size_t wapbl_space_free(size_t, off_t, off_t);
 #define	wapbl_alloc(s)		malloc(s)
 #define	wapbl_free(a, s)	free(a)
 #define	wapbl_calloc(n, s)	calloc((n), (s))
+
+#define	SET_ERROR(E)		(E)
 
 #endif /* !_KERNEL */
 
