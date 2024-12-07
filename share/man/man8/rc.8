@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.39 2017/10/14 21:21:51 lukem Exp $
+.\" 	$NetBSD: rc.8,v 1.40 2024/12/07 18:45:20 martin Exp $
 .\"
 .\" Copyright (c) 2000-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 15, 2017
+.Dd December 7, 2024
 .Dt RC 8
 .Os
 .Sh NAME
 .Nm rc ,
 .Nm rc.local ,
 .Nm rc.shutdown ,
+.Nm rc.shutdown.final ,
 .Nm rc.d/
 .Nd startup and shutdown scripts
 .Sh SYNOPSIS
@@ -179,6 +180,30 @@ and sources the script in a sub-shell.
 If the script has a
 .Sq .sh
 suffix then it is sourced directly into the current shell.
+.It
+Runs
+.Pa /etc/rc.shutdown.final
+if it exists, passing the currently ongoing shutdown action, which
+will be one of:
+.Bl -bullet
+.It
+shutdown
+when going to single user mode.
+.It
+halt
+when halting the machine (but not powering it down).
+.It
+reboot
+when rebooting the machine.
+.It
+poweroff
+when halting the machine and powering it off.
+.El
+.Pp
+The script may be used for example to controll additional
+actions, e.g. powering off external devices, restarting
+a UPS (in case main power is restored in the interval betweeen
+the computer powering off and the UPS running out of battery).
 .El
 .Ss Contents of rc.d/
 .Nm rc.d/

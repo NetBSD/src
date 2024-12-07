@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc.shutdown,v 1.9 2012/06/25 07:22:45 jnemeth Exp $
+# $NetBSD: rc.shutdown,v 1.10 2024/12/07 18:45:20 martin Exp $
 #
 # rc.shutdown --
 #	Run the scripts in /etc/rc.d with reverse rcorder.
@@ -18,6 +18,9 @@ if ! checkyesno do_rcshutdown; then
 	echo "Skipping shutdown hooks."
 	exit 0
 fi
+
+_rcshutdown_action="$1"
+set --
 
 stty status '^T'
 
@@ -54,6 +57,14 @@ files=$(rcorder -k shutdown ${rcshutdown_rcorder_flags} ${scripts})
 for _rc_elem in $(reverse_list $files); do
 	run_rc_script $_rc_elem stop
 done
+
+#
+#	Run final local handlers (if any exist)
+#
+if [ -r /etc/rc.shutdown.final ]; then
+	set -- "$_rcshutdown_action"
+	. /etc/rc.shutdown.final
+fi
 
 
 #	Terminate the background watchdog timer (if it is running)

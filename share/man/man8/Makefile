@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2020/08/28 12:13:09 christos Exp $
+#	$NetBSD: Makefile,v 1.112 2024/12/07 18:45:20 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
@@ -17,6 +17,7 @@ MLINKS+=nis.8 yp.8
 MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.local.8
 MLINKS+=rc.8 rc.shutdown.8
+MLINKS+=rc.8 rc.shutdown.final.8
 
 SUBDIR= man8.acorn32 man8.alpha man8.amiga man8.atari \
 	man8.cobalt man8.dreamcast man8.emips man8.evbarm \
