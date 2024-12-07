@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.32 2015/05/21 02:04:22 rtr Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.33 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -30,8 +30,21 @@
  *
  *	@(#)nfsdiskless.h	8.1 (Berkeley) 6/10/93
  */
+
 #ifndef _NFS_NFSDISKLESS_H_
 #define _NFS_NFSDISKLESS_H_
+
+#include <sys/types.h>
+
+#include <sys/mount.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <nfs/nfsmount.h>
+#include <nfs/nfsproto.h>
+
+struct ifnet;
 
 /*
  * Structure holds parameters needed by nfs_mountroot(),
@@ -66,25 +79,27 @@ struct nfs_diskless {
 };
 
 #ifdef _KERNEL
-int nfs_boot_init (struct nfs_diskless *, struct lwp *);
-void nfs_boot_cleanup (struct nfs_diskless *, struct lwp *);
-int nfs_boot_ifupdown (struct ifnet *, struct lwp *, int);
-int nfs_boot_setaddress (struct ifnet *, struct lwp *,
-			     uint32_t, uint32_t, uint32_t);
-void nfs_boot_setmtu (struct ifnet *, int, struct lwp *);
-int nfs_boot_deladdress (struct ifnet *, struct lwp *, uint32_t);
-void nfs_boot_flushrt (struct ifnet *);
-int nfs_boot_setrecvtimo (struct socket *);
-int nfs_boot_enbroadcast (struct socket *);
-int nfs_boot_sobind_ipport (struct socket *, uint16_t, struct lwp *);
-int nfs_boot_sendrecv (struct socket *, struct sockaddr_in *,
-			   int (*)(struct mbuf*, void*, int), struct mbuf*,
-			   int (*)(struct mbuf**, void*), struct mbuf**,
-			   struct mbuf**, void*, struct lwp *);
+struct lwp;
 
-int nfs_bootdhcp  (struct nfs_diskless *, struct lwp *, int *);
-int nfs_bootparam (struct nfs_diskless *, struct lwp *, int *);
-int nfs_bootstatic (struct nfs_diskless *, struct lwp *, int *);
+int nfs_boot_init(struct nfs_diskless *, struct lwp *);
+void nfs_boot_cleanup(struct nfs_diskless *, struct lwp *);
+int nfs_boot_ifupdown(struct ifnet *, struct lwp *, int);
+int nfs_boot_setaddress(struct ifnet *, struct lwp *,
+    uint32_t, uint32_t, uint32_t);
+void nfs_boot_setmtu (struct ifnet *, int, struct lwp *);
+int nfs_boot_deladdress(struct ifnet *, struct lwp *, uint32_t);
+void nfs_boot_flushrt(struct ifnet *);
+int nfs_boot_setrecvtimo(struct socket *);
+int nfs_boot_enbroadcast(struct socket *);
+int nfs_boot_sobind_ipport(struct socket *, uint16_t, struct lwp *);
+int nfs_boot_sendrecv(struct socket *, struct sockaddr_in *,
+    int (*)(struct mbuf *, void*, int), struct mbuf *,
+    int (*)(struct mbuf **, void*), struct mbuf **,
+    struct mbuf **, void*, struct lwp *);
+
+int nfs_bootdhcp(struct nfs_diskless *, struct lwp *, int *);
+int nfs_bootparam(struct nfs_diskless *, struct lwp *, int *);
+int nfs_bootstatic(struct nfs_diskless *, struct lwp *, int *);
 
 extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 
@@ -96,7 +111,9 @@ extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 #define NFS_BOOT_NOSTATIC	0x20
 #define NFS_BOOT_HAS_ROOTPATH	0x40
 
-#define NFS_BOOT_ALLINFO	(NFS_BOOT_HAS_MYIP|NFS_BOOT_HAS_GWIP|NFS_BOOT_HAS_MASK|NFS_BOOT_HAS_SERVADDR|NFS_BOOT_HAS_SERVER|NFS_BOOT_HAS_ROOTPATH)
+#define NFS_BOOT_ALLINFO						      \
+	(NFS_BOOT_HAS_MYIP|NFS_BOOT_HAS_GWIP|NFS_BOOT_HAS_MASK|		      \
+	    NFS_BOOT_HAS_SERVADDR|NFS_BOOT_HAS_SERVER|NFS_BOOT_HAS_ROOTPATH)
 
 #endif /* _KERNEL */
 

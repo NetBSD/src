@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.96 2022/04/27 17:38:52 hannken Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.97 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,13 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX needs <nfs/rpcv2.h> and <nfs/nfs.h> because of typedefs
- */
+#ifndef _NFS_NFS_VAR_H_
+#define	_NFS_NFS_VAR_H_
 
 #ifdef _KERNEL
+
 #include <sys/mallocvar.h>
 #include <sys/pool.h>
+
+#include <nfs/nfsproto.h>
+#include <nfs/rpcv2.h>
 
 struct vnode;
 struct uio;
@@ -364,4 +367,7 @@ void netexport_rdunlock(void);
 void netexport_init(void);
 void netexport_fini(void);
 bool netexport_hasexports(void);
+
 #endif /* _KERNEL */
+
+#endif	/* _NFS_NFS_VAR_H_ */

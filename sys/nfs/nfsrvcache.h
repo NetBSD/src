@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.16 2007/12/04 17:42:32 yamt Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.17 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,15 @@
  *	@(#)nfsrvcache.h	8.3 (Berkeley) 3/30/95
  */
 
-
 #ifndef _NFS_NFSRVCACHE_H_
 #define _NFS_NFSRVCACHE_H_
+
+#include <sys/types.h>
+
+#include <sys/condvar.h>
+#include <sys/queue.h>
+
+#include <nfs/nfs.h>
 
 /*
  * Definitions for the server recent request cache
@@ -85,4 +91,4 @@ struct nfsrvcache {
 #define	RC_INETADDR	0x20
 #define	RC_NAM		0x40
 
-#endif
+#endif	/* _NFS_NFSRVCACHE_H_ */

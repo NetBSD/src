@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.17 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.18 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
 #ifndef _NFS_NFSPROTO_H_
 #define _NFS_NFSPROTO_H_
 
+#include <sys/types.h>
+
+#include <sys/fstypes.h>
 
 /*
  * nfs definitions as per the Version 2 and 3 specs
@@ -432,4 +435,4 @@ struct nfsv3_pathconf {
 	u_int32_t pc_casepreserving;
 };
 
-#endif
+#endif	/* _NFS_NFSPROTO_H_ */

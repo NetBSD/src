@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcv2.h,v 1.12 2006/12/28 00:39:03 yamt Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.13 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,10 @@
  *	@(#)rpcv2.h	8.2 (Berkeley) 3/30/95
  */
 
-
 #ifndef _NFS_RPCV2_H_
 #define _NFS_RPCV2_H_
+
+#include <sys/types.h>
 
 /*
  * Definitions for Sun RPC Version 2, from
@@ -142,4 +143,5 @@ typedef u_char			NFSKERBKEYSCHED_T[2];
 #define NFS_KERBTTL	(30 * 60)	/* Credential ttl (sec) */
 #define NFS_KERBCLOCKSKEW (5 * 60)	/* Clock skew (sec) */
 #define NFS_KERBW1(t)	(*((u_long *)(&((t).dat[((t).length + 3) & ~0x3]))))
-#endif
+
+#endif	/* _NFS_RPCV2_H_ */

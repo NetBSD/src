@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_subs.h,v 1.15 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: xdr_subs.h,v 1.16 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,6 @@
  *
  *	@(#)xdr_subs.h	8.3 (Berkeley) 3/30/95
  */
-
 
 #ifndef _NFS_XDR_SUBS_H_
 #define _NFS_XDR_SUBS_H_
@@ -72,14 +71,16 @@
 #define	fxdr_nfsv2time(f, t) { \
 	(t)->tv_sec = ntohl(((struct nfsv2_time *)(f))->nfsv2_sec); \
 	if (((struct nfsv2_time *)(f))->nfsv2_usec != 0xffffffff) \
-		(t)->tv_nsec = 1000 * ntohl(((struct nfsv2_time *)(f))->nfsv2_usec); \
+		(t)->tv_nsec = 1000 * \
+		    ntohl(((struct nfsv2_time *)(f))->nfsv2_usec); \
 	else \
 		(t)->tv_nsec = 0; \
 }
 #define	txdr_nfsv2time(f, t) { \
 	((struct nfsv2_time *)(t))->nfsv2_sec = htonl((f)->tv_sec); \
 	if ((f)->tv_nsec != -1) \
-		((struct nfsv2_time *)(t))->nfsv2_usec = htonl((f)->tv_nsec / 1000); \
+		((struct nfsv2_time *)(t))->nfsv2_usec = \
+		    htonl((f)->tv_nsec / 1000); \
 	else \
 		((struct nfsv2_time *)(t))->nfsv2_usec = 0xffffffff; \
 }
@@ -103,4 +104,4 @@
 	((u_int32_t *)(t))[1] = htonl((u_int32_t)((f) & 0xffffffff));	\
 }
 
-#endif
+#endif	/* _NFS_XDR_SUBS_H_ */

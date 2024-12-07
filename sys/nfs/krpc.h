@@ -1,8 +1,12 @@
-/*	$NetBSD: krpc.h,v 1.9 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: krpc.h,v 1.10 2024/12/07 02:05:55 riastradh Exp $	*/
+
+#ifndef _NFS_KRPC_H_
+#define	_NFS_KRPC_H_
 
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
+
 int krpc_call(struct sockaddr_in *sin,
 	u_int prog, u_int vers, u_int func,
 	struct mbuf **data, struct mbuf **from, struct lwp *l);
@@ -15,8 +19,8 @@ struct mbuf *xdr_string_encode(char *str, int len);
 struct mbuf *xdr_string_decode(struct mbuf *m, char *str, int *len_p);
 struct mbuf *xdr_inaddr_encode(struct in_addr *ia);
 struct mbuf *xdr_inaddr_decode(struct mbuf *m, struct in_addr *ia);
-#endif /* _KERNEL */
 
+#endif /* _KERNEL */
 
 /*
  * RPC definitions for the portmapper
@@ -31,7 +35,6 @@ struct mbuf *xdr_inaddr_decode(struct mbuf *m, struct in_addr *ia);
 #define	PMAPPROC_DUMP		4
 #define	PMAPPROC_CALLIT		5
 
-
 /*
  * RPC definitions for bootparamd
  */
@@ -40,3 +43,4 @@ struct mbuf *xdr_inaddr_decode(struct mbuf *m, struct in_addr *ia);
 #define BOOTPARAM_WHOAMI	1
 #define BOOTPARAM_GETFILE	2
 
+#endif	/* _NFS_KRPC_H_ */

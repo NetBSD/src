@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.58 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.59 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,6 @@
  *
  *	@(#)nfsm_subs.h	8.2 (Berkeley) 3/30/95
  */
-
 
 #ifndef _NFS_NFSM_SUBS_H_
 #define _NFS_NFSM_SUBS_H_
@@ -572,4 +571,4 @@
 			break; \
 		}; }
 
-#endif
+#endif	/* _NFS_NFSM_SUBS_H_ */

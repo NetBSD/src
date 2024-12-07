@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.53 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.54 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,8 @@
  *	@(#)nfsmount.h	8.3 (Berkeley) 3/30/95
  */
 
-
 #ifndef _NFS_NFSMOUNT_H_
-#define _NFS_NFSMOUNT_H_
+#define	_NFS_NFSMOUNT_H_
 
 #if defined(_KERNEL) && !defined(NFS_ARGS_ONLY)
 #include <sys/condvar.h>
@@ -200,4 +199,4 @@ void	nfs_vfs_done(void);
 
 #endif /* _KERNEL */
 
-#endif
+#endif	/* _NFS_NFSMOUNT_H_ */

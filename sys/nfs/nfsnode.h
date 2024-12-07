@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.76 2021/10/21 13:21:55 andvar Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.77 2024/12/07 02:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,14 +36,18 @@
 
 
 #ifndef _NFS_NFSNODE_H_
-#define _NFS_NFSNODE_H_
+#define	_NFS_NFSNODE_H_
+
+#include <sys/types.h>
 
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/timespec.h>
 
-#ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
-#endif
+#include <nfs/nfsproto.h>
+
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 
@@ -61,7 +65,6 @@
  * logical blocknumber, and also a pointer to a buffer where
  * the cookies are stored.
  */
-
 
 LIST_HEAD(nfsdirhashhead, nfsdircache);
 TAILQ_HEAD(nfsdirchainhead, nfsdircache);
@@ -280,4 +283,4 @@ extern int (**nfsv2_vnodeop_p)(void *);
 
 #endif /* _KERNEL */
 
-#endif
+#endif	/* _NFS_NFSNODE_H_ */
