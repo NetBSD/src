@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.569 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.570 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.569 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.570 2024/12/07 02:23:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -649,8 +649,8 @@ do_sys_mount(struct lwp *l, const char *type, enum uio_seg type_seg,
 done:
 	if (vfsopsrele)
 		vfs_delref(vfsops);
-    	if (vp != NULL) {
-	    	vrele(vp);
+	if (vp != NULL) {
+		vrele(vp);
 	}
 	if (data_buf != data)
 		kmem_free(data_buf, alloc_sz);
@@ -1706,7 +1706,7 @@ change_root(struct vnode *vp)
 	kauth_proc_chroot(ncred, p->p_cwdi);
 
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, p->p_cred, true);
+	proc_crmod_leave(ncred, p->p_cred, true);
 }
 
 /*
@@ -2064,7 +2064,7 @@ again:
 			/*
 			 * userland told us wrong size.
 			 */
-		    	error = EINVAL;
+			error = EINVAL;
 		}
 	}
 	kmem_free(fhp, fhsize);
@@ -3012,7 +3012,7 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 	error = (*fp->f_ops->fo_seek)(fp, SCARG(uap, offset),
 	    SCARG(uap, whence), (off_t *)retval, FOF_UPDATE_OFFSET);
 out:
- 	fd_putfile(fd);
+	fd_putfile(fd);
 	return (error);
 }
 

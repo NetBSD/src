@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.71 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.72 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.71 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.72 2024/12/07 02:23:09 riastradh Exp $");
 
 /*
  * File system transaction operations.
@@ -997,8 +997,8 @@ fscow_run(struct buf *bp, bool data_valid)
 	LIST_FOREACH(hp, &fmi->fmi_cow_handler, ch_list)
 		if ((error = (*hp->ch_func)(hp->ch_arg, bp, data_valid)) != 0)
 			break;
- 	if (error == 0)
- 		bp->b_flags |= B_COWDONE;
+	if (error == 0)
+		bp->b_flags |= B_COWDONE;
 
 	/*
 	 * Check if other threads want to change the list.

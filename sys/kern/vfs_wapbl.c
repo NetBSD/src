@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.114 2024/12/07 02:11:43 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.115 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.114 2024/12/07 02:11:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.115 2024/12/07 02:23:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.114 2024/12/07 02:11:43 riastradh Ex
 
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
-static int wapbl_allow_dpofua = 0; 	/* switched off by default for now */
+static int wapbl_allow_dpofua = 0;	/* switched off by default for now */
 static int wapbl_journal_iobufs = 4;
 
 static inline size_t wapbl_space_free(size_t, off_t, off_t);
@@ -122,7 +122,7 @@ struct wapbl {
 
 	unsigned wl_lock_count;	/* m:	Count of transactions in progress */
 
-	size_t wl_circ_size; 	/* r:	Number of bytes in buffer of log */
+	size_t wl_circ_size;	/* r:	Number of bytes in buffer of log */
 	size_t wl_circ_off;	/* r:	Number of bytes reserved at start */
 
 	size_t wl_bufcount_max;	/* r:	Number of buffers reserved for log */
@@ -235,14 +235,14 @@ struct wapbl {
 	TAILQ_HEAD(, buf) wl_iobufs;		/* l: Free or filling bufs */
 	TAILQ_HEAD(, buf) wl_iobufs_busy;	/* l: In-transit bufs */
 
-	int wl_dkcache;		/* r: 	disk cache flags */
+	int wl_dkcache;		/* r:	disk cache flags */
 #define WAPBL_USE_FUA(wl)	\
 		(wapbl_allow_dpofua && ISSET((wl)->wl_dkcache, DKCACHE_FUA))
 #define WAPBL_JFLAGS(wl)	\
 		(WAPBL_USE_FUA(wl) ? (wl)->wl_jwrite_flags : 0)
 #define WAPBL_JDATA_FLAGS(wl)	\
 		(WAPBL_JFLAGS(wl) & B_MEDIA_DPO)	/* only DPO */
-	int wl_jwrite_flags;	/* r: 	journal write flags */
+	int wl_jwrite_flags;	/* r:	journal write flags */
 };
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -1552,7 +1552,7 @@ wapbl_truncate(struct wapbl *wl, size_t minfree)
 	minfree -= avail;
 	while (wl->wl_error_count == 0 &&
 	    wl->wl_reclaimable_bytes < minfree) {
-        	WAPBL_PRINTF(WAPBL_PRINT_TRUNCATE,
+		WAPBL_PRINTF(WAPBL_PRINT_TRUNCATE,
 		    ("wapbl_truncate: sleeping on %p"
 			" wl=%p bytes=%zd minfree=%zd\n",
 			&wl->wl_reclaimable_bytes,
@@ -3240,7 +3240,7 @@ wapbl_replay_process(struct wapbl_replay *wr, off_t head, off_t tail)
 		default:
 			printf("Unrecognized wapbl type: 0x%08x\n",
 			    wcn->wc_type);
- 			error = EFTYPE;
+			error = EFTYPE;
 			goto errout;
 		}
 		wapbl_circ_advance(wr, wcn->wc_len, &saveoff);

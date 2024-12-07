@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.65 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.66 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.65 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.66 2024/12/07 02:23:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -555,7 +555,7 @@ vfs_detach(struct vfsops *vfs)
 	 */
 	vfs_opv_free(vfs->vfs_opv_descs);
 out:
- 	mutex_exit(&vfs_list_lock);
+	mutex_exit(&vfs_list_lock);
 	return error;
 }
 

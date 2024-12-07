@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.7 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.8 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.7 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.8 2024/12/07 02:23:09 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -80,7 +80,7 @@ vfs_hooks_detach(struct vfs_hooks *vfs_hooks)
                 }
         }
         if (hp == NULL)
-       		ret = ESRCH;
+		ret = ESRCH;
 	mutex_exit(&vfs_hooks_lock);
 
 	return ret;
@@ -97,9 +97,9 @@ func fargs								\
 {									\
 	int error;							\
 	struct vfs_hooks *hp;						\
- 									\
+									\
 	error = EJUSTRETURN;						\
- 									\
+									\
 	mutex_enter(&vfs_hooks_lock);					\
         LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {		\
 		if (hp-> hook != NULL) {				\
@@ -109,7 +109,7 @@ func fargs								\
 		}							\
 	}								\
 	mutex_exit(&vfs_hooks_lock);					\
- 									\
+									\
 	return error;							\
 }
 
@@ -123,7 +123,7 @@ void									\
 func fargs								\
 {									\
 	struct vfs_hooks *hp;						\
- 									\
+									\
 	mutex_enter(&vfs_hooks_lock);					\
         LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {		\
 		if (hp-> hook != NULL)					\

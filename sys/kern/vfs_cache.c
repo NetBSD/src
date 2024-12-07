@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.157 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.158 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
 #define __NAMECACHE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.157 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.158 2024/12/07 02:23:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -561,7 +561,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	/* Could the entry be purged below? */
 	if ((cnflags & ISLASTCN) != 0 &&
 	    ((cnflags & MAKEENTRY) == 0 || nameiop == CREATE)) {
-	    	op = RW_WRITER;
+		op = RW_WRITER;
 	} else {
 		op = RW_READER;
 	}
@@ -726,9 +726,10 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 		KASSERT(dvi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_ACCESS_ACTION(VEXEC,
-		    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
+			dvp->v_type, dvi->vi_nc_mode & ALLPERMS),
+		    dvp, NULL,
 		    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
-		    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
+			dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
 		if (error != 0) {
 			if (newlock != NULL) {
 				rw_exit(newlock);
@@ -825,11 +826,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		KASSERT(vi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(kauth_cred_get(),
 		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, vi->vi_nc_mode &
-		    ALLPERMS), vp, NULL, genfs_can_access(vp, curlwp->l_cred,
-		    vi->vi_nc_uid, vi->vi_nc_gid, vi->vi_nc_mode & ALLPERMS,
-		    NULL, accmode));
-		    if (error != 0) {
-		    	rw_exit(&vi->vi_nc_listlock);
+			ALLPERMS),
+		    vp, NULL, genfs_can_access(vp, curlwp->l_cred,
+			vi->vi_nc_uid, vi->vi_nc_gid,
+			vi->vi_nc_mode & ALLPERMS,
+			NULL, accmode));
+		if (error != 0) {
+			rw_exit(&vi->vi_nc_listlock);
 			COUNT(ncs_denied);
 			return EACCES;
 		}
@@ -853,7 +856,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		if (ncp->nc_name[0] == '.') {
 			if (nlen == 1 ||
 			    (nlen == 2 && ncp->nc_name[1] == '.')) {
-			    	break;
+				break;
 			}
 		}
 
@@ -1351,7 +1354,7 @@ cache_deactivate(void)
 	/* If we're nowhere near budget yet, don't bother. */
 	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
 	if (total < (desiredvnodes >> 1)) {
-	    	return;
+		return;
 	}
 
 	/*

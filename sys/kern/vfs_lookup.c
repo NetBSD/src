@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.236 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.237 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.236 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.237 2024/12/07 02:23:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1020,7 +1020,7 @@ lookup_crossmount(struct namei_state *state,
 	}
 
 	/* If searchdir is still around, re-lock it. */
- 	if (error == 0 && lktype != LK_NONE) {
+	if (error == 0 && lktype != LK_NONE) {
 		vn_lock(searchdir, lktype | LK_RETRY);
 		*searchdir_locked = true;
 	}
@@ -1239,8 +1239,8 @@ unionlookup:
 		KASSERT(searchdir_locked);
 		if ((cnp->cn_flags & (ISLASTCN | LOCKPARENT)) !=
 		    (ISLASTCN | LOCKPARENT)) {
-		    	VOP_UNLOCK(searchdir);
-		    	searchdir_locked = false;
+			VOP_UNLOCK(searchdir);
+			searchdir_locked = false;
 		}
 	} else {
 		KASSERT(!searchdir_locked);
@@ -1307,11 +1307,11 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		if ((cnp->cn_flags & ISDOTDOT) != 0) {
 			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
 			    (cnp->cn_flags & NOCROSSMOUNT)) {
-			    	error = EOPNOTSUPP;
+				error = EOPNOTSUPP;
 				break;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
-			    	error = EOPNOTSUPP;
+				error = EOPNOTSUPP;
 				break;
 			}
 		}
@@ -1352,7 +1352,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		if (foundobj == NULL) {
 			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
 			    (searchdir->v_mount->mnt_flag & MNT_UNION) != 0) {
-			    	error = EOPNOTSUPP;
+				error = EOPNOTSUPP;
 			} else {
 				error = ENOENT;
 				terminal = ((cnp->cn_flags & ISLASTCN) != 0);
@@ -1570,8 +1570,8 @@ namei_oneroot(struct namei_state *state,
 		    foundobj->v_type == VDIR &&
 		    foundobj->v_mountedhere != NULL &&
 		    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		    	error = lookup_crossmount(state, &searchdir,
-		    	    &foundobj, &searchdir_locked);
+			error = lookup_crossmount(state, &searchdir,
+			    &foundobj, &searchdir_locked);
 		}
 
 		if (error) {
@@ -1865,8 +1865,8 @@ skiploop:
 			 * it can't be safely changed. Feh. XXX
 			 */
 			KASSERT(searchdir_locked);
-		    	VOP_UNLOCK(searchdir);
-		    	searchdir_locked = false;
+			VOP_UNLOCK(searchdir);
+			searchdir_locked = false;
 		} else if ((cnp->cn_flags & LOCKLEAF) != 0 &&
 		    (searchdir != foundobj ||
 			(cnp->cn_flags & LOCKPARENT) == 0)) {

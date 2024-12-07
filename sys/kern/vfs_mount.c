@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.108 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.109 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.108 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.109 2024/12/07 02:23:09 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -499,7 +499,7 @@ vfs_vnode_iterator_next1(struct vnode_iterator *vni,
 again:
 		if (vip == NULL) {
 			mutex_exit(lock);
-	       		return NULL;
+			return NULL;
 		}
 		vp = VIMPL_TO_VNODE(vip);
 		KASSERT(vp != NULL);

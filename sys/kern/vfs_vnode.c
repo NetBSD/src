@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.154 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.155 2024/12/07 02:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.154 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.155 2024/12/07 02:23:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -522,7 +522,7 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	vip = VNODE_TO_VIMPL(vp);
 	if (listhd == vip->vi_lrulisthd &&
 	    (getticks() - vip->vi_lrulisttm) < hz) {
-	    	return;
+		return;
 	}
 
 	mutex_enter(&vdrain_lock);
