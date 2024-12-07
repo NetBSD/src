@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.8 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.9 2024/12/07 19:53:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -46,6 +46,25 @@ struct gicv3_its_device {
 	LIST_ENTRY(gicv3_its_device) dev_list;
 };
 
+struct gicv3_its_page_table {
+	uint32_t		pt_dev_id;
+	struct gicv3_dma	pt_dma;
+	LIST_ENTRY(gicv3_its_page_table) pt_list;
+};
+
+struct gicv3_its_table {
+	void			*tab_l1;
+	uint32_t		tab_page_size;
+	uint64_t		tab_l1_entry_size;
+	uint64_t		tab_l1_num_ids;
+	uint64_t		tab_l2_entry_size;
+	uint64_t		tab_l2_num_ids;
+	bool			tab_indirect;
+	bool			tab_shareable;
+
+	LIST_HEAD(, gicv3_its_page_table) tab_pt;
+};
+
 struct gicv3_its {
 	bus_space_tag_t		its_bst;
 	bus_space_handle_t	its_bsh;
@@ -67,6 +86,10 @@ struct gicv3_its {
 
 	struct gicv3_dma	its_cmd;		/* Command queue */
 	struct gicv3_dma	its_tab[8];		/* ITS tables */
+
+	struct gicv3_its_table	its_tab_device;
+
+	bool			its_cmd_flush;
 
 	struct arm_pci_msi	its_msi;
 
