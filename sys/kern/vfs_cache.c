@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.158 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.159 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
 #define __NAMECACHE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.158 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.159 2024/12/07 02:27:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -834,7 +834,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		if (error != 0) {
 			rw_exit(&vi->vi_nc_listlock);
 			COUNT(ncs_denied);
-			return EACCES;
+			return SET_ERROR(EACCES);
 		}
 	}
 	TAILQ_FOREACH(ncp, &vi->vi_nc_list, nc_list) {
@@ -877,7 +877,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 				rw_exit(&vi->vi_nc_listlock);
 				SDT_PROBE(vfs, namecache, revlookup,
 				    fail, vp, ERANGE, 0, 0, 0);
-				return (ERANGE);
+				return SET_ERROR(ERANGE);
 			}
 			memcpy(bp, ncp->nc_name, nlen);
 			*bpp = bp;
@@ -899,13 +899,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		SDT_PROBE(vfs, namecache, revlookup, success, vp, dvp,
 		    0, 0, 0);
 		COUNT(ncs_revhits);
-		return (0);
+		return 0;
 	}
 	rw_exit(&vi->vi_nc_listlock);
 	COUNT(ncs_revmiss);
 out:
 	*dvpp = NULL;
-	return (-1);
+	return -1;
 }
 
 /*

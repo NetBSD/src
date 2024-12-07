@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.237 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.238 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.237 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.238 2024/12/07 02:27:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.237 2024/12/07 02:23:09 riastradh E
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/syslimits.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -309,7 +310,7 @@ pathbuf_copyin(const char *userpath, struct pathbuf **ret)
 
 	pb = pathbuf_create_raw();
 	if (pb == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	error = copyinstr(userpath, pb->pb_path, PATH_MAX, NULL);
 	if (error) {
@@ -335,7 +336,7 @@ pathbuf_maybe_copyin(const char *path, enum uio_seg seg, struct pathbuf **ret)
 	} else {
 		*ret = pathbuf_create(path);
 		if (*ret == NULL) {
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		}
 		return 0;
 	}
@@ -681,7 +682,7 @@ namei_start(struct namei_state *state, int isnfsd,
 	 */
 	if (ndp->ni_pathlen == 1) {
 		ndp->ni_erootdir = NULL;
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	ndp->ni_loopcnt = 0;
@@ -696,13 +697,13 @@ namei_start(struct namei_state *state, int isnfsd,
 	}
 
 	if (startdir == NULL) {
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	/* NDAT may feed us with a non directory namei_getstartdir */
 	if (startdir->v_type != VDIR) {
 		vrele(startdir);
-		return ENOTDIR;
+		return SET_ERROR(ENOTDIR);
 	}
 
 	*startdir_ret = startdir;
@@ -744,7 +745,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	int error;
 
 	if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
-		return ELOOP;
+		return SET_ERROR(ELOOP);
 	}
 
 	vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
@@ -775,7 +776,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	linklen = MAXPATHLEN - auio.uio_resid;
 	if (linklen == 0) {
 		PNBUF_PUT(cp);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	/*
@@ -789,7 +790,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 		symlink_magic(self->l_proc, cp, &linklen)) ||
 	    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 		PNBUF_PUT(cp);
-		return ENAMETOOLONG;
+		return SET_ERROR(ENAMETOOLONG);
 	}
 	if (ndp->ni_pathlen > 1) {
 		/* includes a null-terminator */
@@ -861,7 +862,7 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 	}
 	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	if (cnp->cn_namelen > KERNEL_NAME_MAX) {
-		return ENAMETOOLONG;
+		return SET_ERROR(ENAMETOOLONG);
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
@@ -1207,7 +1208,7 @@ unionlookup:
 		 * then the name must exist.
 		 */
 		if ((cnp->cn_flags & (REQUIREDIR | CREATEDIR)) == REQUIREDIR) {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			goto done;
 		}
 
@@ -1216,7 +1217,7 @@ unionlookup:
 		 * allowing file to be created.
 		 */
 		if (state->rdonly) {
-			error = EROFS;
+			error = SET_ERROR(EROFS);
 			goto done;
 		}
 
@@ -1307,11 +1308,11 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		if ((cnp->cn_flags & ISDOTDOT) != 0) {
 			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
 			    (cnp->cn_flags & NOCROSSMOUNT)) {
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 				break;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 				break;
 			}
 		}
@@ -1325,7 +1326,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		if ((cnp->cn_flags & ISLASTCN) != 0) {
 			if (cnp->cn_nameiop != LOOKUP ||
 			    (cnp->cn_flags & LOCKPARENT) != 0) {
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 				break;
 			}
 		}
@@ -1338,7 +1339,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		 */
 		if (!cache_lookup_linked(searchdir, cnp->cn_nameptr,
 			cnp->cn_namelen, &foundobj, &plock, cnp->cn_cred)) {
-			error = EOPNOTSUPP;
+			error = SET_ERROR(EOPNOTSUPP);
 			break;
 		}
 		KASSERT(plock != NULL);
@@ -1352,9 +1353,9 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		if (foundobj == NULL) {
 			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
 			    (searchdir->v_mount->mnt_flag & MNT_UNION) != 0) {
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 			} else {
-				error = ENOENT;
+				error = SET_ERROR(ENOENT);
 				terminal = ((cnp->cn_flags & ISLASTCN) != 0);
 			}
 			break;
@@ -1368,7 +1369,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			error = vcache_tryvget(foundobj);
 			if (error != 0) {
 				foundobj = NULL;
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 			} else {
 				terminal = (foundobj->v_type != VLNK &&
 				    (cnp->cn_flags & ISLASTCN) != 0);
@@ -1394,7 +1395,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 				error = vcache_tryvget(foundobj);
 				if (error != 0) {
 					foundobj = NULL;
-					error = EOPNOTSUPP;
+					error = SET_ERROR(EOPNOTSUPP);
 				}
 				break;
 			} else {
@@ -1410,7 +1411,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			error = vcache_tryvget(foundobj);
 			if (error != 0) {
 				foundobj = NULL;
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 			} else {
 				terminal = (foundobj->v_type != VLNK);
 			}
@@ -1454,7 +1455,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			 * case of a root vnode being reclaimed while
 			 * trying to cross a mount.
 			 */
-			error2 = EOPNOTSUPP;
+			error2 = SET_ERROR(EOPNOTSUPP);
 		} else {
 			error2 = vcache_tryvget(searchdir);
 		}
@@ -1474,7 +1475,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			ndp->ni_pathlen = oldpathlen;
 			error = lookup_parsepath(state, *searchdir_ret);
 			if (error == 0) {
-				error = EOPNOTSUPP;
+				error = SET_ERROR(EOPNOTSUPP);
 			}
 		}
 	} else if (plock != NULL) {
@@ -1627,7 +1628,7 @@ namei_oneroot(struct namei_state *state,
 			ndp->ni_pathlen += state->slashes;
 			ndp->ni_next -= state->slashes;
 			if (neverfollow) {
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 			} else if (searchdir == NULL) {
 				/*
 				 * dholland 20160410: lookup_once only
@@ -1649,7 +1650,7 @@ namei_oneroot(struct namei_state *state,
 				 * NFS occasionally but even then it
 				 * means something's badly wrong.)
 				 */
-				error = ENOTDIR;
+				error = SET_ERROR(ENOTDIR);
 			} else {
 				/*
 				 * dholland 20110410: if we're at a
@@ -1715,7 +1716,7 @@ namei_oneroot(struct namei_state *state,
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
-			return ENOTDIR;
+			return SET_ERROR(ENOTDIR);
 		}
 
 		/*
@@ -1817,10 +1818,10 @@ skiploop:
 
 			switch (cnp->cn_nameiop) {
 			case CREATE:
-				return EEXIST;
+				return SET_ERROR(EEXIST);
 			case DELETE:
 			case RENAME:
-				return EBUSY;
+				return SET_ERROR(EBUSY);
 			default:
 				break;
 			}
@@ -1847,7 +1848,7 @@ skiploop:
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
-			return EROFS;
+			return SET_ERROR(EROFS);
 		}
 
 		/* Lock the leaf node if requested. */
@@ -2115,10 +2116,10 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	 * to contain a slash.
 	 */
 	if (strlen(ndp->ni_pathbuf->pb_path) > KERNEL_NAME_MAX) {
-		return ENAMETOOLONG;
+		return SET_ERROR(ENAMETOOLONG);
 	}
 	if (strchr(ndp->ni_pathbuf->pb_path, '/')) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	ndp->ni_pathlen = strlen(ndp->ni_pathbuf->pb_path) + 1;
@@ -2221,7 +2222,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
 	 * Check for read-only lookups.
 	 */
 	if (rdonly && cnp->cn_nameiop != LOOKUP) {
-		error = EROFS;
+		error = SET_ERROR(EROFS);
 		if (*vpp) {
 			vrele(*vpp);
 		}
@@ -2314,7 +2315,7 @@ nameiat_simple_kernel(struct vnode *dvp, const char *path,
 
 	pb = pathbuf_create(path);
 	if (pb == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	error = nameiat_simple(dvp, pb, sflags, vp_ret);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.109 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.110 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.109 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.110 2024/12/07 02:27:38 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.109 2024/12/07 02:23:09 riastradh Ex
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -195,13 +196,13 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 			break;
 	if (vfsp == NULL) {
 		mutex_exit(&vfs_list_lock);
-		return (ENODEV);
+		return SET_ERROR(ENODEV);
 	}
 	vfsp->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
 	if ((mp = vfs_mountalloc(vfsp, NULL)) == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	error = vfs_busy(mp);
 	KASSERT(error == 0);
 	mp->mnt_flag = MNT_RDONLY;
@@ -352,11 +353,11 @@ _vfs_busy(struct mount *mp, bool wait)
 		fstrans_start(mp);
 	} else {
 		if (fstrans_start_nowait(mp))
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		fstrans_done(mp);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	vfs_ref(mp);
 	return 0;
@@ -413,13 +414,13 @@ vfs_set_lowermount(struct mount *mp, struct mount *lowermp)
 
 	for (depth = 0, mp2 = lowermp; mp2; depth++, mp2 = mp2->mnt_lower) {
 		if (depth == 23)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 	}
 #endif
 
 	if (lowermp) {
 		if (lowermp == dead_rootmount)
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		error = vfs_busy(lowermp);
 		if (error)
 			return error;
@@ -663,7 +664,7 @@ vflush_one(vnode_t *vp, vnode_t *skipvp, int flags)
 		return 0;
 	}
 	vrele(vp);
-	return EBUSY;
+	return SET_ERROR(EBUSY);
 }
 
 int
@@ -704,7 +705,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	if (error)
 		return error;
 	if (busy)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	return 0;
 }
 
@@ -817,17 +818,17 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	/* Cannot make a non-dir a mount-point (from here anyway). */
 	if (vp->v_type != VDIR) {
 		vfs_delref(vfsops);
-		return ENOTDIR;
+		return SET_ERROR(ENOTDIR);
 	}
 
 	if (flags & MNT_EXPORTED) {
 		vfs_delref(vfsops);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
 		vfs_delref(vfsops);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
@@ -870,12 +871,12 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	}
 	if (nd.ni_vp != vp) {
 		vput(nd.ni_vp);
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto err_mounted;
 	}
 	if (vp->v_mountedhere != NULL) {
 		vput(nd.ni_vp);
-		error = EBUSY;
+		error = SET_ERROR(EBUSY);
 		goto err_mounted;
 	}
 	error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0);
@@ -1271,7 +1272,7 @@ vfs_mountroot(void)
 	default:
 		printf("%s: inappropriate for root file system\n",
 		    device_xname(root_device));
-		return (ENODEV);
+		return SET_ERROR(ENODEV);
 	}
 
 	/*
@@ -1280,7 +1281,7 @@ vfs_mountroot(void)
 	 */
 	if (strcmp(rootfstype, ROOT_FSTYPE_ANY) != 0) {
 		v = vfs_getopsbyname(rootfstype);
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 		if (v != NULL) {
 			if (v->vfs_mountroot != NULL) {
 				error = (v->vfs_mountroot)();
@@ -1319,7 +1320,7 @@ vfs_mountroot(void)
 		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%llx)", (unsigned long long)rootdev);
 		printf("\n");
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 	}
 
 done:
@@ -1450,13 +1451,13 @@ vfs_mountedon(vnode_t *vp)
 	int error = 0;
 
 	if (vp->v_type != VBLK)
-		return ENOTBLK;
+		return SET_ERROR(ENOTBLK);
 	if (spec_node_getmountedfs(vp) != NULL)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	if (spec_node_lookup_by_dev(vp->v_type, vp->v_rdev, VDEAD_NOWAIT, &vq)
 	    == 0) {
 		if (spec_node_getmountedfs(vq) != NULL)
-			error = EBUSY;
+			error = SET_ERROR(EBUSY);
 		vrele(vq);
 	}
 
@@ -1482,7 +1483,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	d_type = D_OTHER;
 
 	if (iskmemvp(vp))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	switch (vp->v_type) {
 	case VCHR: {
@@ -1524,7 +1525,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	}
 
 	if (d_type != D_DISK)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (bvpp != NULL)
 		*bvpp = bvp;
@@ -1535,7 +1536,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	 * XXX: if it's on a disk with any other mounted slice.
 	 */
 	if (vfs_mountedon(bvp))
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	return 0;
 }

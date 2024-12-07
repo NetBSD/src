@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.72 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.73 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.72 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.73 2024/12/07 02:27:38 riastradh Exp $");
 
 /*
  * File system transaction operations.
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.72 2024/12/07 02:23:09 riastradh Exp
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
@@ -546,7 +547,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	pserialize_read_exit(s);
 
 	if (! wait)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	mutex_enter(&fstrans_lock);
 	while (! grant_lock(fmi, lock_type))
@@ -702,7 +703,7 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 
 	fli = fstrans_get_lwp_info(mp, true);
 	if (fli == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	fmi = fli->fli_mountinfo;
 	old_state = fmi->fmi_state;
 	if (old_state == new_state)
@@ -768,15 +769,15 @@ vfs_suspend(struct mount *mp, int nowait)
 	int error;
 
 	if (mp == dead_rootmount)
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	fli = fstrans_get_lwp_info(mp, true);
 	if (fli == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	if (nowait) {
 		if (!mutex_tryenter(&vfs_suspend_lock))
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 	} else
 		mutex_enter(&vfs_suspend_lock);
 
@@ -787,7 +788,7 @@ vfs_suspend(struct mount *mp, int nowait)
 
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
 		vfs_resume(mp);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	return 0;
@@ -933,7 +934,7 @@ fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 	fstrans_mount_dtor(fmi);
 	cow_change_done(fmi);
 
-	return hp ? 0 : EINVAL;
+	return hp ? 0 : SET_ERROR(EINVAL);
 }
 
 /*

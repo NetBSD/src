@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.66 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.67 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.66 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.67 2024/12/07 02:27:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,7 +138,7 @@ int
 vn_default_error(void *v)
 {
 
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 static struct sysctllog *vfs_sysctllog;
@@ -354,15 +354,15 @@ usermount_common_policy(struct mount *mp, u_long flags)
 
 	/* No exporting if unprivileged. */
 	if (flags & MNT_EXPORTED)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	/* Must have 'nosuid' and 'nodev'. */
 	if ((flags & MNT_NODEV) == 0 || (flags & MNT_NOSUID) == 0)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	/* Retain 'noexec'. */
 	if ((mp->mnt_flag & MNT_NOEXEC) && (flags & MNT_NOEXEC) == 0)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	return 0;
 }
@@ -482,7 +482,7 @@ vfs_attach(struct vfsops *vfs)
 	 */
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
-			error = EEXIST;
+			error = SET_ERROR(EEXIST);
 			goto out;
 		}
 	}
@@ -526,7 +526,7 @@ vfs_detach(struct vfsops *vfs)
 	 * Make sure no one is using the filesystem.
 	 */
 	if (vfs->vfs_refcount != 0) {
-		error = EBUSY;
+		error = SET_ERROR(EBUSY);
 		goto out;
 	}
 
@@ -541,7 +541,7 @@ vfs_detach(struct vfsops *vfs)
 	}
 
 	if (v == NULL) {
-		error = ESRCH;
+		error = SET_ERROR(ESRCH);
 		goto out;
 	}
 

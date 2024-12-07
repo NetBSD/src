@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.501 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.502 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.501 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.502 2024/12/07 02:27:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.501 2024/12/07 02:11:42 riastradh Exp
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
@@ -214,7 +215,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	if (flags & V_SAVE) {
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0);
 		if (error)
-		        return (error);
+		        return error;
 		KASSERT(LIST_EMPTY(&vp->v_dirtyblkhd));
 	}
 
@@ -228,7 +229,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
@@ -241,7 +242,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		/*
 		 * XXX Since there are no node locks for NFS, I believe
@@ -268,7 +269,7 @@ restart:
 
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -302,7 +303,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
@@ -317,13 +318,13 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1000,9 +1001,9 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	int error, first;
 
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	if (namelen != 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	first = 1;
 	error = 0;
@@ -1043,7 +1044,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	mutex_exit(&vfs_list_lock);
 	sysctl_relock();
 	*oldlenp = needed;
-	return (error);
+	return error;
 }
 
 int kinfo_vdebug = 1;
@@ -1069,15 +1070,15 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	int error;
 
 	if (namelen != 0)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 #define VPTRSZ	sizeof(vnode_t *)
 #define VNODESZ	sizeof(vnode_t)
 	if (where == NULL) {
 		*sizep = (numvnodes + KINFO_VNODESLOP) * (VPTRSZ + VNODESZ);
-		return (0);
+		return 0;
 	}
 	ewhere = where + *sizep;
 
@@ -1092,7 +1093,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				mountlist_iterator_destroy(iter);
 				sysctl_relock();
 				*sizep = bp - where;
-				return (ENOMEM);
+				return SET_ERROR(ENOMEM);
 			}
 			memcpy(&vbuf, vp, VNODESZ);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
@@ -1101,7 +1102,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				vfs_vnode_iterator_destroy(marker);
 				mountlist_iterator_destroy(iter);
 				sysctl_relock();
-				return (error);
+				return error;
 			}
 			vrele(vp);
 			bp += VPTRSZ + VNODESZ;
@@ -1112,7 +1113,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	*sizep = bp - where;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1262,7 +1263,7 @@ vfs_getopsbyname(const char *name)
 		v->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
-	return (v);
+	return v;
 }
 
 void
@@ -1419,7 +1420,7 @@ vfs_unixify_accmode(accmode_t *accmode)
 	 */
 	if (*accmode & VEXPLICIT_DENY) {
 		*accmode = 0;
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -1429,7 +1430,7 @@ vfs_unixify_accmode(accmode_t *accmode)
 	 * on the containing directory instead.
 	 */
 	if (*accmode & (VDELETE_CHILD | VDELETE))
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	if (*accmode & VADMIN_PERMS) {
 		*accmode &= ~VADMIN_PERMS;
@@ -1442,7 +1443,7 @@ vfs_unixify_accmode(accmode_t *accmode)
 	 */
 	*accmode &= ~(VSTAT_PERMS | VSYNCHRONIZE);
 
-	return (0);
+	return 0;
 }
 
 time_t	rootfstime;			/* recorded root fs time, if known */

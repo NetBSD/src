@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.305 2024/12/07 02:13:30 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.306 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.305 2024/12/07 02:13:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.306 2024/12/07 02:27:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -322,7 +322,7 @@ buf_setvalimit(vsize_t sz)
 
 	/* We need to accommodate at least NMEMPOOLS of MAXBSIZE each */
 	if (sz < NMEMPOOLS * MAXBSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	bufmem_valimit = sz;
 	return 0;
@@ -453,7 +453,7 @@ buf_memcalc(void)
 	if (bufmem_valimit != 0 && n > bufmem_valimit)
 		n = bufmem_valimit;
 
-	return (n);
+	return n;
 }
 
 /*
@@ -735,7 +735,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 			mp->mnt_stat.f_asyncreads++;
 	}
 
-	return (bp);
+	return bp;
 }
 
 /*
@@ -753,7 +753,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, int flags, buf_t **bpp)
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
@@ -782,7 +782,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
@@ -864,7 +864,7 @@ bwrite(buf_t *bp)
 	sync = !ISSET(bp->b_flags, B_ASYNC);
 	if (sync && mp != NULL && ISSET(mp->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -918,9 +918,9 @@ bwrite(buf_t *bp)
 		/* Release the buffer. */
 		brelse(bp, 0);
 
-		return (rv);
+		return rv;
 	} else {
-		return (0);
+		return 0;
 	}
 }
 
@@ -929,7 +929,7 @@ vn_bwrite(void *v)
 {
 	struct vop_bwrite_args *ap = v;
 
-	return (bwrite(ap->a_bp));
+	return bwrite(ap->a_bp);
 }
 
 /*
@@ -1194,7 +1194,7 @@ incore(struct vnode *vp, daddr_t blkno)
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1223,7 +1223,7 @@ loop:
 			mutex_exit(&bufcache_lock);
 			SDT_PROBE4(io, kernel, , getblk__done,
 			    vp, blkno, size, NULL);
-			return (NULL);
+			return NULL;
 		}
 		KASSERT(!cv_has_waiters(&bp->b_done));
 #ifdef DIAGNOSTIC
@@ -1271,7 +1271,7 @@ loop:
 	}
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	SDT_PROBE4(io, kernel, , getblk__done,  vp, blkno, size, bp);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1293,7 +1293,7 @@ geteblk(int size)
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	error = allocbuf(bp, size, 0);
 	KASSERT(error == 0);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1336,7 +1336,7 @@ allocbuf(buf_t *bp, int size, int preserve)
 	 */
 	addr = buf_alloc(desired_size);
 	if (addr == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	if (preserve)
 		memcpy(addr, bp->b_data, MIN(oldsize,desired_size));
 	if (bp->b_data != NULL)
@@ -1410,7 +1410,7 @@ start:
 			bp->b_freelistindex = -1;
 #endif /* defined(DIAGNOSTIC) */
 			SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
-			return (bp);
+			return bp;
 		}
 		mutex_enter(&bufcache_lock);
 	}
@@ -1454,7 +1454,7 @@ start:
 				    &bufcache_lock, slptimeo);
 		}
 		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
-		return (NULL);
+		return NULL;
 	}
 
 #ifdef DIAGNOSTIC
@@ -1492,7 +1492,7 @@ start:
 		fstrans_done(transmp);
 		mutex_enter(&bufcache_lock);
 		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
-		return (NULL);
+		return NULL;
 	}
 
 	KASSERT(transmp == NULL);
@@ -1522,7 +1522,7 @@ start:
 	}
 
 	SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1785,10 +1785,10 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	int error, elem_count, retries;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	retries = 100;
 retry:
@@ -1810,7 +1810,7 @@ retry:
 	 */
 	if (op != KERN_BUF_ALL || arg != KERN_BUF_ALL ||
 	    elem_size < 1 || elem_count < 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	if (oldp == NULL) {
 		/* count only, don't run through the buffer queues */
@@ -1844,7 +1844,7 @@ retry:
 					 * bail out.
 					 */
 					if (retries-- == 0) {
-						error = EAGAIN;
+						error = SET_ERROR(EAGAIN);
 						break;
 					}
 					mutex_exit(&bufcache_lock);
@@ -1866,7 +1866,7 @@ retry:
 
 	*oldlenp = needed;
 
-	return (error);
+	return error;
 }
 
 static int
@@ -1890,23 +1890,23 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	/* Update the copy */
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	if (rnode->sysctl_data == &bufcache) {
 		if (temp_bufcache > 100)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufcache = temp_bufcache;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
 		if (bufmem_hiwater - temp_water < 16)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufmem_lowater = temp_water;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
 		if (temp_water - bufmem_lowater < 16)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufmem_hiwater = temp_water;
 	} else
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/* Drain until below new high water mark */
 	sysctl_unlock();
@@ -2085,7 +2085,7 @@ nestiobuf_iodone(buf_t *bp)
 		 * Not all got transferred, raise an error. We have no way to
 		 * propagate these conditions to mbp.
 		 */
-		error = EIO;
+		error = SET_ERROR(EIO);
 	}
 
 	donebytes = bp->b_bufsize;
@@ -2193,7 +2193,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 
 	if ((bp->b_cflags & BC_BUSY) != 0) {
 		if (curlwp == uvm.pagedaemon_lwp) {
-			error = EDEADLK;
+			error = SET_ERROR(EDEADLK);
 			goto out;
 		}
 		bp->b_cflags |= BC_WANTED;
@@ -2213,7 +2213,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 		if (interlock != NULL)
 			mutex_enter(interlock);
 		if (error == 0)
-			error = EPASSTHROUGH;
+			error = SET_ERROR(EPASSTHROUGH);
 	} else {
 		bp->b_cflags |= BC_BUSY;
 		error = 0;

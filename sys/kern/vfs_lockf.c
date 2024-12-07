@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.82 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.83 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.82 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.83 2024/12/07 02:27:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.82 2024/12/07 02:11:42 riastradh Exp
 #include <sys/kmem.h>
 #include <sys/lockf.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/uidinfo.h>
 #include <sys/vnode.h>
@@ -523,7 +524,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		 */
 		if ((lock->lf_flags & F_WAIT) == 0) {
 			lf_free(lock);
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 		}
 		/*
 		 * We are blocked. Since flock style locks cover
@@ -568,7 +569,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				p = (struct proc *)waitblock->lf_id;
 				if (p == curproc) {
 					lf_free(lock);
-					return EDEADLK;
+					return SET_ERROR(EDEADLK);
 				}
 			}
 			/*
@@ -578,7 +579,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 */
 			if (i >= maxlockdepth) {
 				lf_free(lock);
-				return EDEADLK;
+				return SET_ERROR(EDEADLK);
 			}
 		}
 		/*
@@ -817,12 +818,12 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 
 	case SEEK_END:
 		if (fl->l_start > __type_max(off_t) - size)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		start = size + fl->l_start;
 		break;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (fl->l_len == 0)
@@ -831,18 +832,18 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		if (fl->l_len >= 0) {
 			if (start >= 0 &&
 			    fl->l_len - 1 > __type_max(off_t) - start)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			end = start + (fl->l_len - 1);
 		} else {
 			/* lockf() allows -ve lengths */
 			if (start < 0)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			end = start - 1;
 			start += fl->l_len;
 		}
 	}
 	if (start < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Allocate locks before acquiring the interlock.  We need two
@@ -860,7 +861,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 			 */
 			sparelock = lf_alloc(0);
 			if (sparelock == NULL) {
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				goto quit;
 			}
 			break;
@@ -872,7 +873,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	switch (ap->a_op) {
@@ -893,7 +894,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 	}
 	if (lock == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto quit;
 	}
 

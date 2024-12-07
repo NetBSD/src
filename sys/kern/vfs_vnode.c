@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.155 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.155 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -170,6 +170,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.155 2024/12/07 02:23:09 riastradh Ex
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/pax.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -1525,7 +1526,7 @@ vcache_tryvget(vnode_t *vp)
 
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
 		if (__predict_false((use & VUSECOUNT_GATE) == 0)) {
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		next = atomic_cas_uint(&vp->v_usecount,
 		    use, (use + 1) | VUSECOUNT_VGET);
@@ -1561,7 +1562,7 @@ vcache_vget(vnode_t *vp)
 			vcache_free(VNODE_TO_VIMPL(vp));
 		else
 			mutex_exit(vp->v_interlock);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	VSTATE_ASSERT(vp, VS_LOADED);
 	error = vcache_tryvget(vp);
@@ -1781,7 +1782,7 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	vip = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (vip != NULL) {
 		vcache_dealloc(new_vip);
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 	}
 	SLIST_INSERT_HEAD(&vcache_hashtab[new_hash & vcache_hashmask],
 	    new_vip, vi_hash);
@@ -2100,9 +2101,9 @@ vdead_check(struct vnode *vp, int flags)
 
 	if (VSTATE_GET(vp) == VS_RECLAIMING) {
 		KASSERT(ISSET(flags, VDEAD_NOWAIT));
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	} else if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	return 0;
@@ -2116,7 +2117,7 @@ vfs_drainvnodes(void)
 
 	if (!vdrain_one(desiredvnodes)) {
 		mutex_exit(&vdrain_lock);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	mutex_exit(&vdrain_lock);

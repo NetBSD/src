@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.115 2024/12/07 02:23:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.116 2024/12/07 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.115 2024/12/07 02:23:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.116 2024/12/07 02:27:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.115 2024/12/07 02:23:09 riastradh Ex
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -519,16 +520,16 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 		 * Not currently implemented, although it could be if
 		 * needed someday.
 		 */
-		return ENOSYS;
+		return SET_ERROR(ENOSYS);
 	}
 
 	if (off < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (blksize < DEV_BSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (blksize % DEV_BSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* XXXTODO: verify that the full load is writable */
 
@@ -539,7 +540,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	 */
 	/* XXX for now pick something minimal */
 	if ((count * blksize) < MAXPHYS) {
-		return ENOSPC;
+		return SET_ERROR(ENOSPC);
 	}
 
 	if ((error = VOP_BMAP(vp, off, &devvp, &logpbn, &run)) != 0) {
@@ -856,7 +857,7 @@ wapbl_stop(struct wapbl *wl, int force)
 		if (force) {
 			wapbl_discard(wl);
 		} else {
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 	}
 
@@ -1562,7 +1563,7 @@ wapbl_truncate(struct wapbl *wl, size_t minfree)
 	if (wl->wl_reclaimable_bytes < minfree) {
 		KASSERT(wl->wl_error_count);
 		/* XXX maybe get actual error from buffer instead someday? */
-		error = EIO;
+		error = SET_ERROR(EIO);
 	}
 	head = wl->wl_head;
 	tail = wl->wl_tail;
@@ -2192,7 +2193,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len, bool force,
 
 	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim)) {
 		if (!force) {
-			error = EAGAIN;
+			error = SET_ERROR(EAGAIN);
 			goto out;
 		}
 
@@ -2974,12 +2975,12 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 		vp, off, count, blksize));
 
 	if (off < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (blksize < DEV_BSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (blksize % DEV_BSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 #ifdef _KERNEL
 #if 0
@@ -2987,7 +2988,7 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	 * especially root.  However, we might still want to verify
 	 * that the full load is readable */
 	if ((off + count) * blksize > vp->v_size)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 #endif
 	if ((error = VOP_BMAP(vp, off, &devvp, &logpbn, 0)) != 0) {
 		return error;
@@ -3013,7 +3014,7 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	/* XXX verify checksums and magic numbers */
 	if (wch->wc_type != WAPBL_WC_HEADER) {
 		printf("Unrecognized wapbl magic: 0x%08x\n", wch->wc_type);
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 		goto errout;
 	}
 
@@ -3240,13 +3241,13 @@ wapbl_replay_process(struct wapbl_replay *wr, off_t head, off_t tail)
 		default:
 			printf("Unrecognized wapbl type: 0x%08x\n",
 			    wcn->wc_type);
-			error = EFTYPE;
+			error = SET_ERROR(EFTYPE);
 			goto errout;
 		}
 		wapbl_circ_advance(wr, wcn->wc_len, &saveoff);
 		if (off != saveoff) {
 			printf("wapbl_replay: corrupted records\n");
-			error = EFTYPE;
+			error = SET_ERROR(EFTYPE);
 			goto errout;
 		}
 	}
@@ -3377,7 +3378,7 @@ out:
 	wapbl_free(scratch1, MAXBSIZE);
 	wapbl_free(scratch2, MAXBSIZE);
 	if (!error && mismatchcnt)
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 	return error;
 }
 #endif
@@ -3470,7 +3471,7 @@ wapbl_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		return wapbl_fini();
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
 
