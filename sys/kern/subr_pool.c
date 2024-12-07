@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.290 2023/04/09 12:21:59 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.291 2024/12/07 23:15:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.290 2023/04/09 12:21:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.291 2024/12/07 23:15:38 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -830,8 +830,18 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		mutex_exit(&pool_head_lock);
 #endif
 
-	if (palloc == NULL)
-		palloc = &pool_allocator_kmem;
+	if (palloc == NULL) {
+		if (size > PAGE_SIZE) {
+			int bigidx = pool_bigidx(size);
+
+			palloc = &pool_allocator_big[bigidx];
+			flags |= PR_NOALIGN;
+		} else if (ipl == IPL_NONE) {
+			palloc = &pool_allocator_nointr;
+		} else {
+			palloc = &pool_allocator_kmem;
+		}
+	}
 
 	if (!cold)
 		mutex_enter(&pool_allocator_lock);
@@ -2115,16 +2125,6 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	unsigned int ppflags;
 
 	pp = &pc->pc_pool;
-	if (palloc == NULL && ipl == IPL_NONE) {
-		if (size > PAGE_SIZE) {
-			int bigidx = pool_bigidx(size);
-
-			palloc = &pool_allocator_big[bigidx];
-			flags |= PR_NOALIGN;
-		} else
-			palloc = &pool_allocator_nointr;
-	}
-
 	ppflags = flags;
 	if (ctor == NULL) {
 		ctor = NO_CTOR;
