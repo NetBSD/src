@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.9 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.10 2024/12/07 10:23:54 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -45,6 +45,7 @@ struct ams_softc {
 	/* Extended Mouse Protocol info, faked for non-EMP mice */
 	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
 	u_int8_t	sc_buttons;	/* number of buttons */
+	u_int8_t	sc_oldbuttons;	/* button state */
 	u_int32_t	sc_res;		/* mouse resolution (dpi) */
 	char		sc_devid[5];	/* device indentifier */
 

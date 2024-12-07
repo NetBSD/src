@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.26 2022/07/30 07:27:55 rin Exp $	*/
+/*	$NetBSD: ams.c,v 1.27 2024/12/07 10:23:54 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.26 2022/07/30 07:27:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.27 2024/12/07 10:23:54 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -499,15 +499,27 @@ ms_processevent(adb_event_t *event, struct ams_softc *amsc)
 	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
+	int phys_buttons = new_event.u.m.buttons;
 #if NAED > 0
 	if (!aed_input(&new_event))
 #endif
 #if NWSMOUSE > 0
-		if (amsc->sc_wsmousedev != NULL) /* wsmouse is attached? */
+		if (amsc->sc_wsmousedev != NULL)  { /* wsmouse is attached? */
+			if ((phys_buttons != new_event.u.m.buttons) &&
+							    (phys_buttons & 1))
+				amsc->sc_oldbuttons =
+				    new_event.u.m.buttons & ~1;
+			else if ((phys_buttons == new_event.u.m.buttons) &&
+						    (amsc->sc_oldbuttons == 0))
+				amsc->sc_oldbuttons = phys_buttons;
+
+			if (phys_buttons == 0)
+				amsc->sc_oldbuttons = 0;
 			wsmouse_input(amsc->sc_wsmousedev,
-			    new_event.u.m.buttons,
+			    amsc->sc_oldbuttons,
 			    new_event.u.m.dx, -new_event.u.m.dy, 0, 0,
 			    WSMOUSE_INPUT_DELTA);
+		}
 #else
 		/* do nothing */ ;
 #endif
