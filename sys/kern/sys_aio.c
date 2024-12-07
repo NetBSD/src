@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.49 2024/12/07 02:38:35 riastradh Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.50 2024/12/07 02:38:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.49 2024/12/07 02:38:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.50 2024/12/07 02:38:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.49 2024/12/07 02:38:35 riastradh Exp $
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
@@ -124,7 +125,7 @@ aio_fini(bool interface)
 		if (p != NULL) {
 			error = syscall_establish(NULL, aio_syscalls);
 			KASSERT(error == 0);
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 	}
 
@@ -168,7 +169,7 @@ aio_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		return aio_fini(true);
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
 
@@ -199,7 +200,7 @@ aio_procinit(struct proc *p)
 	uaddr = uvm_uarea_alloc();
 	if (uaddr == 0) {
 		aio_exit(p, aio);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 	error = lwp_create(curlwp, p, uaddr, 0, NULL, 0, aio_worker,
 	    NULL, &l, curlwp->l_class, &curlwp->l_sigmask, &curlwp->l_sigstk);
@@ -360,13 +361,13 @@ aio_process(struct aio_job *a_job)
 		struct uio auio;
 
 		if (aiocbp->aio_nbytes > SSIZE_MAX) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto done;
 		}
 
 		fp = fd_getfile(fd);
 		if (fp == NULL) {
-			error = EBADF;
+			error = SET_ERROR(EBADF);
 			goto done;
 		}
 
@@ -385,7 +386,7 @@ aio_process(struct aio_job *a_job)
 
 			if ((fp->f_flag & FREAD) == 0) {
 				fd_putfile(fd);
-				error = EBADF;
+				error = SET_ERROR(EBADF);
 				goto done;
 			}
 			auio.uio_rw = UIO_READ;
@@ -399,7 +400,7 @@ aio_process(struct aio_job *a_job)
 
 			if ((fp->f_flag & FWRITE) == 0) {
 				fd_putfile(fd);
-				error = EBADF;
+				error = SET_ERROR(EBADF);
 				goto done;
 			}
 			auio.uio_rw = UIO_WRITE;
@@ -424,7 +425,7 @@ aio_process(struct aio_job *a_job)
 
 		if ((fp->f_flag & FWRITE) == 0) {
 			fd_putfile(fd);
-			error = EBADF;
+			error = SET_ERROR(EBADF);
 			goto done;
 		}
 
@@ -487,7 +488,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 
 	/* Non-accurate check for the limit */
 	if (aio_jobs_count + 1 > aio_max)
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 
 	/* Get the data structure from user-space */
 	error = copyin(aiocb_uptr, &aiocbp, sizeof(struct aiocb));
@@ -498,12 +499,12 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	sig = &aiocbp.aio_sigevent;
 	if (sig->sigev_signo < 0 || sig->sigev_signo >= NSIG ||
 	    sig->sigev_notify < SIGEV_NONE || sig->sigev_notify > SIGEV_SA)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Buffer and byte count */
 	if (((AIO_SYNC | AIO_DSYNC) & op) == 0)
 		if (aiocbp.aio_buf == NULL || aiocbp.aio_nbytes > SSIZE_MAX)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 	/* Check the opcode, if LIO_NOP - simply ignore */
 	if (op == AIO_LIO) {
@@ -513,7 +514,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		else if (aiocbp.aio_lio_opcode == LIO_READ)
 			op = AIO_READ;
 		else
-			return (aiocbp.aio_lio_opcode == LIO_NOP) ? 0 : EINVAL;
+			return (aiocbp.aio_lio_opcode == LIO_NOP) ? 0 :
+			    SET_ERROR(EINVAL);
 	} else {
 		KASSERT(lio == NULL);
 	}
@@ -529,7 +531,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 			if (a_job->aiocb_uptr != aiocb_uptr)
 				continue;
 			mutex_exit(&aio->aio_mtx);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		mutex_exit(&aio->aio_mtx);
 	}
@@ -541,7 +543,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 */
 	if (lio == NULL && p->p_aio == NULL)
 		if (aio_procinit(p))
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 	aio = p->p_aio;
 
 	/*
@@ -549,7 +551,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 * structure back to the user-space.
 	 */
 	aiocbp._state = JOB_WIP;
-	aiocbp._errno = EINPROGRESS;
+	aiocbp._errno = SET_ERROR(EINPROGRESS);
 	aiocbp._retval = -1;
 	error = copyout(&aiocbp, aiocb_uptr, sizeof(struct aiocb));
 	if (error)
@@ -580,7 +582,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		atomic_dec_uint(&aio_jobs_count);
 		mutex_exit(&aio->aio_mtx);
 		pool_put(&aio_job_pool, a_job);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
@@ -625,9 +627,9 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 	fildes = (unsigned int)SCARG(uap, fildes);
 	dt = atomic_load_consume(&fdp->fd_dt);
 	if (fildes >= dt->dt_nfiles)
-		return EBADF;
+		return SET_ERROR(EBADF);
 	if (dt->dt_ff[fildes] == NULL || dt->dt_ff[fildes]->ff_file == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 
 	/* Check if AIO structure is initialized */
 	if (p->p_aio == NULL) {
@@ -649,7 +651,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 				continue;
 			if (fildes != a_job->aiocbp.aio_fildes) {
 				mutex_exit(&aio->aio_mtx);
-				return EBADF;
+				return SET_ERROR(EBADF);
 			}
 		} else if (a_job->aiocbp.aio_fildes != fildes)
 			continue;
@@ -687,7 +689,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		a_job = TAILQ_FIRST(&tmp_jobs_list);
 		TAILQ_REMOVE(&tmp_jobs_list, a_job, list);
 		/* Set the errno and copy structures back to the user-space */
-		a_job->aiocbp._errno = ECANCELED;
+		a_job->aiocbp._errno = SET_ERROR(ECANCELED);
 		a_job->aiocbp._state = JOB_DONE;
 		if (copyout(&a_job->aiocbp, a_job->aiocb_uptr,
 		    sizeof(struct aiocb)))
@@ -703,7 +705,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 	}
 
 	if (errcnt)
-		return EFAULT;
+		return SET_ERROR(EFAULT);
 
 	/* Set a correct return value */
 	if (*retval == 0)
@@ -725,14 +727,14 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
 	int error;
 
 	if (aio == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
 	if (error)
 		return error;
 
 	if (aiocbp._state == JOB_NONE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	*retval = aiocbp._errno;
 
@@ -750,7 +752,7 @@ sys_aio_fsync(struct lwp *l, const struct sys_aio_fsync_args *uap,
 	int op = SCARG(uap, op);
 
 	if ((op != O_DSYNC) && (op != O_SYNC))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	op = O_DSYNC ? AIO_DSYNC : AIO_SYNC;
 
@@ -781,14 +783,14 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
 	int error;
 
 	if (aio == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
 	if (error)
 		return error;
 
 	if (aiocbp._errno == EINPROGRESS || aiocbp._state != JOB_DONE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	*retval = aiocbp._retval;
 
@@ -816,7 +818,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 
 	nent = SCARG(uap, nent);
 	if (nent <= 0 || nent > aio_listio_max)
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 
 	if (SCARG(uap, timeout)) {
 		/* Convert timespec to ticks */
@@ -846,7 +848,7 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 	int i, error, timo;
 
 	if (p->p_aio == NULL)
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	aio = p->p_aio;
 
 	if (ts) {
@@ -854,7 +856,7 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 		if (timo == 0 && ts->tv_sec == 0 && ts->tv_nsec > 0)
 			timo = 1;
 		if (timo <= 0)
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 	} else
 		timo = 0;
 
@@ -898,7 +900,7 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 		error = cv_timedwait_sig(&aio->done_cv, &aio->aio_mtx, timo);
 		if (error) {
 			if (error == EWOULDBLOCK)
-				error = EAGAIN;
+				error = SET_ERROR(EAGAIN);
 			break;
 		}
 	}
@@ -938,14 +940,14 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 
 	/* Non-accurate checks for the limit and invalid values */
 	if (nent < 1 || nent > aio_listio_max)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (aio_jobs_count + nent > aio_max)
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 
 	/* Check if AIO structure is initialized, if not - initialize it */
 	if (p->p_aio == NULL)
 		if (aio_procinit(p))
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 	aio = p->p_aio;
 
 	/* Create a LIO structure */
@@ -969,12 +971,12 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 			    sig->sigev_signo >= NSIG ||
 			    sig->sigev_notify < SIGEV_NONE ||
 			    sig->sigev_notify > SIGEV_SA))
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 		} else
 			memset(&lio->sig, 0, sizeof(struct sigevent));
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		break;
 	}
 
@@ -1008,7 +1010,7 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 
 	/* Return an error, if any */
 	if (errcnt) {
-		error = EIO;
+		error = SET_ERROR(EIO);
 		goto err;
 	}
 
@@ -1020,7 +1022,7 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 		while (lio->refcnt > 1 && error == 0)
 			error = cv_wait_sig(&aio->done_cv, &aio->aio_mtx);
 		if (error)
-			error = EINTR;
+			error = SET_ERROR(EINTR);
 	}
 
 err:
@@ -1054,7 +1056,7 @@ sysctl_aio_listio_max(SYSCTLFN_ARGS)
 		return error;
 
 	if (newsize < 1 || newsize > aio_max)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	aio_listio_max = newsize;
 
 	return 0;
@@ -1075,7 +1077,7 @@ sysctl_aio_max(SYSCTLFN_ARGS)
 		return error;
 
 	if (newsize < 1 || newsize < aio_listio_max)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	aio_max = newsize;
 
 	return 0;
