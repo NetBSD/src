@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.68 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.69 2024/12/07 07:52:19 andvar Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.68 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.69 2024/12/07 07:52:19 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -266,7 +266,7 @@ static void mvgbec_attach(device_t, device_t, void *);
 static int mvgbec_print(void *, const char *);
 static int mvgbec_search(device_t, cfdata_t, const int *, void *);
 
-/* MII funcstions */
+/* MII functions */
 static int mvgbec_miibus_readreg(device_t, int, int, uint16_t *);
 static int mvgbec_miibus_writereg(device_t, int, int, uint16_t);
 static void mvgbec_miibus_statchg(struct ifnet *);
