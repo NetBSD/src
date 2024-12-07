@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.111 2024/12/06 18:44:00 riastradh Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.112 2024/12/07 02:31:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.111 2024/12/06 18:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.112 2024/12/07 02:31:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -593,7 +593,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 */
 	sysctl_unlock();
 	if ((dfp = fgetdummy()) == NULL) {
-	 	sysctl_relock();
+		sysctl_relock();
 		return SET_ERROR(ENOMEM);
 	}
 
@@ -647,10 +647,10 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	}
 	mutex_exit(&filelist_lock);
 	fputdummy(dfp);
- 	*oldlenp = needed;
+	*oldlenp = needed;
 	if (oldp == NULL)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
- 	sysctl_relock();
+	sysctl_relock();
 
 	return error;
 }

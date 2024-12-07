@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.146 2024/12/06 18:44:00 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.146 2024/12/06 18:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1170,7 +1170,7 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 #endif
 
 		/* Prepend sockaddr to this record (m) of input chain m0 */
-	  	n = m_prepend_sockaddr(sb, m, asa);
+		n = m_prepend_sockaddr(sb, m, asa);
 		if (n == NULL) {
 			error = SET_ERROR(ENOBUFS);
 			goto bad;
@@ -1210,7 +1210,7 @@ bad:
 	 * the input record chain passed to us as m0.
 	 */
 	while ((n = n0) != NULL) {
-	  	struct mbuf *np;
+		struct mbuf *np;
 
 		/* Undo the sballoc() of this record */
 		for (np = n; np; np = np->m_next)

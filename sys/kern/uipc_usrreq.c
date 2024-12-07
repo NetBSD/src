@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.206 2024/12/06 18:44:00 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.207 2024/12/07 02:31:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.206 2024/12/06 18:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.207 2024/12/07 02:31:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1572,8 +1572,8 @@ unp_internalize(struct mbuf **controlp)
 		}
 		if ((fp = fd_getfile(fd)) == NULL
 		    || fp->f_type == DTYPE_KQUEUE) {
-		    	if (fp)
-		    		fd_putfile(fd);
+			if (fp)
+				fd_putfile(fd);
 			atomic_dec_uint(&unp_rights);
 			nfds = i;
 			error = SET_ERROR(EBADF);
@@ -1611,7 +1611,7 @@ unp_internalize(struct mbuf **controlp)
 	}
 
  out:
- 	/* Release descriptor references. */
+	/* Release descriptor references. */
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd_putfile(*fdp++);
@@ -1915,7 +1915,7 @@ unp_scan(struct mbuf *m0, void (*op)(file_t *), int discard)
 		for (m = m0; m; m = m->m_next) {
 			if (m->m_type != MT_CONTROL ||
 			    m->m_len < sizeof(*cm)) {
-			    	continue;
+				continue;
 			}
 			cm = mtod(m, struct cmsghdr *);
 			if (cm->cmsg_level != SOL_SOCKET ||
