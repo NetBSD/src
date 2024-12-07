@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.165 2023/04/09 09:00:56 riastradh Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.166 2024/12/07 23:19:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.165 2023/04/09 09:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.166 2024/12/07 23:19:07 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -227,7 +227,14 @@ kmeminit_nkmempages(void)
 	}
 
 #if defined(NKMEMPAGES_MAX_UNLIMITED) && !defined(KMSAN)
-	npages = physmem;
+	/*
+	 * The extra 1/9 here is to account for uvm_km_va_starved_p()
+	 * wanting to keep 10% of kmem virtual space free.
+	 * The intent is that on "unlimited" platforms we should be able
+	 * to allocate all of physical memory as kmem without behaving
+	 * as though we running short of kmem virtual space.
+	 */
+	npages = (physmem * 10) / 9;
 #else
 
 #if defined(KMSAN)
