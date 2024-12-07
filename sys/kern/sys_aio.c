@@ -1,9 +1,9 @@
-/*	$NetBSD: sys_aio.c,v 1.48 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.49 2024/12/07 02:38:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,19 +32,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.48 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.49 2024/12/07 02:38:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/buf.h>
 #include <sys/condvar.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/lwp.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -58,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.48 2020/05/23 23:42:43 ad Exp $");
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
-#include <sys/atomic.h>
-#include <sys/module.h>
-#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1084,35 +1086,35 @@ SYSCTL_SETUP(sysctl_aio_init, "aio sysctl")
 	int rv;
 
 	rv = sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		CTLTYPE_INT, "posix_aio",
-		SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
-			     "Asynchronous I/O option to which the "
-			     "system attempts to conform"),
-		NULL, _POSIX_ASYNCHRONOUS_IO, NULL, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+	    CTLTYPE_INT, "posix_aio",
+	    SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
+		"Asynchronous I/O option to which the "
+		"system attempts to conform"),
+	    NULL, _POSIX_ASYNCHRONOUS_IO, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		return;
 
 	rv = sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "aio_listio_max",
-		SYSCTL_DESCR("Maximum number of asynchronous I/O "
-			     "operations in a single list I/O call"),
-		sysctl_aio_listio_max, 0, &aio_listio_max, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "aio_listio_max",
+	    SYSCTL_DESCR("Maximum number of asynchronous I/O "
+		"operations in a single list I/O call"),
+	    sysctl_aio_listio_max, 0, &aio_listio_max, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		return;
 
 	rv = sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "aio_max",
-		SYSCTL_DESCR("Maximum number of asynchronous I/O "
-			     "operations"),
-		sysctl_aio_max, 0, &aio_max, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "aio_max",
+	    SYSCTL_DESCR("Maximum number of asynchronous I/O "
+		"operations"),
+	    sysctl_aio_max, 0, &aio_max, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	return;
 }
