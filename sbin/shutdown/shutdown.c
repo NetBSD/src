@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.58 2022/07/01 16:45:12 kre Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.59 2024/12/07 14:08:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.58 2022/07/01 16:45:12 kre Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.59 2024/12/07 14:08:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ static char *bootstr;
 static void badtime(void) __dead;
 static void die_you_gravy_sucking_pig_dog(void) __dead;
 static void doitfast(void);
-static void dorcshutdown(void);
+static void dorcshutdown(const char *what);
 static void finish(int) __dead;
 static void getoffset(char *);
 static void loop(void) __dead;
@@ -378,7 +378,7 @@ die_you_gravy_sucking_pig_dog(void)
 	}
 	if (dofast)
 		doitfast();
-	dorcshutdown();
+	dorcshutdown(what);
 	if (doreboot || dohalt) {
 		const char *args[20];
 		const char **arg, *path;
@@ -516,12 +516,23 @@ getoffset(char *timearg)
 }
 
 static void
-dorcshutdown(void)
+dorcshutdown(const char *arg)
 {
+	static char cmd[sizeof(_PATH_RCSHUTDOWN) + 64];
+
+	if (arg) {
+		snprintf(cmd, sizeof(cmd), "set -- %s && . " _PATH_RCSHUTDOWN,
+		    arg);
+		cmd[sizeof(cmd)-1] = 0;
+		arg = cmd;
+	} else {
+		arg = ". " _PATH_RCSHUTDOWN;
+	}
+
 	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
 #ifndef DEBUG
 	(void)setuid(0);
-	(void)system(". " _PATH_RCSHUTDOWN);
+	(void)system(arg);
 #endif
 	(void)sleep(5);		/* Give operator a chance to abort this. */
 	(void)printf("\r\nDone running shutdown hooks.\r\n");
