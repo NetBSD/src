@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.12 2024/12/06 11:58:56 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.13 2024/12/07 21:56:37 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.12 2024/12/06 11:58:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.13 2024/12/07 21:56:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * STI lies to us - it reports a 2048x2048 framebuffer but blitter
 	 * ops wrap around below 1024 and we seem to have only about 250
-	 * usable columns to the right. Should still be enough to cache 
+	 * usable columns to the right. Should still be enough to cache
 	 * a font or four.
 	 * So, the framebuffer seems to be 1536x1024, which is odd since the
 	 * FX4 is supposed to support resolutions higher than 1280x1024.
@@ -907,7 +907,7 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 			sc->sc_font = ri->ri_font;
 			summitfb_loadfont(sc);
 			ri->ri_ops.putchar = summitfb_putchar_fast;
-		} else 
+		} else
 			ri->ri_ops.putchar = summitfb_putchar;
 	}
 }
