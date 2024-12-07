@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.291 2024/12/07 23:15:38 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.292 2024/12/07 23:23:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.291 2024/12/07 23:15:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.292 2024/12/07 23:23:25 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -889,6 +889,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_npages = 0;
 	pp->pr_minitems = 0;
 	pp->pr_minpages = 0;
+	pp->pr_maxitems = UINT_MAX;
 	pp->pr_maxpages = UINT_MAX;
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
@@ -1330,7 +1331,8 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pp->pr_nidle++;
 		if (pp->pr_nitems - pp->pr_itemsperpage >= pp->pr_minitems &&
 		    pp->pr_npages > pp->pr_minpages &&
-		    pp->pr_npages > pp->pr_maxpages) {
+		    (pp->pr_npages > pp->pr_maxpages ||
+		     pp->pr_nitems > pp->pr_maxitems)) {
 			pr_rmpage(pp, ph, pq);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
@@ -1904,16 +1906,18 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 
 	/* Single line output. */
 	if (print_short) {
-		(*pr)(" %s:%p:%u:%u:%u:%u:%u:%u:%u:%u:%u:%u\n",
+		(*pr)(" %s:%p:%u:%u:%u:%u:%u:%u:%u:%u:%u:%u:%zu\n",
 		    pp->pr_wchan, pp, pp->pr_size, pp->pr_align, pp->pr_npages,
 		    pp->pr_nitems, pp->pr_nout, pp->pr_nget, pp->pr_nput,
-		    pp->pr_npagealloc, pp->pr_npagefree, pp->pr_nidle);
+		    pp->pr_npagealloc, pp->pr_npagefree, pp->pr_nidle,
+		    (size_t)pp->pr_npagealloc * pp->pr_alloc->pa_pagesz);
 		return;
 	}
 
-	(*pr)(" %s: size %u, align %u, ioff %u, roflags 0x%08x\n",
-	    pp->pr_wchan, pp->pr_size, pp->pr_align, pp->pr_itemoffset,
-	    pp->pr_roflags);
+	(*pr)(" %s: itemsize %u, totalmem %zu align %u, ioff %u, roflags 0x%08x\n",
+	    pp->pr_wchan, pp->pr_size,
+	    (size_t)pp->pr_npagealloc * pp->pr_alloc->pa_pagesz,
+	    pp->pr_align, pp->pr_itemoffset, pp->pr_roflags);
 	(*pr)("\tpool %p, alloc %p\n", pp, pp->pr_alloc);
 	(*pr)("\tminitems %u, minpages %u, maxpages %u, npages %u\n",
 	    pp->pr_minitems, pp->pr_minpages, pp->pr_maxpages, pp->pr_npages);
