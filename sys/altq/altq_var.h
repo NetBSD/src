@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.12 2008/11/25 15:59:10 tsutsui Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.13 2024/12/07 07:45:43 andvar Exp $	*/
 /*	$KAME: altq_var.h,v 1.18 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ struct callout {
 /* dummy callout structure */
 struct callout {
 	void		*c_arg;			/* function argument */
-	void		(*c_func)(void *);	/* functiuon to call */
+	void		(*c_func)(void *);	/* function to call */
 };
 #define	CALLOUT_INIT(c)		do { (void)memset((c), 0, sizeof(*(c))); } while (/*CONSTCOND*/ 0)
 #define	CALLOUT_RESET(c,t,f,a)	do {	(c)->c_arg = (a);	\
