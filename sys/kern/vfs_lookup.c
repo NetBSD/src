@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.235 2024/07/01 00:58:04 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.236 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,30 +37,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.235 2024/07/01 00:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.236 2024/12/07 02:11:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/syslimits.h>
-#include <sys/time.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
-#include <sys/vnode_impl.h>
-#include <sys/fstrans.h>
-#include <sys/mount.h>
+#include <sys/types.h>
+
+#include <sys/dirent.h>
 #include <sys/errno.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/hash.h>
-#include <sys/proc.h>
-#include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/ktrace.h>
-#include <sys/dirent.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/syslimits.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
@@ -261,6 +263,7 @@ pathbuf_create_raw(void)
 void
 pathbuf_destroy(struct pathbuf *pb)
 {
+
 	KASSERT(pb->pb_pathcopyuses == 0);
 	KASSERT(pb->pb_pathcopy == NULL);
 	PNBUF_PUT(pb->pb_path);
@@ -326,6 +329,7 @@ pathbuf_copyin(const char *userpath, struct pathbuf **ret)
 int
 pathbuf_maybe_copyin(const char *path, enum uio_seg seg, struct pathbuf **ret)
 {
+
 	if (seg == UIO_USERSPACE) {
 		return pathbuf_copyin(path, ret);
 	} else {
@@ -344,6 +348,7 @@ pathbuf_maybe_copyin(const char *path, enum uio_seg seg, struct pathbuf **ret)
 void
 pathbuf_copystring(const struct pathbuf *pb, char *buf, size_t maxlen)
 {
+
 	strlcpy(buf, pb->pb_path, maxlen);
 }
 
@@ -356,6 +361,7 @@ pathbuf_copystring(const struct pathbuf *pb, char *buf, size_t maxlen)
 const char *
 pathbuf_stringcopy_get(struct pathbuf *pb)
 {
+
 	if (pb->pb_pathcopyuses == 0) {
 		pb->pb_pathcopy = PNBUF_GET();
 		strcpy(pb->pb_pathcopy, pb->pb_path);
@@ -367,6 +373,7 @@ pathbuf_stringcopy_get(struct pathbuf *pb)
 void
 pathbuf_stringcopy_put(struct pathbuf *pb, const char *str)
 {
+
 	KASSERT(str == pb->pb_pathcopy);
 	KASSERT(pb->pb_pathcopyuses > 0);
 	pb->pb_pathcopyuses--;
@@ -456,7 +463,7 @@ struct namei_state {
 
 	unsigned attempt_retry:1;	/* true if error allows emul retry */
 	unsigned root_referenced:1;	/* true if ndp->ni_rootdir and
-					     ndp->ni_erootdir were referenced */
+					    ndp->ni_erootdir were referenced */
 };
 
 
@@ -498,6 +505,7 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 static void
 namei_cleanup(struct namei_state *state)
 {
+
 	KASSERT(state->cnp == &state->ndp->ni_cnd);
 
 	if (state->root_referenced) {
@@ -603,6 +611,7 @@ namei_getstartdir(struct namei_state *state)
 static struct vnode *
 namei_getstartdir_for_nfsd(struct namei_state *state)
 {
+
 	KASSERT(state->ndp->ni_atdir != NULL);
 
 	/* always use the real root, and never set an emulation root */
@@ -659,7 +668,7 @@ namei_ktrace(struct namei_state *state)
  */
 static int
 namei_start(struct namei_state *state, int isnfsd,
-	    struct vnode **startdir_ret)
+    struct vnode **startdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
 	struct vnode *startdir;
@@ -706,8 +715,9 @@ namei_start(struct namei_state *state, int isnfsd,
 static inline int
 namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
 {
+
 	return (foundobj->v_type == VLNK) &&
-		(state->cnp->cn_flags & (FOLLOW|REQUIREDIR));
+	    (state->cnp->cn_flags & (FOLLOW|REQUIREDIR));
 }
 
 /*
@@ -720,8 +730,8 @@ namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
  */
 static inline int
 namei_follow(struct namei_state *state, int inhibitmagic,
-	     struct vnode *searchdir, struct vnode *foundobj,
-	     struct vnode **newsearchdir_ret)
+    struct vnode *searchdir, struct vnode *foundobj,
+    struct vnode **newsearchdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
@@ -776,7 +786,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	 * XXX: This is how it was before; is that a bug or a feature?
 	 */
 	if ((!inhibitmagic && vfs_magiclinks &&
-	     symlink_magic(self->l_proc, cp, &linklen)) ||
+		symlink_magic(self->l_proc, cp, &linklen)) ||
 	    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 		PNBUF_PUT(cp);
 		return ENAMETOOLONG;
@@ -803,8 +813,8 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 		searchdir = ndp->ni_erootdir;
 		if (searchdir == NULL ||
 		    (ndp->ni_pnbuf[1] == '.'
-		     && ndp->ni_pnbuf[2] == '.'
-		     && ndp->ni_pnbuf[3] == '/')) {
+			&& ndp->ni_pnbuf[2] == '.'
+			&& ndp->ni_pnbuf[3] == '/')) {
 			ndp->ni_erootdir = NULL;
 			searchdir = ndp->ni_rootdir;
 		}
@@ -829,7 +839,6 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 {
 	const char *cp;			/* pointer into pathname argument */
 	int error;
-
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
 
@@ -856,9 +865,9 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
-	*(char *)cp = '\0';
-	printf("{%s}: ", cnp->cn_nameptr);
-	*(char *)cp = c; }
+		*(char *)cp = '\0';
+		printf("{%s}: ", cnp->cn_nameptr);
+		*(char *)cp = c; }
 #endif /* NAMEI_DIAGNOSTIC */
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
@@ -908,9 +917,9 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
  */
 static int
 lookup_crossmount(struct namei_state *state,
-		  struct vnode **searchdir_ret,
-		  struct vnode **foundobj_ret,
-		  bool *searchdir_locked)
+    struct vnode **searchdir_ret,
+    struct vnode **foundobj_ret,
+    bool *searchdir_locked)
 {
 	struct componentname *cnp = state->cnp;
 	struct vnode *foundobj, *vp;
@@ -976,7 +985,9 @@ lookup_crossmount(struct namei_state *state,
 				cache_enter_mount(foundobj, vp);
 			}
 
-			/* Finally, drop references to foundobj & mountpoint. */
+			/*
+			 * Finally, drop references to foundobj & mountpoint.
+			 */
 			vrele(foundobj);
 			fstrans_done(mp);
 			if (error) {
@@ -1053,10 +1064,10 @@ lookup_lktype(struct vnode *searchdir, struct componentname *cnp)
  */
 static int
 lookup_once(struct namei_state *state,
-	    struct vnode *searchdir,
-	    struct vnode **newsearchdir_ret,
-	    struct vnode **foundobj_ret,
-	    bool *newsearchdir_locked_ret)
+    struct vnode *searchdir,
+    struct vnode **newsearchdir_ret,
+    struct vnode **foundobj_ret,
+    bool *newsearchdir_locked_ret)
 {
 	struct vnode *tmpvn;		/* scratch vnode */
 	struct vnode *foundobj;		/* result */
@@ -1104,24 +1115,26 @@ lookup_once(struct namei_state *state,
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 
-				retval = vn_isunder(searchdir, ndp->ni_rootdir, l);
+				retval = vn_isunder(searchdir, ndp->ni_rootdir,
+				    l);
 				if (!retval) {
-				    /* Oops! We got out of jail! */
-				    log(LOG_WARNING,
-					"chrooted pid %d uid %d (%s) "
-					"detected outside of its chroot\n",
-					p->p_pid, kauth_cred_geteuid(l->l_cred),
-					p->p_comm);
-				    /* Put us at the jail root. */
-				    vrele(searchdir);
-				    searchdir = NULL;
-				    foundobj = ndp->ni_rootdir;
-				    vref(foundobj);
-				    vref(foundobj);
-				    *newsearchdir_ret = foundobj;
-				    *foundobj_ret = foundobj;
-				    error = 0;
-				    goto done;
+					/* Oops! We got out of jail! */
+					log(LOG_WARNING,
+					    "chrooted pid %d uid %d (%s) "
+					    "detected outside of its chroot\n",
+					    p->p_pid,
+					    kauth_cred_geteuid(l->l_cred),
+					    p->p_comm);
+					/* Put us at the jail root. */
+					vrele(searchdir);
+					searchdir = NULL;
+					foundobj = ndp->ni_rootdir;
+					vref(foundobj);
+					vref(foundobj);
+					*newsearchdir_ret = foundobj;
+					*foundobj_ret = foundobj;
+					error = 0;
+					goto done;
 				}
 			}
 			if ((searchdir->v_vflag & VV_ROOT) == 0 ||
@@ -1252,7 +1265,7 @@ done:
  */
 static int
 lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
-		   struct vnode **foundobj_ret)
+    struct vnode **foundobj_ret)
 {
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
@@ -1324,7 +1337,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		 * have permission to look up files in this directory.
 		 */
 		if (!cache_lookup_linked(searchdir, cnp->cn_nameptr,
-		    cnp->cn_namelen, &foundobj, &plock, cnp->cn_cred)) {
+			cnp->cn_namelen, &foundobj, &plock, cnp->cn_cred)) {
 			error = EOPNOTSUPP;
 			break;
 		}
@@ -1482,7 +1495,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
  */
 static int
 namei_oneroot(struct namei_state *state,
-	 int neverfollow, int inhibitmagic, int isnfsd)
+    int neverfollow, int inhibitmagic, int isnfsd)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
@@ -1582,7 +1595,7 @@ namei_oneroot(struct namei_state *state,
 			 * and which shouldn't. XXX.
 			 */
 			state->attempt_retry = 1;
-			return (error);
+			return error;
 		}
 
 		if (foundobj == NULL) {
@@ -1646,8 +1659,8 @@ namei_oneroot(struct namei_state *state,
 				 * symlink in. (FUTURE)
 				 */
 				error = namei_follow(state, inhibitmagic,
-						     searchdir, foundobj,
-						     &searchdir);
+				    searchdir, foundobj,
+				    &searchdir);
 			}
 			if (error) {
 				KASSERT(searchdir != foundobj);
@@ -1731,8 +1744,7 @@ namei_oneroot(struct namei_state *state,
 	KASSERT((cnp->cn_flags & LOCKPARENT) == 0 || searchdir == NULL ||
 	    VOP_ISLOCKED(searchdir) == LK_EXCLUSIVE);
 
- skiploop:
-
+skiploop:
 	if (foundobj != NULL) {
 		if (foundobj == ndp->ni_erootdir) {
 			/*
@@ -1786,7 +1798,7 @@ namei_oneroot(struct namei_state *state,
 		 */
 		if (cnp->cn_nameiop != LOOKUP &&
 		    (searchdir == NULL ||
-		     searchdir->v_mount != foundobj->v_mount) &&
+			searchdir->v_mount != foundobj->v_mount) &&
 		    (cnp->cn_flags & NONEXCLHACK) == 0) {
 			if (searchdir) {
 				if (searchdir_locked) {
@@ -1804,12 +1816,12 @@ namei_oneroot(struct namei_state *state,
 			state->attempt_retry = 1;
 
 			switch (cnp->cn_nameiop) {
-			    case CREATE:
+			case CREATE:
 				return EEXIST;
-			    case DELETE:
-			    case RENAME:
+			case DELETE:
+			case RENAME:
 				return EBUSY;
-			    default:
+			default:
 				break;
 			}
 			panic("Invalid nameiop\n");
@@ -1857,7 +1869,7 @@ namei_oneroot(struct namei_state *state,
 		    	searchdir_locked = false;
 		} else if ((cnp->cn_flags & LOCKLEAF) != 0 &&
 		    (searchdir != foundobj ||
-		    (cnp->cn_flags & LOCKPARENT) == 0)) {
+			(cnp->cn_flags & LOCKPARENT) == 0)) {
 			const int lktype = (cnp->cn_flags & LOCKSHARED) != 0 ?
 			    LK_SHARED : LK_EXCLUSIVE;
 			vn_lock(foundobj, lktype | LK_RETRY);
@@ -1886,7 +1898,7 @@ namei_oneroot(struct namei_state *state,
  */
 static int
 namei_tryemulroot(struct namei_state *state,
-	 int neverfollow, int inhibitmagic, int isnfsd)
+    int neverfollow, int inhibitmagic, int isnfsd)
 {
 	int error;
 
@@ -1900,7 +1912,7 @@ namei_tryemulroot(struct namei_state *state,
 		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
 	}
 
-    emul_retry:
+emul_retry:
 	state->attempt_retry = 0;
 
 	error = namei_oneroot(state, neverfollow, inhibitmagic, isnfsd);
@@ -1940,8 +1952,7 @@ namei(struct nameidata *ndp)
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state,
-				  0/*!neverfollow*/, 0/*!inhibitmagic*/,
-				  0/*isnfsd*/);
+	    0/*!neverfollow*/, 0/*!inhibitmagic*/, 0/*isnfsd*/);
 	namei_cleanup(&state);
 
 	if (error) {
@@ -1977,7 +1988,7 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state,
-				  neverfollow, 1/*inhibitmagic*/, 1/*isnfsd*/);
+	    neverfollow, 1/*inhibitmagic*/, 1/*isnfsd*/);
 	namei_cleanup(&state);
 
 	if (error) {
@@ -2081,7 +2092,7 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 
 	ndp->ni_vp = foundobj;
-	return (error);
+	return error;
 }
 
 /*
@@ -2129,7 +2140,8 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
  * *vpp is locked on exit unless it's NULL.
  */
 int
-relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int dummy)
+relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
+    int dummy)
 {
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
@@ -2225,11 +2237,11 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 			goto bad;
 		}
 	}
-	return (0);
+	return 0;
 
 bad:
 	*vpp = NULL;
-	return (error);
+	return error;
 }
 
 /*
@@ -2249,10 +2261,10 @@ const namei_simple_flags_t NSM_NOFOLLOW_TRYEMULROOT = &ns_nt;
 const namei_simple_flags_t NSM_FOLLOW_NOEMULROOT = &ns_fn;
 const namei_simple_flags_t NSM_FOLLOW_TRYEMULROOT = &ns_ft;
 
-static
-int
+static int
 namei_simple_convert_flags(namei_simple_flags_t sflags)
 {
+
 	if (sflags == NSM_NOFOLLOW_NOEMULROOT)
 		return NOFOLLOW | 0;
 	if (sflags == NSM_NOFOLLOW_TRYEMULROOT)
@@ -2269,6 +2281,7 @@ int
 namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
     struct vnode **vp_ret)
 {
+
 	return nameiat_simple_kernel(NULL, path, sflags, vp_ret);
 }
 
@@ -2313,6 +2326,7 @@ int
 namei_simple_user(const char *path, namei_simple_flags_t sflags,
     struct vnode **vp_ret)
 {
+
 	return nameiat_simple_user(NULL, path, sflags, vp_ret);
 }
 

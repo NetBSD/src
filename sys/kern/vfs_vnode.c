@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.154 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,21 +148,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.154 2024/12/07 02:11:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/fstrans.h>
 #include <sys/hash.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mount.h>
@@ -174,7 +176,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp 
 #include <sys/threadpool.h>
 #include <sys/vnode_impl.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -739,8 +740,10 @@ vrele_task(struct threadpool_job *job)
 		}
 
 		lru_iter_release(&iter);
-		if (skipped)
-			kpause("vrele", false, MAX(1, mstohz(10)), &vdrain_lock);
+		if (skipped) {
+			kpause("vrele", false, MAX(1, mstohz(10)),
+			    &vdrain_lock);
+		}
 	}
 
 	threadpool_job_done(job);
@@ -1298,7 +1301,8 @@ vgone(vnode_t *vp)
 {
 	int lktype;
 
-	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount ||
+	    fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	lktype = LK_EXCLUSIVE;
@@ -2006,7 +2010,8 @@ vcache_make_anon(vnode_t *vp)
 	bool recycle;
 
 	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
-	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount ||
+	    fstrans_is_owner(vp->v_mount));
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 
 	/* Remove from vnode cache. */

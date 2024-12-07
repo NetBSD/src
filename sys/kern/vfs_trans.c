@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.71 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.71 2024/12/07 02:11:42 riastradh Exp $");
 
 /*
  * File system transaction operations.
@@ -41,17 +41,19 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/buf.h>
+#include <sys/fstrans.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
-#include <sys/pserialize.h>
-#include <sys/vnode.h>
-#include <sys/fstrans.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/pserialize.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -807,7 +809,6 @@ vfs_resume(struct mount *mp)
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
 	mutex_exit(&vfs_suspend_lock);
 }
-
 
 /*
  * True, if no thread is running a cow handler.

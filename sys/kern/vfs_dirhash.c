@@ -1,9 +1,9 @@
-/* $NetBSD: vfs_dirhash.c,v 1.15 2022/09/28 09:57:13 reinoud Exp $ */
+/*	$NetBSD: vfs_dirhash.c,v 1.16 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,31 +23,31 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.15 2022/09/28 09:57:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.16 2024/12/07 02:11:42 riastradh Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/dirent.h>
+#include <sys/dirhash.h>
 #include <sys/hash.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/vnode.h>
 #include <sys/sysctl.h>
-
-#include <sys/dirhash.h>
+#include <sys/vnode.h>
 
 #if 1
-#	define DPRINTF(a) ;
+#	define DPRINTF(a) __nothing
 #else
-#	define DPRINTF(a) printf a;
+#	define DPRINTF(a) printf a
 #endif
 
 /*
@@ -87,11 +87,11 @@ dirhash_init(void)
 	/* init dirhash pools */
 	sz = sizeof(struct dirhash);
 	pool_init(&dirhash_pool, sz, 0, 0, 0,
-		"dirhpl", NULL, IPL_NONE);
+	    "dirhpl", NULL, IPL_NONE);
 
 	sz = sizeof(struct dirhash_entry);
 	pool_init(&dirhash_entry_pool, sz, 0, 0, 0,
-		"dirhepl", NULL, IPL_NONE);
+	    "dirhepl", NULL, IPL_NONE);
 
 	mutex_init(&dirhashmutex, MUTEX_DEFAULT, IPL_NONE);
 	max_entries = maxdirhashsize / sz;
@@ -101,22 +101,22 @@ dirhash_init(void)
 	/* create sysctl knobs and dials */
 	sysctl_log = NULL;
 	sysctl_createv(&sysctl_log, 0, NULL, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "dirhash", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "dirhash", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&sysctl_log, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "memused",
-		       SYSCTL_DESCR("current dirhash memory usage"),
-		       NULL, 0, &dirhashsize, 0,
-		       CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_INT, "memused",
+	    SYSCTL_DESCR("current dirhash memory usage"),
+	    NULL, 0, &dirhashsize, 0,
+	    CTL_CREATE, CTL_EOL);
 	sysctl_createv(&sysctl_log, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxmem",
-		       SYSCTL_DESCR("maximum dirhash memory usage"),
-		       NULL, 0, &maxdirhashsize, 0,
-		       CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "maxmem",
+	    SYSCTL_DESCR("maximum dirhash memory usage"),
+	    NULL, 0, &maxdirhashsize, 0,
+	    CTL_CREATE, CTL_EOL);
 }
 
 
@@ -132,7 +132,6 @@ dirhash_finish(void)
 	/* sysctl_teardown(&sysctl_log); */
 }
 #endif
-
 
 /*
  * generic dirhash implementation
@@ -151,8 +150,8 @@ dirhash_purge_entries(struct dirhash *dirh)
 		return;
 
 	for (hashline = 0; hashline < DIRHASH_HASHSIZE; hashline++) {
-		while ((dirh_e =
-		    LIST_FIRST(&dirh->entries[hashline])) != NULL) {
+		while ((dirh_e = LIST_FIRST(&dirh->entries[hashline]))
+		    != NULL) {
 			LIST_REMOVE(dirh_e, next);
 			pool_put(&dirhash_entry_pool, dirh_e);
 		}
@@ -170,7 +169,6 @@ dirhash_purge_entries(struct dirhash *dirh)
 	dirhashsize -= dirh->size;
 	dirh->size = 0;
 }
-
 
 void
 dirhash_purge(struct dirhash **dirhp)
@@ -191,7 +189,6 @@ dirhash_purge(struct dirhash **dirhp)
 	pool_put(&dirhash_pool, dirh);
 	*dirhp = NULL;
 }
-
 
 void
 dirhash_get(struct dirhash **dirhp)
@@ -221,7 +218,6 @@ dirhash_get(struct dirhash **dirhp)
 	*dirhp = dirh;
 }
 
-
 void
 dirhash_put(struct dirhash *dirh)
 {
@@ -231,10 +227,9 @@ dirhash_put(struct dirhash *dirh)
 	mutex_exit(&dirhashmutex);
 }
 
-
 void
 dirhash_enter(struct dirhash *dirh,
-	struct dirent *dirent, uint64_t offset, uint32_t entry_size, int new_p)
+    struct dirent *dirent, uint64_t offset, uint32_t entry_size, int new_p)
 {
 	struct dirhash *del_dirh, *prev_dirh;
 	struct dirhash_entry *dirh_e;
@@ -250,7 +245,8 @@ dirhash_enter(struct dirhash *dirh,
 		return;
 
 	/* calculate our hash */
-	hashvalue = hash32_strn(dirent->d_name, dirent->d_namlen, HASH32_STR_INIT);
+	hashvalue = hash32_strn(dirent->d_name, dirent->d_namlen,
+	    HASH32_STR_INIT);
 	hashline  = hashvalue & DIRHASH_HASHMASK;
 
 	/* lookup and insert entry if not there yet */
@@ -313,10 +309,8 @@ dirhash_enter(struct dirhash *dirh,
 	LIST_INSERT_HEAD(&dirh->entries[hashline], dirh_e, next);
 }
 
-
 void
-dirhash_enter_freed(struct dirhash *dirh, uint64_t offset,
-	uint32_t entry_size)
+dirhash_enter_freed(struct dirhash *dirh, uint64_t offset, uint32_t entry_size)
 {
 	struct dirhash_entry *dirh_e;
 
@@ -344,16 +338,15 @@ dirhash_enter_freed(struct dirhash *dirh, uint64_t offset,
 	dirhashsize += sizeof(struct dirhash_entry);
 }
 
-
 void
 dirhash_remove(struct dirhash *dirh, struct dirent *dirent,
-	uint64_t offset, uint32_t entry_size)
+    uint64_t offset, uint32_t entry_size)
 {
 	struct dirhash_entry *dirh_e;
 	uint32_t hashvalue, hashline;
 
 	DPRINTF(("dirhash remove %"PRIu64", %d for `%*.*s`\n",
-		offset, entry_size, 
+		offset, entry_size,
 		dirent->d_namlen, dirent->d_namlen, dirent->d_name));
 
 	/* make sure we have a dirhash to work on */
@@ -361,7 +354,8 @@ dirhash_remove(struct dirhash *dirh, struct dirent *dirent,
 	KASSERT(dirh->refcnt > 0);
 
 	/* calculate our hash */
-	hashvalue = hash32_strn(dirent->d_name, dirent->d_namlen, HASH32_STR_INIT);
+	hashvalue = hash32_strn(dirent->d_name, dirent->d_namlen,
+	    HASH32_STR_INIT);
 	hashline  = hashvalue & DIRHASH_HASHMASK;
 
 	/* lookup entry */
@@ -389,14 +383,13 @@ dirhash_remove(struct dirhash *dirh, struct dirent *dirent,
 	panic("dirhash_remove couldn't find entry in hash table\n");
 }
 
-
 /*
  * BUGALERT: don't use result longer than needed, never past the node lock.
  * Call with NULL *result initially and it will return nonzero if again.
  */
 int
 dirhash_lookup(struct dirhash *dirh, const char *d_name, int d_namlen,
-	struct dirhash_entry **result)
+    struct dirhash_entry **result)
 {
 	struct dirhash_entry *dirh_e;
 	uint32_t hashvalue, hashline;
@@ -434,15 +427,13 @@ dirhash_lookup(struct dirhash *dirh, const char *d_name, int d_namlen,
 	return 0;
 }
 
-
 /*
  * BUGALERT: don't use result longer than needed, never past the node lock.
  * Call with NULL *result initially and it will return nonzero if again.
  */
-
 int
 dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
-	struct dirhash_entry **result)
+    struct dirhash_entry **result)
 {
 	struct dirhash_entry *dirh_e;
 
@@ -471,7 +462,6 @@ dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
 	return 0;
 }
 
-
 bool
 dirhash_dir_isempty(struct dirhash *dirh)
 {
@@ -488,8 +478,8 @@ dirhash_dir_isempty(struct dirhash *dirh)
 
 	if (dirh->num_files != num) {
 		printf("dirhash_dir_isempy: dirhash_counter failed: "
-			"dirh->num_files = %d, counted %d\n",
-			dirh->num_files, num);
+		    "dirh->num_files = %d, counted %d\n",
+		    dirh->num_files, num);
 		assert(dirh->num_files == num);
 	}
 #endif
@@ -499,4 +489,3 @@ dirhash_dir_isempty(struct dirhash *dirh)
 	/* the directory is empty when only '..' lifes in it or is absent */
 	return (dirh->num_files <= 1);
 }
-

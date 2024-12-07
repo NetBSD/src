@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.39 2023/03/24 12:22:52 bouyer Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.40 2024/12/07 02:11:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,24 +68,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.39 2023/03/24 12:22:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.40 2024/12/07 02:11:43 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
+#include <sys/types.h>
+
 #include <sys/extattr.h>
-#include <sys/xattr.h>
-#include <sys/sysctl.h>
-#include <sys/syscallargs.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/ktrace.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
+#include <sys/xattr.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -142,7 +144,8 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
  * require the use of this system call.
  */
 int
-sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t *retval)
+sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -269,7 +272,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	cnt -= auio.uio_resid;
 	retval[0] = cnt;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }
@@ -331,7 +334,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	} else
 		retval[0] = size;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }
@@ -410,7 +413,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	} else
 		retval[0] = size;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }

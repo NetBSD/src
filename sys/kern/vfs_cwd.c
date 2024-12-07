@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.11 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.12 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -31,14 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.11 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.12 2024/12/07 02:11:42 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/kmem.h>
 
 /*
  * Create an initial cwdinfo structure, using the same current and root
@@ -70,7 +71,7 @@ cwdinit(void)
 	cwdi->cwdi_cmask = copy->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 
-	return (cwdi);
+	return cwdi;
 }
 
 /*

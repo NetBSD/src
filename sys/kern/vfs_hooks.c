@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.6 2009/03/15 17:14:40 cegger Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.7 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,12 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.6 2009/03/15 17:14:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.7 2024/12/07 02:11:42 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/queue.h>
+
+#include <sys/errno.h>
 #include <sys/mount.h>
 #include <sys/mutex.h>
+#include <sys/queue.h>
 
 LIST_HEAD(vfs_hooks_head, vfs_hooks) vfs_hooks_head =
     LIST_HEAD_INITIALIZER(vfs_hooks_head);
@@ -61,7 +63,7 @@ vfs_hooks_attach(struct vfs_hooks *vfs_hooks)
 	LIST_INSERT_HEAD(&vfs_hooks_head, vfs_hooks, vfs_hooks_list);
 	mutex_exit(&vfs_hooks_lock);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -81,7 +83,7 @@ vfs_hooks_detach(struct vfs_hooks *vfs_hooks)
        		ret = ESRCH;
 	mutex_exit(&vfs_hooks_lock);
 
-	return (ret);
+	return ret;
 }
 
 /*

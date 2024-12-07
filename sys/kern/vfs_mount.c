@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.107 2024/08/11 13:09:58 bad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.108 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.107 2024/08/11 13:09:58 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.108 2024/12/07 02:11:42 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -77,20 +77,20 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.107 2024/08/11 13:09:58 bad Exp $");
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/extattr.h>
 #include <sys/fcntl.h>
 #include <sys/filedesc.h>
-#include <sys/device.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mount.h>
-#include <sys/fstrans.h>
 #include <sys/namei.h>
-#include <sys/extattr.h>
-#include <sys/verified_exec.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/verified_exec.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode_impl.h>
 
@@ -190,7 +190,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 
 	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
-		if (!strncmp(vfsp->vfs_name, fstypename, 
+		if (!strncmp(vfsp->vfs_name, fstypename,
 		    sizeof(mp->mnt_stat.f_fstypename)))
 			break;
 	if (vfsp == NULL) {
@@ -512,7 +512,8 @@ again:
 			goto again;
 		}
 
-		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vip, mvip, vi_mntvnodes);
+		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vip, mvip,
+		    vi_mntvnodes);
 		VIMPL_TO_VNODE(mvip)->v_usecount = 1;
 		mutex_exit(lock);
 		error = vcache_vget(vp);
@@ -789,7 +790,7 @@ start_extattr(struct mount *mp)
 	int error;
 
 	error = VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, NULL, 0, NULL);
-	if (error) 
+	if (error)
 		printf("%s: failed to start extattr: error = %d\n",
 		       mp->mnt_stat.f_mntonname, error);
 
@@ -1059,7 +1060,7 @@ vfs_unmount_next(uint64_t gen)
 
 	mountlist_iterator_init(&iter);
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
-		if ((nmp == NULL || mp->mnt_gen > nmp->mnt_gen) && 
+		if ((nmp == NULL || mp->mnt_gen > nmp->mnt_gen) &&
 		    mp->mnt_gen < gen) {
 			if (nmp != NULL)
 				vfs_rele(nmp);
@@ -1400,7 +1401,7 @@ mount_initspecific(struct mount *mp)
 	int error __diagused;
 
 	error = specificdata_init(mount_specificdata_domain,
-				  &mp->mnt_specdataref);
+	    &mp->mnt_specdataref);
 	KASSERT(error == 0);
 }
 
@@ -1424,7 +1425,7 @@ mount_getspecific(struct mount *mp, specificdata_key_t key)
 {
 
 	return specificdata_getspecific(mount_specificdata_domain,
-					 &mp->mnt_specdataref, key);
+	    &mp->mnt_specdataref, key);
 }
 
 /*
@@ -1436,7 +1437,7 @@ mount_setspecific(struct mount *mp, specificdata_key_t key, void *data)
 {
 
 	specificdata_setspecific(mount_specificdata_domain,
-				 &mp->mnt_specdataref, key, data);
+	    &mp->mnt_specdataref, key, data);
 }
 
 /*
@@ -1503,7 +1504,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 		}
 
 		break;
-		}
+	}
 
 	case VBLK: {
 		const struct bdevsw *bdev;
@@ -1516,7 +1517,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 		bvp = vp;
 
 		break;
-		}
+	}
 
 	default:
 		break;
@@ -1685,7 +1686,8 @@ mountlist_append(struct mount *mp)
 
 /*
  * Remove mount from mount list.
- */void
+ */
+void
 mountlist_remove(struct mount *mp)
 {
 	struct mountlist_entry *me;

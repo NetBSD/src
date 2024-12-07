@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.61 2021/06/29 22:39:21 dholland Exp $ */
+/*	$NetBSD: vfs_getcwd.c,v 1.62 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,26 +30,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.61 2021/06/29 22:39:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.62 2024/12/07 02:11:42 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/kmem.h>
+#include <sys/types.h>
+
 #include <sys/dirent.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <ufs/ufs/dir.h>	/* XXX only for DIRBLKSIZ */
 
-#include <sys/syscallargs.h>
 
 /*
  * Vnode variable naming conventions in this file:
@@ -358,7 +360,10 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 
 		/* Do we need to check access to the directory? */
 		if (chkaccess && !cache_have_id(lvp)) {
-			/* Need exclusive for UFS VOP_GETATTR (itimes) & VOP_LOOKUP. */
+			/*
+			 * Need exclusive for UFS VOP_GETATTR (itimes)
+			 * & VOP_LOOKUP.
+			 */
 			vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_ACCESS(lvp, accmode, cred);
 			if (error) {
@@ -466,7 +471,8 @@ proc_isunder(struct proc *p1, struct lwp *l2)
  */
 
 int
-sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *retval)
+sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(char *) bufp;
@@ -497,7 +503,7 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 	 */
 	cwdi = l->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, 
+	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path,
 	    len/2, GETCWD_CHECK_ACCESS, l);
 	rw_exit(&cwdi->cwdi_lock);
 

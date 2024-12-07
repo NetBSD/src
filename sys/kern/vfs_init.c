@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.64 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.65 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.64 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.65 2024/12/07 02:11:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.64 2023/09/23 18:21:11 ad Exp $");
 #if 0
 #define DODEBUG(A) A
 #else
-#define DODEBUG(A)
+#define DODEBUG(A) __nothing
 #endif
 
 SDT_PROVIDER_DEFINE(vfs);
@@ -138,7 +138,7 @@ int
 vn_default_error(void *v)
 {
 
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 static struct sysctllog *vfs_sysctllog;
@@ -151,32 +151,31 @@ sysctl_vfs_setup(void)
 {
 
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic",
-		       SYSCTL_DESCR("Non-specific vfs related information"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "generic",
+	    SYSCTL_DESCR("Non-specific vfs related information"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, VFS_GENERIC, CTL_EOL);
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "fstypes",
-		       SYSCTL_DESCR("List of file systems present"),
-		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_STRING, "fstypes",
+	    SYSCTL_DESCR("List of file systems present"),
+	    sysctl_vfs_generic_fstypes, 0, NULL, 0,
+	    CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "magiclinks",
-		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
-		       NULL, 0, &vfs_magiclinks, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "magiclinks",
+	    SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+	    NULL, 0, &vfs_magiclinks, 0,
+	    CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "timestamp_precision",
-			SYSCTL_DESCR("File timestamp precision"),
-			NULL, 0, &vfs_timestamp_precision, 0,
-			CTL_VFS, VFS_GENERIC, VFS_TIMESTAMP_PRECISION,
-			CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "timestamp_precision",
+	    SYSCTL_DESCR("File timestamp precision"),
+	    NULL, 0, &vfs_timestamp_precision, 0,
+	    CTL_VFS, VFS_GENERIC, VFS_TIMESTAMP_PRECISION,
+	    CTL_EOL);
 }
-
 
 /*
  * vfs_init.c
@@ -228,10 +227,11 @@ vfs_opv_init_explicit(const struct vnodeopv_desc *vfs_opv_desc)
 		 * list of supported operations.
 		 */
 		if (opve_descp->opve_op->vdesc_offset == 0 &&
-		    opve_descp->opve_op->vdesc_offset != VOFFSET(vop_default)) {
+		    opve_descp->opve_op->vdesc_offset != VOFFSET(vop_default))
+		{
 			printf("operation %s not listed in %s.\n",
 			    opve_descp->opve_op->vdesc_name, "vfs_op_descs");
-			panic ("vfs_opv_init: bad operation");
+			panic("vfs_opv_init: bad operation");
 		}
 
 		/*
@@ -254,12 +254,14 @@ vfs_opv_init_default(const struct vnodeopv_desc *vfs_opv_desc)
 	 * Force every operations vector to have a default routine.
 	 */
 	if (opv_desc_vector[VOFFSET(vop_default)] == NULL)
-		panic("vfs_opv_init: operation vector without default routine.");
+		panic("vfs_opv_init: operation vector without vop_default");
 
-	for (j = 0; j < VNODE_OPS_COUNT; j++)
-		if (opv_desc_vector[j] == NULL)
+	for (j = 0; j < VNODE_OPS_COUNT; j++) {
+		if (opv_desc_vector[j] == NULL) {
 			opv_desc_vector[j] =
 			    opv_desc_vector[VOFFSET(vop_default)];
+		}
+	}
 }
 
 void
@@ -327,7 +329,7 @@ vfs_op_check(void)
 
 	if (i != VNODE_OPS_COUNT) {
 		panic("vfs_op_check: vnode ops count mismatch (%d != %d)",
-			i, VNODE_OPS_COUNT);
+		    i, VNODE_OPS_COUNT);
 	}
 
 	DODEBUG(printf ("vfs_opv_numops=%d\n", VNODE_OPS_COUNT));
@@ -504,9 +506,9 @@ vfs_attach(struct vfsops *vfs)
 	 * Sanity: make sure the reference count is 0.
 	 */
 	vfs->vfs_refcount = 0;
- out:
+out:
 	mutex_exit(&vfs_list_lock);
-	return (error);
+	return error;
 }
 
 /*
@@ -552,9 +554,9 @@ vfs_detach(struct vfsops *vfs)
 	 * Free the vnode operations vector.
 	 */
 	vfs_opv_free(vfs->vfs_opv_descs);
- out:
+out:
  	mutex_exit(&vfs_list_lock);
-	return (error);
+	return error;
 }
 
 void

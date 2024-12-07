@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.157 2024/12/07 02:11:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  *	therefore want to make everything simplest in the lookup path.
  *
  *	struct namecache is mostly stable except for list and tree related
- *	entries, changes to which don't affect the cached name or vnode. 
+ *	entries, changes to which don't affect the cached name or vnode.
  *	For changes to name+vnode, entries are purged in preference to
  *	modifying them.
  *
@@ -181,10 +181,11 @@
  *	3) cache_lru_lock	(LRU list direction, used during reclaim)
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $");
-
 #define __NAMECACHE_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.157 2024/12/07 02:11:42 riastradh Exp $");
+
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
@@ -192,6 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/callout.h>
 #include <sys/cpu.h>
@@ -898,7 +900,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 	}
 	rw_exit(&vi->vi_nc_listlock);
 	COUNT(ncs_revmiss);
- out:
+out:
 	*dvpp = NULL;
 	return (-1);
 }
