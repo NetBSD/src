@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.304 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.305 2024/12/07 02:13:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.304 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.305 2024/12/07 02:13:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -1189,8 +1189,8 @@ incore(struct vnode *vp, daddr_t blkno)
 	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_cflags, BC_INVAL)) {
-		    	KASSERT(bp->b_objlock == vp->v_interlock);
-		    	return (bp);
+			KASSERT(bp->b_objlock == vp->v_interlock);
+			return (bp);
 		}
 	}
 
@@ -1431,7 +1431,7 @@ start:
 		}
 	}
 	if (bp != NULL) {
-	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY) ||
+		KASSERT(!ISSET(bp->b_cflags, BC_BUSY) ||
 		    ISSET(bp->b_cflags, BC_VFLUSH));
 		bremfree(bp);
 
@@ -1474,7 +1474,7 @@ start:
 	}
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
-    	KASSERT(!cv_has_waiters(&bp->b_done));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * If buffer was a delayed write, start it and return NULL
