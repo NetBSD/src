@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.32 2024/08/15 06:15:16 skrll Exp $
+$NetBSD: version,v 1.33 2024/12/07 19:29:04 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -35,3 +35,4 @@ is taken as the current.
 2.12:	Add userconf support.
 2.13:	Add Arm RT support and change Arm64 (aarch64) RT VAs.
 2.14:	Arm64: check cpu support for big endian kernel.
+2.15:	Arm64: Use 1:1 PA to VA mappings for RT services.

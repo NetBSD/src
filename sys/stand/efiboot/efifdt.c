@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.37 2024/08/15 06:15:16 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.38 2024/12/07 19:29:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -722,8 +722,9 @@ efi_fdt_create_acpifdt(void)
 
 #ifdef EFIBOOT_RUNTIME_ADDRESS
 static uint64_t
-efi_fdt_runtime_alloc_va(uint64_t npages)
+efi_fdt_runtime_alloc_va(uint64_t pa, uint64_t npages)
 {
+#if EFIBOOT_RUNTIME_ADDRESS != 0
 	static uint64_t va = EFIBOOT_RUNTIME_ADDRESS;
 	static uint64_t sz = EFIBOOT_RUNTIME_SIZE;
 	uint64_t nva;
@@ -738,6 +739,9 @@ efi_fdt_runtime_alloc_va(uint64_t npages)
 	sz -= (npages * EFI_PAGE_SIZE);
 
 	return nva;
+#else
+	return pa;
+#endif
 }
 
 void
@@ -763,7 +767,8 @@ efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
 			continue;
 		}
 
-		md->VirtualStart = efi_fdt_runtime_alloc_va(md->NumberOfPages);
+		md->VirtualStart =
+		    efi_fdt_runtime_alloc_va(md->PhysicalStart, md->NumberOfPages);
 
 		switch (md->Type) {
 		case EfiRuntimeServicesCode:
