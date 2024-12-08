@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.12 2022/07/23 03:08:17 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.13 2024/12/08 20:44:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.12 2022/07/23 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.13 2024/12/08 20:44:40 jmcneill Exp $");
+
+#include <sys/device.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -42,9 +44,44 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.12 2022/07/23 03:08:17 thorpej Exp $"
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_i2c")
 
+static const struct device_compatible_entry hid_compat_data[] = {
+	{ .compat = "PNP0C50" },
+	DEVICE_COMPAT_EOL
+};
+
 struct acpi_i2c_context {
 	uint16_t i2c_addr;
+	struct acpi_devnode *res_src;
 };
+
+static struct acpi_devnode *
+acpi_i2c_resource_find_source(ACPI_RESOURCE_SOURCE *rs)
+{
+	ACPI_STATUS rv;
+	ACPI_HANDLE hdl;
+	struct acpi_devnode *ad;
+
+	if (rs->StringPtr == NULL) {
+		return NULL;
+	}
+
+	rv = AcpiGetHandle(NULL, rs->StringPtr, &hdl);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: couldn't lookup '%s': %s\n", __func__,
+		    rs->StringPtr, AcpiFormatException(rv));
+		return NULL;
+	}
+
+	SIMPLEQ_FOREACH(ad, &acpi_softc->sc_head, ad_list) {
+		if (ad->ad_handle == hdl) {
+			return ad;
+		}
+	}
+
+	printf("%s: no acpi devnode matching resource source '%s'\n",
+	    __func__, rs->StringPtr);
+	return NULL;
+}
 
 static ACPI_STATUS
 acpi_i2c_resource_parse_callback(ACPI_RESOURCE *res, void *context)
@@ -58,6 +95,8 @@ acpi_i2c_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		switch (res->Data.I2cSerialBus.Type) {
 		case ACPI_RESOURCE_SERIAL_TYPE_I2C:
 			i2cc->i2c_addr = res->Data.I2cSerialBus.SlaveAddress;
+			i2cc->res_src = acpi_i2c_resource_find_source(
+			    &res->Data.I2cSerialBus.ResourceSource);
 			break;
 		}
 		break;
@@ -113,6 +152,40 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	prop_object_release(dev);
 }
 
+static void
+acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
+    prop_array_t array)
+{
+	struct acpi_devnode *ad;
+
+	KASSERT(dev != NULL);
+
+	SIMPLEQ_FOREACH(ad, &acpi_softc->sc_head, ad_list) {
+		struct acpi_attach_args aa = {
+			.aa_node = ad
+		};
+		struct acpi_i2c_context i2cc;
+		ACPI_STATUS rv;
+
+		if (!acpi_device_present(ad->ad_handle))
+			continue;
+		if (ad->ad_device != NULL)
+			continue;
+		if (acpi_compatible_match(&aa, hid_compat_data) == 0)
+			continue;
+
+		memset(&i2cc, 0, sizeof(i2cc));
+		rv = AcpiWalkResources(ad->ad_handle, "_CRS",
+		    acpi_i2c_resource_parse_callback, &i2cc);
+		if (ACPI_SUCCESS(rv) &&
+		    i2cc.i2c_addr != 0 &&
+		    i2cc.res_src == devnode) {
+			aprint_debug_dev(dev, "claiming %s\n", ad->ad_name);
+			acpi_enter_i2c_device(ad, array);
+		}
+	}
+}
+
 prop_array_t
 acpi_enter_i2c_devs(device_t dev, struct acpi_devnode *devnode)
 {
@@ -132,6 +205,7 @@ acpi_enter_i2c_devs(device_t dev, struct acpi_devnode *devnode)
 
 	if (dev != NULL) {
 		acpi_claim_childdevs(dev, devnode);
+		acpi_enter_i2chid_devs(dev, devnode, array);
 	}
 
 	return array;
