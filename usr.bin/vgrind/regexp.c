@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.15 2021/12/12 08:49:58 andvar Exp $	*/
+/*	$NetBSD: regexp.c,v 1.16 2024/12/08 07:53:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.15 2021/12/12 08:49:58 andvar Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.16 2024/12/08 07:53:18 andvar Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -270,7 +270,7 @@ expconv(void)
 	    OCNT(cs) = tocc(ccre - cs);		/* offset to next symbol */
 	    break;
 
-	/* reurn from a recursion */
+	/* return from a recursion */
 	case ')':
 	    if (acs != NULL) {
 		do {
