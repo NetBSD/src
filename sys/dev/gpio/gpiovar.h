@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.19 2023/11/06 00:35:05 brad Exp $ */
+/* $NetBSD: gpiovar.h,v 1.20 2024/12/08 20:40:38 jmcneill Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -36,6 +36,8 @@ typedef struct gpio_chipset_tag {
 				     int (*)(void *), void *);
 	void	(*gp_intr_disestablish)(void *, void *);
 	bool	(*gp_intr_str)(void *, int, int, char *, size_t);
+	void	(*gp_intr_mask)(void *, void *);
+	void	(*gp_intr_unmask)(void *, void *);
 } *gpio_chipset_tag_t;
 
 /* GPIO pin description */
@@ -118,6 +120,8 @@ void *	gpio_intr_establish(void *, struct gpio_pinmap *, int, int, int,
 void	gpio_intr_disestablish(void *, void *);
 bool	gpio_intr_str(void *, struct gpio_pinmap *, int, int,
 		      char *, size_t);
+void	gpio_intr_mask(void *, void *);
+void	gpio_intr_unmask(void *, void *);
 int	gpio_pin_to_pin_num(void *, struct gpio_pinmap *, int);
 
 int	gpio_lock(void *);

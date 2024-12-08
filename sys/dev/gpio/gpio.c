@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.73 2023/11/06 00:35:05 brad Exp $ */
+/* $NetBSD: gpio.c,v 1.74 2024/12/08 20:40:38 jmcneill Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.73 2023/11/06 00:35:05 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.74 2024/12/08 20:40:38 jmcneill Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -616,6 +616,28 @@ gpio_intr_str(void *gpio, struct gpio_pinmap *map, int pin, int irqmode,
 	(void) snprintf(intrstr, intrstrlen, "%s (%s)", hwstr, mode);
 	
 	return (true);
+}
+
+void
+gpio_intr_mask(void *gpio, void *ih)
+{
+	struct gpio_softc *sc = gpio;
+
+	if (sc->sc_gc->gp_intr_mask == NULL)
+		return;
+
+	sc->sc_gc->gp_intr_mask(sc->sc_gc->gp_cookie, ih);
+}
+
+void
+gpio_intr_unmask(void *gpio, void *ih)
+{
+	struct gpio_softc *sc = gpio;
+
+	if (sc->sc_gc->gp_intr_unmask == NULL)
+		return;
+
+	sc->sc_gc->gp_intr_unmask(sc->sc_gc->gp_cookie, ih);
 }
 
 int
