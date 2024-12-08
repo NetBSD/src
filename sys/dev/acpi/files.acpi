@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.133 2024/08/26 13:38:28 riastradh Exp $
+#	$NetBSD: files.acpi,v 1.134 2024/12/08 20:49:14 jmcneill Exp $
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
@@ -22,6 +22,7 @@ file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
 file	dev/acpi/acpi_dev.c		acpi
 file	dev/acpi/acpi_event.c		acpi
+file	dev/acpi/acpi_gpio.c		acpi
 file	dev/acpi/acpi_i2c.c		acpi
 file	dev/acpi/acpi_mcfg.c		acpi & pci
 file	dev/acpi/acpi_pci.c		acpi & pci
@@ -335,5 +336,15 @@ file	dev/acpi/dwcmmc_acpi.c		dwcmmc_acpi
 # DesignWare Watchdog
 attach	dwcwdt at acpinodebus with dwcwdt_acpi
 file	dev/acpi/dwcwdt_acpi.c		dwcwdt_acpi
+
+# Qualcomm GPIO
+device	qcomgpio: gpiobus
+attach	qcomgpio at acpinodebus
+file	dev/acpi/qcomgpio.c		qcomgpio
+
+# Qualcomm I2C controller
+device	qcomiic: i2cbus
+attach	qcomiic at acpinodebus
+file	dev/acpi/qcomiic.c		qcomiic
 
 include	"dev/acpi/wmi/files.wmi"

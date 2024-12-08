@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.90 2024/03/20 03:14:45 riastradh Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.91 2024/12/08 20:49:14 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -134,6 +134,10 @@ struct acpi_devnode {
 	int			 ad_state;	/* Device power state */
 	bus_dma_tag_t		 ad_dmat;	/* Bus DMA tag for device */
 	bus_dma_tag_t		 ad_dmat64;	/* Bus DMA tag for device (64-bit) */
+
+	device_t		ad_gpiodev;	/* GPIO controller device */
+	int			(*ad_gpio_translate)(void *, ACPI_INTEGER, void **);
+	void			*ad_gpio_priv;	/* private data for translate */
 
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
