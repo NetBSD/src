@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.36 2024/12/07 19:53:07 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.37 2024/12/08 20:04:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.36 2024/12/07 19:53:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.37 2024/12/08 20:04:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.36 2024/12/07 19:53:07 jmcneill Exp 
 #ifdef ITS_DEBUG
 #define DPRINTF(x)	printf x
 #else
-#define DPRINTF(x)
+#define DPRINTF(x)	__nothing
 #endif
 
 /*
