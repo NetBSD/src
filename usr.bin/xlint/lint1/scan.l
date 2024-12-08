@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.142 2024/05/12 08:48:36 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.143 2024/12/08 17:12:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.142 2024/05/12 08:48:36 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.143 2024/12/08 17:12:01 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -49,8 +49,19 @@ EXP	([eE][+-]?[0-9]+)
 PEXP	(p[+-]?[0-9A-Fa-f]+)
 FSUF	([fFlL]?[i]?)
 
+punctuator_1	[\[\](){}.]|->
+punctuator_2	{punctuator_1}|\+\+|--|[&*+\-~!]
+punctuator_3	{punctuator_2}|\/|%|<<|>>|<|>|<=|>=|==|!=|\^|\||&&|\|\|
+punctuator_4	{punctuator_3}|\?|:|::|;|\.\.\.
+punctuator_5	{punctuator_4}|=|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=
+punctuator_6	{punctuator_5}|,|#|##
+punctuator_7	{punctuator_6}|<:|:>|<%|%>|%:|%:%:
+punctuator	{punctuator_7}|@
+
 %pointer
 %option nounput
+
+%x preprocessing
 
 %%
 
@@ -115,11 +126,29 @@ FSUF	([fFlL]?[i]?)
 "::"				return T_DCOLON;
 "'"				return lex_character_constant();
 "L'"				return lex_wide_character_constant();
-^#.*$				lex_directive(yytext);
 \n				lex_next_line();
 \t|" "|\f|\v			;
 "/*"				lex_comment();
 "//"				lex_slash_slash_comment();
+
+^#				{
+					BEGIN preprocessing;
+					lex_pp_begin();
+				}
+<preprocessing>[_A-Za-z][_A-Za-z0-9]*	lex_pp_identifier(yytext);
+<preprocessing>\.?[0-9]('?[_A-Za-z0-9]|[EePp][-+][0-9]+|\.)*	lex_pp_number(yytext);
+<preprocessing>\'		lex_pp_character_constant();
+<preprocessing>\"		lex_pp_string_literal();
+<preprocessing>{punctuator}	lex_pp_punctuator(yytext);
+<preprocessing>\/\*		lex_pp_comment();
+<preprocessing>[ \f\t\v]+	lex_pp_whitespace();
+<preprocessing>.		lex_unknown_character(yytext[0]);
+<preprocessing>\n		{
+					lex_pp_end();
+					lex_next_line();
+					BEGIN INITIAL;
+				}
+
 .				lex_unknown_character(yytext[0]);
 
 %%

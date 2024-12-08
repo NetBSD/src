@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_255.c,v 1.6 2023/08/11 04:27:49 rillig Exp $	*/
+/*	$NetBSD: msg_255.c,v 1.7 2024/12/08 17:12:01 rillig Exp $	*/
 # 3 "msg_255.c"
 
 // Test for message: undefined or invalid '#' directive [255]
@@ -34,12 +34,13 @@
 /* expect+1: warning: undefined or invalid '#' directive [255] */
 # 4 /
 
-/* expect+1: warning: undefined or invalid '#' directive [255] */
+/* expect+3: error: newline in string or char constant [254] */
+/* expect+2: error: unterminated string constant [258] */
 # 5 "unfinished
 
 // An empty string means standard input; tabs may be used for spacing.
 #	6	""
 
-# 44 "msg_255.c"
+# 45 "msg_255.c"
 
 int dummy;

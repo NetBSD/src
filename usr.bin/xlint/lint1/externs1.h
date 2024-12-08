@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.237 2024/11/30 10:43:49 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.238 2024/12/08 17:12:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -391,6 +391,15 @@ void outusg(const sym_t *);
 /*
  * lex.c
  */
+void lex_pp_begin(void);
+void lex_pp_identifier(const char *);
+void lex_pp_number(const char *);
+void lex_pp_character_constant(void);
+void lex_pp_string_literal(void);
+void lex_pp_punctuator(const char *);
+void lex_pp_comment(void);
+void lex_pp_whitespace(void);
+void lex_pp_end(void);
 int lex_name(const char *, size_t);
 int lex_integer_constant(const char *, size_t, int);
 int lex_floating_constant(const char *, size_t);
@@ -399,7 +408,6 @@ int lex_string(void);
 int lex_wide_string(void);
 int lex_character_constant(void);
 int lex_wide_character_constant(void);
-void lex_directive(const char *);
 void lex_next_line(void);
 void lex_comment(void);
 void lex_slash_slash_comment(void);

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.231 2024/11/29 20:02:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.232 2024/12/08 17:12:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.231 2024/11/29 20:02:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.232 2024/12/08 17:12:01 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -689,20 +689,20 @@ lex_operator(int t, op_t o)
 	return t;
 }
 
-static buffer *
+static buffer
 read_quoted(bool *complete, char delim, bool wide)
 {
-	buffer *buf = xcalloc(1, sizeof(*buf));
-	buf_init(buf);
+	buffer buf;
+	buf_init(&buf);
 	if (wide)
-		buf_add_char(buf, 'L');
-	buf_add_char(buf, delim);
+		buf_add_char(&buf, 'L');
+	buf_add_char(&buf, delim);
 
 	for (;;) {
 		int c = read_byte();
 		if (c <= 0)
 			break;
-		buf_add_char(buf, (char)c);
+		buf_add_char(&buf, (char)c);
 		if (c == '\n')
 			break;
 		if (c == delim) {
@@ -711,13 +711,13 @@ read_quoted(bool *complete, char delim, bool wide)
 		}
 		if (c == '\\') {
 			c = read_byte();
-			buf_add_char(buf, (char)(c <= 0 ? ' ' : c));
+			buf_add_char(&buf, (char)(c <= 0 ? ' ' : c));
 			if (c <= 0)
 				break;
 		}
 	}
 	*complete = false;
-	buf_add_char(buf, delim);
+	buf_add_char(&buf, delim);
 	return buf;
 }
 
@@ -931,12 +931,12 @@ check_quoted(const buffer *buf, bool complete, char delim)
 		error(253);
 }
 
-static buffer *
+static buffer
 lex_quoted(char delim, bool wide)
 {
 	bool complete;
-	buffer *buf = read_quoted(&complete, delim, wide);
-	check_quoted(buf, complete, delim);
+	buffer buf = read_quoted(&complete, delim, wide);
+	check_quoted(&buf, complete, delim);
 	return buf;
 }
 
@@ -944,12 +944,12 @@ lex_quoted(char delim, bool wide)
 int
 lex_character_constant(void)
 {
-	buffer *buf = lex_quoted('\'', false);
+	buffer buf = lex_quoted('\'', false);
 
 	size_t n = 0;
 	uint64_t val = 0;
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it)) {
+	while (quoted_next(&buf, &it)) {
 		val = (val << CHAR_SIZE) + it.value;
 		n++;
 	}
@@ -983,13 +983,13 @@ lex_character_constant(void)
 int
 lex_wide_character_constant(void)
 {
-	buffer *buf = lex_quoted('\'', true);
+	buffer buf = lex_quoted('\'', true);
 
 	static char wbuf[MB_LEN_MAX + 1];
 	size_t n = 0, nmax = MB_CUR_MAX;
 
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it)) {
+	while (quoted_next(&buf, &it)) {
 		if (n < nmax)
 			wbuf[n] = (char)it.value;
 		n++;
@@ -1064,36 +1064,19 @@ set_csrc_pos(void)
 	outsrc(transform_filename(curr_pos.p_file, strlen(curr_pos.p_file)));
 }
 
-/*
- * Called for preprocessor directives. Currently implemented are:
- *	# pragma [argument...]
- *	# lineno
- *	# lineno "filename" [GCC-flag...]
- */
-void
-lex_directive(const char *text)
+/* # lineno ["filename" [GCC-flag...]]  */
+static void
+set_location(const char *p)
 {
-	const char *p = text + 1;	/* skip '#' */
-
-	while (*p == ' ' || *p == '\t')
-		p++;
-
-	if (!ch_isdigit(*p)) {
-		if (strncmp(p, "pragma", 6) == 0
-		    && ch_isspace(p[6]))
-			return;
-		goto error;
-	}
-
 	char *end;
 	long ln = strtol(--p, &end, 10);
 	if (end == p)
 		goto error;
 	p = end;
 
-	if (*p != ' ' && *p != '\t' && *p != '\0')
+	if (*p != ' ' && *p != '\0')
 		goto error;
-	while (*p == ' ' || *p == '\t')
+	while (*p == ' ')
 		p++;
 
 	if (*p != '\0') {
@@ -1130,6 +1113,141 @@ lex_directive(const char *text)
 error:
 	/* undefined or invalid '#' directive */
 	warning(255);
+}
+
+static void
+check_stmt_macro(const char *text)
+{
+	const char *p = text;
+	while (*p == ' ')
+		p++;
+
+	const char *name_start = p;
+	while (ch_isalnum(*p) || *p == '_')
+		p++;
+	const char *name_end = p;
+
+	if (*p == '(') {
+		while (*p != '\0' && *p != ')')
+			p++;
+		if (*p == ')')
+			p++;
+	}
+
+	while (*p == ' ')
+		p++;
+
+	if (strncmp(p, "do", 2) == 0 && !ch_isalnum(p[2]))
+		/* do-while macro '%.*s' ends with semicolon */
+		warning(385, (int)(name_end - name_start), name_start);
+}
+
+// Between lex_pp_begin and lex_pp_end, the current preprocessing line,
+// with comments and whitespace converted to a single space.
+static buffer pp_line;
+
+void
+lex_pp_begin(void)
+{
+	if (pp_line.data == NULL)
+		buf_init(&pp_line);
+	debug_step("%s", __func__);
+	lint_assert(pp_line.len == 0);
+}
+
+void
+lex_pp_identifier(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_number(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_character_constant(void)
+{
+	buffer buf = lex_quoted('\'', false);
+	debug_step("%s '%s'", __func__, buf.data);
+	buf_add(&pp_line, buf.data);
+	free(buf.data);
+}
+
+void
+lex_pp_string_literal(void)
+{
+	buffer buf = lex_quoted('"', false);
+	debug_step("%s '%s'", __func__, buf.data);
+	buf_add(&pp_line, buf.data);
+	free(buf.data);
+}
+
+void
+lex_pp_punctuator(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_comment(void)
+{
+	int lc = -1, c;
+
+	for (;;) {
+		if ((c = read_byte()) == EOF) {
+			/* unterminated comment */
+			error(256);
+			return;
+		}
+		if (lc == '*' && c == '/')
+			break;
+		lc = c;
+	}
+
+	buf_add_char(&pp_line, ' ');
+}
+
+void
+lex_pp_whitespace(void)
+{
+	buf_add_char(&pp_line, ' ');
+}
+
+void
+lex_pp_end(void)
+{
+	const char *text = pp_line.data;
+	size_t len = pp_line.len;
+	while (len > 0 && text[len - 1] == ' ')
+		len--;
+	debug_step("%s '%.*s'", __func__, (int)len, text);
+
+	const char *p = text;
+	while (*p == ' ')
+		p++;
+
+	if (ch_isdigit(*p))
+		set_location(p);
+	else if (strncmp(p, "pragma ", 7) == 0)
+		goto done;
+	else if (strncmp(p, "define ", 7) == 0) {
+		 if (text[len - 1] == ';')
+			check_stmt_macro(p + 7);
+	} else if (strncmp(p, "undef ", 6) == 0)
+		goto done;
+	else
+		/* undefined or invalid '#' directive */
+		warning(255);
+
+done:
+	pp_line.len = 0;
+	pp_line.data[0] = '\0';
 }
 
 /* Handle lint comments such as ARGSUSED. */
@@ -1251,7 +1369,9 @@ reset_suppressions(void)
 int
 lex_string(void)
 {
-	yylval.y_string = lex_quoted('"', false);
+	buffer *buf = xmalloc(sizeof(*buf));
+	*buf = lex_quoted('"', false);
+	yylval.y_string = buf;
 	return T_STRING;
 }
 
@@ -1277,18 +1397,19 @@ wide_length(const buffer *buf)
 int
 lex_wide_string(void)
 {
-	buffer *buf = lex_quoted('"', true);
+	buffer buf = lex_quoted('"', true);
 
 	buffer str;
 	buf_init(&str);
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it))
+	while (quoted_next(&buf, &it))
 		buf_add_char(&str, (char)it.value);
 
-	free(buf->data);
-	*buf = (buffer) { .len = wide_length(&str) };
+	free(buf.data);
 
-	yylval.y_string = buf;
+	buffer *len_buf = xcalloc(1, sizeof(*len_buf));
+	len_buf->len = wide_length(&str);
+	yylval.y_string = len_buf;
 	return T_STRING;
 }
 

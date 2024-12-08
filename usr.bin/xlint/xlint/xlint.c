@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.125 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.126 2024/12/08 17:12:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.125 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.126 2024/12/08 17:12:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -579,6 +579,7 @@ main(int argc, char *argv[])
 	list_add(&cpp.flags, "-Dlint");	/* XXX don't define with -s */
 	list_add(&cpp.flags, "-D__lint");
 	list_add(&cpp.flags, "-D__lint__");
+	list_add(&cpp.flags, "-dD");
 
 	list_add(&default_libraries, "c");
 
