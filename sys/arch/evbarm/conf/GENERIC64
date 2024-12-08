@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.219 2024/08/27 00:56:16 riastradh Exp $
+#	$NetBSD: GENERIC64,v 1.220 2024/12/08 20:52:32 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -244,9 +244,10 @@ imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio* 	at acpi?
+qcomgpio*	at acpi?		# Qualcomm GPIO
+rkgpio* 	at rkiomux?		# Rockchip GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
-rkgpio* 	at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
@@ -355,6 +356,7 @@ dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c* 	at fdt? pass 4		# IMX I2C
 nxpiic* 	at acpi?		# NXP Layerscape I2C
+qcomiic*	at acpi?		# Qualcomm I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -382,6 +384,11 @@ pcf8563rtc*	at iic?			# PCF8563 RTC
 rkpmic* 	at iic?			# Rockchip Power Management IC
 rkreg*		at rkpmic?
 tcagpio*	at iic?
+
+# I2C HID devices
+ihidev*		at iic?
+ims*		at ihidev? reportid ?
+wsmouse*	at ims? mux 0
 
 # Power Domain controllers
 applepmgr* 	at fdt? pass 0
