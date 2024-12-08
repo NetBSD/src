@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.6 2022/01/14 22:25:49 riastradh Exp $ */
+/* $NetBSD: ihidev.h,v 1.7 2024/12/08 20:49:56 jmcneill Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -107,8 +107,10 @@ struct i2c_hid_desc {
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/workqueue.h>
+#include <sys/gpio.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/gpio/gpiovar.h>
 
 struct ihidev_softc {
 	device_t	sc_dev;
@@ -118,6 +120,9 @@ struct ihidev_softc {
 	kmutex_t	sc_lock;
 
 	void *		sc_ih;
+	void *		sc_ih_gpio;
+	struct gpio_pinmap sc_ih_gpiomap;
+	int		sc_ih_gpiopins[1];
 	struct workqueue *sc_wq;
 	struct work	sc_work;
 	volatile unsigned sc_work_pending;
