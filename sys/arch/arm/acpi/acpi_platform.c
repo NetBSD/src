@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.37 2024/06/30 17:58:08 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.38 2024/12/08 20:55:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.37 2024/06/30 17:58:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.38 2024/12/08 20:55:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -402,12 +402,13 @@ acpi_platform_device_register_post_config(device_t self, void *aux)
 static void
 acpi_platform_reset(void)
 {
-#ifdef EFI_RUNTIME
-	if (arm_efirt_reset(EFI_RESET_COLD) == 0)
-		return;
-#endif
-	if (psci_available())
+	if (psci_available()) {
 		psci_system_reset();
+	}
+
+#ifdef EFI_RUNTIME
+	arm_efirt_reset(EFI_RESET_COLD);
+#endif
 }
 
 static u_int

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.24 2022/11/25 22:17:20 mrg Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.25 2024/12/08 20:55:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.24 2022/11/25 22:17:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.25 2024/12/08 20:55:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,12 +128,14 @@ static void
 acpi_fdt_poweroff(device_t dev)
 {
 	delay(500000);
-#ifdef EFI_RUNTIME
-	if (arm_efirt_reset(EFI_RESET_SHUTDOWN) == 0)
-		return;
-#endif
-	if (psci_available())
+
+	if (psci_available()) {
 		psci_system_off();
+	}
+
+#ifdef EFI_RUNTIME
+	arm_efirt_reset(EFI_RESET_SHUTDOWN);
+#endif
 }
 
 static int
