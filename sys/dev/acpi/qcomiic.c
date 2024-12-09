@@ -1,4 +1,4 @@
-/* $NetBSD: qcomiic.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $ */
+/* $NetBSD: qcomiic.c,v 1.2 2024/12/09 22:13:14 jmcneill Exp $ */
 
 /*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
 /*
@@ -129,6 +129,8 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = qciic_exec;
+
+	acpi_i2c_register(aa->aa_node, self, &sc->sc_ic);
 
 	/*
 	 * Defer the attachment of I2C bus until all ACPI devices have been
