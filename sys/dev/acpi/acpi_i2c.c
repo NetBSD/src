@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.13 2024/12/08 20:44:40 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.14 2024/12/09 22:12:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,19 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.13 2024/12/08 20:44:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.14 2024/12/09 22:12:54 jmcneill Exp $");
 
 #include <sys/device.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_i2c.h>
+#include <external/bsd/acpica/dist/include/acinterp.h>
 #include <dev/i2c/i2cvar.h>
 
 #include <sys/kmem.h>
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_i2c")
+
+struct acpi_i2c_address_space_context {
+	ACPI_CONNECTION_INFO conn_info;	/* must be first */
+	i2c_tag_t tag;
+};
 
 static const struct device_compatible_entry hid_compat_data[] = {
 	{ .compat = "PNP0C50" },
@@ -209,4 +215,135 @@ acpi_enter_i2c_devs(device_t dev, struct acpi_devnode *devnode)
 	}
 
 	return array;
+}
+
+static ACPI_STATUS
+acpi_i2c_gsb_init(ACPI_HANDLE region_hdl, UINT32 function,
+    void *handler_ctx, void **region_ctx)
+{
+	if (function == ACPI_REGION_DEACTIVATE) {
+		*region_ctx = NULL;
+	} else {
+		*region_ctx = region_hdl;
+	}
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
+    UINT32 bit_width, UINT64 *value, void *handler_ctx,
+    void *region_ctx)
+{
+	ACPI_OPERAND_OBJECT *region_obj = region_ctx;
+	struct acpi_i2c_address_space_context *context = handler_ctx;
+	UINT8 *buffer = ACPI_CAST_PTR(uint8_t, value);
+	UINT8 *data_buffer;
+	UINT8 data_length;
+	ACPI_PHYSICAL_ADDRESS base_address;
+	ACPI_RESOURCE *res;
+	UINT32 length;
+	UINT8 space_id;
+	ACPI_STATUS rv;
+	ACPI_CONNECTION_INFO *conn_info= &context->conn_info;
+	i2c_tag_t tag = context->tag;
+	i2c_op_t op;
+	union {
+		uint8_t cmd8;
+		uint16_t cmd16;
+	} cmd;
+	size_t cmdlen;
+
+	if (region_obj->Region.Type != ACPI_TYPE_REGION) {
+		return AE_OK;
+	}
+
+	base_address = region_obj->Region.Address;
+	space_id = region_obj->Region.SpaceId;
+
+	KASSERT(space_id == ACPI_ADR_SPACE_GSBUS);
+
+	rv = AcpiExGetProtocolBufferLength(function >> 16, &length);
+	if (ACPI_FAILURE(rv)) {
+		return rv;
+	}
+
+	rv = AcpiBufferToResource(conn_info->Connection, conn_info->Length,
+	    &res);
+	if (ACPI_FAILURE(rv)) {
+		return rv;
+	}
+	if (res->Type != ACPI_RESOURCE_TYPE_SERIAL_BUS ||
+	    res->Data.CommonSerialBus.Type != ACPI_RESOURCE_SERIAL_TYPE_I2C) {
+		return AE_TYPE;
+	}
+
+	data_buffer = &buffer[2];
+	data_length = (UINT8)length;
+
+	if ((function & ACPI_IO_MASK) != 0) {
+		op = I2C_OP_WRITE_WITH_STOP;
+	} else {
+		op = I2C_OP_READ_WITH_STOP;
+	}
+
+#ifdef ACPI_I2C_DEBUG
+	printf("%s %s: %s Attr %X Addr %.4X BaseAddr %.4X Length %.2X BitWidth %X BufLen %X",
+	       __func__, AcpiUtGetRegionName (space_id),
+	       (function & ACPI_IO_MASK) ? "Write" : "Read ",
+	       (UINT32) (function >> 16),
+	       (UINT32) address, (UINT32) base_address,
+	       length, bit_width, buffer[1]);
+	printf(" [AccessLength %.2X Connection %p]\n",
+	       conn_info->AccessLength, conn_info->Connection);
+#endif
+
+	if (bit_width == 8) {
+		cmd.cmd8 = (uint8_t)(base_address + address);
+		cmdlen = 1;
+	} else if (bit_width == 16) {
+		cmd.cmd16 = (uint16_t)(base_address + address);
+		cmdlen = 2;
+	} else {
+		cmdlen = 0;
+	}
+	if (cmdlen == 0) {
+		buffer[0] = EINVAL;
+	} else {
+		const int flags = I2C_F_POLL;
+		iic_acquire_bus(tag, flags);
+		buffer[0] = iic_exec(tag, op, res->Data.I2cSerialBus.SlaveAddress,
+				     &cmd, cmdlen, data_buffer, data_length, flags);
+		iic_release_bus(tag, flags);
+		if (buffer[0] == 0) {
+			buffer[1] = data_length;
+		}
+#ifdef ACPI_I2C_DEBUG
+		printf("iic_exec returned %d\n", buffer[0]);
+#endif
+	}
+
+	ACPI_FREE(res);
+
+	return AE_OK;
+}
+
+ACPI_STATUS
+acpi_i2c_register(struct acpi_devnode *devnode, device_t dev, i2c_tag_t tag)
+{
+	struct acpi_i2c_address_space_context *context;
+	ACPI_STATUS rv;
+
+	context = kmem_zalloc(sizeof(*context), KM_SLEEP);
+	context->tag = tag;
+
+	rv = AcpiInstallAddressSpaceHandler(devnode->ad_handle,
+	    ACPI_ADR_SPACE_GSBUS, acpi_i2c_gsb_handler, acpi_i2c_gsb_init,
+	    context);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(dev,
+		    "couldn't install address space handler: %s",
+		    AcpiFormatException(rv));
+	}
+
+	return rv;
 }
