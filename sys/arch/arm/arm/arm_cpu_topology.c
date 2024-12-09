@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_cpu_topology.c,v 1.7 2024/06/30 17:58:08 jmcneill Exp $	*/
+/*	$NetBSD: arm_cpu_topology.c,v 1.8 2024/12/09 21:55:06 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthew R. Green
@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.7 2024/06/30 17:58:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.8 2024/12/09 21:55:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,13 @@ arm_cpu_topology_set(struct cpu_info * const ci, mpidr_t mpidr)
 {
 #ifdef MULTIPROCESSOR
 	uint pkgid, coreid, smtid, numaid;
+	bool use_aff0 = (mpidr & MPIDR_MT) != 0 ||
+			CPU_ID_ORYON_P(ci->ci_id.ac_midr);
 
 	/* NUMA info comes from firmware tables (ACPI or FDT). */
 	numaid = ci->ci_numa_id;
 
-	if (mpidr & MPIDR_MT) {
+	if (use_aff0) {
 		pkgid = __SHIFTOUT(mpidr, MPIDR_AFF2);
 		coreid = __SHIFTOUT(mpidr, MPIDR_AFF1);
 		smtid = __SHIFTOUT(mpidr, MPIDR_AFF0);
