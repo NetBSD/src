@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,13 +56,14 @@ typedef enum {
 
 struct qcomgpio_config {
 	u_int	num_pins;
-	int	(*translate)(ACPI_INTEGER);
+	int	(*translate)(ACPI_RESOURCE_GPIO *);
 };
 
 struct qcomgpio_intr_handler {
 	int	(*ih_func)(void *);
 	void	*ih_arg;
 	int	ih_pin;
+	int	ih_type;
 	LIST_ENTRY(qcomgpio_intr_handler) ih_list;
 };
 
@@ -96,7 +97,7 @@ static bool	qcomgpio_intr_str(void *, int, int, char *, size_t);
 static void	qcomgpio_intr_mask(void *, void *);
 static void	qcomgpio_intr_unmask(void *, void *);
 
-static int	qcomgpio_acpi_translate(void *, ACPI_INTEGER, void **);
+static int	qcomgpio_acpi_translate(void *, ACPI_RESOURCE_GPIO *, void **);
 static void	qcomgpio_register_event(void *, struct acpi_event *,
 					ACPI_RESOURCE_GPIO *);
 static int	qcomgpio_intr(void *);
@@ -104,12 +105,18 @@ static int	qcomgpio_intr(void *);
 CFATTACH_DECL_NEW(qcomgpio, sizeof(struct qcomgpio_softc),
     qcomgpio_match, qcomgpio_attach, NULL, NULL);
 
+#define X1E_NUM_PINS	239
+
 static int
-qcomgpio_x1e_translate(ACPI_INTEGER val)
+qcomgpio_x1e_translate(ACPI_RESOURCE_GPIO *gpio)
 {
-	switch (val) {
-	case 0x33:
-		return 51;
+	const ACPI_INTEGER pin = gpio->PinTable[0];
+
+	if (pin < X1E_NUM_PINS) {
+		return gpio->PinTable[0];
+	}
+
+	switch (pin) {
 	case 0x180:
 		return 67;
 	case 0x380:
@@ -120,7 +127,7 @@ qcomgpio_x1e_translate(ACPI_INTEGER val)
 }
 
 static struct qcomgpio_config qcomgpio_x1e_config = {
-	.num_pins = 239,
+	.num_pins = X1E_NUM_PINS,
 	.translate = qcomgpio_x1e_translate,
 };
 
@@ -186,12 +193,35 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) *
 	    sc->sc_config->num_pins, KM_SLEEP);
 	for (pin = 0; pin < sc->sc_config->num_pins; pin++) {
+#if notyet
+		uint32_t ctl, func;
+
+		aprint_debuf_dev(self, "pin %u: ", pin);
+		ctl = RD4(sc, TLMM_GPIO_CTL(pin));
+		func = __SHIFTOUT(ctl, TLMM_GPIO_CTL_MUX);
+
+		sc->sc_pins[pin].pin_caps = 0;
+		if (func == TLMM_GPIO_CTL_MUX_GPIO) {
+			if ((ctl & TLMM_GPIO_CTL_OE) != 0) {
+				sc->sc_pins[pin].pin_caps |= GPIO_PIN_OUTPUT;
+				aprint_debug("gpio output\n");
+			} else {
+				sc->sc_pins[pin].pin_caps |= GPIO_PIN_INPUT;
+				aprint_debug("gpio input\n");
+			}
+		} else {
+			aprint_debug("func %#x\n", func);
+		}
+#else
+		sc->sc_pins[pin].pin_caps =
+		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+#endif
 		sc->sc_pins[pin].pin_num = pin;
-		sc->sc_pins[pin].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 		sc->sc_pins[pin].pin_intrcaps =
 		    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
 		    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_HIGH_LEVEL |
 		    GPIO_INTR_LOW_LEVEL | GPIO_INTR_MPSAFE;
+
 		/* It's not safe to read all pins, so leave pin state unknown */
 		sc->sc_pins[pin].pin_state = 0;
 	}
@@ -238,12 +268,13 @@ done:
 }
 
 static int
-qcomgpio_acpi_translate(void *priv, ACPI_INTEGER pin, void **gpiop)
+qcomgpio_acpi_translate(void *priv, ACPI_RESOURCE_GPIO *gpio, void **gpiop)
 {
 	struct qcomgpio_softc * const sc = priv;
+	const ACPI_INTEGER pin = gpio->PinTable[0];
 	int xpin;
 
-	xpin = sc->sc_config->translate(pin);
+	xpin = sc->sc_config->translate(gpio);
 
 	aprint_debug_dev(sc->sc_dev, "translate %#lx -> %u\n", pin, xpin);
 
@@ -278,7 +309,7 @@ qcomgpio_register_event(void *priv, struct acpi_event *ev,
 	int irqmode;
 	void *ih;
 
-	const int pin = qcomgpio_acpi_translate(sc, gpio->PinTable[0], NULL);
+	const int pin = qcomgpio_acpi_translate(sc, gpio, NULL);
 
 	if (pin < 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -308,6 +339,10 @@ qcomgpio_register_event(void *priv, struct acpi_event *ev,
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't register event for pin %#x\n",
 		    gpio->PinTable[0]);
+		return;
+	}
+	if (gpio->Triggering == ACPI_LEVEL_SENSITIVE) {
+		acpi_event_set_intrcookie(ev, ih);
 	}
 }
 
@@ -318,6 +353,9 @@ qcomgpio_pin_read(void *priv, int pin)
 	uint32_t val;
 
 	if (pin < 0 || pin >= sc->sc_config->num_pins) {
+		return 0;
+	}
+	if ((sc->sc_pins[pin].pin_caps & GPIO_PIN_INPUT) == 0) {
 		return 0;
 	}
 
@@ -332,6 +370,9 @@ qcomgpio_pin_write(void *priv, int pin, int pinval)
 	uint32_t val;
 
 	if (pin < 0 || pin >= sc->sc_config->num_pins) {
+		return;
+	}
+	if ((sc->sc_pins[pin].pin_caps & GPIO_PIN_OUTPUT) == 0) {
 		return;
 	}
 
@@ -372,6 +413,8 @@ qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 	qih->ih_func = func;
 	qih->ih_arg = arg;
 	qih->ih_pin = pin;
+	qih->ih_type = (irqmode & GPIO_INTR_LEVEL_MASK) != 0 ?
+	    IST_LEVEL : IST_EDGE;
 
 	mutex_enter(&sc->sc_lock);
 
@@ -462,6 +505,9 @@ qcomgpio_intr_mask(void *priv, void *ih)
 	uint32_t val;
 
 	val = RD4(sc, TLMM_GPIO_INTR_CFG(qih->ih_pin));
+	if (qih->ih_type == IST_LEVEL) {
+		val &= ~TLMM_GPIO_INTR_CFG_INTR_RAW_STATUS_EN;
+	}
 	val &= ~TLMM_GPIO_INTR_CFG_INTR_ENABLE;
 	WR4(sc, TLMM_GPIO_INTR_CFG(qih->ih_pin), val);
 }
@@ -474,6 +520,9 @@ qcomgpio_intr_unmask(void *priv, void *ih)
 	uint32_t val;
 
 	val = RD4(sc, TLMM_GPIO_INTR_CFG(qih->ih_pin));
+	if (qih->ih_type == IST_LEVEL) {
+		val |= TLMM_GPIO_INTR_CFG_INTR_RAW_STATUS_EN;
+	}
 	val |= TLMM_GPIO_INTR_CFG_INTR_ENABLE;
 	WR4(sc, TLMM_GPIO_INTR_CFG(qih->ih_pin), val);
 }

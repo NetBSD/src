@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_gpio.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $ */
+/* $NetBSD: acpi_gpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/gpio.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.1 2024/12/08 20:49:14 jmcneill Exp $
 
 int
 acpi_gpio_register(struct acpi_devnode *ad, device_t dev,
-    int (*translate)(void *, ACPI_INTEGER, void **), void *priv)
+    int (*translate)(void *, ACPI_RESOURCE_GPIO *, void **), void *priv)
 {
 	if (ad->ad_gpiodev != NULL) {
 		device_printf(dev, "%s already registered\n",
@@ -95,7 +95,7 @@ acpi_gpio_translate(ACPI_RESOURCE_GPIO *res, void **gpiop, int *pin)
 	}
 
 	xpin = gpioad->ad_gpio_translate(gpioad->ad_gpio_priv,
-	    res->PinTable[0], gpiop);
+	    res, gpiop);
 	if (xpin == -1) {
 		/* Pin could not be translated. */
 		return AE_NOT_IMPLEMENTED;
@@ -148,15 +148,15 @@ acpi_gpio_get_int(ACPI_HANDLE hdl, u_int index, void **gpiop, int *pin,
 	if (ACPI_FAILURE(rv)) {
 		return rv;
 	}
+	gpio = ctx.res;
 
-	rv = acpi_gpio_translate(ctx.res, gpiop, pin);
+	rv = acpi_gpio_translate(gpio, gpiop, pin);
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: translate failed: %s\n", __func__,
 		    AcpiFormatException(rv));
 		return rv;
 	}
 
-	gpio = ctx.res;
         if (gpio->Triggering == ACPI_LEVEL_SENSITIVE) {
                 *irqmode = gpio->Polarity == ACPI_ACTIVE_HIGH ? 
                     GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL;
@@ -176,7 +176,7 @@ acpi_gpio_get_int(ACPI_HANDLE hdl, u_int index, void **gpiop, int *pin,
 }
 
 ACPI_STATUS
-acpi_gpio_get_io(ACPI_HANDLE hdl, u_int index, void **gpio, int *pin)
+acpi_gpio_get_io(ACPI_HANDLE hdl, u_int index, void **gpiop, int *pin)
 {
 	struct acpi_gpio_resource_context ctx = {
 		.index = index,
@@ -189,5 +189,5 @@ acpi_gpio_get_io(ACPI_HANDLE hdl, u_int index, void **gpio, int *pin)
 		return rv;
 	}
 
-	return acpi_gpio_translate(ctx.res, gpio, pin);
+	return acpi_gpio_translate(ctx.res, gpiop, pin);
 }
