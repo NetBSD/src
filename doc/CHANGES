@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3117 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3118 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -615,3 +615,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	curses(3): Implement the ncurses extension wgetscrreg which returns
 		the scrolling region of the given window.  [blymn 20241205]
 	editline(3): Print 0 width characters.  [christos 20241205]
+	mac68k: Support for backlight control on PowerBooks.  [nat 20241209]
