@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.128 2024/12/08 20:49:56 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.129 2024/12/09 22:05:17 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -328,15 +328,20 @@ device  ihidev: hid, ihidbus, gpio
 attach  ihidev at iic
 file    dev/i2c/ihidev.c			ihidev
 
-#HID mice
+# HID mice
 device	ims: hid, hidms, wsmousedev
 attach	ims at ihidbus
 file	dev/i2c/ims.c				ims
 
-#HID multitouch
+# HID multitouch
 device	imt: hid, hidmt, wsmousedev
 attach	imt at ihidbus
 file	dev/i2c/imt.c				imt
+
+# HID keyboard
+device	ikbd: hid, hidkbd, wskbddev
+attach	ikbd at ihidbus
+file	dev/i2c/ikbd.c				ikbd
 
 # Taos TSL256x ambient light sensor
 device	tsllux: sysmon_envsys
