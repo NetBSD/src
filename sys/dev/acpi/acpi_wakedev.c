@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.29 2022/05/31 20:28:57 mrg Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.30 2024/12/09 23:41:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.29 2022/05/31 20:28:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.30 2024/12/09 23:41:36 jmcneill Exp $");
 
 #include "pci.h"
 
@@ -152,7 +152,11 @@ acpi_wakedev_init(struct acpi_devnode *ad)
 	/*
 	 * Last but not least, mark the GPE for wake.
 	 */
-	rv = AcpiSetupGpeForWake(ad->ad_handle, hdl, val);
+	if (!AcpiGbl_ReducedHardware) {
+		rv = AcpiSetupGpeForWake(ad->ad_handle, hdl, val);
+	} else {
+		rv = AE_OK;
+	}
 
 out:
 	if (buf.Pointer != NULL)
@@ -307,11 +311,15 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 		val = ad->ad_wakedev->aw_number;
 
 		if (state == ACPI_STATE_S0) {
-			(void)AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_DISABLE);
+			if (!AcpiGbl_ReducedHardware) {
+				AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_DISABLE);
+			}
 			continue;
 		}
 
-		(void)AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_ENABLE);
+		if (!AcpiGbl_ReducedHardware) {
+			AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_ENABLE);
+		}
 
 		acpi_wakedev_power_set(ad, true);
 		acpi_wakedev_method(ad, state);
