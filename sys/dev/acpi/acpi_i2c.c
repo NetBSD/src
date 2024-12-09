@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.14 2024/12/09 22:12:54 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.15 2024/12/09 22:29:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.14 2024/12/09 22:12:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.15 2024/12/09 22:29:49 jmcneill Exp $");
 
 #include <sys/device.h>
 
@@ -109,7 +109,7 @@ acpi_i2c_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		break;
 	default:
-		printf("resource type 0x%x ignored\n", res->Type);
+		break;
 	}
 	return_ACPI_STATUS(AE_OK);
 }
@@ -127,9 +127,6 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	rv = AcpiWalkResources(ad->ad_handle, "_CRS",
 	     acpi_i2c_resource_parse_callback, &i2cc);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("ACPI: unable to get resources "
-		   "for %s: %s\n", ad->ad_name,
-		   AcpiFormatException(rv));
 		return;
 	}
 	if (i2cc.i2c_addr == 0)
