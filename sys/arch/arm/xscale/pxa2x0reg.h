@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.27 2024/02/10 09:21:52 andvar Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.28 2024/12/09 22:00:44 andvar Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -828,7 +828,7 @@ struct pxa2x0_dma_desc {
 
 /* address to access codec registers */
 #define AC97_PRIAUDIO	0x0200	/* Primary audio codec */
-#define AC97_SECAUDIO	0x0300	/* Secondary autio codec */
+#define AC97_SECAUDIO	0x0300	/* Secondary audio codec */
 #define AC97_PRIMODEM	0x0400	/* Primary modem codec */
 #define AC97_SECMODEM	0x0500	/* Secondary modem codec */
 #define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
