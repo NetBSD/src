@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.26 2022/10/15 11:07:38 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.27 2024/12/09 21:56:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.26 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.27 2024/12/09 21:56:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.26 2022/10/15 11:07:38 jmcneill E
 #if NPCI > 0
 #include <dev/acpi/acpi_mcfg.h>
 #endif
+#include <arm/acpi/acpi_iort.h>
 
 #include <arm/arm/efi_runtime.h>
 
@@ -522,18 +523,27 @@ arm_acpi_dma_init_ranges(struct acpi_softc *sc, struct acpi_devnode *ad,
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	ACPI_HANDLE module;
+	ACPI_IORT_NAMED_COMPONENT *nc;
 	ACPI_STATUS rv;
+	uintptr_t dma_mask;
 	int n;
 
 	module = arm_acpi_dma_module(sc, ad->ad_parent);
 	if (module == NULL) {
 default_tag:
+		rv = acpi_iort_named_component(ad, &nc);
+		if (ACPI_SUCCESS(rv) && nc->MemoryAddressLimit != 0) {
+			dma_mask = __BITS(nc->MemoryAddressLimit - 1, 0);
+		} else {
+			dma_mask = UINTPTR_MAX;
+		}
+
 		/* No translation required */
 		dmat->_nranges = 1;
 		dmat->_ranges = kmem_zalloc(sizeof(*dmat->_ranges), KM_SLEEP);
 		dmat->_ranges[0].dr_sysbase = 0;
 		dmat->_ranges[0].dr_busbase = 0;
-		dmat->_ranges[0].dr_len = UINTPTR_MAX;
+		dmat->_ranges[0].dr_len = dma_mask;
 		dmat->_ranges[0].dr_flags = flags;
 		return;
 	}

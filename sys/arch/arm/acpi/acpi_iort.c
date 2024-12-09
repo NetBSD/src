@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_iort.c,v 1.4 2020/09/13 21:41:17 jmcneill Exp $ */
+/* $NetBSD: acpi_iort.c,v 1.5 2024/12/09 21:56:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.4 2020/09/13 21:41:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.5 2024/12/09 21:56:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,4 +148,37 @@ acpi_iort_its_id_map(u_int seg, uint32_t devid)
 	}
 
 	return 0;
+}
+
+ACPI_STATUS
+acpi_iort_named_component(ACPI_HANDLE handle,
+    ACPI_IORT_NAMED_COMPONENT **out)
+{
+	ACPI_TABLE_IORT *iort;
+	ACPI_IORT_NODE *node;
+	ACPI_IORT_NAMED_COMPONENT *nc;
+	ACPI_HANDLE nch;
+	uint32_t offset, n;
+	ACPI_STATUS rv;
+
+	rv = AcpiGetTable(ACPI_SIG_IORT, 0, (ACPI_TABLE_HEADER **)&iort);
+	if (ACPI_FAILURE(rv)) {
+		return rv;
+	}
+
+	offset = iort->NodeOffset;
+	for (n = 0; n < iort->NodeCount; n++) {
+		node = ACPI_ADD_PTR(ACPI_IORT_NODE, iort, offset);
+		if (node->Type == ACPI_IORT_NODE_NAMED_COMPONENT) {
+			nc = (ACPI_IORT_NAMED_COMPONENT *)node->NodeData;
+			rv = AcpiGetHandle(NULL, nc->DeviceName, &nch);
+			if (rv == AE_OK && nch == handle) {
+				*out = nc;
+				return AE_OK;
+			}
+		}
+		offset += le16toh(node->Length);
+	}
+
+	return AE_NOT_FOUND;
 }

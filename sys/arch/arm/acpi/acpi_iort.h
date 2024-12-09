@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_iort.h,v 1.2 2020/02/13 00:02:21 jmcneill Exp $ */
+/* $NetBSD: acpi_iort.h,v 1.3 2024/12/09 21:56:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,5 +34,7 @@
 
 uint32_t	acpi_iort_pci_root_map(u_int, uint32_t);
 uint32_t	acpi_iort_its_id_map(u_int, uint32_t);
+ACPI_STATUS	acpi_iort_named_component(ACPI_HANDLE,
+					  ACPI_IORT_NAMED_COMPONENT **);
 
 #endif /* !_ARM_ACPI_ACPI_IORT_H */
