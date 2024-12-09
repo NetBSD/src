@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.57 2024/11/02 02:43:48 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.58 2024/12/09 12:09:02 nros Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,9 +53,10 @@ typedef struct _locale		*locale_t;
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 
 __BEGIN_DECLS
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) || \
+    (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE)
 void	*memccpy(void *, const void *, int, size_t);
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE || _ISOC23_SOURCE */
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
 void	*memcpy(void * __restrict, const void * __restrict, size_t);
@@ -82,9 +83,12 @@ int	 strcoll_l(const char *, const char *, locale_t);
 char	*strcpy(char * __restrict, const char * __restrict);
 size_t	 strcspn(const char *, const char *);
 #if (_POSIX_C_SOURCE - 0 >= 200809L) || defined(_XOPEN_SOURCE) || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || (__STDC_VERSION__ - 0 >= 202311L) || \
+    defined(_ISOC23_SOURCE)
 char	*strdup(const char *);
-#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE ||
+        * _ISOC23_SOURCE
+        */
 __aconst char *strerror(int);
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
 __aconst char *strerror_l(int, locale_t);
@@ -101,8 +105,11 @@ size_t	 strlen(const char *);
 char	*strncat(char * __restrict, const char * __restrict, size_t);
 int	 strncmp(const char *, const char *, size_t);
 char	*strncpy(char * __restrict, const char * __restrict, size_t);
-#if (_POSIX_C_SOURCE - 0 >= 200809L) || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0 >= 200809L) || defined(_NETBSD_SOURCE) || \
+    (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE)
 char	*strndup(const char *, size_t);
+#endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE || _ISOC23_SOURCE */
+#if (_POSIX_C_SOURCE - 0 >= 200809L) || defined(_NETBSD_SOURCE)
 size_t	strnlen(const char *, size_t);
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 char	*strpbrk(const char *, const char *);

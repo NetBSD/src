@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strdup.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strdup.3,v 1.18 2009/01/29 10:15:39 wiz Exp $
+.\"	$NetBSD: strdup.3,v 1.19 2024/12/09 12:09:02 nros Exp $
 .\"
-.Dd January 28, 2009
+.Dd December 9, 2024
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -98,6 +98,12 @@ The
 .Fn strdup
 function conforms to
 .St -p1003.1-2001 .
+The
+.Fn strdup
+and
+.Fn strndup
+functions conform to
+.St -isoC-2023 .
 .Sh HISTORY
 The
 .Fn strdup
