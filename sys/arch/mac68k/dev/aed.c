@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.40 2024/09/14 20:59:45 nat Exp $	*/
+/*	$NetBSD: aed.c,v 1.41 2024/12/09 10:32:53 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.40 2024/09/14 20:59:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.41 2024/12/09 10:32:53 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -68,6 +68,8 @@ static void	aed_dokeyupdown(adb_event_t *);
 static void	aed_handoff(adb_event_t *);
 static void	aed_enqevent(adb_event_t *);
 
+static void	aed_display_on(device_t);
+static void	aed_display_off(device_t);
 static void	aed_brightness_down(device_t);
 static void	aed_brightness_up(device_t);
 
@@ -151,6 +153,10 @@ aedattach(device_t parent, device_t self, void *aux)
 
 	aed_sc = sc;
 
+	pmf_event_register(self, PMFE_DISPLAY_ON,
+	    aed_display_on, TRUE);
+	pmf_event_register(self, PMFE_DISPLAY_OFF,
+	    aed_display_off, TRUE);
 	pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    aed_brightness_up, TRUE);
 	pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
@@ -680,4 +686,16 @@ aed_brightness_up(device_t dev)
 
 	level = uimin(BRIGHTNESS_MAX, level + step);
 	brightness = pm_set_brightness(level);
+}
+
+static void
+aed_display_on(device_t dev)
+{
+	(void)pm_set_brightness(brightness);
+}
+
+static void
+aed_display_off(device_t dev)
+{
+	(void)pm_set_brightness(0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_grfbus.c,v 1.2 2020/10/21 11:15:18 rin Exp $ */
+/* $NetBSD: genfb_grfbus.c,v 1.3 2024/12/09 10:32:53 nat Exp $ */
 
 /* NetBSD: simplefb.c,v 1.7 2019/01/30 00:55:04 jmcneill Exp */
 /*-
@@ -61,7 +61,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_grfbus.c,v 1.2 2020/10/21 11:15:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_grfbus.c,v 1.3 2024/12/09 10:32:53 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,6 +134,7 @@ genfb_grfbus_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l
 	struct wsdisplayio_fbinfo *fbi;
 	struct rasops_info *ri;
 	int error;
+	u_int video;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -158,6 +159,15 @@ genfb_grfbus_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l
 			fbi->fbi_fboffset = m68k_page_offset(sc->sc_paddr);
 		}
 		return error;
+	case WSDISPLAYIO_SVIDEO:
+		video = *(u_int *)data;
+		if (video == WSDISPLAYIO_VIDEO_OFF)
+			pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
+		else if (video == WSDISPLAYIO_VIDEO_ON)
+			pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+		else
+			return EINVAL;
+		return 0;
 	default:
 		return EPASSTHROUGH;
 	}
