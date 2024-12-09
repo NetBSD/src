@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2482 2024/11/30 14:48:57 macallan Exp $
+#	$NetBSD: mi,v 1.2483 2024/12/09 18:48:56 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10627,6 +10627,7 @@
 ./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf_l.0		comp-c-catman		.cat
+./usr/share/man/cat3/snprintf_ss.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sockaddr_snprintf.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sockatmark.0		comp-c-catman		.cat
@@ -19130,6 +19131,7 @@
 ./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf_l.html		comp-c-htmlman		html
+./usr/share/man/html3/snprintf_ss.html		comp-c-htmlman		html
 ./usr/share/man/html3/snvis.html		comp-c-htmlman		html
 ./usr/share/man/html3/sockaddr_snprintf.html	comp-c-htmlman		html
 ./usr/share/man/html3/sockatmark.html		comp-c-htmlman		html
@@ -27669,6 +27671,7 @@
 ./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
 ./usr/share/man/man3/snprintf.3			comp-c-man		.man
 ./usr/share/man/man3/snprintf_l.3		comp-c-man		.man
+./usr/share/man/man3/snprintf_ss.3		comp-c-man		.man
 ./usr/share/man/man3/snvis.3			comp-c-man		.man
 ./usr/share/man/man3/sockaddr_snprintf.3	comp-c-man		.man
 ./usr/share/man/man3/sockatmark.3		comp-c-man		.man
