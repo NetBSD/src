@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.31 2024/12/08 20:49:56 jmcneill Exp $ */
+/* $NetBSD: ihidev.c,v 1.32 2024/12/09 01:17:30 jmcneill Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
 #include "acpica.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.31 2024/12/08 20:49:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.32 2024/12/09 01:17:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,6 @@ try_gpioint:
 			    "can't find gpioint resource\n");
 			return false;
 		}
-		device_printf(sc->sc_dev, "[GPIO] got controller %p\n", sc->sc_ih_gpio);
 
 		sc->sc_ih_gpiomap.pm_map = sc->sc_ih_gpiopins;
 		error = gpio_pin_map(sc->sc_ih_gpio, pin, 1,
