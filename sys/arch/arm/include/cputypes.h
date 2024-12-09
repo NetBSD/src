@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.18 2024/10/07 23:11:33 jakllsch Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.19 2024/12/09 21:52:52 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -217,6 +217,9 @@
 
 #define CPU_ID_AMPERE1		0xc00fac30
 #define CPU_ID_AMPERE1A		0xc00fac40
+
+#define CPU_ID_ORYON		0x510f0010
+#define CPU_ID_ORYON_P(n)	((n & 0xff0ffff0) == CPU_ID_ORYON)
 
 /*
  * Chip-specific errata. These defines are intended to be

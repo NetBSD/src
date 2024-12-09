@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.81 2024/10/07 23:11:33 jakllsch Exp $ */
+/* $NetBSD: cpu.c,v 1.82 2024/12/09 21:52:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.81 2024/10/07 23:11:33 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.82 2024/12/09 21:52:53 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -245,6 +245,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
 	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
 	{ CPU_ID_A64FX & CPU_PARTMASK, "A64FX", "Fujitsu", "v8.2-A+" },
+	{ CPU_ID_ORYON & CPU_PARTMASK, "Oryon", "Qualcomm", "v8.7-A+" },
 };
 
 static void
