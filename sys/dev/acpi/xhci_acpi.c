@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.13 2021/08/07 16:19:09 thorpej Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.14 2024/12/09 22:15:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.13 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.14 2024/12/09 22:15:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.13 2021/08/07 16:19:09 thorpej Exp $
 #include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_usb.h>
 
+#define XHCI_ACPI_FLAG_URS	__BIT(0)
+
 static const struct device_compatible_entry compat_data[] = {
 	/* XHCI-compliant USB controller without standard debug */
 	{ .compat = "PNP0D10" },
@@ -57,7 +59,10 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0D15" },
 
 	/* DesignWare Dual Role SuperSpeed USB controller */
-	{ .compat = "808622B7", },
+	{ .compat = "808622B7" },
+
+	/* XHCI-compliant URS USB controller */
+	{ .compat = "PNP0CA1", .value = XHCI_ACPI_FLAG_URS },
 
 	DEVICE_COMPAT_EOL
 };
@@ -90,13 +95,17 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	struct xhci_acpi_softc * const asc = device_private(self);
 	struct xhci_softc * const sc = &asc->sc_xhci;
 	struct acpi_attach_args *aa = aux;
-	struct acpi_resources res;
+	struct acpi_resources res, res_urs;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	uint32_t hccparams;
+	uintptr_t flags;
 	ACPI_STATUS rv;
+	bool res_urs_valid = false;
 	int error;
 	void *ih;
+
+	flags = acpi_compatible_lookup(aa, compat_data)->value;
 
 	asc->sc_handle = aa->aa_node->ad_handle;
 
@@ -117,10 +126,38 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(self, "couldn't find irq resource\n");
-		goto done;
+	if ((flags & XHCI_ACPI_FLAG_URS) == 0) {
+		irq = acpi_res_irq(&res, 0);
+		if (irq == NULL) {
+			aprint_error_dev(self, "couldn't find irq resource\n");
+			goto done;
+		}
+	} else {
+		struct acpi_devnode *ad;
+
+		/* For URS nodes, the interrupt resources is on a child with _ADR=0. */
+		irq = NULL;
+		SIMPLEQ_FOREACH(ad, &aa->aa_node->ad_child_head, ad_child_list) {
+			ACPI_INTEGER adr;
+			if (acpi_eval_integer(ad->ad_handle, "_ADR", &adr) == AE_OK &&
+			    adr == 0) {
+				rv = acpi_resource_parse(sc->sc_dev, ad->ad_handle,
+				    "_CRS", &res_urs, &acpi_resource_parse_ops_quiet);
+				if (ACPI_FAILURE(rv)) {
+					aprint_error_dev(self,
+					    "couldn't parse URS resources: %s\n",
+					    AcpiFormatException(rv));
+					goto done;
+				}
+				res_urs_valid = true;
+				irq = acpi_res_irq(&res_urs, 0);
+				break;
+			}
+		}
+		if (irq == NULL) {
+			aprint_error_dev(self, "couldn't find irq resource\n");
+			goto done;
+		}
 	}
 
 	sc->sc_ios = mem->ar_length;
@@ -146,8 +183,7 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	}
 
-	ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	ih = acpi_intr_establish_irq(self, irq,
 	    IPL_USB, true, xhci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
@@ -166,6 +202,9 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 
 done:
 	acpi_resource_cleanup(&res);
+	if (res_urs_valid) {
+		acpi_resource_cleanup(&res_urs);
+	}
 }
 
 static void
