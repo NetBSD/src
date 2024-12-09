@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.32 2024/12/09 01:17:30 jmcneill Exp $ */
+/* $NetBSD: ihidev.c,v 1.33 2024/12/09 22:06:31 jmcneill Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
 #include "acpica.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.32 2024/12/09 01:17:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.33 2024/12/09 22:06:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ static int	ihidev_hid_command(struct ihidev_softc *, int, void *, bool);
 static int	ihidev_intr(void *);
 static void	ihidev_work(struct work *, void *);
 #endif
+static int	ihidev_poweron(struct ihidev_softc *, bool);
 static int	ihidev_reset(struct ihidev_softc *, bool);
 static int	ihidev_hid_desc_parse(struct ihidev_softc *);
 
@@ -589,9 +590,9 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 }
 
 static int
-ihidev_reset(struct ihidev_softc *sc, bool poll)
+ihidev_poweron(struct ihidev_softc *sc, bool poll)
 {
-	DPRINTF(("%s: resetting\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: poweron\n", device_xname(sc->sc_dev)));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_ON, poll)) {
@@ -600,6 +601,14 @@ ihidev_reset(struct ihidev_softc *sc, bool poll)
 	}
 
 	DELAY(1000);
+
+	return (0);
+}
+
+static int
+ihidev_reset(struct ihidev_softc *sc, bool poll)
+{
+	DPRINTF(("%s: resetting\n", device_xname(sc->sc_dev)));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_RESET, 0, poll)) {
 		aprint_error_dev(sc->sc_dev, "failed to reset hardware\n");
@@ -968,7 +977,7 @@ ihidev_open(struct ihidev *scd)
 	}
 
 	/* power on */
-	ihidev_reset(sc, false);
+	ihidev_poweron(sc, false);
 	error = 0;
 
 out:	mutex_exit(&sc->sc_lock);
