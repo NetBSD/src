@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.42 2024/12/06 12:41:12 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.43 2024/12/10 09:13:00 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.42 2024/12/06 12:41:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.43 2024/12/10 09:13:00 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -1294,7 +1294,7 @@ sti_cursor(void *v, int on, int row, int col)
 /*
  * ISO 8859-1 part of Unicode to HP Roman font index conversion array.
  */
-static const uint8_t
+const uint8_t
 sti_unitoroman[0x100 - 0xa0] = {
 	0xa0, 0xb8, 0xbf, 0xbb, 0xba, 0xbc,    0, 0xbd,
 	0xab,    0, 0xf9, 0xfb,    0, 0xf6,    0, 0xb0,
