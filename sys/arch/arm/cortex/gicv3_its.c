@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.37 2024/12/08 20:04:21 riastradh Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.38 2024/12/10 21:33:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.37 2024/12/08 20:04:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.38 2024/12/10 21:33:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -449,6 +449,7 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	dev->dev_id = devid;
 	dev->dev_size = itt_size;
 	gicv3_dma_alloc(its->its_gic, &dev->dev_itt, itt_size, GITS_ITT_ALIGN);
+	LIST_INSERT_HEAD(&its->its_devices, dev, dev_list);
 
 	if (its->its_cmd_flush) {
 		cpu_dcache_wb_range((vaddr_t)dev->dev_itt.base, itt_size);
