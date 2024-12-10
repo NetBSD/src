@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.9 2024/11/22 10:41:50 mlelstv Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.10 2024/12/10 10:52:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.9 2024/11/22 10:41:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.10 2024/12/10 10:52:05 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.9 2024/11/22 10:41:50 mlelstv Exp 
 #  define COMPAT_SIGCONTEXT
 # endif
 #else /* COMPAT_NETBSD32 */
-# if !defined(__amd64__) && !defined(__arch64__)
+# if !defined(__amd64__) && !defined(__aarch64__)
 #  define COMPAT_SIGCONTEXT
 # endif
 #endif /* COMPAT_NETBSD32 */
