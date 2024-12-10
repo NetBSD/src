@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.51 2024/08/10 15:20:59 riastradh Exp $ */
+/* $NetBSD: cpu.h,v 1.52 2024/12/10 11:27:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ struct cpu_info {
 
 	/* sysctl(9) exposed system registers */
 	struct aarch64_sysctl_cpu_id ci_id;
+#define ci_midr		ci_id.ac_midr
 
 	/* cache information and function pointers */
 	struct aarch64_cache_info ci_cacheinfo[MAX_CACHE_LEVEL];
