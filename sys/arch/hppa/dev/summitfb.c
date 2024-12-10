@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.13 2024/12/07 21:56:37 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.14 2024/12/10 09:10:57 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.13 2024/12/07 21:56:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.14 2024/12/10 09:10:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.13 2024/12/07 21:56:37 riastradh Exp 
 #else
 #define	DPRINTF(s) __nothing
 #endif
+
+//#define SUMMITFB_ENABLE_GC
 
 int	summitfb_match(device_t, cfdata_t, void *);
 void	summitfb_attach(device_t, device_t, void *);
@@ -165,6 +167,8 @@ static int	summitfb_do_cursor(struct summitfb_softc *,
 
 static void	summitfb_set_video(struct summitfb_softc *, int);
 
+static void	summitfb_copyfont(struct summitfb_softc *);
+
 struct wsdisplay_accessops summitfb_accessops = {
 	.ioctl = summitfb_ioctl,
 	.mmap = summitfb_mmap,
@@ -178,6 +182,9 @@ struct wsdisplay_accessops summitfb_accessops = {
 
 static inline void summitfb_wait_fifo(struct summitfb_softc *, uint32_t);
 static inline void summitfb_wait(struct summitfb_softc *);
+
+int	sti_fetchfonts(struct sti_screen *, struct sti_inqconfout *, uint32_t,
+	    u_int);
 
 int
 summitfb_match(device_t parent, cfdata_t cf, void *aux)
@@ -255,7 +262,11 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_scr.scr_rom = sc->sc_base.sc_rom;
 	ret = sti_screen_setup(&sc->sc_scr, STI_FBMODE);
-
+	{
+		struct sti_dd *dd = &rom->rom_dd;
+		sti_fetchfonts(&sc->sc_scr, NULL, dd->dd_fntaddr, 0);
+		summitfb_copyfont(sc);
+	}
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
 	sc->sc_write_mode = 0xffffffff;
@@ -658,6 +669,8 @@ summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
 	if (sc->sc_write_mode == mode) return;
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE,
+	    (mode & 0x07000000) | 0x400);
 	sc->sc_write_mode = mode;
 }
 
@@ -666,7 +679,6 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
 }
 
 void
@@ -703,7 +715,6 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_READ_MODE_COPY);
 	summitfb_write4(sc, VISFX_CLIP_TL, 0);
 	summitfb_write4(sc, VISFX_CLIP_WH,
 	    ((sc->sc_scr.fbwidth + 1) << 16) | (sc->sc_scr.fbheight + 1));
@@ -848,7 +859,7 @@ summitfb_mmap(void *v, void *vs, off_t offset, int prot)
 		/* framebuffer */
 		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
-	} else if (offset >= 0x80000000 && offset < 0x80400000) {
+	} else if (offset >= 0x80000000 && offset < 0x81000000) {
 		/* blitter registers etc. */
 		pa = bus_space_mmap(rom->memt, rom->regh[0],
 		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
@@ -1037,7 +1048,6 @@ summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 		summitfb_write_mode(sc, rop);
 	} else
 		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
 	summitfb_write4(sc, VISFX_COPY_DST, (xd << 16) | yd);
@@ -1248,7 +1258,6 @@ summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, 0x050000c0);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, 0x05000400);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 
@@ -1457,6 +1466,7 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 		summitfb_write4(sc, VISFX_CURSOR_COLOR, rgb);
 		rgb = r[1] << 16 | g[1] << 8 | b[1];
 		/* this isn't right */
+		summitfb_write4(sc, VISFX_CURSOR_INDEX, 1);
 		summitfb_write4(sc, VISFX_CURSOR_COLOR + 4, rgb);
 
 	}
@@ -1565,4 +1575,55 @@ summitfb_set_video(struct summitfb_softc *sc, int on)
 	if (on) {
 	} else {
 	}
+}
+
+extern const uint8_t sti_unitoroman[];
+
+static void
+summitfb_copyfont(struct summitfb_softc *sc)
+{
+	struct sti_font *fp = &sc->sc_scr.scr_curfont;
+	uint8_t *font = sc->sc_scr.scr_romfont;
+	uint8_t *fontbuf, *fontdata, *src, *dst;
+	struct wsdisplay_font *f;
+	int bufsize, i, si;
+
+	if (font == NULL) return;
+	bufsize = sizeof(struct wsdisplay_font) + 32 + fp->bpc * ( fp->last - fp->first);
+	printf("%s: %dx%d %d\n", __func__, fp->width, fp->height, bufsize);
+	fontbuf = kmem_alloc(bufsize, KM_NOSLEEP);
+	if (fontbuf == NULL) return;
+	f = (struct wsdisplay_font *)fontbuf;
+	f->name = fontbuf + sizeof(struct wsdisplay_font);
+	fontdata = fontbuf + sizeof(struct wsdisplay_font) + 32;
+	strcpy(fontbuf + sizeof(struct wsdisplay_font), "HP ROM");
+	f->firstchar = fp->first;
+	f->numchars = (fp->last + 1) - fp->first;
+	f->encoding = WSDISPLAY_FONTENC_ISO;
+	f->fontwidth = fp->width;
+	f->fontheight = fp->height;
+	f->stride = (fp->width + 7) >> 3;
+	f->bitorder = WSDISPLAY_FONTORDER_L2R;
+	f->byteorder = WSDISPLAY_FONTORDER_L2R;
+	f->data = fontdata;
+	/* skip over font struct */
+	font += sizeof(struct sti_font);
+	/* now copy and rearrange the glyphs into ISO order */
+	/* first, copy the characters up to 0x7f */
+	memcpy(fontdata, font, (0x80 - fp->first) * fp->bpc);
+	/* zero 0x80 to 0x9f */
+	memset(fontdata + 0x80 * fp->bpc, 0, 0x20 * fp->bpc);
+	/* rearrange 0xa0 till last */
+	for (i = 0xa0; i < (fp->last + 1); i++) {
+		dst = fontdata + fp->bpc * i;
+		si = sti_unitoroman[i - 0xa0];
+		if (si != 0) {
+			src = font + fp->bpc * si;
+			memcpy(dst, src, fp->bpc);
+		} else {
+			/* no mapping - zeeo this cell */
+			memset(dst, 0, fp->bpc);
+		}
+	}
+	wsfont_add(f, 0);
 }
