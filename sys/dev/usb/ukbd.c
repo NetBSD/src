@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.164 2023/09/02 17:43:16 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.165 2024/12/10 11:21:30 mlelstv Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.164 2023/09/02 17:43:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.165 2024/12/10 11:21:30 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -531,27 +531,26 @@ int
 ukbd_enable(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
+	int error = 0;
 
 	if (on && sc->sc_dying)
 		return EIO;
 
-	/* Should only be called to change state */
-	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
-#ifdef DIAGNOSTIC
-		aprint_error_dev(sc->sc_dev, "bad call on=%d\n", on);
-#endif
-		return EBUSY;
-	}
-
 	DPRINTF(("%s: sc=%p on=%d\n", __func__, sc, on));
 	if (on) {
-		sc->sc_flags |= FLAG_ENABLED;
-		return uhidev_open(sc->sc_hdev, &ukbd_intr, sc);
+		if ((sc->sc_flags & FLAG_ENABLED) == 0) {
+			error = uhidev_open(sc->sc_hdev, &ukbd_intr, sc);
+			if (error == 0)
+				sc->sc_flags |= FLAG_ENABLED;
+		}
 	} else {
-		sc->sc_flags &= ~FLAG_ENABLED;
-		uhidev_close(sc->sc_hdev);
-		return 0;
+		if ((sc->sc_flags & FLAG_ENABLED) != 0) {
+			uhidev_close(sc->sc_hdev);
+			sc->sc_flags &= ~FLAG_ENABLED;
+		}
 	}
+
+	return error;
 }
 
 
