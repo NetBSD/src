@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.147 2024/10/20 15:37:37 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.148 2024/12/10 00:41:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.147 2024/10/20 15:37:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.148 2024/12/10 00:41:30 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -216,7 +216,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* XXX cache last result? */
 		const struct arm32_dma_range * const dr =
 		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
-		if (dr == NULL) {
+		if (__predict_false(dr == NULL)) {
 			STAT_INCR(inrange_fail);
 			return EINVAL;
 		}
@@ -264,7 +264,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	     (segs[nseg - 1].ds_addr & bmask) == (curaddr & bmask))) {
 		/* coalesce */
 		segs[nseg - 1].ds_len += sgsize;
-	} else if (nseg >= map->_dm_segcnt) {
+	} else if (__predict_false(nseg >= map->_dm_segcnt)) {
 		return EFBIG;
 	} else {
 		/* new segment */
@@ -311,7 +311,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	if ((cookie->id_flags & _BUS_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
-		if (error)
+		if (__predict_false(error))
 			return error;
 	}
 
@@ -332,7 +332,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_origbuflen = buflen;
 	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
 	    buflen, vm, flags);
-	if (error)
+	if (__predict_false(error))
 		return error;
 
 	STAT_INCR(bounced_loads);
@@ -546,7 +546,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    "dm_maxsegsz %" PRIuBUSSIZE " _dm_maxmaxsegsz %" PRIuBUSSIZE,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
-	if (buflen > map->_dm_size)
+	if (__predict_false(buflen > map->_dm_size))
 		return EINVAL;
 
 	if (p != NULL) {
@@ -559,7 +559,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = buflen;
 		map->_dm_vmspace = vm;
 		map->_dm_origbuf = buf;
@@ -622,7 +622,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 	KASSERT(m0->m_flags & M_PKTHDR);
 
-	if (m0->m_pkthdr.len > map->_dm_size)
+	if (__predict_false(m0->m_pkthdr.len > map->_dm_size))
 		return EINVAL;
 
 	/* _bus_dmamap_load_paddr() clears this if we're not... */
@@ -641,7 +641,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		/*
 		 * Don't allow reads in read-only mbufs.
 		 */
-		if (M_ROMAP(m) && (flags & BUS_DMA_READ)) {
+		if (__predict_false(M_ROMAP(m) && (flags & BUS_DMA_READ))) {
 			error = EFAULT;
 			break;
 		}
@@ -682,7 +682,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 				error = _bus_dmamap_load_paddr(t, map,
 				    paddr, size, false);
-				if (error)
+				if (__predict_false(error))
 					break;
 				offset = 0;
 				remainbytes -= size;
@@ -702,7 +702,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			    m->m_len, vmspace_kernel(), flags);
 		}
 	}
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->_dm_origbuf = m0;
 		map->_dm_buftype = _BUS_DMA_BUFTYPE_MBUF;
@@ -766,7 +766,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 		resid -= minlen;
 	}
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = uio->uio_resid;
 		map->_dm_origbuf = uio;
 		map->_dm_buftype = _BUS_DMA_BUFTYPE_UIO;
@@ -799,7 +799,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
-	if (size0 > map->_dm_size)
+	if (__predict_false(size0 > map->_dm_size))
 		return EINVAL;
 
 	for (i = 0, size = size0; i < nsegs && size > 0; i++) {
@@ -813,12 +813,12 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		    (ds->_ds_flags & _BUS_DMAMAP_COHERENT) != 0;
 		error = _bus_dmamap_load_paddr(t, map, ds->ds_addr,
 		    sgsize, coherent);
-		if (error != 0)
+		if (__predict_false(error != 0))
 			break;
 		size -= sgsize;
 	}
 
-	if (error != 0) {
+	if (__predict_false(error != 0)) {
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
 		return error;
@@ -1107,9 +1107,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/*
 	 * Mixing of PRE and POST operations is not allowed.
 	 */
-	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
-	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("%s: mix PRE and POST", __func__);
+	KASSERTMSG((((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+	    || ((ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) == 0)),
+	    "%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
 	    "offset %" PRIxBUSADDR " mapsize %" PRIuBUSSIZE,
@@ -1675,7 +1675,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
 		    coherent);
-		if (error)
+		if (__predict_false(error))
 			return error;
 
 		vaddr += sgsize;
