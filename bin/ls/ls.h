@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.19 2014/02/20 18:56:36 christos Exp $	*/
+/*	$NetBSD: ls.h,v 1.20 2024/12/11 12:56:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,8 @@
 
 #define NO_PRINT	1
 
+/* POSIX (IEEE Std 1003.1-2001) says we should use 512 blocks */
+#define	POSIX_BLOCK_SIZE	512
 extern long blocksize;		/* block size units */
 
 extern int f_accesstime;	/* use time of last access */
@@ -59,7 +61,6 @@ extern int f_leafonly;		/* when recursing, print leaf names only */
 typedef struct {
 	FTSENT *list;
 	u_int64_t btotal;
-	u_int64_t stotal;
 	int entries;
 	unsigned int maxlen;
 	int s_block;

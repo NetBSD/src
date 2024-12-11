@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.78 2024/02/02 22:58:26 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.79 2024/12/11 12:56:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.78 2024/02/02 22:58:26 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.79 2024/12/11 12:56:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ ls_main(int argc, char *argv[])
 	if (f_inode || f_longform || f_size) {
 		if (!kflag)
 			(void)getbsize(NULL, &blocksize);
-		blocksize /= 512;
+		blocksize /= POSIX_BLOCK_SIZE;
 	}
 
 	/* Select a sort function. */
@@ -495,7 +495,7 @@ display(FTSENT *p, FTSENT *list)
 	DISPLAY d;
 	FTSENT *cur;
 	NAMES *np;
-	u_int64_t btotal, stotal;
+	u_int64_t btotal;
 	off_t maxsize;
 	blkcnt_t maxblock;
 	ino_t maxinode;
@@ -524,7 +524,7 @@ display(FTSENT *p, FTSENT *list)
 	maxinode = maxnlink = 0;
 	bcfile = 0;
 	maxuser = maxgroup = maxflags = maxlen = 0;
-	btotal = stotal = maxblock = maxsize = 0;
+	btotal = maxblock = maxsize = 0;
 	maxmajor = maxminor = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -573,7 +573,6 @@ display(FTSENT *p, FTSENT *list)
 			}
 
 			btotal += sp->st_blocks;
-			stotal += sp->st_size;
 			if (f_longform) {
 				if (f_numericonly ||
 				    (user = user_from_uid(sp->st_uid, 0)) ==
@@ -629,7 +628,6 @@ display(FTSENT *p, FTSENT *list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		d.stotal = stotal;
 		if (f_humanize) {
 			d.s_block = 4; /* min buf length for humanize_number */
 		} else {
