@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_gpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $ */
+/* $NetBSD: acpi_gpio.c,v 1.3 2024/12/11 01:00:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,30 +34,133 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.3 2024/12/11 01:00:02 jmcneill Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 #include <sys/gpio.h>
+
+#include <dev/gpio/gpiovar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_gpio.h>
 
-int
+struct acpi_gpio_address_space_context {
+	ACPI_CONNECTION_INFO conn_info;	/* must be first */
+	struct acpi_devnode *ad;
+};
+
+static ACPI_STATUS
+acpi_gpio_address_space_init(ACPI_HANDLE region_hdl, UINT32 function,
+    void *handler_ctx, void **region_ctx)
+{
+	if (function == ACPI_REGION_DEACTIVATE) {
+		*region_ctx = NULL;
+	} else {
+		*region_ctx = region_hdl;
+	}
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpi_gpio_address_space_handler(UINT32 function,
+    ACPI_PHYSICAL_ADDRESS address, UINT32 bit_width, UINT64 *value,
+    void *handler_ctx, void *region_ctx)
+{
+	ACPI_OPERAND_OBJECT *region_obj = region_ctx;
+	struct acpi_gpio_address_space_context *context = handler_ctx;
+	ACPI_CONNECTION_INFO *conn_info = &context->conn_info;
+	struct acpi_devnode *ad = context->ad;
+	ACPI_RESOURCE *res;
+	ACPI_STATUS rv;
+	struct gpio_pinmap pinmap;
+	int pins[1];
+	void *gpiop;
+	int pin;
+
+	if (region_obj->Region.Type != ACPI_TYPE_REGION) {
+		return AE_OK;
+	}
+
+	if (ad->ad_gpiodev == NULL) {
+		return AE_NO_HANDLER;
+	}
+
+	rv = AcpiBufferToResource(conn_info->Connection,
+	    conn_info->Length, &res);
+	if (ACPI_FAILURE(rv)) {
+		return rv;
+	}
+
+	if (res->Data.Gpio.PinTableLength != 1) {
+		/* TODO */
+		aprint_debug_dev(ad->ad_gpiodev,
+		    "Pin table length %u not implemented\n",
+		    res->Data.Gpio.PinTableLength);
+		rv = AE_NOT_IMPLEMENTED;
+		goto done;
+	}
+
+	pin = ad->ad_gpio_translate(ad->ad_gpio_priv,
+	    &res->Data.Gpio, &gpiop);
+	if (pin == -1) {
+		/* Pin could not be translated. */
+		rv = AE_SUPPORT;
+		goto done;
+	}
+
+	pinmap.pm_map = pins;
+	if (gpio_pin_map(gpiop, pin, 1, &pinmap) != 0) {
+		rv = AE_NOT_ACQUIRED;
+		goto done;
+	}
+	if (function & ACPI_IO_MASK) {
+		gpio_pin_write(gpiop, &pinmap, 0, *value & 1);
+	} else {
+		*value = gpio_pin_read(gpiop, &pinmap, 0);
+	}
+	gpio_pin_unmap(gpiop, &pinmap);
+
+done:
+	ACPI_FREE(res);
+
+	return rv;
+}
+
+ACPI_STATUS
 acpi_gpio_register(struct acpi_devnode *ad, device_t dev,
     int (*translate)(void *, ACPI_RESOURCE_GPIO *, void **), void *priv)
 {
+	struct acpi_gpio_address_space_context *context;
+	ACPI_STATUS rv;
+
 	if (ad->ad_gpiodev != NULL) {
 		device_printf(dev, "%s already registered\n",
 		    device_xname(ad->ad_gpiodev));
-		return EBUSY;
+		return AE_ALREADY_EXISTS;
+	}
+
+	context = kmem_zalloc(sizeof(*context), KM_SLEEP);
+	context->ad = ad;
+
+	rv = AcpiInstallAddressSpaceHandler(ad->ad_handle,
+	    ACPI_ADR_SPACE_GPIO,
+	    acpi_gpio_address_space_handler,
+	    acpi_gpio_address_space_init,
+	    context);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(dev,
+		    "couldn't install address space handler: %s",
+		    AcpiFormatException(rv));
+		return rv;
 	}
 
 	ad->ad_gpiodev = dev;
 	ad->ad_gpio_translate = translate;
 	ad->ad_gpio_priv = priv;
 
-	return 0;
+	return AE_OK;
 }
 
 static ACPI_STATUS
@@ -98,7 +201,7 @@ acpi_gpio_translate(ACPI_RESOURCE_GPIO *res, void **gpiop, int *pin)
 	    res, gpiop);
 	if (xpin == -1) {
 		/* Pin could not be translated. */
-		return AE_NOT_IMPLEMENTED;
+		return AE_SUPPORT;
 	}
 
 	*pin = xpin;
