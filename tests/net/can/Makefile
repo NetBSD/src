@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/03/01 18:08:16 christos Exp $
+# $NetBSD: Makefile,v 1.4 2024/12/11 19:57:13 andvar Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ SRCS.t_canfilter=	t_canfilter.c h_canutils.c
 
 # XXX we don't use INET here, but we need rumpnet_netinet anyway:
 # common code in if.c is compiled with -DINET and will dereference ip_pktq,
-# which is NULL if rumpnet_netinet is not inclued.
+# which is NULL if rumpnet_netinet is not included.
 # 
 LDADD+=		-lrumpnet_netcan -lrumpnet_netinet -lrumpnet_net -lrumpnet
 LDADD+=		${LIBRUMPBASE}
