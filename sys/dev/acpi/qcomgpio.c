@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.3 2024/12/11 00:59:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.2 2024/12/09 22:10:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.3 2024/12/11 00:59:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,9 +54,16 @@ typedef enum {
 	QCOMGPIO_X1E,
 } qcomgpio_type;
 
+struct qcomgpio_reserved {
+	int	start;
+	int	count;
+};
+
 struct qcomgpio_config {
 	u_int	num_pins;
 	int	(*translate)(ACPI_RESOURCE_GPIO *);
+	struct qcomgpio_reserved *reserved;
+	u_int	num_reserved;
 };
 
 struct qcomgpio_intr_handler {
@@ -87,6 +94,7 @@ struct qcomgpio_softc {
 static int	qcomgpio_match(device_t, cfdata_t, void *);
 static void	qcomgpio_attach(device_t, device_t, void *);
 
+static bool	qcomgpio_pin_reserved(struct qcomgpio_softc *, int);
 static int	qcomgpio_pin_read(void *, int);
 static void	qcomgpio_pin_write(void *, int, int);
 static void	qcomgpio_pin_ctl(void *, int, int);
@@ -107,6 +115,13 @@ CFATTACH_DECL_NEW(qcomgpio, sizeof(struct qcomgpio_softc),
 
 #define X1E_NUM_PINS	239
 
+static struct qcomgpio_reserved qcomgpio_x1e_reserved[] = {
+	{ .start = 34, .count = 2 },
+	{ .start = 44, .count = 4 },
+	{ .start = 72, .count = 2 },
+	{ .start = 238, .count = 1 },
+};
+
 static int
 qcomgpio_x1e_translate(ACPI_RESOURCE_GPIO *gpio)
 {
@@ -119,6 +134,8 @@ qcomgpio_x1e_translate(ACPI_RESOURCE_GPIO *gpio)
 	switch (pin) {
 	case 0x180:
 		return 67;
+	case 0x340:
+		return 92;
 	case 0x380:
 		return 3;
 	default:
@@ -129,6 +146,8 @@ qcomgpio_x1e_translate(ACPI_RESOURCE_GPIO *gpio)
 static struct qcomgpio_config qcomgpio_x1e_config = {
 	.num_pins = X1E_NUM_PINS,
 	.translate = qcomgpio_x1e_translate,
+	.reserved = qcomgpio_x1e_reserved,
+	.num_reserved = __arraycount(qcomgpio_x1e_reserved),
 };
 
 static const struct device_compatible_entry compat_data[] = {
@@ -193,37 +212,13 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) *
 	    sc->sc_config->num_pins, KM_SLEEP);
 	for (pin = 0; pin < sc->sc_config->num_pins; pin++) {
-#if notyet
-		uint32_t ctl, func;
-
-		aprint_debuf_dev(self, "pin %u: ", pin);
-		ctl = RD4(sc, TLMM_GPIO_CTL(pin));
-		func = __SHIFTOUT(ctl, TLMM_GPIO_CTL_MUX);
-
-		sc->sc_pins[pin].pin_caps = 0;
-		if (func == TLMM_GPIO_CTL_MUX_GPIO) {
-			if ((ctl & TLMM_GPIO_CTL_OE) != 0) {
-				sc->sc_pins[pin].pin_caps |= GPIO_PIN_OUTPUT;
-				aprint_debug("gpio output\n");
-			} else {
-				sc->sc_pins[pin].pin_caps |= GPIO_PIN_INPUT;
-				aprint_debug("gpio input\n");
-			}
-		} else {
-			aprint_debug("func %#x\n", func);
-		}
-#else
-		sc->sc_pins[pin].pin_caps =
-		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-#endif
+		sc->sc_pins[pin].pin_caps = qcomgpio_pin_reserved(sc, pin) ?
+		    0 : (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT);
 		sc->sc_pins[pin].pin_num = pin;
 		sc->sc_pins[pin].pin_intrcaps =
 		    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
 		    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_HIGH_LEVEL |
 		    GPIO_INTR_LOW_LEVEL | GPIO_INTR_MPSAFE;
-
-		/* It's not safe to read all pins, so leave pin state unknown */
-		sc->sc_pins[pin].pin_state = 0;
 	}
 
 	sc->sc_gc.gp_cookie = sc;
@@ -344,6 +339,22 @@ qcomgpio_register_event(void *priv, struct acpi_event *ev,
 	if (gpio->Triggering == ACPI_LEVEL_SENSITIVE) {
 		acpi_event_set_intrcookie(ev, ih);
 	}
+}
+
+static bool
+qcomgpio_pin_reserved(struct qcomgpio_softc *sc, int pin)
+{
+	u_int n;
+
+	for (n = 0; n < sc->sc_config->num_reserved; n++) {
+		if (pin >= sc->sc_config->reserved[n].start &&
+		    pin < sc->sc_config->reserved[n].start +
+			  sc->sc_config->reserved[n].count) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static int
