@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.49 2024/12/05 17:17:43 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.50 2024/12/11 14:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.49 2024/12/05 17:17:43 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.50 2024/12/11 14:52:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,8 @@ vwalk(void)
 			continue;
  extra:
 		if (!eflag && !(dflag && p->fts_info == FTS_SL)) {
-			printf("extra: %s", RP(p));
+			printf(flavor == F_FREEBSD9 ? "%s extra" : "extra: %s",
+			    RP(p));
 			if (rflag) {
 #if HAVE_STRUCT_STAT_ST_FLAGS
 				if (rflag > 1 &&
