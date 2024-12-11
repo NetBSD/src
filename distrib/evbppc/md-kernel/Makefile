@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/01/30 15:04:35 nonaka Exp $
+#	$NetBSD: Makefile,v 1.7 2024/12/11 00:06:58 maya Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,6 +16,7 @@ MDSET_RELEASEDIR=	binary/kernel
 MDSET_SUFFIXES.-=	img create-img
 
 create-img= \
+	AWK=${TOOL_AWK}; FILE=${TOOL_FILE}; \
 	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT}; \
 		export OBJDUMP OBJCOPY STAT; ${MKIMG} ${.TARGET:R} ${.TARGET}
 

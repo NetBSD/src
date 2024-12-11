@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1408 2024/10/23 00:50:47 kalvisd Exp $
+#	$NetBSD: bsd.own.mk,v 1.1409 2024/12/11 00:06:58 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -489,6 +489,7 @@ TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+TOOL_FILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
@@ -617,6 +618,7 @@ TOOL_DTC=		dtc
 TOOL_EQN=		eqn
 TOOL_FDISK=		fdisk
 TOOL_FGEN=		fgen
+TOOL_FILE=		file
 TOOL_GENASSYM=		genassym
 TOOL_GENCAT=		gencat
 TOOL_GMAKE=		gmake

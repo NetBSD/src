@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.5 2014/03/03 18:25:14 joerg Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.6 2024/12/11 00:06:58 maya Exp $
 
 # Convert an input to a TFTP image loadable by the IBM PowerPC OpenBIOS.
 
@@ -19,11 +19,13 @@ output=$1; shift
 : ${OBJDUMP=objdump}
 : ${OBJCOPY=objcopy}
 : ${STAT=stat}
+: ${AWK=awk}
+: ${FILE=file}
 
-file=$( file $input )
+file=$( ${FILE} $input )
 case $file in
 *:\ ELF\ *)
-	start=`${OBJDUMP} -f ${input} | awk '/start address/ { print $NF }'`
+	start=`${OBJDUMP} -f ${input} | ${AWK} '/start address/ { print $NF }'`
 	start=`printf "%d" $start`
 	${OBJCOPY} -O binary ${input} ${input}.bin.$$
 	;;
