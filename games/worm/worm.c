@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.31 2015/08/17 17:17:01 dholland Exp $	*/
+/*	$NetBSD: worm.c,v 1.32 2024/12/11 03:47:27 maya Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.31 2015/08/17 17:17:01 dholland Exp $");
+__RCSID("$NetBSD: worm.c,v 1.32 2024/12/11 03:47:27 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ newlink(void)
 
 	b = malloc(sizeof(*b));
 	if (b == NULL) {
-		err(EXIT_FAILURE, NULL);
+		err(EXIT_FAILURE, "malloc failed");
 	}
 	return b;
 }
