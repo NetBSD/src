@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.38 2024/12/10 21:33:53 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.39 2024/12/12 08:33:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.38 2024/12/10 21:33:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.39 2024/12/12 08:33:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -783,6 +783,10 @@ gicv3_its_command_init(struct gicv3_softc *sc, struct gicv3_its *its)
 
 		its->its_cmd_flush = true;
 	}
+	aprint_normal_dev(sc->sc_dev, "ITS command table @ %#lx/%#lx, %s, %s\n",
+	    its->its_cmd.segs[0].ds_addr, its->its_cmd.len,
+	    gits_cache_type[__SHIFTOUT(cbaser, GITS_BASER_InnerCache)],
+	    gits_share_type[__SHIFTOUT(cbaser, GITS_BASER_Shareability)]);
 
 	gits_write_8(its, GITS_CWRITER, 0);
 }
