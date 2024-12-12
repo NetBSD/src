@@ -1,4 +1,4 @@
-.\"	$NetBSD: putc.3,v 1.14 2019/09/02 00:48:16 sevan Exp $
+.\"	$NetBSD: putc.3,v 1.15 2024/12/12 06:18:24 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,7 +66,8 @@ The
 function
 writes the character
 .Fa c
-(converted to an ``unsigned char'')
+(converted to an
+.Dq unsigned char )
 to the output stream pointed to by
 .Fa stream .
 .Pp
@@ -112,9 +113,10 @@ function
 writes the specified
 .Em int
 to the named output
-.Fa stream .
+.Fa stream ,
+in a binary format.
 .Sh RETURN VALUES
-The functions,
+The functions
 .Fn fputc ,
 .Fn putc
 and
@@ -153,7 +155,7 @@ conform to
 .St -p1003.1-96 .
 .Sh HISTORY
 The
-.Fn putc ,
+.Fn putc
 and
 .Fn putw
 functions first appeared in
