@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.7 2023/06/26 12:21:18 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.8 2024/12/12 05:33:47 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -24,11 +24,10 @@
 -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 -- POSSIBILITY OF SUCH DAMAGE.
 
--- usage: [INDENT=...] lua t_options.lua <file>...
+-- usage: [INDENT=...] lua t_options.lua <file.c>...
 --
--- Test driver for indent that runs indent on several inputs, checks the
--- output and can run indent with different command line options on the same
--- input.
+-- Run indent on several inputs with different command line options, verifying
+-- that the actual output equals the expected output.
 --
 -- The test files contain the input to be formatted, the formatting options
 -- and the output, all as close together as possible. The test files use the
@@ -41,7 +40,8 @@
 --	//indent end
 --		Finishes an '//indent input' or '//indent run' section.
 --	//indent run-equals-input [options]
---		Runs indent on the input, expecting unmodified output.
+--		Runs indent on the input, expecting that the output is the
+--		same as the input.
 --	//indent run-equals-prev-output [options]
 --		Runs indent on the input, expecting the same output as from
 --		the previous run.
@@ -52,7 +52,7 @@
 -- are filtered out, they can be used for remarks near the affected code.
 --
 -- The actual output from running indent is written to stdout, the expected
--- test output is written to 'expected.out'.
+-- test output is written to 'expected.out', ready to be compared using diff.
 
 local warned = false
 
@@ -78,7 +78,7 @@ local output_lineno = 0
 
 local expected_out = assert(io.open("expected.out", "w"))
 
-local function die(ln, msg)
+local function err(ln, msg)
 	io.stderr:write(("%s:%d: error: %s\n"):format(filename, ln, msg))
 	os.exit(false)
 end
@@ -112,9 +112,8 @@ end
 
 local function check_empty_lines_block(n)
 	if max_empty_lines ~= n and seen_input_section then
-		local lines = n ~= 1 and "lines" or "line"
 		warn(lineno, ("expecting %d empty %s, got %d")
-		    :format(n, lines, max_empty_lines))
+		    :format(n, n ~= 1 and "lines" or "line", max_empty_lines))
 	end
 end
 
@@ -139,23 +138,23 @@ local function run_indent(inp, args)
 	end
 end
 
-local function handle_empty_section(line)
+local function handle_line_outside_section(line)
 	if line == "" then
 		curr_empty_lines = curr_empty_lines + 1
-	else
-		if curr_empty_lines > max_empty_lines then
-			max_empty_lines = curr_empty_lines
-		end
-		if curr_empty_lines > 0 then
-			if prev_empty_lines > 1 then
-				warn(lineno - curr_empty_lines - 1,
-				    prev_empty_lines .. " empty lines a few "
-				    .. "lines above, should be only 1")
-			end
-			prev_empty_lines = curr_empty_lines
-		end
-		curr_empty_lines = 0
+		return
 	end
+	if curr_empty_lines > max_empty_lines then
+		max_empty_lines = curr_empty_lines
+	end
+	if curr_empty_lines > 0 then
+		if prev_empty_lines > 1 then
+			warn(lineno - curr_empty_lines - 1,
+			    prev_empty_lines .. " empty lines a few "
+			    .. "lines above, should be only 1")
+		end
+		prev_empty_lines = curr_empty_lines
+	end
+	curr_empty_lines = 0
 end
 
 local function handle_indent_input()
@@ -264,7 +263,7 @@ local function handle_indent_directive(line, command, args)
 	elseif command == "end" then
 		warn(lineno, "misplaced '//indent end'")
 	else
-		die(lineno, "invalid line '" .. line .. "'")
+		err(lineno, "invalid line '" .. line .. "'")
 	end
 
 	prev_empty_lines = 0
@@ -273,7 +272,7 @@ end
 
 local function handle_line(line)
 	if section == "" then
-		handle_empty_section(line)
+		handle_line_outside_section(line)
 	end
 
 	-- Hide comments starting with dollar from indent; they are used for
@@ -326,7 +325,7 @@ local function main()
 		handle_file(arg)
 	end
 	if section ~= "" then
-		die(lineno, "still in section '" .. section .. "'")
+		err(lineno, "still in section '" .. section .. "'")
 	end
 	check_unused_input()
 	expected_out:close()
