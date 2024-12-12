@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.4 2024/12/12 12:47:57 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.5 2024/12/12 21:51:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.4 2024/12/12 12:47:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.5 2024/12/12 21:51:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,8 @@ struct qcomgpio_reserved {
 struct qcomgpio_config {
 	struct qcomgpio_reserved *reserved;
 	u_int	num_reserved;
+	u_int	*pdc_filter;
+	u_int	num_pdc_filter;
 };
 
 struct qcomgpio_intr_handler {
@@ -144,9 +146,15 @@ static struct qcomgpio_reserved qcomgpio_x1e_reserved[] = {
 	{ .start = 238, .count = 1 },
 };
 
+static int qcomgpio_x1e_pdc_filter[] = {
+	0x140,	/* Interrupt storm due to missing SMI support. */
+};
+
 static struct qcomgpio_config qcomgpio_x1e_config = {
 	.reserved = qcomgpio_x1e_reserved,
 	.num_reserved = __arraycount(qcomgpio_x1e_reserved),
+	.pdc_filter = qcomgpio_x1e_pdc_filter,
+	.num_pdc_filter = __arraycount(qcomgpio_x1e_pdc_filter),
 };
 
 static const struct device_compatible_entry compat_data[] = {
@@ -303,7 +311,7 @@ qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *sc,
 {
 	ACPI_STATUS rv;
 	ACPI_OBJECT *obj;
-	u_int n;
+	u_int n, filt;
 
 	rv = acpi_dsm_typed(hdl, qcomgpio_pdc_dsm_uuid,
 	    QCOMGPIO_PDC_DSM_REV, QCOMGPIO_PDC_DSM_FUNC_CIPR,
@@ -316,6 +324,7 @@ qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *sc,
 
 	for (n = 0; n < obj->Package.Count; n++) {
 		ACPI_OBJECT *map = &obj->Package.Elements[n];
+		bool filter = false;
 		u_int irq, pdc;
 		int pin;
 
@@ -331,12 +340,26 @@ qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *sc,
 		pin = (int)map->Package.Elements[1].Integer.Value;
 		for (pdc = 0; pdc < sc->sc_npdcmap; pdc++) {
 			if (sc->sc_pdcmap[pdc].pm_irq == irq) {
-				sc->sc_pdcmap[pdc].pm_pin = pin;
+				for (filt = 0;
+				     filt < sc->sc_config->num_pdc_filter;
+		     		     filt++) {
+					if (sc->sc_config->pdc_filter[filt] ==
+					    pdc * 64) {
+						filter = true;
+						break;
+					}
+				}
+
+				if (!filter) {
+					sc->sc_pdcmap[pdc].pm_pin = pin;
+				}
 				break;
 			}
 		}
+
 		aprint_debug_dev(sc->sc_dev,
-		    "PDC irq %#x -> pin %d%s\n", irq, pin,
+		    "PDC irq %#x -> pin %d%s%s\n", irq, pin,
+		    filter ? " (filtered)" : "",
 		    pdc == sc->sc_npdcmap ? " (unused)" : "");
 	}
 
