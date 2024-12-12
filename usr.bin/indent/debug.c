@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.70 2023/06/27 04:41:23 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.71 2024/12/12 05:51:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.70 2023/06/27 04:41:23 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.71 2024/12/12 05:51:50 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -162,11 +162,11 @@ debug_printf(const char *fmt, ...)
 	va_list ap;
 
 	if (state.heading != NULL) {
-		fprintf(f, "%s\n", state.heading);
+		(void)fprintf(f, "%s\n", state.heading);
 		state.heading = NULL;
 	}
 	va_start(ap, fmt);
-	vfprintf(f, fmt, ap);
+	(void)vfprintf(f, fmt, ap);
 	va_end(ap);
 	state.wrote_newlines = 0;
 }
@@ -178,14 +178,14 @@ debug_println(const char *fmt, ...)
 	va_list ap;
 
 	if (state.heading != NULL) {
-		fprintf(f, "%s\n", state.heading);
+		(void)fprintf(f, "%s\n", state.heading);
 		state.heading = NULL;
 		state.wrote_newlines = 1;
 	}
 	va_start(ap, fmt);
-	vfprintf(f, fmt, ap);
+	(void)vfprintf(f, fmt, ap);
 	va_end(ap);
-	fprintf(f, "\n");
+	(void)fprintf(f, "\n");
 	state.wrote_newlines = fmt[0] == '\0' ? state.wrote_newlines + 1 : 1;
 }
 

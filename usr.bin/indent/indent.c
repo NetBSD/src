@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.391 2024/12/12 05:51:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.391 2024/12/12 05:51:50 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -155,10 +155,10 @@ diag(int level, const char *msg, ...)
 		found_err = true;
 
 	va_start(ap, msg);
-	fprintf(stderr, "%s: %s:%d: ",
+	(void)fprintf(stderr, "%s: %s:%d: ",
 	    level == 0 ? "warning" : "error", in_name, in.token_start_line);
-	vfprintf(stderr, msg, ap);
-	fprintf(stderr, "\n");
+	(void)vfprintf(stderr, msg, ap);
+	(void)fprintf(stderr, "\n");
 	va_end(ap);
 }
 
@@ -243,7 +243,7 @@ copy_to_bak_file(void)
 	/* now the original input file will be the output */
 	output = fopen(in_name, "w");
 	if (output == NULL) {
-		remove(backup_name);
+		(void)remove(backup_name);
 		err(1, "%s", in_name);
 	}
 }
@@ -1103,7 +1103,7 @@ indent(void)
 {
 	debug_parser_state();
 
-	for (;;) {		/* loop until we reach eof */
+	for (;;) {
 		lexer_symbol lsym = lexi();
 
 		debug_blank_line();

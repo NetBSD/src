@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.87 2023/12/10 17:45:35 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.88 2024/12/12 05:51:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.87 2023/12/10 17:45:35 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.88 2024/12/12 05:51:50 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -130,7 +130,7 @@ add_typedefs_from_file(const char *fname)
 	char line[BUFSIZ];
 
 	if ((file = fopen(fname, "r")) == NULL) {
-		fprintf(stderr, "indent: cannot open file %s\n", fname);
+		(void)fprintf(stderr, "indent: cannot open file %s\n", fname);
 		exit(1);
 	}
 	while ((fgets(line, sizeof(line), file)) != NULL) {
@@ -292,7 +292,7 @@ load_profile(const char *fname, bool must_exist)
 		if (n > 0) {
 			buf[n] = '\0';
 			if (opt.verbose)
-				fprintf(stderr, "profile: %s\n", buf);
+				(void)fprintf(stderr, "profile: %s\n", buf);
 			if (buf[0] != '-')
 				errx(1,
 				    "%s: option \"%s\" must start with '-'",
