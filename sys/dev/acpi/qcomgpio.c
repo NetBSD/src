@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.5 2024/12/12 21:51:19 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.6 2024/12/12 22:30:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.5 2024/12/12 21:51:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.6 2024/12/12 22:30:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.5 2024/12/12 21:51:19 jmcneill Exp $"
 #include <sys/queue.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/evcnt.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -71,6 +72,8 @@ struct qcomgpio_intr_handler {
 	void	*ih_arg;
 	int	ih_pin;
 	int	ih_type;
+	struct evcnt ih_evcnt;
+	char	ih_name[16];
 	LIST_ENTRY(qcomgpio_intr_handler) ih_list;
 };
 
@@ -536,6 +539,7 @@ qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 	qih->ih_pin = pin;
 	qih->ih_type = (irqmode & GPIO_INTR_LEVEL_MASK) != 0 ?
 	    IST_LEVEL : IST_EDGE;
+	snprintf(qih->ih_name, sizeof(qih->ih_name), "pin %d", pin);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -584,6 +588,9 @@ qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 
 	mutex_exit(&sc->sc_lock);
 
+	evcnt_attach_dynamic(&qih->ih_evcnt, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->sc_dev), qih->ih_name);
+
 	return qih;
 }
 
@@ -593,6 +600,8 @@ qcomgpio_intr_disestablish(void *priv, void *ih)
 	struct qcomgpio_softc * const sc = priv;
 	struct qcomgpio_intr_handler *qih = ih;
 	uint32_t val;
+
+	evcnt_detach(&qih->ih_evcnt);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -663,6 +672,8 @@ qcomgpio_intr(void *priv)
 
 		val = RD4(sc, TLMM_GPIO_INTR_STATUS(pin));
 		if ((val & TLMM_GPIO_INTR_STATUS_INTR_STATUS) != 0) {
+			qih->ih_evcnt.ev_count++;
+
 			rv |= qih->ih_func(qih->ih_arg);
 
 			val &= ~TLMM_GPIO_INTR_STATUS_INTR_STATUS;
