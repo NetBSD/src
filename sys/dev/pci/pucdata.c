@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.117 2024/11/11 14:48:01 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.118 2024/12/12 14:23:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.117 2024/11/11 14:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.118 2024/12/12 14:23:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1852,19 +1852,6 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Oxford Semiconductor OXPCIe954 PCIe UARTs */
-	{   "Oxford Semiconductor OXPCIe954 UART",
-	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954,
-		0, 0 },
-	    {	0xffff,	0xffff,	0,	0	},
-	    {
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
-	    },
-	},
-
 	/* Oxford Semiconductor OXmPCI952 PCI UARTs */
 	{   "Oxford Semiconductor OXmPCI952 UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_EXSYS_EX41092,
@@ -2076,7 +2063,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Oxford Semiconductor OX16PCI958 UARTs (wildcard)*/
+	/* Oxford Semiconductor OX16PCI958 UARTs (wildcard) */
 	{   "Oxford Semiconductor OX16PCI958 UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_OX16PCI958,
 		0, 0 },
@@ -2090,6 +2077,81 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x28, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x30, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x38, COM_FREQ * 10},
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe952 PCIe 1 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN1,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe952 PCIe 2 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN2,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	
+	/* Oxford Semiconductor OXPCIe952 PCIe 2 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN2_2,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe954 PCIe 4 native S */
+	{   "Oxford Semiconductor OXPCIe954 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe954 PCIe 4 native S */
+	{   "Oxford Semiconductor OXPCIe954 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954SN4,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	
+	/* Oxford Semiconductor OXPCIe958 PCIe 8 native S */
+	{   "Oxford Semiconductor OXPCIe958 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE958SN8,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1800, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1a00, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1c00, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1e00, COM_FREQ * 0x22 },
 	    },
 	},
 
