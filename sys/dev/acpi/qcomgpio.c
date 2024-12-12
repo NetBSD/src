@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.3 2024/12/11 00:59:16 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.4 2024/12/12 12:47:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.3 2024/12/11 00:59:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.4 2024/12/12 12:47:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,8 +60,6 @@ struct qcomgpio_reserved {
 };
 
 struct qcomgpio_config {
-	u_int	num_pins;
-	int	(*translate)(ACPI_RESOURCE_GPIO *);
 	struct qcomgpio_reserved *reserved;
 	u_int	num_reserved;
 };
@@ -74,6 +72,11 @@ struct qcomgpio_intr_handler {
 	LIST_ENTRY(qcomgpio_intr_handler) ih_list;
 };
 
+struct qcomgpio_pdcmap {
+	int	pm_pin;
+	u_int	pm_irq;
+};
+
 struct qcomgpio_softc {
 	device_t			sc_dev;
 	device_t			sc_gpiodev;
@@ -82,8 +85,12 @@ struct qcomgpio_softc {
 	const struct qcomgpio_config	*sc_config;
 	struct gpio_chipset_tag		sc_gc;
 	gpio_pin_t			*sc_pins;
+	u_int				sc_npins;
 	LIST_HEAD(, qcomgpio_intr_handler) sc_intrs;
 	kmutex_t			sc_lock;
+
+	struct qcomgpio_pdcmap		*sc_pdcmap;
+	u_int				sc_npdcmap;
 };
 
 #define RD4(sc, reg)		\
@@ -105,6 +112,9 @@ static bool	qcomgpio_intr_str(void *, int, int, char *, size_t);
 static void	qcomgpio_intr_mask(void *, void *);
 static void	qcomgpio_intr_unmask(void *, void *);
 
+static u_int	qcomgpio_acpi_num_pins(device_t, ACPI_HANDLE);
+static void	qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *,
+					  ACPI_HANDLE);
 static int	qcomgpio_acpi_translate(void *, ACPI_RESOURCE_GPIO *, void **);
 static void	qcomgpio_register_event(void *, struct acpi_event *,
 					ACPI_RESOURCE_GPIO *);
@@ -113,7 +123,19 @@ static int	qcomgpio_intr(void *);
 CFATTACH_DECL_NEW(qcomgpio, sizeof(struct qcomgpio_softc),
     qcomgpio_match, qcomgpio_attach, NULL, NULL);
 
-#define X1E_NUM_PINS	239
+static UINT8 qcomgpio_gpio_dsm_uuid[ACPI_UUID_LENGTH] = {
+	0xa4, 0xb2, 0xb9, 0x98, 0x63, 0x16, 0x5f, 0x4a,
+	0x82, 0xf2, 0xc6, 0xc9, 0x9a, 0x39, 0x47, 0x26
+};
+#define QCOMGPIO_GPIO_DSM_REV		0
+#define QCOMGPIO_GPIO_DSM_FUNC_NUM_PINS	2
+
+static UINT8 qcomgpio_pdc_dsm_uuid[ACPI_UUID_LENGTH] = {
+	0xd4, 0x0f, 0x1b, 0x92, 0x7c, 0x56, 0xa0, 0x43,
+	0xbb, 0x14, 0x26, 0x48, 0xf7, 0xb2, 0xa1, 0x8c
+};
+#define QCOMGPIO_PDC_DSM_REV		0
+#define QCOMGPIO_PDC_DSM_FUNC_CIPR	2
 
 static struct qcomgpio_reserved qcomgpio_x1e_reserved[] = {
 	{ .start = 34, .count = 2 },
@@ -122,30 +144,7 @@ static struct qcomgpio_reserved qcomgpio_x1e_reserved[] = {
 	{ .start = 238, .count = 1 },
 };
 
-static int
-qcomgpio_x1e_translate(ACPI_RESOURCE_GPIO *gpio)
-{
-	const ACPI_INTEGER pin = gpio->PinTable[0];
-
-	if (pin < X1E_NUM_PINS) {
-		return gpio->PinTable[0];
-	}
-
-	switch (pin) {
-	case 0x180:
-		return 67;
-	case 0x340:
-		return 92;
-	case 0x380:
-		return 3;
-	default:
-		return -1;
-	}
-}
-
 static struct qcomgpio_config qcomgpio_x1e_config = {
-	.num_pins = X1E_NUM_PINS,
-	.translate = qcomgpio_x1e_translate,
 	.reserved = qcomgpio_x1e_reserved,
 	.num_reserved = __arraycount(qcomgpio_x1e_reserved),
 };
@@ -174,7 +173,7 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
-	int error, pin;
+	int error, pin, n;
 	void *ih;
 
 	sc->sc_dev = self;
@@ -209,9 +208,25 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) *
-	    sc->sc_config->num_pins, KM_SLEEP);
-	for (pin = 0; pin < sc->sc_config->num_pins; pin++) {
+	sc->sc_npdcmap = res.ar_nirq;
+	sc->sc_pdcmap = kmem_zalloc(sizeof(*sc->sc_pdcmap) * sc->sc_npdcmap,
+	    KM_SLEEP);
+	for (n = 0; n < sc->sc_npdcmap; n++) {
+		sc->sc_pdcmap[n].pm_irq = acpi_res_irq(&res, n)->ar_irq;
+		sc->sc_pdcmap[n].pm_pin = -1;
+		aprint_debug_dev(self, "IRQ resource %u -> %#x\n",
+		    n, sc->sc_pdcmap[n].pm_irq);
+	}
+	qcomgpio_acpi_fill_pdcmap(sc, hdl);
+
+	sc->sc_npins = qcomgpio_acpi_num_pins(self, hdl);
+	if (sc->sc_npins == 0) {
+		aprint_error_dev(self, "couldn't determine pin count!\n");
+		goto done;
+	}
+	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) * sc->sc_npins,
+	    KM_SLEEP);
+	for (pin = 0; pin < sc->sc_npins; pin++) {
 		sc->sc_pins[pin].pin_caps = qcomgpio_pin_reserved(sc, pin) ?
 		    0 : (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT);
 		sc->sc_pins[pin].pin_num = pin;
@@ -250,7 +265,7 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 	memset(&gba, 0, sizeof(gba));
 	gba.gba_gc = &sc->sc_gc;
 	gba.gba_pins = sc->sc_pins;
-	gba.gba_npins = sc->sc_config->num_pins;
+	gba.gba_npins = sc->sc_npins;
 	sc->sc_gpiodev = config_found(self, &gba, gpiobus_print,
 	    CFARGS(.iattr = "gpiobus"));
 	if (sc->sc_gpiodev != NULL) {
@@ -262,28 +277,100 @@ done:
 	acpi_resource_cleanup(&res);
 }
 
+static u_int
+qcomgpio_acpi_num_pins(device_t dev, ACPI_HANDLE hdl)
+{
+	ACPI_STATUS rv;
+	ACPI_INTEGER npins;
+
+	rv = acpi_dsm_integer(hdl, qcomgpio_gpio_dsm_uuid, 
+	    QCOMGPIO_GPIO_DSM_REV, QCOMGPIO_GPIO_DSM_FUNC_NUM_PINS,
+	    NULL, &npins);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(dev, "GPIO _DSM failed: %s\n",
+		    AcpiFormatException(rv));
+		return 0;
+	}
+
+	aprint_debug_dev(dev, "GPIO pin count: %u\n", (u_int)npins);
+
+	return (u_int)npins;
+}
+
+static void
+qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *sc,
+    ACPI_HANDLE hdl)
+{
+	ACPI_STATUS rv;
+	ACPI_OBJECT *obj;
+	u_int n;
+
+	rv = acpi_dsm_typed(hdl, qcomgpio_pdc_dsm_uuid,
+	    QCOMGPIO_PDC_DSM_REV, QCOMGPIO_PDC_DSM_FUNC_CIPR,
+	    NULL, ACPI_TYPE_PACKAGE, &obj);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(sc->sc_dev, "PDC _DSM failed: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+
+	for (n = 0; n < obj->Package.Count; n++) {
+		ACPI_OBJECT *map = &obj->Package.Elements[n];
+		u_int irq, pdc;
+		int pin;
+
+		if (map->Type != ACPI_TYPE_PACKAGE ||
+		    map->Package.Count < 3 ||
+		    map->Package.Elements[0].Type != ACPI_TYPE_INTEGER ||
+		    map->Package.Elements[1].Type != ACPI_TYPE_INTEGER ||
+		    map->Package.Elements[2].Type != ACPI_TYPE_INTEGER) {
+			continue;
+		}
+
+		irq = (u_int)map->Package.Elements[2].Integer.Value;
+		pin = (int)map->Package.Elements[1].Integer.Value;
+		for (pdc = 0; pdc < sc->sc_npdcmap; pdc++) {
+			if (sc->sc_pdcmap[pdc].pm_irq == irq) {
+				sc->sc_pdcmap[pdc].pm_pin = pin;
+				break;
+			}
+		}
+		aprint_debug_dev(sc->sc_dev,
+		    "PDC irq %#x -> pin %d%s\n", irq, pin,
+		    pdc == sc->sc_npdcmap ? " (unused)" : "");
+	}
+
+	ACPI_FREE(obj);
+}
+
 static int
 qcomgpio_acpi_translate(void *priv, ACPI_RESOURCE_GPIO *gpio, void **gpiop)
 {
 	struct qcomgpio_softc * const sc = priv;
-	const ACPI_INTEGER pin = gpio->PinTable[0];
-	int xpin;
+	const ACPI_INTEGER vpin = gpio->PinTable[0];
+	int pin = -1;
 
-	xpin = sc->sc_config->translate(gpio);
+	if (vpin < sc->sc_npins) {
+		/* Virtual pin number is 1:1 mapping with hardware. */
+		pin = vpin;
+	} else if (vpin / 64 < sc->sc_npdcmap) {
+		/* Translate the virtual pin number to a hardware pin. */
+		pin = sc->sc_pdcmap[vpin / 64].pm_pin;
+	}
 
-	aprint_debug_dev(sc->sc_dev, "translate %#lx -> %u\n", pin, xpin);
+	aprint_debug_dev(sc->sc_dev, "translate %#lx -> %u\n", vpin, pin);
 
 	if (gpiop != NULL) {
 		if (sc->sc_gpiodev != NULL) {
 			*gpiop = device_private(sc->sc_gpiodev);
 		} else {
 			device_printf(sc->sc_dev,
-			    "no gpiodev for pin %#lx -> %u\n", pin, xpin);
-			xpin = -1;
+			    "no gpiodev for pin %#lx -> %u\n", vpin, pin);
+			pin = -1;
 		}
 	}
 
-	return xpin;
+	return pin;
 }
 
 static int
@@ -363,7 +450,7 @@ qcomgpio_pin_read(void *priv, int pin)
 	struct qcomgpio_softc * const sc = priv;
 	uint32_t val;
 
-	if (pin < 0 || pin >= sc->sc_config->num_pins) {
+	if (pin < 0 || pin >= sc->sc_npins) {
 		return 0;
 	}
 	if ((sc->sc_pins[pin].pin_caps & GPIO_PIN_INPUT) == 0) {
@@ -380,7 +467,7 @@ qcomgpio_pin_write(void *priv, int pin, int pinval)
 	struct qcomgpio_softc * const sc = priv;
 	uint32_t val;
 
-	if (pin < 0 || pin >= sc->sc_config->num_pins) {
+	if (pin < 0 || pin >= sc->sc_npins) {
 		return;
 	}
 	if ((sc->sc_pins[pin].pin_caps & GPIO_PIN_OUTPUT) == 0) {
@@ -411,7 +498,7 @@ qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 	uint32_t dect, pol;
 	uint32_t val;
 
-	if (pin < 0 || pin >= sc->sc_config->num_pins) {
+	if (pin < 0 || pin >= sc->sc_npins) {
 		return NULL;
 	}
 	if (ipl != IPL_VM) {
