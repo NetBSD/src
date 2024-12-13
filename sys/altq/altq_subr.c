@@ -36,6 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $
 #include "pf.h"
 #endif
 
+#ifndef NPF
+#define NPF 1
+#endif
+
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -62,9 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
+#include  <net/npf/npf_altq.h>
+
 #include <altq/altq.h>
 #ifdef ALTQ3_COMPAT
 #include <altq/altq_conf.h>
@@ -135,7 +139,7 @@ altq_attach(struct ifaltq *ifq, int type, void *discipline,
 
 #ifdef ALTQ3_COMPAT
 	/*
-	 * pfaltq can override the existing discipline, but altq3 cannot.
+	 * npfaltq can override the existing discipline, but altq3 cannot.
 	 * check these if clfier is not NULL (which implies altq3).
 	 */
 	if (clfier != NULL) {
@@ -400,13 +404,12 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 	return (0);
 }
 
-#if NPF > 0
 /*
  * attach a discipline to the interface.  if one already exists, it is
  * overridden.
  */
 int
-altq_pfattach(struct pf_altq *a)
+altq_npfattach(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -415,17 +418,17 @@ altq_pfattach(struct pf_altq *a)
 		break;
 #ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
-		error = cbq_pfattach(a);
+		error = cbq_npfattach(a);
 		break;
 #endif
 #ifdef ALTQ_PRIQ
 	case ALTQT_PRIQ:
-		error = priq_pfattach(a);
+		error = priq_npfattach(a);
 		break;
 #endif
 #ifdef ALTQ_HFSC
 	case ALTQT_HFSC:
-		error = hfsc_pfattach(a);
+		error = hfsc_npfattach(a);
 		break;
 #endif
 	default:
@@ -441,7 +444,7 @@ altq_pfattach(struct pf_altq *a)
  * discipline.
  */
 int
-altq_pfdetach(struct pf_altq *a)
+altq_npfdetach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error = 0;
@@ -467,7 +470,7 @@ altq_pfdetach(struct pf_altq *a)
  * add a discipline or a queue
  */
 int
-altq_add(struct pf_altq *a)
+altq_add(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -506,7 +509,7 @@ altq_add(struct pf_altq *a)
  * remove a discipline or a queue
  */
 int
-altq_remove(struct pf_altq *a)
+altq_remove(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -540,7 +543,7 @@ altq_remove(struct pf_altq *a)
  * add a queue to the discipline
  */
 int
-altq_add_queue(struct pf_altq *a)
+altq_add_queue(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -571,7 +574,7 @@ altq_add_queue(struct pf_altq *a)
  * remove a queue from the discipline
  */
 int
-altq_remove_queue(struct pf_altq *a)
+altq_remove_queue(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -602,7 +605,7 @@ altq_remove_queue(struct pf_altq *a)
  * get queue statistics
  */
 int
-altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+altq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	int error = 0;
 
@@ -628,7 +631,6 @@ altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	return (error);
 }
-#endif /* NPF > 0 */
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header

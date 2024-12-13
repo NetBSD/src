@@ -207,7 +207,7 @@ typedef void (timeout_t)(void *);
 #define	m_pktlen(m)		((m)->m_pkthdr.len)
 
 struct ifnet; struct mbuf;
-struct pf_altq;
+struct npf_altq;
 #ifdef ALTQ3_CLFIER_COMPAT
 struct flowinfo;
 #endif
@@ -227,34 +227,34 @@ void	altq_assert(const char *, int, const char *);
 int	tbr_set(struct ifaltq *, struct tb_profile *);
 int	tbr_get(struct ifaltq *, struct tb_profile *);
 
-int	altq_pfattach(struct pf_altq *);
-int	altq_pfdetach(struct pf_altq *);
-int	altq_add(struct pf_altq *);
-int	altq_remove(struct pf_altq *);
-int	altq_add_queue(struct pf_altq *);
-int	altq_remove_queue(struct pf_altq *);
-int	altq_getqstats(struct pf_altq *, void *, int *);
+int	altq_npfattach(struct npf_altq *);
+int	altq_npfdetach(struct npf_altq *);
+int	altq_add(struct npf_altq *);
+int	altq_remove(struct npf_altq *);
+int	altq_add_queue(struct npf_altq *);
+int	altq_remove_queue(struct npf_altq *);
+int	altq_getqstats(struct npf_altq *, void *, int *);
 
-int	cbq_pfattach(struct pf_altq *);
-int	cbq_add_altq(struct pf_altq *);
-int	cbq_remove_altq(struct pf_altq *);
-int	cbq_add_queue(struct pf_altq *);
-int	cbq_remove_queue(struct pf_altq *);
-int	cbq_getqstats(struct pf_altq *, void *, int *);
+int	cbq_npfattach(struct npf_altq *);
+int	cbq_add_altq(struct npf_altq *);
+int	cbq_remove_altq(struct npf_altq *);
+int	cbq_add_queue(struct npf_altq *);
+int	cbq_remove_queue(struct npf_altq *);
+int	cbq_getqstats(struct npf_altq *, void *, int *);
 
-int	priq_pfattach(struct pf_altq *);
-int	priq_add_altq(struct pf_altq *);
-int	priq_remove_altq(struct pf_altq *);
-int	priq_add_queue(struct pf_altq *);
-int	priq_remove_queue(struct pf_altq *);
-int	priq_getqstats(struct pf_altq *, void *, int *);
+int	priq_npfattach(struct npf_altq *);
+int	priq_add_altq(struct npf_altq *);
+int	priq_remove_altq(struct npf_altq *);
+int	priq_add_queue(struct npf_altq *);
+int	priq_remove_queue(struct npf_altq *);
+int	priq_getqstats(struct npf_altq *, void *, int *);
 
-int	hfsc_pfattach(struct pf_altq *);
-int	hfsc_add_altq(struct pf_altq *);
-int	hfsc_remove_altq(struct pf_altq *);
-int	hfsc_add_queue(struct pf_altq *);
-int	hfsc_remove_queue(struct pf_altq *);
-int	hfsc_getqstats(struct pf_altq *, void *, int *);
+int	hfsc_npfattach(struct npf_altq *);
+int	hfsc_add_altq(struct npf_altq *);
+int	hfsc_remove_altq(struct npf_altq *);
+int	hfsc_add_queue(struct npf_altq *);
+int	hfsc_remove_queue(struct npf_altq *);
+int	hfsc_getqstats(struct npf_altq *, void *, int *);
 
 #endif /* _KERNEL */
 #endif /* _ALTQ_ALTQ_VAR_H_ */

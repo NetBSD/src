@@ -51,6 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp 
 #include "pf.h"
 #endif
 
+#ifndef NPF
+#define NPF 1
+#endif
+
+
 #ifdef ALTQ_HFSC  /* hfsc is enabled by ALTQ_HFSC option in opt_altq.h */
 
 #include <sys/param.h>
@@ -70,9 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp 
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
+#include <net/npf/npf_altq.h>
 #include <altq/altq.h>
 #include <altq/altq_hfsc.h>
 #ifdef ALTQ3_COMPAT
@@ -173,9 +176,8 @@ altqdev_decl(hfsc);
 static struct hfsc_if *hif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
 int
-hfsc_pfattach(struct pf_altq *a)
+hfsc_npfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;
@@ -190,7 +192,7 @@ hfsc_pfattach(struct pf_altq *a)
 }
 
 int
-hfsc_add_altq(struct pf_altq *a)
+hfsc_add_altq(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct ifnet *ifp;
@@ -212,14 +214,14 @@ hfsc_add_altq(struct pf_altq *a)
 
 	hif->hif_ifq = &ifp->if_snd;
 
-	/* keep the state in pf_altq */
+	/* keep the state in npf_altq */
 	a->altq_disc = hif;
 
 	return (0);
 }
 
 int
-hfsc_remove_altq(struct pf_altq *a)
+hfsc_remove_altq(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 
@@ -238,7 +240,7 @@ hfsc_remove_altq(struct pf_altq *a)
 }
 
 int
-hfsc_add_queue(struct pf_altq *a)
+hfsc_add_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
@@ -281,7 +283,7 @@ hfsc_add_queue(struct pf_altq *a)
 }
 
 int
-hfsc_remove_queue(struct pf_altq *a)
+hfsc_remove_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
@@ -296,7 +298,7 @@ hfsc_remove_queue(struct pf_altq *a)
 }
 
 int
-hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+hfsc_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
@@ -320,7 +322,6 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
-#endif /* NPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding

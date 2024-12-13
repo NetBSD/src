@@ -39,6 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp 
 #include "pf.h"
 #endif
 
+#ifndef NPF
+#define NPF 1
+#endif
+
+
 #ifdef ALTQ_PRIQ  /* priq is enabled by ALTQ_PRIQ option in opt_altq.h */
 
 #include <sys/param.h>
@@ -56,9 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp 
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
+#include <net/npf/npf_altq.h>
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 #include <altq/altq_priq.h>
@@ -105,9 +108,8 @@ altqdev_decl(priq);
 static struct priq_if *pif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
 int
-priq_pfattach(struct pf_altq *a)
+priq_npfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;
@@ -122,7 +124,7 @@ priq_pfattach(struct pf_altq *a)
 }
 
 int
-priq_add_altq(struct pf_altq *a)
+priq_add_altq(struct npf_altq *a)
 {
 	struct priq_if	*pif;
 	struct ifnet	*ifp;
@@ -139,14 +141,14 @@ priq_add_altq(struct pf_altq *a)
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = &ifp->if_snd;
 
-	/* keep the state in pf_altq */
+	/* keep the state in npf_altq */
 	a->altq_disc = pif;
 
 	return (0);
 }
 
 int
-priq_remove_altq(struct pf_altq *a)
+priq_remove_altq(struct npf_altq *a)
 {
 	struct priq_if *pif;
 
@@ -161,7 +163,7 @@ priq_remove_altq(struct pf_altq *a)
 }
 
 int
-priq_add_queue(struct pf_altq *a)
+priq_add_queue(struct npf_altq *a)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -188,7 +190,7 @@ priq_add_queue(struct pf_altq *a)
 }
 
 int
-priq_remove_queue(struct pf_altq *a)
+priq_remove_queue(struct npf_altq *a)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -203,7 +205,7 @@ priq_remove_queue(struct pf_altq *a)
 }
 
 int
-priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+priq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -227,7 +229,6 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
-#endif /* NPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding
