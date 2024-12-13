@@ -337,6 +337,7 @@ struct npfioc_altq {
 #define IOC_NPF_ADD_ALTQ	_IOWR('N', 110, struct npfioc_altq)
 #define IOC_NPF_GET_ALTQS	_IOWR('N', 111, struct npfioc_altq)
 #define IOC_NPF_BEGIN_ALTQ  _IO('N', 114)
+#define IOC_NPF_DESTROY_ALTQ	_IO('N', 115)
 
 /*
  * NPF error report.

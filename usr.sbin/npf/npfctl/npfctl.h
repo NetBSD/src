@@ -272,6 +272,7 @@ nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
 void		npfctl_config_save(nl_config_t *, const char *);
 int		npfctl_ruleset_show(int, const char *);
+int npfctl_config_flush(int, int, char **);
 
 nl_rule_t *	npfctl_rule_ref(void);
 nl_table_t *	npfctl_table_ref(void);
@@ -320,6 +321,7 @@ char		*rate2str(double);
 
 int npf_rule_qnames_exists(const char *);
 int check_commit_altq(void);
+int  npf_altq_destroy(int);
 
 /*
  * For the systems which do not define TH_ECE and TW_CRW.

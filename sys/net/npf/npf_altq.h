@@ -129,3 +129,4 @@ extern int npf_commit_altq(void);
 extern int npf_add_altq(void *);
 extern u_int32_t npf_qname2qid(char *);
 void npf_qid_unref(u_int32_t);
+extern int npf_altq_destroy(void);

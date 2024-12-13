@@ -273,4 +273,18 @@ tag_unref(struct npf_tags *head, u_int16_t tag)
 	}
 }
 
+/* disable, destroy and stop altq routine when packet filtering disabled */
+int
+npf_altq_destroy(void)
+{
+	//u_int32_t		 ticket;
+	if (npf_begin_altq() == 0)
+		npf_commit_altq();
+	if (npf_altq_loaded) {
+		pool_destroy(&npf_altq_pl);
+		npf_altq_loaded = 0;
+	}
+	return 0;
+}
+
 #endif /*ALTQ */

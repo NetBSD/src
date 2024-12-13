@@ -1413,3 +1413,13 @@ npf_rule_qnames_exists(const char *qname)
 
 	return found;
 }
+
+int
+npf_altq_destroy(int fd)
+{
+	altqsupport = npfctl_test_altqsupport(fd);
+	if (!(altqsupport & (ioctl(fd, IOC_NPF_DESTROY_ALTQ) != -1)))
+		if (errno != ENOENT)
+			err(1, "IOC_NPF_DESTROY_ALTQ");
+	return 0;
+}
