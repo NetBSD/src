@@ -13,7 +13,7 @@ CPPFLAGS+=	-I${.CURDIR}
 SRCS+=		npf_scan.l npf_parse.y
 YHEADER=	1
 
-LDADD+=		-lnpf -lpcap -lutil -ly
+LDADD+=		-lnpf -lpcap -lutil -ly -lm
 DPADD+=		${LIBNPF} ${LIBUTIL} ${LIBPCAP} ${LIBUTIL} ${LIBY}
 
 WARNS=		5

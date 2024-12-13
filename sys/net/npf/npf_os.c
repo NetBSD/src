@@ -274,6 +274,16 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return npfctl_table(npf, data);
 	case IOC_NPF_STATS:
 		return npf_stats_export(npf, data);
+	case IOC_NPF_ADD_ALTQ:
+		return npf_add_altq(data);
+	case IOC_NPF_GET_ALTQS:
+		return npf_get_altqs(data);
+	case IOC_NPF_BEGIN_ALTQ:
+	/* initialize all queueing components on the first attempt*/
+		if (!npf_altq_loaded) {
+			npf_altq_init();
+		}
+		return npf_begin_altq();
 	case IOC_NPF_LOAD:
 	case IOC_NPF_SAVE:
 	case IOC_NPF_RULE:
