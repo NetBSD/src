@@ -735,6 +735,12 @@ npf_rule_setproc(nl_rule_t *rl, const char *name)
 	return nvlist_error(rl->rule_dict);
 }
 
+npf_rule_setqueue(nl_rule_t *rl, const char *qname)
+{
+	nvlist_add_string(rl->rule_dict, "queue", qname);
+	return nvlist_error(rl->rule_dict);
+}
+
 void *
 npf_rule_export(nl_rule_t *rl, size_t *length)
 {
@@ -841,6 +847,12 @@ const char *
 npf_rule_getproc(nl_rule_t *rl)
 {
 	return dnvlist_get_string(rl->rule_dict, "rproc", NULL);
+}
+
+const char *
+npf_rule_getqueue(nl_rule_t *rl)
+{
+	return dnvlist_get_string(rl->rule_dict, "queue", NULL);
 }
 
 uint64_t

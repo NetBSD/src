@@ -155,6 +155,11 @@ void		npf_table_destroy(nl_table_t *);
 
 int		npf_table_replace(int, nl_table_t *, npf_error_t *);
 
+/* queueing*/
+const char *    npf_rule_getqueue(nl_rule_t *);
+int     npf_rule_setqueue(nl_rule_t *, const char *);
+
+
 #ifdef _NPF_PRIVATE
 
 #include <ifaddrs.h>

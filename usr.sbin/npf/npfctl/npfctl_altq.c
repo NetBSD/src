@@ -1393,3 +1393,23 @@ print_hfsc_sc(const char *scname, u_int m1, u_int d, u_int m2,
 	if (d != 0)
 		printf(")");
 }
+
+/* this checks for undefined queues appended on a rule */
+int
+npf_rule_qnames_exists(const char *qname)
+{
+	int found = 0;
+	struct npf_altq* a;
+	TAILQ_FOREACH(a, &altqs, entries) {
+		if (a->qname[0] != 0){
+			if (strcmp(a->qname, qname) == 0){
+				found = 1;
+				break;
+			}
+		}
+	}
+	if (!found)
+		yyerror("no qname named '%s' defined\n", qname);
+
+	return found;
+}
