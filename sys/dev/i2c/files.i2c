@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.129 2024/12/09 22:05:17 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.130 2024/12/13 12:03:35 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -324,7 +324,7 @@ file	dev/i2c/asms.c				asms
 define  ihidbus {[ reportid = -1 ]}
 
 # HID root device for multiple report IDs
-device  ihidev: hid, ihidbus, gpio
+device  ihidev: hid, ihidbus
 attach  ihidev at iic
 file    dev/i2c/ihidev.c			ihidev
 
