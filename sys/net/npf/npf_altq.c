@@ -69,9 +69,11 @@ TAILQ_HEAD(npf_tags, npf_tagname)	npf_tags = TAILQ_HEAD_INITIALIZER(npf_tags),
 				npf_qids = TAILQ_HEAD_INITIALIZER(npf_qids);
 void tag_unref(struct npf_tags *, u_int16_t);
 u_int16_t npftagname2tag(struct npf_tags *, char *);
+
 #if (NPF_QNAME_SIZE != NPF_TAG_NAME_SIZE)
 #error NPF_QNAME_SIZE must be equal to NPF_TAG_NAME_SIZE
 #endif
+
 /* npf interface to start altq */
 void
 npf_altq_init(void)
@@ -159,4 +161,116 @@ npf_add_altq(void *data)
 		npf_altq_loaded = 1;
 	return 0;
 }
+
+int
+npf_commit_altq(void)
+{
+	struct npf_altqqueue	*old_altqs;
+	struct npf_altq		*altq;
+	int			 s, err, error = 0;
+	if (!npf_altqs_inactive_open)
+		return (EBUSY);
+	/* swap altqs, keep the old. */
+	s = splsoftnet();
+	old_altqs = npf_altqs_active;
+	npf_altqs_active = npf_altqs_inactive;
+	npf_altqs_inactive = old_altqs;
+	nticket_altqs_active = nticket_altqs_inactive;
+	/* Attach new disciplines */
+	TAILQ_FOREACH(altq, npf_altqs_active, entries) {
+		if (altq->qname[0] == 0) {
+			/* attach the discipline */
+			error = altq_npfattach(altq);
+			if (error == 0 && !npf_altq_running)
+				error = npf_enable_altq(altq);
+			if (error != 0) {
+				splx(s);
+				return (error);
+			}
+		}
+	}
+	/* Purge the old altq list */
+	while ((altq = TAILQ_FIRST(npf_altqs_inactive)) != NULL) {
+		TAILQ_REMOVE(npf_altqs_inactive, altq, entries);
+		if (altq->qname[0] == 0) {
+			/* detach and destroy the discipline */
+			if (npf_altq_running)
+				error = npf_disable_altq(altq);
+			err = altq_npfdetach(altq);
+			if (err != 0 && error == 0)
+				error = err;
+			err = altq_remove(altq);
+			if (err != 0 && error == 0)
+				error = err;
+		} else
+			npf_qid_unref(altq->qid);
+		pool_put(&npf_altq_pl, altq);
+	}
+	splx(s);
+	npf_altqs_inactive_open = 0;
+	return (error);
+}
+
+u_int32_t
+npf_qname2qid(char *qname)
+{
+	return ((u_int32_t)npftagname2tag(&npf_qids, qname));
+}
+
+u_int16_t
+npftagname2tag(struct npf_tags *head, char *tagname)
+{
+	struct npf_tagname	*tag, *p = NULL;
+	u_int16_t		 new_tagid = 1;
+	TAILQ_FOREACH(tag, head, entries)
+		if (strcmp(tagname, tag->name) == 0) {
+			tag->ref++;
+			return (tag->tag);
+		}
+	/*
+	 * to avoid fragmentation, we do a linear search from the beginning
+	 * and take the first free slot we find. if there is none or the list
+	 * is empty, append a new entry at the end.
+	 */
+	/* new entry */
+	if (!TAILQ_EMPTY(head))
+		for (p = TAILQ_FIRST(head); p != NULL &&
+		    p->tag == new_tagid; p = TAILQ_NEXT(p, entries))
+			new_tagid = p->tag + 1;
+	if (new_tagid > TAGID_MAX)
+		return (0);
+	/* allocate and fill new struct npf_tagname */
+	tag = (struct npf_tagname *)malloc(sizeof(struct npf_tagname),
+	    M_TEMP, M_NOWAIT);
+	if (tag == NULL)
+		return (0);
+	memset(tag, 0, sizeof(struct npf_tagname));
+	strlcpy(tag->name, tagname, sizeof(tag->name));
+	tag->tag = new_tagid;
+	tag->ref++;
+	if (p != NULL)	/* insert new entry before p */
+		TAILQ_INSERT_BEFORE(p, tag, entries);
+	else	/* either list empty or no free slot in between */
+		TAILQ_INSERT_TAIL(head, tag, entries);
+	return (tag->tag);
+}
+
+void
+tag_unref(struct npf_tags *head, u_int16_t tag)
+{
+	struct npf_tagname	*p, *next;
+	if (tag == 0)
+		return;
+	for (p = TAILQ_FIRST(head); p != NULL; p = next) {
+		next = TAILQ_NEXT(p, entries);
+		if (tag == p->tag) {
+			if (--p->ref == 0) {
+				TAILQ_REMOVE(head, p, entries);
+				free(p, M_TEMP);
+			}
+			break;
+		}
+	}
+}
+
 #endif /*ALTQ */

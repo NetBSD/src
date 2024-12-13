@@ -102,9 +102,11 @@ typedef uint8_t			npf_netmask_t;
 
 #define	NBUF_DATAREF_RESET	0x01
 
+struct qid;
 struct mbuf;
 struct nbuf;
 typedef struct nbuf nbuf_t;
+struct npf_rule;
 
 void		nbuf_init(npf_t *, nbuf_t *, struct mbuf *, const ifnet_t *);
 void		nbuf_reset(nbuf_t *);
@@ -124,6 +126,7 @@ bool		nbuf_cksum_barrier(nbuf_t *, int);
 int		nbuf_add_tag(nbuf_t *, uint32_t);
 int		npf_mbuf_add_tag(nbuf_t *, struct mbuf *, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t *);
+void 	mbuf_altq_tag(struct qid, struct mbuf *);
 
 /*
  * Packet information cache.

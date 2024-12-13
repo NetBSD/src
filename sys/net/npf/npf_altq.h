@@ -100,3 +100,32 @@ struct npf_altq {
 	} pq_u;
 	u_int32_t		 qid;		/* return value */
 };
+
+struct qid {
+	u_int32_t qid;
+};
+
+struct npf_tag {
+	u_int16_t	tag;		/* tag id */
+};
+
+struct npf_tagname {
+	TAILQ_ENTRY(npf_tagname)	entries;
+	char			name[NPF_TAG_NAME_SIZE];
+	u_int16_t		tag;
+	int			ref;
+};
+
+TAILQ_HEAD(npf_altqqueue, npf_altq);
+
+extern int npf_altq_loaded;
+extern int altqattached;
+extern bool npf_altq_running;
+
+extern int npf_get_altqs(void *);
+extern void npf_altq_init(void);
+extern int npf_begin_altq(void);
+extern int npf_commit_altq(void);
+extern int npf_add_altq(void *);
+extern u_int32_t npf_qname2qid(char *);
+void npf_qid_unref(u_int32_t);

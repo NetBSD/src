@@ -62,6 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.50 2024/07/05 04:34:35 rin Exp $")
 #include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <altq/if_altq.h>
+#endif
+
+
+#ifdef _KERNEL_OPT
+#include "opt_altq.h"
 #endif
 
 #include "npf_impl.h"
@@ -239,6 +245,15 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
+#ifdef ALTQ
+	struct qid qid;
+	/*
+	 * get the rule queues by their ids. used for tagging after pass
+	 */
+	if (rl != NULL)
+		qid = npf_rule_getqid(rl);
+#endif /*ALTQ */
+
 	/* Conclude with the rule and release the lock. */
 	error = npf_rule_conclude(rl, &mi);
 	npf_config_read_exit(npf, slock);
@@ -307,6 +322,12 @@ out:
 
 	/* Pass the packet if decided and there is no error. */
 	if (decision == NPF_DECISION_PASS && !error) {
+
+#ifdef ALTQ
+		/* give them ALTQ tags based on the qid if a queue is appended on a rule */
+		if (qid.qid)
+			mbuf_altq_tag(qid, *mp);
+#endif /*ALTQ */
 		/*
 		 * XXX: Disable for now, it will be set accordingly later,
 		 * for optimisations (to reduce inspection).

@@ -44,12 +44,20 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.60 2020/05/30 14:16:56 rmind Exp $");
 #include <net/bpf.h>
 #endif
 
+#ifdef _KERNEL_OPT
+#include "opt_altq.h"
+#endif
+
+
 #include "npf_impl.h"
 #include "npf_conn.h"
 
 #define	NPF_ERR_DEBUG(e) \
 	nvlist_add_string((e), "source-file", __FILE__); \
 	nvlist_add_number((e), "source-line", __LINE__);
+
+/* condition to verify queue assigned for rules */
+int altqattached = 0;
 
 static int __noinline
 npf_mk_params(npf_t *npf, const nvlist_t *req, nvlist_t *resp, bool set)
@@ -351,6 +359,23 @@ npf_mk_singlerule(npf_t *npf, const nvlist_t *req, nvlist_t *resp,
 		npf_rule_setrproc(rl, rp);
 	}
 
+#ifdef ALTQ
+	if (npf_altq_loaded) {
+		/* assign the rule queues, if any */
+		const char *qname;
+		printf("finding queues......\n");
+		qname = dnvlist_get_string(req, "queue", NULL);
+		if (qname != NULL) {
+			if (npf_rule_setqid(rl, qname)) {
+				goto err;
+			}
+			printf("the queues are found...\n");
+			if (!altqattached)
+				altqattached = 1;
+		}
+	}
+#endif
+
 	/* Filter byte-code (binary data). */
 	code = dnvlist_get_binary(req, "code", &clen, NULL, 0);
 	if (code) {
@@ -592,6 +617,16 @@ npfctl_load(npf_t *npf, const nvlist_t *req, nvlist_t *resp)
 	if (error) {
 		goto fail;
 	}
+
+#ifdef ALTQ
+	 /*TODO: attach quues here */
+	if (npf_altq_loaded && altqattached) {
+		error = npf_commit_altq();
+		if (error) {
+			goto fail;
+		}
+	}
+#endif /* ALTQ */
 
 	flush = dnvlist_get_bool(req, "flush", false);
 	nc->default_pass = flush;
