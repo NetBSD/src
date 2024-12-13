@@ -287,4 +287,44 @@ npf_altq_destroy(void)
 	return 0;
 }
 
+int
+npf_altq_start(void)
+{
+	int error;
+    struct npf_altq		*altq;
+    /* enable all altq interfaces on active list */
+    TAILQ_FOREACH(altq, npf_altqs_active, entries) {
+        if (altq->qname[0] == 0) {
+            error = npf_enable_altq(altq);
+            if (error != 0)
+                break;
+        }
+    }
+
+	return error;
+}
+
+int
+npf_enable_altq(struct npf_altq *altq)
+{
+	struct ifnet		*ifp;
+	struct tb_profile	 tb;
+	int			 s, error = 0;
+	if ((ifp = ifunit(altq->ifname)) == NULL)
+		return (EINVAL);
+	if (ifp->if_snd.altq_type != ALTQT_NONE)
+		error = altq_enable(&ifp->if_snd);
+	/* set tokenbucket regulator */
+	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		tb.rate = altq->ifbandwidth;
+		tb.depth = altq->tbrsize;
+		s = splnet();
+		error = tbr_set(&ifp->if_snd, &tb);
+		splx(s);
+	}
+	if (error == 0)
+		npf_altq_running = true;
+	return (error);
+}
+
 #endif /*ALTQ */
