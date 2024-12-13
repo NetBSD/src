@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.15 2024/12/09 22:29:49 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.16 2024/12/13 12:25:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "iic.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.15 2024/12/09 22:29:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.16 2024/12/13 12:25:39 jmcneill Exp $");
 
 #include <sys/device.h>
 
@@ -55,10 +57,12 @@ static const struct device_compatible_entry hid_compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+#if NIIC > 0
 struct acpi_i2c_context {
 	uint16_t i2c_addr;
 	struct acpi_devnode *res_src;
 };
+#endif
 
 static struct acpi_devnode *
 acpi_i2c_resource_find_source(ACPI_RESOURCE_SOURCE *rs)
@@ -214,6 +218,7 @@ acpi_enter_i2c_devs(device_t dev, struct acpi_devnode *devnode)
 	return array;
 }
 
+#if NIIC > 0
 static ACPI_STATUS
 acpi_i2c_gsb_init(ACPI_HANDLE region_hdl, UINT32 function,
     void *handler_ctx, void **region_ctx)
@@ -323,10 +328,12 @@ acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
 
 	return AE_OK;
 }
+#endif
 
 ACPI_STATUS
 acpi_i2c_register(struct acpi_devnode *devnode, device_t dev, i2c_tag_t tag)
 {
+#if NIIC > 0
 	struct acpi_i2c_address_space_context *context;
 	ACPI_STATUS rv;
 
@@ -343,4 +350,7 @@ acpi_i2c_register(struct acpi_devnode *devnode, device_t dev, i2c_tag_t tag)
 	}
 
 	return rv;
+#else
+	return AE_NOT_CONFIGURED;
+#endif
 }

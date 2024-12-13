@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_gpio.c,v 1.3 2024/12/11 01:00:02 jmcneill Exp $ */
+/* $NetBSD: acpi_gpio.c,v 1.4 2024/12/13 12:25:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -33,8 +33,10 @@
  * ACPI GPIO resource support.
  */
 
+#include "gpio.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.3 2024/12/11 01:00:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.4 2024/12/13 12:25:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -46,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.3 2024/12/11 01:00:02 jmcneill Exp $
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_gpio.h>
 
+#if NGPIO > 0
 struct acpi_gpio_address_space_context {
 	ACPI_CONNECTION_INFO conn_info;	/* must be first */
 	struct acpi_devnode *ad;
@@ -127,11 +130,13 @@ done:
 
 	return rv;
 }
+#endif
 
 ACPI_STATUS
 acpi_gpio_register(struct acpi_devnode *ad, device_t dev,
     int (*translate)(void *, ACPI_RESOURCE_GPIO *, void **), void *priv)
 {
+#if NGPIO > 0
 	struct acpi_gpio_address_space_context *context;
 	ACPI_STATUS rv;
 
@@ -161,6 +166,9 @@ acpi_gpio_register(struct acpi_devnode *ad, device_t dev,
 	ad->ad_gpio_priv = priv;
 
 	return AE_OK;
+#else
+	return AE_NOT_CONFIGURED;
+#endif
 }
 
 static ACPI_STATUS
