@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.75 2024/12/06 20:38:43 snj Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.76 2024/12/13 17:15:43 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3727,7 +3727,7 @@ tests/lib/libarchive/Makefile			1.16
 
 sys/dev/pci/virtio_pci.c			1.55
 
-	virtio(4): PR 68680: fix big-endian 64-bit register access.
+	virtio(4): PR 58680: fix big-endian 64-bit register access.
 	The access is supposed to be always little-endian, irrespective
 	of the host or guest's byte order.  This was previously implemented
 	correctly, but through a series of changes via the confusing name
