@@ -269,6 +269,8 @@ void		npfctl_config_init(bool);
 void		npfctl_config_build(void);
 int		npfctl_config_send(int);
 nl_config_t *	npfctl_config_ref(void);
+int npfctl_config_print(int);
+npfctl_config_show(int, int, char **);
 int		npfctl_config_show(int);
 void		npfctl_config_save(nl_config_t *, const char *);
 int		npfctl_ruleset_show(int, const char *);
@@ -319,9 +321,18 @@ u_int32_t	 qname_to_qid(const char *);
 struct npf_altq *npfaltq_lookup(const char *ifname);
 char		*rate2str(double);
 
+int		npfctl_print_altq(int);
+int npf_rule_qnames_exists(const char *);
+void print_altq(const struct npf_altq *, unsigned, struct node_queue_bw *,
+	struct node_queue_opt *);
+void print_queue(const struct npf_altq *, unsigned, struct node_queue_bw *,
+    int , struct node_queue_opt *);
+int check_commit_altq(void);
+
 int npf_rule_qnames_exists(const char *);
 int check_commit_altq(void);
 int  npf_altq_destroy(int);
+int npfctl_print_altq(int);
 
 /*
  * For the systems which do not define TH_ECE and TW_CRW.

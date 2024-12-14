@@ -1209,6 +1209,7 @@ check_commit_hfsc(struct npf_altq *pa)
 	}
 	return (error);
 }
+
 void
 print_altq(const struct npf_altq *a, unsigned level, struct node_queue_bw *bw,
 	struct node_queue_opt *qopts)
@@ -1241,6 +1242,7 @@ print_altq(const struct npf_altq *a, unsigned level, struct node_queue_bw *bw,
 		printf("qlimit %u ", a->qlimit);
 	printf("tbrsize %u ", a->tbrsize);
 }
+
 void
 print_queue(const struct npf_altq *a, unsigned level, struct node_queue_bw *bw,
     int print_interface, struct node_queue_opt *qopts)
@@ -1275,6 +1277,7 @@ print_queue(const struct npf_altq *a, unsigned level, struct node_queue_bw *bw,
 		break;
 	}
 }
+
 static int
 print_cbq_opts(const struct npf_altq *a)
 {
@@ -1309,6 +1312,7 @@ print_cbq_opts(const struct npf_altq *a)
 	} else
 		return (0);
 }
+
 static int
 print_priq_opts(const struct npf_altq *a)
 {
@@ -1331,6 +1335,7 @@ print_priq_opts(const struct npf_altq *a)
 	} else
 		return (0);
 }
+
 static int
 print_hfsc_opts(const struct npf_altq *a, const struct node_queue_opt *qopts)
 {
@@ -1373,6 +1378,7 @@ print_hfsc_opts(const struct npf_altq *a, const struct node_queue_opt *qopts)
 	} else
 		return (0);
 }
+
 void
 print_hfsc_sc(const char *scname, u_int m1, u_int d, u_int m2,
     const struct node_hfsc_sc *sc)

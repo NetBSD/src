@@ -527,7 +527,7 @@ npfctl(int action, int argc, char **argv)
 		fun = "npfctl_config_send";
 		break;
 	case NPFCTL_SHOWCONF:
-		ret = npfctl_config_show(fd);
+		ret = npfctl_config_show(fd, argc, argv);
 		fun = "npfctl_config_show";
 		break;
 	case NPFCTL_FLUSH:
@@ -579,7 +579,7 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_VALIDATE:
 		npfctl_config_init(false);
 		npfctl_parse_file(argc > 2 ? argv[2] : NPF_CONF_PATH);
-		ret = npfctl_config_show(0);
+		ret = npfctl_config_show(0, argc, argv);
 		fun = "npfctl_config_show";
 		break;
 	case NPFCTL_DEBUG:
