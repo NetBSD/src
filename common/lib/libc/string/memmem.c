@@ -25,7 +25,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/string/memmem.c 315468 2017-03-18 00:53:24Z emaste $");
 #else
-__RCSID("$NetBSD: memmem.c,v 1.4 2021/05/16 09:43:39 rillig Exp $");
+__RCSID("$NetBSD: memmem.c,v 1.5 2024/12/14 16:48:05 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: memmem.c,v 1.4 2021/05/16 09:43:39 rillig Exp $");
 #include <stdint.h>
 #else
 #include <lib/libkern/libkern.h>
-#endif 
+#endif
 
 static char *twobyte_memmem(const unsigned char *h, size_t k,
     const unsigned char *n)
