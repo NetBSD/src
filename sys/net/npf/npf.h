@@ -321,6 +321,14 @@ struct npfioc_altq {
 	struct npf_altq	 altq;
 };
 
+struct npfioc_qstats {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	void		*buf;
+	int		 nbytes;
+	u_int8_t	 scheduler;
+};
+
 /*
  * IOCTL operations.
  */
@@ -336,8 +344,9 @@ struct npfioc_altq {
 #define	IOC_NPF_TABLE_REPLACE	_IOWR('N', 109, nvlist_ref_t)
 #define IOC_NPF_ADD_ALTQ	_IOWR('N', 110, struct npfioc_altq)
 #define IOC_NPF_GET_ALTQS	_IOWR('N', 111, struct npfioc_altq)
-#define IOC_NPF_BEGIN_ALTQ  _IO('N', 114)
-#define IOC_NPF_DESTROY_ALTQ	_IO('N', 115)
+#define IOC_NPF_BEGIN_ALTQ  _IO('N', 112)
+#define IOC_NPF_DESTROY_ALTQ	_IO('N', 113)
+#define IOC_NPF_GET_QSTATS  _IOWR('N', 114, struct npfioc_qstats)
 
 /*
  * NPF error report.

@@ -134,3 +134,4 @@ int npf_altq_start(void);
 int npf_disable_altq(struct npf_altq *);
 int npf_stop_altq(void);
 int npf_enable_altq(struct npf_altq );
+extern int npf_get_qstats(void *);

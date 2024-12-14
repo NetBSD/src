@@ -131,7 +131,7 @@ usage(void)
 }
 
 static int
-npfctl_print_stats(int fd)
+npfctl_print_filter_stats(int fd)
 {
 	static const struct stats_s {
 		/* Note: -1 indicates a new section. */
@@ -393,6 +393,31 @@ npfctl_config_flush(int fd, int argc, char* argv[])
 	return error;
 }
 
+static int
+npfctl_print_stats(int fd, int argc, char* argv[])
+{
+	int ch;
+	int error = 0;
+	argc--;
+	argv++;
+	while((ch = getopt(argc, argv, "fq")) != -1) {
+		switch(ch)
+		{
+			case 'f':
+				error =	npfctl_print_filter_stats(fd);
+				break;
+			case 'q':
+				error = npfctl_show_altq(fd);
+				break;
+			default:
+				errx(EXIT_FAILURE,
+					"Usage: %s stats { -f | -q }\n",
+					getprogname());
+		}
+	}
+	return error;
+}
+
 static void
 npfctl_debug(int argc, char **argv)
 {
@@ -544,7 +569,7 @@ npfctl(int action, int argc, char **argv)
 		fun = "npfctl_config_save";
 		break;
 	case NPFCTL_STATS:
-		ret = npfctl_print_stats(fd);
+		ret = npfctl_print_stats(fd, argc, argv);
 		fun = "npfctl_print_stats";
 		break;
 	case NPFCTL_CONN_LIST:

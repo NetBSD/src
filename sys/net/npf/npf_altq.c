@@ -371,4 +371,32 @@ npf_disable_altq(struct npf_altq *altq)
 	return (error);
 }
 
+int
+npf_get_qstats(void *data)
+{
+	int error;
+	struct npfioc_qstats	*pq = (struct npfioc_qstats *)data;
+	struct npf_altq		*altq;
+	u_int32_t		 nr;
+	int			 nbytes;
+
+	nbytes = pq->nbytes;
+	nr = 0;
+	altq = TAILQ_FIRST(npf_altqs_active);
+	while ((altq != NULL) && (nr < pq->nr)) {
+		altq = TAILQ_NEXT(altq, entries);
+		nr++;
+	}
+	if (altq == NULL) {
+		error = EBUSY;
+		return error;
+	}
+	error = altq_getqstats(altq, pq->buf, &nbytes);
+	if (error == 0) {
+		pq->scheduler = altq->scheduler;
+		pq->nbytes = nbytes;
+	}
+	return error;
+}
+
 #endif /*ALTQ */
