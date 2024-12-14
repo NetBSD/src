@@ -25,7 +25,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/string/memmem.c 315468 2017-03-18 00:53:24Z emaste $");
 #else
-__RCSID("$NetBSD: memmem.c,v 1.5 2024/12/14 16:48:05 riastradh Exp $");
+__RCSID("$NetBSD: memmem.c,v 1.6 2024/12/14 16:48:13 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,8 @@ static char *twobyte_memmem(const unsigned char *h, size_t k,
 static char *threebyte_memmem(const unsigned char *h, size_t k,
     const unsigned char *n)
 {
-	uint32_t nw = n[0] << 24 | n[1] << 16 | n[2] << 8;
-	uint32_t hw = h[0] << 24 | h[1] << 16 | h[2] << 8;
+	uint32_t nw = (uint32_t)n[0] << 24 | n[1] << 16 | n[2] << 8;
+	uint32_t hw = (uint32_t)h[0] << 24 | h[1] << 16 | h[2] << 8;
 	for (h += 3, k -= 3; k; k--, hw = (hw|*h++) << 8)
 		if (hw == nw) return __UNCONST(h - 3);
 	return hw == nw ? __UNCONST(h - 3) : 0;
@@ -58,8 +58,8 @@ static char *threebyte_memmem(const unsigned char *h, size_t k,
 static char *fourbyte_memmem(const unsigned char *h, size_t k,
     const unsigned char *n)
 {
-	uint32_t nw = n[0] << 24 | n[1] << 16 | n[2] << 8 | n[3];
-	uint32_t hw = h[0] << 24 | h[1] << 16 | h[2] << 8 | h[3];
+	uint32_t nw = (uint32_t)n[0] << 24 | n[1] << 16 | n[2] << 8 | n[3];
+	uint32_t hw = (uint32_t)h[0] << 24 | h[1] << 16 | h[2] << 8 | h[3];
 	for (h += 4, k -= 4; k; k--, hw = hw << 8 | *h++)
 		if (hw == nw) return __UNCONST(h - 4);
 	return hw == nw ? __UNCONST(h - 4) : 0;
