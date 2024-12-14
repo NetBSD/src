@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.19 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.20 2024/12/14 07:43:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.19 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.20 2024/12/14 07:43:09 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -67,7 +67,7 @@ pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
 		*pte |= pmap_attr_gp;
 	}
 	if (clrprot & VM_PROT_EXECUTE)
-		*pte |= LX_BLKPAG_UXN|LX_BLKPAG_PXN;
+		*pte |= LX_BLKPAG_UXN | LX_BLKPAG_PXN;
 }
 
 /*
