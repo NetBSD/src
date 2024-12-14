@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.16 2024/12/13 12:25:39 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.17 2024/12/14 12:52:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.16 2024/12/13 12:25:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.17 2024/12/14 12:52:39 jmcneill Exp $");
 
 #include <sys/device.h>
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.16 2024/12/13 12:25:39 jmcneill Exp $
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_i2c.h>
 #include <external/bsd/acpica/dist/include/acinterp.h>
+#include <external/bsd/acpica/dist/include/amlcode.h>
 #include <dev/i2c/i2cvar.h>
 
 #include <sys/kmem.h>
@@ -238,36 +239,29 @@ acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
 {
 	ACPI_OPERAND_OBJECT *region_obj = region_ctx;
 	struct acpi_i2c_address_space_context *context = handler_ctx;
-	UINT8 *buffer = ACPI_CAST_PTR(uint8_t, value);
-	UINT8 *data_buffer;
-	UINT8 data_length;
+	UINT8 *buf = ACPI_CAST_PTR(uint8_t, value);
 	ACPI_PHYSICAL_ADDRESS base_address;
 	ACPI_RESOURCE *res;
-	UINT32 length;
-	UINT8 space_id;
 	ACPI_STATUS rv;
-	ACPI_CONNECTION_INFO *conn_info= &context->conn_info;
+	ACPI_CONNECTION_INFO *conn_info = &context->conn_info;
 	i2c_tag_t tag = context->tag;
+	i2c_addr_t i2c_addr;
 	i2c_op_t op;
 	union {
 		uint8_t cmd8;
 		uint16_t cmd16;
+		uint32_t cmd32;
 	} cmd;
+	size_t buflen;
 	size_t cmdlen;
+	bool do_xfer = true;
 
 	if (region_obj->Region.Type != ACPI_TYPE_REGION) {
 		return AE_OK;
 	}
 
 	base_address = region_obj->Region.Address;
-	space_id = region_obj->Region.SpaceId;
-
-	KASSERT(space_id == ACPI_ADR_SPACE_GSBUS);
-
-	rv = AcpiExGetProtocolBufferLength(function >> 16, &length);
-	if (ACPI_FAILURE(rv)) {
-		return rv;
-	}
+	KASSERT(region_obj->Region.SpaceId == ACPI_ADR_SPACE_GSBUS);
 
 	rv = AcpiBufferToResource(conn_info->Connection, conn_info->Length,
 	    &res);
@@ -279,9 +273,7 @@ acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
 		return AE_TYPE;
 	}
 
-	data_buffer = &buffer[2];
-	data_length = (UINT8)length;
-
+	i2c_addr = res->Data.I2cSerialBus.SlaveAddress;
 	if ((function & ACPI_IO_MASK) != 0) {
 		op = I2C_OP_WRITE_WITH_STOP;
 	} else {
@@ -289,38 +281,96 @@ acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
 	}
 
 #ifdef ACPI_I2C_DEBUG
+	UINT32 length;
+	rv = AcpiExGetProtocolBufferLength(function >> 16, &length);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s AcpiExGetProtocolBufferLength failed: %s\n",
+		    __func__, AcpiFormatException(rv));
+		length = UINT32_MAX;
+	}
 	printf("%s %s: %s Attr %X Addr %.4X BaseAddr %.4X Length %.2X BitWidth %X BufLen %X",
-	       __func__, AcpiUtGetRegionName (space_id),
+	       __func__, AcpiUtGetRegionName(region_obj->Region.SpaceId),
 	       (function & ACPI_IO_MASK) ? "Write" : "Read ",
 	       (UINT32) (function >> 16),
 	       (UINT32) address, (UINT32) base_address,
-	       length, bit_width, buffer[1]);
+	       length, bit_width, buf[1]);
 	printf(" [AccessLength %.2X Connection %p]\n",
 	       conn_info->AccessLength, conn_info->Connection);
 #endif
 
-	if (bit_width == 8) {
-		cmd.cmd8 = (uint8_t)(base_address + address);
-		cmdlen = 1;
-	} else if (bit_width == 16) {
-		cmd.cmd16 = (uint16_t)(base_address + address);
-		cmdlen = 2;
-	} else {
+	switch ((UINT32)(function >> 16)) {
+	case AML_FIELD_ATTRIB_QUICK:
 		cmdlen = 0;
+		buflen = 0;
+		break;
+	case AML_FIELD_ATTRIB_SEND_RECEIVE:
+		cmdlen = 0;
+		buflen = 1;
+		break;
+	case AML_FIELD_ATTRIB_BYTE:
+		cmdlen = bit_width / NBBY;
+		buflen = 1;
+		break;
+	case AML_FIELD_ATTRIB_WORD:
+		cmdlen = bit_width / NBBY;
+		buflen = 2;
+		break;
+	case AML_FIELD_ATTRIB_BYTES:
+		cmdlen = bit_width / NBBY;
+		buflen = buf[1];
+		break;
+	case AML_FIELD_ATTRIB_BLOCK:
+		cmdlen = bit_width / NBBY;
+		buflen = buf[1];
+		op |= I2C_OPMASK_BLKMODE;
+		break;
+	case AML_FIELD_ATTRIB_RAW_BYTES:
+	case AML_FIELD_ATTRIB_RAW_PROCESS_BYTES:
+	case AML_FIELD_ATTRIB_PROCESS_CALL:
+	default:
+		cmdlen = 0;
+		do_xfer = false;
+#ifdef ACPI_I2C_DEBUG
+		printf("field attrib 0x%x not supported\n",
+		    (UINT32)(function >> 16));
+#endif
+		break;
 	}
-	if (cmdlen == 0) {
-		buffer[0] = EINVAL;
+
+	switch (cmdlen) {
+	case 0:
+	case 1:
+		cmd.cmd8 = (uint8_t)(base_address + address);
+		break;
+	case 2:
+		cmd.cmd16 = (uint16_t)(base_address + address);
+		break;
+	case 4:
+		cmd.cmd32 = (uint32_t)(base_address + address);
+		break;
+	default:
+		do_xfer = false;
+#ifdef ACPI_I2C_DEBUG
+		printf("cmdlen %zu not supported\n", cmdlen);
+#endif
+		break;
+	}
+
+	if (!do_xfer) {
+		buf[0] = EINVAL;
 	} else {
 		const int flags = I2C_F_POLL;
 		iic_acquire_bus(tag, flags);
-		buffer[0] = iic_exec(tag, op, res->Data.I2cSerialBus.SlaveAddress,
-				     &cmd, cmdlen, data_buffer, data_length, flags);
+		buf[0] = iic_exec(tag, op, i2c_addr,
+				  &cmd, cmdlen, &buf[2], buflen, flags);
 		iic_release_bus(tag, flags);
-		if (buffer[0] == 0) {
-			buffer[1] = data_length;
+		if (buf[0] == 0) {
+			buf[1] = buflen;
 		}
 #ifdef ACPI_I2C_DEBUG
-		printf("iic_exec returned %d\n", buffer[0]);
+		printf("%s iic_exec op %u addr 0x%x len %zu/%zu returned %d\n",
+		    __func__, op, res->Data.I2cSerialBus.SlaveAddress, cmdlen,
+		    buflen, buf[0]);
 #endif
 	}
 
