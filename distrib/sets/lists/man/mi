@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1791 2024/12/07 18:45:20 martin Exp $
+# $NetBSD: mi,v 1.1792 2024/12/15 20:57:47 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1907,6 +1907,7 @@
 ./usr/share/man/cat4/sparc64/ffb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/lom.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/pyro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sab.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sabtty.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/tadpmu.0		man-sys-catman		.cat
@@ -5475,6 +5476,7 @@
 ./usr/share/man/man4/sparc64/ffb.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/intro.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/lom.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/pyro.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sab.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sabtty.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/tadpmu.4		man-sys-man		.man
