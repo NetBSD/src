@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_169.c,v 1.9 2024/12/15 05:08:42 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.10 2024/12/15 06:04:17 rillig Exp $	*/
 # 3 "msg_169.c"
 
 // Test for message: possible precedence confusion between '%s' and '%s' [169]
@@ -50,9 +50,9 @@ confusing_shift_arith(unsigned a, unsigned b, unsigned c, unsigned char ch)
 }
 
 void
-confusing_logical(bool a, bool b, bool c)
+confusing_logical(bool a, bool b, bool c, bool d)
 {
-	bool con, okl, okr, eql;
+	bool con, okl, okr, okb, eql;
 
 	eql = a && b && c;
 	eql = a || b || c;
@@ -66,6 +66,16 @@ confusing_logical(bool a, bool b, bool c)
 	con = a || b && c;
 	okl = (a || b) && c;
 	okr = a || (b && c);
+
+	// When both nested operands have confusing precedence, there's only
+	// a single warning, as that is enough to point to the issue.
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	con = a && b || c && d;
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	okl = (a && b) || c && d;
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	okr = a && b || (c && d);
+	okb = (a && b) || (c && d);
 }
 
 void

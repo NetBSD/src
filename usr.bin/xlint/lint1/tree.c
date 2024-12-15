@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.663 2024/12/15 05:08:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.664 2024/12/15 06:04:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.663 2024/12/15 05:08:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.664 2024/12/15 06:04:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1581,32 +1581,28 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 }
 
 static bool
-is_confusing_precedence(op_t op, op_t lop, op_t rop, op_t *cop)
+is_confusing_precedence(op_t op, const tnode_t *operand, op_t *cop)
 {
+	if (operand->tn_parenthesized)
+		return false;
+	op_t oop = operand->tn_op;
 
 	if (op == SHL || op == SHR) {
-		if (lop == PLUS || lop == MINUS)
-			return *cop = lop, true;
-		if (rop == PLUS || rop == MINUS)
-			return *cop = rop, true;
+		if (oop == PLUS || oop == MINUS)
+			return *cop = oop, true;
 		return false;
 	}
 
 	if (op == LOGOR) {
-		if (lop == LOGAND)
-			return *cop = lop, true;
-		if (rop == LOGAND)
-			return *cop = rop, true;
+		if (oop == LOGAND)
+			return *cop = oop, true;
 		return false;
 	}
 
 	lint_assert(op == BITAND || op == BITXOR || op == BITOR);
-	if (lop != op
-	    && (lop == PLUS || lop == MINUS || lop == BITAND || lop == BITXOR))
-		return *cop = lop, true;
-	if (rop != op
-	    && (rop == PLUS || rop == MINUS || rop == BITAND || rop == BITXOR))
-		return *cop = rop, true;
+	if (oop != op
+	    && (oop == PLUS || oop == MINUS || oop == BITAND || oop == BITXOR))
+		return *cop = oop, true;
 	return false;
 }
 
@@ -1634,9 +1630,8 @@ check_precedence_confusion(tnode_t *tn)
 		continue;
 
 	op_t cop;
-	if (is_confusing_precedence(tn->tn_op,
-	    ln->tn_parenthesized ? NOOP : ln->tn_op,
-	    rn->tn_parenthesized ? NOOP : rn->tn_op, &cop)) {
+	if (is_confusing_precedence(tn->tn_op, ln, &cop) ||
+	    is_confusing_precedence(tn->tn_op, rn, &cop)) {
 		/* possible precedence confusion between '%s' and '%s' */
 		warning(169, op_name(tn->tn_op), op_name(cop));
 	}
