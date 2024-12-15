@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.71.2.4 2024/10/09 11:15:39 martin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.71.2.5 2024/12/15 14:32:46 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.4 2024/10/09 11:15:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.5 2024/12/15 14:32:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3386,11 +3386,12 @@ wg_task_retry_handshake(struct wg_softc *wg, struct wg_peer *wgp)
 	WG_TRACE("WGP_TASK_RETRY_HANDSHAKE");
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
-	KASSERT(wgp->wgp_handshake_start_time != 0);
 
 	wgs = wgp->wgp_session_unstable;
 	if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE)
 		return;
+
+	KASSERT(wgp->wgp_handshake_start_time != 0);
 
 	/*
 	 * XXX no real need to assign a new index here, but we do need
