@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.75 2022/06/08 23:12:27 andvar Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.76 2024/12/15 16:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -68,6 +68,9 @@
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
+#ifndef PT_MACHDEP_STRINGS
+# define PT_MACHDEP_STRINGS
+#endif
 
 #define PT_STRINGS \
 /*  0 */    "PT_TRACE_ME", \
@@ -97,7 +100,12 @@
 /* 24 */    "PT_LWPSTATUS", \
 /* 25 */    "PT_LWPNEXT", \
 /* 26 */    "PT_SET_SIGPASS", \
-/* 27 */    "PT_GET_SIGPASS"
+/* 27 */    "PT_GET_SIGPASS", \
+/* 28 */    "*PT_INVALID_28", \
+/* 29 */    "*PT_INVALID_29", \
+/* 30 */    "*PT_INVALID_30", \
+/* 31 */    "*PT_INVALID_31", \
+PT_MACHDEP_STRINGS
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {

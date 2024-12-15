@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.93 2024/12/15 16:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.93 2024/12/15 16:26:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -143,11 +143,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andva
 
 #include <machine/reg.h>
 
-# ifdef PTRACE_DEBUG
-#  define DPRINTF(a) uprintf a
-# else
-#  define DPRINTF(a)
-# endif
+#ifdef PTRACE_DEBUG
+# define DPRINTF(a) uprintf a
+static const char *pt_strings[] = { PT_STRINGS };
+#else
+# define DPRINTF(a)
+#endif
 
 static kauth_listener_t ptrace_listener;
 static int process_auxv_offset(struct proc *, struct uio *);
@@ -812,8 +813,9 @@ ptrace_lwpstatus(struct proc *t, struct ptrace_methods *ptm, struct lwp **lt,
 	ptrace_read_lwpstatus(l, &pls);
 
 out:
-	DPRINTF(("%s: lwp=%d sigpend=%02x%02x%02x%02x sigmask=%02x%02x%02x%02x "
-	   "name='%s' private=%p\n", __func__, pls.pl_lwpid,
+	DPRINTF(("%s: lwp=%d sigpend=%02x%02x%02x%02x "
+	    "sigmask=%02x%02x%02x%02x name='%s' private=%p\n",
+	    __func__, pls.pl_lwpid,
 	    pls.pl_sigpend.__bits[0], pls.pl_sigpend.__bits[1],
 	    pls.pl_sigpend.__bits[2], pls.pl_sigpend.__bits[3],
 	    pls.pl_sigmask.__bits[0], pls.pl_sigmask.__bits[1],
@@ -1089,6 +1091,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	bool locked;
 	error = 0;
 
+	DPRINTF(("%s: tracer=%d tracee=%d req=%s(%d) addr=%p data=%d\n",
+	    __func__, p->p_pid, pid,
+	    (u_int)req < __arraycount(pt_strings) ? pt_strings[req] : "???",
+	    req, addr, data));
 	/*
 	 * If attaching or detaching, we need to get a write hold on the
 	 * proclist lock so that we can re-parent the target process.
