@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.6 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: res_state.c,v 1.6.66.1 2024/12/15 15:04:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.6 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.6.66.1 2024/12/15 15:04:53 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ __res_get_state(void)
 		res_state_debug("checkout from list", st);
 	} else {
 		pthread_mutex_unlock(&res_mtx);
-		st = malloc(sizeof(*st));
+		st = calloc(1, sizeof(*st));
 		if (st == NULL) {
 			h_errno = NETDB_INTERNAL;
 			return NULL;
