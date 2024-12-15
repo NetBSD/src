@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_gpio.c,v 1.4 2024/12/13 12:25:39 jmcneill Exp $ */
+/* $NetBSD: acpi_gpio.c,v 1.5 2024/12/15 10:15:55 hannken Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.4 2024/12/13 12:25:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.5 2024/12/15 10:15:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -49,6 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_gpio.c,v 1.4 2024/12/13 12:25:39 jmcneill Exp $
 #include <dev/acpi/acpi_gpio.h>
 
 #if NGPIO > 0
+
+#define _COMPONENT	ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME	("acpi_gpio")
+
 struct acpi_gpio_address_space_context {
 	ACPI_CONNECTION_INFO conn_info;	/* must be first */
 	struct acpi_devnode *ad;
