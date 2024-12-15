@@ -1,4 +1,4 @@
-/* $NetBSD: crc32.c,v 1.4 2012/12/29 16:18:08 jmcneill Exp $ */
+/* $NetBSD: crc32.c,v 1.4.40.1 2024/12/15 14:38:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -33,14 +33,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crc32.c,v 1.4 2012/12/29 16:18:08 jmcneill Exp $");
+__RCSID("$NetBSD: crc32.c,v 1.4.40.1 2024/12/15 14:38:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <stdint.h>
-
-uint32_t	crc32(const void *, size_t);
-uint32_t	crc32v(const struct iovec *, int);
+#include "crc32.h"
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -99,6 +97,7 @@ crc32v(const struct iovec *iov, int cnt)
 
 	for (i = 0; i < cnt; i++) {
 		p = iov[i].iov_base;
+/*###102 [lint] warning conversion from 'unsigned long' to 'int' may lose accuracy [132]%%%*/
 		len = iov[i].iov_len;
 		while (len--)
 			crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
