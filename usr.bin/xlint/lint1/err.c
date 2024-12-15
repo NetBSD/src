@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.260 2024/12/08 17:12:01 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.261 2024/12/15 05:08:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.260 2024/12/08 17:12:01 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.261 2024/12/15 05:08:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -224,7 +224,7 @@ static const char *const msgs[] = {
 	"precision lost in bit-field assignment",			// 166
 	"array subscript %jd cannot be negative",			// 167
 	"array subscript %ju cannot be > %d",				// 168
-	"precedence confusion possible: parenthesize!",			// 169
+	"possible precedence confusion between '%s' and '%s'",		// 169
 	"first operand of '?' must have scalar type",			// 170
 	"cannot assign to '%s' from '%s'",				// 171
 	"too many struct/union initializers",				// 172

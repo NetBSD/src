@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.662 2024/11/30 10:43:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.663 2024/12/15 05:08:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.662 2024/11/30 10:43:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.663 2024/12/15 05:08:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1581,38 +1581,32 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 }
 
 static bool
-is_confusing_precedence(op_t op, op_t lop, bool lparen, op_t rop, bool rparen)
+is_confusing_precedence(op_t op, op_t lop, op_t rop, op_t *cop)
 {
 
 	if (op == SHL || op == SHR) {
-		if (!lparen && (lop == PLUS || lop == MINUS))
-			return true;
-		if (!rparen && (rop == PLUS || rop == MINUS))
-			return true;
+		if (lop == PLUS || lop == MINUS)
+			return *cop = lop, true;
+		if (rop == PLUS || rop == MINUS)
+			return *cop = rop, true;
 		return false;
 	}
 
 	if (op == LOGOR) {
-		if (!lparen && lop == LOGAND)
-			return true;
-		if (!rparen && rop == LOGAND)
-			return true;
+		if (lop == LOGAND)
+			return *cop = lop, true;
+		if (rop == LOGAND)
+			return *cop = rop, true;
 		return false;
 	}
 
 	lint_assert(op == BITAND || op == BITXOR || op == BITOR);
-	if (!lparen && lop != op) {
-		if (lop == PLUS || lop == MINUS)
-			return true;
-		if (lop == BITAND || lop == BITXOR)
-			return true;
-	}
-	if (!rparen && rop != op) {
-		if (rop == PLUS || rop == MINUS)
-			return true;
-		if (rop == BITAND || rop == BITXOR)
-			return true;
-	}
+	if (lop != op
+	    && (lop == PLUS || lop == MINUS || lop == BITAND || lop == BITXOR))
+		return *cop = lop, true;
+	if (rop != op
+	    && (rop == PLUS || rop == MINUS || rop == BITAND || rop == BITXOR))
+		return *cop = rop, true;
 	return false;
 }
 
@@ -1639,11 +1633,12 @@ check_precedence_confusion(tnode_t *tn)
 	for (rn = tn->u.ops.right; rn->tn_op == CVT; rn = rn->u.ops.left)
 		continue;
 
+	op_t cop;
 	if (is_confusing_precedence(tn->tn_op,
-	    ln->tn_op, ln->tn_parenthesized,
-	    rn->tn_op, rn->tn_parenthesized)) {
-		/* precedence confusion possible: parenthesize! */
-		warning(169);
+	    ln->tn_parenthesized ? NOOP : ln->tn_op,
+	    rn->tn_parenthesized ? NOOP : rn->tn_op, &cop)) {
+		/* possible precedence confusion between '%s' and '%s' */
+		warning(169, op_name(tn->tn_op), op_name(cop));
 	}
 }
 
