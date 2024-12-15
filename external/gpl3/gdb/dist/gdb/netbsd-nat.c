@@ -580,6 +580,7 @@ ptid_t
 nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		       target_wait_flags target_options)
 {
+again:
   pid_t pid = nbsd_wait (ptid, ourstatus, target_options);
   ptid_t wptid = ptid_t (pid);
 
@@ -640,8 +641,7 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
       /* The GDB core expects that the rest of the threads are running.  */
       if (ptrace (PT_CONTINUE, pid, (void *) 1, 0) == -1)
 	perror_with_name (("ptrace"));
-
-      return wptid;
+      goto again;
     }
 
   if (in_thread_list (this, ptid_t (pid)))
