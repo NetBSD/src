@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.23.10.1 2024/11/17 13:32:53 martin Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.23.10.2 2024/12/15 12:57:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -43,6 +43,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/endian.h>
 #include <sys/exec_aout.h>
 #include <sys/exec_elf.h>
 
@@ -55,8 +56,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <arpa/inet.h>
 
 
 struct sect {
@@ -372,7 +371,7 @@ main(int argc, char **argv)
 
 	/* We now have enough information to cons up an a.out header... */
 	mid = get_mid(&ex);
-	aex.a_midmag = (u_long)htonl(((u_long)symflag << 26)
+	aex.a_midmag = (u_long)htobe32(((u_long)symflag << 26)
 	    | ((u_long)mid << 16) | magic);
 
 	aex.a_text = text.len;
