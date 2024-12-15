@@ -1,5 +1,4 @@
-
-/*	$NetBSD: uipc_mbuf.c,v 1.254 2024/12/06 18:44:00 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.255 2024/12/15 11:07:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -63,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.254 2024/12/06 18:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.255 2024/12/15 11:07:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ether.h"
