@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.9 2024/10/20 14:06:49 mlelstv Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.10 2024/12/15 21:40:05 andvar Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.9 2024/10/20 14:06:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.10 2024/12/15 21:40:05 andvar Exp $");
 
 #include "autofs.h"
 
@@ -142,7 +142,7 @@ autofs_trigger_vn(struct vnode *vp, const char *path, int pathlen,
 	anp = vp->v_data;
 
 	/*
-	 * Release the vnode lock, so that other operations, in partcular
+	 * Release the vnode lock, so that other operations, in particular
 	 * mounting a filesystem on top of it, can proceed.  Increase use
 	 * count, to prevent the vnode from being deallocated and to prevent
 	 * filesystem from being unmounted.
