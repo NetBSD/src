@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.39 2024/12/12 08:33:27 skrll Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.40 2024/12/15 11:24:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.39 2024/12/12 08:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.40 2024/12/15 11:24:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -459,7 +459,7 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	/*
 	 * Map the device to the ITT
 	 */
-	const u_int size = uimax(1, fls32(vectors));
+	const u_int size = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	mutex_enter(its->its_lock);
 	error = gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, size, true);
 	if (error == 0) {
@@ -812,46 +812,6 @@ gicv3_its_table_params(struct gicv3_softc *sc, struct gicv3_its *its,
 	}
 }
 
-static u_int
-gicv3_its_probe_page_size(struct gicv3_its *its, int tab)
-{
-	uint64_t baser, tmp;
-	u_int page_size = 65536;
-
-	baser = gits_read_8(its, GITS_BASERn(tab));
-	for (;;) {
-		baser &= ~GITS_BASER_Page_Size;
-		switch (page_size) {
-		case 4096:
-			baser |= __SHIFTIN(GITS_Page_Size_4KB, GITS_BASER_Page_Size);
-			break;
-		case 16384:
-			baser |= __SHIFTIN(GITS_Page_Size_16KB, GITS_BASER_Page_Size);
-			break;
-		case 65536:
-			baser |= __SHIFTIN(GITS_Page_Size_64KB, GITS_BASER_Page_Size);
-			break;
-		}
-
-		gits_write_8(its, GITS_BASERn(tab), baser);
-		tmp = gits_read_8(its, GITS_BASERn(tab));
-		if ((baser & GITS_BASER_Page_Size) == (tmp & GITS_BASER_Page_Size)) {
-			return page_size;
-		}
-
-		if (page_size == 65536) {
-			page_size = 16384;
-		} else if (page_size == 16384) {
-			page_size = 4096;
-		} else {
-			aprint_error_dev(its->its_gic->sc_dev,
-			    "WARNING: Couldn't determine ITS page size, "
-			    "defaulting to 4KB\n");
-			return page_size;
-		}
-	}
-}
-
 static bool
 gicv3_its_table_probe_indirect(struct gicv3_its *its, int tab)
 {
@@ -892,8 +852,18 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 		l2_entry_size = 0;
 		l2_num_ids = 0;
 
-		page_size = gicv3_its_probe_page_size(its, tab);
-		table_align = 65536; // why not
+		switch (__SHIFTOUT(baser, GITS_BASER_Page_Size)) {
+		case GITS_Page_Size_64KB:
+			page_size = 65536;
+			break;
+		case GITS_Page_Size_16KB:
+			page_size = 16384;
+			break;
+		case GITS_Page_Size_4KB:
+		default:
+			page_size = 4096;
+		}
+		table_align = page_size;
 
 		switch (__SHIFTOUT(baser, GITS_BASER_Type)) {
 		case GITS_Type_Devices:
