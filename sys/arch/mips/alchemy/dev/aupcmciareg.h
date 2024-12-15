@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmciareg.h,v 1.1 2006/02/23 03:49:28 gdamore Exp $ */
+/* $NetBSD: aupcmciareg.h,v 1.2 2024/12/15 21:39:28 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 /*
  * PCMCIA address ranges.  The Alchemy provides 64 MB mappings for
- * each of the three ranges.  Of particlar, please note that
+ * each of the three ranges.  Of particular, please note that
  * AUCMCIA_IO_START begins at offset zero.
  */
 #define	AUPCMCIA_IO_OFFSET	0x00000000
