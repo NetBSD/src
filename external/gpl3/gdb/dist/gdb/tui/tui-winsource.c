@@ -316,7 +316,7 @@ tui_source_window_base::refresh_window ()
      the screen, potentially creating a flicker.  */
   wnoutrefresh (handle.get ());
 
-  int pad_width = getmaxx (m_pad.get ());
+  int pad_width = m_pad.get () ? getmaxx (m_pad.get ()) : 0;
   int left_margin = this->left_margin ();
   int view_width = this->view_width ();
   int content_width = m_max_length;
@@ -345,7 +345,8 @@ tui_source_window_base::refresh_window ()
   int smincol = x + box_width () + left_margin;
   int smaxrow = sminrow + m_content.size () - 1;
   int smaxcol = smincol + view_width - 1;
-  prefresh (m_pad.get (), 0, pad_x, sminrow, smincol, smaxrow, smaxcol);
+  if (m_pad.get ())
+    prefresh (m_pad.get (), 0, pad_x, sminrow, smincol, smaxrow, smaxcol);
 }
 
 void
