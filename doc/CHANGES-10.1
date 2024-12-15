@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.76 2024/12/13 17:15:43 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.77 2024/12/15 15:03:43 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -3786,4 +3786,41 @@ share/man/man4/uftdi.4				1.24
 
 	Add Brainboxes devices to the supported list. PR/kern 55824
 	[msaitoh, ticket #1026]
+
+sys/arch/hppa/stand/mkboot/mkboot.c		1.5
+sys/arch/powerpc/stand/mkbootimage/mkbootimage.c 1.21
+usr.bin/elf2aout/elf2aout.c			1.25
+
+	Build fixes for newer GCC versions.
+	[gutteridge, ticket #1019]
+
+sys/net/if_wg.c					1.133
+
+	wg(4): PR 58859: avoid spurious kassert for harmless race in
+	session retry.
+	[alnsn, ticket #1022]
+
+usr.bin/mkubootimage/crc32.c			1.5
+usr.bin/mkubootimage/crc32.h			1.1
+usr.bin/mkubootimage/mkubootimage.1		1.15
+usr.bin/mkubootimage/mkubootimage.c		1.31,1.34
+
+	mkubootimage(1): PR 57914 and 58674: tool build fixes for newer GCC
+	and build reproducibility.
+	[gutteridge, ticket #1023]
+
+sys/uvm/uvm_km.c				1.166
+
+	kmem: improve behavior when using all of physical memory as kmem.
+	[chs, ticket #1027]
+
+sys/kern/subr_pool.c				1.292
+
+	pool: fix pool_sethiwat().
+	[chs, ticket #1028]
+
+lib/libpthread/res_state.c			1.8
+
+	libpthread: PR 58888: zero-initialize res_state objects.
+	[riastradh, ticket #1029]
 
