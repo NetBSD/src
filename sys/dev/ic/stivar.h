@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.11 2020/12/23 08:34:35 tsutsui Exp $	*/
+/*	$NetBSD: stivar.h,v 1.12 2024/12/16 08:56:25 macallan Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -136,6 +136,12 @@ struct sti_softc {
 	void			(*sc_enable_rom)(struct sti_softc *);
 	void			(*sc_disable_rom)(struct sti_softc *);
 };
+
+/*
+ * this maps 0xa0 - 0xff from ISO8859-1 to HP Roman 8
+ * 0x00-0x7f are identical, 0x80-0x9f are empty
+ */
+extern const uint8_t sti_unitoroman[];
 
 int	sti_attach_common(struct sti_softc *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, u_int);
