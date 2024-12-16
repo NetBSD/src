@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.78 2024/12/16 12:48:46 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.79 2024/12/16 13:08:11 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -626,7 +626,7 @@ usr.sbin/sysinst/msg.mi.en			1.52
 
 sys/arch/powerpc/oea/altivec.c			1.35
 
-	powerpc: PR 58283; don not try to restore altivec registers
+	powerpc: PR 58283; do not try to restore altivec registers
 	in vec_restore_from_mcontext() if no altivec is supported.
 	[tsutsui, ticket #732]
 
