@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.14 2024/12/10 09:10:57 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.15 2024/12/16 08:57:42 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.14 2024/12/10 09:10:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.15 2024/12/16 08:57:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1576,8 +1576,6 @@ summitfb_set_video(struct summitfb_softc *sc, int on)
 	} else {
 	}
 }
-
-extern const uint8_t sti_unitoroman[];
 
 static void
 summitfb_copyfont(struct summitfb_softc *sc)
