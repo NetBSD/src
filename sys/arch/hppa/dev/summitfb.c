@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.15 2024/12/16 08:57:42 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.16 2024/12/16 09:40:48 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.15 2024/12/16 08:57:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.16 2024/12/16 09:40:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,10 +690,6 @@ summitfb_setup(struct summitfb_softc *sc)
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
 
-	/*
-	 * STI hands us the frame buffer in 32bit access mode,
-	 * one of these puts us into 8bit FB access mode
-	 */
 #if 1
 	summitfb_write4(sc, 0xb08044, 0x1b);
 	summitfb_write4(sc, 0xb08048, 0x1b);
@@ -718,7 +714,8 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, VISFX_CLIP_TL, 0);
 	summitfb_write4(sc, VISFX_CLIP_WH,
 	    ((sc->sc_scr.fbwidth + 1) << 16) | (sc->sc_scr.fbheight + 1));
-
+	/* turn off the cursor sprite */
+	summitfb_write4(sc, VISFX_CURSOR_POS, 0);
 	summitfb_setup_fb(sc);
 }
 
@@ -1010,7 +1007,6 @@ summitfb_putpalreg(struct summitfb_softc *sc, uint8_t idx,
 	summitfb_write4(sc, VISFX_COLOR_VALUE, (r << 16) | ( g << 8) | b);
 	summitfb_write4(sc, VISFX_COLOR_MASK, 0xff);
 	summitfb_write4(sc, 0x80004c, 0xc);
-	summitfb_write4(sc, 0x800000, 0);
 	return 0;
 }
 
