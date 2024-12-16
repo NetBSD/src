@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.27 2024/12/07 10:23:54 nat Exp $	*/
+/*	$NetBSD: ams.c,v 1.28 2024/12/16 03:45:52 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.27 2024/12/07 10:23:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.28 2024/12/16 03:45:52 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,6 +125,10 @@ amsattach(device_t parent, device_t self, void *aux)
 	adbinfo.siDataAreaAddr = (void *)sc;
 
 	ems_init(sc);
+
+	if (mac68k_machine.machineid == MACH_MACPB500 &&
+	    sc->sc_class == MSCLASS_MOUSE && sc->sc_devid[0] == '\0')
+		sc->handler_id = ADBMS_200DPI;
 
 	/* print out the type of mouse we have */
 	switch (sc->handler_id) {
