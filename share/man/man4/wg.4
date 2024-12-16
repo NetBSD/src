@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.10 2024/03/24 00:45:06 uwe Exp $
+.\"	$NetBSD: wg.4,v 1.11 2024/12/16 19:21:59 christos Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 20, 2020
+.Dd December 16, 2024
 .Dt WG 4
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -136,6 +136,21 @@ wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
         inet 10.2.0.1/24 flags 0
 .Ed
 .Pp
+You can put all these commands in
+.Pa /etc/ifconfig.wg0
+so that the interface gets configured automatically during startup:
+.Bd -literal -offset 4n
+A# cat /etc/ifconfig.wg0
+net 10.2.0.1/24
+inet6 fd00:2::1/64
+!wgconfig wg0 set private-key /etc/wg/wg0
+!wgconfig wg0 set listen-port 1234
+!wgconfig wg0 add peer B X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
+    --preshared-key=/etc/wg/wg0.A-B \e
+    --allowed-ips=10.2.0.42/32,fd00:2::1/128 \e
+up
+.Ed
+.Pp
 Configure B to connect to A at 192.0.2.123 on port 1234 and the packets
 can begin to flow:
 .Bd -literal -offset 4n
@@ -163,6 +178,21 @@ B# ping6 -n fd00:2::1
 PING6(56=40+8+8 bytes) fd00:2::42 --> fd00:2::1
 16 bytes from fd00:2::1, icmp_seq=0 hlim=64 time=2.634 ms
 \&...
+.Ed
+.Pp
+Same as before, you can put all these commands in
+.Pa /etc/ifconfig.wg0
+so that the interface gets configured automatically during startup:
+.Bd -literal -offset 4n
+B# cat /etc/ifconfig.wg0
+inet 10.2.0.42/24
+inet6 fd00:2::42/64
+!wgconfig wg0 set private-key /etc/wg/wg0
+!wgconfig wg0 add peer A N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
+    --preshared-key=/etc/wg/wg0.A-B \e
+    --allowed-ips=10.2.0.1/32,fd00:2::1/128 \e
+    --endpoint=192.0.2.123:1234
+up
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
