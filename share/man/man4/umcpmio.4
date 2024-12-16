@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.2 2024/12/16 17:25:09 uwe Exp $
+.\" $NetBSD: umcpmio.4,v 1.3 2024/12/16 19:04:29 rillig Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 22, 2024
+.Dd December 16, 2024
 .Dt UMCPMIO 4
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ driver provides support for the MCP2221 / MCP2221A multi-io bridge chip.
 The chip provides 4 simple gpio pins with multiple functions
 that attach as a
 .Xr gpio 4
-device, a I2C port that attaches as a
+device, an I2C port that attaches as an
 .Xr iic 4
 device and a UART serial port that attaches using
 .Xr umodem 4
@@ -64,7 +64,7 @@ ALT3:SSPND:Clock output:USBCFG:I2C activity
 .Pp
 ADC1, ADC2 and ADC3 are independent of each other and each 10 bits in
 length.
-To utilize one of the ADC pins an
+To utilize one of the ADC pins, an
 .Xr open 2
 is performed against
 .Pa /dev/umcpmio0GP1 ,
@@ -80,9 +80,9 @@ values.
 .Pp
 There is actually only one DAC present in the chip, but it is mirrored
 to GP2 and GP3 if the pin is set to ALT1.
-The DAC is 5 bits in length and to use it an
+The DAC is 5 bits in length, and to use it, an
 .Xr open 2
-is performed aginst
+is performed against
 .Pa /dev/umcpmio0GP2
 or
 .Pa /dev/umcpmio0GP3
@@ -91,10 +91,10 @@ with only the
 flag set.
 Writes of
 .Vt uint8_t
-bytes to the file descriptor will result in a analog signal being
+bytes to the file descriptor will result in an analog signal being
 created on the output pin.
 .Pp
-The clock output is derived from the USB clock of 48MHZ.
+The clock output is derived from the USB clock of 48MHz.
 The duty cycle and clock divider can be adjusted with
 .Xr sysctl 8
 variables.
@@ -104,10 +104,10 @@ command.
 .Ss I2C
 The chip supports a hardware I2C port with a simple scripting engine.
 When the driver attaches, the I2C speed is set to 100Kb/s.
-The ability to perform a I2C READ without a STOP is not supported by
+The ability to perform an I2C READ without a STOP is not supported by
 the MCP2221 / MCP2221A engine and the driver turns a READ without STOP
 into a READ with STOP.
-This behavior is just a attempt to allow a device to function and it
+This behavior is just an attempt to allow a device to function, and it
 may not work for any particular device.
 In particular, it is known that the
 .Xr si70xxtemp 4
@@ -118,7 +118,7 @@ devices will not work as expected.
 The UART utilizes the
 .Xr umodem 4
 driver.
-The UART function of the chip only support
+The UART function of the chip only supports
 .Tn 8-N-1
 communications.
 .Sh SYSCTL VARIABLES
@@ -144,11 +144,12 @@ This variable is in microseconds and defaults to 2500.
 The driver will only allow
 .Li response_errcnt
 number of errors when waiting for a reponse from a HID report.
-This includes timeouts due to exceeding response_wait.
+This includes timeouts due to exceeding
+.Li response_wait .
 .
 .Pp
 .It Li hw.umcpmio0.i2c.reportreadnostop
-Report on the console if a driver attempts to use a I2C READ without
+Report on the console if a driver attempts to use an I2C READ without
 STOP.
 A READ without STOP is not supported by the MCP2221 / MCP2221A I2C
 engine and will be turned into a READ with STOP by the driver.
@@ -156,27 +157,29 @@ engine and will be turned into a READ with STOP by the driver.
 .Pp
 .It Li hw.umcpmio0.i2c.busy_delay
 The driver checks in a number of cases if the I2C engine is busy and
-will wait for busy_delay microseconds before checking again.
+will wait for
+.Li busy_delay
+microseconds before checking again.
 .
 .Pp
 .It Li hw.umcpmio0.i2c.retry_busy_read
-The number of times to try to do a I2C READ when the engine is busy.
+The number of times to try to do an I2C READ when the engine is busy.
 .
 .Pp
 .It Li hw.umcpmio0.i2c.retry_busy_write
-The number of times to try to do a I2C WRITE when the engine is busy.
+The number of times to try to do an I2C WRITE when the engine is busy.
 .
 .Pp
 .It Li hw.umcpmio0.gpio.clock_duty_cycle
 .It Li hw.umcpmio0.gpio.clock_divider
-When GP1 is configured to use function ALT3 it will output a clock
+When GP1 is configured to use function ALT3, it will output a clock
 pulse.
 The valid values for
 .Li clock_duty_cycle
 are 75%, 50%, 25% and 0%.
 That is, 75% of the time a high and 25% of the time a low will be
 present on the GP1 pin.
-The values for
+The valid values for
 .Li clock_divider
 are 375kHz, 750kHz, 1.5MHz, 3MHz, 6MHz, 12MHz and 24MHz.
 .
@@ -204,10 +207,10 @@ Device files that allow access to the ADC or DAC functions of the
 associated gpio pin.
 .El
 .Sh SEE ALSO
-.Xr umcpmioctl 8 ,
 .Xr gpio 4 ,
 .Xr iic 4 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr umcpmioctl 8
 .Sh HISTORY
 The
 .Nm
@@ -221,15 +224,15 @@ driver was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
 The gpio pins on the MCP2221 / MCP2221A are very slow and one should
-not expect to be able rapidly change their state.
+not expect to be able to rapidly change their state.
 Even if the problem mentioned below did not exist, one should not
 expect to be able to use any of the gpio bit banger drivers such as
 .Xr gpioiic 4
 or
 .Xr gpioow 4 .
 .Pp
-The interrupt function on GP1 can not currently be used because it is
-currently not possible to attach though the driver.
+The interrupt function on GP1 cannot currently be used because it is
+currently not possible to attach through the driver.
 There may be two possible problems going on:
 .Bl -bullet
 .It
@@ -239,7 +242,7 @@ framework runs at
 .Dv IPL_VM
 with a spin lock and when it attempts to establish an interrupt that
 uses the gpio from
-.Xr umcpmio 4
+.Xr umcpmio 4 ,
 calls are made into the USB stack that will want to wait in a way that
 is not allowed while holding a spin lock.
 .
@@ -247,26 +250,26 @@ is not allowed while holding a spin lock.
 .Xr autoconf 9
 runs with
 .Dv KERNEL_LOCK
-and during the attachment this lock is held when calls are made into
+and during the attachment, this lock is held when calls are made into
 the USB stack that will cause a wait that is not allowed while holding
-.Dv KERNEL_LOGK .
+.Dv KERNEL_LOCK .
 .El
-
+.
 .Pp
 Either or both of these may be
 going on, but the end result is that the kernel will panic while
 attempting to perform a USB transfer while another driver is
-attempting to attach though
+attempting to attach through
 .Xr umcpmio 4 .
 .Pp
 Likewise, a
 .Ql \|gpioctl gpio1 attach ...\|
-type call will also panic for for the same reason.
+type call will also panic for the same reason.
 .Pp
 The end result is that
 .Xr gpioirq 4 ,
 .Xr gpiopps 4
-and 
+and
 .Xr gpioow 4
 will not work with the gpio from
 .Xr umcpio 4 .
@@ -276,12 +279,12 @@ Please note that the
 driver itself can use the USB stack during attachment and there does
 not appear to be any problems using the GPIO pins or setting GPIO pin
 configurations.
-It is only when the driver is a target during another drivers
+It is only when the driver is a target during another driver's
 attachment that there is a problem.
 .Pp
 The ability to set or change values in most of the chip's FLASH memory
 is not supported.
 This includes changing the configuration protection password.
 Likewise, support for entering the configuration protection password
-does not exist should a particular chip have password protection
+does not exist, should a particular chip have password protection
 enabled.
