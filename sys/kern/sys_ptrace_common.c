@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.94 2024/12/15 17:42:34 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.95 2024/12/16 12:56:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.94 2024/12/15 17:42:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.95 2024/12/16 12:56:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -966,7 +966,7 @@ ptrace_sendsig(struct lwp *l, int req, struct proc *t, struct lwp *lt, int signo
 		else
 			lwp_unstop(lt);
 
-		if (signo != SIGKILL)
+		if (req != PT_KILL || signo != SIGKILL)
 			return 0;
 	}
 
