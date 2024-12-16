@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.570.2.5 2024/03/25 15:23:49 martin Exp $
+.\"	$NetBSD: main,v 1.570.2.6 2024/12/16 12:41:34 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -503,23 +503,23 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss "Dedication"
-.Pp
-.
-.Nx
-\n[major].0 is dedicated to the memory of Ryo SHIMIZU, who
-passed away in May 2023.
-.Pp
-Ryo's technical contributions are too many to list here in full.
-He was a long term contributor and worked on a lot of low-level code
-over various architectures, from x68k to aarch64.
-He also worked on various out-of-tree
-.Nx
-items, like the IIJ git repository conversion.
-.Pp
-The project lost an excellent technical contributor and many
-of us a good friend.
-.Pp
+.\" .Ss "Dedication"
+.\" .Pp
+.\" .
+.\" .Nx
+.\" \n[major].0 is dedicated to the memory of Ryo SHIMIZU, who
+.\" passed away in May 2023.
+.\" .Pp
+.\" Ryo's technical contributions are too many to list here in full.
+.\" He was a long term contributor and worked on a lot of low-level code
+.\" over various architectures, from x68k to aarch64.
+.\" He also worked on various out-of-tree
+.\" .Nx
+.\" items, like the IIJ git repository conversion.
+.\" .Pp
+.\" The project lost an excellent technical contributor and many
+.\" of us a good friend.
+.\" .Pp
 .\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
