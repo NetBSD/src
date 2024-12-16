@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1354 2024/10/30 18:09:16 christos Exp $
+# $NetBSD: mi,v 1.1355 2024/12/16 16:37:39 brad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1833,6 +1833,7 @@
 ./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
 ./usr/sbin/unbound-control			base-netutil-bin	unbound
 ./usr/sbin/unbound-control-setup		base-netutil-bin	unbound
+./usr/sbin/umcpmioctl				base-sysutil-bin
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
 ./usr/sbin/usbdevs				base-sysutil-bin

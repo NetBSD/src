@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.179 2023/07/20 20:00:34 mrg Exp $
+#	$NetBSD: files.usb,v 1.180 2024/12/16 16:37:38 brad Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -88,6 +88,7 @@ defflag opt_usb.h	UVIDEO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVISOR_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVSCOM_DEBUG: USB_DEBUG
 defflag opt_usb.h	ZYD_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMSCMIO_DEBUG: USB_DEBUG
 
 define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
@@ -561,3 +562,9 @@ file	dev/usb/ualea.c			ualea
 # Broadcom FullMAC USB wireless adapter
 attach	bwfm at usbdevif with bwfm_usb: firmload
 file	dev/usb/if_bwfm_usb.c		bwfm_usb
+
+# Microchip USB 2.0 to I2C/UART Protocol Converter with GPIO
+device	umcpmio: hid, i2cbus, i2cexec, gpiobus
+attach  umcpmio at uhidbus
+file    dev/usb/umcpmio.c		umcpmio			needs-flag
+file	dev/usb/umcpmio_subr.c		umcpmio

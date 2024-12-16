@@ -1,0 +1,123 @@
+.\" $NetBSD: umcpmioctl.8,v 1.1 2024/12/16 16:37:40 brad Exp $
+.\"
+.\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd November 24, 2024
+.Dt UMCPMIOCTL 8
+.Os
+.Sh NAME
+.Nm umcpmioctl
+.Nd Command line utility to interact with a MCP2221 / MCP2221A multi-io chip
+.Sh SYNOPSIS
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar status
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get sram
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get gp
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash cs
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash gp
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash usbman
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash usbprod
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash usbsn
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar get flash chipsn
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Ar put flash gp GPn PIN_FUNCTION ...
+.Pp
+GPn is one of GP0, GP1, GP2 or GP3
+.Pp
+PIN_FUNCTION is one of GPIO_PIN_INPUT, GPIO_PIN_OUTPUT, GPIO_PIN_ALT0,
+GPIO_PIN_ALT1, GPIO_PIN_ALT2, GPIO_PIN_ALT3, DEFAULT_OUTPUT_ZERO, or
+DEFAULT_OUTPUT_ONE
+.Pp
+For a
+.Ar put flash
+the GPn and PIN_FUNCTION pairs may be repeated
+.Sh DESCRIPTION
+The
+.Nm
+utility interacts with a MCP2221 / MCP2221A and can be used to pull
+the status of the chip, get the SRAM values, get the values from the
+onboard FLASH and can be used to set some of the FLASH values
+assoicated with the gpio pins.  The values from flash are copied into
+the SRAM when the chip enumerates or powers up.
+.Sh EXAMPLES
+.Pp
+.Dl "umcpmioctl /dev/umcpmio0ctl status"
+.Pp
+Query the chip for its status.
+.Pp
+.Dl "umcpmioctl /dev/umcpmio0ctl get sram"
+.Pp
+Return the values from the SRAM on the chip.
+.Pp
+.Dl "umcpmioctl /dev/umcpmio0ctl get flash cs"
+.Pp
+Return the values for the chip settings from the FLASH.
+.Pp
+.Dl "umcpmioctl /dev/umcpmio0ctl put flash gp GP0 GPIO_PIN_INPUT"
+.Pp
+This will set the GP0 pin to be an input pin on start up of the chip.
+.Pp
+.Dl "umcpmioctl /dev/umcpmio0ctl put flash gp GP2 GPIO_PIN_OUTPUT GP0 GPIO_PIN_ALT0"
+.Pp
+This will set the GP2 pin to be an output pin and GP0 pin to have the
+ALT0 function upon chip start up.
+.Sh SEE ALSO
+.Xr umcpmio 4
+.Xr gpio 4
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 11.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+Only the gpio settings can be changed in FLASH.
+.Pp
+The output is not very pleasent to use and one will probably need to
+have the datasheet for the MCP2221 / MCP2221A on hand to make sense of
+it.

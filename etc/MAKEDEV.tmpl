@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.234 2023/11/06 00:35:05 brad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.235 2024/12/16 16:37:40 brad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1028,6 +1028,15 @@ ugen[0-9]*)
 		mkdev ugen$unit.$j c %ugen_chr% $(($unit * 16 + ${j#0}))
 	done
 	;;
+
+umcpmio[0-9]*)
+        unit=${i#umcpmio}
+        mkdev umcpmio${unit}ctl c %umcpmio_chr% $unit 660
+        for j in 0 1 2
+        do
+                mkdev umcpmio${unit}GP$(($j + 1)) c %umcpmio_chr% $(($unit * 3 + 128 + ${j#})) 666
+        done
+        ;;
 
 wscons)
 	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7

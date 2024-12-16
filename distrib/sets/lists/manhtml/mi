@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.14 2024/12/15 20:57:47 mrg Exp $
+# $NetBSD: mi,v 1.15 2024/12/16 16:37:39 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1843,6 +1843,7 @@
 ./usr/share/man/html4/uipad.html		man-sys-htmlman		html
 ./usr/share/man/html4/uipaq.html		man-sys-htmlman		html
 ./usr/share/man/html4/uirda.html		man-sys-htmlman		html
+./usr/share/man/html4/umcpmio.html		man-sys-htmlman		html
 ./usr/share/man/html4/uk.html			man-sys-htmlman		html
 ./usr/share/man/html4/ukbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ukphy.html		man-sys-htmlman		html
@@ -3083,6 +3084,7 @@
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umbctl.html		man-netutil-htmlman	html
+./usr/share/man/html8/umcpmioctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unbound-checkconf.html	man-netutil-htmlman	html,unbound

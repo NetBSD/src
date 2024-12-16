@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.454 2024/11/10 15:57:32 riastradh Exp $
+# $NetBSD: mi,v 1.455 2024/12/16 16:37:39 brad Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1368,6 +1368,7 @@
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete,compatfile
 ./usr/libdata/debug/usr/sbin/tsig-keygen.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/umcpmioctl.debug	base-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/unbound-anchor.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-checkconf.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-control.debug	base-netutil-debug	debug,unbound

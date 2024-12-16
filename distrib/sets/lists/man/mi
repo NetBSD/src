@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1792 2024/12/15 20:57:47 mrg Exp $
+# $NetBSD: mi,v 1.1793 2024/12/16 16:37:39 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2043,6 +2043,7 @@
 ./usr/share/man/cat4/ulpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umass.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umb.0			man-sys-catman		.cat
+./usr/share/man/cat4/umcpmio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umcs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umct.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umidi.0			man-sys-catman		.cat
@@ -3489,6 +3490,7 @@
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umbctl.0			man-netutil-catman	.cat
+./usr/share/man/cat8/umcpmioctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,unbound
@@ -5612,6 +5614,7 @@
 ./usr/share/man/man4/ulpt.4			man-sys-man		.man
 ./usr/share/man/man4/umass.4			man-sys-man		.man
 ./usr/share/man/man4/umb.4			man-sys-man		.man
+./usr/share/man/man4/umcpmio.4			man-sys-man		.man
 ./usr/share/man/man4/umcs.4			man-sys-man		.man
 ./usr/share/man/man4/umct.4			man-sys-man		.man
 ./usr/share/man/man4/umidi.4			man-sys-man		.man
@@ -7055,6 +7058,7 @@
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umbctl.8			man-netutil-man		.man
+./usr/share/man/man8/umcpmioctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
 ./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,unbound
 ./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,unbound
