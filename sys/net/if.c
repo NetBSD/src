@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.530 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.531 2024/12/16 05:18:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.530 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.531 2024/12/16 05:18:37 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -927,6 +927,7 @@ if_percpuq_enqueue(struct if_percpuq *ipq, struct mbuf *m)
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		percpu_putref(ipq->ipq_ifqs);
+		if_statinc(ipq->ipq_ifp, if_iqdrops);
 		m_freem(m);
 		goto out;
 	}
