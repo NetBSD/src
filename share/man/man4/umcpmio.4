@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.3 2024/12/16 19:04:29 rillig Exp $
+.\" $NetBSD: umcpmio.4,v 1.4 2024/12/16 21:45:04 uwe Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -176,18 +176,34 @@ When GP1 is configured to use function ALT3, it will output a clock
 pulse.
 The valid values for
 .Li clock_duty_cycle
-are 75%, 50%, 25% and 0%.
+are
+.Ql 75% ,
+.Ql 50% ,
+.Ql 25% ,
+and
+.Ql \^0% .
 That is, 75% of the time a high and 25% of the time a low will be
 present on the GP1 pin.
 The valid values for
 .Li clock_divider
-are 375kHz, 750kHz, 1.5MHz, 3MHz, 6MHz, 12MHz and 24MHz.
+are
+.Ql 375kHz ,
+.Ql 750kHz ,
+.Ql 1.5MHz ,
+.Ql 3MHz ,
+.Ql 6MHz ,
+.Ql 12MHz ,
+and
+.Ql 24MHz .
 .
 .Pp
 .It Li hw.umcpmio0.dac.vref
 .It Li hw.umcpmio0.adc.vref
 Sets the VREF value for the DAC or ADC.
-The valid values are 4.096V, 2.048V, 1.024V,
+The valid values are
+.Ql 4.096V ,
+.Ql 2.048V ,
+.Ql 1.024V ,
 .Ql OFF ,
 and
 .Ql VDD .
