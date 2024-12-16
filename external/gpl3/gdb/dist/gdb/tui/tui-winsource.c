@@ -41,6 +41,10 @@
 #include "tui/tui-location.h"
 #include "gdb_curses.h"
 
+/* ncurses returns -1, but BSD segfaults; the code assumes ncurses */
+#define tui_getmaxx(w)	((w) ? getmaxx (w) : -1)
+#define tui_getmaxy(w)	((w) ? getmaxy (w) : -1)
+
 /* Function to display the "main" routine.  */
 void
 tui_display_main ()
@@ -316,7 +320,7 @@ tui_source_window_base::refresh_window ()
      the screen, potentially creating a flicker.  */
   wnoutrefresh (handle.get ());
 
-  int pad_width = m_pad.get () ? getmaxx (m_pad.get ()) : 0;
+  int pad_width = tui_getmaxx (m_pad.get ());
   int left_margin = this->left_margin ();
   int view_width = this->view_width ();
   int content_width = m_max_length;
@@ -365,10 +369,10 @@ tui_source_window_base::show_source_content ()
   /* If the required pad width is wider than the previously requested pad
      width, then we might want to grow the pad.  */
   if (required_pad_width > m_pad_requested_width
-      || required_pad_height > getmaxy (m_pad.get ()))
+      || required_pad_height > tui_getmaxy (m_pad.get ()))
     {
       /* The current pad width.  */
-      int pad_width = m_pad == nullptr ? 0 : getmaxx (m_pad.get ());
+      int pad_width = m_pad == nullptr ? 0 : tui_getmaxx (m_pad.get ());
 
       gdb_assert (pad_width <= m_pad_requested_width);
 
@@ -377,7 +381,7 @@ tui_source_window_base::show_source_content ()
 	 bigger pad.  There's no point asking again, so we'll just make so
 	 with the pad we currently have.  */
       if (pad_width == m_pad_requested_width
-	  || required_pad_height > getmaxy (m_pad.get ()))
+	  || required_pad_height > tui_getmaxy (m_pad.get ()))
 	{
 	  pad_width = required_pad_width;
 
@@ -399,7 +403,7 @@ tui_source_window_base::show_source_content ()
 
       m_pad_requested_width = required_pad_width;
       tui_debug_printf ("requested width %d, allocated width %d",
-			required_pad_width, getmaxx (m_pad.get ()));
+			required_pad_width, tui_getmaxx (m_pad.get ()));
     }
 
   gdb_assert (m_pad != nullptr);
@@ -534,7 +538,7 @@ tui_source_window_base::validate_scroll_offsets ()
     m_horizontal_offset = 0;
 
   int content_width = m_max_length;
-  int pad_width = getmaxx (m_pad.get ());
+  int pad_width = tui_getmaxx (m_pad.get ());
   int view_width = this->view_width ();
 
   tui_debug_printf ("pad_width = %d, view_width = %d, content_width = %d",
