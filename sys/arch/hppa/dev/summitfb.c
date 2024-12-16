@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.16 2024/12/16 09:40:48 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.17 2024/12/16 10:05:47 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.16 2024/12/16 09:40:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.17 2024/12/16 10:05:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,9 +271,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
 	sc->sc_write_mode = 0xffffffff;
 
-	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
-	    sc->sc_width, sc->sc_height);
-
 #ifdef SUMMITFB_DEBUG
 	sc->sc_height -= 200;
 	sc->sc_width -= 200;
@@ -350,6 +347,9 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	}
+
+	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
+	    sc->sc_width, sc->sc_height);
 
 	/* no suspend/resume support yet */
 	pmf_device_register(sc->sc_dev, NULL, NULL);
@@ -1584,7 +1584,7 @@ summitfb_copyfont(struct summitfb_softc *sc)
 
 	if (font == NULL) return;
 	bufsize = sizeof(struct wsdisplay_font) + 32 + fp->bpc * ( fp->last - fp->first);
-	printf("%s: %dx%d %d\n", __func__, fp->width, fp->height, bufsize);
+	DPRINTF(("%s: %dx%d %d\n", __func__, fp->width, fp->height, bufsize));
 	fontbuf = kmem_alloc(bufsize, KM_NOSLEEP);
 	if (fontbuf == NULL) return;
 	f = (struct wsdisplay_font *)fontbuf;
