@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3119 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3120 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -618,3 +618,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	mac68k: Support for backlight control on PowerBooks.  [nat 20241209]
 	puc(4): Add support for some Oxford Semiconductor devices.
 		[msaitoh 20241212]
+	umcpmio(4): Driver for the MCP-2221 / 2221A multi-io chip.
+		[brad 20241216]
