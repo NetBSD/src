@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.194 2024/09/03 07:59:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.195 2024/12/16 05:20:31 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.194 2024/09/03 07:59:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.195 2024/12/16 05:20:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1812,9 +1812,6 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct psref psref_src;
 	DECLARE_LOCK_VARIABLE;
 	bool src_if_protected;
-
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
-		return;
 
 	src_if = m_get_rcvif_psref(m, &psref_src);
 	if (src_if == NULL) {
