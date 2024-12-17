@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1349 2024/12/08 17:12:00 rillig Exp $
+# $NetBSD: mi,v 1.1350 2024/12/17 17:56:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3367,6 +3367,7 @@
 ./usr/tests/lib/libc/sys/t_posix_fallocate		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ppoll			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_ptrace_kill			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_sigchld		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_wait			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_wait3			tests-lib-tests		compattestfile,atf
