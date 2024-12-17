@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.6 2024/12/12 22:30:47 jmcneill Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.7 2024/12/17 22:04:57 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,23 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.6 2024/12/12 22:30:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.7 2024/12/17 22:04:57 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/gpio.h>
-#include <sys/queue.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/evcnt.h>
+#include <sys/queue.h>
 
-#include <dev/acpi/acpireg.h>
-#include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_event.h>
 #include <dev/acpi/acpi_gpio.h>
+#include <dev/acpi/acpi_intr.h>
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/acpi/qcomgpioreg.h>
 
 #include <dev/gpio/gpiovar.h>
