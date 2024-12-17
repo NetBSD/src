@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.17 2024/12/17 12:39:39 martin Exp $
+# $NetBSD: files.gpio,v 1.18 2024/12/17 12:44:33 martin Exp $
 
 define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
@@ -6,7 +6,7 @@ device	gpio: gpio
 attach	gpio at gpiobus
 file	dev/gpio/gpio.c				gpio 	needs-flag
 
-file	dev/gpio/gpiobus.c			gpiobus
+file	dev/gpio/gpiolib.c			gpiobus
 
 # GPIO simulator
 defpseudodev	gpiosim: gpiobus
