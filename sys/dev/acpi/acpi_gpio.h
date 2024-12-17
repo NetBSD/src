@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_gpio.h,v 1.3 2024/12/11 01:00:02 jmcneill Exp $ */
+/* $NetBSD: acpi_gpio.h,v 1.4 2024/12/17 22:04:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,8 +32,16 @@
 #ifndef _DEV_ACPI_ACPI_GPIO_H
 #define _DEV_ACPI_ACPI_GPIO_H
 
+#include <sys/types.h>
+
+#include <sys/device_if.h>
+
+#include <dev/acpi/acpica.h>
+
+struct acpi_devnode;
+
 ACPI_STATUS	acpi_gpio_register(struct acpi_devnode *, device_t,
-				   int (*)(void *, ACPI_RESOURCE_GPIO *, void **), void *);
+		    int (*)(void *, ACPI_RESOURCE_GPIO *, void **), void *);
 ACPI_STATUS	acpi_gpio_get_int(ACPI_HANDLE, u_int, void **, int *, int *);
 ACPI_STATUS	acpi_gpio_get_io(ACPI_HANDLE, u_int, void **, int *);
 
