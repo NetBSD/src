@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpioreg.h,v 1.2 2024/12/09 22:10:25 jmcneill Exp $ */
+/* $NetBSD: qcomgpioreg.h,v 1.3 2024/12/17 22:05:11 riastradh Exp $ */
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,6 +17,8 @@
 
 #ifndef QCOMGPIOREG_H
 #define QCOMGPIOREG_H
+
+#include <sys/cdefs.h>
 
 #define _TLMM_GPIO_PIN_OFFSET(pin, reg)	((pin) * 0x1000 + (reg))
 
