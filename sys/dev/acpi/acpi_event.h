@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_event.h,v 1.2 2022/01/11 10:53:08 jmcneill Exp $ */
+/* $NetBSD: acpi_event.h,v 1.3 2024/12/17 21:55:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,12 +32,20 @@
 #ifndef _DEV_ACPI_ACPI_EVENT_H
 #define _DEV_ACPI_ACPI_EVENT_H
 
+#include <sys/device_if.h>
+
+#include <dev/acpi/acpica.h>
+
 struct acpi_event;
+struct acpi_irq;
 
 ACPI_STATUS	acpi_event_create_gpio(device_t, ACPI_HANDLE,
-		    void (*)(void *, struct acpi_event *, ACPI_RESOURCE_GPIO *), void *);
+		    void (*)(void *, struct acpi_event *,
+			ACPI_RESOURCE_GPIO *),
+		    void *);
 ACPI_STATUS	acpi_event_create_int(device_t, ACPI_HANDLE,
-		    void (*)(void *, struct acpi_event *, struct acpi_irq *), void *);
+		    void (*)(void *, struct acpi_event *, struct acpi_irq *),
+		    void *);
 ACPI_STATUS	acpi_event_notify(struct acpi_event *);
 void		acpi_event_set_intrcookie(struct acpi_event *, void *);
 
