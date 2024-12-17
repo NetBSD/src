@@ -1,4 +1,4 @@
-/* $NetBSD: qcomgpio.c,v 1.7 2024/12/17 22:04:57 riastradh Exp $ */
+/* $NetBSD: qcomgpio.c,v 1.8 2024/12/17 22:05:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.7 2024/12/17 22:04:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qcomgpio.c,v 1.8 2024/12/17 22:05:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,7 +113,7 @@ static int	qcomgpio_pin_read(void *, int);
 static void	qcomgpio_pin_write(void *, int, int);
 static void	qcomgpio_pin_ctl(void *, int, int);
 static void *	qcomgpio_intr_establish(void *, int, int, int,
-					int (*)(void *), void *);
+		    int (*)(void *), void *);
 static void	qcomgpio_intr_disestablish(void *, void *);
 static bool	qcomgpio_intr_str(void *, int, int, char *, size_t);
 static void	qcomgpio_intr_mask(void *, void *);
@@ -121,10 +121,10 @@ static void	qcomgpio_intr_unmask(void *, void *);
 
 static u_int	qcomgpio_acpi_num_pins(device_t, ACPI_HANDLE);
 static void	qcomgpio_acpi_fill_pdcmap(struct qcomgpio_softc *,
-					  ACPI_HANDLE);
+		    ACPI_HANDLE);
 static int	qcomgpio_acpi_translate(void *, ACPI_RESOURCE_GPIO *, void **);
 static void	qcomgpio_register_event(void *, struct acpi_event *,
-					ACPI_RESOURCE_GPIO *);
+		    ACPI_RESOURCE_GPIO *);
 static int	qcomgpio_intr(void *);
 
 CFATTACH_DECL_NEW(qcomgpio, sizeof(struct qcomgpio_softc),
@@ -283,7 +283,7 @@ qcomgpio_attach(device_t parent, device_t self, void *aux)
 	    CFARGS(.iattr = "gpiobus"));
 	if (sc->sc_gpiodev != NULL) {
 		acpi_gpio_register(aa->aa_node, self,
-		    qcomgpio_acpi_translate, sc); 
+		    qcomgpio_acpi_translate, sc);
 	}
 
 done:
@@ -296,7 +296,7 @@ qcomgpio_acpi_num_pins(device_t dev, ACPI_HANDLE hdl)
 	ACPI_STATUS rv;
 	ACPI_INTEGER npins;
 
-	rv = acpi_dsm_integer(hdl, qcomgpio_gpio_dsm_uuid, 
+	rv = acpi_dsm_integer(hdl, qcomgpio_gpio_dsm_uuid,
 	    QCOMGPIO_GPIO_DSM_REV, QCOMGPIO_GPIO_DSM_FUNC_NUM_PINS,
 	    NULL, &npins);
 	if (ACPI_FAILURE(rv)) {
@@ -519,7 +519,7 @@ qcomgpio_pin_ctl(void *priv, int pin, int flags)
 
 static void *
 qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
-			int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg)
 {
 	struct qcomgpio_softc * const sc = priv;
 	struct qcomgpio_intr_handler *qih, *qihp;
@@ -583,7 +583,7 @@ qcomgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 	val |= pol;
 	val &= ~TLMM_GPIO_INTR_CFG_TARGET_PROC_MASK;
 	val |= __SHIFTIN(TLMM_GPIO_INTR_CFG_TARGET_PROC_RPM,
-			 TLMM_GPIO_INTR_CFG_TARGET_PROC_MASK);
+	    TLMM_GPIO_INTR_CFG_TARGET_PROC_MASK);
 	val |= TLMM_GPIO_INTR_CFG_INTR_RAW_STATUS_EN;
 	val |= TLMM_GPIO_INTR_CFG_INTR_ENABLE;
 	WR4(sc, TLMM_GPIO_INTR_CFG(pin), val);
