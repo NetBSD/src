@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.74 2024/12/08 20:40:38 jmcneill Exp $ */
+/* $NetBSD: gpio.c,v 1.75 2024/12/17 12:39:39 martin Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.74 2024/12/08 20:40:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.75 2024/12/17 12:39:39 martin Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -329,18 +329,6 @@ gpio_print(void *aux, const char *pnp)
 	for (i = 0; i < 32; i++)
 		if (ga->ga_mask & (1 << i))
 			aprint_normal(" %d", ga->ga_offset + i);
-
-	return UNCONF;
-}
-
-int
-gpiobus_print(void *aux, const char *pnp)
-{
-#if 0
-	struct gpiobus_attach_args *gba = aux;
-#endif
-	if (pnp != NULL)
-		aprint_normal("gpiobus at %s", pnp);
 
 	return UNCONF;
 }
