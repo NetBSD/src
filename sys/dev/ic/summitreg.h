@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.8 2024/12/16 09:39:03 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.9 2024/12/18 05:19:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -96,19 +96,20 @@
  */
 
 /*
- * The 0x80xxxx and 0x40xxxx ranges are aliased to each other, no idea what
- * the differences are, so for now just use 40xxxx for both palette and cursor
- * sprite access.
+ * Turns out 0x40xxxx and 0x80xxxx access the same registers, one difference
+ * is that through 0x80xxxx we can read back at least some values, so use
+ * that one
  * The _POS, _INDEX and _DATA registers work exactly like on HCRX
  */
 
-#define VISFX_CURSOR_POS	0x400000
+#define VISFX_CURSOR_POS	0x800000
 #define VISFX_CURSOR_ENABLE	0x80000000
-#define VISFX_CURSOR_INDEX	0x400004
-#define VISFX_CURSOR_DATA	0x400008
-#define VISFX_CURSOR_COLOR	0x400010
-#define VISFX_COLOR_MASK	0x400018
-#define VISFX_COLOR_INDEX	0x400020
-#define VISFX_COLOR_VALUE	0x400024
+#define VISFX_CURSOR_INDEX	0x800004
+#define VISFX_CURSOR_DATA	0x800008
+#define VISFX_CURSOR_FG		0x80000c
+#define VISFX_CURSOR_BG		0x800010
+#define VISFX_COLOR_MASK	0x800018
+#define VISFX_COLOR_INDEX	0x800020
+#define VISFX_COLOR_VALUE	0x800024
 
 #endif	/* SUMMITREG_H */
