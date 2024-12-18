@@ -1,4 +1,4 @@
-/* $NetBSD: qcomiic.c,v 1.2 2024/12/09 22:13:14 jmcneill Exp $ */
+/* $NetBSD: qcomiic.c,v 1.3 2024/12/18 21:23:27 jmcneill Exp $ */
 
 /*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
 /*
@@ -64,7 +64,6 @@ struct qciic_softc {
 
 static int	qciic_acpi_match(device_t, cfdata_t, void *);
 static void	qciic_acpi_attach(device_t, device_t, void *);
-static void	qciic_acpi_attach_late(device_t);
 static int	qciic_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
@@ -91,6 +90,7 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct qciic_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	struct i2cbus_attach_args iba;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
@@ -132,28 +132,14 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpi_i2c_register(aa->aa_node, self, &sc->sc_ic);
 
-	/*
-	 * Defer the attachment of I2C bus until all ACPI devices have been
-	 * enumerated, as other devices may provide resources for devices
-	 * attached to the I2C bus.
-	 */
-	config_defer(self, qciic_acpi_attach_late);
-
-done:
-	acpi_resource_cleanup(&res);
-}
-
-static void
-qciic_acpi_attach_late(device_t self)
-{
-	struct i2cbus_attach_args iba;
-	struct qciic_softc * const sc = device_private(self);
-
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
 	iba.iba_child_devices = acpi_enter_i2c_devs(self, sc->sc_acpi);
 
 	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+
+done:
+	acpi_resource_cleanup(&res);
 }
 
 static int
