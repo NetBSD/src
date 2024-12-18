@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.9 2024/12/18 16:01:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.9 2024/12/18 16:01:28 riastradh Exp $");
 
 /*
  * timerfd
@@ -337,7 +337,7 @@ static int
 timerfd_fop_poll(file_t * const fp, int const events)
 {
 	struct timerfd * const tfd = fp->f_timerfd;
-	int revents = events & (POLLOUT | POLLWRNORM);
+	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		itimer_lock();

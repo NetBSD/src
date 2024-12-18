@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.5 2023/07/08 15:32:58 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.6 2024/12/18 16:01:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.5 2023/07/08 15:32:58 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.6 2024/12/18 16:01:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -391,20 +391,19 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	ATF_REQUIRE(kevent(kq, kev, 1, NULL, 0, &ts) == 0);
 
 	/*
-	 * fd should be writable but not readable.  Pass all of the
-	 * event bits; we should only get back POLLOUT | POLLWRNORM.
-	 * (It's writable only in so far as we'll get an error if we try.)
+	 * fd should not be ready for anything.  Pass all of the event
+	 * bits; we should get back nothing.
 	 */
 	fds[0].fd = fd;
 	fds[0].events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI |
 	    POLLOUT | POLLWRNORM | POLLWRBAND | POLLHUP;
 	fds[0].revents = 0;
 	ATF_REQUIRE(poll(fds, 1, 0) == 1);
-	ATF_REQUIRE(fds[0].revents == (POLLOUT | POLLWRNORM));
+	ATF_REQUIRE(fds[0].revents == 0);
 
 	/*
-	 * As above; fd should only be set in writefds upon return
-	 * from the select() call.
+	 * As above; fd should not be set on return from the select()
+	 * call.
 	 */
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
@@ -416,7 +415,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	FD_SET(fd, &exceptfds);
 	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 1);
 	ATF_REQUIRE(!FD_ISSET(fd, &readfds));
-	ATF_REQUIRE(FD_ISSET(fd, &writefds));
+	ATF_REQUIRE(!FD_ISSET(fd, &writefds));
 	ATF_REQUIRE(!FD_ISSET(fd, &exceptfds));
 
 	/*
@@ -438,8 +437,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	    POLLOUT | POLLWRNORM | POLLWRBAND | POLLHUP;
 	fds[0].revents = 0;
 	ATF_REQUIRE(poll(fds, 1, 0) == 1);
-	ATF_REQUIRE(fds[0].revents == (POLLIN | POLLRDNORM |
-				       POLLOUT | POLLWRNORM));
+	ATF_REQUIRE(fds[0].revents == (POLLIN | POLLRDNORM));
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
@@ -451,7 +449,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	FD_SET(fd, &exceptfds);
 	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 2);
 	ATF_REQUIRE(FD_ISSET(fd, &readfds));
-	ATF_REQUIRE(FD_ISSET(fd, &writefds));
+	ATF_REQUIRE(!FD_ISSET(fd, &writefds));
 	ATF_REQUIRE(!FD_ISSET(fd, &exceptfds));
 
 	/*
