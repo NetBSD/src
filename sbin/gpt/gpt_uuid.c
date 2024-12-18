@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.23 2024/10/20 08:21:30 mlelstv Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.24 2024/12/18 20:56:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.23 2024/10/20 08:21:30 mlelstv Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.24 2024/12/18 20:56:40 andvar Exp $");
 #endif
 
 #include <err.h>
@@ -312,7 +312,7 @@ out:
 }
 
 /*
- * For reproducable builds, we can base UUIDs on one external timestamp.
+ * For reproducible builds, we can base UUIDs on one external timestamp.
  *
  * Bump timestamp by one 100ns unit to make them unique within a GPT.
  * Use zero clock sequence and node id, ideally these should also be
