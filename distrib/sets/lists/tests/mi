@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1350 2024/12/17 17:56:45 christos Exp $
+# $NetBSD: mi,v 1.1351 2024/12/18 02:47:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4799,6 +4799,7 @@
 ./usr/tests/usr.bin/cc/t_asan_off_by_one		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_poison			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_uaf			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_ctype_abuse			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_fuzzer_oom			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_fuzzer_simple			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_fuzzer_timeout			tests-usr.bin-tests	compattestfile,atf

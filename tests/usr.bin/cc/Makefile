@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2019/08/18 20:15:58 kamil Exp $
+# $NetBSD: Makefile,v 1.9 2024/12/18 02:47:00 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,8 @@ UBSAN_TESTS+=	t_ubsan_int_divzero
 TESTS_SH=	#
 TESTS_SH+=	$(ASAN_TESTS)
 TESTS_SH+=	$(UBSAN_TESTS)
+
+TESTS_SH+=	t_ctype_abuse
 TESTS_SH+=	t_hello
 TESTS_SH+=	t_libgomp
 
