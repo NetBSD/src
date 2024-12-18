@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.299 2024/03/20 03:14:45 riastradh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.300 2024/12/18 21:19:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.299 2024/03/20 03:14:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.300 2024/12/18 21:19:52 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -201,6 +201,7 @@ static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
+static void		acpi_find_deps(struct acpi_softc *);
 static void		acpi_config_tree(struct acpi_softc *);
 static void		acpi_config_dma(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
@@ -701,12 +702,97 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, UINT32_MAX,
 	    acpi_make_devnode, acpi_make_devnode_post, &awc, NULL);
 
+	/*
+	 * Find device dependencies.
+	 */
+	acpi_find_deps(sc);
+
 #if NPCI > 0
 	/*
 	 * Scan the internal namespace.
 	 */
 	(void)acpi_pcidev_scan(sc->sc_root);
 #endif
+}
+
+static void
+acpi_add_dep(struct acpi_devnode *ad, struct acpi_devnode *depad)
+{
+	struct acpi_devnodedep *dd;
+
+	dd = kmem_alloc(sizeof(*dd), KM_SLEEP);
+	dd->dd_node = depad;
+	SIMPLEQ_INSERT_TAIL(&ad->ad_deps, dd, dd_list);
+}
+
+static void
+acpi_find_deps(struct acpi_softc *sc)
+{
+	struct acpi_devnode *ad;
+
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
+		struct acpi_devnode *depad;
+		ACPI_OBJECT *obj;
+		ACPI_HANDLE _dep;
+		ACPI_BUFFER buf;
+		ACPI_STATUS rv;
+		u_int ref;
+
+		if (acpi_is_scope(ad) ||
+		    ad->ad_parent == NULL ||
+		    ad->ad_devinfo->Type != ACPI_TYPE_DEVICE) {
+			continue;
+		}
+
+		/* Add an implicit dependency on parent devices. */
+		if (!acpi_is_scope(ad->ad_parent) &&
+		    ad->ad_parent->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
+			acpi_add_dep(ad, ad->ad_parent);
+		}
+
+		rv = AcpiGetHandle(ad->ad_handle, "_DEP", &_dep);
+		if (ACPI_FAILURE(rv)) {
+			goto logit;
+		}
+
+		buf.Pointer = NULL;
+		buf.Length = ACPI_ALLOCATE_BUFFER;
+		rv = AcpiEvaluateObjectTyped(_dep, NULL, NULL, &buf,
+		    ACPI_TYPE_PACKAGE);
+		if (ACPI_FAILURE(rv)) {
+			goto logit;
+		}
+		obj = buf.Pointer;
+
+		for (ref = 0; ref < obj->Package.Count; ref++) {
+			ACPI_OBJECT *robj = &obj->Package.Elements[ref];
+			ACPI_HANDLE rhdl;
+
+			rv = acpi_eval_reference_handle(robj, &rhdl);
+			if (ACPI_FAILURE(rv)) {
+				continue;
+			}
+
+			depad = acpi_match_node(rhdl);
+			if (depad != NULL) {
+				acpi_add_dep(ad, depad);
+			}
+		}
+
+		ACPI_FREE(buf.Pointer);
+
+logit:
+		if (!SIMPLEQ_EMPTY(&ad->ad_deps)) {
+			struct acpi_devnodedep *dd;
+
+			aprint_debug_dev(sc->sc_dev, "%s dependencies:",
+			    ad->ad_name);
+			SIMPLEQ_FOREACH(dd, &ad->ad_deps, dd_list) {
+				aprint_debug(" %s", dd->dd_node->ad_name);
+			}
+			aprint_debug("\n"); 
+		}
+	}
 }
 
 static void
@@ -809,6 +895,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_head, ad, ad_list);
+		SIMPLEQ_INIT(&ad->ad_deps);
 
 		if (ad->ad_parent != NULL) {
 
@@ -935,9 +1022,62 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 }
 
 static void
+acpi_rescan_node(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	const char * const hpet_ids[] = { "PNP0103", NULL };
+	struct acpi_attach_args aa;
+	struct acpi_devnodedep *dd;
+	ACPI_DEVICE_INFO *di = ad->ad_devinfo;
+
+	if (ad->ad_scanned || ad->ad_device != NULL) {
+		return;
+	}
+
+	/*
+	 * Mark as scanned before checking dependencies to
+	 * break out of dependency cycles.
+	 */
+	ad->ad_scanned = true;
+
+	if (!acpi_device_present(ad->ad_handle)) {
+		return;
+	}
+
+	if (acpi_match_hid(di, acpi_ignored_ids) != 0) {
+		return;
+	}
+
+	if (acpi_match_hid(di, hpet_ids) != 0 && sc->sc_hpet != NULL) {
+		return;
+	}
+
+	/* Rescan dependencies first. */
+	SIMPLEQ_FOREACH(dd, &ad->ad_deps, dd_list) {
+		if (!dd->dd_node->ad_scanned) {
+			acpi_rescan_node(sc, dd->dd_node);
+		}
+	}
+
+	aa.aa_node = ad;
+	aa.aa_iot = sc->sc_iot;
+	aa.aa_memt = sc->sc_memt;
+	if (ad->ad_pciinfo != NULL) {
+		aa.aa_pc = ad->ad_pciinfo->ap_pc;
+		aa.aa_pciflags = sc->sc_pciflags;
+	}
+	aa.aa_ic = sc->sc_ic;
+	aa.aa_dmat = ad->ad_dmat;
+	aa.aa_dmat64 = ad->ad_dmat64;
+
+	ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
+	    CFARGS(.iattr = "acpinodebus",
+		   .devhandle = devhandle_from_acpi(devhandle_invalid(),
+						    ad->ad_handle)));
+}
+
+static void
 acpi_rescan_early(struct acpi_softc *sc)
 {
-	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 
 	/*
@@ -959,31 +1099,20 @@ acpi_rescan_early(struct acpi_softc *sc)
 
 		KASSERT(ad->ad_handle != NULL);
 
-		aa.aa_node = ad;
-		aa.aa_iot = sc->sc_iot;
-		aa.aa_memt = sc->sc_memt;
-		if (ad->ad_pciinfo != NULL) {
-			aa.aa_pc = ad->ad_pciinfo->ap_pc;
-			aa.aa_pciflags = sc->sc_pciflags;
-		}
-		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = ad->ad_dmat;
-		aa.aa_dmat64 = ad->ad_dmat64;
-
-		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
-		    CFARGS(.iattr = "acpinodebus",
-			   .devhandle = devhandle_from_acpi(devhandle_invalid(),
-							    ad->ad_handle)));
+		acpi_rescan_node(sc, ad);
 	}
 }
 
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
-	const char * const hpet_ids[] = { "PNP0103", NULL };
-	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
+
+	/* Reset scan state. */
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
+		ad->ad_scanned = false;
+	}
 
 	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
@@ -1019,29 +1148,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (acpi_match_hid(di, acpi_early_ids) != 0)
 			continue;
 
-		if (acpi_match_hid(di, acpi_ignored_ids) != 0)
-			continue;
-
-		if (acpi_match_hid(di, hpet_ids) != 0 && sc->sc_hpet != NULL)
-			continue;
-
 		KASSERT(ad->ad_handle != NULL);
 
-		aa.aa_node = ad;
-		aa.aa_iot = sc->sc_iot;
-		aa.aa_memt = sc->sc_memt;
-		if (ad->ad_pciinfo != NULL) {
-			aa.aa_pc = ad->ad_pciinfo->ap_pc;
-			aa.aa_pciflags = sc->sc_pciflags;
-		}
-		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = ad->ad_dmat;
-		aa.aa_dmat64 = ad->ad_dmat64;
-
-		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
-		    CFARGS(.iattr = "acpinodebus",
-			   .devhandle = devhandle_from_acpi(devhandle_invalid(),
-							    ad->ad_handle)));
+		acpi_rescan_node(sc, ad);
 	}
 }
 
