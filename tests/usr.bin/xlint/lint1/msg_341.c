@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_341.c,v 1.3 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_341.c,v 1.4 2024/12/18 18:14:54 rillig Exp $	*/
 # 3 "msg_341.c"
 
 // Test for message: argument to '%s' must be 'unsigned char' or EOF, not '%s' [341]
@@ -62,7 +62,7 @@ function_call_int(int c)
 }
 
 void
-macro_invocation_NetBSD(char c)
+macro_invocation_NetBSD(char c, signed char sc)
 {
 
 	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
@@ -76,4 +76,11 @@ macro_invocation_NetBSD(char c)
 
 	/* expect+1: warning: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'unsigned int' [342] */
 	sink(((int)((_ctype_tab_ + 1)[((unsigned int)c)] & 0x0040)));
+
+	// https://mail-index.netbsd.org/current-users/2024/12/15/msg045888.html
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'unsigned int' [341] */
+	sink(((int)((_ctype_tab_ + 1)[(0xffffffffu)])));
+
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'signed char' [341] */
+	sink(((int)((_ctype_tab_ + 1)[sc])));
 }

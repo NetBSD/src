@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.12 2024/03/19 23:19:03 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.13 2024/12/18 18:14:54 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.12 2024/03/19 23:19:03 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.13 2024/12/18 18:14:54 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -112,7 +112,7 @@ check_ctype_arg(const char *func, const tnode_t *arg)
 	}
 
 	cn = before_conversion(arg);
-	if (cn->tn_type->t_tspec == CHAR) {
+	if (cn->tn_type->t_tspec != UCHAR && cn->tn_type->t_tspec != INT) {
 		/* argument to '%s' must be 'unsigned char' or EOF, not '%s' */
 		warning(341, func, type_name(cn->tn_type));
 		return;
