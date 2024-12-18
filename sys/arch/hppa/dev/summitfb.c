@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.17 2024/12/16 10:05:47 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.18 2024/12/18 05:22:05 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.17 2024/12/16 10:05:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.18 2024/12/18 05:22:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,11 +1459,9 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 		copyin(cur->cmap.red, r, 2);
 		summitfb_write4(sc, VISFX_CURSOR_INDEX, 0);
 		rgb = r[0] << 16 | g[0] << 8 | b[0];
-		summitfb_write4(sc, VISFX_CURSOR_COLOR, rgb);
+		summitfb_write4(sc, VISFX_CURSOR_BG, rgb);
 		rgb = r[1] << 16 | g[1] << 8 | b[1];
-		/* this isn't right */
-		summitfb_write4(sc, VISFX_CURSOR_INDEX, 1);
-		summitfb_write4(sc, VISFX_CURSOR_COLOR + 4, rgb);
+		summitfb_write4(sc, VISFX_CURSOR_FG, rgb);
 
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
