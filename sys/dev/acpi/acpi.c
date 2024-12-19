@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.300 2024/12/18 21:19:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.301 2024/12/19 14:19:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.300 2024/12/18 21:19:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.301 2024/12/19 14:19:53 riastradh Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -790,7 +790,7 @@ logit:
 			SIMPLEQ_FOREACH(dd, &ad->ad_deps, dd_list) {
 				aprint_debug(" %s", dd->dd_node->ad_name);
 			}
-			aprint_debug("\n"); 
+			aprint_debug("\n");
 		}
 	}
 }
