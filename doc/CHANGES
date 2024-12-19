@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3120 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3121 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -615,7 +615,28 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	curses(3): Implement the ncurses extension wgetscrreg which returns
 		the scrolling region of the given window.  [blymn 20241205]
 	editline(3): Print 0 width characters.  [christos 20241205]
+	rc(8): Add an optional local hook /etc/rc.shutdown.final
+		called last in the shutdown sequence and passed the shutdown
+		reason.  [martin 20241207]
+	pms(4): Support PS/2 mouse hot-plug.  [chs 20241207]
+	ihidev(4): Add support for GPIO interrupts.  [jmcneill 20241208]
+	aarch64: Add support for Snapdragon X Elite GPIO and I2C controllers.
+		[jmcneill 20241208]
 	mac68k: Support for backlight control on PowerBooks.  [nat 20241209]
+	libc: Expose memccpy, strdup, and strndup to C23 applications.
+		[nros 20241209]
+	aarch64: Identify and fix topology for Qualcomm Oryon CPUs.
+		[jmcneill 20241209]
+	i2c(4): Import ikbd(4) i2c HID keyboard driver from OpenBSD.
+		[jmcneill 20241209]
+	acpi(4), i2c(4): Support GenericSerialBus address space handlers.
+		[jmcneill 20241209]
+	acpi(4), xhci(4): Add support for generic USB role switching device
+		nodes.  [jmcneill 20241209]
+	ls(1): Use the number of blocks used in the current directory
+		instead of the total file byte count when printing the
+		initial "total" line with the -h option combined with
+		-s or -l options.  [simonb 20241211]
 	puc(4): Add support for some Oxford Semiconductor devices.
 		[msaitoh 20241212]
 	umcpmio(4): Driver for the MCP-2221 / 2221A multi-io chip.
