@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.7 2024/12/09 22:03:34 jmcneill Exp $	*/
+/*	$NetBSD: hid.c,v 1.8 2024/12/19 00:50:47 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.7 2024/12/09 22:03:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.8 2024/12/19 00:50:47 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -524,13 +524,17 @@ hid_is_collection(const void *desc, int size, uint8_t id, uint32_t usage)
 		    hi.collection == HCOLL_LOGICAL))
 			coll_usage = hi.usage;
 
-		if (hi.kind == hid_endcollection &&
+		if ((hi.kind == hid_collection ||
+		     hi.kind == hid_endcollection) &&
 		    coll_usage == usage &&
 		    hi.report_ID == id) {
 			DPRINTFN(2,("hid_is_collection: found\n"));
 			hid_end_parse(hd);
 			return 1;
 		}
+
+		if (hi.kind == hid_endcollection)
+			coll_usage = ~0;
 	}
 	DPRINTFN(2,("hid_is_collection: not found\n"));
 	hid_end_parse(hd);
