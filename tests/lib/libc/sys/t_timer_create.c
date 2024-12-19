@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.6 2024/12/18 22:26:53 riastradh Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.7 2024/12/19 20:07:29 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ enum mode {
 static void
 timer_signal_handler(int signo, siginfo_t *si, void *osi __unused)
 {
+	const int errno_save = errno;
 	timer_t *tp;
 
 	tp = si->si_value.sival_ptr;
@@ -56,6 +57,7 @@ timer_signal_handler(int signo, siginfo_t *si, void *osi __unused)
 		expired = 1;
 
 	(void)fprintf(stderr, "%s: %s\n", __func__, strsignal(signo));
+	errno = errno_save;
 }
 
 static void
@@ -106,6 +108,7 @@ timer_signal_create(clockid_t cid, enum mode mode, int flags)
 	 */
 	switch (mode) {
 	case PAST:
+		ATF_REQUIRE(flags & TIMER_ABSTIME);
 		tim.it_value.tv_sec = -1;
 		break;
 	case EXPIRE:
@@ -130,15 +133,8 @@ timer_signal_create(clockid_t cid, enum mode mode, int flags)
 	    (long long)t0.tv_sec, (int)t0.tv_nsec);
 	fprintf(stderr, "expire at %lld sec %d nsec\n",
 	    (long long)tim.it_value.tv_sec, (int)tim.it_value.tv_nsec);
-	if (mode == PAST && (flags & TIMER_ABSTIME) == 0) {
-		atf_tc_expect_fail("PR kern/58919:"
-		    " timer_settime fails to trigger for past times");
-	}
 	RL(timer_settime(t, flags, &tim, NULL));
 	RL(timer_settime(t, flags, &tim, &otim));
-	if (mode == PAST && (flags & TIMER_ABSTIME) == 0) {
-		atf_tc_expect_pass();
-	}
 
 	RL(clock_gettime(cid, &t1));
 	timespecsub(&t1, &t0, &dt);
@@ -147,8 +143,31 @@ timer_signal_create(clockid_t cid, enum mode mode, int flags)
 
 	/*
 	 * Check to make sure the time remaining is at most the
-	 * relative time we expected.
+	 * relative time we expected -- plus slop of up to 2sec,
+	 * because timer_settime rounds the duration up to a multiple
+	 * of a tick period, which is at most 1sec (usually more like
+	 * 10ms or 1ms, and in the future with high-resolution timers
+	 * it'll be more like clock_getres(cid), but we don't have a
+	 * way to get this bound right now), and if we ask for a wakeup
+	 * (say) 0.9tick at a time 0.8tick before the next tick, the
+	 * next tick is too early so we have to wait two ticks.
+	 *
+	 * The main point of this is to make sure that we're not
+	 * getting absolute time by mistake (PR 58917) so the slop of
+	 * 2sec is fine.
+	 *
+	 * Parentheses are required around the argument
+	 *
+	 *	&(const struct timespec){2, 0}
+	 *
+	 * to timespecadd because it's a macro and the brilliant C
+	 * preprocessor splits arguments at a comma if they're not
+	 * parenthesized.
 	 */
+	if (flags & TIMER_ABSTIME) {
+		timespecadd(&rtim.it_value, (&(const struct timespec){2, 0}),
+		    &rtim.it_value);
+	}
 	atf_tc_expect_fail("PR kern/58917:"
 	    " timer_settime and timerfd_settime return"
 	    " absolute time of next event");
@@ -200,14 +219,21 @@ timer_signal_create(clockid_t cid, enum mode mode, int flags)
 	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
 	switch (mode) {
 	case PAST:
-		if (flags & TIMER_ABSTIME) {
-			atf_tc_expect_fail("PR kern/58919:"
-			    " timer_settime fails to trigger for past times");
-		}
+		/*
+		 * Wait for at least one tick to pass.
+		 *
+		 * XXX This does not really follow POSIX, which says
+		 * `If the specified time has already passed, the
+		 * function shall succeed and the expiration
+		 * notification shall be made.'
+		 * (https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/timer_settime.html),
+		 * suggesting that it should be immediate without any
+		 * further delay, but other operating systems also
+		 * sometimes have a small delay.
+		 */
+		RL(clock_nanosleep(cid, 0, &(const struct timespec){0, 1},
+			NULL));
 		ATF_CHECK_MSG(expired, "timer failed to fire immediately");
-		if (flags & TIMER_ABSTIME) {
-			atf_tc_expect_pass();
-		}
 		break;
 	case EXPIRE:
 	case NOEXPIRE:
@@ -368,20 +394,6 @@ ATF_TC_BODY(timer_create_mono_expire_abs, tc)
 	timer_signal_create(CLOCK_MONOTONIC, EXPIRE, TIMER_ABSTIME);
 }
 
-ATF_TC(timer_create_real_past);
-ATF_TC_HEAD(timer_create_real_past, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks timer_create(2) with CLOCK_REALTIME and sigevent(3), "
-	    "SIGEV_SIGNAL, with expiration passed before timer_settime(2)");
-}
-
-ATF_TC_BODY(timer_create_real_past, tc)
-{
-	timer_signal_create(CLOCK_REALTIME, PAST, 0);
-}
-
 ATF_TC(timer_create_real_past_abs);
 ATF_TC_HEAD(timer_create_real_past_abs, tc)
 {
@@ -395,20 +407,6 @@ ATF_TC_HEAD(timer_create_real_past_abs, tc)
 ATF_TC_BODY(timer_create_real_past_abs, tc)
 {
 	timer_signal_create(CLOCK_REALTIME, PAST, TIMER_ABSTIME);
-}
-
-ATF_TC(timer_create_mono_past);
-ATF_TC_HEAD(timer_create_mono_past, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks timer_create(2) with CLOCK_MONOTONIC and sigevent(3), "
-	    "SIGEV_SIGNAL, with expiration passed before timer_settime(2)");
-}
-
-ATF_TC_BODY(timer_create_mono_past, tc)
-{
-	timer_signal_create(CLOCK_MONOTONIC, PAST, 0);
 }
 
 ATF_TC(timer_create_mono_past_abs);
@@ -436,15 +434,20 @@ ATF_TC_HEAD(timer_invalidtime, tc)
 ATF_TC_BODY(timer_invalidtime, tc)
 {
 	const struct itimerspec einval_its[] = {
-		[0] = { .it_value = { -1, -1 } },
-		[1] = { .it_value = { 1, -1 } },
-		[2] = { .it_value = { 0, 1000000001 } },
-		[3] = { .it_interval = { -1, -1 } },
-		[4] = { .it_interval = { 1, -1 } },
-		[5] = { .it_interval = { 0, 1000000001 } },
+		[0] = { .it_value = {-1, 0} },
+		[1] = { .it_value = {0, -1} },
+		[2] = { .it_value = {0, 1000000001} },
+		[3] = { .it_value = {1, 0}, .it_interval = {-1, 0} },
+		[4] = { .it_value = {1, 0}, .it_interval = {0, -1} },
+		[5] = { .it_value = {1, 0}, .it_interval = {0, 1000000001} },
 	};
 	struct timespec now;
+	sigset_t sigs, mask;
 	unsigned i;
+
+	RL(sigemptyset(&sigs));
+	RL(sigaddset(&sigs, SIGALRM));
+	RL(sigprocmask(SIG_BLOCK, &sigs, &mask));
 
 	RL(clock_gettime(CLOCK_MONOTONIC, &now));
 
@@ -452,6 +455,18 @@ ATF_TC_BODY(timer_invalidtime, tc)
 
 	for (i = 0; i < __arraycount(einval_its); i++) {
 		struct itimerspec its;
+
+		fprintf(stderr, "case %u\n", i);
+
+		if (einval_its[i].it_value.tv_sec < 0 ||
+		    einval_its[i].it_interval.tv_sec < 0) {
+			/*
+			 * This returns ETIMEDOUT instead of EINVAL.
+			 */
+			atf_tc_expect_fail("PR kern/58920:"
+			    " timer_settime fails ETIMEDOUT"
+			    " on negative interval, not EINVAL");
+		}
 
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, 0, &einval_its[i], NULL) == -1);
@@ -461,7 +476,17 @@ ATF_TC_BODY(timer_invalidtime, tc)
 		its.it_value.tv_sec += now.tv_sec + 60;
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, TIMER_ABSTIME, &its, NULL) == -1);
+
+		if (einval_its[i].it_value.tv_sec < 0 ||
+		    einval_its[i].it_interval.tv_sec < 0) {
+			atf_tc_expect_pass();
+		}
 	}
+
+	/* Wait up to 2sec to make sure no timer got set anyway. */
+	ATF_CHECK_ERRNO(EAGAIN,
+	    sigtimedwait(&sigs, NULL, &(const struct timespec){2, 0}) == -1);
+	RL(sigprocmask(SIG_SETMASK, &mask, NULL));
 
 	RL(timer_delete(t));
 }
@@ -478,9 +503,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, timer_create_real_expire_abs);
 	ATF_TP_ADD_TC(tp, timer_create_mono_expire);
 	ATF_TP_ADD_TC(tp, timer_create_mono_expire_abs);
-	ATF_TP_ADD_TC(tp, timer_create_real_past);
 	ATF_TP_ADD_TC(tp, timer_create_real_past_abs);
-	ATF_TP_ADD_TC(tp, timer_create_mono_past);
 	ATF_TP_ADD_TC(tp, timer_create_mono_past_abs);
 	ATF_TP_ADD_TC(tp, timer_invalidtime);
 
