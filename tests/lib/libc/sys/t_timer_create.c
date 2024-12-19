@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.7 2024/12/19 20:07:29 riastradh Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.8 2024/12/19 23:36:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -458,16 +458,6 @@ ATF_TC_BODY(timer_invalidtime, tc)
 
 		fprintf(stderr, "case %u\n", i);
 
-		if (einval_its[i].it_value.tv_sec < 0 ||
-		    einval_its[i].it_interval.tv_sec < 0) {
-			/*
-			 * This returns ETIMEDOUT instead of EINVAL.
-			 */
-			atf_tc_expect_fail("PR kern/58920:"
-			    " timer_settime fails ETIMEDOUT"
-			    " on negative interval, not EINVAL");
-		}
-
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, 0, &einval_its[i], NULL) == -1);
 
@@ -476,11 +466,6 @@ ATF_TC_BODY(timer_invalidtime, tc)
 		its.it_value.tv_sec += now.tv_sec + 60;
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, TIMER_ABSTIME, &its, NULL) == -1);
-
-		if (einval_its[i].it_value.tv_sec < 0 ||
-		    einval_its[i].it_interval.tv_sec < 0) {
-			atf_tc_expect_pass();
-		}
 	}
 
 	/* Wait up to 2sec to make sure no timer got set anyway. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.222 2024/12/19 23:36:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.222 2024/12/19 23:36:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1396,9 +1396,9 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
 		return EINVAL;
 	val = *value;
-	if ((error = itimespecfix(&val.it_value)) != 0 ||
-	    (error = itimespecfix(&val.it_interval)) != 0)
-		return error;
+	if (itimespecfix(&val.it_value) != 0 ||
+	    itimespecfix(&val.it_interval) != 0)
+		return EINVAL;
 
 	itimer_lock();
  restart:
