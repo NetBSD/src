@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.9 2024/12/19 20:11:03 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.9 2024/12/19 20:11:03 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -216,18 +216,8 @@ ATF_TC_BODY(timerfd_invalidtime, tc)
 	RL(clock_gettime(CLOCK_MONOTONIC, &now));
 	RL(fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK));
 
-	atf_tc_expect_fail("PR kern/58914:"
-	    " timerfd_settime(2) is missing itimespecfix");
 	for (i = 0; i < __arraycount(einval_its); i++) {
 		struct itimerspec its;
-
-		if (einval_its[i].it_interval.tv_sec < 0 ||
-		    einval_its[i].it_interval.tv_nsec < 0 ||
-		    einval_its[i].it_interval.tv_nsec >= 1000000000) {
-			/* Avoid crashing the kernel for now, PR 58914. */
-			fprintf(stderr, "skip %u\n", i);
-			continue;
-		}
 
 		fprintf(stderr, "case %u\n", i);
 

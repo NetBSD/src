@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.9 2024/12/18 16:01:28 riastradh Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.9 2024/12/18 16:01:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $");
 
 /*
  * timerfd
@@ -593,10 +593,15 @@ do_timerfd_settime(struct lwp *l, int fd, int flags,
     const struct itimerspec *new_value, struct itimerspec *old_value,
     register_t *retval)
 {
+	struct itimerspec value = *new_value;
 	file_t *fp;
 	int error;
 
 	if (flags & ~(TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)) {
+		return EINVAL;
+	}
+	if (itimespecfix(&value.it_value) != 0 ||
+	    itimespecfix(&value.it_interval) != 0) {
 		return EINVAL;
 	}
 
@@ -618,7 +623,7 @@ do_timerfd_settime(struct lwp *l, int fd, int flags,
 	if (old_value != NULL) {
 		*old_value = it->it_time;
 	}
-	it->it_time = *new_value;
+	it->it_time = value;
 
 	/*
 	 * If we've been passed a relative value, convert it to an
