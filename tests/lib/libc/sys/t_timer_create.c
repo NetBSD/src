@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.8 2024/12/19 23:36:49 riastradh Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.9 2024/12/19 23:41:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -168,23 +168,11 @@ timer_signal_create(clockid_t cid, enum mode mode, int flags)
 		timespecadd(&rtim.it_value, (&(const struct timespec){2, 0}),
 		    &rtim.it_value);
 	}
-	atf_tc_expect_fail("PR kern/58917:"
-	    " timer_settime and timerfd_settime return"
-	    " absolute time of next event");
 	ATF_CHECK_MSG(timespeccmp(&otim.it_value, &rtim.it_value, <=),
 	    "time remaining %lld sec %d nsec,"
 	    " expected at most %lld sec %d nsec",
 	    (long long)otim.it_value.tv_sec, (int)otim.it_value.tv_nsec,
 	    (long long)rtim.it_value.tv_sec, (int)rtim.it_value.tv_nsec);
-	atf_tc_expect_pass();
-
-	/*
-	 * Until we fix PR kern/58917, adjust it to be relative to the
-	 * start time.
-	 */
-	timespecsub(&otim.it_value, &t0, &otim.it_value);
-	fprintf(stderr, "adjust otim to %lld sec %d nsec\n",
-	    (long long)otim.it_value.tv_sec, (int)otim.it_value.tv_nsec);
 
 #if 0
 	/*

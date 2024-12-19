@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.222 2024/12/19 23:36:49 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.223 2024/12/19 23:41:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.222 2024/12/19 23:36:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.223 2024/12/19 23:41:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1386,7 +1386,7 @@ dotimer_settime(int timerid, struct itimerspec *value,
     struct itimerspec *ovalue, int flags, struct proc *p)
 {
 	struct timespec now;
-	struct itimerspec val, oval;
+	struct itimerspec val;
 	struct ptimers *pts;
 	struct itimer *it;
 	int error;
@@ -1407,7 +1407,8 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		return EINVAL;
 	}
 
-	oval = it->it_time;
+	if (ovalue)
+		itimer_gettime(it, ovalue);
 	it->it_time = val;
 
 	/*
@@ -1449,9 +1450,6 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	}
 	KASSERT(error == 0);
 	itimer_unlock();
-
-	if (ovalue)
-		*ovalue = oval;
 
 	return 0;
 }
