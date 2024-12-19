@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.7 2024/12/19 14:42:32 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.8 2024/12/19 20:10:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,25 +29,28 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.7 2024/12/19 14:42:32 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.8 2024/12/19 20:10:49 riastradh Exp $");
 
 #include <sys/types.h>
+
 #include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/timerfd.h>
+
 #include <errno.h>
 #include <poll.h>
 #include <pthread.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <atf-c.h>
 
+#include "h_macros.h"
 #include "isqemu.h"
 
 struct helper_context {
@@ -145,6 +148,24 @@ ATF_TC_BODY(timerfd_create, tc)
 
 /*****************************************************************************/
 
+ATF_TC(timerfd_write);
+ATF_TC_HEAD(timerfd_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "validates rejection of writes to timerfds");
+}
+ATF_TC_BODY(timerfd_write, tc)
+{
+	int fd;
+	char c = 1;
+
+	RL(fd = timerfd_create(CLOCK_REALTIME, 0));
+	ATF_CHECK_ERRNO(EBADF, write(fd, &c, 1) == -1);
+	RL(close(fd));
+}
+
+/*****************************************************************************/
+
 ATF_TC(timerfd_bogusfd);
 ATF_TC_HEAD(timerfd_bogusfd, tc)
 {
@@ -166,6 +187,110 @@ ATF_TC_BODY(timerfd_bogusfd, tc)
 	    timerfd_settime(fd, 0, &its, NULL) == -1);
 
 	(void) close(fd);
+}
+
+/*****************************************************************************/
+
+ATF_TC(timerfd_invalidtime);
+ATF_TC_HEAD(timerfd_invalidtime, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "validates rejection of invalid itimerspec by timerfd_settime()");
+}
+ATF_TC_BODY(timerfd_invalidtime, tc)
+{
+	const struct itimerspec einval_its[] = {
+		[0] = { .it_value = {-1, 0} },
+		[1] = { .it_value = {0, -1} },
+		[2] = { .it_value = {0, 1000000001} },
+		[3] = { .it_value = {1, 0}, .it_interval = {-1, 0} },
+		[4] = { .it_value = {1, 0}, .it_interval = {0, -1} },
+		[5] = { .it_value = {1, 0}, .it_interval = {0, 1000000001} },
+	};
+	struct timespec now;
+	unsigned i;
+	fd_set readfds;
+	uint64_t val;
+	int fd;
+
+	RL(clock_gettime(CLOCK_MONOTONIC, &now));
+	RL(fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK));
+
+	atf_tc_expect_fail("PR kern/58914:"
+	    " timerfd_settime(2) is missing itimespecfix");
+	for (i = 0; i < __arraycount(einval_its); i++) {
+		struct itimerspec its;
+
+		if (einval_its[i].it_interval.tv_sec < 0 ||
+		    einval_its[i].it_interval.tv_nsec < 0 ||
+		    einval_its[i].it_interval.tv_nsec >= 1000000000) {
+			/* Avoid crashing the kernel for now, PR 58914. */
+			fprintf(stderr, "skip %u\n", i);
+			continue;
+		}
+
+		fprintf(stderr, "case %u\n", i);
+
+		ATF_CHECK_ERRNO(EINVAL,
+		    timerfd_settime(fd, 0, &einval_its[i], NULL) == -1);
+
+		/* Try the same with an absolute time near now. */
+		its.it_value = einval_its[i].it_value;
+		its.it_value.tv_sec += now.tv_sec + 60;
+		ATF_CHECK_ERRNO(EINVAL,
+		    timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL) == -1);
+	}
+
+	/* Wait up to 2sec to make sure no timer got set anyway. */
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	RL(select(fd + 1, &readfds, NULL, NULL, &(struct timeval){2, 0}));
+	ATF_CHECK(!FD_ISSET(fd, &readfds));
+	ATF_CHECK_ERRNO(EAGAIN, timerfd_read(fd, &val) == -1);
+
+	RL(close(fd));
+}
+
+/*****************************************************************************/
+
+ATF_TC(timerfd_past);
+ATF_TC_HEAD(timerfd_past, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "validates trigger on past time");
+}
+ATF_TC_BODY(timerfd_past, tc)
+{
+	struct itimerspec its = {.it_value = {-1, 0}, .it_interval = {0, 0}};
+	struct timespec then, now, delta;
+	uint64_t val;
+	int fd;
+
+	RL(fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK));
+
+	RL(clock_gettime(CLOCK_MONOTONIC, &then));
+	timespecadd(&then, &its.it_value, &its.it_value);
+	RL(timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL));
+
+	/*
+	 * Wait for one tick to pass.
+	 *
+	 * XXX Having to do this seems silly, but it matches Linux, so.
+	 */
+	RL(clock_nanosleep(CLOCK_MONOTONIC, 0, &(const struct timespec){0, 1},
+		NULL));
+
+	RL(timerfd_read(fd, &val));
+	RL(clock_gettime(CLOCK_MONOTONIC, &now));
+	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
+
+	timespecsub(&now, &then, &delta);
+	ATF_CHECK_MSG(check_value_against_bounds(delta.tv_sec, 0, 0),
+	    "then=%jd.%09lu now=%jd.%09lu delta=%jd.%09lu",
+	    (intmax_t)then.tv_sec, then.tv_nsec,
+	    (intmax_t)now.tv_sec, now.tv_nsec,
+	    (intmax_t)delta.tv_sec, delta.tv_nsec);
+
+	RL(close(fd));
 }
 
 /*****************************************************************************/
@@ -661,8 +786,12 @@ ATF_TC_BODY(timerfd_fcntl, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, timerfd_create);
+	ATF_TP_ADD_TC(tp, timerfd_write);
 	ATF_TP_ADD_TC(tp, timerfd_bogusfd);
+	ATF_TP_ADD_TC(tp, timerfd_invalidtime);
+	ATF_TP_ADD_TC(tp, timerfd_past);
 	ATF_TP_ADD_TC(tp, timerfd_block);
 	ATF_TP_ADD_TC(tp, timerfd_repeating);
 	ATF_TP_ADD_TC(tp, timerfd_abstime);
