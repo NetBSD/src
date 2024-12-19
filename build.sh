@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.381 2024/11/29 16:56:40 riastradh Exp $
+#	$NetBSD: build.sh,v 1.382 2024/12/19 22:00:13 riastradh Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2070,7 +2070,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.381 2024/11/29 16:56:40 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.382 2024/12/19 22:00:13 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2355,6 +2355,11 @@ PASSIVE_FETCH=			yes
 DISTDIR=		${pkgroot}/distfiles
 PACKAGES=		${pkgroot}/packages
 WRKOBJDIR=		${pkgroot}/work
+
+# pkgsrc cross-builds are not set up to support native X, but also part
+# of the point of pkgsrc cross-build infrastructure is to not need
+# native X any more.
+X11_TYPE=		modular
 
 .-include "${MAKECONF}"
 
