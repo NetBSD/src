@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.8 2024/12/19 20:10:49 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.9 2024/12/19 20:11:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.8 2024/12/19 20:10:49 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.9 2024/12/19 20:11:03 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -308,6 +308,7 @@ ATF_TC_BODY(timerfd_block, tc)
 
 	ATF_REQUIRE((fd = timerfd_create(CLOCK_MONOTONIC, 0)) >= 0);
 
+	struct itimerspec oits;
 	const struct itimerspec its = {
 		.it_value = { .tv_sec = 1, .tv_nsec = 0 },
 		.it_interval = { .tv_sec = 0, .tv_nsec = 0 },
@@ -315,6 +316,16 @@ ATF_TC_BODY(timerfd_block, tc)
 
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &then) == 0);
 	ATF_REQUIRE(timerfd_settime(fd, 0, &its, NULL) == 0);
+	ATF_REQUIRE(timerfd_settime(fd, 0, &its, &oits) == 0);
+	atf_tc_expect_fail("PR kern/58917:"
+	    " timer_settime and timerfd_settime return absolute time"
+	    " of next event");
+	ATF_CHECK_MSG(timespeccmp(&oits.it_value, &its.it_value, <=),
+	    "timerfd_settime returned %jd.%09lu remaining,"
+	    " expected at most %jd.%09lu",
+	    (intmax_t)oits.it_value.tv_sec, oits.it_value.tv_nsec,
+	    (intmax_t)its.it_value.tv_sec, its.it_value.tv_nsec);
+	atf_tc_expect_pass();
 	ATF_REQUIRE(timerfd_read(fd, &val) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
 	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
@@ -383,15 +394,27 @@ ATF_TC_BODY(timerfd_abstime, tc)
 
 	ATF_REQUIRE((fd = timerfd_create(CLOCK_MONOTONIC, 0)) >= 0);
 
-	struct itimerspec its = {
+	struct itimerspec oits, its = {
 		.it_value = { .tv_sec = 0, .tv_nsec = 0 },
 		.it_interval = { .tv_sec = 0, .tv_nsec = 0 },
 	};
 
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &then) == 0);
-	its.it_value = then;
-	its.it_value.tv_sec += 1;
+	delta = (struct timespec){1, 0};
+	timespecadd(&then, &delta, &its.it_value);
 	ATF_REQUIRE(timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL) == 0);
+	ATF_REQUIRE(timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, &oits) == 0);
+	timespecadd(&delta, (&(const struct timespec){2, 0}), /* tick slop */
+	    &delta);
+	atf_tc_expect_fail("PR kern/58917:"
+	    " timer_settime and timerfd_settime return absolute time"
+	    " of next event");
+	ATF_CHECK_MSG(timespeccmp(&oits.it_value, &delta, <=),
+	    "timerfd_settime returned %jd.%09lu remaining,"
+	    " expected at most %jd.%09lu",
+	    (intmax_t)oits.it_value.tv_sec, oits.it_value.tv_nsec,
+	    (intmax_t)delta.tv_sec, delta.tv_nsec);
+	atf_tc_expect_pass();
 	ATF_REQUIRE(timerfd_read(fd, &val) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
 	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
