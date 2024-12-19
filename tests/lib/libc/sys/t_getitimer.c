@@ -1,4 +1,4 @@
-/* $NetBSD: t_getitimer.c,v 1.4 2022/04/04 19:33:46 andvar Exp $ */
+/* $NetBSD: t_getitimer.c,v 1.5 2024/12/19 20:07:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getitimer.c,v 1.4 2022/04/04 19:33:46 andvar Exp $");
+__RCSID("$NetBSD: t_getitimer.c,v 1.5 2024/12/19 20:07:16 riastradh Exp $");
 
 #include <sys/time.h>
 
@@ -40,15 +40,17 @@ __RCSID("$NetBSD: t_getitimer.c,v 1.4 2022/04/04 19:33:46 andvar Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static bool	fail;
-static void	sighandler(int);
+#include "h_macros.h"
+
+static sig_atomic_t	fired;
+static void		sighandler(int);
 
 static void
 sighandler(int signo)
 {
 
 	if (signo == SIGALRM || signo == SIGVTALRM)
-		fail = false;
+		fired = 1;
 }
 
 ATF_TC(getitimer_empty);
@@ -125,8 +127,7 @@ ATF_TC_BODY(setitimer_basic, tc)
 	it.it_interval.tv_sec = 0;
 	it.it_interval.tv_usec = 0;
 
-	fail = true;
-
+	fired = 0;
 	ATF_REQUIRE(signal(SIGALRM, sighandler) != SIG_ERR);
 	ATF_REQUIRE(setitimer(ITIMER_REAL, &it, NULL) == 0);
 
@@ -139,7 +140,7 @@ ATF_TC_BODY(setitimer_basic, tc)
 	 */
 	(void)sleep(1);
 
-	if (fail != false)
+	if (!fired)
 		atf_tc_fail("timer did not fire");
 }
 
@@ -201,6 +202,41 @@ ATF_TC_BODY(setitimer_old, tc)
 		atf_tc_fail("setitimer(2) did not store old values");
 }
 
+ATF_TC(setitimer_invalidtime);
+ATF_TC_HEAD(setitimer_invalidtime, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test invalid values in setitimer(2)");
+}
+
+ATF_TC_BODY(setitimer_invalidtime, tc)
+{
+	const struct itimerval it[] = {
+		[0] = { .it_value = {-1, 0} },
+		[1] = { .it_value = {0, -1} },
+		[2] = { .it_value = {0, 1000001} },
+		[3] = { .it_value = {1, 0}, .it_interval = {-1, 0} },
+		[4] = { .it_value = {1, 0}, .it_interval = {0, -1} },
+		[5] = { .it_value = {1, 0}, .it_interval = {0, 1000001} },
+	};
+	sigset_t sigs, mask;
+	unsigned i;
+
+	RL(sigemptyset(&sigs));
+	RL(sigaddset(&sigs, SIGALRM));
+	RL(sigprocmask(SIG_BLOCK, &sigs, &mask));
+
+	for (i = 0; i < __arraycount(it); i++) {
+		fprintf(stderr, "case %u\n", i);
+		ATF_CHECK_ERRNO(EINVAL,
+		    setitimer(ITIMER_REAL, &it[i], NULL) == -1);
+	}
+
+	/* Wait up to 2sec to make sure no timer got set anyway. */
+	ATF_CHECK_ERRNO(EAGAIN,
+	    sigtimedwait(&sigs, NULL, &(const struct timespec){2, 0}) == -1);
+	RL(sigprocmask(SIG_SETMASK, &mask, NULL));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -209,6 +245,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, setitimer_basic);
 	ATF_TP_ADD_TC(tp, setitimer_err);
 	ATF_TP_ADD_TC(tp, setitimer_old);
+	ATF_TP_ADD_TC(tp, setitimer_invalidtime);
 
 	return atf_no_error();
 }
