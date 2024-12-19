@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.6 2024/12/18 16:01:28 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.7 2024/12/19 14:42:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.6 2024/12/18 16:01:28 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.7 2024/12/19 14:42:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -389,6 +389,8 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	ATF_REQUIRE((kq = kqueue()) >= 0);
 	EV_SET(&kev[0], fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	ATF_REQUIRE(kevent(kq, kev, 1, NULL, 0, &ts) == 0);
+	EV_SET(&kev[0], fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+	ATF_CHECK_ERRNO(EINVAL, kevent(kq, kev, 1, NULL, 0, &ts) == -1);
 
 	/*
 	 * fd should not be ready for anything.  Pass all of the event
@@ -398,8 +400,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	fds[0].events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI |
 	    POLLOUT | POLLWRNORM | POLLWRBAND | POLLHUP;
 	fds[0].revents = 0;
-	ATF_REQUIRE(poll(fds, 1, 0) == 1);
-	ATF_REQUIRE(fds[0].revents == 0);
+	ATF_REQUIRE(poll(fds, 1, 0) == 0);
 
 	/*
 	 * As above; fd should not be set on return from the select()
@@ -413,7 +414,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	FD_SET(fd, &readfds);
 	FD_SET(fd, &writefds);
 	FD_SET(fd, &exceptfds);
-	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 1);
+	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 0);
 	ATF_REQUIRE(!FD_ISSET(fd, &readfds));
 	ATF_REQUIRE(!FD_ISSET(fd, &writefds));
 	ATF_REQUIRE(!FD_ISSET(fd, &exceptfds));
@@ -447,7 +448,7 @@ ATF_TC_BODY(timerfd_select_poll_kevent_immed, tc)
 	FD_SET(fd, &readfds);
 	FD_SET(fd, &writefds);
 	FD_SET(fd, &exceptfds);
-	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 2);
+	ATF_REQUIRE(select(fd + 1, &readfds, &writefds, &exceptfds, &tv) == 1);
 	ATF_REQUIRE(FD_ISSET(fd, &readfds));
 	ATF_REQUIRE(!FD_ISSET(fd, &writefds));
 	ATF_REQUIRE(!FD_ISSET(fd, &exceptfds));
