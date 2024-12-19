@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.11 2024/12/19 23:50:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.10 2024/12/19 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.11 2024/12/19 23:50:22 riastradh Exp $");
 
 /*
  * timerfd
@@ -621,7 +621,7 @@ do_timerfd_settime(struct lwp *l, int fd, int flags,
 
  restart:
 	if (old_value != NULL) {
-		*old_value = it->it_time;
+		itimer_gettime(it, old_value);
 	}
 	it->it_time = value;
 
