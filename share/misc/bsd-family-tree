@@ -455,11 +455,13 @@ FreeBSD 5.2           |      |                 |                       |
  |         FreeBSD    |      |         |    |     |                    |
  |           13.3     |      *--NetBSD |    |     |                    |
  |                    |      |   10.0  |    |   OpenBSD                |
- |                    |      |         |    |    7.5                   |
- |                    |      |       NetBSD |     |                    |
- |                    |      |        9.4   |     |                    |
- |                    |      |            NetBSD  |                    |
- |                    |      |             8.3    |                    |
+ |                    |      |    |    |    |    7.5                   |
+ |                    |      |    |  NetBSD |     |                    |
+ |                    |      |    |   9.4   |     |                    |
+ |                    |      |    |       NetBSD  |                    |
+ |                    |      |    |        8.3    |                    |
+ |                    |      |  NetBSD            |                    |
+ |                    |      |   10.1             |                    |
  |                    |      |                    |                    |
 FreeBSD 15            |    NetBSD 11            OpenBSD             DragonFly
  -current             |     -current             -current            -current
@@ -895,6 +897,7 @@ NetBSD 10.0		2024-03-28 [NBD]
 OpenBSD 7.5		2024-04-05 [OBD]
 NetBSD 9.4		2024-04-20 [NBD]
 NetBSD 8.3		2024-05-07 [NBD]
+NetBSD 10.1		2024-12-16 [NBD]
 
 Bibliography
 ------------------------
@@ -959,4 +962,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2023 Wolfram Schneider <wosch@FreeBSD.org>
 URL: https://cgit.freebsd.org/src/tree/share/misc/bsd-family-tree
 
-$NetBSD: bsd-family-tree,v 1.85 2024/05/16 12:04:21 ast Exp $
+$NetBSD: bsd-family-tree,v 1.86 2024/12/20 18:22:28 martin Exp $
