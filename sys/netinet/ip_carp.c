@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.120 2023/08/01 07:04:16 mrg Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.121 2024/12/20 00:49:08 rin Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.120 2023/08/01 07:04:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.121 2024/12/20 00:49:08 rin Exp $");
 
 /*
  * TODO:
@@ -1881,20 +1881,18 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 static int
 carp_join_multicast(struct carp_softc *sc)
 {
-	struct ip_moptions *imo = &sc->sc_imo, tmpimo;
+	struct ip_moptions *imo = &sc->sc_imo;
+	struct in_multi *imm;
 	struct in_addr addr;
 
 	if (sc->sc_carpdev == NULL)
 		return (ENETDOWN);
 
-	memset(&tmpimo, 0, sizeof(tmpimo));
 	addr.s_addr = INADDR_CARP_GROUP;
-	if ((tmpimo.imo_membership[0] =
-	    in_addmulti(&addr, &sc->sc_if)) == NULL) {
+	if ((imm = in_addmulti(&addr, &sc->sc_if)) == NULL)
 		return (ENOBUFS);
-	}
 
-	imo->imo_membership[0] = tmpimo.imo_membership[0];
+	imo->imo_membership[0] = imm;
 	imo->imo_num_memberships = 1;
 	imo->imo_multicast_if_index = sc->sc_carpdev->if_index;
 	imo->imo_multicast_ttl = CARP_DFLTTL;
