@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_boot.c,v 1.6 2024/01/21 15:10:07 kre Exp $	*/
+/*	$NetBSD: fdt_boot.c,v 1.7 2024/12/20 07:55:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.6 2024/01/21 15:10:07 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.7 2024/12/20 07:55:45 mlelstv Exp $");
 
 #include "opt_efi.h"
 #include "opt_md.h"
@@ -160,7 +160,8 @@ fdt_map_range(uint64_t start, uint64_t end, uint64_t *psize,
 	const vaddr_t voff = start & PAGE_MASK;
 
 	// XXX NH add an align so map_chunk works betterer?
-	va = uvm_km_alloc(kernel_map, *psize, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0) {
 		printf("Failed to allocate VA for %s\n", purpose);
 		return NULL;
