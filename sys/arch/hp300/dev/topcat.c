@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.12 2024/05/04 16:06:57 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.13 2024/12/20 22:42:57 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	 * instead of 512. It looks these boards have actually have
 	 * enough 64KB (1bpp) or 256KB (4bpp) VRAM and RAMDAC capabilities
 	 * to display 1024x400 pixels.
-	 * 
+	 *
 	 * However HP's officlal "Service Information Manual" for
 	 * "HP 900 Series 300 Computers Models 330/350" says:
 	 *  "The medium-resolution board uses eight memory chips per plane.

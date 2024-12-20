@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.114 2024/05/11 19:16:19 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.115 2024/12/20 22:43:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2024/05/11 19:16:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.115 2024/12/20 22:43:26 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -293,11 +293,11 @@ hp300_ih_free(struct m68k_intrhand *ih)
 {
 	kmem_free(ih, sizeof(struct hp300_intrhand));
 }
- 
-static const struct m68k_ih_allocfuncs hp300_ih_allocfuncs = { 
+
+static const struct m68k_ih_allocfuncs hp300_ih_allocfuncs = {
 	.alloc = hp300_ih_alloc,
 	.free  = hp300_ih_free,
-}; 
+};
 
 /*
  * Determine the device configuration for the running system.
