@@ -1,4 +1,4 @@
-/*	$NetBSD: am9516.h,v 1.2 2003/05/03 18:11:03 wiz Exp $	*/
+/*	$NetBSD: am9516.h,v 1.3 2024/12/20 23:51:59 tsutsui Exp $	*/
 
 /*
  * This file is derived from the file dev/devSCSI3.c from
@@ -33,8 +33,8 @@
 #define UDC_ADR_CMR_LOW		0x52	/* channel mode reg, low word */
 #define UDC_ADR_COUNT		0x32	/* number of words to transfer */
 
-/* 
- * For a DMA transfer, the appropriate udc registers are loaded from a 
+/*
+ * For a DMA transfer, the appropriate udc registers are loaded from a
  * table in memory pointed to by the chain address register.
  */
 struct udc_table {

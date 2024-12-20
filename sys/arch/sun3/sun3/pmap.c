@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178 2024/01/13 00:43:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179 2024/12/20 23:49:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2024/01/13 00:43:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2024/12/20 23:49:32 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -3047,7 +3047,7 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	int pte;
 	int flush_by_page = 0;
 #if defined(HAVECACHE) || defined(DIAGNOSTIC)
-	vaddr_t segva = sun3_trunc_seg(sva); 
+	vaddr_t segva = sun3_trunc_seg(sva);
 #endif
 
 	CHECK_SPL();

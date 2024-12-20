@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.31 2020/03/14 14:05:44 ad Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.32 2024/12/20 23:50:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_VME32	0x20	/* etc. */
 #define	PMAP_NC		0x40	/* tells pmap_enter to set PTE_CI */
 #define	PMAP_SPEC	0xFF	/* mask to get all above. */
- 
+
 #endif	/* _KERNEL */
 
 /* MMU specific segment size */

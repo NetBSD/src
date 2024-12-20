@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.29 2024/06/02 13:28:45 andvar Exp $	*/
+/*	$NetBSD: esp.c,v 1.30 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.29 2024/06/02 13:28:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.30 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ static struct ncr53c9x_glue esp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-static int 
+static int
 espmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -120,7 +120,7 @@ espmatch(device_t parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 espattach(device_t parent, device_t self, void *aux)
 {
 	struct esp_softc *esc = device_private(self);
@@ -266,7 +266,7 @@ esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 	bus_space_write_1(esc->sc_bst, esc->sc_bsh, reg * 4, val);
 }
 
-int 
+int
 esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -274,7 +274,7 @@ esp_dma_isintr(struct ncr53c9x_softc *sc)
 	return DMA_ISINTR(esc->sc_dma);
 }
 
-void 
+void
 esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -282,7 +282,7 @@ esp_dma_reset(struct ncr53c9x_softc *sc)
 	dma_reset(esc->sc_dma);
 }
 
-int 
+int
 esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -290,7 +290,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 	return espdmaintr(esc->sc_dma);
 }
 
-int 
+int
 esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
@@ -299,7 +299,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	return dma_setup(esc->sc_dma, addr, len, datain, dmasize);
 }
 
-void 
+void
 esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -307,7 +307,7 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 	DMA_GO(esc->sc_dma);
 }
 
-void 
+void
 esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -315,7 +315,7 @@ esp_dma_stop(struct ncr53c9x_softc *sc)
 	DMA_STOP(esc->sc_dma);
 }
 
-int 
+int
 esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.32 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.33 2024/12/20 23:51:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.32 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.33 2024/12/20 23:51:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ static int cg2intr(void *);
 /*
  * Match a cg2.
  */
-static int 
+static int
 cg2match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -162,7 +162,7 @@ cg2match(device_t parent, cfdata_t cf, void *aux)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-static void 
+static void
 cg2attach(device_t parent, device_t self, void *args)
 {
 	struct cg2_softc *sc = device_private(self);
@@ -202,7 +202,7 @@ cg2attach(device_t parent, device_t self, void *args)
 	fb_attach(fb, 2);
 }
 
-int 
+int
 cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cg2_softc *sc;
@@ -214,7 +214,7 @@ cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int 
+int
 cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));
@@ -226,7 +226,7 @@ cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t 
+paddr_t
 cg2mmap(dev_t dev, off_t off, int prot)
 {
 	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));
@@ -249,7 +249,7 @@ cg2mmap(dev_t dev, off_t off, int prot)
  */
 
 /* FBIOGATTR: */
-static int 
+static int
 cg2gattr(struct fbdevice *fb, void *data)
 {
 	struct fbgattr *fba = data;
@@ -266,7 +266,7 @@ cg2gattr(struct fbdevice *fb, void *data)
 }
 
 /* FBIOGVIDEO: */
-static int 
+static int
 cg2gvideo(struct fbdevice *fb, void *data)
 {
 	int *on = data;
@@ -277,7 +277,7 @@ cg2gvideo(struct fbdevice *fb, void *data)
 }
 
 /* FBIOSVIDEO: */
-static int 
+static int
 cg2svideo(struct fbdevice *fb, void *data)
 {
 	int *on = data;
@@ -289,7 +289,7 @@ cg2svideo(struct fbdevice *fb, void *data)
 }
 
 /* FBIOGETCMAP: */
-static int 
+static int
 cg2getcmap(struct fbdevice *fb, void *data)
 {
 	struct fbcmap *cmap = data;
@@ -330,7 +330,7 @@ cg2getcmap(struct fbdevice *fb, void *data)
 }
 
 /* FBIOPUTCMAP: */
-static int 
+static int
 cg2putcmap(struct fbdevice *fb, void *data)
 {
 	struct fbcmap *cmap = data;
@@ -372,7 +372,7 @@ cg2putcmap(struct fbdevice *fb, void *data)
 
 }
 
-static int 
+static int
 cg2intr(void *vsc)
 {
 	struct cg2_softc *sc = vsc;

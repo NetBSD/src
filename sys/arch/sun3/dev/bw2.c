@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.37 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.38 2024/12/20 23:51:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.37 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.38 2024/12/20 23:51:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static struct fbdriver bw2fbdriver = {
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };
 
-static int 
+static int
 bw2match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -188,7 +188,7 @@ bw2match(device_t parent, cfdata_t cf, void *args)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-static void 
+static void
 bw2attach(device_t parent, device_t self, void *args)
 {
 	struct bw2_softc *sc = device_private(self);
@@ -295,7 +295,7 @@ bw2attach(device_t parent, device_t self, void *args)
 	fb_attach(fb, 1);
 }
 
-int 
+int
 bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct bw2_softc *sc;
@@ -307,7 +307,7 @@ bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int 
+int
 bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
@@ -319,7 +319,7 @@ bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t 
+paddr_t
 bw2mmap(dev_t dev, off_t off, int prot)
 {
 	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
@@ -339,7 +339,7 @@ bw2mmap(dev_t dev, off_t off, int prot)
 }
 
 /* FBIOGVIDEO: */
-static int 
+static int
 bw2gvideo(struct fbdevice *fb, void *data)
 {
 	struct bw2_softc *sc = fb->fb_private;
@@ -350,7 +350,7 @@ bw2gvideo(struct fbdevice *fb, void *data)
 }
 
 /* FBIOSVIDEO: */
-static int 
+static int
 bw2svideo(struct fbdevice *fb, void *data)
 {
 	struct bw2_softc *sc = fb->fb_private;

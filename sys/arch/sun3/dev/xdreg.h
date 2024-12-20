@@ -1,4 +1,4 @@
-/*	$NetBSD: xdreg.h,v 1.8 2021/10/24 20:00:11 andvar Exp $	*/
+/*	$NetBSD: xdreg.h,v 1.9 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -197,9 +197,9 @@ struct xd_iopb {
 
 /*
  * some commands overload bytes 6 to 0x13 of the iopb with different meanings.
- * these commands include: 
+ * these commands include:
  *   section 4.2: controller parameters
- *   section 4.3: drive parameters 
+ *   section 4.3: drive parameters
  *   section 4.4: format parameters
  *
  * note that the commands that overload the iopb are not part of the
@@ -281,7 +281,7 @@ struct xd_iopb_ctrl {
 #define XDC_DELAY_SPARC 0
 
 /*
- * drive parameters iopb: redefines bytes: 6, 8, 9, a, b, c, d, e 
+ * drive parameters iopb: redefines bytes: 6, 8, 9, a, b, c, d, e
  */
 
 struct xd_iopb_drive {
@@ -305,7 +305,7 @@ struct xd_iopb_drive {
 };
 
 /*
- * format parameters iopb: redefines bytes: 6, 8, 9, a, b, c, d, 0x10, 0x11 
+ * format parameters iopb: redefines bytes: 6, 8, 9, a, b, c, d, 0x10, 0x11
  */
 
 struct xd_iopb_format {

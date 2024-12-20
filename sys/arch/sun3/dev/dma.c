@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.24 2023/12/20 05:18:00 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.25 2024/12/20 23:52:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.24 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.25 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,7 @@ static void	dmaattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(dma, sizeof(struct dma_softc),
     dmamatch, dmaattach, NULL, NULL);
 
-static int 
+static int
 dmamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -81,7 +81,7 @@ dmamatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 dmaattach(device_t parent, device_t self, void *aux)
 {
 	struct dma_softc *sc = device_private(self);
@@ -200,7 +200,7 @@ espdmafind(int unit)
 	DMA_SCSR(sc, _csr);						\
 } while (/* CONSTCOND */0)
 
-void 
+void
 dma_reset(struct dma_softc *sc)
 {
 	uint32_t csr;
@@ -241,7 +241,7 @@ dma_reset(struct dma_softc *sc)
 /*
  * setup a dma transfer
  */
-int 
+int
 dma_setup(struct dma_softc *sc, uint8_t **addr, size_t *len, int datain,
     size_t *dmasize)
 {
@@ -302,7 +302,7 @@ dma_setup(struct dma_softc *sc, uint8_t **addr, size_t *len, int datain,
  *
  * return 1 if it was a DMA continue.
  */
-int 
+int
 espdmaintr(struct dma_softc *sc)
 {
 	struct ncr53c9x_softc *nsc = sc->sc_client;

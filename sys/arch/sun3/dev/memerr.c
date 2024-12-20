@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.22 2008/12/16 22:35:27 christos Exp $ */
+/*	$NetBSD: memerr.c,v 1.23 2024/12/20 23:52:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.22 2008/12/16 22:35:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.23 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ CFATTACH_DECL_NEW(memerr, sizeof(struct memerr_softc),
 
 static int memerr_attached;
 
-static int 
+static int
 memerr_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -99,7 +99,7 @@ memerr_match(device_t parent, cfdata_t cf, void *args)
 	return 1;
 }
 
-static void 
+static void
 memerr_attach(device_t parent, device_t self, void *args)
 {
 	struct memerr_softc *sc = device_private(self);
@@ -154,7 +154,7 @@ memerr_attach(device_t parent, device_t self, void *args)
  * Functions for ECC memory
  *****************************************************************/
 
-static int 
+static int
 memerr_interrupt(void *arg)
 {
 	struct memerr_softc *sc = arg;
@@ -230,7 +230,7 @@ recover:
  * Need to look at the ECC syndrome register on
  * the memory board that caused the error...
  */
-void 
+void
 memerr_correctable(struct memerr_softc *sc)
 {
 

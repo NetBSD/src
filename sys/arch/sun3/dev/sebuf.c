@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.20 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.21 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.20 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.21 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static int  sebuf_print(void *, const char *);
 CFATTACH_DECL_NEW(sebuf, sizeof(struct sebuf_softc),
     sebuf_match, sebuf_attach, NULL, NULL);
 
-static int 
+static int
 sebuf_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -132,7 +132,7 @@ sebuf_match(device_t parent, cfdata_t cf, void *args)
 	return 1;
 }
 
-static void 
+static void
 sebuf_attach(device_t parent, device_t self, void *args)
 {
 	struct sebuf_softc *sc = device_private(self);
@@ -172,7 +172,7 @@ sebuf_attach(device_t parent, device_t self, void *args)
 	(void)config_found(self, (void *)&aa, sebuf_print, CFARGS_NONE);
 }
 
-static int 
+static int
 sebuf_print(void *aux, const char *name)
 {
 

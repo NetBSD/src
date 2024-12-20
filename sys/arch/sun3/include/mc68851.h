@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.6 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.7 2024/12/20 23:50:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct mmu_long_dte_struct { /* 'dte' stands for 'descriptor table entry' */
 			char	dt:2;		/* Descriptor Type */
 			/* Bit masks for fields above */
 #define			MMU_LONG_DTE_LU    0x80000000
-#define			MMU_LONG_DTE_LIMIT 0x7fff0000 
+#define			MMU_LONG_DTE_LIMIT 0x7fff0000
 #define			MMU_LONG_DTE_RAL   0x0000e000
 #define			MMU_LONG_DTE_WAL   0x00001c00
 #define			MMU_LONG_DTE_SG    0x00000200
@@ -126,7 +126,7 @@ typedef struct mmu_long_dte_struct *mmu_long_dtbl_t;
  *  |                          UNUSED                               |
  *  +---.---.---+---.---.---+---+---+---+---+---+---+---+---+---.---+
  *  |    RAL    |    WAL    |SG | S | G |CI | L | M | U |WP |DT (01)|
- *  +---.---.---+---.---.---+---+---+---+---+---+---+---+---+---.---+  
+ *  +---.---.---+---.---.---+---+---+---+---+---+---+---+---+---.---+
  *  |              TABLE PHYSICAL ADDRESS (BITS 31-16)              |
  *  +---.---.---.---.---.---.---.---.---.---.---.---.---.---.---.---+
  *  |TABLE PHYS. ADDRESS (15-8)     |            UNUSED             |
@@ -178,9 +178,9 @@ struct mmu_long_pte_struct { /* 'pte' stands for 'page table entry' */
 typedef struct mmu_long_pte_struct mmu_long_pte_t;
 typedef struct mmu_long_pte_struct *mmu_long_ptbl_t;
 
-/* Every entry in the level A table (except for the page entries  
- * described above) points to a level B table.  Level B tables are 
- * arrays of 'short format' table descriptors.  Their structure 
+/* Every entry in the level A table (except for the page entries
+ * described above) points to a level B table.  Level B tables are
+ * arrays of 'short format' table descriptors.  Their structure
  * is smaller than an A table descriptor and is as follows:
  *
  * 31                                                             16
@@ -211,14 +211,14 @@ typedef struct mmu_short_dte_struct *mmu_short_dtbl_t;
 
 /* Every entry in a level B table points to a level C table.  Level C tables
  * contain arrays of short format page 'entry' descriptors.  A short format
- * page 'entry' is the same size as a short format page 'table' 
+ * page 'entry' is the same size as a short format page 'table'
  * descriptor (a B table entry).  Thus B and C tables can be allocated
  * interchangeably from the same pool.  However, we will keep them separate.
  *
- * The descriptor type (DT) field of a Page Table Entry (PTE) is '01'. This 
- * indicates to the MMU that the address contained in the PTE's 'base 
- * address' field is the base address for a physical page in memory to which 
- * the VA should be mapped, and not a base address for a yet another 
+ * The descriptor type (DT) field of a Page Table Entry (PTE) is '01'. This
+ * indicates to the MMU that the address contained in the PTE's 'base
+ * address' field is the base address for a physical page in memory to which
+ * the VA should be mapped, and not a base address for a yet another
  * descriptor table, thus ending the table walk.
  *
  * 31                                                             16
@@ -255,7 +255,7 @@ struct mmu_short_pte_struct { /* 'pte' stands for 'page table entry' */
 typedef struct mmu_short_pte_struct mmu_short_pte_t;
 typedef struct mmu_short_pte_struct *mmu_short_ptbl_t;
 
-/* These are bit masks and other values that are common to all types of 
+/* These are bit masks and other values that are common to all types of
  * descriptors.
  */
 /* Page table descriptors have a 'Descriptor Type' field describing the

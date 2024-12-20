@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.64 2020/11/21 00:27:52 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.65 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.64 2020/11/21 00:27:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.65 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static void	si_minphys(struct buf *);
  * structures are in si_obio.c and si_vme.c
  */
 
-void 
+void
 si_attach(struct si_softc *sc)
 {
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -132,7 +132,7 @@ si_attach(struct si_softc *sc)
 	 */
 	ncr_sc->sc_no_disconnect =
 	    (sc->sc_options & SI_NO_DISCONNECT);
-	ncr_sc->sc_parity_disable = 
+	ncr_sc->sc_parity_disable =
 	    (sc->sc_options & SI_NO_PARITY_CHK) >> 8;
 	if (sc->sc_options & SI_FORCE_POLLING)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
@@ -253,7 +253,7 @@ si_intr(void *arg)
  * for DMA transfer.  On the Sun3, this means mapping the buffer
  * into DVMA space.  dvma_mapin() flushes the cache for us.
  */
-void 
+void
 si_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
@@ -338,7 +338,7 @@ found:
 }
 
 
-void 
+void
 si_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
@@ -375,7 +375,7 @@ si_dma_free(struct ncr5380_softc *ncr_sc)
  * xx_dma_stop() will be called next.
  * Same for either VME or OBIO.
  */
-void 
+void
 si_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;

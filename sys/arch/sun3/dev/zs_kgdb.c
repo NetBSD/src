@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.27 2023/10/24 19:05:06 andvar Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.28 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.27 2023/10/24 19:05:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.28 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -100,7 +100,7 @@ static u_char zs_kgdb_regs[16] = {
 /*
  * This replaces "zs_reset()" in the sparc driver.
  */
-static void 
+static void
 zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 {
 	int s, tconst;
@@ -127,7 +127,7 @@ zs_setparam(struct zs_chanstate *cs, int iena, int rate)
  * KGDB interrupts will be enabled later when zs0 is configured.
  * Called after cninit(), so printf() etc. works.
  */
-void 
+void
 zs_kgdb_init(void)
 {
 	struct zs_chanstate cs;
@@ -173,7 +173,7 @@ zs_kgdb_init(void)
  *
  * Set the speed to kgdb_rate, CS8, etc.
  */
-int 
+int
 zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 
@@ -196,7 +196,7 @@ zs_check_kgdb(struct zs_chanstate *cs, int dev)
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
-static void 
+static void
 zskgdb(struct zs_chanstate *cs)
 {
 	int unit = minor(kgdb_dev);
@@ -218,7 +218,7 @@ static void zs_kgdb_softint(struct zs_chanstate *);
 
 int kgdb_input_lost;
 
-static void 
+static void
 zs_kgdb_rxint(struct zs_chanstate *cs)
 {
 	u_char c, rr1;
@@ -242,13 +242,13 @@ zs_kgdb_rxint(struct zs_chanstate *cs)
 	}
 }
 
-static void 
+static void
 zs_kgdb_txint(struct zs_chanstate *cs)
 {
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 }
 
-static void 
+static void
 zs_kgdb_stint(struct zs_chanstate *cs, int force)
 {
 	int rr0;
@@ -265,7 +265,7 @@ zs_kgdb_stint(struct zs_chanstate *cs, int force)
 	}
 }
 
-static void 
+static void
 zs_kgdb_softint(struct zs_chanstate *cs)
 {
 	printf("zs_kgdb_softint?\n");

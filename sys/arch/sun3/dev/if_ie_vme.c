@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.23 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.24 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.23 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.24 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -86,7 +86,7 @@ static void ie_vme_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ie_vme, sizeof(struct ie_softc),
     ie_vme_match, ie_vme_attach, NULL, NULL);
 
-static int 
+static int
 ie_vme_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -111,7 +111,7 @@ ie_vme_match(device_t parent, cfdata_t cf, void *args)
  * a multibus/vme card.   if you want to use a 3E you'll have
  * to fix this.
  */
-void 
+void
 ie_vme_attach(device_t parent, device_t self, void *args)
 {
 	struct ie_softc *sc = device_private(self);
@@ -194,7 +194,7 @@ ie_vme_attach(device_t parent, device_t self, void *args)
  * MULTIBUS/VME support
  */
 
-void 
+void
 ie_vmeattend(struct ie_softc *sc)
 {
 	volatile struct ievme *iev = (struct ievme *)sc->sc_reg;
@@ -203,7 +203,7 @@ ie_vmeattend(struct ie_softc *sc)
 	iev->status &= ~IEVME_ATTEN;	/* down. */
 }
 
-void 
+void
 ie_vmereset(struct ie_softc *sc)
 {
 	volatile struct ievme *iev = (struct ievme *)sc->sc_reg;
@@ -213,7 +213,7 @@ ie_vmereset(struct ie_softc *sc)
 	iev->status = (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
 }
 
-void 
+void
 ie_vmerun(struct ie_softc *sc)
 {
 

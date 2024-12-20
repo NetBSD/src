@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 2014/07/25 08:10:35 dholland Exp $ */
+/*	$NetBSD: fb.c,v 1.17 2024/12/20 23:52:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.17 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static int fbpriority;
  * This is called by the real driver (i.e. bw2, cg3, ...)
  * to declare itself as a potential default frame buffer.
  */
-void 
+void
 fb_attach(struct fbdevice *fb, int newpri)
 {
 	if (fbpriority < newpri) {
@@ -96,7 +96,7 @@ fb_attach(struct fbdevice *fb, int newpri)
 	}
 }
 
-int 
+int
 fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -105,20 +105,20 @@ fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, l));
 }
 
-int 
+int
 fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, l));
 }
 
-int 
+int
 fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	return (fbioctlfb(devfb, cmd, data));
 }
 
-paddr_t 
+paddr_t
 fbmmap(dev_t dev, off_t off, int prot)
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
@@ -127,7 +127,7 @@ fbmmap(dev_t dev, off_t off, int prot)
 /*
  * Common fb ioctl function
  */
-int 
+int
 fbioctlfb(struct fbdevice *fb, u_long cmd, void *data)
 {
 	struct fbdriver *fbd = fb->fb_driver;
@@ -167,7 +167,7 @@ fbioctlfb(struct fbdevice *fb, u_long cmd, void *data)
 	return (error);
 }
 
-void 
+void
 fb_unblank(void)
 {
 	int on = 1;
@@ -182,7 +182,7 @@ fb_unblank(void)
  * Default ioctl function to put in struct fbdriver
  * for functions that are not supported.
  */
-int 
+int
 fb_noioctl(struct fbdevice *fbd, void *vp)
 {
 	return ENOTTY;
@@ -193,7 +193,7 @@ fb_noioctl(struct fbdevice *fbd, void *vp)
  */
 
 /* Set FB size based on EEPROM screen shape code. */
-void 
+void
 fb_eeprom_setsize(struct fbdevice *fb)
 {
 	int szcode;
@@ -237,7 +237,7 @@ fb_eeprom_setsize(struct fbdevice *fb)
  * Probe for a P4 register at the passed virtual address.
  * Returns P4 ID value, or -1 if no P4 register.
  */
-int 
+int
 fb_pfour_id(void *va)
 {
 	volatile uint32_t val, save, *pfour = va;
@@ -263,7 +263,7 @@ fb_pfour_id(void *va)
 /*
  * Return the status of the video enable.
  */
-int 
+int
 fb_pfour_get_video(struct fbdevice *fb)
 {
 
@@ -273,7 +273,7 @@ fb_pfour_get_video(struct fbdevice *fb)
 /*
  * Turn video on or off using the P4 register.
  */
-void 
+void
 fb_pfour_set_video(struct fbdevice *fb, int on)
 {
 	int pfour;
@@ -296,7 +296,7 @@ static const struct {
 /*
  * Use the P4 register to determine the screen size.
  */
-void 
+void
 fb_pfour_setsize(struct fbdevice *fb)
 {
 	int p4, p4type, p4size;

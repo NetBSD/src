@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.34 2020/11/21 00:27:52 thorpej Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.35 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.34 2020/11/21 00:27:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.35 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static void eeprom_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(eeprom, 0,
     eeprom_match, eeprom_attach, NULL, NULL);
 
-static int 
+static int
 eeprom_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -87,7 +87,7 @@ eeprom_match(device_t parent, cfdata_t cf, void *args)
 	return 1;
 }
 
-static void 
+static void
 eeprom_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs *ca = args;

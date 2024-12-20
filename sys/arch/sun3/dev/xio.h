@@ -1,4 +1,4 @@
-/* $NetBSD: xio.h,v 1.4 2015/09/07 03:49:46 dholland Exp $ */
+/* $NetBSD: xio.h,v 1.5 2024/12/20 23:52:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -26,9 +26,9 @@
  */
 
 /*
- * x i o . h 
+ * x i o . h
  *
- * this file defines the software structure we use to ioctl the 
+ * this file defines the software structure we use to ioctl the
  * 753/7053.   this interface isn't set in stone and may (or may not)
  * need adjustment.
  *

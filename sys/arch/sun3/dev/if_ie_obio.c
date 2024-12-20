@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.25 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.26 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.25 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.26 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -78,7 +78,7 @@ static void ie_obio_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
 
-static int 
+static int
 ie_obio_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -94,7 +94,7 @@ ie_obio_match(device_t parent, cfdata_t cf, void *args)
 	return 1;
 }
 
-void 
+void
 ie_obio_attach(device_t parent, device_t self, void *args)
 {
 	struct ie_softc *sc = device_private(self);
@@ -164,7 +164,7 @@ ie_obio_attach(device_t parent, device_t self, void *args)
  */
 
 /* Whack the "channel attetion" line. */
-void 
+void
 ie_obattend(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
@@ -177,7 +177,7 @@ ie_obattend(struct ie_softc *sc)
  * This is called during driver attach.
  * Reset and initialize.
  */
-void 
+void
 ie_obreset(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
@@ -190,7 +190,7 @@ ie_obreset(struct ie_softc *sc)
  * This is called at the end of ieinit().
  * optional.
  */
-void 
+void
 ie_obrun(struct ie_softc *sc)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.52 2010/01/19 22:06:23 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.53 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.52 2010/01/19 22:06:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -100,9 +100,9 @@ CFATTACH_DECL_NEW(le, sizeof(struct le_softc),
 #endif
 
 hide void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
-hide uint16_t lerdcsr(struct lance_softc *, uint16_t);  
+hide uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
-hide void 
+hide void
 lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -111,7 +111,7 @@ lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 	ler1->ler1_rdp = val;
 }
 
-hide uint16_t 
+hide uint16_t
 lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -120,9 +120,9 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
-} 
+}
 
-int 
+int
 le_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -138,7 +138,7 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void 
+void
 le_attach(device_t parent, device_t self, void *aux)
 {
 	struct le_softc *lesc = device_private(self);

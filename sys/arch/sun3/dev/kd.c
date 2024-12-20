@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.59 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: kd.c,v 1.60 2024/12/20 23:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.59 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.60 2024/12/20 23:52:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.59 2014/07/25 08:10:35 dholland Exp $");
 #include <machine/psl.h>
 
 #include <dev/cons.h>
-#include <dev/sun/event_var.h> 
+#include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
 #include <sun3/dev/zs_cons.h>
@@ -112,7 +112,7 @@ const struct cdevsw kd_cdevsw = {
 /*
  * Prepare the console tty; called on first open of /dev/console
  */
-void 
+void
 kd_init(struct kd_softc *kd)
 {
 	struct tty *tp;
@@ -139,7 +139,7 @@ kdtty(dev_t dev)
 	return (kd->kd_tty);
 }
 
-int 
+int
 kdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -191,7 +191,7 @@ static	int firstopen = 1;
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
-int 
+int
 kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -212,7 +212,7 @@ kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-int 
+int
 kdread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
@@ -224,7 +224,7 @@ kdread(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
-int 
+int
 kdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
@@ -236,7 +236,7 @@ kdwrite(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
-int 
+int
 kdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -244,11 +244,11 @@ kdpoll(dev_t dev, int events, struct lwp *l)
 
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
-int 
+int
 kdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -273,7 +273,7 @@ kdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
-static int 
+static int
 kdparam(struct tty *tp, struct termios *t)
 {
 	/* XXX - These are ignored... */
@@ -286,7 +286,7 @@ kdparam(struct tty *tp, struct termios *t)
 
 static void kd_putfb(struct tty *);
 
-static void 
+static void
 kdstart(struct tty *tp)
 {
 	struct clist *cl;
@@ -330,7 +330,7 @@ out:
  * Timeout function to do delayed writes to the screen.
  * Called at splsoftclock when requested by kdstart.
  */
-static void 
+static void
 kd_later(void *tpaddr)
 {
 	struct tty *tp = tpaddr;
@@ -349,7 +349,7 @@ kd_later(void *tpaddr)
  * This can take a while, so to avoid missing
  * interrupts, this is called at splsoftclock.
  */
-static void 
+static void
 kd_putfb(struct tty *tp)
 {
 	char buf[PUT_WSIZE];
@@ -367,7 +367,7 @@ kd_putfb(struct tty *tp)
 	}
 }
 
-void 
+void
 cons_attach_input(struct cons_channel *cc, struct consdev *cn)
 {
 	struct kd_softc *kd = &kd_softc;
@@ -384,14 +384,14 @@ static int kd_rom_iclose(struct cons_channel *);
 
 static struct cons_channel prom_cons_channel;
 
-int 
+int
 kd_rom_iopen(struct cons_channel *cc)
 {
 	/* No-op */
 	return (0);
 }
 
-int 
+int
 kd_rom_iclose(struct cons_channel *cc)
 {
 	/* No-op */
@@ -402,7 +402,7 @@ kd_rom_iclose(struct cons_channel *cc)
  * Our "interrupt" routine for input. This is called by
  * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
-void 
+void
 kd_cons_input(int c)
 {
 	struct kd_softc *kd = &kd_softc;
@@ -442,12 +442,12 @@ struct consdev consdev_kd = {
 };
 
 /* We never call this. */
-static void 
+static void
 kdcnprobe(struct consdev *cn)
 {
 }
 
-static void 
+static void
 kdcninit(struct consdev *cn)
 {
 	struct kbd_state *ks = &kdcn_state;
@@ -469,7 +469,7 @@ kdcninit(struct consdev *cn)
 	kd_is_console = 1;
 }
 
-static int 
+static int
 kdcngetc(dev_t dev)
 {
 	struct kbd_state *ks = &kdcn_state;
@@ -510,13 +510,13 @@ out:
 	return (keysym);
 }
 
-static void 
+static void
 kdcnputc(dev_t dev, int c)
 {
 	(romVectorPtr->fbWriteChar)(c & 0x7f);
 }
 
-static void 
+static void
 kdcnpollc(dev_t dev, int on)
 {
 	struct kbd_state *ks = &kdcn_state;
