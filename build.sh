@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.385 2024/12/20 15:56:45 riastradh Exp $
+#	$NetBSD: build.sh,v 1.386 2024/12/20 22:24:20 kre Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@
 # suitable shell, then we show a message and exit.
 #
 
-errmsg=''		# error message, if not empty
+errmsg=			# error message, if not empty
 shelltest=false		# if true, exit after testing the shell
 re_exec_allowed=true	# if true, we may exec under another shell
 
@@ -49,12 +49,12 @@ re_exec_allowed=true	# if true, we may exec under another shell
 # for internal use only, are not documented, and are not valid anywhere
 # other than $1.
 case "$1" in
-"--shelltest")
+--shelltest)
     shelltest=true
     re_exec_allowed=false
     shift
     ;;
-"--no-re-exec")
+--no-re-exec)
     re_exec_allowed=false
     shift
     ;;
@@ -64,8 +64,14 @@ esac
 # This is the first feature that we test, because subsequent
 # tests use "!".
 #
-if test -z "$errmsg"; then
-    if ( eval '! false' ) >/dev/null 2>&1 ; then
+# Unfortunately, if the shell doesn't support ! most of the tests
+# following which use '!' are likely to simply abort with a syntax error.
+# Not executing the code containing ! does not avoid compiling it.
+#
+if test -z "$errmsg"
+then
+    if ( eval '! false' ) >/dev/null 2>&1
+    then
 	:
     else
 	errmsg='Shell does not support "!".'
@@ -74,7 +80,8 @@ fi
 
 # Does the shell support functions?
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
 	eval 'somefunction() { : ; }'
 	) >/dev/null 2>&1
@@ -91,9 +98,10 @@ fi
 # ksh93 fails this test; it uses an incompatible syntax involving the
 # keywords 'function' and 'typeset'.
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
-	eval 'f() { local v=2; }; v=1; f && test x"$v" = x"1"'
+	eval 'f() { local v=2; }; v=1; f && test x"$v" = x1'
 	) >/dev/null 2>&1
     then
 	errmsg='Shell does not support the "local" keyword in functions.'
@@ -103,9 +111,10 @@ fi
 # Does the shell support ${var%suffix}, ${var#prefix}, and their variants?
 #
 # We don't bother testing for ${var+value}, ${var-value}, or their variants,
-# since shells without those are sure to fail other tests too.
+# since shells without those (unlikely) are sure to fail other tests too.
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
 	eval 'var=a/b/c ;
 	      test x"${var#*/};${var##*/};${var%/*};${var%%/*}" = \
@@ -120,7 +129,8 @@ fi
 #
 # zsh in normal mode (as opposed to "emulate sh" mode) fails this test.
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
 	eval 'IFS=: ; v=":a b::c" ; set -- $v ; IFS=+ ;
 		test x"$#;$1,$2,$3,$4;$*" = x"4;,a b,,c;+a b++c"'
@@ -134,10 +144,12 @@ fi
 #
 # Some versions of zsh fail this test, even in "emulate sh" mode.
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
-	eval 'set -- "a a a" "b b b"; set -- ${1+"$@"};
-	      test x"$#;$1;$2" = x"2;a a a;b b b";'
+	eval 'set -- "a a a" "b b b"
+	      set -- ${1+"$@"}
+	      test x"$#;$1;$2" = x"2;a a a;b b b" '
 	) >/dev/null 2>&1
     then
 	errmsg='Shell does not support ${1+"$@"}.'
@@ -146,9 +158,10 @@ fi
 
 # Does the shell support $(...) command substitution?
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
-	eval 'var=$(echo abc); test x"$var" = x"abc"'
+	eval 'var=$(echo abc); test x"$var" = xabc'
 	) >/dev/null 2>&1
     then
 	errmsg='Shell does not support "$(...)" command substitution.'
@@ -161,7 +174,8 @@ fi
 # Some shells known to fail this test are:  NetBSD /bin/ksh (as of 2009-12),
 # bash-3.1, pdksh-5.2.14, zsh-4.2.7 in "emulate sh" mode.
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
 	eval 'var=$(case x in x) echo abc;; esac); test x"$var" = x"abc"'
 	) >/dev/null 2>&1
@@ -173,8 +187,10 @@ if test -z "$errmsg"; then
 fi
 
 # Does the shell support getopts or getopt?
+#  (XXX: Q: why the need for the eval here, looks unncessary)
 #
-if test -z "$errmsg"; then
+if test -z "$errmsg"
+then
     if ! (
 	eval 'type getopts || type getopt'
 	) >/dev/null 2>&1
@@ -186,8 +202,10 @@ fi
 #
 # If shelltest is true, exit now, reporting whether or not the shell is good.
 #
-if $shelltest; then
-    if test -n "$errmsg"; then
+if "$shelltest"
+then
+    if test -n "$errmsg"
+    then
 	echo >&2 "$0: $errmsg"
 	exit 1
     else
@@ -201,8 +219,10 @@ fi
 # Loops are broken by passing an extra "--no-re-exec" flag to the new
 # instance of this script.
 #
-if test -n "$errmsg"; then
-    if $re_exec_allowed; then
+if test -n "$errmsg"
+then
+    if "$re_exec_allowed"
+    then
 	for othershell in \
 	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh dash bash
 	    # NOTE: some shells known not to work are:
@@ -213,7 +233,7 @@ if test -n "$errmsg"; then
 	do
 	    test -n "$othershell" || continue
 	    if eval 'type "$othershell"' >/dev/null 2>&1 \
-		&& "$othershell" "$0" --shelltest >/dev/null 2>&1
+		&& $othershell "$0" --shelltest >/dev/null 2>&1
 	    then
 		cat <<EOF
 $0: $errmsg
@@ -271,7 +291,7 @@ bomb()
 {
 	cat >&2 <<ERRORMESSAGE
 
-ERROR: $@
+ERROR: $*
 
 *** BUILD ABORTED ***
 ERRORMESSAGE
@@ -289,11 +309,12 @@ ERRORMESSAGE
 #    eval "\$command $quotedlist \$filename"
 #
 shell_quote()
-{(
-	local result=''
+(
+	local result=
 	local arg qarg
 	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
-	for arg in "$@" ; do
+	for arg in "$@"
+	do
 		case "${arg}" in
 		'')
 			qarg="''"
@@ -306,12 +327,12 @@ shell_quote()
 			# beginning and end of the result and as part of
 			# '\'''\'' sequences that result from multiple
 			# adjacent quotes in he input.
-			qarg="$(printf "%s\n" "$arg" | \
+			qarg=$(printf "%s\n" "$arg" |
 			    ${SED:-sed} -e "s/'/'\\\\''/g" \
 				-e "1s/^/'/" -e "\$s/\$/'/" \
 				-e "1s/^''//" -e "\$s/''\$//" \
 				-e "s/'''/'/g"
-				)"
+			    )
 			;;
 		*)
 			# Arg is not the empty string, and does not contain
@@ -323,19 +344,20 @@ shell_quote()
 		result="${result}${result:+ }${qarg}"
 	done
 	printf "%s\n" "$result"
-)}
+)
 
 statusmsg()
 {
-	${runcmd} echo "===> $@" | tee -a "${results}"
+	${runcmd} echo "===> $*" | tee -a "${results}"
 }
 
 statusmsg2()
 {
 	local msg
 
-	msg="${1}"
+	msg=${1}
 	shift
+
 	case "${msg}" in
 	????????????????*)	;;
 	??????????*)		msg="${msg}      ";;
@@ -355,7 +377,7 @@ statusmsg2()
 
 warning()
 {
-	statusmsg "Warning: $@"
+	statusmsg "Warning: $*"
 }
 
 # Find a program in the PATH, and show the result.  If not found,
@@ -364,18 +386,19 @@ warning()
 #
 find_in_PATH()
 {
-	local prog="$1"
-	local result="${2-"$1"}"
-	local oldIFS="${IFS}"
+	local prog=$1
+	local result=${2-$1}
 	local dir
-	IFS=":"
-	for dir in ${PATH}; do
-		if [ -x "${dir}/${prog}" ]; then
-			result="${dir}/${prog}"
+	local IFS=:
+
+	for dir in ${PATH}
+	do
+		if [ -x "${dir}/${prog}" ]
+		then
+			result=${dir}/${prog}
 			break
 		fi
 	done
-	IFS="${oldIFS}"
 	echo "${result}"
 }
 
@@ -389,8 +412,10 @@ set_HOST_SH()
 
 	# Solaris has /usr/xpg4/bin/sh.
 	#
-	[ -z "${HOST_SH}" ] && [ x"${uname_s}" = x"SunOS" ] && \
-		[ -x /usr/xpg4/bin/sh ] && HOST_SH="/usr/xpg4/bin/sh"
+	[ -z "${HOST_SH}" ] &&
+		[ "${uname_s}" = SunOS ] &&
+		[ -x /usr/xpg4/bin/sh ] &&
+			HOST_SH=/usr/xpg4/bin/sh
 
 	# Try to get the name of the shell that's running this script,
 	# by parsing the output from "ps".  We assume that, if the host
@@ -405,8 +430,12 @@ set_HOST_SH()
 	# If we get the wrong result here, the user can override it by
 	# specifying HOST_SH in the environment.
 	#
-	[ -z "${HOST_SH}" ] && HOST_SH="$(
-		(ps -p $$ -o comm | sed -ne "2s/[ ${tab}]*\$//p") 2>/dev/null )"
+	[ -z "${HOST_SH}" ] && HOST_SH=$(
+		(
+			ps -p $$ -o comm |
+			    sed -ne "2s/[ ${tab}]*\$//p"
+		) 2>/dev/null
+	)
 
 	# If nothing above worked, use "sh".  We will later find the
 	# first directory in the PATH that has a "sh" program.
@@ -461,8 +490,8 @@ initdefaults()
 
 	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
-	    bomb "usr.bin/make not found; build.sh must be run from the top \
-level of source directory"
+	    bomb "usr.bin/make not found; build.sh must be run from" \
+	         "the top level of source directory"
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
@@ -510,8 +539,11 @@ level of source directory"
 	# every occurrence of pwd to use -P.
 	#
 	# XXX Except that doesn't work on Solaris. Or many Linuces.
+	#     And the standard says altering PWD produces unspecified results
+	# So instead just cd -P to $PWD which should make PWD be symlink free
 	#
-	unset PWD
+	cd -P "${PWD}" || bomb "Cannot cd to \$PWD ($PWD)"
+	# At this point TOP=$PWD should just work, but let's be ultra safe.
 	TOP=$( (exec pwd -P 2>/dev/null) || (exec pwd 2>/dev/null) )
 
 	# The user can set HOST_SH in the environment, or we try to
@@ -598,11 +630,12 @@ level of source directory"
 
 	# Set the BUILDSEED to NetBSD-"N"
 	#
-	setmakeenv BUILDSEED "NetBSD-$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh -m)"
+	setmakeenv BUILDSEED \
+		"NetBSD-$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh -m)"
 
 	# Set MKARZERO to "yes"
 	#
-	setmakeenv MKARZERO "yes"
+	setmakeenv MKARZERO yes
 
 }
 
@@ -741,16 +774,17 @@ MACHINE=zaurus		MACHINE_ARCH=earm	ALIAS=ezaurus DEFAULT
 getarch()
 {
 	local IFS
-	local found=""
+	local found=
 	local line
 
 	IFS="${nl}"
 	makewrappermachine="${MACHINE}"
-	for line in ${valid_MACHINE_ARCH}; do
+	for line in ${valid_MACHINE_ARCH}
+	do
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		" ")
+		' ')
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -789,8 +823,9 @@ getarch()
 		;;
 	"MACHINE="*" MACHINE_ARCH="*)
 		# Obey the MACHINE= and MACHINE_ARCH= parts of the line.
-		IFS=" "
-		for frag in ${found}; do
+		IFS=' '
+		for frag in ${found}
+		do
 			case "$frag" in
 			MACHINE=*|MACHINE_ARCH=*)
 				eval "$frag"
@@ -816,16 +851,18 @@ validatearch()
 
 	case "${MACHINE_ARCH}" in
 	"")
-		bomb "No MACHINE_ARCH provided. Use 'build.sh -m ${MACHINE} list-arch' to show options"
+		bomb "No MACHINE_ARCH provided." \
+		     "Use 'build.sh -m ${MACHINE} list-arch' to show options"
 		;;
 	esac
 
 	IFS="${nl}"
-	for line in ${valid_MACHINE_ARCH}; do
+	for line in ${valid_MACHINE_ARCH}
+	do
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		" ")
+		' ')
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -863,9 +900,9 @@ validatearch()
 #
 listarch()
 {
-	local machglob="$1" archglob="$2"
+	local machglob=$1 archglob=$2
 	local IFS
-	local wildcard="*"
+	local wildcard='*'
 	local line xline frag
 	local line_matches_machine line_matches_arch
 	local found=false
@@ -875,7 +912,8 @@ listarch()
 	: "${archglob:=${wildcard}}"
 
 	IFS="${nl}"
-	for line in ${valid_MACHINE_ARCH}; do
+	for line in ${valid_MACHINE_ARCH}
+	do
 		line="${line%%#*}" # ignore comments
 		xline="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		[ -z "${xline}" ] && continue # skip blank or comment lines
@@ -883,8 +921,9 @@ listarch()
 		line_matches_machine=false
 		line_matches_arch=false
 
-		IFS=" "
-		for frag in ${xline}; do
+		IFS=' '
+		for frag in ${xline}
+		do
 			case "${frag}" in
 			MACHINE=${machglob})
 				line_matches_machine=true ;;
@@ -895,12 +934,14 @@ listarch()
 			esac
 		done
 
-		if $line_matches_machine && $line_matches_arch; then
+		if $line_matches_machine && $line_matches_arch
+		then
 			found=true
 			echo "$line"
 		fi
 	done
-	if ! $found; then
+	if ! $found
+	then
 		echo >&2 "No match for" \
 		    "MACHINE=${machglob} MACHINE_ARCH=${archglob}"
 		return 1
@@ -942,7 +983,8 @@ bomb_getmakevar()
 #
 getmakevar()
 {
-	if [ -x "${make}" ]; then
+	if [ -x "${make}" ]
+	then
 		bomb_getmakevar "$1"
 	else
 		echo "\$$1"
@@ -993,7 +1035,8 @@ clearmakeenv()
 {
 	local var
 
-	for var in ${makeenv}; do
+	for var in ${makeenv}
+	do
 		unset ${var}
 	done
 }
@@ -1003,12 +1046,13 @@ clearmakeenv()
 #
 resolvepaths()
 {
-	local var="$1"
+	local var=$1
 	local val
 	eval val=\"\${${var}}\"
-	local newval=''
+	local newval=
 	local word
-	for word in ${val}; do
+	for word in ${val}
+	do
 		resolvepath word
 		newval="${newval}${newval:+ }${word}"
 	done
@@ -1021,7 +1065,7 @@ resolvepaths()
 #
 resolvepath()
 {
-	local var="$1"
+	local var=$1
 	local val
 	eval val=\"\${${var}}\"
 	case "${val}" in
@@ -1067,7 +1111,8 @@ help()
 
  Other OPERATIONs:
     help                Show this help message, and exit.
-    makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
+    makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper
+                        and ${toolprefix}make.
                         Always performed.
     cleandir            Run "make cleandir".  [Default unless -u is used]
     dtb                 Build devicetree blobs.
@@ -1173,7 +1218,8 @@ _usage_
 #
 usage()
 {
-	if [ -n "$*" ]; then
+	if [ -n "$*" ]
+	then
 		echo 1>&2 ""
 		echo 1>&2 "${progname}: $*"
 	fi
@@ -1183,12 +1229,13 @@ usage()
 
 parseoptions()
 {
-	opts='a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xZ:'
+	opts=a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xZ:
 	opt_a=false
 	opt_m=false
 	local did_show_info=false
 
-	if type getopts >/dev/null 2>&1; then
+	if type getopts >/dev/null 2>&1
+	then
 		# Use POSIX getopts.
 		#
 		getoptcmd='getopts :${opts} opt && opt=-${opt}'
@@ -1211,7 +1258,8 @@ parseoptions()
 
 	# Parse command line options.
 	#
-	while eval ${getoptcmd}; do
+	while eval ${getoptcmd}
+	do
 		case ${opt} in
 
 		-a)
@@ -1226,7 +1274,8 @@ parseoptions()
 			;;
 
 		-C)
-			eval ${optargcmd}; resolvepaths OPTARG
+			eval ${optargcmd}
+			resolvepaths OPTARG
 			CDEXTRA="${CDEXTRA}${CDEXTRA:+ }${OPTARG}"
 			;;
 
@@ -1246,7 +1295,8 @@ parseoptions()
 			;;
 
 		-D)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			setmakeenv DESTDIR "${OPTARG}"
 			;;
 
@@ -1260,7 +1310,8 @@ parseoptions()
 			;;
 
 		-M)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			case "${OPTARG}" in
 			\$*)	usage "-M argument must not begin with '\$'"
 				;;
@@ -1320,7 +1371,8 @@ parseoptions()
 			;;
 
 		-R)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			setmakeenv RELEASEDIR "${OPTARG}"
 			;;
 
@@ -1335,7 +1387,8 @@ parseoptions()
 			;;
 
 		-T)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			TOOLDIR="${OPTARG}"
 			export TOOLDIR
 			;;
@@ -1365,12 +1418,14 @@ parseoptions()
 			;;
 
 		-w)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			makewrapper="${OPTARG}"
 			;;
 
 		-X)
-			eval ${optargcmd}; resolvepath OPTARG
+			eval ${optargcmd}
+			resolvepath OPTARG
 			setmakeenv X11SRCDIR "${OPTARG}"
 			;;
 
@@ -1394,7 +1449,8 @@ parseoptions()
 			;;
 
 		'-?')
-			if [ "${OPTARG}" = '?' ]; then
+			if [ "${OPTARG}" = '?' ]
+			then
 				help
 				exit 0
 			fi
@@ -1415,7 +1471,8 @@ parseoptions()
 	# Validate operations.
 	#
 	eval ${optremcmd}
-	while [ $# -gt 0 ]; do
+	while [ $# -gt 0 ]
+	do
 		op=$1; shift
 		operations="${operations} ${op}"
 
@@ -1432,13 +1489,13 @@ parseoptions()
 			;;
 		mkrepro-timestamp)
 			setup_mkrepro quiet
-			echo ${MKREPRO_TIMESTAMP:-0}
+			echo "${MKREPRO_TIMESTAMP:-0}"
 			did_show_info=true
 			;;
 
 		show-revisionid)
 			setup_mkrepro quiet
-			echo ${NETBSD_REVISIONID}
+			echo "${NETBSD_REVISIONID}"
 			did_show_info=true
 			;;
 
@@ -1512,19 +1569,23 @@ parseoptions()
 		eval do_${op}=true
 	done
 
-	[ "$did_show_info" = true ] && [ ${MKREPRO_TIMESTAMP:-0} -ne 0 ] && exit
+	"$did_show_info" && [ "${MKREPRO_TIMESTAMP:-0}" -ne 0 ] && exit
 
 	[ -n "${operations}" ] || usage "Missing OPERATION to perform"
 
 	# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 	#
-	if [ -z "${MACHINE}" ]; then
-		[ "${uname_s}" = "NetBSD" ] ||
-		    bomb "MACHINE must be set, or -m must be used, for cross builds"
+	if [ -z "${MACHINE}" ]
+	then
+		[ "${uname_s}" = NetBSD ] || {
+		    bomb "MACHINE must be set, or -m must be used," \
+		         "for cross builds"
+		}
 		MACHINE=${uname_m}
 		MACHINE_ARCH=${uname_p}
 	fi
-	if $opt_m && ! $opt_a; then
+	if $opt_m && ! $opt_a
+	then
 		# Settings implied by the command line -m option
 		# override MACHINE_ARCH from the environment (if any).
 		getarch
@@ -1540,7 +1601,7 @@ parseoptions()
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
 	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
-	setmakeenv USETOOLS "yes"
+	setmakeenv USETOOLS yes
 	setmakeenv MAKEWRAPPERMACHINE "${makewrappermachine:-${MACHINE}}"
 	setmakeenv MAKE_OBJDIR_CHECK_WRITABLE no
 }
@@ -1552,11 +1613,13 @@ sanitycheck()
 {
 	# Install as non-root is a bad idea.
 	#
-	if ${do_install} && [ "$id_u" -ne 0 ] ; then
-		if ${do_expertmode}; then
-			warning "Will install as an unprivileged user"
+	if ${do_install} && [ "$id_u" -ne 0 ]
+	then
+		if ${do_expertmode}
+		then
+		    warning "Will install as an unprivileged user"
 		else
-			bomb "-E must be set for install as an unprivileged user"
+		    bomb "-E must be set for install as an unprivileged user"
 		fi
 	fi
 
@@ -1570,7 +1633,8 @@ sanitycheck()
 	path="${path%:.}"	# delete trailing ":."
 	case ":${path}:/" in
 	*:[!/~]*)
-		if ${do_expertmode}; then
+		if ${do_expertmode}
+		then
 			warning "PATH contains non-absolute components"
 		else
 			bomb "PATH environment variable must not" \
@@ -1579,10 +1643,11 @@ sanitycheck()
 		;;
 	esac
 
-	while [ ${MKX11-no} = "yes" ]; do		# not really a loop
+	while [ "${MKX11-no}" = yes ]		# not really a loop
+	do
 		test -n "${X11SRCDIR}" && {
 		    test -d "${X11SRCDIR}/external" ||
-		    	bomb "X11SRCDIR (${X11SRCDIR}) does not exist (with -x)"
+			bomb "X11SRCDIR (${X11SRCDIR}) does not exist (with -x)"
 		    break
 		}
 		for _xd in \
@@ -1592,12 +1657,13 @@ sanitycheck()
 		do
 		    test -f "${_xd}/Makefile" &&
 			setmakeenv X11SRCDIR "${_xd}" &&
-			break 2
+			    break 2
 		done
 		bomb "Asked to build X11 but no xsrc"
 	done
 
-	while $do_pkg; do				# not really a loop
+	while $do_pkg				# not really a loop
+	do
 		test -n "${PKGSRCDIR}" && {
 		    test -f "${PKGSRCDIR}/mk/bsd.pkg.mk" ||
 			bomb "PKGSRCDIR (${PKGSRCDIR}) does not exist"
@@ -1610,18 +1676,19 @@ sanitycheck()
 		do
 		    test -f "${_pd}/mk/bsd.pkg.mk" &&
 			setmakeenv PKGSRCDIR "${_pd}" &&
-			break 2
+			    break 2
 		done
 		bomb "Asked to build package but no pkgsrc"
 	done
-	if $do_pkg && [ "${MKX11-no}" = yes ]; then
+	if $do_pkg && [ "${MKX11-no}" = yes ]
+	then
 		# See comment below about X11_TYPE in pkgsrc mk.conf.
 		# (Feel free to remove this, and set X11_TYPE to
 		# native/modular according to MKX11=yes/no, if you want
 		# to do the work to make X11_TYPE=native cross-builds
 		# work.)
 		bomb "Experimental \`build.sh pkg=...'" \
-		    "does not support -x/MKX11=yes"
+		     "does not support -x/MKX11=yes"
 	fi
 }
 
@@ -1637,7 +1704,8 @@ print_tooldir_program()
 	local tooldir_program
 	local program=${1}
 
-	if [ -n "${TOOLDIR}" ]; then
+	if [ -n "${TOOLDIR}" ]
+	then
 		echo "${TOOLDIR}/bin/${toolprefix}${program}"
 		return
 	fi
@@ -1645,11 +1713,11 @@ print_tooldir_program()
 	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
 	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
 	#
-	local host_ostype="${uname_s}-$(
-		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+	local host_ostype=${uname_s}-$(
+			echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
 		)-$(
-		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
-		)"
+			echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+		)
 
 	# Look in a few potential locations for
 	# ${possible_TOOLDIR}/bin/${toolprefix}${program}.
@@ -1672,15 +1740,16 @@ print_tooldir_program()
 		"${TOP}/obj" \
 		"${TOP}/obj.${MACHINE}"
 	do
-		[ -n "${possible_TOP_OBJ}" ] || continue
-		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
-		possible_program="${possible_TOOLDIR}/bin/${toolprefix}${program}"
-		if [ -x "${possible_program}" ]; then
-			echo ${possible_program}
-			return;
-		fi
+	    [ -n "${possible_TOP_OBJ}" ] || continue
+	    possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
+	    possible_program="${possible_TOOLDIR}/bin/${toolprefix}${program}"
+	    if [ -x "${possible_program}" ]
+	    then
+		echo ${possible_program}
+		return
+	    fi
 	done
-	echo ""
+	echo ''
 }
 
 # print_tooldir_make --
@@ -1727,16 +1796,19 @@ print_tooldir_make()
 	# the value of TOOLDIR.  Believe the result only if it's
 	# a directory that already exists and contains bin/${toolprefix}make.
 	#
-	if [ -x "${possible_make}" ]; then
-		possible_TOOLDIR="$(
+	if [ -x "${possible_make}" ]
+	then
+		possible_TOOLDIR=$(
 			make="${possible_make}" \
-			nobomb_getmakevar TOOLDIR 2>/dev/null
-			)"
-		if [ $? = 0 ] && [ -n "${possible_TOOLDIR}" ] \
-		    && [ -d "${possible_TOOLDIR}" ];
+			    nobomb_getmakevar TOOLDIR 2>/dev/null
+			)
+		if [ $? = 0 ] &&
+		   [ -n "${possible_TOOLDIR}" ] &&
+		   [ -d "${possible_TOOLDIR}" ]
 		then
 			tooldir_make="${possible_TOOLDIR}/bin/${toolprefix}make"
-			if [ -x "${tooldir_make}" ]; then
+			if [ -x "${tooldir_make}" ]
+			then
 				echo "${tooldir_make}"
 				return 0
 			fi
@@ -1780,9 +1852,12 @@ print_tooldir_make()
 rebuildmake()
 {
 	make="$(print_tooldir_make)"
-	if [ -n "${make}" ] && [ -x "${make}" ]; then
-		for f in usr.bin/make/*.[ch]; do
-			if [ "${f}" -nt "${make}" ]; then
+	if [ -n "${make}" ] && [ -x "${make}" ]
+	then
+		for f in usr.bin/make/*.[ch]
+		do
+			if [ "${f}" -nt "${make}" ]
+			then
 				statusmsg "${make} outdated" \
 					"(older than ${f}), needs building."
 				do_rebuildmake=true
@@ -1795,12 +1870,14 @@ rebuildmake()
 	fi
 
 	# Build bootstrap ${toolprefix}make if needed.
-	if ! ${do_rebuildmake}; then
+	if ! ${do_rebuildmake}
+	then
 		return
 	fi
 
 	# Silent configure with MAKEVERBOSE==0
-	if [ ${MAKEVERBOSE:-2} -eq 0 ]; then
+	if [ ${MAKEVERBOSE:-2} -eq 0 ]
+	then
 		configure_args=--silent
 	fi
 
@@ -1810,7 +1887,8 @@ rebuildmake()
 		CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
 	    ${HOST_SH} "${TOP}/tools/make/configure" ${configure_args} ||
 	( cp ${tmpdir}/config.log ${tmpdir}-config.log
-	      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
+	      bomb "Configure of ${toolprefix}make failed," \
+		   "see ${tmpdir}-config.log for details" )
 	${runcmd} ${HOST_SH} buildmake.sh ||
 	    bomb "Build of ${toolprefix}make failed"
 	make="${tmpdir}/${toolprefix}make"
@@ -1835,10 +1913,12 @@ validatemakeparams()
 	# else if ./mk.conf exists, then set MAKECONF to that,
 	# else use the default from share/mk/bsd.own.mk (/etc/mk.conf).
 	#
-	if [ -n "${MAKECONF+1}" ]; then
+	if [ -n "${MAKECONF+1}" ]
+	then
 		setmakeenv MAKECONF "${MAKECONF}"
 		statusmsg2 "getenv MAKECONF:" "${MAKECONF}"
-	elif [ -f "${TOP}/mk.conf" ]; then
+	elif [ -f "${TOP}/mk.conf" ]
+	then
 		setmakeenv MAKECONF "${TOP}/mk.conf"
 		statusmsg2 "mk.conf MAKECONF:" "${MAKECONF}"
 	else
@@ -1846,9 +1926,11 @@ validatemakeparams()
 		setmakeenv MAKECONF "${MAKECONF}"
 		statusmsg2 "share/mk MAKECONF:" "${MAKECONF}"
 	fi
-	if [ -z "${MAKECONF}" ]; then
+	if [ -z "${MAKECONF}" ]
+	then
 		bomb "MAKECONF must not be empty"
-	elif [ -e "${MAKECONF}" ]; then
+	elif [ -e "${MAKECONF}" ]
+	then
 		statusmsg2 "MAKECONF file:" "${MAKECONF}"
 	else
 		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
@@ -1864,34 +1946,39 @@ validatemakeparams()
 
 	# Non-root should always use either the -U or -E flag.
 	#
-	if ! ${do_expertmode} && \
-	    [ "$id_u" -ne 0 ] && \
-	    [ "${MKUNPRIVED}" = "no" ] ; then
+	if ! ${do_expertmode} && [ "$id_u" -ne 0 ] && [ "${MKUNPRIVED}" = no ]
+	then
 		bomb "-U or -E must be set for build as an unprivileged user"
 	fi
 
-	if [ "${runcmd}" = "echo" ]; then
+	if [ "${runcmd}" = echo ]
+	then
 		TOOLCHAIN_MISSING=no
-		EXTERNAL_TOOLCHAIN=""
+		EXTERNAL_TOOLCHAIN=
 	else
 		TOOLCHAIN_MISSING=$(bomb_getmakevar TOOLCHAIN_MISSING)
 		EXTERNAL_TOOLCHAIN=$(bomb_getmakevar EXTERNAL_TOOLCHAIN)
 	fi
-	if [ "${TOOLCHAIN_MISSING}" = "yes" ] && \
-	   [ -z "${EXTERNAL_TOOLCHAIN}" ]; then
-		${runcmd} echo "ERROR: build.sh (in-tree cross-toolchain) is not yet available for"
+	if [ "${TOOLCHAIN_MISSING}" = yes ] && [ -z "${EXTERNAL_TOOLCHAIN}" ]
+	then
+		${runcmd} echo "ERROR: build.sh (in-tree cross-toolchain)" \
+						"is not yet available for"
 		${runcmd} echo "	MACHINE:      ${MACHINE}"
 		${runcmd} echo "	MACHINE_ARCH: ${MACHINE_ARCH}"
 		${runcmd} echo ""
-		${runcmd} echo "All builds for this platform should be done via a traditional make"
-		${runcmd} echo "If you wish to use an external cross-toolchain, set"
-		${runcmd} echo "	EXTERNAL_TOOLCHAIN=<path to toolchain root>"
+		${runcmd} echo "All builds for this platform should be done" \
+						"via a traditional make"
+		${runcmd} echo "If you wish to use an external" \
+						"cross-toolchain, set"
+		${runcmd} echo "	EXTERNAL_TOOLCHAIN=<path to" \
+						"toolchain root>"
 		${runcmd} echo "in either the environment or mk.conf and rerun"
 		${runcmd} echo "	${progname} $*"
 		exit 1
 	fi
 
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		# Create the top-level object directory.
 		#
 		# "make obj NOSUBDIR=" can handle most cases, but it
@@ -1903,31 +1990,35 @@ validatemakeparams()
 		# could be handled either way, but we choose to handle
 		# it similarly to MAKEOBJDIRPREFIX.
 		#
-		if [ -n "${TOP_obj}" ]; then
+		if [ -n "${TOP_obj}" ]
+		then
 			# It must have been set by the "-M" or "-O"
 			# command line options, so there's no need to
 			# use getmakevar
 			:
-		elif [ -n "$MAKEOBJDIRPREFIX" ]; then
+		elif [ -n "$MAKEOBJDIRPREFIX" ]
+		then
 			TOP_obj="$(getmakevar MAKEOBJDIRPREFIX)${TOP}"
-		elif [ -n "$MAKEOBJDIR" ]; then
+		elif [ -n "$MAKEOBJDIR" ]
+		then
 			TOP_obj="$(getmakevar MAKEOBJDIR)"
 		fi
-		if [ -n "$TOP_obj" ]; then
-			${runcmd} mkdir -p "${TOP_obj}" ||
-			    bomb "Can't create top level object directory" \
-					"${TOP_obj}"
+		if [ -n "$TOP_obj" ]
+		then
+		    ${runcmd} mkdir -p "${TOP_obj}" ||
+			bomb "Can't create top level object directory" \
+			     "${TOP_obj}"
 		else
-			${runcmd} "${make}" -m ${TOP}/share/mk obj NOSUBDIR= ||
+		    ${runcmd} "${make}" -m "${TOP}/share/mk" obj NOSUBDIR= ||
 			    bomb "Can't create top level object directory" \
-					"using make obj"
+				 "using make obj"
 		fi
 
 		# make obj in tools to ensure that the objdir for "tools"
 		# is available.
 		#
 		${runcmd} cd tools
-		${runcmd} "${make}" -m ${TOP}/share/mk obj NOSUBDIR= ||
+		${runcmd} "${make}" -m "${TOP}/share/mk" obj NOSUBDIR= ||
 		    bomb "Failed to make obj in tools"
 		${runcmd} cd "${TOP}"
 	fi
@@ -1942,7 +2033,8 @@ validatemakeparams()
 	do
 		eval oldval=\"\$${var}\"
 		newval="$(getmakevar $var)"
-		if ! $do_expertmode; then
+		if ! $do_expertmode
+		then
 			: ${_SRC_TOP_OBJ_:=$(getmakevar _SRC_TOP_OBJ_)}
 			case "$var" in
 			DESTDIR)
@@ -1955,9 +2047,10 @@ validatemakeparams()
 				;;
 			esac
 		fi
-		if [ -n "$oldval" ] && [ "$oldval" != "$newval" ]; then
+		if [ -n "$oldval" ] && [ "$oldval" != "$newval" ]
+		then
 			bomb "Value of ${var} has changed" \
-				"(was \"${oldval}\", now \"${newval}\")"
+			     "(was \"${oldval}\", now \"${newval}\")"
 		fi
 		eval ${var}=\"\${newval}\"
 		eval export ${var}
@@ -1969,29 +2062,36 @@ validatemakeparams()
 
 	# Check validity of TOOLDIR and DESTDIR.
 	#
-	if [ -z "${TOOLDIR}" ] || [ "${TOOLDIR}" = "/" ]; then
+	if [ -z "${TOOLDIR}" ] || [ "${TOOLDIR}" = / ]
+	then
 		bomb "TOOLDIR '${TOOLDIR}' invalid"
 	fi
 	removedirs="${TOOLDIR}"
 
-	if [ -z "${DESTDIR}" ] || [ "${DESTDIR}" = "/" ]; then
-		if ${do_distribution} || ${do_release} || \
-		   [ "${uname_s}" != "NetBSD" ] || \
-		   [ "${uname_m}" != "${MACHINE}" ]; then
-			bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'"
+	if [ -z "${DESTDIR}" ] || [ "${DESTDIR}" = / ]
+	then
+		if ${do_distribution} || ${do_release} ||
+		   [ "${uname_s}" != NetBSD ] ||
+		   [ "${uname_m}" != "${MACHINE}" ]
+		then
+			bomb "DESTDIR must != / for cross builds," \
+			     "or ${progname} 'distribution' or 'release'"
 		fi
-		if ! ${do_expertmode}; then
+		if ! ${do_expertmode}
+		then
 			bomb "DESTDIR must != / for non -E (expert) builds"
 		fi
 		statusmsg "WARNING: Building to /, in expert mode."
-		statusmsg "         This may cause your system to break!  Reasons include:"
-		statusmsg "            - your kernel is not up to date"
-		statusmsg "            - the libraries or toolchain have changed"
+		statusmsg "         This may cause your system to break!"
+		statusmsg "         Reasons include:"
+		statusmsg "           - your kernel is not up to date"
+		statusmsg "           - the libraries or toolchain have changed"
 		statusmsg "         YOU HAVE BEEN WARNED!"
 	else
 		removedirs="${removedirs} ${DESTDIR}"
 	fi
-	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
+	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]
+	then
 		bomb "Must set RELEASEDIR with 'releasekernel=...'"
 	fi
 
@@ -2005,12 +2105,15 @@ validatemakeparams()
 		# DESTDIR is about to be removed
 		;;
 	*)
-		if [ -e "${DESTDIR}/METALOG" ] && \
-		    [ "${MKUNPRIVED}" = "no" ] ; then
-			if $do_expertmode; then
+		if [ -e "${DESTDIR}/METALOG" ] &&
+		   [ "${MKUNPRIVED}" = no ]
+		then
+			if $do_expertmode
+			then
 				warning "A previous build.sh run specified -U"
 			else
-				bomb "A previous build.sh run specified -U; you must specify it again now"
+				bomb "A previous build.sh run specified -U;" \
+				     "you must specify it again now"
 			fi
 		fi
 		;;
@@ -2021,9 +2124,12 @@ validatemakeparams()
 	# If release operation is specified with live-image or install-image,
 	# the release op should be performed with -U for later image ops.
 	#
-	if ${do_release} && ( ${do_live_image} || ${do_install_image} ) && \
-	    [ "${MKUNPRIVED}" = "no" ] ; then
-		bomb "-U must be specified on building release to create images later"
+	if ${do_release} &&
+	    { ${do_live_image} || ${do_install_image} ; } &&
+	    [ "${MKUNPRIVED}" = no ]
+	then
+		bomb "-U must be specified on building release" \
+		     "to create images later"
 	fi
 }
 
@@ -2032,8 +2138,10 @@ createmakewrapper()
 {
 	# Remove the target directories.
 	#
-	if ${do_removedirs}; then
-		for f in ${removedirs}; do
+	if ${do_removedirs}
+	then
+		for f in ${removedirs}
+		do
 			statusmsg "Removing ${f}"
 			${runcmd} rm -r -f "${f}"
 		done
@@ -2051,15 +2159,16 @@ createmakewrapper()
 	# value of TOOLDIR might be different from the value guessed
 	# before the top level obj dir was created.
 	#
-	if ! ${done_rebuildmake} && \
-	    ( [ ! -x "$make" ] || [ "$make" != "$(print_tooldir_make)" ] )
+	if ! ${done_rebuildmake} &&
+	   { ! [ -x "$make" ] || [ "$make" != "$(print_tooldir_make)" ] ; }
 	then
 		rebuildmake
 	fi
 
 	# Install ${toolprefix}make if it was built.
 	#
-	if ${done_rebuildmake}; then
+	if ${done_rebuildmake}
+	then
 		${runcmd} rm -f "${TOOLDIR}/bin/${toolprefix}make"
 		${runcmd} cp "${make}" "${TOOLDIR}/bin/${toolprefix}make" ||
 		    bomb "Failed to install \$TOOLDIR/bin/${toolprefix}make"
@@ -2070,13 +2179,16 @@ createmakewrapper()
 	# Build a ${toolprefix}make wrapper script, usable by hand as
 	# well as by build.sh.
 	#
-	if [ -z "${makewrapper}" ]; then
-		makewrapper="${TOOLDIR}/bin/${toolprefix}make-${makewrappermachine:-${MACHINE}}"
+	if [ -z "${makewrapper}" ]
+	then
+		makewrapper="${TOOLDIR}/bin/${toolprefix}make"
+		makewrapper="${makewrapper}-${makewrappermachine:-${MACHINE}}"
 		[ -z "${BUILDID}" ] || makewrapper="${makewrapper}-${BUILDID}"
 	fi
 
 	${runcmd} rm -f "${makewrapper}"
-	if [ "${runcmd}" = "echo" ]; then
+	if [ "${runcmd}" = echo ]
+	then
 		echo 'cat <<EOF >'${makewrapper}
 		makewrapout=
 	else
@@ -2092,18 +2204,25 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.385 2024/12/20 15:56:45 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.386 2024/12/20 22:24:20 kre Exp $
 # with these arguments: ${_args}
 #
 
 EOF
 	{
-		sorted_vars="$(for var in ${makeenv}; do echo "${var}" ; done \
-			| sort -u )"
-		for var in ${sorted_vars}; do
+		sorted_vars=$(
+			for var in ${makeenv}
+			do
+				echo "${var}"
+			done |
+				sort -u
+		)
+		for var in ${sorted_vars}
+		do
 			eval val=\"\${${var}}\"
 			eval is_set=\"\${${var}+set}\"
-			if [ -z "${is_set}" ]; then
+			if [ -z "${is_set}" ]
+			then
 				echo "unset ${var}"
 			else
 				qval="$(shell_quote "${val}")"
@@ -2111,20 +2230,20 @@ EOF
 			fi
 		done
 
-		cat <<EOF
+		cat <<-EOF
 
-exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
-EOF
+			exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
+		EOF
 	} | eval cat "${makewrapout}"
-	[ "${runcmd}" = "echo" ] && echo EOF
+	[ "${runcmd}" = echo ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
 	statusmsg2 "Updated makewrapper:" "${makewrapper}"
 }
 
 make_in_dir()
 {
-	local dir="$1"
-	local op="$2"
+	local dir=$1
+	local op=$2
 	${runcmd} cd "${dir}" ||
 	    bomb "Failed to cd to \"${dir}\""
 	${runcmd} "${makewrapper}" ${parallel} ${op} ||
@@ -2135,11 +2254,13 @@ make_in_dir()
 
 buildtools()
 {
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		${runcmd} "${makewrapper}" ${parallel} obj-tools ||
 		    bomb "Failed to make obj-tools"
 	fi
-	if [ "${MKUPDATE}" = "no" ]; then
+	if [ "${MKUPDATE}" = no ]
+	then
 		make_in_dir tools cleandir
 	fi
 	make_in_dir tools build_install
@@ -2148,11 +2269,13 @@ buildtools()
 
 buildlibs()
 {
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		${runcmd} "${makewrapper}" ${parallel} obj ||
 		    bomb "Failed to make obj"
 	fi
-	if [ "${MKUPDATE}" = "no" ]; then
+	if [ "${MKUPDATE}" = no ]
+	then
 		make_in_dir lib cleandir
 	fi
 	make_in_dir . do-distrib-dirs
@@ -2163,8 +2286,9 @@ buildlibs()
 
 getkernelconf()
 {
-	kernelconf="$1"
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	kernelconf=$1
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		# The correct value of KERNOBJDIR might
 		# depend on a prior "make obj" in
 		# ${KERNSRCDIR}/${KERNARCHDIR}/compile.
@@ -2173,24 +2297,24 @@ getkernelconf()
 		KERNARCHDIR="$(getmakevar KERNARCHDIR)"
 		make_in_dir "${KERNSRCDIR}/${KERNARCHDIR}/compile" obj
 	fi
-	KERNCONFDIR="$(getmakevar KERNCONFDIR)"
-	KERNOBJDIR="$(getmakevar KERNOBJDIR)"
+	KERNCONFDIR=$(getmakevar KERNCONFDIR)
+	KERNOBJDIR=$(getmakevar KERNOBJDIR)
 	case "${kernelconf}" in
 	*/*)
-		kernelconfpath="${kernelconf}"
-		kernelconfname="${kernelconf##*/}"
+		kernelconfpath=${kernelconf}
+		kernelconfname=${kernelconf##*/}
 		;;
 	*)
-		kernelconfpath="${KERNCONFDIR}/${kernelconf}"
-		kernelconfname="${kernelconf}"
+		kernelconfpath=${KERNCONFDIR}/${kernelconf}
+		kernelconfname=${kernelconf}
 		;;
 	esac
-	kernelbuildpath="${KERNOBJDIR}/${kernelconfname}"
+	kernelbuildpath=${KERNOBJDIR}/${kernelconfname}
 }
 
 diskimage()
 {
-	ARG="$(echo $1 | tr '[:lower:]' '[:upper:]')"
+	ARG="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
 	[ -f "${DESTDIR}/etc/mtree/set.base" ] ||
 	    bomb "The release binaries must be built first"
 	kerneldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
@@ -2202,7 +2326,8 @@ diskimage()
 
 buildkernel()
 {
-	if ! ${do_tools} && ! ${buildkernelwarned:-false}; then
+	if ! ${do_tools} && ! ${buildkernelwarned:-false}
+	then
 		# Building tools every time we build a kernel is clearly
 		# unnecessary.  We could try to figure out whether rebuilding
 		# the tools is necessary this time, but it doesn't seem worth
@@ -2217,11 +2342,13 @@ buildkernel()
 	statusmsg2 "Build directory:" "${kernelbuildpath}"
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
-	if [ "${MKUPDATE}" = "no" ]; then
+	if [ "${MKUPDATE}" = no ]
+	then
 		make_in_dir "${kernelbuildpath}" cleandir
 	fi
-	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
-	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first"
+	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] ||
+		bomb "${TOOLDIR}/bin/${toolprefix}config does not exist." \
+		     "You need to \"$0 tools\" first"
 	CONFIGOPTS=$(getmakevar CONFIGOPTS)
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" ${CONFIGOPTS} \
 		-b "${kernelbuildpath}" -s "${TOP}/sys" ${configopts} \
@@ -2230,11 +2357,13 @@ buildkernel()
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
 
-	if [ "${runcmd}" != "echo" ]; then
+	if [ "${runcmd}" != echo ]
+	then
 		statusmsg "Kernels built from ${kernelconf}:"
 		kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
-		for kern in ${kernlist:-netbsd}; do
-			[ -f "${kernelbuildpath}/${kern}" ] && \
+		for kern in ${kernlist:-netbsd}
+		do
+			[ -f "${kernelbuildpath}/${kern}" ] &&
 			    echo "  ${kernelbuildpath}/${kern}"
 		done | tee -a "${results}"
 	fi
@@ -2246,12 +2375,14 @@ releasekernel()
 	kernelreldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
 	${runcmd} mkdir -p "${kernelreldir}"
 	kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
-	for kern in ${kernlist:-netbsd}; do
+	for kern in ${kernlist:-netbsd}
+	do
 		builtkern="${kernelbuildpath}/${kern}"
 		[ -f "${builtkern}" ] || continue
 		releasekern="${kernelreldir}/${kern}-${kernelconfname}.gz"
 		statusmsg2 "Kernel copy:" "${releasekern}"
-		if [ "${runcmd}" = "echo" ]; then
+		if [ "${runcmd}" = echo ]
+		then
 			echo "gzip -c -9 < ${builtkern} > ${releasekern}"
 		else
 			gzip -c -9 < "${builtkern}" > "${releasekern}"
@@ -2262,7 +2393,8 @@ releasekernel()
 buildkernels()
 {
 	allkernels=$( runcmd= make_in_dir etc '-V ${ALL_KERNELS}' )
-	for k in $allkernels; do
+	for k in $allkernels
+	do
 		buildkernel "${k}"
 	done
 }
@@ -2270,7 +2402,8 @@ buildkernels()
 buildmodules()
 {
 	setmakeenv MKBINUTILS no
-	if ! ${do_tools} && ! ${buildmoduleswarned:-false}; then
+	if ! ${do_tools} && ! ${buildmoduleswarned:-false}
+	then
 		# Building tools every time we build modules is clearly
 		# unnecessary as well as a kernel.
 		#
@@ -2279,31 +2412,38 @@ buildmodules()
 	fi
 
 	statusmsg "Building kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		make_in_dir sys/modules obj
 	fi
-	if [ "${MKUPDATE}" = "no" ]; then
+	if [ "${MKUPDATE}" = no ]
+	then
 		make_in_dir sys/modules cleandir
 	fi
 	make_in_dir sys/modules dependall
 	make_in_dir sys/modules install
 
-	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+	statusmsg "Successful build of kernel modules for" \
+		  "NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
 builddtb()
 {
-	statusmsg "Building devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	statusmsg "Building devicetree blobs for" \
+		  "NetBSD/${MACHINE} ${DISTRIBVER}"
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		make_in_dir sys/dtb obj
 	fi
-	if [ "${MKUPDATE}" = "no" ]; then
+	if [ "${MKUPDATE}" = no ]
+	then
 		make_in_dir sys/dtb cleandir
 	fi
 	make_in_dir sys/dtb dependall
 	make_in_dir sys/dtb install
 
-	statusmsg "Successful build of devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
+	statusmsg "Successful build of devicetree blobs for" \
+		  "NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
 buildpkg()
@@ -2332,25 +2472,35 @@ buildpkg()
 		makejobsarg="--make-jobs ${parallel#-j }"
 		makejobsvar="MAKE_JOBS=${parallel#-j }"
 		;;
-	*)	makejobsarg=""
-		makejobsvar=""
+	*)	makejobsarg=
+		makejobsvar=
 		;;
 	esac
 
-	if [ "${MAKEVERBOSE}" -eq 0 ]; then
+	if [ "${MAKEVERBOSE}" -eq 0 ]
+	then
 		quiet="--quiet"
 	else
-		quiet=""
+		quiet=
 	fi
 
 	# Derived from pkgsrc/mk/bsd.prefs.mk rev. 1.451.
 	opsys_version=$(echo "${DISTRIBVER}" |
-		awk -F. '{major=int($1); minor=int($2); if (minor>=100) minor=99; patch=int($3); if (patch>=100) patch=99; printf "%02d%02d%02d", major, minor, patch}')
+		awk -F. '{
+				major=int($1)
+				minor=int($2)
+				if (minor>=100) minor=99
+				patch=int($3)
+				if (patch>=100) patch=99
+				printf "%02d%02d%02d", major, minor, patch
+			}'
+	)
 
 	# Bootstrap pkgsrc if needed.
 	#
 	# XXX Redo this if it's out-of-date, not just if it's missing.
-	if ! [ -x "${pkgroot}/pkg/bin/bmake" ]; then
+	if ! [ -x "${pkgroot}/pkg/bin/bmake" ]
+	then
 		statusmsg "Bootstrapping pkgsrc"
 
 		cat >"${pkgroot}/mk.conf-fragment" <<EOF
@@ -2392,22 +2542,29 @@ EOF
 
 		# XXX Set --abi for mips and whatever else needs it?
 		# XXX Unprivileged native tools, privileged cross.
-		(cd "${PKGSRCDIR}" && clearmakeenv && ./bootstrap/bootstrap \
-			${makejobsarg} \
-			--mk-fragment "${pkgroot}/mk.conf-fragment" \
-			--prefix "${pkgroot}/pkg" \
-			${quiet} \
-			--unprivileged \
-			--workdir "${pkgroot}/bootwork") \
-		|| bomb "Failed to bootstrap pkgsrc"
+		(
+			cd "${PKGSRCDIR}" &&
+			clearmakeenv &&
+			./bootstrap/bootstrap \
+				${makejobsarg} \
+				--mk-fragment "${pkgroot}/mk.conf-fragment" \
+				--prefix "${pkgroot}/pkg" \
+				${quiet} \
+				--unprivileged \
+				--workdir "${pkgroot}/bootwork"
+		) ||
+			 bomb "Failed to bootstrap pkgsrc"
 	fi
 
 	# Build the package.
-	(cd "${PKGSRCDIR}/${catpkg}" && clearmakeenv && \
+	(
+		cd "${PKGSRCDIR}/${catpkg}" &&
+		clearmakeenv &&
 		"${pkgroot}/pkg/bin/bmake" package \
 			USE_CROSS_COMPILE=yes \
-			${makejobsvar}) \
-	|| bomb "Failed to build ${catpkg}"
+			${makejobsvar}
+	) ||
+		bomb "Failed to build ${catpkg}"
 }
 
 installmodules()
@@ -2472,34 +2629,40 @@ RUMP_LIBSETS="
 
 dorump()
 {
-	local doclean=""
-	local doobjs=""
+	local doclean=
+	local doobjs=
 
 	export RUMPKERN_ONLY=1
 	# create obj and distrib dirs
-	if [ "${MKOBJDIRS}" != "no" ]; then
+	if [ "${MKOBJDIRS}" != no ]
+	then
 		make_in_dir "${NETBSDSRCDIR}/etc/mtree" obj
 		make_in_dir "${NETBSDSRCDIR}/sys/rump" obj
 	fi
 	${runcmd} "${makewrapper}" ${parallel} do-distrib-dirs \
 	    || bomb "Could not create distrib-dirs"
 
-	[ "${MKUPDATE}" = "no" ] && doclean="cleandir"
+	[ "${MKUPDATE}" = no ] && doclean="cleandir"
 	targlist="${doclean} ${doobjs} dependall install"
+
 	# optimize: for test we build only static libs (3x test speedup)
-	if [ "${1}" = "rumptest" ] ; then
+	if [ "${1}" = rumptest ]
+	then
 		setmakeenv NOPIC 1
 		setmakeenv NOPROFILE 1
 	fi
-	for cmd in ${targlist} ; do
+
+	for cmd in ${targlist}
+	do
 		make_in_dir "${NETBSDSRCDIR}/sys/rump" ${cmd}
 	done
 
 	# if we just wanted to build & install rump, we're done
-	[ "${1}" != "rumptest" ] && return
+	[ "${1}" != rumptest ] && return
 
-	${runcmd} cd "${NETBSDSRCDIR}/sys/rump/librump/rumpkern" \
-	    || bomb "cd to rumpkern failed"
+	${runcmd} cd "${NETBSDSRCDIR}/sys/rump/librump/rumpkern" ||
+		bomb "cd to rumpkern failed"
+
 	md_quirks=`${runcmd} "${makewrapper}" -V '${_SYMQUIRK}'`
 	# one little, two little, three little backslashes ...
 	md_quirks="$(echo ${md_quirks} | sed 's,\\,\\\\,g'";s/'//g" )"
@@ -2508,10 +2671,12 @@ dorump()
 
 	local oIFS="${IFS}"
 	IFS=","
-	for set in ${RUMP_LIBSETS} ; do
+	for set in ${RUMP_LIBSETS}
+	do
 		IFS="${oIFS}"
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
-		    -static --whole-archive ${set} --no-whole-archive -lpthread -lc 2>&1 -o /tmp/rumptest.$$ | \
+		    -static --whole-archive ${set} --no-whole-archive   \
+		    -lpthread -lc 2>&1 -o /tmp/rumptest.$$ |
 		      awk -v quirks="${md_quirks}" '
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
@@ -2540,15 +2705,18 @@ setup_mkrepro()
 {
 	local quiet="$1"
 
-	if [ ${MKREPRO-no} != "yes" ]; then
+	if [ "${MKREPRO-no}" != yes ]
+	then
 		return
 	fi
-	if [ ${MKREPRO_TIMESTAMP-0} -ne 0 ]; then
+	if [ "${MKREPRO_TIMESTAMP-0}" -ne 0 ]
+	then
 		return
 	fi
 
 	local dirs=${NETBSDSRCDIR-/usr/src}/
-	if [ ${MKX11-no} = "yes" ]; then
+	if [ "${MKX11-no}" = yes ]
+	then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 
@@ -2558,60 +2726,87 @@ setup_mkrepro()
 	local t
 	local tag
 	local vcs
-	for d in ${dirs}; do
-		if [ -d "${d}CVS" ]; then
+	for d in ${dirs}
+	do
+		if [ -d "${d}CVS" ]
+		then
 			local cvslatest=$(print_tooldir_program cvslatest)
-			if [ ! -x "${cvslatest}" ]; then
+			if ! [ -x "${cvslatest}" ]
+			then
 				buildtools
 			fi
 			local nbdate=$(print_tooldir_program date)
 
 			local cvslatestflags=
-			if ${do_expertmode}; then
+			if ${do_expertmode}
+			then
 				cvslatestflags=-i
 			fi
 
-			t=$("${cvslatest}" ${cvslatestflags} "${d}")
-			if [ -f "${d}CVS/Tag" ]; then
+			t=$("${cvslatest}" ${cvslatestflags} "${d}") ||
+				bomb "${cvslatest} failed"
+			if [ -f "${d}CVS/Tag" ]
+			then
 				tag=$( sed 's/^T//' < "${d}CVS/Tag" )
 			else
 				tag=HEAD
 			fi
-			NETBSD_REVISIONID="${tag}-"$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')
+			NETBSD_REVISIONID="${tag}-$(
+				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
-		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
-			t=$(cd "${d}" && git log -1 --format=%ct)
-			NETBSD_REVISIONID=$(cd "${d}" && git log -1 --format=%H)
+		elif [ -d "${d}.git" ] || [ -f "${d}.git" ]
+		then
+			t=$(cd "${d}" && git log -1 --format=%ct) ||
+				bomb "git log %ct failed"
+			NETBSD_REVISIONID=$(
+			   cd "${d}" && git log -1 --format=%H) ||
+				bomb "git log %H failed"
 			vcs=git
-		elif [ -d "${d}.hg" ]; then
-			t=$(hg --repo "$d" log -r . --template '{date.unixtime}\n')
-			NETBSD_REVISIONID=$(hg --repo "$d" identify --template '{id}\n')
+		elif [ -d "${d}.hg" ]
+		then
+			t=$(hg --repo "$d" \
+			    log -r . --template '{date.unixtime}\n') ||
+				bomb "hg log failed"
+			NETBSD_REVISIONID=$(hg --repo "$d" \
+			    identify --template '{id}\n') ||
+				bomb "hg identify failed"
 			vcs=hg
-		elif [ -f "${d}.hg_archival.txt" ]; then
-			local stat=$(print_tooldir_program stat)
-			if [ ! -x "${stat}" ]; then
+		elif [ -f "${d}.hg_archival.txt" ]
+		then
+			local stat
+			stat=$(print_tooldir_program stat) ||
+				bomb "print_tooldir_program stat failed"
+			if ! [ -x "${stat}" ]
+			then
 				buildtools
 			fi
 
-			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt")
-			NETBSD_REVISIONID=$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")
+			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt") ||
+				bomb "stat failed on ${d}.hg_archival.txt"
+			NETBSD_REVISIONID=$(
+			    awk '/^node:/ { print $2 }' <"${d}.hg_archival.txt"
+			  ) || bomb \
+			      "awk failed to find node: in ${d}.hg_archival.txt"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
 
-		if [ -z "$t" ]; then
+		if [ -z "$t" ]
+		then
 			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
 		fi
 
 		#echo "latest $d $vcs $t"
-		if [ "$t" -gt "$MKREPRO_TIMESTAMP" ]; then
+		if [ "$t" -gt "$MKREPRO_TIMESTAMP" ]
+		then
 			MKREPRO_TIMESTAMP="$t"
 		fi
 	done
 
 	[ "${MKREPRO_TIMESTAMP}" -ne 0 ] || bomb "Failed to compute timestamp"
-	if [ -z "${quiet}" ]; then
+	if [ -z "${quiet}" ]
+	then
 		statusmsg2 "MKREPRO_TIMESTAMP" \
 			"$(repro_date "${MKREPRO_TIMESTAMP}")"
 	fi
@@ -2621,7 +2816,7 @@ setup_mkrepro()
 main()
 {
 	initdefaults
-	_args=$@
+	_args=$*
 	parseoptions "$@"
 
 	sanitycheck
@@ -2634,18 +2829,22 @@ main()
 	statusmsg2 "MACHINE_ARCH:"     "${MACHINE_ARCH}"
 	statusmsg2 "Build platform:"   "${uname_s} ${uname_r} ${uname_m}"
 	statusmsg2 "HOST_SH:"          "${HOST_SH}"
-	if [ -n "${BUILDID}" ]; then
-		statusmsg2 "BUILDID:"  "${BUILDID}"
+	if [ -n "${BUILDID}" ]
+	then
+		statusmsg2 BUILDID: "${BUILDID}"
 	fi
-	if [ -n "${BUILDINFO}" ]; then
-		printf "%b\n" "${BUILDINFO}" | \
-		while read -r line ; do
+	if [ -n "${BUILDINFO}" ]
+	then
+		printf "%b\n" "${BUILDINFO}" |
+		while read -r line
+		do
 			[ -s "${line}" ] && continue
-			statusmsg2 "BUILDINFO:"  "${line}"
+			statusmsg2 BUILDINFO: "${line}"
 		done
 	fi
 
-	if [ -n "${MAKECONF+1}" ] && [ -z "${MAKECONF}" ]; then
+	if [ -n "${MAKECONF+1}" ] && [ -z "${MAKECONF}" ]
+	then
 		bomb "MAKECONF must not be empty"
 	fi
 
@@ -2656,7 +2855,8 @@ main()
 
 	# Perform the operations.
 	#
-	for op in ${operations}; do
+	for op in ${operations}
+	do
 		case "${op}" in
 
 		makewrapper)
@@ -2693,16 +2893,18 @@ main()
 		iso-image|iso-image-source)
 			${runcmd} "${makewrapper}" ${parallel} \
 			    CDEXTRA="$CDEXTRA" ${op} ||
-			    bomb "Failed to make ${op}"
+				bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
 			;;
 
 		live-image|install-image)
 			# install-image and live-image require mtree spec files
-			# built with MKUNPRIVED.  Assume MKUNPRIVED build has been
-			# performed if METALOG file is created in DESTDIR.
-			if [ ! -e "${DESTDIR}/METALOG" ] ; then
-				bomb "The release binaries must have been built with -U to create images"
+			# built with MKUNPRIVED.  Assume MKUNPRIVED build has
+			# been performed if METALOG file is created in DESTDIR.
+			if [ ! -e "${DESTDIR}/METALOG" ]
+			then
+				bomb "The release binaries must have been" \
+				     "built with -U to create images"
 			fi
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
@@ -2741,7 +2943,8 @@ main()
 
 		pkg=*)
 			arg=${op#*=}
-			if ! [ -d "$PKGSRCDIR"/"$arg" ]; then
+			if ! [ -d "${PKGSRCDIR}/${arg}" ]
+			then
 				bomb "no such package ${arg}"
 			fi
 			buildpkg "${arg}"
@@ -2749,9 +2952,11 @@ main()
 
 		installmodules=*)
 			arg=${op#*=}
-			if [ "${arg}" = "/" ] && \
-			    (	[ "${uname_s}" != "NetBSD" ] || \
-				[ "${uname_m}" != "${MACHINE}" ] ); then
+			if [ "${arg}" = / ] && {
+				[ "${uname_s}" != NetBSD ] ||
+				[ "${uname_m}" != "${MACHINE}" ]
+			    }
+			then
 				bomb "'${op}' must != / for cross builds"
 			fi
 			installmodules "${arg}"
@@ -2759,9 +2964,11 @@ main()
 
 		install=*)
 			arg=${op#*=}
-			if [ "${arg}" = "/" ] && \
-			    (	[ "${uname_s}" != "NetBSD" ] || \
-				[ "${uname_m}" != "${MACHINE}" ] ); then
+			if [ "${arg}" = / ] && {
+				[ "${uname_s}" != NetBSD ] ||
+				[ "${uname_m}" != "${MACHINE}" ]
+			   }
+			then
 				bomb "'${op}' must != / for cross builds"
 			fi
 			installworld "${arg}"
@@ -2789,7 +2996,8 @@ main()
 	done
 
 	statusmsg2 "${progname} ended:" "$(date)"
-	if [ -s "${results}" ]; then
+	if [ -s "${results}" ]
+	then
 		echo "===> Summary of results:"
 		sed -e 's/^===>//;s/^/	/' "${results}"
 		echo "===> ."
