@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.384 2024/12/20 14:31:49 martin Exp $
+#	$NetBSD: build.sh,v 1.385 2024/12/20 15:56:45 riastradh Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1614,6 +1614,15 @@ sanitycheck()
 		done
 		bomb "Asked to build package but no pkgsrc"
 	done
+	if $do_pkg && [ "${MKX11-no}" = yes ]; then
+		# See comment below about X11_TYPE in pkgsrc mk.conf.
+		# (Feel free to remove this, and set X11_TYPE to
+		# native/modular according to MKX11=yes/no, if you want
+		# to do the work to make X11_TYPE=native cross-builds
+		# work.)
+		bomb "Experimental \`build.sh pkg=...'" \
+		    "does not support -x/MKX11=yes"
+	fi
 }
 
 # print_tooldir_program --
@@ -2083,7 +2092,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.384 2024/12/20 14:31:49 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.385 2024/12/20 15:56:45 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2372,6 +2381,8 @@ WRKOBJDIR=		${pkgroot}/work
 # pkgsrc cross-builds are not set up to support native X, but also part
 # of the point of pkgsrc cross-build infrastructure is to not need
 # native X any more.
+#
+# (If you fix this, remove the bomb in build.sh pkg=... on MKX11=yes.)
 X11_TYPE=		modular
 
 .-include "${MAKECONF}"
