@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.63 2021/11/01 05:07:16 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.64 2024/12/20 07:58:21 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.63 2021/11/01 05:07:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.64 2024/12/20 07:58:21 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -541,6 +541,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	sa->sa_family = osa->sa_family;
 	sa->sa_len = omsg.msg_namelen;
 
+	msg.msg_flags = 0;
 	msg.msg_name = nam;
 	msg.msg_namelen = omsg.msg_namelen;
 	error = compat43_set_accrights(&msg, NETBSD32PTR64(omsg.msg_accrights),
