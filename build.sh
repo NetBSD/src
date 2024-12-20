@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.382 2024/12/19 22:00:13 riastradh Exp $
+#	$NetBSD: build.sh,v 1.383 2024/12/20 14:05:54 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1107,6 +1107,9 @@ help()
                         patterns or exact values in MACHINE or MACHINE_ARCH.
     mkrepro-timestamp   Show the latest source timestamp used for reproducible
                         builds and exit.  Requires -P or -V MKREPRO=yes.
+    show-revisionid	Show the revision ID of the current directory
+			(in SCM dependend format) and exit.
+			Requires -P or -V MKREPRO=yes.
 
  Options:
     -a ARCH        Set MACHINE_ARCH=ARCH.  [Default: deduced from MACHINE]
@@ -1183,6 +1186,7 @@ parseoptions()
 	opts='a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xZ:'
 	opt_a=false
 	opt_m=false
+	local did_show_info=false
 
 	if type getopts >/dev/null 2>&1; then
 		# Use POSIX getopts.
@@ -1429,7 +1433,13 @@ parseoptions()
 		mkrepro-timestamp)
 			setup_mkrepro quiet
 			echo ${MKREPRO_TIMESTAMP:-0}
-			[ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
+			did_show_info=true
+			;;
+
+		show-revisionid)
+			setup_mkrepro quiet
+			echo ${NETBSD_REVISIONID}
+			did_show_info=true
 			;;
 
 		kernel=*|releasekernel=*|kernel.gdb=*)
@@ -1501,6 +1511,9 @@ parseoptions()
 		op="$( echo "$op" | tr -s '.-' '__')"
 		eval do_${op}=true
 	done
+
+	[ "$did_show_info" = true ] && [ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
+
 	[ -n "${operations}" ] || usage "Missing OPERATION to perform"
 
 	# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
@@ -2070,7 +2083,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.382 2024/12/19 22:00:13 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.383 2024/12/20 14:05:54 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2520,7 +2533,7 @@ setup_mkrepro()
 		return
 	fi
 	if [ ${MKREPRO_TIMESTAMP-0} -ne 0 ]; then
-		return;
+		return
 	fi
 
 	local dirs=${NETBSDSRCDIR-/usr/src}/
@@ -2529,8 +2542,10 @@ setup_mkrepro()
 	fi
 
 	MKREPRO_TIMESTAMP=0
+	NETBSD_REVISIONID=
 	local d
 	local t
+	local tag
 	local vcs
 	for d in ${dirs}; do
 		if [ -d "${d}CVS" ]; then
@@ -2538,6 +2553,7 @@ setup_mkrepro()
 			if [ ! -x "${cvslatest}" ]; then
 				buildtools
 			fi
+			local nbdate=$(print_tooldir_program date)
 
 			local cvslatestflags=
 			if ${do_expertmode}; then
@@ -2545,12 +2561,20 @@ setup_mkrepro()
 			fi
 
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
+			if [ -f "${d}CVS/Tag" ]; then
+				tag=$( sed 's/^T//' < "${d}CVS/Tag" )
+			else
+				tag=HEAD
+			fi
+			NETBSD_REVISIONID="${tag}-"$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')
 			vcs=cvs
 		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
 			t=$(cd "${d}" && git log -1 --format=%ct)
+			NETBSD_REVISIONID=$(cd "${d}" && git log -1 --format=%H)
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
 			t=$(hg --repo "$d" log -r . --template '{date.unixtime}\n')
+			NETBSD_REVISIONID=$(hg --repo "$d" identify --template '{id}\n')
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]; then
 			local stat=$(print_tooldir_program stat)
@@ -2559,6 +2583,7 @@ setup_mkrepro()
 			fi
 
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt")
+			NETBSD_REVISIONID=$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
@@ -2579,7 +2604,7 @@ setup_mkrepro()
 		statusmsg2 "MKREPRO_TIMESTAMP" \
 			"$(repro_date "${MKREPRO_TIMESTAMP}")"
 	fi
-	export MKREPRO MKREPRO_TIMESTAMP
+	export MKREPRO MKREPRO_TIMESTAMP NETBSD_REVISIONID
 }
 
 main()
