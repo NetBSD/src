@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.383 2024/12/20 14:05:54 martin Exp $
+#	$NetBSD: build.sh,v 1.384 2024/12/20 14:31:49 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1512,7 +1512,7 @@ parseoptions()
 		eval do_${op}=true
 	done
 
-	[ "$did_show_info" = true ] && [ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
+	[ "$did_show_info" = true ] && [ ${MKREPRO_TIMESTAMP:-0} -ne 0 ] && exit
 
 	[ -n "${operations}" ] || usage "Missing OPERATION to perform"
 
@@ -2083,7 +2083,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.383 2024/12/20 14:05:54 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.384 2024/12/20 14:31:49 martin Exp $
 # with these arguments: ${_args}
 #
 
