@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.17 2024/12/20 23:52:00 tsutsui Exp $ */
+/*	$NetBSD: fb.c,v 1.18 2024/12/21 17:40:11 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.17 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.17 2024/12/20 23:52:00 tsutsui Exp $");
 #include <sun3/dev/fbvar.h>
 #include <sun3/dev/p4reg.h>
 
-dev_type_open(fbopen);
-dev_type_close(fbclose);
-dev_type_ioctl(fbioctl);
-dev_type_mmap(fbmmap);
+static dev_type_open(fbopen);
+static dev_type_close(fbclose);
+static dev_type_ioctl(fbioctl);
+static dev_type_mmap(fbmmap);
 
 const struct cdevsw fb_cdevsw = {
 	.d_open = fbopen,
@@ -96,7 +96,7 @@ fb_attach(struct fbdevice *fb, int newpri)
 	}
 }
 
-int
+static int
 fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -105,20 +105,20 @@ fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, l));
 }
 
-int
+static int
 fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, l));
 }
 
-int
+static int
 fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	return (fbioctlfb(devfb, cmd, data));
 }
 
-paddr_t
+static paddr_t
 fbmmap(dev_t dev, off_t off, int prot)
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));

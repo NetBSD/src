@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.83 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.84 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.83 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.84 2024/12/21 17:40:11 tsutsui Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -207,14 +207,14 @@ struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */
 };
 
-dev_type_open(xyopen);
-dev_type_close(xyclose);
-dev_type_read(xyread);
-dev_type_write(xywrite);
-dev_type_ioctl(xyioctl);
-dev_type_strategy(xystrategy);
-dev_type_dump(xydump);
-dev_type_size(xysize);
+static dev_type_open(xyopen);
+static dev_type_close(xyclose);
+static dev_type_read(xyread);
+static dev_type_write(xywrite);
+static dev_type_ioctl(xyioctl);
+static dev_type_strategy(xystrategy);
+static dev_type_dump(xydump);
+static dev_type_size(xysize);
 
 const struct bdevsw xy_bdevsw = {
 	.d_open = xyopen,
@@ -704,7 +704,7 @@ xy_init(struct xy_softc *xy)
 /*
  * xyclose: close device
  */
-int
+static int
 xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
@@ -728,7 +728,7 @@ xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
  * xydump: crash dump system
  */
-int
+static int
 xydump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int unit, part;
@@ -805,7 +805,7 @@ xy_getkauthreq(u_char cmd)
 /*
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
-int
+static int
 xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
@@ -894,7 +894,7 @@ xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 /*
  * xyopen: open drive
  */
-int
+static int
 xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, unit, part, s;
@@ -953,14 +953,14 @@ xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return err;
 }
 
-int
+static int
 xyread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(xystrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int
+static int
 xywrite(dev_t dev, struct uio *uio, int flags)
 {
 
@@ -972,7 +972,7 @@ xywrite(dev_t dev, struct uio *uio, int flags)
  * xysize: return size of a partition for a dump
  */
 
-int
+static int
 xysize(dev_t dev)
 {
 	struct xy_softc *xysc;
@@ -1004,7 +1004,7 @@ xysize(dev_t dev)
 /*
  * xystrategy: buffering system interface to xy.
  */
-void
+static void
 xystrategy(struct buf *bp)
 {
 	struct xy_softc *xy;

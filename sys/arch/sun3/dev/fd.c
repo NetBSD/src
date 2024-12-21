@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.89 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -271,12 +271,12 @@ static void	fdattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
 
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_strategy(fdstrategy);
+static dev_type_open(fdopen);
+static dev_type_close(fdclose);
+static dev_type_read(fdread);
+static dev_type_write(fdwrite);
+static dev_type_ioctl(fdioctl);
+static dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
 	.d_open = fdopen,
@@ -654,7 +654,7 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 	return type ? &fd_types[type - 1] : fd->sc_deftype;
 }
 
-void
+static void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
@@ -876,7 +876,7 @@ out_fdc(struct fdc_softc *fdc, u_char x)
 	return 0;
 }
 
-int
+static int
 fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit, pmask;
@@ -922,7 +922,7 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
@@ -946,14 +946,14 @@ fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 fdread(dev_t dev, struct uio *uio, int flag)
 {
 
 	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int
+static int
 fdwrite(dev_t dev, struct uio *uio, int flag)
 {
 
@@ -1586,7 +1586,7 @@ fdcretry(struct fdc_softc *fdc)
 	fdc->sc_errors++;
 }
 
-int
+static int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.79 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.80 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.79 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.80 2024/12/21 17:40:11 tsutsui Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -276,14 +276,14 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	booting;	/* are we booting or not? */
 };
 
-dev_type_open(xdopen);
-dev_type_close(xdclose);
-dev_type_read(xdread);
-dev_type_write(xdwrite);
-dev_type_ioctl(xdioctl);
-dev_type_strategy(xdstrategy);
-dev_type_dump(xddump);
-dev_type_size(xdsize);
+static dev_type_open(xdopen);
+static dev_type_close(xdclose);
+static dev_type_read(xdread);
+static dev_type_write(xdwrite);
+static dev_type_ioctl(xdioctl);
+static dev_type_strategy(xdstrategy);
+static dev_type_dump(xddump);
+static dev_type_size(xdsize);
 
 const struct bdevsw xd_bdevsw = {
 	.d_open = xdopen,
@@ -757,7 +757,7 @@ xd_init(struct xd_softc *xd)
 /*
  * xdclose: close device
  */
-int
+static int
 xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xd_softc *xd = device_lookup_private(&xd_cd, DISKUNIT(dev));
@@ -781,7 +781,7 @@ xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
  * xddump: crash dump system
  */
-int
+static int
 xddump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int unit, part;
@@ -852,7 +852,7 @@ xd_getkauthreq(u_char cmd)
 /*
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
-int
+static int
 xdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct xd_softc *xd;
@@ -941,7 +941,7 @@ xdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 /*
  * xdopen: open drive
  */
-int
+static int
 xdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, unit, part, s;
@@ -1000,14 +1000,14 @@ xdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return err;
 }
 
-int
+static int
 xdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(xdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int
+static int
 xdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
@@ -1018,7 +1018,7 @@ xdwrite(dev_t dev, struct uio *uio, int flags)
 /*
  * xdsize: return size of a partition for a dump
  */
-int
+static int
 xdsize(dev_t dev)
 {
 	struct xd_softc *xdsc;
@@ -1050,7 +1050,7 @@ xdsize(dev_t dev)
 /*
  * xdstrategy: buffering system interface to xd.
  */
-void
+static void
 xdstrategy(struct buf *bp)
 {
 	struct xd_softc *xd;

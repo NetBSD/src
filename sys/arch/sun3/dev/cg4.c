@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.43 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: cg4.c,v 1.44 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.43 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.44 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,9 @@ static void	cg4attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cgfour, sizeof(struct cg4_softc),
     cg4match, cg4attach, NULL, NULL);
 
-dev_type_open(cg4open);
-dev_type_ioctl(cg4ioctl);
-dev_type_mmap(cg4mmap);
+static dev_type_open(cg4open);
+static dev_type_ioctl(cg4ioctl);
+static dev_type_mmap(cg4mmap);
 
 const struct cdevsw cgfour_cdevsw = {
 	.d_open = cg4open,
@@ -337,7 +337,7 @@ cg4attach(device_t parent, device_t self, void *args)
 	fb_attach(fb, 4);
 }
 
-int
+static int
 cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cg4_softc *sc;
@@ -349,7 +349,7 @@ cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg4_softc *sc = device_lookup_private(&cgfour_cd, minor(dev));
@@ -368,7 +368,7 @@ cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  *
  * The hardware looks completely different.
  */
-paddr_t
+static paddr_t
 cg4mmap(dev_t dev, off_t off, int prot)
 {
 	struct cg4_softc *sc = device_lookup_private(&cgfour_cd, minor(dev));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.60 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: kd.c,v 1.61 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.60 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.61 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,13 +86,13 @@ static void kd_init(struct kd_softc *);
 static void kd_cons_input(int);
 static void kd_later(void *);
 
-dev_type_open(kdopen);
-dev_type_close(kdclose);
-dev_type_read(kdread);
-dev_type_write(kdwrite);
-dev_type_ioctl(kdioctl);
-dev_type_tty(kdtty);
-dev_type_poll(kdpoll);
+static dev_type_open(kdopen);
+static dev_type_close(kdclose);
+static dev_type_read(kdread);
+static dev_type_write(kdwrite);
+static dev_type_ioctl(kdioctl);
+static dev_type_tty(kdtty);
+static dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
 	.d_open = kdopen,
@@ -130,7 +130,7 @@ kd_init(struct kd_softc *kd)
 	return;
 }
 
-struct tty *
+static struct tty *
 kdtty(dev_t dev)
 {
 	struct kd_softc *kd;
@@ -139,7 +139,7 @@ kdtty(dev_t dev)
 	return (kd->kd_tty);
 }
 
-int
+static int
 kdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -191,7 +191,7 @@ static	int firstopen = 1;
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
-int
+static int
 kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -212,7 +212,7 @@ kdclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 kdread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
@@ -224,7 +224,7 @@ kdread(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
-int
+static int
 kdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct kd_softc *kd;
@@ -236,7 +236,7 @@ kdwrite(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
-int
+static int
 kdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kd_softc *kd;
@@ -248,7 +248,7 @@ kdpoll(dev_t dev, int events, struct lwp *l)
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
-int
+static int
 kdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;

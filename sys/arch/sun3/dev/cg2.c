@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.33 2024/12/20 23:51:59 tsutsui Exp $	*/
+/*	$NetBSD: cg2.c,v 1.34 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.33 2024/12/20 23:51:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.34 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,9 @@ static void	cg2attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cgtwo, sizeof(struct cg2_softc),
     cg2match, cg2attach, NULL, NULL);
 
-dev_type_open(cg2open);
-dev_type_ioctl(cg2ioctl);
-dev_type_mmap(cg2mmap);
+static dev_type_open(cg2open);
+static dev_type_ioctl(cg2ioctl);
+static dev_type_mmap(cg2mmap);
 
 const struct cdevsw cgtwo_cdevsw = {
 	.d_open = cg2open,
@@ -202,7 +202,7 @@ cg2attach(device_t parent, device_t self, void *args)
 	fb_attach(fb, 2);
 }
 
-int
+static int
 cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cg2_softc *sc;
@@ -214,7 +214,7 @@ cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));
@@ -226,7 +226,7 @@ cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t
+static paddr_t
 cg2mmap(dev_t dev, off_t off, int prot)
 {
 	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));

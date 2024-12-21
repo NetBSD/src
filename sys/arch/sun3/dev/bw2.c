@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.38 2024/12/20 23:51:59 tsutsui Exp $	*/
+/*	$NetBSD: bw2.c,v 1.39 2024/12/21 17:40:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.38 2024/12/20 23:51:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.39 2024/12/21 17:40:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,9 @@ static void	bw2attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bwtwo, sizeof(struct bw2_softc),
     bw2match, bw2attach, NULL, NULL);
 
-dev_type_open(bw2open);
-dev_type_ioctl(bw2ioctl);
-dev_type_mmap(bw2mmap);
+static dev_type_open(bw2open);
+static dev_type_ioctl(bw2ioctl);
+static dev_type_mmap(bw2mmap);
 
 const struct cdevsw bwtwo_cdevsw = {
 	.d_open = bw2open,
@@ -295,7 +295,7 @@ bw2attach(device_t parent, device_t self, void *args)
 	fb_attach(fb, 1);
 }
 
-int
+static int
 bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct bw2_softc *sc;
@@ -307,7 +307,7 @@ bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
@@ -319,7 +319,7 @@ bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t
+static paddr_t
 bw2mmap(dev_t dev, off_t off, int prot)
 {
 	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
