@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.184 2024/05/20 11:36:20 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.185 2024/12/21 07:31:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.184 2024/05/20 11:36:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.185 2024/12/21 07:31:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2567,7 +2567,7 @@ xhci_event_cmd(struct xhci_softc * const sc, const struct xhci_trb * const trb)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
