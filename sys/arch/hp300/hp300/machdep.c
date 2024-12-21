@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2024/03/05 14:15:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240 2024/12/21 17:53:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2024/12/21 17:53:21 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -79,9 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2024/03/05 14:15:32 thorpej Exp $"
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif /* DDB */
-#ifdef __ELF__
 #include <sys/exec_elf.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
