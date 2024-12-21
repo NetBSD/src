@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.264 2024/11/10 00:11:43 kre Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.265 2024/12/21 19:02:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.264 2024/11/10 00:11:43 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.265 2024/12/21 19:02:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -857,6 +857,16 @@ closef(file_t *fp)
 	}
 	if (fp->f_ops != NULL) {
 		error = (*fp->f_ops->fo_close)(fp);
+
+		/*
+		 * .fo_close is final, so real errors are frowned on
+		 * (but allowed and passed on to close(2)), and
+		 * ERESTART is absolutely forbidden because the file
+		 * descriptor is gone and there is no chance to retry.
+		 */
+		KASSERTMSG(error != ERESTART,
+		    "file %p f_ops %p fo_close %p returned ERESTART",
+		    fp, fp->f_ops, fp->f_ops->fo_close);
 	} else {
 		error = 0;
 	}
