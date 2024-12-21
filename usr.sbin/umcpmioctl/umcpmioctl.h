@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.h,v 1.1 2024/12/16 16:37:40 brad Exp $	*/
+/*	$NetBSD: umcpmioctl.h,v 1.2 2024/12/21 13:48:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifndef _UMCPMIOCTL_H_
-#define _UCMMIOCTL_H_
+#define _UMCPMIOCTL_H_
 
 /* Top level commands */
 #define UMCPMIO_GET 1
