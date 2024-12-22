@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.224 2024/12/22 23:16:26 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.225 2024/12/22 23:18:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,23 +62,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.224 2024/12/22 23:16:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.225 2024/12/22 23:18:18 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/resourcevar.h>
+#include <sys/types.h>
+
+#include <sys/callout.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
+#include <sys/kmem.h>
+#include <sys/lwp.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/queue.h>
+#include <sys/resourcevar.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/syscallargs.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/timevar.h>
 #include <sys/timex.h>
-#include <sys/kauth.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/cpu.h>
+#include <sys/vnode.h>
+
+#include <machine/limits.h>
 
 kmutex_t	itimer_mutex __cacheline_aligned;	/* XXX static */
 static struct itlist itimer_realtime_changed_notify;
