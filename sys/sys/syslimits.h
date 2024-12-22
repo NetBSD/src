@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.28 2015/08/21 07:19:39 uebayasi Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.29 2024/12/22 23:18:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -68,6 +68,13 @@
 #define	EXPR_NEST_MAX		   32	/* max expressions nested in expr(1) */
 #define	LINE_MAX		 2048	/* max bytes in an input line */
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
+
+/*
+ * POSIX Realtime Extension (1003.1b-1993)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 199309L || defined(_NETBSD_SOURCE)
+#define	DELAYTIMER_MAX		   32	/* max timer_overrun() value */
+#endif
 
 /*
  * IEEE Std 1003.1c-95, adopted in X/Open CAE Specification Issue 5 Version 2

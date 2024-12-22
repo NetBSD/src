@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.225 2024/12/22 23:18:18 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.226 2024/12/22 23:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.225 2024/12/22 23:18:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.226 2024/12/22 23:18:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,8 +107,6 @@ CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
-
-#define	DELAYTIMER_MAX	32
 
 /*
  * Initialize timekeeping.
