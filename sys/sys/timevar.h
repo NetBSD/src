@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.51 2023/07/17 13:44:24 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.52 2024/12/22 23:24:20 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -202,8 +202,6 @@ int	tshzto(const struct timespec *);
 int	tshztoup(const struct timespec *);
 int	tvhzto(const struct timeval *);
 void	inittimecounter(void);
-int	itimerfix(struct timeval *);
-int	itimespecfix(struct timespec *);
 int	ppsratecheck(struct timeval *, int *, int);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	settime(struct proc *p, struct timespec *);
@@ -213,8 +211,6 @@ int	settimeofday1(const struct timeval *, bool,
 	    const void *, struct lwp *, bool);
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
 	    struct lwp *);
-int	tstohz(const struct timespec *);
-int	tvtohz(const struct timeval *);
 int	inittimeleft(struct timespec *, struct timespec *);
 int	gettimeleft(struct timespec *, struct timespec *);
 void	timerupcall(struct lwp *);

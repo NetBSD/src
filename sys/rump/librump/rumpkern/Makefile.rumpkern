@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.191 2023/06/03 09:09:15 lukem Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.192 2024/12/22 23:24:20 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -126,6 +126,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_psref.c		\
 	subr_specificdata.c	\
 	subr_time.c		\
+	subr_time_arith.c	\
 	subr_thmap.c		\
 	subr_vmem.c		\
 	subr_workqueue.c	\

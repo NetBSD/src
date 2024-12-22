@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.81 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: time.h,v 1.82 2024/12/22 23:24:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -266,7 +266,8 @@ ns2bintime(uint64_t ns)
 	} while (0)
 #define timespec2ns(x) (((uint64_t)(x)->tv_sec) * 1000000000L + (x)->tv_nsec)
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_TIME_TESTING)
+#include <sys/stdbool.h>
 bool timespecaddok(const struct timespec *, const struct timespec *) __pure;
 bool timespecsubok(const struct timespec *, const struct timespec *) __pure;
 #endif
@@ -310,6 +311,7 @@ struct	itimerspec {
 #define	TIMER_ABSTIME	0x1	/* absolute timer */
 
 #ifdef _KERNEL
+#include <sys/timearith.h>
 #include <sys/timevar.h>
 #else /* !_KERNEL */
 #ifndef _STANDALONE

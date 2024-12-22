@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.226 2024/12/22 23:18:29 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.227 2024/12/22 23:24:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.226 2024/12/22 23:18:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.227 2024/12/22 23:24:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -846,10 +846,9 @@ itimer_arm_real(struct itimer * const it)
 static void
 itimer_callout(void *arg)
 {
-	uint64_t last_val, next_val, interval, now_ns;
 	struct timespec now, next;
 	struct itimer * const it = arg;
-	int backwards;
+	int overruns;
 
 	itimer_lock();
 	(*it->it_ops->ito_fire)(it);
@@ -866,34 +865,13 @@ itimer_callout(void *arg)
 		getnanotime(&now);
 	}
 
-	backwards = (timespeccmp(&it->it_time.it_value, &now, >));
-
-	/* Nonnegative interval guaranteed by itimerfix.  */
-	KASSERT(it->it_time.it_interval.tv_sec >= 0);
-	KASSERT(it->it_time.it_interval.tv_nsec >= 0);
-
-	/* Handle the easy case of non-overflown timers first. */
-	if (!backwards &&
-	    timespecaddok(&it->it_time.it_value, &it->it_time.it_interval)) {
-		timespecadd(&it->it_time.it_value, &it->it_time.it_interval,
-		    &next);
-		it->it_time.it_value = next;
-	} else {
-		now_ns = timespec2ns(&now);
-		last_val = timespec2ns(&it->it_time.it_value);
-		interval = timespec2ns(&it->it_time.it_interval);
-
-		next_val = now_ns +
-		    (now_ns - last_val + interval - 1) % interval;
-
-		if (backwards)
-			next_val += interval;
-		else
-			it->it_overruns += (now_ns - last_val) / interval;
-
-		it->it_time.it_value.tv_sec = next_val / 1000000000;
-		it->it_time.it_value.tv_nsec = next_val % 1000000000;
-	}
+	/*
+	 * Given the current itimer value and interval and the time
+	 * now, compute the next itimer value and count overruns.
+	 */
+	itimer_transition(&it->it_time, &now, &next, &overruns);
+	it->it_time.it_value = next;
+	it->it_overruns += overruns;
 
 	/*
 	 * Reset the callout, if it's not going away.
