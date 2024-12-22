@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.39 2024/10/10 11:14:28 kre Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.40 2024/12/22 23:18:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,17 +33,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.39 2024/10/10 11:14:28 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.40 2024/12/22 23:18:47 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/intr.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/lwp.h>
-#include <sys/timex.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
-#include <sys/intr.h>
+#include <sys/timex.h>
 
 /*
  * Compute number of hz until specified time.  Used to compute second
