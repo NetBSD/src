@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.44 2023/10/25 08:19:34 simonb Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.45 2024/12/22 23:17:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.44 2023/10/25 08:19:34 simonb Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.45 2024/12/22 23:17:26 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,8 @@ sysconf(int name)
 		mib[1] = KERN_NGROUPS;
 		break;
 	case _SC_OPEN_MAX:
-		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1 : (long)rl.rlim_cur);
+		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1
+		    : (long)rl.rlim_cur);
 	case _SC_STREAM_MAX:
 		mib[0] = CTL_USER;
 		mib[1] = USER_STREAM_MAX;
@@ -298,12 +299,12 @@ sysconf(int name)
 		if (sysctlgetmibinfo("kern.aio_listio_max", &mib[0], &mib_len,
 		    NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
-		break; 
+		break;
 	case _SC_AIO_MAX:
 		if (sysctlgetmibinfo("kern.aio_max", &mib[0], &mib_len,
 		    NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
-		break; 
+		break;
 	case _SC_ASYNCHRONOUS_IO:
 		if (sysctlgetmibinfo("kern.posix_aio", &mib[0], &mib_len,
 		    NULL, NULL, NULL, SYSCTL_VERSION))
@@ -318,12 +319,12 @@ sysconf(int name)
 		if (sysctlgetmibinfo("kern.mqueue.mq_open_max", &mib[0],
 		    &mib_len, NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
-		break; 
+		break;
 	case _SC_MQ_PRIO_MAX:
 		if (sysctlgetmibinfo("kern.mqueue.mq_prio_max", &mib[0],
 		    &mib_len, NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
-		break; 
+		break;
 	case _SC_PRIORITY_SCHEDULING:
 		if (sysctlgetmibinfo("kern.posix_sched", &mib[0], &mib_len,
 		    NULL, NULL, NULL, SYSCTL_VERSION))
@@ -359,10 +360,10 @@ sysconf(int name)
 		return MAXSYMLINKS;
 
 yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
-			return (-1);
+			return -1;
 		if (value == 0)
-			return (-1);
-		return (value);
+			return -1;
+		return value;
 
 /* Extensions */
 	case _SC_NPROCESSORS_CONF:
@@ -379,21 +380,21 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		len = sizeof(mem);
 		mib[0] = CTL_HW;
 		mib[1] = HW_PHYSMEM64;
-		return sysctl(mib, 2, &mem, &len, NULL, 0) == -1 ? -1 : 
-		    (long)(mem / _getpagesize()); 
+		return (sysctl(mib, 2, &mem, &len, NULL, 0) == -1 ? -1
+		    : (long)(mem / _getpagesize()));
 
 	case _SC_AVPHYS_PAGES:
 		len = sizeof(uvmexp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_UVMEXP2;
-		return sysctl(mib, 2, &uvmexp, &len, NULL, 0) == -1 ? -1 : 
-		    (long)(uvmexp.free);
+		return (sysctl(mib, 2, &uvmexp, &len, NULL, 0) == -1 ? -1
+		    : (long)(uvmexp.free));
 
 /* Native */
 	case _SC_SCHED_RT_TS:
 		if (sysctlgetmibinfo("kern.sched.rtts", &mib[0], &mib_len,
-		    NULL, NULL, NULL, SYSCTL_VERSION))      
-			return -1;              
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
 		break;
 	case _SC_SCHED_PRI_MIN:
 		if (sysctlgetmibinfo("kern.sched.pri_min", &mib[0], &mib_len,
@@ -446,7 +447,8 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		return 200112L;
 	default:
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
-	return (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1 ? -1 : value); 
+	return (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1 ? -1
+	    : value);
 }
