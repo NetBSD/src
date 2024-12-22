@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.223 2024/12/19 23:41:45 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.224 2024/12/22 23:16:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.223 2024/12/19 23:41:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.224 2024/12/22 23:16:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -902,6 +902,9 @@ itimer_callout(void *arg)
  *
  *	If the callout had already fired but not yet run, fails with
  *	ERESTART -- caller must restart from the top to look up a timer.
+ *
+ *	Caller is responsible for validating it->it_value and
+ *	it->it_interval, e.g. with itimerfix or itimespecfix.
  */
 int
 itimer_settime(struct itimer *it)
@@ -911,6 +914,12 @@ itimer_settime(struct itimer *it)
 
 	KASSERT(itimer_lock_held());
 	KASSERT(!it->it_dying);
+	KASSERT(it->it_time.it_value.tv_sec >= 0);
+	KASSERT(it->it_time.it_value.tv_nsec >= 0);
+	KASSERT(it->it_time.it_value.tv_nsec < 1000000000);
+	KASSERT(it->it_time.it_interval.tv_sec >= 0);
+	KASSERT(it->it_time.it_interval.tv_nsec >= 0);
+	KASSERT(it->it_time.it_interval.tv_nsec < 1000000000);
 
 	if (!CLOCK_VIRTUAL_P(it->it_clockid)) {
 		/*
