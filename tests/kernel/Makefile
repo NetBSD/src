@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.83 2024/11/10 15:57:32 riastradh Exp $
+# $NetBSD: Makefile,v 1.84 2024/12/22 23:25:15 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -101,6 +101,12 @@ TESTS_C+=		t_extent
 SRCS.t_extent=		t_extent.c subr_extent.c
 CPPFLAGS.t_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
 CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
+
+TESTS_C+=		t_time_arith
+SRCS.t_time_arith=	t_time_arith.c subr_time_arith.c
+CPPFLAGS.t_time_arith.c+=	-I${NETBSDSRCDIR}/sys -D_TIME_TESTING
+CPPFLAGS.subr_time_arith.c+=	-I${NETBSDSRCDIR}/sys -D_TIME_TESTING
+LDADD.t_time_arith+=	-lutil
 
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}

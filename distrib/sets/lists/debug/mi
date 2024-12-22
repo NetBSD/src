@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.456 2024/12/17 17:56:45 christos Exp $
+# $NetBSD: mi,v 1.457 2024/12/22 23:25:14 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1838,6 +1838,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_sysctl.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_sysv.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_time_arith.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_timeleft.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_unmount.debug			tests-kernel-tests	debug,atf,rump
