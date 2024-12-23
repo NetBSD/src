@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.21 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.22 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.21 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.22 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -63,6 +63,9 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	    "copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
 	    dooverlay ? "overlay" : "overwrite",
 	    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
+
+	if ((srcwin == NULL) || (dstwin == NULL))
+		return ERR;
 
 	/* overwrite() and overlay() can come here with -ve srcwin coords */
 	if (sminrow < 0) {

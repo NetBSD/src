@@ -1,4 +1,4 @@
-/*	$NetBSD: idcok.c,v 1.2 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: idcok.c,v 1.3 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)idcok.c	blymn 2002/06/06";
 #else
-__RCSID("$NetBSD: idcok.c,v 1.2 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: idcok.c,v 1.3 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,6 +50,9 @@ __RCSID("$NetBSD: idcok.c,v 1.2 2017/01/06 13:53:18 roy Exp $");
 int
 idcok(WINDOW *win, bool bf)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (bf)
 		win->flags |= __IDCHAR;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.30 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: delch.c,v 1.31 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.30 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: delch.c,v 1.31 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -88,6 +88,9 @@ int
 wdelch(WINDOW *win)
 {
 	__LDATA *end, *temp1, *temp2;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 #ifndef HAVE_WCHAR
 	end = &win->alines[win->cury]->line[win->maxx - 1];

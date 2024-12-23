@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.24 2022/10/19 06:09:27 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.25 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.24 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.25 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -137,6 +137,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	wchar_t *lstr, *slstr;
 	int width, len, lx, sx, x, y, tx, ty, cw, pcw, newx, tn, w;
 	wchar_t ws[] = L"		";
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	/* check for leading non-spacing character */
 	if (!wstr)

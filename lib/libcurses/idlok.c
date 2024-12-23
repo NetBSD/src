@@ -1,4 +1,4 @@
-/*	$NetBSD: idlok.c,v 1.12 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: idlok.c,v 1.13 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)idlok.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: idlok.c,v 1.12 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: idlok.c,v 1.13 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: idlok.c,v 1.12 2017/01/06 13:53:18 roy Exp $");
 int
 idlok(WINDOW *win, bool bf)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (bf)
 		win->flags |= __IDLINE;
 	else

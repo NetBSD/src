@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.8 2021/08/15 15:12:36 rillig Exp $	*/
+/*	$NetBSD: instr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: instr.c,v 1.8 2021/08/15 15:12:36 rillig Exp $");
+__RCSID("$NetBSD: instr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -139,7 +139,7 @@ winnstr(WINDOW *win, char *str, int n)
 	__LDATA	*end, *start;
 	int epos, sn;
 
-	if (str == NULL)
+	if ((win == NULL) || (str == NULL))
 		return ERR;
 
 	sn = n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.30 2022/12/21 06:18:01 blymn Exp $	*/
+/*	$NetBSD: printw.c,v 1.31 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.30 2022/12/21 06:18:01 blymn Exp $");
+__RCSID("$NetBSD: printw.c,v 1.31 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -71,6 +71,9 @@ wprintw(WINDOW *win, const char *fmt,...)
 {
 	va_list ap;
 	int     ret;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	va_start(ap, fmt);
 	ret = vw_printw(win, fmt, ap);
@@ -121,6 +124,9 @@ vw_printw(WINDOW *win, const char *fmt, va_list ap)
 	int n;
 
 	__CTRACE(__CTRACE_INPUT, "vw_printw: win %p\n", win);
+
+        if (__predict_false(win == NULL))
+                return ERR;
 
 	if (win->fp == NULL) {
 		win->fp = open_memstream(&win->buf, &win->buflen);

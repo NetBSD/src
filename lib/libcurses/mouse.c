@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.1 2020/03/23 13:37:36 roy Exp $	*/
+/*	$NetBSD: mouse.c,v 1.2 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mouse.c,v 1.1 2020/03/23 13:37:36 roy Exp $");
+__RCSID("$NetBSD: mouse.c,v 1.2 2024/12/23 02:58:04 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: mouse.c,v 1.1 2020/03/23 13:37:36 roy Exp $");
 bool
 wenclose(const WINDOW *win, int y, int x)
 {
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (y < win->begy || y > win->begy + win->maxy ||
 	    x < win->begx || x > win->begx + win->maxx)
@@ -65,6 +68,9 @@ mouse_trafo(int *y, int *x, bool to_screen)
 bool wmouse_trafo(const WINDOW *win, int *y, int *x, bool to_screen)
 {
 	int wy = *y, wx = *x;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (to_screen) {
 		wy += win->begy;

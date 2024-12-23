@@ -1,4 +1,4 @@
-/*	$NetBSD: keypad.c,v 1.15 2021/09/06 07:03:49 rin Exp $  */
+/*	$NetBSD: keypad.c,v 1.16 2024/12/23 02:58:03 blymn Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.15 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.16 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -44,6 +44,9 @@ keypad(WINDOW *win, bool bf)
 {
 	__CTRACE(__CTRACE_MISC,
 	    "keypad: win %p, %s\n", win, bf ? "TRUE" : "FALSE");
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (bf) {
 		win->flags |= __KEYPAD;
 		if (!(curscr->flags & __KEYPAD)) {
@@ -63,6 +66,9 @@ keypad(WINDOW *win, bool bf)
 bool
 is_keypad(const WINDOW *win)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 
 	return win->flags & __KEYPAD ? true : false;
 }

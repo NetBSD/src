@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.37 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.38 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.37 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.38 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -70,6 +70,9 @@ werase(WINDOW *win)
 	attr_t	battr;
 
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	bch = win->bch;
 	if (win != curscr)

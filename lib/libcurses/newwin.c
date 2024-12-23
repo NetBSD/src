@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.67 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.68 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.67 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.68 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -83,6 +83,9 @@ WINDOW *
 dupwin(WINDOW *win)
 {
 	WINDOW *new_one;
+
+	if (__predict_false(win == NULL))
+		return NULL;
 
 	if ((new_one = __newwin(_cursesi_screen, win->maxy, win->maxx,
 				win->begy, win->begx, FALSE,
@@ -195,8 +198,9 @@ __subwin(WINDOW *orig, int nlines, int ncols, int by, int bx, int ispad)
 
 	__CTRACE(__CTRACE_WINDOW, "subwin: (%p, %d, %d, %d, %d, %d)\n",
 	    orig, nlines, ncols, by, bx, ispad);
-	if (orig == NULL)
-		return NULL;
+
+        if (__predict_false(orig == NULL))
+                return NULL;
 
 	/* Make sure window fits inside the original one. */
 	maxy = nlines > 0 ? nlines : orig->maxy + orig->begy - by + nlines;
@@ -413,6 +417,9 @@ __swflags(WINDOW *win)
 bool
 is_pad(const WINDOW *win)
 {
+
+	if (__predict_false(win == NULL))
+		return false;
 
 	return win->flags & __ISPAD ? true : false;
 }

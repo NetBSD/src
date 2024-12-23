@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wchstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $ */
+/*   $NetBSD: in_wchstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wchstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: in_wchstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -126,6 +126,9 @@ win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 	int x = 0, cw = 0, cnt = 0;
 	cchar_t *wcp;
 	nschar_t *np;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (wchstr == NULL)
 		return ERR;

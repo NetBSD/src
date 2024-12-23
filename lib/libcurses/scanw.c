@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.23 2019/06/30 22:16:20 blymn Exp $	*/
+/*	$NetBSD: scanw.c,v 1.24 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.23 2019/06/30 22:16:20 blymn Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.24 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -70,6 +70,9 @@ wscanw(WINDOW *win, const char *fmt,...)
 {
 	va_list ap;
 	int     ret;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	va_start(ap, fmt);
 	ret = vw_scanw(win, fmt, ap);
@@ -117,6 +120,9 @@ vw_scanw(WINDOW *win, const char *fmt, va_list ap)
 {
 	char    buf[1024];
 	int	ret;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	ret = ERR;
 	if (wgetnstr(win, buf, (int) sizeof(buf)) == OK) {

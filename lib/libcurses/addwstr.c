@@ -1,4 +1,4 @@
-/*   $NetBSD: addwstr.c,v 1.8 2021/09/06 07:45:48 rin Exp $ */
+/*   $NetBSD: addwstr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addwstr.c,v 1.8 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: addwstr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -133,6 +133,9 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 	const wchar_t *p;
 	cchar_t cc;
 	wchar_t wc[2];
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	/*
 	 * BSD curses: if (n > 0) then "at most n", else "len = strlen(s)"

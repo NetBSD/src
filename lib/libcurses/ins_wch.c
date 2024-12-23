@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.20 2022/10/19 06:09:27 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.21 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.20 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.21 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -90,6 +90,9 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	int cw, pcw, x, y, sx, ex, newx, i;
 	nschar_t *np, *tnp;
 	wchar_t ws[] = L"		";
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	/* check for non-spacing characters */
 	if (!wch)

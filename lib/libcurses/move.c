@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.25 2022/11/04 06:12:22 blymn Exp $	*/
+/*	$NetBSD: move.c,v 1.26 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.25 2022/11/04 06:12:22 blymn Exp $");
+__RCSID("$NetBSD: move.c,v 1.26 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -63,6 +63,9 @@ int
 wmove(WINDOW *win, int y, int x)
 {
 	__CTRACE(__CTRACE_MISC, "wmove: win %p, (%d, %d)\n", win, y, x);
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (x < 0 || y < 0)
 		return ERR;
 	if (x > win->maxx || y >= win->maxy)
@@ -85,6 +88,9 @@ wmove(WINDOW *win, int y, int x)
 void
 wcursyncup(WINDOW *win)
 {
+
+	if (__predict_false(win == NULL))
+		return;
 
 	while (win->orig) {
 		wmove(win->orig, win->cury + win->begy - win->orig->begy,

@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.13 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: underscore.c,v 1.14 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: underscore.c,v 1.13 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: underscore.c,v 1.14 2024/12/23 02:58:04 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -71,6 +71,8 @@ underend(void)
 int
 wunderscore(WINDOW *win)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	/* If can underscore, set the screen underscore bit. */
 	if ((enter_underline_mode != NULL && exit_underline_mode != NULL) ||
@@ -89,6 +91,9 @@ wunderscore(WINDOW *win)
 int
 wunderend(WINDOW *win)
 {
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (exit_underline_mode != NULL) {
 		__CTRACE(__CTRACE_ATTR, "wunderend\n");

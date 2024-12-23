@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.24 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.25 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.24 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.25 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -69,6 +69,9 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 #ifndef HAVE_WCHAR
 	int	 endy, endx, i;
 	__LDATA	*fp, *lp;
+
+	if (__predict_false(win == NULL))
+		return;
 
 	if (!(left & __CHARTEXT))
 		left |= ACS_VLINE;
@@ -204,6 +207,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	int	 endy, endx, i, j, k, cw, pcw, tlcw, blcw, trcw, brcw;
 	cchar_t left, right, bottom, top, topleft, topright, botleft, botright;
 	nschar_t *np, *tnp;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (ls && wcwidth(ls->vals[0]))
 		memcpy(&left, ls, sizeof(cchar_t));
