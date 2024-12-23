@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.386 2024/12/20 22:24:20 kre Exp $
+#	$NetBSD: build.sh,v 1.387 2024/12/23 01:51:13 kre Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -386,8 +386,8 @@ warning()
 #
 find_in_PATH()
 {
-	local prog=$1
-	local result=${2-$1}
+	local prog="$1"
+	local result="${2-$1}"
 	local dir
 	local IFS=:
 
@@ -900,7 +900,7 @@ validatearch()
 #
 listarch()
 {
-	local machglob=$1 archglob=$2
+	local machglob="$1" archglob="$2"
 	local IFS
 	local wildcard='*'
 	local line xline frag
@@ -1046,11 +1046,12 @@ clearmakeenv()
 #
 resolvepaths()
 {
-	local var=$1
+	local var="$1"
 	local val
 	eval val=\"\${${var}}\"
 	local newval=
 	local word
+
 	for word in ${val}
 	do
 		resolvepath word
@@ -1065,7 +1066,7 @@ resolvepaths()
 #
 resolvepath()
 {
-	local var=$1
+	local var="$1"
 	local val
 	eval val=\"\${${var}}\"
 	case "${val}" in
@@ -1702,7 +1703,7 @@ print_tooldir_program()
 	local possible_TOOLDIR
 	local possible_program
 	local tooldir_program
-	local program=${1}
+	local program="${1}"
 
 	if [ -n "${TOOLDIR}" ]
 	then
@@ -1713,11 +1714,11 @@ print_tooldir_program()
 	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
 	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
 	#
-	local host_ostype=${uname_s}-$(
+	local host_ostype="${uname_s}-$(
 			echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
 		)-$(
 			echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
-		)
+		)"
 
 	# Look in a few potential locations for
 	# ${possible_TOOLDIR}/bin/${toolprefix}${program}.
@@ -2204,7 +2205,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.386 2024/12/20 22:24:20 kre Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.387 2024/12/23 01:51:13 kre Exp $
 # with these arguments: ${_args}
 #
 
@@ -2242,8 +2243,8 @@ EOF
 
 make_in_dir()
 {
-	local dir=$1
-	local op=$2
+	local dir="$1"
+	local op="$2"
 	${runcmd} cd "${dir}" ||
 	    bomb "Failed to cd to \"${dir}\""
 	${runcmd} "${makewrapper}" ${parallel} ${op} ||
@@ -2669,11 +2670,14 @@ dorump()
 	${runcmd} cd "${TOP}" || bomb "cd to ${TOP} failed"
 	tool_ld=`${runcmd} "${makewrapper}" -V '${LD}'`
 
-	local oIFS="${IFS}"
+	local oIFS="${IFS-UnSeTT}"
 	IFS=","
 	for set in ${RUMP_LIBSETS}
 	do
-		IFS="${oIFS}"
+		case "${oIFS}" in
+		UnSeTT)	unset IFS;;
+		*)	IFS="${oIFS}";;
+		esac
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
 		    -static --whole-archive ${set} --no-whole-archive   \
 		    -lpthread -lc 2>&1 -o /tmp/rumptest.$$ |
@@ -2714,7 +2718,7 @@ setup_mkrepro()
 		return
 	fi
 
-	local dirs=${NETBSDSRCDIR-/usr/src}/
+	local dirs="${NETBSDSRCDIR-/usr/src}/"
 	if [ "${MKX11-no}" = yes ]
 	then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
@@ -2730,15 +2734,15 @@ setup_mkrepro()
 	do
 		if [ -d "${d}CVS" ]
 		then
-			local cvslatest=$(print_tooldir_program cvslatest)
+			local cvslatest="$(print_tooldir_program cvslatest)"
 			if ! [ -x "${cvslatest}" ]
 			then
 				buildtools
 			fi
-			local nbdate=$(print_tooldir_program date)
+			local nbdate="$(print_tooldir_program date)"
 
 			local cvslatestflags=
-			if ${do_expertmode}
+			if "${do_expertmode}"
 			then
 				cvslatestflags=-i
 			fi
