@@ -1,4 +1,4 @@
-/*	$NetBSD: altq.h,v 1.4 2006/10/12 19:59:08 peter Exp $ */
+/*	$NetBSD: altq.h,v 1.5 2024/12/24 08:35:28 ozaki-r Exp $ */
 /*	$KAME: altq.h,v 1.10 2003/07/10 12:07:47 kjc Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct	altqreq {
 
 /* simple token backet meter profile */
 struct	tb_profile {
-	u_int	rate;	/* rate in bit-per-sec */
+	uint64_t	rate;	/* rate in bit-per-sec */
 	u_int	depth;	/* depth in bytes */
 };
 

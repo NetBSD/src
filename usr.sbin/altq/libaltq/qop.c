@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.12 2024/11/12 21:28:50 andvar Exp $	*/
+/*	$NetBSD: qop.c,v 1.13 2024/12/24 08:35:28 ozaki-r Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -306,7 +306,7 @@ qcmd_delete_filter(const char *ifname, const char *clname, const char *flname)
 }
 
 int
-qcmd_tbr_register(const char *ifname, u_int rate, u_int size)
+qcmd_tbr_register(const char *ifname, uint64_t rate, u_int size)
 {
 	struct tbrinfo *info;
 
@@ -326,7 +326,7 @@ qcmd_tbr_register(const char *ifname, u_int rate, u_int size)
  */
 
 int
-qop_add_if(struct ifinfo **rp, const char *ifname, u_int bandwidth,
+qop_add_if(struct ifinfo **rp, const char *ifname, uint64_t bandwidth,
 	   struct qdisc_ops *qdisc_ops, void *if_private)
 {
 	struct ifinfo	*ifinfo;
@@ -788,7 +788,7 @@ struct classinfo *get_nextclass(struct classinfo *clinfo)
 	return (next);
 }
 
-u_long
+uint64_t
 atobps(const char *s)
 {
 	double bandwidth;
@@ -805,7 +805,7 @@ atobps(const char *s)
 	}
 	if (bandwidth < 0)
 		bandwidth = 0;
-	return ((u_long)bandwidth);
+	return ((uint64_t)bandwidth);
 }
 
 u_long

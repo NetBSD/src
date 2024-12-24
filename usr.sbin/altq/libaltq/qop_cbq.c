@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.12 2021/07/21 06:36:33 ozaki-r Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.13 2024/12/24 08:35:28 ozaki-r Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -61,7 +61,7 @@ static int qop_cbq_enable_hook(struct ifinfo *);
 static int qop_cbq_delete_class_hook(struct classinfo *);
 
 static int cbq_class_spec(struct ifinfo *, u_long, u_long, u_int, int,
-			  u_int, u_int, u_int, u_int, u_int,
+			  uint64_t, u_int, u_int, u_int, u_int,
 			  u_int, cbq_class_spec_t *);
 
 static int cbq_attach(struct ifinfo *);
@@ -112,7 +112,7 @@ static struct qdisc_ops cbq_qdisc = {
 int
 cbq_interface_parser(const char *ifname, int argc, char **argv)
 {
-	u_int  	bandwidth = 100000000;	/* 100Mbps */
+	uint64_t  	bandwidth = 100000000;	/* 100Mbps */
 	u_int	tbrsize = 0;
 	u_int	is_efficient = 0;
 	u_int	is_wrr = 1;	/* weighted round-robin is default */
@@ -169,7 +169,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
 	const char	*borrow = NULL;
 	u_int   pri = 1;
 	u_int	pbandwidth = 0;
-	u_int	bandwidth = 0;
+	uint64_t	bandwidth = 0;
 	u_int	maxdelay = 0;		/* 0 means default */
 	u_int	maxburst = 0;		/* 0 means default */
 	u_int	minburst = 0;		/* 0 means default */
@@ -309,7 +309,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
  * qcmd api
  */
 int
-qcmd_cbq_add_if(const char *ifname, u_int bandwidth, int is_wrr, int efficient,
+qcmd_cbq_add_if(const char *ifname, uint64_t bandwidth, int is_wrr, int efficient,
     bool no_control)
 {
 	int error;
@@ -325,7 +325,7 @@ qcmd_cbq_add_if(const char *ifname, u_int bandwidth, int is_wrr, int efficient,
 int
 qcmd_cbq_add_class(const char *ifname, const char *class_name,
 		   const char *parent_name, const char *borrow_name,
-		   u_int pri, u_int bandwidth,
+		   u_int pri, uint64_t bandwidth,
 		   u_int maxdelay, u_int maxburst, u_int minburst,
 		   u_int av_pkt_size, u_int max_pkt_size,
 		   int admission_type, int flags)
@@ -333,7 +333,7 @@ qcmd_cbq_add_class(const char *ifname, const char *class_name,
 	struct ifinfo *ifinfo;
 	struct cbq_ifinfo *cbq_ifinfo;
 	struct classinfo *parent = NULL, *borrow = NULL;
-	u_int	ctl_bandwidth = 0;
+	uint64_t ctl_bandwidth = 0;
 	int	error = 0;
 
 	if ((ifinfo = ifname2ifinfo(ifname)) == NULL)
@@ -402,7 +402,7 @@ qcmd_cbq_add_class(const char *ifname, const char *class_name,
 
 int
 qcmd_cbq_modify_class(const char *ifname, const char *class_name,
-		      u_int pri, u_int bandwidth,
+		      u_int pri, uint64_t bandwidth,
 		      u_int maxdelay, u_int maxburst, u_int minburst,
 		      u_int av_pkt_size, u_int max_pkt_size, int flags)
 {
@@ -479,7 +479,7 @@ qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname)
  */
 int 
 qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
-	       u_int bandwidth, int is_wrr, int efficient, bool no_control)
+	       uint64_t bandwidth, int is_wrr, int efficient, bool no_control)
 {
 	struct ifinfo *ifinfo = NULL;
 	struct cbq_ifinfo *cbq_ifinfo = NULL;
@@ -520,7 +520,7 @@ qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
 int 
 qop_cbq_add_class(struct classinfo **rp, const char *class_name,
 		  struct ifinfo *ifinfo, struct classinfo *parent, 
-		  struct classinfo *borrow, u_int pri, u_int bandwidth,
+		  struct classinfo *borrow, u_int pri, uint64_t bandwidth,
 		  u_int maxdelay, u_int maxburst, u_int minburst,
 		  u_int av_pkt_size, u_int max_pkt_size,
 		  int admission_type, int flags)
@@ -668,14 +668,14 @@ qop_cbq_delete_class_hook(struct classinfo *clinfo)
 }
 
 int
-qop_cbq_modify_class(struct classinfo *clinfo, u_int pri, u_int bandwidth,
+qop_cbq_modify_class(struct classinfo *clinfo, u_int pri, uint64_t bandwidth,
 		     u_int maxdelay, u_int maxburst, u_int minburst,
 		     u_int av_pkt_size, u_int max_pkt_size, int flags)
 {
 	struct ifinfo *ifinfo;
 	struct cbq_classinfo *cbq_clinfo, *parent_clinfo;
 	u_int	parent_handle, borrow_handle;
-	u_int	old_bandwidth;
+	uint64_t	old_bandwidth;
 	int	error;
 
 	ifinfo = clinfo->ifinfo;
@@ -766,7 +766,7 @@ qop_cbq_enable_hook(struct ifinfo *ifinfo)
 static int
 cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	       u_long borrow_class, u_int pri, int flags,
-	       u_int bandwidth, u_int maxdelay, u_int maxburst,
+	       uint64_t bandwidth, u_int maxdelay, u_int maxburst,
 	       u_int minburst, u_int av_pkt_size, u_int max_pkt_size,
 	       cbq_class_spec_t *cl_spec)
 {
