@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.9 2024/12/24 08:35:28 ozaki-r Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.10 2024/12/24 12:13:05 kre Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -29,6 +29,7 @@
 #define _ALTQ_QOP_H_
 
 #include <sys/queue.h>
+#include <sys/types.h>
 #include <altq/altq.h>
 #include <altq/altq_red.h>
 
@@ -178,7 +179,7 @@ const char *qoperror(int qoperrno);
 u_int get_ifindex(const char *ifname);
 struct classinfo *get_rootclass(struct ifinfo *ifinfo);
 struct classinfo *get_nextclass(struct classinfo *clinfo);
-u_long atobps(const char *s);
+uint64_t atobps(const char *s);
 u_long atobytes(const char *s);
 int qop_red_set_defaults(int th_min, int th_max, int inv_pmax);
 int qop_rio_set_defaults(struct redparams *params);
