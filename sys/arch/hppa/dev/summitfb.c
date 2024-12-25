@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.18 2024/12/18 05:22:05 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.19 2024/12/25 05:44:12 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.18 2024/12/18 05:22:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.19 2024/12/25 05:44:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,7 +670,7 @@ summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
 	summitfb_write4(sc, VISFX_VRAM_READ_MODE,
-	    (mode & 0x07000000) | 0x400);
+	    (mode & 0x07fff000) | 0x400);
 	sc->sc_write_mode = mode;
 }
 
@@ -678,12 +678,21 @@ static inline void
 summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
-	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
+		summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0); // opaque
+	} else {
+		summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
+		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
+		summitfb_write4(sc, VISFX_OTR, OTR_A);	// all transparent
+	}		
 }
 
 void
 summitfb_setup(struct summitfb_softc *sc)
 {
+	int i;
 
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
@@ -695,7 +704,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xb08048, 0x1b);
 
 	summitfb_write4(sc, 0x920860, 0xe4);
-	summitfb_write4(sc, 0x921110, 0);
+	summitfb_write4(sc, VISFX_IBO, 0);
 	summitfb_write4(sc, 0x921114, 0);
 	summitfb_write4(sc, 0x9211d8, 0);
 
@@ -705,6 +714,22 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa00850, 0);	/* fx4 */
 	summitfb_write4(sc, 0xa0086c, 0);
 #endif
+
+	/* make sure the overlay is opaque */
+	summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
+	/*
+	 * initialize XLUT
+	 * the whole thing so we don't have to clear the attribute plane
+	 */
+	for (i = 0; i < 16; i++)	
+		summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1); /* RGB, CFS1 */
+	summitfb_write4(sc, VISFX_CFS(1), CFS_8F | CFS_BYPASS);
+	/* overlay is 8bit, uses LUT 0 */
+	summitfb_write4(sc, VISFX_CFS(16), CFS_8I | CFS_LUT0);
+	summitfb_write4(sc, VISFX_CFS(17), CFS_8I | CFS_LUT0);
+
+	/* turn off force attr so the above takes effect */
+	summitfb_write4(sc, VISFX_FATTR, 0);
 
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
@@ -797,7 +822,18 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		int ret;
 
 		ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-		fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+		//fbi->fbi_fbsize = sc->sc_height * 2048;
+		fbi->fbi_stride = 8192;
+		fbi->fbi_bitsperpixel = 32;
+		fbi->fbi_pixeltype = WSFB_RGB;
+		fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
+		fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+		fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+		fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+		fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
 		return ret;
 	}
 
@@ -1003,10 +1039,9 @@ summitfb_putpalreg(struct summitfb_softc *sc, uint8_t idx,
     uint8_t r, uint8_t g, uint8_t b)
 {
 
-	summitfb_write4(sc, VISFX_COLOR_INDEX, 0xc0005100 + idx);
+	summitfb_write4(sc, VISFX_COLOR_INDEX, idx);
 	summitfb_write4(sc, VISFX_COLOR_VALUE, (r << 16) | ( g << 8) | b);
 	summitfb_write4(sc, VISFX_COLOR_MASK, 0xff);
-	summitfb_write4(sc, 0x80004c, 0xc);
 	return 0;
 }
 
@@ -1550,7 +1585,6 @@ summitfb_do_cursor(struct summitfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 7;
 			summitfb_write4(sc, VISFX_CURSOR_DATA, latch);
 		}
-		summitfb_setup_fb(sc);
 	}
 
 	return 0;
@@ -1567,7 +1601,9 @@ summitfb_set_video(struct summitfb_softc *sc, int on)
 
 	summitfb_wait(sc);
 	if (on) {
+		summitfb_write4(sc, VISFX_MPC, MPC_VIDEO_ON);
 	} else {
+		summitfb_write4(sc, VISFX_MPC, MPC_VSYNC_OFF | MPC_HSYNC_OFF);
 	}
 }
 
