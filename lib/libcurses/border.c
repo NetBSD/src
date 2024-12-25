@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.25 2024/12/23 02:58:03 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.26 2024/12/25 15:35:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.25 2024/12/23 02:58:03 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.26 2024/12/25 15:35:29 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -71,7 +71,7 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	__LDATA	*fp, *lp;
 
 	if (__predict_false(win == NULL))
-		return;
+		return ERR;
 
 	if (!(left & __CHARTEXT))
 		left |= ACS_VLINE;
