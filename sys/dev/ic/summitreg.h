@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.9 2024/12/18 05:19:17 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.10 2024/12/25 05:03:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -38,10 +38,16 @@
 #ifndef SUMMITREG_H
 #define SUMMITREG_H
 
+#define VISFX_CONTROL		0x641000
 #define VISFX_STATUS		0x641400	// zero when idle
 #define VISFX_FIFO		0x641440
+#define VISFX_IBO		0x921110	// ROP and such
+#define VISFX_IAA0		0x921200	// XLUT, 16 entries
+#define VISFX_IAA(n)		(0x921200 + ((n) << 2))
+#define VISFX_OTR		0x921148	// overlay transparency
+
 #define VISFX_VRAM_WRITE_MODE	0xa00808
-#define VISFX_VRAM_READ_MODE	0xa0080c	// this is a guess
+#define VISFX_VRAM_READ_MODE	0xa0080c
 #define VISFX_PIXEL_MASK	0xa0082c
 #define VISFX_FG_COLOUR		0xa0083c
 #define VISFX_BG_COLOUR		0xa00844
@@ -67,6 +73,32 @@
 /* looks like 0x000000c0 enables fb/bg colours to be applied */
 
 #define VISFX_READ_MODE_COPY	0x02000400
+
+#define OTC01	0x00000000	/* one pixel per 32bit write */
+#define OTC04	0x02000000	/* 4 pixels per 32bit write */
+#define OTC32	0x05000000	/* 32 pixels per 32bit write */
+#define BIN8I	0x00000000	/* 8bit indexed */
+#define BIN12I	0x00010000	/* 12bit indexed */
+#define BIN332F	0x00040000	/* R3G3B2 */
+#define BIN8F	0x00070000	/* ARGB8 */
+#define BINapln	0x00110000	/* attribute plane */
+#define BINhost	0x00300000	/* DMA to host */
+#define BUFovl	0x00000000	/* 8bit overlay */
+#define BUFBL	0x00008000	/* back/left */
+#define BUFFL	0x00004000	/* front/left */
+#define BUFBR	0x00002000	/* back/right */
+#define BUFFR	0x00001000	/* front/right */
+
+/* attribute table */
+#define IAA_8I		0x00000000	/* 8bit CI */
+#define IAA_8F		0x00000070	/* RGB8 */
+#define IAA_CFS0	0x00000000	/* CFS select */
+#define IAA_CFS1	0x00000100	/* CFS 1 etc. */
+
+#define OTR_T	0x00010000	/* when set 0 is transparent, otherwise 0xff */
+#define OTR_A	0x00000100	/* always transparent */
+#define OTR_L1	0x00000002	/* transparency controlled by CFS17 */
+#define OTR_L0	0x00000001	/* transparency controlled by CFS16 */
 
 /*
  * for STI colour change mode:
@@ -111,5 +143,20 @@
 #define VISFX_COLOR_MASK	0x800018
 #define VISFX_COLOR_INDEX	0x800020
 #define VISFX_COLOR_VALUE	0x800024
+#define VISFX_FATTR		0x80003c	/* force attribute */
+#define VISFX_MPC		0x80004c
+	#define MPC_VIDEO_ON	0x0c
+	#define MPC_VSYNC_OFF	0x02
+	#define MPC_HSYNC_OFF	0x01
+#define VISFX_CFS0		0x800100	/* colour function select */
+#define VISFX_CFS(n)		(VISFX_CFS0 + ((n) << 2))
+/* 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay */
+#define CFS_CR		0x80	// enable color recovery
+#define CFS_8I		0x00	// 8bit indexed
+#define CFS_332 	0x40	// R3G3B2
+#define CFS_8F		0x70	// ARGB8
+#define CFS_LUT0	0x00	// use LUT 0
+#define CFS_LUT1	0x01	// LUT 1 etc.
+#define CFS_BYPASS	0x07	// bypass LUT
 
 #endif	/* SUMMITREG_H */
