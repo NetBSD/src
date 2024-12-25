@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.10 2024/12/25 05:03:07 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.11 2024/12/25 05:35:51 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -152,8 +152,8 @@
 #define VISFX_CFS(n)		(VISFX_CFS0 + ((n) << 2))
 /* 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay */
 #define CFS_CR		0x80	// enable color recovery
-#define CFS_8I		0x00	// 8bit indexed
-#define CFS_332 	0x40	// R3G3B2
+#define CFS_332		0x00	// R3G3B2
+#define CFS_8I	 	0x40	// 8bit indexed
 #define CFS_8F		0x70	// ARGB8
 #define CFS_LUT0	0x00	// use LUT 0
 #define CFS_LUT1	0x01	// LUT 1 etc.
