@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.79 2024/10/09 22:13:21 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.80 2024/12/26 21:14:52 andvar Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -698,7 +698,7 @@ It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
 It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_STREAMING
-Adjusts, if necessary, the size, alignment, and boundary constrains
+Adjusts, if necessary, the size, alignment, and boundary constraints
 to conform to the platform-dependent requirements for the use of the
 .Dv BUS_DMA_STREAMING
 flag with the
