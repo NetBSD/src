@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_fs.h,v 1.4 2022/02/16 22:00:56 andvar Exp $ */
+/* $NetBSD: nilfs_fs.h,v 1.5 2024/12/26 21:16:26 andvar Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -436,7 +436,7 @@ struct nilfs_segment_summary {
 #define NILFS_SS_GC     0x0010  /* segment written for cleaner operation */
 #define NILFS_SS_FLAG_BITS "\20\1LOGBGN\2LOGEND\3SR\4SYNDT\5GC"
 
-/* Segment summary constrains */
+/* Segment summary constraints */
 #define NILFS_SEG_MIN_BLOCKS     16        /* minimum number of blocks in a
 					      full segment */
 #define NILFS_PSEG_MIN_BLOCKS    2         /* minimum number of blocks in a
