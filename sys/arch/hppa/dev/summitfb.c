@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.20 2024/12/26 10:44:11 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.21 2024/12/26 17:41:27 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.20 2024/12/26 10:44:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.21 2024/12/26 17:41:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -686,7 +686,7 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 		summitfb_write4(sc, VISFX_OTR, OTR_A);	// all transparent
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
-	//summitfb_write4(sc, VISFX_CONTROL, CONTROL_WFC);	
+	//summitfb_write4(sc, VISFX_CONTROL, CONTROL_WFC);
 }
 
 void
@@ -722,7 +722,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	 * initialize XLUT
 	 * the whole thing so we don't have to clear the attribute plane
 	 */
-	for (i = 0; i < 16; i++)	
+	for (i = 0; i < 16; i++)
 		summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1); /* RGB, CFS1 */
 	summitfb_write4(sc, VISFX_CFS(1), CFS_8F | CFS_BYPASS);
 	/* overlay is 8bit, uses LUT 0 */
