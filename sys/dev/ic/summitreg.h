@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.11 2024/12/25 05:35:51 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.12 2024/12/26 10:40:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -39,9 +39,20 @@
 #define SUMMITREG_H
 
 #define VISFX_CONTROL		0x641000
+	#define CONTROL_WFC	0x00000200	// FIFO when 0, direct when 1
+#define VISFX_FC		0x641040	// Fault Control
 #define VISFX_STATUS		0x641400	// zero when idle
 #define VISFX_FIFO		0x641440
-#define VISFX_IBO		0x921110	// ROP and such
+#define VISFX_FOE		0x920404	// Fragment Operation Enable
+	#define FOE_TEXTURE	0x00000001
+	#define FOE_SPECULAR	0x00000002
+	#define FOE_DEPTHCUE	0x00000004
+	#define FOE_ALPHATEST	0x00000008
+	#define FOE_STENCIL	0x00000010
+	#define FOE_Z_TEST	0x00000020
+	#define FOE_BLEND_ROP	0x00000040	// IBO is used
+	#define FOE_DITHER	0x00000080
+#define VISFX_IBO		0x921110	// ROP in lowest nibble
 #define VISFX_IAA0		0x921200	// XLUT, 16 entries
 #define VISFX_IAA(n)		(0x921200 + ((n) << 2))
 #define VISFX_OTR		0x921148	// overlay transparency
@@ -54,13 +65,13 @@
 #define VISFX_PLANE_MASK	0xa0084c
 /* this controls what we see in the FB aperture */
 #define VISFX_APERTURE_ACCESS	0xa00858
-	#define VISFX_DEPTH_8	0xb0
-	#define VISFX_DEPTH_32	0xd0
+	#define VISFX_DEPTH_8	0x30
+	#define VISFX_DEPTH_32	0x50
 
 #define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
 #define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
 #define VISFX_VRAM_WRITE_DEST		0xac1000
-
+#define VISFX_TCR			0xac1024	/* throttle control */
 #define VISFX_CLIP_TL		0xac1050	/* clipping rect, top/left */
 #define VISFX_CLIP_WH		0xac1054	/* clipping rect, w/h */
 
