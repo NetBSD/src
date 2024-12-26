@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.19 2024/12/25 05:44:12 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.20 2024/12/26 10:44:11 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.19 2024/12/25 05:44:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.20 2024/12/26 10:44:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,7 @@ static void	summitfb_rectfill(struct summitfb_softc *, int, int, int, int,
 static void	summitfb_bitblt(void *, int, int, int, int, int,
 		    int, int);
 
-#if 0
 static void	summitfb_cursor(void *, int, int, int);
-#endif
 static void	summitfb_putchar(void *, int, int, u_int, long);
 static void	summitfb_putchar_fast(void *, int, int, u_int, long);
 static void	summitfb_loadfont(struct summitfb_softc *);
@@ -669,8 +667,7 @@ summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
 	if (sc->sc_write_mode == mode) return;
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE,
-	    (mode & 0x07fff000) | 0x400);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE,mode & 0x07fff000);
 	sc->sc_write_mode = mode;
 }
 
@@ -678,6 +675,7 @@ static inline void
 summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
+	summitfb_wait(sc);
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
@@ -686,7 +684,9 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 		summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
 		summitfb_write4(sc, VISFX_OTR, OTR_A);	// all transparent
-	}		
+	}
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
+	//summitfb_write4(sc, VISFX_CONTROL, CONTROL_WFC);	
 }
 
 void
@@ -699,6 +699,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
 
+	summitfb_wait(sc);
 #if 1
 	summitfb_write4(sc, 0xb08044, 0x1b);
 	summitfb_write4(sc, 0xb08048, 0x1b);
@@ -731,14 +732,19 @@ summitfb_setup(struct summitfb_softc *sc)
 	/* turn off force attr so the above takes effect */
 	summitfb_write4(sc, VISFX_FATTR, 0);
 
+	summitfb_write4(sc, VISFX_TCR, 0x10001000);	/* disable throttling */
+
 	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_CONTROL, 0);	// clear WFC
 	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
 	summitfb_write4(sc, VISFX_PIXEL_MASK, 0xffffffff);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
+	summitfb_write4(sc, VISFX_FOE, FOE_BLEND_ROP);
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 	summitfb_write4(sc, VISFX_CLIP_TL, 0);
 	summitfb_write4(sc, VISFX_CLIP_WH,
-	    ((sc->sc_scr.fbwidth + 1) << 16) | (sc->sc_scr.fbheight + 1));
+	    ((sc->sc_scr.fbwidth) << 16) | (sc->sc_scr.fbheight));
 	/* turn off the cursor sprite */
 	summitfb_write4(sc, VISFX_CURSOR_POS, 0);
 	summitfb_setup_fb(sc);
@@ -922,7 +928,7 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
 	    WSSCREEN_RESIZE;
-	scr->scr_flags |= VCONS_LOADFONT | VCONS_NO_CURSOR;
+	scr->scr_flags |= VCONS_LOADFONT/* | VCONS_NO_CURSOR*/;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 	    sc->sc_width / ri->ri_font->fontwidth);
@@ -933,7 +939,7 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.copycols = summitfb_copycols;
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
-	//ri->ri_ops.cursor = summitfb_cursor;
+	ri->ri_ops.cursor = summitfb_cursor;
 #ifdef SUMMITFB_ENABLE_GC
 	sc->sc_putchar = ri->ri_ops.putchar;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
@@ -1048,13 +1054,11 @@ summitfb_putpalreg(struct summitfb_softc *sc, uint8_t idx,
 static inline void
 summitfb_wait_fifo(struct summitfb_softc *sc, uint32_t slots)
 {
-#if 0
 	uint32_t reg;
 
 	do {
-		reg = summitfb_read4(sc, NGLE_REG_34);
+		reg = summitfb_read4(sc, VISFX_FIFO);
 	} while (reg < slots);
-#endif
 }
 
 static void
@@ -1063,6 +1067,8 @@ summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
 {
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_FILL);
+	summitfb_wait_fifo(sc, 4);
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, bg);
 	summitfb_write4(sc, VISFX_START, (x << 16) | y);
 	summitfb_write4(sc, VISFX_SIZE, (wi << 16) | he);
@@ -1074,18 +1080,15 @@ summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 {
 	struct summitfb_softc *sc = cookie;
 
-	/* XXX no ROP support yet */
-	if (rop != RopSrc) {
-		summitfb_write_mode(sc, rop);
-	} else
-		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+	summitfb_wait_fifo(sc, 4);
+	summitfb_write4(sc, VISFX_IBO, rop);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
 	summitfb_write4(sc, VISFX_COPY_DST, (xd << 16) | yd);
 
 }
 
-#if 0
 static void
 summitfb_nuke_cursor(struct rasops_info *ri)
 {
@@ -1098,7 +1101,7 @@ summitfb_nuke_cursor(struct rasops_info *ri)
 		he = ri->ri_font->fontheight;
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
-		if (0) summitfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+		summitfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
 		ri->ri_flg &= ~RI_CURSOR;
 	}
 }
@@ -1133,7 +1136,6 @@ summitfb_cursor(void *cookie, int on, int row, int col)
 	}
 
 }
-#endif
 
 static void
 summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
@@ -1152,12 +1154,10 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (!CHAR_IN_FONT(c, font))
 		return;
 
-	/* XXX as long as we use putchar() to draw the cursor */
-#if 0
 	if (row == ri->ri_crow && col == ri->ri_ccol) {
 		ri->ri_flg &= ~RI_CURSOR;
 	}
-#endif
+
 	wi = font->fontwidth;
 	he = font->fontheight;
 
@@ -1175,6 +1175,8 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
+	summitfb_wait_fifo(sc, 6);
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 	mask = 0xffffffff << (32 - wi);
@@ -1213,7 +1215,7 @@ summitfb_loadfont(struct summitfb_softc *sc)
 
 	summitfb_setup(sc);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
-
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, 0xffffffff);
 	summitfb_write4(sc, VISFX_BG_COLOUR, 0);
 
@@ -1266,12 +1268,10 @@ summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	/* XXX as long as we use putchar() to draw the cursor */
-#if 0
 	if (row == ri->ri_crow && col == ri->ri_ccol) {
 		ri->ri_flg &= ~RI_CURSOR;
 	}
-#endif
+
 	wi = font->fontwidth;
 	he = font->fontheight;
 
@@ -1289,6 +1289,8 @@ summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, 0x050000c0);
+	summitfb_wait_fifo(sc, 6);
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
 
@@ -1358,13 +1360,13 @@ summitfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	int32_t xs, xd, y, width, height;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-#if 0
+
 		if (ri->ri_crow == row &&
 		    ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols) &&
 		    (ri->ri_flg & RI_CURSOR)) {
 			summitfb_nuke_cursor(ri);
 		}
-#endif
+
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1412,12 +1414,12 @@ summitfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	int32_t x, ys, yd, width, height;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-#if 0
+
 		if (ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows) &&
 		    (ri->ri_flg & RI_CURSOR)) {
 			summitfb_nuke_cursor(ri);
 		}
-#endif
+
 		x = ri->ri_xorigin;
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
