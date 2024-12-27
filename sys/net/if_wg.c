@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.134 2024/12/27 15:55:19 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.134 2024/12/27 15:55:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -5497,7 +5497,7 @@ wg_send_hs_user(struct wg_peer *wgp, struct mbuf *m)
 }
 
 static int
-wg_send_hs_data(struct wg_peer *wgp, struct mbuf *m)
+wg_send_data_user(struct wg_peer *wgp, struct mbuf *m)
 {
 
 	return wg_send_user(wgp, m, /*handshake*/false);
