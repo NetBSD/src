@@ -102,9 +102,9 @@ npf_begin_altq(void)
 		pool_put(&npf_altq_pl, altq);
 	}
 	if (error)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -130,7 +130,7 @@ npf_add_altq(void *data)
 		error = ENOMEM;
 		return error;
 	}
-	memcpy(altq, &paa->altq, sizeof(struct npf_altq));
+	memcpy(altq, &paa->altq, sizeof(paa->altq));
 	/*
 		* if this is for a queue, find the discipline and
 		* copy the necessary fields
@@ -155,7 +155,7 @@ npf_add_altq(void *data)
 		return error;
 	}
 	TAILQ_INSERT_TAIL(npf_altqs_inactive, altq, entries);
-	memcpy(&paa->altq, altq, sizeof(struct npf_altq));
+	memcpy(&paa->altq, altq, sizeof(*altq));
 
 	if (!npf_altq_loaded)
 		npf_altq_loaded = 1;
@@ -169,7 +169,7 @@ npf_commit_altq(void)
 	struct npf_altq		*altq;
 	int			 s, err, error = 0;
 	if (!npf_altqs_inactive_open)
-		return (EBUSY);
+		return EBUSY;
 	/* swap altqs, keep the old. */
 	s = splsoftnet();
 	old_altqs = npf_altqs_active;
@@ -185,7 +185,7 @@ npf_commit_altq(void)
 				error = npf_enable_altq(altq);
 			if (error != 0) {
 				splx(s);
-				return (error);
+				return error;
 			}
 		}
 	}
@@ -208,7 +208,7 @@ npf_commit_altq(void)
 	}
 	splx(s);
 	npf_altqs_inactive_open = 0;
-	return (error);
+	return error;
 }
 
 u_int32_t
@@ -238,13 +238,13 @@ npftagname2tag(struct npf_tags *head, char *tagname)
 		    p->tag == new_tagid; p = TAILQ_NEXT(p, entries))
 			new_tagid = p->tag + 1;
 	if (new_tagid > TAGID_MAX)
-		return (0);
+		return 0;
 	/* allocate and fill new struct npf_tagname */
-	tag = (struct npf_tagname *)malloc(sizeof(struct npf_tagname),
+	tag = (struct npf_tagname *)malloc(sizeof(*tag),
 	    M_TEMP, M_NOWAIT);
 	if (tag == NULL)
-		return (0);
-	memset(tag, 0, sizeof(struct npf_tagname));
+		return 0;
+	memset(tag, 0, sizeof(*tag));
 	strlcpy(tag->name, tagname, sizeof(tag->name));
 	tag->tag = new_tagid;
 	tag->ref++;
@@ -311,7 +311,7 @@ npf_enable_altq(struct npf_altq *altq)
 	struct tb_profile	 tb;
 	int			 s, error = 0;
 	if ((ifp = ifunit(altq->ifname)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 	if (ifp->if_snd.altq_type != ALTQT_NONE)
 		error = altq_enable(&ifp->if_snd);
 	/* set tokenbucket regulator */
@@ -324,7 +324,7 @@ npf_enable_altq(struct npf_altq *altq)
 	}
 	if (error == 0)
 		npf_altq_running = true;
-	return (error);
+	return error;
 }
 
 int
@@ -351,13 +351,13 @@ npf_disable_altq(struct npf_altq *altq)
 	struct tb_profile	 tb;
 	int			 s, error;
 	if ((ifp = ifunit(altq->ifname)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 	/*
 	 * when the discipline is no longer referenced, it was overridden
 	 * by a new one.  if so, just return.
 	 */
 	if (altq->altq_disc != ifp->if_snd.altq_disc)
-		return (0);
+		return 0;
 	error = altq_disable(&ifp->if_snd);
 	if (error == 0) {
 		/* clear tokenbucket regulator */
@@ -368,7 +368,7 @@ npf_disable_altq(struct npf_altq *altq)
 	}
 	if (error == 0)
 		npf_altq_running = 0;
-	return (error);
+	return error;
 }
 
 int

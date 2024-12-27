@@ -515,7 +515,7 @@ npfctl_print_altq(int fd)
 {
 	//struct npf_altq_node	*root = NULL, *node;
 	struct npfioc_altq	 pa;
-	u_int32_t		 mnr, nr;
+	uint32_t		 mnr, nr;
 
 	memset(&pa, 0, sizeof(pa));
 	if (ioctl(fd, IOC_NPF_GET_ALTQS, &pa)) {

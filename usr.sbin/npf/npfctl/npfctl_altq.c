@@ -99,7 +99,7 @@ struct node_queue *queues = NULL;
 		if (r == NULL) { \
 			r = calloc(1, sizeof(T)); \
 			if (r == NULL) \
-				err(1, "LOOP: calloc"); \
+				err(EXIT_FAILURE, "LOOP: calloc"); \
 			r->next = NULL; \
 		} \
 		n = r; \
@@ -118,11 +118,11 @@ npfctl_test_altqsupport(int dev)
 		if (errno == ENODEV) {
 			fprintf(stderr, "No ALTQ support in kernel\n"
 				"ALTQ related functions disabled\n");
-			return (0);
+			return 0;
 		} else
-		err(1, "IOC_GET_ALTQS");
+		err(EXIT_FAILURE, "IOC_GET_ALTQS");
 	}
-	return (1);
+	return 1;
 }
 /* evaluate bandwidth */
 int
@@ -145,16 +145,16 @@ npfctl_eval_bw(struct node_queue_bw * bw, char * bw_spec)
 			if (bps < 0 || bps > 100) {
 				yyerror("bandwidth spec "
 					"out of range");
-				return (-1);
+				return -1;
 			}
 			bw->bw_percent = bps;
 			bps = 0;
 		} else {
 			yyerror("unknown unit %s", cp);
-			return (-1);
+			return -1;
 		}
 	}
-	bw->bw_absolute = (u_int32_t)bps;
+	bw->bw_absolute = (uint32_t)bps;
 	return 0;
 }
 
@@ -169,7 +169,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 	struct node_queue_bw	 bw;
 	int			 errs = 0;
 	npfdev = npfctl_open_dev(NPF_DEV_PATH);
-	memcpy(&pa, a, sizeof(struct npf_altq));
+	memcpy(&pa, a, sizeof(*a));
 	if (strlcpy(pa.ifname, ifname,
 		sizeof(pa.ifname)) >= sizeof(pa.ifname))
 		errx(1, "expand_altq: strlcpy");
@@ -190,7 +190,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 		if (pa.scheduler == ALTQT_CBQ ||
 			pa.scheduler == ALTQT_HFSC) {
 			/* now create a root queue */
-			memset(&pb, 0, sizeof(struct npf_altq));
+			memset(&pb, 0, sizeof(pb));
 			if (strlcpy(qname, "root_", sizeof(qname)) >=
 				sizeof(qname))
 				errx(1, "expand_altq: strlcpy");
@@ -216,7 +216,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 		LOOP_THROUGH(struct node_queue, queue, nqueues,
 			n = calloc(1, sizeof(struct node_queue));
 			if (n == NULL)
-				err(1, "expand_altq: calloc");
+				err(EXIT_FAILURE, "expand_altq: calloc");
 			if (pa.scheduler == ALTQT_CBQ ||
 				pa.scheduler == ALTQT_HFSC)
 				if (strlcpy(n->parent, qname,
@@ -242,7 +242,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 	}
 	FREE_LIST(struct node_queue, nqueues);
 
-	return (errs);
+	return errs;
 }
 int
 expand_queue(struct npf_altq *a, const char *ifname,
@@ -251,13 +251,13 @@ expand_queue(struct npf_altq *a, const char *ifname,
 {
 	struct node_queue	*n, *nq;
 	struct npf_altq		 pa;
-	u_int8_t		 found = 0;
-	u_int8_t		 errs = 0;
+	uint8_t		 found = 0;
+	uint8_t		 errs = 0;
 
 	if (queues == NULL) {
 		yyerror("queue %s has no parent", a->qname);
 		FREE_LIST(struct node_queue, nqueues);
-		return (1);
+		return 1;
 	}
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, NPF_QNAME_SIZE) &&
@@ -266,7 +266,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
 			(strncmp(ifname, tqueue->ifname, IFNAMSIZ)))){
 			/* found ourself in the child queues */
 			found++;
-			memcpy(&pa, a, sizeof(struct npf_altq));
+			memcpy(&pa, a, sizeof(*a));
 			if (pa.scheduler != ALTQT_NONE &&
 				pa.scheduler != tqueue->scheduler) {
 				yyerror("exactly one scheduler type "
@@ -316,7 +316,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
 				n = calloc(1,
 					sizeof(struct node_queue));
 				if (n == NULL)
-					err(1, "expand_queue: calloc");
+					err(EXIT_FAILURE, "expand_queue: calloc");
 				if (strlcpy(n->parent, a->qname,
 					sizeof(n->parent)) >=
 					sizeof(n->parent))
@@ -348,9 +348,9 @@ out:
 		errs++;
 	}
 	if (errs)
-		return (1);
+		return 1;
 	else
-		return (0);
+		return 0;
 }
 /*
  * eval_npfaltq computes the discipline parameters.
@@ -387,11 +387,11 @@ eval_npfaltq(struct npf_altq *pa, struct node_queue_bw *bw,
 			size = 0xffff;
 		pa->tbrsize = size;
 	}
-	return (errors);
+	return errors;
 }
 int
 npf_eval_queue_opts(struct npf_altq *pa, struct node_queue_opt *opts,
-    u_int32_t ref_bw)
+    uint32_t ref_bw)
 {
 	int	errors = 0;
 	switch (pa->scheduler) {
@@ -440,14 +440,14 @@ npf_eval_queue_opts(struct npf_altq *pa, struct node_queue_opt *opts,
 		errors++;
 		break;
 	}
-	return (errors);
+	return errors;
 }
 int
 npfctl_add_altq(struct npf_altq *a)
 {
 	struct npfioc_altq *npaltq;
 	if ((npaltq =  malloc(sizeof(*npaltq))) == NULL)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	memcpy(&npaltq->altq, a, sizeof(struct npf_altq));
 	if (ioctl(npfdev, IOC_NPF_ADD_ALTQ, npaltq)) {
 		if (errno == ENXIO)
@@ -456,49 +456,49 @@ npfctl_add_altq(struct npf_altq *a)
 			errx(1, "%s: driver does not support "
 				"altq", a->ifname);
 		else
-			err(1, "NPFADDALTQ");
+			err(EXIT_FAILURE, "NPFADDALTQ");
 	}
 	npfaltq_store(&npaltq->altq);
 	free(npaltq);
-	return (0);
+	return 0;
 }
 void
 npfaltq_store(struct npf_altq *a)
 {
 	struct npf_altq	*altq;
 	if ((altq = malloc(sizeof(*altq))) == NULL)
-		err(1, "malloc");
-	memcpy(altq, a, sizeof(struct npf_altq));
+		err(EXIT_FAILURE, "malloc");
+	memcpy(altq, a, sizeof(*a));
 	TAILQ_INSERT_TAIL(&altqs, altq, entries);
 	/* check altq presence in config */
 }
-u_int32_t
-npf_eval_bwspec(struct node_queue_bw *bw, u_int32_t ref_bw)
+uint32_t
+npf_eval_bwspec(struct node_queue_bw *bw, uint32_t ref_bw)
 {
 	if (bw->bw_absolute > 0)
 		return (bw->bw_absolute);
 	if (bw->bw_percent > 0)
 		return (ref_bw / 100 * bw->bw_percent);
-	return (0);
+	return 0;
 }
-u_int32_t
+uint32_t
 get_ifspeed(char *ifname)
 {
 	int			 s;
 	struct ifdatareq	 ifdr;
 	struct if_data		*ifrdat;
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		err(1, "getifspeed: socket");
+		err(EXIT_FAILURE, "getifspeed: socket");
 	memset(&ifdr, 0, sizeof(ifdr));
 	if (strlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name)) >=
 	    sizeof(ifdr.ifdr_name))
 		errx(1, "getifspeed: strlcpy");
 	if (ioctl(s, SIOCGIFDATA, &ifdr) == -1)
-		err(1, "getifspeed: SIOCGIFDATA");
+		err(EXIT_FAILURE, "getifspeed: SIOCGIFDATA");
 	ifrdat = &ifdr.ifdr_data;
 	if (close(s) == -1)
-		err(1, "getifspeed: close");
-	return ((u_int32_t)ifrdat->ifi_baudrate);
+		err(EXIT_FAILURE, "getifspeed: close");
+	return ((uint32_t)ifrdat->ifi_baudrate);
 }
 u_long
 get_ifmtu(char *ifname)
@@ -506,20 +506,20 @@ get_ifmtu(char *ifname)
 	int		s;
 	struct ifreq	ifr;
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		err(1, "socket");
+		err(EXIT_FAILURE, "socket");
 	bzero(&ifr, sizeof(ifr));
 	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
 	    sizeof(ifr.ifr_name))
 		errx(1, "getifmtu: strlcpy");
 	if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGIFMTU");
+		err(EXIT_FAILURE, "SIOCGIFMTU");
 	if (close(s) == -1)
-		err(1, "close");
+		err(EXIT_FAILURE, "close");
 	if (ifr.ifr_mtu > 0)
 		return (ifr.ifr_mtu);
 	else {
 		warnx("could not get mtu for %s, assuming 1500", ifname);
-		return (1500);
+		return 1500;
 	}
 }
 /*
@@ -531,19 +531,19 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 {
 	/* should be merged with expand_queue */
 	struct npf_altq	*if_pa, *parent, *altq;
-	u_int32_t	 bwsum;
+	uint32_t	 bwsum;
 	int		 error = 0;
 	/* find the corresponding interface and copy fields used by queues */
 	if ((if_pa = npfaltq_lookup(pa->ifname)) == NULL) {
 		fprintf(stderr, "altq not defined on %s\n", pa->ifname);
-		return (1);
+		return 1;
 	}
 	pa->scheduler = if_pa->scheduler;
 	pa->ifbandwidth = if_pa->ifbandwidth;
 	if (qname_to_npfaltq(pa->qname, pa->ifname) != NULL) {
 		fprintf(stderr, "queue %s already exists on interface %s\n",
 		    pa->qname, pa->ifname);
-		return (1);
+		return 1;
 	}
 	pa->qid = qname_to_qid(pa->qname);
 	parent = NULL;
@@ -552,7 +552,7 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 		if (parent == NULL) {
 			fprintf(stderr, "parent %s not found for %s\n",
 			    pa->parent, pa->qname);
-			return (1);
+			return 1;
 		}
 		pa->parent_qid = parent->qid;
 	}
@@ -564,14 +564,14 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 		if (pa->bandwidth > pa->ifbandwidth) {
 			fprintf(stderr, "bandwidth for %s higher than "
 			    "interface\n", pa->qname);
-			return (1);
+			return 1;
 		}
 		/* check the sum of the child bandwidth is under parent's */
 		if (parent != NULL) {
 			if (pa->bandwidth > parent->bandwidth) {
 				warnx("bandwidth for %s higher than parent",
 				    pa->qname);
-				return (1);
+				return 1;
 			}
 			bwsum = 0;
 			TAILQ_FOREACH(altq, &altqs, entries) {
@@ -590,7 +590,7 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 		}
 	}
 	if (npf_eval_queue_opts(pa, opts, parent == NULL? 0 : parent->bandwidth))
-		return (1);
+		return 1;
 	switch (pa->scheduler) {
 	case ALTQT_CBQ:
 		error = eval_npfqueue_cbq(pa);
@@ -604,7 +604,7 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 	default:
 		break;
 	}
-	return (error);
+	return error;
 }
 struct npf_altq *
 qname_to_npfaltq(const char *qname, const char *ifname)
@@ -613,11 +613,11 @@ qname_to_npfaltq(const char *qname, const char *ifname)
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
 		    strncmp(qname, altq->qname, NPF_QNAME_SIZE) == 0)
-			return (altq);
+			return altq;
 	}
-	return (NULL);
+	return NULL;
 }
-u_int32_t
+uint32_t
 qname_to_qid(const char *qname)
 {
 	struct npf_altq	*altq;
@@ -630,7 +630,7 @@ qname_to_qid(const char *qname)
 		if (strncmp(qname, altq->qname, NPF_QNAME_SIZE) == 0)
 			return (altq->qid);
 	}
-	return (0);
+	return 0;
 }
 
 /*define only one discipline on one interface */
@@ -654,9 +654,9 @@ npfaltq_lookup(const char *ifname)
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
 		    altq->qname[0] == 0)
-			return (altq);
+			return altq;
 	}
-	return (NULL);
+	return NULL;
 }
 /*
  * CBQ support functions
@@ -670,7 +670,7 @@ eval_npfqueue_cbq(struct npf_altq *pa)
 	u_int		 ifmtu;
 	if (pa->priority >= CBQ_MAXPRI) {
 		warnx("priority out of range: max %d", CBQ_MAXPRI - 1);
-		return (-1);
+		return -1;
 	}
 	ifmtu = get_ifmtu(pa->ifname);
 	opts = &pa->pq_u.cbq_opts;
@@ -689,7 +689,7 @@ eval_npfqueue_cbq(struct npf_altq *pa)
 	if (pa->parent[0] == 0)
 		opts->flags |= (CBQCLF_ROOTCLASS | CBQCLF_WRR);
 	cbq_compute_idletime(pa);
-	return (0);
+	return 0;
 }
 /*
  * compute ns_per_byte, maxidle, minidle, and offtime
@@ -765,7 +765,7 @@ cbq_compute_idletime(struct npf_altq *pa)
 	opts->maxidle = (u_int)fabs(maxidle);
 	opts->minidle = (int)minidle;
 	opts->offtime = (u_int)fabs(offtime);
-	return (0);
+	return 0;
 }
 /*
  * PRIQ support functions
@@ -776,7 +776,7 @@ eval_npfqueue_priq(struct npf_altq *pa)
 	struct npf_altq	*altq;
 	if (pa->priority >= PRIQ_MAXPRI) {
 		warnx("priority out of range: max %d", PRIQ_MAXPRI - 1);
-		return (-1);
+		return -1;
 	}
 	/* the priority should be unique for the interface */
 	TAILQ_FOREACH(altq, &altqs, entries) {
@@ -784,10 +784,10 @@ eval_npfqueue_priq(struct npf_altq *pa)
 		    altq->qname[0] != 0 && altq->priority == pa->priority) {
 			warnx("%s and %s have the same priority",
 			    altq->qname, pa->qname);
-			return (-1);
+			return -1;
 		}
 	}
-	return (0);
+	return 0;
 }
 /*
  * HFSC support functions
@@ -804,7 +804,7 @@ eval_npfqueue_hfsc(struct npf_altq *pa)
 		opts->lssc_m1 = pa->ifbandwidth;
 		opts->lssc_m2 = pa->ifbandwidth;
 		opts->lssc_d = 0;
-		return (0);
+		return 0;
 	}
 	LIST_INIT(&rtsc);
 	LIST_INIT(&lssc);
@@ -815,13 +815,13 @@ eval_npfqueue_hfsc(struct npf_altq *pa)
 	    (opts->lssc_m1 > 0 && opts->lssc_m2 == 0) ||
 	    (opts->ulsc_m1 > 0 && opts->ulsc_m2 == 0)) {
 		warnx("m2 is zero for %s", pa->qname);
-		return (-1);
+		return -1;
 	}
 	if ((opts->rtsc_m1 < opts->rtsc_m2 && opts->rtsc_m1 != 0) ||
 	    (opts->lssc_m1 < opts->lssc_m2 && opts->lssc_m1 != 0) ||
 	    (opts->ulsc_m1 < opts->ulsc_m2 && opts->ulsc_m1 != 0)) {
 		warnx("m1 must be zero for convex curve: %s", pa->qname);
-		return (-1);
+		return -1;
 	}
 	/*
 	 * admission control:
@@ -906,11 +906,11 @@ eval_npfqueue_hfsc(struct npf_altq *pa)
 	}
 	gsc_destroy(&rtsc);
 	gsc_destroy(&lssc);
-	return (0);
+	return 0;
 err_ret:
 	gsc_destroy(&rtsc);
 	gsc_destroy(&lssc);
-	return (-1);
+	return -1;
 }
 #define	R2S_BUFS	8
 #define	RATESTR_MAX	16
@@ -931,7 +931,7 @@ rate2str(double rate)
 		snprintf(buf, RATESTR_MAX, "%.2f%cb", rate, unit[i]);
 	else
 		snprintf(buf, RATESTR_MAX, "%d%cb", (int)rate, unit[i]);
-	return (buf);
+	return buf;
 }
 /*
  * admission control using generalized service curve
@@ -958,12 +958,12 @@ is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc)
 	double		 y;
 	if (is_sc_null(sc)) {
 		if (LIST_EMPTY(gsc))
-			return (1);
+			return 1;
 		LIST_FOREACH(s, gsc, _next) {
 			if (s->m != 0)
-				return (0);
+				return 0;
 		}
-		return (1);
+		return 1;
 	}
 	/*
 	 * gsc has a dummy entry at the end with x = HUGE_VAL.
@@ -971,24 +971,24 @@ is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc)
 	 */
 	end = gsc_getentry(gsc, HUGE_VAL);
 	if (end == NULL)
-		return (1);
+		return 1;
 	last = NULL;
 	for (s = LIST_FIRST(gsc); s != end; s = LIST_NEXT(s, _next)) {
 		if (s->y > sc_x2y(sc, s->x))
-			return (0);
+			return 0;
 		last = s;
 	}
 	/* last now holds the real last segment */
 	if (last == NULL)
-		return (1);
+		return 1;
 	if (last->m > sc->m2)
-		return (0);
+		return 0;
 	if (last->x < sc->d && last->m > sc->m1) {
 		y = last->y + (sc->d - last->x) * last->m;
 		if (y > sc_x2y(sc, sc->d))
-			return (0);
+			return 0;
 	}
-	return (1);
+	return 1;
 }
 static void
 gsc_destroy(struct gen_sc *gsc)
@@ -1010,15 +1010,15 @@ gsc_getentry(struct gen_sc *gsc, double x)
 	prev = NULL;
 	LIST_FOREACH(s, gsc, _next) {
 		if (s->x == x)
-			return (s);	/* matching entry found */
+			return s;	/* matching entry found */
 		else if (s->x < x)
 			prev = s;
 		else
 			break;
 	}
 	/* we have to create a new entry */
-	if ((new = calloc(1, sizeof(struct segment))) == NULL)
-		return (NULL);
+	if ((new = calloc(1, sizeof(*new))) == NULL)
+		return NULL;
 	new->x = x;
 	if (x == HUGE_VAL || s == NULL)
 		new->d = 0;
@@ -1049,7 +1049,7 @@ gsc_getentry(struct gen_sc *gsc, double x)
 		new->m = prev->m;
 		LIST_INSERT_AFTER(prev, new, _next);
 	}
-	return (new);
+	return new;
 }
 /* add a segment to a generalized service curve */
 static int
@@ -1064,7 +1064,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	start = gsc_getentry(gsc, x);
 	end = gsc_getentry(gsc, x2);
 	if (start == NULL || end == NULL)
-		return (-1);
+		return -1;
 	for (s = start; s != end; s = LIST_NEXT(s, _next)) {
 		s->m += m;
 		s->y += y + (s->x - x) * m;
@@ -1073,7 +1073,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	for (; s != end; s = LIST_NEXT(s, _next)) {
 		s->y += m * d;
 	}
-	return (0);
+	return 0;
 }
 /* get y-projection of a service curve */
 static double
@@ -1087,7 +1087,7 @@ sc_x2y(struct service_curve *sc, double x)
 		/* y belongs to the 2nd segment */
 		y = (double)sc->d * (double)sc->m1
 			+ (x - (double)sc->d) * (double)sc->m2;
-	return (y);
+	return y;
 }
 /*
  * check_commit_altq does consistency check for each interface
@@ -1115,7 +1115,7 @@ check_commit_altq(void)
 			}
 		}
 	}
-	return (error);
+	return error;
 }
 static int
 check_commit_cbq(struct npf_altq *pa)
@@ -1146,7 +1146,7 @@ check_commit_cbq(struct npf_altq *pa)
 		warnx("should have one default queue on %s", pa->ifname);
 		error++;
 	}
-	return (error);
+	return error;
 }
 static int
 check_commit_priq(struct npf_altq *pa)
@@ -1170,7 +1170,7 @@ check_commit_priq(struct npf_altq *pa)
 		warnx("should have one default queue on %s", pa->ifname);
 		error++;
 	}
-	return (error);
+	return error;
 }
 static int
 check_commit_hfsc(struct npf_altq *pa)
@@ -1194,7 +1194,7 @@ check_commit_hfsc(struct npf_altq *pa)
 	}
 	if (default_class != 1) {
 		warnx("should have one default queue on %s", pa->ifname);
-		return (1);
+		return 1;
 	}
 	/* make sure the default queue is a leaf */
 	TAILQ_FOREACH(altq, &altqs, entries) {
@@ -1207,7 +1207,7 @@ check_commit_hfsc(struct npf_altq *pa)
 			error++;
 		}
 	}
-	return (error);
+	return error;
 }
 
 void
@@ -1308,9 +1308,9 @@ print_cbq_opts(const struct npf_altq *a)
 		if (opts->flags & CBQCLF_DEFCLASS)
 			printf(" default");
 		printf(" ) ");
-		return (1);
+		return 1;
 	} else
-		return (0);
+		return 0;
 }
 
 static int
@@ -1331,9 +1331,9 @@ print_priq_opts(const struct npf_altq *a)
 		if (opts->flags & PRCF_DEFAULTCLASS)
 			printf(" default");
 		printf(" ) ");
-		return (1);
+		return 1;
 	} else
-		return (0);
+		return 0;
 }
 
 static int
@@ -1374,9 +1374,9 @@ print_hfsc_opts(const struct npf_altq *a, const struct node_queue_opt *qopts)
 			print_hfsc_sc("upperlimit", opts->ulsc_m1, opts->ulsc_d,
 			    opts->ulsc_m2, n_ulsc);
 		printf(" ) ");
-		return (1);
+		return 1;
 	} else
-		return (0);
+		return 0;
 }
 
 void
@@ -1426,6 +1426,6 @@ npf_altq_destroy(int fd)
 	altqsupport = npfctl_test_altqsupport(fd);
 	if (!(altqsupport & (ioctl(fd, IOC_NPF_DESTROY_ALTQ) != -1)))
 		if (errno != ENOENT)
-			err(1, "IOC_NPF_DESTROY_ALTQ");
+			err(EXIT_FAILURE, "IOC_NPF_DESTROY_ALTQ");
 	return 0;
 }

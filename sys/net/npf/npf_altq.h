@@ -82,17 +82,17 @@ struct npf_altq {
 	void			*altq_disc;	/* discipline-specific state */
 	TAILQ_ENTRY(npf_altq)	 entries;
 	/* scheduler spec */
-	u_int8_t		 scheduler;	/* scheduler type */
-	u_int16_t		 tbrsize;	/* tokenbucket regulator size */
-	u_int32_t		 ifbandwidth;	/* interface bandwidth */
+	uint8_t		 scheduler;	/* scheduler type */
+	uint16_t		 tbrsize;	/* tokenbucket regulator size */
+	uint32_t		 ifbandwidth;	/* interface bandwidth */
 	/* queue spec */
 	char			 qname[NPF_QNAME_SIZE];	/* queue name */
 	char			 parent[NPF_QNAME_SIZE];	/* parent name */
-	u_int32_t		 parent_qid;	/* parent queue id */
-	u_int32_t		 bandwidth;	/* queue bandwidth */
-	u_int8_t		 priority;	/* priority */
-	u_int16_t		 qlimit;	/* queue size limit */
-	u_int16_t		 flags;		/* misc flags */
+	uint32_t		 parent_qid;	/* parent queue id */
+	uint32_t		 bandwidth;	/* queue bandwidth */
+	uint8_t		 priority;	/* priority */
+	uint16_t		 qlimit;	/* queue size limit */
+	uint16_t		 flags;		/* misc flags */
 	union {
 		struct npf_cbq_opts		 cbq_opts;
 		struct npf_priq_opts	 priq_opts;
@@ -102,17 +102,17 @@ struct npf_altq {
 };
 
 struct qid {
-	u_int32_t qid;
+	uint32_t qid;
 };
 
 struct npf_tag {
-	u_int16_t	tag;		/* tag id */
+	uint16_t	tag;		/* tag id */
 };
 
 struct npf_tagname {
 	TAILQ_ENTRY(npf_tagname)	entries;
 	char			name[NPF_TAG_NAME_SIZE];
-	u_int16_t		tag;
+	uint16_t		tag;
 	int			ref;
 };
 
@@ -127,8 +127,8 @@ extern void npf_altq_init(void);
 extern int npf_begin_altq(void);
 extern int npf_commit_altq(void);
 extern int npf_add_altq(void *);
-extern u_int32_t npf_qname2qid(char *);
-void npf_qid_unref(u_int32_t);
+extern uint32_t npf_qname2qid(char *);
+void npf_qid_unref(uint32_t);
 extern int npf_altq_destroy(void);
 int npf_altq_start(void);
 int npf_disable_altq(struct npf_altq *);

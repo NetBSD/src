@@ -55,15 +55,15 @@
 #define DEFAULT_PRIORITY	1
 #endif
 struct node_queue_bw {
-	u_int32_t	bw_absolute;
-	u_int16_t	bw_percent;
+	uint32_t	bw_absolute;
+	uint16_t	bw_percent;
 };
 
 struct node_hfsc_sc {
 	struct node_queue_bw	m1;	/* slope of 1st segment; bps */
 	u_int			d;	/* x-projection of m1; msec */
 	struct node_queue_bw	m2;	/* slope of 2nd segment; bps */
-	u_int8_t		used;
+	uint8_t		used;
 };
 
 struct node_hfsc_opts {
@@ -306,18 +306,18 @@ int	expand_altq(struct npf_altq *, const char *, struct node_queue *,
 int	expand_queue(struct npf_altq *, const char *, struct node_queue *,
 	    struct node_queue_bw, struct node_queue_opt *);
 u_long get_ifmtu(char *);
-u_int32_t get_ifspeed(char *);
-u_int32_t npf_eval_bwspec(struct node_queue_bw *, u_int32_t);
+uint32_t get_ifspeed(char *);
+uint32_t npf_eval_bwspec(struct node_queue_bw *, uint32_t);
 void npfaltq_store(struct npf_altq *);
 int npfctl_add_altq(struct npf_altq *);
 int npf_eval_queue_opts(struct npf_altq *, struct node_queue_opt *,
-    u_int32_t);
+    uint32_t);
 int eval_npfaltq(struct npf_altq *, struct node_queue_bw *,
     struct node_queue_opt *);
 int eval_npfqueue(struct npf_altq *, struct node_queue_bw *,
     struct node_queue_opt *);
 struct npf_altq	*qname_to_npfaltq(const char *, const char *);
-u_int32_t	 qname_to_qid(const char *);
+uint32_t	 qname_to_qid(const char *);
 struct npf_altq *npfaltq_lookup(const char *ifname);
 char		*rate2str(double);
 

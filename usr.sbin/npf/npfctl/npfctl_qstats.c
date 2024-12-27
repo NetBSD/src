@@ -1,18 +1,32 @@
-/*
- * Copyright (c) Henning Brauer <henning@openbsd.org>
+/*-
+ * Copyright (c) 2011-2020 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This material is based upon work partially supported by The
+ * NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -43,8 +57,8 @@ struct queue_stats {
 	int			 avgn;
 	double			 avg_bytes;
 	double			 avg_packets;
-	u_int64_t		 prev_bytes;
-	u_int64_t		 prev_packets;
+	uint64_t		 prev_bytes;
+	uint64_t		 prev_packets;
 };
 struct npf_altq_node {
 	struct npf_altq		 altq;
@@ -72,7 +86,7 @@ npfctl_show_altq(int fd)
 	int			 nodes;
 
 	if ((nodes = npfctl_update_qstats(fd, &root)) < 0)
-		return (-1);
+		return -1;
 	if (nodes == 0)
 		printf("No queue in use\n");
 	for (node = root; node != NULL; node = node->next) {
@@ -87,7 +101,7 @@ npfctl_show_altq(int fd)
 		fflush(stdout);
 		sleep(STAT_INTERVAL);
 		if ((nodes = npfctl_update_qstats(fd, &root)) == -1)
-			return (-1);
+			return -1;
 		for (node = root; node != NULL; node = node->next) {
 			if (node->altq.ifname == NULL)
 				continue;
@@ -95,7 +109,7 @@ npfctl_show_altq(int fd)
 		}
 	}
 	npfctl_free_altq_node(root);
-	return (0);
+	return 0;
 }
 
 int
@@ -104,15 +118,15 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 	struct npf_altq_node	*node;
 	struct npfioc_altq	 pa;
 	struct npfioc_qstats	 pq;
-	u_int32_t		 mnr, nr;
+	uint32_t		 mnr, nr;
 	struct queue_stats	 qstats;
-	static	u_int32_t	 last_ticket;
+	static	uint32_t	 last_ticket;
 	memset(&pa, 0, sizeof(pa));
 	memset(&pq, 0, sizeof(pq));
 	memset(&qstats, 0, sizeof(qstats));
 	if (ioctl(fd, IOC_NPF_GET_ALTQS, &pa)) {
 		warn("IOC_NPF_GET_ALTQS");
-		return (-1);
+		return -1;
 	}
 	/* if a new set is found, start over */
 	if (pa.ticket != last_ticket && *root != NULL) {
@@ -125,7 +139,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 		pa.nr = nr;
 		if (ioctl(fd, IOC_NPF_GET_ALTQ, &pa)) {
 			warn("IOC_NPF_GET_ALTQ");
-			return (-1);
+			return -1;
 		}
 		if (pa.altq.qid > 0) {
 			pq.nr = nr;
@@ -134,7 +148,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 			pq.nbytes = sizeof(qstats.data);
 			if (ioctl(fd, IOC_NPF_GET_QSTATS, &pq)) {
 				warn("IOC_NPF_GET_QSTATS");
-				return (-1);
+				return -1;
 			}
 			if ((node = npfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
@@ -146,7 +160,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 			}
 		}
 	}
-	return (mnr);
+	return mnr;
 }
 
 void
@@ -154,10 +168,10 @@ npfctl_insert_altq_node(struct npf_altq_node **root,
     const struct npf_altq altq, const struct queue_stats qstats)
 {
 	struct npf_altq_node	*node;
-	node = calloc(1, sizeof(struct npf_altq_node));
+	node = calloc(1, sizeof(*node));
 	if (node == NULL)
-		err(1, "npfctl_insert_altq_node: calloc");
-	memcpy(&node->altq, &altq, sizeof(struct npf_altq));
+		err(EXIT_FAILURE, "npfctl_insert_altq_node: calloc");
+	memcpy(&node->altq, &altq, sizeof(altq));
 	memcpy(&node->qstats, &qstats, sizeof(qstats));
 	node->next = node->children = NULL;
 	if (*root == NULL)
@@ -192,15 +206,15 @@ npfctl_find_altq_node(struct npf_altq_node *root, const char *qname,
 	for (node = root; node != NULL; node = node->next) {
 		if (!strcmp(node->altq.qname, qname)
 		    && !(strcmp(node->altq.ifname, ifname)))
-			return (node);
+			return node;
 		if (node->children != NULL) {
 			child = npfctl_find_altq_node(node->children, qname,
 			    ifname);
 			if (child != NULL)
-				return (child);
+				return child;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 void
@@ -321,7 +335,7 @@ void
 update_avg(struct npf_altq_node *a)
 {
 	struct queue_stats	*qs;
-	u_int64_t		 b, p;
+	uint64_t		 b, p;
 	int			 n;
 	if (a->altq.qid == 0)
 		return;
