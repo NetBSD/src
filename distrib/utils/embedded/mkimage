@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.84 2024/08/12 18:45:51 skrll Exp $
+# $NetBSD: mkimage,v 1.85 2024/12/27 19:02:19 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -110,6 +110,72 @@ getsectors() {
 		;;
 	esac
 	echo $((m * v / 512))
+}
+
+minwrites_fstab_entries() {
+	$minwrites || return 0
+	cat << EOF
+tmpfs		/var/log		tmpfs	rw,union,-s32M
+tmpfs		/var/run		tmpfs	rw,union,-s1M
+tmpfs		/var/mail		tmpfs	rw,union,-s10M
+tmpfs		/var/spool/postfix	tmpfs	rw,union,-s20M
+tmpfs		/var/db/postfix		tmpfs	rw,union,-s1M
+tmpfs		/var/chroot		tmpfs	rw,union,-s10M
+EOF
+}
+
+make_fstab_gpt() {
+	local boot=$1
+	local rootopts=
+	if $minwrites; then
+		rootopts=,log,nodevmtime
+	fi
+
+	cat > ${mnt}/etc/fstab << EOF
+# NetBSD /etc/fstab
+# See /usr/share/examples/fstab/ for more examples.
+NAME=${gpt_label_ffs:-netbsd-root}	/		ffs	rw,noatime${rootopts}	1 1
+NAME=${gpt_label_boot:-$boot}		/boot		msdos	rw	1 1
+ptyfs		/dev/pts	ptyfs	rw
+procfs		/proc		procfs	rw
+tmpfs		/var/shm	tmpfs	rw,-m1777,-sram%25
+EOF
+	minwrites_fstab_entries >> ${mnt}/etc/fstab
+}
+
+# From Richard Neswold's:
+# http://rich-tbp.blogspot.com/2013/03/netbsd-on-rpi-minimizing-disk-writes.html
+# Also for the postfix stuff below
+make_fstab_normal() {
+	local rootopts=
+	if $minwrites; then
+		rootopts=,nodevmtime
+	fi
+	cat > ${mnt}/etc/fstab << EOF
+# NetBSD /etc/fstab
+# See /usr/share/examples/fstab/ for more examples.
+ROOT.a		/			ffs	rw,log,noatime,$rootopts	1 1
+ROOT.e		/boot			msdos	rw				1 1
+ptyfs		/dev/pts		ptyfs	rw
+procfs		/proc			procfs	rw
+tmpfs		/tmp			tmpfs	rw,-s32M
+tmpfs		/var/shm		tmpfs	rw,-m1777,-sram%25
+EOF
+	minwrites_fstab_entries >> ${mnt}/etc/fstab
+}
+
+make_fstab_default() {
+	if $gpt; then
+		make_fstab_gpt "$@"
+	else
+		make_fstab_normal
+	fi
+	echo "./etc/fstab type=file uname=root gname=wheel mode=0644" \
+	    >> "$tmp/selected_sets"
+
+	# Missing mount points from fstab
+	echo "./proc type=dir uname=root gname=wheel mode=0755" \
+	    >> "$tmp/selected_sets"
 }
 
 usage() {
