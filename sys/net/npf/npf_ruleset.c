@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 2020 Mindaugas Rasiukevicius <rmind at noxt eu>
- * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2015,2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
