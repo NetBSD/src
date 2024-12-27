@@ -26,6 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,6 +119,7 @@ npf_get_altqs(void *data)
     paa->ticket = nticket_altqs_active;
 	return 0 ;
 }
+
 int
 npf_add_altq(void *data)
 {
@@ -398,5 +400,4 @@ npf_get_qstats(void *data)
 	}
 	return error;
 }
-
 #endif /*ALTQ */

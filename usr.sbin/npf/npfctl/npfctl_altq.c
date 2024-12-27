@@ -110,6 +110,7 @@ struct node_queue *queues = NULL;
 			n = n->next; \
 		} \
 	} while (0)
+
 int
 npfctl_test_altqsupport(int dev)
 {
@@ -244,6 +245,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 
 	return errs;
 }
+
 int
 expand_queue(struct npf_altq *a, const char *ifname,
     struct node_queue *nqueues, struct node_queue_bw bwspec,
@@ -352,6 +354,7 @@ out:
 	else
 		return 0;
 }
+
 /*
  * eval_npfaltq computes the discipline parameters.
  */
@@ -389,6 +392,7 @@ eval_npfaltq(struct npf_altq *pa, struct node_queue_bw *bw,
 	}
 	return errors;
 }
+
 int
 npf_eval_queue_opts(struct npf_altq *pa, struct node_queue_opt *opts,
     uint32_t ref_bw)
@@ -442,6 +446,7 @@ npf_eval_queue_opts(struct npf_altq *pa, struct node_queue_opt *opts,
 	}
 	return errors;
 }
+
 int
 npfctl_add_altq(struct npf_altq *a)
 {
@@ -462,6 +467,7 @@ npfctl_add_altq(struct npf_altq *a)
 	free(npaltq);
 	return 0;
 }
+
 void
 npfaltq_store(struct npf_altq *a)
 {
@@ -472,6 +478,7 @@ npfaltq_store(struct npf_altq *a)
 	TAILQ_INSERT_TAIL(&altqs, altq, entries);
 	/* check altq presence in config */
 }
+
 uint32_t
 npf_eval_bwspec(struct node_queue_bw *bw, uint32_t ref_bw)
 {
@@ -481,6 +488,7 @@ npf_eval_bwspec(struct node_queue_bw *bw, uint32_t ref_bw)
 		return (ref_bw / 100 * bw->bw_percent);
 	return 0;
 }
+
 uint32_t
 get_ifspeed(char *ifname)
 {
@@ -500,6 +508,7 @@ get_ifspeed(char *ifname)
 		err(EXIT_FAILURE, "getifspeed: close");
 	return ((uint32_t)ifrdat->ifi_baudrate);
 }
+
 u_long
 get_ifmtu(char *ifname)
 {
@@ -522,6 +531,7 @@ get_ifmtu(char *ifname)
 		return 1500;
 	}
 }
+
 /*
  * eval_npfqueue computes the queue parameters.
  */
@@ -606,6 +616,7 @@ eval_npfqueue(struct npf_altq *pa, struct node_queue_bw *bw,
 	}
 	return error;
 }
+
 struct npf_altq *
 qname_to_npfaltq(const char *qname, const char *ifname)
 {
@@ -617,6 +628,7 @@ qname_to_npfaltq(const char *qname, const char *ifname)
 	}
 	return NULL;
 }
+
 uint32_t
 qname_to_qid(const char *qname)
 {
@@ -647,6 +659,7 @@ ifdisc_lookup(struct npf_altq * altq)
 	}
 	return 0;
 }
+
 struct npf_altq *
 npfaltq_lookup(const char *ifname)
 {
@@ -658,6 +671,7 @@ npfaltq_lookup(const char *ifname)
 	}
 	return NULL;
 }
+
 /*
  * CBQ support functions
  */
@@ -691,6 +705,7 @@ eval_npfqueue_cbq(struct npf_altq *pa)
 	cbq_compute_idletime(pa);
 	return 0;
 }
+
 /*
  * compute ns_per_byte, maxidle, minidle, and offtime
  */
@@ -767,6 +782,7 @@ cbq_compute_idletime(struct npf_altq *pa)
 	opts->offtime = (u_int)fabs(offtime);
 	return 0;
 }
+
 /*
  * PRIQ support functions
  */
@@ -789,6 +805,7 @@ eval_npfqueue_priq(struct npf_altq *pa)
 	}
 	return 0;
 }
+
 /*
  * HFSC support functions
  */
@@ -912,6 +929,7 @@ err_ret:
 	gsc_destroy(&lssc);
 	return -1;
 }
+
 #define	R2S_BUFS	8
 #define	RATESTR_MAX	16
 char *
@@ -933,6 +951,7 @@ rate2str(double rate)
 		snprintf(buf, RATESTR_MAX, "%d%cb", (int)rate, unit[i]);
 	return buf;
 }
+
 /*
  * admission control using generalized service curve
  */
@@ -946,6 +965,7 @@ gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc)
 		gsc_add_seg(gsc, 0.0, 0.0, (double)sc->d, (double)sc->m1);
 	gsc_add_seg(gsc, (double)sc->d, 0.0, HUGE_VAL, (double)sc->m2);
 }
+
 /*
  * check whether all points of a generalized service curve have
  * their y-coordinates no larger than a given two-piece linear
@@ -990,6 +1010,7 @@ is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc)
 	}
 	return 1;
 }
+
 static void
 gsc_destroy(struct gen_sc *gsc)
 {
@@ -999,6 +1020,7 @@ gsc_destroy(struct gen_sc *gsc)
 		free(s);
 	}
 }
+
 /*
  * return a segment entry starting at x.
  * if gsc has no entry starting at x, a new entry is created at x.
@@ -1051,6 +1073,7 @@ gsc_getentry(struct gen_sc *gsc, double x)
 	}
 	return new;
 }
+
 /* add a segment to a generalized service curve */
 static int
 gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
@@ -1075,6 +1098,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	}
 	return 0;
 }
+
 /* get y-projection of a service curve */
 static double
 sc_x2y(struct service_curve *sc, double x)
@@ -1089,6 +1113,7 @@ sc_x2y(struct service_curve *sc, double x)
 			+ (x - (double)sc->d) * (double)sc->m2;
 	return y;
 }
+
 /*
  * check_commit_altq does consistency check for each interface
  */
@@ -1117,6 +1142,7 @@ check_commit_altq(void)
 	}
 	return error;
 }
+
 static int
 check_commit_cbq(struct npf_altq *pa)
 {
@@ -1148,6 +1174,7 @@ check_commit_cbq(struct npf_altq *pa)
 	}
 	return error;
 }
+
 static int
 check_commit_priq(struct npf_altq *pa)
 {
@@ -1172,6 +1199,7 @@ check_commit_priq(struct npf_altq *pa)
 	}
 	return error;
 }
+
 static int
 check_commit_hfsc(struct npf_altq *pa)
 {
