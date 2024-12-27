@@ -58,9 +58,11 @@ struct npf_cbq_opts {
 	u_int		offtime;
 	int		flags;
 };
+
 struct npf_priq_opts {
 	int		flags;
 };
+
 struct npf_hfsc_opts {
 	/* real-time service curve */
 	u_int		rtsc_m1;	/* slope of the 1st segment in bps */
@@ -76,6 +78,7 @@ struct npf_hfsc_opts {
 	u_int		ulsc_m2;
 	int		flags;
 };
+
 /* entries for our tail queue for our altqs */
 struct npf_altq {
 	char			 ifname[IFNAMSIZ];

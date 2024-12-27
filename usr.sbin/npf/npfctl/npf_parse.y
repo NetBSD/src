@@ -1075,7 +1075,6 @@ rule_queue
 	}
 	;
 
-
 block_opts
 	: RETURNRST	{ $$ = NPF_RULE_RETRST; }
 	| RETURNICMP	{ $$ = NPF_RULE_RETICMP; }

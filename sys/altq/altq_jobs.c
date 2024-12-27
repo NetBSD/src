@@ -37,22 +37,22 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*                                                                     
- * JoBS - altq prototype implementation                                
- *                                                                     
+/*
+ * JoBS - altq prototype implementation
+ *
  * Author: Nicolas Christin <nicolas@cs.virginia.edu>
  *
- * JoBS algorithms originally devised and proposed by		       
+ * JoBS algorithms originally devised and proposed by
  * Nicolas Christin and Jorg Liebeherr.
- * Grateful acknowledgments to Tarek Abdelzaher for his help and       
+ * Grateful acknowledgments to Tarek Abdelzaher for his help and
  * comments, and to Kenjiro Cho for some helpful advice.
  * Contributed by the Multimedia Networks Group at the University
- * of Virginia. 
+ * of Virginia.
  *
- * Papers and additional info can be found at 
+ * Papers and additional info can be found at
  * http://qosbox.cs.virginia.edu
- *                                                                      
- */ 							               
+ *
+ */
 
 /*
  * JoBS queue
@@ -315,25 +315,25 @@ jobs_class_create(struct jobs_if *jif, int pri, int64_t adc, int64_t rdc,
 	if (adc == -1) {
 		cl->concerned_adc = 0;
 		adc = ALTQ_INFINITY;
-	} else 
+	} else
 		cl->concerned_adc = 1;
 
 	if (alc == -1) {
 		cl->concerned_alc = 0;
 		alc = ALTQ_INFINITY;
-	} else 
+	} else
 		cl->concerned_alc = 1;
 
 	if (rdc == -1) {
 		rdc = 0;
 		cl->concerned_rdc = 0;
-	} else 
+	} else
 		cl->concerned_rdc = 1;
 
 	if (rlc == -1) {
 		rlc = 0;
 		cl->concerned_rlc = 0;
-	} else 
+	} else
 		cl->concerned_rlc = 1;
 
 	if (arc == -1) {
@@ -522,7 +522,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 				PKTCNTR_RESET(&scan->cl_rout);
 				PKTCNTR_RESET(&scan->cl_rout_th);
 				PKTCNTR_RESET(&scan->cl_arrival);
-				PKTCNTR_RESET(&scan->cl_dropcnt);	
+				PKTCNTR_RESET(&scan->cl_dropcnt);
 				scan->cl_lastdel = 0;
 				scan->current_loss = 0;
 				scan->service_rate = 0;
@@ -556,7 +556,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 				PKTCNTR_RESET(&scan->cl_rout);
 				PKTCNTR_RESET(&scan->cl_rout_th);
 				PKTCNTR_RESET(&scan->cl_arrival);
-				PKTCNTR_RESET(&scan->cl_dropcnt);	
+				PKTCNTR_RESET(&scan->cl_dropcnt);
 				scan->current_loss = 0;
 				scan->service_rate = 0;
 				scan->idletime = now;
@@ -978,7 +978,7 @@ tslist_enqueue(struct jobs_class *cl, u_int64_t arv)
 	TSENTRY *pushed;
 	pushed = malloc(sizeof(TSENTRY), M_DEVBUF, M_WAITOK);
 	if (pushed == NULL)
-		return (0);	
+		return (0);
 
 	pushed->timestamp = arv;
 	TAILQ_INSERT_TAIL(cl->arv_tm, pushed, ts_list);
@@ -1161,7 +1161,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 
 	prop_control = (upper_bound*upper_bound*min_share)
 	    /(max_prod*(max_avg_pkt_size << 2));
-  
+
 	prop_control = bps_to_internal(ticks_to_secs(prop_control)); /* in BT-1 */
 
 	credit = 0;
@@ -1237,7 +1237,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
- 
+
 		if (is_backlogged && cl->concerned_rdc) {
 			available = result[i]
 			    + cl->service_rate-cl->min_rate_adc;
@@ -1621,7 +1621,7 @@ min_rates_adc(struct jobs_if *jif)
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
-		if (is_backlogged && cl->concerned_adc) { 
+		if (is_backlogged && cl->concerned_adc) {
 			remaining_time = cl->cl_adc - proj_delay(jif, i);
 			if (remaining_time > 0 ) {
 				/* min rate needed for ADC */
