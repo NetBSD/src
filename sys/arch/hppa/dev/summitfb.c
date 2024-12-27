@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.21 2024/12/26 17:41:27 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.22 2024/12/27 13:46:12 skrll Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.21 2024/12/26 17:41:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.22 2024/12/27 13:46:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.21 2024/12/26 17:41:27 riastradh Exp 
 
 #include "opt_summitfb.h"
 
+#define SUMMITFB_DEBUG
 #ifdef SUMMITFB_DEBUG
 #define	DPRINTF(s) printf s
 #else
@@ -260,11 +261,11 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_scr.scr_rom = sc->sc_base.sc_rom;
 	ret = sti_screen_setup(&sc->sc_scr, STI_FBMODE);
-	{
-		struct sti_dd *dd = &rom->rom_dd;
-		sti_fetchfonts(&sc->sc_scr, NULL, dd->dd_fntaddr, 0);
-		summitfb_copyfont(sc);
-	}
+
+	struct sti_dd *dd = &rom->rom_dd;
+	sti_fetchfonts(&sc->sc_scr, NULL, dd->dd_fntaddr, 0);
+	summitfb_copyfont(sc);
+
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
 	sc->sc_write_mode = 0xffffffff;
@@ -399,10 +400,10 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 	}
 
 	summitfb_disable_rom_internal(spc);
+
 	/*
 	 * Iterate over the ROM images, pick the best candidate.
 	 */
-
 	selected = (bus_addr_t)-1;
 	for (offs = 0; offs < romsize; offs += subsize) {
 		summitfb_enable_rom_internal(spc);
@@ -454,7 +455,7 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 		 * code is for.
 		 */
 
-		suboffs = offs +(bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
+		suboffs = offs + bus_space_read_2(pa->pa_memt, romh,
 		    offs + 0x18);
 		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
 		tmp = le32toh(tmp);
@@ -509,8 +510,7 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 	 */
 
 	summitfb_enable_rom_internal(spc);
-	offs = selected +
-	    (bus_addr_t)bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
+	offs = selected + bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
 	for (i = 0; i < STI_REGION_MAX; i++) {
 		rc = summitfb_readbar(sc, pa, i,
 		    bus_space_read_1(pa->pa_memt, romh, offs + i));
@@ -523,9 +523,8 @@ summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
 	 */
 
 	offs = selected +
-	    (bus_addr_t)bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
-	stiromsize = (bus_addr_t)bus_space_read_4(pa->pa_memt, romh,
-	    offs + 0x18);
+	    bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
+	stiromsize = bus_space_read_4(pa->pa_memt, romh, offs + 0x18);
 	stiromsize = le32toh(stiromsize);
 	summitfb_disable_rom_internal(spc);
 
@@ -664,7 +663,8 @@ summitfb_wait(struct summitfb_softc *sc)
 static inline void
 summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
 {
-	if (sc->sc_write_mode == mode) return;
+	if (sc->sc_write_mode == mode)
+		return;
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
 	summitfb_write4(sc, VISFX_VRAM_READ_MODE,mode & 0x07fff000);
@@ -1359,7 +1359,7 @@ summitfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct summitfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
 
-	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+	if (sc->sc_locked == 0 && sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 
 		if (ri->ri_crow == row &&
 		    ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols) &&
@@ -1389,7 +1389,7 @@ summitfb_erasecols(void *cookie, int row, int startcol, int ncols,
 	struct summitfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
 
-	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+	if (sc->sc_locked == 0 && sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
@@ -1413,7 +1413,7 @@ summitfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	struct summitfb_softc *sc = scr->scr_cookie;
 	int32_t x, ys, yd, width, height;
 
-	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+	if (sc->sc_locked == 0 && sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 
 		if (ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows) &&
 		    (ri->ri_flg & RI_CURSOR)) {
@@ -1440,7 +1440,7 @@ summitfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct summitfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
 
-	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+	if (sc->sc_locked == 0 && sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_emuwidth;
@@ -1464,10 +1464,13 @@ summitfb_move_cursor(struct summitfb_softc *sc, int x, int y)
 	sc->sc_cursor_y = y;
 	y -= sc->sc_hot_y;
 
-	if (x < 0) x = 0x1000 - x;
-	if (y < 0) y = 0x1000 - y;
+	if (x < 0)
+		x = 0x1000 - x;
+	if (y < 0)
+		y = 0x1000 - y;
 	pos = (x << 16) | y;
-	if (sc->sc_enabled) pos |= 0x80000000;
+	if (sc->sc_enabled)
+		pos |= 0x80000000;
 	summitfb_write4(sc, VISFX_CURSOR_POS, pos);
 }
 
@@ -1618,11 +1621,13 @@ summitfb_copyfont(struct summitfb_softc *sc)
 	struct wsdisplay_font *f;
 	int bufsize, i, si;
 
-	if (font == NULL) return;
+	if (font == NULL)
+		return;
 	bufsize = sizeof(struct wsdisplay_font) + 32 + fp->bpc * ( fp->last - fp->first);
 	DPRINTF(("%s: %dx%d %d\n", __func__, fp->width, fp->height, bufsize));
 	fontbuf = kmem_alloc(bufsize, KM_NOSLEEP);
-	if (fontbuf == NULL) return;
+	if (fontbuf == NULL)
+		return;
 	f = (struct wsdisplay_font *)fontbuf;
 	f->name = fontbuf + sizeof(struct wsdisplay_font);
 	fontdata = fontbuf + sizeof(struct wsdisplay_font) + 32;
