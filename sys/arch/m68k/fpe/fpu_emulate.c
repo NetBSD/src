@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.45 2024/12/28 11:15:11 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.46 2024/12/28 11:23:12 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.45 2024/12/28 11:15:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.46 2024/12/28 11:23:12 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -913,11 +913,10 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 static int
 test_cc(struct fpemu *fe, int pred)
 {
-	int result, sig_bsun, invert;
+	int result, sig_bsun;
 	int fpsr;
 
 	fpsr = fe->fe_fpsr;
-	invert = 0;
 	DPRINTF(("%s: fpsr=0x%08x\n", __func__, fpsr));
 	pred &= 0x3f;		/* lowest 6 bits */
 
@@ -936,54 +935,56 @@ test_cc(struct fpemu *fe, int pred)
 		sig_bsun = 0;
 	}
 
-	if (pred & 0x08) {
-		DPRINTF(("Not "));
-		/* predicate is "NOT ..." */
-		pred ^= 0xf;		/* invert */
-		invert = -1;
+	/*
+	 *           condition   real 68882
+	 * mnemonic  in manual   condition
+	 * --------  ----------  ----------
+	 * 0000 F    0           <-         = ~NAN &  0 & ~Z | 0
+	 * 0001 EQ   Z           <-         = ~NAN &  0 |  Z | 0
+	 * 0010 OGT  ~(NAN|Z|N)  <-         = ~NAN & ~N & ~Z | 0
+	 * 0011 OGE  Z|~(NAN|N)  <-         = ~NAN & ~N |  Z | 0
+	 * 0100 OLT  N&~(NAN|Z)  <-         = ~NAN &  N & ~Z | 0
+	 * 0101 OLE  Z|(N&~NAN)  <-         = ~NAN &  N |  Z | 0
+	 * 0110 OGL  ~(NAN|Z)    <-         = ~NAN &  1 & ~Z | 0
+	 * 0111 OR   ~NAN        Z|~NAN     = ~NAN &  1 |  Z | 0
+	 *
+	 * 1000 UN   NAN         <-         =  1   &  0 & ~Z | NAN
+	 * 1001 UEQ  NAN|Z       <-         =  1   &  0 |  Z | NAN
+	 * 1010 UGT  NAN|~(N|Z)  <-         =  1   & ~N & ~Z | NAN
+	 * 1011 UGE  NAN|(Z|~N)  <-         =  1   & ~N |  Z | NAN
+	 * 1100 ULT  NAN|(N&~Z)  <-         =  1   &  N & ~Z | NAN
+	 * 1101 ULE  NAN|(Z|N)   <-         =  1   &  N |  Z | NAN
+	 * 1110 NE   ~Z          NAN|(~Z)   =  1   &  1 & ~Z | NAN
+	 * 1111 T    1           <-         =  1   &  1 |  Z | NAN
+	 */
+	if ((pred & 0x08) == 0) {
+		result = ((fpsr & FPSR_NAN) == 0);
+	} else {
+		result = 1;
 	}
-	switch (pred) {
-	case 0:			/* (Signaling) False */
-		DPRINTF(("False"));
-		result = 0;
+	switch (pred & 0x06) {
+	case 0x00:	/* AND 0 */
+		result &= 0;
 		break;
-	case 1:			/* (Signaling) Equal */
-		DPRINTF(("Equal"));
-		result = -((fpsr & FPSR_ZERO) == FPSR_ZERO);
+	case 0x02:	/* AND ~N */
+		result &= ((fpsr & FPSR_NEG) == 0);
 		break;
-	case 2:			/* Greater Than */
-		DPRINTF(("GT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == 0);
+	case 0x04:	/* AND N */
+		result &= ((fpsr & FPSR_NEG) != 0);
 		break;
-	case 3:			/* Greater or Equal */
-		DPRINTF(("GE"));
-		result = -((fpsr & FPSR_ZERO) ||
-		    (fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
+	case 0x06:	/* AND 1 */
+		result &= 1;
 		break;
-	case 4:			/* Less Than */
-		DPRINTF(("LT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == FPSR_NEG);
-		break;
-	case 5:			/* Less or Equal */
-		DPRINTF(("LE"));
-		result = -((fpsr & FPSR_ZERO) ||
-		    ((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
-		break;
-	case 6:			/* Greater or Less than */
-		DPRINTF(("GLT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO)) == 0);
-		break;
-	case 7:			/* Greater, Less or Equal */
-		DPRINTF(("GLE"));
-		result = -((fpsr & FPSR_NAN) == 0);
-		break;
-	default:
-		/* invalid predicate */
-		DPRINTF(("Invalid predicate\n"));
-		return SIGILL;
 	}
-	/* if the predicate is "NOT ...", then invert the result */
-	result ^= invert;
+	if ((pred & 0x01) == 0) {
+		result &= ((fpsr & FPSR_ZERO) == 0);
+	} else {
+		result |= ((fpsr & FPSR_ZERO) != 0);
+	}
+	if ((pred & 0x08) != 0) {
+		result |= ((fpsr & FPSR_NAN) != 0);
+	}
+
 	DPRINTF(("=> %s (%d)\n", result ? "true" : "false", result));
 	/* if it's an IEEE unaware test and NAN is set, BSUN is set */
 	if (sig_bsun && (fpsr & FPSR_NAN)) {
@@ -997,7 +998,7 @@ test_cc(struct fpemu *fe, int pred)
 	/* put fpsr back */
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr = fpsr;
 
-	return result;
+	return -result;
 }
 
 /*
