@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.387 2024/12/23 01:51:13 kre Exp $
+#	$NetBSD: build.sh,v 1.388 2024/12/28 00:39:56 gutteridge Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1154,7 +1154,7 @@ help()
     mkrepro-timestamp   Show the latest source timestamp used for reproducible
                         builds and exit.  Requires -P or -V MKREPRO=yes.
     show-revisionid	Show the revision ID of the current directory
-			(in SCM dependend format) and exit.
+			(in SCM-dependent format) and exit.
 			Requires -P or -V MKREPRO=yes.
 
  Options:
@@ -2205,7 +2205,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.387 2024/12/23 01:51:13 kre Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.388 2024/12/28 00:39:56 gutteridge Exp $
 # with these arguments: ${_args}
 #
 
