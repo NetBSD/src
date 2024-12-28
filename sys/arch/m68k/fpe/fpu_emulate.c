@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.43 2024/12/28 05:56:15 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.44 2024/12/28 11:09:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.43 2024/12/28 05:56:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.44 2024/12/28 11:09:43 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1010,6 +1010,8 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 	unsigned short sval;
 
 	branch = test_cc(fe, insn->is_word1);
+	if (branch > 0)
+		return branch;
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr;
 
 	insn->is_advance = 4;
@@ -1017,10 +1019,10 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 
 	switch (insn->is_opcode & 070) {
 	case 010:			/* fdbcc */
-		if (branch == -1) {
+		if (branch) {
 			/* advance */
 			insn->is_advance = 6;
-		} else if (!branch) {
+		} else {
 			/* decrement Dn and if (Dn != -1) branch */
 			uint16_t count = frame->f_regs[insn->is_opcode & 7];
 
@@ -1049,8 +1051,6 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 			/* write it back */
 			frame->f_regs[insn->is_opcode & 7] &= 0xffff0000;
 			frame->f_regs[insn->is_opcode & 7] |= (uint32_t)count;
-		} else {		/* got a signal */
-			sig = SIGFPE;
 		}
 		break;
 
@@ -1068,12 +1068,9 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 				return SIGILL;
 				break;
 			}
+			insn->is_advance = advance;
 
-			if (branch == 0) {
-				/* no trap */
-				insn->is_advance = advance;
-				sig = 0;
-			} else {
+			if (branch) {
 				/* trap */
 				sig = SIGFPE;
 			}
@@ -1088,14 +1085,8 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 		if (sig) {
 			break;
 		}
-		if (branch == -1 || branch == 0) {
-			/* set result */
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&branch);
-		} else {
-			/* got an exception */
-			sig = branch;
-		}
+		/* set result */
+		sig = fpu_store_ea(frame, insn, &insn->is_ea, (char *)&branch);
 		break;
 	}
 	return sig;
