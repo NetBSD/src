@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.7 2024/01/28 09:03:22 macallan Exp $	*/
+/*	$NetBSD: elroy.c,v 1.8 2024/12/28 16:48:32 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -500,8 +500,7 @@ elroy_vaddr(void *v, bus_space_handle_t h)
 paddr_t
 elroy_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 {
-
-	return -1;
+	return btop(addr + off);
 }
 
 uint8_t
