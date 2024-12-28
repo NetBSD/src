@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.42 2024/12/28 05:52:53 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.43 2024/12/28 05:56:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.42 2024/12/28 05:52:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.43 2024/12/28 05:56:15 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -332,74 +332,81 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 	struct fpframe *fpf = fe->fe_fpframe;
 	int sig;
 	int reglist;
+	int regcount;
 	int fpu_to_mem;
+	uint32_t tmp[3];
 
 	/* move to/from control registers */
 	reglist = (insn->is_word1 & 0x1c00) >> 10;
-	/* Bit 13 selects direction (FPU to/from Mem) */
-	fpu_to_mem = insn->is_word1 & 0x2000;
+	/*
+	 * If reglist is 0b000, treat it as FPIAR.  This is not specification
+	 * but the behavior described in the 6888x user's manual.
+	 */
+	if (reglist == 0)
+		reglist = 1;
 
-	insn->is_datasize = 4;
+	if (reglist == 7) {
+		regcount = 3;
+	} else if (reglist == 3 || reglist == 5 || reglist == 6) {
+		regcount = 2;
+	} else {
+		regcount = 1;
+	}
+	insn->is_datasize = regcount * 4;
 	insn->is_advance = 4;
 	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
 	if (sig)
 		return sig;
 
-	if (reglist != 1 && reglist != 2 && reglist != 4 &&
-	    (insn->is_ea.ea_flags & EA_DIRECT)) {
-		/* attempted to copy more than one FPcr to CPU regs */
-		DPRINTF(("%s: tried to copy too many FPcr\n", __func__));
-		return SIGILL;
+	/*
+	 * For data register, only single register can be transferred.
+	 * For addr register, only FPIAR can be transferred.
+	 */
+	if ((insn->is_ea.ea_flags & EA_DIRECT)) {
+		if (insn->is_ea.ea_regnum < 8) {
+			if (regcount != 1) {
+				return SIGILL;
+			}
+		} else {
+			if (reglist != 1) {
+				return SIGILL;
+			}
+		}
 	}
 
-	if (reglist & 4) {
-		/* fpcr */
-		if ((insn->is_ea.ea_flags & EA_DIRECT) &&
-		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
-			/* attempted to copy FPCR to An */
-			DPRINTF(("%s: tried to copy FPCR from/to A%d\n",
-			    __func__, insn->is_ea.ea_regnum & 7));
-			return SIGILL;
-		}
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpcr);
-		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpcr);
-		}
-	}
-	if (sig)
-		return sig;
+	/* Bit 13 selects direction (FPU to/from Mem) */
+	fpu_to_mem = insn->is_word1 & 0x2000;
+	if (fpu_to_mem) {
+		uint32_t *s = &tmp[0];
 
-	if (reglist & 2) {
-		/* fpsr */
-		if ((insn->is_ea.ea_flags & EA_DIRECT) &&
-		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
-			/* attempted to copy FPSR to An */
-			DPRINTF(("%s: tried to copy FPSR from/to A%d\n",
-			    __func__, insn->is_ea.ea_regnum & 7));
-			return SIGILL;
+		if ((reglist & 4)) {
+			*s++ = fpf->fpf_fpcr;
 		}
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpsr);
-		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpsr);
+		if ((reglist & 2)) {
+			*s++ = fpf->fpf_fpsr;
 		}
-	}
-	if (sig)
-		return sig;
+		if ((reglist & 1)) {
+			*s++ = fpf->fpf_fpiar;
+		}
 
-	if (reglist & 1) {
-		/* fpiar - can be moved to/from An */
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpiar);
-		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpiar);
+		sig = fpu_store_ea(frame, insn, &insn->is_ea, (char *)tmp);
+	} else {
+		const uint32_t *d = &tmp[0];
+
+		sig = fpu_load_ea(frame, insn, &insn->is_ea, (char *)tmp);
+		if (sig)
+			return sig;
+
+		if ((reglist & 4)) {
+			fpf->fpf_fpcr = *d++;
+			fpf->fpf_fpcr &= 0x0000fff0;
+		}
+		if ((reglist & 2)) {
+			fpf->fpf_fpsr = *d++;
+			fpf->fpf_fpsr &= 0x0ffffff8;
+		}
+		if ((reglist & 1)) {
+			fpf->fpf_fpiar = *d++;
 		}
 	}
 	return sig;
