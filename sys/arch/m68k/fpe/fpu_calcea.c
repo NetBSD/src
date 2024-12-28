@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.28 2024/12/28 03:11:09 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.28 2024/12/28 03:11:09 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -150,7 +150,7 @@ fpu_decode_ea(struct frame *frame, struct instruction *insn,
 			sig = fetch_disp(frame, insn, 1, &ea->ea_offset);
 			DPRINTF(("%s: reg indirect with displacement reg=%d\n",
 			    __func__, ea->ea_regnum));
-		break;
+			break;
 
 		case 060:			/* (d8,An,Xn) */
 			ea->ea_flags = EA_INDEXED;
@@ -571,7 +571,7 @@ fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
 			/* sign-extend word to long */
 			data &= 0xffff;
 			if (data & 0x8000)
-			data |= 0xffff0000;
+				data |= 0xffff0000;
 		}
 		insn->is_advance += 2;
 		dst[0] = data;
