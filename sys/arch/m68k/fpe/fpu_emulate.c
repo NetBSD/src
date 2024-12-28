@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.44 2024/12/28 11:09:43 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.45 2024/12/28 11:15:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.44 2024/12/28 11:09:43 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.45 2024/12/28 11:15:11 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -918,7 +918,6 @@ test_cc(struct fpemu *fe, int pred)
 
 	fpsr = fe->fe_fpsr;
 	invert = 0;
-	fpsr &= ~FPSR_EXCP;		/* clear all exceptions */
 	DPRINTF(("%s: fpsr=0x%08x\n", __func__, fpsr));
 	pred &= 0x3f;		/* lowest 6 bits */
 
@@ -989,6 +988,10 @@ test_cc(struct fpemu *fe, int pred)
 	/* if it's an IEEE unaware test and NAN is set, BSUN is set */
 	if (sig_bsun && (fpsr & FPSR_NAN)) {
 		fpsr |= FPSR_BSUN;
+	}
+	/* if BSUN is set, IOP is set too */
+	if ((fpsr & FPSR_BSUN)) {
+		fpsr |= FPSR_AIOP;
 	}
 
 	/* put fpsr back */
