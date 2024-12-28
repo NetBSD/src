@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198 2024/05/13 00:12:33 msaitoh Exp $ */
+/*	$NetBSD: trap.c,v 1.199 2024/12/28 13:48:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2024/05/13 00:12:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2024/12/28 13:48:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1087,8 +1087,15 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	/* deal with invalid VAs early */
 	if (__predict_false(addr >= (1UL<<HOLESHIFT) && addr < (1UL<<63))) {
 
-		if (tstate & TSTATE_PRIV)
+		if (tstate & TSTATE_PRIV) {
+			if (onfault) {
+				tf->tf_pc = onfault;
+				tf->tf_npc = onfault + 4;
+				tf->tf_out[0] = EFAULT;
+				return;
+			}
 			panic("fault type %u for invalid va %lx", type, addr);
+		}
 
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
