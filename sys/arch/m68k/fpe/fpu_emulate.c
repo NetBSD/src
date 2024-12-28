@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.46 2024/12/28 11:23:12 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.47 2024/12/28 12:15:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.46 2024/12/28 11:23:12 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.47 2024/12/28 12:15:27 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -201,6 +201,10 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 		/* type=1: fdbcc, fscc, ftrapcc */
 		DPRINTF(("%s: type1\n", __func__));
 		sig = fpu_emul_type1(&fe, &insn);
+		/* real FTRAPcc raises T_TRAPVINST if the condition is met. */
+		if (sig == SIGFPE) {
+			ksi->ksi_trap = T_TRAPVINST;
+		}
 	} else {
 		/* type=4: fsave    (privileged) */
 		/* type=5: frestore (privileged) */
@@ -1005,6 +1009,8 @@ test_cc(struct fpemu *fe, int pred)
  * type 1: fdbcc, fscc, ftrapcc
  * In this function, we know:
  *   (opcode & 0x01C0) == 0x0040
+ * return SIGILL for an illegal instruction.
+ * return SIGFPE if FTRAPcc's condition is met.
  */
 static int
 fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
