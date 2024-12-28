@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.47 2024/12/28 12:15:27 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.48 2024/12/28 12:23:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.47 2024/12/28 12:15:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.48 2024/12/28 12:23:51 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -357,7 +357,6 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		regcount = 1;
 	}
 	insn->is_datasize = regcount * 4;
-	insn->is_advance = 4;
 	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
 	if (sig)
 		return sig;
@@ -437,7 +436,6 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	/* int w1_post_incr; */
 	int *fpregs;
 
-	insn->is_advance = 4;
 	insn->is_datasize = 12;
 	word1 = insn->is_word1;
 
@@ -1024,9 +1022,7 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 		return branch;
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr;
 
-	insn->is_advance = 4;
 	sig = 0;
-
 	switch (insn->is_opcode & 070) {
 	case 010:			/* fdbcc */
 		if (branch) {
@@ -1089,7 +1085,6 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 
 		/* FALLTHROUGH */
 	default:			/* fscc */
-		insn->is_advance = 4;
 		insn->is_datasize = 1;	/* always byte */
 		sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
 		if (sig) {
@@ -1117,7 +1112,6 @@ fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 	/*
 	 * Get branch displacement.
 	 */
-	insn->is_advance = 4;
 	displ = insn->is_word1;
 
 	if (insn->is_opcode & 0x40) {
