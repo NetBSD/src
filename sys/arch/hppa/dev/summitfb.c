@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.23 2024/12/27 13:54:26 skrll Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.24 2024/12/28 14:34:49 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.23 2024/12/27 13:54:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.24 2024/12/28 14:34:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	struct sti_rom *rom;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
+	struct sti_dd *dd;
 	unsigned long defattr = 0;
 	int ret, is_console = 0;
 
@@ -257,12 +258,13 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_base.sc_rom = rom;
+	dd = &rom->rom_dd;
 
 	sc->sc_scr.scr_rom = sc->sc_base.sc_rom;
 	ret = sti_screen_setup(&sc->sc_scr, STI_FBMODE);
 
-	struct sti_dd *dd = &rom->rom_dd;
 	sti_fetchfonts(&sc->sc_scr, NULL, dd->dd_fntaddr, 0);
+	wsfont_init();
 	summitfb_copyfont(sc);
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
@@ -893,7 +895,7 @@ summitfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return -1;
 
-	if (offset >= 0 && offset < sc->sc_scr.fblen) {
+	if (offset >= 0 && offset < 0x01000000) {
 		/* framebuffer */
 		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
