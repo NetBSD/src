@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.42 2024/12/28 05:52:53 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.42 2024/12/28 05:52:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -161,32 +161,36 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 	 */
 	if (optype == 0x0000) {
 		/* type=0: generic */
-		if ((sval & 0xc000) == 0xc000) {
-			DPRINTF(("%s: fmovm FPr\n", __func__));
-			sig = fpu_emul_fmovm(&fe, &insn);
-		} else if ((sval & 0xc000) == 0x8000) {
-			DPRINTF(("%s: fmovm FPcr\n", __func__));
-			sig = fpu_emul_fmovmcr(&fe, &insn);
-		} else if ((sval & 0xe000) == 0x6000) {
-			/* fstore = fmove FPn,mem */
-			DPRINTF(("%s: fmove to mem\n", __func__));
-			sig = fpu_emul_fstore(&fe, &insn);
-		} else if ((sval & 0xfc00) == 0x5c00) {
-			/* fmovecr */
-			DPRINTF(("%s: fmovecr\n", __func__));
-			sig = fpu_emul_fmovecr(&fe, &insn);
-		} else if ((sval & 0xa07f) == 0x26) {
-			/* fscale */
-			DPRINTF(("%s: fscale\n", __func__));
-			sig = fpu_emul_fscale(&fe, &insn);
+		if ((sval & 0x8000)) {
+			if ((sval & 0x4000)) {
+				DPRINTF(("%s: fmovm FPr\n", __func__));
+				sig = fpu_emul_fmovm(&fe, &insn);
+			} else {
+				DPRINTF(("%s: fmovm FPcr\n", __func__));
+				sig = fpu_emul_fmovmcr(&fe, &insn);
+			}
 		} else {
-			DPRINTF(("%s: other type0\n", __func__));
-			/* all other type0 insns are arithmetic */
-			sig = fpu_emul_arith(&fe, &insn);
-		}
-		if (sig == 0) {
-			DPRINTF(("%s: type 0 returned 0\n", __func__));
-			sig = fpu_upd_excp(&fe);
+			if ((sval & 0xe000) == 0x6000) {
+				/* fstore = fmove FPn,mem */
+				DPRINTF(("%s: fmove to mem\n", __func__));
+				sig = fpu_emul_fstore(&fe, &insn);
+			} else if ((sval & 0xfc00) == 0x5c00) {
+				/* fmovecr */
+				DPRINTF(("%s: fmovecr\n", __func__));
+				sig = fpu_emul_fmovecr(&fe, &insn);
+			} else if ((sval & 0xa07f) == 0x26) {
+				/* fscale */
+				DPRINTF(("%s: fscale\n", __func__));
+				sig = fpu_emul_fscale(&fe, &insn);
+			} else {
+				DPRINTF(("%s: other type0\n", __func__));
+				/* all other type0 insns are arithmetic */
+				sig = fpu_emul_arith(&fe, &insn);
+			}
+			if (sig == 0) {
+				DPRINTF(("%s: type 0 returned 0\n", __func__));
+				sig = fpu_upd_excp(&fe);
+			}
 		}
 	} else if (optype == 0x0080 || optype == 0x00C0) {
 		/* type=2 or 3: fbcc, short or long disp. */
