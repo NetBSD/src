@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.549 2024/03/05 20:59:41 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.550 2024/12/29 07:28:38 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.549 2024/03/05 20:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.550 2024/12/29 07:28:38 jmmv Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -384,7 +384,7 @@ main(void)
 #endif
 
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
+#if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 	size_t splash_size = (&_binary_splash_image_end -
 	    &_binary_splash_image_start) * sizeof(void *);
 	splash_setimage(&_binary_splash_image_start, splash_size);
