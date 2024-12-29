@@ -1,7 +1,5 @@
 # tools'fied mkhybrid to build HFS/ISO9660 hybrid image for mac68k and macppc
 
-(See src/distrib/cdrom/README how to fetch set binaries and build iso images)
-
 ## What's this?
 
 This external/gpl2/mkhybrid provides tools'fied mkhybrid(8) to build
