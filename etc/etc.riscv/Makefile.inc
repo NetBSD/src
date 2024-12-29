@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2023/05/07 12:41:46 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2024/12/29 09:46:44 jmmv Exp $
 #
 #	etc.riscv/Makefile.inc -- riscv-specific etc Makefile targets
 #
@@ -31,6 +31,7 @@ __mkimage: .USE
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
+	MKPOSTFIX=${MKPOSTFIX} \
 	${HOST_SH} ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz

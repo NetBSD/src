@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2024/10/31 08:29:24 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2024/12/29 09:46:44 jmmv Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -55,6 +55,7 @@ __mkimage: .USE
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
+	MKPOSTFIX=${MKPOSTFIX} \
 	${HOST_SH} -x ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz

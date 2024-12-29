@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.86 2024/12/28 18:13:29 christos Exp $
+# $NetBSD: mkimage,v 1.87 2024/12/29 09:46:44 jmmv Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,6 +61,9 @@ INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
 MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
+postfix=false
+[ "${MKPOSTFIX:-yes}" = no ] || postfix=true
+
 src="/usr/src"
 sets="base comp etc games gpufw man manhtml misc modules rescue tests text"
 xsets="xbase xcomp xetc xfont xserver"
@@ -118,10 +121,14 @@ minwrites_fstab_entries() {
 tmpfs		/var/log		tmpfs	rw,union,-s32M
 tmpfs		/var/run		tmpfs	rw,union,-s1M
 tmpfs		/var/mail		tmpfs	rw,union,-s10M
-tmpfs		/var/spool/postfix	tmpfs	rw,union,-s20M
-tmpfs		/var/db/postfix		tmpfs	rw,union,-s1M
 tmpfs		/var/chroot		tmpfs	rw,union,-s10M
 EOF
+	if $postfix; then
+	cat << EOF
+tmpfs		/var/spool/postfix	tmpfs	rw,union,-s20M
+tmpfs		/var/db/postfix		tmpfs	rw,union,-s1M
+EOF
+	fi
 }
 
 make_fstab_gpt() {
