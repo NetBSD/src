@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.8 2024/12/28 16:48:32 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.9 2024/12/29 07:51:25 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -206,9 +206,9 @@ elroy_match(device_t parent, cfdata_t cf, void *aux)
 	    (ca->ca_type.iodc_type == HPPA_TYPE_BRIDGE &&
 	     ca->ca_type.iodc_sv_model == HPPA_BRIDGE_DINO &&
 	     ca->ca_type.iodc_model == 0x78))
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -233,7 +233,7 @@ elroy_attach_hook(device_t parent, device_t self,
 int
 elroy_maxdevs(void *v, int bus)
 {
-	return (32);
+	return 32;
 }
 
 pcitag_t
@@ -242,7 +242,7 @@ elroy_make_tag(void *v, int bus, int dev, int func)
 	if (bus > 255 || dev > 31 || func > 7)
 		panic("elroy_make_tag: bad request");
 
-	return ((bus << 16) | (dev << 11) | (func << 8));
+	return (bus << 16) | (dev << 11) | (func << 8);
 }
 
 void
@@ -264,7 +264,7 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 /* printf("elroy_conf_read(%p, 0x%08x, 0x%x)", v, tag, reg); */
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
-		return ((pcireg_t) -1);
+		return (pcireg_t) -1;
 
 	arb_mask = elroy_read32(&r->arb_mask);
 	err_cfg = elroy_read32(&r->err_cfg);
@@ -289,7 +289,7 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 
 	data = le32toh(data);
 /* printf("=0x%08x (@ 0x%08x)\n", data, le32toh(data1)); */
-	return (data);
+	return data;
 }
 
 void
@@ -342,9 +342,9 @@ elroy_iomap(void *v, bus_addr_t bpa, bus_size_t size,
 
 	if ((error = bus_space_map(sc->sc_bt, bpa + sc->sc_iobase, size,
 	    flags, bshp)))
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -356,9 +356,9 @@ elroy_memmap(void *v, bus_addr_t bpa, bus_size_t size,
 	int error;
 
 	if ((error = bus_space_map(sc->sc_bt, bpa, size, flags, bshp)))
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -366,7 +366,7 @@ elroy_subregion(void *v, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t size, bus_space_handle_t *nbshp)
 {
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }
 
 int
@@ -387,9 +387,9 @@ elroy_ioalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	rend += sc->sc_iobase;
 	if (bus_space_alloc(sc->sc_bt, rstart, rend, size,
 	    align, boundary, flags, addrp, bshp))
-		return (ENOMEM);
+		return ENOMEM;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -402,9 +402,9 @@ elroy_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 
 	if (bus_space_alloc(sc->sc_bt, rstart, rend, size,
 	    align, boundary, flags, addrp, bshp))
-		return (ENOMEM);
+		return ENOMEM;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -460,7 +460,7 @@ elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 			if (elroy_memalloc(sc, 0xf0800000, 0xff7fffff,
 			    ELROY_MEM_WINDOW, ELROY_MEM_WINDOW, EX_NOBOUNDARY,
 			    0, &mem_start, &memh))
-				return (NULL);
+				return NULL;
 
 			snprintf(sc->sc_memexname, sizeof(sc->sc_memexname),
 			    "%s_mem", device_xname(sc->sc_dv));
@@ -470,7 +470,7 @@ elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 				extent_destroy(sc->sc_ioex);
 				bus_space_free(sc->sc_bt, memh,
 				    ELROY_MEM_WINDOW);
-				return (NULL);
+				return NULL;
 			}
 		}
 		ex = sc->sc_memex;
@@ -481,12 +481,12 @@ elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 
 	if (extent_alloc_subregion(ex, start, ex->ex_end, size, size, 0,
 	    EX_NOBOUNDARY, EX_NOWAIT, &start))
-		return (NULL);
+		return NULL;
 
 	extent_free(ex, start, size, EX_NOWAIT);
 	return rbus_new_root_share(tag, ex, start, size, 0);
 #else
-	return (NULL);
+	return NULL;
 #endif
 }
 #endif
@@ -494,7 +494,7 @@ elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 void *
 elroy_vaddr(void *v, bus_space_handle_t h)
 {
-	return ((void *)h);
+	return (void *)h;
 }
 
 paddr_t
@@ -517,7 +517,7 @@ elroy_r2(void *v, bus_space_handle_t h, bus_size_t o)
 
 	h += o;
 	p = (volatile uint16_t *)h;
-	return (le16toh(*p));
+	return le16toh(*p);
 }
 
 uint32_t
@@ -527,7 +527,7 @@ elroy_r4(void *v, bus_space_handle_t h, bus_size_t o)
 
 	h += o;
 	data = *(volatile uint32_t *)h;
-	return (le32toh(data));
+	return le32toh(data);
 }
 
 uint64_t
@@ -537,7 +537,7 @@ elroy_r8(void *v, bus_space_handle_t h, bus_size_t o)
 
 	h += o;
 	data = *(volatile uint64_t *)h;
-	return (le64toh(data));
+	return le64toh(data);
 }
 
 uint16_t
@@ -547,7 +547,7 @@ elroy_rs2(void *v, bus_space_handle_t h, bus_size_t o)
 
 	h += o;
 	p = (volatile uint16_t *)h;
-	return (*p);
+	return *p;
 }
 
 uint32_t
@@ -1129,8 +1129,8 @@ elroy_dmamap_create(void *v, bus_size_t size, int nsegments,
 
 	/* TODO check the addresses, boundary, enable dma */
 
-	return (bus_dmamap_create(sc->sc_dmat, size, nsegments,
-	    maxsegsz, boundary, flags, dmamp));
+	return bus_dmamap_create(sc->sc_dmat, size, nsegments,
+	    maxsegsz, boundary, flags, dmamp);
 }
 
 void
@@ -1147,7 +1147,7 @@ elroy_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamap_load(sc->sc_dmat, map, addr, size, p, flags));
+	return bus_dmamap_load(sc->sc_dmat, map, addr, size, p, flags);
 }
 
 int
@@ -1155,7 +1155,7 @@ elroy_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, flags));
+	return bus_dmamap_load_mbuf(sc->sc_dmat, map, m, flags);
 }
 
 int
@@ -1163,7 +1163,7 @@ elroy_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamap_load_uio(sc->sc_dmat, map, uio, flags));
+	return bus_dmamap_load_uio(sc->sc_dmat, map, uio, flags);
 }
 
 int
@@ -1172,7 +1172,7 @@ elroy_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamap_load_raw(sc->sc_dmat, map, segs, nsegs, size, flags));
+	return bus_dmamap_load_raw(sc->sc_dmat, map, segs, nsegs, size, flags);
 }
 
 void
@@ -1199,8 +1199,8 @@ elroy_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamem_alloc(sc->sc_dmat, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags));
+	return bus_dmamem_alloc(sc->sc_dmat, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags);
 }
 
 void
@@ -1217,7 +1217,7 @@ elroy_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamem_map(sc->sc_dmat, segs, nsegs, size, kvap, flags));
+	return bus_dmamem_map(sc->sc_dmat, segs, nsegs, size, kvap, flags);
 }
 
 void
@@ -1234,7 +1234,7 @@ elroy_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs, off_t off,
 {
 	struct elroy_softc *sc = v;
 
-	return (bus_dmamem_mmap(sc->sc_dmat, segs, nsegs, off, prot, flags));
+	return bus_dmamem_mmap(sc->sc_dmat, segs, nsegs, off, prot, flags);
 }
 
 const struct hppa_bus_dma_tag elroy_dmat = {
