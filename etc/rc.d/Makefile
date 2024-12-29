@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.118 2023/09/27 00:24:13 riastradh Exp $
+# $NetBSD: Makefile,v 1.119 2024/12/29 09:47:49 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ CONFIGFILES=\
 		mountcritlocal mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
 		npfd ntpd ntpdate \
-		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
+		perusertmp pf pf_boot pflogd powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd resize_root rndctl root route6d routed rtadvd \
@@ -43,6 +43,10 @@ CONFIGFILES=\
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
+
+.if ${MKPOSTFIX} != "no"
+CONFIGFILES+=	postfix
+.endif
 
 .if ${MKYP} != "no"
 CONFIGFILES+=	ypbind yppasswdd ypserv
