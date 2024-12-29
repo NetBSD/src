@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.80 2024/12/26 21:14:52 andvar Exp $
+.\" $NetBSD: bus_dma.9,v 1.81 2024/12/29 22:12:56 andvar Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2024
+.Dd December 29, 2024
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -530,7 +530,7 @@ The length of the mapping from
 .Fa offset
 to synchronize.
 .It Fa ops
-One or more synchronization operation to perform.
+One or more synchronization operations to perform.
 The following DMA synchronization operations are defined:
 .Bl -tag -width Ds \" Dv
 .It Dv BUS_DMASYNC_PREREAD
@@ -549,7 +549,7 @@ Perform any synchronization required after device access to host memory.
 where each operation may involve cache flush/invalidation, bounce buffer
 copying, and/or memory barriers.
 .Pp
-More than one operation may performed in a given synchronization call.
+More than one operation may be performed in a given synchronization call.
 Mixing of
 .Dv PRE
 and
@@ -645,7 +645,7 @@ given tag.
 .Pp
 The mapping of this memory is machine-dependent
 .Pq or Dq opaque ;
-machine-independent code is not to assume that the
+machine-independent code should not assume that the
 addresses returned are valid in kernel virtual address space, or that
 the addresses returned are system physical addresses.
 The address value returned as part of
