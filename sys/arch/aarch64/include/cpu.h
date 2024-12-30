@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.52 2024/12/10 11:27:28 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.53 2024/12/30 19:17:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -99,6 +99,21 @@ struct aarch64_cache_info {
 	struct aarch64_cache_unit dcache;
 };
 
+struct aarch64_low_power_idle {
+	uint32_t min_res;		/* minimum residency */
+	uint32_t wakeup_latency;	/* worst case */
+	uint32_t save_restore_flags;
+#define LPI_SAVE_RESTORE_CORE	__BIT(0)
+#define LPI_SAVE_RESTORE_TRACE	__BIT(1)
+#define LPI_SAVE_RESTORE_GICR	__BIT(2)
+#define LPI_SAVE_RESTORE_GICD	__BIT(3)
+	uint32_t reg_addr;
+#define LPI_REG_ADDR_WFI	0xffffffff
+
+	char *name;
+	struct evcnt events;
+};
+
 struct cpu_info {
 	struct cpu_data ci_data;
 	device_t ci_dev;
@@ -165,6 +180,11 @@ struct cpu_info {
 
 	/* ACPI */
 	uint32_t ci_acpiid;	/* ACPI Processor Unique ID */
+
+	/* ACPI low power idle */
+	uint32_t ci_nlpi;
+	struct aarch64_low_power_idle *ci_lpi;
+	uint64_t ci_last_idle;
 
 	/* cached system registers */
 	uint64_t ci_sctlr_el1;
