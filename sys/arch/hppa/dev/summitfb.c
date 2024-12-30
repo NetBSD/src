@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.24 2024/12/28 14:34:49 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.25 2024/12/30 08:32:37 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.24 2024/12/28 14:34:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.25 2024/12/30 08:32:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef SUMMITFB_DEBUG
 	sc->sc_height -= 200;
-	sc->sc_width -= 200;
 #endif
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -307,7 +306,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	summitfb_setup(sc);
-	summitfb_setup_fb(sc);
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -335,7 +333,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	    defattr);
 #endif
 
-	summitfb_setup(sc);
 	summitfb_restore_palette(sc);
 	summitfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
@@ -702,39 +699,20 @@ summitfb_setup(struct summitfb_softc *sc)
 
 	summitfb_wait(sc);
 #if 1
-	summitfb_write4(sc, 0xb08044, 0x1b);
-	summitfb_write4(sc, 0xb08048, 0x1b);
+	/* these control byte swapping */
+	summitfb_write4(sc, 0xb08044, 0x1b);	/* MFU_BSCTD */
+	summitfb_write4(sc, 0xb08048, 0x1b);	/* MFU_BSCCTL */
 
-	summitfb_write4(sc, 0x920860, 0xe4);
-	summitfb_write4(sc, VISFX_IBO, 0);
-	summitfb_write4(sc, 0x921114, 0);
-	summitfb_write4(sc, 0x9211d8, 0);
+	summitfb_write4(sc, 0x920860, 0xe4);	/* FBC_RBS */
+	summitfb_write4(sc, 0x921114, 0);	/* CPE, ckip plane enable */
+	summitfb_write4(sc, 0x9211d8, 0);	/* FCDA */
 
-	summitfb_write4(sc, 0xa00404, 0);
-	summitfb_write4(sc, 0xa00818, 0);
-	summitfb_write4(sc, 0xa0081c, 0);	/* fx4 */
-	summitfb_write4(sc, 0xa00850, 0);	/* fx4 */
-	summitfb_write4(sc, 0xa0086c, 0);
+	summitfb_write4(sc, 0xa00818, 0);	/* WORG window origin */
+	summitfb_write4(sc, 0xa0081c, 0);	/* FBS front buffer select*/
+	summitfb_write4(sc, 0xa00850, 0);	/* MISC_CTL */
+	summitfb_write4(sc, 0xa0086c, 0);	/* WCE window clipping enable */
 #endif
-
-	/* make sure the overlay is opaque */
-	summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
-	/*
-	 * initialize XLUT
-	 * the whole thing so we don't have to clear the attribute plane
-	 */
-	for (i = 0; i < 16; i++)
-		summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1); /* RGB, CFS1 */
-	summitfb_write4(sc, VISFX_CFS(1), CFS_8F | CFS_BYPASS);
-	/* overlay is 8bit, uses LUT 0 */
-	summitfb_write4(sc, VISFX_CFS(16), CFS_8I | CFS_LUT0);
-	summitfb_write4(sc, VISFX_CFS(17), CFS_8I | CFS_LUT0);
-
-	/* turn off force attr so the above takes effect */
-	summitfb_write4(sc, VISFX_FATTR, 0);
-
-	summitfb_write4(sc, VISFX_TCR, 0x10001000);	/* disable throttling */
-
+	/* initialize drawiing engine */
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_CONTROL, 0);	// clear WFC
 	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
@@ -748,6 +726,34 @@ summitfb_setup(struct summitfb_softc *sc)
 	    ((sc->sc_scr.fbwidth) << 16) | (sc->sc_scr.fbheight));
 	/* turn off the cursor sprite */
 	summitfb_write4(sc, VISFX_CURSOR_POS, 0);
+	summitfb_write4(sc, VISFX_TCR, 0x10001000);	/* disable throttling */
+
+	/* make sure the overlay is opaque */
+	summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
+
+	/*
+	 * initialize XLUT
+	 */
+	for (i = 0; i < 16; i++)
+		summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1); /* RGB, CFS1 */
+	summitfb_write4(sc, VISFX_CFS(1), CFS_8F | CFS_BYPASS);
+	/* overlay is 8bit, uses LUT 0 */
+	summitfb_write4(sc, VISFX_CFS(16), CFS_8I | CFS_LUT0);
+	summitfb_write4(sc, VISFX_CFS(17), CFS_8I | CFS_LUT0);
+
+	/* zero the attribute plane */
+	summitfb_write_mode(sc, OTC04 | BINapln);
+	summitfb_wait_fifo(sc, 4);
+	summitfb_write4(sc, VISFX_PLANE_MASK, 0xff);
+	summitfb_write4(sc, VISFX_IBO, 0);
+	summitfb_write4(sc, VISFX_START, 0);
+	summitfb_write4(sc, VISFX_SIZE, (sc->sc_width << 16) | sc->sc_height);
+	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
+
+	/* turn off force attr so the above takes effect */
+	summitfb_write4(sc, VISFX_FATTR, 0);
+
 	summitfb_setup_fb(sc);
 }
 
@@ -1214,7 +1220,6 @@ summitfb_loadfont(struct summitfb_softc *sc)
 	uint16_t *data16;
 	uint32_t mask;
 
-	summitfb_setup(sc);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, 0xffffffff);
