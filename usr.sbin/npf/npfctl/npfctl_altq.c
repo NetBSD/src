@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Nyarko
+ * by Emmanuel Nyarko.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
