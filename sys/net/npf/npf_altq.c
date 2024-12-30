@@ -28,6 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#include "opt_altq.h"
+#endif
+#ifdef ALTQ
 #include <sys/unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,17 +47,10 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-#ifdef _KERNEL_OPT
-#include "opt_inet.h"
-#include "opt_altq.h"
-#endif
-#ifdef ALTQ
 #include <altq/altq.h>
-#endif
 #include "npf_altq.h"
 #include "npf.h"
 
-#ifdef ALTQ
 /*
  * starting point of altq kernel routines
  */
