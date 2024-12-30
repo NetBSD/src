@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.13 2024/12/30 17:55:06 pgoyette Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.14 2024/12/30 18:01:09 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ function adds
 to the list of hooks invoked by
 .Xr dopowerhooks 9
 at power change.
- invoked, the hook function
+When invoked, the hook function
 .Fa fn
 will be passed the new power state as the first argument and
 .Fa arg
