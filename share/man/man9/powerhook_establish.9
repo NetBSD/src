@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.12 2024/12/30 17:48:10 christos Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.13 2024/12/30 17:55:06 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ The
 .Fn powerhook_establish
 function adds
 .Fa fn
-of the list of hooks invoked by
+to the list of hooks invoked by
 .Xr dopowerhooks 9
 at power change.
  invoked, the hook function
