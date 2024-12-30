@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.301 2024/12/19 14:19:53 riastradh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.302 2024/12/30 11:44:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.301 2024/12/19 14:19:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.302 2024/12/30 11:44:16 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1056,6 +1056,11 @@ acpi_rescan_node(struct acpi_softc *sc, struct acpi_devnode *ad)
 		if (!dd->dd_node->ad_scanned) {
 			acpi_rescan_node(sc, dd->dd_node);
 		}
+	}
+
+	/* Dependency scanning may have claimed this device. */
+	if (ad->ad_device != NULL) {
+		return;
 	}
 
 	aa.aa_node = ad;

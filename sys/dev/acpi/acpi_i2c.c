@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.17 2024/12/14 12:52:39 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.18 2024/12/30 11:44:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.17 2024/12/14 12:52:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.18 2024/12/30 11:44:16 jmcneill Exp $");
 
 #include <sys/device.h>
 
@@ -189,6 +189,8 @@ acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
 		    i2cc.i2c_addr != 0 &&
 		    i2cc.res_src == devnode) {
 			aprint_debug_dev(dev, "claiming %s\n", ad->ad_name);
+			ad->ad_device = dev;
+			acpi_claim_childdevs(dev, ad);
 			acpi_enter_i2c_device(ad, array);
 		}
 	}
