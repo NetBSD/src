@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.33 2022/07/23 03:08:17 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.34 2024/12/30 19:07:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.33 2022/07/23 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.34 2024/12/30 19:07:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -782,7 +782,7 @@ acpi_match_cpu_info(struct cpu_info *ci)
 	ACPI_HANDLE hdl;
 	ACPI_STATUS rv;
 
-	if (sc == NULL || acpi_active == 0)
+	if (sc == NULL)
 		return NULL;
 
 	/*
