@@ -315,18 +315,18 @@ typedef struct npf_ioctl_table {
 } npf_ioctl_table_t;
 
 struct npfioc_altq {
-	u_int32_t	 action;
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
+	uint32_t	 action;
+	uint32_t	 ticket;
+	uint32_t	 nr;
 	struct npf_altq	 altq;
 };
 
 struct npfioc_qstats {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
+	uint32_t	ticket;
+	uint32_t	nr;
 	void		*buf;
-	int		 nbytes;
-	u_int8_t	 scheduler;
+	int		nbytes;
+	uint8_t		scheduler;
 };
 
 /*
