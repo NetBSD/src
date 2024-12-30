@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.102 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: awi.c,v 1.103 2024/12/30 20:45:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.102 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.103 2024/12/30 20:45:47 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -276,10 +276,9 @@ awi_attach(struct awi_softc *sc)
 	if ((sc->sc_sdhook = shutdownhook_establish(awi_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    ifp->if_xname);
-	if ((sc->sc_powerhook =
-	     powerhook_establish(ifp->if_xname, awi_power, sc)) == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    ifp->if_xname);
+
+	pmf_device_register(sc->sc_dev, NULL, NULL);
+	pmf_class_network_register(sc->sc_dev, ifp);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -310,7 +309,7 @@ awi_detach(struct awi_softc *sc)
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(sc->sc_dev);
 	softint_disestablish(sc->sc_soft_ih);
 	splx(s);
 	return 0;
@@ -328,38 +327,6 @@ awi_activate(device_t self, enum devact act)
 	default:
 		return EOPNOTSUPP;
 	}
-}
-
-void
-awi_power(int why, void *arg)
-{
-	struct awi_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-	int ocansleep;
-
-	DPRINTF(("awi_power: %d\n", why));
-	s = splnet();
-	ocansleep = sc->sc_cansleep;
-	sc->sc_cansleep = 0;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		awi_stop(ifp, 1);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			awi_init(ifp);
-			awi_softintr(sc);	/* make sure */
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	sc->sc_cansleep = ocansleep;
-	splx(s);
 }
 
 void
