@@ -49,14 +49,14 @@
  * options defined on the cbq, priq and hfsc when configuring them
  */
 struct npf_cbq_opts {
-	u_int		minburst;
-	u_int		maxburst;
-	u_int		pktsize;
-	u_int		maxpktsize;
-	u_int		ns_per_byte;
-	u_int		maxidle;
-	int		minidle;
-	u_int		offtime;
+	uint32_t		minburst;
+	uint32_t		maxburst;
+	uint32_t		pktsize;
+	uint32_t		maxpktsize;
+	uint32_t		ns_per_byte;
+	uint32_t		maxidle;
+	int			minidle;
+	uint32_t		offtime;
 	int		flags;
 };
 
@@ -66,17 +66,17 @@ struct npf_priq_opts {
 
 struct npf_hfsc_opts {
 	/* real-time service curve */
-	u_int		rtsc_m1;	/* slope of the 1st segment in bps */
-	u_int		rtsc_d;		/* the x-projection of m1 in msec */
-	u_int		rtsc_m2;	/* slope of the 2nd segment in bps */
+	uint32_t	rtsc_m1;	/* slope of the 1st segment in bps */
+	uint32_t	rtsc_d;		/* the x-projection of m1 in msec */
+	uint32_t	rtsc_m2;	/* slope of the 2nd segment in bps */
 	/* link-sharing service curve */
-	u_int		lssc_m1;
-	u_int		lssc_d;
-	u_int		lssc_m2;
+	uint32_t	lssc_m1;
+	uint32_t	lssc_d;
+	uint32_t	lssc_m2;
 	/* upper-limit service curve */
-	u_int		ulsc_m1;
-	u_int		ulsc_d;
-	u_int		ulsc_m2;
+	uint32_t	ulsc_m1;
+	uint32_t	ulsc_d;
+	uint32_t	ulsc_m2;
 	int		flags;
 };
 
