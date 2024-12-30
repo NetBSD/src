@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.7 2024/02/16 15:11:38 skrll Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.8 2024/12/30 14:46:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.7 2024/02/16 15:11:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.8 2024/12/30 14:46:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -687,8 +687,8 @@ bcmstb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
                 return EINVAL;
 
         imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
-        imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask", &imasklen)
-;
+        imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask",
+	     &imasklen);
         if (imap == NULL || imask == NULL || imasklen != 16)
                 return EINVAL;
 
