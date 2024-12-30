@@ -1062,16 +1062,16 @@ rule_queue
 	 }
 	| QUEUE STRING
 	{
-			$$.qname = $2;
+		$$.qname = $2;
 	}
 	| QUEUE PAR_OPEN STRING PAR_CLOSE
 	{
-			$$.qname = $3;
+		$$.qname = $3;
 	}
 	| QUEUE PAR_OPEN STRING COMMA STRING PAR_CLOSE
 	{
-			$$.qname = $3;
-			$$.pqname = $5;
+		$$.qname = $3;
+		$$.pqname = $5;
 	}
 	;
 
