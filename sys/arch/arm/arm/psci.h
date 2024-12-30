@@ -1,4 +1,4 @@
-/* $NetBSD: psci.h,v 1.4 2021/08/07 21:20:14 jmcneill Exp $ */
+/* $NetBSD: psci.h,v 1.5 2024/12/30 19:09:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,7 @@
  */
 enum psci_function {
 	PSCI_FUNC_VERSION,
+	PSCI_FUNC_CPU_SUSPEND,
 	PSCI_FUNC_CPU_ON,
 	PSCI_FUNC_SYSTEM_OFF,
 	PSCI_FUNC_SYSTEM_RESET,
@@ -112,6 +113,11 @@ uint32_t	psci_version(void);
  * Power up a core. Args: target_cpu, entry_point_address, context_id
  */
 int	psci_cpu_on(register_t, register_t, register_t);
+
+/*
+ * Suspend a core. Args: power_state
+ */
+int	psci_cpu_suspend(uint32_t);
 
 /*
  * Shut down the system.

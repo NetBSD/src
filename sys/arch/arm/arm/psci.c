@@ -1,4 +1,4 @@
-/* $NetBSD: psci.c,v 1.7 2021/08/07 21:20:14 jmcneill Exp $ */
+/* $NetBSD: psci.c,v 1.8 2024/12/30 19:09:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.7 2021/08/07 21:20:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.8 2024/12/30 19:09:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,8 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.7 2021/08/07 21:20:14 jmcneill Exp $");
 #define	PSCI_SYSTEM_OFF		0x84000008
 #define	PSCI_SYSTEM_RESET	0x84000009
 #if defined(__aarch64__)
+#define	PSCI_CPU_SUSPEND	0xc4000001
 #define	PSCI_CPU_ON		0xc4000003
 #else
+#define	PSCI_CPU_SUSPEND	0x84000001
 #define	PSCI_CPU_ON		0x84000003
 #endif
 #define	PSCI_FEATURES		0x8400000a
@@ -53,6 +55,7 @@ static uint32_t psci_functions[PSCI_FUNC_MAX] = {
         [PSCI_FUNC_VERSION] = PSCI_VERSION,
         [PSCI_FUNC_SYSTEM_OFF] = PSCI_SYSTEM_OFF,
 	[PSCI_FUNC_SYSTEM_RESET] = PSCI_SYSTEM_RESET,
+	[PSCI_FUNC_CPU_SUSPEND] = PSCI_CPU_SUSPEND,
 	[PSCI_FUNC_CPU_ON] = PSCI_CPU_ON,
 	[PSCI_FUNC_FEATURES] = PSCI_FEATURES,
 };
@@ -98,6 +101,13 @@ psci_cpu_on(register_t target_cpu, register_t entry_point_address,
 {
 	return psci_call(psci_functions[PSCI_FUNC_CPU_ON], target_cpu,
 	    entry_point_address, context_id);
+}
+
+int
+psci_cpu_suspend(uint32_t power_state)
+{
+	return psci_call(psci_functions[PSCI_FUNC_CPU_SUSPEND], power_state,
+	    0, 0);
 }
 
 void
