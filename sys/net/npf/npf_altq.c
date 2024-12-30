@@ -55,8 +55,8 @@
  * starting point of altq kernel routines
  */
 bool	 npf_altq_running = false;
-u_int32_t		 nticket_altqs_active;
-u_int32_t		 nticket_altqs_inactive;
+uint32_t		 nticket_altqs_active;
+uint32_t		 nticket_altqs_inactive;
 struct npf_altqqueue	*npf_altqs_active;
 struct npf_altqqueue	*npf_altqs_inactive;
 struct npf_altqqueue  npf_altqs[2];
@@ -96,13 +96,12 @@ npf_begin_altq(void)
 		TAILQ_REMOVE(npf_altqs_inactive, altq, entries);
 		if (altq->qname[0] == 0) {
 			/* detach and destroy the discipline */
-			error = altq_remove(altq);
+			if ((error = altq_remove(altq)) != 0)
+				return error;
 		} else
 			npf_qid_unref(altq->qid);
 		pool_put(&npf_altq_pl, altq);
 	}
-	if (error)
-		return error;
 
 	return 0;
 }
@@ -131,7 +130,7 @@ npf_add_altq(void *data)
 		error = ENOMEM;
 		return error;
 	}
-	memcpy(altq, &paa->altq, sizeof(paa->altq));
+	memcpy(altq, &paa->altq, sizeof(*altq));
 	/*
 		* if this is for a queue, find the discipline and
 		* copy the necessary fields
@@ -156,7 +155,7 @@ npf_add_altq(void *data)
 		return error;
 	}
 	TAILQ_INSERT_TAIL(npf_altqs_inactive, altq, entries);
-	memcpy(&paa->altq, altq, sizeof(*altq));
+	memcpy(&paa->altq, altq, sizeof(paa->altq));
 
 	if (!npf_altq_loaded)
 		npf_altq_loaded = 1;
@@ -241,7 +240,7 @@ npftagname2tag(struct npf_tags *head, char *tagname)
 	if (new_tagid > TAGID_MAX)
 		return 0;
 	/* allocate and fill new struct npf_tagname */
-	tag = (struct npf_tagname *)malloc(sizeof(*tag),
+	tag = malloc(sizeof(*tag),
 	    M_TEMP, M_NOWAIT);
 	if (tag == NULL)
 		return 0;
