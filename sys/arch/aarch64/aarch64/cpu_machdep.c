@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.15 2024/04/14 12:51:16 skrll Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.16 2024/12/30 19:13:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.15 2024/04/14 12:51:16 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.16 2024/12/30 19:13:48 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -51,6 +51,9 @@ __KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.15 2024/04/14 12:51:16 skrll Exp $
 #include <aarch64/machdep.h>
 #include <aarch64/pcb.h>
 #include <aarch64/userret.h>
+#include <aarch64/cpufunc.h>
+
+void (*arm_cpu_idle)(void) = aarch64_cpu_idle_wfi;
 
 #ifdef __HAVE_FAST_SOFTINTS
 #if IPL_VM != IPL_SOFTSERIAL + 1
@@ -374,3 +377,9 @@ pic_ipi_shootdown(void *arg)
 	return 1;
 }
 #endif /* MULTIPROCESSOR */
+
+void
+cpu_idle(void)
+{
+	arm_cpu_idle();
+}

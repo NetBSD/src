@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.27 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.28 2024/12/30 19:13:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -51,6 +51,8 @@ extern int aarch64_pac_enabled;
 void aarch64_hafdbs_init(int);
 void aarch64_pan_init(int);
 int aarch64_pac_init(int);
+
+void aarch64_cpu_idle_wfi(void);
 
 int set_cpufuncs(void);
 int aarch64_setcpufuncs(struct cpu_info *);
