@@ -3,7 +3,8 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann, Christos Zoulas and Mindaugas Rasiukevicius.
+ * by Martin Husemann, Christos Zoulas, Mindaugas Rasiukevicius and
+ * Emmanuel Nyarko
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

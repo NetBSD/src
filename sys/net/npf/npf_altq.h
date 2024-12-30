@@ -1,9 +1,10 @@
+/* NetBSD */
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This material is based upon work partially supported by The
- * NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Emmanuel Nyarko
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
