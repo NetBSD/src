@@ -415,8 +415,7 @@ bandwidth	: bw_spec {
 		}
 		;
 
-bw_spec : BW_SPEC
-		{$$ = $1; }
+bw_spec : BW_SPEC	{$$ = $1; }
 		;
 
 scheduler	: CBQ {
