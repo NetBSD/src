@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.27 2024/12/09 21:56:19 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.28 2024/12/30 12:19:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.27 2024/12/09 21:56:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.28 2024/12/30 12:19:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ acpi_md_pmapflags(paddr_t pa)
 
 			case EFI_MD_TYPE_IOMEM:
 			case EFI_MD_TYPE_IOPORT:
-				return PMAP_DEV;
+				return PMAP_DEV_NP;
 
 			default:
 				if ((attr & EFI_MD_ATTR_WB) != 0)
@@ -125,7 +125,7 @@ acpi_md_pmapflags(paddr_t pa)
 				else if ((attr & EFI_MD_ATTR_WT) != 0)
 					return 0;	/* XXX */
 
-				return PMAP_DEV;
+				return PMAP_DEV_NP;
 			}
 		}
 
