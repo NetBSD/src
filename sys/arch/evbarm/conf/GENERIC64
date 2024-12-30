@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.221 2024/12/09 22:17:31 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.222 2024/12/30 12:31:09 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -158,6 +158,13 @@ gpioleds*	at fdt?
 # System Controller
 syscon* 	at fdt? pass 1		# Generic System Controller
 sunxisramc*	at fdt? pass 1		# Allwinner System Control
+qcomipcc*	at acpi?		# Qualcomm IPCC
+qcompas*	at acpi?		# Qualcomm ADSP PAS
+qcompep*	at acpi?		# Qualcomm PEP / AOSS
+qcomscm*	at acpi?		# Qualcomm Secure Channel Manager
+qcomsmem*	at acpi?		# Qualcomm Shared Memory
+qcomsmptp*	at acpi?		# Qualcomm Shared Memory P2P
+qcomspmi*	at acpi?		# Qualcomm SPMI
 
 # Timer
 gtmr*		at fdt? pass 2		# ARM Generic Timer
