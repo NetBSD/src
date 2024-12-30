@@ -1,4 +1,4 @@
-# $NetBSD: sshd,v 1.10 2023/06/20 22:00:00 riastradh Exp $
+# $NetBSD: sshd.in,v 1.1 2024/12/30 21:59:08 jmmv Exp $
 #
 # PAM configuration for the "sshd" service
 #

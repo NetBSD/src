@@ -1,4 +1,4 @@
-# $NetBSD: su,v 1.9 2023/06/20 22:00:00 riastradh Exp $
+# $NetBSD: su.in,v 1.1 2024/12/30 21:59:08 jmmv Exp $
 #
 # PAM configuration for the "su" service
 #
