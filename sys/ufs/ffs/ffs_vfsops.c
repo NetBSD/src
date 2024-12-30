@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.382 2023/09/08 23:21:55 riastradh Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.383 2024/12/30 09:01:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.382 2023/09/08 23:21:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.383 2024/12/30 09:01:35 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1969,8 +1969,6 @@ ffs_sync_selector(void *cl, struct vnode *vp)
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
- *
- * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.227 2024/07/02 05:02:49 rin Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.228 2024/12/30 09:01:35 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.227 2024/07/02 05:02:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.228 2024/12/30 09:01:35 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -961,8 +961,6 @@ ext2fs_sync_selector(void *cl, struct vnode *vp)
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
- *
- * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
 ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
