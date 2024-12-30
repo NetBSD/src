@@ -1,4 +1,4 @@
-/*-
+*-
  * Copyright (c) 2011-2012,2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -156,7 +156,7 @@ on			return ON;
 off			return OFF;
 inet6			return INET6;
 inet4			return INET4;
-ifaddrs		return IFADDRS;
+ifaddrs			return IFADDRS;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
@@ -166,7 +166,7 @@ ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;
-ruleset		return RULESET;
+ruleset			return RULESET;
 from			return FROM;
 to			return TO;
 port			return PORT;
