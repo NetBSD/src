@@ -289,7 +289,8 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_GET_ALTQS:
 		return npf_get_altqs(data);
 	case IOC_NPF_BEGIN_ALTQ:
-		if (!npf_altq_loaded) { /* initialize all queueing components on the first attempt*/
+		/* initialize all queueing components on the first attempt */
+		if (!npf_altq_loaded) {
 			npf_altq_init();
 		}
 		return npf_begin_altq();
