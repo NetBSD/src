@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -111,12 +111,12 @@ npf_begin_altq(void)
 int
 npf_get_altqs(void *data)
 {
-    struct npfioc_altq	*paa = (struct npfioc_altq *)data;
-    struct npf_altq		*altq;
-    paa->nr = 0;
-    TAILQ_FOREACH(altq, npf_altqs_active, entries)
-        paa->nr++;
-    paa->ticket = nticket_altqs_active;
+	struct npfioc_altq	*paa = (struct npfioc_altq *)data;
+	struct npf_altq		*altq;
+	paa->nr = 0;
+	TAILQ_FOREACH(altq, npf_altqs_active, entries)
+		paa->nr++;
+	paa->ticket = nticket_altqs_active;
 	return 0 ;
 }
 

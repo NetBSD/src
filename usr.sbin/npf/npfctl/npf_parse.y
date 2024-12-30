@@ -203,7 +203,7 @@ yyerror(const char *fmt, ...)
 %token	<str>		PARAM
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
-%token  <str>       BW_SPEC
+%token  <str>		BW_SPEC
 
 %type	<str>		addr some_name table_store dynamic_ifaddrs  bw_spec
 %type	<str>		proc_param_val opt_apply ifname on_ifname ifref
@@ -222,15 +222,15 @@ yyerror(const char *fmt, ...)
 %type	<filtopts>	filt_opts all_or_filt_opts
 %type	<optproto>	rawproto
 %type	<rulegroup>	group_opts
-%type	<queue_opts> queue_opts queue_opt queue_opts_l
+%type	<queue_opts> 	queue_opts queue_opt queue_opts_l
 %type	<qassign>	rule_queue
 %type	<queue>		qassign qassign_list qassign_item
 %type	<queue_options>	scheduler
 %type	<num>		cbqflags_list cbqflags_item
 %type	<num>		priqflags_list priqflags_item
-%type	<hfsc_opts>		hfscopts_list hfscopts_item hfsc_opts
+%type	<hfsc_opts>	hfscopts_list hfscopts_item hfsc_opts
 %type	<queue_bwspec>	bandwidth
-%type   <str>			queue_flags
+%type   <str>		queue_flags
 
 %union {
 	char *		str;
@@ -277,11 +277,11 @@ line
 altq : ALTQ on_ifname queue_opts QUEUE qassign {
 		struct npf_altq a;
 
-		memset(&a, 0, sizeof(a));
 		if ($3.scheduler.qtype == ALTQT_NONE) {
 			yyerror("no scheduler specified!");
 			YYERROR;
 		}
+		memset(&a, 0, sizeof(a));
 		a.scheduler = $3.scheduler.qtype;
 		a.qlimit = $3.qlimit;
 		a.tbrsize = $3.tbrsize;
@@ -295,7 +295,7 @@ altq : ALTQ on_ifname queue_opts QUEUE qassign {
 	}
 	;
 
-queuespec	: QUEUE IDENTIFIER on_ifname queue_opts qassign {
+queuespec	: QUEUE IDENTIFIER on_ifname queue_opts qassign	{
 			struct npf_altq	a;
 
 			memset(&a, 0, sizeof(a));
@@ -327,7 +327,7 @@ queuespec	: QUEUE IDENTIFIER on_ifname queue_opts qassign {
 		;
 
 queue_opts	:	{
-			memset(&queue_opts, 0, sizeof queue_opts );
+			memset(&queue_opts, 0, sizeof(queue_opts));
 			queue_opts.priority = DEFAULT_PRIORITY;
 			queue_opts.qlimit = DEFAULT_QLIMIT;
 			queue_opts.scheduler.qtype = ALTQT_NONE;
@@ -336,7 +336,7 @@ queue_opts	:	{
 		    queue_opts_l
 			{ $$ = queue_opts; }
 		| /* empty */ {
-			memset(&queue_opts, 0, sizeof queue_opts);
+			memset(&queue_opts, 0, sizeof(queue_opts));
 			queue_opts.priority = DEFAULT_PRIORITY;
 			queue_opts.qlimit = DEFAULT_QLIMIT;
 			queue_opts.scheduler.qtype = ALTQT_NONE;
@@ -349,7 +349,7 @@ queue_opts_l	: queue_opts_l queue_opt
 		| queue_opt
 		;
 
-queue_opt	: BANDWIDTH bandwidth	{
+queue_opt	: BANDWIDTH bandwidth {
 			if (queue_opts.marker & QOM_BWSPEC) {
 				yyerror("bandwidth cannot be respecified");
 				YYERROR;
@@ -357,7 +357,7 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_BWSPEC;
 			queue_opts.queue_bwspec = $2;
 		}
-		| PRIORITY number	{
+		| PRIORITY number {
 			if (queue_opts.marker & QOM_PRIORITY) {
 				yyerror("priority cannot be respecified");
 				YYERROR;
@@ -369,7 +369,7 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_PRIORITY;
 			queue_opts.priority = $2;
 		}
-		| QLIMIT number	{
+		| QLIMIT number {
 			if (queue_opts.marker & QOM_QLIMIT) {
 				yyerror("qlimit cannot be respecified");
 				YYERROR;
@@ -381,7 +381,7 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_QLIMIT;
 			queue_opts.qlimit = $2;
 		}
-		| scheduler	{
+		| scheduler {
 			if (queue_opts.marker & QOM_SCHEDULER) {
 				yyerror("scheduler cannot be respecified");
 				YYERROR;
@@ -389,7 +389,7 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_SCHEDULER;
 			queue_opts.scheduler = $1;
 		}
-		| TBRSIZE number	{
+		| TBRSIZE number {
 			if (queue_opts.marker & QOM_TBRSIZE) {
 				yyerror("tbrsize cannot be respecified");
 				YYERROR;
@@ -406,7 +406,7 @@ queue_opt	: BANDWIDTH bandwidth	{
 bandwidth	: bw_spec {
 			struct node_queue_bw bw;
 
-			if (npfctl_eval_bw(&bw, $1)){
+			if (npfctl_eval_bw(&bw, $1)) {
 				YYERROR;
 				free($1);
 			}
@@ -418,38 +418,38 @@ bw_spec : BW_SPEC
 		{$$ = $1; }
 		;
 
-scheduler	: CBQ				{
+scheduler	: CBQ {
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = 0;
 		}
-		| CBQ PAR_OPEN cbqflags_list PAR_CLOSE	{
+		| CBQ PAR_OPEN cbqflags_list PAR_CLOSE {
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = $3;
 		}
-		| PRIQ				{
+		| PRIQ {
 			$$.qtype = ALTQT_PRIQ;
 			$$.data.priq_opts.flags = 0;
 		}
-		| PRIQ PAR_OPEN priqflags_list PAR_CLOSE	{
+		| PRIQ PAR_OPEN priqflags_list PAR_CLOSE {
 			$$.qtype = ALTQT_PRIQ;
 			$$.data.priq_opts.flags = $3;
 		}
-		| HFSC				{
+		| HFSC {
 			$$.qtype = ALTQT_HFSC;
 			bzero(&$$.data.hfsc_opts,
 			    sizeof(struct node_hfsc_opts));
 		}
-		| HFSC PAR_OPEN hfsc_opts PAR_CLOSE	{
+		| HFSC PAR_OPEN hfsc_opts PAR_CLOSE {
 			$$.qtype = ALTQT_HFSC;
 			$$.data.hfsc_opts = $3;
 		}
 		;
 
-cbqflags_list	: cbqflags_item				{ $$ |= $1; }
+cbqflags_list	: cbqflags_item	{ $$ |= $1; }
 		| cbqflags_list COMMA cbqflags_item	{ $$ |= $3; }
 		;
 
-cbqflags_item	: IDENTIFIER	{
+cbqflags_item	: IDENTIFIER {
 #ifdef CBQCLF_BORROW
 			if (!strcmp($1, "borrow"))
 				$$ = CBQCLF_BORROW;
@@ -470,11 +470,11 @@ cbqflags_item	: IDENTIFIER	{
 		| DEFAULT { $$ = CBQCLF_DEFCLASS; }
 		;
 
-priqflags_list	: priqflags_item			{ $$ |= $1; }
+priqflags_list	: priqflags_item	{ $$ |= $1; }
 		| priqflags_list COMMA priqflags_item	{ $$ |= $3; }
 		;
 
-priqflags_item	: IDENTIFIER	{
+priqflags_item	: IDENTIFIER {
 			if (!strcmp($1, "red"))
 				$$ = PRCF_RED;
 			else if (!strcmp($1, "ecn"))
@@ -493,10 +493,10 @@ priqflags_item	: IDENTIFIER	{
 
 hfsc_opts	:	{
 				memset(&hfsc_opts, 0,
-				    sizeof(struct node_hfsc_opts));
+				    sizeof(*$$));
 			}
-		    hfscopts_list				{
-			$$ = hfsc_opts;
+			hfsc_opts_list {
+				$$ = hfsc_opts;
 		}
 		;
 
@@ -504,7 +504,7 @@ hfscopts_list	: hfscopts_item
 		| hfscopts_list COMMA hfscopts_item
 		;
 
-hfscopts_item	: LINKSHARE bandwidth				{
+hfscopts_item	: LINKSHARE bandwidth {
 			if (hfsc_opts.linkshare.used) {
 				yyerror("linkshare already specified");
 				YYERROR;
@@ -523,7 +523,7 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.linkshare.m2 = $7;
 			hfsc_opts.linkshare.used = 1;
 		}
-		| REALTIME bandwidth				{
+		| REALTIME bandwidth {
 			if (hfsc_opts.realtime.used) {
 				yyerror("realtime already specified");
 				YYERROR;
@@ -542,7 +542,7 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.realtime.m2 = $7;
 			hfsc_opts.realtime.used = 1;
 		}
-		| UPPERLIMIT bandwidth				{
+		| UPPERLIMIT bandwidth {
 			if (hfsc_opts.upperlimit.used) {
 				yyerror("upperlimit already specified");
 				YYERROR;
@@ -561,7 +561,7 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.upperlimit.m2 = $7;
 			hfsc_opts.upperlimit.used = 1;
 		}
-		| IDENTIFIER	{
+		| IDENTIFIER {
 			if (!strcmp($1, "red"))
 				hfsc_opts.flags |= HFCF_RED;
 			else if (!strcmp($1, "ecn"))
@@ -578,21 +578,21 @@ hfscopts_item	: LINKSHARE bandwidth				{
 		| DEFAULT { hfsc_opts.flags |= HFCF_DEFAULTCLASS; }
 		;
 
-qassign		: /* empty */		{ $$ = NULL; }
+qassign		: /* empty */	{ $$ = NULL; }
 		| qassign_item		{ $$ = $1; }
 		| CURLY_OPEN qassign_list CURLY_CLOSE	{ $$ = $2; }
 		;
 
-qassign_list	: qassign_item			{ $$ = $1; }
-		| qassign_list COMMA qassign_item	{
+qassign_list	: qassign_item { $$ = $1; }
+		| qassign_list COMMA qassign_item {
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
 		}
 		;
 
-qassign_item	: IDENTIFIER			{
-			$$ = calloc(1, sizeof(struct node_queue));
+qassign_item	: IDENTIFIER {
+			$$ = calloc(1, sizeof(*$$));
 
 			if ($$ == NULL)
 				err(1, "qassign_item: calloc");
