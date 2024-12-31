@@ -244,7 +244,7 @@ hfsc_add_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
-	struct hfsc_opts *opts;
+	struct npf_hfsc_opts *opts;
 	struct service_curve rtsc, lssc, ulsc;
 
 	if ((hif = a->altq_disc) == NULL)

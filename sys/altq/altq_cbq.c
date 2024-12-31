@@ -310,7 +310,7 @@ cbq_add_queue(struct npf_altq *a)
 	struct rm_class	*borrow, *parent;
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
-	struct cbq_opts	*opts;
+	struct npf_cbq_opts	*opts;
 	int		i, error;
 
 	if ((cbqp = a->altq_disc) == NULL)
