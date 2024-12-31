@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.38.4.5 2024/11/28 16:33:25 martin Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.38.4.6 2024/12/31 01:30:24 snj Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38.4.5 2024/11/28 16:33:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38.4.6 2024/12/31 01:30:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38.4.5 2024/11/28 16:33:25 martin E
 #define VIRTIO_PRIVATE
 #include <dev/pci/virtiovar.h> /* XXX: move to non-pci */
 
+#if defined(__alpha__) || defined(__sparc64__)
+/*
+ * XXX VIRTIO_F_ACCESS_PLATFORM is required for standard PCI DMA
+ * XXX to work on these platforms, at least by Qemu.
+ * XXX
+ * XXX Generalize this later.
+ */
+#define	__NEED_VIRTIO_F_ACCESS_PLATFORM
+#endif /* __alpha__ || __sparc64__ */
 
 #define VIRTIO_PCI_LOG(_sc, _use_log, _fmt, _args...)	\
 do {							\
@@ -277,8 +286,28 @@ virtio_pci_attach(device_t parent, device_t self, void *aux)
 		ret = virtio_pci_attach_10(self, aux);
 	}
 	if (ret == 0 && revision == 0) {
-		/* revision 0 means 0.9 only or both 0.9 and 1.0 */
+		/*
+		 * revision 0 means 0.9 only or both 0.9 and 1.0.  The
+		 * latter are so-called "Transitional Devices".  For
+		 * those devices, we want to use the 1.0 interface if
+		 * possible.
+		 *
+		 * XXX Currently only on platforms that require 1.0
+		 * XXX features, such as VIRTIO_F_ACCESS_PLATFORM.
+		 */
+#ifdef __NEED_VIRTIO_F_ACCESS_PLATFORM
+		/* First, try to attach 1.0 */
+		ret = virtio_pci_attach_10(self, aux);
+		if (ret != 0) {
+			aprint_error_dev(self,
+			    "VirtIO 1.0 error = %d, falling back to 0.9\n",
+			    ret);
+			/* Fall back to 0.9. */
+			ret = virtio_pci_attach_09(self, aux);
+		}
+#else
 		ret = virtio_pci_attach_09(self, aux);
+#endif /* __NEED_VIRTIO_F_ACCESS_PLATFORM */
 	}
 	if (ret) {
 		aprint_error_dev(self, "cannot attach (%d)\n", ret);
@@ -798,6 +827,10 @@ virtio_pci_negotiate_features_10(struct virtio_softc *sc,
 	uint64_t host, negotiated, device_status;
 
 	guest_features |= VIRTIO_F_VERSION_1;
+#ifdef __NEED_VIRTIO_F_ACCESS_PLATFORM
+	/* XXX This could use some work. */
+	guest_features |= VIRTIO_F_ACCESS_PLATFORM;
+#endif /* __NEED_VIRTIO_F_ACCESS_PLATFORM */
 	/* notify on empty is 0.9 only */
 	guest_features &= ~VIRTIO_F_NOTIFY_ON_EMPTY;
 	sc->sc_active_features = 0;
