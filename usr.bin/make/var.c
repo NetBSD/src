@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1141 2024/11/23 22:59:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1142 2024/12/31 09:35:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1141 2024/11/23 22:59:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1142 2024/12/31 09:35:21 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -962,7 +962,7 @@ UnexportVar(Substring varname, UnexportWhat what)
 }
 
 static void
-UnexportVars(FStr *varnames, UnexportWhat what)
+UnexportVars(const char *varnames, UnexportWhat what)
 {
 	size_t i;
 	SubstringWords words;
@@ -970,7 +970,7 @@ UnexportVars(FStr *varnames, UnexportWhat what)
 	if (what == UNEXPORT_ENV)
 		ClearEnv();
 
-	words = Substring_Words(varnames->str, false);
+	words = Substring_Words(varnames, false);
 	for (i = 0; i < words.len; i++)
 		UnexportVar(words.words[i], what);
 	SubstringWords_Free(words);
@@ -987,7 +987,7 @@ Var_UnExport(bool isEnv, const char *arg)
 	FStr varnames;
 
 	GetVarnamesToUnexport(isEnv, arg, &varnames, &what);
-	UnexportVars(&varnames, what);
+	UnexportVars(varnames.str, what);
 	FStr_Done(&varnames);
 }
 
