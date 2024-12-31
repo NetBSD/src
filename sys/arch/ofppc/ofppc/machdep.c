@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2021/03/05 01:33:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.18.1 2024/12/31 01:17:02 snj Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2021/03/05 01:33:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.18.1 2024/12/31 01:17:02 snj Exp $");
 
 #include "opt_ofwoea.h"
 
@@ -136,9 +136,9 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		if (i == -1) {
 			OF_getprop(node, "name", model_name,
 			    sizeof(model_name));
-			model_init();
 		}
 	}
+	model_init();
 
 	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
 		node = OF_finddevice("/");
