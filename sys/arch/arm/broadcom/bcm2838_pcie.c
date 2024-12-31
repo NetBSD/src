@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.8 2024/12/30 14:46:37 skrll Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.9 2024/12/31 13:58:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.8 2024/12/30 14:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.9 2024/12/31 13:58:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,12 +72,12 @@ struct bcmstb_busspace {
 };
 
 struct bcmstb_softc {
-        bus_space_tag_t         sc_bst;
-        bus_space_handle_t      sc_bsh;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t      sc_bsh;
 	bus_dma_tag_t		sc_dmat;
 
-        kmutex_t                sc_lock;
-        const char              *sc_name;
+	kmutex_t		sc_lock;
+	const char	      *sc_name;
 
 	int			sc_phandle;
 
@@ -132,6 +132,7 @@ stb_write(struct bcmstb_softc *sc, int r, uint32_t v)
 {
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, r, v);
 }
+
 static inline uint32_t
 stb_read(struct bcmstb_softc *sc, int r)
 {
@@ -236,7 +237,7 @@ bcmstb_attach(device_t self, struct bcmstb_softc *sc)
 	int error;
 
 	// fdtbus_register_interrupt_controller(self, OF_child(sc->sc_phandle),
-	  //           &bcmstb_intrfuncs);
+	//	   &bcmstb_intrfuncs);
 
 	pc = &sc->sc_pc;
 
@@ -258,7 +259,6 @@ bcmstb_attach(device_t self, struct bcmstb_softc *sc)
 	pc->pc_intr_setattr = bcmstb_intr_setattr;
 	pc->pc_intr_establish = bcmstb_intr_establish;
 	pc->pc_intr_disestablish = bcmstb_intr_disestablish;
-
 
 	/* XXX bus-range */
 	sc->sc_bus_min = 0x00;
@@ -441,7 +441,7 @@ bcmstb_encode_size(int bits)
 static int
 bcmstb_setup(struct bcmstb_softc *sc)
 {
-        struct bcmstb_busspace * const bs = &sc->sc_mem;
+	struct bcmstb_busspace * const bs = &sc->sc_mem;
 	uint32_t w, m;
 	uint64_t ad;
 	int t, i, sz;
@@ -470,7 +470,7 @@ bcmstb_setup(struct bcmstb_softc *sc)
 	/*
 	 * XXX Inbound window for RPI4 is 3GB, should be parsed
 	 * from dma-ranges attribute
-	*/
+	 */
 	ad = 0;
 	sz = bcmstb_encode_size(32);
 
@@ -676,54 +676,54 @@ bcmstb_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *ilinep
 static int
 bcmstb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 {
-        struct bcmstb_softc *sc = pa->pa_pc->pc_intr_v;
-        u_int addr_cells, interrupt_cells;
-        const u_int *imap, *imask;
-        int imaplen, imasklen;
-        u_int match[4];
-        int index, off;
+	struct bcmstb_softc *sc = pa->pa_pc->pc_intr_v;
+	u_int addr_cells, interrupt_cells;
+	const u_int *imap, *imask;
+	int imaplen, imasklen;
+	u_int match[4];
+	int index, off;
 
-        if (pa->pa_intrpin == 0)
-                return EINVAL;
+	if (pa->pa_intrpin == 0)
+		return EINVAL;
 
-        imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
-        imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask",
+	imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
+	imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask",
 	     &imasklen);
-        if (imap == NULL || imask == NULL || imasklen != 16)
-                return EINVAL;
+	if (imap == NULL || imask == NULL || imasklen != 16)
+		return EINVAL;
 
 	off = CFG_OFFSET(pa->pa_bus, pa->pa_device, pa->pa_function, 0);
 
-        /* Convert attach args to specifier */
-        match[0] = htobe32(off) & imask[0];
-        match[1] = htobe32(0) & imask[1];
-        match[2] = htobe32(0) & imask[2];
-        match[3] = htobe32(pa->pa_intrpin) & imask[3];
+	/* Convert attach args to specifier */
+	match[0] = htobe32(off) & imask[0];
+	match[1] = htobe32(0) & imask[1];
+	match[2] = htobe32(0) & imask[2];
+	match[3] = htobe32(pa->pa_intrpin) & imask[3];
 
-        index = 0;
-        while (imaplen >= 20) {
-                const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
-                if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
-                        addr_cells = 2;
-                if (of_getprop_uint32(map_ihandle, "#interrupt-cells", &interrupt_cells))
-                        interrupt_cells = 0;
-                if (imaplen < (addr_cells + interrupt_cells) * 4)
-                        return ENXIO;
+	index = 0;
+	while (imaplen >= 20) {
+		const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
+		if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
+			addr_cells = 2;
+		if (of_getprop_uint32(map_ihandle, "#interrupt-cells", &interrupt_cells))
+			interrupt_cells = 0;
+		if (imaplen < (addr_cells + interrupt_cells) * 4)
+			return ENXIO;
 
-                if ((imap[0] & imask[0]) == match[0] &&
-                    (imap[1] & imask[1]) == match[1] &&
-                    (imap[2] & imask[2]) == match[2] &&
-                    (imap[3] & imask[3]) == match[3]) {
-                        *ih = index;
-                        return 0;
-                }
+		if ((imap[0] & imask[0]) == match[0] &&
+		    (imap[1] & imask[1]) == match[1] &&
+		    (imap[2] & imask[2]) == match[2] &&
+		    (imap[3] & imask[3]) == match[3]) {
+			*ih = index;
+			return 0;
+		}
 
-                imap += (5 + addr_cells + interrupt_cells);
-                imaplen -= (5 + addr_cells + interrupt_cells) * 4;
-                index++;
-        }
+		imap += (5 + addr_cells + interrupt_cells);
+		imaplen -= (5 + addr_cells + interrupt_cells) * 4;
+		index++;
+	}
 
-        return EINVAL;
+	return EINVAL;
 }
 
 static const u_int *
@@ -826,7 +826,7 @@ bcmstb_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 
 	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0) {
 //		return arm_pci_msi_intr_establish(&sc->sc_pc, ih, ipl,
-//		                                  callback, arg, xname);
+//						  callback, arg, xname);
 		return NULL;
 	}
 
@@ -836,7 +836,7 @@ bcmstb_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 		return NULL;
 
 	return fdtbus_intr_establish_raw(ihandle, specifier, ipl, flags,
-	                                 callback, arg, xname);
+					 callback, arg, xname);
 }
 
 static void
@@ -851,24 +851,23 @@ static int
 bcmstb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
-        struct bcmstb_busspace * const bs = t;
+	struct bcmstb_busspace * const bs = t;
 
-//        if ((bs->flags & PCI_FLAGS_IO_OKAY) != 0) {
-                /* Force strongly ordered mapping for all I/O space */
-                flag = BUS_SPACE_MAP_NONPOSTED;
-//        }
+//	if ((bs->flags & PCI_FLAGS_IO_OKAY) != 0) {
+		/* Force strongly ordered mapping for all I/O space */
+		flag = BUS_SPACE_MAP_NONPOSTED;
+//	}
 
-        for (size_t i = 0; i < bs->nranges; i++) {
-                const bus_addr_t rmin = bs->ranges[i].bpci;
-                const bus_addr_t rmax = bs->ranges[i].bpci - 1 + bs->ranges[i]
+	for (size_t i = 0; i < bs->nranges; i++) {
+		const bus_addr_t rmin = bs->ranges[i].bpci;
+		const bus_addr_t rmax = bs->ranges[i].bpci - 1 + bs->ranges[i]
 .size;
-                if ((bpa >= rmin) && ((bpa - 1 + size) <= rmax)) {
+		if ((bpa >= rmin) && ((bpa - 1 + size) <= rmax)) {
 			const bus_addr_t pa = bs->ranges[i].bbus + (bpa - rmin);
 
-                        return bs->map(t, pa, size, flag, bshp);
-                }
-        }
+			return bs->map(t, pa, size, flag, bshp);
+		}
+	}
 
-        return ERANGE;
+	return ERANGE;
 }
-
