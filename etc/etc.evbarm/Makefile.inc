@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.132 2024/12/29 09:46:44 jmmv Exp $
+#	$NetBSD: Makefile.inc,v 1.133 2024/12/31 08:02:48 jmmv Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -95,9 +95,7 @@ __mkimage: .USE
 	MKPOSTFIX=${MKPOSTFIX} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
-	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
-	${TOOL_GZIP} -cd ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz \
-		> ${IMAGE.dir}/${.TARGET:S/smp_//}.img
+	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img
 .for f in ${INSTALLBOOT_BOARDS}
 	@echo "===> Making bootable image ${IMAGE.dir:T}/${.TARGET:S/smp_//}-${f}.img.gz"
 	@cp ${IMAGE.dir}/${.TARGET:S/smp_//}.img ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
@@ -106,7 +104,8 @@ __mkimage: .USE
 		&& ${TOOL_GZIP} -f ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img \
 		|| rm ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
 .endfor
-	rm ${IMAGE.dir}/${.TARGET:S/smp_//}.img
+	@echo "===> Compressing image ${IMAGE.dir}/${.TARGET:S/smp_//}.img"
+	${TOOL_GZIP} -f ${GZIP_N_FLAG} -9 ${IMAGE.dir}/${.TARGET:S/smp_//}.img
 
 ARCHES.earmv4=		armv4
 ARCHES.earmv4eb=	armv4
