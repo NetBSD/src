@@ -153,7 +153,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 			if ((node = npfctl_find_altq_node(*root, pa.altq.qname,
 			    pa.altq.ifname)) != NULL) {
 				memcpy(&node->qstats.data, &qstats.data,
-				    sizeof(qstats.data));
+				    sizeof(node->qstats.data));
 				update_avg(node);
 			} else {
 				npfctl_insert_altq_node(root, pa.altq, qstats);
@@ -171,8 +171,8 @@ npfctl_insert_altq_node(struct npf_altq_node **root,
 	node = calloc(1, sizeof(*node));
 	if (node == NULL)
 		err(EXIT_FAILURE, "npfctl_insert_altq_node: calloc");
-	memcpy(&node->altq, &altq, sizeof(altq));
-	memcpy(&node->qstats, &qstats, sizeof(qstats));
+	memcpy(&node->altq, &altq, sizeof(node->altq));
+	memcpy(&node->qstats, &qstats, sizeof(node->qstats));
 	node->next = node->children = NULL;
 	if (*root == NULL)
 		*root = node;
@@ -185,7 +185,7 @@ npfctl_insert_altq_node(struct npf_altq_node **root,
 		struct npf_altq_node	*parent;
 		parent = npfctl_find_altq_node(*root, altq.parent, altq.ifname);
 		if (parent == NULL)
-			errx(1, "parent %s not found", altq.parent);
+			errx(EXIT_FAILURE, "parent %s not found", altq.parent);
 		if (parent->children == NULL)
 			parent->children = node;
 		else {
