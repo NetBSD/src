@@ -65,8 +65,10 @@ static int	eval_npfqueue_hfsc(struct npf_altq *);
 static int	check_commit_hfsc(struct npf_altq *);
 static int	print_hfsc_opts(const struct npf_altq *,
 		    const struct node_queue_opt *);
-static void 	npfctl_append_queue(struct npf_altq pa, char *,
+static void 	altq_append_queues(struct npf_altq pa, char *,
 			char *);
+static void 	queue_append_queues(struct npf_altq *, struct node_queue *,
+				struct node_queue *);
 static void		 gsc_add_sc(struct gen_sc *, struct service_curve *);
 static int		 is_gsc_under_sc(struct gen_sc *,
 			     struct service_curve *);
@@ -198,8 +200,12 @@ npf_add_root_queue(struct npf_altq pa, char * ifname,
 	return errs;
 }
 
+/*
+ * child queues set on altq decl will be appended to global queue here:
+ * altq on .... queue {a,b ,c }
+ */
 static void
-npfctl_append_queue(struct npf_altq pa, char *ifname,
+altq_append_queues(struct npf_altq pa, char *ifname,
 	char qname[], struct node_queue *queue)
 {
 	struct node_queue	*n;
@@ -219,6 +225,42 @@ npfctl_append_queue(struct npf_altq pa, char *ifname,
 		sizeof(n->ifname)) >= sizeof(n->ifname))
 		errx(EXIT_FAILURE, "append_queue: strlcpy");
 	n->scheduler = pa.scheduler;
+	n->next = NULL;
+	n->tail = n;
+	if (queues == NULL)
+		queues = n;
+	else {
+		queues->tail->next = n;
+		queues->tail = n;
+	}
+}
+
+/*
+ * child queues set on new defining child queues appended on a global queue:
+ * queue .... queue {a, b, b}
+ */
+static void
+queue_append_queues(struct npf_altq *a, struct node_queue *tqueue,
+	struct node_queue *nq)
+{
+	struct node_queue	*n;
+	n = calloc(1,
+		sizeof(*n));
+	if (n == NULL)
+		err(EXIT_FAILURE, "expand_queue: calloc");
+	if (strlcpy(n->parent, a->qname,
+		sizeof(n->parent)) >=
+		sizeof(n->parent))
+		errx(EXIT_FAILURE, "expand_queue strlcpy");
+	if (strlcpy(n->queue, nq->queue,
+		sizeof(n->queue)) >=
+		sizeof(n->queue))
+		errx(EXIT_FAILURE, "expand_queue strlcpy");
+	if (strlcpy(n->ifname, tqueue->ifname,
+		sizeof(n->ifname)) >=
+		sizeof(n->ifname))
+		errx(EXIT_FAILURE, "expand_queue strlcpy");
+	n->scheduler = tqueue->scheduler;
 	n->next = NULL;
 	n->tail = n;
 	if (queues == NULL)
@@ -265,7 +307,7 @@ expand_altq(struct npf_altq *a, const char *ifname,
 				errx(EXIT_FAILURE, "cannot add root queue");
 			}
 		LOOP_THROUGH(struct node_queue, queue, nqueues,
-			npfctl_append_queue(pa, ifname, qname, queue));
+			altq_append_queues(pa, ifname, qname, queue));
 	}
 	FREE_LIST(struct node_queue, nqueues);
 
@@ -341,31 +383,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
 					errs++;
 					continue;
 				}
-				n = calloc(1,
-					sizeof(*n));
-				if (n == NULL)
-					err(EXIT_FAILURE, "expand_queue: calloc");
-				if (strlcpy(n->parent, a->qname,
-					sizeof(n->parent)) >=
-					sizeof(n->parent))
-					errx(1, "expand_queue strlcpy");
-				if (strlcpy(n->queue, nq->queue,
-					sizeof(n->queue)) >=
-					sizeof(n->queue))
-					errx(1, "expand_queue strlcpy");
-				if (strlcpy(n->ifname, tqueue->ifname,
-					sizeof(n->ifname)) >=
-					sizeof(n->ifname))
-					errx(1, "expand_queue strlcpy");
-				n->scheduler = tqueue->scheduler;
-				n->next = NULL;
-				n->tail = n;
-				if (queues == NULL)
-					queues = n;
-				else {
-					queues->tail->next = n;
-					queues->tail = n;
-				}
+				queue_append_queues(a, tqueue, nq);
 			}
 		}
 	);
