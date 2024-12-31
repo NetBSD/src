@@ -69,6 +69,8 @@ static void 	altq_append_queues(struct npf_altq pa, char *,
 			char *);
 static void 	queue_append_queues(struct npf_altq *, struct node_queue *,
 				struct node_queue *);
+static int 		scheduler_check(struct npf_altq *, struct node_queue *,
+				struct node_queue *, struct node_queue_bw);
 static void		 gsc_add_sc(struct gen_sc *, struct service_curve *);
 static int		 is_gsc_under_sc(struct gen_sc *,
 			     struct service_curve *);
@@ -271,6 +273,38 @@ queue_append_queues(struct npf_altq *a, struct node_queue *tqueue,
 	}
 }
 
+static int
+scheduler_check(struct npf_altq *pa, struct node_queue *tqueue,
+	struct node_queue *nqueues, struct node_queue_bw bwspec)
+{
+	if (pa->scheduler != ALTQT_NONE &&
+		pa->scheduler != tqueue->scheduler) {
+		yyerror("exactly one scheduler type "
+			"per interface allowed");
+		return -1;
+	}
+	pa->scheduler = tqueue->scheduler;
+	/* scheduler dependent error checking */
+	switch (pa->scheduler) {
+	case ALTQT_PRIQ:
+		if (nqueues != NULL) {
+			yyerror("priq queues cannot "
+				"have child queues");
+			return -1;
+		}
+		if (bwspec.bw_absolute > 0 ||
+			bwspec.bw_percent < 100) {
+			yyerror("priq doesn't take "
+				"bandwidth");
+			return -1;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
 int
 expand_altq(struct npf_altq *a, const char *ifname,
     struct node_queue *nqueues, struct node_queue_bw bwspec,
@@ -337,34 +371,9 @@ expand_queue(struct npf_altq *a, const char *ifname,
 			/* found ourself in the child queues */
 			found++;
 			memcpy(&pa, a, sizeof(pa));
-			if (pa.scheduler != ALTQT_NONE &&
-				pa.scheduler != tqueue->scheduler) {
-				yyerror("exactly one scheduler type "
-					"per interface allowed");
-				errs++;
+			if (scheduler_check(&pa, tqueue, nqueues, bwspec) == -1)
 				goto out;
-			}
-			pa.scheduler = tqueue->scheduler;
-			/* scheduler dependent error checking */
-			switch (pa.scheduler) {
-			case ALTQT_PRIQ:
-				if (nqueues != NULL) {
-					yyerror("priq queues cannot "
-						"have child queues");
-					errs++;
-					goto out;
-				}
-				if (bwspec.bw_absolute > 0 ||
-					bwspec.bw_percent < 100) {
-					yyerror("priq doesn't take "
-						"bandwidth");
-					errs++;
-					goto out;
-				}
-				break;
-			default:
-				break;
-			}
+
 			if (strlcpy(pa.ifname, tqueue->ifname,
 				sizeof(pa.ifname)) >= sizeof(pa.ifname))
 				errx(1, "expand_queue: strlcpy");
