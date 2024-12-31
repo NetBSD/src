@@ -52,6 +52,8 @@
 #include "npfctl.h"
 
 LIST_HEAD(gen_sc, segment) rtsc, lssc;
+static int	npf_add_root_queue(struct npf_altq, char *,
+			char *, struct node_queue_opt *);
 static int	eval_npfqueue_cbq(struct npf_altq *);
 static int	cbq_compute_idletime(struct npf_altq *);
 static int	check_commit_cbq(struct npf_altq *);
@@ -63,6 +65,8 @@ static int	eval_npfqueue_hfsc(struct npf_altq *);
 static int	check_commit_hfsc(struct npf_altq *);
 static int	print_hfsc_opts(const struct npf_altq *,
 		    const struct node_queue_opt *);
+static void 	npfctl_append_queue(struct npf_altq pa, char *,
+			char *);
 static void		 gsc_add_sc(struct gen_sc *, struct service_curve *);
 static int		 is_gsc_under_sc(struct gen_sc *,
 			     struct service_curve *);
@@ -97,7 +101,7 @@ struct node_queue *queues = NULL;
 	do { \
 		T *n; \
 		if (r == NULL) { \
-			r = calloc(1, sizeof(T)); \
+			r = calloc(1, sizeof(*r)); \
 			if (r == NULL) \
 				err(EXIT_FAILURE, "LOOP: calloc"); \
 			r->next = NULL; \
@@ -115,9 +119,9 @@ int
 npfctl_test_altqsupport(int dev)
 {
 	struct npfioc_altq pa;
-	if (ioctl(dev, IOC_NPF_GET_ALTQS, &pa)) {
+	if (ioctl(dev, IOC_NPF_GET_ALTQS, &pa) == -1) {
 		if (errno == ENODEV) {
-			fprintf(stderr, "No ALTQ support in kernel\n"
+			warnx("No ALTQ support in kernel\n"
 				"ALTQ related functions disabled\n");
 			return 0;
 		} else
@@ -127,7 +131,7 @@ npfctl_test_altqsupport(int dev)
 }
 /* evaluate bandwidth */
 int
-npfctl_eval_bw(struct node_queue_bw * bw, char * bw_spec)
+npfctl_eval_bw(struct node_queue_bw *bw, char *bw_spec)
 {
 	double	 bps;
 	char	*cp;
@@ -159,18 +163,83 @@ npfctl_eval_bw(struct node_queue_bw * bw, char * bw_spec)
 	return 0;
 }
 
+/* create root queue for cbq or hfsc */
+static int
+npf_add_root_queue(struct npf_altq pa, char * ifname,
+	char qname[], struct node_queue_opt *opts)
+{
+	struct node_queue_bw	bw;
+	struct npf_altq pb;
+	int errs = 0;
+
+	/* now create a root queue */
+	memset(&pb, 0, sizeof(pb));
+	if (strlcpy(qname, "root_", sizeof(qname)) >=
+		sizeof(qname))
+		errx(EXIT_FAILURE, "add_root: strlcpy");
+	if (strlcat(qname, ifname,
+		sizeof(qname)) >= sizeof(qname))
+		errx(EXIT_FAILURE, "add_root: strlcat");
+	if (strlcpy(pb.qname, qname,
+		sizeof(pb.qname)) >= sizeof(pb.qname))
+		errx(EXIT_FAILURE, "add_root: strlcpy");
+	if (strlcpy(pb.ifname, ifname,
+		sizeof(pb.ifname)) >= sizeof(pb.ifname))
+		errx(EXIT_FAILURE, "add_root: strlcpy");
+	pb.qlimit = pa.qlimit;
+	pb.scheduler = pa.scheduler;
+	bw.bw_absolute = pa.ifbandwidth;
+	bw.bw_percent = 0;
+	if (eval_npfqueue(&pb, &bw, opts))
+		errs++;
+	else
+		if (npfctl_add_altq(&pb))
+			errs++;
+	return errs;
+}
+
+static void
+npfctl_append_queue(struct npf_altq pa, char *ifname,
+	char qname[], struct node_queue *queue)
+{
+	struct node_queue	*n;
+	n = calloc(1, sizeof(*n));
+	if (n == NULL)
+		err(EXIT_FAILURE, "append_queue: calloc");
+	if (pa.scheduler == ALTQT_CBQ ||
+		pa.scheduler == ALTQT_HFSC)
+		if (strlcpy(n->parent, qname,
+			sizeof(n->parent)) >=
+			sizeof(n->parent))
+			errx(EXIT_FAILURE, "append_queue: strlcpy");
+	if (strlcpy(n->queue, queue->queue,
+		sizeof(n->queue)) >= sizeof(n->queue))
+		errx(EXIT_FAILURE, "append_queue: strlcpy");
+	if (strlcpy(n->ifname, ifname,
+		sizeof(n->ifname)) >= sizeof(n->ifname))
+		errx(EXIT_FAILURE, "append_queue: strlcpy");
+	n->scheduler = pa.scheduler;
+	n->next = NULL;
+	n->tail = n;
+	if (queues == NULL)
+		queues = n;
+	else {
+		queues->tail->next = n;
+		queues->tail = n;
+	}
+}
+
 int
 expand_altq(struct npf_altq *a, const char *ifname,
     struct node_queue *nqueues, struct node_queue_bw bwspec,
     struct node_queue_opt *opts)
 {
-	struct npf_altq		 pa, pb;
+	struct npf_altq		 pa;
 	char			 qname[NPF_QNAME_SIZE];
-	struct node_queue	*n;
-	struct node_queue_bw	 bw;
 	int			 errs = 0;
 	npfdev = npfctl_open_dev(NPF_DEV_PATH);
-	memcpy(&pa, a, sizeof(*a));
+
+	memcpy(&pa, a, sizeof(pa));
 	if (strlcpy(pa.ifname, ifname,
 		sizeof(pa.ifname)) >= sizeof(pa.ifname))
 		errx(1, "expand_altq: strlcpy");
@@ -187,59 +256,16 @@ expand_altq(struct npf_altq *a, const char *ifname,
 					errs++;
 				}
 			} else
-				errx(1, "cannot begin altq: altq_begin");
+				errx(EXIT_FAILURE, "cannot begin altq: altq_begin");
+
 		if (pa.scheduler == ALTQT_CBQ ||
 			pa.scheduler == ALTQT_HFSC) {
 			/* now create a root queue */
-			memset(&pb, 0, sizeof(pb));
-			if (strlcpy(qname, "root_", sizeof(qname)) >=
-				sizeof(qname))
-				errx(1, "expand_altq: strlcpy");
-			if (strlcat(qname, ifname,
-				sizeof(qname)) >= sizeof(qname))
-				errx(1, "expand_altq: strlcat");
-			if (strlcpy(pb.qname, qname,
-				sizeof(pb.qname)) >= sizeof(pb.qname))
-				errx(1, "expand_altq: strlcpy");
-			if (strlcpy(pb.ifname, ifname,
-				sizeof(pb.ifname)) >= sizeof(pb.ifname))
-				errx(1, "expand_altq: strlcpy");
-			pb.qlimit = pa.qlimit;
-			pb.scheduler = pa.scheduler;
-			bw.bw_absolute = pa.ifbandwidth;
-			bw.bw_percent = 0;
-			if (eval_npfqueue(&pb, &bw, opts))
-				errs++;
-			else
-				if (npfctl_add_altq(&pb))
-					errs++;
-		}
-		LOOP_THROUGH(struct node_queue, queue, nqueues,
-			n = calloc(1, sizeof(struct node_queue));
-			if (n == NULL)
-				err(EXIT_FAILURE, "expand_altq: calloc");
-			if (pa.scheduler == ALTQT_CBQ ||
-				pa.scheduler == ALTQT_HFSC)
-				if (strlcpy(n->parent, qname,
-					sizeof(n->parent)) >=
-					sizeof(n->parent))
-					errx(1, "expand_altq: strlcpy");
-			if (strlcpy(n->queue, queue->queue,
-				sizeof(n->queue)) >= sizeof(n->queue))
-				errx(1, "expand_altq: strlcpy");
-			if (strlcpy(n->ifname, ifname,
-				sizeof(n->ifname)) >= sizeof(n->ifname))
-				errx(1, "expand_altq: strlcpy");
-			n->scheduler = pa.scheduler;
-			n->next = NULL;
-			n->tail = n;
-			if (queues == NULL)
-				queues = n;
-			else {
-				queues->tail->next = n;
-				queues->tail = n;
+			if (npf_add_root_queue(pa, ifname, qname, opts))
+				errx(EXIT_FAILURE, "cannot add root queue");
 			}
-		);
+		LOOP_THROUGH(struct node_queue, queue, nqueues,
+			npfctl_append_queue(pa, ifname, qname, queue));
 	}
 	FREE_LIST(struct node_queue, nqueues);
 
@@ -268,7 +294,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
 			(strncmp(ifname, tqueue->ifname, IFNAMSIZ)))){
 			/* found ourself in the child queues */
 			found++;
-			memcpy(&pa, a, sizeof(*a));
+			memcpy(&pa, a, sizeof(pa));
 			if (pa.scheduler != ALTQT_NONE &&
 				pa.scheduler != tqueue->scheduler) {
 				yyerror("exactly one scheduler type "
@@ -316,7 +342,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
 					continue;
 				}
 				n = calloc(1,
-					sizeof(struct node_queue));
+					sizeof(*n));
 				if (n == NULL)
 					err(EXIT_FAILURE, "expand_queue: calloc");
 				if (strlcpy(n->parent, a->qname,
@@ -453,7 +479,7 @@ npfctl_add_altq(struct npf_altq *a)
 	struct npfioc_altq *npaltq;
 	if ((npaltq =  malloc(sizeof(*npaltq))) == NULL)
 		err(EXIT_FAILURE, "malloc");
-	memcpy(&npaltq->altq, a, sizeof(struct npf_altq));
+	memcpy(&npaltq->altq, a, sizeof(npaltq->altq));
 	if (ioctl(npfdev, IOC_NPF_ADD_ALTQ, npaltq)) {
 		if (errno == ENXIO)
 			errx(1, "qtype not configured");
@@ -474,7 +500,7 @@ npfaltq_store(struct npf_altq *a)
 	struct npf_altq	*altq;
 	if ((altq = malloc(sizeof(*altq))) == NULL)
 		err(EXIT_FAILURE, "malloc");
-	memcpy(altq, a, sizeof(*a));
+	memcpy(altq, a, sizeof(*altq));
 	TAILQ_INSERT_TAIL(&altqs, altq, entries);
 	/* check altq presence in config */
 }
