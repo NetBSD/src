@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.31.2.1 2023/08/11 14:35:25 martin Exp $
+.\"	$NetBSD: rnd.9,v 1.31.2.2 2024/12/31 01:35:10 snj Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,7 +176,7 @@ or
 issues calls to each source's
 .Fa callback
 in serial \(em it never issues two calls to the same source's callback
-at the same time in two differen threads or on two different CPUs.
+at the same time in two different threads or on two different CPUs.
 .Pp
 The callback may be invoked in thread context or soft interrupt
 context, up to
