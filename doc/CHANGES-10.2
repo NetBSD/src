@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.1 2024/12/20 18:31:34 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.2 2024/12/31 01:47:13 snj Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -10,4 +10,42 @@ external/gpl2/groff/tmac/mdoc.local             patched by hand
 sys/sys/param.h                                 patched by hand
 
 	Welcome to 10.1_STABLE!
+
+sys/arch/ofppc/ofppc/machdep.c			1.121
+
+	PR 58909: call model_init() always, even if we could not
+	fetch a "model" or "name" property.
+	[martin, ticket #1030]
+
+build.sh					1.383, 1.384, 1.388
+
+	Add a new operation "show-revisionid" that extracts a marker
+	usable to recreate the source (depending on the revision control
+	system in use).
+	[martin, ticket #1031]
+
+sys/dev/pci/virtio_pci.c			1.44
+sys/dev/pci/virtioreg.h				1.13
+
+	PR port-sparc64/57290: On alpha and sparc64, use VirtIO 1.0 and
+	VIRTIO_F_ACCESS_PLATFORM so that DMA to PCI-attached VirtIO
+	devices works properly.  This is needed for Qemu to select the
+	appropriate address space for PCI DMA.
+	[martin, ticket #1032]
+
+share/man/man9/rnd.9				1.33
+
+	fix typo in rnd(9) documentation.
+	[andvar, ticket #1033]
+
+bin/sh/var.c					1.88
+
+	Fix a core dump that can occur if TZ is unset and ToD_FORMAT
+	contains and strftime() conversions which need to know the zone.
+	[kre, ticket #1034]
+
+sys/arch/sparc64/sparc64/trap.c			1.199
+
+	PR 58936: do not panic if we hit a VA-hole address in copyin/copyout.
+	[martin, ticket #1035]
 
