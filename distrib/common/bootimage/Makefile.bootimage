@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.41 2024/06/26 09:13:47 martin Exp $
+#	$NetBSD: Makefile.bootimage,v 1.42 2024/12/31 06:58:00 jmmv Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -244,7 +244,10 @@ SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '
 #
 # definitions to create root fs
 #
-SETS_DEFAULT=	modules base etc comp games gpufw man misc rescue tests text
+SETS_DEFAULT=	modules base etc comp games gpufw man misc rescue text
+.if ${MKATF} != "no"
+SETS_DEFAULT+=	tests
+.endif
 .if ${MKCOMPAT} != "no"
 SETS_DEFAULT+=	base32
 .endif
