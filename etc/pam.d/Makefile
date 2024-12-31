@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/12/30 21:59:08 jmmv Exp $
+# $NetBSD: Makefile,v 1.13 2024/12/31 20:27:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,14 +11,16 @@ FILESMODE_README=444
 
 .for f in display_manager ftpd sshd su system
 FILESBUILD_$f=	yes
+.endfor
 
-$f: $f.in
+.SUFFIXES: .in
+
+.in:
 	${_MKTARGET_CREATE}
 .if ${MKSKEY} != "no"
-	cp $> $@
+	cp ${.IMPSRC} ${.TARGET}
 .else
-	${TOOL_SED} -e '/pam_skey/d' < $> > $@
+	${TOOL_SED} -e '/pam_skey/d' < ${.IMPSRC} > ${.TARGET}
 .endif
-.endfor
 
 .include <bsd.prog.mk>
