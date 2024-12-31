@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.36 2024/04/08 21:28:35 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.36 2024/04/08 21:28:35 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -742,8 +742,10 @@ ATF_TC_BODY(snprintb, tc)
 	// new style bit-field, difference between '=' and ':'
 	//
 	// The ':' conversion can almost emulate the '=' conversion, without the
-	// numeric output and with a different separator. It's best to use
-	// either 'f' with '=', or 'F' with ':', but not mix them.
+	// numeric output and with a different separator.
+	//
+	// The 'f' and '=' conversions are used together, the 'F' and ':'
+	// conversions are used together, but these two groups cannot be mixed.
 	h_snprintb(
 	    "\177\020"
 	    "f\000\004field\0"
@@ -757,23 +759,23 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field default, fixed string
 	//
-	// The 'f' conversion pairs up with the '=' conversion,
-	// the 'F' conversion pairs up with the ':' conversion,
-	// but there's only one 'default' conversion for both variants,
-	// so its description should include the '=' when used with 'f' but
-	// not with 'F'.
+	// When used with the 'f' conversion, the '*' conversion should
+	// start with '=' to match the rest of the format.
+	//
+	// When used with the 'F' conversion, the '*' conversion should not
+	// start with '=' to avoid the wrong punctuation ',=' in the output.
 	h_snprintb(
 	    "\177\020"
 	    "f\030\010f1\0"
-		"*default\0"
+		"*default-f\0"
 	    "f\020\010f2\0"
-		"*=default\0"
+		"*=default-f\0"
 	    "F\010\010\0"
-		"*default\0"
+		"*default-F\0"
 	    "F\010\010\0"
-		"*=default\0",
+		"*=default-F\0",
 	    0x11223344,
-	    "0x11223344<f1=0x11default,f2=0x22=default,default,=default>");
+	    "0x11223344<f1=0x11default-f,f2=0x22=default-f,default-F,=default-F>");
 
 	// new style bit-field default, numeric conversion specifier
 	h_snprintb(
