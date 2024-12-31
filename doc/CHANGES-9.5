@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.44 2024/12/15 15:05:18 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.45 2024/12/31 01:10:40 snj Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -694,4 +694,11 @@ lib/libpthread/res_state.c			1.8
 
 	libpthread: PR 58888: zero-initialize res_state objects.
 	[riastradh, ticket #1930]
+
+build.sh					1.383, 1.384, 1.388 via patch
+
+	Add a new operation "show-revisionid" that extracts a marker
+	usable to recreate the source (depending on the revision control
+	system in use).
+	[martin, ticket #1931]
 
