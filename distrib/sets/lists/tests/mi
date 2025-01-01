@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1353 2024/12/23 00:43:44 riastradh Exp $
+# $NetBSD: mi,v 1.1354 2025/01/01 18:15:48 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3205,6 +3205,7 @@
 ./usr/tests/lib/libc/regex/t_exhaust			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/t_regex			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/t_regex_att			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/regex/t_regex_binary		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/rpc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/rpc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/rpc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
