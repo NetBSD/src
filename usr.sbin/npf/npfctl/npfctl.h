@@ -270,8 +270,7 @@ void		npfctl_config_build(void);
 int		npfctl_config_send(int);
 nl_config_t *	npfctl_config_ref(void);
 int npfctl_config_print(int);
-npfctl_config_show(int, int, char **);
-int		npfctl_config_show(int);
+int npfctl_config_show(int, int, char **);
 void		npfctl_config_save(nl_config_t *, const char *);
 int		npfctl_ruleset_show(int, const char *);
 int npfctl_config_flush(int, int, char **);
@@ -333,6 +332,7 @@ int npf_rule_qnames_exists(const char *);
 int check_commit_altq(void);
 int  npf_altq_destroy(int);
 int npfctl_print_altq(int);
+int npfctl_show_altq(int);
 
 /*
  * For the systems which do not define TH_ECE and TW_CRW.
