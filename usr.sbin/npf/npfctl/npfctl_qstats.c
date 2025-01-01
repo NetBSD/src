@@ -124,7 +124,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 	memset(&pa, 0, sizeof(pa));
 	memset(&pq, 0, sizeof(pq));
 	memset(&qstats, 0, sizeof(qstats));
-	if (ioctl(fd, IOC_NPF_GET_ALTQ, &pa)) {
+	if (ioctl(fd, IOC_NPF_GET_ALTQS, &pa)) {
 		warn("IOC_NPF_GET_ALTQS");
 		return -1;
 	}
@@ -137,7 +137,7 @@ npfctl_update_qstats(int fd, struct npf_altq_node **root)
 	mnr = pa.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pa.nr = nr;
-		if (ioctl(fd, IOC_NPF_GET_ALTQS, &pa)) {
+		if (ioctl(fd, IOC_NPF_GET_ALTQ, &pa)) {
 			warn("IOC_NPF_GET_ALTQ");
 			return -1;
 		}
