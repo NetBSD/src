@@ -90,7 +90,7 @@ npfctl_show_altq(int fd)
 	if (nodes == 0)
 		printf("No queue in use\n");
 	for (node = root; node != NULL; node = node->next) {
-		if (node->altq.ifname == NULL)
+		if (node->altq.ifname[0] == '0')
 			continue;
 
 		npfctl_print_altq_node(fd, node, 0);
@@ -103,7 +103,7 @@ npfctl_show_altq(int fd)
 		if ((nodes = npfctl_update_qstats(fd, &root)) == -1)
 			return -1;
 		for (node = root; node != NULL; node = node->next) {
-			if (node->altq.ifname == NULL)
+			if (node->altq.ifname[0] == '0')
 				continue;
 			npfctl_print_altq_node(fd, node, 0);
 		}
