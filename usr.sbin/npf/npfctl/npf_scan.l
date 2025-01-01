@@ -197,7 +197,6 @@ qlimit			return QLIMIT;
 "!"			return EXCL_MARK;
 
 /* bandwidth specification rule */
-
 {NUMBER}[\.]*[0-9]*{BW_UNIT} {
 			yylval.str = estrndup(yytext, yyleng);
 			return BW_SPEC;
