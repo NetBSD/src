@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Mindaugas Rasiukevicius.
+ * by Mindaugas Rasiukevicius and Emmanuel Nyarko
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -525,7 +525,7 @@ npfctl_print_altq(int fd)
 	mnr = pa.nr;
 	for (nr = 0; nr < mnr; nr++) {
 		pa.nr = nr;
-		if (ioctl(fd, IOC_NPF_GET_ALTQ, &pa)) {
+		if (ioctl(fd, IOC_NPF_GET_ALTQS, &pa)) {
 			warn("IOC_NPF_GET_ALTQ");
 			return -1;
 		}
