@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.15 2024/07/16 12:01:19 riastradh Exp $
+#	$NetBSD: GENERIC.common,v 1.16 2025/01/01 17:53:07 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -149,13 +149,23 @@ qemufwcfg* 	at fdt?			# QEMU Firmware Configuration device
 # RTC devices
 gfrtc* 		at fdt?			# Google Goldfish RTC
 
+# PCIE
+pcihost* 	at fdt?			# Generic PCI host controller
+pci* 		at pcibus?
+ppb* 		at pci? dev ? function ?
+pci* 		at ppb?
+
 # USB
 xhci* 		at fdt?			# XHCI
+xhci*		at pci?			# XHCI
 usb* 		at usbus?
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
 pseudo-device 	sequencer		# MIDI sequencer
 
+# NVMe
+nvme* 		at pci? dev ? function ?
+ld* 		at nvme? nsid ?
 
 # Virtio devices
 virtio* 	at fdt?			# Virtio MMIO device
