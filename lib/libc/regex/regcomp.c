@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.48 2023/08/30 20:37:24 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.49 2025/01/01 18:19:50 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.48 2023/08/30 20:37:24 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.49 2025/01/01 18:19:50 christos Exp $");
 
 #ifndef LIBHACK
 #define REGEX_GNU_EXTENSIONS
@@ -1764,8 +1764,7 @@ CHadd(struct parse *p, cset *cs, wint_t ch)
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(cs != NULL);
 
-	assert(ch >= 0);
-	if (ch < NC)
+	if ((unsigned)ch < NC)
 		cs->bmp[(unsigned)ch >> 3] |= 1 << (ch & 7);
 	else {
 		newwides = reallocarray(cs->wides, cs->nwides + 1,
@@ -1778,9 +1777,9 @@ CHadd(struct parse *p, cset *cs, wint_t ch)
 		cs->wides[cs->nwides++] = ch;
 	}
 	if (cs->icase) {
-		if ((nch = towlower(ch)) < NC)
+		if ((unsigned)(nch = towlower(ch)) < NC)
 			cs->bmp[(unsigned)nch >> 3] |= 1 << (nch & 7);
-		if ((nch = towupper(ch)) < NC)
+		if ((unsigned)(nch = towupper(ch)) < NC)
 			cs->bmp[(unsigned)nch >> 3] |= 1 << (nch & 7);
 	}
 }

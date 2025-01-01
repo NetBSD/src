@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.15 2021/02/24 18:13:21 christos Exp $	*/
+/*	$NetBSD: regex2.h,v 1.16 2025/01/01 18:19:50 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -135,8 +135,7 @@ CHIN1(cset *cs, wint_t ch)
 {
 	unsigned int i;
 
-	assert(ch >= 0);
-	if (ch < NC)
+	if ((unsigned)ch < NC)
 		return (((cs->bmp[(unsigned)ch >> 3] & (1 << (ch & 7))) != 0) ^
 		    cs->invert);
 	for (i = 0; i < cs->nwides; i++) {
@@ -160,8 +159,7 @@ static __inline int
 CHIN(cset *cs, wint_t ch)
 {
 
-	assert(ch >= 0);
-	if (ch < NC)
+	if ((unsigned)ch < NC)
 		return (((cs->bmp[(unsigned)ch >> 3] & (1 << (ch & 7))) != 0) ^
 		    cs->invert);
 	else if (cs->icase)
