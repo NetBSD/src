@@ -493,7 +493,7 @@ priqflags_item	: IDENTIFIER {
 
 hfsc_opts	:	{
 				memset(&hfsc_opts, 0,
-				    sizeof(*$$));
+				    sizeof(struct node_hfsc_opts));
 			}
 			hfsc_opts_list {
 				$$ = hfsc_opts;
@@ -592,7 +592,7 @@ qassign_list	: qassign_item { $$ = $1; }
 		;
 
 qassign_item	: IDENTIFIER {
-			$$ = calloc(1, sizeof(*$$));
+			$$ = calloc(1, sizeof(struct node_queue));
 
 			if ($$ == NULL)
 				err(1, "qassign_item: calloc");
