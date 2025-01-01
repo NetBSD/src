@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_pciephy.c,v 1.2 2024/11/12 07:21:42 skrll Exp $ */
+/* $NetBSD: jh7110_pciephy.c,v 1.3 2025/01/01 17:35:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_pciephy.c,v 1.2 2024/11/12 07:21:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_pciephy.c,v 1.3 2025/01/01 17:35:44 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -137,7 +137,7 @@ jh7110_pciephy_attach(device_t parent, device_t self, void *aux)
 	WR4(sc, PCIE_KVCO_LEVEL, PCEI_PHY_KVCO_FINE_TUNE_LEVEL);
 	WR4(sc, PCIE_KVCO_TUNE_SIGNAL, PCIE_KVO_FINE_TUNE_SIGNALS);
 
-        fdtbus_register_phy_controller(self, faa->faa_phandle,
+	fdtbus_register_phy_controller(self, faa->faa_phandle,
 	    &jh7110pciephy_funcs);
 }
 
