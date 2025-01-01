@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.47 2025/01/01 14:03:42 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.48 2025/01/01 14:09:28 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -307,9 +307,7 @@ test_ic_plus(void)
 {
 	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = -129 + s64 % 1;
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = -128 + s64 % 1;
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = 127 + s64 % 1;
 	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = 128 + s64 % 1;
@@ -320,19 +318,15 @@ test_ic_plus(void)
 	/* expect+2: warning: conversion of negative constant -128 to unsigned type 'unsigned long long' [222] */
 	/* expect+1: warning: conversion from 'unsigned long long' to 'signed char' may lose accuracy [132] */
 	s8 = -128 + u64 % 1;
-	/* expect+1: warning: conversion from 'unsigned long long' to 'signed char' may lose accuracy [132] */
 	s8 = 127 + u64 % 1;
 	/* expect+1: warning: conversion from 'unsigned long long' to 'signed char' may lose accuracy [132] */
 	s8 = 128 + u64 % 1;
 
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = 0 + u64 % 1;
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = 255 + u64 % 1;
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = 256 + u64 % 1;
 
-	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = '0' + s64 % 10;
 }
 

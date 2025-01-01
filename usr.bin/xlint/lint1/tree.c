@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.664 2024/12/15 06:04:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.665 2025/01/01 14:09:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.664 2024/12/15 06:04:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.665 2025/01/01 14:09:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -81,6 +81,45 @@ static uint64_t
 u64_max(uint64_t a, uint64_t b)
 {
 	return a > b ? a : b;
+}
+
+static int64_t
+si_min_value(const type_t *tp)
+{
+	uint64_t mask = value_bits(size_in_bits(tp->t_tspec));
+	return -(int64_t)(mask >> 1) - 1;
+}
+
+static int64_t
+si_max_value(const type_t *tp)
+{
+	uint64_t mask = value_bits(size_in_bits(tp->t_tspec));
+	return (int64_t)(mask >> 1);
+}
+
+static uint64_t
+ui_max_value(const type_t *tp)
+{
+	return value_bits(size_in_bits(tp->t_tspec));
+}
+
+static int64_t
+si_plus_sat(const type_t *tp, int64_t a, int64_t b)
+{
+	if (a >= 0) {
+		int64_t max = si_max_value(tp);
+		return b <= max - a ? a + b : max;
+	} else {
+		int64_t min = si_min_value(tp);
+		return b >= min - a ? a + b : min;
+	}
+}
+
+static uint64_t
+ui_plus_sat(const type_t *tp, uint64_t a, uint64_t b)
+{
+	uint64_t max = ui_max_value(tp);
+	return b <= max - a ? a + b : max;
 }
 
 static uint64_t
@@ -214,6 +253,20 @@ ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.smax = INT64_MAX;
 	c.umin = 0;
 	c.umax = b.umax - 1;
+	c.bclr = ~u64_fill_right(c.umax);
+	return c;
+}
+
+static integer_constraints
+ic_plus(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	bool maybe_signed = ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b);
+
+	integer_constraints c;
+	c.smin = maybe_signed ? si_plus_sat(tp, a.smin, b.smin) : INT64_MIN;
+	c.smax = maybe_signed ? si_plus_sat(tp, a.smax, b.smax) : INT64_MAX;
+	c.umin = maybe_signed ? 0 : ui_plus_sat(tp, a.umin, b.umin);
+	c.umax = maybe_signed ? UINT64_MAX : ui_plus_sat(tp, a.umax, b.umax);
 	c.bclr = ~u64_fill_right(c.umax);
 	return c;
 }
@@ -360,6 +413,10 @@ ic_expr(const tnode_t *tn)
 		lc = ic_expr(before_conversion(tn->u.ops.left));
 		rc = ic_expr(before_conversion(tn->u.ops.right));
 		return ic_mod(tn->tn_type, lc, rc);
+	case PLUS:
+		lc = ic_expr(before_conversion(tn->u.ops.left));
+		rc = ic_expr(before_conversion(tn->u.ops.right));
+		return ic_plus(tn->tn_type, lc, rc);
 	case SHL:
 		lc = ic_expr(tn->u.ops.left);
 		rc = ic_expr(tn->u.ops.right);
