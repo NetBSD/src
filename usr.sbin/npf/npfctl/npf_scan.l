@@ -174,6 +174,7 @@ flags			return FLAGS;
 icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
+
 altq			return ALTQ;
 cbq			return CBQ;
 priq			return PRIQ;
@@ -196,7 +197,6 @@ qlimit			return QLIMIT;
 "="			return EQ;
 "!"			return EXCL_MARK;
 
-/* bandwidth specification rule */
 {NUMBER}[\.]*[0-9]*{BW_UNIT} {
 			yylval.str = estrndup(yytext, yyleng);
 			return BW_SPEC;
