@@ -404,4 +404,28 @@ npf_get_qstats(void *data)
 	}
 	return error;
 }
+
+int
+npf_get_altq(void *data)
+{
+	int error = 0;
+	struct npfioc_altq	*paa = (struct npfioc_altq *)data;
+	struct npf_altq		*altq;
+	u_int32_t		 nr;
+
+	nr = 0;
+	altq = TAILQ_FIRST(npf_altqs_active);
+	while ((altq != NULL) && (nr < paa->nr)) {
+		altq = TAILQ_NEXT(altq, entries);
+		nr++;
+	}
+	if (altq == NULL) {
+		error = EBUSY;
+		return error;
+	}
+
+	memcpy(&paa->altq, altq, sizeof(struct npf_altq));
+	return error;
+}
+
 #endif /*ALTQ */

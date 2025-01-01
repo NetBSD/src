@@ -301,6 +301,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_ALTQ_STATE:
 		*(int *)data = npf_altq_running;
 		return 0;
+	case IOC_NPF_GET_ALTQ:
+		return npf_get_altq(data);
+
 	case IOC_NPF_LOAD:
 	case IOC_NPF_SAVE:
 	case IOC_NPF_RULE:

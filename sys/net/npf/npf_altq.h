@@ -127,6 +127,7 @@ extern int altqattached;
 extern bool npf_altq_running;
 
 extern int npf_get_altqs(void *);
+extern int npf_get_altq(void *);
 extern void npf_altq_init(void);
 extern int npf_begin_altq(void);
 extern int npf_commit_altq(void);
