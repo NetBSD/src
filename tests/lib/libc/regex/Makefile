@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2021/02/25 22:37:36 christos Exp $
+# $NetBSD: Makefile,v 1.12 2025/01/01 18:13:48 christos Exp $
 
 NOMAN=
 
@@ -7,14 +7,23 @@ NOMAN=
 TESTSDIR?=	${TESTSBASE}/lib/libc/regex
 IMPLEMENTATION?=	-DREGEX_SPENCER -DSKIP_LEFTASSOC
 
+LIBC= 		${NETBSDSRCDIR}/lib/libc
 BINDIR=		${TESTSDIR}
 PROGS?=		h_regex
 SRCS.h_regex=	main.c split.c debug.c
-CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex ${IMPLEMENTATION} -DNLS
+CPPFLAGS+=	-I${LIBC}/regex ${IMPLEMENTATION} -DNLS
 
 TESTS_SH?=	t_regex
 TESTS_C=	t_regex_att
+TESTS_C=	t_regex_binary
 TESTS_C+=	t_exhaust
+
+.PATH: ${LIBC}/regex
+REGEXSRCS = regcomp.c regerror.c regexec.c regsub.c
+SRCS.t_regex_binary=	t_regex_binary.c ${REGEXSRCS}
+.for s in ${REGEXSRCS}
+CPPFLAGS.$s+= -UNLS -I${LIBC}/include
+.endfor
 
 FILESDIR=	${TESTSDIR}/data
 FILES+=		README
