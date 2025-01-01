@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_scroll.3,v 1.5 2024/12/05 04:08:12 blymn Exp $
+.\"	$NetBSD: curses_scroll.3,v 1.6 2025/01/01 00:29:18 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2002
+.Dd December 31, 2024
 .Dt CURSES_SCROLL 3
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@
 .Fn wsetscrreg "WINDOW *win" "int top" "int bottom"
 .Sh DESCRIPTION
 The
-.Fn setscrreg
+.Fn getscrreg
 function gets the software scrolling region lines on
 .Dv stdscr
 which defines a region of the screen that will be scrolled.
