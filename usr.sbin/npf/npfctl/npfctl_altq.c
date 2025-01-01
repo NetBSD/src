@@ -52,7 +52,7 @@
 #include "npfctl.h"
 
 LIST_HEAD(gen_sc, segment) rtsc, lssc;
-static int	npf_add_root_queue(struct npf_altq, char *,
+static int	npf_add_root_queue(struct npf_altq, const char *,
 			char *, struct node_queue_opt *);
 static int	eval_npfqueue_cbq(struct npf_altq *);
 static int	cbq_compute_idletime(struct npf_altq *);
@@ -65,7 +65,7 @@ static int	eval_npfqueue_hfsc(struct npf_altq *);
 static int	check_commit_hfsc(struct npf_altq *);
 static int	print_hfsc_opts(const struct npf_altq *,
 		    const struct node_queue_opt *);
-static void 	altq_append_queues(struct npf_altq pa, char *,
+static void 	altq_append_queues(struct npf_altq pa, const char *,
 			char *, struct node_queue *);
 static void 	queue_append_queues(struct npf_altq *, struct node_queue *,
 				struct node_queue *);
