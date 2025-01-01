@@ -68,7 +68,7 @@ int npf_altq_loaded = 0;
 TAILQ_HEAD(npf_tags, npf_tagname)	npf_tags = TAILQ_HEAD_INITIALIZER(npf_tags),
 				npf_qids = TAILQ_HEAD_INITIALIZER(npf_qids);
 void tag_unref(struct npf_tags *, u_int16_t);
-u_int16_t npftagname2tag(struct npf_tags *, char *);
+uint16_t npftagname2tag(struct npf_tags *, char *);
 
 #if (NPF_QNAME_SIZE != NPF_TAG_NAME_SIZE)
 #error NPF_QNAME_SIZE must be equal to NPF_TAG_NAME_SIZE
@@ -271,6 +271,12 @@ tag_unref(struct npf_tags *head, u_int16_t tag)
 			break;
 		}
 	}
+}
+
+void
+npf_qid_unref(u_int32_t qid)
+{
+	tag_unref(&npf_qids, (u_int16_t)qid);
 }
 
 /* disable, destroy and stop altq routine when packet filtering disabled */
