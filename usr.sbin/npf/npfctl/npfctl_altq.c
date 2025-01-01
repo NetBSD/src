@@ -66,7 +66,7 @@ static int	check_commit_hfsc(struct npf_altq *);
 static int	print_hfsc_opts(const struct npf_altq *,
 		    const struct node_queue_opt *);
 static void 	altq_append_queues(struct npf_altq pa, char *,
-			char *);
+			char *, struct node_queue *);
 static void 	queue_append_queues(struct npf_altq *, struct node_queue *,
 				struct node_queue *);
 static int 		scheduler_check(struct npf_altq *, struct node_queue *,
@@ -169,20 +169,23 @@ npfctl_eval_bw(struct node_queue_bw *bw, char *bw_spec)
 
 /* create root queue for cbq or hfsc */
 static int
-npf_add_root_queue(struct npf_altq pa, char * ifname,
+npf_add_root_queue(struct npf_altq pa, const char * ifname,
 	char qname[], struct node_queue_opt *opts)
 {
 	struct node_queue_bw	bw;
 	struct npf_altq pb;
 	int errs = 0;
 
-	/* now create a root queue */
+	/*
+	 * we cannot use sizeof(qname) directly here as it will give sizeof(char*)
+	 * so the copyably bytes is manually hack the  using sizeof(char) * qname max size
+	 */
 	memset(&pb, 0, sizeof(pb));
-	if (strlcpy(qname, "root_", sizeof(qname)) >=
-		sizeof(qname))
+	if (strlcpy(qname, "root_", (sizeof(char) * NPF_QNAME_SIZE)) >=
+		(sizeof(char) * NPF_QNAME_SIZE))
 		errx(EXIT_FAILURE, "add_root: strlcpy");
-	if (strlcat(qname, ifname,
-		sizeof(qname)) >= sizeof(qname))
+	if (strlcat(qname, ifname, (sizeof(char) * NPF_QNAME_SIZE)) >=
+		(sizeof(char) * NPF_QNAME_SIZE))
 		errx(EXIT_FAILURE, "add_root: strlcat");
 	if (strlcpy(pb.qname, qname,
 		sizeof(pb.qname)) >= sizeof(pb.qname))
@@ -207,7 +210,7 @@ npf_add_root_queue(struct npf_altq pa, char * ifname,
  * altq on .... queue {a,b ,c }
  */
 static void
-altq_append_queues(struct npf_altq pa, char *ifname,
+altq_append_queues(struct npf_altq pa, const char *ifname,
 	char qname[], struct node_queue *queue)
 {
 	struct node_queue	*n;
@@ -353,7 +356,7 @@ expand_queue(struct npf_altq *a, const char *ifname,
     struct node_queue *nqueues, struct node_queue_bw bwspec,
     struct node_queue_opt *opts)
 {
-	struct node_queue	*n, *nq;
+	struct node_queue	*nq;
 	struct npf_altq		 pa;
 	uint8_t		 found = 0;
 	uint8_t		 errs = 0;
