@@ -1838,7 +1838,7 @@ jobsclose(dev_t dev, int flag, int fmt,
 		if (ALTQ_IS_ENABLED(jif->jif_ifq))
 			altq_disable(jif->jif_ifq);
 
-		int error = altq_detach(pif->pif_ifq);
+		int error = altq_detach(jif->jif_ifq);
 		switch (error) {
 		case 0:
 		case ENXIO:	/* already disabled */
