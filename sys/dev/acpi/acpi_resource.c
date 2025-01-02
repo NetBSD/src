@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.43 2024/06/30 09:34:24 jmcneill Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.44 2025/01/02 16:32:34 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.43 2024/06/30 09:34:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.44 2025/01/02 16:32:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -801,6 +801,15 @@ acpi_res_parse_ioport(device_t dev, void *context, uint32_t base,
 			ar->ar_length += length;
 			return;
 		}
+	}
+
+	/* IO and FixedIO I/O resource addresses are limited to 10/16-bit. */
+	if (base + length - 1 > UINT16_MAX) {
+		aprint_error_dev(dev, "ACPI: invalid I/O register resource %d,"
+		    " base 0x%x, length %d\n",
+		    res->ar_nio, base, length);
+		res->ar_nio++;
+		return;
 	}
 
 	ar = ACPI_ALLOCATE(sizeof(*ar));
