@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.49 2025/01/02 03:46:27 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.50 2025/01/02 17:35:02 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -250,23 +250,36 @@ test_ic_mult(void)
 
 	// from __BITS, __SHIFTIN, __SHIFTOUT
 	u32 = (u16 & 1023ULL) / 1ULL * 1024ULL | (u16 & 1023ULL) / 1ULL * 1ULL;
+
+	// FIXME
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = 1 * s8;
+	// FIXME
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = 1 * s16;
+	s32 = 1 * s32;
+	s64 = 1 * s64;
 }
 
 void
 test_ic_div(void)
 {
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
 	u8 = u8 / u8;
-	// FIXME
 	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
 	u8 = u16 / u8;
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = u8 / u8;
 	u16 = u32 / 65536;
 	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
 	u16 = u32 / 65535;
+
+	// FIXME
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = s8 / 1;
+	// FIXME
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = s16 / 1;
+	s32 = s32 / 1;
+	s64 = s64 / 1;
 }
 
 void
@@ -327,6 +340,11 @@ test_ic_plus(void)
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = 256 + u64 % 1;
 
+	u8 = s8 + 0x80;
+	u16 = s16 + 0x8000;
+	u32 = s32 + 0x80000000;
+	u64 = s64 + 0x8000000000000000;
+
 	// XXX: No warnings since portable_rank_cmp is the same for both sides.
 	bits.u11 = bits.u10 + bits.u10 + 1;
 	bits.u11 = bits.u10 + bits.u10 + 2;
@@ -377,6 +395,11 @@ test_ic_minus(void)
 	s8 = ((s64 & 0xff) ^ 0x80) - 0x7f;
 	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = ((s64 & 0xff) ^ 0x80) - 0x81;
+
+	u8 = s8 - -0x80;
+	u16 = s16 - -0x8000;
+	u32 = s32 - -0x80000000;
+	u64 = s64 - -0x8000000000000000;
 }
 
 void
@@ -516,6 +539,12 @@ test_ic_cvt(void)
 	u16 = (u32_t)(u32 & 0x0000ff00);
 	u16 = (u16_t)u32;
 	u16 = (u8_t)(u32 & 0xffff) << 8;
+	u16 = (int)3.0;
+
+	u8 = (u8_t)(u64 & 0x0f);
+	u8 = (u8_t)(u64 & 0x0f) << 4;
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = (u8_t)(u64 & 0x0f) << 5;
 }
 
 unsigned char
