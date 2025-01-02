@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.5 2022/10/19 22:28:35 riastradh Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.6 2025/01/02 07:54:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.5 2022/10/19 22:28:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.6 2025/01/02 07:54:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,26 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* enable the clock */
+	struct clk *clk = fdtbus_clock_get_index(phandle, 0);
+	if (clk_enable(clk) != 0) {
+		aprint_error(": couldn't enable the clock\n");
+		goto failed_clock;
+	}
+
+	/* de-assert resets */
+	struct fdtbus_reset *rst = fdtbus_reset_get_index(phandle, 0);
+	if (fdtbus_reset_deassert(rst) != 0) {
+		aprint_error(": couldn't de-assert the reset\n");
+		goto failed_reset;
+	}
+
 	aprint_naive(": I2C controller\n");
 	aprint_normal(": I2C controller\n");
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
-		return;
+		goto failed_intrstr;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
@@ -102,11 +116,11 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 		dwiic_intr, &sc->sc_dwiic, device_xname(self));
 	if (sc->sc_dwiic.sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto out;
+		goto failed_intr;
 	}
 
 	if (!dwiic_attach(&sc->sc_dwiic))
-		goto out;
+		goto failed_attach;
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 
@@ -114,6 +128,14 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_dwiic.sc_i2c_tag, iicbus_print);
 
-out:
 	return;
+
+failed_attach:
+	fdtbus_intr_disestablish(phandle, sc->sc_dwiic.sc_ih);
+
+failed_intrstr:
+failed_intr:
+failed_reset:
+failed_clock:
+	bus_space_unmap(sc->sc_dwiic.sc_iot, sc->sc_dwiic.sc_ioh, size);
 }
