@@ -36,13 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
-#include "pf.h"
+#include "npf.h"
 #endif
-
-#ifndef NPF
-#define NPF 1
-#endif
-
 
 #ifdef ALTQ_PRIQ  /* priq is enabled by ALTQ_PRIQ option in opt_altq.h */
 
@@ -61,7 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp 
 #include <net/if.h>
 #include <netinet/in.h>
 
+#if NPF > 0
 #include <net/npf/npf_altq.h>
+#endif
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 #include <altq/altq_priq.h>
@@ -108,6 +105,7 @@ altqdev_decl(priq);
 static struct priq_if *pif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
+#if NPF > 0
 int
 priq_npfattach(struct npf_altq *a)
 {
@@ -229,6 +227,7 @@ priq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
+#endif /* NPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding

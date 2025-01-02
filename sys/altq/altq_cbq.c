@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.41 2024/09/26 02:39:09 ozaki-r Exp $"
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
-#include "pf.h"
+#include "npf.h"
 #endif
 
 #ifdef ALTQ_CBQ	/* cbq is enabled by ALTQ_CBQ option in opt_altq.h */
@@ -59,7 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.41 2024/09/26 02:39:09 ozaki-r Exp $"
 #include <net/if.h>
 #include <netinet/in.h>
 
+#if NPF > 0
 #include <net/npf/npf_altq.h>
+#endif
+
 #include <altq/altq.h>
 #include <altq/altq_cbq.h>
 #ifdef ALTQ3_COMPAT
@@ -240,6 +243,7 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 #endif
 }
 
+#if NPF > 0
 int
 cbq_npfattach(struct npf_altq *a)
 {
@@ -472,6 +476,8 @@ cbq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
+
+#endif /* NPF > 0 */
 
 /*
  * int
