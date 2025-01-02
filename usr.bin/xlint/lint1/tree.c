@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.665 2025/01/01 14:09:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.666 2025/01/02 03:46:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.665 2025/01/01 14:09:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.666 2025/01/02 03:46:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -83,20 +83,6 @@ u64_max(uint64_t a, uint64_t b)
 	return a > b ? a : b;
 }
 
-static int64_t
-si_min_value(const type_t *tp)
-{
-	uint64_t mask = value_bits(size_in_bits(tp->t_tspec));
-	return -(int64_t)(mask >> 1) - 1;
-}
-
-static int64_t
-si_max_value(const type_t *tp)
-{
-	uint64_t mask = value_bits(size_in_bits(tp->t_tspec));
-	return (int64_t)(mask >> 1);
-}
-
 static uint64_t
 ui_max_value(const type_t *tp)
 {
@@ -104,22 +90,39 @@ ui_max_value(const type_t *tp)
 }
 
 static int64_t
+si_max_value(const type_t *tp)
+{
+	return (int64_t)(ui_max_value(tp) >> 1);
+}
+
+static int64_t
+si_min_value(const type_t *tp)
+{
+	return -si_max_value(tp) - 1;
+}
+
+static int64_t
 si_plus_sat(const type_t *tp, int64_t a, int64_t b)
 {
-	if (a >= 0) {
+	if (b >= 0) {
 		int64_t max = si_max_value(tp);
-		return b <= max - a ? a + b : max;
+		return a <= max - b ? a + b : max;
 	} else {
 		int64_t min = si_min_value(tp);
-		return b >= min - a ? a + b : min;
+		return a >= min - b ? a + b : min;
 	}
 }
 
-static uint64_t
-ui_plus_sat(const type_t *tp, uint64_t a, uint64_t b)
+static int64_t
+si_minus_sat(const type_t *tp, int64_t a, int64_t b)
 {
-	uint64_t max = ui_max_value(tp);
-	return b <= max - a ? a + b : max;
+	if (b >= 0) {
+		int64_t min = si_min_value(tp);
+		return a >= min + b ? a - b : min;
+	} else {
+		int64_t max = si_max_value(tp);
+		return a <= max + b ? a - b : max;
+	}
 }
 
 static uint64_t
@@ -175,10 +178,11 @@ ic_any(const type_t *tp)
 {
 	integer_constraints c;
 
-	uint64_t vbits = value_bits(width_in_bits(tp));
+	unsigned width = width_in_bits(tp);
+	uint64_t vbits = value_bits(width);
 	if (is_uinteger(tp->t_tspec)) {
-		c.smin = INT64_MIN;
-		c.smax = INT64_MAX;
+		c.smin = width < 64 ? 0 : INT64_MIN;
+		c.smax = width < 64 ? (int64_t)vbits : INT64_MAX;
 		c.umin = 0;
 		c.umax = vbits;
 		c.bclr = ~c.umax;
@@ -260,13 +264,55 @@ ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
 static integer_constraints
 ic_plus(const type_t *tp, integer_constraints a, integer_constraints b)
 {
-	bool maybe_signed = ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b);
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b)) {
+		integer_constraints c;
+		c.smin = si_plus_sat(tp, a.smin, b.smin);
+		c.smax = si_plus_sat(tp, a.smax, b.smax);
+		c.umin = 0;
+		c.umax = UINT64_MAX;
+		c.bclr = 0;
+		return c;
+	}
+
+	uint64_t max = ui_max_value(tp);
+	integer_constraints c;
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	if (b.umax <= max - a.umax) {
+		c.umin = a.umin + b.umin;
+		c.umax = a.umax + b.umax;
+	} else {
+		c.umin = 0;
+		c.umax = max;
+	}
+	c.bclr = ~u64_fill_right(c.umax);
+	return c;
+}
+
+static integer_constraints
+ic_minus(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b)) {
+		integer_constraints c;
+		c.smin = si_minus_sat(tp, a.smin, b.smax);
+		c.smax = si_minus_sat(tp, a.smax, b.smin);
+		c.umin = 0;
+		c.umax = UINT64_MAX;
+		c.bclr = 0;
+		return c;
+	}
 
 	integer_constraints c;
-	c.smin = maybe_signed ? si_plus_sat(tp, a.smin, b.smin) : INT64_MIN;
-	c.smax = maybe_signed ? si_plus_sat(tp, a.smax, b.smax) : INT64_MAX;
-	c.umin = maybe_signed ? 0 : ui_plus_sat(tp, a.umin, b.umin);
-	c.umax = maybe_signed ? UINT64_MAX : ui_plus_sat(tp, a.umax, b.umax);
+	c.smin = si_minus_sat(tp, a.smin, b.smax);
+	c.smax = si_minus_sat(tp, a.smax, b.smin);
+	if (a.umin >= b.umax) {
+		c.umin = a.umin - b.umax;
+		c.umax = a.umax - b.umin;
+	} else {
+		c.umin = 0;
+		c.umax = is_uinteger(tp->t_tspec) ? ui_max_value(tp)
+		    : UINT64_MAX;
+	}
 	c.bclr = ~u64_fill_right(c.umax);
 	return c;
 }
@@ -333,6 +379,21 @@ ic_bitand(integer_constraints a, integer_constraints b)
 		c.smax = (int64_t)c.umax;
 	}
 	c.bclr = a.bclr | b.bclr;
+	return c;
+}
+
+static integer_constraints
+ic_bitxor(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c = ic_any(tp);
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b))
+		return c;
+	c.umax = a.umax | b.umax;
+	if (c.umax >> 63 == 0) {
+		c.smin = 0;
+		c.smax = (int64_t)c.umax;
+	}
+	c.bclr = a.bclr & b.bclr;
 	return c;
 }
 
@@ -417,6 +478,10 @@ ic_expr(const tnode_t *tn)
 		lc = ic_expr(before_conversion(tn->u.ops.left));
 		rc = ic_expr(before_conversion(tn->u.ops.right));
 		return ic_plus(tn->tn_type, lc, rc);
+	case MINUS:
+		lc = ic_expr(before_conversion(tn->u.ops.left));
+		rc = ic_expr(before_conversion(tn->u.ops.right));
+		return ic_minus(tn->tn_type, lc, rc);
 	case SHL:
 		lc = ic_expr(tn->u.ops.left);
 		rc = ic_expr(tn->u.ops.right);
@@ -429,6 +494,10 @@ ic_expr(const tnode_t *tn)
 		lc = ic_expr(tn->u.ops.left);
 		rc = ic_expr(tn->u.ops.right);
 		return ic_bitand(lc, rc);
+	case BITXOR:
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
+		return ic_bitxor(tn->tn_type, lc, rc);
 	case BITOR:
 		lc = ic_expr(tn->u.ops.left);
 		rc = ic_expr(tn->u.ops.right);

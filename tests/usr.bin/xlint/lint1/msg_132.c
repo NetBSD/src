@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.48 2025/01/01 14:09:28 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.49 2025/01/02 03:46:27 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -327,7 +327,56 @@ test_ic_plus(void)
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = 256 + u64 % 1;
 
+	// XXX: No warnings since portable_rank_cmp is the same for both sides.
+	bits.u11 = bits.u10 + bits.u10 + 1;
+	bits.u11 = bits.u10 + bits.u10 + 2;
+	bits.u11 = bits.u10 + 1024;
+	bits.u11 = bits.u10 + 1025;
+
+	u8 = bits.u7 + bits.u7 + 1;
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = bits.u7 + bits.u7 + 2;
+	u8 = bits.u7 + 128;
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = bits.u7 + 129;
+
+	// The result of the second '+' wraps around, thus the warning,
+	// even though the final result fits in a u16.
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
+	u16 = u32 % 0x00010000 + 0x80000000 + 0x80000000;
+
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
+	u16 = u32 % 0x00010000 + 0xffff8000;
+	/* expect+1: warning: conversion from 'unsigned int' to 'short' may lose accuracy [132] */
+	s16 = u32 % 0x00010000 + 0xffff8000;
+
+	/* expect+1: warning: conversion from 'long long' to 'unsigned short' may lose accuracy [132] */
+	u16 = s64 % 0x00010000 + 0xffffffffLL + -0xffffffffLL;
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	u16 = s32 % 0x00010000 + 0x7fff0000 + -0x7fff0000;
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
+	u16 = u32 % 0x00010000 + 0xffff0000 + 0x00010000;
+
 	s8 = '0' + s64 % 10;
+}
+
+void
+test_ic_minus(void)
+{
+	// Shift the range [0x00 to 0xff] to [-0x80 to 0x7f].
+	s8 = (s64 & 0xff) - 0x80;
+
+	// Sign-extend the lowest bits.
+	s8 = ((s64 & 0xff) ^ 0x80) - 0x80;
+	s16 = ((s64 & 0xffff) ^ 0x8000) - 0x8000;
+	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'long long', op '&' [309] */
+	s32 = ((s64 & 0xffffffff) ^ 0x80000000) - 0x80000000;
+
+	// Trying to sign-extend, but with off-by-one errors.
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = ((s64 & 0xff) ^ 0x80) - 0x7f;
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = ((s64 & 0xff) ^ 0x80) - 0x81;
 }
 
 void
@@ -389,6 +438,20 @@ test_ic_bitand(void)
 
 	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
 	u8 = u16 & u32;
+}
+
+void
+test_ic_bitxor(void)
+{
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = u8 ^ u16;
+	u16 = u8 ^ u16;
+
+	// Sign-extend.
+	s8 = (u8 ^ 0x80) - 0x80;
+	s16 = (u16 ^ 0x8000) - 0x8000;
+	s32 = (u32 ^ 0x80000000) - 0x80000000;
+	s64 = (u64 ^ 0x8000000000000000) - 0x8000000000000000;
 }
 
 void
