@@ -551,6 +551,7 @@ altq_add_queue(struct npf_altq *a)
 #ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_add_queue(a);
+		printf("queue added\n");
 		break;
 #endif
 #ifdef ALTQ_PRIQ
