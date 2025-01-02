@@ -1,4 +1,4 @@
-.\"	$NetBSD: pv.4,v 1.1 2025/01/02 10:34:33 imil Exp $
+.\"	$NetBSD: pv.4,v 1.2 2025/01/02 20:27:43 rillig Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ported from OpenBSD
-.Dd January 2024
+.Dd January 2, 2025
 .Dt PV 4
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Sh SYNOPSIS
 .Cd "pv* at pvbus?"
 .Sh DESCRIPTION
+The
 .Nm
 driver is used on virtual machines that are running on hypervisors.
 It provides a pseudo-bus for all paravirtual devices that do not
