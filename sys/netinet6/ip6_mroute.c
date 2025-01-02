@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.132 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.133 2025/01/02 16:10:22 andvar Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.132 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.133 2025/01/02 16:10:22 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -529,7 +529,7 @@ ip6_mrouter_done(void)
 #ifdef MROUTING
 	/*
 	 * If there is still IPv4 multicast routing daemon,
-	 * we remain interfaces to receive all muliticasted packets.
+	 * we remain interfaces to receive all multicasted packets.
 	 * XXX: there may be an interface in which the IPv4 multicast
 	 * daemon is not interested...
 	 */
