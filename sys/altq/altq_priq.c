@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.28 2021/09/21 14:30:15 christos Exp 
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 #include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
@@ -105,7 +105,7 @@ altqdev_decl(priq);
 static struct priq_if *pif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 int
 priq_npfattach(struct npf_altq *a)
 {
@@ -227,7 +227,7 @@ priq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
-#endif /* NPF > 0 */
+#endif /* NPF_ALTQ > 0 */
 
 /*
  * bring the interface back to the initial state by discarding

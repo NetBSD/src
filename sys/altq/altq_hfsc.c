@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp 
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 #include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
@@ -173,7 +173,7 @@ altqdev_decl(hfsc);
 static struct hfsc_if *hif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 int
 hfsc_npfattach(struct npf_altq *a)
 {
@@ -320,7 +320,7 @@ hfsc_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
-#endif /* NPF > 0 */
+#endif /* NPF_ALTQ > 0 */
 
 /*
  * bring the interface back to the initial state by discarding

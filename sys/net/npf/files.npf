@@ -8,7 +8,7 @@
 #
 
 defpseudo	npf:	ifnet, libnv
-defflag npf.h   NPF
+defflag npf.h   NPF_ALTQ
 
 # Core
 file	net/npf/npf.c				npf

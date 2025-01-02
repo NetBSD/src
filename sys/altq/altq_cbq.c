@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.41 2024/09/26 02:39:09 ozaki-r Exp $"
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 #include <net/npf/npf_altq.h>
 #endif
 
@@ -243,7 +243,7 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 #endif
 }
 
-#if NPF > 0
+#if NPF_ALTQ > 0
 int
 cbq_npfattach(struct npf_altq *a)
 {
@@ -477,7 +477,7 @@ cbq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 	return (0);
 }
 
-#endif /* NPF > 0 */
+#endif /* NPF_ALTQ > 0 */
 
 /*
  * int
