@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.78.2.1 2025/01/02 19:50:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.78.2.1 2025/01/02 19:50:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1480,14 +1480,19 @@ get_tod(struct var *vp)
 			len = vp->name_len + 4 + sizeof t_err - 1;
 			continue;
 		}
-		if (strftime_z(zone, buf.b + vp->name_len + 1,
-		     buf.len - vp->name_len - 2, fmt, tmp)) {
-			if (zone && zone != last_zone) {
-				tzfree(zone);
-				INTON;
+		if (zone != NULL) {
+			if (strftime_z(zone, buf.b + vp->name_len + 1,
+			     buf.len - vp->name_len - 2, fmt, tmp)) {
+				if (zone != last_zone) {
+					tzfree(zone);
+					INTON;
+				}
+				return buf.b;
 			}
-			return buf.b;
-		}
+		} else if (strftime(buf.b + vp->name_len + 1,
+			    buf.len - vp->name_len - 2, fmt, tmp))
+				return buf.b;
+
 		if (len >= 4096)	/* Let's be reasonable */
 			break;
 		len <<= 1;
