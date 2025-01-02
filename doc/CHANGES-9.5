@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.45 2024/12/31 01:10:40 snj Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.46 2025/01/02 19:56:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -701,4 +701,15 @@ build.sh					1.383, 1.384, 1.388 via patch
 	usable to recreate the source (depending on the revision control
 	system in use).
 	[martin, ticket #1931]
+
+bin/sh/var.c					1.88
+
+	sh(1): fix a core dump that can occur if TZ is unset and ToD_FORMAT
+	contains and strftime() conversions which need to know the zone.
+	[kre, ticket #1932]
+
+sys/conf/copyright				1.23
+
+	Welcome to 2025!
+	[jnemeth, ticket #1933]
 
