@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.51 2025/01/02 18:36:52 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.52 2025/01/02 20:02:59 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -251,14 +251,28 @@ test_ic_mult(void)
 	// from __BITS, __SHIFTIN, __SHIFTOUT
 	u32 = (u16 & 1023ULL) / 1ULL * 1024ULL | (u16 & 1023ULL) / 1ULL * 1ULL;
 
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
 	s8 = 1 * s8;
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
 	s16 = 1 * s16;
 	s32 = 1 * s32;
 	s64 = 1 * s64;
+
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = 2 * s8;
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = 2 * s16;
+	// No warning, as there is no narrowing conversion.
+	s32 = 2 * s32;
+	// No warning, as there is no narrowing conversion.
+	s64 = 2 * s64;
+
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = -1 * s8;
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = -1 * s16;
+	// No warning, as there is no narrowing conversion.
+	s32 = -1 * s32;
+	// No warning, as there is no narrowing conversion.
+	s64 = -1 * s64;
 }
 
 void
@@ -272,14 +286,19 @@ test_ic_div(void)
 	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
 	u16 = u32 / 65535;
 
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
 	s8 = s8 / 1;
-	// FIXME
-	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
 	s16 = s16 / 1;
 	s32 = s32 / 1;
 	s64 = s64 / 1;
+
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = s8 / -1;
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = s16 / -1;
+	// No warning, as there is no narrowing conversion.
+	s32 = s32 / -1;
+	// No warning, as there is no narrowing conversion.
+	s64 = s64 / -1;
 }
 
 void

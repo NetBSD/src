@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.668 2025/01/02 18:36:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.669 2025/01/02 20:02:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.668 2025/01/02 18:36:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.669 2025/01/02 20:02:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -147,6 +147,22 @@ si_min_value(const type_t *tp)
 }
 
 static int64_t
+si_mult_sat(const type_t *tp, int64_t l, int64_t r)
+{
+	uint64_t al = s64_abs(l);
+	uint64_t ar = s64_abs(r);
+	bool neg = (l >= 0) != (r >= 0);
+	uint64_t max = ui_max_value(tp);
+	uint64_t max_prod = (uint64_t)max + (neg ? 1 : 0);
+	if (al == 0 || ar <= max_prod / al)
+		return l * r;
+	else if (neg)
+		return -1 - (int64_t)(max >> 1);
+	else
+		return (int64_t)(max >> 1);
+}
+
+static int64_t
 si_plus_sat(const type_t *tp, int64_t a, int64_t b)
 {
 	if (b >= 0) {
@@ -211,8 +227,21 @@ ic_mult(const type_t *tp, integer_constraints a, integer_constraints b)
 {
 	integer_constraints c;
 
-	if (ic_maybe_signed_binary(tp, a, b)
-	    || (a.umax > 0 && b.umax > ic_any(tp).umax / a.umax))
+	if (ic_maybe_signed_binary(tp, a, b)) {
+		int64_t ll = si_mult_sat(tp, a.smin, b.smin);
+		int64_t lu = si_mult_sat(tp, a.smin, b.smax);
+		int64_t ul = si_mult_sat(tp, a.smax, b.smin);
+		int64_t uu = si_mult_sat(tp, a.smax, b.smax);
+
+		c.smin = s64_min(ll, s64_min(lu, s64_min(ul, uu)));
+		c.smax = s64_max(ll, s64_max(lu, s64_max(ul, uu)));
+		c.umin = c.smin >= 0 ? (uint64_t)c.smin : 0;
+		c.umax = c.smin >= 0 ? (uint64_t)c.smax : UINT64_MAX;
+		c.bclr = ~u64_fill_right(c.umax);
+		return c;
+	}
+
+	if (a.umax > 0 && b.umax > ic_any(tp).umax / a.umax)
 		return ic_any(tp);
 
 	c.smin = INT64_MIN;
@@ -226,8 +255,11 @@ ic_mult(const type_t *tp, integer_constraints a, integer_constraints b)
 static integer_constraints
 ic_div(const type_t *tp, integer_constraints a, integer_constraints b)
 {
-	if (ic_maybe_signed_binary(tp, a, b))
+	if (ic_maybe_signed_binary(tp, a, b)) {
+		if (b.smin >= 0)
+			return a;
 		return ic_any(tp);
+	}
 
 	integer_constraints c;
 	c.smin = INT64_MIN;
@@ -1102,8 +1134,8 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		*overflow = l == min_value;
 		return *overflow ? l : -l;
 	case MULT:;
-		uint64_t al = l >= 0 ? (uint64_t)l : -(uint64_t)l;
-		uint64_t ar = r >= 0 ? (uint64_t)r : -(uint64_t)r;
+		uint64_t al = s64_abs(l);
+		uint64_t ar = s64_abs(r);
 		bool neg = (l >= 0) != (r >= 0);
 		uint64_t max_prod = (uint64_t)max_value + (neg ? 1 : 0);
 		if (al > 0 && ar > max_prod / al) {
