@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.6 2025/01/02 07:54:41 skrll Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.7 2025/01/02 12:31:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.6 2025/01/02 07:54:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.7 2025/01/02 12:31:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,18 +89,27 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* enable the clock */
-	struct clk *clk = fdtbus_clock_get_index(phandle, 0);
-	if (clk_enable(clk) != 0) {
-		aprint_error(": couldn't enable the clock\n");
+	/* enable clock(s) */
+	struct clk *clk;
+	u_int c;
+	for (c = 0; (clk = fdtbus_clock_get_index(phandle, c)) != NULL; c++) {
+		if (clk_enable(clk) != 0) {
+			aprint_error(": couldn't enable clock #%d\n", c);
+			goto failed_clock;
+		}
+	}
+	if (c == 0) {
+		aprint_error(": missing clock\n");
 		goto failed_clock;
 	}
 
-	/* de-assert resets */
+	/* de-assert optional reset. */
 	struct fdtbus_reset *rst = fdtbus_reset_get_index(phandle, 0);
-	if (fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert the reset\n");
-		goto failed_reset;
+	if (rst != NULL) {
+		if (fdtbus_reset_deassert(rst) != 0) {
+			aprint_error(": couldn't de-assert the reset\n");
+			goto failed_reset;
+		}
 	}
 
 	aprint_naive(": I2C controller\n");
