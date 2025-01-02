@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2025/01/01 18:13:48 christos Exp $
+# $NetBSD: Makefile,v 1.13 2025/01/02 01:45:19 kre Exp $
 
 NOMAN=
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-I${LIBC}/regex ${IMPLEMENTATION} -DNLS
 
 TESTS_SH?=	t_regex
 TESTS_C=	t_regex_att
-TESTS_C=	t_regex_binary
+TESTS_C+=	t_regex_binary
 TESTS_C+=	t_exhaust
 
 .PATH: ${LIBC}/regex

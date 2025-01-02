@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1354 2025/01/01 18:15:48 christos Exp $
+# $NetBSD: mi,v 1.1355 2025/01/02 01:45:19 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4187,6 +4187,7 @@
 ./usr/tests/lib/libtre/h_regex_att			tests-obsolete		obsolete
 ./usr/tests/lib/libtre/t_exhaust			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libtre/t_regex_att			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libtre/t_regex_binary			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
