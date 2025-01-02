@@ -1,0 +1,5 @@
+define	pvbus {}
+
+device	pv {}
+attach	pv at pvbus
+file	arch/x86/pv/pvbus.c			pvbus	needs-flag

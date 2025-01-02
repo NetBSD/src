@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.123 2024/02/23 22:10:39 andvar Exp $
+#	$NetBSD: files.amd64,v 1.124 2025/01/02 10:34:33 imil Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -94,7 +94,7 @@ include	"dev/i2o/files.i2o"
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus,
-	ipmibus, hypervisorbus
+	ipmibus, hypervisorbus, pvbus
 attach	mainbus at root
 file	arch/amd64/amd64/amd64_mainbus.c	mainbus & !xenpv
 file	arch/x86/x86/mainbus.c			mainbus
@@ -199,5 +199,8 @@ file	dev/acpi/vmbus_acpi.c			vmbus_acpi
 
 # VMEbus support
 include "dev/vme/files.vme"
+
+# PVbus support
+include "arch/x86/pv/files.pv"
 
 include	"arch/amd64/conf/majors.amd64"
