@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.23 2021/08/07 16:18:40 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.24 2025/01/02 16:09:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.23 2021/08/07 16:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.24 2025/01/02 16:09:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.23 2021/08/07 16:18:40 thorpej Exp $");
 #include "locators.h"
 
 /*
- * Atomwide Mulit-port serial podule device.
+ * Atomwide Multi-port serial podule device.
  *
  * This probes and attaches the top level multi-port serial device to the
  * podulebus. It then configures the child com devices.
