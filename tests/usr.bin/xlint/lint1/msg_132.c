@@ -1,9 +1,7 @@
-/*	$NetBSD: msg_132.c,v 1.50 2025/01/02 17:35:02 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.51 2025/01/02 18:36:52 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
-
-/* lint1-extra-flags: -X 351 */
 
 /*
  * NetBSD's default lint flags only include a single -a, which only flags
@@ -13,7 +11,7 @@
  * https://gnats.netbsd.org/14531
  */
 
-/* lint1-extra-flags: -aa */
+/* lint1-extra-flags: -aa -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -36,6 +34,8 @@ s8_t s8;
 s16_t s16;
 s32_t s32;
 s64_t s64;
+
+const char *ptr;
 
 struct bit_fields {
 	unsigned u1:1;
@@ -376,6 +376,8 @@ test_ic_plus(void)
 	u16 = u32 % 0x00010000 + 0xffff0000 + 0x00010000;
 
 	s8 = '0' + s64 % 10;
+
+	ptr = ptr + 3;
 }
 
 void
@@ -400,6 +402,11 @@ test_ic_minus(void)
 	u16 = s16 - -0x8000;
 	u32 = s32 - -0x80000000;
 	u64 = s64 - -0x8000000000000000;
+
+	ptr = ptr - 3;
+	s64 = ptr + 3 - ptr;
+	/* expect+1: warning: conversion from 'long' to 'unsigned int' may lose accuracy [132] */
+	u32 = ptr + 3 - ptr;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.667 2025/01/02 17:35:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.668 2025/01/02 18:36:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.667 2025/01/02 17:35:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.668 2025/01/02 18:36:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -439,16 +439,16 @@ ic_con(const type_t *tp, const val_t *v)
 static integer_constraints
 ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 {
-	unsigned nw = width_in_bits(ntp);
-	unsigned ow = width_in_bits(otp);
-	bool nu = is_uinteger(ntp->t_tspec);
-	bool ou = is_uinteger(otp->t_tspec);
+	unsigned new_width = width_in_bits(ntp);
+	unsigned old_width = width_in_bits(otp);
+	bool new_unsigned = is_uinteger(ntp->t_tspec);
+	bool old_unsigned = is_uinteger(otp->t_tspec);
 
-	if (nw >= ow && nu == ou)
+	if (new_width >= old_width && new_unsigned == old_unsigned)
 		return a;
-	if (nw > ow && ou)
+	if (new_width > old_width && old_unsigned)
 		return a;
-	if (nu && (~value_bits(nw) & ~a.bclr) == 0)
+	if (new_unsigned && (~value_bits(new_width) & ~a.bclr) == 0)
 		return a;
 	return ic_any(ntp);
 }
@@ -478,6 +478,8 @@ ic_expr(const tnode_t *tn)
 		rc = ic_expr(before_conversion(tn->u.ops.right));
 		return ic_plus(tn->tn_type, lc, rc);
 	case MINUS:
+		if (tn->u.ops.left->tn_type->t_tspec == PTR)
+			return ic_any(tn->tn_type);
 		lc = ic_expr(before_conversion(tn->u.ops.left));
 		rc = ic_expr(before_conversion(tn->u.ops.right));
 		return ic_minus(tn->tn_type, lc, rc);
