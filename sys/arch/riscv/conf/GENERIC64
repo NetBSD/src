@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.19 2025/01/01 17:53:07 skrll Exp $
+# $NetBSD: GENERIC64,v 1.20 2025/01/03 11:49:04 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -102,6 +102,9 @@ eqos* 		at fdt?			# DesignWare Ethernet QoS
 micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 mcommphy* 	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
 ukphy* 		at mii? phy ?		# generic unknown PHYs
+
+# Temperature sensor
+jh71x0temp* 	at fdt?			# StarFive JH71x0 Temperature sensor
 
 # Pull in optional local configuration - always at end
 cinclude 	"arch/riscv/conf/GENERIC64.local"

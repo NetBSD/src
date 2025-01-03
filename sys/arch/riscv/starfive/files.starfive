@@ -1,4 +1,4 @@
-#	$NetBSD: files.starfive,v 1.9 2025/01/01 17:53:08 skrll Exp $
+#	$NetBSD: files.starfive,v 1.10 2025/01/03 11:49:04 skrll Exp $
 #
 # Configuration info for StarFive SoCs
 #
@@ -54,3 +54,8 @@ file	arch/riscv/starfive/jh7110_pcie.c		jh7110_pcie
 device	jh7110syscon
 attach	jh7110syscon at fdt with jh7110_syscon
 file	arch/riscv/starfive/jh7110_syscon.c		jh7110_syscon
+
+# JH71x0 temperature sensor
+device	jh71x0temp
+attach	jh71x0temp at fdt with jh71x0_temp
+file	arch/riscv/starfive/jh71x0_temp.c		jh71x0_temp
