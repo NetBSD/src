@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.15 2025/01/03 05:42:50 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.15 2025/01/03 05:42:50 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -79,7 +79,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 #if DEBUG_FPE
 		printf("  fpu_emul_fstore: invalid format %d\n", format);
 #endif
-		sig = SIGFPE;
+		return SIGFPE;
 	}
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: format %d, size %d\n",
