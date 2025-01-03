@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.9 2024/12/31 13:58:21 skrll Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.10 2025/01/03 13:04:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.9 2024/12/31 13:58:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.10 2025/01/03 13:04:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,11 +73,11 @@ struct bcmstb_busspace {
 
 struct bcmstb_softc {
 	bus_space_tag_t		sc_bst;
-	bus_space_handle_t      sc_bsh;
+	bus_space_handle_t	sc_bsh;
 	bus_dma_tag_t		sc_dmat;
 
 	kmutex_t		sc_lock;
-	const char	      *sc_name;
+	const char *		sc_name;
 
 	int			sc_phandle;
 
@@ -151,9 +151,9 @@ stb_setbits(struct bcmstb_softc *sc, int r, uint32_t clr, uint32_t set)
 	w = (w & ~clr) | set;
 	stb_write(sc, r, w);
 }
-#define STBWRITE(sc, r, v)  stb_write((sc), (r), (v))
-#define STBREAD(sc, r)      stb_read((sc), (r))
-#define STBRMW(sc, r, c, s) stb_setbits((sc), (r), (c), (s))
+#define STBWRITE(sc, r, v)	stb_write((sc), (r), (v))
+#define STBREAD(sc, r)		stb_read((sc), (r))
+#define STBRMW(sc, r, c, s)	stb_setbits((sc), (r), (c), (s))
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "brcm,pci-plat-dev" },
@@ -688,7 +688,7 @@ bcmstb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 
 	imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
 	imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask",
-	     &imasklen);
+	    &imasklen);
 	if (imap == NULL || imask == NULL || imasklen != 16)
 		return EINVAL;
 
@@ -860,8 +860,7 @@ bcmstb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	for (size_t i = 0; i < bs->nranges; i++) {
 		const bus_addr_t rmin = bs->ranges[i].bpci;
-		const bus_addr_t rmax = bs->ranges[i].bpci - 1 + bs->ranges[i]
-.size;
+		const bus_addr_t rmax = bs->ranges[i].bpci - 1 + bs->ranges[i].size;
 		if ((bpa >= rmin) && ((bpa - 1 + size) <= rmax)) {
 			const bus_addr_t pa = bs->ranges[i].bbus + (bpa - rmin);
 
