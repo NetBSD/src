@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.483 2024/07/22 18:15:04 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.484 2025/01/03 04:51:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.483 2024/07/22 18:15:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.484 2025/01/03 04:51:42 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -256,12 +256,6 @@ static enum {			/* Why is the make aborting? */
 
 /* Tracks the number of tokens currently "out" to build jobs. */
 int jobTokensRunning = 0;
-
-typedef enum JobStartResult {
-	JOB_RUNNING,		/* Job is running */
-	JOB_ERROR,		/* Error in starting the job */
-	JOB_FINISHED		/* The job is already finished */
-} JobStartResult;
 
 /*
  * Descriptions for various shells.
@@ -1267,7 +1261,7 @@ TouchRegular(GNode *gn)
 }
 
 /*
- * Touch the given target. Called by JobStart when the -t flag was given.
+ * Touch the given target. Called by Job_Make when the -t flag was given.
  *
  * The modification date of the file is changed.
  * If the file did not exist, it is created.
@@ -1613,22 +1607,8 @@ JobWriteShellCommands(Job *job, GNode *gn, bool *out_run)
 	*out_run = JobWriteCommands(job);
 }
 
-/*
- * Start a target-creation process going for the target described by gn.
- *
- * Results:
- *	JOB_ERROR if there was an error in the commands, JOB_FINISHED
- *	if there isn't actually anything left to do for the job and
- *	JOB_RUNNING if the job has been started.
- *
- * Details:
- *	A new Job node is created and added to the list of running
- *	jobs. PMake is forked and a child shell created.
- *
- * NB: The return value is ignored by everyone.
- */
-static JobStartResult
-JobStart(GNode *gn, bool special)
+void
+Job_Make(GNode *gn)
 {
 	Job *job;		/* new job descriptor */
 	char *argv[10];		/* Argument vector to shell */
@@ -1640,14 +1620,14 @@ JobStart(GNode *gn, bool special)
 			break;
 	}
 	if (job >= job_table_end)
-		Punt("JobStart no job slots vacant");
+		Punt("Job_Make no job slots vacant");
 
 	memset(job, 0, sizeof *job);
 	job->node = gn;
 	job->tailCmds = NULL;
 	job->status = JOB_ST_SET_UP;
 
-	job->special = special || gn->type & OP_SPECIAL;
+	job->special = (gn->type & OP_SPECIAL) != OP_NONE;
 	job->ignerr = opts.ignoreErrors || gn->type & OP_IGNORE;
 	job->echo = !(opts.silent || gn->type & OP_SILENT);
 
@@ -1732,7 +1712,7 @@ JobStart(GNode *gn, bool special)
 			Make_Update(job->node);
 		}
 		job->status = JOB_ST_FREE;
-		return cmdsOK ? JOB_FINISHED : JOB_ERROR;
+		return;
 	}
 
 	/*
@@ -1745,7 +1725,6 @@ JobStart(GNode *gn, bool special)
 	JobCreatePipe(job, 3);
 
 	JobExec(job, argv);
-	return JOB_RUNNING;
 }
 
 /*
@@ -2102,16 +2081,6 @@ Job_CatchOutput(void)
 		if (--nready == 0)
 			return;
 	}
-}
-
-/*
- * Start the creation of a target. Basically a front-end for JobStart used by
- * the Make module.
- */
-void
-Job_Make(GNode *gn)
-{
-	(void)JobStart(gn, false);
 }
 
 static void
