@@ -499,7 +499,7 @@ while [ -z "$REQUEST_ID" ]; do
 
   while true; do
     if [ -z "$BATCH" ]; then
-      $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
+      $ECHON1 "a)bort and save, e)dit or s)end? $ECHON2"
       read input
     else
       if [ $CNT -eq 6 ]; then
