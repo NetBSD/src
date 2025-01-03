@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt_else.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt_else.c,v 1.6 2025/01/03 16:56:53 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt_else, which represents the
@@ -80,5 +80,37 @@ example(_Bool cond)
 			else
 			{
 			}
+}
+//indent end
+
+
+/*
+ * In many cases, an else-if sequence is written in a single line.
+ * Occasionally, there are cases in which the code is clearer when the
+ * 'else' and 'if' are in separate lines.  In such a case, the inner 'if'
+ * statement should be indented like any other statement.
+ */
+//indent input
+void
+example(void)
+{
+	if (cond)
+		stmt();
+	else
+		if (cond)
+			stmt();
+}
+//indent end
+
+//indent run
+void
+example(void)
+{
+	if (cond)
+		stmt();
+	else
+	//$ FIXME: wrong indentation.
+	if (cond)
+		stmt();
 }
 //indent end
