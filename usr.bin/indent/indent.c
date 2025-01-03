@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.391 2024/12/12 05:51:50 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.392 2025/01/03 23:37:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.391 2024/12/12 05:51:50 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.392 2025/01/03 23:37:18 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -315,7 +315,18 @@ set_initial_indentation(void)
 static bool
 should_break_line(lexer_symbol lsym)
 {
-	if (lsym == lsym_semicolon)
+	if (lsym == lsym_if && ps.prev_lsym == lsym_else
+	    && opt.else_if_in_same_line)
+		ps.newline = nl_no;
+	if (ps.newline == nl_unless_lbrace && lsym != lsym_lbrace)
+		ps.newline = nl_yes;
+	if (ps.newline == nl_unless_semicolon && lsym != lsym_semicolon)
+		ps.newline = nl_yes;
+	if (ps.newline == nl_unless_if && lsym != lsym_if)
+		ps.newline = nl_yes;
+	if (ps.newline != nl_yes)
+		return false;
+	if (lsym == lsym_semicolon && ps.prev_lsym == lsym_rbrace)
 		return false;
 	if (ps.prev_lsym == lsym_lbrace || ps.prev_lsym == lsym_semicolon)
 		return true;
@@ -571,7 +582,12 @@ process_newline(void)
 	if (ps.psyms.sym[ps.psyms.len - 1] == psym_switch_expr
 	    && opt.brace_same_line
 	    && com.len == 0) {
-		ps.want_newline = true;
+		ps.newline = nl_unless_lbrace;
+		goto stay_in_line;
+	}
+	if (ps.psyms.sym[ps.psyms.len - 1] == psym_if_expr_stmt_else
+	    && opt.else_if_in_same_line) {
+		ps.newline = nl_unless_if;
 		goto stay_in_line;
 	}
 
@@ -665,10 +681,13 @@ process_rparen(void)
 	buf_add_buf(&code, &token);
 
 	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
+		bool is_do_while = ps.spaced_expr_psym == psym_while_expr
+		    && ps.psyms.sym[ps.psyms.len - 1] == psym_do_stmt;
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
 
-		ps.want_newline = true;
+		ps.newline = is_do_while
+		    ? nl_unless_semicolon : nl_unless_lbrace;
 		ps.next_unary = true;
 		ps.in_stmt_or_decl = false;
 		ps.want_blank = true;
@@ -721,7 +740,7 @@ process_lbrace(void)
 	if (ps.in_init)
 		ps.init_level++;
 	else
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 
 	if (code.len > 0 && !ps.in_init) {
 		if (!opt.brace_same_line ||
@@ -812,7 +831,7 @@ process_rbrace(void)
 	if (!ps.in_var_decl
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_do_stmt
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_if_expr_stmt)
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 }
 
 static void
@@ -868,7 +887,7 @@ process_comma(void)
 		if (ps.break_after_comma && (opt.break_after_comma ||
 			ind_add(compute_code_indent(), code.s, code.len)
 			>= opt.max_line_length - typical_varname_length))
-			ps.want_newline = true;
+			ps.newline = nl_yes;
 	}
 }
 
@@ -882,7 +901,7 @@ process_label_colon(void)
 	if (ps.seen_case)
 		out.line_kind = lk_case_or_default;
 	ps.in_stmt_or_decl = false;
-	ps.want_newline = ps.seen_case;
+	ps.newline = ps.seen_case ? nl_unless_semicolon : nl_no;
 	ps.seen_case = false;
 	ps.want_blank = false;
 }
@@ -936,7 +955,7 @@ process_semicolon(void)
 
 	if (ps.spaced_expr_psym == psym_0) {
 		parse(psym_stmt);
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 	}
 }
 
@@ -1000,7 +1019,7 @@ process_word(lexer_symbol lsym)
 	} else if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
-		ps.want_newline = true;
+		ps.newline = nl_unless_lbrace;
 		ps.in_stmt_or_decl = false;
 		ps.next_unary = true;
 	}
@@ -1016,7 +1035,7 @@ process_do(void)
 		output_line();
 
 	parse(psym_do);
-	ps.want_newline = true;
+	ps.newline = nl_unless_lbrace;
 }
 
 static void
@@ -1030,7 +1049,7 @@ process_else(void)
 		output_line();
 
 	parse(psym_else);
-	ps.want_newline = true;
+	ps.newline = opt.else_if_in_same_line ? nl_unless_if : nl_yes;
 }
 
 static void
@@ -1117,16 +1136,12 @@ indent(void)
 			return process_eof();
 
 		if (lsym == lsym_preprocessing || lsym == lsym_newline)
-			ps.want_newline = false;
+			ps.newline = nl_no;
 		else if (lsym == lsym_comment) {
 			/* no special processing */
 		} else {
-			if (lsym == lsym_if && ps.prev_lsym == lsym_else
-			    && opt.else_if_in_same_line)
-				ps.want_newline = false;
-
-			if (ps.want_newline && should_break_line(lsym)) {
-				ps.want_newline = false;
+			if (should_break_line(lsym)) {
+				ps.newline = nl_no;
 				output_line();
 			}
 			ps.in_stmt_or_decl = true;

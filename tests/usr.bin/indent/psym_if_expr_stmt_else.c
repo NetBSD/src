@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt_else.c,v 1.6 2025/01/03 16:56:53 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt_else.c,v 1.7 2025/01/03 23:37:18 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt_else, which represents the
@@ -108,9 +108,7 @@ example(void)
 {
 	if (cond)
 		stmt();
-	else
-	//$ FIXME: wrong indentation.
-	if (cond)
+	else if (cond)
 		stmt();
 }
 //indent end

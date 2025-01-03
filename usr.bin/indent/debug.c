@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.71 2024/12/12 05:51:50 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.72 2025/01/03 23:37:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.71 2024/12/12 05:51:50 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.72 2025/01/03 23:37:18 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -105,6 +105,14 @@ const char *const psym_name[] = {
 	"do",
 	"do_stmt",
 	"while_expr",
+};
+
+static const char *const newline_name[] = {
+	"no",
+	"no-if",
+	"no-lbrace",
+	"no-semicolon",
+	"yes",
 };
 
 static const char *const declaration_name[] = {
@@ -376,7 +384,7 @@ debug_parser_state(void)
 
 	state.heading = "vertical spacing";
 	debug_ps_bool(break_after_comma);
-	debug_ps_bool(want_newline);
+	debug_ps_enum(newline, newline_name);
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
 	debug_ps_enum(badp, badp_name);

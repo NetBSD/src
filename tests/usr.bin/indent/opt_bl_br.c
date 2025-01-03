@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.9 2023/05/21 10:18:44 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.10 2025/01/03 23:37:18 rillig Exp $ */
 
 //indent input
 void
@@ -166,8 +166,7 @@ function(void)
 	{
 		stmt();
 	}
-	else
-	if (cond)
+	else if (cond)
 	{
 		stmt();
 	}

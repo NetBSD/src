@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.207 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.208 2025/01/03 23:37:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -396,12 +396,16 @@ extern struct parser_state {
 	bool break_after_comma;	/* whether to add a newline after the next
 				 * comma; used in declarations but not in
 				 * initializer lists */
-	bool want_newline;	/* whether the next token should go to a new
-				 * line; used after 'if (expr)' and in similar
-				 * situations; tokens like '{' or ';' may
-				 * ignore this */
+	enum {
+		nl_no,
+		nl_unless_if,
+		nl_unless_lbrace,
+		nl_unless_semicolon,
+		nl_yes,
+	} newline;		/* decides whether to insert a line break
+				 * before the next token */
 
-	enum declaration {
+	enum {
 		decl_no,	/* no declaration anywhere nearby */
 		decl_begin,	/* collecting tokens of a declaration */
 		decl_end,	/* finished a declaration */

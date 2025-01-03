@@ -1,4 +1,4 @@
-/* $NetBSD: psym_while_expr.c,v 1.5 2023/06/02 15:07:46 rillig Exp $ */
+/* $NetBSD: psym_while_expr.c,v 1.6 2025/01/03 23:37:18 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_while_expr, which represents the keyword
@@ -38,10 +38,12 @@ function(void)
 	} while (cond);
 
 	if (cmd)
-		while (cond);
+		while (cond)
+			;
 
 	{
 	}
-	while (cond);
+	while (cond)
+		;
 }
 //indent end
