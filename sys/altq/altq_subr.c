@@ -401,7 +401,6 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 }
 
 #if NNPF > 0
-jfjfkfdkk
 /*
  * attach a discipline to the interface.  if one already exists, it is
  * overridden.
