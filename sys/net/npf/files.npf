@@ -8,10 +8,9 @@
 #
 
 defpseudo	npf:	ifnet, libnv
-defflag npf.h   NPF_ALTQ
 
 # Core
-file	net/npf/npf.c				npf
+file	net/npf/npf.c				npf     needs-flag
 file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf

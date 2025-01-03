@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.33 2017/03/14 09:03:08 ozaki-r Exp $
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#if NPF_ALTQ > 0
+#if NNPF > 0
 #include  <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
@@ -400,7 +400,7 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 	return (0);
 }
 
-#if NPF_ALTQ > 0
+#if NNPF > 0
 jfjfkfdkk
 /*
  * attach a discipline to the interface.  if one already exists, it is
@@ -630,7 +630,7 @@ altq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 
 	return (error);
 }
-#endif /* NPF_ALTQ > 0 */
+#endif /* NNPF > 0 */
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header

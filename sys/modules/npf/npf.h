@@ -1,1 +1,1 @@
-#define NPF 1
+#define NNPF 1
