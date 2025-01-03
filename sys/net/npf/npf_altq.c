@@ -32,7 +32,7 @@
 #include "opt_altq.h"
 #include "opt_inet.h"
 #endif
-#ifdef ALTQ
+
 #include <sys/unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,8 @@
 #include <altq/altq.h>
 #include "npf_altq.h"
 #include "npf.h"
+
+#ifdef ALTQ
 
 /*
  * starting point of altq kernel routines
