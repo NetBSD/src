@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.13 2025/01/03 18:42:52 joe Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.13 2025/01/03 18:42:52 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1838,7 +1838,7 @@ jobsclose(dev_t dev, int flag, int fmt,
 		if (ALTQ_IS_ENABLED(jif->jif_ifq))
 			altq_disable(jif->jif_ifq);
 
-		int error = altq_detach(pif->pif_ifq);
+		int error = altq_detach(jif->jif_ifq);
 		switch (error) {
 		case 0:
 		case ENXIO:	/* already disabled */
@@ -1849,7 +1849,7 @@ jobsclose(dev_t dev, int flag, int fmt,
 		jobs_detach(jif);
 	}
 
-	return error;
+	return 0;
 }
 
 int
