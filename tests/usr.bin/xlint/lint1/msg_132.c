@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.52 2025/01/02 20:02:59 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.53 2025/01/03 01:27:35 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -424,8 +424,6 @@ test_ic_minus(void)
 
 	ptr = ptr - 3;
 	s64 = ptr + 3 - ptr;
-	/* expect+1: warning: conversion from 'long' to 'unsigned int' may lose accuracy [132] */
-	u32 = ptr + 3 - ptr;
 }
 
 void
