@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.84 2024/06/08 06:42:59 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.85 2025/01/03 02:14:52 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,7 @@
 : "${lint1:=/usr/libexec/lint1}"
 : "${archsubdir:=archsubdir_must_be_set}"
 
+srcdir="$(atf_get_srcdir)"
 
 configure_test_case()
 {
@@ -113,13 +114,14 @@ configure_test_case()
 	export LC_ALL
 }
 
-# shellcheck disable=SC2155
+tests_done=''
 check_lint1()
 {
-	local src="$(atf_get_srcdir)/$1"
-	local exp="${1%.c}.exp"
+	local src="$1"
+	local base="${src##*/}"
+	local exp="${base%.c}.exp"
 	local exp_ln="${src%.c}.exp-ln"
-	local wrk_ln="${1%.c}.ln"
+	local wrk_ln="${base%.c}.ln"
 	local flags=""
 	local skip=""
 
@@ -131,13 +133,13 @@ check_lint1()
 	configure_test_case "$src"	# sets 'skip' and 'flags'
 
 	if [ "$skip" = "yes" ]; then
-		atf_skip "unsuitable platform"
+		return
 	fi
+	tests_done="$tests_done $src"
 
 	# shellcheck disable=SC2086
 	atf_check -s 'exit' -o "save:$exp" \
 	    "$lint1" $flags "$src" "$wrk_ln"
-	atf_check lua "$(atf_get_srcdir)/check-expect.lua" "$src"
 
 	if [ "$exp_ln" != '/dev/null' ]; then
 		# Remove comments and whitespace from the .exp-ln file.
@@ -152,21 +154,22 @@ check_lint1()
 	fi
 }
 
+atf_test_case lint1
+lint1_head() {
+	atf_set 'require.progs' "$lint1"
+}
+lint1_body() {
+	local src
+
+	for src in "$srcdir"/*.c; do
+		check_lint1 "$src"
+	done
+
+	# shellcheck disable=SC2086
+	atf_check lua "$srcdir/check-expect.lua" $tests_done
+}
+
 atf_init_test_cases()
 {
-	local src name
-
-	for src in "$(atf_get_srcdir)"/*.c; do
-		src=${src##*/}
-		name=${src%.c}
-
-		atf_test_case "$name"
-		eval "${name}_head() {
-			atf_set 'require.progs' '$lint1'
-		}"
-		eval "${name}_body() {
-			check_lint1 '$name.c'
-		}"
-		atf_add_test_case "$name"
-	done
+	atf_add_test_case lint1
 }

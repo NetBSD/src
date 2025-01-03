@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.12 2024/01/28 08:54:27 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.13 2025/01/03 02:14:52 rillig Exp $
 
 --[[
 
@@ -278,13 +278,17 @@ end
 
 
 local function main(args)
-  local update = args[1] == "-u"
-  if update then
-    table.remove(args, 1)
+  local update = false
+  for _, arg in ipairs(args) do
+    if arg == "-u" then
+      update = true
+    end
   end
 
   for _, name in ipairs(args) do
-    check_test(name, update)
+    if name ~= "-u" then
+      check_test(name, update)
+    end
   end
 end
 
