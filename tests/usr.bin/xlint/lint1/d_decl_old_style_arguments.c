@@ -9,7 +9,7 @@
 
 void func(int a, int b, int c);
 
-/* expect+5: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+5: warning: function definition for 'func' with identifier list is obsolete in C23 [384] */
 /* expect+4: warning: parameter 'num' unused in function 'func' [231] */
 /* expect+3: warning: parameter 'ptr' unused in function 'func' [231] */
 /* expect+2: warning: parameter 'dbl' unused in function 'func' [231] */

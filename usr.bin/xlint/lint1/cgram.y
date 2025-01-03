@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.516 2024/12/01 18:37:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.517 2025/01/03 03:14:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.516 2024/12/01 18:37:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.517 2025/01/03 03:14:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1659,13 +1659,7 @@ param_list:
 		block_level++;
 		begin_declaration_level(DLK_PROTO_PARAMS);
 	} identifier_list T_RPAREN {
-		$$ = (parameter_list){ .first = $3 };
-		if (allow_c23)
-			/* function definition with identifier list is ... */
-			error(384);
-		else if (allow_c99)
-			/* function definition with identifier list is ... */
-			warning(384);
+		$$ = (parameter_list){ .first = $3, .identifier = true };
 	}
 |	abstract_decl_param_list
 ;

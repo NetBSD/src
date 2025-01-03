@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_021.c,v 1.7 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: msg_021.c,v 1.8 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "msg_021.c"
 
 // Test for message: redeclaration of formal parameter '%s' [21]
@@ -10,7 +10,7 @@
 /*ARGSUSED*/
 void
 /* expect+2: error: redeclaration of formal parameter 'parameter' [21] */
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'old_style_with_duplicate_parameter' with identifier list is obsolete in C23 [384] */
 old_style_with_duplicate_parameter(parameter, parameter)
     int parameter;
 {
@@ -18,7 +18,7 @@ old_style_with_duplicate_parameter(parameter, parameter)
 }
 
 void
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'old_style_with_duplicate_parameter_declaration' with identifier list is obsolete in C23 [384] */
 old_style_with_duplicate_parameter_declaration(parameter)
     int parameter;
     /* expect+1: error: redeclaration of formal parameter 'parameter' [237] */
@@ -26,7 +26,7 @@ old_style_with_duplicate_parameter_declaration(parameter)
 {
 }
 
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'old_style_with_local_variable' with identifier list is obsolete in C23 [384] */
 void old_style_with_local_variable(parameter)
     int parameter;
 {

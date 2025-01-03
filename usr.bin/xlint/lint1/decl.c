@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.411 2024/11/30 10:43:48 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.412 2025/01/03 03:14:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.411 2024/11/30 10:43:48 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.412 2025/01/03 03:14:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1376,6 +1376,13 @@ add_function(sym_t *decl, parameter_list params)
 	for (const sym_t *p = params.first; p != NULL; p = p->s_next)
 		debug_sym("param: ", p, "\n");
 #endif
+
+	if (params.identifier && allow_c23)
+		/* function definition for '%s' with identifier list is ... */
+		error_at(384, &decl->s_def_pos, decl->s_name);
+	else if (params.identifier && allow_c99)
+		/* function definition for '%s' with identifier list is ... */
+		warning_at(384, &decl->s_def_pos, decl->s_name);
 
 	if (params.prototype) {
 		if (!allow_c90)

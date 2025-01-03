@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_384.c,v 1.1 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: msg_384.c,v 1.2 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "msg_384.c"
 
-// Test for message: function definition with identifier list is obsolete in C23 [384]
+// Test for message: function definition for '%s' with identifier list is obsolete in C23 [384]
 
 /* lint1-extra-flags: -X 351 */
 
@@ -12,7 +12,7 @@
  */
 
 static inline int
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'function_with_identifier_list' with identifier list is obsolete in C23 [384] */
 function_with_identifier_list(a, b)
 	int a, b;
 {

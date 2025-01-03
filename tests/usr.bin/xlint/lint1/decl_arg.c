@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.16 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.17 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -24,7 +24,7 @@ void type_qualifier_pointer(const number *const);
  * Just some unrealistic coverage for the grammar rule 'arg_declaration'.
  */
 extern void
-/* expect+6: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+6: warning: function definition for 'old_style' with identifier list is obsolete in C23 [384] */
 /* expect+5: warning: parameter 'an_int' unused in function 'old_style' [231] */
 /* expect+4: warning: parameter 'a_const_int' unused in function 'old_style' [231] */
 /* expect+3: warning: parameter 'a_number' unused in function 'old_style' [231] */
@@ -62,7 +62,7 @@ struct a_struct { int member; } a_struct;
  * 'notype_direct_declarator'.
  */
 extern int
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'cover_notype_direct_decl' with identifier list is obsolete in C23 [384] */
 cover_notype_direct_decl(arg)
 int arg;
 /* expect+1: error: declared parameter 'name' is missing [53] */
@@ -157,7 +157,7 @@ void cover_asm_or_symbolrename_symbolrename(void)
 
 
 double
-/* expect+1: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+1: warning: function definition for 'f' with identifier list is obsolete in C23 [384] */
 f(e, s, r, a, t, n)
 	/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
 	extern double e;

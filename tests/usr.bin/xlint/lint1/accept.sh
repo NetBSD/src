@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.16 2024/07/10 05:43:58 rillig Exp $
+# $NetBSD: accept.sh,v 1.17 2025/01/03 03:14:47 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,13 @@
 #	'expect' comments.
 
 set -eu
+
+atf_get_srcdir() {
+	echo "."
+}
+atf_test_case() {
+	:
+}
 
 : "${archsubdir:=$(make -v ARCHSUBDIR)}"
 . './t_integration.sh'		# for configure_test_case

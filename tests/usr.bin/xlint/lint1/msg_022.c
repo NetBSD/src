@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_022.c,v 1.7 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: msg_022.c,v 1.8 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "msg_022.c"
 
 // Test for message: incomplete or misplaced function definition [22]
@@ -27,7 +27,7 @@ unsigned long sz = sizeof(int(param1, param2));
 /* expect+1: warning: empty declaration [0] */
 ;
 
-/* expect+3: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+3: warning: function definition for 'old_style' with identifier list is obsolete in C23 [384] */
 /* expect+2: error: incomplete or misplaced function definition [22] */
 /* expect+1: warning: old-style declaration; add 'int' [1] */
 old_style(arg);

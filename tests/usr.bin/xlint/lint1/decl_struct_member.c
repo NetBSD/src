@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.18 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.19 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -79,7 +79,6 @@ struct array_of_bit_fields {
  * Before decl.c 1.188 from 2021-06-20, lint ran into a segmentation fault.
  */
 struct {
-	/* expect+2: warning: function definition with identifier list is obsolete in C23 [384] */
 	/* expect+1: error: syntax error '0' [249] */
 	char a(_)0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_051.c,v 1.8 2024/12/01 18:37:54 rillig Exp $	*/
+/*	$NetBSD: msg_051.c,v 1.9 2025/01/03 03:14:47 rillig Exp $	*/
 # 3 "msg_051.c"
 
 // Test for message: parameter mismatch: %d declared, %d defined [51]
@@ -9,7 +9,7 @@ void
 example(int, int);
 
 void
-/* expect+4: warning: function definition with identifier list is obsolete in C23 [384] */
+/* expect+4: warning: function definition for 'example' with identifier list is obsolete in C23 [384] */
 /* expect+3: warning: parameter 'a' unused in function 'example' [231] */
 /* expect+2: warning: parameter 'b' unused in function 'example' [231] */
 /* expect+1: warning: parameter 'c' unused in function 'example' [231] */
