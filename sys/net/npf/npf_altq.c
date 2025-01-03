@@ -63,7 +63,6 @@ struct npf_altqqueue	*npf_altqs_active;
 struct npf_altqqueue	*npf_altqs_inactive;
 struct npf_altqqueue  npf_altqs[2];
 
-int			 npf_altqs_inactive_open;
 struct pool		 npf_altq_pl;
 int npf_altq_loaded = 0;
 
@@ -170,8 +169,7 @@ npf_commit_altq(void)
 	struct npf_altqqueue	*old_altqs;
 	struct npf_altq		*altq;
 	int			 s, err, error = 0;
-	if (!npf_altqs_inactive_open)
-		return EBUSY;
+
 	/* swap altqs, keep the old. */
 	s = splsoftnet();
 	old_altqs = npf_altqs_active;
@@ -209,7 +207,6 @@ npf_commit_altq(void)
 		pool_put(&npf_altq_pl, altq);
 	}
 	splx(s);
-	npf_altqs_inactive_open = 0;
 	return error;
 }
 
