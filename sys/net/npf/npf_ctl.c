@@ -360,7 +360,9 @@ npf_mk_singlerule(npf_t *npf, const nvlist_t *req, nvlist_t *resp,
 	}
 
 #ifdef ALTQ
+	printf("making queue rule\n");
 	if (npf_altq_loaded) {
+		printf("check if queue is appended on a rule\n");
 		/* assign the rule queues, if any */
 		const char *qname;
 
@@ -369,10 +371,12 @@ npf_mk_singlerule(npf_t *npf, const nvlist_t *req, nvlist_t *resp,
 			if (npf_rule_setqid(rl, qname)) {
 				goto err;
 			}
+			printf("rule-id set\n");
 			if (!altqattached)
 				altqattached = 1;
 		}
 	}
+	printf("finished making queue rule\n");
 #endif
 
 	/* Filter byte-code (binary data). */
@@ -618,13 +622,17 @@ npfctl_load(npf_t *npf, const nvlist_t *req, nvlist_t *resp)
 	}
 
 #ifdef ALTQ
+	printf("attaching altq...\n");
 	 /*TODO: attach quues here */
 	if (npf_altq_loaded && altqattached) {
+		printf("attaching..\n");
 		error = npf_commit_altq();
+		printf("finished \n");
 		if (error) {
 			goto fail;
 		}
 	}
+	printf("finished attaching altq\n");
 #endif /* ALTQ */
 
 	flush = dnvlist_get_bool(req, "flush", false);
