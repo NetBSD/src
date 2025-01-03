@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.25 2024/12/30 08:32:37 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.26 2025/01/03 13:18:30 skrll Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.25 2024/12/30 08:32:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.26 2025/01/03 13:18:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,11 +1629,10 @@ summitfb_copyfont(struct summitfb_softc *sc)
 
 	if (font == NULL)
 		return;
-	bufsize = sizeof(struct wsdisplay_font) + 32 + fp->bpc * ( fp->last - fp->first);
+
+	bufsize = sizeof(struct wsdisplay_font) + 32 + fp->bpc * (fp->last - fp->first);
 	DPRINTF(("%s: %dx%d %d\n", __func__, fp->width, fp->height, bufsize));
-	fontbuf = kmem_alloc(bufsize, KM_NOSLEEP);
-	if (fontbuf == NULL)
-		return;
+	fontbuf = kmem_alloc(bufsize, KM_SLEEP);
 	f = (struct wsdisplay_font *)fontbuf;
 	f->name = fontbuf + sizeof(struct wsdisplay_font);
 	fontdata = fontbuf + sizeof(struct wsdisplay_font) + 32;
