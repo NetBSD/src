@@ -86,6 +86,8 @@ npf_altq_init(void)
 	npf_altqs_inactive = &npf_altqs[1];
 }
 
+HDHHJJJJD
+
 int
 npf_begin_altq(void)
 {
