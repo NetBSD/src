@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.47 2024/05/17 02:59:08 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.48 2025/01/03 00:40:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ libedit_private EditLine *el_init_internal(const char *, FILE *, FILE *,
 					 __FILE__, __LINE__); \
 				fprintf a; \
 				abort(); \
-			} while( /*CONSTCOND*/0);
+			} while (0)
 #else
 #define EL_ABORT(a)	abort()
 #endif
