@@ -28,11 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-hfhddkdkdk
-
 #ifdef _KERNEL_OPT
-#include "opt_inet.h"
 #include "opt_altq.h"
+#include "opt_inet.h"
 #endif
 #ifdef ALTQ
 #include <sys/unistd.h>
@@ -87,8 +85,6 @@ npf_altq_init(void)
 	npf_altqs_active = &npf_altqs[0];
 	npf_altqs_inactive = &npf_altqs[1];
 }
-
-HDHHJJJJD
 
 int
 npf_begin_altq(void)
