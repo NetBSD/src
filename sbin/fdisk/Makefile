@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.44 2023/06/03 09:09:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.45 2025/01/03 16:16:14 rillig Exp $
 
-PROG=	fdisk 
+PROG=	fdisk
 SRCS=	fdisk.c
 
 MAN=	fdisk.8
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+= -DBOOTSEL
-.if (${HOSTPROG:U} == "")
+.if ${HOSTPROG:U} == ""
 CPPFLAGS+= -DUSE_DISKLIST
 .endif
 .endif
@@ -21,10 +21,13 @@ CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rwd0c"'
 .endif
 
 COPTS.fdisk.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+LINTFLAGS+=	-X 117		# '>>' on signed value
+LINTFLAGS+=	-X 132		# conversion may lose accuracy
+LINTFLAGS+=	-X 298		# conversion in function call may lose accuracy
 
 .include <bsd.prog.mk>
 
-.if (${HOSTPROG:U} == "")
+.if ${HOSTPROG:U} == ""
 DPADD+=	${LIBUTIL} ${LIBZ}
 LDADD+=	-lutil -lz
 .endif

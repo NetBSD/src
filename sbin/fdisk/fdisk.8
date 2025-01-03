@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.92 2020/05/24 21:01:49 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.93 2025/01/03 16:16:14 rillig Exp $
 .\"
-.Dd May 24, 2020
+.Dd January 3, 2025
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -17,8 +17,6 @@
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 .Op Fl b Ar cylinders/heads/sectors
 .Op Fl c Ar bootcode
-.Op Fl T Ar disktype
-.Op Fl t Ar disktab
 .Op Fl z Ar sectorsize
 .Op Ar device
 .Nm
@@ -226,12 +224,6 @@ an additional logical partition will be created.
 Indicate that
 .Ar device
 is a regular file.
-Unless the geometry of
-.Ar device
-is told to
-.Nm
-by
-.Fl T Ar disktype ,
 .Nm
 will count the 512-byte sectors in
 .Ar device
@@ -308,18 +300,6 @@ If the optional arguments are not provided, they stay as before or
 use the same defaults as the interactive mode, if new.
 This flag requires the use of a partition selection flag
 .Pq Fl 0 , 1 , 2 , 3 , No or Fl E Ar number .
-.It Fl T Ar disktype
-Use the disklabel
-.Ar disktype
-instead of the disklabel on
-.Ar device .
-.It Fl t Ar disktab
-Read
-.Ar disktype
-from the named
-.Xr disktab 5
-file instead of from
-.Pa /etc/disktab .
 .It Fl u
 Update partition data, including
 .Em id , start , No and Em size .

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.161 2022/04/02 19:15:09 mlelstv Exp $ */
+/*	$NetBSD: fdisk.c,v 1.162 2025/01/03 16:16:14 rillig Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.161 2022/04/02 19:15:09 mlelstv Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.162 2025/01/03 16:16:14 rillig Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -114,7 +114,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.161 2022/04/02 19:15:09 mlelstv Exp $");
 #define _PATH_DEFDISK	"/dev/rwd0d"
 #endif
 
-struct {
+static struct {
 	struct mbr_sector *ptn;		/* array of pbrs */
 	daddr_t		base;		/* first sector of ext. ptn */
 	daddr_t		limit;		/* last sector of ext. ptn */
@@ -138,7 +138,7 @@ static char *boot_path = NULL;			/* name of file we actually opened */
 #ifdef BOOTSEL
 #define BOOTSEL_OPTIONS	"B"
 #else
-#define BOOTSEL_OPTIONS	
+#define BOOTSEL_OPTIONS	""
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
 #endif
 #define OPTIONS	BOOTSEL_OPTIONS "0123FSafgiIluvA:b:c:E:r:s:w:z:"
@@ -206,7 +206,6 @@ static unsigned int ptn_0_offset;	/* default dos_sectors */
 
 static int fd = -1, wfd = -1, *rfd = &fd;
 static char *disk_file = NULL;
-static char *disk_type = NULL;
 
 static int a_flag;		/* set active partition */
 static int i_flag;		/* init bootcode */
@@ -393,7 +392,7 @@ main(int argc, char *argv[])
 	v_flag = 0;
 	E_flag = 0;
 	csysid = -1;
-	cstart = csize = ~0;
+	cstart = csize = ~0U;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '0':
@@ -410,9 +409,10 @@ main(int argc, char *argv[])
 			break;
 		case 'E':	/* Extended partition number */
 			E_flag = 1;
-			partition = strtoul(optarg, &cp, 0);
-			if (*cp || partition < 0)
+			unsigned long ul = strtoul(optarg, &cp, 0);
+			if (*cp || ul > INT_MAX)
 				errx(1, "Bad partition number -E %s.", optarg);
+			partition = (int)ul;
 			break;
 #ifdef BOOTSEL
 		case 'B':	/* Bootselect parameters */
@@ -492,22 +492,11 @@ main(int argc, char *argv[])
 		case 'w':	/* write data to disk_file */
 			disk_file = optarg;
 			break;
-		case 't':
-			if (setdisktab(optarg) == -1)
-				errx(EXIT_FAILURE, "bad disktab");
-			break;
-		case 'T':
-			disk_type = optarg;
-			break;
 		case 'z':
 			secsize = atoi(optarg);
-			if (secsize <= 512)
-out:				 errx(EXIT_FAILURE, "Invalid sector size %zd",
+			if (secsize <= 512 || (secsize & (secsize - 1)) != 0)
+				errx(EXIT_FAILURE, "Invalid sector size %zd",
 				    secsize);
-			for (ch = secsize; (ch & 1) == 0; ch >>= 1)
-				continue;
-			if (ch != 1)
-				goto out;
 			break;
 		default:
 			usage();
@@ -515,9 +504,6 @@ out:				 errx(EXIT_FAILURE, "Invalid sector size %zd",
 	}
 	argc -= optind;
 	argv += optind;
-
-	if (disk_type != NULL && getdiskbyname(disk_type) == NULL)
-		errx(EXIT_FAILURE, "bad disktype");
 
 	if (sh_flag && (a_flag || i_flag || u_flag || f_flag || s_flag))
 		usage();
@@ -978,7 +964,7 @@ is_all_zero(const unsigned char *p, size_t size)
  * diagnosing boot failures.
  */
 static void
-print_pbr(daddr_t sector, int indent, uint8_t part_type)
+print_pbr(daddr_t sector, int indent, uint8_t part_type __unused)
 {
 	struct mbr_sector pboot;
 	unsigned char *p, *endp;
@@ -1092,9 +1078,6 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 		goto fail;
 	}
 
-	/*
-	 * Do some sanity checking here
-	 */
 	if (((struct mbr_sector *)buf)->mbr_magic != LE_MBR_MAGIC) {
 		warnx("%s: invalid magic", boot_path);
 		goto fail;
@@ -1135,7 +1118,7 @@ init_sector0(int zappart)
 		mboot.mbr_bootsel_magic = bootcode[0].mbr_bootsel_magic;
 	}
 	mboot.mbr_magic = LE_MBR_MAGIC;
-	
+
 	if (!zappart)
 		return;
 	for (i = 0; i < MBR_PART_COUNT; i++)
@@ -1229,7 +1212,7 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 		return;
 	}
 	while (isdigit((unsigned char)*p2))
-		p2++; 
+		p2++;
 
 	len = p2 - p;
 	if (len > size) {
@@ -1237,7 +1220,7 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 		strlcpy(diskname, fullname, size);
 		return;
 	}
- 
+
 	memcpy(diskname, p, len);
 	diskname[len] = 0;
 }
@@ -1690,7 +1673,7 @@ intuit_translated_geometry(void)
 				break;
 			}
 		}
-		if (xheads != -1)	
+		if (xheads != -1)
 			break;
 	}
 
@@ -1906,7 +1889,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 	}
 
 	/* Check we haven't cut space allocated to an extended ptn */
-	
+
 	if (!MBR_IS_EXTENDED(sysid)) {
 		/* no longer an extended partition */
 		if (fix) {
@@ -2087,7 +2070,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			}
 			if (size == (daddr_t)0xffffffff) {
 				size = le32toh(partp->mbrp_size);
-				if (size == 0) 
+				if (size == 0)
 					size = disksectors - start;
 			}
 		}
@@ -2461,7 +2444,6 @@ change_bios_geometry(void)
 				" (%"PRIdaddr" sectors, %dMB)\n",
 			    i, bip->bi_cyl, bip->bi_head, bip->bi_sec,
 			    bip->bi_lbasecs, SEC_TO_MB(bip->bi_lbasecs));
-				
 		}
 		printf("\n");
 	}
@@ -2513,7 +2495,7 @@ open_disk(int update)
 				warnx("%s is not a character device", namebuf);
 			else
 				warn("cannot opendisk %s", namebuf);
-			return (-1);
+			return -1;
 		}
 		disk = namebuf;
 	} else {
@@ -2527,7 +2509,7 @@ open_disk(int update)
 	if (get_params() == -1) {
 		close(fd);
 		fd = -1;
-		return (-1);
+		return -1;
 	}
 	if (disk_file != NULL) {
 		/* for testing: read/write data from a disk file */
@@ -2540,7 +2522,7 @@ open_disk(int update)
 		}
 	} else
 		wfd = fd;
-	return (0);
+	return 0;
 }
 
 static ssize_t
@@ -2570,7 +2552,7 @@ read_disk(daddr_t sector, void *buf)
 	memcpy(buf, &iobuf[mod], 512);
 
 	return 512;
-}	
+}
 
 static ssize_t
 write_disk(daddr_t sector, void *buf)
@@ -2619,19 +2601,11 @@ guess_geometry(daddr_t _sectors)
 static int
 get_params(void)
 {
-	if (disk_type != NULL) {
-		struct disklabel *tmplabel;
-
-		if ((tmplabel = getdiskbyname(disk_type)) == NULL) {
-			warn("%s: bad disktype", disk);
-			return (-1);
-		}
-		disklabel = *tmplabel;
-	} else if (F_flag) {
+	if (F_flag) {
 		struct stat st;
 		if (fstat(fd, &st) == -1) {
 			warn("%s: fstat", disk);
-			return (-1);
+			return -1;
 		}
 		if (st.st_size % 512 != 0) {
 			warnx("%s size (%ju) is not divisible "
@@ -2650,7 +2624,7 @@ get_params(void)
 		warn("%s: DIOCGDEFLABEL", disk);
 		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 			warn("%s: DIOCGDINFO", disk);
-			return (-1);
+			return -1;
 		}
 	}
 #endif
@@ -2672,7 +2646,7 @@ get_params(void)
 	}
 	dos_disksectors = disksectors;
 
-	return (0);
+	return 0;
 }
 
 #ifdef BOOTSEL
@@ -2858,7 +2832,7 @@ yesno(const char *str, ...)
 		ch = getchar();
 	if (ch == EOF)
 		errx(1, "EOF");
-	return (first == 'y' || first == 'Y');
+	return first == 'y' || first == 'Y';
 }
 
 static int64_t
@@ -3005,22 +2979,22 @@ type_match(const void *key, const void *item)
 	const struct mbr_ptype *ptr = item;
 
 	if (*idp < ptr->id)
-		return (-1);
+		return -1;
 	if (*idp > ptr->id)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 static const char *
 get_type(int type)
 {
-	struct mbr_ptype *ptr;
+	const struct mbr_ptype *ptr;
 
 	ptr = bsearch(&type, mbr_ptypes, KNOWN_SYSIDS,
 	    sizeof(mbr_ptypes[0]), type_match);
-	if (ptr == 0)
-		return ("unknown");
-	return (ptr->name);
+	if (ptr == NULL)
+		return "unknown";
+	return ptr->name;
 }
 
 static int
