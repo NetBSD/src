@@ -338,7 +338,7 @@ int check_commit_altq(void);
 
 int npf_rule_qnames_exists(const char *);
 int check_commit_altq(void);
-int  npf_altq_destroy(int);
+int  npfctl_altq_destroy(int);
 int npfctl_print_altq(int);
 int npfctl_show_altq(int);
 

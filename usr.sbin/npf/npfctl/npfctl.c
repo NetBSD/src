@@ -379,7 +379,7 @@ npfctl_config_flush(int fd, int argc, char* argv[])
 	while((ch = getopt(argc, argv, "q")) != -1) {
 		switch(ch) {
 			case 'q':
-				return npf_altq_destroy(fd);
+				return npfctl_altq_destroy(fd);
 			default:
 				errx(EXIT_FAILURE,
 					"Usage: %s flush -q }\n",
@@ -387,7 +387,7 @@ npfctl_config_flush(int fd, int argc, char* argv[])
 		}
 	}
 	/* a single flush destroys queueing then filtering altogether*/
-	error = npf_altq_destroy(fd);
+	error = npfctl_altq_destroy(fd);
 	if (!error)
 		error = npf_config_flush(fd);
 	return error;

@@ -1505,7 +1505,7 @@ npf_rule_qnames_exists(const char *qname)
 }
 
 int
-npf_altq_destroy(int fd)
+npfctl_altq_destroy(int fd)
 {
 	altqsupport = npfctl_test_altqsupport(fd);
 	if (!(altqsupport & (ioctl(fd, IOC_NPF_DESTROY_ALTQ) != -1)))
