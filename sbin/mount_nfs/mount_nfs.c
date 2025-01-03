@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.75 2022/12/21 19:00:52 chs Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.76 2025/01/03 00:49:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.75 2022/12/21 19:00:52 chs Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.76 2025/01/03 00:49:24 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ mount_nfs_parseargs(int argc, char *argv[],
 	memset(nfsargsp, 0, sizeof(*nfsargsp));
 	*nfsargsp = nfsdefargs;
 	while ((c = getopt(argc, argv,
-	    "23Aa:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UuX")) != -1)
+	    "23Aa:bcCdD:g:I:iL:lo:PpqR:r:sTt:w:x:UuX")) != -1)
 		switch (c) {
 		case '3':
 		case 'q':
@@ -416,7 +416,6 @@ mount_nfs_parseargs(int argc, char *argv[],
 			break;
 		default:
 			usage();
-			break;
 		}
 	argc -= optind;
 	argv += optind;
