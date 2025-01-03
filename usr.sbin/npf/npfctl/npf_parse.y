@@ -273,6 +273,7 @@ line
 	| set
 	| altq
 	| queuespec
+	|
 	;
 
 altq : ALTQ on_ifname queue_opts QUEUE qassign {
