@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.80 2025/01/04 10:28:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.81 2025/01/04 21:20:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.80 2025/01/04 10:28:08 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.81 2025/01/04 21:20:59 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -153,7 +153,7 @@ void
 parse(parser_symbol psym)
 {
 	debug_blank_line();
-	debug_println("parse token: %s", psym_name[psym]);
+	debug_println("parse: %s", psym_name[psym]);
 
 	if (psym != psym_else) {
 		while (ps.psyms.sym[ps.psyms.len - 1] == psym_if_expr_stmt) {
@@ -266,15 +266,17 @@ parse(parser_symbol psym)
 
 #if debug
 	static struct buffer before, after;
-	debug_fmt_psyms_stack(&before);
+	buf_clear(&before);
+	ps_psyms_to_string(&before, &ps);
 #endif
 	psyms_reduce();
 #if debug
-	debug_fmt_psyms_stack(&after);
-	if (before.len != after.len
-	    || memcmp(before.s, after.s, before.len) != 0) {
-		debug_println("psyms before:%s", before.s);
-		debug_println("psyms after: %s", after.s);
-	}
+	buf_clear(&after);
+	ps_psyms_to_string(&after, &ps);
+	if (strcmp(before.s, after.s) != 0) {
+		debug_println("psyms before: %s", before.s);
+		debug_println("psyms after:  %s", after.s);
+	} else
+		debug_println("psyms: %s", after.s);
 #endif
 }

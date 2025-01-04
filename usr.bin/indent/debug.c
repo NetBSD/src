@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.73 2025/01/04 10:28:08 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.74 2025/01/04 21:20:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.73 2025/01/04 10:28:08 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.74 2025/01/04 21:20:59 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -286,62 +286,62 @@ debug_ps_enum_member(const char *name, const char *prev, const char *curr)
 		debug_println("\t\t%s: %s", name, curr);
 }
 
-static bool
-paren_stack_equal(const struct paren_stack *a, const struct paren_stack *b)
+static void
+debug_ps_str_member(const char *name,
+    void (*to_string)(struct buffer *, const struct parser_state *))
 {
-	if (a->len != b->len)
-		return false;
+	static struct buffer prev_buf;
+	static struct buffer curr_buf;
 
-	for (size_t i = 0, n = a->len; i < n; i++)
-		if (a->item[i].indent != b->item[i].indent
-		    || a->item[i].cast != b->item[i].cast)
-			return false;
-	return true;
+	buf_clear(&prev_buf);
+	to_string(&prev_buf, &state.prev_ps);
+	buf_clear(&curr_buf);
+	to_string(&curr_buf, &ps);
+
+	if (!state.ps_first && strcmp(prev_buf.s, curr_buf.s) != 0)
+		debug_println("\t\t%s: %s -> %s",
+		    name, prev_buf.s, curr_buf.s);
+	else if (config.full_parser_state || state.ps_first)
+		debug_println("\t\t%s: %s", name, curr_buf.s);
 }
 
 static void
-debug_ps_paren(void)
+ps_di_stack_to_string(struct buffer *buf, const struct parser_state *s)
 {
-	if (!config.full_parser_state
-	    && paren_stack_equal(&state.prev_ps.paren, &ps.paren)
-	    && !state.ps_first)
-		return;
-
-	debug_printf("\t\tparen:");
-	for (size_t i = 0; i < ps.paren.len; i++) {
-		debug_printf("  %s %d",
-		    paren_level_cast_name[ps.paren.item[i].cast],
-		    ps.paren.item[i].indent);
+	for (int i = 0; i < s->decl_level; i++) {
+		char str[64];
+		snprintf(str, sizeof(str), "%s%d",
+			 i > 0 ? " " : "", s->di_stack[i]);
+		buf_add_str(buf, str);
 	}
-	if (ps.paren.len == 0)
-		debug_printf(" none");
-	debug_println("");
-}
-
-static bool
-ps_di_stack_has_changed(void)
-{
-	if (state.prev_ps.decl_level != ps.decl_level)
-		return true;
-	for (int i = 0; i < ps.decl_level; i++)
-		if (state.prev_ps.di_stack[i] != ps.di_stack[i])
-			return true;
-	return false;
+	if (s->decl_level == 0)
+		buf_add_str(buf, "none");
 }
 
 static void
-debug_ps_di_stack(void)
+ps_paren_to_string(struct buffer *buf, const struct parser_state *s)
 {
-	bool changed = ps_di_stack_has_changed();
-	if (!config.full_parser_state && !changed && !state.ps_first)
-		return;
+	for (size_t i = 0; i < s->paren.len; i++) {
+		buf_add_str(buf, i > 0 ? "  " : "");
+		buf_add_str(buf, paren_level_cast_name[s->paren.item[i].cast]);
+		char str[64];
+		snprintf(str, sizeof(str), " %d", s->paren.item[i].indent);
+		buf_add_str(buf, str);
+	}
+	if (s->paren.len == 0)
+		buf_add_str(buf, "none");
+}
 
-	debug_printf("\t\tdi_stack: ");
-	for (int i = 0; i < ps.decl_level; i++)
-		debug_printf(" %d", ps.di_stack[i]);
-	if (ps.decl_level == 0)
-		debug_printf(" none");
-	debug_println("");
+void
+ps_psyms_to_string(struct buffer *buf, const struct parser_state *s)
+{
+	for (size_t i = 0; i < s->psyms.len; i++) {
+		char num[64];
+		snprintf(num, sizeof(num), "%s%d ",
+		    i > 0 ? "  " : "", s->psyms.ind_level[i]);
+		buf_add_str(buf, num);
+		buf_add_str(buf, psym_name[s->psyms.sym[i]]);
+	}
 }
 
 #define debug_ps_bool(name) \
@@ -351,6 +351,8 @@ debug_ps_di_stack(void)
 #define debug_ps_enum(name, names) \
         debug_ps_enum_member(#name, (names)[state.prev_ps.name], \
 	    (names)[ps.name])
+#define debug_ps_str(name, to_string) \
+        debug_ps_str_member((/* LINTED 129 */(void)&ps.name, #name), to_string)
 
 void
 debug_parser_state(void)
@@ -378,21 +380,20 @@ debug_parser_state(void)
 	state.heading2 = "indentation of statements and declarations";
 	debug_ps_int(ind_level);
 	debug_ps_int(ind_level_follow);
+	debug_ps_str(psyms, ps_psyms_to_string);
 	debug_ps_bool(line_is_stmt_cont);
 	debug_ps_int(decl_level);
-	debug_ps_di_stack();
+	debug_ps_str(di_stack, ps_di_stack_to_string);
 	debug_ps_bool(decl_indent_done);
 	debug_ps_int(decl_ind);
 	debug_ps_bool(tabs_to_var);
 	debug_ps_enum(extra_expr_indent, extra_expr_indent_name);
 
-	// The parser symbol stack is printed in debug_psyms_stack instead.
-
 	state.heading2 = "spacing inside a statement or declaration";
 	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
 	debug_ps_int(ind_paren_level);
-	debug_ps_paren();
+	debug_ps_str(paren, ps_paren_to_string);
 
 	state.heading2 = "indentation of comments";
 	debug_ps_int(comment_ind);
@@ -413,17 +414,5 @@ debug_parser_state(void)
 	parser_state_free(&state.prev_ps);
 	parser_state_back_up(&state.prev_ps);
 	state.ps_first = false;
-}
-
-void
-debug_fmt_psyms_stack(struct buffer *buf)
-{
-	buf_clear(buf);
-	for (size_t i = 0; i < ps.psyms.len; i++) {
-		char num[64];
-		snprintf(num, sizeof(num), "  %d ", ps.psyms.ind_level[i]);
-		buf_add_str(buf, num);
-		buf_add_str(buf, psym_name[ps.psyms.sym[i]]);
-	}
 }
 #endif

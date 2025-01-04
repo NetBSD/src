@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.393 2025/01/04 10:28:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.394 2025/01/04 21:20:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.393 2025/01/04 10:28:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.394 2025/01/04 21:20:59 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -504,7 +504,7 @@ parser_state_restore(const struct parser_state *src)
 {
 	struct paren_level *ps_paren_item = ps.paren.item;
 	size_t ps_paren_cap = ps.paren.cap;
-	enum parser_symbol *ps_psyms_sym = ps.psyms.sym;
+	parser_symbol *ps_psyms_sym = ps.psyms.sym;
 	int *ps_psyms_ind_level = ps.psyms.ind_level;
 	size_t ps_psyms_cap = ps.psyms.cap;
 
@@ -1126,8 +1126,8 @@ indent(void)
 		lexer_symbol lsym = lexi();
 
 		debug_blank_line();
-		debug_printf("line %d: next token is %s",
-		    in.token_start_line, lsym_name[lsym]);
+		debug_printf("line %s:%d: next token is %s",
+		    in_name, in.token_start_line, lsym_name[lsym]);
 		debug_print_buf("with text", &token);
 		debug_println("");
 		if (lab.len > 0 || code.len > 0 || com.len > 0)

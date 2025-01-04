@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.209 2025/01/04 10:28:08 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.210 2025/01/04 21:20:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -120,7 +120,7 @@ typedef enum lexer_symbol {
  * Structure of the source code, in terms of declarations, statements and
  * braces; used to determine the indentation level of these parts.
  */
-typedef enum parser_symbol {
+typedef enum {
 	psym_0,			/* a placeholder; not stored on the stack */
 	psym_lbrace_block,	/* '{' for a block of code */
 	psym_lbrace_struct,	/* '{' in 'struct ... { ... }' */
@@ -461,7 +461,7 @@ void debug_println(const char *, ...) __printflike(1, 2);
 void debug_blank_line(void);
 void debug_vis_range(const char *, size_t);
 void debug_parser_state(void);
-void debug_fmt_psyms_stack(struct buffer *);
+void ps_psyms_to_string(struct buffer *, const struct parser_state *);
 void debug_print_buf(const char *, const struct buffer *);
 void debug_buffers(const char *);
 void parser_state_back_up(struct parser_state *);
@@ -478,7 +478,6 @@ extern const char *const line_kind_name[];
 #define debug_blank_line() debug_noop()
 #define	debug_vis_range(s, len) debug_noop()
 #define	debug_parser_state() debug_noop()
-#define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
 #define	debug_buffers(descr) debug_noop()
 #define static_unless_debug static
