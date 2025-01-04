@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.81 2024/12/29 22:12:56 andvar Exp $
+.\" $NetBSD: bus_dma.9,v 1.82 2025/01/04 17:18:08 riastradh Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -645,7 +645,7 @@ given tag.
 .Pp
 The mapping of this memory is machine-dependent
 .Pq or Dq opaque ;
-machine-independent code should not assume that the
+machine-independent code must not assume that the
 addresses returned are valid in kernel virtual address space, or that
 the addresses returned are system physical addresses.
 The address value returned as part of
