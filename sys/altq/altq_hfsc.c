@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.31 2025/01/08 13:00:04 joe Exp $");
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
-#include "pf.h"
+#include "npf.h"
 #endif
 
 #ifdef ALTQ_HFSC  /* hfsc is enabled by ALTQ_HFSC option in opt_altq.h */
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.31 2025/01/08 13:00:04 joe Exp $");
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
+#if NNPF > 0
+#include <net/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_hfsc.h>
@@ -173,9 +173,9 @@ altqdev_decl(hfsc);
 static struct hfsc_if *hif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
+#if NNPF > 0
 int
-hfsc_pfattach(struct pf_altq *a)
+hfsc_pfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;
@@ -190,7 +190,7 @@ hfsc_pfattach(struct pf_altq *a)
 }
 
 int
-hfsc_add_altq(struct pf_altq *a)
+hfsc_add_altq(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct ifnet *ifp;
@@ -219,7 +219,7 @@ hfsc_add_altq(struct pf_altq *a)
 }
 
 int
-hfsc_remove_altq(struct pf_altq *a)
+hfsc_remove_altq(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 
@@ -238,7 +238,7 @@ hfsc_remove_altq(struct pf_altq *a)
 }
 
 int
-hfsc_add_queue(struct pf_altq *a)
+hfsc_add_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
@@ -281,7 +281,7 @@ hfsc_add_queue(struct pf_altq *a)
 }
 
 int
-hfsc_remove_queue(struct pf_altq *a)
+hfsc_remove_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
@@ -296,7 +296,7 @@ hfsc_remove_queue(struct pf_altq *a)
 }
 
 int
-hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+hfsc_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
@@ -320,7 +320,7 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return 0;
 }
-#endif /* NPF > 0 */
+#endif /* NNPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding

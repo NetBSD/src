@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.42 2025/01/08 13:00:04 joe Exp $");
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
-#include "pf.h"
+#include "npf.h"
 #endif
 
 #ifdef ALTQ_CBQ	/* cbq is enabled by ALTQ_CBQ option in opt_altq.h */
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.42 2025/01/08 13:00:04 joe Exp $");
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
+#if NNPF > 0
+#include <net/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_cbq.h>
@@ -242,9 +242,9 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 #endif
 }
 
-#if NPF > 0
+#if NNPF > 0
 int
-cbq_pfattach(struct pf_altq *a)
+cbq_pfattach(struct npf_altq *a)
 {
 	struct ifnet	*ifp;
 	int		 s, error;
@@ -259,7 +259,7 @@ cbq_pfattach(struct pf_altq *a)
 }
 
 int
-cbq_add_altq(struct pf_altq *a)
+cbq_add_altq(struct npf_altq *a)
 {
 	cbq_state_t	*cbqp;
 	struct ifnet	*ifp;
@@ -285,7 +285,7 @@ cbq_add_altq(struct pf_altq *a)
 }
 
 int
-cbq_remove_altq(struct pf_altq *a)
+cbq_remove_altq(struct npf_altq *a)
 {
 	cbq_state_t	*cbqp;
 
@@ -308,7 +308,7 @@ cbq_remove_altq(struct pf_altq *a)
 
 #define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000)
 int
-cbq_add_queue(struct pf_altq *a)
+cbq_add_queue(struct npf_altq *a)
 {
 	struct rm_class	*borrow, *parent;
 	cbq_state_t	*cbqp;
@@ -415,7 +415,7 @@ cbq_add_queue(struct pf_altq *a)
 }
 
 int
-cbq_remove_queue(struct pf_altq *a)
+cbq_remove_queue(struct npf_altq *a)
 {
 	struct rm_class	*cl;
 	cbq_state_t	*cbqp;
@@ -451,7 +451,7 @@ cbq_remove_queue(struct pf_altq *a)
 }
 
 int
-cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+cbq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
@@ -475,7 +475,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
-#endif /* NPF > 0 */
+#endif /* NNPF > 0 */
 
 /*
  * int

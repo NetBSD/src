@@ -10,7 +10,7 @@
 defpseudo	npf:	ifnet, libnv
 
 # Core
-file	net/npf/npf.c				npf
+file	net/npf/npf.c				npf     needs-flag
 file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf

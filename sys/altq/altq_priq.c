@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.29 2025/01/08 13:00:04 joe Exp $");
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
-#include "pf.h"
+#include "npf.h"
 #endif
 
 #ifdef ALTQ_PRIQ  /* priq is enabled by ALTQ_PRIQ option in opt_altq.h */
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.29 2025/01/08 13:00:04 joe Exp $");
 #include <net/if.h>
 #include <netinet/in.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
+#if NNPF > 0
+#include <net/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
@@ -105,9 +105,9 @@ altqdev_decl(priq);
 static struct priq_if *pif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
-#if NPF > 0
+#if NNPF > 0
 int
-priq_pfattach(struct pf_altq *a)
+priq_pfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;
@@ -122,7 +122,7 @@ priq_pfattach(struct pf_altq *a)
 }
 
 int
-priq_add_altq(struct pf_altq *a)
+priq_add_altq(struct npf_altq *a)
 {
 	struct priq_if	*pif;
 	struct ifnet	*ifp;
@@ -146,7 +146,7 @@ priq_add_altq(struct pf_altq *a)
 }
 
 int
-priq_remove_altq(struct pf_altq *a)
+priq_remove_altq(struct npf_altq *a)
 {
 	struct priq_if *pif;
 
@@ -161,7 +161,7 @@ priq_remove_altq(struct pf_altq *a)
 }
 
 int
-priq_add_queue(struct pf_altq *a)
+priq_add_queue(struct npf_altq *a)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -188,7 +188,7 @@ priq_add_queue(struct pf_altq *a)
 }
 
 int
-priq_remove_queue(struct pf_altq *a)
+priq_remove_queue(struct npf_altq *a)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -203,7 +203,7 @@ priq_remove_queue(struct pf_altq *a)
 }
 
 int
-priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+priq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
@@ -227,7 +227,7 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return 0;
 }
-#endif /* NPF > 0 */
+#endif /* NNPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding
