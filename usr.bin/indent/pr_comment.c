@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.173 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.174 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.173 2023/12/03 21:44:42 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.174 2025/01/04 10:28:08 rillig Exp $");
 
 #include <string.h>
 
@@ -54,7 +54,7 @@ static void
 com_add_star(void)
 {
 	if (opt.star_comment_cont)
-		buf_add_chars(&com, " * ", 3);
+		buf_add_str(&com, " * ");
 }
 
 static bool
@@ -268,9 +268,9 @@ copy_comment_wrap_finish(int line_length, bool delim)
 
 	in.p += 2;
 	if (com.len > 0 && ch_isblank(com.s[com.len - 1]))
-		buf_add_chars(&com, "*/", 2);
+		buf_add_str(&com, "*/");
 	else
-		buf_add_chars(&com, " */", 3);
+		buf_add_str(&com, " */");
 }
 
 static void

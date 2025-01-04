@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.72 2025/01/03 23:37:18 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.73 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.72 2025/01/03 23:37:18 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.73 2025/01/04 10:28:08 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -48,133 +48,151 @@ static struct {
 };
 
 const char *const lsym_name[] = {
-	"eof",
-	"preprocessing",
-	"newline",
-	"comment",
-	"lparen",
-	"rparen",
-	"lbracket",
-	"rbracket",
-	"lbrace",
-	"rbrace",
-	"period",
-	"unary_op",
-	"sizeof",
-	"offsetof",
-	"postfix_op",
-	"binary_op",
-	"question",
-	"question_colon",
-	"comma",
-	"typedef",
-	"modifier",
-	"tag",
-	"type",
-	"word",
-	"funcname",
-	"label_colon",
-	"other_colon",
-	"semicolon",
-	"case",
-	"default",
-	"do",
-	"else",
-	"for",
-	"if",
-	"switch",
-	"while",
-	"return",
+	"lsym_eof",
+	"lsym_preprocessing",
+	"lsym_newline",
+	"lsym_comment",
+	"lsym_lparen",
+	"lsym_rparen",
+	"lsym_lbracket",
+	"lsym_rbracket",
+	"lsym_lbrace",
+	"lsym_rbrace",
+	"lsym_period",
+	"lsym_unary_op",
+	"lsym_sizeof",
+	"lsym_offsetof",
+	"lsym_postfix_op",
+	"lsym_binary_op",
+	"lsym_question",
+	"lsym_question_colon",
+	"lsym_comma",
+	"lsym_typedef",
+	"lsym_modifier",
+	"lsym_tag",
+	"lsym_type",
+	"lsym_word",
+	"lsym_funcname",
+	"lsym_label_colon",
+	"lsym_other_colon",
+	"lsym_semicolon",
+	"lsym_case",
+	"lsym_default",
+	"lsym_do",
+	"lsym_else",
+	"lsym_for",
+	"lsym_if",
+	"lsym_switch",
+	"lsym_while",
+	"lsym_return",
 };
 
 const char *const psym_name[] = {
-	"-",
-	"{block",
-	"{struct",
-	"{union",
-	"{enum",
-	"}",
-	"decl",
-	"stmt",
-	"for_exprs",
-	"if_expr",
-	"if_expr_stmt",
-	"if_expr_stmt_else",
-	"else",
-	"switch_expr",
-	"do",
-	"do_stmt",
-	"while_expr",
+	"psym_0",
+	"psym_lbrace_block",
+	"psym_lbrace_struct",
+	"psym_lbrace_union",
+	"psym_lbrace_enum",
+	"psym_rbrace",
+	"psym_decl",
+	"psym_stmt",
+	"psym_for_exprs",
+	"psym_if_expr",
+	"psym_if_expr_stmt",
+	"psym_if_expr_stmt_else",
+	"psym_else",
+	"psym_switch_expr",
+	"psym_do",
+	"psym_do_stmt",
+	"psym_while_expr",
 };
 
 static const char *const newline_name[] = {
-	"no",
-	"no-if",
-	"no-lbrace",
-	"no-semicolon",
-	"yes",
+	"nl_no",
+	"nl_unless_if",
+	"nl_unless_lbrace",
+	"nl_unless_semicolon",
+	"nl_yes",
 };
 
 static const char *const declaration_name[] = {
-	"no",
-	"begin",
-	"end",
+	"decl_no",
+	"decl_begin",
+	"decl_end",
 };
 
 static const char *const badp_name[] = {
-	"none",
-	"seen{",
-	"decl",
-	"seen_decl",
-	"yes",
+	"badp_none",
+	"badp_seen_lbrace",
+	"badp_decl",
+	"badp_seen_decl",
+	"badp_yes",
 };
 
 const char *const paren_level_cast_name[] = {
-	"(unknown cast)",
-	"(maybe cast)",
-	"(no cast)",
+	"cast_unknown",
+	"cast_maybe",
+	"cast_no",
 };
 
 const char *const line_kind_name[] = {
-	"other",
-	"blank",
-	"#if",
-	"#endif",
-	"#other",
-	"stmt head",
-	"}",
-	"block comment",
-	"case/default",
+	"lk_other",
+	"lk_blank",
+	"lk_pre_if",
+	"lk_pre_endif",
+	"lk_pre_other",
+	"lk_stmt_head",
+	"lk_func_end",
+	"lk_block_comment",
+	"lk_case_or_default",
 };
 
 static const char *const extra_expr_indent_name[] = {
-	"no",
-	"maybe",
-	"last",
+	"eei_no",
+	"eei_maybe",
+	"eei_last"
 };
 
 static struct {
 	struct parser_state prev_ps;
 	bool ps_first;
-	const char *heading;
+	const char *heading1;
+	const char *heading2;
 	unsigned wrote_newlines;
 } state = {
 	.ps_first = true,
 	.wrote_newlines = 1,
 };
 
+static FILE *
+debug_file(void)
+{
+	return output == stdout ? stderr : stdout;
+}
+
+static void
+debug_print_headings(void)
+{
+	if (state.heading1 != NULL) {
+		(void)fprintf(debug_file(), "%s:\n", state.heading1);
+		state.heading1 = NULL;
+		state.wrote_newlines = 1;
+	}
+	if (state.heading2 != NULL) {
+		(void)fprintf(debug_file(), "\t%s:\n", state.heading2);
+		state.heading2 = NULL;
+		state.wrote_newlines = 1;
+	}
+}
+
 void
 debug_printf(const char *fmt, ...)
 {
-	FILE *f = output == stdout ? stderr : stdout;
 	va_list ap;
 
-	if (state.heading != NULL) {
-		(void)fprintf(f, "%s\n", state.heading);
-		state.heading = NULL;
-	}
+	debug_print_headings();
 	va_start(ap, fmt);
-	(void)vfprintf(f, fmt, ap);
+	(void)vfprintf(debug_file(), fmt, ap);
 	va_end(ap);
 	state.wrote_newlines = 0;
 }
@@ -182,18 +200,13 @@ debug_printf(const char *fmt, ...)
 void
 debug_println(const char *fmt, ...)
 {
-	FILE *f = output == stdout ? stderr : stdout;
 	va_list ap;
 
-	if (state.heading != NULL) {
-		(void)fprintf(f, "%s\n", state.heading);
-		state.heading = NULL;
-		state.wrote_newlines = 1;
-	}
+	debug_print_headings();
 	va_start(ap, fmt);
-	(void)vfprintf(f, fmt, ap);
+	(void)vfprintf(debug_file(), fmt, ap);
 	va_end(ap);
-	(void)fprintf(f, "\n");
+	(void)fprintf(debug_file(), "\n");
 	state.wrote_newlines = fmt[0] == '\0' ? state.wrote_newlines + 1 : 1;
 }
 
@@ -234,12 +247,15 @@ debug_print_buf(const char *name, const struct buffer *buf)
 }
 
 void
-debug_buffers(void)
+debug_buffers(const char *descr)
 {
-	debug_print_buf("label", &lab);
-	debug_print_buf("code", &code);
-	debug_print_buf("comment", &com);
-	debug_blank_line();
+	if (lab.len > 0 || code.len > 0 || com.len > 0) {
+		debug_printf("%s:", descr);
+		debug_print_buf("label", &lab);
+		debug_print_buf("code", &code);
+		debug_print_buf("comment", &com);
+		debug_blank_line();
+	}
 }
 
 static void
@@ -247,27 +263,27 @@ debug_ps_bool_member(const char *name, bool prev, bool curr)
 {
 	if (!state.ps_first && curr != prev) {
 		char diff = " -+x"[(prev ? 1 : 0) + (curr ? 2 : 0)];
-		debug_println("        [%c]  ps.%s", diff, name);
+		debug_println("\t\t%s: [%c]", name, diff);
 	} else if (config.full_parser_state || state.ps_first)
-		debug_println("        [%c]  ps.%s", curr ? 'x' : ' ', name);
+		debug_println("\t\t%s: [%c]", name, curr ? 'x' : ' ');
 }
 
 static void
 debug_ps_int_member(const char *name, int prev, int curr)
 {
 	if (!state.ps_first && curr != prev)
-		debug_println(" %3d -> %3d  ps.%s", prev, curr, name);
+		debug_println("\t\t%s: %d -> %d", name, prev, curr);
 	else if (config.full_parser_state || state.ps_first)
-		debug_println("        %3d  ps.%s", curr, name);
+		debug_println("\t\t%s: %d", name, curr);
 }
 
 static void
 debug_ps_enum_member(const char *name, const char *prev, const char *curr)
 {
 	if (!state.ps_first && strcmp(prev, curr) != 0)
-		debug_println(" %3s -> %3s  ps.%s", prev, curr, name);
+		debug_println("\t\t%s: %s -> %s", name, prev, curr);
 	else if (config.full_parser_state || state.ps_first)
-		debug_println(" %10s  ps.%s", curr, name);
+		debug_println("\t\t%s: %s", name, curr);
 }
 
 static bool
@@ -291,9 +307,9 @@ debug_ps_paren(void)
 	    && !state.ps_first)
 		return;
 
-	debug_printf("             ps.paren:");
+	debug_printf("\t\tparen:");
 	for (size_t i = 0; i < ps.paren.len; i++) {
-		debug_printf(" %s%d",
+		debug_printf("  %s %d",
 		    paren_level_cast_name[ps.paren.item[i].cast],
 		    ps.paren.item[i].indent);
 	}
@@ -320,7 +336,7 @@ debug_ps_di_stack(void)
 	if (!config.full_parser_state && !changed && !state.ps_first)
 		return;
 
-	debug_printf("     %s      ps.di_stack:", changed ? "->" : "  ");
+	debug_printf("\t\tdi_stack: ");
 	for (int i = 0; i < ps.decl_level; i++)
 		debug_printf(" %d", ps.di_stack[i]);
 	if (ps.decl_level == 0)
@@ -341,7 +357,8 @@ debug_parser_state(void)
 {
 	debug_blank_line();
 
-	state.heading = "token classification";
+	state.heading1 = "parser state";
+	state.heading2 = "token classification";
 	debug_ps_enum(prev_lsym, lsym_name);
 	debug_ps_bool(in_stmt_or_decl);
 	debug_ps_bool(in_decl);
@@ -358,7 +375,7 @@ debug_parser_state(void)
 	debug_ps_bool(prev_paren_was_cast);
 	debug_ps_int(quest_level);
 
-	state.heading = "indentation of statements and declarations";
+	state.heading2 = "indentation of statements and declarations";
 	debug_ps_int(ind_level);
 	debug_ps_int(ind_level_follow);
 	debug_ps_bool(line_is_stmt_cont);
@@ -371,25 +388,26 @@ debug_parser_state(void)
 
 	// The parser symbol stack is printed in debug_psyms_stack instead.
 
-	state.heading = "spacing inside a statement or declaration";
+	state.heading2 = "spacing inside a statement or declaration";
 	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
 	debug_ps_int(ind_paren_level);
 	debug_ps_paren();
 
-	state.heading = "indentation of comments";
+	state.heading2 = "indentation of comments";
 	debug_ps_int(comment_ind);
 	debug_ps_int(comment_shift);
 	debug_ps_bool(comment_cont);
 
-	state.heading = "vertical spacing";
+	state.heading2 = "vertical spacing";
 	debug_ps_bool(break_after_comma);
 	debug_ps_enum(newline, newline_name);
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
 	debug_ps_enum(badp, badp_name);
 
-	state.heading = NULL;
+	state.heading1 = NULL;
+	state.heading2 = NULL;
 	debug_blank_line();
 
 	parser_state_free(&state.prev_ps);
@@ -398,13 +416,14 @@ debug_parser_state(void)
 }
 
 void
-debug_psyms_stack(const char *situation)
+debug_fmt_psyms_stack(struct buffer *buf)
 {
-	debug_printf("parse stack %s:", situation);
-	const struct psym_stack *psyms = &ps.psyms;
-	for (size_t i = 0; i < psyms->len; i++)
-		debug_printf(" %d %s",
-		    psyms->ind_level[i], psym_name[psyms->sym[i]]);
-	debug_println("");
+	buf_clear(buf);
+	for (size_t i = 0; i < ps.psyms.len; i++) {
+		char num[64];
+		snprintf(num, sizeof(num), "  %d ", ps.psyms.ind_level[i]);
+		buf_add_str(buf, num);
+		buf_add_str(buf, psym_name[ps.psyms.sym[i]]);
+	}
 }
 #endif

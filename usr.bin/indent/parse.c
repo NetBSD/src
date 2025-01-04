@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.79 2023/06/18 06:56:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.80 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.79 2023/06/18 06:56:32 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.80 2025/01/04 10:28:08 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -264,7 +264,17 @@ parse(parser_symbol psym)
 		return;
 	}
 
-	debug_psyms_stack("before reduction");
+#if debug
+	static struct buffer before, after;
+	debug_fmt_psyms_stack(&before);
+#endif
 	psyms_reduce();
-	debug_psyms_stack("after reduction");
+#if debug
+	debug_fmt_psyms_stack(&after);
+	if (before.len != after.len
+	    || memcmp(before.s, after.s, before.len) != 0) {
+		debug_println("psyms before:%s", before.s);
+		debug_println("psyms after: %s", after.s);
+	}
+#endif
 }

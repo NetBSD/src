@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.236 2024/12/12 05:51:50 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.237 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.236 2024/12/12 05:51:50 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.237 2025/01/04 10:28:08 rillig Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -176,6 +176,7 @@ want_blank_line(void)
 {
 	debug_println("%s: %s -> %s", __func__,
 	    line_kind_name[out.prev_line_kind], line_kind_name[out.line_kind]);
+	debug_blank_line();
 
 	if (((ps.blank_line_after_decl && ps.declaration == decl_no)
 	    || ps.badp == badp_yes)
@@ -426,8 +427,7 @@ void
 output_line(void)
 {
 	debug_blank_line();
-	debug_printf("%s", __func__);
-	debug_buffers();
+	debug_buffers(__func__);
 
 	if (indent_enabled == indent_on)
 		output_indented_line();

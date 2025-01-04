@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.392 2025/01/03 23:37:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.393 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.392 2025/01/03 23:37:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.393 2025/01/04 10:28:08 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1126,10 +1126,12 @@ indent(void)
 		lexer_symbol lsym = lexi();
 
 		debug_blank_line();
-		debug_printf("line %d: %s",
+		debug_printf("line %d: next token is %s",
 		    in.token_start_line, lsym_name[lsym]);
-		debug_print_buf("token", &token);
-		debug_buffers();
+		debug_print_buf("with text", &token);
+		debug_println("");
+		if (lab.len > 0 || code.len > 0 || com.len > 0)
+			debug_buffers("the buffers contain");
 		debug_blank_line();
 
 		if (lsym == lsym_eof)

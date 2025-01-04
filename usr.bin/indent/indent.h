@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.208 2025/01/03 23:37:18 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.209 2025/01/04 10:28:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -67,6 +67,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef enum lexer_symbol {
 	lsym_eof,
@@ -460,9 +461,9 @@ void debug_println(const char *, ...) __printflike(1, 2);
 void debug_blank_line(void);
 void debug_vis_range(const char *, size_t);
 void debug_parser_state(void);
-void debug_psyms_stack(const char *);
+void debug_fmt_psyms_stack(struct buffer *);
 void debug_print_buf(const char *, const struct buffer *);
-void debug_buffers(void);
+void debug_buffers(const char *);
 void parser_state_back_up(struct parser_state *);
 void parser_state_free(struct parser_state *);
 extern const char *const lsym_name[];
@@ -479,7 +480,7 @@ extern const char *const line_kind_name[];
 #define	debug_parser_state() debug_noop()
 #define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
-#define	debug_buffers() debug_noop()
+#define	debug_buffers(descr) debug_noop()
 #define static_unless_debug static
 #endif
 
@@ -506,6 +507,12 @@ void *nonnull(void *);
 
 void buf_add_char(struct buffer *, char);
 void buf_add_chars(struct buffer *, const char *, size_t);
+
+static inline void
+buf_add_str(struct buffer *buf, const char *str)
+{
+	buf_add_chars(buf, str, strlen(str));
+}
 
 static inline bool
 ch_isalnum(char ch)
