@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.41 2024/11/24 14:49:04 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.42 2025/01/04 14:23:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.41 2024/11/24 14:49:04 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.42 2025/01/04 14:23:03 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -907,6 +907,15 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 
 #ifdef __HAVE_MM_MD_KERNACC
+
+#define IN_RANGE_P(addr, start, end)	(start) <= (addr) && (addr) < (end)
+#ifdef _LP64
+#define IN_DIRECTMAP_P(va) \
+	IN_RANGE_P(va, RISCV_DIRECTMAP_START, RISCV_DIRECTMAP_END)
+#else
+#define IN_DIRECTMAP_P(va) false
+#endif
+
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
@@ -920,20 +929,15 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	const vaddr_t va = (vaddr_t)ptr;
 
-#define IN_RANGE_P(addr, start, end) (start) <= (addr) && (addr) < (end)
-
 	*handled = false;
 	if (IN_RANGE_P(va, kernstart, kernend)) {
 		*handled = true;
 		if (va < data_start && (prot & VM_PROT_WRITE) != 0) {
 			return EFAULT;
 		}
-	}
-#ifdef _LP64
-	 else if (IN_RANGE_P(va, RISCV_DIRECTMAP_START, RISCV_DIRECTMAP_END)) {
+	} else if (IN_DIRECTMAP_P(va)) {
 		*handled = true;
 	}
-#endif
 
 	return 0;
 }
