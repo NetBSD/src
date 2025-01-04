@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.37 2022/10/30 11:51:19 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.38 2025/01/04 14:35:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.37 2022/10/30 11:51:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.38 2025/01/04 14:35:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,11 +235,11 @@ static const struct axppmic_ctrl axp805_ctrls[] = {
 		0x11, __BIT(2), 0x22, __BITS(3,0)),
 	AXP_CTRL("bldo4", 700, 1900, 100,
 		0x11, __BIT(3), 0x23, __BITS(3,0)),
-	AXP_CTRL("cldo1", 700, 3300, 100, 
+	AXP_CTRL("cldo1", 700, 3300, 100,
 		0x11, __BIT(4), 0x24, __BITS(4,0)),
 	AXP_CTRL2("cldo2", 700, 4200, 100, 28, 200, 4,
 		0x11, __BIT(5), 0x25, __BITS(4,0)),
-	AXP_CTRL("cldo3", 700, 3300, 100, 
+	AXP_CTRL("cldo3", 700, 3300, 100,
 		0x11, __BIT(6), 0x26, __BITS(4,0)),
 };
 
@@ -435,7 +435,7 @@ static const struct axppmic_config axp803_config = {
 	.vbusirq = AXPPMIC_IRQ(1, __BITS(3,2)),
 	.battirq = AXPPMIC_IRQ(2, __BITS(7,6)),
 	.chargeirq = AXPPMIC_IRQ(2, __BITS(3,2)),
-	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),	
+	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),
 };
 
 static const struct axppmic_config axp805_config = {
@@ -482,7 +482,7 @@ static const struct axppmic_config axp813_config = {
 	.vbusirq = AXPPMIC_IRQ(1, __BITS(3,2)),
 	.battirq = AXPPMIC_IRQ(2, __BITS(7,6)),
 	.chargeirq = AXPPMIC_IRQ(2, __BITS(3,2)),
-	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),	
+	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),
 };
 
 static const struct device_compatible_entry compat_data[] = {
