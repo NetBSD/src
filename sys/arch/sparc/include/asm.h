@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.23 2020/04/17 14:19:44 joerg Exp $ */
+/*	$NetBSD: asm.h,v 1.24 2025/01/04 18:45:23 martin Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -157,9 +157,16 @@
 #define ASMSTR			.asciz
 
 #ifdef __ELF__
+#ifdef _NETBSD_REVISIONID
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz "$" "NetBSD: " __FILE__ 			\
+			    " " _NETBSD_REVISIONID " $";		\
+			.popsection
+#else
 #define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#endif
 #else
 #define RCSID(name)		.asciz name
 #endif
