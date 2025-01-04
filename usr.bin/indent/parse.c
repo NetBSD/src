@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.81 2025/01/04 21:20:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.82 2025/01/04 21:54:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,11 +38,19 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.81 2025/01/04 21:20:59 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.82 2025/01/04 21:54:26 rillig Exp $");
 
 #include <stdlib.h>
 
 #include "indent.h"
+
+/* Replace the top 2 symbols with the given symbol. */
+static void
+psyms_replace2(parser_symbol psym)
+{
+	ps.psyms.len--;
+	ps.psyms.sym[ps.psyms.len - 1] = psym;
+}
 
 /*
  * Try to combine the statement on the top of the parse stack with the symbol
@@ -54,19 +62,17 @@ psyms_reduce_stmt(void)
 	switch (ps.psyms.sym[ps.psyms.len - 2]) {
 
 	case psym_stmt:
-		ps.psyms.len--;
-		ps.psyms.sym[ps.psyms.len - 1] = psym_stmt;
+		psyms_replace2(psym_stmt);
+		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
 		return true;
 
 	case psym_do:
-		ps.psyms.len--;
-		ps.psyms.sym[ps.psyms.len - 1] = psym_do_stmt;
+		psyms_replace2(psym_do_stmt);
 		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
 		return true;
 
 	case psym_if_expr:
-		ps.psyms.len--;
-		ps.psyms.sym[ps.psyms.len - 1] = psym_if_expr_stmt;
+		psyms_replace2(psym_if_expr_stmt);
 		/* For the time being, assume that there is no 'else' on this
 		 * 'if', and set the indentation level accordingly. If an
 		 * 'else' is scanned, it will be fixed up later. */
@@ -82,8 +88,7 @@ psyms_reduce_stmt(void)
 	case psym_if_expr_stmt_else:
 	case psym_for_exprs:
 	case psym_while_expr:
-		ps.psyms.len--;
-		ps.psyms.sym[ps.psyms.len - 1] = psym_stmt;
+		psyms_replace2(psym_stmt);
 		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
 		return true;
 

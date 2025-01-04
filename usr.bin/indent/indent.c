@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.394 2025/01/04 21:20:59 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.395 2025/01/04 21:54:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.394 2025/01/04 21:20:59 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.395 2025/01/04 21:54:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -181,18 +181,6 @@ ind_add(int ind, const char *s, size_t len)
 }
 
 static void
-init_globals(void)
-{
-	ps_push(psym_stmt, false);	/* as a stop symbol */
-	ps.prev_lsym = lsym_semicolon;
-	ps.lbrace_kind = psym_lbrace_block;
-
-	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
-	if (suffix != NULL)
-		backup_suffix = suffix;
-}
-
-static void
 load_profiles(int argc, char **argv)
 {
 	const char *profile_name = NULL;
@@ -295,7 +283,7 @@ parse_command_line(int argc, char **argv)
 }
 
 static void
-set_initial_indentation(void)
+initialize_parser(void)
 {
 	inp_read_line();
 
@@ -310,6 +298,9 @@ set_initial_indentation(void)
 	}
 
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
+	ps_push(psym_stmt, false);	/* as a stop symbol */
+	ps.prev_lsym = lsym_semicolon;
+	ps.lbrace_kind = psym_lbrace_block;
 }
 
 static bool
@@ -1168,9 +1159,12 @@ indent(void)
 int
 main(int argc, char **argv)
 {
-	init_globals();
+	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
+	if (suffix != NULL)
+		backup_suffix = suffix;
+
 	load_profiles(argc, argv);
 	parse_command_line(argc, argv);
-	set_initial_indentation();
+	initialize_parser();
 	return indent();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_rbrace.c,v 1.7 2023/06/08 06:47:14 rillig Exp $ */
+/* $NetBSD: lsym_rbrace.c,v 1.8 2025/01/04 21:54:26 rillig Exp $ */
 
 /*
  * Tests for the token lsym_rbrace, which represents a '}' in these contexts:
@@ -90,9 +90,8 @@ int numbers[][] = {{11},
 		{31},
 	};
 	int numbers[][] = {{11},
-	// $ FIXME: Must be indented.
-	{21},
-	{31},
+		{21},
+		{31},
 	};
 }
 //indent end
