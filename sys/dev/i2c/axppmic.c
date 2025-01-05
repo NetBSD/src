@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.39 2025/01/05 08:31:24 skrll Exp $ */
+/* $NetBSD: axppmic.c,v 1.40 2025/01/05 08:45:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.39 2025/01/05 08:31:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.40 2025/01/05 08:45:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,83 @@ static const struct axppmic_ctrl axp813_ctrls[] = {
 		0x13, __BIT(7), 0x2a, __BITS(4,0)),
 };
 
+static const struct axppmic_ctrl axp15060_ctrls[] = {
+	AXP_CTRL( "dcdc1",  1500, 3400, 100,
+		 0x13, __BITS(4, 0),
+		 0x10, __BIT(0)),
+	// DCDC2: 0.5~1.2V, 10mV/step, 1.22~1.54V, 20mV/step, IMAX=3.5A, DVM
+	AXP_CTRL2_RANGE("dcdc2",
+			500, 1540, 70, 10, 1220, 16 , 20,
+			0x14, __BITS(6, 0),
+			0x10, __BIT(1)),
+	// DCDC3: 0.5~1.2V, 10mV/step, 1.22~1.54V, 20mV/step, IMAX=3.5A, DVM
+	AXP_CTRL2_RANGE("dcdc3",
+			500, 1540, 70, 10, 1220, 16 , 20,
+			0x15, __BITS(6, 0),
+			0x10, __BIT(2)),
+	// DCDC4: 0.5~1.2V, 10mV/step, 1.22~1.54V, 20mV/step, IMAX=3.5A, DVM
+	AXP_CTRL2_RANGE("dcdc4",
+			500, 1540, 70, 10, 1220, 16 , 20,
+			0x16, __BITS(6, 0),
+			0x10, __BIT(3)),
+	// DCDC5: 0.8~1.12V, 10mV/step, 1.14~1.84V, 20mV/step, IMAX=2.5A, DVM
+	AXP_CTRL2_RANGE("dcdc5",
+			800, 1840,
+			32, 10,
+			1140, 35, 20,
+			0x17, __BITS(6, 0),
+			0x10, __BIT(4)),
+	AXP_CTRL("dcdc6", 500, 3400, 100,
+		 0x18, __BITS(4, 0),
+		 0x10, __BIT(5)),
+	AXP_CTRL("aldo1", 700, 3300, 100,
+		 0x19, __BITS(4, 0),
+		 0x11, __BIT(0)),
+	AXP_CTRL("aldo2", 700, 3300, 100,
+		 0x20, __BITS(4, 0),
+		 0x11, __BIT(1)),
+	AXP_CTRL("aldo3", 700, 3300, 100,
+		 0x21, __BITS(4, 0),
+		 0x11, __BIT(2)),
+	AXP_CTRL("aldo4", 700, 3300, 100,
+		 0x22, __BITS(4, 0),
+		 0x11, __BIT(3)),
+	AXP_CTRL("aldo5", 700, 3300, 100,
+		 0x23, __BITS(4, 0),
+		 0x11, __BIT(4)),
+	AXP_CTRL("bldo1", 700, 3300, 100,
+		 0x24, __BITS(4, 0),
+		 0x11, __BIT(5)),
+	AXP_CTRL("bldo2", 700, 3300, 100,
+		 0x25, __BITS(4, 0),
+		 0x11, __BIT(6)),
+	AXP_CTRL("bldo3", 700, 3300, 100,
+		 0x26, __BITS(4, 0),
+		 0x11, __BIT(7)),
+	AXP_CTRL("bldo4", 700, 3300, 100,
+		 0x27, __BITS(4, 0),
+		 0x12, __BIT(0)),
+	AXP_CTRL("bldo5", 700, 3300, 100,
+		 0x28, __BITS(4, 0),
+		 0x12, __BIT(1)),
+	AXP_CTRL("cldo1", 700, 3300, 100,
+		 0x29, __BITS(4, 0),
+		 0x12, __BIT(2)),
+	AXP_CTRL("cldo2", 700, 3300, 100,
+		 0x2a, __BITS(4, 0),
+		 0x12, __BIT(3)),
+	AXP_CTRL("cldo3", 700, 3300, 100,
+		 0x2b, __BITS(4, 0),
+		 0x12, __BIT(4)),
+	AXP_CTRL("cldo4", 700, 4200, 100,
+		 0x2d, __BITS(5, 0),
+		 0x12, __BIT(5)),
+	AXP_CTRL("cpusldo", 700, 1400, 50,
+		 0x2e, __BITS(3, 0),
+		 0x12, __BIT(6)),
+};
+
+
 struct axppmic_irq {
 	u_int reg;
 	uint8_t mask;
@@ -485,12 +562,21 @@ static const struct axppmic_config axp813_config = {
 	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),
 };
 
+static const struct axppmic_config axp15060_config = {
+	.name = "AXP15060",
+	.controls = axp15060_ctrls,
+	.ncontrols = __arraycount(axp15060_ctrls),
+	.irq_regs = 2,
+	.poklirq = AXPPMIC_IRQ(2, __BIT(3)),
+};
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "x-powers,axp803",		.data = &axp803_config },
 	{ .compat = "x-powers,axp805",		.data = &axp805_config },
 	{ .compat = "x-powers,axp806",		.data = &axp806_config },
 	{ .compat = "x-powers,axp809",		.data = &axp809_config },
 	{ .compat = "x-powers,axp813",		.data = &axp813_config },
+	{ .compat = "x-powers,axp15060",	.data = &axp15060_config },
 	DEVICE_COMPAT_EOL
 };
 
