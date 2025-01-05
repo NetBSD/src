@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.40 2025/01/05 08:45:08 skrll Exp $ */
+/* $NetBSD: axppmic.c,v 1.41 2025/01/05 19:24:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.40 2025/01/05 08:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.41 2025/01/05 19:24:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,8 +566,6 @@ static const struct axppmic_config axp15060_config = {
 	.name = "AXP15060",
 	.controls = axp15060_ctrls,
 	.ncontrols = __arraycount(axp15060_ctrls),
-	.irq_regs = 2,
-	.poklirq = AXPPMIC_IRQ(2, __BIT(3)),
 };
 
 static const struct device_compatible_entry compat_data[] = {
