@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.669 2025/01/02 20:02:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.670 2025/01/05 06:58:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.669 2025/01/02 20:02:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.670 2025/01/05 06:58:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -494,26 +494,26 @@ ic_expr(const tnode_t *tn)
 
 	switch (tn->tn_op) {
 	case MULT:
-		lc = ic_expr(before_conversion(tn->u.ops.left));
-		rc = ic_expr(before_conversion(tn->u.ops.right));
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
 		return ic_mult(tn->tn_type, lc, rc);
 	case DIV:
-		lc = ic_expr(before_conversion(tn->u.ops.left));
-		rc = ic_expr(before_conversion(tn->u.ops.right));
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
 		return ic_div(tn->tn_type, lc, rc);
 	case MOD:
-		lc = ic_expr(before_conversion(tn->u.ops.left));
-		rc = ic_expr(before_conversion(tn->u.ops.right));
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
 		return ic_mod(tn->tn_type, lc, rc);
 	case PLUS:
-		lc = ic_expr(before_conversion(tn->u.ops.left));
-		rc = ic_expr(before_conversion(tn->u.ops.right));
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
 		return ic_plus(tn->tn_type, lc, rc);
 	case MINUS:
 		if (tn->u.ops.left->tn_type->t_tspec == PTR)
 			return ic_any(tn->tn_type);
-		lc = ic_expr(before_conversion(tn->u.ops.left));
-		rc = ic_expr(before_conversion(tn->u.ops.right));
+		lc = ic_expr(tn->u.ops.left);
+		rc = ic_expr(tn->u.ops.right);
 		return ic_minus(tn->tn_type, lc, rc);
 	case SHL:
 		lc = ic_expr(tn->u.ops.left);
