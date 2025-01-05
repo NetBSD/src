@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.46 2025/01/05 14:30:38 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.47 2025/01/05 16:53:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -182,10 +182,10 @@
 
 #ifdef __ELF__
 #define _IDENTSTR(x)	.pushsection ".ident","MS",@progbits,1;		\
-			.asciz x;					\
+			x;						\
 			.popsection
 #else
-#define _IDENTSTR(x)	.text; .asciz x
+#define _IDENTSTR(x)	.text; x
 #endif
 #ifdef _NETBSD_REVISIONID
 #define	RCSID(_s)							      \
