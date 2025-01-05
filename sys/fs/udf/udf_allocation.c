@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.47 2022/05/22 11:27:36 andvar Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.48 2025/01/05 22:11:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.47 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.48 2025/01/05 22:11:18 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1998,7 +1998,7 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 		}
 		flags = UDF_EXT_FLAGS(udf_rw32(l_icb.len));
 		if (flags != UDF_EXT_REDIRECT) {
-			/* only one past the last one is adressable */
+			/* only one past the last one is addressable */
 			break;
 		}
 

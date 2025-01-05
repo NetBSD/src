@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.27 2024/02/22 14:11:52 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.28 2025/01/05 22:11:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.27 2024/02/22 14:11:52 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.28 2025/01/05 22:11:18 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,8 +580,8 @@ mke2fs(const char *fsys, int fi, int fo)
 			zap_old_sblock(pblock * pbsize[i]);
 		}
 		/*
-		 * Also zap possbile FFS magic leftover to prevent
-		 * kernel vfs_mountroot() and bootloadres from mis-recognizing
+		 * Also zap possible FFS magic leftover to prevent
+		 * kernel vfs_mountroot() and bootloaders from mis-recognizing
 		 * this file system as FFS.
 		 */
 		zap_old_sblock(8192);	/* SBLOCK_UFS1 */
