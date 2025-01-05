@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.395 2024/11/12 19:58:53 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.396 2025/01/05 13:08:57 plunky Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1734,6 +1734,7 @@ TLER	time-limited error recovery
 TLI	transport layer interface
 TLS	thread local storage
 TLS	transport layer security
+TLV	type, length, value
 TM	Turing machine
 TM	thermal monitor
 TMDS	transition minimized differential signaling
