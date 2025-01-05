@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.17 2025/01/02 07:55:26 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.18 2025/01/05 09:04:07 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -170,6 +170,10 @@ ld* 		at nvme? nsid ?
 # I2C controllers
 dwiic* 		at fdt?			# Designware I2C
 iic* 		at i2cbus?
+
+# I2C devices
+axppmic* 	at iic?			# X-Powers AXP Power Management IC
+axpreg* 	at axppmic?
 
 # Virtio devices
 virtio* 	at fdt?			# Virtio MMIO device
