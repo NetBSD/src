@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.38 2025/01/04 14:35:49 skrll Exp $ */
+/* $NetBSD: axppmic.c,v 1.39 2025/01/05 08:31:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.38 2025/01/04 14:35:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.39 2025/01/05 08:31:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1108,7 +1108,8 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", c->name);
 
 	if (c->has_mode_set) {
-		const bool master_mode = of_hasprop(sc->sc_phandle, "x-powers,self-working-mode") ||
+		const bool master_mode =
+		    of_hasprop(sc->sc_phandle, "x-powers,self-working-mode") ||
 		    of_hasprop(sc->sc_phandle, "x-powers,master-mode");
 
 		iic_acquire_bus(sc->sc_i2c, 0);
