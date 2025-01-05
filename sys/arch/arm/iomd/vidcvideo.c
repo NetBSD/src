@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.50 2022/09/27 06:36:42 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.51 2025/01/05 21:37:21 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.50 2022/09/27 06:36:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.51 2025/01/05 21:37:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ struct fb_devconfig {
 
 	struct vidc_mode	mode_info;
 
-	struct wsdisplay_emulops orig_ri_ops;	/* Rasops functions for deligation */
+	struct wsdisplay_emulops orig_ri_ops;	/* Rasops functions for delegation */
 
 	/* virtual console support */
 	struct vcons_data dc_vd;
@@ -252,7 +252,7 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, u_int mem_size,
 	/* blank the memory */
 	memset((void*)dc->dc_vaddr, 0, dc->dc_size);
 
-	/* intitialise miscelanious */
+	/* initialize miscellaneous */
 	dc->dc_writeback_delay = 0;
 }
 
@@ -625,7 +625,7 @@ vidcvideo_colourmap_and_cursor_init(struct fb_devconfig *dc)
 	ri->ri_gpos = rgbdat[4];
 	ri->ri_bpos = rgbdat[5];
 
-	/* initialise color map */
+	/* initialize color map */
 	cm = &dc->dc_cmap;
 	p = rasops_cmap;
 	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
@@ -788,7 +788,7 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct fb_devconfig *dc = (struct fb_devconfig *) (scr->scr_cookie);
 
-	/* All movements are done in multiples of character heigths */
+	/* All movements are done in multiples of character heights */
 	height = ri->ri_font->fontheight * nrows;
 	size   = height * ri->ri_stride;
 
@@ -812,8 +812,8 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 
 	/*
 	 * Else we just copy the area : we're braindead for now 
-	 * Note: we can't use hardware scrolling when the softc isnt
-	 * known yet...  if its not known we dont have interrupts and
+	 * Note: we can't use hardware scrolling when the softc isn't
+	 * known yet...  if it's not known we don't have interrupts and
 	 * we can't change the display address reliable other than in
 	 * a Vsync
 	 */
