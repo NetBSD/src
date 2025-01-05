@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.2 2020/04/17 14:19:44 joerg Exp $ */
+/* $NetBSD: asm.h,v 1.3 2025/01/05 16:52:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -83,9 +83,16 @@
 #define	PLT(x)			x
 #endif
 
+#ifdef _NETBSD_REVISIONID
+#define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz "$" "NetBSD: " __FILE__			\
+			    " " _NETBSD_REVISIONID " $";		\
+			.popsection
+#else
 #define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#endif
 #define RCSID(x)	__RCSID(x)
 
 #define	WEAK_ALIAS(alias,sym)						\
