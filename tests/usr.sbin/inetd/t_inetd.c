@@ -1,4 +1,4 @@
-/*	$NetBSD: t_inetd.c,v 1.2 2021/09/01 06:12:50 christos Exp $	*/
+/*	$NetBSD: t_inetd.c,v 1.3 2025/01/05 08:23:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_inetd.c,v 1.2 2021/09/01 06:12:50 christos Exp $");
+__RCSID("$NetBSD: t_inetd.c,v 1.3 2025/01/05 08:23:33 riastradh Exp $");
 
 #include <atf-c.h>
 #include <spawn.h>
@@ -81,7 +81,7 @@ ATF_TC_BODY(test_ratelimit, tc)
 	    concat(atf_tc_get_config_var(tc, "srcdir"), "/test_server"),
 	    "test_server"
 	);
-	
+
 	/* Run inetd in debug mode using specified config file */
 	proc = run("inetd", (char* const []) {
 	    __UNCONST("inetd"), __UNCONST("-d"),
@@ -102,9 +102,9 @@ ATF_TC_BODY(test_ratelimit, tc)
 	for (int i = 0; i < 3; i++) {
 		ATF_REQUIRE(run_udp_client("5432"));
 	}
-	
+
 	/* Rate limiting should prevent a response to this request */
-	ATF_REQUIRE(!run_udp_client("5432"));	
+	ATF_REQUIRE(!run_udp_client("5432"));
 
 	/* dgram/wait ip_max of 0 */
 	ATF_REQUIRE(!run_udp_client("5433"));
@@ -156,7 +156,7 @@ ATF_TP_ADD_TCS(tp)
 }
 
 /* Return true if successfully received message, false if timeout */
-static bool 
+static bool
 run_udp_client(const char *port)
 {
 	char buffer[] = "test";
@@ -164,7 +164,7 @@ run_udp_client(const char *port)
 
 	int udp = create_socket("127.0.0.1", port, SOCK_DGRAM, UDP, 1, &addr);
 
-	CHECK_ERROR(sendto(udp, buffer, sizeof(buffer), 0, 
+	CHECK_ERROR(sendto(udp, buffer, sizeof(buffer), 0,
 	    (struct sockaddr *)&addr, addr.ss_len));
 
 	struct iovec iov = {
@@ -202,14 +202,14 @@ run_tcp_client(const char *port)
 	ssize_t count;
 	int tcp;
 	char buffer[] = "test";
-	
+
 	tcp = create_socket("127.0.0.1", port, SOCK_STREAM, TCP, 1, &remote);
 	CHECK_ERROR(connect(tcp, (const struct sockaddr *)&remote,
 	    remote.ss_len));
 	CHECK_ERROR(send(tcp, buffer, sizeof(buffer), 0));
 	count = recv(tcp, buffer, sizeof(buffer), 0);
 	if (count == -1) {
-		/* 
+		/*
 		 * Connection reset by peer indicates the connection was
 		 * dropped. EAGAIN indicates the timeout expired. Any other
 		 * error is unexpected for this client program test.
@@ -229,12 +229,12 @@ run_tcp_client(const char *port)
 	return true;
 }
 
-/* 
- * Create a socket with the characteristics inferred by the args, return parsed 
+/*
+ * Create a socket with the characteristics inferred by the args, return parsed
  * socket address in dst.
  */
 static int
-create_socket(const char *address, const char *port, 
+create_socket(const char *address, const char *port,
     int socktype, int proto, time_t timeout_sec, struct sockaddr_storage *dst)
 {
         struct addrinfo hints = {
@@ -245,15 +245,15 @@ create_socket(const char *address, const char *port,
 	struct addrinfo * res;
 	int error, fd;
 
-	ATF_REQUIRE_EQ_MSG(error = getaddrinfo(address, port, &hints, &res), 0, 
+	ATF_REQUIRE_EQ_MSG(error = getaddrinfo(address, port, &hints, &res), 0,
 	    "%s", gai_strerror(error));
 
 	/* Make sure there is only one possible bind address */
 	ATF_REQUIRE_MSG(res->ai_next == NULL, "Ambiguous create_socket args");
-	CHECK_ERROR(fd = socket(res->ai_family, 
+	CHECK_ERROR(fd = socket(res->ai_family,
 	    res->ai_socktype, res->ai_protocol));
 	struct timeval timeout = { timeout_sec, 0 };
-	CHECK_ERROR(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, 
+	CHECK_ERROR(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
 	    sizeof(timeout)));
 	memcpy(dst, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
@@ -266,7 +266,7 @@ run(const char *prog, char *const *args)
 {
 	pid_t proc;
 	extern char **environ;
-	ATF_REQUIRE_EQ(posix_spawnp(&proc, prog, 
+	ATF_REQUIRE_EQ(posix_spawnp(&proc, prog,
 	    NULL, NULL, args, environ), 0);
 	return proc;
 }
@@ -280,7 +280,7 @@ waitfor(pid_t pid, const char *taskname)
 	ATF_REQUIRE_MSG(rpid == pid, "wait %d != %d %s",
 	    rpid, pid, strerror(errno));
 
-	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), EXIT_SUCCESS, 
+	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), EXIT_SUCCESS,
 	    "%s failed with "
 	    "exit status %d", taskname, WEXITSTATUS(status));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_server.c,v 1.2 2021/09/01 06:12:50 christos Exp $	*/
+/*	$NetBSD: test_server.c,v 1.3 2025/01/05 08:23:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test_server.c,v 1.2 2021/09/01 06:12:50 christos Exp $");
+__RCSID("$NetBSD: test_server.c,v 1.3 2025/01/05 08:23:33 riastradh Exp $");
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	} else if (strcmp(argv[1], "stream") == 0) {
 		if (strcmp(argv[2], "wait") == 0) {
 			stream_wait_service();
-		} else if (strcmp(argv[2], "nowait") == 0) { 
+		} else if (strcmp(argv[2], "nowait") == 0) {
 			stream_nowait_service();
 		} else {
 			syslog(LOG_ERR, "Invalid arg %s", argv[2]);
@@ -142,17 +142,17 @@ dgram_wait_service(void)
 	/* Peek so service can still get the packet */
 	CHECK(count = recvmsg(0, &header, 0));
 
-	CHECK(sendto(1, buffer, (size_t)count, 0, 
+	CHECK(sendto(1, buffer, (size_t)count, 0,
 	    (struct sockaddr*)(&addr), addr.ss_len));
-	
-	int error = getnameinfo((struct sockaddr*)&addr, 
+
+	int error = getnameinfo((struct sockaddr*)&addr,
 	    addr.ss_len, name, NI_MAXHOST,
 	    NULL, 0, NI_NUMERICHOST);
-	
+
 	if (error) {
 		syslog(LOG_ERR, "getnameinfo error: %s\n", gai_strerror(error));
 		exit(EXIT_FAILURE);
 	}
-	syslog(LOG_WARNING, "Received dgram/wait message \"%.*s\" from %s\n", 
+	syslog(LOG_WARNING, "Received dgram/wait message \"%.*s\" from %s\n",
 	    (int)count, buffer, name);
 }
