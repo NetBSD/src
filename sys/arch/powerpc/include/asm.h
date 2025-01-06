@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.55 2025/01/04 18:37:23 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.56 2025/01/06 10:46:44 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -159,8 +159,10 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 #define RCSID(x)	__RCSID(x)
 #ifdef _NETBSD_REVISIONID
 #define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
-			.asciz "$" "NetBSD: " __FILE__ 			\
-			    " " _NETBSD_REVISIONID " $";		\
+			.asciz x;					\
+			.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+			.ascii " "; .ascii _NETBSD_REVISIONID;		\
+			.asciz " $";					\
 			.popsection
 #else
 #define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\

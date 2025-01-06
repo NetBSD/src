@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.76 2025/01/04 19:29:44 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.77 2025/01/06 10:46:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -348,8 +348,10 @@ _C_LABEL(x):
 
 #ifdef _NETBSD_REVISIONID
 #define	RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
-			.asciz "$" "NetBSD: " __FILE__ 			\
-			    " " _NETBSD_REVISIONID " $";		\
+			.asciz x;					\
+			.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+			.ascii " "; .ascii _NETBSD_REVISIONID;		\
+			.asciz " $";					\
 			.popsection
 #else
 #define	RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
