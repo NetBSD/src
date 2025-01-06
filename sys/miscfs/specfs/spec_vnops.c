@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.218 2023/04/22 15:32:49 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.219 2025/01/06 09:45:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.218 2023/04/22 15:32:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.219 2025/01/06 09:45:49 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -727,11 +727,11 @@ spec_open(void *v)
 	enum kauth_device_req req;
 	specnode_t *sn, *sn1;
 	specdev_t *sd;
+	int dtype;
 	spec_ioctl_t ioctl;
 	u_int gen = 0;
 	const char *name = NULL;
 	bool needclose = false;
-	struct partinfo pi;
 
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERTMSG(vp->v_type == VBLK || vp->v_type == VCHR, "type=%d",
@@ -1038,11 +1038,28 @@ spec_open(void *v)
 	 * forbidden to devsw_detach until closed).  So it is safe to
 	 * query cdev_type unconditionally here.
 	 */
-	if (cdev_type(dev) == D_DISK) {
-		ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
-		if ((*ioctl)(dev, DIOCGPARTINFO, &pi, FREAD, curlwp) == 0)
-			uvm_vnp_setsize(vp,
-			    (voff_t)pi.pi_secsize * pi.pi_size);
+	switch (vp->v_type) {
+	case VCHR:
+		ioctl = cdev_ioctl;
+		dtype = cdev_type(dev);
+		break;
+	default:
+		ioctl = bdev_ioctl;
+		dtype = bdev_type(dev);
+		break;
+	}
+	if (dtype == D_DISK) {
+		struct partinfo pi;
+		off_t sz;
+
+		error = (*ioctl)(dev, DIOCGPARTINFO, &pi, FREAD, curlwp);
+		if (error == 0)
+			sz = (off_t)pi.pi_size * pi.pi_secsize;
+		else if (error == ENOTTY)
+			error = (*ioctl)(dev, DIOCGMEDIASIZE, &sz, FREAD, curlwp);
+
+		if (error == 0)
+			uvm_vnp_setsize(vp, (voff_t)sz);
 	}
 
 	/* Success!  */
