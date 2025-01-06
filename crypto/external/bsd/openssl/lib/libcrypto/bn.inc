@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.10 2023/05/31 20:57:31 christos Exp $
+#	$NetBSD: bn.inc,v 1.11 2025/01/06 19:11:26 rillig Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/bn
 
@@ -45,8 +45,3 @@ SRCS += ${BN_SRCS}
 .for cryptosrc in ${BN_SRCS}
 CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
 .endfor
-
-
-LINTFLAGS.bn_nist.c+=	-X 132	# conversion from 'unsigned long' to 'int'
-LINTFLAGS.bn_nist.c+=	-X 161	# constant in conditional context
-LINTFLAGS.bn_nist.c+=	-X 275	# cast discards 'const' from type 'pointer to const unsigned long'

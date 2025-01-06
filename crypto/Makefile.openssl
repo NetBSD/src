@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.19 2023/05/25 19:12:51 riastradh Exp $
+#	$NetBSD: Makefile.openssl,v 1.20 2025/01/06 19:11:26 rillig Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -25,12 +25,15 @@ CWARNFLAGS.clang+= -Wno-implicit-int-float-conversion
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
 
-LINTFLAGS+=	-X 161	# constant in conditional context
-LINTFLAGS+=	-X 129	# expression has null effect
 LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
-LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'
+LINTFLAGS+=	-X 129	# expression has null effect
+LINTFLAGS+=	-X 132	# conversion may lose accuracy
+LINTFLAGS+=	-X 161	# constant in conditional context
 LINTFLAGS+=	-X 220	# fallthrough on case statement
-LINTFLAGS+=	-X 118	# semantics of '%s' change in ANSI C; use explicit cast
+LINTFLAGS+=	-X 231	# argument unused in function
+LINTFLAGS+=	-X 309	# (unsigned int)0x80000000 & (unsigned long)x
+LINTFLAGS+=	-X 275	# cast discards 'const' from pointer
+LINTFLAGS+=	-X 298	# argument conversion may lose accuracy
 
 
 .if ${HAVE_OPENSSL} <= 11

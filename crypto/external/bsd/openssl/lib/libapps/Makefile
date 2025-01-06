@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2024/07/21 08:43:57 rillig Exp $
+#	$NetBSD: Makefile,v 1.8 2025/01/06 19:11:26 rillig Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -32,7 +32,6 @@ CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 CPPFLAGS+= -I${OPENSSLSRC}/../include
 CPPFLAGS+= -I${OPENSSLSRC}/apps/lib
 CPPFLAGS+= -I${OPENSSLSRC}/apps/include
-LINTFLAGS+=	-X 309	# (unsigned int)0x80000000 & (unsigned long)x
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 OPENSSLINC=	${OPENSSLSRC}/include/openssl
