@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.16 2025/01/03 05:54:07 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.17 2025/01/06 06:14:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.16 2025/01/03 05:54:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.17 2025/01/06 06:14:17 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -60,8 +60,6 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 	word1 = insn->is_word1;
 	format = (word1 >> 10) & 7;
 	regnum = (word1 >> 7) & 7;
-
-	insn->is_advance = 4;
 
 	if (format == FTYPE_DBL) {
 		insn->is_datasize = 8;
