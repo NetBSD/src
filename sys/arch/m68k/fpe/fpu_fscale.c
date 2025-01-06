@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.16 2013/03/26 11:30:20 isaki Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.17 2025/01/06 07:34:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.16 2013/03/26 11:30:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.17 2025/01/06 07:34:24 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -54,6 +54,7 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 	uint32_t *fpregs;
 	int word1, sig;
 	int regnum, format;
+	int modreg;
 	int scale, sign, exp;
 	uint32_t m0, m1;
 	uint32_t buf[3], fpsr;
@@ -109,6 +110,12 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 			return sig;
 		}
 
+		/* Check an illegal mod/reg. */
+		modreg = insn->is_opcode & 077;
+		if ((modreg >> 3) == 1/*An*/ || modreg >= 075) {
+			return SIGILL;
+		}
+
 		/* Get effective address. (modreg=opcode&077) */
 		sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
 		if (sig) {
@@ -116,6 +123,15 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 			printf("fpu_emul_fscale: error in decode_ea\n");
 #endif
 			return sig;
+		}
+
+		if (insn->is_ea.ea_flags == EA_DIRECT &&
+		    insn->is_datasize > 4) {
+#if DEBUG_FPE
+			printf("%s: attempted to fetch dbl/ext from reg\n",
+			    __func__);
+#endif
+			return SIGILL;
 		}
 
 #if DEBUG_FPE

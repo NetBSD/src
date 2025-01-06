@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.48 2024/12/28 12:23:51 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.49 2025/01/06 07:34:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.48 2024/12/28 12:23:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.49 2025/01/06 07:34:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -338,10 +338,28 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 	int reglist;
 	int regcount;
 	int fpu_to_mem;
+	int modreg;
 	uint32_t tmp[3];
 
 	/* move to/from control registers */
 	reglist = (insn->is_word1 & 0x1c00) >> 10;
+	/* Bit 13 selects direction (FPU to/from Mem) */
+	fpu_to_mem = insn->is_word1 & 0x2000;
+
+	/* Check an illegal mod/reg. */
+	modreg = insn->is_opcode & 077;
+	if (fpu_to_mem) {
+		/* PCrel, #imm are illegal. */
+		if (modreg >= 072) {
+			return SIGILL;
+		}
+	} else {
+		/* All mod/reg can be specified. */
+		if (modreg >= 075) {
+			return SIGILL;
+		}
+	}
+
 	/*
 	 * If reglist is 0b000, treat it as FPIAR.  This is not specification
 	 * but the behavior described in the 6888x user's manual.
@@ -357,7 +375,7 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		regcount = 1;
 	}
 	insn->is_datasize = regcount * 4;
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 	if (sig)
 		return sig;
 
@@ -377,8 +395,6 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 		}
 	}
 
-	/* Bit 13 selects direction (FPU to/from Mem) */
-	fpu_to_mem = insn->is_word1 & 0x2000;
 	if (fpu_to_mem) {
 		uint32_t *s = &tmp[0];
 
@@ -432,6 +448,7 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	struct fpframe *fpf = fe->fe_fpframe;
 	int word1, sig;
 	int reglist, regmask, regnum;
+	int modreg;
 	int fpu_to_mem, order;
 	/* int w1_post_incr; */
 	int *fpregs;
@@ -458,8 +475,22 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	}
 	reglist &= 0xFF;
 
-	/* Get effective address. (modreg=opcode&077) */
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+	/* Check an illegal mod/reg. */
+	modreg = insn->is_opcode & 077;
+	if (fpu_to_mem) {
+		/* Dn, An, (An)+, PCrel, #imm are illegal. */
+		if (modreg < 020 || (modreg >> 3) == 3 || modreg >= 072) {
+			return SIGILL;
+		}
+	} else {
+		/* Dn, An, -(An), #imm are illegal. */
+		if (modreg < 020 || (modreg >> 3) == 4 || modreg >= 074) {
+			return SIGILL;
+		}
+	}
+
+	/* Get effective address. */
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 	if (sig)
 		return sig;
 
@@ -571,6 +602,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 	struct fpn *res;
 	int word1, sig = 0;
 	int regnum, format;
+	int modreg;
 	int discard_result = 0;
 	uint32_t buf[3];
 #ifdef DEBUG_FPE
@@ -624,11 +656,24 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 			return sig;
 		}
 
-		/* Get effective address. (modreg=opcode&077) */
-		sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+		/* Check an illegal mod/reg. */
+		modreg = insn->is_opcode & 077;
+		if ((modreg >> 3) == 1/*An*/ || modreg >= 075) {
+			return SIGILL;
+		}
+
+		/* Get effective address. */
+		sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 		if (sig) {
 			DPRINTF(("%s: error in fpu_decode_ea\n", __func__));
 			return sig;
+		}
+
+		if (insn->is_ea.ea_flags == EA_DIRECT &&
+		    insn->is_datasize > 4) {
+			DPRINTF(("%s: attempted to fetch dbl/ext from reg\n",
+			    __func__));
+			return SIGILL;
 		}
 
 		DUMP_INSN(insn);
