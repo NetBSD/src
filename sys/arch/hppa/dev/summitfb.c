@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.27 2025/01/06 17:33:28 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.28 2025/01/07 05:36:35 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.27 2025/01/06 17:33:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.28 2025/01/07 05:36:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	 * FX4 is supposed to support resolutions higher than 1280x1024.
 	 * I guess video memory is allocated in 512x512 chunks
 	 */
-	glyphcache_init(&sc->sc_gc, 
+	glyphcache_init(&sc->sc_gc,
 	    sc->sc_height,
 	    sc->sc_height,
 	    (sc->sc_width + 511) & (~511),
