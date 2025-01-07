@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.13 2022/09/10 12:14:18 rillig Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.14 2025/01/07 17:12:20 andvar Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -245,7 +245,7 @@ rfc1048_opts[] = {
 	"iIP-routes",		/* 33: IP static routes (dst,router) */
 
 	/* Link Layer parameters, per-interface (RFC-1533, sect. 6) */
-	"bLL-trailer",		/* 34: do tralier encapsulation */
+	"bLL-trailer",		/* 34: do trailer encapsulation */
 	"lLL-arp-tmo",		/* 35: ARP cache timeout */
 	"bLL-ether2",		/* 36: Ethernet version 2 (IEEE 802.3) */
 
