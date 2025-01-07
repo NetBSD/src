@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.16 2021/07/24 21:31:37 andvar Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.17 2025/01/07 20:24:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -68,7 +68,7 @@ struct ahci_cmd_header {
 #define AHCI_CMDH_F_CBSY	0x0400 /* clear BSY on R_OK */
 #define AHCI_CMDH_F_BIST	0x0200 /* BIST FIS */
 #define AHCI_CMDH_F_RST		0x0100 /* Reset FIS */
-#define AHCI_CMDH_F_PRF		0x0080 /* prefectchable */
+#define AHCI_CMDH_F_PRF		0x0080 /* prefetchable */
 #define AHCI_CMDH_F_WR		0x0040 /* write */
 #define AHCI_CMDH_F_A		0x0020 /* ATAPI */
 #define AHCI_CMDH_F_CFL_MASK	0x001f /* command FIS length (in dw) */
@@ -119,10 +119,10 @@ struct ahci_r_fis {
 #define		AHCI_CAP_IS_GEN2	0x00200000 /* 3.0 Gb/s */
 #define		AHCI_CAP_IS_GEN3	0x00300000 /* 6.0 Gb/s */
 #define		AHCI_CAP_CLO	0x01000000 /* Command list override */
-#define		AHCI_CAP_AL	0x02000000 /* Single Activitly LED */
+#define		AHCI_CAP_AL	0x02000000 /* Single Activity LED */
 #define		AHCI_CAP_ALP	0x04000000 /* Aggressive link power management */
 #define		AHCI_CAP_SSU	0x08000000 /* Staggered spin-up */
-#define		AHCI_CAP_MPS	0x10000000 /* Mechanical swicth */
+#define		AHCI_CAP_MPS	0x10000000 /* Mechanical switch */
 #define		AHCI_CAP_NTF	0x20000000 /* Snotification */
 #define		AHCI_CAP_NCQ	0x40000000 /* Native command queuing */
 #define		AHCI_CAP_64BIT	0x80000000 /* 64bit addresses */
@@ -157,7 +157,7 @@ struct ahci_r_fis {
 
 #define AHCI_CC_PORTS	0x18 /* command completion coalescing ports (1b/port */
 
-#define AHCI_EM_LOC	0x1c /* enclosure managemement location */
+#define AHCI_EM_LOC	0x1c /* enclosure management location */
 #define		AHCI_EML_OFF_MASK 0xffff0000 /* offset in ABAR */
 #define		AHCI_EML_OFF_SHIFT 16
 #define		AHCI_EML_SZ_MASK  0x0000ffff /* offset in ABAR */
@@ -166,7 +166,7 @@ struct ahci_r_fis {
 #define AHCI_EM_CTL	0x20 /* enclosure management control */
 #define		AHCI_EMC_PM	0x08000000 /* port multiplier support */
 #define		AHCI_EMC_ALHD	0x04000000 /* activity LED hardware driven */
-#define		AHCI_EMC_XMIT	0x02000000 /* tramsit messages only */
+#define		AHCI_EMC_XMIT	0x02000000 /* transmit messages only */
 #define		AHCI_EMC_SMB	0x01000000 /* single message buffer */
 #define		AHCI_EMC_SGPIO	0x00080000 /* enclosure management messages */
 #define		AHCI_EMC_SES2	0x00040000 /* SeS-2 messages */

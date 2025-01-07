@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.55 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.56 2025/01/07 20:24:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.55 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.56 2025/01/07 20:24:10 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1449,7 +1449,7 @@ cs_counter_event(struct cs_softc *sc, uint16_t cntEvent)
 		/* The count should be read before an overflow occurs. */
 		errorCount = CS_READ_PACKET_PAGE(sc, PKTPG_TX_COL);
 		/*
-		 * The tramsit event routine always checks the number of
+		 * The transmit event routine always checks the number of
 		 * collisions for any packet so we don't increment any
 		 * counters here, as they should already have been
 		 * considered.
