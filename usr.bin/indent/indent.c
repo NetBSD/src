@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.395 2025/01/04 21:54:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.396 2025/01/07 03:55:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.395 2025/01/04 21:54:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.396 2025/01/07 03:55:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -298,7 +298,7 @@ initialize_parser(void)
 	}
 
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
-	ps_push(psym_stmt, false);	/* as a stop symbol */
+	ps_psyms_push(psym_stmt, ps.ind_level);	/* as a stop symbol */
 	ps.prev_lsym = lsym_semicolon;
 	ps.lbrace_kind = psym_lbrace_block;
 }

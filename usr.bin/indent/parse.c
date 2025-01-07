@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.84 2025/01/07 03:14:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.85 2025/01/07 03:55:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.84 2025/01/07 03:14:23 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.85 2025/01/07 03:55:00 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -46,48 +46,11 @@ __RCSID("$NetBSD: parse.c,v 1.84 2025/01/07 03:14:23 rillig Exp $");
 
 /* Replace the top 2 symbols with the given symbol. */
 static void
-psyms_replace2(parser_symbol psym)
+ps_psyms_replace2(parser_symbol psym)
 {
 	ps.psyms.len--;
 	ps.psyms.sym[ps.psyms.len - 1] = psym;
-}
-
-/*
- * Try to combine the statement on the top of the parse stack with the symbol
- * directly below it, replacing these two symbols with a single symbol.
- */
-static bool
-psyms_reduce_stmt(void)
-{
-	switch (ps.psyms.sym[ps.psyms.len - 2]) {
-
-	case psym_stmt:
-		psyms_replace2(psym_stmt);
-		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
-		return true;
-
-	case psym_do:
-		psyms_replace2(psym_do_stmt);
-		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
-		return true;
-
-	case psym_if_expr:
-		psyms_replace2(psym_if_expr_stmt);
-		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
-		return true;
-
-	case psym_switch_expr:
-	case psym_decl:
-	case psym_if_expr_stmt_else:
-	case psym_for_exprs:
-	case psym_while_expr:
-		psyms_replace2(psym_stmt);
-		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
-		return true;
-
-	default:
-		return false;
-	}
+	ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
 }
 
 static int
@@ -101,7 +64,7 @@ left_justify_decl_level(void)
 }
 
 void
-ps_push(parser_symbol psym, bool follow)
+ps_psyms_push(parser_symbol psym, int ind_level)
 {
 	if (ps.psyms.len == ps.psyms.cap) {
 		ps.psyms.cap += 16;
@@ -112,8 +75,7 @@ ps_push(parser_symbol psym, bool follow)
 	}
 	ps.psyms.len++;
 	ps.psyms.sym[ps.psyms.len - 1] = psym;
-	ps.psyms.ind_level[ps.psyms.len - 1] =
-	    follow ? ps.ind_level_follow : ps.ind_level;
+	ps.psyms.ind_level[ps.psyms.len - 1] = ind_level;
 }
 
 /*
@@ -124,9 +86,26 @@ static void
 psyms_reduce(void)
 {
 again:
-	if (ps.psyms.len >= 2 && ps.psyms.sym[ps.psyms.len - 1] == psym_stmt
-	    && psyms_reduce_stmt())
-		goto again;
+	if (ps.psyms.len >= 2 && ps.psyms.sym[ps.psyms.len - 1] == psym_stmt) {
+		switch (ps.psyms.sym[ps.psyms.len - 2]) {
+		case psym_decl:
+		case psym_stmt:
+		case psym_for_exprs:
+		case psym_if_expr_stmt_else:
+		case psym_switch_expr:
+		case psym_while_expr:
+			ps_psyms_replace2(psym_stmt);
+			goto again;
+		case psym_if_expr:
+			ps_psyms_replace2(psym_if_expr_stmt);
+			goto again;
+		case psym_do:
+			ps_psyms_replace2(psym_do_stmt);
+			goto again;
+		default:
+			return;
+		}
+	}
 	if (ps.psyms.sym[ps.psyms.len - 1] == psym_while_expr &&
 	    ps.psyms.sym[ps.psyms.len - 2] == psym_do_stmt) {
 		ps.psyms.len -= 2;
@@ -183,8 +162,8 @@ parse(parser_symbol psym)
 				ps.ind_level--;
 		}
 
-		ps_push(psym, false);
-		ps_push(psym_stmt, true);
+		ps_psyms_push(psym, ps.ind_level);
+		ps_psyms_push(psym_stmt, ps.ind_level_follow);
 		break;
 
 	case psym_rbrace:
@@ -194,10 +173,8 @@ parse(parser_symbol psym)
 			diag(1, "Statement nesting error");
 			break;
 		}
-		ps.psyms.len--;
-		ps.ind_level = ps.psyms.ind_level[ps.psyms.len - 1];
-		ps.ind_level_follow = ps.ind_level;
-		ps.psyms.sym[ps.psyms.len - 1] = psym_stmt;
+		ps_psyms_replace2(psym_stmt);
+		ps.ind_level = ps.ind_level_follow;
 		break;
 
 	case psym_decl:
@@ -205,7 +182,7 @@ parse(parser_symbol psym)
 			break;	/* only put one declaration onto stack */
 
 		ps.break_after_comma = true;
-		ps_push(psym_decl, true);
+		ps_psyms_push(psym_decl, ps.ind_level_follow);
 
 		if (opt.left_justify_decl) {
 			ps.ind_level = left_justify_decl_level();
@@ -215,7 +192,7 @@ parse(parser_symbol psym)
 
 	case psym_stmt:
 		ps.break_after_comma = false;
-		ps_push(psym_stmt, false);
+		ps_psyms_push(psym_stmt, ps.ind_level);
 		break;
 
 	case psym_if_expr:
@@ -230,7 +207,7 @@ parse(parser_symbol psym)
 	case psym_for_exprs:
 		ps.ind_level = ps.ind_level_follow;
 		ps.ind_level_follow = ps.ind_level + 1;
-		ps_push(psym, false);
+		ps_psyms_push(psym, ps.ind_level);
 		break;
 
 	case psym_else:
@@ -244,7 +221,7 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_switch_expr:
-		ps_push(psym_switch_expr, true);
+		ps_psyms_push(psym_switch_expr, ps.ind_level_follow);
 		ps.ind_level_follow += (int)opt.case_indent + 1;
 		break;
 
@@ -252,9 +229,9 @@ parse(parser_symbol psym)
 		if (ps.psyms.sym[ps.psyms.len - 1] == psym_do_stmt) {
 			ps.ind_level = ps.psyms.ind_level[ps.psyms.len - 1];
 			ps.ind_level_follow = ps.ind_level;
-			ps_push(psym_while_expr, false);
+			ps_psyms_push(psym_while_expr, ps.ind_level);
 		} else {
-			ps_push(psym_while_expr, true);
+			ps_psyms_push(psym_while_expr, ps.ind_level_follow);
 			ps.ind_level_follow++;
 		}
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: psym_do_stmt.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: psym_do_stmt.c,v 1.5 2025/01/07 03:55:00 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_do_stmt, which represents the state after
@@ -27,5 +27,23 @@ function(void)
 	do			/* comment */
 		stmt();
 	while (0);
+}
+//indent end
+
+
+//indent input
+{
+	if (cond) do stmt; while (cond); stmt;
+}
+//indent end
+
+//indent run
+{
+	if (cond)
+		do
+			stmt;
+		while (cond);
+	//$ Ensure that this statement is indented the same as the 'if' above.
+	stmt;
 }
 //indent end
