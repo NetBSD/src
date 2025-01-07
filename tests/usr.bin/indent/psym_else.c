@@ -1,4 +1,4 @@
-/* $NetBSD: psym_else.c,v 1.7 2023/06/16 23:19:01 rillig Exp $ */
+/* $NetBSD: psym_else.c,v 1.8 2025/01/07 02:55:31 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_else, which represents the keyword 'else'
@@ -42,7 +42,7 @@ example(bool cond)
 				stmt();
 			else
 				stmt();
-	/* comment */
+		/* comment */
 		else
 			stmt();
 }

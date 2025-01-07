@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.82 2025/01/04 21:54:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.83 2025/01/07 02:55:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.82 2025/01/04 21:54:26 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.83 2025/01/07 02:55:30 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -73,14 +73,7 @@ psyms_reduce_stmt(void)
 
 	case psym_if_expr:
 		psyms_replace2(psym_if_expr_stmt);
-		/* For the time being, assume that there is no 'else' on this
-		 * 'if', and set the indentation level accordingly. If an
-		 * 'else' is scanned, it will be fixed up later. */
-		size_t i = ps.psyms.len - 2;
-		while (ps.psyms.sym[i] != psym_stmt
-		    && ps.psyms.sym[i] != psym_lbrace_block)
-			i--;
-		ps.ind_level_follow = ps.psyms.ind_level[i];
+		ps.ind_level_follow = ps.psyms.ind_level[ps.psyms.len - 1];
 		return true;
 
 	case psym_switch_expr:
@@ -163,6 +156,8 @@ parse(parser_symbol psym)
 	if (psym != psym_else) {
 		while (ps.psyms.sym[ps.psyms.len - 1] == psym_if_expr_stmt) {
 			ps.psyms.sym[ps.psyms.len - 1] = psym_stmt;
+			ps.ind_level = ps.ind_level_follow
+			    = ps.psyms.ind_level[ps.psyms.len - 2];
 			psyms_reduce();
 		}
 	}
