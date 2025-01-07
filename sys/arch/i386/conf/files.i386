@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.408 2024/02/23 22:10:39 andvar Exp $
+#	$NetBSD: files.i386,v 1.409 2025/01/07 14:37:09 imil Exp $
 #
 # new style config file for i386 architecture
 #
@@ -127,7 +127,7 @@ define	pnpbiosbus {}
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
 	cpubus, ioapicbus, apmbus, pnpbiosbus, ipmibus,
-	bioscall, hypervisorbus
+	bioscall, hypervisorbus, pvbus
 attach	mainbus at root
 file	arch/i386/i386/i386_mainbus.c	mainbus & !xenpv
 file	arch/x86/x86/mainbus.c		mainbus
@@ -420,5 +420,8 @@ obsolete	defflag	opt_vesafb.h	VESAFB_PM
 device	glxsb: opencrypto
 attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
+
+# PVbus support
+include "arch/x86/pv/files.pv"
 
 include "arch/i386/conf/majors.i386"

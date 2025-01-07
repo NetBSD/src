@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.8 2025/01/07 14:37:09 imil Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.8 2025/01/07 14:37:09 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp 
 #include "pnpbios.h"
 #include "acpica.h"
 #include "ipmi.h"
+#include "pvbus.h"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -90,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp 
 #endif /* PCI_ADDR_FIXUP */
 #endif /* PCI_BUS_FIXUP */
 #endif /* NPCI > 0 */
+#if NPVBUS > 0
+#include <arch/x86/pv/pvvar.h>
+#endif
 
 void	i386_mainbus_childdetached(device_t, device_t);
 int	i386_mainbus_match(device_t, cfdata_t, void *);
@@ -114,6 +118,9 @@ union i386_mainbus_attach_args {
 #endif
 #if NIPMI > 0
 	struct ipmi_attach_args mba_ipmi;
+#endif
+#if NPVBUS > 0
+	struct pvbus_attach_args mba_pvba;
 #endif
 };
 
@@ -240,6 +247,20 @@ i386_mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
+#if NPVBUS > 0
+	/* add here more VM guests types that would benefit from a pv bus */
+	switch(vm_guest) {
+	/* FALLTHROUGH */
+	case VM_GUEST_GENPVH:
+	case VM_GUEST_KVM:
+		mba.mba_pvba.pvba_busname = "pvbus";
+		config_found(self, &mba.mba_pvba.pvba_busname, NULL,
+			CFARGS(.iattr = "pvbus"));
+		break;
+	default:
+		break;
+	}
+#endif
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
