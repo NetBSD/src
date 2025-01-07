@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.48 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.48.4.1 2025/01/07 16:13:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.48 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.48.4.1 2025/01/07 16:13:35 martin Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -188,11 +188,15 @@ ffs_wapbl_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 		    FFS_DBTOFSB(fs, wd->wd_blkno), wd->wd_len, -1);
 	}
 
+	mutex_enter(&ump->um_lock);
 	if (fs->fs_fmod != 0) {
 		fs->fs_fmod = 0;
 		fs->fs_time = time_second;
+		mutex_exit(&ump->um_lock);
 		error = ffs_cgupdate(ump, 0);
 		KASSERT(error == 0);
+	} else {
+		mutex_exit(&ump->um_lock);
 	}
 }
 

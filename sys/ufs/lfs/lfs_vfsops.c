@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.382 2022/03/19 13:53:33 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.382.4.1 2025/01/07 16:13:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.382 2022/03/19 13:53:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.382.4.1 2025/01/07 16:13:34 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1499,8 +1499,6 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
- *
- * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
 lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
