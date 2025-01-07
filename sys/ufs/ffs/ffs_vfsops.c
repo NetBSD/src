@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.362.2.1 2023/11/28 13:11:37 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.362.2.2 2025/01/07 16:16:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.2.1 2023/11/28 13:11:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.2.2 2025/01/07 16:16:50 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.2.1 2023/11/28 13:11:37 martin 
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -547,8 +548,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		fs = ump->um_fs;
 	} else {
 		/*
-		 * Update the mount.
+		 * Update the mount.  The file system is suspended.
 		 */
+		KASSERT(fstrans_is_owner(mp));
 
 		/*
 		 * The initial mount got a reference on this
@@ -689,25 +691,26 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    DPRINTF("set_statvfs_info returned %d", error);
 	}
 	fs->fs_flags &= ~FS_DOSOFTDEP;
-	if (fs->fs_fmod != 0) {	/* XXX */
-		int err;
-
-		fs->fs_fmod = 0;
-		if (fs->fs_clean & FS_WASCLEAN)
-			fs->fs_time = time_second;
-		else {
-			printf("%s: file system not clean (fs_clean=%#x); "
-			    "please fsck(8)\n", mp->mnt_stat.f_mntfromname,
-			    fs->fs_clean);
-			printf("%s: lost blocks %" PRId64 " files %d\n",
-			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
-			    fs->fs_pendinginodes);
-		}
-		err = UFS_WAPBL_BEGIN(mp);
-		if (err == 0) {
+	if (UFS_WAPBL_BEGIN(mp) == 0) {
+		mutex_enter(&ump->um_lock);
+		if (fs->fs_fmod != 0) {
+			fs->fs_fmod = 0;
+			if (fs->fs_clean & FS_WASCLEAN)
+				fs->fs_time = time_second;
+			else {
+				printf("%s: file system not clean "
+				    "(fs_clean=%#x); please fsck(8)\n",
+				    mp->mnt_stat.f_mntfromname, fs->fs_clean);
+				printf("%s: lost blocks %" PRId64
+				    " files %d\n", mp->mnt_stat.f_mntfromname,
+				    fs->fs_pendingblocks, fs->fs_pendinginodes);
+			}
+			mutex_exit(&ump->um_lock);
 			(void) ffs_cgupdate(ump, MNT_WAIT);
-			UFS_WAPBL_END(mp);
+		} else {
+			mutex_exit(&ump->um_lock);
 		}
+		UFS_WAPBL_END(mp);
 	}
 	if ((mp->mnt_flag & MNT_SOFTDEP) != 0) {
 		printf("%s: `-o softdep' is no longer supported, "
@@ -1673,6 +1676,9 @@ ffs_unmount(struct mount *mp, int mntflags)
 	extern int doforce;
 #endif
 
+	/* The file system is suspended. */
+	KASSERT(fstrans_is_owner(mp));
+
 	if (ump->um_discarddata) {
 		ffs_discard_finish(ump->um_discarddata, mntflags);
 		ump->um_discarddata = NULL;
@@ -1683,17 +1689,17 @@ ffs_unmount(struct mount *mp, int mntflags)
 		flags |= FORCECLOSE;
 	if ((error = ffs_flushfiles(mp, flags, l)) != 0)
 		return (error);
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error == 0)
-		if (fs->fs_ronly == 0 &&
-		    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
+	if (fs->fs_ronly == 0 && UFS_WAPBL_BEGIN(mp) == 0) {
+		if (ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 		    fs->fs_clean & FS_WASCLEAN) {
+			mutex_enter(&ump->um_lock);
 			fs->fs_clean = FS_ISCLEAN;
 			fs->fs_fmod = 0;
+			mutex_exit(&ump->um_lock);
 			(void) ffs_sbupdate(ump, MNT_WAIT);
 		}
-	if (error == 0)
 		UFS_WAPBL_END(mp);
+	}
 #ifdef WAPBL
 	KASSERT(!(mp->mnt_wapbl_replay && mp->mnt_wapbl));
 	if (mp->mnt_wapbl_replay) {
@@ -1874,8 +1880,6 @@ ffs_sync_selector(void *cl, struct vnode *vp)
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
- *
- * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
@@ -1952,17 +1956,21 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/*
 	 * Write back modified superblock.
 	 */
-	if (fs->fs_fmod != 0) {
-		fs->fs_fmod = 0;
-		fs->fs_time = time_second;
-		error = UFS_WAPBL_BEGIN(mp);
-		if (error)
-			allerror = error;
-		else {
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error) {
+		allerror = error;
+	} else {
+		mutex_enter(&ump->um_lock);
+		if (fs->fs_fmod != 0) {
+			fs->fs_fmod = 0;
+			fs->fs_time = time_second;
+			mutex_exit(&ump->um_lock);
 			if ((error = ffs_cgupdate(ump, waitfor)))
 				allerror = error;
-			UFS_WAPBL_END(mp);
+		} else {
+			mutex_exit(&ump->um_lock);
 		}
+		UFS_WAPBL_END(mp);
 	}
 
 #ifdef WAPBL
@@ -2308,26 +2316,28 @@ int
 ffs_sbupdate(struct ufsmount *mp, int waitfor)
 {
 	struct fs *fs = mp->um_fs;
+	struct fs *bfs;
 	struct buf *bp;
 	int error;
-	u_int32_t saveflag;
 
 	error = ffs_getblk(mp->um_devvp,
 	    fs->fs_sblockloc / DEV_BSIZE, FFS_NOBLK,
 	    fs->fs_sbsize, false, &bp);
 	if (error)
 		return error;
-	saveflag = fs->fs_flags & FS_INTERNAL;
-	fs->fs_flags &= ~FS_INTERNAL;
 
+	mutex_enter(&mp->um_lock);
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
+	mutex_exit(&mp->um_lock);
 
+	bfs = (struct fs *)bp->b_data;
+
+	bfs->fs_flags &= ~FS_INTERNAL;
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
-		ffs_sb_swap((struct fs *)bp->b_data, (struct fs *)bp->b_data);
+		ffs_sb_swap(bfs, bfs);
 #endif
-	fs->fs_flags |= saveflag;
 
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
