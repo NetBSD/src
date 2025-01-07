@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.26 2021/08/08 20:54:49 nia Exp $ */
+/*  $NetBSD: msg.c,v 1.27 2025/01/07 17:39:45 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -513,7 +513,7 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 #endif
 
 	/*
-	 * We have a header, get remaing length to read
+	 * We have a header, get remaining length to read
 	 */
 	if (puffs_framebuf_getdata_atoff(pufbuf, 0, &foh, sizeof(foh)) != 0)
 		DERR(EX_SOFTWARE, "puffs_framebuf_getdata_atoff failed");

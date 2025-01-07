@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.60 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.61 2025/01/07 17:39:45 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.60 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.61 2025/01/07 17:39:45 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1092,7 +1092,7 @@ pq3etsec_ifstop(struct ifnet *ifp, int disable)
 	etsec_write(sc, MIIMCFG, miimcfg);
 
 	/*
-	 * Let's consume any remaing transmitted packets.  And if we are
+	 * Let's consume any remaining transmitted packets.  And if we are
 	 * disabling the interface, purge ourselves of any untransmitted
 	 * packets.  But don't consume any received packets, just drop them.
 	 * If we aren't disabling the interface, save the mbufs in the

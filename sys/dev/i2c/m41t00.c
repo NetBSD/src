@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.23 2020/01/02 19:11:12 thorpej Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.24 2025/01/07 17:39:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.23 2020/01/02 19:11:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.24 2025/01/07 17:39:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ m41t00_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	 *
 	 *	- writing SECONDS
 	 *	- reading back SECONDS, remembering it as "initial seconds"
-	 *	- write the remaing RTC registers
+	 *	- write the remaining RTC registers
 	 *	- read back SECONDS as "final seconds"
 	 *	- if "initial seconds" == 59, ensure "final seconds" == 59
 	 *	- else, ensure "final seconds" is no more than one second

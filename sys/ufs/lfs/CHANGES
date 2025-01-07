@@ -1,4 +1,4 @@
-#   $NetBSD: CHANGES,v 1.6 2024/02/09 22:08:38 andvar Exp $
+#   $NetBSD: CHANGES,v 1.7 2025/01/07 17:39:45 andvar Exp $
 
 kernel:
 
@@ -6,7 +6,7 @@ kernel:
   locked by another process, lfs_markv will process the rest of the
   inodes passed to it and then return EAGAIN.  The cleaner will
   recognize this and not mark the segment clean.  When the cleaner runs
-  again, the segment containg the (formerly) locked inode will sort high
+  again, the segment containing the (formerly) locked inode will sort high
   for cleaning, since it is now almost entirely empty.
 
 - A beginning has been made to test keeping atime information in the
