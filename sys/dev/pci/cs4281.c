@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.60 2024/09/14 21:22:37 andvar Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.61 2025/01/07 18:27:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.60 2024/09/14 21:22:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.61 2025/01/07 18:27:26 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1130,7 +1130,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	BA0WRITE4(sc, CS4281_DCR0, dat32);
 	BA0WRITE4(sc, CS4281_DCR1, dat32);
 
-	/* Set Auto-Initialize Contorl enable */
+	/* Set Auto-Initialize Control enable */
 	BA0WRITE4(sc, CS4281_DMR0,
 		  DMRn_DMA | DMRn_AUTO | DMRn_TR_READ);
 	BA0WRITE4(sc, CS4281_DMR1,

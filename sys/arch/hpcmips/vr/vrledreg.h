@@ -1,4 +1,4 @@
-/*	$NetBSD: vrledreg.h,v 1.3 2001/06/11 10:04:27 enami Exp $	*/
+/*	$NetBSD: vrledreg.h,v 1.4 2025/01/07 18:27:26 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 SATO Kazumi. All rights reserved.
@@ -47,7 +47,7 @@
 #define		LEDLTS_DIV8SEC		0x02	/* 0.125 sec */
 #define		LEDLTS_DIV16SEC		0x01	/* 0.0625 sec */
 
-#define LEDCNT_REG_W		0x8	/* LED Coltrol register */
+#define LEDCNT_REG_W		0x8	/* LED Control register */
 #define		LEDCNT_AUTOSTOP		(1<<1)	/* Auto Stop */
 #define		LEDCNT_NOAUTOSTOP	(0<<1)	/* Auto Stop Disable*/
 

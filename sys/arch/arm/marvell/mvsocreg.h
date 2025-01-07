@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.13 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.14 2025/01/07 18:27:26 andvar Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -49,7 +49,7 @@
  */
 #define MVSOC_DDR_BASE		(UNITID2PHYS(DDR))	/* 0x00000 */
 
-/* DDR SDRAM Contriller Address Decode Registers */
+/* DDR SDRAM Controller Address Decode Registers */
 #define MVSOC_DSC_BASE			0x01500	/* DDR SDRAM Ctrl Addr Reg */
 #define MVSOC_DSC_NCS			4
 #define MVSOC_DSC_CSBAR(x)		((x) * 8)
@@ -202,7 +202,7 @@
  *   used by Dove only ???
  */
 
-/* DDR SDRAM Contriller Address Decode Registers */
+/* DDR SDRAM Controller Address Decode Registers */
 #define MVSOC_AXI_NCS			2
 #define MVSOC_AXI_MMAP1(cs)		(((cs) << 4) + 0x100)
 #define MVSOC_AXI_MMAP1_STARTADDRESS(v)	((v) & 0xff800000)
