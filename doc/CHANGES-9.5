@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.46 2025/01/02 19:56:03 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.47 2025/01/07 16:17:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -712,4 +712,12 @@ sys/conf/copyright				1.23
 
 	Welcome to 2025!
 	[jnemeth, ticket #1933]
+
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.228
+sys/ufs/ffs/ffs_vfsops.c			1.383,1.384 (patch)
+sys/ufs/ffs/ffs_wapbl.c				1.50
+sys/ufs/lfs/lfs_vfsops.c			1.383
+
+	ffs: PR 58837: missing locking around fs_fmod/time.
+	[hannken, ticket #1934]
 
