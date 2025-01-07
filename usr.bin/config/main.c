@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.101 2024/01/18 04:41:37 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.102 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.101 2024/01/18 04:41:37 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.102 2025/01/07 14:21:11 joe Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -884,7 +884,7 @@ deffilesystem(struct nvlist *fses, struct nvlist *deps)
 		/*
 		 * Implicit attribute definition for filesystem.
 		 */
-		const char *n; 
+		const char *n;
 		n = strtolower(nv->nv_name);
 		refattr(n);
 	}
@@ -1099,7 +1099,7 @@ defoption(const char *fname, struct defoptlist *opts, struct nvlist *deps)
 
 
 /*
- * Define an option for which a value is required. 
+ * Define an option for which a value is required.
  */
 void
 defparam(const char *fname, struct defoptlist *opts, struct nvlist *deps, int obs)
@@ -1206,7 +1206,7 @@ deloption(const char *name, int nowarn)
 void
 addfsoption(const char *name)
 {
-	const char *n; 
+	const char *n;
 
 	/* Make sure this is a defined file system. */
 	if (!OPT_FSOPT(name)) {
@@ -1376,7 +1376,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
     struct nvlist ***next, const char *name, const char *type, int nowarn)
 {
 	struct nvlist *nv;
-	
+
 	if (ht_remove(ht, name)) {
 		/*
 		 * -U command line option removals are always silent
@@ -1610,7 +1610,7 @@ mkident(void)
 
 	if (ident == NULL)
 		return (0);
-	
+
 	if ((fp = fopen("ident", "w")) == NULL) {
 		warn("cannot write ident");
 		return (1);
@@ -1870,7 +1870,7 @@ extract_config(const char *kname, const char *cname, int cfd)
 
 	(void)close(kfd);
 	(void)munmap(base, (size_t)st.st_size);
-		
+
 	return found;
 }
 
@@ -1930,7 +1930,7 @@ devbase_has_any_instance(struct devbase *dev, int unit, int state, int level)
 		return ht_enumerate(deaddevitab, devbase_has_dead_instances,
 		    &dhdi);
 	}
-		
+
 	return 0;
 }
 
@@ -1997,7 +1997,7 @@ addlevelparent(struct devbase *d, struct devbase *parent)
 	for (p = parent; p != NULL; p = p->d_levelparent)
 		if (d == p && d->d_level > 1)
 			return 0;
-	d->d_levelparent = p ? p : &root; 
+	d->d_levelparent = p ? p : &root;
 	d->d_level++;
 	return 1;
 }
@@ -2109,7 +2109,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 
 			} else if (!changed)
 				goto out;
-		} 
+		}
 	}
 
 	for (al = d->d_attrs; al != NULL; al = al->al_next) {

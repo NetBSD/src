@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.11 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.12 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.11 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.12 2025/01/07 14:21:11 joe Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -357,7 +357,7 @@ ht_enumerate2(struct hashtab *ht, ht_callback2 cbfunc2, void *arg)
 	struct hashenthead *hpp;
 	size_t i;
 	int rval = 0;
-	
+
 	for (i = 0; i < ht->ht_size; i++) {
 		hpp = &ht->ht_tab[i];
 		TAILQ_FOREACH(hp, hpp, h_next)
@@ -373,7 +373,7 @@ ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 	struct hashenthead *hpp;
 	size_t i;
 	int rval = 0;
-	
+
 	for (i = 0; i < ht->ht_size; i++) {
 		hpp = &ht->ht_tab[i];
 		TAILQ_FOREACH(hp, hpp, h_next)

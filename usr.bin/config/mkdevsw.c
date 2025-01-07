@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.15 2016/07/16 07:13:26 pgoyette Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.16 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkdevsw.c,v 1.15 2016/07/16 07:13:26 pgoyette Exp $");
+__RCSID("$NetBSD: mkdevsw.c,v 1.16 2025/01/07 14:21:11 joe Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -113,7 +113,7 @@ pentry(FILE *fp, struct hashtab *t, devmajor_t i, char p)
 	dm = ht_lookup(t, intern(mstr));
 
 	if (dm)
-		fprintf(fp, "\t&%s_%cdevsw", dm->dm_name, p); 
+		fprintf(fp, "\t&%s_%cdevsw", dm->dm_name, p);
 	else
 		fputs("\tNULL", fp);
 

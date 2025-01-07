@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.16 2021/10/12 17:14:10 christos Exp $	*/
+/*	$NetBSD: lint.c,v 1.17 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -31,7 +31,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lint.c,v 1.16 2021/10/12 17:14:10 christos Exp $");
+__RCSID("$NetBSD: lint.c,v 1.17 2025/01/07 14:21:11 joe Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -110,7 +110,6 @@ do_emit_fs(const char *name, struct nvlist *nv, void *v)
 
 	return 1;
 }
-	
 
 void
 emit_options(void)

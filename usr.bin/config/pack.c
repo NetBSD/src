@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.11 2024/04/05 00:43:42 riastradh Exp $	*/
+/*	$NetBSD: pack.c,v 1.12 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pack.c,v 1.11 2024/04/05 00:43:42 riastradh Exp $");
+__RCSID("$NetBSD: pack.c,v 1.12 2025/01/07 14:21:11 joe Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -248,7 +248,7 @@ packlocs(void)
 		if ((ps = i->i_pspec) != NULL &&
 		    (l = ps->p_iattr->a_loclen) > 0) {
 			if (Pflag) {
-				o = findvec(i->i_locs, 
+				o = findvec(i->i_locs,
 				    LOCHASH(i->i_locs[l - 1]), l,
 				    samelocs, locators.used);
 				i->i_locoff = o < 0 ?

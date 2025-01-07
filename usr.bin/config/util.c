@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 2024/01/18 04:41:38 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.23 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.22 2024/01/18 04:41:38 thorpej Exp $");
+__RCSID("$NetBSD: util.c,v 1.23 2025/01/07 14:21:11 joe Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -409,7 +409,7 @@ condexpr_create(enum condexpr_types type)
 		cx->cx_or.left = NULL;
 		cx->cx_or.right = NULL;
 		break;
-	
+
 	    default:
 		panic("condexpr_create: invalid expr type %d", (int)type);
 	}

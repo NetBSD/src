@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.36 2024/08/13 10:14:04 uwe Exp $	*/
+/*	$NetBSD: scan.l,v 1.37 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.36 2024/08/13 10:14:04 uwe Exp $");
+__RCSID("$NetBSD: scan.l,v 1.37 2025/01/07 14:21:11 joe Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -124,7 +124,7 @@ SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 %option  noyywrap nounput noinput
 
 PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
-QCHARS	\"(\\.|[^\\"])*\" 
+QCHARS	\"(\\.|[^\\"])*\"
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 FILENAME	({PATH}|{QCHARS})
 RESTOFLINE	[ \t]*(#[^\n]*)?\n

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.29 2015/09/03 13:53:36 uebayasi Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.30 2025/01/07 14:21:11 joe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.29 2015/09/03 13:53:36 uebayasi Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.30 2025/01/07 14:21:11 joe Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -208,7 +208,7 @@ fprintstr(FILE *fp, const char *str)
 	}
 
 	(void)fputc('\t', fp);
-	
+
 	for (; *str; str++) {
 		switch (*str) {
 		case '\\':
@@ -362,7 +362,7 @@ emitlocs(void)
 	const char *tfname;
 	int rval;
 	FILE *tfp;
-	
+
 	tfname = "tmp_locators.h";
 	if ((tfp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
@@ -444,9 +444,9 @@ emittime(void)
 	    "#define CONFIG_MONTH\t%2d\n"
 	    "#define CONFIG_DATE\t%2d\n"
 	    "#define CONFIG_HOUR\t%2d\n"
-	    "#define CONFIG_MINS\t%2d\n"		
+	    "#define CONFIG_MINS\t%2d\n"
 	    "#define CONFIG_SECS\t%2d\n",
-	    buf, (long long)t, 
+	    buf, (long long)t,
 	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec);
 
