@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.27 2021/12/10 20:36:03 andvar Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.28 2025/01/07 18:51:40 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -307,7 +307,7 @@ readreg(uint32_t reg)
 #define JZ_ICSR1	0x10001020	/* raw IRQ line status */
 #define JZ_ICMR1	0x10001024	/* IRQ mask, 1 masks IRQ */
 #define JZ_ICMSR1	0x10001028	/* sets bits in mask register */
-#define JZ_ICMCR1	0x1000102c	/* clears bits in maks register */
+#define JZ_ICMCR1	0x1000102c	/* clears bits in mask register */
 #define JZ_ICPR1	0x10001030	/* line status after masking */
 
 #define JZ_DSR0		0x10001034	/* source for PDMA */
