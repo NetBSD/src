@@ -48,6 +48,78 @@
 #define	NPF_CONF_PATH	"/etc/npf.conf"
 #define	NPF_DB_PATH	"/var/db/npf.db"
 
+#ifndef DEFAULT_QLIMIT
+#define DEFAULT_QLIMIT		50
+#endif
+#ifndef DEFAULT_PRIORITY
+#define DEFAULT_PRIORITY	1
+#endif
+
+struct node_queue_bw {
+	uint32_t	bw_absolute;
+	uint16_t	bw_percent;
+};
+
+struct node_hfsc_sc {
+	struct node_queue_bw	m1;	/* slope of 1st segment; bps */
+	u_int			d;	/* x-projection of m1; msec */
+	struct node_queue_bw	m2;	/* slope of 2nd segment; bps */
+	uint8_t		used;
+};
+
+struct node_hfsc_opts {
+	struct node_hfsc_sc	realtime;
+	struct node_hfsc_sc	linkshare;
+	struct node_hfsc_sc	upperlimit;
+	int			flags;
+};
+
+struct node_queue_opt {
+	int			 qtype;
+	union {
+		struct npf_cbq_opts	cbq_opts;
+		struct npf_priq_opts	priq_opts;
+		struct node_hfsc_opts	hfsc_opts;
+	}			 data;
+};
+
+struct queue_opts {
+	int			marker;
+/* use flags for which option is set*/
+#define QOM_BWSPEC	0x01
+#define QOM_SCHEDULER	0x02
+#define QOM_PRIORITY	0x04
+#define QOM_TBRSIZE	0x08
+#define QOM_QLIMIT	0x10
+	struct node_queue_bw	queue_bwspec;
+	struct node_queue_opt	scheduler;
+	int			priority;
+	int			tbrsize;
+	int			qlimit;
+};
+
+struct node_queue {
+	char			 queue[NPF_QNAME_SIZE];
+	char			 parent[NPF_QNAME_SIZE];
+	char			 ifname[IFNAMSIZ];
+	int			 scheduler;
+	struct node_queue	*next;
+	struct node_queue	*tail;
+};
+
+struct node_qassign {
+	char		*qname;
+	char		*pqname;
+};
+
+/*
+ * generalized service curve used for admission control
+ */
+struct segment {
+	LIST_ENTRY(segment)	_next;
+	double			x, y, d, m;
+};
+
 typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
 	npf_addr_t	fam_addr;
