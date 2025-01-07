@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.3 2011/02/02 02:20:26 rmind Exp $ */
+/*	$NetBSD: filter.c,v 1.4 2025/01/07 21:15:40 joe Exp $ */
 /*	$OpenBSD: filter.c,v 1.6 2007/08/01 09:31:41 henning Exp $ */
 
 /*
@@ -185,7 +185,7 @@ do_rollback(void)
 
 	if (ioctl(dev, DIOCXROLLBACK, &pft) == -1)
 		return (-1);
-	
+
 	return (0);
 }
 
@@ -202,7 +202,7 @@ init_filter(char *opt_qname, char *opt_tagname, int opt_verbose)
 	else if (opt_verbose == 2)
 		rule_log = PF_LOG_ALL;
 
-	dev = open("/dev/pf", O_RDWR);	
+	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1)
 		err(1, "/dev/pf");
 	if (ioctl(dev, DIOCGETSTATUS, &status) == -1)
@@ -248,7 +248,7 @@ prepare_commit(u_int32_t id)
 
 	return (0);
 }
-	
+
 int
 prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
     struct sockaddr *dst, u_int16_t d_port)
@@ -356,7 +356,7 @@ server_lookup(struct sockaddr *client, struct sockaddr *proxy,
 	if (client->sa_family == AF_INET)
 		return (server_lookup4(satosin(client), satosin(proxy),
 		    satosin(server)));
-	
+
 	if (client->sa_family == AF_INET6)
 		return (server_lookup6(satosin6(client), satosin6(proxy),
 		    satosin6(server)));
@@ -379,7 +379,7 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	memcpy(&pnl.daddr.v4, &proxy->sin_addr.s_addr, sizeof pnl.daddr.v4);
 	pnl.sport = client->sin_port;
 	pnl.dport = proxy->sin_port;
-	
+
 	if (ioctl(dev, DIOCNATLOOK, &pnl) == -1)
 		return (-1);
 
@@ -389,7 +389,7 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	memcpy(&server->sin_addr.s_addr, &pnl.rdaddr.v4,
 	    sizeof server->sin_addr.s_addr);
 	server->sin_port = pnl.rdport;
-		
+
 	return (0);
 }
 
@@ -407,7 +407,7 @@ server_lookup6(struct sockaddr_in6 *client, struct sockaddr_in6 *proxy,
 	memcpy(&pnl.daddr.v6, &proxy->sin6_addr.s6_addr, sizeof pnl.daddr.v6);
 	pnl.sport = client->sin6_port;
 	pnl.dport = proxy->sin6_port;
-	
+
 	if (ioctl(dev, DIOCNATLOOK, &pnl) == -1)
 		return (-1);
 
