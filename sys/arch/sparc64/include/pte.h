@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.28 2016/11/04 05:41:01 macallan Exp $ */
+/*	$NetBSD: pte.h,v 1.29 2025/01/07 18:51:05 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -91,7 +91,7 @@
  *  a real pain to do this in C.
  */
 #if 0
-/* We don't use bitfeilds anyway. */
+/* We don't use bitfields anyway. */
 struct sun4u_tag_fields {
 	uint64_t tag_g:1,	/* global flag */
 		tag_reserved:2,	/* reserved for future use */
