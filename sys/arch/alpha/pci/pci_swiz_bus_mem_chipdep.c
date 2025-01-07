@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.49 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.50 2025/01/07 20:14:52 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.49 2023/12/04 00:32:10 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.50 2025/01/07 20:14:52 andvar Exp $");
 
 #include <sys/vmem_impl.h>
 
@@ -669,7 +669,7 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
-	int prefectchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
+	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 
 	/*
@@ -693,17 +693,17 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 	mustd = 0;
 #endif
 
-	/* No prefectchable space without dense. */
+	/* No prefetchable space without dense. */
 	if (mustd == 0)
-		prefectchable = 0;
+		prefetchable = 0;
 
 	/*
 	 * We must have dense space to map memory linearly.
 	 */
-	if (linear && !prefectchable)
+	if (linear && !prefetchable)
 		return (EOPNOTSUPP);
 
-	musts = (prefectchable == 0);
+	musts = (prefetchable == 0);
 	if (!__C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, NULL)) {
 		/*
 		 * This address isn't mapped into sparse space; don't
@@ -757,7 +757,7 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 		printf("%s: window[1]=0x%lx-0x%lx\n", __S(__C(CHIP,_mem_map)),
 		    CHIP_D_MEM_W1_BUS_START(v), CHIP_D_MEM_W1_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx prefectchable",
+		panic("%s: don't know how to map %lx prefetchable",
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
 #endif /* CHIP_D_MEM_W1_SYS_START */
@@ -776,11 +776,11 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize,
 		printf("%s: window[3]=0x%lx-0x%lx\n", __S(__C(CHIP,_mem_map)),
 		    CHIP_S_MEM_W3_BUS_START(v), CHIP_S_MEM_W3_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx non-prefectchable",
+		panic("%s: don't know how to map %lx non-prefetchable",
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
 
-	if (prefectchable)
+	if (prefetchable)
 		*memhp = dh;
 	else
 		*memhp = sh;
