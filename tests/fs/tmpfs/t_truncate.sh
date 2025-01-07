@@ -1,4 +1,4 @@
-# $NetBSD: t_truncate.sh,v 1.4 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_truncate.sh,v 1.5 2025/01/07 17:36:45 andvar Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,7 @@ basic_body() {
 
 	echo "Creating big file"
 	jot 10000 >a || atf_fail "Failed to create big file"
-	echo "Trunctaing the file to a smaller size"
+	echo "Truncating the file to a smaller size"
 	echo foo >a || atf_fail "Failed to truncate file to a smaller size"
 	[ $(md5 a | cut -d ' ' -f 4) = d3b07384d113edec49eaa6238ad5ff00 ] || \
 	    echo "Truncated file is incorrect"
