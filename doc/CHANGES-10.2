@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.3 2025/01/02 19:58:20 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.4 2025/01/07 16:14:28 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -53,4 +53,12 @@ sys/conf/copyright				1.23
 
 	Welcome to 2025!
 	[jnemeth, ticket #1036]
+
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.228
+sys/ufs/ffs/ffs_vfsops.c			1.383,1.384
+sys/ufs/ffs/ffs_wapbl.c				1.50
+sys/ufs/lfs/lfs_vfsops.c			1.383
+
+	ffs: PR 58837: missing locking around fs_fmod/time.
+	[hannken, ticket #1037]
 
