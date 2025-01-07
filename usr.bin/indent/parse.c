@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.83 2025/01/07 02:55:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.84 2025/01/07 03:14:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.83 2025/01/07 02:55:30 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.84 2025/01/07 03:14:23 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -156,9 +156,9 @@ parse(parser_symbol psym)
 	if (psym != psym_else) {
 		while (ps.psyms.sym[ps.psyms.len - 1] == psym_if_expr_stmt) {
 			ps.psyms.sym[ps.psyms.len - 1] = psym_stmt;
-			ps.ind_level = ps.ind_level_follow
-			    = ps.psyms.ind_level[ps.psyms.len - 2];
 			psyms_reduce();
+			ps.ind_level = ps.ind_level_follow
+			    = ps.psyms.ind_level[ps.psyms.len - 1];
 		}
 	}
 

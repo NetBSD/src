@@ -1,4 +1,4 @@
-/* $NetBSD: psym_for_exprs.c,v 1.6 2023/05/15 08:56:39 rillig Exp $ */
+/* $NetBSD: psym_for_exprs.c,v 1.7 2025/01/07 03:14:24 rillig Exp $ */
 
 /*
  * Tests for the parser state psym_for_exprs, which represents the state after
@@ -27,3 +27,26 @@ for_loops(void)
 //indent end
 
 //indent run-equals-input -ldi0
+
+
+//indent input
+{
+for (ever1)
+for (ever2)
+for (ever3)
+return;
+
+stmt;
+}
+//indent end
+
+//indent run
+{
+	for (ever1)
+		for (ever2)
+			for (ever3)
+				return;
+
+	stmt;
+}
+//indent end

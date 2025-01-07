@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt.c,v 1.5 2025/01/07 03:14:24 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt, which represents the state
@@ -25,3 +25,32 @@ function(void)
 //indent end
 
 //indent run-equals-input
+
+
+//indent input
+{
+for (ever1)
+for (ever2)
+for (ever3)
+if (cond1)
+if (cond2)
+if (cond3)
+return;
+
+stmt;
+}
+//indent end
+
+//indent run
+{
+	for (ever1)
+		for (ever2)
+			for (ever3)
+				if (cond1)
+					if (cond2)
+						if (cond3)
+							return;
+
+	stmt;
+}
+//indent end
