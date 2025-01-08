@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.191 2024/04/12 05:04:02 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.192 2025/01/08 08:24:07 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.191 2024/04/12 05:04:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.192 2025/01/08 08:24:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1616,7 +1616,7 @@ ccdgetdisklabel(dev_t dev)
 		 *
 		 * This is necessary since total size of ccd may vary
 		 * when an interleave is changed even though exactly
-		 * same componets are used, and old disklabel may used
+		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
 		if (lp->d_secperunit < UINT32_MAX ?
