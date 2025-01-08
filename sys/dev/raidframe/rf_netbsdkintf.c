@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.417 2023/10/09 21:55:48 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.418 2025/01/08 08:25:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.417 2023/10/09 21:55:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.418 2025/01/08 08:25:36 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -540,7 +540,7 @@ rf_rescan(void)
  * 32802 + 64 (RF_PROTECTED_SECTORS) + 8226 = 41092
  * 
  * In order to find the boot wedge, we must iterate on each component, 
- * find its offset from disk beginning, abd look for the boot wedge with 
+ * find its offset from disk beginning, and look for the boot wedge with 
  * startblck adjusted.
  */
 static device_t
@@ -880,7 +880,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 
 	/*
 	   At this point we have possibly selected a live component.
-	   If we didn't find a live ocmponent, we now check to see
+	   If we didn't find a live component, we now check to see
 	   if there is a relevant spared component.
 	*/
 
