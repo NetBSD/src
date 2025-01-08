@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.28 2025/01/08 18:31:15 tsutsui Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.29 2025/01/08 18:36:08 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.28 2025/01/08 18:31:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.29 2025/01/08 18:36:08 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -183,7 +183,7 @@ CFATTACH_DECL_NEW(qt, sizeof(struct qt_softc),
  * Maximum packet size needs to include 4 bytes for the CRC
  * on received packets.
  */
-#define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + 4)
+#define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + ETHER_CRC_LEN)
 #define	MINPACKETSIZE 64
 
 #define QT_WCSR(csr, val) \
@@ -623,7 +623,7 @@ qtrint(struct qt_softc *sc)
 			if_statinc(&sc->is_if, if_ierrors);
 			goto rnext;
 		}
-		len = (rp->rmd1 & RMD1_MCNT) - 4;	/* -4 for CRC */
+		len = (rp->rmd1 & RMD1_MCNT) - ETHER_CRC_LEN;
 
 		if ((rp->rmd0 & RMD0_ERR3) || (rp->rmd2 & RMD2_ERR4)) {
 #ifdef QTDEBUG
