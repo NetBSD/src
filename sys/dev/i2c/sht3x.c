@@ -1,5 +1,5 @@
 
-/*	$NetBSD: sht3x.c,v 1.8 2024/11/07 20:06:21 brad Exp $	*/
+/*	$NetBSD: sht3x.c,v 1.9 2025/01/08 08:33:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.8 2024/11/07 20:06:21 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.9 2025/01/08 08:33:34 andvar Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -546,7 +546,7 @@ sht3x_take_periodic_measurement(void *aux)
 		    rawbuf, sizeof(rawbuf));
 		/*
 		 * EIO is actually expected if the poll interval is faster
-		 * than the rate that the sensor is set to.  Unfortunally,
+		 * than the rate that the sensor is set to.  Unfortunately,
 		 * this will also mess with the ability to detect an actual
 		 * problem with the sensor in periodic mode, so we do the best
 		 * we can here.
@@ -993,7 +993,7 @@ sht3x_sysctl_init(struct sht3x_sc *sc)
 
 	if ((error = sysctl_createv(&sc->sc_sht3xlog, 0, NULL, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_STRING, "rates",
-	    SYSCTL_DESCR("Valid peridoic rates"), 0, 0,
+	    SYSCTL_DESCR("Valid periodic rates"), 0, 0,
 	    __UNCONST(sht3x_rate_names),
 	    sizeof(sht3x_rate_names) + 1,
 	    CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
