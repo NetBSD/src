@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.26 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.27 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.26 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.27 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -347,7 +347,7 @@ blue_detach(blue_queue_t *rqp)
 	free(rqp->rq_q, M_DEVBUF);
 	free(rqp->rq_blue, M_DEVBUF);
 	free(rqp, M_DEVBUF);
-	return (error);
+	return error;
 }
 
 /*
@@ -376,7 +376,7 @@ blue_init(blue_t *rp, int flags, int pkttime, int blue_max_pmark,
 	}
 
 	microtime(&rp->blue_last);
-	return (0);
+	return 0;
 }
 
 /*
@@ -492,10 +492,10 @@ blue_addq(blue_t *rp, class_queue_t *q, struct mbuf *m,
 		rp->blue_stats.drop_bytes += m->m_pkthdr.len;
 #endif
 		m_freem(m);
-		return (-1);
+		return -1;
 	}
 	/* successfully queued */
-	return (0);
+	return 0;
 }
 
 /*
@@ -507,7 +507,7 @@ drop_early(blue_t *rp)
 {
 	if ((cprng_fast32() % rp->blue_max_pmark) < rp->blue_pmark) {
 		/* drop or mark */
-		return (1);
+		return 1;
 	}
 	/* no drop/mark */
 	return (0);
@@ -524,7 +524,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 
 	if (pktattr == NULL ||
 	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
-		return (0);
+		return 0;
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
@@ -534,7 +534,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 	if (m0 == NULL) {
 		/* ick, pattr_hdr is stale */
 		pktattr->pattr_af = AF_UNSPEC;
-		return (0);
+		return 0;
 	}
 
 	switch (pktattr->pattr_af) {
@@ -566,7 +566,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 			sum = (sum >> 16) + (sum & 0xffff);
 			sum += (sum >> 16);  /* add carry */
 			ip->ip_sum = htons(~sum & 0xffff);
-			return (1);
+			return 1;
 		}
 		break;
 #ifdef INET6
@@ -596,7 +596,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 	}
 
 	/* not marked */
-	return (0);
+	return 0;
 }
 
 /*
@@ -640,7 +640,7 @@ blue_getq(blue_t *rp, class_queue_t *q)
 	rp->blue_stats.xmit_packets++;
 	rp->blue_stats.xmit_bytes += m->m_pkthdr.len;
 #endif
-	return (m);
+	return m;
 }
 
 static int
@@ -655,7 +655,7 @@ blue_request(struct ifaltq *ifq, int req, void *arg)
 			ifq->ifq_len = 0;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 

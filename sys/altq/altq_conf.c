@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.23 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.23 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -188,7 +188,7 @@ altqopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int unit = minor(dev);
 
 	if (unit == 0)
-		return (0);
+		return 0;
 	if (unit < naltqsw)
 		return (*altqsw[unit].d_open)(dev, flag, fmt, l);
 
@@ -201,7 +201,7 @@ altqclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	int unit = minor(dev);
 
 	if (unit == 0)
-		return (0);
+		return 0;
 	if (unit < naltqsw)
 		return (*altqsw[unit].d_close)(dev, flag, fmt, l);
 
@@ -228,7 +228,7 @@ altqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag, struct lwp *l)
 			    l->l_cred, KAUTH_NETWORK_ALTQ,
 			    KAUTH_REQ_NETWORK_ALTQ_CONF, NULL, NULL,
 			    NULL)) != 0)
-				return (error);
+				return error;
 			break;
 		}
 
@@ -238,19 +238,19 @@ altqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag, struct lwp *l)
 			if ((ifp = ifunit(typereq->ifname)) == NULL)
 				return (EINVAL);
 			typereq->arg = (u_long)ifp->if_snd.altq_type;
-			return (0);
+			return 0;
 		case ALTQTBRSET:
 			tbrreq = (struct tbrreq *)addr;
 			if ((ifp = ifunit(tbrreq->ifname)) == NULL)
-				return (EINVAL);
+				return EINVAL;
 			return tbr_set(&ifp->if_snd, &tbrreq->tb_prof);
 		case ALTQTBRGET:
 			tbrreq = (struct tbrreq *)addr;
 			if ((ifp = ifunit(tbrreq->ifname)) == NULL)
-				return (EINVAL);
+				return EINVAL;
 			return tbr_get(&ifp->if_snd, &tbrreq->tb_prof);
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 	}
 	if (unit < naltqsw)
@@ -324,13 +324,13 @@ altq_module_register(struct altq_module_data *mdata)
 	int type = mdata->type;
 
 	if (type < 0 || type >= ALTQT_MAX)
-		return (EINVAL);
+		return EINVAL;
 #if (__FreeBSD_version < 502103)
 	if (altqsw[type].d_open != noopen)
 #else
 	if (altqsw[type].d_open != NULL)
 #endif
-		return (EBUSY);
+		return EBUSY;
 	altqsw[type] = *mdata->altqsw;	/* set discipline functions */
 	altq_modules[type] = mdata;	/* save module data pointer */
 #if (__FreeBSD_version < 502103)
@@ -340,7 +340,7 @@ altq_module_register(struct altq_module_data *mdata)
 	altqsw[type].dev = make_dev(&altq_cdevsw, type, UID_ROOT, GID_WHEEL,
 	    0644, "altq/%s", altqsw[type].d_name);
 #endif
-	return (0);
+	return 0;
 }
 
 static int
@@ -349,11 +349,11 @@ altq_module_deregister(struct altq_module_data *mdata)
 	int type = mdata->type;
 
 	if (type < 0 || type >= ALTQT_MAX)
-		return (EINVAL);
+		return EINVAL;
 	if (mdata != altq_modules[type])
-		return (EINVAL);
+		return EINVAL;
 	if (altq_modules[type]->ref > 0)
-		return (EBUSY);
+		return EBUSY;
 #if (__FreeBSD_version < 502103)
 	destroy_dev(makedev(CDEV_MAJOR, type));
 #else
@@ -361,7 +361,7 @@ altq_module_deregister(struct altq_module_data *mdata)
 #endif
 	altqsw[type] = noqdisc;
 	altq_modules[type] = NULL;
-	return (0);
+	return 0;
 }
 
 int
@@ -384,7 +384,7 @@ altq_module_handler(module_t mod, int cmd, void *arg)
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 #endif  /* ALTQ_KLD */

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.25 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.26 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.25 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.26 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -211,7 +211,7 @@ rio_alloc(int weight, struct redparams *params, int flags, int pkttime)
 
 	rp = malloc(sizeof(rio_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
-		return (NULL);
+		return NULL;
 
 	rp->rio_flags = flags;
 	if (pkttime == 0)
@@ -288,7 +288,7 @@ rio_alloc(int weight, struct redparams *params, int flags, int pkttime)
 		microtime(&prec->last);
 	}
 
-	return (rp);
+	return rp;
 }
 
 void
@@ -321,7 +321,7 @@ dscp2index(u_int8_t dscp)
 	int	dpindex = dscp & AF_DROPPRECMASK;
 
 	if (dpindex == 0)
-		return (0);
+		return 0;
 	return ((dpindex >> 3) - 1);
 }
 #endif
@@ -416,7 +416,7 @@ rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
 		PKTCNTR_ADD(&rp->q_stats[dpindex].drop_cnt, m_pktlen(m));
 #endif
 		m_freem(m);
-		return (-1);
+		return -1;
 	}
 
 	for (i = dpindex; i < RIO_NDROPPREC; i++)
@@ -436,7 +436,7 @@ rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
 #ifdef RIO_STATS
 	PKTCNTR_ADD(&rp->q_stats[dpindex].xmit_cnt, m_pktlen(m));
 #endif
-	return (0);
+	return 0;
 }
 
 struct mbuf *
@@ -457,7 +457,7 @@ rio_getq(rio_t *rp, class_queue_t *q)
 			}
 		}
 	}
-	return (m);
+	return m;
 }
 
 #ifdef ALTQ3_COMPAT
@@ -503,7 +503,7 @@ rioioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_RIO, NULL,
 		    NULL, NULL)) != 0)
-			return (error);
+			return error;
 		break;
 	}
 
@@ -700,7 +700,7 @@ rio_detach(rio_queue_t *rqp)
 		altq_disable(rqp->rq_ifq);
 
 	if ((error = altq_detach(rqp->rq_ifq)))
-		return (error);
+		return error;
 
 	if (rio_list == rqp)
 		rio_list = rqp->rq_next;
@@ -717,7 +717,7 @@ rio_detach(rio_queue_t *rqp)
 	rio_destroy(rqp->rq_rio);
 	free(rqp->rq_q, M_DEVBUF);
 	free(rqp, M_DEVBUF);
-	return (error);
+	return error;
 }
 
 /*
@@ -735,7 +735,7 @@ rio_request(struct ifaltq *ifq, int req, void *arg)
 			ifq->ifq_len = 0;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 /*

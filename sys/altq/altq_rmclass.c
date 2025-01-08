@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.31 2024/07/01 02:18:44 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.32 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.31 2024/07/01 02:18:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.32 2025/01/08 13:00:04 joe Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -205,13 +205,13 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
 	int		 s;
 
 	if (pri >= RM_MAXPRIO)
-		return (NULL);
+		return NULL;
 #ifndef ALTQ_RED
 	if (flags & RMCF_RED) {
 #ifdef ALTQ_DEBUG
 		printf("rmc_newclass: RED not configured for CBQ!\n");
 #endif
-		return (NULL);
+		return NULL;
 	}
 #endif
 #ifndef ALTQ_RIO
@@ -219,19 +219,19 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
 #ifdef ALTQ_DEBUG
 		printf("rmc_newclass: RIO not configured for CBQ!\n");
 #endif
-		return (NULL);
+		return NULL;
 	}
 #endif
 
 	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
-		return (NULL);
+		return NULL;
 	CALLOUT_INIT(&cl->callout_);
 
 	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->q_ == NULL) {
 		free(cl, M_DEVBUF);
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -344,7 +344,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
 		rmc_wrr_set_weights(ifd);
 	}
 	splx(s);
-	return (cl);
+	return cl;
 }
 
 int
@@ -393,7 +393,7 @@ rmc_modclass(struct rm_class *cl, uint64_t psecPerByte, int maxq, u_int maxidle,
 		rmc_wrr_set_weights(ifd);
 	}
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -449,7 +449,7 @@ rmc_get_weight(struct rm_ifdat *ifd, int pri)
 	if ((pri >= 0) && (pri < RM_MAXPRIO))
 		return (ifd->M_[pri]);
 	else
-		return (0);
+		return 0;
 }
 
 /*
@@ -677,7 +677,7 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, uint64_t psecPerByte,
 	if (mtu < 1) {
 		printf("altq: %s: invalid MTU (interface not initialized?)\n",
 		    ifq->altq_ifp->if_xname);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	(void)memset((char *)ifd, 0, sizeof (*ifd));
@@ -728,11 +728,11 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, uint64_t psecPerByte,
 				       maxidle, minidle, offtime,
 				       0, 0)) == NULL) {
 		printf("rmc_init: root class not allocated\n");
-		return (ENOMEM);
+		return ENOMEM;
 	}
 	ifd->root_->depth_ = 0;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -793,7 +793,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 
 	if (_rmc_addq(cl, m) < 0)
 		/* failed */
-		return (-1);
+		return -1;
 
 	if (is_empty) {
 		CBQTRACE(rmc_queue_packet, 'ytpe', cl->stats_.handle);
@@ -803,9 +803,9 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 	if (qlen(cl->q_) > qlimit(cl->q_)) {
 		/* note: qlimit can be set to 0 or 1 */
 		rmc_drop_action(cl);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -846,25 +846,25 @@ rmc_satisfied(struct rm_class *cl, struct timespec *now)
 	rm_class_t	*p;
 
 	if (cl == NULL)
-		return (1);
+		return 1;
 	if (TS_LT(now, &cl->undertime_))
-		return (1);
+		return 1;
 	if (cl->depth_ == 0) {
 		if (!cl->sleeping_ && (qlen(cl->q_) > cl->qthresh_))
-			return (0);
+			return 0;
 		else
-			return (1);
+			return 1;
 	}
 	if (cl->children_ != NULL) {
 		p = cl->children_;
 		while (p != NULL) {
 			if (!rmc_satisfied(p, now))
-				return (0);
+				return 0;
 			p = p->next_;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -887,7 +887,7 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 	 * underlimit.  Otherwise, check to see if the class is underlimit.
 	 */
 	if (cl->parent_ == NULL)
-		return (1);
+		return 1;
 
 	if (!TS_LT(now, &cl->undertime_)) {
 		/* Fast path: the given class is allowed to send packets */
@@ -896,7 +896,7 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 			cl->sleeping_ = 0;
 			cl->undertime_.tv_sec = 0;
 		}
-		return (1);
+		return 1;
 	}
 
 	top = NULL;
@@ -905,13 +905,13 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 		    (cl->depth_ > ifd->cutoff_)) {
 			/* No need to call the delay action */
 			if (sleeping)
-				return (0);
+				return 0;
 #ifdef ADJUST_CUTOFF
 			if (cl != NULL)
 				/* cutoff is taking effect, just
 				   return false without calling
 				   the delay action. */
-				return (0);
+				return 0;
 #endif
 #ifdef BORROW_OFFTIME
 			/*
@@ -932,14 +932,14 @@ rmc_under_limit(struct rm_class *cl, struct timespec *now)
 			p->overtime_ = *now;
 			(p->overlimit)(p, NULL);
 #endif
-			return (0);
+			return 0;
 		}
 		top = cl;
 	} while (cl->undertime_.tv_sec && TS_LT(now, &cl->undertime_));
 
 	if (cl != p)
 		ifd->borrowed_[ifd->qi_] = cl;
-	return (1);
+	return 1;
 }
 
 /*
@@ -1061,7 +1061,7 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 	CBQTRACE(_rmc_wrr_dequeue_next, 'otsr', ifd->cutoff_);
 
 	if (!ifd->efficient_ || first == NULL)
-		return (NULL);
+		return NULL;
 
 	cl = first;
 	cpri = cl->pri_;
@@ -1106,7 +1106,7 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 		m = _rmc_pollq(cl);
 		ifd->pollcache_ = cl;
 	}
-	return (m);
+	return m;
 }
 
 /*
@@ -1176,7 +1176,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 	 */
 	reset_cutoff(ifd);
 	if (!ifd->efficient_ || first == NULL)
-		return (NULL);
+		return NULL;
 
 	cl = first;
 	cpri = cl->pri_;
@@ -1212,7 +1212,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 		m = _rmc_pollq(cl);
 		ifd->pollcache_ = cl;
 	}
-	return (m);
+	return m;
 }
 
 /*
@@ -1233,7 +1233,7 @@ mbuf_t *
 rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
 {
 	if (ifd->queued_ >= ifd->maxqueued_)
-		return (NULL);
+		return NULL;
 	else if (ifd->wrr_)
 		return (_rmc_wrr_dequeue_next(ifd, mode));
 	else
@@ -1470,7 +1470,7 @@ tvhzto(struct timeval *tv)
 	getmicrotime(&t2);
 	t2.tv_sec = tv->tv_sec - t2.tv_sec;
 	t2.tv_usec = tv->tv_usec - t2.tv_usec;
-	return (tvtohz(&t2));
+	return tvtohz(&t2);
 }
 #endif /* __FreeBSD_version > 300000 */
 
@@ -1624,7 +1624,7 @@ _rmc_addq(rm_class_t *cl, mbuf_t *m)
 		write_dsfield(m, cl->pktattr_, 0);
 
 	_addq(cl->q_, m);
-	return (0);
+	return 0;
 }
 
 /* note: _rmc_dropq is not called for red */
@@ -1743,7 +1743,7 @@ _getq(class_queue_t *q)
 	mbuf_t	*m, *m0;
 
 	if ((m = qtail(q)) == NULL)
-		return (NULL);
+		return NULL;
 	if ((m0 = m->m_nextpkt) != m)
 		m->m_nextpkt = m0->m_nextpkt;
 	else {
@@ -1752,7 +1752,7 @@ _getq(class_queue_t *q)
 	}
 	qlen(q)--;
 	m0->m_nextpkt = NULL;
-	return (m0);
+	return m0;
 }
 
 /* drop a packet at the tail of the queue */
@@ -1775,7 +1775,7 @@ _getq_tail(class_queue_t *q)
 		qtail(q) = prev;
 	qlen(q)--;
 	m->m_nextpkt = NULL;
-	return (m);
+	return m;
 }
 
 /* randomly select a packet in the queue */
@@ -1804,7 +1804,7 @@ _getq_random(class_queue_t *q)
 	}
 	qlen(q)--;
 	m->m_nextpkt = NULL;
-	return (m);
+	return m;
 }
 
 void

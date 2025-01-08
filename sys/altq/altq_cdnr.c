@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.23 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.23 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -142,7 +142,7 @@ altq_cdnr_input(struct mbuf *m, int af)
 	ifp = m_get_rcvif_NOMPSAFE(m);
 	if (!ALTQ_IS_CNDTNING(&ifp->if_snd))
 		/* traffic conditioner is not enabled on this interface */
-		return (1);
+		return 1;
 
 	top = ifp->if_snd.altq_cdnr;
 
@@ -172,12 +172,12 @@ altq_cdnr_input(struct mbuf *m, int af)
 
 		switch (tca->tca_code) {
 		case TCACODE_PASS:
-			return (1);
+			return 1;
 		case TCACODE_DROP:
 			m_freem(m);
-			return (0);
+			return 0;
 		case TCACODE_RETURN:
-			return (0);
+			return 0;
 		case TCACODE_MARK:
 #ifdef INET6
 			if (af == AF_INET6) {
@@ -192,14 +192,14 @@ altq_cdnr_input(struct mbuf *m, int af)
 #endif
 				ip->ip_tos = tca->tca_dscp |
 					(ip->ip_tos & DSCP_CUMASK);
-			return (1);
+			return 1;
 		case TCACODE_NEXT:
 			cb = tca->tca_next;
 			tca = (*cb->cb_input)(cb, &pktinfo);
 			break;
 		case TCACODE_NONE:
 		default:
-			return (1);
+			return 1;
 		}
 	}
 }
@@ -213,8 +213,8 @@ tcb_lookup(char *ifname)
 	if ((ifp = ifunit(ifname)) != NULL)
 		LIST_FOREACH(top, &tcb_list, tc_next)
 			if (top->tc_ifq->altq_ifp == ifp)
-				return (top);
-	return (NULL);
+				return top;
+	return NULL;
 }
 
 static struct cdnr_block *
@@ -224,11 +224,11 @@ cdnr_handle2cb(u_long handle)
 
 	cb = (struct cdnr_block *)handle;
 	if (handle != ALIGN(cb))
-		return (NULL);
+		return NULL;
 
 	if (cb == NULL || cb->cb_handle != handle)
-		return (NULL);
-	return (cb);
+		return NULL;
+	return cb;
 }
 
 static u_long
@@ -261,12 +261,12 @@ cdnr_cballoc(struct top_cdnr *top, int type, struct tc_action *(*input_func)(
 		size = sizeof(struct tswtcm);
 		break;
 	default:
-		return (NULL);
+		return NULL;
 	}
 
 	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cb == NULL)
-		return (NULL);
+		return NULL;
 
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -337,7 +337,7 @@ generic_element_destroy(struct cdnr_block *cb)
 	default:
 		error = EINVAL;
 	}
-	return (error);
+	return error;
 }
 
 static int
@@ -353,7 +353,7 @@ tca_verify_action(struct tc_action *utca)
 	case TCACODE_HANDLE:
 		/* verify handle value */
 		if (cdnr_handle2cb(utca->tca_handle) == NULL)
-			return (-1);
+			return -1;
 		break;
 
 	case TCACODE_NONE:
@@ -361,9 +361,9 @@ tca_verify_action(struct tc_action *utca)
 	case TCACODE_NEXT:
 	default:
 		/* should not be passed from a user */
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 static void
@@ -410,7 +410,7 @@ top_create(struct ifaltq *ifq)
 	struct top_cdnr *top;
 
 	if ((top = cdnr_cballoc(NULL, TCETYPE_TOP, NULL)) == NULL)
-		return (NULL);
+		return NULL;
 
 	top->tc_ifq = ifq;
 	/* set default action for the top level conditioner */
@@ -420,7 +420,7 @@ top_create(struct ifaltq *ifq)
 
 	ifq->altq_cdnr = top;
 
-	return (top);
+	return top;
 }
 
 static int
@@ -455,7 +455,7 @@ top_destroy(struct top_cdnr *top)
 			altq_input = NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -467,26 +467,26 @@ element_create(struct top_cdnr *top, struct tc_action *action)
 	struct cdnr_block *cb;
 
 	if (tca_verify_action(action) < 0)
-		return (NULL);
+		return NULL;
 
 	if ((cb = cdnr_cballoc(top, TCETYPE_ELEMENT, NULL)) == NULL)
-		return (NULL);
+		return NULL;
 
 	tca_import_action(&cb->cb_action, action);
 
-	return (cb);
+	return cb;
 }
 
 static int
 element_destroy(struct cdnr_block *cb)
 {
 	if (cb->cb_ref > 0)
-		return (EBUSY);
+		return EBUSY;
 
 	tca_invalidate_action(&cb->cb_action);
 
 	cdnr_cbdestroy(cb);
-	return (0);
+	return 0;
 }
 
 /*
@@ -524,31 +524,31 @@ tbm_create(struct top_cdnr *top, struct tb_profile *profile,
 
 	if (tca_verify_action(in_action) < 0
 	    || tca_verify_action(out_action) < 0)
-		return (NULL);
+		return NULL;
 
 	if ((tbm = cdnr_cballoc(top, TCETYPE_TBMETER,
 				tbm_input)) == NULL)
-		return (NULL);
+		return NULL;
 
 	tb_import_profile(&tbm->tb, profile);
 
 	tca_import_action(&tbm->in_action, in_action);
 	tca_import_action(&tbm->out_action, out_action);
 
-	return (tbm);
+	return tbm;
 }
 
 static int
 tbm_destroy(struct tbmeter *tbm)
 {
 	if (tbm->cdnrblk.cb_ref > 0)
-		return (EBUSY);
+		return EBUSY;
 
 	tca_invalidate_action(&tbm->in_action);
 	tca_invalidate_action(&tbm->out_action);
 
 	cdnr_cbdestroy(tbm);
-	return (0);
+	return 0;
 }
 
 static struct tc_action *
@@ -598,11 +598,11 @@ trtcm_create(struct top_cdnr *top, struct tb_profile *cmtd_profile,
 	if (tca_verify_action(green_action) < 0
 	    || tca_verify_action(yellow_action) < 0
 	    || tca_verify_action(red_action) < 0)
-		return (NULL);
+		return NULL;
 
 	if ((tcm = cdnr_cballoc(top, TCETYPE_TRTCM,
 				trtcm_input)) == NULL)
-		return (NULL);
+		return NULL;
 
 	tb_import_profile(&tcm->cmtd_tb, cmtd_profile);
 	tb_import_profile(&tcm->peak_tb, peak_profile);
@@ -627,21 +627,21 @@ trtcm_create(struct top_cdnr *top, struct tb_profile *cmtd_profile,
 
 	tcm->coloraware = coloraware;
 
-	return (tcm);
+	return tcm;
 }
 
 static int
 trtcm_destroy(struct trtcm *tcm)
 {
 	if (tcm->cdnrblk.cb_ref > 0)
-		return (EBUSY);
+		return EBUSY;
 
 	tca_invalidate_action(&tcm->green_action);
 	tca_invalidate_action(&tcm->yellow_action);
 	tca_invalidate_action(&tcm->red_action);
 
 	cdnr_cbdestroy(tcm);
-	return (0);
+	return 0;
 }
 
 static struct tc_action *
@@ -720,11 +720,11 @@ tswtcm_create(struct top_cdnr *top, u_int32_t cmtd_rate, u_int32_t peak_rate,
 	if (tca_verify_action(green_action) < 0
 	    || tca_verify_action(yellow_action) < 0
 	    || tca_verify_action(red_action) < 0)
-		return (NULL);
+		return NULL;
 
 	if ((tsw = cdnr_cballoc(top, TCETYPE_TSWTCM,
 				tswtcm_input)) == NULL)
-		return (NULL);
+		return NULL;
 
 	tca_import_action(&tsw->green_action, green_action);
 	tca_import_action(&tsw->yellow_action, yellow_action);
@@ -752,21 +752,21 @@ tswtcm_create(struct top_cdnr *top, u_int32_t cmtd_rate, u_int32_t peak_rate,
 	/* timewin is converted from msec to machine clock unit */
 	tsw->timewin = (u_int64_t)machclk_freq * avg_interval / 1000;
 
-	return (tsw);
+	return tsw;
 }
 
 static int
 tswtcm_destroy(struct tswtcm *tsw)
 {
 	if (tsw->cdnrblk.cb_ref > 0)
-		return (EBUSY);
+		return EBUSY;
 
 	tca_invalidate_action(&tsw->green_action);
 	tca_invalidate_action(&tsw->yellow_action);
 	tca_invalidate_action(&tsw->red_action);
 
 	cdnr_cbdestroy(tsw);
-	return (0);
+	return 0;
 }
 
 static struct tc_action *
@@ -839,14 +839,14 @@ cdnrcmd_if_attach(char *ifname)
 	struct top_cdnr *top;
 
 	if ((ifp = ifunit(ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if (ifp->if_snd.altq_cdnr != NULL)
-		return (EBUSY);
+		return EBUSY;
 
 	if ((top = top_create(&ifp->if_snd)) == NULL)
-		return (ENOMEM);
-	return (0);
+		return ENOMEM;
+	return 0;
 }
 
 static int
@@ -855,7 +855,7 @@ cdnrcmd_if_detach(char *ifname)
 	struct top_cdnr *top;
 
 	if ((top = tcb_lookup(ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	return top_destroy(top);
 }
@@ -867,14 +867,14 @@ cdnrcmd_add_element(struct cdnr_add_element *ap)
 	struct cdnr_block *cb;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	cb = element_create(top, &ap->action);
 	if (cb == NULL)
-		return (EINVAL);
+		return EINVAL;
 	/* return a class handle to the user */
 	ap->cdnr_handle = cdnr_cb2handle(cb);
-	return (0);
+	return 0;
 }
 
 static int
@@ -884,10 +884,10 @@ cdnrcmd_delete_element(struct cdnr_delete_element *ap)
 	struct cdnr_block *cb;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cb = cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (cb->cb_type != TCETYPE_ELEMENT)
 		return generic_element_destroy(cb);
@@ -902,10 +902,10 @@ cdnrcmd_add_filter(struct cdnr_add_filter *ap)
 	struct cdnr_block *cb;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cb = cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	return acc_add_filter(&top->tc_classifier, &ap->filter,
 			      cb, &ap->filter_handle);
@@ -917,7 +917,7 @@ cdnrcmd_delete_filter(struct cdnr_delete_filter *ap)
 	struct top_cdnr *top;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	return acc_delete_filter(&top->tc_classifier, ap->filter_handle);
 }
@@ -929,14 +929,14 @@ cdnrcmd_add_tbm(struct cdnr_add_tbmeter *ap)
 	struct tbmeter *tbm;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	tbm = tbm_create(top, &ap->profile, &ap->in_action, &ap->out_action);
 	if (tbm == NULL)
-		return (EINVAL);
+		return EINVAL;
 	/* return a class handle to the user */
 	ap->cdnr_handle = cdnr_cb2handle(&tbm->cdnrblk);
-	return (0);
+	return 0;
 }
 
 static int
@@ -945,11 +945,11 @@ cdnrcmd_modify_tbm(struct cdnr_modify_tbmeter *ap)
 	struct tbmeter *tbm;
 
 	if ((tbm = (struct tbmeter *)cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	tb_import_profile(&tbm->tb, &ap->profile);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -958,12 +958,12 @@ cdnrcmd_tbm_stats(struct cdnr_tbmeter_stats *ap)
 	struct tbmeter *tbm;
 
 	if ((tbm = (struct tbmeter *)cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	ap->in_cnt = tbm->in_cnt;
 	ap->out_cnt = tbm->out_cnt;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -973,17 +973,17 @@ cdnrcmd_add_trtcm(struct cdnr_add_trtcm *ap)
 	struct trtcm *tcm;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	tcm = trtcm_create(top, &ap->cmtd_profile, &ap->peak_profile,
 			   &ap->green_action, &ap->yellow_action,
 			   &ap->red_action, ap->coloraware);
 	if (tcm == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	/* return a class handle to the user */
 	ap->cdnr_handle = cdnr_cb2handle(&tcm->cdnrblk);
-	return (0);
+	return 0;
 }
 
 static int
@@ -992,12 +992,12 @@ cdnrcmd_modify_trtcm(struct cdnr_modify_trtcm *ap)
 	struct trtcm *tcm;
 
 	if ((tcm = (struct trtcm *)cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	tb_import_profile(&tcm->cmtd_tb, &ap->cmtd_profile);
 	tb_import_profile(&tcm->peak_tb, &ap->peak_profile);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1006,7 +1006,7 @@ cdnrcmd_tcm_stats(struct cdnr_tcm_stats *ap)
 	struct cdnr_block *cb;
 
 	if ((cb = cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (cb->cb_type == TCETYPE_TRTCM) {
 		struct trtcm *tcm = (struct trtcm *)cb;
@@ -1021,9 +1021,9 @@ cdnrcmd_tcm_stats(struct cdnr_tcm_stats *ap)
 		ap->yellow_cnt = tsw->yellow_cnt;
 		ap->red_cnt = tsw->red_cnt;
 	} else
-		return (EINVAL);
+		return EINVAL;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1033,20 +1033,20 @@ cdnrcmd_add_tswtcm(struct cdnr_add_tswtcm *ap)
 	struct tswtcm *tsw;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if (ap->cmtd_rate > ap->peak_rate)
-		return (EINVAL);
+		return EINVAL;
 
 	tsw = tswtcm_create(top, ap->cmtd_rate, ap->peak_rate,
 			    ap->avg_interval, &ap->green_action,
 			    &ap->yellow_action, &ap->red_action);
 	if (tsw == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	/* return a class handle to the user */
 	ap->cdnr_handle = cdnr_cb2handle(&tsw->cdnrblk);
-	return (0);
+	return 0;
 }
 
 static int
@@ -1055,10 +1055,10 @@ cdnrcmd_modify_tswtcm(struct cdnr_modify_tswtcm *ap)
 	struct tswtcm *tsw;
 
 	if ((tsw = (struct tswtcm *)cdnr_handle2cb(ap->cdnr_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (ap->cmtd_rate > ap->peak_rate)
-		return (EINVAL);
+		return EINVAL;
 
 	/* convert rates from bits/sec to bytes/sec */
 	tsw->cmtd_rate = ap->cmtd_rate / 8;
@@ -1068,7 +1068,7 @@ cdnrcmd_modify_tswtcm(struct cdnr_modify_tswtcm *ap)
 	/* timewin is converted from msec to machine clock unit */
 	tsw->timewin = (u_int64_t)machclk_freq * ap->avg_interval / 1000;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1083,7 +1083,7 @@ cdnrcmd_get_stats(struct cdnr_get_stats *ap)
 	int error, n, nskip, nelements;
 
 	if ((top = tcb_lookup(ap->iface.cdnr_ifname)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	/* copy action stats */
 	(void)memcpy(ap->cnts, top->tc_cnts, sizeof(ap->cnts));
@@ -1092,7 +1092,7 @@ cdnrcmd_get_stats(struct cdnr_get_stats *ap)
 	nelements = ap->nelements;
 	usp = ap->tce_stats;
 	if (nelements <= 0 || usp == NULL)
-		return (0);
+		return 0;
 
 	nskip = ap->nskip;
 	n = 0;
@@ -1129,14 +1129,14 @@ cdnrcmd_get_stats(struct cdnr_get_stats *ap)
 
 		if ((error = copyout((void *)&tce, (void *)usp++,
 				     sizeof(tce))) != 0)
-			return (error);
+			return error;
 
 		if (++n == nelements)
 			break;
 	}
 	ap->nelements = n;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1151,7 +1151,7 @@ cdnropen(dev_t dev, int flag, int fmt,
 
 	if (machclk_freq == 0) {
 		printf("cdnr: no CPU clock available!\n");
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	/* everything will be done when the queueing scheme is attached. */
@@ -1173,7 +1173,7 @@ cdnrclose(dev_t dev, int flag, int fmt,
 	}
 	altq_input = NULL;
 
-	return (error);
+	return error;
 }
 
 int

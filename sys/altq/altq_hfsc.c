@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.31 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.30 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.31 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -181,12 +181,12 @@ hfsc_pfattach(struct pf_altq *a)
 	int s, error;
 
 	if ((ifp = ifunit(a->ifname)) == NULL || a->altq_disc == NULL)
-		return (EINVAL);
+		return EINVAL;
 	s = splnet();
 	error = altq_attach(&ifp->if_snd, ALTQT_HFSC, a->altq_disc,
 	    hfsc_enqueue, hfsc_dequeue, hfsc_request, NULL, NULL);
 	splx(s);
-	return (error);
+	return error;
 }
 
 int
@@ -196,18 +196,18 @@ hfsc_add_altq(struct pf_altq *a)
 	struct ifnet *ifp;
 
 	if ((ifp = ifunit(a->ifname)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 	if (!ALTQ_IS_READY(&ifp->if_snd))
-		return (ENODEV);
+		return ENODEV;
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (hif == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
 		free(hif, M_DEVBUF);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	hif->hif_ifq = &ifp->if_snd;
@@ -215,7 +215,7 @@ hfsc_add_altq(struct pf_altq *a)
 	/* keep the state in pf_altq */
 	a->altq_disc = hif;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -224,7 +224,7 @@ hfsc_remove_altq(struct pf_altq *a)
 	struct hfsc_if *hif;
 
 	if ((hif = a->altq_disc) == NULL)
-		return (EINVAL);
+		return EINVAL;
 	a->altq_disc = NULL;
 
 	(void)hfsc_clear_interface(hif);
@@ -234,7 +234,7 @@ hfsc_remove_altq(struct pf_altq *a)
 
 	free(hif, M_DEVBUF);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -246,7 +246,7 @@ hfsc_add_queue(struct pf_altq *a)
 	struct service_curve rtsc, lssc, ulsc;
 
 	if ((hif = a->altq_disc) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	opts = &a->pq_u.hfsc_opts;
 
@@ -254,13 +254,13 @@ hfsc_add_queue(struct pf_altq *a)
 	    hif->hif_rootclass == NULL)
 		parent = NULL;
 	else if ((parent = clh_to_clp(hif, a->parent_qid)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (a->qid == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	if (clh_to_clp(hif, a->qid) != NULL)
-		return (EBUSY);
+		return EBUSY;
 
 	rtsc.m1 = opts->rtsc_m1;
 	rtsc.d  = opts->rtsc_d;
@@ -275,9 +275,9 @@ hfsc_add_queue(struct pf_altq *a)
 	cl = hfsc_class_create(hif, &rtsc, &lssc, &ulsc,
 	    parent, a->qlimit, opts->flags, a->qid);
 	if (cl == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -287,10 +287,10 @@ hfsc_remove_queue(struct pf_altq *a)
 	struct hfsc_class *cl;
 
 	if ((hif = a->altq_disc) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((cl = clh_to_clp(hif, a->qid)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	return (hfsc_class_destroy(cl));
 }
@@ -304,21 +304,21 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	int error = 0;
 
 	if ((hif = altq_lookup(a->ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cl = clh_to_clp(hif, a->qid)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (*nbytes < sizeof(stats))
-		return (EINVAL);
+		return EINVAL;
 
 	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
-		return (error);
+		return error;
 	*nbytes = sizeof(stats);
-	return (0);
+	return 0;
 }
 #endif /* NPF > 0 */
 
@@ -351,7 +351,7 @@ hfsc_clear_interface(struct hfsc_if *hif)
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -364,7 +364,7 @@ hfsc_request(struct ifaltq *ifq, int req, void *arg)
 		hfsc_purge(hif);
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 /* discard all the queued packets on the interface */
@@ -389,20 +389,20 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	int i, s;
 
 	if (hif->hif_classes >= HFSC_MAX_CLASSES)
-		return (NULL);
+		return NULL;
 
 #ifndef ALTQ_RED
 	if (flags & HFCF_RED) {
 #ifdef ALTQ_DEBUG
 		printf("hfsc_class_create: RED not configured for HFSC!\n");
 #endif
-		return (NULL);
+		return NULL;
 	}
 #endif
 
 	cl = malloc(sizeof(struct hfsc_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
-		return (NULL);
+		return NULL;
 
 	cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->cl_q == NULL)
@@ -534,7 +534,7 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	}
 	splx(s);
 
-	return (cl);
+	return cl;
 
  err_ret:
 	if (cl->cl_actc != NULL)
@@ -558,7 +558,7 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	if (cl->cl_q != NULL)
 		free(cl->cl_q, M_DEVBUF);
 	free(cl, M_DEVBUF);
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -567,10 +567,10 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	int i, s;
 
 	if (cl == NULL)
-		return (0);
+		return 0;
 
 	if (is_a_parent_class(cl))
-		return (EBUSY);
+		return EBUSY;
 
 	s = splnet();
 
@@ -634,7 +634,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	free(cl->cl_q, M_DEVBUF);
 	free(cl, M_DEVBUF);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -658,7 +658,7 @@ hfsc_nextclass(struct hfsc_class *cl)
 			}
 	}
 
-	return (cl);
+	return cl;
 }
 
 /*
@@ -680,7 +680,7 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m)
 		printf("altq: packet for %s does not have pkthdr\n",
 		    ifq->altq_ifp->if_xname);
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	cl = NULL;
 	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID)) != NULL)
@@ -710,7 +710,7 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m)
 	if (hfsc_addq(cl, m) != 0) {
 		/* drop occurred.  mbuf was freed in hfsc_addq. */
 		PKTCNTR_ADD(&cl->cl_stats.drop_cnt, len);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	IFQ_INC_LEN(ifq);
 	cl->cl_hif->hif_packets++;
@@ -719,7 +719,7 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m)
 	if (qlen(cl->cl_q) == 1)
 		set_active(cl, m_pktlen(m));
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -743,7 +743,7 @@ hfsc_dequeue(struct ifaltq *ifq, int op)
 
 	if (hif->hif_packets == 0)
 		/* no packet in the tree */
-		return (NULL);
+		return NULL;
 
 	cur_time = read_machclk();
 
@@ -797,7 +797,7 @@ hfsc_dequeue(struct ifaltq *ifq, int op)
 		if (op == ALTDQ_POLL) {
 			hif->hif_pollcache = cl;
 			m = hfsc_pollq(cl);
-			return (m);
+			return m;
 		}
 	}
 
@@ -828,7 +828,7 @@ hfsc_dequeue(struct ifaltq *ifq, int op)
 		set_passive(cl);
 	}
 
-	return (m);
+	return m;
 }
 
 static int
@@ -846,7 +846,7 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 #endif
 	if (qlen(cl->cl_q) >= qlimit(cl->cl_q)) {
 		m_freem(m);
-		return (-1);
+		return -1;
 	}
 
 	if (cl->cl_flags & HFCF_CLEARDSCP)
@@ -854,7 +854,7 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 
 	_addq(cl->cl_q, m);
 
-	return (0);
+	return 0;
 }
 
 static struct mbuf *
@@ -1177,7 +1177,7 @@ ellist_alloc(void)
 
 	head = malloc(sizeof(ellist_t), M_DEVBUF, M_WAITOK);
 	TAILQ_INIT(head);
-	return (head);
+	return head;
 }
 
 static void
@@ -1265,7 +1265,7 @@ ellist_get_mindl(ellist_t *head, u_int64_t cur_time)
 		if (cl == NULL || p->cl_d < cl->cl_d)
 			cl = p;
 	}
-	return (cl);
+	return cl;
 }
 
 /*
@@ -1280,7 +1280,7 @@ actlist_alloc(void)
 
 	head = malloc(sizeof(actlist_t), M_DEVBUF, M_WAITOK);
 	TAILQ_INIT(head);
-	return (head);
+	return head;
 }
 
 static void
@@ -1359,9 +1359,9 @@ actlist_firstfit(struct hfsc_class *cl, u_int64_t cur_time)
 
 	TAILQ_FOREACH(p, cl->cl_actc, cl_actlist) {
 		if (p->cl_f <= cur_time)
-			return (p);
+			return p;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1407,7 +1407,7 @@ seg_x2y(u_int64_t x, u_int64_t sm)
 	 * but divide it for the upper and lower bits to avoid overflow
 	 */
 	y = (x >> SM_SHIFT) * sm + (((x & SM_MASK) * sm) >> SM_SHIFT);
-	return (y);
+	return y;
 }
 
 static inline u_int64_t
@@ -1423,7 +1423,7 @@ seg_y2x(u_int64_t y, u_int64_t ism)
 		x = (y >> ISM_SHIFT) * ism
 		    + (((y & ISM_MASK) * ism) >> ISM_SHIFT);
 	}
-	return (x);
+	return x;
 }
 
 static inline u_int64_t
@@ -1432,7 +1432,7 @@ m2sm(u_int m)
 	u_int64_t sm;
 
 	sm = ((u_int64_t)m << SM_SHIFT) / 8 / machclk_freq;
-	return (sm);
+	return sm;
 }
 
 static inline u_int64_t
@@ -1444,7 +1444,7 @@ m2ism(u_int m)
 		ism = HT_INFINITY;
 	else
 		ism = ((u_int64_t)machclk_freq << ISM_SHIFT) * 8 / m;
-	return (ism);
+	return ism;
 }
 
 static inline u_int64_t
@@ -1453,7 +1453,7 @@ d2dx(u_int d)
 	u_int64_t dx;
 
 	dx = ((u_int64_t)d * machclk_freq) / 1000;
-	return (dx);
+	return dx;
 }
 
 static u_int
@@ -1525,7 +1525,7 @@ rtsc_y2x(struct runtime_sc *rtsc, u_int64_t y)
 		x = rtsc->x + rtsc->dx
 		    + seg_y2x(y - rtsc->y - rtsc->dy, rtsc->ism2);
 	}
-	return (x);
+	return x;
 }
 
 static u_int64_t
@@ -1542,7 +1542,7 @@ rtsc_x2y(struct runtime_sc *rtsc, u_int64_t x)
 		/* y belongs to the 2nd segment */
 		y = rtsc->y + rtsc->dy
 		    + seg_x2y(x - rtsc->x - rtsc->dx, rtsc->sm2);
-	return (y);
+	return y;
 }
 
 /*
@@ -1692,19 +1692,19 @@ clh_to_clp(struct hfsc_if *hif, u_int32_t chandle)
 	struct hfsc_class *cl;
 
 	if (chandle == 0)
-		return (NULL);
+		return NULL;
 	/*
 	 * first, try optimistically the slot matching the lower bits of
 	 * the handle.  if it fails, do the linear table search.
 	 */
 	i = chandle % HFSC_MAX_CLASSES;
 	if ((cl = hif->hif_class_tbl[i]) != NULL && cl->cl_handle == chandle)
-		return (cl);
+		return cl;
 	for (i = 0; i < HFSC_MAX_CLASSES; i++)
 		if ((cl = hif->hif_class_tbl[i]) != NULL &&
 		    cl->cl_handle == chandle)
-			return (cl);
-	return (NULL);
+			return cl;
+	return NULL;
 }
 
 #ifdef ALTQ3_COMPAT
@@ -1715,7 +1715,7 @@ hfsc_attach(struct ifaltq *ifq, u_int bandwidth)
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (hif == NULL)
-		return (NULL);
+		return NULL;
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
@@ -1729,7 +1729,7 @@ hfsc_attach(struct ifaltq *ifq, u_int bandwidth)
 	hif->hif_next = hif_list;
 	hif_list = hif;
 
-	return (hif);
+	return hif;
 }
 
 static void
@@ -1771,21 +1771,21 @@ hfsc_class_modify(struct hfsc_class *cl, struct service_curve *rsc,
 		rsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
 		if (rsc_tmp == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 	}
 	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0) &&
 	    cl->cl_fsc == NULL) {
 		fsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
 		if (fsc_tmp == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 	}
 	if (usc != NULL && (usc->m1 != 0 || usc->m2 != 0) &&
 	    cl->cl_usc == NULL) {
 		usc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
 		    M_WAITOK);
 		if (usc_tmp == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 	}
 
 	cur_time = read_machclk();
@@ -1856,7 +1856,7 @@ hfsc_class_modify(struct hfsc_class *cl, struct service_curve *rsc,
 
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1871,7 +1871,7 @@ hfscopen(dev_t dev, int flag, int fmt,
 
 	if (machclk_freq == 0) {
 		printf("hfsc: no CPU clock available!\n");
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	/* everything will be done when the queueing scheme is attached. */
@@ -1919,7 +1919,7 @@ hfscioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_HFSC, NULL,
 		    NULL, NULL)) != 0)
-			return (error);
+			return error;
 		break;
 	}
 
@@ -2005,10 +2005,10 @@ hfsccmd_if_attach(struct hfsc_attach *ap)
 	int error;
 
 	if ((ifp = ifunit(ap->iface.hfsc_ifname)) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if ((hif = hfsc_attach(&ifp->if_snd, ap->bandwidth)) == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/*
 	 * set HFSC to this ifnet structure.
@@ -2018,7 +2018,7 @@ hfsccmd_if_attach(struct hfsc_attach *ap)
 				 &hif->hif_classifier, acc_classify)) != 0)
 		hfsc_detach(hif);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -2028,13 +2028,13 @@ hfsccmd_if_detach(struct hfsc_interface *ap)
 	int error;
 
 	if ((hif = altq_lookup(ap->hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if (ALTQ_IS_ENABLED(hif->hif_ifq))
 		altq_disable(hif->hif_ifq);
 
 	if ((error = altq_detach(hif->hif_ifq)))
-		return (error);
+		return error;
 
 	hfsc_detach(hif);
 	return 0;
@@ -2048,29 +2048,29 @@ hfsccmd_add_class(struct hfsc_add_class *ap)
 	int	i;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if (ap->parent_handle == HFSC_NULLCLASS_HANDLE &&
 	    hif->hif_rootclass == NULL)
 		parent = NULL;
 	else if ((parent = clh_to_clp(hif, ap->parent_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	/* assign a class handle (use a free slot number for now) */
 	for (i = 1; i < HFSC_MAX_CLASSES; i++)
 		if (hif->hif_class_tbl[i] == NULL)
 			break;
 	if (i == HFSC_MAX_CLASSES)
-		return (EBUSY);
+		return EBUSY;
 
 	if ((cl = hfsc_class_create(hif, &ap->service_curve, NULL, NULL,
 	    parent, ap->qlimit, ap->flags, i)) == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/* return a class handle to the user */
 	ap->class_handle = i;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -2080,10 +2080,10 @@ hfsccmd_delete_class(struct hfsc_delete_class *ap)
 	struct hfsc_class *cl;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cl = clh_to_clp(hif, ap->class_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	return hfsc_class_destroy(cl);
 }
@@ -2098,10 +2098,10 @@ hfsccmd_modify_class(struct hfsc_modify_class *ap)
 	struct service_curve *usc = NULL;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cl = clh_to_clp(hif, ap->class_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (ap->sctype & HFSC_REALTIMESC)
 		rsc = &ap->service_curve;
@@ -2120,16 +2120,16 @@ hfsccmd_add_filter(struct hfsc_add_filter *ap)
 	struct hfsc_class *cl;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	if ((cl = clh_to_clp(hif, ap->class_handle)) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (is_a_parent_class(cl)) {
 #ifdef ALTQ_DEBUG
 		printf("hfsccmd_add_filter: not a leaf class!\n");
 #endif
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	return acc_add_filter(&hif->hif_classifier, &ap->filter,
@@ -2142,7 +2142,7 @@ hfsccmd_delete_filter(struct hfsc_delete_filter *ap)
 	struct hfsc_if *hif;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	return acc_delete_filter(&hif->hif_classifier,
 				 ap->filter_handle);
@@ -2157,7 +2157,7 @@ hfsccmd_class_stats(struct hfsc_class_stats *ap)
 	int	n, nclasses, error;
 
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	ap->cur_time = read_machclk();
 	ap->machclk_freq = machclk_freq;
@@ -2170,7 +2170,7 @@ hfsccmd_class_stats(struct hfsc_class_stats *ap)
 	     cl = hfsc_nextclass(cl), n++)
 		;
 	if (n != nclasses)
-		return (EINVAL);
+		return EINVAL;
 
 	/* then, read the next N classes in the tree */
 	nclasses = ap->nclasses;
@@ -2182,12 +2182,12 @@ hfsccmd_class_stats(struct hfsc_class_stats *ap)
 
 		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
-			return (error);
+			return error;
 	}
 
 	ap->nclasses = n;
 
-	return (0);
+	return 0;
 }
 
 #ifdef KLD_MODULE

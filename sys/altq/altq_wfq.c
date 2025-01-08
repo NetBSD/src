@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.24 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.24 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -94,7 +94,7 @@ wfq_setenable(struct wfq_interface *ifacep, int flag)
 	int error = 0;
 
 	if ((wfqp = altq_lookup(ifacep->wfq_ifacename, ALTQT_WFQ)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	switch(flag){
 	case ENABLE:
@@ -120,25 +120,25 @@ wfq_ifattach(struct wfq_interface *ifacep)
 #ifdef WFQ_DEBUG
 		printf("wfq_ifattach()...no ifp found\n");
 #endif
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	if (!ALTQ_IS_READY(&ifp->if_snd)) {
 #ifdef WFQ_DEBUG
 		printf("wfq_ifattach()...altq is not ready\n");
 #endif
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	/* allocate and initialize wfq_state_t */
 	new_wfqp = malloc(sizeof(wfq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_wfqp == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	queue = malloc(sizeof(wfq) * DEFAULT_QSIZE, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (queue == NULL) {
 		free(new_wfqp, M_DEVBUF);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	/* keep the ifq */
@@ -166,13 +166,13 @@ wfq_ifattach(struct wfq_interface *ifacep)
 				 new_wfqp, wfq_classify)) != 0) {
 		free(queue, M_DEVBUF);
 		free(new_wfqp, M_DEVBUF);
-		return (error);
+		return error;
 	}
 
 	new_wfqp->next = wfq_list;
 	wfq_list = new_wfqp;
 
-	return (error);
+	return error;
 }
 
 
@@ -183,7 +183,7 @@ wfq_ifdetach(struct wfq_interface *ifacep)
 	wfq_state_t	*wfqp;
 
 	if ((wfqp = altq_lookup(ifacep->wfq_ifacename, ALTQT_WFQ)) == NULL)
-		return (EBADF);
+		return EBADF;
 
 	/* free queued mbuf */
 	wfq_flush(wfqp->ifq);
@@ -208,7 +208,7 @@ wfq_ifdetach(struct wfq_interface *ifacep)
 	/* deallocate wfq_state_t */
 	free(wfqp->queue, M_DEVBUF);
 	free(wfqp, M_DEVBUF);
-	return (error);
+	return error;
 }
 
 static int
@@ -221,7 +221,7 @@ wfq_request(struct ifaltq *ifq, int req, void *arg)
 		wfq_flush(wfqp->ifq);
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 
@@ -580,7 +580,7 @@ wfq_config(struct wfq_conf *cf)
 		queue = malloc(sizeof(wfq) * cf->nqueues, M_DEVBUF,
 		    M_WAITOK|M_ZERO);
 		if (queue == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 
 		wfqp->nums = cf->nqueues;
 		wfqp->bytes = 0;
@@ -682,7 +682,7 @@ wfqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_WFQ, NULL,
 		    NULL, NULL)) != 0)
-			return (error);
+			return error;
 		break;
 	}
 

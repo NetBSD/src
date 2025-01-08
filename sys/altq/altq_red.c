@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.36 2025/01/08 13:00:04 joe Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.36 2025/01/08 13:00:04 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -237,7 +237,7 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 
 	rp = malloc(sizeof(red_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
-		return (NULL);
+		return NULL;
 
 	rp->red_avg = 0;
 	rp->red_idle = 1;
@@ -316,7 +316,7 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 	/* if fv_alloc fails, flowvalve is just disabled */
 #endif
 #endif /* ALTQ3_COMPAT */
-	return (rp);
+	return rp;
 }
 
 void
@@ -356,7 +356,7 @@ red_addq(red_t *rp, class_queue_t *q, struct mbuf *m,
 	if (rp->red_flowvalve != NULL && rp->red_flowvalve->fv_flows > 0)
 		if (fv_checkflow(rp->red_flowvalve, pktattr, &fve)) {
 			m_freem(m);
-			return (-1);
+			return -1;
 		}
 #endif
 #endif /* ALTQ3_COMPAT */
@@ -472,13 +472,13 @@ red_addq(red_t *rp, class_queue_t *q, struct mbuf *m,
 #endif
 #endif /* ALTQ3_COMPAT */
 		m_freem(m);
-		return (-1);
+		return -1;
 	}
 	/* successfully queued */
 #ifdef RED_STATS
 	PKTCNTR_ADD(&rp->red_stats.xmit_cnt, m_pktlen(m));
 #endif
-	return (0);
+	return 0;
 }
 
 /*
@@ -498,7 +498,7 @@ drop_early(int fp_len, int fp_probd, int count)
 	d = fp_probd - count * fp_len;
 	if (d <= 0)
 		/* count exceeds the hard limit: drop or mark */
-		return (1);
+		return 1;
 
 	/*
 	 * now the range of d is [1..600] in fixed-point. (when
@@ -508,10 +508,10 @@ drop_early(int fp_len, int fp_probd, int count)
 
 	if ((cprng_fast32() % d) < fp_len) {
 		/* drop or mark */
-		return (1);
+		return 1;
 	}
 	/* no drop/mark */
-	return (0);
+	return 0;
 }
 
 /*
@@ -531,7 +531,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 	if (t != NULL) {
 		at = (struct altq_tag *)(t + 1);
 		if (at == NULL)
-			return (0);
+			return 0;
 		af = at->af;
 		hdr = at->hdr;
 #ifdef ALTQ3_COMPAT
@@ -540,10 +540,10 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 		hdr = pktattr->pattr_hdr;
 #endif /* ALTQ3_COMPAT */
 	} else
-		return (0);
+		return 0;
 
 	if (af != AF_INET && af != AF_INET6)
-		return (0);
+		return 0;
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
@@ -552,7 +552,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 			break;
 	if (m0 == NULL) {
 		/* ick, tag info is stale */
-		return (0);
+		return 0;
 	}
 
 	switch (af) {
@@ -563,12 +563,12 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 			int sum;
 
 			if (ip->ip_v != 4)
-				return (0);	/* version mismatch! */
+				return 0;	/* version mismatch! */
 
 			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
-				return (0);	/* not-ECT */
+				return 0;	/* not-ECT */
 			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
-				return (1);	/* already marked */
+				return 1;	/* already marked */
 
 			/*
 			 * ecn-capable but not marked,
@@ -585,7 +585,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 			sum = (sum >> 16) + (sum & 0xffff);
 			sum += (sum >> 16);  /* add carry */
 			ip->ip_sum = htons(~sum & 0xffff);
-			return (1);
+			return 1;
 		}
 		break;
 #ifdef INET6
@@ -596,26 +596,26 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 
 			flowlabel = ntohl(ip6->ip6_flow);
 			if ((flowlabel >> 28) != 6)
-				return (0);	/* version mismatch! */
+				return 0;	/* version mismatch! */
 			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
 			    (IPTOS_ECN_NOTECT << 20))
-				return (0);	/* not-ECT */
+				return 0;	/* not-ECT */
 			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
 			    (IPTOS_ECN_CE << 20))
-				return (1);	/* already marked */
+				return 1;	/* already marked */
 			/*
 			 * ecn-capable but not marked,  mark CE
 			 */
 			flowlabel |= (IPTOS_ECN_CE << 20);
 			ip6->ip6_flow = htonl(flowlabel);
-			return (1);
+			return 1;
 		}
 		break;
 #endif  /* INET6 */
 	}
 
 	/* not marked */
-	return (0);
+	return 0;
 }
 
 struct mbuf *
@@ -632,7 +632,7 @@ red_getq(red_t *rp, class_queue_t *q)
 	}
 
 	rp->red_idle = 0;
-	return (m);
+	return m;
 }
 
 /*
@@ -653,7 +653,7 @@ wtab_alloc(int weight)
 	for (w = wtab_list; w != NULL; w = w->w_next)
 		if (w->w_weight == weight) {
 			w->w_refcount++;
-			return (w);
+			return w;
 		}
 
 	w = malloc(sizeof(struct wtab), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -672,7 +672,7 @@ wtab_alloc(int weight)
 			w->w_param_max = 1 << i;
 	}
 
-	return (w);
+	return w;
 }
 
 int
@@ -681,7 +681,7 @@ wtab_destroy(struct wtab *w)
 	struct wtab	*prev;
 
 	if (--w->w_refcount > 0)
-		return (0);
+		return 0;
 
 	if (wtab_list == w)
 		wtab_list = w->w_next;
@@ -692,7 +692,7 @@ wtab_destroy(struct wtab *w)
 		}
 
 	free(w, M_DEVBUF);
-	return (0);
+	return 0;
 }
 
 int32_t
@@ -702,11 +702,11 @@ pow_w(struct wtab *w, int n)
 	int32_t	val;
 
 	if (n >= w->w_param_max)
-		return (0);
+		return 0;
 
 	val = 1 << FP_SHIFT;
 	if (n <= 0)
-		return (val);
+		return val;
 
 	bit = 1;
 	i = 0;
@@ -718,7 +718,7 @@ pow_w(struct wtab *w, int n)
 		i++;
 		bit <<=  1;
 	}
-	return (val);
+	return val;
 }
 
 #ifdef ALTQ3_COMPAT
@@ -769,7 +769,7 @@ redioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_RED, NULL,
 		    NULL, NULL)) != 0)
-			return (error);
+			return error;
 		break;
 	}
 
@@ -979,7 +979,7 @@ red_detach(red_queue_t *rqp)
 		altq_disable(rqp->rq_ifq);
 
 	if ((error = altq_detach(rqp->rq_ifq)))
-		return (error);
+		return error;
 
 	if (red_list == rqp)
 		red_list = rqp->rq_next;
@@ -996,7 +996,7 @@ red_detach(red_queue_t *rqp)
 	red_destroy(rqp->rq_red);
 	free(rqp->rq_q, M_DEVBUF);
 	free(rqp, M_DEVBUF);
-	return (error);
+	return error;
 }
 
 /*
@@ -1042,7 +1042,7 @@ red_dequeue(struct ifaltq *ifq, int op)
 	m =  red_getq(rqp->rq_red, rqp->rq_q);
 	if (m != NULL)
 		ifq->ifq_len--;
-	return (m);
+	return m;
 }
 
 static int
@@ -1055,7 +1055,7 @@ red_request(struct ifaltq *ifq, int req, void *arg)
 		red_purgeq(rqp);
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 static void
@@ -1134,7 +1134,7 @@ flowlist_lookup(struct flowvalve *fv, struct altq_pktattr *pktattr,
 	struct timeval tthresh;
 
 	if (pktattr == NULL)
-		return (NULL);
+		return NULL;
 
 	tthresh.tv_sec = now->tv_sec - FV_TTHRESH;
 	flows = 0;
@@ -1156,7 +1156,7 @@ flowlist_lookup(struct flowvalve *fv, struct altq_pktattr *pktattr,
 			    ip->ip_src.s_addr &&
 			    fve->fve_flow.flow_ip.ip_dst.s_addr ==
 			    ip->ip_dst.s_addr)
-				return (fve);
+				return fve;
 			flows++;
 		}
 		break;
@@ -1175,7 +1175,7 @@ flowlist_lookup(struct flowvalve *fv, struct altq_pktattr *pktattr,
 					       &ip6->ip6_src) &&
 			    IN6_ARE_ADDR_EQUAL(&fve->fve_flow.flow_ip6.ip6_dst,
 					       &ip6->ip6_dst))
-				return (fve);
+				return fve;
 			flows++;
 		}
 		break;
@@ -1183,10 +1183,10 @@ flowlist_lookup(struct flowvalve *fv, struct altq_pktattr *pktattr,
 
 	default:
 		/* unknown protocol.  no drop. */
-		return (NULL);
+		return NULL;
 	}
 	fv->fv_flows = flows;	/* save the number of active fve's */
-	return (NULL);
+	return NULL;
 }
 
 static inline struct fve *
@@ -1230,7 +1230,7 @@ flowlist_reclaim(struct flowvalve *fv, struct altq_pktattr *pktattr)
 #ifdef FV_STATS
 	fv->fv_stats.alloc++;
 #endif
-	return (fve);
+	return fve;
 }
 
 static inline void
@@ -1255,13 +1255,13 @@ fv_alloc(struct red *rp)
 	num = FV_FLOWLISTSIZE;
 	fv = malloc(sizeof(struct flowvalve), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (fv == NULL)
-		return (NULL);
+		return NULL;
 
 	fv->fv_fves = malloc(sizeof(struct fve) * num, M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	if (fv->fv_fves == NULL) {
 		free(fv, M_DEVBUF);
-		return (NULL);
+		return NULL;
 	}
 
 	fv->fv_flows = 0;
@@ -1280,7 +1280,7 @@ fv_alloc(struct red *rp)
 	if (fv->fv_p2ftab == NULL) {
 		free(fv->fv_fves, M_DEVBUF);
 		free(fv, M_DEVBUF);
-		return (NULL);
+		return NULL;
 	}
 	/*
 	 * create the p2f table.
@@ -1293,7 +1293,7 @@ fv_alloc(struct red *rp)
 		fv->fv_p2ftab[i] = (f / (rp->red_thmax + FV_ALPHA)) >> 8;
 	}
 
-	return (fv);
+	return fv;
 }
 
 static void
@@ -1315,7 +1315,7 @@ fv_p2f(struct flowvalve *fv, int p)
 		f = fv->fv_p2ftab[(val >> BRTT_SHIFT)];
 	else
 		f = fv->fv_p2ftab[1];
-	return (f);
+	return f;
 }
 
 /*
@@ -1336,7 +1336,7 @@ fv_checkflow(struct flowvalve *fv, struct altq_pktattr *pktattr,
 
 	if ((fve = flowlist_lookup(fv, pktattr, &now)) == NULL)
 		/* no matching entry in the flowlist */
-		return (0);
+		return 0;
 
 	*fcache = fve;
 
@@ -1382,7 +1382,7 @@ fv_checkflow(struct flowvalve *fv, struct altq_pktattr *pktattr,
 #ifdef FV_STATS
 			fv->fv_stats.predrop++;
 #endif
-			return (1);
+			return 1;
 		}
 	}
 
@@ -1395,7 +1395,7 @@ fv_checkflow(struct flowvalve *fv, struct altq_pktattr *pktattr,
 #ifdef FV_STATS
 	fv->fv_stats.pass++;
 #endif
-	return (0);
+	return 0;
 }
 
 /*
