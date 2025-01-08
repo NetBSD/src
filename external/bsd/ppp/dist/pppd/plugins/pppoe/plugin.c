@@ -22,24 +22,19 @@
 *
 ***********************************************************************/
 
-static char const RCSID[] =
-"Id: plugin.c,v 1.17 2008/06/15 04:35:50 paulus Exp ";
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define _GNU_SOURCE 1
 #include "pppoe.h"
-
-#include "pppd/pppd.h"
-#include "pppd/fsm.h"
-#include "pppd/lcp.h"
-#include "pppd/ipcp.h"
-#include "pppd/ccp.h"
-/* #include "pppd/pathnames.h" */
 
 #include <linux/types.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -50,13 +45,14 @@ static char const RCSID[] =
 #include <linux/ppp_defs.h>
 #include <linux/if_pppox.h>
 
-#ifndef _ROOT_PATH
-#define _ROOT_PATH ""
-#endif
+#include <pppd/pppd.h>
+#include <pppd/options.h>
+#include <pppd/fsm.h>
+#include <pppd/lcp.h>
+#include <pppd/ipcp.h>
+#include <pppd/ccp.h>
 
-#define _PATH_ETHOPT         _ROOT_PATH "/etc/ppp/options."
-
-char pppd_version[] = VERSION;
+char pppd_version[] = PPPD_VERSION;
 
 /* From sys-linux.c in pppd -- MUST FIX THIS! */
 extern int new_style_driver;
@@ -64,15 +60,16 @@ extern int new_style_driver;
 char *pppd_pppoe_service = NULL;
 static char *acName = NULL;
 static char *existingSession = NULL;
-static int printACNames = 0;
+int pppoe_verbose = 0;
 static char *pppoe_reqd_mac = NULL;
 unsigned char pppoe_reqd_mac_addr[6];
 static char *pppoe_host_uniq;
 static int pppoe_padi_timeout = PADI_TIMEOUT;
 static int pppoe_padi_attempts = MAX_PADI_ATTEMPTS;
+static char devnam[MAXNAMELEN];
 
 static int PPPoEDevnameHook(char *cmd, char **argv, int doit);
-static option_t Options[] = {
+static struct option Options[] = {
     { "device name", o_wild, (void *) &PPPoEDevnameHook,
       "PPPoE device name",
       OPT_DEVNAM | OPT_PRIVFIX | OPT_NOARG  | OPT_A2STRVAL | OPT_STATIC,
@@ -89,9 +86,9 @@ static option_t Options[] = {
       "Attach to existing session (sessid:macaddr)" },
     { "rp_pppoe_sess",    o_string, &existingSession,
       "Legacy alias for pppoe-sess", OPT_ALIAS },
-    { "pppoe-verbose", o_int, &printACNames,
+    { "pppoe-verbose", o_int, &pppoe_verbose,
       "Be verbose about discovered access concentrators" },
-    { "rp_pppoe_verbose", o_int, &printACNames,
+    { "rp_pppoe_verbose", o_int, &pppoe_verbose,
       "Legacy alias for pppoe-verbose", OPT_ALIAS },
     { "pppoe-mac", o_string, &pppoe_reqd_mac,
       "Only connect to specified MAC address" },
@@ -128,9 +125,6 @@ PPPOEInitDevice(void)
     conn->ifName = devnam;
     conn->discoverySocket = -1;
     conn->sessionSocket = -1;
-    conn->printACNames = printACNames;
-    conn->discoveryTimeout = pppoe_padi_timeout;
-    conn->discoveryAttempts = pppoe_padi_attempts;
     return 1;
 }
 
@@ -149,6 +143,7 @@ PPPOEConnectDevice(void)
     struct sockaddr_pppox sp;
     struct ifreq ifr;
     int s;
+    char remote_number[MAXNAMELEN];
 
     /* Open session socket before discovery phase, to avoid losing session */
     /* packets sent by peer just after PADS packet (noted on some Cisco    */
@@ -162,8 +157,8 @@ PPPOEConnectDevice(void)
     }
 
     /* Restore configuration */
-    lcp_allowoptions[0].mru = conn->mtu;
-    lcp_wantoptions[0].mru = conn->mru;
+    lcp_allowoptions[0].mru = conn->mtu = conn->storedmtu;
+    lcp_wantoptions[0].mru = conn->mru = conn->storedmru;
 
     /* Update maximum MRU */
     s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -180,9 +175,9 @@ PPPOEConnectDevice(void)
     close(s);
 
     if (lcp_allowoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD)
-	lcp_allowoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
+	lcp_allowoptions[0].mru = conn->mtu = ifr.ifr_mtu - TOTAL_OVERHEAD;
     if (lcp_wantoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD)
-	lcp_wantoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
+	lcp_wantoptions[0].mru = conn->mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
 
     if (pppoe_host_uniq) {
 	if (!parseHostUniq(pppoe_host_uniq, &conn->hostUniq))
@@ -197,7 +192,7 @@ PPPOEConnectDevice(void)
 
     conn->acName = acName;
     conn->serviceName = pppd_pppoe_service;
-    strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
+    ppp_set_pppdevnam(devnam);
     if (existingSession) {
 	unsigned int mac[ETH_ALEN];
 	int i, ses;
@@ -217,15 +212,26 @@ PPPOEConnectDevice(void)
 	    error("Failed to create PPPoE discovery socket: %m");
 	    goto errout;
 	}
-	discovery(conn);
+	discovery1(conn, 0);
+	/* discovery1() may update conn->mtu and conn->mru */
+	lcp_allowoptions[0].mru = conn->mtu;
+	lcp_wantoptions[0].mru = conn->mru;
+	if (conn->discoveryState != STATE_RECEIVED_PADO) {
+	    error("Unable to complete PPPoE Discovery phase 1");
+	    goto errout;
+	}
+	discovery2(conn);
+	/* discovery2() may update conn->mtu and conn->mru */
+	lcp_allowoptions[0].mru = conn->mtu;
+	lcp_wantoptions[0].mru = conn->mru;
 	if (conn->discoveryState != STATE_SESSION) {
-	    error("Unable to complete PPPoE Discovery");
+	    error("Unable to complete PPPoE Discovery phase 2");
 	    goto errout;
 	}
     }
 
     /* Set PPPoE session-number for further consumption */
-    ppp_session_number = ntohs(conn->session);
+    ppp_set_session_number(ntohs(conn->session));
 
     sp.sa_family = AF_PPPOX;
     sp.sa_protocol = PX_PROTO_OE;
@@ -241,17 +247,12 @@ PPPOEConnectDevice(void)
 	    (unsigned) conn->peerEth[3],
 	    (unsigned) conn->peerEth[4],
 	    (unsigned) conn->peerEth[5]);
+    warn("Connected to %s via interface %s", remote_number, conn->ifName);
+    ppp_set_remote_number(remote_number);
 
-    warn("Connected to %02X:%02X:%02X:%02X:%02X:%02X via interface %s",
-	 (unsigned) conn->peerEth[0],
-	 (unsigned) conn->peerEth[1],
-	 (unsigned) conn->peerEth[2],
-	 (unsigned) conn->peerEth[3],
-	 (unsigned) conn->peerEth[4],
-	 (unsigned) conn->peerEth[5],
-	 conn->ifName);
-
-    script_setenv("MACREMOTE", remote_number, 0);
+    ppp_script_setenv("MACREMOTE", remote_number, 0);
+    if (conn->actualACname)
+	ppp_script_setenv("ACNAME", conn->actualACname, 0);
 
     if (connect(conn->sessionSocket, (struct sockaddr *) &sp,
 		sizeof(struct sockaddr_pppox)) < 0) {
@@ -306,22 +307,31 @@ PPPOEDisconnectDevice(void)
 		sizeof(struct sockaddr_pppox)) < 0 && errno != EALREADY)
 	error("Failed to disconnect PPPoE socket: %d %m", errno);
     close(conn->sessionSocket);
+    if (conn->discoverySocket < 0)
+	conn->discoverySocket =
+            openInterface(conn->ifName, Eth_PPPOE_Discovery, NULL);
     if (conn->discoverySocket >= 0) {
         sendPADT(conn, NULL);
 	close(conn->discoverySocket);
     }
+    free(conn->actualACname);
+    conn->actualACname = NULL;
 }
 
 static void
 PPPOEDeviceOptions(void)
 {
+    char name[MAXPATHLEN];
     char buf[MAXPATHLEN];
 
-    strlcpy(buf, _PATH_ETHOPT, MAXPATHLEN);
-    strlcat(buf, devnam, MAXPATHLEN);
-    if (!options_from_file(buf, 0, 0, 1))
-	exit(EXIT_OPTION_ERROR);
-
+    slprintf(name, sizeof(name), "options.%s", devnam);
+	if (ppp_get_filepath(PPP_DIR_CONF, name, buf, sizeof(buf)) < sizeof(buf)) {
+		if (!ppp_options_from_file(buf, 0, 0, 1)) {
+			exit(EXIT_OPTION_ERROR);
+		}
+	} else {
+		exit(EXIT_OPTION_ERROR);
+	}
 }
 
 struct channel pppoe_channel;
@@ -385,10 +395,11 @@ PPPoEDevnameHook(char *cmd, char **argv, int doit)
 	if (the_channel != &pppoe_channel) {
 
 	    the_channel = &pppoe_channel;
-	    modem = 0;
+	    ppp_set_modem(0);
 
 	    PPPOEInitDevice();
 	}
+	ppp_set_devnam(devnam);
 	return 1;
     }
 
@@ -407,13 +418,13 @@ PPPoEDevnameHook(char *cmd, char **argv, int doit)
 void
 plugin_init(void)
 {
-    if (!ppp_available() && !new_style_driver) {
+    if (!ppp_check_kernel_support() && !new_style_driver) {
 	fatal("Linux kernel does not support PPPoE -- are you running 2.4.x?");
     }
 
-    add_options(Options);
+    ppp_add_options(Options);
 
-    info("PPPoE plugin from pppd %s", VERSION);
+    info("PPPoE plugin from pppd %s", PPPD_VERSION);
 }
 
 void pppoe_check_options(void)
@@ -425,7 +436,7 @@ void pppoe_check_options(void)
 	if (sscanf(pppoe_reqd_mac, "%x:%x:%x:%x:%x:%x",
 		   &mac[0], &mac[1], &mac[2], &mac[3],
 		   &mac[4], &mac[5]) != 6) {
-	    option_error("cannot parse pppoe-mac option value");
+	    ppp_option_error("cannot parse pppoe-mac option value");
 	    exit(EXIT_OPTION_ERROR);
 	}
 	for (i = 0; i < 6; ++i)
@@ -448,8 +459,8 @@ void pppoe_check_options(void)
 	lcp_wantoptions[0].mru = MAX_PPPOE_MTU;
 
     /* Save configuration */
-    conn->mtu = lcp_allowoptions[0].mru;
-    conn->mru = lcp_wantoptions[0].mru;
+    conn->storedmtu = lcp_allowoptions[0].mru;
+    conn->storedmru = lcp_wantoptions[0].mru;
 
     ccp_allowoptions[0].deflate = 0;
     ccp_wantoptions[0].deflate = 0;
@@ -459,6 +470,9 @@ void pppoe_check_options(void)
 
     ccp_allowoptions[0].bsd_compress = 0;
     ccp_wantoptions[0].bsd_compress = 0;
+
+    conn->discoveryTimeout = pppoe_padi_timeout;
+    conn->discoveryAttempts = pppoe_padi_attempts;
 }
 
 struct channel pppoe_channel = {
@@ -467,8 +481,8 @@ struct channel pppoe_channel = {
     .check_options = pppoe_check_options,
     .connect = &PPPOEConnectDevice,
     .disconnect = &PPPOEDisconnectDevice,
-    .establish_ppp = &generic_establish_ppp,
-    .disestablish_ppp = &generic_disestablish_ppp,
+    .establish_ppp = &ppp_generic_establish,
+    .disestablish_ppp = &ppp_generic_disestablish,
     .send_config = NULL,
     .recv_config = &PPPOERecvConfig,
     .close = NULL,
