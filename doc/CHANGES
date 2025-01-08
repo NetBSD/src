@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3121 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3122 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -641,3 +641,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[msaitoh 20241212]
 	umcpmio(4): Driver for the MCP-2221 / 2221A multi-io chip.
 		[brad 20241216]
+	pppd(8): Import 2.5.2 [christos 20250108]
