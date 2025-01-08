@@ -18,3 +18,6 @@
 #pragma once
 
 int	qcaoss_send(char *, size_t);
+
+void	*qccpucp_channel(u_int id);
+int	qccpucp_send(void *);
