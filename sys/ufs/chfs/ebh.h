@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.h,v 1.4 2016/08/06 20:42:29 dholland Exp $	*/
+/*	$NetBSD: ebh.h,v 1.5 2025/01/08 11:39:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -123,7 +123,7 @@ RB_HEAD(ltree_rbtree, chfs_ltree_entry);
 
 
 /**
- * struct chfs_scan_leb - scanning infomration about a physical eraseblock
+ * struct chfs_scan_leb - scanning information about a physical eraseblock
  * @erase_cnt: erase counter
  * @pebnr: physical eraseblock number
  * @info: the status of the PEB's eraseblock header when NOR serial when NAND
@@ -254,13 +254,13 @@ struct erase_thread {
  * @ltree: the lock tree
  * @ltree_lock: protects the tree
  * @alc_mutex: serializes "atomic LEB change" operation
- * @free: RB-tree of the free easeblocks
+ * @free: RB-tree of the free eraseblocks
  * @in_use: RB-tree of PEBs are in use
  * @to_erase: list of the PEBs waiting for erase
  * @fully_erased: list of PEBs that have been erased but don't have header
  * @erase_lock: list and tree lock for fully_erased and to_erase lists and
  *		for the free RB-tree
- * @bg_erase: background thread for eraseing PEBs.
+ * @bg_erase: background thread for erasing PEBs.
  * @ops: collection of operations which depends on flash type
  * @max_serial: max serial number of eraseblocks, only used on NAND
  */

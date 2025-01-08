@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.10 2022/12/30 09:08:48 andvar Exp $	*/
+/*	$NetBSD: ebh.c,v 1.11 2025/01/08 11:39:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -949,7 +949,7 @@ free_peb(struct chfs_ebh *ebh)
 		goto out_free;
 	}
 	/* Erase PEB */
-	//dbg_ebh("[FREE PEB] eraseing a block\n");
+	//dbg_ebh("[FREE PEB] erasing a block\n");
 	peb = TAILQ_FIRST(&ebh->to_erase);
 	TAILQ_REMOVE(&ebh->to_erase, peb, u.queue);
 	mutex_exit(&ebh->erase_lock);

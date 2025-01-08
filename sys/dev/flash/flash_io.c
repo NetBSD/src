@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_io.c,v 1.6 2023/04/03 18:03:23 gutteridge Exp $	*/
+/*	$NetBSD: flash_io.c,v 1.7 2025/01/08 11:39:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.6 2023/04/03 18:03:23 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.7 2025/01/08 11:39:50 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -243,7 +243,7 @@ flash_io_cache_sync(struct flash_io *fio)
 
 	base = fio->fio_block * fio->fio_if->erasesize;
 
-	FLDPRINTF(("eraseing block at 0x%jx\n", (uintmax_t )base));
+	FLDPRINTF(("erasing block at 0x%jx\n", (uintmax_t )base));
 	ei.ei_addr = base;
 	ei.ei_len = fio->fio_if->erasesize;
 	ei.ei_callback = NULL;
