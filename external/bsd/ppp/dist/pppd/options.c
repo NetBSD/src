@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.6 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.7 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -43,7 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.6 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.7 2025/01/08 19:59:39 christos Exp $");
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -55,11 +59,13 @@ __RCSID("$NetBSD: options.c,v 1.6 2021/01/09 16:39:28 christos Exp $");
 #include <syslog.h>
 #include <string.h>
 #include <pwd.h>
-#ifdef PLUGIN
+#include <sys/param.h>
+#include <net/if.h>
+#ifdef PPP_WITH_PLUGINS
 #include <dlfcn.h>
 #endif
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 #include <pcap.h>
 /*
  * There have been 3 or 4 different names for this in libpcap CVS, but
@@ -74,9 +80,11 @@ __RCSID("$NetBSD: options.c,v 1.6 2021/01/09 16:39:28 christos Exp $");
 #define DLT_PPP_PPPD	DLT_PPP
 #endif
 #endif
-#endif /* PPP_FILTER */
+#endif /* PPP_WITH_FILTER */
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
+#include "upap.h"
 #include "pathnames.h"
 
 #if defined(ultrix) || defined(NeXT)
@@ -96,7 +104,6 @@ struct option_value {
 int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
-char	devnam[MAXPATHLEN];	/* Device name */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 bool	master_detach;		/* Detach when we're (only) multilink master */
@@ -109,7 +116,6 @@ char	passwd[MAXSECRETLEN];	/* Password for PAP */
 bool	persist = 0;		/* Reopen link after it goes down */
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 bool	demand = 0;		/* do dial-on-demand */
-char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 bool	holdoff_specified;	/* true if a holdoff value has been given */
@@ -120,29 +126,37 @@ char	linkname[MAXPATHLEN];	/* logical name for link */
 bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */
+char	path_net_init[MAXPATHLEN]; /* pathname of net-init script */
+char	path_net_preup[MAXPATHLEN];/* pathname of net-pre-up script */
+char	path_net_down[MAXPATHLEN]; /* pathname of net-down script */
 char	path_ipup[MAXPATHLEN];	/* pathname of ip-up script */
 char	path_ipdown[MAXPATHLEN];/* pathname of ip-down script */
-char	req_ifname[MAXIFNAMELEN];	/* requested interface name */
+char	path_ippreup[MAXPATHLEN]; /* pathname of ip-pre-up script */
+char	req_ifname[IFNAMSIZ];	/* requested interface name */
 bool	multilink = 0;		/* Enable multilink operation */
 char	*bundle_name = NULL;	/* bundle name for multilink */
 bool	dump_options;		/* print out option values */
+bool	show_options;		/* print all supported options and exit */
 bool	dryrun;			/* print out option values and exit */
 char	*domain;		/* domain name set by domain option */
 int	child_wait = 5;		/* # seconds to wait for children at exit */
 struct userenv *userenv_list;	/* user environment variables */
 int	dfl_route_metric = -1;	/* metric of the default route to set over the PPP link */
 
-#ifdef MAXOCTETS
-unsigned int  maxoctets = 0;    /* default - no limit */
-int maxoctets_dir = 0;       /* default - sum of traffic */
-int maxoctets_timeout = 1;   /* default 1 second */ 
+#ifdef PPP_WITH_IPV6CP
+char	path_ipv6up[MAXPATHLEN];   /* pathname of ipv6-up script */
+char	path_ipv6down[MAXPATHLEN]; /* pathname of ipv6-down script */
 #endif
 
+unsigned int  maxoctets = 0;    /* default - no limit */
+session_limit_dir_t maxoctets_dir = PPP_OCTETS_DIRECTION_SUM; /* default - sum of traffic */
+int maxoctets_timeout = 1;   /* default 1 second */ 
 
-extern option_t auth_options[];
+
+extern struct option auth_options[];
 extern struct stat devstat;
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 /* Filter program for packets to pass */
 struct	bpf_program pass_filter_in;
 struct	bpf_program pass_filter_out;
@@ -152,7 +166,7 @@ struct	bpf_program active_filter_in;
 struct	bpf_program active_filter_out;
 #endif
 
-static option_t *curopt;	/* pointer to option being processed */
+static struct option *curopt;	/* pointer to option being processed */
 char *current_option;		/* the name of the option being parsed */
 int  privileged_option;		/* set iff the current option came from root */
 char *option_source;		/* string saying where the option came from */
@@ -161,6 +175,8 @@ bool devnam_fixed;		/* can no longer change device name */
 
 static int logfile_fd = -1;	/* fd opened for log file */
 static char logfile_name[MAXPATHLEN];	/* name of log file */
+
+static bool noipx_opt;		/* dummy for noipx option */
 
 /*
  * Prototypes
@@ -172,36 +188,34 @@ static int showversion(char **);
 static int showhelp(char **);
 static void usage(void);
 static int setlogfile(char **);
-#ifdef PLUGIN
+#ifdef PPP_WITH_PLUGINS
 static int loadplugin(char **);
 #endif
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 static int setpassfilter_in(char **);
 static int setactivefilter_in(char **);
 static int setpassfilter_out(char **);
 static int setactivefilter_out(char **);
 #endif
 
-#ifdef MAXOCTETS
 static int setmodir(char **);
-#endif
 
 static int user_setenv(char **);
-static void user_setprint(option_t *, printer_func, void *);
+static void user_setprint(struct option *, printer_func, void *);
 static int user_unsetenv(char **);
-static void user_unsetprint(option_t *, printer_func, void *);
+static void user_unsetprint(struct option *, printer_func, void *);
 
-static option_t *find_option(char *name);
-static int process_option(option_t *, char *, char **);
-static int n_arguments(option_t *);
+static struct option *find_option(char *name);
+static int process_option(struct option *, char *, char **);
+static int n_arguments(struct option *);
 static int number_option(char *, u_int32_t *, int);
 
 /*
  * Structure to store extra lists of options.
  */
 struct option_list {
-    option_t *options;
+    struct option *options;
     struct option_list *next;
 };
 
@@ -210,7 +224,7 @@ static struct option_list *extra_options = NULL;
 /*
  * Valid arguments.
  */
-option_t general_options[] = {
+struct option general_options[] = {
     { "debug", o_int, &debug,
       "Increase debugging level", OPT_INC | OPT_NOARG | 1 },
     { "-d", o_int, &debug,
@@ -266,6 +280,10 @@ option_t general_options[] = {
 
     { "--version", o_special_noarg, (void *)showversion,
       "Show version number" },
+    { "-v", o_special_noarg, (void *)showversion,
+      "Show version number" },
+    { "show-options", o_bool, &show_options,
+      "Show all options and exit", 1 },
     { "--help", o_special_noarg, (void *)showhelp,
       "Show brief listing of options" },
     { "-h", o_special_noarg, (void *)showhelp,
@@ -307,7 +325,7 @@ option_t general_options[] = {
 
     { "ifname", o_string, req_ifname,
       "Set PPP interface name",
-      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXIFNAMELEN },
+      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, IFNAMSIZ },
 
     { "dump", o_bool, &dump_options,
       "Print out option values after parsing all options", 1 },
@@ -329,14 +347,36 @@ option_t general_options[] = {
       "Metric to use for the default route (Linux only; -1 for default behavior)",
       OPT_PRIV|OPT_LLIMIT|OPT_INITONLY, NULL, 0, -1 },
 
+    { "net-init-script", o_string, path_net_init,
+      "Set pathname of net-init script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+    { "net-pre-up-script", o_string, path_net_preup,
+      "Set pathname of net-preup script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+    { "net-down-script", o_string, path_net_down,
+      "Set pathname of net-down script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+
     { "ip-up-script", o_string, path_ipup,
       "Set pathname of ip-up script",
       OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
     { "ip-down-script", o_string, path_ipdown,
       "Set pathname of ip-down script",
       OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+    { "ip-pre-up-script", o_string, path_ippreup,
+      "Set pathname of ip-pre-up script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
 
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_IPV6CP
+    { "ipv6-up-script", o_string, path_ipv6up,
+      "Set pathname of ipv6-up script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+    { "ipv6-down-script", o_string, path_ipv6down,
+      "Set pathname of ipv6-down script",
+      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+#endif
+
+#ifdef PPP_WITH_MULTILINK
     { "multilink", o_bool, &multilink,
       "Enable multilink operation", OPT_PRIO | 1 },
     { "mp", o_bool, &multilink,
@@ -348,14 +388,14 @@ option_t general_options[] = {
 
     { "bundle", o_string, &bundle_name,
       "Bundle name for multilink", OPT_PRIO },
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_WITH_MULTILINK */
 
-#ifdef PLUGIN
+#ifdef PPP_WITH_PLUGINS
     { "plugin", o_special, (void *)loadplugin,
       "Load a plug-in module into pppd", OPT_PRIV | OPT_A2LIST },
 #endif
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
     { "pass-filter-in", o_special, setpassfilter_in,
       "set filter for packets to pass inwards", OPT_PRIO },
     { "pass-filter-out", o_special, setpassfilter_out,
@@ -367,7 +407,6 @@ option_t general_options[] = {
       "set filter for active pkts outwards", OPT_PRIO },
 #endif
 
-#ifdef MAXOCTETS
     { "maxoctets", o_int, &maxoctets,
       "Set connection traffic limit",
       OPT_PRIO | OPT_LLIMIT | OPT_NOINCR | OPT_ZEROINF },
@@ -378,7 +417,9 @@ option_t general_options[] = {
       "Set direction for limit traffic (sum,in,out,max)" },
     { "mo-timeout", o_int, &maxoctets_timeout,
       "Check for traffic limit every N seconds", OPT_PRIO | OPT_LLIMIT | 1 },
-#endif
+
+    /* Dummy option, does nothing */
+    { "noipx", o_bool, &noipx_opt, NULL, OPT_NOPRINT | 1 },
 
     { NULL }
 };
@@ -387,24 +428,112 @@ option_t general_options[] = {
 #define IMPLEMENTATION ""
 #endif
 
-static const char *usage_string = "\
-pppd version %s\n\
-Usage: %s [ options ], where options are:\n\
-	<device>	Communicate over the named device\n\
-	<speed>		Set the baud rate to <speed>\n\
-	<loc>:<rem>	Set the local and/or remote interface IP\n\
-			addresses.  Either one may be omitted.\n\
-	asyncmap <n>	Set the desired async map to hex <n>\n\
-	auth		Require authentication from peer\n\
-        connect <p>     Invoke shell command <p> to set up the serial line\n\
-	crtscts		Use hardware RTS/CTS flow control\n\
-	cdtrcts		Use hardware DTR/CTS flow control (if supported)\n\
-	defaultroute	Add default route through interface\n\
-	file <f>	Take options from file <f>\n\
-	modem		Use modem control lines\n\
-	mru <n>		Set MRU value to <n> for negotiation\n\
-See pppd(8) for more options.\n\
-";
+int
+ppp_get_max_idle_time()
+{
+    return idle_time_limit;
+}
+
+void
+ppp_set_max_idle_time(unsigned int max)
+{
+    idle_time_limit = max;
+}
+
+int
+ppp_get_max_connect_time()
+{
+    return maxconnect;
+}
+
+void
+ppp_set_max_connect_time(unsigned int max)
+{
+    maxconnect = max;
+}
+
+void
+ppp_set_session_limit(unsigned int octets)
+{
+    maxoctets = octets;
+}
+
+void
+ppp_set_session_limit_dir(unsigned int dir)
+{
+    if (dir > 4)
+        dir = PPP_OCTETS_DIRECTION_SUM;
+    maxoctets_dir = (session_limit_dir_t) dir;
+}
+
+bool
+debug_on()
+{
+    return !!debug;
+}
+
+int
+ppp_get_path(ppp_path_t type, char *buf, size_t bufsz)
+{
+    const char *path;
+
+    if (buf && bufsz > 0) {
+        switch (type) {
+        case PPP_DIR_LOG:
+            path = PPP_PATH_VARLOG;
+            break;
+        case PPP_DIR_RUNTIME:
+            path = PPP_PATH_VARRUN;
+            break;
+#ifdef PPP_WITH_PLUGINS
+        case PPP_DIR_PLUGIN:
+            path = PPP_PATH_PLUGIN;
+            break;
+#endif
+        case PPP_DIR_CONF:
+            path = PPP_PATH_CONFDIR;
+            break;
+	default:
+	    return -1;
+        }
+        return strlcpy(buf, path, bufsz);
+    }
+    return -1;
+}
+
+int
+ppp_get_filepath(ppp_path_t type, const char *name, char *buf, size_t bufsz)
+{
+    const char *path;
+
+    if (buf && bufsz > 0) {
+        switch (type) {
+        case PPP_DIR_LOG:
+            path = PPP_PATH_VARLOG;
+            break;
+        case PPP_DIR_RUNTIME:
+            path = PPP_PATH_VARRUN;
+            break;
+#ifdef PPP_WITH_PLUGINS
+        case PPP_DIR_PLUGIN:
+            path = PPP_PATH_PLUGIN;
+            break;
+#endif
+	case PPP_DIR_CONF:
+            path = PPP_PATH_CONFDIR;
+            break;
+	default:
+	    return -1;
+        }
+        return slprintf(buf, bufsz, "%s/%s", path, name);
+    }
+    return -1;
+}
+
+bool ppp_persist(void)
+{
+    return !!persist;
+}
 
 /*
  * parse_args - parse a string of arguments from the command line.
@@ -413,7 +542,7 @@ int
 parse_args(int argc, char **argv)
 {
     char *arg;
-    option_t *opt;
+    struct option *opt;
     int n;
 
     privileged_option = privileged;
@@ -424,13 +553,13 @@ parse_args(int argc, char **argv)
 	--argc;
 	opt = find_option(arg);
 	if (opt == NULL) {
-	    option_error("unrecognized option '%s'", arg);
+	    ppp_option_error("unrecognized option '%s'", arg);
 	    usage();
 	    return 0;
 	}
 	n = n_arguments(opt);
 	if (argc < n) {
-	    option_error("too few parameters for option %s", arg);
+	    ppp_option_error("too few parameters for option %s", arg);
 	    return 0;
 	}
 	if (!process_option(opt, arg, argv))
@@ -446,11 +575,11 @@ parse_args(int argc, char **argv)
  * and interpret them.
  */
 int
-options_from_file(char *filename, int must_exist, int check_prot, int priv)
+ppp_options_from_file(char *filename, int must_exist, int check_prot, int priv)
 {
     FILE *f;
     int i, newline, ret, err;
-    option_t *opt;
+    struct option *opt;
     int oldpriv, n;
     char *oldsource;
     uid_t euid;
@@ -460,7 +589,7 @@ options_from_file(char *filename, int must_exist, int check_prot, int priv)
 
     euid = geteuid();
     if (check_prot && seteuid(getuid()) == -1) {
-	option_error("unable to drop privileges to open %s: %m", filename);
+	ppp_option_error("unable to drop privileges to open %s: %m", filename);
 	return 0;
     }
     f = fopen(filename, "r");
@@ -474,7 +603,7 @@ options_from_file(char *filename, int must_exist, int check_prot, int priv)
 		warn("Warning: can't open options file %s: %m", filename);
 	    return 1;
 	}
-	option_error("Can't open options file %s: %m", filename);
+	ppp_option_error("Can't open options file %s: %m", filename);
 	return 0;
     }
 
@@ -488,14 +617,14 @@ options_from_file(char *filename, int must_exist, int check_prot, int priv)
     while (getword(f, cmd, &newline, filename)) {
 	opt = find_option(cmd);
 	if (opt == NULL) {
-	    option_error("In file %s: unrecognized option '%s'",
+	    ppp_option_error("In file %s: unrecognized option '%s'",
 			 filename, cmd);
 	    goto err;
 	}
 	n = n_arguments(opt);
 	for (i = 0; i < n; ++i) {
 	    if (!getword(f, args[i], &newline, filename)) {
-		option_error(
+		ppp_option_error(
 			"In file %s: too few parameters for option '%s'",
 			filename, cmd);
 		goto err;
@@ -509,6 +638,7 @@ options_from_file(char *filename, int must_exist, int check_prot, int priv)
 
 err:
     fclose(f);
+    free(option_source);
     privileged_option = oldpriv;
     option_source = oldsource;
     return ret;
@@ -529,14 +659,14 @@ options_from_user(void)
     pw = getpwuid(getuid());
     if (pw == NULL || (user = pw->pw_dir) == NULL || user[0] == 0)
 	return 1;
-    file = _PATH_USEROPT;
+    file = PPP_PATH_USEROPT;
     pl = strlen(user) + strlen(file) + 2;
     path = malloc(pl);
     if (path == NULL)
 	novm("init file name");
     slprintf(path, pl, "%s/%s", user, file);
     option_priority = OPRIO_CFGFILE;
-    ret = options_from_file(path, 0, 1, privileged);
+    ret = ppp_options_from_file(path, 0, 1, privileged);
     free(path);
     return ret;
 }
@@ -561,17 +691,17 @@ options_for_tty(void)
 	dev = p + 5;
     if (dev[0] == 0 || strcmp(dev, "tty") == 0)
 	return 1;		/* don't look for /etc/ppp/options.tty */
-    pl = strlen(_PATH_TTYOPT) + strlen(dev) + 1;
+    pl = strlen(PPP_PATH_TTYOPT) + strlen(dev) + 1;
     path = malloc(pl);
     if (path == NULL)
 	novm("tty init file name");
-    slprintf(path, pl, "%s%s", _PATH_TTYOPT, dev);
+    slprintf(path, pl, "%s%s", PPP_PATH_TTYOPT, dev);
     /* Turn slashes into dots, for Solaris case (e.g. /dev/term/a) */
-    for (p = path + strlen(_PATH_TTYOPT); *p != 0; ++p)
+    for (p = path + strlen(PPP_PATH_TTYOPT); *p != 0; ++p)
 	if (*p == '/')
 	    *p = '.';
     option_priority = OPRIO_CFGFILE;
-    ret = options_from_file(path, 0, 0, 1);
+    ret = ppp_options_from_file(path, 0, 0, 1);
     free(path);
     return ret;
 }
@@ -583,7 +713,7 @@ int
 options_from_list(struct wordlist *w, int priv)
 {
     char *argv[MAXARGS];
-    option_t *opt;
+    struct option *opt;
     int i, n, ret = 0;
     struct wordlist *w0;
 
@@ -594,7 +724,7 @@ options_from_list(struct wordlist *w, int priv)
     while (w != NULL) {
 	opt = find_option(w->word);
 	if (opt == NULL) {
-	    option_error("In secrets file: unrecognized option '%s'",
+	    ppp_option_error("In secrets file: unrecognized option '%s'",
 			 w->word);
 	    goto err;
 	}
@@ -603,7 +733,7 @@ options_from_list(struct wordlist *w, int priv)
 	for (i = 0; i < n; ++i) {
 	    w = w->next;
 	    if (w == NULL) {
-		option_error(
+		ppp_option_error(
 			"In secrets file: too few parameters for option '%s'",
 			w0->word);
 		goto err;
@@ -621,10 +751,10 @@ err:
 }
 
 /*
- * match_option - see if this option matches an option_t structure.
+ * match_option - see if this option matches an option structure.
  */
 static int
-match_option(char *name, option_t *opt, int dowild)
+match_option(char *name, struct option *opt, int dowild)
 {
 	int (*match)(char *, char **, int);
 
@@ -641,10 +771,10 @@ match_option(char *name, option_t *opt, int dowild)
  * looking for an entry with the given name.
  * This could be optimized by using a hash table.
  */
-static option_t *
+static struct option *
 find_option(char *name)
 {
-	option_t *opt;
+	struct option *opt;
 	struct option_list *list;
 	int i, dowild;
 
@@ -675,7 +805,7 @@ find_option(char *name)
  * process_option - process one new-style option.
  */
 static int
-process_option(option_t *opt, char *cmd, char **argv)
+process_option(struct option *opt, char *cmd, char **argv)
 {
     u_int32_t v;
     int iv, a;
@@ -684,7 +814,7 @@ process_option(option_t *opt, char *cmd, char **argv)
     int (*wildp)(char *, char **, int);
     char *optopt = (opt->type == o_wild)? "": " option";
     int prio = option_priority;
-    option_t *mainopt = opt;
+    struct option *mainopt = opt;
 
     current_option = opt->name;
     if ((opt->flags & OPT_PRIVFIX) && privileged_option)
@@ -695,7 +825,7 @@ process_option(option_t *opt, char *cmd, char **argv)
 	if (prio < mainopt->priority) {
 	    /* new value doesn't override old */
 	    if (prio == OPRIO_CMDLINE && mainopt->priority > OPRIO_ROOT) {
-		option_error("%s%s set in %s cannot be overridden\n",
+		ppp_option_error("%s%s set in %s cannot be overridden\n",
 			     opt->name, optopt, mainopt->source);
 		return 0;
 	    }
@@ -706,22 +836,22 @@ process_option(option_t *opt, char *cmd, char **argv)
 		 opt->name, optopt, option_source);
     }
 
-    if ((opt->flags & OPT_INITONLY) && phase != PHASE_INITIALIZE) {
-	option_error("%s%s cannot be changed after initialization",
+    if ((opt->flags & OPT_INITONLY) && !in_phase(PHASE_INITIALIZE)) {
+	ppp_option_error("%s%s cannot be changed after initialization",
 		     opt->name, optopt);
 	return 0;
     }
     if ((opt->flags & OPT_PRIV) && !privileged_option) {
-	option_error("using the %s%s requires root privilege",
+	ppp_option_error("using the %s%s requires root privilege",
 		     opt->name, optopt);
 	return 0;
     }
     if ((opt->flags & OPT_ENABLE) && *(bool *)(opt->addr2) == 0) {
-	option_error("%s%s is disabled", opt->name, optopt);
+	ppp_option_error("%s%s is disabled", opt->name, optopt);
 	return 0;
     }
     if ((opt->flags & OPT_DEVEQUIV) && devnam_fixed) {
-	option_error("the %s%s may not be changed in %s",
+	ppp_option_error("the %s%s may not be changed in %s",
 		     opt->name, optopt, option_source);
 	return 0;
     }
@@ -743,7 +873,7 @@ process_option(option_t *opt, char *cmd, char **argv)
     case o_int:
 	iv = 0;
 	if ((opt->flags & OPT_NOARG) == 0) {
-	    if (!int_option(*argv, &iv))
+	    if (!ppp_int_option(*argv, &iv))
 		return 0;
 	    if ((((opt->flags & OPT_LLIMIT) && iv < opt->lower_limit)
 		 || ((opt->flags & OPT_ULIMIT) && iv > opt->upper_limit))
@@ -751,15 +881,15 @@ process_option(option_t *opt, char *cmd, char **argv)
 		char *zok = (opt->flags & OPT_ZEROOK)? " zero or": "";
 		switch (opt->flags & OPT_LIMITS) {
 		case OPT_LLIMIT:
-		    option_error("%s value must be%s >= %d",
+		    ppp_option_error("%s value must be%s >= %d",
 				 opt->name, zok, opt->lower_limit);
 		    break;
 		case OPT_ULIMIT:
-		    option_error("%s value must be%s <= %d",
+		    ppp_option_error("%s value must be%s <= %d",
 				 opt->name, zok, opt->upper_limit);
 		    break;
 		case OPT_LIMITS:
-		    option_error("%s value must be%s between %d and %d",
+		    ppp_option_error("%s value must be%s between %d and %d",
 				opt->name, zok, opt->lower_limit, opt->upper_limit);
 		    break;
 		}
@@ -776,7 +906,7 @@ process_option(option_t *opt, char *cmd, char **argv)
 	    int oldv = *(int *)(opt->addr);
 	    if ((opt->flags & OPT_ZEROINF) ?
 		(oldv != 0 && (iv == 0 || iv > oldv)) : (iv > oldv)) {
-		option_error("%s value cannot be increased", opt->name);
+		ppp_option_error("%s value cannot be increased", opt->name);
 		return 0;
 	    }
 	}
@@ -873,7 +1003,7 @@ process_option(option_t *opt, char *cmd, char **argv)
 int
 override_value(char *option, int priority, const char *source)
 {
-	option_t *opt;
+	struct option *opt;
 
 	opt = find_option(option);
 	if (opt == NULL)
@@ -892,7 +1022,7 @@ override_value(char *option, int priority, const char *source)
  * n_arguments - tell how many arguments an option takes
  */
 static int
-n_arguments(option_t *opt)
+n_arguments(struct option *opt)
 {
 	return (opt->type == o_bool || opt->type == o_special_noarg
 		|| (opt->flags & OPT_NOARG))? 0: 1;
@@ -902,7 +1032,7 @@ n_arguments(option_t *opt)
  * add_options - add a list of options to the set we grok.
  */
 void
-add_options(option_t *opt)
+ppp_add_options(struct option *opt)
 {
     struct option_list *list;
 
@@ -928,7 +1058,7 @@ check_options(void)
  * print_option - print out an option and its value
  */
 static void
-print_option(option_t *opt, option_t *mainopt, printer_func printer, void *arg)
+print_option(struct option *opt, struct option *mainopt, printer_func printer, void *arg)
 {
 	int i, v;
 	char *p;
@@ -990,8 +1120,8 @@ print_option(option_t *opt, option_t *mainopt, printer_func printer, void *arg)
 			printer(arg, " ");
 		}
 		if (opt->flags & OPT_A2PRINTER) {
-			void (*oprt)(option_t *, printer_func, void *);
-			oprt = (void (*)(option_t *, printer_func, void *))
+			void (*oprt)(struct option *, printer_func, void *);
+			oprt = (void (*)(struct option *, printer_func, void *))
 				opt->addr2;
 			(*oprt)(opt, printer, arg);
 		} else if (opt->flags & OPT_A2STRVAL) {
@@ -1027,7 +1157,7 @@ print_option(option_t *opt, option_t *mainopt, printer_func printer, void *arg)
  * array of options.
  */
 static void
-print_option_list(option_t *opt, printer_func printer, void *arg)
+print_option_list(struct option *opt, printer_func printer, void *arg)
 {
 	while (opt->name != NULL) {
 		if (opt->priority != OPRIO_DEFAULT
@@ -1064,8 +1194,33 @@ print_options(printer_func printer, void *arg)
 static void
 usage(void)
 {
-    if (phase == PHASE_INITIALIZE)
-	fprintf(stderr, usage_string, VERSION, progname);
+    FILE *fp = stderr;
+    if (in_phase(PHASE_INITIALIZE)) {
+        fprintf(fp, "%s v%s\n", PACKAGE_NAME, PACKAGE_VERSION);
+        fprintf(fp, "Copyright (C) 1999-2024 Paul Mackerras, and others. All rights reserved.\n\n");
+
+
+        fprintf(fp, "License BSD: The 3 clause BSD license <https://opensource.org/licenses/BSD-3-Clause>\n");
+        fprintf(fp, "This is free software: you are free to change and redistribute it.\n");
+        fprintf(fp, "There is NO WARRANTY, to the extent permitted by law.\n\n");
+
+        fprintf(fp, "Report Bugs:\n   %s\n\n", PACKAGE_BUGREPORT);
+        fprintf(fp, "Usage: %s [ options ], where options are:\n", progname);
+        fprintf(fp, "   <device>        Communicate over the named device\n");
+        fprintf(fp, "   <speed>         Set the baud rate to <speed>\n");
+        fprintf(fp, "   <loc>:<rem>     Set the local and/or remote interface IP\n");
+        fprintf(fp, "                   addresses.  Either one may be omitted.\n");
+        fprintf(fp, "   asyncmap <n>    Set the desired async map to hex <n>\n");
+        fprintf(fp, "   auth            Require authentication from peer\n");
+        fprintf(fp, "   connect <p>     Invoke shell command <p> to set up the serial line\n");
+        fprintf(fp, "   crtscts         Use hardware RTS/CTS flow control\n");
+        fprintf(fp, "   defaultroute    Add default route through interface\n");
+        fprintf(fp, "   file <f>        Take options from file <f>\n");
+        fprintf(fp, "   modem           Use modem control lines\n");
+        fprintf(fp, "   mru <n>         Set MRU value to <n> for negotiation\n");
+        fprintf(fp, "   show-options    Display an extended list of options\n");
+        fprintf(fp, "See pppd(8) for more options.\n");
+    }
 }
 
 /*
@@ -1074,7 +1229,7 @@ usage(void)
 static int
 showhelp(char **argv)
 {
-    if (phase == PHASE_INITIALIZE) {
+    if (in_phase(PHASE_INITIALIZE)) {
 	usage();
 	exit(0);
     }
@@ -1087,7 +1242,7 @@ showhelp(char **argv)
 static int
 showversion(char **argv)
 {
-    if (phase == PHASE_INITIALIZE) {
+    if (in_phase(PHASE_INITIALIZE)) {
 	fprintf(stdout, "pppd version %s\n", VERSION);
 	exit(0);
     }
@@ -1095,12 +1250,67 @@ showversion(char **argv)
 }
 
 /*
- * option_error - print a message about an error in an option.
- * The message is logged, and also sent to
- * stderr if phase == PHASE_INITIALIZE.
+ * Print a set of options including the name of the group of options
+ */
+static void
+showopts_list(FILE *fp, const char *title, struct option *list, ...)
+{
+	struct option *opt = list;
+    va_list varg;
+
+    if (opt && opt->name) {
+        va_start(varg, list);
+        vfprintf(fp, title, varg);
+        fprintf(fp, ":\n");
+        va_end(varg);
+
+        do {
+            fprintf(fp, "    %-22s %s\n", opt->name, opt->description?:"");
+            opt++;
+        } while (opt && opt->name);
+
+        fprintf(fp, "\n");
+    }
+}
+
+/*
+ * Dumps the list of available options
  */
 void
-option_error(char *fmt, ...)
+showopts(void)
+{
+    struct option_list *list;
+    FILE *fp = stderr;
+    int i = 0;
+
+    showopts_list(fp, "General Options",
+            general_options);
+
+    showopts_list(fp, "Authentication Options",
+            auth_options);
+
+    for (list = extra_options; list != NULL; list = list->next)
+		showopts_list(fp, "Extra Options", list->options);
+
+    showopts_list(fp, "Channel Options",
+            the_channel->options);
+
+    for (i = 0; protocols[i] != NULL; ++i) {
+        if (protocols[i]->options != NULL) {
+            showopts_list(fp, "%s Options",
+                    protocols[i]->options,
+                    protocols[i]->name);
+        }
+    }
+}
+
+/*
+ * ppp_option_error - print a message about an error in an option.
+ * The message is logged, and also sent to
+ * stderr if in_phase(PHASE_INITIALIZE).
+ */
+void
+ppp_option_error(char *fmt, ...)
 {
     va_list args;
     char buf[1024];
@@ -1108,7 +1318,7 @@ option_error(char *fmt, ...)
     va_start(args, fmt);
     vslprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
-    if (phase == PHASE_INITIALIZE)
+    if (in_phase(PHASE_INITIALIZE))
 	fprintf(stderr, "%s: %s\n", progname, buf);
     syslog(LOG_ERR, "%s", buf);
 }
@@ -1355,7 +1565,7 @@ getword(FILE *f, char *word, int *newlinep, char *filename)
 	if (ferror(f)) {
 	    if (errno == 0)
 		errno = EIO;
-	    option_error("Error reading %s: %m", filename);
+	    ppp_option_error("Error reading %s: %m", filename);
 	    die(1);
 	}
 	/*
@@ -1365,7 +1575,7 @@ getword(FILE *f, char *word, int *newlinep, char *filename)
 	if (len == 0)
 	    return 0;
 	if (quoted)
-	    option_error("warning: quoted word runs to end of file (%.20s...)",
+	    ppp_option_error("warning: quoted word runs to end of file (%.20s...)",
 			 filename, word);
     }
 
@@ -1373,7 +1583,7 @@ getword(FILE *f, char *word, int *newlinep, char *filename)
      * Warn if the word was too long, and append a terminating null.
      */
     if (len >= MAXWORDLEN) {
-	option_error("warning: word in file %s too long (%.20s...)",
+	ppp_option_error("warning: word in file %s too long (%.20s...)",
 		     filename, word);
 	len = MAXWORDLEN - 1;
     }
@@ -1395,7 +1605,7 @@ number_option(char *str, u_int32_t *valp, int base)
 
     *valp = strtoul(str, &ptr, base);
     if (ptr == str) {
-	option_error("invalid numeric parameter '%s' for %s option",
+	ppp_option_error("invalid numeric parameter '%s' for %s option",
 		     str, current_option);
 	return 0;
     }
@@ -1409,7 +1619,7 @@ number_option(char *str, u_int32_t *valp, int base)
  * if there is an error.
  */
 int
-int_option(char *str, int *valp)
+ppp_int_option(char *str, int *valp)
 {
     u_int32_t v;
 
@@ -1430,7 +1640,7 @@ int_option(char *str, int *valp)
 static int
 readfile(char **argv)
 {
-    return options_from_file(*argv, 1, 1, privileged_option);
+    return ppp_options_from_file(*argv, 1, 1, privileged_option);
 }
 
 /*
@@ -1460,23 +1670,23 @@ callfile(char **argv)
 	}
     }
     if (!ok) {
-	option_error("call option value may not contain .. or start with /");
+	ppp_option_error("call option value may not contain .. or start with /");
 	return 0;
     }
 
-    l = strlen(arg) + strlen(_PATH_PEERFILES) + 1;
+    l = strlen(arg) + strlen(PPP_PATH_PEERFILES) + 1;
     if ((fname = (char *) malloc(l)) == NULL)
 	novm("call file name");
-    slprintf(fname, l, "%s%s", _PATH_PEERFILES, arg);
-    script_setenv("CALL_FILE", arg, 0);
+    slprintf(fname, l, "%s%s", PPP_PATH_PEERFILES, arg);
+    ppp_script_setenv("CALL_FILE", arg, 0);
 
-    ok = options_from_file(fname, 1, 1, 1);
+    ok = ppp_options_from_file(fname, 1, 1, 1);
 
     free(fname);
     return ok;
 }
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 /*
  * setpassfilter_in - Set the pass filter for incoming packets
  */
@@ -1489,8 +1699,8 @@ setpassfilter_in(argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &pass_filter_in, *argv, 1, netmask) == -1) {
-	option_error("error in pass-filter-in expression: %s\n",
-		     pcap_geterr(pc));
+	ppp_option_error("error in pass-filter-in expression: %s\n",
+			 pcap_geterr(pc));
 	ret = 0;
     }
     pcap_close(pc);
@@ -1510,8 +1720,8 @@ setpassfilter_out(argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &pass_filter_out, *argv, 1, netmask) == -1) {
-	option_error("error in pass-filter-out expression: %s\n",
-		     pcap_geterr(pc));
+	ppp_option_error("error in pass-filter-out expression: %s\n",
+			 pcap_geterr(pc));
 	ret = 0;
     }
     pcap_close(pc);
@@ -1530,8 +1740,8 @@ setactivefilter_in(char **argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_in, *argv, 1, netmask) == -1) {
-	option_error("error in active-filter expression: %s\n",
-		     pcap_geterr(pc));
+	ppp_option_error("error in active-filter-in expression: %s\n",
+			 pcap_geterr(pc));
 	ret = 0;
     }
     pcap_close(pc);
@@ -1550,8 +1760,8 @@ setactivefilter_out(char **argv)
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
     if (pcap_compile(pc, &active_filter_out, *argv, 1, netmask) == -1) {
-	option_error("error in active-filter expression: %s\n",
-		     pcap_geterr(pc));
+	ppp_option_error("error in active-filter-out expression: %s\n",
+			 pcap_geterr(pc));
 	ret = 0;
     }
     pcap_close(pc);
@@ -1585,7 +1795,7 @@ setlogfile(char **argv)
 
     euid = geteuid();
     if (!privileged_option && seteuid(getuid()) == -1) {
-	option_error("unable to drop permissions to open %s: %m", *argv);
+	ppp_option_error("unable to drop permissions to open %s: %m", *argv);
 	return 0;
     }
     fd = open(*argv, O_WRONLY | O_APPEND | O_CREAT | O_EXCL, 0644);
@@ -1596,7 +1806,7 @@ setlogfile(char **argv)
 	fatal("unable to regain privileges: %m");
     if (fd < 0) {
 	errno = err;
-	option_error("Can't open log file %s: %m", *argv);
+	ppp_option_error("Can't open log file %s: %m", *argv);
 	return 0;
     }
     strlcpy(logfile_name, *argv, sizeof(logfile_name));
@@ -1608,7 +1818,6 @@ setlogfile(char **argv)
     return 1;
 }
 
-#ifdef MAXOCTETS
 static int
 setmodir(char **argv)
 {
@@ -1625,9 +1834,8 @@ setmodir(char **argv)
     }
     return 1;
 }
-#endif
 
-#ifdef PLUGIN
+#ifdef PPP_WITH_PLUGINS
 static int
 loadplugin(char **argv)
 {
@@ -1639,7 +1847,7 @@ loadplugin(char **argv)
     const char *vers;
 
     if (strchr(arg, '/') == 0) {
-	const char *base = _PATH_PLUGIN;
+	const char *base = PPP_PATH_PLUGIN;
 	int l = strlen(base) + strlen(arg) + 2;
 	path = malloc(l);
 	if (path == 0)
@@ -1652,25 +1860,27 @@ loadplugin(char **argv)
     if (handle == 0) {
 	err = dlerror();
 	if (err != 0)
-	    option_error("%s", err);
-	option_error("Couldn't load plugin %s", arg);
+	    ppp_option_error("%s", err);
+	ppp_option_error("Couldn't load plugin %s", arg);
 	goto err;
     }
     init = (void (*)(void))dlsym(handle, "plugin_init");
     if (init == 0) {
-	option_error("%s has no initialization entry point", arg);
+	ppp_option_error("%s has no initialization entry point", arg);
 	goto errclose;
     }
     vers = (const char *) dlsym(handle, "pppd_version");
     if (vers == 0) {
 	warn("Warning: plugin %s has no version information", arg);
     } else if (strcmp(vers, VERSION) != 0) {
-	option_error("Plugin %s is for pppd version %s, this is %s",
+	ppp_option_error("Plugin %s is for pppd version %s, this is %s",
 		     arg, vers, VERSION);
 	goto errclose;
     }
     info("Plugin %s loaded.", arg);
     (*init)();
+    if (path != arg)
+	free(path);
     return 1;
 
  errclose:
@@ -1680,7 +1890,7 @@ loadplugin(char **argv)
 	free(path);
     return 0;
 }
-#endif /* PLUGIN */
+#endif /* PPP_WITH_PLUGINS */
 
 /*
  * Set an environment variable specified by the user.
@@ -1693,11 +1903,11 @@ user_setenv(char **argv)
     struct userenv *uep, **insp;
 
     if ((eqp = strchr(arg, '=')) == NULL) {
-	option_error("missing = in name=value: %s", arg);
+	ppp_option_error("missing = in name=value: %s", arg);
 	return 0;
     }
     if (eqp == arg) {
-	option_error("missing variable name: %s", arg);
+	ppp_option_error("missing variable name: %s", arg);
 	return 0;
     }
     for (uep = userenv_list; uep != NULL; uep = uep->ue_next) {
@@ -1712,6 +1922,10 @@ user_setenv(char **argv)
     /* The name never changes, so allocate it with the structure */
     if (uep == NULL) {
 	uep = malloc(sizeof (*uep) + (eqp-arg));
+	if (uep == NULL) {
+		novm("environment variable");
+		return 1;
+	}
 	strncpy(uep->ue_name, arg, eqp-arg);
 	uep->ue_name[eqp-arg] = '\0';
 	uep->ue_next = NULL;
@@ -1738,7 +1952,7 @@ user_setenv(char **argv)
 }
 
 static void
-user_setprint(option_t *opt, printer_func printer, void *arg)
+user_setprint(struct option *opt, printer_func printer, void *arg)
 {
     struct userenv *uep, *uepnext;
 
@@ -1764,11 +1978,11 @@ user_unsetenv(char **argv)
     char *arg = argv[0];
 
     if (strchr(arg, '=') != NULL) {
-	option_error("unexpected = in name: %s", arg);
+	ppp_option_error("unexpected = in name: %s", arg);
 	return 0;
     }
     if (*arg == '\0') {
-	option_error("missing variable name for unset");
+	ppp_option_error("missing variable name for unset");
 	return 0;
     }
     for (uep = userenv_list; uep != NULL; uep = uep->ue_next) {
@@ -1781,6 +1995,10 @@ user_unsetenv(char **argv)
     /* The name never changes, so allocate it with the structure */
     if (uep == NULL) {
 	uep = malloc(sizeof (*uep) + strlen(arg));
+	if (uep == NULL) {
+		novm("environment variable");
+		return 1;
+	}
 	strcpy(uep->ue_name, arg);
 	uep->ue_next = NULL;
 	insp = &userenv_list;
@@ -1806,7 +2024,7 @@ user_unsetenv(char **argv)
 }
 
 static void
-user_unsetprint(option_t *opt, printer_func printer, void *arg)
+user_unsetprint(struct option *opt, printer_func printer, void *arg)
 {
     struct userenv *uep, *uepnext;
 

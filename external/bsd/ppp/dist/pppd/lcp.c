@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -43,22 +43,29 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
 
-/*
- * TODO:
- */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
+#include <time.h>
+#include <arpa/inet.h>
+#include <sys/mman.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
 #include "fsm.h"
 #include "lcp.h"
-#include "chap-new.h"
+#include "eap.h"
+#include "chap.h"
 #include "magic.h"
-
+#include "multilink.h"
 
 /*
  * When the link comes up we want to be able to wait for a short while,
@@ -71,22 +78,32 @@ __RCSID("$NetBSD: lcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 static void lcp_delayed_up(void *);
 
 /*
+ * These definitions relate to the measurement and logging of round-trip
+ * time (RTT) of LCP echo-requests implemented in lcp_rtt_update_buffer().
+ */
+#define LCP_RTT_MAGIC 0x19450425
+#define LCP_RTT_HEADER_LENGTH 4
+#define LCP_RTT_FILE_SIZE 8192
+#define LCP_RTT_ELEMENTS (LCP_RTT_FILE_SIZE / sizeof(u_int32_t) - LCP_RTT_HEADER_LENGTH) / 2
+
+/*
  * LCP-related command-line options.
  */
 int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
 bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
+char	*lcp_rtt_file = NULL;	/* measure the RTT of LCP echo-requests */
 bool	lax_recv = 0;		/* accept control chars in asyncmap */
 bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
 
 static int noopt(char **);
 
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
 static int setendpoint(char **);
 static void printendpoint(option_t *, void (*)(void *, char *, ...), void *);
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_WITH_MULTILINK */
 
-static option_t lcp_option_list[] = {
+static struct option lcp_option_list[] = {
     /* LCP options */
     { "-all", o_special_noarg, (void *)noopt,
       "Don't request/allow any LCP options" },
@@ -155,6 +172,9 @@ static option_t lcp_option_list[] = {
       "Set time in seconds between LCP echo requests", OPT_PRIO },
     { "lcp-echo-adaptive", o_bool, &lcp_echo_adaptive,
       "Suppress LCP echo requests if traffic was received", 1 },
+    { "lcp-rtt-file", o_string, &lcp_rtt_file,
+      "Filename for logging the round-trip time of LCP echo requests",
+      OPT_PRIO | OPT_PRIV },
     { "lcp-restart", o_int, &lcp_fsm[0].timeouttime,
       "Set time in seconds between LCP retransmissions", OPT_PRIO },
     { "lcp-max-terminate", o_int, &lcp_fsm[0].maxtermtransmits,
@@ -167,7 +187,7 @@ static option_t lcp_option_list[] = {
     { "receive-all", o_bool, &lax_recv,
       "Accept all received control characters", 1 },
 
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
     { "mrru", o_int, &lcp_wantoptions[0].mrru,
       "Maximum received packet size for multilink bundle",
       OPT_PRIO, &lcp_wantoptions[0].neg_mrru },
@@ -182,7 +202,7 @@ static option_t lcp_option_list[] = {
     { "endpoint", o_special, (void *) setendpoint,
       "Endpoint discriminator for multilink",
       OPT_PRIO | OPT_A2PRINTER, (void *) printendpoint },
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_WITH_MULTILINK */
 
     { "noendpoint", o_bool, &noendpoint,
       "Don't send or accept multilink endpoint discriminator", 1 },
@@ -200,6 +220,8 @@ lcp_options lcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static int lcp_echo_number   = 0;	/* ID number of next echo frame */
 static int lcp_echo_timer_running = 0;  /* set if a timer is running */
+static int lcp_rtt_file_fd = 0;		/* fd for the opened LCP RTT file */
+static u_int32_t *lcp_rtt_buffer = NULL; /* the mmap'ed LCP RTT file */
 
 static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
 
@@ -308,7 +330,7 @@ noopt(char **argv)
     return (1);
 }
 
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
 static int
 setendpoint(char **argv)
 {
@@ -316,7 +338,7 @@ setendpoint(char **argv)
 	lcp_wantoptions[0].neg_endpoint = 1;
 	return 1;
     }
-    option_error("Can't parse '%s' as an endpoint discriminator", *argv);
+    ppp_option_error("Can't parse '%s' as an endpoint discriminator", *argv);
     return 0;
 }
 
@@ -325,7 +347,7 @@ printendpoint(option_t *opt, void (*printer)(void *, char *, ...), void *arg)
 {
 	printer(arg, "%s", epdisc_to_str(&lcp_wantoptions[0].endpoint));
 }
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_WITH_MULTILINK */
 
 /*
  * lcp_init - Initialize LCP.
@@ -393,11 +415,11 @@ lcp_close(int unit, char *reason)
     fsm *f = &lcp_fsm[unit];
     int oldstate;
 
-    if (phase != PHASE_DEAD && phase != PHASE_MASTER)
+    if (!in_phase(PHASE_DEAD) && !in_phase(PHASE_MASTER))
 	new_phase(PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
 	f->state = STOPPED;
     }
     oldstate = f->state;
@@ -439,7 +461,7 @@ lcp_lowerup(int unit)
 
     if (listen_time != 0) {
 	f->flags |= DELAYED_UP;
-	timeout(lcp_delayed_up, f, 0, listen_time * 1000);
+	ppp_timeout(lcp_delayed_up, f, 0, listen_time * 1000);
     } else
 	fsm_lowerup(f);
 }
@@ -455,7 +477,7 @@ lcp_lowerdown(int unit)
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
     } else
 	fsm_lowerdown(&lcp_fsm[unit]);
 }
@@ -486,7 +508,7 @@ lcp_input(int unit, u_char *p, int len)
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
 	fsm_lowerup(f);
     }
     fsm_input(f, p, len);
@@ -1280,7 +1302,7 @@ lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	if (looped_back) {
 	    if (++try.numloops >= lcp_loopbackfail) {
 		notice("Serial line is looped back.");
-		status = EXIT_LOOPBACK;
+		ppp_set_status(EXIT_LOOPBACK);
 		lcp_close(f->unit, "Loopback detected");
 	    }
 	} else
@@ -1873,10 +1895,10 @@ lcp_up(fsm *f)
      */
     mtu = ho->neg_mru? ho->mru: PPP_MRU;
     mru = go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU;
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
-#endif /* HAVE_MULTILINK */
-	netif_set_mtu(f->unit, MIN(MIN(mtu, mru), ao->mru));
+#endif /* PPP_WITH_MULTILINK */
+	ppp_set_mtu(f->unit, MIN(MIN(mtu, mru), ao->mru));
     ppp_send_config(f->unit, mtu,
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
@@ -2097,7 +2119,7 @@ lcp_printpkt(u_char *p, int plen, void (*printer)(void *, char *, ...), void *ar
 		}
 		break;
 	    case CI_EPDISC:
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
 		if (olen >= CILEN_CHAR) {
 		    struct epdisc epd;
 		    p += 2;
@@ -2190,7 +2212,7 @@ void LcpLinkFailure (fsm *f)
     if (f->state == OPENED) {
 	info("No response to %d echo-requests", lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
-	status = EXIT_PEER_DEAD;
+	ppp_set_status(EXIT_PEER_DEAD);
 	lcp_close(f->unit, "Peer not responding");
     }
 }
@@ -2229,6 +2251,73 @@ LcpEchoTimeout (void *arg)
 }
 
 /*
+ * Log the round-trip time (RTT) of the received LCP echo-request.
+ *
+ * The header section at the beginning of lcp_rtt_file contains
+ * LCP_RTT_HEADER_LENGTH fields, each a u_int32_t in network byte order:
+ * [0] LCP_RTT_MAGIC
+ * [1] status (1: the file is open and is being written)
+ * [2] index of the most recently updated element
+ * [3] the value of the lcp-echo-interval parameter
+ *
+ * The header is followed by a ring buffer of LCP_RTT_ELEMENTS elements, each
+ * containing a pair of u_int32_t in network byte order with this content:
+ * [0] UNIX timestamp
+ * [1] bits 24-31: the number of lost LCP echo replies
+ *     bits 0-23:  the measured RTT in microseconds
+ *
+ * The timestamp is unsigned to support storing dates beyond 2038.
+ *
+ * Consumers of lcp_rtt_file are expected to:
+ * - read the complete file of arbitrary length
+ * - check the magic number
+ * - process the data elements starting at the index
+ * - ignore any elements with a timestamp of 0
+ */
+static void
+lcp_rtt_update_buffer (unsigned long rtt)
+{
+    volatile u_int32_t *const ring_header = lcp_rtt_buffer;
+    volatile u_int32_t *const ring_buffer = lcp_rtt_buffer
+	+ LCP_RTT_HEADER_LENGTH;
+    unsigned int next_entry, lost;
+
+    /* choose the next entry where the data will be stored */
+    if (ntohl(ring_header[2]) >= (LCP_RTT_ELEMENTS - 1) * 2)
+	next_entry = 0;				/* go back to the beginning */
+    else
+	next_entry = ntohl(ring_header[2]) + 2;	/* use the next one */
+
+    /* update the data element */
+    /* storing the timestamp in an *unsigned* long allows dates up to 2106 */
+    ring_buffer[next_entry] = htonl((u_int32_t) time(NULL));
+    lost = lcp_echos_pending - 1;
+    if (lost > 0xFF)
+	lost = 0xFF;		/* truncate the lost packets count to 256 */
+    if (rtt > 0xFFFFFF)
+	rtt = 0xFFFFFF;		/* truncate the RTT to 16777216 */
+    /* use bits 24-31 for the lost packets count and bits 0-23 for the RTT */
+    ring_buffer[next_entry + 1] = htonl((u_int32_t) ((lost << 24) + rtt));
+
+    /* update the pointer to the (just updated) most current data element */
+    ring_header[2] = htonl(next_entry);
+
+    /* In theory, CPUs implementing a weakly-consistent memory model do not
+     * guarantee that these three memory store operations to the buffer will
+     * be seen in the same order by the reader process.
+     * This means that a process reading the file could see the index
+     * having been updated before the element that the index points to had
+     * been written.
+     * But in practice we expect that the read(2) system call used by
+     * consumers processes is atomic with respect to the following msync(2)
+     * call, so we ignore the issue.
+     */
+
+    if (msync(lcp_rtt_buffer, LCP_RTT_FILE_SIZE, MS_ASYNC) < 0)
+	error("msync() for %s failed: %m", lcp_rtt_file);
+}
+
+/*
  * LcpEchoReply - LCP has received a reply to the echo
  */
 
@@ -2249,6 +2338,30 @@ lcp_received_echo_reply (fsm *f, int id, u_char *inp, int len)
 	return;
     }
 
+    if (lcp_rtt_file_fd && len >= 16) {
+	long lcp_rtt_magic;
+
+	/*
+	 * If the magic word is found at the beginning of the data section
+	 * of the frame then read the timestamp which follows and subtract
+	 * it from the current time to compute the round trip time.
+	 */
+	GETLONG(lcp_rtt_magic, inp);
+	if (lcp_rtt_magic == LCP_RTT_MAGIC) {
+	    struct timespec ts;
+	    unsigned long req_sec, req_nsec, rtt;
+
+	    clock_gettime(CLOCK_MONOTONIC, &ts);
+	    GETLONG(req_sec, inp);
+	    GETLONG(req_nsec, inp);
+	    /* compute the RTT in microseconds */
+	    rtt = (ts.tv_sec - req_sec) * 1000000
+		+ (ts.tv_nsec / 1000 - req_nsec / 1000);
+	    /* log the RTT */
+	    lcp_rtt_update_buffer(rtt);
+	}
+    }
+
     /* Reset the number of outstanding echo frames */
     lcp_echos_pending = 0;
 }
@@ -2261,7 +2374,7 @@ static void
 LcpSendEchoRequest (fsm *f)
 {
     u_int32_t lcp_magic;
-    u_char pkt[4], *pktp;
+    u_char pkt[16], *pktp;
 
     /*
      * Detect the failure of the peer at this point.
@@ -2283,6 +2396,8 @@ LcpSendEchoRequest (fsm *f)
 
 	if (get_ppp_stats(f->unit, &cur_stats) && cur_stats.pkts_in != last_pkts_in) {
 	    last_pkts_in = cur_stats.pkts_in;
+	    /* receipt of traffic indicates the link is working... */
+	    lcp_echos_pending = 0;
 	    return;
 	}
     }
@@ -2294,9 +2409,71 @@ LcpSendEchoRequest (fsm *f)
         lcp_magic = lcp_gotoptions[f->unit].magicnumber;
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
+
+	/* Put a timestamp in the data section of the frame */
+	if (lcp_rtt_file_fd) {
+	    struct timespec ts;
+
+	    PUTLONG(LCP_RTT_MAGIC, pktp);
+	    clock_gettime(CLOCK_MONOTONIC, &ts);
+	    PUTLONG((u_int32_t)ts.tv_sec, pktp);
+	    PUTLONG((u_int32_t)ts.tv_nsec, pktp);
+	}
+
         fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
 	++lcp_echos_pending;
     }
+}
+
+static void
+lcp_rtt_open_file (void)
+{
+    volatile u_int32_t *ring_header;
+
+    if (!lcp_rtt_file)
+	return;
+
+    lcp_rtt_file_fd = open(lcp_rtt_file, O_RDWR | O_CREAT, 0644);
+    if (lcp_rtt_file_fd < 0) {
+	error("Can't open the RTT log file %s: %m", lcp_rtt_file);
+	lcp_rtt_file_fd = 0;
+	return;
+    }
+
+    if (ftruncate(lcp_rtt_file_fd, LCP_RTT_FILE_SIZE) < 0)
+	fatal("ftruncate() of %s failed: %m", lcp_rtt_file);
+    lcp_rtt_buffer = mmap(0, LCP_RTT_FILE_SIZE, PROT_READ | PROT_WRITE,
+	    MAP_SHARED, lcp_rtt_file_fd, 0);
+    if (lcp_rtt_buffer == MAP_FAILED)
+	fatal("mmap() of %s failed: %m", lcp_rtt_file);
+    ring_header = lcp_rtt_buffer;
+
+    /* initialize the ring buffer */
+    if (ring_header[0] != htonl(LCP_RTT_MAGIC)) {
+	memset(lcp_rtt_buffer, 0, LCP_RTT_FILE_SIZE);
+	ring_header[0] = htonl(LCP_RTT_MAGIC);
+    }
+
+    ring_header[3] = htonl(lcp_echo_interval);
+    ring_header[1] = htonl(1); /* status: LCP up, file opened */
+}
+
+static void
+lcp_rtt_close_file (void)
+{
+    volatile u_int32_t *const ring_header = lcp_rtt_buffer;
+
+    if (!lcp_rtt_file_fd)
+	return;
+
+    ring_header[1] = htonl(0); /* status: LCP down, file closed */
+
+    if (munmap(lcp_rtt_buffer, LCP_RTT_FILE_SIZE) < 0)
+	error("munmap() of %s failed: %m", lcp_rtt_file);
+    if (close(lcp_rtt_file_fd) < 0)
+	error("close() of %s failed: %m", lcp_rtt_file);
+    lcp_rtt_buffer = NULL;
+    lcp_rtt_file_fd = 0;
 }
 
 /*
@@ -2312,6 +2489,9 @@ lcp_echo_lowerup (int unit)
     lcp_echos_pending      = 0;
     lcp_echo_number        = 0;
     lcp_echo_timer_running = 0;
+
+    /* Open the file where the LCP RTT data will be logged */
+    lcp_rtt_open_file();
   
     /* If a timeout interval is specified then start the timer */
     if (lcp_echo_interval != 0)
@@ -2331,4 +2511,7 @@ lcp_echo_lowerdown (int unit)
         UNTIMEOUT (LcpEchoTimeout, f);
         lcp_echo_timer_running = 0;
     }
+
+    /* Close the file containing the LCP RTT data */
+    lcp_rtt_close_file();
 }

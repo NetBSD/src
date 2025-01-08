@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: chap_ms.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * chap_ms.h - Challenge Handshake Authentication Protocol definitions.
@@ -28,18 +28,23 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp 
  */
 
-#ifndef __CHAPMS_INCLUDE__
+#ifndef PPP_CHAPMS_H
+#define PPP_CHAPMS_H
 
-#define MD4_SIGNATURE_SIZE	16	/* 16 bytes in a MD4 message digest */
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_NT_PASSWORD		256	/* Max (Unicode) chars in an NT pass */
 
 #define MS_CHAP_RESPONSE_LEN	49	/* Response length for MS-CHAP */
 #define MS_CHAP2_RESPONSE_LEN	49	/* Response length for MS-CHAPv2 */
 #define MS_AUTH_RESPONSE_LENGTH	40	/* MS-CHAPv2 authenticator response, */
+#define MS_AUTH_NTRESP_LEN      24  /* Length of NT-response field */
 					/* as ASCII */
 
 /* E=eeeeeeeeee error codes for MS-CHAP failure messages. */
@@ -69,22 +74,6 @@
 #define MS_CHAP2_NTRESP_LEN	24
 #define MS_CHAP2_FLAGS		48
 
-#ifdef MPPE
-#include "mppe.h"	/* MPPE_MAX_KEY_LEN */
-extern u_char mppe_send_key[MPPE_MAX_KEY_LEN];
-extern u_char mppe_recv_key[MPPE_MAX_KEY_LEN];
-extern int mppe_keys_set;
-
-/* These values are the RADIUS attribute values--see RFC 2548. */
-#define MPPE_ENC_POL_ENC_ALLOWED 1
-#define MPPE_ENC_POL_ENC_REQUIRED 2
-#define MPPE_ENC_TYPES_RC4_40 2
-#define MPPE_ENC_TYPES_RC4_128 4
-
-/* used by plugins (using above values) */
-extern void set_mppe_enc_types(int, int);
-#endif
-
 /* Are we the authenticator or authenticatee?  For MS-CHAPv2 key derivation. */
 #define MS_CHAP2_AUTHENTICATEE 0
 #define MS_CHAP2_AUTHENTICATOR 1
@@ -92,20 +81,26 @@ extern void set_mppe_enc_types(int, int);
 void ChapMS (u_char *, char *, int, u_char *);
 void ChapMS2 (u_char *, u_char *, char *, char *, int,
 	      u_char *, u_char[MS_AUTH_RESPONSE_LENGTH+1], int);
-#ifdef MPPE
-void mppe_set_keys (u_char *, u_char[MD4_SIGNATURE_SIZE]);
-void mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
-		    u_char NTResponse[24], int IsServer);
-#endif
 
-void	ChallengeHash (u_char[16], u_char *, char *, u_char[8]);
+void ChallengeHash (u_char[16], u_char *, char *, u_char[8]);
 
-void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
-			u_char NTResponse[24], u_char PeerChallenge[16],
-			u_char *rchallenge, char *username,
-			u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
+
+/**
+ * PasswordHashHash - 16 bytes representing the NT Password Hash Hash
+ * NTResponse - 24 bytes  represending the NTResponse parameter
+ * PeerChallenge - 16 bytes challange for peer
+ * rchallenge - 16 bytes challenge provided by peer
+ * authResponse - 24 + 1 byte to store the authenticator response
+ */
+void GenerateAuthenticatorResponse(unsigned char *PasswordHashHash,
+			unsigned char *NTResponse, unsigned char *PeerChallenge,
+			unsigned char *rchallenge, char *username,
+			unsigned char *authResponse);
 
 void chapms_init(void);
 
-#define __CHAPMS_INCLUDE__
-#endif /* __CHAPMS_INCLUDE__ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PPP_CHAPMS_H */

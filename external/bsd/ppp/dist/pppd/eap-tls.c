@@ -99,7 +99,6 @@ void eaptls_gen_mppe_keys(struct eaptls_session *ets, int client)
     unsigned char  eap_tls13_context[] = { EAPT_TLS };
     unsigned char *context = NULL;
     size_t         context_len = 0;
-    unsigned char *p;
 
     dbglog("EAP-TLS generating MPPE keys");
     if (ets->tls_v13)
@@ -139,7 +138,7 @@ void eaptls_gen_mppe_keys(struct eaptls_session *ets, int client)
 
 #endif /* PPP_WITH_MPPE */
 
-int password_callback (char *buf, int size, int rwflag, void *u)
+static int password_callback (char *buf, int size, int rwflag, void *u)
 {
     if (buf)
     {
@@ -150,7 +149,7 @@ int password_callback (char *buf, int size, int rwflag, void *u)
 }
 
 
-CONF *eaptls_ssl_load_config( void )
+static CONF *eaptls_ssl_load_config( void )
 {
     CONF        *config;
     int          ret_code;
@@ -187,7 +186,7 @@ CONF *eaptls_ssl_load_config( void )
 }
 
 #ifndef OPENSSL_NO_ENGINE
-ENGINE *eaptls_ssl_load_engine( char *engine_name )
+static ENGINE *eaptls_ssl_load_engine( char *engine_name )
 {
     ENGINE      *e = NULL;
 
@@ -272,7 +271,6 @@ SSL_CTX *eaptls_init_ssl(int init_server, char *cacertfile, char *capath,
     STACK_OF(X509) *chain = NULL;
     BIO         *input;
     int          ret;
-    int          reason;
 
     /*
      * Without these can't continue 
@@ -624,7 +622,7 @@ fail:
  * Determine the maximum packet size by looking at the LCP handshake
  */
 
-int eaptls_get_mtu(int unit)
+static int eaptls_get_mtu(int unit)
 {
     int mtu, mru;
 

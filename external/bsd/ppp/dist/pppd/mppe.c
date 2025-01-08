@@ -113,7 +113,7 @@ mppe_set_chapv1(unsigned char *rchallenge, unsigned char *PasswordHashHash)
 {
     PPP_MD_CTX *ctx;
     u_char Digest[SHA_DIGEST_LENGTH];
-    int DigestLen;
+    unsigned int DigestLen;
 
     ctx = PPP_MD_CTX_new();
     if (ctx != NULL) {
@@ -156,7 +156,7 @@ mppe_set_chapv2(unsigned char *PasswordHashHash, unsigned char *NTResponse,
     u_char	MasterKey[SHA_DIGEST_LENGTH];
     u_char	SendKey[SHA_DIGEST_LENGTH];
     u_char	RecvKey[SHA_DIGEST_LENGTH];
-    int KeyLen;
+    unsigned int KeyLen;
 
     u_char SHApad1[40] =
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

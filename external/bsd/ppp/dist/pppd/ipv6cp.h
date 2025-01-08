@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: ipv6cp.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * ipv6cp.h - PPP IPV6 Control Protocol.
@@ -35,6 +35,15 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
+#ifndef PPP_IPV6CP_H
+#define PPP_IPV6CP_H
+
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*  Original version, based on RFC2023 :
 
@@ -157,6 +166,7 @@ typedef struct ipv6cp_options {
     int opt_remote;		/* histoken set by option */
     int use_ip;			/* use IP as interface identifier */
     int use_persistent;		/* use uniquely persistent value for address */
+    int use_remotenumber;	/* use remote number value for address */
     int neg_vj;			/* Van Jacobson Compression? */
     u_short vj_protocol;	/* protocol value to use in VJ option */
     eui64_t ourid, hisid;	/* Interface identifiers */
@@ -169,3 +179,21 @@ extern ipv6cp_options ipv6cp_allowoptions[];
 extern ipv6cp_options ipv6cp_hisoptions[];
 
 extern struct protent ipv6cp_protent;
+
+/*
+ * Hook for a plugin to know when IPv6 protocol has come up
+ */
+typedef void (ipv6_up_hook_fn)(void);
+extern ipv6_up_hook_fn *ipv6_up_hook;
+
+/*
+ * Hook for a plugin to know when IPv6 protocol has come down
+ */
+typedef void (ipv6_down_hook_fn)(void);
+extern ipv6_down_hook_fn *ipv6_down_hook;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -70,12 +70,12 @@ void mp_bundle_terminated(void);
 /*
  * Acting as a multilink master
  */
-bool mp_master();
+bool mp_master(void);
 
 /*
  * Was multilink negotiated
  */
-bool mp_on();
+bool mp_on(void);
 
 /*
  * Convert an endpoint discriminator to a string

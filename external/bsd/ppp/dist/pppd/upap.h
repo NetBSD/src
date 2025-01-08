@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: upap.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * upap.h - User/Password Authentication Protocol definitions.
@@ -41,6 +41,15 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PPP_UPAP_H
+#define PPP_UPAP_H
+
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * Packet header = Code, id, length.
@@ -67,7 +76,7 @@ typedef struct upap_state {
     int us_passwdlen;		/* Password length */
     int us_clientstate;		/* Client state */
     int us_serverstate;		/* Server state */
-    u_char us_id;		/* Current id */
+    unsigned char us_id;		/* Current id */
     int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
     int us_transmits;		/* Number of auth-reqs sent */
     int us_maxtransmits;	/* Maximum number of auth-reqs to send */
@@ -108,3 +117,42 @@ void upap_authwithpeer(int, char *, char *);
 void upap_authpeer(int);
 
 extern struct protent pap_protent;
+
+typedef int  (pap_check_hook_fn)(void);
+typedef int  (pap_auth_hook_fn)(char *user, char *passwd, char **msgp,
+                struct wordlist **paddrs,
+                struct wordlist **popts);
+typedef void (pap_logout_hook_fn)(void);
+typedef int  (pap_passwd_hook_fn)(char *user, char *passwd);
+
+/*
+ * This function will return a value of 1 to indicate that a plugin intent to
+ *   supply a username or a password through the pap_auth_hook callback.
+ *
+ * A return value of > 0 will avoid parsing pap-secrets file.
+ */
+extern pap_check_hook_fn  *pap_check_hook;
+
+/*
+ * This hook is used to check if a username and password matches against the
+ *   PAP secrets.
+ */
+extern pap_auth_hook_fn   *pap_auth_hook;
+
+/*
+ * Hook for plugin to know about PAP user logout.
+ */
+extern pap_logout_hook_fn *pap_logout_hook;
+
+/*
+ * A plugin can chose to supply its own user and password overriding what
+ * previously has been configured. Hook is only valid when pppd is acting
+ * as a client
+ */
+extern pap_passwd_hook_fn *pap_passwd_hook;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // PPP_UPAP_H

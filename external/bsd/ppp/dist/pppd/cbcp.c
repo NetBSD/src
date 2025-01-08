@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.6 2025/01/08 19:59:38 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -34,19 +34,23 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cbcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.6 2025/01/08 19:59:38 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
 #include "cbcp.h"
 #include "fsm.h"
 #include "lcp.h"
+#include "options.h"
 
 
 /*
@@ -54,7 +58,7 @@ __RCSID("$NetBSD: cbcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
  */
 static int setcbcp (char **);
 
-static option_t cbcp_option_list[] = {
+static struct option cbcp_option_list[] = {
     { "callback", o_special, (void *)setcbcp,
       "Ask for callback", OPT_PRIO | OPT_A2STRVAL, &cbcp[0].us_number },
     { NULL }
@@ -473,6 +477,6 @@ static void
 cbcp_up(cbcp_state *us)
 {
     persist = 0;
-    status = EXIT_CALLBACK;
+    ppp_set_status(EXIT_CALLBACK);
     lcp_close(0, "Call me back, please");
 }

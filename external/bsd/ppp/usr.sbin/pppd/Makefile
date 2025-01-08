@@ -1,11 +1,41 @@
-#	$NetBSD: Makefile,v 1.3 2023/06/03 09:09:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2025/01/08 19:59:40 christos Exp $
 
 .include "../Makefile.inc"
 
 PROG=	pppd
-SRCS=	auth.c cbcp.c ccp.c chap-md5.c chap-new.c chap_ms.c demand.c eap.c \
-	ecp.c fsm.c ipcp.c ipxcp.c lcp.c magic.c main.c multilink.c \
-	options.c pppcrypt.c session.c sys-bsd.c tdb.c tty.c upap.c utils.c
+SRCS= \
+auth.c \
+cbcp.c \
+ccp.c \
+chap-md5.c \
+chap.c \
+chap_ms.c \
+crypto.c \
+crypto_ms.c \
+demand.c \
+eap.c \
+eap-tls.c \
+ecp.c \
+fsm.c \
+ipcp.c \
+lcp.c \
+magic.c \
+main.c \
+mppe.c \
+multilink.c \
+options.c \
+peap.c \
+ppp-des.c \
+ppp-md4.c \
+ppp-md5.c \
+ppp-sha1.c \
+session.c \
+sys-bsd.c \
+tdb.c \
+tls.c \
+tty.c \
+upap.c \
+utils.c
 
 PPPDDIR=	${DIST}/pppd
 
@@ -14,13 +44,15 @@ MAN=	pppd.8
 BINMODE=4555
 BINOWN=	root
 
-CPPFLAGS+= -I${.CURDIR} -DHAVE_PATHS_H -DSUPPORT_UTMP -DSUPPORT_UTMPX -DPLUGIN
-CPPFLAGS+= -I${PPPDDIR} -DPPP_FILTER
-CPPFLAGS+= -DCBCP_SUPPORT -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DMPPE
-CPPFLAGS+= -DHAVE_MULTILINK -DUSE_TDB
+CPPFLAGS+= -I${.CURDIR} -DHAVE_CONFIG_H -DSUPPORT_UTMP -DSUPPORT_UTMPX
+CPPFLAGS+= -I${PPPDDIR} -I${DIST}/../include -DSYSCONFDIR=\"/etc\"
+CPPFLAGS+= -DPPPD_PLUGIN_DIR=\"/usr/libexec/ppp\"
+CPPFLAGS+= -Wno-error=deprecated-declarations
+CPPFLAGS+= -Wno-deprecated-declarations
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
+CPPFLAGS+= -DPPP_WITH_IPV6CP
 SRCS+=	eui64.c ipv6cp.c
 .endif
 
@@ -30,8 +62,8 @@ LDADD+=-lpam ${PAM_STATIC_LDADD}
 DPADD+=${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
-LDADD+= -lpcap -lcrypt -lutil -Wl,--export-dynamic
-DPADD+= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
+LDADD+= -lpcap -lcrypt -lssl -lcrypto -lutil -Wl,--export-dynamic
+DPADD+= ${LIBPCAP} ${LIBCRYPT} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
 
 .for f in chap-md5 chap_ms eap
 COPTS.${f}.c+=	-Wno-pointer-sign

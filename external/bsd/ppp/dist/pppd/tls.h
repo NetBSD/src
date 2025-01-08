@@ -39,12 +39,12 @@ struct tls_info;
 /**
  * Initialize the SSL library
  */
-int tls_init();
+int tls_init(void);
 
 /**
  * Get the SSL_METHOD
  */
-const SSL_METHOD* tls_method();
+const SSL_METHOD* tls_method(void);
 
 /**
  * Configure the SSL options

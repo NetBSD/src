@@ -55,7 +55,7 @@ typedef struct _PPP_MD PPP_MD;
 /*
  * Create a new Message Digest context object
  */
-PPP_MD_CTX *PPP_MD_CTX_new();
+PPP_MD_CTX *PPP_MD_CTX_new(void);
 
 /*
  * Free the Message Digest context
@@ -154,12 +154,12 @@ void PPP_crypto_error(char *fmt, ...);
 /*
  * Global initialization, must be called once per process
  */
-int PPP_crypto_init();
+int PPP_crypto_init(void);
 
 /*
  * Global deinitialization
  */
-int PPP_crypto_deinit();
+int PPP_crypto_deinit(void);
 
 #ifdef __cplusplus
 }

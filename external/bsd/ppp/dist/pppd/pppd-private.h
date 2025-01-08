@@ -46,10 +46,10 @@
 #include <stdio.h>		/* for FILE */
 #include <stdlib.h>		/* for encrypt */
 #include <unistd.h>		/* for setkey */
-#if defined(SOL2)
-#include <net/ppp_defs.h>
-#else
+#if defined(__linux__)
 #include <linux/ppp_defs.h>
+#else
+#include <net/ppp_defs.h>
 #endif
 
 #include "pppd.h"
@@ -253,8 +253,12 @@ extern session_limit_dir_t maxoctets_dir;       /* Direction */
 extern int                 maxoctets_timeout;   /* Timeout for check of octets limit */
 
 #ifdef PPP_WITH_FILTER
-extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
-extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+/* Filter for pkts to pass */
+extern struct	bpf_program pass_filter_in;
+extern struct	bpf_program pass_filter_out;
+/* Filter for link-active pkts */
+extern struct	bpf_program active_filter_in;
+extern struct	bpf_program active_filter_out;
 #endif
 
 #ifdef PPP_WITH_MSLANMAN
@@ -454,7 +458,8 @@ void logwtmp(const char *, const char *, const char *);
 int  get_host_seed(void);	/* Get host-dependent random number seed */
 int  have_route_to(u_int32_t); /* Check if route to addr exists */
 #ifdef PPP_WITH_FILTER
-int  set_filters(struct bpf_program *pass, struct bpf_program *active);
+int  set_filters(struct bpf_program *pass_in, struct bpf_program *pass_out,
+    struct bpf_program *active_in, struct bpf_program *active_out);
 				/* Set filter programs in kernel */
 #endif
 int  get_if_hwaddr(unsigned char *addr, char *name);

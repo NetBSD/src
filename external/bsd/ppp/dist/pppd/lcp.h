@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: lcp.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -41,6 +41,15 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PPP_LCP_H
+#define PPP_LCP_H
+
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * Options.
@@ -82,6 +91,14 @@
 /* Value used as data for CI_CALLBACK option */
 #define CBCP_OPT	6	/* Use callback control protocol */
 
+/* An endpoint discriminator, used with multilink. */
+#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
+struct epdisc {
+    unsigned char	class;
+    unsigned char	length;
+    unsigned char	value[MAX_ENDP_LEN];
+};
+
 /*
  * The state of options is described by an lcp_options structure.
  */
@@ -104,11 +121,11 @@ typedef struct lcp_options {
     bool neg_endpoint;		/* negotiate endpoint discriminator */
     int  mru;			/* Value of MRU */
     int	 mrru;			/* Value of MRRU, and multilink enable */
-    u_char chap_mdtype;		/* which MD types (hashing algorithm) */
-    u_int32_t asyncmap;		/* Value of async map */
-    u_int32_t magicnumber;
+    unsigned char chap_mdtype;		/* which MD types (hashing algorithm) */
+    uint32_t asyncmap;		/* Value of async map */
+    uint32_t magicnumber;
     int  numloops;		/* Number of loops during magic number neg. */
-    u_int32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
+    uint32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
     struct epdisc endpoint;	/* endpoint discriminator */
 } lcp_options;
 
@@ -126,10 +143,17 @@ void lcp_open(int);
 void lcp_close(int, char *);
 void lcp_lowerup(int);
 void lcp_lowerdown(int);
-void lcp_sprotrej(int, u_char *, int);	/* send protocol reject */
+void lcp_sprotrej(int, unsigned char *, int);	/* send protocol reject */
 
 extern struct protent lcp_protent;
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
 #define DEFLOOPBACKFAIL	10
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // PPP_LCP_H

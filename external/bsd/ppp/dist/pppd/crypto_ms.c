@@ -126,7 +126,7 @@ int
 DesEncrypt(const unsigned char *clear, const unsigned char *key, unsigned char *cipher)
 {
     int retval = 0;
-    unsigned int clen = 0;
+    int clen = 0;
     unsigned char des_key[8];
 
     PPP_CIPHER_CTX *ctx = PPP_CIPHER_CTX_new();
@@ -155,7 +155,7 @@ int
 DesDecrypt(const unsigned char *cipher, const unsigned char *key, unsigned char *clear)
 {
     int retval = 0;
-    unsigned int clen = 0;
+    int clen = 0;
     unsigned char des_key[8];
 
     PPP_CIPHER_CTX *ctx = PPP_CIPHER_CTX_new();

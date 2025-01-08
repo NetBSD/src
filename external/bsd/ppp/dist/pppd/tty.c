@@ -1,9 +1,9 @@
-/*	$NetBSD: tty.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
  *
- * Copyright (C) 2000-2004 Paul Mackerras. All rights reserved.
+ * Copyright (C) 2000-2024 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,14 +12,10 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -71,7 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tty.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -96,7 +96,8 @@ __RCSID("$NetBSD: tty.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
 #include "fsm.h"
 #include "lcp.h"
 
@@ -112,7 +113,7 @@ static int setdevname(char *, char **, int);
 static int setspeed(char *, char **, int);
 static int setxonxoff(char **);
 static int setescape(char **);
-static void printescape(option_t *, void (*)(void *, char *,...),void *);
+static void printescape(struct option *, void (*)(void *, char *,...),void *);
 static void finish_tty(void);
 static int start_charshunt(int, int);
 static void stop_charshunt(void *, int);
@@ -137,6 +138,8 @@ int locked;			/* lock() has succeeded */
 struct stat devstat;		/* result of stat() on devnam */
 
 /* option variables */
+char	devnam[MAXPATHLEN];	/* Device name */
+char	ppp_devname[MAXPATHLEN];/* name of PPP tty (maybe ttypx) */
 int	crtscts = 0;		/* Use hardware flow control */
 int	stop_bits = 1;		/* Number of serial port stop bits */
 bool	modem = 1;		/* Use modem control lines */
@@ -165,7 +168,7 @@ extern int privopen;		/* don't lock, open device as root */
 u_int32_t xmit_accm[8];		/* extended transmit ACCM */
 
 /* option descriptors */
-option_t tty_options[] = {
+static struct option tty_options[] = {
     /* device name must be first, or change connect_tty() below! */
     { "device name", o_wild, (void *) &setdevname,
       "Serial port device name",
@@ -262,6 +265,61 @@ struct channel tty_channel = {
 	&tty_close_fds
 };
 
+bool
+ppp_sync_serial()
+{
+    return sync_serial;
+}
+
+bool
+ppp_get_modem()
+{
+    return modem;
+}
+
+void
+ppp_set_modem(bool on)
+{
+    modem = on;
+}
+
+bool
+ppp_using_pty()
+{
+    return using_pty;
+}
+
+int
+ppp_set_pppdevnam(const char *name)
+{
+    if (name) {
+        return strlcpy(ppp_devname, name, sizeof(ppp_devname));
+    }
+    return -1;
+}
+
+const char *
+ppp_pppdevnam()
+{
+    return ppp_devname;
+}
+
+const char *
+ppp_devnam()
+{
+    return devnam;
+}
+
+int
+ppp_set_devnam(const char *name)
+{
+    if (name) {
+        return strlcpy(devnam, name, sizeof(devnam));
+    }
+    return -1;
+}
+
+
 /*
  * setspeed - Set the serial port baud rate.
  * If doit is 0, the call is to check whether this option is
@@ -310,17 +368,17 @@ setdevname(char *cp, char **argv, int doit)
 	if (stat(cp, &statbuf) < 0) {
 		if (!doit)
 			return errno != ENOENT;
-		option_error("Couldn't stat %s: %m", cp);
+		ppp_option_error("Couldn't stat %s: %m", cp);
 		return 0;
 	}
 	if (!S_ISCHR(statbuf.st_mode)) {
 		if (doit)
-			option_error("%s is not a character device", cp);
+			ppp_option_error("%s is not a character device", cp);
 		return 0;
 	}
 
 	if (doit) {
-		strlcpy(devnam, cp, sizeof(devnam));
+		strlcpy(devnam, cp, MAXPATHLEN);
 		devstat = statbuf;
 		default_device = 0;
 	}
@@ -352,16 +410,16 @@ setescape(char **argv)
     while (*p) {
 	n = strtol(p, &endp, 16);
 	if (p == endp) {
-	    option_error("escape parameter contains invalid hex number '%s'",
+	    ppp_option_error("escape parameter contains invalid hex number '%s'",
 			 p);
 	    return 0;
 	}
 	p = endp;
 	if (n < 0 || n == 0x5E || n > 0xFF) {
-	    option_error("can't escape character 0x%x", n);
+	    ppp_option_error("can't escape character 0x%x", n);
 	    ret = 0;
 	} else
-	    xmit_accm[n >> 5] |= 1 << (n & 0x1F);
+	    xmit_accm[n >> 5] |= 1U << (n & 0x1F);
 	while (*p == ',' || *p == ' ')
 	    ++p;
     }
@@ -370,7 +428,7 @@ setescape(char **argv)
 }
 
 static void
-printescape(option_t *opt, void (*printer)(void *, char *, ...), void *arg)
+printescape(struct option *opt, void (*printer)(void *, char *, ...), void *arg)
 {
 	int n;
 	int first = 1;
@@ -378,7 +436,7 @@ printescape(option_t *opt, void (*printer)(void *, char *, ...), void *arg)
 	for (n = 0; n < 256; ++n) {
 		if (n == 0x7d)
 			n += 2;		/* skip 7d, 7e */
-		if (xmit_accm[n >> 5] & (1 << (n & 0x1f))) {
+		if (xmit_accm[n >> 5] & (1U << (n & 0x1f))) {
 			if (!first)
 				printer(arg, ",");
 			else
@@ -395,9 +453,9 @@ printescape(option_t *opt, void (*printer)(void *, char *, ...), void *arg)
  */
 void tty_init(void)
 {
-    add_notifier(&pidchange, maybe_relock, 0);
+    ppp_add_notify(NF_PID_CHANGE, maybe_relock, 0);
     the_channel = &tty_channel;
-    xmit_accm[3] = 0x60000000;
+    xmit_accm[3] = 0x60000000U;
 }
 
 /*
@@ -412,10 +470,10 @@ void tty_process_extra_options(void)
 	if (default_device) {
 		char *p;
 		if (!isatty(0) || (p = ttyname(0)) == NULL) {
-			option_error("no device specified and stdin is not a tty");
+			ppp_option_error("no device specified and stdin is not a tty");
 			exit(EXIT_OPTION_ERROR);
 		}
-		strlcpy(devnam, p, sizeof(devnam));
+		strlcpy(devnam, p, MAXPATHLEN);
 		if (stat(devnam, &devstat) < 0)
 			fatal("Couldn't stat default device %s: %m", devnam);
 	}
@@ -442,12 +500,12 @@ tty_check_options(void)
 	int fdflags;
 
 	if (demand && notty) {
-		option_error("demand-dialling is incompatible with notty");
+		ppp_option_error("demand-dialling is incompatible with notty");
 		exit(EXIT_OPTION_ERROR);
 	}
 	if (demand && connect_script == 0 && ptycommand == NULL
 	    && pty_socket == NULL) {
-		option_error("connect script is required for demand-dialling\n");
+		ppp_option_error("connect script is required for demand-dialling\n");
 		exit(EXIT_OPTION_ERROR);
 	}
 	/* default holdoff to 0 if no connect script has been given */
@@ -456,16 +514,16 @@ tty_check_options(void)
 
 	if (using_pty) {
 		if (!default_device) {
-			option_error("%s option precludes specifying device name",
+			ppp_option_error("%s option precludes specifying device name",
 				     pty_socket? "socket": notty? "notty": "pty");
 			exit(EXIT_OPTION_ERROR);
 		}
 		if (ptycommand != NULL && notty) {
-			option_error("pty option is incompatible with notty option");
+			ppp_option_error("pty option is incompatible with notty option");
 			exit(EXIT_OPTION_ERROR);
 		}
 		if (pty_socket != NULL && (ptycommand != NULL || notty)) {
-			option_error("socket option is incompatible with pty and notty");
+			ppp_option_error("socket option is incompatible with pty and notty");
 			exit(EXIT_OPTION_ERROR);
 		}
 		default_device = notty;
@@ -519,14 +577,14 @@ int connect_tty(void)
 	 * Get a pty master/slave pair if the pty, notty, socket,
 	 * or record options were specified.
 	 */
-	strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
+	strlcpy(ppp_devname, devnam, MAXPATHLEN);
 	pty_master = -1;
 	pty_slave = -1;
 	real_ttyfd = -1;
 	if (using_pty || record_file != NULL) {
-		if (!get_pty(&pty_master, &pty_slave, ppp_devnam, uid)) {
+		if (!get_pty(&pty_master, &pty_slave, ppp_devname, uid)) {
 			error("Couldn't allocate pseudo-tty");
-			status = EXIT_FATAL_ERROR;
+			ppp_set_status(EXIT_FATAL_ERROR);
 			return -1;
 		}
 		set_up_tty(pty_slave, 1);
@@ -535,7 +593,7 @@ int connect_tty(void)
 	/*
 	 * Lock the device if we've been asked to.
 	 */
-	status = EXIT_LOCK_FAILED;
+	ppp_set_status(EXIT_LOCK_FAILED);
 	if (lockflag && !privopen) {
 		if (lock(devnam) < 0)
 			goto errret;
@@ -561,7 +619,7 @@ int connect_tty(void)
 			if (prio < OPRIO_ROOT && seteuid(uid) == -1) {
 				error("Unable to drop privileges before opening %s: %m\n",
 				      devnam);
-				status = EXIT_OPEN_FAILED;
+				ppp_set_status(EXIT_OPEN_FAILED);
 				goto errret;
 			}
 			real_ttyfd = open(devnam, O_NONBLOCK | O_RDWR, 0);
@@ -573,7 +631,7 @@ int connect_tty(void)
 			errno = err;
 			if (err != EINTR) {
 				error("Failed to open %s: %m", devnam);
-				status = EXIT_OPEN_FAILED;
+				ppp_set_status(EXIT_OPEN_FAILED);
 			}
 			if (!persist || err != EINTR)
 				goto errret;
@@ -616,7 +674,7 @@ int connect_tty(void)
 	 * If the pty, socket, notty and/or record option was specified,
 	 * start up the character shunt now.
 	 */
-	status = EXIT_PTYCMD_FAILED;
+	ppp_set_status(EXIT_PTYCMD_FAILED);
 	if (ptycommand != NULL) {
 		if (record_file != NULL) {
 			int ipipe[2], opipe[2], ok;
@@ -682,7 +740,7 @@ int connect_tty(void)
 		if (initializer && initializer[0]) {
 			if (device_script(initializer, ttyfd, ttyfd, 0) < 0) {
 				error("Initializer script failed");
-				status = EXIT_INIT_FAILED;
+				ppp_set_status(EXIT_INIT_FAILED);
 				goto errretf;
 			}
 			if (got_sigterm) {
@@ -695,7 +753,7 @@ int connect_tty(void)
 		if (connector && connector[0]) {
 			if (device_script(connector, ttyfd, ttyfd, 0) < 0) {
 				error("Connect script failed");
-				status = EXIT_CONNECT_FAILED;
+				ppp_set_status(EXIT_CONNECT_FAILED);
 				goto errretf;
 			}
 			if (got_sigterm) {
@@ -722,7 +780,7 @@ int connect_tty(void)
 				break;
 			if (errno != EINTR) {
 				error("Failed to reopen %s: %m", devnam);
-				status = EXIT_OPEN_FAILED;
+				ppp_set_status(EXIT_OPEN_FAILED);
 			}
 			if (!persist || errno != EINTR || hungup || got_sigterm)
 				goto errret;
@@ -731,7 +789,7 @@ int connect_tty(void)
 	}
 
 	slprintf(numbuf, sizeof(numbuf), "%d", baud_rate);
-	script_setenv("SPEED", numbuf, 0);
+	ppp_script_setenv("SPEED", numbuf, 0);
 
 	/* run welcome script, if any */
 	if (welcomer && welcomer[0]) {
@@ -910,9 +968,9 @@ open_socket(char *dest)
 static int
 start_charshunt(int ifd, int ofd)
 {
-    int cpid;
+    int cpid, ret;
 
-    cpid = safe_fork(ifd, ofd, (log_to_fd >= 0? log_to_fd: 2));
+    cpid = ppp_safe_fork(ifd, ofd, (log_to_fd >= 0? log_to_fd: 2));
     if (cpid == -1) {
 	error("Can't fork process for character shunt: %m");
 	return 0;
@@ -924,10 +982,14 @@ start_charshunt(int ifd, int ofd)
 	    log_to_fd = -1;
 	else if (log_to_fd >= 0)
 	    log_to_fd = 2;
-	setgid(getgid());
-	setuid(uid);
-	if (getuid() != uid)
-	    fatal("setuid failed");
+	ret = setgid(getgid());
+	if (ret != 0) {
+		fatal("setgid failed, %m");
+	}
+	ret = setuid(uid);
+	if (ret != 0 || getuid() != uid) {
+		fatal("setuid failed, %m");
+	}
 	charshunt(0, 1, record_file);
 	exit(0);
     }
@@ -1051,7 +1113,7 @@ charshunt(int ifd, int ofd, char *record_file)
     pty_readable = stdin_readable = 1;
 
     ilevel = olevel = 0;
-    get_time(&levelt);
+    ppp_get_time(&levelt);
     if (max_data_rate) {
 	max_level = max_data_rate / 10;
 	if (max_level < 100)
@@ -1100,7 +1162,7 @@ charshunt(int ifd, int ofd, char *record_file)
 	    int nbt;
 	    struct timeval now;
 
-	    get_time(&now);
+	    ppp_get_time(&now);
 	    dt = (now.tv_sec - levelt.tv_sec
 		  + (now.tv_usec - levelt.tv_usec) / 1e6);
 	    nbt = (int)(dt * max_data_rate);

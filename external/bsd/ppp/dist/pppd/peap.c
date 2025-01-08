@@ -274,7 +274,7 @@ static void peap_response(eap_state *esp, u_char id, u_char *buf, int len)
 	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + peap_len);
 }
 
-void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
+static void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
 		u_char *out_buf, int *out_len)
 {
 	struct peap_state *psm = esp->ea_peap;

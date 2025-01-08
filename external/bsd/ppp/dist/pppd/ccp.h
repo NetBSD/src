@@ -1,9 +1,9 @@
-/*	$NetBSD: ccp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: ccp.h,v 1.6 2025/01/08 19:59:38 christos Exp $	*/
 
 /*
  * ccp.h - Definitions for PPP Compression Control Protocol.
  *
- * Copyright (c) 1994-2002 Paul Mackerras. All rights reserved.
+ * Copyright (c) 1994-2024 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,14 +12,10 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -28,9 +24,15 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Id: ccp.h,v 1.12 2004/11/04 10:02:26 paulus Exp 
  */
+#ifndef PPP_CCP_H
+#define PPP_CCP_H
+
+#include "pppdconf.h"
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct ccp_options {
     bool bsd_compress;		/* do BSD Compress? */
@@ -39,9 +41,9 @@ typedef struct ccp_options {
     bool predictor_2;		/* do Predictor-2? */
     bool deflate_correct;	/* use correct code for deflate? */
     bool deflate_draft;		/* use draft RFC code for deflate? */
-    u_char mppe;		/* MPPE bitfield */
-    u_short bsd_bits;		/* # bits/code for BSD Compress */
-    u_short deflate_size;	/* lg(window size) for Deflate */
+    unsigned char mppe;		/* MPPE bitfield */
+    unsigned short bsd_bits;		/* # bits/code for BSD Compress */
+    unsigned short deflate_size;	/* lg(window size) for Deflate */
     short method;		/* code for chosen compression method */
 } ccp_options;
 
@@ -52,3 +54,9 @@ extern ccp_options ccp_allowoptions[];
 extern ccp_options ccp_hisoptions[];
 
 extern struct protent ccp_protent;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // PPP_CCP_H

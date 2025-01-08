@@ -87,6 +87,10 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
  * TODO:
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -105,7 +109,7 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
 #if defined(NetBSD1_2) || defined(__NetBSD_Version__)
 #include <util.h>
 #endif
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 #include <net/bpf.h>
 #endif
 
@@ -167,6 +171,7 @@ __RCSID("NetBSD: sys-bsd.c,v 1.68 2013/06/24 20:43:48 christos Exp ");
 #endif
 
 #include "pppd.h"
+#include "pppd-private.h"
 #include "fsm.h"
 #include "ipcp.h"
 
@@ -325,7 +330,7 @@ sys_cleanup(void)
  * sys_close - Clean up in a child process before execing.
  */
 void
-sys_close()
+ppp_sys_close()
 {
     if (sock_fd >= 0)
 	close(sock_fd);
@@ -356,11 +361,11 @@ sys_check_options(void)
 }
 
 /*
- * ppp_available - check whether the system has any ppp interfaces
+ * ppp_check_kernel_support - check whether the system has any ppp interfaces
  * (in fact we check whether we can create one)
  */
 int
-ppp_available(void)
+ppp_check_kernel_support(void)
 {
     int s;
     extern char *no_ppp_msg;
@@ -1175,10 +1180,10 @@ get_loop_output(void)
 
 
 /*
- * netif_set_mtu - set the MTU on the PPP network interface.
+ * ppp_set_mtu - set the MTU on the PPP network interface.
  */
 void
-netif_set_mtu(int unit, int mtu)
+ppp_set_mtu(int unit, int mtu)
 {
     struct ifreq ifr;
 
@@ -1193,10 +1198,10 @@ netif_set_mtu(int unit, int mtu)
 }
 
 /*
- * netif_get_mtu - get the MTU on the PPP network interface.
+ * ppp_get_mtu - get the MTU on the PPP network interface.
  */
 int
-netif_get_mtu(int unit)
+ppp_get_mtu(int unit)
 {
     struct ifreq ifr;
 
@@ -1229,7 +1234,7 @@ tty_send_config(int mtu, u_int32_t asyncmap, int pcomp, int accomp)
     x = get_flags(ppp_fd);
     x = pcomp? x | SC_COMP_PROT: x &~ SC_COMP_PROT;
     x = accomp? x | SC_COMP_AC: x &~ SC_COMP_AC;
-    x = sync_serial ? x | SC_SYNC : x & ~SC_SYNC;
+    x = ppp_sync_serial() ? x | SC_SYNC : x & ~SC_SYNC;
     set_flags(ppp_fd, x);
 }
 
@@ -1341,7 +1346,7 @@ get_ppp_stats(int u, struct pppd_stats *stats)
 }
 
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
 /*
  * set_filters - transfer the pass and active filters to the kernel.
  */
@@ -2194,7 +2199,7 @@ unlock(void)
  * get_time - Get current time, monotonic if possible.
  */
 int
-get_time(struct timeval *tv)
+ppp_get_time(struct timeval *tv)
 {
     return gettimeofday(tv, NULL);
 }

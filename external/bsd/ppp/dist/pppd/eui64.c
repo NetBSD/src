@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: eui64.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * eui64.c - EUI64 routines for IPv6CP.
@@ -37,9 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eui64.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: eui64.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
 
-#include "pppd.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "pppd-private.h"
 
 
 /*

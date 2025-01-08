@@ -34,6 +34,9 @@ case "${host_os}" in
     solaris2*)
 	build_sunos=yes
 	;;
+    netbsd*)
+	build_netbsd=yes
+	;;
     *)
 	AC_MSG_ERROR(["OS ${host_os} not supported"])
 	;;
@@ -41,6 +44,7 @@ esac
 
 AM_CONDITIONAL([LINUX], [test "x${build_linux}" = "xyes" ])
 AM_CONDITIONAL([SUNOS], [test "x${build_sunos}" = "xyes" ])
+AM_CONDITIONAL([NETBSD], [test "x${build_netbsd}" = "xyes" ])
 AM_COND_IF([SUNOS],
       CFLAGS="$CFLAGS -DSOL2 -DSRV4")
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: eui64.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * eui64.h - EUI64 routines for IPv6CP.
@@ -35,13 +35,14 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+#ifndef PPP_EUI64_H
+#define PPP_EUI64_H
 
-#ifndef __EUI64_H__
-#define __EUI64_H__
+#include "pppdconf.h"
 
-#if !defined(INET6)
-#error	"this file should only be included when INET6 is defined"
-#endif /* not defined(INET6) */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(SOL2)
 #include <netinet/in.h>
@@ -111,5 +112,8 @@ typedef union
 
 char *eui64_ntoa(eui64_t);	/* Returns ascii representation of id */
 
-#endif /* __EUI64_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* PPP_EUI64_H */

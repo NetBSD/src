@@ -1,9 +1,9 @@
-/*	$NetBSD: auth.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.6 2025/01/08 19:59:38 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
  *
- * Copyright (c) 1993-2002 Paul Mackerras. All rights reserved.
+ * Copyright (c) 1993-2024 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,14 +12,10 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -71,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-#if 0
-#define RCSID	"Id: auth.c,v 1.117 2008/07/01 12:27:56 paulus Exp "
-static const char rcsid[] = RCSID;
-#else
-__RCSID("$NetBSD: auth.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.6 2025/01/08 19:59:38 christos Exp $");
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdio.h>
@@ -87,6 +82,7 @@ __RCSID("$NetBSD: auth.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <grp.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -100,7 +96,7 @@ __RCSID("$NetBSD: auth.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <arpa/inet.h>
 
 
-#ifdef HAS_SHADOW
+#ifdef HAVE_SHADOW_H
 #include <shadow.h>
 #ifndef PW_PPP
 #define PW_PPP PW_LOGIN
@@ -108,25 +104,31 @@ __RCSID("$NetBSD: auth.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #endif
 #include <time.h>
 
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
 #ifdef SYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "ccp.h"
 #include "ecp.h"
 #include "ipcp.h"
 #include "upap.h"
-#include "chap-new.h"
+#include "chap.h"
 #include "eap.h"
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 #include "eap-tls.h"
 #endif
-#ifdef CBCP_SUPPORT
+#ifdef PPP_WITH_CBCP
 #include "cbcp.h"
 #endif
+#include "multilink.h"
 #include "pathnames.h"
 #include "session.h"
 
@@ -178,28 +180,26 @@ static bool default_auth;
 int (*idle_time_hook)(struct ppp_idle *) = NULL;
 
 /* Hook for a plugin to say whether we can possibly authenticate any peer */
-int (*pap_check_hook)(void) = NULL;
+pap_check_hook_fn *pap_check_hook = NULL;
 
 /* Hook for a plugin to check the PAP user and password */
-int (*pap_auth_hook)(char *user, char *passwd, char **msgp,
-		     struct wordlist **paddrs,
-		     struct wordlist **popts) = NULL;
+pap_auth_hook_fn *pap_auth_hook = NULL;
 
 /* Hook for a plugin to know about the PAP user logout */
-void (*pap_logout_hook)(void) = NULL;
+pap_logout_hook_fn *pap_logout_hook = NULL;
 
 /* Hook for a plugin to get the PAP password for authenticating us */
-int (*pap_passwd_hook)(char *user, char *passwd) = NULL;
+pap_passwd_hook_fn *pap_passwd_hook = NULL;
 
 /* Hook for a plugin to say if we can possibly authenticate a peer using CHAP */
-int (*chap_check_hook)(void) = NULL;
+chap_check_hook_fn *chap_check_hook = NULL;
 
 /* Hook for a plugin to get the CHAP password for authenticating us */
-int (*chap_passwd_hook)(char *user, char *passwd) = NULL;
+chap_passwd_hook_fn *chap_passwd_hook = NULL;
 
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 /* Hook for a plugin to get the EAP-TLS password for authenticating us */
-int (*eaptls_passwd_hook)(char *user, char *passwd) = NULL;
+eaptls_passwd_hook_fn *eaptls_passwd_hook = NULL;
 #endif
 
 /* Hook for a plugin to say whether it is OK if the peer
@@ -208,11 +208,6 @@ int (*null_auth_hook)(struct wordlist **paddrs,
 		      struct wordlist **popts) = NULL;
 
 int (*allowed_address_hook)(u_int32_t addr) = NULL;
-
-#ifdef HAVE_MULTILINK
-/* Hook for plugin to hear when an interface joins a multilink bundle */
-void (*multilink_join_hook)(void) = NULL;
-#endif
 
 /* A notifier for when the peer has authenticated itself,
    and we are proceeding to the network phase. */
@@ -243,7 +238,7 @@ bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
 bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
 bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
 bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
-#ifdef CHAPMS
+#ifdef PPP_WITH_CHAPMS
 bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
 bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #else
@@ -257,20 +252,27 @@ bool explicit_remote = 0;	/* User specified explicit remote name */
 bool explicit_user = 0;		/* Set if "user" option supplied */
 bool explicit_passwd = 0;	/* Set if "password" option supplied */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
-#ifdef USE_EAPTLS
-char *cacert_file  = NULL;	/* CA certificate file (pem format) */
-char *ca_path      = NULL;	/* directory with CA certificates */
-char *cert_file    = NULL;	/* client certificate file (pem format) */
-char *privkey_file = NULL;	/* client private key file (pem format) */
-char *crl_dir      = NULL;	/* directory containing CRL files */
-char *crl_file     = NULL;	/* Certificate Revocation List (CRL) file (pem format) */
-char *max_tls_version = NULL;	/* Maximum TLS protocol version (default=1.2) */
-bool need_peer_eap = 0;			/* Require peer to authenticate us */
+char path_upapfile[MAXPATHLEN];	/* Pathname of pap-secrets file */
+char path_chapfile[MAXPATHLEN];	/* Pathname of chap-secrets file */
+
+#if defined(PPP_WITH_EAPTLS) || defined(PPP_WITH_PEAP)
+char *cacert_file  = NULL;  /* CA certificate file (pem format) */
+char *ca_path      = NULL;  /* Directory with CA certificates */
+char *crl_dir      = NULL;  /* Directory containing CRL files */
+char *crl_file     = NULL;  /* Certificate Revocation List (CRL) file (pem format) */
+char *max_tls_version = NULL;   /* Maximum TLS protocol version (default=1.2) */
+char *tls_verify_method = NULL; /* Verify certificate method */
+bool  tls_verify_key_usage = 0; /* Verify peer certificate key usage */
+#endif
+
+#if defined(PPP_WITH_EAPTLS)
+char *cert_file    = NULL;  /* Client certificate file (pem format) */
+char *privkey_file = NULL;  /* Client private key file (pem format) */
+char *pkcs12_file  = NULL;  /* Client private key envelope file (pkcs12 format) */
+bool need_peer_eap = 0;	    /* Require peer to authenticate us */
 #endif
 
 static char *fname;		/* name of most recent +ua file */
-
-extern char *crypt (const char *, const char *);
 
 /* Prototypes for procedures local to this file. */
 
@@ -284,7 +286,7 @@ static int  have_chap_secret (char *, char *, int, int *);
 static int  have_srp_secret(char *client, char *server, int need_ip,
     int *lacks_ipp);
 
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 static int  have_eaptls_secret_server
 (char *client, char *server, int need_ip, int *lacks_ipp);
 static int  have_eaptls_secret_client (char *client, char *server);
@@ -311,15 +313,12 @@ static int  set_noauth_addr (char **);
 static int  set_permitted_number (char **);
 static void check_access (FILE *, char *);
 static int  wordlist_count (struct wordlist *);
-
-#ifdef MAXOCTETS
 static void check_maxoctets (void *);
-#endif
 
 /*
  * Authentication-related options.
  */
-option_t auth_options[] = {
+struct option auth_options[] = {
     { "auth", o_bool, &auth_required,
       "Require authentication from peer", OPT_PRIO | 1 },
     { "noauth", o_bool, &auth_required,
@@ -339,7 +338,7 @@ option_t auth_options[] = {
       "Require CHAP authentication from peer",
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MD5,
       &lcp_wantoptions[0].chap_mdtype },
-#ifdef CHAPMS
+#ifdef PPP_WITH_CHAPMS
     { "require-mschap", o_bool, &auth_required,
       "Require MS-CHAP authentication from peer",
       OPT_PRIOSUB | OPT_A2OR | MDTYPE_MICROSOFT,
@@ -370,7 +369,7 @@ option_t auth_options[] = {
       "Don't allow CHAP authentication with peer",
       OPT_ALIAS | OPT_A2CLRB | MDTYPE_MD5,
       &lcp_allowoptions[0].chap_mdtype },
-#ifdef CHAPMS
+#ifdef PPP_WITH_CHAPMS
     { "refuse-mschap", o_bool, &refuse_mschap,
       "Don't agree to auth to peer with MS-CHAP",
       OPT_A2CLRB | MDTYPE_MICROSOFT,
@@ -419,6 +418,14 @@ option_t auth_options[] = {
       "Set remote name for authentication", OPT_PRIO | OPT_STATIC,
       &explicit_remote, MAXNAMELEN },
 
+    { "pap-secrets", o_string, path_upapfile,
+      "Set pathname of pap-secrets", OPT_PRIO | OPT_PRIV | OPT_STATIC,
+      NULL, MAXPATHLEN },
+
+    { "chap-secrets", o_string, path_chapfile,
+      "Set pathname of chap-secrets", OPT_PRIO | OPT_PRIV | OPT_STATIC,
+      NULL, MAXPATHLEN },
+
     { "login", o_bool, &uselogin,
       "Use system password database for PAP", OPT_A2COPY | 1 ,
       &session_mgmt },
@@ -443,20 +450,59 @@ option_t auth_options[] = {
       "Set telephone number(s) which are allowed to connect",
       OPT_PRIV | OPT_A2LIST },
 
-#ifdef USE_EAPTLS
-    { "ca", o_string, &cacert_file,   "EAP-TLS CA certificate in PEM format" },
-    { "capath", o_string, &ca_path,   "EAP-TLS CA certificate directory" },
-    { "cert", o_string, &cert_file,   "EAP-TLS client certificate in PEM format" },
-    { "key", o_string, &privkey_file, "EAP-TLS client private key in PEM format" },
-    { "crl-dir", o_string, &crl_dir,  "Use CRLs in directory" },
-    { "crl", o_string, &crl_file,     "Use specific CRL file" },
+#if defined(PPP_WITH_EAPTLS) || defined(PPP_WITH_PEAP)
+    { "ca", o_string, &cacert_file,     "CA certificate in PEM format" },
+    { "capath", o_string, &ca_path,     "TLS CA certificate directory" },
+    { "crl-dir", o_string, &crl_dir,    "Use CRLs in directory" },
+    { "crl", o_string, &crl_file,       "Use specific CRL file" },
     { "max-tls-version", o_string, &max_tls_version,
       "Maximum TLS version (1.0/1.1/1.2 (default)/1.3)" },
+    { "tls-verify-key-usage", o_bool, &tls_verify_key_usage,
+      "Verify certificate type and extended key usage" },
+    { "tls-verify-method", o_string, &tls_verify_method,
+      "Verify peer by method (none|subject|name|suffix)" },
+#endif
+
+#if defined(PPP_WITH_EAPTLS)
+    { "cert", o_string, &cert_file,     "client certificate in PEM format" },
+    { "key", o_string, &privkey_file,   "client private key in PEM format" },
+    { "pkcs12", o_string, &pkcs12_file, "EAP-TLS client credentials in PKCS12 format" },
     { "need-peer-eap", o_bool, &need_peer_eap,
       "Require the peer to authenticate us", 1 },
-#endif /* USE_EAPTLS */
+#endif /* PPP_WITH_EAPTLS */
     { NULL }
 };
+
+const char *
+ppp_remote_name()
+{
+    return remote_name;
+}
+
+const char *
+ppp_get_remote_number(void)
+{
+    return remote_number;
+}
+
+void
+ppp_set_remote_number(const char *buf)
+{
+    if (buf) {
+        strlcpy(remote_number, buf, sizeof(remote_number));
+        ppp_script_setenv("REMOTENUMBER", remote_number, 0);
+    }
+}
+
+const char *
+ppp_peer_authname(char *buf, size_t bufsz)
+{
+    if (buf && bufsz > 0) {
+        strlcpy(buf, peer_authname, bufsz);
+        return buf;
+    }
+    return peer_authname;
+}
 
 /*
  * setupapfile - specifies UPAP info for authenticating with peer.
@@ -482,7 +528,7 @@ setupapfile(char **argv)
 	novm("+ua file name");
     euid = geteuid();
     if (seteuid(getuid()) == -1) {
-	option_error("unable to reset uid before opening %s: %m", fname);
+	ppp_option_error("unable to reset uid before opening %s: %m", fname);
         free(fname);
 	return 0;
     }
@@ -490,7 +536,7 @@ setupapfile(char **argv)
     if (seteuid(euid) == -1)
 	fatal("unable to regain privileges: %m");
     if (ufile == NULL) {
-	option_error("unable to open user login data file %s", fname);
+	ppp_option_error("unable to open user login data file %s", fname);
         free(fname);
 	return 0;
     }
@@ -500,7 +546,7 @@ setupapfile(char **argv)
     if (fgets(u, MAXNAMELEN - 1, ufile) == NULL
 	|| fgets(p, MAXSECRETLEN - 1, ufile) == NULL) {
 	fclose(ufile);
-	option_error("unable to read user login data file %s", fname);
+	ppp_option_error("unable to read user login data file %s", fname);
         free(fname);
 	return 0;
     }
@@ -539,7 +585,7 @@ privgroup(char **argv)
 
     g = getgrnam(*argv);
     if (g == 0) {
-	option_error("group %s is unknown", *argv);
+	ppp_option_error("group %s is unknown", *argv);
 	return 0;
     }
     for (i = 0; i < ngroups; ++i) {
@@ -608,7 +654,7 @@ link_required(int unit)
  */
 void start_link(int unit)
 {
-    status = EXIT_CONNECT_FAILED;
+    ppp_set_status(EXIT_CONNECT_FAILED);
     new_phase(PHASE_SERIALCONN);
 
     hungup = 0;
@@ -626,7 +672,7 @@ void start_link(int unit)
      */
     fd_ppp = the_channel->establish_ppp(devfd);
     if (fd_ppp < 0) {
-	status = EXIT_FATAL_ERROR;
+	ppp_set_status(EXIT_FATAL_ERROR);
 	goto disconnect;
     }
 
@@ -638,12 +684,12 @@ void start_link(int unit)
      * incoming events (reply, timeout, etc.).
      */
     if (ifunit >= 0)
-	notice("Connect: %s <--> %s", ifname, ppp_devnam);
+	notice("Connect: %s <--> %s", ifname, ppp_devname);
     else
-	notice("Starting negotiation on %s", ppp_devnam);
+	notice("Starting negotiation on %s", ppp_devname);
     add_fd(fd_ppp);
 
-    status = EXIT_NEGOTIATION_FAILED;
+    ppp_set_status(EXIT_NEGOTIATION_FAILED);
     new_phase(PHASE_ESTABLISH);
 
     lcp_lowerup(0);
@@ -667,7 +713,7 @@ void start_link(int unit)
 void
 link_terminated(int unit)
 {
-    if (phase == PHASE_DEAD || phase == PHASE_MASTER)
+    if (in_phase(PHASE_DEAD) || in_phase(PHASE_MASTER))
 	return;
     new_phase(PHASE_DISCONNECT);
 
@@ -676,7 +722,7 @@ link_terminated(int unit)
     }
     session_end(devnam);
 
-    if (!doing_multilink) {
+    if (!mp_on()) {
 	notice("Connection terminated.");
 	print_link_stats();
     } else
@@ -687,9 +733,8 @@ link_terminated(int unit)
      * can happen that another pppd gets the same unit and then
      * we delete its pid file.
      */
-    if (!doing_multilink && !demand)
+    if (!demand && !mp_on())
 	remove_pidfiles();
-
     /*
      * If we may want to bring the link up again, transfer
      * the ppp unit back to the loopback.  Set the
@@ -699,14 +744,14 @@ link_terminated(int unit)
 	remove_fd(fd_ppp);
 	clean_check();
 	the_channel->disestablish_ppp(devfd);
-	if (doing_multilink)
+	if (mp_on())
 	    mp_exit_bundle();
 	fd_ppp = -1;
     }
     if (!hungup)
 	lcp_lowerdown(0);
-    if (!doing_multilink && !demand)
-	script_unsetenv("IFNAME");
+    if (!mp_on() && !demand)
+	ppp_script_unsetenv("IFNAME");
 
     /*
      * Run disconnector script, if requested.
@@ -719,7 +764,7 @@ link_terminated(int unit)
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
 
-    if (doing_multilink && multilink_master) {
+    if (mp_on() && mp_master()) {
 	if (!bundle_terminating) {
 	    new_phase(PHASE_MASTER);
 	    if (master_detach && !detached)
@@ -740,14 +785,15 @@ link_down(int unit)
 	notify(link_down_notifier, 0);
 	auth_state = s_down;
 	if (auth_script_state == s_up && auth_script_pid == 0) {
-	    update_link_stats(unit);
+	    ppp_get_link_stats(NULL);
 	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN);
+	    auth_script(PPP_PATH_AUTHDOWN);
 	}
     }
-    if (!doing_multilink) {
+    if (!mp_on())
+    {
 	upper_layers_down(unit);
-	if (phase != PHASE_DEAD && phase != PHASE_MASTER)
+	if (!in_phase(PHASE_DEAD) && !in_phase(PHASE_MASTER))
 	    new_phase(PHASE_ESTABLISH);
     }
     /* XXX if doing_multilink, should do something to stop
@@ -782,7 +828,7 @@ link_established(int unit)
     lcp_options *wo = &lcp_wantoptions[unit];
     lcp_options *go = &lcp_gotoptions[unit];
     lcp_options *ho = &lcp_hisoptions[unit];
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
     lcp_options *ao = &lcp_allowoptions[unit];
 #endif
     int i;
@@ -791,13 +837,11 @@ link_established(int unit)
     /*
      * Tell higher-level protocols that LCP is up.
      */
-    if (!doing_multilink) {
+    if (!mp_on())
 	for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	    if (protp->protocol != PPP_LCP && protp->enabled_flag
 		&& protp->lowerup != NULL)
 		(*protp->lowerup)(unit);
-    }
-
     if (!auth_required && noauth_addrs != NULL)
 	set_allowed_addrs(unit, NULL, NULL);
 
@@ -813,24 +857,24 @@ link_established(int unit)
 	    set_allowed_addrs(unit, NULL, NULL);
 	} else if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
-	    status = EXIT_PEER_AUTH_FAILED;
+	    ppp_set_status(EXIT_PEER_AUTH_FAILED);
 	    lcp_close(unit, "peer refused to authenticate");
 	    return;
 	}
     }
 
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
     if (need_peer_eap && !ao->neg_eap) {
 	warn("eap required to authenticate us but no suitable secrets");
 	lcp_close(unit, "couldn't negotiate eap");
-	status = EXIT_AUTH_TOPEER_FAILED;
+	ppp_set_status(EXIT_AUTH_TOPEER_FAILED);
 	return;
     }
 
     if (need_peer_eap && !ho->neg_eap) {
 	warn("peer doesn't want to authenticate us with eap");
 	lcp_close(unit, "couldn't negotiate eap");
-	status = EXIT_PEER_AUTH_FAILED;
+	ppp_set_status(EXIT_PEER_AUTH_FAILED);
 	return;
     }
 #endif
@@ -891,11 +935,11 @@ network_phase(int unit)
 	auth_state = s_up;
 	if (auth_script_state == s_down && auth_script_pid == 0) {
 	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP);
+	    auth_script(PPP_PATH_AUTHUP);
 	}
     }
 
-#ifdef CBCP_SUPPORT
+#ifdef PPP_WITH_CBCP
     /*
      * If we negotiated callback, do it now.
      */
@@ -926,7 +970,7 @@ start_networks(int unit)
 
     new_phase(PHASE_NETWORK);
 
-#ifdef HAVE_MULTILINK
+#ifdef PPP_WITH_MULTILINK
     if (multilink) {
 	if (mp_join_bundle()) {
 	    if (multilink_join_hook)
@@ -936,9 +980,9 @@ start_networks(int unit)
 	    return;
 	}
     }
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_WITH_MULTILINK */
 
-#ifdef PPP_FILTER
+#ifdef PPP_WITH_FILTER
     if (!demand)
 	set_filters(&pass_filter_in, &pass_filter_out,
 		    &active_filter_in, &active_filter_out);
@@ -989,7 +1033,7 @@ auth_peer_fail(int unit, int protocol)
     /*
      * Authentication failure: take the link down
      */
-    status = EXIT_PEER_AUTH_FAILED;
+    ppp_set_status(EXIT_PEER_AUTH_FAILED);
     lcp_close(unit, "Authentication failed");
 }
 
@@ -1001,15 +1045,17 @@ auth_peer_success(int unit, int protocol, int prot_flavor,
 		  char *name, int namelen)
 {
     int bit;
+    const char *prot;
 
     switch (protocol) {
     case PPP_CHAP:
 	bit = CHAP_PEER;
+	prot = "CHAP";
 	switch (prot_flavor) {
 	case CHAP_MD5:
 	    bit |= CHAP_MD5_PEER;
 	    break;
-#ifdef CHAPMS
+#ifdef PPP_WITH_CHAPMS
 	case CHAP_MICROSOFT:
 	    bit |= CHAP_MS_PEER;
 	    break;
@@ -1021,12 +1067,15 @@ auth_peer_success(int unit, int protocol, int prot_flavor,
 	break;
     case PPP_PAP:
 	bit = PAP_PEER;
+	prot = "PAP";
 	break;
     case PPP_EAP:
 	bit = EAP_PEER;
+	prot = "EAP";
 	break;
     default:
 	warn("auth_peer_success: unknown protocol %x", protocol);
+	prot = "unknown protocol";
 	return;
     }
 
@@ -1037,7 +1086,8 @@ auth_peer_success(int unit, int protocol, int prot_flavor,
 	namelen = sizeof(peer_authname) - 1;
     BCOPY(name, peer_authname, namelen);
     peer_authname[namelen] = 0;
-    script_setenv("PEERNAME", peer_authname, 0);
+    ppp_script_setenv("PEERNAME", peer_authname, 0);
+    notice("Peer %q authenticated with %s", peer_authname, prot);
 
     /* Save the authentication method for later. */
     auth_done[unit] |= bit;
@@ -1064,7 +1114,7 @@ auth_withpeer_fail(int unit, int protocol)
      * is no point in persisting without any way to get updated
      * authentication secrets.
      */
-    status = EXIT_AUTH_TOPEER_FAILED;
+    ppp_set_status(EXIT_AUTH_TOPEER_FAILED);
     lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
@@ -1085,7 +1135,7 @@ auth_withpeer_success(int unit, int protocol, int prot_flavor)
 	case CHAP_MD5:
 	    bit |= CHAP_MD5_WITHPEER;
 	    break;
-#ifdef CHAPMS
+#ifdef PPP_WITH_CHAPMS
 	case CHAP_MICROSOFT:
 	    bit |= CHAP_MS_WITHPEER;
 	    break;
@@ -1136,14 +1186,14 @@ np_up(int unit, int proto)
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
-	status = EXIT_OK;
+	ppp_set_status(EXIT_OK);
 	unsuccess = 0;
 	new_phase(PHASE_RUNNING);
 
 	if (idle_time_hook != 0)
 	    tlim = (*idle_time_hook)(NULL);
 	else
-	    tlim = idle_time_limit;
+	    tlim = ppp_get_max_idle_time();
 	if (tlim > 0)
 	    TIMEOUT(check_idle, NULL, tlim);
 
@@ -1151,13 +1201,15 @@ np_up(int unit, int proto)
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
-	if (maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, maxconnect);
+	if (ppp_get_max_connect_time() > 0)
+	    TIMEOUT(connect_time_expired, 0, ppp_get_max_connect_time());
 
-#ifdef MAXOCTETS
+	/*
+	 * Configure a check to see if session has outlived it's limit
+	 *   in terms of octets
+	 */
 	if (maxoctets > 0)
 	    TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
-#endif
 
 	/*
 	 * Detach now, if the updetach option was given.
@@ -1184,9 +1236,7 @@ np_down(int unit, int proto)
     if (--num_np_up == 0) {
 	UNTIMEOUT(check_idle, NULL);
 	UNTIMEOUT(connect_time_expired, NULL);
-#ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
-#endif	
 	new_phase(PHASE_NETWORK);
     }
 }
@@ -1203,40 +1253,46 @@ np_finished(int unit, int proto)
     }
 }
 
-#ifdef MAXOCTETS
+/*
+ * Periodic callback to check if session has reached its limit. The period defaults
+ * to 1 second and is configurable by setting "mo-timeout" in configuration
+ */
 static void
 check_maxoctets(void *arg)
 {
-    unsigned int used;
+    unsigned int used = 0;
+    ppp_link_stats_st stats;
 
-    update_link_stats(ifunit);
-    link_stats_valid=0;
-    
-    switch(maxoctets_dir) {
-	case PPP_OCTETS_DIRECTION_IN:
-	    used = link_stats.bytes_in;
-	    break;
-	case PPP_OCTETS_DIRECTION_OUT:
-	    used = link_stats.bytes_out;
-	    break;
-	case PPP_OCTETS_DIRECTION_MAXOVERAL:
-	case PPP_OCTETS_DIRECTION_MAXSESSION:
-	    used = (link_stats.bytes_in > link_stats.bytes_out) ? link_stats.bytes_in : link_stats.bytes_out;
-	    break;
-	default:
-	    used = link_stats.bytes_in+link_stats.bytes_out;
-	    break;
+    if (ppp_get_link_stats(&stats)) {
+        switch(maxoctets_dir) {
+            case PPP_OCTETS_DIRECTION_IN:
+                used = stats.bytes_in;
+                break;
+            case PPP_OCTETS_DIRECTION_OUT:
+                used = stats.bytes_out;
+                break;
+            case PPP_OCTETS_DIRECTION_MAXOVERAL:
+            case PPP_OCTETS_DIRECTION_MAXSESSION:
+                used = (stats.bytes_in > stats.bytes_out)
+                                ? stats.bytes_in
+                                : stats.bytes_out;
+                break;
+            default:
+                used = stats.bytes_in+stats.bytes_out;
+                break;
+        }
     }
+
     if (used > maxoctets) {
 	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
-	status = EXIT_TRAFFIC_LIMIT;
+	ppp_set_status(EXIT_TRAFFIC_LIMIT);
 	lcp_close(0, "Traffic limit");
+	link_stats_print = 0;
 	need_holdoff = 0;
     } else {
         TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
     }
 }
-#endif
 
 /*
  * check_idle - check whether the link has been idle for long
@@ -1255,12 +1311,12 @@ check_idle(void *arg)
 	tlim = idle_time_hook(&idle);
     } else {
 	itime = MIN(idle.xmit_idle, idle.recv_idle);
-	tlim = idle_time_limit - itime;
+	tlim = ppp_get_max_idle_time() - itime;
     }
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
-	status = EXIT_IDLE_TIMEOUT;
+	ppp_set_status(EXIT_IDLE_TIMEOUT);
 	lcp_close(0, "Link inactive");
 	need_holdoff = 0;
     } else {
@@ -1275,8 +1331,9 @@ static void
 connect_time_expired(void *arg)
 {
     info("Connect time expired");
-    status = EXIT_CONNECT_TIME;
+    ppp_set_status(EXIT_CONNECT_TIME);
     lcp_close(0, "Connect time expired");	/* Close connection */
+    need_holdoff = 0;
 }
 
 /*
@@ -1291,11 +1348,19 @@ auth_check_options(void)
 
     /* Default our_name to hostname, and user to our_name */
     if (our_name[0] == 0 || usehostname)
-	strlcpy(our_name, hostname, sizeof(our_name));
+        strlcpy(our_name, hostname, sizeof(our_name));
+
     /* If a blank username was explicitly given as an option, trust
        the user and don't use our_name */
     if (user[0] == 0 && !explicit_user)
 	strlcpy(user, our_name, sizeof(user));
+
+#if defined(SYSTEM_CA_PATH) && (defined(PPP_WITH_EAPTLS) || defined(PPP_WITH_PEAP))
+    /* Use system default for CA Path if not specified */
+    if (!ca_path) {
+        ca_path = SYSTEM_CA_PATH;
+    }
+#endif
 
     /*
      * If we have a default route, require the peer to authenticate
@@ -1342,7 +1407,7 @@ auth_check_options(void)
 				    our_name, 1, &lacks_ip);
     }
 
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
     if (!can_auth && wo->neg_eap) {
 	can_auth =
 	    have_eaptls_secret_server((explicit_remote ? remote_name :
@@ -1353,21 +1418,21 @@ auth_check_options(void)
 
     if (auth_required && !can_auth && noauth_addrs == NULL) {
 	if (default_auth) {
-	    option_error(
+	    ppp_option_error(
 "By default the remote system is required to authenticate itself");
-	    option_error(
+	    ppp_option_error(
 "(because this system has a default route to the internet)");
 	} else if (explicit_remote)
-	    option_error(
+	    ppp_option_error(
 "The remote system (%s) is required to authenticate itself",
 			 remote_name);
 	else
-	    option_error(
+	    ppp_option_error(
 "The remote system is required to authenticate itself");
-	option_error(
+	ppp_option_error(
 "but I couldn't find any suitable secret (password) for it to use to do so.");
 	if (lacks_ip)
-	    option_error(
+	    ppp_option_error(
 "(None of the available passwords would let it use an IP address.)");
 
 	exit(1);
@@ -1405,7 +1470,7 @@ auth_reset(int unit)
 	(hadchap == 1 || (hadchap == -1 && have_chap_secret(user,
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
 	have_srp_secret(user, (explicit_remote? remote_name: NULL), 0, NULL)
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 		|| have_eaptls_secret_client(user, (explicit_remote? remote_name: NULL))
 #endif
 	);
@@ -1424,7 +1489,7 @@ auth_reset(int unit)
 		1, NULL))) &&
 	!have_srp_secret((explicit_remote? remote_name: NULL), our_name, 1,
 	    NULL)
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 	 && !have_eaptls_secret_server((explicit_remote? remote_name: NULL),
 				   our_name, 1, NULL)
 #endif
@@ -1488,7 +1553,7 @@ check_passwd(int unit,
      * Open the file of pap secrets and scan for a suitable secret
      * for authenticating this user.
      */
-    filename = _PATH_UPAPFILE;
+    filename = path_upapfile;
     addrs = opts = NULL;
     ret = UPAP_AUTHNAK;
     f = fopen(filename, "r");
@@ -1520,8 +1585,10 @@ check_passwd(int unit,
 	    if (secret[0] != 0 && !login_secret) {
 		/* password given in pap-secrets - must match */
 		if (cryptpap || strcmp(passwd, secret) != 0) {
+#ifdef HAVE_CRYPT_H
 		    char *cbuf = crypt(passwd, secret);
 		    if (!cbuf || strcmp(cbuf, secret) != 0)
+#endif
 			ret = UPAP_AUTHNAK;
 		}
 	    }
@@ -1587,7 +1654,7 @@ null_login(int unit)
      * Open the file of pap secrets and scan for a suitable secret.
      */
     if (ret <= 0) {
-	filename = _PATH_UPAPFILE;
+	filename = path_upapfile;
 	addrs = NULL;
 	f = fopen(filename, "r");
 	if (f == NULL)
@@ -1634,7 +1701,7 @@ get_pap_passwd(char *passwd)
 	    return ret;
     }
 
-    filename = _PATH_UPAPFILE;
+    filename = path_upapfile;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
@@ -1671,7 +1738,7 @@ have_pap_secret(int *lacks_ipp)
 	    return ret;
     }
 
-    filename = _PATH_UPAPFILE;
+    filename = path_upapfile;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
@@ -1713,7 +1780,7 @@ have_chap_secret(char *client, char *server,
 	}
     }
 
-    filename = _PATH_CHAPFILE;
+    filename = path_chapfile;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
@@ -1751,7 +1818,7 @@ have_srp_secret(char *client, char *server, int need_ip, int *lacks_ipp)
     char *filename;
     struct wordlist *addrs;
 
-    filename = _PATH_SRPFILE;
+    filename = PPP_PATH_SRPFILE;
     f = fopen(filename, "r");
     if (f == NULL)
 	return 0;
@@ -1799,7 +1866,7 @@ get_secret(int unit, char *client, char *server,
 	    return 0;
 	}
     } else {
-	filename = _PATH_CHAPFILE;
+	filename = path_chapfile;
 	addrs = NULL;
 	secbuf[0] = 0;
 
@@ -1853,7 +1920,7 @@ get_srp_secret(int unit, char *client, char *server,
     if (!am_server && passwd[0] != '\0') {
 	strlcpy(secret, passwd, MAXWORDLEN);
     } else {
-	filename = _PATH_SRPFILE;
+	filename = PPP_PATH_SRPFILE;
 	addrs = NULL;
 
 	fp = fopen(filename, "r");
@@ -2046,7 +2113,7 @@ auth_ip_addr(int unit, u_int32_t addr)
     int ok;
 
     /* don't allow loopback or multicast address */
-    if (bad_ip_adrs(addr))
+    if (ppp_bad_ip_addr(addr))
 	return 0;
 
     if (allowed_address_hook) {
@@ -2074,12 +2141,10 @@ ip_addr_check(u_int32_t addr, struct permitted_ip *addrs)
 }
 
 /*
- * bad_ip_adrs - return 1 if the IP address is one we don't want
- * to use, such as an address in the loopback net or a multicast address.
- * addr is in network byte order.
+ * Check if given addr in network byte order is in the looback network, or a multicast address.
  */
-int
-bad_ip_adrs(u_int32_t addr)
+bool
+ppp_bad_ip_addr(u_int32_t addr)
 {
     addr = ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
@@ -2110,7 +2175,7 @@ int
 auth_number(void)
 {
     struct wordlist *wp = permitted_numbers;
-    int l;
+    size_t l;
 
     /* Allow all if no authorization list. */
     if (!wp)
@@ -2120,9 +2185,10 @@ auth_number(void)
     while (wp) {
 	/* trailing '*' wildcard */
 	l = strlen(wp->word);
-	if ((wp->word)[l - 1] == '*')
-	    l--;
-	if (!strncasecmp(wp->word, remote_number, l))
+	if (l > 0 && (wp->word)[l - 1] == '*') {
+	    if (!strncasecmp(wp->word, remote_number, l - 1))
+		return 1;
+	} else if (strcasecmp(wp->word, remote_number) == 0)
 	    return 1;
 	wp = wp->next;
     }
@@ -2357,13 +2423,13 @@ auth_script_done(void *arg)
     case s_up:
 	if (auth_state == s_down) {
 	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN);
+	    auth_script(PPP_PATH_AUTHDOWN);
 	}
 	break;
     case s_down:
 	if (auth_state == s_up) {
 	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP);
+	    auth_script(PPP_PATH_AUTHUP);
 	}
 	break;
     }
@@ -2396,13 +2462,14 @@ auth_script(char *script)
     argv[3] = user_name;
     argv[4] = devnam;
     argv[5] = strspeed;
-    argv[6] = NULL;
+    argv[6] = ipparam;
+    argv[7] = NULL;
 
     auth_script_pid = run_program(script, argv, 0, auth_script_done, NULL, 0);
 }
 
 
-#ifdef USE_EAPTLS
+#ifdef PPP_WITH_EAPTLS
 static int
 have_eaptls_secret_server(char *client, char *server,
 			  int need_ip, int *lacks_ipp)
@@ -2416,7 +2483,7 @@ have_eaptls_secret_server(char *client, char *server,
     char cacertfile[MAXWORDLEN];
     char pkfile[MAXWORDLEN];
 
-    filename = _PATH_EAPTLSSERVFILE;
+    filename = PPP_PATH_EAPTLSSERVFILE;
     f = fopen(filename, "r");
     if (f == NULL)
 		return 0;
@@ -2470,8 +2537,10 @@ have_eaptls_secret_client(char *client, char *server)
 
 	if ((cacert_file || ca_path) && cert_file && privkey_file)
 		return 1;
+	if (pkcs12_file)
+		return 1;
 
-    filename = _PATH_EAPTLSCLIFILE;
+    filename = PPP_PATH_EAPTLSCLIFILE;
     f = fopen(filename, "r");
     if (f == NULL)
 		return 0;
@@ -2653,7 +2722,7 @@ scan_authfile_eaptls(FILE *f, char *client, char *server,
 int
 get_eaptls_secret(int unit, char *client, char *server,
 		  char *clicertfile, char *servcertfile, char *cacertfile,
-		  char *capath, char *pkfile, int am_server)
+		  char *capath, char *pkfile, char *pkcs12, int am_server)
 {
     FILE *fp;
     int ret;
@@ -2667,6 +2736,7 @@ get_eaptls_secret(int unit, char *client, char *server,
 	bzero(cacertfile, MAXWORDLEN);
 	bzero(capath, MAXWORDLEN);
 	bzero(pkfile, MAXWORDLEN);
+	bzero(pkcs12, MAXWORDLEN);
 
 	/* the ca+cert+privkey can also be specified as options */
 	if (!am_server && (cacert_file || ca_path) && cert_file && privkey_file )
@@ -2678,9 +2748,17 @@ get_eaptls_secret(int unit, char *client, char *server,
 			strlcpy( capath, ca_path, MAXWORDLEN );
 		strlcpy( pkfile, privkey_file, MAXWORDLEN );
 	}
+    else if (!am_server && pkcs12_file)
+	{
+		strlcpy( pkcs12, pkcs12_file, MAXWORDLEN );
+		if (cacert_file)
+			strlcpy( cacertfile, cacert_file, MAXWORDLEN );
+		if (ca_path)
+			strlcpy( capath, ca_path, MAXWORDLEN );
+	}
 	else
 	{
-		filename = (am_server ? _PATH_EAPTLSSERVFILE : _PATH_EAPTLSCLIFILE);
+		filename = (am_server ? PPP_PATH_EAPTLSSERVFILE : PPP_PATH_EAPTLSCLIFILE);
 		addrs = NULL;
 
 		fp = fopen(filename, "r");

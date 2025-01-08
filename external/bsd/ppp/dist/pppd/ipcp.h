@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -41,6 +41,14 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PPP_IPCP_H
+#define PPP_IPCP_H
+
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Options.
@@ -78,12 +86,14 @@ typedef struct ipcp_options {
     bool accept_remote;		/* accept peer's value for hisaddr */
     bool req_dns1;		/* Ask peer to send primary DNS address? */
     bool req_dns2;		/* Ask peer to send secondary DNS address? */
+    bool req_wins1;		/* Ask peer to send primary WINS address? */
+    bool req_wins2;		/* Ask peer to send secondary WINS address? */
     int  vj_protocol;		/* protocol value to use in VJ option */
     int  maxslotindex;		/* values for RFC1332 VJ compression neg. */
     bool cflag;
-    u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
-    u_int32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
-    u_int32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
+    uint32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
+    uint32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
+    uint32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
 } ipcp_options;
 
 extern fsm ipcp_fsm[];
@@ -92,6 +102,30 @@ extern ipcp_options ipcp_gotoptions[];
 extern ipcp_options ipcp_allowoptions[];
 extern ipcp_options ipcp_hisoptions[];
 
-char *ip_ntoa(u_int32_t);
+char *ip_ntoa(uint32_t);
 
 extern struct protent ipcp_protent;
+
+/*
+ * Hook for a plugin to know when IP protocol has come up
+ */
+typedef void (ip_up_hook_fn)(void);
+extern ip_up_hook_fn *ip_up_hook;
+
+/*
+ * Hook for a plugin to know when IP protocol has come down
+ */
+typedef void (ip_down_hook_fn)(void);
+extern ip_down_hook_fn *ip_down_hook;
+
+/*
+ * Hook for a plugin to choose the remote IP address
+ */
+typedef void (ip_choose_hook_fn)(uint32_t *);
+extern ip_choose_hook_fn *ip_choose_hook;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PPP_IPCP_H */

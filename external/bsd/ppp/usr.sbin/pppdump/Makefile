@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/28 22:33:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2025/01/08 19:59:41 christos Exp $
 
 .include "../Makefile.inc"
 
 .PATH: ${DIST}/pppdump ${NETBSDSRCDIR}/sys/net
 
 PROG=	pppdump
-SRCS=	pppdump.c deflate.c bsd-comp.c zlib.c
+SRCS=	pppdump.c zlib.c
 MAN=	pppdump.8
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/net -I${.CURDIR}

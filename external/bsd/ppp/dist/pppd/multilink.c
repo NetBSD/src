@@ -1,9 +1,9 @@
-/*	$NetBSD: multilink.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: multilink.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * multilink.c - support routines for multilink.
  *
- * Copyright (c) 2000-2002 Paul Mackerras. All rights reserved.
+ * Copyright (c) 2000-2024 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,14 +12,10 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -31,7 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: multilink.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: multilink.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <string.h>
 #include <ctype.h>
@@ -42,10 +43,11 @@ __RCSID("$NetBSD: multilink.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "tdb.h"
+#include "multilink.h"
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */
@@ -78,6 +80,18 @@ static int owns_unit(TDB_DATA pid, int unit);
 	 || ((addr) & 0xffff0000) == 0xc0a80000)	/* 192.168.x.x */
 
 #define process_exists(n)	(kill((n), 0) == 0 || errno != ESRCH)
+
+multilink_join_hook_fn *multilink_join_hook = NULL;
+
+bool mp_master()
+{
+    return multilink_master;
+}
+
+bool mp_on()
+{
+    return doing_multilink;
+}
 
 void
 mp_check_options(void)
@@ -140,12 +154,12 @@ mp_join_bundle(void)
 		if (demand) {
 			/* already have a bundle */
 			cfg_bundle(0, 0, 0, 0);
-			netif_set_mtu(0, mtu);
+			ppp_set_mtu(0, mtu);
 			return 0;
 		}
 		make_new_bundle(0, 0, 0, 0);
 		set_ifunit(1);
-		netif_set_mtu(0, mtu);
+		ppp_set_mtu(0, mtu);
 		return 0;
 	}
 
@@ -190,8 +204,8 @@ mp_join_bundle(void)
 	mtu = MIN(ho->mrru, ao->mru);
 	if (demand) {
 		cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
-		netif_set_mtu(0, mtu);
-		script_setenv("BUNDLE", bundle_id + 7, 1);
+		ppp_set_mtu(0, mtu);
+		ppp_script_setenv("BUNDLE", bundle_id + 7, 1);
 		return 0;
 	}
 
@@ -225,7 +239,7 @@ mp_join_bundle(void)
 		/* attach to existing unit */
 		if (bundle_attach(unit)) {
 			set_ifunit(0);
-			script_setenv("BUNDLE", bundle_id + 7, 0);
+			ppp_script_setenv("BUNDLE", bundle_id + 7, 0);
 			make_bundle_links(1);
 			unlock_db();
 			info("Link attached to %s", ifname);
@@ -237,8 +251,8 @@ mp_join_bundle(void)
 	/* we have to make a new bundle */
 	make_new_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
 	set_ifunit(1);
-	netif_set_mtu(0, mtu);
-	script_setenv("BUNDLE", bundle_id + 7, 1);
+	ppp_set_mtu(0, mtu);
+	ppp_script_setenv("BUNDLE", bundle_id + 7, 1);
 	make_bundle_links(0);
 	unlock_db();
 	info("New bundle %s created", ifname);
@@ -274,7 +288,7 @@ void mp_bundle_terminated(void)
 	print_link_stats();
 	if (!demand) {
 		remove_pidfiles();
-		script_unsetenv("IFNAME");
+		ppp_script_unsetenv("IFNAME");
 	}
 
 	lock_db();
@@ -450,7 +464,7 @@ get_default_epdisc(struct epdisc *ep)
 	hp = gethostbyname(hostname);
 	if (hp != NULL) {
 		addr = *(u_int32_t *)hp->h_addr;
-		if (!bad_ip_adrs(addr)) {
+		if (!ppp_bad_ip_addr(addr)) {
 			addr = ntohl(addr);
 			if (!LOCAL_IP_ADDR(addr)) {
 				ep->class = EPD_IP;

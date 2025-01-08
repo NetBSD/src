@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * session.c - PPP session control.
@@ -19,7 +19,7 @@
  * 3. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ *     <paulus@ozlabs.org>".
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -71,16 +71,26 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: session.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
 
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
-#ifdef HAS_SHADOW
+
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
+#ifdef HAVE_SHADOW_H
 #include <shadow.h>
 #endif
+
 #include <time.h>
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
@@ -91,12 +101,12 @@ __RCSID("$NetBSD: session.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <util.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "pppd.h"
+#include "pppd-private.h"
 #include "session.h"
 
-#ifdef USE_PAM
+#ifdef PPP_WITH_PAM
 #include <security/pam_appl.h>
-#endif /* #ifdef USE_PAM */
+#endif /* #ifdef PPP_WITH_PAM */
 
 #define SET_MSG(var, msg) if (var != NULL) { var[0] = msg; }
 #define COPY_STRING(s) ((s) ? strdup(s) : NULL)
@@ -111,7 +121,7 @@ __RCSID("$NetBSD: session.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 /* We have successfully started a session */
 static bool logged_in = 0;
 
-#ifdef USE_PAM
+#ifdef PPP_WITH_PAM
 /*
  * Static variables used to communicate between the conversation function
  * and the server_login function
@@ -169,25 +179,25 @@ static struct pam_conv pam_conv_data = {
     &conversation,
     NULL
 };
-#endif /* #ifdef USE_PAM */
+#endif /* #ifdef PPP_WITH_PAM */
 
 int
 session_start(const int flags, const char *user, const char *passwd, const char *ttyName, char **msg)
 {
-#ifdef USE_PAM
+#ifdef PPP_WITH_PAM
     bool ok = 1;
     const char *usr;
     int pam_error;
     bool try_session = 0;
-#else /* #ifdef USE_PAM */
+#else /* #ifdef PPP_WITH_PAM */
     struct passwd *pw;
     char *cbuf;
-#ifdef HAS_SHADOW
+#ifdef HAVE_SHADOW_H
     struct spwd *spwd;
     struct spwd *getspnam();
     long now = 0;
-#endif /* #ifdef HAS_SHADOW */
-#endif /* #ifdef USE_PAM */
+#endif /* #ifdef HAVE_SHADOW_H */
+#endif /* #ifdef PPP_WITH_PAM */
 
     SET_MSG(msg, SUCCESS_MSG);
 
@@ -201,7 +211,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
        return SESSION_FAILED;
     }
 
-#ifdef USE_PAM
+#ifdef PPP_WITH_PAM
     /* Find the '\\' in the username */
     /* This needs to be fixed to support different username schemes */
     if ((usr = strchr(user, '\\')) == NULL)
@@ -297,7 +307,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
     /* If our PAM checks have already failed, then we must return a failure */
     if (!ok) return SESSION_FAILED;
 
-#else /* #ifdef USE_PAM */
+#else /* #ifdef PPP_WITH_PAM */
 
 /*
  * Use the non-PAM methods directly.  'pw' will remain NULL if the user
@@ -316,7 +326,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
 	if (pw == NULL)
 	    return SESSION_FAILED;
 
-#ifdef HAS_SHADOW
+#ifdef HAVE_SHADOW_H
 
 	spwd = getspnam(user);
 	endspent();
@@ -347,19 +357,21 @@ session_start(const int flags, const char *user, const char *passwd, const char 
 	/* We have a valid shadow entry, keep the password */
 	pw->pw_passwd = spwd->sp_pwdp;
 
-#endif /* #ifdef HAS_SHADOW */
+#endif /* #ifdef HAVE_SHADOW_H */
 
 	/*
 	 * If no passwd, don't let them login if we're authenticating.
 	 */
         if (pw->pw_passwd == NULL || strlen(pw->pw_passwd) < 2)
             return SESSION_FAILED;
+#ifdef HAVE_CRYPT_H
 	cbuf = crypt(passwd, pw->pw_passwd);
 	if (!cbuf || strcmp(cbuf, pw->pw_passwd) != 0)
+#endif
             return SESSION_FAILED;
     }
 
-#endif /* #ifdef USE_PAM */
+#endif /* #ifdef PPP_WITH_PAM */
 
     /*
      * Write a wtmp entry for this user.
@@ -377,7 +389,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
 
 	logged_in = 1;
 
-#if defined(_PATH_LASTLOG) && !defined(USE_PAM)
+#if defined(_PATH_LASTLOG) && !defined(PPP_WITH_PAM)
 	/*
 	 * Enter the user in lastlog only if he has been authenticated using
 	 * local system services.  If he has not, then we don't know what his
@@ -399,7 +411,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
                 (void)close(fd);
             }
 	}
-#endif /* _PATH_LASTLOG and not USE_PAM */
+#endif /* _PATH_LASTLOG and not PPP_WITH_PAM */
 	info("user %s logged in on tty %s intf %s", user, ttyName, ifname);
     }
 
@@ -412,7 +424,7 @@ session_start(const int flags, const char *user, const char *passwd, const char 
 void
 session_end(const char* ttyName)
 {
-#ifdef USE_PAM
+#ifdef PPP_WITH_PAM
     int pam_error = PAM_SUCCESS;
 
     if (pamh != NULL) {

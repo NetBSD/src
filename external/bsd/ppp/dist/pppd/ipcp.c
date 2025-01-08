@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -43,11 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
 
-/*
- * TODO:
- */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +60,8 @@ __RCSID("$NetBSD: ipcp.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <arpa/inet.h>
 #include <net/if.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
 #include "fsm.h"
 #include "ipcp.h"
 #include "pathnames.h"
@@ -72,19 +73,16 @@ ipcp_options ipcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
 ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
 ipcp_options ipcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 
+char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 u_int32_t netmask = 0;		/* IP netmask to set on interface */
 
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 bool	noremoteip = 0;		/* Let him have no IP address */
 
-/* Hook for a plugin to know when IP protocol has come up */
-void (*ip_up_hook)(void) = NULL;
+ip_up_hook_fn *ip_up_hook = NULL;
+ip_down_hook_fn *ip_down_hook = NULL;
+ip_choose_hook_fn *ip_choose_hook = NULL;
 
-/* Hook for a plugin to know when IP protocol has come down */
-void (*ip_down_hook)(void) = NULL;
-
-/* Hook for a plugin to choose the remote IP address */
-void (*ip_choose_hook)(u_int32_t *) = NULL;
 
 /* Notifiers for when IPCP goes up and down */
 struct notifier *ip_up_notifier = NULL;
@@ -94,6 +92,8 @@ struct notifier *ip_down_notifier = NULL;
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
 static int proxy_arp_set[NUM_PPP];	/* Have created proxy arp entry */
 static bool usepeerdns;			/* Ask peer for DNS addrs */
+static bool usepeerwins;		/* Ask peer for WINS addrs */
+static bool noresolvconf;		/* Do not create resolv.conf */
 static int ipcp_is_up;			/* have called np_up() */
 static int ipcp_is_open;		/* haven't called np_finished() */
 static bool ask_for_local;		/* request our address from peer */
@@ -142,9 +142,9 @@ static int setdnsaddr (char **);
 static int setwinsaddr (char **);
 static int setnetmask (char **);
 int setipaddr (char *, char **, int);
-static void printipaddr (option_t *, void (*)(void *, char *,...),void *);
+static void printipaddr (struct option *, void (*)(void *, char *,...),void *);
 
-static option_t ipcp_option_list[] = {
+static struct option ipcp_option_list[] = {
     { "noip", o_bool, &ipcp_protent.enabled_flag,
       "Disable IP and IPCP" },
     { "-ip", o_bool, &ipcp_protent.enabled_flag,
@@ -221,6 +221,12 @@ static option_t ipcp_option_list[] = {
 
     { "usepeerdns", o_bool, &usepeerdns,
       "Ask peer for DNS address(es)", 1 },
+
+    { "usepeerwins", o_bool, &usepeerwins,
+      "Ask peer for WINS address(es)", 1 },
+
+    { "noresolvconf", o_bool, &noresolvconf,
+      "Do not create resolv.conf", 1 },
 
     { "netmask", o_special, (void *)setnetmask,
       "set netmask", OPT_PRIO | OPT_A2STRVAL | OPT_STATIC, netmask_str },
@@ -334,10 +340,10 @@ setvjslots(char **argv)
 {
     int value;
 
-    if (!int_option(*argv, &value))
+    if (!ppp_int_option(*argv, &value))
 	return 0;
     if (value < 2 || value > 16) {
-	option_error("vj-max-slots value must be between 2 and 16");
+	ppp_option_error("vj-max-slots value must be between 2 and 16");
 	return 0;
     }
     ipcp_wantoptions [0].maxslotindex =
@@ -358,7 +364,7 @@ setdnsaddr(char **argv)
     dns = inet_addr(*argv);
     if (dns == (u_int32_t) -1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
-	    option_error("invalid address parameter '%s' for ms-dns option",
+	    ppp_option_error("invalid address parameter '%s' for ms-dns option",
 			 *argv);
 	    return 0;
 	}
@@ -393,7 +399,7 @@ setwinsaddr(char **argv)
     wins = inet_addr(*argv);
     if (wins == (u_int32_t) -1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
-	    option_error("invalid address parameter '%s' for ms-wins option",
+	    ppp_option_error("invalid address parameter '%s' for ms-wins option",
 			 *argv);
 	    return 0;
 	}
@@ -444,13 +450,13 @@ setipaddr(char *arg, char **argv, int doit)
 	*colon = '\0';
 	if ((local = inet_addr(arg)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
-		option_error("unknown host: %s", arg);
+		ppp_option_error("unknown host: %s", arg);
 		return 0;
 	    }
 	    local = *(u_int32_t *)hp->h_addr;
 	}
-	if (bad_ip_adrs(local)) {
-	    option_error("bad local IP address %s", ip_ntoa(local));
+	if (ppp_bad_ip_addr(local)) {
+	    ppp_option_error("bad local IP address %s", ip_ntoa(local));
 	    return 0;
 	}
 	if (local != 0)
@@ -465,15 +471,15 @@ setipaddr(char *arg, char **argv, int doit)
     if (*++colon != '\0' && option_priority >= prio_remote) {
 	if ((remote = inet_addr(colon)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
-		option_error("unknown host: %s", colon);
+		ppp_option_error("unknown host: %s", colon);
 		return 0;
 	    }
 	    remote = *(u_int32_t *)hp->h_addr;
 	    if (remote_name[0] == 0)
 		strlcpy(remote_name, colon, sizeof(remote_name));
 	}
-	if (bad_ip_adrs(remote)) {
-	    option_error("bad remote IP address %s", ip_ntoa(remote));
+	if (ppp_bad_ip_addr(remote)) {
+	    ppp_option_error("bad remote IP address %s", ip_ntoa(remote));
 	    return 0;
 	}
 	if (remote != 0)
@@ -485,7 +491,7 @@ setipaddr(char *arg, char **argv, int doit)
 }
 
 static void
-printipaddr(option_t *opt, void (*printer) (void *, char *, ...), void *arg)
+printipaddr(struct option *opt, void (*printer) (void *, char *, ...), void *arg)
 {
 	ipcp_options *wo = &ipcp_wantoptions[0];
 
@@ -516,7 +522,7 @@ setnetmask(char **argv)
     mask = htonl(mask);
 
     if (n == 0 || p[n] != 0 || (netmask & ~mask) != 0) {
-	option_error("invalid netmask value '%s'", *argv);
+	ppp_option_error("invalid netmask value '%s'", *argv);
 	return 0;
     }
 
@@ -555,6 +561,11 @@ parse_dotted_ip(char *p, u_int32_t *vp)
     }
     *vp = v;
     return p - p0;
+}
+
+const char *ppp_ipparam()
+{
+    return ipparam;
 }
 
 
@@ -683,14 +694,17 @@ ipcp_resetci(fsm *f)
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *ao = &ipcp_allowoptions[f->unit];
 
-    wo->req_addr = (wo->neg_addr || wo->old_addrs) &&
-	(ao->neg_addr || ao->old_addrs);
+    wo->req_addr = ((wo->neg_addr || wo->old_addrs) &&
+	(ao->neg_addr || ao->old_addrs)) ||
+	(wo->hisaddr && !wo->accept_remote);
     if (wo->ouraddr == 0)
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
     wo->req_dns1 = usepeerdns;	/* Request DNS addresses from the peer */
     wo->req_dns2 = usepeerdns;
+    wo->req_wins1 = usepeerwins; /* Request WINS addresses from the peer */
+    wo->req_wins2 = usepeerwins;
     *go = *wo;
     if (!ask_for_local)
 	go->ouraddr = 0;
@@ -742,8 +756,8 @@ ipcp_cilen(fsm *f)
 	    LENCIADDR(go->neg_addr) +
 	    LENCIDNS(go->req_dns1) +
 	    LENCIDNS(go->req_dns2) +
-	    LENCIWINS(go->winsaddr[0]) +
-	    LENCIWINS(go->winsaddr[1])) ;
+	    LENCIWINS(go->req_wins1) +
+	    LENCIWINS(go->req_wins2)) ;
 }
 
 
@@ -814,8 +828,8 @@ ipcp_addci(fsm *f, u_char *ucp, int *lenp)
 	    neg = 0; \
     }
 
-#define ADDCIWINS(opt, addr) \
-    if (addr) { \
+#define ADDCIWINS(opt, neg, addr) \
+    if (neg) { \
 	if (len >= CILEN_ADDR) { \
 	    u_int32_t l; \
 	    PUTCHAR(opt, ucp); \
@@ -824,7 +838,7 @@ ipcp_addci(fsm *f, u_char *ucp, int *lenp)
 	    PUTLONG(l, ucp); \
 	    len -= CILEN_ADDR; \
 	} else \
-	    addr = 0; \
+	    neg = 0; \
     }
 
     ADDCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs, go->ouraddr,
@@ -839,9 +853,9 @@ ipcp_addci(fsm *f, u_char *ucp, int *lenp)
 
     ADDCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
 
-    ADDCIWINS(CI_MS_WINS1, go->winsaddr[0]);
+    ADDCIWINS(CI_MS_WINS1, go->req_wins1, go->winsaddr[0]);
 
-    ADDCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+    ADDCIWINS(CI_MS_WINS2, go->req_wins2, go->winsaddr[1]);
     
     *lenp -= len;
 }
@@ -943,8 +957,8 @@ ipcp_ackci(fsm *f, u_char *p, int len)
 	    goto bad; \
     }
 
-#define ACKCIWINS(opt, addr) \
-    if (addr) { \
+#define ACKCIWINS(opt, neg, addr) \
+    if (neg) { \
 	u_int32_t l; \
 	if ((len -= CILEN_ADDR) < 0) \
 	    goto bad; \
@@ -970,9 +984,9 @@ ipcp_ackci(fsm *f, u_char *p, int len)
 
     ACKCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
 
-    ACKCIWINS(CI_MS_WINS1, go->winsaddr[0]);
+    ACKCIWINS(CI_MS_WINS1, go->req_wins1, go->winsaddr[0]);
 
-    ACKCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+    ACKCIWINS(CI_MS_WINS2, go->req_wins2, go->winsaddr[1]);
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -999,11 +1013,12 @@ bad:
 static int
 ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 {
+    ipcp_options *wo = &ipcp_wantoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     u_char cimaxslotindex, cicflag;
     u_char citype, cilen, *next;
     u_short cishort;
-    u_int32_t ciaddr1, ciaddr2, l, cidnsaddr;
+    u_int32_t ciaddr1, ciaddr2, l, cidnsaddr, ciwinsaddr;
     ipcp_options no;		/* options we've seen Naks for */
     ipcp_options try;		/* options to request next time */
 
@@ -1064,6 +1079,19 @@ ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	INCPTR(2, p); \
 	GETLONG(l, p); \
 	cidnsaddr = htonl(l); \
+	no.neg = 1; \
+	code \
+    }
+
+#define NAKCIWINS(opt, neg, code) \
+    if (go->neg && \
+	((cilen = p[1]) == CILEN_ADDR) && \
+	len >= cilen && \
+	p[0] == opt) { \
+	len -= cilen; \
+	INCPTR(2, p); \
+	GETLONG(l, p); \
+	ciwinsaddr = htonl(l); \
 	no.neg = 1; \
 	code \
     }
@@ -1144,6 +1172,22 @@ ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	     }
 	     );
 
+    NAKCIWINS(CI_MS_WINS1, req_wins1,
+	     if (treat_as_reject) {
+		 try.req_wins1 = 0;
+	     } else {
+		 try.winsaddr[0] = ciwinsaddr;
+	     }
+	     );
+
+    NAKCIWINS(CI_MS_WINS2, req_wins2,
+	     if (treat_as_reject) {
+		 try.req_wins2 = 0;
+	     } else {
+		 try.winsaddr[1] = ciwinsaddr;
+	     }
+	     );
+
     /*
      * There may be remaining CIs, if the peer is requesting negotiation
      * on an option that we didn't include in our request packet.
@@ -1174,7 +1218,7 @@ ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
 	    if (ciaddr1 && go->accept_local)
-		try.ouraddr = ciaddr1;
+		try.ouraddr = wo->old_addrs ? ciaddr1 : 0;
 	    GETLONG(l, p);
 	    ciaddr2 = htonl(l);
 	    if (ciaddr2 && go->accept_remote)
@@ -1189,7 +1233,7 @@ ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	    ciaddr1 = htonl(l);
 	    if (ciaddr1 && go->accept_local)
 		try.ouraddr = ciaddr1;
-	    if (try.ouraddr != 0)
+	    if (try.ouraddr != 0 && wo->neg_addr)
 		try.neg_addr = 1;
 	    no.neg_addr = 1;
 	    break;
@@ -1210,13 +1254,20 @@ ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject)
 	    no.req_dns2 = 1;
 	    break;
 	case CI_MS_WINS1:
-	case CI_MS_WINS2:
-	    if (cilen != CILEN_ADDR)
+	    if (go->req_wins1 || no.req_wins1 || cilen != CILEN_ADDR)
 		goto bad;
 	    GETLONG(l, p);
-	    ciaddr1 = htonl(l);
-	    if (ciaddr1)
-		try.winsaddr[citype == CI_MS_WINS2] = ciaddr1;
+	    try.winsaddr[0] = htonl(l);
+	    try.req_wins1 = 1;
+	    no.req_wins1 = 1;
+	    break;
+	case CI_MS_WINS2:
+	    if (go->req_wins2 || no.req_wins2 || cilen != CILEN_ADDR)
+		goto bad;
+	    GETLONG(l, p);
+	    try.winsaddr[1] = htonl(l);
+	    try.req_wins2 = 1;
+	    no.req_wins2 = 1;
 	    break;
 	}
 	p = next;
@@ -1235,7 +1286,6 @@ bad:
     IPCPDEBUG(("ipcp_nakci: received bad Nak!"));
     return 0;
 }
-
 
 /*
  * ipcp_rejci - Reject some of our CIs.
@@ -1331,8 +1381,8 @@ ipcp_rejci(fsm *f, u_char *p, int len)
 	try.neg = 0; \
     }
 
-#define REJCIWINS(opt, addr) \
-    if (addr && \
+#define REJCIWINS(opt, neg, addr) \
+    if (go->neg && \
 	((cilen = p[1]) == CILEN_ADDR) && \
 	len >= cilen && \
 	p[0] == opt) { \
@@ -1344,7 +1394,7 @@ ipcp_rejci(fsm *f, u_char *p, int len)
 	/* Check rejected value. */ \
 	if (cilong != addr) \
 	    goto bad; \
-	try.winsaddr[opt == CI_MS_WINS2] = 0; \
+	try.neg = 0; \
     }
 
     REJCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs,
@@ -1359,9 +1409,9 @@ ipcp_rejci(fsm *f, u_char *p, int len)
 
     REJCIDNS(CI_MS_DNS2, req_dns2, go->dnsaddr[1]);
 
-    REJCIWINS(CI_MS_WINS1, go->winsaddr[0]);
+    REJCIWINS(CI_MS_WINS1, req_wins1, go->winsaddr[0]);
 
-    REJCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+    REJCIWINS(CI_MS_WINS2, req_wins2, go->winsaddr[1]);
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -1396,14 +1446,14 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
     ipcp_options *ao = &ipcp_allowoptions[f->unit];
     u_char *cip, *next;		/* Pointer to current and next CIs */
-    u_short cilen, citype;	/* Parsed len, type */
+    u_int32_t cilen, citype;	/* Parsed len, type */
     u_short cishort;		/* Parsed short value */
     u_int32_t tl, ciaddr1, ciaddr2;/* Parsed address values */
     int rc = CONFACK;		/* Final packet return code */
     int orc;			/* Individual option return code */
     u_char *p;			/* Pointer to next char to parse */
     u_char *ucp = inp;		/* Pointer to current output char */
-    int l = *len;		/* Length left */
+    u_int32_t l = *len;		/* Length left */
     u_char maxslotindex, cflag;
     int d;
 
@@ -1475,7 +1525,7 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 	    if (ciaddr2 != wo->ouraddr) {
 		if (ciaddr2 == 0 || !wo->accept_local) {
 		    orc = CONFNAK;
-		    if (!reject_if_disagree) {
+		    if (!reject_if_disagree && wo->old_addrs) {
 			DECPTR(sizeof(u_int32_t), p);
 			tl = ntohl(wo->ouraddr);
 			PUTLONG(tl, p);
@@ -1551,7 +1601,7 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 	    /* Microsoft primary or secondary WINS request */
 	    d = citype == CI_MS_WINS2;
 
-	    /* If we do not have a DNS address then we cannot send it */
+	    /* If we do not have a WINS address then we cannot send it */
 	    if (ao->winsaddr[d] == 0 ||
 		cilen != CILEN_ADDR) {	/* Check CI length */
 		orc = CONFREJ;		/* Reject CI */
@@ -1652,7 +1702,8 @@ endswitch:
      * option safely.
      */
     if (rc != CONFREJ && !ho->neg_addr && !ho->old_addrs &&
-	wo->req_addr && !reject_if_disagree && !noremoteip) {
+	wo->req_addr && !reject_if_disagree &&
+	((wo->hisaddr && !wo->accept_remote) || !noremoteip)) {
 	if (rc == CONFACK) {
 	    rc = CONFNAK;
 	    ucp = inp;			/* reset pointer */
@@ -1694,7 +1745,7 @@ ip_check_options(void)
 	wo->accept_local = 1;	/* don't insist on this default value */
 	if ((hp = gethostbyname(hostname)) != NULL) {
 	    local = *(u_int32_t *)hp->h_addr;
-	    if (local != 0 && !bad_ip_adrs(local))
+	    if (local != 0 && !ppp_bad_ip_addr(local))
 		wo->ouraddr = local;
 	}
     }
@@ -1724,7 +1775,7 @@ ip_demand_conf(int u)
     }
     if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
 	return 0;
-    ipcp_script(_PATH_IPPREUP, 1);
+    ipcp_script(path_ippreup, 1);
     if (!sifup(u))
 	return 0;
     if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
@@ -1764,6 +1815,12 @@ ipcp_up(fsm *f)
     /*
      * We must have a non-zero IP address for both ends of the link.
      */
+
+    if (wo->hisaddr && !wo->accept_remote && (!(ho->neg_addr || ho->old_addrs) || ho->hisaddr != wo->hisaddr)) {
+	error("Peer refused to agree to his IP address");
+	ipcp_close(f->unit, "Refused his IP address");
+	return;
+    }
     if (!ho->neg_addr && !ho->old_addrs)
 	ho->hisaddr = wo->hisaddr;
 
@@ -1783,22 +1840,29 @@ ipcp_up(fsm *f)
 	warn("Could not determine remote IP address: defaulting to %I",
 	     ho->hisaddr);
     }
-    script_setenv("IPLOCAL", ip_ntoa(go->ouraddr), 0);
+    ppp_script_setenv("IPLOCAL", ip_ntoa(go->ouraddr), 0);
     if (ho->hisaddr != 0)
-	script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr), 1);
+	ppp_script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr), 1);
 
     if (!go->req_dns1)
 	    go->dnsaddr[0] = 0;
     if (!go->req_dns2)
 	    go->dnsaddr[1] = 0;
     if (go->dnsaddr[0])
-	script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]), 0);
+	ppp_script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]), 0);
     if (go->dnsaddr[1])
-	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
+	ppp_script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
     if (usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
-	script_setenv("USEPEERDNS", "1", 0);
+	ppp_script_setenv("USEPEERDNS", "1", 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
     }
+
+    if (go->winsaddr[0])
+        ppp_script_setenv("WINS1", ip_ntoa(go->winsaddr[0]), 0);
+    if (go->winsaddr[1])
+        ppp_script_setenv("WINS2", ip_ntoa(go->winsaddr[1]), 0);
+    if (usepeerwins && (go->winsaddr[0] || go->winsaddr[1]))
+        ppp_script_setenv("USEPEERWINS", "1", 0);
 
     /*
      * Check that the peer is allowed to use the IP address it wants.
@@ -1823,16 +1887,17 @@ ipcp_up(fsm *f)
 				      wo->replace_default_route);
 	    if (go->ouraddr != wo->ouraddr) {
 		warn("Local IP address changed to %I", go->ouraddr);
-		script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
+		ppp_script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
 		wo->ouraddr = go->ouraddr;
 	    } else
-		script_unsetenv("OLDIPLOCAL");
-	    if (ho->hisaddr != wo->hisaddr && wo->hisaddr != 0) {
+		ppp_script_unsetenv("OLDIPLOCAL");
+	    if (ho->hisaddr != wo->hisaddr) {
 		warn("Remote IP address changed to %I", ho->hisaddr);
-		script_setenv("OLDIPREMOTE", ip_ntoa(wo->hisaddr), 0);
+		if (wo->hisaddr != 0)
+		    ppp_script_setenv("OLDIPREMOTE", ip_ntoa(wo->hisaddr), 0);
 		wo->hisaddr = ho->hisaddr;
 	    } else
-		script_unsetenv("OLDIPREMOTE");
+		ppp_script_unsetenv("OLDIPREMOTE");
 
 	    /* Set the interface to the new addresses */
 	    mask = GetMask(go->ouraddr);
@@ -1876,7 +1941,7 @@ ipcp_up(fsm *f)
 	ifindex = if_nametoindex(ifname);
 
 	/* run the pre-up script, if any, and wait for it to finish */
-	ipcp_script(_PATH_IPPREUP, 1);
+	ipcp_script(path_ippreup, 1);
 
 	/* check if preup script renamed the interface */
 	if (!if_indextoname(ifindex, ifname)) {
@@ -1959,7 +2024,7 @@ ipcp_down(fsm *f)
      * before the interface is marked down. */
     /* XXX more correct: we must get the stats before running the notifiers,
      * at least for the radius plugin */
-    update_link_stats(f->unit);
+    ppp_get_link_stats(NULL);
     notify(ip_down_notifier, 0);
     if (ip_down_hook)
 	ip_down_hook();
@@ -1970,7 +2035,7 @@ ipcp_down(fsm *f)
     sifvjcomp(f->unit, 0, 0, 0);
 
     print_link_stats(); /* _after_ running the notifiers and ip_down_hook(),
-			 * because print_link_stats() sets link_stats_valid
+			 * because print_link_stats() sets link_stats_print
 			 * to 0 (zero) */
 
     /*
@@ -2096,20 +2161,23 @@ create_resolv(u_int32_t peerdns1, u_int32_t peerdns2)
 {
     FILE *f;
 
-    f = fopen(_PATH_RESOLV, "w");
+    if (noresolvconf)
+	return;
+
+    f = fopen(PPP_PATH_RESOLV, "w");
     if (f == NULL) {
-	error("Failed to create %s: %m", _PATH_RESOLV);
+	error("Failed to create %s: %m", PPP_PATH_RESOLV);
 	return;
     }
 
     if (peerdns1)
 	fprintf(f, "nameserver %s\n", ip_ntoa(peerdns1));
 
-    if (peerdns2)
+    if (peerdns2 && peerdns2 != peerdns1)
 	fprintf(f, "nameserver %s\n", ip_ntoa(peerdns2));
 
     if (ferror(f))
-	error("Write failed to %s: %m", _PATH_RESOLV);
+	error("Write failed to %s: %m", PPP_PATH_RESOLV);
 
     fclose(f);
 }

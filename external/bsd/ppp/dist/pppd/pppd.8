@@ -1,13 +1,12 @@
 .\" NetBSD
-.\" manual page [] for pppd 2.4
-.\" Id: pppd.8,v 1.90 2008/03/26 12:09:40 paulus Exp 
+.\" manual page [] for pppd 2.5.x
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
 .\" IP indented paragraph
 .\" TP hanging label
 .\" 
-.\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
+.\" Copyright (c) 1993-2024 Paul Mackerras <paulus@ozlabs.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -56,8 +55,8 @@ non-privileged user.
 .I speed
 An option that is a decimal number is taken as the desired baud rate
 for the serial device.  On systems such as
-4.4BSD and NetBSD, any speed can be specified.  Other systems
-(e.g. Linux, SunOS) only support the commonly-used baud rates.
+Linux, 4.4BSD and NetBSD, any speed can be specified.  Other systems
+(e.g. SunOS) only support the commonly-used baud rates.
 .TP
 .B asyncmap \fImap
 This option sets the Async-Control-Character-Map (ACCM) for this end
@@ -127,12 +126,6 @@ Define the metric of the \fIdefaultroute\fR and only add it if there
 is no other default route with the same metric.  With the default
 value of -1, the route is only added if there is no default route at
 all.
-.TP
-.B defaultroute6
-Add a default IPv6 route to the system routing tables, using the peer as
-the gateway, when IPv6CP negotiation is successfully completed.
-This entry is removed when the PPP connection is broken.  This option
-is privileged if the \fInodefaultroute6\fR option has been specified.
 .TP
 .B replacedefaultroute
 This option is a flag to the defaultroute option. If defaultroute is
@@ -219,11 +212,14 @@ Set the local and/or remote 64-bit interface identifier. Either one may be
 omitted. The identifier must be specified in standard ASCII notation of
 IPv6 addresses (e.g. ::dead:beef). If the
 \fIipv6cp\-use\-ipaddr\fR
-option is given, the local identifier is the local IPv4 address (see above).
+option is given, the local identifier is the local IPv4 address and the
+remote identifier is the remote IPv4 address (see above).
+If the \fIipv6cp-use-remotenumber\fR option is given, the remote identifier
+is set to the value from \fIremotenumber\fR option.
 On systems which supports a unique persistent id, such as EUI\-48 derived
 from the Ethernet MAC address, \fIipv6cp\-use\-persistent\fR option can be
-used to replace the \fIipv6 <local>,<remote>\fR option. Otherwise the 
-identifier is randomized.
+used to set local identifier.  Otherwise both local and remote identifiers
+are randomized.
 .TP
 .B active\-filter \fIfilter\-expression
 Specifies a packet filter to be applied to data packets to determine
@@ -267,10 +263,16 @@ compression in the corresponding direction.  Use \fInobsdcomp\fR or
 \fIbsdcomp 0\fR to disable BSD-Compress compression entirely.
 .TP
 .B ca \fIca-file
-(EAP-TLS) Use the file \fIca-file\fR as the X.509 Certificate Authority
+(EAP-TLS, or PEAP) Use the file \fIca-file\fR as the X.509 Certificate Authority
 (CA) file (in PEM format), needed for setting up an EAP-TLS connection.
 This option is used on the client-side in conjunction with the \fBcert\fR
-and \fBkey\fR options.
+and \fBkey\fR options.  Either \fIca\fR, or \fIcapath\fR options are required
+for PEAP. EAP-TLS may also use the entry in eaptls-client or eaptls-server
+for a CA certificate associated with a particular peer.
+.TP
+.B capath \fIpath
+(EAP-TLS, or PEAP) Specify a location that contains public CA certificates.
+Either \fIca\fR, or \fIcapath\fR options are required for PEAP.
 .TP
 .B cdtrcts
 Use a non-standard hardware flow control (i.e. DTR/CTS) to control
@@ -327,15 +329,15 @@ negotiation by sending its first LCP packet.  The default value is
 or \fBpty\fR option is used.
 .TP
 .B crl \fIfilename
-(EAP-TLS) Use the file \fIfilename\fR as the Certificate Revocation List
+(EAP-TLS, or PEAP) Use the file \fIfilename\fR as the Certificate Revocation List
 to check for the validity of the peer's certificate. This option is not
-mandatory for setting up an EAP-TLS connection. Also see the \fBcrl-dir\fR
+mandatory for setting up a TLS connection. Also see the \fBcrl-dir\fR
 option.
 .TP
 .B crl-dir \fIdirectory
-(EAP-TLS) Use the directory \fIdirectory\fR to scan for CRL files in
+(EAP-TLS, or PEAP) Use the directory \fIdirectory\fR to scan for CRL files in
 has format ($hash.r0) to check for the validity of the peer's certificate.
-This option is not mandatory for setting up an EAP-TLS connection.
+This option is not mandatory for setting up a TLS connection.
 Also see the \fBcrl\fR option.
 .TP
 .B debug
@@ -354,6 +356,17 @@ escaped for both the transmit and the receive direction.
 Disable MRU [Maximum Receive Unit] negotiation.  With this option,
 pppd will use the default MRU value of 1500 bytes for both the
 transmit and receive direction.
+.TP
+.B defaultroute6
+Add a default IPv6 route to the system routing tables, using the peer as
+the gateway, when IPv6CP negotiation is successfully completed.
+This entry is removed when the PPP connection is broken.  This option
+is privileged if the \fInodefaultroute6\fR option has been specified.
+\fBWARNING: Do not enable this option by default\fR.  IPv6 routing tables
+are managed by kernel (as apposite to IPv4) and IPv6 default route is
+configured by kernel automatically too based on ICMPv6 Router Advertisement
+packets.  This option may conflict with kernel IPv6 route setup and should
+be used only for broken IPv6 networks.
 .TP
 .B deflate \fInr,nt
 Request that the peer compress packets that it sends, using the
@@ -463,7 +476,8 @@ exclude the password string from the log.  This is the default.
 Specifies how many seconds to wait before re-initiating the link after
 it terminates.  This option only has any effect if the \fIpersist\fR
 or \fIdemand\fR option is used.  The holdoff period is not applied if
-the link was terminated because it was idle.
+the link was terminated because it was idle, connect time expired,
+modem hangup or user request.
 .TP
 .B idle \fIn
 Specifies that pppd should disconnect if the link is idle for \fIn\fR
@@ -494,12 +508,25 @@ to send configure-Rejects instead to \fIn\fR (default 10).
 Set the maximum number of IPCP terminate-request transmissions to
 \fIn\fR (default 3).
 .TP
+.B ipcp\-no\-address
+Disable negotiation of addresses via IP-Address IPCP option.
+.TP
+.B ipcp\-no\-addresses
+Disable negotiation of addresses via old-style deprecated IP-Addresses
+IPCP option. pppd by default try to use new-style IP-Address IPCP option.
+If new-style is not supported by peer or is disabled by \fBipcp\-no\-address\fR
+option then pppd fallbacks to old-style deprecated IP-Addresses IPCP option.
+When both new-style and old-style are disabled by both \fBipcp\-no\-address\fR
+and \fBipcp\-no\-addresses\fR options then negotiation of IP addresses
+is completely disabled.
+.TP
 .B ipcp\-restart \fIn
 Set the IPCP restart interval (retransmission timeout) to \fIn\fR
 seconds (default 3).
 .TP
 .B ipparam \fIstring
-Provides an extra parameter to the ip\-up, ip\-pre\-up and ip\-down
+Provides an extra parameter most of the notification scripts, most notably
+ip\-up, ip\-pre\-up, ip\-down, ipv6\-up, ipv6\-down, auth\-up and auth\-down
 scripts.  If this
 option is given, the \fIstring\fR supplied is given as the 6th
 parameter to those scripts.
@@ -513,6 +540,23 @@ was specified in an option.
 With this option, pppd will accept the peer's idea of its (remote)
 IPv6 interface identifier, even if the remote IPv6 interface
 identifier was specified in an option.
+.TP
+.B ipv6cp\-noremote
+Allow pppd to operate without having an IPv6 link local address for the peer.
+This option is only available under Linux.  Normally, pppd will request the
+peer's IPv6 interface identifier (used for composing IPv6 link local address),
+and if the peer does not supply it, pppd will generate one for the peer.
+With this option, if the peer does not supply its IPv6 interface identifier,
+pppd will not ask the peer for it, and will not set the destination IPv6
+link local address of the ppp interface.  In this situation, the ppp interface
+can be used for routing by creating device routes, but the peer itself cannot
+be addressed directly for IPv6 traffic until the peer starts announcing ICMPv6
+Router Advertisement or ICMPv6 Neighbor Advertisement packets.  Note that IPv6
+router must announce ICMPv6 Router Advertisement packets.
+.TP
+.B ipv6cp\-nosendip
+Don't send our local IPv6 interface identifier to peer during IPv6 interface
+identifier negotiation.
 .TP
 .B ipv6cp\-max\-configure \fIn
 Set the maximum number of IPv6CP configure-request transmissions to
@@ -529,70 +573,6 @@ Set the maximum number of IPv6CP terminate-request transmissions to
 .B ipv6cp\-restart \fIn
 Set the IPv6CP restart interval (retransmission timeout) to \fIn\fR
 seconds (default 3).
-.TP
-.B ipx
-Enable the IPXCP and IPX protocols.  This option is presently only
-supported under Linux, and only if your kernel has been configured to
-include IPX support.
-.TP
-.B ipx\-network \fIn
-Set the IPX network number in the IPXCP configure request frame to
-\fIn\fR, a hexadecimal number (without a leading 0x).  There is no
-valid default.  If this option is not specified, the network number is
-obtained from the peer.  If the peer does not have the network number,
-the IPX protocol will not be started.
-.TP
-.B ipx\-node \fIn\fB:\fIm
-Set the IPX node numbers. The two node numbers are separated from each
-other with a colon character. The first number \fIn\fR is the local
-node number. The second number \fIm\fR is the peer's node number. Each
-node number is a hexadecimal number, at most 10 digits long. The node
-numbers on the ipx\-network must be unique. There is no valid
-default. If this option is not specified then the node numbers are
-obtained from the peer.
-.TP
-.B ipx\-router\-name \fI<string>
-Set the name of the router. This is a string and is sent to the peer
-as information data.
-.TP
-.B ipx\-routing \fIn
-Set the routing protocol to be received by this option. More than one
-instance of \fIipx\-routing\fR may be specified. The '\fInone\fR'
-option (0) may be specified as the only instance of ipx\-routing. The
-values may be \fI0\fR for \fINONE\fR, \fI2\fR for \fIRIP/SAP\fR, and
-\fI4\fR for \fINLSP\fR.
-.TP
-.B ipxcp\-accept\-local
-Accept the peer's NAK for the node number specified in the ipx\-node
-option. If a node number was specified, and non-zero, the default is
-to insist that the value be used. If you include this option then you
-will permit the peer to override the entry of the node number.
-.TP
-.B ipxcp\-accept\-network
-Accept the peer's NAK for the network number specified in the
-ipx\-network option. If a network number was specified, and non-zero, the
-default is to insist that the value be used. If you include this
-option then you will permit the peer to override the entry of the node
-number.
-.TP
-.B ipxcp\-accept\-remote
-Use the peer's network number specified in the configure request
-frame. If a node number was specified for the peer and this option was
-not specified, the peer will be forced to use the value which you have
-specified.
-.TP
-.B ipxcp\-max\-configure \fIn
-Set the maximum number of IPXCP configure request frames which the
-system will send to \fIn\fR. The default is 10.
-.TP
-.B ipxcp\-max\-failure \fIn
-Set the maximum number of IPXCP NAK frames which the local system will
-send before it rejects the options. The default value is 3.
-.TP
-.B ipxcp\-max\-terminate \fIn
-Set the maximum number of IPXCP terminate request frames before the
-local system considers that the peer is not listening to them. The
-default value is 3.
 .TP
 .B kdebug \fIn
 Enable debugging code in the kernel-level PPP driver.  The argument
@@ -658,6 +638,10 @@ Set the maximum number of LCP terminate-request transmissions to
 Set the LCP restart interval (retransmission timeout) to \fIn\fR
 seconds (default 3).
 .TP
+.B lcp\-rtt\-file \fIfilename
+Sets the file where the round-trip time (RTT) of LCP echo-request frames
+will be logged.
+.TP
 .B linkname \fIname\fR
 Sets the logical name of the link to \fIname\fR.  Pppd will create a
 file named \fBppp\-\fIname\fB.pid\fR in /var/run (or /etc/ppp on some
@@ -707,6 +691,11 @@ network control protocol comes up).
 .B maxfail \fIn
 Terminate after \fIn\fR consecutive failed connection attempts.  A
 value of 0 means no limit.  The default value is 10.
+.TP
+.B max\-tls-\version \fIstring
+(EAP-TLS, or PEAP) Configures the max allowed TLS version used during
+negotiation with a peer.  The default value for this is \fI1.2\fR.  Values
+allowed for this option is \fI1.0.\fR, \fI1.1\fR, \fI1.2\fR, \fI1.3\fR.
 .TP
 .B modem
 Use the modem control lines.  This option is the default.  With this
@@ -772,11 +761,18 @@ will be used as the name to send to the peer when authenticating the
 local system to the peer.  (Note that pppd does not append the domain
 name to \fIname\fR.)
 .TP
+.B netmask \fImask
+Set the IPV4 network mask on the PPP interface to the given
+\fImask\fR, which can be given in dotted-quad notation or as a single
+hexadecimal number preceded by 0x.  This option is not normally
+needed because the PPP interface is a point-to-point connection, but
+in some specialized circumstances it can be useful.
+.TP
 .B noaccomp
 Disable Address/Control compression in both directions (send and
 receive).
 .TP
-.B need-peer-eap
+.B need\-peer\-eap
 (EAP-TLS) Require the peer to verify our authentication credentials.
 .TP
 .B noauth
@@ -846,11 +842,6 @@ which is to determine (if possible) the local IP address from the
 hostname.  With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it specified explicitly on the
 command line or in an options file).
-.TP
-.B noipx
-Disable the IPXCP and IPX protocols.  This option should only be
-required if the peer is buggy and gets confused by requests from pppd
-for IPXCP negotiation.
 .TP
 .B noktune
 Opposite of the \fIktune\fR option; disables pppd from changing system
@@ -924,6 +915,9 @@ not set the destination address of the ppp interface.  In this
 situation, the ppp interface can be used for routing by creating
 device routes, but the peer itself cannot be addressed directly for IP
 traffic.
+.TP
+.B nosendip
+Don't send our local IP address to peer during IP address negotiation.
 .TP
 .B notty
 Normally, pppd requires a terminal device.  With this option, pppd
@@ -1154,6 +1148,16 @@ The device used by pppd with this option must have sync support.
 Currently supports Microgate SyncLink adapters
 under Linux and FreeBSD 2.2.8 and later.
 .TP
+.B tls\-verify\-method \fIstring
+(EAP-TLS, or PEAP) Match the value specified for \fIremotename\fR to that that
+of the X509 certificates subject name, common name, or suffix of the common
+name.  Respective values allowed for this option is: \fInone\fR, \fIsubject\fR,
+\fIname\fR, or \fIsuffix\fR.  The default value for this option is \fIname\fR.
+.TP
+.B tls\-verify\-key\-usage
+(EAP-TLS, or PEAP) Enables examination of peer certificate's purpose, and
+extended key usage attributes.
+.TP
 .B unit \fInum
 Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
 connections.  If the unit is already in use a dynamically allocated number will
@@ -1198,7 +1202,21 @@ by the peer (if any) are passed to the /etc/ppp/ip\-up script in the
 environment variables DNS1 and DNS2, and the environment variable
 USEPEERDNS will be set to 1.  In addition, pppd will create an
 /etc/ppp/resolv.conf file containing one or two nameserver lines with
-the address(es) supplied by the peer.
+the address(es) supplied by the peer (unless the \fInoresolvconf\fR
+option is given).
+.TP
+.B usepeerwins
+Ask the peer for up to 2 WINS server addresses.  The addresses supplied
+by the peer (if any) are passed to the /etc/ppp/ip\-up script in the
+environment variables WINS1 and WINS2, and the environment variable
+USEPEERWINS will be set to 1.
+.LP
+Please note that some modems (like the Huawei E220) requires this option in
+order to avoid a race condition that results in the incorrect DNS servers
+being assigned.
+.TP
+.B noresolvconf
+Do not create the /etc/ppp/resolv.conf file.
 .TP
 .B user \fIname
 Sets the name used for authenticating the local system to the peer to
@@ -1231,35 +1249,36 @@ by specifying ppp'd option \fBnic-eth0\fR. Prefix \fBnic-\fR for this
 option may be avoided if interface name is unambiguous and does not
 look like any other pppd's option.
 .TP
-.B pppoe-service \fIname
+.B pppoe\-service \fIname
 Connect to specified PPPoE service name. For backward compatibility also
 \fBrp_pppoe_service\fP option name is supported.
 .TP
-.B pppoe-ac \fIname
+.B pppoe\-ac \fIname
 Connect to specified PPPoE access concentrator name. For backward
 compatibility also \fBrp_pppoe_ac\fP option name is supported.
 .TP
-.B pppoe-sess \fIsessid\fP:\fImacaddr
+.B pppoe\-sess \fIsessid\fP:\fImacaddr
 Attach to existing PPPoE session. For backward compatibility also
 \fBrp_pppoe_sess\fP option name is supported.
 .TP
-.B pppoe-verbose \fIn
-Be verbose about discovered access concentrators. For backward
-compatibility also \fBrp_pppoe_verbose\fP option name is supported.
+.B pppoe\-verbose \fIn
+Be verbose about discovered access concentrators. When set to 2 or bigger
+value then dump also discovery packets. For backward compatibility also
+\fBrp_pppoe_verbose\fP option name is supported.
 .TP
-.B pppoe-mac \fImacaddr
+.B pppoe\-mac \fImacaddr
 Connect to specified MAC address.
 .TP
-.B pppoe-host-uniq \fIstring
+.B pppoe\-host\-uniq \fIstring
 Set the PPPoE Host-Uniq tag to the supplied hex string.
 By default PPPoE Host-Uniq tag is set to the pppd's process PID.
 For backward compatibility this option may be specified without
 \fBpppoe-\fP prefix.
 .TP
-.B pppoe-padi-timeout \fIn
+.B pppoe\-padi\-timeout \fIn
 Initial timeout for discovery packets in seconds (default 5).
 .TP
-.B pppoe-padi-attempts \fIn
+.B pppoe\-padi\-attempts \fIn
 Number of discovery attempts (default 3).
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  Pppd
@@ -1726,8 +1745,8 @@ We failed to authenticate ourselves to the peer.
 Pppd invokes scripts at various stages in its processing which can be
 used to perform site-specific ancillary processing.  These scripts are
 usually shell scripts, but could be executable code files instead.
-Pppd does not wait for the scripts to finish (except for the ip-pre-up
-script).  The scripts are
+Pppd does not wait for the scripts to finish (except for the net\-init,
+net\-pre\-up and ip\-pre\-up scripts).  The scripts are
 executed as root (with the real and effective user-id set to 0), so
 that they can do things such as update routing tables or run
 privileged daemons.  Be careful that the contents of these scripts do
@@ -1751,9 +1770,23 @@ IPCP has come up.
 The IP address for the remote end of the link.  This is only set when
 IPCP has come up.
 .TP
+.B LLLOCAL
+The Link-Local IPv6 address for the local end of the link.  This is only
+set when IPV6CP has come up.
+.TP
+.B LLREMOTE
+The Link-Local IPv6 address for the remote end of the link.  This is only
+set when IPV6CP has come up.
+.TP
 .B PEERNAME
 The authenticated name of the peer.  This is only set if the peer
 authenticates itself.
+.TP
+.B REMOTENUMBER
+The remote's number as provided to pppd by the remotenumber option.  The
+meaning of this varies based on the type of connection, xl2tpd for example can
+either provide the dialing number AVP or the remote's IP address.  pppoe-server
+typically provides the MAC address.
 .TP
 .B SPEED
 The baud rate of the tty device.
@@ -1794,6 +1827,20 @@ option was given).
 If the peer supplies DNS server addresses, this variable is set to the
 second DNS server address supplied (whether or not the usepeerdns
 option was given).
+.TP
+.B WINS1
+If the peer supplies WINS server addresses, this variable is set to the
+first WINS server address supplied.
+.TP
+.B WINS2
+If the peer supplies WINS server addresses, this variable is set to the
+second WINS server address supplied.
+.TP
+.B ACNAME
+If the pppoe plugin is used to establish a connection to an access
+concentrator (AC), this variable is set to the name of the AC, as
+supplied by the AC.
+.P
 .P
 Pppd invokes the following scripts, if they exist.  It is not an error
 if they don't exist.
@@ -1802,7 +1849,7 @@ if they don't exist.
 A program or script which is executed after the remote system
 successfully authenticates itself.  It is executed with the parameters
 .IP
-\fIinterface\-name peer\-name user\-name tty\-device speed\fR
+\fIinterface\-name peer\-name user\-name tty\-device speed ipparam\fR
 .IP
 Note that this script is not executed if the peer doesn't authenticate
 itself, for example when the \fInoauth\fR option is used.
@@ -1820,6 +1867,14 @@ IP addresses assigned but is still down.  This can be used to
 add firewall rules before any IP traffic can pass through the
 interface.  Pppd will wait for this script to finish before bringing
 the interface up, so this script should run quickly.
+.PP
+WARNING:  Please note that on systems where a single interface carries multiple
+protocols (Linux) ip-pre-up is NOT actually guaranteed to execute prior to the
+interface moving into an up state, although IP information won't be known you
+should consider using net-pre-up instead, alternatively, disable other NCPs
+such that IPv4 is the only negotiated protocol - which will also result in a
+guarantee that ip-pre-up is called prior to the interface going into an UP
+state.
 .TP
 .B /etc/ppp/ip\-up
 A program or script which is executed when the link is available for
@@ -1849,33 +1904,26 @@ Similar to /etc/ppp/ip\-down, but it is executed when IPv6 packets can no
 longer be transmitted on the link. It is executed with the same parameters 
 as the ipv6\-up script.
 .TP
-.B /etc/ppp/ipx\-up
-A program or script which is executed when the link is available for
-sending and receiving IPX packets (that is, IPXCP has come up).  It is
-executed with the parameters
+.B /etc/ppp/net\-init
+This script will be executed the moment the ppp unit number is known.  This
+script will be waited for and should not cause significant delays.  This can be
+used to update book-keeping type systems external to ppp and provides the only
+guaranteed point where a script can be executed knowing the ppp unit number
+prior to LCP being initiated.  It is executed with the parameters
 .IP
-\fIinterface\-name tty\-device speed network\-number local\-IPX\-node\-address
-remote\-IPX\-node\-address local\-IPX\-routing\-protocol remote\-IPX\-routing\-protocol
-local\-IPX\-router\-name remote\-IPX\-router\-name ipparam pppd\-pid\fR 
-.IP
-The local\-IPX\-routing\-protocol and remote\-IPX\-routing\-protocol field
-may be one of the following:
-.IP
-NONE      to indicate that there is no routing protocol
-.br
-RIP       to indicate that RIP/SAP should be used
-.br
-NLSP      to indicate that Novell NLSP should be used
-.br
-RIP NLSP  to indicate that both RIP/SAP and NLSP should be used
+\fIinterface\-name tty\-device speed ipparam
 .TP
-.B /etc/ppp/ipx\-down
-A program or script which is executed when the link is no longer
-available for sending and receiving IPX packets.  This script can be
-used for undoing the effects of the /etc/ppp/ipx\-up script.  It is
-invoked in the same manner and with the same parameters as the ipx\-up
-script.
-.SH FILES
+.B /etc/ppp/net\-pre\-up
+This script will be executed just prior to NCP negotiations initiating, and is
+guaranteed to be executed whilst the interface (Linux) and/or sub-interfaces
+(Solaris) as the case may be is/are still down.  ppp will block waiting for
+this script to complete, and the interface may be safely renamed in this script
+(using for example "ip li set dev $1 name ppp-foobar".  The parameters are the
+same as for net\-init.
+.TP
+.B /etc/ppp/net\-down
+This script will be executed just prior to ppp terminating and will not be
+waited for.  The parameters are the same as for net\-init.
 .TP
 .B /var/run/ppp\fIn\fB.pid \fR(BSD or Linux), \fB/etc/ppp/ppp\fIn\fB.pid \fR(others)
 Process-ID for pppd process on ppp interface unit \fIn\fR.
@@ -2021,7 +2069,7 @@ of a fatal decompression error.  (Fatal decompression errors generally
 indicate a bug in one or other implementation.)
 
 .SH AUTHORS
-Paul Mackerras (paulus@samba.org), based on earlier work by
+Paul Mackerras (paulus@ozlabs.org), based on earlier work by
 Drew Perkins,
 Brad Clements,
 Karl Fox,
@@ -2083,7 +2131,7 @@ are met:
 .br
      (412) 268-4387, fax: (412) 268-7395
 .br
-     tech-transfer@andrew.cmu.edu
+     tech\-transfer@andrew.cmu.edu
 .LP
 3b. The name(s) of the authors of this software must not be used to
    endorse or promote products derived from this software without
@@ -2096,7 +2144,7 @@ are met:
     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
 .br
    "This product includes software developed by Paul Mackerras
-    <paulus@samba.org>".
+    <paulus@ozlabs.org>".
 .br
    "This product includes software developed by Pedro Roque Marques
     <pedro_m@yahoo.com>".

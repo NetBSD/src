@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -43,7 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: magic.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +55,7 @@ __RCSID("$NetBSD: magic.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
 #include "magic.h"
 
 

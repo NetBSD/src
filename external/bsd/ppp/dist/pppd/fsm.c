@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.5 2021/01/09 16:39:28 christos Exp $	*/
+/*	$NetBSD: fsm.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -43,7 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fsm.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
+__RCSID("$NetBSD: fsm.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
  * TODO:
@@ -55,7 +59,7 @@ __RCSID("$NetBSD: fsm.c,v 1.5 2021/01/09 16:39:28 christos Exp $");
 #include <string.h>
 #include <sys/types.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
 #include "fsm.h"
 
 
