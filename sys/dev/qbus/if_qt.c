@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.28 2025/01/08 18:31:15 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -43,7 +43,7 @@
  *	It works!  Darned board couldn't handle "short" rings - those rings
  *	where only half the entries were made available to the board (the
  *	ring descriptors were the full size, merely half the entries were
- * 	flagged as belonging always to the driver).  Grrrr.  Would have thought
+ *	flagged as belonging always to the driver).  Grrrr.  Would have thought
  *	the board could skip over those entries reserved by the driver.
  *	Now to find a way not to have to allocated 32+12 times 1.5kb worth of
  *	buffers...
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.28 2025/01/08 18:31:15 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -172,7 +172,9 @@ static	void qtsrr(struct qt_softc *, int);
 static	void qtrint(struct qt_softc *sc);
 static	void qttint(struct qt_softc *sc);
 
-/* static	void qtrestart(struct qt_softc *sc); */
+#ifdef notyet
+static	void qtreset(struct qt_softc *sc);
+#endif
 
 CFATTACH_DECL_NEW(qt, sizeof(struct qt_softc),
     qtmatch, qtattach, NULL, NULL);
@@ -180,7 +182,7 @@ CFATTACH_DECL_NEW(qt, sizeof(struct qt_softc),
 /*
  * Maximum packet size needs to include 4 bytes for the CRC
  * on received packets.
-*/
+ */
 #define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + 4)
 #define	MINPACKETSIZE 64
 
@@ -243,7 +245,7 @@ qtmatch(device_t parent, cfdata_t cf, void *aux)
  * the 'if_attach' call is skipped.  For a -YM the START command is issued,
  * but the device is not marked as running|up - that happens at interrupt level
  * when the device interrupts to say it has started.
-*/
+ */
 
 void
 qtattach(device_t parent, device_t self, void *aux)
@@ -268,7 +270,7 @@ qtattach(device_t parent, device_t self, void *aux)
 /*
  * Now allocate the buffers and initialize the buffers.  This should _never_
  * fail because main memory is allocated after the DMA pool is used up.
-*/
+ */
 
 	sc->is_addr[0] = QT_RCSR(0);
 	sc->is_addr[1] = QT_RCSR(2);
@@ -301,7 +303,7 @@ qtturbo(struct qt_softc *sc)
  * Issue the software reset.  Delay 150us.  The board should now be in
  * DELQA-Normal mode.  Set ITB and DEQTA select.  If both bits do not
  * stay turned on then the board is not a DELQA-YM.
-*/
+ */
 	QT_WCSR(CSR_ARQR, ARQR_SR);
 	QT_WCSR(CSR_ARQR, 0);
 	delay(150L);
@@ -310,26 +312,24 @@ qtturbo(struct qt_softc *sc)
 	i = QT_RCSR(CSR_SRR);
 	QT_WCSR(CSR_SRR, 0x8000);	/* Turn off ITB, set DELQA select */
 	if (i != 0x8001)
-		return(0);
+		return 0;
 /*
  * Board is a DELQA-YM.  Send the commands to enable Turbo mode.  Delay
  * 1 second, testing the SRR register every millisecond to see if the
  * board has shifted to Turbo mode.
-*/
+ */
 	QT_WCSR(CSR_XCR0, 0x0baf);
 	QT_WCSR(CSR_XCR1, 0xff00);
-	for	(i = 0; i < 1000; i++)
-		{
-		if	((QT_RCSR(CSR_SRR) & SRR_RESP) == 1)
+	for (i = 0; i < 1000; i++) {
+		if ((QT_RCSR(CSR_SRR) & SRR_RESP) == 1)
 			break;
 		delay(1000L);
-		}
-	if	(i >= 1000)
-		{
+	}
+	if (i >= 1000) {
 		printf("qt !Turbo\n");
-		return(0);
-		}
-	return(1);
+		return 0;
+	}
+	return 1;
 }
 
 #define ETHER_CMP(a,b)	memcmp((a), (b), 6)
@@ -400,8 +400,8 @@ qtinit(struct ifnet *ifp)
 	struct qt_init *iniblk;
 	struct ifrw *ifrw;
 	struct ifxmt *ifxp;
-	struct	qt_rring *rp;
-	struct	qt_tring *tp;
+	struct qt_rring *rp;
+	struct qt_tring *tp;
 	int i, error;
 
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -412,7 +412,8 @@ qtinit(struct ifnet *ifp)
 	if (sc->sc_ib == NULL) {
 		if (if_ubaminit(&sc->sc_ifuba, sc->sc_uh,
 		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
-			printf("%s: can't initialize\n", device_xname(sc->sc_dev));
+			printf("%s: can't initialize\n",
+			    device_xname(sc->sc_dev));
 			ifp->if_flags &= ~IFF_UP;
 			return 0;
 		}
@@ -434,7 +435,7 @@ qtinit(struct ifnet *ifp)
  * (64 byte) alignment.  Since the only time the INIT block is referenced is
  * at 'startup' or 'reset' time there is really no time penalty (and a modest
  * D space savings) involved.
-*/
+ */
 		memset(sc->sc_ib, 0, sizeof(struct qt_cdata));
 		iniblk = &sc->sc_ib->qc_init;
 
@@ -459,7 +460,7 @@ qtinit(struct ifnet *ifp)
  * called with outstanding I/O operations we check the ring descriptors for
  * a non-zero 'rhost0' (or 'thost0') word and place those buffers back on
  * the free list.
-*/
+ */
 	for (i = 0; i < NRCV; i++) {
 		rp = &sc->sc_ib->qc_r[i];
 		ifrw = &sc->sc_ifr[i];
@@ -467,14 +468,14 @@ qtinit(struct ifnet *ifp)
 		rp->rmd4 = loint(ifrw->ifrw_info);
 		rp->rmd5 = hiint(ifrw->ifrw_info);
 		rp->rmd3 = 0;			/* clear RMD3_OWN */
-		}
+	}
 	for (i = 0; i < NXMT; i++) {
 		tp = &sc->sc_ib->qc_t[i];
 		ifxp = &sc->sc_ifw[i];
 		tp->tmd4 = loint(ifxp->ifw_info);
 		tp->tmd5 = hiint(ifxp->ifw_info);
 		tp->tmd3 = TMD3_OWN;
-		}
+	}
 
 	sc->xnext = sc->xlast = sc->nxmit = 0;
 	sc->rindex = 0;
@@ -489,14 +490,14 @@ qtinit(struct ifnet *ifp)
  * full operations will proceed.  If the timeout expires without an interrupt
  * being received an error is printed, the flags cleared and the device left
  * marked down.
-*/
+ */
 	QT_WCSR(CSR_IBAL, loint(&sc->sc_pib->qc_init));
 	QT_WCSR(CSR_IBAH, hiint(&sc->sc_pib->qc_init));
 	QT_WCSR(CSR_SRQR, 2);
 
 	sc->is_if.if_flags |= IFF_RUNNING;
 	return 0;
-	}
+}
 
 /*
  * Start output on interface.
@@ -504,15 +505,15 @@ qtinit(struct ifnet *ifp)
 
 void
 qtstart(struct ifnet *ifp)
-	{
-	int	len, nxmit;
+{
+	int len, nxmit;
 	struct qt_softc *sc = ifp->if_softc;
 	struct qt_tring *rp;
-	struct	mbuf *m = NULL;
+	struct mbuf *m = NULL;
 
 	for (nxmit = sc->nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&sc->is_if.if_snd, m);
-		if	(m == 0)
+		if (m == NULL)
 			break;
 
 		rp = &sc->sc_ib->qc_t[sc->xnext];
@@ -527,7 +528,7 @@ qtstart(struct ifnet *ifp)
 		rp->tmd3 = len & TMD3_BCT;	/* set length,clear ownership */
 		QT_WCSR(CSR_ARQR, ARQR_TRQ);	/* tell device it has buffer */
 
-		if	(++sc->xnext >= NXMT)
+		if (++sc->xnext >= NXMT)
 			sc->xnext = 0;
 	}
 	if (sc->nxmit != nxmit)
@@ -540,32 +541,32 @@ qtstart(struct ifnet *ifp)
  * interrupts and timeouts come here.  Check for hard device errors and print a
  * message if any errors are found.  If we are waiting for the device to
  * START then check if the device is now running.
-*/
+ */
 
 void
 qtintr(void *arg)
-	{
+{
 	struct qt_softc *sc = arg;
 	struct ifnet *ifp = &sc->is_if;
 	short status;
 
-
 	status = QT_RCSR(CSR_SRR);
-	if	(status < 0)
+	if (status < 0) {
 		/* should we reset the device after a bunch of these errs? */
 		qtsrr(sc, status);
+	}
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return; /* Unwanted interrupt */
 	qtrint(sc);
 	qttint(sc);
 	qtstart(&sc->is_ec.ec_if);
-	}
+}
 
 /*
  * Transmit interrupt service.  Only called if there are outstanding transmit
  * requests which could have completed.  The DELQA-YM doesn't provide the
  * status bits telling the kind (receive, transmit) of interrupt.
-*/
+ */
 
 #define BBLMIS (TMD2_BBL|TMD2_MIS)
 
@@ -582,7 +583,7 @@ qttint(struct qt_softc *sc)
 /*
  * Collisions don't count as output errors, but babbling and missing packets
  * do count as output errors.
-*/
+ */
 		if (rp->tmd2 & TMD2_CER)
 			if_statinc(&sc->is_if, if_collisions);
 		if ((rp->tmd0 & TMD0_ERR1) ||
@@ -604,7 +605,7 @@ qttint(struct qt_softc *sc)
 /*
  * Receive interrupt service.  Pull packet off the interface and put into
  * a mbuf chain for processing later.
-*/
+ */
 
 void
 qtrint(struct qt_softc *sc)
@@ -612,13 +613,13 @@ qtrint(struct qt_softc *sc)
 	struct qt_rring *rp;
 	struct ifnet *ifp = &sc->is_ec.ec_if;
 	struct mbuf *m;
-	int	len;
+	int len;
 
-	while	(sc->sc_ib->qc_r[(int)sc->rindex].rmd3 & RMD3_OWN)
-		{
+	while (sc->sc_ib->qc_r[(int)sc->rindex].rmd3 & RMD3_OWN) {
 		rp = &sc->sc_ib->qc_r[(int)sc->rindex];
 		if ((rp->rmd0 & (RMD0_STP|RMD0_ENP)) != (RMD0_STP|RMD0_ENP)) {
-			printf("%s: chained packet\n", device_xname(sc->sc_dev));
+			printf("%s: chained packet\n",
+			    device_xname(sc->sc_dev));
 			if_statinc(&sc->is_if, if_ierrors);
 			goto rnext;
 		}
@@ -637,7 +638,7 @@ qtrint(struct qt_softc *sc)
 		}
 		m = if_ubaget(&sc->sc_ifuba, &sc->sc_ifr[(int)sc->rindex],
 		    ifp, len);
-		if (m == 0) {
+		if (m == NULL) {
 			if_statinc(&sc->is_if, if_ierrors);
 			goto rnext;
 		}
@@ -646,11 +647,11 @@ rnext:
 		--sc->nrcv;
 		rp->rmd3 = 0;
 		rp->rmd1 = MCLBYTES;
-		if	(++sc->rindex >= NRCV)
+		if (++sc->rindex >= NRCV)
 			sc->rindex = 0;
-		}
-	QT_WCSR(CSR_ARQR, ARQR_RRQ);	/* tell device it has buffer */
 	}
+	QT_WCSR(CSR_ARQR, ARQR_RRQ);	/* tell device it has buffer */
+}
 
 int
 qtioctl(struct ifnet *ifp, u_long cmd, void *data)
@@ -667,13 +668,14 @@ qtioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 	}
 	splx(s);
-	return (error);
+	return error;
 }
 
 void
 qtsrr(struct qt_softc *sc, int srrbits)
 {
 	char buf[100];
+
 	snprintb(buf, sizeof(buf), SRR_BITS, srrbits);
 	printf("%s: srr=%s\n", device_xname(sc->sc_dev), buf);
 }
@@ -689,9 +691,10 @@ qtstop(struct ifnet *ifp, int disable)
 	int i;
 
 	QT_WCSR(CSR_SRQR, 3);
-	for (i = 0; i < 100; i++)
+	for (i = 0; i < 100; i++) {
 		if ((QT_RCSR(CSR_SRR) & SRR_RESP) == 3)
 			break;
+	}
 	if (QT_RCSR(CSR_SRR) & SRR_FES)
 		qtsrr(sc, QT_RCSR(CSR_SRR));
 	/* Forget already queued transmit requests */
@@ -712,14 +715,13 @@ qtstop(struct ifnet *ifp, int disable)
  * After the reset put the device back in -T mode.  Then call qtinit() to
  * reinitialize the ring structures and issue the 'timeout' for the "device
  * started interrupt".
-*/
+ */
 
 void
-qtreset(sc)
-	struct qt_softc *sc;
-	{
+qtreset(struct qt_softc *sc)
+{
 
 	qtturbo(sc);
 	qtinit(&sc->is_ec.ec_if);
-	}
+}
 #endif
