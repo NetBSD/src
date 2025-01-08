@@ -62,7 +62,7 @@
 #if 0
 /* Have IPv6 Control Protocol */
 #define PPP_WITH_IPV6CP 1
-#edif
+#endif
 
 /* Support for Pluggable Authentication Modules */
 #define PPP_WITH_PAM 1
