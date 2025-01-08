@@ -40,6 +40,10 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*
  * TODO:
  */
@@ -47,7 +51,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
+#include "options.h"
 #include "upap.h"
 
 
@@ -56,7 +61,7 @@ static bool hide_password = 1;
 /*
  * Command-line options.
  */
-static option_t pap_option_list[] = {
+static struct option pap_option_list[] = {
     { "hide-password", o_bool, &hide_password,
       "Don't output passwords to log", OPT_PRIO | 1 },
     { "show-password", o_bool, &hide_password,

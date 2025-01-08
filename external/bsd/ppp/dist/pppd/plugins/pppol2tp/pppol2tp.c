@@ -24,37 +24,47 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "pppd.h"
-#include "pathnames.h"
-#include "fsm.h"
-#include "lcp.h"
-#include "ccp.h"
-#include "ipcp.h"
 #include <sys/stat.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <stdio.h>
+
 #include <linux/version.h>
 #include <linux/sockios.h>
+#include <linux/ppp-ioctl.h>
+
 #ifndef aligned_u64
 /* should be defined in sys/types.h */
 #define aligned_u64 unsigned long long __attribute__((aligned(8)))
 #endif
+
 #include <linux/types.h>
 #include <linux/if_ether.h>
 #include <linux/ppp_defs.h>
-#include <linux/if_ppp.h>
 #include <linux/if_pppox.h>
 #include <linux/if_pppol2tp.h>
+
+#include <pppd/pppd.h>
+#include <pppd/options.h>
+#include <pppd/fsm.h>
+#include <pppd/lcp.h>
+#include <pppd/ccp.h>
+#include <pppd/ipcp.h>
+
 
 /* should be added to system's socket.h... */
 #ifndef SOL_PPPOL2TP
 #define SOL_PPPOL2TP	273
 #endif
 
-const char pppd_version[] = VERSION;
+const char pppd_version[] = PPPD_VERSION;
 
 static int setdevname_pppol2tp(char **argv);
 
@@ -82,7 +92,7 @@ void (*pppol2tp_send_accm_hook)(int tunnel_id, int session_id,
 /* Hook provided to allow other plugins to handle IP up/down */
 void (*pppol2tp_ip_updown_hook)(int tunnel_id, int session_id, int up) = NULL;
 
-static option_t pppol2tp_options[] = {
+static struct option pppol2tp_options[] = {
 	{ "pppol2tp", o_special, &setdevname_pppol2tp,
 	  "FD for PPPoL2TP socket", OPT_DEVNAM | OPT_A2STRVAL,
           &pppol2tp_fd_str },
@@ -121,15 +131,15 @@ static int setdevname_pppol2tp(char **argv)
 		char buffer[128];
 		struct sockaddr pppol2tp;
 	} s;
-	int len = sizeof(s);
+	socklen_t len = sizeof(s);
 	char **a;
 	int tmp;
-	int tmp_len = sizeof(tmp);
+	socklen_t tmp_len = sizeof(tmp);
 
 	if (device_got_set)
 		return 0;
 
-	if (!int_option(*argv, &pppol2tp_fd))
+	if (!ppp_int_option(*argv, &pppol2tp_fd))
 		return 0;
 
 	if(getsockname(pppol2tp_fd, (struct sockaddr *)&s, &len) < 0) {
@@ -154,7 +164,7 @@ static int setdevname_pppol2tp(char **argv)
 
 	/* Setup option defaults. Compression options are disabled! */
 
-	modem = 0;
+	ppp_set_modem(false);
 
 	lcp_allowoptions[0].neg_accompression = 1;
 	lcp_wantoptions[0].neg_accompression = 0;
@@ -195,7 +205,7 @@ static void disconnect_pppol2tp(void)
 }
 
 static void send_config_pppol2tp(int mtu,
-			      u_int32_t asyncmap,
+			      uint32_t asyncmap,
 			      int pcomp,
 			      int accomp)
 {
@@ -203,8 +213,8 @@ static void send_config_pppol2tp(int mtu,
 	int on = 1;
 	int fd;
 	char reorderto[16];
-	char tid[8];
-	char sid[8];
+	char tid[12];
+	char sid[12];
 
 	if (pppol2tp_ifname[0]) {
 		struct ifreq ifr;
@@ -213,14 +223,14 @@ static void send_config_pppol2tp(int mtu,
 		fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (fd >= 0) {
 			memset (&ifr, '\0', sizeof (ifr));
-			strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+			ppp_get_ifname(ifr.ifr_name, sizeof(ifr.ifr_name));
 			strlcpy(ifr.ifr_newname, pppol2tp_ifname,
 				sizeof(ifr.ifr_name));
 			ioctl(fd, SIOCSIFNAME, (caddr_t) &ifr);
-			strlcpy(ifname, pppol2tp_ifname, 32);
+			ppp_set_ifname(pppol2tp_ifname);
 			if (pppol2tp_debug_mask & PPPOL2TP_MSG_CONTROL) {
 				dbglog("ppp%d: interface name %s",
-				       ifunit, ifname);
+					ppp_ifunit(), ppp_ifname());
 			}
 		}
 		close(fd);
@@ -230,17 +240,17 @@ static void send_config_pppol2tp(int mtu,
 		warn("Overriding mtu %d to %d", mtu, lcp_allowoptions[0].mru);
 		mtu = lcp_allowoptions[0].mru;
 	}
-	netif_set_mtu(ifunit, mtu);
+	ppp_set_mtu(ppp_ifunit(), mtu);
 
 	reorderto[0] = '\0';
 	if (pppol2tp_reorder_timeout > 0)
 		sprintf(&reorderto[0], "%d ", pppol2tp_reorder_timeout);
 	tid[0] = '\0';
 	if (pppol2tp_tunnel_id > 0)
-		sprintf(&tid[0], "%hu ", pppol2tp_tunnel_id);
+		sprintf(&tid[0], "%u ", pppol2tp_tunnel_id);
 	sid[0] = '\0';
 	if (pppol2tp_session_id > 0)
-		sprintf(&sid[0], "%hu ", pppol2tp_session_id);
+		sprintf(&sid[0], "%u ", pppol2tp_session_id);
 
 	dbglog("PPPoL2TP options: %s%s%s%s%s%s%s%s%sdebugmask %d",
 	       pppol2tp_recv_seq ? "recvseq " : "",
@@ -275,7 +285,7 @@ static void send_config_pppol2tp(int mtu,
 }
 
 static void recv_config_pppol2tp(int mru,
-			      u_int32_t asyncmap,
+			      uint32_t asyncmap,
 			      int pcomp,
 			      int accomp)
 {
@@ -284,7 +294,7 @@ static void recv_config_pppol2tp(int mru,
 		     lcp_allowoptions[0].mru);
 		mru = lcp_allowoptions[0].mru;
 	}
-	if ((ifunit >= 0) && ioctl(pppol2tp_fd, PPPIOCSMRU, (caddr_t) &mru) < 0)
+	if ((ppp_ifunit() >= 0) && ioctl(pppol2tp_fd, PPPIOCSMRU, (caddr_t) &mru) < 0)
 		error("Couldn't set PPP MRU: %m");
 }
 
@@ -492,33 +502,35 @@ void plugin_init(void)
 {
 #if defined(__linux__)
 	extern int new_style_driver;	/* From sys-linux.c */
-	if (!ppp_available() && !new_style_driver)
+	if (!ppp_check_kernel_support() && !new_style_driver)
 		fatal("Kernel doesn't support ppp_generic - "
 		    "needed for PPPoL2TP");
 #else
 	fatal("No PPPoL2TP support on this OS");
 #endif
-	add_options(pppol2tp_options);
+	ppp_add_options(pppol2tp_options);
 
 	/* Hook up ip up/down notifiers to send indicator to openl2tpd
 	 * that the link is up
 	 */
-	add_notifier(&ip_up_notifier, pppol2tp_ip_up, NULL);
-	add_notifier(&ip_down_notifier, pppol2tp_ip_down, NULL);
-	add_notifier(&ipv6_up_notifier, pppol2tp_ip_up, NULL);
-	add_notifier(&ipv6_down_notifier, pppol2tp_ip_down, NULL);
+	ppp_add_notify(NF_IP_UP, pppol2tp_ip_up, NULL);
+	ppp_add_notify(NF_IP_DOWN, pppol2tp_ip_down, NULL);
+#ifdef PPP_WITH_IPV6CP
+	ppp_add_notify(NF_IPV6_UP, pppol2tp_ip_up, NULL);
+	ppp_add_notify(NF_IPV6_DOWN, pppol2tp_ip_down, NULL);
+#endif
 }
 
 struct channel pppol2tp_channel = {
-    options: pppol2tp_options,
-    process_extra_options: NULL,
-    check_options: &pppol2tp_check_options,
-    connect: &connect_pppol2tp,
-    disconnect: &disconnect_pppol2tp,
-    establish_ppp: &generic_establish_ppp,
-    disestablish_ppp: &generic_disestablish_ppp,
-    send_config: &send_config_pppol2tp,
-    recv_config: &recv_config_pppol2tp,
-    close: NULL,
-    cleanup: NULL
+    .options = pppol2tp_options,
+    .process_extra_options = NULL,
+    .check_options = &pppol2tp_check_options,
+    .connect = &connect_pppol2tp,
+    .disconnect = &disconnect_pppol2tp,
+    .establish_ppp = &ppp_generic_establish,
+    .disestablish_ppp = &ppp_generic_disestablish,
+    .send_config = &send_config_pppol2tp,
+    .recv_config = &recv_config_pppol2tp,
+    .close = NULL,
+    .cleanup = NULL
 };

@@ -1,7 +1,7 @@
 /*
  * mppe.h - Definitions for MPPE
  *
- * Copyright (c) 2008 Paul Mackerras. All rights reserved.
+ * Copyright (c) 2008-2024 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,15 +15,6 @@
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
- *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
@@ -32,9 +23,19 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PPP_MPPE_H
+#define PPP_MPPE_H
+
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define MPPE_PAD		4	/* MPPE growth per frame */
-#define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
+#define MPPE_MAX_KEY_SIZE	32	/* Largest key length */
+#define MPPE_MAX_KEY_LEN       16      /* Largest key size accepted by the kernel */
 
 /* option bits for ccp_options.mppe */
 #define MPPE_OPT_40		0x01	/* 40 bit */
@@ -67,7 +68,7 @@
 /* Build a CI from mppe opts (see RFC 3078) */
 #define MPPE_OPTS_TO_CI(opts, ci)		\
     do {					\
-	u_char *ptr = ci; /* u_char[4] */	\
+	unsigned char *ptr = ci; /* unsigned char[4] */	\
 						\
 	/* H bit */				\
 	if (opts & MPPE_OPT_STATEFUL)		\
@@ -89,7 +90,7 @@
 /* The reverse of the above */
 #define MPPE_CI_TO_OPTS(ci, opts)		\
     do {					\
-	u_char *ptr = ci; /* u_char[4] */	\
+	unsigned char *ptr = ci; /* unsigned char[4] */	\
 						\
 	opts = 0;				\
 						\
@@ -119,3 +120,60 @@
 	if (ptr[3] & ~MPPE_ALL_BITS)		\
 	    opts |= MPPE_OPT_UNKNOWN;		\
     } while (/* CONSTCOND */ 0)
+
+
+#if PPP_WITH_MPPE
+
+/* These values are the RADIUS attribute values--see RFC 2548. */
+#define MPPE_ENC_POL_ENC_ALLOWED 1
+#define MPPE_ENC_POL_ENC_REQUIRED 2
+#define MPPE_ENC_TYPES_RC4_40 2
+#define MPPE_ENC_TYPES_RC4_128 4
+
+/* used by plugins (using above values) */
+void mppe_set_enc_types (int policy, int types);
+
+/*
+ * Set the MPPE send and recv keys. NULL values for keys are ignored
+ *   and input values are cleared to avoid leaving them on the stack
+ */
+void mppe_set_keys(unsigned char *send_key, unsigned char *recv_key, int keylen);
+
+/*
+ * Get the MPPE recv key
+ */
+int mppe_get_recv_key(unsigned char *recv_key, int length);
+
+/*
+ * Get the MPPE send key
+ */
+int mppe_get_send_key(unsigned char *send_key, int length);
+
+/*
+ * Clear the MPPE keys
+ */
+void mppe_clear_keys(void);
+
+/*
+ * Check if the MPPE keys are set
+ */
+bool mppe_keys_isset(void);
+
+/*
+ * Set mppe_xxxx_key from NT Password Hash Hash (MSCHAPv1), see RFC3079
+ */
+void mppe_set_chapv1(unsigned char *rchallenge, unsigned char *PasswordHashHash);
+
+/*
+ * Set the mppe_xxxx_key from MS-CHAP-v2 credentials, see RFC3079
+ */
+void mppe_set_chapv2(unsigned char *PasswordHashHash,
+		    unsigned char *NTResponse, int IsServer);
+
+#endif  // #ifdef PPP_WITH_MPPE
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // #ifdef PPP_MPPE_H

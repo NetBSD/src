@@ -40,6 +40,10 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*
  * TODO:
  * Randomize fsm id on link/init.
@@ -50,7 +54,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "pppd.h"
+#include "pppd-private.h"
 #include "fsm.h"
 
 

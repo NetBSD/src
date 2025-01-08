@@ -17,7 +17,7 @@
  * 3. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
+ *     <paulus@ozlabs.org>".
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -27,9 +27,14 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PPP_SESSION_H
+#define PPP_SESSION_H
 
-#ifndef __SESSION_H
-#define __SESSION_H
+#include "pppdconf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define SESS_AUTH  1	/* Check User Authentication */
 #define SESS_ACCT  2	/* Check Account Validity */
@@ -88,4 +93,8 @@ session_start(const int flags, const char* user, const char* passwd, const char*
 void
 session_end(const char* tty);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // PPP_SESSION_H
