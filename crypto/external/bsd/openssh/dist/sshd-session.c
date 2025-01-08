@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.5 2025/01/08 13:37:04 buhrow Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.6 2025/01/08 21:49:32 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.9 2024/09/09 02:39:57 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.5 2025/01/08 13:37:04 buhrow Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.6 2025/01/08 21:49:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,23 @@ __RCSID("$NetBSD: sshd-session.c,v 1.5 2025/01/08 13:37:04 buhrow Exp $");
 #include <syslog.h>
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
+
+static void
+check_connection(const char *argv0, int sock_in)
+{
+	struct request_info req;
+
+	request_init(&req, RQ_DAEMON, argv0, RQ_FILE, sock_in, 0);
+	fromhost(&req);
+
+	if (hosts_access(&req))
+		return;
+	debug("Connection refused by tcp wrapper");
+	/* n.b. hosts_access(3) has logged and notified blocklistd */
+	refuse(&req);
+	/* NOTREACHED */
+	fatal("libwrap refuse returns");
+}
 #endif /* LIBWRAP */
 
 #ifdef WITH_LDAP_PUBKEY
@@ -1200,34 +1217,13 @@ main(int ac, char **av)
 #ifdef LIBWRAP
 	/* Check whether logins are denied from this host. */
 	if (ssh_packet_connection_is_on_socket(ssh)) {
-		struct request_info req;
-
 		/* First, try with the value stored in __progname */
-		request_init(&req, RQ_DAEMON, __progname, RQ_FILE, sock_in, 0);
-		fromhost(&req);
-
-		if (!hosts_access(&req)) {
-			debug("Connection refused by tcp wrapper");
-			/* n.b. hosts_access(3) has logged and notified blocklistd */
-			refuse(&req);
-			/* NOTREACHED */
-			fatal("libwrap refuse returns");
-		}
-
+		check_connection(__progname, sock_in);
 		/*
 		 * Test with "sshd" as well, since that is what most people
 		 * will have in their hosts.allow and hosts.deny files.
 		 */
-		request_set(&req, RQ_DAEMON, "sshd", RQ_FILE, sock_in, 0);
-		fromhost(&req);
-
-		if (!hosts_access(&req)) {
-			debug("Connection refused by tcp wrapper");
-			/* n.b. hosts_access(3) has logged and notified blocklistd */
-			refuse(&req);
-			/* NOTREACHED */
-			fatal("libwrap refuse returns");
-		}
+		check_connection("sshd", sock_in);
 	}
 #endif /* LIBWRAP */
 
