@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.4 2024/09/24 21:32:19 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.5 2025/01/08 13:37:04 buhrow Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.9 2024/09/09 02:39:57 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.4 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.5 2025/01/08 13:37:04 buhrow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1196,6 +1196,40 @@ main(int ac, char **av)
 	 * the socket goes away.
 	 */
 	remote_ip = ssh_remote_ipaddr(ssh);
+
+#ifdef LIBWRAP
+	/* Check whether logins are denied from this host. */
+	if (ssh_packet_connection_is_on_socket(ssh)) {
+		struct request_info req;
+
+		/* First, try with the value stored in __progname */
+		request_init(&req, RQ_DAEMON, __progname, RQ_FILE, sock_in, 0);
+		fromhost(&req);
+
+		if (!hosts_access(&req)) {
+			debug("Connection refused by tcp wrapper");
+			/* n.b. hosts_access(3) has logged and notified blocklistd */
+			refuse(&req);
+			/* NOTREACHED */
+			fatal("libwrap refuse returns");
+		}
+
+		/*
+		 * Test with "sshd" as well, since that is what most people
+		 * will have in their hosts.allow and hosts.deny files.
+		 */
+		request_set(&req, RQ_DAEMON, "sshd", RQ_FILE, sock_in, 0);
+		fromhost(&req);
+
+		if (!hosts_access(&req)) {
+			debug("Connection refused by tcp wrapper");
+			/* n.b. hosts_access(3) has logged and notified blocklistd */
+			refuse(&req);
+			/* NOTREACHED */
+			fatal("libwrap refuse returns");
+		}
+	}
+#endif /* LIBWRAP */
 
 	rdomain = ssh_packet_rdomain_in(ssh);
 
