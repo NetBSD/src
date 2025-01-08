@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2066 2024/12/08 15:46:07 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2067 2025/01/08 13:41:23 buhrow Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1130,6 +1130,7 @@ markus is very cooperative about it):
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
 - adjust the DEFAULT_PKCS11_WHITELIST for ssh-agent
 - blocklistd additions
+- LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.1t/3.0.15
