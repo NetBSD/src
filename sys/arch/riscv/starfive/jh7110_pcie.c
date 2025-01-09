@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_pcie.c,v 1.1 2025/01/01 17:53:08 skrll Exp $ */
+/* $NetBSD: jh7110_pcie.c,v 1.2 2025/01/09 10:39:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_pcie.c,v 1.1 2025/01/01 17:53:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_pcie.c,v 1.2 2025/01/09 10:39:01 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -414,7 +414,7 @@ jh7110_pcie_host_init(struct jh7110_pcie_softc *sc)
 	    c++) {
 		if (clk_enable(clk) != 0) {
 			aprint_error_dev(phsc->sc_dev,
-			    ": couldn't enable clock #%d\n", c);
+			    "couldn't enable clock #%d\n", c);
 			return ENXIO;
 		}
 	}
@@ -425,7 +425,7 @@ jh7110_pcie_host_init(struct jh7110_pcie_softc *sc)
 	    r++) {
 		if (fdtbus_reset_deassert(rst) != 0) {
 			aprint_error_dev(phsc->sc_dev,
-			    ": couldn't de-assert reset #%d\n", r);
+			    "couldn't de-assert reset #%d\n", r);
 			return ENXIO;
 		}
 	}
@@ -498,7 +498,7 @@ jh7110_pcie_host_init(struct jh7110_pcie_softc *sc)
 	syscon_unlock(sc->sc_syscon);
 
 	if ((reg & DATA_LINK_ACTIVE) == 0) {
-		aprint_error_dev(phsc->sc_dev, ": link not up\n");
+		aprint_error_dev(phsc->sc_dev, "link not up\n");
 		    return ENXIO;
 	}
 
@@ -527,7 +527,7 @@ jh7110_pcie_atr_init(struct jh7110_pcie_softc *sc)
 	ranges = fdtbus_get_prop(phsc->sc_phandle, "ranges", &ranges_len);
 	if (ranges == NULL) {
 		aprint_error_dev(phsc->sc_dev,
-		    ": couldn't find 'ranges' property\n");
+		    "couldn't find 'ranges' property\n");
 		return ENXIO;
 	}
 	const int ranges_cells = ranges_len / sizeof(uint32_t);
