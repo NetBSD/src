@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.49 2022/03/03 06:26:28 riastradh Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.50 2025/01/09 06:55:25 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.49 2022/03/03 06:26:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.50 2025/01/09 06:55:25 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -327,6 +328,7 @@ gtmr_delay(unsigned int n)
 	uint64_t last = gtmr_read_cntct(sc);
 
 	while (ticks > 0) {
+		SPINLOCK_BACKOFF_HOOK;
 		uint64_t curr = gtmr_read_cntct(sc);
 		if (curr >= last)
 			ticks -= (curr - last);
