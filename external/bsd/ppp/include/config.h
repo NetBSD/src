@@ -188,7 +188,11 @@
 #define PPP_WITH_OPENSSL 1
 
 /* Support for Pluggable Authentication Modules */
+#ifdef USE_PAM
 #define PPP_WITH_PAM 1
+#else
+#undef PPP_WITH_PAM
+#endif
 
 /* Have PEAP authentication support */
 #define PPP_WITH_PEAP 1

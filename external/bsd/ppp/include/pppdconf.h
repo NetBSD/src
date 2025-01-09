@@ -65,7 +65,11 @@
 #endif
 
 /* Support for Pluggable Authentication Modules */
+#ifdef USE_PAM
 #define PPP_WITH_PAM 1
+#else
+#undef PPP_WITH_PAM
+#endif
 
 /* Have EAP-SRP authentication support */
 /* #undef PPP_WITH_SRP */
