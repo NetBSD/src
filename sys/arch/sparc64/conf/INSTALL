@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2025/01/09 19:09:47 martin Exp $
+#	$NetBSD: INSTALL,v 1.32 2025/01/09 19:28:33 martin Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC!
@@ -6,7 +6,7 @@
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"INSTALL-$Revision: 1.31 $"
+#ident		"INSTALL-$Revision: 1.32 $"
 
 makeoptions	COPTS="-Os -Wno-uninitialized"
 
@@ -21,8 +21,8 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `miniroot' image, which is built in distrib/sparc64/miniroot.
-## This value comes from distrib/sparc64/xminiroot/Makefile
-## and is calculated like: expr 14 \* 1024 \* 2
-## since NUMCYLS=14
-options 	MEMORY_DISK_ROOT_SIZE=28672	# size of memory disk, in 512 byte blocks
+## This value comes from distrib/sparc64/instfs/Makefile
+## and is calculated like: expr 11 \* 1024 \* 2
+## since IMAGESIZE=11
+options 	MEMORY_DISK_ROOT_SIZE=22528	# size of memory disk, in 512 byte blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
