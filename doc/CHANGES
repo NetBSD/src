@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3122 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3123 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -641,4 +641,21 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[msaitoh 20241212]
 	umcpmio(4): Driver for the MCP-2221 / 2221A multi-io chip.
 		[brad 20241216]
+	altq, cbq: Support 10 Gbps bandwidth.  [ozaki-r 20241224]
+	m68k: Improve FP emulation. [isaki 20241228]
+	aarch64: Add support for Snapdragon X1E battery and charger sensors.
+		This is a port of a set of drivers from OpenBSD, adapted to
+		use ACPI instead of FDT bindings.  [jmcneill 20241230]
+	aarch64: Enable support for low power idle CPU states on ACPI
+		platforms.  [jmcneill 20241230]
+	riscv: Add support for PCI and the PCIe controller in the JH7110 SoC.
+		[skrll 20250101]
+	x86: New pv(4) pseudo-bus driver for all paravirtual devices that do
+		not attach to a well-known bus like pci(4).  [imil 20250102]
+	riscv: Add a StarFive JH71[01]0 temperature sensor driver.
+		[skrll 20250103]
+	riscv: Add support for the X-Powers AXP Power Management IC.
+		[skrll 20250105]
+	evbarm: Add Arm SCMI performance protocol support (adapted from
+		OpenBSD). [jmcneill 20250108]
 	pppd(8): Import 2.5.2 [christos 20250108]
