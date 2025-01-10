@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-var.mk,v 1.3 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: opt-debug-var.mk,v 1.4 2025/01/10 23:00:38 rillig Exp $
 #
 # Tests for the -dv command line option, which adds debug logging about
 # variable assignment and evaluation.
@@ -9,6 +9,7 @@
 ASSIGNED=	value
 
 # TODO: Explain why the empty assignment "Global: SUBST = " is needed.
+# expect: Global: SUBST = # (empty)
 # expect: Global: SUBST = value
 SUBST:=		value
 
@@ -26,6 +27,20 @@ SUBST:=		value
 .if !empty(ASSIGNED)
 .endif
 
-.MAKEFLAGS: -d0
 
-all: .PHONY
+# An expression for a variable with a single-character ordinary name.
+# expect: Var_Parse: $U (eval-defined)
+# FIXME: Replace "Malformed" with "Undefined variable".
+# expect+1: Malformed conditional '$U'
+.if $U
+.endif
+
+# An expression for a target-specific variable with a single-character name.
+# expect: Var_Parse: $< (eval-defined)
+# FIXME: Replace "Malformed" with "Undefined variable".
+# expect+1: Malformed conditional '$<'
+.if $<
+.endif
+
+
+.MAKEFLAGS: -d0

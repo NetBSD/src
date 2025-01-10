@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.353 2024/11/22 05:36:33 rillig Exp $
+# $NetBSD: Makefile,v 1.354 2025/01/10 23:00:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -24,7 +24,7 @@
 # and it should be added to the TESTS list.
 #
 # Any added files must also be added to src/distrib/sets/lists/tests/mi.
-# To do that, just run "make sync-mi" in this directory.
+# To do that, run "make sync-mi" in this directory.
 #
 
 .MAIN: all
@@ -313,6 +313,7 @@ TESTS+=		shell-csh
 TESTS+=		shell-custom
 TESTS+=		shell-ksh
 TESTS+=		shell-sh
+TESTS+=		suff
 TESTS+=		suff-add-later
 TESTS+=		suff-clear-regular
 TESTS+=		suff-clear-single

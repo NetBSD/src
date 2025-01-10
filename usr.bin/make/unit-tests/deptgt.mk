@@ -1,4 +1,4 @@
-# $NetBSD: deptgt.mk,v 1.21 2024/08/29 20:20:36 rillig Exp $
+# $NetBSD: deptgt.mk,v 1.22 2025/01/10 23:00:38 rillig Exp $
 #
 # Tests for special targets like .BEGIN or .SUFFIXES in dependency
 # declarations.
@@ -37,6 +37,12 @@ ${:U}: empty-source
 	: command for empty targets list
 : empty-source
 	: command for empty targets list
+.MAKEFLAGS: -d0
+
+# An expression based on an undefined variable is allowed on both sides of
+# the dependency declaration.
+.MAKEFLAGS: -dv
+deptgt-${UNDEF}: depsrc-${UNDEF}
 .MAKEFLAGS: -d0
 
 # In a dependency declaration, the whole line is expanded before interpreting

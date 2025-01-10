@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-defined.mk,v 1.13 2024/08/06 17:46:01 rillig Exp $
+# $NetBSD: cond-func-defined.mk,v 1.14 2025/01/10 23:00:38 rillig Exp $
 #
 # Tests for the defined() function in .if conditions.
 
@@ -48,6 +48,11 @@ ${:UA B}=	variable name with spaces
 # the makefiles looks like it.
 .  endif
 .endfor
+
+# Expressions in the argument of a function call don't have to be defined.
+.if defined(${UNDEF})
+.  error
+.endif
 
 # Neither of the conditions is true.  Before July 2020, the right-hand
 # condition was evaluated even though it was irrelevant.

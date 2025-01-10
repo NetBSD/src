@@ -2,6 +2,12 @@ Global: ASSIGNED = value
 Global: SUBST = # (empty)
 Global: SUBST = value
 Var_Parse: y(ASSIGNED) (eval)
+Var_Parse: $U (eval-defined)
+make: "opt-debug-var.mk" line 35: Malformed conditional '$U'
+Var_Parse: $< (eval-defined)
+make: "opt-debug-var.mk" line 42: Malformed conditional '$<'
 Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
-exit status 0
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
