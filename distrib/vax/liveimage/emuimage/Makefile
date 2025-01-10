@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/12/15 18:03:18 gson Exp $
+#	$NetBSD: Makefile,v 1.5 2025/01/10 18:10:11 tsutsui Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-vax-live	# gives ${IMGBASE}.img
 
@@ -11,5 +11,8 @@ LIVEIMAGEMB=		${EMUIMAGEMB}
 PRIMARY_BOOT=		xxboot
 #SECONDARY_BOOT=	# boot is extracted from base.tgz
 SECONDARY_BOOT_ARG=	# nothing
+
+# XXX: tools disklabel(8) for vax doesn't preserve existing bootblock?
+INSTALLBOOT_AFTER_DISKLABEL=	yes
 
 .include "${.CURDIR}/../../../common/bootimage/Makefile.liveimage"
