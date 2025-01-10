@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.42 2024/12/31 06:58:00 jmmv Exp $
+#	$NetBSD: Makefile.bootimage,v 1.43 2025/01/10 18:11:56 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -54,9 +54,9 @@
 #	USE_SUNLABEL
 #		set yes if target disk image requires Sun's label
 #		(default: no)
-#	INSTALLBOOT_AFTER_DISKLABEL (untested)
+#	INSTALLBOOT_AFTER_DISKLABEL
 #		set yes if the target ${MACHINE} requires disklabel
-#		to run installboot(8), like hp300
+#		to run installboot(8), like hp300 and vax
 #		(default: empty)
 #	IMAGEMB
 #		target image size in MB
