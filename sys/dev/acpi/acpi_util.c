@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.34 2024/12/30 19:07:31 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.35 2025/01/11 11:40:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.34 2024/12/30 19:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.35 2025/01/11 11:40:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -1212,17 +1212,29 @@ acpi_dsm_query(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
 }
 
 ACPI_STATUS
-acpi_claim_childdevs(device_t dev, struct acpi_devnode *devnode)
+acpi_claim_childdevs(device_t dev, struct acpi_devnode *devnode,
+    const char *method)
 {
 	struct acpi_devnode *ad;
 
 	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
 		if (ad->ad_device != NULL)
 			continue;
+
+		if (method != NULL) {
+			ACPI_HANDLE h;
+			ACPI_STATUS rv;
+
+			rv = AcpiGetHandle(ad->ad_handle, method, &h);
+			if (ACPI_FAILURE(rv)) {
+				continue;
+			}
+		}
+
 		aprint_debug_dev(dev, "claiming %s\n",
 		    acpi_name(ad->ad_handle));
 		ad->ad_device = dev;
-		acpi_claim_childdevs(dev, ad);
+		acpi_claim_childdevs(dev, ad, method);
 	}
 
 	return AE_OK;
