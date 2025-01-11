@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.87 2024/12/29 09:46:44 jmmv Exp $
+# $NetBSD: mkimage,v 1.88 2025/01/11 14:33:31 jmmv Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,6 +60,8 @@ MTREE=${TOOL_MTREE:-mtree}
 INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
 MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
+SED=${TOOL_SED:-sed}
+PWD_MKDB=${TOOL_PWD_MKDB:-pwd_mkdb}
 
 postfix=false
 [ "${MKPOSTFIX:-yes}" = no ] || postfix=true

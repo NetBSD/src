@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2024/12/29 09:46:44 jmmv Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2025/01/11 14:33:31 jmmv Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -51,6 +51,8 @@ __mkimage: .USE
 	TOOL_PAX=${TOOL_PAX} \
 	TOOL_MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE} \
 	TOOL_MTREE=${TOOL_MTREE} \
+	TOOL_SED=${TOOL_SED} \
+	TOOL_PWD_MKDB=${TOOL_PWD_MKDB} \
 	HOST_SH=${HOST_SH} \
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
