@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.32 2025/01/11 20:16:40 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.33 2025/01/11 20:54:45 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -196,10 +196,7 @@ EXP=	# empty
 .endif
 
 # Even in expressions based on an unnamed variable, there may be errors.
-# XXX: The error message should mention the variable name of the expression,
-# even though that name is empty in this case.
-# expect+2: Unknown modifier "Z"
-# expect+1: Malformed conditional '${:Z}'
+# expect+1: Unknown modifier "Z"
 .if ${:Z}
 .  error
 .else
@@ -212,8 +209,7 @@ EXP=	# empty
 # variable name with quotes, leading to the rather confusing "Unfinished
 # modifier for  (',' missing)", having two spaces in a row.
 #
-# expect+2: Unfinished modifier (',' missing)
-# expect+1: Malformed conditional '${:S,}'
+# expect+1: Unfinished modifier (',' missing)
 .if ${:S,}
 .  error
 .else

@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.14 2025/01/11 20:16:40 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.15 2025/01/11 20:54:45 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -58,8 +58,7 @@ VAR+=		3
 # When ApplyModifiers results in an error, this appears in the debug log
 # as "is error", without surrounding quotes.
 # expect: Result of ${:unknown} is error (eval-defined, defined)
-# expect+2: Unknown modifier "unknown"
-# expect+1: Malformed conditional '${:Uvariable:unknown}'
+# expect+1: Unknown modifier "unknown"
 .if ${:Uvariable:unknown}
 .endif
 

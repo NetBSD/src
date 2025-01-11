@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1142 2024/12/31 09:35:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1143 2025/01/11 20:54:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1142 2024/12/31 09:35:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1143 2025/01/11 20:54:45 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3471,8 +3471,9 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	VarEvalMode then_emode = VARE_PARSE;
 	VarEvalMode else_emode = VARE_PARSE;
+	int parseErrorsBefore = parseErrors, parseErrorsAfter = parseErrors;
 
-	CondResult cond_rc = CR_TRUE;	/* just not CR_ERROR */
+	CondResult cond_rc = CR_TRUE;	/* anything other than CR_ERROR */
 	if (Expr_ShouldEval(expr)) {
 		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
 		cond_rc = Cond_EvalCondition(expr->name);
@@ -3480,6 +3481,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 			then_emode = expr->emode;
 		if (cond_rc == CR_FALSE)
 			else_emode = expr->emode;
+		parseErrorsAfter = parseErrors;
 	}
 
 	evalStack.elems[evalStack.len - 1].kind = VSK_COND_THEN;
@@ -3499,7 +3501,8 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	if (cond_rc == CR_ERROR) {
 		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
-		Parse_Error(PARSE_FATAL, "Bad condition");
+		if (parseErrorsAfter == parseErrorsBefore)
+			Parse_Error(PARSE_FATAL, "Bad condition");
 		LazyBuf_Done(&thenBuf);
 		LazyBuf_Done(&elseBuf);
 		return AMR_CLEANUP;

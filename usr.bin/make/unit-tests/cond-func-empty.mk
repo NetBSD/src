@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.27 2025/01/10 23:00:38 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.28 2025/01/11 20:54:45 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests an
 # expression for emptiness.
@@ -163,8 +163,7 @@ ${:U WORD }=	variable name with spaces
 .  error
 .endif
 
-# expect+2: Unclosed variable "WORD"
-# expect+1: Malformed conditional 'empty(WORD'
+# expect+1: Unclosed variable "WORD"
 .if empty(WORD
 .  error
 .else

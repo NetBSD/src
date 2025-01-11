@@ -14,11 +14,10 @@ make: "varmod-match.mk" line 344: Unfinished character range in pattern '[x-' of
 	while evaluating variable "WORDS" with value "[x- x x- y"
 make: "varmod-match.mk" line 356: Unfinished character range in pattern '[^x-' of modifier ':M'
 	while evaluating variable "WORDS" with value "[x- x x- y yyyyy"
-make: "varmod-match.mk" line 364: Unfinished character list in pattern '[' of modifier ':M'
+make: "varmod-match.mk" line 363: Unfinished character list in pattern '[' of modifier ':M'
 	while evaluating variable " : :: " with value " : :: "
-make: "varmod-match.mk" line 364: Unknown modifier "]"
+make: "varmod-match.mk" line 363: Unknown modifier "]"
 	while evaluating variable " : :: " with value ""
-make: "varmod-match.mk" line 364: Malformed conditional '${ ${:U\:} ${:U\:\:} :L:M[:]} != ":"'
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

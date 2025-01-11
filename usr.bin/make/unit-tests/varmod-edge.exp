@@ -14,12 +14,10 @@ make: "varmod-edge.mk" line 194: Unknown modifier ":"
 make: "varmod-edge.mk" line 194: Unknown modifier ":"
 	while evaluating variable "INP" with value ""
 	while evaluating variable "MOD" with value "${INP::::}"
-make: "varmod-edge.mk" line 203: Unknown modifier "Z"
+make: "varmod-edge.mk" line 200: Unknown modifier "Z"
 	while evaluating "${:Z}" with value ""
-make: "varmod-edge.mk" line 203: Malformed conditional '${:Z}'
-make: "varmod-edge.mk" line 217: Unfinished modifier (',' missing)
+make: "varmod-edge.mk" line 213: Unfinished modifier (',' missing)
 	while evaluating "${:S,}" with value ""
-make: "varmod-edge.mk" line 217: Malformed conditional '${:S,}'
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
