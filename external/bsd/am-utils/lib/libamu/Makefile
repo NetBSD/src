@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/08/10 16:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2025/01/11 23:00:02 mrg Exp $
 
 NOLINKLIB=	# defined
 
@@ -33,4 +33,4 @@ CLEANFILES+=	config_local.h
 
 .include <bsd.lib.mk>
 
-${SRCS}: config_local.h
+${SRCS} ${OBJS}: config_local.h
