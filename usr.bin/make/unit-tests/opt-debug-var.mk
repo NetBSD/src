@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-var.mk,v 1.4 2025/01/10 23:00:38 rillig Exp $
+# $NetBSD: opt-debug-var.mk,v 1.5 2025/01/11 21:21:33 rillig Exp $
 #
 # Tests for the -dv command line option, which adds debug logging about
 # variable assignment and evaluation.
@@ -29,16 +29,14 @@ SUBST:=		value
 
 
 # An expression for a variable with a single-character ordinary name.
-# expect: Var_Parse: $U (eval-defined)
-# FIXME: Replace "Malformed" with "Undefined variable".
-# expect+1: Malformed conditional '$U'
+# expect: Var_Parse: $U (eval-defined-loud)
+# expect+1: Variable "U" is undefined
 .if $U
 .endif
 
 # An expression for a target-specific variable with a single-character name.
-# expect: Var_Parse: $< (eval-defined)
-# FIXME: Replace "Malformed" with "Undefined variable".
-# expect+1: Malformed conditional '$<'
+# expect: Var_Parse: $< (eval-defined-loud)
+# expect+1: Variable "<" is undefined
 .if $<
 .endif
 

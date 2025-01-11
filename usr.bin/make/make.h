@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.347 2024/08/29 20:20:35 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.348 2025/01/11 21:21:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -693,7 +693,7 @@ typedef struct CmdOpts {
 	 */
 	DebugFlags debug;
 
-	/* -df: debug output is written here - default stderr */
+	/* -dF: debug output is written here - default stderr */
 	FILE *debug_file;
 
 	/*
@@ -960,6 +960,12 @@ typedef enum VarEvalMode {
 
 	/*
 	 * Parse and evaluate the expression.  It is an error if a
+	 * subexpression evaluates to undefined.
+	 */
+	VARE_EVAL_DEFINED_LOUD,
+
+	/*
+	 * Parse and evaluate the expression.  It is a silent error if a
 	 * subexpression evaluates to undefined.
 	 */
 	VARE_EVAL_DEFINED,

@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-var.mk,v 1.10 2025/01/10 23:00:38 rillig Exp $
+# $NetBSD: cond-token-var.mk,v 1.11 2025/01/11 21:21:33 rillig Exp $
 #
 # Tests for expressions in .if conditions.
 #
@@ -26,13 +26,13 @@ DEF=	defined
 .endif
 
 # A variable that appears on the left-hand side must be defined.
-# expect+1: Malformed conditional '${UNDEF} == ${DEF}'
+# expect+1: Variable "UNDEF" is undefined
 .if ${UNDEF} == ${DEF}
 .  error
 .endif
 
 # A variable that appears on the right-hand side must be defined.
-# expect+1: Malformed conditional '${DEF} == ${UNDEF}'
+# expect+1: Variable "UNDEF" is undefined
 .if ${DEF} == ${UNDEF}
 .  error
 .endif
@@ -42,7 +42,7 @@ DEF=	defined
 .endif
 
 # An undefined variable on its own generates a parse error.
-# expect+1: Malformed conditional '${UNDEF}'
+# expect+1: Variable "UNDEF" is undefined
 .if ${UNDEF}
 .endif
 
@@ -60,14 +60,12 @@ DEF=	defined
 .endif
 
 # A variable on the left-hand side must be defined.
-# FIXME: Replace "Malformed" with "Undefined variable".
-# expect+1: Malformed conditional '$U == $D'
+# expect+1: Variable "U" is undefined
 .if $U == $D
 .endif
 
 # A variable on the right-hand side must be defined.
-# FIXME: Replace "Malformed" with "Undefined variable".
-# expect+1: Malformed conditional '$D == $U'
+# expect+1: Variable "U" is undefined
 .if $D == $U
 .endif
 
@@ -76,8 +74,7 @@ DEF=	defined
 .endif
 
 # An undefined variable without a comparison operator generates a parse error.
-# FIXME: Replace "Malformed" with "Undefined variable".
-# expect+1: Malformed conditional '$U'
+# expect+1: Variable "U" is undefined
 .if $U
 .endif
 
@@ -104,18 +101,28 @@ DEF=	defined
 .endif
 
 .MAKEFLAGS: -dv
-# FIXME: Replace "Malformed" with "Undefined variable".
+# The left-hand side of a comparison must not be an unquoted word.
 # expect+1: Malformed conditional 'x${UNDEF1}y == "${UNDEF2}" || 0x${UNDEF3}'
 .if x${UNDEF1}y == "${UNDEF2}" || 0x${UNDEF3}
 .endif
 
-# FIXME: Replace "Malformed" with "Undefined variable".
+# The left-hand side of a comparison must not be an unquoted word.
 # expect+1: Malformed conditional 'x${DEF}y == "${UNDEF2}" || 0x${UNDEF3}'
 .if x${DEF}y == "${UNDEF2}" || 0x${UNDEF3}
 .endif
 
-# FIXME: Replace "Malformed" with "Undefined variable".
+# The left-hand side of a comparison must not be an unquoted word.
 # expect+1: Malformed conditional 'x${DEF}y == "${DEF}" || 0x${UNDEF3}'
 .if x${DEF}y == "${DEF}" || 0x${UNDEF3}
 .endif
+
+# An expression in a condition must not be based on an undefined variable,
+# but undefined variables may occur in the variable name or in modifiers.
+#
+# expect: Var_Parse: ${VAR.param$U} (eval-defined-loud)
+# expect: Var_Parse: $U} (eval)
+VAR.param=	value of VAR.param
+.if ${VAR.param$U}
+.endif
+
 .MAKEFLAGS: -d0
