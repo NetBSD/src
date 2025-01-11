@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.31 2024/08/29 20:20:36 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.32 2025/01/11 20:16:40 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -198,8 +198,8 @@ EXP=	# empty
 # Even in expressions based on an unnamed variable, there may be errors.
 # XXX: The error message should mention the variable name of the expression,
 # even though that name is empty in this case.
-# expect+2: Malformed conditional '${:Z}'
-# expect+1: Unknown modifier "Z"
+# expect+2: Unknown modifier "Z"
+# expect+1: Malformed conditional '${:Z}'
 .if ${:Z}
 .  error
 .else

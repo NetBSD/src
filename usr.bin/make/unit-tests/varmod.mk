@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.20 2024/08/29 20:20:37 rillig Exp $
+# $NetBSD: varmod.mk,v 1.21 2025/01/11 20:16:40 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -132,8 +132,8 @@ VAR=	STOP
 
 # Test the range generation modifier ':range=n' with a very large number that
 # is larger than SIZE_MAX for any supported platform.
-# expect+2: Malformed conditional '${word:L:range=99333000222000111000}'
-# expect+1: Invalid number "99333000222000111000}" for ':range' modifier
+# expect+2: Invalid number "99333000222000111000}" for ':range' modifier
+# expect+1: Malformed conditional '${word:L:range=99333000222000111000}'
 .if ${word:L:range=99333000222000111000}
 .endif
 
@@ -202,15 +202,15 @@ VAR_DOLLAR=	VAR$$
 .if ${:Ufallback$} != "fallback"
 .  error
 .endif
-# expect+2: Malformed conditional '${%y:L:gmtime=1000$}'
-# expect+1: Invalid time value "1000$"
+# expect+2: Invalid time value "1000$"
+# expect+1: Malformed conditional '${%y:L:gmtime=1000$}'
 .if ${%y:L:gmtime=1000$}
 .  error
 .else
 .  error
 .endif
-# expect+2: Malformed conditional '${%y:L:localtime=1000$}'
-# expect+1: Invalid time value "1000$"
+# expect+2: Invalid time value "1000$"
+# expect+1: Malformed conditional '${%y:L:localtime=1000$}'
 .if ${%y:L:localtime=1000$}
 .  error
 .else

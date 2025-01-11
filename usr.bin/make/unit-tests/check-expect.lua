@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.9 2024/07/20 11:05:11 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.10 2025/01/11 20:16:40 rillig Exp $
 
 --[[
 
@@ -151,6 +151,9 @@ local function check_mk(mk_fname)
             by_location[location][i] = ""
             found = true
             break
+          elseif message ~= "" then
+            print_error("error: %s:%d: out-of-order '%s'",
+              mk_fname, mk_lineno, message)
           end
         end
       end

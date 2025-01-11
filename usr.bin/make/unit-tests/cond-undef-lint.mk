@@ -1,4 +1,4 @@
-# $NetBSD: cond-undef-lint.mk,v 1.5 2024/08/06 18:00:17 rillig Exp $
+# $NetBSD: cond-undef-lint.mk,v 1.6 2025/01/11 20:16:40 rillig Exp $
 #
 # Tests for defined and undefined variables in .if conditions, in lint mode.
 #
@@ -20,8 +20,8 @@ DEF=		defined
 .endif
 
 # Since the condition fails to evaluate, neither of the branches is taken.
-# expect+2: Malformed conditional '${UNDEF}'
-# expect+1: Variable "UNDEF" is undefined
+# expect+2: Variable "UNDEF" is undefined
+# expect+1: Malformed conditional '${UNDEF}'
 .if ${UNDEF}
 .  error
 .else

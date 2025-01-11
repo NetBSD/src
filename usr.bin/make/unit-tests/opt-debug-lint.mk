@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.20 2024/08/29 20:20:36 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.21 2025/01/11 20:16:40 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed expressions.
@@ -16,8 +16,8 @@
 #
 # See also:
 #	cond-undef-lint.mk
-# expect+2: Malformed conditional '$X'
-# expect+1: Variable "X" is undefined
+# expect+2: Variable "X" is undefined
+# expect+1: Malformed conditional '$X'
 .if $X
 .  error
 .endif
@@ -40,8 +40,8 @@
 # hoping for the caller to print an error message.  This resulted in the
 # well-known "Malformed conditional" error message, even though the
 # conditional was well-formed and the only error was an undefined variable.
-# expect+2: Malformed conditional '${UNDEF}'
-# expect+1: Variable "UNDEF" is undefined
+# expect+2: Variable "UNDEF" is undefined
+# expect+1: Malformed conditional '${UNDEF}'
 .if ${UNDEF}
 .  error
 .endif
