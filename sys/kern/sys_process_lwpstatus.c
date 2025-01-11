@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.4 2022/07/10 17:47:58 riastradh Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.5 2025/01/11 19:42:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.4 2022/07/10 17:47:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.5 2025/01/11 19:42:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -112,7 +112,7 @@ int
 process_validfpregs(struct lwp *l)
 {
 
-#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+#if defined(PT_FPREGS)
 	return (l->l_flag & LW_SYSTEM) == 0;
 #else
 	return 0;
@@ -123,7 +123,7 @@ int
 process_validregs(struct lwp *l)
 {
 
-#if defined(PT_SETREGS) || defined(PT_GETREGS)
+#if defined(PT_REGS)
 	return (l->l_flag & LW_SYSTEM) == 0;
 #else
 	return 0;
@@ -134,7 +134,7 @@ int
 process_validdbregs(struct lwp *l)
 {
 
-#if defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+#if defined(PT_DBREGS)
 	return (l->l_flag & LW_SYSTEM) == 0;
 #else
 	return 0;
@@ -183,7 +183,7 @@ process_doregs(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
     struct uio *uio)
 {
-#if defined(PT_GETREGS) || defined(PT_SETREGS)
+#if defined(PT_REGS)
 	size_t s;
 	ptrace_regrfunc_t r;
 	ptrace_regwfunc_t w;
@@ -217,7 +217,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
     struct uio *uio)
 {
-#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+#if defined(PT_FPREGS)
 	size_t s;
 	ptrace_regrfunc_t r;
 	ptrace_regwfunc_t w;
@@ -252,7 +252,7 @@ process_dodbregs(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
     struct uio *uio)
 {
-#if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
+#if defined(PT_DBREGS)
 	size_t s;
 	ptrace_regrfunc_t r;
 	ptrace_regwfunc_t w;
