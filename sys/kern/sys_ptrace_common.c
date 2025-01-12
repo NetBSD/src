@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.92.4.1 2025/01/12 12:02:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.92.4.1 2025/01/12 12:02:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -884,7 +884,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	DPRINTF(("%s: lwp=%d request=%d\n", __func__, l->l_lid, rq));
 
 	switch (rq) {
-#if defined(PT_SETREGS) || defined(PT_GETREGS)
+#if defined(PT_REGS)
 	case_PT_GETREGS
 	case_PT_SETREGS
 		if (!process_validregs(*lt))
@@ -893,7 +893,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 		func = ptm->ptm_doregs;
 		break;
 #endif
-#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+#if defined(PT_FPREGS)
 	case_PT_GETFPREGS
 	case_PT_SETFPREGS
 		if (!process_validfpregs(*lt))
@@ -902,7 +902,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 		func = ptm->ptm_dofpregs;
 		break;
 #endif
-#if defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+#if defined(PT_DBREGS)
 	case_PT_GETDBREGS
 	case_PT_SETDBREGS
 		if (!process_validdbregs(*lt))

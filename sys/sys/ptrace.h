@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.75 2022/06/08 23:12:27 andvar Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.75.4.1 2025/01/12 12:02:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -346,11 +346,20 @@ int	ptrace_machdep_dorequest(struct lwp *, struct lwp **, int,
 typedef int (*ptrace_regrfunc_t)(struct lwp *, void *, size_t *);
 typedef int (*ptrace_regwfunc_t)(struct lwp *, void *, size_t);
 
-#if defined(PT_SETREGS) || defined(PT_GETREGS) || \
-    defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
-    defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
-# define PT_REGISTERS
-#endif
+#if defined(PTRACE)
+# if defined(PT_SETREGS) || defined(PT_GETREGS) 
+#  define PT_REGS
+# endif
+# if defined(PT_SETFPREGS) || defined(PT_GETFPREGS) 
+#  define PT_FPREGS
+# endif
+# if defined(PT_SETDBREGS) || defined(PT_GETDBREGS) 
+#  define PT_DBREGS
+# endif
+# if defined(PT_REGS) || defined(PT_FPREGS) || defined(PT_DBREGS)
+#  define PT_REGISTERS
+# endif
+#endif /* PTRACE */
 
 #else /* !_KERNEL */
 
