@@ -1,8 +1,26 @@
-# $NetBSD: suff.mk,v 1.1 2025/01/10 23:00:38 rillig Exp $
+# $NetBSD: suff.mk,v 1.2 2025/01/12 23:10:30 rillig Exp $
 #
 # Demonstrate suffix rules and dependency resolution.
 
-all: .PHONY edge-case.to everything
+
+# Circumvent the file system cache.
+.if !make(init) && !make(step*)
+all:
+	@${MAKE} -f ${MAKEFILE} init
+	@${MAKE} -f ${MAKEFILE} step1
+.endif
+
+
+.if make(init)
+init:
+.  if ${.PARSEDIR:tA} != ${.CURDIR:tA}
+${:U}!=		cd ${MAKEFILE:H} && cp a*.mk ${.CURDIR}
+.  endif
+.endif
+
+
+.if make(step1)
+step1: .PHONY edge-case.to everything
 
 .MAKEFLAGS: -dsv
 
@@ -20,3 +38,4 @@ edge-case.from edge-case.additional:
 
 everything: .PHONY a*.mk
 	: Making ${.TARGET} from ${.ALLSRC}.
+.endif

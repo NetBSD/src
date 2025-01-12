@@ -6,10 +6,10 @@ inserting ".to" (2) at end of list
 transformation .from.to complete
 Var_Parse: ${.PREFIX}${.ARCHIVE}.additional (eval-defined)
 Var_Parse: ${.ARCHIVE}.additional (eval-defined)
-Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional
-Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from
-Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional
-Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk
+Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional
+Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from
+Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional
+Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk
 Global: delete .PARSEDIR
 Global: delete .PARSEFILE
 Global: ignoring delete '.INCLUDEDFROMDIR' as it is not found
@@ -33,17 +33,16 @@ Command: ignoring delete 'v' as it is not found
 Result of ${.MAKEOVERRIDES:@v@$v=${$v:Q}@} is ""
 Global: .INCLUDES = # (empty)
 Global: .LIBS = # (empty)
-Global: .TARGETS =  all
 Global: ignoring delete '.SHELL' as it is not found
 Command: .SHELL = /bin/sh
-Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END
-all: @ = all
-all: @ = all
-all: * = all
-SuffFindDeps "all"
-all: @ = all
-all: * = all
-	No valid suffix on all
+Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END
+step1: @ = step1
+step1: @ = step1
+step1: * = step1
+SuffFindDeps "step1"
+step1: @ = step1
+step1: * = step1
+	No valid suffix on step1
 Wildcard expanding "edge-case.to"...suffix is ".to"...
 edge-case.to: @ = edge-case.to
 edge-case.to: @ = edge-case.to
@@ -63,8 +62,8 @@ SuffFindDeps "everything"
 everything: @ = everything
 everything: * = everything
 Wildcard expanding "a*.mk"...
-archive-suffix.mk...Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END archive-suffix.mk
-archive.mk...Global: .ALLTARGETS =  all edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END archive-suffix.mk archive.mk
+archive-suffix.mk...Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END archive-suffix.mk
+archive.mk...Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional a*.mk .END archive-suffix.mk archive.mk
 
 	No valid suffix on everything
 Wildcard expanding "edge-case.additional"...
@@ -130,10 +129,10 @@ everything: ? = archive-suffix.mk archive.mk
 Var_Parse: ${.TARGET} from ${.ALLSRC}. (eval)
 Var_Parse: ${.ALLSRC}. (eval)
 : Making everything from archive-suffix.mk archive.mk.
-all: > = edge-case.to
-all: ? = edge-case.to
-all: > = edge-case.to everything
-all: ? = edge-case.to everything
+step1: > = edge-case.to
+step1: ? = edge-case.to
+step1: > = edge-case.to everything
+step1: ? = edge-case.to everything
 .END: @ = .END
 .END: * = .END
 SuffFindDeps ".END"
