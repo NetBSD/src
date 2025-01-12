@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.27 2021/09/18 15:14:40 tsutsui Exp $	*/
+/*	$NetBSD: akbd.c,v 1.28 2025/01/12 05:56:59 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.27 2021/09/18 15:14:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.28 2025/01/12 05:56:59 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -322,7 +322,12 @@ kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
 #if NAED > 0
-	if (adb_polling || !aed_input(&new_event))
+	int result;
+
+	if ((result = aed_input(&new_event)) != 0)
+		return;
+
+	if (adb_polling || !result)
 #endif
 #if NWSKBD > 0
 		if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
