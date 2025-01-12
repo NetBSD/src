@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.1 2024/03/13 07:55:28 nat Exp $ */
+/* $NetBSD: ascreg.h,v 1.2 2025/01/12 09:28:26 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -33,6 +33,8 @@
 
 #define FIFO_A		0
 #define FIFO_B		0x400
+#define FIFO_A_ALT	0x1000
+#define FIFO_B_ALT	0x1800
 #define FIFO_LEN	0x400
 
 #define VERLOC		0x800
@@ -79,6 +81,8 @@
 #define	B_WRITEPTRLO	0xf21
 #define	B_READPTRHI	0xf22
 #define	B_READPTRLO	0xf23
+
+#define MACOS_HIGH_VOL	0x36  /* Should NOT exceed this value */
 
 #define A_LEFT_VOL	0xf06
 #define A_RIGHT_VOL	0xf07
