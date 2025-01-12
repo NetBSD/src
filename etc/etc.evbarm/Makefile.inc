@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.134 2025/01/11 14:33:31 jmmv Exp $
+#	$NetBSD: Makefile.inc,v 1.135 2025/01/12 02:55:23 jmmv Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -95,7 +95,7 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
+	${HOST_SH} ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img
 .for f in ${INSTALLBOOT_BOARDS}
@@ -147,28 +147,28 @@ INSTALLATION_DIRS+=	installation/misc
 
 .if !empty(MACHINE_ARCH:M*armv7*) && empty(ALL_KERNELS)
 smp_armv7: __mkimage
-MKI_OPTS.smp_armv7=	-K ${IMAGE.kern}
+MKI_OPTS.smp_armv7=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_armv7
 .endif
 
 .if !empty(MACHINE_ARCH:Maarch64*) && empty(ALL_KERNELS)
 smp_arm64: __mkimage
-MKI_OPTS.smp_arm64=	-K ${IMAGE.kern}
+MKI_OPTS.smp_arm64=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_arm64
 smp_arm64mbr: __mkimage
-MKI_OPTS.smp_arm64mbr=	-K ${IMAGE.kern}
+MKI_OPTS.smp_arm64mbr=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_arm64mbr
 .endif
 
 .if !empty(KERNEL_SETS:MRPI)
 smp_rpi: __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
-MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.img.gz
+MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.img.gz -x
 SNAP_MD_POST_DEPS+=	smp_rpi
 .endif
 smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI_INSTALL)
-MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz
+MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz -x
 SNAP_MD_POST_DEPS+=	smp_rpi_inst
 .endif
 .endif
