@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.40 2021/03/10 13:27:51 simonb Exp $
+.\"     $NetBSD: kprintf.9,v 1.41 2025/01/12 20:16:34 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,7 +288,7 @@ and
 .Fn vsnprintf
 functions return the number of characters that would have been placed
 in the buffer
-.Fa buf .
+.Fa buf ,
 if there was enough space in the buffer, not including the trailing
 .Dv NUL
 character used to terminate output strings like the user-space functions
