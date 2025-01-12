@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.38 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: bwi.c,v 1.39 2025/01/12 11:55:26 jmcneill Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.39 2025/01/12 11:55:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -99,7 +99,6 @@ do {									\
 
 /* XXX temporary porting goop */
 #include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 /* XXX does not belong here */
