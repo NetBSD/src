@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.4 2025/01/07 16:14:28 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.5 2025/01/12 12:03:45 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -61,4 +61,19 @@ sys/ufs/lfs/lfs_vfsops.c			1.383
 
 	ffs: PR 58837: missing locking around fs_fmod/time.
 	[hannken, ticket #1037]
+
+usr.bin/calendar/calendars/calendar.christian	1.13,1.14
+usr.bin/calendar/calendars/calendar.holiday	1.35
+usr.bin/calendar/calendars/calendar.judaic	1.12
+usr.bin/calendar/calendars/calendar.usholiday	1.12
+
+	calendars: Update for 2025.
+	[nia, ticket #1038]
+
+sys/kern/sys_process_lwpstatus.c		1.5
+sys/kern/sys_ptrace_common.c			1.96
+sys/sys/ptrace.h				1.77
+
+	i386: PR 58983: fix INSTALL_FLOPPY kernel on i386.
+	[hgutch, ticket #1039]
 
