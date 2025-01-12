@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.25 2021/01/09 15:16:28 christos Exp $	*/
+/*	$NetBSD: regular.c,v 1.26 2025/01/12 06:38:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.25 2021/01/09 15:16:28 christos Exp $");
+__RCSID("$NetBSD: regular.c,v 1.26 2025/01/12 06:38:21 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: regular.c,v 1.25 2021/01/09 15:16:28 christos Exp $");
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "extern.h"
 
@@ -88,18 +89,30 @@ c_regular(int fd1, const char *file1, off_t skip1, off_t len1,
 		}
 
 		blk_cnt = blk_sz;
-		for (; blk_cnt--; ++p1, ++p2, ++byte) {
-			if ((ch = *p1) != *p2) {
-				if (!lflag) {
-					diffmsg(file1, file2, byte, line);
-					/* NOTREACHED */
+		if ((lflag || sflag) && (memcmp(p1, p2, blk_sz) == 0)) {
+			/*
+			 * If the two blocks are the same and we are
+			 * using the -l or -s flags, we don't need to
+			 * count lines.  There is nothing else to do
+			 * except advance the pointers for munmap()
+			 * below.
+			 */
+			p1 += blk_sz;
+			p2 += blk_sz;
+		} else {
+			for (; blk_cnt--; ++p1, ++p2, ++byte) {
+				if ((ch = *p1) != *p2) {
+					if (!lflag) {
+						diffmsg(file1, file2, byte, line);
+						/* NOTREACHED */
+					}
+					dfound = 1;
+					(void)printf("%6lld %3o %3o\n",
+					    (long long)byte, ch, *p2);
 				}
-				dfound = 1;
-				(void)printf("%6lld %3o %3o\n",
-				    (long long)byte, ch, *p2);
+				if (ch == '\n')
+					++line;
 			}
-			if (ch == '\n')
-				++line;
 		}
 		munmap(p1 - blk_sz, blk_sz);
 		munmap(p2 - blk_sz, blk_sz);
