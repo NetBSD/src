@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.47 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: akbd.c,v 1.48 2025/01/12 09:07:02 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.47 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.48 2025/01/12 09:07:02 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -308,6 +308,12 @@ kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
         new_event = *event;
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
+#if NAED > 0
+	int result;
+
+	if ((result = aed_input(&new_event)) != 0)
+		return;
+#endif
 	kbd_intr(&new_event);
 #if NAED > 0
 	aed_input(&new_event);
