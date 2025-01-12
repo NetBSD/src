@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.36 2024/09/26 01:16:50 riastradh Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.37 2025/01/12 05:53:45 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.36 2024/09/26 01:16:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.37 2025/01/12 05:53:45 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -853,7 +853,7 @@ pm_intr_pm2(void *arg)
 		case 0x80:			/* 1 sec interrupt? */
 			pm_counter++;
 			break;
-		case 0x08:			/* Brightness/Contrast button on LCD panel */
+		case 0x08:	/* Brightness/Contrast button on LCD panel */
 			/* get brightness and contrast of the LCD */
 			pm_LCD_brightness = (u_int)pmdata.data[3] & 0xff;
 			pm_LCD_contrast = (u_int)pmdata.data[4] & 0xff;
@@ -1203,12 +1203,11 @@ pm_set_brightness(u_int brightness)
 	case PM_HW_PB5XX:
 		/* this is an experimental code */
 		pmdata.command = 0x41;
-		brightness = 0x7f - brightness / 2;
-		if (brightness < 0x25)
-			brightness = 0x25;
-		if (brightness > 0x5a)
-			brightness = 0x7f;
-		pmdata.data[0] = brightness;
+		if ((int)brightness < 0)
+			brightness = 0;
+		if ((int)brightness > 31)
+			brightness = 31;
+		pmdata.data[0] = (31 - brightness) * 23 / 10 + 37;
 		(void)pm_pmgrop_pm2(&pmdata);
 		break;
 	case PM_HW_PB1XX:
