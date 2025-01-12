@@ -1,4 +1,4 @@
-/* $NetBSD: int_const.h,v 1.2 2023/07/04 01:02:50 riastradh Exp $ */
+/* $NetBSD: int_const.h,v 1.3 2025/01/12 09:05:28 skrll Exp $ */
 
 #ifndef __INTMAX_C_SUFFIX__
 
@@ -13,7 +13,7 @@
 
 #define __UINT8_C_SUFFIX__
 #define __UINT16_C_SUFFIX__
-#define __UINT32_C_SUFFIX__
+#define __UINT32_C_SUFFIX__	U
 #ifdef _LP64
 #define __UINT64_C_SUFFIX__	UL
 #else
