@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.48 2025/01/12 09:07:02 nat Exp $	*/
+/*	$NetBSD: akbd.c,v 1.49 2025/01/13 16:17:36 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.48 2025/01/12 09:07:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.49 2025/01/13 16:17:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,12 +253,11 @@ akbdattach(device_t parent, device_t self, void *aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 }
 
-
 /*
  * Handle putting the keyboard data received from the ADB into
  * an ADB event record.
  */
-void 
+void
 kbd_adbcomplete(uint8_t *buffer, uint8_t *data_area, int adb_command)
 {
 	adb_event_t event;
@@ -296,7 +295,7 @@ kbd_adbcomplete(uint8_t *buffer, uint8_t *data_area, int adb_command)
 }
 
 /*
- * Given a keyboard ADB event, record the keycodes and call the key 
+ * Given a keyboard ADB event, record the keycodes and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.
  */
@@ -354,11 +353,11 @@ getleds(int addr)
 
 /*
  * Set the keyboard LED's.
- * 
+ *
  * Automatically translates from ioctl/softc format to the
  * actual keyboard register format
  */
-static int 
+static int
 setleds(struct akbd_softc *ksc, u_char leds)
 {
 	int addr;
@@ -391,13 +390,13 @@ setleds(struct akbd_softc *ksc, u_char leds)
 	if ((buffer[2] & 0xf8) != leds)
 		return (EIO);
 	else
-		return (0); 
+		return (0);
 }
 
 /*
  * Toggle all of the LED's on and off, just for show.
  */
-static void 
+static void
 blinkleds(struct akbd_softc *ksc)
 {
 	int addr, i;
@@ -416,7 +415,7 @@ blinkleds(struct akbd_softc *ksc)
 	i = 10;
 	do {
 		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0)); 
+	} while (setleds(ksc, (u_char)0x00) && (i-- > 0));
 
 	return;
 }
@@ -498,10 +497,10 @@ kbd_passup(struct akbd_softc *sc,int key)
 	} else {
 		int press, val;
 		int type;
-    
+
 		press = ADBK_PRESS(key);
 		val = ADBK_KEYVAL(key);
-    
+
 		type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
 		wskbd_input(sc->sc_wskbddev, type, val);
@@ -531,7 +530,7 @@ kbd_intr(void *arg)
 	 */
 	if ((key == 57) || (key == 185))
 		shift = 0;
-	
+
 	if (key == 255) {
 		if (shift == 0) {
 			key = 185;

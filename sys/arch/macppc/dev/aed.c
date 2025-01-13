@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.36 2025/01/12 09:07:02 nat Exp $	*/
+/*	$NetBSD: aed.c,v 1.37 2025/01/13 16:17:36 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.36 2025/01/12 09:07:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.37 2025/01/13 16:17:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,11 +132,11 @@ aedattach(device_t parent, device_t self, void *aux)
 	sc->sc_rptinterval = 6;
 	sc->sc_repeating = -1;          /* not repeating */
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = (device_cfdata(self)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
-	
+
 	sc->sc_buttons = 0;
 
 	sc->sc_open = 0;
@@ -149,7 +149,7 @@ aedattach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Given a keyboard ADB event, record the keycode and call the key 
+ * Given a keyboard ADB event, record the keycode and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.  Pass mouse events directly to
  * the handoff function.
@@ -186,7 +186,7 @@ aed_input(adb_event_t *event)
  * 3rd mouse button events while the 1, 2, and 3 keys will generate
  * the corresponding mouse button event.
  */
-static int 
+static int
 aed_emulate_mouse(adb_event_t *event)
 {
 	static int emulmodkey_down = 0;
@@ -331,7 +331,7 @@ aed_emulate_mouse(adb_event_t *event)
  * for the repeating key and schedules the next call at sc_rptinterval
  * ticks in the future.
  */
-static void 
+static void
 aed_kbdrpt(void *kstate)
 {
 	struct aed_softc *sc = (struct aed_softc *)kstate;
@@ -350,13 +350,12 @@ aed_kbdrpt(void *kstate)
 	}
 }
 
-
 /*
  * Cancels the currently repeating key event if there is one, schedules
  * a new repeating key event if needed, and hands the event off to the
  * appropriate subsystem.
  */
-static void 
+static void
 aed_dokeyupdown(adb_event_t *event)
 {
 	int     kbd_key;
@@ -395,7 +394,7 @@ aed_handoff(adb_event_t *event)
 /*
  * Place the event in the event queue and wakeup any waiting processes.
  */
-static void 
+static void
 aed_enqevent(adb_event_t *event)
 {
 	int     s;
@@ -425,7 +424,7 @@ aed_enqevent(adb_event_t *event)
 	splx(s);
 }
 
-int 
+int
 aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
@@ -451,8 +450,7 @@ aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (error);
 }
 
-
-int 
+int
 aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s = spladb();
@@ -464,8 +462,7 @@ aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-
-int 
+int
 aedread(dev_t dev, struct uio *uio, int flag)
 {
 	int s, error;
@@ -510,7 +507,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 	return (0);
 }
 
-int 
+int
 aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
@@ -573,14 +570,13 @@ aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (0);
 }
 
-
-int 
+int
 aedpoll(dev_t dev, int events, struct lwp *l)
 {
 	int s, revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);
-	
+
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
