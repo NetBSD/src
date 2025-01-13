@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2025/01/13 07:53:47 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	ntpq.c					\
 	ntpq-subs.c				\
 	ntpq-opts.c
 
-LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts -L${LIBISC} -liscntp -ledit -lterminfo -lm 
+LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts -L${LIBISC} -liscntp -ledit -lterminfo -lm
 #DPADD+=		${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBEDIT} ${LIBTERMINFO} ${LIBM}
 
 .include "${.CURDIR}/../Makefile.inc"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/02/01 07:46:21 kardel Exp $
+#	$NetBSD: Makefile,v 1.4 2025/01/13 07:53:47 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ BINDIR=	/usr/sbin
 
 SRCS=	ntpdate.c
 
-LDADD+=		-L${LIBNTP} -lntp -L${LIBISC} -liscntp -lm 
+LDADD+=		-L${LIBNTP} -lntp -L${LIBISC} -liscntp -lm
 DPADD+=		${LIBNTP}/libntp.a ${LIBISC}/libiscntp.a ${LIBM}
 
 .include "${.CURDIR}/../Makefile.inc"

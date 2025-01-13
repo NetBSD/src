@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2020/10/18 15:20:13 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2025/01/13 07:53:47 skrll Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= ntp-keygen ntpd ntpdate ntpdc ntpq ntptime ntptrace sntp 
+SUBDIR= ntp-keygen ntpd ntpdate ntpdc ntpq ntptime ntptrace sntp
 
 CPPFLAGS+=-DOPENSSL
 
