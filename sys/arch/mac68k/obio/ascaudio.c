@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.3 2025/01/12 09:28:26 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.4 2025/01/13 16:23:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.3 2025/01/12 09:28:26 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.4 2025/01/13 16:23:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,7 +200,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = ((device_cfdata(self)->cf_flags) &
 			    ASCAUDIO_OPTIONS_MASK);
 
@@ -280,7 +280,6 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-
 	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
 		return;
 
@@ -291,7 +290,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOCTRLA, tmp);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOCTRLB, tmp);
-	
+
 }
 
 int
@@ -377,7 +376,7 @@ ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 		.frequency_type	= 1,
 		.frequency	= { 11025 }, }
 	};
-			
+
 	return audio_query_format(asc_formats, ASCAUDIO_NFORMATS, ae);
 }
 
@@ -407,7 +406,6 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 
 	sc->sc_pintr = intr;
 	sc->sc_pintrarg = intrarg;
-
 
 	loc = block;
  	if (bus_space_read_1(sc->sc_tag, sc->sc_handle, ASCMODE) !=
@@ -487,7 +485,6 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 	if (!sc)
 		return (ENODEV);
 
-
 	uint8_t *loc;
 	loc = block;
 
@@ -538,7 +535,7 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 			bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFO_B);
 		}
 #endif
-			
+
 		return 0;
 	}
 
@@ -598,7 +595,6 @@ ascaudio_halt(void *opaque)
 
 	sc->sc_avail = 0;
 	sc->sc_recavail = 0;
-
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM, CLEARFIFO);
 
@@ -887,7 +883,7 @@ more:
 
 	mutex_exit(&sc->sc_intr_lock);
 }
-		
+
 static void
 ascaudio_intr_enable(void)
 {

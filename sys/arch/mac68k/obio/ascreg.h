@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.2 2025/01/12 09:28:26 nat Exp $ */
+/* $NetBSD: ascreg.h,v 1.3 2025/01/13 16:23:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -39,7 +39,7 @@
 
 #define VERLOC		0x800
 
-#define ASCMODE		0x801		
+#define ASCMODE		0x801
 #define MODESTOP	0
 #define MODEFIFO	1
 #define MODEWAVE	2 		/* not in easc */
@@ -65,7 +65,7 @@
 #define ASCRATE		0x807
 #define MACFREQ		0 		/* 22254 Hz */
 #define F22KHZ		2		/* 22050 Hz */
-#define F44KHZ		3		/* 44100 Hz */	
+#define F44KHZ		3		/* 44100 Hz */
 
 #define APLAYREC	0x80a
 #define RECORDA		__BIT(0)

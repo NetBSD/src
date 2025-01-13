@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.58 2017/10/12 09:48:53 flxd Exp $	*/
+/*	$NetBSD: asc.c,v 1.59 2025/01/13 16:23:48 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.58 2017/10/12 09:48:53 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.59 2025/01/13 16:23:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -307,7 +307,7 @@ ascmmap(dev_t dev, off_t off, int prot)
 	return (-1);
 }
 
-static int 
+static int
 asc_ring_bell(void *arg, int freq, int length, int volume)
 {
 	struct asc_softc *sc = (struct asc_softc *)arg;
@@ -356,7 +356,7 @@ asc_ring_bell(void *arg, int freq, int length, int volume)
 	return (0);
 }
 
-static void 
+static void
 asc_stop_bell(void *arg)
 {
 	struct asc_softc *sc = (struct asc_softc *)arg;
@@ -384,7 +384,6 @@ asc_intr_enable(void)
 		via2_reg(rIER) = 0x80 | V2IF_ASC;
 	splx(s);
 }
-
 
 /*ARGSUSED*/
 static void
