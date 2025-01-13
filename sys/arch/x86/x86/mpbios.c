@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.71 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.72 2025/01/13 06:35:38 imil Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.71 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.72 2025/01/13 06:35:38 imil Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -209,6 +209,9 @@ static void mpbios_int(const uint8_t *, int, struct mp_intr_map *);
 static const void *mpbios_map(paddr_t, int, struct mp_map *);
 static void mpbios_unmap(struct mp_map *);
 
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+static uint16_t compute_entry_count(const uint8_t *, const uint8_t *);
+#endif
 /*
  * globals to help us bounce our way through parsing the config table.
  */
@@ -332,6 +335,19 @@ mpbios_probe(device_t self)
 	mp_fps = mpbios_search(self, BIOS_BASE, BIOS_COUNT, &mp_fp_map);
 	if (mp_fps != NULL)
 		goto found;
+
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+	/*
+	 * Linux assumes that it always has 640 kB of base memory and
+	 * searches for the MP table at 639k regardless of whether that
+	 * address is present in the system memory map.  Some VM systems
+	 * rely on this buggy behaviour.
+	 */
+	mp_fps = mpbios_search(self, 639 * 1024, 1024 / 4, &mp_fp_map);
+	if (mp_fps != NULL)
+		goto found;
+#endif
+
 
 	/* nothing found */
 	return 0;
@@ -533,6 +549,31 @@ static const uint8_t dflt_lint_tab[2] = {
 };
 
 
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+/* Compute the correct entry_count value. */
+static uint16_t
+compute_entry_count(const uint8_t *entry, const uint8_t *end)
+{
+	size_t nentries = 0;
+
+	while (entry < end) {
+		switch (*entry) {
+		case MPS_MCT_CPU:
+		case MPS_MCT_BUS:
+		case MPS_MCT_IOAPIC:
+		case MPS_MCT_IOINT:
+		case MPS_MCT_LINT:
+			break;
+		default:
+			panic("%s: Unknown MP Config Entry %d\n", __func__,
+				(int)*entry);
+		}
+		entry += mp_conf[*entry].length;;
+		nentries++;
+	}
+	return (uint16_t)(nentries);
+}
+#endif
 /*
  * 1st pass on BIOS's Intel MP specification table.
  *
@@ -557,6 +598,9 @@ mpbios_scan(device_t self, int *ncpup)
 	int		intr_cnt, cur_intr;
 #if NLAPIC > 0
 	paddr_t		lapic_base;
+#endif
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+	uint16_t	countfix = 0;
 #endif
 	const struct dflt_conf_entry *dflt_conf;
 	const int *dflt_bus_irq;
@@ -677,6 +721,13 @@ mpbios_scan(device_t self, int *ncpup)
 		position += sizeof(*mp_cth);
 
 		count = mp_cth->entry_count;
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+		if (count == 0) {
+			/* count the correct entry_count */
+			countfix = compute_entry_count(position, end);
+			count = countfix;
+		}
+#endif
 		intr_cnt = 0;
 
 		while ((count--) && (position < end)) {
@@ -721,6 +772,10 @@ mpbios_scan(device_t self, int *ncpup)
 		/* re-walk the table, recording info of interest */
 		position = (const uint8_t *)mp_cth + sizeof(*mp_cth);
 		count = mp_cth->entry_count;
+#ifdef MPTABLE_LINUX_BUG_COMPAT
+		if (count == 0)
+			count = countfix;
+#endif
 		cur_intr = 0;
 
 		while ((count--) && (position < end)) {
