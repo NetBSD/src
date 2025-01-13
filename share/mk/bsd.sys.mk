@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.316 2024/02/13 16:15:59 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.317 2025/01/13 15:40:18 riastradh Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -56,11 +56,17 @@ CXXFLAGS+=	${REPROFLAGS}
 .endif
 
 # NetBSD sources use C99 style, with some GCC extensions.
-# Coverity does not like -std=gnu99
+# Coverity does not like -std=gnu99 (XXX untested but likely not gnu11 either)
+#
+# XXX Ideally we would not rely on GNU extensions, but currently some
+# code uses alloca(3) which -std=c11 compiles broken-at-runtime.  Until
+# we fix that (PR toolchain/58969: use of alloca is warning, not error,
+# with -std=c11), we have to continue using -std=gnu11 and not
+# -std=c11.
 .if !defined(COVERITY_TOP_CONFIG) && empty(CFLAGS:M*-std=*)
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -std=gnu99 :}
-CFLAGS+=	${${ACTIVE_CC} == "gcc":? -std=gnu99 :}
-CFLAGS+=	${${ACTIVE_CC} == "pcc":? -std=gnu99 :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -std=gnu11 :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -std=gnu11 :}
+CFLAGS+=	${${ACTIVE_CC} == "pcc":? -std=gnu11 :}
 .endif
 
 .if defined(WARNS)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.301 2024/05/06 08:43:36 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.302 2025/01/13 15:40:18 riastradh Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -66,7 +66,7 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} -D_KERNEL -D_KERNEL_OPT
 .if !defined(COVERITY_TOP_CONFIG)
-CPPFLAGS+=	-std=gnu99
+CPPFLAGS+=	-std=gnu11
 .endif
 .if ${KERNEL_DIR:Uno} == "yes"
 CPPFLAGS+=	-DKERNEL_DIR
