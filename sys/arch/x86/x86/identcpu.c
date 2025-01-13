@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.131 2024/12/02 13:31:32 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.132 2025/01/13 18:51:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.131 2024/12/02 13:31:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.132 2025/01/13 18:51:37 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -144,13 +144,25 @@ cpu_probe_intel_cache(struct cpu_info *ci)
 static void
 cpu_probe_intel_errata(struct cpu_info *ci)
 {
-	u_int family, model, stepping;
+	u_int family, model;
 
 	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
-	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
-	if (family == 0x6 && model == 0x5C && stepping == 0x9) { /* Apollo Lake */
+	/*
+	 * For details, refer to the Intel Pentium and Celeron Processor
+	 * N- and J- Series Specification Update (Document number: 334820-010),
+	 * August 2022, Revision 010. See page 28, Section 5.30: "APL30 A Store
+	 * Instruction May Not Wake Up MWAIT."
+	 * https://cdrdv2-public.intel.com/334820/334820-APL_Spec_Update_rev010.pdf
+	 *
+	 * Disable MWAIT/MONITOR on Apollo Lake CPUs to address the APL30 erratum.
+	 * When using the MONITOR/MWAIT instruction pair, stores to the armed
+	 * address range may fail to trigger MWAIT to resume execution.
+	 * When these instructions are used to hatch secondary CPUs,
+	 * this erratum causes SMP boot failures.
+	 */
+	if (family == 0x6 && model == 0x5C) {
 		wrmsr(MSR_MISC_ENABLE,
 		    rdmsr(MSR_MISC_ENABLE) & ~IA32_MISC_MWAIT_EN);
 
