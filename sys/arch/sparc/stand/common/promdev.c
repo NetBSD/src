@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.29 2019/02/03 11:58:38 mrg Exp $ */
+/*	$NetBSD: promdev.c,v 1.30 2025/01/13 14:37:30 jdc Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -78,6 +78,11 @@ static char	*oldmon_mapin(u_long, int, int);
 #ifndef BOOTXX
 static char	*mygetpropstring(int, char *);
 static int	getdevtype(int, char *);
+void	israidlabel(char* buf);
+
+static daddr_t doffset = 0;
+static int raidchecked = 0;
+
 #endif
 
 extern struct fs_ops file_system_nfs[];
@@ -103,8 +108,69 @@ char	prom_bootdevice[MAX_PROM_PATH];
 static int	saveecho;
 
 #ifndef BOOTXX
-static daddr_t doffset = 0;
+void
+israidlabel(char *buf)
+{
+	char *partition;
+	int part = 0;
+	struct disklabel *dlp;
+
+	/* Check the disklabel to see if the boot partition is type RAID.
+	 *
+	 * For machines with prom_version() == PROM_OLDMON, we
+	 * only handle boot from RAID for the first disk partition
+	 * because we only know the boot device but not the partition.
+	 */
+	if (prom_version() != PROM_OLDMON) {
+		if ((partition = strchr(prom_bootdevice, ':')) != NULL &&
+		    *++partition >= 'a' &&
+		    *partition <= 'a' +  MAXPARTITIONS)
+			part = *partition - 'a';
+	}
+
+#ifdef DEBUG_PROM
+	printf("israidlabel: Checking disklabel for RAID partition (%c)\n",
+	    'a' + part);
 #endif
+
+#ifdef NOTDEF_DEBUG
+	{
+		int x = 0;
+		char *p = (char *) buf;
+
+		printf("Disklabel sector (%d):\n", LABELSECTOR);
+		printf("00000000  ");
+		while (x < DEV_BSIZE) {
+			if (*p >= 0x00 && *p < 0x10)
+				printf("0%x ", *p & 0xff);
+			else
+				printf("%x ", *p & 0xff);
+			x++;
+			if (x && !(x % 8))
+				printf(" ");
+			if (x && !(x % 16)) {
+				if(x < 0x100)
+					printf("\n000000%x  ", x);
+				else
+					printf("\n00000%x  ", x);
+			}
+			p++;
+		}
+		printf("\n");
+	}
+#endif
+	/* Check for NetBSD disk label. */
+	dlp = (struct disklabel *) (buf + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC && !dkcksum(dlp) &&
+	    dlp->d_partitions[part].p_fstype == FS_RAID) {
+#ifdef DEBUG_PROM
+		printf("israidlabel: found RAID partition, "
+		    "adjusting offset to %ld\n", RF_PROTECTED_SECTORS);
+#endif
+		doffset = RF_PROTECTED_SECTORS;
+	}
+}
+#endif	/* BOOTXX */
 
 void
 putchar(int c)
@@ -127,21 +193,15 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
 	int	error = 0, fd = 0;
 	struct	promdata *pd;
-#ifndef BOOTXX
-	char *partition;
-	int part = 0;
-	char rawpart[MAX_PROM_PATH];
-	struct promdata *disk_pd;
-	char buf[DEV_BSIZE];
-	struct disklabel *dlp;
-	size_t read;
-#endif
 
 	pd = (struct promdata *)alloc(sizeof *pd);
 	f->f_devdata = (void *)pd;
 
 	switch (prom_version()) {
 	case PROM_OLDMON:
+#ifdef DEBUG_PROM
+		printf("devopen: PROM_OLDMON\n");
+#endif
 		error = oldmon_iopen(pd);
 #ifndef BOOTXX
 		pd->xmit = oldmon_xmit;
@@ -168,6 +228,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 		pd->fd = fd;
 		switch (prom_version()) {
 		case PROM_OBP_V0:
+#ifdef DEBUG_PROM
+			printf("devopen: PROM_OBP_V0\n");
+#endif
 #ifndef BOOTXX
 			pd->xmit = obp_v0_xmit;
 			pd->recv = obp_v0_recv;
@@ -177,6 +240,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 		case PROM_OBP_V2:
 		case PROM_OBP_V3:
 		case PROM_OPENFIRM:
+#ifdef DEBUG_PROM
+			printf("devopen: PROM_OBP_V2+\n");
+#endif
 #ifndef BOOTXX
 			pd->xmit = obp_v2_xmit;
 			pd->recv = obp_v2_recv;
@@ -207,86 +273,13 @@ devopen(struct open_file *f, const char *fname, char **file)
 				prom_bootdevice);
 			return (error);
 		}
-	} else {
+	} else
 		memcpy(file_system, file_system_ufs,
 		    sizeof(struct fs_ops) * nfsys);
 
-#ifdef NOTDEF_DEBUG
-	printf("devopen: Checking disklabel for RAID partition\n");
-#endif
-
-		/*
-		 * Don't check disklabel on floppy boot since
-		 * reopening it could cause Data Access Exception later.
-		 */
-		if (bootdev_isfloppy(prom_bootdevice))
-			return 0;
-
-		/*
-		 * We need to read from the raw partition (i.e. the
-		 * beginning of the disk in order to check the NetBSD
-		 * disklabel to see if the boot partition is type RAID.
-		 *
-		 * For machines with prom_version() == PROM_OLDMON, we
-		 * only handle boot from RAID for the first disk partition.
-		 */
-		disk_pd = (struct promdata *)alloc(sizeof *disk_pd);
-		memcpy(disk_pd, pd, sizeof(struct promdata));
-		if (prom_version() != PROM_OLDMON) {
-			strcpy(rawpart, prom_bootdevice);
-			if ((partition = strchr(rawpart, ':')) != NULL &&
-		    	    *++partition >= 'a' &&
-			    *partition <= 'a' +  MAXPARTITIONS) {
-				part = *partition - 'a';
-				*partition = RAW_PART + 'a';
-			} else
-				strcat(rawpart, ":c");
-			if ((disk_pd->fd = prom_open(rawpart)) == 0)
-				return 0;
-		}
-		error = f->f_dev->dv_strategy(disk_pd, F_READ, LABELSECTOR,
-		    DEV_BSIZE, &buf, &read);
-		if (prom_version() != PROM_OLDMON)
-			prom_close(disk_pd->fd);
-		if (error || (read != DEV_BSIZE))
-			return 0;
-#ifdef NOTDEF_DEBUG
-		{
-			int x = 0;
-			char *p = (char *) buf;
-
-			printf("  Sector %d:\n", LABELSECTOR);
-			printf("00000000  ");
-			while (x < DEV_BSIZE) {
-				if (*p >= 0x00 && *p < 0x10)
-					printf("0%x ", *p & 0xff);
-				else
-					printf("%x ", *p & 0xff);
-				x++;
-				if (x && !(x % 8))
-					printf(" ");
-				if (x && !(x % 16)) {
-					if(x < 0x100)
-						printf("\n000000%x  ", x);
-					else
-						printf("\n00000%x  ", x);
-				}
-				p++;
-			}
-			printf("\n");
-		}
-#endif
-		/* Check for NetBSD disk label. */
-		dlp = (struct disklabel *) (buf + LABELOFFSET);
-		if (dlp->d_magic == DISKMAGIC && !dkcksum(dlp) &&
-		    dlp->d_partitions[part].p_fstype == FS_RAID) {
-#ifdef NOTDEF_DEBUG
-			printf("devopen: found RAID partition, "
-			    "adjusting offset to %d\n", RF_PROTECTED_SECTORS);
-#endif
-			doffset = RF_PROTECTED_SECTORS;
-		}
-	}
+	/* Don't check disklabel for RAID on floppy boot */
+	if (bootdev_isfloppy(prom_bootdevice))
+		raidchecked = 1;
 #endif /* BOOTXX */
 	return (0);
 }
@@ -299,11 +292,12 @@ obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	int	n, error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
-
 #ifndef BOOTXX
-	dblk += doffset;
+	char	labelbuf[DEV_BSIZE];
 #endif
+
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("promstrategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
 
@@ -317,6 +311,13 @@ obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 		printf("promstrategy: non-block device not supported\n");
 		error = EINVAL;
 	}
+
+	if (!raidchecked && flag == F_READ) {
+		prom_bread(fd, btodb(DEV_BSIZE), LABELSECTOR, &labelbuf[0]);
+		israidlabel(&labelbuf[0]);
+		raidchecked = 1;
+	}
+	dblk += doffset;
 #endif
 
 	n = (flag == F_READ)
@@ -326,6 +327,7 @@ obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	*rsize = dbtob(n);
 
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("rsize = %zx\n", *rsize);
 #endif
 	return (error);
@@ -338,15 +340,25 @@ obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	int	error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
-
 #ifndef BOOTXX
-	dblk += doffset;
+	char	labelbuf[DEV_BSIZE];
 #endif
+
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("promstrategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
 
-#ifndef BOOTXX	/* We know it's a block device, so save some space */
+#ifndef BOOTXX
+	if (!raidchecked && flag == F_READ) {
+		prom_seek(fd, dbtob(LABELSECTOR));
+		prom_read(fd, &labelbuf[0], DEV_BSIZE);
+		israidlabel(&labelbuf[0]);
+		raidchecked = 1;
+	}
+	dblk += doffset;
+
+	/* We know it's a block device, so save some space */
 	if (pd->devtype == DT_BLOCK)
 #endif
 		prom_seek(fd, dbtob(dblk));
@@ -356,6 +368,7 @@ obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 		: prom_write(fd, buf, size);
 
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("rsize = %zx\n", *rsize);
 #endif
 	return (error);
@@ -374,6 +387,9 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	char	*dmabuf;
 	int	si_flag;
 	size_t	xcnt;
+#ifndef BOOTXX
+	char	labelbuf[DEV_BSIZE];
+#endif
 
 	si = pd->si;
 	ops = si->si_boottab;
@@ -382,11 +398,26 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dblk += doffset;
 #endif
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("prom_strategy: size=%zd dblk=%d\n", size, (int)dblk);
+#endif
+	
+#ifndef BOOTXX
+	if (!raidchecked && flag == F_READ) {
+		dmabuf = dvma_mapin(&labelbuf[0], DEV_BSIZE);
+		si->si_bn = LABELSECTOR;
+		si->si_cc = DEV_BSIZE;
+		si_flag = SAIO_F_READ;
+		xcnt = (*ops->b_strategy)(si, si_flag);
+		dvma_mapout(dmabuf, DEV_BSIZE);
+		israidlabel(&labelbuf[0]);
+		raidchecked = 1;
+	}
+	dblk += doffset;
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
-	
+
 	si->si_bn = dblk;
 	si->si_ma = dmabuf;
 	si->si_cc = size;
@@ -396,6 +427,7 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dvma_mapout(dmabuf, size);
 
 #ifdef DEBUG_PROM
+if (dblk < 3000)
 	printf("disk_strategy: xcnt = %zx\n", xcnt);
 #endif
 
