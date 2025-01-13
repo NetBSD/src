@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.15 2021/02/28 20:27:40 thorpej Exp $
+$NetBSD: version,v 1.16 2025/01/13 17:33:10 tsutsui Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().
@@ -16,3 +16,4 @@ $NetBSD: version,v 1.15 2021/02/28 20:27:40 thorpej Exp $
 		no OF path was specified.
 1.13:		Fix boot failure of installation floppies
 1.14:		Properly inform OFW of the kernel's location using claim + map.
+1.15:		Tweak bootpath strings for OpenBIOS v1.1 used on QEMU.

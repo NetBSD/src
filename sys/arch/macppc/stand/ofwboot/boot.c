@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.31 2021/02/28 20:27:40 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.32 2025/01/13 17:33:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ prom2boot(char *dev)
 {
 	char *cp;
 
+	DPRINTF("%s: bootpath from OF: \"%s\"\n", __func__, dev);
 	cp = dev + strlen(dev) - 1;
 	for (; *cp; cp--) {
 		if (*cp == ':') {
@@ -113,12 +114,31 @@ prom2boot(char *dev)
 				*cp = 0;
 				break;
 			} else {
-				/* disk@0:5,boot -> disk@0:0 */
-				strcpy(cp, ":0");
+				/*
+				 * OpenBIOS v1.1 on qemu-system-ppc emulates
+				 * Open Firmware 3.x but it also recognizes
+				 * pmBootEntry info in the Apple Partition Map
+				 * like old Open Firmware 1.x/2.x machines.
+				 * In such case, the OpenBIOS passes
+				 * "/[boot device]/disk@0:,%BOOT"
+				 * for bootpath strings, but it looks
+				 * the OpenBIOS doesn't recognize
+				 * partition info in "disk@0:0" format.
+				 * So just remove file arg strings without
+				 * adding partition info in such case.
+				 */
+				if (cp[1] == ',') {
+					/* just drop extra ",[bootfile]" */
+					cp[1] = '\0';
+				} else {
+					/* disk@0:5,boot -> disk@0:0 */
+					strcpy(cp, ":0");
+				}
 				break;
 			}
 		}
 	}
+	DPRINTF("%s: bootpath patched: \"%s\"\n", __func__, dev);
 }
 
 static void
