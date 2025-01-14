@@ -4,8 +4,8 @@ defining transformation from `.from' to `.to'
 inserting ".from" (1) at end of list
 inserting ".to" (2) at end of list
 transformation .from.to complete
-Var_Parse: ${.PREFIX}${.ARCHIVE}.additional (eval-defined)
-Var_Parse: ${.ARCHIVE}.additional (eval-defined)
+Var_Parse: ${.PREFIX}${.ARCHIVE}.additional (eval)
+Var_Parse: ${.ARCHIVE}.additional (eval)
 Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional
 Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from
 Global: .ALLTARGETS =  step1 edge-case.to everything ${.PREFIX}${.ARCHIVE}.additional edge-case.from edge-case.additional

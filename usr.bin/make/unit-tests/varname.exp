@@ -7,7 +7,7 @@ Var_Parse: ${VAR(((}}}}" != "3 open parentheses}}}" (eval)
 Global: .ALLTARGETS =  VAR(((=)
 make: "varname.mk" line 32: Missing ')' in archive specification
 make: "varname.mk" line 32: Error in archive specification: "VAR"
-Var_Parse: ${:UVAR\(\(\(}=	try2 (eval-defined)
+Var_Parse: ${:UVAR\(\(\(}=	try2 (eval)
 Evaluating modifier ${:U...} on value "" (eval, undefined)
 Result of ${:UVAR\(\(\(} is "VAR\(\(\(" (eval, defined)
 Global: .ALLTARGETS =  VAR(((=) VAR\(\(\(=

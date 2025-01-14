@@ -3,7 +3,7 @@ Global: UT_VAR = <${REF}>
 Parsing directive-export-impl.mk:28: .export UT_VAR
 Global: .MAKE.EXPORTED = UT_VAR
 Parsing directive-export-impl.mk:32: : ${UT_VAR:N*}
-Var_Parse: ${UT_VAR:N*} (eval-defined)
+Var_Parse: ${UT_VAR:N*} (eval)
 Var_Parse: ${REF}> (eval)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"
@@ -26,7 +26,7 @@ Var_Parse: ${REF}> (eval)
 Result of ${:!echo "\$UT_VAR"!} is "<>" (eval, defined)
 Comparing "<>" != "<>"
 Parsing directive-export-impl.mk:50: : ${UT_VAR:N*}
-Var_Parse: ${UT_VAR:N*} (eval-defined)
+Var_Parse: ${UT_VAR:N*} (eval)
 Var_Parse: ${REF}> (eval)
 Evaluating modifier ${UT_VAR:N...} on value "<>"
 Pattern for ':N' is "*"

@@ -1,4 +1,4 @@
-Var_Parse: ${UNDEF1} (eval-defined)
+Var_Parse: ${UNDEF1} (eval)
 Global: .ALLTARGETS =  all
 Global: .ALLTARGETS =  all ${DEF2}
 Global: .ALLTARGETS =  all ${DEF2} a-${DEF2}-b
@@ -10,7 +10,7 @@ Global: INDIRECT_3 = indirect
 Global: UNDEF1 = undef1
 Global: DEF2 = def2
 Global: .ALLTARGETS =  all ${DEF2} a-${DEF2}-b ${UNDEF3} 1-${INDIRECT_1}-1 $$)
-Var_Parse: ${:U\$)}: (eval-defined)
+Var_Parse: ${:U\$)}: (eval)
 Evaluating modifier ${:U...} on value "" (eval, undefined)
 Result of ${:U\$)} is "$)" (eval, defined)
 Global: .ALLTARGETS =  all ${DEF2} a-${DEF2}-b ${UNDEF3} 1-${INDIRECT_1}-1 $$) undef1

@@ -8,8 +8,8 @@ ParseDependency(: empty-source)
 Parsing deptgt.mk:39: 	: command for empty targets list
 Parsing deptgt.mk:40: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
-Var_Parse: ${UNDEF}: depsrc-${UNDEF} (eval-defined)
-Var_Parse: ${UNDEF} (eval-defined)
+Var_Parse: ${UNDEF}: depsrc-${UNDEF} (eval)
+Var_Parse: ${UNDEF} (eval)
 Global: .ALLTARGETS =  target1 target2 sources empty-source deptgt-
 Global: .ALLTARGETS =  target1 target2 sources empty-source deptgt- depsrc-
 Global: .MAKEFLAGS =  -r -k -d p -d 0 -d v -d
