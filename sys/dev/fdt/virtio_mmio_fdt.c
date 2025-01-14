@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.11 2025/01/14 16:46:38 riastradh Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.11 2025/01/14 16:46:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ struct virtio_mmio_fdt_softc {
 
 CFATTACH_DECL3_NEW(virtio_mmio_fdt, sizeof(struct virtio_mmio_fdt_softc),
     virtio_mmio_fdt_match, virtio_mmio_fdt_attach, virtio_mmio_fdt_detach, NULL,
-    virtio_mmio_fdt_rescan, (void *)voidop, DVF_DETACH_SHUTDOWN);
+    virtio_mmio_fdt_rescan, NULL, 0);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "virtio,mmio" },

@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.11 2025/01/14 16:46:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.11 2025/01/14 16:46:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,7 @@ static void	virtio_acpi_free_interrupts(struct virtio_mmio_softc *);
 
 CFATTACH_DECL3_NEW(virtio_acpi, sizeof(struct virtio_acpi_softc),
     virtio_acpi_match, virtio_acpi_attach, virtio_acpi_detach, NULL,
-    virtio_acpi_rescan, (void *)voidop, DVF_DETACH_SHUTDOWN);
+    virtio_acpi_rescan, NULL, 0);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "LNRO0005" },
