@@ -1,10 +1,6 @@
-# $NetBSD: Makefile,v 1.6 2024/11/08 16:59:26 christos Exp $	
+# $NetBSD: Makefile,v 1.7 2025/01/14 19:58:10 riastradh Exp $	
 
-.if ${MACHINE} == "sun2"
-LIBISPRIVATE=yes
-.else
 LIBISPRIVATE=pic
-.endif
 NOLINT=yes	# XXX
 WARNS?=		4
 .include <bsd.init.mk>

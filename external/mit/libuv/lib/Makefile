@@ -1,10 +1,6 @@
-# $NetBSD: Makefile,v 1.11 2024/11/13 03:38:58 riastradh Exp $
+# $NetBSD: Makefile,v 1.12 2025/01/14 19:58:10 riastradh Exp $
 
-.if ${MACHINE} == "sun2"
-LIBISPRIVATE=yes
-.else
 LIBISPRIVATE=pic
-.endif
 
 .include <bsd.own.mk>
 
