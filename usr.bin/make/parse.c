@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.737 2025/01/14 21:23:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.738 2025/01/14 21:34:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.737 2025/01/14 21:23:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.738 2025/01/14 21:34:09 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1841,7 +1841,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 	char *output, *error;
 
 	cmd = FStr_InitRefer(uvalue);
-	Var_Expand(&cmd, SCOPE_CMDLINE, VARE_EVAL_DEFINED);
+	Var_Expand(&cmd, SCOPE_CMDLINE, VARE_EVAL);
 
 	output = Cmd_Exec(cmd.str, &error);
 	Var_SetExpand(scope, name, output);
