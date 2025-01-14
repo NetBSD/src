@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.416 2024/11/23 04:07:37 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.417 2025/01/14 19:44:53 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -71,24 +71,24 @@ PGFLAGS+=	-fPIC
 
 ##### Libraries that this may depend upon.
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
-.for _lib _dir in ${LIBDPLIBS}
-.if !defined(LIBDO.${_lib})
+.  for _lib _dir in ${LIBDPLIBS}
+.    if !defined(LIBDO.${_lib})
 LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDO.${_lib}
-.endif
-.if ${LIBDO.${_lib}} == "_external"
+.    endif
+.    if ${LIBDO.${_lib}} == "_external"
 LDADD+=		-l${_lib}
-.else
+.    else
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
-.if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
+.      if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}_pic.a
-.elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
+.      elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.so
-.else
+.      else
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.a
-.endif
-.endif
-.endfor
+.      endif
+.    endif
+.  endfor
 .endif									# }
 
 ##### Build and install rules
