@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.417 2025/01/14 19:44:53 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.418 2025/01/14 19:46:56 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -59,7 +59,7 @@ AFLAGS+=        ${PIE_AFLAGS}
 .endif
 # The -fPIC is needed for libraries that include other libraries
 # The order matters here, PIC needs to be last
-.if ${LIBISPRIVATE} == "pic"
+.if ${MKPIC} != "no"
 CFLAGS+=        -fPIC
 AFLAGS+=        -fPIC
 .endif
