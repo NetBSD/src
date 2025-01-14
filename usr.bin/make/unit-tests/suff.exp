@@ -51,8 +51,8 @@ SuffFindDeps "edge-case.to"
 	trying edge-case.from...got it
 edge-case.to: @ = edge-case.to
 edge-case.to: * = edge-case
-Expanding "${.PREFIX}${.ARCHIVE}.additional"...Var_Parse: ${.PREFIX}${.ARCHIVE}.additional (eval-defined)
-Var_Parse: ${.ARCHIVE}.additional (eval-defined)
+Expanding "${.PREFIX}${.ARCHIVE}.additional"...Var_Parse: ${.PREFIX}${.ARCHIVE}.additional (eval)
+Var_Parse: ${.ARCHIVE}.additional (eval)
 edge-case.additional...
 	applying .from -> .to to "edge-case.to"
 everything: @ = everything

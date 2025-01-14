@@ -1,4 +1,4 @@
-# $NetBSD: suff.mk,v 1.2 2025/01/12 23:10:30 rillig Exp $
+# $NetBSD: suff.mk,v 1.3 2025/01/14 21:39:25 rillig Exp $
 #
 # Demonstrate suffix rules and dependency resolution.
 
@@ -30,7 +30,7 @@ step1: .PHONY edge-case.to everything
 	: Making ${.TARGET} from ${.ALLSRC}.
 
 # When making this target, ${.ARCHIVE} is undefined, but there's no warning.
-# expect: Var_Parse: ${.ARCHIVE}.additional (eval-defined)
+# expect: Var_Parse: ${.ARCHIVE}.additional (eval)
 edge-case.to: ${.PREFIX}${.ARCHIVE}.additional
 
 edge-case.from edge-case.additional:
