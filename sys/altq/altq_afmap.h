@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.h,v 1.3 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_afmap.h,v 1.4 2025/01/14 13:49:17 joe Exp $	*/
 /*	$KAME: altq_afmap.h,v 1.6 2002/04/03 05:38:50 kjc Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ int		afm_remove(struct afm *);
 int		afm_removeall(struct ifnet *);
 struct		afm *afm_lookup(struct ifnet *, int, int);
 struct afm 	*afm_match(struct ifnet *, struct flowinfo *);
+struct afm_head *afmhead_if(struct ifnet *);
 
 #endif /* _KERNEL */
 

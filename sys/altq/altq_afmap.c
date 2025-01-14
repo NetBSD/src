@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.23 2021/12/31 14:25:47 riastradh Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.24 2025/01/14 13:49:17 joe Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.23 2021/12/31 14:25:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.24 2025/01/14 13:49:17 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -104,12 +104,8 @@ afm_dealloc(struct ifnet *ifp)
 {
 	struct afm_head *head;
 
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
-		return (-1);
+	if ((head = afmhead_if(ifp)) == NULL)
+		return -1 ;
 
 	afm_removeall(ifp);
 
@@ -124,11 +120,7 @@ afm_top(struct ifnet *ifp)
 {
 	struct afm_head *head;
 
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
+	if ((head = afmhead_if(ifp)) == NULL)
 		return NULL;
 
 	return (head->afh_head.lh_first);
@@ -140,12 +132,8 @@ afm_add(struct ifnet *ifp, struct atm_flowmap *flowmap)
 	struct afm_head *head;
 	struct afm *afm;
 
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
-		return (-1);
+	if ((head = afmhead_if(ifp)) == NULL)
+		return -1;
 
 	if (flowmap->af_flowinfo.fi_family == AF_INET) {
 		if (flowmap->af_flowinfo.fi_len != sizeof(struct flowinfo_in))
@@ -184,13 +172,9 @@ afm_removeall(struct ifnet *ifp)
 {
 	struct afm_head *head;
 	struct afm *afm;
-
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
-		return (-1);
+	
+	if ((head = afmhead_if(ifp)) == NULL)
+		return -1;
 
 	while ((afm = head->afh_head.lh_first) != NULL)
 		afm_remove(afm);
@@ -203,11 +187,7 @@ afm_lookup(struct ifnet *ifp, int vpi, int vci)
 	struct afm_head *head;
 	struct afm *afm;
 
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
+	if ((head = afmhead_if(ifp)) == NULL)
 		return NULL;
 
 	for (afm = head->afh_head.lh_first; afm != NULL;
@@ -290,11 +270,7 @@ afm_match(struct ifnet *ifp, struct flowinfo *flow)
 {
 	struct afm_head *head;
 
-	for (head = afhead_chain.lh_first; head != NULL;
-	     head = head->afh_chain.le_next)
-		if (head->afh_ifp == ifp)
-			break;
-	if (head == NULL)
+	if ((head = afmhead_if(ifp)) == NULL)
 		return NULL;
 
 	switch (flow->fi_family) {
@@ -311,6 +287,18 @@ afm_match(struct ifnet *ifp, struct flowinfo *flow)
 	}
 }
 
+/* find the address family node on the current interface */
+struct afm_head *
+afmhead_if(struct ifnet *ifp)
+{
+	struct afm_head *head;
+	for (head = afhead_chain.lh_first; head != NULL;
+	    head = head->afh_chain.le_next)
+		if (head->afh_ifp == ifp)
+			return head;
+	return NULL;
+}	
+				
 /*
  * afm device interface
  */
