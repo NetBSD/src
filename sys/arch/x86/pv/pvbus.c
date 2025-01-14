@@ -1,4 +1,4 @@
-/* $NetBSD: pvbus.c,v 1.1 2025/01/02 10:34:33 imil Exp $ */
+/*	$NetBSD: pvbus.c,v 1.2 2025/01/14 08:03:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
+
 #include <sys/bus.h>
+#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -54,22 +55,23 @@ struct x86_bus_dma_tag pvbus_bus_dma_tag = {
 };
 
 CFATTACH_DECL_NEW(pv, sizeof(struct pv_softc),
-		  pv_match, pv_attach, NULL, NULL);
+    pv_match, pv_attach, NULL, NULL);
 
 static int
 _pv_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
-	int *cookieflagsp)
+    int *cookieflagsp)
 {
+
 	if ((map->_dm_size / PAGE_SIZE) > map->_dm_segcnt)
 		*cookieflagsp |= X86_DMA_MIGHT_NEED_BOUNCE;
 
 	return 0;
 }
 
-
 static int
 pv_match(device_t parent, cfdata_t match, void *aux)
 {
+
 	return 1;
 }
 
