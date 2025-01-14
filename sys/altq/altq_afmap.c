@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.24 2025/01/14 13:49:17 joe Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.25 2025/01/14 13:51:49 joe Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.24 2025/01/14 13:49:17 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.25 2025/01/14 13:51:49 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -96,7 +96,7 @@ afm_alloc(struct ifnet *ifp)
 	/* add this afm_head to the chain */
 	LIST_INSERT_HEAD(&afhead_chain, head, afh_chain);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -137,18 +137,18 @@ afm_add(struct ifnet *ifp, struct atm_flowmap *flowmap)
 
 	if (flowmap->af_flowinfo.fi_family == AF_INET) {
 		if (flowmap->af_flowinfo.fi_len != sizeof(struct flowinfo_in))
-			return (EINVAL);
+			return EINVAL;
 #ifdef INET6
 	} else if (flowmap->af_flowinfo.fi_family == AF_INET6) {
 		if (flowmap->af_flowinfo.fi_len != sizeof(struct flowinfo_in6))
-			return (EINVAL);
+			return EINVAL;
 #endif
 	} else
-		return (EINVAL);
+		return EINVAL;
 
 	afm = malloc(sizeof(struct afm), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (afm == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	afm->afm_vci = flowmap->af_vci;
 	afm->afm_vpi = flowmap->af_vpi;
@@ -164,7 +164,7 @@ afm_remove(struct afm *afm)
 {
 	LIST_REMOVE(afm, afm_list);
 	free(afm, M_DEVBUF);
-	return (0);
+	return 0;
 }
 
 int
@@ -178,7 +178,7 @@ afm_removeall(struct ifnet *ifp)
 
 	while ((afm = head->afh_head.lh_first) != NULL)
 		afm_remove(afm);
-	return (0);
+	return 0;
 }
 
 struct afm *
@@ -220,7 +220,7 @@ afm_match4(struct afm_head *head, struct flowinfo_in *fp)
 		    afm->afm_flowinfo4.fi_proto != fp->fi_proto)
 			continue;
 		/* match found! */
-		return (afm);
+		return afm;
 	}
 	return NULL;
 }
@@ -349,7 +349,7 @@ afmioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_AFMAP, NULL,
 		    NULL, NULL);
 		if (error)
-			return (error);
+			return error;
 		break;
 	}
 
