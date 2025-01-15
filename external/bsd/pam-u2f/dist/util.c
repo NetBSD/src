@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 Yubico AB - See COPYING
+ * Copyright (C) 2014-2022 Yubico AB - See COPYING
  */
 
 #include <fido.h>
@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <stdarg.h>
-#include <syslog.h>
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
@@ -24,8 +22,10 @@
 #include <arpa/inet.h>
 
 #include "b64.h"
+#include "debug.h"
 #include "util.h"
 
+#define SSH_MAX_SIZE 8192
 #define SSH_HEADER "-----BEGIN OPENSSH PRIVATE KEY-----\n"
 #define SSH_HEADER_LEN (sizeof(SSH_HEADER) - 1)
 #define SSH_TRAILER "-----END OPENSSH PRIVATE KEY-----\n"
@@ -166,27 +166,69 @@ static void reset_device(device_t *device) {
   memset(device, 0, sizeof(*device));
 }
 
+static int parse_native_credential(const cfg_t *cfg, char *s, device_t *cred) {
+  const char *delim = ",";
+  const char *kh, *pk, *type, *attr;
+  char *saveptr = NULL;
+
+  memset(cred, 0, sizeof(*cred));
+
+  if ((kh = strtok_r(s, delim, &saveptr)) == NULL) {
+    debug_dbg(cfg, "Missing key handle");
+    goto fail;
+  }
+
+  if ((pk = strtok_r(NULL, delim, &saveptr)) == NULL) {
+    debug_dbg(cfg, "Missing public key");
+    goto fail;
+  }
+
+  if ((type = strtok_r(NULL, delim, &saveptr)) == NULL) {
+    debug_dbg(cfg, "Old format, assume es256 and +presence");
+    cred->old_format = 1;
+    type = "es256";
+    attr = "+presence";
+  } else if ((attr = strtok_r(NULL, delim, &saveptr)) == NULL) {
+    debug_dbg(cfg, "Empty attributes");
+    attr = "";
+  }
+
+  cred->keyHandle = cred->old_format ? normal_b64(kh) : strdup(kh);
+  if (cred->keyHandle == NULL || (cred->publicKey = strdup(pk)) == NULL ||
+      (cred->coseType = strdup(type)) == NULL ||
+      (cred->attributes = strdup(attr)) == NULL) {
+    debug_dbg(cfg, "Unable to allocate memory for credential components");
+    goto fail;
+  }
+
+  return 1;
+
+fail:
+  reset_device(cred);
+  return 0;
+}
+
 static int parse_native_format(const cfg_t *cfg, const char *username,
-                               char *buf, FILE *opwfile, device_t *devices,
+                               FILE *opwfile, device_t *devices,
                                unsigned *n_devs) {
 
   char *s_user, *s_credential;
-  const char *s_token;
+  char *buf = NULL;
+  size_t bufsiz = 0;
+  ssize_t len;
   unsigned i;
+  int r = 0;
 
-  while (fgets(buf, (int) (DEVSIZE * (cfg->max_devs - 1)), opwfile)) {
+  while ((len = getline(&buf, &bufsiz, opwfile)) != -1) {
     char *saveptr = NULL;
-    size_t len = strlen(buf);
     if (len > 0 && buf[len - 1] == '\n')
       buf[len - 1] = '\0';
 
-    if (cfg->debug)
-      D(cfg->debug_file, "Authorization line: %s", buf);
+    debug_dbg(cfg, "Read %zu bytes", len);
 
     s_user = strtok_r(buf, ":", &saveptr);
     if (s_user && strcmp(username, s_user) == 0) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Matched user: %s", s_user);
+      debug_dbg(cfg, "Matched user: %s", s_user);
 
       // only keep last line for this user
       for (i = 0; i < *n_devs; i++) {
@@ -195,197 +237,96 @@ static int parse_native_format(const cfg_t *cfg, const char *username,
       *n_devs = 0;
 
       i = 0;
-      while ((s_credential = strtok_r(NULL, ":", &saveptr)) != NULL) {
-        // s_credential is the whole line now
-        char *credsaveptr = NULL;
-
+      while ((s_credential = strtok_r(NULL, ":", &saveptr))) {
         if ((*n_devs)++ > cfg->max_devs - 1) {
           *n_devs = cfg->max_devs;
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Found more than %d devices, ignoring the remaining ones",
-              cfg->max_devs);
-          }
+          debug_dbg(cfg,
+                    "Found more than %d devices, ignoring the remaining ones",
+                    cfg->max_devs);
           break;
         }
 
-        reset_device(&devices[i]);
-
-        s_token = strtok_r(s_credential, ",", &credsaveptr);
-
-        if (!s_token) {
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Unable to retrieve keyHandle for device %d", i + 1);
-          }
-          return -1;
+        if (!parse_native_credential(cfg, s_credential, &devices[i])) {
+          debug_dbg(cfg, "Failed to parse credential");
+          goto fail;
         }
 
-        if (cfg->debug) {
-          D(cfg->debug_file, "KeyHandle for device number %d: %s", i + 1,
-            s_token);
-        }
-
-        devices[i].keyHandle = strdup(s_token);
-
-        if (!devices[i].keyHandle) {
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Unable to allocate memory for keyHandle number %d", i);
-          }
-          return -1;
-        }
-
-        if (is_resident(devices[i].keyHandle) && cfg->debug) {
-          D(cfg->debug_file, "Credential is resident");
-        }
-
-        s_token = strtok_r(NULL, ",", &credsaveptr);
-
-        if (!s_token) {
-          if (cfg->debug) {
-            D(cfg->debug_file, "Unable to retrieve publicKey number %d", i + 1);
-          }
-          return -1;
-        }
-
-        if (cfg->debug) {
-          D(cfg->debug_file, "publicKey for device number %d: %s", i + 1,
-            s_token);
-        }
-
-        devices[i].publicKey = strdup(s_token);
-
-        if (!devices[i].publicKey) {
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Unable to allocate memory for publicKey number %d", i);
-          }
-          return -1;
-        }
-
-        s_token = strtok_r(NULL, ",", &credsaveptr);
-
-        if (!s_token) {
-          if (cfg->debug) {
-            D(cfg->debug_file, "Unable to retrieve COSE type %d", i + 1);
-            D(cfg->debug_file, "Assuming ES256 (backwards compatibility)");
-          }
-          devices[i].old_format = 1;
-          devices[i].coseType = strdup("es256");
-        } else {
-          if (cfg->debug) {
-            D(cfg->debug_file, "COSE type for device number %d: %s", i + 1,
-              s_token);
-          }
-          devices[i].coseType = strdup(s_token);
-        }
-
-        if (!devices[i].coseType) {
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Unable to allocate memory for COSE type number %d", i);
-          }
-          return -1;
-        }
-
-        s_token = strtok_r(NULL, ",", &credsaveptr);
-
-        if (devices[i].old_format == 1) {
-          if (cfg->debug) {
-            D(cfg->debug_file, "Old format for device %d, no attributes",
-              i + 1);
-            D(cfg->debug_file, "Assuming 'presence' (backwards compatibility)");
-          }
-          s_token = "+presence";
-        } else if (!s_token) {
-          s_token = "";
-        }
-
-        if (cfg->debug) {
-          D(cfg->debug_file, "Attributes for device number %d: %s", i + 1,
-            s_token);
-        }
-        devices[i].attributes = strdup(s_token);
-
-        if (!devices[i].attributes) {
-          if (cfg->debug) {
-            D(cfg->debug_file,
-              "Unable to allocate memory for attributes number %d", i);
-          }
-          return -1;
-        }
-
-        if (devices[i].old_format) {
-          char *websafe_b64 = devices[i].keyHandle;
-          devices[i].keyHandle = normal_b64(websafe_b64);
-          free(websafe_b64);
-          if (!devices[i].keyHandle) {
-            if (cfg->debug) {
-              D(cfg->debug_file,
-                "Unable to allocate memory for keyHandle number %d", i);
-            }
-            return -1;
-          }
-        }
-
+        debug_dbg(cfg, "KeyHandle for device number %u: %s", i + 1,
+                  devices[i].keyHandle);
+        debug_dbg(cfg, "publicKey for device number %u: %s", i + 1,
+                  devices[i].publicKey);
+        debug_dbg(cfg, "COSE type for device number %u: %s", i + 1,
+                  devices[i].coseType);
+        debug_dbg(cfg, "Attributes for device number %u: %s", i + 1,
+                  devices[i].attributes);
         i++;
       }
     }
   }
 
-  return 1;
+  if (!feof(opwfile)) {
+    debug_dbg(cfg, "authfile parsing ended before eof (%d)", errno);
+    goto fail;
+  }
+
+  r = 1;
+fail:
+  free(buf);
+  return r;
 }
 
-static int load_ssh_key(const cfg_t *cfg, char *buf, size_t buf_size,
-                        FILE *opwfile, size_t opwfile_size) {
-  char *cp = buf;
+static int load_ssh_key(const cfg_t *cfg, char **out, FILE *opwfile,
+                        size_t opwfile_size) {
+  size_t buf_size;
+  char *buf = NULL;
+  char *cp = NULL;
+  int r = 0;
   int ch;
 
-  if (opwfile_size > buf_size ||
-      opwfile_size < SSH_HEADER_LEN + SSH_TRAILER_LEN) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (length)");
-    }
-    return 0;
+  *out = NULL;
+
+  if (opwfile_size < SSH_HEADER_LEN + SSH_TRAILER_LEN) {
+    debug_dbg(cfg, "Malformed SSH key (length)");
+    goto fail;
+  }
+
+  buf_size = opwfile_size > SSH_MAX_SIZE ? SSH_MAX_SIZE : opwfile_size;
+  if ((cp = buf = calloc(1, buf_size)) == NULL) {
+    debug_dbg(cfg, "Failed to allocate buffer for SSH key");
+    goto fail;
   }
 
   // NOTE(adma): +1 for \0
   if (fgets(buf, (int)(SSH_HEADER_LEN + 1), opwfile) == NULL ||
       strlen(buf) != SSH_HEADER_LEN ||
       strncmp(buf, SSH_HEADER, SSH_HEADER_LEN) != 0) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (header)");
-    }
-    return 0;
+    debug_dbg(cfg, "Malformed SSH key (header)");
+    goto fail;
   }
 
   while (opwfile_size > 0 && buf_size > 1) {
     ch = fgetc(opwfile);
     if (ch == EOF) {
-      if (cfg->debug) {
-        D(cfg->debug_file, "Unexpected authfile termination");
-      }
-      return 0;
+      debug_dbg(cfg, "Unexpected authfile termination");
+      goto fail;
     }
 
     opwfile_size--;
-    buf_size--;
 
     if (ch != '\n' && ch != '\r') {
       *cp = (char) ch;
+      buf_size--;
       if (ch == '-') {
         // NOTE(adma): no +1 here since we already read one '-'
         if (buf_size < SSH_TRAILER_LEN ||
             fgets(cp + 1, (int)SSH_TRAILER_LEN, opwfile) == NULL ||
             strlen(cp) != SSH_TRAILER_LEN ||
             strncmp(cp, SSH_TRAILER, SSH_TRAILER_LEN) != 0) {
-          if (cfg->debug) {
-            D(cfg->debug_file, "Malformed SSH key (trailer)");
-          }
-          return 0;
+          debug_dbg(cfg, "Malformed SSH key (trailer)");
+          goto fail;
         }
 
+        r = 1;
         *(cp) = '\0';
         break;
       } else {
@@ -394,11 +335,15 @@ static int load_ssh_key(const cfg_t *cfg, char *buf, size_t buf_size,
     }
   }
 
-  if (cfg->debug) { // TODO(adma): too verbose? Delete?
-    D(cfg->debug_file, "Credential is \"%s\"", buf);
+fail:
+  if (r != 1) {
+    free(buf);
+    buf = NULL;
   }
 
-  return 1;
+  *out = buf;
+
+  return r;
 }
 
 static int ssh_get(const unsigned char **buf, size_t *size, unsigned char *dst,
@@ -464,12 +409,10 @@ static int ssh_log_cstring(const cfg_t *cfg, const unsigned char **buf,
   (void) name; // silence compiler warnings if PAM_DEBUG disabled
 
   if (!ssh_get_cstring(buf, size, &str, &len)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Malformed SSH key (%s)", name);
+    debug_dbg(cfg, "Malformed SSH key (%s)", name);
     return 0;
   }
-  if (cfg->debug)
-    D(cfg->debug_file, "%s (%zu) \"%s\"", name, len, str);
+  debug_dbg(cfg, "%s (%zu) \"%s\"", name, len, str);
 
   free(str);
   return 1;
@@ -483,28 +426,21 @@ static int ssh_get_attrs(const cfg_t *cfg, const unsigned char **buf,
 
   // flags
   if (!ssh_get_u8(buf, size, &flags)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (flags)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (flags)");
     return 0;
   }
-  if (cfg->debug) {
-    D(cfg->debug_file, "flags: %02x", flags);
-  }
+  debug_dbg(cfg, "flags: %02x", flags);
 
   r = snprintf(tmp, sizeof(tmp), "%s%s",
                flags & SSH_SK_USER_PRESENCE_REQD ? "+presence" : "",
                flags & SSH_SK_USER_VERIFICATION_REQD ? "+verification" : "");
   if (r < 0 || (size_t) r >= sizeof(tmp)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to prepare flags");
+    debug_dbg(cfg, "Unable to prepare flags");
     return 0;
   }
 
   if ((*attrs = strdup(tmp)) == NULL) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Unable to allocate attributes");
-    }
+    debug_dbg(cfg, "Unable to allocate attributes");
     return 0;
   }
 
@@ -526,9 +462,7 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
 
   // key type
   if (!ssh_get_cstring(buf, size, &ssh_type, &len)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (keytype)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (keytype)");
     goto err;
   }
 
@@ -540,60 +474,44 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
     type = COSE_EDDSA;
     point_len = SSH_EDDSA_POINT_LEN;
   } else {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Unknown key type %s", ssh_type);
-    }
+    debug_dbg(cfg, "Unknown key type %s", ssh_type);
     goto err;
   }
 
-  if (cfg->debug) {
-    D(cfg->debug_file, "keytype (%zu) \"%s\"", len, ssh_type);
-  }
+  debug_dbg(cfg, "keytype (%zu) \"%s\"", len, ssh_type);
 
   if (type == COSE_ES256) {
     // curve name
     if (!ssh_get_cstring(buf, size, &ssh_curve, &len)) {
-      if (cfg->debug) {
-        D(cfg->debug_file, "Malformed SSH key (curvename)");
-      }
+      debug_dbg(cfg, "Malformed SSH key (curvename)");
       goto err;
     }
 
     if (len == SSH_P256_NAME_LEN &&
         memcmp(ssh_curve, SSH_P256_NAME, SSH_P256_NAME_LEN) == 0) {
-      if (cfg->debug) {
-        D(cfg->debug_file, "curvename (%zu) \"%s\"", len, ssh_curve);
-      }
+      debug_dbg(cfg, "curvename (%zu) \"%s\"", len, ssh_curve);
     } else {
-      if (cfg->debug) {
-        D(cfg->debug_file, "Unknown curve %s", ssh_curve);
-      }
+      debug_dbg(cfg, "Unknown curve %s", ssh_curve);
       goto err;
     }
   }
 
   // point
   if (!ssh_get_string_ref(buf, size, &blob, &len)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (point)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (point)");
     goto err;
   }
 
   if (len != point_len) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Invalid point length, should be %zu, found %zu",
-        point_len, len);
-    }
+    debug_dbg(cfg, "Invalid point length, should be %zu, found %zu", point_len,
+              len);
     goto err;
   }
 
   if (type == COSE_ES256) {
     // Skip the initial '04'
     if (len < 1) {
-      if (cfg->debug) {
-        D(cfg->debug_file, "Failed to skip initial '04'");
-      }
+      debug_dbg(cfg, "Failed to skip initial '04'");
       goto err;
     }
     blob++;
@@ -601,16 +519,12 @@ static int ssh_get_pubkey(const cfg_t *cfg, const unsigned char **buf,
   }
 
   if (!b64_encode(blob, len, pubkey_p)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Unable to allocate public key");
-    }
+    debug_dbg(cfg, "Unable to allocate public key");
     goto err;
   }
 
   if ((*type_p = strdup(cose_string(type))) == NULL) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Unable to allocate COSE type");
-    }
+    debug_dbg(cfg, "Unable to allocate COSE type");
     goto err;
   }
 
@@ -628,26 +542,26 @@ err:
   return ok;
 }
 
-static int parse_ssh_format(const cfg_t *cfg, char *buf, size_t buf_size,
-                            FILE *opwfile, size_t opwfile_size,
-                            device_t *devices, unsigned *n_devs) {
-
+static int parse_ssh_format(const cfg_t *cfg, FILE *opwfile,
+                            size_t opwfile_size, device_t *devices,
+                            unsigned *n_devs) {
+  char *b64 = NULL;
   const unsigned char *decoded;
   unsigned char *decoded_initial = NULL;
   size_t decoded_len;
   const unsigned char *blob;
   uint32_t check1, check2, tmp;
   size_t len;
+  int r = 0;
 
   // The logic below is inspired by
   // how ssh parses its own keys. See sshkey.c
   reset_device(&devices[0]);
+  *n_devs = 0;
 
-  if (!load_ssh_key(cfg, buf, buf_size, opwfile, opwfile_size) ||
-      !b64_decode(buf, (void **) &decoded_initial, &decoded_len)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Unable to decode credential");
-    }
+  if (!load_ssh_key(cfg, &b64, opwfile, opwfile_size) ||
+      !b64_decode(b64, (void **) &decoded_initial, &decoded_len)) {
+    debug_dbg(cfg, "Unable to decode credential");
     goto out;
   }
 
@@ -656,9 +570,7 @@ static int parse_ssh_format(const cfg_t *cfg, char *buf, size_t buf_size,
   // magic
   if (decoded_len < SSH_AUTH_MAGIC_LEN ||
       memcmp(decoded, SSH_AUTH_MAGIC, SSH_AUTH_MAGIC_LEN) != 0) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (magic)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (magic)");
     goto out;
   }
 
@@ -671,54 +583,40 @@ static int parse_ssh_format(const cfg_t *cfg, char *buf, size_t buf_size,
     goto out;
 
   if (!ssh_get_u32(&decoded, &decoded_len, &tmp)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (nkeys)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (nkeys)");
     goto out;
   }
-  if (cfg->debug) {
-    D(cfg->debug_file, "nkeys: %" PRIu32, tmp);
-  }
+  debug_dbg(cfg, "nkeys: %" PRIu32, tmp);
   if (tmp != 1) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Multiple keys not supported");
-    }
+    debug_dbg(cfg, "Multiple keys not supported");
     goto out;
   }
 
   // public_key (skip)
   if (!ssh_get_string_ref(&decoded, &decoded_len, NULL, NULL)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (pubkey)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (pubkey)");
     goto out;
   }
 
   // private key (consume length)
   if (!ssh_get_u32(&decoded, &decoded_len, &tmp) || decoded_len < tmp) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (pvtkey length)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (pvtkey length)");
     goto out;
   }
 
   // check1, check2
   if (!ssh_get_u32(&decoded, &decoded_len, &check1) ||
       !ssh_get_u32(&decoded, &decoded_len, &check2)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (check1, check2)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (check1, check2)");
     goto out;
   }
-  if (cfg->debug) {
-    D(cfg->debug_file, "check1: %" PRIu32, check1);
-    D(cfg->debug_file, "check2: %" PRIu32, check2);
-  }
+
+  debug_dbg(cfg, "check1: %" PRIu32, check1);
+  debug_dbg(cfg, "check2: %" PRIu32, check2);
+
   if (check1 != check2) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Mismatched check values");
-      goto out;
-    }
+    debug_dbg(cfg, "Mismatched check values");
+    goto out;
   }
 
   if (!ssh_get_pubkey(cfg, &decoded, &decoded_len, &devices[0].coseType,
@@ -730,28 +628,18 @@ static int parse_ssh_format(const cfg_t *cfg, char *buf, size_t buf_size,
   // keyhandle
   if (!ssh_get_string_ref(&decoded, &decoded_len, &blob, &len) ||
       !b64_encode(blob, len, &devices[0].keyHandle)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (keyhandle)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (keyhandle)");
     goto out;
   }
 
-  if (cfg->debug) {
-    D(cfg->debug_file, "KeyHandle for device number 1: %s",
-      devices[0].keyHandle);
-    D(cfg->debug_file, "publicKey for device number 1: %s",
-      devices[0].publicKey);
-    D(cfg->debug_file, "COSE type for device number 1: %s",
-      devices[0].coseType);
-    D(cfg->debug_file, "Attributes for device number 1: %s",
-      devices[0].attributes);
-  }
+  debug_dbg(cfg, "KeyHandle for device number 1: %s", devices[0].keyHandle);
+  debug_dbg(cfg, "publicKey for device number 1: %s", devices[0].publicKey);
+  debug_dbg(cfg, "COSE type for device number 1: %s", devices[0].coseType);
+  debug_dbg(cfg, "Attributes for device number 1: %s", devices[0].attributes);
 
   // reserved (skip)
   if (!ssh_get_string_ref(&decoded, &decoded_len, NULL, NULL)) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (reserved)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (reserved)");
     goto out;
   }
 
@@ -761,44 +649,36 @@ static int parse_ssh_format(const cfg_t *cfg, char *buf, size_t buf_size,
 
   // padding
   if (decoded_len >= 255) {
-    if (cfg->debug) {
-      D(cfg->debug_file, "Malformed SSH key (padding length)");
-    }
+    debug_dbg(cfg, "Malformed SSH key (padding length)");
     goto out;
   }
 
   for (int i = 1; (unsigned) i <= decoded_len; i++) {
     if (decoded[i - 1] != i) {
-      if (cfg->debug) {
-        D(cfg->debug_file, "Malformed SSH key (padding)");
-      }
+      debug_dbg(cfg, "Malformed SSH key (padding)");
       goto out;
     }
   }
 
-  free(decoded_initial);
-  decoded_initial = NULL;
-
   *n_devs = 1;
-
-  return 1;
+  r = 1;
 
 out:
-  reset_device(&devices[0]);
-
-  if (decoded_initial) {
-    free(decoded_initial);
-    decoded_initial = NULL;
+  if (r != 1) {
+    reset_device(&devices[0]);
+    *n_devs = 0;
   }
 
-  return -1;
+  free(decoded_initial);
+  free(b64);
+
+  return r;
 }
 
 int get_devices_from_authfile(const cfg_t *cfg, const char *username,
                               device_t *devices, unsigned *n_devs) {
 
-  char *buf = NULL;
-  int retval = 0;
+  int r = PAM_AUTHINFO_UNAVAIL;
   int fd = -1;
   struct stat st;
   struct passwd *pw = NULL, pw_s;
@@ -813,95 +693,77 @@ int get_devices_from_authfile(const cfg_t *cfg, const char *username,
 
   fd = open(cfg->auth_file, O_RDONLY | O_CLOEXEC | O_NOCTTY);
   if (fd < 0) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Cannot open file: %s (%s)", cfg->auth_file,
-        strerror(errno));
+    if (errno == ENOENT && cfg->nouserok) {
+      r = PAM_IGNORE;
+    }
+    debug_dbg(cfg, "Cannot open authentication file: %s", strerror(errno));
     goto err;
   }
 
   if (fstat(fd, &st) < 0) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Cannot stat file: %s (%s)", cfg->auth_file,
-        strerror(errno));
+    debug_dbg(cfg, "Cannot stat authentication file: %s", strerror(errno));
     goto err;
   }
 
   if (!S_ISREG(st.st_mode)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "%s is not a regular file", cfg->auth_file);
+    debug_dbg(cfg, "Authentication file is not a regular file");
     goto err;
   }
 
-  if (st.st_size == 0) {
-    if (cfg->debug)
-      D(cfg->debug_file, "File %s is empty", cfg->auth_file);
+  if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
+    debug_dbg(cfg, "Authentication file has insecure permissions");
     goto err;
   }
+
   opwfile_size = (size_t)st.st_size;
 
   gpu_ret = getpwuid_r(st.st_uid, &pw_s, buffer, sizeof(buffer), &pw);
   if (gpu_ret != 0 || pw == NULL) {
-    D(cfg->debug_file, "Unable to retrieve credentials for uid %u, (%s)",
-      st.st_uid, strerror(errno));
+    debug_dbg(cfg, "Unable to retrieve credentials for uid %u, (%s)", st.st_uid,
+              strerror(errno));
     goto err;
   }
 
   if (strcmp(pw->pw_name, username) != 0 && strcmp(pw->pw_name, "root") != 0) {
     if (strcmp(username, "root") != 0) {
-      D(cfg->debug_file,
-        "The owner of the authentication file is neither %s nor root",
-        username);
+      debug_dbg(cfg,
+                "The owner of the authentication file is neither %s nor root",
+                username);
     } else {
-      D(cfg->debug_file, "The owner of the authentication file is not root");
+      debug_dbg(cfg, "The owner of the authentication file is not root");
     }
     goto err;
   }
 
   opwfile = fdopen(fd, "r");
   if (opwfile == NULL) {
-    if (cfg->debug)
-      D(cfg->debug_file, "fdopen: %s", strerror(errno));
+    debug_dbg(cfg, "fdopen: %s", strerror(errno));
     goto err;
   } else {
     fd = -1; /* fd belongs to opwfile */
   }
 
-  buf = calloc(1, (DEVSIZE * cfg->max_devs));
-  if (!buf) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to allocate memory");
-    goto err;
-  }
-
   if (cfg->sshformat == 0) {
-    retval = parse_native_format(cfg, username, buf, opwfile, devices, n_devs);
+    if (parse_native_format(cfg, username, opwfile, devices, n_devs) != 1) {
+      goto err;
+    }
   } else {
-    retval = parse_ssh_format(cfg, buf, DEVSIZE * cfg->max_devs, opwfile,
-                              opwfile_size, devices, n_devs);
+    if (parse_ssh_format(cfg, opwfile, opwfile_size, devices, n_devs) != 1) {
+      goto err;
+    }
   }
 
-  if (retval != 1) {
-    // NOTE(adma): error message is logged by the previous function
-    goto err;
-  }
-
-  if (cfg->debug)
-    D(cfg->debug_file, "Found %d device(s) for user %s", *n_devs, username);
-
-  retval = 1;
-  goto out;
+  debug_dbg(cfg, "Found %d device(s) for user %s", *n_devs, username);
+  r = PAM_SUCCESS;
 
 err:
-  for (i = 0; i < *n_devs; i++) {
-    reset_device(&devices[i]);
-  }
-
-  *n_devs = 0;
-
-out:
-  if (buf) {
-    free(buf);
-    buf = NULL;
+  if (r != PAM_SUCCESS) {
+    for (i = 0; i < *n_devs; i++) {
+      reset_device(&devices[i]);
+    }
+    *n_devs = 0;
+  } else if (*n_devs == 0) {
+    r = cfg->nouserok ? PAM_IGNORE : PAM_USER_UNKNOWN;
   }
 
   if (opwfile)
@@ -910,7 +772,7 @@ out:
   if (fd != -1)
     close(fd);
 
-  return retval;
+  return r;
 }
 
 void free_devices(device_t *devices, const unsigned n_devs) {
@@ -936,35 +798,29 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
   size_t i;
   size_t j;
 
-  if (cfg->debug)
-    D(cfg->debug_file, "Working with %zu authenticator(s)", devlist_len);
+  debug_dbg(cfg, "Working with %zu authenticator(s)", devlist_len);
 
   for (i = 0, j = 0; i < devlist_len; i++) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Checking whether key exists in authenticator %zu", i);
+    debug_dbg(cfg, "Checking whether key exists in authenticator %zu", i);
 
     di = fido_dev_info_ptr(devlist, i);
     if (!di) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to get device pointer");
+      debug_dbg(cfg, "Unable to get device pointer");
       continue;
     }
 
-    if (cfg->debug)
-      D(cfg->debug_file, "Authenticator path: %s", fido_dev_info_path(di));
+    debug_dbg(cfg, "Authenticator path: %s", fido_dev_info_path(di));
 
     dev = fido_dev_new();
     if (!dev) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to allocate device type");
+      debug_dbg(cfg, "Unable to allocate device type");
       continue;
     }
 
     r = fido_dev_open(dev, fido_dev_info_path(di));
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to open authenticator: %s (%d)",
-          fido_strerr(r), r);
+      debug_dbg(cfg, "Failed to open authenticator: %s (%d)", fido_strerr(r),
+                r);
       fido_dev_free(&dev);
       continue;
     }
@@ -977,12 +833,10 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
       if ((!fido_dev_is_fido2(dev) && r == FIDO_ERR_USER_PRESENCE_REQUIRED) ||
           (fido_dev_is_fido2(dev) && r == FIDO_OK)) {
         authlist[j++] = dev;
-        if (cfg->debug)
-          D(cfg->debug_file, "Found key in authenticator %zu", i);
+        debug_dbg(cfg, "Found key in authenticator %zu", i);
         return (1);
       }
-      if (cfg->debug)
-        D(cfg->debug_file, "Key not found in authenticator %zu", i);
+      debug_dbg(cfg, "Key not found in authenticator %zu", i);
 
       fido_dev_close(dev);
       fido_dev_free(&dev);
@@ -992,8 +846,7 @@ static int get_authenticators(const cfg_t *cfg, const fido_dev_info_t *devlist,
   if (j != 0)
     return (1);
   else {
-    if (cfg->debug)
-      D(cfg->debug_file, "Key not found");
+    debug_dbg(cfg, "Key not found");
     return (0);
   }
 }
@@ -1084,13 +937,11 @@ static int match_device_opts(fido_dev_t *dev, struct opts *opts) {
 static int set_opts(const cfg_t *cfg, const struct opts *opts,
                     fido_assert_t *assert) {
   if (fido_assert_set_up(assert, opts->up) != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set UP");
+    debug_dbg(cfg, "Failed to set UP");
     return 0;
   }
   if (fido_assert_set_uv(assert, opts->uv) != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set UV");
+    debug_dbg(cfg, "Failed to set UV");
     return 0;
   }
 
@@ -1102,15 +953,13 @@ static int set_cdh(const cfg_t *cfg, fido_assert_t *assert) {
   int r;
 
   if (!random_bytes(cdh, sizeof(cdh))) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to generate challenge");
+    debug_dbg(cfg, "Failed to generate challenge");
     return 0;
   }
 
   r = fido_assert_set_clientdata_hash(assert, cdh, sizeof(cdh));
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to set challenge: %s (%d)", fido_strerr(r), r);
+    debug_dbg(cfg, "Unable to set challenge: %s (%d)", fido_strerr(r), r);
     return 0;
   }
 
@@ -1126,52 +975,43 @@ static fido_assert_t *prepare_assert(const cfg_t *cfg, const device_t *device,
   int r;
 
   if ((assert = fido_assert_new()) == NULL) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to allocate assertion");
+    debug_dbg(cfg, "Unable to allocate assertion");
     goto err;
   }
 
-  if (device->old_format && strcmp(cfg->origin, cfg->appid) != 0)
+  if (device->old_format)
     r = fido_assert_set_rp(assert, cfg->appid);
   else
     r = fido_assert_set_rp(assert, cfg->origin);
 
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to set origin: %s (%d)", fido_strerr(r), r);
+    debug_dbg(cfg, "Unable to set origin: %s (%d)", fido_strerr(r), r);
     goto err;
   }
 
   if (is_resident(device->keyHandle)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Credential is resident");
+    debug_dbg(cfg, "Credential is resident");
   } else {
-    if (cfg->debug)
-      D(cfg->debug_file, "Key handle: %s", device->keyHandle);
+    debug_dbg(cfg, "Key handle: %s", device->keyHandle);
     if (!b64_decode(device->keyHandle, (void **) &buf, &buf_len)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to decode key handle");
+      debug_dbg(cfg, "Failed to decode key handle");
       goto err;
     }
 
     r = fido_assert_allow_cred(assert, buf, buf_len);
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to set keyHandle: %s (%d)", fido_strerr(r),
-          r);
+      debug_dbg(cfg, "Unable to set keyHandle: %s (%d)", fido_strerr(r), r);
       goto err;
     }
   }
 
   if (!set_opts(cfg, opts, assert)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set assert options");
+    debug_dbg(cfg, "Failed to set assert options");
     goto err;
   }
 
   if (!set_cdh(cfg, assert)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set client data hash");
+    debug_dbg(cfg, "Failed to set client data hash");
     goto err;
   }
 
@@ -1236,21 +1076,18 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
 
   if (old) {
     if (!hex_decode(pk, &buf, &buf_len)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to decode public key");
+      debug_dbg(cfg, "Failed to decode public key");
       goto err;
     }
   } else {
     if (!b64_decode(pk, (void **) &buf, &buf_len)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to decode public key");
+      debug_dbg(cfg, "Failed to decode public key");
       goto err;
     }
   }
 
   if (!cose_type(type, &out->type)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unknown COSE type '%s'", type);
+    debug_dbg(cfg, "Unknown COSE type '%s'", type);
     goto err;
   }
 
@@ -1258,8 +1095,7 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
   // returned as an error.  Instead, it is handled by fido_verify_assert().
   if (out->type == COSE_ES256) {
     if ((out->ptr = es256_pk_new()) == NULL) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to allocate ES256 public key");
+      debug_dbg(cfg, "Failed to allocate ES256 public key");
       goto err;
     }
     if (old) {
@@ -1268,34 +1104,28 @@ static int parse_pk(const cfg_t *cfg, int old, const char *type, const char *pk,
       r = es256_pk_from_ptr(out->ptr, buf, buf_len);
     }
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to convert ES256 public key");
+      debug_dbg(cfg, "Failed to convert ES256 public key");
     }
   } else if (out->type == COSE_RS256) {
     if ((out->ptr = rs256_pk_new()) == NULL) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to allocate RS256 public key");
+      debug_dbg(cfg, "Failed to allocate RS256 public key");
       goto err;
     }
     r = rs256_pk_from_ptr(out->ptr, buf, buf_len);
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to convert RS256 public key");
+      debug_dbg(cfg, "Failed to convert RS256 public key");
     }
   } else if (out->type == COSE_EDDSA) {
     if ((out->ptr = eddsa_pk_new()) == NULL) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to allocate EDDSA public key");
+      debug_dbg(cfg, "Failed to allocate EDDSA public key");
       goto err;
     }
     r = eddsa_pk_from_ptr(out->ptr, buf, buf_len);
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to convert EDDSA public key");
+      debug_dbg(cfg, "Failed to convert EDDSA public key");
     }
   } else {
-    if (cfg->debug)
-      D(cfg->debug_file, "COSE type '%s' not handled", type);
+    debug_dbg(cfg, "COSE type '%s' not handled", type);
     goto err;
   }
 
@@ -1313,7 +1143,7 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
   fido_dev_t **authlist = NULL;
   int cued = 0;
   int r;
-  int retval = -2;
+  int retval = PAM_AUTH_ERR;
   size_t ndevs = 0;
   size_t ndevs_prev = 0;
   unsigned i = 0;
@@ -1329,57 +1159,46 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
 #endif
   memset(&pk, 0, sizeof(pk));
 
-  devlist = fido_dev_info_new(64);
+  devlist = fido_dev_info_new(DEVLIST_LEN);
   if (!devlist) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to allocate devlist");
+    debug_dbg(cfg, "Unable to allocate devlist");
     goto out;
   }
 
-  r = fido_dev_info_manifest(devlist, 64, &ndevs);
+  r = fido_dev_info_manifest(devlist, DEVLIST_LEN, &ndevs);
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to discover device(s), %s (%d)",
-        fido_strerr(r), r);
+    debug_dbg(cfg, "Unable to discover device(s), %s (%d)", fido_strerr(r), r);
     goto out;
   }
 
   ndevs_prev = ndevs;
 
-  if (cfg->debug)
-    D(cfg->debug_file, "Device max index is %zu", ndevs);
+  debug_dbg(cfg, "Device max index is %zu", ndevs);
 
-  authlist = calloc(64 + 1, sizeof(fido_dev_t *));
+  authlist = calloc(DEVLIST_LEN + 1, sizeof(fido_dev_t *));
   if (!authlist) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Unable to allocate authenticator list");
+    debug_dbg(cfg, "Unable to allocate authenticator list");
     goto out;
   }
 
-  if (cfg->nodetect && cfg->debug)
-    D(cfg->debug_file,
-      "nodetect option specified, suitable key detection will be skipped");
+  if (cfg->nodetect)
+    debug_dbg(cfg, "nodetect option specified, suitable key detection will be "
+                   "skipped");
 
   i = 0;
   while (i < n_devs) {
-    retval = -2;
-
-    if (cfg->debug)
-      D(cfg->debug_file, "Attempting authentication with device number %d",
-        i + 1);
+    debug_dbg(cfg, "Attempting authentication with device number %d", i + 1);
 
     init_opts(&opts); /* used during authenticator discovery */
     assert = prepare_assert(cfg, &devices[i], &opts);
     if (assert == NULL) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to prepare assert");
+      debug_dbg(cfg, "Failed to prepare assert");
       goto out;
     }
 
     if (!parse_pk(cfg, devices[i].old_format, devices[i].coseType,
                   devices[i].publicKey, &pk)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to parse public key");
+      debug_dbg(cfg, "Failed to parse public key");
       goto out;
     }
 
@@ -1391,30 +1210,26 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
 
         r = match_device_opts(authlist[j], &opts);
         if (r != 1) {
-          if (cfg->debug) {
-            D(cfg->debug_file, "%s, skipping authenticator",
-              r < 0 ? "Failed to query supported options"
-                    : "Unsupported options");
-          }
+          debug_dbg(cfg, "%s, skipping authenticator",
+                    r < 0 ? "Failed to query supported options"
+                          : "Unsupported options");
           continue;
         }
 
         if (!set_opts(cfg, &opts, assert)) {
-          if (cfg->debug)
-            D(cfg->debug_file, "Failed to set assert options");
+          debug_dbg(cfg, "Failed to set assert options");
           goto out;
         }
 
         if (!set_cdh(cfg, assert)) {
-          if (cfg->debug)
-            D(cfg->debug_file, "Failed to reset client data hash");
+          debug_dbg(cfg, "Failed to reset client data hash");
           goto out;
         }
 
         if (opts.pin == FIDO_OPT_TRUE) {
           pin = converse(pamh, PAM_PROMPT_ECHO_OFF, "Please enter the PIN: ");
           if (pin == NULL) {
-            D(cfg->debug_file, "converse() returned NULL");
+            debug_dbg(cfg, "converse() returned NULL");
             goto out;
           }
         }
@@ -1435,46 +1250,42 @@ int do_authentication(const cfg_t *cfg, const device_t *devices,
           if (opts.pin == FIDO_OPT_TRUE || opts.uv == FIDO_OPT_TRUE) {
             r = fido_assert_set_uv(assert, FIDO_OPT_TRUE);
             if (r != FIDO_OK) {
-              D(cfg->debug_file, "Failed to set UV");
+              debug_dbg(cfg, "Failed to set UV");
               goto out;
             }
           }
           r = fido_assert_verify(assert, 0, pk.type, pk.ptr);
           if (r == FIDO_OK) {
-            retval = 1;
+            retval = PAM_SUCCESS;
             goto out;
           }
         }
       }
     } else {
-      if (cfg->debug)
-        D(cfg->debug_file, "Device for this keyhandle is not present");
+      debug_dbg(cfg, "Device for this keyhandle is not present");
     }
 
     i++;
 
     fido_dev_info_free(&devlist, ndevs);
 
-    devlist = fido_dev_info_new(64);
+    devlist = fido_dev_info_new(DEVLIST_LEN);
     if (!devlist) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to allocate devlist");
+      debug_dbg(cfg, "Unable to allocate devlist");
       goto out;
     }
 
-    r = fido_dev_info_manifest(devlist, 64, &ndevs);
+    r = fido_dev_info_manifest(devlist, DEVLIST_LEN, &ndevs);
     if (r != FIDO_OK) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to discover device(s), %s (%d)",
-          fido_strerr(r), r);
+      debug_dbg(cfg, "Unable to discover device(s), %s (%d)", fido_strerr(r),
+                r);
       goto out;
     }
 
     if (ndevs > ndevs_prev) {
-      if (cfg->debug)
-        D(cfg->debug_file,
-          "Devices max_index has changed: %zu (was %zu). Starting over", ndevs,
-          ndevs_prev);
+      debug_dbg(cfg,
+                "Devices max_index has changed: %zu (was %zu). Starting over",
+                ndevs, ndevs_prev);
       ndevs_prev = ndevs;
       i = 0;
     }
@@ -1524,35 +1335,30 @@ static int manual_get_assert(const cfg_t *cfg, const char *prompt,
   b64_sig = converse(pamh, PAM_PROMPT_ECHO_ON, prompt);
 
   if (!b64_decode(b64_authdata, (void **) &authdata, &authdata_len)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to decode authenticator data");
+    debug_dbg(cfg, "Failed to decode authenticator data");
     goto err;
   }
 
   if (!b64_decode(b64_sig, (void **) &sig, &sig_len)) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to decode signature");
+    debug_dbg(cfg, "Failed to decode signature");
     goto err;
   }
 
   r = fido_assert_set_count(assert, 1);
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set signature count of assertion");
+    debug_dbg(cfg, "Failed to set signature count of assertion");
     goto err;
   }
 
   r = fido_assert_set_authdata(assert, 0, authdata, authdata_len);
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set authdata of assertion");
+    debug_dbg(cfg, "Failed to set authdata of assertion");
     goto err;
   }
 
   r = fido_assert_set_sig(assert, 0, sig, sig_len);
   if (r != FIDO_OK) {
-    if (cfg->debug)
-      D(cfg->debug_file, "Failed to set signature of assertion");
+    debug_dbg(cfg, "Failed to set signature of assertion");
     goto err;
   }
 
@@ -1575,7 +1381,7 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
   char *b64_challenge = NULL;
   char prompt[MAX_PROMPT_LEN];
   char buf[MAX_PROMPT_LEN];
-  int retval = -2;
+  int retval = PAM_AUTH_ERR;
   int n;
   int r;
   unsigned i = 0;
@@ -1600,37 +1406,30 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
     parse_opts(cfg, devices[i].attributes, &opts);
     assert[i] = prepare_assert(cfg, &devices[i], &opts);
     if (assert[i] == NULL) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to prepare assert");
+      debug_dbg(cfg, "Failed to prepare assert");
       goto out;
     }
 
-    if (cfg->debug)
-      D(cfg->debug_file, "Attempting authentication with device number %d",
-        i + 1);
+    debug_dbg(cfg, "Attempting authentication with device number %d", i + 1);
 
     if (!parse_pk(cfg, devices[i].old_format, devices[i].coseType,
                   devices[i].publicKey, &pk[i])) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Unable to parse public key %u", i);
+      debug_dbg(cfg, "Unable to parse public key %u", i);
       goto out;
     }
 
     if (!b64_encode(fido_assert_clientdata_hash_ptr(assert[i]),
                     fido_assert_clientdata_hash_len(assert[i]),
                     &b64_challenge)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to encode challenge");
+      debug_dbg(cfg, "Failed to encode challenge");
       goto out;
     }
 
-    if (cfg->debug)
-      D(cfg->debug_file, "Challenge: %s", b64_challenge);
+    debug_dbg(cfg, "Challenge: %s", b64_challenge);
 
     n = snprintf(prompt, sizeof(prompt), "Challenge #%d:", i + 1);
     if (n <= 0 || (size_t) n >= sizeof(prompt)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to print challenge prompt");
+      debug_dbg(cfg, "Failed to print challenge prompt");
       goto out;
     }
 
@@ -1639,8 +1438,7 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
     n = snprintf(buf, sizeof(buf), "%s\n%s\n%s", b64_challenge, cfg->origin,
                  devices[i].keyHandle);
     if (n <= 0 || (size_t) n >= sizeof(buf)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to print fido2-assert input string");
+      debug_dbg(cfg, "Failed to print fido2-assert input string");
       goto out;
     }
 
@@ -1654,25 +1452,21 @@ int do_manual_authentication(const cfg_t *cfg, const device_t *devices,
            "Please pass the challenge(s) above to fido2-assert, and "
            "paste the results in the prompt below.");
 
-  retval = -1;
-
   for (i = 0; i < n_devs; ++i) {
     n = snprintf(prompt, sizeof(prompt), "Response #%d: ", i + 1);
     if (n <= 0 || (size_t) n >= sizeof(prompt)) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to print response prompt");
+      debug_dbg(cfg, "Failed to print response prompt");
       goto out;
     }
 
     if (!manual_get_assert(cfg, prompt, pamh, assert[i])) {
-      if (cfg->debug)
-        D(cfg->debug_file, "Failed to get assert %u", i);
+      debug_dbg(cfg, "Failed to get assert %u", i);
       goto out;
     }
 
     r = fido_assert_verify(assert[i], 0, pk[i].type, pk[i].ptr);
     if (r == FIDO_OK) {
-      retval = 1;
+      retval = PAM_SUCCESS;
       break;
     }
   }
@@ -1732,34 +1526,6 @@ char *converse(pam_handle_t *pamh, int echocode, const char *prompt) {
 
   return ret;
 }
-
-#if defined(PAM_DEBUG)
-void _debug(FILE *debug_file, const char *file, int line, const char *func,
-            const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-
-#if defined(WITH_FUZZING)
-  (void) debug_file;
-  snprintf(NULL, 0, DEBUG_STR, file, line, func);
-  vsnprintf(NULL, 0, fmt, ap);
-#elif defined(LOG_DEBUG)
-  if (debug_file == (FILE *) -1) {
-    syslog(LOG_AUTHPRIV | LOG_DEBUG, DEBUG_STR, file, line, func);
-    vsyslog(LOG_AUTHPRIV | LOG_DEBUG, fmt, ap);
-  } else {
-    fprintf(debug_file, DEBUG_STR, file, line, func);
-    vfprintf(debug_file, fmt, ap);
-    fprintf(debug_file, "\n");
-  }
-#else  /* Windows, MAC */
-  fprintf(debug_file, DEBUG_STR, file, line, func);
-  vfprintf(debug_file, fmt, ap);
-  fprintf(debug_file, "\n");
-#endif /* __linux__ */
-  va_end(ap);
-}
-#endif /* PAM_DEBUG */
 
 #ifndef RANDOM_DEV
 #define RANDOM_DEV "/dev/urandom"

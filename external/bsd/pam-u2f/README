@@ -1,0 +1,5 @@
+# $NetBSD: README,v 1.1 2025/01/15 15:30:47 christos Exp $
+- Run autoreconf -f -i and build to see what defines the compiler generates
+  in the Makefiles and copy them to Makefile.inc
+- To regen the catalog pages: 
+    export XML_CATALOG_FILES=/usr/pkg/share/xml/catalog 

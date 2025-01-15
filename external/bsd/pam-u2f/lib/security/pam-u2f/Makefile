@@ -1,13 +1,14 @@
-# $NetBSD: Makefile,v 1.6 2023/05/09 15:02:59 christos Exp $
+# $NetBSD: Makefile,v 1.7 2025/01/15 15:30:48 christos Exp $
 
 .include <bsd.own.mk>
+.include "${.PARSEDIR}/../../../Makefile.inc"
 .PATH: ${NETBSDSRCDIR}/external/bsd/pam-u2f/dist
 
 CPPFLAGS+= -DHAVE_SECURITY_PAM_APPL_H #-DHAVE_SECURITY_PAM_MODULES_H
 #CPPFLAGS+= -DPAM_DEBUG -DDEBUG_PAM
 
 LIB=	pam_u2f
-SRCS=	pam-u2f.c drop_privs.c util.c b64.c explicit_bzero.c
+SRCS=	pam-u2f.c util.c b64.c explicit_bzero.c expand.c debug.c
 MAN=	pam_u2f.8
 
 COPTS.util.c += -Wno-error=stack-protector -Wno-error=deprecated-declarations

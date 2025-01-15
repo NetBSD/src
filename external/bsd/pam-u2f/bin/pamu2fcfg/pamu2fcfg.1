@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pamu2fcfg
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
-.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 11/01/2020
+.\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
+.\"      Date: Version 1.3.1
 .\"    Manual: PAM U2F Configuration Tool
 .\"    Source: pamu2fcfg
 .\"  Language: English
 .\"
-.TH "PAMU2FCFG" "1" "11/01/2020" "pamu2fcfg" "PAM U2F Configuration Tool"
+.TH "PAMU2FCFG" "1" "Version 1\&.3\&.1" "pamu2fcfg" "PAM U2F Configuration Tool"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,7 +34,7 @@ pamu2fcfg \- Configuration tool for the U2F PAM module\&.
 \fBpamu2fcfg\fR [\fIOPTION\fR]\&...
 .SH "DESCRIPTION"
 .sp
-Perform a U2F registration procedure using a connected U2F token and output a configuration line that can be used with the U2F PAM module\&.
+Perform a FIDO2/U2F registration procedure using a connected authenticator and output a configuration line that can be used with the U2F PAM module\&.
 .SH "OPTIONS"
 .PP
 \fB\-d\fR, \fB\-\-debug\fR
@@ -49,13 +49,13 @@ Print help and exit
 .PP
 \fB\-o\fR, \fB\-\-origin\fR=\fISTRING\fR
 .RS 4
-Origin URL to use during registration\&. Defaults to pam://hostname
+Set the FIDO2 relying party ID to use during registration\&. Defaults to pam://hostname\&. Before pamu2fcfg v1\&.1\&.0, this set the U2F origin URL\&.
 .RE
 .PP
 \fB\-i\fR, \fB\-\-appid\fR=\fISTRING\fR
 .RS 4
-Application ID to use during registration\&. Defaults to
-\fBorigin\fR
+Set the FIDO2 relying party name to use during registration\&. Defaults to
+\fBorigin\fR\&. Before pamu2fcfg v1\&.1\&.0, this set the U2F application ID\&.
 .RE
 .PP
 \fB\-r\fR, \fB\-\-resident\fR
@@ -65,7 +65,12 @@ Generate a resident credential\&. Defaults to off\&.
 .PP
 \fB\-t\fR, \fB\-\-type\fR=\fISTRING\fR
 .RS 4
-COSE type to use during registration (ES256 or RS256)\&. Defaults to ES256\&.
+COSE type to use during registration (ES256, EDDSA, or RS256)\&. Defaults to ES256\&.
+.RE
+.PP
+\fB\-P\fR, \fB\-\-no\-user\-presence\fR
+.RS 4
+Allow using the credential without ensuring the user\(cqs presence\&. Defaults to off\&.
 .RE
 .PP
 \fB\-N\fR, \fB\-\-pin\-verification\fR
@@ -79,25 +84,23 @@ Require user verification during authentication\&. Defaults to off\&.
 .RE
 .sp
 \fB\-\-version\fR: \fBPrint version and exit\fR
-.sp
-Group: user (mutually exclusive)
 .PP
 \fB\-u\fR, \fB\-\-username\fR=\fISTRING\fR
 .RS 4
-The name of the user registering the device\&. Defaults to the current user name
+The name of the user registering the device\&. Defaults to the current user name\&.
 .RE
 .PP
 \fB\-n\fR, \fB\-\-nouser\fR
 .RS 4
-Print only registration information (keyHandle and public key)\&. Useful for appending
+Print only registration information (key handle, public key, and options)\&. Useful for appending\&.
 .RE
 .SH "BUGS"
 .sp
-Report pamu2fcfg bugs in the issue tracker: \m[blue]\fBhttps://github\&.com/Yubico/pam\-u2f/issues\fR\m[]
+Report pamu2fcfg bugs in the issue tracker: https://github\&.com/Yubico/pam\-u2f/issues
 .SH "SEE ALSO"
 .sp
-\fBpam_u2f\fR(8), \fBpam\fR(7)
+\fBpam_u2f\fR(8), \fBpam\fR(7), \fBfido2\-token\fR(1)
 .sp
-The pam\-u2f home page: \m[blue]\fBhttps://developers\&.yubico\&.com/pam\-u2f/\fR\m[]
+The pam\-u2f home page: https://developers\&.yubico\&.com/pam\-u2f/
 .sp
-YubiKeys can be obtained from Yubico: \m[blue]\fBhttps://www\&.yubico\&.com/\fR\m[]
+YubiKeys can be obtained from Yubico: https://www\&.yubico\&.com/

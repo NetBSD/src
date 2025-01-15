@@ -54,7 +54,7 @@ char *expand_variables(const char *str, const char *user) {
           buf_write(&head, &size, value, strlen(value)) != 0) {
         goto fail;
       }
-    } else if (buf_write_byte(&head, &size, *str) != 0) {
+    } else if (buf_write_byte(&head, &size, (uint8_t)*str) != 0) {
       goto fail;
     }
   }
