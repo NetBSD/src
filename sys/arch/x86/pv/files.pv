@@ -2,4 +2,7 @@ define	pvbus {}
 
 device	pv {}
 attach	pv at pvbus
-file	arch/x86/pv/pvbus.c			pvbus	needs-flag
+file	arch/x86/pv/pvbus.c				pvbus	needs-flag
+
+attach	virtio at pv with mmio_cmdline:			virtio_mmio
+file	dev/virtio/arch/x86/virtio_mmio_cmdline.c	mmio_cmdline

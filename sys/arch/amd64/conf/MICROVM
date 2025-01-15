@@ -1,0 +1,143 @@
+# $NetBSD: MICROVM,v 1.1 2025/01/15 13:16:22 imil Exp $
+#
+# MICROVM kernel configuration, for use with Qemu microvm machine type
+# or Firecracker.
+# Stripped-down configuration with no PCI, use VirtIO over MMIO virtual
+# bus instead. ACPI is disabled as Firecracker doesn't support it,
+# use legacy MP tables instead.
+#
+# Exemple qemu usage on a Linux host to boot a NetBSD guest:
+#
+# qemu-system-x86_64							\
+# 	-M microvm,x-option-roms=off,rtc=on,acpi=off,pic=off,accel=kvm	\
+# 	-m 256 -cpu host -kernel ${KERNEL} 				\
+# 	-append "root=ld0a console=com rw -z"				\
+# 	-display none -device virtio-blk-device,drive=hd0		\
+# 	-drive file=${IMG},format=raw,id=hd0				\
+# 	-device virtio-net-device,netdev=net0 				\
+# 	-netdev user,id=net0,ipv6=off,hostfwd=::2200-:22		\
+# 	-global virtio-mmio.force-legacy=false -serial stdio
+
+machine amd64 x86 xen
+include         "conf/std"      # MI standard options
+include         "arch/xen/conf/std.xenversion"
+
+options         CPU_IN_CKSUM
+options         EXEC_ELF64      # exec ELF binaries
+options         EXEC_SCRIPT     # exec #! scripts
+options         MTRR
+options         MULTIPROCESSOR
+
+options         CHILD_MAX=1024  # 160 is too few
+options         OPEN_MAX=1024   # 128 is too few
+
+mainbus0 at root
+cpu* at mainbus?
+ioapic* at mainbus? apid ?
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+maxusers	8		# estimated number of users
+
+options 	INSECURE	# disable kernel security levels - X needs this
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Xen PV support for PVH and HVM guests, needed for PVH boot
+options 	XENPVHVM
+options 	XEN
+hypervisor*	at mainbus?		# Xen hypervisor
+xenbus*	 	at hypervisor?		# Xen virtual bus
+xencons*	at hypervisor?		# Xen virtual console
+
+# Include NetBSD 10 compatibility
+options		COMPAT_100
+#
+# Because gcc omits the frame pointer for any -O level, the line below
+# is needed to make backtraces in DDB work.
+#
+makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
+
+# File systems
+#include "conf/filesystems.config"
+file-system FFS
+file-system EXT2FS
+file-system KERNFS
+file-system MFS
+file-system TMPFS
+file-system PTYFS
+file-system MSDOSFS
+file-system PROCFS
+
+options		DKWEDGE_AUTODISCOVER
+options		DKWEDGE_METHOD_GPT
+# File system options
+# ffs
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+#
+# Device configuration
+#
+
+# ACPI will be used if present. If not it will fall back to MPBIOS
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+# Provide bug-for-bug compatibility with Linux in MP Table searching
+# and parsing.  Firecracker relies on these bugs.
+options		MPTABLE_LINUX_BUG_COMPAT
+
+#pci*	at mainbus? bus ?
+#acpi0	at mainbus0
+
+# ISA bus support
+isa0	at mainbus?
+
+# ISA serial interfaces
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+
+# Virtual bus for non-PCI devices
+pv* at pvbus?
+
+## Virtio devices
+# Use MMIO by default
+virtio* at pv?
+#virtio* at acpi?
+#virtio* at pci? dev ? function ?	# Virtio PCI device
+#viomb*	at virtio?			# Virtio memory balloon device
+
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+viocon* at virtio?
+
+vio9p*	at virtio?			# Virtio 9P device
+#vioscsi* at virtio?
+#scsibus* at vioscsi?
+
+pseudo-device	md			# memory disk device (ramdisk)
+#options 	MEMORY_DISK_HOOKS	# enable md specific hooks
+#options 	MEMORY_DISK_DYNAMIC	# enable dynamic resizing
+#
+pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+## network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	loop			# network loopback
+
+## miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+file-system	PUFFS
+pseudo-device	putter
