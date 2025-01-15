@@ -8,18 +8,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
-        cc: [clang-10]
+        os: [ubuntu-24.04]
+        cc: [clang-18]
         sanitizer: [asan]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Dependencies
       env:
         CC: ${{ matrix.cc }}
       run: |
         sudo apt -q update
         sudo apt install -q -y autoconf automake libtool pkg-config \
-          libpam-dev gengetopt libz-dev libudev-dev
+          libpam-dev libz-dev libudev-dev libpcsclite-dev
           sudo apt install -q -y ${CC%-*}-tools-${CC#clang-}
     - name: Fuzz
       env:

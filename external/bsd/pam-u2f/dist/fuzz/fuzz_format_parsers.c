@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2020 Yubico AB - See COPYING
+ * Copyright (C) 2020-2022 Yubico AB - See COPYING
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "fuzz/fuzz.h"
-#include "util.c"
-#include "b64.c"
+#include "util.h"
 
 static void cleanup(device_t *devs, unsigned int n_devs) {
   for (unsigned int i = 0; i < n_devs; i++) {
@@ -30,17 +30,18 @@ static void cleanup(device_t *devs, unsigned int n_devs) {
 
 int LLVMFuzzerTestOneInput(const uint8_t *, size_t);
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-  char buf[DEVSIZE * DEV_MAX_SIZE]; /* DEVSIZE * cfg.max_size */
   device_t devs[12] = {0};
   unsigned int n_devs = 12;
   FILE *fp = NULL;
   size_t fp_len = 0;
   size_t offset = 0;
-  char username[256] = {0};
+  char username[256] = "user";
   size_t username_len = 0;
-  uint8_t ssh_format = 1;
   cfg_t cfg = {0};
+
   cfg.max_devs = DEV_MAX_SIZE;
+  cfg.auth_file = "/path/to/authfile"; /* XXX: any path works, file mocked */
+  cfg.sshformat = 1;
 
   /* first 6 byte decides which parser we should call, if
    * we want to run with debug and also sets the initial seed */
@@ -59,7 +60,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
   /* choose which format parser to run, even == native, odd == ssh */
   if (data[offset++] % 2) {
-    ssh_format = 0;
+    cfg.sshformat = 0;
     /* native format, get a random username first */
     if (size < 7) {
       return -1;
@@ -68,6 +69,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (username_len > (size - offset)) {
       username_len = (size - offset);
     }
+    memset(username, 0, sizeof(username));
     memcpy(username, &data[offset], username_len);
     offset += username_len;
   }
@@ -83,14 +85,12 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
   }
   (void) fseek(fp, 0L, SEEK_SET);
 
-  if (ssh_format) {
-    parse_ssh_format(&cfg, buf, sizeof(buf), fp, size, devs, &n_devs);
-  } else {
-    parse_native_format(&cfg, username, buf, fp, devs, &n_devs);
-  }
+  set_user(username);
+  set_authfile(fileno(fp));
+
+  get_devices_from_authfile(&cfg, username, devs, &n_devs);
 
   cleanup(devs, n_devs);
-
   fclose(fp);
 
   return 0;

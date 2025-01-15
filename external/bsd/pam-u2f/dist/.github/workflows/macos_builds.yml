@@ -8,12 +8,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-10.15 ]
+        os: [ macos-13, macos-14, macos-15 ]
         cc: [ clang ]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: dependencies
-      run: brew install check cmake gengetopt help2man mandoc openssl@1.1 pkg-config automake
+      run: brew install check cmake help2man libfido2 mandoc libtool automake
     - name: build
       env:
         CC: ${{ matrix.cc }}

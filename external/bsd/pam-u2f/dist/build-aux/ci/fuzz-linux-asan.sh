@@ -3,11 +3,11 @@ set -euxo pipefail
 
 CORPUS_URL="https://storage.googleapis.com/yubico-pam-u2f/corpus.tgz"
 
-LIBCBOR_URL="git://github.com/pjk/libcbor"
-LIBCBOR_TAG="v0.8.0"
+LIBCBOR_URL="https://github.com/pjk/libcbor"
+LIBCBOR_TAG="v0.11.0"
 LIBCBOR_CFLAGS="-fsanitize=address,alignment,bounds"
-LIBFIDO2_URL="git://github.com/Yubico/libfido2"
-LIBFIDO2_TAG="1.7.0"
+LIBFIDO2_URL="https://github.com/Yubico/libfido2"
+LIBFIDO2_TAG="1.15.0"
 LIBFIDO2_CFLAGS="-fsanitize=address,alignment,bounds"
 
 COMMON_CFLAGS="-g2 -fno-omit-frame-pointer"
@@ -48,7 +48,8 @@ mkdir build
 cmake -B build \
 	-DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_PREFIX="${FAKEROOT}" \
 	-DCMAKE_C_FLAGS_DEBUG="${LIBFIDO2_CFLAGS} ${COMMON_CFLAGS}" \
-	-DCMAKE_BUILD_TYPE=Debug -DFUZZ=1 -DLIBFUZZER=0 -DBUILD_EXAMPLES=0 \
+	-DFUZZ_LDFLAGS="-fsanitize=fuzzer" \
+	-DCMAKE_BUILD_TYPE=Debug -DFUZZ=1 -DBUILD_EXAMPLES=0 \
 	-DBUILD_TOOLS=0 -DBUILD_MANPAGES=0
 make VERBOSE=1 -j $(nproc) -C build all install
 popd &>/dev/null # libfido2

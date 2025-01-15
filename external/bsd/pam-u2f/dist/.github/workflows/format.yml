@@ -4,26 +4,28 @@ on: [push, pull_request]
 
 jobs:
   format:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-24.04
+    env:
+      CLANG_FORMAT_VERSION: -15
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Dependencies
       run: |
         sudo apt -q update
-        sudo apt install -q -y clang-format-6.0
+        sudo apt install -q -y "clang-format${CLANG_FORMAT_VERSION}"
     - name: Check
       run: |
         if [[ -n "${GITHUB_BASE_REF}" ]]; then
           # pull request, check head branch against base branch
           GITHUB_BEFORE="$(git ls-remote origin "${GITHUB_BASE_REF}" | cut -f1)"
-        elif [[ "${GITHUB_REF}" != "refs/heads/master" ]]; then
-          # workflow triggered from some branch other than master, assume that
-          # the branch will eventually be merged into master
-          GITHUB_BEFORE="$(git ls-remote origin refs/heads/master | cut -f1)"
+        elif [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+          # workflow triggered from some branch other than main, assume that
+          # the branch will eventually be merged into main
+          GITHUB_BEFORE="$(git ls-remote origin refs/heads/main | cut -f1)"
         else
-          # master branch, compare against previous state
+          # main branch, compare against previous state
           # (jq comes preinstalled on github runners)
           GITHUB_BEFORE="$(jq -r '.before' "${GITHUB_EVENT_PATH}")"
         fi

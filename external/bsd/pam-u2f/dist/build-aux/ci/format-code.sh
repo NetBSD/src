@@ -5,8 +5,8 @@
 # Script to determine if source code in a diff is properly formatted. On
 # GitHub, a commit range is provided which corresponds to the commit range of
 #   1) commits associated with a pull request, or
-#   2) commits on a branch which are not also part of master, or
-#   3) commits since last push to master.
+#   2) commits on a branch which are not also part of main, or
+#   3) commits since last push to main.
 #
 # Exits with non 0 exit code if formatting is needed.
 #
@@ -22,7 +22,7 @@ fi
 >&2 echo "Commit range $COMMIT_RANGE"
 
 FILES_TO_CHECK="$(git diff --name-only "$COMMIT_RANGE" | grep -e '\.c$' -e '\.h$' || true)"
-CFV="${CLANG_FORMAT_VERSION:--6.0}"
+CFV="${CLANG_FORMAT_VERSION:-10}"
 
 if [ -z "${FILES_TO_CHECK}" ]; then
     >&2 echo "No source code to check for formatting"

@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     container: alpine:latest
     strategy:
       fail-fast: false
@@ -14,36 +14,14 @@ jobs:
     - name: dependencies
       run: |
         apk -q update
-        apk add build-base clang clang-analyzer cmake coreutils eudev-dev
-        apk add git linux-headers openssl-dev zlib-dev
-        apk add autoconf automake libtool linux-pam-dev gengetopt
+        apk add autoconf automake bash build-base clang clang-analyzer git \
+          libfido2-dev libtool linux-pam-dev openssl-dev pkgconfig
     - name: checkout pam-u2f
-      uses: actions/checkout@v2
-    - name: checkout libcbor
-      uses: actions/checkout@v2
-      with:
-        repository: PJK/libcbor
-        path: libcbor
-        ref: v0.8.0
-    - name: checkout libfido2
-      uses: actions/checkout@v2
-      with:
-        repository: Yubico/libfido2
-        path: libfido2
-        ref: 1.7.0
-    - name: install libcbor
-      run: |
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib .
-        make -j"$(nproc)" && make install
-      working-directory: libcbor
-    - name: install libfido2
-      run: |
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib .
-        make -j"$(nproc)" && make install
-      working-directory: libfido2
+      uses: actions/checkout@v4
+    - name: mark workspace as safe
+      run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
     - name: build
       env:
         CC: ${{ matrix.cc }}
-        USER: root
       run: |
-        /bin/bash -eux build-aux/ci/build-linux-${CC%-*}.sh
+        ./build-aux/ci/build-linux-${CC%-*}.sh

@@ -1,30 +1,13 @@
 #!/usr/bin/env bash
 set -ex
 
-BUILDROOT="$(git rev-parse --show-toplevel)"
+# Link to the same OpenSSL version as libfido2.
+OPENSSL="$(brew deps libfido2 | grep openssl)"
+LIBFIDO2_PKGCONF="$(brew --prefix libfido2)/lib/pkgconfig"
+OPENSSL_PKGCONF="$(brew --prefix "${OPENSSL}")/lib/pkgconfig"
+export PKG_CONFIG_PATH="${LIBFIDO2_PKGCONF}:${OPENSSL_PKGCONF}"
 
-pushd "/tmp" &>/dev/null
-  # Build and install libcbor
-  git clone git://github.com/pjk/libcbor
-  pushd "/tmp/libcbor" &>/dev/null
-    git checkout v0.5.0
-    cmake -Bbuild -H.
-    cmake --build build -- --jobs=2 VERBOSE=1
-    sudo make -j $(sysctl -n hw.logicalcpu) -C build install
-  popd &>/dev/null
-
-  # Build and install libfido2
-  export PKG_CONFIG_PATH=/usr/local/opt/openssl@1.1/lib/pkgconfig
-  git clone git://github.com/Yubico/libfido2
-  pushd "/tmp/libfido2" &>/dev/null
-    cmake -Bbuild -H.
-    cmake --build build -- --jobs=2 VERBOSE=1
-    sudo make -j $(sysctl -n hw.logicalcpu) -C build install
-  popd &>/dev/null
-popd &>/dev/null
-
-pushd "$BUILDROOT" &>/dev/null
-  ./autogen.sh
-  ./configure --disable-silent-rules --disable-man
-  make -j $(sysctl -n hw.logicalcpu)
-popd &>/dev/null
+./autogen.sh
+./configure --disable-silent-rules --disable-man
+make -j $(sysctl -n hw.logicalcpu)
+make check

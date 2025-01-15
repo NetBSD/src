@@ -48,6 +48,11 @@ $XDG_CONFIG_HOME/Yubico/u2f_keys. If $XDG_CONFIG_HOME is not set,
 $HOME/.config/Yubico/u2f_keys is used. The authfile format is
 <username>:<KeyHandle1>,<UserKey1>,<CoseType1>,<Options1>:<KeyHandle2>,<UserKey2>,<CoseType2>,<Options2>:...
 
+*expand*::
+Enables variable expansion within the authfile path: `%u` is expanded to the
+local user name (`PAM_USER`) and `%%` is expanded to `%`. Unknown expansion
+sequences result in an authentication error. See also `openasuser`.
+
 *authpending_file*=_file_::
 Set the location of the file that is used for touch request
 notifications. This file will be opened when pam-u2f starts waiting
@@ -67,17 +72,17 @@ Setuid to the authenticating user when opening the authfile. Useful
 when the user's home is stored on an NFS volume mounted with the
 root_squash option (which maps root to nobody which will not be able
 to read the file). Note that after release 1.0.8 this is done by
-default when no global authfile or XDG_CONFIG_HOME environment
-variable has been set.
+default when no global authfile (path is absolute) or XDG_CONFIG_HOME
+environment variable has been set.
 
 *alwaysok*::
 Set to enable all authentication attempts to succeed (aka presentation
 mode).
 
 *max_devices*=_n_devices_::
-Maximum number of devices allowed per user (default is 24). Devices
-specified in the authentication file that exceed this value will be
-ignored.
+Maximum number of devices (credentials) allowed per user (default is 24).
+Devices specified in the authorization mapping file that exceed this value
+will be ignored.
 
 *interactive*::
 Set to prompt a message and wait before testing the presence of a U2F
@@ -108,18 +113,20 @@ authentication. See *NOTES* below.
 
 *userpresence*=_int_::
 If 1, require user presence during authentication. If 0, do not
-request user presence during authentication. Otherwise, fallback to
+request user presence during authentication. If omitted, fallback to
 the authenticator's default behaviour.
 
 *userverification*=_int_::
-If 1, require user verification during authentication. If 0, do not
-request user verification during authentication. Otherwise, fallback
-to the authenticator's default behaviour.
+If 1, require user verification during authentication (e.g. biometrics).
+If 0, do not request user verification during authentication. If omitted,
+fallback to the authenticator's default behaviour. If enabled, an
+authenticator with support for FIDO2 user verification is required.
 
 *pinverification*=_int_::
 If 1, require PIN verification during authentication. If 0, do not
-request PIN verification during authentication. Otherwise, fallback to
-the authenticator's default behaviour.
+request PIN verification during authentication. If omitted, fallback to
+the authenticator's default behaviour. If enabled, an authenticator with
+support for a FIDO2 PIN is required.
 
 *sshformat*::
 Use credentials produced by versions of OpenSSH that have support for
@@ -129,15 +136,26 @@ as SSH.
 
 == EXAMPLES
 
-auth sufficient pam_u2f.so debug origin=pam://$HOSTNAME appid=pam://$HOSTNAME
+Second factor authentication deferring user verification configuration to the
+authorization mapping file.
 
-auth required pam_u2f.so origin=http://example.com appid=http://example.com authfile=/etc/yubikey_mappings
+  auth required pam_u2f.so authfile=/etc/u2f_mappings cue
+
+Passwordless authentication enforcing PIN verification.
+
+  auth sufficient pam_u2f.so authfile=/etc/u2f_mappings cue pinverification=1 userverification=0
+
+Passwordless authentication using built-in UV (e.g. biometrics) with a fallback
+to PIN.
+
+  auth sufficient pam_u2f.so authfile=/etc/u2f_mappings cue pinverification=0 userverification=1
+  auth sufficient pam_u2f.so authfile=/etc/u2f_mappings cue pinverification=1 userverification=0
 
 == CAVEATS
-By default the mapping file inside a home directory will be opened as
-the target user, whereas the central file will be opened as "root". If
-the "XDG_CONFIG_HOME" variable is set, privileges will not be dropped
-unless the "openasuser" configuration setting is set.
+By default, relative paths to the authfile will be opened as the
+target user, whereas absolute paths will be opened as "root". If the
+"XDG_CONFIG_HOME" variable is set, privileges will not be dropped unless
+the "openasuser" configuration setting is set.
 
 Using pam-u2f to secure the login to a computer while storing the
 mapping file in an encrypted home directory, will result in the
