@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.9 2024/10/13 18:21:20 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.10 2025/01/17 11:54:50 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.9 2024/10/13 18:21:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.10 2025/01/17 11:54:50 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.9 2024/10/13 18:21:20 jmcneill Exp $
 #define DPRINTF(s)	/**/
 #endif
 
-static uint32_t sdmmc_cisptr(struct sdmmc_function *);
 static void decode_funce_common(struct sdmmc_function *, struct sdmmc_cis *,
 				int, uint32_t);
 static void decode_funce_function(struct sdmmc_function *, struct sdmmc_cis *,
@@ -49,7 +48,7 @@ static void decode_funce_function(struct sdmmc_function *, struct sdmmc_cis *,
 static void decode_vers_1(struct sdmmc_function *, struct sdmmc_cis *, int,
 			  uint32_t);
 
-static uint32_t
+uint32_t
 sdmmc_cisptr(struct sdmmc_function *sf)
 {
 	uint32_t cisptr = 0;
@@ -108,7 +107,6 @@ decode_funce_lan_nid(struct sdmmc_function *sf, struct sdmmc_cis *cis,
 {
 	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
 	device_t dev = sf->sc->sc_dev;
-	uint8_t mac[6] __unused;
 	int i;
 
 	if (tpllen != 8) {
@@ -117,13 +115,19 @@ decode_funce_lan_nid(struct sdmmc_function *sf, struct sdmmc_cis *cis,
 		return;
 	}
 
+	if (sdmmc_io_read_1(sf0, reg++) != 6) {
+		aprint_error_dev(dev,
+		    "CISTPL_FUNCE(lan_nid) invalid\n");
+	}
+
 	for (i = 0; i < 6; i++) {
-		mac[i] = sdmmc_io_read_1(sf0, reg++);
+		cis->lan_nid[i] = sdmmc_io_read_1(sf0, reg++);
 	}
 
 	DPRINTF(
 	    ("CISTPL_FUNCE: LAN_NID=%02x:%02x:%02x:%02x:%02x:%02x\n",
-	    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]));
+	    cis->lan_nid[0], cis->lan_nid[1], cis->lan_nid[2],
+	    cis->lan_nid[3], cis->lan_nid[4], cis->lan_nid[5]));
 }
 
 static void
