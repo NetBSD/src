@@ -1,0 +1,855 @@
+<abi-corpus architecture='elf-amd-x86_64' soname='liburcu-memb.so.8'>
+<!--
+SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+
+SPDX-License-Identifier: CC0-1.0
+-->
+  <elf-needed>
+    <dependency name='libpthread.so.0'/>
+    <dependency name='libc.so.6'/>
+    <dependency name='ld-linux-x86-64.so.2'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <!-- _fini -->
+    <elf-symbol name='_fini' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- _init -->
+    <elf-symbol name='_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_async -->
+    <elf-symbol name='compat_futex_async' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_noasync -->
+    <elf-symbol name='compat_futex_noasync' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rcu_cmpxchg_pointer_sym -->
+    <elf-symbol name='rcu_cmpxchg_pointer_sym' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rcu_dereference_sym -->
+    <elf-symbol name='rcu_dereference_sym' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rcu_set_pointer_sym -->
+    <elf-symbol name='rcu_set_pointer_sym' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rcu_xchg_pointer_sym -->
+    <elf-symbol name='rcu_xchg_pointer_sym' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_barrier -->
+    <elf-symbol name='urcu_memb_barrier' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_call_rcu -->
+    <elf-symbol name='urcu_memb_call_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_call_rcu_after_fork_child -->
+    <elf-symbol name='urcu_memb_call_rcu_after_fork_child' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_call_rcu_after_fork_parent -->
+    <elf-symbol name='urcu_memb_call_rcu_after_fork_parent' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_call_rcu_before_fork -->
+    <elf-symbol name='urcu_memb_call_rcu_before_fork' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_call_rcu_data_free -->
+    <elf-symbol name='urcu_memb_call_rcu_data_free' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_create_all_cpu_call_rcu_data -->
+    <elf-symbol name='urcu_memb_create_all_cpu_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_create_call_rcu_data -->
+    <elf-symbol name='urcu_memb_create_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_barrier -->
+    <elf-symbol name='urcu_memb_defer_barrier' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_barrier_thread -->
+    <elf-symbol name='urcu_memb_defer_barrier_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_exit -->
+    <elf-symbol name='urcu_memb_defer_exit' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_rcu -->
+    <elf-symbol name='urcu_memb_defer_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_register_thread -->
+    <elf-symbol name='urcu_memb_defer_register_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_defer_unregister_thread -->
+    <elf-symbol name='urcu_memb_defer_unregister_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_free_all_cpu_call_rcu_data -->
+    <elf-symbol name='urcu_memb_free_all_cpu_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_get_call_rcu_data -->
+    <elf-symbol name='urcu_memb_get_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_get_call_rcu_thread -->
+    <elf-symbol name='urcu_memb_get_call_rcu_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_get_cpu_call_rcu_data -->
+    <elf-symbol name='urcu_memb_get_cpu_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_get_default_call_rcu_data -->
+    <elf-symbol name='urcu_memb_get_default_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_get_thread_call_rcu_data -->
+    <elf-symbol name='urcu_memb_get_thread_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_init -->
+    <elf-symbol name='urcu_memb_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_read_lock -->
+    <elf-symbol name='urcu_memb_read_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_read_ongoing -->
+    <elf-symbol name='urcu_memb_read_ongoing' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_read_unlock -->
+    <elf-symbol name='urcu_memb_read_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_register_rculfhash_atfork -->
+    <elf-symbol name='urcu_memb_register_rculfhash_atfork' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_register_thread -->
+    <elf-symbol name='urcu_memb_register_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_set_cpu_call_rcu_data -->
+    <elf-symbol name='urcu_memb_set_cpu_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_set_thread_call_rcu_data -->
+    <elf-symbol name='urcu_memb_set_thread_call_rcu_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_synchronize_rcu -->
+    <elf-symbol name='urcu_memb_synchronize_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_unregister_rculfhash_atfork -->
+    <elf-symbol name='urcu_memb_unregister_rculfhash_atfork' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_unregister_thread -->
+    <elf-symbol name='urcu_memb_unregister_thread' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <elf-variable-symbols>
+    <!-- __urcu_compat_futex_cond -->
+    <elf-symbol name='__urcu_compat_futex_cond' size='48' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __urcu_compat_futex_lock -->
+    <elf-symbol name='__urcu_compat_futex_lock' size='40' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_flavor -->
+    <elf-symbol name='urcu_memb_flavor' size='112' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_gp -->
+    <elf-symbol name='urcu_memb_gp' size='128' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_has_sys_membarrier -->
+    <elf-symbol name='urcu_memb_has_sys_membarrier' size='4' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- urcu_memb_reader -->
+    <elf-symbol name='urcu_memb_reader' size='256' type='tls-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-variable-symbols>
+  <abi-instr version='1.0' address-size='64' path='urcu.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- int -->
+    <type-decl name='int' size-in-bits='32' id='type-id-1'/>
+    <!-- int urcu_memb_has_sys_membarrier -->
+    <var-decl name='urcu_memb_has_sys_membarrier' type-id='type-id-1' mangled-name='urcu_memb_has_sys_membarrier' visibility='default' filepath='../include/urcu/static/urcu-memb.h' line='72' column='1' elf-symbol-id='urcu_memb_has_sys_membarrier'/>
+    <!-- struct urcu_gp -->
+    <class-decl name='urcu_gp' size-in-bits='1024' is-struct='yes' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='66' column='1' id='type-id-2'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned long int urcu_gp::ctr -->
+        <var-decl name='ctr' type-id='type-id-3' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='74' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- int32_t urcu_gp::futex -->
+        <var-decl name='futex' type-id='type-id-4' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='76' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- unsigned long int -->
+    <type-decl name='unsigned long int' size-in-bits='64' id='type-id-3'/>
+    <!-- typedef int __int32_t -->
+    <typedef-decl name='__int32_t' type-id='type-id-1' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='40' column='1' id='type-id-5'/>
+    <!-- typedef __int32_t int32_t -->
+    <typedef-decl name='int32_t' type-id='type-id-5' filepath='/usr/include/x86_64-linux-gnu/bits/stdint-intn.h' line='26' column='1' id='type-id-4'/>
+    <!-- urcu_gp urcu_memb_gp -->
+    <var-decl name='urcu_memb_gp' type-id='type-id-2' mangled-name='urcu_memb_gp' visibility='default' filepath='../include/urcu/static/urcu-memb.h' line='83' column='1' elf-symbol-id='urcu_memb_gp'/>
+    <!-- struct urcu_reader -->
+    <class-decl name='urcu_reader' size-in-bits='2048' is-struct='yes' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='79' column='1' id='type-id-6'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned long int urcu_reader::ctr -->
+        <var-decl name='ctr' type-id='type-id-3' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='81' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- char urcu_reader::need_mb -->
+        <var-decl name='need_mb' type-id='type-id-7' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='82' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1024'>
+        <!-- cds_list_head urcu_reader::node -->
+        <var-decl name='node' type-id='type-id-8' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1152'>
+        <!-- pthread_t urcu_reader::tid -->
+        <var-decl name='tid' type-id='type-id-9' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='85' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='31'>
+        <!-- unsigned int urcu_reader::registered -->
+        <var-decl name='registered' type-id='type-id-10' visibility='default' filepath='../include/urcu/static/urcu-common.h' line='87' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- char -->
+    <type-decl name='char' size-in-bits='8' id='type-id-7'/>
+    <!-- struct cds_list_head -->
+    <class-decl name='cds_list_head' size-in-bits='128' is-struct='yes' visibility='default' filepath='../include/urcu/list.h' line='37' column='1' id='type-id-8'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_list_head* cds_list_head::next -->
+        <var-decl name='next' type-id='type-id-11' visibility='default' filepath='../include/urcu/list.h' line='38' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- cds_list_head* cds_list_head::prev -->
+        <var-decl name='prev' type-id='type-id-11' visibility='default' filepath='../include/urcu/list.h' line='38' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_list_head* -->
+    <pointer-type-def type-id='type-id-8' size-in-bits='64' id='type-id-11'/>
+    <!-- typedef unsigned long int pthread_t -->
+    <typedef-decl name='pthread_t' type-id='type-id-3' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='27' column='1' id='type-id-9'/>
+    <!-- unsigned int -->
+    <type-decl name='unsigned int' size-in-bits='32' id='type-id-10'/>
+    <!-- urcu_reader urcu_memb_reader -->
+    <var-decl name='urcu_memb_reader' type-id='type-id-6' mangled-name='urcu_memb_reader' visibility='default' filepath='../include/urcu/static/urcu-memb.h' line='85' column='1' elf-symbol-id='urcu_memb_reader'/>
+    <!-- struct rcu_flavor_struct -->
+    <class-decl name='rcu_flavor_struct' size-in-bits='896' is-struct='yes' visibility='default' filepath='../include/urcu/flavor.h' line='42' column='1' id='type-id-12'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- void ()* rcu_flavor_struct::read_lock -->
+        <var-decl name='read_lock' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='43' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void ()* rcu_flavor_struct::read_unlock -->
+        <var-decl name='read_unlock' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='44' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- int ()* rcu_flavor_struct::read_ongoing -->
+        <var-decl name='read_ongoing' type-id='type-id-14' visibility='default' filepath='../include/urcu/flavor.h' line='45' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- void ()* rcu_flavor_struct::read_quiescent_state -->
+        <var-decl name='read_quiescent_state' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='46' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- void (rcu_head*, void (rcu_head*)*)* rcu_flavor_struct::update_call_rcu -->
+        <var-decl name='update_call_rcu' type-id='type-id-15' visibility='default' filepath='../include/urcu/flavor.h' line='47' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <!-- void ()* rcu_flavor_struct::update_synchronize_rcu -->
+        <var-decl name='update_synchronize_rcu' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='49' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <!-- void (void (void*)*, void*)* rcu_flavor_struct::update_defer_rcu -->
+        <var-decl name='update_defer_rcu' type-id='type-id-16' visibility='default' filepath='../include/urcu/flavor.h' line='50' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <!-- void ()* rcu_flavor_struct::thread_offline -->
+        <var-decl name='thread_offline' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <!-- void ()* rcu_flavor_struct::thread_online -->
+        <var-decl name='thread_online' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <!-- void ()* rcu_flavor_struct::register_thread -->
+        <var-decl name='register_thread' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='54' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <!-- void ()* rcu_flavor_struct::unregister_thread -->
+        <var-decl name='unregister_thread' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='55' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <!-- void ()* rcu_flavor_struct::barrier -->
+        <var-decl name='barrier' type-id='type-id-13' visibility='default' filepath='../include/urcu/flavor.h' line='57' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <!-- void (urcu_atfork*)* rcu_flavor_struct::register_rculfhash_atfork -->
+        <var-decl name='register_rculfhash_atfork' type-id='type-id-17' visibility='default' filepath='../include/urcu/flavor.h' line='59' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <!-- void (urcu_atfork*)* rcu_flavor_struct::unregister_rculfhash_atfork -->
+        <var-decl name='unregister_rculfhash_atfork' type-id='type-id-17' visibility='default' filepath='../include/urcu/flavor.h' line='60' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- void -->
+    <type-decl name='void' id='type-id-18'/>
+    <!-- void ()* -->
+    <pointer-type-def type-id='type-id-19' size-in-bits='64' id='type-id-13'/>
+    <!-- int ()* -->
+    <pointer-type-def type-id='type-id-20' size-in-bits='64' id='type-id-14'/>
+    <!-- struct rcu_head -->
+    <class-decl name='rcu_head' size-in-bits='128' is-struct='yes' visibility='default' filepath='../include/urcu/call-rcu.h' line='57' column='1' id='type-id-21'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node rcu_head::next -->
+        <var-decl name='next' type-id='type-id-22' visibility='default' filepath='../include/urcu/call-rcu.h' line='58' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void (rcu_head*)* rcu_head::func -->
+        <var-decl name='func' type-id='type-id-23' visibility='default' filepath='../include/urcu/call-rcu.h' line='59' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_wfcq_node -->
+    <class-decl name='cds_wfcq_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='58' column='1' id='type-id-22'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node* cds_wfcq_node::next -->
+        <var-decl name='next' type-id='type-id-24' visibility='default' filepath='../include/urcu/wfcqueue.h' line='59' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfcq_node* -->
+    <pointer-type-def type-id='type-id-22' size-in-bits='64' id='type-id-24'/>
+    <!-- rcu_head* -->
+    <pointer-type-def type-id='type-id-21' size-in-bits='64' id='type-id-25'/>
+    <!-- void (rcu_head*)* -->
+    <pointer-type-def type-id='type-id-26' size-in-bits='64' id='type-id-23'/>
+    <!-- void (rcu_head*, void (rcu_head*)*)* -->
+    <pointer-type-def type-id='type-id-27' size-in-bits='64' id='type-id-15'/>
+    <!-- void* -->
+    <pointer-type-def type-id='type-id-18' size-in-bits='64' id='type-id-28'/>
+    <!-- void (void*)* -->
+    <pointer-type-def type-id='type-id-29' size-in-bits='64' id='type-id-30'/>
+    <!-- void (void (void*)*, void*)* -->
+    <pointer-type-def type-id='type-id-31' size-in-bits='64' id='type-id-16'/>
+    <!-- struct urcu_atfork -->
+    <class-decl name='urcu_atfork' size-in-bits='256' is-struct='yes' visibility='default' filepath='../include/urcu/flavor.h' line='32' column='1' id='type-id-32'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- void (void*)* urcu_atfork::before_fork -->
+        <var-decl name='before_fork' type-id='type-id-30' visibility='default' filepath='../include/urcu/flavor.h' line='33' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void (void*)* urcu_atfork::after_fork_parent -->
+        <var-decl name='after_fork_parent' type-id='type-id-30' visibility='default' filepath='../include/urcu/flavor.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- void (void*)* urcu_atfork::after_fork_child -->
+        <var-decl name='after_fork_child' type-id='type-id-30' visibility='default' filepath='../include/urcu/flavor.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- void* urcu_atfork::priv -->
+        <var-decl name='priv' type-id='type-id-28' visibility='default' filepath='../include/urcu/flavor.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- urcu_atfork* -->
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' id='type-id-33'/>
+    <!-- void (urcu_atfork*)* -->
+    <pointer-type-def type-id='type-id-34' size-in-bits='64' id='type-id-17'/>
+    <!-- const rcu_flavor_struct -->
+    <qualified-type-def type-id='type-id-12' const='yes' id='type-id-35'/>
+    <!-- const rcu_flavor_struct urcu_memb_flavor -->
+    <var-decl name='urcu_memb_flavor' type-id='type-id-35' mangled-name='urcu_memb_flavor' visibility='default' filepath='../include/urcu/flavor.h' line='81' column='1' elf-symbol-id='urcu_memb_flavor'/>
+    <!-- void urcu_memb_defer_exit() -->
+    <function-decl name='urcu_memb_defer_exit' mangled-name='urcu_memb_defer_exit' filepath='src/urcu-defer-impl.h' line='467' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_exit'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_defer_unregister_thread() -->
+    <function-decl name='urcu_memb_defer_unregister_thread' mangled-name='urcu_memb_defer_unregister_thread' filepath='src/urcu-defer-impl.h' line='449' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_unregister_thread'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- int urcu_memb_defer_register_thread() -->
+    <function-decl name='urcu_memb_defer_register_thread' mangled-name='urcu_memb_defer_register_thread' filepath='src/urcu-defer-impl.h' line='427' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_register_thread'>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- void urcu_memb_defer_rcu(void (void*)*, void*) -->
+    <function-decl name='urcu_memb_defer_rcu' mangled-name='urcu_memb_defer_rcu' filepath='src/urcu-defer-impl.h' line='396' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_rcu'>
+      <!-- parameter of type 'void (void*)*' -->
+      <parameter type-id='type-id-30' name='fct' filepath='src/urcu-defer-impl.h' line='396' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='p' filepath='src/urcu-defer-impl.h' line='396' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_defer_barrier() -->
+    <function-decl name='urcu_memb_defer_barrier' mangled-name='urcu_memb_defer_barrier' filepath='src/urcu-defer-impl.h' line='282' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_barrier'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_defer_barrier_thread() -->
+    <function-decl name='urcu_memb_defer_barrier_thread' mangled-name='urcu_memb_defer_barrier_thread' filepath='src/urcu-defer-impl.h' line='262' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_defer_barrier_thread'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_unregister_rculfhash_atfork(urcu_atfork*) -->
+    <function-decl name='urcu_memb_unregister_rculfhash_atfork' mangled-name='urcu_memb_unregister_rculfhash_atfork' filepath='src/urcu-call-rcu-impl.h' line='1012' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_unregister_rculfhash_atfork'>
+      <!-- parameter of type 'urcu_atfork*' -->
+      <parameter type-id='type-id-33' name='atfork' filepath='src/urcu-call-rcu-impl.h' line='1012' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_register_rculfhash_atfork(urcu_atfork*) -->
+    <function-decl name='urcu_memb_register_rculfhash_atfork' mangled-name='urcu_memb_register_rculfhash_atfork' filepath='src/urcu-call-rcu-impl.h' line='1002' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_register_rculfhash_atfork'>
+      <!-- parameter of type 'urcu_atfork*' -->
+      <parameter type-id='type-id-33' name='atfork' filepath='src/urcu-call-rcu-impl.h' line='1012' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_call_rcu_after_fork_child() -->
+    <function-decl name='urcu_memb_call_rcu_after_fork_child' mangled-name='urcu_memb_call_rcu_after_fork_child' filepath='src/urcu-call-rcu-impl.h' line='960' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_call_rcu_after_fork_child'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_call_rcu_after_fork_parent() -->
+    <function-decl name='urcu_memb_call_rcu_after_fork_parent' mangled-name='urcu_memb_call_rcu_after_fork_parent' filepath='src/urcu-call-rcu-impl.h' line='938' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_call_rcu_after_fork_parent'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_call_rcu_before_fork() -->
+    <function-decl name='urcu_memb_call_rcu_before_fork' mangled-name='urcu_memb_call_rcu_before_fork' filepath='src/urcu-call-rcu-impl.h' line='911' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_call_rcu_before_fork'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_barrier() -->
+    <function-decl name='urcu_memb_barrier' mangled-name='urcu_memb_barrier' filepath='src/urcu-call-rcu-impl.h' line='840' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_barrier'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_free_all_cpu_call_rcu_data() -->
+    <function-decl name='urcu_memb_free_all_cpu_call_rcu_data' mangled-name='urcu_memb_free_all_cpu_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='777' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_free_all_cpu_call_rcu_data'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- struct call_rcu_data -->
+    <class-decl name='call_rcu_data' size-in-bits='1024' is-struct='yes' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='53' column='1' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_tail call_rcu_data::cbs_tail -->
+        <var-decl name='cbs_tail' type-id='type-id-37' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='61' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- cds_wfcq_head call_rcu_data::cbs_head -->
+        <var-decl name='cbs_head' type-id='type-id-38' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='62' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <!-- unsigned long int call_rcu_data::flags -->
+        <var-decl name='flags' type-id='type-id-3' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='63' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <!-- int32_t call_rcu_data::futex -->
+        <var-decl name='futex' type-id='type-id-4' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='64' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <!-- unsigned long int call_rcu_data::qlen -->
+        <var-decl name='qlen' type-id='type-id-3' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='65' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <!-- pthread_t call_rcu_data::tid -->
+        <var-decl name='tid' type-id='type-id-9' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='66' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <!-- int call_rcu_data::cpu_affinity -->
+        <var-decl name='cpu_affinity' type-id='type-id-1' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='67' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <!-- unsigned long int call_rcu_data::gp_count -->
+        <var-decl name='gp_count' type-id='type-id-3' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='68' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <!-- cds_list_head call_rcu_data::list -->
+        <var-decl name='list' type-id='type-id-8' visibility='default' filepath='src/urcu-call-rcu-impl.h' line='69' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_wfcq_tail -->
+    <class-decl name='cds_wfcq_tail' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='140' column='1' id='type-id-37'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node* cds_wfcq_tail::p -->
+        <var-decl name='p' type-id='type-id-24' visibility='default' filepath='../include/urcu/wfcqueue.h' line='141' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_wfcq_head -->
+    <class-decl name='cds_wfcq_head' size-in-bits='384' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='71' column='1' id='type-id-38'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node cds_wfcq_head::node -->
+        <var-decl name='node' type-id='type-id-22' visibility='default' filepath='../include/urcu/wfcqueue.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- pthread_mutex_t cds_wfcq_head::lock -->
+        <var-decl name='lock' type-id='type-id-39' visibility='default' filepath='../include/urcu/wfcqueue.h' line='73' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='320' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='67' column='1' id='type-id-40'>
+      <data-member access='private'>
+        <!-- __pthread_mutex_s __anonymous_union__::__data -->
+        <var-decl name='__data' type-id='type-id-41' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __anonymous_union__::__size[40] -->
+        <var-decl name='__size' type-id='type-id-42' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long int __anonymous_union__::__align -->
+        <var-decl name='__align' type-id='type-id-43' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_mutex_s -->
+    <class-decl name='__pthread_mutex_s' size-in-bits='320' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='118' column='1' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- int __pthread_mutex_s::__lock -->
+        <var-decl name='__lock' type-id='type-id-1' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __pthread_mutex_s::__count -->
+        <var-decl name='__count' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- int __pthread_mutex_s::__owner -->
+        <var-decl name='__owner' type-id='type-id-1' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <!-- unsigned int __pthread_mutex_s::__nusers -->
+        <var-decl name='__nusers' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='124' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- int __pthread_mutex_s::__kind -->
+        <var-decl name='__kind' type-id='type-id-1' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <!-- short int __pthread_mutex_s::__spins -->
+        <var-decl name='__spins' type-id='type-id-44' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <!-- short int __pthread_mutex_s::__elision -->
+        <var-decl name='__elision' type-id='type-id-44' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- __pthread_list_t __pthread_mutex_s::__list -->
+        <var-decl name='__list' type-id='type-id-45' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='155' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- short int -->
+    <type-decl name='short int' size-in-bits='16' id='type-id-44'/>
+    <!-- struct __pthread_internal_list -->
+    <class-decl name='__pthread_internal_list' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='82' column='1' id='type-id-46'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__prev -->
+        <var-decl name='__prev' type-id='type-id-47' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__next -->
+        <var-decl name='__next' type-id='type-id-47' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='85' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- __pthread_internal_list* -->
+    <pointer-type-def type-id='type-id-46' size-in-bits='64' id='type-id-47'/>
+    <!-- typedef __pthread_internal_list __pthread_list_t -->
+    <typedef-decl name='__pthread_list_t' type-id='type-id-46' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='86' column='1' id='type-id-45'/>
+
+    <!-- char[40] -->
+    <array-type-def dimensions='1' type-id='type-id-7' size-in-bits='320' id='type-id-42'>
+      <!-- <anonymous range>[40] -->
+      <subrange length='40' type-id='type-id-3' id='type-id-48'/>
+
+    </array-type-def>
+    <!-- long int -->
+    <type-decl name='long int' size-in-bits='64' id='type-id-43'/>
+    <!-- typedef __anonymous_union__ pthread_mutex_t -->
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-40' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='72' column='1' id='type-id-39'/>
+    <!-- call_rcu_data* -->
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' id='type-id-49'/>
+    <!-- void urcu_memb_call_rcu_data_free(call_rcu_data*) -->
+    <function-decl name='urcu_memb_call_rcu_data_free' mangled-name='urcu_memb_call_rcu_data_free' filepath='src/urcu-call-rcu-impl.h' line='742' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_call_rcu_data_free'>
+      <!-- parameter of type 'call_rcu_data*' -->
+      <parameter type-id='type-id-49' name='crdp' filepath='src/urcu-call-rcu-impl.h' line='742' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_call_rcu(rcu_head*, void (rcu_head*)*) -->
+    <function-decl name='urcu_memb_call_rcu' mangled-name='urcu_memb_call_rcu' filepath='src/urcu-call-rcu-impl.h' line='704' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_call_rcu'>
+      <!-- parameter of type 'rcu_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/urcu-call-rcu-impl.h' line='704' column='1'/>
+      <!-- parameter of type 'void (rcu_head*)*' -->
+      <parameter type-id='type-id-23' name='func' filepath='src/urcu-call-rcu-impl.h' line='705' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- int urcu_memb_create_all_cpu_call_rcu_data(unsigned long int) -->
+    <function-decl name='urcu_memb_create_all_cpu_call_rcu_data' mangled-name='urcu_memb_create_all_cpu_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='626' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_create_all_cpu_call_rcu_data'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-3' name='flags' filepath='src/urcu-call-rcu-impl.h' line='626' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- void urcu_memb_set_thread_call_rcu_data(call_rcu_data*) -->
+    <function-decl name='urcu_memb_set_thread_call_rcu_data' mangled-name='urcu_memb_set_thread_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='613' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_set_thread_call_rcu_data'>
+      <!-- parameter of type 'call_rcu_data*' -->
+      <parameter type-id='type-id-49' name='crdp' filepath='src/urcu-call-rcu-impl.h' line='613' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- call_rcu_data* urcu_memb_get_thread_call_rcu_data() -->
+    <function-decl name='urcu_memb_get_thread_call_rcu_data' mangled-name='urcu_memb_get_thread_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='597' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_get_thread_call_rcu_data'>
+      <!-- call_rcu_data* -->
+      <return type-id='type-id-49'/>
+    </function-decl>
+    <!-- call_rcu_data* urcu_memb_get_call_rcu_data() -->
+    <function-decl name='urcu_memb_get_call_rcu_data' mangled-name='urcu_memb_get_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='577' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_get_call_rcu_data'>
+      <!-- call_rcu_data* -->
+      <return type-id='type-id-49'/>
+    </function-decl>
+    <!-- call_rcu_data* urcu_memb_get_default_call_rcu_data() -->
+    <function-decl name='urcu_memb_get_default_call_rcu_data' mangled-name='urcu_memb_get_default_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='552' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_get_default_call_rcu_data'>
+      <!-- call_rcu_data* -->
+      <return type-id='type-id-49'/>
+    </function-decl>
+    <!-- int urcu_memb_set_cpu_call_rcu_data(int, call_rcu_data*) -->
+    <function-decl name='urcu_memb_set_cpu_call_rcu_data' mangled-name='urcu_memb_set_cpu_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='513' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_set_cpu_call_rcu_data'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='cpu' filepath='src/urcu-call-rcu-impl.h' line='513' column='1'/>
+      <!-- parameter of type 'call_rcu_data*' -->
+      <parameter type-id='type-id-49' name='crdp' filepath='src/urcu-call-rcu-impl.h' line='513' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- call_rcu_data* urcu_memb_create_call_rcu_data(unsigned long int, int) -->
+    <function-decl name='urcu_memb_create_call_rcu_data' mangled-name='urcu_memb_create_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='489' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_create_call_rcu_data'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-3' name='flags' filepath='src/urcu-call-rcu-impl.h' line='489' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='cpu_affinity' filepath='src/urcu-call-rcu-impl.h' line='490' column='1'/>
+      <!-- call_rcu_data* -->
+      <return type-id='type-id-49'/>
+    </function-decl>
+    <!-- pthread_t urcu_memb_get_call_rcu_thread(call_rcu_data*) -->
+    <function-decl name='urcu_memb_get_call_rcu_thread' mangled-name='urcu_memb_get_call_rcu_thread' filepath='src/urcu-call-rcu-impl.h' line='471' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_get_call_rcu_thread'>
+      <!-- parameter of type 'call_rcu_data*' -->
+      <parameter type-id='type-id-49' name='crdp' filepath='src/urcu-call-rcu-impl.h' line='471' column='1'/>
+      <!-- typedef pthread_t -->
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <!-- call_rcu_data* urcu_memb_get_cpu_call_rcu_data(int) -->
+    <function-decl name='urcu_memb_get_cpu_call_rcu_data' mangled-name='urcu_memb_get_cpu_call_rcu_data' filepath='src/urcu-call-rcu-impl.h' line='449' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_get_cpu_call_rcu_data'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='cpu' filepath='src/urcu-call-rcu-impl.h' line='449' column='1'/>
+      <!-- call_rcu_data* -->
+      <return type-id='type-id-49'/>
+    </function-decl>
+    <!-- void urcu_memb_init() -->
+    <function-decl name='urcu_memb_init' mangled-name='urcu_memb_init' filepath='src/urcu.c' line='594' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_init'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_unregister_thread() -->
+    <function-decl name='urcu_memb_unregister_thread' mangled-name='urcu_memb_unregister_thread' filepath='src/urcu.c' line='546' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_unregister_thread'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_register_thread() -->
+    <function-decl name='urcu_memb_register_thread' mangled-name='urcu_memb_register_thread' filepath='src/urcu.c' line='532' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_register_thread'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- int urcu_memb_read_ongoing() -->
+    <function-decl name='urcu_memb_read_ongoing' mangled-name='urcu_memb_read_ongoing' filepath='src/urcu.c' line='527' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_read_ongoing'>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- void urcu_memb_read_unlock() -->
+    <function-decl name='urcu_memb_read_unlock' mangled-name='urcu_memb_read_unlock' filepath='src/urcu.c' line='522' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_read_unlock'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_read_lock() -->
+    <function-decl name='urcu_memb_read_lock' mangled-name='urcu_memb_read_lock' filepath='src/urcu.c' line='517' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_read_lock'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- void urcu_memb_synchronize_rcu() -->
+    <function-decl name='urcu_memb_synchronize_rcu' mangled-name='urcu_memb_synchronize_rcu' filepath='src/urcu.c' line='396' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='urcu_memb_synchronize_rcu'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-decl>
+    <!-- int () -->
+    <function-type size-in-bits='64' id='type-id-20'>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-type>
+    <!-- void () -->
+    <function-type size-in-bits='64' id='type-id-19'>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+    <!-- void (rcu_head*) -->
+    <function-type size-in-bits='64' id='type-id-26'>
+      <!-- parameter of type 'rcu_head*' -->
+      <parameter type-id='type-id-25'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+    <!-- void (rcu_head*, void (rcu_head*)*) -->
+    <function-type size-in-bits='64' id='type-id-27'>
+      <!-- parameter of type 'rcu_head*' -->
+      <parameter type-id='type-id-25'/>
+      <!-- parameter of type 'void (rcu_head*)*' -->
+      <parameter type-id='type-id-23'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+    <!-- void (urcu_atfork*) -->
+    <function-type size-in-bits='64' id='type-id-34'>
+      <!-- parameter of type 'urcu_atfork*' -->
+      <parameter type-id='type-id-33'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+    <!-- void (void (void*)*, void*) -->
+    <function-type size-in-bits='64' id='type-id-31'>
+      <!-- parameter of type 'void (void*)*' -->
+      <parameter type-id='type-id-30'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+    <!-- void (void*) -->
+    <function-type size-in-bits='64' id='type-id-29'>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28'/>
+      <!-- void -->
+      <return type-id='type-id-18'/>
+    </function-type>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='urcu-pointer.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- void** -->
+    <pointer-type-def type-id='type-id-28' size-in-bits='64' id='type-id-50'/>
+    <!-- void* rcu_cmpxchg_pointer_sym(void**, void*, void*) -->
+    <function-decl name='rcu_cmpxchg_pointer_sym' mangled-name='rcu_cmpxchg_pointer_sym' filepath='src/urcu-pointer.c' line='53' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rcu_cmpxchg_pointer_sym'>
+      <!-- parameter of type 'void**' -->
+      <parameter type-id='type-id-50' name='p' filepath='src/urcu-pointer.c' line='53' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='old' filepath='src/urcu-pointer.c' line='53' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='_new' filepath='src/urcu-pointer.c' line='53' column='1'/>
+      <!-- void* -->
+      <return type-id='type-id-28'/>
+    </function-decl>
+    <!-- void* rcu_xchg_pointer_sym(void**, void*) -->
+    <function-decl name='rcu_xchg_pointer_sym' mangled-name='rcu_xchg_pointer_sym' filepath='src/urcu-pointer.c' line='47' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rcu_xchg_pointer_sym'>
+      <!-- parameter of type 'void**' -->
+      <parameter type-id='type-id-50' name='p' filepath='src/urcu-pointer.c' line='47' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='v' filepath='src/urcu-pointer.c' line='47' column='1'/>
+      <!-- void* -->
+      <return type-id='type-id-28'/>
+    </function-decl>
+    <!-- void* rcu_set_pointer_sym(void**, void*) -->
+    <function-decl name='rcu_set_pointer_sym' mangled-name='rcu_set_pointer_sym' filepath='src/urcu-pointer.c' line='40' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rcu_set_pointer_sym'>
+      <!-- parameter of type 'void**' -->
+      <parameter type-id='type-id-50' name='p' filepath='src/urcu-pointer.c' line='40' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='v' filepath='src/urcu-pointer.c' line='40' column='1'/>
+      <!-- void* -->
+      <return type-id='type-id-28'/>
+    </function-decl>
+    <!-- void* rcu_dereference_sym(void*) -->
+    <function-decl name='rcu_dereference_sym' mangled-name='rcu_dereference_sym' filepath='src/urcu-pointer.c' line='35' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rcu_dereference_sym'>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-28' name='p' filepath='src/urcu-pointer.c' line='35' column='1'/>
+      <!-- void* -->
+      <return type-id='type-id-28'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='compat_futex.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- pthread_mutex_t __urcu_compat_futex_lock -->
+    <var-decl name='__urcu_compat_futex_lock' type-id='type-id-39' mangled-name='__urcu_compat_futex_lock' visibility='default' filepath='src/compat_futex.c' line='44' column='1' elf-symbol-id='__urcu_compat_futex_lock'/>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='384' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='75' column='1' id='type-id-51'>
+      <data-member access='private'>
+        <!-- __pthread_cond_s __anonymous_union__::__data -->
+        <var-decl name='__data' type-id='type-id-52' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='77' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __anonymous_union__::__size[48] -->
+        <var-decl name='__size' type-id='type-id-53' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long long int __anonymous_union__::__align -->
+        <var-decl name='__align' type-id='type-id-54' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='79' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_cond_s -->
+    <class-decl name='__pthread_cond_s' size-in-bits='384' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='171' column='1' id='type-id-52'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __anonymous_union__  -->
+        <var-decl name='' type-id='type-id-55' visibility='default'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- unsigned int __pthread_cond_s::__g_refs[2] -->
+        <var-decl name='__g_refs' type-id='type-id-56' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='191' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- unsigned int __pthread_cond_s::__g_size[2] -->
+        <var-decl name='__g_size' type-id='type-id-56' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- unsigned int __pthread_cond_s::__g1_orig_size -->
+        <var-decl name='__g1_orig_size' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='193' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <!-- unsigned int __pthread_cond_s::__wrefs -->
+        <var-decl name='__wrefs' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <!-- unsigned int __pthread_cond_s::__g_signals[2] -->
+        <var-decl name='__g_signals' type-id='type-id-56' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='195' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='173' column='1' id='type-id-55'>
+      <data-member access='private'>
+        <!-- long long unsigned int __anonymous_union__::__wseq -->
+        <var-decl name='__wseq' type-id='type-id-57' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='175' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- __anonymous_struct__ __anonymous_union__::__wseq32 -->
+        <var-decl name='__wseq32' type-id='type-id-58' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='180' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- long long unsigned int -->
+    <type-decl name='long long unsigned int' size-in-bits='64' id='type-id-57'/>
+    <!-- struct __anonymous_struct__ -->
+    <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='176' column='1' id='type-id-58'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned int __anonymous_struct__::__low -->
+        <var-decl name='__low' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='178' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __anonymous_struct__::__high -->
+        <var-decl name='__high' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='179' column='1'/>
+      </data-member>
+    </class-decl>
+
+    <!-- unsigned int[2] -->
+    <array-type-def dimensions='1' type-id='type-id-10' size-in-bits='64' id='type-id-56'>
+      <!-- <anonymous range>[2] -->
+      <subrange length='2' type-id='type-id-3' id='type-id-59'/>
+
+    </array-type-def>
+
+    <!-- char[48] -->
+    <array-type-def dimensions='1' type-id='type-id-7' size-in-bits='384' id='type-id-53'>
+      <!-- <anonymous range>[48] -->
+      <subrange length='48' type-id='type-id-3' id='type-id-60'/>
+
+    </array-type-def>
+    <!-- long long int -->
+    <type-decl name='long long int' size-in-bits='64' id='type-id-54'/>
+    <!-- typedef __anonymous_union__ pthread_cond_t -->
+    <typedef-decl name='pthread_cond_t' type-id='type-id-51' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='80' column='1' id='type-id-61'/>
+    <!-- pthread_cond_t __urcu_compat_futex_cond -->
+    <var-decl name='__urcu_compat_futex_cond' type-id='type-id-61' mangled-name='__urcu_compat_futex_cond' visibility='default' filepath='src/compat_futex.c' line='46' column='1' elf-symbol-id='__urcu_compat_futex_cond'/>
+    <!-- int32_t* -->
+    <pointer-type-def type-id='type-id-4' size-in-bits='64' id='type-id-62'/>
+    <!-- struct timespec -->
+    <class-decl name='timespec' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='9' column='1' id='type-id-63'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __time_t timespec::tv_sec -->
+        <var-decl name='tv_sec' type-id='type-id-64' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='11' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __syscall_slong_t timespec::tv_nsec -->
+        <var-decl name='tv_nsec' type-id='type-id-65' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='12' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef long int __time_t -->
+    <typedef-decl name='__time_t' type-id='type-id-43' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='148' column='1' id='type-id-64'/>
+    <!-- typedef long int __syscall_slong_t -->
+    <typedef-decl name='__syscall_slong_t' type-id='type-id-43' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='184' column='1' id='type-id-65'/>
+    <!-- const timespec -->
+    <qualified-type-def type-id='type-id-63' const='yes' id='type-id-66'/>
+    <!-- const timespec* -->
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' id='type-id-67'/>
+    <!-- int compat_futex_async(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_async' mangled-name='compat_futex_async' filepath='src/compat_futex.c' line='118' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_async'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-62' name='uaddr' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='op' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-4' name='val' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-67' name='timeout' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-62' name='uaddr2' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-4' name='val3' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int compat_futex_noasync(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_noasync' mangled-name='compat_futex_noasync' filepath='src/compat_futex.c' line='54' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_noasync'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-62' name='uaddr' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='op' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-4' name='val' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-67' name='timeout' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-62' name='uaddr2' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-4' name='val3' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+  </abi-instr>
+</abi-corpus>

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2023 EfficiOS Inc.
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+if [ "x${URCU_TESTS_SRCDIR:-}" != "x" ]; then
+	UTILSSH="$URCU_TESTS_SRCDIR/utils/utils.sh"
+else
+	UTILSSH="$(dirname "$0")/../utils/utils.sh"
+fi
+
+# shellcheck source=../utils/utils.sh
+source "$UTILSSH"
+
+# shellcheck source=../../utils/tap.sh
+source "$URCU_TESTS_SRCDIR/utils/tap.sh"
+
+CURDIR="${URCU_TESTS_BUILDDIR}/unit"
+
+STD_OUTPUT="/dev/null"
+STD_ERROR="/dev/null"
+
+NUM_TESTS=13
+
+TESTDIR=$(mktemp -d)
+
+populate_testdir() {
+	local cpus=("$@")
+
+	mkdir "$TESTDIR"
+
+	for i in "${cpus[@]}"; do
+		mkdir "$TESTDIR/$i"
+	done
+}
+
+test_get_max_cpuid_from_sysfs_cxx() {
+	local num_cpus=$1
+	shift
+	local current_cpus=("$@")
+	local result
+
+	populate_testdir "${current_cpus[@]}" >"$STD_OUTPUT" 2>"$STD_ERROR"
+	result=$("${CURDIR}/get_max_cpuid_from_sysfs_cxx" "$TESTDIR")
+	is "$result" "$num_cpus" "get_max_cpuid_from_sysfs_cxx - cpu set: '${current_cpus[*]}', expected: '$num_cpus', result: '$result'"
+	rm -rf "$TESTDIR"
+}
+
+if [ "$URCU_TESTS_OS_TYPE" == "linux" ]; then
+	plan_tests $NUM_TESTS
+
+	diag "get_max_cpuid_from_sysfs_cxx"
+
+	test_data=(0 "cpu0")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(1 "cpu0" "cpu1")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(1 "cpu1" "cpu0")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(3 "cpu3")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(99 "cpu99")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(3 "cpu0" "cpu3")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(3 "cpufreq" "cpuidle" "cpu0" "cpu1" "cpu2" "cpu3")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(0 "cpu" "cpu0")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(5 "cpu" "cpu5")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+
+	test_data=(-1 "toto")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(-1 "cpu")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(-1 "cpua" "cpud")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+
+	test_data=(-1 "cpufreq" "cpuidle")
+	test_get_max_cpuid_from_sysfs_cxx "${test_data[@]}"
+else
+	plan_skip_all "Linux specific tests."
+fi

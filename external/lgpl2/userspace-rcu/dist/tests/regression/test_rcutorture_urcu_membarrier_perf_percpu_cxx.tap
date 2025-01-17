@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+#
+
+if [ "x${URCU_TESTS_SRCDIR:-}" != "x" ]; then
+	UTILSSH="$URCU_TESTS_SRCDIR/utils/utils.sh"
+else
+	UTILSSH="$(dirname "$0")/../utils/utils.sh"
+fi
+
+# shellcheck source=../utils/utils.sh
+source "$UTILSSH"
+
+
+"${URCU_TESTS_BUILDDIR}/regression/rcutorture_urcu_membarrier_cxx" "$(urcu_nproc)" perf 1 callrcu_percpu

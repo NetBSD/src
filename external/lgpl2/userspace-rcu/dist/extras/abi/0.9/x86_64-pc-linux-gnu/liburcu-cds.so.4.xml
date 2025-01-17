@@ -1,0 +1,1187 @@
+<abi-corpus architecture='elf-amd-x86_64' soname='liburcu-cds.so.4'>
+<!--
+SPDX-FileCopyrightText: 2021 EfficiOS Inc.
+
+SPDX-License-Identifier: CC0-1.0
+-->
+  <elf-needed>
+    <dependency name='liburcu-common.so.4'/>
+    <dependency name='libpthread.so.0'/>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <!-- __cds_lfs_init -->
+    <elf-symbol name='__cds_lfs_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_lfs_pop -->
+    <elf-symbol name='__cds_lfs_pop' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_lfs_pop_all -->
+    <elf-symbol name='__cds_lfs_pop_all' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- _cds_lfht_new -->
+    <elf-symbol name='_cds_lfht_new' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_add -->
+    <elf-symbol name='cds_lfht_add' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_add_replace -->
+    <elf-symbol name='cds_lfht_add_replace' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_add_unique -->
+    <elf-symbol name='cds_lfht_add_unique' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_count_nodes -->
+    <elf-symbol name='cds_lfht_count_nodes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_del -->
+    <elf-symbol name='cds_lfht_del' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_destroy -->
+    <elf-symbol name='cds_lfht_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_first -->
+    <elf-symbol name='cds_lfht_first' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_fls_ulong -->
+    <elf-symbol name='cds_lfht_fls_ulong' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_get_count_order_u32 -->
+    <elf-symbol name='cds_lfht_get_count_order_u32' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_get_count_order_ulong -->
+    <elf-symbol name='cds_lfht_get_count_order_ulong' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_is_node_deleted -->
+    <elf-symbol name='cds_lfht_is_node_deleted' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_lookup -->
+    <elf-symbol name='cds_lfht_lookup' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_next -->
+    <elf-symbol name='cds_lfht_next' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_next_duplicate -->
+    <elf-symbol name='cds_lfht_next_duplicate' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_replace -->
+    <elf-symbol name='cds_lfht_replace' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_resize -->
+    <elf-symbol name='cds_lfht_resize' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfq_dequeue_rcu -->
+    <elf-symbol name='cds_lfq_dequeue_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfq_destroy_rcu -->
+    <elf-symbol name='cds_lfq_destroy_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfq_enqueue_rcu -->
+    <elf-symbol name='cds_lfq_enqueue_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfq_init_rcu -->
+    <elf-symbol name='cds_lfq_init_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfq_node_init_rcu -->
+    <elf-symbol name='cds_lfq_node_init_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_destroy -->
+    <elf-symbol name='cds_lfs_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_empty -->
+    <elf-symbol name='cds_lfs_empty' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_init -->
+    <elf-symbol name='cds_lfs_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_init_rcu -->
+    <elf-symbol name='cds_lfs_init_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_node_init -->
+    <elf-symbol name='cds_lfs_node_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_node_init_rcu -->
+    <elf-symbol name='cds_lfs_node_init_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_pop_all_blocking -->
+    <elf-symbol name='cds_lfs_pop_all_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_pop_blocking -->
+    <elf-symbol name='cds_lfs_pop_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_pop_lock -->
+    <elf-symbol name='cds_lfs_pop_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_pop_rcu -->
+    <elf-symbol name='cds_lfs_pop_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_pop_unlock -->
+    <elf-symbol name='cds_lfs_pop_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_push -->
+    <elf-symbol name='cds_lfs_push' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfs_push_rcu -->
+    <elf-symbol name='cds_lfs_push_rcu' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_async -->
+    <elf-symbol name='compat_futex_async' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_noasync -->
+    <elf-symbol name='compat_futex_noasync' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <elf-variable-symbols>
+    <!-- __urcu_compat_futex_cond -->
+    <elf-symbol name='__urcu_compat_futex_cond' size='48' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __urcu_compat_futex_lock -->
+    <elf-symbol name='__urcu_compat_futex_lock' size='40' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_mm_chunk -->
+    <elf-symbol name='cds_lfht_mm_chunk' size='32' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_mm_mmap -->
+    <elf-symbol name='cds_lfht_mm_mmap' size='32' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_lfht_mm_order -->
+    <elf-symbol name='cds_lfht_mm_order' size='32' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-variable-symbols>
+  <abi-instr version='1.0' address-size='64' path='rculfqueue.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+    <!-- int -->
+    <type-decl name='int' size-in-bits='32' id='type-id-1'/>
+    <!-- void -->
+    <type-decl name='void' id='type-id-2'/>
+    <!-- struct cds_lfq_node_rcu -->
+    <class-decl name='cds_lfq_node_rcu' size-in-bits='128' is-struct='yes' visibility='default' filepath='urcu/rculfqueue.h' line='35' column='1' id='type-id-3'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfq_node_rcu* cds_lfq_node_rcu::next -->
+        <var-decl name='next' type-id='type-id-4' visibility='default' filepath='urcu/rculfqueue.h' line='36' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- int cds_lfq_node_rcu::dummy -->
+        <var-decl name='dummy' type-id='type-id-1' visibility='default' filepath='urcu/rculfqueue.h' line='37' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfq_queue_rcu -->
+    <class-decl name='cds_lfq_queue_rcu' size-in-bits='192' is-struct='yes' visibility='default' filepath='urcu/rculfqueue.h' line='40' column='1' id='type-id-5'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfq_node_rcu* cds_lfq_queue_rcu::head -->
+        <var-decl name='head' type-id='type-id-4' visibility='default' filepath='urcu/rculfqueue.h' line='41' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- cds_lfq_node_rcu* cds_lfq_queue_rcu::tail -->
+        <var-decl name='tail' type-id='type-id-4' visibility='default' filepath='urcu/rculfqueue.h' line='41' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- void (rcu_head*, void (rcu_head*)*)* cds_lfq_queue_rcu::queue_call_rcu -->
+        <var-decl name='queue_call_rcu' type-id='type-id-6' visibility='default' filepath='urcu/rculfqueue.h' line='42' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct rcu_head -->
+    <class-decl name='rcu_head' size-in-bits='128' is-struct='yes' visibility='default' filepath='./urcu-call-rcu.h' line='59' column='1' id='type-id-7'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node rcu_head::next -->
+        <var-decl name='next' type-id='type-id-8' visibility='default' filepath='./urcu-call-rcu.h' line='60' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void (rcu_head*)* rcu_head::func -->
+        <var-decl name='func' type-id='type-id-9' visibility='default' filepath='./urcu-call-rcu.h' line='61' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_wfcq_node -->
+    <class-decl name='cds_wfcq_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='./urcu/wfcqueue.h' line='59' column='1' id='type-id-8'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node* cds_wfcq_node::next -->
+        <var-decl name='next' type-id='type-id-10' visibility='default' filepath='./urcu/wfcqueue.h' line='60' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_lfq_node_rcu* -->
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' id='type-id-4'/>
+    <!-- cds_lfq_queue_rcu* -->
+    <pointer-type-def type-id='type-id-5' size-in-bits='64' id='type-id-11'/>
+    <!-- cds_wfcq_node* -->
+    <pointer-type-def type-id='type-id-8' size-in-bits='64' id='type-id-10'/>
+    <!-- rcu_head* -->
+    <pointer-type-def type-id='type-id-7' size-in-bits='64' id='type-id-12'/>
+    <!-- void (rcu_head*)* -->
+    <pointer-type-def type-id='type-id-13' size-in-bits='64' id='type-id-9'/>
+    <!-- void (rcu_head*, void (rcu_head*)*)* -->
+    <pointer-type-def type-id='type-id-14' size-in-bits='64' id='type-id-6'/>
+    <!-- cds_lfq_node_rcu* cds_lfq_dequeue_rcu(cds_lfq_queue_rcu*) -->
+    <function-decl name='cds_lfq_dequeue_rcu' mangled-name='cds_lfq_dequeue_rcu' filepath='rculfqueue.c' line='56' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfq_dequeue_rcu'>
+      <!-- parameter of type 'cds_lfq_queue_rcu*' -->
+      <parameter type-id='type-id-11' name='q' filepath='rculfqueue.c' line='56' column='1'/>
+      <!-- cds_lfq_node_rcu* -->
+      <return type-id='type-id-4'/>
+    </function-decl>
+    <!-- void cds_lfq_enqueue_rcu(cds_lfq_queue_rcu*, cds_lfq_node_rcu*) -->
+    <function-decl name='cds_lfq_enqueue_rcu' mangled-name='cds_lfq_enqueue_rcu' filepath='rculfqueue.c' line='50' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfq_enqueue_rcu'>
+      <!-- parameter of type 'cds_lfq_queue_rcu*' -->
+      <parameter type-id='type-id-11' name='q' filepath='rculfqueue.c' line='50' column='1'/>
+      <!-- parameter of type 'cds_lfq_node_rcu*' -->
+      <parameter type-id='type-id-4' name='node' filepath='rculfqueue.c' line='50' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- int cds_lfq_destroy_rcu(cds_lfq_queue_rcu*) -->
+    <function-decl name='cds_lfq_destroy_rcu' mangled-name='cds_lfq_destroy_rcu' filepath='rculfqueue.c' line='45' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfq_destroy_rcu'>
+      <!-- parameter of type 'cds_lfq_queue_rcu*' -->
+      <parameter type-id='type-id-11' name='q' filepath='rculfqueue.c' line='45' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- void cds_lfq_init_rcu(cds_lfq_queue_rcu*, void (rcu_head*, void (rcu_head*)*)*) -->
+    <function-decl name='cds_lfq_init_rcu' mangled-name='cds_lfq_init_rcu' filepath='rculfqueue.c' line='38' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfq_init_rcu'>
+      <!-- parameter of type 'cds_lfq_queue_rcu*' -->
+      <parameter type-id='type-id-11' name='q' filepath='rculfqueue.c' line='38' column='1'/>
+      <!-- parameter of type 'void (rcu_head*, void (rcu_head*)*)*' -->
+      <parameter type-id='type-id-6' name='queue_call_rcu' filepath='rculfqueue.c' line='39' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfq_node_init_rcu(cds_lfq_node_rcu*) -->
+    <function-decl name='cds_lfq_node_init_rcu' mangled-name='cds_lfq_node_init_rcu' filepath='rculfqueue.c' line='33' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfq_node_init_rcu'>
+      <!-- parameter of type 'cds_lfq_node_rcu*' -->
+      <parameter type-id='type-id-4' name='node' filepath='rculfqueue.c' line='33' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void (rcu_head*) -->
+    <function-type size-in-bits='64' id='type-id-13'>
+      <!-- parameter of type 'rcu_head*' -->
+      <parameter type-id='type-id-12'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+    <!-- void (rcu_head*, void (rcu_head*)*) -->
+    <function-type size-in-bits='64' id='type-id-14'>
+      <!-- parameter of type 'rcu_head*' -->
+      <parameter type-id='type-id-12'/>
+      <!-- parameter of type 'void (rcu_head*)*' -->
+      <parameter type-id='type-id-9'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='rculfstack.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+    <!-- struct cds_lfs_node_rcu -->
+    <class-decl name='cds_lfs_node_rcu' size-in-bits='64' is-struct='yes' visibility='default' filepath='urcu/rculfstack.h' line='37' column='1' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_node_rcu* cds_lfs_node_rcu::next -->
+        <var-decl name='next' type-id='type-id-16' visibility='default' filepath='urcu/rculfstack.h' line='38' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfs_stack_rcu -->
+    <class-decl name='cds_lfs_stack_rcu' size-in-bits='64' is-struct='yes' visibility='default' filepath='urcu/rculfstack.h' line='41' column='1' id='type-id-17'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_node_rcu* cds_lfs_stack_rcu::head -->
+        <var-decl name='head' type-id='type-id-16' visibility='default' filepath='urcu/rculfstack.h' line='42' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_lfs_node_rcu* -->
+    <pointer-type-def type-id='type-id-15' size-in-bits='64' id='type-id-16'/>
+    <!-- cds_lfs_stack_rcu* -->
+    <pointer-type-def type-id='type-id-17' size-in-bits='64' id='type-id-18'/>
+    <!-- cds_lfs_node_rcu* cds_lfs_pop_rcu(cds_lfs_stack_rcu*) -->
+    <function-decl name='cds_lfs_pop_rcu' mangled-name='cds_lfs_pop_rcu' filepath='rculfstack.c' line='53' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_pop_rcu'>
+      <!-- parameter of type 'cds_lfs_stack_rcu*' -->
+      <parameter type-id='type-id-18' name='s' filepath='rculfstack.c' line='53' column='1'/>
+      <!-- cds_lfs_node_rcu* -->
+      <return type-id='type-id-16'/>
+    </function-decl>
+    <!-- int cds_lfs_push_rcu(cds_lfs_stack_rcu*, cds_lfs_node_rcu*) -->
+    <function-decl name='cds_lfs_push_rcu' mangled-name='cds_lfs_push_rcu' filepath='rculfstack.c' line='47' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_push_rcu'>
+      <!-- parameter of type 'cds_lfs_stack_rcu*' -->
+      <parameter type-id='type-id-18' name='s' filepath='rculfstack.c' line='47' column='1'/>
+      <!-- parameter of type 'cds_lfs_node_rcu*' -->
+      <parameter type-id='type-id-16' name='node' filepath='rculfstack.c' line='48' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- void cds_lfs_init_rcu(cds_lfs_stack_rcu*) -->
+    <function-decl name='cds_lfs_init_rcu' mangled-name='cds_lfs_init_rcu' filepath='rculfstack.c' line='42' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_init_rcu'>
+      <!-- parameter of type 'cds_lfs_stack_rcu*' -->
+      <parameter type-id='type-id-18' name='s' filepath='rculfstack.c' line='42' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfs_node_init_rcu(cds_lfs_node_rcu*) -->
+    <function-decl name='cds_lfs_node_init_rcu' mangled-name='cds_lfs_node_init_rcu' filepath='rculfstack.c' line='37' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_node_init_rcu'>
+      <!-- parameter of type 'cds_lfs_node_rcu*' -->
+      <parameter type-id='type-id-16' name='node' filepath='rculfstack.c' line='37' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='lfstack.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+
+    <!-- bool -->
+    <type-decl name='bool' size-in-bits='8' id='type-id-19'/>
+    <!-- char -->
+    <type-decl name='char' size-in-bits='8' id='type-id-20'/>
+    <!-- char[40] -->
+    <array-type-def dimensions='1' type-id='type-id-20' size-in-bits='320' id='type-id-21'>
+      <!-- <anonymous range>[40] -->
+      <subrange length='40' type-id='type-id-22' id='type-id-23'/>
+
+    </array-type-def>
+    <!-- long int -->
+    <type-decl name='long int' size-in-bits='64' id='type-id-24'/>
+    <!-- short int -->
+    <type-decl name='short int' size-in-bits='16' id='type-id-25'/>
+    <!-- unsigned int -->
+    <type-decl name='unsigned int' size-in-bits='32' id='type-id-26'/>
+    <!-- unsigned long int -->
+    <type-decl name='unsigned long int' size-in-bits='64' id='type-id-22'/>
+    <!-- struct cds_lfs_head -->
+    <class-decl name='cds_lfs_head' size-in-bits='64' is-struct='yes' visibility='default' filepath='urcu/lfstack.h' line='69' column='1' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_node cds_lfs_head::node -->
+        <var-decl name='node' type-id='type-id-28' visibility='default' filepath='urcu/lfstack.h' line='70' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfs_node -->
+    <class-decl name='cds_lfs_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='urcu/lfstack.h' line='59' column='1' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_node* cds_lfs_node::next -->
+        <var-decl name='next' type-id='type-id-29' visibility='default' filepath='urcu/lfstack.h' line='60' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef __anonymous_union__ cds_lfs_stack_ptr_t -->
+    <typedef-decl name='cds_lfs_stack_ptr_t' type-id='type-id-30' filepath='urcu/lfstack.h' line='90' column='1' id='type-id-31'/>
+    <!-- union {__cds_lfs_stack* _s; cds_lfs_stack* s;} -->
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='urcu/lfstack.h' line='87' column='1' id='type-id-30'>
+      <data-member access='private'>
+        <!-- __cds_lfs_stack* _s -->
+        <var-decl name='_s' type-id='type-id-32' visibility='default' filepath='urcu/lfstack.h' line='88' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- cds_lfs_stack* s -->
+        <var-decl name='s' type-id='type-id-33' visibility='default' filepath='urcu/lfstack.h' line='89' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __cds_lfs_stack -->
+    <class-decl name='__cds_lfs_stack' size-in-bits='64' is-struct='yes' visibility='default' filepath='urcu/lfstack.h' line='73' column='1' id='type-id-34'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_head* __cds_lfs_stack::head -->
+        <var-decl name='head' type-id='type-id-35' visibility='default' filepath='urcu/lfstack.h' line='74' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfs_stack -->
+    <class-decl name='cds_lfs_stack' size-in-bits='384' is-struct='yes' visibility='default' filepath='urcu/lfstack.h' line='77' column='1' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfs_head* cds_lfs_stack::head -->
+        <var-decl name='head' type-id='type-id-35' visibility='default' filepath='urcu/lfstack.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- pthread_mutex_t cds_lfs_stack::lock -->
+        <var-decl name='lock' type-id='type-id-37' visibility='default' filepath='urcu/lfstack.h' line='79' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef __anonymous_union__1 pthread_mutex_t -->
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-38' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-37'/>
+    <!-- union {__pthread_mutex_s __data; char __size[40]; long int __align;} -->
+    <union-decl name='__anonymous_union__1' size-in-bits='320' is-anonymous='yes' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' id='type-id-38'>
+      <data-member access='private'>
+        <!-- __pthread_mutex_s __data -->
+        <var-decl name='__data' type-id='type-id-39' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __size[40] -->
+        <var-decl name='__size' type-id='type-id-21' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long int __align -->
+        <var-decl name='__align' type-id='type-id-24' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_mutex_s -->
+    <class-decl name='__pthread_mutex_s' size-in-bits='320' is-struct='yes' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' id='type-id-39'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- int __pthread_mutex_s::__lock -->
+        <var-decl name='__lock' type-id='type-id-1' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __pthread_mutex_s::__count -->
+        <var-decl name='__count' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- int __pthread_mutex_s::__owner -->
+        <var-decl name='__owner' type-id='type-id-1' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <!-- unsigned int __pthread_mutex_s::__nusers -->
+        <var-decl name='__nusers' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- int __pthread_mutex_s::__kind -->
+        <var-decl name='__kind' type-id='type-id-1' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <!-- short int __pthread_mutex_s::__spins -->
+        <var-decl name='__spins' type-id='type-id-25' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <!-- short int __pthread_mutex_s::__elision -->
+        <var-decl name='__elision' type-id='type-id-25' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- __pthread_list_t __pthread_mutex_s::__list -->
+        <var-decl name='__list' type-id='type-id-40' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef __pthread_internal_list __pthread_list_t -->
+    <typedef-decl name='__pthread_list_t' type-id='type-id-41' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1' id='type-id-40'/>
+    <!-- struct __pthread_internal_list -->
+    <class-decl name='__pthread_internal_list' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='49' column='1' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__prev -->
+        <var-decl name='__prev' type-id='type-id-42' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__next -->
+        <var-decl name='__next' type-id='type-id-42' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='52' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- __cds_lfs_stack* -->
+    <pointer-type-def type-id='type-id-34' size-in-bits='64' id='type-id-32'/>
+    <!-- __pthread_internal_list* -->
+    <pointer-type-def type-id='type-id-41' size-in-bits='64' id='type-id-42'/>
+    <!-- cds_lfs_head* -->
+    <pointer-type-def type-id='type-id-27' size-in-bits='64' id='type-id-35'/>
+    <!-- cds_lfs_node* -->
+    <pointer-type-def type-id='type-id-28' size-in-bits='64' id='type-id-29'/>
+    <!-- cds_lfs_stack* -->
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' id='type-id-33'/>
+    <!-- cds_lfs_head* __cds_lfs_pop_all(cds_lfs_stack_ptr_t) -->
+    <function-decl name='__cds_lfs_pop_all' mangled-name='__cds_lfs_pop_all' filepath='lfstack.c' line='88' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_lfs_pop_all'>
+      <!-- parameter of type 'typedef cds_lfs_stack_ptr_t' -->
+      <parameter type-id='type-id-31' name='s' filepath='lfstack.c' line='88' column='1'/>
+      <!-- cds_lfs_head* -->
+      <return type-id='type-id-35'/>
+    </function-decl>
+    <!-- cds_lfs_node* __cds_lfs_pop(cds_lfs_stack_ptr_t) -->
+    <function-decl name='__cds_lfs_pop' mangled-name='__cds_lfs_pop' filepath='lfstack.c' line='83' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_lfs_pop'>
+      <!-- parameter of type 'typedef cds_lfs_stack_ptr_t' -->
+      <parameter type-id='type-id-31' name='s' filepath='lfstack.c' line='83' column='1'/>
+      <!-- cds_lfs_node* -->
+      <return type-id='type-id-29'/>
+    </function-decl>
+    <!-- void cds_lfs_pop_unlock(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_pop_unlock' mangled-name='cds_lfs_pop_unlock' filepath='lfstack.c' line='78' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_pop_unlock'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='78' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfs_pop_lock(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_pop_lock' mangled-name='cds_lfs_pop_lock' filepath='lfstack.c' line='73' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_pop_lock'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='73' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- cds_lfs_head* cds_lfs_pop_all_blocking(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_pop_all_blocking' mangled-name='cds_lfs_pop_all_blocking' filepath='lfstack.c' line='68' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_pop_all_blocking'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='68' column='1'/>
+      <!-- cds_lfs_head* -->
+      <return type-id='type-id-35'/>
+    </function-decl>
+    <!-- cds_lfs_node* cds_lfs_pop_blocking(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_pop_blocking' mangled-name='cds_lfs_pop_blocking' filepath='lfstack.c' line='63' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_pop_blocking'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='63' column='1'/>
+      <!-- cds_lfs_node* -->
+      <return type-id='type-id-29'/>
+    </function-decl>
+    <!-- bool cds_lfs_push(cds_lfs_stack_ptr_t, cds_lfs_node*) -->
+    <function-decl name='cds_lfs_push' mangled-name='cds_lfs_push' filepath='lfstack.c' line='58' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_push'>
+      <!-- parameter of type 'typedef cds_lfs_stack_ptr_t' -->
+      <parameter type-id='type-id-31' name='s' filepath='lfstack.c' line='58' column='1'/>
+      <!-- parameter of type 'cds_lfs_node*' -->
+      <parameter type-id='type-id-29' name='node' filepath='lfstack.c' line='58' column='1'/>
+      <!-- bool -->
+      <return type-id='type-id-19'/>
+    </function-decl>
+    <!-- bool cds_lfs_empty(cds_lfs_stack_ptr_t) -->
+    <function-decl name='cds_lfs_empty' mangled-name='cds_lfs_empty' filepath='lfstack.c' line='53' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_empty'>
+      <!-- parameter of type 'typedef cds_lfs_stack_ptr_t' -->
+      <parameter type-id='type-id-31' name='s' filepath='lfstack.c' line='53' column='1'/>
+      <!-- bool -->
+      <return type-id='type-id-19'/>
+    </function-decl>
+    <!-- void __cds_lfs_init(__cds_lfs_stack*) -->
+    <function-decl name='__cds_lfs_init' mangled-name='__cds_lfs_init' filepath='lfstack.c' line='48' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_lfs_init'>
+      <!-- parameter of type '__cds_lfs_stack*' -->
+      <parameter type-id='type-id-32' name='s' filepath='lfstack.c' line='48' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfs_destroy(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_destroy' mangled-name='cds_lfs_destroy' filepath='lfstack.c' line='43' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_destroy'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='43' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfs_init(cds_lfs_stack*) -->
+    <function-decl name='cds_lfs_init' mangled-name='cds_lfs_init' filepath='lfstack.c' line='38' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_init'>
+      <!-- parameter of type 'cds_lfs_stack*' -->
+      <parameter type-id='type-id-33' name='s' filepath='lfstack.c' line='38' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfs_node_init(cds_lfs_node*) -->
+    <function-decl name='cds_lfs_node_init' mangled-name='cds_lfs_node_init' filepath='lfstack.c' line='33' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfs_node_init'>
+      <!-- parameter of type 'cds_lfs_node*' -->
+      <parameter type-id='type-id-29' name='node' filepath='lfstack.c' line='33' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='rculfhash.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+
+
+
+    <!-- cds_lfht_node*[64] -->
+    <array-type-def dimensions='1' type-id='type-id-43' size-in-bits='4096' id='type-id-44'>
+      <!-- <anonymous range>[64] -->
+      <subrange length='64' type-id='type-id-22' id='type-id-45'/>
+
+    </array-type-def>
+    <!-- cds_lfht_node*[] -->
+    <array-type-def dimensions='1' type-id='type-id-43' size-in-bits='infinite' id='type-id-46'>
+      <!-- <anonymous range>[] -->
+      <subrange length='infinite' type-id='type-id-22' id='type-id-47'/>
+
+    </array-type-def>
+    <!-- char[56] -->
+    <array-type-def dimensions='1' type-id='type-id-20' size-in-bits='448' id='type-id-48'>
+      <!-- <anonymous range>[56] -->
+      <subrange length='56' type-id='type-id-22' id='type-id-49'/>
+
+    </array-type-def>
+    <!-- struct cds_lfht -->
+    <class-decl name='cds_lfht' size-in-bits='5248' is-struct='yes' visibility='default' filepath='./rculfhash-internal.h' line='68' column='1' id='type-id-50'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned long int cds_lfht::max_nr_buckets -->
+        <var-decl name='max_nr_buckets' type-id='type-id-22' visibility='default' filepath='./rculfhash-internal.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- const cds_lfht_mm_type* cds_lfht::mm -->
+        <var-decl name='mm' type-id='type-id-51' visibility='default' filepath='./rculfhash-internal.h' line='71' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- const rcu_flavor_struct* cds_lfht::flavor -->
+        <var-decl name='flavor' type-id='type-id-52' visibility='default' filepath='./rculfhash-internal.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- long int cds_lfht::count -->
+        <var-decl name='count' type-id='type-id-24' visibility='default' filepath='./rculfhash-internal.h' line='74' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- pthread_mutex_t cds_lfht::resize_mutex -->
+        <var-decl name='resize_mutex' type-id='type-id-37' visibility='default' filepath='./rculfhash-internal.h' line='83' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <!-- pthread_attr_t* cds_lfht::resize_attr -->
+        <var-decl name='resize_attr' type-id='type-id-53' visibility='default' filepath='./rculfhash-internal.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <!-- unsigned int cds_lfht::in_progress_resize -->
+        <var-decl name='in_progress_resize' type-id='type-id-26' visibility='default' filepath='./rculfhash-internal.h' line='85' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='672'>
+        <!-- unsigned int cds_lfht::in_progress_destroy -->
+        <var-decl name='in_progress_destroy' type-id='type-id-26' visibility='default' filepath='./rculfhash-internal.h' line='85' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <!-- unsigned long int cds_lfht::resize_target -->
+        <var-decl name='resize_target' type-id='type-id-22' visibility='default' filepath='./rculfhash-internal.h' line='86' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <!-- int cds_lfht::resize_initiated -->
+        <var-decl name='resize_initiated' type-id='type-id-1' visibility='default' filepath='./rculfhash-internal.h' line='87' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='800'>
+        <!-- int cds_lfht::flags -->
+        <var-decl name='flags' type-id='type-id-1' visibility='default' filepath='./rculfhash-internal.h' line='92' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <!-- unsigned long int cds_lfht::min_alloc_buckets_order -->
+        <var-decl name='min_alloc_buckets_order' type-id='type-id-22' visibility='default' filepath='./rculfhash-internal.h' line='93' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='896'>
+        <!-- unsigned long int cds_lfht::min_nr_alloc_buckets -->
+        <var-decl name='min_nr_alloc_buckets' type-id='type-id-22' visibility='default' filepath='./rculfhash-internal.h' line='94' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <!-- ht_items_count* cds_lfht::split_count -->
+        <var-decl name='split_count' type-id='type-id-54' visibility='default' filepath='./rculfhash-internal.h' line='95' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1024'>
+        <!-- unsigned long int cds_lfht::size -->
+        <var-decl name='size' type-id='type-id-22' visibility='default' filepath='./rculfhash-internal.h' line='100' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1088'>
+        <!-- cds_lfht_node* (cds_lfht*, unsigned long int)* cds_lfht::bucket_at -->
+        <var-decl name='bucket_at' type-id='type-id-55' visibility='default' filepath='./rculfhash-internal.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1152'>
+        <!-- union {cds_lfht_node* tbl_order[64]; cds_lfht_node* tbl_chunk[]; cds_lfht_node* tbl_mmap;} -->
+        <var-decl name='' type-id='type-id-56' visibility='default'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfht_mm_type -->
+    <class-decl name='cds_lfht_mm_type' size-in-bits='256' is-struct='yes' visibility='default' filepath='./urcu/rculfhash.h' line='105' column='1' id='type-id-57'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfht* (unsigned long int, unsigned long int)* cds_lfht_mm_type::alloc_cds_lfht -->
+        <var-decl name='alloc_cds_lfht' type-id='type-id-58' visibility='default' filepath='./urcu/rculfhash.h' line='106' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void ()* cds_lfht_mm_type::alloc_bucket_table -->
+        <var-decl name='alloc_bucket_table' type-id='type-id-59' visibility='default' filepath='./urcu/rculfhash.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- void ()* cds_lfht_mm_type::free_bucket_table -->
+        <var-decl name='free_bucket_table' type-id='type-id-59' visibility='default' filepath='./urcu/rculfhash.h' line='109' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- cds_lfht_node* (cds_lfht*, unsigned long int)* cds_lfht_mm_type::bucket_at -->
+        <var-decl name='bucket_at' type-id='type-id-55' visibility='default' filepath='./urcu/rculfhash.h' line='110' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_lfht_node -->
+    <class-decl name='cds_lfht_node' size-in-bits='128' is-struct='yes' visibility='default' filepath='./urcu/rculfhash.h' line='60' column='1' id='type-id-60'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfht_node* cds_lfht_node::next -->
+        <var-decl name='next' type-id='type-id-43' visibility='default' filepath='./urcu/rculfhash.h' line='61' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- unsigned long int cds_lfht_node::reverse_hash -->
+        <var-decl name='reverse_hash' type-id='type-id-22' visibility='default' filepath='./urcu/rculfhash.h' line='62' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct rcu_flavor_struct -->
+    <class-decl name='rcu_flavor_struct' size-in-bits='768' is-struct='yes' visibility='default' filepath='./urcu-flavor.h' line='30' column='1' id='type-id-61'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- void ()* rcu_flavor_struct::read_lock -->
+        <var-decl name='read_lock' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='31' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- void ()* rcu_flavor_struct::read_unlock -->
+        <var-decl name='read_unlock' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- int ()* rcu_flavor_struct::read_ongoing -->
+        <var-decl name='read_ongoing' type-id='type-id-63' visibility='default' filepath='./urcu-flavor.h' line='33' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- void ()* rcu_flavor_struct::read_quiescent_state -->
+        <var-decl name='read_quiescent_state' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- void (rcu_head*, void (rcu_head*)*)* rcu_flavor_struct::update_call_rcu -->
+        <var-decl name='update_call_rcu' type-id='type-id-6' visibility='default' filepath='./urcu-flavor.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <!-- void ()* rcu_flavor_struct::update_synchronize_rcu -->
+        <var-decl name='update_synchronize_rcu' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='37' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <!-- void (void (void*)*, void*)* rcu_flavor_struct::update_defer_rcu -->
+        <var-decl name='update_defer_rcu' type-id='type-id-64' visibility='default' filepath='./urcu-flavor.h' line='38' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <!-- void ()* rcu_flavor_struct::thread_offline -->
+        <var-decl name='thread_offline' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='40' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <!-- void ()* rcu_flavor_struct::thread_online -->
+        <var-decl name='thread_online' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='41' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <!-- void ()* rcu_flavor_struct::register_thread -->
+        <var-decl name='register_thread' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='42' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <!-- void ()* rcu_flavor_struct::unregister_thread -->
+        <var-decl name='unregister_thread' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='43' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <!-- void ()* rcu_flavor_struct::barrier -->
+        <var-decl name='barrier' type-id='type-id-62' visibility='default' filepath='./urcu-flavor.h' line='45' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef pthread_attr_t pthread_attr_t -->
+    <typedef-decl name='pthread_attr_t' type-id='type-id-65' filepath='/usr/include/bits/pthreadtypes.h' line='62' column='1' id='type-id-66'/>
+    <!-- union pthread_attr_t -->
+    <union-decl name='pthread_attr_t' size-in-bits='448' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='56' column='1' id='type-id-65'>
+      <data-member access='private'>
+        <!-- char pthread_attr_t::__size[56] -->
+        <var-decl name='__size' type-id='type-id-48' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='58' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long int pthread_attr_t::__align -->
+        <var-decl name='__align' type-id='type-id-24' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='59' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct ht_items_count -->
+    <class-decl name='ht_items_count' size-in-bits='1024' is-struct='yes' visibility='default' filepath='rculfhash.c' line='335' column='1' id='type-id-67'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned long int ht_items_count::add -->
+        <var-decl name='add' type-id='type-id-22' visibility='default' filepath='rculfhash.c' line='336' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- unsigned long int ht_items_count::del -->
+        <var-decl name='del' type-id='type-id-22' visibility='default' filepath='rculfhash.c' line='336' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- union {cds_lfht_node* tbl_order[64]; cds_lfht_node* tbl_chunk[]; cds_lfht_node* tbl_mmap;} -->
+    <union-decl name='__anonymous_union__' size-in-bits='4096' is-anonymous='yes' visibility='default' filepath='./rculfhash-internal.h' line='111' column='1' id='type-id-56'>
+      <data-member access='private'>
+        <!-- cds_lfht_node* tbl_order[64] -->
+        <var-decl name='tbl_order' type-id='type-id-44' visibility='default' filepath='./rculfhash-internal.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- cds_lfht_node* tbl_chunk[] -->
+        <var-decl name='tbl_chunk' type-id='type-id-46' visibility='default' filepath='./rculfhash-internal.h' line='132' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- cds_lfht_node* tbl_mmap -->
+        <var-decl name='tbl_mmap' type-id='type-id-43' visibility='default' filepath='./rculfhash-internal.h' line='138' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct cds_lfht_iter -->
+    <class-decl name='cds_lfht_iter' size-in-bits='128' is-struct='yes' visibility='default' filepath='./urcu/rculfhash.h' line='66' column='1' id='type-id-68'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_lfht_node* cds_lfht_iter::node -->
+        <var-decl name='node' type-id='type-id-43' visibility='default' filepath='./urcu/rculfhash.h' line='67' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- cds_lfht_node* cds_lfht_iter::next -->
+        <var-decl name='next' type-id='type-id-43' visibility='default' filepath='./urcu/rculfhash.h' line='67' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef int (cds_lfht_node*, void*)* cds_lfht_match_fct -->
+    <typedef-decl name='cds_lfht_match_fct' type-id='type-id-69' filepath='./urcu/rculfhash.h' line='83' column='1' id='type-id-70'/>
+    <!-- typedef __uint32_t uint32_t -->
+    <typedef-decl name='uint32_t' type-id='type-id-71' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' id='type-id-72'/>
+    <!-- typedef unsigned int __uint32_t -->
+    <typedef-decl name='__uint32_t' type-id='type-id-26' filepath='/usr/include/bits/types.h' line='42' column='1' id='type-id-71'/>
+    <!-- cds_lfht* -->
+    <pointer-type-def type-id='type-id-50' size-in-bits='64' id='type-id-73'/>
+    <!-- cds_lfht* (unsigned long int, unsigned long int)* -->
+    <pointer-type-def type-id='type-id-74' size-in-bits='64' id='type-id-58'/>
+    <!-- cds_lfht_iter* -->
+    <pointer-type-def type-id='type-id-68' size-in-bits='64' id='type-id-75'/>
+    <!-- cds_lfht_node* -->
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' id='type-id-43'/>
+    <!-- cds_lfht_node* (cds_lfht*, unsigned long int)* -->
+    <pointer-type-def type-id='type-id-76' size-in-bits='64' id='type-id-55'/>
+    <!-- const cds_lfht_mm_type -->
+    <qualified-type-def type-id='type-id-57' const='yes' id='type-id-77'/>
+    <!-- const cds_lfht_mm_type* -->
+    <pointer-type-def type-id='type-id-77' size-in-bits='64' id='type-id-51'/>
+    <!-- const rcu_flavor_struct -->
+    <qualified-type-def type-id='type-id-61' const='yes' id='type-id-78'/>
+    <!-- const rcu_flavor_struct* -->
+    <pointer-type-def type-id='type-id-78' size-in-bits='64' id='type-id-52'/>
+    <!-- ht_items_count* -->
+    <pointer-type-def type-id='type-id-67' size-in-bits='64' id='type-id-54'/>
+    <!-- int ()* -->
+    <pointer-type-def type-id='type-id-79' size-in-bits='64' id='type-id-63'/>
+    <!-- int (cds_lfht_node*, void*)* -->
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' id='type-id-69'/>
+    <!-- long int* -->
+    <pointer-type-def type-id='type-id-24' size-in-bits='64' id='type-id-81'/>
+    <!-- pthread_attr_t* -->
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' id='type-id-53'/>
+    <!-- pthread_attr_t** -->
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' id='type-id-82'/>
+    <!-- unsigned long int* -->
+    <pointer-type-def type-id='type-id-22' size-in-bits='64' id='type-id-83'/>
+    <!-- void ()* -->
+    <pointer-type-def type-id='type-id-84' size-in-bits='64' id='type-id-62'/>
+    <!-- void ()* -->
+    <pointer-type-def type-id='type-id-85' size-in-bits='64' id='type-id-59'/>
+    <!-- void (void (void*)*, void*)* -->
+    <pointer-type-def type-id='type-id-86' size-in-bits='64' id='type-id-64'/>
+    <!-- void (void*)* -->
+    <pointer-type-def type-id='type-id-87' size-in-bits='64' id='type-id-88'/>
+    <!-- void* -->
+    <pointer-type-def type-id='type-id-2' size-in-bits='64' id='type-id-89'/>
+    <!-- void cds_lfht_resize(cds_lfht*, unsigned long int) -->
+    <function-decl name='cds_lfht_resize' mangled-name='cds_lfht_resize' filepath='rculfhash.c' line='1933' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_resize'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1933' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='new_size' filepath='rculfhash.c' line='1933' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfht_count_nodes(cds_lfht*, long int*, unsigned long int*, long int*) -->
+    <function-decl name='cds_lfht_count_nodes' mangled-name='cds_lfht_count_nodes' filepath='rculfhash.c' line='1810' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_count_nodes'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1810' column='1'/>
+      <!-- parameter of type 'long int*' -->
+      <parameter type-id='type-id-81' name='approx_before' filepath='rculfhash.c' line='1811' column='1'/>
+      <!-- parameter of type 'unsigned long int*' -->
+      <parameter type-id='type-id-83' name='count' filepath='rculfhash.c' line='1812' column='1'/>
+      <!-- parameter of type 'long int*' -->
+      <parameter type-id='type-id-81' name='approx_after' filepath='rculfhash.c' line='1813' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- int cds_lfht_destroy(cds_lfht*, pthread_attr_t**) -->
+    <function-decl name='cds_lfht_destroy' mangled-name='cds_lfht_destroy' filepath='rculfhash.c' line='1775' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_destroy'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1775' column='1'/>
+      <!-- parameter of type 'pthread_attr_t**' -->
+      <parameter type-id='type-id-82' name='attr' filepath='rculfhash.c' line='1775' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int cds_lfht_is_node_deleted(cds_lfht_node*) -->
+    <function-decl name='cds_lfht_is_node_deleted' mangled-name='cds_lfht_is_node_deleted' filepath='rculfhash.c' line='1732' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_is_node_deleted'>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='node' filepath='rculfhash.c' line='1732' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int cds_lfht_del(cds_lfht*, cds_lfht_node*) -->
+    <function-decl name='cds_lfht_del' mangled-name='cds_lfht_del' filepath='rculfhash.c' line='1716' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_del'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1716' column='1'/>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='node' filepath='rculfhash.c' line='1716' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int cds_lfht_replace(cds_lfht*, cds_lfht_iter*, unsigned long int, cds_lfht_match_fct, void*, cds_lfht_node*) -->
+    <function-decl name='cds_lfht_replace' mangled-name='cds_lfht_replace' filepath='rculfhash.c' line='1695' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_replace'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1695' column='1'/>
+      <!-- parameter of type 'cds_lfht_iter*' -->
+      <parameter type-id='type-id-75' name='old_iter' filepath='rculfhash.c' line='1696' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='hash' filepath='rculfhash.c' line='1697' column='1'/>
+      <!-- parameter of type 'typedef cds_lfht_match_fct' -->
+      <parameter type-id='type-id-70' name='match' filepath='rculfhash.c' line='1698' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89' name='key' filepath='rculfhash.c' line='1699' column='1'/>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='new_node' filepath='rculfhash.c' line='1700' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- cds_lfht_node* cds_lfht_add_replace(cds_lfht*, unsigned long int, cds_lfht_match_fct, void*, cds_lfht_node*) -->
+    <function-decl name='cds_lfht_add_replace' mangled-name='cds_lfht_add_replace' filepath='rculfhash.c' line='1672' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_add_replace'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1672' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='hash' filepath='rculfhash.c' line='1673' column='1'/>
+      <!-- parameter of type 'typedef cds_lfht_match_fct' -->
+      <parameter type-id='type-id-70' name='match' filepath='rculfhash.c' line='1674' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89' name='key' filepath='rculfhash.c' line='1675' column='1'/>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='node' filepath='rculfhash.c' line='1676' column='1'/>
+      <!-- cds_lfht_node* -->
+      <return type-id='type-id-43'/>
+    </function-decl>
+    <!-- cds_lfht_node* cds_lfht_add_unique(cds_lfht*, unsigned long int, cds_lfht_match_fct, void*, cds_lfht_node*) -->
+    <function-decl name='cds_lfht_add_unique' mangled-name='cds_lfht_add_unique' filepath='rculfhash.c' line='1655' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_add_unique'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1655' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='hash' filepath='rculfhash.c' line='1656' column='1'/>
+      <!-- parameter of type 'typedef cds_lfht_match_fct' -->
+      <parameter type-id='type-id-70' name='match' filepath='rculfhash.c' line='1657' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89' name='key' filepath='rculfhash.c' line='1658' column='1'/>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='node' filepath='rculfhash.c' line='1659' column='1'/>
+      <!-- cds_lfht_node* -->
+      <return type-id='type-id-43'/>
+    </function-decl>
+    <!-- void cds_lfht_add(cds_lfht*, unsigned long int, cds_lfht_node*) -->
+    <function-decl name='cds_lfht_add' mangled-name='cds_lfht_add' filepath='rculfhash.c' line='1644' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_add'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1644' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='hash' filepath='rculfhash.c' line='1644' column='1'/>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43' name='node' filepath='rculfhash.c' line='1645' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfht_first(cds_lfht*, cds_lfht_iter*) -->
+    <function-decl name='cds_lfht_first' mangled-name='cds_lfht_first' filepath='rculfhash.c' line='1634' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_first'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1634' column='1'/>
+      <!-- parameter of type 'cds_lfht_iter*' -->
+      <parameter type-id='type-id-75' name='iter' filepath='rculfhash.c' line='1634' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfht_next(cds_lfht*, cds_lfht_iter*) -->
+    <function-decl name='cds_lfht_next' mangled-name='cds_lfht_next' filepath='rculfhash.c' line='1612' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_next'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1612' column='1'/>
+      <!-- parameter of type 'cds_lfht_iter*' -->
+      <parameter type-id='type-id-75' name='iter' filepath='rculfhash.c' line='1612' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfht_next_duplicate(cds_lfht*, cds_lfht_match_fct, void*, cds_lfht_iter*) -->
+    <function-decl name='cds_lfht_next_duplicate' mangled-name='cds_lfht_next_duplicate' filepath='rculfhash.c' line='1579' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_next_duplicate'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1579' column='1'/>
+      <!-- parameter of type 'typedef cds_lfht_match_fct' -->
+      <parameter type-id='type-id-70' name='match' filepath='rculfhash.c' line='1579' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89' name='key' filepath='rculfhash.c' line='1580' column='1'/>
+      <!-- parameter of type 'cds_lfht_iter*' -->
+      <parameter type-id='type-id-75' name='iter' filepath='rculfhash.c' line='1580' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void cds_lfht_lookup(cds_lfht*, unsigned long int, cds_lfht_match_fct, void*, cds_lfht_iter*) -->
+    <function-decl name='cds_lfht_lookup' mangled-name='cds_lfht_lookup' filepath='rculfhash.c' line='1541' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_lookup'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht' filepath='rculfhash.c' line='1541' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='hash' filepath='rculfhash.c' line='1541' column='1'/>
+      <!-- parameter of type 'typedef cds_lfht_match_fct' -->
+      <parameter type-id='type-id-70' name='match' filepath='rculfhash.c' line='1542' column='1'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89' name='key' filepath='rculfhash.c' line='1542' column='1'/>
+      <!-- parameter of type 'cds_lfht_iter*' -->
+      <parameter type-id='type-id-75' name='iter' filepath='rculfhash.c' line='1543' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- cds_lfht* _cds_lfht_new(unsigned long int, unsigned long int, unsigned long int, int, const cds_lfht_mm_type*, const rcu_flavor_struct*, pthread_attr_t*) -->
+    <function-decl name='_cds_lfht_new' mangled-name='_cds_lfht_new' filepath='rculfhash.c' line='1467' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='_cds_lfht_new'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='init_size' filepath='rculfhash.c' line='1467' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='min_nr_alloc_buckets' filepath='rculfhash.c' line='1468' column='1'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='max_nr_buckets' filepath='rculfhash.c' line='1469' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='flags' filepath='rculfhash.c' line='1470' column='1'/>
+      <!-- parameter of type 'const cds_lfht_mm_type*' -->
+      <parameter type-id='type-id-51' name='mm' filepath='rculfhash.c' line='1471' column='1'/>
+      <!-- parameter of type 'const rcu_flavor_struct*' -->
+      <parameter type-id='type-id-52' name='flavor' filepath='rculfhash.c' line='1472' column='1'/>
+      <!-- parameter of type 'pthread_attr_t*' -->
+      <parameter type-id='type-id-53' name='attr' filepath='rculfhash.c' line='1473' column='1'/>
+      <!-- cds_lfht* -->
+      <return type-id='type-id-73'/>
+    </function-decl>
+    <!-- int cds_lfht_get_count_order_ulong(unsigned long int) -->
+    <function-decl name='cds_lfht_get_count_order_ulong' mangled-name='cds_lfht_get_count_order_ulong' filepath='rculfhash.c' line='551' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_get_count_order_ulong'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='x' filepath='rculfhash.c' line='551' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int cds_lfht_get_count_order_u32(uint32_t) -->
+    <function-decl name='cds_lfht_get_count_order_u32' mangled-name='cds_lfht_get_count_order_u32' filepath='rculfhash.c' line='539' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_get_count_order_u32'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='type-id-72' name='x' filepath='rculfhash.c' line='539' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- unsigned int cds_lfht_fls_ulong(unsigned long int) -->
+    <function-decl name='cds_lfht_fls_ulong' mangled-name='cds_lfht_fls_ulong' filepath='rculfhash.c' line='526' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_lfht_fls_ulong'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='x' filepath='rculfhash.c' line='526' column='1'/>
+      <!-- unsigned int -->
+      <return type-id='type-id-26'/>
+    </function-decl>
+    <!-- cds_lfht* (unsigned long int, unsigned long int) -->
+    <function-type size-in-bits='64' id='type-id-74'>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22'/>
+      <!-- cds_lfht* -->
+      <return type-id='type-id-73'/>
+    </function-type>
+    <!-- cds_lfht_node* (cds_lfht*, unsigned long int) -->
+    <function-type size-in-bits='64' id='type-id-76'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22'/>
+      <!-- cds_lfht_node* -->
+      <return type-id='type-id-43'/>
+    </function-type>
+    <!-- int () -->
+    <function-type size-in-bits='64' id='type-id-79'>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-type>
+    <!-- int (cds_lfht_node*, void*) -->
+    <function-type size-in-bits='64' id='type-id-80'>
+      <!-- parameter of type 'cds_lfht_node*' -->
+      <parameter type-id='type-id-43'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-type>
+    <!-- void () -->
+    <function-type size-in-bits='64' id='type-id-84'>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+    <!-- void (cds_lfht*, unsigned long int) -->
+    <function-type size-in-bits='64' id='type-id-85'>
+      <!-- parameter of type 'cds_lfht*' -->
+      <parameter type-id='type-id-73' name='ht'/>
+      <!-- parameter of type 'unsigned long int' -->
+      <parameter type-id='type-id-22' name='new_size'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+    <!-- void (void (void*)*, void*) -->
+    <function-type size-in-bits='64' id='type-id-86'>
+      <!-- parameter of type 'void (void*)*' -->
+      <parameter type-id='type-id-88'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+    <!-- void (void*) -->
+    <function-type size-in-bits='64' id='type-id-87'>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='type-id-89'/>
+      <!-- void -->
+      <return type-id='type-id-2'/>
+    </function-type>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='rculfhash-mm-order.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+    <!-- const cds_lfht_mm_type cds_lfht_mm_order -->
+    <var-decl name='cds_lfht_mm_order' type-id='type-id-77' mangled-name='cds_lfht_mm_order' visibility='default' filepath='./urcu/rculfhash.h' line='114' column='1' elf-symbol-id='cds_lfht_mm_order'/>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='rculfhash-mm-chunk.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+    <!-- const cds_lfht_mm_type cds_lfht_mm_chunk -->
+    <var-decl name='cds_lfht_mm_chunk' type-id='type-id-77' mangled-name='cds_lfht_mm_chunk' visibility='default' filepath='./urcu/rculfhash.h' line='115' column='1' elf-symbol-id='cds_lfht_mm_chunk'/>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='rculfhash-mm-mmap.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+    <!-- const cds_lfht_mm_type cds_lfht_mm_mmap -->
+    <var-decl name='cds_lfht_mm_mmap' type-id='type-id-77' mangled-name='cds_lfht_mm_mmap' visibility='default' filepath='./urcu/rculfhash.h' line='116' column='1' elf-symbol-id='cds_lfht_mm_mmap'/>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='compat_futex.c' comp-dir-path='/home/mjeanson/Git/lttng/userspace-rcu/stable-0.9' language='LANG_C99'>
+
+
+    <!-- char[48] -->
+    <array-type-def dimensions='1' type-id='type-id-20' size-in-bits='384' id='type-id-90'>
+      <!-- <anonymous range>[48] -->
+      <subrange length='48' type-id='type-id-22' id='type-id-91'/>
+
+    </array-type-def>
+    <!-- long long int -->
+    <type-decl name='long long int' size-in-bits='64' id='type-id-92'/>
+    <!-- long long unsigned int -->
+    <type-decl name='long long unsigned int' size-in-bits='64' id='type-id-93'/>
+    <!-- unsigned int[2] -->
+    <array-type-def dimensions='1' type-id='type-id-26' size-in-bits='64' id='type-id-94'>
+      <!-- <anonymous range>[2] -->
+      <subrange length='2' type-id='type-id-22' id='type-id-95'/>
+
+    </array-type-def>
+    <!-- typedef __anonymous_union__ pthread_cond_t -->
+    <typedef-decl name='pthread_cond_t' type-id='type-id-96' filepath='/usr/include/bits/pthreadtypes.h' line='80' column='1' id='type-id-97'/>
+    <!-- union {__pthread_cond_s __data; char __size[48]; long long int __align;} -->
+    <union-decl name='__anonymous_union__' size-in-bits='384' is-anonymous='yes' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='75' column='1' id='type-id-96'>
+      <data-member access='private'>
+        <!-- __pthread_cond_s __data -->
+        <var-decl name='__data' type-id='type-id-98' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='77' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __size[48] -->
+        <var-decl name='__size' type-id='type-id-90' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long long int __align -->
+        <var-decl name='__align' type-id='type-id-92' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='79' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_cond_s -->
+    <class-decl name='__pthread_cond_s' size-in-bits='384' is-struct='yes' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='92' column='1' id='type-id-98'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- union {long long unsigned int __wseq; struct {unsigned int __low; unsigned int __high;} __wseq32;} -->
+        <var-decl name='' type-id='type-id-99' visibility='default'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- unsigned int __pthread_cond_s::__g_refs[2] -->
+        <var-decl name='__g_refs' type-id='type-id-94' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='112' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- unsigned int __pthread_cond_s::__g_size[2] -->
+        <var-decl name='__g_size' type-id='type-id-94' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='113' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- unsigned int __pthread_cond_s::__g1_orig_size -->
+        <var-decl name='__g1_orig_size' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <!-- unsigned int __pthread_cond_s::__wrefs -->
+        <var-decl name='__wrefs' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='115' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <!-- unsigned int __pthread_cond_s::__g_signals[2] -->
+        <var-decl name='__g_signals' type-id='type-id-94' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='116' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- union {long long unsigned int __wseq; struct {unsigned int __low; unsigned int __high;} __wseq32;} -->
+    <union-decl name='__anonymous_union__1' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='94' column='1' id='type-id-99'>
+      <data-member access='private'>
+        <!-- long long unsigned int __wseq -->
+        <var-decl name='__wseq' type-id='type-id-93' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='96' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- struct {unsigned int __low; unsigned int __high;} __wseq32 -->
+        <var-decl name='__wseq32' type-id='type-id-100' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='101' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct {unsigned int __low; unsigned int __high;} -->
+    <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='97' column='1' id='type-id-100'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned int __low -->
+        <var-decl name='__low' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='99' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __high -->
+        <var-decl name='__high' type-id='type-id-26' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='100' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef __int32_t int32_t -->
+    <typedef-decl name='int32_t' type-id='type-id-101' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' id='type-id-102'/>
+    <!-- typedef int __int32_t -->
+    <typedef-decl name='__int32_t' type-id='type-id-1' filepath='/usr/include/bits/types.h' line='41' column='1' id='type-id-101'/>
+    <!-- struct timespec -->
+    <class-decl name='timespec' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/bits/types/struct_timespec.h' line='10' column='1' id='type-id-103'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __time_t timespec::tv_sec -->
+        <var-decl name='tv_sec' type-id='type-id-104' visibility='default' filepath='/usr/include/bits/types/struct_timespec.h' line='12' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __syscall_slong_t timespec::tv_nsec -->
+        <var-decl name='tv_nsec' type-id='type-id-105' visibility='default' filepath='/usr/include/bits/types/struct_timespec.h' line='16' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef long int __time_t -->
+    <typedef-decl name='__time_t' type-id='type-id-24' filepath='/usr/include/bits/types.h' line='160' column='1' id='type-id-104'/>
+    <!-- typedef long int __syscall_slong_t -->
+    <typedef-decl name='__syscall_slong_t' type-id='type-id-24' filepath='/usr/include/bits/types.h' line='197' column='1' id='type-id-105'/>
+    <!-- const timespec -->
+    <qualified-type-def type-id='type-id-103' const='yes' id='type-id-106'/>
+    <!-- const timespec* -->
+    <pointer-type-def type-id='type-id-106' size-in-bits='64' id='type-id-107'/>
+    <!-- int32_t* -->
+    <pointer-type-def type-id='type-id-102' size-in-bits='64' id='type-id-108'/>
+    <!-- pthread_mutex_t __urcu_compat_futex_lock -->
+    <var-decl name='__urcu_compat_futex_lock' type-id='type-id-37' mangled-name='__urcu_compat_futex_lock' visibility='default' filepath='compat_futex.c' line='44' column='1' elf-symbol-id='__urcu_compat_futex_lock'/>
+    <!-- pthread_cond_t __urcu_compat_futex_cond -->
+    <var-decl name='__urcu_compat_futex_cond' type-id='type-id-97' mangled-name='__urcu_compat_futex_cond' visibility='default' filepath='compat_futex.c' line='46' column='1' elf-symbol-id='__urcu_compat_futex_cond'/>
+    <!-- int compat_futex_async(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_async' mangled-name='compat_futex_async' filepath='compat_futex.c' line='118' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_async'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-108' name='uaddr' filepath='compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='op' filepath='compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-102' name='val' filepath='compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-107' name='timeout' filepath='compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-108' name='uaddr2' filepath='compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-102' name='val3' filepath='compat_futex.c' line='119' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <!-- int compat_futex_noasync(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_noasync' mangled-name='compat_futex_noasync' filepath='compat_futex.c' line='54' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_noasync'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-108' name='uaddr' filepath='compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-1' name='op' filepath='compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-102' name='val' filepath='compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-107' name='timeout' filepath='compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-108' name='uaddr2' filepath='compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-102' name='val3' filepath='compat_futex.c' line='55' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-1'/>
+    </function-decl>
+  </abi-instr>
+</abi-corpus>

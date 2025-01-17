@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2020 EfficiOS Inc.
+#
+# SPDX-License-Identifier: MIT
+
+[gerrit]
+host=review.lttng.org
+port=29418
+project=userspace-rcu.git
+defaultbranch=master
+defaultremote=review
+defaultrebase=0

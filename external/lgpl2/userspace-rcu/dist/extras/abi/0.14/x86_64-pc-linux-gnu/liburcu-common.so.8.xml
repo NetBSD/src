@@ -1,0 +1,910 @@
+<abi-corpus architecture='elf-amd-x86_64' soname='liburcu-common.so.8'>
+<!--
+SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+
+SPDX-License-Identifier: CC0-1.0
+-->
+  <elf-needed>
+    <dependency name='libpthread.so.0'/>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <!-- __cds_wfcq_dequeue_blocking -->
+    <elf-symbol name='__cds_wfcq_dequeue_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_dequeue_nonblocking -->
+    <elf-symbol name='__cds_wfcq_dequeue_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_dequeue_with_state_blocking -->
+    <elf-symbol name='__cds_wfcq_dequeue_with_state_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_dequeue_with_state_nonblocking -->
+    <elf-symbol name='__cds_wfcq_dequeue_with_state_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_first_blocking -->
+    <elf-symbol name='__cds_wfcq_first_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_first_nonblocking -->
+    <elf-symbol name='__cds_wfcq_first_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_init -->
+    <elf-symbol name='__cds_wfcq_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_next_blocking -->
+    <elf-symbol name='__cds_wfcq_next_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_next_nonblocking -->
+    <elf-symbol name='__cds_wfcq_next_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_splice_blocking -->
+    <elf-symbol name='__cds_wfcq_splice_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfcq_splice_nonblocking -->
+    <elf-symbol name='__cds_wfcq_splice_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfq_dequeue_blocking -->
+    <elf-symbol name='__cds_wfq_dequeue_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_init -->
+    <elf-symbol name='__cds_wfs_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_pop_all -->
+    <elf-symbol name='__cds_wfs_pop_all' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_pop_blocking -->
+    <elf-symbol name='__cds_wfs_pop_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_pop_nonblocking -->
+    <elf-symbol name='__cds_wfs_pop_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_pop_with_state_blocking -->
+    <elf-symbol name='__cds_wfs_pop_with_state_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __cds_wfs_pop_with_state_nonblocking -->
+    <elf-symbol name='__cds_wfs_pop_with_state_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- _fini -->
+    <elf-symbol name='_fini' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- _init -->
+    <elf-symbol name='_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_dequeue_blocking -->
+    <elf-symbol name='cds_wfcq_dequeue_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_dequeue_lock -->
+    <elf-symbol name='cds_wfcq_dequeue_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_dequeue_unlock -->
+    <elf-symbol name='cds_wfcq_dequeue_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_dequeue_with_state_blocking -->
+    <elf-symbol name='cds_wfcq_dequeue_with_state_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_destroy -->
+    <elf-symbol name='cds_wfcq_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_empty -->
+    <elf-symbol name='cds_wfcq_empty' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_enqueue -->
+    <elf-symbol name='cds_wfcq_enqueue' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_init -->
+    <elf-symbol name='cds_wfcq_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_node_init -->
+    <elf-symbol name='cds_wfcq_node_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfcq_splice_blocking -->
+    <elf-symbol name='cds_wfcq_splice_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfq_dequeue_blocking -->
+    <elf-symbol name='cds_wfq_dequeue_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfq_destroy -->
+    <elf-symbol name='cds_wfq_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfq_enqueue -->
+    <elf-symbol name='cds_wfq_enqueue' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfq_init -->
+    <elf-symbol name='cds_wfq_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfq_node_init -->
+    <elf-symbol name='cds_wfq_node_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_destroy -->
+    <elf-symbol name='cds_wfs_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_empty -->
+    <elf-symbol name='cds_wfs_empty' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_first -->
+    <elf-symbol name='cds_wfs_first' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_init -->
+    <elf-symbol name='cds_wfs_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_next_blocking -->
+    <elf-symbol name='cds_wfs_next_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_next_nonblocking -->
+    <elf-symbol name='cds_wfs_next_nonblocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_node_init -->
+    <elf-symbol name='cds_wfs_node_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_pop_all_blocking -->
+    <elf-symbol name='cds_wfs_pop_all_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_pop_blocking -->
+    <elf-symbol name='cds_wfs_pop_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_pop_lock -->
+    <elf-symbol name='cds_wfs_pop_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_pop_unlock -->
+    <elf-symbol name='cds_wfs_pop_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_pop_with_state_blocking -->
+    <elf-symbol name='cds_wfs_pop_with_state_blocking' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- cds_wfs_push -->
+    <elf-symbol name='cds_wfs_push' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_async -->
+    <elf-symbol name='compat_futex_async' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- compat_futex_noasync -->
+    <elf-symbol name='compat_futex_noasync' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <elf-variable-symbols>
+    <!-- __urcu_compat_futex_cond -->
+    <elf-symbol name='__urcu_compat_futex_cond' size='48' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- __urcu_compat_futex_lock -->
+    <elf-symbol name='__urcu_compat_futex_lock' size='40' type='object-type' binding='weak-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-variable-symbols>
+  <abi-instr version='1.0' address-size='64' path='wfqueue.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- struct cds_wfq_node -->
+    <class-decl name='cds_wfq_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfqueue.h' line='47' column='1' id='type-id-1'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfq_node* cds_wfq_node::next -->
+        <var-decl name='next' type-id='type-id-2' visibility='default' filepath='../include/urcu/wfqueue.h' line='48' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfq_node* -->
+    <pointer-type-def type-id='type-id-1' size-in-bits='64' id='type-id-2'/>
+    <!-- struct cds_wfq_queue -->
+    <class-decl name='cds_wfq_queue' size-in-bits='512' is-struct='yes' visibility='default' filepath='../include/urcu/wfqueue.h' line='51' column='1' id='type-id-3'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfq_node* cds_wfq_queue::head -->
+        <var-decl name='head' type-id='type-id-2' visibility='default' filepath='../include/urcu/wfqueue.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- cds_wfq_node** cds_wfq_queue::tail -->
+        <var-decl name='tail' type-id='type-id-4' visibility='default' filepath='../include/urcu/wfqueue.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- cds_wfq_node cds_wfq_queue::dummy -->
+        <var-decl name='dummy' type-id='type-id-1' visibility='default' filepath='../include/urcu/wfqueue.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- pthread_mutex_t cds_wfq_queue::lock -->
+        <var-decl name='lock' type-id='type-id-5' visibility='default' filepath='../include/urcu/wfqueue.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfq_node** -->
+    <pointer-type-def type-id='type-id-2' size-in-bits='64' id='type-id-4'/>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='320' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='67' column='1' id='type-id-6'>
+      <data-member access='private'>
+        <!-- __pthread_mutex_s __anonymous_union__::__data -->
+        <var-decl name='__data' type-id='type-id-7' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __anonymous_union__::__size[40] -->
+        <var-decl name='__size' type-id='type-id-8' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long int __anonymous_union__::__align -->
+        <var-decl name='__align' type-id='type-id-9' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_mutex_s -->
+    <class-decl name='__pthread_mutex_s' size-in-bits='320' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='118' column='1' id='type-id-7'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- int __pthread_mutex_s::__lock -->
+        <var-decl name='__lock' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __pthread_mutex_s::__count -->
+        <var-decl name='__count' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- int __pthread_mutex_s::__owner -->
+        <var-decl name='__owner' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <!-- unsigned int __pthread_mutex_s::__nusers -->
+        <var-decl name='__nusers' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='124' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- int __pthread_mutex_s::__kind -->
+        <var-decl name='__kind' type-id='type-id-10' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <!-- short int __pthread_mutex_s::__spins -->
+        <var-decl name='__spins' type-id='type-id-12' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <!-- short int __pthread_mutex_s::__elision -->
+        <var-decl name='__elision' type-id='type-id-12' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- __pthread_list_t __pthread_mutex_s::__list -->
+        <var-decl name='__list' type-id='type-id-13' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='155' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- int -->
+    <type-decl name='int' size-in-bits='32' id='type-id-10'/>
+    <!-- unsigned int -->
+    <type-decl name='unsigned int' size-in-bits='32' id='type-id-11'/>
+    <!-- short int -->
+    <type-decl name='short int' size-in-bits='16' id='type-id-12'/>
+    <!-- struct __pthread_internal_list -->
+    <class-decl name='__pthread_internal_list' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='82' column='1' id='type-id-14'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__prev -->
+        <var-decl name='__prev' type-id='type-id-15' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __pthread_internal_list* __pthread_internal_list::__next -->
+        <var-decl name='__next' type-id='type-id-15' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='85' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- __pthread_internal_list* -->
+    <pointer-type-def type-id='type-id-14' size-in-bits='64' id='type-id-15'/>
+    <!-- typedef __pthread_internal_list __pthread_list_t -->
+    <typedef-decl name='__pthread_list_t' type-id='type-id-14' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='86' column='1' id='type-id-13'/>
+    <!-- char -->
+    <type-decl name='char' size-in-bits='8' id='type-id-16'/>
+    <!-- unsigned long int -->
+    <type-decl name='unsigned long int' size-in-bits='64' id='type-id-17'/>
+
+    <!-- char[40] -->
+    <array-type-def dimensions='1' type-id='type-id-16' size-in-bits='320' id='type-id-8'>
+      <!-- <anonymous range>[40] -->
+      <subrange length='40' type-id='type-id-17' id='type-id-18'/>
+
+    </array-type-def>
+    <!-- long int -->
+    <type-decl name='long int' size-in-bits='64' id='type-id-9'/>
+    <!-- typedef __anonymous_union__ pthread_mutex_t -->
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-6' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='72' column='1' id='type-id-5'/>
+    <!-- cds_wfq_queue* -->
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' id='type-id-19'/>
+    <!-- cds_wfq_node* cds_wfq_dequeue_blocking(cds_wfq_queue*) -->
+    <function-decl name='cds_wfq_dequeue_blocking' mangled-name='cds_wfq_dequeue_blocking' filepath='src/wfqueue.c' line='59' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfq_dequeue_blocking'>
+      <!-- parameter of type 'cds_wfq_queue*' -->
+      <parameter type-id='type-id-19' name='q' filepath='src/wfqueue.c' line='59' column='1'/>
+      <!-- cds_wfq_node* -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- cds_wfq_node* __cds_wfq_dequeue_blocking(cds_wfq_queue*) -->
+    <function-decl name='__cds_wfq_dequeue_blocking' mangled-name='__cds_wfq_dequeue_blocking' filepath='src/wfqueue.c' line='54' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfq_dequeue_blocking'>
+      <!-- parameter of type 'cds_wfq_queue*' -->
+      <parameter type-id='type-id-19' name='q' filepath='src/wfqueue.c' line='59' column='1'/>
+      <!-- cds_wfq_node* -->
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <!-- void -->
+    <type-decl name='void' id='type-id-20'/>
+    <!-- void cds_wfq_enqueue(cds_wfq_queue*, cds_wfq_node*) -->
+    <function-decl name='cds_wfq_enqueue' mangled-name='cds_wfq_enqueue' filepath='src/wfqueue.c' line='49' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfq_enqueue'>
+      <!-- parameter of type 'cds_wfq_queue*' -->
+      <parameter type-id='type-id-19' name='q' filepath='src/wfqueue.c' line='49' column='1'/>
+      <!-- parameter of type 'cds_wfq_node*' -->
+      <parameter type-id='type-id-2' name='node' filepath='src/wfqueue.c' line='49' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfq_destroy(cds_wfq_queue*) -->
+    <function-decl name='cds_wfq_destroy' mangled-name='cds_wfq_destroy' filepath='src/wfqueue.c' line='44' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfq_destroy'>
+      <!-- parameter of type 'cds_wfq_queue*' -->
+      <parameter type-id='type-id-19' name='q' filepath='src/wfqueue.c' line='44' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfq_init(cds_wfq_queue*) -->
+    <function-decl name='cds_wfq_init' mangled-name='cds_wfq_init' filepath='src/wfqueue.c' line='39' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfq_init'>
+      <!-- parameter of type 'cds_wfq_queue*' -->
+      <parameter type-id='type-id-19' name='q' filepath='src/wfqueue.c' line='44' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfq_node_init(cds_wfq_node*) -->
+    <function-decl name='cds_wfq_node_init' mangled-name='cds_wfq_node_init' filepath='src/wfqueue.c' line='34' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfq_node_init'>
+      <!-- parameter of type 'cds_wfq_node*' -->
+      <parameter type-id='type-id-2' name='node' filepath='src/wfqueue.c' line='34' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='wfcqueue.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- struct cds_wfcq_node -->
+    <class-decl name='cds_wfcq_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='58' column='1' id='type-id-21'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node* cds_wfcq_node::next -->
+        <var-decl name='next' type-id='type-id-22' visibility='default' filepath='../include/urcu/wfcqueue.h' line='59' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfcq_node* -->
+    <pointer-type-def type-id='type-id-21' size-in-bits='64' id='type-id-22'/>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='91' column='1' id='type-id-23'>
+      <data-member access='private'>
+        <!-- __cds_wfcq_head* __anonymous_union__::_h -->
+        <var-decl name='_h' type-id='type-id-24' visibility='default' filepath='../include/urcu/wfcqueue.h' line='92' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- cds_wfcq_head* __anonymous_union__::h -->
+        <var-decl name='h' type-id='type-id-25' visibility='default' filepath='../include/urcu/wfcqueue.h' line='93' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __cds_wfcq_head -->
+    <class-decl name='__cds_wfcq_head' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='67' column='1' id='type-id-26'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node __cds_wfcq_head::node -->
+        <var-decl name='node' type-id='type-id-21' visibility='default' filepath='../include/urcu/wfcqueue.h' line='68' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- __cds_wfcq_head* -->
+    <pointer-type-def type-id='type-id-26' size-in-bits='64' id='type-id-24'/>
+    <!-- struct cds_wfcq_head -->
+    <class-decl name='cds_wfcq_head' size-in-bits='384' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='71' column='1' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node cds_wfcq_head::node -->
+        <var-decl name='node' type-id='type-id-21' visibility='default' filepath='../include/urcu/wfcqueue.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- pthread_mutex_t cds_wfcq_head::lock -->
+        <var-decl name='lock' type-id='type-id-5' visibility='default' filepath='../include/urcu/wfcqueue.h' line='73' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfcq_head* -->
+    <pointer-type-def type-id='type-id-27' size-in-bits='64' id='type-id-25'/>
+    <!-- typedef __anonymous_union__ cds_wfcq_head_ptr_t -->
+    <typedef-decl name='cds_wfcq_head_ptr_t' type-id='type-id-23' filepath='../include/urcu/wfcqueue.h' line='94' column='1' id='type-id-28'/>
+    <!-- struct cds_wfcq_tail -->
+    <class-decl name='cds_wfcq_tail' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfcqueue.h' line='140' column='1' id='type-id-29'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfcq_node* cds_wfcq_tail::p -->
+        <var-decl name='p' type-id='type-id-22' visibility='default' filepath='../include/urcu/wfcqueue.h' line='141' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfcq_tail* -->
+    <pointer-type-def type-id='type-id-29' size-in-bits='64' id='type-id-30'/>
+    <!-- cds_wfcq_node* __cds_wfcq_next_nonblocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, cds_wfcq_node*) -->
+    <function-decl name='__cds_wfcq_next_nonblocking' mangled-name='__cds_wfcq_next_nonblocking' filepath='src/wfcqueue.c' line='178' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_next_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='179' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='180' column='1'/>
+      <!-- parameter of type 'cds_wfcq_node*' -->
+      <parameter type-id='type-id-22' name='node' filepath='src/wfcqueue.c' line='181' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_next_blocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, cds_wfcq_node*) -->
+    <function-decl name='__cds_wfcq_next_blocking' mangled-name='__cds_wfcq_next_blocking' filepath='src/wfcqueue.c' line='170' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_next_blocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='179' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='180' column='1'/>
+      <!-- parameter of type 'cds_wfcq_node*' -->
+      <parameter type-id='type-id-22' name='node' filepath='src/wfcqueue.c' line='181' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_first_nonblocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_first_nonblocking' mangled-name='__cds_wfcq_first_nonblocking' filepath='src/wfcqueue.c' line='163' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_first_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='164' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='165' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_first_blocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_first_blocking' mangled-name='__cds_wfcq_first_blocking' filepath='src/wfcqueue.c' line='156' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_first_blocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='164' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='165' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- unnamed&#45;enum&#45;underlying&#45;type -->
+    <type-decl name='unnamed-enum-underlying-type' is-anonymous='yes' size-in-bits='32' alignment-in-bits='32' id='type-id-31'/>
+    <!-- enum cds_wfcq_ret -->
+    <enum-decl name='cds_wfcq_ret' filepath='../include/urcu/wfcqueue.h' line='47' column='1' id='type-id-32'>
+      <underlying-type type-id='type-id-31'/>
+      <enumerator name='CDS_WFCQ_RET_WOULDBLOCK' value='-1'/>
+      <enumerator name='CDS_WFCQ_RET_DEST_EMPTY' value='0'/>
+      <enumerator name='CDS_WFCQ_RET_DEST_NON_EMPTY' value='1'/>
+      <enumerator name='CDS_WFCQ_RET_SRC_EMPTY' value='2'/>
+    </enum-decl>
+    <!-- cds_wfcq_ret __cds_wfcq_splice_nonblocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_splice_nonblocking' mangled-name='__cds_wfcq_splice_nonblocking' filepath='src/wfcqueue.c' line='146' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_splice_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='dest_q_head' filepath='src/wfcqueue.c' line='147' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='dest_q_tail' filepath='src/wfcqueue.c' line='148' column='1'/>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='src_q_head' filepath='src/wfcqueue.c' line='149' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='src_q_tail' filepath='src/wfcqueue.c' line='150' column='1'/>
+      <!-- enum cds_wfcq_ret -->
+      <return type-id='type-id-32'/>
+    </function-decl>
+    <!-- cds_wfcq_ret __cds_wfcq_splice_blocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_splice_blocking' mangled-name='__cds_wfcq_splice_blocking' filepath='src/wfcqueue.c' line='136' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_splice_blocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='dest_q_head' filepath='src/wfcqueue.c' line='147' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='dest_q_tail' filepath='src/wfcqueue.c' line='148' column='1'/>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='src_q_head' filepath='src/wfcqueue.c' line='149' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='src_q_tail' filepath='src/wfcqueue.c' line='150' column='1'/>
+      <!-- enum cds_wfcq_ret -->
+      <return type-id='type-id-32'/>
+    </function-decl>
+    <!-- int* -->
+    <pointer-type-def type-id='type-id-10' size-in-bits='64' id='type-id-33'/>
+    <!-- cds_wfcq_node* __cds_wfcq_dequeue_with_state_nonblocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, int*) -->
+    <function-decl name='__cds_wfcq_dequeue_with_state_nonblocking' mangled-name='__cds_wfcq_dequeue_with_state_nonblocking' filepath='src/wfcqueue.c' line='128' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_dequeue_with_state_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='129' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='130' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfcqueue.c' line='131' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_dequeue_nonblocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_dequeue_nonblocking' mangled-name='__cds_wfcq_dequeue_nonblocking' filepath='src/wfcqueue.c' line='121' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_dequeue_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='164' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='165' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_dequeue_with_state_blocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*, int*) -->
+    <function-decl name='__cds_wfcq_dequeue_with_state_blocking' mangled-name='__cds_wfcq_dequeue_with_state_blocking' filepath='src/wfcqueue.c' line='113' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_dequeue_with_state_blocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='129' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='130' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfcqueue.c' line='131' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* __cds_wfcq_dequeue_blocking(cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_dequeue_blocking' mangled-name='__cds_wfcq_dequeue_blocking' filepath='src/wfcqueue.c' line='106' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_dequeue_blocking'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='164' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='165' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_ret cds_wfcq_splice_blocking(cds_wfcq_head*, cds_wfcq_tail*, cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_splice_blocking' mangled-name='cds_wfcq_splice_blocking' filepath='src/wfcqueue.c' line='96' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_splice_blocking'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='dest_q_head' filepath='src/wfcqueue.c' line='97' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='dest_q_tail' filepath='src/wfcqueue.c' line='98' column='1'/>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='src_q_head' filepath='src/wfcqueue.c' line='99' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='src_q_tail' filepath='src/wfcqueue.c' line='100' column='1'/>
+      <!-- enum cds_wfcq_ret -->
+      <return type-id='type-id-32'/>
+    </function-decl>
+    <!-- cds_wfcq_node* cds_wfcq_dequeue_with_state_blocking(cds_wfcq_head*, cds_wfcq_tail*, int*) -->
+    <function-decl name='cds_wfcq_dequeue_with_state_blocking' mangled-name='cds_wfcq_dequeue_with_state_blocking' filepath='src/wfcqueue.c' line='88' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_dequeue_with_state_blocking'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='89' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='90' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfcqueue.c' line='91' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- cds_wfcq_node* cds_wfcq_dequeue_blocking(cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_dequeue_blocking' mangled-name='cds_wfcq_dequeue_blocking' filepath='src/wfcqueue.c' line='81' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_dequeue_blocking'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='82' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='83' column='1'/>
+      <!-- cds_wfcq_node* -->
+      <return type-id='type-id-22'/>
+    </function-decl>
+    <!-- void cds_wfcq_dequeue_unlock(cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_dequeue_unlock' mangled-name='cds_wfcq_dequeue_unlock' filepath='src/wfcqueue.c' line='75' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_dequeue_unlock'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='75' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='76' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfcq_dequeue_lock(cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_dequeue_lock' mangled-name='cds_wfcq_dequeue_lock' filepath='src/wfcqueue.c' line='69' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_dequeue_lock'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='75' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='76' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- bool -->
+    <type-decl name='bool' size-in-bits='8' id='type-id-34'/>
+    <!-- bool cds_wfcq_enqueue(cds_wfcq_head_ptr_t, cds_wfcq_tail*, cds_wfcq_node*) -->
+    <function-decl name='cds_wfcq_enqueue' mangled-name='cds_wfcq_enqueue' filepath='src/wfcqueue.c' line='62' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_enqueue'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='62' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='63' column='1'/>
+      <!-- parameter of type 'cds_wfcq_node*' -->
+      <parameter type-id='type-id-22' name='node' filepath='src/wfcqueue.c' line='64' column='1'/>
+      <!-- bool -->
+      <return type-id='type-id-34'/>
+    </function-decl>
+    <!-- bool cds_wfcq_empty(cds_wfcq_head_ptr_t, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_empty' mangled-name='cds_wfcq_empty' filepath='src/wfcqueue.c' line='55' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_empty'>
+      <!-- parameter of type 'typedef cds_wfcq_head_ptr_t' -->
+      <parameter type-id='type-id-28' name='head' filepath='src/wfcqueue.c' line='55' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='56' column='1'/>
+      <!-- bool -->
+      <return type-id='type-id-34'/>
+    </function-decl>
+    <!-- void __cds_wfcq_init(__cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='__cds_wfcq_init' mangled-name='__cds_wfcq_init' filepath='src/wfcqueue.c' line='49' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfcq_init'>
+      <!-- parameter of type '__cds_wfcq_head*' -->
+      <parameter type-id='type-id-24' name='head' filepath='src/wfcqueue.c' line='49' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='50' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfcq_destroy(cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_destroy' mangled-name='cds_wfcq_destroy' filepath='src/wfcqueue.c' line='43' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_destroy'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='75' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='76' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfcq_init(cds_wfcq_head*, cds_wfcq_tail*) -->
+    <function-decl name='cds_wfcq_init' mangled-name='cds_wfcq_init' filepath='src/wfcqueue.c' line='37' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_init'>
+      <!-- parameter of type 'cds_wfcq_head*' -->
+      <parameter type-id='type-id-25' name='head' filepath='src/wfcqueue.c' line='75' column='1'/>
+      <!-- parameter of type 'cds_wfcq_tail*' -->
+      <parameter type-id='type-id-30' name='tail' filepath='src/wfcqueue.c' line='76' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfcq_node_init(cds_wfcq_node*) -->
+    <function-decl name='cds_wfcq_node_init' mangled-name='cds_wfcq_node_init' filepath='src/wfcqueue.c' line='32' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfcq_node_init'>
+      <!-- parameter of type 'cds_wfcq_node*' -->
+      <parameter type-id='type-id-22' name='node' filepath='src/wfcqueue.c' line='32' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='wfstack.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- struct cds_wfs_head -->
+    <class-decl name='cds_wfs_head' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfstack.h' line='81' column='1' id='type-id-35'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfs_node cds_wfs_head::node -->
+        <var-decl name='node' type-id='type-id-36' visibility='default' filepath='../include/urcu/wfstack.h' line='82' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- struct cds_wfs_node -->
+    <class-decl name='cds_wfs_node' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfstack.h' line='71' column='1' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfs_node* cds_wfs_node::next -->
+        <var-decl name='next' type-id='type-id-37' visibility='default' filepath='../include/urcu/wfstack.h' line='72' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfs_node* -->
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' id='type-id-37'/>
+    <!-- cds_wfs_head* -->
+    <pointer-type-def type-id='type-id-35' size-in-bits='64' id='type-id-38'/>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='../include/urcu/wfstack.h' line='109' column='1' id='type-id-39'>
+      <data-member access='private'>
+        <!-- __cds_wfs_stack* __anonymous_union__::_s -->
+        <var-decl name='_s' type-id='type-id-40' visibility='default' filepath='../include/urcu/wfstack.h' line='110' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- cds_wfs_stack* __anonymous_union__::s -->
+        <var-decl name='s' type-id='type-id-41' visibility='default' filepath='../include/urcu/wfstack.h' line='111' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __cds_wfs_stack -->
+    <class-decl name='__cds_wfs_stack' size-in-bits='64' is-struct='yes' visibility='default' filepath='../include/urcu/wfstack.h' line='85' column='1' id='type-id-42'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfs_head* __cds_wfs_stack::head -->
+        <var-decl name='head' type-id='type-id-38' visibility='default' filepath='../include/urcu/wfstack.h' line='86' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- __cds_wfs_stack* -->
+    <pointer-type-def type-id='type-id-42' size-in-bits='64' id='type-id-40'/>
+    <!-- struct cds_wfs_stack -->
+    <class-decl name='cds_wfs_stack' size-in-bits='384' is-struct='yes' visibility='default' filepath='../include/urcu/wfstack.h' line='89' column='1' id='type-id-43'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- cds_wfs_head* cds_wfs_stack::head -->
+        <var-decl name='head' type-id='type-id-38' visibility='default' filepath='../include/urcu/wfstack.h' line='90' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- pthread_mutex_t cds_wfs_stack::lock -->
+        <var-decl name='lock' type-id='type-id-5' visibility='default' filepath='../include/urcu/wfstack.h' line='91' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- cds_wfs_stack* -->
+    <pointer-type-def type-id='type-id-43' size-in-bits='64' id='type-id-41'/>
+    <!-- typedef __anonymous_union__ cds_wfs_stack_ptr_t -->
+    <typedef-decl name='cds_wfs_stack_ptr_t' type-id='type-id-39' filepath='../include/urcu/wfstack.h' line='112' column='1' id='type-id-44'/>
+    <!-- cds_wfs_head* __cds_wfs_pop_all(cds_wfs_stack_ptr_t) -->
+    <function-decl name='__cds_wfs_pop_all' mangled-name='__cds_wfs_pop_all' filepath='src/wfstack.c' line='126' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_pop_all'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='126' column='1'/>
+      <!-- cds_wfs_head* -->
+      <return type-id='type-id-38'/>
+    </function-decl>
+    <!-- cds_wfs_node* __cds_wfs_pop_with_state_nonblocking(cds_wfs_stack_ptr_t, int*) -->
+    <function-decl name='__cds_wfs_pop_with_state_nonblocking' mangled-name='__cds_wfs_pop_with_state_nonblocking' filepath='src/wfstack.c' line='120' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_pop_with_state_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='120' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfstack.c' line='121' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* __cds_wfs_pop_nonblocking(cds_wfs_stack_ptr_t) -->
+    <function-decl name='__cds_wfs_pop_nonblocking' mangled-name='__cds_wfs_pop_nonblocking' filepath='src/wfstack.c' line='114' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_pop_nonblocking'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='114' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* __cds_wfs_pop_with_state_blocking(cds_wfs_stack_ptr_t, int*) -->
+    <function-decl name='__cds_wfs_pop_with_state_blocking' mangled-name='__cds_wfs_pop_with_state_blocking' filepath='src/wfstack.c' line='108' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_pop_with_state_blocking'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='120' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfstack.c' line='121' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* __cds_wfs_pop_blocking(cds_wfs_stack_ptr_t) -->
+    <function-decl name='__cds_wfs_pop_blocking' mangled-name='__cds_wfs_pop_blocking' filepath='src/wfstack.c' line='102' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_pop_blocking'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='114' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- void cds_wfs_pop_unlock(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_pop_unlock' mangled-name='cds_wfs_pop_unlock' filepath='src/wfstack.c' line='97' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_pop_unlock'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='97' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfs_pop_lock(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_pop_lock' mangled-name='cds_wfs_pop_lock' filepath='src/wfstack.c' line='92' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_pop_lock'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='97' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- cds_wfs_node* cds_wfs_next_nonblocking(cds_wfs_node*) -->
+    <function-decl name='cds_wfs_next_nonblocking' mangled-name='cds_wfs_next_nonblocking' filepath='src/wfstack.c' line='87' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_next_nonblocking'>
+      <!-- parameter of type 'cds_wfs_node*' -->
+      <parameter type-id='type-id-37' name='node' filepath='src/wfstack.c' line='87' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* cds_wfs_next_blocking(cds_wfs_node*) -->
+    <function-decl name='cds_wfs_next_blocking' mangled-name='cds_wfs_next_blocking' filepath='src/wfstack.c' line='82' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_next_blocking'>
+      <!-- parameter of type 'cds_wfs_node*' -->
+      <parameter type-id='type-id-37' name='node' filepath='src/wfstack.c' line='87' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* cds_wfs_first(cds_wfs_head*) -->
+    <function-decl name='cds_wfs_first' mangled-name='cds_wfs_first' filepath='src/wfstack.c' line='77' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_first'>
+      <!-- parameter of type 'cds_wfs_head*' -->
+      <parameter type-id='type-id-38' name='head' filepath='src/wfstack.c' line='77' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_head* cds_wfs_pop_all_blocking(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_pop_all_blocking' mangled-name='cds_wfs_pop_all_blocking' filepath='src/wfstack.c' line='72' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_pop_all_blocking'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='72' column='1'/>
+      <!-- cds_wfs_head* -->
+      <return type-id='type-id-38'/>
+    </function-decl>
+    <!-- cds_wfs_node* cds_wfs_pop_with_state_blocking(cds_wfs_stack*, int*) -->
+    <function-decl name='cds_wfs_pop_with_state_blocking' mangled-name='cds_wfs_pop_with_state_blocking' filepath='src/wfstack.c' line='67' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_pop_with_state_blocking'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='67' column='1'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='type-id-33' name='state' filepath='src/wfstack.c' line='67' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- cds_wfs_node* cds_wfs_pop_blocking(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_pop_blocking' mangled-name='cds_wfs_pop_blocking' filepath='src/wfstack.c' line='61' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_pop_blocking'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='61' column='1'/>
+      <!-- cds_wfs_node* -->
+      <return type-id='type-id-37'/>
+    </function-decl>
+    <!-- int cds_wfs_push(cds_wfs_stack_ptr_t, cds_wfs_node*) -->
+    <function-decl name='cds_wfs_push' mangled-name='cds_wfs_push' filepath='src/wfstack.c' line='56' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_push'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='56' column='1'/>
+      <!-- parameter of type 'cds_wfs_node*' -->
+      <parameter type-id='type-id-37' name='node' filepath='src/wfstack.c' line='56' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-10'/>
+    </function-decl>
+    <!-- bool cds_wfs_empty(cds_wfs_stack_ptr_t) -->
+    <function-decl name='cds_wfs_empty' mangled-name='cds_wfs_empty' filepath='src/wfstack.c' line='51' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_empty'>
+      <!-- parameter of type 'typedef cds_wfs_stack_ptr_t' -->
+      <parameter type-id='type-id-44' name='u_stack' filepath='src/wfstack.c' line='51' column='1'/>
+      <!-- bool -->
+      <return type-id='type-id-34'/>
+    </function-decl>
+    <!-- void __cds_wfs_init(__cds_wfs_stack*) -->
+    <function-decl name='__cds_wfs_init' mangled-name='__cds_wfs_init' filepath='src/wfstack.c' line='46' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='__cds_wfs_init'>
+      <!-- parameter of type '__cds_wfs_stack*' -->
+      <parameter type-id='type-id-40' name='s' filepath='src/wfstack.c' line='46' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfs_destroy(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_destroy' mangled-name='cds_wfs_destroy' filepath='src/wfstack.c' line='41' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_destroy'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='97' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfs_init(cds_wfs_stack*) -->
+    <function-decl name='cds_wfs_init' mangled-name='cds_wfs_init' filepath='src/wfstack.c' line='36' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_init'>
+      <!-- parameter of type 'cds_wfs_stack*' -->
+      <parameter type-id='type-id-41' name='s' filepath='src/wfstack.c' line='97' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+    <!-- void cds_wfs_node_init(cds_wfs_node*) -->
+    <function-decl name='cds_wfs_node_init' mangled-name='cds_wfs_node_init' filepath='src/wfstack.c' line='31' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='cds_wfs_node_init'>
+      <!-- parameter of type 'cds_wfs_node*' -->
+      <parameter type-id='type-id-37' name='node' filepath='src/wfstack.c' line='31' column='1'/>
+      <!-- void -->
+      <return type-id='type-id-20'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr version='1.0' address-size='64' path='compat_futex.c' comp-dir-path='src' language='LANG_C99'>
+    <!-- pthread_mutex_t __urcu_compat_futex_lock -->
+    <var-decl name='__urcu_compat_futex_lock' type-id='type-id-5' mangled-name='__urcu_compat_futex_lock' visibility='default' filepath='src/compat_futex.c' line='44' column='1' elf-symbol-id='__urcu_compat_futex_lock'/>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='384' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='75' column='1' id='type-id-45'>
+      <data-member access='private'>
+        <!-- __pthread_cond_s __anonymous_union__::__data -->
+        <var-decl name='__data' type-id='type-id-46' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='77' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- char __anonymous_union__::__size[48] -->
+        <var-decl name='__size' type-id='type-id-47' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- long long int __anonymous_union__::__align -->
+        <var-decl name='__align' type-id='type-id-48' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='79' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- struct __pthread_cond_s -->
+    <class-decl name='__pthread_cond_s' size-in-bits='384' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='171' column='1' id='type-id-46'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __anonymous_union__  -->
+        <var-decl name='' type-id='type-id-49' visibility='default'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <!-- unsigned int __pthread_cond_s::__g_refs[2] -->
+        <var-decl name='__g_refs' type-id='type-id-50' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='191' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <!-- unsigned int __pthread_cond_s::__g_size[2] -->
+        <var-decl name='__g_size' type-id='type-id-50' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <!-- unsigned int __pthread_cond_s::__g1_orig_size -->
+        <var-decl name='__g1_orig_size' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='193' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <!-- unsigned int __pthread_cond_s::__wrefs -->
+        <var-decl name='__wrefs' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <!-- unsigned int __pthread_cond_s::__g_signals[2] -->
+        <var-decl name='__g_signals' type-id='type-id-50' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='195' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- union __anonymous_union__ -->
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='173' column='1' id='type-id-49'>
+      <data-member access='private'>
+        <!-- long long unsigned int __anonymous_union__::__wseq -->
+        <var-decl name='__wseq' type-id='type-id-51' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='175' column='1'/>
+      </data-member>
+      <data-member access='private'>
+        <!-- __anonymous_struct__ __anonymous_union__::__wseq32 -->
+        <var-decl name='__wseq32' type-id='type-id-52' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='180' column='1'/>
+      </data-member>
+    </union-decl>
+    <!-- long long unsigned int -->
+    <type-decl name='long long unsigned int' size-in-bits='64' id='type-id-51'/>
+    <!-- struct __anonymous_struct__ -->
+    <class-decl name='__anonymous_struct__' size-in-bits='64' is-struct='yes' is-anonymous='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='176' column='1' id='type-id-52'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- unsigned int __anonymous_struct__::__low -->
+        <var-decl name='__low' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='178' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <!-- unsigned int __anonymous_struct__::__high -->
+        <var-decl name='__high' type-id='type-id-11' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h' line='179' column='1'/>
+      </data-member>
+    </class-decl>
+
+    <!-- unsigned int[2] -->
+    <array-type-def dimensions='1' type-id='type-id-11' size-in-bits='64' id='type-id-50'>
+      <!-- <anonymous range>[2] -->
+      <subrange length='2' type-id='type-id-17' id='type-id-53'/>
+
+    </array-type-def>
+
+    <!-- char[48] -->
+    <array-type-def dimensions='1' type-id='type-id-16' size-in-bits='384' id='type-id-47'>
+      <!-- <anonymous range>[48] -->
+      <subrange length='48' type-id='type-id-17' id='type-id-54'/>
+
+    </array-type-def>
+    <!-- long long int -->
+    <type-decl name='long long int' size-in-bits='64' id='type-id-48'/>
+    <!-- typedef __anonymous_union__ pthread_cond_t -->
+    <typedef-decl name='pthread_cond_t' type-id='type-id-45' filepath='/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h' line='80' column='1' id='type-id-55'/>
+    <!-- pthread_cond_t __urcu_compat_futex_cond -->
+    <var-decl name='__urcu_compat_futex_cond' type-id='type-id-55' mangled-name='__urcu_compat_futex_cond' visibility='default' filepath='src/compat_futex.c' line='46' column='1' elf-symbol-id='__urcu_compat_futex_cond'/>
+    <!-- typedef int __int32_t -->
+    <typedef-decl name='__int32_t' type-id='type-id-10' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='40' column='1' id='type-id-56'/>
+    <!-- typedef __int32_t int32_t -->
+    <typedef-decl name='int32_t' type-id='type-id-56' filepath='/usr/include/x86_64-linux-gnu/bits/stdint-intn.h' line='26' column='1' id='type-id-57'/>
+    <!-- int32_t* -->
+    <pointer-type-def type-id='type-id-57' size-in-bits='64' id='type-id-58'/>
+    <!-- struct timespec -->
+    <class-decl name='timespec' size-in-bits='128' is-struct='yes' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='9' column='1' id='type-id-59'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <!-- __time_t timespec::tv_sec -->
+        <var-decl name='tv_sec' type-id='type-id-60' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='11' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <!-- __syscall_slong_t timespec::tv_nsec -->
+        <var-decl name='tv_nsec' type-id='type-id-61' visibility='default' filepath='/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h' line='12' column='1'/>
+      </data-member>
+    </class-decl>
+    <!-- typedef long int __time_t -->
+    <typedef-decl name='__time_t' type-id='type-id-9' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='148' column='1' id='type-id-60'/>
+    <!-- typedef long int __syscall_slong_t -->
+    <typedef-decl name='__syscall_slong_t' type-id='type-id-9' filepath='/usr/include/x86_64-linux-gnu/bits/types.h' line='184' column='1' id='type-id-61'/>
+    <!-- const timespec -->
+    <qualified-type-def type-id='type-id-59' const='yes' id='type-id-62'/>
+    <!-- const timespec* -->
+    <pointer-type-def type-id='type-id-62' size-in-bits='64' id='type-id-63'/>
+    <!-- int compat_futex_async(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_async' mangled-name='compat_futex_async' filepath='src/compat_futex.c' line='118' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_async'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-58' name='uaddr' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-10' name='op' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-57' name='val' filepath='src/compat_futex.c' line='118' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-63' name='timeout' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-58' name='uaddr2' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-57' name='val3' filepath='src/compat_futex.c' line='119' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-10'/>
+    </function-decl>
+    <!-- int compat_futex_noasync(int32_t*, int, int32_t, const timespec*, int32_t*, int32_t) -->
+    <function-decl name='compat_futex_noasync' mangled-name='compat_futex_noasync' filepath='src/compat_futex.c' line='54' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='compat_futex_noasync'>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-58' name='uaddr' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='type-id-10' name='op' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-57' name='val' filepath='src/compat_futex.c' line='54' column='1'/>
+      <!-- parameter of type 'const timespec*' -->
+      <parameter type-id='type-id-63' name='timeout' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'int32_t*' -->
+      <parameter type-id='type-id-58' name='uaddr2' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- parameter of type 'typedef int32_t' -->
+      <parameter type-id='type-id-57' name='val3' filepath='src/compat_futex.c' line='55' column='1'/>
+      <!-- int -->
+      <return type-id='type-id-10'/>
+    </function-decl>
+  </abi-instr>
+</abi-corpus>
