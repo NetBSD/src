@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.132 2025/01/13 18:51:37 andvar Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.133 2025/01/17 10:38:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.132 2025/01/13 18:51:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.133 2025/01/17 10:38:48 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -155,12 +155,14 @@ cpu_probe_intel_errata(struct cpu_info *ci)
 	 * August 2022, Revision 010. See page 28, Section 5.30: "APL30 A Store
 	 * Instruction May Not Wake Up MWAIT."
 	 * https://cdrdv2-public.intel.com/334820/334820-APL_Spec_Update_rev010.pdf
+	 * https://web.archive.org/web/20250114072355/https://cdrdv2-public.intel.com/334820/334820-APL_Spec_Update_rev010.pdf
 	 *
-	 * Disable MWAIT/MONITOR on Apollo Lake CPUs to address the APL30 erratum.
-	 * When using the MONITOR/MWAIT instruction pair, stores to the armed
-	 * address range may fail to trigger MWAIT to resume execution.
-	 * When these instructions are used to hatch secondary CPUs,
-	 * this erratum causes SMP boot failures.
+	 * Disable MWAIT/MONITOR on Apollo Lake CPUs to address the
+	 * APL30 erratum.  When using the MONITOR/MWAIT instruction
+	 * pair, stores to the armed address range may fail to trigger
+	 * MWAIT to resume execution.  When these instructions are used
+	 * to hatch secondary CPUs, this erratum causes SMP boot
+	 * failures.
 	 */
 	if (family == 0x6 && model == 0x5C) {
 		wrmsr(MSR_MISC_ENABLE,
