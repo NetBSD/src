@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.88 2025/01/11 14:33:31 jmmv Exp $
+# $NetBSD: mkimage,v 1.89 2025/01/17 12:11:53 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -225,6 +225,9 @@ fi
 resize=false
 gpt=false
 gpt_hybrid=false
+fsize=8192
+bsize=65536
+ffsversion=1
 
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
@@ -334,7 +337,7 @@ if [ -z "${bootonly}" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
 	${MAKEFS} -rx ${endian} -N ${release}/etc -t ffs \
 	    -O ${ffsoffset} ${timestamp_opt} \
-	    -o d=4096,f=8192,b=65536 -b $((${extra}))m \
+	    -o d=4096,f=${fsize},b=${bsize},v=${ffsversion} -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
