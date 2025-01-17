@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.70 2023/09/19 22:15:32 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.71 2025/01/17 04:11:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.70 2023/09/19 22:15:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.71 2025/01/17 04:11:33 mrg Exp $");
 
 #include "opt_dtrace.h"
 
@@ -523,8 +523,7 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 			curspc = &curci->ci_schedstate;
 
 			/* If this CPU is idle and 1st class, we're done. */
-			if ((curspc->spc_flags & (SPCF_IDLE | SPCF_1STCLASS)) ==
-			    (SPCF_IDLE | SPCF_1STCLASS)) {
+			if (cpu_is_idle_1stclass(curci)) {
 				return curci;
 			}
 
@@ -536,8 +535,7 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 			}
 			if (curpri == bestpri) {
 				/* Prefer first class CPUs over others. */
-				if ((curspc->spc_flags & SPCF_1STCLASS) == 0 &&
-				    (bestspc->spc_flags & SPCF_1STCLASS) != 0) {
+				if (cpu_is_better(bestci, curci)) {
 				    	continue;
 				}
 				/*
@@ -568,7 +566,7 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
-	struct schedstate_percpu *spc, *tspc;
+	struct schedstate_percpu *spc;
 	struct cpu_info *ci, *curci, *tci;
 	pri_t eprio;
 	int flags;
@@ -611,9 +609,7 @@ sched_takecpu(struct lwp *l)
 	 */
 	tci = ci;
 	do {
-		tspc = &tci->ci_schedstate;
-		if ((tspc->spc_flags & flags) == flags &&
-		    sched_migratable(l, tci)) {
+		if (cpu_is_type(tci, flags) && sched_migratable(l, tci)) {
 			return tci;
 		}
 		tci = tci->ci_sibling[CPUREL_CORE];
@@ -635,9 +631,7 @@ sched_takecpu(struct lwp *l)
 	curci = curcpu();
 	tci = curci;
 	do {
-		tspc = &tci->ci_schedstate;
-		if ((tspc->spc_flags & flags) == flags &&
-		    sched_migratable(l, tci)) {
+		if (cpu_is_type(tci, flags) && sched_migratable(l, tci)) {
 			return tci;
 		}
 		tci = tci->ci_sibling[CPUREL_CORE];
@@ -670,8 +664,7 @@ sched_catchlwp(struct cpu_info *ci)
 	 * Be more aggressive if this CPU is first class, and the other
 	 * is not.
 	 */
-	gentle = ((curspc->spc_flags & SPCF_1STCLASS) == 0 ||
-	    (spc->spc_flags & SPCF_1STCLASS) != 0);
+	gentle = cpu_is_better(curci, ci);
 
 	if (atomic_load_relaxed(&spc->spc_mcount) < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {
@@ -913,7 +906,6 @@ sched_idle(void)
 void
 sched_preempted(struct lwp *l)
 {
-	const int flags = SPCF_IDLE | SPCF_1STCLASS;
 	struct schedstate_percpu *tspc;
 	struct cpu_info *ci, *tci;
 
@@ -930,8 +922,8 @@ sched_preempted(struct lwp *l)
 	 * - or this LWP is a child of vfork() that has just done execve()
 	 */
 	if (l->l_target_cpu != NULL ||
-	    ((tspc->spc_flags & SPCF_1STCLASS) != 0 &&
-	    (l->l_pflag & LP_TELEPORT) == 0)) {
+	    (cpu_is_1stclass(ci) &&
+	     (l->l_pflag & LP_TELEPORT) == 0)) {
 		return;
 	}
 
@@ -944,8 +936,7 @@ sched_preempted(struct lwp *l)
 	tci = ci->ci_sibling[CPUREL_CORE];
 	while (tci != ci) {
 		tspc = &tci->ci_schedstate;
-		if ((tspc->spc_flags & flags) == flags &&
-		    sched_migratable(l, tci)) {
+		if (cpu_is_idle_1stclass(tci) && sched_migratable(l, tci)) {
 		    	l->l_target_cpu = tci;
 			l->l_pflag &= ~LP_TELEPORT;
 		    	return;
@@ -976,8 +967,7 @@ sched_preempted(struct lwp *l)
 		 * whole system if needed.
 		 */
 		tci = sched_bestcpu(l, l->l_cpu);
-		if (tci != ci &&
-		    (tci->ci_schedstate.spc_flags & flags) == flags) {
+		if (tci != ci && cpu_is_idle_1stclass(tci)) {
 			l->l_target_cpu = tci;
 		}
 	}
@@ -998,8 +988,7 @@ sched_vforkexec(struct lwp *l, bool samecpu)
 {
 
 	KASSERT(l == curlwp);
-	if ((samecpu && ncpu > 1) ||
-	    (l->l_cpu->ci_schedstate.spc_flags & SPCF_1STCLASS) == 0) {
+	if ((samecpu && ncpu > 1) || !cpu_is_1stclass(l->l_cpu)) {
 		l->l_pflag |= LP_TELEPORT;
 		preempt();
 	}

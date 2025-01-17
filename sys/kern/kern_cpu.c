@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.97 2023/09/02 17:44:59 riastradh Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.97 2023/09/02 17:44:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -450,6 +450,42 @@ cpu_setstate(struct cpu_info *ci, bool online)
 
 	spc->spc_lastmod = time_second;
 	return 0;
+}
+
+bool
+cpu_is_type(struct cpu_info *ci, int wanted)
+{
+
+	return (ci->ci_schedstate.spc_flags & wanted) == wanted;
+}
+
+bool
+cpu_is_idle_1stclass(struct cpu_info *ci)
+{
+	const int wanted = SPCF_IDLE | SPCF_1STCLASS;
+
+	return cpu_is_type(ci, wanted);
+}
+
+bool
+cpu_is_1stclass(struct cpu_info *ci)
+{
+	const int wanted = SPCF_1STCLASS;
+
+	return cpu_is_type(ci, wanted);
+}
+
+bool
+cpu_is_better(struct cpu_info *ci1, struct cpu_info *ci2)
+{
+	const int ci1_flags = ci1->ci_schedstate.spc_flags;
+	const int ci2_flags = ci2->ci_schedstate.spc_flags;
+
+	if ((ci1_flags & SPCF_1STCLASS) != 0 &&
+	    (ci2_flags & SPCF_1STCLASS) == 0)
+		return ci1;
+
+	return ci2;
 }
 
 #if defined(__HAVE_INTR_CONTROL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2024/03/05 20:59:41 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2025/01/17 04:11:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -114,6 +114,12 @@ cpu_name(struct cpu_info *ci)
 {
 	return ci->ci_data.cpu_name;
 }
+
+/* Scheduler helpers */
+bool cpu_is_type(struct cpu_info *, int);
+bool cpu_is_idle_1stclass(struct cpu_info *);
+bool cpu_is_1stclass(struct cpu_info *);
+bool cpu_is_better(struct cpu_info *, struct cpu_info *);
 
 #ifdef CPU_UCODE
 struct cpu_ucode_softc {

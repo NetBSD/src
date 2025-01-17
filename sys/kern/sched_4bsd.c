@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.46 2022/10/26 23:24:09 riastradh Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.47 2025/01/17 04:11:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.46 2022/10/26 23:24:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.47 2025/01/17 04:11:33 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -146,7 +146,7 @@ sched_tick(struct cpu_info *ci)
 			 */
 			pri = MAXPRI_KTHREAD;
 			spc->spc_flags |= SPCF_SHOULDYIELD;
-		} else if ((spc->spc_flags & SPCF_1STCLASS) == 0) {
+		} else if (!cpu_is_1stclass(ci)) {
 			/*
 			 * For SMT or asymmetric systems push a little
 			 * harder: if this is not a 1st class CPU, try to
