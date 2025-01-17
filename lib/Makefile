@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.305 2025/01/17 16:08:35 christos Exp $
+#	$NetBSD: Makefile,v 1.306 2025/01/17 17:43:14 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -256,7 +256,7 @@ SUBDIR+=        ../external/cddl/osnet/lib/libzfs
 SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 
 SUBDIR+=	../external/mit/libuv/lib
-SUBDIR+=	../external/lgpl2/userspace-rcu/lib
+# SUBDIR+=	../external/lgpl2/userspace-rcu/lib
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
