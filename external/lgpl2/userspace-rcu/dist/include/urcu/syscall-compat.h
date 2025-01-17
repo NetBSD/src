@@ -13,6 +13,8 @@
 #include <sys/syscall.h>
 #elif defined(__linux__) || defined(__GLIBC__)
 #include <syscall.h>
+#elif defined(__NetBSD__)
+#include <sys/syscall.h>
 
 #elif defined(__CYGWIN__) || defined(__APPLE__) || \
 	defined(__FreeBSD__) || defined(__DragonFly__) || \

@@ -67,6 +67,14 @@ unsigned long urcu_get_thread_id(void)
 {
 	return (unsigned long) getthrid();
 }
+#elif defined(__NetBSD__)
+#include <lwp.h>
+
+static inline
+unsigned long urcu_get_thread_id(void)
+{
+	return (unsigned long) _lwp_self();
+}
 #else
 # warning "use pid as thread ID"
 static inline
