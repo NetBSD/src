@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.30 2025/01/13 14:37:30 jdc Exp $ */
+/*	$NetBSD: promdev.c,v 1.31 2025/01/17 10:35:47 riastradh Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -78,7 +78,7 @@ static char	*oldmon_mapin(u_long, int, int);
 #ifndef BOOTXX
 static char	*mygetpropstring(int, char *);
 static int	getdevtype(int, char *);
-void	israidlabel(char* buf);
+void		israidlabel(char *buf);
 
 static daddr_t doffset = 0;
 static int raidchecked = 0;
@@ -175,7 +175,7 @@ israidlabel(char *buf)
 void
 putchar(int c)
 {
- 
+
 	if (c == '\n')
 		prom_putchar('\r');
 	prom_putchar(c);
@@ -401,7 +401,7 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 if (dblk < 3000)
 	printf("prom_strategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
-	
+
 #ifndef BOOTXX
 	if (!raidchecked && flag == F_READ) {
 		dmabuf = dvma_mapin(&labelbuf[0], DEV_BSIZE);
@@ -745,7 +745,7 @@ static struct mapinfo {
 	{ MAP_MAINMEM,   PG_OBMEM | PG_COMMON, 0 },
 	{ MAP_OBIO,      PG_OBIO  | PG_COMMON, 0 },
 	{ MAP_MBMEM,     PG_VME16 | PG_COMMON, 0xFF000000 },
-	{ MAP_MBIO,      PG_VME16 | PG_COMMON, 0xFFFF0000 }, 
+	{ MAP_MBIO,      PG_VME16 | PG_COMMON, 0xFFFF0000 },
 	{ MAP_VME16A16D, PG_VME16 | PG_COMMON, 0xFFFF0000 },
 	{ MAP_VME16A32D, PG_VME32 | PG_COMMON, 0xFFFF0000 },
 	{ MAP_VME24A16D, PG_VME16 | PG_COMMON, 0xFF000000 },
@@ -785,5 +785,5 @@ found:
 		pte += 1;
 		length -= NBPG;
 	} while (length > 0);
-	return ((char*)(prom_devmap | (pa & PGOFSET)));
+	return ((char *)(prom_devmap | (pa & PGOFSET)));
 }
