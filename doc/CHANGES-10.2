@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.5 2025/01/12 12:03:45 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.6 2025/01/17 12:28:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -76,4 +76,10 @@ sys/sys/ptrace.h				1.77
 
 	i386: PR 58983: fix INSTALL_FLOPPY kernel on i386.
 	[hgutch, ticket #1039]
+
+share/man/man5/services.5			1.11
+usr.sbin/services_mkdb/services_mkdb.8		1.13
+
+	services(5): PR 58998:  consistently refer to the cdb database.
+	[uwe, ticket #1040]
 
