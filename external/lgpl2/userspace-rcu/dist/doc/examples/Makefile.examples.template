@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2013 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+#
+# SPDX-License-Identifier: MIT
+
+# This makefile is purposefully kept simple to support GNU and BSD make.
+
+LOCAL_CFLAGS := -g -O2 -Wall
+AM_V_P := :
+
+all: $(BINARY)
+
+$(BINARY): $(OBJECTS)
+	@verbose="$(AM_V_P)"; if [ "x$$verbose" = "x" ]; then verbose=":"; fi; \
+		if $$verbose; then set -x; else echo "  CCLD     $@"; fi; \
+		$(CC) $(LOCAL_CFLAGS) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+		-o $@ $(OBJECTS) $(LIBS)
+
+$(OBJECTS): $(SOURCES) $(DEPS)
+	@verbose="$(AM_V_P)"; if [ "x$$verbose" = "x" ]; then verbose=":"; fi; \
+		if $$verbose; then set -x; else echo "  CC       $@"; fi; \
+		$(CC) $(LOCAL_CFLAGS) $(AM_CFLAGS) $(CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+		-c -o $@ $(SOURCES)
+
+.PHONY: clean
+clean:
+	rm -f *.o $(BINARY)

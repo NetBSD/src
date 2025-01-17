@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2023 EfficiOS Inc.
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+if [ "x${URCU_TESTS_SRCDIR:-}" != "x" ]; then
+	UTILSSH="$URCU_TESTS_SRCDIR/utils/utils.sh"
+else
+	UTILSSH="$(dirname "$0")/../utils/utils.sh"
+fi
+
+# shellcheck source=../utils/utils.sh
+source "$UTILSSH"
+
+# shellcheck source=../../utils/tap.sh
+source "$URCU_TESTS_SRCDIR/utils/tap.sh"
+
+CURDIR="${URCU_TESTS_BUILDDIR}/unit"
+
+NUM_TESTS=8
+
+TESTFILE=$(mktemp)
+
+populate_testfile() {
+	local cpumask="$1"
+
+	# shellcheck disable=SC2059
+	printf "$cpumask" > "$TESTFILE"
+}
+
+test_test_get_cpu_mask_from_sysfs_cxx() {
+	local cpumask="$1"
+	local result
+
+	# Without '\n'
+	populate_testfile "$cpumask"
+	result=$("${CURDIR}/get_cpu_mask_from_sysfs_cxx" "$TESTFILE")
+	test "$cpumask" == "$result"
+	ok $? "test_get_cpu_mask_from_sysfs_cxx - without '\n' expected: '$cpumask', result: '$result'"
+
+	# With '\n'
+	populate_testfile "$cpumask\n"
+	result=$("${CURDIR}/get_cpu_mask_from_sysfs_cxx" "$TESTFILE")
+	test "$cpumask" == "$result"
+	ok $? "test_get_cpu_mask_from_sysfs_cxx - with '\n' expected: '$cpumask', result: '$result'"
+}
+
+if [ "$URCU_TESTS_OS_TYPE" == "linux" ]; then
+	plan_tests $NUM_TESTS
+
+	test_test_get_cpu_mask_from_sysfs_cxx ""
+	test_test_get_cpu_mask_from_sysfs_cxx "0"
+	test_test_get_cpu_mask_from_sysfs_cxx "0-3"
+	test_test_get_cpu_mask_from_sysfs_cxx "0,3-7,9"
+else
+	plan_skip_all "Linux specific tests."
+fi

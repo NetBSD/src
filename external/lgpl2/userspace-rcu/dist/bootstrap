@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# SPDX-FileCopyrightText: 2023 EfficiOS Inc.
+#
+# SPDX-License-Identifier: MIT
+
+set -x
+if [ ! -d "config" ]; then
+	mkdir config
+fi
+
+autoreconf -vi -W all,error

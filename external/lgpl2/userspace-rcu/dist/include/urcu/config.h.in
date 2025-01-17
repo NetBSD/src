@@ -1,0 +1,37 @@
+// SPDX-FileCopyrightText: 2023 EfficiOS Inc.
+//
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
+/* urcu/config.h.in. Manually generated for control over the contained defs. */
+
+/* Enable SMP support. With SMP support enabled, uniprocessors are also
+   supported. With SMP support disabled, UP systems work fine, but the
+   behavior of SMP systems is undefined. */
+#undef CONFIG_RCU_SMP
+
+/* TLS provided by the compiler. */
+#undef CONFIG_RCU_TLS
+
+/* clock_gettime() is detected. */
+#undef CONFIG_RCU_HAVE_CLOCK_GETTIME
+
+/* Require the operating system to support the membarrier system call for
+   default and bulletproof flavors. */
+#undef CONFIG_RCU_FORCE_SYS_MEMBARRIER
+
+/* Enable internal debugging self-checks.
+   Introduces a performance penalty. */
+#undef CONFIG_RCU_DEBUG
+
+/* Uatomic API uses atomic builtins. */
+#undef CONFIG_RCU_USE_ATOMIC_BUILTINS
+
+/* Emit legacy memory barriers? */
+#undef CONFIG_RCU_EMIT_LEGACY_MB
+
+/* Expose multi-flavor support */
+#define CONFIG_RCU_HAVE_MULTIFLAVOR 1
+
+/* Enable extra debugging checks for lock-free hash table iterator
+   traversal. */
+#undef CONFIG_CDS_LFHT_ITER_DEBUG
