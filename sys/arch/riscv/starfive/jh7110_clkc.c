@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_clkc.c,v 1.6 2024/09/20 07:29:39 rin Exp $ */
+/* $NetBSD: jh7110_clkc.c,v 1.7 2025/01/17 07:57:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.6 2024/09/20 07:29:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_clkc.c,v 1.7 2025/01/17 07:57:42 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -816,14 +816,14 @@ struct jh7110_clock_config {
 	size_t jhcc_nclks;
 };
 
+static struct jh7110_clock_config jh7110_sysclk_config = {
+	.jhcc_clocks = jh7110_sysclk_clocks,
+	.jhcc_nclks = __arraycount(jh7110_sysclk_clocks),
+};
+
 static struct jh7110_clock_config jh7110_aonclk_config = {
 	.jhcc_clocks = jh7110_aonclk_clocks,
 	.jhcc_nclks = __arraycount(jh7110_aonclk_clocks),
-};
-
-static struct jh7110_clock_config jh7110_ispclk_config = {
-	.jhcc_clocks = jh7110_ispclk_clocks,
-	.jhcc_nclks = __arraycount(jh7110_ispclk_clocks),
 };
 
 static struct jh7110_clock_config jh7110_stgclk_config = {
@@ -831,9 +831,9 @@ static struct jh7110_clock_config jh7110_stgclk_config = {
 	.jhcc_nclks = __arraycount(jh7110_stgclk_clocks),
 };
 
-static struct jh7110_clock_config jh7110_sysclk_config = {
-	.jhcc_clocks = jh7110_sysclk_clocks,
-	.jhcc_nclks = __arraycount(jh7110_sysclk_clocks),
+static struct jh7110_clock_config jh7110_ispclk_config = {
+	.jhcc_clocks = jh7110_ispclk_clocks,
+	.jhcc_nclks = __arraycount(jh7110_ispclk_clocks),
 };
 
 static struct jh7110_clock_config jh7110_voutclk_config = {
@@ -921,16 +921,16 @@ static struct jh7110_crg jh7110_aon_config = {
 	.jhc_debug = true,
 };
 
-static struct jh7110_crg jh7110_isp_config = {
-	.jhc_name = "Image-Signal-Process",
-	.jhc_clk = &jh7110_ispclk_config,
-	.jhc_rst = &jh7110_isprst_config,
-};
-
 static struct jh7110_crg jh7110_stg_config = {
 	.jhc_name = "System-Top-Group",
 	.jhc_clk = &jh7110_stgclk_config,
 	.jhc_rst = &jh7110_stgrst_config,
+};
+
+static struct jh7110_crg jh7110_isp_config = {
+	.jhc_name = "Image-Signal-Process",
+	.jhc_clk = &jh7110_ispclk_config,
+	.jhc_rst = &jh7110_isprst_config,
 };
 
 static struct jh7110_crg jh7110_vout_config = {
@@ -943,8 +943,8 @@ static struct jh7110_crg jh7110_vout_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "starfive,jh7110-syscrg", .data = &jh7110_sys_config },
 	{ .compat = "starfive,jh7110-aoncrg", .data = &jh7110_aon_config },
-	{ .compat = "starfive,jh7110-ispcrg", .data = &jh7110_isp_config },
 	{ .compat = "starfive,jh7110-stgcrg", .data = &jh7110_stg_config },
+	{ .compat = "starfive,jh7110-ispcrg", .data = &jh7110_isp_config },
 	{ .compat = "starfive,jh7110-voutcrg", .data = &jh7110_vout_config },
 	DEVICE_COMPAT_EOL
 };
