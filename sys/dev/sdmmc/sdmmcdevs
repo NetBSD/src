@@ -1,4 +1,4 @@
-	$NetBSD: sdmmcdevs,v 1.8 2020/01/01 12:15:53 jmcneill Exp $
+	$NetBSD: sdmmcdevs,v 1.9 2025/01/17 11:55:37 jmcneill Exp $
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ product ATHEROS AR6001_a	0x010a	AR6001
 product ATHEROS AR6001_b	0x010b	AR6001
 
 /* Broadcom */
+product BROADCOM NINTENDO_WII	0x044b	Nintendo Wii WLAN
 product BROADCOM BCM4324	0x4324	BCM 4324
 product BROADCOM BCM4329	0x4329	BCM 4329
 product BROADCOM BCM4330	0x4330	BCM 4330
