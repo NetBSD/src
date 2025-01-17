@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2025/01/14 19:58:10 riastradh Exp $	
+# $NetBSD: Makefile,v 1.8 2025/01/17 10:40:09 riastradh Exp $
 
 LIBISPRIVATE=pic
 NOLINT=yes	# XXX
 WARNS?=		4
 .include <bsd.init.mk>
-USE_FORT?= yes	
+USE_FORT?= yes
 
 CPPFLAGS+= -I${.OBJDIR}
 DIST=${.CURDIR}/../dist
@@ -60,7 +60,7 @@ CPPFLAGS+= -I${SRCDIR} -DZSTD_MULTITHREAD
 LIBDPLIBS += pthread ${NETBSDSRCDIR}/lib/libpthread
 
 .if ${LIBISPRIVATE:Uno} == "no"
-INCS=	zdict.h zstd.h zstd_errors.h  
+INCS=	zdict.h zstd.h zstd_errors.h
 INCSDIR=	/usr/include
 
 
