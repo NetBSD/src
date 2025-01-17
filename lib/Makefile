@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.304 2025/01/11 01:23:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.305 2025/01/17 16:08:35 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -182,8 +182,6 @@ SUBDIR+=	../external/apache2/llvm/include
 
 SUBDIR+=	../external/mit/libcbor/lib
 
-SUBDIR+=	../external/mit/libuv/lib
-
 SUBDIR+=	../external/bsd/zstd/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
@@ -257,6 +255,9 @@ SUBDIR+=        ../external/cddl/osnet/lib/libzfs
 
 SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 
+SUBDIR+=	../external/mit/libuv/lib
+SUBDIR+=	../external/lgpl2/userspace-rcu/lib
+
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -264,7 +265,7 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz,
 						   # libfido2
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
 SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
-						# libuv
+						# libuv, userspace-rcu
 .if ${MKUNBOUND} != "no"
 SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
 .endif
