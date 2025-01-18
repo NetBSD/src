@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1515 2025/01/03 06:31:47 mrg Exp $
+$NetBSD: pcidevs,v 1.1516 2025/01/18 08:10:14 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5134,6 +5134,7 @@ product INTEL 63XXESB_HDA	0x269a	63xxESB High Definition Audio Controller
 product INTEL 63XXESB_SMB	0x269b	63xxESB SMBus Controller
 product INTEL 63XXESB_IDE	0x269e	63xxESB IDE Controller
 product INTEL SNR_DLB		0x270b	Snow Ridge DLB 1.0
+product INTEL WIFI7		0x272b  Wi-Fi 7
 product INTEL 82945P_MCH	0x2770	82945G/P Memory Controller Hub
 product INTEL 82945P_EXP	0x2771	82945G/P PCI Express Bridge
 product INTEL 82945P_IGD	0x2772	82945G/P Integrated Graphics Device
@@ -6509,6 +6510,7 @@ product INTEL APL_LPC		0x5ae8	Apollo Lake LPC
 product INTEL APL_SSRAM		0x5aec	Apollo Lake Shared SRAM
 product INTEL APL_UART_3	0x5aee	Apollo Lake UART 3
 product INTEL APL_HB		0x5af0	Apollo Lake Host Bridge
+product INTEL NPU_LNL		0x643e  Lunar Lake NPU
 product INTEL XEOND_HB_DMI2	0x6f00	Core i7-6xxxK/Xeon-D Host Bridge (DMI2)
 product INTEL XEOND_HB_PCIE	0x6f01	Xeon-D Host Bridge (PCIe)
 product INTEL XEOND_PCIE_1	0x6f02	Xeon-D PCIe Root Port (x8 or x4 max)
@@ -6771,6 +6773,11 @@ product INTEL 6HS_H_GSPI_2	0x7afb	600 Series PCH-H GSPI 2
 product INTEL 6HS_H_I2C_4	0x7afc	600 Series PCH-H I2C 4
 product INTEL 6HS_H_I2C_5	0x7afd	600 Series PCH-H I2C 5
 product INTEL 6HS_H_UART_2	0x7afe	600 Series PCH-H UART 2
+product INTEL VMD_MTL		0x7d0b  Volume Management Device
+product INTEL NPU_MTL		0x7d1d  Meteor Lake NPU
+product INTEL SMBUS_MTL		0x7e22  Meteor Lake SMbus
+product INTEL SPI_MTL		0x7e23  Meteor Lake SPI Controller
+product INTEL MPM_MTL		0x7e7f	Meteor Lake Memory Power Management
 product INTEL SCH_IDE		0x811a  SCH IDE Controller
 product INTEL E600_HDA		0x811b	E600 HD Audio
 product INTEL E600_PCIB_0	0x8180	E600 Virtual PCI-PCI Bridge
@@ -7607,6 +7614,8 @@ product INTEL RPL_IGD_9		0xa7a9	Raptor Lake Graphics (64 or 48EU)
 product INTEL RPL_IGD_10	0xa7aa	Raptor Lake Graphics (96 or 80EU)
 product INTEL RPL_IGD_11	0xa7ac	Raptor Lake Graphics (96 or 80EU)
 product INTEL RPL_IGD_12	0xa7ad	Raptor Lake Graphics (64EU)
+product INTEL NPU_ARL		0xad1d  Arrow Lake NPU
+product INTEL NPU_PTL		0xb03e  Panther Lake NPU
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
