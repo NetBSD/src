@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.21 2025/01/18 07:26:06 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.22 2025/01/18 07:26:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.21 2025/01/18 07:26:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.22 2025/01/18 07:26:21 riastradh Exp $");
 
 /*
  * Futexes
@@ -996,15 +996,15 @@ futex_wait(struct futex_wait *fw, const struct timespec *deadline,
  *
  *	Wake up to nwake waiters on f matching bitset; then, if f2 is
  *	provided, move up to nrequeue remaining waiters on f matching
- *	bitset to f2.  Return the number of waiters actually woken.
- *	Caller must hold the locks of f and f2, if provided.
+ *	bitset to f2.  Return the number of waiters actually woken or
+ *	requeued.  Caller must hold the locks of f and f2, if provided.
  */
 static unsigned
 futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
     unsigned nrequeue, int bitset)
 {
 	struct futex_wait *fw, *fw_next;
-	unsigned nwoken = 0;
+	unsigned nwoken_or_requeued = 0;
 	int hold_error __diagused;
 
 	KASSERT(mutex_owned(&f->fx_qlock));
@@ -1025,7 +1025,7 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 			cv_broadcast(&fw->fw_cv);
 			mutex_exit(&fw->fw_lock);
 			nwake--;
-			nwoken++;
+			nwoken_or_requeued++;
 			/*
 			 * Drop the futex reference on behalf of the
 			 * waiter.  We assert this is not the last
@@ -1054,6 +1054,16 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 				mutex_exit(&fw->fw_lock);
 				nrequeue--;
 				/*
+				 * PR kern/59004: Missing constant for upper
+				 * bound on systemwide number of lwps
+				 */
+				KASSERT(nwoken_or_requeued <
+				    MIN(PID_MAX*MAXMAXLWP, FUTEX_TID_MASK));
+				__CTASSERT(UINT_MAX >=
+				    MIN(PID_MAX*MAXMAXLWP, FUTEX_TID_MASK));
+				if (++nwoken_or_requeued == 0) /* paranoia */
+					nwoken_or_requeued = UINT_MAX;
+				/*
 				 * Transfer the reference from f to f2.
 				 * As above, we assert that we are not
 				 * dropping the last reference to f here.
@@ -1072,8 +1082,8 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 		KASSERT(nrequeue == 0);
 	}
 
-	/* Return the number of waiters woken.  */
-	return nwoken;
+	/* Return the number of waiters woken or requeued.  */
+	return nwoken_or_requeued;
 }
 
 /*
@@ -1303,7 +1313,8 @@ futex_func_wake(bool shared, int *uaddr, int val, int val3, register_t *retval)
 	 * number woken.
 	 */
 	futex_queue_lock(f);
-	nwoken = futex_wake(f, val, NULL, 0, val3);
+	nwoken = futex_wake(f, /*nwake*/val, NULL, /*nrequeue*/0,
+	    /*bitset*/val3);
 	futex_queue_unlock(f);
 
 	/* Release the futex.  */
@@ -1327,7 +1338,7 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
     int val2, int val3, register_t *retval)
 {
 	struct futex *f = NULL, *f2 = NULL;
-	unsigned nwoken = 0;	/* default to zero woken on early return */
+	unsigned nwoken_or_requeued = 0; /* default to zero on early return */
 	int error;
 
 	/* Reject negative number of wakeups or requeues. */
@@ -1371,13 +1382,15 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 		error = EAGAIN;
 	} else {
 		error = 0;
-		nwoken = futex_wake(f, val, f2, val2, FUTEX_BITSET_MATCH_ANY);
+		nwoken_or_requeued = futex_wake(f, /*nwake*/val,
+		    f2, /*nrequeue*/val2,
+		    FUTEX_BITSET_MATCH_ANY);
 	}
 	futex_queue_unlock2(f, f2);
 
 out:
-	/* Return the number of waiters woken.  */
-	*retval = nwoken;
+	/* Return the number of waiters woken or requeued.  */
+	*retval = nwoken_or_requeued;
 
 	/* Release the futexes if we got them.  */
 	if (f2)
@@ -1563,10 +1576,16 @@ futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
 		if (error)
 			goto out_unlock;
 	} while (actual != oldval);
-	nwoken = (f ? futex_wake(f, val, NULL, 0, FUTEX_BITSET_MATCH_ANY) : 0);
-	if (f2 && futex_compute_cmp(oldval, val3))
-		nwoken += futex_wake(f2, val2, NULL, 0,
+	if (f == NULL) {
+		nwoken = 0;
+	} else {
+		nwoken = futex_wake(f, /*nwake*/val, NULL, /*nrequeue*/0,
 		    FUTEX_BITSET_MATCH_ANY);
+	}
+	if (f2 && futex_compute_cmp(oldval, val3)) {
+		nwoken += futex_wake(f2, /*nwake*/val2, NULL, /*nrequeue*/0,
+		    FUTEX_BITSET_MATCH_ANY);
+	}
 
 	/* Success! */
 	error = 0;
@@ -1855,8 +1874,10 @@ release_futex(uintptr_t const uptr, lwpid_t const tid, bool const is_pi,
 	 *
 	 * XXX eventual PI handling?
 	 */
-	if (oldval & FUTEX_WAITERS)
-		(void)futex_wake(f, 1, NULL, 0, FUTEX_BITSET_MATCH_ANY);
+	if (oldval & FUTEX_WAITERS) {
+		(void)futex_wake(f, /*nwake*/1, NULL, /*nrequeue*/0,
+		    FUTEX_BITSET_MATCH_ANY);
+	}
 
 	/* Unlock the queue and release the futex.  */
 out:	futex_queue_unlock(f);
