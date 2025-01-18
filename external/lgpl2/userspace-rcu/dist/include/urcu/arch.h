@@ -34,6 +34,8 @@
  * URCU_ARCH_M68K : All Motorola 68000 variants
  * URCU_ARCH_RISCV : All RISC-V variants
  * URCU_ARCH_LOONGARCH : All LoongArch variants
+ * URCU_ARCH_VAX : All DEC VAX variants
+ * URCU_ARCH_SH3 : All SUPER H 3 variants
  */
 
 #if (defined(__INTEL_OFFLOAD) || defined(__TARGET_ARCH_MIC) || defined(__MIC__))
@@ -157,7 +159,18 @@
 #define URCU_ARCH_LOONGARCH 1
 #include <urcu/arch/loongarch.h>
 
+#elif defined(__vax__)
+
+#define URCU_ARCH_VAX 1
+#include <urcu/arch/vax.h>
+
+#elif defined(__sh3__)
+
+#define URCU_ARCH_SH3 1
+#include <urcu/arch/sh3.h>
+
 #else
+
 #error "Cannot build: unrecognized architecture, see <urcu/arch.h>."
 #endif
 
