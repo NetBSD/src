@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100_clkc.c,v 1.5 2025/01/18 17:20:05 skrll Exp $ */
+/* $NetBSD: jh7100_clkc.c,v 1.6 2025/01/18 17:21:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.5 2025/01/18 17:20:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.6 2025/01/18 17:21:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -126,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.5 2025/01/18 17:20:05 skrll Exp $"
 #define JH7100_CLK_WDTIMER_APB		171
 #define JH7100_CLK_WDT_CORE		172
 #define JH7100_CLK_PWM_APB		181
+#define JH7100_CLK_TEMP_APB		183
+#define JH7100_CLK_TEMP_SENSE		184
 
 #define JH7100_CLK_PLL0_OUT		186
 #define JH7100_CLK_PLL1_OUT		187
@@ -276,6 +278,8 @@ static struct jh71x0_clkc_clk jh7100_clocks[] = {
 
 	JH71X0CLKC_GATE(JH7100_CLK_WDTIMER_APB,		"wdtimer_apb",	"apb2_bus"),
 
+	JH71X0CLKC_GATE(JH7100_CLK_TEMP_APB,		"temp_apb",	"apb2_bus"),
+
 	JH71X0CLKC_GATEDIV(JH7100_CLK_UART0_CORE,	"uart0_core",		 63, "perh1_src"),
 	JH71X0CLKC_GATEDIV(JH7100_CLK_UART1_CORE,	"uart1_core",		 63, "perh1_src"),
 	JH71X0CLKC_GATEDIV(JH7100_CLK_UART2_CORE,	"uart2_core",		 63, "perh0_src"),
@@ -301,6 +305,7 @@ static struct jh71x0_clkc_clk jh7100_clocks[] = {
 	JH71X0CLKC_GATEDIV(JH7100_CLK_GMAC_RMII_TX,	"gmac_rmii_txclk",	  8, "gmac_rmii_ref"),
 	JH71X0CLKC_GATEDIV(JH7100_CLK_GMAC_RMII_RX,	"gmac_rmii_rxclk",	  8, "gmac_rmii_ref"),
 	JH71X0CLKC_GATEDIV(JH7100_CLK_GMAC_TOPHYREF,	"gmac_tophyref",	127, "gmac_root_div"),
+	JH71X0CLKC_GATEDIV(JH7100_CLK_TEMP_SENSE,	"temp_sense",		 31, "osc_sys"),
 
 	JH71X0CLKC_FRACDIV(JH7100_CLK_AUDIO_DIV,	"audio_div",		"audio_root"),
 
