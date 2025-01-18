@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.8 2025/01/18 07:05:15 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.9 2025/01/18 07:26:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.8 2025/01/18 07:05:15 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.9 2025/01/18 07:26:06 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -927,13 +927,10 @@ ATF_TC_BODY(futex_cmp_requeue_trivial, tc)
 
 	futex_word = 123;
 	futex_word1 = 456;	/* should be ignored */
-	atf_tc_expect_fail("PR kern/56828:"
-	    " futex calls in Linux emulation sometimes hang");
 	ATF_CHECK_ERRNO(EAGAIN, __futex(&futex_word, FUTEX_CMP_REQUEUE,
 		/*nwake*/1, NULL, &futex_word1, /*nrequeue*/1, 0) == -1);
 	ATF_CHECK_ERRNO(EAGAIN, __futex(&futex_word, FUTEX_CMP_REQUEUE,
 		/*nwake*/1, NULL, &futex_word1, /*nrequeue*/1, 122) == -1);
-	atf_tc_expect_pass();
 	nwoken = __futex(&futex_word, FUTEX_CMP_REQUEUE,
 	    /*nwake*/1, NULL, &futex_word1, /*nrequeue*/1, 123);
 	ATF_CHECK_MSG(nwoken != -1, "errno=%d (%s)", errno, strerror(errno));

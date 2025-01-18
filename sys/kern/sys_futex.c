@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.20 2024/04/11 13:51:36 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.21 2025/01/18 07:26:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.20 2024/04/11 13:51:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.21 2025/01/18 07:26:06 riastradh Exp $");
 
 /*
  * Futexes
@@ -1336,14 +1336,23 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 		goto out;
 	}
 
-	/* Look up the source futex, if any. */
-	error = futex_lookup(uaddr, shared, &f);
+	/*
+	 * Look up or create the source futex.  For FUTEX_CMP_REQUEUE,
+	 * we always create it, rather than bail if it has no waiters,
+	 * because FUTEX_CMP_REQUEUE always tests the futex word in
+	 * order to report EAGAIN.
+	 */
+	error = (op == FUTEX_CMP_REQUEUE
+	    ? futex_lookup_create(uaddr, shared, &f)
+	    : futex_lookup(uaddr, shared, &f));
 	if (error)
 		goto out;
 
-	/* If there is none, nothing to do. */
-	if (f == NULL)
+	/* If there is none for FUTEX_REQUEUE, nothing to do. */
+	if (f == NULL) {
+		KASSERT(op != FUTEX_CMP_REQUEUE);
 		goto out;
+	}
 
 	/*
 	 * We may need to create the destination futex because it's
