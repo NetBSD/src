@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.6 2025/01/18 06:22:35 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.7 2025/01/18 06:22:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.6 2025/01/18 06:22:35 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.7 2025/01/18 06:22:56 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -846,8 +846,11 @@ do_futex_requeue_test(int flags, int op)
 	 */
 
 	/* Wake one waiter on 1, move one waiter to 0. */
-	ATF_REQUIRE(__futex(&futex_word1, op | flags,
-			    1, NULL, &futex_word, 1, good_val3) == 1);
+	atf_tc_expect_fail("PR kern/56828:"
+	    " futex calls in Linux emulation sometimes hang");
+	ATF_CHECK(__futex(&futex_word1, op | flags,
+		1, NULL, &futex_word, 1, good_val3) == 2);
+	atf_tc_expect_pass();
 
 	/*
 	 * FUTEX 0: 1 LWP
