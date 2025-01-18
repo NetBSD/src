@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100_clkc.c,v 1.4 2024/09/18 08:31:50 skrll Exp $ */
+/* $NetBSD: jh7100_clkc.c,v 1.5 2025/01/18 17:20:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.4 2024/09/18 08:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.5 2025/01/18 17:20:05 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -132,6 +132,38 @@ __KERNEL_RCSID(0, "$NetBSD: jh7100_clkc.c,v 1.4 2024/09/18 08:31:50 skrll Exp $"
 #define JH7100_CLK_PLL2_OUT		188
 
 #define JH7100_NCLKS			189
+
+#define JH7100_AUDCLK_ADC_MCLK		0
+#define JH7100_AUDCLK_I2S1_MCLK		1
+#define JH7100_AUDCLK_I2SADC_APB	2
+#define JH7100_AUDCLK_I2SADC_BCLK	3
+#define JH7100_AUDCLK_I2SADC_BCLK_N	4
+#define JH7100_AUDCLK_I2SADC_LRCLK	5
+#define JH7100_AUDCLK_PDM_APB		6
+#define JH7100_AUDCLK_PDM_MCLK		7
+#define JH7100_AUDCLK_I2SVAD_APB	8
+#define JH7100_AUDCLK_SPDIF		9
+#define JH7100_AUDCLK_SPDIF_APB		10
+#define JH7100_AUDCLK_PWMDAC_APB	11
+#define JH7100_AUDCLK_DAC_MCLK		12
+#define JH7100_AUDCLK_I2SDAC_APB	13
+#define JH7100_AUDCLK_I2SDAC_BCLK	14
+#define JH7100_AUDCLK_I2SDAC_BCLK_N	15
+#define JH7100_AUDCLK_I2SDAC_LRCLK	16
+#define JH7100_AUDCLK_I2S1_APB		17
+#define JH7100_AUDCLK_I2S1_BCLK		18
+#define JH7100_AUDCLK_I2S1_BCLK_N	19
+#define JH7100_AUDCLK_I2S1_LRCLK	20
+#define JH7100_AUDCLK_I2SDAC16K_APB	21
+#define JH7100_AUDCLK_APB0_BUS		22
+#define JH7100_AUDCLK_DMA1P_AHB		23
+#define JH7100_AUDCLK_USB_APB		24
+#define JH7100_AUDCLK_USB_LPM		25
+#define JH7100_AUDCLK_USB_STB		26
+#define JH7100_AUDCLK_APB_EN		27
+#define JH7100_AUDCLK_VAD_MEM		28
+
+#define JH7100_AUDCLK_NCLKS		29
 
 
 static const char *cpundbus_root_parents[] = {
@@ -279,8 +311,112 @@ static struct jh71x0_clkc_clk jh7100_clocks[] = {
 };
 
 
+static const char *adc_mclk_parents[] = {
+	"audio_src", "audio_12288",
+};
+
+static const char *i2s1_mclk_parents[] = {
+	"audio_src", "audio_12288",
+};
+
+static const char *i2sadc_bclk_parents[] = {
+	"adc_mclk", "i2sadc_bclk_iopad"
+};
+
+static const char *i2sadc_lrclk_parents[] = {
+	"i2sadc_bclk_n", "i2sadc_lrclk_iopad", "i2sadc_bclk",
+};
+
+static const char *pdm_mclk_parents[] = {
+	"audio_src", "audio_12288",
+};
+
+static const char *spdif_parents[] = {
+	"audio_src", "audio_12288",
+};
+
+static const char *dac_mclk_parents[] = {
+	"audio_src", "audio_12288",
+};
+
+static const char *i2sdac_bclk_parents[] = {
+	"dac_mclk", "i2sadc_blk_iopad",
+};
+
+static const char *i2sdac_lrclk_parents[] = {
+	"i2s1_mclk", "i2sadc_blk_iopad",
+};
+
+static const char *i2s1_bclk_parents[] = {
+	"i2s1_mclk", "i2sadc_blk_iopad",
+};
+
+static const char *i2s1_lrclk_parents[] = {
+	"i2s1_bclk_n", "i2sadc_lrclk_iopad",
+};
+
+static const char *vad_mem_parents[] = {
+	"vad_intmem", "audio_12288",
+};
+
+
+static struct jh71x0_clkc_clk jh7100_audclk_clocks[] = {
+	JH71X0CLKC_MUXDIVGATE(JH7100_AUDCLK_ADC_MCLK, "adc_mclk", 15, adc_mclk_parents),
+	JH71X0CLKC_MUXDIVGATE(JH7100_AUDCLK_I2S1_MCLK, "i2s1_mclk", 15, i2s1_mclk_parents),
+
+	JH71X0CLKC_GATE(JH7100_AUDCLK_I2SADC_APB, "i2sadc_apb", "apb0_bus"),
+
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2SADC_BCLK, "i2sadc_bclk", 31, i2sadc_bclk_parents),
+
+	JH71X0CLKC_INV(JH7100_AUDCLK_I2SADC_BCLK_N, "i2sadc_bclk_n", "i2sadc_bclk"),
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2SADC_LRCLK, "i2sadc_lrclk", 63, i2sadc_lrclk_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_PDM_APB, "pdm_apb", "apb0_bus"),
+	JH71X0CLKC_MUXDIVGATE(JH7100_AUDCLK_PDM_MCLK, "pdm_mclk", 15, pdm_mclk_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_I2SVAD_APB, "i2svad_apb", "apb0_bus"),
+	JH71X0CLKC_MUXDIVGATE(JH7100_AUDCLK_SPDIF, "spdif", 15, spdif_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_SPDIF_APB, "spdif_apb", "apb0_bus"),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_PWMDAC_APB, "pwmdac_apb", "apb0_bus"),
+	JH71X0CLKC_MUXDIVGATE(JH7100_AUDCLK_DAC_MCLK, "dac_mclk", 15, dac_mclk_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_I2SDAC_APB, "i2sdac_apb", "apb0_bus"),
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2SDAC_BCLK, "i2sdac_bclk", 31, i2sdac_bclk_parents),
+	JH71X0CLKC_INV(JH7100_AUDCLK_I2SDAC_BCLK_N, "i2sdac_bclk_n", "i2sdac_bclk"),
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2SDAC_LRCLK, "i2sdac_lrclk", 31, i2sdac_lrclk_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_I2S1_APB, "i2s1_apb", "apb0_bus"),
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2S1_BCLK, "i2s1_bclk", 31, i2s1_bclk_parents),
+	JH71X0CLKC_INV(JH7100_AUDCLK_I2S1_BCLK_N, "i2s1_bclk_n", "i2s1_bclk"),
+	JH71X0CLKC_MUXDIV(JH7100_AUDCLK_I2S1_LRCLK, "i2s1_lrclk", 63, i2s1_lrclk_parents),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_I2SDAC16K_APB, "i2s1dac16k_apb", "apb0_bus"),
+	JH71X0CLKC_DIV(JH7100_AUDCLK_APB0_BUS, "apb0_bus", 8, "dom7ahb_bus"),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_DMA1P_AHB, "dma1p_ahb", "dom7ahb_bus"),
+	JH71X0CLKC_GATE(JH7100_AUDCLK_USB_APB, "usb_apb", /*CLK_IGNORE_UNUSED,*/ "apb_en"),
+	JH71X0CLKC_GATEDIV(JH7100_AUDCLK_USB_LPM, "usb_lpm", /*CLK_IGNORE_UNUSED,*/ 4, "usb_apb"),
+	JH71X0CLKC_GATEDIV(JH7100_AUDCLK_USB_STB, "usb_stb", /*CLK_IGNORE_UNUSED,*/ 3, "usb_apb"),
+	JH71X0CLKC_DIV(JH7100_AUDCLK_APB_EN, "apb_en", 8, "dom7ahb_bus"),
+	JH71X0CLKC_MUX(JH7100_AUDCLK_VAD_MEM, "vad_mem", vad_mem_parents),
+};
+
+struct jh7100_clk_config {
+	const char *jhcc_name;
+	struct jh71x0_clkc_clk *jhcc_clocks;
+	size_t jhcc_nclks;
+};
+
+static struct jh7100_clk_config jh7100_clk_config = {
+	.jhcc_name = "System",
+	.jhcc_clocks = jh7100_clocks,
+	.jhcc_nclks = __arraycount(jh7100_clocks),
+};
+
+
+static struct jh7100_clk_config jh7110_audclk_config = {
+	.jhcc_name = "Audio",
+	.jhcc_clocks = jh7100_audclk_clocks,
+	.jhcc_nclks = __arraycount(jh7100_audclk_clocks),
+};
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "starfive,jh7100-clkgen" },
+	{ .compat = "starfive,jh7100-clkgen", .data = &jh7100_clk_config },
+	{ .compat = "starfive,jh7100-audclk", .data = &jh7110_audclk_config },
 	DEVICE_COMPAT_EOL
 };
 
@@ -323,6 +459,7 @@ jh7100_clkc_attach(device_t parent, device_t self, void *aux)
 	struct jh71x0_clkc_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	char infomsg[128] = "";
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -342,26 +479,35 @@ jh7100_clkc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	struct clk * const osclk = fdtbus_clock_get(phandle, "osc_sys");
-	if (osclk == NULL) {
-		aprint_error(": couldn't get osc_sys\n");
-		return;
-	}
-	u_int osclk_rate = clk_get_rate(osclk);
+	const struct jh7100_clk_config *jhcc =
+	    of_compatible_lookup(phandle, compat_data)->data;
+	KASSERT(jhcc != NULL);
 
-	struct clk * const oaclk = fdtbus_clock_get(phandle, "osc_aud");
-	if (oaclk == NULL) {
-		aprint_error(": couldn't get osc_aud\n");
-		return;
+	if (jhcc == &jh7100_clk_config) {
+		struct clk * const osclk = fdtbus_clock_get(phandle, "osc_sys");
+		if (osclk == NULL) {
+			aprint_error(": couldn't get osc_sys\n");
+			return;
+		}
+		u_int osclk_rate = clk_get_rate(osclk);
+
+		struct clk * const oaclk = fdtbus_clock_get(phandle, "osc_aud");
+		if (oaclk == NULL) {
+			aprint_error(": couldn't get osc_aud\n");
+			return;
+		}
+		u_int oaclk_rate = clk_get_rate(oaclk);
+
+		snprintf(infomsg, sizeof(infomsg), "(OSC0 %u Hz, OSC1 %u Hz)",
+		    osclk_rate, oaclk_rate);
 	}
-	u_int oaclk_rate = clk_get_rate(oaclk);
 
 	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &jh71x0_clkc_funcs;
 	sc->sc_clkdom.priv = sc;
 
-	sc->sc_clk = jh7100_clocks;
-	sc->sc_nclks = __arraycount(jh7100_clocks);
+	sc->sc_clk = jhcc->jhcc_clocks;
+	sc->sc_nclks = jhcc->jhcc_nclks;
 	for (size_t id = 0; id < sc->sc_nclks; id++) {
 		if (sc->sc_clk[id].jcc_type == JH71X0CLK_UNKNOWN)
 			continue;
@@ -371,8 +517,7 @@ jh7100_clkc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": JH7100 (OSC0 %u Hz, OSC1 %u Hz)\n",
-	    osclk_rate, oaclk_rate);
+	aprint_normal(": JH7100 %s clocks %s\n", jhcc->jhcc_name, infomsg);
 
 	for (size_t id = 0; id < sc->sc_nclks; id++) {
 		if (sc->sc_clk[id].jcc_type == JH71X0CLK_UNKNOWN)
