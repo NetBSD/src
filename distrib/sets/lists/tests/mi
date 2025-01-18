@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1356 2025/01/10 23:00:37 rillig Exp $
+# $NetBSD: mi,v 1.1357 2025/01/18 22:31:22 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4942,6 +4942,10 @@
 ./usr/tests/usr.bin/ftp/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/ftp/custom_headers.sh		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ftp/t_custom_headers		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gcov				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gcov/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/gcov/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/gcov/t_gcov				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb/Atffile				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/gdb/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
