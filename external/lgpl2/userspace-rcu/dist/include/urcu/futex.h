@@ -37,7 +37,7 @@
 # include <sys/time.h>
 # include <sys/futex.h>
 
-#elif defined(__NetBSD__) && defined(SYS___futex)
+#elif defined(__NetBSD__) && defined(SYS___futex) && 0
 
 # include <unistd.h>
 # include <sys/time.h>
@@ -206,12 +206,12 @@ static inline int futex_async(int32_t *uaddr, int op, int32_t val,
 	return ret;
 }
 
-#elif defined(__NetBSD__) && defined(SYS___futex)
+#elif defined(__NetBSD__) && defined(SYS___futex) && 0
 
 static inline int futex(int32_t *uaddr, int op, int32_t val,
 		const struct timespec *timeout, int32_t *uaddr2, int32_t val3)
 {
-	return syscall(SYS___futex, uaddr, op, val, timeout, uaddr2, 0, val3);
+	return _syscall(SYS___futex, uaddr, op, val, timeout, uaddr2, 0, val3);
 }
 
 static inline int futex_noasync(int32_t *uaddr, int op, int32_t val,
