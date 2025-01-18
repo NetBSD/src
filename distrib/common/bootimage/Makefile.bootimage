@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.43 2025/01/10 18:11:56 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.44 2025/01/18 09:07:14 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -519,7 +519,6 @@ ${WORKEFI}: ${TARGETFS}
 .endfor
 	${RM} -f ${WORKEFI}
 	${TOOL_MAKEFS} -M ${EFIMB}m -m ${EFIMB}m			\
-	    -B ${TARGET_ENDIANNESS}					\
 	    ${MAKEFS_TIMESTAMP}						\
 	    -t msdos -o F=32,c=1					\
 	    ${WORKEFI} ${EFIWORKDIR}
