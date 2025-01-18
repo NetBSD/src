@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.82 2024/07/06 07:09:22 mlelstv Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.83 2025/01/18 18:35:47 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -36,11 +36,17 @@
 
 /*
  * USB Communication Device Class (Ethernet Networking Control Model)
- * http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+ *
+ * Originally written for the 1.1 spec at:
+ * https://web.archive.org/web/20140824090418/http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+ *
+ * Updated 1.2 spec at:
+ * https://web.archive.org/web/20241127002135/https://www.usb.org/document-library/class-definitions-communication-devices-12
+ * https://web.archive.org/web/20240510195654/https://www.usb.org/sites/default/files/CDC1.2_WMC1.1_012011.zip
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.82 2024/07/06 07:09:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.83 2025/01/18 18:35:47 riastradh Exp $");
 
 #include <sys/param.h>
 
