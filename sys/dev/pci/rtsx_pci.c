@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.10 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.11 2025/01/18 08:12:45 mrg Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.10 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.11 2025/01/18 08:12:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	/* 
-	 * Explicitly match the UNDEFINED device class only. Some RTS5902
+	 * Explicitly match the UNDEFINED device class only. Some RTS5209
 	 * devices advertise a SYSTEM/SDHC class in addition to the UNDEFINED
 	 * device class. Let sdhc(4) handle the SYSTEM/SDHC ones.
 	 */
@@ -79,6 +79,7 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	case PCI_PRODUCT_REALTEK_RTS5227:
 	case PCI_PRODUCT_REALTEK_RTS5229:
 	case PCI_PRODUCT_REALTEK_RTS522A:
+	case PCI_PRODUCT_REALTEK_RTS5249:
 	case PCI_PRODUCT_REALTEK_RTS525A:
 	case PCI_PRODUCT_REALTEK_RTL8402:
 	case PCI_PRODUCT_REALTEK_RTL8411:
@@ -116,6 +117,7 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 		flags = RTSX_F_5227;
 		break;
 	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTS5249:
 		flags = RTSX_F_5229;
 		break;
 	case PCI_PRODUCT_REALTEK_RTS525A:
