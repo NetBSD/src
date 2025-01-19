@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.6 2024/09/22 14:07:13 jmcneill Exp $
+#	$NetBSD: WII,v 1.7 2025/01/19 00:29:28 jmcneill Exp $
 #
 #	Nintendo Wii
 #
@@ -155,6 +155,7 @@ sdhc0		at hollywood0 addr 0x0d070000 irq 7	# SD card
 sdhc1		at hollywood0 addr 0x0d080000 irq 8	# SDIO/BT
 sdmmc*		at sdmmcbus?
 ld*		at sdmmc?
+bwi*		at sdmmc?				# WLAN
 
 include "dev/usb/usbdevices.config"
 include "dev/bluetooth/bluetoothdevices.config"

@@ -1,4 +1,4 @@
-.\" $NetBSD: bwi.4,v 1.14 2024/09/07 20:33:53 rillig Exp $
+.\" $NetBSD: bwi.4,v 1.15 2025/01/19 00:29:29 jmcneill Exp $
 .\"
 .\" Copyright (c) 2007 The DragonFly Project.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $DragonFly: src/share/man/man4/bwi.4,v 1.10 2008/07/26 16:25:40 swildner Exp $
 .\"
-.Dd April 25, 2012
+.Dd January 18, 2025
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Cd "bwi* at pci? dev ? function ?"
 .Cd "bwi* at cardbus? function ?"
+.Cd "bwi* at sdmmc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -73,6 +74,7 @@ driver:
 .Pp
 .Bl -column -offset 6n -compact "Apple AirPort Extreme" "BCM4318" "Mini PCI" "b/g"
 .It Em "Card	Chip	Bus	Standard"
+.It Apple AirPort Extreme			b/g
 .It Buffalo WLI-CB-G54	BCM4306	CardBus	b/g
 .It Buffalo WLI3-CB-G54L	BCM4318	CardBus	b/g
 .It Buffalo WLI-PCI-G54S	BCM4306	PCI	b/g
@@ -80,7 +82,7 @@ driver:
 .It Dell Wireless 1470	BCM4318	Mini PCI	b/g
 .It Dell Truemobile 1400	BCM4309	Mini PCI	b/g
 .It Dell Latitude D505	BCM4306	PCI	b/g
-.It Apple AirPort Extreme			b/g
+.It Nintendo Wii WLAN	BCM4318	SDIO	b/g
 .El
 .Sh FILES
 The firmware for the adapter is not shipped with

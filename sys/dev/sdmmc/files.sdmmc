@@ -1,4 +1,4 @@
-#      $NetBSD: files.sdmmc,v 1.5 2017/11/07 16:30:32 khorben Exp $
+#      $NetBSD: files.sdmmc,v 1.6 2025/01/19 00:29:29 jmcneill Exp $
 #      $OpenBSD: files.sdmmc,v 1.2 2006/06/01 21:53:41 uwe Exp $
 #
 # Config file and device description for machine-independent SD/MMC code.
@@ -25,3 +25,7 @@ file	dev/sdmmc/sbt.c			sbt
 # Broadcom FullMAC SDIO wireless adapter
 attach bwfm at sdmmc with bwfm_sdio
 file	dev/sdmmc/if_bwfm_sdio.c	bwfm_sdio
+
+# Broadcom SoftMAC SDIO wireless driver
+attach bwi at sdmmc with bwi_sdio
+file	dev/sdmmc/if_bwi_sdio.c		bwi_sdio

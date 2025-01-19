@@ -1,4 +1,4 @@
-/*	$NetBSD: bwireg.h,v 1.4 2020/05/18 05:47:54 msaitoh Exp $	*/
+/*	$NetBSD: bwireg.h,v 1.5 2025/01/19 00:29:28 jmcneill Exp $	*/
 /*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
@@ -150,6 +150,18 @@
 #define BWI_TXRX_INTR_STATUS(i)		(BWI_TXRX_INTR_STATUS_BASE + ((i) * 8))
 #define BWI_TXRX_INTR_MASK(i)		(BWI_TXRX_INTR_MASK_BASE + ((i) * 8))
 
+#define BWI_PIO_TXCTL(qid)		(0x0000300 + (qid) * 0x10 + 0x0)
+#define BWI_PIO_TXCTL_VALID		(0xf << 0)
+#define BWI_PIO_TXCTL_VALID_BYTES(n)	((1 << (n)) - 1)
+#define BWI_PIO_TXCTL_EOF		(1 << 4)
+#define BWI_PIO_TXCTL_FREADY		(1 << 7)
+#define BWI_PIO_TXDATA(qid)		(0x0000300 + (qid) * 0x10 + 0x4)
+
+#define BWI_PIO_RXCTL(qid)		(0x0000300 + (qid) * 0x10 + 0x8)
+#define BWI_PIO_RXCTL_FRAMERDY		(1 << 0)
+#define BWI_PIO_RXCTL_DATARDY		(1 << 1)
+#define BWI_PIO_RXDATA(qid)		(0x0000300 + (qid) * 0x10 + 0xc)
+
 #define BWI_MAC_STATUS			0x00000120
 #define BWI_MAC_STATUS_ENABLE		(1 << 0)
 #define BWI_MAC_STATUS_UCODE_START	(1 << 1)
@@ -196,6 +208,7 @@
 #define BWI_COMM_MOBJ_SLOTTIME		0x10
 #define BWI_COMM_MOBJ_MACREV		0x16
 #define BWI_COMM_MOBJ_TX_ACK		0x22
+#define BWI_COMM_MOBJ_RXPADOFF		0x34
 #define BWI_COMM_MOBJ_UCODE_STATE	0x40
 #define BWI_COMM_MOBJ_SHRETRY_FB	0x44
 #define BWI_COMM_MOBJ_LGRETEY_FB	0x46
@@ -252,6 +265,7 @@
 #define BWI_TX32_STATUS_STATE_STOPPED	3
 #define BWI_RX32_CTRL			0x10
 #define BWI_RX32_CTRL_HDRSZ_MASK	0x00fe
+#define BWI_RX32_CTRL_DIRECT_FIFO	0x0100
 #define BWI_RX32_RINGINFO		0x14
 #define BWI_RX32_INDEX			0x18
 #define BWI_RX32_STATUS			0x1c

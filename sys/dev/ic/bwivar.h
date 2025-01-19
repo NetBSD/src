@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.10 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.11 2025/01/19 00:29:28 jmcneill Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -78,14 +78,18 @@ enum bwi_txpwrcb_type {
 	((hdr) + sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN)
 
 #define CSR_READ_4(sc, reg)			\
-	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
+	_bwi_read_4(sc, reg)
 #define CSR_READ_2(sc, reg)			\
-	bus_space_read_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
+	_bwi_read_2(sc, reg)
+#define CSR_READ_MULTI_4(sc, reg, datap, count)	\
+	_bwi_read_multi_4(sc, reg, datap, count)
 
 #define CSR_WRITE_4(sc, reg, val)		\
-	bus_space_write_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
+	_bwi_write_4(sc, reg, val)
 #define CSR_WRITE_2(sc, reg, val)		\
-	bus_space_write_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
+	_bwi_write_2(sc, reg, val)
+#define CSR_WRITE_MULTI_4(sc, reg, datap, count) \
+	_bwi_write_multi_4(sc, reg, datap, count)
 
 #define CSR_SETBITS_4(sc, reg, bits)		\
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) | (bits))
@@ -101,6 +105,9 @@ enum bwi_txpwrcb_type {
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(bits))
 #define CSR_CLRBITS_2(sc, reg, bits)		\
 	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) & ~(bits))
+
+struct pool_cache;
+struct workqueue;
 
 struct bwi_desc32 {
 	/* Little endian */
@@ -145,6 +152,7 @@ struct bwi_rxbuf_hdr {
 #define BWI_RXH_F1_OFDM		(1 << 0)
 
 #define BWI_RXH_F2_TYPE2FRAME	(1 << 2)
+#define BWI_RXH_F2_INVALID	(1 << 0)
 
 #define BWI_RXH_F3_BCM2050_RSSI	(1 << 10)
 
@@ -207,12 +215,17 @@ struct bwi_ring_data {
 	void			*rdata_desc;
 };
 
+struct bwi_txbuf_data;
+
 struct bwi_txbuf {
 	struct mbuf		*tb_mbuf;
 	bus_dmamap_t		 tb_dmap;
 
 	struct ieee80211_node	*tb_ni;
 	int			 tb_rate_idx[2];
+
+	struct bwi_txbuf_data	*tb_data;
+	STAILQ_ENTRY(bwi_txbuf)	 tb_entry;
 };
 
 struct bwi_txbuf_data {
@@ -522,6 +535,28 @@ struct bwi_node {
 	struct ieee80211_amrr_node	amn;
 };
 
+enum bwi_task_cmd {
+	BWI_TASK_NEWSTATE,
+	BWI_TASK_UPDATESLOT,
+	BWI_TASK_TX,
+	BWI_TASK_INIT,
+	BWI_TASK_CALIBRATE,
+};
+
+#define BWI_TASK_COUNT		64
+
+struct bwi_task {
+	struct work		 t_work;
+	struct ieee80211com	*t_ic;
+	enum bwi_task_cmd	 t_cmd;
+	union {
+		struct {
+			enum ieee80211_state state;
+			int	 arg;
+		} t_newstate;
+	};
+};
+
 struct bwi_softc {
 	device_t		 sc_dev;
 	struct ethercom		 sc_ec;
@@ -627,6 +662,24 @@ struct bwi_softc {
 	void			 (*sc_conf_write)(void *, uint32_t, uint32_t);
 	uint32_t		 (*sc_conf_read)(void *, uint32_t);
 
+	void			 (*sc_reg_write_2)(void *, uint32_t, uint16_t);
+	uint16_t		 (*sc_reg_read_2)(void *, uint32_t);
+	void			 (*sc_reg_write_4)(void *, uint32_t, uint32_t);
+	uint32_t		 (*sc_reg_read_4)(void *, uint32_t);
+
+	void			 (*sc_reg_write_multi_4)(void *, uint32_t,
+				     const uint32_t *, size_t);
+	void			 (*sc_reg_read_multi_4)(void *, uint32_t,
+				     uint32_t *, size_t);
+
+	struct pool_cache	*sc_freetask;
+	struct workqueue	*sc_taskq;
+	uint8_t			*sc_pio_databuf;
+	kmutex_t		 sc_pio_txlock;
+	STAILQ_HEAD(, bwi_txbuf) sc_pio_txpend;
+	size_t			 sc_pio_fifolen;
+	size_t			 sc_pio_fifoavail;
+
 	struct sysctllog	*sc_sysctllog;
 
 	/* Sysctl variables */
@@ -654,8 +707,77 @@ struct bwi_softc {
 	int			 sc_txtap_len;
 };
 
+static inline void
+_bwi_read_multi_4(struct bwi_softc *sc, bus_size_t reg, uint32_t *datap,
+    bus_size_t count)
+{
+	if (sc->sc_reg_read_multi_4 != NULL) {
+		return sc->sc_reg_read_multi_4(sc, reg, datap, count);
+	} else {
+		return bus_space_read_multi_4(sc->sc_mem_bt, sc->sc_mem_bh,
+		    reg, datap, count);
+	}
+}
+
+static inline uint16_t
+_bwi_read_2(struct bwi_softc *sc, bus_size_t reg)
+{
+	if (sc->sc_reg_read_2 != NULL) {
+		return sc->sc_reg_read_2(sc, reg);
+	} else {
+		return bus_space_read_2(sc->sc_mem_bt, sc->sc_mem_bh, reg);
+	}
+}
+
+static inline uint32_t
+_bwi_read_4(struct bwi_softc *sc, bus_size_t reg)
+{
+	if (sc->sc_reg_read_4 != NULL) {
+		return sc->sc_reg_read_4(sc, reg);
+	} else {
+		return bus_space_read_4(sc->sc_mem_bt, sc->sc_mem_bh, reg);
+	}
+}
+
+static inline void
+_bwi_write_multi_4(struct bwi_softc *sc, bus_size_t reg, const uint32_t *datap,
+    bus_size_t count)
+{
+	if (sc->sc_reg_read_multi_4 != NULL) {
+		return sc->sc_reg_write_multi_4(sc, reg, datap, count);
+	} else {
+		return bus_space_write_multi_4(sc->sc_mem_bt, sc->sc_mem_bh,
+		    reg, datap, count);
+	}
+}
+
+static inline void
+_bwi_write_2(struct bwi_softc *sc, bus_size_t reg, uint16_t val)
+{
+	if (sc->sc_reg_write_2 != NULL) {
+		sc->sc_reg_write_2(sc, reg, val);
+	} else {
+		bus_space_write_2(sc->sc_mem_bt, sc->sc_mem_bh, reg, val);
+	}
+}
+
+static inline void
+_bwi_write_4(struct bwi_softc *sc, bus_size_t reg, uint32_t val)
+{
+	if (sc->sc_reg_write_4 != NULL) {
+		sc->sc_reg_write_4(sc, reg, val);
+	} else {
+		bus_space_write_4(sc->sc_mem_bt, sc->sc_mem_bh, reg, val);
+	}
+}
+
 #define BWI_F_BUS_INITED	0x1
 #define BWI_F_PROMISC		0x2
+#define BWI_F_SDIO		0x4
+#define BWI_F_PIO		0x8
+
+#define BWI_IS_SDIO(sc)		ISSET((sc)->sc_flags, BWI_F_SDIO)
+#define BWI_IS_PIO(sc)		ISSET((sc)->sc_flags, BWI_F_PIO)
 
 #define BWI_DBG_MAC		0x00000001
 #define BWI_DBG_RF		0x00000002
