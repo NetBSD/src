@@ -29,6 +29,7 @@ unsigned long _uatomic_cmpxchg(void *addr, unsigned long old,
 	switch (len) {
 	case 4:
 	{
+#ifdef __sparc_v9__
 		__asm__ __volatile__ (
 			"membar #StoreLoad | #LoadLoad\n\t"
                         "cas [%1],%2,%0\n\t"
@@ -36,6 +37,20 @@ unsigned long _uatomic_cmpxchg(void *addr, unsigned long old,
                         : "+&r" (_new)
                         : "r" (addr), "r" (old)
                         : "memory");
+#else
+		__asm__ __volatile__ (
+			"ldstub [%%sp-1], %%g0\n\t"
+			"ld [%1], %%g1\n\t"
+			"cmp %%g1, %2\n\t"
+			"bne,a 1f\n\t"
+			" mov %2, %0\n\t"
+			"st %0, [%1]\n\t"
+			"stbar\n\t"
+			"1:\n\t"
+			: "+&r" (_new)
+			: "r" (addr), "r" (old)
+			: "memory", "%g1");
+#endif
 
 		return _new;
 	}
