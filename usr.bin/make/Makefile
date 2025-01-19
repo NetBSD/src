@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127 2023/12/19 20:08:27 rillig Exp $
+#	$NetBSD: Makefile,v 1.128 2025/01/19 10:57:10 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -28,6 +28,7 @@ WARNS=	6
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 GCOV?=		gcov
+CPPFLAGS+=	-DFORK_FUNCTION=fork
 COPTS+=		--coverage -O0 -ggdb
 GCOV_PERL=	if (/^File '(?:.*\/)?(\S+)'/) {
 GCOV_PERL+=		$$file = $$1; $$func = "";

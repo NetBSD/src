@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.636 2024/11/23 22:59:51 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.637 2025/01/19 10:57:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.636 2024/11/23 22:59:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.637 2025/01/19 10:57:10 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1780,7 +1780,7 @@ Cmd_Exec(const char *cmd, char **error)
 
 	Var_ReexportVars(SCOPE_GLOBAL);
 
-	switch (cpid = vfork()) {
+	switch (cpid = FORK_FUNCTION()) {
 	case 0:
 		(void)close(pipefds[0]);
 		(void)dup2(pipefds[1], STDOUT_FILENO);

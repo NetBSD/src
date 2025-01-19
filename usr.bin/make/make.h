@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.348 2025/01/11 21:21:33 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.349 2025/01/19 10:57:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -176,6 +176,15 @@
 typedef unsigned char bool;
 #define true	1
 #define false	0
+#endif
+
+/*
+ * In code coverage mode with gcc>=12, calling vfork/exec does not mark any
+ * further code from the parent process as covered. gcc-10.5.0 is fine, as
+ * are fork/exec calls, as well as posix_spawn.
+ */
+#ifndef FORK_FUNCTION
+#define FORK_FUNCTION vfork
 #endif
 
 #include "lst.h"
