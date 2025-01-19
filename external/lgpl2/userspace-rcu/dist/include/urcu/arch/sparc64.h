@@ -41,11 +41,6 @@ __asm__ __volatile__("ba,pt %%xcc, 1f\n\t"	\
 #define cmm_mb()	membar_safe("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad")
 #define cmm_rmb()	membar_safe("#LoadLoad")
 #define cmm_wmb()	membar_safe("#StoreStore")
-#else
-/* from gcc config/sparc/sync.md */
-#define cmm_mb()	__asm__ __volatile__("stbar\n\tldstub\t[%sp-1], %g0")
-#define cmm_rmb()	__asm__ __volatile__("ldstub\t[%sp-1], %g0")
-#define cmm_wmb()	__asm__ __volatile__("stbar")
 #endif
 
 #ifdef __cplusplus
