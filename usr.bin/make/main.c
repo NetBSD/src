@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.637 2025/01/19 10:57:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.638 2025/01/19 12:59:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.637 2025/01/19 10:57:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.638 2025/01/19 12:59:39 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1991,23 +1991,14 @@ write_all(int fd, const void *data, size_t n)
 
 /* Print why exec failed, avoiding stdio. */
 void MAKE_ATTR_DEAD
-execDie(const char *af, const char *av)
+execDie(const char *func, const char *arg)
 {
-	Buffer buf;
+	char msg[1024];
+	int len;
 
-	Buf_Init(&buf);
-	Buf_AddStr(&buf, progname);
-	Buf_AddStr(&buf, ": ");
-	Buf_AddStr(&buf, af);
-	Buf_AddStr(&buf, "(");
-	Buf_AddStr(&buf, av);
-	Buf_AddStr(&buf, ") failed (");
-	Buf_AddStr(&buf, strerror(errno));
-	Buf_AddStr(&buf, ")\n");
-
-	write_all(STDERR_FILENO, buf.data, buf.len);
-
-	Buf_Done(&buf);
+	len = snprintf(msg, sizeof(msg), "%s: %s(%s) failed (%s)\n",
+	    progname, func, arg, strerror(errno));
+	write_all(STDERR_FILENO, msg, (size_t)len);
 	_exit(1);
 }
 
