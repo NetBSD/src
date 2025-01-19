@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.315 2024/04/10 20:50:18 jschauma Exp $
+$NetBSD: acronyms,v 1.316 2025/01/19 16:25:23 christos Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -615,6 +615,7 @@ VEG	very evil grin
 VIP	very important person
 VLA	variable length array
 VLPR	vehicle license plate recognition
+VPS	virtual private server
 VRI	vehicle recognition identification
 W/	with
 W/E	whatever
