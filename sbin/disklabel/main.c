@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2024/05/15 12:47:22 tsutsui Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2025/01/19 04:37:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2024/05/15 12:47:22 tsutsui Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2025/01/19 04:37:15 tsutsui Exp $");
 #endif
 #endif	/* not lint */
 
@@ -220,6 +220,7 @@ static const struct disklabel_params {
 	{ "pmax",	0, 0,  8, 2, 0,  64, LITTLE_ENDIAN },	/* mips */
 	{ "sun2",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 	{ "sun68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68010 */
+	{ "virt68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 	{ "x68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 
 	{ "vax",	0, 0, 12, 2, 8,  64, LITTLE_ENDIAN },	/* vax */
