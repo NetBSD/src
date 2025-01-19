@@ -26,7 +26,7 @@
  *  - <https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=d199d2e56da2379004e7e0457150409c0c99d3e6>
  */
 #ifdef URCU_GCC_VERSION
-# if (URCU_GCC_VERSION < 130300)
+# if (URCU_GCC_VERSION < 130300) && !defined(__NetBSD__)
 #  error "Implementations of some atomic operations of GCC < 13.3.0 for RISC-V are insufficient for sequential consistency. For this reason Userspace RCU is currently marked as 'broken' for RISC-V on these GCC versions."
 # endif
 #endif
