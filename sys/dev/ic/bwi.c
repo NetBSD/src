@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.40 2025/01/19 00:29:28 jmcneill Exp $	*/
+/*	$NetBSD: bwi.c,v 1.41 2025/01/20 17:16:33 christos Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.40 2025/01/19 00:29:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.41 2025/01/20 17:16:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -8708,7 +8708,7 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	bus_dmamap_t map;
 	bus_addr_t paddr;
 	struct mbuf *m;
-	int error;
+	int error = 0;
 
 	KASSERT(buf_idx < BWI_RX_NDESC);
 
