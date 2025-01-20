@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.385 2025/01/20 07:21:29 imil Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.385 2025/01/20 07:21:29 imil Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -168,6 +168,7 @@ int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
 
 int	com_common_getc(dev_t, struct com_regs *);
+static void	com_txwait(struct com_regs *);
 static void	com_common_putc(dev_t, struct com_regs *, int, int);
 
 int	cominit(struct com_regs *, int, int, int, tcflag_t);
@@ -589,8 +590,14 @@ com_attach_subr(struct com_softc *sc)
 			break;
 		}
 
-		/* Make sure the console is always "hardwired". */
-		delay(10000);			/* wait for output to finish */
+		if (vm_guest == VM_GUEST_NO)
+			/* Make sure the console is always "hardwired". */
+			delay(10000); /* wait for output to finish */
+		else {
+			const int s = splserial();
+			com_txwait(regsp);
+			splx(s);
+		}
 		if (is_console) {
 			SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		}
@@ -2526,10 +2533,20 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 }
 
 static void
+com_txwait(struct com_regs *regsp)
+{
+	int timo;
+
+	timo = 150000;
+	while (!ISSET(CSR_READ_1(regsp, COM_REG_LSR), LSR_TXRDY) && --timo)
+		continue;
+}
+
+static void
 com_common_putc(dev_t dev, struct com_regs *regsp, int c, int with_readahead)
 {
 	int s = splserial();
-	int cin, stat, timo;
+	int cin, stat;
 
 	if (with_readahead && com_readaheadcount < MAX_READAHEAD
 	     && ISSET(stat = CSR_READ_1(regsp, COM_REG_LSR), LSR_RXRDY)) {
@@ -2541,9 +2558,7 @@ com_common_putc(dev_t dev, struct com_regs *regsp, int c, int with_readahead)
 	}
 
 	/* wait for any pending transmission to finish */
-	timo = 150000;
-	while (!ISSET(CSR_READ_1(regsp, COM_REG_LSR), LSR_TXRDY) && --timo)
-		continue;
+	com_txwait(regsp);
 
 	CSR_WRITE_1(regsp, COM_REG_TXDATA, c);
 	COM_BARRIER(regsp, BR | BW);
