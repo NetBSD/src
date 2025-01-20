@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.293 2024/11/04 20:43:38 brad Exp $
+#	$NetBSD: Makefile,v 1.294 2025/01/20 13:54:55 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -96,6 +96,7 @@ SUBDIR+=	if_lagg
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
 SUBDIR+=	if_mue
+SUBDIR+=	if_ncm
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe

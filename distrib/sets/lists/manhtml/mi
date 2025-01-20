@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.15 2024/12/16 16:37:39 brad Exp $
+# $NetBSD: mi,v 1.16 2025/01/20 13:54:54 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1474,6 +1474,7 @@
 ./usr/share/man/html4/mvsata.html		man-sys-htmlman		html
 ./usr/share/man/html4/nadb.html			man-sys-htmlman		html
 ./usr/share/man/html4/nca.html			man-sys-htmlman		html
+./usr/share/man/html4/ncm.html			man-sys-htmlman		html
 ./usr/share/man/html4/nct.html			man-sys-htmlman		html
 ./usr/share/man/html4/ne.html			man-sys-htmlman		html
 ./usr/share/man/html4/nele.html			man-sys-htmlman		html

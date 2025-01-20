@@ -1,0 +1,74 @@
+.\" $NetBSD: ncm.4,v 1.1 2025/01/20 13:54:54 maya Exp $
+.\"
+.\"
+.\" Copyright (c) 2025 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Maya Rashish
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 20, 2025
+.Dt NCM 4
+.Os
+.Sh NAME
+.Nm ncm
+.Nd USB Network Control Model driver
+.Sh SYNOPSIS
+.Cd "ncm*  at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for USB Network Control Model devices, often appearing
+as hotspot USB tethering in Android devices on devices such as the following:
+.Pp
+.Bl -bullet -compact
+.It
+Google Pixel 8
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr usbnet 4 ,
+.Xr ifconfig.if 5 ,
+.Xr ifconfig 8
+.Rs
+.%T "Universal Serial Bus Class Communications Class Subclass Specification for Network Control Model Devices"
+.%U https://www.usb.org/sites/default/files/NCM10_012011.zip
+.Re
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 11.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Maya Rashish Aq Mt maya@netbsd.org
+based on the
+.Xr cdce 4
+driver written by
+.An Craig Boston Aq Mt craig@tobuj.gank.org .

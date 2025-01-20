@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.29 2024/11/05 07:58:44 martin Exp $
+# $NetBSD: module.mi,v 1.30 2025/01/20 13:54:54 maya Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
@@ -211,6 +211,8 @@
 ./usr/libdata/debug/@MODULEDIR@/if_mpls/if_mpls.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_mue				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_mue/if_mue.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_ncm				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_ncm/if_ncm.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_npflog				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_npflog/if_npflog.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_ppp				modules-base-kernel	kmod,debug

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.180 2024/12/16 16:37:38 brad Exp $
+#	$NetBSD: files.usb,v 1.181 2025/01/20 13:54:55 maya Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -375,6 +375,11 @@ file	dev/usb/if_mos.c		mos
 device	mue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	mue at usbdevif
 file	dev/usb/if_mue.c		mue
+
+# Network Control Model
+device ncm: arp, ether, ifnet, usbnet
+attach ncm at usbifif
+file	dev/usb/if_ncm.c		ncm
 
 # Atheros AR9170
 device	otus: arp, ether, firmload, ifnet, wlan
