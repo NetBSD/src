@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.129 2025/01/20 20:03:14 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.130 2025/01/20 22:24:33 kre Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.129 2025/01/20 20:03:14 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.130 2025/01/20 22:24:33 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1215,6 +1215,7 @@ printid(char ug, const char *str)
 	if (!str)
 		return;
 
+	fputc(' ', metafp);
 	fputc(ug, metafp);
 	if (parseid(str, &id))
 		fprintf(metafp, "id=%jd", (intmax_t)id);
