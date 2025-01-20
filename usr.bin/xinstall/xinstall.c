@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.128 2024/05/10 09:14:52 wiz Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.129 2025/01/20 20:03:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.128 2024/05/10 09:14:52 wiz Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.129 2025/01/20 20:03:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,8 @@ static int	numberedbackup;
 static int	verbose;
 static int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 static char	pathbuf[MAXPATHLEN];
-static uid_t	uid = -1;
-static gid_t	gid = -1;
+static uid_t	uid = (uid_t)-1;
+static gid_t	gid = (gid_t)-1;
 static char	*group, *owner, *fflags, *tags;
 static FILE	*metafp;
 static char	*metafile;
@@ -134,7 +134,7 @@ static char	*afterinstallcmd;
 static const char *suffix = BACKUP_SUFFIX;
 static char	*destdir;
 
-enum {
+static enum {
 	DIGEST_NONE = 0,
 	DIGEST_MD5,
 	DIGEST_RMD160,
@@ -167,7 +167,7 @@ static void	install_dir(char *, u_int);
 static void	makelink(char *, char *);
 static void	metadata_log(const char *, const char *, struct timeval *,
 	    const char *, const char *, off_t);
-static int	parseid(char *, id_t *);
+static int	parseid(const char *, id_t *);
 static void 	run(const char *, const char *, const char *, int);
 static void	strip(const char *);
 __dead static void	usage(void);
@@ -445,7 +445,7 @@ main(int argc, char *argv[])
  *	parse uid or gid from arg into id, returning non-zero if successful
  */
 static int
-parseid(char *name, id_t *id)
+parseid(const char *name, id_t *id)
 {
 	char	*ep;
 
@@ -892,6 +892,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 	case DIGEST_NONE:
 		if (to_fd < 0)
 			return NULL; /* no need to do anything */
+		/*FALLTHROUGH*/
 	default:
 		break;
 	}
@@ -1203,6 +1204,25 @@ install_dir(char *path, u_int flags)
 }
 
 /*
+ * printid --
+ *	Print a user or group id or name into the metalog
+ */
+static void
+printid(char ug, const char *str)
+{
+	id_t id;
+
+	if (!str)
+		return;
+
+	fputc(ug, metafp);
+	if (parseid(str, &id))
+		fprintf(metafp, "id=%jd", (intmax_t)id);
+	else
+		fprintf(metafp, "name=%s", str);
+}
+
+/*
  * metadata_log --
  *	if metafp is not NULL, output mtree(8) full path name and settings to
  *	metafp, to allow permissions to be set correctly by other tools,
@@ -1249,10 +1269,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	p = buf;
 							/* print details */
 	fprintf(metafp, ".%s%s type=%s", *p ? "/" : "", p, type);
-	if (owner)
-		fprintf(metafp, " uname=%s", owner);
-	if (group)
-		fprintf(metafp, " gname=%s", group);
+	printid('u', owner);
+	printid('g', group);
 	fprintf(metafp, " mode=%#o", mode);
 	if (slink) {
 		strsvis(buf, slink, VIS_CSTYLE, extra);	/* encode link */
