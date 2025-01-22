@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.13 2024/09/19 01:59:14 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.14 2025/01/22 17:07:17 gutteridge Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -113,6 +113,17 @@
 		<string>Rockchip RK3288 Asus Tinker Board</string>
 		<key>u-boot-pkg</key>
 		<string>tinker</string>
+	</dict>
+
+	<!--
+	  imx boards
+	  -->
+	<key>riot,imx6s-riotboard</key>
+	<dict>
+		<key>description</key>
+		<string>RIoTboard i.MX6S</string>
+		<key>u-boot-pkg</key>
+		<string>riotboard</string>
 	</dict>
 
 	<!--
