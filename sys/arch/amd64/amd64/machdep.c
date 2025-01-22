@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.370 2024/12/02 13:31:32 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.371 2025/01/22 10:03:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.370 2024/12/02 13:31:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.371 2025/01/22 10:03:55 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1020,15 +1020,26 @@ int
 dump_header_addseg(paddr_t start, paddr_t size)
 {
 	phys_ram_seg_t seg = { start, size };
+	int error;
 
-	return dump_header_addbytes(&seg, sizeof(seg));
+	error = dump_header_addbytes(&seg, sizeof(seg));
+	if (error) {
+		printf("[seg 0x%"PRIxPADDR" bytes 0x%"PRIxPSIZE" failed,"
+		    " error=%d] ", start, size, error);
+	}
+	return error;
 }
 
 int
 dump_header_finish(void)
 {
+	int error;
+
 	memset(dump_headerbuf_ptr, 0, dump_headerbuf_avail);
-	return dump_header_flush();
+	error = dump_header_flush();
+	if (error)
+		printf("[finish failed, error=%d] ", error);
+	return error;
 }
 
 
@@ -1080,24 +1091,37 @@ cpu_dump(void)
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
+	int error;
 
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return (ENXIO);
+	if (bdev == NULL) {
+		printf("[device 0x%llx ENXIO] ", (unsigned long long)dumpdev);
+		return ENXIO;
+	}
 
 	/*
 	 * Generate a segment header.
 	 */
 	CORE_SETMAGIC(seg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	seg.c_size = dump_header_size - ALIGN(sizeof(seg));
-	(void)dump_header_addbytes(&seg, ALIGN(sizeof(seg)));
+	error = dump_header_addbytes(&seg, ALIGN(sizeof(seg)));
+	if (error) {
+		printf("[segment header %zu bytes failed, error=%d] ",
+		    ALIGN(sizeof(seg)), error);
+		/* blithely proceed (can't fail?) */
+	}
 
 	/*
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.ptdpaddr = PDPpaddr;
 	cpuhdr.nmemsegs = dump_nmemsegs;
-	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
+	error = dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
+	if (error) {
+		printf("[MD header %zu bytes failed, error=%d] ",
+		    ALIGN(sizeof(cpuhdr)), error);
+		/* blithely proceed (can't fail?) */
+	}
 
 	/*
 	 * Write out the memory segment descriptors.
