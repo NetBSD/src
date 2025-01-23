@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1516 2025/01/18 08:10:14 mrg Exp $
+$NetBSD: pcidevs,v 1.1517 2025/01/23 07:34:08 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6775,9 +6775,15 @@ product INTEL 6HS_H_I2C_5	0x7afd	600 Series PCH-H I2C 5
 product INTEL 6HS_H_UART_2	0x7afe	600 Series PCH-H UART 2
 product INTEL VMD_MTL		0x7d0b  Volume Management Device
 product INTEL NPU_MTL		0x7d1d  Meteor Lake NPU
+product INTEL LPC_MTL		0x7e02	Meteor Lake LPC/ISA Bridge
+product INTEL PCH_MTL		0x7d14	Meteor Lake PCH
 product INTEL SMBUS_MTL		0x7e22  Meteor Lake SMbus
 product INTEL SPI_MTL		0x7e23  Meteor Lake SPI Controller
+product INTEL ARCG_MTL		0x7d55	Meteor Lake Arc Graphics
+product INTEL AHCI_MTL		0x7e63	Meteor Lake AHCI Controller
+product INTEL USB32_MTL		0x7e7d	Meteor Lake USB 3.2 Gen 2x1 xHCI Host Controller
 product INTEL MPM_MTL		0x7e7f	Meteor Lake Memory Power Management
+product INTEL TB4USB_MTL	0x7ec0	Meteor Lake Thunderbolt 4 USB Controller
 product INTEL SCH_IDE		0x811a  SCH IDE Controller
 product INTEL E600_HDA		0x811b	E600 HD Audio
 product INTEL E600_PCIB_0	0x8180	E600 Virtual PCI-PCI Bridge
@@ -7852,7 +7858,13 @@ product MICREL KSZ8841		0x8841	10/100 Ethernet
 product MICREL KSZ8842		0x8842	Switched 2 Port 10/100 Ethernet
 
 /* Micron/Crucial Technology products */
-product MICRON SM2263		0x2263	SM2263 NVMe Controller
+product MICRON P1		0x2263	P1 NVMe SSD
+product MICRON P1_1		0x5403	P1 NVMe SSD
+product MICRON P5PLUS		0x5407	P5 Plus NVMe SSD
+product MICRON P2P3P3P		0x540a	P2 / P3 / P3 Plus NVMe SSD
+product MICRON P5		0x5412	P5 NVMe SSD
+product MICRON T500		0x5415	T500 NVMe SSD
+product MICRON T700		0x5419	T700 NVMe SSD
 
 /* Middle Digital products */
 product MIDDLE_DIGITAL WEASEL_VGA	0x9050	Weasel Virtual VGA
