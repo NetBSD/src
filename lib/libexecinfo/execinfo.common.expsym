@@ -1,4 +1,6 @@
 backtrace
+backtrace_sandbox_fini
+backtrace_sandbox_init
 backtrace_symbols
 backtrace_symbols_fd
 backtrace_symbols_fd_fmt
