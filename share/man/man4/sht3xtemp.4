@@ -1,4 +1,4 @@
-.\" $NetBSD: sht3xtemp.4,v 1.3 2022/04/27 23:11:25 brad Exp $
+.\" $NetBSD: sht3xtemp.4,v 1.4 2025/01/23 19:14:45 brad Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -95,6 +95,14 @@ The delays are documented in the datasheet for the chip.
 The driver will attempt to read back the values readattempts number of
 times.
 The default is 10 which should be more than enough for most purposes.
+.It hw.sht3xtemp0.clockstretch
+The chip supports a set of commands that lets it use I2C clock
+stretching to perform the temperature or humidity measurement.  If
+this is set to 1 then use the clock stretching commands with the
+device.  Note that the I2C controller must support clock stretching
+in order for this to work reliability.  When this option is enabled,
+the readattempts sysctl noted above will not be used.  This option only
+apply to single shot measurements.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/sht3xtempu" -compact
