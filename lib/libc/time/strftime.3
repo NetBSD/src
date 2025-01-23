@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.37 2022/10/25 08:07:07 kre Exp $
+.\"	$NetBSD: strftime.3,v 1.38 2025/01/23 22:44:22 christos Exp $
 .\"
 .Dd October 9, 2020
 .Dt STRFTIME 3
@@ -73,60 +73,120 @@ Otherwise, zero is returned.
 .Pp
 Each conversion specification is replaced by the characters as
 follows which are then copied into the array.
+The characters depend on the values of zero or more members of
+.Fa timeptr
+as specified by brackets in the description.
+If a bracketed member name is followed by
+.Dq + ,
+.Nm strftime
+can use the named member even though POSIX.1-2024 does not list it;
+if the name is followed by
+.Dq \&- ,
+.Nm strftime
+ignores the member even though POSIX.1-2024 lists it
+which means portable code should set it.
+For portability,
+.Fa timeptr
+should be initialized as if by a successful call to
+.Xr gmtime 3 ,
+.Xr localtime 3 ,
+.Xr mktime 3 ,
+.Xr timegm 3 ,
+or similar functions.
 .Bl -tag -width "xxxx"
 .It Cm \&%A
 is replaced by the locale's full weekday name.
+.Dv [ tm_wday ]
 .It Cm %a
 is replaced by the locale's abbreviated weekday name.
+.Dv [ tm_wday ]
 .It Cm \&%B
 is replaced by the locale's full month name.
+.Dv [ tm_mon ]
 .It Cm \&%b No or Cm \&%h
 is replaced by the locale's abbreviated month name.
+.RI [ tm_mon ]
 .It Cm \&%C
 is replaced by the century (a year divided by 100 and truncated to an integer)
-as a decimal number [00,99].
+as a decimal number, with at least two digits by default.
+.RI [ tm_year ]
 .It Cm \&%c
 is replaced by the locale's appropriate date and time representation.
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_mon ,
+.Dv tm_mday ,
+.Dv tm_wday ,
+.Dv tm_hour ,
+.Dv tm_min ,
+.Dv tm_sec ,
+.Dv tm_gmtoff ,
+.Dv tm_zone ,
+.Dv tm_isdst \&-].
 .It Cm \&%D
 is replaced by the date in the format
 .Dq Li %m/%d/%y .
+Although used in the United States for current dates,
+this format is ambiguous elsewhere
+and for dates that might involve other centuries.
+.Dv [ tm_year ,
+.Dv tm_mon ,
+.Dv tm_mday ]
 .It Cm \&%d
 is replaced by the day of the month as a decimal number [01,31].
+.Dv [ tm_mday ]
 .It Cm \&%e
 is replaced by the day of month as a decimal number [1,31];
 single digits are preceded by a blank.
+.Dv [ tm_mday ]
 .It Cm \&%F
 is equivalent to
 .Dq Li %Y-%m-%d
 (the ISO 8601 date format).
+.Dv [ tm_year ,
+.Dv tm_mon ,
+.Dv tm_mday ]
 .It Cm \&%G
 is replaced by the ISO 8601 year with century as a decimal number.
 See also the
 .Cm \&%V
 conversion specification
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%g
-is replaced by the ISO 8601 year without century as a decimal number [00-99].
+is replaced by the ISO 8601 year without century as a decimal number.
 This is the year that includes the greater part of the week.
 (Monday as the first day of a week).
 See also the
 .Ql \&%V
 conversion specification.
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%H
 is replaced by the hour (24-hour clock) as a decimal number [00,23].
+.Dv [ tm_hour ]
 .It Cm \&%I
 is replaced by the hour (12-hour clock) as a decimal number [01,12].
+.Dv [ tm_hour ]
 .It Cm \&%j
 is replaced by the day of the year as a decimal number [001,366].
+.Dv [ tm_yday ]
 .It Cm \&%k
 is replaced by the hour (24-hour clock) as a decimal number [0,23];
 single digits are preceded by a blank.
+.Dv [ tm_hour ]
 .It Cm \&%l
 is replaced by the hour (12-hour clock) as a decimal number [1,12];
 single digits are preceded by a blank.
+.Dv [ tm_hour ]
 .It Cm \&%M
 is replaced by the minute as a decimal number [00,59].
+.Dv [ tm_min ]
 .It Cm %m
 is replaced by the month as a decimal number [01,12].
+.Dv [ tm_mon ]
 .It Cm %n
 is replaced by a newline.
 .It Cm %p
@@ -134,9 +194,12 @@ is replaced by the locale's equivalent of either
 .Dq Tn AM
 or
 .Dq Tn PM .
+.Dv [ tm_hour ]
 .It Cm \&%R
 is replaced by the time in the format
 .Dq Li %H:%M .
+.Dv [ tm_hour ,
+.Dv tm_min ]
 .It Cm \&%r
 is replaced by the locale's representation of 12-hour clock time
 using AM/PM notation.
@@ -145,20 +208,61 @@ is replaced by the second as a decimal number [00,60].
 The range of
 seconds is [00-60] instead of [00-59] to allow for the periodic occurrence
 of leap seconds.
+.Dv [ tm_sec ]
 .It Cm \&%s
 is replaced by the number of seconds since the Epoch (see
 .Xr ctime 3 ) .
+Although %s is reliable in this implementation,
+it can have glitches on other platforms
+(notably obsolescent platforms lacking
+.Fa tm_gmtoff
+or where
+.Tp time_t
+is no wider than int), and POSIX allows
+.Nm strftime
+to set
+.Dv errno
+to
+.Dv EINVAL
+or
+.Dv EOVERFLOW
+and return 0 if the number of seconds would be negative or out of range for
+.Tp time_t .
+Portable code should therefore format a
+.Tp time_t
+value directly via something like
+.Xr snprintf 3
+instead of via
+.Xr localtime 3
+followed by
+.Nm strftime
+with "%s".
+.Dv [ tm_year ,
+.Dv tm_mon ,
+.Dv tm_mday ,
+.Dv tm_hour ,
+.Dv tm_min ,
+.Dv tm_sec ,
+.Dv tm_gmtoff +,
+.Dv tm_isdst \&-].
 .It Cm \&%T
 is replaced by the time in the format
 .Dq Li %H:%M:%S .
+.Dv [ tm_hour ,
+.Dv tm_min ,
+.Dv tm_sec ]
 .It Cm \&%t
 is replaced by a tab.
 .It Cm \&%U
 is replaced by the week number of the year (Sunday as the first day of
 the week) as a decimal number [00,53].
+.Dv [ tm_wday ,
+.Dv tm_yday ,
+.Dv tm_year \&-]
 .It Cm \&%u
 is replaced by the weekday (Monday as the first day of the week)
 as a decimal number [1,7].
+.Dv [ tm_wday ]
 .It Cm \&%V
 is replaced by the week number of the year (Monday as the first day of
 the week) as a decimal number [01,53]. According to ISO 8601 the week
@@ -167,26 +271,63 @@ otherwise it is week 53 of the previous year, and the next week is week 1.
 The year is given by the
 .Ql \&%G
 conversion specification.
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%v
 is replaced by the date in the format
 .Dq Li %e-%b-%Y .
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%W
 is replaced by the week number of the year (Monday as the first day of
 the week) as a decimal number [00,53].
+.Dv [ tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%w
 is replaced by the weekday (Sunday as the first day of the week)
 as a decimal number [0,6].
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_wday ]
 .It Cm \&%X
 is replaced by the locale's appropriate time representation.
+.Dv [ tm_year \&-,
+.Dv tm_yday \&-,
+.Dv tm_mon \&-,
+.Dv tm_mday \&-,
+.Dv tm_wday \&-,
+.Dv tm_hour ,
+.Dv tm_min ,
+.Dv tm_sec ,
+.Dv tm_gmtoff ,
+.Dv tm_zone ,
+.Dv tm_isdst \&-].
 .It Cm \&%x
 is replaced by the locale's appropriate date representation.
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_mon ,
+.Dv tm_mday ,
+.Dv tm_wday ,
+.Dv tm_hour \&-,
+.Dv tm_min \&-,
+.Dv tm_sec \&-,
+.Dv tm_gmtoff \&-,
+.Dv tm_zone \&-,
+.Dv tm_isdst \&-].
 .It Cm \&%Y
 is replaced by the year with century as a decimal number.
+.Dv [ tm_year ]
 .It Cm \&%y
 is replaced by the year without century as a decimal number [00,99].
+.Dv [ tm_year ]
 .It Cm \&%Z
 is replaced by the time zone abbreviation,
 or the empty string if this is not determinable.
+.Dv [ tm_zone ,
+.Dv tm_isdst \&-]
 .It Cm \&%z
 is replaced by the offset from the Prime Meridian in the format
 +HHMM or -HHMM (ISO 8601) as appropriate, with positive values representing
@@ -205,6 +346,16 @@ format.
 On
 .Nx
 currently this only works for the C locale.
+.Dv [ tm_year ,
+.Dv tm_yday ,
+.Dv tm_mon ,
+.Dv tm_mday ,
+.Dv tm_wday ,
+.Dv tm_hour ,
+.Dv tm_min ,
+.Dv tm_sec ,
+.Dv tm_gmtoff ,
+.Dv tm_zone ]
 .It Cm %-*
 GNU libc extension.
 Do not do any padding when performing numerical outputs.
@@ -215,9 +366,20 @@ Explicitly specify space for padding.
 GNU libc extension.
 Explicitly specify zero for padding.
 .It Cm %%
-is replaced by
+is replaced by as single
 .Ql % .
 .El
+.Pp
+As a side effect,
+.Nm strftime
+also behaves as if
+.Xr tzset 3
+were called.
+This is for compatibility with older platforms, as required by POSIX;
+it is not needed for
+.Nm strftime
+'s
+own use.
 .Pp
 The
 .Fn strftime_z

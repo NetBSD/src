@@ -1,9 +1,9 @@
-.\" $NetBSD: zdump.8,v 1.25 2023/12/06 21:45:11 kre Exp $
+.\" $NetBSD: zdump.8,v 1.26 2025/01/23 22:44:22 christos Exp $
 .\" @(#)zdump.8	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\" .TH zdump 8
-.Dd December 6, 2023
+.Dd January 23, 2025
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -26,6 +26,14 @@ The
 program prints the current time in each
 .Ar timezone
 named on the command line.
+A
+.Dv timezone
+of
+.Dq \&-
+is treated as if it were 
+.Pa /dev/stdin ;
+this can be used to pipe TZif data into
+.Nm zdump .
 .Sh OPTIONS
 .Bl -tag -width XXXXXXXXX -compact
 .It Fl \-version

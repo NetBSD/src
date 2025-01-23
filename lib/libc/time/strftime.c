@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.56 2024/06/07 13:53:23 riastradh Exp $	*/
+/*	$NetBSD: strftime.c,v 1.57 2025/01/23 22:44:22 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.56 2024/06/07 13:53:23 riastradh Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.57 2025/01/23 22:44:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,8 +69,63 @@ __RCSID("$NetBSD: strftime.c,v 1.56 2024/06/07 13:53:23 riastradh Exp $");
 #include <locale.h>
 #include <stdio.h>
 
+/* If true, the value returned by an idealized unlimited-range mktime
+   always fits into an integer type with bounds MIN and MAX.
+   If false, the value might not fit.
+   This macro is usable in #if if its arguments are.
+   Add or subtract 2**31 - 1 for the maximum UT offset allowed in a TZif file,
+   divide by the maximum number of non-leap seconds in a year,
+   divide again by two just to be safe,
+   and account for the tm_year origin (1900) and time_t origin (1970).  */
+#define MKTIME_FITS_IN(min, max) \
+  ((min) < 0 \
+   && ((min) + 0x7fffffff) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900 < INT_MIN \
+   && INT_MAX < ((max) - 0x7fffffff) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900)
+
+/* MKTIME_MIGHT_OVERFLOW is true if mktime can fail due to time_t overflow
+   or if it is not known whether mktime can fail,
+   and is false if mktime definitely cannot fail.
+   This macro is usable in #if, and so does not use TIME_T_MAX or sizeof.
+   If the builder has not configured this macro, guess based on what
+   known platforms do.  When in doubt, guess true.  */
+#ifndef MKTIME_MIGHT_OVERFLOW
+# if defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__
+#  include <sys/param.h>
+# endif
+# if ((/* The following heuristics assume native time_t.  */ \
+       defined_time_tz) \
+      || ((/* Traditional time_t is 'long', so if 'long' is not wide enough \
+	      assume overflow unless we're on a known-safe host.  */ \
+	   !MKTIME_FITS_IN(LONG_MIN, LONG_MAX)) \
+	  && (/* GNU C Library 2.29 (2019-02-01) and later has 64-bit time_t \
+		 if __TIMESIZE is 64.  */ \
+	      !defined __TIMESIZE || __TIMESIZE < 64) \
+	  && (/* FreeBSD 12 r320347 (__FreeBSD_version 1200036; 2017-06-26), \
+		 and later has 64-bit time_t on all platforms but i386 which \
+		 is currently scheduled for end-of-life on 2028-11-30.  */ \
+	      !defined __FreeBSD_version || __FreeBSD_version < 1200036 \
+	      || defined __i386) \
+	  && (/* NetBSD 6.0 (2012-10-17) and later has 64-bit time_t.  */ \
+	      !defined __NetBSD_Version__ || __NetBSD_Version__ < 600000000) \
+	  && (/* OpenBSD 5.5 (2014-05-01) and later has 64-bit time_t.  */ \
+	      !defined OpenBSD || OpenBSD < 201405)))
+#  define MKTIME_MIGHT_OVERFLOW 1
+# else
+#  define MKTIME_MIGHT_OVERFLOW 0
+# endif
+#endif
+/* Check that MKTIME_MIGHT_OVERFLOW is consistent with time_t's range.  */
+static_assert(MKTIME_MIGHT_OVERFLOW
+	      || MKTIME_FITS_IN(TIME_T_MIN, TIME_T_MAX));
+
+#if MKTIME_MIGHT_OVERFLOW
+/* Do this after system includes as it redefines time_t, mktime, timeoff.  */
+# define USE_TIMEX_T true
+# include "localtime.c"
+#endif
+
 #ifndef DEPRECATE_TWO_DIGIT_YEARS
-# define DEPRECATE_TWO_DIGIT_YEARS false
+# define DEPRECATE_TWO_DIGIT_YEARS 0
 #endif
 
 #ifdef __weak_alias
@@ -152,10 +207,6 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 	enum warn warn = IN_NONE;
 
 	p = _fmt(sp, format, t, s, s + maxsize, &warn, loc);
-	if (!p) {
-		errno = EOVERFLOW;
-		return 0;
-	}
 	if (/*CONSTCOND*/DEPRECATE_TWO_DIGIT_YEARS
 	    && warn != IN_NONE && getenv(YEAR_2000_NAME)) {
 		(void) fprintf(stderr, "\n");
@@ -192,6 +243,12 @@ _fmt(const timezone_t sp, const char *format, const struct tm *t, char *pt,
 label:
 			switch (*++format) {
 			case '\0':
+				/* Output unknown conversion specifiers as-is,
+				   to aid debugging.  This includes '%' at
+				   format end.  This conforms to C23 section
+				   7.29.3.5 paragraph 6, which says behavior
+				   is undefined here.  */
+			default:
 				--format;
 				break;
 			case 'A':
@@ -381,15 +438,17 @@ label:
 					tm.tm_mday = t->tm_mday;
 					tm.tm_mon = t->tm_mon;
 					tm.tm_year = t->tm_year;
+
+					/* Get the time_t value for TM.
+					   Native time_t, or its redefinition
+					   by localtime.c above, is wide enough
+					   so that this cannot overflow.  */
+#if defined TM_GMTOFF
+					mkt = timeoff(&tm, t->TM_GMTOFF);
+#else
 					tm.tm_isdst = t->tm_isdst;
-#if defined TM_GMTOFF && ! UNINIT_TRAP
-					tm.TM_GMTOFF = t->TM_GMTOFF;
-#endif
 					mkt = mktime_z(sp, &tm);
-					/* If mktime fails, %s expands to the
-					   value of (time_t) -1 as a failure
-					   marker; this is better in practice
-					   than strftime failing.  */
+#endif
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t)) {
 						intmax_t n = mkt;
@@ -716,12 +775,6 @@ label:
 				PadIndex = PAD_ZERO;
 				goto label;
 			case '%':
-			/*
-			** X311J/88-090 (4.12.3.5): if conversion char is
-			** undefined, behavior is undefined. Print out the
-			** character itself as printf(3) also does.
-			*/
-			default:
 				break;
 			}
 		}

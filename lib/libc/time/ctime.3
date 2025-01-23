@@ -1,9 +1,9 @@
-.\" $NetBSD: ctime.3,v 1.71 2023/09/16 18:40:26 christos Exp $
+.\" $NetBSD: ctime.3,v 1.72 2025/01/23 22:44:22 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\"
-.Dd September 16, 2023
+.Dd January 23, 2025
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -28,11 +28,11 @@
 .Vt extern char *tzname[2];
 .Ft [[deprecated]] char *
 .Fn asctime "const struct tm *tm"
-.Ft char *
+.Ft [[only in POSIX.1-2017 and earlier]] char *
 .Fn asctime_r "const struct tm *restrict tm" "char * restrict buf"
 .Ft [[deprecated]] char *
 .Fn ctime "const time_t *clock"
-.Ft char *
+.Ft [[only in POSIX.1-2017 and earlier]] char *
 .Fn ctime_r "const time_t *clock"  "char *buf"
 .Ft char *
 .Fn ctime_rz "timezone_t restrict tz" "const time_t *clock"  "char *buf"
@@ -68,6 +68,19 @@ structure to a string with the following general format:
 .Bd -literal -offset indent
 Thu Nov 24 18:22:48 1986\en\e0
 .Ed
+Years requiring fewer than four characters are padded with leading zeroes.
+For years longer than four characters, the string is of the form:
+.Bd -literal -offset indent
+Thu Nov 24 18:22:48     81986\n\0
+.Ed
+with five spaces before the year.
+This unusual format is designed to make it less likely that older
+software that expects exactly 26 bytes of output will mistakenly output
+misleading values for out-of-range years.
+This function is deprecated starting in C23.
+Callers can use
+.Fn strftime
+instead.
 .Pp
 The
 .Fa tm
