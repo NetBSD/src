@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.8 2022/06/25 06:51:37 skrll Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.9 2025/01/23 12:08:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backtrace.c,v 1.8 2022/06/25 06:51:37 skrll Exp $");
+__RCSID("$NetBSD: backtrace.c,v 1.9 2025/01/23 12:08:12 christos Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -55,6 +55,8 @@ __RCSID("$NetBSD: backtrace.c,v 1.8 2022/06/25 06:51:37 skrll Exp $");
 #define SELF	"/proc/curproc/file"
 #endif
 
+static int self_fd = -1;
+
 static int
 open_self(int flags)
 {
@@ -73,6 +75,23 @@ open_self(int flags)
 	return open(pathname, flags);
 }
 
+int
+backtrace_sandbox_init(void)
+{
+
+	if (self_fd == -1)
+		self_fd = open_self(O_RDONLY);
+	return self_fd >= 0 ? 0 : -1;
+}
+
+void
+backtrace_sandbox_fini(void)
+{
+	assert(self_fd >= 0);
+
+	close(self_fd);
+	self_fd = -1;
+}
 
 static int __printflike(4, 5)
 rasprintf(char **buf, size_t *bufsiz, size_t offs, const char *fmt, ...)
@@ -182,9 +201,9 @@ backtrace_symbols_fmt(void *const *trace, size_t len, const char *fmt)
 	static const size_t slen = sizeof(char *) + 64;	/* estimate */
 	char *ptr;
 	symtab_t *st;
-	int fd;
+	int fd = self_fd;
 
-	if ((fd = open_self(O_RDONLY)) != -1)
+	if (fd != -1 || (fd = open_self(O_RDONLY)) != -1)
 		st = symtab_create(fd, -1, STT_FUNC);
 	else
 		st = NULL;
@@ -216,7 +235,7 @@ backtrace_symbols_fmt(void *const *trace, size_t len, const char *fmt)
 
 out:
 	symtab_destroy(st);
-	if (fd != -1)
+	if (fd != -1 && fd != self_fd)
 		(void)close(fd);
 
 	return (void *)ptr;
