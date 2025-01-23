@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.90 2022/10/24 10:17:40 riastradh Exp $	*/
+/*	$NetBSD: i2c.c,v 1.91 2025/01/23 19:05:51 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.90 2022/10/24 10:17:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.91 2025/01/23 19:05:51 brad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	i2c_tag_t ic = sc->sc_tag;
 	uint8_t *buf = NULL;
 	void *cmd = NULL;
-	int error;
+	int error=0;
 
 	/* Validate parameters */
 	if (iie->iie_addr > I2C_MAX_ADDR)
@@ -734,7 +734,7 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 		error = EIO;
 
 out:
-	if (iie->iie_buf != NULL && I2C_OP_READ_P(iie->iie_op))
+	if (!error && iie->iie_buf != NULL && I2C_OP_READ_P(iie->iie_op))
 		error = copyout(buf, iie->iie_buf, iie->iie_buflen);
 
 	if (buf)
@@ -742,9 +742,6 @@ out:
 
 	if (cmd)
 		kmem_free(cmd, iie->iie_cmdlen);
-
-	if (error)
-		return error;
 
 	return error;
 }
