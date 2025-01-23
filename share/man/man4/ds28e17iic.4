@@ -1,0 +1,92 @@
+.\" $NetBSD: ds28e17iic.4,v 1.1 2025/01/23 19:02:42 brad Exp $
+.\"
+.\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 12, 2025
+.Dt DS28E17IIC 4
+.Os
+.Sh NAME
+.Nm ds28e17iic
+.Nd Driver for Maxim DS28E17 1-Wire to I2C bridge
+.Sh SYNOPSIS
+.Cd "ds28e17iic* at onewire?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides a 1-Wire to I2C bridge with a
+.Xr iic 4
+bus at the far end using the DS28E17 bridge chip.
+.Pp
+The DS28E17 will automatically detect and deal with a end device that
+uses I2C clock stretching.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It Li hw.ds28e17iic0.readycount
+.It Li hw.ds28e17iic0.readydelay
+When the driver sends a transaction down the 1-Wire bus, these
+variables are how long to delay before reading the status on whether
+or not the conversion is done and the number of times to perform this
+read back.  In general, these values should be as short as possible,
+but if there are too short, a EAGAIN timeout will occur when the end
+device is just taking a longer than expect amount of time to respond.
+This may be particularly noticed if end device is doing clock
+stretching.
+.It Li hw.ds28e17iic0.reportreadnostop
+If set to 1, report that an attempt to do a Read without a Stop
+occured.  The chip does not support that operation.  Read without Stop
+will be treated as a Read with a Stop with the hope that the end
+device will be able to deal with that.
+.It Li hw.ds28e17iic0.reportzerolen
+If set to 1, report that an attempt to perform a zero length read or
+zero length write occured.  The chip does not support zero length
+reads or writes.
+.It Li hw.ds28e17iic0.debug
+If the driver is compiled with
+.Dv DS28E17IIC_DEBUG ,
+this node will appear and can be used to set the debugging level.
+.El
+.Sh SEE ALSO
+.Xr onewire 4 ,
+.Xr iic 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+While this may not be considered a bug, the DS28E17 chip will detach
+itself from the
+.Xr onewire 4
+bus if there is not a device connected to its SDA and SCL pins.
+.Pp
+The
+.Xr i2cscan 8
+command will not function entirely correctly when run against a
+DS28E17 chip.  The default mode of doing a I2C Write with Stop that is
+zero length is not supported by the DS28E17 chip.  When the
+.Xr i2cscan 8
+command is used with its one byte read mode it will find devices as
+long as the device does not NACK on a I2C read.
+

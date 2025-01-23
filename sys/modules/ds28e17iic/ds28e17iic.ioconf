@@ -1,0 +1,8 @@
+#	$NetBSD: ds28e17iic.ioconf,v 1.1 2025/01/23 19:02:42 brad Exp $
+
+ioconf		ds28e17iic
+
+include		"conf/files"
+
+pseudo-root	onewire*
+ds28e17iic*	at onewire?

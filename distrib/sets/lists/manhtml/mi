@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2025/01/20 13:54:54 maya Exp $
+# $NetBSD: mi,v 1.17 2025/01/23 19:02:43 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1035,6 +1035,7 @@
 ./usr/share/man/html4/drum.html			man-sys-htmlman		html
 ./usr/share/man/html4/drvctl.html		man-sys-htmlman		html
 ./usr/share/man/html4/ds2482ow.html		man-sys-htmlman		html
+./usr/share/man/html4/ds28e17iic.html		man-sys-htmlman		html
 ./usr/share/man/html4/dse.html			man-sys-htmlman		html
 ./usr/share/man/html4/dtide.html		man-sys-htmlman		html
 ./usr/share/man/html4/dtv.html			man-sys-htmlman		html

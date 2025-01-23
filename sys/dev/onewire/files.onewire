@@ -1,4 +1,4 @@
-# $NetBSD: files.onewire,v 1.5 2020/04/14 13:36:51 macallan Exp $
+# $NetBSD: files.onewire,v 1.6 2025/01/23 19:02:42 brad Exp $
 
 define	onewire {}
 defflag opt_onewire.h	ONEWIRE_DEBUG
@@ -19,3 +19,8 @@ file	dev/onewire/owtemp.c		owtemp
 device 	oweeprom
 attach 	oweeprom at onewire
 file 	dev/onewire/oweeprom.c		oweeprom
+
+# I2C bridge
+device	ds28e17iic: i2cbus, i2cexec
+attach	ds28e17iic at onewire
+file	dev/onewire/ds28e17iic.c	ds28e17iic
