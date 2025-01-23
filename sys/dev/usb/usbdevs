@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.818 2024/11/27 12:46:37 brad Exp $
+$NetBSD: usbdevs,v 1.819 2025/01/23 07:11:27 mrg Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1967,6 +1967,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 
 product INTEL2 RMH		0x0020	Rate Matching Hub
 product INTEL2 RMH2		0x0024	Rate Matching Hub
+product INTEL2 GPBT54		0x0036	Gale Peak Bluetooth 5.4
 product INTEL2 RMH3		0x8000	Rate Matching Hub
 product INTEL2 RMH4		0x8001	Rate Matching Hub
 product INTEL2 RMH5		0x8002	Rate Matching Hub
