@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.37 2024/12/16 16:42:22 brad Exp $
+.\"	$NetBSD: iic.4,v 1.38 2025/01/23 19:26:29 brad Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -42,6 +42,7 @@
 .Cd "iic* at cuda?                # macppc "
 .Cd "iic* at cxdtv?               # amd64 i386 "
 .Cd "iic* at diic?                # acorn32 evbppc "
+.Cd "iic* at ds28e17iic?          # 1-Wire "
 .Cd "iic* at dwiic?               # amd64 i386 "
 .Cd "iic* at exyoi2c?             # evbarm "
 .Cd "iic* at g2i2c?               # evbarm "
@@ -155,6 +156,8 @@ Support for CUDA microcontrollers found in many Power Macintosh and
 compatible computers
 .It Xr cxdtv 4
 Digital video driver for Conexant CX2388x based cards
+.It Xr ds28e17iic 4
+1-Wire to I2C bridge
 .It Xr gpioiic 4
 GPIO I2C controller
 .It Xr ichsmb 4

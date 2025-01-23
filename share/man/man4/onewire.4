@@ -1,4 +1,4 @@
-.\"	$NetBSD: onewire.4,v 1.5 2014/03/18 18:20:39 riastradh Exp $
+.\"	$NetBSD: onewire.4,v 1.6 2025/01/23 19:26:29 brad Exp $
 .\"	$OpenBSD: onewire.4,v 1.2 2006/03/06 10:24:46 grange Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -43,14 +43,16 @@ bus.
 .Pp
 The driver supports plugging and unplugging slave devices on the fly.
 .Sh SUPPORTED MASTERS
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width 14n -offset ind -compact
+.It Xr ds2482ow 4
+I2C to 1-Wire bridge
 .It Xr gpioow 4
 1-Wire bus bit-banging through GPIO pin
 .El
 .Sh SUPPORTED SLAVES
-.Bl -tag -width 10n -offset ind -compact
-.\".It Xr owid 4
-.\"ID family type device
+.Bl -tag -width 14n -offset ind -compact
+.It Xr ds28e17iic 4
+1-Wire to IIC bridge
 .It Xr owtemp 4
 temperature family type device
 .El
