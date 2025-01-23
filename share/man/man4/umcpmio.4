@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.4 2024/12/16 21:45:04 uwe Exp $
+.\" $NetBSD: umcpmio.4,v 1.5 2025/01/23 19:15:49 brad Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -110,10 +110,11 @@ into a READ with STOP.
 This behavior is just an attempt to allow a device to function, and it
 may not work for any particular device.
 In particular, it is known that the
-.Xr si70xxtemp 4
-and
 .Xr ds2482ow 4
-devices will not work as expected.
+device will not work as expected.
+.Pp
+The MCP2221 / MCP2221A chip will automatically detact and deal with a
+device that uses I2C clock stretching.
 .Ss UART
 The UART utilizes the
 .Xr umodem 4
