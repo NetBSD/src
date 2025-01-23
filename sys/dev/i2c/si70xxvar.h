@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xxvar.h,v 1.3 2021/11/11 14:16:04 brad Exp $	*/
+/*	$NetBSD: si70xxvar.h,v 1.4 2025/01/23 19:13:19 brad Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -41,9 +41,7 @@ struct si70xx_sc {
 	bool 		sc_vddok;
 	bool 		sc_heateron;
 	int 		sc_heaterval;
-#ifdef HAVE_I2C_EXECV
-	uint32_t 	sc_clockstretch;
-#endif
+	bool	 	sc_clockstretch;
 	int 		sc_readattempts;
 	bool		sc_noheater;
 	bool		sc_nofw;

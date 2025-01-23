@@ -1,4 +1,4 @@
-.\" $NetBSD: si70xxtemp.4,v 1.7 2021/11/12 15:12:11 brad Exp $
+.\" $NetBSD: si70xxtemp.4,v 1.8 2025/01/23 19:13:19 brad Exp $
 .\"
 .\" Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -75,6 +75,13 @@ times.
 The default is 40 which should be enough for most purposes.
 There is an initial wait of 10,500 microseconds followed by
 a additional 1,000 microseconds per read attempt.
+.It hw.si70xxtemp0.clockstretch
+The chip supports a set of commands that lets it use I2C clock
+stretching to perform the temperature or humidity measurement.  If
+this is set to 1 then use the clock stretching commands with the
+device.  Note that the I2C controller must support clock stretching
+in order for this to work reliability.  When this option is enabled,
+the readattempts sysctl noted above will not be used.
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,

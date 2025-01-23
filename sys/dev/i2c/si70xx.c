@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.11 2022/03/30 00:06:50 pgoyette Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.12 2025/01/23 19:13:19 brad Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.11 2022/03/30 00:06:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.12 2025/01/23 19:13:19 brad Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021, HTU21D and SHT21
@@ -214,6 +214,8 @@ si70xx_dir(uint8_t cmd, size_t len)
 	case SI70XX_READ_ID_PT2B:
 	case SI70XX_READ_FW_VERA:
 	case SI70XX_READ_FW_VERB:
+	case SI70XX_MEASURE_RH_HOLD:
+	case SI70XX_MEASURE_TEMP_HOLD:
 		return I2C_OP_READ_WITH_STOP;
 	case SI70XX_WRITE_USER_REG_1:
 	case SI70XX_WRITE_HEATER_REG:
@@ -221,7 +223,7 @@ si70xx_dir(uint8_t cmd, size_t len)
 		return I2C_OP_WRITE_WITH_STOP;
 	case SI70XX_MEASURE_RH_NOHOLD:
 	case SI70XX_MEASURE_TEMP_NOHOLD:
-		return len == 0 ? I2C_OP_READ : I2C_OP_READ_WITH_STOP;
+		return len == 0 ? I2C_OP_WRITE : I2C_OP_READ_WITH_STOP;
 	default:
 		panic("%s: bad command %#x\n", __func__, cmd);
 		return 0;
@@ -505,15 +507,12 @@ si70xx_sysctl_init(struct si70xx_sc *sc)
 
 #endif
 
-#ifdef HAVE_I2C_EXECV
 	if ((error = sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "clockstretch",
-	    SYSCTL_DESCR("Clockstretch value"), si70xx_verify_sysctl, 0,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "clockstretch",
+	    SYSCTL_DESCR("Use clock stretch commands for measurements"), NULL, 0,
 	    &sc->sc_clockstretch, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		return error;
-#endif
-
 
 	if ((error = sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "readattempts",
@@ -620,9 +619,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_si70xxdebug = 0;
-#ifdef HAVE_I2C_EXECV
-	sc->sc_clockstretch = 2048;
-#endif
+	sc->sc_clockstretch = false;
 	sc->sc_readattempts = 40;
 	sc->sc_ignorecrc = false;
 	sc->sc_sme = NULL;
@@ -686,7 +683,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	    crc1, validcrcpt1));
 
 	error = si70xx_cmd2(sc, SI70XX_READ_ID_PT2A, SI70XX_READ_ID_PT2B,
-	    buf, 8);
+	    buf, 6);
 	if (error != 0) {
 		aprint_error_dev(self, "Failed to read second part of ID: %d\n",
 		    error);
@@ -718,7 +715,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	    buf[3], buf[4], buf[5], crc2, validcrcpt2));
 
 	error = si70xx_cmd2(sc, SI70XX_READ_FW_VERA, SI70XX_READ_FW_VERB,
-	    buf, 8);
+	    buf, 1);
 
 	if (error) {
 		aprint_error_dev(self, "Failed to read firmware version: Error %d\n",
@@ -841,6 +838,7 @@ si70xx_exec(struct si70xx_sc *sc, uint8_t cmd, envsys_data_t *edata)
 
 	switch (cmd) {
 	case SI70XX_MEASURE_RH_NOHOLD:
+	case SI70XX_MEASURE_RH_HOLD:
 		/*
 		 * The published conversion for RH is: %RH =
 		 * ((125 * RHCODE) / 65536) - 6
@@ -868,6 +866,7 @@ si70xx_exec(struct si70xx_sc *sc, uint8_t cmd, envsys_data_t *edata)
 		name = "RH";
 		break;
 	case SI70XX_MEASURE_TEMP_NOHOLD:
+	case SI70XX_MEASURE_TEMP_HOLD:
 		/*
 		 * The published conversion for temp is:
 		 * degree C = ((175.72 * TEMPCODE) / 65536) -
@@ -897,41 +896,39 @@ si70xx_exec(struct si70xx_sc *sc, uint8_t cmd, envsys_data_t *edata)
 		return EINVAL;
 	}
 
-#if HAVE_I2C_EXECV
-	memset(buf, 0, sizeof(buf));
-	error = iic_execv(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, 1, buf, sizeof(buf), 0, I2C_ATTR_CLOCKSTRETCH,
-	    sc->sc_clockstretch, I2C_ATTR_EOL);
-#else
-	/*
-	 * The lower level driver must support the ability to
-	 * do a zero length read, otherwise this breaks
-	 */
-	error = si70xx_cmd1(sc, cmd, buf, 0);
-	if (error) {
-		DPRINTF(sc, 2, ("%s: Failed to read NO HOLD %s %d %d\n",
-		    device_xname(sc->sc_dev), name, 1, error));
-		return error;
-	}
+	if (sc->sc_clockstretch) {
+		error = si70xx_cmd1(sc, cmd, buf, sizeof(buf));
+		if (error) {
+			DPRINTF(sc, 2, ("%s: Failed to read HOLD %s %d %d\n",
+			    device_xname(sc->sc_dev), name, 1, error));
+			return error;
+		}
+	} else {
+		error = si70xx_cmd1(sc, cmd, NULL, 0);
+		if (error) {
+			DPRINTF(sc, 2, ("%s: Failed to read NO HOLD %s %d %d\n",
+			    device_xname(sc->sc_dev), name, 1, error));
+			return error;
+		}
 
-	/*
-	 * It will probably be at least this long... we would
-	 * not have to do this sort of thing if clock
-	 * stretching worked.  Even this is a problem for the
-	 * RPI without a patch to remove a [apparently] not
-	 * needed KASSERT()
-	 */
-	delay(xdelay);
+		/*
+		 * It will probably be at least this long... we would
+		 * not have to do this sort of thing if clock
+		 * stretching worked.  Even this is a problem for the
+		 * RPI without a patch to remove a [apparently] not
+		 * needed KASSERT()
+		 */
+		delay(xdelay);
 
-	for (int aint = 0; aint < sc->sc_readattempts; aint++) {
-		error = si70xx_cmd0(sc, buf, sizeof(buf));
-		if (error == 0)
-			break;
-		DPRINTF(sc, 2, ("%s: Failed to read NO HOLD RH"
-		    " %d %d\n", device_xname(sc->sc_dev), 2, error));
-		delay(1000);
+		for (int aint = 0; aint < sc->sc_readattempts; aint++) {
+			error = si70xx_cmd0(sc, buf, sizeof(buf));
+			if (error == 0)
+				break;
+			DPRINTF(sc, 2, ("%s: Failed to read NO HOLD RH"
+			    " %d %d\n", device_xname(sc->sc_dev), 2, error));
+			delay(1000);
+		}
 	}
-#endif
 
 	DPRINTF(sc, 2, ("%s: %s values: %02x%02x%02x - %02x\n",
 	    device_xname(sc->sc_dev), name, buf[0], buf[1], buf[2],
@@ -983,11 +980,17 @@ si70xx_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 	}
 	switch (edata->sensor) {
 	case SI70XX_HUMIDITY_SENSOR:
-		error = si70xx_exec(sc, SI70XX_MEASURE_RH_NOHOLD, edata);
+		if (sc->sc_clockstretch)
+			error = si70xx_exec(sc, SI70XX_MEASURE_RH_HOLD, edata);
+		else
+			error = si70xx_exec(sc, SI70XX_MEASURE_RH_NOHOLD, edata);
 		break;
 
 	case SI70XX_TEMP_SENSOR:
-		error = si70xx_exec(sc, SI70XX_MEASURE_TEMP_NOHOLD, edata);
+		if (sc->sc_clockstretch)
+			error = si70xx_exec(sc, SI70XX_MEASURE_TEMP_HOLD, edata);
+		else
+			error = si70xx_exec(sc, SI70XX_MEASURE_TEMP_NOHOLD, edata);
 		break;
 	default:
 		error = EINVAL;
