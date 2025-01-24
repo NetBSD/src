@@ -1,4 +1,4 @@
-# $NetBSD: t_cut.sh,v 1.1 2012/03/17 16:33:13 jruoho Exp $
+# $NetBSD: t_cut.sh,v 1.2 2025/01/24 22:15:35 gutteridge Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -90,7 +90,7 @@ dsflag_body()
 atf_test_case latin1
 latin1_head()
 {
-	atf_set "descr" "Checks support for non-ascii characters"
+	atf_set "descr" "Checks support for non-ASCII characters"
 }
 latin1_body()
 {
