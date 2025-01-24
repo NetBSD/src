@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.12 2024/12/26 10:40:46 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.13 2025/01/24 07:43:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -67,6 +67,11 @@
 #define VISFX_APERTURE_ACCESS	0xa00858
 	#define VISFX_DEPTH_8	0x30
 	#define VISFX_DEPTH_32	0x50
+#define VISFX_RPH		0xa0085c	// read prefetch hint
+	#define VISFX_RPH_RTL	0x80000000	// right-to-left
+	#define VISFX_RPH_LTR	0x00000000	// left-to-right
+
+#define VISFX_READ_DATA		0xa41480
 
 #define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
 #define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
@@ -100,7 +105,7 @@
 #define BUFBR	0x00002000	/* back/right */
 #define BUFFR	0x00001000	/* front/right */
 
-/* attribute table */
+/* attribute table, this only selects depth and CFS */
 #define IAA_8I		0x00000000	/* 8bit CI */
 #define IAA_8F		0x00000070	/* RGB8 */
 #define IAA_CFS0	0x00000000	/* CFS select */
@@ -145,12 +150,12 @@
  * The _POS, _INDEX and _DATA registers work exactly like on HCRX
  */
 
-#define VISFX_CURSOR_POS	0x800000
+#define VISFX_CURSOR_POS	0x400000
 #define VISFX_CURSOR_ENABLE	0x80000000
-#define VISFX_CURSOR_INDEX	0x800004
-#define VISFX_CURSOR_DATA	0x800008
-#define VISFX_CURSOR_FG		0x80000c
-#define VISFX_CURSOR_BG		0x800010
+#define VISFX_CURSOR_INDEX	0x400004
+#define VISFX_CURSOR_DATA	0x400008
+#define VISFX_CURSOR_FG		0x40000c
+#define VISFX_CURSOR_BG		0x400010
 #define VISFX_COLOR_MASK	0x800018
 #define VISFX_COLOR_INDEX	0x800020
 #define VISFX_COLOR_VALUE	0x800024
