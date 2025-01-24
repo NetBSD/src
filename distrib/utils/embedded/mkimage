@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.89 2025/01/17 12:11:53 jmcneill Exp $
+# $NetBSD: mkimage,v 1.90 2025/01/24 21:47:51 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -163,7 +163,7 @@ make_fstab_normal() {
 	cat > ${mnt}/etc/fstab << EOF
 # NetBSD /etc/fstab
 # See /usr/share/examples/fstab/ for more examples.
-ROOT.a		/			ffs	rw,log,noatime${rootopts}	1 1
+ROOT.a		/			ffs	rw,noatime${rootopts}	1 1
 ROOT.e		/boot			msdos	rw				1 1
 ptyfs		/dev/pts		ptyfs	rw
 procfs		/proc			procfs	rw
