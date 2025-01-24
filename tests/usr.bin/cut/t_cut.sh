@@ -1,4 +1,4 @@
-# $NetBSD: t_cut.sh,v 1.2 2025/01/24 22:15:35 gutteridge Exp $
+# $NetBSD: t_cut.sh,v 1.3 2025/01/24 22:23:38 gutteridge Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -119,6 +119,21 @@ utf8_body()
 		cut -c 6,7,8 "$(atf_get_srcdir)/d_utf8.in"
 }
 
+atf_test_case nflag
+nflag_head()
+{
+	atf_set "descr" "Checks -n flag (PR bin/59029)"
+}
+
+nflag_body()
+{
+	export LC_ALL=en_US.UTF-8
+
+	atf_expect_fail "PR bin/59029"
+	atf_check -o inline:"bar\nBar\nBAr\nBAR\n" \
+		cut -b -n 6,7,8 "$(atf_get_srcdir)/d_utf8.in"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
@@ -127,4 +142,5 @@ atf_init_test_cases()
 	atf_add_test_case dsflag
 	atf_add_test_case latin1
 	atf_add_test_case utf8
+	atf_add_test_case nflag
 }
