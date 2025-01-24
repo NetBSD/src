@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.396 2025/01/05 13:08:57 plunky Exp $
+$NetBSD: acronyms.comp,v 1.397 2025/01/24 19:43:55 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1532,6 +1532,7 @@ SCP	secure copy
 SCP	system control processor
 SCPI	system control and power interface
 SCSI	Small Computer System Interface
+SCT	Signed Certificate Timestamp
 SCTP	Stream Control Transmission Protocol
 SDDC	software defined data center
 SDEI	software delegated exception interface
