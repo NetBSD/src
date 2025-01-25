@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.354 2025/01/10 23:00:38 rillig Exp $
+# $NetBSD: Makefile,v 1.355 2025/01/25 22:46:30 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -47,6 +47,11 @@ TMPDIR:=	/tmp/uid${.MAKE.UID}
 .if !exist(${TMPDIR})
 _!= mkdir -p ${TMPDIR}
 .endif
+# and clean it up - outside the context of
+# any target that might be using it.
+.END: rm-tmpdir
+rm-tmpdir:	.NOMETA
+	@rm -rf ${TMPDIR}
 
 # Each test is in a sub-makefile.
 # Keep the list sorted.
@@ -781,7 +786,6 @@ test:	${OUTFILES} .PHONY
 	  if [ "$$have_lua" = "yes" ]; then \
 	    (cd ${.CURDIR} && "$$lua" ./check-expect.lua *.mk); \
 	  fi; \
-	  rm -rf ${TMPDIR}; \
 	fi
 
 accept:
