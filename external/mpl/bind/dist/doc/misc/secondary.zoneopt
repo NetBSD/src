@@ -5,22 +5,20 @@ zone <string> [ <class> ] {
 	allow-query-on { <address_match_element>; ... };
 	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
 	allow-update-forwarding { <address_match_element>; ... };
-	also-notify [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
-	alt-transfer-source ( <ipv4_address> | * ) ; // deprecated
-	alt-transfer-source-v6 ( <ipv6_address> | * ) ; // deprecated
-	auto-dnssec ( allow | maintain | off ); // deprecated
+	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	check-names ( fail | warn | ignore );
+	checkds ( explicit | <boolean> );
 	database <string>;
 	dialup ( notify | notify-passive | passive | refresh | <boolean> ); // deprecated
 	dlz <string>;
-	dnskey-sig-validity <integer>;
-	dnssec-dnskey-kskonly <boolean>;
+	dnskey-sig-validity <integer>; // obsolete
+	dnssec-dnskey-kskonly <boolean>; // obsolete
 	dnssec-loadkeys-interval <integer>;
 	dnssec-policy <string>;
-	dnssec-update-mode ( maintain | no-resign );
+	dnssec-update-mode ( maintain | no-resign ); // obsolete
 	file <quoted_string>;
 	forward ( first | only );
-	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
+	forwarders [ port <integer> ] [ tls <string> ] { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ] [ tls <string> ]; ... };
 	inline-signing <boolean>;
 	ixfr-from-differences <boolean>;
 	journal <quoted_string>;
@@ -43,25 +41,24 @@ zone <string> [ <class> ] {
 	multi-master <boolean>;
 	notify ( explicit | master-only | primary-only | <boolean> );
 	notify-delay <integer>;
-	notify-source ( <ipv4_address> | * ) ;
-	notify-source-v6 ( <ipv6_address> | * ) ;
+	notify-source ( <ipv4_address> | * );
+	notify-source-v6 ( <ipv6_address> | * );
 	notify-to-soa <boolean>;
 	nsec3-test-zone <boolean>; // test only
-	parental-agents [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
-	parental-source ( <ipv4_address> | * ) ;
-	parental-source-v6 ( <ipv6_address> | * ) ;
-	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	parental-agents [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	parental-source ( <ipv4_address> | * );
+	parental-source-v6 ( <ipv6_address> | * );
+	primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	request-expire <boolean>;
 	request-ixfr <boolean>;
 	sig-signing-nodes <integer>;
 	sig-signing-signatures <integer>;
 	sig-signing-type <integer>;
-	sig-validity-interval <integer> [ <integer> ];
-	transfer-source ( <ipv4_address> | * ) ;
-	transfer-source-v6 ( <ipv6_address> | * ) ;
+	sig-validity-interval <integer> [ <integer> ]; // obsolete
+	transfer-source ( <ipv4_address> | * );
+	transfer-source-v6 ( <ipv6_address> | * );
 	try-tcp-refresh <boolean>;
-	update-check-ksk <boolean>;
-	use-alt-transfer-source <boolean>; // deprecated
+	update-check-ksk <boolean>; // obsolete
 	zero-no-soa-ttl <boolean>;
 	zone-statistics ( full | terse | none | <boolean> );
 };

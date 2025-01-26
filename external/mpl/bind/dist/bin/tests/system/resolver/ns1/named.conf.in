@@ -28,9 +28,12 @@ options {
 			      "gooddname.example.net"; };
 	allow-query {!10.53.0.8; any; };
 	max-zone-ttl unlimited;
+	resolver-query-timeout 5000; # 5 seconds
 	attach-cache "globalcache";
 	max-recursion-queries 100;
 };
+
+trust-anchors { };
 
 server 10.53.0.3 {
 	tcp-only yes;

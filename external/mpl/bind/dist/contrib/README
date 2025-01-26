@@ -23,9 +23,8 @@ be fixed as time permits.
 
     - dlz/modules
 
-      Dynamically linkable DLZ modules that can be configured into
-      named at runtime, enabling access to external data sources including
-      LDAP, MySQL, Berkeley DB, perl scripts, etc.
+      Dynamically linkable DLZ modules have been moved into a separate
+      repository located at https://gitlab.isc.org/isc-projects/dlz-modules.
 
     - gitchangelog/
 

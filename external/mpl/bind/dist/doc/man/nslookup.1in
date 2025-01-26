@@ -63,11 +63,9 @@ seconds, type:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 nslookup \-query=hinfo  \-timeout=10
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -77,9 +75,9 @@ and immediately exit.
 .INDENT 0.0
 .TP
 .B \fBhost [server]\fP
-This command looks up information for \X'tty: link #std-iscman-host'\fI\%host\fP\X'tty: link' using the current default server or
-using \fBserver\fP, if specified. If \X'tty: link #std-iscman-host'\fI\%host\fP\X'tty: link' is an Internet address and the
-query type is A or PTR, the name of the host is returned. If \X'tty: link #std-iscman-host'\fI\%host\fP\X'tty: link' is
+This command looks up information for \fI\%host\fP using the current default server or
+using \fBserver\fP, if specified. If \fI\%host\fP is an Internet address and the
+query type is A or PTR, the name of the host is returned. If \fI\%host\fP is
 a name and does not have a trailing period (\fB\&.\fP), the search list is used
 to qualify the name.
 .sp
@@ -216,7 +214,7 @@ when \fBnslookup\fP runs, or when the standard output is not a tty.
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-dig'\fI\%dig(1)\fP\X'tty: link', \X'tty: link #std-iscman-host'\fI\%host(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link'\&.
+\fI\%dig(1)\fP, \fI\%host(1)\fP, \fI\%named(8)\fP\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

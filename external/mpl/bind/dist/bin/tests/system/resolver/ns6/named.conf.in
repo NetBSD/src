@@ -25,12 +25,8 @@ options {
 	dnssec-validation no;
 	querylog yes;
 	statistics-file "named.stats";
-	/*
-	 * test that named loads with root-delegation-only that
-	 * has a exclude list.
-	 */
-	root-delegation-only exclude { "a"; };
 	max-udp-size 4096;
+	responselog no;
 };
 
 zone "." {
@@ -75,11 +71,6 @@ zone "tld1" {
 zone "no-edns-version.tld" {
 	type primary;
 	file "no-edns-version.tld.db";
-};
-
-zone "delegation-only" {
-	type primary;
-	file "delegation-only.db";
 };
 
 zone "fetch.tld" {

@@ -73,13 +73,34 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "checking that a forward zone works ($n)"
-ret=0
-dig_with_opts +noadd +noauth txt.example1. txt @$hidden >dig.out.$n.hidden || ret=1
-dig_with_opts +noadd +noauth txt.example1. txt @$f2 >dig.out.$n.f2 || ret=1
-digcomp dig.out.$n.hidden dig.out.$n.f2 || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
+echo_i "checking that DoT expired certificate does not work ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  nextpart ns4/named.run >/dev/null
+  dig_with_opts +noadd +noauth txt.example4. txt @$hidden >dig.out.$n.hidden || ret=1
+  dig_with_opts +noadd +noauth txt.example4. txt @$f2 >dig.out.$n.f2 || ret=1
+  digcomp dig.out.$n.hidden dig.out.$n.f2 >/dev/null 2>&1 && ret=1
+  wait_for_log 1 "TLS peer certificate verification failed" ns4/named.run || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
+
+n=$((n + 1))
+echo_i "checking that a forward zone works (DoT insecure) ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  nextpart ns4/named.run >/dev/null
+  dig_with_opts +noadd +noauth txt.example1. txt @$hidden >dig.out.$n.hidden || ret=1
+  dig_with_opts +noadd +noauth txt.example1. txt @$f2 >dig.out.$n.f2 || ret=1
+  digcomp dig.out.$n.hidden dig.out.$n.f2 || ret=1
+  wait_for_log 1 "TLS client session created for 10.53.0.2" ns4/named.run || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
 
 n=$((n + 1))
 echo_i "checking that forwarding doesn't spontaneously happen ($n)"
@@ -91,19 +112,64 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "checking that a forward zone with no specified policy works ($n)"
-ret=0
-dig_with_opts +noadd +noauth txt.example3. txt @$hidden >dig.out.$n.hidden || ret=1
-dig_with_opts +noadd +noauth txt.example3. txt @$f2 >dig.out.$n.f2 || ret=1
-digcomp dig.out.$n.hidden dig.out.$n.f2 || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
+echo_i "checking that a forward zone with no specified policy works (DoT forward-secrecy) ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  nextpart ns4/named.run >/dev/null
+  dig_with_opts +noadd +noauth txt.example3. txt @$hidden >dig.out.$n.hidden || ret=1
+  dig_with_opts +noadd +noauth txt.example3. txt @$f2 >dig.out.$n.f2 || ret=1
+  digcomp dig.out.$n.hidden dig.out.$n.f2 || ret=1
+  wait_for_log 1 "TLS client session created for 10.53.0.2" ns4/named.run || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
+
+n=$((n + 1))
+echo_i "checking that DoT remote-hostname works ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  nextpart ns4/named.run >/dev/null
+  dig_with_opts +noadd +noauth txt.example8. txt @$hidden >dig.out.$n.hidden || ret=1
+  dig_with_opts +noadd +noauth txt.example8. txt @$f2 >dig.out.$n.f2 || ret=1
+  digcomp dig.out.$n.hidden dig.out.$n.f2 >/dev/null 2>&1 || ret=1
+  wait_for_log 1 "TLS client session created for 10.53.0.2" ns4/named.run || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
+
+n=$((n + 1))
+echo_i "checking that DoT bad remote-hostname does not work ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  nextpart ns4/named.run >/dev/null
+  dig_with_opts +noadd +noauth txt.example9. txt @$hidden >dig.out.$n.hidden || ret=1
+  dig_with_opts +noadd +noauth txt.example9. txt @$f2 >dig.out.$n.f2 || ret=1
+  digcomp dig.out.$n.hidden dig.out.$n.f2 >/dev/null 2>&1 && ret=1
+  wait_for_log 1 "TLS peer certificate verification failed" ns4/named.run || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
 
 n=$((n + 1))
 echo_i "checking that a forward only doesn't recurse ($n)"
 ret=0
 dig_with_opts txt.example5. txt @$f2 >dig.out.$n.f2 || ret=1
 grep "SERVFAIL" dig.out.$n.f2 >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# GL#1793
+n=$((n + 1))
+echo_i "checking that the 'serverquota' counter isn't increased because of the SERVFAIL in the previous check ($n)"
+ret=0
+"${CURL}" "http://10.53.0.4:${EXTRAPORT1}/json/v1" 2>/dev/null >statschannel.out.$n
+grep -F "ServerQuota" statschannel.out.$n >/dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -122,19 +188,23 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 check_override() (
-  dig_with_opts 1.0.10.in-addr.arpa TXT @10.53.0.4 >dig.out.$n.f2 \
+  dig_with_opts 1.0.10.in-addr.arpa TXT @$f2 >dig.out.$n.f2 \
     && grep "status: NOERROR" dig.out.$n.f2 >/dev/null \
-    && dig_with_opts 2.0.10.in-addr.arpa TXT @10.53.0.4 >dig.out.$n.f2 \
+    && dig_with_opts 2.0.10.in-addr.arpa TXT @$f2 >dig.out.$n.f2 \
     && grep "status: NXDOMAIN" dig.out.$n.f2 >/dev/null
 )
 
 n=$((n + 1))
-echo_i "checking that forward only zone overrides empty zone ($n)"
-ret=0
-# retry loop in case the server restart above causes transient failure
-retry_quiet 10 check_override || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
+echo_i "checking that forward only zone overrides empty zone (DoT forward-secrecy-mutual-tls) ($n)"
+if $FEATURETEST --have-fips-dh; then
+  ret=0
+  # retry loop in case the server restart above causes transient failure
+  retry_quiet 10 check_override || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+else
+  echo_i "skipped."
+fi
 
 n=$((n + 1))
 echo_i "checking that DS lookups for grafting forward zones are isolated ($n)"

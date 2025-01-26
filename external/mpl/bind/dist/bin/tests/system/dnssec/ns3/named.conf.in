@@ -21,6 +21,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	notify yes;
 	dnssec-validation yes;
@@ -35,6 +36,42 @@ key rndc_key {
 
 controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "dnssec" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
+};
+
+dnssec-policy "autonsec" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+	};
+};
+
+dnssec-policy "autonsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
 };
 
 zone "." {
@@ -209,20 +246,21 @@ zone "expired.example" {
 
 zone "update-nsec3.example" {
 	type primary;
+	dnssec-policy nsec3;
 	allow-update { any; };
 	file "update-nsec3.example.db.signed";
 };
 
 zone "auto-nsec.example" {
 	type primary;
-	auto-dnssec maintain;
+	dnssec-policy autonsec;
 	allow-update { !0.0.0.0; };
 	file "auto-nsec.example.db.signed";
 };
 
 zone "auto-nsec3.example" {
 	type primary;
-	auto-dnssec maintain;
+	dnssec-policy autonsec3;
 	allow-update { !0.0.0.0; };
 	file "auto-nsec3.example.db.signed";
 };
@@ -264,13 +302,6 @@ zone "expiring.example" {
 	file "expiring.example.db.signed";
 };
 
-zone "nosign.example" {
-	type primary;
-	allow-update { any; };
-	dnssec-update-mode no-resign;
-	file "nosign.example.db.signed";
-};
-
 zone "upper.example" {
 	type primary;
 	file "upper.example.db.signed";
@@ -285,15 +316,7 @@ zone "inline.example" {
 	type primary;
 	file "inline.example.db";
 	inline-signing yes;
-	auto-dnssec maintain;
-};
-
-zone "publish-inactive.example" {
-	type primary;
-	file "publish-inactive.example.db";
-	auto-dnssec maintain;
-	dnssec-dnskey-kskonly no;
-	update-policy local;
+	dnssec-policy dnssec;
 };
 
 zone "future.example" {
@@ -376,6 +399,38 @@ zone "too-many-iterations" {
 	type secondary;
 	primaries { 10.53.0.2; };
 	file "too-many-iterations.bk";
+};
+
+zone "rsasha1.example" {
+	type primary;
+	file "rsasha1.example.db";
+};
+
+zone "rsasha1-1024.example" {
+	type primary;
+	file "rsasha1-1024.example.db";
+};
+
+dnssec-policy "siginterval1" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	signatures-validity 1d;
+	signatures-refresh 21h;
+	signatures-validity-dnskey 90d;
+};
+
+dnssec-policy "siginterval2" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	signatures-validity 35d;
+	signatures-refresh 28d;
+	signatures-validity-dnskey 90d;
 };
 
 include "siginterval.conf";

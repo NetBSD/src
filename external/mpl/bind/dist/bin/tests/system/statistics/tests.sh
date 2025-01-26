@@ -219,8 +219,6 @@ if $FEATURETEST --have-libxml2 && "${CURL}" --http1.1 http://10.53.0.3:${EXTRAPO
   # grep "<h2>Glue cache statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
   grep "<h3>View _default" xsltproc.out.${n} >/dev/null || ret=1
   grep "<h4>Zone example" xsltproc.out.${n} >/dev/null || ret=1
-  grep "<h2>Task Manager Configuration</h2>" xsltproc.out.${n} >/dev/null || ret=1
-  grep "<h2>Tasks</h2>" xsltproc.out.${n} >/dev/null || ret=1
   grep "<h2>Memory Usage Summary</h2>" xsltproc.out.${n} >/dev/null || ret=1
   grep "<h2>Memory Contexts</h2>" xsltproc.out.${n} >/dev/null || ret=1
 else

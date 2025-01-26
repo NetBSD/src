@@ -14,8 +14,6 @@
 # shellcheck source=conf.sh
 . ../conf.sh
 
-$SHELL clean.sh
-
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
@@ -35,23 +33,23 @@ awk 'END {
 }' </dev/null >>ns1/under-limit.db
 cp ns1/under-limit.db ns1/under-limit-kasp.db
 
-cp ns1/empty.db.in ns1/on-limit.db
+cp ns1/empty.db.in ns1/below-limit.db
 awk 'END {
 	 for (i = 0; i < 500; i++ ) { print "500-txt TXT", i; }
 	 for (i = 0; i < 1000; i++ ) { print "1000-txt TXT", i; }
 	 for (i = 0; i < 2000; i++ ) { print "2000-txt TXT", i; }
 	 for (i = 0; i < 2050; i++ ) { print "2050-txt TXT", i; }
-}' </dev/null >>ns1/on-limit.db
-cp ns1/on-limit.db ns1/on-limit-kasp.db
+}' </dev/null >>ns1/below-limit.db
+cp ns1/below-limit.db ns1/below-limit-kasp.db
 
-cp ns1/empty.db.in ns1/over-limit.db
+cp ns1/empty.db.in ns1/above-limit.db
 awk 'END {
 	 for (i = 0; i < 500; i++ ) { print "500-txt TXT", i; }
 	 for (i = 0; i < 1000; i++ ) { print "1000-txt TXT", i; }
 	 for (i = 0; i < 2000; i++ ) { print "2000-txt TXT", i; }
 	 for (i = 0; i < 2050; i++ ) { print "2050-txt TXT", i; }
 	 for (i = 0; i < 2100; i++ ) { print "2100-txt TXT", i; }
-}' </dev/null >>ns1/over-limit.db
+}' </dev/null >>ns1/above-limit.db
 
 cp ns1/empty.db.in ns1/255types.db
 for ntype in $(seq 65280 65534); do

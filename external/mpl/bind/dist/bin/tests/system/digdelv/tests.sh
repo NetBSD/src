@@ -59,7 +59,7 @@ check_ttl_range() {
   return $result
 }
 
-# using delv insecure mode as not testing dnssec here
+# use delv insecure mode by default, as we're mostly not testing dnssec
 delv_with_opts() {
   "$DELV" +noroot -p "$PORT" "$@"
 }
@@ -562,6 +562,25 @@ if [ -x "$DIG" ]; then
   status=$((status + ret))
 
   n=$((n + 1))
+  echo_i "checking ednsopt UL prints as expected (single lease) ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +ednsopt=UL:00000e10 +qr a.example >dig.out.test$n 2>&1 || ret=1
+  pat='UL: 3600 (1 hour)'
+  grep "$pat" dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+  n=$((n + 1))
+
+  n=$((n + 1))
+  echo_i "checking ednsopt UL prints as expected (split lease) ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +ednsopt=UL:00000e1000127500 +qr a.example >dig.out.test$n 2>&1 || ret=1
+  pat='UL: 3600/1209600 (1 hour/2 weeks)'
+  grep "$pat" dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+  n=$((n + 1))
+
   echo_i "checking ednsopt LLQ prints as expected ($n)"
   ret=0
   dig_with_opts @10.53.0.3 +ednsopt=llq:0001000200001234567812345678fefefefe +qr a.example >dig.out.test$n 2>&1 || ret=1
@@ -1122,6 +1141,20 @@ fi
 
 if [ -x "$MDIG" ]; then
   n=$((n + 1))
+  echo_i "checking mdig +tcp works with a source address and port ($n)"
+  ret=0
+  # When running more than once in quick succession with a source address#port,
+  # we can get a "response failed with address not available" error because
+  # the address#port is still busy, but we are not interested in that error,
+  # as we are only looking for the unexpected error case, that's why we ignore
+  # the return code from mdig, but we check for the unexpected error message
+  # using grep. See GitLab #4969.
+  mdig_with_opts -b "10.53.0.3#${EXTRAPORT8}" +tcp @10.53.0.3 example >dig.out.test$n 2>&1 || true
+  grep -F "unexpected error" dig.out.test$n >/dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
   echo_i "check that mdig handles malformed option '+ednsopt=:' gracefully ($n)"
   ret=0
   mdig_with_opts @10.53.0.3 +ednsopt=: a.example >dig.out.test$n 2>&1 && ret=1
@@ -1413,6 +1446,55 @@ if [ -x "$DELV" ]; then
     if [ $ret -ne 0 ]; then echo_i "failed"; fi
     status=$((status + ret))
   fi
+
+  n=$((n + 1))
+  echo_i "check that delv handles REFUSED when chasing DS records ($n)"
+  delv_with_opts @10.53.0.2 +root xxx.example.tld A >delv.out.test$n 2>&1 || ret=1
+  grep ";; resolution failed: broken trust chain" delv.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "check NS output from delv +ns ($n)"
+  delv_with_opts -i +ns +nortrace +nostrace +nomtrace +novtrace +hint=../_common/root.hint ns example >delv.out.test$n || ret=1
+  lines=$(awk '$1 == "example." && $4 == "NS" {print}' delv.out.test$n | wc -l)
+  [ $lines -eq 2 ] || ret=1
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "checking delv +ns (no validation) ($n)"
+  ret=0
+  delv_with_opts -i +ns +hint=../_common/root.hint a a.example >delv.out.test$n || ret=1
+  grep -q '; authoritative' delv.out.test$n || ret=1
+  grep -q '_.example' delv.out.test$n && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "checking delv +ns +qmin (no validation) ($n)"
+  ret=0
+  delv_with_opts -i +ns +qmin +hint=../_common/root.hint a a.example >delv.out.test$n || ret=1
+  grep -q '; authoritative' delv.out.test$n || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "checking delv +ns (with validation) ($n)"
+  ret=0
+  delv_with_opts -a ns1/anchor.dnskey +root +ns +hint=../_common/root.hint a a.example >delv.out.test$n || ret=1
+  grep -q '; fully validated' delv.out.test$n || ret=1
+  grep -q '_.example' delv.out.test$n && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "checking delv +ns +qmin (with validation) ($n)"
+  ret=0
+  delv_with_opts -a ns1/anchor.dnskey +root +ns +qmin +hint=../_common/root.hint a a.example >delv.out.test$n || ret=1
+  grep -q '; fully validated' delv.out.test$n || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
 else
   echo_i "$DELV is needed, so skipping these delv tests"
 fi

@@ -25,6 +25,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.8; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
 	notify no;
@@ -32,7 +33,7 @@ options {
 };
 
 key key1. {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 

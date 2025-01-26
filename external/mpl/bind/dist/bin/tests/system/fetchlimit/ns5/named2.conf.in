@@ -25,10 +25,12 @@ options {
 	notify yes;
 	stale-answer-enable yes;
 	stale-cache-enable yes;
-	stale-answer-client-timeout 1800;
+	stale-answer-client-timeout 0;
 	clients-per-query 5;
 	max-clients-per-query 10;
 };
+
+trust-anchors { };
 
 server 10.53.0.4 {
 	edns no;

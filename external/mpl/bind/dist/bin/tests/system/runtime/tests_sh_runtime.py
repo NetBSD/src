@@ -9,6 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "rndc.out.*",
+        "ns2/named-alt*.conf",
+        "ns2/named*.run",
+        "ns2/nope",
+        "ns2/tmp.*",
+    ]
+)
+
 
 def test_runtime(run_tests_sh):
     run_tests_sh()

@@ -681,12 +681,10 @@ damage be if a key were compromised without you knowing about it? How
 serious would a key roll failure be?
 
 Before going any further, it is worth noting that if you sign your zone
-with either of the fully automatic methods (described in ref:`signing_alternative_ways`),
-you don't really need to
-concern yourself with the details of a key rollover: BIND 9 takes care of
-it all for you. If you are doing a manual key roll or are setting up the
-keys for a semi-automatic key rollover, you do need to familiarize yourself
-with the various steps involved and the timing details.
+with :any:`dnssec-policy`, you don't really need to concern yourself with the
+details of a key rollover: BIND 9 takes care of it all for you. If you are
+doing a manual key roll, you do need to familiarize yourself with the various
+steps involved and the timing details.
 
 Rolling a key is not as simple as replacing the DNSKEY statement in the
 zone. That is an essential part of it, but timing is everything. For
@@ -882,60 +880,10 @@ roll over DNSKEYs to a new algorithm, e.g., from RSASHA1 (algorithm 5 or
 care to avoid breaking DNSSEC validation.
 
 If you are managing DNSSEC by using the :any:`dnssec-policy` configuration,
-:iscman:`named` handles the rollover for you. Simply change the algorithm
+:iscman:`named` handles these steps for you. Simply change the algorithm
 for the relevant keys, and :iscman:`named` uses the new algorithm when the
 key is next rolled. It performs a smooth transition to the new
 algorithm, ensuring that the zone remains valid throughout rollover.
-
-If you are using other methods to sign the zone, the administrator needs to do more work. As
-with other key rollovers, when the zone is a primary zone, an algorithm
-rollover can be accomplished using dynamic updates or automatic key
-rollovers. For secondary zones, only automatic key rollovers are
-possible, but the :iscman:`dnssec-settime` utility can be used to control the
-timing.
-
-In any case, the first step is to put DNSKEYs in place using the new algorithm.
-You must generate the ``K*`` files for the new algorithm and put
-them in the zone's key directory, where :iscman:`named` can access them. Take
-care to set appropriate ownership and permissions on the keys. If the
-:any:`auto-dnssec` zone option is set to ``maintain``, :iscman:`named`
-automatically signs the zone with the new keys, based on their timing
-metadata when the :any:`dnssec-loadkeys-interval` elapses or when you issue the
-:option:`rndc loadkeys` command. Otherwise, for primary zones, you can use
-:iscman:`nsupdate` to add the new DNSKEYs to the zone; this causes :iscman:`named`
-to use them to sign the zone. For secondary zones, e.g., on a
-"bump in the wire" signing server, :iscman:`nsupdate` cannot be used.
-
-Once the zone has been signed by the new DNSKEYs (and you have waited
-for at least one TTL period), you must inform the parent zone and any trust
-anchor repositories of the new KSKs, e.g., you might place DS records in
-the parent zone through your DNS registrar's website.
-
-Before starting to remove the old algorithm from a zone, you must allow
-the maximum TTL on its DS records in the parent zone to expire. This
-assures that any subsequent queries retrieve the new DS records
-for the new algorithm. After the TTL has expired, you can remove the DS
-records for the old algorithm from the parent zone and any trust anchor
-repositories. You must then allow another maximum TTL interval to elapse
-so that the old DS records disappear from all resolver caches.
-
-The next step is to remove the DNSKEYs using the old algorithm from your
-zone. Again this can be accomplished using :iscman:`nsupdate` to delete the
-old DNSKEYs (for primary zones only) or by automatic key rollover when
-:any:`auto-dnssec` is set to ``maintain``. You can cause the automatic key
-rollover to take place immediately by using the :iscman:`dnssec-settime`
-utility to set the *Delete* date on all keys to any time in the past.
-(See the :option:`dnssec-settime -D date/offset <dnssec-settime -D>` option.)
-
-After adjusting the timing metadata, the :option:`rndc loadkeys` command
-causes :iscman:`named` to remove the DNSKEYs and
-RRSIGs for the old algorithm from the zone. Note also that with the
-:iscman:`nsupdate` method, removing the DNSKEYs also causes :iscman:`named` to
-remove the associated RRSIGs automatically.
-
-Once you have verified that the old DNSKEYs and RRSIGs have been removed
-from the zone, the final (optional) step is to remove the key files for
-the old algorithm from the key directory.
 
 Other Topics
 ~~~~~~~~~~~~
@@ -1061,13 +1009,14 @@ Below are a few challenges and disadvantages that DNSSEC faces.
 
 6. *Not enough people are using it today*: While it's estimated (as of
    mid-2020) that roughly 30% of the global Internet DNS traffic is
-   validating  [#]_ , that doesn't mean that many of the DNS zones are
-   actually signed. What this means is, even if your company's zone is
-   signed today, fewer than 30% of the Internet's servers are taking
-   advantage of this extra security. It gets worse: with less than 1.5%
-   of the ``com.`` domains signed, even if your DNSSEC validation is enabled today,
-   it's not likely to buy you or your users a whole lot more protection
-   until these popular domain names decide to sign their zones.
+   validating, [#apnic_validating_stats]_ that doesn't mean that many of
+   the DNS zones are actually signed. What this means is, even if your
+   company's zone is signed today, fewer than 30% of the Internet's
+   servers are taking advantage of this extra security. It gets worse:
+   with less than 1.5% of the ``com.`` domains signed, even if your
+   DNSSEC validation is enabled today, it's not likely to buy you or
+   your users a whole lot more protection until these popular domain
+   names decide to sign their zones.
 
 The last point may have more impact than you realize. Consider this:
 HTTP and HTTPS make up the majority of traffic on the Internet. While you may have
@@ -1082,6 +1031,6 @@ CNAME to ``foo.random-cloud-provider.com``. As long as
 fully validate everything when they visit your web page and could be
 redirected elsewhere by a cache poisoning attack.
 
-.. [#]
+.. [#apnic_validating_stats]
    Based on APNIC statistics at
    `<https://stats.labs.apnic.net/dnssec/XA>`__

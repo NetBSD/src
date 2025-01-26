@@ -21,6 +21,7 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
+	allow-transfer { any; };
 };
 
 zone "example" {

@@ -85,9 +85,8 @@ n=0
 n=$((n + 1))
 echo_i "checking that catalog-bad1.example (with no version) has failed to load ($n)"
 ret=0
-wait_for_message ns2/named.run "catz: zone 'catalog-bad1.example' has no 'version' record" \
-  && wait_for_message ns2/named.run "catz: new catalog zone 'catalog-bad1.example' is broken and will not be processed" || ret=1
-if [ $ret -ne 0 ]; then echo_i "failed"; fi
+wait_for_message ns2/named.run "catz: zone 'catalog-bad1.example' has no 'version' record and will not be processed" \
+  && if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
@@ -122,7 +121,7 @@ echo_i "checking that catalog-bad5.example (non-IN class) has failed to load ($n
 ret=0
 wait_for_message ns2/named.run "'catalog-zones' option is only supported for views with class IN" \
   && wait_for_message ns2/named.run "all zones loaded" || ret=1
-grep -F "catz: dns_catz_add_zone catalog-bad5.example" ns2/named.run && ret=1
+grep -F "catz: dns_catz_zone_add catalog-bad5.example" ns2/named.run && ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -294,7 +293,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "zone_shutdown: zone dom1.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom1.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -520,7 +519,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that unpermitted change of ownership did not happen ($n)"
 ret=0
-wait_for_message ns2/named.run "catz_addmodzone_taskaction: zone 'dom2.example' will not be added because another catalog zone already contains an entry with that zone" || ret=1
+wait_for_message ns2/named.run "catz_addmodzone_cb: zone 'dom2.example' will not be added because another catalog zone already contains an entry with that zone" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -642,7 +641,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that the change of ownership did not happen because version '1' catalog2 zone does not support the 'coo' property ($n)"
 ret=0
-wait_for_message ns2/named.run "catz_addmodzone_taskaction: zone 'dom2.example' will not be added because another catalog zone already contains an entry with that zone" || ret=1
+wait_for_message ns2/named.run "catz_addmodzone_cb: zone 'dom2.example' will not be added because another catalog zone already contains an entry with that zone" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -762,7 +761,7 @@ n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
 wait_for_message ns2/named.run "catz: adding zone 'dom-existing.example' from catalog 'catalog1.example'" \
-  && wait_for_message ns2/named.run "catz_addmodzone_taskaction: zone 'dom-existing.example' will not be added because it is an explicitly configured zone" || ret=1
+  && wait_for_message ns2/named.run "catz_addmodzone_cb: zone 'dom-existing.example' will not be added because it is an explicitly configured zone" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -808,7 +807,7 @@ n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
 wait_for_message ns2/named.run "catz: adding zone 'dom-existing-forward.example' from catalog 'catalog1.example'" \
-  && wait_for_message ns2/named.run "catz_addmodzone_taskaction: zone 'dom-existing-forward.example' will not be processed because of the explicitly configured forwarding for that zone" || ret=1
+  && wait_for_message ns2/named.run "catz_addmodzone_cb: zone 'dom-existing-forward.example' will not be processed because of the explicitly configured forwarding for that zone" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -946,7 +945,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "zone_shutdown: zone dom5.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom5.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1003,7 +1002,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "zone_shutdown: zone dom6.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom6.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1497,7 +1496,7 @@ END
   n=$((n + 1))
   echo_i "waiting for secondary to sync up ($n)"
   ret=0
-  wait_for_message ns2/named.run "zone_shutdown: zone ${special}/IN/default: shutting down" || ret=1
+  wait_for_message ns2/named.run "catz: catz_delzone_cb: zone '${special}' deleted" || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 
@@ -1635,7 +1634,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "zone_shutdown: zone dom11.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom11.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1667,7 +1666,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "zone_shutdown: zone subdomain.of.dom11.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'subdomain.of.dom11.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2030,7 +2029,9 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
+wait_for_message ns2/named.run "catz: zone 'dom16.example' was expected to exist but can not be found, will be restored" || ret=1
 wait_for_message ns2/named.run "catz: update_from_db: new zone merged" || ret=1
+wait_for_message ns2/named.run "catz: catalog1.example: reload done: success" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2039,6 +2040,13 @@ echo_i "checking that dom16.example. is served by secondary and that it's the on
 ret=0
 wait_for_a @10.53.0.2 dom16.example. dig.out.test$n || ret=1
 grep "192.0.2.1" dig.out.test$n >/dev/null || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom8.example. was not accidentally deleted during the configuration ($n)"
+ret=0
+_wait_for_message ns2/named.run "catz: zone 'dom8.example' was expected to exist but can not be found, will be restored" && ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2436,11 +2444,9 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "catz: deleting zone 'dom17.example' from catalog 'catalog1.example' - success" \
-  && wait_for_message ns2/named.run "catz: deleting zone 'dom18.example' from catalog 'catalog1.example' - success" \
-  && wait_for_message ns2/named.run "zone_shutdown: zone dom17.example/IN/default: shutting down" \
-  && wait_for_message ns2/named.run "zone_shutdown: zone dom18.example/IN/default: shutting down" || ret=1
-if [ $ret -ne 0 ]; then echo_i "failed"; fi
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom17.example' deleted" \
+  && wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom18.example' deleted" \
+  && if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
@@ -2527,10 +2533,8 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "catz: deleting zone 'dom17.example' from catalog 'catalog2.example' - success" \
-  && wait_for_message ns2/named.run "catz: deleting zone 'dom18.example' from catalog 'catalog2.example' - success" \
-  && wait_for_message ns2/named.run "zone_shutdown: zone dom17.example/IN/default: shutting down" \
-  && wait_for_message ns2/named.run "zone_shutdown: zone dom18.example/IN/default: shutting down" || ret=1
+wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom17.example' deleted" \
+  && wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom18.example' deleted" || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

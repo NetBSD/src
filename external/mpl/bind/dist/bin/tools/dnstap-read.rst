@@ -43,6 +43,9 @@ Options
    This option prints the text form of the DNS
    message that was encapsulated in the ``dnstap`` frame, after printing the ``dnstap`` data.
 
+.. option:: -t
+
+   This option prints long timestamps with millisecond precision.
 .. option:: -x
 
    This option prints a hex dump of the wire form

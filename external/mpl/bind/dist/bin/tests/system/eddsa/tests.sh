@@ -22,7 +22,7 @@ dig_with_opts() {
   "$DIG" +tcp +noau +noadd +nosea +nostat +nocmd +dnssec -p "$PORT" "$@"
 }
 
-if [ -f ed25519-supported.file ]; then
+if [ $ED25519_SUPPORTED = 1 ]; then
   # Check the example. domain
   n=$((n + 1))
   echo_i "checking that Ed25519 positive validation works ($n)"
@@ -50,7 +50,7 @@ fi
 
 n=$((n + 1))
 ret=0
-if [ -f ed448-supported.file ]; then
+if [ $ED448_SUPPORTED = 1 ]; then
   # Check the example. domain
   n=$((n + 1))
   echo_i "checking that Ed448 positive validation works ($n)"

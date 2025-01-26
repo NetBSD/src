@@ -18,12 +18,9 @@ cp ns1/root.db.in ns1/root.db
 touch ns2/trusted.conf
 cp ns2/nsec3-loop.db.in ns2/nsec3-loop.db
 cp ns2/bits.db.in ns2/bits.db
-cp ns2/bits.db.in ns2/inactiveksk.db
-cp ns2/bits.db.in ns2/inactivezsk.db
 cp ns2/bits.db.in ns2/nokeys.db
 cp ns2/bits.db.in ns2/removedkeys-secondary.db
 cp ns2/bits.db.in ns2/retransfer.db
-cp ns2/bits.db.in ns2/retransfer3.db
 
 cp ns3/primary.db.in ns3/primary.db
 cp ns3/primary.db.in ns3/dynamic.db
@@ -44,6 +41,7 @@ cp ns4/noixfr.db.in ns4/noixfr.db
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
+cp ns3/delayedkeys.conf.1 ns3/delayedkeys.conf
 copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.pre ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf

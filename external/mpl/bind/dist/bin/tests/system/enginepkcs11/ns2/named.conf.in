@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+controls { /* empty */ };
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion no;
+	dnssec-validation no;
+	notify no;
+};
+
+key "keyforview1" {
+        algorithm @DEFAULT_HMAC@;
+        secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
+};
+
+key "keyforview2" {
+        algorithm @DEFAULT_HMAC@;
+        secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
+};
+
+key-store "hsm" {
+	directory ".";
+	pkcs11-uri "pkcs11:token=softhsm2-enginepkcs11;pin-value=1234";
+};
+
+key-store "hsm2" {
+	directory "keys";
+	pkcs11-uri "pkcs11:token=softhsm2-enginepkcs11;pin-value=1234";
+};
+
+key-store "pin" {
+	directory ".";
+	pkcs11-uri "pkcs11:token=softhsm2-enginepkcs11;pin-source=pin";
+};
+
+key-store "disk" {
+	directory "keys";
+};
+

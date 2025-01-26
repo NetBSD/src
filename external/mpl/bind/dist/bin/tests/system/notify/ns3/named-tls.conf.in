@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+tls tls-forward-secrecy {
+    protocols { TLSv1.2; };
+    ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+    dhparam-file "../dhparam3072.pem";
+    ca-file "../CA/CA.pem";
+};
+
+tls tls-forward-secrecy-remote-hostname {
+    protocols { TLSv1.2; };
+    ca-file "../CA/CA.pem";
+    remote-hostname "srv02.crt01.example.com";
+};
+
+tls tls-forward-secrecy-bad-remote-hostname {
+    protocols { TLSv1.2; };
+    ca-file "../CA/CA.pem";
+    remote-hostname "srv02-bad.crt01.example.com";
+};
+
+tls tls-forward-secrecy-mutual-tls {
+    protocols { TLSv1.2; };
+    ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+    key-file "../CA/certs/srv03.crt01.example.com.key";
+    cert-file "../CA/certs/srv03.crt01.example.com.pem";
+    dhparam-file "../dhparam3072.pem";
+    ca-file "../CA/CA.pem";
+};
+
+tls tls-expired {
+    protocols { TLSv1.2; };
+    ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+    prefer-server-ciphers yes;
+    dhparam-file "../dhparam3072.pem";
+    ca-file "../CA/CA.pem";
+};
+
+zone tls-x1 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 tls ephemeral; };
+};
+
+zone tls-x2 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 port @EXTRAPORT1@ tls tls-forward-secrecy; };
+};
+
+zone tls-x3 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 port @EXTRAPORT1@ tls tls-forward-secrecy-remote-hostname; };
+};
+
+zone tls-x4 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 port @EXTRAPORT1@ tls tls-forward-secrecy-bad-remote-hostname; };
+};
+
+zone tls-x5 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 port @EXTRAPORT3@ tls tls-forward-secrecy-mutual-tls; };
+};
+
+zone tls-x6 {
+	type primary;
+	file "generic.db";
+	notify explicit;
+	also-notify { 10.53.0.2 port @EXTRAPORT4@ tls tls-expired; };
+};

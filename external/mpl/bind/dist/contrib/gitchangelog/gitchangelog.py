@@ -561,7 +561,8 @@ def paragraph_wrap(text, regexp="\n\n", separator="\n"):
     """
     regexp = re.compile(regexp, re.MULTILINE)
     return separator.join(
-        "\n".join(textwrap.wrap(paragraph.strip())) for paragraph in regexp.split(text)
+        "\n".join(textwrap.wrap(paragraph.strip(), break_on_hyphens=False))
+        for paragraph in regexp.split(text)
     ).strip()
 
 
@@ -1514,7 +1515,12 @@ def rest_py(data, opts={}):
         if opts["include_commit_sha"]:
             subject += " ``%s``" % commit["commit"].sha1_short
 
-        entry = indent("\n".join(textwrap.wrap(subject)), first="- ").strip() + "\n"
+        entry = (
+            indent(
+                "\n".join(textwrap.wrap(subject, break_on_hyphens=False)), first="- "
+            ).strip()
+            + "\n"
+        )
 
         if commit["body"]:
             entry += "\n" + indent(commit["body"])

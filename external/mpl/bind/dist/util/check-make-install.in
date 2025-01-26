@@ -47,7 +47,7 @@ if [ ! -f "${named_man_page_path}" ]; then
 fi
 
 if [ -n "${DESTDIR}" ]; then
-	for expected_subdir in bin etc include lib sbin share; do
+	for expected_subdir in bin include lib sbin share; do
 		echo "${install_dir}/${expected_subdir}" >> "${abs_builddir}/expected_dirs"
 	done
 	find "${install_dir}" -maxdepth 1 -mindepth 1 -type d | sort > "${abs_builddir}/existing_dirs"

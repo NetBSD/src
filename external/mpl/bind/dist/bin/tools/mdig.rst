@@ -161,11 +161,6 @@ The global query options are:
    they are replaced by the string "[omitted]"; in the DNSKEY case, the
    key ID is displayed as the replacement, e.g., ``[ key id = value ]``.
 
-.. option:: +dscp=value
-
-   This option formerly set the DSCP value used when sending a query.
-   It is now obsolete, and has no effect.
-
 .. option:: +multiline, +nomultiline
 
    This option toggles printing of records, like the SOA records, in a verbose multi-line format

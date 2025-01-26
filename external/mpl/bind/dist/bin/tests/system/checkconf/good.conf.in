@@ -1,0 +1,284 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * This is just a random selection of configuration options.
+ */
+
+/* cut here */
+dnssec-policy "test" {
+	cdnskey yes;
+	cds-digest-types {
+		"sha-256";
+	};
+	dnskey-ttl 3600;
+	keys {
+		ksk key-directory lifetime P1Y algorithm 13 tag-range 0 32767;
+		zsk lifetime P30D algorithm 13;
+		csk key-store "hsm" lifetime P30D algorithm 8 2048;
+	};
+	max-zone-ttl 86400;
+	nsec3param ;
+	parent-ds-ttl 7200;
+	parent-propagation-delay PT1H;
+	publish-safety PT3600S;
+	purge-keys P90D;
+	retire-safety PT3600S;
+	signatures-jitter PT12H;
+	signatures-refresh P3D;
+	signatures-validity P2W;
+	signatures-validity-dnskey P14D;
+	zone-propagation-delay PT5M;
+};
+key-store "hsm" {
+	directory ".";
+	pkcs11-uri "pkcs11:token=bind9;pin-value=1234";
+};
+options {
+	avoid-v4-udp-ports {
+		100;
+	};
+	avoid-v6-udp-ports {
+		100;
+	};
+	blackhole {
+		10.0.0.0/8;
+	};
+	directory ".";
+	dump-file "named_dumpdb";
+	heartbeat-interval 30;
+	hostname none;
+	interface-interval 30;
+	listen-on port 90 {
+		"any";
+	};
+	listen-on port 100 {
+		127.0.0.1/32;
+	};
+	listen-on-v6 port 53 {
+		"none";
+	};
+	match-mapped-addresses yes;
+	memstatistics-file "named.memstats";
+	pid-file none;
+	port 5300;
+	querylog yes;
+	recursing-file "named.recursing";
+	recursive-clients 3000;
+	serial-query-rate 100;
+	server-id none;
+	update-quota 200;
+	check-names primary warn;
+	check-names secondary ignore;
+	max-cache-size 20000000000000;
+	max-query-restarts 10;
+	nta-lifetime 604800;
+	nta-recheck 604800;
+	validate-except {
+		"corp";
+	};
+	dnssec-policy "test";
+	max-ixfr-ratio 90%;
+	transfer-source 0.0.0.0;
+	zone-statistics none;
+};
+parental-agents "parents" port 5353 source 10.10.10.10 port 5354 source-v6 2001:db8::10 port 5355 {
+	10.10.10.11;
+	2001:db8::11;
+};
+view "first" {
+	match-clients {
+		"none";
+	};
+	zone "example1" {
+		type primary;
+		file "xxx";
+		update-policy local;
+		max-ixfr-ratio 20%;
+		notify-source 10.10.10.10 port 53;
+	};
+	zone "clone" {
+		type primary;
+		file "yyy";
+		max-ixfr-ratio unlimited;
+	};
+	dnssec-validation auto;
+	max-query-restarts 15;
+	zone-statistics terse;
+};
+view "second" {
+	match-clients {
+		"any";
+	};
+	zone "example1" {
+		type primary;
+		file "zzz";
+		update-policy local;
+		zone-statistics yes;
+	};
+	zone "example2" {
+		type static-stub;
+		forward only;
+		forwarders tls "ephemeral" {
+			10.53.0.4 port 8053 tls "ephemeral";
+		};
+		zone-statistics no;
+	};
+	zone "example3" {
+		type static-stub;
+		server-addresses {
+			1.2.3.4;
+		};
+	};
+	zone "clone" {
+		in-view "first";
+	};
+	zone "." {
+		type redirect;
+		primaries {
+			1.2.3.4;
+		};
+	};
+	dnssec-validation auto;
+	zone-statistics full;
+};
+view "third" {
+	match-clients {
+		"none";
+	};
+	zone "clone" {
+		in-view "first";
+		forward only;
+		forwarders {
+			10.0.0.100;
+		};
+	};
+	zone "dnssec" {
+		type primary;
+		file "file";
+		allow-update {
+			"any";
+		};
+		dnssec-policy "default";
+	};
+	zone "p" {
+		type primary;
+		file "pfile";
+	};
+	zone "s" {
+		type secondary;
+		file "sfile";
+		primaries {
+			1.2.3.4;
+		};
+		notify primary-only;
+	};
+};
+view "fourth" {
+	zone "dnssec-test" {
+		type primary;
+		checkds explicit;
+		file "dnssec-test.db";
+		parental-agents {
+			1.2.3.4;
+			1.2.3.5;
+		};
+		dnssec-policy "test";
+		parental-source 10.10.10.10 port 53;
+	};
+	zone "dnssec-default" {
+		type primary;
+		file "dnssec-default.db";
+		parental-agents {
+			"parents";
+		};
+		dnssec-policy "default";
+	};
+	zone "dnssec-inherit" {
+		type primary;
+		checkds no;
+		file "dnssec-inherit.db";
+	};
+	zone "dnssec-none" {
+		type primary;
+		file "dnssec-none.db";
+		dnssec-policy "none";
+	};
+	zone "dnssec-view1" {
+		type primary;
+		checkds yes;
+		file "dnssec-view41.db";
+		dnssec-policy "test";
+	};
+	zone "dnssec-view2" {
+		type primary;
+		file "dnssec-view42.db";
+	};
+	zone "dnssec-view3" {
+		type primary;
+		file "dnssec-view43.db";
+		dnssec-policy "none";
+		key-directory "keys";
+	};
+	zone "dnssec-view4" {
+		type primary;
+		file "dnssec-view44.db";
+		dnssec-policy "none";
+	};
+	dnssec-policy "default";
+	key-directory ".";
+};
+view "fifth" {
+	zone "dnssec-view1" {
+		type primary;
+		file "dnssec-view51.db";
+		dnssec-policy "test";
+	};
+	zone "dnssec-view2" {
+		type primary;
+		file "dnssec-view52.db";
+		dnssec-policy "test";
+		key-directory "keys";
+	};
+	zone "dnssec-view3" {
+		type primary;
+		file "dnssec-view53.db";
+		dnssec-policy "default";
+		key-directory "keys";
+	};
+	zone "dnssec-view4" {
+		type primary;
+		file "dnssec-view54.db";
+		dnssec-policy "none";
+	};
+	key-directory ".";
+};
+view "chaos" chaos {
+	zone "hostname.bind" chaos {
+		type primary;
+		database "_builtin hostname";
+	};
+};
+dyndb "name" "library.so" {
+	this;
+	\};
+	is a {
+		"test" { \{ of; the; };
+	} bracketed;
+	"text \"";
+	system;
+};
+key "mykey" {
+	algorithm "@DEFAULT_HMAC@";
+	secret "qwertyuiopasdfgh";
+};

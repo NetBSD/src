@@ -21,7 +21,7 @@ dnssec-verify - DNSSEC zone verification tool
 Synopsis
 ~~~~~~~~
 
-:program:`dnssec-verify` [**-c** class] [**-E** engine] [**-I** input-format] [**-o** origin] [**-q**] [**-v** level] [**-V**] [**-x**] [**-z**] {zonefile}
+:program:`dnssec-verify` [**-c** class] [**-E** engine] [**-I** input-format] [**-J** filename] [**-o** origin] [**-q**] [**-v** level] [**-V**] [**-x**] [**-z**] {zonefile}
 
 Description
 ~~~~~~~~~~~
@@ -52,6 +52,11 @@ Options
    for dynamic signed zones, so that the dumped zone file in a non-text
    format containing updates can be verified independently.
    This option is not useful for non-dynamic zones.
+
+.. option:: -J filename
+
+   This option tells :program:`dnssec-verify` to read the journal from the given file
+   when loading the zone file.
 
 .. option:: -o origin
 

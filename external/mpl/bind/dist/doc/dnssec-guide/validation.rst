@@ -76,13 +76,13 @@ not loading; or the web browser returning an error message indicating
 that the page cannot be displayed. For example, if root name
 servers were misconfigured with the wrong information about ``.org``, it
 could cause all validation for ``.org`` domains to fail. To end
-users, it would appear that all ``.org`` web
-sites were out of service [#]_. Should you encounter DNSSEC-related problems, don't be
-tempted to disable validation; there is almost certainly a solution that
-leaves validation enabled. A basic troubleshooting guide can be found in
-:ref:`dnssec_troubleshooting`.
+users, it would appear that all ``.org`` web sites were out of service.
+[#wrong_root_addr]_ Should you encounter DNSSEC-related problems, don't
+be tempted to disable validation; there is almost certainly a solution
+that leaves validation enabled. A basic troubleshooting guide can be
+found in :ref:`dnssec_troubleshooting`.
 
-.. [#]
+.. [#wrong_root_addr]
    Of course, something like this could happen for reasons other than
    DNSSEC: for example, the root publishing the wrong addresses for the
    ``.org`` nameservers.
@@ -128,8 +128,7 @@ While :iscman:`nslookup` is popular, partly because it comes pre-installed on
 most systems, it is not DNSSEC-aware. :iscman:`dig`, on the other hand, fully
 supports the DNSSEC standard and comes as a part of BIND. If you do not
 have :iscman:`dig` already installed on your system, install it by downloading
-it from ISC's `website <https://www.isc.org/download>`__. ISC provides pre-compiled
-Windows versions on its website.
+it from ISC's `website <https://www.isc.org/download>`__.
 
 :iscman:`dig` is a flexible tool for interrogating DNS name servers. It
 performs DNS lookups and displays the answers that are returned from the
@@ -401,10 +400,14 @@ Let's discuss the difference between *yes* and *auto*. If set to
 using the :any:`trust-anchors` statement (with either the ``static-key`` or
 ``static-ds`` modifier) in the configuration file; if set to
 *auto* (the default, and as shown in the example), then no further
-action should be required as BIND includes a copy [#]_ of the root key.
+action should be required as BIND includes a copy [#root_zone_key_update]_ of the root key.
 When set to *auto*, BIND automatically keeps the keys (also known as
 trust anchors, discussed in :ref:`trust_anchors_description`)
 up-to-date without intervention from the DNS administrator.
+
+When using *yes*, please note that if :any:`trust-anchors` does not include a
+valid root key, then validation does not take place for names which are not
+covered by any of the configured trust anchors.
 
 We recommend using the default *auto* unless there is a good reason to
 require a manual trust anchor. To learn more about trust anchors,
@@ -560,12 +563,6 @@ validated and the authenticated data (``ad``) bit is set, and the response
 is sent to the client; if it does not verify, a SERVFAIL is returned to
 the client.
 
-.. [#]
-   BIND technically includes two copies of the root key: one is in
-   ``bind.keys.h`` and is built into the executable, and one is in
-   ``bind.keys`` as a :any:`trust-anchors` statement. The two copies of the
-   key are identical.
-
 .. _trust_anchors_description:
 
 Trust Anchors
@@ -648,9 +645,8 @@ anchor) configured. How did it get here, and how do we maintain it?
 If you followed the recommendation in
 :ref:`easy_start_guide_for_recursive_servers`, by setting
 :any:`dnssec-validation` to *auto*, there is nothing left to do.
-BIND already includes a copy of the root key (in the file
-``bind.keys``), and automatically updates it when the root key
-changes. [#]_ It looks something like this:
+BIND already includes a copy of the root key, and automatically updates it
+when the root key changes. [#root_zone_key_update]_ It looks something like this:
 
 ::
 
@@ -675,10 +671,8 @@ to *yes* rather than *auto*:
        dnssec-validation yes;
    };
 
-Then, download the root key manually from a trustworthy source, such as
-`<https://www.isc.org/bind-keys>`__. Finally, take the root key you
-manually downloaded and put it into a :any:`trust-anchors` statement as
-shown below:
+Then, download the root key manually from a trustworthy source,
+and put it into a :any:`trust-anchors` statement as shown below:
 
 ::
 
@@ -693,16 +687,15 @@ shown below:
                    R1AkUTV74bU=";
    };
 
-While this :any:`trust-anchors` statement and the one in the ``bind.keys``
-file appear similar, the definition of the key in ``bind.keys`` has the
-``initial-key`` modifier, whereas in the statement in the configuration
-file, that is replaced by ``static-key``. There is an important
-difference between the two: a key defined with ``static-key`` is always
-trusted until it is deleted from the configuration file. With the
-``initial-key`` modified, keys are only trusted once: for as long as it
-takes to load the managed key database and start the key maintenance
-process. Thereafter, BIND uses the managed keys database
-(``managed-keys.bind.jnl``) as the source of key information.
+While this :any:`trust-anchors` statement looks similar to the built-in
+version above, the built-in key has the ``initial-key`` modifier, whereas
+in the statement in the configuration file, that is replaced by
+``static-key``. There is an important difference between the two: a key
+defined with ``static-key`` is always trusted until it is deleted from the
+configuration file. With the ``initial-key`` modifier, keys are only
+trusted once: for as long as it takes to load the managed key database and
+start the key maintenance process. Thereafter, BIND uses the managed keys
+database (``managed-keys.bind.jnl``) as the source of key information.
 
 .. warning::
 
@@ -722,7 +715,7 @@ the top-level domains have been signed, including all the largest ones.
 Unless you have a particular need to manage keys yourself, it is best to
 use the BIND defaults and let the software manage the root key.
 
-.. [#]
+.. [#root_zone_key_update]
    The root zone was signed in July 2010 and, as at the time of this writing
    (mid-2020), the key has been changed once, in October 2018. The intention going
    forward is to roll the key once every five years.

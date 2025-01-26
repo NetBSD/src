@@ -9,6 +9,29 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "ns1/K*",
+        "ns1/dsset-*",
+        "ns1/*.signed",
+        "ns1/allwild.db",
+        "ns1/example.db",
+        "ns1/nestedwild.db",
+        "ns1/nsec.db",
+        "ns1/nsec3.db",
+        "ns1/private.nsec.conf",
+        "ns1/private.nsec.db",
+        "ns1/private.nsec3.conf",
+        "ns1/private.nsec3.db",
+        "ns1/root.db",
+        "ns1/signer.err",
+        "ns1/trusted.conf",
+    ]
+)
+
 
 def test_wildcard(run_tests_sh):
     run_tests_sh()

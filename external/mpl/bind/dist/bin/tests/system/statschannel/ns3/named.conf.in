@@ -13,9 +13,13 @@
 
 options {
 	query-source address 10.53.0.3;
+	query-source-v6 fd92:7065:b8e:ffff::3;
 	notify-source 10.53.0.3;
+	notify-source-v6 fd92:7065:b8e:ffff::3;
 	transfer-source 10.53.0.3;
+	transfer-source-v6 fd92:7065:b8e:ffff::3;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
@@ -24,6 +28,7 @@ options {
 	notify no;
 	minimal-responses no;
 	version none;  // make statistics independent of the version number
+	allow-new-zones yes;
 };
 
 statistics-channels { inet 10.53.0.3 port @EXTRAPORT1@ allow { localhost; }; };
@@ -37,8 +42,24 @@ controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+server fd92:7065:b8e:ffff::1 {
+	tcp-only yes;
+};
+
 zone "example" {
 	type secondary;
 	file "example.db";
 	primaries { 10.53.0.1; };
+};
+
+zone "example-tcp" {
+	type secondary;
+	file "example-tcp.db";
+	primaries { fd92:7065:b8e:ffff::1; };
+};
+
+zone "example-tls" {
+	type secondary;
+	file "example-tls.db";
+	primaries { fd92:7065:b8e:ffff::1 tls ephemeral; };
 };

@@ -9,6 +9,21 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "*.example.db",
+        "*.example.db.signed",
+        "K*",
+        "dsset-*",
+        "keyfromlabel.out.*",
+        "pin",
+        "pkcs11-tool.out.*",
+        "signer.out.*",
+    ]
+)
+
 
 def test_keyfromlabel(run_tests_sh):
     run_tests_sh()

@@ -2,11 +2,11 @@ include $(top_srcdir)/Makefile.top
 
 AM_CPPFLAGS +=			\
 	$(LIBISC_CFLAGS)	\
-	$(LIBIRS_CFLAGS)
+	$(LIBDNS_CFLAGS)
 
 LDADD +=			\
 	$(LIBISC_LIBS)		\
-	$(LIBIRS_LIBS)
+	$(LIBDNS_LIBS)
 
 check_PROGRAMS =		\
 	resconf_test

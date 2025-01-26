@@ -127,8 +127,12 @@ ADDR a.bit.longer.ns.name.good.
 ADDR ns2.good.
 ADDR ns3.good.
 ADDR ns3.good.
+NS bit.longer.ns.name.good.
 NS boing.good.
 NS good.
+NS longer.ns.name.good.
+NS name.good.
+NS ns.name.good.
 NS zoop.boing.good.
 __EOF
 cat <<__EOF | diff ans3/query.log - >/dev/null || ret=1
@@ -161,7 +165,11 @@ ADDR a.bit.longer.ns.name.good.
 ADDR ns2.good.
 ADDR ns3.good.
 ADDR ns3.good.
+NS bit.longer.ns.name.good.
 NS boing.good.
+NS longer.ns.name.good.
+NS name.good.
+NS ns.name.good.
 NS zoop.boing.good.
 __EOF
 cat <<__EOF | diff ans3/query.log - >/dev/null || ret=1
@@ -212,6 +220,7 @@ ADDR ns2.bad.
 ADDR ns3.bad.
 ADDR ns3.bad.
 NS boing.bad.
+NS name.bad.
 __EOF
 cat <<__EOF | diff ans3/query.log - >/dev/null || ret=1
 ADDR icky.icky.icky.ptang.zoop.boing.bad.
@@ -260,6 +269,8 @@ ADDR ns2.ugly.
 ADDR ns3.ugly.
 ADDR ns3.ugly.
 NS boing.ugly.
+NS name.ugly.
+NS name.ugly.
 __EOF
 echo "ADDR icky.icky.icky.ptang.zoop.boing.ugly." | diff ans3/query.log - >/dev/null || ret=1
 echo "ADDR icky.icky.icky.ptang.zoop.boing.ugly." | diff ans4/query.log - >/dev/null || ret=1
@@ -291,7 +302,11 @@ ADDR a.bit.longer.ns.name.slow.
 ADDR ns2.slow.
 ADDR ns3.slow.
 ADDR ns3.slow.
+NS bit.longer.ns.name.slow.
 NS boing.slow.
+NS longer.ns.name.slow.
+NS name.slow.
+NS ns.name.slow.
 NS slow.
 NS zoop.boing.slow.
 __EOF
@@ -347,8 +362,12 @@ ADDR a.bit.longer.ns.name.good.
 ADDR ns2.good.
 ADDR ns3.good.
 ADDR ns3.good.
+NS bit.longer.ns.name.good.
 NS boing.good.
 NS good.
+NS longer.ns.name.good.
+NS name.good.
+NS ns.name.good.
 NS zoop.boing.good.
 __EOF
 cat <<__EOF | diff ans3/query.log - >/dev/null || ret=1

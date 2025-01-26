@@ -233,6 +233,12 @@ echo_i "checking RRset that exceeds max-records-per-type ($n)"
 ret=0
 dig_with_opts @10.53.0.3 biganswer.big >dig.out.1.test$n || ret=1
 grep 'status: SERVFAIL' dig.out.1.test$n >/dev/null || ret=1
+
+msg="error adding 'biganswer.big/A' in './IN' (cache): too many records (must not exceed 100)"
+wait_for_log 10 "$msg" ns3/named.run || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 ns3_reset ns3/named5.conf.in
 dig_with_opts @10.53.0.3 biganswer.big >dig.out.2.test$n || ret=1
 grep 'status: NOERROR' dig.out.2.test$n >/dev/null || ret=1

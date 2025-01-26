@@ -72,18 +72,18 @@ zone "under-limit-kasp" {
 	file "under-limit-kasp.bk";
 };
 
-zone "on-limit" {
+zone "below-limit" {
 	type secondary;
 	primaries { 10.53.0.1; };
 	masterfile-format raw;
-	file "on-limit.bk";
+	file "below-limit.bk";
 };
 
-zone "on-limit-kasp" {
+zone "below-limit-kasp" {
 	type secondary;
 	primaries { 10.53.0.1; };
 	masterfile-format raw;
-	file "on-limit-kasp.bk";
+	file "below-limit-kasp.bk";
 };
 
 zone "255types" {

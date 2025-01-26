@@ -5,9 +5,7 @@ zone <string> [ <class> ] {
 	allow-query-on { <address_match_element>; ... };
 	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
 	allow-update-forwarding { <address_match_element>; ... };
-	also-notify [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
-	alt-transfer-source ( <ipv4_address> | * ) ; // deprecated
-	alt-transfer-source-v6 ( <ipv6_address> | * ) ; // deprecated
+	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	check-names ( fail | warn | ignore );
 	database <string>;
 	file <quoted_string>;
@@ -31,15 +29,14 @@ zone <string> [ <class> ] {
 	multi-master <boolean>;
 	notify ( explicit | master-only | primary-only | <boolean> );
 	notify-delay <integer>;
-	notify-source ( <ipv4_address> | * ) ;
-	notify-source-v6 ( <ipv6_address> | * ) ;
-	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	notify-source ( <ipv4_address> | * );
+	notify-source-v6 ( <ipv6_address> | * );
+	primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	request-expire <boolean>;
 	request-ixfr <boolean>;
-	transfer-source ( <ipv4_address> | * ) ;
-	transfer-source-v6 ( <ipv6_address> | * ) ;
+	transfer-source ( <ipv4_address> | * );
+	transfer-source-v6 ( <ipv6_address> | * );
 	try-tcp-refresh <boolean>;
-	use-alt-transfer-source <boolean>; // deprecated
 	zero-no-soa-ttl <boolean>;
 	zone-statistics ( full | terse | none | <boolean> );
 };

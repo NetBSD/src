@@ -21,7 +21,7 @@ dnssec-keygen: DNSSEC key generation tool
 Synopsis
 ~~~~~~~~
 
-:program:`dnssec-keygen` [**-3**] [**-A** date/offset] [**-a** algorithm] [**-b** keysize] [**-C**] [**-c** class] [**-D** date/offset] [**-d** bits] [**-D** sync date/offset] [**-E** engine] [**-f** flag] [**-G**] [**-g** generator] [**-h**] [**-I** date/offset] [**-i** interval] [**-K** directory] [**-k** policy] [**-L** ttl] [**-l** file] [**-n** nametype] [**-P** date/offset] [**-P** sync date/offset] [**-p** protocol] [**-q**] [**-R** date/offset] [**-S** key] [**-s** strength] [**-T** rrtype] [**-t** type] [**-V**] [**-v** level] {name}
+:program:`dnssec-keygen` [**-3**] [**-A** date/offset] [**-a** algorithm] [**-b** keysize] [**-C**] [**-c** class] [**-D** date/offset] [**-d** bits] [**-D** sync date/offset] [**-E** engine] [**-f** flag] [**-F**] [**-G**] [**-h**] [**-I** date/offset] [**-i** interval] [**-K** directory] [**-k** policy] [**-L** ttl] [**-l** file] [**-n** nametype] [**-M** tag_min:tag_max] [**-P** date/offset] [**-P** sync date/offset] [**-p** protocol] [**-q**] [**-R** date/offset] [**-S** key] [**-s** strength] [**-T** rrtype] [**-t** type] [**-V**] [**-v** level] {name}
 
 Description
 ~~~~~~~~~~~
@@ -47,9 +47,7 @@ Options
 
    This option selects the cryptographic algorithm. For DNSSEC keys, the value of
    ``algorithm`` must be one of RSASHA1, NSEC3RSASHA1, RSASHA256,
-   RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448. For
-   TKEY, the value must be DH (Diffie-Hellman); specifying this value
-   automatically sets the :option:`-T KEY <-T>` option as well.
+   RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448.
 
    These values are case-insensitive. In some cases, abbreviations are
    supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
@@ -107,18 +105,24 @@ Options
 .. option:: -f flag
 
    This option sets the specified flag in the flag field of the KEY/DNSKEY record.
-   The only recognized flags are KSK (Key-Signing Key) and REVOKE.
+   The only recognized flags are ZSK (Zone-Signing Key), KSK (Key-Signing Key)
+   and REVOKE.
+
+   Note that ZSK is not a physical flag in the DNSKEY record, it is merely used
+   to explicitly tell that you want to create a ZSK. Setting :option:`-f` in
+   conjunction with :option:`-k` will result in generating keys that only
+   match the given role set with this option.
+
+.. option:: -F
+
+   This options turns on FIPS (US Federal Information Processing Standards)
+   mode if the underlying crytographic library supports running in FIPS
+   mode.
 
 .. option:: -G
 
    This option generates a key, but does not publish it or sign with it. This option is
    incompatible with :option:`-P` and :option:`-A`.
-
-.. option:: -g generator
-
-   This option indicates the generator to use if generating a Diffie-Hellman key. Allowed
-   values are 2 and 5. If no generator is specified, a known prime from
-   :rfc:`2539` is used if possible; otherwise the default is 2.
 
 .. option:: -h
 
@@ -153,6 +157,19 @@ Options
 
    This option provides a configuration file that contains a ``dnssec-policy`` statement
    (matching the policy set with :option:`-k`).
+
+.. option:: -M tag_min:tag_max
+
+   This option sets the range of acceptable key tag values that ``dnssec-keygen``
+   will produce. If the key tag of the new key or the key tag of
+   the revoked version of the new key is outside this range,
+   the new key will be rejected and another new key will be generated.
+   This is designed to be used when generating keys in a multi-signer
+   scenario, where each operator is given a range of key tags to
+   prevent collisions among different operators.  The valid values
+   for ``tag_min`` and ``tag_max`` are [0..65535].  The default allows all
+   key tag values to be produced.  This option is ignored when ``-k policy``
+   is specified.
 
 .. option:: -n nametype
 

@@ -13,8 +13,6 @@
 
 . ../conf.sh
 
-$SHELL clean.sh
-
 copy_setports ns2/named1.conf.in ns2/named.conf
 
 copy_setports ns2/named-alt1.conf.in ns2/named-alt1.conf
@@ -22,9 +20,6 @@ copy_setports ns2/named-alt2.conf.in ns2/named-alt2.conf
 copy_setports ns2/named-alt3.conf.in ns2/named-alt3.conf
 copy_setports ns2/named-alt4.conf.in ns2/named-alt4.conf
 copy_setports ns2/named-alt5.conf.in ns2/named-alt5.conf
-copy_setports ns2/named-alt6.conf.in ns2/named-alt6.conf
-copy_setports ns2/named-alt7.conf.in ns2/named-alt7.conf
-copy_setports ns2/named-alt8.conf.in ns2/named-alt8.conf
 
 mkdir ns2/nope
 chmod 555 ns2/nope

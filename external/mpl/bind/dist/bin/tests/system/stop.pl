@@ -98,7 +98,7 @@ if ($use_rndc) {
 		stop_rndc($name, $rndc_port);
 	}
 
-	@ns = wait_for_servers(30, @ns);
+	@ns = wait_for_servers(120, @ns);
 }
 
 # Pass 2: SIGTERM
@@ -106,13 +106,13 @@ foreach my $name (@ns) {
 	stop_signal($name, "TERM");
 }
 
-@ns = wait_for_servers(60, @ns);
+@ns = wait_for_servers(300, @ns);
 
 foreach my $name(@ans) {
 	stop_signal($name, "TERM", 1);
 }
 
-@ans = wait_for_servers(1200, @ans);
+@ans = wait_for_servers(300, @ans);
 
 # Pass 3: SIGABRT
 foreach my $name (@ns) {
@@ -129,16 +129,6 @@ foreach my $name (@ans) {
 exit($errors);
 
 # Subroutines
-
-# Return the full path to a given server's lock file.
-sub server_lock_file {
-	my ( $server ) = @_;
-
-	return $testdir . "/" . $server . "/named.lock" if ($server =~ /^ns/);
-	return if ($server =~ /^ans/);
-
-	die "Unknown server type $server\n";
-}
 
 # Return the full path to a given server's PID file.
 sub server_pid_file {
@@ -257,15 +247,6 @@ sub pid_file_exists {
 	return $server;
 }
 
-sub lock_file_exists {
-	my ( $server ) = @_;
-	my $lock_file = server_lock_file($server);
-
-	return unless defined($lock_file) && -f $lock_file;
-
-	return $server;
-}
-
 sub wait_for_servers {
 	my ( $timeout, @servers ) = @_;
 
@@ -273,7 +254,7 @@ sub wait_for_servers {
 		sleep 1 if (@servers > 0);
 		@servers =
 			grep { defined($_) }
-			map  { pid_file_exists($_) || lock_file_exists($_) } @servers;
+			map  { pid_file_exists($_) } @servers;
 		$timeout--;
 	}
 

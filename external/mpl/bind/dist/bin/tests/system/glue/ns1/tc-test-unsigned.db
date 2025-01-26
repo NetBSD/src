@@ -1,0 +1,112 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; CAUTION: Contents of this zone were carefully crafted so that the responses
+; to the queries used in the "glue" system test have a very specific size.
+; Editing this zone is not recommended as it may break the relevant checks.
+
+$TTL 300
+@			IN SOA	ns hostmaster (
+				1
+				3600
+				1800
+				1814400
+				3600
+				)
+			NS	a
+a			A	10.53.0.1
+
+subdomain-a		NS	abcdefghijklmnopqrstuvwxyz.subdomain-a
+			NS	bcdefghijklmnopqrstuvwxyz.subdomain-a
+			NS	cdefghijklmnopqrstuvwxyz.subdomain-a
+			NS	defghijklmnopqrstuvwxyz.subdomain-a
+			NS	efghijklmnopqrstuvwxyz.subdomain-a
+			NS	fghijklmnopqrstuvwxyz.subdomain-a
+			NS	ghijklmnopqrstuvwxyz.subdomain-a
+			NS	hijklmnopqrstuvwxyz.subdomain-a
+			NS	ijklmnopqrstuvwxyz.subdomain-a
+			NS	jklmnopqrstuvwxyz.subdomain-a
+			NS	klmnopqrstuvwxyz.subdomain-a
+			NS	lmnopqrstuvwxyz.subdomain-a
+			NS	mnopqrstuvwxyz.subdomain-a
+
+abcdefghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+bcdefghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+cdefghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+defghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+efghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+fghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+ghijklmnopqrstuvwxyz.subdomain-a		A	10.53.0.1
+hijklmnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+ijklmnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+jklmnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+klmnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+lmnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+mnopqrstuvwxyz.subdomain-a			A	10.53.0.1
+
+subdomain-aaaa		NS	abcdefghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	bcdefghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	cdefghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	defghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	efghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	fghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	ghijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	hijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	ijklmnopqrstuvwxyz.subdomain-aaaa
+			NS	jklmnopqrstuvwxyz.subdomain-aaaa
+			NS	klmnopqrstuvwxyz.subdomain-aaaa
+			NS	lmnopqrstuvwxyz.subdomain-aaaa
+			NS	mnopqrstuvwxyz.subdomain-aaaa
+
+abcdefghijklmnopqrstuvwxyz.subdomain-aaaa	AAAA	fd92:7065:b8e:ffff::1
+bcdefghijklmnopqrstuvwxyz.subdomain-aaaa	AAAA	fd92:7065:b8e:ffff::1
+cdefghijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+defghijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+efghijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+fghijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+ghijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+hijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+ijklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+jklmnopqrstuvwxyz.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+klmnopqrstuvwxyz.subdomain-aaaa			AAAA	fd92:7065:b8e:ffff::1
+lmnopqrstuvwxyz.subdomain-aaaa			AAAA	fd92:7065:b8e:ffff::1
+mnopqrstuvwxyz.subdomain-aaaa			AAAA	fd92:7065:b8e:ffff::1
+
+subdomain-both		NS	abcdefghijklmnopqrstuvwxyz.subdomain-both
+			NS	bcdefghijklmnopqrstuvwxyz.subdomain-both
+			NS	cdefghijklmnopqrstuvwxyz.subdomain-both
+			NS	defghijklmnopqrstuvwxyz.subdomain-both
+			NS	efghijklmnopqrstuvwxyz.subdomain-both
+			NS	fghijklmnopqrstuvwxyz.subdomain-both
+			NS	ghijklmnopqrstuvwxyz.subdomain-both
+			NS	hijklmnopqrstuvwxyz.subdomain-both
+			NS	ijklmnopqrstuvwxyz.subdomain-both
+			NS	jklmnopqrstuvwxyz.subdomain-both
+			NS	klmnopqrstuvwxyz.subdomain-both
+			NS	lmnopqrstuvwxyz.subdomain-both
+			NS	mnopqrstuvwxyz.subdomain-both
+
+abcdefghijklmnopqrstuvwxyz.subdomain-both	A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+bcdefghijklmnopqrstuvwxyz.subdomain-both	A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+cdefghijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+defghijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+efghijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+fghijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+ghijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1
+hijklmnopqrstuvwxyz.subdomain-both		A	10.53.0.1
+						AAAA	fd92:7065:b8e:ffff::1

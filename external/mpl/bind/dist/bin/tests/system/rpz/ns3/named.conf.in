@@ -25,6 +25,7 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	notify yes;
 	minimal-responses no;
 	recursion yes;
@@ -48,7 +49,7 @@ options {
 	    zone "bl-drop"	policy drop;
 	    zone "bl-tcp-only"	policy tcp-only;
 	    zone "bl.tld2";
-	    zone "manual-update-rpz";
+	    zone "manual-update-rpz"	ede forged;
 	    zone "mixed-case-rpz";
 	}
 	add-soa yes
@@ -63,6 +64,8 @@ options {
 	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
 	notify-delay 0;
 };
+
+trust-anchors { };
 
 logging { category rpz { default_debug; }; };
 

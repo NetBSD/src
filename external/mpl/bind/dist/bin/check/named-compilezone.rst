@@ -23,17 +23,23 @@ named-compilezone - zone file converting tool
 Synopsis
 ~~~~~~~~
 
-:program:`named-compilezone` [**-d**] [**-h**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-M** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-r** mode] [**-s** style] [**-S** mode] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {**-o** filename} {zonename} {filename}
+:program:`named-compilezone` [**-d**] [**-h**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-C** mode] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-M** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-r** mode] [**-s** style] [**-S** mode] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {**-o** filename} {zonename} {filename}
 
 Description
 ~~~~~~~~~~~
 
 :program:`named-compilezone` checks the syntax and integrity of a zone file,
 and dumps the zone contents to a specified file in a specified format.
-It applies strict check levels by default, since the
-dump output is used as an actual zone file loaded by :iscman:`named`.
-When manually specified otherwise, the check levels must at least be as
-strict as those specified in the :iscman:`named` configuration file.
+
+Unlike :program:`named-checkzone`, zone contents are not strictly checked
+by default. If the output is to be used as an actual zone file to be loaded
+by :iscman:`named`, then the check levels should be manually configured to
+be at least as strict as those specified in the :iscman:`named` configuration
+file.
+
+Running :program:`named-checkzone` on the input prior to compiling will
+ensure that the zone compiles with the default requirements of
+:iscman:`named`.
 
 Options
 ~~~~~~~
@@ -70,11 +76,20 @@ Options
 
    This option specifies the class of the zone. If not specified, ``IN`` is assumed.
 
+.. option:: -C mode
+
+   This option controls check mode on zone files when loading.
+   Possible modes are ``check-svcb:fail`` and ``check-svcb:ignore``.
+
+   ``check-svcb:fail`` turns on additional checks on ``_dns`` SVCB
+   records and ``check-svcb:ignore`` disables these checks.  The
+   default is ``check-svcb:ignore``.
+
 .. option:: -i mode
 
    This option performs post-load zone integrity checks. Possible modes are
-   ``full`` (the default), ``full-sibling``, ``local``,
-   ``local-sibling``, and ``none``.
+   ``full``, ``full-sibling``, ``local``,
+   ``local-sibling``, and ``none`` (the default).
 
    Mode ``full`` checks that MX records refer to A or AAAA records
    (both in-zone and out-of-zone hostnames). Mode ``local`` only
@@ -118,7 +133,7 @@ Options
 .. option:: -k mode
 
    This option performs ``check-names`` checks with the specified failure mode.
-   Possible modes are ``fail`` (the default), ``warn``, and ``ignore``.
+   Possible modes are ``fail``, ``warn``, and ``ignore`` (the default).
 
 .. option:: -l ttl
 
@@ -135,19 +150,19 @@ Options
 .. option:: -m mode
 
    This option specifies whether MX records should be checked to see if they are
-   addresses. Possible modes are ``fail``, ``warn`` (the default), and
-   ``ignore``.
+   addresses. Possible modes are ``fail``, ``warn``, and
+   ``ignore`` (the default).
 
 .. option:: -M mode
 
    This option checks whether a MX record refers to a CNAME. Possible modes are
-   ``fail``, ``warn`` (the default), and ``ignore``.
+   ``fail``, ``warn``, and ``ignore`` (the default).
 
 .. option:: -n mode
 
    This option specifies whether NS records should be checked to see if they are
-   addresses. Possible modes are ``fail`` (the default), ``warn``,  and
-   ``ignore``.
+   addresses. Possible modes are ``fail``, ``warn``,  and
+   ``ignore`` (the default).
 
 .. option:: -o filename
 
@@ -158,7 +173,7 @@ Options
 
    This option checks for records that are treated as different by DNSSEC but are
    semantically equal in plain DNS. Possible modes are ``fail``,
-   ``warn`` (the default), and ``ignore``.
+   ``warn``, and ``ignore`` (the default).
 
 .. option:: -s style
 
@@ -171,7 +186,7 @@ Options
 .. option:: -S mode
 
    This option checks whether an SRV record refers to a CNAME. Possible modes are
-   ``fail``, ``warn`` (the default), and ``ignore``.
+   ``fail``, ``warn``, and ``ignore`` (the default).
 
 .. option:: -t directory
 
@@ -183,7 +198,7 @@ Options
 
    This option checks whether Sender Policy Framework (SPF) records exist and issues a
    warning if an SPF-formatted TXT record is not also present. Possible
-   modes are ``warn`` (the default) and ``ignore``.
+   modes are ``warn`` and ``ignore`` (the default).
 
 .. option:: -w directory
 
@@ -201,7 +216,7 @@ Options
    This option specifies whether to check for non-terminal wildcards. Non-terminal
    wildcards are almost always the result of a failure to understand the
    wildcard matching algorithm (:rfc:`4592`). Possible modes are ``warn``
-   (the default) and ``ignore``.
+   and ``ignore`` (the default).
 
 .. option:: zonename
 

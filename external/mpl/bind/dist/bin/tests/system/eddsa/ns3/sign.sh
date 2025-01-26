@@ -25,7 +25,7 @@ echo_i "ns3/sign.sh"
 
 cp $infile $zonefile
 
-if [ -f ../ed448-supported.file ]; then
+if [ $ED448_SUPPORTED = 1 ]; then
   for i in Xexample.com.+016+09713 Xexample.com.+016+38353; do
     cp "$i.key" "$(echo $i.key | sed s/X/K/)"
     cp "$i.private" "$(echo $i.private | sed s/X/K/)"

@@ -15,6 +15,9 @@ AM_LDFLAGS =					\
 	$(STD_LDFLAGS)
 LDADD =
 
+BUILT_SOURCES =
+CLEANFILES =
+
 if HOST_MACOS
 AM_LDFLAGS +=					\
 	-Wl,-flat_namespace
@@ -34,6 +37,9 @@ LIBISC_CFLAGS +=						\
 	-I$(top_builddir)/lib/isc/include
 
 LIBISC_LIBS += $(top_builddir)/lib/isc/libisc.la
+if HAVE_DTRACE
+LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
+endif
 
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
@@ -41,18 +47,18 @@ LIBDNS_CFLAGS = \
 
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
+if HAVE_DTRACE
+LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
+endif
 
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
-
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
+if HAVE_DTRACE
+LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
+endif
 
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
@@ -65,9 +71,3 @@ LIBISCCC_CFLAGS = \
 
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
-
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la

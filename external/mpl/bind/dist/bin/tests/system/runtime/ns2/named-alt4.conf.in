@@ -12,11 +12,9 @@
  */
 
 options {
-	directory "./nope";
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
-	recursion no;
+	listen-on-v6 { fd92:7065:b8e:ffff::2; };
 	dnssec-validation no;
 };

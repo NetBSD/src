@@ -26,7 +26,7 @@ from sphinx import addnodes
 try:
     from sphinx.util.docutils import ReferenceRole
 except ImportError:
-    # pylint: disable=too-few-public-methods
+
     class ReferenceRole(roles.GenericRole):
         """
         The ReferenceRole class (used as a base class by GitLabRefRole
@@ -132,7 +132,7 @@ def setup(app):
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
 
@@ -223,7 +223,6 @@ rst_epilog = """
 .. |rndc_conf| replace:: ``/etc/rndc.conf``
 .. |rndc_key| replace:: ``/etc/rndc.key``
 .. |named_conf| replace:: ``/etc/named.conf``
-.. |bind_keys| replace:: ``/etc/bind.keys``
 .. |named_pid| replace:: ``/run/named.pid``
 .. |session_key| replace:: ``/run/session.key``
 """

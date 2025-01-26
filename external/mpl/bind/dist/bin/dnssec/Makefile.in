@@ -98,9 +98,9 @@ target_triplet = @target@
 
 bin_PROGRAMS = dnssec-cds$(EXEEXT) dnssec-dsfromkey$(EXEEXT) \
 	dnssec-importkey$(EXEEXT) dnssec-keyfromlabel$(EXEEXT) \
-	dnssec-keygen$(EXEEXT) dnssec-revoke$(EXEEXT) \
-	dnssec-settime$(EXEEXT) dnssec-signzone$(EXEEXT) \
-	dnssec-verify$(EXEEXT)
+	dnssec-keygen$(EXEEXT) dnssec-ksr$(EXEEXT) \
+	dnssec-revoke$(EXEEXT) dnssec-settime$(EXEEXT) \
+	dnssec-signzone$(EXEEXT) dnssec-verify$(EXEEXT)
 subdir = bin/dnssec
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -113,10 +113,10 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -143,47 +143,53 @@ am__DEPENDENCIES_1 =
 @HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 dnssec_cds_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_dsfromkey_SOURCES = dnssec-dsfromkey.c
 dnssec_dsfromkey_OBJECTS = dnssec-dsfromkey.$(OBJEXT)
 dnssec_dsfromkey_LDADD = $(LDADD)
 dnssec_dsfromkey_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_importkey_SOURCES = dnssec-importkey.c
 dnssec_importkey_OBJECTS = dnssec-importkey.$(OBJEXT)
 dnssec_importkey_LDADD = $(LDADD)
 dnssec_importkey_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_keyfromlabel_SOURCES = dnssec-keyfromlabel.c
 dnssec_keyfromlabel_OBJECTS = dnssec-keyfromlabel.$(OBJEXT)
 dnssec_keyfromlabel_LDADD = $(LDADD)
 dnssec_keyfromlabel_DEPENDENCIES = libdnssectool.la \
-	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+	$(am__DEPENDENCIES_2) $(LIBISCCFG_LIBS) $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_1)
 dnssec_keygen_SOURCES = dnssec-keygen.c
 dnssec_keygen_OBJECTS = dnssec_keygen-dnssec-keygen.$(OBJEXT)
 am__DEPENDENCIES_3 = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
-dnssec_keygen_DEPENDENCIES = $(am__DEPENDENCIES_3) $(LIBISCCFG_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
+dnssec_keygen_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_1)
+dnssec_ksr_SOURCES = dnssec-ksr.c
+dnssec_ksr_OBJECTS = dnssec-ksr.$(OBJEXT)
+dnssec_ksr_LDADD = $(LDADD)
+dnssec_ksr_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_revoke_SOURCES = dnssec-revoke.c
 dnssec_revoke_OBJECTS = dnssec-revoke.$(OBJEXT)
 dnssec_revoke_LDADD = $(LDADD)
 dnssec_revoke_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_settime_SOURCES = dnssec-settime.c
 dnssec_settime_OBJECTS = dnssec-settime.$(OBJEXT)
 dnssec_settime_LDADD = $(LDADD)
 dnssec_settime_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 dnssec_signzone_SOURCES = dnssec-signzone.c
-dnssec_signzone_OBJECTS = dnssec-signzone.$(OBJEXT)
-dnssec_signzone_LDADD = $(LDADD)
-dnssec_signzone_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+dnssec_signzone_OBJECTS = dnssec_signzone-dnssec-signzone.$(OBJEXT)
+dnssec_signzone_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_1)
 dnssec_verify_SOURCES = dnssec-verify.c
 dnssec_verify_OBJECTS = dnssec-verify.$(OBJEXT)
 dnssec_verify_LDADD = $(LDADD)
 dnssec_verify_DEPENDENCIES = libdnssectool.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+	$(LIBISCCFG_LIBS) $(LIBDNS_LIBS) $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -202,10 +208,11 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/dnssec-cds.Po \
 	./$(DEPDIR)/dnssec-dsfromkey.Po \
 	./$(DEPDIR)/dnssec-importkey.Po \
-	./$(DEPDIR)/dnssec-keyfromlabel.Po \
+	./$(DEPDIR)/dnssec-keyfromlabel.Po ./$(DEPDIR)/dnssec-ksr.Po \
 	./$(DEPDIR)/dnssec-revoke.Po ./$(DEPDIR)/dnssec-settime.Po \
-	./$(DEPDIR)/dnssec-signzone.Po ./$(DEPDIR)/dnssec-verify.Po \
+	./$(DEPDIR)/dnssec-verify.Po \
 	./$(DEPDIR)/dnssec_keygen-dnssec-keygen.Po \
+	./$(DEPDIR)/dnssec_signzone-dnssec-signzone.Po \
 	./$(DEPDIR)/dnssectool.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -228,11 +235,11 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libdnssectool_la_SOURCES) dnssec-cds.c dnssec-dsfromkey.c \
 	dnssec-importkey.c dnssec-keyfromlabel.c dnssec-keygen.c \
-	dnssec-revoke.c dnssec-settime.c dnssec-signzone.c \
-	dnssec-verify.c
+	dnssec-ksr.c dnssec-revoke.c dnssec-settime.c \
+	dnssec-signzone.c dnssec-verify.c
 DIST_SOURCES = $(libdnssectool_la_SOURCES) dnssec-cds.c \
 	dnssec-dsfromkey.c dnssec-importkey.c dnssec-keyfromlabel.c \
-	dnssec-keygen.c dnssec-revoke.c dnssec-settime.c \
+	dnssec-keygen.c dnssec-ksr.c dnssec-revoke.c dnssec-settime.c \
 	dnssec-signzone.c dnssec-verify.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -290,10 +297,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -316,15 +325,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -332,9 +342,14 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSYSTEMD_CFLAGS = @LIBSYSTEMD_CFLAGS@
+LIBSYSTEMD_LIBS = @LIBSYSTEMD_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -358,6 +373,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -384,6 +400,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -397,7 +414,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -469,10 +485,13 @@ AM_CFLAGS = \
 	$(STD_CFLAGS)
 
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
-	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBDNS_CFLAGS) \
-	-DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
+	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBISCCFG_CFLAGS) \
+	$(LIBDNS_CFLAGS) -DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
-LDADD = libdnssectool.la $(LIBISC_LIBS) $(LIBDNS_LIBS)
+LDADD = libdnssectool.la $(LIBISC_LIBS) $(LIBISCCFG_LIBS) \
+	$(LIBDNS_LIBS) $(OPENSSL_LIBS)
+BUILT_SOURCES = 
+CLEANFILES = 
 @HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
@@ -483,6 +502,7 @@ LDADD = libdnssectool.la $(LIBISC_LIBS) $(LIBDNS_LIBS)
 @HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -490,18 +510,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -514,12 +530,6 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
-
 noinst_LTLIBRARIES = libdnssectool.la
 libdnssectool_la_SOURCES = \
 	dnssectool.h		\
@@ -527,13 +537,22 @@ libdnssectool_la_SOURCES = \
 
 dnssec_keygen_CPPFLAGS = \
 	$(AM_CPPFLAGS)		\
-	$(LIBISCCFG_CFLAGS)
+	$(OPENSSL_CFLAGS)
 
 dnssec_keygen_LDADD = \
 	$(LDADD)		\
-	$(LIBISCCFG_LIBS)
+	$(OPENSSL_LIBS)
 
-all: all-am
+dnssec_signzone_CPPFLAGS = \
+	$(AM_CPPFLAGS)		\
+	$(OPENSSL_CFLAGS)
+
+dnssec_signzone_LDADD = \
+	$(LDADD)		\
+	$(OPENSSL_LIBS)
+
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -651,6 +670,10 @@ dnssec-keygen$(EXEEXT): $(dnssec_keygen_OBJECTS) $(dnssec_keygen_DEPENDENCIES) $
 	@rm -f dnssec-keygen$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dnssec_keygen_OBJECTS) $(dnssec_keygen_LDADD) $(LIBS)
 
+dnssec-ksr$(EXEEXT): $(dnssec_ksr_OBJECTS) $(dnssec_ksr_DEPENDENCIES) $(EXTRA_dnssec_ksr_DEPENDENCIES) 
+	@rm -f dnssec-ksr$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dnssec_ksr_OBJECTS) $(dnssec_ksr_LDADD) $(LIBS)
+
 dnssec-revoke$(EXEEXT): $(dnssec_revoke_OBJECTS) $(dnssec_revoke_DEPENDENCIES) $(EXTRA_dnssec_revoke_DEPENDENCIES) 
 	@rm -f dnssec-revoke$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dnssec_revoke_OBJECTS) $(dnssec_revoke_LDADD) $(LIBS)
@@ -677,11 +700,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-dsfromkey.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-importkey.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-keyfromlabel.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-ksr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-revoke.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-settime.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-signzone.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec-verify.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec_keygen-dnssec-keygen.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssec_signzone-dnssec-signzone.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssectool.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -727,6 +751,20 @@ dnssec_keygen-dnssec-keygen.obj: dnssec-keygen.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnssec-keygen.c' object='dnssec_keygen-dnssec-keygen.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnssec_keygen_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnssec_keygen-dnssec-keygen.obj `if test -f 'dnssec-keygen.c'; then $(CYGPATH_W) 'dnssec-keygen.c'; else $(CYGPATH_W) '$(srcdir)/dnssec-keygen.c'; fi`
+
+dnssec_signzone-dnssec-signzone.o: dnssec-signzone.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnssec_signzone_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dnssec_signzone-dnssec-signzone.o -MD -MP -MF $(DEPDIR)/dnssec_signzone-dnssec-signzone.Tpo -c -o dnssec_signzone-dnssec-signzone.o `test -f 'dnssec-signzone.c' || echo '$(srcdir)/'`dnssec-signzone.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dnssec_signzone-dnssec-signzone.Tpo $(DEPDIR)/dnssec_signzone-dnssec-signzone.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnssec-signzone.c' object='dnssec_signzone-dnssec-signzone.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnssec_signzone_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnssec_signzone-dnssec-signzone.o `test -f 'dnssec-signzone.c' || echo '$(srcdir)/'`dnssec-signzone.c
+
+dnssec_signzone-dnssec-signzone.obj: dnssec-signzone.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnssec_signzone_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dnssec_signzone-dnssec-signzone.obj -MD -MP -MF $(DEPDIR)/dnssec_signzone-dnssec-signzone.Tpo -c -o dnssec_signzone-dnssec-signzone.obj `if test -f 'dnssec-signzone.c'; then $(CYGPATH_W) 'dnssec-signzone.c'; else $(CYGPATH_W) '$(srcdir)/dnssec-signzone.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dnssec_signzone-dnssec-signzone.Tpo $(DEPDIR)/dnssec_signzone-dnssec-signzone.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnssec-signzone.c' object='dnssec_signzone-dnssec-signzone.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnssec_signzone_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnssec_signzone-dnssec-signzone.obj `if test -f 'dnssec-signzone.c'; then $(CYGPATH_W) 'dnssec-signzone.c'; else $(CYGPATH_W) '$(srcdir)/dnssec-signzone.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -822,14 +860,17 @@ distdir-am: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS) $(LTLIBRARIES)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
@@ -850,6 +891,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -858,6 +900,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool \
@@ -868,11 +911,12 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/dnssec-dsfromkey.Po
 	-rm -f ./$(DEPDIR)/dnssec-importkey.Po
 	-rm -f ./$(DEPDIR)/dnssec-keyfromlabel.Po
+	-rm -f ./$(DEPDIR)/dnssec-ksr.Po
 	-rm -f ./$(DEPDIR)/dnssec-revoke.Po
 	-rm -f ./$(DEPDIR)/dnssec-settime.Po
-	-rm -f ./$(DEPDIR)/dnssec-signzone.Po
 	-rm -f ./$(DEPDIR)/dnssec-verify.Po
 	-rm -f ./$(DEPDIR)/dnssec_keygen-dnssec-keygen.Po
+	-rm -f ./$(DEPDIR)/dnssec_signzone-dnssec-signzone.Po
 	-rm -f ./$(DEPDIR)/dnssectool.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -927,11 +971,12 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/dnssec-dsfromkey.Po
 	-rm -f ./$(DEPDIR)/dnssec-importkey.Po
 	-rm -f ./$(DEPDIR)/dnssec-keyfromlabel.Po
+	-rm -f ./$(DEPDIR)/dnssec-ksr.Po
 	-rm -f ./$(DEPDIR)/dnssec-revoke.Po
 	-rm -f ./$(DEPDIR)/dnssec-settime.Po
-	-rm -f ./$(DEPDIR)/dnssec-signzone.Po
 	-rm -f ./$(DEPDIR)/dnssec-verify.Po
 	-rm -f ./$(DEPDIR)/dnssec_keygen-dnssec-keygen.Po
+	-rm -f ./$(DEPDIR)/dnssec_signzone-dnssec-signzone.Po
 	-rm -f ./$(DEPDIR)/dnssectool.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
@@ -959,7 +1004,7 @@ unit: unit-am
 
 unit-am: unit-local
 
-.MAKE: install-am install-strip
+.MAKE: all check install install-am install-exec install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-binPROGRAMS clean-generic clean-libtool \

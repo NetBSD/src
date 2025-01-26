@@ -19,6 +19,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
 	notify yes;
@@ -36,7 +37,7 @@ controls {
 };
 
 key tsigzone. {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 
@@ -60,10 +61,14 @@ zone "tsigzone" {
 	allow-transfer { tzkey; };
 };
 
+primaries "ns1" port @PORT@ source 10.53.0.2 {
+	10.53.0.1;
+};
+
 zone "secondary" {
 	type secondary;
 	file "sec.db";
-	primaries { 10.53.0.1; };
+	primaries { ns1; };
 	masterfile-format text;
 };
 

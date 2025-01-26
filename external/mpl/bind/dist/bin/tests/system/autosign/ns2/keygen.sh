@@ -16,9 +16,8 @@
 # Have the child generate subdomain keys and pass DS sets to us.
 (cd ../ns3 && $SHELL keygen.sh)
 
-for subdomain in secure nsec3 autonsec3 optout rsasha256 rsasha512 \
-  nsec3-to-nsec oldsigs sync dname-at-apex-nsec3 cds-delete \
-  cdnskey-delete; do
+for subdomain in secure nsec3 optout rsasha256 rsasha512 \
+  nsec3-to-nsec oldsigs dname-at-apex-nsec3; do
   cp ../ns3/dsset-$subdomain.example. .
 done
 
@@ -40,7 +39,7 @@ ksk=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
 $KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone >/dev/null
 keyfile_to_static_ds $ksk >private.conf
 cp private.conf ../ns4/private.conf
-$SIGNER -S -3 beef -A -o $zone -f $zonefile $infile >/dev/null
+$SIGNER -S -3 beef -A -o $zone -f $zonefile $infile >signing.privsec.out 2>&1
 
 # Extract saved keys for the revoke-to-duplicate-key test
 zone=bar
@@ -53,11 +52,17 @@ for i in Xbar.+013+59973.key Xbar.+013+59973.private \
 done
 $KEYGEN -a ECDSAP256SHA256 -q $zone >/dev/null
 $DSFROMKEY Kbar.+013+60101.key >dsset-bar.
+$SIGNER -S -o bar. -O full $zonefile >signing.bar.out 2>&1
 
 # a zone with empty non-terminals.
-zone=optout-with-ent
-zonefile=optout-with-ent.db
-infile=optout-with-ent.db.in
+zone=nsec3-with-ent
+zonefile=nsec3-with-ent.db
+infile=nsec3-with-ent.db.in
 cat $infile >$zonefile
 kskname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
 $KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone >/dev/null
+
+# Copy zone input files
+cp child.nsec3.example.db.in child.nsec3.example.db
+cp child.optout.example.db.in child.optout.example.db
+cp insecure.secure.example.db.in insecure.secure.example.db

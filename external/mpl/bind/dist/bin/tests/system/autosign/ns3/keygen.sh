@@ -29,6 +29,8 @@ setup() {
   n=$((${n:-0} + 1))
 }
 
+mkdir inactive
+
 setup secure.example
 cp $infile $zonefile
 ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk $zone 2>kg.out) || dumpit kg.out
@@ -155,10 +157,7 @@ $DSFROMKEY $ksk.key >dsset-${zone}.
 # None of these algorithms are supported for signing in FIPS mode
 # as they are MD5 and SHA1 based.
 #
-if (
-  cd ..
-  $SHELL ../testcrypto.sh -q RSASHA1
-); then
+if [ $RSASHA1_SUPPORTED = 1 ]; then
   setup nsec-only.example
   cp $infile $zonefile
   ksk=$($KEYGEN -q -a RSASHA1 -fk $zone 2>kg.out) || dumpit kg.out
@@ -181,7 +180,8 @@ while [ $count -le 1000 ]; do
 done
 $KEYGEN -q -a $DEFAULT_ALGORITHM -fk $zone >kg.out 2>&1 || dumpit kg.out
 $KEYGEN -q -a $DEFAULT_ALGORITHM $zone >kg.out 2>&1 || dumpit kg.out
-$SIGNER -PS -s now-1y -e now-6mo -o $zone -f $zonefile.signed $zonefile >s.out || dumpit s.out
+$SIGNER -PS -x -s now-1y -e now-6mo -o $zone -f $zonefile.signed $zonefile >s.out || dumpit s.out
+cp $zonefile.signed $zonefile.bak
 mv $zonefile.signed $zonefile
 
 #
@@ -201,32 +201,13 @@ $KEYGEN -q -a $DEFAULT_ALGORITHM $zone >kg.out 2>&1 || dumpit kg.out
 $SIGNER -S -3 beef -A -o $zone -f $zonefile $infile >s.out || dumpit s.out
 
 #
-# secure-to-insecure transition test zone; used to test removal of
-# keys via nsupdate
-#
-setup secure-to-insecure.example
-$KEYGEN -a $DEFAULT_ALGORITHM -q -fk $zone >kg.out 2>&1 || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -q $zone >kg.out 2>&1 || dumpit kg.out
-$SIGNER -S -o $zone -f $zonefile $infile >s.out || dumpit s.out
-
-#
-# another secure-to-insecure transition test zone; used to test
-# removal of keys on schedule.
-#
-setup secure-to-insecure2.example
-ksk=$($KEYGEN -q -a $DEFAULT_ALGORITHM -3 -fk $zone 2>kg.out) || dumpit kg.out
-echo $ksk >../del1.key
-zsk=$($KEYGEN -q -a $DEFAULT_ALGORITHM -3 $zone 2>kg.out) || dumpit kg.out
-echo $zsk >../del2.key
-$SIGNER -S -3 beef -o $zone -f $zonefile $infile >s.out || dumpit s.out
-
-#
 # Introducing a pre-published key test.
 #
 setup prepub.example
-infile="secure-to-insecure2.example.db.in"
+infile="prepub.example.db.in"
 $KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk $zone >kg.out 2>&1 || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
+zsk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone 2>kg.out) || dumpit kg.out
+echo $zsk >../prepub.key
 $SIGNER -S -3 beef -o $zone -f $zonefile $infile >s.out || dumpit s.out
 
 #
@@ -265,6 +246,7 @@ ksk=$($KEYGEN -G -q -a $DEFAULT_ALGORITHM -3 -fk $zone 2>kg.out) || dumpit kg.ou
 echo $ksk >../delayksk.key
 zsk=$($KEYGEN -G -q -a $DEFAULT_ALGORITHM -3 $zone 2>kg.out) || dumpit kg.out
 echo $zsk >../delayzsk.key
+cp delay.example.db.in delay.example.db
 
 #
 # A zone with signatures that are already expired, and the private KSK
@@ -302,7 +284,7 @@ echo $zsk >../inaczsk-zsk.key
 $SETTIME -I now $zsk >st.out 2>&1 || dumpit st.out
 
 #
-# A zone that is set to 'auto-dnssec maintain' during a reconfig
+# A zone that is set to 'dnssec-policy' during a reconfig
 #
 setup reconf.example
 cp secure.example.db.in $zonefile
@@ -310,7 +292,7 @@ $KEYGEN -q -a $DEFAULT_ALGORITHM -3 -fk $zone >kg.out 2>&1 || dumpit kg.out
 $KEYGEN -q -a $DEFAULT_ALGORITHM -3 $zone >kg.out 2>&1 || dumpit kg.out
 
 #
-# A zone which generates CDS and CDNSEY RRsets automatically
+# A zone which generates CDS and CDNSEY RRsets automatically (with an additional CSK)
 #
 setup sync.example
 cp $infile $zonefile
@@ -320,20 +302,11 @@ $DSFROMKEY $ksk.key >dsset-${zone}.
 echo ns3/$ksk >../sync.key
 
 #
-# A zone that generates CDS and CDNSKEY and uses dnssec-dnskey-kskonly
+# A zone that generates CDS and CDNSKEY automatically
 #
 setup kskonly.example
 cp $infile $zonefile
 ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk -P sync now $zone 2>kg.out) || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key >dsset-${zone}.
-
-#
-# A zone that has a published inactive key that is autosigned.
-#
-setup inacksk2.example
-cp $infile $zonefile
-ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -Pnow -A now+3600 -fk $zone 2>kg.out) || dumpit kg.out
 $KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
 $DSFROMKEY $ksk.key >dsset-${zone}.
 
@@ -347,26 +320,6 @@ $KEYGEN -a $DEFAULT_ALGORITHM -3 -q -P now -A now+3600 $zone >kg.out 2>&1 || dum
 $DSFROMKEY $ksk.key >dsset-${zone}.
 
 #
-# A zone that starts with a active KSK + ZSK and a inactive ZSK.
-#
-setup inacksk3.example
-cp $infile $zonefile
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q -P now -A now+3600 -fk $zone >kg.out 2>&1 || dumpit kg.out
-ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk $zone 2>kg.out) || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key >dsset-${zone}.
-
-#
-# A zone that starts with a active KSK + ZSK and a inactive ZSK.
-#
-setup inaczsk3.example
-cp $infile $zonefile
-ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk $zone 2>kg.out) || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
-$KEYGEN -a $DEFAULT_ALGORITHM -3 -q -P now -A now+3600 $zone >kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key >dsset-${zone}.
-
-#
 # A zone that starts with an active KSK + ZSK and an inactive ZSK, with the
 # latter getting deleted during the test.
 #
@@ -375,31 +328,15 @@ cp $infile $zonefile
 ksk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -fk $zone 2>kg.out) || dumpit kg.out
 $KEYGEN -a $DEFAULT_ALGORITHM -3 -q $zone >kg.out 2>&1 || dumpit kg.out
 zsk=$($KEYGEN -a $DEFAULT_ALGORITHM -3 -q -I now-1w $zone 2>kg.out) || dumpit kg.out
+cat $zsk.key >>$zonefile
+mv $zsk.key inactive/
+mv $zsk.private inactive/
 echo $zsk >../delzsk.key
 
 #
 # Check that NSEC3 are correctly signed and returned from below a DNAME
 #
 setup dname-at-apex-nsec3.example
-cp $infile $zonefile
-ksk=$($KEYGEN -q -a $DEFAULT_ALGORITHM -3 -fk $zone 2>kg.out) || dumpit kg.out
-$KEYGEN -q -a $DEFAULT_ALGORITHM -3 $zone >kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key >dsset-${zone}.
-
-#
-# Check that dynamically added CDS (DELETE) is kept in the zone after signing.
-#
-setup cds-delete.example
-cp $infile $zonefile
-ksk=$($KEYGEN -q -a $DEFAULT_ALGORITHM -3 -fk $zone 2>kg.out) || dumpit kg.out
-$KEYGEN -q -a $DEFAULT_ALGORITHM -3 $zone >kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key >dsset-${zone}.
-
-#
-# Check that dynamically added CDNSKEY (DELETE) is kept in the zone after
-# signing.
-#
-setup cdnskey-delete.example
 cp $infile $zonefile
 ksk=$($KEYGEN -q -a $DEFAULT_ALGORITHM -3 -fk $zone 2>kg.out) || dumpit kg.out
 $KEYGEN -q -a $DEFAULT_ALGORITHM -3 $zone >kg.out 2>&1 || dumpit kg.out

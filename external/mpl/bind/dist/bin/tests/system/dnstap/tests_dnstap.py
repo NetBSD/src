@@ -15,10 +15,20 @@ import os
 import re
 import subprocess
 
+import isctest
 import pytest
 
+import dns.message
+
 pytest.importorskip("dns", minversion="2.0.0")
-import dns.resolver
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dnstap.out.*",
+        "ns*/dnstap.out*",
+        "ns2/example.db",
+    ]
+)
 
 
 def run_rndc(server, rndc_command):
@@ -34,15 +44,13 @@ def run_rndc(server, rndc_command):
     subprocess.check_output(cmdline, stderr=subprocess.STDOUT, timeout=10)
 
 
-def test_dnstap_dispatch_socket_addresses(named_port):
-    # Prepare for querying ns3.
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = ["10.53.0.3"]
-    resolver.port = named_port
-
+def test_dnstap_dispatch_socket_addresses():
     # Send some query to ns3 so that it records something in its dnstap file.
-    ans = resolver.resolve("mail.example.", "A")
-    assert ans[0].address == "10.0.0.2"
+    msg = dns.message.make_query("mail.example.", "A")
+    res = isctest.query.tcp(msg, "10.53.0.2", expected_rcode=dns.rcode.NOERROR)
+    assert res.answer == [
+        dns.rrset.from_text("mail.example.", 300, "IN", "A", "10.0.0.2")
+    ]
 
     # Before continuing, roll dnstap file to ensure it is flushed to disk.
     run_rndc("10.53.0.3", ["dnstap", "-roll", "1"])

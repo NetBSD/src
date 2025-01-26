@@ -41,6 +41,8 @@ options {
 	require-server-cookie yes;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "root.hint";

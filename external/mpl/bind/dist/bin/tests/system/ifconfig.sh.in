@@ -82,9 +82,9 @@ up() {
       ;;
     *-*-linux*)
       if [ "$use_ip" ]; then
-        ip address add $a/24 dev lo:$int
-        ip link set dev lo:$int mtu 1500
+        [ "$a" ] && ip address add $a/24 dev lo:$int
         [ "$aaaa" ] && ip address add $aaaa/64 dev lo
+        ip link set dev lo:$int mtu 1500
       else
         ifconfig lo:$int $a up netmask 255.255.255.0 mtu 1500
         [ "$aaaa" ] && ifconfig lo inet6 add $aaaa/64
@@ -250,7 +250,6 @@ case $1 in
         *) ipv6="" ;;
       esac
       for ns in $(sequence 1 $max); do
-        [ $i -gt 0 -a $ns -gt 2 ] && break
         int=$((i * max + ns))
         case $i in
           0 | 1 | 2)

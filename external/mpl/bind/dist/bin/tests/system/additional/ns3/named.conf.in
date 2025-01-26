@@ -26,6 +26,8 @@ options {
 	minimal-responses no;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "root.hint";

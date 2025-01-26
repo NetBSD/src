@@ -25,6 +25,8 @@ options {
 	minimal-responses no;
 };
 
+trust-anchors { };
+
 plugin query "../../../../plugins/.libs/filter-aaaa.so" {
 	filter-aaaa-on-v6 yes;
 	filter-aaaa { fd92:7065:b8e:ffff::1; };

@@ -25,6 +25,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
 	notify yes;
@@ -68,6 +69,18 @@ zone "axfr-max-idle-time" {
 	max-transfer-idle-in 50;  # this is tested as seconds, when used with '-T transferinsecs'
 	primaries { 10.53.0.1; };
 	file "axfr-max-idle-time.bk";
+};
+
+zone "axfr-rndc-retransfer-force" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	file "axfr-rndc-retransfer-force.bk";
+};
+
+zone "xot-primary-try-next" {
+	type secondary;
+	primaries { 10.53.0.99 port @EXTRAPORT1@ tls ephemeral; 10.53.0.1; };
+	file "xot-primary-try-next.bk";
 };
 
 zone "axfr-too-big" {

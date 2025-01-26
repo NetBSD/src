@@ -32,7 +32,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 dnssec-signzone \- DNSSEC zone signing tool
 .SH SYNOPSIS
 .sp
-\fBdnssec\-signzone\fP [\fB\-a\fP] [\fB\-c\fP class] [\fB\-d\fP directory] [\fB\-D\fP] [\fB\-E\fP engine] [\fB\-e\fP end\-time] [\fB\-f\fP output\-file] [\fB\-g\fP] [\fB\-h\fP] [\fB\-i\fP interval] [\fB\-I\fP input\-format] [\fB\-j\fP jitter] [\fB\-K\fP directory] [\fB\-k\fP key] [\fB\-L\fP serial] [\fB\-M\fP maxttl] [\fB\-N\fP soa\-serial\-format] [\fB\-o\fP origin] [\fB\-O\fP output\-format] [\fB\-P\fP] [\fB\-Q\fP] [\fB\-q\fP] [\fB\-R\fP] [\fB\-S\fP] [\fB\-s\fP start\-time] [\fB\-T\fP ttl] [\fB\-t\fP] [\fB\-u\fP] [\fB\-v\fP level] [\fB\-V\fP] [\fB\-X\fP extended end\-time] [\fB\-x\fP] [\fB\-z\fP] [\fB\-3\fP salt] [\fB\-H\fP iterations] [\fB\-A\fP] {zonefile} [key...]
+\fBdnssec\-signzone\fP [\fB\-a\fP] [\fB\-c\fP class] [\fB\-d\fP directory] [\fB\-D\fP] [\fB\-E\fP engine] [\fB\-e\fP end\-time] [\fB\-f\fP output\-file] [\fB\-F\fP] [\fB\-g\fP] [\fB\-G sync\-records\fP] [\fB\-h\fP] [\fB\-i\fP interval] [\fB\-I\fP input\-format] [\fB\-j\fP jitter] [\fB\-J\fP filename] [\fB\-K\fP directory] [\fB\-k\fP key] [\fB\-L\fP serial] [\fB\-M\fP maxttl] [\fB\-N\fP soa\-serial\-format] [\fB\-o\fP origin] [\fB\-O\fP output\-format] [\fB\-P\fP] [\fB\-Q\fP] [\fB\-q\fP] [\fB\-R\fP] [\fB\-S\fP] [\fB\-s\fP start\-time] [\fB\-T\fP ttl] [\fB\-t\fP] [\fB\-u\fP] [\fB\-v\fP level] [\fB\-V\fP] [\fB\-X\fP extended end\-time] [\fB\-x\fP] [\fB\-z\fP] [\fB\-3\fP salt] [\fB\-H\fP iterations] [\fB\-A\fP] {zonefile} [key...]
 .SH DESCRIPTION
 .sp
 \fBdnssec\-signzone\fP signs a zone; it generates NSEC and RRSIG records
@@ -85,9 +85,30 @@ hardware service module (usually \fBpkcs11\fP).
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-F
+This options turns on FIPS (US Federal Information Processing Standards)
+mode if the underlying crytographic library supports running in FIPS
+mode.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-g
 This option indicates that DS records for child zones should be generated from a \fBdsset\-\fP or \fBkeyset\-\fP
 file. Existing DS records are removed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-G sync\-records
+This option indicates which CDS and CDNSKEY records should be generated. \fBsync\-records\fP is a
+comma\-separated string with the following allowed items: \fBcdnskey\fP, and \fBcds:<digest\-type>\fP,
+where \fBdigest\-type\fP is an allowed algorithm such as SHA\-256 (2), or SHA\-384 (4).
+Only works in combination with smart signing (\fB\-S\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-J filename
+This option tells \fBdnssec\-signzone\fP to read the journal from the given file
+when loading the zone file.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -111,7 +132,7 @@ which is useful to know when rolling keys. The maxttl is the longest
 possible time before signatures that have been retrieved by resolvers
 expire from resolver caches. Zones that are signed with this
 option should be configured to use a matching \fBmax\-zone\-ttl\fP in
-\X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&. (Note: This option is incompatible with \fI\%\-D\fP,
+\fI\%named.conf\fP\&. (Note: This option is incompatible with \fI\%\-D\fP,
 because it modifies non\-DNSSEC data in the output zone.)
 .UNINDENT
 .INDENT 0.0
@@ -268,8 +289,8 @@ zone. Possible formats are \fBtext\fP (the default), which is the standard
 textual representation of the zone; \fBfull\fP, which is text output in a
 format suitable for processing by external scripts; and \fBraw\fP and
 \fBraw=N\fP, which store the zone in binary formats for rapid loading by
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&. \fBraw=N\fP specifies the format version of the raw zone file:
-if N is 0, the raw file can be read by any version of \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'; if N is
+\fI\%named\fP\&. \fBraw=N\fP specifies the format version of the raw zone file:
+if N is 0, the raw file can be read by any version of \fI\%named\fP; if N is
 1, the file can be read by release 9.9.0 or higher. The default is 1.
 .UNINDENT
 .INDENT 0.0
@@ -391,16 +412,13 @@ This option sets the debugging level.
 .TP
 .B \-x
 This option indicates that BIND 9 should only sign the DNSKEY, CDNSKEY, and CDS RRsets with key\-signing keys,
-and should omit signatures from zone\-signing keys. (This is similar to the
-\fBdnssec\-dnskey\-kskonly yes;\fP zone option in \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.)
+and should omit signatures from zone\-signing keys.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-z
 This option indicates that BIND 9 should ignore the KSK flag on keys when determining what to sign. This causes
 KSK\-flagged keys to sign all records, not just the DNSKEY RRset.
-(This is similar to the \fBupdate\-check\-ksk no;\fP zone option in
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.)
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -468,7 +486,7 @@ the current directory, they are used for signing.
 .SH EXAMPLE
 .sp
 The following command signs the \fBexample.com\fP zone with the
-ECDSAP256SHA256 key generated by \X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen\fP\X'tty: link'
+ECDSAP256SHA256 key generated by \fI\%dnssec\-keygen\fP
 (Kexample.com.+013+17247). Because the \fI\%\-S\fP option is not being used,
 the zone\(aqs keys must be in the master file (\fBdb.example.com\fP). This
 invocation looks for \fBdsset\fP files in the current directory, so that
@@ -476,39 +494,35 @@ DS records can be imported from them (\fI\%\-g\fP).
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 % dnssec\-signzone \-g \-o example.com db.example.com \e
 Kexample.com.+013+17247
 db.example.com.signed
 %
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
 In the above example, \fBdnssec\-signzone\fP creates the file
 \fBdb.example.com.signed\fP\&. This file should be referenced in a zone
-statement in the \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' file.
+statement in the \fI\%named.conf\fP file.
 .sp
 This example re\-signs a previously signed zone with default parameters.
 The private keys are assumed to be in the current directory.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 % cp db.example.com.signed db.example.com
 % dnssec\-signzone \-o example.com db.example.com
 db.example.com.signed
 %
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc4033.html'\fI\%RFC 4033\fP\X'tty: link',
+\fI\%dnssec\-keygen(8)\fP, BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc4033.html'\fI\%RFC 4033\fP\X'tty: link',
 \X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html'\fI\%RFC 6781\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium

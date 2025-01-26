@@ -56,6 +56,10 @@ November 1987. [#rfc1035_1]_ [#rfc1035_2]_
 :rfc:`1183` - C. F. Everhart, L. A. Mamakos, R. Ullmann, P. Mockapetris. *New DNS RR
 Definitions.* October 1990.
 
+:rfc:`1521` - N. Borenstein, N. Freed - *MIME (Multipurpose Internet Mail Extensions)
+Part One: Mechanisms for Specifying and Describing the Format of Internet Message
+Bodies.* September 1993. [#rfc1521]_
+
 :rfc:`1706` - B. Manning and R. Colella. *DNS NSAP Resource Records.* October 1994.
 
 :rfc:`1712` - C. Farrell, M. Schulze, S. Pleitner, and D. Baldoni. *DNS Encoding of
@@ -120,7 +124,7 @@ System (DNS).* August 2002. [#rfc3363]_
 October 2002.
 
 :rfc:`3492` - A. Costello. *Punycode: A Bootstring Encoding of Unicode for
-Internationalized Domain Names in Applications (IDNA).* March 2003.
+Internationalized Domain Names in Applications (IDNA).* March 2003. [#idna]_
 
 :rfc:`3493` - R. Gilligan, S. Thomson, J. Bound, J. McCann, and W. Stevens.
 *Basic Socket Interface Extensions for IPv6.* March 2003.
@@ -194,7 +198,7 @@ RRSIG Resource Records for DNSSEC.* October 2009.
 
 :rfc:`5891` - J. Klensin.
 *Internationalized Domain Names in Applications (IDNA): Protocol.*
-August 2010
+August 2010 [#idna]_
 
 :rfc:`5936` - E. Lewis and A. Hoenes, Ed. *DNS Zone Transfer Protocol (AXFR).*
 June 2010.
@@ -311,7 +315,7 @@ P. Thomassen, A. Sargsyan. *DNS Catalog Zones.* July 2023.
 
 :rfc:`9460` - B. Schwartz, M. Bishop and E. Nygren, *Service Binding and
 Parameter Specification via the DNS (SVCB and HTTPS Resource Records).*
-November 2023.
+November 2023. [#rfc9460]_
 
 Best Current Practice RFCs
 --------------------------
@@ -367,6 +371,8 @@ Aggregation and Renumbering.* July 2000. [#rfc2874]_
 :rfc:`4074` - Y. Morishita and T. Jinmei. *Common Misbehavior Against DNS Queries for
 IPv6 Addresses.* June 2005.
 
+:rfc:`4294` - J. Loughney, Ed. - *IPv6 Node Requirements.* April 2006. [#rfc4294]_
+
 :rfc:`4431` - M. Andrews and S. Weiler. *The DNSSEC Lookaside Validation
 (DLV) DNS Resource Record.* February 2006. [#rfc4431]_
 
@@ -391,8 +397,10 @@ Notes
 .. [#rfc1035_2] CLASS ANY queries are not supported. This is considered a
    feature.
 
-.. [#rfc2931] Support for SIG(0) message verification was removed
-   as part of the mitigation of CVE-2024-1975.
+.. [#rfc2931] When receiving a query signed with a SIG(0), the server is
+   only able to verify the signature if it has the key in its local
+   authoritative data; it cannot do recursion or validation to
+   retrieve unknown keys.
 
 .. [#rfc2874] Compliance is with loading and serving of A6 records only.
    A6 records were moved to the experimental category by :rfc:`3363`.
@@ -442,7 +450,7 @@ Notes
 
 .. [#rfc4294] Section 5.1 - DNAME records are fully supported.
 
-.. [#rfc7050] RFC 7050 is updated by RFC 8880.
+.. [#rfc7050] :rfc:`7050` is updated by :rfc:`8880`.
 
 .. [#noencryptedfwd] Forwarding DNS queries over encrypted transports is not
    supported yet.

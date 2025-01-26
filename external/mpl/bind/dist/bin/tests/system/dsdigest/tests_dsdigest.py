@@ -10,8 +10,21 @@
 # information regarding copyright ownership.
 
 import dns.message
+import pytest
 
 import isctest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns*/K*",
+        "ns*/dsset-*",
+        "ns*/trusted.conf",
+        "ns*/*.signed",
+        "ns1/root.db",
+        "ns2/bad.db",
+        "ns2/good.db",
+    ]
+)
 
 
 def test_dsdigest_good():

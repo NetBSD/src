@@ -9,6 +9,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "ns2/named.stats*",
+    ]
+)
+
 
 def test_padding(run_tests_sh):
     run_tests_sh()

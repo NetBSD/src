@@ -15,8 +15,16 @@ import os
 import pathlib
 import subprocess
 
-import isctest
 import pytest
+
+import isctest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "sslyze.log.*",
+        "ns*/example*.db",
+    ]
+)
 
 
 def is_pid_alive(pid):

@@ -133,6 +133,38 @@ for (;;) {
 		$packet->push("additional", new Net::DNS::RR("ns.broken 300 A 10.53.0.4"));
 	} elsif ($qname =~ /\.partial-formerr/) {
 		$packet->header->rcode("FORMERR");
+	} elsif ($qname eq "gl6412") {
+		if ($qtype eq "SOA") {
+			$packet->push("answer",
+			      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+		} elsif ($qtype eq "NS") {
+			$packet->push("answer",
+			      new Net::DNS::RR($qname . " 300 NS ns2" . $qname));
+			$packet->push("answer",
+			      new Net::DNS::RR($qname . " 300 NS ns3" . $qname));
+		} else {
+			$packet->push("authority",
+			      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+		}
+	} elsif ($qname eq "a.gl6412" || $qname eq "a.a.gl6412") {
+		$packet->push("authority",
+			      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+	} elsif ($qname eq "ns2.gl6412") {
+		if ($qtype eq "A") {
+			$packet->push("answer",
+				      new Net::DNS::RR($qname . " 300 A 10.53.0.2"));
+		} else {
+			$packet->push("authority",
+				      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+		}
+	} elsif ($qname eq "ns3.gl6412") {
+		if ($qtype eq "A") {
+			$packet->push("answer",
+				      new Net::DNS::RR($qname . " 300 A 10.53.0.3"));
+		} else {
+			$packet->push("authority",
+				      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+		}
 	} else {
 		# Data for the "bogus referrals" test
 		$packet->push("authority", new Net::DNS::RR("below.www.example.com 300 NS ns.below.www.example.com"));

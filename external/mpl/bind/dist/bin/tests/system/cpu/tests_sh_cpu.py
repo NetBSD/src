@@ -9,6 +9,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "named.run.*",
+        "ns1/managed-keys.*",
+    ]
+)
+
 
 def test_cpu(run_tests_sh):
     run_tests_sh()

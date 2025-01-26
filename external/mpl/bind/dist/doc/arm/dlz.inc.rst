@@ -16,9 +16,10 @@ Dynamically Loadable Zones (DLZ)
 
 Dynamically Loadable Zones (DLZ) are an extension to BIND 9 that allows
 zone data to be retrieved directly from an external database. There is
-no required format or schema. DLZ modules exist for several different
-database backends, including MySQL and LDAP, and can be
-written for any other.
+no required format or schema.
+
+There are number of contributed DLZ modules for several different database
+backends, including MySQL and LDAP, but they are not actively maintained.
 
 The DLZ module provides data to :iscman:`named` in text
 format, which is then converted to DNS wire format by :iscman:`named`. This
@@ -86,11 +87,11 @@ backend storage of redirection rules:
 Sample DLZ Module
 ~~~~~~~~~~~~~~~~~
 
-For guidance in the implementation of DLZ modules, the directory
-``contrib/dlz/example`` contains a basic dynamically linkable DLZ
-module - i.e., one which can be loaded at runtime by the "dlopen" DLZ
-driver. The example sets up a single zone, whose name is passed to the
-module as an argument in the :any:`dlz` statement:
+For guidance in the implementation of DLZ modules, the ``example``
+directory in the [gitlab.isc.org/isc-projects/dlz-modules](https://gitlab.isc.org/isc-projects/dlz-modules/-/tree/main/example?ref_type=heads)
+contains a basic dynamically linkable DLZ module - i.e., one which can be loaded
+at runtime by the "dlopen" DLZ driver. The example sets up a single zone, whose
+name is passed to the module as an argument in the :any:`dlz` statement:
 
 ::
 
@@ -124,6 +125,8 @@ records for a particular name depending on the network from which the
 query arrived.
 
 Documentation of the DLZ module API can be found in
-``contrib/dlz/example/README``. This directory also contains the header
-file ``dlz_minimal.h``, which defines the API and should be included by
-any dynamically linkable DLZ module.
+[README](https://gitlab.isc.org/isc-projects/dlz-modules/-/raw/main/example/README). This
+repository also contains the header file
+[dlz_minimal.h](https://gitlab.isc.org/isc-projects/dlz-modules/-/raw/main/modules/include/dlz_minimal.h),
+which defines the API and should be included by any dynamically linkable DLZ
+module.

@@ -29,6 +29,7 @@ AC_DEFUN([AX_CHECK_JEMALLOC], [
      PKG_CHECK_MODULES(
 	[JEMALLOC], [jemalloc],
 	[
+	    PKG_CHECK_VERSION([JEMALLOC_VERSION], [jemalloc])
 	    found=true
 	], [
 	    AC_CHECK_HEADERS([malloc_np.h jemalloc/jemalloc.h],
@@ -36,9 +37,10 @@ AC_DEFUN([AX_CHECK_JEMALLOC], [
 		    save_LIBS="$LIBS"
 		    save_LDFLAGS="$LDFLAGS"
 		    save_CPPFLAGS="$CPPFLAGS"
-		    AC_SEARCH_LIBS([mallocx], [jemalloc],
+		    AC_SEARCH_LIBS([sdallocx], [jemalloc],
 			[
 			    found=true
+			    JEMALLOC_VERSION=system
 			    AS_IF([test "$ac_cv_search_mallocx" != "none required"],
 				[JEMALLOC_LIBS="$ac_cv_search_mallocx"])
 			])

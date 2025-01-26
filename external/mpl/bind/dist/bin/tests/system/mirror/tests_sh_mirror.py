@@ -9,6 +9,26 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "rndc.out.*",
+        "ns*/db-*",
+        "ns*/dsset-*",
+        "ns*/jn-*",
+        "ns*/K*",
+        "ns*/*.conf",
+        "ns*/*.db",
+        "ns*/*.jnl",
+        "ns*/*.mirror",
+        "ns*/*.nzf*",
+        "ns*/*.nzd*",
+        "ns*/*.signed",
+    ]
+)
+
 
 def test_mirror(run_tests_sh):
     run_tests_sh()

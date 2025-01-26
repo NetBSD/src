@@ -163,8 +163,7 @@ while [ $i -lt 50 ]; do
 	zone "${zone_name}" {
 	    type primary;
 	    file "db.${zone_name}";
-	    dnssec-dnskey-kskonly yes;
-	    auto-dnssec maintain;
+	    dnssec-policy default;
 	    inline-signing yes;
 	};
 	EOF
@@ -183,7 +182,6 @@ while [ $i -lt 50 ]; do
 	localhost       IN      A       127.0.0.1
 	EOF
 
-  $KEYGEN -q -Kns2 -fk -aecdsa256 "${zone_name}" >/dev/null
   $RNDCCMD 10.53.0.2 reconfig || ret=1
   if [ $ret != 0 ]; then
     echo_i "failed"

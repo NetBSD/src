@@ -23,8 +23,6 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
-	/* test that named loads with root-delegation-only */
-	root-delegation-only;
 };
 
 zone "." {

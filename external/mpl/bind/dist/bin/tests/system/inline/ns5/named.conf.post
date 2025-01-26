@@ -34,10 +34,17 @@ options {
 	servfail-ttl 0;
 };
 
+dnssec-policy "inline" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
 zone "bits" {
 	type secondary;
 	primaries { 10.53.0.2; };
 	file "bits.bk";
-	auto-dnssec maintain;
+	dnssec-policy inline;
 	inline-signing yes;
 };

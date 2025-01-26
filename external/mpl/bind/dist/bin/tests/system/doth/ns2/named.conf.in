@@ -44,7 +44,10 @@ options {
 	listen-on tls none http local { 10.53.0.2; };   // unencrypted DoH
 	listen-on-v6 tls none http local { fd92:7065:b8e:ffff::2; };
 	listen-on-v6 { none; };
-	recursion no;
+	recursion yes;
+	allow-recursion { any; };
+	allow-query-cache { any; };
+	allow-recursion-on { 10.53.0.2; }; # allow-query-cache-on inherits;
 	notify no;
 	ixfr-from-differences yes;
 	check-integrity no;
@@ -54,9 +57,22 @@ options {
 	transfers-out 100;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";
+};
+
+tls tls-example-primary-wrong-ca {
+	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
+	ca-file "not-a-file.pem";
+};
+
+zone "test.example.com" {
+	type forward;
+	forward only;
+	forwarders port @TLSPORT@ { 10.53.0.2 tls tls-example-primary-wrong-ca; };
 };
 
 tls tls-example-primary {

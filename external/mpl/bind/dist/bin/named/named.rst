@@ -21,7 +21,7 @@ named - Internet domain name server
 Synopsis
 ~~~~~~~~
 
-:program:`named` [ [**-4**] | [**-6**] ] [**-c** config-file] [**-C**] [**-d** debug-level] [**-D** string] [**-E** engine-name] [**-f**] [**-g**] [**-L** logfile] [**-M** option] [**-m** flag] [**-n** #cpus] [**-p** port] [**-s**] [**-t** directory] [**-U** #listeners] [**-u** user] [**-v**] [**-V**] [**-X** lock-file]
+:program:`named` [ [**-4**] | [**-6**] ] [**-c** config-file] [**-C**] [**-d** debug-level] [**-D** string] [**-E** engine-name] [**-f**] [**-g**] [**-L** logfile] [**-M** option] [**-m** flag] [**-n** #cpus] [**-p** port] [**-s**] [**-t** directory] [**-u** user] [**-v**] [**-V**] ]
 
 Description
 ~~~~~~~~~~~
@@ -86,6 +86,12 @@ Options
 
    This option runs the server in the foreground (i.e., do not daemonize).
 
+.. option:: -F
+
+   This options turns on FIPS (US Federal Information Processing Standards)
+   mode if the underlying crytographic library supports running in FIPS
+   mode.
+
 .. option:: -g
 
    This option runs the server in the foreground and forces all logging to ``stderr``.
@@ -143,22 +149,6 @@ Options
       This option is mainly of interest to BIND 9 developers and may be
       removed or changed in a future release.
 
-.. option:: -S #max-socks
-
-   This option is deprecated and no longer has any function.
-
-.. warning::
-
-      This option should be unnecessary for the vast majority of users.
-      The use of this option could even be harmful, because the specified
-      value may exceed the limitation of the underlying system API. It
-      is therefore set only when the default configuration causes
-      exhaustion of file descriptors and the operational environment is
-      known to support the specified number of sockets. Note also that
-      the actual maximum number is normally slightly fewer than the
-      specified value, because :program:`named` reserves some file descriptors
-      for its internal use.
-
 .. option:: -t directory
 
    This option tells :program:`named` to chroot to ``directory`` after processing the command-line arguments, but
@@ -171,22 +161,9 @@ Options
       most systems; the way ``chroot`` is defined allows a process
       with root privileges to escape a chroot jail.
 
-.. option:: -U #dispatches
+.. option:: -U #listeners
 
-   This option specifies the number of per-interface UDP ``#dispatches`` that :program:`named` should use to handle the outgoing (recursive) UDP connection,
-   to reduce contention between the resolver threads.
-
-   If not specified, :program:`named` calculates a default value based on the
-   number of detected CPUs: 1 for a single CPU, and the number of detected CPUs minus
-   one for machines with more than 1 CPU.
-
-   This cannot be increased to a value higher than the number of CPUs
-   (see :option:`-n` on how to override the value).
-
-.. warning::
-
-      This option should be unnecessary for the vast majority of users,
-      and will be removed in the next version of BIND 9.
+   This option has been removed. Attempts to use it now result in a warning.
 
 .. option:: -u user
 
@@ -214,10 +191,7 @@ Options
 
 .. option:: -X lock-file
 
-   This option acquires a lock on the specified file at runtime; this helps to
-   prevent duplicate :program:`named` instances from running simultaneously.
-   Use of this option overrides the ``lock-file`` option in
-   :iscman:`named.conf`. If set to ``none``, the lock file check is disabled.
+   This option has been removed and using it will cause a fatal error.
 
 Signals
 ~~~~~~~

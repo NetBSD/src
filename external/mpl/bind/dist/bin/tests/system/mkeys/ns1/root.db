@@ -11,7 +11,7 @@
 
 $TTL 20
 .                      IN SOA  gson.nominum.com. a.root.servers.nil. (
-                               2000042100      ; serial
+                               1               ; serial
                                600             ; refresh
                                600             ; retry
                                1200            ; expire

@@ -60,6 +60,8 @@ options {
 	response-policy { zone "rpz"; };
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";

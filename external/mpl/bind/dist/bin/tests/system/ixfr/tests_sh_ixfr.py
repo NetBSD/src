@@ -9,6 +9,26 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out*",
+        "stats.*",
+        "ans*/ans.run",
+        "ns*/*.jnl",
+        "ns1/named.run.prev*",
+        "ns1/myftp.db",
+        "ns3/large.db",
+        "ns3/mytest*.db",
+        "ns3/subtest*.db",
+        "ns4/mytest.db",
+        "ns4/subtest.db",
+        "ns5/mytest.db",
+        "ns5/subtest.db",
+    ]
+)
+
 
 def test_ixfr(run_tests_sh):
     run_tests_sh()

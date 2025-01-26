@@ -21,6 +21,7 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	forward only;
 	forwarders { 10.53.0.3; };
 	minimal-responses no;
@@ -58,7 +59,7 @@ zone "policy1" {
 	file "empty.db";
 	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
 	notify-delay 0;
-	allow-transfer  { any; };
+	allow-transfer	{ any; };
 };
 
 zone "bl.tld2s." {

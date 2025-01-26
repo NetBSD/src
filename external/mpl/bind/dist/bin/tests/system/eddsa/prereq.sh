@@ -15,12 +15,6 @@ set -e
 
 . ../conf.sh
 
-supported=0
-if $SHELL ../testcrypto.sh ed25519; then
-  supported=1
+if [ $ED25519_SUPPORTED = 0 ] && [ $ED448_SUPPORTED = 0 ]; then
+  exit 1
 fi
-if $SHELL ../testcrypto.sh ed448; then
-  supported=1
-fi
-
-[ "$supported" -eq 1 ] || exit 1

@@ -32,7 +32,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 dnssec-keygen \- DNSSEC key generation tool
 .SH SYNOPSIS
 .sp
-\fBdnssec\-keygen\fP [\fB\-3\fP] [\fB\-A\fP date/offset] [\fB\-a\fP algorithm] [\fB\-b\fP keysize] [\fB\-C\fP] [\fB\-c\fP class] [\fB\-D\fP date/offset] [\fB\-d\fP bits] [\fB\-D\fP sync date/offset] [\fB\-E\fP engine] [\fB\-f\fP flag] [\fB\-G\fP] [\fB\-g\fP generator] [\fB\-h\fP] [\fB\-I\fP date/offset] [\fB\-i\fP interval] [\fB\-K\fP directory] [\fB\-k\fP policy] [\fB\-L\fP ttl] [\fB\-l\fP file] [\fB\-n\fP nametype] [\fB\-P\fP date/offset] [\fB\-P\fP sync date/offset] [\fB\-p\fP protocol] [\fB\-q\fP] [\fB\-R\fP date/offset] [\fB\-S\fP key] [\fB\-s\fP strength] [\fB\-T\fP rrtype] [\fB\-t\fP type] [\fB\-V\fP] [\fB\-v\fP level] {name}
+\fBdnssec\-keygen\fP [\fB\-3\fP] [\fB\-A\fP date/offset] [\fB\-a\fP algorithm] [\fB\-b\fP keysize] [\fB\-C\fP] [\fB\-c\fP class] [\fB\-D\fP date/offset] [\fB\-d\fP bits] [\fB\-D\fP sync date/offset] [\fB\-E\fP engine] [\fB\-f\fP flag] [\fB\-F\fP] [\fB\-G\fP] [\fB\-h\fP] [\fB\-I\fP date/offset] [\fB\-i\fP interval] [\fB\-K\fP directory] [\fB\-k\fP policy] [\fB\-L\fP ttl] [\fB\-l\fP file] [\fB\-n\fP nametype] [\fB\-M\fP tag_min:tag_max] [\fB\-P\fP date/offset] [\fB\-P\fP sync date/offset] [\fB\-p\fP protocol] [\fB\-q\fP] [\fB\-R\fP date/offset] [\fB\-S\fP key] [\fB\-s\fP strength] [\fB\-T\fP rrtype] [\fB\-t\fP type] [\fB\-V\fP] [\fB\-v\fP level] {name}
 .SH DESCRIPTION
 .sp
 \fBdnssec\-keygen\fP generates keys for DNSSEC (Secure DNS), as defined in
@@ -55,9 +55,7 @@ versions, then the NSEC3 version is selected; for example,
 .B \-a algorithm
 This option selects the cryptographic algorithm. For DNSSEC keys, the value of
 \fBalgorithm\fP must be one of RSASHA1, NSEC3RSASHA1, RSASHA256,
-RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448. For
-TKEY, the value must be DH (Diffie\-Hellman); specifying this value
-automatically sets the \fI\%\-T KEY\fP option as well.
+RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448.
 .sp
 These values are case\-insensitive. In some cases, abbreviations are
 supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
@@ -69,7 +67,7 @@ option, which copies the algorithm from the predecessor key.
 .sp
 In prior releases, HMAC algorithms could be generated for use as TSIG
 keys, but that feature was removed in BIND 9.13.0. Use
-\X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen\fP\X'tty: link' to generate TSIG keys.
+\fI\%tsig\-keygen\fP to generate TSIG keys.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -121,20 +119,26 @@ hardware service module (usually \fBpkcs11\fP).
 .TP
 .B \-f flag
 This option sets the specified flag in the flag field of the KEY/DNSKEY record.
-The only recognized flags are KSK (Key\-Signing Key) and REVOKE.
+The only recognized flags are ZSK (Zone\-Signing Key), KSK (Key\-Signing Key)
+and REVOKE.
+.sp
+Note that ZSK is not a physical flag in the DNSKEY record, it is merely used
+to explicitly tell that you want to create a ZSK. Setting \fI\%\-f\fP in
+conjunction with \fI\%\-k\fP will result in generating keys that only
+match the given role set with this option.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-F
+This options turns on FIPS (US Federal Information Processing Standards)
+mode if the underlying crytographic library supports running in FIPS
+mode.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-G
 This option generates a key, but does not publish it or sign with it. This option is
 incompatible with \fI\%\-P\fP and \fI\%\-A\fP\&.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B \-g generator
-This option indicates the generator to use if generating a Diffie\-Hellman key. Allowed
-values are 2 and 5. If no generator is specified, a known prime from
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc2539.html'\fI\%RFC 2539\fP\X'tty: link' is used if possible; otherwise the default is 2.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -174,6 +178,20 @@ is the same as leaving it unset.
 .B \-l file
 This option provides a configuration file that contains a \fBdnssec\-policy\fP statement
 (matching the policy set with \fI\%\-k\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-M tag_min:tag_max
+This option sets the range of acceptable key tag values that \fBdnssec\-keygen\fP
+will produce. If the key tag of the new key or the key tag of
+the revoked version of the new key is outside this range,
+the new key will be rejected and another new key will be generated.
+This is designed to be used when generating keys in a multi\-signer
+scenario, where each operator is given a range of key tags to
+prevent collisions among different operators.  The valid values
+for \fBtag_min\fP and \fBtag_max\fP are [0..65535].  The default allows all
+key tag values to be produced.  This option is ignored when \fB\-k policy\fP
+is specified.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -352,7 +370,7 @@ string. \fBKnnnn.+aaa+iiiii.key\fP contains the public key, and
 \fBKnnnn.+aaa+iiiii.private\fP contains the private key.
 .sp
 The \fB\&.key\fP file contains a DNSKEY or KEY record. When a zone is being
-signed by \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' or \X'tty: link #cmdoption-dnssec-signzone-S'\fI\%dnssec\-signzone \-S\fP\X'tty: link', DNSKEY records are
+signed by \fI\%named\fP or \fI\%dnssec\-signzone \-S\fP, DNSKEY records are
 included automatically. In other cases, the \fB\&.key\fP file can be
 inserted into a zone file manually or with an \fB$INCLUDE\fP statement.
 .sp
@@ -377,7 +395,7 @@ To generate a matching key\-signing key, issue the command:
 \fBdnssec\-keygen \-a ECDSAP256SHA256 \-f KSK example.com\fP
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-dnssec-signzone'\fI\%dnssec\-signzone(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc2539.html'\fI\%RFC 2539\fP\X'tty: link',
+\fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc2539.html'\fI\%RFC 2539\fP\X'tty: link',
 \X'tty: link https://datatracker.ietf.org/doc/html/rfc2845.html'\fI\%RFC 2845\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium

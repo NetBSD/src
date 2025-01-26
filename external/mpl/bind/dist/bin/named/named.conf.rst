@@ -52,7 +52,6 @@ Any of these zone statements can also be set inside the view statement.
 .. literalinclude:: ../../doc/misc/redirect.zoneopt
 .. literalinclude:: ../../doc/misc/static-stub.zoneopt
 .. literalinclude:: ../../doc/misc/stub.zoneopt
-.. literalinclude:: ../../doc/misc/delegation-only.zoneopt
 .. literalinclude:: ../../doc/misc/in-view.zoneopt
 
 Files

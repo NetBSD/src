@@ -23,6 +23,11 @@ pytest.importorskip("dns", minversion="2.0.0")
 import dns.message
 import dns.query
 
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ans*/ans.run",
+    ]
+)
 
 TIMEOUT = 10
 
@@ -45,8 +50,8 @@ def create_socket(host, port):
 def test_tcp_garbage(named_port):
     with create_socket("10.53.0.7", named_port) as sock:
         msg = create_msg("a.example.", "A")
-        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
-        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())
 
         wire = msg.to_wire()
         assert len(wire) > 0
@@ -58,8 +63,8 @@ def test_tcp_garbage(named_port):
 
         with pytest.raises(EOFError):
             try:
-                (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
-                (response, rtime) = dns.query.receive_tcp(sock, timeout())
+                dns.query.send_tcp(sock, msg, timeout())
+                dns.query.receive_tcp(sock, timeout())
             except ConnectionError as e:
                 raise EOFError from e
 
@@ -67,8 +72,8 @@ def test_tcp_garbage(named_port):
 def test_tcp_garbage_response(named_port):
     with create_socket("10.53.0.7", named_port) as sock:
         msg = create_msg("a.example.", "A")
-        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
-        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())
 
         wire = msg.to_wire()
         assert len(wire) > 0
@@ -77,11 +82,11 @@ def test_tcp_garbage_response(named_port):
         # the connection to be terminated
 
         rmsg = dns.message.make_response(msg)
-        (sbytes, stime) = dns.query.send_tcp(sock, rmsg, timeout())
+        dns.query.send_tcp(sock, rmsg, timeout())
 
         with pytest.raises(EOFError):
             try:
-                (response, rtime) = dns.query.receive_tcp(sock, timeout())
+                dns.query.receive_tcp(sock, timeout())
             except ConnectionError as e:
                 raise EOFError from e
 
@@ -90,11 +95,11 @@ def test_tcp_garbage_response(named_port):
 def test_close_wait(named_port):
     with create_socket("10.53.0.7", named_port) as sock:
         msg = create_msg("a.example.", "A")
-        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
-        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())
 
         msg = dns.message.make_query("a.example.", "A", use_edns=0, payload=1232)
-        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
+        dns.query.send_tcp(sock, msg, timeout())
 
         # Shutdown the socket, but ignore the other side closing the socket
         # first because we sent DNS message with EDNS0
@@ -112,5 +117,23 @@ def test_close_wait(named_port):
     # available for the query below and it will time out.
     with create_socket("10.53.0.7", named_port) as sock:
         msg = create_msg("a.example.", "A")
-        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
-        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())
+
+
+# GL #4273
+def test_tcp_big(named_port):
+    with create_socket("10.53.0.7", named_port) as sock:
+        msg = dns.message.Message(id=0)
+        msg.flags = dns.flags.RD
+        msg.question.append(dns.rrset.from_text(dns.name.root, 0, 1, "URI"))
+        msg.additional.append(
+            dns.rrset.from_text(dns.name.root, 0, 1, "URI", "0 0 " + "b" * 65503)
+        )
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())
+
+        # Now check that the server is alive and well
+        msg = create_msg("a.example.", "A")
+        dns.query.send_tcp(sock, msg, timeout())
+        dns.query.receive_tcp(sock, timeout())

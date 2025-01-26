@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Dict, Optional
 
 
-CONFTEST_LOGGER = logging.getLogger("conftest")
 LOG_FORMAT = "%(asctime)s %(levelname)7s:%(name)s  %(message)s"
 
 LOGGERS = {
@@ -51,10 +50,6 @@ def avoid_duplicated_logs():
             todel.append(handler)
     for handler in todel:
         logging.root.handlers.remove(handler)
-
-
-init_conftest_logger()
-avoid_duplicated_logs()
 
 
 def init_module_logger(system_test_name: str, testdir: Path):

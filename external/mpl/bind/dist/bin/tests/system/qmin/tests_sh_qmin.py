@@ -9,7 +9,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
 import isctest.mark
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "named.run.*",
+        "query*.log",
+        "ans*/ans.run",
+        "ans*/query.log*",
+    ]
+)
 
 
 # The qmin test is inherently unstable, see GL #904 for details.

@@ -34,17 +34,21 @@ awk 'END { for (i = 1; i <= '${size}'; i++)
      printf "host%d IN A 10.53.0.6\n", i; }' </dev/null >>ns6/huge.zone.db
 
 copy_setports ns2/named.conf.in ns2/named.conf
+copy_setports ns2/secondkey.conf.in ns2/secondkey.conf
 copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
 copy_setports ns7/named.conf.in ns7/named.conf
 
+keyset=
 make_key() {
   $RNDCCONFGEN -k key$1 -A $3 -s 10.53.0.4 -p $2 \
     >ns4/key${1}.conf 2>/dev/null
   grep -E -v '(^# Start|^# End|^# Use|^[^#])' ns4/key$1.conf | cut -c3- \
     | sed 's/allow { 10.53.0.4/allow { any/' >>ns4/named.conf
+  key='"'key$1'";'
+  keyset="$keyset $key"
 }
 
 $FEATURETEST --md5 && make_key 1 ${EXTRAPORT1} hmac-md5
@@ -58,7 +62,6 @@ cat >>ns4/named.conf <<-EOF
 
 controls {
 	inet 10.53.0.4 port ${EXTRAPORT7}
-		allow { any; } keys { "key1"; "key2"; "key3";
-                                      "key4"; "key5"; "key6"; };
+		allow { any; } keys { $keyset };
 };
 EOF

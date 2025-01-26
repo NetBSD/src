@@ -25,6 +25,7 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.8; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	notify yes;
 	minimal-responses no;
 	recursion yes;
@@ -45,6 +46,8 @@ options {
 	also-notify { 10.53.0.8 port @EXTRAPORT1@; };
 	notify-delay 0;
 };
+
+trust-anchors { };
 
 logging { category rpz { default_debug; }; };
 

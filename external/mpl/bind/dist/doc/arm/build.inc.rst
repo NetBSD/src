@@ -55,16 +55,18 @@ Required Libraries
 
 To build BIND 9, the following packages must be installed:
 
+- a C11-compliant compiler
 - ``libcrypto``, ``libssl``
+- ``liburcu``
 - ``libuv``
 - ``perl``
 - ``pkg-config`` / ``pkgconfig`` / ``pkgconf``
 
-BIND 9.18 requires ``libuv`` 1.0.0 or higher, using ``libuv`` >= 1.40.0
+BIND 9.20 requires ``libuv`` 1.34.0 or higher; using ``libuv`` >= 1.40.0
 is recommended. Compiling or running with ``libuv`` 1.35.0 or 1.36.0 is
 not supported, as this could lead to an assertion failure in the UDP
-receive code. On older systems, an updated ``libuv`` package needs to be
-installed from sources such as EPEL, PPA, or other native sources. The
+receive code. On older systems an updated ``libuv`` package needs to be
+installed from sources, such as EPEL, PPA, or other native sources. The
 other option is to build and install ``libuv`` from source.
 
 OpenSSL 1.0.2e or newer is required. If the OpenSSL library is installed
@@ -72,6 +74,15 @@ in a nonstandard location, specify the prefix using
 ``--with-openssl=<PREFIX>`` on the ``configure`` command line. To use a
 PKCS#11 hardware service module for cryptographic operations,
 ``engine_pkcs11`` from the OpenSC project must be compiled and used.
+
+The Userspace RCU library ``liburcu`` (https://liburcu.org/) is used
+for lock-free data structures and concurrent safe memory reclamation.
+
+On Linux, process capabilities are managed in user space using the
+``libcap`` library
+(https://git.kernel.org/pub/scm/libs/libcap/libcap.git/), which can be
+installed on most Linux systems via the ``libcap-dev`` or
+``libcap-devel`` package.
 
 To build BIND from the git repository, the following tools must also be
 installed:
@@ -86,7 +97,8 @@ Optional Features
 To see a full list of configuration options, run ``configure --help``.
 
 To improve performance, use of the ``jemalloc`` library
-(http://jemalloc.net/) is strongly recommended.
+(https://jemalloc.net/) is strongly recommended. Version 4.0.0 or newer is
+required when in use.
 
 To support :rfc:`DNS over HTTPS (DoH) <8484>`, the server must be linked
 with ``libnghttp2`` (https://nghttp2.org/). If the library is
@@ -133,19 +145,6 @@ the ``libedit`` library (https://www.thrysoee.dk/editline/) must be
 installed. If these are installed at a nonstandard location, adjust
 ``PKG_CONFIG_PATH``. ``readline`` is used by default, and ``libedit``
 can be explicitly requested using ``--with-readline=libedit``.
-
-Certain compiled-in constants and default settings can be decreased to
-values better suited to small machines, e.g. OpenWRT boxes, by
-specifying ``--with-tuning=small`` on the ``configure`` command line.
-This decreases memory usage by using smaller structures, but degrades
-performance.
-
-On Linux, process capabilities are managed in user space using the
-``libcap`` library
-(https://git.kernel.org/pub/scm/libs/libcap/libcap.git/), which can be
-installed on most Linux systems via the ``libcap-dev`` or
-``libcap-devel`` package. Process capability support can also be
-disabled by configuring with ``--disable-linux-caps``.
 
 On some platforms it is necessary to explicitly request large file
 support to handle files bigger than 2GB. This can be done by using

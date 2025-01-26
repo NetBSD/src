@@ -19,4 +19,9 @@ $FEATURETEST --gssapi || {
   exit 255
 }
 
+$FEATURETEST --have-fips-dh || {
+  echo_i "FIPS mode Diffie-Hellman not working - skipping tsiggss test"
+  exit 255
+}
+
 exit 0

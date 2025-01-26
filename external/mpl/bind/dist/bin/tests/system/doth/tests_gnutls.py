@@ -25,6 +25,13 @@ import dns.name
 import dns.rdataclass
 import dns.rdatatype
 
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "gnutls-cli.*",
+        "ns*/example*.db",
+    ]
+)
+
 
 def test_gnutls_cli_query(gnutls_cli_executable, named_tlsport):
     # Prepare the example/SOA query which will be sent over TLS.

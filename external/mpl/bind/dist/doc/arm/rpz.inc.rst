@@ -257,7 +257,7 @@ rely on these name servers.  Here is an example that achieves this result:
 The ``*`` at the beginning of these CNAME target names is special, and it
 causes the original query name to be prepended to the CNAME target. So if a
 user tries to visit the Conficker command and control domain
-http://racaldftn.com.ai/ (which was a valid Conficker command and control
+`racaldftn.com.ai` (which was a valid Conficker command and control
 domain name on 19-October-2011), the RPZ-configured recursive name server
 will send back this answer:
 

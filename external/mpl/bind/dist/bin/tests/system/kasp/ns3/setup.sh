@@ -16,6 +16,10 @@
 
 echo_i "ns3/setup.sh"
 
+# Create key store directories.
+mkdir ksk
+mkdir zsk
+
 setup() {
   zone="$1"
   echo_i "setting up zone: $zone"
@@ -46,7 +50,7 @@ for zn in default dnssec-keygen some-keys legacy-keys pregenerated \
   rumoured rsasha256 rsasha512 ecdsa256 ecdsa384 \
   dynamic dynamic-inline-signing inline-signing \
   checkds-ksk checkds-doubleksk checkds-csk inherit unlimited \
-  manual-rollover multisigner-model2; do
+  manual-rollover multisigner-model2 keystore; do
   setup "${zn}.kasp"
   cp template.db.in "$zonefile"
 done
@@ -62,10 +66,7 @@ cp template.db.in "i-am.special.kasp.db"
 # Set up RSASHA1 based zones
 #
 for zn in rsasha1 rsasha1-nsec3; do
-  if (
-    cd ..
-    $SHELL ../testcrypto.sh -q RSASHA1
-  ); then
+  if [ $RSASHA1_SUPPORTED = 1 ]; then
     setup "${zn}.kasp"
     cp template.db.in "$zonefile"
   else
@@ -75,13 +76,13 @@ for zn in rsasha1 rsasha1-nsec3; do
   fi
 done
 
-if [ -f ../ed25519-supported.file ]; then
+if [ $ED25519_SUPPORTED = 1 ]; then
   setup "ed25519.kasp"
   cp template.db.in "$zonefile"
   cat ed25519.conf >>named.conf
 fi
 
-if [ -f ../ed448-supported.file ]; then
+if [ $ED448_SUPPORTED = 1 ]; then
   setup "ed448.kasp"
   cp template.db.in "$zonefile"
   cat ed448.conf >>named.conf
@@ -128,15 +129,19 @@ $KEYGEN -G -k rsasha256 -l policies/kasp.conf $zone >keygen.out.$zone.2 2>&1
 
 zone="multisigner-model2.kasp"
 echo_i "setting up zone: $zone"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -f KSK -L 3600 -M 32768:65535 $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 $zone -M 32768:65535 2>keygen.out.$zone.2)
+cat "${KSK}.key" | grep -v ";.*" >>"${zone}.db"
+cat "${ZSK}.key" | grep -v ";.*" >>"${zone}.db"
 # Import the ZSK sets of the other providers into their DNSKEY RRset.
-ZSK1=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2>keygen.out.$zone.1)
-ZSK2=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2>keygen.out.$zone.2)
-# ZSK1 will be added to the unsigned zonefile.
+# ZSK1 is from a different provider and is added to the unsigned zonefile.
+# ZSK2 is also from a different provider and is added with a Dynamic Update.
+ZSK1=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 -M 0:32767 $zone 2>keygen.out.$zone.3)
+ZSK2=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 -M 0:32767 $zone 2>keygen.out.$zone.4)
 cat "../${ZSK1}.key" | grep -v ";.*" >>"${zone}.db"
 cat "../${ZSK1}.key" | grep -v ";.*" >"${zone}.zsk1"
-rm -f "../${ZSK1}.*"
-# ZSK2 will be used with a Dynamic Update.
 cat "../${ZSK2}.key" | grep -v ";.*" >"${zone}.zsk2"
+rm -f "../${ZSK1}.*"
 rm -f "../${ZSK2}.*"
 
 zone="rumoured.kasp"
@@ -177,11 +182,23 @@ $SIGNER -PS -x -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone
 setup dynamic-signed-inline-signing.kasp
 T="now-1d"
 csktimes="-P $T -A $T -P sync $T"
-CSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $csktimes $zone 2>keygen.out.$zone.1)
-$SETTIME -s -g $O -d $O $T -k $O $T -z $O $T -r $O $T "$CSK" >settime.out.$zone.1 2>&1
-cat template.db.in "${CSK}.key" >"$infile"
+CSK=$($KEYGEN -K keys -a $DEFAULT_ALGORITHM -L 3600 -f KSK $csktimes $zone 2>keygen.out.$zone.1)
+$SETTIME -s -g $O -d $O $T -k $O $T -z $O $T -r $O $T "keys/$CSK" >settime.out.$zone.1 2>&1
+cat template.db.in "keys/${CSK}.key" >"$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "keys/$CSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -PS -z -x -s now-2w -e now-1mi -o $zone -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -PS -K keys -z -x -s now-2w -e now-1mi -o $zone -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+
+# We are changing an existing single-signed zone to multi-signed
+# zone where the key tags do not match the dnssec-policy key tag range
+setup single-to-multisigner.kasp
+T="now-1d"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -M 0:32767 -L 3600 -f KSK $ksktimes $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -M 0:32767 -L 3600 $zsktimes $zone 2>keygen.out.$zone.2)
+$SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" >settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $T -z $O $T "$ZSK" >settime.out.$zone.2 2>&1
+cat template.db.in "${KSK}.key" "${ZSK}.key" >"$infile"
+$SIGNER -PS -z -x -s now-2w -e now-1mi -o $zone -f "${zonefile}" $infile >signer.out.$zone.1 2>&1
 
 # These signatures are set to expire long in the past, update immediately.
 setup expired-sigs.autosign
@@ -274,6 +291,22 @@ echo "ZSK: yes" >>"${ZSK}".state
 echo "Lifetime: 31536000" >>"${ZSK}".state # PT1Y
 rm -f "${ZSK}".private
 
+# These signatures are still good, but the key files will be removed
+# before a second run of reconfiguring keys.
+setup keyfiles-missing.autosign
+T="now-6mo"
+ksktimes="-P $T -A $T -P sync $T"
+zsktimes="-P $T -A $T"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 $zsktimes $zone 2>keygen.out.$zone.2)
+$SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" >settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $T -z $O $T "$ZSK" >settime.out.$zone.2 2>&1
+cat template.db.in "${KSK}.key" "${ZSK}.key" >"$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >>"$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
+cp $infile $zonefile
+$SIGNER -S -x -s now-1w -e now+1w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+
 # These signatures are already expired, and the private ZSK is retired.
 setup zsk-retired.autosign
 T="now-6mo"
@@ -289,6 +322,12 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
 $SIGNER -PS -x -s now-2w -e now-1mi -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 $SETTIME -s -g HIDDEN "$ZSK" >settime.out.$zone.3 2>&1
+# An old key that is being purged should not prevent keymgr to be run.
+T1="now-1y"
+T2="now-2y"
+oldtimes="-P $T2 -A $T2 -I $T1 -D $T1"
+OLD=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 $oldtimes $zone 2>keygen.out.$zone.3)
+$SETTIME -s -g $H -k $H $T1 -z $H $T1 "$OLD" >settime.out.$zone.3 2>&1
 
 #
 # The zones at enable-dnssec.autosign represent the various steps of the
@@ -639,7 +678,7 @@ $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN "$KSK" >settime.out.$zo
 $SETTIME -s -g $O -k $O $TactN -z $O $TactN "$ZSK" >settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" >"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 2:
 # It is time to submit the introduce the new KSK.
@@ -691,7 +730,7 @@ cat template.db.in "${KSK}.key" "${ZSK}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 3:
 # It is time to submit the DS.
@@ -758,7 +797,7 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 4:
 # The DS should be swapped now.
@@ -819,7 +858,7 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 5:
 # The predecessor DNSKEY is removed long enough that is has become HIDDEN.
@@ -858,7 +897,7 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 6:
 # The predecessor DNSKEY can be purged.
@@ -897,7 +936,7 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 #
 # The zones at csk-roll.autosign represent the various steps of a CSK rollover
@@ -914,7 +953,7 @@ $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" >se
 cat template.db.in "${CSK}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 2:
 # It is time to introduce the new CSK.
@@ -942,7 +981,7 @@ $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" >se
 cat template.db.in "${CSK}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 3:
 # It is time to submit the DS and to roll signatures.
@@ -997,7 +1036,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 4:
 # Some time later all the ZRRSIG records should be from the new CSK, and the
@@ -1044,7 +1083,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 5:
 # After the DS is swapped in step 4, also the KRRSIG records can be removed.
@@ -1080,7 +1119,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 6:
 # After the retire interval has passed the predecessor DNSKEY can be
@@ -1124,7 +1163,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 7:
 # Some time later the predecessor DNSKEY enters the HIDDEN state.
@@ -1159,7 +1198,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 8:
 # The predecessor DNSKEY can be purged.
@@ -1194,7 +1233,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 #
 # The zones at csk-roll2.autosign represent the various steps of a CSK rollover
@@ -1213,7 +1252,7 @@ $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" >se
 cat template.db.in "${CSK}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 2:
 # It is time to introduce the new CSK.
@@ -1241,7 +1280,7 @@ $SETTIME -s -g $O -k $O $TactN -r $O $TactN -d $O $TactN -z $O $TactN "$CSK" >se
 cat template.db.in "${CSK}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 3:
 # It is time to submit the DS and to roll signatures.
@@ -1296,7 +1335,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 4:
 # Some time later all the ZRRSIG records should be from the new CSK, and the
@@ -1344,7 +1383,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 5:
 # Some time later the DS can be swapped and the old DNSKEY can be removed from
@@ -1381,7 +1420,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 6:
 # Some time later the predecessor DNSKEY enters the HIDDEN state.
@@ -1417,7 +1456,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Step 7:
 # The predecessor DNSKEY can be purged, but purge-keys is disabled.
@@ -1452,7 +1491,7 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" >"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -z -x -G "cdnskey,cds:sha-256,cds:sha-384" -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
 
 # Test #2375, the "three is a crowd" bug, where a new key is introduced but the
 # previous rollover has not finished yet. In other words, we have a key KEY2
@@ -1493,4 +1532,4 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK1" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK2" >>"$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >>"$infile"
 cp $infile $zonefile
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1
+$SIGNER -S -x -G "cds:sha-256" -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infile >signer.out.$zone.1 2>&1

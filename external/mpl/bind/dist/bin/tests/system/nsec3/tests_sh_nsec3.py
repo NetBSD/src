@@ -9,6 +9,28 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "*.created",
+        "dig.out.*",
+        "rndc.reload.*",
+        "rndc.signing.*",
+        "update.out.*",
+        "verify.out.*",
+        "ns*/dsset-**",
+        "ns*/K*",
+        "ns*/settime.out.*",
+        "ns*/*.db",
+        "ns*/*.jbk",
+        "ns*/*.jnl",
+        "ns*/*.signed",
+        "ns*/keygen.out.*",
+        "ns3/named-fips.conf",
+    ]
+)
+
 
 def test_nsec3(run_tests_sh):
     run_tests_sh()

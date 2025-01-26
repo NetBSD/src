@@ -96,8 +96,9 @@ target_triplet = @target@
 
 check_PROGRAMS = dns_master_load$(EXEEXT) \
 	dns_message_checksig$(EXEEXT) dns_message_parse$(EXEEXT) \
-	dns_name_fromtext_target$(EXEEXT) dns_rdata_fromtext$(EXEEXT) \
-	dns_rdata_fromwire_text$(EXEEXT) \
+	dns_name_fromtext_target$(EXEEXT) dns_name_fromwire$(EXEEXT) \
+	dns_qp$(EXEEXT) dns_qpkey_name$(EXEEXT) \
+	dns_rdata_fromtext$(EXEEXT) dns_rdata_fromwire_text$(EXEEXT) \
 	isc_lex_getmastertoken$(EXEEXT) isc_lex_gettoken$(EXEEXT)
 subdir = fuzz
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -111,10 +112,10 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -137,43 +138,70 @@ am__DEPENDENCIES_1 =
 @HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
-dns_master_load_DEPENDENCIES = libfuzzmain.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+dns_master_load_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 dns_message_checksig_SOURCES = dns_message_checksig.c
 dns_message_checksig_OBJECTS = dns_message_checksig.$(OBJEXT)
 dns_message_checksig_LDADD = $(LDADD)
 dns_message_checksig_DEPENDENCIES = libfuzzmain.la \
-	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 dns_message_parse_SOURCES = dns_message_parse.c
 dns_message_parse_OBJECTS = dns_message_parse.$(OBJEXT)
 dns_message_parse_LDADD = $(LDADD)
-dns_message_parse_DEPENDENCIES = libfuzzmain.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+dns_message_parse_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 dns_name_fromtext_target_SOURCES = dns_name_fromtext_target.c
 dns_name_fromtext_target_OBJECTS = dns_name_fromtext_target.$(OBJEXT)
 dns_name_fromtext_target_LDADD = $(LDADD)
 dns_name_fromtext_target_DEPENDENCIES = libfuzzmain.la \
-	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
+am_dns_name_fromwire_OBJECTS = dns_name_fromwire.$(OBJEXT) \
+	old.$(OBJEXT)
+dns_name_fromwire_OBJECTS = $(am_dns_name_fromwire_OBJECTS)
+dns_name_fromwire_LDADD = $(LDADD)
+dns_name_fromwire_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
+dns_qp_SOURCES = dns_qp.c
+dns_qp_OBJECTS = dns_qp.$(OBJEXT)
+dns_qp_LDADD = $(LDADD)
+dns_qp_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
+dns_qpkey_name_SOURCES = dns_qpkey_name.c
+dns_qpkey_name_OBJECTS = dns_qpkey_name.$(OBJEXT)
+dns_qpkey_name_LDADD = $(LDADD)
+dns_qpkey_name_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 dns_rdata_fromtext_SOURCES = dns_rdata_fromtext.c
 dns_rdata_fromtext_OBJECTS = dns_rdata_fromtext.$(OBJEXT)
 dns_rdata_fromtext_LDADD = $(LDADD)
-dns_rdata_fromtext_DEPENDENCIES = libfuzzmain.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+dns_rdata_fromtext_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 dns_rdata_fromwire_text_SOURCES = dns_rdata_fromwire_text.c
 dns_rdata_fromwire_text_OBJECTS = dns_rdata_fromwire_text.$(OBJEXT)
 dns_rdata_fromwire_text_LDADD = $(LDADD)
 dns_rdata_fromwire_text_DEPENDENCIES = libfuzzmain.la \
-	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 isc_lex_getmastertoken_SOURCES = isc_lex_getmastertoken.c
 isc_lex_getmastertoken_OBJECTS = isc_lex_getmastertoken.$(OBJEXT)
 isc_lex_getmastertoken_LDADD = $(LDADD)
 isc_lex_getmastertoken_DEPENDENCIES = libfuzzmain.la \
-	$(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 isc_lex_gettoken_SOURCES = isc_lex_gettoken.c
 isc_lex_gettoken_OBJECTS = isc_lex_gettoken.$(OBJEXT)
 isc_lex_gettoken_LDADD = $(LDADD)
-isc_lex_gettoken_DEPENDENCIES = libfuzzmain.la $(am__DEPENDENCIES_2) \
-	$(LIBDNS_LIBS)
+isc_lex_gettoken_DEPENDENCIES = libfuzzmain.la \
+	$(top_builddir)/tests/libtest/libtest.la $(LIBDNS_LIBS) \
+	$(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -193,10 +221,13 @@ am__depfiles_remade = ./$(DEPDIR)/dns_master_load.Po \
 	./$(DEPDIR)/dns_message_checksig.Po \
 	./$(DEPDIR)/dns_message_parse.Po \
 	./$(DEPDIR)/dns_name_fromtext_target.Po \
+	./$(DEPDIR)/dns_name_fromwire.Po ./$(DEPDIR)/dns_qp.Po \
+	./$(DEPDIR)/dns_qpkey_name.Po \
 	./$(DEPDIR)/dns_rdata_fromtext.Po \
 	./$(DEPDIR)/dns_rdata_fromwire_text.Po \
 	./$(DEPDIR)/isc_lex_getmastertoken.Po \
-	./$(DEPDIR)/isc_lex_gettoken.Po ./$(DEPDIR)/main.Plo
+	./$(DEPDIR)/isc_lex_gettoken.Po ./$(DEPDIR)/main.Plo \
+	./$(DEPDIR)/old.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -218,12 +249,14 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libfuzzmain_la_SOURCES) dns_master_load.c \
 	dns_message_checksig.c dns_message_parse.c \
-	dns_name_fromtext_target.c dns_rdata_fromtext.c \
+	dns_name_fromtext_target.c $(dns_name_fromwire_SOURCES) \
+	dns_qp.c dns_qpkey_name.c dns_rdata_fromtext.c \
 	dns_rdata_fromwire_text.c isc_lex_getmastertoken.c \
 	isc_lex_gettoken.c
 DIST_SOURCES = $(libfuzzmain_la_SOURCES) dns_master_load.c \
 	dns_message_checksig.c dns_message_parse.c \
-	dns_name_fromtext_target.c dns_rdata_fromtext.c \
+	dns_name_fromtext_target.c $(dns_name_fromwire_SOURCES) \
+	dns_qp.c dns_qpkey_name.c dns_rdata_fromtext.c \
 	dns_rdata_fromwire_text.c isc_lex_getmastertoken.c \
 	isc_lex_gettoken.c
 am__can_run_installinfo = \
@@ -487,10 +520,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -513,15 +548,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -529,9 +565,14 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSYSTEMD_CFLAGS = @LIBSYSTEMD_CFLAGS@
+LIBSYSTEMD_LIBS = @LIBSYSTEMD_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -555,6 +596,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -581,6 +623,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -594,7 +637,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -665,9 +707,14 @@ ACLOCAL_AMFLAGS = -I $(top_srcdir)/m4
 AM_CFLAGS = $(STD_CFLAGS) $(TEST_CFLAGS)
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBDNS_CFLAGS) \
-	-DFUZZDIR=\"$(abs_srcdir)\"
+	$(LIBURCU_CFLAGS) $(LIBUV_CFLAGS) -DFUZZDIR=\"$(abs_srcdir)\" \
+	-I$(top_srcdir)/lib/dns -I$(top_srcdir)/lib/isc \
+	-I$(top_srcdir)/tests/include
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1) $(FUZZ_LDFLAGS)
-LDADD = libfuzzmain.la $(LIBISC_LIBS) $(LIBDNS_LIBS)
+LDADD = libfuzzmain.la $(top_builddir)/tests/libtest/libtest.la \
+	$(LIBDNS_LIBS) $(LIBISC_LIBS)
+BUILT_SOURCES = 
+CLEANFILES = 
 @HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
@@ -678,6 +725,7 @@ LDADD = libfuzzmain.la $(LIBISC_LIBS) $(LIBDNS_LIBS)
 @HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -685,18 +733,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -709,12 +753,6 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
-
 check_LTLIBRARIES = libfuzzmain.la
 libfuzzmain_la_SOURCES = \
 	fuzz.h				\
@@ -725,15 +763,24 @@ EXTRA_DIST = \
 	dns_message_checksig.in		\
 	dns_message_parse.in		\
 	dns_name_fromtext_target.in	\
+	dns_name_fromwire.in		\
+	dns_qp.in			\
+	dns_qpkey_name.in		\
 	dns_rdata_fromtext.in		\
 	dns_rdata_fromwire_text.in	\
 	isc_lex_getmastertoken.in	\
 	isc_lex_gettoken.in
 
+dns_name_fromwire_SOURCES = \
+	dns_name_fromwire.c		\
+	old.c				\
+	old.h
+
 TESTS = $(check_PROGRAMS)
 @HAVE_FUZZ_LOG_COMPILER_TRUE@LOG_COMPILER = $(srcdir)/$(FUZZ_LOG_COMPILER)
 @HAVE_FUZZ_LOG_COMPILER_TRUE@AM_LOG_FLAGS = $(srcdir)
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .log .o .obj .test .test$(EXEEXT) .trs
@@ -807,6 +854,18 @@ dns_name_fromtext_target$(EXEEXT): $(dns_name_fromtext_target_OBJECTS) $(dns_nam
 	@rm -f dns_name_fromtext_target$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dns_name_fromtext_target_OBJECTS) $(dns_name_fromtext_target_LDADD) $(LIBS)
 
+dns_name_fromwire$(EXEEXT): $(dns_name_fromwire_OBJECTS) $(dns_name_fromwire_DEPENDENCIES) $(EXTRA_dns_name_fromwire_DEPENDENCIES) 
+	@rm -f dns_name_fromwire$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dns_name_fromwire_OBJECTS) $(dns_name_fromwire_LDADD) $(LIBS)
+
+dns_qp$(EXEEXT): $(dns_qp_OBJECTS) $(dns_qp_DEPENDENCIES) $(EXTRA_dns_qp_DEPENDENCIES) 
+	@rm -f dns_qp$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dns_qp_OBJECTS) $(dns_qp_LDADD) $(LIBS)
+
+dns_qpkey_name$(EXEEXT): $(dns_qpkey_name_OBJECTS) $(dns_qpkey_name_DEPENDENCIES) $(EXTRA_dns_qpkey_name_DEPENDENCIES) 
+	@rm -f dns_qpkey_name$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dns_qpkey_name_OBJECTS) $(dns_qpkey_name_LDADD) $(LIBS)
+
 dns_rdata_fromtext$(EXEEXT): $(dns_rdata_fromtext_OBJECTS) $(dns_rdata_fromtext_DEPENDENCIES) $(EXTRA_dns_rdata_fromtext_DEPENDENCIES) 
 	@rm -f dns_rdata_fromtext$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dns_rdata_fromtext_OBJECTS) $(dns_rdata_fromtext_LDADD) $(LIBS)
@@ -833,11 +892,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_message_checksig.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_message_parse.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_name_fromtext_target.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_name_fromwire.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_qp.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_qpkey_name.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_rdata_fromtext.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_rdata_fromwire_text.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/isc_lex_getmastertoken.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/isc_lex_gettoken.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/old.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1099,6 +1162,27 @@ dns_name_fromtext_target.log: dns_name_fromtext_target$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+dns_name_fromwire.log: dns_name_fromwire$(EXEEXT)
+	@p='dns_name_fromwire$(EXEEXT)'; \
+	b='dns_name_fromwire'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+dns_qp.log: dns_qp$(EXEEXT)
+	@p='dns_qp$(EXEEXT)'; \
+	b='dns_qp'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+dns_qpkey_name.log: dns_qpkey_name$(EXEEXT)
+	@p='dns_qpkey_name$(EXEEXT)'; \
+	b='dns_qpkey_name'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 dns_rdata_fromtext.log: dns_rdata_fromtext$(EXEEXT)
 	@p='dns_rdata_fromtext$(EXEEXT)'; \
 	b='dns_rdata_fromtext'; \
@@ -1177,11 +1261,14 @@ distdir-am: $(DISTFILES)
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS) $(check_LTLIBRARIES)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile
 installdirs:
-install: install-am
-install-exec: install-exec-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
@@ -1205,6 +1292,7 @@ mostlyclean-generic:
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -1213,6 +1301,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
@@ -1223,11 +1312,15 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/dns_message_checksig.Po
 	-rm -f ./$(DEPDIR)/dns_message_parse.Po
 	-rm -f ./$(DEPDIR)/dns_name_fromtext_target.Po
+	-rm -f ./$(DEPDIR)/dns_name_fromwire.Po
+	-rm -f ./$(DEPDIR)/dns_qp.Po
+	-rm -f ./$(DEPDIR)/dns_qpkey_name.Po
 	-rm -f ./$(DEPDIR)/dns_rdata_fromtext.Po
 	-rm -f ./$(DEPDIR)/dns_rdata_fromwire_text.Po
 	-rm -f ./$(DEPDIR)/isc_lex_getmastertoken.Po
 	-rm -f ./$(DEPDIR)/isc_lex_gettoken.Po
 	-rm -f ./$(DEPDIR)/main.Plo
+	-rm -f ./$(DEPDIR)/old.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1281,11 +1374,15 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/dns_message_checksig.Po
 	-rm -f ./$(DEPDIR)/dns_message_parse.Po
 	-rm -f ./$(DEPDIR)/dns_name_fromtext_target.Po
+	-rm -f ./$(DEPDIR)/dns_name_fromwire.Po
+	-rm -f ./$(DEPDIR)/dns_qp.Po
+	-rm -f ./$(DEPDIR)/dns_qpkey_name.Po
 	-rm -f ./$(DEPDIR)/dns_rdata_fromtext.Po
 	-rm -f ./$(DEPDIR)/dns_rdata_fromwire_text.Po
 	-rm -f ./$(DEPDIR)/isc_lex_getmastertoken.Po
 	-rm -f ./$(DEPDIR)/isc_lex_gettoken.Po
 	-rm -f ./$(DEPDIR)/main.Plo
+	-rm -f ./$(DEPDIR)/old.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1312,7 +1409,8 @@ unit: unit-am
 
 unit-am: unit-local
 
-.MAKE: check-am install-am install-strip
+.MAKE: all check check-am install install-am install-exec \
+	install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-TESTS \
 	check-am clean clean-checkLTLIBRARIES clean-checkPROGRAMS \

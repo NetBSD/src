@@ -48,6 +48,9 @@ signed-sub2		NS	ns2.sub2
 signed-sub2		DS	44137 8 2 1CB4F54E0B4F4F85109143113A3C679716A2377D86EB0907846A03FB 0C0A3927
 d			CNAME	d.signed-sub2
 
+mutt                    NS      ns5.mutt
+ns5.mutt                A       10.53.0.5
+
 ; long CNAME loop
 loop			CNAME	goop
 goop			CNAME	boop

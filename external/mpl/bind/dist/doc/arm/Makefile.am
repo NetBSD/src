@@ -52,13 +52,11 @@ EXTRA_DIST =					\
 	recursive-query.png			\
 	reference.rst				\
 	requirements.inc.rst			\
-	requirements.txt			\
 	resolver-forward.dia			\
 	resolver-forward.png			\
 	rpz.inc.rst				\
 	security.inc.rst			\
 	sig0.inc.rst				\
-	tkey.inc.rst				\
 	troubleshooting.inc.rst			\
 	tsig.inc.rst				\
 	zones.inc.rst				\
@@ -67,10 +65,10 @@ EXTRA_DIST =					\
 	_ext/namedconf.py			\
 	_ext/rndcconf.py			\
 	_static/custom.css			\
+	../changelog/*.rst			\
 	../dnssec-guide				\
 	../misc/options				\
 	../misc/rndc.grammar			\
-	../misc/delegation-only.zoneopt		\
 	../misc/forward.zoneopt			\
 	../misc/hint.zoneopt			\
 	../misc/in-view.zoneopt			\
@@ -105,17 +103,7 @@ install-epub:
 	$(INSTALL) -d $(DESTDIR)/$(docdir)
 	$(INSTALL_DATA) $(SPHINXBUILDDIR)/epub/*.epub $(DESTDIR)/$(docdir)/
 
-if HAVE_XELATEX
-pdf-local:
-	$(AM_V_SPHINX)$(SPHINX_BUILD) -b latex -d $(SPHINXBUILDDIR)/.doctrees/latex $(ALLSPHINXOPTS) $(SPHINXBUILDDIR)/latex
-	$(MAKE) -C $(SPHINXBUILDDIR)/latex all-pdf
-
-install-pdf-local:
-	$(INSTALL) -d $(DESTDIR)/$(docdir)
-	$(INSTALL_DATA) $(SPHINXBUILDDIR)/latex/*.pdf $(DESTDIR)/$(docdir)/
-endif
-
 clean-local:
 	-rm -rf $(SPHINXBUILDDIR)
 
-doc-local: html singlehtml pdf epub
+doc-local: html singlehtml epub

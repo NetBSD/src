@@ -28,6 +28,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 zone "." {
 	type primary;
 	file "root.db";
@@ -53,5 +55,3 @@ zone "." {
 	file "redirect.db";
 	allow-query { !10.53.0.2; !10.53.0.4; any; };
 };
-
-// include "trusted.conf";

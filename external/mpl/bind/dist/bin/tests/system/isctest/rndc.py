@@ -14,7 +14,6 @@ import os
 import subprocess
 
 
-# pylint: disable=too-few-public-methods
 class RNDCExecutor(abc.ABC):
     """
     An interface which RNDC executors have to implement in order for the

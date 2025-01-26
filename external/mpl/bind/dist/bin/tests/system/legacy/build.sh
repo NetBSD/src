@@ -13,9 +13,5 @@
 
 . ../conf.sh
 
-$SHELL clean.sh
-
 (cd ns6 && $SHELL -e sign.sh)
 (cd ns7 && $SHELL -e sign.sh)
-
-$SHELL clean.sh

@@ -27,9 +27,9 @@ options {
 	zone-statistics yes;
 };
 
-statistics-channels {
-	inet 10.53.0.3 port @EXTRAPORT1@ allow { any; };
-};
+trust-anchors { };
+
+include "statistics-channels.conf";
 
 key rndc_key {
 	secret "1234abcd8765";

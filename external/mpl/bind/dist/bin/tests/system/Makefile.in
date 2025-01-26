@@ -95,14 +95,12 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@am__append_1 = \
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
+@DNSRPS_TRUE@am__append_2 = rpz/testlib
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@noinst_PROGRAMS = feature-test$(EXEEXT) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	makejournal$(EXEEXT) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	pipelined/pipequeries$(EXEEXT) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	resolve$(EXEEXT) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rndc/gencheck$(EXEEXT) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rpz/dnsrps$(EXEEXT) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tkey/keycreate$(EXEEXT) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tkey/keydelete$(EXEEXT)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rpz/dnsrps$(EXEEXT)
 subdir = bin/tests/system
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -115,35 +113,35 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = conf.sh ifconfig.sh legacy.run.sh start.sh \
-	stop.sh
+CONFIG_CLEAN_FILES = ifconfig.sh start.sh stop.sh
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
 feature_test_SOURCES = feature-test.c
 feature_test_OBJECTS = feature_test-feature-test.$(OBJEXT)
-feature_test_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
 @HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
-feature_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@feature_test_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 makejournal_SOURCES = makejournal.c
 makejournal_OBJECTS = makejournal-makejournal.$(OBJEXT)
-am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@makejournal_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 pipelined_pipequeries_SOURCES = pipelined/pipequeries.c
@@ -152,27 +150,15 @@ pipelined_pipequeries_OBJECTS =  \
 	pipelined/pipequeries-pipequeries.$(OBJEXT)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@pipelined_pipequeries_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
-resolve_SOURCES = resolve.c
-resolve_OBJECTS = resolve-resolve.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@resolve_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBIRS_LIBS) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 rndc_gencheck_SOURCES = rndc/gencheck.c
 rndc_gencheck_OBJECTS = rndc/gencheck.$(OBJEXT)
 rndc_gencheck_LDADD = $(LDADD)
-rndc_gencheck_DEPENDENCIES = $(am__DEPENDENCIES_2)
+rndc_gencheck_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS)
 rpz_dnsrps_SOURCES = rpz/dnsrps.c
 rpz_dnsrps_OBJECTS = rpz/dnsrps-dnsrps.$(OBJEXT)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@rpz_dnsrps_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
-tkey_keycreate_SOURCES = tkey/keycreate.c
-tkey_keycreate_OBJECTS = tkey/keycreate-keycreate.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keycreate_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
-tkey_keydelete_SOURCES = tkey/keydelete.c
-tkey_keydelete_OBJECTS = tkey/keydelete-keydelete.$(OBJEXT)
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keydelete_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS) \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -190,11 +176,8 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/feature_test-feature-test.Po \
 	./$(DEPDIR)/makejournal-makejournal.Po \
-	./$(DEPDIR)/resolve-resolve.Po \
 	pipelined/$(DEPDIR)/pipequeries-pipequeries.Po \
-	rndc/$(DEPDIR)/gencheck.Po rpz/$(DEPDIR)/dnsrps-dnsrps.Po \
-	tkey/$(DEPDIR)/keycreate-keycreate.Po \
-	tkey/$(DEPDIR)/keydelete-keydelete.Po
+	rndc/$(DEPDIR)/gencheck.Po rpz/$(DEPDIR)/dnsrps-dnsrps.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -215,11 +198,9 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = feature-test.c makejournal.c pipelined/pipequeries.c \
-	resolve.c rndc/gencheck.c rpz/dnsrps.c tkey/keycreate.c \
-	tkey/keydelete.c
+	rndc/gencheck.c rpz/dnsrps.c
 DIST_SOURCES = feature-test.c makejournal.c pipelined/pipequeries.c \
-	resolve.c rndc/gencheck.c rpz/dnsrps.c tkey/keycreate.c \
-	tkey/keydelete.c
+	rndc/gencheck.c rpz/dnsrps.c
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -463,12 +444,12 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
-DIST_SUBDIRS = $(SUBDIRS)
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/conf.sh.in \
-	$(srcdir)/ifconfig.sh.in $(srcdir)/legacy.run.sh.in \
+DIST_SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver \
+	rpz/testlib
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/ifconfig.sh.in \
 	$(srcdir)/start.sh.in $(srcdir)/stop.sh.in \
 	$(top_srcdir)/Makefile.top $(top_srcdir)/depcomp \
-	$(top_srcdir)/test-driver README
+	$(top_srcdir)/test-driver README.md
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -524,10 +505,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -550,15 +533,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -566,9 +550,14 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSYSTEMD_CFLAGS = @LIBSYSTEMD_CFLAGS@
+LIBSYSTEMD_LIBS = @LIBSYSTEMD_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -592,6 +581,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -618,6 +608,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -631,7 +622,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -703,9 +693,11 @@ AM_CFLAGS = \
 	$(STD_CFLAGS)
 
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
-	-I$(srcdir)/include $(LIBISC_CFLAGS)
+	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBDNS_CFLAGS)
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
-LDADD = $(LIBISC_LIBS)
+LDADD = $(LIBISC_LIBS) $(LIBDNS_LIBS)
+BUILT_SOURCES = 
+CLEANFILES = 
 @HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
@@ -716,6 +708,7 @@ LDADD = $(LIBISC_LIBS)
 @HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -723,18 +716,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -747,17 +736,17 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
-
 EXTRA_DIST = .
-SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
+SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@feature_test_CPPFLAGS = \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)	\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(OPENSSL_CFLAGS)
+
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@feature_test_LDADD = \
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD)		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(OPENSSL_LIBS)
 
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@makejournal_CPPFLAGS = \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
@@ -775,36 +764,15 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD)		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
 
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@resolve_CPPFLAGS = \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBISC_CFLAGS)	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBIRS_CFLAGS)
-
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@resolve_LDADD = $(LIBISC_LIBS) $(LIBIRS_LIBS) $(LIBDNS_LIBS)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@rpz_dnsrps_CPPFLAGS = \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)	\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	-DLIBRPZ_LIB_OPEN=\"$(abs_builddir)/rpz/testlib/.libs/libdummyrpz.so\"
 
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@rpz_dnsrps_LDADD = \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
-
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keycreate_CPPFLAGS = \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)
-
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keycreate_LDADD = \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
-
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keydelete_CPPFLAGS = \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(AM_CPPFLAGS)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_CFLAGS)
-
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@tkey_keydelete_LDADD = \
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LDADD)		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(LIBDNS_LIBS)		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	$(DLOPEN_LIBS)
 
 
 # Longer running tests are listed (and executed) first to take the most
@@ -843,7 +811,6 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	dnstap			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	doth			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	dsdigest		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	dupsigs			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	dyndb			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	ecdsa			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	eddsa			\
@@ -867,7 +834,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	kasp			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	keepalive		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	keyfromlabel		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	keymgr2kasp		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	ksr			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	legacy			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	limits			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	logfileconfig		\
@@ -876,6 +843,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	metadata		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	mirror			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	mkeys			\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	multisigner		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	names			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	notify			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nsec3			\
@@ -884,6 +852,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nzd2nzf			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	padding			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	pending			\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	proxy			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	pipelined		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	qmin			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	reclimit		\
@@ -909,7 +878,6 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	stub			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	synthfromdnssec		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tcp			\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tkey			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tools			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	transport-acl		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	tsig			\
@@ -931,7 +899,8 @@ LOG_DRIVER_V_1 = --verbose yes
 LOG_DRIVER = $(srcdir)/custom-test-driver
 AM_LOG_DRIVER_FLAGS = $(LOG_DRIVER_V)
 LOG_COMPILER = $(srcdir)/run.sh
-all: all-recursive
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .log .o .obj .test .test$(EXEEXT) .trs
@@ -965,11 +934,7 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-conf.sh: $(top_builddir)/config.status $(srcdir)/conf.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 ifconfig.sh: $(top_builddir)/config.status $(srcdir)/ifconfig.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-legacy.run.sh: $(top_builddir)/config.status $(srcdir)/legacy.run.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 start.sh: $(top_builddir)/config.status $(srcdir)/start.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -1004,10 +969,6 @@ pipelined/pipequeries-pipequeries.$(OBJEXT):  \
 pipelined/pipequeries$(EXEEXT): $(pipelined_pipequeries_OBJECTS) $(pipelined_pipequeries_DEPENDENCIES) $(EXTRA_pipelined_pipequeries_DEPENDENCIES) pipelined/$(am__dirstamp)
 	@rm -f pipelined/pipequeries$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pipelined_pipequeries_OBJECTS) $(pipelined_pipequeries_LDADD) $(LIBS)
-
-resolve$(EXEEXT): $(resolve_OBJECTS) $(resolve_DEPENDENCIES) $(EXTRA_resolve_DEPENDENCIES) 
-	@rm -f resolve$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(resolve_OBJECTS) $(resolve_LDADD) $(LIBS)
 rndc/$(am__dirstamp):
 	@$(MKDIR_P) rndc
 	@: > rndc/$(am__dirstamp)
@@ -1032,43 +993,21 @@ rpz/dnsrps-dnsrps.$(OBJEXT): rpz/$(am__dirstamp) \
 rpz/dnsrps$(EXEEXT): $(rpz_dnsrps_OBJECTS) $(rpz_dnsrps_DEPENDENCIES) $(EXTRA_rpz_dnsrps_DEPENDENCIES) rpz/$(am__dirstamp)
 	@rm -f rpz/dnsrps$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rpz_dnsrps_OBJECTS) $(rpz_dnsrps_LDADD) $(LIBS)
-tkey/$(am__dirstamp):
-	@$(MKDIR_P) tkey
-	@: > tkey/$(am__dirstamp)
-tkey/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) tkey/$(DEPDIR)
-	@: > tkey/$(DEPDIR)/$(am__dirstamp)
-tkey/keycreate-keycreate.$(OBJEXT): tkey/$(am__dirstamp) \
-	tkey/$(DEPDIR)/$(am__dirstamp)
-
-tkey/keycreate$(EXEEXT): $(tkey_keycreate_OBJECTS) $(tkey_keycreate_DEPENDENCIES) $(EXTRA_tkey_keycreate_DEPENDENCIES) tkey/$(am__dirstamp)
-	@rm -f tkey/keycreate$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(tkey_keycreate_OBJECTS) $(tkey_keycreate_LDADD) $(LIBS)
-tkey/keydelete-keydelete.$(OBJEXT): tkey/$(am__dirstamp) \
-	tkey/$(DEPDIR)/$(am__dirstamp)
-
-tkey/keydelete$(EXEEXT): $(tkey_keydelete_OBJECTS) $(tkey_keydelete_DEPENDENCIES) $(EXTRA_tkey_keydelete_DEPENDENCIES) tkey/$(am__dirstamp)
-	@rm -f tkey/keydelete$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(tkey_keydelete_OBJECTS) $(tkey_keydelete_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f pipelined/*.$(OBJEXT)
 	-rm -f rndc/*.$(OBJEXT)
 	-rm -f rpz/*.$(OBJEXT)
-	-rm -f tkey/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/feature_test-feature-test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/makejournal-makejournal.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resolve-resolve.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@pipelined/$(DEPDIR)/pipequeries-pipequeries.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@rndc/$(DEPDIR)/gencheck.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@rpz/$(DEPDIR)/dnsrps-dnsrps.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@tkey/$(DEPDIR)/keycreate-keycreate.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@tkey/$(DEPDIR)/keydelete-keydelete.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1142,20 +1081,6 @@ pipelined/pipequeries-pipequeries.obj: pipelined/pipequeries.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pipelined_pipequeries_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pipelined/pipequeries-pipequeries.obj `if test -f 'pipelined/pipequeries.c'; then $(CYGPATH_W) 'pipelined/pipequeries.c'; else $(CYGPATH_W) '$(srcdir)/pipelined/pipequeries.c'; fi`
 
-resolve-resolve.o: resolve.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(resolve_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT resolve-resolve.o -MD -MP -MF $(DEPDIR)/resolve-resolve.Tpo -c -o resolve-resolve.o `test -f 'resolve.c' || echo '$(srcdir)/'`resolve.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/resolve-resolve.Tpo $(DEPDIR)/resolve-resolve.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='resolve.c' object='resolve-resolve.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(resolve_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o resolve-resolve.o `test -f 'resolve.c' || echo '$(srcdir)/'`resolve.c
-
-resolve-resolve.obj: resolve.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(resolve_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT resolve-resolve.obj -MD -MP -MF $(DEPDIR)/resolve-resolve.Tpo -c -o resolve-resolve.obj `if test -f 'resolve.c'; then $(CYGPATH_W) 'resolve.c'; else $(CYGPATH_W) '$(srcdir)/resolve.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/resolve-resolve.Tpo $(DEPDIR)/resolve-resolve.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='resolve.c' object='resolve-resolve.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(resolve_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o resolve-resolve.obj `if test -f 'resolve.c'; then $(CYGPATH_W) 'resolve.c'; else $(CYGPATH_W) '$(srcdir)/resolve.c'; fi`
-
 rpz/dnsrps-dnsrps.o: rpz/dnsrps.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(rpz_dnsrps_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT rpz/dnsrps-dnsrps.o -MD -MP -MF rpz/$(DEPDIR)/dnsrps-dnsrps.Tpo -c -o rpz/dnsrps-dnsrps.o `test -f 'rpz/dnsrps.c' || echo '$(srcdir)/'`rpz/dnsrps.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) rpz/$(DEPDIR)/dnsrps-dnsrps.Tpo rpz/$(DEPDIR)/dnsrps-dnsrps.Po
@@ -1170,34 +1095,6 @@ rpz/dnsrps-dnsrps.obj: rpz/dnsrps.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(rpz_dnsrps_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o rpz/dnsrps-dnsrps.obj `if test -f 'rpz/dnsrps.c'; then $(CYGPATH_W) 'rpz/dnsrps.c'; else $(CYGPATH_W) '$(srcdir)/rpz/dnsrps.c'; fi`
 
-tkey/keycreate-keycreate.o: tkey/keycreate.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keycreate_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tkey/keycreate-keycreate.o -MD -MP -MF tkey/$(DEPDIR)/keycreate-keycreate.Tpo -c -o tkey/keycreate-keycreate.o `test -f 'tkey/keycreate.c' || echo '$(srcdir)/'`tkey/keycreate.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tkey/$(DEPDIR)/keycreate-keycreate.Tpo tkey/$(DEPDIR)/keycreate-keycreate.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tkey/keycreate.c' object='tkey/keycreate-keycreate.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keycreate_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tkey/keycreate-keycreate.o `test -f 'tkey/keycreate.c' || echo '$(srcdir)/'`tkey/keycreate.c
-
-tkey/keycreate-keycreate.obj: tkey/keycreate.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keycreate_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tkey/keycreate-keycreate.obj -MD -MP -MF tkey/$(DEPDIR)/keycreate-keycreate.Tpo -c -o tkey/keycreate-keycreate.obj `if test -f 'tkey/keycreate.c'; then $(CYGPATH_W) 'tkey/keycreate.c'; else $(CYGPATH_W) '$(srcdir)/tkey/keycreate.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tkey/$(DEPDIR)/keycreate-keycreate.Tpo tkey/$(DEPDIR)/keycreate-keycreate.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tkey/keycreate.c' object='tkey/keycreate-keycreate.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keycreate_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tkey/keycreate-keycreate.obj `if test -f 'tkey/keycreate.c'; then $(CYGPATH_W) 'tkey/keycreate.c'; else $(CYGPATH_W) '$(srcdir)/tkey/keycreate.c'; fi`
-
-tkey/keydelete-keydelete.o: tkey/keydelete.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keydelete_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tkey/keydelete-keydelete.o -MD -MP -MF tkey/$(DEPDIR)/keydelete-keydelete.Tpo -c -o tkey/keydelete-keydelete.o `test -f 'tkey/keydelete.c' || echo '$(srcdir)/'`tkey/keydelete.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tkey/$(DEPDIR)/keydelete-keydelete.Tpo tkey/$(DEPDIR)/keydelete-keydelete.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tkey/keydelete.c' object='tkey/keydelete-keydelete.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keydelete_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tkey/keydelete-keydelete.o `test -f 'tkey/keydelete.c' || echo '$(srcdir)/'`tkey/keydelete.c
-
-tkey/keydelete-keydelete.obj: tkey/keydelete.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keydelete_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tkey/keydelete-keydelete.obj -MD -MP -MF tkey/$(DEPDIR)/keydelete-keydelete.Tpo -c -o tkey/keydelete-keydelete.obj `if test -f 'tkey/keydelete.c'; then $(CYGPATH_W) 'tkey/keydelete.c'; else $(CYGPATH_W) '$(srcdir)/tkey/keydelete.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tkey/$(DEPDIR)/keydelete-keydelete.Tpo tkey/$(DEPDIR)/keydelete-keydelete.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tkey/keydelete.c' object='tkey/keydelete-keydelete.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tkey_keydelete_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tkey/keydelete-keydelete.obj `if test -f 'tkey/keydelete.c'; then $(CYGPATH_W) 'tkey/keydelete.c'; else $(CYGPATH_W) '$(srcdir)/tkey/keydelete.c'; fi`
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1206,7 +1103,6 @@ clean-libtool:
 	-rm -rf pipelined/.libs pipelined/_libs
 	-rm -rf rndc/.libs rndc/_libs
 	-rm -rf rpz/.libs rpz/_libs
-	-rm -rf tkey/.libs tkey/_libs
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -1682,13 +1578,6 @@ dsdigest.log: dsdigest
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-dupsigs.log: dupsigs
-	@p='dupsigs'; \
-	b='dupsigs'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 dyndb.log: dyndb
 	@p='dyndb'; \
 	b='dyndb'; \
@@ -1850,9 +1739,9 @@ keyfromlabel.log: keyfromlabel
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-keymgr2kasp.log: keymgr2kasp
-	@p='keymgr2kasp'; \
-	b='keymgr2kasp'; \
+ksr.log: ksr
+	@p='ksr'; \
+	b='ksr'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1913,6 +1802,13 @@ mkeys.log: mkeys
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+multisigner.log: multisigner
+	@p='multisigner'; \
+	b='multisigner'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 names.log: names
 	@p='names'; \
 	b='names'; \
@@ -1965,6 +1861,13 @@ padding.log: padding
 pending.log: pending
 	@p='pending'; \
 	b='pending'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+proxy.log: proxy
+	@p='proxy'; \
+	b='proxy'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -2144,13 +2047,6 @@ tcp.log: tcp
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-tkey.log: tkey
-	@p='tkey'; \
-	b='tkey'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 tools.log: tools
 	@p='tools'; \
 	b='tools'; \
@@ -2319,12 +2215,15 @@ distdir-am: $(DISTFILES)
 	  dist-hook
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: check-recursive
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-recursive
 all-am: Makefile $(PROGRAMS)
 installdirs: installdirs-recursive
 installdirs-am:
-install: install-recursive
-install-exec: install-exec-recursive
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-recursive
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive
 
@@ -2348,6 +2247,7 @@ mostlyclean-generic:
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -2358,12 +2258,11 @@ distclean-generic:
 	-rm -f rndc/$(am__dirstamp)
 	-rm -f rpz/$(DEPDIR)/$(am__dirstamp)
 	-rm -f rpz/$(am__dirstamp)
-	-rm -f tkey/$(DEPDIR)/$(am__dirstamp)
-	-rm -f tkey/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-recursive
 
 clean-am: clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
@@ -2372,12 +2271,9 @@ clean-am: clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
 distclean: distclean-recursive
 		-rm -f ./$(DEPDIR)/feature_test-feature-test.Po
 	-rm -f ./$(DEPDIR)/makejournal-makejournal.Po
-	-rm -f ./$(DEPDIR)/resolve-resolve.Po
 	-rm -f pipelined/$(DEPDIR)/pipequeries-pipequeries.Po
 	-rm -f rndc/$(DEPDIR)/gencheck.Po
 	-rm -f rpz/$(DEPDIR)/dnsrps-dnsrps.Po
-	-rm -f tkey/$(DEPDIR)/keycreate-keycreate.Po
-	-rm -f tkey/$(DEPDIR)/keydelete-keydelete.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -2429,12 +2325,9 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 		-rm -f ./$(DEPDIR)/feature_test-feature-test.Po
 	-rm -f ./$(DEPDIR)/makejournal-makejournal.Po
-	-rm -f ./$(DEPDIR)/resolve-resolve.Po
 	-rm -f pipelined/$(DEPDIR)/pipequeries-pipequeries.Po
 	-rm -f rndc/$(DEPDIR)/gencheck.Po
 	-rm -f rpz/$(DEPDIR)/dnsrps-dnsrps.Po
-	-rm -f tkey/$(DEPDIR)/keycreate-keycreate.Po
-	-rm -f tkey/$(DEPDIR)/keydelete-keydelete.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -2461,7 +2354,8 @@ unit: unit-recursive
 
 unit-am: unit-local
 
-.MAKE: $(am__recursive_targets) check-am install-am install-strip
+.MAKE: $(am__recursive_targets) all check check-am install install-am \
+	install-exec install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--depfiles check check-TESTS check-am clean clean-generic \

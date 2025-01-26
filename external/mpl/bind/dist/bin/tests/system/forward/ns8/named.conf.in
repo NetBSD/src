@@ -24,6 +24,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "root.db";

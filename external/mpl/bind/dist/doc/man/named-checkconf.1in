@@ -32,20 +32,29 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 named-checkconf \- named configuration file syntax checking tool
 .SH SYNOPSIS
 .sp
-\fBnamed\-checkconf\fP [\fB\-chjlvz\fP] [\fB\-p\fP [\fB\-x\fP ]] [\fB\-t\fP directory] {filename}
+\fBnamed\-checkconf\fP [\fB\-achjlvz\fP] [\fB\-p\fP [\fB\-x\fP ]] [\fB\-t\fP directory] {filename}
 .SH DESCRIPTION
 .sp
 \fBnamed\-checkconf\fP checks the syntax, but not the semantics, of a
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' configuration file. The file, along with all files included by it, is parsed and checked for syntax
+\fI\%named\fP configuration file. The file, along with all files included by it, is parsed and checked for syntax
 errors. If no file is specified,
 \fB@sysconfdir@/named.conf\fP is read by default.
 .sp
-Note: files that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' reads in separate parser contexts, such as
-\fBrndc.key\fP and \fBbind.keys\fP, are not automatically read by
-\fBnamed\-checkconf\fP\&. Configuration errors in these files may cause
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to fail to run, even if \fBnamed\-checkconf\fP was successful.
-However, \fBnamed\-checkconf\fP can be run on these files explicitly.
+Note: files that \fI\%named\fP reads in separate parser contexts, such as
+\fBrndc.conf\fP or \fBrndc.key\fP, are not automatically read by
+\fBnamed\-checkconf\fP\&.  Configuration errors in these files may cause
+\fI\%named\fP to fail to run, even if \fBnamed\-checkconf\fP was
+successful.  However, \fBnamed\-checkconf\fP can be run on these files
+explicitly.
 .SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-a
+Don\(aqt check the \fIdnssec\-policy\fP\(aqs DNSSEC key algorithms against
+those supported by the crypto provider.  This is useful when checking
+a \fInamed.conf\fP intended to be run on another machine with possibly a
+different set of supported DNSSEC key algorithms.
+.UNINDENT
 .INDENT 0.0
 .TP
 .B \-h
@@ -54,7 +63,7 @@ This option prints the usage summary and exits.
 .INDENT 0.0
 .TP
 .B \-j
-When loading a zonefile, this option instructs \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to read the journal if it exists.
+When loading a zonefile, this option instructs \fI\%named\fP to read the journal if it exists.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -77,15 +86,15 @@ This option ignores warnings on deprecated options.
 .INDENT 0.0
 .TP
 .B \-p
-This option prints out the \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' and included files in canonical form if
+This option prints out the \fI\%named.conf\fP and included files in canonical form if
 no errors were detected. See also the \fI\%\-x\fP option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-t directory
-This option instructs \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' to chroot to \fBdirectory\fP, so that \fBinclude\fP directives in the
+This option instructs \fI\%named\fP to chroot to \fBdirectory\fP, so that \fBinclude\fP directives in the
 configuration file are processed as if run by a similarly chrooted
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.
+\fI\%named\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -97,7 +106,7 @@ This option prints the version of the \fBnamed\-checkconf\fP program and exits.
 .B \-x
 When printing the configuration files in canonical form, this option obscures
 shared secrets by replacing them with strings of question marks
-(\fB?\fP). This allows the contents of \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' and related files
+(\fB?\fP). This allows the contents of \fI\%named.conf\fP and related files
 to be shared \- for example, when submitting bug reports \-
 without compromising private data. This option cannot be used without
 \fI\%\-p\fP\&.
@@ -105,7 +114,7 @@ without compromising private data. This option cannot be used without
 .INDENT 0.0
 .TP
 .B \-z
-This option performs a test load of all zones of type \fBprimary\fP found in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link'\&.
+This option performs a test load of all zones of type \fBprimary\fP found in \fI\%named.conf\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -119,7 +128,7 @@ it defaults to \fB@sysconfdir@/named.conf\fP\&.
 and 0 otherwise.
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-named-checkzone'\fI\%named\-checkzone(8)\fP\X'tty: link', BIND 9 Administrator Reference Manual.
+\fI\%named(8)\fP, \fI\%named\-checkzone(8)\fP, BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

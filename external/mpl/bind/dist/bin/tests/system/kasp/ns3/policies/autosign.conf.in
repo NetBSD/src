@@ -76,6 +76,7 @@ dnssec-policy "ksk-doubleksk" {
 	retire-safety P2D;
 	purge-keys PT1H;
 
+	cdnskey no;
 	keys {
 		ksk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
 		zsk key-directory lifetime P1Y  algorithm @DEFAULT_ALGORITHM@;
@@ -99,6 +100,7 @@ dnssec-policy "csk-roll" {
 	retire-safety 2h;
 	purge-keys PT1H;
 
+	cds-digest-types { "sha-384"; }; // use a different digest type for testing purposes
 	keys {
 		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;
 	};
@@ -121,6 +123,7 @@ dnssec-policy "csk-roll2" {
 	retire-safety 1h;
 	purge-keys 0;
 
+	cds-digest-types { "sha-256"; "sha-384"; }; // use two digest type for testing purposes
 	keys {
 		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;
 	};

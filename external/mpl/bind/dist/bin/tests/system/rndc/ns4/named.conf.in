@@ -20,6 +20,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 view normal {
 	match-clients { any; };
 

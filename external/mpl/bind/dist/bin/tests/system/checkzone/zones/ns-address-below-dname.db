@@ -18,5 +18,5 @@ example.com.		SOA	marka.isc.org. a.root.servers.nil. (
 				600     ; minimum
 				)
 example.com.		DNAME	example.net.
-example.com.		NS	ns.example.com
+example.com.		NS	ns.example.com.
 ns.example.com.		A	192.168.0.2

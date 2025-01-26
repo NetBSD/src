@@ -15,9 +15,21 @@ import re
 import shutil
 import signal
 
+import dns.message
+import pytest
+
 import isctest
 
-import dns.message
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns1/changing.db",
+        "ns1/zone*.example.db",
+        "ns1/zones.conf",
+        "ns2/changing.bk",
+        "ns2/zone*.example.bk",
+        "ns2/zones.conf",
+    ]
+)
 
 
 def test_xferquota(named_port, servers):

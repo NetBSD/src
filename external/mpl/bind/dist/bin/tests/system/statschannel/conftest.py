@@ -9,9 +9,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import os
+
 import pytest
 
 
 @pytest.fixture(scope="module")
-def statsport(ports):
-    return ports["EXTRAPORT1"]
+def statsport():
+    return int(os.environ["EXTRAPORT1"])

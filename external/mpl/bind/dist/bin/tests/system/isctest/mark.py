@@ -47,6 +47,10 @@ def is_dnsrps_available():
     return True
 
 
+def with_dnstap(*args):  # pylint: disable=unused-argument
+    return feature_test("--enable-dnstap")
+
+
 def with_tsan(*args):  # pylint: disable=unused-argument
     return feature_test("--tsan")
 

@@ -24,6 +24,8 @@ options {
 	notify yes;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";

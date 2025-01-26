@@ -68,14 +68,39 @@ reconfig_server() {
 run_dig_multitest_expect_success "$testing: a UDP query over Do53"
 run_dig_multitest_expect_success "$testing: a TCP query over Do53" +tcp
 
+reconfig_server "reconfiguring the server to use PROXYv2" named-proxy.conf.in
+run_dig_multitest_expect_success "$testing: a UDP query for Do53 over PROXYv2" +proxy
+run_dig_multitest_expect_success "$testing: a TCP query for Do53 over PROXYv2" +tcp +proxy
+
 reconfig_server "reconfiguring the server to use TLS/DoT" named-tls.conf.in
 run_dig_multitest_expect_success "$testing: a query over TLS/DoT" +tls
+
+reconfig_server "reconfiguring the server to use TLS/DoT over encrypted PROXYv2" named-tls-proxy-encrypted.conf.in
+run_dig_multitest_expect_success "$testing: a query over TLS/DoT over encrypted PROXYv2" +tls +proxy
+
+reconfig_server "reconfiguring the server to use TLS/DoT over plain PROXYv2" named-tls-proxy-plain.conf.in
+run_dig_multitest_expect_success "$testing: a query over TLS/DoT over plain PROXYv2" +tls +proxy +proxy-plain
 
 reconfig_server "reconfiguring the server to use HTTPS/DoH" named-https.conf.in
 run_dig_multitest_expect_success "$testing: a query over HTTPS/DoH" +https
 
+reconfig_server "reconfiguring the server to use HTTPS/DoH over encrypted PROXYv2" named-https-proxy-encrypted.conf.in
+run_dig_multitest_expect_success "$testing: a query over HTTPS/DoH over encrypted PROXYv2" +https +proxy
+
+reconfig_server "reconfiguring the server to use HTTPS/DoH over plain PROXYv2" named-https-proxy-plain.conf.in
+run_dig_multitest_expect_success "$testing: a query over HTTPS/DoH over plain PROXYv2" +https +proxy +proxy-plain
+
 reconfig_server "reconfiguring the server to use plain HTTP/DoH" named-http-plain.conf.in
 run_dig_multitest_expect_success "$testing: a query over plain HTTP/DoH" +http-plain
+
+reconfig_server "reconfiguring the server to use plain HTTP/DoH over PROXYv2" named-http-plain-proxy.conf.in
+run_dig_multitest_expect_success "$testing: a query over plain HTTP/DoH over PROXYv2" +http-plain +proxy
+
+reconfig_server "reconfiguring the server back to use TLS/DoT" named-tls.conf.in
+run_dig_multitest_expect_success "$testing: a query over TLS/DoT" +tls
+
+reconfig_server "reconfiguring the server back to use HTTPS/DoH" named-https.conf.in
+run_dig_multitest_expect_success "$testing: a query over HTTPS/DoH" +https
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

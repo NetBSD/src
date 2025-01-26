@@ -92,20 +92,19 @@ zone "under-limit-kasp" {
 	file "under-limit-kasp.db.raw";
 	masterfile-format raw;
 	dnssec-policy masterformat;
-	inline-signing yes;
 	allow-transfer { any; };
 };
 
-zone "on-limit" {
+zone "below-limit" {
 	type primary;
-	file "on-limit.db.raw";
+	file "below-limit.db.raw";
 	masterfile-format raw;
 	allow-transfer { any; };
 };
 
-zone "on-limit-kasp" {
+zone "below-limit-kasp" {
 	type primary;
-	file "on-limit-kasp.db.raw";
+	file "below-limit-kasp.db.raw";
 	masterfile-format raw;
 	dnssec-policy masterformat;
 	inline-signing no;
@@ -113,9 +112,9 @@ zone "on-limit-kasp" {
 	allow-transfer { any; };
 };
 
-zone "over-limit" {
+zone "above-limit" {
 	type primary;
-	file "over-limit.db.raw";
+	file "above-limit.db.raw";
 	masterfile-format raw;
 	allow-transfer { any; };
 };
@@ -133,5 +132,5 @@ zone "signed" {
 	masterfile-format raw;
 	allow-transfer { any; };
 	update-policy local;
-	auto-dnssec maintain;
+	dnssec-policy masterformat;
 };

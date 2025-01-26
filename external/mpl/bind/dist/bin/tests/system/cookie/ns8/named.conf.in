@@ -33,6 +33,10 @@ options {
 	require-server-cookie yes;
 };
 
+trust-anchors { };
+
+server 10.53.0.7 { require-cookie yes; };
+
 zone "example" {
 	type primary;
 	file "example.db";

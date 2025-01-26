@@ -16,9 +16,12 @@ options {
 	notify-source 10.53.0.3;
 	transfer-source 10.53.0.3;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
+	listen-on tls ephemeral { 10.53.0.3; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
 	notify yes;
@@ -34,11 +37,16 @@ controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+tls tls-example-primary {
+	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
+	ca-file "../CA/CA.pem";
+};
+
 zone "example" {
 	type secondary;
 	file "example.bk";
 	allow-update-forwarding { 10.53.0.1; };
-	primaries { 10.53.0.1; };
+	primaries { 10.53.0.1 tls ephemeral; };
 };
 
 zone "example2" {
@@ -48,11 +56,21 @@ zone "example2" {
 	primaries { 10.53.0.1; };
 };
 
+zone "example2-toomanykeys" {
+	type secondary;
+	file "example2-toomanykeys.bk";
+	allow-update-forwarding { 10.53.0.1; };
+	primaries { 10.53.0.1; };
+};
+
 zone "example3" {
 	type secondary;
 	file "example3.bk";
 	allow-update-forwarding { 10.53.0.1; };
-	primaries { 10.53.0.1; };
+	primaries {
+		10.53.0.1 tls tls-example-primary; // bad
+		10.53.0.1; // good
+	};
 };
 
 zone "noprimary" {

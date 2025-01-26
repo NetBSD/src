@@ -26,15 +26,37 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint.blackhole";
+};
+
+dnssec-policy "default-dynamic" {
+	inline-signing no;
 };
 
 zone "example" {
 	type primary;
 	allow-update { any; };
 	file "example.db";
+};
+
+zone "relaxed" {
+	type primary;
+	allow-update { any; };
+	check-svcb no;
+	file "relaxed.db";
 };
 
 zone "nsec3param.test" {
@@ -73,6 +95,6 @@ zone "too-big.test" {
 zone "multisigner.test" {
 	type primary;
 	allow-update { any; };
-	dnssec-policy "default";
+	dnssec-policy "default-dynamic";
 	file "multisigner.test.db";
 };

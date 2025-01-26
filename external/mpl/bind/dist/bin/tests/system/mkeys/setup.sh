@@ -11,14 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+# Explicitly setting ALGORITHM_SET is only needed is the script is executed
+# standalone without the pytest runner (e.g. for debugging).
 export ALGORITHM_SET="ecc_default"
-. ../conf.sh
 
-# Ensure the selected algorithm set is okay.
-if [ "$ALGORITHM_SET" = "error" ]; then
-  echofail "Algorithm selection failed." >&2
-  exit 1
-fi
+. ../conf.sh
 
 copy_setports ns1/named1.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf

@@ -11,121 +11,107 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import time
 import os
-
 import pytest
 
 pytest.importorskip("dns", minversion="2.0.0")
-import dns.resolver
+import isctest
+from isctest.compat import dns_rcode
+
+import dns.message
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns3/*-rpz-external.local.db",
+        "ns3/rpz*.txt",
+    ]
+)
 
 
-def wait_for_transfer(ip, port, client_ip, name, rrtype):
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = [ip]
-    resolver.port = port
+@pytest.mark.parametrize(
+    "qname,source,rcode",
+    [
+        # For 10.53.0.1 source IP:
+        # - baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
+        # - gooddomain.com is allowed
+        # - allowed. is allowed
+        ("baddomain.", "10.53.0.1", dns.rcode.NXDOMAIN),
+        ("gooddomain.", "10.53.0.1", dns.rcode.NOERROR),
+        ("allowed.", "10.53.0.1", dns.rcode.NOERROR),
+        # For 10.53.0.2 source IP:
+        # - allowed.com isn't allowed (CNAME .), should return NXDOMAIN
+        # - baddomain.com is allowed
+        # - gooddomain.com is allowed
+        ("baddomain.", "10.53.0.2", dns.rcode.NOERROR),
+        ("gooddomain.", "10.53.0.2", dns.rcode.NOERROR),
+        ("allowed.", "10.53.0.2", dns.rcode.NXDOMAIN),
+        # For 10.53.0.3 source IP:
+        # - gooddomain.com is allowed
+        # - baddomain.com is allowed
+        # - allowed. is allowed
+        ("baddomain.", "10.53.0.3", dns.rcode.NOERROR),
+        ("gooddomain.", "10.53.0.3", dns.rcode.NOERROR),
+        ("allowed.", "10.53.0.3", dns.rcode.NOERROR),
+        # For 10.53.0.4 source IP:
+        # - gooddomain.com isn't allowed (CNAME .), should return NXDOMAIN
+        # - baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
+        # - allowed. is allowed
+        ("baddomain.", "10.53.0.4", dns.rcode.NXDOMAIN),
+        ("gooddomain.", "10.53.0.4", dns.rcode.NXDOMAIN),
+        ("allowed.", "10.53.0.4", dns.rcode.NOERROR),
+        # For 10.53.0.5 (any) source IP:
+        # - baddomain.com is allowed
+        # - gooddomain.com isn't allowed (CNAME .), should return NXDOMAIN
+        # - allowed.com isn't allowed (CNAME .), should return NXDOMAIN
+        ("baddomain.", "10.53.0.5", dns.rcode.NOERROR),
+        ("gooddomain.", "10.53.0.5", dns.rcode.NXDOMAIN),
+        ("allowed.", "10.53.0.5", dns.rcode.NXDOMAIN),
+    ],
+)
+def test_rpz_multiple_views(qname, source, rcode):
+    # Wait for the rpz-external.local zone transfer
+    msg = dns.message.make_query("rpz-external.local", "SOA")
+    isctest.query.tcp(
+        msg,
+        ip="10.53.0.3",
+        source="10.53.0.2",
+        expected_rcode=dns_rcode.NOERROR,
+    )
+    isctest.query.tcp(
+        msg,
+        ip="10.53.0.3",
+        source="10.53.0.5",
+        expected_rcode=dns_rcode.NOERROR,
+    )
 
-    for _ in range(10):
-        try:
-            resolver.resolve(name, rrtype, source=client_ip)
-        except dns.resolver.NoNameservers:
-            time.sleep(1)
-        else:
-            break
-    else:
-        raise RuntimeError(
-            "zone transfer failed: "
-            f"client {client_ip} got NXDOMAIN for {name} {rrtype} from @{ip}:{port}"
-        )
-
-
-def test_rpz_multiple_views(named_port):
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = ["10.53.0.3"]
-    resolver.port = named_port
-
-    wait_for_transfer("10.53.0.3", named_port, "10.53.0.2", "rpz-external.local", "SOA")
-    wait_for_transfer("10.53.0.3", named_port, "10.53.0.5", "rpz-external.local", "SOA")
-
-    # For 10.53.0.1 source IP:
-    # - baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
-    # - gooddomain.com is allowed
-    # - allowed. is allowed
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("baddomain.", "A", source="10.53.0.1")
-
-    ans = resolver.resolve("gooddomain.", "A", source="10.53.0.1")
-    assert ans[0].address == "10.53.0.2"
-
-    ans = resolver.resolve("allowed.", "A", source="10.53.0.1")
-    assert ans[0].address == "10.53.0.2"
-
-    # For 10.53.0.2 source IP:
-    # - allowed.com isn't allowed (CNAME .), should return NXDOMAIN
-    # - baddomain.com is allowed
-    # - gooddomain.com is allowed
-    ans = resolver.resolve("baddomain.", "A", source="10.53.0.2")
-    assert ans[0].address == "10.53.0.2"
-
-    ans = resolver.resolve("gooddomain.", "A", source="10.53.0.2")
-    assert ans[0].address == "10.53.0.2"
-
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("allowed.", "A", source="10.53.0.2")
-
-    # For 10.53.0.3 source IP:
-    # - gooddomain.com is allowed
-    # - baddomain.com is allowed
-    # - allowed. is allowed
-    ans = resolver.resolve("baddomain.", "A", source="10.53.0.3")
-    assert ans[0].address == "10.53.0.2"
-
-    ans = resolver.resolve("gooddomain.", "A", source="10.53.0.3")
-    assert ans[0].address == "10.53.0.2"
-
-    ans = resolver.resolve("allowed.", "A", source="10.53.0.3")
-    assert ans[0].address == "10.53.0.2"
-
-    # For 10.53.0.4 source IP:
-    # - gooddomain.com isn't allowed (CNAME .), should return NXDOMAIN
-    # - baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
-    # - allowed. is allowed
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("baddomain.", "A", source="10.53.0.4")
-
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("gooddomain.", "A", source="10.53.0.4")
-
-    ans = resolver.resolve("allowed.", "A", source="10.53.0.4")
-    assert ans[0].address == "10.53.0.2"
-
-    # For 10.53.0.5 (any) source IP:
-    # - baddomain.com is allowed
-    # - gooddomain.com isn't allowed (CNAME .), should return NXDOMAIN
-    # - allowed.com isn't allowed (CNAME .), should return NXDOMAIN
-    ans = resolver.resolve("baddomain.", "A", source="10.53.0.5")
-    assert ans[0].address == "10.53.0.2"
-
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("gooddomain.", "A", source="10.53.0.5")
-
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("allowed.", "A", source="10.53.0.5")
+    msg = dns.message.make_query(qname, "A")
+    res = isctest.query.udp(msg, "10.53.0.3", source=source, expected_rcode=rcode)
+    if rcode == dns.rcode.NOERROR:
+        assert res.answer == [dns.rrset.from_text(qname, 300, "IN", "A", "10.53.0.2")]
 
 
-def test_rpz_passthru_logging(named_port):
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = ["10.53.0.3"]
-    resolver.port = named_port
+def test_rpz_passthru_logging():
+    resolver_ip = "10.53.0.3"
 
     # Should generate a log entry into rpz_passthru.txt
-    ans = resolver.resolve("allowed.", "A", source="10.53.0.1")
-    assert ans[0].address == "10.53.0.2"
+    msg_allowed = dns.message.make_query("allowed.", "A")
+    res_allowed = isctest.query.udp(
+        msg_allowed, resolver_ip, source="10.53.0.1", expected_rcode=dns.rcode.NOERROR
+    )
+    assert res_allowed.answer == [
+        dns.rrset.from_text("allowed.", 300, "IN", "A", "10.53.0.2")
+    ]
 
     # baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
     # Should generate a log entry into rpz.txt
-    with pytest.raises(dns.resolver.NXDOMAIN):
-        resolver.resolve("baddomain.", "A", source="10.53.0.1")
+    msg_not_allowed = dns.message.make_query("baddomain.", "A")
+    res_not_allowed = isctest.query.udp(
+        msg_not_allowed,
+        resolver_ip,
+        source="10.53.0.1",
+        expected_rcode=dns.rcode.NXDOMAIN,
+    )
+    isctest.check.nxdomain(res_not_allowed)
 
     rpz_passthru_logfile = os.path.join("ns3", "rpz_passthru.txt")
     rpz_logfile = os.path.join("ns3", "rpz.txt")

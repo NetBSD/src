@@ -9,6 +9,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.ns*.test*",
+        "ns1/dynamic.db",
+        "ns1/dynamic.db.jnl",
+        "ns2/dynamic.bk",
+        "ns2/dynamic.bk.jnl",
+        "ns2/example.bk",
+    ]
+)
+
 
 def test_case(run_tests_sh):
     run_tests_sh()

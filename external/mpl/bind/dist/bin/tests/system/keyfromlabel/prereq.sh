@@ -13,9 +13,19 @@
 
 . ../conf.sh
 
-if [ -n "${SOFTHSM2_MODULE}" ] && command -v pkcs11-tool >/dev/null && command -v softhsm2-util >/dev/null; then
-  exit 0
-fi
+[ -n "${SOFTHSM2_CONF}" ] || {
+  echo_i "skip: softhsm2 configuration not available"
+  exit 255
+}
 
-echo_i "skip: softhsm2-util or pkcs11-tool not available"
-exit 255
+[ -f "$SOFTHSM2_MODULE" ] || {
+  echo_i "skip: softhsm2 module not available"
+  exit 1
+}
+
+for _bin in softhsm2-util pkcs11-tool; do
+  command -v "$_bin" >/dev/null || {
+    echo_i "skip: $_bin not available"
+    exit 1
+  }
+done

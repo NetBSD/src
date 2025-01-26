@@ -1,0 +1,34 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+@			IN	SOA  secondary.example. hostmaster.example. (
+				1       ; serial
+				20      ; refresh (20 seconds)
+				20      ; retry (20 seconds)
+				1814400 ; expire (3 weeks)
+				3600    ; minimum (1 hour)
+				)
+
+				NS	ns5
+				NS	ns6
+				NS	ns7
+ns5				A	10.53.0.5
+ns6				A	10.53.0.6
+ns7				A	10.53.0.7
+
+$ORIGIN explicit.dsremoved.ns5-6-7.
+bad				NS	ns9.bad
+ns9.bad				A	10.53.0.9
+
+$ORIGIN yes.dsremoved.ns5-6-7.
+bad				NS	ns9.bad
+ns9.bad				A	10.53.0.9

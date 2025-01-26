@@ -19,6 +19,10 @@ dnssec-policy "unlimited" {
 	};
 };
 
+dnssec-policy "default-dynamic" {
+	inline-signing no;
+};
+
 dnssec-policy "manual-rollover" {
 	dnskey-ttl 3600;
 
@@ -30,10 +34,11 @@ dnssec-policy "manual-rollover" {
 
 dnssec-policy "multisigner-model2" {
 	dnskey-ttl 3600;
+	inline-signing no;
 
 	keys {
-		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
-		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 32768 65535;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 32768 65535;
 	};
 };
 
@@ -115,4 +120,21 @@ dnssec-policy "checkds-csk" {
 
 dnssec-policy "ttl" {
 	max-zone-ttl 299;
+};
+
+key-store "ksk" {
+	directory "ksk";
+};
+
+key-store "zsk" {
+	directory "zsk";
+};
+
+dnssec-policy "keystore" {
+	dnskey-ttl 303;
+
+	keys {
+		ksk key-store "ksk" lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-store "zsk" lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
 };

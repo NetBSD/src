@@ -28,6 +28,8 @@ options {
 	fetches-per-server 400;
 };
 
+trust-anchors { };
+
 server 10.53.0.4 {
 	edns no;
 };

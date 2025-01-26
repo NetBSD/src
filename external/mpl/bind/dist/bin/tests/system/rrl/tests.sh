@@ -258,25 +258,21 @@ ckstats final truncated 23
 #########
 sec_start
 
+# check that "would limit" is emitted for "log-only yes;"
 DIGOPTS="+nocookie +nosearch +time=1 +tries=1 +ignore -p ${PORT}"
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
-$DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1
+$DIG $DIGOPTS @$ns4 A a7.tld4 >dig.out.a7.tld 2>/dev/null
+# skip this check if query takes over 500ms
+if grep -E ';; Query time: [1-4]?[0-9]?[0-9] msec' dig.out.a7.tld >/dev/null 2>&1; then
+  for i in 1 2 3 4 5; do
+    $DIG $DIGOPTS @$ns4 A a7.tld4 >/dev/null 2>&1 &
+  done
+  wait
+  grep "would limit" ns4/named.run >/dev/null 2>&1 || setret "\"would limit\" not found in log file."
+fi
 
 # regression test for GL #2839
 DIGOPTS="+bufsize=4096 +ignore -p ${PORT}"
 $DIG $DIGOPTS @$ns4 TXT big.tld4 >/dev/null 2>&1
-
-grep "would limit" ns4/named.run >/dev/null 2>&1 \
-  || setret "\"would limit\" not found in log file."
 
 echo_i "exit status: $ret"
 [ $ret -eq 0 ] || exit 1

@@ -32,6 +32,8 @@ options {
 	qname-minimization disabled;
 };
 
+trust-anchors { };
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm @DEFAULT_HMAC@;

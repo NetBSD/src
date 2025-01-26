@@ -357,7 +357,9 @@ for (;;) {
 			last unless $n == 2;
 			my $len = unpack("n", $lenbuf);
 			$n = $conn->sysread($buf, $len);
+			last unless $n == $len;
 		}
 		sleep(1);
+		$conn->close;
 	}
 }

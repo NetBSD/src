@@ -22,12 +22,12 @@ section, cannot be the basis for CVE assignment or special security-sensitive
 handling of issues.
 
 Unauthorized access can potentially disclose sensitive data, slow down server
-operation, etc. Unauthorized, unexpected, or incorrect writes to listed objects
-can potentically cause crashes, incorrect data handling, or corruption.
+operation, etc. Unauthorized, unexpected, or incorrect writes to any of the following listed objects
+can potentially cause crashes, incorrect data handling, or corruption:
 
 - All files stored on disk - including zone files, configuration files, key
   files, temporary files, etc.
-- Clients communicating via :any:`controls` socket using configured keys
+- Clients communicating via the :any:`controls` socket using configured keys
 - Access to :any:`statistics-channels` from untrusted clients
 - Sockets used for :any:`update-policy` type `external`
 
@@ -80,12 +80,12 @@ ACLs give users finer control over who can access the
 name server, without cluttering up configuration files with huge lists of
 IP addresses.
 
-It is a *good idea* to use ACLs, and to control access.
+It is a *good idea* to use ACLs and to control access.
 Limiting access to the server by outside parties can help prevent
-spoofing and denial of service (DoS) attacks against the server.
+spoofing and denial-of-service (DoS) attacks against the server.
 
 ACLs match clients on the basis of up to three characteristics: 1) The
-client's IP address; 2) the TSIG key that was used to sign the
+client's IP address; 2) the TSIG or SIG(0) key that was used to sign the
 request, if any; and 3) an address prefix encoded in an EDNS
 Client-Subnet option, if any.
 
@@ -126,7 +126,7 @@ and no queries at all from the networks specified in ``bogusnets``.
 
 In addition to network addresses and prefixes, which are matched against
 the source address of the DNS request, ACLs may include ``key``
-elements, which specify the name of a TSIG key.
+elements, which specify the name of a TSIG or SIG(0) key.
 
 When BIND 9 is built with GeoIP support, ACLs can also be used for
 geographic access restrictions. This is done by specifying an ACL

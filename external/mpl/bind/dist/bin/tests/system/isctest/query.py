@@ -10,34 +10,54 @@
 # information regarding copyright ownership.
 
 import os
-from typing import Optional
+import time
+from typing import Any, Callable, Optional
 
 import dns.query
 import dns.message
 
+import isctest.log
+from isctest.compat import dns_rcode
 
 QUERY_TIMEOUT = 10
 
 
-def udp(
+def generic_query(
+    query_func: Callable[..., Any],
     message: dns.message.Message,
     ip: str,
     port: Optional[int] = None,
     source: Optional[str] = None,
     timeout: int = QUERY_TIMEOUT,
-) -> dns.message.Message:
+    attempts: int = 10,
+    expected_rcode: dns_rcode = None,
+) -> Any:
     if port is None:
         port = int(os.environ["PORT"])
-    return dns.query.udp(message, ip, timeout, port=port, source=source)
+    res = None
+    for attempt in range(attempts):
+        try:
+            isctest.log.debug(
+                f"{query_func.__name__}(): ip={ip}, port={port}, source={source}, "
+                f"timeout={timeout}, attempts left={attempts-attempt}"
+            )
+            res = query_func(message, ip, timeout, port=port, source=source)
+            if res.rcode() == expected_rcode or expected_rcode is None:
+                return res
+        except (dns.exception.Timeout, ConnectionRefusedError) as e:
+            isctest.log.debug(f"{query_func.__name__}(): the '{e}' exceptio raised")
+        time.sleep(1)
+    if expected_rcode is not None:
+        last_rcode = dns_rcode.to_text(res.rcode()) if res else None
+        isctest.log.debug(
+            f"{query_func.__name__}(): expected rcode={dns_rcode.to_text(expected_rcode)}, last rcode={last_rcode}"
+        )
+    raise dns.exception.Timeout
 
 
-def tcp(
-    message: dns.message.Message,
-    ip: str,
-    port: Optional[int] = None,
-    source: Optional[str] = None,
-    timeout: int = QUERY_TIMEOUT,
-) -> dns.message.Message:
-    if port is None:
-        port = int(os.environ["PORT"])
-    return dns.query.tcp(message, ip, timeout, port=port, source=source)
+def udp(*args, **kwargs) -> Any:
+    return generic_query(dns.query.udp, *args, **kwargs)
+
+
+def tcp(*args, **kwargs) -> Any:
+    return generic_query(dns.query.tcp, *args, **kwargs)
