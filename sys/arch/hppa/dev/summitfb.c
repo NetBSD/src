@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.28 2025/01/07 05:36:35 riastradh Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.29 2025/01/26 11:21:21 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.28 2025/01/07 05:36:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.29 2025/01/26 11:21:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.28 2025/01/07 05:36:35 riastradh Exp 
 #else
 #define	DPRINTF(s) __nothing
 #endif
-
-//#define SUMMITFB_ENABLE_GC
 
 int	summitfb_match(device_t, cfdata_t, void *);
 void	summitfb_attach(device_t, device_t, void *);
@@ -139,7 +137,7 @@ static int 	summitfb_putpalreg(struct summitfb_softc *, uint8_t, uint8_t,
 		    uint8_t, uint8_t);
 
 static inline void summitfb_setup_fb(struct summitfb_softc *);
-
+static void 	summitfb_clearfb(struct summitfb_softc *);
 static void	summitfb_rectfill(struct summitfb_softc *, int, int, int, int,
 		    uint32_t);
 static void	summitfb_bitblt(void *, int, int, int, int, int,
@@ -687,7 +685,6 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 		summitfb_write4(sc, VISFX_OTR, OTR_A);	// all transparent
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
-	//summitfb_write4(sc, VISFX_CONTROL, CONTROL_WFC);
 }
 
 void
@@ -707,7 +704,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xb08048, 0x1b);	/* MFU_BSCCTL */
 
 	summitfb_write4(sc, 0x920860, 0xe4);	/* FBC_RBS */
-	summitfb_write4(sc, 0x921114, 0);	/* CPE, ckip plane enable */
+	summitfb_write4(sc, 0x921114, 0);	/* CPE, clip plane enable */
 	summitfb_write4(sc, 0x9211d8, 0);	/* FCDA */
 
 	summitfb_write4(sc, 0xa00818, 0);	/* WORG window origin */
@@ -724,7 +721,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, VISFX_FOE, FOE_BLEND_ROP);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
-	summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
+	summitfb_read_mode(sc, OTC04 | BIN8I | BUFovl);
 	summitfb_write4(sc, VISFX_CLIP_TL, 0);
 	summitfb_write4(sc, VISFX_CLIP_WH,
 	    ((sc->sc_scr.fbwidth) << 16) | (sc->sc_scr.fbheight));
@@ -749,9 +746,10 @@ summitfb_setup(struct summitfb_softc *sc)
 
 	/* zero the attribute plane */
 	summitfb_write_mode(sc, OTC04 | BINapln);
-	summitfb_wait_fifo(sc, 4);
+	summitfb_wait_fifo(sc, 12);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xff);
 	summitfb_write4(sc, VISFX_IBO, 0);	/* GXclear */
+	summitfb_write4(sc, VISFX_FG_COLOUR, 0);
 	summitfb_write4(sc, VISFX_START, 0);
 	summitfb_write4(sc, VISFX_SIZE, (sc->sc_width << 16) | sc->sc_height);
 	summitfb_wait(sc);
@@ -828,7 +826,8 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
 				summitfb_set_video(sc, 1);
-			}
+			} else
+				summitfb_clearfb(sc);
 			summitfb_setup_fb(sc);
 		}
 		return 0;
@@ -1070,12 +1069,23 @@ summitfb_wait_fifo(struct summitfb_softc *sc, uint32_t slots)
 }
 
 static void
+summitfb_clearfb(struct summitfb_softc *sc)
+{
+	summitfb_write_mode(sc, OTC32 | BIN8F | BUFBL | BUFFL | 0x8c0);
+	summitfb_wait_fifo(sc, 10);
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
+	summitfb_write4(sc, VISFX_FG_COLOUR, 0);
+	summitfb_write4(sc, VISFX_START, 0);
+	summitfb_write4(sc, VISFX_SIZE, (sc->sc_width << 16) | sc->sc_height);
+}
+
+static void
 summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
     uint32_t bg)
 {
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_FILL);
-	summitfb_wait_fifo(sc, 4);
+	summitfb_wait_fifo(sc, 10);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, bg);
 	summitfb_write4(sc, VISFX_START, (x << 16) | y);
@@ -1101,7 +1111,7 @@ summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	}
 	summitfb_write_mode(sc, write_mode);
 	summitfb_read_mode(sc, read_mode);
-	summitfb_wait_fifo(sc, 4);
+	summitfb_wait_fifo(sc, 10);
 	summitfb_write4(sc, VISFX_IBO, rop);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
@@ -1195,7 +1205,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
-	summitfb_wait_fifo(sc, 6);
+	summitfb_wait_fifo(sc, 12);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
@@ -1237,6 +1247,7 @@ summitfb_loadfont(struct summitfb_softc *sc)
 		return;
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
+	summitfb_wait_fifo(sc, 10);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, 0xffffffff);
 	summitfb_write4(sc, VISFX_BG_COLOUR, 0);
@@ -1311,7 +1322,7 @@ summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, 0x050000c0);
-	summitfb_wait_fifo(sc, 6);
+	summitfb_wait_fifo(sc, 8);
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, fg);
 	summitfb_write4(sc, VISFX_BG_COLOUR, bg);
@@ -1320,6 +1331,7 @@ summitfb_putchar_fast(void *cookie, int row, int col, u_int c, long attr)
 	xs = sc->sc_font_start + (i % sc->sc_cols) * sc->sc_font->fontwidth;
 	ys = (i / sc->sc_cols) * sc->sc_font->fontheight;
 
+	summitfb_wait_fifo(sc, 8);
 	summitfb_write4(sc, VISFX_COPY_SRC, (xs << 16) | ys);
 	summitfb_write4(sc, VISFX_COPY_WH, (wi << 16) | he);
 	summitfb_write4(sc, VISFX_COPY_DST, (x << 16) | y);
@@ -1364,7 +1376,6 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		return;
 
 	summitfb_setup_fb(sc);
-	summitfb_wait(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
 
 	if (rv == GC_ADD)
