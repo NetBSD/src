@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3129 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3130 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -667,3 +667,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ds28e17iic(4): Driver for the DS28E17 1-Wire to I2C bridge chip
 		[brad 20241104]
 	tzcode: Updated to 2025a. [christos 20250123]
+	bind: Import version 9.20.4. [christos 20260126]

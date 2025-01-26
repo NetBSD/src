@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2074 2025/01/23 22:45:49 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2075 2025/01/26 16:39:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -124,12 +124,12 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.18.30/MPL
-Current Vers:	9.18.30/MPL 9.20.2/MPL
+Version:	9.20.4/MPL
+Current Vers:	9.20.4/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
-Date:		2023-09-21
+Date:		2025-01-26
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
