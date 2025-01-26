@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.13 2025/01/24 07:43:42 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.14 2025/01/26 05:20:57 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -42,6 +42,14 @@
 	#define CONTROL_WFC	0x00000200	// FIFO when 0, direct when 1
 #define VISFX_FC		0x641040	// Fault Control
 #define VISFX_STATUS		0x641400	// zero when idle
+/*
+ * about the FIFO register:
+ * - on FX4, there are 0x800 FIFO slots, quite a lot
+ * - based on observation, every register write seems to occupy *two* slots
+ * - we need to write 0 to VISFX_CONTROL to enable FIFO pacing
+ * - the FIFO is quite difficult to overrun but things like x11perf copywinwin
+ *   will do it if we're not careful
+ */
 #define VISFX_FIFO		0x641440
 #define VISFX_FOE		0x920404	// Fragment Operation Enable
 	#define FOE_TEXTURE	0x00000001
@@ -144,9 +152,7 @@
  */
 
 /*
- * Turns out 0x40xxxx and 0x80xxxx access the same registers, one difference
- * is that through 0x80xxxx we can read back at least some values, so use
- * that one
+ * use unbuffered space for cursor registers
  * The _POS, _INDEX and _DATA registers work exactly like on HCRX
  */
 
