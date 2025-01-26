@@ -1,5 +1,4 @@
 cfg_acl_fromconfig
-cfg_acl_fromconfig2
 cfg_aclconfctx_attach
 cfg_aclconfctx_create
 cfg_aclconfctx_detach
@@ -21,6 +20,7 @@ cfg_doc_void
 cfg_gettoken
 cfg_is_enum
 cfg_kasp_fromconfig
+cfg_keystore_fromconfig
 cfg_list_first
 cfg_list_length
 cfg_list_next
@@ -45,6 +45,7 @@ cfg_obj_asuint64
 cfg_obj_attach
 cfg_obj_destroy
 cfg_obj_file
+cfg_obj_getsockaddrtls
 cfg_obj_isboolean
 cfg_obj_isduration
 cfg_obj_isfixedpoint
@@ -53,6 +54,7 @@ cfg_obj_ismap
 cfg_obj_isnetprefix
 cfg_obj_ispercentage
 cfg_obj_issockaddr
+cfg_obj_issockaddrtls
 cfg_obj_isstring
 cfg_obj_istuple
 cfg_obj_istype
@@ -84,6 +86,7 @@ cfg_parse_qstring
 cfg_parse_rawaddr
 cfg_parse_rawport
 cfg_parse_sockaddr
+cfg_parse_sockaddrtls
 cfg_parse_spacelist
 cfg_parse_special
 cfg_parse_sstring
@@ -135,6 +138,7 @@ cfg_rep_map
 cfg_rep_netprefix
 cfg_rep_percentage
 cfg_rep_sockaddr
+cfg_rep_sockaddrtls
 cfg_rep_string
 cfg_rep_tuple
 cfg_rep_uint32
@@ -167,7 +171,7 @@ cfg_type_rndcconf
 cfg_type_rndckey
 cfg_type_sessionkey
 cfg_type_sockaddr
-cfg_type_sockaddrdscp
+cfg_type_sockaddrtls
 cfg_type_sstring
 cfg_type_token
 cfg_type_uint32
@@ -177,6 +181,8 @@ cfg_type_ustring
 cfg_type_void
 cfg_type_zoneopts
 cfg_ungettoken
+isccfg_check_key
+isccfg_check_namedconf
 isccfg_duration_fromtext
 isccfg_duration_toseconds
 isccfg_parse_duration

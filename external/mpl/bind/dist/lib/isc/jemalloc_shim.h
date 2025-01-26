@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc_shim.h,v 1.3 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: jemalloc_shim.h,v 1.4 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,13 +18,12 @@
 #if !defined(HAVE_JEMALLOC)
 
 #include <stddef.h>
+#include <string.h>
 
 #include <isc/util.h>
 
 const char *malloc_conf = NULL;
 
-/* Without jemalloc, isc_mem_get_align() is equal to isc_mem_get() */
-#define MALLOCX_ALIGN(a)    (a & 0) /* Clear the flag */
 #define MALLOCX_ZERO	    ((int)0x40)
 #define MALLOCX_TCACHE_NONE (0)
 #define MALLOCX_ARENA(a)    (0)
@@ -40,15 +39,18 @@ static inline void *
 mallocx(size_t size, int flags) {
 	void *ptr = NULL;
 
-	UNUSED(flags);
-
-	size_info *si = malloc(size + sizeof(*si));
+	size_t bytes = ISC_CHECKED_ADD(size, sizeof(size_info));
+	size_info *si = malloc(bytes);
 	INSIST(si != NULL);
 
 	si->size = size;
 	ptr = &si[1];
 
-	return (ptr);
+	if ((flags & MALLOCX_ZERO) != 0) {
+		memset(ptr, 0, size);
+	}
+
+	return ptr;
 }
 
 static inline void
@@ -62,22 +64,23 @@ static inline size_t
 sallocx(void *ptr, int flags ISC_ATTR_UNUSED) {
 	size_info *si = &(((size_info *)ptr)[-1]);
 
-	return (si[0].size);
+	return si[0].size;
 }
 
 static inline void *
 rallocx(void *ptr, size_t size, int flags) {
-	size_info *si = &(((size_info *)ptr)[-1]);
-
-	UNUSED(flags);
-
-	si = realloc(si, size + sizeof(*si));
+	size_info *si = realloc(&(((size_info *)ptr)[-1]), size + sizeof(*si));
 	INSIST(si != NULL);
+
+	if ((flags & MALLOCX_ZERO) != 0 && size > si->size) {
+		memset((uint8_t *)si + sizeof(*si) + si->size, 0,
+		       size - si->size);
+	}
 
 	si->size = size;
 	ptr = &si[1];
 
-	return (ptr);
+	return ptr;
 }
 
 #endif /* !defined(HAVE_JEMALLOC) */

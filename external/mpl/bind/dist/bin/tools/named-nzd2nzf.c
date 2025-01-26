@@ -1,4 +1,4 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.10 2024/09/22 00:14:04 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.11 2025/01/26 16:25:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,6 @@
 #include <lmdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <isc/print.h>
 
 #include <dns/view.h>
 
@@ -101,5 +99,5 @@ main(int argc, char *argv[]) {
 	mdb_txn_abort(txn);
 	mdb_env_close(env);
 
-	return (0);
+	return 0;
 }

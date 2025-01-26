@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.9 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.10 2025/01/26 16:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,6 @@
 #include <stdbool.h>
 
 #include <isc/base64.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/types.h>
@@ -83,7 +82,7 @@ ignore(dns_rdata_t *param, dns_rdataset_t *privateset) {
 		 * doesn't matter if we are removing this one.
 		 */
 		if (CREATE(rdata.data[1])) {
-			return (false);
+			return false;
 		}
 		if (rdata.data[0] != param->data[0] ||
 		    rdata.data[2] != param->data[2] ||
@@ -99,11 +98,11 @@ ignore(dns_rdata_t *param, dns_rdataset_t *privateset) {
 		 * the caller that it will be removed.
 		 */
 		if (NONSEC(rdata.data[1])) {
-			return (false);
+			return false;
 		}
-		return (true);
+		return true;
 	}
-	return (false);
+	return false;
 }
 
 isc_result_t
@@ -333,7 +332,7 @@ failure:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);
 	}
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -341,7 +340,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 	isc_result_t result;
 
 	if (private->length < 5) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
 	if (private->data[0] == 0) {
@@ -409,11 +408,11 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		snprintf(keybuf, sizeof(keybuf), "key %d/%s", keyid, algbuf);
 		isc_buffer_putstr(buf, keybuf);
 	} else {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
 	isc_buffer_putuint8(buf, 0);
 	result = ISC_R_SUCCESS;
 failure:
-	return (result);
+	return result;
 }

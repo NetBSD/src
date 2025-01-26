@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2022/03/07 09:23:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2025/01/26 16:25:52 christos Exp $
 
-SUBDIR+= libisc .WAIT libdns libisccc .WAIT libisccfg .WAIT libbind9 libirs
+SUBDIR+= libisc .WAIT libdns libisccc .WAIT libisccfg
 SUBDIR+= libns .WAIT plugins
 
 .include <bsd.buildinstall.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,15 +18,22 @@
 /*! \file dns/forward.h */
 
 #include <isc/lang.h>
+#include <isc/mem.h>
+#include <isc/refcount.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
 
+#include <dns/fixedname.h>
+#include <dns/qp.h>
 #include <dns/types.h>
+
+/* Add -DDNS_FORWARD_TRACE=1 to CFLAGS for detailed reference tracing */
 
 ISC_LANG_BEGINDECLS
 
 struct dns_forwarder {
 	isc_sockaddr_t addr;
+	dns_name_t    *tlsname;
 	ISC_LINK(dns_forwarder_t) link;
 };
 
@@ -35,20 +42,20 @@ typedef ISC_LIST(struct dns_forwarder) dns_forwarderlist_t;
 struct dns_forwarders {
 	dns_forwarderlist_t fwdrs;
 	dns_fwdpolicy_t	    fwdpolicy;
+	isc_mem_t	   *mctx;
+	isc_refcount_t	    references;
+	dns_name_t	    name;
 };
 
-isc_result_t
-dns_fwdtable_create(isc_mem_t *mctx, dns_fwdtable_t **fwdtablep);
+void
+dns_fwdtable_create(isc_mem_t *mctx, dns_view_t *view,
+		    dns_fwdtable_t **fwdtablep);
 /*%<
  * Creates a new forwarding table.
  *
  * Requires:
  * \li 	mctx is a valid memory context.
  * \li	fwdtablep != NULL && *fwdtablep == NULL
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOMEMORY
  */
 
 isc_result_t
@@ -75,24 +82,8 @@ dns_fwdtable_add(dns_fwdtable_t *fwdtable, const dns_name_t *name,
  */
 
 isc_result_t
-dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name);
-/*%<
- * Removes an entry for 'name' from the forwarding table.  If an entry
- * that exactly matches 'name' does not exist, ISC_R_NOTFOUND will be returned.
- *
- * Requires:
- * \li	fwdtable is a valid forwarding table.
- * \li	name is a valid name
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOTFOUND
- * \li	#ISC_R_NOSPACE
- */
-
-isc_result_t
 dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
-		  dns_name_t *foundname, dns_forwarders_t **forwardersp);
+		  dns_forwarders_t **forwardersp);
 /*%<
  * Finds a domain in the forwarding table.  The closest matching parent
  * domain is returned.
@@ -101,13 +92,11 @@ dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
  * \li	fwdtable is a valid forwarding table.
  * \li	name is a valid name
  * \li	forwardersp != NULL && *forwardersp == NULL
- * \li	foundname to be NULL or a valid name with buffer.
  *
  * Returns:
  * \li	#ISC_R_SUCCESS         Success
  * \li	#DNS_R_PARTIALMATCH    Superdomain found with data
  * \li	#ISC_R_NOTFOUND        No match
- * \li	#ISC_R_NOSPACE         Concatenating nodes to form foundname failed
  */
 
 void
@@ -122,4 +111,17 @@ dns_fwdtable_destroy(dns_fwdtable_t **fwdtablep);
  * \li	all memory associated with the forwarding table is freed.
  */
 
+#if DNS_FORWARD_TRACE
+#define dns_forwarders_ref(ptr) \
+	dns_forwarders__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_forwarders_unref(ptr) \
+	dns_forwarders__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_forwarders_attach(ptr, ptrp) \
+	dns_forwarders__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_forwarders_detach(ptrp) \
+	dns_forwarders__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_forwarders);
+#else
+ISC_REFCOUNT_DECL(dns_forwarders);
+#endif
 ISC_LANG_ENDDECLS

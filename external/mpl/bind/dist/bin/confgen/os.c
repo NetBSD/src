@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.2 2024/02/21 22:51:00 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@ set_user(FILE *fd, const char *user) {
 	pw = getpwnam(user);
 	if (pw == NULL) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
-	return (fchown(fileno(fd), pw->pw_uid, -1));
+	return fchown(fileno(fd), pw->pw_uid, -1);
 }

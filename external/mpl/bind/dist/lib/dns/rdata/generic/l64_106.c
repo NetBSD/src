@@ -1,4 +1,4 @@
-/*	$NetBSD: l64_106.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.9 2025/01/26 16:25:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ fromtext_l64(ARGS_FROMTEXT) {
 	if (locator_pton(DNS_AS_STR(token), locator) != 1) {
 		RETTOK(DNS_R_SYNTAX);
 	}
-	return (mem_tobuffer(target, locator, NS_LOCATORSZ));
+	return mem_tobuffer(target, locator, NS_LOCATORSZ);
 }
 
 static isc_result_t
@@ -75,7 +75,7 @@ totext_l64(ARGS_TOTEXT) {
 		 region.base[2] << 8 | region.base[3],
 		 region.base[4] << 8 | region.base[5],
 		 region.base[6] << 8 | region.base[7]);
-	return (str_totext(buf, target));
+	return str_totext(buf, target);
 }
 
 static isc_result_t
@@ -85,16 +85,15 @@ fromwire_l64(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_l64);
 
 	UNUSED(type);
-	UNUSED(options);
 	UNUSED(rdclass);
 	UNUSED(dctx);
 
 	isc_buffer_activeregion(source, &sregion);
 	if (sregion.length != 10) {
-		return (DNS_R_FORMERR);
+		return DNS_R_FORMERR;
 	}
 	isc_buffer_forward(source, sregion.length);
-	return (mem_tobuffer(target, sregion.base, sregion.length));
+	return mem_tobuffer(target, sregion.base, sregion.length);
 }
 
 static isc_result_t
@@ -104,7 +103,7 @@ towire_l64(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -120,7 +119,7 @@ compare_l64(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &region1);
 	dns_rdata_toregion(rdata2, &region2);
-	return (isc_region_compare(&region1, &region2));
+	return isc_region_compare(&region1, &region2);
 }
 
 static isc_result_t
@@ -136,7 +135,7 @@ fromstruct_l64(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	RETERR(uint16_tobuffer(l64->pref, target));
-	return (mem_tobuffer(target, l64->l64, sizeof(l64->l64)));
+	return mem_tobuffer(target, l64->l64, sizeof(l64->l64));
 }
 
 static isc_result_t
@@ -157,7 +156,7 @@ tostruct_l64(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	l64->pref = uint16_fromregion(&region);
 	memmove(l64->l64, region.base, region.length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -180,7 +179,7 @@ additionaldata_l64(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -192,7 +191,7 @@ digest_l64(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -204,7 +203,7 @@ checkowner_l64(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -216,12 +215,12 @@ checknames_l64(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_l64(ARGS_COMPARE) {
-	return (compare_l64(rdata1, rdata2));
+	return compare_l64(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_L64_106_C */

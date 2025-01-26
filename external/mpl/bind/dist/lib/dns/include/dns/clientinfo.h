@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.h,v 1.8 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: clientinfo.h,v 1.9 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@ ISC_LANG_BEGINDECLS
 #define DNS_CLIENTINFO_VERSION 3
 /*
  * Any updates to this structure should also be applied in
- * contrib/modules/dlz/dlz_minmal.h.
+ * https://gitlab.isc.org/isc-projects/dlz-modules/-/raw/main/modules/include/dlz_minimal.h
  */
 typedef struct dns_clientinfo {
 	uint16_t  version;

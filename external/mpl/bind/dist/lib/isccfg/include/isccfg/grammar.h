@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.h,v 1.9 2024/02/21 22:52:45 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.10 2025/01/26 16:25:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -180,9 +180,9 @@ struct cfg_obj {
 		cfg_obj_t      **tuple;
 		isc_sockaddr_t	 sockaddr;
 		struct {
-			isc_sockaddr_t sockaddr;
-			int32_t	       dscp;
-		} sockaddrdscp;
+			isc_sockaddr_t	 sockaddr;
+			isc_textregion_t tls;
+		} sockaddrtls;
 		cfg_netprefix_t	  netprefix;
 		isccfg_duration_t duration;
 	} value;
@@ -260,8 +260,10 @@ struct cfg_parser {
 };
 
 /* Parser context flags */
-#define CFG_PCTX_SKIP	      0x1
-#define CFG_PCTX_NODEPRECATED 0x2
+#define CFG_PCTX_SKIP		(1 << 0)
+#define CFG_PCTX_NODEPRECATED	(1 << 1)
+#define CFG_PCTX_NOOBSOLETE	(1 << 2)
+#define CFG_PCTX_NOEXPERIMENTAL (1 << 3)
 
 /*@{*/
 /*%
@@ -271,8 +273,8 @@ struct cfg_parser {
 #define CFG_ADDR_V4PREFIXOK 0x00000002
 #define CFG_ADDR_V6OK	    0x00000004
 #define CFG_ADDR_WILDOK	    0x00000008
-#define CFG_ADDR_DSCPOK	    0x00000010
-#define CFG_ADDR_PORTOK	    0x00000020
+#define CFG_ADDR_PORTOK	    0x00000010
+#define CFG_ADDR_TLSOK	    0x00000020
 #define CFG_ADDR_MASK	    (CFG_ADDR_V6OK | CFG_ADDR_V4OK)
 /*@}*/
 
@@ -288,6 +290,7 @@ extern cfg_rep_t cfg_rep_map;
 extern cfg_rep_t cfg_rep_list;
 extern cfg_rep_t cfg_rep_tuple;
 extern cfg_rep_t cfg_rep_sockaddr;
+extern cfg_rep_t cfg_rep_sockaddrtls;
 extern cfg_rep_t cfg_rep_netprefix;
 extern cfg_rep_t cfg_rep_void;
 extern cfg_rep_t cfg_rep_fixedpoint;
@@ -311,7 +314,7 @@ extern cfg_type_t cfg_type_bracketed_text;
 extern cfg_type_t cfg_type_optional_bracketed_text;
 extern cfg_type_t cfg_type_keyref;
 extern cfg_type_t cfg_type_sockaddr;
-extern cfg_type_t cfg_type_sockaddrdscp;
+extern cfg_type_t cfg_type_sockaddrtls;
 extern cfg_type_t cfg_type_netaddr;
 extern cfg_type_t cfg_type_netaddr4;
 extern cfg_type_t cfg_type_netaddr4wild;
@@ -379,6 +382,10 @@ cfg_parse_rawport(cfg_parser_t *pctx, unsigned int flags, in_port_t *port);
 
 isc_result_t
 cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+isc_result_t
+cfg_parse_sockaddrtls(cfg_parser_t *pctx, const cfg_type_t *type,
+		      cfg_obj_t **ret);
 
 isc_result_t
 cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);

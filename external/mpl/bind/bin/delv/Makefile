@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2024/02/21 22:50:55 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2025/01/26 16:24:31 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -9,7 +9,7 @@ BINDIR=	/usr/bin
 DIST=${IDIST}/bin/delv
 CPPFLAGS+=	-I${DIST}/include -I${IDIST}/lib/irs/include
 CPPFLAGS+=	-DSYSCONFDIR=\"${SYSCONFDIR}\"
-LDADD+=		-lirs -lisccfg
+LDADD+=		-lisccfg
 DPADD+=		${LIBIRS} ${LIBISCCFG}
 
 .PATH: ${DIST} ${IDIST}/doc/man

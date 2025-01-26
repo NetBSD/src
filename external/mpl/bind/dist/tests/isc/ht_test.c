@@ -1,4 +1,4 @@
-/*	$NetBSD: ht_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: ht_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <isc/hash.h>
 #include <isc/ht.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -41,12 +40,12 @@
 #undef mctx
 
 static void
-test_ht_full(int bits, uintptr_t count) {
+test_ht_full(uint8_t init_bits, uintptr_t count) {
 	isc_ht_t *ht = NULL;
 	isc_result_t result;
 	uintptr_t i;
 
-	isc_ht_init(&ht, mctx, bits, ISC_HT_CASE_SENSITIVE);
+	isc_ht_init(&ht, mctx, init_bits, ISC_HT_CASE_SENSITIVE);
 	assert_non_null(ht);
 
 	for (i = 1; i < count; i++) {
@@ -186,12 +185,12 @@ test_ht_iterator(void) {
 	isc_result_t result;
 	isc_ht_iter_t *iter = NULL;
 	uintptr_t i;
-	uintptr_t count = 10000;
+	uintptr_t count = 7600;
 	uint32_t walked;
 	unsigned char key[16];
 	size_t tksize;
 
-	isc_ht_init(&ht, mctx, 16, ISC_HT_CASE_SENSITIVE);
+	isc_ht_init(&ht, mctx, HT_MIN_BITS, ISC_HT_CASE_SENSITIVE);
 	assert_non_null(ht);
 	for (i = 1; i <= count; i++) {
 		/*
@@ -203,6 +202,9 @@ test_ht_iterator(void) {
 		result = isc_ht_add(ht, key, 16, (void *)i);
 		assert_int_equal(result, ISC_R_SUCCESS);
 	}
+
+	/* We want to iterate while rehashing is in progress */
+	assert_true(rehashing_in_progress(ht));
 
 	walked = 0;
 	isc_ht_iter_create(ht, &iter);
@@ -283,6 +285,9 @@ test_ht_iterator(void) {
 	assert_int_equal(result, ISC_R_NOMORE);
 	assert_int_equal(walked, 0);
 
+	/* Iterator doesn't progress rehashing */
+	assert_true(rehashing_in_progress(ht));
+
 	isc_ht_iter_destroy(&iter);
 	assert_null(iter);
 
@@ -290,21 +295,34 @@ test_ht_iterator(void) {
 	assert_null(ht);
 }
 
-/* 20 bit, 200K elements test */
-ISC_RUN_TEST_IMPL(isc_ht_20) {
-	UNUSED(state);
-	test_ht_full(20, 200000);
+/* 1 bit, 120 elements test, full rehashing */
+ISC_RUN_TEST_IMPL(isc_ht_1_120) {
+	test_ht_full(1, 120);
+	return;
 }
 
-/* 8 bit, 20000 elements crowded test */
-ISC_RUN_TEST_IMPL(isc_ht_8) {
+/* 6 bit, 1000 elements test, full rehashing */
+ISC_RUN_TEST_IMPL(isc_ht_6_1000) {
+	test_ht_full(6, 1000);
+	return;
+}
+
+/* 24 bit, 200K elements test, no rehashing */
+ISC_RUN_TEST_IMPL(isc_ht_24_200000) {
+	UNUSED(state);
+	test_ht_full(24, 200000);
+}
+
+/* 15 bit, 45K elements test, full rehashing */
+ISC_RUN_TEST_IMPL(isc_ht_1_48000) {
+	UNUSED(state);
+	test_ht_full(1, 48000);
+}
+
+/* 8 bit, 20k elements test, partial rehashing */
+ISC_RUN_TEST_IMPL(isc_ht_8_20000) {
 	UNUSED(state);
 	test_ht_full(8, 20000);
-}
-
-ISC_RUN_TEST_IMPL(isc_ht_1) {
-	UNUSED(state);
-	test_ht_full(1, 100);
 }
 
 /* test hashtable iterator */
@@ -365,9 +383,11 @@ ISC_RUN_TEST_IMPL(isc_ht_case) {
 
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY(isc_ht_case)
-ISC_TEST_ENTRY(isc_ht_20)
-ISC_TEST_ENTRY(isc_ht_8)
-ISC_TEST_ENTRY(isc_ht_1)
+ISC_TEST_ENTRY(isc_ht_1_120)
+ISC_TEST_ENTRY(isc_ht_6_1000)
+ISC_TEST_ENTRY(isc_ht_24_200000)
+ISC_TEST_ENTRY(isc_ht_1_48000)
+ISC_TEST_ENTRY(isc_ht_8_20000)
 ISC_TEST_ENTRY(isc_ht_iterator)
 ISC_TEST_LIST_END
 

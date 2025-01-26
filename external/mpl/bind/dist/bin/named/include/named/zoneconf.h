@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.h,v 1.7 2024/02/21 22:51:06 christos Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.8 2025/01/26 16:24:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,8 +30,8 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		     const cfg_obj_t *zconfig, cfg_aclconfctx_t *ac,
-		     dns_kasplist_t *kasplist, dns_zone_t *zone,
-		     dns_zone_t *raw);
+		     dns_kasplist_t *kasplist, dns_keystorelist_t *keystores,
+		     dns_zone_t *zone, dns_zone_t *raw);
 /*%<
  * Configure or reconfigure a zone according to the named.conf
  * data.
@@ -46,7 +46,9 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
  */
 
 bool
-named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig);
+named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig,
+		    const cfg_obj_t *vconfig, const cfg_obj_t *config,
+		    dns_kasplist_t *kasplist);
 /*%<
  * If 'zone' can be safely reconfigured according to the configuration
  * data in 'zconfig', return true.  If the configuration data is so
@@ -55,10 +57,12 @@ named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig);
  */
 
 bool
-named_zone_inlinesigning(const cfg_obj_t *zconfig);
+named_zone_inlinesigning(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
+			 const cfg_obj_t *config, dns_kasplist_t *kasplist);
 /*%<
  * Determine if zone uses inline-signing. This is true if inline-signing
- * is set to yes.
+ * is set to yes, in the zone clause or in the zone's dnssec-policy clause.
+ * By default, dnssec-policy uses inline-signing.
  */
 
 isc_result_t

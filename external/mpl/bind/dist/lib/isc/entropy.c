@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.7 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.8 2025/01/26 16:25:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,18 +13,14 @@
  * information regarding copyright ownership.
  */
 
-#include <openssl/err.h>
-#include <openssl/rand.h>
-
+#include <isc/entropy.h>
 #include <isc/types.h>
 #include <isc/util.h>
-
-#include "entropy_private.h"
+#include <isc/uv.h>
 
 void
 isc_entropy_get(void *buf, size_t buflen) {
-	if (RAND_bytes(buf, buflen) < 1) {
-		FATAL_ERROR("RAND_bytes(): %s",
-			    ERR_error_string(ERR_get_error(), NULL));
-	}
+	int r = uv_random(NULL, NULL, buf, buflen, 0, NULL);
+
+	UV_RUNTIME_CHECK(uv_random, r);
 }

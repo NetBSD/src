@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.12 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.13 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,13 +15,13 @@
 
 /*! \file */
 
+#include <netdb.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
 #include <isc/netaddr.h>
-#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
@@ -29,16 +29,16 @@
 
 bool
 isc_sockaddr_equal(const isc_sockaddr_t *a, const isc_sockaddr_t *b) {
-	return (isc_sockaddr_compare(a, b,
-				     ISC_SOCKADDR_CMPADDR |
-					     ISC_SOCKADDR_CMPPORT |
-					     ISC_SOCKADDR_CMPSCOPE));
+	return isc_sockaddr_compare(a, b,
+				    ISC_SOCKADDR_CMPADDR |
+					    ISC_SOCKADDR_CMPPORT |
+					    ISC_SOCKADDR_CMPSCOPE);
 }
 
 bool
 isc_sockaddr_eqaddr(const isc_sockaddr_t *a, const isc_sockaddr_t *b) {
-	return (isc_sockaddr_compare(
-		a, b, ISC_SOCKADDR_CMPADDR | ISC_SOCKADDR_CMPSCOPE));
+	return isc_sockaddr_compare(
+		a, b, ISC_SOCKADDR_CMPADDR | ISC_SOCKADDR_CMPSCOPE);
 }
 
 bool
@@ -47,7 +47,7 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 	REQUIRE(a != NULL && b != NULL);
 
 	if (a->length != b->length) {
-		return (false);
+		return false;
 	}
 
 	/*
@@ -56,7 +56,7 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 	 */
 
 	if (a->type.sa.sa_family != b->type.sa.sa_family) {
-		return (false);
+		return false;
 	}
 	switch (a->type.sa.sa_family) {
 	case AF_INET:
@@ -64,12 +64,12 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 		    memcmp(&a->type.sin.sin_addr, &b->type.sin.sin_addr,
 			   sizeof(a->type.sin.sin_addr)) != 0)
 		{
-			return (false);
+			return false;
 		}
 		if ((flags & ISC_SOCKADDR_CMPPORT) != 0 &&
 		    a->type.sin.sin_port != b->type.sin.sin_port)
 		{
-			return (false);
+			return false;
 		}
 		break;
 	case AF_INET6:
@@ -77,7 +77,7 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 		    memcmp(&a->type.sin6.sin6_addr, &b->type.sin6.sin6_addr,
 			   sizeof(a->type.sin6.sin6_addr)) != 0)
 		{
-			return (false);
+			return false;
 		}
 		/*
 		 * If ISC_SOCKADDR_CMPSCOPEZERO is set then don't return
@@ -89,20 +89,20 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 		     (a->type.sin6.sin6_scope_id != 0 &&
 		      b->type.sin6.sin6_scope_id != 0)))
 		{
-			return (false);
+			return false;
 		}
 		if ((flags & ISC_SOCKADDR_CMPPORT) != 0 &&
 		    a->type.sin6.sin6_port != b->type.sin6.sin6_port)
 		{
-			return (false);
+			return false;
 		}
 		break;
 	default:
 		if (memcmp(&a->type, &b->type, a->length) != 0) {
-			return (false);
+			return false;
 		}
 	}
-	return (true);
+	return true;
 }
 
 bool
@@ -111,7 +111,7 @@ isc_sockaddr_eqaddrprefix(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 	isc_netaddr_t na, nb;
 	isc_netaddr_fromsockaddr(&na, a);
 	isc_netaddr_fromsockaddr(&nb, b);
-	return (isc_netaddr_eqprefix(&na, &nb, prefixlen));
+	return isc_netaddr_eqprefix(&na, &nb, prefixlen);
 }
 
 isc_result_t
@@ -138,27 +138,8 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		snprintf(pbuf, sizeof(pbuf), "%u",
 			 ntohs(sockaddr->type.sin6.sin6_port));
 		break;
-	case AF_UNIX:
-		plen = strlen(sockaddr->type.sunix.sun_path);
-		if (plen >= isc_buffer_availablelength(target)) {
-			return (ISC_R_NOSPACE);
-		}
-
-		isc_buffer_putmem(
-			target,
-			(const unsigned char *)sockaddr->type.sunix.sun_path,
-			plen);
-
-		/*
-		 * Null terminate after used region.
-		 */
-		isc_buffer_availableregion(target, &avail);
-		INSIST(avail.length >= 1);
-		avail.base[0] = '\0';
-
-		return (ISC_R_SUCCESS);
 	default:
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	plen = strlen(pbuf);
@@ -167,11 +148,11 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 	isc_netaddr_fromsockaddr(&netaddr, sockaddr);
 	result = isc_netaddr_totext(&netaddr, target);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	if (1 + plen + 1 > isc_buffer_availablelength(target)) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	isc_buffer_putmem(target, (const unsigned char *)"#", 1);
@@ -184,7 +165,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 	INSIST(avail.length >= 1);
 	avail.base[0] = '\0';
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -208,51 +189,56 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 	}
 }
 
-unsigned int
-isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, bool address_only) {
-	unsigned int length = 0;
-	const unsigned char *s = NULL;
-	unsigned int h = 0;
+void
+isc_sockaddr_hash_ex(isc_hash32_t *hash, const isc_sockaddr_t *sockaddr,
+		     bool address_only) {
+	REQUIRE(sockaddr != NULL);
+
+	size_t len = 0;
+	const uint8_t *s = NULL;
 	unsigned int p = 0;
 	const struct in6_addr *in6;
 
-	REQUIRE(sockaddr != NULL);
-
 	switch (sockaddr->type.sa.sa_family) {
 	case AF_INET:
-		s = (const unsigned char *)&sockaddr->type.sin.sin_addr;
-		p = ntohs(sockaddr->type.sin.sin_port);
-		length = sizeof(sockaddr->type.sin.sin_addr.s_addr);
+		s = (const uint8_t *)&sockaddr->type.sin.sin_addr;
+		len = sizeof(sockaddr->type.sin.sin_addr.s_addr);
+		if (!address_only) {
+			p = ntohs(sockaddr->type.sin.sin_port);
+		}
 		break;
 	case AF_INET6:
 		in6 = &sockaddr->type.sin6.sin6_addr;
-		s = (const unsigned char *)in6;
+		s = (const uint8_t *)in6;
 		if (IN6_IS_ADDR_V4MAPPED(in6)) {
 			s += 12;
-			length = sizeof(sockaddr->type.sin.sin_addr.s_addr);
+			len = sizeof(sockaddr->type.sin.sin_addr.s_addr);
 		} else {
-			length = sizeof(sockaddr->type.sin6.sin6_addr);
+			len = sizeof(sockaddr->type.sin6.sin6_addr);
 		}
-		p = ntohs(sockaddr->type.sin6.sin6_port);
+		if (!address_only) {
+			p = ntohs(sockaddr->type.sin6.sin6_port);
+		}
 		break;
 	default:
-		UNEXPECTED_ERROR("unknown address family: %d",
-				 (int)sockaddr->type.sa.sa_family);
-		s = (const unsigned char *)&sockaddr->type;
-		length = sockaddr->length;
-		p = 0;
+		UNREACHABLE();
 	}
 
-	uint8_t buf[sizeof(struct sockaddr_storage) + sizeof(p)];
-	memmove(buf, s, length);
+	isc_hash32_hash(hash, s, len, true);
 	if (!address_only) {
-		memmove(buf + length, &p, sizeof(p));
-		h = isc_hash_function(buf, length + sizeof(p), true);
-	} else {
-		h = isc_hash_function(buf, length, true);
+		isc_hash32_hash(hash, &p, sizeof(p), true);
 	}
+}
 
-	return (h);
+uint32_t
+isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, bool address_only) {
+	isc_hash32_t hash;
+
+	isc_hash32_init(&hash);
+
+	isc_sockaddr_hash_ex(&hash, sockaddr, address_only);
+
+	return isc_hash32_finalize(&hash);
 }
 
 void
@@ -334,13 +320,13 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr) {
 	/*
 	 * Assume that PF_xxx == AF_xxx for all AF and PF.
 	 */
-	return (sockaddr->type.sa.sa_family);
+	return sockaddr->type.sa.sa_family;
 #else  /* if (AF_INET == PF_INET && AF_INET6 == PF_INET6) */
 	switch (sockaddr->type.sa.sa_family) {
 	case AF_INET:
-		return (PF_INET);
+		return PF_INET;
 	case AF_INET6:
-		return (PF_INET6);
+		return PF_INET6;
 	default:
 		FATAL_ERROR("unknown address family: %d",
 			    (int)sockaddr->type.sa.sa_family);
@@ -402,7 +388,7 @@ isc_sockaddr_getport(const isc_sockaddr_t *sockaddr) {
 			    (int)sockaddr->type.sa.sa_family);
 	}
 
-	return (port);
+	return port;
 }
 
 bool
@@ -413,9 +399,9 @@ isc_sockaddr_ismulticast(const isc_sockaddr_t *sockaddr) {
 	    sockaddr->type.sa.sa_family == AF_INET6)
 	{
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_ismulticast(&netaddr));
+		return isc_netaddr_ismulticast(&netaddr);
 	}
-	return (false);
+	return false;
 }
 
 bool
@@ -424,9 +410,9 @@ isc_sockaddr_isexperimental(const isc_sockaddr_t *sockaddr) {
 
 	if (sockaddr->type.sa.sa_family == AF_INET) {
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_isexperimental(&netaddr));
+		return isc_netaddr_isexperimental(&netaddr);
 	}
-	return (false);
+	return false;
 }
 
 bool
@@ -435,9 +421,9 @@ isc_sockaddr_issitelocal(const isc_sockaddr_t *sockaddr) {
 
 	if (sockaddr->type.sa.sa_family == AF_INET6) {
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_issitelocal(&netaddr));
+		return isc_netaddr_issitelocal(&netaddr);
 	}
-	return (false);
+	return false;
 }
 
 bool
@@ -446,9 +432,9 @@ isc_sockaddr_islinklocal(const isc_sockaddr_t *sockaddr) {
 
 	if (sockaddr->type.sa.sa_family == AF_INET6) {
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_islinklocal(&netaddr));
+		return isc_netaddr_islinklocal(&netaddr);
 	}
-	return (false);
+	return false;
 }
 
 bool
@@ -457,22 +443,9 @@ isc_sockaddr_isnetzero(const isc_sockaddr_t *sockaddr) {
 
 	if (sockaddr->type.sa.sa_family == AF_INET) {
 		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_isnetzero(&netaddr));
+		return isc_netaddr_isnetzero(&netaddr);
 	}
-	return (false);
-}
-
-isc_result_t
-isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
-	if (strlen(path) >= sizeof(sockaddr->type.sunix.sun_path)) {
-		return (ISC_R_NOSPACE);
-	}
-	memset(sockaddr, 0, sizeof(*sockaddr));
-	sockaddr->length = sizeof(sockaddr->type.sunix);
-	sockaddr->type.sunix.sun_family = AF_UNIX;
-	strlcpy(sockaddr->type.sunix.sun_path, path,
-		sizeof(sockaddr->type.sunix.sun_path));
-	return (ISC_R_SUCCESS);
+	return false;
 }
 
 isc_result_t
@@ -486,18 +459,15 @@ isc_sockaddr_fromsockaddr(isc_sockaddr_t *isa, const struct sockaddr *sa) {
 	case AF_INET6:
 		length = sizeof(isa->type.sin6);
 		break;
-	case AF_UNIX:
-		length = sizeof(isa->type.sunix);
-		break;
 	default:
-		return (ISC_R_NOTIMPLEMENTED);
+		return ISC_R_NOTIMPLEMENTED;
 	}
 
-	memset(isa, 0, sizeof(isc_sockaddr_t));
+	*isa = (isc_sockaddr_t){ .length = length,
+				 .link = ISC_LINK_INITIALIZER };
 	memmove(isa, sa, length);
-	isa->length = length;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 bool
@@ -507,7 +477,7 @@ isc_sockaddr_disabled(const isc_sockaddr_t *sockaddr) {
 	    (sockaddr->type.sa.sa_family == AF_INET6 &&
 	     isc_net_probeipv6() == ISC_R_DISABLED))
 	{
-		return (true);
+		return true;
 	}
-	return (false);
+	return false;
 }

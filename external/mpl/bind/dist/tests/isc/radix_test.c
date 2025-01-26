@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: radix_test.c,v 1.3 2025/01/26 16:25:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,8 +43,7 @@ ISC_RUN_TEST_IMPL(isc_radix_remove) {
 
 	UNUSED(state);
 
-	result = isc_radix_create(mctx, &radix, 32);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_radix_create(mctx, &radix, 32);
 
 	in_addr.s_addr = inet_addr("1.1.1.1");
 	isc_netaddr_fromin(&netaddr, &in_addr);
@@ -92,8 +91,7 @@ ISC_RUN_TEST_IMPL(isc_radix_search) {
 
 	UNUSED(state);
 
-	result = isc_radix_create(mctx, &radix, 32);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_radix_create(mctx, &radix, 32);
 
 	in_addr.s_addr = inet_addr("3.3.3.0");
 	isc_netaddr_fromin(&netaddr, &in_addr);

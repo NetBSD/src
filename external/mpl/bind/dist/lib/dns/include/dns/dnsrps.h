@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dnsrps.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,9 +37,9 @@ extern librpz_emsg_t librpz_lib_open_emsg;
  *
  * All of these structures are used by a single thread and so need no locks.
  *
- * rpsdb_t holds the state for a set of RPZ queries.
+ * dns_rpsdb_t holds the state for a set of RPZ queries.
  *
- * rpsnode_t is a link to the rpsdb_t for the set of  RPZ queries
+ * rpsnode_t is a link to the dns_rpsdb_t for the set of  RPZ queries
  * and a flag saying whether it is pretending to be a node with RRs for
  * the qname or the node with the SOA for the zone containing the rewritten
  * RRs or justifying NXDOMAIN.
@@ -47,7 +47,8 @@ extern librpz_emsg_t librpz_lib_open_emsg;
 typedef struct {
 	uint8_t unused;
 } rpsnode_t;
-typedef struct rpsdb {
+
+struct dns_rpsdb {
 	dns_db_t	    common;
 	int		    ref_cnt;
 	librpz_result_id_t  hit_id;
@@ -57,7 +58,7 @@ typedef struct rpsdb {
 	const dns_name_t   *qname;
 	rpsnode_t	    origin_node;
 	rpsnode_t	    data_node;
-} rpsdb_t;
+};
 
 /*
  * Convert a dnsrps policy to a classic BIND9 RPZ policy.
@@ -81,7 +82,7 @@ dns_dnsrps_type2trig(dns_rpz_type_t type);
  * Start dnsrps for the entire server.
  */
 isc_result_t
-dns_dnsrps_server_create(void);
+dns_dnsrps_server_create(const char *librpz_path);
 
 /*
  * Stop dnsrps for the entire server.

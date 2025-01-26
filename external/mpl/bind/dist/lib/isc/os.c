@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.3 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.4 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,11 +33,11 @@ static mode_t isc__os_umask = 0;
 static long
 sysconf_ncpus(void) {
 #if defined(_SC_NPROCESSORS_ONLN)
-	return (sysconf((_SC_NPROCESSORS_ONLN)));
+	return sysconf(_SC_NPROCESSORS_ONLN);
 #elif defined(_SC_NPROC_ONLN)
-	return (sysconf((_SC_NPROC_ONLN)));
+	return sysconf(_SC_NPROC_ONLN);
 #else  /* if defined(_SC_NPROCESSORS_ONLN) */
-	return (0);
+	return 0;
 #endif /* if defined(_SC_NPROCESSORS_ONLN) */
 }
 #endif /* HAVE_SYSCONF */
@@ -55,9 +55,9 @@ sysctl_ncpus(void) {
 	len = sizeof(ncpu);
 	result = sysctlbyname("hw.ncpu", &ncpu, &len, 0, 0);
 	if (result != -1) {
-		return (ncpu);
+		return ncpu;
 	}
-	return (0);
+	return 0;
 }
 #endif /* if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTLBYNAME) */
 
@@ -84,7 +84,7 @@ sched_affinity_ncpus(void) {
 	result = sched_getaffinity(0, sizeof(cpus), &cpus);
 	if (result != -1) {
 #ifdef CPU_COUNT
-		return (CPU_COUNT(&cpus));
+		return CPU_COUNT(&cpus);
 #else
 		int i, n = 0;
 
@@ -92,10 +92,10 @@ sched_affinity_ncpus(void) {
 			if (CPU_ISSET(i, &cpus))
 				++n;
 		}
-		return (n);
+		return n;
 #endif
 	}
-	return (0);
+	return 0;
 }
 #endif
 
@@ -120,9 +120,9 @@ cpuset_affinity_ncpus(void) {
 			if (CPU_ISSET(i, &cpus))
 				++n;
 		}
-		return (n);
+		return n;
 	}
-	return (0);
+	return 0;
 }
 #endif
 
@@ -161,17 +161,17 @@ umask_initialize(void) {
 
 unsigned int
 isc_os_ncpus(void) {
-	return (isc__os_ncpus);
+	return isc__os_ncpus;
 }
 
 unsigned long
 isc_os_cacheline(void) {
-	return (isc__os_cacheline);
+	return isc__os_cacheline;
 }
 
 mode_t
 isc_os_umask(void) {
-	return (isc__os_umask);
+	return isc__os_umask;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.7 2024/02/21 22:52:27 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.8 2025/01/26 16:25:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #endif /* HAVE_BACKTRACE_SYMBOLS */
 
 #include <isc/backtrace.h>
-#include <isc/print.h>
+#include <isc/log.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
@@ -36,7 +36,7 @@ isc_backtrace(void **addrs, int maxaddrs) {
 	 * See notes in backtrace.h.
 	 */
 	if (addrs == NULL || maxaddrs <= 0) {
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -45,22 +45,42 @@ isc_backtrace(void **addrs, int maxaddrs) {
 	 */
 	n = backtrace(addrs, maxaddrs);
 	if (n < 2) {
-		return (-1);
+		return -1;
 	}
 	n--;
 	memmove(addrs, &addrs[1], sizeof(addrs[0]) * n);
 
-	return (n);
+	return n;
 }
 
 char **
 isc_backtrace_symbols(void *const *buffer, int size) {
-	return (backtrace_symbols(buffer, size));
+	return backtrace_symbols(buffer, size);
 }
 
 void
 isc_backtrace_symbols_fd(void *const *buffer, int size, int fd) {
 	backtrace_symbols_fd(buffer, size, fd);
+}
+
+void
+isc_backtrace_log(isc_log_t *lctx, isc_logcategory_t *category,
+		  isc_logmodule_t *module, int level) {
+	void *tracebuf[ISC_BACKTRACE_MAXFRAME];
+	int nframes;
+	char **strs;
+
+	nframes = isc_backtrace(tracebuf, ISC_BACKTRACE_MAXFRAME);
+	if (nframes <= 0) {
+		return;
+	}
+	strs = isc_backtrace_symbols(tracebuf, nframes);
+	if (strs == NULL) {
+		return;
+	}
+	for (int i = 0; i < nframes; i++) {
+		isc_log_write(lctx, category, module, level, "%s", strs[i]);
+	}
 }
 
 #else /* HAVE_BACKTRACE_SYMBOLS */
@@ -70,7 +90,7 @@ isc_backtrace(void **addrs, int maxaddrs) {
 	UNUSED(addrs);
 	UNUSED(maxaddrs);
 
-	return (-1);
+	return -1;
 }
 
 char **
@@ -78,7 +98,7 @@ isc_backtrace_symbols(void *const *buffer, int size) {
 	UNUSED(buffer);
 	UNUSED(size);
 
-	return (NULL);
+	return NULL;
 }
 
 void
@@ -86,6 +106,15 @@ isc_backtrace_symbols_fd(void *const *buffer, int size, int fd) {
 	UNUSED(buffer);
 	UNUSED(size);
 	UNUSED(fd);
+}
+
+void
+isc_backtrace_log(isc_log_t *lctx, isc_logcategory_t *category,
+		  isc_logmodule_t *module, int level) {
+	UNUSED(lctx);
+	UNUSED(category);
+	UNUSED(module);
+	UNUSED(level);
 }
 
 #endif /* HAVE_BACKTRACE_SYMBOLS */

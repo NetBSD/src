@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.11 2024/09/22 00:13:55 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.12 2025/01/26 16:24:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <isc/app.h>
 #include <isc/attributes.h>
 #include <isc/commandline.h>
 #include <isc/dir.h>
@@ -27,10 +26,8 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
@@ -152,15 +149,12 @@ main(int argc, char **argv) {
 		UNREACHABLE();
 	}
 
-	/* Compilation specific defaults */
+	/* When compiling, disable checks by default */
 	if (progmode == progmode_compile) {
-		zone_options |= (DNS_ZONEOPT_CHECKNS | DNS_ZONEOPT_FATALNS |
-				 DNS_ZONEOPT_CHECKSPF | DNS_ZONEOPT_CHECKDUPRR |
-				 DNS_ZONEOPT_CHECKNAMES |
-				 DNS_ZONEOPT_CHECKNAMESFAIL |
-				 DNS_ZONEOPT_CHECKWILDCARD);
-	} else {
-		zone_options |= (DNS_ZONEOPT_CHECKDUPRR | DNS_ZONEOPT_CHECKSPF);
+		zone_options = 0;
+		docheckmx = false;
+		docheckns = false;
+		dochecksrv = false;
 	}
 
 #define ARGCMP(X) (strcmp(isc_commandline_argument, X) == 0)
@@ -168,8 +162,8 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = false;
 
 	while ((c = isc_commandline_parse(argc, argv,
-					  "c:df:hi:jJ:k:L:l:m:n:qr:s:t:o:vw:DF:"
-					  "M:S:T:W:")) != EOF)
+					  "c:df:hi:jJ:k:L:l:m:n:qr:s:t:o:vw:C:"
+					  "DF:M:S:T:W:")) != EOF)
 	{
 		switch (c) {
 		case 'c':
@@ -362,6 +356,18 @@ main(int argc, char **argv) {
 
 		case 'w':
 			workdir = isc_commandline_argument;
+			break;
+
+		case 'C':
+			if (ARGCMP("check-svcb:fail")) {
+				zone_options |= DNS_ZONEOPT_CHECKSVCB;
+			} else if (ARGCMP("check-svcb:ignore")) {
+				zone_options &= ~DNS_ZONEOPT_CHECKSVCB;
+			} else {
+				fprintf(stderr, "invalid argument to -C: %s\n",
+					isc_commandline_argument);
+				exit(EXIT_FAILURE);
+			}
 			break;
 
 		case 'D':
@@ -567,5 +573,5 @@ main(int argc, char **argv) {
 	}
 	isc_mem_destroy(&mctx);
 
-	return ((result == ISC_R_SUCCESS) ? 0 : 1);
+	return (result == ISC_R_SUCCESS) ? 0 : 1;
 }

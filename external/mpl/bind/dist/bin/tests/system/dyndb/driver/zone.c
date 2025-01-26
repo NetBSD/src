@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.6 2024/02/21 22:51:27 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.7 2025/01/26 16:24:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,7 +44,6 @@
 #include <dns/zone.h>
 
 #include "instance.h"
-#include "lock.h"
 #include "log.h"
 #include "util.h"
 
@@ -69,12 +68,8 @@ create_zone(sample_instance_t *const inst, dns_name_t *const name,
 
 	zone_argv[0] = inst->db_name;
 
-	result = dns_zone_create(&raw, inst->mctx);
-	if (result != ISC_R_SUCCESS) {
-		log_write(ISC_LOG_ERROR, "create_zone: dns_zone_create -> %s\n",
-			  isc_result_totext(result));
-		goto cleanup;
-	}
+	dns_zone_create(&raw, inst->mctx, 0); /* FIXME: all zones are assigned
+						 to loop 0 */
 	result = dns_zone_setorigin(raw, name);
 	if (result != ISC_R_SUCCESS) {
 		log_write(ISC_LOG_ERROR,
@@ -107,7 +102,7 @@ create_zone(sample_instance_t *const inst, dns_name_t *const name,
 	dns_acl_detach(&acl_any);
 
 	*rawp = raw;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	dns_name_format(name, zone_name, DNS_NAME_FORMATSIZE);
@@ -123,7 +118,7 @@ cleanup:
 		dns_acl_detach(&acl_any);
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -136,14 +131,13 @@ publish_zone(sample_instance_t *inst, dns_zone_t *zone) {
 	bool freeze = false;
 	dns_zone_t *zone_in_view = NULL;
 	dns_view_t *view_in_zone = NULL;
-	isc_result_t lock_state = ISC_R_IGNORE;
 
 	REQUIRE(inst != NULL);
 	REQUIRE(zone != NULL);
 
 	/* Return success if the zone is already in the view as expected. */
 	result = dns_view_findzone(inst->view, dns_zone_getorigin(zone),
-				   &zone_in_view);
+				   DNS_ZTFIND_EXACT, &zone_in_view);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 		goto cleanup;
 	}
@@ -174,7 +168,6 @@ publish_zone(sample_instance_t *inst, dns_zone_t *zone) {
 		CLEANUP_WITH(ISC_R_UNEXPECTED);
 	}
 
-	run_exclusive_enter(inst, &lock_state);
 	if (inst->view->frozen) {
 		freeze = true;
 		dns_view_thaw(inst->view);
@@ -196,9 +189,8 @@ cleanup:
 	if (freeze) {
 		dns_view_freeze(inst->view);
 	}
-	run_exclusive_exit(inst, lock_state);
 
-	return (result);
+	return result;
 }
 
 /*
@@ -233,7 +225,7 @@ load_zone(dns_zone_t *zone) {
 	}
 
 cleanup:
-	return (result);
+	return result;
 }
 
 /*
@@ -263,5 +255,5 @@ activate_zone(sample_instance_t *inst, dns_zone_t *raw) {
 	}
 
 cleanup:
-	return (result);
+	return result;
 }

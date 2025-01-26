@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.9 2024/02/21 22:52:11 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.10 2025/01/26 16:25:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -130,7 +130,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	/*
 	 * Other Data.
 	 */
-	return (isc_base64_tobuffer(lexer, target, (int)token.value.as_ulong));
+	return isc_base64_tobuffer(lexer, target, (int)token.value.as_ulong);
 }
 
 static isc_result_t
@@ -141,9 +141,9 @@ totext_any_tsig(ARGS_TOTEXT) {
 	char *bufp;
 	dns_name_t name;
 	dns_name_t prefix;
-	bool sub;
 	uint64_t sigtime;
 	unsigned short n;
+	unsigned int opts;
 
 	REQUIRE(rdata->type == dns_rdatatype_tsig);
 	REQUIRE(rdata->rdclass == dns_rdataclass_any);
@@ -156,8 +156,9 @@ totext_any_tsig(ARGS_TOTEXT) {
 	dns_name_init(&name, NULL);
 	dns_name_init(&prefix, NULL);
 	dns_name_fromregion(&name, &sr);
-	sub = name_prefix(&name, tctx->origin, &prefix);
-	RETERR(dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&name, tctx->origin, &prefix) ? DNS_NAME_OMITFINALDOT
+							 : 0;
+	RETERR(dns_name_totext(&prefix, opts, target));
 	RETERR(str_totext(" ", target));
 	isc_region_consume(&sr, name_length(&name));
 
@@ -172,7 +173,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	*bufp-- = 0;
 	*bufp-- = ' ';
 	do {
-		*bufp-- = decdigits[sigtime % 10];
+		*bufp-- = '0' + sigtime % 10;
 		sigtime /= 10;
 	} while (sigtime != 0);
 	bufp++;
@@ -248,9 +249,9 @@ totext_any_tsig(ARGS_TOTEXT) {
 	 * Other.
 	 */
 	if (tctx->width == 0) { /* No splitting */
-		return (isc_base64_totext(&sr, 60, "", target));
+		return isc_base64_totext(&sr, 60, "", target);
 	} else {
-		return (isc_base64_totext(&sr, 60, " ", target));
+		return isc_base64_totext(&sr, 60, " ", target);
 	}
 }
 
@@ -266,20 +267,20 @@ fromwire_any_tsig(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
+	dctx = dns_decompress_setpermitted(dctx, false);
 
 	/*
 	 * Algorithm Name.
 	 */
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, target));
 
 	isc_buffer_activeregion(source, &sr);
 	/*
 	 * Time Signed + Fudge.
 	 */
 	if (sr.length < 8) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	RETERR(mem_tobuffer(target, sr.base, 8));
 	isc_region_consume(&sr, 8);
@@ -289,11 +290,11 @@ fromwire_any_tsig(ARGS_FROMWIRE) {
 	 * Signature Length + Signature.
 	 */
 	if (sr.length < 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	n = uint16_fromregion(&sr);
 	if (sr.length < n + 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	RETERR(mem_tobuffer(target, sr.base, n + 2));
 	isc_region_consume(&sr, n + 2);
@@ -303,7 +304,7 @@ fromwire_any_tsig(ARGS_FROMWIRE) {
 	 * Original ID + Error.
 	 */
 	if (sr.length < 4) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	RETERR(mem_tobuffer(target, sr.base, 4));
 	isc_region_consume(&sr, 4);
@@ -313,14 +314,14 @@ fromwire_any_tsig(ARGS_FROMWIRE) {
 	 * Other Length + Other.
 	 */
 	if (sr.length < 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	n = uint16_fromregion(&sr);
 	if (sr.length < n + 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	isc_buffer_forward(source, n + 2);
-	return (mem_tobuffer(target, sr.base, n + 2));
+	return mem_tobuffer(target, sr.base, n + 2);
 }
 
 static isc_result_t
@@ -333,13 +334,13 @@ towire_any_tsig(ARGS_TOWIRE) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_any);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
+	dns_compress_setpermitted(cctx, false);
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_init(&name, offsets);
 	dns_name_fromregion(&name, &sr);
-	RETERR(dns_name_towire(&name, cctx, target));
+	RETERR(dns_name_towire(&name, cctx, target, NULL));
 	isc_region_consume(&sr, name_length(&name));
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -365,11 +366,11 @@ compare_any_tsig(ARGS_COMPARE) {
 	dns_name_fromregion(&name2, &r2);
 	order = dns_name_rdatacompare(&name1, &name2);
 	if (order != 0) {
-		return (order);
+		return order;
 	}
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -393,7 +394,7 @@ fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 
 	isc_buffer_availableregion(target, &tr);
 	if (tr.length < 6 + 2 + 2) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	/*
@@ -420,7 +421,7 @@ fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 
 	isc_buffer_availableregion(target, &tr);
 	if (tr.length < 2 + 2 + 2) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	/*
@@ -441,7 +442,7 @@ fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 	/*
 	 * Other Data.
 	 */
-	return (mem_tobuffer(target, tsig->other, tsig->otherlen));
+	return mem_tobuffer(target, tsig->other, tsig->otherlen);
 }
 
 static isc_result_t
@@ -499,9 +500,6 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	 */
 	INSIST(sr.length >= tsig->siglen);
 	tsig->signature = mem_maybedup(mctx, sr.base, tsig->siglen);
-	if (tsig->signature == NULL) {
-		goto cleanup;
-	}
 	isc_region_consume(&sr, tsig->siglen);
 
 	/*
@@ -527,21 +525,9 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	 */
 	INSIST(sr.length == tsig->otherlen);
 	tsig->other = mem_maybedup(mctx, sr.base, tsig->otherlen);
-	if (tsig->other == NULL) {
-		goto cleanup;
-	}
 
 	tsig->mctx = mctx;
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (mctx != NULL) {
-		dns_name_free(&tsig->algorithm, tsig->mctx);
-	}
-	if (mctx != NULL && tsig->signature != NULL) {
-		isc_mem_free(mctx, tsig->signature);
-	}
-	return (ISC_R_NOMEMORY);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -576,7 +562,7 @@ additionaldata_any_tsig(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -588,7 +574,7 @@ digest_any_tsig(ARGS_DIGEST) {
 	UNUSED(digest);
 	UNUSED(arg);
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static bool
@@ -601,7 +587,7 @@ checkowner_any_tsig(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -613,12 +599,12 @@ checknames_any_tsig(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_any_tsig(ARGS_COMPARE) {
-	return (compare_any_tsig(rdata1, rdata2));
+	return compare_any_tsig(rdata1, rdata2);
 }
 
 #endif /* RDATA_ANY_255_TSIG_250_C */

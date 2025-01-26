@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.3 2025/01/26 16:25:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,27 +28,25 @@
 #include <isc/atomic.h>
 #include <isc/commandline.h>
 #include <isc/condition.h>
+#include <isc/job.h>
+#include <isc/loop.h>
 #include <isc/mem.h>
-#include <isc/print.h>
-#include <isc/task.h>
+#include <isc/os.h>
 #include <isc/time.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
-#include "netmgr/uv-compat.h"
 #include "timer.c"
 
 #include <tests/isc.h>
 
 /* Set to true (or use -v option) for verbose output */
-static bool verbose = false;
+static bool verbose = true;
 
 #define FUDGE_SECONDS	  0	    /* in absence of clock_getres() */
 #define FUDGE_NANOSECONDS 500000000 /* in absence of clock_getres() */
 
 static isc_timer_t *timer = NULL;
-static isc_condition_t cv;
-static isc_mutex_t mx;
 static isc_time_t endtime;
 static isc_mutex_t lasttime_mx;
 static isc_time_t lasttime;
@@ -58,92 +56,46 @@ static atomic_int_fast32_t eventcnt;
 static atomic_uint_fast32_t errcnt;
 static int nevents;
 
-static int
-_setup(void **state) {
-	atomic_init(&errcnt, ISC_R_SUCCESS);
+typedef struct setup_test_arg {
+	isc_timertype_t timertype;
+	isc_interval_t *interval;
+	isc_job_cb action;
+} setup_test_arg_t;
 
-	setup_managers(state);
+static void
+setup_test_run(void *data) {
+	isc_timertype_t timertype = ((setup_test_arg_t *)data)->timertype;
+	isc_interval_t *interval = ((setup_test_arg_t *)data)->interval;
+	isc_job_cb action = ((setup_test_arg_t *)data)->action;
 
-	return (0);
-}
+	isc_mutex_lock(&lasttime_mx);
+	lasttime = isc_time_now();
+	UNLOCK(&lasttime_mx);
 
-static int
-_teardown(void **state) {
-	teardown_managers(state);
-
-	return (0);
+	isc_timer_create(mainloop, action, (void *)timertype, &timer);
+	isc_timer_start(timer, timertype, interval);
 }
 
 static void
-test_shutdown(isc_task_t *task, isc_event_t *event) {
-	isc_result_t result;
+setup_test(isc_timertype_t timertype, isc_interval_t *interval,
+	   isc_job_cb action) {
+	setup_test_arg_t arg = { .timertype = timertype,
+				 .interval = interval,
+				 .action = action };
 
-	UNUSED(task);
-
-	/*
-	 * Signal shutdown processing complete.
-	 */
-	result = isc_mutex_lock(&mx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_condition_signal(&cv);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_mutex_unlock(&mx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	isc_event_free(&event);
-}
-
-static void
-setup_test(isc_timertype_t timertype, isc_time_t *expires,
-	   isc_interval_t *interval,
-	   void (*action)(isc_task_t *, isc_event_t *)) {
-	isc_result_t result;
-	isc_task_t *task = NULL;
 	isc_time_settoepoch(&endtime);
 	atomic_init(&eventcnt, 0);
 
-	isc_mutex_init(&mx);
 	isc_mutex_init(&lasttime_mx);
-
-	isc_condition_init(&cv);
 
 	atomic_store(&errcnt, ISC_R_SUCCESS);
 
-	LOCK(&mx);
-
-	result = isc_task_create(taskmgr, 0, &task);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_task_onshutdown(task, test_shutdown, NULL);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	isc_mutex_lock(&lasttime_mx);
-	result = isc_time_now(&lasttime);
-	isc_mutex_unlock(&lasttime_mx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_timer_create(timermgr, timertype, expires, interval, task,
-				  action, (void *)timertype, &timer);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	/*
-	 * Wait for shutdown processing to complete.
-	 */
-	while (atomic_load(&eventcnt) != nevents) {
-		result = isc_condition_wait(&cv, &mx);
-		assert_int_equal(result, ISC_R_SUCCESS);
-	}
-
-	UNLOCK(&mx);
+	isc_loop_setup(mainloop, setup_test_run, &arg);
+	isc_loopmgr_run(loopmgr);
 
 	assert_int_equal(atomic_load(&errcnt), ISC_R_SUCCESS);
 
-	isc_task_detach(&task);
-	isc_mutex_destroy(&mx);
 	isc_mutex_destroy(&lasttime_mx);
-	(void)isc_condition_destroy(&cv);
 }
 
 static void
@@ -163,18 +115,6 @@ subthread_assert_true(bool expected, const char *file, unsigned int line) {
 	subthread_assert_true(expected, __FILE__, __LINE__)
 
 static void
-subthread_assert_int_equal(int observed, int expected, const char *file,
-			   unsigned int line) {
-	if (observed != expected) {
-		printf("# %s:%u subthread_assert_int_equal(%d != %d)\n", file,
-		       line, observed, expected);
-		set_global_error(ISC_R_UNEXPECTED);
-	}
-}
-#define subthread_assert_int_equal(observed, expected) \
-	subthread_assert_int_equal(observed, expected, __FILE__, __LINE__)
-
-static void
 subthread_assert_result_equal(isc_result_t result, isc_result_t expected,
 			      const char *file, unsigned int line) {
 	if (result != expected) {
@@ -188,33 +128,22 @@ subthread_assert_result_equal(isc_result_t result, isc_result_t expected,
 	subthread_assert_result_equal(observed, expected, __FILE__, __LINE__)
 
 static void
-ticktock(isc_task_t *task, isc_event_t *event) {
+ticktock(void *arg) {
 	isc_result_t result;
 	isc_time_t now;
 	isc_time_t base;
 	isc_time_t ulim;
 	isc_time_t llim;
 	isc_interval_t interval;
-	isc_eventtype_t expected_event_type;
-
 	int tick = atomic_fetch_add(&eventcnt, 1);
+
+	UNUSED(arg);
 
 	if (verbose) {
 		print_message("# tick %d\n", tick);
 	}
 
-	expected_event_type = ISC_TIMEREVENT_LIFE;
-	if ((uintptr_t)event->ev_arg == isc_timertype_ticker) {
-		expected_event_type = ISC_TIMEREVENT_TICK;
-	}
-
-	if (event->ev_type != expected_event_type) {
-		print_error("# expected event type %u, got %u\n",
-			    expected_event_type, event->ev_type);
-	}
-
-	result = isc_time_now(&now);
-	subthread_assert_result_equal(result, ISC_R_SUCCESS);
+	now = isc_time_now();
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	isc_mutex_lock(&lasttime_mx);
@@ -238,13 +167,10 @@ ticktock(isc_task_t *task, isc_event_t *event) {
 	isc_mutex_unlock(&lasttime_mx);
 	subthread_assert_result_equal(result, ISC_R_SUCCESS);
 
-	isc_event_free(&event);
-
 	if (atomic_load(&eventcnt) == nevents) {
-		result = isc_time_now(&endtime);
-		subthread_assert_result_equal(result, ISC_R_SUCCESS);
+		endtime = isc_time_now();
 		isc_timer_destroy(&timer);
-		isc_task_shutdown(task);
+		isc_loopmgr_shutdown(loopmgr);
 	}
 }
 
@@ -254,7 +180,6 @@ ticktock(isc_task_t *task, isc_event_t *event) {
 
 /* timer type ticker */
 ISC_RUN_TEST_IMPL(ticker) {
-	isc_time_t expires;
 	isc_interval_t interval;
 
 	UNUSED(state);
@@ -264,49 +189,27 @@ ISC_RUN_TEST_IMPL(ticker) {
 	nanoseconds = 500000000;
 
 	isc_interval_set(&interval, seconds, nanoseconds);
-	isc_time_settoepoch(&expires);
 
-	setup_test(isc_timertype_ticker, &expires, &interval, ticktock);
-}
-
-/* timer type once reaches lifetime */
-ISC_RUN_TEST_IMPL(once_life) {
-	isc_result_t result;
-	isc_time_t expires;
-	isc_interval_t interval;
-
-	UNUSED(state);
-
-	nevents = 1;
-	seconds = 1;
-	nanoseconds = 100000000;
-
-	isc_interval_set(&interval, seconds, nanoseconds);
-	result = isc_time_nowplusinterval(&expires, &interval);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	isc_interval_set(&interval, 0, 0);
-
-	setup_test(isc_timertype_once, &expires, &interval, ticktock);
+	setup_test(isc_timertype_ticker, &interval, ticktock);
 }
 
 static void
-test_idle(isc_task_t *task, isc_event_t *event) {
+test_idle(void *arg) {
 	isc_result_t result;
 	isc_time_t now;
 	isc_time_t base;
 	isc_time_t ulim;
 	isc_time_t llim;
 	isc_interval_t interval;
-
 	int tick = atomic_fetch_add(&eventcnt, 1);
+
+	UNUSED(arg);
 
 	if (verbose) {
 		print_message("# tick %d\n", tick);
 	}
 
-	result = isc_time_now(&now);
-	subthread_assert_result_equal(result, ISC_R_SUCCESS);
+	now = isc_time_now();
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	isc_mutex_lock(&lasttime_mx);
@@ -329,18 +232,12 @@ test_idle(isc_task_t *task, isc_event_t *event) {
 	isc_time_add(&now, &interval, &lasttime);
 	isc_mutex_unlock(&lasttime_mx);
 
-	subthread_assert_int_equal(event->ev_type, ISC_TIMEREVENT_IDLE);
-
-	isc_event_free(&event);
-
 	isc_timer_destroy(&timer);
-	isc_task_shutdown(task);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* timer type once idles out */
 ISC_RUN_TEST_IMPL(once_idle) {
-	isc_result_t result;
-	isc_time_t expires;
 	isc_interval_t interval;
 
 	UNUSED(state);
@@ -349,27 +246,23 @@ ISC_RUN_TEST_IMPL(once_idle) {
 	seconds = 1;
 	nanoseconds = 200000000;
 
-	isc_interval_set(&interval, seconds + 1, nanoseconds);
-	result = isc_time_nowplusinterval(&expires, &interval);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
 	isc_interval_set(&interval, seconds, nanoseconds);
 
-	setup_test(isc_timertype_once, &expires, &interval, test_idle);
+	setup_test(isc_timertype_once, &interval, test_idle);
 }
 
 /* timer reset */
 static void
-test_reset(isc_task_t *task, isc_event_t *event) {
+test_reset(void *arg) {
 	isc_result_t result;
 	isc_time_t now;
 	isc_time_t base;
 	isc_time_t ulim;
 	isc_time_t llim;
-	isc_time_t expires;
 	isc_interval_t interval;
-
 	int tick = atomic_fetch_add(&eventcnt, 1);
+
+	UNUSED(arg);
 
 	if (verbose) {
 		print_message("# tick %d\n", tick);
@@ -379,8 +272,7 @@ test_reset(isc_task_t *task, isc_event_t *event) {
 	 * Check expired time.
 	 */
 
-	result = isc_time_now(&now);
-	subthread_assert_result_equal(result, ISC_R_SUCCESS);
+	now = isc_time_now();
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	isc_mutex_lock(&lasttime_mx);
@@ -403,34 +295,18 @@ test_reset(isc_task_t *task, isc_event_t *event) {
 	isc_time_add(&now, &interval, &lasttime);
 	isc_mutex_unlock(&lasttime_mx);
 
-	int _eventcnt = atomic_load(&eventcnt);
-
-	if (_eventcnt < 3) {
-		subthread_assert_int_equal(event->ev_type, ISC_TIMEREVENT_TICK);
-
-		if (_eventcnt == 2) {
+	if (tick < 2) {
+		if (tick == 1) {
 			isc_interval_set(&interval, seconds, nanoseconds);
-			result = isc_time_nowplusinterval(&expires, &interval);
-			subthread_assert_result_equal(result, ISC_R_SUCCESS);
-
-			isc_interval_set(&interval, 0, 0);
-			result = isc_timer_reset(timer, isc_timertype_once,
-						 &expires, &interval, false);
-			subthread_assert_result_equal(result, ISC_R_SUCCESS);
+			isc_timer_start(timer, isc_timertype_once, &interval);
 		}
-
-		isc_event_free(&event);
 	} else {
-		subthread_assert_int_equal(event->ev_type, ISC_TIMEREVENT_LIFE);
-
-		isc_event_free(&event);
 		isc_timer_destroy(&timer);
-		isc_task_shutdown(task);
+		isc_loopmgr_shutdown(loopmgr);
 	}
 }
 
 ISC_RUN_TEST_IMPL(reset) {
-	isc_time_t expires;
 	isc_interval_t interval;
 
 	UNUSED(state);
@@ -440,63 +316,45 @@ ISC_RUN_TEST_IMPL(reset) {
 	nanoseconds = 750000000;
 
 	isc_interval_set(&interval, seconds, nanoseconds);
-	isc_time_settoepoch(&expires);
 
-	setup_test(isc_timertype_ticker, &expires, &interval, test_reset);
+	setup_test(isc_timertype_ticker, &interval, test_reset);
 }
 
 static atomic_bool startflag;
-static atomic_bool shutdownflag;
 static isc_timer_t *tickertimer = NULL;
 static isc_timer_t *oncetimer = NULL;
-static isc_task_t *task1 = NULL;
-static isc_task_t *task2 = NULL;
-
-/*
- * task1 blocks on mx while events accumulate
- * in its queue, until signaled by task2.
- */
 
 static void
-tick_event(isc_task_t *task, isc_event_t *event) {
-	isc_result_t result;
-	isc_time_t expires;
-	isc_interval_t interval;
+tick_event(void *arg) {
+	int tick;
 
-	UNUSED(task);
+	UNUSED(arg);
 
 	if (!atomic_load(&startflag)) {
 		if (verbose) {
 			print_message("# tick_event %d\n", -1);
 		}
-		isc_event_free(&event);
 		return;
 	}
 
-	int tick = atomic_fetch_add(&eventcnt, 1);
+	tick = atomic_fetch_add(&eventcnt, 1);
 	if (verbose) {
 		print_message("# tick_event %d\n", tick);
 	}
 
 	/*
-	 * On the first tick, purge all remaining tick events
-	 * and then shut down the task.
+	 * On the first tick, purge all remaining tick events.
 	 */
 	if (tick == 0) {
-		isc_time_settoepoch(&expires);
-		isc_interval_set(&interval, seconds, 0);
-		result = isc_timer_reset(tickertimer, isc_timertype_ticker,
-					 &expires, &interval, true);
-		subthread_assert_result_equal(result, ISC_R_SUCCESS);
-
-		isc_task_shutdown(task);
+		isc_timer_destroy(&tickertimer);
+		isc_loopmgr_shutdown(loopmgr);
 	}
-
-	isc_event_free(&event);
 }
 
 static void
-once_event(isc_task_t *task, isc_event_t *event) {
+once_event(void *arg) {
+	UNUSED(arg);
+
 	if (verbose) {
 		print_message("# once_event\n");
 	}
@@ -506,95 +364,175 @@ once_event(isc_task_t *task, isc_event_t *event) {
 	 */
 	atomic_store(&startflag, true);
 
-	isc_event_free(&event);
-	isc_task_shutdown(task);
+	isc_timer_destroy(&oncetimer);
 }
 
-static void
-shutdown_purge(isc_task_t *task, isc_event_t *event) {
-	UNUSED(task);
-	UNUSED(event);
+ISC_LOOP_SETUP_IMPL(purge) {
+	atomic_init(&eventcnt, 0);
+	atomic_store(&errcnt, ISC_R_SUCCESS);
+}
 
-	if (verbose) {
-		print_message("# shutdown_event\n");
-	}
-
-	/*
-	 * Signal shutdown processing complete.
-	 */
-	atomic_store(&shutdownflag, 1);
-
-	isc_event_free(&event);
+ISC_LOOP_TEARDOWN_IMPL(purge) {
+	assert_int_equal(atomic_load(&errcnt), ISC_R_SUCCESS);
+	assert_int_equal(atomic_load(&eventcnt), 1);
 }
 
 /* timer events purged */
-ISC_RUN_TEST_IMPL(purge) {
-	isc_result_t result;
-	isc_time_t expires;
+ISC_LOOP_TEST_SETUP_TEARDOWN_IMPL(purge) {
 	isc_interval_t interval;
 
-	UNUSED(state);
+	UNUSED(arg);
+
+	if (verbose) {
+		print_message("# purge_run\n");
+	}
 
 	atomic_init(&startflag, 0);
-	atomic_init(&shutdownflag, 0);
-	atomic_init(&eventcnt, 0);
 	seconds = 1;
 	nanoseconds = 0;
 
-	result = isc_task_create(taskmgr, 0, &task1);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_task_onshutdown(task1, shutdown_purge, NULL);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_task_create(taskmgr, 0, &task2);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	isc_time_settoepoch(&expires);
 	isc_interval_set(&interval, seconds, 0);
 
 	tickertimer = NULL;
-	result = isc_timer_create(timermgr, isc_timertype_ticker, &expires,
-				  &interval, task1, tick_event, NULL,
-				  &tickertimer);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_timer_create(mainloop, tick_event, NULL, &tickertimer);
+	isc_timer_start(tickertimer, isc_timertype_ticker, &interval);
 
 	oncetimer = NULL;
 
 	isc_interval_set(&interval, (seconds * 2) + 1, 0);
-	result = isc_time_nowplusinterval(&expires, &interval);
-	assert_int_equal(result, ISC_R_SUCCESS);
 
-	isc_interval_set(&interval, 0, 0);
-	result = isc_timer_create(timermgr, isc_timertype_once, &expires,
-				  &interval, task2, once_event, NULL,
-				  &oncetimer);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_timer_create(mainloop, once_event, NULL, &oncetimer);
+	isc_timer_start(oncetimer, isc_timertype_once, &interval);
+}
 
-	/*
-	 * Wait for shutdown processing to complete.
-	 */
-	while (!atomic_load(&shutdownflag)) {
-		uv_sleep(1);
+/*
+ * Set of tests that check whether the rescheduling works as expected.
+ */
+
+isc_time_t timer_start;
+isc_time_t timer_stop;
+uint64_t timer_expect;
+uint64_t timer_ticks;
+isc_interval_t timer_interval;
+isc_timertype_t timer_type;
+
+ISC_LOOP_TEARDOWN_IMPL(timer_expect) {
+	uint64_t diff = isc_time_microdiff(&timer_stop, &timer_start) / 1000000;
+	assert_true(diff == timer_expect);
+}
+
+static void
+timer_event(void *arg ISC_ATTR_UNUSED) {
+	if (--timer_ticks == 0) {
+		isc_timer_destroy(&timer);
+		isc_loopmgr_shutdown(loopmgr);
+		timer_stop = isc_loop_now(isc_loop());
+	} else {
+		isc_timer_start(timer, timer_type, &timer_interval);
 	}
+}
 
-	assert_int_equal(atomic_load(&errcnt), ISC_R_SUCCESS);
+ISC_LOOP_SETUP_IMPL(reschedule_up) {
+	timer_start = isc_loop_now(isc_loop());
+	timer_expect = 1;
+	timer_ticks = 1;
+	timer_type = isc_timertype_once;
+}
 
-	assert_int_equal(atomic_load(&eventcnt), 1);
+ISC_LOOP_TEST_CUSTOM_IMPL(reschedule_up, setup_loop_reschedule_up,
+			  teardown_loop_timer_expect) {
+	isc_timer_create(mainloop, timer_event, NULL, &timer);
 
-	isc_timer_destroy(&tickertimer);
-	isc_timer_destroy(&oncetimer);
-	isc_task_destroy(&task1);
-	isc_task_destroy(&task2);
+	/* Schedule the timer to fire immediately */
+	isc_interval_set(&timer_interval, 0, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+
+	/* And then reschedule it to 1 second */
+	isc_interval_set(&timer_interval, 1, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+}
+
+ISC_LOOP_SETUP_IMPL(reschedule_down) {
+	timer_start = isc_loop_now(isc_loop());
+	timer_expect = 0;
+	timer_ticks = 1;
+	timer_type = isc_timertype_once;
+}
+
+ISC_LOOP_TEST_CUSTOM_IMPL(reschedule_down, setup_loop_reschedule_down,
+			  teardown_loop_timer_expect) {
+	isc_timer_create(mainloop, timer_event, NULL, &timer);
+
+	/* Schedule the timer to fire at 10 seconds */
+	isc_interval_set(&timer_interval, 10, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+
+	/* And then reschedule it fire immediately */
+	isc_interval_set(&timer_interval, 0, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+}
+
+ISC_LOOP_SETUP_IMPL(reschedule_from_callback) {
+	timer_start = isc_loop_now(isc_loop());
+	timer_expect = 1;
+	timer_ticks = 2;
+	timer_type = isc_timertype_once;
+}
+
+ISC_LOOP_TEST_CUSTOM_IMPL(reschedule_from_callback,
+			  setup_loop_reschedule_from_callback,
+			  teardown_loop_timer_expect) {
+	isc_timer_create(mainloop, timer_event, NULL, &timer);
+
+	isc_interval_set(&timer_interval, 0, NS_PER_SEC / 2);
+	isc_timer_start(timer, timer_type, &timer_interval);
+}
+
+ISC_LOOP_SETUP_IMPL(zero) {
+	timer_start = isc_loop_now(isc_loop());
+	timer_expect = 0;
+	timer_ticks = 1;
+	timer_type = isc_timertype_once;
+}
+
+ISC_LOOP_TEST_CUSTOM_IMPL(zero, setup_loop_zero, teardown_loop_timer_expect) {
+	isc_timer_create(mainloop, timer_event, NULL, &timer);
+
+	/* Schedule the timer to fire immediately (in the next event loop) */
+	isc_interval_set(&timer_interval, 0, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+}
+
+ISC_LOOP_SETUP_IMPL(reschedule_ticker) {
+	timer_start = isc_loop_now(isc_loop());
+	timer_expect = 1;
+	timer_ticks = 5;
+	timer_type = isc_timertype_ticker;
+}
+
+ISC_LOOP_TEST_CUSTOM_IMPL(reschedule_ticker, setup_loop_reschedule_ticker,
+			  teardown_loop_timer_expect) {
+	isc_timer_create(mainloop, timer_event, NULL, &timer);
+
+	/* Schedule the timer to fire immediately (in the next event loop) */
+	isc_interval_set(&timer_interval, 0, 0);
+	isc_timer_start(timer, timer_type, &timer_interval);
+
+	/* Then fire every 1/4 second */
+	isc_interval_set(&timer_interval, 0, NS_PER_SEC / 4);
 }
 
 ISC_TEST_LIST_START
 
-ISC_TEST_ENTRY_CUSTOM(ticker, _setup, _teardown)
-ISC_TEST_ENTRY_CUSTOM(once_life, _setup, _teardown)
-ISC_TEST_ENTRY_CUSTOM(once_idle, _setup, _teardown)
-ISC_TEST_ENTRY_CUSTOM(reset, _setup, _teardown)
-ISC_TEST_ENTRY_CUSTOM(purge, _setup, _teardown)
+ISC_TEST_ENTRY_CUSTOM(ticker, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(once_idle, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(reset, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(purge, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(reschedule_up, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(reschedule_down, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(reschedule_from_callback, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(zero, setup_loopmgr, teardown_loopmgr)
+ISC_TEST_ENTRY_CUSTOM(reschedule_ticker, setup_loopmgr, teardown_loopmgr)
 
 ISC_TEST_LIST_END
 

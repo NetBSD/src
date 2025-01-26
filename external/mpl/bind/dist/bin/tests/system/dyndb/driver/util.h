@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.5 2024/02/21 22:51:27 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.6 2025/01/26 16:24:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,32 +53,3 @@
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
 	} while (0)
-
-#define CHECKED_MEM_GET(m, target_ptr, s)                      \
-	do {                                                   \
-		(target_ptr) = isc_mem_get((m), (s));          \
-		if ((target_ptr) == NULL) {                    \
-			result = ISC_R_NOMEMORY;               \
-			log_error("Memory allocation failed"); \
-			goto cleanup;                          \
-		}                                              \
-	} while (0)
-
-#define CHECKED_MEM_GET_PTR(m, target_ptr) \
-	CHECKED_MEM_GET(m, target_ptr, sizeof(*(target_ptr)))
-
-#define CHECKED_MEM_STRDUP(m, source, target)                  \
-	do {                                                   \
-		(target) = isc_mem_strdup((m), (source));      \
-		if ((target) == NULL) {                        \
-			result = ISC_R_NOMEMORY;               \
-			log_error("Memory allocation failed"); \
-			goto cleanup;                          \
-		}                                              \
-	} while (0)
-
-#define ZERO_PTR(ptr) memset((ptr), 0, sizeof(*(ptr)))
-
-#define MEM_PUT_AND_DETACH(target_ptr)                        \
-	isc_mem_putanddetach(&(target_ptr)->mctx, target_ptr, \
-			     sizeof(*(target_ptr)))

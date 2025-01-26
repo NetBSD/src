@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.8 2024/09/22 00:13:55 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.9 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,6 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/net.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -293,5 +292,5 @@ options {\n\
 
 	isc_mem_destroy(&mctx);
 
-	return (0);
+	return 0;
 }

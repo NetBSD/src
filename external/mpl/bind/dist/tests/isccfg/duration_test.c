@@ -1,4 +1,4 @@
-/*	$NetBSD: duration_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: duration_test.c,v 1.3 2025/01/26 16:25:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,6 @@
 
 #include <tests/isc.h>
 
-isc_log_t *lctx = NULL;
 static isc_logcategory_t categories[] = { { "", 0 },
 					  { "client", 0 },
 					  { "network", 0 },
@@ -68,21 +67,21 @@ ISC_SETUP_TEST_IMPL(group) {
 	result = isc_log_usechannel(logconfig, "stderr", NULL, NULL);
 
 	if (result != ISC_R_SUCCESS) {
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 ISC_TEARDOWN_TEST_IMPL(group) {
 	if (lctx == NULL) {
-		return (-1);
+		return -1;
 	}
 
 	isc_log_setcontext(NULL);
 	isc_log_destroy(&lctx);
 
-	return (0);
+	return 0;
 }
 
 struct duration_conf {

@@ -1,7 +1,0 @@
-irs_resconf_destroy
-irs_resconf_getattempts
-irs_resconf_getnameservers
-irs_resconf_getndots
-irs_resconf_getsearchlist
-irs_resconf_gettimeout
-irs_resconf_load

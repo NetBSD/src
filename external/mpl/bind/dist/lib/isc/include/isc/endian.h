@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.6 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.7 2025/01/26 16:25:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -166,3 +166,101 @@
 
 #endif /* WORDS_BIGENDIAN */
 #endif /* !htobe64 */
+
+/*
+ * Macros to convert uint8_t arrays to integers.
+ */
+
+/* Low-Endian */
+
+#define ISC_U16TO8_LE(p, v)      \
+	(p)[0] = (uint8_t)((v)); \
+	(p)[1] = (uint8_t)((v) >> 8);
+
+#define ISC_U8TO16_LE(p) (((uint16_t)((p)[0])) | ((uint16_t)((p)[1]) << 8))
+
+#define ISC_U32TO8_LE(p, v)            \
+	(p)[0] = (uint8_t)((v));       \
+	(p)[1] = (uint8_t)((v) >> 8);  \
+	(p)[2] = (uint8_t)((v) >> 16); \
+	(p)[3] = (uint8_t)((v) >> 24);
+
+#define ISC_U8TO32_LE(p)                                    \
+	(((uint32_t)((p)[0])) | ((uint32_t)((p)[1]) << 8) | \
+	 ((uint32_t)((p)[2]) << 16) | ((uint32_t)((p)[3]) << 24))
+
+#define ISC_U48TO8_LE(p, v)            \
+	(p)[0] = (uint8_t)((v));       \
+	(p)[1] = (uint8_t)((v) >> 8);  \
+	(p)[2] = (uint8_t)((v) >> 16); \
+	(p)[3] = (uint8_t)((v) >> 24); \
+	(p)[4] = (uint8_t)((v) >> 32); \
+	(p)[5] = (uint8_t)((v) >> 40);
+
+#define ISC_U8TO48_LE(p)                                           \
+	(((uint64_t)((p)[0])) | ((uint64_t)((p)[1]) << 8) |        \
+	 ((uint64_t)((p)[2]) << 16) | ((uint64_t)((p)[3]) << 24) | \
+	 ((uint64_t)((p)[4]) << 32) | ((uint64_t)((p)[5]) << 40))
+
+#define ISC_U64TO8_LE(p, v)            \
+	(p)[0] = (uint8_t)((v));       \
+	(p)[1] = (uint8_t)((v) >> 8);  \
+	(p)[2] = (uint8_t)((v) >> 16); \
+	(p)[3] = (uint8_t)((v) >> 24); \
+	(p)[4] = (uint8_t)((v) >> 32); \
+	(p)[5] = (uint8_t)((v) >> 40); \
+	(p)[6] = (uint8_t)((v) >> 48); \
+	(p)[7] = (uint8_t)((v) >> 56);
+
+#define ISC_U8TO64_LE(p)                                           \
+	(((uint64_t)((p)[0])) | ((uint64_t)((p)[1]) << 8) |        \
+	 ((uint64_t)((p)[2]) << 16) | ((uint64_t)((p)[3]) << 24) | \
+	 ((uint64_t)((p)[4]) << 32) | ((uint64_t)((p)[5]) << 40) | \
+	 ((uint64_t)((p)[6]) << 48) | ((uint64_t)((p)[7]) << 56))
+
+/* Big-Endian */
+
+#define ISC_U16TO8_BE(p, v)           \
+	(p)[0] = (uint8_t)((v) >> 8); \
+	(p)[1] = (uint8_t)((v));
+
+#define ISC_U8TO16_BE(p) (((uint16_t)((p)[0]) << 8) | ((uint16_t)((p)[1])))
+
+#define ISC_U32TO8_BE(p, v)            \
+	(p)[0] = (uint8_t)((v) >> 24); \
+	(p)[1] = (uint8_t)((v) >> 16); \
+	(p)[2] = (uint8_t)((v) >> 8);  \
+	(p)[3] = (uint8_t)((v));
+
+#define ISC_U8TO32_BE(p)                                           \
+	(((uint32_t)((p)[0]) << 24) | ((uint32_t)((p)[1]) << 16) | \
+	 ((uint32_t)((p)[2]) << 8) | ((uint32_t)((p)[3])))
+
+#define ISC_U48TO8_BE(p, v)            \
+	(p)[0] = (uint8_t)((v) >> 40); \
+	(p)[1] = (uint8_t)((v) >> 32); \
+	(p)[2] = (uint8_t)((v) >> 24); \
+	(p)[3] = (uint8_t)((v) >> 16); \
+	(p)[4] = (uint8_t)((v) >> 8);  \
+	(p)[5] = (uint8_t)((v));
+
+#define ISC_U8TO48_BE(p)                                           \
+	(((uint64_t)((p)[0]) << 40) | ((uint64_t)((p)[1]) << 32) | \
+	 ((uint64_t)((p)[2]) << 24) | ((uint64_t)((p)[3]) << 16) | \
+	 ((uint64_t)((p)[4]) << 8) | ((uint64_t)((p)[5])))
+
+#define ISC_U64TO8_BE(p, v)            \
+	(p)[0] = (uint8_t)((v) >> 56); \
+	(p)[1] = (uint8_t)((v) >> 48); \
+	(p)[2] = (uint8_t)((v) >> 40); \
+	(p)[3] = (uint8_t)((v) >> 32); \
+	(p)[4] = (uint8_t)((v) >> 24); \
+	(p)[5] = (uint8_t)((v) >> 16); \
+	(p)[6] = (uint8_t)((v) >> 8);  \
+	(p)[7] = (uint8_t)((v));
+
+#define ISC_U8TO64_BE(p)                                           \
+	(((uint64_t)((p)[0]) << 56) | ((uint64_t)((p)[1]) << 48) | \
+	 ((uint64_t)((p)[2]) << 40) | ((uint64_t)((p)[3]) << 32) | \
+	 ((uint64_t)((p)[4]) << 24) | ((uint64_t)((p)[5]) << 16) | \
+	 ((uint64_t)((p)[6]) << 8) | ((uint64_t)((p)[7])))

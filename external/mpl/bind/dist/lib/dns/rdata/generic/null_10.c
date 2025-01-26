@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: null_10.c,v 1.9 2025/01/26 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,14 +30,14 @@ fromtext_null(ARGS_FROMTEXT) {
 	UNUSED(target);
 	UNUSED(callbacks);
 
-	return (DNS_R_SYNTAX);
+	return DNS_R_SYNTAX;
 }
 
 static isc_result_t
 totext_null(ARGS_TOTEXT) {
 	REQUIRE(rdata->type == dns_rdatatype_null);
 
-	return (unknown_totext(rdata, tctx, target));
+	return unknown_totext(rdata, tctx, target);
 }
 
 static isc_result_t
@@ -49,11 +49,10 @@ fromwire_null(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
@@ -62,7 +61,7 @@ towire_null(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -76,7 +75,7 @@ compare_null(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -92,7 +91,7 @@ fromstruct_null(ARGS_FROMSTRUCT) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	return (mem_tobuffer(target, null->data, null->length));
+	return mem_tobuffer(target, null->data, null->length);
 }
 
 static isc_result_t
@@ -110,12 +109,8 @@ tostruct_null(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	null->length = r.length;
 	null->data = mem_maybedup(mctx, r.base, r.length);
-	if (null->data == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	null->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -144,7 +139,7 @@ additionaldata_null(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -155,7 +150,7 @@ digest_null(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -167,7 +162,7 @@ checkowner_null(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -178,12 +173,12 @@ checknames_null(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_null(ARGS_COMPARE) {
-	return (compare_null(rdata1, rdata2));
+	return compare_null(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_NULL_10_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.9 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 	UNUSED(options);
 	UNUSED(callbacks);
 
-	return (isc_base64_tobuffer(lexer, target, -2));
+	return isc_base64_tobuffer(lexer, target, -2);
 }
 
 static isc_result_t
@@ -65,7 +65,7 @@ totext_in_dhcid(ARGS_TOTEXT) {
 			RETERR(str_totext(buf, target));
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -78,15 +78,14 @@ fromwire_in_dhcid(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length == 0) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
@@ -100,7 +99,7 @@ towire_in_dhcid(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -117,7 +116,7 @@ compare_in_dhcid(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -134,7 +133,7 @@ fromstruct_in_dhcid(ARGS_FROMSTRUCT) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	return (mem_tobuffer(target, dhcid->dhcid, dhcid->length));
+	return mem_tobuffer(target, dhcid->dhcid, dhcid->length);
 }
 
 static isc_result_t
@@ -154,12 +153,8 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 
 	dhcid->dhcid = mem_maybedup(mctx, region.base, region.length);
-	if (dhcid->dhcid == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	dhcid->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -190,7 +185,7 @@ additionaldata_in_dhcid(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -202,7 +197,7 @@ digest_in_dhcid(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -215,7 +210,7 @@ checkowner_in_dhcid(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -227,12 +222,12 @@ checknames_in_dhcid(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_in_dhcid(ARGS_COMPARE) {
-	return (compare_in_dhcid(rdata1, rdata2));
+	return compare_in_dhcid(rdata1, rdata2);
 }
 
 #endif /* RDATA_IN_1_DHCID_49_C */

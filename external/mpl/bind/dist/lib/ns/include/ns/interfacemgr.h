@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.h,v 1.11 2024/09/22 00:14:10 christos Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.12 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,11 +45,13 @@
 
 #include <stdbool.h>
 
+#include <isc/loop.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netmgr.h>
 #include <isc/refcount.h>
 #include <isc/result.h>
+#include <isc/sockaddr.h>
 
 #include <dns/geoip.h>
 
@@ -65,9 +67,6 @@
 
 #define NS_INTERFACEFLAG_ANYADDR   0x01U /*%< bound to "any" address */
 #define NS_INTERFACEFLAG_LISTENING 0x02U /*%< listening */
-#define MAX_UDP_DISPATCH                           \
-	128 /*%< Maximum number of UDP dispatchers \
-	     *           to start per interface */
 /*% The nameserver interface structure */
 struct ns_interface {
 	unsigned int	   magic; /*%< Magic number. */
@@ -91,7 +90,8 @@ struct ns_interface {
 					   *   servicing TCP queries
 					   *   (whether accepting or
 					   *   connected) */
-	ns_clientmgr_t *clientmgr;	  /*%< Client manager. */
+	ns_clientmgr_t	   *clientmgr;	  /*%< Client manager. */
+	isc_nm_proxy_type_t proxy_type;
 	ISC_LINK(ns_interface_t) link;
 };
 
@@ -101,10 +101,9 @@ struct ns_interface {
 
 isc_result_t
 ns_interfacemgr_create(isc_mem_t *mctx, ns_server_t *sctx,
-		       isc_taskmgr_t *taskmgr, isc_timermgr_t *timermgr,
-		       isc_nm_t *nm, dns_dispatchmgr_t *dispatchmgr,
-		       isc_task_t *task, dns_geoip_databases_t *geoip,
-		       int ncpus, bool scan, ns_interfacemgr_t **mgrp);
+		       isc_loopmgr_t *loopmgr, isc_nm_t *nm,
+		       dns_dispatchmgr_t     *dispatchmgr,
+		       dns_geoip_databases_t *geoip, ns_interfacemgr_t **mgrp);
 /*%<
  * Create a new interface manager.
  *
@@ -113,26 +112,33 @@ ns_interfacemgr_create(isc_mem_t *mctx, ns_server_t *sctx,
  * to set nonempty listen-on lists.
  */
 
-void
-ns_interfacemgr_attach(ns_interfacemgr_t *source, ns_interfacemgr_t **target);
-
-void
-ns_interfacemgr_detach(ns_interfacemgr_t **targetp);
+ISC_REFCOUNT_DECL(ns_interfacemgr);
 
 void
 ns_interfacemgr_shutdown(ns_interfacemgr_t *mgr);
 
 void
+ns_interfacemgr_routeconnect(ns_interfacemgr_t *mgr);
+/*%
+ * Connect to the route socket.
+ *
+ * NOTE: This function is idempotent.  Calling it on an ns_interfacemgr_t object
+ * with route socket already connected will do nothing.
+ */
+
+void
+ns_interfacemgr_routedisconnect(ns_interfacemgr_t *mgr);
+/*%
+ * Disconnect the route socket.
+ *
+ * NOTE: This function is idempotent.  Calling it on an ns_interfacemgr_t object
+ * that has no routing socket will do nothing.
+ */
+
+void
 ns_interfacemgr_setbacklog(ns_interfacemgr_t *mgr, int backlog);
 /*%<
  * Set the size of the listen() backlog queue.
- */
-
-bool
-ns_interfacemgr_islistening(ns_interfacemgr_t *mgr);
-/*%<
- * Return if the manager is listening on any interface. It can be called
- * after a scan or adjust.
  */
 
 isc_result_t
@@ -192,4 +198,20 @@ ns_interfacemgr_getclientmgr(ns_interfacemgr_t *mgr);
  *
  * Returns the client manager for the current worker thread.
  * (This cannot be run from outside a network manager thread.)
+ */
+
+bool
+ns_interfacemgr_dynamic_updates_are_reliable(void);
+/*%<
+ * Returns 'true' if periodic interface re-scans timer should be
+ * disabled. That is the case on the platforms where kernel-based
+ * mechanisms for tracking networking interface states is reliable enough.
+ */
+
+void
+ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
+		    const char *name, ns_interface_t **ifpret);
+/*%<
+ * Create an interface 'name' associated with address 'addr'. If
+ * 'name' is NULL then it is set to "default".
  */

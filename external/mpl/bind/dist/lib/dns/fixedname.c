@@ -1,4 +1,4 @@
-/*	$NetBSD: fixedname.c,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: fixedname.c,v 1.6 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,11 +31,11 @@ dns_fixedname_invalidate(dns_fixedname_t *fixed) {
 
 dns_name_t *
 dns_fixedname_name(dns_fixedname_t *fixed) {
-	return (&fixed->name);
+	return &fixed->name;
 }
 
 dns_name_t *
 dns_fixedname_initname(dns_fixedname_t *fixed) {
 	dns_fixedname_init(fixed);
-	return (dns_fixedname_name(fixed));
+	return dns_fixedname_name(fixed);
 }

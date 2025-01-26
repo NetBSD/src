@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_message_parse.c,v 1.2 2024/02/21 22:51:58 christos Exp $	*/
+/*	$NetBSD: dns_message_parse.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -38,12 +37,11 @@ static size_t output_len = 1024;
 static uint8_t render_buf[64 * 1024 - 1];
 
 int
-LLVMFuzzerInitialize(int *argc __attribute__((unused)),
-		     char ***argv __attribute__((unused))) {
+LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_mem_create(&mctx);
 	output = isc_mem_get(mctx, output_len);
 
-	return (0);
+	return 0;
 }
 
 static isc_result_t
@@ -51,7 +49,7 @@ parse_message(isc_buffer_t *input, dns_message_t **messagep) {
 	isc_result_t result;
 	dns_message_t *message = NULL;
 
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &message);
 
 	result = dns_message_parse(message, input, DNS_MESSAGEPARSE_BESTEFFORT);
 	if (result == DNS_R_RECOVERABLE) {
@@ -64,7 +62,7 @@ parse_message(isc_buffer_t *input, dns_message_t **messagep) {
 		dns_message_detach(&message);
 	}
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -89,7 +87,7 @@ print_message(dns_message_t *message) {
 			output);
 	}
 
-	return (result);
+	return result;
 }
 
 #define CHECKRESULT(r, f)                 \
@@ -114,10 +112,8 @@ render_message(dns_message_t **messagep) {
 		message->counts[i] = 0;
 	}
 
-	result = dns_compress_init(&cctx, -1, mctx);
-	if (result != ISC_R_SUCCESS) {
-		return (result);
-	}
+	dns_compress_init(&cctx, mctx, 0);
+
 	CHECKRESULT(result, dns_message_renderbegin(message, &cctx, &buffer));
 
 	CHECKRESULT(result, dns_message_rendersection(message,
@@ -141,11 +137,11 @@ render_message(dns_message_t **messagep) {
 
 	result = parse_message(&buffer, messagep);
 
-	return (result);
+	return result;
 
 cleanup:
 	dns_compress_invalidate(&cctx);
-	return (result);
+	return result;
 }
 
 int
@@ -155,7 +151,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	dns_message_t *message = NULL;
 
 	if (size > 65535) {
-		return (0);
+		return 0;
 	}
 
 	isc_buffer_constinit(&buffer, data, size);
@@ -187,5 +183,5 @@ cleanup:
 		dns_message_detach(&message);
 	}
 
-	return (0);
+	return 0;
 }

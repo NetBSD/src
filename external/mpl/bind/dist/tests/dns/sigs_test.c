@@ -1,4 +1,4 @@
-/*	$NetBSD: sigs_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: sigs_test.c,v 1.4 2025/01/26 16:25:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,10 +82,10 @@ setup_test(void **state) {
 	result = dst_lib_init(mctx, NULL);
 
 	if (result != ISC_R_SUCCESS) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -94,7 +94,7 @@ teardown_test(void **state) {
 
 	dst_lib_destroy();
 
-	return (0);
+	return 0;
 }
 
 /*%
@@ -128,7 +128,8 @@ compare_tuples(const zonediff_t *expected, dns_difftuple_t *found,
 	 * Check owner name.
 	 */
 	expected_name = dns_fixedname_initname(&expected_fname);
-	result = dns_name_fromstring(expected_name, expected->owner, 0, mctx);
+	result = dns_name_fromstring(expected_name, expected->owner,
+				     dns_rootname, 0, mctx);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	dns_name_format(&found->name, found_name, sizeof(found_name));
 	assert_true(dns_name_equal(expected_name, &found->name));
@@ -243,7 +244,7 @@ updatesigs_test(const updatesigs_test_params_t *test, dns_zone_t *zone,
 	 */
 	result = dns__zone_updatesigs(&raw_diff, db, version, zone_keys, nkeys,
 				      zone, now - 3600, now + 3600, 0, now,
-				      true, false, &zonediff);
+				      &zonediff);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(ISC_LIST_EMPTY(raw_diff.tuples));
 	assert_false(ISC_LIST_EMPTY(zone_diff.tuples));
@@ -294,7 +295,7 @@ ISC_RUN_TEST_IMPL(updatesigs_next) {
 	dns_db_t *db = NULL;
 	isc_result_t result;
 	unsigned int nkeys;
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
 	size_t i;
 
 	UNUSED(state);
@@ -313,9 +314,8 @@ ISC_RUN_TEST_IMPL(updatesigs_next) {
 	result = dns_zone_setkeydirectory(zone, TESTS_DIR "/testkeys");
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	isc_stdtime_get(&now);
-	result = dns__zone_findkeys(zone, db, NULL, now, mctx, DNS_MAXZONEKEYS,
-				    zone_keys, &nkeys);
+	result = dns_zone_findkeys(zone, db, NULL, now, mctx, DNS_MAXZONEKEYS,
+				   zone_keys, &nkeys);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(nkeys, 2);
 

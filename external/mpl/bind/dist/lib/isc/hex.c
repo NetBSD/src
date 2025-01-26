@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.8 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.9 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
 
 /*! \file */
 
-#include <ctype.h>
 #include <stdbool.h>
 
 #include <isc/buffer.h>
@@ -23,6 +22,23 @@
 #include <isc/lex.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#define D ('0' - 0x0) /* ascii '0' to hex */
+#define U ('A' - 0xA) /* ascii 'A' to hex */
+#define L ('a' - 0xa) /* ascii 'a' to hex */
+
+const uint8_t isc__hex_char[256] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, D, D, D, D, D, D, D, D, D, D, 0, 0, 0, 0, 0, 0, 0, U,
+	U, U, U, U, U, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, L, L, L, L, L, L, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+#undef D
+#undef U
+#undef L
 
 #define RETERR(x)                        \
 	do {                             \
@@ -66,7 +82,7 @@ isc_hex_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 			RETERR(str_totext(wordbreak, target));
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*%
@@ -88,12 +104,13 @@ hex_decode_init(hex_decode_ctx_t *ctx, int length, isc_buffer_t *target) {
 
 static isc_result_t
 hex_decode_char(hex_decode_ctx_t *ctx, int c) {
-	const char *s;
+	uint8_t hexval;
 
-	if ((s = strchr(hex, toupper(c))) == NULL) {
-		return (ISC_R_BADHEX);
+	hexval = isc_hex_char(c);
+	if (hexval == 0) {
+		return ISC_R_BADHEX;
 	}
-	ctx->val[ctx->digits++] = (int)(s - hex);
+	ctx->val[ctx->digits++] = c - hexval;
 	if (ctx->digits == 2) {
 		unsigned char num;
 
@@ -101,25 +118,25 @@ hex_decode_char(hex_decode_ctx_t *ctx, int c) {
 		RETERR(mem_tobuffer(ctx->target, &num, 1));
 		if (ctx->length >= 0) {
 			if (ctx->length == 0) {
-				return (ISC_R_BADHEX);
+				return ISC_R_BADHEX;
 			} else {
 				ctx->length -= 1;
 			}
 		}
 		ctx->digits = 0;
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
 hex_decode_finish(hex_decode_ctx_t *ctx) {
 	if (ctx->length > 0) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	if (ctx->digits != 0) {
-		return (ISC_R_BADHEX);
+		return ISC_R_BADHEX;
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -159,9 +176,9 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 	}
 	RETERR(hex_decode_finish(&ctx));
 	if (length == -2 && before == after) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -180,7 +197,7 @@ isc_hex_decodestring(const char *cstr, isc_buffer_t *target) {
 		RETERR(hex_decode_char(&ctx, c));
 	}
 	RETERR(hex_decode_finish(&ctx));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -192,12 +209,12 @@ str_totext(const char *source, isc_buffer_t *target) {
 	l = strlen(source);
 
 	if (l > region.length) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -206,9 +223,9 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 
 	isc_buffer_availableregion(target, &tr);
 	if (length > tr.length) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	memmove(tr.base, base, length);
 	isc_buffer_add(target, length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

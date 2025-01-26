@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.4 2025/01/26 16:25:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,8 @@
 #include <cmocka.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
+#include <isc/random.h>
+#include <isc/result.h>
 #include <isc/util.h>
 
 #include <dns/rdatalist.h>
@@ -39,6 +40,14 @@
 
 #define TEST_ORIGIN "test"
 
+#define CHECK(r)                               \
+	{                                      \
+		result = (r);                  \
+		if (result != ISC_R_SUCCESS) { \
+			goto cleanup;          \
+		}                              \
+	}
+
 static int
 setup_test(void **state) {
 	isc_result_t result;
@@ -48,10 +57,10 @@ setup_test(void **state) {
 	result = dst_lib_init(mctx, NULL);
 
 	if (result != ISC_R_SUCCESS) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -60,7 +69,7 @@ teardown_test(void **state) {
 
 	dst_lib_destroy();
 
-	return (0);
+	return 0;
 }
 
 static isc_result_t
@@ -83,11 +92,12 @@ add_mac(dst_context_t *tsigctx, isc_buffer_t *buf) {
 	result = dst_context_adddata(tsigctx, &r);
 	dns_rdata_freestruct(&tsig);
 cleanup:
-	return (result);
+	return result;
 }
 
 static isc_result_t
-add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
+add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target,
+	 isc_stdtime_t now, bool mangle_sig) {
 	dns_compress_t cctx;
 	dns_rdata_any_tsig_t tsig;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
@@ -98,16 +108,13 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	isc_buffer_t sigbuf;
 	isc_region_t r;
 	isc_result_t result = ISC_R_SUCCESS;
-	isc_stdtime_t now;
 	unsigned char tsigbuf[1024];
 	unsigned int count;
 	unsigned int sigsize = 0;
-	bool invalidate_ctx = false;
 
 	memset(&tsig, 0, sizeof(tsig));
 
-	CHECK(dns_compress_init(&cctx, -1, mctx));
-	invalidate_ctx = true;
+	dns_compress_init(&cctx, mctx, 0);
 
 	tsig.common.rdclass = dns_rdataclass_any;
 	tsig.common.rdtype = dns_rdatatype_tsig;
@@ -115,7 +122,6 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	dns_name_init(&tsig.algorithm, NULL);
 	dns_name_clone(key->algorithm, &tsig.algorithm);
 
-	isc_stdtime_get(&now);
 	tsig.timesigned = now;
 	tsig.fudge = DNS_TSIG_FUDGE;
 	tsig.originalid = 50;
@@ -135,6 +141,9 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	CHECK(dst_context_sign(tsigctx, &sigbuf));
 	tsig.siglen = isc_buffer_usedlength(&sigbuf);
 	assert_int_equal(sigsize, tsig.siglen);
+	if (mangle_sig) {
+		isc_random_buf(tsig.signature, tsig.siglen);
+	}
 
 	isc_buffer_allocate(mctx, &dynbuf, 512);
 	CHECK(dns_rdata_fromstruct(&rdata, dns_rdataclass_any,
@@ -144,8 +153,8 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target) {
 	rdatalist.type = dns_rdatatype_tsig;
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 	dns_rdataset_init(&rdataset);
-	CHECK(dns_rdatalist_tordataset(&rdatalist, &rdataset));
-	CHECK(dns_rdataset_towire(&rdataset, &key->name, &cctx, target, 0,
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	CHECK(dns_rdataset_towire(&rdataset, key->name, &cctx, target, 0,
 				  &count));
 
 	/*
@@ -162,11 +171,9 @@ cleanup:
 	if (dynbuf != NULL) {
 		isc_buffer_free(&dynbuf);
 	}
-	if (invalidate_ctx) {
-		dns_compress_invalidate(&cctx);
-	}
+	dns_compress_invalidate(&cctx);
 
-	return (result);
+	return result;
 }
 
 static void
@@ -200,13 +207,13 @@ printmessage(dns_message_t *msg) {
 }
 
 static void
-render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
+render(isc_buffer_t *buf, unsigned int flags, dns_tsigkey_t *key,
        isc_buffer_t **tsigin, isc_buffer_t **tsigout, dst_context_t *tsigctx) {
 	dns_message_t *msg = NULL;
 	dns_compress_t cctx;
 	isc_result_t result;
 
-	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &msg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTRENDER, &msg);
 	assert_non_null(msg);
 
 	msg->id = 50;
@@ -229,12 +236,10 @@ render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
 		result = dns_message_settsigkey(msg, key);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
-		result = dns_message_setquerytsig(msg, *tsigin);
-		assert_int_equal(result, ISC_R_SUCCESS);
+		dns_message_setquerytsig(msg, *tsigin);
 	}
 
-	result = dns_compress_init(&cctx, -1, mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_compress_init(&cctx, mctx, 0);
 
 	result = dns_message_renderbegin(msg, &cctx, buf);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -261,18 +266,13 @@ render(isc_buffer_t *buf, unsigned flags, dns_tsigkey_t *key,
 	dns_message_detach(&msg);
 }
 
-/*
- * Test tsig tcp-continuation validation:
- * Check that a simulated three message TCP sequence where the first
- * and last messages contain TSIGs but the intermediate message doesn't
- * correctly verifies.
- */
-ISC_RUN_TEST_IMPL(tsig_tcp) {
+static void
+tsig_tcp(isc_stdtime_t now, isc_result_t expected_result, bool mangle_sig) {
 	const dns_name_t *tsigowner = NULL;
 	dns_fixedname_t fkeyname;
 	dns_message_t *msg = NULL;
 	dns_name_t *keyname;
-	dns_tsig_keyring_t *ring = NULL;
+	dns_tsigkeyring_t *ring = NULL;
 	dns_tsigkey_t *key = NULL;
 	isc_buffer_t *buf = NULL;
 	isc_buffer_t *querytsig = NULL;
@@ -283,20 +283,19 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	dst_context_t *tsigctx = NULL;
 	dst_context_t *outctx = NULL;
 
-	UNUSED(state);
-
 	/* isc_log_setdebuglevel(lctx, 99); */
 
 	keyname = dns_fixedname_initname(&fkeyname);
-	result = dns_name_fromstring(keyname, "test", 0, NULL);
+	result = dns_name_fromstring(keyname, "test", dns_rootname, 0, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_tsigkeyring_create(mctx, &ring);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_tsigkeyring_create(mctx, &ring);
+	assert_non_null(ring);
 
-	result = dns_tsigkey_create(keyname, dns_tsig_hmacsha256_name, secret,
-				    sizeof(secret), false, NULL, 0, 0, mctx,
-				    ring, &key);
+	result = dns_tsigkey_create(keyname, DST_ALG_HMACSHA256, secret,
+				    sizeof(secret), mctx, &key);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dns_tsigkeyring_add(ring, key);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(key);
 
@@ -317,7 +316,7 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	/*
 	 * Process response message 1.
 	 */
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	result = dns_message_settsigkey(msg, key);
@@ -328,8 +327,7 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 
 	printmessage(msg);
 
-	result = dns_message_setquerytsig(msg, querytsig);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_setquerytsig(msg, querytsig);
 
 	result = dns_tsig_verify(buf, msg, NULL, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -371,7 +369,7 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	/*
 	 * Process response message 2.
 	 */
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	msg->tcp_continuation = 1;
@@ -386,8 +384,7 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 
 	printmessage(msg);
 
-	result = dns_message_setquerytsig(msg, tsigin);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_setquerytsig(msg, tsigin);
 
 	result = dns_tsig_verify(buf, msg, NULL, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -411,13 +408,13 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	isc_buffer_allocate(mctx, &buf, 65535);
 	render(buf, DNS_MESSAGEFLAG_QR, key, &tsigout, &tsigout, outctx);
 
-	result = add_tsig(outctx, key, buf);
+	result = add_tsig(outctx, key, buf, now, mangle_sig);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Process response message 3.
 	 */
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &msg);
 	assert_non_null(msg);
 
 	msg->tcp_continuation = 1;
@@ -437,13 +434,23 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	 */
 	assert_non_null(dns_message_gettsig(msg, &tsigowner));
 
-	result = dns_message_setquerytsig(msg, tsigin);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_message_setquerytsig(msg, tsigin);
 
 	result = dns_tsig_verify(buf, msg, NULL, NULL);
-	assert_int_equal(result, ISC_R_SUCCESS);
-	assert_int_equal(msg->verified_sig, 1);
-	assert_int_equal(msg->tsigstatus, dns_rcode_noerror);
+	switch (expected_result) {
+	case ISC_R_SUCCESS:
+		assert_int_equal(result, ISC_R_SUCCESS);
+		assert_int_equal(msg->verified_sig, 1);
+		assert_int_equal(msg->tsigstatus, dns_rcode_noerror);
+		break;
+	case DNS_R_CLOCKSKEW:
+		assert_int_equal(result, DNS_R_CLOCKSKEW);
+		assert_int_equal(msg->verified_sig, 1);
+		assert_int_equal(msg->tsigstatus, dns_tsigerror_badtime);
+		break;
+	default:
+		UNREACHABLE();
+	}
 
 	if (tsigin != NULL) {
 		isc_buffer_free(&tsigin);
@@ -473,6 +480,29 @@ ISC_RUN_TEST_IMPL(tsig_tcp) {
 	}
 }
 
+/*
+ * Test tsig tcp-continuation validation:
+ * Check that a simulated three message TCP sequence where the first
+ * and last messages contain TSIGs but the intermediate message doesn't
+ * correctly verifies.
+ */
+ISC_RUN_TEST_IMPL(tsig_tcp) {
+	/* Run with correct current time */
+	tsig_tcp(isc_stdtime_now(), ISC_R_SUCCESS, false);
+}
+
+ISC_RUN_TEST_IMPL(tsig_badtime) {
+	/* Run with time outside of the fudge */
+	tsig_tcp(isc_stdtime_now() - 2 * DNS_TSIG_FUDGE, DNS_R_CLOCKSKEW,
+		 false);
+	tsig_tcp(isc_stdtime_now() + 2 * DNS_TSIG_FUDGE, DNS_R_CLOCKSKEW,
+		 false);
+}
+
+ISC_RUN_TEST_IMPL(tsig_badsig) {
+	tsig_tcp(isc_stdtime_now(), DNS_R_TSIGERRORSET, true);
+}
+
 /* Tests the dns__tsig_algvalid function */
 ISC_RUN_TEST_IMPL(algvalid) {
 	UNUSED(state);
@@ -488,91 +518,10 @@ ISC_RUN_TEST_IMPL(algvalid) {
 	assert_false(dns__tsig_algvalid(DST_ALG_GSSAPI));
 }
 
-/* Tests the dns__tsig_algfromname function */
-ISC_RUN_TEST_IMPL(algfromname) {
-	UNUSED(state);
-
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACMD5_NAME),
-			 DST_ALG_HMACMD5);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACSHA1_NAME),
-			 DST_ALG_HMACSHA1);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACSHA224_NAME),
-			 DST_ALG_HMACSHA224);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACSHA256_NAME),
-			 DST_ALG_HMACSHA256);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACSHA384_NAME),
-			 DST_ALG_HMACSHA384);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_HMACSHA512_NAME),
-			 DST_ALG_HMACSHA512);
-
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_GSSAPI_NAME),
-			 DST_ALG_GSSAPI);
-	assert_int_equal(dns__tsig_algfromname(DNS_TSIG_GSSAPIMS_NAME),
-			 DST_ALG_GSSAPI);
-
-	assert_int_equal(dns__tsig_algfromname(dns_rootname), 0);
-}
-
-/* Tests the dns__tsig_algnamefromname function */
-
-/*
- * Helper function to create a dns_name_t from a string and see if
- * the dns__tsig_algnamefromname function can correctly match it against the
- * static table of known algorithms.
- */
-static void
-test_name(const char *name_string, const dns_name_t *expected) {
-	dns_name_t name;
-	dns_name_init(&name, NULL);
-	assert_int_equal(dns_name_fromstring(&name, name_string, 0, mctx),
-			 ISC_R_SUCCESS);
-	assert_ptr_equal(dns__tsig_algnamefromname(&name), expected);
-	dns_name_free(&name, mctx);
-}
-
-ISC_RUN_TEST_IMPL(algnamefromname) {
-	UNUSED(state);
-
-	/* test the standard algorithms */
-	test_name("hmac-md5.sig-alg.reg.int", DNS_TSIG_HMACMD5_NAME);
-	test_name("hmac-sha1", DNS_TSIG_HMACSHA1_NAME);
-	test_name("hmac-sha224", DNS_TSIG_HMACSHA224_NAME);
-	test_name("hmac-sha256", DNS_TSIG_HMACSHA256_NAME);
-	test_name("hmac-sha384", DNS_TSIG_HMACSHA384_NAME);
-	test_name("hmac-sha512", DNS_TSIG_HMACSHA512_NAME);
-
-	test_name("gss-tsig", DNS_TSIG_GSSAPI_NAME);
-	test_name("gss.microsoft.com", DNS_TSIG_GSSAPIMS_NAME);
-
-	/* try another name that isn't a standard algorithm name */
-	assert_null(dns__tsig_algnamefromname(dns_rootname));
-}
-
-/* Tests the dns__tsig_algallocated function */
-ISC_RUN_TEST_IMPL(algallocated) {
-	UNUSED(state);
-
-	/* test the standard algorithms */
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACMD5_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA1_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA224_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA256_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA384_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA512_NAME));
-
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA512_NAME));
-	assert_false(dns__tsig_algallocated(DNS_TSIG_HMACSHA512_NAME));
-
-	/* try another name that isn't a standard algorithm name */
-	assert_true(dns__tsig_algallocated(dns_rootname));
-}
-
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY_CUSTOM(tsig_tcp, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_badtime, setup_test, teardown_test)
 ISC_TEST_ENTRY(algvalid)
-ISC_TEST_ENTRY(algfromname)
-ISC_TEST_ENTRY_CUSTOM(algnamefromname, setup_test, teardown_test)
-ISC_TEST_ENTRY(algallocated)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

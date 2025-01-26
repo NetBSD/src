@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.h,v 1.7 2024/02/21 22:51:58 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.8 2025/01/26 16:25:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,15 +33,14 @@ ISC_LANG_BEGINDECLS
 extern bool debug;
 
 int
-LLVMFuzzerInitialize(int *argc __attribute__((unused)),
-		     char ***argv __attribute__((unused)));
+LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED);
 
 int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
 #define CHECK(x)                    \
 	if ((x) != ISC_R_SUCCESS) { \
-		return 0;           \
+		return (0);         \
 	}
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.h,v 1.8 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.9 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,59 +53,15 @@ ISC_LANG_BEGINDECLS
 
 typedef void (*dns_keytable_callback_t)(const dns_name_t *name, void *fn_arg);
 
-isc_result_t
-dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep);
+void
+dns_keytable_create(dns_view_t *view, dns_keytable_t **keytablep);
 /*%<
  * Create a keytable.
  *
  * Requires:
  *
- *\li	'mctx' is a valid memory context.
- *
+ *\li	'view' is a valid memory context.
  *\li	keytablep != NULL && *keytablep == NULL
- *
- * Ensures:
- *
- *\li	On success, *keytablep is a valid, empty key table.
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *
- *\li	Any other result indicates failure.
- */
-
-void
-dns_keytable_attach(dns_keytable_t *source, dns_keytable_t **targetp);
-/*%<
- * Attach *targetp to source.
- *
- * Requires:
- *
- *\li	'source' is a valid keytable.
- *
- *\li	'targetp' points to a NULL dns_keytable_t *.
- *
- * Ensures:
- *
- *\li	*targetp is attached to source.
- */
-
-void
-dns_keytable_detach(dns_keytable_t **keytablep);
-/*%<
- * Detach *keytablep from its keytable.
- *
- * Requires:
- *
- *\li	'keytablep' points to a valid keytable.
- *
- * Ensures:
- *
- *\li	*keytablep is NULL.
- *
- *\li	If '*keytablep' is the last reference to the keytable,
- *		all resources used by the keytable will be freed
  */
 
 isc_result_t
@@ -254,20 +210,6 @@ dns_keytable_finddeepestmatch(dns_keytable_t *keytable, const dns_name_t *name,
  *\li	Any other result indicates an error.
  */
 
-void
-dns_keytable_detachkeynode(dns_keytable_t *keytable, dns_keynode_t **keynodep);
-/*%<
- * Detach a keynode found via dns_keytable_find().
- *
- * Requires:
- *
- *\li	*keynodep is a valid keynode returned by a call to dns_keytable_find().
- *
- * Ensures:
- *
- *\li	*keynodep == NULL
- */
-
 isc_result_t
 dns_keytable_issecuredomain(dns_keytable_t *keytable, const dns_name_t *name,
 			    dns_name_t *foundname, bool *wantdnssecp);
@@ -345,9 +287,15 @@ dns_keynode_trust(dns_keynode_t *keynode);
  * trusted: no longer an initializing key.
  */
 
-isc_result_t
+void
 dns_keytable_forall(dns_keytable_t *keytable,
 		    void (*func)(dns_keytable_t *, dns_keynode_t *,
 				 dns_name_t *, void *),
 		    void *arg);
+/*%<
+ * Call 'func' on each keynode in 'keytable'.
+ */
+
+ISC_REFCOUNT_DECL(dns_keytable);
+ISC_REFCOUNT_DECL(dns_keynode);
 ISC_LANG_ENDDECLS

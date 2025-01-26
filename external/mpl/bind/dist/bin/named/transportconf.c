@@ -1,4 +1,4 @@
-/*	$NetBSD: transportconf.c,v 1.2 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: transportconf.c,v 1.3 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -122,22 +122,24 @@ add_doh_transports(const cfg_obj_t *transportlist, dns_transport_list_t *list) {
 					     dns_transport_set_tls_versions);
 		parse_transport_option(doh, transport, "ciphers",
 				       dns_transport_set_ciphers);
+		parse_transport_option(doh, transport, "cipher-suites",
+				       dns_transport_set_cipher_suites);
 		parse_transport_bool_option(
 			doh, transport, "prefer-server-ciphers",
-			dns_transport_set_prefer_server_ciphers)
-			parse_transport_option(doh, transport, "ca-file",
-					       dns_transport_set_cafile);
+			dns_transport_set_prefer_server_ciphers);
+		parse_transport_option(doh, transport, "ca-file",
+				       dns_transport_set_cafile);
 		parse_transport_option(doh, transport, "remote-hostname",
 				       dns_transport_set_remote_hostname);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 failure:
 	cfg_obj_log(doh, named_g_lctx, ISC_LOG_ERROR,
 		    "configuring DoH '%s': %s", dohid,
 		    isc_result_totext(result));
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -174,22 +176,24 @@ add_tls_transports(const cfg_obj_t *transportlist, dns_transport_list_t *list) {
 					     dns_transport_set_tls_versions);
 		parse_transport_option(tls, transport, "ciphers",
 				       dns_transport_set_ciphers);
+		parse_transport_option(tls, transport, "cipher-suites",
+				       dns_transport_set_cipher_suites);
 		parse_transport_bool_option(
 			tls, transport, "prefer-server-ciphers",
-			dns_transport_set_prefer_server_ciphers)
-			parse_transport_option(tls, transport, "ca-file",
-					       dns_transport_set_cafile);
+			dns_transport_set_prefer_server_ciphers);
+		parse_transport_option(tls, transport, "ca-file",
+				       dns_transport_set_cafile);
 		parse_transport_option(tls, transport, "remote-hostname",
 				       dns_transport_set_remote_hostname);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 failure:
 	cfg_obj_log(tls, named_g_lctx, ISC_LOG_ERROR,
 		    "configuring tls '%s': %s", tlsid,
 		    isc_result_totext(result));
 
-	return (result);
+	return result;
 }
 
 #define CHECK(f)                             \
@@ -216,7 +220,7 @@ transport_list_fromconfig(const cfg_obj_t *config, dns_transport_list_t *list) {
 		obj = NULL;
 	}
 
-	return (result);
+	return result;
 }
 
 static void
@@ -258,8 +262,8 @@ named_transports_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	}
 
 	*listp = list;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 failure:
 	dns_transport_list_detach(&list);
-	return (result);
+	return result;
 }

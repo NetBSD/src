@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.2 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: once.h,v 1.3 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,8 @@ typedef pthread_once_t isc_once_t;
 
 #define ISC_ONCE_INIT PTHREAD_ONCE_INIT
 
-/* XXX We could do fancier error handling... */
-
-#define isc_once_do(op, f) \
-	((pthread_once((op), (f)) == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+#define isc_once_do(op, f)                                  \
+	{                                                   \
+		int _ret = pthread_once((op), (f));         \
+		PTHREADS_RUNTIME_CHECK(pthread_once, _ret); \
+	}

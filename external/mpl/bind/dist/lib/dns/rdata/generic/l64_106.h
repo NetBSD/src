@@ -1,4 +1,4 @@
-/*	$NetBSD: l64_106.h,v 1.7 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: l64_106.h,v 1.8 2025/01/26 16:25:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.9 2024/09/22 00:14:06 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.10 2025/01/26 16:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,18 +15,32 @@
 
 /*! \file */
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/ascii.h>
 #include <isc/mem.h>
 #include <isc/region.h>
 #include <isc/result.h>
-#include <isc/string.h> /* Required for HP/UX (and others?) */
+#include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/db.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdataslab.h>
+#include <dns/stats.h>
+
+#define CASESET(header)                                \
+	((atomic_load_acquire(&(header)->attributes) & \
+	  DNS_SLABHEADERATTR_CASESET) != 0)
+#define CASEFULLYLOWER(header)                         \
+	((atomic_load_acquire(&(header)->attributes) & \
+	  DNS_SLABHEADERATTR_CASEFULLYLOWER) != 0)
+#define NONEXISTENT(header)                            \
+	((atomic_load_acquire(&(header)->attributes) & \
+	  DNS_SLABHEADERATTR_NONEXISTENT) != 0)
 
 /*
  * The rdataslab structure allows iteration to occur in both load order
@@ -72,23 +86,62 @@
 
 struct xrdata {
 	dns_rdata_t rdata;
+#if DNS_RDATASET_FIXED
 	unsigned int order;
+#endif /* if DNS_RDATASET_FIXED */
 };
+
+#define peek_uint16(buffer) ({ ((uint16_t)*(buffer) << 8) | *((buffer) + 1); })
+#define get_uint16(buffer)                            \
+	({                                            \
+		uint16_t __ret = peek_uint16(buffer); \
+		buffer += sizeof(uint16_t);           \
+		__ret;                                \
+	})
+
+static void
+rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG);
+static isc_result_t
+rdataset_first(dns_rdataset_t *rdataset);
+static isc_result_t
+rdataset_next(dns_rdataset_t *rdataset);
+static void
+rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
+static void
+rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG);
+static unsigned int
+rdataset_count(dns_rdataset_t *rdataset);
+static isc_result_t
+rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+		    dns_rdataset_t *neg, dns_rdataset_t *negsig DNS__DB_FLARG);
+static isc_result_t
+rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+		    dns_rdataset_t *neg, dns_rdataset_t *negsig DNS__DB_FLARG);
+static void
+rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
+static void
+rdataset_expire(dns_rdataset_t *rdataset DNS__DB_FLARG);
+static void
+rdataset_clearprefetch(dns_rdataset_t *rdataset);
+static void
+rdataset_setownercase(dns_rdataset_t *rdataset, const dns_name_t *name);
+static void
+rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
 
 /*% Note: the "const void *" are just to make qsort happy.  */
 static int
 compare_rdata(const void *p1, const void *p2) {
 	const struct xrdata *x1 = p1;
 	const struct xrdata *x2 = p2;
-	return (dns_rdata_compare(&x1->rdata, &x2->rdata));
+	return dns_rdata_compare(&x1->rdata, &x2->rdata);
 }
 
 #if DNS_RDATASET_FIXED
 static void
 fillin_offsets(unsigned char *offsetbase, unsigned int *offsettable,
-	       unsigned length) {
+	       unsigned int length) {
 	unsigned int i, j;
-	unsigned char *raw;
+	unsigned char *raw = NULL;
 
 	for (i = 0, j = 0; i < length; i++) {
 		if (offsettable[i] == 0) {
@@ -123,20 +176,18 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	 * rdata as rdata.data == NULL is valid.
 	 */
 	static unsigned char removed;
-	struct xrdata *x;
-	unsigned char *rawbuf;
-#if DNS_RDATASET_FIXED
-	unsigned char *offsetbase;
-#endif /* if DNS_RDATASET_FIXED */
+	struct xrdata *x = NULL;
+	unsigned char *rawbuf = NULL;
 	unsigned int buflen;
 	isc_result_t result;
 	unsigned int nitems;
 	unsigned int nalloc;
+	unsigned int length;
 	unsigned int i;
 #if DNS_RDATASET_FIXED
-	unsigned int *offsettable;
+	unsigned char *offsetbase = NULL;
+	unsigned int *offsettable = NULL;
 #endif /* if DNS_RDATASET_FIXED */
-	unsigned int length;
 
 	buflen = reservelen + 2;
 
@@ -148,7 +199,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	 */
 	if (nitems == 0) {
 		if (rdataset->type != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 		rawbuf = isc_mem_get(mctx, buflen);
 		region->base = rawbuf;
@@ -156,22 +207,22 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		rawbuf += reservelen;
 		*rawbuf++ = 0;
 		*rawbuf = 0;
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	if (maxrrperset > 0 && nitems > maxrrperset) {
-		return (DNS_R_TOOMANYRECORDS);
+		return DNS_R_TOOMANYRECORDS;
 	}
 
 	if (nitems > 0xffff) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	/*
 	 * Remember the original number of items.
 	 */
 	nalloc = nitems;
-	x = isc_mem_get(mctx, nalloc * sizeof(struct xrdata));
+	x = isc_mem_cget(mctx, nalloc, sizeof(struct xrdata));
 
 	/*
 	 * Save all of the rdata members into an array.
@@ -276,18 +327,16 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	 * Allocate the memory, set up a buffer, start copying in
 	 * data.
 	 */
-	rawbuf = isc_mem_get(mctx, buflen);
+	rawbuf = isc_mem_cget(mctx, 1, buflen);
 
 #if DNS_RDATASET_FIXED
 	/* Allocate temporary offset table. */
-	offsettable = isc_mem_get(mctx, nalloc * sizeof(unsigned int));
-	memset(offsettable, 0, nalloc * sizeof(unsigned int));
+	offsettable = isc_mem_cget(mctx, nalloc, sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	region->base = rawbuf;
 	region->length = buflen;
 
-	memset(rawbuf, 0, buflen);
 	rawbuf += reservelen;
 
 #if DNS_RDATASET_FIXED
@@ -335,82 +384,70 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 
 #if DNS_RDATASET_FIXED
 	fillin_offsets(offsetbase, offsettable, nalloc);
-	isc_mem_put(mctx, offsettable, nalloc * sizeof(unsigned int));
+	isc_mem_cput(mctx, offsettable, nalloc, sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	result = ISC_R_SUCCESS;
 
 free_rdatas:
-	isc_mem_put(mctx, x, nalloc * sizeof(struct xrdata));
-	return (result);
+	isc_mem_cput(mctx, x, nalloc, sizeof(struct xrdata));
+	return result;
 }
 
 unsigned int
 dns_rdataslab_size(unsigned char *slab, unsigned int reservelen) {
-	unsigned int count, length;
-	unsigned char *current;
-
 	REQUIRE(slab != NULL);
 
-	current = slab + reservelen;
-	count = *current++ * 256;
-	count += *current++;
+	unsigned char *current = slab + reservelen;
+	uint16_t count = get_uint16(current);
+
 #if DNS_RDATASET_FIXED
 	current += (4 * count);
 #endif /* if DNS_RDATASET_FIXED */
-	while (count > 0) {
-		count--;
-		length = *current++ * 256;
-		length += *current++;
-#if DNS_RDATASET_FIXED
-		current += length + 2;
-#else  /* if DNS_RDATASET_FIXED */
+
+	while (count-- > 0) {
+		uint16_t length = get_uint16(current);
 		current += length;
+#if DNS_RDATASET_FIXED
+		current += 2;
 #endif /* if DNS_RDATASET_FIXED */
 	}
 
-	return ((unsigned int)(current - slab));
+	return (unsigned int)(current - slab);
 }
 
 unsigned int
 dns_rdataslab_rdatasize(unsigned char *slab, unsigned int reservelen) {
-	unsigned int count, length, rdatalen = 0;
-	unsigned char *current;
-
 	REQUIRE(slab != NULL);
 
-	current = slab + reservelen;
-	count = *current++ * 256;
-	count += *current++;
+	uint16_t rdatalen = 0;
+	unsigned char *current = slab + reservelen;
+	uint16_t count = get_uint16(current);
+
 #if DNS_RDATASET_FIXED
 	current += (4 * count);
 #endif /* if DNS_RDATASET_FIXED */
-	while (count > 0) {
-		count--;
-		length = *current++ * 256;
-		length += *current++;
+
+	while (count-- > 0) {
+		uint16_t length = get_uint16(current);
 		rdatalen += length;
-#if DNS_RDATASET_FIXED
-		current += length + 2;
-#else  /* if DNS_RDATASET_FIXED */
 		current += length;
+#if DNS_RDATASET_FIXED
+		current += 2;
 #endif /* if DNS_RDATASET_FIXED */
 	}
 
-	return (rdatalen);
+	return rdatalen;
 }
 
 unsigned int
 dns_rdataslab_count(unsigned char *slab, unsigned int reservelen) {
-	unsigned int count;
-	unsigned char *current;
-
 	REQUIRE(slab != NULL);
 
-	current = slab + reservelen;
-	count = *current++ * 256;
-	count += *current++;
-	return (count);
+	unsigned char *current = slab + reservelen;
+	uint16_t count = get_uint16(current);
+
+	return count;
 }
 
 /*
@@ -424,11 +461,8 @@ rdata_from_slab(unsigned char **current, dns_rdataclass_t rdclass,
 		dns_rdatatype_t type, dns_rdata_t *rdata) {
 	unsigned char *tcurrent = *current;
 	isc_region_t region;
-	unsigned int length;
 	bool offline = false;
-
-	length = *tcurrent++ * 256;
-	length += *tcurrent++;
+	uint16_t length = get_uint16(tcurrent);
 
 	if (type == dns_rdatatype_rrsig) {
 		if ((*tcurrent & DNS_RDATASLAB_OFFLINE) != 0) {
@@ -459,32 +493,28 @@ static bool
 rdata_in_slab(unsigned char *slab, unsigned int reservelen,
 	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
 	      dns_rdata_t *rdata) {
-	unsigned int count, i;
-	unsigned char *current;
-	dns_rdata_t trdata = DNS_RDATA_INIT;
-	int n;
+	unsigned char *current = slab + reservelen;
 
-	current = slab + reservelen;
-	count = *current++ * 256;
-	count += *current++;
+	uint16_t count = get_uint16(current);
 
 #if DNS_RDATASET_FIXED
 	current += (4 * count);
 #endif /* if DNS_RDATASET_FIXED */
 
-	for (i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++) {
+		dns_rdata_t trdata = DNS_RDATA_INIT;
 		rdata_from_slab(&current, rdclass, type, &trdata);
 
-		n = dns_rdata_compare(&trdata, rdata);
+		int n = dns_rdata_compare(&trdata, rdata);
 		if (n == 0) {
-			return (true);
+			return true;
 		}
 		if (n > 0) { /* In DNSSEC order. */
 			break;
 		}
 		dns_rdata_reset(&trdata);
 	}
-	return (false);
+	return false;
 }
 
 isc_result_t
@@ -493,7 +523,8 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		    dns_rdataclass_t rdclass, dns_rdatatype_t type,
 		    unsigned int flags, uint32_t maxrrperset,
 		    unsigned char **tslabp) {
-	unsigned char *ocurrent, *ostart, *ncurrent, *tstart, *tcurrent, *data;
+	unsigned char *ocurrent = NULL, *ostart = NULL, *ncurrent = NULL;
+	unsigned char *tstart = NULL, *tcurrent = NULL, *data = NULL;
 	unsigned int ocount, ncount, count, olength, tlength, tcount, length;
 	dns_rdata_t ordata = DNS_RDATA_INIT;
 	dns_rdata_t nrdata = DNS_RDATA_INIT;
@@ -505,8 +536,8 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	unsigned int oncount;
 	unsigned int norder = 0;
 	unsigned int oorder = 0;
-	unsigned char *offsetbase;
-	unsigned int *offsettable;
+	unsigned char *offsetbase = NULL;
+	unsigned int *offsettable = NULL;
 #endif /* if DNS_RDATASET_FIXED */
 
 	/*
@@ -518,22 +549,20 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	REQUIRE(oslab != NULL && nslab != NULL);
 
 	ocurrent = oslab + reservelen;
-	ocount = *ocurrent++ * 256;
-	ocount += *ocurrent++;
+	ocount = get_uint16(ocurrent);
 #if DNS_RDATASET_FIXED
 	ocurrent += (4 * ocount);
 #endif /* if DNS_RDATASET_FIXED */
 	ostart = ocurrent;
 	ncurrent = nslab + reservelen;
-	ncount = *ncurrent++ * 256;
-	ncount += *ncurrent++;
+	ncount = get_uint16(ncurrent);
 #if DNS_RDATASET_FIXED
 	ncurrent += (4 * ncount);
 #endif /* if DNS_RDATASET_FIXED */
 	INSIST(ocount > 0 && ncount > 0);
 
 	if (maxrrperset > 0 && ocount + ncount > maxrrperset) {
-		return (DNS_R_TOOMANYRECORDS);
+		return DNS_R_TOOMANYRECORDS;
 	}
 
 #if DNS_RDATASET_FIXED
@@ -549,8 +578,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	 */
 	olength = 0;
 	for (count = 0; count < ocount; count++) {
-		length = *ocurrent++ * 256;
-		length += *ocurrent++;
+		length = get_uint16(ocurrent);
 #if DNS_RDATASET_FIXED
 		olength += length + 8;
 		ocurrent += length + 2;
@@ -595,11 +623,11 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 
 	if (((flags & DNS_RDATASLAB_EXACT) != 0) && (tcount != ncount + ocount))
 	{
-		return (DNS_R_NOTEXACT);
+		return DNS_R_NOTEXACT;
 	}
 
 	if (!added_something && (flags & DNS_RDATASLAB_FORCE) == 0) {
-		return (DNS_R_UNCHANGED);
+		return DNS_R_UNCHANGED;
 	}
 
 	/*
@@ -610,11 +638,11 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		 * We have a singleton type, but there's more than one
 		 * RR in the rdataset.
 		 */
-		return (DNS_R_SINGLETON);
+		return DNS_R_SINGLETON;
 	}
 
 	if (tcount > 0xffff) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	/*
@@ -639,9 +667,8 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	 */
 	tcurrent += (tcount * 4);
 
-	offsettable = isc_mem_get(mctx,
-				  (ocount + oncount) * sizeof(unsigned int));
-	memset(offsettable, 0, (ocount + oncount) * sizeof(unsigned int));
+	offsettable = isc_mem_cget(mctx, (ocount + oncount),
+				   sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	/*
@@ -650,7 +677,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 	ocurrent = ostart;
 	INSIST(ocount != 0);
 #if DNS_RDATASET_FIXED
-	oorder = ocurrent[2] * 256 + ocurrent[3];
+	oorder = peek_uint16(&ocurrent[2]);
 	INSIST(oorder < ocount);
 #endif /* if DNS_RDATASET_FIXED */
 	rdata_from_slab(&ocurrent, rdclass, type, &ordata);
@@ -664,7 +691,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		do {
 			dns_rdata_reset(&nrdata);
 #if DNS_RDATASET_FIXED
-			norder = ncurrent[2] * 256 + ncurrent[3];
+			norder = peek_uint16(&ncurrent[2]);
 
 			INSIST(norder < oncount);
 #endif /* if DNS_RDATASET_FIXED */
@@ -703,7 +730,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 			if (oadded < ocount) {
 				dns_rdata_reset(&ordata);
 #if DNS_RDATASET_FIXED
-				oorder = ocurrent[2] * 256 + ocurrent[3];
+				oorder = peek_uint16(&ocurrent[2]);
 				INSIST(oorder < ocount);
 #endif /* if DNS_RDATASET_FIXED */
 				rdata_from_slab(&ocurrent, rdclass, type,
@@ -731,8 +758,7 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 				do {
 					dns_rdata_reset(&nrdata);
 #if DNS_RDATASET_FIXED
-					norder = ncurrent[2] * 256 +
-						 ncurrent[3];
+					norder = peek_uint16(&ncurrent[2]);
 					INSIST(norder < oncount);
 #endif /* if DNS_RDATASET_FIXED */
 					rdata_from_slab(&ncurrent, rdclass,
@@ -746,15 +772,15 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 #if DNS_RDATASET_FIXED
 	fillin_offsets(offsetbase, offsettable, ocount + oncount);
 
-	isc_mem_put(mctx, offsettable,
-		    (ocount + oncount) * sizeof(unsigned int));
+	isc_mem_cput(mctx, offsettable, (ocount + oncount),
+		     sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	INSIST(tcurrent == tstart + tlength);
 
 	*tslabp = tstart;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -762,13 +788,14 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 		       unsigned int reservelen, isc_mem_t *mctx,
 		       dns_rdataclass_t rdclass, dns_rdatatype_t type,
 		       unsigned int flags, unsigned char **tslabp) {
-	unsigned char *mcurrent, *sstart, *scurrent, *tstart, *tcurrent;
+	unsigned char *mcurrent = NULL, *sstart = NULL, *scurrent = NULL;
+	unsigned char *tstart = NULL, *tcurrent = NULL;
 	unsigned int mcount, scount, rcount, count, tlength, tcount, i;
 	dns_rdata_t srdata = DNS_RDATA_INIT;
 	dns_rdata_t mrdata = DNS_RDATA_INIT;
 #if DNS_RDATASET_FIXED
-	unsigned char *offsetbase;
-	unsigned int *offsettable;
+	unsigned char *offsetbase = NULL;
+	unsigned int *offsettable = NULL;
 	unsigned int order;
 #endif /* if DNS_RDATASET_FIXED */
 
@@ -776,11 +803,9 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 	REQUIRE(mslab != NULL && sslab != NULL);
 
 	mcurrent = mslab + reservelen;
-	mcount = *mcurrent++ * 256;
-	mcount += *mcurrent++;
+	mcount = get_uint16(mcurrent);
 	scurrent = sslab + reservelen;
-	scount = *scurrent++ * 256;
-	scount += *scurrent++;
+	scount = get_uint16(scurrent);
 	INSIST(mcount > 0 && scount > 0);
 
 	/*
@@ -837,21 +862,21 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 	 * check only works as rdataslabs do not contain duplicates.
 	 */
 	if (((flags & DNS_RDATASLAB_EXACT) != 0) && (rcount != scount)) {
-		return (DNS_R_NOTEXACT);
+		return DNS_R_NOTEXACT;
 	}
 
 	/*
 	 * Don't continue if the new rdataslab would be empty.
 	 */
 	if (tcount == 0) {
-		return (DNS_R_NXRRSET);
+		return DNS_R_NXRRSET;
 	}
 
 	/*
 	 * If nothing is going to change, we can stop.
 	 */
 	if (rcount == 0) {
-		return (DNS_R_UNCHANGED);
+		return DNS_R_UNCHANGED;
 	}
 
 	/*
@@ -863,8 +888,7 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 #if DNS_RDATASET_FIXED
 	offsetbase = tcurrent;
 
-	offsettable = isc_mem_get(mctx, mcount * sizeof(unsigned int));
-	memset(offsettable, 0, mcount * sizeof(unsigned int));
+	offsettable = isc_mem_cget(mctx, mcount, sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	/*
@@ -881,15 +905,14 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 	 * Copy the parts of mslab not in sslab.
 	 */
 	mcurrent = mslab + reservelen;
-	mcount = *mcurrent++ * 256;
-	mcount += *mcurrent++;
+	mcount = get_uint16(mcurrent);
 #if DNS_RDATASET_FIXED
 	mcurrent += (4 * mcount);
 #endif /* if DNS_RDATASET_FIXED */
 	for (i = 0; i < mcount; i++) {
 		unsigned char *mrdatabegin = mcurrent;
 #if DNS_RDATASET_FIXED
-		order = mcurrent[2] * 256 + mcurrent[3];
+		order = peek_uint16(&mcurrent[2]);
 		INSIST(order < mcount);
 #endif /* if DNS_RDATASET_FIXED */
 		rdata_from_slab(&mcurrent, rdclass, type, &mrdata);
@@ -920,33 +943,31 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 #if DNS_RDATASET_FIXED
 	fillin_offsets(offsetbase, offsettable, mcount);
 
-	isc_mem_put(mctx, offsettable, mcount * sizeof(unsigned int));
+	isc_mem_cput(mctx, offsettable, mcount, sizeof(unsigned int));
 #endif /* if DNS_RDATASET_FIXED */
 
 	INSIST(tcurrent == tstart + tlength);
 
 	*tslabp = tstart;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 bool
 dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 		    unsigned int reservelen) {
-	unsigned char *current1, *current2;
+	unsigned char *current1 = NULL, *current2 = NULL;
 	unsigned int count1, count2;
 	unsigned int length1, length2;
 
 	current1 = slab1 + reservelen;
-	count1 = *current1++ * 256;
-	count1 += *current1++;
+	count1 = get_uint16(current1);
 
 	current2 = slab2 + reservelen;
-	count2 = *current2++ * 256;
-	count2 += *current2++;
+	count2 = get_uint16(current2);
 
 	if (count1 != count2) {
-		return (false);
+		return false;
 	}
 
 #if DNS_RDATASET_FIXED
@@ -954,12 +975,9 @@ dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 	current2 += (4 * count2);
 #endif /* if DNS_RDATASET_FIXED */
 
-	while (count1 > 0) {
-		length1 = *current1++ * 256;
-		length1 += *current1++;
-
-		length2 = *current2++ * 256;
-		length2 += *current2++;
+	while (count1-- > 0) {
+		length1 = get_uint16(current1);
+		length2 = get_uint16(current2);
 
 #if DNS_RDATASET_FIXED
 		current1 += 2;
@@ -969,36 +987,32 @@ dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 		if (length1 != length2 ||
 		    memcmp(current1, current2, length1) != 0)
 		{
-			return (false);
+			return false;
 		}
 
 		current1 += length1;
 		current2 += length1;
-
-		count1--;
 	}
-	return (true);
+	return true;
 }
 
 bool
 dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
 		     unsigned int reservelen, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type) {
-	unsigned char *current1, *current2;
+	unsigned char *current1 = NULL, *current2 = NULL;
 	unsigned int count1, count2;
 	dns_rdata_t rdata1 = DNS_RDATA_INIT;
 	dns_rdata_t rdata2 = DNS_RDATA_INIT;
 
 	current1 = slab1 + reservelen;
-	count1 = *current1++ * 256;
-	count1 += *current1++;
+	count1 = get_uint16(current1);
 
 	current2 = slab2 + reservelen;
-	count2 = *current2++ * 256;
-	count2 += *current2++;
+	count2 = get_uint16(current2);
 
 	if (count1 != count2) {
-		return (false);
+		return false;
 	}
 
 #if DNS_RDATASET_FIXED
@@ -1010,10 +1024,455 @@ dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
 		rdata_from_slab(&current1, rdclass, type, &rdata1);
 		rdata_from_slab(&current2, rdclass, type, &rdata2);
 		if (dns_rdata_compare(&rdata1, &rdata2) != 0) {
-			return (false);
+			return false;
 		}
 		dns_rdata_reset(&rdata1);
 		dns_rdata_reset(&rdata2);
 	}
-	return (true);
+	return true;
+}
+
+dns_slabheader_t *
+dns_slabheader_fromrdataset(const dns_rdataset_t *rdataset) {
+	dns_slabheader_t *header = (dns_slabheader_t *)rdataset->slab.raw;
+	return header - 1;
+}
+
+void *
+dns_slabheader_raw(dns_slabheader_t *header) {
+	return header + 1;
+}
+
+void
+dns_slabheader_setownercase(dns_slabheader_t *header, const dns_name_t *name) {
+	unsigned int i;
+	bool fully_lower;
+
+	/*
+	 * We do not need to worry about label lengths as they are all
+	 * less than or equal to 63.
+	 */
+	memset(header->upper, 0, sizeof(header->upper));
+	fully_lower = true;
+	for (i = 0; i < name->length; i++) {
+		if (isupper(name->ndata[i])) {
+			header->upper[i / 8] |= 1 << (i % 8);
+			fully_lower = false;
+		}
+	}
+	DNS_SLABHEADER_SETATTR(header, DNS_SLABHEADERATTR_CASESET);
+	if (fully_lower) {
+		DNS_SLABHEADER_SETATTR(header,
+				       DNS_SLABHEADERATTR_CASEFULLYLOWER);
+	}
+}
+
+void
+dns_slabheader_copycase(dns_slabheader_t *dest, dns_slabheader_t *src) {
+	if (CASESET(src)) {
+		uint_least16_t attr = DNS_SLABHEADER_GETATTR(
+			src, (DNS_SLABHEADERATTR_CASESET |
+			      DNS_SLABHEADERATTR_CASEFULLYLOWER));
+		DNS_SLABHEADER_SETATTR(dest, attr);
+		memmove(dest->upper, src->upper, sizeof(src->upper));
+	}
+}
+
+void
+dns_slabheader_reset(dns_slabheader_t *h, dns_db_t *db, dns_dbnode_t *node) {
+	ISC_LINK_INIT(h, link);
+	h->heap_index = 0;
+	h->heap = NULL;
+	h->db = db;
+	h->node = node;
+
+	atomic_init(&h->attributes, 0);
+	atomic_init(&h->last_refresh_fail_ts, 0);
+
+	STATIC_ASSERT((sizeof(h->attributes) == 2),
+		      "The .attributes field of dns_slabheader_t needs to be "
+		      "16-bit int type exactly.");
+}
+
+dns_slabheader_t *
+dns_slabheader_new(dns_db_t *db, dns_dbnode_t *node) {
+	dns_slabheader_t *h = NULL;
+
+	h = isc_mem_get(db->mctx, sizeof(*h));
+	*h = (dns_slabheader_t){
+		.link = ISC_LINK_INITIALIZER,
+	};
+	dns_slabheader_reset(h, db, node);
+	return h;
+}
+
+void
+dns_slabheader_destroy(dns_slabheader_t **headerp) {
+	unsigned int size;
+	dns_slabheader_t *header = *headerp;
+
+	*headerp = NULL;
+
+	isc_mem_t *mctx = header->db->mctx;
+
+	dns_db_deletedata(header->db, header->node, header);
+
+	if (NONEXISTENT(header)) {
+		size = sizeof(*header);
+	} else {
+		size = dns_rdataslab_size((unsigned char *)header,
+					  sizeof(*header));
+	}
+
+	isc_mem_put(mctx, header, size);
+}
+
+void
+dns_slabheader_freeproof(isc_mem_t *mctx, dns_slabheader_proof_t **proof) {
+	if (dns_name_dynamic(&(*proof)->name)) {
+		dns_name_free(&(*proof)->name, mctx);
+	}
+	if ((*proof)->neg != NULL) {
+		isc_mem_put(mctx, (*proof)->neg,
+			    dns_rdataslab_size((*proof)->neg, 0));
+	}
+	if ((*proof)->negsig != NULL) {
+		isc_mem_put(mctx, (*proof)->negsig,
+			    dns_rdataslab_size((*proof)->negsig, 0));
+	}
+	isc_mem_put(mctx, *proof, sizeof(**proof));
+	*proof = NULL;
+}
+
+dns_rdatasetmethods_t dns_rdataslab_rdatasetmethods = {
+	.disassociate = rdataset_disassociate,
+	.first = rdataset_first,
+	.next = rdataset_next,
+	.current = rdataset_current,
+	.clone = rdataset_clone,
+	.count = rdataset_count,
+	.getnoqname = rdataset_getnoqname,
+	.getclosest = rdataset_getclosest,
+	.settrust = rdataset_settrust,
+	.expire = rdataset_expire,
+	.clearprefetch = rdataset_clearprefetch,
+	.setownercase = rdataset_setownercase,
+	.getownercase = rdataset_getownercase,
+};
+
+/* Fixed RRSet helper macros */
+
+#define DNS_RDATASET_LENGTH 2;
+
+#if DNS_RDATASET_FIXED
+#define DNS_RDATASET_ORDER 2
+#define DNS_RDATASET_COUNT (count * 4)
+#else /* !DNS_RDATASET_FIXED */
+#define DNS_RDATASET_ORDER 0
+#define DNS_RDATASET_COUNT 0
+#endif /* DNS_RDATASET_FIXED */
+
+static void
+rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG) {
+	dns_db_t *db = rdataset->slab.db;
+	dns_dbnode_t *node = rdataset->slab.node;
+
+	dns__db_detachnode(db, &node DNS__DB_FLARG_PASS);
+}
+
+static isc_result_t
+rdataset_first(dns_rdataset_t *rdataset) {
+	unsigned char *raw = rdataset->slab.raw;
+	uint16_t count = peek_uint16(raw);
+	if (count == 0) {
+		rdataset->slab.iter_pos = NULL;
+		rdataset->slab.iter_count = 0;
+		return ISC_R_NOMORE;
+	}
+
+	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0) {
+		raw += DNS_RDATASET_COUNT;
+	}
+
+	/*
+	 * iter_count is the number of rdata beyond the cursor
+	 * position, so we decrement the total count by one before
+	 * storing it.
+	 *
+	 * If DNS_RDATASETATTR_LOADORDER is not set 'raw' points to the
+	 * first record.  If DNS_RDATASETATTR_LOADORDER is set 'raw' points
+	 * to the first entry in the offset table.
+	 */
+	rdataset->slab.iter_pos = raw + DNS_RDATASET_LENGTH;
+	rdataset->slab.iter_count = count - 1;
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+rdataset_next(dns_rdataset_t *rdataset) {
+	uint16_t count = rdataset->slab.iter_count;
+	if (count == 0) {
+		rdataset->slab.iter_pos = NULL;
+		return ISC_R_NOMORE;
+	}
+	rdataset->slab.iter_count = count - 1;
+
+	/*
+	 * Skip forward one record (length + 4) or one offset (4).
+	 */
+	unsigned char *raw = rdataset->slab.iter_pos;
+#if DNS_RDATASET_FIXED
+	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0)
+#endif /* DNS_RDATASET_FIXED */
+	{
+		uint16_t length = peek_uint16(raw);
+		raw += length;
+	}
+	rdataset->slab.iter_pos = raw + DNS_RDATASET_ORDER +
+				  DNS_RDATASET_LENGTH;
+
+	return ISC_R_SUCCESS;
+}
+
+static void
+rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
+	unsigned char *raw = NULL;
+	unsigned int length;
+	isc_region_t r;
+	unsigned int flags = 0;
+
+	raw = rdataset->slab.iter_pos;
+	REQUIRE(raw != NULL);
+
+	/*
+	 * Find the start of the record if not already in iter_pos
+	 * then skip the length and order fields.
+	 */
+#if DNS_RDATASET_FIXED
+	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) != 0) {
+		unsigned int offset;
+		offset = ((unsigned int)raw[0] << 24) +
+			 ((unsigned int)raw[1] << 16) +
+			 ((unsigned int)raw[2] << 8) + (unsigned int)raw[3];
+		raw = rdataset->slab.raw + offset;
+	}
+#endif /* if DNS_RDATASET_FIXED */
+
+	length = peek_uint16(raw);
+
+	raw += DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
+
+	if (rdataset->type == dns_rdatatype_rrsig) {
+		if (*raw & DNS_RDATASLAB_OFFLINE) {
+			flags |= DNS_RDATA_OFFLINE;
+		}
+		length--;
+		raw++;
+	}
+	r.length = length;
+	r.base = raw;
+	dns_rdata_fromregion(rdata, rdataset->rdclass, rdataset->type, &r);
+	rdata->flags |= flags;
+}
+
+static void
+rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG) {
+	dns_db_t *db = source->slab.db;
+	dns_dbnode_t *node = source->slab.node;
+	dns_dbnode_t *cloned_node = NULL;
+
+	dns__db_attachnode(db, node, &cloned_node DNS__DB_FLARG_PASS);
+	INSIST(!ISC_LINK_LINKED(target, link));
+	*target = *source;
+	ISC_LINK_INIT(target, link);
+
+	target->slab.iter_pos = NULL;
+	target->slab.iter_count = 0;
+}
+
+static unsigned int
+rdataset_count(dns_rdataset_t *rdataset) {
+	unsigned char *raw = NULL;
+	unsigned int count;
+
+	raw = rdataset->slab.raw;
+	count = get_uint16(raw);
+
+	return count;
+}
+
+static isc_result_t
+rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+		    dns_rdataset_t *nsec,
+		    dns_rdataset_t *nsecsig DNS__DB_FLARG) {
+	dns_db_t *db = rdataset->slab.db;
+	dns_dbnode_t *node = rdataset->slab.node;
+	const dns_slabheader_proof_t *noqname = rdataset->slab.noqname;
+
+	/*
+	 * Usually, rdataset->slab.raw refers the data following a
+	 * dns_slabheader, but in this case it points to a bare
+	 * rdataslab belonging to the dns_slabheader's `noqname` field.
+	 * The DNS_RDATASETATTR_KEEPCASE attribute is set to prevent
+	 * setownercase and getownercase methods from affecting the
+	 * case of NSEC/NSEC3 owner names.
+	 */
+	dns__db_attachnode(db, node,
+			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	*nsec = (dns_rdataset_t){
+		.methods = &dns_rdataslab_rdatasetmethods,
+		.rdclass = db->rdclass,
+		.type = noqname->type,
+		.ttl = rdataset->ttl,
+		.trust = rdataset->trust,
+		.slab.db = db,
+		.slab.node = node,
+		.slab.raw = noqname->neg,
+		.link = nsec->link,
+		.count = nsec->count,
+		.attributes = nsec->attributes | DNS_RDATASETATTR_KEEPCASE,
+		.magic = nsec->magic,
+	};
+
+	dns__db_attachnode(db, node,
+			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	*nsecsig = (dns_rdataset_t){
+		.methods = &dns_rdataslab_rdatasetmethods,
+		.rdclass = db->rdclass,
+		.type = dns_rdatatype_rrsig,
+		.covers = noqname->type,
+		.ttl = rdataset->ttl,
+		.trust = rdataset->trust,
+		.slab.db = db,
+		.slab.node = node,
+		.slab.raw = noqname->negsig,
+		.link = nsecsig->link,
+		.count = nsecsig->count,
+		.attributes = nsecsig->attributes | DNS_RDATASETATTR_KEEPCASE,
+		.magic = nsecsig->magic,
+	};
+
+	dns_name_clone(&noqname->name, name);
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+		    dns_rdataset_t *nsec,
+		    dns_rdataset_t *nsecsig DNS__DB_FLARG) {
+	dns_db_t *db = rdataset->slab.db;
+	dns_dbnode_t *node = rdataset->slab.node;
+	const dns_slabheader_proof_t *closest = rdataset->slab.closest;
+
+	/*
+	 * As mentioned above, rdataset->slab.raw usually refers the data
+	 * following an dns_slabheader, but in this case it points to a bare
+	 * rdataslab belonging to the dns_slabheader's `closest` field.
+	 */
+	dns__db_attachnode(db, node,
+			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	*nsec = (dns_rdataset_t){
+		.methods = &dns_rdataslab_rdatasetmethods,
+		.rdclass = db->rdclass,
+		.type = closest->type,
+		.ttl = rdataset->ttl,
+		.trust = rdataset->trust,
+		.slab.db = db,
+		.slab.node = node,
+		.slab.raw = closest->neg,
+		.link = nsec->link,
+		.count = nsec->count,
+		.attributes = nsec->attributes | DNS_RDATASETATTR_KEEPCASE,
+		.magic = nsec->magic,
+	};
+
+	dns__db_attachnode(db, node,
+			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	*nsecsig = (dns_rdataset_t){
+		.methods = &dns_rdataslab_rdatasetmethods,
+		.rdclass = db->rdclass,
+		.type = dns_rdatatype_rrsig,
+		.covers = closest->type,
+		.ttl = rdataset->ttl,
+		.trust = rdataset->trust,
+		.slab.db = db,
+		.slab.node = node,
+		.slab.raw = closest->negsig,
+		.link = nsecsig->link,
+		.count = nsecsig->count,
+		.attributes = nsecsig->attributes | DNS_RDATASETATTR_KEEPCASE,
+		.magic = nsecsig->magic,
+	};
+
+	dns_name_clone(&closest->name, name);
+
+	return ISC_R_SUCCESS;
+}
+
+static void
+rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
+
+	dns_db_locknode(header->db, header->node, isc_rwlocktype_write);
+	header->trust = rdataset->trust = trust;
+	dns_db_unlocknode(header->db, header->node, isc_rwlocktype_write);
+}
+
+static void
+rdataset_expire(dns_rdataset_t *rdataset DNS__DB_FLARG) {
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
+
+	dns_db_expiredata(header->db, header->node, header);
+}
+
+static void
+rdataset_clearprefetch(dns_rdataset_t *rdataset) {
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
+
+	dns_db_locknode(header->db, header->node, isc_rwlocktype_write);
+	DNS_SLABHEADER_CLRATTR(header, DNS_SLABHEADERATTR_PREFETCH);
+	dns_db_unlocknode(header->db, header->node, isc_rwlocktype_write);
+}
+
+static void
+rdataset_setownercase(dns_rdataset_t *rdataset, const dns_name_t *name) {
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
+
+	dns_db_locknode(header->db, header->node, isc_rwlocktype_write);
+	dns_slabheader_setownercase(header, name);
+	dns_db_unlocknode(header->db, header->node, isc_rwlocktype_write);
+}
+
+static void
+rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name) {
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
+	uint8_t mask = (1 << 7);
+	uint8_t bits = 0;
+
+	dns_db_locknode(header->db, header->node, isc_rwlocktype_read);
+
+	if (!CASESET(header)) {
+		goto unlock;
+	}
+
+	if (CASEFULLYLOWER(header)) {
+		isc_ascii_lowercopy(name->ndata, name->ndata, name->length);
+	} else {
+		uint8_t *nd = name->ndata;
+		for (size_t i = 0; i < name->length; i++) {
+			if (mask == (1 << 7)) {
+				bits = header->upper[i / 8];
+				mask = 1;
+			} else {
+				mask <<= 1;
+			}
+			nd[i] = (bits & mask) ? isc_ascii_toupper(nd[i])
+					      : isc_ascii_tolower(nd[i]);
+		}
+	}
+
+unlock:
+	dns_db_unlocknode(header->db, header->node, isc_rwlocktype_read);
 }

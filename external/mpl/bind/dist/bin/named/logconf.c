@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.9 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.10 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,8 +19,6 @@
 #include <stdbool.h>
 
 #include <isc/file.h>
-#include <isc/offset.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -61,11 +59,11 @@ category_fromconf(const cfg_obj_t *ccat, isc_logconfig_t *logconfig) {
 		/*
 		 * Allow further processing by returning success.
 		 */
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	if (logconfig == NULL) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	module = NULL;
@@ -84,10 +82,10 @@ category_fromconf(const cfg_obj_t *ccat, isc_logconfig_t *logconfig) {
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 				      "logging channel '%s': %s", channelname,
 				      isc_result_totext(result));
-			return (result);
+			return result;
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*%
@@ -135,7 +133,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 			    "channel '%s': exactly one of file, syslog, "
 			    "null, and stderr must be present",
 			    channelname);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	type = ISC_LOG_TONULL;
@@ -148,14 +146,14 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 		const cfg_obj_t *suffixobj = cfg_tuple_get(fileobj, "suffix");
 		int32_t versions = ISC_LOG_ROLLNEVER;
 		isc_log_rollsuffix_t suffix = isc_log_rollsuffix_increment;
-		isc_offset_t size = 0;
+		off_t size = 0;
 		uint64_t maxoffset;
 
 		/*
-		 * isc_offset_t is a signed integer type, so the maximum
+		 * off_t is a signed integer type, so the maximum
 		 * value is all 1s except for the MSB.
 		 */
-		switch (sizeof(isc_offset_t)) {
+		switch (sizeof(off_t)) {
 		case 4:
 			maxoffset = 0x7fffffffULL;
 			break;
@@ -180,7 +178,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 		if (sizeobj != NULL && cfg_obj_isuint64(sizeobj) &&
 		    cfg_obj_asuint64(sizeobj) < maxoffset)
 		{
-			size = (isc_offset_t)cfg_obj_asuint64(sizeobj);
+			size = (off_t)cfg_obj_asuint64(sizeobj);
 		}
 		if (suffixobj != NULL && cfg_obj_isstring(suffixobj) &&
 		    strcasecmp(cfg_obj_asstring(suffixobj), "timestamp") == 0)
@@ -314,7 +312,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 	}
 
 done:
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -369,8 +367,8 @@ named_logconfig(isc_logconfig_t *logconfig, const cfg_obj_t *logstmt) {
 		CHECK(named_log_setunmatchedcategory(logconfig));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
-	return (result);
+	return result;
 }

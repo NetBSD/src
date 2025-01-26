@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.17 2024/09/22 00:14:10 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.18 2025/01/26 16:25:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,11 +18,12 @@
 #include <stdbool.h>
 
 #include <isc/interfaceiter.h>
+#include <isc/loop.h>
 #include <isc/netmgr.h>
 #include <isc/os.h>
 #include <isc/random.h>
 #include <isc/string.h>
-#include <isc/task.h>
+#include <isc/tid.h>
 #include <isc/util.h>
 
 #include <dns/acl.h>
@@ -56,12 +57,6 @@
 
 #define LISTENING(ifp) (((ifp)->flags & NS_INTERFACEFLAG_LISTENING) != 0)
 
-#ifdef TUNE_LARGE
-#define UDPBUFFERS 32768
-#else /* ifdef TUNE_LARGE */
-#define UDPBUFFERS 1000
-#endif /* TUNE_LARGE */
-
 #define IFMGR_MAGIC		 ISC_MAGIC('I', 'F', 'M', 'G')
 #define NS_INTERFACEMGR_VALID(t) ISC_MAGIC_VALID(t, IFMGR_MAGIC)
 
@@ -73,13 +68,11 @@ struct ns_interfacemgr {
 	unsigned int magic; /*%< Magic number */
 	isc_refcount_t references;
 	isc_mutex_t lock;
-	isc_mem_t *mctx;	  /*%< Memory context */
-	ns_server_t *sctx;	  /*%< Server context */
-	isc_taskmgr_t *taskmgr;	  /*%< Task manager */
-	isc_task_t *task;	  /*%< Task */
-	isc_timermgr_t *timermgr; /*%< Timer manager */
-	isc_nm_t *nm;		  /*%< Net manager */
-	int ncpus;		  /*%< Number of workers */
+	isc_mem_t *mctx;	/*%< Memory context */
+	ns_server_t *sctx;	/*%< Server context */
+	isc_loopmgr_t *loopmgr; /*%< Loop manager */
+	isc_nm_t *nm;		/*%< Net manager */
+	uint32_t ncpus;		/*%< Number of workers */
 	dns_dispatchmgr_t *dispatchmgr;
 	unsigned int generation; /*%< Current generation no */
 	ns_listenlist_t *listenon4;
@@ -102,14 +95,14 @@ clearlistenon(ns_interfacemgr_t *mgr);
 static bool
 need_rescan(ns_interfacemgr_t *mgr, struct MSGHDR *rtm, size_t len) {
 	if (rtm->MSGTYPE != RTM_NEWADDR && rtm->MSGTYPE != RTM_DELADDR) {
-		return (false);
+		return false;
 	}
 
 #ifndef LINUX_NETLINK_AVAILABLE
 	UNUSED(mgr);
 	UNUSED(len);
 	/* On most systems, any NEWADDR or DELADDR means we rescan */
-	return (true);
+	return true;
 #else  /* LINUX_NETLINK_AVAILABLE */
 	/* ...but on linux we need to check the messages more carefully */
 	for (struct MSGHDR *nlh = rtm;
@@ -180,7 +173,7 @@ need_rescan(ns_interfacemgr_t *mgr, struct MSGHDR *rtm, size_t len) {
 				    (existed && was_listening &&
 				     rtm->MSGTYPE == RTM_DELADDR))
 				{
-					return (true);
+					return true;
 				}
 			} else if (rth->rta_type == IFA_ADDRESS &&
 				   ifa->ifa_family == AF_INET)
@@ -189,20 +182,20 @@ need_rescan(ns_interfacemgr_t *mgr, struct MSGHDR *rtm, size_t len) {
 				 * It seems that the IPv4 P2P link state
 				 * has changed.
 				 */
-				return (true);
+				return true;
 			} else if (rth->rta_type == IFA_LOCAL) {
 				/*
 				 * Local address state has changed - do
 				 * rescan.
 				 */
-				return (true);
+				return true;
 			}
 			rth = RTA_NEXT(rth, rtl);
 		}
 	}
 #endif /* LINUX_NETLINK_AVAILABLE */
 
-	return (false);
+	return false;
 }
 
 static void
@@ -219,16 +212,18 @@ route_recv(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 		return;
 	}
 
-	if (eresult != ISC_R_SUCCESS) {
-		if (eresult != ISC_R_CANCELED && eresult != ISC_R_SHUTTINGDOWN)
-		{
-			isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
-				      "automatic interface scanning "
-				      "terminated: %s",
-				      isc_result_totext(eresult));
-		}
-		isc_nmhandle_detach(&mgr->route);
-		ns_interfacemgr_detach(&mgr);
+	switch (eresult) {
+	case ISC_R_SUCCESS:
+		break;
+	default:
+		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
+			      "automatic interface scanning terminated: %s",
+			      isc_result_totext(eresult));
+		FALLTHROUGH;
+	case ISC_R_CANCELED:
+	case ISC_R_SHUTTINGDOWN:
+	case ISC_R_EOF:
+		ns_interfacemgr_routedisconnect(mgr);
 		return;
 	}
 
@@ -278,36 +273,29 @@ route_connected(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
 
 isc_result_t
 ns_interfacemgr_create(isc_mem_t *mctx, ns_server_t *sctx,
-		       isc_taskmgr_t *taskmgr, isc_timermgr_t *timermgr,
-		       isc_nm_t *nm, dns_dispatchmgr_t *dispatchmgr,
-		       isc_task_t *task, dns_geoip_databases_t *geoip,
-		       int ncpus, bool scan, ns_interfacemgr_t **mgrp) {
+		       isc_loopmgr_t *loopmgr, isc_nm_t *nm,
+		       dns_dispatchmgr_t *dispatchmgr,
+		       dns_geoip_databases_t *geoip, ns_interfacemgr_t **mgrp) {
 	isc_result_t result;
 	ns_interfacemgr_t *mgr = NULL;
-
-	UNUSED(task);
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(mgrp != NULL);
 	REQUIRE(*mgrp == NULL);
 
 	mgr = isc_mem_get(mctx, sizeof(*mgr));
-	*mgr = (ns_interfacemgr_t){ .taskmgr = taskmgr,
-				    .timermgr = timermgr,
-				    .nm = nm,
-				    .dispatchmgr = dispatchmgr,
-				    .generation = 1,
-				    .ncpus = ncpus };
+	*mgr = (ns_interfacemgr_t){
+		.loopmgr = loopmgr,
+		.nm = nm,
+		.dispatchmgr = dispatchmgr,
+		.generation = 1,
+		.ncpus = isc_loopmgr_nloops(loopmgr),
+	};
 
 	isc_mem_attach(mctx, &mgr->mctx);
 	ns_server_attach(sctx, &mgr->sctx);
 
 	isc_mutex_init(&mgr->lock);
-
-	result = isc_task_create_bound(taskmgr, 0, &mgr->task, 0);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_lock;
-	}
 
 	atomic_init(&mgr->shuttingdown, false);
 
@@ -319,14 +307,11 @@ ns_interfacemgr_create(isc_mem_t *mctx, ns_server_t *sctx,
 	 */
 	result = ns_listenlist_create(mctx, &mgr->listenon4);
 	if (result != ISC_R_SUCCESS) {
-		goto cleanup_task;
+		goto cleanup_lock;
 	}
 	ns_listenlist_attach(mgr->listenon4, &mgr->listenon6);
 
-	result = dns_aclenv_create(mctx, &mgr->aclenv);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_listenon;
-	}
+	dns_aclenv_create(mctx, &mgr->aclenv);
 #if defined(HAVE_GEOIP2)
 	mgr->aclenv->geoip = geoip;
 #else  /* if defined(HAVE_GEOIP2) */
@@ -337,47 +322,61 @@ ns_interfacemgr_create(isc_mem_t *mctx, ns_server_t *sctx,
 	mgr->magic = IFMGR_MAGIC;
 	*mgrp = mgr;
 
-	mgr->clientmgrs = isc_mem_get(mgr->mctx,
-				      mgr->ncpus * sizeof(mgr->clientmgrs[0]));
-	for (size_t i = 0; i < (size_t)mgr->ncpus; i++) {
-		result = ns_clientmgr_create(mgr->sctx, mgr->taskmgr,
-					     mgr->timermgr, mgr->aclenv, (int)i,
+	mgr->clientmgrs = isc_mem_cget(mgr->mctx, mgr->ncpus,
+				       sizeof(mgr->clientmgrs[0]));
+	for (size_t i = 0; i < mgr->ncpus; i++) {
+		result = ns_clientmgr_create(mgr->sctx, mgr->loopmgr,
+					     mgr->aclenv, (int)i,
 					     &mgr->clientmgrs[i]);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	}
 
-	if (scan) {
-		ns_interfacemgr_t *imgr = NULL;
+	return ISC_R_SUCCESS;
 
-		ns_interfacemgr_attach(mgr, &imgr);
-
-		result = isc_nm_routeconnect(nm, route_connected, imgr, 0);
-		if (result == ISC_R_NOTIMPLEMENTED) {
-			ns_interfacemgr_detach(&imgr);
-		}
-		if (result != ISC_R_SUCCESS) {
-			isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_INFO,
-				      "unable to open route socket: %s",
-				      isc_result_totext(result));
-		}
-	}
-
-	return (ISC_R_SUCCESS);
-
-cleanup_listenon:
-	ns_listenlist_detach(&mgr->listenon4);
-	ns_listenlist_detach(&mgr->listenon6);
-cleanup_task:
-	isc_task_detach(&mgr->task);
 cleanup_lock:
 	isc_mutex_destroy(&mgr->lock);
 	ns_server_detach(&mgr->sctx);
 	isc_mem_putanddetach(&mgr->mctx, mgr, sizeof(*mgr));
-	return (result);
+	return result;
+}
+
+void
+ns_interfacemgr_routeconnect(ns_interfacemgr_t *mgr) {
+	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
+	REQUIRE(isc_tid() == 0);
+
+	if (mgr->route != NULL) {
+		return;
+	}
+
+	ns_interfacemgr_ref(mgr);
+
+	isc_result_t result = isc_nm_routeconnect(mgr->nm, route_connected,
+						  mgr);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_INFO,
+			      "unable to open route socket: %s",
+			      isc_result_totext(result));
+		ns_interfacemgr_unref(mgr);
+	}
+}
+
+void
+ns_interfacemgr_routedisconnect(ns_interfacemgr_t *mgr) {
+	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
+	REQUIRE(isc_tid() == 0);
+
+	if (mgr->route == NULL) {
+		return;
+	}
+
+	isc_nmhandle_close(mgr->route);
+	isc_nmhandle_detach(&mgr->route);
+	ns_interfacemgr_detach(&mgr);
 }
 
 static void
-ns_interfacemgr_destroy(ns_interfacemgr_t *mgr) {
+ns_interfacemgr__destroy(ns_interfacemgr_t *mgr) {
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 
 	isc_refcount_destroy(&mgr->references);
@@ -387,16 +386,15 @@ ns_interfacemgr_destroy(ns_interfacemgr_t *mgr) {
 	ns_listenlist_detach(&mgr->listenon6);
 	clearlistenon(mgr);
 	isc_mutex_destroy(&mgr->lock);
-	for (size_t i = 0; i < (size_t)mgr->ncpus; i++) {
+	for (size_t i = 0; i < mgr->ncpus; i++) {
 		ns_clientmgr_detach(&mgr->clientmgrs[i]);
 	}
-	isc_mem_put(mgr->mctx, mgr->clientmgrs,
-		    mgr->ncpus * sizeof(mgr->clientmgrs[0]));
+	isc_mem_cput(mgr->mctx, mgr->clientmgrs, mgr->ncpus,
+		     sizeof(mgr->clientmgrs[0]));
 
 	if (mgr->sctx != NULL) {
 		ns_server_detach(&mgr->sctx);
 	}
-	isc_task_detach(&mgr->task);
 	mgr->magic = 0;
 	isc_mem_putanddetach(&mgr->mctx, mgr, sizeof(*mgr));
 }
@@ -419,26 +417,10 @@ ns_interfacemgr_getaclenv(ns_interfacemgr_t *mgr) {
 	aclenv = mgr->aclenv;
 	UNLOCK(&mgr->lock);
 
-	return (aclenv);
+	return aclenv;
 }
 
-void
-ns_interfacemgr_attach(ns_interfacemgr_t *source, ns_interfacemgr_t **target) {
-	REQUIRE(NS_INTERFACEMGR_VALID(source));
-	isc_refcount_increment(&source->references);
-	*target = source;
-}
-
-void
-ns_interfacemgr_detach(ns_interfacemgr_t **targetp) {
-	ns_interfacemgr_t *target = *targetp;
-	*targetp = NULL;
-	REQUIRE(target != NULL);
-	REQUIRE(NS_INTERFACEMGR_VALID(target));
-	if (isc_refcount_decrement(&target->references) == 1) {
-		ns_interfacemgr_destroy(target);
-	}
-}
+ISC_REFCOUNT_IMPL(ns_interfacemgr, ns_interfacemgr__destroy);
 
 void
 ns_interfacemgr_shutdown(ns_interfacemgr_t *mgr) {
@@ -458,21 +440,27 @@ ns_interfacemgr_shutdown(ns_interfacemgr_t *mgr) {
 		isc_nm_cancelread(mgr->route);
 	}
 
-	for (size_t i = 0; i < (size_t)mgr->ncpus; i++) {
+	for (size_t i = 0; i < mgr->ncpus; i++) {
 		ns_clientmgr_shutdown(mgr->clientmgrs[i]);
 	}
 }
 
-static void
-interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
-		 ns_interface_t **ifpret) {
+void
+ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
+		    const char *name, ns_interface_t **ifpret) {
 	ns_interface_t *ifp = NULL;
+	const char *default_name = "default";
 
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 
 	ifp = isc_mem_get(mgr->mctx, sizeof(*ifp));
-	*ifp = (ns_interface_t){ .generation = mgr->generation, .addr = *addr };
+	*ifp = (ns_interface_t){ .generation = mgr->generation,
+				 .addr = *addr,
+				 .proxy_type = ISC_NM_PROXY_NONE };
 
+	if (name == NULL) {
+		name = default_name;
+	}
 	strlcpy(ifp->name, name, sizeof(ifp->name));
 
 	isc_mutex_init(&ifp->lock);
@@ -493,24 +481,31 @@ interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
 }
 
 static isc_result_t
-ns_interface_listenudp(ns_interface_t *ifp) {
+ns_interface_listenudp(ns_interface_t *ifp, isc_nm_proxy_type_t proxy) {
 	isc_result_t result;
 
 	/* Reserve space for an ns_client_t with the netmgr handle */
-	result = isc_nm_listenudp(ifp->mgr->nm, &ifp->addr, ns__client_request,
-				  ifp, sizeof(ns_client_t),
-				  &ifp->udplistensocket);
-	return (result);
+	if (proxy == ISC_NM_PROXY_NONE) {
+		result = isc_nm_listenudp(ifp->mgr->nm, ISC_NM_LISTEN_ALL,
+					  &ifp->addr, ns_client_request, ifp,
+					  &ifp->udplistensocket);
+	} else {
+		INSIST(proxy == ISC_NM_PROXY_PLAIN);
+		result = isc_nm_listenproxyudp(ifp->mgr->nm, ISC_NM_LISTEN_ALL,
+					       &ifp->addr, ns_client_request,
+					       ifp, &ifp->udplistensocket);
+	}
+	return result;
 }
 
 static isc_result_t
-ns_interface_listentcp(ns_interface_t *ifp) {
+ns_interface_listentcp(ns_interface_t *ifp, isc_nm_proxy_type_t proxy) {
 	isc_result_t result;
 
-	result = isc_nm_listentcpdns(
-		ifp->mgr->nm, &ifp->addr, ns__client_request, ifp,
-		ns__client_tcpconn, ifp, sizeof(ns_client_t), ifp->mgr->backlog,
-		&ifp->mgr->sctx->tcpquota, &ifp->tcplistensocket);
+	result = isc_nm_listenstreamdns(
+		ifp->mgr->nm, ISC_NM_LISTEN_ALL, &ifp->addr, ns_client_request,
+		ifp, ns__client_tcpconn, ifp, ifp->mgr->backlog,
+		&ifp->mgr->sctx->tcpquota, NULL, proxy, &ifp->tcplistensocket);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
 			      "creating TCP socket: %s",
@@ -529,7 +524,7 @@ ns_interface_listentcp(ns_interface_t *ifp) {
 			      isc_result_totext(result));
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -537,19 +532,21 @@ ns_interface_listentcp(ns_interface_t *ifp) {
  * TLS related options.
  */
 static isc_result_t
-ns_interface_listentls(ns_interface_t *ifp, isc_tlsctx_t *sslctx) {
+ns_interface_listentls(ns_interface_t *ifp, isc_nm_proxy_type_t proxy,
+		       isc_tlsctx_t *sslctx) {
 	isc_result_t result;
 
-	result = isc_nm_listentlsdns(
-		ifp->mgr->nm, &ifp->addr, ns__client_request, ifp,
-		ns__client_tcpconn, ifp, sizeof(ns_client_t), ifp->mgr->backlog,
-		&ifp->mgr->sctx->tcpquota, sslctx, &ifp->tlslistensocket);
+	result = isc_nm_listenstreamdns(
+		ifp->mgr->nm, ISC_NM_LISTEN_ALL, &ifp->addr, ns_client_request,
+		ifp, ns__client_tcpconn, ifp, ifp->mgr->backlog,
+		&ifp->mgr->sctx->tcpquota, sslctx, proxy,
+		&ifp->tlslistensocket);
 
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_ERROR,
 			      "creating TLS socket: %s",
 			      isc_result_totext(result));
-		return (result);
+		return result;
 	}
 
 	/*
@@ -564,7 +561,7 @@ ns_interface_listentls(ns_interface_t *ifp, isc_tlsctx_t *sslctx) {
 			      isc_result_totext(result));
 	}
 
-	return (result);
+	return result;
 }
 
 #ifdef HAVE_LIBNGHTTP2
@@ -575,21 +572,20 @@ load_http_endpoints(isc_nm_http_endpoints_t *epset, ns_interface_t *ifp,
 
 	for (size_t i = 0; i < neps; i++) {
 		result = isc_nm_http_endpoints_add(epset, eps[i],
-						   ns__client_request, ifp,
-						   sizeof(ns_client_t));
+						   ns_client_request, ifp);
 		if (result != ISC_R_SUCCESS) {
 			break;
 		}
 	}
 
-	return (result);
+	return result;
 }
 #endif /* HAVE_LIBNGHTTP2 */
 
 static isc_result_t
-ns_interface_listenhttp(ns_interface_t *ifp, isc_tlsctx_t *sslctx, char **eps,
-			size_t neps, uint32_t max_clients,
-			uint32_t max_concurrent_streams) {
+ns_interface_listenhttp(ns_interface_t *ifp, isc_nm_proxy_type_t proxy,
+			isc_tlsctx_t *sslctx, char **eps, size_t neps,
+			uint32_t max_clients, uint32_t max_concurrent_streams) {
 #if HAVE_LIBNGHTTP2
 	isc_result_t result = ISC_R_FAILURE;
 	isc_nmsocket_t *sock = NULL;
@@ -604,8 +600,9 @@ ns_interface_listenhttp(ns_interface_t *ifp, isc_tlsctx_t *sslctx, char **eps,
 		quota = isc_mem_get(ifp->mgr->mctx, sizeof(*quota));
 		isc_quota_init(quota, max_clients);
 		result = isc_nm_listenhttp(
-			ifp->mgr->nm, &ifp->addr, ifp->mgr->backlog, quota,
-			sslctx, epset, max_concurrent_streams, &sock);
+			ifp->mgr->nm, ISC_NM_LISTEN_ALL, &ifp->addr,
+			ifp->mgr->backlog, quota, sslctx, epset,
+			max_concurrent_streams, proxy, &sock);
 	}
 
 	isc_nm_http_endpoints_detach(&epset);
@@ -625,7 +622,7 @@ ns_interface_listenhttp(ns_interface_t *ifp, isc_tlsctx_t *sslctx, char **eps,
 			      "creating %s socket: %s",
 			      sslctx ? "HTTPS" : "HTTP",
 			      isc_result_totext(result));
-		return (result);
+		return result;
 	}
 
 	if (sslctx) {
@@ -646,15 +643,16 @@ ns_interface_listenhttp(ns_interface_t *ifp, isc_tlsctx_t *sslctx, char **eps,
 			      isc_result_totext(result));
 	}
 
-	return (result);
+	return result;
 #else
 	UNUSED(ifp);
+	UNUSED(proxy);
 	UNUSED(sslctx);
 	UNUSED(eps);
 	UNUSED(neps);
 	UNUSED(max_clients);
 	UNUSED(max_concurrent_streams);
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 #endif
 }
 
@@ -671,7 +669,7 @@ interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
 	ifp = *ifpret;
 
 	if (ifp == NULL) {
-		interface_create(mgr, addr, name, &ifp);
+		ns_interface_create(mgr, addr, name, &ifp);
 	} else {
 		REQUIRE(!LISTENING(ifp));
 		LOCK(&mgr->lock);
@@ -680,29 +678,30 @@ interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
 	}
 
 	ifp->flags |= NS_INTERFACEFLAG_LISTENING;
+	ifp->proxy_type = elt->proxy;
 
 	if (elt->is_http) {
 		result = ns_interface_listenhttp(
-			ifp, elt->sslctx, elt->http_endpoints,
+			ifp, elt->proxy, elt->sslctx, elt->http_endpoints,
 			elt->http_endpoints_number, elt->http_max_clients,
 			elt->max_concurrent_streams);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup_interface;
 		}
 		*ifpret = ifp;
-		return (result);
+		return result;
 	}
 
 	if (elt->sslctx != NULL) {
-		result = ns_interface_listentls(ifp, elt->sslctx);
+		result = ns_interface_listentls(ifp, elt->proxy, elt->sslctx);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup_interface;
 		}
 		*ifpret = ifp;
-		return (result);
+		return result;
 	}
 
-	result = ns_interface_listenudp(ifp);
+	result = ns_interface_listenudp(ifp, elt->proxy);
 	if (result != ISC_R_SUCCESS) {
 		if ((result == ISC_R_ADDRINUSE) && (addr_in_use != NULL)) {
 			*addr_in_use = true;
@@ -710,8 +709,8 @@ interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
 		goto cleanup_interface;
 	}
 
-	if (((mgr->sctx->options & NS_SERVER_NOTCP) == 0)) {
-		result = ns_interface_listentcp(ifp);
+	if ((mgr->sctx->options & NS_SERVER_NOTCP) == 0) {
+		result = ns_interface_listentcp(ifp, elt->proxy);
 		if (result != ISC_R_SUCCESS) {
 			if ((result == ISC_R_ADDRINUSE) &&
 			    (addr_in_use != NULL))
@@ -729,11 +728,11 @@ interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr, const char *name,
 		}
 	}
 	*ifpret = ifp;
-	return (result);
+	return result;
 
 cleanup_interface:
 	ns_interface_shutdown(ifp);
-	return (result);
+	return result;
 }
 
 void
@@ -804,7 +803,7 @@ find_matching_interface(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr) {
 		}
 	}
 	UNLOCK(&mgr->lock);
-	return (ifp);
+	return ifp;
 }
 
 static void
@@ -850,7 +849,7 @@ purge_old_interfaces(ns_interfacemgr_t *mgr) {
 static bool
 listenon_is_ip6_any(ns_listenelt_t *elt) {
 	REQUIRE(elt && elt->acl);
-	return (dns_acl_isany(elt->acl));
+	return dns_acl_isany(elt->acl);
 }
 
 static isc_result_t
@@ -867,7 +866,7 @@ setup_locals(isc_interface_t *interface, dns_acl_t *localhost,
 	result = dns_iptable_addprefix(localhost->iptable, netaddr, prefixlen,
 				       true);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	/* Then add localnets prefix */
@@ -875,7 +874,7 @@ setup_locals(isc_interface_t *interface, dns_acl_t *localhost,
 
 	/* Non contiguous netmasks not allowed by IPv6 arch. */
 	if (result != ISC_R_SUCCESS && netaddr->family == AF_INET6) {
-		return (result);
+		return result;
 	}
 
 	if (result != ISC_R_SUCCESS) {
@@ -883,7 +882,7 @@ setup_locals(isc_interface_t *interface, dns_acl_t *localhost,
 			      "omitting IPv4 interface %s from "
 			      "localnets ACL: %s",
 			      interface->name, isc_result_totext(result));
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	if (prefixlen == 0U) {
@@ -892,16 +891,16 @@ setup_locals(isc_interface_t *interface, dns_acl_t *localhost,
 			      "zero prefix length detected",
 			      (netaddr->family == AF_INET) ? "IPv4" : "IPv6",
 			      interface->name);
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	result = dns_iptable_addprefix(localnets->iptable, netaddr, prefixlen,
 				       true);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -1049,7 +1048,11 @@ same_listener_type(ns_interface_t *ifp, ns_listenelt_t *new_le) {
 		same_transport_type = true;
 	}
 
-	return (same_transport_type);
+	/*
+	 * Check if transport type of the listener has not changed. That
+	 * implies that PROXY type has not been changed as well.
+	 */
+	return same_transport_type && new_le->proxy == ifp->proxy_type;
 }
 
 static bool
@@ -1070,10 +1073,10 @@ interface_update_or_shutdown(ns_interfacemgr_t *mgr, ns_interface_t *ifp,
 			if (config) {
 				update_listener_configuration(mgr, ifp, le);
 			}
-			return (true);
+			return true;
 		}
 	}
-	return (false);
+	return false;
 }
 
 static isc_result_t
@@ -1173,17 +1176,11 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose, bool config) {
 
 	result = isc_interfaceiter_create(mgr->mctx, &iter);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
-	result = dns_acl_create(mgr->mctx, 0, &localhost);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_iter;
-	}
-	result = dns_acl_create(mgr->mctx, 0, &localnets);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_localhost;
-	}
+	dns_acl_create(mgr->mctx, 0, &localhost);
+	dns_acl_create(mgr->mctx, 0, &localnets);
 
 	clearlistenon(mgr);
 
@@ -1269,8 +1266,8 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose, bool config) {
 					    mgr->aclenv, &match, NULL);
 			if (match <= 0) {
 				ns_interface_t *new = NULL;
-				interface_create(mgr, &listen_sockaddr,
-						 interface.name, &new);
+				ns_interface_create(mgr, &listen_sockaddr,
+						    interface.name, &new);
 				continue;
 			}
 
@@ -1361,15 +1358,11 @@ do_scan(ns_interfacemgr_t *mgr, bool verbose, bool config) {
 
 	dns_aclenv_set(mgr->aclenv, localhost, localnets);
 
-	/* cleanup_localnets: */
 	dns_acl_detach(&localnets);
-
-cleanup_localhost:
 	dns_acl_detach(&localhost);
 
-cleanup_iter:
 	isc_interfaceiter_destroy(&iter);
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -1378,7 +1371,7 @@ ns_interfacemgr_scan(ns_interfacemgr_t *mgr, bool verbose, bool config) {
 	bool purge = true;
 
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
-	REQUIRE(isc_nm_tid() == 0);
+	REQUIRE(isc_tid() == 0);
 
 	mgr->generation++; /* Increment the generation count. */
 
@@ -1405,14 +1398,7 @@ ns_interfacemgr_scan(ns_interfacemgr_t *mgr, bool verbose, bool config) {
 			      "not listening on any interfaces");
 	}
 
-	return (result);
-}
-
-bool
-ns_interfacemgr_islistening(ns_interfacemgr_t *mgr) {
-	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
-
-	return (ISC_LIST_EMPTY(mgr->interfaces) ? false : true);
+	return result;
 }
 
 void
@@ -1440,7 +1426,7 @@ ns_interfacemgr_dumprecursing(FILE *f, ns_interfacemgr_t *mgr) {
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 
 	LOCK(&mgr->lock);
-	for (size_t i = 0; i < (size_t)mgr->ncpus; i++) {
+	for (size_t i = 0; i < mgr->ncpus; i++) {
 		ns_client_dumprecursing(f, mgr->clientmgrs[i]);
 	}
 	UNLOCK(&mgr->lock);
@@ -1458,7 +1444,7 @@ ns_interfacemgr_listeningon(ns_interfacemgr_t *mgr,
 	 * return true.
 	 */
 	if (atomic_load(&mgr->shuttingdown)) {
-		return (true);
+		return true;
 	}
 	LOCK(&mgr->lock);
 	for (old = ISC_LIST_HEAD(mgr->listenon); old != NULL;
@@ -1471,23 +1457,37 @@ ns_interfacemgr_listeningon(ns_interfacemgr_t *mgr,
 	}
 	UNLOCK(&mgr->lock);
 
-	return (result);
+	return result;
 }
 
 ns_server_t *
 ns_interfacemgr_getserver(ns_interfacemgr_t *mgr) {
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 
-	return (mgr->sctx);
+	return mgr->sctx;
 }
 
 ns_clientmgr_t *
 ns_interfacemgr_getclientmgr(ns_interfacemgr_t *mgr) {
-	int tid = isc_nm_tid();
+	int tid = isc_tid();
 
 	REQUIRE(NS_INTERFACEMGR_VALID(mgr));
 	REQUIRE(tid >= 0);
-	REQUIRE(tid < mgr->ncpus);
+	REQUIRE((uint32_t)tid < mgr->ncpus);
 
-	return (mgr->clientmgrs[tid]);
+	return mgr->clientmgrs[tid];
+}
+
+bool
+ns_interfacemgr_dynamic_updates_are_reliable(void) {
+#if defined(LINUX_NETLINK_AVAILABLE)
+	/*
+	 * Let's disable periodic interface rescans on Linux, as there a
+	 * reliable kernel-based mechanism for tracking interface state
+	 * changes is available.
+	 */
+	return true;
+#else
+	return false;
+#endif /* LINUX_NETLINK_AVAILABLE */
 }

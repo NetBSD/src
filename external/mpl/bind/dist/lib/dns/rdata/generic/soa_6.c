@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.8 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.9 2025/01/26 16:25:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,7 +75,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 		RETERR(uint32_tobuffer(n, target));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static const char *soa_fieldnames[5] = { "serial", "refresh", "retry", "expire",
@@ -87,7 +87,7 @@ totext_soa(ARGS_TOTEXT) {
 	dns_name_t mname;
 	dns_name_t rname;
 	dns_name_t prefix;
-	bool sub;
+	unsigned int opts;
 	int i;
 	bool multiline;
 	bool comm;
@@ -114,13 +114,17 @@ totext_soa(ARGS_TOTEXT) {
 	dns_name_fromregion(&rname, &dregion);
 	isc_region_consume(&dregion, name_length(&rname));
 
-	sub = name_prefix(&mname, tctx->origin, &prefix);
-	RETERR(dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&mname, tctx->origin, &prefix)
+		       ? DNS_NAME_OMITFINALDOT
+		       : 0;
+	RETERR(dns_name_totext(&prefix, opts, target));
 
 	RETERR(str_totext(" ", target));
 
-	sub = name_prefix(&rname, tctx->origin, &prefix);
-	RETERR(dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&rname, tctx->origin, &prefix)
+		       ? DNS_NAME_OMITFINALDOT
+		       : 0;
+	RETERR(dns_name_totext(&prefix, opts, target));
 
 	if (multiline) {
 		RETERR(str_totext(" (", target));
@@ -152,7 +156,7 @@ totext_soa(ARGS_TOTEXT) {
 		RETERR(str_totext(")", target));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -167,29 +171,29 @@ fromwire_soa(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
+	dctx = dns_decompress_setpermitted(dctx, true);
 
 	dns_name_init(&mname, NULL);
 	dns_name_init(&rname, NULL);
 
-	RETERR(dns_name_fromwire(&mname, source, dctx, options, target));
-	RETERR(dns_name_fromwire(&rname, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&mname, source, dctx, target));
+	RETERR(dns_name_fromwire(&rname, source, dctx, target));
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
 
 	if (sregion.length < 20) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	if (tregion.length < 20) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_forward(source, 20);
 	isc_buffer_add(target, 20);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -204,7 +208,7 @@ towire_soa(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
+	dns_compress_setpermitted(cctx, true);
 
 	dns_name_init(&mname, moffsets);
 	dns_name_init(&rname, roffsets);
@@ -213,20 +217,20 @@ towire_soa(ARGS_TOWIRE) {
 
 	dns_name_fromregion(&mname, &sregion);
 	isc_region_consume(&sregion, name_length(&mname));
-	RETERR(dns_name_towire(&mname, cctx, target));
+	RETERR(dns_name_towire(&mname, cctx, target, NULL));
 
 	dns_name_fromregion(&rname, &sregion);
 	isc_region_consume(&sregion, name_length(&rname));
-	RETERR(dns_name_towire(&rname, cctx, target));
+	RETERR(dns_name_towire(&rname, cctx, target, NULL));
 
 	isc_buffer_availableregion(target, &tregion);
 	if (tregion.length < 20) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_add(target, 20);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static int
@@ -254,7 +258,7 @@ compare_soa(ARGS_COMPARE) {
 
 	order = dns_name_rdatacompare(&name1, &name2);
 	if (order != 0) {
-		return (order);
+		return order;
 	}
 
 	isc_region_consume(&region1, name_length(&name1));
@@ -268,13 +272,13 @@ compare_soa(ARGS_COMPARE) {
 
 	order = dns_name_rdatacompare(&name1, &name2);
 	if (order != 0) {
-		return (order);
+		return order;
 	}
 
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
 
-	return (isc_region_compare(&region1, &region2));
+	return isc_region_compare(&region1, &region2);
 }
 
 static isc_result_t
@@ -298,7 +302,7 @@ fromstruct_soa(ARGS_FROMSTRUCT) {
 	RETERR(uint32_tobuffer(soa->refresh, target));
 	RETERR(uint32_tobuffer(soa->retry, target));
 	RETERR(uint32_tobuffer(soa->expire, target));
-	return (uint32_tobuffer(soa->minimum, target));
+	return uint32_tobuffer(soa->minimum, target);
 }
 
 static isc_result_t
@@ -343,7 +347,7 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	soa->minimum = uint32_fromregion(&region);
 
 	soa->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -371,7 +375,7 @@ additionaldata_soa(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -393,7 +397,7 @@ digest_soa(ARGS_DIGEST) {
 	RETERR(dns_name_digest(&name, digest, arg));
 	isc_region_consume(&r, name_length(&name));
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -405,7 +409,7 @@ checkowner_soa(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -424,7 +428,7 @@ checknames_soa(ARGS_CHECKNAMES) {
 		if (bad != NULL) {
 			dns_name_clone(&name, bad);
 		}
-		return (false);
+		return false;
 	}
 	isc_region_consume(&region, name_length(&name));
 	dns_name_fromregion(&name, &region);
@@ -432,14 +436,14 @@ checknames_soa(ARGS_CHECKNAMES) {
 		if (bad != NULL) {
 			dns_name_clone(&name, bad);
 		}
-		return (false);
+		return false;
 	}
-	return (true);
+	return true;
 }
 
 static int
 casecompare_soa(ARGS_COMPARE) {
-	return (compare_soa(rdata1, rdata2));
+	return compare_soa(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_SOA_6_C */

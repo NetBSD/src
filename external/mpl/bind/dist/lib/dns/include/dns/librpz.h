@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.9 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.10 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,13 +38,12 @@
 
 #pragma once
 
+#include <arpa/nameser.h>
 #include <inttypes.h>
+#include <netinet/in.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-
-#include <arpa/nameser.h>
-#include <netinet/in.h>
 #include <sys/types.h>
 
 /*
@@ -57,6 +56,8 @@
 #define LIBDEF(t, s)
 #define LIBDEF_F(f)
 #endif /* ifdef LIBRPZ_INTERNAL */
+
+#define LIBRPZ_MAXDOMAIN 255
 
 /*
  * Response Policy Zone triggers.
@@ -128,7 +129,7 @@ typedef struct librpz_prefix {
 typedef uint8_t librpz_dsize_t;
 typedef struct librpz_domain {
 	librpz_dsize_t size; /* of only .d */
-	uint8_t	       d[0]; /* variable length wire format */
+	uint8_t	       d[];  /* variable length wire format */
 } librpz_domain_t;
 
 /*
@@ -136,7 +137,7 @@ typedef struct librpz_domain {
  */
 typedef struct librpz_domain_buf {
 	librpz_dsize_t size;
-	uint8_t	       d[NS_MAXCDNAME];
+	uint8_t	       d[LIBRPZ_MAXDOMAIN];
 } librpz_domain_buf_t;
 
 /*
@@ -148,7 +149,7 @@ typedef struct {
 	uint16_t class;	   /* network byte order */
 	uint32_t ttl;	   /* network byte order */
 	uint16_t rdlength; /* network byte order */
-	uint8_t	 rdata[0]; /* variable length */
+	uint8_t	 rdata[];  /* variable length */
 } librpz_rr_t;
 
 /*
@@ -172,8 +173,7 @@ typedef struct librpz_result {
 	librpz_dznum_t	   dznum;   /* dnsrpzd zone number */
 	librpz_cznum_t	   cznum;   /* librpz client zone number */
 	librpz_trig_t	   trig : LIBRPZ_TRIG_SIZE;
-	bool		   log : 1; /* log rewrite given librpz_log_level
-				     * */
+	bool		   log : 1; /* log rewrite at given log level */
 } librpz_result_t;
 
 /**
@@ -217,7 +217,7 @@ typedef struct {
 } librpz_emsg_t;
 
 #ifdef LIBRPZ_HAVE_ATTR
-#define LIBRPZ_UNUSED	__attribute__((unused))
+#define LIBRPZ_UNUSED	ISC_ATTR_UNUSED
 #define LIBRPZ_PF(f, l) __attribute__((format(printf, f, l)))
 #define LIBRPZ_NORET	__attribute__((__noreturn__))
 #else /* ifdef LIBRPZ_HAVE_ATTR */
@@ -229,14 +229,15 @@ typedef struct {
 typedef bool(librpz_parse_log_opt_t)(librpz_emsg_t *emsg, const char *arg);
 LIBDEF_F(parse_log_opt)
 
-typedef void(librpz_vpemsg_t)(librpz_emsg_t *emsg, const char *p, va_list args);
+typedef void(librpz_vpemsg_t)(librpz_emsg_t *emsg, const char *p, va_list args)
+	LIBRPZ_PF(2, 0);
 LIBDEF_F(vpemsg)
 typedef void(librpz_pemsg_t)(librpz_emsg_t *emsg, const char *p, ...)
 	LIBRPZ_PF(2, 3);
 LIBDEF_F(pemsg)
 
 typedef void(librpz_vlog_t)(librpz_log_level_t level, void *ctx, const char *p,
-			    va_list args);
+			    va_list args) LIBRPZ_PF(3, 0);
 LIBDEF_F(vlog)
 typedef void(librpz_log_t)(librpz_log_level_t level, void *ctx, const char *p,
 			   ...) LIBRPZ_PF(3, 4);
@@ -246,10 +247,10 @@ typedef void(librpz_fatal_t)(int ex_code, const char *p, ...) LIBRPZ_PF(2, 3);
 extern void
 librpz_fatal(int ex_code, const char *p, ...) LIBRPZ_PF(2, 3) LIBRPZ_NORET;
 
-typedef void(librpz_rpz_assert_t)(const char *file, unsigned line,
+typedef void(librpz_rpz_assert_t)(const char *file, unsigned int line,
 				  const char *p, ...) LIBRPZ_PF(3, 4);
 extern void
-librpz_rpz_assert(const char *file, unsigned line, const char *p, ...)
+librpz_rpz_assert(const char *file, unsigned int line, const char *p, ...)
 	LIBRPZ_PF(3, 4) LIBRPZ_NORET;
 
 typedef void(librpz_rpz_vassert_t)(const char *file, uint line, const char *p,
@@ -848,7 +849,7 @@ extern librpz_0_t librpz_def_0;
 typedef librpz_0_t librpz_t;
 extern librpz_t	  *librpz;
 
-#if LIBRPZ_LIB_OPEN == 2
+#if DNSRPS_LIB_OPEN == 2
 #include <dlfcn.h>
 
 /**
@@ -872,7 +873,7 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
 		if (dlclose(*dl_handle) != 0) {
 			snprintf(emsg->c, sizeof(librpz_emsg_t),
 				 "dlopen(NULL): %s", dlerror());
-			return (NULL);
+			return NULL;
 		}
 		*dl_handle = NULL;
 	}
@@ -888,40 +889,42 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
 		if (new_librpz != NULL) {
 			if (dl_handle != NULL) {
 				*dl_handle = handle;
+				handle = NULL;
 			}
-			return (new_librpz);
+			return new_librpz;
 		}
 		if (dlclose(handle) != 0) {
 			snprintf(emsg->c, sizeof(librpz_emsg_t),
 				 "dlsym(NULL, " LIBRPZ_DEF_STR "): %s",
 				 dlerror());
-			return (NULL);
+			return NULL;
 		}
 	}
 
 	if (path == NULL || path[0] == '\0') {
 		snprintf(emsg->c, sizeof(librpz_emsg_t),
 			 "librpz not linked and no dlopen() path provided");
-		return (NULL);
+		return NULL;
 	}
 
 	handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL) {
 		snprintf(emsg->c, sizeof(librpz_emsg_t), "dlopen(%s): %s", path,
 			 dlerror());
-		return (NULL);
+		return NULL;
 	}
 	new_librpz = dlsym(handle, LIBRPZ_DEF_STR);
 	if (new_librpz != NULL) {
 		if (dl_handle != NULL) {
 			*dl_handle = handle;
+			handle = NULL;
 		}
-		return (new_librpz);
+		return new_librpz;
 	}
 	snprintf(emsg->c, sizeof(librpz_emsg_t),
 		 "dlsym(%s, " LIBRPZ_DEF_STR "): %s", path, dlerror());
 	dlclose(handle);
-	return (NULL);
+	return NULL;
 }
 #elif defined(LIBRPZ_LIB_OPEN)
 /*
@@ -935,13 +938,13 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
 		*dl_handle = NULL;
 	}
 
-#if LIBRPZ_LIB_OPEN == 1
+#if DNSRPS_LIB_OPEN == 1
 	emsg->c[0] = '\0';
-	return (&LIBRPZ_DEF);
-#else  /* if LIBRPZ_LIB_OPEN == 1 */
+	return &LIBRPZ_DEF;
+#else  /* if DNSRPS_LIB_OPEN == 1 */
 	snprintf(emsg->c, sizeof(librpz_emsg_t),
 		 "librpz not available via ./configure");
-	return (NULL);
-#endif /* LIBRPZ_LIB_OPEN */
+	return NULL;
+#endif /* DNSRPS_LIB_OPEN */
 }
 #endif /* LIBRPZ_LIB_OPEN */

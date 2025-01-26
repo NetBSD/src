@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.9 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.10 2025/01/26 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,7 +104,7 @@ fromtext_nsec3(ARGS_FROMTEXT) {
 	RETERR(uint8_tobuffer(isc_buffer_usedlength(&b), target));
 	RETERR(mem_tobuffer(target, &buf, isc_buffer_usedlength(&b)));
 
-	return (typemap_fromtext(lexer, target, true));
+	return typemap_fromtext(lexer, target, true);
 }
 
 static isc_result_t
@@ -180,7 +180,7 @@ totext_nsec3(ARGS_TOTEXT) {
 		RETERR(str_totext(" )", target));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -192,7 +192,6 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 
 	UNUSED(type);
 	UNUSED(rdclass);
-	UNUSED(options);
 	UNUSED(dctx);
 
 	isc_buffer_activeregion(source, &sr);
@@ -225,7 +224,7 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 
 	RETERR(mem_tobuffer(target, rr.base, rr.length));
 	isc_buffer_forward(source, rr.length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -238,7 +237,7 @@ towire_nsec3(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -254,7 +253,7 @@ compare_nsec3(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -283,7 +282,7 @@ fromstruct_nsec3(ARGS_FROMSTRUCT) {
 	region.base = nsec3->typebits;
 	region.length = nsec3->len;
 	RETERR(typemap_test(&region, true));
-	return (mem_tobuffer(target, nsec3->typebits, nsec3->len));
+	return mem_tobuffer(target, nsec3->typebits, nsec3->len);
 }
 
 static isc_result_t
@@ -308,34 +307,17 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	nsec3->salt_length = uint8_consume_fromregion(&region);
 	INSIST(nsec3->salt_length <= region.length);
 	nsec3->salt = mem_maybedup(mctx, region.base, nsec3->salt_length);
-	if (nsec3->salt == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
 	isc_region_consume(&region, nsec3->salt_length);
 
 	nsec3->next_length = uint8_consume_fromregion(&region);
 	INSIST(nsec3->next_length <= region.length);
 	nsec3->next = mem_maybedup(mctx, region.base, nsec3->next_length);
-	if (nsec3->next == NULL) {
-		goto cleanup;
-	}
 	isc_region_consume(&region, nsec3->next_length);
 
 	nsec3->len = region.length;
 	nsec3->typebits = mem_maybedup(mctx, region.base, region.length);
-	if (nsec3->typebits == NULL) {
-		goto cleanup;
-	}
-
 	nsec3->mctx = mctx;
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (nsec3->next != NULL) {
-		isc_mem_free(mctx, nsec3->next);
-	}
-	isc_mem_free(mctx, nsec3->salt);
-	return (ISC_R_NOMEMORY);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -370,7 +352,7 @@ additionaldata_nsec3(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -380,7 +362,7 @@ digest_nsec3(ARGS_DIGEST) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec3);
 
 	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -402,10 +384,10 @@ checkowner_nsec3(ARGS_CHECKOWNER) {
 	isc_region_consume(&label, 1);
 	isc_buffer_init(&buffer, owner, sizeof(owner));
 	if (isc_base32hexnp_decoderegion(&label, &buffer) == ISC_R_SUCCESS) {
-		return (true);
+		return true;
 	}
 
-	return (false);
+	return false;
 }
 
 static bool
@@ -416,12 +398,12 @@ checknames_nsec3(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_nsec3(ARGS_COMPARE) {
-	return (compare_nsec3(rdata1, rdata2));
+	return compare_nsec3(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_NSEC3_50_C */

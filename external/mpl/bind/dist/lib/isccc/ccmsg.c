@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.c,v 1.7 2024/02/21 22:52:42 christos Exp $	*/
+/*	$NetBSD: ccmsg.c,v 1.8 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,85 +40,72 @@
 #include <isc/util.h>
 
 #include <isccc/ccmsg.h>
-#include <isccc/events.h>
 
 #define CCMSG_MAGIC	 ISC_MAGIC('C', 'C', 'm', 's')
 #define VALID_CCMSG(foo) ISC_MAGIC_VALID(foo, CCMSG_MAGIC)
+
+/*
+ * Try parsing a message from the internal read_buffer and set state
+ * accordingly. Returns true if a message was successfully parsed, false if not.
+ * If no message could be parsed the ccmsg struct remains untouched.
+ */
+static isc_result_t
+try_parse_message(isccc_ccmsg_t *ccmsg) {
+	REQUIRE(ccmsg != NULL);
+
+	uint32_t len = 0;
+	if (isc_buffer_peekuint32(ccmsg->buffer, &len) != ISC_R_SUCCESS) {
+		return ISC_R_NOMORE;
+	}
+	if (len == 0) {
+		return ISC_R_UNEXPECTEDEND;
+	}
+	if (len > ccmsg->maxsize) {
+		return ISC_R_RANGE;
+	}
+	if (isc_buffer_remaininglength(ccmsg->buffer) < sizeof(uint32_t) + len)
+	{
+		return ISC_R_NOMORE;
+	}
+	/* Skip the size we just peeked */
+	isc_buffer_forward(ccmsg->buffer, sizeof(uint32_t));
+	ccmsg->size = len;
+	return ISC_R_SUCCESS;
+}
 
 static void
 recv_data(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 	  void *arg) {
 	isccc_ccmsg_t *ccmsg = arg;
-	size_t size;
 
-	INSIST(VALID_CCMSG(ccmsg));
+	REQUIRE(VALID_CCMSG(ccmsg));
 
-	switch (eresult) {
-	case ISC_R_SHUTTINGDOWN:
-	case ISC_R_CANCELED:
-	case ISC_R_EOF:
-		ccmsg->result = eresult;
-		goto done;
-	case ISC_R_SUCCESS:
-		if (region == NULL) {
-			ccmsg->result = ISC_R_EOF;
-			goto done;
-		}
-		ccmsg->result = ISC_R_SUCCESS;
-		break;
-	default:
-		ccmsg->result = eresult;
+	REQUIRE(handle == ccmsg->handle);
+	if (eresult != ISC_R_SUCCESS) {
 		goto done;
 	}
 
-	if (!ccmsg->length_received) {
-		if (region->length < sizeof(uint32_t)) {
-			ccmsg->result = ISC_R_UNEXPECTEDEND;
-			goto done;
-		}
+	REQUIRE(region != NULL);
 
-		ccmsg->size = ntohl(*(uint32_t *)region->base);
-
-		if (ccmsg->size == 0) {
-			ccmsg->result = ISC_R_UNEXPECTEDEND;
-			goto done;
-		}
-		if (ccmsg->size > ccmsg->maxsize) {
-			ccmsg->result = ISC_R_RANGE;
-			goto done;
-		}
-
-		isc_region_consume(region, sizeof(uint32_t));
-		isc_buffer_allocate(ccmsg->mctx, &ccmsg->buffer, ccmsg->size);
-
-		ccmsg->length_received = true;
+	/* Copy the received data to our reassembly buffer */
+	eresult = isc_buffer_copyregion(ccmsg->buffer, region);
+	if (eresult != ISC_R_SUCCESS) {
+		goto done;
 	}
+	isc_region_consume(region, region->length);
 
-	/*
-	 * If there's no more data, wait for more
-	 */
-	if (region->length == 0) {
+	/* Try to parse a single message of the buffer */
+	eresult = try_parse_message(ccmsg);
+	/* No results from parsing, we need more data */
+	if (eresult == ISC_R_NOMORE) {
 		return;
 	}
 
-	/* We have some data in the buffer, read it */
-
-	size = ISC_MIN(isc_buffer_availablelength(ccmsg->buffer),
-		       region->length);
-	isc_buffer_putmem(ccmsg->buffer, region->base, size);
-	isc_region_consume(region, size);
-
-	if (isc_buffer_usedlength(ccmsg->buffer) == ccmsg->size) {
-		ccmsg->result = ISC_R_SUCCESS;
-		goto done;
-	}
-
-	/* Wait for more data to come */
-	return;
-
 done:
-	isc_nm_pauseread(handle);
-	ccmsg->cb(handle, ccmsg->result, ccmsg->cbarg);
+	isc_nm_read_stop(handle);
+	ccmsg->recv_cb(handle, eresult, ccmsg->recv_cbarg);
+
+	return;
 }
 
 void
@@ -132,9 +119,13 @@ isccc_ccmsg_init(isc_mem_t *mctx, isc_nmhandle_t *handle,
 		.magic = CCMSG_MAGIC,
 		.maxsize = 0xffffffffU, /* Largest message possible. */
 		.mctx = mctx,
-		.handle = handle,
-		.result = ISC_R_UNEXPECTED /* None yet. */
 	};
+
+	/* Preallocate the buffer to maximum single TCP read */
+	isc_buffer_allocate(ccmsg->mctx, &ccmsg->buffer,
+			    UINT16_MAX + sizeof(uint16_t));
+
+	isc_nmhandle_attach(handle, &ccmsg->handle);
 }
 
 void
@@ -148,40 +139,82 @@ void
 isccc_ccmsg_readmessage(isccc_ccmsg_t *ccmsg, isc_nm_cb_t cb, void *cbarg) {
 	REQUIRE(VALID_CCMSG(ccmsg));
 
-	if (ccmsg->buffer != NULL) {
-		isc_buffer_free(&ccmsg->buffer);
+	if (ccmsg->size != 0) {
+		/* Remove the previously read message from the buffer */
+		isc_buffer_forward(ccmsg->buffer, ccmsg->size);
+		ccmsg->size = 0;
+		isc_buffer_trycompact(ccmsg->buffer);
 	}
 
-	ccmsg->cb = cb;
-	ccmsg->cbarg = cbarg;
-	ccmsg->result = ISC_R_UNEXPECTED; /* unknown right now */
-	ccmsg->length_received = false;
+	ccmsg->recv_cb = cb;
+	ccmsg->recv_cbarg = cbarg;
 
-	if (ccmsg->reading) {
-		isc_nm_resumeread(ccmsg->handle);
-	} else {
+	/* If we have previous data still in the buffer, try to parse it */
+	isc_result_t result = try_parse_message(ccmsg);
+	if (result == ISC_R_NOMORE) {
+		/* We need to read more data */
 		isc_nm_read(ccmsg->handle, recv_data, ccmsg);
-		ccmsg->reading = true;
+		return;
 	}
+
+	ccmsg->recv_cb(ccmsg->handle, result, ccmsg->recv_cbarg);
+}
+
+static void
+ccmsg_senddone(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
+	isccc_ccmsg_t *ccmsg = arg;
+
+	REQUIRE(VALID_CCMSG(ccmsg));
+	REQUIRE(ccmsg->send_cb != NULL);
+
+	isc_nm_cb_t send_cb = ccmsg->send_cb;
+	ccmsg->send_cb = NULL;
+
+	send_cb(handle, eresult, ccmsg->send_cbarg);
+
+	isc_nmhandle_detach(&handle);
 }
 
 void
-isccc_ccmsg_cancelread(isccc_ccmsg_t *ccmsg) {
+isccc_ccmsg_sendmessage(isccc_ccmsg_t *ccmsg, isc_region_t *region,
+			isc_nm_cb_t cb, void *cbarg) {
+	REQUIRE(VALID_CCMSG(ccmsg));
+	REQUIRE(ccmsg->send_cb == NULL);
+
+	ccmsg->send_cb = cb;
+	ccmsg->send_cbarg = cbarg;
+
+	isc_nmhandle_ref(ccmsg->handle);
+	isc_nm_send(ccmsg->handle, region, ccmsg_senddone, ccmsg);
+}
+
+void
+isccc_ccmsg_disconnect(isccc_ccmsg_t *ccmsg) {
 	REQUIRE(VALID_CCMSG(ccmsg));
 
-	if (ccmsg->reading) {
-		isc_nm_cancelread(ccmsg->handle);
-		ccmsg->reading = false;
+	if (ccmsg->handle != NULL) {
+		isc_nm_read_stop(ccmsg->handle);
+		isc_nmhandle_close(ccmsg->handle);
+		isc_nmhandle_detach(&ccmsg->handle);
 	}
 }
 
 void
 isccc_ccmsg_invalidate(isccc_ccmsg_t *ccmsg) {
 	REQUIRE(VALID_CCMSG(ccmsg));
+	REQUIRE(ccmsg->handle == NULL);
 
 	ccmsg->magic = 0;
 
-	if (ccmsg->buffer != NULL) {
-		isc_buffer_free(&ccmsg->buffer);
-	}
+	isc_buffer_free(&ccmsg->buffer);
+}
+
+void
+isccc_ccmsg_toregion(isccc_ccmsg_t *ccmsg, isccc_region_t *ccregion) {
+	REQUIRE(VALID_CCMSG(ccmsg));
+	REQUIRE(ccmsg->buffer);
+	REQUIRE(isc_buffer_remaininglength(ccmsg->buffer) >= ccmsg->size);
+
+	ccregion->rstart = isc_buffer_current(ccmsg->buffer);
+	ccregion->rend = ccregion->rstart + ccmsg->size;
 }

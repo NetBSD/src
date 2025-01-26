@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.3 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.4 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/net.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
@@ -186,14 +185,14 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	iter->magic = IFITER_MAGIC;
 	*iterp = iter;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 failure:
 	if (iter->ifaddrs != NULL) { /* just in case */
 		freeifaddrs(iter->ifaddrs);
 	}
 	isc_mem_put(mctx, iter, sizeof(*iter));
-	return (result);
+	return result;
 }
 
 /*
@@ -217,12 +216,12 @@ internal_current(isc_interfaceiter_t *iter) {
 	INSIST(ifa->ifa_name != NULL);
 
 	if (ifa->ifa_addr == NULL) {
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	family = ifa->ifa_addr->sa_family;
 	if (family != AF_INET && family != AF_INET6) {
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	memset(&iter->current, 0, sizeof(iter->current));
@@ -265,7 +264,7 @@ internal_current(isc_interfaceiter_t *iter) {
 			 ifa->ifa_name);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -281,10 +280,10 @@ internal_next(isc_interfaceiter_t *iter) {
 		iter->pos = iter->pos->ifa_next;
 	}
 	if (iter->pos == NULL) {
-		return (ISC_R_NOMORE);
+		return ISC_R_NOMORE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -308,7 +307,7 @@ isc_result_t
 isc_interfaceiter_current(isc_interfaceiter_t *iter, isc_interface_t *ifdata) {
 	REQUIRE(iter->result == ISC_R_SUCCESS);
 	memmove(ifdata, &iter->current, sizeof(*ifdata));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -329,7 +328,7 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter) {
 		}
 	}
 	iter->result = result;
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -350,7 +349,7 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 		}
 	}
 	iter->result = result;
-	return (result);
+	return result;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.9 2024/09/22 00:14:10 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.10 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <stdbool.h>
 
 #include <isc/fuzz.h>
+#include <isc/histo.h>
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/quota.h>
@@ -31,7 +32,6 @@
 #include <dns/acl.h>
 #include <dns/types.h>
 
-#include <ns/events.h>
 #include <ns/types.h>
 
 #define NS_SERVER_LOGQUERIES	 0x00000001U /*%< log queries */
@@ -51,6 +51,7 @@
 #define NS_SERVER_TRANSFERINSECS 0x00008000U /*%< -T transferinsecs */
 #define NS_SERVER_TRANSFERSLOWLY 0x00010000U /*%< -T transferslowly */
 #define NS_SERVER_TRANSFERSTUCK	 0x00020000U /*%< -T transferstuck */
+#define NS_SERVER_LOGRESPONSES	 0x00040000U /*%< log responses */
 
 /*%
  * Type for callback function to get hostname.
@@ -68,7 +69,9 @@ typedef void (*ns_fuzzcb_t)(void);
  */
 typedef isc_result_t (*ns_matchview_t)(
 	isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr, dns_message_t *message,
-	dns_aclenv_t *env, isc_result_t *sigresultp, dns_view_t **viewp);
+	dns_aclenv_t *env, ns_server_t *sctx, isc_loop_t *loop, isc_job_cb cb,
+	void *cbarg, isc_result_t *sigresultp, isc_result_t *viewmatchresult,
+	dns_view_t **viewp);
 
 /*%
  * Server context.
@@ -90,6 +93,8 @@ struct ns_server {
 	isc_quota_t tcpquota;
 	isc_quota_t xfroutquota;
 	isc_quota_t updquota;
+	isc_quota_t sig0checksquota;
+	dns_acl_t  *sig0checksquota_exempt;
 	ISC_LIST(isc_quota_t) http_quotas;
 	isc_mutex_t http_quotas_lock;
 
@@ -97,7 +102,6 @@ struct ns_server {
 	uint32_t options;
 
 	dns_acl_t     *blackholeacl;
-	dns_acl_t     *keepresporder;
 	uint16_t       udpsize;
 	uint16_t       transfer_tcp_message_size;
 	bool	       interface_auto;
@@ -121,15 +125,15 @@ struct ns_server {
 	dns_stats_t *opcodestats;
 	dns_stats_t *rcodestats;
 
-	isc_stats_t *udpinstats4;
-	isc_stats_t *udpoutstats4;
-	isc_stats_t *udpinstats6;
-	isc_stats_t *udpoutstats6;
+	isc_histomulti_t *udpinstats4;
+	isc_histomulti_t *udpoutstats4;
+	isc_histomulti_t *udpinstats6;
+	isc_histomulti_t *udpoutstats6;
 
-	isc_stats_t *tcpinstats4;
-	isc_stats_t *tcpoutstats4;
-	isc_stats_t *tcpinstats6;
-	isc_stats_t *tcpoutstats6;
+	isc_histomulti_t *tcpinstats4;
+	isc_histomulti_t *tcpoutstats4;
+	isc_histomulti_t *tcpinstats6;
+	isc_histomulti_t *tcpoutstats6;
 };
 
 struct ns_altsecret {
@@ -137,7 +141,7 @@ struct ns_altsecret {
 	unsigned char secret[32];
 };
 
-isc_result_t
+void
 ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 		 ns_server_t **sctxp);
 /*%<

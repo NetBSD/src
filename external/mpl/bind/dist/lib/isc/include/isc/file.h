@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.7 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.8 2025/01/26 16:25:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,9 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <isc/lang.h>
-#include <isc/stat.h>
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -104,16 +104,8 @@ isc_result_t
 isc_file_openuniqueprivate(char *templet, FILE **fp);
 isc_result_t
 isc_file_openuniquemode(char *templet, int mode, FILE **fp);
-isc_result_t
-isc_file_bopenunique(char *templet, FILE **fp);
-isc_result_t
-isc_file_bopenuniqueprivate(char *templet, FILE **fp);
-isc_result_t
-isc_file_bopenuniquemode(char *templet, int mode, FILE **fp);
 /*!<
  * \brief Create and open a file with a unique name based on 'templet'.
- *	isc_file_bopen*() open the file in binary mode in Windows.
- *	isc_file_open*() open the file in text mode in Windows.
  *
  * Notes:
  *\li	'template' is a reserved work in C++.  If you want to complain
@@ -297,7 +289,7 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen);
  */
 
 isc_result_t
-isc_file_truncate(const char *filename, isc_offset_t size);
+isc_file_truncate(const char *filename, off_t size);
 /*%<
  * Truncate/extend the file specified to 'size' bytes.
  */
@@ -314,8 +306,8 @@ isc_result_t
 isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
 		   char const **basename);
 /*%<
- * Split a path into dirname and basename.  If 'path' contains no slash
- * (or, on windows, backslash), then '*dirname' is set to ".".
+ * Split a path into dirname and basename.  If 'path' contains no slash,
+ * then '*dirname' is set to ".".
  *
  * Allocates memory for '*dirname', which can be freed with isc_mem_free().
  *

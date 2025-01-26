@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.9 2024/02/21 22:52:12 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.10 2025/01/26 16:25:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,10 +44,10 @@ fromtext_isdn(ARGS_FROMTEXT) {
 	    token.type != isc_tokentype_qstring)
 	{
 		isc_lex_ungettoken(lexer, &token);
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -62,10 +62,10 @@ totext_isdn(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	RETERR(txt_totext(&region, true, target));
 	if (region.length == 0) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 	RETERR(str_totext(" ", target));
-	return (txt_totext(&region, true, target));
+	return txt_totext(&region, true, target);
 }
 
 static isc_result_t
@@ -75,13 +75,12 @@ fromwire_isdn(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(dctx);
 	UNUSED(rdclass);
-	UNUSED(options);
 
 	RETERR(txt_fromwire(source, target));
 	if (buffer_empty(source)) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
-	return (txt_fromwire(source, target));
+	return txt_fromwire(source, target);
 }
 
 static isc_result_t
@@ -91,7 +90,7 @@ towire_isdn(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_isdn);
 	REQUIRE(rdata->length != 0);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -107,7 +106,7 @@ compare_isdn(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -125,10 +124,10 @@ fromstruct_isdn(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(isdn->isdn_len, target));
 	RETERR(mem_tobuffer(target, isdn->isdn, isdn->isdn_len));
 	if (isdn->subaddress == NULL) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 	RETERR(uint8_tobuffer(isdn->subaddress_len, target));
-	return (mem_tobuffer(target, isdn->subaddress, isdn->subaddress_len));
+	return mem_tobuffer(target, isdn->subaddress, isdn->subaddress_len);
 }
 
 static isc_result_t
@@ -149,9 +148,6 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	isdn->isdn_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	isdn->isdn = mem_maybedup(mctx, r.base, isdn->isdn_len);
-	if (isdn->isdn == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
 	isc_region_consume(&r, isdn->isdn_len);
 
 	if (r.length == 0) {
@@ -162,19 +158,10 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 		isc_region_consume(&r, 1);
 		isdn->subaddress = mem_maybedup(mctx, r.base,
 						isdn->subaddress_len);
-		if (isdn->subaddress == NULL) {
-			goto cleanup;
-		}
 	}
 
 	isdn->mctx = mctx;
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (mctx != NULL && isdn->isdn != NULL) {
-		isc_mem_free(mctx, isdn->isdn);
-	}
-	return (ISC_R_NOMEMORY);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -205,7 +192,7 @@ additionaldata_isdn(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -216,7 +203,7 @@ digest_isdn(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -228,7 +215,7 @@ checkowner_isdn(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -239,12 +226,12 @@ checknames_isdn(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_isdn(ARGS_COMPARE) {
-	return (compare_isdn(rdata1, rdata2));
+	return compare_isdn(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_ISDN_20_C */

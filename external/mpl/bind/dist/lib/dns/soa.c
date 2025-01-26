@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: soa.c,v 1.7 2025/01/26 16:25:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,8 +27,8 @@
 
 static uint32_t
 decode_uint32(unsigned char *p) {
-	return (((uint32_t)p[0] << 24) + ((uint32_t)p[1] << 16) +
-		((uint32_t)p[2] << 8) + ((uint32_t)p[3] << 0));
+	return ((uint32_t)p[0] << 24) + ((uint32_t)p[1] << 16) +
+	       ((uint32_t)p[2] << 8) + ((uint32_t)p[3] << 0);
 }
 
 static void
@@ -54,7 +54,7 @@ soa_get(dns_rdata_t *rdata, int offset) {
 	 */
 	INSIST(rdata->length >= 20);
 	INSIST(offset >= 0 && offset <= 16);
-	return (decode_uint32(rdata->data + rdata->length - 20 + offset));
+	return decode_uint32(rdata->data + rdata->length - 20 + offset);
 }
 
 isc_result_t
@@ -84,29 +84,29 @@ dns_soa_buildrdata(const dns_name_t *origin, const dns_name_t *contact,
 	dns_name_init(&soa.contact, NULL);
 	dns_name_clone(contact, &soa.contact);
 
-	return (dns_rdata_fromstruct(rdata, rdclass, dns_rdatatype_soa, &soa,
-				     &rdatabuf));
+	return dns_rdata_fromstruct(rdata, rdclass, dns_rdatatype_soa, &soa,
+				    &rdatabuf);
 }
 
 uint32_t
 dns_soa_getserial(dns_rdata_t *rdata) {
-	return (soa_get(rdata, 0));
+	return soa_get(rdata, 0);
 }
 uint32_t
 dns_soa_getrefresh(dns_rdata_t *rdata) {
-	return (soa_get(rdata, 4));
+	return soa_get(rdata, 4);
 }
 uint32_t
 dns_soa_getretry(dns_rdata_t *rdata) {
-	return (soa_get(rdata, 8));
+	return soa_get(rdata, 8);
 }
 uint32_t
 dns_soa_getexpire(dns_rdata_t *rdata) {
-	return (soa_get(rdata, 12));
+	return soa_get(rdata, 12);
 }
 uint32_t
 dns_soa_getminimum(dns_rdata_t *rdata) {
-	return (soa_get(rdata, 16));
+	return soa_get(rdata, 16);
 }
 
 static void

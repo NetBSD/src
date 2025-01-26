@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.7 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: geoip.c,v 1.8 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #endif /* if defined(HAVE_GEOIP2) */
 
 #include <isc/dir.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -46,7 +45,7 @@ open_geoip2(const char *dir, const char *dbfile, MMDB_s *mmdb) {
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "GeoIP2 database '%s/%s': path too long", dir,
 			      dbfile);
-		return (NULL);
+		return NULL;
 	}
 
 	ret = MMDB_open(pathbuf, MMDB_MODE_MMAP, mmdb);
@@ -54,7 +53,7 @@ open_geoip2(const char *dir, const char *dbfile, MMDB_s *mmdb) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "opened GeoIP2 database '%s'", pathbuf);
-		return (mmdb);
+		return mmdb;
 	}
 
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
@@ -62,7 +61,7 @@ open_geoip2(const char *dir, const char *dbfile, MMDB_s *mmdb) {
 		      "unable to open GeoIP2 database '%s' (status %d)",
 		      pathbuf, ret);
 
-	return (NULL);
+	return NULL;
 }
 #endif /* HAVE_GEOIP2 */
 

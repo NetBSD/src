@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: quota_test.c,v 1.3 2025/01/26 16:25:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,19 +26,19 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
+#include <isc/job.h>
 #include <isc/quota.h>
 #include <isc/result.h>
 #include <isc/thread.h>
 #include <isc/util.h>
-
-#include "netmgr/uv-compat.h"
+#include <isc/uv.h>
 
 #include <tests/isc.h>
 
+isc_quota_t quota;
+
 ISC_RUN_TEST_IMPL(isc_quota_get_set) {
 	UNUSED(state);
-	isc_quota_t quota;
-	isc_quota_t *quota2 = NULL;
 	isc_quota_init(&quota, 100);
 
 	assert_int_equal(isc_quota_getmax(&quota), 100);
@@ -51,30 +51,31 @@ ISC_RUN_TEST_IMPL(isc_quota_get_set) {
 	assert_int_equal(isc_quota_getsoft(&quota), 30);
 
 	assert_int_equal(isc_quota_getused(&quota), 0);
-	isc_quota_attach(&quota, &quota2);
+	isc_quota_acquire(&quota);
 	assert_int_equal(isc_quota_getused(&quota), 1);
-	isc_quota_detach(&quota2);
+	isc_quota_release(&quota);
 	assert_int_equal(isc_quota_getused(&quota), 0);
+
+	/* Unlimited */
+	isc_quota_max(&quota, 0);
+	isc_quota_soft(&quota, 0);
+
 	isc_quota_destroy(&quota);
 }
 
 static void
-add_quota(isc_quota_t *source, isc_quota_t **target,
-	  isc_result_t expected_result, int expected_used) {
+add_quota(isc_quota_t *source, isc_result_t expected_result,
+	  int expected_used) {
 	isc_result_t result;
 
-	*target = NULL;
-
-	result = isc_quota_attach(source, target);
+	result = isc_quota_acquire(source);
 	assert_int_equal(result, expected_result);
 
 	switch (expected_result) {
 	case ISC_R_SUCCESS:
 	case ISC_R_SOFTQUOTA:
-		assert_ptr_equal(*target, source);
 		break;
 	default:
-		assert_null(*target);
 		break;
 	}
 
@@ -82,30 +83,26 @@ add_quota(isc_quota_t *source, isc_quota_t **target,
 }
 
 ISC_RUN_TEST_IMPL(isc_quota_hard) {
-	isc_quota_t quota;
-	isc_quota_t *quotas[110];
 	int i;
 	UNUSED(state);
 
 	isc_quota_init(&quota, 100);
 
 	for (i = 0; i < 100; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, i + 1);
+		add_quota(&quota, ISC_R_SUCCESS, i + 1);
 	}
 
-	add_quota(&quota, &quotas[100], ISC_R_QUOTA, 100);
+	add_quota(&quota, ISC_R_QUOTA, 100);
 
 	assert_int_equal(isc_quota_getused(&quota), 100);
 
-	isc_quota_detach(&quotas[0]);
-	assert_null(quotas[0]);
+	isc_quota_release(&quota);
 
-	add_quota(&quota, &quotas[100], ISC_R_SUCCESS, 100);
-	add_quota(&quota, &quotas[101], ISC_R_QUOTA, 100);
+	add_quota(&quota, ISC_R_SUCCESS, 100);
+	add_quota(&quota, ISC_R_QUOTA, 100);
 
 	for (i = 100; i > 0; i--) {
-		isc_quota_detach(&quotas[i]);
-		assert_null(quotas[i]);
+		isc_quota_release(&quota);
 		assert_int_equal(isc_quota_getused(&quota), i - 1);
 	}
 	assert_int_equal(isc_quota_getused(&quota), 0);
@@ -113,8 +110,6 @@ ISC_RUN_TEST_IMPL(isc_quota_hard) {
 }
 
 ISC_RUN_TEST_IMPL(isc_quota_soft) {
-	isc_quota_t quota;
-	isc_quota_t *quotas[110];
 	int i;
 	UNUSED(state);
 
@@ -122,17 +117,16 @@ ISC_RUN_TEST_IMPL(isc_quota_soft) {
 	isc_quota_soft(&quota, 50);
 
 	for (i = 0; i < 50; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SUCCESS, i + 1);
+		add_quota(&quota, ISC_R_SUCCESS, i + 1);
 	}
 	for (i = 50; i < 100; i++) {
-		add_quota(&quota, &quotas[i], ISC_R_SOFTQUOTA, i + 1);
+		add_quota(&quota, ISC_R_SOFTQUOTA, i + 1);
 	}
 
-	add_quota(&quota, &quotas[i], ISC_R_QUOTA, 100);
+	add_quota(&quota, ISC_R_QUOTA, 100);
 
 	for (i = 99; i >= 0; i--) {
-		isc_quota_detach(&quotas[i]);
-		assert_null(quotas[i]);
+		isc_quota_release(&quota);
 		assert_int_equal(isc_quota_getused(&quota), i);
 	}
 	assert_int_equal(isc_quota_getused(&quota), 0);
@@ -140,17 +134,13 @@ ISC_RUN_TEST_IMPL(isc_quota_soft) {
 }
 
 static atomic_uint_fast32_t cb_calls = 0;
-static isc_quota_cb_t cbs[30];
-static isc_quota_t *qp;
+static isc_job_t cbs[30];
 
 static void
-callback(isc_quota_t *quota, void *data) {
+callback(void *data) {
 	int val = *(int *)data;
 	/* Callback is not called if we get the quota directly */
 	assert_int_not_equal(val, -1);
-
-	/* We get the proper quota pointer */
-	assert_ptr_equal(quota, qp);
 
 	/* Verify that the callbacks are called in order */
 	int v = atomic_fetch_add_relaxed(&cb_calls, 1);
@@ -161,15 +151,12 @@ callback(isc_quota_t *quota, void *data) {
 	 * for the last 5 - do a 'chain detach'.
 	 */
 	if (v >= 5) {
-		isc_quota_detach(&quota);
+		isc_quota_release(&quota);
 	}
 }
 
 ISC_RUN_TEST_IMPL(isc_quota_callback) {
 	isc_result_t result;
-	isc_quota_t quota;
-	isc_quota_t *quotas[30];
-	qp = &quota;
 	/*
 	 * - 10 calls that end with SUCCESS
 	 * - 10 calls that end with SOFTQUOTA
@@ -185,51 +172,45 @@ ISC_RUN_TEST_IMPL(isc_quota_callback) {
 	isc_quota_soft(&quota, 10);
 
 	for (i = 0; i < 10; i++) {
-		quotas[i] = NULL;
-		isc_quota_cb_init(&cbs[i], callback, &ints[i]);
-		result = isc_quota_attach_cb(&quota, &quotas[i], &cbs[i]);
+		cbs[i] = (isc_job_t)ISC_JOB_INITIALIZER;
+		result = isc_quota_acquire_cb(&quota, &cbs[i], callback,
+					      &ints[i]);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		assert_ptr_equal(quotas[i], &quota);
 		assert_int_equal(isc_quota_getused(&quota), i + 1);
 	}
 	for (i = 10; i < 20; i++) {
-		quotas[i] = NULL;
-		isc_quota_cb_init(&cbs[i], callback, &ints[i]);
-		result = isc_quota_attach_cb(&quota, &quotas[i], &cbs[i]);
+		cbs[i] = (isc_job_t)ISC_JOB_INITIALIZER;
+		result = isc_quota_acquire_cb(&quota, &cbs[i], callback,
+					      &ints[i]);
 		assert_int_equal(result, ISC_R_SOFTQUOTA);
-		assert_ptr_equal(quotas[i], &quota);
 		assert_int_equal(isc_quota_getused(&quota), i + 1);
 	}
 
 	for (i = 20; i < 30; i++) {
-		quotas[i] = NULL;
-		isc_quota_cb_init(&cbs[i], callback, &ints[i]);
-		result = isc_quota_attach_cb(&quota, &quotas[i], &cbs[i]);
+		cbs[i] = (isc_job_t)ISC_JOB_INITIALIZER;
+		result = isc_quota_acquire_cb(&quota, &cbs[i], callback,
+					      &ints[i]);
 		assert_int_equal(result, ISC_R_QUOTA);
-		assert_ptr_equal(quotas[i], NULL);
 		assert_int_equal(isc_quota_getused(&quota), 20);
 	}
 	assert_int_equal(atomic_load(&cb_calls), 0);
 
 	for (i = 0; i < 5; i++) {
-		isc_quota_detach(&quotas[i]);
-		assert_null(quotas[i]);
+		isc_quota_release(&quota);
 		assert_int_equal(isc_quota_getused(&quota), 20);
 		assert_int_equal(atomic_load(&cb_calls), i + 1);
 	}
 	/* That should cause a chain reaction */
-	isc_quota_detach(&quotas[5]);
+	isc_quota_release(&quota);
 	assert_int_equal(atomic_load(&cb_calls), 10);
 
 	/* Release the quotas that we did not released in the callback */
 	for (i = 0; i < 5; i++) {
-		qp = &quota;
-		isc_quota_detach(&qp);
+		isc_quota_release(&quota);
 	}
 
 	for (i = 6; i < 20; i++) {
-		isc_quota_detach(&quotas[i]);
-		assert_null(quotas[i]);
+		isc_quota_release(&quota);
 		assert_int_equal(isc_quota_getused(&quota), 19 - i);
 	}
 	assert_int_equal(atomic_load(&cb_calls), 10);
@@ -248,8 +229,7 @@ ISC_RUN_TEST_IMPL(isc_quota_callback) {
 typedef struct qthreadinfo {
 	atomic_uint_fast32_t direct;
 	atomic_uint_fast32_t callback;
-	isc_quota_t *quota;
-	isc_quota_cb_t callbacks[100];
+	isc_job_t callbacks[100];
 } qthreadinfo_t;
 
 static atomic_uint_fast32_t g_tnum = 0;
@@ -257,42 +237,39 @@ static atomic_uint_fast32_t g_tnum = 0;
 isc_thread_t g_threads[10 * 100];
 
 static void *
-quota_detach(void *quotap) {
-	isc_quota_t *quota = (isc_quota_t *)quotap;
+quota_release(void *arg) {
 	uv_sleep(10);
-	isc_quota_detach(&quota);
-	return ((isc_threadresult_t)0);
+	isc_quota_release((isc_quota_t *)arg);
+	return NULL;
 }
 
 static void
-quota_callback(isc_quota_t *quota, void *data) {
+quota_callback(void *data) {
 	qthreadinfo_t *qti = (qthreadinfo_t *)data;
 	atomic_fetch_add_relaxed(&qti->callback, 1);
 	int tnum = atomic_fetch_add_relaxed(&g_tnum, 1);
-	isc_thread_create(quota_detach, quota, &g_threads[tnum]);
+	isc_thread_create(quota_release, &quota, &g_threads[tnum]);
 }
 
-static isc_threadresult_t
+static void *
 quota_thread(void *qtip) {
 	qthreadinfo_t *qti = (qthreadinfo_t *)qtip;
 	for (int i = 0; i < 100; i++) {
-		isc_quota_cb_init(&qti->callbacks[i], quota_callback, qti);
-		isc_quota_t *quota = NULL;
-		isc_result_t result = isc_quota_attach_cb(qti->quota, &quota,
-							  &qti->callbacks[i]);
+		qti->callbacks[i] = (isc_job_t)ISC_JOB_INITIALIZER;
+		isc_result_t result = isc_quota_acquire_cb(
+			&quota, &qti->callbacks[i], quota_callback, qti);
 		if (result == ISC_R_SUCCESS) {
 			atomic_fetch_add_relaxed(&qti->direct, 1);
 			int tnum = atomic_fetch_add_relaxed(&g_tnum, 1);
-			isc_thread_create(quota_detach, quota,
+			isc_thread_create(quota_release, &quota,
 					  &g_threads[tnum]);
 		}
 	}
-	return ((isc_threadresult_t)0);
+	return NULL;
 }
 
 ISC_RUN_TEST_IMPL(isc_quota_callback_mt) {
 	UNUSED(state);
-	isc_quota_t quota;
 	int i;
 
 	isc_quota_init(&quota, 100);
@@ -301,7 +278,6 @@ ISC_RUN_TEST_IMPL(isc_quota_callback_mt) {
 	for (i = 0; i < 10; i++) {
 		atomic_init(&qtis[i].direct, 0);
 		atomic_init(&qtis[i].callback, 0);
-		qtis[i].quota = &quota;
 		isc_thread_create(quota_thread, &qtis[i], &threads[i]);
 	}
 	for (i = 0; i < 10; i++) {

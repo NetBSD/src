@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.h,v 1.6 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: notify.h,v 1.7 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

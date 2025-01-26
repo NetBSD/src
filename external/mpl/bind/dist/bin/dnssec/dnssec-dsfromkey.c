@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.12 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.13 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
 #include <isc/dir.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -57,6 +56,7 @@ static dns_name_t *name = NULL;
 static isc_mem_t *mctx = NULL;
 static uint32_t ttl;
 static bool emitttl = false;
+static unsigned int split_width = 0;
 
 static isc_result_t
 initname(char *setname) {
@@ -68,7 +68,7 @@ initname(char *setname) {
 	isc_buffer_init(&buf, setname, strlen(setname));
 	isc_buffer_add(&buf, strlen(setname));
 	result = dns_name_fromtext(name, &buf, dns_rootname, 0, NULL);
-	return (result);
+	return result;
 }
 
 static void
@@ -103,8 +103,8 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 
 	dns_name_format(name, setname, sizeof(setname));
 
-	result = dns_db_create(mctx, "rbt", name, dns_dbtype_zone, rdclass, 0,
-			       NULL, &db);
+	result = dns_db_create(mctx, ZONEDB_DEFAULT, name, dns_dbtype_zone,
+			       rdclass, 0, NULL, &db);
 	if (result != ISC_R_SUCCESS) {
 		fatal("can't create database");
 	}
@@ -140,7 +140,7 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 	if (db != NULL) {
 		dns_db_detach(&db);
 	}
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -155,7 +155,7 @@ loadkeyset(char *dirname, dns_rdataset_t *rdataset) {
 	if (dirname != NULL) {
 		/* allow room for a trailing slash */
 		if (strlen(dirname) >= isc_buffer_availablelength(&buf)) {
-			return (ISC_R_NOSPACE);
+			return ISC_R_NOSPACE;
 		}
 		isc_buffer_putstr(&buf, dirname);
 		if (dirname[strlen(dirname) - 1] != '/') {
@@ -164,18 +164,18 @@ loadkeyset(char *dirname, dns_rdataset_t *rdataset) {
 	}
 
 	if (isc_buffer_availablelength(&buf) < 7) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	isc_buffer_putstr(&buf, "keyset-");
 
 	result = dns_name_tofilenametext(name, false, &buf);
 	check_result(result, "dns_name_tofilenametext()");
 	if (isc_buffer_availablelength(&buf) == 0) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	isc_buffer_putuint8(&buf, 0);
 
-	return (loadset(filename, rdataset));
+	return loadset(filename, rdataset);
 }
 
 static void
@@ -277,13 +277,13 @@ emit(dns_dsdigest_t dt, bool showall, bool cds, dns_rdata_t *rdata) {
 		fatal("can't build record");
 	}
 
-	result = dns_name_totext(name, false, &nameb);
+	result = dns_name_totext(name, 0, &nameb);
 	if (result != ISC_R_SUCCESS) {
 		fatal("can't print name");
 	}
 
-	result = dns_rdata_tofmttext(&ds, (dns_name_t *)NULL, 0, 0, 0, "",
-				     &textb);
+	result = dns_rdata_tofmttext(&ds, (dns_name_t *)NULL, 0, 0, split_width,
+				     "", &textb);
 
 	if (result != ISC_R_SUCCESS) {
 		fatal("can't print rdata");
@@ -316,7 +316,7 @@ emit(dns_dsdigest_t dt, bool showall, bool cds, dns_rdata_t *rdata) {
 
 static void
 emits(bool showall, bool cds, dns_rdata_t *rdata) {
-	unsigned i, n;
+	unsigned int i, n;
 
 	n = sizeof(dtype) / sizeof(dtype[0]);
 	for (i = 0; i < n; i++) {
@@ -350,6 +350,7 @@ usage(void) {
 			"    -f zonefile: read keys from a zone file\n"
 			"    -h: print help information\n"
 			"    -K directory: where to find key or keyset files\n"
+			"    -w split base64 rdata text into chunks\n"
 			"    -s: read keys from keyset-<dnsname> file\n"
 			"    -T: TTL of output records (omitted by default)\n"
 			"    -v level: verbosity\n"
@@ -383,7 +384,7 @@ main(int argc, char **argv) {
 
 	isc_commandline_errprint = false;
 
-#define OPTIONS "12Aa:Cc:d:Ff:K:l:sT:v:hV"
+#define OPTIONS "12Aa:Cc:d:Ff:K:l:sT:v:whV"
 	while ((ch = isc_commandline_parse(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '1':
@@ -434,6 +435,9 @@ main(int argc, char **argv) {
 			if (*endp != '\0') {
 				fatal("-v must be followed by a number");
 			}
+			break;
+		case 'w':
+			split_width = UINT_MAX;
 			break;
 		case 'F':
 			/* Reserved for FIPS mode */
@@ -556,8 +560,8 @@ main(int argc, char **argv) {
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
-		return (1);
+		return 1;
 	} else {
-		return (0);
+		return 0;
 	}
 }

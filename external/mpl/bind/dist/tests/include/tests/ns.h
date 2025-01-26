@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: ns.h,v 1.4 2025/01/26 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,10 +23,10 @@
 #include <isc/buffer.h>
 #include <isc/hash.h>
 #include <isc/log.h>
+#include <isc/loop.h>
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
@@ -45,23 +45,17 @@ typedef struct ns_test_id {
 
 #define NS_TEST_ID(desc) { .description = desc, .lineno = __LINE__ }
 
-#define CHECK(r)                             \
-	do {                                 \
-		result = (r);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
-
 extern dns_dispatchmgr_t *dispatchmgr;
-extern ns_clientmgr_t	 *clientmgr;
 extern ns_interfacemgr_t *interfacemgr;
 extern ns_server_t	 *sctx;
 
-#ifdef NETMGR_TRACE
-#define FLARG                                              \
-	, const char	    *file __attribute__((unused)), \
-		unsigned int line __attribute__((unused)), \
-		const char  *func __attribute__((unused))
+extern atomic_uint_fast32_t client_refs[32];
+extern atomic_uintptr_t	    client_addrs[32];
+
+#if ISC_NETMGR_TRACE
+#define FLARG                                                                  \
+	, const char *file ISC_ATTR_UNUSED, unsigned int line ISC_ATTR_UNUSED, \
+		const char *func ISC_ATTR_UNUSED
 #else
 #define FLARG
 #endif
@@ -70,6 +64,8 @@ int
 setup_server(void **state);
 int
 teardown_server(void **state);
+void
+shutdown_interfacemgr(void *arg ISC_ATTR_UNUSED);
 
 /*%
  * Load data for zone "zonename" from file "filename" and start serving it to
@@ -94,7 +90,7 @@ isc_result_t
 ns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 		size_t *sizep);
 
-isc_result_t
+void
 ns_test_getclient(ns_interface_t *ifp0, bool tcp, ns_client_t **clientp);
 
 /*%

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.12 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.13 2025/01/26 16:25:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,6 +56,18 @@
 #include <dns/rdatastruct.h>
 #include <dns/types.h>
 
+/* Fixed RRSet helper macros */
+
+#define DNS_RDATASET_LENGTH 2;
+
+#if DNS_RDATASET_FIXED
+#define DNS_RDATASET_ORDER 2
+#define DNS_RDATASET_COUNT (count * 4)
+#else /* !DNS_RDATASET_FIXED */
+#define DNS_RDATASET_ORDER 0
+#define DNS_RDATASET_COUNT 0
+#endif /* DNS_RDATASET_FIXED */
+
 ISC_LANG_BEGINDECLS
 
 typedef enum {
@@ -65,22 +77,25 @@ typedef enum {
 } dns_rdatasetadditional_t;
 
 typedef struct dns_rdatasetmethods {
-	void (*disassociate)(dns_rdataset_t *rdataset);
+	void (*disassociate)(dns_rdataset_t *rdataset DNS__DB_FLARG);
 	isc_result_t (*first)(dns_rdataset_t *rdataset);
 	isc_result_t (*next)(dns_rdataset_t *rdataset);
 	void (*current)(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
-	void (*clone)(dns_rdataset_t *source, dns_rdataset_t *target);
+	void (*clone)(dns_rdataset_t	    *source,
+		      dns_rdataset_t *target DNS__DB_FLARG);
 	unsigned int (*count)(dns_rdataset_t *rdataset);
 	isc_result_t (*addnoqname)(dns_rdataset_t   *rdataset,
 				   const dns_name_t *name);
 	isc_result_t (*getnoqname)(dns_rdataset_t *rdataset, dns_name_t *name,
-				   dns_rdataset_t *neg, dns_rdataset_t *negsig);
+				   dns_rdataset_t	 *neg,
+				   dns_rdataset_t *negsig DNS__DB_FLARG);
 	isc_result_t (*addclosest)(dns_rdataset_t   *rdataset,
 				   const dns_name_t *name);
 	isc_result_t (*getclosest)(dns_rdataset_t *rdataset, dns_name_t *name,
-				   dns_rdataset_t *neg, dns_rdataset_t *negsig);
+				   dns_rdataset_t	 *neg,
+				   dns_rdataset_t *negsig DNS__DB_FLARG);
 	void (*settrust)(dns_rdataset_t *rdataset, dns_trust_t trust);
-	void (*expire)(dns_rdataset_t *rdataset);
+	void (*expire)(dns_rdataset_t *rdataset DNS__DB_FLARG);
 	void (*clearprefetch)(dns_rdataset_t *rdataset);
 	void (*setownercase)(dns_rdataset_t *rdataset, const dns_name_t *name);
 	void (*getownercase)(const dns_rdataset_t *rdataset, dns_name_t *name);
@@ -133,19 +148,79 @@ struct dns_rdataset {
 	 */
 	isc_stdtime_t resign;
 
-	/*@{*/
 	/*%
-	 * These are for use by the rdataset implementation, and MUST NOT
-	 * be changed by clients.
+	 * Extra fields used by various rdataset implementations, that is, by
+	 * the code referred to in the rdataset methods table. The names of
+	 * the structures roughly correspond to the file containing the
+	 * implementation, except that `rdlist` is used by `rdatalist.c`,
+	 * `sdb.c`, and `sdlz.c`.
+	 *
+	 * Pointers in these structs use incomplete structure types,
+	 * because the structure definitions and corresponding typedef
+	 * names might not be in scope in this header.
 	 */
-	void	    *private1;
-	void	    *private2;
-	void	    *private3;
-	unsigned int privateuint4;
-	void	    *private5;
-	const void  *private6;
-	const void  *private7;
 	/*@}*/
+	union {
+		struct {
+			struct dns_keynode *node;
+			dns_rdata_t	   *iter;
+		} keytable;
+
+		/*
+		 * An ncache rdataset is a view of memory held elsewhere:
+		 * raw can point to either a buffer on the stack or to an
+		 * rdataslab, such as in an rbtdb database.
+		 */
+		struct {
+			unsigned char *raw;
+			unsigned char *iter_pos;
+			unsigned int   iter_count;
+		} ncache;
+
+		/*
+		 * A slab rdataset provides access to an rdataslab. In
+		 * an rbtdb database, 'raw' will generally point to the
+		 * memory immediately following a slabheader. (There
+		 * is an exception in the case of rdatasets returned by
+		 * the `getnoqname` and `getclosest` methods; see
+		 * comments in rbtdb.c for details.)
+		 */
+		struct {
+			struct dns_db	       *db;
+			dns_dbnode_t	       *node;
+			unsigned char	       *raw;
+			unsigned char	       *iter_pos;
+			unsigned int		iter_count;
+			dns_slabheader_proof_t *noqname, *closest;
+		} slab;
+
+		/*
+		 * A simple rdatalist, plus an optional dbnode used by
+		 * builtin and sdlz.
+		 */
+		struct {
+			struct dns_rdatalist *list;
+			struct dns_rdata     *iter;
+
+			/*
+			 * These refer to names passed in by the caller of
+			 * dns_rdataset_addnoqname() and _addclosest()
+			 */
+			const struct dns_name *noqname, *closest;
+			dns_dbnode_t	      *node;
+		} rdlist;
+
+#ifdef USE_DNSRPS
+		/*
+		 * DNSRPS rdatasets. dns_rpsdb_t is defined in dnsrps.h.
+		 */
+		struct {
+			dns_rpsdb_t *db;
+			void	    *iter_pos;
+			unsigned int iter_count;
+		} rps;
+#endif /* USE_DNSRPS */
+	};
 };
 
 #define DNS_RDATASET_COUNT_UNDEFINED UINT32_MAX
@@ -202,6 +277,8 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_ANCIENT      0x02000000
 #define DNS_RDATASETATTR_STALE_WINDOW 0x04000000
 #define DNS_RDATASETATTR_STALE_ADDED  0x08000000
+#define DNS_RDATASETATTR_KEEPCASE     0x10000000
+#define DNS_RDATASETATTR_STATICSTUB   0x20000000
 
 /*%
  * _OMITDNSSEC:
@@ -234,8 +311,10 @@ dns_rdataset_invalidate(dns_rdataset_t *rdataset);
  *	without initializing it will cause an assertion failure.
  */
 
+#define dns_rdataset_disassociate(rdataset) \
+	dns__rdataset_disassociate(rdataset DNS__DB_FILELINE)
 void
-dns_rdataset_disassociate(dns_rdataset_t *rdataset);
+dns__rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG);
 /*%<
  * Disassociate 'rdataset' from its rdata, allowing it to be reused.
  *
@@ -280,8 +359,11 @@ dns_rdataset_makequestion(dns_rdataset_t *rdataset, dns_rdataclass_t rdclass,
  *\li	'rdataset' is a valid, associated, question rdataset.
  */
 
+#define dns_rdataset_clone(source, target) \
+	dns__rdataset_clone(source, target DNS__DB_FILELINE)
 void
-dns_rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target);
+dns__rdataset_clone(dns_rdataset_t	  *source,
+		    dns_rdataset_t *target DNS__DB_FLARG);
 /*%<
  * Make 'target' refer to the same rdataset as 'source'.
  *
@@ -481,9 +563,12 @@ dns_rdataset_additionaldata(dns_rdataset_t	    *rdataset,
  *\li	Any error that dns_rdata_additionaldata() can return.
  */
 
+#define dns_rdataset_getnoqname(rdataset, name, neg, negsig) \
+	dns__rdataset_getnoqname(rdataset, name, neg, negsig DNS__DB_FILELINE)
 isc_result_t
-dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *neg, dns_rdataset_t *negsig);
+dns__rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			 dns_rdataset_t	       *neg,
+			 dns_rdataset_t *negsig DNS__DB_FLARG);
 /*%<
  * Return the noqname proof for this record.
  *
@@ -507,9 +592,12 @@ dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
  *	 rdatasets.
  */
 
+#define dns_rdataset_getclosest(rdataset, name, nsec, nsecsig) \
+	dns__rdataset_getclosest(rdataset, name, nsec, nsecsig DNS__DB_FILELINE)
 isc_result_t
-dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+dns__rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			 dns_rdataset_t		*nsec,
+			 dns_rdataset_t *nsecsig DNS__DB_FLARG);
 /*%<
  * Return the closest encloser for this record.
  *
@@ -539,8 +627,10 @@ dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
  * The local trust level of 'rdataset' is also set.
  */
 
+#define dns_rdataset_expire(rdataset) \
+	dns__rdataset_expire(rdataset DNS__DB_FILELINE)
 void
-dns_rdataset_expire(dns_rdataset_t *rdataset);
+dns__rdataset_expire(dns_rdataset_t *rdataset DNS__DB_FLARG);
 /*%<
  * Mark the rdataset to be expired in the backing database.
  */
@@ -570,28 +660,6 @@ dns_rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
  * If the CASESET attribute is set, retrieve the case bitfield that was
  * previously stored by dns_rdataset_getownername(), and capitalize 'name'
  * according to it. If CASESET is not set, do nothing.
- */
-
-isc_result_t
-dns_rdataset_addglue(dns_rdataset_t *rdataset, dns_dbversion_t *version,
-		     dns_message_t *msg);
-/*%<
- * Add glue records for rdataset to the additional section of message in
- * 'msg'. 'rdataset' must be of type NS.
- *
- * In case a successful result is not returned, the caller should try to
- * add glue directly to the message by iterating for additional data.
- *
- * Requires:
- * \li	'rdataset' is a valid NS rdataset.
- * \li	'version' is the DB version.
- * \li	'msg' is the DNS message to which the glue should be added.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOTIMPLEMENTED
- *\li	#ISC_R_FAILURE
- *\li	Any error that dns_rdata_additionaldata() can return.
  */
 
 void

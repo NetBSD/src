@@ -1,4 +1,4 @@
-/*	$NetBSD: isc_lex_gettoken.c,v 1.2 2024/02/21 22:51:58 christos Exp $	*/
+/*	$NetBSD: isc_lex_gettoken.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,16 +29,11 @@ static isc_mem_t *mctx = NULL;
 static isc_lex_t *lex = NULL;
 
 int
-LLVMFuzzerInitialize(int *argc __attribute__((unused)),
-		     char ***argv __attribute__((unused))) {
-	isc_result_t result;
-
+LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_mem_create(&mctx);
+	isc_lex_create(mctx, 1024, &lex);
 
-	result = isc_lex_create(mctx, 1024, &lex);
-	REQUIRE(result == ISC_R_SUCCESS);
-
-	return (0);
+	return 0;
 }
 
 int
@@ -57,5 +52,5 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 		result = isc_lex_gettoken(lex, 0, &token);
 	} while (result == ISC_R_SUCCESS);
 
-	return (0);
+	return 0;
 }

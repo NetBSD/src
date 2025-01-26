@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.2 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.3 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,8 +68,8 @@ isc_syslog_facilityfromstring(const char *str, int *facilityp) {
 	for (i = 0; facilities[i].strval != NULL; i++) {
 		if (strcasecmp(facilities[i].strval, str) == 0) {
 			*facilityp = facilities[i].val;
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		}
 	}
-	return (ISC_R_NOTFOUND);
+	return ISC_R_NOTFOUND;
 }

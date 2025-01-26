@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.13 2024/09/22 00:14:05 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.14 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,19 +20,18 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <isc/async.h>
 #include <isc/hex.h>
+#include <isc/loop.h>
 #include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
 #include <isc/result.h>
-#include <isc/task.h>
-#include <isc/thread.h>
 #include <isc/util.h>
+#include <isc/work.h>
 
 #include <dns/catz.h>
 #include <dns/dbiterator.h>
-#include <dns/events.h>
 #include <dns/rdatasetiter.h>
 #include <dns/view.h>
 #include <dns/zone.h>
@@ -73,6 +72,7 @@ struct dns_catz_entry {
  */
 struct dns_catz_zone {
 	unsigned int magic;
+	isc_loop_t *loop;
 	dns_name_t name;
 	dns_catz_zones_t *catzs;
 	dns_rdata_t soa;
@@ -99,10 +99,8 @@ struct dns_catz_zone {
 	dns_dbversion_t *updbversion; /* version we're working on */
 
 	isc_timer_t *updatetimer;
-	isc_event_t updateevent;
 
 	bool active;
-	bool db_registered;
 	bool broken;
 
 	isc_refcount_t references;
@@ -110,12 +108,16 @@ struct dns_catz_zone {
 };
 
 static void
-dns__catz_timer_cb(isc_task_t *task, isc_event_t *event);
+dns__catz_timer_cb(void *);
+static void
+dns__catz_timer_start(dns_catz_zone_t *catz);
+static void
+dns__catz_timer_stop(void *arg);
 
 static void
 dns__catz_update_cb(void *data);
 static void
-dns__catz_done_cb(void *data, isc_result_t result);
+dns__catz_done_cb(void *data);
 
 static isc_result_t
 catz_process_zones_entry(dns_catz_zone_t *catz, dns_rdataset_t *value,
@@ -139,10 +141,8 @@ struct dns_catz_zones {
 	isc_refcount_t references;
 	isc_mutex_t lock;
 	dns_catz_zonemodmethods_t *zmm;
-	isc_taskmgr_t *taskmgr;
-	isc_timermgr_t *timermgr;
+	isc_loopmgr_t *loopmgr;
 	dns_view_t *view;
-	isc_task_t *updater;
 	atomic_bool shuttingdown;
 };
 
@@ -242,21 +242,20 @@ dns_catz_options_setdefault(isc_mem_t *mctx, const dns_catz_options_t *defaults,
 	opts->in_memory = defaults->in_memory;
 }
 
-static void
-catz_coo_new(isc_mem_t *mctx, const dns_name_t *domain,
-	     dns_catz_coo_t **ncoop) {
-	dns_catz_coo_t *ncoo;
-
+static dns_catz_coo_t *
+catz_coo_new(isc_mem_t *mctx, const dns_name_t *domain) {
 	REQUIRE(mctx != NULL);
 	REQUIRE(domain != NULL);
-	REQUIRE(ncoop != NULL && *ncoop == NULL);
 
-	ncoo = isc_mem_get(mctx, sizeof(*ncoo));
+	dns_catz_coo_t *ncoo = isc_mem_get(mctx, sizeof(*ncoo));
+	*ncoo = (dns_catz_coo_t){
+		.magic = DNS_CATZ_COO_MAGIC,
+	};
 	dns_name_init(&ncoo->name, NULL);
 	dns_name_dup(domain, mctx, &ncoo->name);
 	isc_refcount_init(&ncoo->references, 1);
-	ncoo->magic = DNS_CATZ_COO_MAGIC;
-	*ncoop = ncoo;
+
+	return ncoo;
 }
 
 static void
@@ -279,15 +278,33 @@ catz_coo_detach(dns_catz_zone_t *catz, dns_catz_coo_t **coop) {
 	}
 }
 
-void
-dns_catz_entry_new(isc_mem_t *mctx, const dns_name_t *domain,
-		   dns_catz_entry_t **nentryp) {
-	dns_catz_entry_t *nentry;
+static void
+catz_coo_add(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
+	     const dns_name_t *domain) {
+	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
+	REQUIRE(DNS_CATZ_ENTRY_VALID(entry));
+	REQUIRE(domain != NULL);
 
+	/* We are write locked, so the add must succeed if not found */
+	dns_catz_coo_t *coo = NULL;
+	isc_result_t result = isc_ht_find(catz->coos, entry->name.ndata,
+					  entry->name.length, (void **)&coo);
+	if (result != ISC_R_SUCCESS) {
+		coo = catz_coo_new(catz->catzs->mctx, domain);
+		result = isc_ht_add(catz->coos, entry->name.ndata,
+				    entry->name.length, coo);
+	}
+	INSIST(result == ISC_R_SUCCESS);
+}
+
+dns_catz_entry_t *
+dns_catz_entry_new(isc_mem_t *mctx, const dns_name_t *domain) {
 	REQUIRE(mctx != NULL);
-	REQUIRE(nentryp != NULL && *nentryp == NULL);
 
-	nentry = isc_mem_get(mctx, sizeof(*nentry));
+	dns_catz_entry_t *nentry = isc_mem_get(mctx, sizeof(*nentry));
+	*nentry = (dns_catz_entry_t){
+		.magic = DNS_CATZ_ENTRY_MAGIC,
+	};
 
 	dns_name_init(&nentry->name, NULL);
 	if (domain != NULL) {
@@ -296,29 +313,27 @@ dns_catz_entry_new(isc_mem_t *mctx, const dns_name_t *domain,
 
 	dns_catz_options_init(&nentry->opts);
 	isc_refcount_init(&nentry->references, 1);
-	nentry->magic = DNS_CATZ_ENTRY_MAGIC;
-	*nentryp = nentry;
+
+	return nentry;
 }
 
 dns_name_t *
 dns_catz_entry_getname(dns_catz_entry_t *entry) {
 	REQUIRE(DNS_CATZ_ENTRY_VALID(entry));
-	return (&entry->name);
+	return &entry->name;
 }
 
-void
-dns_catz_entry_copy(dns_catz_zone_t *catz, const dns_catz_entry_t *entry,
-		    dns_catz_entry_t **nentryp) {
-	dns_catz_entry_t *nentry = NULL;
-
+dns_catz_entry_t *
+dns_catz_entry_copy(dns_catz_zone_t *catz, const dns_catz_entry_t *entry) {
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 	REQUIRE(DNS_CATZ_ENTRY_VALID(entry));
-	REQUIRE(nentryp != NULL && *nentryp == NULL);
 
-	dns_catz_entry_new(catz->catzs->mctx, &entry->name, &nentry);
+	dns_catz_entry_t *nentry = dns_catz_entry_new(catz->catzs->mctx,
+						      &entry->name);
 
 	dns_catz_options_copy(catz->catzs->mctx, &entry->opts, &nentry->opts);
-	*nentryp = nentry;
+
+	return nentry;
 }
 
 void
@@ -356,7 +371,7 @@ dns_catz_entry_validate(const dns_catz_entry_t *entry) {
 	REQUIRE(DNS_CATZ_ENTRY_VALID(entry));
 	UNUSED(entry);
 
-	return (true);
+	return true;
 }
 
 bool
@@ -367,24 +382,24 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 	REQUIRE(DNS_CATZ_ENTRY_VALID(eb));
 
 	if (ea == eb) {
-		return (true);
+		return true;
 	}
 
 	if (ea->opts.masters.count != eb->opts.masters.count) {
-		return (false);
+		return false;
 	}
 
 	if (memcmp(ea->opts.masters.addrs, eb->opts.masters.addrs,
 		   ea->opts.masters.count * sizeof(isc_sockaddr_t)))
 	{
-		return (false);
+		return false;
 	}
 
 	for (size_t i = 0; i < eb->opts.masters.count; i++) {
 		if ((ea->opts.masters.keys[i] == NULL) !=
 		    (eb->opts.masters.keys[i] == NULL))
 		{
-			return (false);
+			return false;
 		}
 		if (ea->opts.masters.keys[i] == NULL) {
 			continue;
@@ -392,7 +407,7 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 		if (!dns_name_equal(ea->opts.masters.keys[i],
 				    eb->opts.masters.keys[i]))
 		{
-			return (false);
+			return false;
 		}
 	}
 
@@ -400,7 +415,7 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 		if ((ea->opts.masters.tlss[i] == NULL) !=
 		    (eb->opts.masters.tlss[i] == NULL))
 		{
-			return (false);
+			return false;
 		}
 		if (ea->opts.masters.tlss[i] == NULL) {
 			continue;
@@ -408,13 +423,13 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 		if (!dns_name_equal(ea->opts.masters.tlss[i],
 				    eb->opts.masters.tlss[i]))
 		{
-			return (false);
+			return false;
 		}
 	}
 
 	/* If one is NULL and the other isn't, the entries don't match */
 	if ((ea->opts.allow_query == NULL) != (eb->opts.allow_query == NULL)) {
-		return (false);
+		return false;
 	}
 
 	/* If one is non-NULL, then they both are */
@@ -422,7 +437,7 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 		isc_buffer_usedregion(ea->opts.allow_query, &ra);
 		isc_buffer_usedregion(eb->opts.allow_query, &rb);
 		if (isc_region_compare(&ra, &rb)) {
-			return (false);
+			return false;
 		}
 	}
 
@@ -430,32 +445,32 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb) {
 	if ((ea->opts.allow_transfer == NULL) !=
 	    (eb->opts.allow_transfer == NULL))
 	{
-		return (false);
+		return false;
 	}
 
 	if (ea->opts.allow_transfer != NULL) {
 		isc_buffer_usedregion(ea->opts.allow_transfer, &ra);
 		isc_buffer_usedregion(eb->opts.allow_transfer, &rb);
 		if (isc_region_compare(&ra, &rb)) {
-			return (false);
+			return false;
 		}
 	}
 
-	return (true);
+	return true;
 }
 
 dns_name_t *
 dns_catz_zone_getname(dns_catz_zone_t *catz) {
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 
-	return (&catz->name);
+	return &catz->name;
 }
 
 dns_catz_options_t *
 dns_catz_zone_getdefoptions(dns_catz_zone_t *catz) {
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 
-	return (&catz->defoptions);
+	return &catz->defoptions;
 }
 
 void
@@ -507,8 +522,8 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 
 	dns_name_format(&catz->name, czname, DNS_NAME_FORMATSIZE);
 
-	isc_ht_init(&toadd, catz->catzs->mctx, 16, ISC_HT_CASE_SENSITIVE);
-	isc_ht_init(&tomod, catz->catzs->mctx, 16, ISC_HT_CASE_SENSITIVE);
+	isc_ht_init(&toadd, catz->catzs->mctx, 1, ISC_HT_CASE_SENSITIVE);
+	isc_ht_init(&tomod, catz->catzs->mctx, 1, ISC_HT_CASE_SENSITIVE);
 	isc_ht_iter_create(newcatz->entries, &iter1);
 	isc_ht_iter_create(catz->entries, &iter2);
 
@@ -562,7 +577,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 		/* Try to find the zone in the view */
 		find_result = dns_view_findzone(catz->catzs->view,
 						dns_catz_entry_getname(nentry),
-						&zone);
+						DNS_ZTFIND_EXACT, &zone);
 		if (find_result == ISC_R_SUCCESS) {
 			dns_catz_coo_t *coo = NULL;
 			char pczname[DNS_NAME_FORMATSIZE];
@@ -594,7 +609,6 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 					      zname, pczname, czname);
 				result = delzone(nentry, parentcatz,
 						 parentcatz->catzs->view,
-						 parentcatz->catzs->taskmgr,
 						 parentcatz->catzs->zmm->udata);
 				isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 					      DNS_LOGMODULE_MASTER,
@@ -682,7 +696,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 
 		dns_name_format(&entry->name, zname, DNS_NAME_FORMATSIZE);
 		result = delzone(entry, catz, catz->catzs->view,
-				 catz->catzs->taskmgr, catz->catzs->zmm->udata);
+				 catz->catzs->zmm->udata);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
 			      "catz: deleting zone '%s' from catalog '%s' - %s",
@@ -703,7 +717,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 
 		dns_name_format(&entry->name, zname, DNS_NAME_FORMATSIZE);
 		result = addzone(entry, catz, catz->catzs->view,
-				 catz->catzs->taskmgr, catz->catzs->zmm->udata);
+				 catz->catzs->zmm->udata);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
 			      "catz: adding zone '%s' from catalog "
@@ -719,7 +733,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 
 		dns_name_format(&entry->name, zname, DNS_NAME_FORMATSIZE);
 		result = modzone(entry, catz, catz->catzs->view,
-				 catz->catzs->taskmgr, catz->catzs->zmm->udata);
+				 catz->catzs->zmm->udata);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
 			      "catz: modifying zone '%s' from catalog "
@@ -766,53 +780,34 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 
 	UNLOCK(&catz->lock);
 
-	return (result);
+	return result;
 }
 
-isc_result_t
-dns_catz_new_zones(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
-		   isc_timermgr_t *timermgr, dns_catz_zones_t **catzsp,
+dns_catz_zones_t *
+dns_catz_zones_new(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 		   dns_catz_zonemodmethods_t *zmm) {
-	isc_result_t result;
-	dns_catz_zones_t *catzs = NULL;
-
 	REQUIRE(mctx != NULL);
-	REQUIRE(taskmgr != NULL);
-	REQUIRE(timermgr != NULL);
-	REQUIRE(catzsp != NULL && *catzsp == NULL);
+	REQUIRE(loopmgr != NULL);
 	REQUIRE(zmm != NULL);
 
-	catzs = isc_mem_get(mctx, sizeof(*catzs));
-	*catzs = (dns_catz_zones_t){ .taskmgr = taskmgr,
-				     .timermgr = timermgr,
+	dns_catz_zones_t *catzs = isc_mem_get(mctx, sizeof(*catzs));
+	*catzs = (dns_catz_zones_t){ .loopmgr = loopmgr,
 				     .zmm = zmm,
 				     .magic = DNS_CATZ_ZONES_MAGIC };
-
-	result = isc_taskmgr_excltask(taskmgr, &catzs->updater);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_task;
-	}
 
 	isc_mutex_init(&catzs->lock);
 	isc_refcount_init(&catzs->references, 1);
 	isc_ht_init(&catzs->zones, mctx, 4, ISC_HT_CASE_SENSITIVE);
 	isc_mem_attach(mctx, &catzs->mctx);
 
-	*catzsp = catzs;
-
-	return (ISC_R_SUCCESS);
-
-cleanup_task:
-	isc_mem_put(mctx, catzs, sizeof(*catzs));
-
-	return (result);
+	return catzs;
 }
 
 void *
 dns_catz_zones_get_udata(dns_catz_zones_t *catzs) {
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
 
-	return (catzs->zmm->udata);
+	return catzs->zmm->udata;
 }
 
 void
@@ -830,27 +825,15 @@ dns_catz_catzs_set_view(dns_catz_zones_t *catzs, dns_view_t *view) {
 	}
 }
 
-isc_result_t
-dns_catz_new_zone(dns_catz_zones_t *catzs, dns_catz_zone_t **catzp,
-		  const dns_name_t *name) {
-	isc_result_t result;
-	dns_catz_zone_t *catz = NULL;
-
+dns_catz_zone_t *
+dns_catz_zone_new(dns_catz_zones_t *catzs, const dns_name_t *name) {
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
-	REQUIRE(catzp != NULL && *catzp == NULL);
 	REQUIRE(ISC_MAGIC_VALID(name, DNS_NAME_MAGIC));
 
-	catz = isc_mem_get(catzs->mctx, sizeof(*catz));
+	dns_catz_zone_t *catz = isc_mem_get(catzs->mctx, sizeof(*catz));
 	*catz = (dns_catz_zone_t){ .active = true,
 				   .version = DNS_CATZ_VERSION_UNDEFINED,
 				   .magic = DNS_CATZ_ZONE_MAGIC };
-
-	result = isc_timer_create(catzs->timermgr, isc_timertype_inactive, NULL,
-				  NULL, catzs->updater, dns__catz_timer_cb,
-				  catz, &catz->updatetimer);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup_timer;
-	}
 
 	dns_catz_zones_attach(catzs, &catz->catzs);
 	isc_mutex_init(&catz->lock);
@@ -863,30 +846,68 @@ dns_catz_new_zone(dns_catz_zones_t *catzs, dns_catz_zone_t **catzp,
 	dns_name_init(&catz->name, NULL);
 	dns_name_dup(name, catzs->mctx, &catz->name);
 
-	*catzp = catz;
+	return catz;
+}
 
-	return (ISC_R_SUCCESS);
+static void
+dns__catz_timer_start(dns_catz_zone_t *catz) {
+	uint64_t tdiff;
+	isc_interval_t interval;
+	isc_time_t now;
 
-cleanup_timer:
-	isc_mem_put(catzs->mctx, catz, sizeof(*catz));
+	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 
-	return (result);
+	now = isc_time_now();
+	tdiff = isc_time_microdiff(&now, &catz->lastupdated) / 1000000;
+	if (tdiff < catz->defoptions.min_update_interval) {
+		uint64_t defer = catz->defoptions.min_update_interval - tdiff;
+		char dname[DNS_NAME_FORMATSIZE];
+
+		dns_name_format(&catz->name, dname, DNS_NAME_FORMATSIZE);
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
+			      "catz: %s: new zone version came "
+			      "too soon, deferring update for "
+			      "%" PRIu64 " seconds",
+			      dname, defer);
+		isc_interval_set(&interval, (unsigned int)defer, 0);
+	} else {
+		isc_interval_set(&interval, 0, 0);
+	}
+
+	catz->loop = isc_loop();
+
+	isc_timer_create(catz->loop, dns__catz_timer_cb, catz,
+			 &catz->updatetimer);
+	isc_timer_start(catz->updatetimer, isc_timertype_once, &interval);
+}
+
+static void
+dns__catz_timer_stop(void *arg) {
+	dns_catz_zone_t *catz = arg;
+	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
+
+	isc_timer_stop(catz->updatetimer);
+	isc_timer_destroy(&catz->updatetimer);
+	catz->loop = NULL;
+
+	dns_catz_zone_detach(&catz);
 }
 
 isc_result_t
-dns_catz_add_zone(dns_catz_zones_t *catzs, const dns_name_t *name,
+dns_catz_zone_add(dns_catz_zones_t *catzs, const dns_name_t *name,
 		  dns_catz_zone_t **catzp) {
-	dns_catz_zone_t *catz = NULL;
-	isc_result_t result, tresult;
-	char zname[DNS_NAME_FORMATSIZE];
-
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
 	REQUIRE(ISC_MAGIC_VALID(name, DNS_NAME_MAGIC));
 	REQUIRE(catzp != NULL && *catzp == NULL);
 
+	dns_catz_zone_t *catz = NULL;
+	isc_result_t result;
+	char zname[DNS_NAME_FORMATSIZE];
+
 	dns_name_format(name, zname, DNS_NAME_FORMATSIZE);
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_MASTER,
-		      ISC_LOG_DEBUG(3), "catz: dns_catz_add_zone %s", zname);
+		      ISC_LOG_DEBUG(3), "catz: dns_catz_zone_add %s", zname);
 
 	LOCK(&catzs->lock);
 
@@ -897,37 +918,34 @@ dns_catz_add_zone(dns_catz_zones_t *catzs, const dns_name_t *name,
 	INSIST(catzs->zones != NULL);
 	INSIST(!atomic_load(&catzs->shuttingdown));
 
-	result = dns_catz_new_zone(catzs, &catz, name);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	result = isc_ht_add(catzs->zones, catz->name.ndata, catz->name.length,
-			    catz);
-	if (result != ISC_R_SUCCESS) {
-		dns_catz_detach_catz(&catz);
-		if (result != ISC_R_EXISTS) {
-			goto cleanup;
-		}
-	}
-
-	if (result == ISC_R_EXISTS) {
-		tresult = isc_ht_find(catzs->zones, name->ndata, name->length,
-				      (void **)&catz);
-		INSIST(tresult == ISC_R_SUCCESS && !catz->active);
+	result = isc_ht_find(catzs->zones, name->ndata, name->length,
+			     (void **)&catz);
+	switch (result) {
+	case ISC_R_SUCCESS:
+		INSIST(!catz->active);
 		catz->active = true;
+		result = ISC_R_EXISTS;
+		break;
+	case ISC_R_NOTFOUND:
+		catz = dns_catz_zone_new(catzs, name);
+
+		result = isc_ht_add(catzs->zones, catz->name.ndata,
+				    catz->name.length, catz);
+		INSIST(result == ISC_R_SUCCESS);
+		break;
+	default:
+		UNREACHABLE();
 	}
+
+	UNLOCK(&catzs->lock);
 
 	*catzp = catz;
 
-cleanup:
-	UNLOCK(&catzs->lock);
-
-	return (result);
+	return result;
 }
 
 dns_catz_zone_t *
-dns_catz_get_zone(dns_catz_zones_t *catzs, const dns_name_t *name) {
+dns_catz_zone_get(dns_catz_zones_t *catzs, const dns_name_t *name) {
 	isc_result_t result;
 	dns_catz_zone_t *found = NULL;
 
@@ -937,32 +955,29 @@ dns_catz_get_zone(dns_catz_zones_t *catzs, const dns_name_t *name) {
 	LOCK(&catzs->lock);
 	if (catzs->zones == NULL) {
 		UNLOCK(&catzs->lock);
-		return (NULL);
+		return NULL;
 	}
 	result = isc_ht_find(catzs->zones, name->ndata, name->length,
 			     (void **)&found);
 	UNLOCK(&catzs->lock);
 	if (result != ISC_R_SUCCESS) {
-		return (NULL);
+		return NULL;
 	}
 
-	return (found);
+	return found;
 }
 
 static void
-dns__catz_shutdown(dns_catz_zone_t *catz) {
+dns__catz_zone_shutdown(dns_catz_zone_t *catz) {
 	/* lock must be locked */
 	if (catz->updatetimer != NULL) {
-		isc_result_t result;
-
 		/* Don't wait for timer to trigger for shutdown */
-		result = isc_timer_reset(catz->updatetimer,
-					 isc_timertype_inactive, NULL, NULL,
-					 true);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
-	}
+		INSIST(catz->loop != NULL);
 
-	dns_catz_detach_catz(&catz);
+		isc_async_run(catz->loop, dns__catz_timer_stop, catz);
+	} else {
+		dns_catz_zone_detach(&catz);
+	}
 }
 
 static void
@@ -1008,17 +1023,18 @@ dns__catz_zone_destroy(dns_catz_zone_t *catz) {
 		isc_ht_destroy(&catz->coos);
 	}
 	catz->magic = 0;
-
 	isc_mutex_destroy(&catz->lock);
-	isc_timer_destroy(&catz->updatetimer);
-	if (catz->db_registered) {
+
+	if (catz->updatetimer != NULL) {
+		isc_timer_async_destroy(&catz->updatetimer);
+	}
+
+	if (catz->db != NULL) {
+		if (catz->dbversion != NULL) {
+			dns_db_closeversion(catz->db, &catz->dbversion, false);
+		}
 		dns_db_updatenotify_unregister(
 			catz->db, dns_catz_dbupdate_callback, catz->catzs);
-	}
-	if (catz->dbversion != NULL) {
-		dns_db_closeversion(catz->db, &catz->dbversion, false);
-	}
-	if (catz->db != NULL) {
 		dns_db_detach(&catz->db);
 	}
 
@@ -1029,7 +1045,6 @@ dns__catz_zone_destroy(dns_catz_zone_t *catz) {
 	dns_catz_options_free(&catz->zoneoptions, mctx);
 
 	dns_catz_zones_detach(&catz->catzs);
-	isc_refcount_destroy(&catz->references);
 
 	isc_mem_put(mctx, catz, sizeof(*catz));
 }
@@ -1040,18 +1055,15 @@ dns__catz_zones_destroy(dns_catz_zones_t *catzs) {
 	REQUIRE(catzs->zones == NULL);
 
 	catzs->magic = 0;
-	isc_task_detach(&catzs->updater);
 	isc_mutex_destroy(&catzs->lock);
-	isc_refcount_destroy(&catzs->references);
 	if (catzs->view != NULL) {
 		dns_view_weakdetach(&catzs->view);
 	}
-
 	isc_mem_putanddetach(&catzs->mctx, catzs, sizeof(*catzs));
 }
 
 void
-dns_catz_shutdown_catzs(dns_catz_zones_t *catzs) {
+dns_catz_zones_shutdown(dns_catz_zones_t *catzs) {
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
 
 	if (!atomic_compare_exchange_strong(&catzs->shuttingdown,
@@ -1070,7 +1082,7 @@ dns_catz_shutdown_catzs(dns_catz_zones_t *catzs) {
 			dns_catz_zone_t *catz = NULL;
 			isc_ht_iter_current(iter, (void **)&catz);
 			result = isc_ht_iter_delcurrent_next(iter);
-			dns__catz_shutdown(catz);
+			dns__catz_zone_shutdown(catz);
 		}
 		INSIST(result == ISC_R_NOMORE);
 		isc_ht_iter_destroy(&iter);
@@ -1107,32 +1119,32 @@ catz_opt_cmp(const dns_label_t *option, const char *opt) {
 	if (option->length - 1 == len &&
 	    memcmp(opt, option->base + 1, len) == 0)
 	{
-		return (true);
+		return true;
 	} else {
-		return (false);
+		return false;
 	}
 }
 
 static catz_opt_t
 catz_get_option(const dns_label_t *option) {
 	if (catz_opt_cmp(option, "ext")) {
-		return (CATZ_OPT_EXT);
+		return CATZ_OPT_EXT;
 	} else if (catz_opt_cmp(option, "zones")) {
-		return (CATZ_OPT_ZONES);
+		return CATZ_OPT_ZONES;
 	} else if (catz_opt_cmp(option, "masters") ||
 		   catz_opt_cmp(option, "primaries"))
 	{
-		return (CATZ_OPT_PRIMARIES);
+		return CATZ_OPT_PRIMARIES;
 	} else if (catz_opt_cmp(option, "allow-query")) {
-		return (CATZ_OPT_ALLOW_QUERY);
+		return CATZ_OPT_ALLOW_QUERY;
 	} else if (catz_opt_cmp(option, "allow-transfer")) {
-		return (CATZ_OPT_ALLOW_TRANSFER);
+		return CATZ_OPT_ALLOW_TRANSFER;
 	} else if (catz_opt_cmp(option, "coo")) {
-		return (CATZ_OPT_COO);
+		return CATZ_OPT_COO;
 	} else if (catz_opt_cmp(option, "version")) {
-		return (CATZ_OPT_VERSION);
+		return CATZ_OPT_VERSION;
 	} else {
-		return (CATZ_OPT_NONE);
+		return CATZ_OPT_NONE;
 	}
 }
 
@@ -1147,18 +1159,17 @@ catz_process_zones(dns_catz_zone_t *catz, dns_rdataset_t *value,
 	REQUIRE(ISC_MAGIC_VALID(name, DNS_NAME_MAGIC));
 
 	if (name->labels == 0) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	dns_name_getlabel(name, name->labels - 1, &mhash);
 
 	if (name->labels == 1) {
-		return (catz_process_zones_entry(catz, value, &mhash));
+		return catz_process_zones_entry(catz, value, &mhash);
 	} else {
 		dns_name_init(&opt, NULL);
 		dns_name_split(name, 1, &opt, NULL);
-		return (catz_process_zones_suboption(catz, value, &mhash,
-						     &opt));
+		return catz_process_zones_suboption(catz, value, &mhash, &opt);
 	}
 }
 
@@ -1169,8 +1180,6 @@ catz_process_coo(dns_catz_zone_t *catz, dns_label_t *mhash,
 	dns_rdata_t rdata;
 	dns_rdata_ptr_t ptr;
 	dns_catz_entry_t *entry = NULL;
-	dns_catz_coo_t *ncoo = NULL;
-	dns_catz_coo_t *ocoo = NULL;
 
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 	REQUIRE(mhash != NULL);
@@ -1178,11 +1187,11 @@ catz_process_coo(dns_catz_zone_t *catz, dns_label_t *mhash,
 
 	/* Change of Ownership was introduced in version "2" of the schema. */
 	if (catz->version < 2) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (value->type != dns_rdatatype_ptr) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (dns_rdataset_count(value) != 1) {
@@ -1191,12 +1200,12 @@ catz_process_coo(dns_catz_zone_t *catz, dns_label_t *mhash,
 			      "catz: 'coo' property PTR RRset contains "
 			      "more than one record, which is invalid");
 		catz->broken = true;
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	result = dns_rdataset_first(value);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	dns_rdata_init(&rdata);
@@ -1204,7 +1213,7 @@ catz_process_coo(dns_catz_zone_t *catz, dns_label_t *mhash,
 
 	result = dns_rdata_tostruct(&rdata, &ptr, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	if (dns_name_countlabels(&ptr.ptr) == 0) {
@@ -1224,24 +1233,12 @@ catz_process_coo(dns_catz_zone_t *catz, dns_label_t *mhash,
 		goto cleanup;
 	}
 
-	result = isc_ht_find(catz->coos, entry->name.ndata, entry->name.length,
-			     (void **)&ocoo);
-	if (result == ISC_R_SUCCESS) {
-		/* The change of ownership permission was already registered. */
-		goto cleanup;
-	}
-
-	catz_coo_new(catz->catzs->mctx, &ptr.ptr, &ncoo);
-	result = isc_ht_add(catz->coos, entry->name.ndata, entry->name.length,
-			    ncoo);
-	if (result != ISC_R_SUCCESS) {
-		catz_coo_detach(catz, &ncoo);
-	}
+	catz_coo_add(catz, entry, &ptr.ptr);
 
 cleanup:
 	dns_rdata_freestruct(&ptr);
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1253,7 +1250,7 @@ catz_process_zones_entry(dns_catz_zone_t *catz, dns_rdataset_t *value,
 	dns_catz_entry_t *entry = NULL;
 
 	if (value->type != dns_rdatatype_ptr) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (dns_rdataset_count(value) != 1) {
@@ -1262,12 +1259,12 @@ catz_process_zones_entry(dns_catz_zone_t *catz, dns_rdataset_t *value,
 			      "catz: member zone PTR RRset contains "
 			      "more than one record, which is invalid");
 		catz->broken = true;
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	result = dns_rdataset_first(value);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	dns_rdata_init(&rdata);
@@ -1275,7 +1272,7 @@ catz_process_zones_entry(dns_catz_zone_t *catz, dns_rdataset_t *value,
 
 	result = dns_rdata_tostruct(&rdata, &ptr, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = isc_ht_find(catz->entries, mhash->base, mhash->length,
@@ -1284,25 +1281,21 @@ catz_process_zones_entry(dns_catz_zone_t *catz, dns_rdataset_t *value,
 		if (dns_name_countlabels(&entry->name) != 0) {
 			/* We have a duplicate. */
 			dns_rdata_freestruct(&ptr);
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		} else {
 			dns_name_dup(&ptr.ptr, catz->catzs->mctx, &entry->name);
 		}
 	} else {
-		dns_catz_entry_new(catz->catzs->mctx, &ptr.ptr, &entry);
+		entry = dns_catz_entry_new(catz->catzs->mctx, &ptr.ptr);
 
 		result = isc_ht_add(catz->entries, mhash->base, mhash->length,
 				    entry);
-		if (result != ISC_R_SUCCESS) {
-			dns_rdata_freestruct(&ptr);
-			dns_catz_entry_detach(catz, &entry);
-			return (result);
-		}
 	}
+	INSIST(result == ISC_R_SUCCESS);
 
 	dns_rdata_freestruct(&ptr);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -1318,7 +1311,7 @@ catz_process_version(dns_catz_zone_t *catz, dns_rdataset_t *value) {
 	REQUIRE(DNS_RDATASET_VALID(value));
 
 	if (value->type != dns_rdatatype_txt) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (dns_rdataset_count(value) != 1) {
@@ -1327,12 +1320,12 @@ catz_process_version(dns_catz_zone_t *catz, dns_rdataset_t *value) {
 			      "catz: 'version' property TXT RRset contains "
 			      "more than one record, which is invalid");
 		catz->broken = true;
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	result = dns_rdataset_first(value);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	dns_rdata_init(&rdata);
@@ -1340,7 +1333,7 @@ catz_process_version(dns_catz_zone_t *catz, dns_rdataset_t *value) {
 
 	result = dns_rdata_tostruct(&rdata, &rdatatxt, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = dns_rdata_txt_first(&rdatatxt);
@@ -1380,7 +1373,7 @@ cleanup:
 			      "zone version property");
 		catz->broken = true;
 	}
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1449,19 +1442,19 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 			result = dns_rdata_txt_first(&rdata_txt);
 			if (result != ISC_R_SUCCESS) {
 				dns_rdata_freestruct(&rdata_txt);
-				return (result);
+				return result;
 			}
 
 			result = dns_rdata_txt_current(&rdata_txt, &rdatastr);
 			if (result != ISC_R_SUCCESS) {
 				dns_rdata_freestruct(&rdata_txt);
-				return (result);
+				return result;
 			}
 
 			result = dns_rdata_txt_next(&rdata_txt);
 			if (result != ISC_R_NOMORE) {
 				dns_rdata_freestruct(&rdata_txt);
-				return (ISC_R_FAILURE);
+				return ISC_R_FAILURE;
 			}
 
 			/* rdatastr.length < DNS_NAME_MAXTEXT */
@@ -1470,15 +1463,16 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 			memmove(keycbuf, rdatastr.data, rdatastr.length);
 			keycbuf[rdatastr.length] = 0;
 			dns_rdata_freestruct(&rdata_txt);
-			result = dns_name_fromstring(keyname, keycbuf, 0, mctx);
+			result = dns_name_fromstring(keyname, keycbuf,
+						     dns_rootname, 0, mctx);
 			if (result != ISC_R_SUCCESS) {
 				dns_name_free(keyname, mctx);
 				isc_mem_put(mctx, keyname, sizeof(*keyname));
-				return (result);
+				return result;
 			}
 			break;
 		default:
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 
 		/*
@@ -1504,7 +1498,7 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 		} else {
 			result = dns_ipkeylist_resize(mctx, ipkl, i + 1);
 			if (result != ISC_R_SUCCESS) {
-				return (result);
+				return result;
 			}
 
 			ipkl->labels[i] = isc_mem_get(mctx,
@@ -1520,20 +1514,20 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 			}
 			ipkl->count++;
 		}
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 	/* else - 'simple' case - without labels */
 
 	if (value->type != dns_rdatatype_a && value->type != dns_rdatatype_aaaa)
 	{
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	rcount = dns_rdataset_count(value) + ipkl->count;
 
 	result = dns_ipkeylist_resize(mctx, ipkl, rcount);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	for (result = dns_rdataset_first(value); result == ISC_R_SUCCESS;
@@ -1561,7 +1555,7 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 		ipkl->labels[ipkl->count] = NULL;
 		ipkl->count++;
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -1582,7 +1576,7 @@ catz_process_apl(dns_catz_zone_t *catz, isc_buffer_t **aclbp,
 	REQUIRE(dns_rdataset_isassociated(value));
 
 	if (value->type != dns_rdatatype_apl) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (dns_rdataset_count(value) > 1) {
@@ -1597,10 +1591,9 @@ catz_process_apl(dns_catz_zone_t *catz, isc_buffer_t **aclbp,
 	dns_rdataset_current(value, &rdata);
 	result = dns_rdata_tostruct(&rdata, &rdata_apl, catz->catzs->mctx);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	isc_buffer_allocate(catz->catzs->mctx, &aclb, 16);
-	isc_buffer_setautorealloc(aclb, true);
 	for (result = dns_rdata_apl_first(&rdata_apl); result == ISC_R_SUCCESS;
 	     result = dns_rdata_apl_next(&rdata_apl))
 	{
@@ -1620,14 +1613,14 @@ catz_process_apl(dns_catz_zone_t *catz, isc_buffer_t **aclbp,
 		if (apl_ent.negative) {
 			isc_buffer_putuint8(aclb, '!');
 		}
-		isc_buffer_reserve(&aclb, INET6_ADDRSTRLEN);
+		isc_buffer_reserve(aclb, INET6_ADDRSTRLEN);
 		result = isc_netaddr_totext(&addr, aclb);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if ((apl_ent.family == 1 && apl_ent.prefix < 32) ||
 		    (apl_ent.family == 2 && apl_ent.prefix < 128))
 		{
 			isc_buffer_putuint8(aclb, '/');
-			isc_buffer_putdecint(aclb, apl_ent.prefix);
+			isc_buffer_printf(aclb, "%" PRId8, apl_ent.prefix);
 		}
 		isc_buffer_putstr(aclb, "; ");
 	}
@@ -1643,7 +1636,7 @@ cleanup:
 		isc_buffer_free(&aclb);
 	}
 	dns_rdata_freestruct(&rdata_apl);
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1662,7 +1655,7 @@ catz_process_zones_suboption(dns_catz_zone_t *catz, dns_rdataset_t *value,
 	REQUIRE(ISC_MAGIC_VALID(name, DNS_NAME_MAGIC));
 
 	if (name->labels < 1) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 	dns_name_getlabel(name, name->labels - 1, &option);
 	opt = catz_get_option(&option);
@@ -1673,7 +1666,7 @@ catz_process_zones_suboption(dns_catz_zone_t *catz, dns_rdataset_t *value,
 	 */
 	if (catz->version >= 2 && opt >= CATZ_OPT_CUSTOM_START) {
 		if (opt != CATZ_OPT_EXT || name->labels < 2) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 		suffix_labels++;
 		dns_name_getlabel(name, name->labels - 2, &option);
@@ -1687,40 +1680,36 @@ catz_process_zones_suboption(dns_catz_zone_t *catz, dns_rdataset_t *value,
 	result = isc_ht_find(catz->entries, mhash->base, mhash->length,
 			     (void **)&entry);
 	if (result != ISC_R_SUCCESS) {
-		dns_catz_entry_new(catz->catzs->mctx, NULL, &entry);
+		entry = dns_catz_entry_new(catz->catzs->mctx, NULL);
 		result = isc_ht_add(catz->entries, mhash->base, mhash->length,
 				    entry);
-		if (result != ISC_R_SUCCESS) {
-			dns_catz_entry_detach(catz, &entry);
-			return (result);
-		}
 	}
+	INSIST(result == ISC_R_SUCCESS);
 
 	dns_name_init(&prefix, NULL);
 	dns_name_split(name, suffix_labels, &prefix, NULL);
 	switch (opt) {
 	case CATZ_OPT_COO:
-		return (catz_process_coo(catz, mhash, value));
+		return catz_process_coo(catz, mhash, value);
 	case CATZ_OPT_PRIMARIES:
-		return (catz_process_primaries(catz, &entry->opts.masters,
-					       value, &prefix));
+		return catz_process_primaries(catz, &entry->opts.masters, value,
+					      &prefix);
 	case CATZ_OPT_ALLOW_QUERY:
 		if (prefix.labels != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		return (catz_process_apl(catz, &entry->opts.allow_query,
-					 value));
+		return catz_process_apl(catz, &entry->opts.allow_query, value);
 	case CATZ_OPT_ALLOW_TRANSFER:
 		if (prefix.labels != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		return (catz_process_apl(catz, &entry->opts.allow_transfer,
-					 value));
+		return catz_process_apl(catz, &entry->opts.allow_transfer,
+					value);
 	default:
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
-	return (ISC_R_FAILURE);
+	return ISC_R_FAILURE;
 }
 
 static void
@@ -1756,7 +1745,7 @@ catz_process_value(dns_catz_zone_t *catz, dns_name_t *name,
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
 	if (name->labels < 1) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 	dns_name_getlabel(name, name->labels - 1, &option);
 	opt = catz_get_option(&option);
@@ -1767,7 +1756,7 @@ catz_process_value(dns_catz_zone_t *catz, dns_name_t *name,
 	 */
 	if (catz->version >= 2 && opt >= CATZ_OPT_CUSTOM_START) {
 		if (opt != CATZ_OPT_EXT || name->labels < 2) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 		suffix_labels++;
 		dns_name_getlabel(name, name->labels - 2, &option);
@@ -1779,29 +1768,29 @@ catz_process_value(dns_catz_zone_t *catz, dns_name_t *name,
 
 	switch (opt) {
 	case CATZ_OPT_ZONES:
-		return (catz_process_zones(catz, rdataset, &prefix));
+		return catz_process_zones(catz, rdataset, &prefix);
 	case CATZ_OPT_PRIMARIES:
-		return (catz_process_primaries(catz, &catz->zoneoptions.masters,
-					       rdataset, &prefix));
+		return catz_process_primaries(catz, &catz->zoneoptions.masters,
+					      rdataset, &prefix);
 	case CATZ_OPT_ALLOW_QUERY:
 		if (prefix.labels != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		return (catz_process_apl(catz, &catz->zoneoptions.allow_query,
-					 rdataset));
+		return catz_process_apl(catz, &catz->zoneoptions.allow_query,
+					rdataset);
 	case CATZ_OPT_ALLOW_TRANSFER:
 		if (prefix.labels != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		return (catz_process_apl(
-			catz, &catz->zoneoptions.allow_transfer, rdataset));
+		return catz_process_apl(catz, &catz->zoneoptions.allow_transfer,
+					rdataset);
 	case CATZ_OPT_VERSION:
 		if (prefix.labels != 0) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		return (catz_process_version(catz, rdataset));
+		return catz_process_version(catz, rdataset);
 	default:
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 }
 
@@ -1833,7 +1822,7 @@ dns__catz_update_process(dns_catz_zone_t *catz, const dns_name_t *src_name,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
 			      "catz: RR found which has a non-IN class");
 		catz->broken = true;
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	nrres = dns_name_fullcompare(src_name, &catz->name, &order, &nlabels);
@@ -1841,7 +1830,7 @@ dns__catz_update_process(dns_catz_zone_t *catz, const dns_name_t *src_name,
 		if (rdataset->type == dns_rdatatype_soa) {
 			result = dns_rdataset_first(rdataset);
 			if (result != ISC_R_SUCCESS) {
-				return (result);
+				return result;
 			}
 
 			dns_rdataset_current(rdataset, &rdata);
@@ -1852,21 +1841,21 @@ dns__catz_update_process(dns_catz_zone_t *catz, const dns_name_t *src_name,
 			 * xxxwpk TODO do we want to save something from SOA?
 			 */
 			dns_rdata_freestruct(&soa);
-			return (result);
+			return result;
 		} else if (rdataset->type == dns_rdatatype_ns) {
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		} else {
-			return (ISC_R_UNEXPECTED);
+			return ISC_R_UNEXPECTED;
 		}
 	} else if (nrres != dns_namereln_subdomain) {
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
 	dns_name_init(&prefix, NULL);
 	dns_name_split(src_name, catz->name.labels, &prefix, NULL);
 	result = catz_process_value(catz, &prefix, rdataset);
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1877,10 +1866,10 @@ digest2hex(unsigned char *digest, unsigned int digestlen, char *hash,
 		size_t left = hashlen - i * 2;
 		int ret = snprintf(hash + i * 2, left, "%02x", digest[i]);
 		if (ret < 0 || (size_t)ret >= left) {
-			return (ISC_R_NOSPACE);
+			return ISC_R_NOSPACE;
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -1902,13 +1891,13 @@ dns_catz_generate_masterfilename(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 
 	isc_buffer_putstr(tbuf, catz->catzs->view->name);
 	isc_buffer_putstr(tbuf, "_");
-	result = dns_name_totext(&catz->name, true, tbuf);
+	result = dns_name_totext(&catz->name, DNS_NAME_OMITFINALDOT, tbuf);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
 
 	isc_buffer_putstr(tbuf, "_");
-	result = dns_name_totext(&entry->name, true, tbuf);
+	result = dns_name_totext(&entry->name, DNS_NAME_OMITFINALDOT, tbuf);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
@@ -1932,7 +1921,7 @@ dns_catz_generate_masterfilename(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 		rlen += strlen(entry->opts.zonedir) + 1;
 	}
 
-	result = isc_buffer_reserve(buffer, (unsigned int)rlen);
+	result = isc_buffer_reserve(*buffer, (unsigned int)rlen);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
@@ -1969,7 +1958,7 @@ dns_catz_generate_masterfilename(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 
 cleanup:
 	isc_buffer_free(&tbuf);
-	return (result);
+	return result;
 }
 
 /*
@@ -2000,9 +1989,8 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 	 */
 	isc_buffer_allocate(catz->catzs->mctx, &buffer, ISC_BUFFER_INCR);
 
-	isc_buffer_setautorealloc(buffer, true);
 	isc_buffer_putstr(buffer, "zone \"");
-	dns_name_totext(&entry->name, true, buffer);
+	dns_name_totext(&entry->name, DNS_NAME_OMITFINALDOT, buffer);
 	isc_buffer_putstr(buffer, "\" { type secondary; primaries");
 
 	isc_buffer_putstr(buffer, " { ");
@@ -2027,7 +2015,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 		}
 		isc_netaddr_fromsockaddr(&netaddr,
 					 &entry->opts.masters.addrs[i]);
-		isc_buffer_reserve(&buffer, INET6_ADDRSTRLEN);
+		isc_buffer_reserve(buffer, INET6_ADDRSTRLEN);
 		result = isc_netaddr_totext(&netaddr, buffer);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
@@ -2039,7 +2027,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 		if (entry->opts.masters.keys[i] != NULL) {
 			isc_buffer_putstr(buffer, " key ");
 			result = dns_name_totext(entry->opts.masters.keys[i],
-						 true, buffer);
+						 DNS_NAME_OMITFINALDOT, buffer);
 			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
 			}
@@ -2048,7 +2036,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 		if (entry->opts.masters.tlss[i] != NULL) {
 			isc_buffer_putstr(buffer, " tls ");
 			result = dns_name_totext(entry->opts.masters.tlss[i],
-						 true, buffer);
+						 DNS_NAME_OMITFINALDOT, buffer);
 			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
 			}
@@ -2080,27 +2068,18 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 	isc_buffer_putstr(buffer, "};");
 	*buf = buffer;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	isc_buffer_free(&buffer);
-	return (result);
+	return result;
 }
 
 static void
-dns__catz_timer_cb(isc_task_t *task, isc_event_t *event) {
+dns__catz_timer_cb(void *arg) {
 	char domain[DNS_NAME_FORMATSIZE];
-	isc_result_t result;
-	dns_catz_zone_t *catz = NULL;
+	dns_catz_zone_t *catz = (dns_catz_zone_t *)arg;
 
-	UNUSED(task);
-	REQUIRE(event != NULL);
-	REQUIRE(event->ev_arg != NULL);
-
-	catz = (dns_catz_zone_t *)event->ev_arg;
-	isc_event_free(&event);
-
-	REQUIRE(isc_nm_tid() >= 0);
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 
 	if (atomic_load(&catz->catzs->shuttingdown)) {
@@ -2137,31 +2116,32 @@ dns__catz_timer_cb(isc_task_t *task, isc_event_t *event) {
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_MASTER,
 		      ISC_LOG_INFO, "catz: %s: reload start", domain);
 
-	dns_catz_ref_catz(catz);
-	isc_nm_work_offload(isc_task_getnetmgr(catz->catzs->updater),
-			    dns__catz_update_cb, dns__catz_done_cb, catz);
+	dns_catz_zone_ref(catz);
+	isc_work_enqueue(catz->loop, dns__catz_update_cb, dns__catz_done_cb,
+			 catz);
 
 exit:
-	result = isc_time_now(&catz->lastupdated);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	isc_timer_destroy(&catz->updatetimer);
+	catz->loop = NULL;
+
+	catz->lastupdated = isc_time_now();
 
 	UNLOCK(&catz->catzs->lock);
 }
 
 isc_result_t
 dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
-	dns_catz_zones_t *catzs = (dns_catz_zones_t *)fn_arg;
+	dns_catz_zones_t *catzs = NULL;
 	dns_catz_zone_t *catz = NULL;
-	isc_time_t now;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_region_t r;
-	char dname[DNS_NAME_FORMATSIZE];
 
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
+	REQUIRE(DNS_CATZ_ZONES_VALID(fn_arg));
+	catzs = (dns_catz_zones_t *)fn_arg;
 
 	if (atomic_load(&catzs->shuttingdown)) {
-		return (ISC_R_SHUTTINGDOWN);
+		return ISC_R_SHUTTINGDOWN;
 	}
 
 	dns_name_toregion(&db->origin, &r);
@@ -2185,59 +2165,23 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 		dns_db_updatenotify_unregister(
 			catz->db, dns_catz_dbupdate_callback, catz->catzs);
 		dns_db_detach(&catz->db);
-		catz->db_registered = false;
 	}
 	if (catz->db == NULL) {
 		/* New db registration. */
 		dns_db_attach(db, &catz->db);
-		result = dns_db_updatenotify_register(
-			db, dns_catz_dbupdate_callback, catz->catzs);
-		if (result == ISC_R_SUCCESS) {
-			catz->db_registered = true;
-		}
+		dns_db_updatenotify_register(db, dns_catz_dbupdate_callback,
+					     catz->catzs);
 	}
 
-	dns_name_format(&catz->name, dname, DNS_NAME_FORMATSIZE);
-
 	if (!catz->updatepending && !catz->updaterunning) {
-		uint64_t tdiff;
-
 		catz->updatepending = true;
-
-		isc_time_now(&now);
-		tdiff = isc_time_microdiff(&now, &catz->lastupdated) / 1000000;
-		if (tdiff < catz->defoptions.min_update_interval) {
-			uint64_t defer = catz->defoptions.min_update_interval -
-					 tdiff;
-			isc_interval_t interval;
-
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-				      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
-				      "catz: %s: new zone version came "
-				      "too soon, deferring update for "
-				      "%" PRIu64 " seconds",
-				      dname, defer);
-			isc_interval_set(&interval, (unsigned int)defer, 0);
-			dns_db_currentversion(db, &catz->dbversion);
-			result = isc_timer_reset(catz->updatetimer,
-						 isc_timertype_once, NULL,
-						 &interval, true);
-			if (result != ISC_R_SUCCESS) {
-				goto cleanup;
-			}
-		} else {
-			isc_event_t *event;
-
-			dns_db_currentversion(db, &catz->dbversion);
-			ISC_EVENT_INIT(
-				&catz->updateevent, sizeof(catz->updateevent),
-				0, NULL, DNS_EVENT_CATZUPDATED,
-				dns__catz_timer_cb, catz, catz, NULL, NULL);
-			event = &catz->updateevent;
-			isc_task_send(catzs->updater, &event);
-		}
+		dns_db_currentversion(db, &catz->dbversion);
+		dns__catz_timer_start(catz);
 	} else {
+		char dname[DNS_NAME_FORMATSIZE];
+
 		catz->updatepending = true;
+		dns_name_format(&catz->name, dname, DNS_NAME_FORMATSIZE);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_DEBUG(3),
 			      "catz: %s: update already queued or running",
@@ -2251,7 +2195,7 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 cleanup:
 	UNLOCK(&catzs->lock);
 
-	return (result);
+	return result;
 }
 
 void
@@ -2272,8 +2216,8 @@ dns_catz_dbupdate_register(dns_db_t *db, dns_catz_zones_t *catzs) {
 
 static bool
 catz_rdatatype_is_processable(const dns_rdatatype_t type) {
-	return (!dns_rdatatype_isdnssec(type) && type != dns_rdatatype_cds &&
-		type != dns_rdatatype_cdnskey && type != dns_rdatatype_zonemd);
+	return !dns_rdatatype_isdnssec(type) && type != dns_rdatatype_cds &&
+	       type != dns_rdatatype_cdnskey && type != dns_rdatatype_zonemd;
 }
 
 /*
@@ -2293,7 +2237,7 @@ dns__catz_update_cb(void *data) {
 	const dns_dbnode_t *vers_node = NULL;
 	dns_dbiterator_t *updbit = NULL;
 	dns_fixedname_t fixname;
-	dns_name_t *name;
+	dns_name_t *name = NULL;
 	dns_rdatasetiter_t *rdsiter = NULL;
 	dns_rdataset_t rdataset;
 	char bname[DNS_NAME_FORMATSIZE];
@@ -2338,8 +2282,6 @@ dns__catz_update_cb(void *data) {
 		goto exit;
 	}
 
-	INSIST(catz == oldcatz);
-
 	if (!is_active) {
 		/* This can happen during a reconfiguration. */
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
@@ -2364,18 +2306,8 @@ dns__catz_update_cb(void *data) {
 		      "catz: updating catalog zone '%s' with serial %" PRIu32,
 		      bname, vers);
 
-	result = dns_catz_new_zone(catzs, &newcatz, &updb->origin);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
-			      "catz: failed to create new zone - %s",
-			      isc_result_totext(result));
-		goto exit;
-	}
-
 	result = dns_db_createiterator(updb, DNS_DB_NONSEC3, &updbit);
 	if (result != ISC_R_SUCCESS) {
-		dns_catz_detach_catz(&newcatz);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
 			      "catz: failed to create DB iterator - %s",
@@ -2390,27 +2322,28 @@ dns__catz_update_cb(void *data) {
 	 * records might be processed differently depending on the version of
 	 * the catalog zone's schema.
 	 */
-	result = dns_name_fromstring2(name, "version", &updb->origin, 0, NULL);
+	result = dns_name_fromstring(name, "version", &updb->origin, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		dns_dbiterator_destroy(&updbit);
-		dns_catz_detach_catz(&newcatz);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
 			      "catz: failed to create name from string - %s",
 			      isc_result_totext(result));
 		goto exit;
 	}
+
 	result = dns_dbiterator_seek(updbit, name);
 	if (result != ISC_R_SUCCESS) {
 		dns_dbiterator_destroy(&updbit);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
-			      "catz: zone '%s' has no 'version' record (%s)",
+			      "catz: zone '%s' has no 'version' record (%s) "
+			      "and will not be processed",
 			      bname, isc_result_totext(result));
-		newcatz->broken = true;
-		goto final;
+		goto exit;
 	}
 
+	newcatz = dns_catz_zone_new(catzs, &updb->origin);
 	name = dns_fixedname_initname(&fixname);
 
 	/*
@@ -2544,7 +2477,6 @@ dns__catz_update_cb(void *data) {
 		oldcatz->version = catz_vers;
 	}
 
-final:
 	if (newcatz->broken) {
 		dns_name_format(name, cname, DNS_NAME_FORMATSIZE);
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
@@ -2552,7 +2484,7 @@ final:
 			      "catz: new catalog zone '%s' is broken and "
 			      "will not be processed",
 			      bname);
-		dns_catz_detach_catz(&newcatz);
+		dns_catz_zone_detach(&newcatz);
 		result = ISC_R_FAILURE;
 		goto exit;
 	}
@@ -2561,7 +2493,7 @@ final:
 	 * Finally merge new zone into old zone.
 	 */
 	result = dns__catz_zones_merge(oldcatz, newcatz);
-	dns_catz_detach_catz(&newcatz);
+	dns_catz_zone_detach(&newcatz);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
@@ -2580,66 +2512,22 @@ exit:
 }
 
 static void
-dns__catz_done_cb(void *data, isc_result_t result) {
+dns__catz_done_cb(void *data) {
 	dns_catz_zone_t *catz = (dns_catz_zone_t *)data;
 	char dname[DNS_NAME_FORMATSIZE];
 
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
-
-	if (result == ISC_R_SUCCESS && catz->updateresult != ISC_R_SUCCESS) {
-		result = catz->updateresult;
-	}
 
 	LOCK(&catz->catzs->lock);
 	catz->updaterunning = false;
 
 	dns_name_format(&catz->name, dname, DNS_NAME_FORMATSIZE);
 
-	/*
-	 * When we're doing reconfig and setting a new catalog zone
-	 * from an existing zone we won't have a chance to set up
-	 * update callback in zone_startload or axfr_makedb, but we will
-	 * call onupdate() artificially so we can register the callback
-	 * here.
-	 */
-	if (result == ISC_R_SUCCESS && !catz->db_registered) {
-		result = dns_db_updatenotify_register(
-			catz->db, dns_catz_dbupdate_callback, catz->catzs);
-		if (result == ISC_R_SUCCESS) {
-			catz->db_registered = true;
-		}
+	if (catz->updatepending && !atomic_load(&catz->catzs->shuttingdown)) {
+		/* Restart the timer */
+		dns__catz_timer_start(catz);
 	}
 
-	/* If there's no update pending, or if shutting down, finish. */
-	if (!catz->updatepending || atomic_load(&catz->catzs->shuttingdown)) {
-		goto done;
-	}
-
-	/* If there's an update pending, schedule it */
-	if (catz->defoptions.min_update_interval > 0) {
-		uint64_t defer = catz->defoptions.min_update_interval;
-		isc_interval_t interval;
-
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
-			      "catz: %s: new zone version came "
-			      "too soon, deferring update for "
-			      "%" PRIu64 " seconds",
-			      dname, defer);
-		isc_interval_set(&interval, (unsigned int)defer, 0);
-		(void)isc_timer_reset(catz->updatetimer, isc_timertype_once,
-				      NULL, &interval, true);
-	} else {
-		isc_event_t *event = NULL;
-		INSIST(!ISC_LINK_LINKED(&catz->updateevent, ev_link));
-		ISC_EVENT_INIT(&catz->updateevent, sizeof(catz->updateevent), 0,
-			       NULL, DNS_EVENT_CATZUPDATED, dns__catz_timer_cb,
-			       catz, catz, NULL, NULL);
-		event = &catz->updateevent;
-		isc_task_send(catz->catzs->updater, &event);
-	}
-
-done:
 	dns_db_closeversion(catz->updb, &catz->updbversion, false);
 	dns_db_detach(&catz->updb);
 
@@ -2647,9 +2535,9 @@ done:
 
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_MASTER,
 		      ISC_LOG_INFO, "catz: %s: reload done: %s", dname,
-		      isc_result_totext(result));
+		      isc_result_totext(catz->updateresult));
 
-	dns_catz_unref_catz(catz);
+	dns_catz_zone_unref(catz);
 }
 
 void
@@ -2699,16 +2587,14 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs) {
 			 * Merge the old zone with an empty one to remove
 			 * all members.
 			 */
-			result = dns_catz_new_zone(catzs, &newcatz,
-						   &catz->name);
-			INSIST(result == ISC_R_SUCCESS);
+			newcatz = dns_catz_zone_new(catzs, &catz->name);
 			dns__catz_zones_merge(catz, newcatz);
-			dns_catz_detach_catz(&newcatz);
+			dns_catz_zone_detach(&newcatz);
 
 			/* Make sure that we have an empty catalog zone. */
 			INSIST(isc_ht_count(catz->entries) == 0);
 			result = isc_ht_iter_delcurrent_next(iter);
-			dns_catz_detach_catz(&catz);
+			dns_catz_zone_detach(&catz);
 		} else {
 			result = isc_ht_iter_next(iter);
 		}
@@ -2719,8 +2605,23 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs) {
 }
 
 void
-dns_catz_get_iterator(dns_catz_zone_t *catz, isc_ht_iter_t **itp) {
+dns_catz_zone_for_each_entry2(dns_catz_zone_t *catz, dns_catz_entry_cb2 cb,
+			      void *arg1, void *arg2) {
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 
-	isc_ht_iter_create(catz->entries, itp);
+	isc_ht_iter_t *iter = NULL;
+	isc_result_t result;
+
+	LOCK(&catz->catzs->lock);
+	isc_ht_iter_create(catz->entries, &iter);
+	for (result = isc_ht_iter_first(iter); result == ISC_R_SUCCESS;
+	     result = isc_ht_iter_next(iter))
+	{
+		dns_catz_entry_t *entry = NULL;
+
+		isc_ht_iter_current(iter, (void **)&entry);
+		cb(entry, arg1, arg2);
+	}
+	isc_ht_iter_destroy(&iter);
+	UNLOCK(&catz->catzs->lock);
 }

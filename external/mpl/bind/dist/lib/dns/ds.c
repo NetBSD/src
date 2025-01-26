@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.9 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.10 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ dns_ds_fromkeyrdata(const dns_name_t *owner, dns_rdata_t *key,
 		key->type == dns_rdatatype_cdnskey);
 
 	if (!dst_ds_digest_supported(digest_type)) {
-		return (ISC_R_NOTIMPLEMENTED);
+		return ISC_R_NOTIMPLEMENTED;
 	}
 
 	switch (digest_type) {
@@ -73,7 +73,7 @@ dns_ds_fromkeyrdata(const dns_name_t *owner, dns_rdata_t *key,
 
 	md = isc_md_new();
 	if (md == NULL) {
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	}
 
 	result = isc_md_init(md, md_type);
@@ -112,7 +112,7 @@ dns_ds_fromkeyrdata(const dns_name_t *owner, dns_rdata_t *key,
 
 end:
 	isc_md_free(md);
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -126,12 +126,12 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 
 	result = dns_ds_fromkeyrdata(owner, key, digest_type, digest, &ds);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	memset(buffer, 0, DNS_DS_BUFFERSIZE);
 	isc_buffer_init(&b, buffer, DNS_DS_BUFFERSIZE);
 	result = dns_rdata_fromstruct(rdata, key->rdclass, dns_rdatatype_ds,
 				      &ds, &b);
-	return (result);
+	return result;
 }

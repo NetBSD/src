@@ -1,4 +1,4 @@
-/*	$NetBSD: notify_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: notify_test.c,v 1.3 2025/01/26 16:25:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,9 +26,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/event.h>
-#include <isc/print.h>
-#include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
 
@@ -39,20 +36,7 @@
 #include <ns/client.h>
 #include <ns/notify.h>
 
-#include <tests/dns.h>
 #include <tests/ns.h>
-
-static int
-setup_test(void **state) {
-	isc__nm_force_tid(0);
-	return (setup_server(state));
-}
-
-static int
-teardown_test(void **state) {
-	isc__nm_force_tid(-1);
-	return (teardown_server(state));
-}
 
 static void
 check_response(isc_buffer_t *buf) {
@@ -61,7 +45,7 @@ check_response(isc_buffer_t *buf) {
 	char rcodebuf[20];
 	isc_buffer_t b;
 
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &message);
 
 	result = dns_message_parse(message, buf, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -76,7 +60,7 @@ check_response(isc_buffer_t *buf) {
 }
 
 /* test ns_notify_start() */
-ISC_RUN_TEST_IMPL(ns_notify_start) {
+ISC_LOOP_TEST_IMPL(notify_start) {
 	isc_result_t result;
 	ns_client_t *client = NULL;
 	isc_nmhandle_t *handle = NULL;
@@ -85,12 +69,9 @@ ISC_RUN_TEST_IMPL(ns_notify_start) {
 	isc_buffer_t nbuf;
 	size_t nsize;
 
-	UNUSED(state);
+	ns_test_getclient(NULL, false, &client);
 
-	result = ns_test_getclient(NULL, false, &client);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = dns_test_makeview("view", false, &client->view);
+	result = dns_test_makeview("view", false, false, &client->view);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = ns_test_serve_zone("example.com",
@@ -109,7 +90,7 @@ ISC_RUN_TEST_IMPL(ns_notify_start) {
 	isc_buffer_init(&nbuf, ndata, nsize);
 	isc_buffer_add(&nbuf, nsize);
 
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &nmsg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &nmsg);
 
 	result = dns_message_parse(nmsg, &nbuf, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -134,10 +115,13 @@ ISC_RUN_TEST_IMPL(ns_notify_start) {
 	handle = client->handle;
 	isc_nmhandle_detach(&client->handle);
 	isc_nmhandle_detach(&handle);
+
+	isc_loop_teardown(mainloop, shutdown_interfacemgr, NULL);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY_CUSTOM(ns_notify_start, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(notify_start, setup_server, teardown_server)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

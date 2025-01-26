@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.h,v 1.6 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: aaaa_28.h,v 1.7 2025/01/26 16:25:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

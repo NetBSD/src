@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: random.h,v 1.6 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,12 +56,18 @@ isc_random_buf(void *buf, size_t buflen);
 uint32_t
 isc_random_uniform(uint32_t upper_bound);
 /*!<
- * \brief Will return a single 32-bit value, uniformly distributed but
- *        less than upper_bound.  This is recommended over
- *        constructions like ``isc_random() % upper_bound'' as it
- *        avoids "modulo bias" when the upper bound is not a power of
- *        two.  In the worst case, this function may require multiple
- *        iterations to ensure uniformity.
+ * \brief Returns a single 32-bit uniformly distributed random value
+ *        less than upper_bound.
+ *
+ * This is better than ``isc_random() % upper_bound'' as it avoids
+ * "modulo bias" when the upper bound is not a power of two. This
+ * function is also faster, because it usually avoids doing any
+ * divisions (which are typically very slow).
+ *
+ * It uses rejection sampling to ensure uniformity, so it may require
+ * multiple iterations to get a result; the probability of needing to
+ * resample is very small when the upper_bound is small, rising to 0.5
+ * when upper_bound is UINT32_MAX/2.
  */
 
 ISC_LANG_ENDDECLS

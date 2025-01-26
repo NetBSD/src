@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.11 2024/09/22 00:14:09 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.12 2025/01/26 16:25:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,13 +23,11 @@
 #include <isc/attributes.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
+#include <isc/overflow.h>
 #include <isc/types.h>
+#include <isc/urcu.h>
 
 ISC_LANG_BEGINDECLS
-
-#define ISC_MEM_LOWATER 0
-#define ISC_MEM_HIWATER 1
-typedef void (*isc_mem_water_t)(void *, int);
 
 /*%
  * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory
@@ -46,7 +44,8 @@ extern unsigned int isc_mem_defaultflags;
 #define ISC_MEM_DEBUGTRACE  0x00000001U
 #define ISC_MEM_DEBUGRECORD 0x00000002U
 #define ISC_MEM_DEBUGUSAGE  0x00000004U
-#define ISC_MEM_DEBUGALL    0x0000001FU
+#define ISC_MEM_DEBUGALL \
+	(ISC_MEM_DEBUGTRACE | ISC_MEM_DEBUGRECORD | ISC_MEM_DEBUGUSAGE)
 /*!<
  * The variable isc_mem_debugging holds a set of flags for
  * turning certain memory debugging options on or off at
@@ -62,8 +61,8 @@ extern unsigned int isc_mem_defaultflags;
  *	Crash if a free doesn't match an allocation.
  *
  * \li #ISC_MEM_DEBUGUSAGE
- *	If a hi_water mark is set, print the maximum inuse memory
- *	every time it is raised once it exceeds the hi_water mark.
+ *	Every time the memory usage is greater (lower) than hi_water
+ *	(lo_water) mark, print the current inuse memory.
  */
 /*@}*/
 
@@ -127,62 +126,63 @@ extern unsigned int isc_mem_defaultflags;
  * (two underscores). The single-underscore macros are used to pass
  * __FILE__ and __LINE__, and in the case of the put functions, to
  * set the pointer being freed to NULL in the calling function.
- *
- * Many of these functions have a further isc___mem_<function>
- * (three underscores) implementation, which is called indirectly
- * via the isc_memmethods structure in the mctx so that dynamically
- * loaded modules can use them even if named is statically linked.
  */
 
-#define ISCMEMFUNC(sfx)	    isc__mem_##sfx
-#define ISCMEMPOOLFUNC(sfx) isc__mempool_##sfx
+/*%
+ * The definitions of the macros have been pulled directly from jemalloc.h
+ * and checked for consistency in mem.c.
+ *
+ *\li	ISC__MEM_ZERO - fill the memory with zeroes before returning
+ */
 
-#define isc_mem_get(c, s) ISCMEMFUNC(get)((c), (s), 0 _ISC_MEM_FILELINE)
-#define isc_mem_get_aligned(c, s, a) \
-	ISCMEMFUNC(get)((c), (s), (a)_ISC_MEM_FILELINE)
+#define ISC__MEM_ZERO ((int)0x40)
+
+#define isc_mem_get(c, s) isc__mem_get((c), (s), 0 _ISC_MEM_FILELINE)
+#define isc_mem_cget(c, n, s)                        \
+	isc__mem_get((c), ISC_CHECKED_MUL((n), (s)), \
+		     ISC__MEM_ZERO _ISC_MEM_FILELINE)
 #define isc_mem_reget(c, p, o, n) \
-	ISCMEMFUNC(reget)((c), (p), (o), (n), 0 _ISC_MEM_FILELINE)
-#define isc_mem_reget_aligned(c, p, o, n, a) \
-	ISCMEMFUNC(reget)((c), (p), (o), (n), (a)_ISC_MEM_FILELINE)
-#define isc_mem_allocate(c, s) ISCMEMFUNC(allocate)((c), (s)_ISC_MEM_FILELINE)
+	isc__mem_reget((c), (p), (o), (n), 0 _ISC_MEM_FILELINE)
+#define isc_mem_creget(c, p, o, n, s)                       \
+	isc__mem_reget((c), (p), ISC_CHECKED_MUL((o), (s)), \
+		       ISC_CHECKED_MUL((n), (s)),           \
+		       ISC__MEM_ZERO _ISC_MEM_FILELINE)
+#define isc_mem_allocate(c, s) isc__mem_allocate((c), (s), 0 _ISC_MEM_FILELINE)
+#define isc_mem_callocate(c, n, s)                        \
+	isc__mem_allocate((c), ISC_CHECKED_MUL((n), (s)), \
+			  ISC__MEM_ZERO _ISC_MEM_FILELINE)
 #define isc_mem_reallocate(c, p, s) \
-	ISCMEMFUNC(reallocate)((c), (p), (s)_ISC_MEM_FILELINE)
-#define isc_mem_strdup(c, p) ISCMEMFUNC(strdup)((c), (p)_ISC_MEM_FILELINE)
+	isc__mem_reallocate((c), (p), (s), 0 _ISC_MEM_FILELINE)
+#define isc_mem_strdup(c, p) isc__mem_strdup((c), (p)_ISC_MEM_FILELINE)
 #define isc_mem_strndup(c, p, l) \
-	ISCMEMFUNC(strndup)((c), (p), (l)_ISC_MEM_FILELINE)
-#define isc_mempool_get(c) ISCMEMPOOLFUNC(get)((c)_ISC_MEM_FILELINE)
+	isc__mem_strndup((c), (p), (l)_ISC_MEM_FILELINE)
+#define isc_mempool_get(c) isc__mempool_get((c)_ISC_MEM_FILELINE)
 
-#define isc_mem_put(c, p, s)                                         \
-	do {                                                         \
-		ISCMEMFUNC(put)((c), (p), (s), 0 _ISC_MEM_FILELINE); \
-		(p) = NULL;                                          \
+#define isc_mem_put(c, p, s)                                      \
+	do {                                                      \
+		isc__mem_put((c), (p), (s), 0 _ISC_MEM_FILELINE); \
+		(p) = NULL;                                       \
 	} while (0)
-#define isc_mem_put_aligned(c, p, s, a)                \
-	do {                                           \
-		ISCMEMFUNC(put)                        \
-		((c), (p), (s), (a)_ISC_MEM_FILELINE); \
-		(p) = NULL;                            \
+#define isc_mem_cput(c, p, n, s)                                  \
+	do {                                                      \
+		isc__mem_put((c), (p), ISC_CHECKED_MUL((n), (s)), \
+			     ISC__MEM_ZERO _ISC_MEM_FILELINE);    \
+		(p) = NULL;                                       \
 	} while (0)
-#define isc_mem_putanddetach(c, p, s)                                         \
-	do {                                                                  \
-		ISCMEMFUNC(putanddetach)((c), (p), (s), 0 _ISC_MEM_FILELINE); \
-		(p) = NULL;                                                   \
+#define isc_mem_putanddetach(c, p, s)                                      \
+	do {                                                               \
+		isc__mem_putanddetach((c), (p), (s), 0 _ISC_MEM_FILELINE); \
+		(p) = NULL;                                                \
 	} while (0)
-#define isc_mem_putanddetach_aligned(c, p, s, a)       \
-	do {                                           \
-		ISCMEMFUNC(putanddetach)               \
-		((c), (p), (s), (a)_ISC_MEM_FILELINE); \
-		(p) = NULL;                            \
+#define isc_mem_free(c, p)                                    \
+	do {                                                  \
+		isc__mem_free((c), (p), 0 _ISC_MEM_FILELINE); \
+		(p) = NULL;                                   \
 	} while (0)
-#define isc_mem_free(c, p)                                   \
+#define isc_mempool_put(c, p)                                \
 	do {                                                 \
-		ISCMEMFUNC(free)((c), (p)_ISC_MEM_FILELINE); \
+		isc__mempool_put((c), (p)_ISC_MEM_FILELINE); \
 		(p) = NULL;                                  \
-	} while (0)
-#define isc_mempool_put(c, p)                                   \
-	do {                                                    \
-		ISCMEMPOOLFUNC(put)((c), (p)_ISC_MEM_FILELINE); \
-		(p) = NULL;                                     \
 	} while (0)
 
 /*@{*/
@@ -202,24 +202,17 @@ mallocx(size_t size, int flags);
 
 extern volatile void *isc__mem_malloc;
 
-#ifndef CMM_ACCESS_ONCE
-/*
- * This macro has been borrowed from Userspace-RCU to ensure the access
- * to isc__mem_malloc will not be optimized away by the compiler.
- */
-#define CMM_ACCESS_ONCE(x) (*(__volatile__ __typeof__(x) *)&(x))
-#endif
-
 #define isc_mem_create(cp)                                            \
 	{                                                             \
-		ISCMEMFUNC(create)((cp)_ISC_MEM_FILELINE);            \
+		isc__mem_create((cp)_ISC_MEM_FILELINE);               \
 		isc__mem_malloc = mallocx;                            \
 		ISC_INSIST(CMM_ACCESS_ONCE(isc__mem_malloc) != NULL); \
 	}
 #else
-#define isc_mem_create(cp) ISCMEMFUNC(create)((cp)_ISC_MEM_FILELINE)
+#define isc_mem_create(cp) isc__mem_create((cp)_ISC_MEM_FILELINE)
 #endif
-void ISCMEMFUNC(create)(isc_mem_t **_ISC_MEM_FLARG);
+void
+isc__mem_create(isc_mem_t **_ISC_MEM_FLARG);
 
 /*!<
  * \brief Create a memory context.
@@ -267,8 +260,9 @@ isc_mem_attach(isc_mem_t *, isc_mem_t **);
 /*@{*/
 void
 isc_mem_attach(isc_mem_t *, isc_mem_t **);
-#define isc_mem_detach(cp) ISCMEMFUNC(detach)((cp)_ISC_MEM_FILELINE)
-void ISCMEMFUNC(detach)(isc_mem_t **_ISC_MEM_FLARG);
+#define isc_mem_detach(cp) isc__mem_detach((cp)_ISC_MEM_FILELINE)
+void
+isc__mem_detach(isc_mem_t **_ISC_MEM_FLARG);
 /*!<
  * \brief Attach to / detach from a memory context.
  *
@@ -283,8 +277,9 @@ void ISCMEMFUNC(detach)(isc_mem_t **_ISC_MEM_FLARG);
  */
 /*@}*/
 
-#define isc_mem_destroy(cp) ISCMEMFUNC(destroy)((cp)_ISC_MEM_FILELINE)
-void ISCMEMFUNC(destroy)(isc_mem_t **_ISC_MEM_FLARG);
+#define isc_mem_destroy(cp) isc__mem_destroy((cp)_ISC_MEM_FILELINE)
+void
+isc__mem_destroy(isc_mem_t **_ISC_MEM_FLARG);
 /*%<
  * Destroy a memory context.
  */
@@ -310,33 +305,6 @@ isc_mem_inuse(isc_mem_t *mctx);
  * allocated from the system but not yet used.
  */
 
-size_t
-isc_mem_maxinuse(isc_mem_t *mctx);
-/*%<
- * Get an estimate of the largest amount of memory that has been in
- * use in 'mctx' at any time.
- */
-
-size_t
-isc_mem_total(isc_mem_t *mctx);
-/*%<
- * Get the total amount of memory in 'mctx', in bytes, including memory
- * not yet used.
- */
-
-size_t
-isc_mem_malloced(isc_mem_t *ctx);
-/*%<
- * Get an estimate of the amount of memory allocated in 'mctx', in bytes.
- */
-
-size_t
-isc_mem_maxmalloced(isc_mem_t *ctx);
-/*%<
- * Get an estimate of the largest amount of memory that has been
- * allocated in 'mctx' at any time.
- */
-
 bool
 isc_mem_isovermem(isc_mem_t *mctx);
 /*%<
@@ -348,49 +316,20 @@ isc_mem_isovermem(isc_mem_t *mctx);
 void
 isc_mem_clearwater(isc_mem_t *mctx);
 void
-isc_mem_setwater(isc_mem_t *mctx, isc_mem_water_t water, void *water_arg,
-		 size_t hiwater, size_t lowater);
+isc_mem_setwater(isc_mem_t *mctx, size_t hiwater, size_t lowater);
 /*%<
  * Set high and low water marks for this memory context.
  *
- * When the memory usage of 'mctx' exceeds 'hiwater',
- * '(water)(water_arg, #ISC_MEM_HIWATER)' will be called.  'water' needs
- * to call isc_mem_waterack() with #ISC_MEM_HIWATER to acknowledge the
- * state change.  'water' may be called multiple times.
+ * When the memory usage of 'mctx' exceeds 'hiwater', the overmem condition
+ * will be met and isc_mem_isovermem() will return true.
  *
- * When the usage drops below 'lowater', 'water' will again be called,
- * this time with #ISC_MEM_LOWATER.  'water' need to calls
- * isc_mem_waterack() with #ISC_MEM_LOWATER to acknowledge the change.
+ * If the 'hiwater' and 'lowater' is set to 0, the high- and low-water
+ * processing are disabled for this memory context.
  *
- *	static void
- *	water(void *arg, int mark) {
- *		struct foo *foo = arg;
- *
- *		LOCK(&foo->marklock);
- *		if (foo->mark != mark) {
- *			foo->mark = mark;
- *			....
- *			isc_mem_waterack(foo->mctx, mark);
- *		}
- *		UNLOCK(&foo->marklock);
- *	}
- *
- * if 'water' is set to NULL, the 'hiwater' and 'lowater' must set to 0, and
- * high- and low-water processing are disabled for this memory context.  There's
- * a convenient function isc_mem_clearwater().
+ * There's a convenient function isc_mem_clearwater().
  *
  * Requires:
- *
- *\li   If 'water' is NULL, 'hiwater' and 'lowater' must be set to 0.
- *\li	If 'water' and 'water_arg' have previously been set, they are
-	unchanged.
  *\li	'hiwater' >= 'lowater'
- */
-
-void
-isc_mem_waterack(isc_mem_t *ctx, int mark);
-/*%<
- * Called to acknowledge changes in signaled by calls to 'water'.
  */
 
 void
@@ -565,36 +504,45 @@ isc_mempool_setfillcount(isc_mempool_t *restrict mpctx,
 /*
  * Pseudo-private functions for use via macros.  Do not call directly.
  */
-void ISCMEMFUNC(putanddetach)(isc_mem_t **, void *, size_t,
-			      size_t _ISC_MEM_FLARG);
-void ISCMEMFUNC(put)(isc_mem_t *, void *, size_t, size_t _ISC_MEM_FLARG);
-void ISCMEMFUNC(free)(isc_mem_t *, void *_ISC_MEM_FLARG);
+void
+isc__mem_putanddetach(isc_mem_t **, void *, size_t, int _ISC_MEM_FLARG);
+void
+isc__mem_put(isc_mem_t *, void *, size_t, int _ISC_MEM_FLARG);
+void
+isc__mem_free(isc_mem_t *, void *, int _ISC_MEM_FLARG);
 
-ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(put), 2)
-void *ISCMEMFUNC(get)(isc_mem_t *, size_t, size_t _ISC_MEM_FLARG);
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(isc__mem_put, 2)
+void *
+isc__mem_get(isc_mem_t *, size_t, int _ISC_MEM_FLARG);
 
-ISC_ATTR_DEALLOCATOR_IDX(ISCMEMFUNC(put), 2)
-void *ISCMEMFUNC(reget)(isc_mem_t *, void *, size_t, size_t,
-			size_t _ISC_MEM_FLARG);
+ISC_ATTR_DEALLOCATOR_IDX(isc__mem_put, 2)
+void *
+isc__mem_reget(isc_mem_t *, void *, size_t, size_t, int _ISC_MEM_FLARG);
 
-ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
-void *ISCMEMFUNC(allocate)(isc_mem_t *, size_t _ISC_MEM_FLARG);
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(isc__mem_free, 2)
+void *
+isc__mem_allocate(isc_mem_t *, size_t, int _ISC_MEM_FLARG);
 
-ISC_ATTR_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
-void *ISCMEMFUNC(reallocate)(isc_mem_t *, void *, size_t _ISC_MEM_FLARG);
+ISC_ATTR_DEALLOCATOR_IDX(isc__mem_free, 2)
+void *
+isc__mem_reallocate(isc_mem_t *, void *, size_t, int _ISC_MEM_FLARG);
 
 ISC_ATTR_RETURNS_NONNULL
-ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
-char *ISCMEMFUNC(strdup)(isc_mem_t *, const char *_ISC_MEM_FLARG);
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(isc__mem_free, 2)
+char *
+isc__mem_strdup(isc_mem_t *, const char *_ISC_MEM_FLARG);
 
 ISC_ATTR_RETURNS_NONNULL
-ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
-char *ISCMEMFUNC(strndup)(isc_mem_t *, const char *, size_t _ISC_MEM_FLARG);
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(isc__mem_free, 2)
+char *
+isc__mem_strndup(isc_mem_t *, const char *, size_t _ISC_MEM_FLARG);
 
-ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMPOOLFUNC(put), 2)
-void *ISCMEMPOOLFUNC(get)(isc_mempool_t *_ISC_MEM_FLARG);
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(isc__mempool_put, 2)
+void *
+isc__mempool_get(isc_mempool_t *_ISC_MEM_FLARG);
 
-void ISCMEMPOOLFUNC(put)(isc_mempool_t *, void *_ISC_MEM_FLARG);
+void
+isc__mempool_put(isc_mempool_t *, void *_ISC_MEM_FLARG);
 
 #ifdef POP_MALLOC_MACRO
 /*

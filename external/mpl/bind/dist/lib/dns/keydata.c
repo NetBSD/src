@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: keydata.c,v 1.7 2025/01/26 16:25:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@ dns_keydata_todnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
 		memmove(dnskey->data, keydata->data, dnskey->datalen);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -74,5 +74,5 @@ dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
 		memmove(keydata->data, dnskey->data, keydata->datalen);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

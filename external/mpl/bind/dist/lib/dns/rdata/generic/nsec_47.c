@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.9 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.10 2025/01/26 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@ fromtext_nsec(ARGS_FROMTEXT) {
 	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
-	return (typemap_fromtext(lexer, target, false));
+	return typemap_fromtext(lexer, target, false);
 }
 
 static isc_result_t
@@ -67,14 +67,14 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_totext(&name, false, target));
+	RETERR(dns_name_totext(&name, 0, target));
 	/*
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
 	if (sr.length > 0) {
 		RETERR(str_totext(" ", target));
 	}
-	return (typemap_totext(&sr, NULL, target));
+	return typemap_totext(&sr, NULL, target);
 }
 
 static isc_result_t
@@ -87,16 +87,16 @@ fromwire_nsec(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
+	dctx = dns_decompress_setpermitted(dctx, false);
 
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, target));
 
 	isc_buffer_activeregion(source, &sr);
 	RETERR(typemap_test(&sr, false));
 	RETERR(mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -108,14 +108,14 @@ towire_nsec(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
+	dns_compress_setpermitted(cctx, false);
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_towire(&name, cctx, target));
+	RETERR(dns_name_towire(&name, cctx, target, NULL));
 
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -131,7 +131,7 @@ compare_nsec(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -154,7 +154,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 	region.base = nsec->typebits;
 	region.length = nsec->len;
 	RETERR(typemap_test(&region, false));
-	return (mem_tobuffer(target, nsec->typebits, nsec->len));
+	return mem_tobuffer(target, nsec->typebits, nsec->len);
 }
 
 static isc_result_t
@@ -180,18 +180,8 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 
 	nsec->len = region.length;
 	nsec->typebits = mem_maybedup(mctx, region.base, region.length);
-	if (nsec->typebits == NULL) {
-		goto cleanup;
-	}
-
 	nsec->mctx = mctx;
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (mctx != NULL) {
-		dns_name_free(&nsec->next, mctx);
-	}
-	return (ISC_R_NOMEMORY);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -221,7 +211,7 @@ additionaldata_nsec(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -231,7 +221,7 @@ digest_nsec(ARGS_DIGEST) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
 	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -243,7 +233,7 @@ checkowner_nsec(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -254,7 +244,7 @@ checknames_nsec(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
@@ -282,12 +272,12 @@ casecompare_nsec(ARGS_COMPARE) {
 
 	order = dns_name_rdatacompare(&name1, &name2);
 	if (order != 0) {
-		return (order);
+		return order;
 	}
 
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
 
-	return (isc_region_compare(&region1, &region2));
+	return isc_region_compare(&region1, &region2);
 }
 #endif /* RDATA_GENERIC_NSEC_47_C */

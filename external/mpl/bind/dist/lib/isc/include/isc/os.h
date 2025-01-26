@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.6 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.7 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,10 +16,10 @@
 #pragma once
 
 /*! \file isc/os.h */
+#include <sys/stat.h>
+
 #include <isc/lang.h>
 #include <isc/types.h>
-
-#include <sys/stat.h>
 
 ISC_LANG_BEGINDECLS
 

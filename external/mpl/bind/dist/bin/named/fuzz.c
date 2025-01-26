@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.c,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: fuzz.c,v 1.8 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,8 +27,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <isc/app.h>
 #include <isc/condition.h>
+#include <isc/loop.h>
 #include <isc/mutex.h>
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -128,8 +128,8 @@ fuzz_thread_client(void *arg) {
 				close(sockfd);
 				named_server_flushonshutdown(named_g_server,
 							     false);
-				isc_app_shutdown();
-				return (NULL);
+				isc_loopmgr_shutdown(named_g_loopmgr);
+				return NULL;
 			}
 			raise(SIGSTOP);
 			goto next;
@@ -161,9 +161,9 @@ fuzz_thread_client(void *arg) {
 	close(sockfd);
 
 	named_server_flushonshutdown(named_g_server, false);
-	isc_app_shutdown();
+	isc_loopmgr_shutdown(named_g_loopmgr);
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -376,8 +376,8 @@ fuzz_thread_resolver(void *arg) {
 				close(listenfd);
 				named_server_flushonshutdown(named_g_server,
 							     false);
-				isc_app_shutdown();
-				return (NULL);
+				isc_loopmgr_shutdown(named_g_loopmgr);
+				return NULL;
 			}
 			raise(SIGSTOP);
 			continue;
@@ -576,7 +576,7 @@ fuzz_thread_resolver(void *arg) {
 	close(sockfd);
 	close(listenfd);
 	named_server_flushonshutdown(named_g_server, false);
-	isc_app_shutdown();
+	isc_loopmgr_shutdown(named_g_loopmgr);
 
 #ifdef __AFL_LOOP
 	/*
@@ -589,7 +589,7 @@ fuzz_thread_resolver(void *arg) {
 	__AFL_LOOP(0);
 #endif /* ifdef __AFL_LOOP */
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -718,9 +718,9 @@ fuzz_thread_tcp(void *arg) {
 	free(buf);
 	close(sockfd);
 	named_server_flushonshutdown(named_g_server, false);
-	isc_app_shutdown();
+	isc_loopmgr_shutdown(named_g_loopmgr);
 
-	return (NULL);
+	return NULL;
 }
 
 #endif /* ENABLE_AFL */
@@ -735,7 +735,7 @@ named_fuzz_notify(void) {
 #ifdef ENABLE_AFL
 	if (getenv("AFL_CMIN")) {
 		named_server_flushonshutdown(named_g_server, false);
-		isc_app_shutdown();
+		isc_loopmgr_shutdown(named_g_loopmgr);
 		return;
 	}
 

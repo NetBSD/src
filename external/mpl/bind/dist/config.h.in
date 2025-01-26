@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Default cache database type */
+#undef CACHEDB_DEFAULT
+
 /* dnsrps $librpz_name */
 #undef DNSRPS_LIBRPZ_PATH
 
@@ -14,6 +17,12 @@
 
 /* Define to enable American Fuzzy Lop test harness */
 #undef ENABLE_AFL
+
+/* Define to 1 if you want FIPS mode to be enabled */
+#undef ENABLE_FIPS_MODE
+
+/* Define to enable memory leak detection in external libraries */
+#undef ENABLE_LEAK_DETECTION
 
 /* define if you want TCP_FASTOPEN enabled if available */
 #undef ENABLE_TCP_FASTOPEN
@@ -33,11 +42,17 @@
 /* Define to 1 if you have the `BN_GENCB_new' function. */
 #undef HAVE_BN_GENCB_NEW
 
+/* define if the compiler supports __builtin_add_overflow(). */
+#undef HAVE_BUILTIN_ADD_OVERFLOW
+
 /* Define to 1 if the compiler supports __builtin_clz. */
 #undef HAVE_BUILTIN_CLZ
 
-/* define if the compiler supports __builtin_*_overflow(). */
-#undef HAVE_BUILTIN_OVERFLOW
+/* define if the compiler supports __builtin_mul_overflow(). */
+#undef HAVE_BUILTIN_MUL_OVERFLOW
+
+/* define if the compiler supports __builtin_sub_overflow(). */
+#undef HAVE_BUILTIN_SUB_OVERFLOW
 
 /* define if the compiler supports __builtin_unreachable(). */
 #undef HAVE_BUILTIN_UNREACHABLE
@@ -57,6 +72,10 @@
 /* Define to 1 if you have the `CRYPTO_zalloc' function. */
 #undef HAVE_CRYPTO_ZALLOC
 
+/* Define to 1 if you have the declaration of `UV_UDP_LINUX_RECVERR', and to 0
+   if you don't. */
+#undef HAVE_DECL_UV_UDP_LINUX_RECVERR
+
 /* Define to 1 if you have the declaration of `UV_UDP_MMSG_CHUNK', and to 0 if
    you don't. */
 #undef HAVE_DECL_UV_UDP_MMSG_CHUNK
@@ -68,9 +87,6 @@
 /* Define to 1 if you have the declaration of `UV_UDP_RECVMMSG', and to 0 if
    you don't. */
 #undef HAVE_DECL_UV_UDP_RECVMMSG
-
-/* Define to 1 if you have the `DH_get0_key' function. */
-#undef HAVE_DH_GET0_KEY
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -84,20 +100,15 @@
 /* Define to 1 if you have the `ERR_get_error_all' function. */
 #undef HAVE_ERR_GET_ERROR_ALL
 
-/* Define to 1 if you have the `EVP_aes_128_ecb' function. */
-#undef HAVE_EVP_AES_128_ECB
-
-/* Define to 1 if you have the `EVP_aes_192_ecb' function. */
-#undef HAVE_EVP_AES_192_ECB
-
-/* Define to 1 if you have the `EVP_aes_256_ecb' function. */
-#undef HAVE_EVP_AES_256_ECB
-
 /* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
 #undef HAVE_EVP_CIPHER_CTX_FREE
 
 /* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
 #undef HAVE_EVP_CIPHER_CTX_NEW
+
+/* Define to 1 if you have the `EVP_default_properties_enable_fips' function.
+   */
+#undef HAVE_EVP_DEFAULT_PROPERTIES_ENABLE_FIPS
 
 /* Define to 1 if you have the `EVP_DigestSignInit' function. */
 #undef HAVE_EVP_DIGESTSIGNINIT
@@ -122,6 +133,9 @@
 
 /* Define to 1 if you have the `EVP_PKEY_get0_EC_KEY' function. */
 #undef HAVE_EVP_PKEY_GET0_EC_KEY
+
+/* Define to 1 if you have the `EVP_PKEY_get0_RSA' function. */
+#undef HAVE_EVP_PKEY_GET0_RSA
 
 /* Define to 1 if you have the `EVP_PKEY_new_raw_private_key' function. */
 #undef HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
@@ -225,11 +239,17 @@
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
 
+/* Define to 1 if libcap was found */
+#undef HAVE_LIBCAP
+
 /* Define if libidn2 was found */
 #undef HAVE_LIBIDN2
 
 /* Build with DNS-over-HTTPS support */
 #undef HAVE_LIBNGHTTP2
+
+/* Use libsystemd library */
+#undef HAVE_LIBSYSTEMD
 
 /* Use libxml2 library */
 #undef HAVE_LIBXML2
@@ -285,7 +305,7 @@
 /* Define to 1 if you have the `pthread_barrier_init' function. */
 #undef HAVE_PTHREAD_BARRIER_INIT
 
-/* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
+/* Define to 1 if PTHREAD_MUTEX_ADAPTIVE_NP is available */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
 
 /* Define to 1 if you have the <pthread_np.h> header file. */
@@ -302,6 +322,9 @@
 
 /* Define to 1 if you have the `pthread_set_name_np' function. */
 #undef HAVE_PTHREAD_SET_NAME_NP
+
+/* Define to 1 if you have the `pthread_spin_init' function. */
+#undef HAVE_PTHREAD_SPIN_INIT
 
 /* Define to 1 if you have the `pthread_yield' function. */
 #undef HAVE_PTHREAD_YIELD
@@ -333,23 +356,14 @@
 /* Define to 1 if you have the `sched_yield' function. */
 #undef HAVE_SCHED_YIELD
 
-/* Define to 1 if you have the `setegid' function. */
-#undef HAVE_SETEGID
-
-/* Define to 1 if you have the `seteuid' function. */
-#undef HAVE_SETEUID
-
-/* Define to 1 if you have the `setresgid' function. */
-#undef HAVE_SETRESGID
-
-/* Define to 1 if you have the `setresuid' function. */
-#undef HAVE_SETRESUID
-
 /* define if the SPARC pause instruction is available */
 #undef HAVE_SPARC_PAUSE
 
 /* Define to 1 if you have the `SSL_CTX_set1_cert_store' function. */
 #undef HAVE_SSL_CTX_SET1_CERT_STORE
+
+/* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
+#undef HAVE_SSL_CTX_SET_CIPHERSUITES
 
 /* Define to 1 if you have the `SSL_CTX_set_keylog_callback' function. */
 #undef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
@@ -374,9 +388,6 @@
 
 /* define if struct stat has st_mtim.tv_nsec field */
 #undef HAVE_STAT_NSEC
-
-/* Define to 1 if you have the <stdalign.h> header file. */
-#undef HAVE_STDALIGN_H
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #undef HAVE_STDATOMIC_H
@@ -414,9 +425,6 @@
 /* Define to 1 if you have the `sysctlbyname' function. */
 #undef HAVE_SYSCTLBYNAME
 
-/* Define to 1 if you have the <sys/capability.h> header file. */
-#undef HAVE_SYS_CAPABILITY_H
-
 /* Define to 1 if you have the <sys/cpuset.h> header file. */
 #undef HAVE_SYS_CPUSET_H
 
@@ -425,6 +433,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/sdt.h> header file. */
+#undef HAVE_SYS_SDT_H
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
@@ -479,9 +490,6 @@
 
 /* Use zlib library */
 #undef HAVE_ZLIB
-
-/* define if __atomic builtins are not available */
-#undef HAVE___ATOMIC
 
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
@@ -545,16 +553,31 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
+/* Build with bulletproof Userspace-RCU flavor */
+#undef RCU_BP
+
+/* Chosen Userspace-RCU flavor */
+#undef RCU_FLAVOR
+
+/* Build with mb Userspace-RCU flavor */
+#undef RCU_MB
+
+/* Build with membarrier Userspace-RCU flavor */
+#undef RCU_MEMBARRIER
+
+/* Build with QSBR Userspace-RCU flavor */
+#undef RCU_QSBR
+
+/* Compile-time Userspace-RCU version */
+#undef RCU_VERSION
+
 /* Define to 1 if all of the C90 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
-/* If the compiler supports a TLS storage class, define it to that here */
-#undef TLS
-
-/* Define to use default system tuning. */
-#undef TUNE_LARGE
+/* Inline small (less than 10 lines) functions */
+#undef URCU_INLINE_SMALL_FUNCTIONS
 
 /* Enable DNS Response Policy Service API */
 #undef USE_DNSRPS
@@ -674,6 +697,9 @@
 # endif
 #endif
 
+/* Default zone database type */
+#undef ZONEDB_DEFAULT
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -700,10 +726,6 @@
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef ssize_t
-
-/* Define if the compiler uses a different keyword than thread_local for TLS
-   variables */
-#undef thread_local
 
 /* Define to the type of an unsigned integer type wide enough to hold a
    pointer, if such a type exists, and if the system does not define it. */

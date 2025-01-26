@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.h,v 1.6 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: rdatalist.h,v 1.7 2025/01/26 16:25:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,7 +73,7 @@ dns_rdatalist_init(dns_rdatalist_t *rdatalist);
  *	values.
  */
 
-isc_result_t
+void
 dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist, dns_rdataset_t *rdataset);
 /*%<
  * Make 'rdataset' refer to the rdata in 'rdatalist'.
@@ -93,12 +93,9 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist, dns_rdataset_t *rdataset);
  *	on success,
  *
  *\li		'rdataset' is associated with the rdata in rdatalist.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
  */
 
-isc_result_t
+void
 dns_rdatalist_fromrdataset(dns_rdataset_t   *rdataset,
 			   dns_rdatalist_t **rdatalist);
 /*%<
@@ -114,9 +111,47 @@ dns_rdatalist_fromrdataset(dns_rdataset_t   *rdataset,
  *	on success,
  *
  *\li		'rdatalist' is pointed to the rdatalist in rdataset.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
  */
+
+void
+dns_rdatalist_disassociate(dns_rdataset_t *rdatasetp DNS__DB_FLARG);
+
+isc_result_t
+dns_rdatalist_first(dns_rdataset_t *rdataset);
+
+isc_result_t
+dns_rdatalist_next(dns_rdataset_t *rdataset);
+
+void
+dns_rdatalist_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
+
+void
+dns_rdatalist_clone(dns_rdataset_t	  *source,
+		    dns_rdataset_t *target DNS__DB_FLARG);
+
+unsigned int
+dns_rdatalist_count(dns_rdataset_t *rdataset);
+
+isc_result_t
+dns_rdatalist_addnoqname(dns_rdataset_t *rdataset, const dns_name_t *name);
+
+isc_result_t
+dns_rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			 dns_rdataset_t	       *neg,
+			 dns_rdataset_t *negsig DNS__DB_FLARG);
+
+isc_result_t
+dns_rdatalist_addclosest(dns_rdataset_t *rdataset, const dns_name_t *name);
+
+isc_result_t
+dns_rdatalist_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			 dns_rdataset_t	       *neg,
+			 dns_rdataset_t *negsig DNS__DB_FLARG);
+
+void
+dns_rdatalist_setownercase(dns_rdataset_t *rdataset, const dns_name_t *name);
+
+void
+dns_rdatalist_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
 
 ISC_LANG_ENDDECLS

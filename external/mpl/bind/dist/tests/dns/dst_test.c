@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,7 +51,7 @@ setup_test(void **state) {
 
 	dst_lib_init(mctx, NULL);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -60,7 +60,7 @@ teardown_test(void **state) {
 
 	dst_lib_destroy();
 
-	return (0);
+	return 0;
 }
 
 /* Read sig in file at path to buf. Check signature ineffability */
@@ -130,7 +130,7 @@ sig_fromfile(const char *path, isc_buffer_t *buf) {
 
 err:
 	isc_mem_put(mctx, data, size + 1);
-	return (result);
+	return result;
 }
 
 static void
@@ -379,18 +379,6 @@ ISC_RUN_TEST_IMPL(cmp_test) {
 		{ "example.", 53461, "example-n.", 37464, DST_ALG_RSASHA256,
 		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
 
-		/* RSA Keypair: different PrivateExponent (d) */
-		{ "example.", 53461, "example-d.", 53461, DST_ALG_RSASHA256,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
-
-		/* RSA Keypair: different Prime1 (p) */
-		{ "example.", 53461, "example-p.", 53461, DST_ALG_RSASHA256,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
-
-		/* RSA Keypair: different Prime2 (q) */
-		{ "example.", 53461, "example-q.", 53461, DST_ALG_RSASHA256,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
-
 		/* RSA Public Key: self */
 		{ "example.", 53461, "example.", 53461, DST_ALG_RSASHA256,
 		  DST_TYPE_PUBLIC, true },
@@ -438,34 +426,6 @@ ISC_RUN_TEST_IMPL(cmp_test) {
 		/* EdDSA Public Key: different key */
 		{ "example.", 63663, "example2.", 37529, DST_ALG_ED25519,
 		  DST_TYPE_PUBLIC, false },
-
-		/* DH Keypair: self */
-		{ "example.", 65316, "example.", 65316, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, true },
-
-		/* DH Keypair: different key */
-		{ "example.", 65316, "example2.", 19823, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
-
-		/* DH Keypair: different key (with generator=5) */
-		{ "example.", 65316, "example3.", 17187, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
-
-		/* DH Keypair: different private key */
-		{ "example.", 65316, "example-private.", 65316, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
-
-		/* DH Public Key: self */
-		{ "example.", 65316, "example.", 65316, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_KEY, true },
-
-		/* DH Public Key: different key */
-		{ "example.", 65316, "example2.", 19823, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_KEY, false },
-
-		/* DH Public Key: different key (with generator=5) */
-		{ "example.", 65316, "example3.", 17187, DST_ALG_DH,
-		  DST_TYPE_PUBLIC | DST_TYPE_KEY, false },
 	};
 	unsigned int i;
 

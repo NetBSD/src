@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.c,v 1.9 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: x25_19.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,7 +45,7 @@ fromtext_x25(ARGS_FROMTEXT) {
 		}
 	}
 	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -58,7 +58,7 @@ totext_x25(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &region);
-	return (txt_totext(&region, true, target));
+	return txt_totext(&region, true, target);
 }
 
 static isc_result_t
@@ -71,18 +71,17 @@ fromwire_x25(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(dctx);
 	UNUSED(rdclass);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length < 5 || sr.base[0] != (sr.length - 1)) {
-		return (DNS_R_FORMERR);
+		return DNS_R_FORMERR;
 	}
 	for (i = 1; i < sr.length; i++) {
 		if (sr.base[i] < 0x30 || sr.base[i] > 0x39) {
-			return (DNS_R_FORMERR);
+			return DNS_R_FORMERR;
 		}
 	}
-	return (txt_fromwire(source, target));
+	return txt_fromwire(source, target);
 }
 
 static isc_result_t
@@ -92,7 +91,7 @@ towire_x25(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_x25);
 	REQUIRE(rdata->length != 0);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -108,7 +107,7 @@ compare_x25(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -126,17 +125,17 @@ fromstruct_x25(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	if (x25->x25_len < 4) {
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 
 	for (i = 0; i < x25->x25_len; i++) {
 		if (!isdigit((unsigned char)x25->x25[i])) {
-			return (ISC_R_RANGE);
+			return ISC_R_RANGE;
 		}
 	}
 
 	RETERR(uint8_tobuffer(x25->x25_len, target));
-	return (mem_tobuffer(target, x25->x25, x25->x25_len));
+	return mem_tobuffer(target, x25->x25, x25->x25_len);
 }
 
 static isc_result_t
@@ -156,12 +155,8 @@ tostruct_x25(ARGS_TOSTRUCT) {
 	x25->x25_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	x25->x25 = mem_maybedup(mctx, r.base, x25->x25_len);
-	if (x25->x25 == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	x25->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -190,7 +185,7 @@ additionaldata_x25(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -201,7 +196,7 @@ digest_x25(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -213,7 +208,7 @@ checkowner_x25(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -224,12 +219,12 @@ checknames_x25(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_x25(ARGS_COMPARE) {
-	return (compare_x25(rdata1, rdata2));
+	return compare_x25(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_X25_19_C */

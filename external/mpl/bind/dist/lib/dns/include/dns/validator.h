@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.10 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.11 2025/01/26 16:25:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,37 +50,56 @@
 
 #include <stdbool.h>
 
-#include <isc/event.h>
+#include <isc/job.h>
 #include <isc/lang.h>
-#include <isc/mutex.h>
+#include <isc/refcount.h>
 
 #include <dns/fixedname.h>
+#include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h> /* for dns_rdata_rrsig_t */
 #include <dns/types.h>
 
 #include <dst/dst.h>
 
+#define DNS_VALIDATOR_NOQNAMEPROOF    0
+#define DNS_VALIDATOR_NODATAPROOF     1
+#define DNS_VALIDATOR_NOWILDCARDPROOF 2
+#define DNS_VALIDATOR_CLOSESTENCLOSER 3
+
 /*%
- * A dns_validatorevent_t is sent when a 'validation' completes.
+ * A validator object represents a validation in progress.
  * \brief
- * 'name', 'rdataset', 'sigrdataset', and 'message' are the values that were
- * supplied when dns_validator_create() was called.  They are returned to the
- * caller so that they may be freed.
- *
- * If the RESULT is ISC_R_SUCCESS and the answer is secure then
- * proofs[] will contain the names of the NSEC records that hold the
- * various proofs.  Note the same name may appear multiple times.
+ * Clients are strongly discouraged from using this type directly, with
+ * the exception of the 'link' field, which may be used directly for
+ * whatever purpose the client desires.
  */
-typedef struct dns_validatorevent {
-	ISC_EVENT_COMMON(struct dns_validatorevent);
-	dns_validator_t *validator;
-	isc_result_t	 result;
-	/*
-	 * Name and type of the response to be validated.
-	 */
+struct dns_validator {
+	unsigned int   magic;
+	dns_view_t    *view;
+	isc_loop_t    *loop;
+	uint32_t       tid;
+	isc_refcount_t references;
+
+	/* Name and type of the response to be validated. */
 	dns_name_t     *name;
 	dns_rdatatype_t type;
+
+	/*
+	 * Callback and argument to use to inform the caller
+	 * that validation is complete.
+	 */
+	isc_job_cb cb;
+	void	  *arg;
+
+	/* Validation options (_DEFER, _NONTA, etc). */
+	unsigned int options;
+
+	/*
+	 * Results of a completed validation.
+	 */
+	isc_result_t result;
+
 	/*
 	 * Rdata and RRSIG (if any) for positive responses.
 	 */
@@ -103,55 +122,39 @@ typedef struct dns_validatorevent {
 	 * Answer is secure.
 	 */
 	bool secure;
-} dns_validatorevent_t;
 
-#define DNS_VALIDATOR_NOQNAMEPROOF    0
-#define DNS_VALIDATOR_NODATAPROOF     1
-#define DNS_VALIDATOR_NOWILDCARDPROOF 2
-#define DNS_VALIDATOR_CLOSESTENCLOSER 3
-
-/*%
- * A validator object represents a validation in progress.
- * \brief
- * Clients are strongly discouraged from using this type directly, with
- * the exception of the 'link' field, which may be used directly for
- * whatever purpose the client desires.
- */
-struct dns_validator {
-	/* Unlocked. */
-	unsigned int magic;
-	isc_mutex_t  lock;
-	dns_view_t  *view;
-	/* Locked by lock. */
-	unsigned int	      options;
-	unsigned int	      attributes;
-	dns_validatorevent_t *event;
-	dns_fetch_t	     *fetch;
-	dns_validator_t	     *subvalidator;
-	dns_validator_t	     *parent;
-	dns_keytable_t	     *keytable;
-	dst_key_t	     *key;
-	dns_rdata_rrsig_t    *siginfo;
-	isc_task_t	     *task;
-	isc_taskaction_t      action;
-	void		     *arg;
-	unsigned int	      labels;
-	dns_rdataset_t	     *currentset;
-	dns_rdataset_t	     *keyset;
-	dns_rdataset_t	     *dsset;
-	dns_rdataset_t	      fdsset;
-	dns_rdataset_t	      frdataset;
-	dns_rdataset_t	      fsigrdataset;
-	dns_fixedname_t	      fname;
-	dns_fixedname_t	      wild;
-	dns_fixedname_t	      closest;
+	/* Internal validator state */
+	atomic_bool	   canceling;
+	unsigned int	   attributes;
+	dns_fetch_t	  *fetch;
+	dns_validator_t	  *subvalidator;
+	dns_validator_t	  *parent;
+	dns_keytable_t	  *keytable;
+	dst_key_t	  *key;
+	dns_rdata_rrsig_t *siginfo;
+	unsigned int	   labels;
+	dns_rdataset_t	  *nxset;
+	dns_rdataset_t	  *keyset;
+	dns_rdataset_t	  *dsset;
+	dns_rdataset_t	   fdsset;
+	dns_rdataset_t	   frdataset;
+	dns_rdataset_t	   fsigrdataset;
+	dns_fixedname_t	   fname;
+	dns_fixedname_t	   wild;
+	dns_fixedname_t	   closest;
 	ISC_LINK(dns_validator_t) link;
-	bool	       mustbesecure;
-	unsigned int   depth;
-	unsigned int   authcount;
-	unsigned int   authfail;
-	bool	       failed;
-	isc_stdtime_t  start;
+	bool	      mustbesecure;
+	unsigned int  depth;
+	unsigned int  authcount;
+	unsigned int  authfail;
+	isc_stdtime_t start;
+
+	bool	       digest_sha1;
+	bool	       supported_algorithm;
+	dns_rdata_t    rdata;
+	bool	       resume;
+	uint32_t      *nvalidations;
+	uint32_t      *nfails;
 	isc_counter_t *qc;
 };
 
@@ -169,12 +172,17 @@ isc_result_t
 dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		     dns_message_t *message, unsigned int options,
-		     isc_task_t *task, isc_taskaction_t action, void *arg,
+		     isc_loop_t *loop, isc_job_cb cb, void *arg,
+		     uint32_t *nvalidations, uint32_t *nfails,
 		     isc_counter_t *qc, dns_validator_t **validatorp);
 /*%<
  * Start a DNSSEC validation.
  *
- * This validates a response to the question given by
+ * On success (which is guaranteed as long as the view has valid
+ * trust anchors), `validatorp` is updated to point to the new
+ * validator. The caller is responsible for detaching it.
+ *
+ * The validator will validate a response to the question given by
  * 'name' and 'type'.
  *
  * To validate a positive response, the response data is
@@ -197,8 +205,11 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  *
  * The validation is performed in the context of 'view'.
  *
- * When the validation finishes, a dns_validatorevent_t with
- * the given 'action' and 'arg' are sent to 'task'.
+ * When the validation finishes, the callback function 'cb' is
+ * called, passing a dns_valstatus_t object which contains a
+ * poiner to 'arg'. The caller is responsible for freeing this
+ * object.
+ *
  * Its 'result' field will be ISC_R_SUCCESS iff the
  * response was successfully proven to be either secure or
  * part of a known insecure domain.
@@ -228,17 +239,31 @@ dns_validator_cancel(dns_validator_t *validator);
  */
 
 void
-dns_validator_destroy(dns_validator_t **validatorp);
+dns_validator_shutdown(dns_validator_t *val);
 /*%<
- * Destroy a DNSSEC validator.
+ * Release the name associated with the DNSSEC validator.
  *
  * Requires:
- *\li	'*validatorp' points to a valid DNSSEC validator.
+ * \li	'val' points to a valid DNSSEC validator.
  * \li	The validator must have completed and sent its completion
- * 	event.
+ *	event.
  *
  * Ensures:
- *\li	All resources used by the validator are freed.
+ *\li	The name associated with the DNSSEC validator is released.
  */
+
+#if DNS_VALIDATOR_TRACE
+#define dns_validator_ref(ptr) \
+	dns_validator__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_validator_unref(ptr) \
+	dns_validator__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_validator_attach(ptr, ptrp) \
+	dns_validator__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_validator_detach(ptrp) \
+	dns_validator__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_validator);
+#else
+ISC_REFCOUNT_DECL(dns_validator);
+#endif
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.10 2024/09/22 00:13:57 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.11 2025/01/26 16:24:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -51,15 +50,15 @@ CHECKRESULT(isc_result_t result, const char *msg) {
 static int
 fromhex(char c) {
 	if (c >= '0' && c <= '9') {
-		return (c - '0');
+		return c - '0';
 	} else if (c >= 'a' && c <= 'f') {
-		return (c - 'a' + 10);
+		return c - 'a' + 10;
 	} else if (c >= 'A' && c <= 'F') {
-		return (c - 'A' + 10);
+		return c - 'A' + 10;
 	}
 
 	fprintf(stderr, "bad input format: %02x\n", c);
-	exit(EXIT_FAILURE);
+	exit(3);
 }
 
 static void
@@ -100,7 +99,7 @@ printmessage(dns_message_t *msg) {
 		isc_mem_put(mctx, buf, len);
 	}
 
-	return (result);
+	return result;
 }
 
 int
@@ -188,7 +187,7 @@ main(int argc, char *argv[]) {
 
 	if (rawdata) {
 		while (fread(&c, 1, 1, f) != 0) {
-			result = isc_buffer_reserve(&input, 1);
+			result = isc_buffer_reserve(input, 1);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			isc_buffer_putuint8(input, (uint8_t)c);
 		}
@@ -225,7 +224,7 @@ main(int argc, char *argv[]) {
 				c = fromhex(*rp++);
 				c *= 16;
 				c += fromhex(*rp++);
-				result = isc_buffer_reserve(&input, 1);
+				result = isc_buffer_reserve(input, 1);
 				RUNTIME_CHECK(result == ISC_R_SUCCESS);
 				isc_buffer_putuint8(input, (uint8_t)c);
 			}
@@ -263,7 +262,7 @@ main(int argc, char *argv[]) {
 	}
 	isc_mem_destroy(&mctx);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -273,7 +272,7 @@ process_message(isc_buffer_t *source) {
 	int i;
 
 	message = NULL;
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &message);
 
 	result = dns_message_parse(message, source, parseflags);
 	if (result == DNS_R_RECOVERABLE) {
@@ -306,8 +305,7 @@ process_message(isc_buffer_t *source) {
 			message->counts[i] = 0; /* Another hack XXX */
 		}
 
-		result = dns_compress_init(&cctx, -1, mctx);
-		CHECKRESULT(result, "dns_compress_init() failed");
+		dns_compress_init(&cctx, mctx, 0);
 
 		result = dns_message_renderbegin(message, &cctx, &buffer);
 		CHECKRESULT(result, "dns_message_renderbegin() failed");
@@ -343,7 +341,8 @@ process_message(isc_buffer_t *source) {
 			isc_mem_stats(mctx, stdout);
 		}
 
-		dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
+		dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE,
+				   &message);
 
 		result = dns_message_parse(message, &buffer, parseflags);
 		CHECKRESULT(result, "dns_message_parse failed");

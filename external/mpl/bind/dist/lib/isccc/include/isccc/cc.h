@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.7 2024/02/21 22:52:43 christos Exp $	*/
+/*	$NetBSD: cc.h,v 1.8 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,6 +40,7 @@
 #include <isc/lang.h>
 
 #include <dst/dst.h>
+
 #include <isccc/types.h>
 
 ISC_LANG_BEGINDECLS

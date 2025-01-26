@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.8 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.9 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -115,6 +115,12 @@ typedef struct dns_master_style dns_master_style_t;
 
 /*% Print expired cache entries. */
 #define DNS_STYLEFLAG_EXPIRED 0x200000000ULL
+
+/*%
+ * If set concurrently with DNS_STYLEFLAG_OMIT_CLASS, the class will
+ * be included when printing a new name.
+ */
+#define DNS_STYLEFLAG_CLASS_PERNAME 0x400000000ULL
 
 ISC_LANG_BEGINDECLS
 
@@ -247,7 +253,7 @@ isc_result_t
 dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 			     dns_dbversion_t	      *version,
 			     const dns_master_style_t *style, FILE *f,
-			     isc_task_t *task, dns_dumpdonefunc_t done,
+			     isc_loop_t *loop, dns_dumpdonefunc_t done,
 			     void *done_arg, dns_dumpctx_t **dctxp);
 
 isc_result_t
@@ -266,7 +272,6 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
  * Temporary dynamic memory may be allocated from 'mctx'.
  *
  * Require:
- *\li	'task' to be valid.
  *\li	'done' to be non NULL.
  *\li	'dctxp' to be non NULL && '*dctxp' to be NULL.
  *
@@ -283,7 +288,7 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 isc_result_t
 dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		     const dns_master_style_t *style, const char *filename,
-		     isc_task_t *task, dns_dumpdonefunc_t done, void *done_arg,
+		     isc_loop_t *loop, dns_dumpdonefunc_t done, void *done_arg,
 		     dns_dumpctx_t **dctxp, dns_masterformat_t format,
 		     dns_masterrawheader_t *header);
 
@@ -332,17 +337,6 @@ dns_master_questiontotext(const dns_name_t	   *owner_name,
 			  dns_rdataset_t	   *rdataset,
 			  const dns_master_style_t *style,
 			  isc_buffer_t		   *target);
-
-isc_result_t
-dns_master_dumpnodetostream(isc_mem_t *mctx, dns_db_t *db,
-			    dns_dbversion_t *version, dns_dbnode_t *node,
-			    const dns_name_t	     *name,
-			    const dns_master_style_t *style, FILE *f);
-
-isc_result_t
-dns_master_dumpnode(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
-		    dns_dbnode_t *node, const dns_name_t *name,
-		    const dns_master_style_t *style, const char *filename);
 
 dns_masterstyle_flags_t
 dns_master_styleflags(const dns_master_style_t *style);

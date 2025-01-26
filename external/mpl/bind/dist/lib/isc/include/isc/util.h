@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.16 2024/09/22 00:14:09 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.17 2025/01/26 16:25:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,17 +29,11 @@
  * ISC_ or isc_ to the name.
  */
 
+#include <isc/attributes.h>
+
 /***
  *** Clang Compatibility Macros
  ***/
-
-#if !defined(__has_attribute)
-#define __has_attribute(x) 0
-#endif /* if !defined(__has_attribute) */
-
-#if !defined(__has_c_attribute)
-#define __has_c_attribute(x) 0
-#endif /* if !defined(__has_c_attribute) */
 
 #if !defined(__has_feature)
 #define __has_feature(x) 0
@@ -50,12 +44,14 @@
  ***/
 
 /*%
- * Use this to hide unused function arguments.
+ * Legacy way how to hide unused function arguments, don't use in
+ * the new code, rather use the ISC_ATTR_UNUSED macro that expands
+ * to either C23's [[maybe_unused]] or __attribute__((__unused__)).
+ *
  * \code
  * int
- * foo(char *bar)
- * {
- *	UNUSED(bar);
+ * foo(ISC_ATTR_UNUSED char *bar) {
+ *         ...;
  * }
  * \endcode
  */
@@ -66,16 +62,6 @@
 #else /* if __GNUC__ >= 8 && !defined(__clang__) */
 #define ISC_NONSTRING
 #endif /* __GNUC__ */
-
-#if __has_c_attribute(fallthrough)
-#define FALLTHROUGH [[fallthrough]]
-#elif __GNUC__ >= 7 && !defined(__clang__)
-#define FALLTHROUGH __attribute__((fallthrough))
-#else
-/* clang-format off */
-#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */
-/* clang-format on */
-#endif
 
 #if HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR && HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
 #define ISC_CONSTRUCTOR __attribute__((constructor))
@@ -96,24 +82,37 @@
 #define ISC_CLAMP(v, x, y) ((v) < (x) ? (x) : ((v) > (y) ? (y) : (v)))
 
 /*%
- * Use this to remove the const qualifier of a variable to assign it to
- * a non-const variable or pass it as a non-const function argument ...
- * but only when you are sure it won't then be changed!
- * This is necessary to sometimes shut up some compilers
- * (as with gcc -Wcast-qual) when there is just no other good way to avoid the
- * situation.
+ * The UNCONST() macro can be used to omit warnings produced by certain
+ * compilers when operating with pointers declared with the const type qual-
+ * ifier in a context without such qualifier.  Examples include passing a
+ * pointer declared with the const qualifier to a function without such
+ * qualifier, and variable assignment from a const pointer to a non-const
+ * pointer.
+ *
+ * As the macro may hide valid errors, their usage is not recommended
+ * unless there is a well-thought reason for a cast.  A typical use case for
+ * __UNCONST() involve an API that does not follow the so-called ``const
+ * correctness'' even if it would be appropriate.
  */
-#define DE_CONST(konst, var)           \
-	do {                           \
-		union {                \
-			const void *k; \
-			void	   *v; \
-		} _u;                  \
-		_u.k = konst;          \
-		var = _u.v;            \
-	} while (0)
+#define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
+/*
+ * Optional return values, or out-arguments
+ */
+#define SET_IF_NOT_NULL(obj, val) \
+	if ((obj) != NULL) {      \
+		*(obj) = (val);   \
+	}
+
+/*%
+ * Get the allocation size for a struct with a flexible array member
+ * containing `count` elements. The struct is identified by a pointer,
+ * typically the one that points to (or will point to) the allocation.
+ */
+#define STRUCT_FLEX_SIZE(pointer, member, count) \
+	(sizeof(*(pointer)) + sizeof(*(pointer)->member) * (count))
 
 /*%
  * Use this in translation units that would otherwise be empty, to
@@ -124,8 +123,6 @@
 /*%
  * We use macros instead of calling the routines directly because
  * the capital letters make the locking stand out.
- * We RUNTIME_CHECK for success since in general there's no way
- * for us to continue if they fail.
  */
 
 #ifdef ISC_UTIL_TRACEON
@@ -137,43 +134,56 @@
 
 #include <isc/result.h> /* Contractual promise. */
 
+#define SPINLOCK(sp)                                                           \
+	{                                                                      \
+		ISC_UTIL_TRACE(fprintf(stderr, "SPINLOCKING %p %s %d\n", (sp), \
+				       __FILE__, __LINE__));                   \
+		isc_spinlock_lock((sp));                                       \
+		ISC_UTIL_TRACE(fprintf(stderr, "SPINLOCKED %p %s %d\n", (sp),  \
+				       __FILE__, __LINE__));                   \
+	}
+#define SPINUNLOCK(sp)                                                    \
+	{                                                                 \
+		isc_spinlock_unlock((sp));                                \
+		ISC_UTIL_TRACE(fprintf(stderr, "SPINUNLOCKED %p %s %d\n", \
+				       (sp), __FILE__, __LINE__));        \
+	}
+
 #define LOCK(lp)                                                           \
-	do {                                                               \
+	{                                                                  \
 		ISC_UTIL_TRACE(fprintf(stderr, "LOCKING %p %s %d\n", (lp), \
 				       __FILE__, __LINE__));               \
-		RUNTIME_CHECK(isc_mutex_lock((lp)) == ISC_R_SUCCESS);      \
+		isc_mutex_lock((lp));                                      \
 		ISC_UTIL_TRACE(fprintf(stderr, "LOCKED %p %s %d\n", (lp),  \
 				       __FILE__, __LINE__));               \
-	} while (0)
+	}
 #define UNLOCK(lp)                                                          \
-	do {                                                                \
-		RUNTIME_CHECK(isc_mutex_unlock((lp)) == ISC_R_SUCCESS);     \
+	{                                                                   \
+		isc_mutex_unlock((lp));                                     \
 		ISC_UTIL_TRACE(fprintf(stderr, "UNLOCKED %p %s %d\n", (lp), \
 				       __FILE__, __LINE__));                \
-	} while (0)
+	}
 
 #define BROADCAST(cvp)                                                        \
-	do {                                                                  \
+	{                                                                     \
 		ISC_UTIL_TRACE(fprintf(stderr, "BROADCAST %p %s %d\n", (cvp), \
 				       __FILE__, __LINE__));                  \
-		RUNTIME_CHECK(isc_condition_broadcast((cvp)) ==               \
-			      ISC_R_SUCCESS);                                 \
-	} while (0)
-#define SIGNAL(cvp)                                                          \
-	do {                                                                 \
-		ISC_UTIL_TRACE(fprintf(stderr, "SIGNAL %p %s %d\n", (cvp),   \
-				       __FILE__, __LINE__));                 \
-		RUNTIME_CHECK(isc_condition_signal((cvp)) == ISC_R_SUCCESS); \
-	} while (0)
+		isc_condition_broadcast((cvp));                               \
+	}
+#define SIGNAL(cvp)                                                        \
+	{                                                                  \
+		ISC_UTIL_TRACE(fprintf(stderr, "SIGNAL %p %s %d\n", (cvp), \
+				       __FILE__, __LINE__));               \
+		isc_condition_signal((cvp));                               \
+	}
 #define WAIT(cvp, lp)                                                         \
-	do {                                                                  \
+	{                                                                     \
 		ISC_UTIL_TRACE(fprintf(stderr, "WAIT %p LOCK %p %s %d\n",     \
 				       (cvp), (lp), __FILE__, __LINE__));     \
-		RUNTIME_CHECK(isc_condition_wait((cvp), (lp)) ==              \
-			      ISC_R_SUCCESS);                                 \
+		isc_condition_wait((cvp), (lp));                              \
 		ISC_UTIL_TRACE(fprintf(stderr, "WAITED %p LOCKED %p %s %d\n", \
 				       (cvp), (lp), __FILE__, __LINE__));     \
-	} while (0)
+	}
 
 /*
  * isc_condition_waituntil can return ISC_R_TIMEDOUT, so we
@@ -185,19 +195,38 @@
 #define WAITUNTIL(cvp, lp, tp) isc_condition_waituntil((cvp), (lp), (tp))
 
 #define RWLOCK(lp, t)                                                         \
-	do {                                                                  \
+	{                                                                     \
 		ISC_UTIL_TRACE(fprintf(stderr, "RWLOCK %p, %d %s %d\n", (lp), \
 				       (t), __FILE__, __LINE__));             \
-		RUNTIME_CHECK(isc_rwlock_lock((lp), (t)) == ISC_R_SUCCESS);   \
+		isc_rwlock_lock((lp), (t));                                   \
 		ISC_UTIL_TRACE(fprintf(stderr, "RWLOCKED %p, %d %s %d\n",     \
 				       (lp), (t), __FILE__, __LINE__));       \
-	} while (0)
-#define RWUNLOCK(lp, t)                                                       \
-	do {                                                                  \
-		ISC_UTIL_TRACE(fprintf(stderr, "RWUNLOCK %p, %d %s %d\n",     \
-				       (lp), (t), __FILE__, __LINE__));       \
-		RUNTIME_CHECK(isc_rwlock_unlock((lp), (t)) == ISC_R_SUCCESS); \
-	} while (0)
+	}
+#define RWUNLOCK(lp, t)                                                   \
+	{                                                                 \
+		ISC_UTIL_TRACE(fprintf(stderr, "RWUNLOCK %p, %d %s %d\n", \
+				       (lp), (t), __FILE__, __LINE__));   \
+		isc_rwlock_unlock((lp), (t));                             \
+	}
+
+#define RDLOCK(lp)   RWLOCK(lp, isc_rwlocktype_read)
+#define RDUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_read)
+#define WRLOCK(lp)   RWLOCK(lp, isc_rwlocktype_write)
+#define WRUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_write)
+
+#define UPGRADELOCK(lock, locktype)                                         \
+	{                                                                   \
+		if (locktype == isc_rwlocktype_read) {                      \
+			if (isc_rwlock_tryupgrade(lock) == ISC_R_SUCCESS) { \
+				locktype = isc_rwlocktype_write;            \
+			} else {                                            \
+				RWUNLOCK(lock, locktype);                   \
+				locktype = isc_rwlocktype_write;            \
+				RWLOCK(lock, locktype);                     \
+			}                                                   \
+		}                                                           \
+		INSIST(locktype == isc_rwlocktype_write);                   \
+	}
 
 /*
  * List Macros.
@@ -231,6 +260,12 @@
 #define __SANITIZE_ADDRESS__ 1
 #endif /* if __has_feature(address_sanitizer) */
 
+#if __SANITIZE_ADDRESS__
+#define ISC_NO_SANITIZE_ADDRESS __attribute__((no_sanitize("address")))
+#else /* if __SANITIZE_ADDRESS__ */
+#define ISC_NO_SANITIZE_ADDRESS
+#endif /* if __SANITIZE_ADDRESS__ */
+
 #if __has_feature(thread_sanitizer)
 #define __SANITIZE_THREAD__ 1
 #endif /* if __has_feature(thread_sanitizer) */
@@ -241,6 +276,7 @@
 #define ISC_NO_SANITIZE_THREAD
 #endif /* if __SANITIZE_THREAD__ */
 
+#ifndef __lint__
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6)
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #elif __has_feature(c_static_assert)
@@ -253,6 +289,9 @@
 #define STATIC_ASSERT(x, msg) \
 	enum { EXPAND_THEN_PASTE(ASSERT_line_, __LINE__) = 1 / ((msg) && (x)) }
 #endif /* if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6) */
+#else
+#define STATIC_ASSERT(cond, msg)
+#endif
 
 #ifdef UNIT_TESTING
 extern void
@@ -311,6 +350,8 @@ mock_assert(const int result, const char *const expression,
 /*
  * Errors
  */
+#include <errno.h> /* for errno */
+
 #include <isc/error.h>	/* Contractual promise. */
 #include <isc/strerr.h> /* for ISC_STRERRORSIZE */
 
@@ -348,11 +389,13 @@ mock_assert(const int result, const char *const expression,
 #endif /* UNIT_TESTING */
 
 /*%
- * Time
+ * Runtime check which logs the error value returned by a POSIX Threads
+ * function and the error string that corresponds to it
  */
-#define TIME_NOW(tp) RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)
-#define TIME_NOW_HIRES(tp) \
-	RUNTIME_CHECK(isc_time_now_hires((tp)) == ISC_R_SUCCESS)
+#define PTHREADS_RUNTIME_CHECK(func, ret)           \
+	if ((ret) != 0) {                           \
+		FATAL_SYSERROR(ret, "%s()", #func); \
+	}
 
 /*%
  * Alignment
@@ -362,11 +405,6 @@ mock_assert(const int result, const char *const expression,
 #else /* ifdef __GNUC__ */
 #define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((uintmax_t)(a) - 1))
 #endif /* ifdef __GNUC__ */
-
-/*%
- * Misc
- */
-#include <isc/deprecated.h>
 
 /*%
  * Swap

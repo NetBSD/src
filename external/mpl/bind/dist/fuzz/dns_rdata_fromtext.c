@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromtext.c,v 1.2 2024/02/21 22:51:58 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromtext.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 #include <isc/commandline.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -40,7 +39,7 @@ int
 LLVMFuzzerInitialize(int *argc, char ***argv) {
 	UNUSED(argc);
 	UNUSED(argv);
-	return (0);
+	return 0;
 }
 
 /* following code was copied from named-rrchecker */
@@ -71,7 +70,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	isc_buffer_add(&inbuf, size);
 	isc_buffer_setactive(&inbuf, size);
 
-	RUNTIME_CHECK(isc_lex_create(mctx, 256, &lex) == ISC_R_SUCCESS);
+	isc_lex_create(mctx, 256, &lex);
 
 	/*
 	 * Set up to lex DNS master file.
@@ -149,5 +148,5 @@ cleanup:
 	isc_lex_close(lex);
 	isc_lex_destroy(&lex);
 	isc_mem_destroy(&mctx);
-	return (0);
+	return 0;
 }

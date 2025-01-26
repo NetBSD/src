@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: iptable.c,v 1.7 2025/01/26 16:25:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,35 +22,21 @@
 
 #include <dns/acl.h>
 
-static void
-destroy_iptable(dns_iptable_t *dtab);
-
 /*
  * Create a new IP table and the underlying radix structure
  */
-isc_result_t
+void
 dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target) {
-	isc_result_t result;
-	dns_iptable_t *tab;
-
-	tab = isc_mem_get(mctx, sizeof(*tab));
-	tab->mctx = NULL;
+	dns_iptable_t *tab = isc_mem_get(mctx, sizeof(*tab));
+	*tab = (dns_iptable_t){
+		.references = ISC_REFCOUNT_INITIALIZER(1),
+		.magic = DNS_IPTABLE_MAGIC,
+	};
 	isc_mem_attach(mctx, &tab->mctx);
-	isc_refcount_init(&tab->refcount, 1);
-	tab->radix = NULL;
-	tab->magic = DNS_IPTABLE_MAGIC;
 
-	result = isc_radix_create(mctx, &tab->radix, RADIX_MAXBITS);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	isc_radix_create(mctx, &tab->radix, RADIX_MAXBITS);
 
 	*target = tab;
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	dns_iptable_detach(&tab);
-	return (result);
 }
 
 static bool dns_iptable_neg = false;
@@ -75,7 +61,7 @@ dns_iptable_addprefix(dns_iptable_t *tab, const isc_netaddr_t *addr,
 	result = isc_radix_insert(tab->radix, &node, NULL, &pfx);
 	if (result != ISC_R_SUCCESS) {
 		isc_refcount_destroy(&pfx.refcount);
-		return (result);
+		return result;
 	}
 
 	/* If a node already contains data, don't overwrite it */
@@ -98,7 +84,7 @@ dns_iptable_addprefix(dns_iptable_t *tab, const isc_netaddr_t *addr,
 	}
 
 	isc_refcount_destroy(&pfx.refcount);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -115,7 +101,7 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, bool pos) {
 		result = isc_radix_insert(tab->radix, &new_node, node, NULL);
 
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 
 		/*
@@ -140,37 +126,25 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, bool pos) {
 	RADIX_WALK_END;
 
 	tab->radix->num_added_node += max_node;
-	return (ISC_R_SUCCESS);
-}
-
-void
-dns_iptable_attach(dns_iptable_t *source, dns_iptable_t **target) {
-	REQUIRE(DNS_IPTABLE_VALID(source));
-	isc_refcount_increment(&source->refcount);
-	*target = source;
-}
-
-void
-dns_iptable_detach(dns_iptable_t **tabp) {
-	REQUIRE(tabp != NULL && DNS_IPTABLE_VALID(*tabp));
-	dns_iptable_t *tab = *tabp;
-	*tabp = NULL;
-
-	if (isc_refcount_decrement(&tab->refcount) == 1) {
-		isc_refcount_destroy(&tab->refcount);
-		destroy_iptable(tab);
-	}
+	return ISC_R_SUCCESS;
 }
 
 static void
-destroy_iptable(dns_iptable_t *dtab) {
+dns__iptable_destroy(dns_iptable_t *dtab) {
 	REQUIRE(DNS_IPTABLE_VALID(dtab));
+
+	dtab->magic = 0;
 
 	if (dtab->radix != NULL) {
 		isc_radix_destroy(dtab->radix, NULL);
 		dtab->radix = NULL;
 	}
 
-	dtab->magic = 0;
 	isc_mem_putanddetach(&dtab->mctx, dtab, sizeof(*dtab));
 }
+
+#if DNS_IPTABLE_TRACE
+ISC_REFCOUNT_TRACE_IMPL(dns_iptable, dns__iptable_destroy);
+#else
+ISC_REFCOUNT_IMPL(dns_iptable, dns__iptable_destroy);
+#endif

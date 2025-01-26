@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,10 +57,11 @@
 #define DNS_MASTER_CHECKMX     0x00000800
 #define DNS_MASTER_CHECKMXFAIL 0x00001000
 
-#define DNS_MASTER_RESIGN   0x00002000
-#define DNS_MASTER_KEY	    0x00004000 /*%< Loading a key zone master file. */
-#define DNS_MASTER_NOTTL    0x00008000 /*%< Don't require ttl. */
-#define DNS_MASTER_CHECKTTL 0x00010000 /*%< Check max-zone-ttl */
+#define DNS_MASTER_RESIGN    0x00002000
+#define DNS_MASTER_KEY	     0x00004000 /*%< Loading a key zone master file. */
+#define DNS_MASTER_NOTTL     0x00008000 /*%< Don't require ttl. */
+#define DNS_MASTER_CHECKTTL  0x00010000 /*%< Check max-zone-ttl */
+#define DNS_MASTER_CHECKSVCB 0x00020000 /*%< Check SVBC records */
 
 ISC_LANG_BEGINDECLS
 
@@ -137,44 +138,18 @@ dns_master_loadbuffer(isc_buffer_t *buffer, dns_name_t *top, dns_name_t *origin,
 		      dns_rdatacallbacks_t *callbacks, isc_mem_t *mctx);
 
 isc_result_t
-dns_master_loadlexer(isc_lex_t *lex, dns_name_t *top, dns_name_t *origin,
-		     dns_rdataclass_t zclass, unsigned int options,
-		     dns_rdatacallbacks_t *callbacks, isc_mem_t *mctx);
-
-isc_result_t
-dns_master_loadfileinc(const char *master_file, dns_name_t *top,
-		       dns_name_t *origin, dns_rdataclass_t zclass,
-		       unsigned int options, uint32_t resign,
-		       dns_rdatacallbacks_t *callbacks, isc_task_t *task,
-		       dns_loaddonefunc_t done, void *done_arg,
-		       dns_loadctx_t **ctxp, dns_masterincludecb_t include_cb,
-		       void *include_arg, isc_mem_t *mctx,
-		       dns_masterformat_t format, uint32_t maxttl);
-
-isc_result_t
-dns_master_loadstreaminc(FILE *stream, dns_name_t *top, dns_name_t *origin,
-			 dns_rdataclass_t zclass, unsigned int options,
-			 dns_rdatacallbacks_t *callbacks, isc_task_t *task,
-			 dns_loaddonefunc_t done, void *done_arg,
-			 dns_loadctx_t **ctxp, isc_mem_t *mctx);
-
-isc_result_t
-dns_master_loadbufferinc(isc_buffer_t *buffer, dns_name_t *top,
+dns_master_loadfileasync(const char *master_file, dns_name_t *top,
 			 dns_name_t *origin, dns_rdataclass_t zclass,
-			 unsigned int options, dns_rdatacallbacks_t *callbacks,
-			 isc_task_t *task, dns_loaddonefunc_t done,
-			 void *done_arg, dns_loadctx_t **ctxp, isc_mem_t *mctx);
-
-isc_result_t
-dns_master_loadlexerinc(isc_lex_t *lex, dns_name_t *top, dns_name_t *origin,
-			dns_rdataclass_t zclass, unsigned int options,
-			dns_rdatacallbacks_t *callbacks, isc_task_t *task,
-			dns_loaddonefunc_t done, void *done_arg,
-			dns_loadctx_t **ctxp, isc_mem_t *mctx);
+			 unsigned int options, uint32_t resign,
+			 dns_rdatacallbacks_t *callbacks, isc_loop_t *loop,
+			 dns_loaddonefunc_t done, void *done_arg,
+			 dns_loadctx_t **ctxp, dns_masterincludecb_t include_cb,
+			 void *include_arg, isc_mem_t *mctx,
+			 dns_masterformat_t format, uint32_t maxttl);
 
 /*%<
- * Loads a RFC1305 master file from a file, stream, buffer, or existing
- * lexer into rdatasets and then calls 'callbacks->commit' to commit the
+ * Loads a RFC1035 master file from a file, stream, or buffer
+ * into rdatasets and then calls 'callbacks->commit' to commit the
  * rdatasets.  Rdata memory belongs to dns_master_load and will be
  * reused / released when the callback completes.  dns_load_master will
  * abort if callbacks->commit returns any value other than ISC_R_SUCCESS.
@@ -194,14 +169,13 @@ dns_master_loadlexerinc(isc_lex_t *lex, dns_name_t *top, dns_name_t *origin,
  *
  * Requires:
  *\li	'master_file' points to a valid string.
- *\li	'lexer' points to a valid lexer.
  *\li	'top' points to a valid name.
  *\li	'origin' points to a valid name.
  *\li	'callbacks->commit' points to a valid function.
  *\li	'callbacks->error' points to a valid function.
  *\li	'callbacks->warn' points to a valid function.
  *\li	'mctx' points to a valid memory context.
- *\li	'task' and 'done' to be valid.
+ *\li	'loop' and 'done' to be valid.
  *\li	'lmgr' to be valid.
  *\li	'ctxp != NULL && ctxp == NULL'.
  *
@@ -216,7 +190,6 @@ dns_master_loadlexerinc(isc_lex_t *lex, dns_name_t *top, dns_name_t *origin,
  *\li	DNS_R_NOOWNER failed to specify a ownername.
  *\li	DNS_R_NOTTL failed to specify a ttl.
  *\li	DNS_R_BADCLASS record class did not match zone class.
- *\li	DNS_R_CONTINUE load still in progress (dns_master_load*inc() only).
  *\li	Any dns_rdata_fromtext() error code.
  *\li	Any error code from callbacks->commit().
  */

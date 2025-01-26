@@ -1,4 +1,4 @@
-/*	$NetBSD: gencheck.c,v 1.6 2024/02/21 22:51:34 christos Exp $	*/
+/*	$NetBSD: gencheck.c,v 1.7 2025/01/26 16:24:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <isc/print.h>
-
 #define USAGE "usage: gencheck <filename>\n"
 
 static int
@@ -36,11 +34,11 @@ check(const char *buf, ssize_t count, size_t *start) {
 			continue;
 		}
 		if (buf[i] != chars[*start]) {
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 int
@@ -88,5 +86,5 @@ out:
 		close(fd);
 	}
 
-	return (ret);
+	return ret;
 }

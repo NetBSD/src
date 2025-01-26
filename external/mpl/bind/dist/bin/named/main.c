@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,31 +21,30 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <uv.h>
 
 #ifdef HAVE_DNSTAP
 #include <protobuf-c/protobuf-c.h>
 #endif
 
-#include <isc/app.h>
 #include <isc/attributes.h>
 #include <isc/backtrace.h>
 #include <isc/commandline.h>
 #include <isc/dir.h>
 #include <isc/file.h>
+#include <isc/fips.h>
 #include <isc/hash.h>
 #include <isc/httpd.h>
 #include <isc/managers.h>
 #include <isc/netmgr.h>
 #include <isc/os.h>
-#include <isc/print.h>
-#include <isc/resource.h>
 #include <isc/result.h>
+#include <isc/signal.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
+#include <isc/uv.h>
+#include <isc/xml.h>
 
 #include <dns/dispatch.h>
 #include <dns/dyndb.h>
@@ -89,7 +88,12 @@
 #endif /* ifdef HAVE_LIBSCF */
 
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
 #include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+#include <openssl/err.h>
+#include <openssl/provider.h>
+#endif
 #ifdef HAVE_LIBXML2
 #include <libxml/parser.h>
 #include <libxml/xmlversion.h>
@@ -97,23 +101,22 @@
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif /* ifdef HAVE_ZLIB */
-
 #ifdef HAVE_LIBNGHTTP2
 #include <nghttp2/nghttp2.h>
 #endif
 
-#include <ns/pfilter.h>
+/* On DragonFly BSD the header does not provide jemalloc API */
+#if defined(HAVE_MALLOC_NP_H) && !defined(__DragonFly__)
+#include <malloc_np.h>
+#include <sys/malloc.h> /* For M_VERSION */
+#elif defined(HAVE_JEMALLOC)
+#include <jemalloc/jemalloc.h>
+#endif
+
 /*
  * Include header files for database drivers here.
  */
 /* #include "xxdb.h" */
-
-/*
- * The maximum number of stack frames to dump on assertion failure.
- */
-#ifndef BACKTRACE_MAXFRAME
-#define BACKTRACE_MAXFRAME 128
-#endif /* ifndef BACKTRACE_MAXFRAME */
 
 extern unsigned int dns_zone_mkey_hour;
 extern unsigned int dns_zone_mkey_day;
@@ -150,6 +153,10 @@ static bool transferstuck = false;
  */
 static bool disable6 = false;
 static bool disable4 = false;
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+static OSSL_PROVIDER *fips = NULL, *base = NULL;
+#endif
 
 void
 named_main_earlywarning(const char *format, ...) {
@@ -199,9 +206,6 @@ assertion_failed(const char *file, int line, isc_assertiontype_t type,
 static void
 assertion_failed(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond) {
-	void *tracebuf[BACKTRACE_MAXFRAME];
-	int nframes;
-
 	/*
 	 * Handle assertion failures.
 	 */
@@ -213,24 +217,12 @@ assertion_failed(const char *file, int line, isc_assertiontype_t type,
 		 */
 		isc_assertion_setcallback(NULL);
 
-		nframes = isc_backtrace(tracebuf, BACKTRACE_MAXFRAME);
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_MAIN, ISC_LOG_CRITICAL,
-			      "%s:%d: %s(%s) failed%s", file, line,
-			      isc_assertion_typetotext(type), cond,
-			      (nframes > 0) ? ", back trace" : "");
-		if (nframes > 0) {
-			char **strs = isc_backtrace_symbols(tracebuf, nframes);
-			if (strs != NULL) {
-				for (int i = 0; i < nframes; i++) {
-					isc_log_write(named_g_lctx,
-						      NAMED_LOGCATEGORY_GENERAL,
-						      NAMED_LOGMODULE_MAIN,
-						      ISC_LOG_CRITICAL, "%s",
-						      strs[i]);
-				}
-			}
-		}
+			      "%s:%d: %s(%s) failed", file, line,
+			      isc_assertion_typetotext(type), cond);
+		isc_backtrace_log(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+				  NAMED_LOGMODULE_MAIN, ISC_LOG_CRITICAL);
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_MAIN, ISC_LOG_CRITICAL,
 			      "exiting (due to assertion failure)");
@@ -322,7 +314,7 @@ usage(void) {
 			"[-p port] [-s]\n"
 			"             [-S sockets] [-t chrootdir] [-u "
 			"username] [-U listeners]\n"
-			"             [-X lockfile] [-m "
+			"             [-m "
 			"{usage|trace|record|size|mctx}]\n"
 			"             [-M fill|nofill]\n"
 			"usage: named [-v|-V|-C]\n");
@@ -416,7 +408,7 @@ parse_int(char *arg, const char *desc) {
 	if (tmp < 0 || tmp != ltmp) {
 		named_main_earlyfatal("%s '%s' out of range", desc, arg);
 	}
-	return (tmp);
+	return tmp;
 }
 
 static struct flag_def {
@@ -475,7 +467,7 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 static void
 list_dnssec_algorithms(isc_buffer_t *b) {
 	for (dst_algorithm_t i = DST_ALG_UNKNOWN; i < DST_MAX_ALGS; i++) {
-		if (i == DST_ALG_DH || i == DST_ALG_GSSAPI ||
+		if (i == DST_ALG_GSSAPI ||
 		    (i >= DST_ALG_HMAC_FIRST && i <= DST_ALG_HMAC_LAST))
 		{
 			continue;
@@ -553,11 +545,7 @@ format_supported_algorithms(void (*emit)(isc_buffer_t *b)) {
 	(*emit)(&b);
 
 	isc_buffer_init(&b, buf, sizeof(buf));
-	isc_buffer_printf(&b, "TKEY mode 2 support (Diffie-Hellman): %s",
-			  (dst_algorithm_supported(DST_ALG_DH) &&
-			   dst_algorithm_supported(DST_ALG_HMACMD5))
-				  ? "yes"
-				  : "non");
+	isc_buffer_printf(&b, "TKEY mode 2 support (Diffie-Hellman): %s", "no");
 	(*emit)(&b);
 
 	isc_buffer_init(&b, buf, sizeof(buf));
@@ -600,9 +588,6 @@ printversion(bool verbose) {
 #endif /* ifdef __GNUC__ */
 #endif /* if defined(__ICC) || defined(__INTEL_COMPILER) */
 #endif /* ifdef __clang__ */
-#ifdef _MSC_VER
-	printf("compiled by MSVC %d\n", _MSC_VER);
-#endif /* ifdef _MSC_VER */
 #ifdef __SUNPRO_C
 	printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
 #endif /* ifdef __SUNPRO_C */
@@ -620,6 +605,14 @@ printversion(bool verbose) {
 	printf("compiled with libuv version: %d.%d.%d\n", UV_VERSION_MAJOR,
 	       UV_VERSION_MINOR, UV_VERSION_PATCH);
 	printf("linked to libuv version: %s\n", uv_version_string());
+	printf("compiled with %s version: %s\n", RCU_FLAVOR, RCU_VERSION);
+#if defined(JEMALLOC_VERSION)
+	printf("compiled with jemalloc version: %u.%u.%u\n",
+	       JEMALLOC_VERSION_MAJOR, JEMALLOC_VERSION_MINOR,
+	       JEMALLOC_VERSION_BUGFIX);
+#elif defined(M_VERSION)
+	printf("compiled with system jemalloc version: %u\n", M_VERSION);
+#endif
 #if HAVE_LIBNGHTTP2
 	nghttp2_info *nginfo = NULL;
 	printf("compiled with libnghttp2 version: %s\n", NGHTTP2_VERSION);
@@ -678,10 +671,8 @@ printversion(bool verbose) {
 	printf("default paths:\n");
 	printf("  named configuration:  %s\n", named_g_conffile);
 	printf("  rndc configuration:   %s\n", rndcconf);
-	printf("  DNSSEC root key:      %s\n", named_g_defaultbindkeys);
 	printf("  nsupdate session key: %s\n", named_g_defaultsessionkeyfile);
 	printf("  named PID file:       %s\n", named_g_defaultpidfile);
-	printf("  named lock file:      %s\n", named_g_defaultlockfile);
 #if defined(HAVE_GEOIP2)
 #define RTC(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
 	RTC(cfg_parser_create(mctx, named_g_lctx, &parser));
@@ -959,9 +950,8 @@ parse_command_line(int argc, char *argv[]) {
 			parse_T_opt(isc_commandline_argument);
 			break;
 		case 'U':
-			named_g_udpdisp = parse_int(isc_commandline_argument,
-						    "number of UDP listeners "
-						    "per interface");
+			/* Obsolete.  No longer in use.  Ignore. */
+			named_main_earlywarning("option '-U' has been removed");
 			break;
 		case 'u':
 			named_g_username = isc_commandline_argument;
@@ -976,17 +966,33 @@ parse_command_line(int argc, char *argv[]) {
 			/* Obsolete. No longer in use. Ignore. */
 			break;
 		case 'X':
-			named_g_forcelock = true;
-			if (strcasecmp(isc_commandline_argument, "none") != 0) {
-				named_g_defaultlockfile =
-					isc_commandline_argument;
-			} else {
-				named_g_defaultlockfile = NULL;
-			}
+			/* Obsolete. No longer in use. Abort. */
+			named_main_earlyfatal("option '-X' has been removed");
 			break;
 		case 'F':
-			/* Reserved for FIPS mode */
-			FALLTHROUGH;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+			fips = OSSL_PROVIDER_load(NULL, "fips");
+			if (fips == NULL) {
+				ERR_clear_error();
+				named_main_earlyfatal(
+					"Failed to load FIPS provider");
+			}
+			base = OSSL_PROVIDER_load(NULL, "base");
+			if (base == NULL) {
+				OSSL_PROVIDER_unload(fips);
+				ERR_clear_error();
+				named_main_earlyfatal(
+					"Failed to load base provider");
+			}
+#endif
+			if (isc_fips_mode()) { /* Already in FIPS mode. */
+				break;
+			}
+			if (isc_fips_set_mode(1) != ISC_R_SUCCESS) {
+				named_main_earlyfatal(
+					"setting FIPS mode failed");
+			}
+			break;
 		case '?':
 			usage();
 			if (isc_commandline_option == '?') {
@@ -1020,51 +1026,31 @@ parse_command_line(int argc, char *argv[]) {
 
 static isc_result_t
 create_managers(void) {
-	isc_result_t result;
-
+	/*
+	 * Set the default named_g_cpus if it was not set from the command line
+	 */
 	INSIST(named_g_cpus_detected > 0);
-
 	if (named_g_cpus == 0) {
 		named_g_cpus = named_g_cpus_detected;
 	}
+
 	isc_log_write(
 		named_g_lctx, NAMED_LOGCATEGORY_GENERAL, NAMED_LOGMODULE_SERVER,
 		ISC_LOG_INFO, "found %u CPU%s, using %u worker thread%s",
 		named_g_cpus_detected, named_g_cpus_detected == 1 ? "" : "s",
 		named_g_cpus, named_g_cpus == 1 ? "" : "s");
-	if (named_g_udpdisp == 0) {
-		named_g_udpdisp = named_g_cpus_detected;
-	}
-	if (named_g_udpdisp > named_g_cpus) {
-		named_g_udpdisp = named_g_cpus;
-	}
-	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-		      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
-		      "using %u UDP listener%s per interface", named_g_udpdisp,
-		      named_g_udpdisp == 1 ? "" : "s");
 
-	result = isc_managers_create(named_g_mctx, named_g_cpus,
-				     0 /* quantum */, &named_g_netmgr,
-				     &named_g_taskmgr, &named_g_timermgr);
-	if (result != ISC_R_SUCCESS) {
-		return (result);
-	}
+	isc_managers_create(&named_g_mctx, named_g_cpus, &named_g_loopmgr,
+			    &named_g_netmgr);
 
 	isc_nm_maxudp(named_g_netmgr, maxudp);
 
-	return (ISC_R_SUCCESS);
-}
-
-static void
-destroy_managers(void) {
-	isc_managers_destroy(&named_g_netmgr, &named_g_taskmgr,
-			     &named_g_timermgr);
+	return ISC_R_SUCCESS;
 }
 
 static void
 setup(void) {
 	isc_result_t result;
-	isc_resourcevalue_t old_openfiles;
 	ns_server_t *sctx;
 #ifdef HAVE_LIBSCF
 	char *instance = NULL;
@@ -1132,16 +1118,6 @@ setup(void) {
 		named_os_daemonize();
 	}
 
-	/*
-	 * We call isc_app_start() here as some versions of FreeBSD's fork()
-	 * destroys all the signal handling it sets up.
-	 */
-	result = isc_app_start();
-	if (result != ISC_R_SUCCESS) {
-		named_main_earlyfatal("isc_app_start() failed: %s",
-				      isc_result_totext(result));
-	}
-
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
 		      "starting %s%s <id:%s>", PACKAGE_STRING,
@@ -1176,11 +1152,6 @@ setup(void) {
 #endif /* ifdef __GNUC__ */
 #endif /* if defined(__ICC) || defined(__INTEL_COMPILER) */
 #endif /* ifdef __clang__ */
-#ifdef _MSC_VER
-	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
-		      "compiled by MSVC %d", _MSC_VER);
-#endif /* ifdef _MSC_VER */
 #ifdef __SUNPRO_C
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
@@ -1210,6 +1181,30 @@ setup(void) {
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
 		      "linked to libuv version: %s", uv_version_string());
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "compiled with %s version: %s", RCU_FLAVOR, RCU_VERSION);
+#if defined(JEMALLOC_VERSION)
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "compiled with jemalloc version: %u.%u.%u",
+		      JEMALLOC_VERSION_MAJOR, JEMALLOC_VERSION_MINOR,
+		      JEMALLOC_VERSION_BUGFIX);
+#elif defined(M_VERSION)
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "compiled with system jemalloc version: %u", M_VERSION);
+#endif
+#if HAVE_LIBNGHTTP2
+	nghttp2_info *nginfo = NULL;
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "compiled with libnghttp2 version: %s", NGHTTP2_VERSION);
+	nginfo = nghttp2_version(1);
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "linked to libnghttp2 version: %s", nginfo->version_str);
+#endif
 #ifdef HAVE_LIBXML2
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
@@ -1235,6 +1230,21 @@ setup(void) {
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
 		      "linked to zlib version: %s", zlibVersion());
 #endif /* if defined(HAVE_ZLIB) && defined(ZLIB_VERSION) */
+#if defined(HAVE_GEOIP2)
+	/* Unfortunately, no version define on link time */
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "linked to maxminddb version: %s", MMDB_lib_version());
+#endif /* if defined(HAVE_GEOIP2) */
+#if defined(HAVE_DNSTAP)
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "compiled with protobuf-c version: %s",
+		      PROTOBUF_C_VERSION);
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "linked to protobuf-c version: %s", protobuf_c_version());
+#endif /* if defined(HAVE_DNSTAP) */
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
 		      "----------------------------------------------------");
@@ -1255,38 +1265,10 @@ setup(void) {
 		      "----------------------------------------------------");
 
 	/*
-	 * Get the initial resource limits.
-	 */
-	RUNTIME_CHECK(isc_resource_getlimit(isc_resource_stacksize,
-					    &named_g_initstacksize) ==
-		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_resource_getlimit(isc_resource_datasize,
-					    &named_g_initdatasize) ==
-		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_resource_getlimit(isc_resource_coresize,
-					    &named_g_initcoresize) ==
-		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_resource_getlimit(isc_resource_openfiles,
-					    &named_g_initopenfiles) ==
-		      ISC_R_SUCCESS);
-
-	/*
 	 * System resources cannot effectively be tuned on some systems.
 	 * Raise the limit in such cases for safety.
 	 */
-	old_openfiles = named_g_initopenfiles;
 	named_os_adjustnofile();
-	RUNTIME_CHECK(isc_resource_getlimit(isc_resource_openfiles,
-					    &named_g_initopenfiles) ==
-		      ISC_R_SUCCESS);
-	if (old_openfiles != named_g_initopenfiles) {
-		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-			      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
-			      "adjusted limit on open files from "
-			      "%" PRIu64 " to "
-			      "%" PRIu64,
-			      old_openfiles, named_g_initopenfiles);
-	}
 
 	/*
 	 * If the named configuration filename is relative, prepend the current
@@ -1308,11 +1290,7 @@ setup(void) {
 	/*
 	 * Record the server's startup time.
 	 */
-	result = isc_time_now(&named_g_boottime);
-	if (result != ISC_R_SUCCESS) {
-		named_main_earlyfatal("isc_time_now() failed: %s",
-				      isc_result_totext(result));
-	}
+	named_g_boottime = isc_time_now();
 
 	result = create_managers();
 	if (result != ISC_R_SUCCESS) {
@@ -1401,8 +1379,6 @@ setup(void) {
 
 static void
 cleanup(void) {
-	destroy_managers();
-
 	if (named_g_mapped != NULL) {
 		dns_acl_detach(&named_g_mapped);
 	}
@@ -1463,7 +1439,7 @@ named_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 			UNEXPECTED_ERROR("scf_handle_create() failed: %s",
 					 scf_strerror(scf_error()));
 		}
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (scf_handle_bind(h) == -1) {
@@ -1472,7 +1448,7 @@ named_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 					 scf_strerror(scf_error()));
 		}
 		scf_handle_destroy(h);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if ((namelen = scf_myname(h, NULL, 0)) == -1) {
@@ -1481,7 +1457,7 @@ named_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 					 scf_strerror(scf_error()));
 		}
 		scf_handle_destroy(h);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if ((instance = isc_mem_allocate(mctx, namelen + 1)) == NULL) {
@@ -1489,7 +1465,7 @@ named_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 				 "allocation failed: %s",
 				 isc_result_totext(ISC_R_NOMEMORY));
 		scf_handle_destroy(h);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (scf_myname(h, instance, namelen + 1) == -1) {
@@ -1499,12 +1475,12 @@ named_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 		}
 		scf_handle_destroy(h);
 		isc_mem_free(mctx, instance);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	scf_handle_destroy(h);
 	*ins_name = instance;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 #endif /* HAVE_LIBSCF */
 
@@ -1520,10 +1496,6 @@ main(int argc, char *argv[]) {
 #ifdef HAVE_GPERFTOOLS_PROFILER
 	(void)ProfilerStart(NULL);
 #endif /* ifdef HAVE_GPERFTOOLS_PROFILER */
-
-#ifdef HAVE_LIBXML2
-	xmlInitParser();
-#endif /* HAVE_LIBXML2 */
 
 	/*
 	 * Technically, this call is superfluous because on startup of the main
@@ -1562,8 +1534,6 @@ main(int argc, char *argv[]) {
 
 	parse_command_line(argc, argv);
 
-	pfilter_enable();
-
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {
 		named_fuzz_setup();
@@ -1591,30 +1561,20 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	isc_mem_create(&named_g_mctx);
-	isc_mem_setname(named_g_mctx, "main");
-
 	setup();
+	isc_mem_setname(named_g_mctx, "main");
 	INSIST(named_g_server != NULL);
 
 	/*
-	 * Start things running and then wait for a shutdown request
-	 * or reload.
+	 * Start things running
 	 */
-	do {
-		result = isc_app_run();
+	isc_signal_start(named_g_server->sighup);
 
-		if (result == ISC_R_RELOAD) {
-			named_server_reloadwanted(named_g_server);
-		} else if (result != ISC_R_SUCCESS) {
-			UNEXPECTED_ERROR("isc_app_run(): %s",
-					 isc_result_totext(result));
-			/*
-			 * Force exit.
-			 */
-			result = ISC_R_SUCCESS;
-		}
-	} while (result != ISC_R_SUCCESS);
+	/*
+	 * Pause the loop manager in fatal.
+	 */
+	named_g_loopmgr_running = true;
+	isc_loopmgr_run(named_g_loopmgr);
 
 #ifdef HAVE_LIBSCF
 	if (named_smf_want_disable == 1) {
@@ -1647,24 +1607,35 @@ main(int argc, char *argv[]) {
 			(void)isc_stdio_close(fp);
 		}
 	}
-	isc_mem_destroy(&named_g_mctx);
+
+	isc_managers_destroy(&named_g_mctx, &named_g_loopmgr, &named_g_netmgr);
+
+#if ENABLE_LEAK_DETECTION
+	isc__tls_setdestroycheck(true);
+	isc__uv_setdestroycheck(true);
+	isc__xml_setdestroycheck(true);
+#endif
+
 	isc_mem_checkdestroyed(stderr);
 
 	named_main_setmemstats(NULL);
-
-	isc_app_finish();
 
 	named_os_closedevnull();
 
 	named_os_shutdown();
 
-#ifdef HAVE_LIBXML2
-	xmlCleanupParser();
-#endif /* HAVE_LIBXML2 */
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+	if (base != NULL) {
+		OSSL_PROVIDER_unload(base);
+	}
+	if (fips != NULL) {
+		OSSL_PROVIDER_unload(fips);
+	}
+#endif
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 	ProfilerStop();
 #endif /* ifdef HAVE_GPERFTOOLS_PROFILER */
 
-	return (0);
+	return 0;
 }

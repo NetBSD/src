@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.8 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.9 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,26 +54,26 @@
 #define DNS_KEYFLAG_RESERVEDMASK2 0xFFFF /*%< no bits defined here */
 
 /* The Algorithm field of the KEY and SIG RR's is an integer, {1..254} */
-#define DNS_KEYALG_RSAMD5	1 /*%< RSA with MD5 */
-#define DNS_KEYALG_RSA		1 /*%< Used just for tagging */
-#define DNS_KEYALG_DH		2 /*%< Diffie Hellman KEY */
-#define DNS_KEYALG_DSA		3 /*%< DSA KEY */
-#define DNS_KEYALG_NSEC3DSA	6
-#define DNS_KEYALG_DSS		DNS_ALG_DSA
-#define DNS_KEYALG_ECC		4
-#define DNS_KEYALG_RSASHA1	5
-#define DNS_KEYALG_NSEC3RSASHA1 7
-#define DNS_KEYALG_RSASHA256	8
-#define DNS_KEYALG_RSASHA512	10
-#define DNS_KEYALG_ECCGOST	12
-#define DNS_KEYALG_ECDSA256	13
-#define DNS_KEYALG_ECDSA384	14
-#define DNS_KEYALG_ED25519	15
-#define DNS_KEYALG_ED448	16
-#define DNS_KEYALG_INDIRECT	252
-#define DNS_KEYALG_PRIVATEDNS	253
-#define DNS_KEYALG_PRIVATEOID	254 /*%< Key begins with OID giving alg */
-#define DNS_KEYALG_MAX		255
+#define DNS_KEYALG_RSAMD5	 1 /*%< RSA with MD5 */
+#define DNS_KEYALG_RSA		 1 /*%< Used just for tagging */
+#define DNS_KEYALG_DH_DEPRECATED 2 /*%< deprecated */
+#define DNS_KEYALG_DSA		 3 /*%< DSA KEY */
+#define DNS_KEYALG_NSEC3DSA	 6
+#define DNS_KEYALG_DSS		 DNS_ALG_DSA
+#define DNS_KEYALG_ECC		 4
+#define DNS_KEYALG_RSASHA1	 5
+#define DNS_KEYALG_NSEC3RSASHA1	 7
+#define DNS_KEYALG_RSASHA256	 8
+#define DNS_KEYALG_RSASHA512	 10
+#define DNS_KEYALG_ECCGOST	 12
+#define DNS_KEYALG_ECDSA256	 13
+#define DNS_KEYALG_ECDSA384	 14
+#define DNS_KEYALG_ED25519	 15
+#define DNS_KEYALG_ED448	 16
+#define DNS_KEYALG_INDIRECT	 252
+#define DNS_KEYALG_PRIVATEDNS	 253
+#define DNS_KEYALG_PRIVATEOID	 254 /*%< Key begins with OID giving alg */
+#define DNS_KEYALG_MAX		 255
 
 /* Protocol values  */
 #define DNS_KEYPROTO_RESERVED 0

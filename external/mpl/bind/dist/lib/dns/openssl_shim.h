@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.h,v 1.2 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: openssl_shim.h,v 1.3 2025/01/26 16:25:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <openssl/dh.h>
 #include <openssl/ecdsa.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/opensslv.h>
 #include <openssl/rsa.h>
 
@@ -28,6 +29,41 @@
 #ifndef RSA_MAX_PUBEXP_BITS
 #define RSA_MAX_PUBEXP_BITS 35
 #endif /* ifndef RSA_MAX_PUBEXP_BITS */
+
+#if !HAVE_BN_GENCB_NEW
+/* These are new in OpenSSL 1.1.0. */
+static inline BN_GENCB *
+BN_GENCB_new(void) {
+	return OPENSSL_malloc(sizeof(BN_GENCB));
+}
+
+static inline void
+BN_GENCB_free(BN_GENCB *cb) {
+	if (cb == NULL) {
+		return;
+	}
+	OPENSSL_free(cb);
+}
+
+static inline void *
+BN_GENCB_get_arg(BN_GENCB *cb) {
+	return cb->arg;
+}
+#endif /* !HAVE_BN_GENCB_NEW */
+
+#if !HAVE_EVP_PKEY_GET0_RSA && OPENSSL_VERSION_NUMBER < 0x10100000L
+static inline const RSA *
+EVP_PKEY_get0_RSA(const EVP_PKEY *pkey) {
+	return pkey->type == EVP_PKEY_RSA ? pkey->pkey.rsa : NULL;
+}
+#endif
+
+#if !HAVE_EVP_PKEY_GET0_EC_KEY && OPENSSL_VERSION_NUMBER < 0x10100000L
+static inline const EC_KEY *
+EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey) {
+	return pkey->type == EVP_PKEY_EC ? pkey->pkey.ec : NULL;
+}
+#endif
 
 #if !HAVE_RSA_SET0_KEY && OPENSSL_VERSION_NUMBER < 0x30000000L
 int
@@ -61,22 +97,6 @@ ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 int
 ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 #endif /* !HAVE_ECDSA_SIG_GET0 */
-
-#if !HAVE_DH_GET0_KEY
-void
-DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
-
-int
-DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
-
-void
-DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
-
-int
-DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-
-#define DH_clear_flags(d, f) ((d)->flags &= ~(f))
-#endif /* !HAVE_DH_GET0_KEY */
 
 #if !HAVE_ERR_GET_ERROR_ALL
 unsigned long

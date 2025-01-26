@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.3 2025/01/26 16:25:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,6 @@
 #include <isc/commandline.h>
 #include <isc/mem.h>
 #include <isc/nonce.h>
-#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/result.h>
 #include <isc/util.h>
@@ -81,17 +80,17 @@ igamc(double a, double x) {
 	double pkm1, pkm2, qkm1, qkm2;
 
 	if ((x <= 0) || (a <= 0)) {
-		return (1.0);
+		return 1.0;
 	}
 
 	if ((x < 1.0) || (x < a)) {
-		return (1.0 - igam(a, x));
+		return 1.0 - igam(a, x);
 	}
 
 	ax = a * log(x) - x - lgamma(a);
 	if (ax < -MAXLOG) {
 		print_error("# igamc: UNDERFLOW, ax=%f\n", ax);
-		return (0.0);
+		return 0.0;
 	}
 	ax = exp(ax);
 
@@ -134,7 +133,7 @@ igamc(double a, double x) {
 		}
 	} while (t > MACHEP);
 
-	return (ans * ax);
+	return ans * ax;
 }
 
 static double
@@ -142,18 +141,18 @@ igam(double a, double x) {
 	double ans, ax, c, r;
 
 	if ((x <= 0) || (a <= 0)) {
-		return (0.0);
+		return 0.0;
 	}
 
 	if ((x > 1.0) && (x > a)) {
-		return (1.0 - igamc(a, x));
+		return 1.0 - igamc(a, x);
 	}
 
 	/* Compute  x**a * exp(-x) / md_gamma(a)  */
 	ax = a * log(x) - x - lgamma(a);
 	if (ax < -MAXLOG) {
 		print_error("# igam: UNDERFLOW, ax=%f\n", ax);
-		return (0.0);
+		return 0.0;
 	}
 	ax = exp(ax);
 
@@ -168,7 +167,7 @@ igam(double a, double x) {
 		ans += c;
 	} while (c / ans > MACHEP);
 
-	return (ans * ax / a);
+	return ans * ax / a;
 }
 
 static int8_t scounts_table[65536];
@@ -193,7 +192,7 @@ scount_calculate(uint16_t n) {
 		n >>= 1;
 	}
 
-	return (sc);
+	return sc;
 }
 
 static uint8_t
@@ -213,7 +212,7 @@ bitcount_calculate(uint16_t n) {
 		n >>= 1;
 	}
 
-	return (bc);
+	return bc;
 }
 
 static void
@@ -255,7 +254,7 @@ matrix_binaryrank(uint32_t *bits, size_t rows, size_t cols) {
 				}
 			}
 
-			return (rank);
+			return rank;
 		}
 
 		rank++;
@@ -276,7 +275,7 @@ matrix_binaryrank(uint32_t *bits, size_t rows, size_t cols) {
 		rt++;
 	}
 
-	return (rank);
+	return rank;
 }
 
 static void
@@ -420,7 +419,7 @@ monobit(uint16_t *values, size_t length) {
 	s_obs = abs(scount) / sqrt(numbits);
 	p_value = erfc(s_obs / sqrt(2.0));
 
-	return (p_value);
+	return p_value;
 }
 
 /*
@@ -462,7 +461,7 @@ runs(uint16_t *values, size_t length) {
 	 * cases.
 	 */
 	if (fabs(pi - 0.5) >= tau) {
-		return (0.0);
+		return 0.0;
 	}
 
 	/* Compute v_obs */
@@ -493,7 +492,7 @@ runs(uint16_t *values, size_t length) {
 
 	p_value = erfc(numer / denom);
 
-	return (p_value);
+	return p_value;
 }
 
 /*
@@ -523,7 +522,7 @@ blockfrequency(uint16_t *values, size_t length) {
 	assert_true(numblocks < 100);
 	assert_true(numbits >= (mbits * numblocks));
 
-	pi = isc_mem_get(mctx, numblocks * sizeof(double));
+	pi = isc_mem_cget(mctx, numblocks, sizeof(double));
 	assert_non_null(pi);
 
 	for (i = 0; i < numblocks; i++) {
@@ -546,11 +545,11 @@ blockfrequency(uint16_t *values, size_t length) {
 
 	chi_square *= 4 * mbits;
 
-	isc_mem_put(mctx, pi, numblocks * sizeof(double));
+	isc_mem_cput(mctx, pi, numblocks, sizeof(double));
 
 	p_value = igamc(numblocks * 0.5, chi_square * 0.5);
 
-	return (p_value);
+	return p_value;
 }
 
 /*
@@ -636,12 +635,19 @@ binarymatrixrank(uint16_t *values, size_t length) {
 
 	p_value = exp(-chi_square * 0.5);
 
-	return (p_value);
+	return p_value;
 }
 
 /***
  *** Tests for isc_random32() function
  ***/
+
+/* Ensure the RNG has been automatically seeded. */
+ISC_RUN_TEST_IMPL(isc_random32_initialized) {
+	UNUSED(state);
+
+	assert_int_not_equal(isc_random32(), 0);
+}
 
 /* Monobit test for the RANDOM */
 ISC_RUN_TEST_IMPL(isc_random32_monobit) {
@@ -767,6 +773,7 @@ ISC_RUN_TEST_IMPL(isc_nonce_bytes_binarymatrixrank) {
 
 ISC_TEST_LIST_START
 
+ISC_TEST_ENTRY(isc_random32_initialized)
 ISC_TEST_ENTRY(isc_random32_monobit)
 ISC_TEST_ENTRY(isc_random32_runs)
 ISC_TEST_ENTRY(isc_random32_blockfrequency)

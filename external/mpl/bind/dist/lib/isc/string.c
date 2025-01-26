@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.8 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.9 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,6 +57,14 @@
 
 #include <isc/string.h> /* IWYU pragma: keep */
 
+/*
+ * We undef _GNU_SOURCE above to get the POSIX strerror_r()
+ */
+int
+isc_string_strerror_r(int errnum, char *buf, size_t buflen) {
+	return strerror_r(errnum, buf, buflen);
+}
+
 #if !defined(HAVE_STRLCPY)
 size_t
 strlcpy(char *dst, const char *src, size_t size) {
@@ -82,7 +90,7 @@ strlcpy(char *dst, const char *src, size_t size) {
 		}
 	}
 
-	return (s - src - 1); /* count does not include NUL */
+	return s - src - 1; /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCPY) */
 
@@ -102,7 +110,7 @@ strlcat(char *dst, const char *src, size_t size) {
 	n = size - dlen;
 
 	if (n == 0U) {
-		return (dlen + strlen(s));
+		return dlen + strlen(s);
 	}
 	while (*s != '\0') {
 		if (n != 1U) {
@@ -113,7 +121,7 @@ strlcat(char *dst, const char *src, size_t size) {
 	}
 	*d = '\0';
 
-	return (dlen + (s - src)); /* count does not include NUL */
+	return dlen + (s - src); /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCAT) */
 
@@ -127,19 +135,16 @@ strnstr(const char *s, const char *find, size_t slen) {
 		len = strlen(find);
 		do {
 			do {
-				if (slen-- < 1 || (sc = *s++) == '\0')
-					return (NULL);
+				if (slen-- < 1 || (sc = *s++) == '\0') {
+					return NULL;
+				}
 			} while (sc != c);
-			if (len > slen)
-				return (NULL);
+			if (len > slen) {
+				return NULL;
+			}
 		} while (strncmp(s, find, len) != 0);
 		s--;
 	}
-	return ((char *)s);
+	return (char *)s;
 }
 #endif
-
-int
-isc_string_strerror_r(int errnum, char *buf, size_t buflen) {
-	return (strerror_r(errnum, buf, buflen));
-}

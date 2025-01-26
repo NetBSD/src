@@ -1,4 +1,4 @@
-/*	$NetBSD: query_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: query_test.c,v 1.3 2025/01/26 16:25:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,27 +33,12 @@
 #include <dns/zone.h>
 
 #include <ns/client.h>
-#include <ns/events.h>
 #include <ns/hooks.h>
 #include <ns/query.h>
 #include <ns/server.h>
 #include <ns/stats.h>
 
 #include <tests/ns.h>
-
-static int
-setup_test(void **state) {
-	isc__nm_force_tid(0);
-	setup_server(state);
-	return (0);
-}
-
-static int
-teardown_test(void **state) {
-	isc__nm_force_tid(-1);
-	teardown_server(state);
-	return (0);
-}
 
 /* can be used for client->sendcb to avoid disruption on sending a response */
 static void
@@ -62,8 +47,8 @@ send_noop(isc_buffer_t *buffer) {
 }
 
 /*****
-***** ns__query_sfcache() tests
-*****/
+ ***** ns__query_sfcache() tests
+ *****/
 
 /*%
  * Structure containing parameters for ns__query_sfcache_test().
@@ -138,8 +123,8 @@ run_sfcache_test(const ns__query_sfcache_test_params_t *test) {
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		dns_badcache_add(qctx->client->view->failcache, dns_rootname,
-				 dns_rdatatype_ns, true,
-				 test->cache_entry_flags, &expire);
+				 dns_rdatatype_ns, test->cache_entry_flags,
+				 isc_time_seconds(&expire));
 	}
 
 	/*
@@ -171,9 +156,7 @@ run_sfcache_test(const ns__query_sfcache_test_params_t *test) {
 }
 
 /* test ns__query_sfcache() */
-ISC_RUN_TEST_IMPL(ns_query_sfcache) {
-	size_t i;
-
+ISC_LOOP_TEST_IMPL(ns__query_sfcache) {
 	const ns__query_sfcache_test_params_t tests[] = {
 		/*
 		 * Sanity check for an empty SERVFAIL cache.
@@ -244,11 +227,12 @@ ISC_RUN_TEST_IMPL(ns_query_sfcache) {
 		},
 	};
 
-	UNUSED(state);
-
-	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		run_sfcache_test(&tests[i]);
 	}
+
+	isc_loop_teardown(mainloop, shutdown_interfacemgr, NULL);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /*****
@@ -264,19 +248,15 @@ typedef struct {
 	dns_rdatatype_t qtype;	      /* QTYPE */
 	unsigned int qflags;	      /* query flags */
 	bool disable_name_checks;     /* if set to true, owner
-				       * name
-				       *          checks will
+				       * name checks will
 				       * be disabled for the
-				       *          view created
-				       * */
+				       * view created
+				       */
 	bool recursive_service;	      /* if set to true, the view
-				       *          created will
-				       * have a cache
-				       *          database
-				       * attached */
+				       * created will have a cache
+				       * database attached */
 	const char *auth_zone_origin; /* origin name of the zone
-				       * the
-				       * created view will be
+				       * the created view will be
 				       * authoritative for */
 	const char *auth_zone_path;   /* path to load the
 				       * authoritative
@@ -313,7 +293,6 @@ run_start_test(const ns__query_start_test_params_t *test) {
 	/*
 	 * Interrupt execution if query_lookup() or ns_query_done() is called.
 	 */
-
 	ns_hooktable_create(mctx, &query_hooks);
 	ns_hook_add(query_hooks, mctx, NS_QUERY_LOOKUP_BEGIN, &hook);
 	ns_hook_add(query_hooks, mctx, NS_QUERY_DONE_BEGIN, &hook);
@@ -435,7 +414,7 @@ run_start_test(const ns__query_start_test_params_t *test) {
 }
 
 /* test ns__query_start() */
-ISC_RUN_TEST_IMPL(ns_query_start) {
+ISC_LOOP_TEST_IMPL(ns__query_start) {
 	size_t i;
 
 	const ns__query_start_test_params_t tests[] = {
@@ -596,11 +575,12 @@ ISC_RUN_TEST_IMPL(ns_query_start) {
 		},
 	};
 
-	UNUSED(state);
-
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		run_start_test(&tests[i]);
 	}
+
+	isc_loop_teardown(mainloop, shutdown_interfacemgr, NULL);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /*****
@@ -627,7 +607,7 @@ typedef struct hookasync_data {
 				       * asynchronous process */
 	bool canceled;		      /* true if the query has been canceled  */
 	isc_result_t start_result;    /* result of 'runasync' */
-	ns_hook_resevent_t *rev;      /* resume event sent on completion */
+	ns_hook_resume_t *rev;	      /* resume state sent on completion */
 	query_ctx_t qctx;	      /* shallow copy of qctx passed to hook */
 	ns_hookpoint_t hookpoint;     /* specifies where to resume */
 	ns_hookpoint_t lasthookpoint; /* remember the last hook point called */
@@ -656,34 +636,39 @@ cancel_hookactx(ns_hookasync_t *ctx) {
 /* 'runasync' callback passed to ns_query_hookasync */
 static isc_result_t
 test_hookasync(query_ctx_t *qctx, isc_mem_t *memctx, void *arg,
-	       isc_task_t *task, isc_taskaction_t action, void *evarg,
+	       isc_loop_t *loop, isc_job_cb cb, void *evarg,
 	       ns_hookasync_t **ctxp) {
 	hookasync_data_t *asdata = arg;
 	ns_hookasync_t *ctx = NULL;
-	ns_hook_resevent_t *rev = NULL;
+	ns_hook_resume_t *rev = NULL;
 
 	if (asdata->start_result != ISC_R_SUCCESS) {
-		return (asdata->start_result);
+		return asdata->start_result;
 	}
 
 	ctx = isc_mem_get(memctx, sizeof(*ctx));
-	rev = (ns_hook_resevent_t *)isc_event_allocate(
-		memctx, task, NS_EVENT_HOOKASYNCDONE, action, evarg,
-		sizeof(*rev));
+	rev = isc_mem_get(memctx, sizeof(*rev));
+	*rev = (ns_hook_resume_t){
+		.hookpoint = asdata->hookpoint,
+		.origresult = DNS_R_NXDOMAIN,
+		.saved_qctx = qctx,
+		.ctx = ctx,
+		.loop = loop,
+		.cb = cb,
+		.arg = evarg,
+	};
 
-	rev->hookpoint = asdata->hookpoint;
-	rev->origresult = DNS_R_NXDOMAIN;
-	rev->saved_qctx = qctx;
-	rev->ctx = ctx;
 	asdata->rev = rev;
 
-	*ctx = (ns_hookasync_t){ .private = asdata };
+	*ctx = (ns_hookasync_t){
+		.destroy = destroy_hookactx,
+		.cancel = cancel_hookactx,
+		.private = asdata,
+	};
 	isc_mem_attach(memctx, &ctx->mctx);
-	ctx->destroy = destroy_hookactx;
-	ctx->cancel = cancel_hookactx;
 
 	*ctxp = ctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -710,11 +695,11 @@ hook_async_common(void *arg, void *data, isc_result_t *resultp,
 		}
 	} else {
 		/*
-		 * Resume from the completion of async event.
-		 * fetchhandle should have been detached so that we can start
-		 * another async event or DNS recursive resolution.
+		 * Resume from the completion of async event.  The fetch handle
+		 * should have been detached so that we can start another async
+		 * event or DNS recursive resolution.
 		 */
-		INSIST(qctx->client->fetchhandle == NULL);
+		INSIST(HANDLE_RECTYPE_HOOK(qctx->client) == NULL);
 		asdata->async = false;
 		switch (hookpoint) {
 		case NS_QUERY_GOT_ANSWER_BEGIN:
@@ -728,121 +713,118 @@ hook_async_common(void *arg, void *data, isc_result_t *resultp,
 	}
 
 	*resultp = ISC_R_UNSET;
-	return (NS_HOOK_RETURN);
+	return NS_HOOK_RETURN;
 }
 
 static ns_hookresult_t
 hook_async_query_setup(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_SETUP));
+	return hook_async_common(arg, data, resultp, NS_QUERY_SETUP);
 }
 
 static ns_hookresult_t
 hook_async_query_start_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_START_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_START_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_lookup_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_LOOKUP_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_LOOKUP_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_resume_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_RESUME_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_RESUME_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_got_answer_begin(void *arg, void *data,
 				  isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_GOT_ANSWER_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_GOT_ANSWER_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_respond_any_begin(void *arg, void *data,
 				   isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_RESPOND_ANY_BEGIN));
+	return hook_async_common(arg, data, resultp,
+				 NS_QUERY_RESPOND_ANY_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_addanswer_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_ADDANSWER_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_ADDANSWER_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_notfound_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_NOTFOUND_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_NOTFOUND_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_prep_delegation_begin(void *arg, void *data,
 				       isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_PREP_DELEGATION_BEGIN));
+	return hook_async_common(arg, data, resultp,
+				 NS_QUERY_PREP_DELEGATION_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_zone_delegation_begin(void *arg, void *data,
 				       isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_ZONE_DELEGATION_BEGIN));
+	return hook_async_common(arg, data, resultp,
+				 NS_QUERY_ZONE_DELEGATION_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_delegation_begin(void *arg, void *data,
 				  isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_DELEGATION_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_DELEGATION_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_delegation_recurse_begin(void *arg, void *data,
 					  isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_DELEGATION_RECURSE_BEGIN));
+	return hook_async_common(arg, data, resultp,
+				 NS_QUERY_DELEGATION_RECURSE_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_nodata_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_NODATA_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_NODATA_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_nxdomain_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_NXDOMAIN_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_NXDOMAIN_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_ncache_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_NCACHE_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_NCACHE_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_cname_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_CNAME_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_CNAME_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_dname_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_DNAME_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_DNAME_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_respond_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_RESPOND_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_RESPOND_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_response_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp,
-				  NS_QUERY_PREP_RESPONSE_BEGIN));
+	return hook_async_common(arg, data, resultp,
+				 NS_QUERY_PREP_RESPONSE_BEGIN);
 }
 
 static ns_hookresult_t
 hook_async_query_done_begin(void *arg, void *data, isc_result_t *resultp) {
-	return (hook_async_common(arg, data, resultp, NS_QUERY_DONE_BEGIN));
+	return hook_async_common(arg, data, resultp, NS_QUERY_DONE_BEGIN);
 }
 
 /*
@@ -856,7 +838,7 @@ ns_test_qctx_destroy_hook(void *arg, void *data, isc_result_t *resultp) {
 
 	asdata->qctx = *qctx; /* remember passed ctx for inspection */
 	*resultp = ISC_R_UNSET;
-	return (NS_HOOK_CONTINUE);
+	return NS_HOOK_CONTINUE;
 }
 
 static void
@@ -877,7 +859,6 @@ run_hookasync_test(const ns__query_hookasync_test_params_t *test) {
 		.action = ns_test_qctx_destroy_hook,
 		.action_data = &asdata,
 	};
-	isc_quota_t *quota = NULL;
 	isc_statscounter_t srvfail_cnt;
 	bool expect_servfail = false;
 
@@ -915,12 +896,12 @@ run_hookasync_test(const ns__query_hookasync_test_params_t *test) {
 	 */
 	isc_quota_max(&sctx->recursionquota, 1);
 	if (!test->quota_ok) {
-		result = isc_quota_attach(&sctx->recursionquota, &quota);
+		result = isc_quota_acquire(&sctx->recursionquota);
 		INSIST(result == ISC_R_SUCCESS);
 	}
 
 	/* Remember SERVFAIL counter */
-	srvfail_cnt = ns_stats_get_counter(qctx->client->sctx->nsstats,
+	srvfail_cnt = ns_stats_get_counter(qctx->client->manager->sctx->nsstats,
 					   ns_statscounter_servfail);
 
 	/*
@@ -964,16 +945,14 @@ run_hookasync_test(const ns__query_hookasync_test_params_t *test) {
 	/* If async event has started, manually invoke the 'done' event. */
 	if (asdata.async) {
 		qctx->client->now = 0; /* set to sentinel before resume */
-		asdata.rev->ev_action(asdata.rev->ev_sender,
-				      (isc_event_t *)asdata.rev);
+		asdata.rev->cb(asdata.rev);
 
 		/* Confirm necessary cleanup has been performed. */
 		INSIST(qctx->client->query.hookactx == NULL);
 		INSIST(qctx->client->state == NS_CLIENTSTATE_WORKING);
-		INSIST(qctx->client->recursionquota == NULL);
-		INSIST(ns_stats_get_counter(qctx->client->sctx->nsstats,
-					    ns_statscounter_recursclients) ==
-		       0);
+		INSIST(ns_stats_get_counter(
+			       qctx->client->manager->sctx->nsstats,
+			       ns_statscounter_recursclients) == 0);
 		INSIST(!ISC_LINK_LINKED(qctx->client, rlink));
 		if (!test->do_cancel) {
 			/*
@@ -993,9 +972,9 @@ run_hookasync_test(const ns__query_hookasync_test_params_t *test) {
 	 * Also, the last-generated qctx should have detach_client being true.
 	 */
 	if (expect_servfail) {
-		INSIST(ns_stats_get_counter(qctx->client->sctx->nsstats,
-					    ns_statscounter_servfail) ==
-		       srvfail_cnt + 1);
+		INSIST(ns_stats_get_counter(
+			       qctx->client->manager->sctx->nsstats,
+			       ns_statscounter_servfail) == srvfail_cnt + 1);
 		if (test->do_cancel) {
 			/* qctx was created on resume and copied in hook */
 			INSIST(asdata.qctx.detach_client);
@@ -1010,15 +989,13 @@ run_hookasync_test(const ns__query_hookasync_test_params_t *test) {
 	 */
 	ns_test_qctx_destroy(&qctx);
 	ns_hooktable_free(mctx, (void **)&ns__hook_table);
-	if (quota != NULL) {
-		isc_quota_detach(&quota);
+	if (!test->quota_ok) {
+		isc_quota_release(&sctx->recursionquota);
 	}
 }
 
-ISC_RUN_TEST_IMPL(ns_query_hookasync) {
+ISC_LOOP_TEST_IMPL(ns__query_hookasync) {
 	size_t i;
-
-	UNUSED(state);
 
 	const ns__query_hookasync_test_params_t tests[] = {
 		{
@@ -1255,6 +1232,9 @@ ISC_RUN_TEST_IMPL(ns_query_hookasync) {
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		run_hookasync_test(&tests[i]);
 	}
+
+	isc_loop_teardown(mainloop, shutdown_interfacemgr, NULL);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /*****
@@ -1281,7 +1261,7 @@ typedef struct {
 typedef struct hookasync_e2e_data {
 	bool async;		   /* true if in a hook-triggered
 				    * asynchronous process */
-	ns_hook_resevent_t *rev;   /* resume event sent on completion */
+	ns_hook_resume_t *rev;	   /* resume state sent on completion */
 	ns_hookpoint_t hookpoint;  /* specifies where to resume */
 	isc_result_t start_result; /* result of 'runasync' */
 	dns_rcode_t expected_rcode;
@@ -1297,33 +1277,38 @@ cancel_e2ehookactx(ns_hookasync_t *ctx) {
 /* 'runasync' callback passed to ns_query_hookasync */
 static isc_result_t
 test_hookasync_e2e(query_ctx_t *qctx, isc_mem_t *memctx, void *arg,
-		   isc_task_t *task, isc_taskaction_t action, void *evarg,
+		   isc_loop_t *loop, isc_job_cb cb, void *evarg,
 		   ns_hookasync_t **ctxp) {
 	ns_hookasync_t *ctx = NULL;
-	ns_hook_resevent_t *rev = NULL;
+	ns_hook_resume_t *rev = NULL;
 	hookasync_e2e_data_t *asdata = arg;
 
 	if (asdata->start_result != ISC_R_SUCCESS) {
-		return (asdata->start_result);
+		return asdata->start_result;
 	}
 
 	ctx = isc_mem_get(memctx, sizeof(*ctx));
-	rev = (ns_hook_resevent_t *)isc_event_allocate(
-		memctx, task, NS_EVENT_HOOKASYNCDONE, action, evarg,
-		sizeof(*rev));
+	rev = isc_mem_get(memctx, sizeof(*rev));
+	*rev = (ns_hook_resume_t){
+		.hookpoint = asdata->hookpoint,
+		.saved_qctx = qctx,
+		.ctx = ctx,
+		.loop = loop,
+		.cb = cb,
+		.arg = evarg,
+	};
 
-	rev->hookpoint = asdata->hookpoint;
-	rev->saved_qctx = qctx;
-	rev->ctx = ctx;
 	asdata->rev = rev;
 
-	*ctx = (ns_hookasync_t){ .private = asdata };
+	*ctx = (ns_hookasync_t){
+		.destroy = destroy_hookactx,
+		.cancel = cancel_e2ehookactx,
+		.private = asdata,
+	};
 	isc_mem_attach(memctx, &ctx->mctx);
-	ctx->destroy = destroy_hookactx;
-	ctx->cancel = cancel_e2ehookactx;
 
 	*ctxp = ctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static ns_hookresult_t
@@ -1337,18 +1322,18 @@ hook_async_e2e(void *arg, void *data, isc_result_t *resultp) {
 		result = ns_query_hookasync(qctx, test_hookasync_e2e, asdata);
 		if (result != ISC_R_SUCCESS) {
 			*resultp = result;
-			return (NS_HOOK_RETURN);
+			return NS_HOOK_RETURN;
 		}
 
 		asdata->async = true;
 		asdata->rev->origresult = *resultp; /* save it for resume */
 		*resultp = ISC_R_UNSET;
-		return (NS_HOOK_RETURN);
+		return NS_HOOK_RETURN;
 	} else {
 		/* Resume from the completion of async event */
 		asdata->async = false;
 		/* Don't touch 'resultp' */
-		return (NS_HOOK_CONTINUE);
+		return NS_HOOK_CONTINUE;
 	}
 }
 
@@ -1364,7 +1349,7 @@ hook_donesend(void *arg, void *data, isc_result_t *resultp) {
 	INSIST(qctx->client->message->rcode == asdata->expected_rcode);
 	asdata->done = true; /* Let the test know this hook is called */
 	*resultp = ISC_R_UNSET;
-	return (NS_HOOK_CONTINUE);
+	return NS_HOOK_CONTINUE;
 }
 
 static void
@@ -1428,8 +1413,7 @@ run_hookasync_e2e_test(const ns__query_hookasync_e2e_test_params_t *test) {
 		 * If async event has started, manually invoke the done event.
 		 */
 		INSIST(asdata.async);
-		asdata.rev->ev_action(asdata.rev->ev_sender,
-				      (isc_event_t *)asdata.rev);
+		asdata.rev->cb(asdata.rev);
 
 		/*
 		 * Usually 'async' is reset to false on the 2nd call to
@@ -1448,9 +1432,7 @@ run_hookasync_e2e_test(const ns__query_hookasync_e2e_test_params_t *test) {
 	ns_hooktable_free(mctx, (void **)&ns__hook_table);
 }
 
-ISC_RUN_TEST_IMPL(ns_query_hookasync_e2e) {
-	UNUSED(state);
-
+ISC_LOOP_TEST_IMPL(ns__query_hookasync_e2e) {
 	const ns__query_hookasync_e2e_test_params_t tests[] = {
 		{
 			NS_TEST_ID("positive answer"),
@@ -1489,14 +1471,16 @@ ISC_RUN_TEST_IMPL(ns_query_hookasync_e2e) {
 	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		run_hookasync_e2e_test(&tests[i]);
 	}
+
+	isc_loop_teardown(mainloop, shutdown_interfacemgr, NULL);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 ISC_TEST_LIST_START
-
-ISC_TEST_ENTRY_CUSTOM(ns_query_sfcache, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(ns_query_start, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(ns_query_hookasync, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(ns_query_hookasync_e2e, setup_test, teardown_test)
-
+ISC_TEST_ENTRY_CUSTOM(ns__query_sfcache, setup_server, teardown_server)
+ISC_TEST_ENTRY_CUSTOM(ns__query_start, setup_server, teardown_server)
+ISC_TEST_ENTRY_CUSTOM(ns__query_hookasync, setup_server, teardown_server)
+ISC_TEST_ENTRY_CUSTOM(ns__query_hookasync_e2e, setup_server, teardown_server)
 ISC_TEST_LIST_END
+
 ISC_TEST_MAIN

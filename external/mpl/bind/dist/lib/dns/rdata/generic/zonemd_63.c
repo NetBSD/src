@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.6 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.7 2025/01/26 16:25:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -74,9 +74,9 @@ fromtext_zonemd(ARGS_FROMTEXT) {
 	result = isc_hex_tobuffer(lexer, target, length);
 	/* Minimum length of digest is 12 octets. */
 	if (isc_buffer_usedlength(target) - isc_buffer_usedlength(&save) < 12) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -139,7 +139,7 @@ totext_zonemd(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -150,7 +150,6 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 
@@ -162,7 +161,7 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	 * correct length.
 	 */
 	if (sr.length < 18) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 
 	switch (sr.base[5]) {
@@ -177,7 +176,7 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	}
 
 	if (digestlen != 0 && sr.length < 6 + digestlen) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 
 	/*
@@ -191,7 +190,7 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	}
 
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
@@ -204,7 +203,7 @@ towire_zonemd(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -220,7 +219,7 @@ compare_zonemd(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -247,7 +246,7 @@ fromstruct_zonemd(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(zonemd->scheme, target));
 	RETERR(uint8_tobuffer(zonemd->digest_type, target));
 
-	return (mem_tobuffer(target, zonemd->digest, zonemd->length));
+	return mem_tobuffer(target, zonemd->digest, zonemd->length);
 }
 
 static isc_result_t
@@ -274,12 +273,8 @@ tostruct_zonemd(ARGS_TOSTRUCT) {
 	zonemd->length = region.length;
 
 	zonemd->digest = mem_maybedup(mctx, region.base, region.length);
-	if (zonemd->digest == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	zonemd->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -308,7 +303,7 @@ additionaldata_zonemd(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -319,7 +314,7 @@ digest_zonemd(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -331,7 +326,7 @@ checkowner_zonemd(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -342,12 +337,12 @@ checknames_zonemd(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_zonemd(ARGS_COMPARE) {
-	return (compare_zonemd(rdata1, rdata2));
+	return compare_zonemd(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_ZONEMD_63_C */

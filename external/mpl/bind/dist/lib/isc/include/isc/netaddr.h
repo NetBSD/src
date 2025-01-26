@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.h,v 1.7 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.8 2025/01/26 16:25:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,19 +19,18 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 #include <isc/lang.h>
 #include <isc/net.h>
 #include <isc/types.h>
 
-#include <sys/types.h>
-#include <sys/un.h>
-
 ISC_LANG_BEGINDECLS
 
 /*
  * Any updates to this structure should also be applied in
- * contrib/modules/dlz/dlz_minmal.h.
+ * https://gitlab.isc.org/isc-projects/dlz-modules/-/raw/main/modules/include/dlz_minimal.h
  */
 struct isc_netaddr {
 	unsigned int family;
@@ -112,9 +111,6 @@ isc_netaddr_fromin(isc_netaddr_t *netaddr, const struct in_addr *ina);
 
 void
 isc_netaddr_fromin6(isc_netaddr_t *netaddr, const struct in6_addr *ina6);
-
-isc_result_t
-isc_netaddr_frompath(isc_netaddr_t *netaddr, const char *path);
 
 void
 isc_netaddr_setzone(isc_netaddr_t *netaddr, uint32_t zone);

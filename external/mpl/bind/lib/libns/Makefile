@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 2024/04/05 01:16:00 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2025/01/26 16:25:53 christos Exp $
 
-NOLINT=yes	# XXX
 LIB=ns
 #USE_SHLIBDIR=   yes
 

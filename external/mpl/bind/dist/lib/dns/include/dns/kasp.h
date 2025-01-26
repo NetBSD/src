@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.h,v 1.7 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: kasp.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,9 +32,17 @@
 #include <isc/mutex.h>
 #include <isc/refcount.h>
 
+#include <dns/dnssec.h>
+#include <dns/keystore.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
+
+/* For storing a list of digest types */
+struct dns_kasp_digest {
+	dns_dsdigest_t digest;
+	ISC_LINK(dns_kasp_digest_t) link;
+};
 
 /* Stores a KASP key */
 struct dns_kasp_key {
@@ -47,10 +55,13 @@ struct dns_kasp_key {
 	ISC_LINK(struct dns_kasp_key) link;
 
 	/* Configuration */
-	uint32_t lifetime;
-	uint8_t	 algorithm;
-	int	 length;
-	uint8_t	 role;
+	dns_keystore_t *keystore;
+	uint32_t	lifetime;
+	uint8_t		algorithm;
+	int		length;
+	uint8_t		role;
+	uint16_t	tag_min;
+	uint16_t	tag_max;
 };
 
 struct dns_kasp_nsec3param {
@@ -83,8 +94,11 @@ struct dns_kasp {
 	uint32_t signatures_validity_dnskey;
 
 	/* Configuration: Keys */
-	dns_kasp_keylist_t keys;
-	dns_ttl_t	   dnskey_ttl;
+	bool		      offlineksk;
+	bool		      cdnskey;
+	dns_kasp_digestlist_t digests;
+	dns_kasp_keylist_t    keys;
+	dns_ttl_t	      dnskey_ttl;
 
 	/* Configuration: Denial of existence */
 	bool		      nsec3;
@@ -98,6 +112,7 @@ struct dns_kasp {
 	/* Zone settings */
 	dns_ttl_t zone_max_ttl;
 	uint32_t  zone_propagation_delay;
+	bool	  inline_signing;
 
 	/* Parent settings */
 	dns_ttl_t parent_ds_ttl;
@@ -410,6 +425,30 @@ dns_kasp_setretiresafety(dns_kasp_t *kasp, uint32_t value);
  *\li   'kasp' is a valid, thawed kasp.
  */
 
+bool
+dns_kasp_inlinesigning(dns_kasp_t *kasp);
+/*%<
+ * Should we use inline-signing for this DNSSEC policy?
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, frozen kasp.
+ *
+ * Returns:
+ *
+ *\li   true or false.
+ */
+
+void
+dns_kasp_setinlinesigning(dns_kasp_t *kasp, bool value);
+/*%<
+ * Set inline-signing.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, thawed kasp.
+ */
+
 dns_ttl_t
 dns_kasp_zonemaxttl(dns_kasp_t *kasp, bool fallback);
 /*%<
@@ -639,6 +678,21 @@ dns_kasp_key_lifetime(dns_kasp_key_t *key);
  *
  */
 
+dns_keystore_t *
+dns_kasp_key_keystore(dns_kasp_key_t *key);
+/*%<
+ * The keystore reference of this key.
+ *
+ * Requires:
+ *
+ *\li  key != NULL
+ *
+ * Returns:
+ *
+ *\li  Keystore of key, or NULL if zone's key-directory is used.
+ *
+ */
+
 bool
 dns_kasp_key_ksk(dns_kasp_key_t *key);
 /*%<
@@ -669,6 +723,44 @@ dns_kasp_key_zsk(dns_kasp_key_t *key);
  *\li  True, if the key role has DNS_KASP_KEY_ROLE_ZSK set.
  *\li  False, otherwise.
  *
+ */
+
+uint16_t
+dns_kasp_key_tagmin(dns_kasp_key_t *key);
+/*%<
+ * Returns the minimum permitted key tag value.
+ *
+ * Requires:
+ *
+ *\li  key != NULL
+ */
+
+uint16_t
+dns_kasp_key_tagmax(dns_kasp_key_t *key);
+/*%<
+ * Returns the maximum permitted key tag value.
+ *
+ * Requires:
+ *
+ *\li  key != NULL
+ */
+
+bool
+dns_kasp_key_match(dns_kasp_key_t *key, dns_dnsseckey_t *dkey);
+/*%<
+ * Does the DNSSEC key 'dkey' match the policy parameters from the kasp key
+ * 'key'? A DNSSEC key matches if it has the same algorithm and size, and if
+ * it has the same role as the kasp key configuration.
+ *
+ * Requires:
+ *
+ *\li  key != NULL
+ *\li  dkey != NULL
+ *
+ * Returns:
+ *
+ *\li  True, if the DNSSEC key matches.
+ *\li  False, otherwise.
  */
 
 bool
@@ -740,6 +832,79 @@ dns_kasp_setnsec3param(dns_kasp_t *kasp, uint8_t iter, bool optout,
  *\li  'kasp' is a valid, unfrozen kasp.
  *\li  'kasp->nsec3' is true.
  *
+ */
+
+bool
+dns_kasp_offlineksk(dns_kasp_t *kasp);
+/*%<
+ * Should we be using Offline KSK key management?
+ *
+ * Requires:
+ *
+ *\li  'kasp' is a valid, frozen kasp.
+ *
+ */
+
+void
+dns_kasp_setofflineksk(dns_kasp_t *kasp, bool offlineksk);
+/*%<
+ * Enable/disable Offline KSK.
+ *
+ * Requires:
+ *
+ *\li  'kasp' is a valid, unfrozen kasp.
+ *
+ */
+
+bool
+dns_kasp_cdnskey(dns_kasp_t *kasp);
+/*%<
+ * Do we need to publish a CDNSKEY?
+ *
+ * Requires:
+ *
+ *\li  'kasp' is a valid, frozen kasp.
+ *
+ */
+
+void
+dns_kasp_setcdnskey(dns_kasp_t *kasp, bool cdnskey);
+/*%<
+ * Enable/disable publication of CDNSKEY records.
+ *
+ * Requires:
+ *
+ *\li  'kasp' is a valid, unfrozen kasp.
+ *
+ */
+
+dns_kasp_digestlist_t
+dns_kasp_digests(dns_kasp_t *kasp);
+/*%<
+ * Get the list of kasp CDS digest types. This determines which CDS records
+ * should be published.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, frozen kasp.
+ *
+ * Returns:
+ *
+ *\li  #ISC_R_SUCCESS
+ *\li  #ISC_R_NOMEMORY
+ *
+ *\li  Other errors are possible.
+ */
+
+void
+dns_kasp_adddigest(dns_kasp_t *kasp, dns_dsdigest_t alg);
+/*%<
+ * Add a CDS digest type, this will enable publication of a CDS record with
+ * digest type 'alg'.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, thawed kasp.
  */
 
 ISC_LANG_ENDDECLS

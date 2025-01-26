@@ -1,4 +1,4 @@
-/*	$NetBSD: ascii.c,v 1.1.1.1 2025/01/26 16:12:30 christos Exp $	*/
+/*	$NetBSD: ascii.c,v 1.2 2025/01/26 16:25:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

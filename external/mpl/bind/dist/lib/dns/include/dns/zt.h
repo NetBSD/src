@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.h,v 1.9 2024/02/21 22:52:11 christos Exp $	*/
+/*	$NetBSD: zt.h,v 1.10 2025/01/26 16:25:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,36 +24,36 @@
 
 #include <dns/types.h>
 
-#define DNS_ZTFIND_NOEXACT 0x01
-#define DNS_ZTFIND_MIRROR  0x02
-
 ISC_LANG_BEGINDECLS
 
-typedef isc_result_t (*dns_zt_allloaded_t)(void *arg);
-/*%<
- * Method prototype: when all pending zone loads are complete,
- * the zone table can inform the caller via a callback function with
- * this signature.
- */
+typedef enum dns_ztfind {
+	DNS_ZTFIND_EXACT = 1 << 0,
+	DNS_ZTFIND_NOEXACT = 1 << 1,
+	DNS_ZTFIND_MIRROR = 1 << 2,
+} dns_ztfind_t;
 
-typedef isc_result_t (*dns_zt_zoneloaded_t)(dns_zt_t *zt, dns_zone_t *zone,
-					    isc_task_t *task);
-/*%<
- * Method prototype: when a zone finishes loading, the zt object
- * can be informed via a callback function with this signature.
- */
+typedef isc_result_t
+dns_zt_callback_t(void *arg);
 
-isc_result_t
-dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **zt);
+void
+dns_zt_create(isc_mem_t *mctx, dns_view_t *view, dns_zt_t **ztp);
 /*%<
- * Creates a new zone table.
+ * Creates a new zone table for a view.
  *
  * Requires:
  * \li	'mctx' to be initialized.
+ * \li	'view' is non-NULL
+ * \li	'ztp' is non-NULL
+ * \li	'*ztp' is NULL
+ */
+
+void
+dns_zt_compact(dns_zt_t *zt);
+/*%<
+ * Reclaim unused memory in the zone table
  *
- * Returns:
- * \li	#ISC_R_SUCCESS on success.
- * \li	#ISC_R_NOMEMORY
+ * Requires:
+ * \li	'zt' to be valid
  */
 
 isc_result_t
@@ -68,8 +68,6 @@ dns_zt_mount(dns_zt_t *zt, dns_zone_t *zone);
  * Returns:
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_EXISTS
- * \li	#ISC_R_NOSPACE
- * \li	#ISC_R_NOMEMORY
  */
 
 isc_result_t
@@ -78,37 +76,38 @@ dns_zt_unmount(dns_zt_t *zt, dns_zone_t *zone);
  * Unmount the given zone from the table.
  *
  * Requires:
- * 	'zt' to be valid
+ *	'zt' to be valid
  * \li	'zone' to be valid
  *
  * Returns:
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND
- * \li	#ISC_R_NOMEMORY
  */
 
 isc_result_t
-dns_zt_find(dns_zt_t *zt, const dns_name_t *name, unsigned int options,
-	    dns_name_t *foundname, dns_zone_t **zone);
+dns_zt_find(dns_zt_t *zt, const dns_name_t *name, dns_ztfind_t options,
+	    dns_zone_t **zone);
 /*%<
- * Find the best match for 'name' in 'zt'.  If foundname is non NULL
- * then the name of the zone found is returned.
+ * Find the best match for 'name' in 'zt'.
  *
  * Notes:
- * \li	If the DNS_ZTFIND_NOEXACT is set, the best partial match (if any)
- *	to 'name' will be returned.
+ * \li	If the DNS_ZTFIND_EXACT option is set, only an exact match is
+ *	returned.
+ *
+ * \li	If the DNS_ZTFIND_NOEXACT option is set, the closest matching
+ *      parent domain is returned, even when there is an exact match
+ *      in the tree.
  *
  * Requires:
  * \li	'zt' to be valid
  * \li	'name' to be valid
- * \li	'foundname' to be initialized and associated with a fixedname or NULL
  * \li	'zone' to be non NULL and '*zone' to be NULL
+ * \li	DNS_ZTFIND_EXACT and DNS_ZTFIND_NOEXACT are not both set
  *
  * Returns:
  * \li	#ISC_R_SUCCESS
- * \li	#DNS_R_PARTIALMATCH
+ * \li	#DNS_R_PARTIALMATCH (if DNS_ZTFIND_EXACT is not set)
  * \li	#ISC_R_NOTFOUND
- * \li	#ISC_R_NOSPACE
  */
 
 void
@@ -145,14 +144,14 @@ isc_result_t
 dns_zt_load(dns_zt_t *zt, bool stop, bool newonly);
 
 isc_result_t
-dns_zt_asyncload(dns_zt_t *zt, bool newonly, dns_zt_allloaded_t alldone,
+dns_zt_asyncload(dns_zt_t *zt, bool newonly, dns_zt_callback_t alldone,
 		 void *arg);
 /*%<
- * Load all zones in the table.  If 'stop' is true,
- * stop on the first error and return it.  If 'stop'
- * is false, ignore errors.
+ * Load all zones in the table. If 'stop' is true, stop on the first
+ * error and return it. If 'stop' is false, ignore errors.
  *
- * if newonly is set only zones that were never loaded are loaded.
+ * If newonly is set only zones that were never loaded are loaded.
+ *
  * dns_zt_asyncload() loads zones asynchronously; when all
  * zones in the zone table have finished loaded (or failed due
  * to errors), the caller is informed by calling 'alldone'
@@ -171,7 +170,7 @@ dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze);
  */
 
 isc_result_t
-dns_zt_apply(dns_zt_t *zt, isc_rwlocktype_t lock, bool stop, isc_result_t *sub,
+dns_zt_apply(dns_zt_t *zt, bool stop, isc_result_t *sub,
 	     isc_result_t (*action)(dns_zone_t *, void *), void *uap);
 /*%<
  * Apply a given 'action' to all zone zones in the table.
@@ -185,8 +184,8 @@ dns_zt_apply(dns_zt_t *zt, isc_rwlocktype_t lock, bool stop, isc_result_t *sub,
  * Returns:
  * \li	ISC_R_SUCCESS if action was applied to all nodes.  If 'stop' is
  *	false and 'sub' is non NULL then the first error (if any)
- *	reported by 'action' is returned in '*sub';
- *	any error code from 'action'.
+ *	reported by 'action' is returned in '*sub'. If 'stop' is true,
+ *	the first error code from 'action' is returned.
  */
 
 bool
@@ -206,7 +205,7 @@ dns_zt_setviewcommit(dns_zt_t *zt);
  * zone table.
  *
  * Requires:
- *\li	'view' to be valid.
+ *\li	'zt' to be valid.
  */
 
 void
@@ -216,7 +215,7 @@ dns_zt_setviewrevert(dns_zt_t *zt);
  * zone table.
  *
  * Requires:
- *\li	'view' to be valid.
+ *\li	'zt' to be valid.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,7 +30,7 @@
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/os.h>
-#include <isc/print.h>
+#include <isc/random.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
 #include <isc/thread.h>
@@ -49,15 +49,13 @@
 #define MP2_FILLCNT 25
 
 /* general memory system tests */
-ISC_RUN_TEST_IMPL(isc_mem) {
+ISC_RUN_TEST_IMPL(isc_mem_get) {
 	void *items1[50];
 	void *items2[50];
 	void *tmp;
 	isc_mempool_t *mp1 = NULL, *mp2 = NULL;
 	unsigned int i, j;
 	int rval;
-
-	UNUSED(state);
 
 	isc_mempool_create(mctx, 24, &mp1);
 	isc_mempool_create(mctx, 31, &mp2);
@@ -130,87 +128,55 @@ ISC_RUN_TEST_IMPL(isc_mem) {
 	isc_mempool_destroy(&mp1);
 }
 
-#if defined(HAVE_MALLOC_NP_H) || defined(HAVE_JEMALLOC)
-/* aligned memory system tests */
-ISC_RUN_TEST_IMPL(isc_mem_aligned) {
-	isc_mem_t *mctx2 = NULL;
-	void *ptr;
-	size_t alignment;
-	uintptr_t aligned;
+/* zeroed memory system tests */
+ISC_RUN_TEST_IMPL(isc_mem_cget_zero) {
+	uint8_t *ptr;
+	bool zeroed;
+	uint8_t expected[4096] = { 0 };
 
-	UNUSED(state);
-
-	/* Check different alignment sizes up to the page size */
-	for (alignment = sizeof(void *); alignment <= 4096; alignment *= 2) {
-		size_t size = alignment / 2 - 1;
-		ptr = isc_mem_get_aligned(mctx, size, alignment);
-
-		/* Check if the pointer is properly aligned */
-		aligned = (((uintptr_t)ptr / alignment) * alignment);
-		assert_ptr_equal(aligned, (uintptr_t)ptr);
-
-		/* Check if we can resize to <alignment, 2*alignment> range */
-		ptr = isc_mem_reget_aligned(mctx, ptr, size,
-					    size * 2 + alignment, alignment);
-
-		/* Check if the pointer is still properly aligned */
-		aligned = (((uintptr_t)ptr / alignment) * alignment);
-		assert_ptr_equal(aligned, (uintptr_t)ptr);
-
-		isc_mem_put_aligned(mctx, ptr, size * 2 + alignment, alignment);
-
-		/* Check whether isc_mem_putanddetach_detach() also works */
-		isc_mem_create(&mctx2);
-		ptr = isc_mem_get_aligned(mctx2, size, alignment);
-		isc_mem_putanddetach_aligned(&mctx2, ptr, size, alignment);
+	/* Skip the test if the memory is zeroed even in normal case */
+	zeroed = true;
+	ptr = isc_mem_get(mctx, sizeof(expected));
+	for (size_t i = 0; i < sizeof(expected); i++) {
+		if (ptr[i] != expected[i]) {
+			zeroed = false;
+			break;
+		}
 	}
+	isc_mem_put(mctx, ptr, sizeof(expected));
+	if (zeroed) {
+		skip();
+		return;
+	}
+
+	ptr = isc_mem_cget(mctx, 1, sizeof(expected));
+	assert_memory_equal(ptr, expected, sizeof(expected));
+	isc_mem_put(mctx, ptr, sizeof(expected));
 }
-#endif /* defined(HAVE_MALLOC_NP_H) || defined(HAVE_JEMALLOC) */
 
-/* test TotalUse calculation */
-ISC_RUN_TEST_IMPL(isc_mem_total) {
-	isc_mem_t *mctx2 = NULL;
-	size_t before, after;
-	ssize_t diff;
-	int i;
+ISC_RUN_TEST_IMPL(isc_mem_callocate_zero) {
+	uint8_t *ptr;
+	bool zeroed;
+	uint8_t expected[4096] = { 0 };
 
-	UNUSED(state);
-
-	/* Local alloc, free */
-	mctx2 = NULL;
-	isc_mem_create(&mctx2);
-
-	before = isc_mem_total(mctx2);
-
-	for (i = 0; i < 100000; i++) {
-		void *ptr;
-
-		ptr = isc_mem_get(mctx2, 2048);
-		isc_mem_put(mctx2, ptr, 2048);
+	/* Skip the test if the memory is zeroed even in normal case */
+	zeroed = true;
+	ptr = isc_mem_get(mctx, sizeof(expected));
+	for (size_t i = 0; i < sizeof(expected); i++) {
+		if (ptr[i] != expected[i]) {
+			zeroed = false;
+			break;
+		}
+	}
+	isc_mem_put(mctx, ptr, sizeof(expected));
+	if (zeroed) {
+		skip();
+		return;
 	}
 
-	after = isc_mem_total(mctx2);
-	diff = after - before;
-
-	assert_int_equal(diff, (2048) * 100000);
-
-	/* ISC_MEMFLAG_INTERNAL */
-
-	before = isc_mem_total(mctx);
-
-	for (i = 0; i < 100000; i++) {
-		void *ptr;
-
-		ptr = isc_mem_get(mctx, 2048);
-		isc_mem_put(mctx, ptr, 2048);
-	}
-
-	after = isc_mem_total(mctx);
-	diff = after - before;
-
-	assert_int_equal(diff, (2048) * 100000);
-
-	isc_mem_destroy(&mctx2);
+	ptr = isc_mem_callocate(mctx, 1, sizeof(expected));
+	assert_memory_equal(ptr, expected, sizeof(expected));
+	isc_mem_free(mctx, ptr);
 }
 
 /* test InUse calculation */
@@ -219,8 +185,6 @@ ISC_RUN_TEST_IMPL(isc_mem_inuse) {
 	size_t before, after;
 	ssize_t diff;
 	void *ptr;
-
-	UNUSED(state);
 
 	mctx2 = NULL;
 	isc_mem_create(&mctx2);
@@ -239,7 +203,6 @@ ISC_RUN_TEST_IMPL(isc_mem_inuse) {
 
 ISC_RUN_TEST_IMPL(isc_mem_zeroget) {
 	uint8_t *data = NULL;
-	UNUSED(state);
 
 	data = isc_mem_get(mctx, 0);
 	assert_non_null(data);
@@ -252,8 +215,6 @@ ISC_RUN_TEST_IMPL(isc_mem_zeroget) {
 
 ISC_RUN_TEST_IMPL(isc_mem_reget) {
 	uint8_t *data = NULL;
-
-	UNUSED(state);
 
 	/* test that we can reget NULL */
 	data = isc_mem_reget(mctx, NULL, 0, REGET_INIT_SIZE);
@@ -292,28 +253,101 @@ ISC_RUN_TEST_IMPL(isc_mem_reget) {
 	isc_mem_put(mctx, data, REGET_SHRINK_SIZE);
 }
 
+ISC_RUN_TEST_IMPL(isc_mem_reallocate) {
+	uint8_t *data = NULL;
+
+	/* test that we can reallocate NULL */
+	data = isc_mem_reallocate(mctx, NULL, REGET_INIT_SIZE);
+	assert_non_null(data);
+	isc_mem_free(mctx, data);
+
+	/* test that we can re-get a zero-length allocation */
+	data = isc_mem_allocate(mctx, 0);
+	assert_non_null(data);
+
+	data = isc_mem_reallocate(mctx, data, REGET_INIT_SIZE);
+	assert_non_null(data);
+
+	for (size_t i = 0; i < REGET_INIT_SIZE; i++) {
+		data[i] = i % UINT8_MAX;
+	}
+
+	data = isc_mem_reallocate(mctx, data, REGET_GROW_SIZE);
+	assert_non_null(data);
+
+	for (size_t i = 0; i < REGET_INIT_SIZE; i++) {
+		assert_int_equal(data[i], i % UINT8_MAX);
+	}
+
+	for (size_t i = REGET_GROW_SIZE; i > 0; i--) {
+		data[i - 1] = i % UINT8_MAX;
+	}
+
+	data = isc_mem_reallocate(mctx, data, REGET_SHRINK_SIZE);
+	assert_non_null(data);
+
+	for (size_t i = REGET_SHRINK_SIZE; i > 0; i--) {
+		assert_int_equal(data[i - 1], i % UINT8_MAX);
+	}
+
+	isc_mem_free(mctx, data);
+}
+
+ISC_RUN_TEST_IMPL(isc_mem_overmem) {
+	isc_mem_t *omctx = NULL;
+	isc_mem_create(&omctx);
+	assert_non_null(omctx);
+
+	isc_mem_setwater(omctx, 1024, 512);
+
+	/* inuse < lo_water */
+	void *data1 = isc_mem_allocate(omctx, 256);
+	assert_false(isc_mem_isovermem(omctx));
+
+	/* lo_water < inuse < hi_water */
+	void *data2 = isc_mem_allocate(omctx, 512);
+	assert_false(isc_mem_isovermem(omctx));
+
+	/* hi_water < inuse */
+	void *data3 = isc_mem_allocate(omctx, 512);
+	assert_true(isc_mem_isovermem(omctx));
+
+	/* lo_water < inuse < hi_water */
+	isc_mem_free(omctx, data2);
+	assert_true(isc_mem_isovermem(omctx));
+
+	/* inuse < lo_water */
+	isc_mem_free(omctx, data3);
+	assert_false(isc_mem_isovermem(omctx));
+
+	/* inuse == 0 */
+	isc_mem_free(omctx, data1);
+	assert_false(isc_mem_isovermem(omctx));
+
+	isc_mem_destroy(&omctx);
+}
+
 #if ISC_MEM_TRACKLINES
 
 /* test mem with no flags */
 ISC_RUN_TEST_IMPL(isc_mem_noflags) {
 	isc_result_t result;
 	isc_mem_t *mctx2 = NULL;
-	char buf[4096], *p, *q;
+	char buf[4096], *p;
 	FILE *f;
 	void *ptr;
 
 	result = isc_stdio_open("mem.output", "w", &f);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	UNUSED(state);
-
-	isc_mem_create(&mctx2);
 	isc_mem_debugging = 0;
+	isc_mem_create(&mctx2);
 	ptr = isc_mem_get(mctx2, 2048);
 	assert_non_null(ptr);
 	isc__mem_printactive(mctx2, f);
 	isc_mem_put(mctx2, ptr, 2048);
 	isc_mem_destroy(&mctx2);
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	isc_stdio_close(f);
 
 	memset(buf, 0, sizeof(buf));
@@ -327,15 +361,7 @@ ISC_RUN_TEST_IMPL(isc_mem_noflags) {
 	buf[sizeof(buf) - 1] = 0;
 
 	p = strchr(buf, '\n');
-	assert_non_null(p);
-	assert_in_range(p, 0, buf + sizeof(buf) - 3);
-	p += 2;
-	q = strchr(p, '\n');
-	assert_non_null(q);
-	*q = '\0';
-	assert_string_equal(p, "None.");
-
-	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
+	assert_null(p);
 }
 
 /* test mem with record flag */
@@ -348,8 +374,6 @@ ISC_RUN_TEST_IMPL(isc_mem_recordflag) {
 
 	result = isc_stdio_open("mem.output", "w", &f);
 	assert_int_equal(result, ISC_R_SUCCESS);
-
-	UNUSED(state);
 
 	isc_mem_create(&mctx2);
 	ptr = isc_mem_get(mctx2, 2048);
@@ -390,15 +414,14 @@ ISC_RUN_TEST_IMPL(isc_mem_traceflag) {
 	f = freopen("mem.output", "w", stderr);
 	assert_non_null(f);
 
-	UNUSED(state);
-
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD | ISC_MEM_DEBUGTRACE;
 	isc_mem_create(&mctx2);
-	isc_mem_debugging = ISC_MEM_DEBUGTRACE;
 	ptr = isc_mem_get(mctx2, 2048);
 	assert_non_null(ptr);
 	isc__mem_printactive(mctx2, f);
 	isc_mem_put(mctx2, ptr, 2048);
 	isc_mem_destroy(&mctx2);
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	isc_stdio_close(f);
 
 	memset(buf, 0, sizeof(buf));
@@ -414,8 +437,12 @@ ISC_RUN_TEST_IMPL(isc_mem_traceflag) {
 
 	buf[sizeof(buf) - 1] = 0;
 
-	assert_memory_equal(buf, "add ", 4);
+	assert_memory_equal(buf, "create ", 6);
 	p = strchr(buf, '\n');
+	assert_non_null(p);
+
+	assert_memory_equal(p + 1, "add ", 4);
+	p = strchr(p + 1, '\n');
 	assert_non_null(p);
 	p = strchr(p + 1, '\n');
 	assert_non_null(p);
@@ -424,8 +451,6 @@ ISC_RUN_TEST_IMPL(isc_mem_traceflag) {
 	p = strchr(p + 1, '\n');
 	assert_non_null(p);
 	assert_memory_equal(p + 1, "del ", 4);
-
-	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 }
 #endif /* if ISC_MEM_TRACKLINES */
 
@@ -437,8 +462,8 @@ ISC_RUN_TEST_IMPL(isc_mem_traceflag) {
 
 static atomic_size_t mem_size;
 
-static isc_threadresult_t
-mem_thread(isc_threadarg_t arg) {
+static void *
+mem_thread(void *arg) {
 	isc_mem_t *mctx2 = (isc_mem_t *)arg;
 	void *items[NUM_ITEMS];
 	size_t size = atomic_load(&mem_size);
@@ -455,7 +480,7 @@ mem_thread(isc_threadarg_t arg) {
 		}
 	}
 
-	return ((isc_threadresult_t)0);
+	return NULL;
 }
 
 ISC_RUN_TEST_IMPL(isc_mem_benchmark) {
@@ -463,14 +488,10 @@ ISC_RUN_TEST_IMPL(isc_mem_benchmark) {
 	isc_thread_t threads[32];
 	isc_time_t ts1, ts2;
 	double t;
-	isc_result_t result;
-
-	UNUSED(state);
 
 	atomic_init(&mem_size, ITEM_SIZE);
 
-	result = isc_time_now(&ts1);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	ts1 = isc_time_now();
 
 	for (int i = 0; i < nthreads; i++) {
 		isc_thread_create(mem_thread, mctx, &threads[i]);
@@ -479,8 +500,7 @@ ISC_RUN_TEST_IMPL(isc_mem_benchmark) {
 		isc_thread_join(threads[i], NULL);
 	}
 
-	result = isc_time_now(&ts2);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	ts2 = isc_time_now();
 
 	t = isc_time_microdiff(&ts2, &ts1);
 
@@ -495,18 +515,15 @@ ISC_RUN_TEST_IMPL(isc_mem_benchmark) {
 
 ISC_TEST_LIST_START
 
-ISC_TEST_ENTRY(isc_mem)
-#if defined(HAVE_MALLOC_NP_H) || defined(HAVE_JEMALLOC)
-ISC_TEST_ENTRY(isc_mem_aligned)
-#endif /* defined(HAVE_MALLOC_NP_H) || defined(HAVE_JEMALLOC) */
-ISC_TEST_ENTRY(isc_mem_total)
+ISC_TEST_ENTRY(isc_mem_get)
+ISC_TEST_ENTRY(isc_mem_cget_zero)
+ISC_TEST_ENTRY(isc_mem_callocate_zero)
 ISC_TEST_ENTRY(isc_mem_inuse)
 ISC_TEST_ENTRY(isc_mem_zeroget)
 ISC_TEST_ENTRY(isc_mem_reget)
+ISC_TEST_ENTRY(isc_mem_reallocate)
+ISC_TEST_ENTRY(isc_mem_overmem)
 
-#if !defined(__SANITIZE_THREAD__)
-ISC_TEST_ENTRY(isc_mem_benchmark)
-#endif /* __SANITIZE_THREAD__ */
 #if ISC_MEM_TRACKLINES
 ISC_TEST_ENTRY(isc_mem_noflags)
 ISC_TEST_ENTRY(isc_mem_recordflag)
@@ -517,6 +534,9 @@ ISC_TEST_ENTRY(isc_mem_recordflag)
  */
 ISC_TEST_ENTRY(isc_mem_traceflag)
 #endif /* if ISC_MEM_TRACKLINES */
+#if !defined(__SANITIZE_THREAD__)
+ISC_TEST_ENTRY(isc_mem_benchmark)
+#endif /* __SANITIZE_THREAD__ */
 
 ISC_TEST_LIST_END
 

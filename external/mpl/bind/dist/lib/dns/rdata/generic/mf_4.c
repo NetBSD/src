@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.9 2025/01/26 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@ fromtext_mf(ARGS_FROMTEXT) {
 		origin = dns_rootname;
 	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -47,7 +47,7 @@ totext_mf(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	bool sub;
+	unsigned int opts;
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 	REQUIRE(rdata->length != 0);
@@ -58,9 +58,9 @@ totext_mf(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	sub = name_prefix(&name, tctx->origin, &prefix);
-
-	return (dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&name, tctx->origin, &prefix) ? DNS_NAME_OMITFINALDOT
+							 : 0;
+	return dns_name_totext(&prefix, opts, target);
 }
 
 static isc_result_t
@@ -72,10 +72,10 @@ fromwire_mf(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
+	dctx = dns_decompress_setpermitted(dctx, true);
 
 	dns_name_init(&name, NULL);
-	return (dns_name_fromwire(&name, source, dctx, options, target));
+	return dns_name_fromwire(&name, source, dctx, target);
 }
 
 static isc_result_t
@@ -87,13 +87,13 @@ towire_mf(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
+	dns_compress_setpermitted(cctx, true);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	return (dns_name_towire(&name, cctx, target));
+	return dns_name_towire(&name, cctx, target, NULL);
 }
 
 static int
@@ -118,7 +118,7 @@ compare_mf(ARGS_COMPARE) {
 	dns_name_fromregion(&name1, &region1);
 	dns_name_fromregion(&name2, &region2);
 
-	return (dns_name_rdatacompare(&name1, &name2));
+	return dns_name_rdatacompare(&name1, &name2);
 }
 
 static isc_result_t
@@ -135,7 +135,7 @@ fromstruct_mf(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	dns_name_toregion(&mf->mf, &region);
-	return (isc_buffer_copyregion(target, &region));
+	return isc_buffer_copyregion(target, &region);
 }
 
 static isc_result_t
@@ -158,7 +158,7 @@ tostruct_mf(ARGS_TOSTRUCT) {
 	dns_name_init(&mf->mf, NULL);
 	name_duporclone(&name, mctx, &mf->mf);
 	mf->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -189,7 +189,7 @@ additionaldata_mf(ARGS_ADDLDATA) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	return ((add)(arg, &name, dns_rdatatype_a, NULL));
+	return (add)(arg, &name, dns_rdatatype_a, NULL DNS__DB_FILELINE);
 }
 
 static isc_result_t
@@ -203,7 +203,7 @@ digest_mf(ARGS_DIGEST) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 
-	return (dns_name_digest(&name, digest, arg));
+	return dns_name_digest(&name, digest, arg);
 }
 
 static bool
@@ -215,7 +215,7 @@ checkowner_mf(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -226,12 +226,12 @@ checknames_mf(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_mf(ARGS_COMPARE) {
-	return (compare_mf(rdata1, rdata2));
+	return compare_mf(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_MF_4_C */

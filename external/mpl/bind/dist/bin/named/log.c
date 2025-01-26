@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.8 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,7 @@ isc_result_t
 named_log_init(bool safe) {
 	isc_result_t result;
 	isc_logconfig_t *lcfg = NULL;
+	isc_mem_t *log_mctx = NULL;
 
 	named_g_categories = categories;
 	named_g_modules = modules;
@@ -60,7 +61,10 @@ named_log_init(bool safe) {
 	/*
 	 * Setup a logging context.
 	 */
-	isc_log_create(named_g_mctx, &named_g_lctx, &lcfg);
+	isc_mem_create(&log_mctx);
+	isc_mem_setname(log_mctx, "named_log");
+	isc_log_create(log_mctx, &named_g_lctx, &lcfg);
+	isc_mem_detach(&log_mctx);
 
 	/*
 	 * named-checktool.c:setup_logging() needs to be kept in sync.
@@ -87,14 +91,14 @@ named_log_init(bool safe) {
 
 	named_log_setdefaultsslkeylogfile(lcfg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	isc_log_destroy(&named_g_lctx);
 	isc_log_setcontext(NULL);
 	dns_log_setcontext(NULL);
 
-	return (result);
+	return result;
 }
 
 void
@@ -235,7 +239,7 @@ named_log_setdefaultcategory(isc_logconfig_t *lcfg) {
 	}
 
 cleanup:
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -244,7 +248,7 @@ named_log_setunmatchedcategory(isc_logconfig_t *lcfg) {
 
 	result = isc_log_usechannel(lcfg, "null", NAMED_LOGCATEGORY_UNMATCHED,
 				    NULL);
-	return (result);
+	return result;
 }
 
 void

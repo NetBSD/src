@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.9 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.10 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,6 @@
 #include <isc/commandline.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -71,7 +70,7 @@ initname(char *setname) {
 	isc_buffer_init(&buf, setname, strlen(setname));
 	isc_buffer_add(&buf, strlen(setname));
 	result = dns_name_fromtext(name, &buf, dns_rootname, 0, NULL);
-	return (result);
+	return result;
 }
 
 static void
@@ -106,8 +105,8 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 
 	dns_name_format(name, setname, sizeof(setname));
 
-	result = dns_db_create(mctx, "rbt", name, dns_dbtype_zone, rdclass, 0,
-			       NULL, &db);
+	result = dns_db_create(mctx, ZONEDB_DEFAULT, name, dns_dbtype_zone,
+			       rdclass, 0, NULL, &db);
 	if (result != ISC_R_SUCCESS) {
 		fatal("can't create database");
 	}
@@ -144,7 +143,7 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 	if (db != NULL) {
 		dns_db_detach(&db);
 	}
-	return (result);
+	return result;
 }
 
 static void
@@ -305,10 +304,9 @@ main(int argc, char **argv) {
 	isc_log_t *log = NULL;
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata;
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
 
 	dns_rdata_init(&rdata);
-	isc_stdtime_get(&now);
 
 	if (argc == 1) {
 		usage();
@@ -472,8 +470,8 @@ main(int argc, char **argv) {
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
-		return (1);
+		return 1;
 	} else {
-		return (0);
+		return 0;
 	}
 }

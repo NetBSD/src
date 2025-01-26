@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: dnstap_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,7 +30,6 @@
 
 #include <isc/buffer.h>
 #include <isc/file.h>
-#include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/types.h>
 #include <isc/util.h>
@@ -46,12 +45,10 @@
 #define TAPSAVED TESTS_DIR "/testdata/dnstap/dnstap.saved"
 #define TAPTEXT	 TESTS_DIR "/testdata/dnstap/dnstap.text"
 
-static int
-cleanup(void **state __attribute__((__unused__))) {
+static void
+cleanup(void **state ISC_ATTR_UNUSED) {
 	(void)isc_file_remove(TAPFILE);
 	(void)isc_file_remove(TAPSOCK);
-
-	return (0);
 }
 
 static int
@@ -66,11 +63,23 @@ setup(void **state) {
 	 * the testdata was originally generated.
 	 */
 	setenv("TZ", "PDT8", 1);
-	return (0);
+
+	setup_loopmgr(state);
+
+	return 0;
+}
+
+static int
+teardown(void **state) {
+	cleanup(state);
+
+	teardown_loopmgr(state);
+
+	return 0;
 }
 
 /* set up dnstap environment */
-ISC_RUN_TEST_IMPL(dns_dt_create) {
+ISC_LOOP_TEST_IMPL(dns_dt_create) {
 	isc_result_t result;
 	dns_dtenv_t *dtenv = NULL;
 	struct fstrm_iothr_options *fopt;
@@ -121,10 +130,12 @@ ISC_RUN_TEST_IMPL(dns_dt_create) {
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
 	}
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* send dnstap messages */
-ISC_RUN_TEST_IMPL(dns_dt_send) {
+ISC_LOOP_TEST_IMPL(dns_dt_send) {
 	isc_result_t result;
 	dns_dtenv_t *dtenv = NULL;
 	dns_dthandle_t *handle = NULL;
@@ -144,11 +155,12 @@ ISC_RUN_TEST_IMPL(dns_dt_send) {
 	isc_sockaddr_t qaddr;
 	isc_sockaddr_t raddr;
 	struct in_addr in;
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
+
 	isc_time_t p, f;
 	struct fstrm_iothr_options *fopt;
 
-	result = dns_test_makeview("test", false, &view);
+	result = dns_test_makeview("test", false, false, &view);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	fopt = fstrm_iothr_options_init();
@@ -173,10 +185,9 @@ ISC_RUN_TEST_IMPL(dns_dt_send) {
 
 	memset(&zr, 0, sizeof(zr));
 	isc_buffer_init(&zb, zone, sizeof(zone));
-	result = dns_compress_init(&cctx, -1, mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-	dns_compress_setmethods(&cctx, DNS_COMPRESS_NONE);
-	result = dns_name_towire(zname, &cctx, &zb);
+	dns_compress_init(&cctx, mctx, 0);
+	dns_compress_setpermitted(&cctx, false);
+	result = dns_name_towire(zname, &cctx, &zb, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	dns_compress_invalidate(&cctx);
 	isc_buffer_usedregion(&zb, &zr);
@@ -186,7 +197,6 @@ ISC_RUN_TEST_IMPL(dns_dt_send) {
 	in.s_addr = inet_addr("10.53.0.2");
 	isc_sockaddr_fromin(&raddr, &in, 2112);
 
-	isc_stdtime_get(&now);
 	isc_time_set(&p, now - 3600, 0); /* past */
 	isc_time_set(&f, now + 3600, 0); /* future */
 
@@ -234,14 +244,20 @@ ISC_RUN_TEST_IMPL(dns_dt_send) {
 			break;
 		}
 
-		dns_dt_send(view, dt, q, r, false, &zr, &p, &f, m);
-		dns_dt_send(view, dt, q, r, false, &zr, NULL, &f, m);
-		dns_dt_send(view, dt, q, r, false, &zr, &p, NULL, m);
-		dns_dt_send(view, dt, q, r, false, &zr, NULL, NULL, m);
-		dns_dt_send(view, dt, q, r, true, &zr, &p, &f, m);
-		dns_dt_send(view, dt, q, r, true, &zr, NULL, &f, m);
-		dns_dt_send(view, dt, q, r, true, &zr, &p, NULL, m);
-		dns_dt_send(view, dt, q, r, true, &zr, NULL, NULL, m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_UDP, &zr, &p, &f, m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_UDP, &zr, NULL, &f,
+			    m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_UDP, &zr, &p, NULL,
+			    m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_UDP, &zr, NULL, NULL,
+			    m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_TCP, &zr, &p, &f, m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_TCP, &zr, NULL, &f,
+			    m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_TCP, &zr, &p, NULL,
+			    m);
+		dns_dt_send(view, dt, q, r, DNS_TRANSPORT_TCP, &zr, NULL, NULL,
+			    m);
 	}
 
 	dns_dt_detach(&view->dtenv);
@@ -281,17 +297,17 @@ ISC_RUN_TEST_IMPL(dns_dt_send) {
 	if (handle != NULL) {
 		dns_dt_close(&handle);
 	}
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* dnstap message to text */
-ISC_RUN_TEST_IMPL(dns_dt_totext) {
+ISC_LOOP_TEST_IMPL(dns_dt_totext) {
 	isc_result_t result;
 	dns_dthandle_t *handle = NULL;
 	uint8_t *data;
 	size_t dsize;
 	FILE *fp = NULL;
-
-	UNUSED(state);
 
 	result = dns_dt_open(TAPSAVED, dns_dtmode_file, mctx, &handle);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -346,13 +362,14 @@ ISC_RUN_TEST_IMPL(dns_dt_totext) {
 	if (handle != NULL) {
 		dns_dt_close(&handle);
 	}
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 ISC_TEST_LIST_START
 
-ISC_TEST_ENTRY_CUSTOM(dns_dt_create, setup, cleanup)
-ISC_TEST_ENTRY_CUSTOM(dns_dt_send, setup, cleanup)
-ISC_TEST_ENTRY_CUSTOM(dns_dt_totext, setup, cleanup)
+ISC_TEST_ENTRY_CUSTOM(dns_dt_create, setup, teardown)
+ISC_TEST_ENTRY_CUSTOM(dns_dt_send, setup, teardown)
+ISC_TEST_ENTRY_CUSTOM(dns_dt_totext, setup, teardown)
 
 ISC_TEST_LIST_END
 

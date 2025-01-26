@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatatype.h,v 1.6 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: rdatatype.h,v 1.7 2025/01/26 16:25:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,14 @@
 #include <isc/lang.h>
 
 #include <dns/types.h>
+
+#define DNS_TYPEPAIR_TYPE(type)	  ((dns_rdatatype_t)((type) & 0xFFFF))
+#define DNS_TYPEPAIR_COVERS(type) ((dns_rdatatype_t)((type) >> 16))
+#define DNS_TYPEPAIR_VALUE(base, ext) \
+	((dns_typepair_t)(((uint32_t)ext) << 16) | (((uint32_t)base) & 0xffff))
+#define DNS_SIGTYPE(type)                           \
+	((dns_typepair_t)(((uint32_t)type) << 16) | \
+	 (((uint32_t)dns_rdatatype_rrsig) & 0xffff))
 
 ISC_LANG_BEGINDECLS
 

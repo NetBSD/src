@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.13 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.14 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,23 +56,21 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/async.h>
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/time.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/dnstap.h>
-#include <dns/events.h>
 #include <dns/log.h>
 #include <dns/message.h>
 #include <dns/name.h>
@@ -107,20 +105,19 @@ struct dns_dtenv {
 	isc_refcount_t refcount;
 
 	isc_mem_t *mctx;
+	isc_loop_t *loop;
 
 	struct fstrm_iothr *iothr;
 	struct fstrm_iothr_options *fopt;
 
-	isc_task_t *reopen_task;
-	isc_mutex_t reopen_lock; /* locks 'reopen_queued'
-				  * */
+	isc_mutex_t reopen_lock; /* locks 'reopen_queued' */
 	bool reopen_queued;
 
 	isc_region_t identity;
 	isc_region_t version;
 	char *path;
 	dns_dtmode_t mode;
-	isc_offset_t max_size;
+	off_t max_size;
 	int rolls;
 	isc_log_rollsuffix_t suffix;
 	isc_stats_t *stats;
@@ -144,7 +141,7 @@ static atomic_uint_fast32_t global_generation;
 
 isc_result_t
 dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
-	      struct fstrm_iothr_options **foptp, isc_task_t *reopen_task,
+	      struct fstrm_iothr_options **foptp, isc_loop_t *loop,
 	      dns_dtenv_t **envp) {
 	isc_result_t result = ISC_R_SUCCESS;
 	fstrm_res res;
@@ -163,16 +160,17 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 
 	atomic_fetch_add_release(&global_generation, 1);
 
-	env = isc_mem_get(mctx, sizeof(dns_dtenv_t));
+	env = isc_mem_get(mctx, sizeof(*env));
+	*env = (dns_dtenv_t){
+		.loop = loop,
+		.reopen_queued = false,
+	};
 
-	memset(env, 0, sizeof(dns_dtenv_t));
 	isc_mem_attach(mctx, &env->mctx);
-	env->reopen_task = reopen_task;
 	isc_mutex_init(&env->reopen_lock);
-	env->reopen_queued = false;
 	env->path = isc_mem_strdup(env->mctx, path);
 	isc_refcount_init(&env->refcount, 1);
-	CHECK(isc_stats_create(env->mctx, &env->stats, dns_dnstapcounter_max));
+	isc_stats_create(env->mctx, &env->stats, dns_dnstapcounter_max);
 
 	fwopt = fstrm_writer_options_init();
 	if (fwopt == NULL) {
@@ -245,7 +243,7 @@ cleanup:
 		isc_mem_putanddetach(&env->mctx, env, sizeof(dns_dtenv_t));
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -261,9 +259,9 @@ dns_dt_setupfile(dns_dtenv_t *env, uint64_t max_size, int rolls,
 		if (max_size == 0 && rolls == ISC_LOG_ROLLINFINITE &&
 		    suffix == isc_log_rollsuffix_increment)
 		{
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		} else {
-			return (ISC_R_INVALIDFILE);
+			return ISC_R_INVALIDFILE;
 		}
 	}
 
@@ -271,7 +269,7 @@ dns_dt_setupfile(dns_dtenv_t *env, uint64_t max_size, int rolls,
 	env->rolls = rolls;
 	env->suffix = suffix;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -283,14 +281,12 @@ dns_dt_reopen(dns_dtenv_t *env, int roll) {
 	struct fstrm_file_options *ffwopt = NULL;
 	struct fstrm_writer_options *fwopt = NULL;
 	struct fstrm_writer *fw = NULL;
+	isc_loopmgr_t *loopmgr = NULL;
 
 	REQUIRE(VALID_DTENV(env));
 
-	/*
-	 * Run in task-exclusive mode.
-	 */
-	result = isc_task_beginexclusive(env->reopen_task);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	loopmgr = isc_loop_getloopmgr(env->loop);
+	isc_loopmgr_pause(loopmgr);
 
 	/*
 	 * Check that we can create a new fw object.
@@ -386,9 +382,9 @@ cleanup:
 		fstrm_writer_options_destroy(&fwopt);
 	}
 
-	isc_task_endexclusive(env->reopen_task);
+	isc_loopmgr_resume(loopmgr);
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -411,21 +407,21 @@ toregion(dns_dtenv_t *env, isc_region_t *r, const char *str) {
 		r->length = strlen((char *)p);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
 dns_dt_setidentity(dns_dtenv_t *env, const char *identity) {
 	REQUIRE(VALID_DTENV(env));
 
-	return (toregion(env, &env->identity, identity));
+	return toregion(env, &env->identity, identity);
 }
 
 isc_result_t
 dns_dt_setversion(dns_dtenv_t *env, const char *version) {
 	REQUIRE(VALID_DTENV(env));
 
-	return (toregion(env, &env->version, version));
+	return toregion(env, &env->version, version);
 }
 
 static void
@@ -441,7 +437,7 @@ dt_queue(dns_dtenv_t *env) {
 	unsigned int generation;
 
 	if (env->iothr == NULL) {
-		return (NULL);
+		return NULL;
 	}
 
 	generation = atomic_load_acquire(&global_generation);
@@ -454,7 +450,7 @@ dt_queue(dns_dtenv_t *env) {
 		set_dt_ioq(generation, ioq);
 	}
 
-	return (dt_ioq.ioq);
+	return dt_ioq.ioq;
 }
 
 void
@@ -472,10 +468,10 @@ dns_dt_getstats(dns_dtenv_t *env, isc_stats_t **statsp) {
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
 	if (env->stats == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 	isc_stats_attach(env->stats, statsp);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -538,17 +534,17 @@ pack_dt(const Dnstap__Dnstap *d, void **buf, size_t *sz) {
 	/* Need to use malloc() here because protobuf uses free() */
 	sbuf.data = malloc(sbuf.alloced);
 	if (sbuf.data == NULL) {
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	}
 	sbuf.must_free_data = 1;
 
 	*sz = dnstap__dnstap__pack_to_buffer(d, (ProtobufCBuffer *)&sbuf);
 	if (sbuf.data == NULL) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 	*buf = sbuf.data;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -609,33 +605,33 @@ static Dnstap__Message__Type
 dnstap_type(dns_dtmsgtype_t msgtype) {
 	switch (msgtype) {
 	case DNS_DTTYPE_SQ:
-		return (DNSTAP__MESSAGE__TYPE__STUB_QUERY);
+		return DNSTAP__MESSAGE__TYPE__STUB_QUERY;
 	case DNS_DTTYPE_SR:
-		return (DNSTAP__MESSAGE__TYPE__STUB_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__STUB_RESPONSE;
 	case DNS_DTTYPE_CQ:
-		return (DNSTAP__MESSAGE__TYPE__CLIENT_QUERY);
+		return DNSTAP__MESSAGE__TYPE__CLIENT_QUERY;
 	case DNS_DTTYPE_CR:
-		return (DNSTAP__MESSAGE__TYPE__CLIENT_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__CLIENT_RESPONSE;
 	case DNS_DTTYPE_AQ:
-		return (DNSTAP__MESSAGE__TYPE__AUTH_QUERY);
+		return DNSTAP__MESSAGE__TYPE__AUTH_QUERY;
 	case DNS_DTTYPE_AR:
-		return (DNSTAP__MESSAGE__TYPE__AUTH_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__AUTH_RESPONSE;
 	case DNS_DTTYPE_RQ:
-		return (DNSTAP__MESSAGE__TYPE__RESOLVER_QUERY);
+		return DNSTAP__MESSAGE__TYPE__RESOLVER_QUERY;
 	case DNS_DTTYPE_RR:
-		return (DNSTAP__MESSAGE__TYPE__RESOLVER_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__RESOLVER_RESPONSE;
 	case DNS_DTTYPE_FQ:
-		return (DNSTAP__MESSAGE__TYPE__FORWARDER_QUERY);
+		return DNSTAP__MESSAGE__TYPE__FORWARDER_QUERY;
 	case DNS_DTTYPE_FR:
-		return (DNSTAP__MESSAGE__TYPE__FORWARDER_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__FORWARDER_RESPONSE;
 	case DNS_DTTYPE_TQ:
-		return (DNSTAP__MESSAGE__TYPE__TOOL_QUERY);
+		return DNSTAP__MESSAGE__TYPE__TOOL_QUERY;
 	case DNS_DTTYPE_TR:
-		return (DNSTAP__MESSAGE__TYPE__TOOL_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__TOOL_RESPONSE;
 	case DNS_DTTYPE_UQ:
-		return (DNSTAP__MESSAGE__TYPE__UPDATE_QUERY);
+		return DNSTAP__MESSAGE__TYPE__UPDATE_QUERY;
 	case DNS_DTTYPE_UR:
-		return (DNSTAP__MESSAGE__TYPE__UPDATE_RESPONSE);
+		return DNSTAP__MESSAGE__TYPE__UPDATE_RESPONSE;
 	default:
 		UNREACHABLE();
 	}
@@ -649,7 +645,7 @@ cpbuf(isc_buffer_t *buf, ProtobufCBinaryData *p, protobuf_c_boolean *has) {
 }
 
 static void
-setaddr(dns_dtmsg_t *dm, isc_sockaddr_t *sa, bool tcp,
+setaddr(dns_dtmsg_t *dm, isc_sockaddr_t *sa, dns_transport_type_t transport,
 	ProtobufCBinaryData *addr, protobuf_c_boolean *has_addr, uint32_t *port,
 	protobuf_c_boolean *has_port) {
 	int family = isc_sockaddr_pf(sa);
@@ -670,10 +666,22 @@ setaddr(dns_dtmsg_t *dm, isc_sockaddr_t *sa, bool tcp,
 		*port = ntohs(sa->type.sin.sin_port);
 	}
 
-	if (tcp) {
+	switch (transport) {
+	case DNS_TRANSPORT_TCP:
 		dm->m.socket_protocol = DNSTAP__SOCKET_PROTOCOL__TCP;
-	} else {
+		break;
+	case DNS_TRANSPORT_UDP:
 		dm->m.socket_protocol = DNSTAP__SOCKET_PROTOCOL__UDP;
+		break;
+	case DNS_TRANSPORT_TLS:
+		dm->m.socket_protocol = DNSTAP__SOCKET_PROTOCOL__DOT;
+		break;
+	case DNS_TRANSPORT_HTTP:
+		dm->m.socket_protocol = DNSTAP__SOCKET_PROTOCOL__DOH;
+		break;
+	case DNS_TRANSPORT_NONE:
+	case DNS_TRANSPORT_COUNT:
+		UNREACHABLE();
 	}
 
 	dm->m.has_socket_protocol = 1;
@@ -683,36 +691,18 @@ setaddr(dns_dtmsg_t *dm, isc_sockaddr_t *sa, bool tcp,
 }
 
 /*%
- * Invoke dns_dt_reopen() and re-allow dnstap output file rolling.  This
- * function is run in the context of the task stored in the 'reopen_task' field
- * of the dnstap environment structure.
+ * Invoke dns_dt_reopen() and re-allow dnstap output file rolling.
  */
 static void
-perform_reopen(isc_task_t *task, isc_event_t *event) {
-	dns_dtenv_t *env;
-
-	REQUIRE(event != NULL);
-	REQUIRE(event->ev_type == DNS_EVENT_FREESTORAGE);
-
-	env = (dns_dtenv_t *)event->ev_arg;
+perform_reopen(void *arg) {
+	dns_dtenv_t *env = (dns_dtenv_t *)arg;
 
 	REQUIRE(VALID_DTENV(env));
-	REQUIRE(task == env->reopen_task);
 
-	/*
-	 * Roll output file in the context of env->reopen_task.
-	 */
+	/* Roll output file. */
 	dns_dt_reopen(env, env->rolls);
 
-	/*
-	 * Clean up.
-	 */
-	isc_event_free(&event);
-	isc_task_detach(&task);
-
-	/*
-	 * Re-allow output file rolling.
-	 */
+	/* Re-allow output file rolling. */
 	LOCK(&env->reopen_lock);
 	env->reopen_queued = false;
 	UNLOCK(&env->reopen_lock);
@@ -724,15 +714,10 @@ perform_reopen(isc_task_t *task, isc_event_t *event) {
  */
 static void
 check_file_size_and_maybe_reopen(dns_dtenv_t *env) {
-	isc_task_t *reopen_task = NULL;
-	isc_event_t *event;
 	struct stat statbuf;
 
-	/*
-	 * If the task from which the output file should be reopened was not
-	 * specified, abort.
-	 */
-	if (env->reopen_task == NULL) {
+	/* If a loopmgr wasn't specified, abort. */
+	if (env->loop == NULL) {
 		return;
 	}
 
@@ -749,15 +734,10 @@ check_file_size_and_maybe_reopen(dns_dtenv_t *env) {
 	}
 
 	/*
-	 * We need to roll the output file, but it needs to be done in the
-	 * context of env->reopen_task.  Allocate and send an event to achieve
-	 * that, then disallow output file rolling until the roll we queue is
-	 * completed.
+	 * Send an event to roll the output file, then disallow output file
+	 * rolling until the roll we queue is completed.
 	 */
-	event = isc_event_allocate(env->mctx, NULL, DNS_EVENT_FREESTORAGE,
-				   perform_reopen, env, sizeof(*event));
-	isc_task_attach(env->reopen_task, &reopen_task);
-	isc_task_send(reopen_task, &event);
+	isc_async_run(env->loop, perform_reopen, env);
 	env->reopen_queued = true;
 
 unlock_and_return:
@@ -766,8 +746,9 @@ unlock_and_return:
 
 void
 dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
-	    isc_sockaddr_t *raddr, bool tcp, isc_region_t *zone,
-	    isc_time_t *qtime, isc_time_t *rtime, isc_buffer_t *buf) {
+	    isc_sockaddr_t *raddr, dns_transport_type_t transport,
+	    isc_region_t *zone, isc_time_t *qtime, isc_time_t *rtime,
+	    isc_buffer_t *buf) {
 	isc_time_t now, *t;
 	dns_dtmsg_t dm;
 
@@ -787,7 +768,7 @@ dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
 		check_file_size_and_maybe_reopen(view->dtenv);
 	}
 
-	TIME_NOW(&now);
+	now = isc_time_now();
 	t = &now;
 
 	init_msg(view->dtenv, &dm, dnstap_type(msgtype));
@@ -867,12 +848,12 @@ dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
 	}
 
 	if (qaddr != NULL) {
-		setaddr(&dm, qaddr, tcp, &dm.m.query_address,
+		setaddr(&dm, qaddr, transport, &dm.m.query_address,
 			&dm.m.has_query_address, &dm.m.query_port,
 			&dm.m.has_query_port);
 	}
 	if (raddr != NULL) {
-		setaddr(&dm, raddr, tcp, &dm.m.response_address,
+		setaddr(&dm, raddr, transport, &dm.m.response_address,
 			&dm.m.has_response_address, &dm.m.response_port,
 			&dm.m.has_response_port);
 	}
@@ -886,13 +867,13 @@ static isc_result_t
 putstr(isc_buffer_t **b, const char *str) {
 	isc_result_t result;
 
-	result = isc_buffer_reserve(b, strlen(str));
+	result = isc_buffer_reserve(*b, strlen(str));
 	if (result != ISC_R_SUCCESS) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	isc_buffer_putstr(*b, str);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -901,17 +882,17 @@ putaddr(isc_buffer_t **b, isc_region_t *ip) {
 
 	if (ip->length == 4) {
 		if (!inet_ntop(AF_INET, ip->base, buf, sizeof(buf))) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 	} else if (ip->length == 16) {
 		if (!inet_ntop(AF_INET6, ip->base, buf, sizeof(buf))) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 	} else {
-		return (ISC_R_BADADDRESSFORM);
+		return ISC_R_BADADDRESSFORM;
 	}
 
-	return (putstr(b, buf));
+	return putstr(b, buf);
 }
 
 static bool
@@ -924,30 +905,30 @@ dnstap_file(struct fstrm_reader *r) {
 
 	res = fstrm_reader_get_control(r, FSTRM_CONTROL_START, &control);
 	if (res != fstrm_res_success) {
-		return (false);
+		return false;
 	}
 
 	res = fstrm_control_get_num_field_content_type(control, &n);
 	if (res != fstrm_res_success) {
-		return (false);
+		return false;
 	}
 	if (n > 0) {
 		res = fstrm_control_get_field_content_type(control, 0, &rtype,
 							   &rlen);
 		if (res != fstrm_res_success) {
-			return (false);
+			return false;
 		}
 
 		if (rlen != dlen) {
-			return (false);
+			return false;
 		}
 
 		if (memcmp(DNSTAP_CONTENT_TYPE, rtype, dlen) == 0) {
-			return (true);
+			return true;
 		}
 	}
 
-	return (false);
+	return false;
 }
 
 isc_result_t
@@ -1011,7 +992,7 @@ cleanup:
 	if (handle != NULL) {
 		isc_mem_put(mctx, handle, sizeof(*handle));
 	}
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -1029,14 +1010,14 @@ dns_dt_getframe(dns_dthandle_t *handle, uint8_t **bufp, size_t *sizep) {
 	switch (res) {
 	case fstrm_res_success:
 		if (data == NULL) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
-		DE_CONST(data, *bufp);
-		return (ISC_R_SUCCESS);
+		*bufp = UNCONST(data);
+		return ISC_R_SUCCESS;
 	case fstrm_res_stop:
-		return (ISC_R_NOMORE);
+		return ISC_R_NOMORE;
 	default:
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 }
 
@@ -1068,8 +1049,8 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 	REQUIRE(destp != NULL && *destp == NULL);
 
 	d = isc_mem_get(mctx, sizeof(*d));
+	*d = (dns_dtdata_t){ 0 };
 
-	memset(d, 0, sizeof(*d));
 	isc_mem_attach(mctx, &d->mctx);
 
 	d->frame = dnstap__dnstap__unpack(NULL, src->length, src->base);
@@ -1151,7 +1132,7 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 
 	isc_buffer_init(&b, d->msgdata.base, d->msgdata.length);
 	isc_buffer_add(&b, d->msgdata.length);
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &d->msg);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &d->msg);
 	result = dns_message_parse(d->msg, &b, 0);
 	if (result != ISC_R_SUCCESS) {
 		if (result != DNS_R_RECOVERABLE) {
@@ -1196,11 +1177,27 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 			protobuf_c_enum_descriptor_get_value(
 				&dnstap__socket_protocol__descriptor,
 				m->socket_protocol);
-		if (type != NULL && type->value == DNSTAP__SOCKET_PROTOCOL__TCP)
-		{
-			d->tcp = true;
+
+		if (type != NULL) {
+			switch (type->value) {
+			case DNSTAP__SOCKET_PROTOCOL__DNSCryptUDP:
+			case DNSTAP__SOCKET_PROTOCOL__DOQ:
+			case DNSTAP__SOCKET_PROTOCOL__UDP:
+				d->transport = DNS_TRANSPORT_UDP;
+				break;
+			case DNSTAP__SOCKET_PROTOCOL__DNSCryptTCP:
+			case DNSTAP__SOCKET_PROTOCOL__TCP:
+				d->transport = DNS_TRANSPORT_TCP;
+				break;
+			case DNSTAP__SOCKET_PROTOCOL__DOT:
+				d->transport = DNS_TRANSPORT_TLS;
+				break;
+			case DNSTAP__SOCKET_PROTOCOL__DOH:
+				d->transport = DNS_TRANSPORT_HTTP;
+				break;
+			}
 		} else {
-			d->tcp = false;
+			d->transport = DNS_TRANSPORT_UDP;
 		}
 	}
 
@@ -1227,7 +1224,7 @@ cleanup:
 		dns_dtdata_free(&d);
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -1299,7 +1296,7 @@ dns_dt_datatotext(dns_dtdata_t *d, isc_buffer_t **dest) {
 		CHECK(putstr(dest, "UR "));
 		break;
 	default:
-		return (DNS_R_BADDNSTAP);
+		return DNS_R_BADDNSTAP;
 	}
 
 	/* Query and response addresses */
@@ -1326,10 +1323,24 @@ dns_dt_datatotext(dns_dtdata_t *d, isc_buffer_t **dest) {
 	CHECK(putstr(dest, " "));
 
 	/* Protocol */
-	if (d->tcp) {
-		CHECK(putstr(dest, "TCP "));
-	} else {
+	switch (d->transport) {
+	case DNS_TRANSPORT_NONE:
+		CHECK(putstr(dest, "NUL "));
+		break;
+	case DNS_TRANSPORT_UDP:
 		CHECK(putstr(dest, "UDP "));
+		break;
+	case DNS_TRANSPORT_TCP:
+		CHECK(putstr(dest, "TCP "));
+		break;
+	case DNS_TRANSPORT_TLS:
+		CHECK(putstr(dest, "DOT "));
+		break;
+	case DNS_TRANSPORT_HTTP:
+		CHECK(putstr(dest, "DOH "));
+		break;
+	case DNS_TRANSPORT_COUNT:
+		UNREACHABLE();
 	}
 
 	/* Message size */
@@ -1361,11 +1372,11 @@ dns_dt_datatotext(dns_dtdata_t *d, isc_buffer_t **dest) {
 		CHECK(putstr(dest, d->typebuf));
 	}
 
-	CHECK(isc_buffer_reserve(dest, 1));
+	CHECK(isc_buffer_reserve(*dest, 1));
 	isc_buffer_putuint8(*dest, 0);
 
 cleanup:
-	return (result);
+	return result;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.h,v 1.1.1.1 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: pause.h,v 1.2 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,7 @@
 
 #pragma once
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) && !defined(__lint__) // XXX:
 #include <immintrin.h>
 #define isc_pause() _mm_pause()
 #elif defined(__i386__)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2024/03/13 12:56:31 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2025/01/26 16:24:30 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -16,7 +16,12 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
 
 LIBUVDIR=	${NETBSDSRCDIR}/external/mit/libuv
 LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
+LIBURCUDIR=	${NETBSDSRCDIR}/external/lgpl2/userspace-rcu
+LIBURCUMEMBOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-memb && ${PRINTOBJDIR}
+LIBURCUCDSOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-cds && ${PRINTOBJDIR}
+LIBURCUCOMMONOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-common && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${LIBUVDIR}/dist/include
+CPPFLAGS+=	-I${LIBURCUDIR}/dist/include -I${LIBURCUDIR}/include
 CFLAGS+=	-std=gnu18
 LINTFLAGS+=	-Ac11
 
@@ -31,11 +36,9 @@ LINTFLAGS+=-Z-include -Z${BIND_SRCDIR}/include/config.h
 CPPFLAGS+=-include ${BIND_SRCDIR}/include/config.h
 CPPFLAGS+=-I${BIND_SRCDIR}/include \
 	-I${IDIST} \
-	-I${IDIST}/lib/bind9/include \
 	-I${IDIST}/lib/dns/include \
 	-I${IDIST}/lib/ns/include \
-	-I${IDIST}/lib/irs/include \
-	-I${IDIST}/lib/isc/include -I${IDIST}/lib/isc/unix/include \
+	-I${IDIST}/lib/isc/include \
 	-I${IDIST}/lib/isccfg/include \
 	-I${IDIST}/lib/isccc/include \
 	-DSESSION_KEYFILE=\"${LOCALSTATEDIR}/run/named/session.key\" \
@@ -52,19 +55,25 @@ DBG=-g3 -gstabs
 .if !defined(LIB) || empty(LIB)
 # NOTE: the order of these libraries is important...
 .if defined(NAMED_DEBUG)
-LDADD+=		-lbind9_g -lisccfg_g -ldns_g -lns_g -lirs_g
+LDADD+=		-lisccfg_g -ldns_g -lns_g
 LDADD+=		-lisccc_g -lisc_g
+LDADD+=		-L${LIBURCUMEMBOBJDIR} -lurcu-memb_g
+LDADD+=		-L${LIBURCUCDSOBJDIR} -lurcu-cds_g
+LDADD+=		-L${LIBURCUCOMMONOBJDIR} -lurcu-common_g
 LDADD+=		-L${LIBUVOBJDIR} -luv_g
-LDADD+=		-lexecinfo_g -lelf_g -lkvm_g -lz_g
+LDADD+=		-lexecinfo_g -lelf_g -lkvm_g -lz_g -lm_g
 .else
-LDADD+=		-lbind9 -lisccfg -ldns -lns -lirs
-DPADD+=		${LIBBIND9} ${LIBISCCFG} ${LIBDNS} ${LIBNS} ${LIBIRS}
+LDADD+=		-lisccfg -ldns -lns
+DPADD+=		${LIBISCCFG} ${LIBDNS} ${LIBNS}
 LDADD+=		-lisccc -lisc 
+LDADD+=		-L${LIBURCUMEMBOBJDIR} -lurcu-memb
+LDADD+=		-L${LIBURCUCDSOBJDIR} -lurcu-cds
+LDADD+=		-L${LIBURCUCOMMONOBJDIR} -lurcu-common
 LDADD+=		-L${LIBUVOBJDIR} -luv
-LDADD+=		-lexecinfo -lelf -lkvm -lz
+LDADD+=		-lexecinfo -lelf -lkvm -lz -lm
 DPADD+=		${LIBISCCC} ${LIBISC}
 DPADD+=		${LIBUVOBJDIR}/libuv.a
-DPADD+=		${LIBEXECINFO} ${LIBKVM} ${LIBZ}
+DPADD+=		${LIBEXECINFO} ${LIBKVM} ${LIBZ} ${LIBM}
 .endif
 .endif
 

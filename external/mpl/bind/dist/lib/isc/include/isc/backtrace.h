@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.h,v 1.6 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: backtrace.h,v 1.7 2025/01/26 16:25:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,13 @@
  ***	Imports
  ***/
 #include <isc/types.h>
+
+/*
+ * The maximum number of stack frames to dump on assertion failure.
+ */
+#ifndef ISC_BACKTRACE_MAXFRAME
+#define ISC_BACKTRACE_MAXFRAME 128
+#endif /* ifndef ISC_BACKTRACE_MAXFRAME */
 
 /***
  *** Functions
@@ -74,7 +81,6 @@ isc_backtrace_symbols(void *const *buffer, int size);
  *
  * Notes:
  *
- *\li	On Windows, this is shim implementation using SymFromAddr()
  *\li	On systems with backtrace_symbols(), it's just a thin wrapper
  *\li	Otherwise, it returns NULL
  *\li	See platform NOTES for backtrace_symbols
@@ -98,6 +104,13 @@ isc_backtrace_symbols_fd(void *const *buffer, int size, int fd);
  *
  *\li	See isc_backtrace_symbols() notes
  *\li	See platform NOTES for backtrace_symbols_fd for caveats
+ */
+
+void
+isc_backtrace_log(isc_log_t *lctx, isc_logcategory_t *category,
+		  isc_logmodule_t *module, int level);
+/*
+ * Write a backtrace to the log.
  */
 
 ISC_LANG_ENDDECLS

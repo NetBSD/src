@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.7 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,9 +15,9 @@
 
 /*! \file */
 
-#include <ctype.h>
 #include <stdbool.h>
 
+#include <isc/ascii.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/string.h>
@@ -64,7 +64,7 @@ isc_symtab_create(isc_mem_t *mctx, unsigned int size,
 
 	symtab->mctx = NULL;
 	isc_mem_attach(mctx, &symtab->mctx);
-	symtab->table = isc_mem_get(mctx, size * sizeof(eltlist_t));
+	symtab->table = isc_mem_cget(mctx, size, sizeof(eltlist_t));
 	for (i = 0; i < size; i++) {
 		INIT_LIST(symtab->table[i]);
 	}
@@ -78,7 +78,7 @@ isc_symtab_create(isc_mem_t *mctx, unsigned int size,
 
 	*symtabp = symtab;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -103,8 +103,8 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 			isc_mem_put(symtab->mctx, elt, sizeof(*elt));
 		}
 	}
-	isc_mem_put(symtab->mctx, symtab->table,
-		    symtab->size * sizeof(eltlist_t));
+	isc_mem_cput(symtab->mctx, symtab->table, symtab->size,
+		     sizeof(eltlist_t));
 	symtab->magic = 0;
 	isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 }
@@ -113,7 +113,6 @@ static unsigned int
 hash(const char *key, bool case_sensitive) {
 	const char *s;
 	unsigned int h = 0;
-	int c;
 
 	/*
 	 * This hash function is similar to the one Ousterhout
@@ -126,13 +125,11 @@ hash(const char *key, bool case_sensitive) {
 		}
 	} else {
 		for (s = key; *s != '\0'; s++) {
-			c = *s;
-			c = tolower((unsigned char)c);
-			h += (h << 3) + c;
+			h += (h << 3) + isc_ascii_tolower(*s);
 		}
 	}
 
-	return (h);
+	return h;
 }
 
 #define FIND(s, k, t, b, e)                                                   \
@@ -163,14 +160,12 @@ isc_symtab_lookup(isc_symtab_t *symtab, const char *key, unsigned int type,
 	FIND(symtab, key, type, bucket, elt);
 
 	if (elt == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
-	if (value != NULL) {
-		*value = elt->value;
-	}
+	SET_IF_NOT_NULL(value, elt->value);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -184,7 +179,7 @@ grow_table(isc_symtab_t *symtab) {
 	newmax = newsize * 3 / 4;
 	INSIST(newsize > 0U && newmax > 0U);
 
-	newtable = isc_mem_get(symtab->mctx, newsize * sizeof(eltlist_t));
+	newtable = isc_mem_cget(symtab->mctx, newsize, sizeof(eltlist_t));
 
 	for (i = 0; i < newsize; i++) {
 		INIT_LIST(newtable[i]);
@@ -204,8 +199,8 @@ grow_table(isc_symtab_t *symtab) {
 		}
 	}
 
-	isc_mem_put(symtab->mctx, symtab->table,
-		    symtab->size * sizeof(eltlist_t));
+	isc_mem_cput(symtab->mctx, symtab->table, symtab->size,
+		     sizeof(eltlist_t));
 
 	symtab->table = newtable;
 	symtab->size = newsize;
@@ -226,7 +221,7 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 
 	if (exists_policy != isc_symexists_add && elt != NULL) {
 		if (exists_policy == isc_symexists_reject) {
-			return (ISC_R_EXISTS);
+			return ISC_R_EXISTS;
 		}
 		INSIST(exists_policy == isc_symexists_replace);
 		UNLINK(symtab->table[bucket], elt, link);
@@ -248,7 +243,7 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 	 * truly const coming in and then the caller modified it anyway ...
 	 * well, don't do that!
 	 */
-	DE_CONST(key, elt->key);
+	elt->key = UNCONST(key);
 	elt->type = type;
 	elt->value = value;
 
@@ -261,7 +256,7 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 		grow_table(symtab);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -275,7 +270,7 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 	FIND(symtab, key, type, bucket, elt);
 
 	if (elt == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
 	if (symtab->undefine_action != NULL) {
@@ -286,11 +281,11 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 	isc_mem_put(symtab->mctx, elt, sizeof(*elt));
 	symtab->count--;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 unsigned int
 isc_symtab_count(isc_symtab_t *symtab) {
 	REQUIRE(VALID_SYMTAB(symtab));
-	return (symtab->count);
+	return symtab->count;
 }

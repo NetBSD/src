@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.9 2024/02/21 22:51:06 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.10 2025/01/26 16:24:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/quota.h>
+#include <isc/signal.h>
 #include <isc/sockaddr.h>
 #include <isc/tls.h>
 #include <isc/types.h>
@@ -39,12 +40,6 @@
 
 #include <named/types.h>
 
-#define NAMED_EVENTCLASS    ISC_EVENTCLASS(0x4E43)
-#define NAMED_EVENT_RELOAD  (NAMED_EVENTCLASS + 0)
-#define NAMED_EVENT_DELZONE (NAMED_EVENTCLASS + 1)
-#define NAMED_EVENT_COMMAND (NAMED_EVENTCLASS + 2)
-#define NAMED_EVENT_TATSEND (NAMED_EVENTCLASS + 3)
-
 /*%
  * Name server state.  Better here than in lots of separate global variables.
  */
@@ -54,27 +49,25 @@ struct named_server {
 
 	ns_server_t *sctx;
 
-	isc_task_t *task;
-
 	char *statsfile;    /*%< Statistics file name */
 	char *dumpfile;	    /*%< Dump file name */
 	char *secrootsfile; /*%< Secroots file name */
-	char *bindkeysfile; /*%< bind.keys file name
-			     * */
+	char *bindkeysfile; /*%< bind.keys file name */
 	char *recfile;	    /*%< Recursive file name */
-	bool  version_set;  /*%< User has set version
-			     * */
+	bool  version_set;  /*%< User has set version */
 	char *version;	    /*%< User-specified version */
-	bool  hostname_set; /*%< User has set hostname
-			     * */
-	char *hostname;	    /*%< User-specified hostname
-			     * */
+	bool  hostname_set; /*%< User has set hostname */
+	char *hostname;	    /*%< User-specified hostname */
+#ifdef USE_DNSRPS
+	char *dnsrpslib;
+#endif /* ifdef USE_DNSRPS */
 
 	/* Server data structures. */
 	dns_loadmgr_t	  *loadmgr;
 	dns_zonemgr_t	  *zonemgr;
 	dns_viewlist_t	   viewlist;
 	dns_kasplist_t	   kasplist;
+	dns_keystorelist_t keystorelist;
 	ns_interfacemgr_t *interfacemgr;
 	dns_db_t	  *in_roothints;
 
@@ -113,10 +106,10 @@ struct named_server {
 
 	dns_dtenv_t *dtenv; /*%< Dnstap environment */
 
-	char *lockfile;
-
 	isc_tlsctx_cache_t *tlsctx_server_cache;
 	isc_tlsctx_cache_t *tlsctx_client_cache;
+
+	isc_signal_t *sighup;
 };
 
 #define NAMED_SERVER_MAGIC    ISC_MAGIC('S', 'V', 'E', 'R')
@@ -137,7 +130,7 @@ named_server_destroy(named_server_t **serverp);
  */
 
 void
-named_server_reloadwanted(named_server_t *server);
+named_server_reloadwanted(void *arg, int signum);
 /*%<
  * Inform a server that a reload is wanted.  This function
  * may be called asynchronously, from outside the server's task.
@@ -193,10 +186,20 @@ named_server_retransfercommand(named_server_t *server, isc_lex_t *lex,
  */
 
 isc_result_t
-named_server_togglequerylog(named_server_t *server, isc_lex_t *lex);
+named_server_setortoggle(named_server_t *server, const char *optname,
+			 unsigned int option, isc_lex_t *lex);
 /*%<
- * Enable/disable logging of queries.  (Takes "yes" or "no" argument,
- * but can also be used as a toggle for backward comptibility.)
+ * Enable/disable, or toggle, a server option via the command channel.
+ * 'option' is the option value to be changed (for example,
+ * NS_SERVER_LOGQUERIES or NS_SERVER_LOGRESPOSNES) and 'optname' is the
+ * option's human-readable name for logging purposes ("query logging"
+ * or "response logging").
+ *
+ * If an explicit argument to enable the option was provided
+ * (i.e., "on", "enable", "true", or "yes") or an explicit argument
+ * to disable it ("off", "disable", "false", or "no"), it will be used.
+ *
+ * If no argument is provided, the option's current state will be reversed.
  */
 
 /*%
@@ -258,19 +261,6 @@ isc_result_t
 named_server_status(named_server_t *server, isc_buffer_t **text);
 
 /*%
- * Report a list of dynamic and static tsig keys, per view.
- */
-isc_result_t
-named_server_tsiglist(named_server_t *server, isc_buffer_t **text);
-
-/*%
- * Delete a specific key (with optional view).
- */
-isc_result_t
-named_server_tsigdelete(named_server_t *server, isc_lex_t *lex,
-			isc_buffer_t **text);
-
-/*%
  * Enable or disable updates for a zone.
  */
 isc_result_t
@@ -298,12 +288,6 @@ named_server_rekey(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text);
  */
 isc_result_t
 named_server_dumprecursing(named_server_t *server);
-
-/*%
- * Maintain a list of dispatches that require reserved ports.
- */
-void
-named_add_reserved_dispatch(named_server_t *server, const isc_sockaddr_t *addr);
 
 /*%
  * Enable or disable dnssec validation.
@@ -396,3 +380,16 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text);
 isc_result_t
 named_server_servestale(named_server_t *server, isc_lex_t *lex,
 			isc_buffer_t **text);
+
+/*%
+ * Report fetch-limited ADB server addresses.
+ */
+isc_result_t
+named_server_fetchlimit(named_server_t *server, isc_lex_t *lex,
+			isc_buffer_t **text);
+
+/*%
+ * Import SKR file for offline KSK signing.
+ */
+isc_result_t
+named_server_skr(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text);

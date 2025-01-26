@@ -1,4 +1,4 @@
-/*	$NetBSD: strerr.h,v 1.6 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: strerr.h,v 1.7 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,4 +28,8 @@
 #if defined(strerror_r)
 #undef strerror_r
 #endif /* if defined(strerror_r) */
+
+/*
+ * Ensure we use a consistent implementation of strerror_r()
+ */
 #define strerror_r isc_string_strerror_r

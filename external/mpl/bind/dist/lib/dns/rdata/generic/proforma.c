@@ -1,4 +1,4 @@
-/*	$NetBSD: proforma.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: proforma.c,v 1.9 2025/01/26 16:25:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,7 @@ static isc_result_t fromtext_ #(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t totext_ #(ARGS_TOTEXT) {
@@ -35,17 +35,17 @@ static isc_result_t totext_ #(ARGS_TOTEXT) {
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0); /* XXX */
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t fromwire_ #(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_proforma.c #);
 	REQUIRE(rdclass == #);
 
-	/* NONE or GLOBAL14 */
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
+	/* see RFC 3597 */
+	dctx = dns_decompress_setpermitted(dctx, false);
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t towire_ #(ARGS_TOWIRE) {
@@ -53,10 +53,10 @@ static isc_result_t towire_ #(ARGS_TOWIRE) {
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0); /* XXX */
 
-	/* NONE or GLOBAL14 */
-	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
+	/* see RFC 3597 */
+	dns_compress_setpermitted(cctx, false);
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static int compare_ #(ARGS_COMPARE) {
@@ -72,7 +72,7 @@ static int compare_ #(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t fromstruct_ #(ARGS_FROMSTRUCT) {
@@ -84,7 +84,7 @@ static isc_result_t fromstruct_ #(ARGS_FROMSTRUCT) {
 	REQUIRE(#->common.rdtype == dns_rdatatype_proforma.ctype);
 	REQUIRE(#->common.rdclass == rdclass);
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t tostruct_ #(ARGS_TOSTRUCT) {
@@ -92,7 +92,7 @@ static isc_result_t tostruct_ #(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0); /* XXX */
 
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static void freestruct_ #(ARGS_FREESTRUCT) {
@@ -111,7 +111,7 @@ static isc_result_t additionaldata_ #(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t digest_ #(ARGS_DIGEST) {
@@ -122,7 +122,7 @@ static isc_result_t digest_ #(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool checkowner_ #(ARGS_CHECKOWNER) {
@@ -134,7 +134,7 @@ static bool checkowner_ #(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool checknames_ #(ARGS_CHECKNAMES) {
@@ -145,7 +145,7 @@ static bool checknames_ #(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int casecompare_ #(ARGS_COMPARE) {
@@ -161,7 +161,7 @@ static int casecompare_ #(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 #endif /* RDATA_GENERIC_#_#_C */

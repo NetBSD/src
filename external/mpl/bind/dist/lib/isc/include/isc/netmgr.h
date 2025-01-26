@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.h,v 1.9 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.10 2025/01/26 16:25:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,20 +15,29 @@
 
 #pragma once
 
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <isc/mem.h>
+#include <isc/refcount.h>
 #include <isc/region.h>
 #include <isc/result.h>
+#include <isc/sockaddr.h>
 #include <isc/tls.h>
 #include <isc/types.h>
 
-#include <sys/socket.h>
-#include <sys/types.h>
+/* Add -DISC_NETMGR_TRACE=1 to CFLAGS for detailed reference tracing */
 
 #if defined(SO_REUSEPORT_LB) || (defined(SO_REUSEPORT) && defined(__linux__))
 #define HAVE_SO_REUSEPORT_LB 1
 #endif
+
+/*
+ * Convenience macros to specify on how many threads should socket listen
+ */
+#define ISC_NM_LISTEN_ALL 0
+#define ISC_NM_LISTEN_ONE 1
 
 /*
  * Replacement for isc_sockettype_t provided by socket.h.
@@ -50,7 +59,7 @@ typedef void (*isc_nm_recv_cb_t)(isc_nmhandle_t *handle, isc_result_t eresult,
  * 'region' contains the received data, if any. It will be freed
  *          after return by caller.
  * 'cbarg'  the callback argument passed to isc_nm_listenudp(),
- *          isc_nm_listentcpdns(), or isc_nm_read().
+ *          isc_nm_listenstreamdns(), or isc_nm_read().
  */
 typedef isc_result_t (*isc_nm_accept_cb_t)(isc_nmhandle_t *handle,
 					   isc_result_t result, void *cbarg);
@@ -61,7 +70,7 @@ typedef isc_result_t (*isc_nm_accept_cb_t)(isc_nmhandle_t *handle,
  * 'handle' the handle that can be used to send back the answer.
  * 'eresult' the result of the event.
  * 'cbarg'  the callback argument passed to isc_nm_listentcp() or
- * isc_nm_listentcpdns().
+ * isc_nm_listenstreamdns().
  */
 
 typedef void (*isc_nm_cb_t)(isc_nmhandle_t *handle, isc_result_t result,
@@ -81,10 +90,45 @@ typedef void (*isc_nm_opaquecb_t)(void *arg);
  * callbacks.
  */
 
-typedef void (*isc_nm_workcb_t)(void *arg);
-typedef void (*isc_nm_after_workcb_t)(void *arg, isc_result_t result);
+typedef struct isc_nm_proxyheader_info {
+	bool complete;
+	union {
+		isc_region_t complete_header; /* complete header data */
+		struct {
+			isc_sockaddr_t src_addr;
+			isc_sockaddr_t dst_addr;
+			isc_region_t   tlv_data;
+		} proxy_info; /* information to put into the new header */
+	};
+} isc_nm_proxyheader_info_t;
 /*%<
- * Callback functions for libuv threadpool work (see uv_work_t)
+ * Information to put into the PROXYv2 header when establishing a connection.
+ */
+
+typedef enum isc_nm_proxy_type {
+	ISC_NM_PROXY_NONE = 0,
+	ISC_NM_PROXY_PLAIN = 1,
+	ISC_NM_PROXY_ENCRYPTED = 2
+} isc_nm_proxy_type_t;
+/*%<
+ * PROXYv2 support type:
+ *
+ * - ISC_NM_PROXY_NONE - no PROXY headers are expected;
+ * - ISC_NM_PROXY_PLAIN - PROXY headers are sent ahead of any encryption, right
+ *                        after TCP connection establishment;
+ * - ISC_NM_PROXY_ENCRYPTED - PROXY headers are sent after TLS handshakes.
+ */
+
+void
+isc_netmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t **netgmrp);
+/*%<
+ * Creates a new network manager and starts it running when loopmgr is started.
+ */
+
+void
+isc_netmgr_destroy(isc_nm_t **netmgrp);
+/*%<
+ * Similar to isc_nm_detach(), but requires all other references to be gone.
  */
 
 void
@@ -94,13 +138,7 @@ isc_nm_detach(isc_nm_t **mgr0);
 /*%<
  * Attach/detach a network manager. When all references have been
  * released, the network manager is shut down, freeing all resources.
- * Destroy is working the same way as detach, but it actively waits
- * for all other references to be gone.
  */
-
-/* Return thread ID of current thread, or ISC_NETMGR_TID_UNKNOWN */
-int
-isc_nm_tid(void);
 
 void
 isc_nmsocket_close(isc_nmsocket_t **sockp);
@@ -142,44 +180,33 @@ isc_nmsocket_set_max_streams(isc_nmsocket_t *listener,
  * \li	'listener' is a pointer to a valid network manager listener socket.
  */
 
-#ifdef NETMGR_TRACE
-#define isc_nmhandle_attach(handle, dest) \
-	isc__nmhandle_attach(handle, dest, __FILE__, __LINE__, __func__)
-#define isc_nmhandle_detach(handlep) \
-	isc__nmhandle_detach(handlep, __FILE__, __LINE__, __func__)
-#define FLARG , const char *file, unsigned int line, const char *func
+#if ISC_NETMGR_TRACE
+#define isc_nmhandle_ref(ptr) \
+	isc_nmhandle__ref(ptr, __func__, __FILE__, __LINE__)
+#define isc_nmhandle_unref(ptr) \
+	isc_nmhandle__unref(ptr, __func__, __FILE__, __LINE__)
+#define isc_nmhandle_attach(ptr, ptrp) \
+	isc_nmhandle__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define isc_nmhandle_detach(ptrp) \
+	isc_nmhandle__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(isc_nmhandle);
 #else
-#define isc_nmhandle_attach(handle, dest) isc__nmhandle_attach(handle, dest)
-#define isc_nmhandle_detach(handlep)	  isc__nmhandle_detach(handlep)
-#define FLARG
+ISC_REFCOUNT_DECL(isc_nmhandle);
 #endif
-
-void
-isc__nmhandle_attach(isc_nmhandle_t *handle, isc_nmhandle_t **dest FLARG);
-void
-isc__nmhandle_detach(isc_nmhandle_t **handlep FLARG);
 /*%<
- * Increment/decrement the reference counter in a netmgr handle,
- * but (unlike the attach/detach functions) do not change the pointer
- * value. If reference counters drop to zero, the handle can be
- * marked inactive, possibly triggering deletion of its associated
- * socket.
+ * Increment/decrement the reference counter in a netmgr handle.
  *
- * (This will be used to prevent a client from being cleaned up when
- * it's passed to an isc_task event handler. The libuv code would not
- * otherwise know that the handle was in use and might free it, along
- * with the client.)
+ * When the detach function is called on a thread other than the one that
+ * created the handle, it is scheduled to asynchronously by the handle's
+ * event loop. When references go to zero, the associated socket will be
+ * closed and deleted.
  */
-#undef FLARG
 
 int
 isc_nmhandle_getfd(isc_nmhandle_t *handle);
 
 void *
 isc_nmhandle_getdata(isc_nmhandle_t *handle);
-
-void *
-isc_nmhandle_getextra(isc_nmhandle_t *handle);
 
 bool
 isc_nmhandle_is_stream(isc_nmhandle_t *handle);
@@ -237,6 +264,29 @@ isc_nmhandle_localaddr(isc_nmhandle_t *handle);
  * Return the local address for the given handle.
  */
 
+isc_sockaddr_t
+isc_nmhandle_real_peeraddr(isc_nmhandle_t *handle);
+/*%<
+ * Return the real (as seen by the OS) peer address for the given
+ * handle even when PROXY protocol is used.
+ *
+ * NOTE: This function is intended mostly for a) implementing PROXYv2
+ * access control facilities and b) logging. Using it for anything
+ * else WILL break PROXYv2 support. Please consider using
+ * 'isc_nmhandle_peeraddr()' instead.
+ */
+isc_sockaddr_t
+isc_nmhandle_real_localaddr(isc_nmhandle_t *handle);
+/*%<
+ * Return the real (as seen by the OS) local address for the given
+ * handle even when PROXY protocol is used.
+ *
+ * NOTE: This function is intended mostly for a) implementing PROXYv2
+ * access control facilities and b) logging. Using it for anything
+ * else WILL break PROXYv2 support. Please consider using
+ * 'isc_nmhandle_localaddr()' instead.
+ */
+
 isc_nm_t *
 isc_nmhandle_netmgr(isc_nmhandle_t *handle);
 /*%<
@@ -244,8 +294,8 @@ isc_nmhandle_netmgr(isc_nmhandle_t *handle);
  */
 
 isc_result_t
-isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
-		 void *cbarg, size_t extrasize, isc_nmsocket_t **sockp);
+isc_nm_listenudp(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		 isc_nm_recv_cb_t cb, void *cbarg, isc_nmsocket_t **sockp);
 /*%<
  * Start listening for UDP packets on interface 'iface' using net manager
  * 'mgr'.
@@ -254,24 +304,15 @@ isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
  *
  * When a packet is received on the socket, 'cb' will be called with 'cbarg'
  * as its argument.
- *
- * When handles are allocated for the socket, 'extrasize' additional bytes
- * can be allocated along with the handle for an associated object, which
- * can then be freed automatically when the handle is destroyed.
  */
 
 void
 isc_nm_udpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
-		  isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
-		  size_t extrahandlesize);
+		  isc_nm_cb_t cb, void *cbarg, unsigned int timeout);
 /*%<
  * Open a UDP socket, bind to 'local' and connect to 'peer', and
  * immediately call 'cb' with a handle so that the caller can begin
  * sending packets over UDP.
- *
- * When handles are allocated for the socket, 'extrasize' additional bytes
- * can be allocated along with the handle for an associated object, which
- * can then be freed automatically when the handle is destroyed.
  *
  * 'timeout' specifies the timeout interval in milliseconds.
  *
@@ -280,8 +321,7 @@ isc_nm_udpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
  */
 
 isc_result_t
-isc_nm_routeconnect(isc_nm_t *mgr, isc_nm_cb_t cb, void *cbarg,
-		    size_t extrahandlesize);
+isc_nm_routeconnect(isc_nm_t *mgr, isc_nm_cb_t cb, void *cbarg);
 /*%<
  * Open a route/netlink socket and call 'cb', so the caller can be
  * begin listening for interface changes.  This behaves similarly to
@@ -291,24 +331,30 @@ isc_nm_routeconnect(isc_nm_t *mgr, isc_nm_cb_t cb, void *cbarg,
  * are not supported.
  */
 
+isc_result_t
+isc_nm_listenproxyudp(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		      isc_nm_recv_cb_t cb, void *cbarg, isc_nmsocket_t **sockp);
+/*%<
+ * The same as `isc_nm_listenudp()`, but PROXYv2 headers are
+ * expected at the beginning of the received datagrams.
+ */
+
+void
+isc_nm_proxyudpconnect(isc_nm_t *mgr, isc_sockaddr_t *local,
+		       isc_sockaddr_t *peer, isc_nm_cb_t cb, void *cbarg,
+		       unsigned int		  timeout,
+		       isc_nm_proxyheader_info_t *proxy_info);
+/*%<
+ * The same as `isc_nm_udpconnect()`, but PROXYv2 headers are added
+ * at the beginning of each sent datagram. The PROXYv2 headers are
+ * created using the data from the `proxy_info` object. If the
+ * object is omitted, then LOCAL PROXYv2 headers are used.
+ */
+
 void
 isc_nm_stoplistening(isc_nmsocket_t *sock);
 /*%<
  * Stop listening on socket 'sock'.
- */
-
-void
-isc_nm_pause(isc_nm_t *mgr);
-/*%<
- * Pause all processing, equivalent to taskmgr exclusive tasks.
- * It won't return until all workers have been paused.
- */
-
-void
-isc_nm_resume(isc_nm_t *mgr);
-/*%<
- * Resume paused processing. It will return immediately after signalling
- * workers to resume.
  */
 
 void
@@ -320,9 +366,9 @@ isc_nm_read(isc_nmhandle_t *handle, isc_nm_recv_cb_t cb, void *cbarg);
  */
 
 void
-isc_nm_pauseread(isc_nmhandle_t *handle);
+isc_nm_read_stop(isc_nmhandle_t *handle);
 /*%<
- * Pause reading on this handle's socket, but remember the callback.
+ * Stop reading on this handle's socket.
  *
  * Requires:
  * \li	'handle' is a valid netmgr handle.
@@ -335,18 +381,17 @@ isc_nm_cancelread(isc_nmhandle_t *handle);
  * active handles with a result code of ISC_R_CANCELED.
  *
  * Requires:
- * \li	'sock' is a valid netmgr socket
+ * \li	'handle' is a valid netmgr handle
  * \li	...for which a read/recv callback has been defined.
  */
 
 void
-isc_nm_resumeread(isc_nmhandle_t *handle);
+isc_nmhandle_close(isc_nmhandle_t *handle);
 /*%<
- * Resume reading on the handle's socket.
+ * Close the active handle - no further read callbacks will happen.
  *
  * Requires:
- * \li	'handle' is a valid netmgr handle.
- * \li	...for a socket with a defined read/recv callback.
+ * 'li	'handle' is a valid netmgr handle
  */
 
 void
@@ -361,10 +406,9 @@ isc_nm_send(isc_nmhandle_t *handle, isc_region_t *region, isc_nm_cb_t cb,
  */
 
 isc_result_t
-isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
-		 isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
-		 size_t extrahandlesize, int backlog, isc_quota_t *quota,
-		 isc_nmsocket_t **sockp);
+isc_nm_listentcp(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		 isc_nm_accept_cb_t accept_cb, void *accept_cbarg, int backlog,
+		 isc_quota_t *quota, isc_nmsocket_t **sockp);
 /*%<
  * Start listening for raw messages over the TCP interface 'iface', using
  * net manager 'mgr'.
@@ -375,9 +419,6 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
  * When connection is accepted on the socket, 'accept_cb' will be called with
  * 'accept_cbarg' as its argument. The callback is expected to start a read.
  *
- * When handles are allocated for the socket, 'extrasize' additional bytes
- * will be allocated along with the handle for an associated object.
- *
  * If 'quota' is not NULL, then the socket is attached to the specified
  * quota. This allows us to enforce TCP client quota limits.
  *
@@ -385,15 +426,14 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
 
 void
 isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
-		  isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
-		  size_t extrahandlesize);
+		  isc_nm_cb_t connect_cb, void *connect_cbarg,
+		  unsigned int timeout);
 /*%<
  * Create a socket using netmgr 'mgr', bind it to the address 'local',
  * and connect it to the address 'peer'.
  *
  * When the connection is complete or has timed out, call 'cb' with
- * argument 'cbarg'. Allocate 'extrahandlesize' additional bytes along
- * with the handle to use for an associated object.
+ * argument 'cbarg'.
  *
  * 'timeout' specifies the timeout interval in milliseconds.
  *
@@ -402,11 +442,11 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
  */
 
 isc_result_t
-isc_nm_listentcpdns(isc_nm_t *mgr, isc_sockaddr_t *iface,
-		    isc_nm_recv_cb_t recv_cb, void *recv_cbarg,
-		    isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
-		    size_t extrahandlesize, int backlog, isc_quota_t *quota,
-		    isc_nmsocket_t **sockp);
+isc_nm_listenstreamdns(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		       isc_nm_recv_cb_t recv_cb, void *recv_cbarg,
+		       isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
+		       int backlog, isc_quota_t *quota, isc_tlsctx_t *tlsctx,
+		       isc_nm_proxy_type_t proxy_type, isc_nmsocket_t **sockp);
 /*%<
  * Start listening for DNS messages over the TCP interface 'iface', using
  * net manager 'mgr'.
@@ -420,42 +460,83 @@ isc_nm_listentcpdns(isc_nm_t *mgr, isc_sockaddr_t *iface,
  * When a complete DNS message is received on the socket, 'cb' will be
  * called with 'cbarg' as its argument.
  *
- * When a new TCPDNS connection is accepted, 'accept_cb' will be called
- * with 'accept_cbarg' as its argument.
+ * When a new connection is accepted, 'accept_cb' will be called with
+ * 'accept_cbarg' as its argument.
  *
- * When handles are allocated for the socket, 'extrasize' additional bytes
- * will be allocated along with the handle for an associated object
- * (typically ns_client).
+ * Passing a non-NULL value as 'tlsctx' instructs the underlying code
+ * to create a DNS over TLS listener.
+ *
+ * Passing 'proxy == true' instruct the code that a PROXY header is
+ * sent before any data after the connection is accepted.
  *
  * 'quota' is passed to isc_nm_listentcp() when opening the raw TCP socket.
  */
 
 isc_result_t
-isc_nm_listentlsdns(isc_nm_t *mgr, isc_sockaddr_t *iface,
-		    isc_nm_recv_cb_t recv_cb, void *recv_cbarg,
-		    isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
-		    size_t extrahandlesize, int backlog, isc_quota_t *quota,
-		    isc_tlsctx_t *sslctx, isc_nmsocket_t **sockp);
+isc_nm_listenproxystream(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+			 isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
+			 int backlog, isc_quota_t *quota, isc_tlsctx_t *tlsctx,
+			 isc_nmsocket_t **sockp);
 /*%<
- * Same as isc_nm_listentcpdns but for an SSL (DoT) socket.
+ * Start listening for data preceded by a PROXYv2 header over the
+ * TCP or TLS on interface 'iface', using net manager 'mgr'.
+ *
+ * On success, 'sockp' will be updated to contain a new listening TCP
+ * socket.
+ *
+ * When connection is accepted on the socket, 'accept_cb' will be called with
+ * 'accept_cbarg' as its argument. The callback is expected to start a read.
+ *
+ * If 'quota' is not NULL, then the socket is attached to the specified
+ * quota. This allows us to enforce TCP client quota limits.
+ *
+ * If 'tlsctx' is not NULL, then listen for TLS connections. In that
+ * case PROXYv2 headers are expected to be sent encrypted right after
+ * the TLS handshake.
  */
 
 void
-isc_nm_sequential(isc_nmhandle_t *handle);
+isc_nm_proxystreamconnect(isc_nm_t *mgr, isc_sockaddr_t *local,
+			  isc_sockaddr_t *peer, isc_nm_cb_t cb, void *cbarg,
+			  unsigned int timeout, isc_tlsctx_t *tlsctx,
+			  isc_tlsctx_client_session_cache_t *client_sess_cache,
+			  isc_nm_proxyheader_info_t	    *proxy_info);
 /*%<
- * Disable pipelining on this connection. Each DNS packet will be only
- * processed after the previous completes.
+ * Create a TCP socket using netmgr 'mgr', bind it to the address
+ * 'local', and connect it to the address 'peer'. Right after the
+ * connection has been established, send PROXYv2 header using the
+ * information provided via the 'proxy_info' to the remote peer. Then
+ * the connection is considered established.
  *
- * The socket must be unpaused after the query is processed.  This is done
- * the response is sent, or if we're dropping the query, it will be done
- * when a handle is fully dereferenced by calling the socket's
- * closehandle_cb callback.
+ * If 'proxy_info' is omitted, then a LOCAL PROXYv2 header is sent.
  *
- * Note: This can only be run while a message is being processed; if it is
- * run before any messages are read, no messages will be read.
+ * When the connection is established or has timed out, call 'cb' with
+ * argument 'cbarg'.
  *
- * Also note: once this has been set, it cannot be reversed for a given
- * connection.
+ * 'timeout' specifies the timeout interval in milliseconds.
+ *
+ * The connected socket can only be accessed via the handle passed to
+ * 'cb'.
+ */
+
+void
+isc_nm_proxyheader_info_init(isc_nm_proxyheader_info_t *restrict info,
+			     isc_sockaddr_t *restrict src_addr,
+			     isc_sockaddr_t *restrict dst_addr,
+			     isc_region_t *restrict tlv_data);
+/*%<
+ * Initialize a 'isc_nm_proxyheader_info_t' object with user
+ * provided addresses and a TLVs blob, that can be omitted (the rest
+ * of the data is REQUIRE()d).
+ */
+
+void
+isc_nm_proxyheader_info_init_complete(isc_nm_proxyheader_info_t *restrict info,
+				      isc_region_t *restrict header_data);
+/*%<
+ * Initialize a 'isc_nm_proxyheader_info_t' with user provided data
+ * blob (e.g. a pre-rendered PROXYv2 header for forwarding or
+ * testing).
  */
 
 void
@@ -537,21 +618,18 @@ isc_nm_checkaddr(const isc_sockaddr_t *addr, isc_socktype_t type);
  */
 
 void
-isc_nm_tcpdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
-		     isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
-		     size_t extrahandlesize);
-void
-isc_nm_tlsdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
-		     isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
-		     size_t extrahandlesize, isc_tlsctx_t *sslctx,
-		     isc_tlsctx_client_session_cache_t *client_sess_cache);
+isc_nm_streamdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local,
+			isc_sockaddr_t *peer, isc_nm_cb_t cb, void *cbarg,
+			unsigned int timeout, isc_tlsctx_t *tlsctx,
+			isc_tlsctx_client_session_cache_t *client_sess_cache,
+			isc_nm_proxy_type_t		   proxy_type,
+			isc_nm_proxyheader_info_t	  *proxy_info);
 /*%<
  * Establish a DNS client connection via a TCP or TLS connection, bound to
  * the address 'local' and connected to the address 'peer'.
  *
  * When the connection is complete or has timed out, call 'cb' with
- * argument 'cbarg'. Allocate 'extrahandlesize' additional bytes along
- * with the handle to use for an associated object.
+ * argument 'cbarg'.
  *
  * 'timeout' specifies the timeout interval in milliseconds.
  *
@@ -571,34 +649,50 @@ isc_nm_is_http_handle(isc_nmhandle_t *handle);
  * 'isc_nm_httpsocket'.
  */
 
-#if HAVE_LIBNGHTTP2
+bool
+isc_nm_is_proxy_unspec(isc_nmhandle_t *handle);
+/*%<
+ * Returns 'true' iff 'handle' is associated with a peer who send
+ * a PROXYv2 header with unsupported address type.
+ */
 
-#define ISC_NM_HTTP_DEFAULT_PATH "/dns-query"
+bool
+isc_nm_is_proxy_handle(isc_nmhandle_t *handle);
+/*%< Returns 'true' iff 'handle' is associated is with a PROXYv2
+ * connection.
+ */
 
 isc_result_t
-isc_nm_listentls(isc_nm_t *mgr, isc_sockaddr_t *iface,
-		 isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
-		 size_t extrahandlesize, int backlog, isc_quota_t *quota,
-		 isc_tlsctx_t *sslctx, isc_nmsocket_t **sockp);
+isc_nm_listentls(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		 isc_nm_accept_cb_t accept_cb, void *accept_cbarg, int backlog,
+		 isc_quota_t *quota, isc_tlsctx_t *sslctx, bool proxy,
+		 isc_nmsocket_t **sockp);
 
 void
 isc_nm_tlsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
-		  isc_nm_cb_t cb, void *cbarg, isc_tlsctx_t *ctx,
+		  isc_nm_cb_t connect_cb, void *connect_cbarg,
+		  isc_tlsctx_t			    *ctx,
 		  isc_tlsctx_client_session_cache_t *client_sess_cache,
-		  unsigned int timeout, size_t extrahandlesize);
+		  unsigned int timeout, bool proxy,
+		  isc_nm_proxyheader_info_t *proxy_info);
+
+#if HAVE_LIBNGHTTP2
+
+#define ISC_NM_HTTP_DEFAULT_PATH "/dns-query"
 
 void
 isc_nm_httpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		   const char *uri, bool POST, isc_nm_cb_t cb, void *cbarg,
 		   isc_tlsctx_t			     *ctx,
 		   isc_tlsctx_client_session_cache_t *client_sess_cache,
-		   unsigned int timeout, size_t extrahandlesize);
+		   unsigned int timeout, isc_nm_proxy_type_t proxy_type,
+		   isc_nm_proxyheader_info_t *proxy_info);
 
 isc_result_t
-isc_nm_listenhttp(isc_nm_t *mgr, isc_sockaddr_t *iface, int backlog,
-		  isc_quota_t *quota, isc_tlsctx_t *ctx,
+isc_nm_listenhttp(isc_nm_t *mgr, uint32_t workers, isc_sockaddr_t *iface,
+		  int backlog, isc_quota_t *quota, isc_tlsctx_t *ctx,
 		  isc_nm_http_endpoints_t *eps, uint32_t max_concurrent_streams,
-		  isc_nmsocket_t **sockp);
+		  isc_nm_proxy_type_t proxy_type, isc_nmsocket_t **sockp);
 
 isc_nm_http_endpoints_t *
 isc_nm_http_endpoints_new(isc_mem_t *mctx);
@@ -612,7 +706,7 @@ isc_nm_http_endpoints_new(isc_mem_t *mctx);
 isc_result_t
 isc_nm_http_endpoints_add(isc_nm_http_endpoints_t *restrict eps,
 			  const char *uri, const isc_nm_recv_cb_t cb,
-			  void *cbarg, const size_t extrahandlesize);
+			  void *cbarg);
 /*%< Adds a new endpoint to the given HTTP endpoints set object.
  *
  * NOTE: adding an endpoint is allowed only if the endpoint object has
@@ -755,35 +849,6 @@ isc_nm_verify_tls_peer_result_string(const isc_nmhandle_t *handle);
  *  \li 'handle' is a valid netmgr handle object.
  */
 
-#define ISC_NM_TASK_SLOW_OFFSET -2
-#define ISC_NM_TASK_SLOW(i)	(ISC_NM_TASK_SLOW_OFFSET - 1 - i)
-
-void
-isc_nm_task_enqueue(isc_nm_t *mgr, isc_task_t *task, int threadid);
-/*%<
- * Enqueue the 'task' onto the netmgr ievents queue.
- *
- * Requires:
- * \li 'mgr' is a valid netmgr object
- * \li 'task' is a valid task
- * \li 'threadid' is either the preferred netmgr tid or -1, in which case
- *     tid will be picked randomly. The threadid is capped (by modulo) to
- *     maximum number of 'workers' as specifed in isc_nm_start()
- */
-
-void
-isc_nm_work_offload(isc_nm_t *mgr, isc_nm_workcb_t work_cb,
-		    isc_nm_after_workcb_t after_work_cb, void *data);
-/*%<
- * Schedules a job to be handled by the libuv thread pool (see uv_work_t).
- * The function specified in `work_cb` will be run by a thread in the
- * thread pool; when complete, the `after_work_cb` function will run.
- *
- * Requires:
- * \li 'mgr' is a valid netmgr object.
- * \li We are currently running in a network manager thread.
- */
-
 void
 isc__nm_force_tid(int tid);
 /*%<
@@ -817,3 +882,21 @@ isc_nm_timer_start(isc_nm_timer_t *, uint64_t);
 
 void
 isc_nm_timer_stop(isc_nm_timer_t *);
+
+isc_result_t
+isc_nmhandle_set_tcp_nodelay(isc_nmhandle_t *handle, const bool value);
+/*%<
+ * Disables/Enables Nagle's algorithm on a TCP socket for a
+ * transport backed by TCP (sets TCP_NODELAY if 'value' equals 'true'
+ * or vice versa).
+ *
+ * Requires:
+ *
+ * \li 'handle' is a valid netmgr handle object.
+ */
+
+isc_sockaddr_t
+isc_nmsocket_getaddr(isc_nmsocket_t *sock);
+/*%<
+ * Return the local address of 'sock'.
+ */

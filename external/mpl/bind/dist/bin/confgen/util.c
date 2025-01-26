@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2024/09/22 00:13:55 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <isc/print.h>
+#include <isc/tls.h>
 
 #include "util.h"
 

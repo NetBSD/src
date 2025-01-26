@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.2 2024/02/21 22:52:49 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,15 +41,14 @@
  */
 
 /* test multiple calls to dns_db_getoriginnode */
-ISC_RUN_TEST_IMPL(getoriginnode) {
+ISC_LOOP_TEST_IMPL(getoriginnode) {
 	dns_db_t *db = NULL;
 	dns_dbnode_t *node = NULL;
 	isc_result_t result;
 
-	UNUSED(state);
-
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
-			       dns_rdataclass_in, 0, NULL, &db);
+	result = dns_db_create(mctx, ZONEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_zone, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_getoriginnode(db, &node);
@@ -61,18 +60,18 @@ ISC_RUN_TEST_IMPL(getoriginnode) {
 	dns_db_detachnode(db, &node);
 
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* test getservestalettl and setservestalettl */
-ISC_RUN_TEST_IMPL(getsetservestalettl) {
+ISC_LOOP_TEST_IMPL(getsetservestalettl) {
 	dns_db_t *db = NULL;
 	isc_result_t result;
 	dns_ttl_t ttl;
 
-	UNUSED(state);
-
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_cache,
-			       dns_rdataclass_in, 0, NULL, &db);
+	result = dns_db_create(mctx, CACHEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_cache, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	ttl = 5000;
@@ -90,10 +89,11 @@ ISC_RUN_TEST_IMPL(getsetservestalettl) {
 	assert_int_equal(ttl, 6 * 3600);
 
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* check DNS_DBFIND_STALEOK works */
-ISC_RUN_TEST_IMPL(dns_dbfind_staleok) {
+ISC_LOOP_TEST_IMPL(dns_dbfind_staleok) {
 	dns_db_t *db = NULL;
 	dns_dbnode_t *node = NULL;
 	dns_fixedname_t example_fixed;
@@ -107,16 +107,15 @@ ISC_RUN_TEST_IMPL(dns_dbfind_staleok) {
 	isc_result_t result;
 	unsigned char data[] = { 0x0a, 0x00, 0x00, 0x01 };
 
-	UNUSED(state);
-
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_cache,
-			       dns_rdataclass_in, 0, NULL, &db);
+	result = dns_db_create(mctx, CACHEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_cache, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	example = dns_fixedname_initname(&example_fixed);
 	found = dns_fixedname_initname(&found_fixed);
 
-	result = dns_name_fromstring(example, "example", 0, NULL);
+	result = dns_name_fromstring(example, "example", dns_rootname, 0, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -156,8 +155,7 @@ ISC_RUN_TEST_IMPL(dns_dbfind_staleok) {
 		}
 
 		dns_rdataset_init(&rdataset);
-		result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-		assert_int_equal(result, ISC_R_SUCCESS);
+		dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 		result = dns_db_findnode(db, example, true, &node);
 		assert_int_equal(result, ISC_R_SUCCESS);
@@ -243,17 +241,17 @@ ISC_RUN_TEST_IMPL(dns_dbfind_staleok) {
 	}
 
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* database class */
-ISC_RUN_TEST_IMPL(class) {
+ISC_LOOP_TEST_IMPL(class) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 
-	UNUSED(state);
-
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
-			       dns_rdataclass_in, 0, NULL, &db);
+	result = dns_db_create(mctx, ZONEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_zone, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_load(db, TESTS_DIR "/testdata/db/data.db",
@@ -263,18 +261,18 @@ ISC_RUN_TEST_IMPL(class) {
 	assert_int_equal(dns_db_class(db), dns_rdataclass_in);
 
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* database type */
-ISC_RUN_TEST_IMPL(dbtype) {
+ISC_LOOP_TEST_IMPL(dbtype) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 
-	UNUSED(state);
-
 	/* DB has zone semantics */
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
-			       dns_rdataclass_in, 0, NULL, &db);
+	result = dns_db_create(mctx, ZONEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_zone, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_db_load(db, TESTS_DIR "/testdata/db/data.db",
 			     dns_masterformat_text, 0);
@@ -284,19 +282,18 @@ ISC_RUN_TEST_IMPL(dbtype) {
 	dns_db_detach(&db);
 
 	/* DB has cache semantics */
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_cache,
-			       dns_rdataclass_in, 0, NULL, &db);
-	assert_int_equal(result, ISC_R_SUCCESS);
-	result = dns_db_load(db, TESTS_DIR "/testdata/db/data.db",
-			     dns_masterformat_text, 0);
+	result = dns_db_create(mctx, CACHEDB_DEFAULT, dns_rootname,
+			       dns_dbtype_cache, dns_rdataclass_in, 0, NULL,
+			       &db);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(dns_db_iscache(db));
 	assert_false(dns_db_iszone(db));
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* database versions */
-ISC_RUN_TEST_IMPL(version) {
+ISC_LOOP_TEST_IMPL(version) {
 	isc_result_t result;
 	dns_fixedname_t fname, ffound;
 	dns_name_t *name, *foundname;
@@ -305,15 +302,13 @@ ISC_RUN_TEST_IMPL(version) {
 	dns_dbnode_t *node = NULL;
 	dns_rdataset_t rdataset;
 
-	UNUSED(state);
-
 	result = dns_test_loaddb(&db, dns_dbtype_zone, "test.test",
 				 TESTS_DIR "/testdata/db/data.db");
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* Open current version for reading */
 	dns_db_currentversion(db, &ver);
-	dns_test_namefromstring("b.test.test", &fname);
+	dns_test_namefromstring("b.test.test.", &fname);
 	name = dns_fixedname_name(&fname);
 	foundname = dns_fixedname_initname(&ffound);
 	dns_rdataset_init(&rdataset);
@@ -326,7 +321,7 @@ ISC_RUN_TEST_IMPL(version) {
 
 	/* Open new version for writing */
 	dns_db_currentversion(db, &ver);
-	dns_test_namefromstring("b.test.test", &fname);
+	dns_test_namefromstring("b.test.test.", &fname);
 	name = dns_fixedname_name(&fname);
 	foundname = dns_fixedname_initname(&ffound);
 	dns_rdataset_init(&rdataset);
@@ -360,15 +355,16 @@ ISC_RUN_TEST_IMPL(version) {
 	dns_db_closeversion(db, &ver, false);
 
 	dns_db_detach(&db);
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY(getoriginnode)
-ISC_TEST_ENTRY(getsetservestalettl)
-ISC_TEST_ENTRY(dns_dbfind_staleok)
-ISC_TEST_ENTRY(class)
-ISC_TEST_ENTRY(dbtype)
-ISC_TEST_ENTRY(version)
+ISC_TEST_ENTRY_CUSTOM(getoriginnode, setup_managers, teardown_managers)
+ISC_TEST_ENTRY_CUSTOM(getsetservestalettl, setup_managers, teardown_managers)
+ISC_TEST_ENTRY_CUSTOM(dns_dbfind_staleok, setup_managers, teardown_managers)
+ISC_TEST_ENTRY_CUSTOM(class, setup_managers, teardown_managers)
+ISC_TEST_ENTRY_CUSTOM(dbtype, setup_managers, teardown_managers)
+ISC_TEST_ENTRY_CUSTOM(version, setup_managers, teardown_managers)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

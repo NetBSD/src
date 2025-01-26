@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: keydata.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

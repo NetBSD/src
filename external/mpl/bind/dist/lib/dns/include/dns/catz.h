@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.h,v 1.8 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: catz.h,v 1.9 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -131,32 +131,28 @@ dns_catz_entry_getname(dns_catz_entry_t *entry);
  * \li	domain name for entry.
  */
 
-void
-dns_catz_entry_new(isc_mem_t *mctx, const dns_name_t *domain,
-		   dns_catz_entry_t **nentryp);
+dns_catz_entry_t *
+dns_catz_entry_new(isc_mem_t *mctx, const dns_name_t *domain);
 /*%<
  * Allocate a new catz_entry on 'mctx', with the name 'domain'
  *
  * Requires:
  * \li	'mctx' to be a valid memory context.
  * \li	'domain' to be valid dns_name or NULL.
- * \li	'nentryp' to be non NULL, *nentryp to be NULL.
  *
  * Returns:
  * \li	ISC_R_SUCCESS on success
  * \li	ISC_R_NOMEMORY on allocation failure
  */
 
-void
-dns_catz_entry_copy(dns_catz_zone_t *catz, const dns_catz_entry_t *entry,
-		    dns_catz_entry_t **nentryp);
+dns_catz_entry_t *
+dns_catz_entry_copy(dns_catz_zone_t *catz, const dns_catz_entry_t *entry);
 /*%<
  * Allocate a new catz_entry and deep copy 'entry' into 'nentryp'.
  *
  * Requires:
  * \li	'mctx' to be a valid memory context.
  * \li	'entry' to be non NULL.
- * \li	'nentryp' to be non NULL, *nentryp to be NULL.
  *
  * Returns:
  * \li	ISC_R_SUCCESS on success
@@ -207,15 +203,14 @@ dns_catz_entry_cmp(const dns_catz_entry_t *ea, const dns_catz_entry_t *eb);
  * \li 'false' if the entries differ.
  */
 
-isc_result_t
-dns_catz_new_zone(dns_catz_zones_t *catzs, dns_catz_zone_t **catzp,
-		  const dns_name_t *name);
+dns_catz_zone_t *
+dns_catz_zone_new(dns_catz_zones_t *catzs, const dns_name_t *name);
 /*%<
  * Allocate a new catz zone on catzs mctx
  *
  * Requires:
  * \li	'catzs' is a valid dns_catz_zones_t.
- * \li	'catzp' is not NULL and '*zonep' is NULL.
+ * \li	'catzp' is not NULL and '*catzp' is NULL.
  * \li	'name' is a valid dns_name_t.
  *
  */
@@ -282,9 +277,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 /* xxxwpk TODO config! */
 typedef isc_result_t (*dns_catz_zoneop_fn_t)(dns_catz_entry_t *entry,
 					     dns_catz_zone_t  *origin,
-					     dns_view_t	      *view,
-					     isc_taskmgr_t    *taskmgr,
-					     void	      *udata);
+					     dns_view_t *view, void *udata);
 struct dns_catz_zonemodmethods {
 	dns_catz_zoneop_fn_t addzone;
 	dns_catz_zoneop_fn_t modzone;
@@ -292,9 +285,8 @@ struct dns_catz_zonemodmethods {
 	void		    *udata;
 };
 
-isc_result_t
-dns_catz_new_zones(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
-		   isc_timermgr_t *timermgr, dns_catz_zones_t **catzsp,
+dns_catz_zones_t *
+dns_catz_zones_new(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 		   dns_catz_zonemodmethods_t *zmm);
 /*%<
  * Allocate a new catz_zones object, a collection storing all catalog zones
@@ -302,8 +294,7 @@ dns_catz_new_zones(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
  *
  * Requires:
  * \li 'mctx' is not NULL.
- * \li 'taskmgr' is not NULL.
- * \li 'timermgr' is not NULL.
+ * \li 'loopmgr' is not NULL.
  * \li 'catzsp' is not NULL and '*catzsp' is NULL.
  * \li 'zmm' is not NULL.
  *
@@ -319,7 +310,7 @@ dns_catz_zones_get_udata(dns_catz_zones_t *catzs);
  */
 
 isc_result_t
-dns_catz_add_zone(dns_catz_zones_t *catzs, const dns_name_t *name,
+dns_catz_zone_add(dns_catz_zones_t *catzs, const dns_name_t *name,
 		  dns_catz_zone_t **catzp);
 /*%<
  * Allocate a new catz named 'name' and put it in 'catzs' collection. This
@@ -333,7 +324,7 @@ dns_catz_add_zone(dns_catz_zones_t *catzs, const dns_name_t *name,
  */
 
 dns_catz_zone_t *
-dns_catz_get_zone(dns_catz_zones_t *catzs, const dns_name_t *name);
+dns_catz_zone_get(dns_catz_zones_t *catzs, const dns_name_t *name);
 /*%<
  * Returns a zone named 'name' from collection 'catzs'
  *
@@ -357,8 +348,8 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg);
 /*%<
  * Callback for update of catalog zone database.
  * If there was no catalog zone update recently it launches an
- * update_taskaction immediately.
- * If there was an update recently it schedules update_taskaction for some time
+ * update action immediately.
+ * If there was an update recently it schedules update for some time
  * in the future.
  * If there is an update scheduled it replaces old db version with a new one.
  *
@@ -368,7 +359,7 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg);
  */
 
 void
-dns_catz_dbupdate_unregister(dns_db_t *db, dns_catz_zones_t *catzs);
+dns_catz_dbupdate_register(dns_db_t *db, dns_catz_zones_t *catzs);
 /*%<
  * Register the catalog zone database update notify callback.
  *
@@ -378,7 +369,7 @@ dns_catz_dbupdate_unregister(dns_db_t *db, dns_catz_zones_t *catzs);
  */
 
 void
-dns_catz_dbupdate_register(dns_db_t *db, dns_catz_zones_t *catzs);
+dns_catz_dbupdate_unregister(dns_db_t *db, dns_catz_zones_t *catzs);
 /*%<
  * Unregister the catalog zone database update notify callback.
  *
@@ -408,18 +399,7 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs);
  */
 
 void
-dns_catz_get_iterator(dns_catz_zone_t *catz, isc_ht_iter_t **itp);
-/*%<
- * Get the hashtable iterator on catalog zone members, point '*itp' to it.
- *
- * Requires:
- * \li	'catzs' is a valid dns_catz_zones_t.
- * \li	'itp' is not NULL and '*itp' is NULL.
- *
- */
-
-void
-dns_catz_shutdown_catzs(dns_catz_zones_t *catzs);
+dns_catz_zones_shutdown(dns_catz_zones_t *catzs);
 /*%<
  * Shut down the catalog zones.
  *
@@ -428,41 +408,43 @@ dns_catz_shutdown_catzs(dns_catz_zones_t *catzs);
  *
  */
 
+typedef void (*dns_catz_entry_cb2)(dns_catz_entry_t *entry, void *arg1,
+				   void *arg2);
+
+void
+dns_catz_zone_for_each_entry2(dns_catz_zone_t *catz, dns_catz_entry_cb2 cb,
+			      void *arg1, void *arg2);
+/*%<
+ * Iterate on the catalog zone members, call 'cb' on each 'entry'.
+ *
+ * Requires:
+ * \li	'catz' is a valid dns_catz_zones_t.
+ *
+ */
+
 #ifdef DNS_CATZ_TRACE
 /* Compatibility macros */
-#define dns_catz_attach_catz(catz, catzp) \
+#define dns_catz_zone_attach(catz, catzp) \
 	dns_catz_zone__attach(catz, catzp, __func__, __FILE__, __LINE__)
-#define dns_catz_detach_catz(catzp) \
+#define dns_catz_zone_detach(catzp) \
 	dns_catz_zone__detach(catzp, __func__, __FILE__, __LINE__)
-#define dns_catz_ref_catz(ptr) \
+#define dns_catz_zone_ref(ptr) \
 	dns_catz_zone__ref(ptr, __func__, __FILE__, __LINE__)
-#define dns_catz_unref_catz(ptr) \
+#define dns_catz_zone_unref(ptr) \
 	dns_catz_zone__unref(ptr, __func__, __FILE__, __LINE__)
 
-#define dns_catz_attach_catzs(catzs, catzsp) \
+#define dns_catz_zones_attach(catzs, catzsp) \
 	dns_catz_zones__attach(catzs, catzsp, __func__, __FILE__, __LINE__)
-#define dns_catz_detach_catzs(catzsp) \
+#define dns_catz_zones_detach(catzsp) \
 	dns_catz_zones__detach(catzsp, __func__, __FILE__, __LINE__)
-#define dns_catz_ref_catzs(ptr) \
+#define dns_catz_zones_ref(ptr) \
 	dns_catz_zones__ref(ptr, __func__, __FILE__, __LINE__)
-#define dns_catz_unref_catzs(ptr) \
+#define dns_catz_zones_unref(ptr) \
 	dns_catz_zones__unref(ptr, __func__, __FILE__, __LINE__)
 
 ISC_REFCOUNT_TRACE_DECL(dns_catz_zone);
 ISC_REFCOUNT_TRACE_DECL(dns_catz_zones);
 #else
-/* Compatibility macros */
-#define dns_catz_attach_catz(catz, catzp) dns_catz_zone_attach(catz, catzp)
-#define dns_catz_detach_catz(catzp)	  dns_catz_zone_detach(catzp)
-#define dns_catz_ref_catz(ptr)		  dns_catz_zone_ref(ptr)
-#define dns_catz_unref_catz(ptr)	  dns_catz_zone_unref(ptr)
-
-#define dns_catz_attach_catzs(catzs, catzsp) \
-	dns_catz_zones_attach(catzs, catzsp)
-#define dns_catz_detach_catzs(catzsp) dns_catz_zones_detach(catzsp)
-#define dns_catz_ref_catzs(ptr)	      dns_catz_zones_ref(ptr)
-#define dns_catz_unref_catzs(ptr)     dns_catz_zones_unref(ptr)
-
 ISC_REFCOUNT_DECL(dns_catz_zone);
 ISC_REFCOUNT_DECL(dns_catz_zones);
 #endif /* DNS_CATZ_TRACE */

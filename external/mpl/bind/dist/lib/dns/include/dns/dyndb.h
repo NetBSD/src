@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.h,v 1.8 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dyndb.h,v 1.9 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,14 @@ ISC_LANG_BEGINDECLS
  * function should detach from them.
  */
 struct dns_dyndbctx {
-	unsigned int	magic;
-	const void     *hashinit;
-	isc_mem_t      *mctx;
-	isc_log_t      *lctx;
-	dns_view_t     *view;
-	dns_zonemgr_t  *zmgr;
-	isc_task_t     *task;
-	isc_timermgr_t *timermgr;
-	const bool     *refvar; /* unused, but retained for API compatibility */
+	unsigned int   magic;
+	const void    *hashinit;
+	isc_mem_t     *mctx;
+	isc_log_t     *lctx;
+	dns_view_t    *view;
+	dns_zonemgr_t *zmgr;
+	isc_loopmgr_t *loopmgr;
+	const bool    *refvar; /* unused, but retained for API compatibility */
 };
 
 #define DNS_DYNDBCTX_MAGIC    ISC_MAGIC('D', 'd', 'b', 'c')
@@ -58,7 +57,7 @@ struct dns_dyndbctx {
  * if not, set DNS_DYNDB_AGE to 0.
  */
 #ifndef DNS_DYNDB_VERSION
-#define DNS_DYNDB_VERSION 1
+#define DNS_DYNDB_VERSION 2
 #define DNS_DYNDB_AGE	  0
 #endif /* ifndef DNS_DYNDB_VERSION */
 
@@ -135,8 +134,8 @@ dns_dyndb_cleanup(bool exiting);
 
 isc_result_t
 dns_dyndb_createctx(isc_mem_t *mctx, const void *hashinit, isc_log_t *lctx,
-		    dns_view_t *view, dns_zonemgr_t *zmgr, isc_task_t *task,
-		    isc_timermgr_t *tmgr, dns_dyndbctx_t **dctxp);
+		    dns_view_t *view, dns_zonemgr_t *zmgr,
+		    isc_loopmgr_t *loopmgr, dns_dyndbctx_t **dctxp);
 /*%
  * Create a dyndb initialization context structure, with
  * pointers to structures in the server that the dyndb module will

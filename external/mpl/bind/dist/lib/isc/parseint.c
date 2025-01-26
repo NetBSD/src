@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: parseint.c,v 1.7 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,12 +30,12 @@ isc_parse_uint32(uint32_t *uip, const char *string, int base) {
 	uint32_t r;
 	char *e;
 	if (!isalnum((unsigned char)(string[0]))) {
-		return (ISC_R_BADNUMBER);
+		return ISC_R_BADNUMBER;
 	}
 	errno = 0;
 	n = strtoul(string, &e, base);
 	if (*e != '\0') {
-		return (ISC_R_BADNUMBER);
+		return ISC_R_BADNUMBER;
 	}
 	/*
 	 * Where long is 64 bits we need to convert to 32 bits then test for
@@ -44,10 +44,10 @@ isc_parse_uint32(uint32_t *uip, const char *string, int base) {
 	 */
 	r = (uint32_t)n;
 	if ((n == ULONG_MAX && errno == ERANGE) || (n != (unsigned long)r)) {
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 	*uip = r;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -56,13 +56,13 @@ isc_parse_uint16(uint16_t *uip, const char *string, int base) {
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	if (val > 0xFFFF) {
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 	*uip = (uint16_t)val;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -71,11 +71,11 @@ isc_parse_uint8(uint8_t *uip, const char *string, int base) {
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	if (val > 0xFF) {
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 	*uip = (uint8_t)val;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

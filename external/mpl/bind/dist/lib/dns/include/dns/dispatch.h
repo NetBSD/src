@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.8 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -71,17 +71,17 @@ ISC_LANG_BEGINDECLS
 struct dns_dispatchset {
 	isc_mem_t	*mctx;
 	dns_dispatch_t **dispatches;
-	int		 ndisp;
-	int		 cur;
-	isc_mutex_t	 lock;
+	uint32_t	 ndisp;
 };
 
-/*
- */
-#define DNS_DISPATCHOPT_FIXEDID 0x00000001U
+typedef enum dns_dispatchopt {
+	DNS_DISPATCHOPT_FIXEDID = 1 << 0,
+	DNS_DISPATCHOPT_UNSHARED = 1 << 1, /* Don't share this connection */
+} dns_dispatchopt_t;
 
 isc_result_t
-dns_dispatchmgr_create(isc_mem_t *mctx, isc_nm_t *nm, dns_dispatchmgr_t **mgrp);
+dns_dispatchmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t *nm,
+		       dns_dispatchmgr_t **mgrp);
 /*%<
  * Creates a new dispatchmgr object, and sets the available ports
  * to the default range (1024-65535).
@@ -186,15 +186,28 @@ dns_dispatch_createudp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *localaddr,
 
 isc_result_t
 dns_dispatch_createtcp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *localaddr,
-		       const isc_sockaddr_t *destaddr, dns_dispatch_t **dispp);
+		       const isc_sockaddr_t *destaddr,
+		       dns_transport_t *transport, dns_dispatchopt_t options,
+		       dns_dispatch_t **dispp);
 /*%<
  * Create a new TCP dns_dispatch.
+ *
+ * Note: a NULL transport is different from a non-NULL transport of type
+ *	 DNS_TRANSPORT_TCP, though currently their behavior is the same.
+ *	 This allows for different types of transactions to be seperated
+ *	 in the future if needed.
  *
  * Requires:
  *
  *\li	mgr is a valid dispatch manager.
  *
- *\li	sock is a valid.
+ *\li	dstaddr to be a valid sockaddr.
+ *
+ *\li	localaddr to be a valid sockaddr.
+ *
+ *\li	transport is NULL or a valid transport.
+ *
+ *\li	dispp to be non NULL and *dispp to be NULL
  *
  * Returns:
  *\li	ISC_R_SUCCESS	-- success.
@@ -256,20 +269,43 @@ dns_dispatch_resume(dns_dispentry_t *resp, uint16_t timeout);
 
 isc_result_t
 dns_dispatch_gettcp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *destaddr,
-		    const isc_sockaddr_t *localaddr, dns_dispatch_t **dispp);
+		    const isc_sockaddr_t *localaddr, dns_transport_t *transport,
+		    dns_dispatch_t **dispp);
 /*
- * Attempt to connect to a existing TCP connection.
+ * Attempt to connect to a existing TCP connection that was created with
+ * parameters that match destaddr, localaddr and transport.
+ *
+ * If localaddr is NULL, we ignore the dispatch's localaddr when looking
+ * for a match.  However, if transport is NULL, then the matching dispatch
+ * must also have been created with a NULL transport.
+ *
+ * Requires:
+ *\li	mgr to be valid dispatch manager.
+ *
+ *\li	dstaddr to be a valid sockaddr.
+ *
+ *\li	localaddr to be NULL or a valid sockaddr.
+ *
+ *\li	transport is NULL or a valid transport.
+ *
+ *\li	dispp to be non NULL and *dispp to be NULL
+ *
+ * Returns:
+ *\li	ISC_R_SUCCESS	-- success.
+ *
+ *\li	Anything else	-- failure.
  */
 
 typedef void (*dispatch_cb_t)(isc_result_t eresult, isc_region_t *region,
 			      void *cbarg);
 
 isc_result_t
-dns_dispatch_add(dns_dispatch_t *disp, unsigned int options,
-		 unsigned int timeout, const isc_sockaddr_t *dest,
-		 dispatch_cb_t connected, dispatch_cb_t sent,
-		 dispatch_cb_t response, void *arg, dns_messageid_t *idp,
-		 dns_dispentry_t **resp);
+dns_dispatch_add(dns_dispatch_t *disp, isc_loop_t *loop,
+		 dns_dispatchopt_t options, unsigned int timeout,
+		 const isc_sockaddr_t *dest, dns_transport_t *transport,
+		 isc_tlsctx_cache_t *tlsctx_cache, dispatch_cb_t connected,
+		 dispatch_cb_t sent, dispatch_cb_t response, void *arg,
+		 dns_messageid_t *idp, dns_dispentry_t **resp);
 /*%<
  * Add a response entry for this dispatch.
  *
@@ -292,6 +328,9 @@ dns_dispatch_add(dns_dispatch_t *disp, unsigned int options,
  *\li	"dest" be non-NULL and valid.
  *
  *\li	"resp" be non-NULL and *resp be NULL
+ *
+ *\li	"transport" to be the same one used with dns_dispatch_createtcp or
+ *	dns_dispatch_gettcp.
  *
  * Ensures:
  *
@@ -359,7 +398,7 @@ dns_dispatchset_get(dns_dispatchset_t *dset);
 
 isc_result_t
 dns_dispatchset_create(isc_mem_t *mctx, dns_dispatch_t *source,
-		       dns_dispatchset_t **dsetp, int n);
+		       dns_dispatchset_t **dsetp, uint32_t n);
 /*%<
  * Given a valid dispatch 'source', create a dispatch set containing
  * 'n' UDP dispatches, with the remainder filled out by clones of the
@@ -387,6 +426,16 @@ dns_dispatch_getnext(dns_dispentry_t *resp);
  *
  * Requires:
  *\li	resp is valid
+ */
+
+isc_result_t
+dns_dispatch_checkperm(dns_dispatch_t *disp);
+/*%<
+ * Check whether it is permitted to do a zone transfer over a dispatch.
+ * See isc_nm_xfr_checkperm().
+ *
+ * Requires:
+ *\li	disp is valid
  */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.9 2024/09/22 00:14:04 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.10 2025/01/26 16:25:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #include <isc/commandline.h>
 #include <isc/log.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
@@ -61,7 +60,7 @@ setup_logging(isc_mem_t *mctx, FILE *errout, isc_log_t **logp) {
 		      ISC_R_SUCCESS);
 
 	*logp = log;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 int
@@ -132,5 +131,5 @@ main(int argc, char **argv) {
 	}
 	isc_log_destroy(&lctx);
 	isc_mem_detach(&mctx);
-	return (result != ISC_R_SUCCESS ? 1 : 0);
+	return result != ISC_R_SUCCESS ? 1 : 0;
 }

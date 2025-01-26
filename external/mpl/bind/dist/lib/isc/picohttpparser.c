@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.3 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.4 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -56,16 +56,16 @@
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c) - 040u < 0137u)
 
-#define CHECK_EOF()           \
-	if (buf == buf_end) { \
-		*ret = -2;    \
-		return NULL;  \
+#define CHECK_EOF()            \
+	if (buf == buf_end) {  \
+		*ret = -2;     \
+		return (NULL); \
 	}
 
 #define EXPECT_CHAR_NO_CHECK(ch) \
 	if (*buf++ != ch) {      \
 		*ret = -1;       \
-		return NULL;     \
+		return (NULL);   \
 	}
 
 #define EXPECT_CHAR(ch) \
@@ -90,7 +90,7 @@
 				    *buf == '\177')                       \
 				{                                         \
 					*ret = -1;                        \
-					return NULL;                      \
+					return (NULL);                    \
 				}                                         \
 			}                                                 \
 			++buf;                                            \
@@ -248,7 +248,7 @@ is_complete(const char *buf, const char *buf_end, size_t last_len, int *ret) {
 	if (*buf < '0' || '9' < *buf) { \
 		buf++;                  \
 		*ret = -1;              \
-		return NULL;            \
+		return (NULL);          \
 	}                               \
 	*(valp_) = (mul_) * (*buf++ - '0');
 
@@ -610,8 +610,9 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 		case CHUNKED_IN_CHUNK_SIZE:
 			for (;; ++src) {
 				int v;
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
+				}
 				if ((v = decode_hex(buf[src])) == -1) {
 					if (decoder->_hex_count == 0) {
 						ret = -1;
@@ -634,10 +635,12 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			/* RFC 7230 A.2 "Line folding in chunk extensions is
 			 * disallowed" */
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] == '\012')
+				}
+				if (buf[src] == '\012') {
 					break;
+				}
 			}
 			++src;
 			if (decoder->bytes_left_in_chunk == 0) {
@@ -654,16 +657,18 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 		case CHUNKED_IN_CHUNK_DATA: {
 			size_t avail = bufsz - src;
 			if (avail < decoder->bytes_left_in_chunk) {
-				if (dst != src)
+				if (dst != src) {
 					memmove(buf + dst, buf + src, avail);
+				}
 				src += avail;
 				dst += avail;
 				decoder->bytes_left_in_chunk -= avail;
 				goto Exit;
 			}
-			if (dst != src)
+			if (dst != src) {
 				memmove(buf + dst, buf + src,
 					decoder->bytes_left_in_chunk);
+			}
 			src += decoder->bytes_left_in_chunk;
 			dst += decoder->bytes_left_in_chunk;
 			decoder->bytes_left_in_chunk = 0;
@@ -672,10 +677,12 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 		/* fallthru */
 		case CHUNKED_IN_CHUNK_CRLF:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] != '\015')
+				}
+				if (buf[src] != '\015') {
 					break;
+				}
 			}
 			if (buf[src] != '\012') {
 				ret = -1;
@@ -686,21 +693,26 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			break;
 		case CHUNKED_IN_TRAILERS_LINE_HEAD:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] != '\015')
+				}
+				if (buf[src] != '\015') {
 					break;
+				}
 			}
-			if (buf[src++] == '\012')
+			if (buf[src++] == '\012') {
 				goto Complete;
+			}
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_MIDDLE;
 		/* fallthru */
 		case CHUNKED_IN_TRAILERS_LINE_MIDDLE:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] == '\012')
+				}
+				if (buf[src] == '\012') {
 					break;
+				}
 			}
 			++src;
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_HEAD;
@@ -713,8 +725,9 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 Complete:
 	ret = bufsz - src;
 Exit:
-	if (dst != src)
+	if (dst != src) {
 		memmove(buf + dst, buf + src, bufsz - src);
+	}
 	*_bufsz = dst;
 	return ret;
 }

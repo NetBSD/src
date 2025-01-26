@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.3 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,33 +40,33 @@ isc___errno2result(int posixerrno, bool dolog, const char *file,
 	case EINVAL: /* XXX sometimes this is not for files */
 	case ENAMETOOLONG:
 	case EBADF:
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	case EISDIR:
-		return (ISC_R_NOTFILE);
+		return ISC_R_NOTFILE;
 	case ENOENT:
-		return (ISC_R_FILENOTFOUND);
+		return ISC_R_FILENOTFOUND;
 	case EACCES:
 	case EPERM:
 	case EROFS:
-		return (ISC_R_NOPERM);
+		return ISC_R_NOPERM;
 	case EEXIST:
-		return (ISC_R_FILEEXISTS);
+		return ISC_R_FILEEXISTS;
 	case EIO:
-		return (ISC_R_IOERROR);
+		return ISC_R_IOERROR;
 	case ENOMEM:
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	case ENFILE:
 	case EMFILE:
-		return (ISC_R_TOOMANYOPENFILES);
+		return ISC_R_TOOMANYOPENFILES;
 #ifdef EDQUOT
 	case EDQUOT:
-		return (ISC_R_DISCQUOTA);
+		return ISC_R_DISCQUOTA;
 #endif /* ifdef EDQUOT */
 	case ENOSPC:
-		return (ISC_R_DISCFULL);
+		return ISC_R_DISCFULL;
 #ifdef EOVERFLOW
 	case EOVERFLOW:
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 #endif /* ifdef EOVERFLOW */
 	case EPIPE:
 #ifdef ECONNRESET
@@ -75,47 +75,47 @@ isc___errno2result(int posixerrno, bool dolog, const char *file,
 #ifdef ECONNABORTED
 	case ECONNABORTED:
 #endif /* ifdef ECONNABORTED */
-		return (ISC_R_CONNECTIONRESET);
+		return ISC_R_CONNECTIONRESET;
 #ifdef ENOTCONN
 	case ENOTCONN:
-		return (ISC_R_NOTCONNECTED);
+		return ISC_R_NOTCONNECTED;
 #endif /* ifdef ENOTCONN */
 #ifdef ETIMEDOUT
 	case ETIMEDOUT:
-		return (ISC_R_TIMEDOUT);
+		return ISC_R_TIMEDOUT;
 #endif /* ifdef ETIMEDOUT */
 #ifdef ENOBUFS
 	case ENOBUFS:
-		return (ISC_R_NORESOURCES);
+		return ISC_R_NORESOURCES;
 #endif /* ifdef ENOBUFS */
 #ifdef EAFNOSUPPORT
 	case EAFNOSUPPORT:
-		return (ISC_R_FAMILYNOSUPPORT);
+		return ISC_R_FAMILYNOSUPPORT;
 #endif /* ifdef EAFNOSUPPORT */
 #ifdef ENETDOWN
 	case ENETDOWN:
-		return (ISC_R_NETDOWN);
+		return ISC_R_NETDOWN;
 #endif /* ifdef ENETDOWN */
 #ifdef EHOSTDOWN
 	case EHOSTDOWN:
-		return (ISC_R_HOSTDOWN);
+		return ISC_R_HOSTDOWN;
 #endif /* ifdef EHOSTDOWN */
 #ifdef ENETUNREACH
 	case ENETUNREACH:
-		return (ISC_R_NETUNREACH);
+		return ISC_R_NETUNREACH;
 #endif /* ifdef ENETUNREACH */
 #ifdef EHOSTUNREACH
 	case EHOSTUNREACH:
-		return (ISC_R_HOSTUNREACH);
+		return ISC_R_HOSTUNREACH;
 #endif /* ifdef EHOSTUNREACH */
 #ifdef EADDRINUSE
 	case EADDRINUSE:
-		return (ISC_R_ADDRINUSE);
+		return ISC_R_ADDRINUSE;
 #endif /* ifdef EADDRINUSE */
 	case EADDRNOTAVAIL:
-		return (ISC_R_ADDRNOTAVAIL);
+		return ISC_R_ADDRNOTAVAIL;
 	case ECONNREFUSED:
-		return (ISC_R_CONNREFUSED);
+		return ISC_R_CONNREFUSED;
 	default:
 		if (dolog) {
 			strerror_r(posixerrno, strbuf, sizeof(strbuf));
@@ -130,6 +130,6 @@ isc___errno2result(int posixerrno, bool dolog, const char *file,
 		 * might have something more descriptive than "unexpected
 		 * error" to log with.
 		 */
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 }

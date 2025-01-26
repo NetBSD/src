@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.8 2024/09/22 00:14:04 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.9 2025/01/26 16:25:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,9 +25,9 @@
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/iterated_hash.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
+#include <isc/tls.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
@@ -70,8 +70,8 @@ usage(void) {
 }
 
 typedef void
-nsec3printer(unsigned algo, unsigned flags, unsigned iters, const char *saltstr,
-	     const char *domain, const char *digest);
+nsec3printer(unsigned int algo, unsigned int flags, unsigned int iters,
+	     const char *saltstr, const char *domain, const char *digest);
 
 static void
 nsec3hash(nsec3printer *nsec3print, const char *algostr, const char *flagstr,
@@ -141,7 +141,7 @@ nsec3hash(nsec3printer *nsec3print, const char *algostr, const char *flagstr,
 }
 
 static void
-nsec3hash_print(unsigned algo, unsigned flags, unsigned iters,
+nsec3hash_print(unsigned int algo, unsigned int flags, unsigned int iters,
 		const char *saltstr, const char *domain, const char *digest) {
 	UNUSED(flags);
 	UNUSED(domain);
@@ -151,7 +151,7 @@ nsec3hash_print(unsigned algo, unsigned flags, unsigned iters,
 }
 
 static void
-nsec3hash_rdata_print(unsigned algo, unsigned flags, unsigned iters,
+nsec3hash_rdata_print(unsigned int algo, unsigned int flags, unsigned int iters,
 		      const char *saltstr, const char *domain,
 		      const char *digest) {
 	fprintf(stdout, "%s NSEC3 %u %u %u %s %s\n", domain, algo, flags, iters,
@@ -193,5 +193,5 @@ skip:
 		nsec3hash(nsec3hash_print, argv[1], NULL, argv[2], argv[0],
 			  argv[3]);
 	}
-	return (0);
+	return 0;
 }

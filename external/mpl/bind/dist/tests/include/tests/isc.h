@@ -1,4 +1,4 @@
-/*	$NetBSD: isc.h,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: isc.h,v 1.4 2025/01/26 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
-#include <uv.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -27,33 +26,38 @@
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/netmgr.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
+#include <isc/uv.h>
 
-#include "netmgr_p.h"
-#include "task_p.h"
-#include "timer_p.h"
+extern isc_mem_t     *mctx;
+extern isc_log_t     *lctx;
+extern isc_loop_t    *mainloop;
+extern isc_loopmgr_t *loopmgr;
+extern isc_nm_t	     *netmgr;
+extern int	      ncpus;
+extern unsigned int   workers;
+extern bool	      debug;
 
-#define CHECK(r)                             \
-	do {                                 \
-		result = (r);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
+int
+setup_mctx(void **state);
+int
+teardown_mctx(void **state);
 
-extern isc_mem_t      *mctx;
-extern isc_nm_t	      *netmgr;
-extern isc_taskmgr_t  *taskmgr;
-extern isc_timermgr_t *timermgr;
-extern unsigned int    workers;
-extern isc_task_t     *maintask;
-extern bool	       debug;
+int
+setup_workers(void **state);
 
-#define isc_test_nap(ms) uv_sleep(ms)
+int
+setup_loopmgr(void **state);
+int
+teardown_loopmgr(void **state);
+
+int
+setup_netmgr(void **state);
+int
+teardown_netmgr(void **state);
 
 int
 setup_managers(void **state);
@@ -79,25 +83,88 @@ teardown_managers(void **state);
 /* clang-format on */
 
 #define ISC_SETUP_TEST_DECLARE(name) \
-	int setup_test_##name(void **state __attribute__((unused)));
+	int setup_test_##name(void **state ISC_ATTR_UNUSED);
 
 #define ISC_RUN_TEST_DECLARE(name) \
-	void run_test_##name(void **state __attribute__((unused)));
+	void run_test_##name(void **state ISC_ATTR_UNUSED);
 
 #define ISC_TEARDOWN_TEST_DECLARE(name) \
-	int teardown_test_##name(void **state __attribute__((unused)))
+	int teardown_test_##name(void **state ISC_ATTR_UNUSED)
 
-#define ISC_SETUP_TEST_IMPL(name)                                    \
-	int setup_test_##name(void **state __attribute__((unused))); \
-	int setup_test_##name(void **state __attribute__((unused)))
+#define ISC_LOOP_TEST_CUSTOM_DECLARE(name, setup, teardown) \
+	void run_test_##name(void **state ISC_ATTR_UNUSED); \
+	void loop_test_##name(void *arg ISC_ATTR_UNUSED);
 
-#define ISC_RUN_TEST_IMPL(name)                                     \
-	void run_test_##name(void **state __attribute__((unused))); \
-	void run_test_##name(void **state __attribute__((unused)))
+#define ISC_LOOP_TEST_DECLARE(name) \
+	ISC_LOOP_TEST_CUSTOM_DECLARE(name, NULL, NULL)
 
-#define ISC_TEARDOWN_TEST_IMPL(name)                                    \
-	int teardown_test_##name(void **state __attribute__((unused))); \
-	int teardown_test_##name(void **state __attribute__((unused)))
+#define ISC_LOOP_TEST_SETUP_DECLARE(name) \
+	ISC_LOOP_TEST_CUSTOM_DECLARE(name, setup_loop_##name, NULL)
+
+#define ISC_LOOP_TEST_SETUP_TEARDOWN_DECLARE(name)            \
+	ISC_LOOP_TEST_CUSTOM_DECLARE(name, setup_loop_##name, \
+				     teardown_loop_##name)
+
+#define ISC_LOOP_TEST_TEARDOWN_DECLARE(name) \
+	ISC_LOOP_TEST_CUSTOM_DECLARE(name, NULL, teardown_loop_##name)
+
+#define ISC_LOOP_SETUP_DECLARE(name) \
+	void setup_loop_##name(void *arg ISC_ATTR_UNUSED);
+
+#define ISC_SETUP_TEST_IMPL(name)                            \
+	int setup_test_##name(void **state ISC_ATTR_UNUSED); \
+	int setup_test_##name(void **state ISC_ATTR_UNUSED)
+
+#define ISC_RUN_TEST_IMPL(name)                             \
+	void run_test_##name(void **state ISC_ATTR_UNUSED); \
+	void run_test_##name(void **state ISC_ATTR_UNUSED)
+
+#define ISC_TEARDOWN_TEST_IMPL(name)                            \
+	int teardown_test_##name(void **state ISC_ATTR_UNUSED); \
+	int teardown_test_##name(void **state ISC_ATTR_UNUSED)
+
+#define ISC_TEST_LIST_START const struct CMUnitTest tests[] = {
+#define ISC_TEST_LIST_END \
+	}                 \
+	;
+
+#define ISC_LOOP_TEST_CUSTOM_IMPL(name, setup, teardown)                   \
+	void run_test_##name(void **state ISC_ATTR_UNUSED);                \
+	void loop_test_##name(void *arg ISC_ATTR_UNUSED);                  \
+	void run_test_##name(void **state ISC_ATTR_UNUSED) {               \
+		isc_job_cb setup_loop = setup;                             \
+		isc_job_cb teardown_loop = teardown;                       \
+		if (setup_loop != NULL) {                                  \
+			isc_loop_setup(mainloop, setup_loop, state);       \
+		}                                                          \
+		if (teardown_loop != NULL) {                               \
+			isc_loop_teardown(mainloop, teardown_loop, state); \
+		}                                                          \
+		isc_loop_setup(mainloop, loop_test_##name, state);         \
+		isc_loopmgr_run(loopmgr);                                  \
+	}                                                                  \
+	void loop_test_##name(void *arg ISC_ATTR_UNUSED)
+
+#define ISC_LOOP_TEST_IMPL(name) ISC_LOOP_TEST_CUSTOM_IMPL(name, NULL, NULL)
+
+#define ISC_LOOP_TEST_SETUP_IMPL(name) \
+	ISC_LOOP_TEST_CUSTOM_IMPL(name, setup_loop_##name, NULL)
+
+#define ISC_LOOP_TEST_SETUP_TEARDOWN_IMPL(name) \
+	ISC_LOOP_TEST_CUSTOM_IMPL(name, setup_loop_##name, teardown_loop_##name)
+
+#define ISC_LOOP_TEST_TEARDOWN_IMPL(name) \
+	ISC_LOOP_TEST_CUSTOM_IMPL(name, NULL, teardown_loop_##name)
+
+#define ISC_LOOP_SETUP_IMPL(name)                          \
+	void setup_loop_##name(void *arg ISC_ATTR_UNUSED); \
+	void setup_loop_##name(void *arg ISC_ATTR_UNUSED)
+
+#define ISC_LOOP_TEARDOWN_IMPL(name)                          \
+	void teardown_loop_##name(void *arg ISC_ATTR_UNUSED); \
+	void teardown_loop_##name(void *arg ISC_ATTR_UNUSED)
+
+#define ISC_TEST_DECLARE(name) void run_test_##name(void **state);
 
 #define ISC_TEST_LIST_START const struct CMUnitTest tests[] = {
 #define ISC_TEST_LIST_END \
@@ -116,8 +183,8 @@ teardown_managers(void **state);
                                                                                         \
 		memset(selected, 0, sizeof(selected));                                  \
                                                                                         \
-		isc_mem_debugging |= ISC_MEM_DEBUGRECORD;                               \
-		isc_mem_create(&mctx);                                                  \
+		setup_mctx(NULL);                                                       \
+		setup_workers(NULL);                                                    \
                                                                                         \
 		while ((c = isc_commandline_parse(argc, argv, "dlt:")) != -1)           \
 		{                                                                       \

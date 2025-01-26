@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.8 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,6 @@
 #include <stdbool.h>
 
 #include <isc/file.h>
-#include <isc/print.h>
 #include <isc/regex.h>
 #include <isc/string.h>
 
@@ -428,11 +427,11 @@ isc_regex_validate(const char *c) {
 	if (!have_atom) {
 		FAIL("no atom");
 	}
-	return (sub);
+	return sub;
 
 error:
 #if VALREGEX_REPORT_REASON
 	fprintf(stderr, "%s\n", reason);
 #endif /* if VALREGEX_REPORT_REASON */
-	return (-1);
+	return -1;
 }

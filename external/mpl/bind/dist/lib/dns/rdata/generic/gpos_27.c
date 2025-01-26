@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.c,v 1.8 2024/02/21 22:52:12 christos Exp $	*/
+/*	$NetBSD: gpos_27.c,v 1.9 2025/01/26 16:25:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@ fromtext_gpos(ARGS_FROMTEXT) {
 					      isc_tokentype_qstring, false));
 		RETTOK(txt_fromtext(&token.value.as_textregion, target));
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -60,7 +60,7 @@ totext_gpos(ARGS_TOTEXT) {
 		}
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -72,12 +72,11 @@ fromwire_gpos(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(dctx);
 	UNUSED(rdclass);
-	UNUSED(options);
 
 	for (i = 0; i < 3; i++) {
 		RETERR(txt_fromwire(source, target));
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -87,7 +86,7 @@ towire_gpos(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -103,7 +102,7 @@ compare_gpos(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -123,7 +122,7 @@ fromstruct_gpos(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(gpos->lat_len, target));
 	RETERR(mem_tobuffer(target, gpos->latitude, gpos->lat_len));
 	RETERR(uint8_tobuffer(gpos->alt_len, target));
-	return (mem_tobuffer(target, gpos->altitude, gpos->alt_len));
+	return mem_tobuffer(target, gpos->altitude, gpos->alt_len);
 }
 
 static isc_result_t
@@ -143,43 +142,23 @@ tostruct_gpos(ARGS_TOSTRUCT) {
 	gpos->long_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	gpos->longitude = mem_maybedup(mctx, region.base, gpos->long_len);
-	if (gpos->longitude == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
 	isc_region_consume(&region, gpos->long_len);
 
 	gpos->lat_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	gpos->latitude = mem_maybedup(mctx, region.base, gpos->lat_len);
-	if (gpos->latitude == NULL) {
-		goto cleanup_longitude;
-	}
 	isc_region_consume(&region, gpos->lat_len);
 
 	gpos->alt_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	if (gpos->lat_len > 0) {
 		gpos->altitude = mem_maybedup(mctx, region.base, gpos->alt_len);
-		if (gpos->altitude == NULL) {
-			goto cleanup_latitude;
-		}
 	} else {
 		gpos->altitude = NULL;
 	}
 
 	gpos->mctx = mctx;
-	return (ISC_R_SUCCESS);
-
-cleanup_latitude:
-	if (mctx != NULL && gpos->longitude != NULL) {
-		isc_mem_free(mctx, gpos->longitude);
-	}
-
-cleanup_longitude:
-	if (mctx != NULL && gpos->latitude != NULL) {
-		isc_mem_free(mctx, gpos->latitude);
-	}
-	return (ISC_R_NOMEMORY);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -214,7 +193,7 @@ additionaldata_gpos(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -225,7 +204,7 @@ digest_gpos(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -237,7 +216,7 @@ checkowner_gpos(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -248,12 +227,12 @@ checknames_gpos(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_gpos(ARGS_COMPARE) {
-	return (compare_gpos(rdata1, rdata2));
+	return compare_gpos(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_GPOS_27_C */

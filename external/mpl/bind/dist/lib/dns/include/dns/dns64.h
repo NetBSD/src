@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dns64.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -109,6 +109,8 @@ dns_dns64_aaaafroma(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
  * 'flags' and 'aaaa'.  If synthesis is performed then the result is
  * written to '*aaaa'.
  *
+ * If 'reqaddr' is NULL the 'client' acl is ignored.
+ *
  * The synthesised address will be of the form:
  *
  *	 <prefix bits><a bits><suffix bits>
@@ -118,7 +120,7 @@ dns_dns64_aaaafroma(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
  *
  * Requires:
  *	'dns64'		to be valid.
- *	'reqaddr'	to be valid.
+ *	'reqaddr'	to be NULL or valid
  *	'reqsigner'	to be NULL or valid.
  *	'env'		to be valid.
  *	'a'		to point to a IPv4 address in network order.

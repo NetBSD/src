@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: rsa_test.c,v 1.3 2025/01/26 16:25:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include "dst_internal.h"
@@ -49,10 +48,10 @@ setup_test(void **state) {
 	result = dst_lib_init(mctx, NULL);
 
 	if (result != ISC_R_SUCCESS) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -61,7 +60,7 @@ teardown_test(void **state) {
 
 	dst_lib_destroy();
 
-	return (0);
+	return 0;
 }
 
 static unsigned char d[10] = { 0xa,  0x10, 0xbb, 0,    0xfe,

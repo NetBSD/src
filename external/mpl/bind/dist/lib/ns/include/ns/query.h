@@ -1,4 +1,4 @@
-/*	$NetBSD: query.h,v 1.8 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.9 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 
 #include <isc/buffer.h>
 #include <isc/netaddr.h>
-#include <isc/task.h>
 #include <isc/types.h>
 
 #include <dns/rdataset.h>
@@ -39,6 +38,58 @@ typedef struct ns_dbversion {
 	bool		 queryok;
 	ISC_LINK(struct ns_dbversion) link;
 } ns_dbversion_t;
+
+/* DB lookup options */
+typedef struct dns_getdb_options {
+	bool noexact	: 1;
+	bool nolog	: 1;
+	bool partial	: 1;
+	bool ignoreacl	: 1;
+	bool stalefirst : 1;
+} dns_getdb_options_t;
+
+/*%
+ * recursion type; various features can initiate recursion and this enum value
+ * allows common code paths to differentiate between them
+ */
+typedef enum {
+	RECTYPE_NORMAL,
+	RECTYPE_PREFETCH,
+	RECTYPE_RPZ,
+	RECTYPE_STALE_REFRESH,
+	RECTYPE_HOOK,
+	RECTYPE_COUNT,
+} ns_query_rectype_t;
+
+/*%
+ * Helper macros for accessing isc_nmhandle_t pointers for a specific recursion
+ * a given client is associated with.
+ */
+#define HANDLE_RECTYPE_NORMAL(client) \
+	((client)->query.recursions[RECTYPE_NORMAL].handle)
+#define HANDLE_RECTYPE_PREFETCH(client) \
+	((client)->query.recursions[RECTYPE_PREFETCH].handle)
+#define HANDLE_RECTYPE_RPZ(client) \
+	((client)->query.recursions[RECTYPE_RPZ].handle)
+#define HANDLE_RECTYPE_STALE_REFRESH(client) \
+	((client)->query.recursions[RECTYPE_STALE_REFRESH].handle)
+#define HANDLE_RECTYPE_HOOK(client) \
+	((client)->query.recursions[RECTYPE_HOOK].handle)
+
+/*%
+ * Helper macros for accessing dns_fetch_t pointers for a specific recursion a
+ * given client is associated with.
+ */
+#define FETCH_RECTYPE_NORMAL(client) \
+	((client)->query.recursions[RECTYPE_NORMAL].fetch)
+#define FETCH_RECTYPE_PREFETCH(client) \
+	((client)->query.recursions[RECTYPE_PREFETCH].fetch)
+#define FETCH_RECTYPE_RPZ(client) \
+	((client)->query.recursions[RECTYPE_RPZ].fetch)
+#define FETCH_RECTYPE_STALE_REFRESH(client) \
+	((client)->query.recursions[RECTYPE_STALE_REFRESH].fetch)
+#define FETCH_RECTYPE_HOOK(client) \
+	((client)->query.recursions[RECTYPE_HOOK].fetch)
 
 /*%
  * nameserver recursion parameters, to uniquely identify a recursion
@@ -68,8 +119,6 @@ struct ns_query {
 	bool		 authdbset;
 	bool		 isreferral;
 	isc_mutex_t	 fetchlock;
-	dns_fetch_t	*fetch;
-	dns_fetch_t	*prefetch;
 	ns_hookasync_t	*hookactx;
 	dns_rpz_st_t	*rpz_st;
 	isc_bufferlist_t namebufs;
@@ -95,6 +144,11 @@ struct ns_query {
 		bool		authoritative;
 		bool		is_zone;
 	} redirect;
+
+	struct {
+		isc_nmhandle_t *handle;
+		dns_fetch_t    *fetch;
+	} recursions[RECTYPE_COUNT];
 
 	ns_query_recparam_t recparam;
 
@@ -122,7 +176,6 @@ struct ns_query {
 #define NS_QUERYATTR_REDIRECT	     0x020000
 #define NS_QUERYATTR_ANSWERED	     0x040000
 #define NS_QUERYATTR_STALEOK	     0x080000
-#define NS_QUERYATTR_STALEPENDING    0x100000
 
 typedef struct query_ctx query_ctx_t;
 
@@ -140,7 +193,7 @@ struct query_ctx {
 	dns_rdatatype_t qtype;
 	dns_rdatatype_t type;
 
-	unsigned int options; /* DB lookup options */
+	dns_getdb_options_t options; /* DB lookup options */
 
 	bool redirected; /* nxdomain redirected? */
 	bool is_zone;	 /* is DB a zone DB? */
@@ -161,7 +214,7 @@ struct query_ctx {
 	ns_client_t *client;	    /* client object */
 	bool	     detach_client; /* client needs detaching */
 
-	dns_fetchevent_t *event; /* recursion event */
+	dns_fetchresponse_t *fresp; /* recursion response */
 
 	dns_db_t	*db;	  /* zone or cache database */
 	dns_dbversion_t *version; /* DB version */
@@ -183,9 +236,11 @@ struct query_ctx {
 	int	     line;   /* line to report error */
 };
 
-typedef isc_result_t (*ns_query_starthookasync_t)(
-	query_ctx_t *qctx, isc_mem_t *mctx, void *arg, isc_task_t *task,
-	isc_taskaction_t action, void *evarg, ns_hookasync_t **ctxp);
+typedef isc_result_t (*ns_query_starthookasync_t)(query_ctx_t *qctx,
+						  isc_mem_t *mctx, void *arg,
+						  isc_loop_t *loop,
+						  isc_job_cb cb, void *evarg,
+						  ns_hookasync_t **ctxp);
 
 /*
  * The following functions are expected to be used only within query.c
@@ -243,7 +298,7 @@ ns_query_hookasync(query_ctx_t *qctx, ns_query_starthookasync_t runasync,
  * other aspects of hook-triggered asynchronous event handling.
  */
 
-isc_result_t
+void
 ns_query_init(ns_client_t *client);
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.12 2024/02/21 22:51:17 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.13 2025/01/26 16:24:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,12 +19,21 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/crypto.h>
+#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+#include <openssl/provider.h>
+#endif
+
+#include <isc/fips.h>
 #include <isc/md.h>
+#include <isc/mem.h>
 #include <isc/net.h>
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/edns.h>
+
+#include <dst/dst.h>
 
 static void
 usage(void) {
@@ -34,13 +43,18 @@ usage(void) {
 	fprintf(stderr, "\t--enable-dnsrps\n");
 	fprintf(stderr, "\t--enable-dnstap\n");
 	fprintf(stderr, "\t--enable-querytrace\n");
+	fprintf(stderr, "\t--fips-provider\n");
 	fprintf(stderr, "\t--gethostname\n");
 	fprintf(stderr, "\t--gssapi\n");
+	fprintf(stderr, "\t--have-fips-dh\n");
+	fprintf(stderr, "\t--have-fips-mode\n");
 	fprintf(stderr, "\t--have-geoip2\n");
 	fprintf(stderr, "\t--have-json-c\n");
 	fprintf(stderr, "\t--have-libxml2\n");
+	fprintf(stderr, "\t--have-openssl-cipher-suites\n");
 	fprintf(stderr, "\t--ipv6only=no\n");
 	fprintf(stderr, "\t--md5\n");
+	fprintf(stderr, "\t--rsasha1\n");
 	fprintf(stderr, "\t--tsan\n");
 	fprintf(stderr, "\t--with-dlz-filesystem\n");
 	fprintf(stderr, "\t--with-libidn2\n");
@@ -53,7 +67,7 @@ int
 main(int argc, char **argv) {
 	if (argc != 2) {
 		usage();
-		return (1);
+		return 1;
 	}
 
 	if (strcmp(argv[1], "--edns-version") == 0) {
@@ -62,31 +76,43 @@ main(int argc, char **argv) {
 #else  /* ifdef DNS_EDNS_VERSION */
 		printf("0\n");
 #endif /* ifdef DNS_EDNS_VERSION */
-		return (0);
+		return 0;
 	}
 
 	if (strcmp(argv[1], "--enable-dnsrps") == 0) {
 #ifdef USE_DNSRPS
-		return (0);
+		return 0;
 #else  /* ifdef USE_DNSRPS */
-		return (1);
+		return 1;
 #endif /* ifdef USE_DNSRPS */
 	}
 
 	if (strcmp(argv[1], "--enable-dnstap") == 0) {
 #ifdef HAVE_DNSTAP
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_DNSTAP */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_DNSTAP */
 	}
 
 	if (strcmp(argv[1], "--enable-querytrace") == 0) {
 #ifdef WANT_QUERYTRACE
-		return (0);
+		return 0;
 #else  /* ifdef WANT_QUERYTRACE */
-		return (1);
+		return 1;
 #endif /* ifdef WANT_QUERYTRACE */
+	}
+
+	if (strcasecmp(argv[1], "--fips-provider") == 0) {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+		OSSL_PROVIDER *fips = OSSL_PROVIDER_load(NULL, "fips");
+		if (fips != NULL) {
+			OSSL_PROVIDER_unload(fips);
+		}
+		return fips != NULL ? 0 : 1;
+#else
+		return 1;
+#endif
 	}
 
 	if (strcmp(argv[1], "--gethostname") == 0) {
@@ -96,69 +122,102 @@ main(int argc, char **argv) {
 		n = gethostname(hostname, sizeof(hostname));
 		if (n == -1) {
 			perror("gethostname");
-			return (1);
+			return 1;
 		}
 		fprintf(stdout, "%s\n", hostname);
-		return (0);
+		return 0;
 	}
 
 	if (strcmp(argv[1], "--gssapi") == 0) {
 #if HAVE_GSSAPI
-		return (0);
+		return 0;
 #else  /* HAVE_GSSAPI */
-		return (1);
+		return 1;
 #endif /* HAVE_GSSAPI */
+	}
+
+	if (strcmp(argv[1], "--have-fips-dh") == 0) {
+#if defined(ENABLE_FIPS_MODE)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+		return 0;
+#else
+		return 1;
+#endif
+#else
+		if (isc_fips_mode()) {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && OPENSSL_API_LEVEL >= 30000
+			return 0;
+#else
+			return 1;
+#endif
+		}
+		return 0;
+#endif
+	}
+
+	if (strcmp(argv[1], "--have-fips-mode") == 0) {
+#if defined(ENABLE_FIPS_MODE)
+		return 0;
+#else
+		return isc_fips_mode() ? 0 : 1;
+#endif
 	}
 
 	if (strcmp(argv[1], "--have-geoip2") == 0) {
 #ifdef HAVE_GEOIP2
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_GEOIP2 */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_GEOIP2 */
 	}
 
 	if (strcmp(argv[1], "--have-json-c") == 0) {
 #ifdef HAVE_JSON_C
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_JSON_C */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_JSON_C */
 	}
 
 	if (strcmp(argv[1], "--have-libxml2") == 0) {
 #ifdef HAVE_LIBXML2
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_LIBXML2 */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_LIBXML2 */
+	}
+
+	if (strcmp(argv[1], "--have-openssl-cipher-suites") == 0) {
+#ifdef HAVE_SSL_CTX_SET_CIPHERSUITES
+		return 0;
+#else  /* ifdef HAVE_SSL_CTX_SET_CIPHERSUITES */
+		return 1;
+#endif /* ifdef HAVE_SSL_CTX_SET_CIPHERSUITES */
 	}
 
 	if (strcmp(argv[1], "--tsan") == 0) {
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
-		return (0);
+		return 0;
 #endif
 #endif
 #if __SANITIZE_THREAD__
-		return (0);
+		return 0;
 #else
-		return (1);
+		return 1;
 #endif
 	}
 
 	if (strcmp(argv[1], "--md5") == 0) {
-		unsigned char digest[ISC_MAX_MD_SIZE];
-		const unsigned char test[] = "test";
-		unsigned int size = sizeof(digest);
+		isc_mem_t *mctx = NULL;
+		int answer;
 
-		if (isc_md(ISC_MD_MD5, test, sizeof(test), digest, &size) ==
-		    ISC_R_SUCCESS)
-		{
-			return (0);
-		} else {
-			return (1);
-		}
+		isc_mem_create(&mctx);
+		dst_lib_init(mctx, NULL);
+		answer = dst_algorithm_supported(DST_ALG_HMACMD5) ? 0 : 1;
+		dst_lib_destroy();
+		isc_mem_detach(&mctx);
+		return answer;
 	}
 
 	if (strcmp(argv[1], "--ipv6only=no") == 0) {
@@ -174,53 +233,64 @@ main(int argc, char **argv) {
 				       (void *)&v6only, &len);
 			close(s);
 		}
-		return ((n == 0 && v6only == 0) ? 0 : 1);
+		return (n == 0 && v6only == 0) ? 0 : 1;
 #else  /* defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY) */
-		return (1);
+		return 1;
 #endif /* defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY) */
+	}
+
+	if (strcasecmp(argv[1], "--rsasha1") == 0) {
+		int answer;
+		isc_mem_t *mctx = NULL;
+		isc_mem_create(&mctx);
+		dst_lib_init(mctx, NULL);
+		answer = dst_algorithm_supported(DST_ALG_RSASHA1) ? 0 : 1;
+		dst_lib_destroy();
+		isc_mem_detach(&mctx);
+		return answer;
 	}
 
 	if (strcmp(argv[1], "--with-dlz-filesystem") == 0) {
 #ifdef DLZ_FILESYSTEM
-		return (0);
+		return 0;
 #else  /* ifdef DLZ_FILESYSTEM */
-		return (1);
+		return 1;
 #endif /* ifdef DLZ_FILESYSTEM */
 	}
 
 	if (strcmp(argv[1], "--with-libidn2") == 0) {
 #ifdef HAVE_LIBIDN2
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_LIBIDN2 */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_LIBIDN2 */
 	}
 
 	if (strcmp(argv[1], "--with-lmdb") == 0) {
 #ifdef HAVE_LMDB
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_LMDB */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_LMDB */
 	}
 
 	if (strcmp(argv[1], "--with-libnghttp2") == 0) {
 #ifdef HAVE_LIBNGHTTP2
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_LIBNGHTTP2 */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_LIBNGHTTP2 */
 	}
 
 	if (strcmp(argv[1], "--with-zlib") == 0) {
 #ifdef HAVE_ZLIB
-		return (0);
+		return 0;
 #else  /* ifdef HAVE_ZLIB */
-		return (1);
+		return 1;
 #endif /* ifdef HAVE_ZLIB */
 	}
 
 	fprintf(stderr, "unknown arg: %s\n", argv[1]);
 	usage();
-	return (1);
+	return 1;
 }

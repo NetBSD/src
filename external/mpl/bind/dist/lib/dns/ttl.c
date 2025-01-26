@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.10 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.11 2025/01/26 16:25:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <isc/ascii.h>
 #include <isc/buffer.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/string.h>
@@ -62,12 +62,12 @@ ttlfmt(unsigned int t, const char *s, bool verbose, bool space,
 	INSIST(len + 1 <= sizeof(tmp));
 	isc_buffer_availableregion(target, &region);
 	if (len > region.length) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	memmove(region.base, tmp, len);
 	isc_buffer_add(target, len);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -75,7 +75,7 @@ ttlfmt(unsigned int t, const char *s, bool verbose, bool space,
  */
 isc_result_t
 dns_ttl_totext(uint32_t src, bool verbose, bool upcase, isc_buffer_t *target) {
-	unsigned secs, mins, hours, days, weeks, x;
+	unsigned int secs, mins, hours, days, weeks, x;
 
 	secs = src % 60;
 	src /= 60;
@@ -121,20 +121,17 @@ dns_ttl_totext(uint32_t src, bool verbose, bool upcase, isc_buffer_t *target) {
 		/*
 		 * The unit letter is the last character in the
 		 * used region of the buffer.
-		 *
-		 * toupper() does not need its argument to be masked of cast
-		 * here because region.base is type unsigned char *.
 		 */
 		isc_buffer_usedregion(target, &region);
 		region.base[region.length - 1] =
-			toupper(region.base[region.length - 1]);
+			isc_ascii_toupper(region.base[region.length - 1]);
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
 dns_counter_fromtext(isc_textregion_t *source, uint32_t *ttl) {
-	return (bind_ttl(source, ttl));
+	return bind_ttl(source, ttl);
 }
 
 isc_result_t
@@ -145,7 +142,7 @@ dns_ttl_fromtext(isc_textregion_t *source, uint32_t *ttl) {
 	if (result != ISC_R_SUCCESS && result != ISC_R_RANGE) {
 		result = DNS_R_BADTTL;
 	}
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -161,7 +158,7 @@ bind_ttl(isc_textregion_t *source, uint32_t *ttl) {
 	 * No legal counter / ttl is longer that 63 characters.
 	 */
 	if (source->length > sizeof(buf) - 1) {
-		return (DNS_R_SYNTAX);
+		return DNS_R_SYNTAX;
 	}
 	/* Copy source->length bytes and NUL terminate. */
 	snprintf(buf, sizeof(buf), "%.*s", (int)source->length, source->base);
@@ -178,7 +175,7 @@ bind_ttl(isc_textregion_t *source, uint32_t *ttl) {
 		INSIST(np - nbuf <= (int)sizeof(nbuf));
 		result = isc_parse_uint32(&n, nbuf, 10);
 		if (result != ISC_R_SUCCESS) {
-			return (DNS_R_SYNTAX);
+			return DNS_R_SYNTAX;
 		}
 		switch (*s) {
 		case 'w':
@@ -209,19 +206,19 @@ bind_ttl(isc_textregion_t *source, uint32_t *ttl) {
 		case '\0':
 			/* Plain number? */
 			if (tmp != 0ULL) {
-				return (DNS_R_SYNTAX);
+				return DNS_R_SYNTAX;
 			}
 			tmp = n;
 			break;
 		default:
-			return (DNS_R_SYNTAX);
+			return DNS_R_SYNTAX;
 		}
 	} while (*s != '\0');
 
 	if (tmp > 0xffffffffULL) {
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 
 	*ttl = (uint32_t)(tmp & 0xffffffffUL);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

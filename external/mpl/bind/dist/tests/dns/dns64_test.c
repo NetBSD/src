@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64_test.c,v 1.2 2024/02/21 22:52:49 christos Exp $	*/
+/*	$NetBSD: dns64_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,8 +75,7 @@ multiple_prefixes(void) {
 	rdatalist.rdclass = rdata[0].rdclass;
 	rdatalist.ttl = 0;
 	dns_rdataset_init(&rdataset);
-	result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 	count = ARRAY_SIZE(prefix);
 	memset(&prefix, 0, sizeof(prefix));
@@ -209,8 +208,7 @@ ISC_RUN_TEST_IMPL(dns64_findprefix) {
 		ISC_LIST_APPEND(rdatalist.rdata, &rdata[0], link);
 		ISC_LIST_APPEND(rdatalist.rdata, &rdata[1], link);
 		dns_rdataset_init(&rdataset);
-		result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-		assert_int_equal(result, ISC_R_SUCCESS);
+		dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 		result = dns_dns64_findprefix(&rdataset, prefix, &count);
 		assert_int_equal(result, tests[i].result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.8 2024/02/21 22:52:42 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.9 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,10 +31,10 @@
 
 /*! \file */
 
-#include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/ascii.h>
 #include <isc/assertions.h>
 #include <isc/magic.h>
 #include <isc/result.h>
@@ -77,12 +77,12 @@ isccc_symtab_create(unsigned int size,
 
 	symtab = malloc(sizeof(*symtab));
 	if (symtab == NULL) {
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	}
-	symtab->table = malloc(size * sizeof(eltlist_t));
+	symtab->table = calloc(size, sizeof(eltlist_t));
 	if (symtab->table == NULL) {
 		free(symtab);
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	}
 	for (i = 0; i < size; i++) {
 		ISC_LIST_INIT(symtab->table[i]);
@@ -95,7 +95,7 @@ isccc_symtab_create(unsigned int size,
 
 	*symtabp = symtab;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -137,7 +137,6 @@ hash(const char *key, bool case_sensitive) {
 	const char *s;
 	unsigned int h = 0;
 	unsigned int g;
-	int c;
 
 	/*
 	 * P. J. Weinberger's hash function, adapted from p. 436 of
@@ -155,9 +154,7 @@ hash(const char *key, bool case_sensitive) {
 		}
 	} else {
 		for (s = key; *s != '\0'; s++) {
-			c = *s;
-			c = tolower((unsigned char)c);
-			h = (h << 4) + c;
+			h = (h << 4) + isc_ascii_tolower(*s);
 			if ((g = (h & 0xf0000000)) != 0) {
 				h = h ^ (g >> 24);
 				h = h ^ g;
@@ -165,7 +162,7 @@ hash(const char *key, bool case_sensitive) {
 		}
 	}
 
-	return (h);
+	return h;
 }
 
 #define FIND(s, k, t, b, e)                                       \
@@ -200,14 +197,12 @@ isccc_symtab_lookup(isccc_symtab_t *symtab, const char *key, unsigned int type,
 	FIND(symtab, key, type, bucket, elt);
 
 	if (elt == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
-	if (value != NULL) {
-		*value = elt->value;
-	}
+	SET_IF_NOT_NULL(value, elt->value);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -224,7 +219,7 @@ isccc_symtab_define(isccc_symtab_t *symtab, char *key, unsigned int type,
 
 	if (exists_policy != isccc_symexists_add && elt != NULL) {
 		if (exists_policy == isccc_symexists_reject) {
-			return (ISC_R_EXISTS);
+			return ISC_R_EXISTS;
 		}
 		INSIST(exists_policy == isccc_symexists_replace);
 		ISC_LIST_UNLINK(symtab->table[bucket], elt, link);
@@ -236,7 +231,7 @@ isccc_symtab_define(isccc_symtab_t *symtab, char *key, unsigned int type,
 	} else {
 		elt = malloc(sizeof(*elt));
 		if (elt == NULL) {
-			return (ISC_R_NOMEMORY);
+			return ISC_R_NOMEMORY;
 		}
 		ISC_LINK_INIT(elt, link);
 	}
@@ -250,7 +245,7 @@ isccc_symtab_define(isccc_symtab_t *symtab, char *key, unsigned int type,
 	 */
 	ISC_LIST_PREPEND(symtab->table[bucket], elt, link);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -265,12 +260,12 @@ isccc_symtab_undefine(isccc_symtab_t *symtab, const char *key,
 	FIND(symtab, key, type, bucket, elt);
 
 	if (elt == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
 	free_elt(symtab, bucket, elt);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void

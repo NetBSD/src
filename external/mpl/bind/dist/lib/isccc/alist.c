@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.c,v 1.8 2024/02/21 22:52:42 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.9 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,6 @@
 #include <string.h>
 
 #include <isc/assertions.h>
-#include <isc/print.h>
 #include <isc/result.h>
 
 #include <isccc/alist.h>
@@ -58,15 +57,15 @@ isccc_alist_create(void) {
 
 	tag = isccc_sexpr_fromstring(ALIST_TAG);
 	if (tag == NULL) {
-		return (NULL);
+		return NULL;
 	}
 	alist = isccc_sexpr_cons(tag, NULL);
 	if (alist == NULL) {
 		isccc_sexpr_free(&tag);
-		return (NULL);
+		return NULL;
 	}
 
-	return (alist);
+	return alist;
 }
 
 bool
@@ -74,16 +73,16 @@ isccc_alist_alistp(isccc_sexpr_t *alist) {
 	isccc_sexpr_t *car;
 
 	if (alist == NULL || alist->type != ISCCC_SEXPRTYPE_DOTTEDPAIR) {
-		return (false);
+		return false;
 	}
 	car = CAR(alist);
 	if (car == NULL || car->type != ISCCC_SEXPRTYPE_STRING) {
-		return (false);
+		return false;
 	}
 	if (strcmp(car->value.as_string, ALIST_TAG) != 0) {
-		return (false);
+		return false;
 	}
-	return (true);
+	return true;
 }
 
 bool
@@ -91,16 +90,16 @@ isccc_alist_emptyp(isccc_sexpr_t *alist) {
 	REQUIRE(isccc_alist_alistp(alist));
 
 	if (CDR(alist) == NULL) {
-		return (true);
+		return true;
 	}
-	return (false);
+	return false;
 }
 
 isccc_sexpr_t *
 isccc_alist_first(isccc_sexpr_t *alist) {
 	REQUIRE(isccc_alist_alistp(alist));
 
-	return (CDR(alist));
+	return CDR(alist);
 }
 
 isccc_sexpr_t *
@@ -122,12 +121,12 @@ isccc_alist_assq(isccc_sexpr_t *alist, const char *key) {
 		if (caar->type == ISCCC_SEXPRTYPE_STRING &&
 		    strcmp(caar->value.as_string, key) == 0)
 		{
-			return (car);
+			return car;
 		}
 		alist = CDR(alist);
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 void
@@ -168,17 +167,17 @@ isccc_alist_define(isccc_sexpr_t *alist, const char *key,
 		 */
 		k = isccc_sexpr_fromstring(key);
 		if (k == NULL) {
-			return (NULL);
+			return NULL;
 		}
 		kv = isccc_sexpr_cons(k, value);
 		if (kv == NULL) {
 			isccc_sexpr_free(&kv);
-			return (NULL);
+			return NULL;
 		}
 		elt = isccc_sexpr_addtolist(&alist, kv);
 		if (elt == NULL) {
 			isccc_sexpr_free(&kv);
-			return (NULL);
+			return NULL;
 		}
 	} else {
 		/*
@@ -188,7 +187,7 @@ isccc_alist_define(isccc_sexpr_t *alist, const char *key,
 		CDR(kv) = value;
 	}
 
-	return (kv);
+	return kv;
 }
 
 isccc_sexpr_t *
@@ -198,14 +197,14 @@ isccc_alist_definestring(isccc_sexpr_t *alist, const char *key,
 
 	v = isccc_sexpr_fromstring(str);
 	if (v == NULL) {
-		return (NULL);
+		return NULL;
 	}
 	kv = isccc_alist_define(alist, key, v);
 	if (kv == NULL) {
 		isccc_sexpr_free(&v);
 	}
 
-	return (kv);
+	return kv;
 }
 
 isccc_sexpr_t *
@@ -215,14 +214,14 @@ isccc_alist_definebinary(isccc_sexpr_t *alist, const char *key,
 
 	v = isccc_sexpr_frombinary(r);
 	if (v == NULL) {
-		return (NULL);
+		return NULL;
 	}
 	kv = isccc_alist_define(alist, key, v);
 	if (kv == NULL) {
 		isccc_sexpr_free(&v);
 	}
 
-	return (kv);
+	return kv;
 }
 
 isccc_sexpr_t *
@@ -231,9 +230,9 @@ isccc_alist_lookup(isccc_sexpr_t *alist, const char *key) {
 
 	kv = isccc_alist_assq(alist, key);
 	if (kv != NULL) {
-		return (CDR(kv));
+		return CDR(kv);
 	}
-	return (NULL);
+	return NULL;
 }
 
 isc_result_t
@@ -247,13 +246,13 @@ isccc_alist_lookupstring(isccc_sexpr_t *alist, const char *key, char **strp) {
 			if (strp != NULL) {
 				*strp = isccc_sexpr_tostring(v);
 			}
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		} else {
-			return (ISC_R_EXISTS);
+			return ISC_R_EXISTS;
 		}
 	}
 
-	return (ISC_R_NOTFOUND);
+	return ISC_R_NOTFOUND;
 }
 
 isc_result_t
@@ -268,13 +267,13 @@ isccc_alist_lookupbinary(isccc_sexpr_t *alist, const char *key,
 			if (r != NULL) {
 				*r = isccc_sexpr_tobinary(v);
 			}
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		} else {
-			return (ISC_R_EXISTS);
+			return ISC_R_EXISTS;
 		}
 	}
 
-	return (ISC_R_NOTFOUND);
+	return ISC_R_NOTFOUND;
 }
 
 void

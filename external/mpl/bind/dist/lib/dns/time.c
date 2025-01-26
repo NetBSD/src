@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.8 2024/02/21 22:52:08 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.9 2025/01/26 16:25:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,12 +20,11 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
-#include <isc/string.h> /* Required for HP/UX (and others?) */
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/time.h>
@@ -51,7 +50,7 @@ dns_time64_totext(int64_t t, isc_buffer_t *target) {
 	tm.tm_year = 70;
 	while (t < 0) {
 		if (tm.tm_year == 0) {
-			return (ISC_R_RANGE);
+			return ISC_R_RANGE;
 		}
 		tm.tm_year--;
 		secs = year_secs(tm.tm_year + 1900);
@@ -61,7 +60,7 @@ dns_time64_totext(int64_t t, isc_buffer_t *target) {
 		t -= secs;
 		tm.tm_year++;
 		if (tm.tm_year + 1900 > 9999) {
-			return (ISC_R_RANGE);
+			return ISC_R_RANGE;
 		}
 	}
 	tm.tm_mon = 0;
@@ -94,27 +93,27 @@ dns_time64_totext(int64_t t, isc_buffer_t *target) {
 	l = strlen(buf);
 
 	if (l > region.length) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	memmove(region.base, buf, l);
 	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 int64_t
 dns_time64_from32(uint32_t value) {
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
 	int64_t start;
 	int64_t t;
 
 	/*
 	 * Adjust the time to the closest epoch.  This should be changed
-	 * to use a 64-bit counterpart to isc_stdtime_get() if one ever
+	 * to use a 64-bit counterpart to isc_stdtime_now() if one ever
 	 * is defined, but even the current code is good until the year
 	 * 2106.
 	 */
-	isc_stdtime_get(&now);
+
 	start = (int64_t)now;
 	if (isc_serial_gt(value, now)) {
 		t = start + (value - now);
@@ -122,12 +121,12 @@ dns_time64_from32(uint32_t value) {
 		t = start - (now - value);
 	}
 
-	return (t);
+	return t;
 }
 
 isc_result_t
 dns_time32_totext(uint32_t value, isc_buffer_t *target) {
-	return (dns_time64_totext(dns_time64_from32(value), target));
+	return dns_time64_totext(dns_time64_from32(value), target);
 }
 
 isc_result_t
@@ -144,7 +143,7 @@ dns_time64_fromtext(const char *source, int64_t *target) {
 	} while (0)
 
 	if (strlen(source) != 14U) {
-		return (DNS_R_SYNTAX);
+		return DNS_R_SYNTAX;
 	}
 	/*
 	 * Confirm the source only consists digits.  sscanf() allows some
@@ -152,13 +151,13 @@ dns_time64_fromtext(const char *source, int64_t *target) {
 	 */
 	for (i = 0; i < 14; i++) {
 		if (!isdigit((unsigned char)source[i])) {
-			return (DNS_R_SYNTAX);
+			return DNS_R_SYNTAX;
 		}
 	}
 	if (sscanf(source, "%4d%2d%2d%2d%2d%2d", &year, &month, &day, &hour,
 		   &minute, &second) != 6)
 	{
-		return (DNS_R_SYNTAX);
+		return DNS_R_SYNTAX;
 	}
 
 	RANGE(0, 9999, year);
@@ -201,7 +200,7 @@ dns_time64_fromtext(const char *source, int64_t *target) {
 	}
 
 	*target = value;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -210,9 +209,9 @@ dns_time32_fromtext(const char *source, uint32_t *target) {
 	isc_result_t result;
 	result = dns_time64_fromtext(source, &value64);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	*target = (uint32_t)value64;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

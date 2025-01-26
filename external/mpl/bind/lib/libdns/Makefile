@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2024/02/21 22:52:53 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2025/01/26 16:25:52 christos Exp $
 
-NOLINT=yes	# XXX
 LIB=dns
 #USE_SHLIBDIR=   yes
 
@@ -19,16 +18,16 @@ CPPFLAGS+=	-I${IDIST}/lib/isc
 
 CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 
-.for f in lookup byaddr request sdb validator
+.for f in byaddr request validator skr
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 .endfor
 
-DNSSEC_SRCS=	dst_api.c dst_parse.c \
-	gssapictx.c hmac_link.c key.c openssl_link.c \
-	openssldh_link.c opensslrsa_link.c \
-	opensslecdsa_link.c openssleddsa_link.c
+DNSSEC_SRCS=    dst_api.c dst_parse.c gssapictx.c hmac_link.c key.c \
+		openssl_link.c opensslrsa_link.c opensslecdsa_link.c \
+		openssleddsa_link.c
+
 .if ${MKKERBEROS} != "no"
-DNSSEC_SRCS+=	gssapi_link.c
+DNSSEC_SRCS+=   gssapi_link.c
 
 CWARNFLAGS.clang+=	-Wno-error=tautological-constant-compare
 .endif
@@ -44,23 +43,22 @@ LINTFLAGS+=	-X 247	# pointer cast from '%s' to '%s' may be troublesome
 LINTFLAGS+=	-X 132	# conversion from '%s' to '%s' may lose accuracy
 LINTFLAGS+=	-X 298	# conversion from '%s' to '%s' may lose accuracy, arg #%d
 
-SRCS=	acl.c adb.c badcache.c byaddr.c cache.c callbacks.c catz.c \
-	clientinfo.c compress.c client.c dyndb.c tsec.c ecs.c \
-	db.c dbiterator.c diff.c dispatch.c dlz.c dns64.c dnsrps.c \
-	dnssec.c \
-	ds.c fixedname.c forward.c ipkeylist.c iptable.c journal.c \
-	kasp.c keydata.c keymgr.c keytable.c log.c \
-	lookup.c master.c masterdump.c message.c name.c ncache.c nsec.c \
-	nsec3.c nta.c order.c peer.c rbt.c rbtdb.c \
-	rcode.c rdata.c rdatalist.c rdataset.c rdatasetiter.c rdataslab.c \
-	request.c resolver.c result.c rootns.c rpz.c rriterator.c rrl.c sdb.c \
-	soa.c ssu.c ssu_external.c stats.c time.c tkey.c transport.c \
-	tsig.c ttl.c private.c validator.c view.c xfrin.c zone.c \
-	zonekey.c zoneverify.c zt.c sdlz.c update.c ${DNSSEC_SRCS}
+SRCS=   acl.c adb.c badcache.c byaddr.c cache.c callbacks.c catz.c \
+	clientinfo.c compress.c client.c dyndb.c ecs.c db.c \
+	dbiterator.c diff.c dispatch.c dlz.c dns64.c dnsrps.c \
+	dnssec.c ds.c fixedname.c forward.c ipkeylist.c iptable.c \
+	journal.c kasp.c keydata.c keymgr.c keystore.c keytable.c \
+	log.c master.c masterdump.c message.c name.c nametree.c \
+	ncache.c nsec.c nsec3.c nta.c order.c peer.c qp.c qpcache.c \
+	qpzone.c rbt.c rbt-cachedb.c rbt-zonedb.c rbtdb.c rcode.c \
+	remote.c resconf.c rdata.c rdatalist.c rdataset.c rdatasetiter.c \
+	rdataslab.c request.c resolver.c result.c rootns.c rpz.c \
+	rriterator.c rrl.c skr.c soa.c ssu.c ssu_external.c stats.c \
+	time.c tkey.c transport.c tsig.c ttl.c private.c validator.c \
+	view.c xfrin.c zone.c zonekey.c zoneverify.c zt.c sdlz.c \
+	update.c ${DNSSEC_SRCS}
 
 COPTS.openssl_link.c+= -Wno-error=deprecated-declarations
-COPTS.openssldh_link.c+= -Wno-error=deprecated-declarations
-COPTS.openssldsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.opensslecdsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.openssleddsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.opensslrsa_link.c+= -Wno-error=deprecated-declarations

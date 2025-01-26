@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.h,v 1.7 2024/02/21 22:52:43 christos Exp $	*/
+/*	$NetBSD: ccmsg.h,v 1.8 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,21 +40,21 @@
 #include <isc/netmgr.h>
 #include <isc/sockaddr.h>
 
+#include <isccc/types.h>
+
 /*% ISCCC Message Structure */
 typedef struct isccc_ccmsg {
 	/* private (don't touch!) */
 	unsigned int	magic;
 	uint32_t	size;
-	bool		length_received;
 	isc_buffer_t   *buffer;
 	unsigned int	maxsize;
 	isc_mem_t      *mctx;
 	isc_nmhandle_t *handle;
-	isc_nm_cb_t	cb;
-	void	       *cbarg;
-	bool		reading;
-	/* public (read-only) */
-	isc_result_t result;
+	isc_nm_cb_t	recv_cb;
+	void	       *recv_cbarg;
+	isc_nm_cb_t	send_cb;
+	void	       *send_cbarg;
 } isccc_ccmsg_t;
 
 ISC_LANG_BEGINDECLS
@@ -111,29 +111,37 @@ isccc_ccmsg_readmessage(isccc_ccmsg_t *ccmsg, isc_nm_cb_t cb, void *cbarg);
  */
 
 void
-isccc_ccmsg_cancelread(isccc_ccmsg_t *ccmsg);
+isccc_ccmsg_sendmessage(isccc_ccmsg_t *ccmsg, isc_region_t *region,
+			isc_nm_cb_t cb, void *cbarg);
 /*%
- * Cancel a readmessage() call.  The event will still be posted with a
- * CANCELED result code.
+ * Sends region over the command channel message.
+ *
+ * CAVEAT: Only a single send message can be scheduled at the time.
+ */
+
+void
+isccc_ccmsg_disconnect(isccc_ccmsg_t *ccmsg);
+/*%
+ * Disconnect from the connected netmgr handle associated with a command
+ * channel message.
  *
  * Requires:
  *
- *\li	"ccmsg" be valid.
+ *\li	"ccmsg" to be valid.
  */
 
 void
 isccc_ccmsg_invalidate(isccc_ccmsg_t *ccmsg);
 /*%
- * Clean up all allocated state, and invalidate the structure.
+ * Clean up the magic number and the dynamic buffer associated with a command
+ * channel message.
  *
  * Requires:
  *
- *\li	"ccmsg" be valid.
- *
- * Ensures:
- *
- *\li	"ccmsg" is invalidated and disassociated with all memory contexts,
- *	sockets, etc.
+ *\li	"ccmsg" to be valid.
  */
+
+void
+isccc_ccmsg_toregion(isccc_ccmsg_t *ccmsg, isccc_region_t *ccregion);
 
 ISC_LANG_ENDDECLS

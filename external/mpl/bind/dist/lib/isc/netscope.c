@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: netscope.c,v 1.7 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@ isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid) {
 
 	/* at this moment, we only support AF_INET6 */
 	if (af != AF_INET6) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	/*
@@ -61,18 +61,18 @@ isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid) {
 #endif /* ifdef HAVE_IF_NAMETOINDEX */
 		llz = strtoull(scopename, &ep, 10);
 		if (ep == scopename) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 
 		/* check overflow */
 		zone = (uint32_t)(llz & 0xffffffffUL);
 		if (zone != llz) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 #ifdef HAVE_IF_NAMETOINDEX
 	}
 #endif /* ifdef HAVE_IF_NAMETOINDEX */
 
 	*zoneid = zone;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

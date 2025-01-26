@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.8 2024/02/21 22:52:15 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.9 2025/01/26 16:25:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ fromtext_in_nsap_ptr(ARGS_FROMTEXT) {
 		origin = dns_rootname;
 	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -50,7 +50,7 @@ totext_in_nsap_ptr(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	bool sub;
+	unsigned int opts;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsap_ptr);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -62,9 +62,9 @@ totext_in_nsap_ptr(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	sub = name_prefix(&name, tctx->origin, &prefix);
-
-	return (dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&name, tctx->origin, &prefix) ? DNS_NAME_OMITFINALDOT
+							 : 0;
+	return dns_name_totext(&prefix, opts, target);
 }
 
 static isc_result_t
@@ -77,10 +77,10 @@ fromwire_in_nsap_ptr(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
+	dctx = dns_decompress_setpermitted(dctx, false);
 
 	dns_name_init(&name, NULL);
-	return (dns_name_fromwire(&name, source, dctx, options, target));
+	return dns_name_fromwire(&name, source, dctx, target);
 }
 
 static isc_result_t
@@ -93,12 +93,12 @@ towire_in_nsap_ptr(ARGS_TOWIRE) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
+	dns_compress_setpermitted(cctx, false);
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	return (dns_name_towire(&name, cctx, target));
+	return dns_name_towire(&name, cctx, target, NULL);
 }
 
 static int
@@ -124,7 +124,7 @@ compare_in_nsap_ptr(ARGS_COMPARE) {
 	dns_name_fromregion(&name1, &region1);
 	dns_name_fromregion(&name2, &region2);
 
-	return (dns_name_rdatacompare(&name1, &name2));
+	return dns_name_rdatacompare(&name1, &name2);
 }
 
 static isc_result_t
@@ -142,7 +142,7 @@ fromstruct_in_nsap_ptr(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	dns_name_toregion(&nsap_ptr->owner, &region);
-	return (isc_buffer_copyregion(target, &region));
+	return isc_buffer_copyregion(target, &region);
 }
 
 static isc_result_t
@@ -166,7 +166,7 @@ tostruct_in_nsap_ptr(ARGS_TOSTRUCT) {
 	dns_name_init(&nsap_ptr->owner, NULL);
 	name_duporclone(&name, mctx, &nsap_ptr->owner);
 	nsap_ptr->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -195,7 +195,7 @@ additionaldata_in_nsap_ptr(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -210,7 +210,7 @@ digest_in_nsap_ptr(ARGS_DIGEST) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 
-	return (dns_name_digest(&name, digest, arg));
+	return dns_name_digest(&name, digest, arg);
 }
 
 static bool
@@ -223,7 +223,7 @@ checkowner_in_nsap_ptr(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -235,12 +235,12 @@ checknames_in_nsap_ptr(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_in_nsap_ptr(ARGS_COMPARE) {
-	return (compare_in_nsap_ptr(rdata1, rdata2));
+	return compare_in_nsap_ptr(rdata1, rdata2);
 }
 
 #endif /* RDATA_IN_1_NSAP_PTR_23_C */

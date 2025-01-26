@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: iptable.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,16 +21,19 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/radix.h>
+#include <isc/refcount.h>
 
 #include <dns/types.h>
 
 struct dns_iptable {
 	unsigned int	  magic;
 	isc_mem_t	 *mctx;
-	isc_refcount_t	  refcount;
+	isc_refcount_t	  references;
 	isc_radix_tree_t *radix;
 	ISC_LINK(dns_iptable_t) nextincache;
 };
+
+/* Add -DDNS_IPTABLE_TRACE=1 to CFLAGS for detailed reference tracing */
 
 #define DNS_IPTABLE_MAGIC    ISC_MAGIC('T', 'a', 'b', 'l')
 #define DNS_IPTABLE_VALID(a) ISC_MAGIC_VALID(a, DNS_IPTABLE_MAGIC)
@@ -41,7 +44,7 @@ struct dns_iptable {
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t
+void
 dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target);
 /*
  * Create a new IP table and the underlying radix structure
@@ -60,10 +63,17 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, bool pos);
  * Merge one IP table into another one.
  */
 
-void
-dns_iptable_attach(dns_iptable_t *source, dns_iptable_t **target);
-
-void
-dns_iptable_detach(dns_iptable_t **tabp);
+#if DNS_IPTABLE_TRACE
+#define dns_iptable_ref(ptr) dns_iptable__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_iptable_unref(ptr) \
+	dns_iptable__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_iptable_attach(ptr, ptrp) \
+	dns_iptable__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_iptable_detach(ptrp) \
+	dns_iptable__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_iptable);
+#else
+ISC_REFCOUNT_DECL(dns_iptable);
+#endif
 
 ISC_LANG_ENDDECLS

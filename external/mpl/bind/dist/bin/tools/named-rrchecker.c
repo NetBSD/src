@@ -1,4 +1,4 @@
-/*	$NetBSD: named-rrchecker.c,v 1.8 2024/09/22 00:14:04 christos Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.9 2025/01/26 16:25:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,6 @@
 #include <isc/commandline.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -172,7 +171,7 @@ main(int argc, char *argv[]) {
 	}
 
 	isc_mem_create(&mctx);
-	RUNTIME_CHECK(isc_lex_create(mctx, 256, &lex) == ISC_R_SUCCESS);
+	isc_lex_create(mctx, 256, &lex);
 
 	/*
 	 * Set up to lex DNS master file.
@@ -189,7 +188,8 @@ main(int argc, char *argv[]) {
 
 	if (origin != NULL) {
 		name = dns_fixedname_initname(&fixed);
-		result = dns_name_fromstring(name, origin, 0, NULL);
+		result = dns_name_fromstring(name, origin, dns_rootname, 0,
+					     NULL);
 		if (result != ISC_R_SUCCESS) {
 			fatal("dns_name_fromstring: %s",
 			      isc_result_totext(result));
@@ -345,5 +345,5 @@ main(int argc, char *argv[]) {
 	}
 
 	cleanup();
-	return (0);
+	return 0;
 }

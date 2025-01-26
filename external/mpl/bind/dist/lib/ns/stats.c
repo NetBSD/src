@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.8 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,44 +60,31 @@ ns_stats_detach(ns_stats_t **statsp) {
 	}
 }
 
-isc_result_t
+void
 ns_stats_create(isc_mem_t *mctx, int ncounters, ns_stats_t **statsp) {
-	ns_stats_t *stats;
-	isc_result_t result;
-
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
-	stats = isc_mem_get(mctx, sizeof(*stats));
+	ns_stats_t *stats = isc_mem_get(mctx, sizeof(*stats));
 	stats->counters = NULL;
 
 	isc_refcount_init(&stats->references, 1);
 
-	result = isc_stats_create(mctx, &stats->counters, ncounters);
-	if (result != ISC_R_SUCCESS) {
-		goto clean_mem;
-	}
+	isc_stats_create(mctx, &stats->counters, ncounters);
 
 	stats->magic = NS_STATS_MAGIC;
 	stats->mctx = NULL;
 	isc_mem_attach(mctx, &stats->mctx);
 	*statsp = stats;
-
-	return (ISC_R_SUCCESS);
-
-clean_mem:
-	isc_mem_put(mctx, stats, sizeof(*stats));
-
-	return (result);
 }
 
 /*%
  * Increment/Decrement methods
  */
-void
+isc_statscounter_t
 ns_stats_increment(ns_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(NS_STATS_VALID(stats));
 
-	isc_stats_increment(stats->counters, counter);
+	return isc_stats_increment(stats->counters, counter);
 }
 
 void
@@ -111,7 +98,7 @@ isc_stats_t *
 ns_stats_get(ns_stats_t *stats) {
 	REQUIRE(NS_STATS_VALID(stats));
 
-	return (stats->counters);
+	return stats->counters;
 }
 
 void
@@ -126,5 +113,5 @@ isc_statscounter_t
 ns_stats_get_counter(ns_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(NS_STATS_VALID(stats));
 
-	return (isc_stats_get_counter(stats->counters, counter));
+	return isc_stats_get_counter(stats->counters, counter);
 }

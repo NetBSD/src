@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.2 2024/02/21 22:51:06 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.3 2025/01/26 16:24:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,10 +41,13 @@ void
 named_os_inituserinfo(const char *username);
 
 void
-named_os_changeuser(void);
+named_os_changeuser(bool permanent);
+
+void
+named_os_restoreuser(void);
 
 uid_t
-ns_os_uid(void);
+named_os_uid(void);
 
 void
 named_os_adjustnofile(void);
@@ -57,9 +60,6 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user);
 
 void
 named_os_writepidfile(const char *filename, bool first_time);
-
-bool
-named_os_issingleton(const char *filename);
 
 void
 named_os_shutdown(void);

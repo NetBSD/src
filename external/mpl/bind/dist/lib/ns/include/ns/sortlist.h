@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.h,v 1.6 2024/02/21 22:52:47 christos Exp $	*/
+/*	$NetBSD: sortlist.h,v 1.7 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -67,16 +67,4 @@ ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg);
  * Find the sort order of 'addr' in 'arg', a topology-like
  * ACL forming the second element in a 2-element top-level
  * sortlist statement.
- */
-
-void
-ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
-			isc_netaddr_t	       *client_addr,
-			dns_addressorderfunc_t *orderp, void **argp);
-/*%<
- * Find the sortlist statement in 'acl' that applies to 'clientaddr', if any.
- * If a sortlist statement applies, return in '*orderp' a pointer to a function
- * for ranking network addresses based on that sortlist statement, and in
- * '*argp' an argument to pass to said function.  If no sortlist statement
- * applies, set '*orderp' and '*argp' to NULL.
  */

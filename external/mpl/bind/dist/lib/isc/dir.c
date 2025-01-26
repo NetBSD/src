@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.3 2025/01/26 16:25:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,14 +17,13 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <netdb.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <isc/dir.h>
 #include <isc/magic.h>
-#include <isc/netdb.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -63,7 +62,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	 */
 	if (strlen(dirname) + 3 > sizeof(dir->dirname)) {
 		/* XXXDCL ? */
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	strlcpy(dir->dirname, dirname, sizeof(dir->dirname));
 
@@ -83,10 +82,10 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	dir->handle = opendir(dirname);
 
 	if (dir->handle == NULL) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
-	return (result);
+	return result;
 }
 
 /*!
@@ -108,14 +107,14 @@ isc_dir_read(isc_dir_t *dir) {
 	entry = readdir(dir->handle);
 
 	if (entry == NULL) {
-		return (ISC_R_NOMORE);
+		return ISC_R_NOMORE;
 	}
 
 	/*
 	 * Make sure that the space for the name is long enough.
 	 */
 	if (sizeof(dir->entry.name) <= strlen(entry->d_name)) {
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
 	strlcpy(dir->entry.name, entry->d_name, sizeof(dir->entry.name));
@@ -125,7 +124,7 @@ isc_dir_read(isc_dir_t *dir) {
 	 */
 	dir->entry.length = strlen(entry->d_name);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*!
@@ -148,7 +147,7 @@ isc_dir_reset(isc_dir_t *dir) {
 
 	rewinddir(dir->handle);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -160,10 +159,10 @@ isc_dir_chdir(const char *dirname) {
 	REQUIRE(dirname != NULL);
 
 	if (chdir(dirname) < 0) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -187,84 +186,11 @@ isc_dir_chroot(const char *dirname) {
 	}
 
 	if (chroot(dirname) < 0 || chdir("/") < 0) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 #else  /* ifdef HAVE_CHROOT */
-	return (ISC_R_NOTIMPLEMENTED);
+	return ISC_R_NOTIMPLEMENTED;
 #endif /* ifdef HAVE_CHROOT */
-}
-
-isc_result_t
-isc_dir_createunique(char *templet) {
-	isc_result_t result;
-	char *x;
-	char *p;
-	int i;
-	int pid;
-
-	REQUIRE(templet != NULL);
-
-	/*!
-	 * \brief mkdtemp is not portable, so this emulates it.
-	 */
-
-	pid = getpid();
-
-	/*
-	 * Replace trailing Xs with the process-id, zero-filled.
-	 */
-	for (x = templet + strlen(templet) - 1; *x == 'X' && x >= templet;
-	     x--, pid /= 10)
-	{
-		*x = pid % 10 + '0';
-	}
-
-	x++; /* Set x to start of ex-Xs. */
-
-	do {
-		i = mkdir(templet, 0700);
-		if (i == 0 || errno != EEXIST) {
-			break;
-		}
-
-		/*
-		 * The BSD algorithm.
-		 */
-		p = x;
-		while (*p != '\0') {
-			if (isdigit((unsigned char)*p)) {
-				*p = 'a';
-			} else if (*p != 'z') {
-				++*p;
-			} else {
-				/*
-				 * Reset character and move to next.
-				 */
-				*p++ = 'a';
-				continue;
-			}
-
-			break;
-		}
-
-		if (*p == '\0') {
-			/*
-			 * Tried all combinations.  errno should already
-			 * be EEXIST, but ensure it is anyway for
-			 * isc__errno2result().
-			 */
-			errno = EEXIST;
-			break;
-		}
-	} while (1);
-
-	if (i == -1) {
-		result = isc__errno2result(errno);
-	} else {
-		result = ISC_R_SUCCESS;
-	}
-
-	return (result);
 }

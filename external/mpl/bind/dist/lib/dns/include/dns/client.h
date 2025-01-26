@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.9 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.10 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,8 +41,9 @@
  *	security issue specific to this module is anticipated.
  */
 
-#include <isc/event.h>
+#include <isc/loop.h>
 #include <isc/sockaddr.h>
+#include <isc/tls.h>
 
 #include <dns/tsig.h>
 #include <dns/types.h>
@@ -56,7 +57,7 @@ ISC_LANG_BEGINDECLS
  ***/
 
 /*%
- * Optional flags for dns_client_(start)resolve.
+ * Optional flags for dns_client_resolve.
  */
 /*%< Do not return DNSSEC data (e.g. RRSIGS) with response. */
 #define DNS_CLIENTRESOPT_NODNSSEC 0x01
@@ -75,24 +76,31 @@ ISC_LANG_BEGINDECLS
 #define DNS_CLIENTVIEW_NAME "_dnsclient"
 
 /*%
- * A dns_clientresevent_t is sent when name resolution performed by a client
- * completes.  'result' stores the result code of the entire resolution
+ * A dns_clientresume_t holds state for resolution performed by a client,
+ * and is sent to the callback when the resolution completes.
+ * 'result' stores the result code of the entire resolution
  * procedure.  'vresult' specifically stores the result code of DNSSEC
  * validation if it is performed.  When name resolution successfully completes,
  * 'answerlist' is typically non empty, containing answer names along with
- * RRsets.  It is the receiver's responsibility to free this list by calling
- * dns_client_freeresanswer() before freeing the event structure.
+ * RRsets. 'cb' is the callback function and 'arg' is the callback argument
+ * that was specified by the caller.
+ *
+ * It is the receiver's responsibility to free 'answerlist' by
+ * calling dns_client_freeresanswer(), and to free the dns_clientresume
+ * structure itself.
  */
-typedef struct dns_clientresevent {
-	ISC_EVENT_COMMON(struct dns_clientresevent);
+typedef struct dns_clientresume {
+	isc_mem_t     *mctx;
 	isc_result_t   result;
 	isc_result_t   vresult;
 	dns_namelist_t answerlist;
-} dns_clientresevent_t; /* too long? */
+	isc_job_cb     cb;
+	void	      *arg;
+} dns_clientresume_t; /* too long? */
 
 isc_result_t
-dns_client_create(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
-		  isc_nm_t *nm, isc_timermgr_t *timermgr, unsigned int options,
+dns_client_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t *nm,
+		  unsigned int options, isc_tlsctx_cache_t *tlsctx_client_cache,
 		  dns_client_t **clientp, const isc_sockaddr_t *localaddr4,
 		  const isc_sockaddr_t *localaddr6);
 /*%<
@@ -111,13 +119,11 @@ dns_client_create(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
  *
  *\li	'mctx' is a valid memory context.
  *
- *\li	'actx' is a valid application context.
- *
- *\li	'taskmgr' is a valid task manager.
- *
+ *\li	'loopmgr' is a valid loop manager.
+
  *\li	'nm' is a valid network manager.
  *
- *\li	'timermgr' is a valid timer manager.
+ *\li	'tlsctx_client_cache' is a valid TLS context cache.
  *
  *\li	clientp != NULL && *clientp == NULL.
  *
@@ -170,27 +176,6 @@ dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
  *\li	Anything else				Failure.
  */
 
-isc_result_t
-dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
-			const dns_name_t *name_space);
-/*%<
- * Remove configured recursive name servers for the 'rdclass' and 'name_space'
- * from the client.  See the description of dns_client_setservers() for
- * the requirements about 'rdclass' and 'name_space'.
- *
- * Requires:
- *
- *\li	'client' is a valid client.
- *
- *\li	'name_space' is NULL or a valid name.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS				On success.
- *
- *\li	Anything else				Failure.
- */
-
 void
 dns_client_setmaxrestarts(dns_client_t *client, uint8_t max_restarts);
 /*%<
@@ -204,17 +189,17 @@ dns_client_setmaxrestarts(dns_client_t *client, uint8_t max_restarts);
  *\li	'max_restarts' is greater than 0.
  */
 
+typedef void (*dns_client_resolve_cb)(dns_client_t     *client,
+				      const dns_name_t *name,
+				      dns_namelist_t   *namelist,
+				      isc_result_t	result);
+
 isc_result_t
 dns_client_resolve(dns_client_t *client, const dns_name_t *name,
 		   dns_rdataclass_t rdclass, dns_rdatatype_t type,
-		   unsigned int options, dns_namelist_t *namelist);
+		   unsigned int options, dns_namelist_t *namelist,
+		   dns_client_resolve_cb resolve_cb);
 
-isc_result_t
-dns_client_startresolve(dns_client_t *client, const dns_name_t *name,
-			dns_rdataclass_t rdclass, dns_rdatatype_t type,
-			unsigned int options, isc_task_t *task,
-			isc_taskaction_t action, void *arg,
-			dns_clientrestrans_t **transp);
 /*%<
  * Perform name resolution for 'name', 'rdclass', and 'type'.
  *
@@ -240,13 +225,6 @@ dns_client_startresolve(dns_client_t *client, const dns_name_t *name,
  * It is expected that the client object passed to dns_client_resolve() was
  * created via dns_client_create() and has external managers and contexts.
  *
- * dns_client_startresolve() is an asynchronous version of dns_client_resolve()
- * and does not block.  When name resolution is completed, 'action' will be
- * called with the argument of a 'dns_clientresevent_t' object, which contains
- * the resulting list of answer names (on success).  On return, '*transp' is
- * set to an opaque transaction ID so that the caller can cancel this
- * resolution process.
- *
  * Requires:
  *
  *\li	'client' is a valid client.
@@ -256,8 +234,6 @@ dns_client_startresolve(dns_client_t *client, const dns_name_t *name,
  *\li	'name' is a valid name.
  *
  *\li	'namelist' != NULL and is not empty.
- *
- *\li	'task' is a valid task.
  *
  *\li	'transp' != NULL && *transp == NULL;
  *
@@ -285,10 +261,11 @@ dns_client_addtrustedkey(dns_client_t *client, dns_rdataclass_t rdclass,
 			 dns_rdatatype_t rdtype, const dns_name_t *keyname,
 			 isc_buffer_t *keydatabuf);
 /*%<
- * Add a DNSSEC trusted key for the 'rdclass' class.  A view for the 'rdclass'
- * class must be created beforehand.  'rdtype' is the type of the RR data
- * for the key, either DNSKEY or DS.  'keyname' is the DNS name of the key,
- * and 'keydatabuf' stores the RR data.
+ * Add a DNSSEC trusted key for the 'rdclass' class (only class 'IN' is
+ * currently supported).  A view for the 'rdclass' class must be created
+ * beforehand.  'rdtype' is the type of the RR data for the key, either
+ * DNSKEY or DS.  'keyname' is the DNS name of the key, and 'keydatabuf'
+ * stores the RR data.
  *
  * Requires:
  *

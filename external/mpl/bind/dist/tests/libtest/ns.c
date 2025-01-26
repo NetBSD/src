@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.3 2025/01/26 16:25:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,17 +24,16 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/hash.h>
+#include <isc/job.h>
+#include <isc/loop.h>
 #include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/netmgr.h>
 #include <isc/os.h>
-#include <isc/print.h>
 #include <isc/random.h>
-#include <isc/resource.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
@@ -55,23 +54,34 @@
 #include <tests/ns.h>
 
 dns_dispatchmgr_t *dispatchmgr = NULL;
-ns_clientmgr_t *clientmgr = NULL;
 ns_interfacemgr_t *interfacemgr = NULL;
 ns_server_t *sctx = NULL;
-bool debug_mem_record = true;
 
 static isc_result_t
 matchview(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
-	  dns_message_t *message, dns_aclenv_t *env, isc_result_t *sigresultp,
+	  dns_message_t *message, dns_aclenv_t *env, ns_server_t *lsctx,
+	  isc_loop_t *loop, isc_job_cb cb, void *cbarg,
+	  isc_result_t *sigresultp, isc_result_t *viewmatchresultp,
 	  dns_view_t **viewp) {
 	UNUSED(srcaddr);
 	UNUSED(destaddr);
 	UNUSED(message);
 	UNUSED(env);
+	UNUSED(lsctx);
+	UNUSED(loop);
+	UNUSED(cb);
+	UNUSED(cbarg);
 	UNUSED(sigresultp);
 	UNUSED(viewp);
 
-	return (ISC_R_NOTIMPLEMENTED);
+	*viewmatchresultp = ISC_R_NOTIMPLEMENTED;
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+static void
+scan_interfaces(void *arg) {
+	UNUSED(arg);
+	ns_interfacemgr_scan(interfacemgr, true, false);
 }
 
 int
@@ -84,37 +94,45 @@ setup_server(void **state) {
 
 	ns_server_create(mctx, matchview, &sctx);
 
-	result = dns_dispatchmgr_create(mctx, netmgr, &dispatchmgr);
+	result = dns_dispatchmgr_create(mctx, loopmgr, netmgr, &dispatchmgr);
 	if (result != ISC_R_SUCCESS) {
-		return (-1);
+		goto cleanup;
 	}
 
-	result = ns_interfacemgr_create(mctx, sctx, taskmgr, timermgr, netmgr,
-					dispatchmgr, maintask, NULL, workers,
-					false, &interfacemgr);
+	result = ns_interfacemgr_create(mctx, sctx, loopmgr, netmgr,
+					dispatchmgr, NULL, &interfacemgr);
 	if (result != ISC_R_SUCCESS) {
-		return (-1);
+		goto cleanup;
 	}
 
 	result = ns_listenlist_default(mctx, port, true, AF_INET, &listenon);
 	if (result != ISC_R_SUCCESS) {
-		return (-1);
+		goto cleanup;
 	}
 
 	ns_interfacemgr_setlistenon4(interfacemgr, listenon);
 	ns_listenlist_detach(&listenon);
 
-	clientmgr = ns_interfacemgr_getclientmgr(interfacemgr);
+	isc_loop_setup(mainloop, scan_interfaces, NULL);
 
-	return (0);
+	return 0;
+
+cleanup:
+	teardown_server(state);
+	return -1;
 }
 
-int
-teardown_server(void **state) {
+void
+shutdown_interfacemgr(void *arg ISC_ATTR_UNUSED) {
 	if (interfacemgr != NULL) {
 		ns_interfacemgr_shutdown(interfacemgr);
 		ns_interfacemgr_detach(&interfacemgr);
 	}
+}
+
+int
+teardown_server(void **state) {
+	shutdown_interfacemgr(NULL);
 
 	if (dispatchmgr != NULL) {
 		dns_dispatchmgr_detach(&dispatchmgr);
@@ -125,62 +143,10 @@ teardown_server(void **state) {
 	}
 
 	teardown_managers(state);
-	return (0);
+	return 0;
 }
 
 static dns_zone_t *served_zone = NULL;
-
-/*
- * We don't want to use netmgr-based client accounting, we need to emulate it.
- */
-atomic_uint_fast32_t client_refs[32];
-atomic_uintptr_t client_addrs[32];
-
-void
-isc__nmhandle_attach(isc_nmhandle_t *source, isc_nmhandle_t **targetp FLARG) {
-	ns_client_t *client = (ns_client_t *)source;
-	int i;
-
-	for (i = 0; i < 32; i++) {
-		if (atomic_load(&client_addrs[i]) == (uintptr_t)client) {
-			break;
-		}
-	}
-	INSIST(i < 32);
-	INSIST(atomic_load(&client_refs[i]) > 0);
-
-	atomic_fetch_add(&client_refs[i], 1);
-
-	*targetp = source;
-	return;
-}
-
-void
-isc__nmhandle_detach(isc_nmhandle_t **handlep FLARG) {
-	isc_nmhandle_t *handle = *handlep;
-	ns_client_t *client = (ns_client_t *)handle;
-	int i;
-
-	*handlep = NULL;
-
-	for (i = 0; i < 32; i++) {
-		if (atomic_load(&client_addrs[i]) == (uintptr_t)client) {
-			break;
-		}
-	}
-	INSIST(i < 32);
-
-	if (atomic_fetch_sub(&client_refs[i], 1) == 1) {
-		dns_view_detach(&client->view);
-		client->state = 4;
-		ns__client_reset_cb(client);
-		ns__client_put_cb(client);
-		isc_mem_put(mctx, client, sizeof(ns_client_t));
-		atomic_store(&client_addrs[i], (uintptr_t)NULL);
-	}
-
-	return;
-}
 
 isc_result_t
 ns_test_serve_zone(const char *zonename, const char *filename,
@@ -193,16 +159,13 @@ ns_test_serve_zone(const char *zonename, const char *filename,
 	 */
 	result = dns_test_makezone(zonename, &served_zone, view, false);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	/*
 	 * Start zone manager.
 	 */
-	result = dns_test_setupzonemgr();
-	if (result != ISC_R_SUCCESS) {
-		goto free_zone;
-	}
+	dns_test_setupzonemgr();
 
 	/*
 	 * Add the zone to the zone manager.
@@ -235,16 +198,15 @@ ns_test_serve_zone(const char *zonename, const char *filename,
 		dns_db_detach(&db);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 release_zone:
 	dns_test_releasezone(served_zone);
 close_zonemgr:
 	dns_test_closezonemgr();
-free_zone:
 	dns_zone_detach(&served_zone);
 
-	return (result);
+	return result;
 }
 
 void
@@ -255,16 +217,19 @@ ns_test_cleanup_zone(void) {
 	dns_zone_detach(&served_zone);
 }
 
-isc_result_t
+void
 ns_test_getclient(ns_interface_t *ifp0, bool tcp, ns_client_t **clientp) {
-	isc_result_t result;
-	ns_client_t *client = isc_mem_get(mctx, sizeof(ns_client_t));
+	ns_client_t *client;
+	ns_clientmgr_t *clientmgr;
 	int i;
 
 	UNUSED(ifp0);
 	UNUSED(tcp);
 
-	result = ns__client_setup(client, clientmgr, true);
+	clientmgr = ns_interfacemgr_getclientmgr(interfacemgr);
+
+	client = isc_mem_get(clientmgr->mctx, sizeof(*client));
+	ns__client_setup(client, clientmgr, true);
 
 	for (i = 0; i < 32; i++) {
 		if (atomic_load(&client_addrs[i]) == (uintptr_t)NULL ||
@@ -279,8 +244,6 @@ ns_test_getclient(ns_interface_t *ifp0, bool tcp, ns_client_t **clientp) {
 	atomic_store(&client_addrs[i], (uintptr_t)client);
 	client->handle = (isc_nmhandle_t *)client; /* Hack */
 	*clientp = client;
-
-	return (result);
 }
 
 /*%
@@ -304,7 +267,8 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	/*
 	 * Create a new DNS message holding a query.
 	 */
-	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTRENDER,
+			   &message);
 
 	/*
 	 * Set query ID to a random value.
@@ -319,21 +283,15 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	/*
 	 * Allocate structures required to construct the query.
 	 */
-	result = dns_message_gettemprdataset(message, &qrdataset);
-	if (result != ISC_R_SUCCESS) {
-		goto destroy_message;
-	}
-	result = dns_message_gettempname(message, &qname);
-	if (result != ISC_R_SUCCESS) {
-		goto put_rdataset;
-	}
+	dns_message_gettemprdataset(message, &qrdataset);
+	dns_message_gettempname(message, &qname);
 
 	/*
 	 * Convert "qnamestr" to a DNS name, create a question rdataset of
 	 * class IN and type "qtype", link the two and add the result to the
 	 * QUESTION section of the query.
 	 */
-	result = dns_name_fromstring(qname, qnamestr, 0, mctx);
+	result = dns_name_fromstring(qname, qnamestr, dns_rootname, 0, mctx);
 	if (result != ISC_R_SUCCESS) {
 		goto put_name;
 	}
@@ -344,7 +302,7 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	/*
 	 * Render the query.
 	 */
-	dns_compress_init(&cctx, -1, mctx);
+	dns_compress_init(&cctx, mctx, 0);
 	isc_buffer_init(&querybuf, query, sizeof(query));
 	result = dns_message_renderbegin(message, &cctx, &querybuf);
 	if (result != ISC_R_SUCCESS) {
@@ -370,16 +328,15 @@ attach_query_msg_to_client(ns_client_t *client, const char *qnamestr,
 	 * Parse the rendered query, storing results in client->message.
 	 */
 	isc_buffer_first(&querybuf);
-	return (dns_message_parse(client->message, &querybuf, 0));
+	return dns_message_parse(client->message, &querybuf, 0);
 
 put_name:
 	dns_message_puttempname(message, &qname);
-put_rdataset:
 	dns_message_puttemprdataset(message, &qrdataset);
 destroy_message:
 	dns_message_detach(&message);
 
-	return (result);
+	return result;
 }
 
 /*%
@@ -414,7 +371,7 @@ extract_qctx(void *arg, void *data, isc_result_t *resultp) {
 	*qctxp = qctx;
 	*resultp = ISC_R_UNSET;
 
-	return (NS_HOOK_RETURN);
+	return NS_HOOK_RETURN;
 }
 
 /*%
@@ -458,9 +415,9 @@ create_qctx_for_client(ns_client_t *client, query_ctx_t **qctxp) {
 	isc_nmhandle_detach(&client->reqhandle);
 
 	if (*qctxp == NULL) {
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	} else {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 }
 
@@ -479,16 +436,14 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 	/*
 	 * Allocate and initialize a client structure.
 	 */
-	result = ns_test_getclient(NULL, false, &client);
-	if (result != ISC_R_SUCCESS) {
-		return (result);
-	}
-	TIME_NOW(&client->tnow);
+	ns_test_getclient(NULL, false, &client);
+	client->tnow = isc_time_now();
 
 	/*
 	 * Every client needs to belong to a view.
 	 */
-	result = dns_test_makeview("view", params->with_cache, &client->view);
+	result = dns_test_makeview("view", false, params->with_cache,
+				   &client->view);
 	if (result != ISC_R_SUCCESS) {
 		goto detach_client;
 	}
@@ -505,7 +460,7 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 
 	/*
 	 * Allow recursion for the client.  As NS_CLIENTATTR_RA normally gets
-	 * set in ns__client_request(), i.e. earlier than the unit tests hook
+	 * set in ns_client_request(), i.e. earlier than the unit tests hook
 	 * into the call chain, just set it manually.
 	 */
 	client->attributes |= NS_CLIENTATTR_RA;
@@ -527,7 +482,7 @@ ns_test_qctx_create(const ns_test_qctx_create_params_t *params,
 	handle = client->handle;
 	isc_nmhandle_detach(&handle);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 detach_query:
 	dns_message_detach(&client->message);
@@ -536,7 +491,7 @@ detach_view:
 detach_client:
 	isc_nmhandle_detach(&client->handle);
 
-	return (result);
+	return result;
 }
 
 void
@@ -569,7 +524,7 @@ ns_test_hook_catch_call(void *arg, void *data, isc_result_t *resultp) {
 
 	*resultp = ISC_R_UNSET;
 
-	return (NS_HOOK_RETURN);
+	return NS_HOOK_RETURN;
 }
 
 isc_result_t
@@ -577,33 +532,35 @@ ns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
 	       const char *testfile) {
 	isc_result_t result;
 	dns_fixedname_t fixed;
-	dns_name_t *name;
+	dns_name_t *name = NULL;
+	const char *dbimp = (dbtype == dns_dbtype_zone) ? ZONEDB_DEFAULT
+							: CACHEDB_DEFAULT;
 
 	name = dns_fixedname_initname(&fixed);
 
-	result = dns_name_fromstring(name, origin, 0, NULL);
+	result = dns_name_fromstring(name, origin, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
-	result = dns_db_create(mctx, "rbt", name, dbtype, dns_rdataclass_in, 0,
+	result = dns_db_create(mctx, dbimp, name, dbtype, dns_rdataclass_in, 0,
 			       NULL, db);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = dns_db_load(*db, testfile, dns_masterformat_text, 0);
-	return (result);
+	return result;
 }
 
 static int
 fromhex(char c) {
 	if (c >= '0' && c <= '9') {
-		return (c - '0');
+		return c - '0';
 	} else if (c >= 'a' && c <= 'f') {
-		return (c - 'a' + 10);
+		return c - 'a' + 10;
 	} else if (c >= 'A' && c <= 'F') {
-		return (c - 'A' + 10);
+		return c - 'A' + 10;
 	}
 
 	printf("bad input format: %02x\n", c);
@@ -623,7 +580,7 @@ ns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 
 	result = isc_stdio_open(file, "r", &f);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	bp = buf;
@@ -647,10 +604,12 @@ ns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 			continue;
 		}
 		if (len % 2 != 0U) {
-			CHECK(ISC_R_UNEXPECTEDEND);
+			result = ISC_R_UNEXPECTEDEND;
+			goto cleanup;
 		}
 		if (len > bufsiz * 2) {
-			CHECK(ISC_R_NOSPACE);
+			result = ISC_R_NOSPACE;
+			goto cleanup;
 		}
 		rp = s;
 		for (i = 0; i < len; i += 2) {
@@ -667,5 +626,5 @@ ns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 
 cleanup:
 	isc_stdio_close(f);
-	return (result);
+	return result;
 }

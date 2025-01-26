@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.4 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ make_name(const char *src, dns_name_t *name) {
 	isc_buffer_t b;
 	isc_buffer_constinit(&b, src, strlen(src));
 	isc_buffer_add(&b, strlen(src));
-	return (dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
+	return dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 }
 
 /* create: make sure we can create a dbiterator */
@@ -97,9 +97,6 @@ test_walk(const char *filename, int flags, int nodes) {
 	     result = dns_dbiterator_next(iter))
 	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
@@ -154,9 +151,6 @@ test_reverse(const char *filename, int flags, int nodes) {
 	     result = dns_dbiterator_prev(iter))
 	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
@@ -221,9 +215,6 @@ test_seek_node(const char *filename, int flags, int nodes) {
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(iter);
@@ -246,9 +237,6 @@ test_seek_node(const char *filename, int flags, int nodes) {
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_prev(iter);

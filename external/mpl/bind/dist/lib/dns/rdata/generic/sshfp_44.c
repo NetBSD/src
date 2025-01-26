@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.10 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.11 2025/01/26 16:25:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	/*
 	 * Digest.
 	 */
-	return (isc_hex_tobuffer(lexer, target, len));
+	return isc_hex_tobuffer(lexer, target, len);
 }
 
 static isc_result_t
@@ -103,7 +103,7 @@ totext_sshfp(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 
 	if (sr.length == 0U) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/*
@@ -122,7 +122,7 @@ totext_sshfp(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -134,21 +134,20 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length < 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 
 	if ((sr.base[1] == 1 && sr.length != ISC_SHA1_DIGESTLENGTH + 2) ||
 	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2))
 	{
-		return (DNS_R_FORMERR);
+		return DNS_R_FORMERR;
 	}
 
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
@@ -161,7 +160,7 @@ towire_sshfp(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -177,7 +176,7 @@ compare_sshfp(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -195,7 +194,7 @@ fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(sshfp->algorithm, target));
 	RETERR(uint8_tobuffer(sshfp->digest_type, target));
 
-	return (mem_tobuffer(target, sshfp->digest, sshfp->length));
+	return mem_tobuffer(target, sshfp->digest, sshfp->length);
 }
 
 static isc_result_t
@@ -220,12 +219,8 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	sshfp->length = region.length;
 
 	sshfp->digest = mem_maybedup(mctx, region.base, region.length);
-	if (sshfp->digest == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	sshfp->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -254,7 +249,7 @@ additionaldata_sshfp(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -265,7 +260,7 @@ digest_sshfp(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -277,7 +272,7 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -288,12 +283,12 @@ checknames_sshfp(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_sshfp(ARGS_COMPARE) {
-	return (compare_sshfp(rdata1, rdata2));
+	return compare_sshfp(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_SSHFP_44_C */

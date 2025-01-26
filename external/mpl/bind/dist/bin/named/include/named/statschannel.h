@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.h,v 1.6 2024/02/21 22:51:06 christos Exp $	*/
+/*	$NetBSD: statschannel.h,v 1.7 2025/01/26 16:24:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,10 @@
  * The statistics channels built-in the name server.
  */
 
+#include <isccc/types.h>
+
 #include <isccfg/aclconf.h>
 
-#include <isccc/types.h>
 #include <named/types.h>
 
 #define NAMED_STATSCHANNEL_HTTPPORT 80

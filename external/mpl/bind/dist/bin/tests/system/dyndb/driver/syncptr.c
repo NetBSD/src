@@ -1,4 +1,4 @@
-/*	$NetBSD: syncptr.c,v 1.7 2024/02/21 22:51:27 christos Exp $	*/
+/*	$NetBSD: syncptr.c,v 1.8 2025/01/26 16:24:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,10 +35,8 @@
 
 #include "syncptr.h"
 
-#include <isc/event.h>
-#include <isc/eventclass.h>
+#include <isc/async.h>
 #include <isc/netaddr.h>
-#include <isc/task.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
@@ -50,15 +48,11 @@
 #include "instance.h"
 #include "util.h"
 
-/* Almost random value. See eventclass.h */
-#define SYNCPTR_WRITE_EVENT (ISC_EVENTCLASS(1025) + 1)
-
 /*
  * Event used for making changes to reverse zones.
  */
-typedef struct syncptrevent syncptrevent_t;
-struct syncptrevent {
-	ISC_EVENT_COMMON(syncptrevent_t);
+typedef struct syncptr syncptr_t;
+struct syncptr {
 	isc_mem_t *mctx;
 	dns_zone_t *zone;
 	dns_diff_t diff;
@@ -76,19 +70,15 @@ struct syncptrevent {
  *
  */
 static void
-syncptr_write(isc_task_t *task, isc_event_t *event) {
-	syncptrevent_t *pevent = (syncptrevent_t *)event;
+syncptr_write(void *arg) {
+	syncptr_t *syncptr = (syncptr_t *)arg;
 	dns_dbversion_t *version = NULL;
 	dns_db_t *db = NULL;
 	isc_result_t result;
 
-	REQUIRE(event->ev_type == SYNCPTR_WRITE_EVENT);
-
-	UNUSED(task);
-
 	log_write(ISC_LOG_INFO, "ENTER: syncptr_write");
 
-	result = dns_zone_getdb(pevent->zone, &db);
+	result = dns_zone_getdb(syncptr->zone, &db);
 	if (result != ISC_R_SUCCESS) {
 		log_write(ISC_LOG_ERROR,
 			  "syncptr_write: dns_zone_getdb -> %s\n",
@@ -103,7 +93,7 @@ syncptr_write(isc_task_t *task, isc_event_t *event) {
 			  isc_result_totext(result));
 		goto cleanup;
 	}
-	result = dns_diff_apply(&pevent->diff, db, version);
+	result = dns_diff_apply(&syncptr->diff, db, version);
 	if (result != ISC_R_SUCCESS) {
 		log_write(ISC_LOG_ERROR,
 			  "syncptr_write: dns_diff_apply -> %s\n",
@@ -118,9 +108,9 @@ cleanup:
 		}
 		dns_db_detach(&db);
 	}
-	dns_zone_detach(&pevent->zone);
-	dns_diff_clear(&pevent->diff);
-	isc_event_free(&event);
+	dns_zone_detach(&syncptr->zone);
+	dns_diff_clear(&syncptr->diff);
+	isc_mem_putanddetach(&syncptr->mctx, syncptr, sizeof(*syncptr));
 }
 
 /*
@@ -169,7 +159,7 @@ syncptr_find_zone(sample_instance_t *inst, dns_rdata_t *rdata, dns_name_t *name,
 	 * @example
 	 * 192.168.0.1 -> 1.0.168.192.in-addr.arpa
 	 */
-	result = dns_byaddr_createptrname(&isc_ip, 0, name);
+	result = dns_byaddr_createptrname(&isc_ip, name);
 	if (result != ISC_R_SUCCESS) {
 		log_write(ISC_LOG_ERROR,
 			  "syncptr_find_zone: dns_byaddr_createptrname -> %s\n",
@@ -178,7 +168,7 @@ syncptr_find_zone(sample_instance_t *inst, dns_rdata_t *rdata, dns_name_t *name,
 	}
 
 	/* Find a zone containing owner name of the PTR record. */
-	result = dns_zt_find(inst->view->zonetable, name, 0, NULL, zone);
+	result = dns_view_findzone(inst->view, name, 0, zone);
 	if (result == DNS_R_PARTIALMATCH) {
 		result = ISC_R_SUCCESS;
 	} else if (result != ISC_R_SUCCESS) {
@@ -202,7 +192,7 @@ cleanup:
 		dns_rdata_freestruct(&ipv6);
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -232,18 +222,17 @@ syncptr(sample_instance_t *inst, dns_name_t *name, dns_rdata_t *addr_rdata,
 	dns_rdata_ptr_t ptr_struct;
 	dns_rdata_t ptr_rdata = DNS_RDATA_INIT;
 	dns_difftuple_t *tp = NULL;
-	isc_task_t *task = NULL;
-	syncptrevent_t *pevent = NULL;
+	syncptr_t *syncptr = NULL;
 
 	dns_fixedname_init(&ptr_name);
 	DNS_RDATACOMMON_INIT(&ptr_struct, dns_rdatatype_ptr, dns_rdataclass_in);
 	dns_name_init(&ptr_struct.ptr, NULL);
 
-	pevent = (syncptrevent_t *)isc_event_allocate(
-		inst->mctx, inst, SYNCPTR_WRITE_EVENT, syncptr_write, NULL,
-		sizeof(syncptrevent_t));
-	isc_buffer_init(&pevent->b, pevent->buf, sizeof(pevent->buf));
-	dns_fixedname_init(&pevent->ptr_target_name);
+	syncptr = isc_mem_get(mctx, sizeof(*syncptr));
+	*syncptr = (syncptr_t){ 0 };
+	isc_mem_attach(mctx, &syncptr->mctx);
+	isc_buffer_init(&syncptr->b, syncptr->buf, sizeof(syncptr->buf));
+	dns_fixedname_init(&syncptr->ptr_target_name);
 
 	/* Check if reverse zone is managed by this driver */
 	result = syncptr_find_zone(inst, addr_rdata,
@@ -256,15 +245,14 @@ syncptr(sample_instance_t *inst, dns_name_t *name, dns_rdata_t *addr_rdata,
 	}
 
 	/* Reverse zone is managed by this driver, prepare PTR record */
-	pevent->zone = NULL;
-	dns_zone_attach(ptr_zone, &pevent->zone);
-	dns_name_copy(name, dns_fixedname_name(&pevent->ptr_target_name));
-	dns_name_clone(dns_fixedname_name(&pevent->ptr_target_name),
+	dns_zone_attach(ptr_zone, &syncptr->zone);
+	dns_name_copy(name, dns_fixedname_name(&syncptr->ptr_target_name));
+	dns_name_clone(dns_fixedname_name(&syncptr->ptr_target_name),
 		       &ptr_struct.ptr);
-	dns_diff_init(inst->mctx, &pevent->diff);
+	dns_diff_init(inst->mctx, &syncptr->diff);
 	result = dns_rdata_fromstruct(&ptr_rdata, dns_rdataclass_in,
 				      dns_rdatatype_ptr, &ptr_struct,
-				      &pevent->b);
+				      &syncptr->b);
 	if (result != ISC_R_SUCCESS) {
 		log_write(ISC_LOG_ERROR,
 			  "syncptr: dns_rdata_fromstruct -> %s\n",
@@ -281,14 +269,14 @@ syncptr(sample_instance_t *inst, dns_name_t *name, dns_rdata_t *addr_rdata,
 			  isc_result_totext(result));
 		goto cleanup;
 	}
-	dns_diff_append(&pevent->diff, &tp);
+	dns_diff_append(&syncptr->diff, &tp);
 
 	/*
 	 * Send update event to the reverse zone.
 	 * It will be processed asynchronously.
 	 */
-	dns_zone_gettask(ptr_zone, &task);
-	isc_task_send(task, (isc_event_t **)&pevent);
+	isc_async_run(dns_zone_getloop(ptr_zone), syncptr_write, syncptr);
+	syncptr = NULL;
 
 cleanup:
 	if (ptr_zone != NULL) {
@@ -297,14 +285,11 @@ cleanup:
 	if (tp != NULL) {
 		dns_difftuple_free(&tp);
 	}
-	if (task != NULL) {
-		isc_task_detach(&task);
-	}
-	if (pevent != NULL) {
-		isc_event_free((isc_event_t **)&pevent);
+	if (syncptr != NULL) {
+		isc_mem_put(mctx, syncptr, sizeof(*syncptr));
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -335,5 +320,5 @@ syncptrs(sample_instance_t *inst, dns_name_t *name, dns_rdataset_t *rdataset,
 	}
 
 cleanup:
-	return (result);
+	return result;
 }

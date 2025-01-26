@@ -1,4 +1,4 @@
-/*	$NetBSD: url.c,v 1.5 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: url.c,v 1.6 2025/01/26 16:25:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -224,12 +224,12 @@ typedef enum {
 static state_t
 parse_url_char(state_t s, const char ch) {
 	if (ch == ' ' || ch == '\r' || ch == '\n') {
-		return (s_dead);
+		return s_dead;
 	}
 
 #if HTTP_PARSER_STRICT
 	if (ch == '\t' || ch == '\f') {
-		return (s_dead);
+		return s_dead;
 	}
 #endif
 
@@ -241,77 +241,77 @@ parse_url_char(state_t s, const char ch) {
 		 */
 
 		if (ch == '/' || ch == '*') {
-			return (s_req_path);
+			return s_req_path;
 		}
 
 		if (isalpha((unsigned char)ch)) {
-			return (s_req_schema);
+			return s_req_schema;
 		}
 
 		break;
 
 	case s_req_schema:
 		if (isalpha((unsigned char)ch)) {
-			return (s);
+			return s;
 		}
 
 		if (ch == ':') {
-			return (s_req_schema_slash);
+			return s_req_schema_slash;
 		}
 
 		break;
 
 	case s_req_schema_slash:
 		if (ch == '/') {
-			return (s_req_schema_slash_slash);
+			return s_req_schema_slash_slash;
 		}
 
 		break;
 
 	case s_req_schema_slash_slash:
 		if (ch == '/') {
-			return (s_req_server_start);
+			return s_req_server_start;
 		}
 
 		break;
 
 	case s_req_server_with_at:
 		if (ch == '@') {
-			return (s_dead);
+			return s_dead;
 		}
 
 		FALLTHROUGH;
 	case s_req_server_start:
 	case s_req_server:
 		if (ch == '/') {
-			return (s_req_path);
+			return s_req_path;
 		}
 
 		if (ch == '?') {
-			return (s_req_query_string_start);
+			return s_req_query_string_start;
 		}
 
 		if (ch == '@') {
-			return (s_req_server_with_at);
+			return s_req_server_with_at;
 		}
 
 		if (IS_USERINFO_CHAR(ch) || ch == '[' || ch == ']') {
-			return (s_req_server);
+			return s_req_server;
 		}
 
 		break;
 
 	case s_req_path:
 		if (IS_URL_CHAR(ch)) {
-			return (s);
+			return s;
 		}
 
 		switch (ch) {
 		case '?':
-			return (s_req_query_string_start);
+			return s_req_query_string_start;
 
 		case '#':
-			return (s_req_fragment_start);
+			return s_req_fragment_start;
 		}
 
 		break;
@@ -319,44 +319,44 @@ parse_url_char(state_t s, const char ch) {
 	case s_req_query_string_start:
 	case s_req_query_string:
 		if (IS_URL_CHAR(ch)) {
-			return (s_req_query_string);
+			return s_req_query_string;
 		}
 
 		switch (ch) {
 		case '?':
 			/* allow extra '?' in query string */
-			return (s_req_query_string);
+			return s_req_query_string;
 
 		case '#':
-			return (s_req_fragment_start);
+			return s_req_fragment_start;
 		}
 
 		break;
 
 	case s_req_fragment_start:
 		if (IS_URL_CHAR(ch)) {
-			return (s_req_fragment);
+			return s_req_fragment;
 		}
 
 		switch (ch) {
 		case '?':
-			return (s_req_fragment);
+			return s_req_fragment;
 
 		case '#':
-			return (s);
+			return s;
 		}
 
 		break;
 
 	case s_req_fragment:
 		if (IS_URL_CHAR(ch)) {
-			return (s);
+			return s;
 		}
 
 		switch (ch) {
 		case '?':
 		case '#':
-			return (s);
+			return s;
 		}
 
 		break;
@@ -369,7 +369,7 @@ parse_url_char(state_t s, const char ch) {
 	 * We should never fall out of the switch above unless there's an
 	 * error.
 	 */
-	return (s_dead);
+	return s_dead;
 }
 
 static host_state_t
@@ -378,57 +378,57 @@ http_parse_host_char(host_state_t s, const char ch) {
 	case s_http_userinfo:
 	case s_http_userinfo_start:
 		if (ch == '@') {
-			return (s_http_host_start);
+			return s_http_host_start;
 		}
 
 		if (IS_USERINFO_CHAR(ch)) {
-			return (s_http_userinfo);
+			return s_http_userinfo;
 		}
 		break;
 
 	case s_http_host_start:
 		if (ch == '[') {
-			return (s_http_host_v6_start);
+			return s_http_host_v6_start;
 		}
 
 		if (IS_HOST_CHAR(ch)) {
-			return (s_http_host);
+			return s_http_host;
 		}
 
 		break;
 
 	case s_http_host:
 		if (IS_HOST_CHAR(ch)) {
-			return (s_http_host);
+			return s_http_host;
 		}
 
 		FALLTHROUGH;
 	case s_http_host_v6_end:
 		if (ch == ':') {
-			return (s_http_host_port_start);
+			return s_http_host_port_start;
 		}
 
 		break;
 
 	case s_http_host_v6:
 		if (ch == ']') {
-			return (s_http_host_v6_end);
+			return s_http_host_v6_end;
 		}
 
 		FALLTHROUGH;
 	case s_http_host_v6_start:
 		if (isxdigit((unsigned char)ch) || ch == ':' || ch == '.') {
-			return (s_http_host_v6);
+			return s_http_host_v6;
 		}
 
 		if (s == s_http_host_v6 && ch == '%') {
-			return (s_http_host_v6_zone_start);
+			return s_http_host_v6_zone_start;
 		}
 		break;
 
 	case s_http_host_v6_zone:
 		if (ch == ']') {
-			return (s_http_host_v6_end);
+			return s_http_host_v6_end;
 		}
 
 		FALLTHROUGH;
@@ -437,14 +437,14 @@ http_parse_host_char(host_state_t s, const char ch) {
 		if (isalnum((unsigned char)ch) || ch == '%' || ch == '.' ||
 		    ch == '-' || ch == '_' || ch == '~')
 		{
-			return (s_http_host_v6_zone);
+			return s_http_host_v6_zone;
 		}
 		break;
 
 	case s_http_host_port:
 	case s_http_host_port_start:
 		if (isdigit((unsigned char)ch)) {
-			return (s_http_host_port);
+			return s_http_host_port;
 		}
 
 		break;
@@ -453,7 +453,7 @@ http_parse_host_char(host_state_t s, const char ch) {
 		break;
 	}
 
-	return (s_http_host_dead);
+	return s_http_host_dead;
 }
 
 static isc_result_t
@@ -473,7 +473,7 @@ http_parse_host(const char *buf, isc_url_parser_t *up, int found_at) {
 		host_state_t new_s = http_parse_host_char(s, *p);
 
 		if (new_s == s_http_host_dead) {
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 		}
 
 		switch (new_s) {
@@ -535,12 +535,12 @@ http_parse_host(const char *buf, isc_url_parser_t *up, int found_at) {
 	case s_http_host_port_start:
 	case s_http_userinfo:
 	case s_http_userinfo_start:
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	default:
 		break;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -552,7 +552,7 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 	const char *p = NULL;
 
 	if (buflen == 0) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	up->port = up->field_set = 0;
@@ -565,7 +565,7 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 		/* Figure out the next field that we're operating on */
 		switch (s) {
 		case s_dead:
-			return (ISC_R_FAILURE);
+			return ISC_R_FAILURE;
 
 		/* Skip delimiters */
 		case s_req_schema_slash:
@@ -620,7 +620,7 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 	if ((up->field_set & (1 << ISC_UF_SCHEMA)) &&
 	    (up->field_set & (1 << ISC_UF_HOST)) == 0)
 	{
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (up->field_set & (1 << ISC_UF_HOST)) {
@@ -628,7 +628,7 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 
 		result = http_parse_host(buf, up, found_at);
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 	}
 
@@ -636,7 +636,7 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 	if (is_connect &&
 	    up->field_set != ((1 << ISC_UF_HOST) | (1 << ISC_UF_PORT)))
 	{
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	if (up->field_set & (1 << ISC_UF_PORT)) {
@@ -663,12 +663,12 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 
 			/* Ports have a max value of 2^16 */
 			if (v > 0xffff) {
-				return (ISC_R_RANGE);
+				return ISC_R_RANGE;
 			}
 		}
 
 		up->port = (uint16_t)v;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }

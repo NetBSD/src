@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.h,v 1.7 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: openssl_shim.h,v 1.8 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,9 +16,7 @@
 #pragma once
 
 #include <openssl/crypto.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
-#include <openssl/hmac.h>
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>
 
@@ -123,11 +121,6 @@ OPENSSL_cleanup(void);
 #define TLS_client_method SSLv23_client_method
 #endif
 
-#if !HAVE_SSL_CTX_UP_REF
-int
-SSL_CTX_up_ref(SSL_CTX *store);
-#endif /* !HAVE_SSL_CTX_UP_REF */
-
 #if !HAVE_X509_STORE_UP_REF
 int
 X509_STORE_up_ref(X509_STORE *v);
@@ -137,3 +130,8 @@ X509_STORE_up_ref(X509_STORE *v);
 void
 SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store);
 #endif /* !HAVE_SSL_CTX_SET1_CERT_STORE */
+
+#if !HAVE_SSL_CTX_UP_REF
+int
+SSL_CTX_up_ref(SSL_CTX *store);
+#endif /* !HAVE_SSL_CTX_UP_REF */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atma_34.c,v 1.8 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: atma_34.c,v 1.9 2025/01/26 16:25:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -106,7 +106,7 @@ fromtext_in_atma(ARGS_FROMTEXT) {
 			RETTOK(ISC_R_UNEXPECTEDEND);
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -137,9 +137,9 @@ totext_in_atma(ARGS_TOTEXT) {
 		RETERR(mem_tobuffer(target, region.base, region.length));
 		break;
 	default:
-		return (ISC_R_NOTIMPLEMENTED);
+		return ISC_R_NOTIMPLEMENTED;
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -151,24 +151,23 @@ fromwire_in_atma(ARGS_FROMWIRE) {
 
 	UNUSED(type);
 	UNUSED(dctx);
-	UNUSED(options);
 	UNUSED(rdclass);
 
 	isc_buffer_activeregion(source, &region);
 	if (region.length < 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 	if (region.base[0] == 1) {
 		unsigned int i;
 		for (i = 1; i < region.length; i++) {
 			if (!isdigit((unsigned char)region.base[i])) {
-				return (DNS_R_FORMERR);
+				return DNS_R_FORMERR;
 			}
 		}
 	}
 	RETERR(mem_tobuffer(target, region.base, region.length));
 	isc_buffer_forward(source, region.length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -179,7 +178,7 @@ towire_in_atma(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return mem_tobuffer(target, rdata->data, rdata->length);
 }
 
 static int
@@ -196,7 +195,7 @@ compare_in_atma(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -214,7 +213,7 @@ fromstruct_in_atma(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	RETERR(mem_tobuffer(target, &atma->format, 1));
-	return (mem_tobuffer(target, atma->atma, atma->atma_len));
+	return mem_tobuffer(target, atma->atma, atma->atma_len);
 }
 
 static isc_result_t
@@ -236,12 +235,8 @@ tostruct_in_atma(ARGS_TOSTRUCT) {
 	isc_region_consume(&r, 1);
 	atma->atma_len = r.length;
 	atma->atma = mem_maybedup(mctx, r.base, r.length);
-	if (atma->atma == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	atma->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -272,7 +267,7 @@ additionaldata_in_atma(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -284,7 +279,7 @@ digest_in_atma(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -297,7 +292,7 @@ checkowner_in_atma(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -309,12 +304,12 @@ checknames_in_atma(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_in_atma(ARGS_COMPARE) {
-	return (compare_in_atma(rdata1, rdata2));
+	return compare_in_atma(rdata1, rdata2);
 }
 
 #endif /* RDATA_IN_1_atma_22_C */

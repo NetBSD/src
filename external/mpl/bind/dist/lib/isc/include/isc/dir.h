@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.2 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.3 2025/01/26 16:25:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,10 @@
 
 #include <dirent.h>
 #include <limits.h>
+#include <sys/types.h> /* Required on some systems. */
 
 #include <isc/lang.h>
 #include <isc/result.h>
-
-#include <sys/types.h> /* Required on some systems. */
 
 #ifndef NAME_MAX
 #define NAME_MAX 256
@@ -69,14 +68,5 @@ isc_dir_chdir(const char *dirname);
 
 isc_result_t
 isc_dir_chroot(const char *dirname);
-
-isc_result_t
-isc_dir_createunique(char *templet);
-/*!<
- * Use a templet (such as from isc_file_mktemplate()) to create a uniquely
- * named, empty directory.  The templet string is modified in place.
- * If result == ISC_R_SUCCESS, it is the name of the directory that was
- * created.
- */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: nsec3_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -117,11 +117,11 @@ nsec3param_salttotext_test(const nsec3param_salttotext_test_params_t *params) {
 ISC_RUN_TEST_IMPL(max_iterations) {
 	UNUSED(state);
 
-	iteration_test(TESTS_DIR "/testdata/nsec3/1024.db", 150);
-	iteration_test(TESTS_DIR "/testdata/nsec3/2048.db", 150);
-	iteration_test(TESTS_DIR "/testdata/nsec3/4096.db", 150);
-	iteration_test(TESTS_DIR "/testdata/nsec3/min-1024.db", 150);
-	iteration_test(TESTS_DIR "/testdata/nsec3/min-2048.db", 150);
+	iteration_test(TESTS_DIR "/testdata/nsec3/1024.db", 50);
+	iteration_test(TESTS_DIR "/testdata/nsec3/2048.db", 50);
+	iteration_test(TESTS_DIR "/testdata/nsec3/4096.db", 50);
+	iteration_test(TESTS_DIR "/testdata/nsec3/min-1024.db", 50);
+	iteration_test(TESTS_DIR "/testdata/nsec3/min-2048.db", 50);
 }
 
 /* check dns_nsec3param_salttotext() */

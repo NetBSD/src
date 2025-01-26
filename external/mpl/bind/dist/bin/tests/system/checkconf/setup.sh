@@ -17,4 +17,6 @@ copy_setports bad-kasp-keydir2.conf.in bad-kasp-keydir2.conf
 copy_setports bad-kasp-keydir3.conf.in bad-kasp-keydir3.conf
 copy_setports bad-kasp-keydir4.conf.in bad-kasp-keydir4.conf
 copy_setports bad-kasp-keydir5.conf.in bad-kasp-keydir5.conf
+copy_setports bad-tsig.conf.in bad-tsig.conf
+copy_setports good.conf.in good.conf
 cp -f good-server-christmas-tree.conf.in good-server-christmas-tree.conf

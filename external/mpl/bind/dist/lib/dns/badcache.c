@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.c,v 1.8 2024/02/21 22:52:05 christos Exp $	*/
+/*	$NetBSD: badcache.c,v 1.9 2025/01/26 16:25:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,15 +18,20 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/async.h>
 #include <isc/buffer.h>
 #include <isc/hash.h>
 #include <isc/log.h>
+#include <isc/loop.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
-#include <isc/print.h>
 #include <isc/rwlock.h>
+#include <isc/spinlock.h>
+#include <isc/stdtime.h>
 #include <isc/string.h>
+#include <isc/thread.h>
 #include <isc/time.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/badcache.h>
@@ -37,488 +42,396 @@
 
 typedef struct dns_bcentry dns_bcentry_t;
 
+typedef struct dns_bckey {
+	const dns_name_t *name;
+	dns_rdatatype_t type;
+} dns__bckey_t;
+
 struct dns_badcache {
 	unsigned int magic;
-	isc_rwlock_t lock;
 	isc_mem_t *mctx;
-
-	isc_mutex_t *tlocks;
-	dns_bcentry_t **table;
-
-	atomic_uint_fast32_t count;
-	atomic_uint_fast32_t sweep;
-
-	unsigned int minsize;
-	unsigned int size;
+	struct cds_lfht *ht;
+	struct cds_list_head *lru;
+	uint32_t nloops;
 };
 
 #define BADCACHE_MAGIC	  ISC_MAGIC('B', 'd', 'C', 'a')
 #define VALID_BADCACHE(m) ISC_MAGIC_VALID(m, BADCACHE_MAGIC)
 
+#define BADCACHE_INIT_SIZE (1 << 10) /* Must be power of 2 */
+#define BADCACHE_MIN_SIZE  (1 << 8)  /* Must be power of 2 */
+
 struct dns_bcentry {
-	dns_bcentry_t *next;
-	dns_rdatatype_t type;
-	isc_time_t expire;
+	isc_loop_t *loop;
+	isc_stdtime_t expire;
 	uint32_t flags;
-	unsigned int hashval;
-	dns_fixedname_t fname;
-	dns_name_t *name;
+
+	struct cds_lfht_node ht_node;
+	struct rcu_head rcu_head;
+	struct cds_list_head lru_head;
+
+	dns_name_t name;
+	dns_rdatatype_t type;
 };
 
 static void
-badcache_resize(dns_badcache_t *bc, isc_time_t *now);
+bcentry_print(dns_bcentry_t *bad, isc_stdtime_t now, FILE *fp);
 
-isc_result_t
-dns_badcache_init(isc_mem_t *mctx, unsigned int size, dns_badcache_t **bcp) {
-	dns_badcache_t *bc = NULL;
-	unsigned int i;
+static void
+bcentry_destroy(struct rcu_head *rcu_head);
 
-	REQUIRE(bcp != NULL && *bcp == NULL);
-	REQUIRE(mctx != NULL);
+static bool
+bcentry_alive(struct cds_lfht *ht, dns_bcentry_t *bad, isc_stdtime_t now);
 
-	bc = isc_mem_get(mctx, sizeof(dns_badcache_t));
-	memset(bc, 0, sizeof(dns_badcache_t));
+dns_badcache_t *
+dns_badcache_new(isc_mem_t *mctx, isc_loopmgr_t *loopmgr) {
+	REQUIRE(loopmgr != NULL);
+
+	uint32_t nloops = isc_loopmgr_nloops(loopmgr);
+	dns_badcache_t *bc = isc_mem_get(mctx, sizeof(*bc));
+	*bc = (dns_badcache_t){
+		.magic = BADCACHE_MAGIC,
+		.nloops = nloops,
+	};
+
+	bc->ht = cds_lfht_new(BADCACHE_INIT_SIZE, BADCACHE_MIN_SIZE, 0,
+			      CDS_LFHT_AUTO_RESIZE | CDS_LFHT_ACCOUNTING, NULL);
+	INSIST(bc->ht != NULL);
+
+	bc->lru = isc_mem_cget(mctx, bc->nloops, sizeof(bc->lru[0]));
+	for (size_t i = 0; i < bc->nloops; i++) {
+		CDS_INIT_LIST_HEAD(&bc->lru[i]);
+	}
 
 	isc_mem_attach(mctx, &bc->mctx);
-	isc_rwlock_init(&bc->lock, 0, 0);
 
-	bc->table = isc_mem_get(bc->mctx, sizeof(*bc->table) * size);
-	bc->tlocks = isc_mem_get(bc->mctx, sizeof(isc_mutex_t) * size);
-	for (i = 0; i < size; i++) {
-		isc_mutex_init(&bc->tlocks[i]);
-	}
-	bc->size = bc->minsize = size;
-	memset(bc->table, 0, bc->size * sizeof(dns_bcentry_t *));
-
-	atomic_init(&bc->count, 0);
-	atomic_init(&bc->sweep, 0);
-	bc->magic = BADCACHE_MAGIC;
-
-	*bcp = bc;
-	return (ISC_R_SUCCESS);
+	return bc;
 }
 
 void
 dns_badcache_destroy(dns_badcache_t **bcp) {
-	dns_badcache_t *bc;
-	unsigned int i;
-
 	REQUIRE(bcp != NULL && *bcp != NULL);
-	bc = *bcp;
+	REQUIRE(VALID_BADCACHE(*bcp));
+
+	dns_badcache_t *bc = *bcp;
 	*bcp = NULL;
-
-	dns_badcache_flush(bc);
-
 	bc->magic = 0;
-	isc_rwlock_destroy(&bc->lock);
-	for (i = 0; i < bc->size; i++) {
-		isc_mutex_destroy(&bc->tlocks[i]);
+
+	dns_bcentry_t *bad = NULL;
+	struct cds_lfht_iter iter;
+	cds_lfht_for_each_entry(bc->ht, &iter, bad, ht_node) {
+		INSIST(!cds_lfht_del(bc->ht, &bad->ht_node));
+		bcentry_destroy(&bad->rcu_head);
 	}
-	isc_mem_put(bc->mctx, bc->table, sizeof(dns_bcentry_t *) * bc->size);
-	isc_mem_put(bc->mctx, bc->tlocks, sizeof(isc_mutex_t) * bc->size);
+	RUNTIME_CHECK(!cds_lfht_destroy(bc->ht, NULL));
+
+	isc_mem_cput(bc->mctx, bc->lru, bc->nloops, sizeof(bc->lru[0]));
+
 	isc_mem_putanddetach(&bc->mctx, bc, sizeof(dns_badcache_t));
 }
 
+static int
+bcentry_match(struct cds_lfht_node *ht_node, const void *key0) {
+	const dns__bckey_t *key = key0;
+	dns_bcentry_t *bad = caa_container_of(ht_node, dns_bcentry_t, ht_node);
+
+	return (bad->type == key->type) &&
+	       dns_name_equal(&bad->name, key->name);
+}
+
+static uint32_t
+bcentry_hash(const dns__bckey_t *key) {
+	isc_hash32_t state;
+	isc_hash32_init(&state);
+	isc_hash32_hash(&state, key->name->ndata, key->name->length, false);
+	isc_hash32_hash(&state, &key->type, sizeof(key->type), true);
+	return isc_hash32_finalize(&state);
+}
+
+static dns_bcentry_t *
+bcentry_lookup(struct cds_lfht *ht, uint32_t hashval, dns__bckey_t *key) {
+	struct cds_lfht_iter iter;
+
+	cds_lfht_lookup(ht, hashval, bcentry_match, key, &iter);
+
+	return cds_lfht_entry(cds_lfht_iter_get_node(&iter), dns_bcentry_t,
+			      ht_node);
+}
+
+static dns_bcentry_t *
+bcentry_new(isc_loop_t *loop, const dns_name_t *name,
+	    const dns_rdatatype_t type, const uint32_t flags,
+	    const isc_stdtime_t expire) {
+	isc_mem_t *mctx = isc_loop_getmctx(loop);
+	dns_bcentry_t *bad = isc_mem_get(mctx, sizeof(*bad));
+	*bad = (dns_bcentry_t){
+		.type = type,
+		.flags = flags,
+		.expire = expire,
+		.loop = isc_loop_ref(loop),
+		.lru_head = CDS_LIST_HEAD_INIT(bad->lru_head),
+	};
+
+	dns_name_init(&bad->name, NULL);
+	dns_name_dup(name, mctx, &bad->name);
+
+	return bad;
+}
+
 static void
-badcache_resize(dns_badcache_t *bc, isc_time_t *now) {
-	dns_bcentry_t **newtable, *bad, *next;
-	isc_mutex_t *newlocks;
-	unsigned int newsize, i;
-	bool grow;
+bcentry_destroy(struct rcu_head *rcu_head) {
+	dns_bcentry_t *bad = caa_container_of(rcu_head, dns_bcentry_t,
+					      rcu_head);
+	isc_loop_t *loop = bad->loop;
+	isc_mem_t *mctx = isc_loop_getmctx(loop);
 
-	RWLOCK(&bc->lock, isc_rwlocktype_write);
+	dns_name_free(&bad->name, mctx);
+	isc_mem_put(mctx, bad, sizeof(*bad));
 
-	/*
-	 * XXXWPK we will have a thundering herd problem here,
-	 * as all threads will wait on the RWLOCK when there's
-	 * a need to resize badcache.
-	 * However, it happens so rarely it should not be a
-	 * performance issue. This is because we double the
-	 * size every time we grow it, and we don't shrink
-	 * unless the number of entries really shrunk. In a
-	 * high load situation, the number of badcache entries
-	 * will eventually stabilize.
-	 */
-	if (atomic_load_relaxed(&bc->count) > bc->size * 8) {
-		grow = true;
-	} else if (atomic_load_relaxed(&bc->count) < bc->size * 2 &&
-		   bc->size > bc->minsize)
-	{
-		grow = false;
-	} else {
-		/* Someone resized it already, bail. */
-		RWUNLOCK(&bc->lock, isc_rwlocktype_write);
-		return;
-	}
+	isc_loop_unref(loop);
+}
 
-	if (grow) {
-		newsize = bc->size * 2 + 1;
-	} else {
-		newsize = (bc->size - 1) / 2;
-#ifdef __clang_analyzer__
-		/*
-		 * XXXWPK there's a bug in clang static analyzer -
-		 * `value % newsize` is considered undefined even though
-		 * we check if newsize is larger than 0. This helps.
-		 */
-		newsize += 1;
-#endif
-	}
-	RUNTIME_CHECK(newsize > 0);
+static void
+bcentry_evict_async(void *arg) {
+	dns_bcentry_t *bad = arg;
 
-	newtable = isc_mem_get(bc->mctx, sizeof(dns_bcentry_t *) * newsize);
-	memset(newtable, 0, sizeof(dns_bcentry_t *) * newsize);
+	RUNTIME_CHECK(bad->loop == isc_loop());
 
-	newlocks = isc_mem_get(bc->mctx, sizeof(isc_mutex_t) * newsize);
+	cds_list_del(&bad->lru_head);
+	call_rcu(&bad->rcu_head, bcentry_destroy);
+}
 
-	/* Copy existing mutexes */
-	for (i = 0; i < newsize && i < bc->size; i++) {
-		newlocks[i] = bc->tlocks[i];
-	}
-	/* Initialize additional mutexes if we're growing */
-	for (i = bc->size; i < newsize; i++) {
-		isc_mutex_init(&newlocks[i]);
-	}
-	/* Destroy extra mutexes if we're shrinking */
-	for (i = newsize; i < bc->size; i++) {
-		isc_mutex_destroy(&bc->tlocks[i]);
-	}
-
-	for (i = 0; atomic_load_relaxed(&bc->count) > 0 && i < bc->size; i++) {
-		for (bad = bc->table[i]; bad != NULL; bad = next) {
-			next = bad->next;
-			if (isc_time_compare(&bad->expire, now) < 0) {
-				isc_mem_put(bc->mctx, bad, sizeof(*bad));
-				atomic_fetch_sub_relaxed(&bc->count, 1);
-			} else {
-				bad->next = newtable[bad->hashval % newsize];
-				newtable[bad->hashval % newsize] = bad;
-			}
+static void
+bcentry_evict(struct cds_lfht *ht, dns_bcentry_t *bad) {
+	if (!cds_lfht_del(ht, &bad->ht_node)) {
+		if (bad->loop == isc_loop()) {
+			bcentry_evict_async(bad);
+			return;
 		}
-		bc->table[i] = NULL;
+
+		isc_async_run(bad->loop, bcentry_evict_async, bad);
+	}
+}
+
+static bool
+bcentry_alive(struct cds_lfht *ht, dns_bcentry_t *bad, isc_stdtime_t now) {
+	if (cds_lfht_is_node_deleted(&bad->ht_node)) {
+		return false;
+	} else if (bad->expire < now) {
+		bcentry_evict(ht, bad);
+		return false;
 	}
 
-	isc_mem_put(bc->mctx, bc->tlocks, sizeof(isc_mutex_t) * bc->size);
-	bc->tlocks = newlocks;
+	return true;
+}
 
-	isc_mem_put(bc->mctx, bc->table, sizeof(*bc->table) * bc->size);
-	bc->size = newsize;
-	bc->table = newtable;
+#define cds_lfht_for_each_entry_next(ht, iter, pos, member)     \
+	for (cds_lfht_next(ht, iter),                           \
+	     pos = cds_lfht_entry(cds_lfht_iter_get_node(iter), \
+				  __typeof__(*(pos)), member);  \
+	     pos != NULL; /**/                                  \
+	     cds_lfht_next(ht, iter),                           \
+	     pos = cds_lfht_entry(cds_lfht_iter_get_node(iter), \
+				  __typeof__(*(pos)), member))
 
-	RWUNLOCK(&bc->lock, isc_rwlocktype_write);
+static void
+bcentry_purge(struct cds_lfht *ht, struct cds_list_head *lru,
+	      isc_stdtime_t now) {
+	size_t count = 10;
+	dns_bcentry_t *bad;
+	cds_list_for_each_entry_rcu(bad, lru, lru_head) {
+		if (bcentry_alive(ht, bad, now)) {
+			break;
+		}
+		if (--count == 0) {
+			break;
+		}
+	}
 }
 
 void
 dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
-		 dns_rdatatype_t type, bool update, uint32_t flags,
-		 isc_time_t *expire) {
-	isc_result_t result;
-	unsigned int hashval, hash;
-	dns_bcentry_t *bad, *prev, *next;
-	isc_time_t now;
-	bool resize = false;
-
+		 dns_rdatatype_t type, uint32_t flags, isc_stdtime_t expire) {
 	REQUIRE(VALID_BADCACHE(bc));
 	REQUIRE(name != NULL);
-	REQUIRE(expire != NULL);
 
-	RWLOCK(&bc->lock, isc_rwlocktype_read);
+	isc_loop_t *loop = isc_loop();
+	uint32_t tid = isc_tid();
+	struct cds_list_head *lru = &bc->lru[tid];
 
-	result = isc_time_now(&now);
-	if (result != ISC_R_SUCCESS) {
-		isc_time_settoepoch(&now);
+	isc_stdtime_t now = isc_stdtime_now();
+	if (expire < now) {
+		expire = now;
 	}
 
-	hashval = dns_name_hash(name, false);
-	hash = hashval % bc->size;
-	LOCK(&bc->tlocks[hash]);
-	prev = NULL;
-	for (bad = bc->table[hash]; bad != NULL; bad = next) {
-		next = bad->next;
-		if (bad->type == type && dns_name_equal(name, bad->name)) {
-			if (update) {
-				bad->expire = *expire;
-				bad->flags = flags;
-			}
-			break;
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
+
+	dns__bckey_t key = {
+		.name = name,
+		.type = type,
+	};
+	uint32_t hashval = bcentry_hash(&key);
+
+	/* struct cds_lfht_iter iter; */
+	dns_bcentry_t *bad = bcentry_new(loop, name, type, flags, expire);
+	struct cds_lfht_node *ht_node;
+	do {
+		ht_node = cds_lfht_add_unique(ht, hashval, bcentry_match, &key,
+					      &bad->ht_node);
+		if (ht_node != &bad->ht_node) {
+			dns_bcentry_t *found = caa_container_of(
+				ht_node, dns_bcentry_t, ht_node);
+			bcentry_evict(ht, found);
 		}
-		if (isc_time_compare(&bad->expire, &now) < 0) {
-			if (prev == NULL) {
-				bc->table[hash] = bad->next;
-			} else {
-				prev->next = bad->next;
-			}
-			isc_mem_put(bc->mctx, bad, sizeof(*bad));
-			atomic_fetch_sub_relaxed(&bc->count, 1);
-		} else {
-			prev = bad;
-		}
-	}
+	} while (ht_node != &bad->ht_node);
 
-	if (bad == NULL) {
-		unsigned count;
-		isc_buffer_t buffer;
+	/* No locking, instead we are using per-thread lists */
+	cds_list_add_tail_rcu(&bad->lru_head, lru);
 
-		bad = isc_mem_get(bc->mctx, sizeof(*bad));
-		*bad = (dns_bcentry_t){ .type = type,
-					.hashval = hashval,
-					.expire = *expire,
-					.flags = flags,
-					.next = bc->table[hash] };
+	bcentry_purge(ht, lru, now);
 
-		isc_buffer_init(&buffer, bad + 1, name->length);
-		bad->name = dns_fixedname_initname(&bad->fname);
-		dns_name_copy(name, bad->name);
-		bc->table[hash] = bad;
-
-		count = atomic_fetch_add_relaxed(&bc->count, 1);
-		if ((count > bc->size * 8) ||
-		    (count < bc->size * 2 && bc->size > bc->minsize))
-		{
-			resize = true;
-		}
-	} else {
-		bad->expire = *expire;
-	}
-
-	UNLOCK(&bc->tlocks[hash]);
-	RWUNLOCK(&bc->lock, isc_rwlocktype_read);
-	if (resize) {
-		badcache_resize(bc, &now);
-	}
+	rcu_read_unlock();
 }
 
-bool
+isc_result_t
 dns_badcache_find(dns_badcache_t *bc, const dns_name_t *name,
-		  dns_rdatatype_t type, uint32_t *flagp, isc_time_t *now) {
-	dns_bcentry_t *bad, *prev, *next;
-	bool answer = false;
-	unsigned int i;
-	unsigned int hash;
-
+		  dns_rdatatype_t type, uint32_t *flagp, isc_stdtime_t now) {
 	REQUIRE(VALID_BADCACHE(bc));
 	REQUIRE(name != NULL);
-	REQUIRE(now != NULL);
 
-	RWLOCK(&bc->lock, isc_rwlocktype_read);
+	isc_result_t result = ISC_R_NOTFOUND;
 
-	/*
-	 * XXXMUKS: dns_name_equal() is expensive as it does a
-	 * octet-by-octet comparison, and it can be made better in two
-	 * ways here. First, lowercase the names (use
-	 * dns_name_downcase() instead of dns_name_copy() in
-	 * dns_badcache_add()) so that dns_name_caseequal() can be used
-	 * which the compiler will emit as SIMD instructions. Second,
-	 * don't put multiple copies of the same name in the chain (or
-	 * multiple names will have to be matched for equality), but use
-	 * name->link to store the type specific part.
-	 */
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
 
-	if (atomic_load_relaxed(&bc->count) == 0) {
-		goto skip;
+	dns__bckey_t key = {
+		.name = name,
+		.type = type,
+	};
+	uint32_t hashval = bcentry_hash(&key);
+
+	dns_bcentry_t *found = bcentry_lookup(ht, hashval, &key);
+
+	if (found != NULL && bcentry_alive(ht, found, now)) {
+		result = ISC_R_SUCCESS;
+		if (flagp != NULL) {
+			*flagp = found->flags;
+		}
 	}
 
-	hash = dns_name_hash(name, false) % bc->size;
-	prev = NULL;
-	LOCK(&bc->tlocks[hash]);
-	for (bad = bc->table[hash]; bad != NULL; bad = next) {
-		next = bad->next;
-		/*
-		 * Search the hash list. Clean out expired records as we go.
-		 */
-		if (isc_time_compare(&bad->expire, now) < 0) {
-			if (prev != NULL) {
-				prev->next = bad->next;
-			} else {
-				bc->table[hash] = bad->next;
-			}
+	uint32_t tid = isc_tid();
+	struct cds_list_head *lru = &bc->lru[tid];
+	bcentry_purge(ht, lru, now);
 
-			isc_mem_put(bc->mctx, bad, sizeof(*bad));
-			atomic_fetch_sub(&bc->count, 1);
-			continue;
-		}
-		if (bad->type == type && dns_name_equal(name, bad->name)) {
-			if (flagp != NULL) {
-				*flagp = bad->flags;
-			}
-			answer = true;
-			break;
-		}
-		prev = bad;
-	}
-	UNLOCK(&bc->tlocks[hash]);
-skip:
+	rcu_read_unlock();
 
-	/*
-	 * Slow sweep to clean out stale records.
-	 */
-	i = atomic_fetch_add(&bc->sweep, 1) % bc->size;
-	if (isc_mutex_trylock(&bc->tlocks[i]) == ISC_R_SUCCESS) {
-		bad = bc->table[i];
-		if (bad != NULL && isc_time_compare(&bad->expire, now) < 0) {
-			bc->table[i] = bad->next;
-			isc_mem_put(bc->mctx, bad, sizeof(*bad));
-			atomic_fetch_sub_relaxed(&bc->count, 1);
-		}
-		UNLOCK(&bc->tlocks[i]);
-	}
-
-	RWUNLOCK(&bc->lock, isc_rwlocktype_read);
-	return (answer);
+	return result;
 }
 
 void
 dns_badcache_flush(dns_badcache_t *bc) {
-	dns_bcentry_t *entry, *next;
-	unsigned int i;
-
-	RWLOCK(&bc->lock, isc_rwlocktype_write);
 	REQUIRE(VALID_BADCACHE(bc));
 
-	for (i = 0; atomic_load_relaxed(&bc->count) > 0 && i < bc->size; i++) {
-		for (entry = bc->table[i]; entry != NULL; entry = next) {
-			next = entry->next;
-			isc_mem_put(bc->mctx, entry, sizeof(*entry));
-			atomic_fetch_sub_relaxed(&bc->count, 1);
-		}
-		bc->table[i] = NULL;
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
+
+	/* Flush the hash table */
+	dns_bcentry_t *bad;
+	struct cds_lfht_iter iter;
+	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+		bcentry_evict(ht, bad);
 	}
-	RWUNLOCK(&bc->lock, isc_rwlocktype_write);
+
+	rcu_read_unlock();
 }
 
 void
 dns_badcache_flushname(dns_badcache_t *bc, const dns_name_t *name) {
-	dns_bcentry_t *bad, *prev, *next;
-	isc_result_t result;
-	isc_time_t now;
-	unsigned int hash;
-
 	REQUIRE(VALID_BADCACHE(bc));
 	REQUIRE(name != NULL);
 
-	RWLOCK(&bc->lock, isc_rwlocktype_read);
+	isc_stdtime_t now = isc_stdtime_now();
 
-	result = isc_time_now(&now);
-	if (result != ISC_R_SUCCESS) {
-		isc_time_settoepoch(&now);
-	}
-	hash = dns_name_hash(name, false) % bc->size;
-	LOCK(&bc->tlocks[hash]);
-	prev = NULL;
-	for (bad = bc->table[hash]; bad != NULL; bad = next) {
-		int n;
-		next = bad->next;
-		n = isc_time_compare(&bad->expire, &now);
-		if (n < 0 || dns_name_equal(name, bad->name)) {
-			if (prev == NULL) {
-				bc->table[hash] = bad->next;
-			} else {
-				prev->next = bad->next;
-			}
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
 
-			isc_mem_put(bc->mctx, bad, sizeof(*bad));
-			atomic_fetch_sub_relaxed(&bc->count, 1);
-		} else {
-			prev = bad;
+	dns_bcentry_t *bad;
+	struct cds_lfht_iter iter;
+	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+		if (dns_name_equal(&bad->name, name)) {
+			bcentry_evict(ht, bad);
+			continue;
 		}
-	}
-	UNLOCK(&bc->tlocks[hash]);
 
-	RWUNLOCK(&bc->lock, isc_rwlocktype_read);
+		/* Flush all the expired entries */
+		(void)bcentry_alive(ht, bad, now);
+	}
+
+	rcu_read_unlock();
 }
 
 void
 dns_badcache_flushtree(dns_badcache_t *bc, const dns_name_t *name) {
-	dns_bcentry_t *bad, *prev, *next;
-	unsigned int i;
-	int n;
-	isc_time_t now;
-	isc_result_t result;
-
 	REQUIRE(VALID_BADCACHE(bc));
 	REQUIRE(name != NULL);
 
-	/*
-	 * We write lock the tree to avoid relocking every node
-	 * individually.
-	 */
-	RWLOCK(&bc->lock, isc_rwlocktype_write);
+	isc_stdtime_t now = isc_stdtime_now();
 
-	result = isc_time_now(&now);
-	if (result != ISC_R_SUCCESS) {
-		isc_time_settoepoch(&now);
-	}
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
 
-	for (i = 0; atomic_load_relaxed(&bc->count) > 0 && i < bc->size; i++) {
-		prev = NULL;
-		for (bad = bc->table[i]; bad != NULL; bad = next) {
-			next = bad->next;
-			n = isc_time_compare(&bad->expire, &now);
-			if (n < 0 || dns_name_issubdomain(bad->name, name)) {
-				if (prev == NULL) {
-					bc->table[i] = bad->next;
-				} else {
-					prev->next = bad->next;
-				}
-
-				isc_mem_put(bc->mctx, bad, sizeof(*bad));
-				atomic_fetch_sub_relaxed(&bc->count, 1);
-			} else {
-				prev = bad;
-			}
+	dns_bcentry_t *bad;
+	struct cds_lfht_iter iter;
+	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+		if (dns_name_issubdomain(&bad->name, name)) {
+			bcentry_evict(ht, bad);
+			continue;
 		}
+
+		/* Flush all the expired entries */
+		(void)bcentry_alive(ht, bad, now);
 	}
 
-	RWUNLOCK(&bc->lock, isc_rwlocktype_write);
+	rcu_read_unlock();
+}
+
+static void
+bcentry_print(dns_bcentry_t *bad, isc_stdtime_t now, FILE *fp) {
+	char namebuf[DNS_NAME_FORMATSIZE];
+	char typebuf[DNS_RDATATYPE_FORMATSIZE];
+
+	dns_name_format(&bad->name, namebuf, sizeof(namebuf));
+	dns_rdatatype_format(bad->type, typebuf, sizeof(typebuf));
+	fprintf(fp, "; %s/%s [ttl %" PRIu32 "]\n", namebuf, typebuf,
+		bad->expire - now);
 }
 
 void
 dns_badcache_print(dns_badcache_t *bc, const char *cachename, FILE *fp) {
-	char namebuf[DNS_NAME_FORMATSIZE];
-	char typebuf[DNS_RDATATYPE_FORMATSIZE];
-	dns_bcentry_t *bad, *next, *prev;
-	isc_time_t now;
-	unsigned int i;
-	uint64_t t;
+	dns_bcentry_t *bad;
+	isc_stdtime_t now = isc_stdtime_now();
 
 	REQUIRE(VALID_BADCACHE(bc));
-	REQUIRE(cachename != NULL);
 	REQUIRE(fp != NULL);
 
-	/*
-	 * We write lock the tree to avoid relocking every node
-	 * individually.
-	 */
-	RWLOCK(&bc->lock, isc_rwlocktype_write);
 	fprintf(fp, ";\n; %s\n;\n", cachename);
 
-	TIME_NOW(&now);
-	for (i = 0; atomic_load_relaxed(&bc->count) > 0 && i < bc->size; i++) {
-		prev = NULL;
-		for (bad = bc->table[i]; bad != NULL; bad = next) {
-			next = bad->next;
-			if (isc_time_compare(&bad->expire, &now) < 0) {
-				if (prev != NULL) {
-					prev->next = bad->next;
-				} else {
-					bc->table[i] = bad->next;
-				}
+	rcu_read_lock();
+	struct cds_lfht *ht = rcu_dereference(bc->ht);
+	INSIST(ht != NULL);
 
-				isc_mem_put(bc->mctx, bad, sizeof(*bad));
-				atomic_fetch_sub_relaxed(&bc->count, 1);
-				continue;
-			}
-			prev = bad;
-			dns_name_format(bad->name, namebuf, sizeof(namebuf));
-			dns_rdatatype_format(bad->type, typebuf,
-					     sizeof(typebuf));
-			t = isc_time_microdiff(&bad->expire, &now);
-			t /= 1000;
-			fprintf(fp,
-				"; %s/%s [ttl "
-				"%" PRIu64 "]\n",
-				namebuf, typebuf, t);
+	struct cds_lfht_iter iter;
+	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+		if (bcentry_alive(ht, bad, now)) {
+			bcentry_print(bad, now, fp);
 		}
 	}
-	RWUNLOCK(&bc->lock, isc_rwlocktype_write);
+
+	rcu_read_unlock();
 }

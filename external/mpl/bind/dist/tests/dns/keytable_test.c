@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: keytable_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,20 @@
 
 #include <tests/dns.h>
 
+static int
+setup_test(void **state) {
+	setup_loopmgr(state);
+
+	return 0;
+}
+
+static int
+teardown_test(void **state) {
+	teardown_loopmgr(state);
+
+	return 0;
+}
+
 dns_keytable_t *keytable = NULL;
 dns_ntatable_t *ntatable = NULL;
 
@@ -79,17 +93,15 @@ str2name(const char *namestr) {
 	static dns_fixedname_t fname;
 	static dns_name_t *name;
 	static isc_buffer_t namebuf;
-	void *deconst_namestr;
 
 	name = dns_fixedname_initname(&fname);
-	DE_CONST(namestr, deconst_namestr); /* OK, since we don't modify it */
-	isc_buffer_init(&namebuf, deconst_namestr, strlen(deconst_namestr));
+	isc_buffer_init(&namebuf, UNCONST(namestr), strlen(namestr));
 	isc_buffer_add(&namebuf, strlen(namestr));
 	assert_int_equal(
 		dns_name_fromtext(name, &namebuf, dns_rootname, 0, NULL),
 		ISC_R_SUCCESS);
 
-	return (name);
+	return name;
 }
 
 static void
@@ -158,25 +170,23 @@ create_tables(void) {
 	dns_rdata_ds_t ds;
 	dns_fixedname_t fn;
 	dns_name_t *keyname = dns_fixedname_name(&fn);
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
 
-	assert_int_equal(dns_test_makeview("view", false, &view),
+	assert_int_equal(dns_test_makeview("view", false, false, &view),
 			 ISC_R_SUCCESS);
 
-	assert_int_equal(dns_keytable_create(mctx, &keytable), ISC_R_SUCCESS);
-	assert_int_equal(
-		dns_ntatable_create(view, taskmgr, timermgr, &ntatable),
-		ISC_R_SUCCESS);
+	dns_keytable_create(view, &keytable);
+	dns_ntatable_create(view, loopmgr, &ntatable);
 
 	/* Add a normal key */
-	dns_test_namefromstring("example.com", &fn);
+	dns_test_namefromstring("example.com.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr1, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, false, false, keyname, &ds,
 					  NULL, NULL),
 			 ISC_R_SUCCESS);
 
 	/* Add an initializing managed key */
-	dns_test_namefromstring("managed.com", &fn);
+	dns_test_namefromstring("managed.com.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr1, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, true, true, keyname, &ds,
 					  NULL, NULL),
@@ -188,7 +198,6 @@ create_tables(void) {
 		ISC_R_SUCCESS);
 
 	/* Add a negative trust anchor, duration 1 hour */
-	isc_stdtime_get(&now);
 	assert_int_equal(dns_ntatable_add(ntatable,
 					  str2name("insecure.example"), false,
 					  now, 3600),
@@ -198,6 +207,7 @@ create_tables(void) {
 static void
 destroy_tables(void) {
 	if (ntatable != NULL) {
+		dns_ntatable_shutdown(ntatable);
 		dns_ntatable_detach(&ntatable);
 	}
 	if (keytable != NULL) {
@@ -208,7 +218,7 @@ destroy_tables(void) {
 }
 
 /* add keys to the keytable */
-ISC_RUN_TEST_IMPL(dns_keytable_add) {
+ISC_LOOP_TEST_IMPL(add) {
 	dns_keynode_t *keynode = NULL;
 	dns_keynode_t *null_keynode = NULL;
 	unsigned char digest[ISC_MAX_MD_SIZE];
@@ -216,7 +226,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 	dns_fixedname_t fn;
 	dns_name_t *keyname = dns_fixedname_name(&fn);
 
-	UNUSED(state);
+	UNUSED(arg);
 
 	create_tables();
 
@@ -231,18 +241,18 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 	 * Try to add the same key.  This should have no effect but
 	 * report success.
 	 */
-	dns_test_namefromstring("example.com", &fn);
+	dns_test_namefromstring("example.com.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr1, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, false, false, keyname, &ds,
 					  NULL, NULL),
 			 ISC_R_SUCCESS);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 	assert_int_equal(
 		dns_keytable_find(keytable, str2name("example.com"), &keynode),
 		ISC_R_SUCCESS);
 
 	/* Add another key (different keydata) */
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 	create_dsstruct(keyname, 257, 3, 5, keystr2, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, false, false, keyname, &ds,
 					  NULL, NULL),
@@ -250,7 +260,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 	assert_int_equal(
 		dns_keytable_find(keytable, str2name("example.com"), &keynode),
 		ISC_R_SUCCESS);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Get the keynode for the managed.com key. Ensure the
@@ -263,14 +273,14 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 	assert_int_equal(dns_keynode_initial(keynode), true);
 	dns_keynode_trust(keynode);
 	assert_int_equal(dns_keynode_initial(keynode), false);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Add a different managed key for managed.com, marking it as an
 	 * initializing key. Since there is already a trusted key at the
 	 * node, the node should *not* be marked as initializing.
 	 */
-	dns_test_namefromstring("managed.com", &fn);
+	dns_test_namefromstring("managed.com.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr2, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, true, true, keyname, &ds,
 					  NULL, NULL),
@@ -279,7 +289,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 		dns_keytable_find(keytable, str2name("managed.com"), &keynode),
 		ISC_R_SUCCESS);
 	assert_int_equal(dns_keynode_initial(keynode), false);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Add the same managed key again, but this time mark it as a
@@ -294,13 +304,13 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 		dns_keytable_find(keytable, str2name("managed.com"), &keynode),
 		ISC_R_SUCCESS);
 	assert_int_equal(dns_keynode_initial(keynode), false);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Add a managed key at a new node, two.com, marking it as an
 	 * initializing key.
 	 */
-	dns_test_namefromstring("two.com", &fn);
+	dns_test_namefromstring("two.com.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr1, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, true, true, keyname, &ds,
 					  NULL, NULL),
@@ -309,7 +319,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 		dns_keytable_find(keytable, str2name("two.com"), &keynode),
 		ISC_R_SUCCESS);
 	assert_int_equal(dns_keynode_initial(keynode), true);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Add a different managed key for two.com, marking it as a
@@ -325,7 +335,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 		dns_keytable_find(keytable, str2name("two.com"), &keynode),
 		ISC_R_SUCCESS);
 	assert_int_equal(dns_keynode_initial(keynode), true);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * Add a normal key to a name that has a null key.  The null key node
@@ -334,7 +344,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 	assert_int_equal(dns_keytable_find(keytable, str2name("null.example"),
 					   &null_keynode),
 			 ISC_R_SUCCESS);
-	dns_test_namefromstring("null.example", &fn);
+	dns_test_namefromstring("null.example.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr2, digest, &ds);
 	assert_int_equal(dns_keytable_add(keytable, false, false, keyname, &ds,
 					  NULL, NULL),
@@ -343,7 +353,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 		dns_keytable_find(keytable, str2name("null.example"), &keynode),
 		ISC_R_SUCCESS);
 	assert_ptr_equal(keynode, null_keynode); /* should be the same node */
-	dns_keytable_detachkeynode(keytable, &null_keynode);
+	dns_keynode_detach(&null_keynode);
 
 	/*
 	 * Try to add a null key to a name that already has a key.  It's
@@ -358,14 +368,18 @@ ISC_RUN_TEST_IMPL(dns_keytable_add) {
 					   &null_keynode),
 			 ISC_R_SUCCESS);
 	assert_ptr_equal(keynode, null_keynode);
-	dns_keytable_detachkeynode(keytable, &null_keynode);
+	dns_keynode_detach(&null_keynode);
 
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* delete keys from the keytable */
-ISC_RUN_TEST_IMPL(dns_keytable_delete) {
+ISC_LOOP_TEST_IMPL(delete) {
+	UNUSED(arg);
+
 	create_tables();
 
 	/* dns_keytable_delete requires exact match */
@@ -391,34 +405,36 @@ ISC_RUN_TEST_IMPL(dns_keytable_delete) {
 		ISC_R_SUCCESS);
 
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* delete key nodes from the keytable */
-ISC_RUN_TEST_IMPL(dns_keytable_deletekey) {
+ISC_LOOP_TEST_IMPL(deletekey) {
 	dns_rdata_dnskey_t dnskey;
 	dns_fixedname_t fn;
 	dns_name_t *keyname = dns_fixedname_name(&fn);
 
-	UNUSED(state);
+	UNUSED(arg);
 
 	create_tables();
 
 	/* key name doesn't match */
-	dns_test_namefromstring("example.org", &fn);
+	dns_test_namefromstring("example.org.", &fn);
 	create_keystruct(257, 3, 5, keystr1, &dnskey);
 	assert_int_equal(dns_keytable_deletekey(keytable, keyname, &dnskey),
 			 ISC_R_NOTFOUND);
 	dns_rdata_freestruct(&dnskey);
 
 	/* subdomain match is the same as no match */
-	dns_test_namefromstring("sub.example.org", &fn);
+	dns_test_namefromstring("sub.example.org.", &fn);
 	create_keystruct(257, 3, 5, keystr1, &dnskey);
 	assert_int_equal(dns_keytable_deletekey(keytable, keyname, &dnskey),
 			 ISC_R_NOTFOUND);
 	dns_rdata_freestruct(&dnskey);
 
 	/* name matches but key doesn't match (resulting in PARTIALMATCH) */
-	dns_test_namefromstring("example.com", &fn);
+	dns_test_namefromstring("example.com.", &fn);
 	create_keystruct(257, 3, 5, keystr2, &dnskey);
 	assert_int_equal(dns_keytable_deletekey(keytable, keyname, &dnskey),
 			 DNS_R_PARTIALMATCH);
@@ -449,7 +465,7 @@ ISC_RUN_TEST_IMPL(dns_keytable_deletekey) {
 	 * A null key node for a name is not deleted when searched by key;
 	 * it must be deleted by dns_keytable_delete()
 	 */
-	dns_test_namefromstring("null.example", &fn);
+	dns_test_namefromstring("null.example.", &fn);
 	create_keystruct(257, 3, 5, keystr1, &dnskey);
 	assert_int_equal(dns_keytable_deletekey(keytable, keyname, &dnskey),
 			 DNS_R_PARTIALMATCH);
@@ -458,15 +474,17 @@ ISC_RUN_TEST_IMPL(dns_keytable_deletekey) {
 	dns_rdata_freestruct(&dnskey);
 
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* check find-variant operations */
-ISC_RUN_TEST_IMPL(dns_keytable_find) {
+ISC_LOOP_TEST_IMPL(find) {
 	dns_keynode_t *keynode = NULL;
 	dns_fixedname_t fname;
 	dns_name_t *name;
 
-	UNUSED(state);
+	UNUSED(arg);
 
 	create_tables();
 
@@ -484,11 +502,11 @@ ISC_RUN_TEST_IMPL(dns_keytable_find) {
 	assert_int_equal(
 		dns_keytable_find(keytable, str2name("example.com"), &keynode),
 		ISC_R_SUCCESS);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 	assert_int_equal(
 		dns_keytable_find(keytable, str2name("null.example"), &keynode),
 		ISC_R_SUCCESS);
-	dns_keytable_detachkeynode(keytable, &keynode);
+	dns_keynode_detach(&keynode);
 
 	/*
 	 * dns_keytable_finddeepestmatch() allows partial match.  Also match
@@ -512,16 +530,18 @@ ISC_RUN_TEST_IMPL(dns_keytable_find) {
 	assert_true(dns_name_equal(name, str2name("null.example")));
 
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* check issecuredomain() */
-ISC_RUN_TEST_IMPL(dns_keytable_issecuredomain) {
+ISC_LOOP_TEST_IMPL(issecuredomain) {
 	bool issecure;
 	const char **n;
 	const char *names[] = { "example.com", "sub.example.com",
 				"null.example", "sub.null.example", NULL };
 
-	UNUSED(state);
+	UNUSED(arg);
 	create_tables();
 
 	/*
@@ -549,13 +569,15 @@ ISC_RUN_TEST_IMPL(dns_keytable_issecuredomain) {
 	assert_false(issecure);
 
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* check dns_keytable_dump() */
-ISC_RUN_TEST_IMPL(dns_keytable_dump) {
+ISC_LOOP_TEST_IMPL(dump) {
 	FILE *f = fopen("/dev/null", "w");
 
-	UNUSED(state);
+	UNUSED(arg);
 
 	create_tables();
 
@@ -567,10 +589,12 @@ ISC_RUN_TEST_IMPL(dns_keytable_dump) {
 	fclose(f);
 
 	destroy_tables();
+
+	isc_loopmgr_shutdown(loopmgr);
 }
 
 /* check negative trust anchors */
-ISC_RUN_TEST_IMPL(dns_keytable_nta) {
+ISC_LOOP_TEST_IMPL(nta) {
 	isc_result_t result;
 	bool issecure, covered;
 	dns_fixedname_t fn;
@@ -578,33 +602,26 @@ ISC_RUN_TEST_IMPL(dns_keytable_nta) {
 	unsigned char digest[ISC_MAX_MD_SIZE];
 	dns_rdata_ds_t ds;
 	dns_view_t *myview = NULL;
-	isc_stdtime_t now;
+	isc_stdtime_t now = isc_stdtime_now();
 
-	UNUSED(state);
-
-	result = dns_test_makeview("view", false, &myview);
+	result = dns_test_makeview("view", false, false, &myview);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_task_create(taskmgr, 0, &myview->task);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_view_initsecroots(myview);
 
-	result = dns_view_initsecroots(myview, mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_view_getsecroots(myview, &keytable);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_view_initntatable(myview, taskmgr, timermgr);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_view_initntatable(myview, loopmgr);
 	result = dns_view_getntatable(myview, &ntatable);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	dns_test_namefromstring("example", &fn);
+	dns_test_namefromstring("example.", &fn);
 	create_dsstruct(keyname, 257, 3, 5, keystr1, digest, &ds);
 	result = dns_keytable_add(keytable, false, false, keyname, &ds, NULL,
 				  NULL),
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	isc_stdtime_get(&now);
 	result = dns_ntatable_add(ntatable, str2name("insecure.example"), false,
 				  now, 1);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -669,6 +686,8 @@ ISC_RUN_TEST_IMPL(dns_keytable_nta) {
 	assert_false(covered);
 	assert_true(issecure);
 
+	isc_loopmgr_shutdown(loopmgr);
+
 	/* Clean up */
 	dns_ntatable_detach(&ntatable);
 	dns_keytable_detach(&keytable);
@@ -676,16 +695,13 @@ ISC_RUN_TEST_IMPL(dns_keytable_nta) {
 }
 
 ISC_TEST_LIST_START
-
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_add, setup_managers, teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_delete, setup_managers, teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_deletekey, setup_managers, teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_find, setup_managers, teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_issecuredomain, setup_managers,
-		      teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_dump, setup_managers, teardown_managers)
-ISC_TEST_ENTRY_CUSTOM(dns_keytable_nta, setup_managers, teardown_managers)
-
+ISC_TEST_ENTRY_CUSTOM(add, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(delete, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(deletekey, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(find, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(issecuredomain, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(dump, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(nta, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

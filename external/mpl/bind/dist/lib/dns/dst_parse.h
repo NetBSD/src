@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.8 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.9 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,12 +60,6 @@
 #define TAG_RSA_COEFFICIENT	((DST_ALG_RSA << TAG_SHIFT) + 7)
 #define TAG_RSA_ENGINE		((DST_ALG_RSA << TAG_SHIFT) + 8)
 #define TAG_RSA_LABEL		((DST_ALG_RSA << TAG_SHIFT) + 9)
-
-#define DH_NTAGS	 4
-#define TAG_DH_PRIME	 ((DST_ALG_DH << TAG_SHIFT) + 0)
-#define TAG_DH_GENERATOR ((DST_ALG_DH << TAG_SHIFT) + 1)
-#define TAG_DH_PRIVATE	 ((DST_ALG_DH << TAG_SHIFT) + 2)
-#define TAG_DH_PUBLIC	 ((DST_ALG_DH << TAG_SHIFT) + 3)
 
 #define ECDSA_NTAGS	     4
 #define TAG_ECDSA_PRIVATEKEY ((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)

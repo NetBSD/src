@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.h,v 1.6 2024/02/21 22:52:43 christos Exp $	*/
+/*	$NetBSD: base64.h,v 1.7 2025/01/26 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

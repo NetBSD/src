@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.3 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,33 +23,34 @@
 
 #include <isc/mutex.h>
 #include <isc/once.h>
-#include <isc/print.h>
+#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
-#ifdef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
-static bool attr_initialized = false;
-static pthread_mutexattr_t attr;
-static isc_once_t once_attr = ISC_ONCE_INIT;
+#include "mutex_p.h"
+
+pthread_mutexattr_t isc__mutex_init_attr;
+static isc_once_t init_once = ISC_ONCE_INIT;
 
 static void
-initialize_attr(void) {
-	RUNTIME_CHECK(pthread_mutexattr_init(&attr) == 0);
-	RUNTIME_CHECK(pthread_mutexattr_settype(
-			      &attr, PTHREAD_MUTEX_ADAPTIVE_NP) == 0);
-	attr_initialized = true;
+mutex_initialize(void) {
+	RUNTIME_CHECK(pthread_mutexattr_init(&isc__mutex_init_attr) == 0);
+#if ISC_MUTEX_ERROR_CHECK
+	RUNTIME_CHECK(pthread_mutexattr_settype(&isc__mutex_init_attr,
+						PTHREAD_MUTEX_ERRORCHECK) == 0);
+#elif HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
+	RUNTIME_CHECK(pthread_mutexattr_settype(&isc__mutex_init_attr,
+						PTHREAD_MUTEX_ADAPTIVE_NP) ==
+		      0);
+#endif
 }
-#endif /* HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
 
-int
-isc__mutex_init(isc_mutex_t *mp) {
-#ifdef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
-	isc_result_t result = ISC_R_SUCCESS;
-	result = isc_once_do(&once_attr, initialize_attr);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+void
+isc__mutex_initialize(void) {
+	isc_once_do(&init_once, mutex_initialize);
+}
 
-	return (pthread_mutex_init(mp, &attr));
-#else  /* HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
-	return (pthread_mutex_init(mp, NULL));
-#endif /* HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
+void
+isc__mutex_shutdown(void) {
+	/* noop */;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.h,v 1.5 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: ninfo_56.h,v 1.6 2025/01/26 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

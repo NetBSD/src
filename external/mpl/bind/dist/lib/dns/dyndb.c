@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.c,v 1.11 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dyndb.c,v 1.12 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,7 +14,6 @@
  */
 
 #include <string.h>
-#include <uv.h>
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
@@ -22,9 +21,9 @@
 #include <isc/once.h>
 #include <isc/region.h>
 #include <isc/result.h>
-#include <isc/task.h>
 #include <isc/types.h>
 #include <isc/util.h>
+#include <isc/uv.h>
 
 #include <dns/dyndb.h>
 #include <dns/log.h>
@@ -76,10 +75,10 @@ impfind(const char *name) {
 	     imp = ISC_LIST_NEXT(imp, link))
 	{
 		if (strcasecmp(name, imp->name) == 0) {
-			return (imp);
+			return imp;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 static isc_result_t
@@ -102,12 +101,12 @@ load_symbol(uv_lib_t *handle, const char *filename, const char *symbol_name,
 			      "failed to lookup symbol %s in "
 			      "DynDB module '%s': %s",
 			      symbol_name, filename, errmsg);
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	*symbolp = symbol;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -129,10 +128,11 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 		      instname, filename);
 
 	imp = isc_mem_get(mctx, sizeof(*imp));
-	memset(imp, 0, sizeof(*imp));
-	isc_mem_attach(mctx, &imp->mctx);
+	*imp = (dyndb_implementation_t){
+		.name = isc_mem_strdup(mctx, instname),
+	};
 
-	imp->name = isc_mem_strdup(imp->mctx, instname);
+	isc_mem_attach(mctx, &imp->mctx);
 
 	INIT_LINK(imp, link);
 
@@ -171,7 +171,7 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 
 	*impp = imp;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DYNDB,
@@ -182,7 +182,7 @@ cleanup:
 
 	unload_library(&imp);
 
-	return (result);
+	return result;
 }
 
 static void
@@ -213,7 +213,7 @@ dns_dyndb_load(const char *libname, const char *name, const char *parameters,
 	REQUIRE(DNS_DYNDBCTX_VALID(dctx));
 	REQUIRE(name != NULL);
 
-	RUNTIME_CHECK(isc_once_do(&once, dyndb_initialize) == ISC_R_SUCCESS);
+	isc_once_do(&once, dyndb_initialize);
 
 	LOCK(&dyndb_lock);
 
@@ -237,7 +237,7 @@ cleanup:
 	}
 
 	UNLOCK(&dyndb_lock);
-	return (result);
+	return result;
 }
 
 void
@@ -245,7 +245,7 @@ dns_dyndb_cleanup(bool exiting) {
 	dyndb_implementation_t *elem;
 	dyndb_implementation_t *prev;
 
-	RUNTIME_CHECK(isc_once_do(&once, dyndb_initialize) == ISC_R_SUCCESS);
+	isc_once_do(&once, dyndb_initialize);
 
 	LOCK(&dyndb_lock);
 	elem = TAIL(dyndb_implementations);
@@ -269,15 +269,15 @@ dns_dyndb_cleanup(bool exiting) {
 
 isc_result_t
 dns_dyndb_createctx(isc_mem_t *mctx, const void *hashinit, isc_log_t *lctx,
-		    dns_view_t *view, dns_zonemgr_t *zmgr, isc_task_t *task,
-		    isc_timermgr_t *tmgr, dns_dyndbctx_t **dctxp) {
+		    dns_view_t *view, dns_zonemgr_t *zmgr,
+		    isc_loopmgr_t *loopmgr, dns_dyndbctx_t **dctxp) {
 	dns_dyndbctx_t *dctx;
 
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
 	dctx = isc_mem_get(mctx, sizeof(*dctx));
 	*dctx = (dns_dyndbctx_t){
-		.timermgr = tmgr,
+		.loopmgr = loopmgr,
 		.hashinit = hashinit,
 		.lctx = lctx,
 	};
@@ -288,16 +288,13 @@ dns_dyndb_createctx(isc_mem_t *mctx, const void *hashinit, isc_log_t *lctx,
 	if (zmgr != NULL) {
 		dns_zonemgr_attach(zmgr, &dctx->zmgr);
 	}
-	if (task != NULL) {
-		isc_task_attach(task, &dctx->task);
-	}
 
 	isc_mem_attach(mctx, &dctx->mctx);
 	dctx->magic = DNS_DYNDBCTX_MAGIC;
 
 	*dctxp = dctx;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -317,10 +314,7 @@ dns_dyndb_destroyctx(dns_dyndbctx_t **dctxp) {
 	if (dctx->zmgr != NULL) {
 		dns_zonemgr_detach(&dctx->zmgr);
 	}
-	if (dctx->task != NULL) {
-		isc_task_detach(&dctx->task);
-	}
-	dctx->timermgr = NULL;
+	dctx->loopmgr = NULL;
 	dctx->lctx = NULL;
 
 	isc_mem_putanddetach(&dctx->mctx, dctx, sizeof(*dctx));

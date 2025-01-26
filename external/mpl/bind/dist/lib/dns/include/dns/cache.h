@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.8 2024/09/22 00:14:07 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.9 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  * Defines dns_cache_t, the cache object.
  *
  * Notes:
- *\li 	A cache object contains DNS data of a single class.
+ *\li	A cache object contains DNS data of a single class.
  *	Multiple classes will be handled by creating multiple
  *	views, each with a different class and its own cache.
  *
@@ -44,9 +44,12 @@
  ***	Imports
  ***/
 
+/* Add -DDNS_CACHE_TRACE=1 to CFLAGS for detailed reference tracing */
+
 #include <stdbool.h>
 
 #include <isc/lang.h>
+#include <isc/refcount.h>
 #include <isc/stats.h>
 #include <isc/stdtime.h>
 
@@ -57,26 +60,30 @@ ISC_LANG_BEGINDECLS
 /***
  ***	Functions
  ***/
+
+#if DNS_CACHE_TRACE
+#define dns_cache_ref(ptr)   dns_cache__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_cache_unref(ptr) dns_cache__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_cache_attach(ptr, ptrp) \
+	dns_cache__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_cache_detach(ptrp) \
+	dns_cache__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_cache);
+#else
+ISC_REFCOUNT_DECL(dns_cache);
+#endif
+
 isc_result_t
-dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
-		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		 const char *cachename, const char *db_type,
-		 unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
+dns_cache_create(isc_loopmgr_t *loopmgr, dns_rdataclass_t rdclass,
+		 const char *cachename, isc_mem_t *mctx, dns_cache_t **cachep);
 /*%<
- * Create a new named DNS cache using two separate memory contexts, one for
- * cache data which can be cleaned and a separate one for memory allocated for
- * the heap (which can grow without an upper limit and has no mechanism for
- * shrinking).
+ * Create a new DNS cache.
+ *
+ * dns_cache_create() will create a named cache (based on dns_rbtdb).
  *
  * Requires:
  *
- *\li	'mctx' is a valid memory context.
- *
- *\li	'taskmgr' is a valid task manager (if 'db_type' is "rbt").
- *
- *\li	'taskmgr' is a valid task manager and 'timermgr' is a valid timer
- * 	manager, or both are NULL (if 'db_type' is not "rbt").  If NULL, no
- * 	periodic cleaning of the cache will take place.
+ *\li	'loopmgr' is a valid loop manager.
  *
  *\li	'cachename' is a valid string.  This must not be NULL.
 
@@ -92,39 +99,6 @@ dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
  *
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
- */
-
-void
-dns_cache_attach(dns_cache_t *cache, dns_cache_t **targetp);
-/*%<
- * Attach *targetp to cache.
- *
- * Requires:
- *
- *\li	'cache' is a valid cache.
- *
- *\li	'targetp' points to a NULL dns_cache_t *.
- *
- * Ensures:
- *
- *\li	*targetp is attached to cache.
- */
-
-void
-dns_cache_detach(dns_cache_t **cachep);
-/*%<
- * Detach *cachep from its cache.
- *
- * Requires:
- *
- *\li	'cachep' points to a valid cache.
- *
- * Ensures:
- *
- *\li	*cachep is NULL.
- *
- *\li	If '*cachep' is the last reference to the cache,
- *		all resources used by the cache will be freed
  */
 
 void
@@ -151,14 +125,6 @@ dns_cache_attachdb(dns_cache_t *cache, dns_db_t **dbp);
  * Ensures:
  *
  *\li	*dbp is attached to the database.
- */
-
-isc_result_t
-dns_cache_clean(dns_cache_t *cache, isc_stdtime_t now);
-/*%<
- * Force immediate cleaning of the cache, freeing all rdatasets
- * whose TTL has expired as of 'now' and that have no pending
- * references.
  */
 
 const char *

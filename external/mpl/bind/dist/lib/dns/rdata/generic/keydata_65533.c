@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.10 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.11 2025/01/26 16:25:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,15 +77,15 @@ fromtext_keydata(ARGS_FROMTEXT) {
 
 	/* Do we have a placeholder KEYDATA record? */
 	if (flags == 0 && proto == 0 && alg == 0) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/* No Key? */
 	if ((flags & 0xc000) == 0xc000) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
-	return (isc_base64_tobuffer(lexer, target, -2));
+	return isc_base64_tobuffer(lexer, target, -2);
 }
 
 static isc_result_t
@@ -101,7 +101,7 @@ totext_keydata(ARGS_TOTEXT) {
 	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	if ((tctx->flags & DNS_STYLEFLAG_KEYDATA) == 0 || rdata->length < 16) {
-		return (unknown_totext(rdata, tctx, target));
+		return unknown_totext(rdata, tctx, target);
 	}
 
 	dns_rdata_toregion(rdata, &sr);
@@ -158,12 +158,12 @@ totext_keydata(ARGS_TOTEXT) {
 		if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
 			RETERR(str_totext(" ; placeholder", target));
 		}
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/* No Key? */
 	if ((flags & 0xc000) == 0xc000) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/* key */
@@ -209,9 +209,7 @@ totext_keydata(ARGS_TOTEXT) {
 		RETERR(str_totext(buf, target));
 
 		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
-			isc_stdtime_t now;
-
-			isc_stdtime_get(&now);
+			isc_stdtime_t now = isc_stdtime_now();
 
 			RETERR(str_totext(tctx->linebreak, target));
 			RETERR(str_totext("; next refresh: ", target));
@@ -248,7 +246,7 @@ totext_keydata(ARGS_TOTEXT) {
 			}
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -260,11 +258,10 @@ fromwire_keydata(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
@@ -276,7 +273,7 @@ towire_keydata(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -290,7 +287,7 @@ compare_keydata(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -324,7 +321,7 @@ fromstruct_keydata(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(keydata->algorithm, target));
 
 	/* Data */
-	return (mem_tobuffer(target, keydata->data, keydata->datalen));
+	return mem_tobuffer(target, keydata->data, keydata->datalen);
 }
 
 static isc_result_t
@@ -343,42 +340,48 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 
 	/* Refresh timer */
 	if (sr.length < 4) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->refresh = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 
 	/* Add hold-down */
 	if (sr.length < 4) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->addhd = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 
 	/* Remove hold-down */
 	if (sr.length < 4) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->removehd = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 
 	/* Flags */
 	if (sr.length < 2) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->flags = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 
 	/* Protocol */
 	if (sr.length < 1) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->protocol = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 
 	/* Algorithm */
 	if (sr.length < 1) {
-		return (ISC_R_UNEXPECTEDEND);
+		/* Not KEYDATA */
+		return ISC_R_NOTIMPLEMENTED;
 	}
 	keydata->algorithm = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
@@ -386,12 +389,8 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 	/* Data */
 	keydata->datalen = sr.length;
 	keydata->data = mem_maybedup(mctx, sr.base, keydata->datalen);
-	if (keydata->data == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	keydata->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -420,7 +419,7 @@ additionaldata_keydata(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -431,7 +430,7 @@ digest_keydata(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -443,7 +442,7 @@ checkowner_keydata(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -454,12 +453,12 @@ checknames_keydata(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_keydata(ARGS_COMPARE) {
-	return (compare_keydata(rdata1, rdata2));
+	return compare_keydata(rdata1, rdata2);
 }
 
 #endif /* GENERIC_KEYDATA_65533_C */

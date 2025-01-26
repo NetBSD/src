@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.6 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: hmac.c,v 1.7 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ isc_hmac_t *
 isc_hmac_new(void) {
 	EVP_MD_CTX *hmac_st = EVP_MD_CTX_new();
 	RUNTIME_CHECK(hmac_st != NULL);
-	return ((isc_hmac_t *)hmac_st);
+	return (isc_hmac_t *)hmac_st;
 }
 
 void
@@ -53,24 +53,24 @@ isc_hmac_init(isc_hmac_t *hmac_st, const void *key, const size_t keylen,
 	REQUIRE(keylen <= INT_MAX);
 
 	if (md_type == NULL) {
-		return (ISC_R_NOTIMPLEMENTED);
+		return ISC_R_NOTIMPLEMENTED;
 	}
 
 	pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, keylen);
 	if (pkey == NULL) {
 		ERR_clear_error();
-		return (ISC_R_CRYPTOFAILURE);
+		return ISC_R_CRYPTOFAILURE;
 	}
 
 	if (EVP_DigestSignInit(hmac_st, NULL, md_type, NULL, pkey) != 1) {
 		EVP_PKEY_free(pkey);
 		ERR_clear_error();
-		return (ISC_R_CRYPTOFAILURE);
+		return ISC_R_CRYPTOFAILURE;
 	}
 
 	EVP_PKEY_free(pkey);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -79,10 +79,10 @@ isc_hmac_reset(isc_hmac_t *hmac_st) {
 
 	if (EVP_MD_CTX_reset(hmac_st) != 1) {
 		ERR_clear_error();
-		return (ISC_R_CRYPTOFAILURE);
+		return ISC_R_CRYPTOFAILURE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -91,15 +91,15 @@ isc_hmac_update(isc_hmac_t *hmac_st, const unsigned char *buf,
 	REQUIRE(hmac_st != NULL);
 
 	if (buf == NULL || len == 0) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	if (EVP_DigestSignUpdate(hmac_st, buf, len) != 1) {
 		ERR_clear_error();
-		return (ISC_R_CRYPTOFAILURE);
+		return ISC_R_CRYPTOFAILURE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -113,33 +113,33 @@ isc_hmac_final(isc_hmac_t *hmac_st, unsigned char *digest,
 
 	if (EVP_DigestSignFinal(hmac_st, digest, &len) != 1) {
 		ERR_clear_error();
-		return (ISC_R_CRYPTOFAILURE);
+		return ISC_R_CRYPTOFAILURE;
 	}
 
 	*digestlen = (unsigned int)len;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 const isc_md_type_t *
 isc_hmac_get_md_type(isc_hmac_t *hmac_st) {
 	REQUIRE(hmac_st != NULL);
 
-	return (EVP_MD_CTX_get0_md(hmac_st));
+	return EVP_MD_CTX_get0_md(hmac_st);
 }
 
 size_t
 isc_hmac_get_size(isc_hmac_t *hmac_st) {
 	REQUIRE(hmac_st != NULL);
 
-	return ((size_t)EVP_MD_CTX_size(hmac_st));
+	return (size_t)EVP_MD_CTX_size(hmac_st);
 }
 
 int
 isc_hmac_get_block_size(isc_hmac_t *hmac_st) {
 	REQUIRE(hmac_st != NULL);
 
-	return (EVP_MD_CTX_block_size(hmac_st));
+	return EVP_MD_CTX_block_size(hmac_st);
 }
 
 isc_result_t
@@ -166,5 +166,5 @@ isc_hmac(const isc_md_type_t *type, const void *key, const size_t keylen,
 end:
 	isc_hmac_free(hmac_st);
 
-	return (res);
+	return res;
 }

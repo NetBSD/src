@@ -27,11 +27,13 @@ isccc_cc_isreply
 isccc_cc_lookupstring
 isccc_cc_lookupuint32
 isccc_cc_towire
-isccc_ccmsg_cancelread
+isccc_ccmsg_disconnect
 isccc_ccmsg_init
 isccc_ccmsg_invalidate
 isccc_ccmsg_readmessage
+isccc_ccmsg_sendmessage
 isccc_ccmsg_setmaxsize
+isccc_ccmsg_toregion
 isccc_sexpr_addtolist
 isccc_sexpr_binaryp
 isccc_sexpr_car

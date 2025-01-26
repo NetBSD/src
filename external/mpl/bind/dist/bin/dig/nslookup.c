@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.10 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.11 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,17 +18,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <isc/app.h>
+#include <isc/async.h>
 #include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/event.h>
+#include <isc/condition.h>
+#include <isc/loop.h>
 #include <isc/netaddr.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/util.h>
+#include <isc/work.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -43,6 +43,9 @@
 #include "dighost.h"
 #include "readline.h"
 
+static char cmdlinebuf[COMMSIZE];
+static char *cmdline = NULL;
+
 static bool short_form = true, tcpmode = false, tcpmode_set = false,
 	    identify = false, stats = true, comments = true,
 	    section_question = true, section_answer = true,
@@ -55,7 +58,6 @@ static bool interactive;
 static bool in_use = false;
 static char defclass[MXRD] = "IN";
 static char deftype[MXRD] = "A";
-static isc_event_t *global_event = NULL;
 static int query_error = 1, print_error = 0;
 
 static char domainopt[DNS_NAME_MAXTEXT];
@@ -114,9 +116,6 @@ static const char *rtypetext[] = {
 
 #define N_KNOWN_RRTYPES (sizeof(rtypetext) / sizeof(rtypetext[0]))
 
-static void
-getinput(isc_task_t *task, isc_event_t *event);
-
 static char *
 rcode_totext(dns_rcode_t rcode) {
 	static char buf[sizeof("?65535")];
@@ -131,21 +130,7 @@ rcode_totext(dns_rcode_t rcode) {
 	} else {
 		totext.consttext = rcodetext[rcode];
 	}
-	return (totext.deconsttext);
-}
-
-static void
-query_finished(void) {
-	isc_event_t *event = global_event;
-
-	debug("dighost_shutdown()");
-
-	if (!in_use) {
-		isc_app_shutdown();
-		return;
-	}
-
-	isc_task_send(global_task, &event);
+	return totext.deconsttext;
 }
 
 static void
@@ -227,9 +212,9 @@ printsection(dig_query_t *query, dns_message_t *msg, bool headers,
 
 	result = dns_message_firstname(msg, section);
 	if (result == ISC_R_NOMORE) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	} else if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	for (;;) {
 		name = NULL;
@@ -273,10 +258,10 @@ printsection(dig_query_t *query, dns_message_t *msg, bool headers,
 		if (result == ISC_R_NOMORE) {
 			break;
 		} else if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -311,9 +296,9 @@ detailsection(dig_query_t *query, dns_message_t *msg, bool headers,
 
 	result = dns_message_firstname(msg, section);
 	if (result == ISC_R_NOMORE) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	} else if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	for (;;) {
 		name = NULL;
@@ -355,10 +340,10 @@ detailsection(dig_query_t *query, dns_message_t *msg, bool headers,
 		if (result == ISC_R_NOMORE) {
 			break;
 		} else if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -404,8 +389,6 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 static isc_result_t
 printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 	     bool headers) {
-	char servtext[ISC_SOCKADDR_FORMATSIZE];
-
 	UNUSED(msgbuf);
 
 	/* I've we've gotten this far, we've reached a server. */
@@ -414,6 +397,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 	debug("printmessage()");
 
 	if (!default_lookups || query->lookup->rdtype == dns_rdatatype_a) {
+		char servtext[ISC_SOCKADDR_FORMATSIZE];
 		isc_sockaddr_format(&query->sockaddr, servtext,
 				    sizeof(servtext));
 		printf("Server:\t\t%s\n", query->userarg);
@@ -442,7 +426,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 
 		/* the lookup failed */
 		print_error |= 1;
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	if (default_lookups && query->lookup->rdtype == dns_rdatatype_a) {
@@ -496,7 +480,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 		printsection(query, msg, headers, DNS_SECTION_AUTHORITY);
 		printsection(query, msg, headers, DNS_SECTION_ADDITIONAL);
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -555,10 +539,10 @@ testtype(char *typetext) {
 	tr.length = strlen(typetext);
 	result = dns_rdatatype_fromtext(&rdtype, &tr);
 	if (result == ISC_R_SUCCESS) {
-		return (true);
+		return true;
 	} else {
 		printf("unknown query type: %s\n", typetext);
-		return (false);
+		return false;
 	}
 }
 
@@ -572,10 +556,10 @@ testclass(char *typetext) {
 	tr.length = strlen(typetext);
 	result = dns_rdataclass_fromtext(&rdclass, &tr);
 	if (result == ISC_R_SUCCESS) {
-		return (true);
+		return true;
 	} else {
 		printf("unknown query class: %s\n", typetext);
-		return (false);
+		return false;
 	}
 }
 
@@ -614,11 +598,6 @@ set_ndots(const char *value) {
 	if (result == ISC_R_SUCCESS) {
 		ndots = n;
 	}
-}
-
-static void
-version(void) {
-	fprintf(stderr, "nslookup %s\n", PACKAGE_VERSION);
 }
 
 static void
@@ -814,10 +793,8 @@ do_next_command(char *input) {
 	} else if ((strcasecmp(ptr, "server") == 0) ||
 		   (strcasecmp(ptr, "lserver") == 0))
 	{
-		isc_app_block();
 		set_nameserver(arg);
 		check_ra = false;
-		isc_app_unblock();
 		show_settings(true, true);
 	} else if (strcasecmp(ptr, "exit") == 0) {
 		in_use = false;
@@ -834,28 +811,31 @@ do_next_command(char *input) {
 }
 
 static void
-get_next_command(void) {
-	char cmdlinebuf[COMMSIZE];
-	char *cmdline, *ptr = NULL;
+readline_next_command(void *arg) {
+	char *ptr = NULL;
 
-	isc_app_block();
-	if (interactive) {
-		cmdline = ptr = readline("> ");
-		if (ptr != NULL && *ptr != 0) {
-			add_history(ptr);
-		}
-	} else {
-		cmdline = fgets(cmdlinebuf, COMMSIZE, stdin);
+	UNUSED(arg);
+
+	isc_loopmgr_blocking(loopmgr);
+	ptr = readline("> ");
+	isc_loopmgr_nonblocking(loopmgr);
+	if (ptr == NULL) {
+		return;
 	}
-	isc_app_unblock();
-	if (cmdline == NULL) {
-		in_use = false;
-	} else {
-		do_next_command(cmdline);
+
+	if (*ptr != 0) {
+		add_history(ptr);
+		strlcpy(cmdlinebuf, ptr, COMMSIZE);
+		cmdline = cmdlinebuf;
 	}
-	if (ptr != NULL) {
-		free(ptr);
-	}
+	free(ptr);
+}
+
+static void
+fgets_next_command(void *arg) {
+	UNUSED(arg);
+
+	cmdline = fgets(cmdlinebuf, COMMSIZE, stdin);
 }
 
 noreturn static void
@@ -884,7 +864,7 @@ parse_args(int argc, char **argv) {
 		debug("main parsing %s", argv[0]);
 		if (argv[0][0] == '-') {
 			if (strncasecmp(argv[0], "-ver", 4) == 0) {
-				version();
+				printf("nslookup %s\n", PACKAGE_VERSION);
 				exit(EXIT_SUCCESS);
 			} else if (argv[0][1] != 0) {
 				setoption(&argv[0][1]);
@@ -908,25 +888,54 @@ parse_args(int argc, char **argv) {
 }
 
 static void
-getinput(isc_task_t *task, isc_event_t *event) {
-	UNUSED(task);
-	if (global_event == NULL) {
-		global_event = event;
-	}
-	while (in_use) {
-		get_next_command();
+start_next_command(void);
+
+static void
+process_next_command(void *arg ISC_ATTR_UNUSED) {
+	isc_loop_t *loop = isc_loop_main(loopmgr);
+	if (cmdline == NULL) {
+		in_use = false;
+	} else {
+		do_next_command(cmdline);
 		if (ISC_LIST_HEAD(lookup_list) != NULL) {
-			start_lookup();
+			isc_async_run(loop, run_loop, NULL);
 			return;
 		}
 	}
-	isc_app_shutdown();
+
+	start_next_command();
+}
+
+static void
+start_next_command(void) {
+	isc_loop_t *loop = isc_loop_main(loopmgr);
+	if (!in_use) {
+		isc_loopmgr_shutdown(loopmgr);
+		return;
+	}
+
+	cmdline = NULL;
+
+	isc_loopmgr_pause(loopmgr);
+	if (interactive) {
+		isc_work_enqueue(loop, readline_next_command,
+				 process_next_command, loop);
+	} else {
+		isc_work_enqueue(loop, fgets_next_command, process_next_command,
+				 loop);
+	}
+	isc_loopmgr_resume(loopmgr);
+}
+
+static void
+read_loop(void *arg) {
+	UNUSED(arg);
+
+	start_next_command();
 }
 
 int
 main(int argc, char **argv) {
-	isc_result_t result;
-
 	interactive = isatty(0);
 
 	ISC_LIST_INIT(lookup_list);
@@ -939,10 +948,7 @@ main(int argc, char **argv) {
 	dighost_printmessage = printmessage;
 	dighost_received = received;
 	dighost_trying = trying;
-	dighost_shutdown = query_finished;
-
-	result = isc_app_start();
-	check_result(result, "isc_app_start");
+	dighost_shutdown = start_next_command;
 
 	setup_libs();
 	progname = argv[0];
@@ -958,23 +964,18 @@ main(int argc, char **argv) {
 		set_search_domain(domainopt);
 	}
 	if (in_use) {
-		result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
+		isc_loopmgr_setup(loopmgr, run_loop, NULL);
 	} else {
-		result = isc_app_onrun(mctx, global_task, getinput, NULL);
+		isc_loopmgr_setup(loopmgr, read_loop, NULL);
 	}
-	check_result(result, "isc_app_onrun");
 	in_use = !in_use;
 
-	(void)isc_app_run();
+	isc_loopmgr_run(loopmgr);
 
 	puts("");
 	debug("done, and starting to shut down");
-	if (global_event != NULL) {
-		isc_event_free(&global_event);
-	}
 	cancel_all();
 	destroy_libs();
-	isc_app_finish();
 
-	return (query_error | print_error);
+	return query_error | print_error;
 }

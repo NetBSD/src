@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.3 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.4 2025/01/26 16:25:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,11 +135,32 @@ isc_tls_cipherlist_valid(const char *cipherlist);
 void
 isc_tlsctx_set_cipherlist(isc_tlsctx_t *ctx, const char *cipherlist);
 /*%<
- * Set cipher list string for on the given TLS context 'ctx'.
+ * Set cipher list string for on the given TLS context 'ctx'. This affects only
+ * TLSv1.2 (and older).
  *
  * Requires:
  * \li	'ctx' != NULL;
  * \li	'cipherlist' a valid pointer to a non empty string.
+ */
+
+bool
+isc_tls_cipher_suites_valid(const char *cipher_suites);
+/*%<
+ * Check if cipher suites string is valid.
+ *
+ * Requires:
+ * \li	'cipher_suites' a valid pointer to a non empty string.
+ */
+
+void
+isc_tlsctx_set_cipher_suites(isc_tlsctx_t *ctx, const char *cipher_suites);
+/*%<
+ * Set cipher suites string for on the given TLS context 'ctx'. This affects
+ * only TLSv1.3.
+ *
+ * Requires:
+ * \li	'ctx' != NULL;
+ * \li	'cipher_suites' a valid pointer to a non empty string.
  */
 
 void
@@ -587,3 +608,12 @@ isc_tlsctx_set_random_session_id_context(isc_tlsctx_t *ctx);
  * Requires:
  *\li   'ctx' - a valid non-NULL pointer;
  */
+
+void
+isc__tls_initialize(void);
+
+void
+isc__tls_shutdown(void);
+
+void
+isc__tls_setdestroycheck(bool check);

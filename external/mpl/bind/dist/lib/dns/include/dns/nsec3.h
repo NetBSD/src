@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.h,v 1.8 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.9 2025/01/26 16:25:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@
 #include <dns/types.h>
 
 #define DNS_NSEC3_SALTSIZE	255
-#define DNS_NSEC3_MAXITERATIONS 150U
+#define DNS_NSEC3_MAXITERATIONS 50U
 
 /*
  * hash = 1, flags =1, iterations = 2, salt length = 1, salt = 255 (max)

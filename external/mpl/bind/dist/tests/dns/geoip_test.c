@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: geoip_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <maxminddb.h>
 
 #include <isc/dir.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
@@ -55,7 +54,7 @@ setup_test(void **state) {
 	/* Use databases from the geoip system test */
 	load_geoip(TEST_GEOIP_DATA);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -64,7 +63,7 @@ teardown_test(void **state) {
 
 	close_geoip();
 
-	return (0);
+	return 0;
 }
 
 static MMDB_s *
@@ -75,10 +74,10 @@ open_geoip2(const char *dir, const char *dbfile, MMDB_s *mmdb) {
 	snprintf(pathbuf, sizeof(pathbuf), "%s/%s", dir, dbfile);
 	ret = MMDB_open(pathbuf, MMDB_MODE_MMAP, mmdb);
 	if (ret == MMDB_SUCCESS) {
-		return (mmdb);
+		return mmdb;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 static void
@@ -117,7 +116,7 @@ entry_exists(dns_geoip_subtype_t subtype, const char *addr) {
 
 	db = geoip2_database(&geoip, fix_subtype(&geoip, subtype));
 
-	return (db != NULL && get_entry_for(db, &na) != NULL);
+	return db != NULL && get_entry_for(db, &na) != NULL;
 }
 
 /*
@@ -183,7 +182,7 @@ do_lookup_string(const char *addr, dns_geoip_subtype_t subtype,
 	elt.subtype = subtype;
 	strlcpy(elt.as_string, string, sizeof(elt.as_string));
 
-	return (dns_geoip_match(&na, &geoip, &elt));
+	return dns_geoip_match(&na, &geoip, &elt);
 }
 
 static bool
@@ -201,7 +200,7 @@ do_lookup_string_v6(const char *addr, dns_geoip_subtype_t subtype,
 	elt.subtype = subtype;
 	strlcpy(elt.as_string, string, sizeof(elt.as_string));
 
-	return (dns_geoip_match(&na, &geoip, &elt));
+	return dns_geoip_match(&na, &geoip, &elt);
 }
 
 /* GeoIP country matching */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.8 2024/02/21 22:52:11 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.9 2025/01/26 16:25:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,6 @@ ISC_LANG_BEGINDECLS
 #define DNS_TKEYMODE_DELETE	      5
 
 struct dns_tkeyctx {
-	dst_key_t	 *dhkey;
 	dns_name_t	 *domain;
 	dns_gss_cred_id_t gsscred;
 	isc_mem_t	 *mctx;
@@ -72,7 +71,7 @@ dns_tkeyctx_destroy(dns_tkeyctx_t **tctxp);
 
 isc_result_t
 dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
-		      dns_tsig_keyring_t *ring);
+		      dns_tsigkeyring_t *ring);
 /*%<
  *	Processes a query containing a TKEY record, adding or deleting TSIG
  *	keys if necessary, and modifies the message to contain the response.
@@ -91,37 +90,10 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
  */
 
 isc_result_t
-dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key,
-		      const dns_name_t *name, const dns_name_t *algorithm,
-		      isc_buffer_t *nonce, uint32_t lifetime);
-/*%<
- *	Builds a query containing a TKEY that will generate a shared
- *	secret using a Diffie-Hellman key exchange.  The shared key
- *	will be of the specified algorithm (only DNS_TSIG_HMACMD5_NAME
- *	is supported), and will be named either 'name',
- *	'name' + server chosen domain, or random data + server chosen domain
- *	if 'name' == dns_rootname.  If nonce is not NULL, it supplies
- *	random data used in the shared secret computation.  The key is
- *	requested to have the specified lifetime (in seconds)
- *
- *
- *	Requires:
- *\li		'msg' is a valid message
- *\li		'key' is a valid Diffie Hellman dst key
- *\li		'name' is a valid name
- *\li		'algorithm' is a valid name
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS	msg was successfully updated to include the
- *				query to be sent
- *\li		other		an error occurred while building the message
- */
-
-isc_result_t
 dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
-		       const dns_name_t *gname, isc_buffer_t *intoken,
-		       uint32_t lifetime, dns_gss_ctx_id_t *context, bool win2k,
-		       isc_mem_t *mctx, char **err_message);
+		       const dns_name_t *gname, uint32_t lifetime,
+		       dns_gss_ctx_id_t *context, isc_mem_t *mctx,
+		       char **err_message);
 /*%<
  *	Builds a query containing a TKEY that will generate a GSSAPI context.
  *	The key is requested to have the specified lifetime (in seconds).
@@ -132,8 +104,6 @@ dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
  *\li		'gname'	  is a valid name
  *\li		'context' is a pointer to a valid gss_ctx_id_t
  *			  (which may have the value GSS_C_NO_CONTEXT)
- *\li		'win2k'   when true says to turn on some hacks to work
- *			  with the non-standard GSS-TSIG of Windows 2000
  *
  *	Returns:
  *\li		ISC_R_SUCCESS	msg was successfully updated to include the
@@ -143,79 +113,11 @@ dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
  */
 
 isc_result_t
-dns_tkey_builddeletequery(dns_message_t *msg, dns_tsigkey_t *key);
-/*%<
- *	Builds a query containing a TKEY record that will delete the
- *	specified shared secret from the server.
- *
- *	Requires:
- *\li		'msg' is a valid message
- *\li		'key' is a valid TSIG key
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS	msg was successfully updated to include the
- *				query to be sent
- *\li		other		an error occurred while building the message
- */
-
-isc_result_t
-dns_tkey_processdhresponse(dns_message_t *qmsg, dns_message_t *rmsg,
-			   dst_key_t *key, isc_buffer_t *nonce,
-			   dns_tsigkey_t **outkey, dns_tsig_keyring_t *ring);
-/*%<
- *	Processes a response to a query containing a TKEY that was
- *	designed to generate a shared secret using a Diffie-Hellman key
- *	exchange.  If the query was successful, a new shared key
- *	is created and added to the list of shared keys.
- *
- *	Requires:
- *\li		'qmsg' is a valid message (the query)
- *\li		'rmsg' is a valid message (the response)
- *\li		'key' is a valid Diffie Hellman dst key
- *\li		'outkey' is either NULL or a pointer to NULL
- *\li		'ring' is a valid keyring or NULL
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS	the shared key was successfully added
- *\li		#ISC_R_NOTFOUND	an error occurred while looking for a
- *				component of the query or response
- */
-
-isc_result_t
-dns_tkey_processgssresponse(dns_message_t *qmsg, dns_message_t *rmsg,
-			    const dns_name_t *gname, dns_gss_ctx_id_t *context,
-			    isc_buffer_t *outtoken, dns_tsigkey_t **outkey,
-			    dns_tsig_keyring_t *ring, char **err_message);
-/*%<
- * XXX
- */
-
-isc_result_t
-dns_tkey_processdeleteresponse(dns_message_t *qmsg, dns_message_t *rmsg,
-			       dns_tsig_keyring_t *ring);
-/*%<
- *	Processes a response to a query containing a TKEY that was
- *	designed to delete a shared secret.  If the query was successful,
- *	the shared key is deleted from the list of shared keys.
- *
- *	Requires:
- *\li		'qmsg' is a valid message (the query)
- *\li		'rmsg' is a valid message (the response)
- *\li		'ring' is not NULL
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS	the shared key was successfully deleted
- *\li		#ISC_R_NOTFOUND	an error occurred while looking for a
- *				component of the query or response
- */
-
-isc_result_t
 dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		      const dns_name_t *server, dns_gss_ctx_id_t *context,
-		      dns_tsigkey_t **outkey, dns_tsig_keyring_t *ring,
-		      bool win2k, char **err_message);
-
-/*
+		      dns_tsigkey_t **outkey, dns_tsigkeyring_t *ring,
+		      char **err_message);
+/*%<
  *	Client side negotiation of GSS-TSIG.  Process the response
  *	to a TKEY, and establish a TSIG key if negotiation was successful.
  *	Build a response to the input TKEY message.  Can take multiple
@@ -231,8 +133,6 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
  *			      if non-NULL must point to NULL
  *		'ring'	  is the keyring in which to establish the key,
  *			      or NULL
- *		'win2k'   when true says to turn on some hacks to work
- *			      with the non-standard GSS-TSIG of Windows 2000
  *
  *	Returns:
  *		ISC_R_SUCCESS	context was successfully established
@@ -241,5 +141,4 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
  *		DNS_R_CONTINUE  additional context negotiation is required;
  *					send the new qmsg to the server
  */
-
 ISC_LANG_ENDDECLS

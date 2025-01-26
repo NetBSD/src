@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.9 2024/09/22 00:14:09 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.10 2025/01/26 16:25:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,83 +29,60 @@ enum {
 	 * Socket statistics counters.
 	 */
 	isc_sockstatscounter_udp4open = 0,
-	isc_sockstatscounter_udp6open = 1,
-	isc_sockstatscounter_tcp4open = 2,
-	isc_sockstatscounter_tcp6open = 3,
-	isc_sockstatscounter_unixopen = 4,
+	isc_sockstatscounter_udp6open,
+	isc_sockstatscounter_tcp4open,
+	isc_sockstatscounter_tcp6open,
 
-	isc_sockstatscounter_udp4openfail = 5,
-	isc_sockstatscounter_udp6openfail = 6,
-	isc_sockstatscounter_tcp4openfail = 7,
-	isc_sockstatscounter_tcp6openfail = 8,
-	isc_sockstatscounter_unixopenfail = 9,
+	isc_sockstatscounter_udp4openfail,
+	isc_sockstatscounter_udp6openfail,
+	isc_sockstatscounter_tcp4openfail,
+	isc_sockstatscounter_tcp6openfail,
 
-	isc_sockstatscounter_udp4close = 10,
-	isc_sockstatscounter_udp6close = 11,
-	isc_sockstatscounter_tcp4close = 12,
-	isc_sockstatscounter_tcp6close = 13,
-	isc_sockstatscounter_unixclose = 14,
-	isc_sockstatscounter_fdwatchclose = 15,
+	isc_sockstatscounter_udp4close,
+	isc_sockstatscounter_udp6close,
+	isc_sockstatscounter_tcp4close,
+	isc_sockstatscounter_tcp6close,
 
-	isc_sockstatscounter_udp4bindfail = 16,
-	isc_sockstatscounter_udp6bindfail = 17,
-	isc_sockstatscounter_tcp4bindfail = 18,
-	isc_sockstatscounter_tcp6bindfail = 19,
-	isc_sockstatscounter_unixbindfail = 20,
-	isc_sockstatscounter_fdwatchbindfail = 21,
+	isc_sockstatscounter_udp4bindfail,
+	isc_sockstatscounter_udp6bindfail,
+	isc_sockstatscounter_tcp4bindfail,
+	isc_sockstatscounter_tcp6bindfail,
 
-	isc_sockstatscounter_udp4connect = 22,
-	isc_sockstatscounter_udp6connect = 23,
-	isc_sockstatscounter_tcp4connect = 24,
-	isc_sockstatscounter_tcp6connect = 25,
-	isc_sockstatscounter_unixconnect = 26,
-	isc_sockstatscounter_fdwatchconnect = 27,
+	isc_sockstatscounter_udp4connect,
+	isc_sockstatscounter_udp6connect,
+	isc_sockstatscounter_tcp4connect,
+	isc_sockstatscounter_tcp6connect,
 
-	isc_sockstatscounter_udp4connectfail = 28,
-	isc_sockstatscounter_udp6connectfail = 29,
-	isc_sockstatscounter_tcp4connectfail = 30,
-	isc_sockstatscounter_tcp6connectfail = 31,
-	isc_sockstatscounter_unixconnectfail = 32,
-	isc_sockstatscounter_fdwatchconnectfail = 33,
+	isc_sockstatscounter_udp4connectfail,
+	isc_sockstatscounter_udp6connectfail,
+	isc_sockstatscounter_tcp4connectfail,
+	isc_sockstatscounter_tcp6connectfail,
 
-	isc_sockstatscounter_tcp4accept = 34,
-	isc_sockstatscounter_tcp6accept = 35,
-	isc_sockstatscounter_unixaccept = 36,
+	isc_sockstatscounter_tcp4accept,
+	isc_sockstatscounter_tcp6accept,
 
-	isc_sockstatscounter_tcp4acceptfail = 37,
-	isc_sockstatscounter_tcp6acceptfail = 38,
-	isc_sockstatscounter_unixacceptfail = 39,
+	isc_sockstatscounter_tcp4acceptfail,
+	isc_sockstatscounter_tcp6acceptfail,
 
-	isc_sockstatscounter_udp4sendfail = 40,
-	isc_sockstatscounter_udp6sendfail = 41,
-	isc_sockstatscounter_tcp4sendfail = 42,
-	isc_sockstatscounter_tcp6sendfail = 43,
-	isc_sockstatscounter_unixsendfail = 44,
-	isc_sockstatscounter_fdwatchsendfail = 45,
+	isc_sockstatscounter_udp4sendfail,
+	isc_sockstatscounter_udp6sendfail,
+	isc_sockstatscounter_tcp4sendfail,
+	isc_sockstatscounter_tcp6sendfail,
 
-	isc_sockstatscounter_udp4recvfail = 46,
-	isc_sockstatscounter_udp6recvfail = 47,
-	isc_sockstatscounter_tcp4recvfail = 48,
-	isc_sockstatscounter_tcp6recvfail = 49,
-	isc_sockstatscounter_unixrecvfail = 50,
-	isc_sockstatscounter_fdwatchrecvfail = 51,
+	isc_sockstatscounter_udp4recvfail,
+	isc_sockstatscounter_udp6recvfail,
+	isc_sockstatscounter_tcp4recvfail,
+	isc_sockstatscounter_tcp6recvfail,
 
-	isc_sockstatscounter_udp4active = 52,
-	isc_sockstatscounter_udp6active = 53,
-	isc_sockstatscounter_tcp4active = 54,
-	isc_sockstatscounter_tcp6active = 55,
-	isc_sockstatscounter_unixactive = 56,
+	isc_sockstatscounter_udp4active,
+	isc_sockstatscounter_udp6active,
+	isc_sockstatscounter_tcp4active,
+	isc_sockstatscounter_tcp6active,
 
-	isc_sockstatscounter_rawopen = 57,
-	isc_sockstatscounter_rawopenfail = 58,
-	isc_sockstatscounter_rawclose = 59,
-	isc_sockstatscounter_rawrecvfail = 60,
-	isc_sockstatscounter_rawactive = 61,
+	isc_sockstatscounter_tcp4clients,
+	isc_sockstatscounter_tcp6clients,
 
-	isc_sockstatscounter_tcp4clients = 62,
-	isc_sockstatscounter_tcp6clients = 63,
-
-	isc_sockstatscounter_max = 64
+	isc_sockstatscounter_max,
 };
 
 ISC_LANG_BEGINDECLS
@@ -120,7 +97,7 @@ ISC_LANG_BEGINDECLS
  */
 typedef void (*isc_stats_dumper_t)(isc_statscounter_t, uint64_t, void *);
 
-isc_result_t
+void
 isc_stats_create(isc_mem_t *mctx, isc_stats_t **statsp, int ncounters);
 /*%<
  * Create a statistics counter structure of general type.  It counts a general
@@ -130,11 +107,6 @@ isc_stats_create(isc_mem_t *mctx, isc_stats_t **statsp, int ncounters);
  *\li	'mctx' must be a valid memory context.
  *
  *\li	'statsp' != NULL && '*statsp' == NULL.
- *
- * Returns:
- *\li	ISC_R_SUCCESS	-- all ok
- *
- *\li	anything else	-- failure
  */
 
 void
@@ -167,10 +139,10 @@ isc_stats_ncounters(isc_stats_t *stats);
  *
  */
 
-void
+isc_statscounter_t
 isc_stats_increment(isc_stats_t *stats, isc_statscounter_t counter);
 /*%<
- * Increment the counter-th counter of stats.
+ * Increment the counter-th counter of stats and return the old value.
  *
  * Requires:
  *\li	'stats' is a valid isc_stats_t.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.4 2025/01/26 16:25:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,15 +25,14 @@
 
 #define UNIT_TESTING
 
+#include <cmocka.h>
 #include <openssl_shim.h>
 
 #include <openssl/err.h>
 
-#include <isc/cmocka.h>
 #include <isc/commandline.h>
 #include <isc/hex.h>
 #include <isc/lex.h>
-#include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/types.h>
 #include <isc/util.h>
@@ -131,7 +130,6 @@ wire_to_rdata(const unsigned char *src, size_t srclen, dns_rdataclass_t rdclass,
 	      dns_rdatatype_t type, unsigned char *dst, size_t dstlen,
 	      dns_rdata_t *rdata) {
 	isc_buffer_t source, target;
-	dns_decompress_t dctx;
 	isc_result_t result;
 
 	/*
@@ -149,13 +147,11 @@ wire_to_rdata(const unsigned char *src, size_t srclen, dns_rdataclass_t rdclass,
 	/*
 	 * Try converting input data into uncompressed wire form.
 	 */
-	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
-	result = dns_rdata_fromwire(rdata, rdclass, type, &source, &dctx, 0,
-				    &target);
-	dns_decompress_invalidate(&dctx);
+	result = dns_rdata_fromwire(rdata, rdclass, type, &source,
+				    DNS_DECOMPRESS_ALWAYS, &target);
 	detect_uncleared_libcrypto_error();
 
-	return (result);
+	return result;
 }
 
 /*
@@ -176,24 +172,24 @@ rdata_towire(dns_rdata_t *rdata, unsigned char *dst, size_t dstlen,
 	/*
 	 * Try converting input data into uncompressed wire form.
 	 */
-	dns_compress_init(&cctx, -1, mctx);
+	dns_compress_init(&cctx, mctx, 0);
 	result = dns_rdata_towire(rdata, &cctx, &target);
 	detect_uncleared_libcrypto_error();
 	dns_compress_invalidate(&cctx);
 
 	*length = isc_buffer_usedlength(&target);
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
 additionaldata_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype,
-		  dns_rdataset_t *found) {
+		  dns_rdataset_t *found DNS__DB_FLARG) {
 	UNUSED(arg);
 	UNUSED(name);
 	UNUSED(qtype);
 	UNUSED(found);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -201,8 +197,8 @@ additionaldata_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype,
  */
 static isc_result_t
 rdata_additionadata(dns_rdata_t *rdata) {
-	return (dns_rdata_additionaldata(rdata, dns_rootname, additionaldata_cb,
-					 NULL));
+	return dns_rdata_additionaldata(rdata, dns_rootname, additionaldata_cb,
+					NULL);
 }
 
 /*
@@ -227,17 +223,19 @@ rdata_checknames(dns_rdata_t *rdata) {
 	(void)dns_rdata_checknames(rdata, dns_rootname, NULL);
 	(void)dns_rdata_checknames(rdata, dns_rootname, bad);
 
-	result = dns_name_fromstring(name, "example.net", 0, NULL);
+	result = dns_name_fromstring(name, "example.net", dns_rootname, 0,
+				     NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	(void)dns_rdata_checknames(rdata, name, NULL);
 	(void)dns_rdata_checknames(rdata, name, bad);
 
-	result = dns_name_fromstring(name, "in-addr.arpa", 0, NULL);
+	result = dns_name_fromstring(name, "in-addr.arpa", dns_rootname, 0,
+				     NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	(void)dns_rdata_checknames(rdata, name, NULL);
 	(void)dns_rdata_checknames(rdata, name, bad);
 
-	result = dns_name_fromstring(name, "ip6.arpa", 0, NULL);
+	result = dns_name_fromstring(name, "ip6.arpa", dns_rootname, 0, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	(void)dns_rdata_checknames(rdata, name, NULL);
 	(void)dns_rdata_checknames(rdata, name, bad);
@@ -2022,31 +2020,79 @@ ISC_RUN_TEST_IMPL(isdn) {
  * KEY tests.
  */
 ISC_RUN_TEST_IMPL(key) {
-	wire_ok_t wire_ok[] = { /*
-				 * RDATA is comprised of:
-				 *
-				 *   - 2 octets for Flags,
-				 *   - 1 octet for Protocol,
-				 *   - 1 octet for Algorithm,
-				 *   - variable number of octets for Public Key.
-				 *
-				 * RFC 2535 section 3.1.2 states that if bits
-				 * 0-1 of Flags are both set, the RR stops after
-				 * the algorithm octet and thus its length must
-				 * be 4 octets.  In any other case, though, the
-				 * Public Key part must not be empty.
+	wire_ok_t wire_ok[] = {
+		/*
+		 * RDATA is comprised of:
+		 *
+		 *   - 2 octets for Flags,
+		 *   - 1 octet for Protocol,
+		 *   - 1 octet for Algorithm,
+		 *   - variable number of octets for Public Key.
+		 *
+		 * RFC 2535 section 3.1.2 states that if bits
+		 * 0-1 of Flags are both set, the RR stops after
+		 * the algorithm octet and thus its length must
+		 * be 4 octets.  In any other case, though, the
+		 * Public Key part must not be empty.
+		 *
+		 * Algorithms PRIVATEDNS (253) and PRIVATEOID (254)
+		 * have an algorithm identifier embedded and the start
+		 * of the public key.
+		 */
+		WIRE_INVALID(0x00), WIRE_INVALID(0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00),
+		WIRE_VALID(0xc0, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0xc0, 0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+		/* PRIVATEDNS example. */
+		WIRE_INVALID(0x00, 0x00, 0x00, 253, 0x07, 'e', 'x', 'a', 'm',
+			     'p', 'l', 'e', 0x00),
+		/* PRIVATEDNS example. + keydata */
+		WIRE_VALID(0x00, 0x00, 0x00, 253, 0x07, 'e', 'x', 'a', 'm', 'p',
+			   'l', 'e', 0x00, 0x00),
+		/* PRIVATEDNS compression pointer. */
+		WIRE_INVALID(0x00, 0x00, 0x00, 253, 0xc0, 0x00, 0x00),
+		/* PRIVATEOID */
+		WIRE_INVALID(0x00, 0x00, 0x00, 254, 0x00),
+		/* PRIVATEOID 1.3.6.1.4.1.2495 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 254, 0x06, 0x07, 0x2b, 0x06,
+			     0x01, 0x04, 0x01, 0x93, 0x3f),
+		/* PRIVATEOID 1.3.6.1.4.1.2495 + keydata */
+		WIRE_VALID(0x00, 0x00, 0x00, 254, 0x06, 0x07, 0x2b, 0x06, 0x01,
+			   0x04, 0x01, 0x93, 0x3f, 0x00),
+		/* PRIVATEOID malformed OID - high-bit set on last octet */
+		WIRE_INVALID(0x00, 0x00, 0x00, 254, 0x06, 0x07, 0x2b, 0x06,
+			     0x01, 0x04, 0x01, 0x93, 0xbf, 0x00),
+		/* PRIVATEOID malformed OID - wrong tag */
+		WIRE_INVALID(0x00, 0x00, 0x00, 254, 0x07, 0x07, 0x2b, 0x06,
+			     0x01, 0x04, 0x01, 0x93, 0x3f, 0x00),
+		WIRE_SENTINEL()
+	};
+	text_ok_t text_ok[] = { /* PRIVATEDNS example. */
+				TEXT_INVALID("0 0 253 B2V4YW1wbGUA"),
+				/* PRIVATEDNS example. + keydata */
+				TEXT_VALID("0 0 253 B2V4YW1wbGUAAA=="),
+				/* PRIVATEDNS compression pointer. */
+				TEXT_INVALID("0 0 253 wAAA"),
+				/* PRIVATEOID */
+				TEXT_INVALID("0 0 254 AA=="),
+				/* PRIVATEOID 1.3.6.1.4.1.2495 */
+				TEXT_INVALID("0 0 254 BgcrBgEEAZM/"),
+				/* PRIVATEOID 1.3.6.1.4.1.2495 + keydata */
+				TEXT_VALID("0 0 254 BgcrBgEEAZM/AA=="),
+				/* PRIVATEOID malformed OID - high-bit set on
+				   last octet */
+				TEXT_INVALID("0 0 254 BgcrBgEEAZO/AA=="),
+				/* PRIVATEOID malformed OID - wrong tag */
+				TEXT_INVALID("0 0 254 BwcrBgEEAZM/AA=="),
+				/*
+				 * Sentinel.
 				 */
-				WIRE_INVALID(0x00),
-				WIRE_INVALID(0x00, 0x00),
-				WIRE_INVALID(0x00, 0x00, 0x00),
-				WIRE_VALID(0xc0, 0x00, 0x00, 0x00),
-				WIRE_INVALID(0xc0, 0x00, 0x00, 0x00, 0x00),
-				WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
-				WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
-				WIRE_SENTINEL()
+				TEXT_SENTINEL()
 	};
 
-	check_rdata(NULL, wire_ok, NULL, false, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_key, sizeof(dns_rdata_key_t));
 }
 
@@ -2402,6 +2448,18 @@ ISC_RUN_TEST_IMPL(sshfp) {
 		    dns_rdatatype_sshfp, sizeof(dns_rdata_sshfp_t));
 }
 
+ISC_RUN_TEST_IMPL(wallet) {
+	text_ok_t text_ok[] = { TEXT_VALID_CHANGED("cid-example wid-example",
+						   "\"cid-example\" "
+						   "\"wid-example\""),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL() };
+	check_rdata(text_ok, NULL, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_wallet, sizeof(dns_rdata_rkey_t));
+}
+
 /*
  * WKS tests.
  *
@@ -2599,13 +2657,50 @@ ISC_RUN_TEST_IMPL(https_svcb) {
 		TEXT_INVALID("1 foo.example.com. ( mandatory=key123,key123 "
 			     "key123=abc)"),
 		/* dohpath tests */
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{dns}",
+				   "1 example.net. key7=\"/{dns}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{+dns}",
+				   "1 example.net. key7=\"/{+dns}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{#dns}",
+				   "1 example.net. key7=\"/{#dns}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{.dns}",
+				   "1 example.net. key7=\"/{.dns}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=\"/{;dns}\"",
+				   "1 example.net. key7=\"/{;dns}\""),
 		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{?dns}",
 				   "1 example.net. key7=\"/{?dns}\""),
 		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/some/path{?dns}",
 				   "1 example.net. key7=\"/some/path{?dns}\""),
-		TEXT_INVALID("1 example.com. dohpath=no-slash"),
-		TEXT_INVALID("1 example.com. dohpath=/{?notdns}"),
-		TEXT_INVALID("1 example.com. dohpath=/notvariable"),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{dns:9999}",
+				   "1 example.net. key7=\"/{dns:9999}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{dns*}",
+				   "1 example.net. key7=\"/{dns*}\""),
+		TEXT_VALID_LOOPCHG(
+			1, "1 example.net. dohpath=/some/path?key=value{&dns}",
+			"1 example.net. key7=\"/some/path?key=value{&dns}\""),
+		TEXT_VALID_LOOPCHG(1,
+				   "1 example.net. "
+				   "dohpath=/some/path?key=value{&dns,x*}",
+				   "1 example.net. "
+				   "key7=\"/some/path?key=value{&dns,x*}\""),
+		TEXT_INVALID("1 example.com. dohpath=not-relative"),
+		TEXT_INVALID("1 example.com. dohpath=/{?no_dns_variable}"),
+		TEXT_INVALID("1 example.com. dohpath=/novariable"),
+		TEXT_INVALID("1 example.com. dohpath=/{?dnsx}"),
+		/* index too big > 9999 */
+		TEXT_INVALID("1 example.com. dohpath=/{?dns:10000}"),
+		/* index not postive */
+		TEXT_INVALID("1 example.com. dohpath=/{?dns:0}"),
+		/* index leading zero */
+		TEXT_INVALID("1 example.com. dohpath=/{?dns:01}"),
+		/* two operators */
+		TEXT_INVALID("1 example.com. dohpath=/{??dns}"),
+		/* invalid % encoding */
+		TEXT_INVALID("1 example.com. dohpath=/%a{?dns}"),
+		/* invalid % encoding */
+		TEXT_INVALID("1 example.com. dohpath=/{?dns,%a}"),
+		/* incomplete macro */
+		TEXT_INVALID("1 example.com. dohpath=/{?dns" /*}*/),
 		TEXT_SENTINEL()
 
 	};
@@ -3106,6 +3201,7 @@ ISC_TEST_ENTRY(nxt)
 ISC_TEST_ENTRY(rkey)
 ISC_TEST_ENTRY(resinfo)
 ISC_TEST_ENTRY(sshfp)
+ISC_TEST_ENTRY(wallet)
 ISC_TEST_ENTRY(wks)
 ISC_TEST_ENTRY(zonemd)
 

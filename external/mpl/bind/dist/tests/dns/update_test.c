@@ -1,4 +1,4 @@
-/*	$NetBSD: update_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: update_test.c,v 1.3 2025/01/26 16:25:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@
 #define KEEP_BEFORE
 
 /*
- * Fix the linking order problem for overridden isc_stdtime_get() by making
+ * Fix the linking order problem for overridden isc_stdtime_now() by making
  * everything local.  This also allows static functions from update.c to be
  * tested.
  */
@@ -53,7 +53,7 @@ setup_test(void **state) {
 
 	setenv("TZ", "", 1);
 
-	return (0);
+	return 0;
 }
 
 static uint32_t mystdtime;
@@ -69,9 +69,9 @@ set_mystdtime(int year, int month, int day) {
 	mystdtime = timegm(&tm);
 }
 
-void
-isc_stdtime_get(isc_stdtime_t *now) {
-	*now = mystdtime;
+isc_stdtime_t
+isc_stdtime_now(void) {
+	return mystdtime;
 }
 
 /* simple increment by 1 */

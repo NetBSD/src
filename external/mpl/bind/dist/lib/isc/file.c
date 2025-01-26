@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.3 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -64,7 +64,6 @@
 #include <isc/log.h>
 #include <isc/md.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -91,7 +90,7 @@ file_stats(const char *file, struct stat *stats) {
 		result = isc__errno2result(errno);
 	}
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -104,7 +103,7 @@ fd_stats(int fd, struct stat *stats) {
 		result = isc__errno2result(errno);
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -120,7 +119,7 @@ isc_file_getsizefd(int fd, off_t *size) {
 		*size = stats.st_size;
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -135,7 +134,7 @@ isc_file_mode(const char *file, mode_t *modep) {
 		*modep = (stats.st_mode & 07777);
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -156,7 +155,7 @@ isc_file_getmodtime(const char *file, isc_time_t *modtime) {
 #endif /* if defined(HAVE_STAT_NSEC) */
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -173,7 +172,7 @@ isc_file_getsize(const char *file, off_t *size) {
 		*size = stats.st_size;
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -200,7 +199,7 @@ isc_file_settime(const char *file, isc_time_t *when) {
 	if ((times[0].tv_sec &
 	     (1ULL << (sizeof(times[0].tv_sec) * CHAR_BIT - 1))) != 0)
 	{
-		return (ISC_R_RANGE);
+		return ISC_R_RANGE;
 	}
 
 	/*
@@ -211,10 +210,10 @@ isc_file_settime(const char *file, isc_time_t *when) {
 		(int32_t)(isc_time_nanoseconds(when) / 1000);
 
 	if (utimes(file, times) < 0) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 #undef TEMPLATE
@@ -222,7 +221,7 @@ isc_file_settime(const char *file, isc_time_t *when) {
 
 isc_result_t
 isc_file_mktemplate(const char *path, char *buf, size_t buflen) {
-	return (isc_file_template(path, TEMPLATE, buf, buflen));
+	return isc_file_template(path, TEMPLATE, buf, buflen);
 }
 
 isc_result_t
@@ -247,7 +246,7 @@ isc_file_template(const char *path, const char *templet, char *buf,
 	if (s != NULL) {
 		size_t prefixlen = s - path + 1;
 		if ((prefixlen + strlen(templet) + 1) > buflen) {
-			return (ISC_R_NOSPACE);
+			return ISC_R_NOSPACE;
 		}
 
 		/* Copy 'prefixlen' bytes and NUL terminate. */
@@ -255,13 +254,13 @@ isc_file_template(const char *path, const char *templet, char *buf,
 		strlcat(buf, templet, buflen);
 	} else {
 		if ((strlen(templet) + 1) > buflen) {
-			return (ISC_R_NOSPACE);
+			return ISC_R_NOSPACE;
 		}
 
 		strlcpy(buf, templet, buflen);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static const char alphnum[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv"
@@ -280,7 +279,7 @@ isc_file_renameunique(const char *file, char *templet) {
 		cp++;
 	}
 	if (cp == templet) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	x = cp--;
@@ -290,12 +289,12 @@ isc_file_renameunique(const char *file, char *templet) {
 	}
 	while (link(file, templet) == -1) {
 		if (errno != EEXIST) {
-			return (isc__errno2result(errno));
+			return isc__errno2result(errno);
 		}
 		for (cp = x;;) {
 			const char *t;
 			if (*cp == '\0') {
-				return (ISC_R_FAILURE);
+				return ISC_R_FAILURE;
 			}
 			t = strchr(alphnum, *cp);
 			if (t == NULL || *++t == '\0') {
@@ -308,22 +307,22 @@ isc_file_renameunique(const char *file, char *templet) {
 	}
 	if (unlink(file) < 0) {
 		if (errno != ENOENT) {
-			return (isc__errno2result(errno));
+			return isc__errno2result(errno);
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
 isc_file_openunique(char *templet, FILE **fp) {
 	int mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-	return (isc_file_openuniquemode(templet, mode, fp));
+	return isc_file_openuniquemode(templet, mode, fp);
 }
 
 isc_result_t
 isc_file_openuniqueprivate(char *templet, FILE **fp) {
 	int mode = S_IWUSR | S_IRUSR;
-	return (isc_file_openuniquemode(templet, mode, fp));
+	return isc_file_openuniquemode(templet, mode, fp);
 }
 
 isc_result_t
@@ -342,7 +341,7 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 		cp++;
 	}
 	if (cp == templet) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
 	x = cp--;
@@ -353,12 +352,12 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 
 	while ((fd = open(templet, O_RDWR | O_CREAT | O_EXCL, mode)) == -1) {
 		if (errno != EEXIST) {
-			return (isc__errno2result(errno));
+			return isc__errno2result(errno);
 		}
 		for (cp = x;;) {
 			char *t;
 			if (*cp == '\0') {
-				return (ISC_R_FAILURE);
+				return ISC_R_FAILURE;
 			}
 			t = strchr(alphnum, *cp);
 			if (t == NULL || *++t == '\0') {
@@ -382,24 +381,7 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 		*fp = f;
 	}
 
-	return (result);
-}
-
-isc_result_t
-isc_file_bopenunique(char *templet, FILE **fp) {
-	int mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-	return (isc_file_openuniquemode(templet, mode, fp));
-}
-
-isc_result_t
-isc_file_bopenuniqueprivate(char *templet, FILE **fp) {
-	int mode = S_IWUSR | S_IRUSR;
-	return (isc_file_openuniquemode(templet, mode, fp));
-}
-
-isc_result_t
-isc_file_bopenuniquemode(char *templet, int mode, FILE **fp) {
-	return (isc_file_openuniquemode(templet, mode, fp));
+	return result;
 }
 
 isc_result_t
@@ -410,9 +392,9 @@ isc_file_remove(const char *filename) {
 
 	r = unlink(filename);
 	if (r == 0) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	} else {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 }
 
@@ -425,9 +407,9 @@ isc_file_rename(const char *oldname, const char *newname) {
 
 	r = rename(oldname, newname);
 	if (r == 0) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	} else {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 }
 
@@ -437,7 +419,7 @@ isc_file_exists(const char *pathname) {
 
 	REQUIRE(pathname != NULL);
 
-	return (file_stats(pathname, &stats) == ISC_R_SUCCESS);
+	return file_stats(pathname, &stats) == ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -449,14 +431,14 @@ isc_file_isplainfile(const char *filename) {
 	memset(&filestat, 0, sizeof(struct stat));
 
 	if ((stat(filename, &filestat)) == -1) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
 	if (!S_ISREG(filestat.st_mode)) {
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -468,14 +450,14 @@ isc_file_isplainfilefd(int fd) {
 	memset(&filestat, 0, sizeof(struct stat));
 
 	if ((fstat(fd, &filestat)) == -1) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
 	if (!S_ISREG(filestat.st_mode)) {
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -488,38 +470,38 @@ isc_file_isdirectory(const char *filename) {
 	memset(&filestat, 0, sizeof(struct stat));
 
 	if ((stat(filename, &filestat)) == -1) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
 	if (!S_ISDIR(filestat.st_mode)) {
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 bool
 isc_file_isabsolute(const char *filename) {
 	REQUIRE(filename != NULL);
-	return (filename[0] == '/');
+	return filename[0] == '/';
 }
 
 bool
 isc_file_iscurrentdir(const char *filename) {
 	REQUIRE(filename != NULL);
-	return (filename[0] == '.' && filename[1] == '\0');
+	return filename[0] == '.' && filename[1] == '\0';
 }
 
 bool
 isc_file_ischdiridempotent(const char *filename) {
 	REQUIRE(filename != NULL);
 	if (isc_file_isabsolute(filename)) {
-		return (true);
+		return true;
 	}
 	if (isc_file_iscurrentdir(filename)) {
-		return (true);
+		return true;
 	}
-	return (false);
+	return false;
 }
 
 const char *
@@ -530,10 +512,10 @@ isc_file_basename(const char *filename) {
 
 	s = strrchr(filename, '/');
 	if (s == NULL) {
-		return (filename);
+		return filename;
 	}
 
-	return (s + 1);
+	return s + 1;
 }
 
 isc_result_t
@@ -548,11 +530,11 @@ isc_file_progname(const char *filename, char *buf, size_t buflen) {
 	len = strlen(base) + 1;
 
 	if (len > buflen) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	memmove(buf, base, len);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -585,7 +567,7 @@ dir_current(char *dirname, size_t length) {
 		}
 	}
 
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -593,23 +575,23 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 	isc_result_t result;
 	result = dir_current(path, pathlen);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	if (strlen(path) + strlen(filename) + 1 > pathlen) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 	strlcat(path, filename, pathlen);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
-isc_file_truncate(const char *filename, isc_offset_t size) {
+isc_file_truncate(const char *filename, off_t size) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	if (truncate(filename, size) < 0) {
 		result = isc__errno2result(errno);
 	}
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -626,29 +608,29 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 	result = file_stats(filename, &sb);
 	if (result == ISC_R_SUCCESS) {
 		if ((sb.st_mode & S_IFREG) == 0) {
-			return (ISC_R_INVALIDFILE);
+			return ISC_R_INVALIDFILE;
 		}
 		flags = O_WRONLY | O_TRUNC;
 	} else if (result == ISC_R_FILENOTFOUND) {
 		flags = O_WRONLY | O_CREAT | O_EXCL;
 	} else {
-		return (result);
+		return result;
 	}
 
 	fd = open(filename, flags, S_IRUSR | S_IWUSR);
 	if (fd == -1) {
-		return (isc__errno2result(errno));
+		return isc__errno2result(errno);
 	}
 
 	f = fdopen(fd, "w");
 	if (f == NULL) {
 		result = isc__errno2result(errno);
 		close(fd);
-		return (result);
+		return result;
 	}
 
 	*fp = f;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -658,7 +640,7 @@ isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
 	const char *file, *slash;
 
 	if (path == NULL) {
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	}
 
 	slash = strrchr(path, '/');
@@ -676,18 +658,18 @@ isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
 	}
 
 	if (dir == NULL) {
-		return (ISC_R_NOMEMORY);
+		return ISC_R_NOMEMORY;
 	}
 
 	if (*file == '\0') {
 		isc_mem_free(mctx, dir);
-		return (ISC_R_INVALIDFILE);
+		return ISC_R_INVALIDFILE;
 	}
 
 	*dirname = dir;
 	*bname = file;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 #define DISALLOW "\\/ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -701,10 +683,10 @@ digest2hex(unsigned char *digest, unsigned int digestlen, char *hash,
 		size_t left = hashlen - i * 2;
 		ret = snprintf(hash + i * 2, left, "%02x", digest[i]);
 		if (ret < 0 || (size_t)ret >= left) {
-			return (ISC_R_NOSPACE);
+			return ISC_R_NOSPACE;
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -737,20 +719,20 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		l += strlen(ext) + 1;
 	}
 
-	if (l > length || l > (unsigned)PATH_MAX) {
-		return (ISC_R_NOSPACE);
+	if (l > length || l > (unsigned int)PATH_MAX) {
+		return ISC_R_NOSPACE;
 	}
 
 	/* Check whether the full-length SHA256 hash filename exists */
 	err = isc_md(ISC_MD_SHA256, (const unsigned char *)base, strlen(base),
 		     digest, &digestlen);
 	if (err != ISC_R_SUCCESS) {
-		return (err);
+		return err;
 	}
 
 	err = digest2hex(digest, digestlen, hash, sizeof(hash));
 	if (err != ISC_R_SUCCESS) {
-		return (err);
+		return err;
 	}
 
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s", dir != NULL ? dir : "",
@@ -758,7 +740,7 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		 ext != NULL ? ext : "");
 	if (isc_file_exists(buf)) {
 		strlcpy(path, buf, length);
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/* Check for a truncated SHA256 hash filename */
@@ -768,7 +750,7 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		 ext != NULL ? ext : "");
 	if (isc_file_exists(buf)) {
 		strlcpy(path, buf, length);
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	/*
@@ -778,17 +760,17 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 	 */
 	if (strpbrk(base, DISALLOW) != NULL) {
 		strlcpy(path, buf, length);
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s", dir != NULL ? dir : "",
 		 dir != NULL ? "/" : "", base, ext != NULL ? "." : "",
 		 ext != NULL ? ext : "");
 	strlcpy(path, buf, length);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 bool
 isc_file_isdirwritable(const char *path) {
-	return (access(path, W_OK | X_OK) == 0);
+	return access(path, W_OK | X_OK) == 0;
 }

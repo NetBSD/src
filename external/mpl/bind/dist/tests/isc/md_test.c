@@ -1,4 +1,4 @@
-/*	$NetBSD: md_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: md_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,13 +20,14 @@
 #include <stddef.h>
 #include <string.h>
 
-/* For FIPS_mode() */
+/* Needs to be included before <cmocka.h> */
 #include <openssl/crypto.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
 
 #include <isc/buffer.h>
+#include <isc/fips.h>
 #include <isc/hex.h>
 #include <isc/md.h>
 #include <isc/region.h>
@@ -42,30 +43,30 @@ static int
 _setup(void **state) {
 	isc_md_t *md = isc_md_new();
 	if (md == NULL) {
-		return (-1);
+		return -1;
 	}
 	*state = md;
-	return (0);
+	return 0;
 }
 
 static int
 _teardown(void **state) {
 	if (*state == NULL) {
-		return (-1);
+		return -1;
 	}
 	isc_md_free(*state);
-	return (0);
+	return 0;
 }
 
 static int
 _reset(void **state) {
 	if (*state == NULL) {
-		return (-1);
+		return -1;
 	}
 	if (isc_md_reset(*state) != ISC_R_SUCCESS) {
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 ISC_RUN_TEST_IMPL(isc_md_new) {
@@ -120,8 +121,10 @@ ISC_RUN_TEST_IMPL(isc_md_init) {
 
 	assert_int_equal(isc_md_init(md, NULL), ISC_R_NOTIMPLEMENTED);
 
-	assert_int_equal(isc_md_init(md, ISC_MD_MD5), ISC_R_SUCCESS);
-	assert_int_equal(isc_md_reset(md), ISC_R_SUCCESS);
+	if (!isc_fips_mode()) {
+		assert_int_equal(isc_md_init(md, ISC_MD_MD5), ISC_R_SUCCESS);
+		assert_int_equal(isc_md_reset(md), ISC_R_SUCCESS);
+	}
 
 	assert_int_equal(isc_md_init(md, ISC_MD_SHA1), ISC_R_SUCCESS);
 	assert_int_equal(isc_md_reset(md), ISC_R_SUCCESS);
@@ -154,8 +157,8 @@ ISC_RUN_TEST_IMPL(isc_md_update) {
 ISC_RUN_TEST_IMPL(isc_md_reset) {
 	isc_md_t *md = *state;
 #if 0
-	unsigned char digest[ISC_MAX_MD_SIZE] __attribute((unused));
-	unsigned int digestlen __attribute((unused));
+	unsigned char digest[ISC_MAX_MD_SIZE] ISC_ATTR_UNUSED;
+	unsigned int digestlen ISC_ATTR_UNUSED;
 #endif /* if 0 */
 
 	assert_non_null(md);
@@ -196,6 +199,12 @@ ISC_RUN_TEST_IMPL(isc_md_final) {
 
 ISC_RUN_TEST_IMPL(isc_md_md5) {
 	isc_md_t *md = *state;
+
+	if (isc_fips_mode()) {
+		skip();
+		return;
+	}
+
 	isc_md_test(md, ISC_MD_MD5, NULL, 0, NULL, 0);
 	isc_md_test(md, ISC_MD_MD5, TEST_INPUT(""),
 		    "D41D8CD98F00B204E9800998ECF8427E", 1);

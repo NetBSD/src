@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.9 2024/02/21 22:52:06 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.10 2025/01/26 16:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -94,14 +93,17 @@ struct dst_key {
 	dns_rdataclass_t key_class; /*%< class of the key record */
 	dns_ttl_t key_ttl;	    /*%< default/initial dnskey ttl */
 	isc_mem_t *mctx;	    /*%< memory context */
+	char *directory;	    /*%< key directory */
 	char *engine;		    /*%< engine name (HSM) */
 	char *label;		    /*%< engine label (HSM) */
 	union {
 		void *generic;
 		dns_gss_ctx_id_t gssctx;
-		DH *dh;
-		EVP_PKEY *pkey;
 		dst_hmac_key_t *hmac_key;
+		struct {
+			EVP_PKEY *pub;
+			EVP_PKEY *priv;
+		} pkeypair;
 	} keydata; /*%< pointer to key in crypto pkg fmt */
 
 	isc_stdtime_t times[DST_MAX_TIMES + 1]; /*%< timing metadata */
@@ -211,14 +213,12 @@ dst__hmacsha384_init(struct dst_func **funcp);
 isc_result_t
 dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t
-dst__openssldh_init(struct dst_func **funcp);
-isc_result_t
 dst__opensslrsa_init(struct dst_func **funcp, unsigned char algorithm);
 isc_result_t
 dst__opensslecdsa_init(struct dst_func **funcp);
 #if HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448
 isc_result_t
-dst__openssleddsa_init(struct dst_func **funcp);
+dst__openssleddsa_init(struct dst_func **funcp, unsigned char algorithm);
 #endif /* HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448 */
 #if HAVE_GSSAPI
 isc_result_t

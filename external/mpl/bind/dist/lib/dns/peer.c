@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.c,v 1.11 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.12 2025/01/26 16:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,6 +58,7 @@ struct dns_peer {
 	bool support_edns;
 	bool request_nsid;
 	bool send_cookie;
+	bool require_cookie;
 	bool request_expire;
 	bool force_tcp;
 	bool tcp_keepalive;
@@ -94,6 +95,7 @@ struct dns_peer {
 #define FORCE_TCP_BIT		   12
 #define SERVER_PADDING_BIT	   13
 #define REQUEST_TCP_KEEPALIVE_BIT  14
+#define REQUIRE_COOKIE_BIT	   15
 
 static void
 peerlist_delete(dns_peerlist_t **list);
@@ -116,7 +118,7 @@ dns_peerlist_new(isc_mem_t *mem, dns_peerlist_t **list) {
 
 	*list = l;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -222,7 +224,7 @@ dns_peerlist_peerbyaddr(dns_peerlist_t *servers, const isc_netaddr_t *addr,
 		res = ISC_R_NOTFOUND;
 	}
 
-	return (res);
+	return res;
 }
 
 isc_result_t
@@ -233,7 +235,7 @@ dns_peerlist_currpeer(dns_peerlist_t *peers, dns_peer_t **retval) {
 
 	dns_peer_attach(p, retval);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -252,7 +254,7 @@ dns_peer_new(isc_mem_t *mem, const isc_netaddr_t *addr, dns_peer_t **peerptr) {
 		UNREACHABLE();
 	}
 
-	return (dns_peer_newprefix(mem, addr, prefixlen, peerptr));
+	return dns_peer_newprefix(mem, addr, prefixlen, peerptr);
 }
 
 isc_result_t
@@ -278,7 +280,7 @@ dns_peer_newprefix(isc_mem_t *mem, const isc_netaddr_t *addr,
 
 	*peerptr = peer;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -346,302 +348,117 @@ peer_delete(dns_peer_t **peer) {
 	isc_mem_put(mem, p, sizeof(*p));
 }
 
-isc_result_t
-dns_peer_setbogus(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(BOGUS_BIT, &peer->bitflags);
-
-	peer->bogus = newval;
-	DNS_BIT_SET(BOGUS_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getbogus(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(BOGUS_BIT, &peer->bitflags)) {
-		*retval = peer->bogus;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
+#define ACCESS_OPTION(name, macro, type, element)                        \
+	isc_result_t dns_peer_get##name(dns_peer_t *peer, type *value) { \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		REQUIRE(value != NULL);                                  \
+		if (DNS_BIT_CHECK(macro, &peer->bitflags)) {             \
+			*value = peer->element;                          \
+			return (ISC_R_SUCCESS);                          \
+		} else {                                                 \
+			return (ISC_R_NOTFOUND);                         \
+		}                                                        \
+	}                                                                \
+	isc_result_t dns_peer_set##name(dns_peer_t *peer, type value) {  \
+		bool existed;                                            \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		existed = DNS_BIT_CHECK(macro, &peer->bitflags);         \
+		peer->element = value;                                   \
+		DNS_BIT_SET(macro, &peer->bitflags);                     \
+		return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);         \
 	}
-}
 
-isc_result_t
-dns_peer_setprovideixfr(dns_peer_t *peer, bool newval) {
-	bool existed;
+ACCESS_OPTION(bogus, BOGUS_BIT, bool, bogus)
+ACCESS_OPTION(forcetcp, FORCE_TCP_BIT, bool, force_tcp)
+ACCESS_OPTION(maxudp, SERVER_MAXUDP_BIT, uint16_t, maxudp)
+ACCESS_OPTION(provideixfr, PROVIDE_IXFR_BIT, bool, provide_ixfr)
+ACCESS_OPTION(requestexpire, REQUEST_EXPIRE_BIT, bool, request_expire)
+ACCESS_OPTION(requestixfr, REQUEST_IXFR_BIT, bool, request_ixfr)
+ACCESS_OPTION(requestnsid, REQUEST_NSID_BIT, bool, request_nsid)
+ACCESS_OPTION(requirecookie, REQUIRE_COOKIE_BIT, bool, require_cookie)
+ACCESS_OPTION(sendcookie, SEND_COOKIE_BIT, bool, send_cookie)
+ACCESS_OPTION(supportedns, SUPPORT_EDNS_BIT, bool, support_edns)
+ACCESS_OPTION(tcpkeepalive, REQUEST_TCP_KEEPALIVE_BIT, bool, tcp_keepalive)
+ACCESS_OPTION(transferformat, SERVER_TRANSFER_FORMAT_BIT, dns_transfer_format_t,
+	      transfer_format)
+ACCESS_OPTION(transfers, TRANSFERS_BIT, uint32_t, transfers)
+ACCESS_OPTION(udpsize, SERVER_UDPSIZE_BIT, uint16_t, udpsize)
 
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(PROVIDE_IXFR_BIT, &peer->bitflags);
-
-	peer->provide_ixfr = newval;
-	DNS_BIT_SET(PROVIDE_IXFR_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getprovideixfr(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(PROVIDE_IXFR_BIT, &peer->bitflags)) {
-		*retval = peer->provide_ixfr;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
+#define ACCESS_OPTIONMAX(name, macro, type, element, max)                \
+	isc_result_t dns_peer_get##name(dns_peer_t *peer, type *value) { \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		REQUIRE(value != NULL);                                  \
+		if (DNS_BIT_CHECK(macro, &peer->bitflags)) {             \
+			*value = peer->element;                          \
+			return (ISC_R_SUCCESS);                          \
+		} else {                                                 \
+			return (ISC_R_NOTFOUND);                         \
+		}                                                        \
+	}                                                                \
+	isc_result_t dns_peer_set##name(dns_peer_t *peer, type value) {  \
+		bool existed;                                            \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		existed = DNS_BIT_CHECK(macro, &peer->bitflags);         \
+		if (value > max) {                                       \
+			value = max;                                     \
+		}                                                        \
+		peer->element = value;                                   \
+		DNS_BIT_SET(macro, &peer->bitflags);                     \
+		return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);         \
 	}
-}
 
-isc_result_t
-dns_peer_setrequestixfr(dns_peer_t *peer, bool newval) {
-	bool existed;
+ACCESS_OPTIONMAX(padding, SERVER_PADDING_BIT, uint16_t, padding, 512)
 
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(REQUEST_IXFR_BIT, &peer->bitflags);
-
-	peer->request_ixfr = newval;
-	DNS_BIT_SET(REQUEST_IXFR_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getrequestixfr(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(REQUEST_IXFR_BIT, &peer->bitflags)) {
-		*retval = peer->request_ixfr;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
+#define ACCESS_SOCKADDR(name, element)                                       \
+	isc_result_t dns_peer_get##name(dns_peer_t *peer,                    \
+					isc_sockaddr_t *value) {             \
+		REQUIRE(DNS_PEER_VALID(peer));                               \
+		REQUIRE(value != NULL);                                      \
+		if (peer->element == NULL) {                                 \
+			return (ISC_R_NOTFOUND);                             \
+		}                                                            \
+		*value = *peer->element;                                     \
+		return (ISC_R_SUCCESS);                                      \
+	}                                                                    \
+	isc_result_t dns_peer_set##name(dns_peer_t *peer,                    \
+					const isc_sockaddr_t *value) {       \
+		REQUIRE(DNS_PEER_VALID(peer));                               \
+		if (peer->element != NULL) {                                 \
+			isc_mem_put(peer->mem, peer->element,                \
+				    sizeof(*peer->element));                 \
+			peer->element = NULL;                                \
+		}                                                            \
+		if (value != NULL) {                                         \
+			peer->element = isc_mem_get(peer->mem,               \
+						    sizeof(*peer->element)); \
+			*peer->element = *value;                             \
+		}                                                            \
+		return (ISC_R_SUCCESS);                                      \
 	}
-}
 
-isc_result_t
-dns_peer_setsupportedns(dns_peer_t *peer, bool newval) {
-	bool existed;
+ACCESS_SOCKADDR(notifysource, notify_source)
+ACCESS_SOCKADDR(querysource, query_source)
+ACCESS_SOCKADDR(transfersource, transfer_source)
 
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SUPPORT_EDNS_BIT, &peer->bitflags);
-
-	peer->support_edns = newval;
-	DNS_BIT_SET(SUPPORT_EDNS_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getsupportedns(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(SUPPORT_EDNS_BIT, &peer->bitflags)) {
-		*retval = peer->support_edns;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
+#define ACCESS_OPTION_OVERWRITE(name, macro, type, element)              \
+	isc_result_t dns_peer_get##name(dns_peer_t *peer, type *value) { \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		REQUIRE(value != NULL);                                  \
+		if (DNS_BIT_CHECK(macro, &peer->bitflags)) {             \
+			*value = peer->element;                          \
+			return (ISC_R_SUCCESS);                          \
+		} else {                                                 \
+			return (ISC_R_NOTFOUND);                         \
+		}                                                        \
+	}                                                                \
+	isc_result_t dns_peer_set##name(dns_peer_t *peer, type value) {  \
+		REQUIRE(DNS_PEER_VALID(peer));                           \
+		peer->element = value;                                   \
+		DNS_BIT_SET(macro, &peer->bitflags);                     \
+		return (ISC_R_SUCCESS);                                  \
 	}
-}
 
-isc_result_t
-dns_peer_setrequestnsid(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags);
-
-	peer->request_nsid = newval;
-	DNS_BIT_SET(REQUEST_NSID_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getrequestnsid(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags)) {
-		*retval = peer->request_nsid;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setsendcookie(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SEND_COOKIE_BIT, &peer->bitflags);
-
-	peer->send_cookie = newval;
-	DNS_BIT_SET(SEND_COOKIE_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getsendcookie(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(SEND_COOKIE_BIT, &peer->bitflags)) {
-		*retval = peer->send_cookie;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setrequestexpire(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(REQUEST_EXPIRE_BIT, &peer->bitflags);
-
-	peer->request_expire = newval;
-	DNS_BIT_SET(REQUEST_EXPIRE_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getrequestexpire(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(REQUEST_EXPIRE_BIT, &peer->bitflags)) {
-		*retval = peer->request_expire;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setforcetcp(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(FORCE_TCP_BIT, &peer->bitflags);
-
-	peer->force_tcp = newval;
-	DNS_BIT_SET(FORCE_TCP_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getforcetcp(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(FORCE_TCP_BIT, &peer->bitflags)) {
-		*retval = peer->force_tcp;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_settcpkeepalive(dns_peer_t *peer, bool newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(REQUEST_TCP_KEEPALIVE_BIT, &peer->bitflags);
-
-	peer->tcp_keepalive = newval;
-	DNS_BIT_SET(REQUEST_TCP_KEEPALIVE_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_gettcpkeepalive(dns_peer_t *peer, bool *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(REQUEST_TCP_KEEPALIVE_BIT, &peer->bitflags)) {
-		*retval = peer->tcp_keepalive;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_settransfers(dns_peer_t *peer, uint32_t newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(TRANSFERS_BIT, &peer->bitflags);
-
-	peer->transfers = newval;
-	DNS_BIT_SET(TRANSFERS_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_gettransfers(dns_peer_t *peer, uint32_t *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(TRANSFERS_BIT, &peer->bitflags)) {
-		*retval = peer->transfers;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_settransferformat(dns_peer_t *peer, dns_transfer_format_t newval) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SERVER_TRANSFER_FORMAT_BIT, &peer->bitflags);
-
-	peer->transfer_format = newval;
-	DNS_BIT_SET(SERVER_TRANSFER_FORMAT_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_gettransferformat(dns_peer_t *peer, dns_transfer_format_t *retval) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(retval != NULL);
-
-	if (DNS_BIT_CHECK(SERVER_TRANSFER_FORMAT_BIT, &peer->bitflags)) {
-		*retval = peer->transfer_format;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
+ACCESS_OPTION_OVERWRITE(ednsversion, EDNS_VERSION_BIT, uint8_t, ednsversion)
 
 isc_result_t
 dns_peer_getkey(dns_peer_t *peer, dns_name_t **retval) {
@@ -652,7 +469,7 @@ dns_peer_getkey(dns_peer_t *peer, dns_name_t **retval) {
 		*retval = peer->key;
 	}
 
-	return (peer->key == NULL ? ISC_R_NOTFOUND : ISC_R_SUCCESS);
+	return peer->key == NULL ? ISC_R_NOTFOUND : ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -668,7 +485,7 @@ dns_peer_setkey(dns_peer_t *peer, dns_name_t **keyval) {
 	peer->key = *keyval;
 	*keyval = NULL;
 
-	return (exists ? ISC_R_EXISTS : ISC_R_SUCCESS);
+	return exists ? ISC_R_EXISTS : ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -684,7 +501,7 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 	result = dns_name_fromtext(dns_fixedname_name(&fname), &b, dns_rootname,
 				   0, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	name = isc_mem_get(peer->mem, sizeof(dns_name_t));
@@ -697,204 +514,5 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 		isc_mem_put(peer->mem, name, sizeof(dns_name_t));
 	}
 
-	return (result);
-}
-
-isc_result_t
-dns_peer_settransfersource(dns_peer_t *peer,
-			   const isc_sockaddr_t *transfer_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	if (peer->transfer_source != NULL) {
-		isc_mem_put(peer->mem, peer->transfer_source,
-			    sizeof(*peer->transfer_source));
-		peer->transfer_source = NULL;
-	}
-	if (transfer_source != NULL) {
-		peer->transfer_source =
-			isc_mem_get(peer->mem, sizeof(*peer->transfer_source));
-
-		*peer->transfer_source = *transfer_source;
-	}
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_gettransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(transfer_source != NULL);
-
-	if (peer->transfer_source == NULL) {
-		return (ISC_R_NOTFOUND);
-	}
-	*transfer_source = *peer->transfer_source;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_setnotifysource(dns_peer_t *peer,
-			 const isc_sockaddr_t *notify_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	if (peer->notify_source != NULL) {
-		isc_mem_put(peer->mem, peer->notify_source,
-			    sizeof(*peer->notify_source));
-		peer->notify_source = NULL;
-	}
-	if (notify_source != NULL) {
-		peer->notify_source = isc_mem_get(peer->mem,
-						  sizeof(*peer->notify_source));
-
-		*peer->notify_source = *notify_source;
-	}
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getnotifysource(dns_peer_t *peer, isc_sockaddr_t *notify_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(notify_source != NULL);
-
-	if (peer->notify_source == NULL) {
-		return (ISC_R_NOTFOUND);
-	}
-	*notify_source = *peer->notify_source;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_setquerysource(dns_peer_t *peer, const isc_sockaddr_t *query_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	if (peer->query_source != NULL) {
-		isc_mem_put(peer->mem, peer->query_source,
-			    sizeof(*peer->query_source));
-		peer->query_source = NULL;
-	}
-	if (query_source != NULL) {
-		peer->query_source = isc_mem_get(peer->mem,
-						 sizeof(*peer->query_source));
-
-		*peer->query_source = *query_source;
-	}
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getquerysource(dns_peer_t *peer, isc_sockaddr_t *query_source) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(query_source != NULL);
-
-	if (peer->query_source == NULL) {
-		return (ISC_R_NOTFOUND);
-	}
-	*query_source = *peer->query_source;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_setudpsize(dns_peer_t *peer, uint16_t udpsize) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SERVER_UDPSIZE_BIT, &peer->bitflags);
-
-	peer->udpsize = udpsize;
-	DNS_BIT_SET(SERVER_UDPSIZE_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getudpsize(dns_peer_t *peer, uint16_t *udpsize) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(udpsize != NULL);
-
-	if (DNS_BIT_CHECK(SERVER_UDPSIZE_BIT, &peer->bitflags)) {
-		*udpsize = peer->udpsize;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setmaxudp(dns_peer_t *peer, uint16_t maxudp) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SERVER_MAXUDP_BIT, &peer->bitflags);
-
-	peer->maxudp = maxudp;
-	DNS_BIT_SET(SERVER_MAXUDP_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getmaxudp(dns_peer_t *peer, uint16_t *maxudp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(maxudp != NULL);
-
-	if (DNS_BIT_CHECK(SERVER_MAXUDP_BIT, &peer->bitflags)) {
-		*maxudp = peer->maxudp;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setpadding(dns_peer_t *peer, uint16_t padding) {
-	bool existed;
-
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	existed = DNS_BIT_CHECK(SERVER_PADDING_BIT, &peer->bitflags);
-
-	if (padding > 512) {
-		padding = 512;
-	}
-	peer->padding = padding;
-	DNS_BIT_SET(SERVER_PADDING_BIT, &peer->bitflags);
-
-	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getpadding(dns_peer_t *peer, uint16_t *padding) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(padding != NULL);
-
-	if (DNS_BIT_CHECK(SERVER_PADDING_BIT, &peer->bitflags)) {
-		*padding = peer->padding;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
-}
-
-isc_result_t
-dns_peer_setednsversion(dns_peer_t *peer, uint8_t ednsversion) {
-	REQUIRE(DNS_PEER_VALID(peer));
-
-	peer->ednsversion = ednsversion;
-	DNS_BIT_SET(EDNS_VERSION_BIT, &peer->bitflags);
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getednsversion(dns_peer_t *peer, uint8_t *ednsversion) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(ednsversion != NULL);
-
-	if (DNS_BIT_CHECK(EDNS_VERSION_BIT, &peer->bitflags)) {
-		*ednsversion = peer->ednsversion;
-		return (ISC_R_SUCCESS);
-	} else {
-		return (ISC_R_NOTFOUND);
-	}
+	return result;
 }

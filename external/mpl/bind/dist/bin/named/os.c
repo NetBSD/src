@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.3 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.4 2025/01/26 16:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,7 @@
 /*! \file */
 #include <stdarg.h>
 #include <stdbool.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h> /* dev_t FreeBSD 2.1 */
 #ifdef HAVE_UNAME
@@ -38,14 +39,13 @@
 
 #include <isc/buffer.h>
 #include <isc/file.h>
-#include <isc/print.h>
-#include <isc/resource.h>
 #include <isc/result.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
 #include <named/globals.h>
+#include <named/log.h>
 #include <named/main.h>
 #include <named/os.h>
 #ifdef HAVE_LIBSCF
@@ -53,9 +53,7 @@
 #endif /* ifdef HAVE_LIBSCF */
 
 static char *pidfile = NULL;
-static char *lockfile = NULL;
 static int devnullfd = -1;
-static int singletonfd = -1;
 
 #ifndef ISC_FACILITY
 #define ISC_FACILITY LOG_DAEMON
@@ -65,7 +63,10 @@ static struct passwd *runas_pw = NULL;
 static bool done_setuid = false;
 static int dfd[2] = { -1, -1 };
 
-#ifdef HAVE_SYS_CAPABILITY_H
+static uid_t saved_uid = (uid_t)-1;
+static gid_t saved_gid = (gid_t)-1;
+
+#if HAVE_LIBCAP
 
 static bool non_root = false;
 static bool non_root_caps = false;
@@ -251,7 +252,28 @@ linux_keepcaps(void) {
 	}
 }
 
-#endif /* HAVE_SYS_CAPABILITY_H */
+#endif /* HAVE_LIBCAP */
+
+static void
+setperms(uid_t uid, gid_t gid) {
+	char strbuf[ISC_STRERRORSIZE];
+
+	/*
+	 * Drop the gid privilege first, because in some cases the gid privilege
+	 * cannot be dropped after the uid privilege has been dropped.
+	 */
+	if (setegid(gid) == -1) {
+		strerror_r(errno, strbuf, sizeof(strbuf));
+		named_main_earlywarning("unable to set effective gid to %d: %s",
+					gid, strbuf);
+	}
+
+	if (seteuid(uid) == -1) {
+		strerror_r(errno, strbuf, sizeof(strbuf));
+		named_main_earlywarning("unable to set effective uid to %d: %s",
+					uid, strbuf);
+	}
+}
 
 static void
 setup_syslog(const char *progname) {
@@ -267,9 +289,9 @@ setup_syslog(const char *progname) {
 void
 named_os_init(const char *progname) {
 	setup_syslog(progname);
-#ifdef HAVE_SYS_CAPABILITY_H
+#if HAVE_LIBCAP
 	linux_initialprivs();
-#endif /* ifdef HAVE_SYS_CAPABILITY_H */
+#endif /* HAVE_LIBCAP */
 #ifdef SIGXFSZ
 	signal(SIGXFSZ, SIG_IGN);
 #endif /* ifdef SIGXFSZ */
@@ -380,15 +402,15 @@ named_os_closedevnull(void) {
 static bool
 all_digits(const char *s) {
 	if (*s == '\0') {
-		return (false);
+		return false;
 	}
 	while (*s != '\0') {
 		if (!isdigit((unsigned char)(*s))) {
-			return (false);
+			return false;
 		}
 		s++;
 	}
-	return (true);
+	return true;
 }
 
 void
@@ -444,25 +466,46 @@ named_os_inituserinfo(const char *username) {
 }
 
 void
-named_os_changeuser(void) {
+named_os_restoreuser(void) {
+	if (runas_pw == NULL || done_setuid) {
+		return;
+	}
+
+	REQUIRE(saved_uid != (uid_t)-1);
+	REQUIRE(saved_gid != (gid_t)-1);
+
+	setperms(saved_uid, saved_gid);
+}
+
+void
+named_os_changeuser(bool permanent) {
 	char strbuf[ISC_STRERRORSIZE];
 	if (runas_pw == NULL || done_setuid) {
 		return;
 	}
 
+	if (!permanent) {
+		saved_uid = getuid();
+		saved_gid = getgid();
+
+		setperms(runas_pw->pw_uid, runas_pw->pw_gid);
+
+		return;
+	}
+
 	done_setuid = true;
 
-	if (setgid(runas_pw->pw_gid) < 0) {
+	if (setgid(runas_pw->pw_gid) == -1) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		named_main_earlyfatal("setgid(): %s", strbuf);
 	}
 
-	if (setuid(runas_pw->pw_uid) < 0) {
+	if (setuid(runas_pw->pw_uid) == -1) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		named_main_earlyfatal("setuid(): %s", strbuf);
 	}
 
-#if defined(HAVE_SYS_CAPABILITY_H)
+#if HAVE_LIBCAP
 	/*
 	 * Restore the ability of named to drop core after the setuid()
 	 * call has disabled it.
@@ -474,45 +517,69 @@ named_os_changeuser(void) {
 	}
 
 	linux_minprivs();
-#endif /* if defined(HAVE_SYS_CAPABILITY_H) */
+#endif /* HAVE_LIBCAP */
 }
 
 uid_t
-ns_os_uid(void) {
+named_os_uid(void) {
 	if (runas_pw == NULL) {
-		return (0);
+		return 0;
 	}
-	return (runas_pw->pw_uid);
+	return runas_pw->pw_uid;
 }
 
 void
 named_os_adjustnofile(void) {
-#if defined(__linux__) || defined(__sun)
-	isc_result_t result;
-	isc_resourcevalue_t newvalue;
+	int r;
+	struct rlimit rl;
+	rlim_t rlim_old;
+	char strbuf[ISC_STRERRORSIZE];
 
-	/*
-	 * Linux: max number of open files specified by one thread doesn't seem
-	 * to apply to other threads on Linux.
-	 * Sun: restriction needs to be removed sooner when hundreds of CPUs
-	 * are available.
-	 */
-	newvalue = ISC_RESOURCE_UNLIMITED;
-
-	result = isc_resource_setlimit(isc_resource_openfiles, newvalue);
-	if (result != ISC_R_SUCCESS) {
-		named_main_earlywarning("couldn't adjust limit on open files");
+	r = getrlimit(RLIMIT_NOFILE, &rl);
+	if (r != 0) {
+		goto fail;
 	}
-#endif /* if defined(__linux__) || defined(__sun) */
+
+	rlim_old = rl.rlim_cur;
+
+	if (rl.rlim_cur == rl.rlim_max) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+			      "the limit on open files is already at the "
+			      "maximum allowed value: "
+			      "%" PRIu64,
+			      (uint64_t)rl.rlim_max);
+		return;
+	}
+
+	rl.rlim_cur = rl.rlim_max;
+	r = setrlimit(RLIMIT_NOFILE, &rl);
+	if (r != 0) {
+		goto fail;
+	}
+
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+		      "adjusted limit on open files from "
+		      "%" PRIu64 " to "
+		      "%" PRIu64,
+		      (uint64_t)rlim_old, (uint64_t)rl.rlim_cur);
+	return;
+
+fail:
+	strerror_r(errno, strbuf, sizeof(strbuf));
+	named_main_earlywarning("adjusting limit on open files failed: %s",
+				strbuf);
+	return;
 }
 
 void
 named_os_minprivs(void) {
-#if defined(HAVE_SYS_CAPABILITY_H)
+#if HAVE_LIBCAP
 	linux_keepcaps();
-	named_os_changeuser();
+	named_os_changeuser(true);
 	linux_minprivs();
-#endif /* if defined(HAVE_SYS_CAPABILITY_H) */
+#endif /* HAVE_LIBCAP */
 }
 
 static int
@@ -522,22 +589,22 @@ safe_open(const char *filename, mode_t mode, bool append) {
 
 	if (stat(filename, &sb) == -1) {
 		if (errno != ENOENT) {
-			return (-1);
+			return -1;
 		}
 	} else if ((sb.st_mode & S_IFREG) == 0) {
 		errno = EOPNOTSUPP;
-		return (-1);
+		return -1;
 	}
 
 	if (append) {
 		fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, mode);
 	} else {
 		if (unlink(filename) < 0 && errno != ENOENT) {
-			return (-1);
+			return -1;
 		}
 		fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, mode);
 	}
-	return (fd);
+	return fd;
 }
 
 static void
@@ -551,26 +618,6 @@ cleanup_pidfile(void) {
 		free(pidfile);
 	}
 	pidfile = NULL;
-}
-
-static void
-cleanup_lockfile(bool unlink_lockfile) {
-	if (singletonfd != -1) {
-		close(singletonfd);
-		singletonfd = -1;
-	}
-
-	if (lockfile != NULL) {
-		if (unlink_lockfile) {
-			int n = unlink(lockfile);
-			if (n == -1 && errno != ENOENT) {
-				named_main_earlywarning("unlink '%s': failed",
-							lockfile);
-			}
-		}
-		free(lockfile);
-		lockfile = NULL;
-	}
 }
 
 /*
@@ -605,7 +652,7 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
 			    !strcmp(slash + 1, ".."))
 			{
 				*slash = '/';
-				return (0);
+				return 0;
 			}
 			mode = S_IRUSR | S_IWUSR | S_IXUSR; /* u=rwx */
 			mode |= S_IRGRP | S_IXGRP;	    /* g=rx */
@@ -627,62 +674,12 @@ mkdirpath(char *filename, void (*report)(const char *, ...)) {
 		}
 		*slash = '/';
 	}
-	return (0);
+	return 0;
 
 error:
 	*slash = '/';
-	return (-1);
+	return -1;
 }
-
-#if !HAVE_SYS_CAPABILITY_H
-static void
-setperms(uid_t uid, gid_t gid) {
-#if defined(HAVE_SETEGID) || defined(HAVE_SETRESGID)
-	char strbuf[ISC_STRERRORSIZE];
-#endif /* if defined(HAVE_SETEGID) || defined(HAVE_SETRESGID) */
-#if !defined(HAVE_SETEGID) && defined(HAVE_SETRESGID)
-	gid_t oldgid, tmpg;
-#endif /* if !defined(HAVE_SETEGID) && defined(HAVE_SETRESGID) */
-#if !defined(HAVE_SETEUID) && defined(HAVE_SETRESUID)
-	uid_t olduid, tmpu;
-#endif /* if !defined(HAVE_SETEUID) && defined(HAVE_SETRESUID) */
-#if defined(HAVE_SETEGID)
-	if (getegid() != gid && setegid(gid) == -1) {
-		strerror_r(errno, strbuf, sizeof(strbuf));
-		named_main_earlywarning("unable to set effective "
-					"gid to %ld: %s",
-					(long)gid, strbuf);
-	}
-#elif defined(HAVE_SETRESGID)
-	if (getresgid(&tmpg, &oldgid, &tmpg) == -1 || oldgid != gid) {
-		if (setresgid(-1, gid, -1) == -1) {
-			strerror_r(errno, strbuf, sizeof(strbuf));
-			named_main_earlywarning("unable to set effective "
-						"gid to %d: %s",
-						gid, strbuf);
-		}
-	}
-#endif /* if defined(HAVE_SETEGID) */
-
-#if defined(HAVE_SETEUID)
-	if (geteuid() != uid && seteuid(uid) == -1) {
-		strerror_r(errno, strbuf, sizeof(strbuf));
-		named_main_earlywarning("unable to set effective "
-					"uid to %ld: %s",
-					(long)uid, strbuf);
-	}
-#elif defined(HAVE_SETRESUID)
-	if (getresuid(&tmpu, &olduid, &tmpu) == -1 || olduid != uid) {
-		if (setresuid(-1, uid, -1) == -1) {
-			strerror_r(errno, strbuf, sizeof(strbuf));
-			named_main_earlywarning("unable to set effective "
-						"uid to %d: %s",
-						uid, strbuf);
-		}
-	}
-#endif /* if defined(HAVE_SETEUID) */
-}
-#endif /* !HAVE_SYS_CAPABILITY_H */
 
 FILE *
 named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
@@ -698,30 +695,25 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		named_main_earlywarning("couldn't strdup() '%s': %s", filename,
 					strbuf);
-		return (NULL);
+		return NULL;
 	}
 	if (mkdirpath(f, named_main_earlywarning) == -1) {
 		free(f);
-		return (NULL);
+		return NULL;
 	}
 	free(f);
 
 	if (switch_user && runas_pw != NULL) {
-		uid_t olduid = getuid();
-		gid_t oldgid = getgid();
-#if HAVE_SYS_CAPABILITY_H
-		REQUIRE(olduid == runas_pw->pw_uid);
-		REQUIRE(oldgid == runas_pw->pw_gid);
-#else /* HAVE_SYS_CAPABILITY_H */
-		/* Set UID/GID to the one we'll be running with eventually */
-		setperms(runas_pw->pw_uid, runas_pw->pw_gid);
-#endif
+		/*
+		 * Temporarily set UID/GID to the one we'll be running with
+		 * eventually.
+		 */
+		named_os_changeuser(false);
+
 		fd = safe_open(filename, mode, false);
 
-#if !HAVE_SYS_CAPABILITY_H
 		/* Restore UID/GID to previous uid/gid */
-		setperms(olduid, oldgid);
-#endif
+		named_os_restoreuser();
 
 		if (fd == -1) {
 			fd = safe_open(filename, mode, false);
@@ -747,7 +739,7 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		named_main_earlywarning("could not open file '%s': %s",
 					filename, strbuf);
-		return (NULL);
+		return NULL;
 	}
 
 	fp = fdopen(fd, "w");
@@ -757,7 +749,7 @@ named_os_openfile(const char *filename, mode_t mode, bool switch_user) {
 					filename, strbuf);
 	}
 
-	return (fp);
+	return fp;
 }
 
 void
@@ -808,68 +800,10 @@ named_os_writepidfile(const char *filename, bool first_time) {
 	(void)fclose(fh);
 }
 
-bool
-named_os_issingleton(const char *filename) {
-	char strbuf[ISC_STRERRORSIZE];
-	struct flock lock;
-
-	if (singletonfd != -1) {
-		return (true);
-	}
-
-	if (strcasecmp(filename, "none") == 0) {
-		return (true);
-	}
-
-	/*
-	 * Make the containing directory if it doesn't exist.
-	 */
-	lockfile = strdup(filename);
-	if (lockfile == NULL) {
-		strerror_r(errno, strbuf, sizeof(strbuf));
-		named_main_earlyfatal("couldn't allocate memory for '%s': %s",
-				      filename, strbuf);
-	} else {
-		int ret = mkdirpath(lockfile, named_main_earlywarning);
-		if (ret == -1) {
-			named_main_earlywarning("couldn't create '%s'",
-						filename);
-			cleanup_lockfile(false);
-			return (false);
-		}
-	}
-
-	/*
-	 * named_os_openfile() uses safeopen() which removes any existing
-	 * files. We can't use that here.
-	 */
-	singletonfd = open(filename, O_WRONLY | O_CREAT,
-			   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if (singletonfd == -1) {
-		cleanup_lockfile(false);
-		return (false);
-	}
-
-	memset(&lock, 0, sizeof(lock));
-	lock.l_type = F_WRLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 1;
-
-	/* Non-blocking (does not wait for lock) */
-	if (fcntl(singletonfd, F_SETLK, &lock) == -1) {
-		cleanup_lockfile(false);
-		return (false);
-	}
-
-	return (true);
-}
-
 void
 named_os_shutdown(void) {
 	closelog();
 	cleanup_pidfile();
-	cleanup_lockfile(true);
 }
 
 void
@@ -931,5 +865,5 @@ named_os_uname(void) {
 	if (unamep == NULL) {
 		getuname();
 	}
-	return (unamep);
+	return unamep;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.h,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: picohttpparser.h,v 1.3 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,

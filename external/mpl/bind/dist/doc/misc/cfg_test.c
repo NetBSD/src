@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_test.c,v 1.3 2024/09/22 00:14:05 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.4 2025/01/26 16:25:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -131,8 +130,6 @@ main(int argc, char **argv) {
 				zonetype = CFG_ZONE_FORWARD;
 			} else if (strcmp(argv[1], "redirect") == 0) {
 				zonetype = CFG_ZONE_REDIRECT;
-			} else if (strcmp(argv[1], "delegation-only") == 0) {
-				zonetype = CFG_ZONE_DELEGATION;
 			} else if (strcmp(argv[1], "in-view") == 0) {
 				zonetype = CFG_ZONE_INVIEW;
 			} else {
@@ -190,8 +187,8 @@ main(int argc, char **argv) {
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }

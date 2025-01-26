@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.9 2024/09/22 00:13:56 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.10 2025/01/26 16:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -205,7 +204,6 @@ main(int argc, char **argv) {
 	int prepub = -1;
 	int options;
 	dns_ttl_t ttl = 0;
-	isc_stdtime_t now;
 	isc_stdtime_t dstime = 0, dnskeytime = 0;
 	isc_stdtime_t krrsigtime = 0, zrrsigtime = 0;
 	isc_stdtime_t pub = 0, act = 0, rev = 0, inact = 0, del = 0;
@@ -241,6 +239,7 @@ main(int argc, char **argv) {
 	bool unsetdsadd = false, setdsadd = false;
 	bool unsetdsdel = false, setdsdel = false;
 	bool printdsadd = false, printdsdel = false;
+	isc_stdtime_t now = isc_stdtime_now();
 
 	options = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE;
 
@@ -253,8 +252,6 @@ main(int argc, char **argv) {
 	setup_logging(mctx, &log);
 
 	isc_commandline_errprint = false;
-
-	isc_stdtime_get(&now);
 
 #define CMDLINE_FLAGS "A:D:d:E:fg:hI:i:K:k:L:P:p:R:r:S:suv:Vz:"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
@@ -965,5 +962,5 @@ main(int argc, char **argv) {
 	isc_mem_free(mctx, directory);
 	isc_mem_destroy(&mctx);
 
-	return (0);
+	return 0;
 }

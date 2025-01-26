@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.10 2024/09/22 00:14:10 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.11 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,17 +37,23 @@
 		RUNTIME_CHECK(result == ISC_R_SUCCESS); \
 	} while (0)
 
-isc_result_t
+void
 ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 		 ns_server_t **sctxp) {
 	ns_server_t *sctx = NULL;
-	isc_result_t result;
 
 	REQUIRE(sctxp != NULL && *sctxp == NULL);
 
 	sctx = isc_mem_get(mctx, sizeof(*sctx));
+	*sctx = (ns_server_t){
+		.udpsize = 1232,
+		.transfer_tcp_message_size = 20480,
 
-	memset(sctx, 0, sizeof(*sctx));
+		.fuzztype = isc_fuzz_none,
+
+		.matchingview = matchingview,
+		.answercookie = true,
+	};
 
 	isc_mem_attach(mctx, &sctx->mctx);
 
@@ -62,58 +68,46 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 	isc_quota_init(&sctx->tcpquota, 10);
 	isc_quota_init(&sctx->recursionquota, 100);
 	isc_quota_init(&sctx->updquota, 100);
+	isc_quota_init(&sctx->sig0checksquota, 1);
 	ISC_LIST_INIT(sctx->http_quotas);
 	isc_mutex_init(&sctx->http_quotas_lock);
 
-	CHECKFATAL(dns_tkeyctx_create(mctx, &sctx->tkeyctx));
+	ns_stats_create(mctx, ns_statscounter_max, &sctx->nsstats);
 
-	CHECKFATAL(ns_stats_create(mctx, ns_statscounter_max, &sctx->nsstats));
+	dns_rdatatypestats_create(mctx, &sctx->rcvquerystats);
 
-	CHECKFATAL(dns_rdatatypestats_create(mctx, &sctx->rcvquerystats));
+	dns_opcodestats_create(mctx, &sctx->opcodestats);
 
-	CHECKFATAL(dns_opcodestats_create(mctx, &sctx->opcodestats));
+	dns_rcodestats_create(mctx, &sctx->rcodestats);
 
-	CHECKFATAL(dns_rcodestats_create(mctx, &sctx->rcodestats));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSIN,
+			      &sctx->udpinstats4);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->udpinstats4,
-				    dns_sizecounter_in_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSOUT,
+			      &sctx->udpoutstats4);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->udpoutstats4,
-				    dns_sizecounter_out_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSIN,
+			      &sctx->udpinstats6);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->udpinstats6,
-				    dns_sizecounter_in_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSOUT,
+			      &sctx->udpoutstats6);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->udpoutstats6,
-				    dns_sizecounter_out_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSIN,
+			      &sctx->tcpinstats4);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpinstats4,
-				    dns_sizecounter_in_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSOUT,
+			      &sctx->tcpoutstats4);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpoutstats4,
-				    dns_sizecounter_out_max));
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSIN,
+			      &sctx->tcpinstats6);
 
-	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpinstats6,
-				    dns_sizecounter_in_max));
-
-	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpoutstats6,
-				    dns_sizecounter_out_max));
-
-	sctx->udpsize = 1232;
-	sctx->transfer_tcp_message_size = 20480;
-
-	sctx->fuzztype = isc_fuzz_none;
-	sctx->fuzznotify = NULL;
-
-	sctx->matchingview = matchingview;
-	sctx->answercookie = true;
+	isc_histomulti_create(mctx, DNS_SIZEHISTO_SIGBITSOUT,
+			      &sctx->tcpoutstats6);
 
 	ISC_LIST_INIT(sctx->altsecrets);
 
 	sctx->magic = SCTX_MAGIC;
 	*sctxp = sctx;
-
-	return (ISC_R_SUCCESS);
 }
 
 void
@@ -143,6 +137,11 @@ ns_server_detach(ns_server_t **sctxp) {
 			isc_mem_put(sctx->mctx, altsecret, sizeof(*altsecret));
 		}
 
+		if (sctx->sig0checksquota_exempt != NULL) {
+			dns_acl_detach(&sctx->sig0checksquota_exempt);
+		}
+
+		isc_quota_destroy(&sctx->sig0checksquota);
 		isc_quota_destroy(&sctx->updquota);
 		isc_quota_destroy(&sctx->recursionquota);
 		isc_quota_destroy(&sctx->tcpquota);
@@ -168,9 +167,6 @@ ns_server_detach(ns_server_t **sctxp) {
 		if (sctx->blackholeacl != NULL) {
 			dns_acl_detach(&sctx->blackholeacl);
 		}
-		if (sctx->keepresporder != NULL) {
-			dns_acl_detach(&sctx->keepresporder);
-		}
 		if (sctx->tkeyctx != NULL) {
 			dns_tkeyctx_destroy(&sctx->tkeyctx);
 		}
@@ -190,29 +186,29 @@ ns_server_detach(ns_server_t **sctxp) {
 		}
 
 		if (sctx->udpinstats4 != NULL) {
-			isc_stats_detach(&sctx->udpinstats4);
+			isc_histomulti_destroy(&sctx->udpinstats4);
 		}
 		if (sctx->tcpinstats4 != NULL) {
-			isc_stats_detach(&sctx->tcpinstats4);
+			isc_histomulti_destroy(&sctx->tcpinstats4);
 		}
 		if (sctx->udpoutstats4 != NULL) {
-			isc_stats_detach(&sctx->udpoutstats4);
+			isc_histomulti_destroy(&sctx->udpoutstats4);
 		}
 		if (sctx->tcpoutstats4 != NULL) {
-			isc_stats_detach(&sctx->tcpoutstats4);
+			isc_histomulti_destroy(&sctx->tcpoutstats4);
 		}
 
 		if (sctx->udpinstats6 != NULL) {
-			isc_stats_detach(&sctx->udpinstats6);
+			isc_histomulti_destroy(&sctx->udpinstats6);
 		}
 		if (sctx->tcpinstats6 != NULL) {
-			isc_stats_detach(&sctx->tcpinstats6);
+			isc_histomulti_destroy(&sctx->tcpinstats6);
 		}
 		if (sctx->udpoutstats6 != NULL) {
-			isc_stats_detach(&sctx->udpoutstats6);
+			isc_histomulti_destroy(&sctx->udpoutstats6);
 		}
 		if (sctx->tcpoutstats6 != NULL) {
-			isc_stats_detach(&sctx->tcpoutstats6);
+			isc_histomulti_destroy(&sctx->tcpoutstats6);
 		}
 
 		sctx->magic = 0;
@@ -234,7 +230,7 @@ ns_server_setserverid(ns_server_t *sctx, const char *serverid) {
 		sctx->server_id = isc_mem_strdup(sctx->mctx, serverid);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -251,7 +247,7 @@ bool
 ns_server_getoption(ns_server_t *sctx, unsigned int option) {
 	REQUIRE(SCTX_VALID(sctx));
 
-	return ((sctx->options & option) != 0);
+	return (sctx->options & option) != 0;
 }
 
 void

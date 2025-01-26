@@ -1,4 +1,4 @@
-/*	$NetBSD: acl_test.c,v 1.2 2024/02/21 22:52:49 christos Exp $	*/
+/*	$NetBSD: acl_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -59,11 +58,9 @@ ISC_RUN_TEST_IMPL(dns_acl_isinsecure) {
 	result = dns_acl_none(mctx, &none);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_acl_create(mctx, 1, &notnone);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_acl_create(mctx, 1, &notnone);
 
-	result = dns_acl_create(mctx, 1, &notany);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_acl_create(mctx, 1, &notany);
 
 	result = dns_acl_merge(notnone, none, false);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -72,8 +69,7 @@ ISC_RUN_TEST_IMPL(dns_acl_isinsecure) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 #if defined(HAVE_GEOIP2)
-	result = dns_acl_create(mctx, 1, &geoip);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_acl_create(mctx, 1, &geoip);
 
 	de = geoip->elements;
 	assert_non_null(de);
@@ -87,8 +83,7 @@ ISC_RUN_TEST_IMPL(dns_acl_isinsecure) {
 	de->node_num = dns_acl_node_count(geoip);
 	geoip->length++;
 
-	result = dns_acl_create(mctx, 1, &notgeoip);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_acl_create(mctx, 1, &notgeoip);
 
 	result = dns_acl_merge(notgeoip, geoip, false);
 	assert_int_equal(result, ISC_R_SUCCESS);

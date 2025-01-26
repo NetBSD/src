@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.2 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.3 2025/01/26 16:25:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -67,35 +67,26 @@
 /***
  *** Imports.
  ***/
-#include <inttypes.h>
-
-#include <isc/lang.h>
-#include <isc/types.h>
-
 #include <arpa/inet.h> /* Contractual promise. */
+#include <inttypes.h>
 #include <net/if.h>
 #include <netinet/in.h> /* Contractual promise. */
 #include <sys/socket.h> /* Contractual promise. */
 #include <sys/types.h>
 
+#include <isc/lang.h>
+#include <isc/types.h>
+
 #ifndef IN6ADDR_LOOPBACK_INIT
 #ifdef s6_addr
 /*% IPv6 address loopback init */
-#define IN6ADDR_LOOPBACK_INIT                                                  \
-	{                                                                      \
-		{                                                              \
-			{                                                      \
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 \
-			}                                                      \
-		}                                                              \
-	}
-#else /* ifdef s6_addr */
 #define IN6ADDR_LOOPBACK_INIT                                          \
 	{                                                              \
-		{                                                      \
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 \
-		}                                                      \
+		{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } } \
 	}
+#else /* ifdef s6_addr */
+#define IN6ADDR_LOOPBACK_INIT \
+	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } }
 #endif /* ifdef s6_addr */
 #endif /* ifndef IN6ADDR_LOOPBACK_INIT */
 
@@ -104,20 +95,11 @@
 /*% IPv6 v4mapped prefix init */
 #define IN6ADDR_V4MAPPED_INIT                                                \
 	{                                                                    \
-		{                                                            \
-			{                                                    \
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, \
-					0, 0, 0                              \
-			}                                                    \
-		}                                                            \
+		{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0 } } \
 	}
 #else /* ifdef s6_addr */
-#define IN6ADDR_V4MAPPED_INIT                                                \
-	{                                                                    \
-		{                                                            \
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0 \
-		}                                                            \
-	}
+#define IN6ADDR_V4MAPPED_INIT \
+	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0 } }
 #endif /* ifdef s6_addr */
 #endif /* ifndef IN6ADDR_V4MAPPED_INIT */
 
@@ -267,12 +249,6 @@ isc_net_enableipv4(void);
 
 void
 isc_net_enableipv6(void);
-
-isc_result_t
-isc_net_probeunix(void);
-/*
- * Returns whether UNIX domain sockets are supported.
- */
 
 isc_result_t
 isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);

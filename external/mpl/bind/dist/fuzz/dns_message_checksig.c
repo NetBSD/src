@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_message_checksig.c,v 1.2 2024/02/21 22:51:58 christos Exp $	*/
+/*	$NetBSD: dns_message_checksig.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,9 +22,9 @@
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
+#include <isc/tid.h>
 #include <isc/util.h>
 
 #include <dns/fixedname.h>
@@ -88,10 +88,11 @@ static isc_mem_t *mctx = NULL;
 #define HMACSHA256 "\x0bhmac-sha256"
 
 static isc_stdtime_t fuzztime = 0x622acce1;
+static isc_loopmgr_t *loopmgr = NULL;
 static dns_view_t *view = NULL;
 static dns_tsigkey_t *tsigkey = NULL;
-static dns_tsig_keyring_t *ring = NULL;
-static dns_tsig_keyring_t *emptyring = NULL;
+static dns_tsigkeyring_t *ring = NULL;
+static dns_tsigkeyring_t *emptyring = NULL;
 static char *wd = NULL;
 static char template[] = "/tmp/dns-message-checksig-XXXXXX";
 
@@ -127,61 +128,8 @@ sig0key. 0 IN KEY 512 3 8 AwEAAa22lgHi1vAbQvu5ETdTrm2H8rwga9tvyMa6LFiSDyevLvSv0U
 
 static bool destroy_dst = false;
 
-static void
-cleanup(void) {
-	char pathbuf[PATH_MAX];
-	char *pwd = getcwd(pathbuf, sizeof(pathbuf));
-
-	if (view != NULL) {
-		dns_view_detach(&view);
-	}
-	if (tsigkey != NULL) {
-		dns_tsigkey_detach(&tsigkey);
-	}
-	if (ring != NULL) {
-		dns_tsigkeyring_detach(&ring);
-	}
-	if (emptyring != NULL) {
-		dns_tsigkeyring_detach(&emptyring);
-	}
-	if (destroy_dst) {
-		dst_lib_destroy();
-	}
-	if (mctx != NULL) {
-		isc_mem_detach(&mctx);
-	}
-	if (wd != NULL && chdir(wd) == 0) {
-		if (remove(f1) != 0) {
-			fprintf(stderr, "remove(%s) failed\n", f1);
-		}
-		if (remove(f2) != 0) {
-			fprintf(stderr, "remove(%s) failed\n", f2);
-		}
-		if (remove(f3) != 0) {
-			fprintf(stderr, "remove(%s) failed\n", f3);
-		}
-		/*
-		 * Restore working directory if possible before cleaning
-		 * up the key directory.  This will help with any other
-		 * cleanup routines and if this code is ever run under
-		 * Windows as the directory should not be in use when
-		 * rmdir() is called.
-		 */
-		if (pwd != NULL && chdir(pwd) != 0) {
-			fprintf(stderr, "can't restore working directory: %s\n",
-				pwd);
-		}
-		if (rmdir(wd) != 0) {
-			fprintf(stderr, "rmdir(%s) failed\n", wd);
-		}
-	} else {
-		fprintf(stderr, "cleanup of %s failed\n", wd ? wd : "(null)");
-	}
-}
-
 int
-LLVMFuzzerInitialize(int *argc __attribute__((unused)),
-		     char ***argv __attribute__((unused))) {
+LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_result_t result;
 	dns_fixedname_t fixed;
 	dns_name_t *name = dns_fixedname_initname(&fixed);
@@ -192,19 +140,17 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	char pathbuf[PATH_MAX];
 	FILE *fd;
 
-	atexit(cleanup);
-
 	wd = mkdtemp(template);
 	if (wd == NULL) {
 		fprintf(stderr, "mkdtemp failed\n");
-		return (1);
+		return 1;
 	}
 
 	snprintf(pathbuf, sizeof(pathbuf), "%s/%s", wd, f1);
 	fd = fopen(pathbuf, "w");
 	if (fd == NULL) {
 		fprintf(stderr, "fopen(%s) failed\n", pathbuf);
-		return (1);
+		return 1;
 	}
 	fputs(c1, fd);
 	fclose(fd);
@@ -213,7 +159,7 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	fd = fopen(pathbuf, "w");
 	if (fd == NULL) {
 		fprintf(stderr, "fopen(%s) failed\n", pathbuf);
-		return (1);
+		return 1;
 	}
 	fputs(c2, fd);
 	fclose(fd);
@@ -222,7 +168,7 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	fd = fopen(pathbuf, "w");
 	if (fd == NULL) {
 		fprintf(stderr, "fopen(%s) failed\n", pathbuf);
-		return (1);
+		return 1;
 	}
 	fputs(c3, fd);
 	fclose(fd);
@@ -233,66 +179,58 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dst_lib_init failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 	destroy_dst = true;
 
-	result = dns_view_create(mctx, dns_rdataclass_in, "view", &view);
+	isc_loopmgr_create(mctx, 1, &loopmgr);
+
+	result = dns_view_create(mctx, loopmgr, NULL, dns_rdataclass_in, "view",
+				 &view);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_view_create failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
-	result = dns_tsigkeyring_create(mctx, &ring);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_tsigkeyring_create failed: %s\n",
-			isc_result_totext(result));
-		return (1);
-	}
+	dns_tsigkeyring_create(mctx, &ring);
+	dns_tsigkeyring_create(mctx, &emptyring);
 
-	result = dns_tsigkeyring_create(mctx, &emptyring);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_tsigkeyring_create failed: %s\n",
-			isc_result_totext(result));
-		return (1);
-	}
-
-	result = dns_name_fromstring(name, "tsig-key", 0, NULL);
+	result = dns_name_fromstring(name, "tsig-key", dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_name_fromstring failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
-	result = dns_tsigkey_create(name, dns_tsig_hmacsha256_name, secret,
-				    sizeof(secret), false, NULL, 0, 0, mctx,
-				    ring, &tsigkey);
+	result = dns_tsigkey_create(name, DST_ALG_HMACSHA256, secret,
+				    sizeof(secret), mctx, &tsigkey);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_tsigkey_create failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
+	}
+	result = dns_tsigkeyring_add(ring, tsigkey);
+	if (result != ISC_R_SUCCESS) {
+		fprintf(stderr, "dns_tsigkeyring_add failed: %s\n",
+			isc_result_totext(result));
+		return 1;
 	}
 
-	result = dns_name_fromstring(name, "sig0key", 0, NULL);
+	result = dns_name_fromstring(name, "sig0key", dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_name_fromstring failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
-	result = dns_zone_create(&zone, mctx);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_zone_create failed: %s\n",
-			isc_result_totext(result));
-		return (1);
-	}
+	dns_zone_create(&zone, mctx, 0);
 
 	result = dns_zone_setorigin(zone, name);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_zone_setorigin failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
 	dns_zone_setclass(zone, view->rdclass);
@@ -302,7 +240,7 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_zone_setkeydirectory failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
 	result = dns_zone_setfile(zone, pathbuf, dns_masterformat_text,
@@ -310,28 +248,29 @@ LLVMFuzzerInitialize(int *argc __attribute__((unused)),
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_zone_setfile failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
 	result = dns_zone_load(zone, false);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_zone_load failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
 	result = dns_view_addzone(view, zone);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_view_addzone failed: %s\n",
 			isc_result_totext(result));
-		return (1);
+		return 1;
 	}
 
+	dns_zone_setview(zone, view);
 	dns_view_freeze(view);
 
 	dns_zone_detach(&zone);
 
-	return (0);
+	return 0;
 }
 
 static isc_result_t
@@ -382,7 +321,7 @@ create_message(dns_message_t **messagep, const uint8_t *data, size_t size,
 		isc_buffer_putmem(&b, data, size);
 	}
 
-	dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
+	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTPARSE, &message);
 
 	result = dns_message_parse(message, &b, 0);
 	if (debug) {
@@ -407,7 +346,7 @@ create_message(dns_message_t **messagep, const uint8_t *data, size_t size,
 		}
 		*messagep = message;
 	}
-	return (result);
+	return result;
 }
 
 int
@@ -436,7 +375,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	 * opcode.
 	 */
 	if (size > 65535 || size < 2) {
-		return (0);
+		return 0;
 	}
 
 	addasig = (*data & 0x80) != 0;
@@ -461,7 +400,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
 	result = create_message(&message, data, size, addasig, addtsig);
 	if (result != ISC_R_SUCCESS) {
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -540,5 +479,5 @@ cleanup:
 		dns_message_detach(&message);
 	}
 
-	return (0);
+	return 0;
 }

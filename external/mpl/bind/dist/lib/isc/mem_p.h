@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_p.h,v 1.6 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: mem_p.h,v 1.7 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,17 +26,6 @@ isc__mem_printactive(isc_mem_t *mctx, FILE *file);
 /*%<
  * For use by unit tests, prints active memory blocks for
  * a single memory context.
- */
-
-void *
-isc__mem_alloc_noctx(size_t size);
-void
-isc__mem_free_noctx(void *ptr, size_t size);
-/*%<
- * Allocate memory that is not associated with an isc_mem memory context.
- *
- * For use purely in the isc_trampoline unit, to avoid the need of copying
- * multiple #ifdef lines from lib/isc/mem.c to lib/isc/trampoline.c.
  */
 
 void

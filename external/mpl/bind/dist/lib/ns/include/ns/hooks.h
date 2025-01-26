@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.h,v 1.8 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: hooks.h,v 1.9 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,12 +19,10 @@
 
 #include <stdbool.h>
 
-#include <isc/event.h>
 #include <isc/list.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/result.h>
-#include <isc/task.h>
 
 #include <dns/rdatatype.h>
 
@@ -200,15 +198,15 @@
  * asynchronous event by calling ns_query_hookasync().  This is similar
  * to ns_query_recurse(), but more generic.  ns_query_hookasync() will
  * call the 'runasync' function with a specified 'arg' (both passed to
- * ns_query_hookasync()) and a set of task and associated event arguments
+ * ns_query_hookasync()) and a set of loop and associated event arguments
  * to be called to resume query handling upon completion of the
  * asynchronous event.
  *
  * The implementation of 'runasync' is assumed to allocate and build an
- * instance of ns_hook_resevent_t whose action, arg, and task are set to
+ * instance of ns_hook_resume_t whose callback, arg, and loop are set to
  * the passed values from ns_query_hookasync().  Other fields of
- * ns_hook_resevent_t must be correctly set in the hook implementation
- * by the time it's sent to the specified task:
+ * ns_hook_resume_t must be correctly set in the hook implementation
+ * by the time it's sent to the specified loop:
  *
  * - hookpoint: the point from which the query handling should be resumed
  *   (which should usually be the hook point that triggered the asynchronous
@@ -231,7 +229,7 @@
  * NS_HOOK_RETURN to suspend the query handling.
  *
  * On the completion of the asynchronous event, the hook implementation is
- * supposed to send the resumeevent to the corresponding task.  The query
+ * supposed to send the resumeevent to the corresponding loop.  The query
  * module resumes the query handling so that the hook action of the
  * specified hook point will be called, skipping some intermediate query
  * handling steps.  So, typically, the same hook action will be called
@@ -244,7 +242,7 @@
  *
  * typedef struct hookstate {
  * 	bool async;
- *	ns_hook_resevent_t *rev
+ *	ns_hook_resume_t *rev
  *	ns_hookpoint_t hookpoint;
  *	isc_result_t origresult;
  * } hookstate_t;
@@ -278,28 +276,30 @@
  * And the 'runasync' function would be something like this:
  *
  * static isc_result_t
- * runasync(query_ctx_t *qctx, void *arg, isc_taskaction_t action,
- *	    void *evarg, isc_task_t *task, ns_hookasync_t **ctxp) {
+ * runasync(query_ctx_t *qctx, void *arg, isc_job_cb cb, void *evarg,
+ * 	    isc_loop_t *loop, ns_hookasync_t **ctxp) {
  * 	hookstate_t *state = arg;
- *	ns_hook_resevent_t *rev = isc_event_allocate(
- *		mctx, task, NS_EVENT_HOOKASYNCDONE, action, evarg,
- *		sizeof(*rev));
+ *	ns_hook_resume_t *rev isc_mem_get(mctx, sizeof(*rev));
  *	ns_hookasync_t *ctx = isc_mem_get(mctx, sizeof(*ctx));
  *
- *	*ctx = (ns_hookasync_t){ .private = NULL };
+ *	*ctx = (ns_hookasync_t){ .private = NULL
+ *                               .hookpoint = state->hookpoint,
+ *                               .origresult = state->origresult,
+ *                               .saved_ctx = qctx,
+ *                               .ctx = ctx,
+ *                               .loop = loop,
+ *                               .cb = cb,
+ *                               .arg = cbarg
+ *	};
  *	isc_mem_attach(mctx, &ctx->mctx);
+ *
  *	ctx->cancel = ...;  // set the cancel function, which cancels the
  *			    // internal asynchronous event (if necessary).
  *			    // it should eventually result in sending
- *			    // the 'rev' event to the calling task.
+ *			    // the 'rev' event to the calling loop.
  *	ctx->destroy = ...; // set the destroy function, which frees 'ctx'
  *
- *	rev->hookpoint = state->hookpoint;
- *	rev->origresult = state->origresult;
- *	rev->saved_qctx = qctx;
- *	rev->ctx = ctx;
- *
- *	state->rev = rev; // store the resume event so we can send it later
+ *	state->rev = rev; // store the resume state so we can send it later
  *
  *	// initiate some asynchronous process here - for example, a
  *	// recursive fetch.
@@ -314,8 +314,7 @@
  *
  * static void
  * asyncproc_done(hookstate_t *state) {
- *	isc_event_t *ev = (isc_event_t *)state->rev;
- *	isc_task_send(ev->ev_sender, &ev);
+ *	isc_async_run(state->rev->loop, state->rev->cb, state->rev->arg);
  * }
  *
  * Caveats:
@@ -438,15 +437,17 @@ struct ns_hookasync {
 
 /*
  * isc_event to be sent on the completion of a hook-initiated asyncronous
- * process, similar to dns_fetchevent_t.
+ * process, similar to dns_fetchresponse_t.
  */
-typedef struct ns_hook_resevent {
-	ISC_EVENT_COMMON(struct ns_hook_resevent);
+typedef struct ns_hook_resume {
 	ns_hookasync_t *ctx;	   /* asynchronous processing context */
 	ns_hookpoint_t	hookpoint; /* hook point from which to resume */
 	isc_result_t origresult; /* result code at the point of call to hook */
 	query_ctx_t *saved_qctx; /* qctx at the point of call to hook */
-} ns_hook_resevent_t;
+	isc_loop_t  *loop;	 /* loopmgr loop to resume in */
+	isc_job_cb   cb;	 /* callback function */
+	void	    *arg;	 /* argument to pass to the callback */
+} ns_hook_resume_t;
 
 /*
  * Plugin API version
@@ -457,7 +458,7 @@ typedef struct ns_hook_resevent {
  * as well; if not, set NS_PLUGIN_AGE to 0.
  */
 #ifndef NS_PLUGIN_VERSION
-#define NS_PLUGIN_VERSION 1
+#define NS_PLUGIN_VERSION 2
 #define NS_PLUGIN_AGE	  0
 #endif /* ifndef NS_PLUGIN_VERSION */
 

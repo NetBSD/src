@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.3 2025/01/26 16:25:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,12 +18,13 @@
 #include <errno.h>
 
 #include <isc/condition.h>
+#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
 
 isc_result_t
-isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
+isc__condition_waituntil(pthread_cond_t *c, pthread_mutex_t *m, isc_time_t *t) {
 	int presult;
 	isc_result_t result;
 	struct timespec ts;
@@ -42,7 +43,7 @@ isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
 	if (result == ISC_R_RANGE) {
 		ts.tv_sec = INT_MAX;
 	} else if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	/*!
@@ -54,13 +55,13 @@ isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
 	do {
 		presult = pthread_cond_timedwait(c, m, &ts);
 		if (presult == 0) {
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		}
 		if (presult == ETIMEDOUT) {
-			return (ISC_R_TIMEDOUT);
+			return ISC_R_TIMEDOUT;
 		}
 	} while (presult == EINTR);
 
 	UNEXPECTED_SYSERROR(presult, "pthread_cond_timedwait()");
-	return (ISC_R_UNEXPECTED);
+	return ISC_R_UNEXPECTED;
 }

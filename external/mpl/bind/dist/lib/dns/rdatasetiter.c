@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.c,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.c,v 1.6 2025/01/26 16:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
 #include <dns/rdatasetiter.h>
 
 void
-dns_rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
+dns__rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp DNS__DB_FLARG) {
 	/*
 	 * Destroy '*iteratorp'.
 	 */
@@ -31,36 +31,36 @@ dns_rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 	REQUIRE(iteratorp != NULL);
 	REQUIRE(DNS_RDATASETITER_VALID(*iteratorp));
 
-	(*iteratorp)->methods->destroy(iteratorp);
+	(*iteratorp)->methods->destroy(iteratorp DNS__DB_FLARG_PASS);
 
 	ENSURE(*iteratorp == NULL);
 }
 
 isc_result_t
-dns_rdatasetiter_first(dns_rdatasetiter_t *iterator) {
+dns__rdatasetiter_first(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 	/*
 	 * Move the rdataset cursor to the first rdataset at the node (if any).
 	 */
 
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 
-	return (iterator->methods->first(iterator));
+	return iterator->methods->first(iterator DNS__DB_FLARG_PASS);
 }
 
 isc_result_t
-dns_rdatasetiter_next(dns_rdatasetiter_t *iterator) {
+dns__rdatasetiter_next(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 	/*
 	 * Move the rdataset cursor to the next rdataset at the node (if any).
 	 */
 
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 
-	return (iterator->methods->next(iterator));
+	return iterator->methods->next(iterator DNS__DB_FLARG_PASS);
 }
 
 void
-dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
-			 dns_rdataset_t *rdataset) {
+dns__rdatasetiter_current(dns_rdatasetiter_t *iterator,
+			  dns_rdataset_t *rdataset DNS__DB_FLARG) {
 	/*
 	 * Return the current rdataset.
 	 */
@@ -69,5 +69,5 @@ dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
 
-	iterator->methods->current(iterator, rdataset);
+	iterator->methods->current(iterator, rdataset DNS__DB_FLARG_PASS);
 }

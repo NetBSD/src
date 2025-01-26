@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.7 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.8 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <isc/heap.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/overflow.h>
 #include <isc/string.h> /* Required for memmove. */
 #include <isc/util.h>
 
@@ -116,8 +117,8 @@ isc_heap_destroy(isc_heap_t **heapp) {
 	REQUIRE(VALID_HEAP(heap));
 
 	if (heap->array != NULL) {
-		isc_mem_put(heap->mctx, heap->array,
-			    heap->size * sizeof(void *));
+		isc_mem_cput(heap->mctx, heap->array, heap->size,
+			     sizeof(void *));
 	}
 	heap->magic = 0;
 	isc_mem_putanddetach(&heap->mctx, heap, sizeof(*heap));
@@ -125,20 +126,17 @@ isc_heap_destroy(isc_heap_t **heapp) {
 
 static void
 resize(isc_heap_t *heap) {
-	void **new_array;
-	unsigned int new_size;
+	unsigned int new_size, new_bytes, old_bytes;
 
 	REQUIRE(VALID_HEAP(heap));
 
-	new_size = heap->size + heap->size_increment;
-	new_array = isc_mem_get(heap->mctx, new_size * sizeof(void *));
-	if (heap->array != NULL) {
-		memmove(new_array, heap->array, heap->size * sizeof(void *));
-		isc_mem_put(heap->mctx, heap->array,
-			    heap->size * sizeof(void *));
-	}
+	new_size = ISC_CHECKED_ADD(heap->size, heap->size_increment);
+	new_bytes = ISC_CHECKED_MUL(new_size, sizeof(void *));
+	old_bytes = ISC_CHECKED_MUL(heap->size, sizeof(void *));
+
 	heap->size = new_size;
-	heap->array = new_array;
+	heap->array = isc_mem_creget(heap->mctx, heap->array, old_bytes,
+				     new_bytes, sizeof(char));
 }
 
 static void
@@ -264,9 +262,9 @@ isc_heap_element(isc_heap_t *heap, unsigned int idx) {
 
 	heap_check(heap);
 	if (idx <= heap->last) {
-		return (heap->array[idx]);
+		return heap->array[idx];
 	}
-	return (NULL);
+	return NULL;
 }
 
 void

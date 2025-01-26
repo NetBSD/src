@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.10 2024/09/22 00:14:02 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.11 2025/01/26 16:25:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -153,7 +152,7 @@ main(int argc, char **argv) {
 	dns_log_setcontext(NULL);
 	dst_lib_destroy();
 	isc_mem_destroy(&mctx);
-	return (0);
+	return 0;
 }
 
 /*! \file */

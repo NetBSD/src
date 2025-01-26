@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.8 2024/02/21 22:52:47 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.9 2025/01/26 16:25:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,9 @@
 #pragma once
 
 /*! \file include/ns/stats.h */
+
+#include <isc/mem.h>
+#include <isc/stats.h>
 
 #include <ns/types.h>
 
@@ -111,7 +114,9 @@ enum {
 
 	ns_statscounter_updatequota = 67,
 
-	ns_statscounter_max = 68,
+	ns_statscounter_recurshighwater = 68,
+
+	ns_statscounter_max = 69,
 };
 
 void
@@ -120,10 +125,10 @@ ns_stats_attach(ns_stats_t *stats, ns_stats_t **statsp);
 void
 ns_stats_detach(ns_stats_t **statsp);
 
-isc_result_t
+void
 ns_stats_create(isc_mem_t *mctx, int ncounters, ns_stats_t **statsp);
 
-void
+isc_statscounter_t
 ns_stats_increment(ns_stats_t *stats, isc_statscounter_t counter);
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.c,v 1.9 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.10 2025/01/26 16:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,357 +18,323 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/async.h>
+#include <isc/loop.h>
+#include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/ratelimiter.h>
 #include <isc/refcount.h>
-#include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
 typedef enum {
-	isc_ratelimiter_stalled = 0,
-	isc_ratelimiter_ratelimited = 1,
-	isc_ratelimiter_idle = 2,
-	isc_ratelimiter_shuttingdown = 3
+	isc_ratelimiter_ratelimited = 0,
+	isc_ratelimiter_idle = 1,
+	isc_ratelimiter_shuttingdown = 2
 } isc_ratelimiter_state_t;
 
+#define RATELIMITER_MAGIC     ISC_MAGIC('R', 't', 'L', 'm')
+#define VALID_RATELIMITER(rl) ISC_MAGIC_VALID(rl, RATELIMITER_MAGIC)
+
 struct isc_ratelimiter {
+	int magic;
 	isc_mem_t *mctx;
-	isc_mutex_t lock;
+	isc_loop_t *loop;
 	isc_refcount_t references;
-	isc_task_t *task;
+	isc_mutex_t lock;
 	isc_timer_t *timer;
 	isc_interval_t interval;
 	uint32_t pertic;
 	bool pushpop;
 	isc_ratelimiter_state_t state;
-	isc_event_t shutdownevent;
-	ISC_LIST(isc_event_t) pending;
+	ISC_LIST(isc_rlevent_t) pending;
 };
 
-#define ISC_RATELIMITEREVENT_SHUTDOWN (ISC_EVENTCLASS_RATELIMITER + 1)
+static void
+isc__ratelimiter_tick(void *arg);
 
 static void
-ratelimiter_tick(isc_task_t *task, isc_event_t *event);
+isc__ratelimiter_start(void *arg);
 
 static void
-ratelimiter_shutdowncomplete(isc_task_t *task, isc_event_t *event);
+isc__ratelimiter_doshutdown(void *arg);
 
-isc_result_t
-isc_ratelimiter_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
-		       isc_task_t *task, isc_ratelimiter_t **ratelimiterp) {
-	isc_result_t result;
-	isc_ratelimiter_t *rl;
-	INSIST(ratelimiterp != NULL && *ratelimiterp == NULL);
+void
+isc_ratelimiter_create(isc_loop_t *loop, isc_ratelimiter_t **rlp) {
+	isc_ratelimiter_t *rl = NULL;
+	isc_mem_t *mctx;
+
+	REQUIRE(loop != NULL);
+	REQUIRE(rlp != NULL && *rlp == NULL);
+
+	mctx = isc_loop_getmctx(loop);
 
 	rl = isc_mem_get(mctx, sizeof(*rl));
 	*rl = (isc_ratelimiter_t){
-		.mctx = mctx,
-		.task = task,
 		.pertic = 1,
 		.state = isc_ratelimiter_idle,
+		.magic = RATELIMITER_MAGIC,
 	};
 
+	isc_mem_attach(mctx, &rl->mctx);
+	isc_loop_attach(loop, &rl->loop);
 	isc_refcount_init(&rl->references, 1);
 	isc_interval_set(&rl->interval, 0, 0);
 	ISC_LIST_INIT(rl->pending);
 
+	isc_timer_create(rl->loop, isc__ratelimiter_tick, rl, &rl->timer);
+
 	isc_mutex_init(&rl->lock);
 
-	result = isc_timer_create(timermgr, isc_timertype_inactive, NULL, NULL,
-				  rl->task, ratelimiter_tick, rl, &rl->timer);
-	if (result != ISC_R_SUCCESS) {
-		goto free_mutex;
-	}
-
-	/*
-	 * Increment the reference count to indicate that we may
-	 * (soon) have events outstanding.
-	 */
-	isc_refcount_increment(&rl->references);
-
-	ISC_EVENT_INIT(&rl->shutdownevent, sizeof(isc_event_t), 0, NULL,
-		       ISC_RATELIMITEREVENT_SHUTDOWN,
-		       ratelimiter_shutdowncomplete, rl, rl, NULL, NULL);
-
-	*ratelimiterp = rl;
-	return (ISC_R_SUCCESS);
-
-free_mutex:
-	isc_refcount_decrementz(&rl->references);
-	isc_refcount_destroy(&rl->references);
-	isc_mutex_destroy(&rl->lock);
-	isc_mem_put(mctx, rl, sizeof(*rl));
-	return (result);
+	*rlp = rl;
 }
 
-isc_result_t
-isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, isc_interval_t *interval) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	REQUIRE(rl != NULL);
+void
+isc_ratelimiter_setinterval(isc_ratelimiter_t *restrict rl,
+			    const isc_interval_t *const interval) {
+	REQUIRE(VALID_RATELIMITER(rl));
 	REQUIRE(interval != NULL);
 
 	LOCK(&rl->lock);
 	rl->interval = *interval;
-	/*
-	 * If the timer is currently running, change its rate.
-	 */
-	if (rl->state == isc_ratelimiter_ratelimited) {
-		result = isc_timer_reset(rl->timer, isc_timertype_ticker, NULL,
-					 &rl->interval, false);
-	}
+	/* The interval will be adjusted on the next tick */
 	UNLOCK(&rl->lock);
-	return (result);
 }
 
 void
-isc_ratelimiter_setpertic(isc_ratelimiter_t *rl, uint32_t pertic) {
-	REQUIRE(rl != NULL);
+isc_ratelimiter_setpertic(isc_ratelimiter_t *restrict rl,
+			  const uint32_t pertic) {
+	REQUIRE(VALID_RATELIMITER(rl));
+	REQUIRE(pertic > 0);
 
-	if (pertic == 0) {
-		pertic = 1;
-	}
+	LOCK(&rl->lock);
 	rl->pertic = pertic;
+	UNLOCK(&rl->lock);
 }
 
 void
-isc_ratelimiter_setpushpop(isc_ratelimiter_t *rl, bool pushpop) {
-	REQUIRE(rl != NULL);
-
-	rl->pushpop = pushpop;
-}
-
-isc_result_t
-isc_ratelimiter_enqueue(isc_ratelimiter_t *rl, isc_task_t *task,
-			isc_event_t **eventp) {
-	isc_result_t result = ISC_R_SUCCESS;
-	isc_event_t *ev;
-
-	REQUIRE(rl != NULL);
-	REQUIRE(task != NULL);
-	REQUIRE(eventp != NULL && *eventp != NULL);
-	ev = *eventp;
-	REQUIRE(ev->ev_sender == NULL);
+isc_ratelimiter_setpushpop(isc_ratelimiter_t *restrict rl, const bool pushpop) {
+	REQUIRE(VALID_RATELIMITER(rl));
 
 	LOCK(&rl->lock);
-	if (rl->state == isc_ratelimiter_ratelimited ||
-	    rl->state == isc_ratelimiter_stalled)
-	{
-		ev->ev_sender = task;
-		*eventp = NULL;
-		if (rl->pushpop) {
-			ISC_LIST_PREPEND(rl->pending, ev, ev_ratelink);
-		} else {
-			ISC_LIST_APPEND(rl->pending, ev, ev_ratelink);
-		}
-	} else if (rl->state == isc_ratelimiter_idle) {
-		result = isc_timer_reset(rl->timer, isc_timertype_ticker, NULL,
-					 &rl->interval, false);
-		if (result == ISC_R_SUCCESS) {
-			ev->ev_sender = task;
-			rl->state = isc_ratelimiter_ratelimited;
-		}
-	} else {
-		INSIST(rl->state == isc_ratelimiter_shuttingdown);
-		result = ISC_R_SHUTTINGDOWN;
+	rl->pushpop = pushpop;
+	UNLOCK(&rl->lock);
+}
+
+static void
+isc__ratelimiter_start(void *arg) {
+	isc_ratelimiter_t *rl = arg;
+	isc_interval_t interval;
+
+	REQUIRE(VALID_RATELIMITER(rl));
+
+	LOCK(&rl->lock);
+	switch (rl->state) {
+	case isc_ratelimiter_ratelimited:
+		/* The first tick happens immediately */
+		isc_interval_set(&interval, 0, 0);
+		isc_timer_start(rl->timer, isc_timertype_once, &interval);
+		break;
+	case isc_ratelimiter_shuttingdown:
+		/* The ratelimiter is shutting down */
+		break;
+	case isc_ratelimiter_idle:
+		/*
+		 * This could happen if we are changing the interval on the
+		 * ratelimiter, but all the events were processed and the timer
+		 * was stopped before the new interval could be applied.
+		 */
+		break;
+	default:
+		UNREACHABLE();
 	}
 	UNLOCK(&rl->lock);
-	if (*eventp != NULL && result == ISC_R_SUCCESS) {
-		isc_task_send(task, eventp);
-	}
-	return (result);
+	isc_ratelimiter_detach(&rl);
 }
 
 isc_result_t
-isc_ratelimiter_dequeue(isc_ratelimiter_t *rl, isc_event_t *event) {
+isc_ratelimiter_enqueue(isc_ratelimiter_t *restrict rl,
+			isc_loop_t *restrict loop, isc_job_cb cb, void *arg,
+			isc_rlevent_t **rlep) {
+	isc_result_t result = ISC_R_SUCCESS;
+	isc_rlevent_t *rle = NULL;
+
+	REQUIRE(VALID_RATELIMITER(rl));
+	REQUIRE(loop != NULL);
+	REQUIRE(rlep != NULL && *rlep == NULL);
+
+	LOCK(&rl->lock);
+	switch (rl->state) {
+	case isc_ratelimiter_shuttingdown:
+		result = ISC_R_SHUTTINGDOWN;
+		break;
+	case isc_ratelimiter_idle:
+		/* Start the ratelimiter */
+		isc_ratelimiter_ref(rl);
+		isc_async_run(rl->loop, isc__ratelimiter_start, rl);
+		rl->state = isc_ratelimiter_ratelimited;
+		FALLTHROUGH;
+	case isc_ratelimiter_ratelimited:
+		rle = isc_mem_get(isc_loop_getmctx(loop), sizeof(*rle));
+		*rle = (isc_rlevent_t){
+			.cb = cb,
+			.arg = arg,
+			.link = ISC_LINK_INITIALIZER,
+		};
+		isc_loop_attach(loop, &rle->loop);
+		isc_ratelimiter_attach(rl, &rle->rl);
+
+		if (rl->pushpop) {
+			ISC_LIST_PREPEND(rl->pending, rle, link);
+		} else {
+			ISC_LIST_APPEND(rl->pending, rle, link);
+		}
+		*rlep = rle;
+		break;
+	default:
+		UNREACHABLE();
+	}
+	UNLOCK(&rl->lock);
+	return result;
+}
+
+isc_result_t
+isc_ratelimiter_dequeue(isc_ratelimiter_t *restrict rl, isc_rlevent_t **rlep) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(rl != NULL);
-	REQUIRE(event != NULL);
+	REQUIRE(rlep != NULL);
 
 	LOCK(&rl->lock);
-	if (ISC_LINK_LINKED(event, ev_ratelink)) {
-		ISC_LIST_UNLINK(rl->pending, event, ev_ratelink);
-		event->ev_sender = NULL;
+	if (ISC_LINK_LINKED(*rlep, link)) {
+		ISC_LIST_UNLINK(rl->pending, *rlep, link);
+		isc_rlevent_free(rlep);
 	} else {
 		result = ISC_R_NOTFOUND;
 	}
 	UNLOCK(&rl->lock);
-	return (result);
+	return result;
 }
 
 static void
-ratelimiter_tick(isc_task_t *task, isc_event_t *event) {
-	isc_ratelimiter_t *rl = (isc_ratelimiter_t *)event->ev_arg;
-	isc_event_t *p;
+isc__ratelimiter_tick(void *arg) {
+	isc_ratelimiter_t *rl = (isc_ratelimiter_t *)arg;
+	isc_rlevent_t *rle = NULL;
 	uint32_t pertic;
+	ISC_LIST(isc_rlevent_t) pending;
 
-	UNUSED(task);
+	REQUIRE(VALID_RATELIMITER(rl));
 
-	isc_event_free(&event);
+	ISC_LIST_INIT(pending);
+
+	LOCK(&rl->lock);
+
+	REQUIRE(rl->timer != NULL);
+
+	if (rl->state == isc_ratelimiter_shuttingdown) {
+		INSIST(EMPTY(rl->pending));
+		goto unlock;
+	}
 
 	pertic = rl->pertic;
 	while (pertic != 0) {
+		rle = ISC_LIST_HEAD(rl->pending);
+		if (rle != NULL) {
+			/* There is work to do.  Let's do it after unlocking. */
+			ISC_LIST_UNLINK(rl->pending, rle, link);
+			ISC_LIST_APPEND(pending, rle, link);
+		} else {
+			/*
+			 * We processed all the scheduled work, but there's a
+			 * room for at least one more event (we haven't consumed
+			 * all of the "pertick"), so we can stop the ratelimiter
+			 * now, and don't worry about isc_ratelimiter_enqueue()
+			 * sending an extra event immediately.
+			 */
+			rl->state = isc_ratelimiter_idle;
+			break;
+		}
 		pertic--;
-		LOCK(&rl->lock);
-		p = ISC_LIST_HEAD(rl->pending);
-		if (p != NULL) {
-			/*
-			 * There is work to do.  Let's do it after unlocking.
-			 */
-			ISC_LIST_UNLINK(rl->pending, p, ev_ratelink);
-		} else {
-			/*
-			 * No work left to do.  Stop the timer so that we don't
-			 * waste resources by having it fire periodically.
-			 */
-			isc_result_t result = isc_timer_reset(
-				rl->timer, isc_timertype_inactive, NULL, NULL,
-				false);
-			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-			rl->state = isc_ratelimiter_idle;
-			pertic = 0; /* Force the loop to exit. */
-		}
-		UNLOCK(&rl->lock);
-		if (p != NULL) {
-			isc_task_t *evtask = p->ev_sender;
-			isc_task_send(evtask, &p);
-		}
-		INSIST(p == NULL);
+	}
+
+	if (rl->state != isc_ratelimiter_idle) {
+		/* Reschedule the timer */
+		isc_timer_start(rl->timer, isc_timertype_once, &rl->interval);
+	}
+unlock:
+	UNLOCK(&rl->lock);
+
+	while ((rle = ISC_LIST_HEAD(pending)) != NULL) {
+		ISC_LIST_UNLINK(pending, rle, link);
+		isc_async_run(rle->loop, rle->cb, rle->arg);
 	}
 }
 
 void
-isc_ratelimiter_shutdown(isc_ratelimiter_t *rl) {
-	isc_event_t *ev;
-	isc_task_t *task;
-	isc_result_t result;
+isc__ratelimiter_doshutdown(void *arg) {
+	isc_ratelimiter_t *rl = arg;
 
-	REQUIRE(rl != NULL);
+	REQUIRE(VALID_RATELIMITER(rl));
 
 	LOCK(&rl->lock);
-	rl->state = isc_ratelimiter_shuttingdown;
-	(void)isc_timer_reset(rl->timer, isc_timertype_inactive, NULL, NULL,
-			      false);
-	while ((ev = ISC_LIST_HEAD(rl->pending)) != NULL) {
-		task = ev->ev_sender;
-		ISC_LIST_UNLINK(rl->pending, ev, ev_ratelink);
-		ev->ev_attributes |= ISC_EVENTATTR_CANCELED;
-		isc_task_send(task, &ev);
-	}
-	task = NULL;
-	isc_task_attach(rl->task, &task);
+	INSIST(rl->state == isc_ratelimiter_shuttingdown);
+	INSIST(EMPTY(rl->pending));
 
-	result = isc_timer_reset(rl->timer, isc_timertype_inactive, NULL, NULL,
-				 true);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	isc_timer_stop(rl->timer);
 	isc_timer_destroy(&rl->timer);
-
-	/*
-	 * Send an event to our task.  The delivery of this event
-	 * indicates that no more timer events will be delivered.
-	 */
-	ev = &rl->shutdownevent;
-	isc_task_send(rl->task, &ev);
-
+	isc_loop_detach(&rl->loop);
 	UNLOCK(&rl->lock);
-}
-
-static void
-ratelimiter_shutdowncomplete(isc_task_t *task, isc_event_t *event) {
-	isc_ratelimiter_t *rl = (isc_ratelimiter_t *)event->ev_arg;
-
-	UNUSED(task);
-
 	isc_ratelimiter_detach(&rl);
-	isc_task_detach(&task);
+}
+
+void
+isc_ratelimiter_shutdown(isc_ratelimiter_t *restrict rl) {
+	isc_rlevent_t *rle = NULL;
+	ISC_LIST(isc_rlevent_t) pending;
+
+	REQUIRE(VALID_RATELIMITER(rl));
+
+	ISC_LIST_INIT(pending);
+
+	LOCK(&rl->lock);
+	if (rl->state != isc_ratelimiter_shuttingdown) {
+		rl->state = isc_ratelimiter_shuttingdown;
+		ISC_LIST_MOVE(pending, rl->pending);
+		isc_ratelimiter_ref(rl);
+		isc_async_run(rl->loop, isc__ratelimiter_doshutdown, rl);
+	}
+	UNLOCK(&rl->lock);
+
+	while ((rle = ISC_LIST_HEAD(pending)) != NULL) {
+		ISC_LIST_UNLINK(pending, rle, link);
+		rle->canceled = true;
+		isc_async_run(rl->loop, rle->cb, rle->arg);
+	}
 }
 
 static void
-ratelimiter_free(isc_ratelimiter_t *rl) {
-	isc_refcount_destroy(&rl->references);
+ratelimiter_destroy(isc_ratelimiter_t *restrict rl) {
+	LOCK(&rl->lock);
+	REQUIRE(rl->state == isc_ratelimiter_shuttingdown);
+	UNLOCK(&rl->lock);
+
 	isc_mutex_destroy(&rl->lock);
-	isc_mem_put(rl->mctx, rl, sizeof(*rl));
+	isc_mem_putanddetach(&rl->mctx, rl, sizeof(*rl));
 }
 
 void
-isc_ratelimiter_attach(isc_ratelimiter_t *source, isc_ratelimiter_t **target) {
-	REQUIRE(source != NULL);
-	REQUIRE(target != NULL && *target == NULL);
+isc_rlevent_free(isc_rlevent_t **rlep) {
+	REQUIRE(rlep != NULL && *rlep != NULL);
 
-	isc_refcount_increment(&source->references);
+	isc_rlevent_t *rle = *rlep;
+	isc_mem_t *mctx = isc_loop_getmctx(rle->loop);
 
-	*target = source;
+	*rlep = NULL;
+
+	isc_loop_detach(&rle->loop);
+	isc_ratelimiter_detach(&rle->rl);
+	isc_mem_put(mctx, rle, sizeof(*rle));
 }
 
-void
-isc_ratelimiter_detach(isc_ratelimiter_t **rlp) {
-	isc_ratelimiter_t *rl;
-
-	REQUIRE(rlp != NULL && *rlp != NULL);
-
-	rl = *rlp;
-	*rlp = NULL;
-
-	if (isc_refcount_decrement(&rl->references) == 1) {
-		ratelimiter_free(rl);
-	}
-}
-
-isc_result_t
-isc_ratelimiter_stall(isc_ratelimiter_t *rl) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	REQUIRE(rl != NULL);
-
-	LOCK(&rl->lock);
-	switch (rl->state) {
-	case isc_ratelimiter_shuttingdown:
-		result = ISC_R_SHUTTINGDOWN;
-		break;
-	case isc_ratelimiter_ratelimited:
-		result = isc_timer_reset(rl->timer, isc_timertype_inactive,
-					 NULL, NULL, false);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
-		FALLTHROUGH;
-	case isc_ratelimiter_idle:
-	case isc_ratelimiter_stalled:
-		rl->state = isc_ratelimiter_stalled;
-		break;
-	}
-	UNLOCK(&rl->lock);
-	return (result);
-}
-
-isc_result_t
-isc_ratelimiter_release(isc_ratelimiter_t *rl) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	REQUIRE(rl != NULL);
-
-	LOCK(&rl->lock);
-	switch (rl->state) {
-	case isc_ratelimiter_shuttingdown:
-		result = ISC_R_SHUTTINGDOWN;
-		break;
-	case isc_ratelimiter_stalled:
-		if (!ISC_LIST_EMPTY(rl->pending)) {
-			result = isc_timer_reset(rl->timer,
-						 isc_timertype_ticker, NULL,
-						 &rl->interval, false);
-			if (result == ISC_R_SUCCESS) {
-				rl->state = isc_ratelimiter_ratelimited;
-			}
-		} else {
-			rl->state = isc_ratelimiter_idle;
-		}
-		break;
-	case isc_ratelimiter_ratelimited:
-	case isc_ratelimiter_idle:
-		break;
-	}
-	UNLOCK(&rl->lock);
-	return (result);
-}
+ISC_REFCOUNT_IMPL(isc_ratelimiter, ratelimiter_destroy);

@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.9 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.10 2025/01/26 16:25:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -106,13 +106,16 @@
 #include <stdbool.h>
 
 #include <isc/assertions.h>
+#include <isc/endian.h>
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/list.h>
 #include <isc/magic.h>
+#include <isc/mem.h>
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -129,7 +132,7 @@ ISC_LANG_BEGINDECLS
  * space in a buffer, we round the allocated buffer length up to the
  * nearest * multiple of this value.
  */
-#define ISC_BUFFER_INCR 2048
+#define ISC_BUFFER_INCR 512
 
 /*
  * The following macros MUST be used only on valid buffers.  It is the
@@ -179,21 +182,22 @@ struct isc_buffer {
 	unsigned int current;
 	unsigned int active;
 	/*@}*/
+	/*! The extra bytes allocated for static buffer */
+	unsigned int extra;
+	bool	     dynamic;
 	/*! linkable */
 	ISC_LINK(isc_buffer_t) link;
 	/*! private internal elements */
 	isc_mem_t *mctx;
-	/* automatically realloc buffer at put* */
-	bool autore;
 };
 
 /***
  *** Functions
  ***/
 
-void
-isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
-		    unsigned int length);
+static inline void
+isc_buffer_allocate(isc_mem_t	      *mctx, isc_buffer_t **restrict dynbuffer,
+		    const unsigned int length);
 /*!<
  * \brief Allocate a dynamic linkable buffer which has "length" bytes in the
  * data region.
@@ -207,29 +211,31 @@ isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
  *\li	Changing the buffer's length field is not permitted.
  */
 
-isc_result_t
-isc_buffer_reserve(isc_buffer_t **dynbuffer, unsigned int size);
+static inline void
+isc_buffer_setmctx(isc_buffer_t *restrict b, isc_mem_t *mctx);
+static inline void
+isc_buffer_clearmctx(isc_buffer_t *restrict b);
+/*!<
+ * \brief Sets/Clears the internal memory context, so isc_buffer_reserve() can
+ * be used on previously 'static' buffer.
+ */
+
+static inline isc_result_t
+isc_buffer_reserve(isc_buffer_t *restrict dynbuffer, const unsigned int size);
 /*!<
  * \brief Make "size" bytes of space available in the buffer. The buffer
  * pointer may move when you call this function.
  *
  * Requires:
- *\li	"dynbuffer" is not NULL.
- *
- *\li	"*dynbuffer" is a valid dynamic buffer.
+ *\li	"dynbuffer" is a valid dynamic buffer.
  *
  * Returns:
  *\li	ISC_R_SUCCESS		- success
  *\li	ISC_R_NOMEMORY		- no memory available
- *
- * Ensures:
- *\li	"*dynbuffer" will be valid on return and will contain all the
- *	original data. However, the buffer pointer may be moved during
- *	reallocation.
  */
 
-void
-isc_buffer_free(isc_buffer_t **dynbuffer);
+static inline void
+isc_buffer_free(isc_buffer_t **restrict dynbuffer);
 /*!<
  * \brief Release resources allocated for a dynamic buffer.
  *
@@ -244,11 +250,12 @@ isc_buffer_free(isc_buffer_t **dynbuffer);
  *	isc_buffer_allocate().
  */
 
-void
-isc__buffer_initnull(isc_buffer_t *b);
+static inline void
+isc_buffer_initnull(isc_buffer_t *restrict b);
 
-void
-isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length);
+static inline void
+isc_buffer_reinit(isc_buffer_t *restrict b, void *base,
+		  const unsigned int length);
 /*!<
  * \brief Make 'b' refer to the 'length'-byte region starting at base.
  * Any existing data will be copied.
@@ -261,18 +268,10 @@ isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length);
  *
  */
 
-void
-isc_buffer_setautorealloc(isc_buffer_t *b, bool enable);
-/*!<
- * \brief Enable or disable autoreallocation on 'b'.
- *
- * Requires:
- *\li	'b' is a valid dynamic buffer (b->mctx != NULL).
- *
- */
-
-void
-isc_buffer_compact(isc_buffer_t *b);
+static inline void
+isc_buffer_trycompact(isc_buffer_t *restrict b);
+static inline void
+isc_buffer_compact(isc_buffer_t *restrict b);
 /*!<
  * \brief Compact the used region by moving the remaining region so it occurs
  * at the start of the buffer.  The used region is shrunk by the size of
@@ -291,106 +290,145 @@ isc_buffer_compact(isc_buffer_t *b);
  *	are those of the remaining region (as it was before the call).
  */
 
-uint8_t
-isc_buffer_getuint8(isc_buffer_t *b);
+static inline isc_result_t
+isc_buffer_peekuint8(const isc_buffer_t *restrict b, uint8_t *valp);
+static inline uint8_t
+isc_buffer_getuint8(isc_buffer_t *restrict b);
+static inline void
+isc_buffer_putuint8(isc_buffer_t *restrict b, const uint8_t val);
 /*!<
- * \brief Read an unsigned 8-bit integer from 'b' and return it.
+ * \brief Peek/Read/Write an unsigned 8-bit integer from/to 'b'.
  *
  * Requires:
  *
  *\li	'b' is a valid buffer.
  *
- *\li	The length of the remaining region of 'b' is at least 1.
+ *\li	The length of the available region of 'b' is at least 1
+ *	or the buffer has autoreallocation enabled.
  *
- * Ensures:
+ * Ensures (for Read):
  *
  *\li	The current pointer in 'b' is advanced by 1.
  *
- * Returns:
+ * Ensures (for Write):
  *
- *\li	A 8-bit unsigned integer.
+ *\li	The used pointer in 'b' is advanced by 1.
+ *
+ * Returns (for Peek and Read):
+ *
+ *\li	A 8-bit unsigned integer. (peek and get)
  */
 
-uint16_t
-isc_buffer_getuint16(isc_buffer_t *b);
+static inline isc_result_t
+isc_buffer_peekuint16(const isc_buffer_t *restrict b, uint16_t *valp);
+static inline uint16_t
+isc_buffer_getuint16(isc_buffer_t *restrict b);
+static inline void
+isc_buffer_putuint16(isc_buffer_t *restrict b, const uint16_t val);
 /*!<
- * \brief Read an unsigned 16-bit integer in network byte order from 'b',
- * convert it to host byte order, and return it.
+ * \brief Peek/Read/Write an unsigned 16-bit integer in network byte order
+ * from/to 'b', convert it to/from host byte order..
  *
  * Requires:
  *
  *\li	'b' is a valid buffer.
  *
- *\li	The length of the remaining region of 'b' is at least 2.
+ *\li	The length of the available region of 'b' is at least 2
+ *	or the buffer has autoreallocation enabled.
  *
- * Ensures:
+ * Ensures (for Read):
  *
  *\li	The current pointer in 'b' is advanced by 2.
  *
- * Returns:
+ * Ensures (for Write):
+ *
+ *\li	The used pointer in 'b' is advanced by 2.
+ *
+ * Returns (for Peek and Read):
  *
  *\li	A 16-bit unsigned integer.
  */
 
-uint32_t
-isc_buffer_getuint32(isc_buffer_t *b);
+static inline isc_result_t
+isc_buffer_peekuint32(const isc_buffer_t *restrict b, uint32_t *restrict valp);
+static inline uint32_t
+isc_buffer_getuint32(isc_buffer_t *restrict b);
+static inline void
+isc_buffer_putuint32(isc_buffer_t *restrict b, uint32_t const val);
 /*!<
- * \brief Read an unsigned 32-bit integer in network byte order from 'b',
- * convert it to host byte order, and return it.
+ * \brief Peek/Read/Write an unsigned 32-bit integer in network byte order
+ * from/to 'b', convert it to/from host byte order.
  *
  * Requires:
  *
  *\li	'b' is a valid buffer.
  *
- *\li	The length of the remaining region of 'b' is at least 4.
+ *\li	The length of the available region of 'b' is at least 4
+ *	or the buffer has autoreallocation enabled.
  *
- * Ensures:
+ * Ensures (for Read):
  *
  *\li	The current pointer in 'b' is advanced by 4.
  *
- * Returns:
+ * Ensures (for Write):
+ *
+ *\li	The used pointer in 'b' is advanced by 4.
+ *
+ * Returns (for Peek and Read):
  *
  *\li	A 32-bit unsigned integer.
  */
 
-uint64_t
-isc_buffer_getuint48(isc_buffer_t *b);
+static inline isc_result_t
+isc_buffer_peekuint48(const isc_buffer_t *restrict b, uint64_t *valp);
+static inline uint64_t
+isc_buffer_getuint48(isc_buffer_t *restrict b);
+static inline void
+isc_buffer_putuint48(isc_buffer_t *restrict b, const uint64_t val);
 /*!<
- * \brief Read an unsigned 48-bit integer in network byte order from 'b',
- * convert it to host byte order, and return it.
+ * \brief Peek/Read/Write an unsigned 48-bit integer in network byte order
+ * from/to 'b', convert it to/from host byte order.
  *
  * Requires:
  *
  *\li	'b' is a valid buffer.
  *
- *\li	The length of the remaining region of 'b' is at least 6.
+ *\li	The length of the available region of 'b' is at least 6
+ *	or the buffer has autoreallocation enabled.
  *
- * Ensures:
+ * Ensures (for Read):
  *
  *\li	The current pointer in 'b' is advanced by 6.
  *
- * Returns:
+ * Ensures (for Write):
+ *
+ *\li	The used pointer in 'b' is advanced by 6.
+ *
+ * Returns (for Peek and Read):
  *
  *\li	A 48-bit unsigned integer (stored in a 64-bit integer).
  */
 
-void
-isc_buffer_putdecint(isc_buffer_t *b, int64_t v);
+static inline void
+isc_buffer_putmem(isc_buffer_t *restrict b, const unsigned char *restrict base,
+		  const unsigned int length);
 /*!<
- * \brief Put decimal representation of 'v' in b
+ * \brief Copy 'length' bytes of memory at 'base' into 'b'.
  *
  * Requires:
  *\li	'b' is a valid buffer.
  *
- *\li	The length of the available region of 'b' is at least strlen(dec('v'))
+ *\li	'base' points to 'length' bytes of valid memory.
+ *
+ *\li	The length of the available region of 'b' is at least 'length'
  *	or the buffer has autoreallocation enabled.
  *
  * Ensures:
- *\li	The used pointer in 'b' is advanced by strlen(dec('v')).
+ *\li	The used pointer in 'b' is advanced by 'length'.
  */
 
-isc_result_t
-isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
+static inline isc_result_t
+isc_buffer_copyregion(isc_buffer_t *restrict b, const isc_region_t *restrict r);
 /*!<
  * \brief Copy the contents of 'r' into 'b'.
  *
@@ -409,8 +447,9 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
  *					big enough.
  */
 
-isc_result_t
-isc_buffer_dup(isc_mem_t *mctx, isc_buffer_t **dstp, const isc_buffer_t *src);
+static inline isc_result_t
+isc_buffer_dup(isc_mem_t *mctx, isc_buffer_t **restrict dstp,
+	       const isc_buffer_t *restrict src);
 /*!<
  * \brief Allocate 'dst' and copy used contents of 'src' into it.
  *
@@ -422,8 +461,8 @@ isc_buffer_dup(isc_mem_t *mctx, isc_buffer_t **dstp, const isc_buffer_t *src);
  *\li	ISC_R_SUCCESS
  */
 
-isc_result_t
-isc_buffer_printf(isc_buffer_t *b, const char *format, ...)
+static inline isc_result_t
+isc_buffer_printf(isc_buffer_t *restrict b, const char *restrict format, ...)
 	ISC_FORMAT_PRINTF(2, 3);
 /*!<
  * \brief Append a formatted string to the used region of 'b'.
@@ -487,13 +526,16 @@ isc_buffer_printf(isc_buffer_t *b, const char *format, ...)
  *\li	'base' is a pointer to a sequence of 'length' bytes.
  */
 static inline void
-isc_buffer_init(isc_buffer_t *b, void *base, unsigned int length) {
-	ISC_REQUIRE(b != NULL);
+isc_buffer_init(isc_buffer_t *restrict b, void *base,
+		const unsigned int length) {
+	REQUIRE(b != NULL);
 
-	*b = (isc_buffer_t){ .base = base,
-			     .length = length,
-			     .magic = ISC_BUFFER_MAGIC };
-	ISC_LINK_INIT(b, link);
+	*b = (isc_buffer_t){
+		.base = base,
+		.length = length,
+		.link = ISC_LINK_INITIALIZER,
+		.magic = ISC_BUFFER_MAGIC,
+	};
 }
 
 /*!
@@ -501,9 +543,11 @@ isc_buffer_init(isc_buffer_t *b, void *base, unsigned int length) {
  * This can later be grown as needed and swapped in place.
  */
 static inline void
-isc_buffer_initnull(isc_buffer_t *b) {
-	*b = (isc_buffer_t){ .magic = ISC_BUFFER_MAGIC };
-	ISC_LINK_INIT(b, link);
+isc_buffer_initnull(isc_buffer_t *restrict b) {
+	*b = (isc_buffer_t){
+		.link = ISC_LINK_INITIALIZER,
+		.magic = ISC_BUFFER_MAGIC,
+	};
 }
 
 /*!
@@ -536,17 +580,14 @@ isc_buffer_initnull(isc_buffer_t *b) {
  *	it will cause an assertion failure.
  */
 static inline void
-isc_buffer_invalidate(isc_buffer_t *b) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(!ISC_LINK_LINKED(b, link));
-	ISC_REQUIRE(b->mctx == NULL);
+isc_buffer_invalidate(isc_buffer_t *restrict b) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(!ISC_LINK_LINKED(b, link));
+	REQUIRE(b->mctx == NULL);
 
-	b->magic = 0;
-	b->base = NULL;
-	b->length = 0;
-	b->used = 0;
-	b->current = 0;
-	b->active = 0;
+	*b = (isc_buffer_t){
+		.magic = 0,
+	};
 }
 
 /*!
@@ -559,9 +600,9 @@ isc_buffer_invalidate(isc_buffer_t *b) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_region(isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_region(isc_buffer_t *restrict b, isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	r->base = b->base;
 	r->length = b->length;
@@ -577,9 +618,10 @@ isc_buffer_region(isc_buffer_t *b, isc_region_t *r) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_usedregion(const isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_usedregion(const isc_buffer_t *restrict b,
+		      isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	r->base = b->base;
 	r->length = b->used;
@@ -595,9 +637,9 @@ isc_buffer_usedregion(const isc_buffer_t *b, isc_region_t *r) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_availableregion(isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_availableregion(isc_buffer_t *restrict b, isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	r->base = isc_buffer_used(b);
 	r->length = isc_buffer_availablelength(b);
@@ -613,9 +655,9 @@ isc_buffer_availableregion(isc_buffer_t *b, isc_region_t *r) {
  *\li	used + n <= length
  */
 static inline void
-isc_buffer_add(isc_buffer_t *b, unsigned int n) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(b->used + n <= b->length);
+isc_buffer_add(isc_buffer_t *restrict b, const unsigned int n) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->used + n <= b->length);
 
 	b->used += n;
 }
@@ -630,9 +672,9 @@ isc_buffer_add(isc_buffer_t *b, unsigned int n) {
  *\li	used >= n
  */
 static inline void
-isc_buffer_subtract(isc_buffer_t *b, unsigned int n) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(b->used >= n);
+isc_buffer_subtract(isc_buffer_t *restrict b, const unsigned int n) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->used >= n);
 
 	b->used -= n;
 	if (b->current > b->used) {
@@ -655,8 +697,8 @@ isc_buffer_subtract(isc_buffer_t *b, unsigned int n) {
  *\li	used = 0
  */
 static inline void
-isc_buffer_clear(isc_buffer_t *b) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
+isc_buffer_clear(isc_buffer_t *restrict b) {
+	REQUIRE(ISC_BUFFER_VALID(b));
 
 	b->used = 0;
 	b->current = 0;
@@ -673,9 +715,9 @@ isc_buffer_clear(isc_buffer_t *b) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_consumedregion(isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_consumedregion(isc_buffer_t *restrict b, isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	r->base = b->base;
 	r->length = b->current;
@@ -691,9 +733,9 @@ isc_buffer_consumedregion(isc_buffer_t *b, isc_region_t *r) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_remainingregion(isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_remainingregion(isc_buffer_t *restrict b, isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	r->base = isc_buffer_current(b);
 	r->length = isc_buffer_remaininglength(b);
@@ -709,9 +751,9 @@ isc_buffer_remainingregion(isc_buffer_t *b, isc_region_t *r) {
  *\li	'r' points to a region structure.
  */
 static inline void
-isc_buffer_activeregion(isc_buffer_t *b, isc_region_t *r) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(r != NULL);
+isc_buffer_activeregion(isc_buffer_t *restrict b, isc_region_t *restrict r) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
 
 	if (b->current < b->active) {
 		r->base = isc_buffer_current(b);
@@ -732,9 +774,9 @@ isc_buffer_activeregion(isc_buffer_t *b, isc_region_t *r) {
  *\li	current + n <= used
  */
 static inline void
-isc_buffer_setactive(isc_buffer_t *b, unsigned int n) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(b->current + n <= b->used);
+isc_buffer_setactive(isc_buffer_t *restrict b, const unsigned int n) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->current + n <= b->used);
 
 	b->active = b->current + n;
 }
@@ -751,8 +793,8 @@ isc_buffer_setactive(isc_buffer_t *b, unsigned int n) {
  *\li	current == 0
  */
 static inline void
-isc_buffer_first(isc_buffer_t *b) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
+isc_buffer_first(isc_buffer_t *restrict b) {
+	REQUIRE(ISC_BUFFER_VALID(b));
 
 	b->current = 0;
 }
@@ -767,9 +809,9 @@ isc_buffer_first(isc_buffer_t *b) {
  *\li	current + n <= used
  */
 static inline void
-isc_buffer_forward(isc_buffer_t *b, unsigned int n) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(b->current + n <= b->used);
+isc_buffer_forward(isc_buffer_t *restrict b, const unsigned int n) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->current + n <= b->used);
 
 	b->current += n;
 }
@@ -784,203 +826,157 @@ isc_buffer_forward(isc_buffer_t *b, unsigned int n) {
  *\li	n <= current
  */
 static inline void
-isc_buffer_back(isc_buffer_t *b, unsigned int n) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(n <= b->current);
+isc_buffer_back(isc_buffer_t *restrict b, const unsigned int n) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(n <= b->current);
 
 	b->current -= n;
 }
 
-/*!
- * \brief Store an unsigned 8-bit integer from 'val' into 'b'.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	The length of the available region of 'b' is at least 1
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 1.
- */
-static inline void
-isc_buffer_putuint8(isc_buffer_t *b, uint8_t val) {
-	unsigned char *cp;
-
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, 1) == ISC_R_SUCCESS);
+#define ISC_BUFFER_PEEK_CHECK(b, s)                 \
+	{                                           \
+		REQUIRE(ISC_BUFFER_VALID(b));       \
+		if ((b)->used - (b)->current < s) { \
+			return (ISC_R_NOMORE);      \
+		}                                   \
 	}
 
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= 1U);
+static inline isc_result_t
+isc_buffer_peekuint8(const isc_buffer_t *restrict b, uint8_t *valp) {
+	ISC_BUFFER_PEEK_CHECK(b, sizeof(*valp));
 
-	cp = isc_buffer_used(b);
-	b->used++;
+	uint8_t *cp = isc_buffer_current(b);
+	SET_IF_NOT_NULL(valp, (uint8_t)(cp[0]));
+	return ISC_R_SUCCESS;
+}
+
+static inline uint8_t
+isc_buffer_getuint8(isc_buffer_t *restrict b) {
+	uint8_t	     val = 0;
+	isc_result_t result = isc_buffer_peekuint8(b, &val);
+	ENSURE(result == ISC_R_SUCCESS);
+	b->current += sizeof(val);
+	return val;
+}
+
+#define ISC_BUFFER_PUT_RESERVE(b, v, s)                                 \
+	{                                                               \
+		REQUIRE(ISC_BUFFER_VALID(b));                           \
+                                                                        \
+		if (b->mctx) {                                          \
+			isc_result_t result = isc_buffer_reserve(b, s); \
+			ENSURE(result == ISC_R_SUCCESS);                \
+		}                                                       \
+                                                                        \
+		REQUIRE(isc_buffer_availablelength(b) >= s);            \
+	}
+
+static inline void
+isc_buffer_putuint8(isc_buffer_t *restrict b, const uint8_t val) {
+	ISC_BUFFER_PUT_RESERVE(b, val, sizeof(val));
+
+	uint8_t *cp = isc_buffer_used(b);
+	b->used += sizeof(val);
 	cp[0] = val;
 }
 
-/*!
- * \brief Store an unsigned 16-bit integer in host byte order from 'val'
- * into 'b' in network byte order.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	The length of the available region of 'b' is at least 2
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 2.
- */
-static inline void
-isc_buffer_putuint16(isc_buffer_t *b, uint16_t val) {
-	unsigned char *cp;
+static inline isc_result_t
+isc_buffer_peekuint16(const isc_buffer_t *restrict b, uint16_t *valp) {
+	ISC_BUFFER_PEEK_CHECK(b, sizeof(*valp));
 
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
+	uint8_t *cp = isc_buffer_current(b);
 
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, 2) == ISC_R_SUCCESS);
-	}
-
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= 2U);
-
-	cp = isc_buffer_used(b);
-	b->used += 2;
-	cp[0] = (unsigned char)(val >> 8);
-	cp[1] = (unsigned char)val;
+	SET_IF_NOT_NULL(valp, ISC_U8TO16_BE(cp));
+	return ISC_R_SUCCESS;
 }
 
-/*!
- * Store an unsigned 24-bit integer in host byte order from 'val'
- * into 'b' in network byte order.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	The length of the available region of 'b' is at least 3
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 3.
- */
-static inline void
-isc_buffer_putuint24(isc_buffer_t *b, uint32_t val) {
-	unsigned char *cp;
-
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, 3) == ISC_R_SUCCESS);
-	}
-
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= 3U);
-
-	cp = isc_buffer_used(b);
-	b->used += 3;
-	cp[0] = (unsigned char)(val >> 16);
-	cp[1] = (unsigned char)(val >> 8);
-	cp[2] = (unsigned char)val;
+static inline uint16_t
+isc_buffer_getuint16(isc_buffer_t *restrict b) {
+	uint16_t     val = 0;
+	isc_result_t result = isc_buffer_peekuint16(b, &val);
+	ENSURE(result == ISC_R_SUCCESS);
+	b->current += sizeof(val);
+	return val;
 }
 
-/*!
- * \brief Store an unsigned 32-bit integer in host byte order from 'val'
- * into 'b' in network byte order.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	The length of the available region of 'b' is at least 4
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 4.
- */
 static inline void
-isc_buffer_putuint32(isc_buffer_t *b, uint32_t val) {
-	unsigned char *cp;
+isc_buffer_putuint16(isc_buffer_t *restrict b, const uint16_t val) {
+	ISC_BUFFER_PUT_RESERVE(b, val, sizeof(val));
 
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, 4) == ISC_R_SUCCESS);
-	}
-
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= 4U);
-
-	cp = isc_buffer_used(b);
-	b->used += 4;
-	cp[0] = (unsigned char)(val >> 24);
-	cp[1] = (unsigned char)(val >> 16);
-	cp[2] = (unsigned char)(val >> 8);
-	cp[3] = (unsigned char)val;
+	uint8_t *cp = isc_buffer_used(b);
+	b->used += sizeof(val);
+	ISC_U16TO8_BE(cp, val);
 }
 
-/*!
- * \brief Store an unsigned 48-bit integer in host byte order from 'val'
- * into 'b' in network byte order.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	The length of the available region of 'b' is at least 6
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 6.
- */
+static inline isc_result_t
+isc_buffer_peekuint32(const isc_buffer_t *restrict b, uint32_t *valp) {
+	ISC_BUFFER_PEEK_CHECK(b, sizeof(*valp));
+
+	uint8_t *cp = isc_buffer_current(b);
+
+	SET_IF_NOT_NULL(valp, ISC_U8TO32_BE(cp));
+	return ISC_R_SUCCESS;
+}
+
+uint32_t
+isc_buffer_getuint32(isc_buffer_t *restrict b) {
+	uint32_t     val = 0;
+	isc_result_t result = isc_buffer_peekuint32(b, &val);
+	ENSURE(result == ISC_R_SUCCESS);
+	b->current += sizeof(val);
+	return val;
+}
+
 static inline void
-isc_buffer_putuint48(isc_buffer_t *b, uint64_t val) {
-	unsigned char *cp = NULL;
+isc_buffer_putuint32(isc_buffer_t *restrict b, const uint32_t val) {
+	ISC_BUFFER_PUT_RESERVE(b, val, sizeof(val));
 
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
+	uint8_t *cp = isc_buffer_used(b);
+	b->used += sizeof(val);
 
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, 6) == ISC_R_SUCCESS);
-	}
+	ISC_U32TO8_BE(cp, val);
+}
 
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= 6U);
+static inline isc_result_t
+isc_buffer_peekuint48(const isc_buffer_t *restrict b, uint64_t *valp) {
+	ISC_BUFFER_PEEK_CHECK(b, 6); /* 48-bits */
 
-	cp = isc_buffer_used(b);
+	uint8_t *cp = isc_buffer_current(b);
+
+	SET_IF_NOT_NULL(valp, ISC_U8TO48_BE(cp));
+	return ISC_R_SUCCESS;
+}
+
+static inline uint64_t
+isc_buffer_getuint48(isc_buffer_t *restrict b) {
+	uint64_t     val = 0;
+	isc_result_t result = isc_buffer_peekuint48(b, &val);
+	ENSURE(result == ISC_R_SUCCESS);
+	b->current += 6; /* 48-bits */
+	return val;
+}
+
+static inline void
+isc_buffer_putuint48(isc_buffer_t *restrict b, const uint64_t val) {
+	ISC_BUFFER_PUT_RESERVE(b, val, 6); /* 48-bits */
+
+	uint8_t *cp = isc_buffer_used(b);
 	b->used += 6;
-	cp[0] = (unsigned char)(val >> 40);
-	cp[1] = (unsigned char)(val >> 32);
-	cp[2] = (unsigned char)(val >> 24);
-	cp[3] = (unsigned char)(val >> 16);
-	cp[4] = (unsigned char)(val >> 8);
-	cp[5] = (unsigned char)val;
+
+	ISC_U48TO8_BE(cp, val);
 }
 
-/*!
- * \brief Copy 'length' bytes of memory at 'base' into 'b'.
- *
- * Requires:
- *\li	'b' is a valid buffer.
- *
- *\li	'base' points to 'length' bytes of valid memory.
- *
- *\li	The length of the available region of 'b' is at least 'length'
- *	or the buffer has autoreallocation enabled.
- *
- * Ensures:
- *\li	The used pointer in 'b' is advanced by 'length'.
- */
 static inline void
-isc_buffer_putmem(isc_buffer_t *b, const unsigned char *base,
-		  unsigned int length) {
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
+isc_buffer_putmem(isc_buffer_t *restrict b, const unsigned char *restrict base,
+		  const unsigned int length) {
+	REQUIRE(ISC_BUFFER_VALID(b));
 
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, length) == ISC_R_SUCCESS);
+	if (b->mctx) {
+		isc_result_t result = isc_buffer_reserve(b, length);
+		REQUIRE(result == ISC_R_SUCCESS);
 	}
 
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= (unsigned int)length);
+	REQUIRE(isc_buffer_availablelength(b) >= (unsigned int)length);
 
 	if (length > 0U) {
 		memmove(isc_buffer_used(b), base, length);
@@ -1003,23 +999,265 @@ isc_buffer_putmem(isc_buffer_t *b, const unsigned char *base,
  *\li	The used pointer in 'b' is advanced by strlen('source').
  */
 static inline void
-isc_buffer_putstr(isc_buffer_t *b, const char *source) {
+isc_buffer_putstr(isc_buffer_t *restrict b, const char *restrict source) {
 	unsigned int   length;
 	unsigned char *cp;
 
-	ISC_REQUIRE(ISC_BUFFER_VALID(b));
-	ISC_REQUIRE(source != NULL);
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(source != NULL);
 
 	length = (unsigned int)strlen(source);
-	if (b->autore) {
-		isc_buffer_t *tmp = b;
-		ISC_REQUIRE(isc_buffer_reserve(&tmp, length) == ISC_R_SUCCESS);
+	if (b->mctx) {
+		isc_result_t result = isc_buffer_reserve(b, length);
+		ENSURE(result == ISC_R_SUCCESS);
 	}
 
-	ISC_REQUIRE(isc_buffer_availablelength(b) >= length);
+	REQUIRE(isc_buffer_availablelength(b) >= length);
 
 	cp = isc_buffer_used(b);
 	memmove(cp, source, length);
 	b->used += length;
 }
+
+static inline void
+isc_buffer_reinit(isc_buffer_t *restrict b, void *base,
+		  const unsigned int length) {
+	/*
+	 * Re-initialize the buffer enough to reconfigure the base of the
+	 * buffer.  We will swap in the new buffer, after copying any
+	 * data we contain into the new buffer and adjusting all of our
+	 * internal pointers.
+	 *
+	 * The buffer must not be smaller than the length of the original
+	 * buffer.
+	 */
+	REQUIRE(b->length <= length);
+	REQUIRE(base != NULL);
+	REQUIRE(b->mctx == NULL);
+
+	if (b->length > 0U) {
+		(void)memmove(base, b->base, b->length);
+	}
+
+	b->base = base;
+	b->length = length;
+}
+
+static inline void
+isc_buffer_trycompact(isc_buffer_t *restrict b) {
+	if (isc_buffer_consumedlength(b) >= isc_buffer_remaininglength(b)) {
+		isc_buffer_compact(b);
+	}
+}
+
+static inline void
+isc_buffer_compact(isc_buffer_t *restrict b) {
+	unsigned int length;
+	void	    *src;
+
+	/*
+	 * Compact the used region by moving the remaining region so it occurs
+	 * at the start of the buffer.  The used region is shrunk by the size
+	 * of the consumed region, and the consumed region is then made empty.
+	 */
+
+	REQUIRE(ISC_BUFFER_VALID(b));
+
+	src = isc_buffer_current(b);
+	length = isc_buffer_remaininglength(b);
+	if (length > 0U) {
+		(void)memmove(b->base, src, (size_t)length);
+	}
+
+	if (b->active > b->current) {
+		b->active -= b->current;
+	} else {
+		b->active = 0;
+	}
+	b->current = 0;
+	b->used = length;
+}
+
+static inline void
+isc_buffer_allocate(isc_mem_t	      *mctx, isc_buffer_t **restrict dbufp,
+		    const unsigned int length) {
+	REQUIRE(dbufp != NULL && *dbufp == NULL);
+
+	isc_buffer_t *dbuf = isc_mem_get(mctx, sizeof(*dbuf) + length);
+	uint8_t	     *bdata = (uint8_t *)dbuf + sizeof(*dbuf);
+
+	isc_buffer_init(dbuf, bdata, length);
+	dbuf->extra = length;
+	isc_buffer_setmctx(dbuf, mctx);
+
+	*dbufp = dbuf;
+}
+
+static inline void
+isc_buffer_setmctx(isc_buffer_t *restrict b, isc_mem_t *mctx) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+
+	b->mctx = mctx;
+}
+
+static inline void
+isc_buffer_clearmctx(isc_buffer_t *restrict b) {
+	REQUIRE(ISC_BUFFER_VALID(b));
+
+	if (b->dynamic) {
+		isc_mem_put(b->mctx, b->base, b->length);
+		b->dynamic = false;
+	}
+
+	b->mctx = NULL;
+}
+
+static inline isc_result_t
+isc_buffer_reserve(isc_buffer_t *restrict dbuf, const unsigned int size) {
+	REQUIRE(ISC_BUFFER_VALID(dbuf));
+
+	size_t len;
+
+	len = dbuf->length;
+	if ((len - dbuf->used) >= size) {
+		return ISC_R_SUCCESS;
+	}
+
+	if (dbuf->mctx == NULL) {
+		return ISC_R_NOSPACE;
+	}
+
+	/* Round to nearest buffer size increment */
+	len = size + dbuf->used;
+	len = ISC_ALIGN(len, ISC_BUFFER_INCR);
+
+	/* Cap at UINT_MAX */
+	if (len > UINT_MAX) {
+		len = UINT_MAX;
+	}
+
+	if ((len - dbuf->used) < size) {
+		return ISC_R_NOMEMORY;
+	}
+
+	if (!dbuf->dynamic) {
+		void *old_base = dbuf->base;
+		dbuf->base = isc_mem_get(dbuf->mctx, len);
+		if (old_base != NULL) {
+			memmove(dbuf->base, old_base, dbuf->used);
+		}
+		dbuf->dynamic = true;
+	} else {
+		dbuf->base = isc_mem_creget(dbuf->mctx, dbuf->base,
+					    dbuf->length, len, sizeof(char));
+	}
+	dbuf->length = (unsigned int)len;
+
+	return ISC_R_SUCCESS;
+}
+
+static inline void
+isc_buffer_free(isc_buffer_t **restrict dbufp) {
+	REQUIRE(dbufp != NULL && ISC_BUFFER_VALID(*dbufp));
+	REQUIRE((*dbufp)->mctx != NULL);
+
+	isc_buffer_t *dbuf = *dbufp;
+	isc_mem_t    *mctx = dbuf->mctx;
+	unsigned int  extra = dbuf->extra;
+
+	*dbufp = NULL; /* destroy external reference */
+
+	isc_buffer_clearmctx(dbuf);
+
+	isc_buffer_invalidate(dbuf);
+	isc_mem_put(mctx, dbuf, sizeof(*dbuf) + extra);
+}
+
+static inline isc_result_t
+isc_buffer_dup(isc_mem_t *mctx, isc_buffer_t **restrict dstp,
+	       const isc_buffer_t *restrict src) {
+	isc_buffer_t *dst = NULL;
+	isc_region_t  region;
+	isc_result_t  result;
+
+	REQUIRE(dstp != NULL && *dstp == NULL);
+	REQUIRE(ISC_BUFFER_VALID(src));
+
+	isc_buffer_usedregion(src, &region);
+
+	isc_buffer_allocate(mctx, &dst, region.length);
+
+	result = isc_buffer_copyregion(dst, &region);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS); /* NOSPACE is impossible */
+	*dstp = dst;
+	return ISC_R_SUCCESS;
+}
+
+static inline isc_result_t
+isc_buffer_copyregion(isc_buffer_t *restrict b,
+		      const isc_region_t *restrict r) {
+	isc_result_t result;
+
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(r != NULL);
+
+	if (b->mctx) {
+		result = isc_buffer_reserve(b, r->length);
+		if (result != ISC_R_SUCCESS) {
+			return result;
+		}
+	}
+
+	if (r->length > isc_buffer_availablelength(b)) {
+		return ISC_R_NOSPACE;
+	}
+
+	if (r->length > 0U) {
+		memmove(isc_buffer_used(b), r->base, r->length);
+		b->used += r->length;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+static inline isc_result_t
+isc_buffer_printf(isc_buffer_t *restrict b, const char *restrict format, ...) {
+	va_list	     ap;
+	int	     n;
+	isc_result_t result;
+
+	REQUIRE(ISC_BUFFER_VALID(b));
+
+	va_start(ap, format);
+	n = vsnprintf(NULL, 0, format, ap);
+	va_end(ap);
+
+	if (n < 0) {
+		return ISC_R_FAILURE;
+	}
+
+	if (b->mctx) {
+		result = isc_buffer_reserve(b, n + 1);
+		if (result != ISC_R_SUCCESS) {
+			return result;
+		}
+	}
+
+	if (isc_buffer_availablelength(b) < (unsigned int)n + 1) {
+		return ISC_R_NOSPACE;
+	}
+
+	va_start(ap, format);
+	n = vsnprintf(isc_buffer_used(b), n + 1, format, ap);
+	va_end(ap);
+
+	if (n < 0) {
+		return ISC_R_FAILURE;
+	}
+
+	b->used += n;
+
+	return ISC_R_SUCCESS;
+}
+
 ISC_LANG_ENDDECLS

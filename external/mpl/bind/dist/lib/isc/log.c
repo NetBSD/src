@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.11 2024/09/22 00:14:08 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.12 2025/01/26 16:25:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h> /* dev_t FreeBSD 2.1 */
 #include <time.h>
 #include <unistd.h>
@@ -31,13 +32,11 @@
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/print.h>
-#include <isc/rwlock.h>
-#include <isc/stat.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/thread.h>
 #include <isc/time.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #define LCTX_MAGIC	    ISC_MAGIC('L', 'c', 't', 'x')
@@ -45,11 +44,6 @@
 
 #define LCFG_MAGIC	   ISC_MAGIC('L', 'c', 'f', 'g')
 #define VALID_CONFIG(lcfg) ISC_MAGIC_VALID(lcfg, LCFG_MAGIC)
-
-#define RDLOCK(lp)   RWLOCK(lp, isc_rwlocktype_read);
-#define WRLOCK(lp)   RWLOCK(lp, isc_rwlocktype_write);
-#define RDUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_read);
-#define WRUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_write);
 
 static thread_local bool forcelog = false;
 
@@ -151,8 +145,7 @@ struct isc_log {
 	isc_logmodule_t *modules;
 	unsigned int module_count;
 	atomic_int_fast32_t debug_level;
-	isc_rwlock_t lcfg_rwl;
-	/* Locked by isc_log lcfg_rwl */
+	/* RCU-protected pointer */
 	isc_logconfig_t *logconfig;
 	isc_mutex_t lock;
 	/* Locked by isc_log lock. */
@@ -262,19 +255,6 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 	REQUIRE(lcfgp == NULL || *lcfgp == NULL);
 
 	lctx = isc_mem_get(mctx, sizeof(*lctx));
-	lctx->mctx = NULL;
-	isc_mem_attach(mctx, &lctx->mctx);
-	lctx->categories = NULL;
-	lctx->category_count = 0;
-	lctx->modules = NULL;
-	lctx->module_count = 0;
-	atomic_init(&lctx->debug_level, 0);
-
-	ISC_LIST_INIT(lctx->messages);
-
-	isc_mutex_init(&lctx->lock);
-	isc_rwlock_init(&lctx->lcfg_rwl, 0, 0);
-
 	/*
 	 * Normally setting the magic number is the last step done
 	 * in a creation function, but a valid log context is needed
@@ -282,12 +262,16 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 	 * If either fails, the lctx is destroyed and not returned
 	 * to the caller.
 	 */
-	lctx->magic = LCTX_MAGIC;
+	*lctx = (isc_log_t){
+		.magic = LCTX_MAGIC,
+		.messages = ISC_LIST_INITIALIZER,
+	};
 
+	isc_mem_attach(mctx, &lctx->mctx);
+	isc_mutex_init(&lctx->lock);
 	isc_log_registercategories(lctx, isc_categories);
 	isc_log_registermodules(lctx, isc_modules);
 	isc_logconfig_create(lctx, &lcfg);
-
 	sync_channellist(lcfg);
 
 	lctx->logconfig = lcfg;
@@ -296,9 +280,7 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 	atomic_init(&lctx->dynamic, lcfg->dynamic);
 
 	*lctxp = lctx;
-	if (lcfgp != NULL) {
-		*lcfgp = lcfg;
-	}
+	SET_IF_NOT_NULL(lcfgp, lcfg);
 }
 
 void
@@ -312,15 +294,12 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp) {
 
 	lcfg = isc_mem_get(lctx->mctx, sizeof(*lcfg));
 
-	lcfg->lctx = lctx;
-	lcfg->channellists = NULL;
-	lcfg->channellist_count = 0;
-	lcfg->duplicate_interval = 0;
-	lcfg->highest_level = level;
-	lcfg->tag = NULL;
-	lcfg->dynamic = false;
-	ISC_LIST_INIT(lcfg->channels);
-	lcfg->magic = LCFG_MAGIC;
+	*lcfg = (isc_logconfig_t){
+		.magic = LCFG_MAGIC,
+		.lctx = lctx,
+		.channels = ISC_LIST_INITIALIZER,
+		.highest_level = level,
+	};
 
 	/*
 	 * Create the default channels:
@@ -330,11 +309,11 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp) {
 	isc_log_createchannel(lcfg, "default_syslog", ISC_LOG_TOSYSLOG, level,
 			      &destination, 0);
 
-	destination.file.stream = stderr;
-	destination.file.name = NULL;
-	destination.file.versions = ISC_LOG_ROLLNEVER;
-	destination.file.suffix = isc_log_rollsuffix_increment;
-	destination.file.maximum_size = 0;
+	destination.file = (isc_logfile_t){
+		.stream = stderr,
+		.versions = ISC_LOG_ROLLNEVER,
+		.suffix = isc_log_rollsuffix_increment,
+	};
 	isc_log_createchannel(lcfg, "default_stderr", ISC_LOG_TOFILEDESC, level,
 			      &destination, ISC_LOG_PRINTTIME);
 
@@ -345,11 +324,11 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp) {
 	 */
 	default_channel.channel = ISC_LIST_HEAD(lcfg->channels);
 
-	destination.file.stream = stderr;
-	destination.file.name = NULL;
-	destination.file.versions = ISC_LOG_ROLLNEVER;
-	destination.file.suffix = isc_log_rollsuffix_increment;
-	destination.file.maximum_size = 0;
+	destination.file = (isc_logfile_t){
+		.stream = stderr,
+		.versions = ISC_LOG_ROLLNEVER,
+		.suffix = isc_log_rollsuffix_increment,
+	};
 	isc_log_createchannel(lcfg, "default_debug", ISC_LOG_TOFILEDESC,
 			      ISC_LOG_DYNAMIC, &destination, ISC_LOG_PRINTTIME);
 
@@ -374,11 +353,9 @@ isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg) {
 	 */
 	sync_channellist(lcfg);
 
-	WRLOCK(&lctx->lcfg_rwl);
-	old_cfg = lctx->logconfig;
-	lctx->logconfig = lcfg;
+	old_cfg = rcu_xchg_pointer(&lctx->logconfig, lcfg);
 	sync_highest_level(lctx, lcfg);
-	WRUNLOCK(&lctx->lcfg_rwl);
+	synchronize_rcu();
 
 	isc_logconfig_destroy(&old_cfg);
 }
@@ -401,16 +378,13 @@ isc_log_destroy(isc_log_t **lctxp) {
 	atomic_store_release(&lctx->highest_level, 0);
 	atomic_store_release(&lctx->dynamic, false);
 
-	WRLOCK(&lctx->lcfg_rwl);
-	lcfg = lctx->logconfig;
-	lctx->logconfig = NULL;
-	WRUNLOCK(&lctx->lcfg_rwl);
+	lcfg = rcu_xchg_pointer(&lctx->logconfig, NULL);
+	synchronize_rcu();
 
 	if (lcfg != NULL) {
 		isc_logconfig_destroy(&lcfg);
 	}
 
-	isc_rwlock_destroy(&lctx->lcfg_rwl);
 	isc_mutex_destroy(&lctx->lock);
 
 	while ((message = ISC_LIST_HEAD(lctx->messages)) != NULL) {
@@ -450,9 +424,9 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 	 */
 	REQUIRE(lcfg->lctx != NULL);
 
-	RDLOCK(&lcfg->lctx->lcfg_rwl);
-	REQUIRE(lcfg->lctx->logconfig != lcfg);
-	RDUNLOCK(&lcfg->lctx->lcfg_rwl);
+	rcu_read_lock();
+	REQUIRE(rcu_dereference(lcfg->lctx->logconfig) != lcfg);
+	rcu_read_unlock();
 
 	mctx = lcfg->lctx->mctx;
 
@@ -466,7 +440,7 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 			 * but in isc_log_createchannel it gets copied
 			 * into writable memory and is not longer truly const.
 			 */
-			DE_CONST(FILE_NAME(channel), filename);
+			filename = UNCONST(FILE_NAME(channel));
 			isc_mem_free(mctx, filename);
 
 			if (FILE_STREAM(channel) != NULL) {
@@ -487,9 +461,8 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 	}
 
 	if (lcfg->channellist_count > 0) {
-		isc_mem_put(mctx, lcfg->channellists,
-			    lcfg->channellist_count *
-				    sizeof(ISC_LIST(isc_logchannellist_t)));
+		isc_mem_cput(mctx, lcfg->channellists, lcfg->channellist_count,
+			     sizeof(ISC_LIST(isc_logchannellist_t)));
 	}
 
 	lcfg->dynamic = false;
@@ -532,7 +505,7 @@ isc_log_registercategories(isc_log_t *lctx, isc_logcategory_t categories[]) {
 				 * The name pointer points to the next array.
 				 * Ick.
 				 */
-				DE_CONST(catp->name, catp);
+				catp = UNCONST(catp->name);
 			} else {
 				catp++;
 			}
@@ -563,16 +536,16 @@ isc_log_categorybyname(isc_log_t *lctx, const char *name) {
 			 * catp is neither modified nor returned to the
 			 * caller, so removing its const qualifier is ok.
 			 */
-			DE_CONST(catp->name, catp);
+			catp = UNCONST(catp->name);
 		} else {
 			if (strcmp(catp->name, name) == 0) {
-				return (catp);
+				return catp;
 			}
 			catp++;
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 void
@@ -603,7 +576,7 @@ isc_log_registermodules(isc_log_t *lctx, isc_logmodule_t modules[]) {
 				 * The name pointer points to the next array.
 				 * Ick.
 				 */
-				DE_CONST(modp->name, modp);
+				modp = UNCONST(modp->name);
 			} else {
 				modp++;
 			}
@@ -634,16 +607,16 @@ isc_log_modulebyname(isc_log_t *lctx, const char *name) {
 			 * modp is neither modified nor returned to the
 			 * caller, so removing its const qualifier is ok.
 			 */
-			DE_CONST(modp->name, modp);
+			modp = UNCONST(modp->name);
 		} else {
 			if (strcmp(modp->name, name) == 0) {
-				return (modp);
+				return modp;
 			}
 			modp++;
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 void
@@ -749,7 +722,7 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
 	}
 
 	if (channel == NULL) {
-		return (ISC_R_NOTFOUND);
+		return ISC_R_NOTFOUND;
 	}
 
 	if (category != NULL) {
@@ -767,11 +740,13 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
 	/*
 	 * Update the highest logging level, if the current lcfg is in use.
 	 */
-	if (lcfg->lctx->logconfig == lcfg) {
+	rcu_read_lock();
+	if (rcu_dereference(lcfg->lctx->logconfig) == lcfg) {
 		sync_highest_level(lctx, lcfg);
 	}
+	rcu_read_unlock();
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void
@@ -836,8 +811,8 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
 	 * Close ISC_LOG_DEBUGONLY channels if level is zero.
 	 */
 	if (level == 0) {
-		RDLOCK(&lctx->lcfg_rwl);
-		isc_logconfig_t *lcfg = lctx->logconfig;
+		rcu_read_lock();
+		isc_logconfig_t *lcfg = rcu_dereference(lctx->logconfig);
 		if (lcfg != NULL) {
 			LOCK(&lctx->lock);
 			for (isc_logchannel_t *channel =
@@ -855,7 +830,7 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
 			}
 			UNLOCK(&lctx->lock);
 		}
-		RDUNLOCK(&lctx->lcfg_rwl);
+		rcu_read_unlock();
 	}
 }
 
@@ -863,7 +838,7 @@ unsigned int
 isc_log_getdebuglevel(isc_log_t *lctx) {
 	REQUIRE(VALID_CONTEXT(lctx));
 
-	return (atomic_load_acquire(&lctx->debug_level));
+	return atomic_load_acquire(&lctx->debug_level);
 }
 
 void
@@ -877,7 +852,7 @@ unsigned int
 isc_log_getduplicateinterval(isc_logconfig_t *lcfg) {
 	REQUIRE(VALID_CONTEXT(lcfg));
 
-	return (lcfg->duplicate_interval);
+	return lcfg->duplicate_interval;
 }
 
 void
@@ -901,7 +876,7 @@ char *
 isc_log_gettag(isc_logconfig_t *lcfg) {
 	REQUIRE(VALID_CONFIG(lcfg));
 
-	return (lcfg->tag);
+	return lcfg->tag;
 }
 
 /* XXXDCL NT  -- This interface will assuredly be changing. */
@@ -914,8 +889,8 @@ void
 isc_log_closefilelogs(isc_log_t *lctx) {
 	REQUIRE(VALID_CONTEXT(lctx));
 
-	RDLOCK(&lctx->lcfg_rwl);
-	isc_logconfig_t *lcfg = lctx->logconfig;
+	rcu_read_lock();
+	isc_logconfig_t *lcfg = rcu_dereference(lctx->logconfig);
 	if (lcfg != NULL) {
 		LOCK(&lctx->lock);
 		for (isc_logchannel_t *channel = ISC_LIST_HEAD(lcfg->channels);
@@ -930,7 +905,7 @@ isc_log_closefilelogs(isc_log_t *lctx) {
 		}
 		UNLOCK(&lctx->lock);
 	}
-	RDUNLOCK(&lctx->lcfg_rwl);
+	rcu_read_unlock();
 }
 
 /****
@@ -984,13 +959,9 @@ assignchannel(isc_logconfig_t *lcfg, unsigned int category_id,
  */
 static void
 sync_channellist(isc_logconfig_t *lcfg) {
-	unsigned int bytes;
-	isc_log_t *lctx;
-	void *lists;
-
 	REQUIRE(VALID_CONFIG(lcfg));
 
-	lctx = lcfg->lctx;
+	isc_log_t *lctx = lcfg->lctx;
 
 	REQUIRE(lctx->category_count != 0);
 
@@ -998,20 +969,10 @@ sync_channellist(isc_logconfig_t *lcfg) {
 		return;
 	}
 
-	bytes = lctx->category_count * sizeof(ISC_LIST(isc_logchannellist_t));
+	lcfg->channellists = isc_mem_creget(
+		lctx->mctx, lcfg->channellists, lcfg->channellist_count,
+		lctx->category_count, sizeof(ISC_LIST(isc_logchannellist_t)));
 
-	lists = isc_mem_get(lctx->mctx, bytes);
-
-	memset(lists, 0, bytes);
-
-	if (lcfg->channellist_count != 0) {
-		bytes = lcfg->channellist_count *
-			sizeof(ISC_LIST(isc_logchannellist_t));
-		memmove(lists, lcfg->channellists, bytes);
-		isc_mem_put(lctx->mctx, lcfg->channellists, bytes);
-	}
-
-	lcfg->channellists = lists;
 	lcfg->channellist_count = lctx->category_count;
 }
 
@@ -1042,7 +1003,7 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 			result = ISC_R_NOSPACE;
 			syslog(LOG_ERR, "unable to remove log files: %s",
 			       isc_result_totext(result));
-			return (result);
+			return result;
 		}
 
 		/*
@@ -1064,7 +1025,7 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 	 * Return if the directory open failed.
 	 */
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	while (isc_dir_read(&dir) == ISC_R_SUCCESS) {
@@ -1106,7 +1067,7 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 	isc_dir_close(&dir);
 
 	*greatestp = greatest;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -1132,7 +1093,7 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, const char *bname,
 	int64_t version = 0;
 
 	if (versions <= 0) {
-		return (INT64_MAX);
+		return INT64_MAX;
 	}
 
 	if (versions > ISC_LOG_MAX_VERSIONS) {
@@ -1165,7 +1126,7 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, const char *bname,
 	/*
 	 * to_keep[versions - 1] is the last one we want to keep
 	 */
-	return (to_keep[versions - 1]);
+	return to_keep[versions - 1];
 }
 
 static isc_result_t
@@ -1189,7 +1150,7 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 			result = ISC_R_NOSPACE;
 			syslog(LOG_ERR, "unable to remove log files: %s",
 			       isc_result_totext(result));
-			return (result);
+			return result;
 		}
 
 		/*
@@ -1211,7 +1172,7 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 	 * Return if the directory open failed.
 	 */
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	last = last_to_keep(versions, &dir, bname, bnamelen);
@@ -1251,7 +1212,7 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 		}
 	}
 	isc_dir_close(&dir);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -1273,7 +1234,7 @@ roll_increment(isc_logfile_t *file) {
 		 */
 		for (greatest = 0; greatest < INT_MAX; greatest++) {
 			n = snprintf(current, sizeof(current), "%s.%u", path,
-				     (unsigned)greatest);
+				     (unsigned int)greatest);
 			if (n >= (int)sizeof(current) || n < 0 ||
 			    !isc_file_exists(current))
 			{
@@ -1287,7 +1248,7 @@ roll_increment(isc_logfile_t *file) {
 		 */
 		result = greatest_version(file, file->versions, &greatest);
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 
 		/*
@@ -1301,13 +1262,13 @@ roll_increment(isc_logfile_t *file) {
 	for (i = greatest; i > 0; i--) {
 		result = ISC_R_SUCCESS;
 		n = snprintf(current, sizeof(current), "%s.%u", path,
-			     (unsigned)(i - 1));
+			     (unsigned int)(i - 1));
 		if (n >= (int)sizeof(current) || n < 0) {
 			result = ISC_R_NOSPACE;
 		}
 		if (result == ISC_R_SUCCESS) {
 			n = snprintf(newpath, sizeof(newpath), "%s.%u", path,
-				     (unsigned)i);
+				     (unsigned int)i);
 			if (n >= (int)sizeof(newpath) || n < 0) {
 				result = ISC_R_NOSPACE;
 			}
@@ -1334,7 +1295,7 @@ roll_increment(isc_logfile_t *file) {
 		       path, path, isc_result_totext(result));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -1361,7 +1322,7 @@ roll_timestamp(isc_logfile_t *file) {
 	}
 
 	/* Then just rename the current logfile */
-	isc_time_now(&now);
+	now = isc_time_now();
 	isc_time_formatshorttimestamp(&now, newts, PATH_MAX + 1);
 	n = snprintf(newpath, sizeof(newpath), "%s.%s", path, newts);
 	if (n >= (int)sizeof(newpath) || n < 0) {
@@ -1374,7 +1335,7 @@ roll_timestamp(isc_logfile_t *file) {
 		       path, path, isc_result_totext(result));
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -1389,23 +1350,23 @@ isc_logfile_roll(isc_logfile_t *file) {
 	 * files is desired.
 	 */
 	if (file->versions == ISC_LOG_ROLLNEVER) {
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	} else if (file->versions == 0) {
 		result = isc_file_remove(file->name);
 		if (result != ISC_R_SUCCESS && result != ISC_R_FILENOTFOUND) {
 			syslog(LOG_ERR, "unable to remove log file '%s': %s",
 			       file->name, isc_result_totext(result));
 		}
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 
 	switch (file->suffix) {
 	case isc_log_rollsuffix_increment:
-		return (roll_increment(file));
+		return roll_increment(file);
 	case isc_log_rollsuffix_timestamp:
-		return (roll_timestamp(file));
+		return roll_timestamp(file);
 	default:
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 }
 
@@ -1451,7 +1412,7 @@ isc_log_open(isc_logchannel_t *channel) {
 	 */
 	if (result == ISC_R_SUCCESS && roll) {
 		if (FILE_VERSIONS(channel) == ISC_LOG_ROLLNEVER) {
-			return (ISC_R_MAXSIZE);
+			return ISC_R_MAXSIZE;
 		}
 		result = isc_logfile_roll(&channel->destination.file);
 		if (result != ISC_R_SUCCESS) {
@@ -1463,13 +1424,13 @@ isc_log_open(isc_logchannel_t *channel) {
 				       isc_result_totext(result));
 				channel->flags |= ISC_LOG_OPENERR;
 			}
-			return (result);
+			return result;
 		}
 	}
 
 	result = isc_stdio_open(path, "a", &FILE_STREAM(channel));
 
-	return (result);
+	return result;
 }
 
 ISC_NO_SANITIZE_THREAD bool
@@ -1485,24 +1446,24 @@ isc_log_wouldlog(isc_log_t *lctx, int level) {
 	 * entered to see if the message should really be output.
 	 */
 	if (lctx == NULL) {
-		return (false);
+		return false;
 	}
 	if (forcelog) {
-		return (true);
+		return true;
 	}
 
 	int highest_level = atomic_load_acquire(&lctx->highest_level);
 	if (level <= highest_level) {
-		return (true);
+		return true;
 	}
 	if (atomic_load_acquire(&lctx->dynamic)) {
 		int debug_level = atomic_load_acquire(&lctx->debug_level);
 		if (level <= debug_level) {
-			return (true);
+			return true;
 		}
 	}
 
-	return (false);
+	return false;
 }
 
 static void
@@ -1550,12 +1511,15 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	iso8601l_string[0] = '\0';
 	iso8601z_string[0] = '\0';
 
-	RDLOCK(&lctx->lcfg_rwl);
+	rcu_read_lock();
 	LOCK(&lctx->lock);
 
 	lctx->buffer[0] = '\0';
 
-	isc_logconfig_t *lcfg = lctx->logconfig;
+	isc_logconfig_t *lcfg = rcu_dereference(lctx->logconfig);
+	if (lcfg == NULL) {
+		goto unlock;
+	}
 
 	category_channels = ISC_LIST_HEAD(lcfg->channellists[category->id]);
 
@@ -1627,7 +1591,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		{
 			isc_time_t isctime;
 
-			TIME_NOW(&isctime);
+			isctime = isc_time_now();
 
 			isc_time_formattimestamp(&isctime, local_time,
 						 sizeof(local_time));
@@ -1677,7 +1641,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * messages which fall within the
 				 * duplicate_interval range.
 				 */
-				TIME_NOW(&oldest);
+				oldest = isc_time_now();
 				if (isc_time_subtract(&oldest, &interval,
 						      &oldest) != ISC_R_SUCCESS)
 				{
@@ -1755,7 +1719,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				message->text = (char *)(message + 1);
 				size -= sizeof(isc_logmessage_t);
 				strlcpy(message->text, lctx->buffer, size);
-				TIME_NOW(&message->time);
+				message->time = isc_time_now();
 				ISC_LINK_INIT(message, link);
 				ISC_LIST_APPEND(lctx->messages, message, link);
 			}
@@ -1906,7 +1870,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 unlock:
 	UNLOCK(&lctx->lock);
-	RDUNLOCK(&lctx->lcfg_rwl);
+	rcu_read_unlock();
 }
 
 void

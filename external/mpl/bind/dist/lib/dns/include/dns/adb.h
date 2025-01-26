@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.8 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,11 +45,6 @@
  * Records are stored internally until a timer expires. The timer is the
  * smaller of the TTL or signature validity period.
  *
- * Lameness is stored per <qname,qtype> tuple, and this data hangs off each
- * address field.  When an address is marked lame for a given tuple the address
- * will not be returned to a caller.
- *
- *
  * MP:
  *
  *\li	The ADB takes care of all necessary locking.
@@ -68,12 +63,15 @@
  *** Imports
  ***/
 
+/* Add -DDNS_ADB_TRACE=1 to CFLAGS for detailed reference tracing */
+
 #include <inttypes.h>
 #include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/mutex.h>
 #include <isc/sockaddr.h>
 
 #include <dns/types.h>
@@ -96,6 +94,15 @@ ISC_LANG_BEGINDECLS
 
 typedef struct dns_adbname dns_adbname_t;
 
+typedef enum {
+	DNS_ADB_UNSET = 0,
+	DNS_ADB_MOREADDRESSES,
+	DNS_ADB_NOMOREADDRESSES,
+	DNS_ADB_EXPIRED,
+	DNS_ADB_CANCELED,
+	DNS_ADB_SHUTTINGDOWN
+} dns_adbstatus_t;
+
 /*!
  *\brief
  * Represents a lookup for a single name.
@@ -116,13 +123,15 @@ struct dns_adbfind {
 	ISC_LINK(dns_adbfind_t) publink;      /*%< RW: client use */
 
 	/* Private */
-	isc_mutex_t    lock; /* locks all below */
-	in_port_t      port;
-	int	       name_bucket;
-	unsigned int   flags;
-	dns_adbname_t *adbname;
-	dns_adb_t     *adb;
-	isc_event_t    event;
+	isc_mutex_t		 lock; /* locks all below */
+	in_port_t		 port;
+	unsigned int		 flags;
+	dns_adbname_t		*adbname;
+	dns_adb_t		*adb;
+	isc_loop_t		*loop;
+	_Atomic(dns_adbstatus_t) status;
+	isc_job_cb		 cb;
+	void			*cbarg;
 	ISC_LINK(dns_adbfind_t) plink;
 };
 
@@ -146,18 +155,6 @@ struct dns_adbfind {
  * _STARTATZONE:
  *	Fetches will start using the closest zone data or use the root servers.
  *	This is useful for reestablishing glue that has expired.
- *
- * _GLUEOK:
- * _HINTOK:
- *	Glue or hints are ok.  These are used when matching names already
- *	in the adb, and when dns databases are searched.
- *
- * _RETURNLAME:
- *	Return lame servers in a find, so that all addresses are returned.
- *
- * _LAMEPRUNED:
- *	At least one address was omitted from the list because it was lame.
- *	This bit will NEVER be set if _RETURNLAME is set in the createfind().
  */
 /*% Return addresses of type INET. */
 #define DNS_ADBFIND_INET 0x00000001
@@ -185,24 +182,9 @@ struct dns_adbfind {
  */
 #define DNS_ADBFIND_STARTATZONE 0x00000020
 /*%
- *	Glue or hints are ok.  These are used when matching names already
- *	in the adb, and when dns databases are searched.
+ *	Fetches will be exempted from the quota.
  */
-#define DNS_ADBFIND_GLUEOK 0x00000040
-/*%
- *	Glue or hints are ok.  These are used when matching names already
- *	in the adb, and when dns databases are searched.
- */
-#define DNS_ADBFIND_HINTOK 0x00000080
-/*%
- *	Return lame servers in a find, so that all addresses are returned.
- */
-#define DNS_ADBFIND_RETURNLAME 0x00000100
-/*%
- *      Only schedule an event if no addresses are known.
- *      Must set _WANTEVENT for this to be meaningful.
- */
-#define DNS_ADBFIND_LAMEPRUNED 0x00000200
+#define DNS_ADBFIND_QUOTAEXEMPT 0x00000040
 /*%
  *      The server's fetch quota is exceeded; it will be treated as
  *      lame for this query.
@@ -212,6 +194,10 @@ struct dns_adbfind {
  *	Don't perform a fetch even if there are no address records available.
  */
 #define DNS_ADBFIND_NOFETCH 0x00000800
+/*%
+ *	Only look for glue record for static stub.
+ */
+#define DNS_ADBFIND_STATICSTUB 0x00001000
 
 /*%
  * The answers to queries come back as a list of these.
@@ -219,8 +205,9 @@ struct dns_adbfind {
 struct dns_adbaddrinfo {
 	unsigned int magic; /*%< private */
 
-	isc_sockaddr_t sockaddr; /*%< [rw] */
-	unsigned int   srtt;	 /*%< [rw] microsecs */
+	isc_sockaddr_t	 sockaddr; /*%< [rw] */
+	unsigned int	 srtt;	   /*%< [rw] microsecs */
+	dns_transport_t *transport;
 
 	unsigned int	flags; /*%< [rw] */
 	dns_adbentry_t *entry; /*%< private */
@@ -228,35 +215,31 @@ struct dns_adbaddrinfo {
 };
 
 /*!<
- * The event sent to the caller task is just a plain old isc_event_t.  It
- * contains no data other than a simple status, passed in the "type" field
- * to indicate that another address resolved, or all partially resolved
- * addresses have failed to resolve.
+ * When the caller recieves a callback from dns_adb_createfind(), the
+ * argument will a pointer to the dns_adbfind_t structure, which includes
+ * this includes a copy of the callback function and argument passed to
+ * dns_adb_createfind(), and a dns_adbstatus_t in the 'status' field,
+ * which indicates one of the following:
  *
- * "sender" is the dns_adbfind_t used to issue this query.
- *
- * This is simply a standard event, with the "type" set to:
- *
- *\li	#DNS_EVENT_ADBMOREADDRESSES   -- another address resolved.
- *\li	#DNS_EVENT_ADBNOMOREADDRESSES -- all pending addresses failed,
- *					were canceled, or otherwise will
- *					not be usable.
- *\li	#DNS_EVENT_ADBCANCELED	     -- The request was canceled by a
- *					3rd party.
- *\li	#DNS_EVENT_ADBNAMEDELETED     -- The name was deleted, so this request
- *					was canceled.
+ *\li	#DNS_ADB_MOREADDRESSES   -- another address resolved.
+ *\li	#DNS_ADB_NOMOREADDRESSES -- all pending addresses failed,
+ *				    were canceled, or otherwise will
+ *				    not be usable.
+ *\li	#DNS_ADB_CANCELED	 -- The request was canceled by a
+ *				    3rd party.
+ *\li	#DNS_ADB_EXPIRED	 -- The name was expired, so this request
+ *				    was canceled.
  *
  * In each of these cases, the addresses returned by the initial call
  * to dns_adb_createfind() can still be used until they are no longer needed.
  */
 
 /****
-**** FUNCTIONS
-****/
+ **** FUNCTIONS
+ ****/
 
-isc_result_t
-dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *tmgr,
-	       isc_taskmgr_t *taskmgr, dns_adb_t **newadb);
+void
+dns_adb_create(isc_mem_t *mem, dns_view_t *view, dns_adb_t **newadb);
 /*%<
  * Create a new ADB.
  *
@@ -271,58 +254,19 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *tmgr,
  *
  *\li	'view' be a pointer to a valid view.
  *
- *\li	'tmgr' be a pointer to a valid timer manager.
- *
- *\li	'taskmgr' be a pointer to a valid task manager.
- *
  *\li	'newadb' != NULL && '*newadb' == NULL.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS	after happiness.
- *\li	#ISC_R_NOMEMORY	after resource allocation failure.
  */
 
-void
-dns_adb_attach(dns_adb_t *adb, dns_adb_t **adbp);
-/*%
- * Attach to an 'adb' to 'adbp'.
- *
- * Requires:
- *\li	'adb' to be a valid dns_adb_t, created via dns_adb_create().
- *\li	'adbp' to be a valid pointer to a *dns_adb_t which is initialized
- *	to NULL.
- */
-
-void
-dns_adb_detach(dns_adb_t **adb);
-/*%
- * Delete the ADB. Sets *ADB to NULL. Cancels any outstanding requests.
- *
- * Requires:
- *
- *\li	'adb' be non-NULL and '*adb' be a valid dns_adb_t, created via
- *	dns_adb_create().
- */
-
-void
-dns_adb_whenshutdown(dns_adb_t *adb, isc_task_t *task, isc_event_t **eventp);
-/*%
- * Send '*eventp' to 'task' when 'adb' has shutdown.
- *
- * Requires:
- *
- *\li	'*adb' is a valid dns_adb_t.
- *
- *\li	eventp != NULL && *eventp is a valid event.
- *
- * Ensures:
- *
- *\li	*eventp == NULL
- *
- *\li	The event's sender field is set to the value of adb when the event
- *	is sent.
- */
+#if DNS_ADB_TRACE
+#define dns_adb_ref(ptr)   dns_adb__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_adb_unref(ptr) dns_adb__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_adb_attach(ptr, ptrp) \
+	dns_adb__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_adb_detach(ptrp) dns_adb__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_adb);
+#else
+ISC_REFCOUNT_DECL(dns_adb);
+#endif
 
 void
 dns_adb_shutdown(dns_adb_t *adb);
@@ -335,8 +279,8 @@ dns_adb_shutdown(dns_adb_t *adb);
  */
 
 isc_result_t
-dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
-		   void *arg, const dns_name_t *name, const dns_name_t *qname,
+dns_adb_createfind(dns_adb_t *adb, isc_loop_t *loop, isc_job_cb cb, void *cbarg,
+		   const dns_name_t *name, const dns_name_t *qname,
 		   dns_rdatatype_t qtype, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target, in_port_t port,
 		   unsigned int depth, isc_counter_t *qc, dns_adbfind_t **find);
@@ -345,9 +289,10 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
  * "name" and will build up a list of found addresses, and perhaps start
  * internal fetches to resolve names that are unknown currently.
  *
- * If other addresses resolve after this call completes, an event will
- * be sent to the <task, taskaction, arg> with the sender of that event
- * set to a pointer to the dns_adbfind_t returned by this function.
+ * If other addresses resolve after this call completes, the 'cb' callback
+ * will be called with a pointer to the dns_adbfind_t returned by this
+ * structure, which in turn has a pointer to the callback argument passed
+ * in as 'cbarg'. The caller is responsible for freeing the find object.
  *
  * If no events will be generated, the *find->result_v4 and/or result_v6
  * members may be examined for address lookup status.  The usual #ISC_R_SUCCESS,
@@ -360,8 +305,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
  *
  * The list of addresses returned is unordered.  The caller must impose
  * any ordering required.  The list will not contain "known bad" addresses,
- * however.  For instance, it will not return hosts that are known to be
- * lame for the zone in question.
+ * however.
  *
  * The caller cannot (directly) modify the contents of the address list's
  * fields other than the "link" field.  All values can be read at any
@@ -380,15 +324,12 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
  * The caller may change them directly in the dns_adbaddrinfo_t since
  * they are copies of the internal address only.
  *
- * XXXMLG  Document options, especially the flags which control how
- *         events are sent.
- *
  * Requires:
  *
  *\li	*adb be a valid isc_adb_t object.
  *
- *\li	If events are to be sent, *task be a valid task,
- *	and isc_taskaction_t != NULL.
+ *\li	If events are to be sent, *loop be a valid loop,
+ *	and cb != NULL.
  *
  *\li	*name is a valid dns_name_t.
  *
@@ -407,10 +348,6 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
  *			returned if task != NULL.
  *\li	#ISC_R_NOMEMORY	insufficient resources
  *\li	#DNS_R_ALIAS	'name' is an alias for another name.
- *
- * Calls, and returns error codes from:
- *
- *\li	isc_stdtime_get()
  *
  * Notes:
  *
@@ -447,6 +384,26 @@ dns_adb_cancelfind(dns_adbfind_t *find);
  */
 
 void
+dns_adbfind_done(dns_adbfind_t find);
+/*%<
+ * Marks a find as ready to free.
+ *
+ * Requires:
+ *
+ *\li	'find' != NULL and *find be valid dns_adbfind_t pointer.
+ */
+
+unsigned int
+dns_adb_findstatus(dns_adbfind_t *);
+/*%<
+ * Returns the status field of the find.
+ *
+ * Requires:
+ *
+ *\li	'find' be a valid dns_adbfind_t pointer.
+ */
+
+void
 dns_adb_destroyfind(dns_adbfind_t **find);
 /*%<
  * Destroys the find reference.
@@ -454,8 +411,7 @@ dns_adb_destroyfind(dns_adbfind_t **find);
  * Note:
  *
  *\li	This can only be called after the event was delivered for a
- *	find.  Additionally, the event MUST have been freed via
- *	isc_event_free() BEFORE this function is called.
+ *	find.
  *
  * Requires:
  *
@@ -470,50 +426,13 @@ dns_adb_destroyfind(dns_adbfind_t **find);
 void
 dns_adb_dump(dns_adb_t *adb, FILE *f);
 /*%<
- * This function is only used for debugging.  It will dump as much of the
- * state of the running system as possible.
+ * Used by "rndc dumpdb": Dump the state of the running ADB.
  *
  * Requires:
  *
- *\li	adb be valid.
+ *\li	adb is valid.
  *
  *\li	f != NULL, and is a file open for writing.
- */
-
-void
-dns_adb_dumpfind(dns_adbfind_t *find, FILE *f);
-/*%<
- * This function is only used for debugging.  Dump the data associated
- * with a find.
- *
- * Requires:
- *
- *\li	find is valid.
- *
- * \li	f != NULL, and is a file open for writing.
- */
-
-isc_result_t
-dns_adb_marklame(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
-		 const dns_name_t *qname, dns_rdatatype_t type,
-		 isc_stdtime_t expire_time);
-/*%<
- * Mark the given address as lame for the <qname,qtype>.  expire_time should
- * be set to the time when the entry should expire.  That is, if it is to
- * expire 10 minutes in the future, it should set it to (now + 10 * 60).
- *
- * Requires:
- *
- *\li	adb be valid.
- *
- *\li	addr be valid.
- *
- *\li	qname be the qname used in the dns_adb_createfind() call.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS		-- all is well.
- *\li	#ISC_R_NOMEMORY		-- could not mark address as lame.
  */
 
 /*
@@ -731,19 +650,17 @@ dns_adb_setcookie(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
  */
 
 size_t
-dns_adb_getcookie(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
-		  unsigned char *cookie, size_t len);
+dns_adb_getcookie(dns_adbaddrinfo_t *addr, unsigned char *cookie, size_t len);
 /*
- * Retrieve the saved COOKIE value and store it in 'cookie' which has
- * size 'len'.
+ * If 'cookie' is not NULL, then retrieve the saved COOKIE value and store it
+ * in 'cookie' which has size 'len'.
  *
  * Requires:
- *\li	'adb' is valid.
  *\li	'addr' is valid.
  *
  * Returns:
- *	The size of the cookie or zero if it doesn't fit in the buffer
- *	or it doesn't exist.
+ *	The size of the cookie or zero if it doesn't exist, or when 'cookie' is
+ *      not NULL and it doesn't fit in the buffer.
  */
 
 void
@@ -778,8 +695,22 @@ dns_adb_setquota(dns_adb_t *adb, uint32_t quota, uint32_t freq, double low,
  *\li	'adb' is valid.
  */
 
+void
+dns_adb_getquota(dns_adb_t *adb, uint32_t *quotap, uint32_t *freqp,
+		 double *lowp, double *highp, double *discountp);
+/*%<
+ * Get the quota values set by dns_adb_setquota().
+ * If any of the 'quotap', 'freqp', 'lowp', 'highp', and
+ * 'discountp' parameters are non-NULL, then the memory they
+ * point to will be updated to hold the corresponding quota
+ * or parameter value.
+ *
+ * Requires:
+ *\li	'adb' is valid.
+ */
+
 bool
-dns_adbentry_overquota(dns_adbentry_t *entry);
+dns_adb_overquota(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
 /*%<
  * Returns true if the specified ADB has too many active fetches.
  *
@@ -804,4 +735,24 @@ dns_adb_endudpfetch(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
  *\li	addr be valid.
  */
 
+isc_stats_t *
+dns_adb_getstats(dns_adb_t *adb);
+/*%<
+ * Get the adb statistics counter set for 'adb'.
+ *
+ * Requires:
+ * \li 'adb' is valid.
+ */
+
+isc_result_t
+dns_adb_dumpquota(dns_adb_t *adb, isc_buffer_t **buf);
+/*%
+ * Dump the addresses, current quota values, and current ATR values
+ * for all servers that are currently being fetchlimited. Servers
+ * for which the quota is still equal to the default and the ATR
+ * is zero are not printed.
+ *
+ * Requires:
+ * \li 'adb' is valid.
+ */
 ISC_LANG_ENDDECLS

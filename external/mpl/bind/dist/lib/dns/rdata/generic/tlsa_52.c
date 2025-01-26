@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.10 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.11 2025/01/26 16:25:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ generic_fromtext_tlsa(ARGS_FROMTEXT) {
 	/*
 	 * Certificate Association Data.
 	 */
-	return (isc_hex_tobuffer(lexer, target, -2));
+	return isc_hex_tobuffer(lexer, target, -2);
 }
 
 static isc_result_t
@@ -118,7 +118,7 @@ generic_totext_tlsa(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -128,38 +128,37 @@ generic_fromwire_tlsa(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
-	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
 
 	/* Usage(1), Selector(1), Type(1), Data(1+) */
 	if (sr.length < 4) {
-		return (ISC_R_UNEXPECTEDEND);
+		return ISC_R_UNEXPECTEDEND;
 	}
 
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static isc_result_t
 fromtext_tlsa(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_tlsa);
 
-	return (generic_fromtext_tlsa(CALL_FROMTEXT));
+	return generic_fromtext_tlsa(CALL_FROMTEXT);
 }
 
 static isc_result_t
 totext_tlsa(ARGS_TOTEXT) {
 	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 
-	return (generic_totext_tlsa(CALL_TOTEXT));
+	return generic_totext_tlsa(CALL_TOTEXT);
 }
 
 static isc_result_t
 fromwire_tlsa(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_tlsa);
 
-	return (generic_fromwire_tlsa(CALL_FROMWIRE));
+	return generic_fromwire_tlsa(CALL_FROMWIRE);
 }
 
 static isc_result_t
@@ -172,7 +171,7 @@ towire_tlsa(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return mem_tobuffer(target, sr.base, sr.length);
 }
 
 static int
@@ -188,7 +187,7 @@ compare_tlsa(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
+	return isc_region_compare(&r1, &r2);
 }
 
 static isc_result_t
@@ -206,7 +205,7 @@ generic_fromstruct_tlsa(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(tlsa->selector, target));
 	RETERR(uint8_tobuffer(tlsa->match, target));
 
-	return (mem_tobuffer(target, tlsa->data, tlsa->length));
+	return mem_tobuffer(target, tlsa->data, tlsa->length);
 }
 
 static isc_result_t
@@ -233,12 +232,8 @@ generic_tostruct_tlsa(ARGS_TOSTRUCT) {
 	tlsa->length = region.length;
 
 	tlsa->data = mem_maybedup(mctx, region.base, region.length);
-	if (tlsa->data == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	tlsa->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -261,7 +256,7 @@ static isc_result_t
 fromstruct_tlsa(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_tlsa);
 
-	return (generic_fromstruct_tlsa(CALL_FROMSTRUCT));
+	return generic_fromstruct_tlsa(CALL_FROMSTRUCT);
 }
 
 static isc_result_t
@@ -275,7 +270,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	tlsa->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&tlsa->common, link);
 
-	return (generic_tostruct_tlsa(CALL_TOSTRUCT));
+	return generic_tostruct_tlsa(CALL_TOSTRUCT);
 }
 
 static void
@@ -297,7 +292,7 @@ additionaldata_tlsa(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -308,7 +303,7 @@ digest_tlsa(ARGS_DIGEST) {
 
 	dns_rdata_toregion(rdata, &r);
 
-	return ((digest)(arg, &r));
+	return (digest)(arg, &r);
 }
 
 static bool
@@ -320,7 +315,7 @@ checkowner_tlsa(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -331,12 +326,12 @@ checknames_tlsa(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (true);
+	return true;
 }
 
 static int
 casecompare_tlsa(ARGS_COMPARE) {
-	return (compare_tlsa(rdata1, rdata2));
+	return compare_tlsa(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_TLSA_52_C */

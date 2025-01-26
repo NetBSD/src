@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.3 2024/09/22 00:14:09 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.4 2025/01/26 16:25:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,8 +18,11 @@
 /*! \file */
 
 #include <pthread.h>
+
 #if HAVE_THREADS_H
 #include <threads.h>
+#else
+#define thread_local _Thread_local
 #endif
 
 #if defined(HAVE_PTHREAD_NP_H)
@@ -29,20 +32,23 @@
 #include <isc/lang.h>
 #include <isc/result.h>
 
-extern thread_local size_t isc_tid_v;
-
 ISC_LANG_BEGINDECLS
 
 typedef pthread_t isc_thread_t;
-typedef void	 *isc_threadresult_t;
-typedef void	 *isc_threadarg_t;
-typedef isc_threadresult_t (*isc_threadfunc_t)(isc_threadarg_t);
+typedef void *(*isc_threadfunc_t)(void *);
+
+/*%
+ * like isc_thread_create(), but run the function on the current
+ * thread which must be the main thread.
+ */
+void
+isc_thread_main(isc_threadfunc_t, void *);
 
 void
-isc_thread_create(isc_threadfunc_t, isc_threadarg_t, isc_thread_t *);
+isc_thread_create(isc_threadfunc_t, void *, isc_thread_t *);
 
 void
-isc_thread_join(isc_thread_t thread, isc_threadresult_t *result);
+isc_thread_join(isc_thread_t thread, void **);
 
 void
 isc_thread_yield(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.9 2025/01/26 16:25:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@ fromtext_ptr(ARGS_FROMTEXT) {
 			warn_badname(&name, lexer, callbacks);
 		}
 	}
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -60,7 +60,7 @@ totext_ptr(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	bool sub;
+	unsigned int opts;
 
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(rdata->length != 0);
@@ -71,9 +71,9 @@ totext_ptr(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	sub = name_prefix(&name, tctx->origin, &prefix);
-
-	return (dns_name_totext(&prefix, sub, target));
+	opts = name_prefix(&name, tctx->origin, &prefix) ? DNS_NAME_OMITFINALDOT
+							 : 0;
+	return dns_name_totext(&prefix, opts, target);
 }
 
 static isc_result_t
@@ -85,10 +85,10 @@ fromwire_ptr(ARGS_FROMWIRE) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
+	dctx = dns_decompress_setpermitted(dctx, true);
 
 	dns_name_init(&name, NULL);
-	return (dns_name_fromwire(&name, source, dctx, options, target));
+	return dns_name_fromwire(&name, source, dctx, target);
 }
 
 static isc_result_t
@@ -100,13 +100,13 @@ towire_ptr(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(rdata->length != 0);
 
-	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
+	dns_compress_setpermitted(cctx, true);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	return (dns_name_towire(&name, cctx, target));
+	return dns_name_towire(&name, cctx, target, NULL);
 }
 
 static int
@@ -131,7 +131,7 @@ compare_ptr(ARGS_COMPARE) {
 	dns_name_fromregion(&name1, &region1);
 	dns_name_fromregion(&name2, &region2);
 
-	return (dns_name_rdatacompare(&name1, &name2));
+	return dns_name_rdatacompare(&name1, &name2);
 }
 
 static isc_result_t
@@ -148,7 +148,7 @@ fromstruct_ptr(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	dns_name_toregion(&ptr->ptr, &region);
-	return (isc_buffer_copyregion(target, &region));
+	return isc_buffer_copyregion(target, &region);
 }
 
 static isc_result_t
@@ -171,7 +171,7 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	dns_name_init(&ptr->ptr, NULL);
 	name_duporclone(&name, mctx, &ptr->ptr);
 	ptr->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
@@ -198,7 +198,7 @@ additionaldata_ptr(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -212,7 +212,7 @@ digest_ptr(ARGS_DIGEST) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 
-	return (dns_name_digest(&name, digest, arg));
+	return dns_name_digest(&name, digest, arg);
 }
 
 static bool
@@ -224,7 +224,7 @@ checkowner_ptr(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (true);
+	return true;
 }
 
 static unsigned char ip6_arpa_data[] = "\003IP6\004ARPA";
@@ -250,11 +250,11 @@ checknames_ptr(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
 
 	if (rdata->rdclass != dns_rdataclass_in) {
-		return (true);
+		return true;
 	}
 
 	if (dns_name_isdnssd(owner)) {
-		return (true);
+		return true;
 	}
 
 	if (dns_name_issubdomain(owner, &in_addr_arpa) ||
@@ -268,14 +268,14 @@ checknames_ptr(ARGS_CHECKNAMES) {
 			if (bad != NULL) {
 				dns_name_clone(&name, bad);
 			}
-			return (false);
+			return false;
 		}
 	}
-	return (true);
+	return true;
 }
 
 static int
 casecompare_ptr(ARGS_COMPARE) {
-	return (compare_ptr(rdata1, rdata2));
+	return compare_ptr(rdata1, rdata2);
 }
 #endif /* RDATA_GENERIC_PTR_12_C */

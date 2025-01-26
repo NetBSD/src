@@ -1,4 +1,4 @@
-/*	$NetBSD: isc.c,v 1.3 2024/09/22 00:14:11 christos Exp $	*/
+/*	$NetBSD: isc.c,v 1.4 2025/01/26 16:25:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,72 +19,128 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/resource.h>
 #include <time.h>
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
+#include <isc/loop.h>
 #include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/os.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
-
-#include "netmgr_p.h"
-#include "task_p.h"
-#include "timer_p.h"
 
 #include <tests/isc.h>
 
 isc_mem_t *mctx = NULL;
-isc_taskmgr_t *taskmgr = NULL;
-isc_timermgr_t *timermgr = NULL;
+isc_log_t *lctx = NULL;
+isc_loop_t *mainloop = NULL;
+isc_loopmgr_t *loopmgr = NULL;
 isc_nm_t *netmgr = NULL;
 unsigned int workers = 0;
-isc_task_t *maintask = NULL;
 bool debug = false;
+
+static void
+adjustnofile(void) {
+	struct rlimit rl;
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
+		if (rl.rlim_cur != rl.rlim_max) {
+			rl.rlim_cur = rl.rlim_max;
+			setrlimit(RLIMIT_NOFILE, &rl);
+		}
+	}
+}
+
+int
+setup_workers(void **state ISC_ATTR_UNUSED) {
+	char *env_workers = getenv("ISC_TASK_WORKERS");
+	if (env_workers != NULL) {
+		workers = atoi(env_workers);
+	} else {
+		workers = isc_os_ncpus();
+
+		/* We always need at least two loops for some of the tests */
+		if (workers < 2) {
+			workers = 2;
+		}
+	}
+	INSIST(workers != 0);
+
+	return 0;
+}
+
+int
+setup_mctx(void **state ISC_ATTR_UNUSED) {
+	isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
+	isc_mem_create(&mctx);
+
+	return 0;
+}
+
+int
+teardown_mctx(void **state ISC_ATTR_UNUSED) {
+	isc_mem_destroy(&mctx);
+
+	return 0;
+}
+
+int
+setup_loopmgr(void **state ISC_ATTR_UNUSED) {
+	REQUIRE(mctx != NULL);
+
+	setup_workers(state);
+
+	isc_loopmgr_create(mctx, workers, &loopmgr);
+	mainloop = isc_loop_main(loopmgr);
+
+	return 0;
+}
+
+int
+teardown_loopmgr(void **state ISC_ATTR_UNUSED) {
+	REQUIRE(netmgr == NULL);
+
+	mainloop = NULL;
+	isc_loopmgr_destroy(&loopmgr);
+
+	return 0;
+}
+
+int
+setup_netmgr(void **state ISC_ATTR_UNUSED) {
+	REQUIRE(loopmgr != NULL);
+
+	adjustnofile();
+
+	isc_netmgr_create(mctx, loopmgr, &netmgr);
+
+	return 0;
+}
+
+int
+teardown_netmgr(void **state ISC_ATTR_UNUSED) {
+	REQUIRE(loopmgr != NULL);
+
+	isc_netmgr_destroy(&netmgr);
+
+	return 0;
+}
 
 int
 setup_managers(void **state) {
-	isc_result_t result;
+	setup_loopmgr(state);
+	setup_netmgr(state);
 
-	UNUSED(state);
-
-	REQUIRE(mctx != NULL);
-
-	if (workers == 0) {
-		char *env_workers = getenv("ISC_TASK_WORKERS");
-		if (env_workers != NULL) {
-			workers = atoi(env_workers);
-		} else {
-			workers = isc_os_ncpus();
-		}
-		INSIST(workers > 0);
-	}
-
-	result = isc_managers_create(mctx, workers, 0, &netmgr, &taskmgr,
-				     &timermgr);
-	if (result != ISC_R_SUCCESS) {
-		return (-1);
-	}
-
-	result = isc_task_create_bound(taskmgr, 0, &maintask, 0);
-	if (result != ISC_R_SUCCESS) {
-		return (-1);
-	}
-
-	isc_taskmgr_setexcltask(taskmgr, maintask);
-
-	return (0);
+	return 0;
 }
 
 int
 teardown_managers(void **state) {
-	UNUSED(state);
+	teardown_netmgr(state);
+	teardown_loopmgr(state);
 
-	isc_task_detach(&maintask);
-	isc_managers_destroy(&netmgr, &taskmgr, &timermgr);
-
-	return (0);
+	return 0;
 }

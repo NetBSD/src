@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.8 2024/09/22 00:13:55 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.9 2025/01/26 16:24:30 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 #	$ cvs -d cvs.netbsd.org:/cvsroot import src/external/mpl/bind/dist ISC bind-9-x-y
 #	Enter the new CHANGES portion as your commit message
 #	$ cd ../../../../../bind-9.x.y
-#	$ run ./configure --enable-querytrace --enable-fixed-rrset
+#	$ env LIBURCU_CFLAGS="-I/usr/src/external/lgpl2/userspace-rcu/include" LIBURCU_LIBS="-L/usr/src/external/lgpl2/userspace-rcu/lib/liburcu-memb -lurcu-memb -L/usr/src/external/lgpl2/userspace-rcu/lib/liburcu-cds -lurcu-cds -L/usr/src/external/lgpl2/userspace-rcu/lib/liburcu-common -lurcu-common" ./configure --enable-querytrace --enable-fixed-rrset
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
 #	  /usr/src/external/mpl/bind/include

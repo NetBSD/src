@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.h,v 1.9 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.10 2025/01/26 16:25:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,8 @@
  * Address match list handling.
  */
 
+/* Add -DDNS_ACL_TRACE=1 to CFLAGS for detailed reference tracing */
+
 /***
  *** Imports
  ***/
@@ -34,7 +36,6 @@
 #include <isc/magic.h>
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
-#include <isc/rwlock.h>
 
 #include <dns/geoip.h>
 #include <dns/iptable.h>
@@ -46,15 +47,13 @@
  ***/
 
 typedef enum {
-	dns_aclelementtype_ipprefix,
 	dns_aclelementtype_keyname,
 	dns_aclelementtype_nestedacl,
 	dns_aclelementtype_localhost,
 	dns_aclelementtype_localnets,
 #if defined(HAVE_GEOIP2)
-	dns_aclelementtype_geoip,
+	dns_aclelementtype_geoip
 #endif /* HAVE_GEOIP2 */
-	dns_aclelementtype_any
 } dns_aclelementtype_t;
 
 typedef struct dns_acl_port_transports {
@@ -88,7 +87,7 @@ struct dns_aclelement {
 struct dns_acl {
 	unsigned int	  magic;
 	isc_mem_t	 *mctx;
-	isc_refcount_t	  refcount;
+	isc_refcount_t	  references;
 	dns_iptable_t	 *iptable;
 	dns_aclelement_t *elements;
 	bool		  has_negatives;
@@ -105,9 +104,8 @@ struct dns_aclenv {
 	isc_mem_t     *mctx;
 	isc_refcount_t references;
 
-	isc_rwlock_t rwlock; /*%< Locks localhost and localnets */
-	dns_acl_t   *localhost;
-	dns_acl_t   *localnets;
+	dns_acl_t *localhost;
+	dns_acl_t *localnets;
 
 	bool match_mapped;
 #if defined(HAVE_GEOIP2)
@@ -124,7 +122,7 @@ struct dns_aclenv {
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t
+void
 dns_acl_create(isc_mem_t *mctx, int n, dns_acl_t **target);
 /*%<
  * Create a new ACL, including an IP table and an array with room
@@ -168,28 +166,16 @@ dns_acl_merge(dns_acl_t *dest, dns_acl_t *source, bool pos);
  * an unexpected positive match in the parent ACL.
  */
 
-void
-dns_acl_attach(dns_acl_t *source, dns_acl_t **target);
-/*%<
- * Attach to acl 'source'.
- *
- * Requires:
- *\li	'source' to be a valid acl.
- *\li	'target' to be non NULL and '*target' to be NULL.
- */
-
-void
-dns_acl_detach(dns_acl_t **aclp);
-/*%<
- * Detach the acl. On final detach the acl must not be linked on any
- * list.
- *
- * Requires:
- *\li	'*aclp' to be a valid acl.
- *
- * Insists:
- *\li	'*aclp' is not linked on final detach.
- */
+#if DNS_ACL_TRACE
+#define dns_acl_ref(ptr)   dns_acl__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_acl_unref(ptr) dns_acl__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_acl_attach(ptr, ptrp) \
+	dns_acl__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_acl_detach(ptrp) dns_acl__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_acl);
+#else
+ISC_REFCOUNT_DECL(dns_acl);
+#endif
 
 bool
 dns_acl_isinsecure(const dns_acl_t *a);
@@ -210,7 +196,7 @@ dns_acl_allowed(isc_netaddr_t *addr, const dns_name_t *signer, dns_acl_t *acl,
  * permitted by 'acl' in environment 'aclenv'.
  */
 
-isc_result_t
+void
 dns_aclenv_create(isc_mem_t *mctx, dns_aclenv_t **envp);
 /*%<
  * Create ACL environment, setting up localhost and localnets ACLs
@@ -231,24 +217,18 @@ dns_aclenv_set(dns_aclenv_t *env, dns_acl_t *localhost, dns_acl_t *localnets);
  * Attach the 'localhost' and 'localnets' arguments to 'env' ACL environment
  */
 
-void
-dns_aclenv_attach(dns_aclenv_t *source, dns_aclenv_t **targetp);
-/*%<
- * Attach '*targetp' to ACL environment 'source'.
- *
- * Requires:
- *\li	'source' is a valid ACL environment.
- *\li	'targetp' is not NULL and '*targetp' is NULL.
- */
-
-void
-dns_aclenv_detach(dns_aclenv_t **aclenvp);
-/*%<
- * Detach an ACL environment; on final detach, destroy it.
- *
- * Requires:
- *\li	'*aclenvp' to be a valid ACL environment
- */
+#if DNS_ACL_TRACE
+#define dns_aclenv_ref(ptr) dns_aclenv__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_aclenv_unref(ptr) \
+	dns_aclenv__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_aclenv_attach(ptr, ptrp) \
+	dns_aclenv__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_aclenv_detach(ptrp) \
+	dns_aclenv__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_aclenv);
+#else
+ISC_REFCOUNT_DECL(dns_aclenv);
+#endif
 
 isc_result_t
 dns_acl_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,

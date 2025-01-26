@@ -1,4 +1,4 @@
-/*	$NetBSD: tm.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: tm.c,v 1.8 2025/01/26 16:25:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -94,22 +94,21 @@ conv_num(const char **buf, int *dest, int llim, int ulim) {
 	int rulim = ulim;
 
 	if (!isdigit((unsigned char)**buf)) {
-		return (0);
+		return 0;
 	}
 
 	do {
-		result *= 10;
-		result += *(*buf)++ - '0';
+		result = 10 * result + *(*buf)++ - '0';
 		rulim /= 10;
-	} while ((result * 10 <= ulim) && rulim && **buf >= '0' &&
-		 **buf <= '9');
+	} while ((result * 10 <= ulim) && rulim &&
+		 isdigit((unsigned char)**buf));
 
 	if (result < llim || result > ulim) {
-		return (0);
+		return 0;
 	}
 
 	*dest = result;
-	return (1);
+	return 1;
 }
 
 time_t
@@ -133,12 +132,12 @@ isc_tm_timegm(struct tm *tm) {
 	      (86400 *
 	       (yday + ((tm->tm_year - 70) * 365) + ((tm->tm_year - 69) / 4) -
 		((tm->tm_year - 1) / 100) + ((tm->tm_year + 299) / 400)));
-	return (ret);
+	return ret;
 }
 
 char *
 isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
-	char c, *ret;
+	char c;
 	const char *bp;
 	size_t len = 0;
 	int alt_format, i, split_year = 0;
@@ -174,7 +173,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case '%': /* "%%" is converted to "%". */
 		literal:
 			if (c != *bp++) {
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -198,49 +197,49 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'c': /* Date and time, using the locale's format. */
 			LEGAL_ALT(ALT_E);
 			if (!(bp = isc_tm_strptime(bp, "%x %X", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'D': /* The date as "%m/%d/%y". */
 			LEGAL_ALT(0);
 			if (!(bp = isc_tm_strptime(bp, "%m/%d/%y", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'R': /* The time as "%H:%M". */
 			LEGAL_ALT(0);
 			if (!(bp = isc_tm_strptime(bp, "%H:%M", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'r': /* The time in 12-hour clock representation. */
 			LEGAL_ALT(0);
 			if (!(bp = isc_tm_strptime(bp, "%I:%M:%S %p", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'T': /* The time as "%H:%M:%S". */
 			LEGAL_ALT(0);
 			if (!(bp = isc_tm_strptime(bp, "%H:%M:%S", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'X': /* The time, using the locale's format. */
 			LEGAL_ALT(ALT_E);
 			if (!(bp = isc_tm_strptime(bp, "%H:%M:%S", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'x': /* The date, using the locale's format. */
 			LEGAL_ALT(ALT_E);
 			if (!(bp = isc_tm_strptime(bp, "%m/%d/%y", tm))) {
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -266,7 +265,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 
 			/* Nothing matched. */
 			if (i == 7) {
-				return (0);
+				return 0;
 			}
 
 			tm->tm_wday = i;
@@ -293,7 +292,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 
 			/* Nothing matched. */
 			if (i == 12) {
-				return (0);
+				return 0;
 			}
 
 			tm->tm_mon = i;
@@ -303,7 +302,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'C': /* The century number. */
 			LEGAL_ALT(ALT_E);
 			if (!(conv_num(&bp, &i, 0, 99))) {
-				return (0);
+				return 0;
 			}
 
 			if (split_year) {
@@ -318,7 +317,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'e':
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_mday, 1, 31))) {
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -328,7 +327,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'H':
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_hour, 0, 23))) {
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -338,7 +337,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'I':
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_hour, 1, 12))) {
-				return (0);
+				return 0;
 			}
 			if (tm->tm_hour == 12) {
 				tm->tm_hour = 0;
@@ -348,7 +347,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'j': /* The day of year. */
 			LEGAL_ALT(0);
 			if (!(conv_num(&bp, &i, 1, 366))) {
-				return (0);
+				return 0;
 			}
 			tm->tm_yday = i - 1;
 			break;
@@ -356,14 +355,14 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'M': /* The minute. */
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_min, 0, 59))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'm': /* The month. */
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &i, 1, 12))) {
-				return (0);
+				return 0;
 			}
 			tm->tm_mon = i - 1;
 			break;
@@ -373,7 +372,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 			/* AM? */
 			if (strcasecmp(am_pm[0], bp) == 0) {
 				if (tm->tm_hour > 11) {
-					return (0);
+					return 0;
 				}
 
 				bp += strlen(am_pm[0]);
@@ -383,7 +382,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 			else if (strcasecmp(am_pm[1], bp) == 0)
 			{
 				if (tm->tm_hour > 11) {
-					return (0);
+					return 0;
 				}
 
 				tm->tm_hour += 12;
@@ -392,12 +391,12 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 			}
 
 			/* Nothing matched. */
-			return (0);
+			return 0;
 
 		case 'S': /* The seconds. */
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_sec, 0, 61))) {
-				return (0);
+				return 0;
 			}
 			break;
 
@@ -411,21 +410,21 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 			 * range for now.
 			 */
 			if (!(conv_num(&bp, &i, 0, 53))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'w': /* The day of week, beginning on sunday. */
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_wday, 0, 6))) {
-				return (0);
+				return 0;
 			}
 			break;
 
 		case 'Y': /* The year. */
 			LEGAL_ALT(ALT_E);
 			if (!(conv_num(&bp, &i, 0, 9999))) {
-				return (0);
+				return 0;
 			}
 
 			tm->tm_year = i - TM_YEAR_BASE;
@@ -434,7 +433,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 		case 'y': /* The year within 100 years of the epoch. */
 			LEGAL_ALT(ALT_E | ALT_O);
 			if (!(conv_num(&bp, &i, 0, 99))) {
-				return (0);
+				return 0;
 			}
 
 			if (split_year) {
@@ -461,11 +460,10 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 			break;
 
 		default: /* Unknown/unsupported conversion. */
-			return (0);
+			return 0;
 		}
 	}
 
 	/* LINTED functional specification */
-	DE_CONST(bp, ret);
-	return (ret);
+	return UNCONST(bp);
 }
