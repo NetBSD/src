@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.16 2023/07/09 20:24:06 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.17 2025/01/26 17:52:23 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.16 2023/07/09 20:24:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.17 2025/01/26 17:52:23 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -300,7 +300,9 @@ static void gen6_ggtt_insert_page(struct i915_address_space *vm,
 #endif
 
 #ifdef __NetBSD__
-	bus_space_write_4(ggtt->gsmt, ggtt->gsmh, offset / I915_GTT_PAGE_SIZE,
+	CTASSERT(sizeof(gen6_pte_t) == 4);
+	bus_space_write_4(ggtt->gsmt, ggtt->gsmh,
+	    sizeof(gen6_pte_t) * (offset / I915_GTT_PAGE_SIZE),
 	    vm->pte_encode(addr, level, flags));
 #else
 	iowrite32(vm->pte_encode(addr, level, flags), pte);
