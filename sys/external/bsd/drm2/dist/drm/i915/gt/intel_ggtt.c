@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.18 2025/01/26 18:21:15 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.19 2025/01/26 18:23:56 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.18 2025/01/26 18:21:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.19 2025/01/26 18:23:56 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -392,8 +392,7 @@ static void gen8_ggtt_clear_range(struct i915_address_space *vm,
 
 #ifdef __NetBSD__
 	for (i = 0; i < num_entries; i++)
-		gen8_set_pte(ggtt->gsmt, ggtt->gsmh,
-		    first_entry + i*sizeof(gen8_pte_t),
+		gen8_set_pte(ggtt->gsmt, ggtt->gsmh, first_entry + i,
 		    scratch_pte);
 #else
 	for (i = 0; i < num_entries; i++)
