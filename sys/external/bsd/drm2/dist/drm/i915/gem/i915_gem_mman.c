@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.27 2024/06/23 19:37:11 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.28 2025/01/26 20:49:22 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.27 2024/06/23 19:37:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.28 2025/01/26 20:49:22 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -83,7 +83,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 
 #ifdef __NetBSD__
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	if (i915->quirks & QUIRK_NETBSD_VERSION_CALLED)
+	if ((i915->quirks & QUIRK_NETBSD_VERSION_CALLED) == 0)
 		args->flags = 0;
 #endif
 
