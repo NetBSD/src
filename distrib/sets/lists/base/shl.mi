@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.995 2024/12/05 04:09:31 blymn Exp $
+# $NetBSD: shl.mi,v 1.996 2025/01/26 16:35:41 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -233,9 +233,9 @@
 ./usr/lib/libbfd.so.18.0			base-sys-shlib		compatfile,binutils=239
 ./usr/lib/libbfd.so.19				base-sys-shlib		compatfile,binutils=242
 ./usr/lib/libbfd.so.19.0			base-sys-shlib		compatfile,binutils=242
-./usr/lib/libbind9.so				base-bind-shlib		compatfile
-./usr/lib/libbind9.so.22			base-bind-shlib		compatfile
-./usr/lib/libbind9.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libbind9.so				base-obsolete		obsolete
+./usr/lib/libbind9.so.22			base-obsolete		obsolete
+./usr/lib/libbind9.so.22.0			base-obsolete		obsolete
 ./usr/lib/libblacklist.so			base-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist.so			base-sys-shlib		compatfile
 ./usr/lib/libblocklist.so.0			base-sys-shlib		compatfile
@@ -298,8 +298,8 @@
 ./usr/lib/libdm.so.0				base-sys-shlib		compatfile
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
-./usr/lib/libdns.so.22				base-bind-shlib		compatfile
-./usr/lib/libdns.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libdns.so.23				base-bind-shlib		compatfile
+./usr/lib/libdns.so.23.0			base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
@@ -374,18 +374,18 @@
 ./usr/lib/libipsec.so				base-net-shlib		compatfile
 ./usr/lib/libipsec.so.3				base-net-shlib		compatfile
 ./usr/lib/libipsec.so.3.0			base-net-shlib		compatfile
-./usr/lib/libirs.so				base-bind-shlib		compatfile
-./usr/lib/libirs.so.22				base-bind-shlib		compatfile
-./usr/lib/libirs.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libirs.so				base-obsolete		obsolete
+./usr/lib/libirs.so.22				base-obsolete		obsolete
+./usr/lib/libirs.so.22.0			base-obsolete		obsolete
 ./usr/lib/libisc.so				base-bind-shlib		compatfile
-./usr/lib/libisc.so.22				base-bind-shlib		compatfile
-./usr/lib/libisc.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libisc.so.23				base-bind-shlib		compatfile
+./usr/lib/libisc.so.23.0			base-bind-shlib		compatfile
 ./usr/lib/libisccc.so				base-bind-shlib		compatfile
-./usr/lib/libisccc.so.22			base-bind-shlib		compatfile
-./usr/lib/libisccc.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libisccc.so.23			base-bind-shlib		compatfile
+./usr/lib/libisccc.so.23.0			base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so				base-bind-shlib		compatfile
-./usr/lib/libisccfg.so.22			base-bind-shlib		compatfile
-./usr/lib/libisccfg.so.22.0			base-bind-shlib		compatfile
+./usr/lib/libisccfg.so.23			base-bind-shlib		compatfile
+./usr/lib/libisccfg.so.23.0			base-bind-shlib		compatfile
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
@@ -466,8 +466,8 @@
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0.1				base-npf-shlib		npf,compatfile
 ./usr/lib/libns.so				base-bind-shlib		compatfile
-./usr/lib/libns.so.22				base-bind-shlib		compatfile
-./usr/lib/libns.so.22.0				base-bind-shlib		compatfile
+./usr/lib/libns.so.23				base-bind-shlib		compatfile
+./usr/lib/libns.so.23.0				base-bind-shlib		compatfile
 ./usr/lib/libnvmm.so				base-sys-shlib		nvmm,pic
 ./usr/lib/libnvmm.so.0				base-sys-shlib		nvmm,pic
 ./usr/lib/libnvmm.so.0.1			base-sys-shlib		nvmm,pic
