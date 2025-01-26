@@ -173,7 +173,7 @@ of documentation in the BIND source tree:
   they document, in files ending in `.rst`: for example, the
   `named` man page is `bin/named/named.rst`.
 * The *BIND 9 Administrator Reference Manual* is in the .rst files in
-  `doc/arm/`; the PDF and HTML versions are automatically generated from
+  `doc/arm/`; the HTML version is automatically generated from
   the `.rst` files.
 * API documentation is in the header file describing the API, in
   Doxygen-formatted comments.

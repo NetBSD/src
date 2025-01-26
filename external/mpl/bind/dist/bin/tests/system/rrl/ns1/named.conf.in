@@ -25,4 +25,6 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 zone "." {type primary; file "root.db";};

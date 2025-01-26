@@ -9,9 +9,22 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+
 import dns.message
+import pytest
 
 import isctest
+
+pytest.importorskip("dns", minversion="2.0.0")
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns1/*",
+        "ns1/dsset-*",
+        "ns1/tc-test-signed.db",
+        "ns1/tc-test-signed.db.signed",
+    ]
+)
 
 
 def test_glue_full_glue_set():
@@ -63,3 +76,38 @@ example.net. 300 IN NS ns1.example.
     isctest.check.rrsets_equal(res.answer, expected_answer.answer)
     isctest.check.rrsets_equal(res.authority, expected_answer.authority)
     isctest.check.rrsets_equal(res.additional, expected_answer.additional)
+
+
+@pytest.mark.parametrize(
+    "qname,dnssec",
+    [
+        # test truncation for unsigned referrals close to UDP packet size limit (A glue)
+        ("foo.subdomain-a.tc-test-unsigned.", False),
+        # test truncation for unsigned referrals close to UDP packet size limit (AAAA glue)
+        ("foo.subdomain-aaaa.tc-test-unsigned.", False),
+        # test truncation for unsigned referrals close to UDP packet size limit (A+AAAA glue)
+        ("foo.subdomain-both.tc-test-unsigned.", False),
+        # test truncation for signed referrals close to UDP packet size limit (A glue)
+        ("foo.subdomain-a.tc-test-signed.", True),
+        # test truncation for signed referrals close to UDP packet size limit (AAAA glue)
+        ("foo.subdomain-aaaa.tc-test-signed.", True),
+        # test truncation for signed referrals close to UDP packet size limit (A+AAAA glue)
+        ("foo.subdomain-both.tc-test-signed.", True),
+    ],
+)
+def test_glue_truncation(qname, dnssec):
+    msg = dns.message.make_query(qname, "A")
+    msg.flags &= ~dns.flags.RD
+    if dnssec:
+        msg.use_edns(
+            payload=512,
+            # Zones used in this test were created with dig in mind that, unlike dnspython,
+            # by default, sets a cookie. Given that the message size must be close to the
+            # truncation limit, we also need to set a cookie here.
+            options=[dns.edns.GenericOption(dns.edns.OptionType.COOKIE, b"0xda13cc")],
+        )
+        msg.want_dnssec(wanted=True)
+    res = isctest.query.udp(msg, "10.53.0.1")
+
+    isctest.check.noerror(res)
+    assert res.flags & dns.flags.TC

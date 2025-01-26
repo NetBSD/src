@@ -11,5 +11,4 @@
 
 .. include:: security.inc.rst
 .. include:: tsig.inc.rst
-.. include:: tkey.inc.rst
 .. include:: sig0.inc.rst

@@ -9,6 +9,33 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "K*",
+        "*.out*",
+        "freeze.test*",
+        "import.key",
+        "journalprint.out.*",
+        "thaw.test*",
+        "*/*.out*",
+        "ns*/K*",
+        "ns*/dsset-*",
+        "ns*/*.db",
+        "ns*/*.nzd",
+        "ns*/*.nzf",
+        "ns*/K*",
+        "ns*/trusted.conf",
+        "ns*/*.bk",
+        "ns*/*.jbk",
+        "ns*/*.jnl",
+        "ns*/*.signed",
+        "ns3/delayedkeys.conf",
+        "ns3/removedkeys",
+    ]
+)
+
 
 def test_inline(run_tests_sh):
     run_tests_sh()

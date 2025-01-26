@@ -25,6 +25,8 @@ options {
 };
 
 view main in {
+	allow-transfer { any; };
+
 	zone example.net {
 		type primary;
 		file "example.net.db";

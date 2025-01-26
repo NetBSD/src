@@ -1,4 +1,4 @@
-/*	$NetBSD: private_test.c,v 1.1.1.1 2024/02/21 21:54:55 christos Exp $	*/
+/*	$NetBSD: private_test.c,v 1.1.1.2 2025/01/26 16:12:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,10 +48,10 @@ setup_test(void **state) {
 	result = dst_lib_init(mctx, NULL);
 
 	if (result != ISC_R_SUCCESS) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -60,7 +60,7 @@ teardown_test(void **state) {
 
 	dst_lib_destroy();
 
-	return (0);
+	return 0;
 }
 
 typedef struct {

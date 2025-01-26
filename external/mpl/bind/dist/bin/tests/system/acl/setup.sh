@@ -13,7 +13,6 @@
 
 . ../conf.sh
 
-$SHELL clean.sh
 $SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 2 3 >ns2/example.db
 $SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 2 3 >ns2/tsigzone.db
 copy_setports ns2/named1.conf.in ns2/named.conf

@@ -1,6 +1,5 @@
 zone <string> [ <class> ] {
 	type hint;
 	check-names ( fail | warn | ignore );
-	delegation-only <boolean>; // deprecated
 	file <quoted_string>;
 };

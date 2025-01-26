@@ -13,8 +13,6 @@
 
 . ../conf.sh
 
-$SHELL clean.sh
-
 copy_setports ns1/named.conf.in ns1/named.conf
 cp ns1/generic.db.in ns1/changed.db
 cp ns1/changed.ver1.jnl.saved ns1/changed.db.jnl

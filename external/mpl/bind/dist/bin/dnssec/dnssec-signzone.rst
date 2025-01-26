@@ -21,7 +21,7 @@ dnssec-signzone - DNSSEC zone signing tool
 Synopsis
 ~~~~~~~~
 
-:program:`dnssec-signzone` [**-a**] [**-c** class] [**-d** directory] [**-D**] [**-E** engine] [**-e** end-time] [**-f** output-file] [**-g**] [**-h**] [**-i** interval] [**-I** input-format] [**-j** jitter] [**-K** directory] [**-k** key] [**-L** serial] [**-M** maxttl] [**-N** soa-serial-format] [**-o** origin] [**-O** output-format] [**-P**] [**-Q**] [**-q**] [**-R**] [**-S**] [**-s** start-time] [**-T** ttl] [**-t**] [**-u**] [**-v** level] [**-V**] [**-X** extended end-time] [**-x**] [**-z**] [**-3** salt] [**-H** iterations] [**-A**] {zonefile} [key...]
+:program:`dnssec-signzone` [**-a**] [**-c** class] [**-d** directory] [**-D**] [**-E** engine] [**-e** end-time] [**-f** output-file] [**-F**] [**-g**] [**-G sync-records**] [**-h**] [**-i** interval] [**-I** input-format] [**-j** jitter] [**-J** filename] [**-K** directory] [**-k** key] [**-L** serial] [**-M** maxttl] [**-N** soa-serial-format] [**-o** origin] [**-O** output-format] [**-P**] [**-Q**] [**-q**] [**-R**] [**-S**] [**-s** start-time] [**-T** ttl] [**-t**] [**-u**] [**-v** level] [**-V**] [**-X** extended end-time] [**-x**] [**-z**] [**-3** salt] [**-H** iterations] [**-A**] {zonefile} [key...]
 
 Description
 ~~~~~~~~~~~
@@ -71,10 +71,28 @@ Options
    engine identifier that drives the cryptographic accelerator or
    hardware service module (usually ``pkcs11``).
 
+.. option:: -F
+
+   This options turns on FIPS (US Federal Information Processing Standards)
+   mode if the underlying crytographic library supports running in FIPS
+   mode.
+
 .. option:: -g
 
    This option indicates that DS records for child zones should be generated from a ``dsset-`` or ``keyset-``
    file. Existing DS records are removed.
+
+.. option:: -G sync-records
+
+   This option indicates which CDS and CDNSKEY records should be generated. ``sync-records`` is a
+   comma-separated string with the following allowed items: ``cdnskey``, and ``cds:<digest-type>``,
+   where ``digest-type`` is an allowed algorithm such as SHA-256 (2), or SHA-384 (4).
+   Only works in combination with smart signing (``-S``).
+
+.. option:: -J filename
+
+   This option tells :program:`dnssec-signzone` to read the journal from the given file
+   when loading the zone file.
 
 .. option:: -K directory
 
@@ -346,15 +364,12 @@ Options
 .. option:: -x
 
    This option indicates that BIND 9 should only sign the DNSKEY, CDNSKEY, and CDS RRsets with key-signing keys,
-   and should omit signatures from zone-signing keys. (This is similar to the
-   ``dnssec-dnskey-kskonly yes;`` zone option in :iscman:`named`.)
+   and should omit signatures from zone-signing keys.
 
 .. option:: -z
 
    This option indicates that BIND 9 should ignore the KSK flag on keys when determining what to sign. This causes
    KSK-flagged keys to sign all records, not just the DNSKEY RRset.
-   (This is similar to the ``update-check-ksk no;`` zone option in
-   :iscman:`named`.)
 
 .. option:: -3 salt
 

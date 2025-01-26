@@ -9,6 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out*",
+        "ns*/_default.nzd*",
+        "ns*/_default.nzf*",
+        "ns2/example.db",
+        "ns2/tsigzone.db",
+    ]
+)
+
 
 def test_acl(run_tests_sh):
     run_tests_sh()

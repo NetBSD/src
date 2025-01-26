@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.h,v 1.1.1.5 2024/02/21 21:54:36 christos Exp $	*/
+/*	$NetBSD: tsigconf.h,v 1.1.1.6 2025/01/26 16:12:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 named_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
-			     isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
+			     isc_mem_t *mctx, dns_tsigkeyring_t **ringp);
 /*%<
  * Create a TSIG key ring and configure it according to the 'key'
  * statements in the global and view configuration objects.

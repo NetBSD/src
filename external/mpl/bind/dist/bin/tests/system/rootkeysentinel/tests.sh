@@ -184,7 +184,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 newtest "check test zone resolves with 'root-key-sentinel no;'" " (expect NOERROR)"
-$DIG $DIGOPTS @10.53.0.4 example SOA >dig.out.ns4.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 example SOA >dig.out.ns4.test$n
 grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

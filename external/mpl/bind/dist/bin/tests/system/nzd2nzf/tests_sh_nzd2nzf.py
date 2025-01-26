@@ -9,6 +9,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "ns*/*.nzd",
+        "ns*/*.nzf*",
+    ]
+)
+
 
 def test_nzd2nzf(run_tests_sh):
     run_tests_sh()

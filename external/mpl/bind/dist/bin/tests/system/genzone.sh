@@ -481,7 +481,13 @@ amtrelay06		AMTRELAY \# 2 0004
 ; type 261
 resinfo			RESINFO	qnamemin exterr=15,16,17 infourl=https://resolver.example.com/guide
 
-; type 262 -- 32767 (unassigned)
+; type 262
+wallet			WALLET	currency-identifer wallet-identifier
+wallet-multiple		WALLET	currency-identifer1 wallet-identifier1
+wallet-multiple		WALLET	currency-identifer1 wallet-identifier2
+wallet-multiple		WALLET	currency-identifer2 wallet-identifier3
+
+; type 265 -- 32767 (unassigned)
 
 ; type 32768
 ta			TA	30795 1 1 (

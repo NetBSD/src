@@ -27,3 +27,6 @@ grep -Ev '^;' <"$ksk.key" | cut -f 7- -d ' ' >keydata
 
 keyfile_to_initial_keys "$ksk" >../ns3/anchor.dnskey
 keyfile_to_initial_ds "$ksk" >../ns3/anchor.ds
+
+ksk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone example.tld.)
+"$SIGNER" -Sz -f example.tld.db -o example.tld example.db.in >/dev/null 2>&1

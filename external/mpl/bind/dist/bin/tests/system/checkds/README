@@ -12,15 +12,87 @@ information regarding copyright ownership.
 The test setup for the checkds tests.
 
 These servers are parent servers:
+- ns1 is the root server.
+
 - ns2 is a primary authoritative server that serves the parent zone for zones
   configured in ns9.
 - ns4 is the secondary server for ns2.
+- ns8 is the secondary server for ns2 that is not part of the NS RRset,
+  used for testing explicit parental-agents.
+
 - ns5 is a primary authoritative server that serves the parent zone for zones
   configured in ns9, but this one does not publish DS records (to test cases
-  where the DS is missing).
+  where the DS is missing and the DS needs to be withdrawn).
+- ns7 is the secondary server for ns5.
+- ns10 is the secondary server for ns5 that is not part of the NS RRset,
+  used for testing explicit parental-agents.
+
 - ns6 is an authoritative server for a different zone, to test badly configured
   parental agents.
-- ns7 is the secondary server for ns5.
 
-Finally, ns9 is the authoritative server for the various DNSSEC enabled test
-domains.
+- ns3 is a resolver that can be configured as a parental agent.
+
+- Finally, ns9 is the authoritative server for the various DNSSEC enabled test
+  domains.
+
+We need multiple test cases for testing the "checkds" functionality. Basically,
+the behavior of "checkds" is of importance in three cases:
+
+1. Enabling DNSSEC
+2. KSK rollover
+3. Going insecure
+
+All these three cases involve publishing DS records into the parent, and
+withdrawing them. The named instance is responsible for checking that the
+relevant DS records are published or removed from the parent zone. Therefor,
+it needs to know what the parental agents are (the servers that it can send
+the DS queries to).
+
+Then there are two ways of retrieving parental agents, either through explicit
+configuration ("checkds explicit;"), or through discovery ("checkds yes;"). In
+the latter case, the parental agents are retrieved by querying for the parent NS
+RRset.
+
+The third value is "checkds no;", which disables the feature.
+
+Depending on the DS publication status, the DS state of the key needs to be
+updated. In case of DS publication, the "DSPublish" state should be set, only
+if all parental agents have the relevant DS published. In case of DS withdrawal,
+the "DSRemoved" state should be set, only if none of the parental agents have
+the relevant DS in their zone.
+
+Regardless of how parental agents are retrieved, we identify the following test
+cases:
+
+1.	Enabling DNSSEC
+
+1.1.	- With one parental agent
+1.1.1.	  - DS is correctly published in the parent:		DSPublish
+1.1.2.	  - DS is not (yet) published in the parent:		!DSPublish
+1.1.3.	  - The parental agent is badly configured:		!DSPublish
+1.1.4.	  - DS is published, but has bogus signature:		!DSPublish
+
+1.2.	- With multiple parental agents
+1.2.1.	  - DS is correctly published in all parents:		DSPublish
+1.2.2.	  - DS is not (yet) published in some parents:		!DSPublish
+1.2.3.	  - One parental agent is badly configured:		!DSPublish
+1.2.4.	  - DS is completely published, bogus signature:	!DSPublish
+
+2.	Going insecure
+
+2.1.	- With one parental agent
+2.1.1.	  - DS is correctly withdrawn from the parent:		DSRemoved
+2.1.2.	  - DS is (still) published in the parent:		!DSRemoved
+2.1.3.	  - The parental agent is badly configured:		!DSRemoved
+2.1.4.	  - DS is withdrawn, but has bogus signature:		!DSRemoved
+
+2.2.	- With multiple parental agents
+2.2.1.	  - DS is correctly withdrawn from all parents:		DSRemoved
+2.2.2.	  - DS is not (yet) withdrawn from some parents:	!DSRemoved
+2.2.3.	  - One parental agent is badly configured:		!DSRemoved
+2.2.4.	  - DS is removed completely, bogus signature:		!DSRemoved
+
+We deliberately don't test the "KSK Rollover" case in this system test as this
+can be considered as the same as "Enabling DNSSEC" for one key and
+"Going insecure" for another case. In other words, it is covered by the two
+other scenarios (although we might still add the test cases in the future).

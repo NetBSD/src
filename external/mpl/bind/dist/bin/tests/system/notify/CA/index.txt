@@ -1,0 +1,3 @@
+V	20540827153314Z		C58668397B1CC49F	unknown	/CN=srv02.crt01.example.com
+V	20540827153318Z		C58668397B1CC4A0	unknown	/CN=srv03.crt01.example.com
+V	240918161818Z		C58668397B1CC4A2	unknown	/CN=srv02.crt01-expired.example.com

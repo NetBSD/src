@@ -1,0 +1,20 @@
+# Hey Emacs, this is -*- makefile-automake -*- file!
+# vim: filetype=automake
+
+AM_V_DTRACE = $(AM_V_DTRACE_@AM_V@)
+AM_V_DTRACE_ = $(AM_V_DTRACE_@AM_DEFAULT_V@)
+AM_V_DTRACE_0 = @echo "  DTRACE   $@";
+
+BUILT_SOURCES += probes.h
+CLEANFILES += probes.h probes.o
+
+probes.h: Makefile probes.d
+	$(AM_V_DTRACE)$(DTRACE) -s $(srcdir)/probes.d -h -o $@
+probes.lo: Makefile probes.d $(DTRACE_DEPS)
+	$(AM_V_DTRACE)$(LIBTOOL) --mode=compile --tag=CC $(DTRACE) -s $(srcdir)/probes.d -G -o $@ $(DTRACE_OBJS)
+
+if HAVE_DTRACE
+if !HOST_MACOS
+DTRACE_LIBADD = probes.lo
+endif
+endif

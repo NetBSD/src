@@ -36,6 +36,8 @@ options {
 	include "../dnsrps.conf";
 };
 
+trust-anchors { };
+
 zone "policy" { type primary; file "policy.db"; };
 
 zone "example.tld" { type primary; file "example.db"; };

@@ -104,7 +104,7 @@ features where appropriate.  Zone files consist of :ref:`Resource Records (RR)
                                         2003080800 ; serial number
                                         12h        ; refresh
                                         15m        ; update retry
-                                        3w         ; expiry
+                                        4d         ; expiry
                                         2h         ; minimum
                                         )
         ; name server RR for the domain

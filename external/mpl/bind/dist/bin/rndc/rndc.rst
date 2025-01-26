@@ -97,6 +97,12 @@ Options
    after executing the requested command (e.g., ISC_R_SUCCESS,
    ISC_R_FAILURE, etc.).
 
+.. option:: -t timeout
+
+   This option sets the idle timeout period for :program:`rndc` to
+   ``timeout`` seconds. The default is 60 seconds, and the maximum settable
+   value is 86400 seconds (1 day). If set to 0, there is no timeout.
+
 .. option:: -V
 
    This option enables verbose logging.
@@ -208,6 +214,13 @@ Currently supported commands are:
    (See the ``dump-file`` option in the BIND 9 Administrator Reference
    Manual.)
 
+.. option:: fetchlimit [view]
+
+   This command dumps a list of servers that are currently being
+   rate-limited as a result of ``fetches-per-server`` settings, and
+   a list of domain names that are currently being rate-limited as
+   a result of ``fetches-per-zone`` settings.
+
 .. option:: flush
 
    This command flushes the server's cache.
@@ -244,6 +257,11 @@ Currently supported commands are:
 
    See also :option:`rndc stop`.
 
+.. option:: skr -import file zone [class [view]]
+
+   This command allows you to import a SKR file for the specified zone, to
+   support offline KSK signing.
+
 .. option:: loadkeys [zone [class [view]]]
 
    This command fetches all DNSSEC keys for the given zone from the key directory. If
@@ -252,10 +270,9 @@ Currently supported commands are:
    immediately re-signed by the new keys, but is allowed to
    incrementally re-sign over time.
 
-   This command requires that the zone be configured with a ``dnssec-policy``, or
-   that the ``auto-dnssec`` zone option be set to ``maintain``, and also requires the
-   zone to be configured to allow dynamic DNS. (See "Dynamic Update Policies" in
-   the Administrator Reference Manual for more details.)
+   This command requires that the zone be configured with a ``dnssec-policy``, and
+   also requires the zone to be configured to allow dynamic DNS. (See "Dynamic
+   Update Policies" in the Administrator Reference Manual for more details.)
 
 .. option:: managed-keys (status | refresh | sync | destroy) [class [view]]
 
@@ -432,14 +449,27 @@ Currently supported commands are:
 
 .. program:: rndc
 
-.. option:: retransfer zone [class [view]]
+.. option:: responselog [on | off]
+
+   This command enables or disables response logging. For backward compatibility,
+   this command can also be used without an argument to toggle response logging
+   on and off.
+
+   Unlike query logging, response logging cannot be enabled by explicitly directing
+   the ``responses`` ``category`` to a ``channel`` in the ``logging`` section
+   of :iscman:`named.conf`, but it can still be enabled by specifying
+   ``responselog yes;`` in the ``options`` section of :iscman:`named.conf`.
+
+.. option:: retransfer [-force] zone [class [view]]
 
    This command retransfers the given secondary zone from the primary server.
 
    If the zone is configured to use ``inline-signing``, the signed
    version of the zone is discarded; after the retransfer of the
    unsigned version is complete, the signed version is regenerated
-   with new signatures.
+   with new signatures. With the optional ``-force`` argument provided
+   if there is an ongoing zone transfer it will be aborted before a new zone
+   transfer is scheduled.
 
 .. option:: scan
 
@@ -492,11 +522,9 @@ Currently supported commands are:
    the zone's DNSKEY RRset. If the DNSKEY RRset is changed, then the
    zone is automatically re-signed with the new key set.
 
-   This command requires that the zone be configured with a ``dnssec-policy``, or
-   that the ``auto-dnssec`` zone option be set to ``allow`` or ``maintain``,
-   and also requires the zone to be configured to allow dynamic DNS. (See
-   "Dynamic Update Policies" in the BIND 9 Administrator Reference Manual for more
-   details.)
+   This command requires that the zone be configured with a ``dnssec-policy``, and
+   also requires the zone to be configured to allow dynamic DNS. (See "Dynamic
+   Update Policies" in the Administrator Reference Manual for more details.)
 
    See also :option:`rndc loadkeys`.
 
@@ -614,17 +642,6 @@ Currently supported commands are:
    See also :option:`rndc notrace`.
 
 .. program:: rndc
-
-.. option:: tsig-delete keyname [view]
-
-   This command deletes a given TKEY-negotiated key from the server. This does not
-   apply to statically configured TSIG keys.
-
-.. option:: tsig-list
-
-   This command lists the names of all TSIG keys currently configured for use by
-   :iscman:`named` in each view. The list includes both statically configured keys and
-   dynamic TKEY-negotiated keys.
 
 .. option:: validation (on | off | status) [view ...]
 

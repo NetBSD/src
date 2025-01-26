@@ -20,8 +20,27 @@ import isctest.mark
 pytest.register_assert_rewrite("generic")
 import generic
 
-pytestmark = isctest.mark.have_json_c
 requests = pytest.importorskip("requests")
+
+pytestmark = [
+    isctest.mark.have_json_c,
+    pytest.mark.extra_artifacts(
+        [
+            "ns2/*.jnl",
+            "ns2/*.signed",
+            "ns2/dsset-*",
+            "ns2/K*",
+            "ns2/dnssec.db.signed",
+            "ns2/dnssec.*.id",
+            "ns2/manykeys.*.id",
+            "ns2/signzone.out.*",
+            "ns3/_default.nzd",
+            "ns3/example-tcp.db",
+            "ns3/example-tls.db",
+            "ns3/example.db",
+        ]
+    ),
+]
 
 
 # JSON helper functions

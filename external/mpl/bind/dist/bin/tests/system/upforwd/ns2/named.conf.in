@@ -19,6 +19,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion yes;
 	dnssec-validation no;
 	notify yes;
@@ -33,5 +34,11 @@ zone "example" {
 zone "example2" {
 	type secondary;
 	file "example2.bk";
+	primaries { 10.53.0.1; };
+};
+
+zone "example3" {
+	type secondary;
+	file "example3.bk";
 	primaries { 10.53.0.1; };
 };

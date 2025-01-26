@@ -139,8 +139,17 @@ parallel test driver; unit tests are also run by `make check`.
 
 The *BIND 9 Administrator Reference Manual* (ARM) is included with the source
 distribution, and in .rst format, in the `doc/arm`
-directory. HTML and PDF versions are automatically generated and can
+directory. The HTML version is automatically generated and can
 be viewed at [https://bind9.readthedocs.io/en/latest/index.html](https://bind9.readthedocs.io/en/latest/index.html).
+
+The PDF version can be built by running:
+
+    cd doc/arm/
+    sphinx-build -b latex . pdf/
+    make -C pdf/ all-pdf
+
+The above requires TeX Live in order to work. The PDF will be written to
+`doc/arm/pdf/Bv9ARM.pdf`.
 
 Man pages for some of the programs in the BIND 9 distribution
 are also included in the BIND ARM.
@@ -154,7 +163,7 @@ Additional information on various subjects can be found in other
 
 #### Bug report identifiers
 
-Most notes in the CHANGES file include a reference to a bug report or
+Most notes in the ARM Changelog appendix include a reference to a bug report or
 issue number. Prior to 2018, these were usually of the form `[RT #NNN]`
 and referred to entries in the "bind9-bugs" RT database, which was not open
 to the public. More recent entries use the form `[GL #NNN]` or, less often,

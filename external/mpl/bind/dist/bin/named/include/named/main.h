@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.1.1.5 2024/02/21 21:54:36 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.1.1.6 2025/01/26 16:12:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,3 +36,6 @@ named_main_earlywarning(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 
 void
 named_main_setmemstats(const char *);
+
+void
+named_main_shutdown(void *arg, int signum);

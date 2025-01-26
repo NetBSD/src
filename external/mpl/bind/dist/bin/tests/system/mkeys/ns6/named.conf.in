@@ -23,7 +23,7 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify no;
-	dnssec-validation yes;
+	dnssec-validation auto;
 	trust-anchor-telemetry no;
 };
 

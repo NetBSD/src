@@ -24,12 +24,19 @@ options {
 	notify no;
 };
 
+dnssec-policy unknown {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
 view "in" {
 	zone "example." {
 		type secondary;
 		primaries { 10.53.0.1; };
 		inline-signing yes;
-		auto-dnssec maintain;
+		dnssec-policy unknown;
 		file "example-in.bk";
 	};
 };

@@ -10,23 +10,14 @@
 # information regarding copyright ownership.
 
 import shutil
-from typing import Any, Optional
+from typing import Optional
 
 import dns.rcode
 import dns.message
 import dns.zone
 
 import isctest.log
-
-# compatiblity with dnspython<2.0.0
-try:
-    # In dnspython>=2.0.0, dns.rcode.Rcode class is available
-    # pylint: disable=invalid-name
-    dns_rcode = dns.rcode.Rcode  # type: Any
-except AttributeError:
-    # In dnspython<2.0.0, selected rcodes are available as integers directly
-    # from dns.rcode
-    dns_rcode = dns.rcode
+from isctest.compat import dns_rcode
 
 
 def rcode(message: dns.message.Message, expected_rcode) -> None:
@@ -35,6 +26,14 @@ def rcode(message: dns.message.Message, expected_rcode) -> None:
 
 def noerror(message: dns.message.Message) -> None:
     rcode(message, dns_rcode.NOERROR)
+
+
+def notimp(message: dns.message.Message) -> None:
+    rcode(message, dns_rcode.NOTIMP)
+
+
+def refused(message: dns.message.Message) -> None:
+    rcode(message, dns_rcode.REFUSED)
 
 
 def servfail(message: dns.message.Message) -> None:

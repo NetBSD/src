@@ -32,9 +32,9 @@ else
 fi
 
 #
-# SIG(0) required cryptographic support which may not be configured.
+# SIG(0) requires cryptographic support which may not be configured.
 #
-keyname=$($KEYGEN -q -n HOST -a ${DEFAULT_ALGORITHM} -b 1024 -T KEY sig0.example2 2>keyname.err)
+keyname=$($KEYGEN -q -n HOST -a ${DEFAULT_ALGORITHM} -T KEY sig0.example2 2>keyname.err)
 if test -n "$keyname"; then
   cat ns1/example1.db $keyname.key >ns1/example2.db
   echo $keyname >keyname
@@ -42,3 +42,12 @@ else
   cat ns1/example1.db >ns1/example2.db
 fi
 cat_i <keyname.err
+
+cat ns1/example1.db >ns1/example2-toomanykeys.db
+for i in 1 2 3; do
+  keyname=$($KEYGEN -q -n HOST -a ${DEFAULT_ALGORITHM} -T KEY sig0.example2-toomanykeys 2>/dev/null)
+  if test -n "$keyname"; then
+    cat $keyname.key >>ns1/example2-toomanykeys.db
+    echo $keyname >keyname$i
+  fi
+done

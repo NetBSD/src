@@ -1,4 +1,4 @@
-/*	$NetBSD: stats_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: stats_test.c,v 1.1.1.2 2025/01/26 16:12:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,12 +34,8 @@
 /* test stats */
 ISC_RUN_TEST_IMPL(isc_stats_basic) {
 	isc_stats_t *stats = NULL;
-	isc_result_t result;
 
-	UNUSED(state);
-
-	result = isc_stats_create(mctx, &stats, 4);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_stats_create(mctx, &stats, 4);
 	assert_int_equal(isc_stats_ncounters(stats), 4);
 
 	/* Default all 0. */

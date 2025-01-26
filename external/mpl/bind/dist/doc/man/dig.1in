@@ -75,11 +75,9 @@ A typical invocation of \fBdig\fP looks like:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 dig @server name type
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -155,11 +153,11 @@ Print a usage summary.
 .B \-k keyfile
 This option tells \fBdig\fP to sign queries using TSIG or
 SIG(0) using a key read from the given file. Key files can be
-generated using \X'tty: link #std-iscman-tsig-keygen'\fI\%tsig\-keygen\fP\X'tty: link'\&. When using TSIG authentication
+generated using \fI\%tsig\-keygen\fP\&. When using TSIG authentication
 with \fBdig\fP, the name server that is queried needs to
 know the key and algorithm that is being used. In BIND, this is
 done by providing appropriate \fBkey\fP and \fBserver\fP statements
-in \X'tty: link #std-iscman-named.conf'\fI\%named.conf\fP\X'tty: link' for TSIG and by looking up the KEY record
+in \fI\%named.conf\fP for TSIG and by looking up the KEY record
 in zone data for SIG(0).
 .UNINDENT
 .INDENT 0.0
@@ -402,12 +400,6 @@ given.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B +dscp=value
-This option formerly set the DSCP value used when sending a query.
-It is now obsolete, and has no effect.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B +edns[=#], +noedns
 This option specifies the EDNS version to query with. Valid values are 0 to 255.
 Setting the EDNS version causes an EDNS query to be sent.
@@ -443,7 +435,7 @@ This option sends an EDNS Expire option.
 .INDENT 0.0
 .TP
 .B +fail, +nofail
-This option indicates that \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link' should try [or not try] the next server if a SERVFAIL is received. The default is
+This option indicates that \fI\%named\fP should try [or not try] the next server if a SERVFAIL is received. The default is
 to not try the next server, which is the reverse of normal stub
 resolver behavior.
 .UNINDENT
@@ -512,29 +504,19 @@ address and port number of the server that provided the answer.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B +idnin, +noidnin
-This option processes [or does not process] IDN domain names on input. This requires
-\fBIDN SUPPORT\fP to have been enabled at compile time.
+.B +idn, +noidn
+Enable or disable IDN processing. By default IDN is enabled for
+input query names, and for display when the output is a terminal.
 .sp
-The default is to process IDN input when standard output is a tty.
-The IDN processing on input is disabled when \fBdig\fP output is redirected
-to files, pipes, and other non\-tty file descriptors.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B +idnout, +noidnout
-This option converts [or does not convert] puny code on output. This requires
-\fBIDN SUPPORT\fP to have been enabled at compile time.
-.sp
-The default is to process puny code on output when standard output is
-a tty. The puny code processing on output is disabled when \fBdig\fP output
-is redirected to files, pipes, and other non\-tty file descriptors.
+You can also turn off \fBdig\fP\(aqs IDN processing by setting
+the \fBIDN_DISABLE\fP environment variable.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +ignore, +noignore
-This option ignores [or does not ignore] truncation in UDP responses instead of retrying with TCP. By
-default, TCP retries are performed.
+This option ignores [or does not ignore] truncation in UDP
+responses instead of retrying with TCP. By default, TCP retries are
+performed.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -601,6 +583,46 @@ which disables padding; the maximum is 512. Values are ordinarily
 expected to be powers of two, such as 128; however, this is not
 mandatory. Responses to padded queries may also be padded, but only
 if the query uses TCP or DNS COOKIE.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +proxy[=src_addr[#src_port]\-dst_addr[#dst_port]], +noproxy
+When this option is set, \fBdig\fP adds PROXYv2 headers to the
+queries. When source and destination addresses are specified, the
+headers contain them and use the \fBPROXY\fP command. It means for
+the remote peer that the queries were sent on behalf of another
+node and that the PROXYv2 header reflects the original connection
+endpoints. The default source port is \fB0\fP and destination port is
+\fI53\fP\&.
+.sp
+For encrypted DNS transports, to prevent accidental information
+leakage, encryption is applied to the PROXYv2 headers: the headers
+are sent right after the handshake process has been completed.
+.sp
+For plain DNS transports, no encryption is applied to the PROXYv2
+headers.
+.sp
+If the addressees are omitted, PROXYv2 headers, that use the
+\fBLOCAL\fP command set, are added instead. For the remote peer, that
+means that the queries were sent on purpose without being relayed,
+so the real connection endpoint addresses must be used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +proxy\-plain[=src_addr[#src_port]\-dst_addr[#dst_port], +noproxy\-plain
+The same as \fB+[no]proxy\fP, but instructs \fBdig\fP to send PROXYv2
+headers ahead of any encryption, before any handshake messages are
+sent. That makes \fBdig\fP behave exactly how it is described
+in the PROXY protocol specification, but not all software expects
+such behaviour.
+.sp
+Please consult the software documentation to find out if you need
+this option. (for example, \fBdnsdist\fP expects encrypted PROXYv2
+headers sent over TLS when encryption is used, while \fBHAProxy\fP
+and many other software packages expect plain ones).
+.sp
+For plain DNS transports the option is effectively an alias for the
+\fB+[no]proxy\fP described above.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -685,12 +707,6 @@ This option performs [or does not perform] a search showing intermediate results
 .UNINDENT
 .INDENT 0.0
 .TP
-.B +sigchase, +nosigchase
-This feature is now obsolete and has been removed; use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link'
-instead.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B +split=W
 This option splits long hex\- or base64\-formatted fields in resource records into
 chunks of \fBW\fP characters (where \fBW\fP is rounded up to the nearest
@@ -770,25 +786,22 @@ is used. This option has no effect if \fI\%+tls\-ca\fP is not specified.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B +topdown, +notopdown
-This feature is related to \fI\%dig +sigchase\fP, which is obsolete and
-has been removed. Use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link' instead.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B +trace, +notrace
-This option toggles tracing of the delegation path from the root name servers for
-the name being looked up. Tracing is disabled by default. When
-tracing is enabled, \fBdig\fP makes iterative queries to resolve the
-name being looked up. It follows referrals from the root servers,
-showing the answer from each server that was used to resolve the
-lookup.
+This option toggles tracing of the delegation path from the root name
+servers for the name being looked up. Tracing is disabled by default.
+When tracing is enabled, \fBdig\fP makes iterative queries to
+resolve the name being looked up. It follows referrals from the root
+servers, showing the answer from each server that was used to resolve
+the lookup.
 .sp
 If \fB@server\fP is also specified, it affects only the initial query for
 the root zone name servers.
 .sp
-\fI\%+dnssec\fP is also set when \fI\%+trace\fP is set, to better emulate the
-default queries from a name server.
+\fI\%+dnssec\fP is set when \fI\%+trace\fP is set, to better
+emulate the default queries from a name server.
+.sp
+Note that the \fBdelv +ns\fP option can also be used for tracing the
+resolution of a name from the root (see \fI\%delv\fP).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -796,12 +809,6 @@ default queries from a name server.
 This option sets the number of times to try UDP and TCP queries to server to \fBT\fP
 instead of the default, 3. If \fBT\fP is less than or equal to zero,
 the number of tries is silently rounded up to 1.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B +trusted\-key=####
-This option formerly specified trusted keys for use with \fI\%dig +sigchase\fP\&. This
-feature is now obsolete and has been removed; use \X'tty: link #std-iscman-delv'\fI\%delv\fP\X'tty: link' instead.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -863,11 +870,9 @@ query options. For example:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 dig +qr www.isc.org any \-x 127.0.0.1 isc.org ns +noqr
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -878,15 +883,6 @@ and a query for the NS records of \fBisc.org\fP\&. A global query option of
 each lookup. The final query has a local query option of \fI\%+noqr\fP which
 means that \fBdig\fP does not print the initial query when it looks up the
 NS records for \fBisc.org\fP\&.
-.SH IDN SUPPORT
-.sp
-If \fBdig\fP has been built with IDN (internationalized domain name)
-support, it can accept and display non\-ASCII domain names. \fBdig\fP
-appropriately converts character encoding of a domain name before sending
-a request to a DNS server or displaying a reply from the server.
-To turn off IDN support, use the parameters
-\fI\%+idnin\fP and \fI\%+idnout\fP, or define the \fBIDN_DISABLE\fP environment
-variable.
 .SH RETURN CODES
 .sp
 \fBdig\fP return codes are:
@@ -914,7 +910,7 @@ Internal error
 \fB${HOME}/.digrc\fP
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-delv'\fI\%delv(1)\fP\X'tty: link', \X'tty: link #std-iscman-host'\fI\%host(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link #std-iscman-dnssec-keygen'\fI\%dnssec\-keygen(8)\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
+\fI\%delv(1)\fP, \fI\%host(1)\fP, \fI\%named(8)\fP, \fI\%dnssec\-keygen(8)\fP, \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
 .SH BUGS
 .sp
 There are probably too many query options.

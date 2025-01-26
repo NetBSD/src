@@ -1,0 +1,95 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+	allow-new-zones yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "common" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "csk" {
+	offline-ksk no;
+	keys {
+		csk lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "unlimited" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "no-cdnskey" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+	cdnskey no;
+	cds-digest-types { SHA-1; SHA-256; SHA-384; };
+};
+
+dnssec-policy "no-cds" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+	cds-digest-types { };
+};
+
+dnssec-policy "two-tone" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+		zsk lifetime P5M algorithm @ALTERNATIVE_ALGORITHM@;
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime P3M algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "ksk-roll" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};

@@ -11,16 +11,12 @@
  * information regarding copyright ownership.
  */
 
-// NS2
-
 options {
-	query-source address 10.53.0.2;
+	new-zones-directory "./nope";
 	port @PORT@;
-	pid-file "named-alt3.pid";
-	lock-file none;
-	listen-on { 10.53.0.2; 10.53.0.3; };
-	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
 	recursion no;
-	notify yes;
 	dnssec-validation no;
 };

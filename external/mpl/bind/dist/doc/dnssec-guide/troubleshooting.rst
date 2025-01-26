@@ -422,7 +422,6 @@ reload`` with the key files missing from the key directory:
 
    named[32516]: received control channel command 'reload'
    named[32516]: loading configuration from '/etc/bind/named.conf'
-   named[32516]: reading built-in trusted keys from file '/etc/bind/bind.keys'
    named[32516]: using default UDP/IPv4 port range: [1024, 65535]
    named[32516]: using default UDP/IPv6 port range: [1024, 65535]
    named[32516]: sizing zone task pool based on 6 zones

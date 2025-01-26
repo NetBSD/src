@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.1.1.1 2024/02/21 21:54:10 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.1.1.2 2025/01/26 16:12:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,10 +50,10 @@ readline(const char *prompt) {
 	line = fgets(buf, RL_MAXCMD, stdin);
 	if (line == NULL) {
 		free(buf);
-		return (NULL);
+		return NULL;
 	}
-	return (buf);
-};
+	return buf;
+}
 
 #define add_history(line)
 

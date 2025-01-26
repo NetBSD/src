@@ -21,6 +21,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	notify yes;
 	dnssec-validation yes;
@@ -42,6 +43,28 @@ dnssec-policy "dnssec" {
 		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
 		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
 	};
+};
+
+dnssec-policy "kskonly" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	signatures-validity 10d;
+	signatures-validity-dnskey 40d;
+};
+
+dnssec-policy "not-enough-hours-in-day" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	/* validity 500 days, with one 1 day jitter (resign in 499 days) */
+	signatures-jitter 1d;
+	signatures-validity-dnskey 500d;
+	signatures-validity 500d;
 };
 
 zone "." {
@@ -126,23 +149,14 @@ zone "cds-x.secure" {
 
 zone "cds-update.secure" {
 	type primary;
-	dnssec-dnskey-kskonly no;
 	file "cds-update.secure.db.signed";
-	allow-update { any; };
-};
-
-zone "cds-kskonly.secure" {
-	type primary;
-	dnssec-dnskey-kskonly yes;
-	file "cds-kskonly.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cds-auto.secure" {
 	type primary;
-	dnssec-dnskey-kskonly no;
 	file "cds-auto.secure.db.signed";
-	auto-dnssec maintain;
+	dnssec-policy dnssec;
 	allow-update { any; };
 };
 
@@ -158,35 +172,21 @@ zone "cdnskey-x.secure" {
 
 zone "cdnskey-update.secure" {
 	type primary;
-	dnssec-dnskey-kskonly no;
 	file "cdnskey-update.secure.db.signed";
-	allow-update { any; };
-};
-
-zone "cdnskey-kskonly.secure" {
-	type primary;
-	dnssec-dnskey-kskonly yes;
-	file "cdnskey-kskonly.secure.db.signed";
 	allow-update { any; };
 };
 
 zone "cdnskey-auto.secure" {
 	type primary;
-	dnssec-dnskey-kskonly no;
 	file "cdnskey-auto.secure.db.signed";
-	auto-dnssec maintain;
+	dnssec-policy dnssec;
 	allow-update { any; };
 };
 
 zone "updatecheck-kskonly.secure" {
 	type primary;
-	auto-dnssec maintain;
-	key-directory ".";
-	dnssec-dnskey-kskonly yes;
-	update-check-ksk yes;
-	sig-validity-interval 10;
-	dnskey-sig-validity 40;
 	file "updatecheck-kskonly.secure.db.signed";
+	dnssec-policy kskonly;
 	allow-update { any; };
 };
 
@@ -198,9 +198,7 @@ zone "corp" {
 zone "hours-vs-days" {
 	type primary;
 	file "hours-vs-days.db.signed";
-	auto-dnssec maintain;
-	/* validity 500 days, resign in 499 days */
-	sig-validity-interval 500 499;
+	dnssec-policy not-enough-hours-in-day;
 	allow-update { any; };
 };
 

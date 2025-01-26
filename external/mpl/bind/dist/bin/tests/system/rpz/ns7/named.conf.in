@@ -21,12 +21,13 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.7; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	minimal-responses no;
 	recursion yes;
 	dnssec-validation yes;
 
 	response-policy {
-	    zone "policy2" add-soa no;
+	    zone "policy2" add-soa no ede none;
 	} qname-wait-recurse no
 	nsip-enable yes
 	nsdname-enable yes
@@ -54,6 +55,6 @@ zone "policy2" {
 	file "policy2.db";
 	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
 	notify-delay 0;
-	allow-transfer  { any; };
+	allow-transfer	{ any; };
 	request-ixfr no; // force axfr on rndc reload
 };

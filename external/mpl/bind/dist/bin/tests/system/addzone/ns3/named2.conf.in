@@ -23,6 +23,7 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	allow-query { any; };
+	allow-transfer { any; };
 	recursion no;
 	allow-new-zones yes;
 	dnssec-validation no;

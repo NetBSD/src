@@ -1,0 +1,483 @@
+<!--
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+SPDX-License-Identifier: MPL-2.0
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0.  If a copy of the MPL was not distributed with this
+file, you can obtain one at https://mozilla.org/MPL/2.0/.
+
+See the COPYRIGHT file distributed with this work for additional
+information regarding copyright ownership.
+-->
+
+# BIND9 System Test Framework
+
+This directory holds test environments for running bind9 system tests involving
+multiple name servers.
+
+Each system test directory holds a set of scripts and configuration files to
+test different parts of BIND.  The directories are named for the aspect of BIND
+they test, for example:
+
+    dnssec/       DNSSEC tests
+    forward/      Forwarding tests
+    glue/         Glue handling tests
+
+etc.
+
+A system test directory must start with an alphabetic character and may not
+contain any special characters. Only hyphen may be used as a word separator.
+
+Typically each set of tests sets up 2-5 name servers and then performs one or
+more tests against them.  Within the test subdirectory, each name server has a
+separate subdirectory containing its configuration data.  These subdirectories
+are named "nsN" or "ansN" (where N is a number between 1 and 8, e.g. ns1, ans2
+etc.)
+
+The tests are completely self-contained and do not require access to the real
+DNS.  Generally, one of the test servers (usually ns1) is set up as a root
+nameserver and is listed in the hints file of the others.
+
+
+## Running the Tests
+
+### Prerequisites
+
+To run system tests, make sure you have the following dependencies installed:
+
+- python3
+- pytest
+- perl
+- dnspython
+- pytest-xdist (for parallel execution)
+- python-jinja2 (for tests which use jinja templates)
+
+Individual system tests might also require additional dependencies. If those
+are missing, the affected tests will be skipped and should produce a message
+specifying what additional prerequisites they expect.
+
+### Network Setup
+
+To enable all servers to run on the same machine, they bind to separate virtual
+IP addresses on the loopback interface.  ns1 runs on 10.53.0.1, ns2 on
+10.53.0.2, etc.  Before running any tests, you must set up these addresses by
+running the command
+
+    sh ifconfig.sh up
+
+as root.  The interfaces can be removed by executing the command:
+
+    sh ifconfig.sh down
+
+... also as root.
+
+The servers use unprivileged ports (above 1024) instead of the usual port 53,
+so they can be run without root privileges once the interfaces have been set
+up.
+
+**Note for MacOS Users**
+
+If you wish to make the interfaces survive across reboots, copy
+org.isc.bind.system and org.isc.bind.system.plist to /Library/LaunchDaemons
+then run
+
+    launchctl load /Library/LaunchDaemons/org.isc.bind.system.plist
+
+... as root.
+
+### Running a Single Test
+
+The recommended way is to use pytest and its test selection facilities:
+
+    pytest -k <test-name-or-pattern>
+
+Using `-k` to specify a pattern allows to run a single pytest test case within
+a system test. E.g. you can use `-k test_sslyze_dot` to execute just the
+`test_sslyze_dot()` function from `doth/tests_sslyze.py`.
+
+However, using the `-k` pattern might pick up more tests than intended. You can
+use the `--collect-only` option to check the list of tests which match you `-k`
+pattern. If you just want to execute all system tests within a single test
+directory, you can also use the utility script:
+
+    ./run.sh system_test_dir_name
+
+### Running All the System Tests
+
+Issuing plain `pytest` command without any argument will execute all tests
+sequentially. To execute them in parallel, ensure you have pytest-xdist
+installed and run:
+
+    pytest [-n <number-of-workers>]
+
+Alternately, using the make command is also supported:
+
+    make [-j numproc] test
+
+### rr
+
+When running system tests, named can be run under the rr tool. rr records a
+trace to the $system_test/nsX/named-Y/ directory, which can be later used to
+replay named. To enable this, execute start.pl with the USE_RR environment
+variable set.
+
+### Test Artifacts
+
+Each test module is executed inside a unique temporary directory which contains
+all the artifacts from the test run. If the tests succeed, they are deleted by
+default. To override this behaviour, pass `--noclean` to pytest.
+
+The directory name starts with the system test name, followed by `_tmp_XXXXXX`,
+i.e. `dns64_tmp_r07vei9s` for `dns64` test run. Since this name changes each
+run, a convenience symlink that has a stable name is also created. It points to
+the latest test artifacts directory and has a form of `dns64_sh_dns64`
+(depending on the particular test module).
+
+To clean up the temporary directories and symlinks, run `make clean-local` in
+the system test directory.
+
+The following test artifacts are typically available:
+
+- pytest.log.txt: main log file with test output
+- files generated by the test itself, e.g. output from "dig" and "rndc"
+- files produced by named, other tools or helper scripts
+
+
+## Writing System Tests
+
+### File Overview
+
+Tests are organized into system test directories which may hold one or more
+test modules (python files). Each module may have multiple test cases. The
+system test directories may contain the following standard files:
+
+- `tests_*.py`: These python files are picked up by pytest as modules. If they
+  contain any test functions, they're added to the test suite.
+
+- `*.j2`: These jinja2 templates can be used for configuration files or any
+  other files which require certain variables filled in, e.g. ports from the
+  environment variables. During test setup, the pytest runner will automatically
+  fill those in and strip the filename extension .j2, e.g. `ns1/named.conf.j2`
+  becomes `ns1/named.conf`. When using advanced templating to conditionally
+  include/omit entire sections or when filling in custom variables used for the
+  test, ensure the templates always include the defaults. If you don't need the
+  file to be auto-templated during test setup, use `.j2.manual` instead and then
+  no defaults are needed.
+
+- `setup.sh`: This sets up the preconditions for the tests.
+
+- `tests.sh`: Any shell-based tests are located within this file. Runs the
+  actual tests.
+
+- `tests_sh_*.py`: A glue file for the pytest runner for executing shell tests.
+
+- `ns<N>`: These subdirectories contain test name servers that can be queried
+  or can interact with each other. The value of N indicates the address the
+  server listens on: for example, ns2 listens on 10.53.0.2, and ns4 on
+  10.53.0.4. All test servers use an unprivileged port, so they don't need to
+  run as root. These servers log at the highest debug level and the log is
+  captured in the file "named.run".
+
+- `ans<N>`: Like ns[X], but these are simple mock name servers implemented in
+  Perl or Python.  They are generally programmed to misbehave in ways named
+  would not so as to exercise named's ability to interoperate with badly
+  behaved name servers.
+
+### Module Scope
+
+A module is a python file which contains test functions. Every system
+test directory may contain multiple modules (i.e. tests_*.py files).
+
+The server setup/teardown is performed for each module. Bundling test cases
+together inside a single module may save some resources. However, test cases
+inside a single module can't be executed in parallel.
+
+It is possible to execute different modules defined within a single system test
+directory in parallel. This is possible thanks to executing the tests inside a
+temporary directory and proper port assignment to ensure there won't be any
+conflicts.
+
+### Port Usage
+
+In order for the tests to run in parallel, each test requires a unique set of
+ports. This is ensured by the pytest runner, which assigns a unique set of
+ports to each test module.
+
+Inside the python tests, it is possible to use the `ports` fixture to get the
+assigned port numbers. They're also set as environment variables. These include:
+
+- `PORT`: used as the basic dns port
+- `TLSPORT`: used as the port for DNS-over-TLS
+- `HTTPPORT`, `HTTPSPORT`: used as the ports for DNS-over-HTTP
+- `CONTROLPORT`: used as the RNDC control port
+- `EXTRAPORT1` through `EXTRAPORT8`: additional ports that can be used as needed
+
+### Logging
+
+Each module has a separate log which will be saved as pytest.log.txt in the
+temporary directory in which the test is executed. This log includes messages
+for this module setup/teardown as well as any logging from the tests. Logging
+level DEBUG and above will be present in this log.
+
+In general, any log messages using INFO or above will also be printed out
+during pytest execution. In CI, the pytest output is also saved to
+pytest.out.txt in the bin/tests/system directory.
+
+### Adding a Test to the System Test Suite
+
+Once a test has been created it will be automatically picked up by the pytest
+runner if it upholds the convention expected by pytest (especially when it comes
+to naming files and test functions).
+
+However, if a new system test directory is created, it also needs to be added to
+`TESTS` in `Makefile.am`, in order to work with `make check`.
+
+
+## Test Files
+
+### setup.sh
+
+This script is responsible for setting up the configuration files used in the
+test. It is used by both the python and shell tests. It is interpreted just
+before the servers are started up for each test module.
+
+To cope with the varying port number, ports are not hard-coded into
+configuration files (or, for that matter, scripts that emulate nameservers).
+Instead, setup.sh is responsible for editing the configuration files to set the
+port numbers.
+
+To do this, configuration files should be supplied in the form of templates
+containing tokens identifying ports.  The tokens have the same name as the
+environment variables listed above, but are prefixed and suffixed by the "@"
+symbol.  For example, a fragment of a configuration file template might look
+like:
+
+    controls {
+        inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+    };
+
+    options {
+        query-source address 10.53.0.1;
+        notify-source 10.53.0.1;
+        transfer-source 10.53.0.1;
+        port @PORT@;
+        allow-new-zones yes;
+    };
+
+setup.sh should copy the template to the desired filename using the
+"copy_setports" shell function defined in "conf.sh", i.e.
+
+    copy_setports ns1/named.conf.in ns1/named.conf
+
+This replaces tokens like @PORT@ with the contents of the environment variables
+listed above. setup.sh should do this for all configuration files required when
+the test starts.
+
+("setup.sh" should also use this method for replacing the tokens in any Perl or
+Python name servers used in the test.)
+
+### tests_*.py
+
+These are test modules containing tests written in python. Every test is a
+function which begins with the name `test_` (according to pytest convention). It
+is possible to pass fixtures to the test function by specifying their name as
+function arguments. Fixtures are used to provide context to the tests, e.g.:
+
+- `ports` is a dictionary with assigned port numbers
+
+### tests_sh_*.py
+
+These are glue files that are required to execute shell based tests (see below).
+These modules shouldn't contain any python tests (use a separate file instead).
+
+### tests.sh
+
+This is the test file for shell based tests.
+
+
+## Nameservers
+
+As noted earlier, a system test will involve a number of nameservers.  These
+will be either instances of named, or special servers written in a language
+such as Perl or Python.
+
+For the former, the version of "named" being run is that in the "bin/named"
+directory in the tree holding the tests (i.e. if "make test" is being run
+immediately after "make", the version of "named" used is that just built).  The
+configuration files, zone files etc. for these servers are located in
+subdirectories of the test directory named "nsN", where N is a small integer.
+The latter are special nameservers, mostly used for generating deliberately bad
+responses, located in subdirectories named "ansN" (again, N is an integer).
+In addition to configuration files, these directories should hold the
+appropriate script files as well.
+
+Note that the "N" for a particular test forms a single number space, e.g. if
+there is an "ns2" directory, there cannot be an "ans2" directory as well.
+Ideally, the directory numbers should start at 1 and work upwards.
+
+When tests are executed, pytest takes care of the test setup and teardown. It
+looks for any `nsN` and `ansN` directories in the system test directory and
+starts those servers.
+
+### `named` Command-Line Options
+
+By default, `named` server is started with the following options:
+
+    -c named.conf   Specifies the configuration file to use (so by implication,
+                    each "nsN" nameserver's configuration file must be called
+                    named.conf).
+
+    -d 99           Sets the maximum debugging level.
+
+    -D <name>       The "-D" option sets a string used to identify the
+                    nameserver in a process listing.  In this case, the string
+                    is the name of the subdirectory.
+
+    -g              Runs the server in the foreground and logs everything to
+                    stderr.
+
+    -m record
+                    Turns on these memory usage debugging flags.
+
+All output is sent to a file called `named.run` in the nameserver directory.
+
+The options used to start named can be altered. There are a couple ways of
+doing this. `start.pl` checks the methods in a specific order: if a check
+succeeds, the options are set and any other specification is ignored.  In order,
+these are:
+
+1. Specifying options to `start.pl` or `start_server` shell utility function
+   after the name of the test directory, e.g.
+
+   start_server --noclean --restart --port ${PORT} ns1 -- "-D xfer-ns1 -T transferinsecs -T transferslowly"
+
+2. Including a file called "named.args" in the "nsN" directory.  If present,
+the contents of the first non-commented, non-blank line of the file are used as
+the named command-line arguments.  The rest of the file is ignored.
+
+3. Tweaking the default command line arguments with "-T" options.  This flag is
+used to alter the behavior of BIND for testing and is not documented in the
+ARM.  The presence of certain files in the "nsN" directory adds flags to
+the default command line (the content of the files is irrelevant - it
+is only the presence that counts):
+
+    named.noaa       Appends "-T noaa" to the command line, which causes
+                     "named" to never set the AA bit in an answer.
+
+    named.dropedns   Adds "-T dropedns" to the command line, which causes
+                     "named" to recognise EDNS options in messages, but drop
+                     messages containing them.
+
+    named.maxudp1460 Adds "-T maxudp1460" to the command line, setting the
+                     maximum UDP size handled by named to 1460.
+
+    named.maxudp512  Adds "-T maxudp512" to the command line, setting the
+                     maximum UDP size handled by named to 512.
+
+    named.noedns     Appends "-T noedns" to the command line, which disables
+                     recognition of EDNS options in messages.
+
+    named.notcp      Adds "-T notcp", which disables TCP in "named".
+
+    named.soa        Appends "-T nosoa" to the command line, which disables
+                     the addition of SOA records to negative responses (or to
+                     the additional section if the response is triggered by RPZ
+                     rewriting).
+
+### Running Nameservers Interactively
+
+In order to debug the nameservers, you can let pytest perform the nameserver
+setup and interact with the servers before the test starts, or even at specific
+points during the test, using the `--trace` option to drop you into pdb debugger
+which pauses the execution of the tests, while keeping the server state intact:
+
+    pytest -k dns64 --trace
+
+
+## Developer Notes
+
+### Test discovery and collection
+
+There are two distinct types of system tests. The first is a shell script
+tests.sh containing individual test cases executed sequentially and the
+success/failure is determined by return code. The second type is a regular
+pytest file which contains test functions.
+
+Dealing with the regular pytest files doesn't require any special consideration
+as long as the naming conventions are met. Discovering the tests.sh tests is
+more complicated.
+
+The chosen solution is to add a bit of glue for each system test. For every
+tests.sh, there is an accompanying tests_sh_*.py file that contains a test
+function which utilizes a custom run_tests_sh fixture to call the tests.sh
+script. Other solutions were tried and eventually rejected. While this
+introduces a bit of extra glue, it is the most portable, compatible and least
+complex solution.
+
+### Compatibility with older pytest version
+
+Keep in mind that the pytest runner must work with ancient versions of pytest.
+When implementing new features, it is advisable to check feature support in
+pytest and pytest-xdist in older distributions first.
+
+As a general rule, any changes to the pytest runner need to keep working on all
+platforms in CI that use the pytest runner. As of 2023-11-14, the oldest
+supported version is whatever is available in EL8.
+
+We may need to add more compat code eventually to handle breaking upstream
+changes. For example, using request.fspath attribute is already deprecated in
+latest pytest.
+
+### Format of Shell Test Output
+
+Shell-based tests have the following format of output:
+
+    <letter>:<test-name>:<message> [(<number>)]
+
+e.g.
+
+    I:catz:checking that dom1.example is not served by primary (1)
+
+The meanings of the fields are as follows:
+
+<letter>
+This indicates the type of message.  This is one of:
+
+    S   Start of the test
+    A   Start of test (retained for backwards compatibility)
+    T   Start of test (retained for backwards compatibility)
+    E   End of the test
+    I   Information.  A test will typically output many of these messages
+        during its run, indicating test progress.  Note that such a message may
+        be of the form "I:testname:failed", indicating that a sub-test has
+        failed.
+    R   Result.  Each test will result in one such message, which is of the
+        form:
+
+                R:<test-tmpdir>:<result>
+
+        where <result> is one of:
+
+            PASS        The test passed
+            FAIL        The test failed
+            SKIPPED     The test was not run, usually because some
+                        prerequisites required to run the test are missing.
+
+<test-tmpdir>
+This is the name of the temporary test directory from which the message
+emanated, which is also the name of the subdirectory holding the test files.
+
+<message>
+This is text output by the test during its execution.
+
+(<number>)
+If present, this will correlate with a file created by the test.  The tests
+execute commands and route the output of each command to a file.  The name of
+this file depends on the command and the test, but will usually be of the form:
+
+    <command>.out.<suffix><number>
+
+e.g. nsupdate.out.test28, dig.out.q3.  This aids diagnosis of problems by
+allowing the output that caused the problem message to be identified.
+

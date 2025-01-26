@@ -47,6 +47,8 @@ options {
 	max-records-per-type 0;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";

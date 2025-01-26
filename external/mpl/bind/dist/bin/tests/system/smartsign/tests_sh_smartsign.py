@@ -9,6 +9,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "*.signed",
+        "K*",
+        "dnskey.sigs",
+        "dsset-*",
+        "dsset.out",
+        "other.sigs",
+    ]
+)
+
 
 def test_smartsign(run_tests_sh):
     run_tests_sh()

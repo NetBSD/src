@@ -9,7 +9,7 @@ zone <string> [ <class> ] {
 	max-records <integer>;
 	max-records-per-type <integer>;
 	max-types-per-name <integer>;
-	max-zone-ttl ( unlimited | <duration> );
-	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	max-zone-ttl ( unlimited | <duration> ); // deprecated
+	primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	zone-statistics ( full | terse | none | <boolean> );
 };

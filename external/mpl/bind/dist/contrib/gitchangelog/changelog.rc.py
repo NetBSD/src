@@ -291,12 +291,7 @@ include_merge = True
 #     r'/(?P<rev>[0-9]+\.[0-9]+(\.[0-9]+)?)\s+\([0-9]+-[0-9]{2}-[0-9]{2}\)\n--+\n/',
 #     idx=lambda m: m.start(1)
 # )
-# publish = stdout
-publish = FileInsertAtFirstRegexMatch(
-    "doc/arm/changelog.rst",
-    r"for changes relevant to them.\n\n",
-    idx=lambda m: m.end(0),
-)
+publish = stdout
 
 
 ## ``revs`` is a list of callable or a list of string

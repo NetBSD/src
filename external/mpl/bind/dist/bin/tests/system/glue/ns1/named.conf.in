@@ -33,7 +33,18 @@ zone "root-servers.nil" {
 	type primary;
 	file "root-servers.nil.db";
 };
+
 zone "net" {
 	type primary;
 	file "net.db";
+};
+
+zone "tc-test-unsigned" {
+	type master;
+	file "tc-test-unsigned.db";
+};
+
+zone "tc-test-signed" {
+	type master;
+	file "tc-test-signed.db.signed";
 };

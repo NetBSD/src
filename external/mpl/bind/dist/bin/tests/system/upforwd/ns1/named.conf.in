@@ -12,7 +12,7 @@
  */
 
 key "update.example." {
-	algorithm "hmac-md5";
+	algorithm @DEFAULT_HMAC@;
 	secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
 };
 
@@ -21,9 +21,12 @@ options {
 	notify-source 10.53.0.1;
 	transfer-source 10.53.0.1;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
+	listen-on tls ephemeral { 10.53.0.1; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion yes;
 	dnssec-validation no;
 	notify yes;
@@ -39,4 +42,16 @@ zone "example2" {
 	type primary;
 	file "example2.db";
 	allow-update { key sig0.example2.; };
+};
+
+zone "example2-toomanykeys" {
+	type primary;
+	file "example2-toomanykeys.db";
+	allow-update { key sig0.example2-toomanykeys.; };
+};
+
+zone "example3" {
+	type primary;
+	file "example3.db";
+	allow-update { key update.example.; 10.53.0.3; };
 };

@@ -25,6 +25,13 @@ class NamedPorts(NamedTuple):
     dns: int = 53
     rndc: int = 953
 
+    @staticmethod
+    def from_env():
+        return NamedPorts(
+            dns=int(os.environ["PORT"]),
+            rndc=int(os.environ["CONTROLPORT"]),
+        )
+
 
 class NamedInstance:
     """
@@ -38,11 +45,10 @@ class NamedInstance:
     ```
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         identifier: str,
-        ports: NamedPorts = NamedPorts(),
+        ports: Optional[NamedPorts] = None,
         rndc_logger: Optional[logging.Logger] = None,
         rndc_executor: Optional[RNDCExecutor] = None,
     ) -> None:
@@ -52,7 +58,8 @@ class NamedInstance:
 
         `ports` is the `NamedPorts` instance listing the UDP/TCP ports on which
         this `named` instance is listening for various types of traffic (both
-        DNS traffic and RNDC commands).
+        DNS traffic and RNDC commands). Defaults to ports set by the test
+        framework.
 
         `rndc_logger` is the `logging.Logger` to use for logging RNDC
         commands sent to this `named` instance.
@@ -61,6 +68,8 @@ class NamedInstance:
         that is used for executing RNDC commands on this `named` instance.
         """
         self.ip = self._identifier_to_ip(identifier)
+        if ports is None:
+            ports = NamedPorts.from_env()
         self.ports = ports
         self.log = LogFile(os.path.join(identifier, "named.run"))
         self._rndc_executor = rndc_executor or RNDCBinaryExecutor()

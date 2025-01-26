@@ -30,3 +30,8 @@ zone "." {
 	type primary;
 	file "root.db";
 };
+
+zone "from-no-cookie-server.example" {
+	type primary;
+	file "from-no-cookie-server.example.db";
+};

@@ -27,9 +27,9 @@ be a part of his or her environment, and understand what it means to deploy it i
 field.
 
 This guide provides basic information on how to configure DNSSEC using
-BIND 9.16.9 or later. Most of the information and examples in this guide also
+BIND 9.16.0 or later. Most of the information and examples in this guide also
 apply to versions of BIND later than 9.9.0, but some of the key features described here
-were only introduced in version 9.16.9. Readers are assumed to have basic
+were only introduced in version 9.16.0. Readers are assumed to have basic
 working knowledge of the Domain Name System (DNS) and related network
 infrastructure, such as concepts of TCP/IP. In-depth knowledge of DNS and
 TCP/IP is not required. The guide assumes no prior knowledge of DNSSEC or
@@ -346,7 +346,7 @@ want to consider deploying DNSSEC:
    implementing DNSSEC, if your organization is subject to compliance
    standards that mandate it. For example, the US government set a
    deadline in 2008 to have all ``.gov`` subdomains signed by
-   December 2009  [#]_. So if you operate a subdomain in ``.gov``, you
+   December 2009. [#omb_memo]_ So if you operate a subdomain in ``.gov``, you
    must implement DNSSEC to be compliant. ICANN also requires
    that all new top-level domains support DNSSEC.
 
@@ -369,7 +369,7 @@ want to consider deploying DNSSEC:
    infrastructure. To take a peek at these next-generation DNS features,
    check out :ref:`introduction_to_dane`.
 
-.. [#]
+.. [#omb_memo]
    The Office of Management and Budget (OMB) for the US government
    published `a memo in
    2008 <https://georgewbush-whitehouse.archives.gov/omb/memoranda/fy2008/m08-23.pdf>`__,

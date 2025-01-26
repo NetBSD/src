@@ -36,8 +36,7 @@ status=0
 n=0
 ret=0
 
-$RNDCCMD 10.53.0.3 signing -nsec3param 1 0 0 - nsec3 >/dev/null 2>&1 || ret=1
-
+# Make sure nsec3 zone is NSEC3 signed.
 for i in 1 2 3 4 5 6 7 8 9 0; do
   nsec3param=$($DIG $DIGOPTS +nodnssec +short @10.53.0.3 nsec3param nsec3.) || ret=1
   test "$nsec3param" = "1 0 0 -" && break
@@ -67,14 +66,12 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that the zone is signed on initial transfer ($n)"
 ret=0
-for i in 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10; do
-  ret=0
-  $RNDCCMD 10.53.0.3 signing -list bits >signing.out.test$n 2>&1 || ret=1
-  keys=$(grep '^Done signing' signing.out.test$n | wc -l)
-  [ $keys = 2 ] || ret=1
-  if [ $ret = 0 ]; then break; fi
-  sleep 1
-done
+zone_is_signed() {
+  $DIG $DIGOPTS @10.53.0.3 bits. AXFR >dig.out.ns3.test$n || return 1
+  $VERIFY -z -o bits. dig.out.ns3.test$n >verify.out.bits.test$n || return 1
+  return 0
+}
+retry_quiet 10 zone_is_signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -113,6 +110,7 @@ n=$((n + 1))
 echo_i "checking private type was properly signed ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.6 bits TYPE65534 >dig.out.ns6.test$n || ret=1
+# One private type record, one signature
 grep "ANSWER: 2," dig.out.ns6.test$n >/dev/null || ret=1
 grep "flags:.* ad[ ;]" dig.out.ns6.test$n >/dev/null || ret=1
 
@@ -122,7 +120,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking removal of remaining private type record via 'rndc signing -clear all' ($n)"
 ret=0
-$RNDCCMD 10.53.0.3 signing -clear all bits >/dev/null || ret=1
+$RNDCCMD 10.53.0.3 signing -clear all bits >signing.out.test$n.clear || ret=1
 
 for i in 1 2 3 4 5 6 7 8 9 10; do
   ans=0
@@ -422,8 +420,8 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking primary zone that was updated while offline is correct ($n)"
 ret=0
-$DIG $DIGOPTS +nodnssec +short @10.53.0.3 updated SOA >dig.out.ns2.soa.test$n || ret=1
-serial=$(awk '{print $3}' dig.out.ns2.soa.test$n)
+$DIG $DIGOPTS +nodnssec +short @10.53.0.3 updated SOA >dig.out.ns3.soa.test$n || ret=1
+serial=$(awk '{print $3}' dig.out.ns3.soa.test$n)
 # serial should have changed
 [ "$serial" = "2000042407" ] && ret=1
 # e.updated should exist and should be signed
@@ -793,62 +791,6 @@ done
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-n=$((n + 1))
-echo_i "check 'rndc signing -nsec3param' requests are queued for zones which are not loaded ($n)"
-ret=0
-# The "retransfer3" zone is configured with "allow-transfer { none; };" on ns2,
-# which means it should not yet be available on ns3.
-$DIG $DIGOPTS @10.53.0.3 retransfer3 SOA >dig.out.ns3.pre.test$n || ret=1
-grep "status: SERVFAIL" dig.out.ns3.pre.test$n >/dev/null || ret=1
-# Switch the zone to NSEC3.  An "NSEC3 -> NSEC -> NSEC3" sequence is used purely
-# to test that multiple queued "rndc signing -nsec3param" requests are handled
-# properly.
-$RNDCCMD 10.53.0.3 signing -nsec3param 1 0 0 - retransfer3 >/dev/null 2>&1 || ret=1
-$RNDCCMD 10.53.0.3 signing -nsec3param none retransfer3 >/dev/null 2>&1 || ret=1
-$RNDCCMD 10.53.0.3 signing -nsec3param 1 0 0 - retransfer3 >/dev/null 2>&1 || ret=1
-# Reconfigure ns2 to allow outgoing transfers for the "retransfer3" zone.
-sed "s|\(allow-transfer { none; };.*\)|// \1|;" ns2/named.conf >ns2/named.conf.new
-mv ns2/named.conf.new ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig || ret=1
-# Request ns3 to retransfer the "retransfer3" zone.
-$RNDCCMD 10.53.0.3 retransfer retransfer3 || ret=1
-# Check whether "retransfer3" uses NSEC3 as requested.
-for i in 0 1 2 3 4 5 6 7 8 9; do
-  ret=0
-  $DIG $DIGOPTS @10.53.0.3 nonexist.retransfer3 A >dig.out.ns3.post.test$n.$i || ret=1
-  grep "status: NXDOMAIN" dig.out.ns3.post.test$n.$i >/dev/null || ret=1
-  grep "NSEC3" dig.out.ns3.post.test$n.$i >/dev/null || ret=1
-  test $ret -eq 0 && break
-  sleep 1
-done
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
-
-n=$((n + 1))
-echo_i "check rndc retransfer of a inline nsec3 secondary retains nsec3 ($n)"
-ret=0
-$RNDCCMD 10.53.0.3 signing -nsec3param 1 0 0 - retransfer3 >/dev/null 2>&1 || ret=1
-for i in 0 1 2 3 4 5 6 7 8 9; do
-  ans=0
-  $DIG $DIGOPTS @10.53.0.3 nonexist.retransfer3 A >dig.out.ns3.pre.test$n || ret=1
-  grep "status: NXDOMAIN" dig.out.ns3.pre.test$n >/dev/null || ans=1
-  grep "NSEC3" dig.out.ns3.pre.test$n >/dev/null || ans=1
-  [ $ans = 0 ] && break
-  sleep 1
-done
-$RNDCCMD 10.53.0.3 retransfer retransfer3 2>&1 || ret=1
-for i in 0 1 2 3 4 5 6 7 8 9; do
-  ans=0
-  $DIG $DIGOPTS @10.53.0.3 nonexist.retransfer3 A >dig.out.ns3.post.test$n || ret=1
-  grep "status: NXDOMAIN" dig.out.ns3.post.test$n >/dev/null || ans=1
-  grep "NSEC3" dig.out.ns3.post.test$n >/dev/null || ans=1
-  [ $ans = 0 ] && break
-  sleep 1
-done
-[ $ans = 1 ] && ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
-
 # NOTE: The test below should be considered fragile.  More details can be found
 # in the comment inside ns7/named.conf.
 n=$((n + 1))
@@ -857,7 +799,7 @@ ret=0
 zone=nsec3-loop
 # Add secondary zone using rndc
 $RNDCCMD 10.53.0.7 addzone $zone \
-  '{ type secondary; primaries { 10.53.0.2; }; file "'$zone'.db"; inline-signing yes; auto-dnssec maintain; };' || ret=1
+  '{ type secondary; primaries { 10.53.0.2; }; file "'$zone'.db"; inline-signing yes; dnssec-policy default; };' || ret=1
 # Wait until secondary zone is fully signed using NSEC
 for i in 1 2 3 4 5 6 7 8 9 0; do
   ret=1
@@ -867,14 +809,17 @@ for i in 1 2 3 4 5 6 7 8 9 0; do
   sleep 1
 done
 # Switch secondary zone to NSEC3
-$RNDCCMD 10.53.0.7 signing -nsec3param 1 0 2 12345678 $zone >/dev/null 2>&1 || ret=1
+$RNDCCMD 10.53.0.7 modzone $zone \
+  '{ type secondary; primaries { 10.53.0.2; }; file "'$zone'.db"; inline-signing yes; dnssec-policy nsec3; };' || ret=1
 # Wait until secondary zone is fully signed using NSEC3
 for i in 1 2 3 4 5 6 7 8 9 0; do
   ret=1
-  nsec3param=$($DIG $DIGOPTS +nodnssec +short @10.53.0.7 nsec3param $zone) || ret=1
-  test "$nsec3param" = "1 0 2 12345678" && ret=0 && break
+  $DIG $DIGOPTS +nodnssec +short @10.53.0.7 nsec3param $zone >dig.out.ns7.test$n
+  nsec3param=$(cat dig.out.ns7.test$n)
+  test "$nsec3param" = "1 0 0 -" && ret=0 && break
   sleep 1
 done
+
 # Attempt to retransfer the secondary zone from primary
 $RNDCCMD 10.53.0.7 retransfer $zone || ret=1
 # Check whether the signer managed to fully sign the retransferred zone by
@@ -1010,7 +955,7 @@ for zone in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
     cat dig.out.ns2.$zone.test$n
   }
   $RNDCCMD 10.53.0.3 addzone test-$zone \
-    '{ type secondary; primaries { 10.53.0.2; }; file "'test-$zone.bk'"; inline-signing yes; auto-dnssec maintain; allow-transfer { any; }; };' || ret=1
+    '{ type secondary; primaries { 10.53.0.2; }; file "'test-$zone.bk'"; inline-signing yes; dnssec-policy default; allow-transfer { any; }; };' || ret=1
   $RNDCCMD 10.53.0.3 delzone test-$zone >/dev/null 2>&1 || ret=1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -1032,11 +977,11 @@ for alg in ${DEFAULT_ALGORITHM_NUMBER} ${ALTERNATIVE_ALGORITHM_NUMBER}; do
 
   dnskeys=$(grep "IN.DNSKEY.25[67] [0-9]* $alg " dig.out.ns3.test$n | wc -l)
   rrsigs=$(grep "RRSIG.DNSKEY $alg " dig.out.ns3.test$n | wc -l)
-  test ${dnskeys:-0} -eq 3 || {
+  test ${dnskeys:-0} -eq 4 || {
     echo_i "failed $alg (dnskeys ${dnskeys:-0})"
     ret=1
   }
-  test ${rrsigs:-0} -eq 2 || {
+  test ${rrsigs:-0} -eq 1 || {
     echo_i "failed $alg (rrsigs ${rrsigs:-0})"
     ret=1
   }
@@ -1132,69 +1077,6 @@ $RNDCCMD 10.53.0.2 signing -serial ${newserial:-0} bits >/dev/null 2>&1 && ret=1
 $RNDCCMD 10.53.0.2 thaw bits >/dev/null 2>&1 || ret=1
 retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${newserial:-1}" dig.out.ns2.post1.test$n && ret=1
 retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${oldserial:-1}" dig.out.ns2.post2.test$n || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
-
-n=$((n + 1))
-echo_i "testing that inline signing works with inactive ZSK and active KSK ($n)"
-ret=0
-
-$DIG $DIGOPTS @10.53.0.3 soa inactivezsk >dig.out.ns3.pre.test$n || ret=1
-soa1=$(awk '$4 == "SOA" { print $7 }' dig.out.ns3.pre.test$n)
-
-$NSUPDATE <<EOF || ret=1
-server 10.53.0.2 ${PORT}
-update add added.inactivezsk 0 IN TXT added record
-send
-EOF
-
-for i in 1 2 3 4 5 6 7 8 9 10; do
-  $DIG $DIGOPTS @10.53.0.3 soa inactivezsk >dig.out.ns3.post.test$n || ret=1
-  soa2=$(awk '$4 == "SOA" { print $7 }' dig.out.ns3.post.test$n)
-  test ${soa1:-0} -ne ${soa2:-0} && break
-  sleep 1
-done
-test ${soa1:-0} -ne ${soa2:-0} || ret=1
-
-$DIG $DIGOPTS @10.53.0.3 txt added.inactivezsk >dig.out.ns3.test$n || ret=1
-grep "ANSWER: 3," dig.out.ns3.test$n >/dev/null || ret=1
-grep "RRSIG" dig.out.ns3.test$n >/dev/null || ret=1
-grep "TXT ${DEFAULT_ALGORITHM_NUMBER} 2" dig.out.ns3.test$n >/dev/null || ret=1
-grep "TXT ${ALTERNATIVE_ALGORITHM_NUMBER} 2" dig.out.ns3.test$n >/dev/null || ret=1
-
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
-
-n=$((n + 1))
-echo_i "testing that inline signing works with inactive KSK and active ZSK ($n)"
-ret=0
-
-$DIG $DIGOPTS @10.53.0.3 axfr inactiveksk >dig.out.ns3.test$n || ret=1
-
-#
-#  check that DNSKEY is signed with ZSK for default algorithm
-#
-awk='$4 == "DNSKEY" && $5 == 256 && $7 == alg { print }'
-zskid=$(awk -v alg=${DEFAULT_ALGORITHM_NUMBER} "${awk}" dig.out.ns3.test$n \
-  | $DSFROMKEY -A -2 -f - inactiveksk | awk '{ print $4}')
-grep "DNSKEY ${DEFAULT_ALGORITHM_NUMBER} 1 [0-9]* [0-9]* [0-9]* ${zskid} " dig.out.ns3.test$n >/dev/null || ret=1
-awk='$4 == "DNSKEY" && $5 == 257 && $7 == alg { print }'
-kskid=$(awk -v alg=${DEFAULT_ALGORITHM_NUMBER} "${awk}" dig.out.ns3.test$n \
-  | $DSFROMKEY -2 -f - inactiveksk | awk '{ print $4}')
-grep "DNSKEY ${DEFAULT_ALGORITHM_NUMBER} 1 [0-9]* [0-9]* [0-9]* ${kskid} " dig.out.ns3.test$n >/dev/null && ret=1
-
-#
-#  check that DNSKEY is signed with KSK for alternative algorithm
-#
-awk='$4 == "DNSKEY" && $5 == 256 && $7 == alg { print }'
-zskid=$(awk -v alg=${ALTERNATIVE_ALGORITHM_NUMBER} "${awk}" dig.out.ns3.test$n \
-  | $DSFROMKEY -A -2 -f - inactiveksk | awk '{ print $4}')
-grep "DNSKEY ${ALTERNATIVE_ALGORITHM_NUMBER} 1 [0-9]* [0-9]* [0-9]* ${zskid} " dig.out.ns3.test$n >/dev/null && ret=1
-awk='$4 == "DNSKEY" && $5 == 257 && $7 == alg { print }'
-kskid=$(awk -v alg=${ALTERNATIVE_ALGORITHM_NUMBER} "${awk}" dig.out.ns3.test$n \
-  | $DSFROMKEY -2 -f - inactiveksk | awk '{ print $4}')
-grep "DNSKEY ${ALTERNATIVE_ALGORITHM_NUMBER} 1 [0-9]* [0-9]* [0-9]* ${kskid} " dig.out.ns3.test$n >/dev/null || ret=1
-
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1368,12 +1250,16 @@ ensure_sigs_only_in_journal() {
 n=$((n + 1))
 echo_i "checking that records added from a journal are scheduled to be resigned ($n)"
 ret=0
+zone="delayedkeys"
 # Signing keys for the "delayedkeys" zone are not yet accessible.  Thus, the
 # zone file for the signed version of the zone will contain no DNSSEC records.
 # Move keys into place now and load them, which will cause DNSSEC records to
 # only be present in the journal for the signed version of the zone.
 mv Kdelayedkeys* ns3/
-$RNDCCMD 10.53.0.3 loadkeys delayedkeys >rndc.out.ns3.pre.test$n 2>&1 || ret=1
+cp ns3/delayedkeys.conf.2 ns3/delayedkeys.conf
+$RNDCCMD 10.53.0.3 reconfig >/dev/null 2>&1 || ret=1
+
+#$RNDCCMD 10.53.0.3 loadkeys delayedkeys > rndc.out.ns3.pre.test$n 2>&1 || ret=1
 # Wait until the zone is signed.
 check_done_signing() (
   $RNDCCMD 10.53.0.3 signing -list delayedkeys >signing.out.test$n 2>&1 || true

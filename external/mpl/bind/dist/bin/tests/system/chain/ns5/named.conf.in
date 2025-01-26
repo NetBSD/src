@@ -40,3 +40,8 @@ zone "signed-sub5.example" {
 	type primary;
 	file "sub.db";
 };
+
+zone "mutt.example" {
+	type primary;
+	file "mutt.db";
+};

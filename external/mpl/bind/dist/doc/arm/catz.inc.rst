@@ -25,7 +25,7 @@ changes are immediately put into effect. Because the catalog zone is a
 normal DNS zone, these configuration changes can be propagated using the
 standard AXFR/IXFR zone transfer mechanism.
 
-Catalog zones' format and behavior are specified as :rfc:`9432`.
+The format and behavior of catalog zones are specified in :rfc:`9432`.
 
 Principle of Operation
 ~~~~~~~~~~~~~~~~~~~~~~

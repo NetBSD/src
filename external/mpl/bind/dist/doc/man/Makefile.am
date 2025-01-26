@@ -11,6 +11,7 @@ MANPAGES_RST =				\
 	dnssec-importkey.rst		\
 	dnssec-keyfromlabel.rst		\
 	dnssec-keygen.rst		\
+	dnssec-ksr.rst			\
 	dnssec-revoke.rst		\
 	dnssec-settime.rst		\
 	dnssec-signzone.rst		\
@@ -51,6 +52,7 @@ MANPAGES_RST =				\
 	../../bin/dnssec/dnssec-importkey.rst \
 	../../bin/dnssec/dnssec-keyfromlabel.rst \
 	../../bin/dnssec/dnssec-keygen.rst \
+	../../bin/dnssec/dnssec-ksr.rst \
 	../../bin/dnssec/dnssec-revoke.rst \
 	../../bin/dnssec/dnssec-settime.rst \
 	../../bin/dnssec/dnssec-signzone.rst \
@@ -87,6 +89,7 @@ man_MANS =				\
 	dnssec-importkey.1		\
 	dnssec-keyfromlabel.1		\
 	dnssec-keygen.1			\
+	dnssec-ksr.1			\
 	dnssec-revoke.1			\
 	dnssec-settime.1		\
 	dnssec-signzone.1		\
@@ -123,7 +126,7 @@ EXTRA_DIST =				\
 	$(MANPAGES_RST)			\
 	$(MANPAGES_IN)
 
-CLEANFILES =				\
+CLEANFILES +=				\
 	$(man_MANS)
 
 #

@@ -9,6 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "rndc.out.*",
+        "ans*/ans.run",
+        "ans*/ans.run.prev",
+        "ns*/named.stats.*",
+    ]
+)
+
 
 def test_tcp(run_tests_sh):
     run_tests_sh()

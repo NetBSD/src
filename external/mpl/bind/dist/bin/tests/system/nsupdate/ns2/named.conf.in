@@ -35,7 +35,7 @@ controls {
 };
 
 key altkey {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 

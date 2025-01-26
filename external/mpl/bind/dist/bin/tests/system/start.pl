@@ -260,7 +260,6 @@ sub construct_ns_command {
 		}
 	} else {
 		$command .= "-D $test-$server ";
-		$command .= "-X named.lock ";
 		$command .= "-m record ";
 
 		foreach my $t_option(
@@ -272,7 +271,7 @@ sub construct_ns_command {
 			}
 		}
 
-		$command .= "-c named.conf -d 99 -g -U 4 -T maxcachesize=2097152";
+		$command .= "-c named.conf -d 99 -g -T maxcachesize=2097152";
 	}
 
 	if (-e "$testdir/$server/named.notcp") {
@@ -324,6 +323,7 @@ sub construct_ans_command {
 	}
 
 	if (-e "$testdir/$server/ans.py") {
+		$ENV{'PYTHONPATH'} = $testdir . ":" . $ENV{'srcdir'};
 		$command = "$PYTHON -u ans.py 10.53.0.$n $queryport";
 	} elsif (-e "$testdir/$server/ans.pl") {
 		$command = "$PERL ans.pl";

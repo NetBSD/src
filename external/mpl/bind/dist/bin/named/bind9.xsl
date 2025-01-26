@@ -15,7 +15,7 @@
   <xsl:output method="html" indent="yes" version="4.0"/>
   <!-- the version number **below** must match version in bin/named/statschannel.c -->
   <!-- don't forget to update "/xml/v<STATS_XML_VERSION_MAJOR>" in the HTTP endpoints listed below -->
-  <xsl:template match="statistics[@version=&quot;3.13&quot;]">
+  <xsl:template match="statistics[@version=&quot;3.14&quot;]">
     <html>
       <head>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -153,29 +153,6 @@
       text-align: center;
      }
      table.info tr:hover{
-      background-color: #99ddff;
-     }
-
-     table.tasks {
-      border: 1px solid grey;
-      width: 500px;
-     }
-     table.tasks th {
-      text-align: center;
-      border: 1px solid grey;
-      width: 150px;
-     }
-     table.tasks td {
-      text-align: right;
-      font-family: monospace;
-     }
-     table.tasks td:nth-child(2) {
-      text-align: center;
-     }
-     table.tasks td:nth-child(4) {
-      text-align: center;
-     }
-     table.tasks tr:hover{
       background-color: #99ddff;
      }
 
@@ -326,8 +303,8 @@
 	<a href="/xml/v3/status">Status</a>,
 	<a href="/xml/v3/server">Server</a>,
 	<a href="/xml/v3/zones">Zones</a>,
+	<a href="/xml/v3/xfrins">Incoming Zone Transfers</a>,
 	<a href="/xml/v3/net">Network</a>,
-	<a href="/xml/v3/tasks">Tasks</a>,
 	<a href="/xml/v3/mem">Memory</a> and
 	<a href="/xml/v3/traffic">Traffic Size</a></p>
         <hr/>
@@ -931,84 +908,62 @@
             </xsl:for-each>
           </xsl:for-each>
         </xsl:if>
-        <xsl:if test="taskmgr/thread-model/type">
-          <h2>Task Manager Configuration</h2>
-          <table class="counters">
-            <tr>
-              <th class="even">Thread-Model</th>
-              <td>
-                <xsl:value-of select="taskmgr/thread-model/type"/>
-              </td>
-            </tr>
-            <tr class="odd">
-              <th>Worker Threads</th>
-              <td>
-                <xsl:value-of select="taskmgr/thread-model/worker-threads"/>
-              </td>
-            </tr>
-            <tr class="even">
-              <th>Default Quantum</th>
-              <td>
-                <xsl:value-of select="taskmgr/thread-model/default-quantum"/>
-              </td>
-            </tr>
-            <tr class="odd">
-              <th>Tasks Running</th>
-              <td>
-                <xsl:value-of select="taskmgr/thread-model/tasks-running"/>
-              </td>
-            </tr>
-            <tr class="even">
-              <th>Tasks Ready</th>
-              <td>
-                <xsl:value-of select="taskmgr/thread-model/tasks-ready"/>
-              </td>
-            </tr>
-          </table>
-          <br/>
-        </xsl:if>
-        <xsl:if test="taskmgr/tasks/task">
-          <h2>Tasks</h2>
-          <table class="tasks">
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>References</th>
-              <th>State</th>
-              <th>Quantum</th>
-              <th>Events</th>
-            </tr>
-            <xsl:for-each select="taskmgr/tasks/task">
-              <xsl:sort select="name"/>
-              <xsl:variable name="css-class14">
-                <xsl:choose>
-                  <xsl:when test="position() mod 2 = 0">even</xsl:when>
-                  <xsl:otherwise>odd</xsl:otherwise>
-                </xsl:choose>
-              </xsl:variable>
-              <tr class="{$css-class14}">
-                <td>
-                  <xsl:value-of select="id"/>
-                </td>
-                <td>
-                  <xsl:value-of select="name"/>
-                </td>
-                <td>
-                  <xsl:value-of select="references"/>
-                </td>
-                <td>
-                  <xsl:value-of select="state"/>
-                </td>
-                <td>
-                  <xsl:value-of select="quantum"/>
-                </td>
-                <td>
-                  <xsl:value-of select="events"/>
-                </td>
-              </tr>
-            </xsl:for-each>
-          </table>
-          <br/>
+        <xsl:if test="views/view/xfrins/xfrin">
+          <xsl:for-each select="views/view">
+            <h3>Incoming Zone Transfers for View <xsl:value-of select="@name"/></h3>
+            <table class="xfrins">
+              <thead>
+	        <tr>
+                  <th>Zone Name</th>
+                  <th>Zone Type</th>
+                  <th>Local Serial</th>
+                  <th>Remote Serial</th>
+                  <th>IXFR</th>
+                  <th>First Refresh</th>
+                  <th>State</th>
+                  <th>Additional Refresh Queued</th>
+                  <th>Local Address</th>
+                  <th>Remote Address</th>
+                  <th>SOA Transport</th>
+                  <th>Transport</th>
+                  <th>TSIG Key Name</th>
+                  <th>Duration (s)</th>
+                  <th>Messages Received</th>
+                  <th>Records Received</th>
+                  <th>Bytes Received</th>
+                </tr>
+              </thead>
+              <tbody>
+                <xsl:for-each select="xfrins/xfrin">
+                  <xsl:variable name="css-class16">
+                    <xsl:choose>
+                      <xsl:when test="position() mod 2 = 0">even</xsl:when>
+                      <xsl:otherwise>odd</xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <tr class="{$css-class16}">
+                    <td><xsl:value-of select="@name"/></td>
+                    <td><xsl:value-of select="type"/></td>
+                    <td><xsl:value-of select="serial"/></td>
+                    <td><xsl:value-of select="remoteserial"/></td>
+                    <td><xsl:value-of select="ixfr"/></td>
+                    <td><xsl:value-of select="firstrefresh"/></td>
+                    <td><xsl:value-of select="state"/></td>
+                    <td><xsl:value-of select="refreshqueued"/></td>
+                    <td><xsl:value-of select="localaddr"/></td>
+                    <td><xsl:value-of select="remoteaddr"/></td>
+                    <td><xsl:value-of select="soatransport"/></td>
+                    <td><xsl:value-of select="transport"/></td>
+                    <td><xsl:value-of select="tsigkeyname"/></td>
+                    <td><xsl:value-of select="duration"/></td>
+                    <td><xsl:value-of select="nmsg"/></td>
+                    <td><xsl:value-of select="nrecs"/></td>
+                    <td><xsl:value-of select="nbytes"/></td>
+                  </tr>
+                </xsl:for-each>
+              </tbody>
+            </table>
+          </xsl:for-each>
         </xsl:if>
         <xsl:if test="memory/summary">
           <h2>Memory Usage Summary</h2>
@@ -1039,12 +994,7 @@
               <th>ID</th>
               <th>Name</th>
               <th>References</th>
-              <th>TotalUse</th>
               <th>InUse</th>
-              <th>MaxUse</th>
-              <th>Malloced</th>
-              <th>MaxMalloced</th>
-              <th>BlockSize</th>
               <th>Pools</th>
               <th>HiWater</th>
               <th>LoWater</th>
@@ -1068,22 +1018,7 @@
                   <xsl:value-of select="references"/>
                 </td>
                 <td>
-                  <xsl:value-of select="total"/>
-                </td>
-                <td>
                   <xsl:value-of select="inuse"/>
-                </td>
-                <td>
-                  <xsl:value-of select="maxinuse"/>
-                </td>
-                <td>
-                  <xsl:value-of select="malloced"/>
-                </td>
-                <td>
-                  <xsl:value-of select="maxmalloced"/>
-                </td>
-                <td>
-                  <xsl:value-of select="blocksize"/>
                 </td>
                 <td>
                   <xsl:value-of select="pools"/>

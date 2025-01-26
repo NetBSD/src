@@ -1,4 +1,4 @@
-/*	$NetBSD: instance.h,v 1.1.1.5 2024/02/21 21:54:31 christos Exp $	*/
+/*	$NetBSD: instance.h,v 1.1.1.6 2025/01/26 16:12:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,7 +49,7 @@ struct sample_instance {
 	/* These are needed for zone creation. */
 	dns_view_t *view;
 	dns_zonemgr_t *zmgr;
-	isc_task_t *task;
+	isc_loopmgr_t *loopmgr;
 	bool exiting;
 
 	dns_zone_t *zone1;

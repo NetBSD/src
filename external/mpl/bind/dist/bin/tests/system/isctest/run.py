@@ -9,14 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import os
 import subprocess
 import time
 from typing import Optional
 
 import isctest.log
+from isctest.compat import dns_rcode
+
+import dns.message
 
 
-def cmd(  # pylint: disable=too-many-arguments
+def cmd(
     args,
     cwd=None,
     timeout=60,
@@ -70,3 +74,36 @@ def retry_with_timeout(func, timeout, delay=1, msg=None):
     if msg is None:
         msg = f"{func.__module__}.{func.__qualname__} timed out after {timeout} s"
     assert False, msg
+
+
+def get_named_cmdline(cfg_dir, cfg_file="named.conf"):
+    cfg_dir = os.path.join(os.getcwd(), cfg_dir)
+    assert os.path.isdir(cfg_dir)
+
+    cfg_file = os.path.join(cfg_dir, cfg_file)
+    assert os.path.isfile(cfg_file)
+
+    named = os.getenv("NAMED")
+    assert named is not None
+
+    named_cmdline = [named, "-c", cfg_file, "-d", "99", "-g"]
+
+    return named_cmdline
+
+
+def get_custom_named_instance(assumed_ns):
+    # This test launches and monitors a named instance itself rather than using
+    # bin/tests/system/start.pl, so manually defining a NamedInstance here is
+    # necessary for sending RNDC commands to that instance. If this "custom"
+    # instance listens on 10.53.0.3, use "ns3" as the identifier passed to
+    # the NamedInstance constructor.
+    named_ports = isctest.instance.NamedPorts.from_env()
+    instance = isctest.instance.NamedInstance(assumed_ns, named_ports)
+
+    return instance
+
+
+def assert_custom_named_is_alive(named_proc, resolver_ip):
+    assert named_proc.poll() is None, "named isn't running"
+    msg = dns.message.make_query("version.bind", "TXT", "CH")
+    isctest.query.tcp(msg, resolver_ip, expected_rcode=dns_rcode.NOERROR)

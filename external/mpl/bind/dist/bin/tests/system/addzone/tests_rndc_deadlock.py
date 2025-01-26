@@ -12,7 +12,20 @@
 import concurrent.futures
 import time
 
+import pytest
+
 import isctest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns*/*.nzf*",
+        "ns*/*.nzd*",
+        "ns1/redirect.db",
+        "ns2/new-zones",
+        "ns2/redirect.db",
+        "ns3/redirect.db",
+    ]
+)
 
 
 def rndc_loop(test_state, domain, ns3):

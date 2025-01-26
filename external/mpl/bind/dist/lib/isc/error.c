@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.7 2025/01/26 16:12:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include <isc/error.h>
-#include <isc/print.h>
 
 /*% Default unexpected callback. */
 static void

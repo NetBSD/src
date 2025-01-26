@@ -16,7 +16,6 @@
 
 # Hey Emacs, this is -*- makefile-automake -*- file!
 # vim: filetype=automake
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -95,7 +94,6 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@am__append_1 = \
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
-@HAVE_CMOCKA_TRUE@am__append_2 = tests
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -108,19 +106,29 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(dist_sysconf_DATA) $(am__DIST_COMMON)
+	$(am__configure_deps) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = doc/doxygen/doxygen-input-filter \
+	bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR \
+	bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR \
+	bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE \
+	bin/tests/system/isctest/vars/.ac_vars/SHELL \
+	bin/tests/system/isctest/vars/.ac_vars/PYTHON \
+	bin/tests/system/isctest/vars/.ac_vars/PERL \
+	bin/tests/system/isctest/vars/.ac_vars/CURL \
+	bin/tests/system/isctest/vars/.ac_vars/NC \
+	bin/tests/system/isctest/vars/.ac_vars/XSLTPROC \
+	bin/tests/system/isctest/vars/.ac_vars/PYTEST \
 	util/check-make-install
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -150,35 +158,6 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(sysconfdir)"
-DATA = $(dist_sysconf_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -207,13 +186,23 @@ am__define_uniq_tagged_files = \
   unique=`for i in $$list; do \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
-DIST_SUBDIRS = . lib doc bin fuzz tests
+DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/Makefile.top \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/CURL.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/NC.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PERL.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PYTEST.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PYTHON.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/SHELL.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR.in \
+	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/XSLTPROC.in \
 	$(top_srcdir)/doc/doxygen/doxygen-input-filter.in \
-	$(top_srcdir)/util/check-make-install.in AUTHORS COPYING \
-	ChangeLog NEWS README.md ar-lib compile config.guess \
-	config.sub install-sh ltmain.sh missing
+	$(top_srcdir)/util/check-make-install.in AUTHORS COPYING NEWS \
+	README.md ar-lib compile config.guess config.sub install-sh \
+	ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -287,10 +276,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -313,15 +304,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -329,9 +321,14 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSYSTEMD_CFLAGS = @LIBSYSTEMD_CFLAGS@
+LIBSYSTEMD_LIBS = @LIBSYSTEMD_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -355,6 +352,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -381,6 +379,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -394,7 +393,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -472,6 +470,8 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = 
+BUILT_SOURCES = bind.keys.h
+CLEANFILES = bind.keys.h
 @HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
@@ -482,6 +482,7 @@ LDADD =
 @HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -489,18 +490,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -513,20 +510,16 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
 
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
+# build libtest before fuzz/* and bin/tests
 
-SUBDIRS = . lib doc bin fuzz $(am__append_2)
-BUILT_SOURCES = bind.keys.h
-CLEANFILES = bind.keys.h
-dist_sysconf_DATA = bind.keys
+# run fuzz tests before system tests
+SUBDIRS = . lib doc tests fuzz bin
 EXTRA_DIST = \
+	bind.keys		\
 	util/bindkeys.pl	\
+	util/dtrace.sh		\
 	contrib			\
-	CHANGES			\
 	COPYRIGHT		\
 	LICENSE			\
 	*.md
@@ -586,6 +579,26 @@ distclean-hdr:
 	-rm -f config.h stamp-h1
 doc/doxygen/doxygen-input-filter: $(top_builddir)/config.status $(top_srcdir)/doc/doxygen/doxygen-input-filter.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/SHELL: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/SHELL.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/PYTHON: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PYTHON.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/PERL: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PERL.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/CURL: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/CURL.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/NC: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/NC.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/XSLTPROC: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/XSLTPROC.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+bin/tests/system/isctest/vars/.ac_vars/PYTEST: $(top_builddir)/config.status $(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/PYTEST.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 util/check-make-install: $(top_builddir)/config.status $(top_srcdir)/util/check-make-install.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
@@ -597,27 +610,6 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
-install-dist_sysconfDATA: $(dist_sysconf_DATA)
-	@$(NORMAL_INSTALL)
-	@list='$(dist_sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(sysconfdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(sysconfdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(sysconfdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(sysconfdir)" || exit $$?; \
-	done
-
-uninstall-dist_sysconfDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(dist_sysconf_DATA)'; test -n "$(sysconfdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(sysconfdir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -929,12 +921,9 @@ distcleancheck: distclean
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-recursive
-all-am: Makefile $(DATA) config.h
+all-am: Makefile config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(sysconfdir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) install-recursive
 install-exec: $(BUILT_SOURCES)
@@ -1001,7 +990,7 @@ install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-dist_sysconfDATA
+install-exec-am:
 
 install-html: install-html-recursive
 
@@ -1045,7 +1034,7 @@ test: test-recursive
 
 test-am: test-local
 
-uninstall-am: uninstall-dist_sysconfDATA
+uninstall-am:
 
 unit: unit-recursive
 
@@ -1062,16 +1051,15 @@ unit-am: unit-local
 	distclean-generic distclean-hdr distclean-libtool \
 	distclean-tags distcleancheck distdir distuninstallcheck \
 	doc-am doc-local dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am \
-	install-dist_sysconfDATA install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am test-am test-local uninstall uninstall-am \
-	uninstall-dist_sysconfDATA unit-am unit-local
+	install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags tags-am test-am test-local uninstall \
+	uninstall-am unit-am unit-local
 
 .PRECIOUS: Makefile
 

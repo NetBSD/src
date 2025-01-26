@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: sockaddr_test.c,v 1.1.1.2 2025/01/26 16:12:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,6 @@
 #include <cmocka.h>
 
 #include <isc/netaddr.h>
-#include <isc/print.h>
 #include <isc/sockaddr.h>
 #include <isc/util.h>
 

@@ -11,6 +11,8 @@
  * information regarding copyright ownership.
  */
 
+include "tls.conf";
+
 options {
 	query-source address 10.53.0.1;
 	notify-source 10.53.0.1;
@@ -25,6 +27,7 @@ options {
 	minimal-responses no;
 	update-quota 1;
 	dnssec-validation no;
+	include "tls.options";
 };
 
 acl named-acl {
@@ -41,17 +44,17 @@ controls {
 };
 
 key altkey {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 
 key restricted.example.nil {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 
 key zonesub-key.example.nil {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234subk8765";
 };
 
@@ -77,6 +80,7 @@ zone "max-ttl.nil" {
 	check-integrity no;
 	allow-update { named-acl; };
 	allow-transfer { any; };
+	max-records-per-type 3;
 };
 
 zone "other.nil" {

@@ -101,10 +101,18 @@ options {
 	max-records-per-type 0;
 };
 
+trust-anchors { };
+
 zone "." {
 	type primary;
 	file "root.db";
 	allow-transfer port @TLSPORT@ transport tls { any; };
+};
+
+zone "test.example.com" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
 };
 
 zone "example" {

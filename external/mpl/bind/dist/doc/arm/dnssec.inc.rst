@@ -49,7 +49,6 @@ BIND offers several ways to generate signatures and maintain their validity
 during the lifetime of a DNS zone:
 
   - :ref:`dnssec_kasp` - **strongly recommended**
-  - :ref:`dnssec_dynamic_zones` - only for special needs
   - :ref:`dnssec_tools` - discouraged, use only for debugging
 
 .. _zone_keys:
@@ -99,11 +98,11 @@ up-to-date DNSSEC practices:
         type primary;
         file "dnssec.example.db";
         dnssec-policy default;
-        inline-signing yes;
     };
 
 The :any:`dnssec-policy` statement requires dynamic DNS to be set up, or
-:any:`inline-signing` to be enabled. In the example above we use the latter.
+:any:`inline-signing` to be enabled. In the example above we use the latter,
+because the ``default`` policy uses :any:`inline-signing`.
 
 This is sufficient to create the necessary signing keys, and generate
 ``DNSKEY``, ``RRSIG``, and ``NSEC`` records for the zone. BIND also takes
@@ -175,13 +174,15 @@ by configuring parental agents:
         type primary;
         file "dnssec.example.db";
         dnssec-policy default;
-        inline-signing yes;
         parental-agents { 192.0.2.1; };
+        checkds explicit;
     };
 
 Here one server, ``192.0.2.1``, is configured for BIND to send DS queries to,
 to check the DS RRset for ``dnssec-example`` during key rollovers. This needs
-to be a trusted server, because BIND does not validate the response.
+to be a trusted server, because BIND does not validate the response. The
+``checkds`` option makes BIND use the explicitly configured parental agents,
+rather than looking them up by querying for the parent NS records.
 
 If setting up a parental agent is undesirable, it is also possible to tell BIND that the
 DS is published in the parent with:
@@ -199,171 +200,18 @@ To revert a signed zone back to an insecure zone, change
 the zone configuration to use the built-in "insecure" policy. Detailed
 instructions are described in :ref:`revert_to_unsigned`.
 
-.. _dnssec_dynamic_zones:
-
-Manual Key Management
-^^^^^^^^^^^^^^^^^^^^^
-
-.. warning::
-   The method described here allows full control over the keys used to sign
-   the zone. This is required only for very special cases and is generally
-   discouraged. Under normal circumstances, please use :ref:`dnssec_kasp`.
-
-
-.. _dnssec_dynamic_zones_multisigner_model:
+.. _dnssec_multisigner_model:
 
 Multi-Signer Model
 ==================
 
 Dynamic zones provide the ability to sign a zone by multiple providers, meaning
-each provider signs and serves the same zone independently. Such a setup requires
-some coordination between providers when it comes to key rollovers, and may be
-better suited to be configured with ``auto-dnssec allow;``. This permits keys to
-be updated and the zone to be re-signed only if the user issues the command
-:option:`rndc sign zonename <rndc sign>`.
-
-A zone can also be configured with ``auto-dnssec maintain``, which automatically
-adjusts the zone's DNSSEC keys on a schedule according to the key timing
-metadata. However, keys still need to be generated separately, for
-example with :iscman:`dnssec-keygen`.
-
-Of course, dynamic zones can also use :any:`dnssec-policy` to fully automate DNSSEC
-maintenance. The next sections assume that more key
-management control is needed, and describe how to use dynamic DNS update to perform
-various DNSSEC operations.
-
-.. _dnssec_dynamic_zones_enabling_dnssec:
-
-Enabling DNSSEC Manually
-========================
-As an alternative to fully automated zone signing using :ref:`dnssec-policy
-<dnssec_kasp>`, a zone can be changed from insecure to secure using a dynamic
-DNS update. :iscman:`named` must be configured so that it can see the ``K*``
-files which contain the public and private parts of the `zone keys`_ that are
-used to sign the zone. Key files should be placed in the :any:`key-directory`, as
-specified in :iscman:`named.conf`:
-
-::
-
-       zone update.example {
-           type primary;
-           update-policy local;
-           auto-dnssec allow;
-           file "dynamic/update.example.db";
-           key-directory "keys/update.example/";
-       };
-
-If there are both a KSK and a ZSK available (or a CSK), this configuration causes the
-zone to be signed. An ``NSEC`` chain is generated as part of the initial signing
-process.
-
-In any secure zone which supports dynamic updates, :iscman:`named` periodically
-re-signs RRsets which have not been re-signed as a result of some update action.
-The signature lifetimes are adjusted to spread the re-sign load over time rather
-than all at once.
-
-.. _dnssec_dynamic_zones_publishing_dnskey_records:
-
-Publishing DNSKEY Records
-=========================
-
-To insert the keys via dynamic update:
-
-::
-
-       % nsupdate
-       > ttl 3600
-       > update add update.example DNSKEY 256 3 7 AwEAAZn17pUF0KpbPA2c7Gz76Vb18v0teKT3EyAGfBfL8eQ8al35zz3Y I1m/SAQBxIqMfLtIwqWPdgthsu36azGQAX8=
-       > update add update.example DNSKEY 257 3 7 AwEAAd/7odU/64o2LGsifbLtQmtO8dFDtTAZXSX2+X3e/UNlq9IHq3Y0 XtC0Iuawl/qkaKVxXe2lo8Ct+dM6UehyCqk=
-       > send
-
-In order to sign with these keys, the corresponding key files should also be
-placed in the :any:`key-directory`.
-
-.. _dnssec_dynamic_zones_nsec3:
-
-NSEC3
-=====
-
-To sign using :ref:`NSEC3 <advanced_discussions_nsec3>` instead of :ref:`NSEC
-<advanced_discussions_nsec>`, add an NSEC3PARAM record to the initial update
-request. The :term:`OPTOUT <Opt-out>` bit in the NSEC3
-chain can be set in the flags field of the
-NSEC3PARAM record.
-
-::
-
-       % nsupdate
-       > ttl 3600
-       > update add update.example DNSKEY 256 3 7 AwEAAZn17pUF0KpbPA2c7Gz76Vb18v0teKT3EyAGfBfL8eQ8al35zz3Y I1m/SAQBxIqMfLtIwqWPdgthsu36azGQAX8=
-       > update add update.example DNSKEY 257 3 7 AwEAAd/7odU/64o2LGsifbLtQmtO8dFDtTAZXSX2+X3e/UNlq9IHq3Y0 XtC0Iuawl/qkaKVxXe2lo8Ct+dM6UehyCqk=
-       > update add update.example NSEC3PARAM 1 0 0 -
-       > send
-
-Note that the ``NSEC3PARAM`` record does not show up until :iscman:`named` has
-had a chance to build/remove the relevant chain. A private type record is
-created to record the state of the operation (see below for more details), and
-is removed once the operation completes.
-
-The ``NSEC3`` chain is generated and the ``NSEC3PARAM`` record is added before
-the ``NSEC`` chain is destroyed.
-
-While the initial signing and ``NSEC``/``NSEC3`` chain generation are occurring,
-other updates are possible as well.
-
-A new ``NSEC3PARAM`` record can be added via dynamic update. When the new
-``NSEC3`` chain has been generated, the ``NSEC3PARAM`` flag field is set to
-zero. At that point, the old ``NSEC3PARAM`` record can be removed. The old
-chain is removed after the update request completes.
-
-:iscman:`named` only supports creating new ``NSEC3`` chains where all the
-``NSEC3`` records in the zone have the same ``OPTOUT`` state. :iscman:`named`
-supports updates to zones where the ``NSEC3`` records in the chain have mixed
-``OPTOUT`` state. :iscman:`named` does not support changing the ``OPTOUT``
-state of an individual ``NSEC3`` record; if the ``OPTOUT`` state of an
-individual ``NSEC3`` needs to be changed, the entire chain must be changed.
-
-To switch back to ``NSEC``, use :iscman:`nsupdate` to remove any ``NSEC3PARAM``
-records. The ``NSEC`` chain is generated before the ``NSEC3`` chain is removed.
-
-.. _dnssec_dynamic_zones_dnskey_rollovers:
-
-DNSKEY Rollovers
-================
-
-To perform key rollovers via a dynamic update, the ``K*`` files for the new keys
-must be added so that :iscman:`named` can find them. The new ``DNSKEY`` RRs can
-then be added via dynamic update. When the zones are being signed, they are
-signed with the new key set; when the signing is complete, the private type
-records are updated so that the last octet is non-zero.
-
-If this is for a KSK, the parent and any trust anchor repositories of the new
-KSK must be informed.
-
-The maximum TTL in the zone must expire before removing the old ``DNSKEY``. If
-it is a KSK that is being updated, the DS RRset in the parent must also be
-updated and its TTL allowed to expire. This ensures that all clients are able to
-verify at least one signature when the old ``DNSKEY`` is removed.
-
-The old ``DNSKEY`` can be removed via ``UPDATE``, taking care to specify the
-correct key. :iscman:`named` cleans out any signatures generated by the old
-key after the update completes.
-
-.. _dnssec_dynamic_zones_going_insecure:
-
-Going Insecure
-==============
-
-To convert a signed zone to unsigned using dynamic DNS, delete all the
-``DNSKEY`` records from the zone apex using :iscman:`nsupdate`. All signatures,
-``NSEC`` or ``NSEC3`` chains, and associated ``NSEC3PARAM`` records are removed
-automatically when the zone is supposed to be re-signed.
-
-This requires the :any:`dnssec-secure-to-insecure` option to be set to ``yes`` in
-:iscman:`named.conf`.
-
-In addition, if the ``auto-dnssec maintain`` or a :any:`dnssec-policy` is used, it
-should be removed or changed to ``allow`` instead; otherwise it will re-sign.
+each provider signs and serves the same zone independently, as is described
+in :rfc:`8901`. BIND 9 is able to support Model 2, where each provider has
+their own KSK and ZSK (or CSK). The keys from the other provider can be
+imported via Dynamic Update. For each active KSK there must be a corresponding
+DS record in the parent zone. Key rollovers require coordination in order
+to update the DS and DNSKEY RRset.
 
 .. _dnssec_tools:
 
@@ -379,7 +227,7 @@ There are several tools available to manually sign a zone.
 
 To set up a DNSSEC secure zone manually, a series of steps
 must be followed. Please see chapter
-:ref:`advanced_discussions_manual_key_management_and_signing` in the
+:ref:`advanced_discussions_manual_signing` in the
 :doc:`dnssec-guide` for more information.
 
 Monitoring with Private Type Records

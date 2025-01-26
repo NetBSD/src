@@ -1,4 +1,4 @@
-/*	$NetBSD: callbacks.c,v 1.1.1.4 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: callbacks.c,v 1.1.1.5 2025/01/26 16:12:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
 
 /*! \file */
 
-#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -81,13 +80,9 @@ static void
 dns_rdatacallbacks_initcommon(dns_rdatacallbacks_t *callbacks) {
 	REQUIRE(callbacks != NULL);
 
-	callbacks->magic = DNS_CALLBACK_MAGIC;
-	callbacks->add = NULL;
-	callbacks->rawdata = NULL;
-	callbacks->zone = NULL;
-	callbacks->add_private = NULL;
-	callbacks->error_private = NULL;
-	callbacks->warn_private = NULL;
+	*callbacks = (dns_rdatacallbacks_t){
+		.magic = DNS_CALLBACK_MAGIC,
+	};
 }
 
 /*

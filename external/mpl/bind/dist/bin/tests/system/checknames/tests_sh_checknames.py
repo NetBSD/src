@@ -9,6 +9,22 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.ns*.test*",
+        "nsupdate.out.*",
+        "ns1/*.example.db",
+        "ns1/*.update.db",
+        "ns1/*.update.db.jnl",
+        "ns4/*.update.db",
+        "ns4/*.update.db.jnl",
+        "ns5/*.update.db",
+        "ns5/*.update.db.jnl",
+    ]
+)
+
 
 def test_checknames(run_tests_sh):
     run_tests_sh()

@@ -9,6 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "rndc.out.*",
+        "sed.out.*",
+        "ns2/named_dump.db.*",
+    ]
+)
+
 
 def test_cacheclean(run_tests_sh):
     run_tests_sh()

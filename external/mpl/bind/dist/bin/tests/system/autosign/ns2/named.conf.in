@@ -21,6 +21,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	notify yes;
 	dnssec-validation yes;
@@ -36,6 +37,40 @@ controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+dnssec-policy "autosign" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "private" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 2;
+};
+
+dnssec-policy "nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
+};
+
+dnssec-policy "optout" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout yes salt-length 0;
+};
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";
@@ -47,18 +82,17 @@ zone "example" {
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy autosign;
 	sig-signing-type 65280;
 };
 
 zone "bar" {
 	type primary;
-	file "bar.db";
+	file "bar.db.signed";
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
-	dnssec-dnskey-kskonly yes;
 };
 
 zone "private.secure.example" {
@@ -67,7 +101,8 @@ zone "private.secure.example" {
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy private;
 };
 
 zone "insecure.secure.example" {
@@ -76,7 +111,8 @@ zone "insecure.secure.example" {
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy autosign;
 };
 
 zone "child.nsec3.example" {
@@ -85,7 +121,8 @@ zone "child.nsec3.example" {
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy nsec3;
 };
 
 zone "child.optout.example" {
@@ -94,16 +131,18 @@ zone "child.optout.example" {
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy optout;
 };
 
-zone "optout-with-ent" {
+zone "nsec3-with-ent" {
 	type primary;
-	file "optout-with-ent.db";
+	file "nsec3-with-ent.db";
 	allow-query { any; };
 	allow-transfer { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
+	inline-signing no;
+	dnssec-policy nsec3;
 };
 
 include "trusted.conf";

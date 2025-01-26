@@ -1,0 +1,55 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; CAUTION: Contents of this zone were carefully crafted so that the responses
+; to the queries used in the "glue" system test have a very specific size.
+; Editing this zone is not recommended as it may break the relevant checks.
+
+$TTL 300
+@				IN SOA	ns hostmaster (
+					1
+					3600
+					1800
+					1814400
+					3600
+					)
+				NS	a
+a				A	10.53.0.1
+
+subdomain-a			NS	0123456789.subdomain-a
+				NS	0123456.subdomain-a
+				NS	0123.subdomain-a
+
+0123456789.subdomain-a		A	10.53.0.1
+0123456.subdomain-a		A	10.53.0.1
+0123.subdomain-a		A	10.53.0.1
+
+subdomain-aaaa			NS	0123456789.subdomain-aaaa
+				NS	0123456.subdomain-aaaa
+				NS	0123.subdomain-aaaa
+
+0123456789.subdomain-aaaa	AAAA	fd92:7065:b8e:ffff::1
+0123456.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+0123.subdomain-aaaa		AAAA	fd92:7065:b8e:ffff::1
+
+subdomain-both			NS	0123456789.subdomain-both
+				NS	0123456.subdomain-both
+				NS	0123.subdomain-both
+				NS	0.subdomain-both
+
+0123456789.subdomain-both	A	10.53.0.1
+				AAAA	fd92:7065:b8e:ffff::1
+0123456.subdomain-both		A	10.53.0.1
+				AAAA	fd92:7065:b8e:ffff::1
+0123.subdomain-both		A	10.53.0.1
+				AAAA	fd92:7065:b8e:ffff::1
+0.subdomain-both		A	10.53.0.1
+				AAAA	fd92:7065:b8e:ffff::1

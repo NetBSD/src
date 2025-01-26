@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.h,v 1.1.1.5 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: iterated_hash.h,v 1.1.1.6 2025/01/26 16:12:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,5 +36,14 @@ isc_iterated_hash(unsigned char *out, const unsigned int hashalg,
 		  const int iterations, const unsigned char *salt,
 		  const int saltlength, const unsigned char *in,
 		  const int inlength);
+
+/*
+ * Private
+ */
+
+void
+isc__iterated_hash_initialize(void);
+void
+isc__iterated_hash_shutdown(void);
 
 ISC_LANG_ENDDECLS

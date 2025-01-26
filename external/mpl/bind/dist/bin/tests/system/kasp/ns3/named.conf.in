@@ -18,13 +18,11 @@ include "named-fips.conf";
 zone "rsasha1.kasp" {
 	type primary;
 	file "rsasha1.kasp.db";
-	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
 zone "rsasha1-nsec3.kasp" {
 	type primary;
 	file "rsasha1-nsec3.kasp.db";
-	inline-signing yes;
 	dnssec-policy "rsasha1-nsec3";
 };

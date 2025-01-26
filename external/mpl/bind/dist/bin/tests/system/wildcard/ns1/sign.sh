@@ -13,8 +13,6 @@
 
 . ../../conf.sh
 
-SYSTESTDIR=wildcard
-
 dssets=
 
 # RFC 4592 example zone.

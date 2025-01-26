@@ -34,3 +34,11 @@ edns-version.tld.	NS	ns.edns-version.tld.
 ns.edns-version.tld.	A	10.53.0.7
 v4only.net.		NS	v4.nameserver.
 v4.nameserver.		A	10.53.0.4
+;
+; Servers for regression test for GL #6412
+; They return broken NODATA responses (incorrect SOA) for the test zone.
+;
+gl6412.			NS	ns2.gl6412.
+gl6412.			NS	ns3.gl6412.
+ns2.gl6412.		A	10.53.0.2
+ns3.gl6412.		A	10.53.0.3

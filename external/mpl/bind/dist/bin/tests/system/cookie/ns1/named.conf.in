@@ -18,7 +18,7 @@ key rndc_key {
 
 key foo {
 	secret "aaaaaaaaaaaa";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 server 10.53.0.10 {
@@ -48,6 +48,8 @@ options {
 	send-cookie yes;
 	nocookie-udp-size 512;
 };
+
+trust-anchors { };
 
 zone "." {
 	type hint;

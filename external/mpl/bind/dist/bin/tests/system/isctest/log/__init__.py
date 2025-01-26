@@ -10,8 +10,10 @@
 # information regarding copyright ownership.
 
 from .basic import (
+    avoid_duplicated_logs,
     deinit_module_logger,
     deinit_test_logger,
+    init_conftest_logger,
     init_module_logger,
     init_test_logger,
     debug,

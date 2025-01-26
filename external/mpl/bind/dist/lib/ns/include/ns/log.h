@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.6 2024/02/21 21:54:48 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.7 2025/01/26 16:12:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@ extern isc_logmodule_t	 ns_modules[];
 #define NS_LOGCATEGORY_QUERY_ERRORS    (&ns_categories[5])
 #define NS_LOGCATEGORY_TAT	       (&ns_categories[6])
 #define NS_LOGCATEGORY_SERVE_STALE     (&ns_categories[7])
+#define NS_LOGCATEGORY_RESPONSES       (&ns_categories[8])
 
 /*
  * Backwards compatibility.

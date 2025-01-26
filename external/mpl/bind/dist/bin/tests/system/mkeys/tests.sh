@@ -13,7 +13,6 @@
 
 set -e
 
-export ALGORITHM_SET="ecc_default"
 #shellcheck source=conf.sh
 . ../conf.sh
 
@@ -41,11 +40,16 @@ mkeys_reload_on() (
   wait_for_log 20 "loaded serial" "ns${nsidx}"/named.run || return 1
 )
 
-mkeys_loadkeys_on() (
-  nsidx=$1
-  nextpart "ns${nsidx}"/named.run >/dev/null
-  rndccmd "10.53.0.${nsidx}" loadkeys . | sed "s/^/ns${nsidx} /" | cat_i
-  wait_for_log 20 "next key event" "ns${nsidx}"/named.run || return 1
+mkeys_resign_rootzone() (
+  n=$1
+  (
+    cd ns1
+    sleep 1 # ensure modification time changes
+    $SIGNER -PSg -N unixtime -o . root.db >signer.out.test$1 2>&1
+  )
+  nextpart ns1/named.run >/dev/null
+  rndccmd "10.53.0.1" reload . | sed "s/^/ns1 /" | cat_i
+  wait_for_log 20 "loaded serial" ns1/named.run || return 1
 )
 
 mkeys_refresh_on() (
@@ -137,7 +141,7 @@ n=$((n + 1))
 echo_i "check new trust anchor can be added ($n)"
 ret=0
 standby1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 >rndc.out.$n 2>&1 || ret=1
 # there should be two keys listed now
@@ -178,7 +182,7 @@ ret=0
 mkeys_sync_on 2 || ret=1
 t1=$(grep "trust pending" ns2/managed-keys.bind) || true
 $SETTIME -D now -K ns1 "$standby1" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 # Less than a second may have passed since the last time ns2 received a
 # ./DNSKEY response from ns1.  Ensure keys are refreshed at a different
 # timestamp to prevent false negatives caused by the acceptance timer getting
@@ -199,7 +203,7 @@ echo_i "restore untrusted standby key, revoke original key ($n)"
 t1=$t2
 $SETTIME -D none -K ns1 "$standby1" >/dev/null
 $SETTIME -R now -K ns1 "$original" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 # Less than a second may have passed since the last time ns2 received a
 # ./DNSKEY response from ns1.  Ensure keys are refreshed at a different
 # timestamp to prevent false negatives caused by the acceptance timer getting
@@ -269,9 +273,9 @@ ret=0
 echo_i "restore revoked key, ensure same result ($n)"
 t1=$t2
 $SETTIME -R none -D now -K ns1 "$original" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 $SETTIME -D none -K ns1 "$original" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 # Less than a second may have passed since the last time ns2 received a
 # ./DNSKEY response from ns1.  Ensure keys are refreshed at a different
 # timestamp to prevent false negatives caused by the acceptance timer getting
@@ -347,7 +351,7 @@ echo_i "revoke original key, add new standby ($n)"
 ret=0
 standby2=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
 $SETTIME -R now -K ns1 "$original" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 >rndc.out.$n 2>&1 || ret=1
 # three keys listed
@@ -378,7 +382,7 @@ n=$((n + 1))
 echo_i "revoke standby before it is trusted ($n)"
 ret=0
 standby3=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 >rndc.out.1.$n 2>&1 || ret=1
 # four keys listed
@@ -400,7 +404,7 @@ count=$(grep -c "trust pending" rndc.out.1.$n) || true
   ret=1
 }
 $SETTIME -R now -K ns1 "$standby3" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 >rndc.out.2.$n 2>&1 || ret=1
 # now three keys listed
@@ -422,7 +426,7 @@ count=$(grep -c "trust pending" rndc.out.2.$n) || true
   ret=1
 }
 $SETTIME -D now -K ns1 "$standby3" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -453,7 +457,7 @@ ret=0
 $SETTIME -D now -K ns1 "$original" >/dev/null
 $SETTIME -R now -K ns1 "$standby1" >/dev/null
 $SETTIME -R now -K ns1 "$standby2" >/dev/null
-mkeys_loadkeys_on 1 || ret=1
+mkeys_resign_rootzone $n || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 >rndc.out.$n 2>&1 || ret=1
 # two keys listed

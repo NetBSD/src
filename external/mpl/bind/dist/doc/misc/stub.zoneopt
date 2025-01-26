@@ -4,11 +4,10 @@ zone <string> [ <class> ] {
 	allow-query-on { <address_match_element>; ... };
 	check-names ( fail | warn | ignore );
 	database <string>;
-	delegation-only <boolean>; // deprecated
 	dialup ( notify | notify-passive | passive | refresh | <boolean> ); // deprecated
 	file <quoted_string>;
 	forward ( first | only );
-	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
+	forwarders [ port <integer> ] [ tls <string> ] { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ] [ tls <string> ]; ... };
 	masterfile-format ( raw | text );
 	masterfile-style ( full | relative );
 	max-records <integer>;
@@ -21,9 +20,8 @@ zone <string> [ <class> ] {
 	min-refresh-time <integer>;
 	min-retry-time <integer>;
 	multi-master <boolean>;
-	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
-	transfer-source ( <ipv4_address> | * ) ;
-	transfer-source-v6 ( <ipv6_address> | * ) ;
-	use-alt-transfer-source <boolean>; // deprecated
+	primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	transfer-source ( <ipv4_address> | * );
+	transfer-source-v6 ( <ipv6_address> | * );
 	zone-statistics ( full | terse | none | <boolean> );
 };

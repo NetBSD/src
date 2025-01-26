@@ -22,7 +22,7 @@ dig_with_opts() {
   "$DIG" +tcp +noau +noadd +nosea +nostat +nocmd +dnssec -p "$PORT" "$@"
 }
 
-if [ -f ecdsa256-supported.file ]; then
+if [ $ECDSAP256SHA256_SUPPORTED = 1 ]; then
   n=$((n + 1))
   echo_i "checking that ECDSA256 positive validation works ($n)"
   ret=0
@@ -36,7 +36,7 @@ else
   echo_i "algorithm ECDSA256 not supported, skipping test"
 fi
 
-if [ -f ecdsa384-supported.file ]; then
+if [ $ECDSAP384SHA384_SUPPORTED = 1 ]; then
   n=$((n + 1))
   echo_i "checking that ECDSA384 positive validation works ($n)"
   ret=0

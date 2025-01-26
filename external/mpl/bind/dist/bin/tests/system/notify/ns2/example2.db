@@ -22,6 +22,7 @@ example.		NS	ns2.example.
 ns2.example.		A	10.53.0.2
 example.		NS	ns3.example.
 ns3.example.		A	10.53.0.3
+ns3.example.		AAAA	fd92:7065:b8e:ffff::3
 
 $ORIGIN example.
 a			A	10.0.0.2

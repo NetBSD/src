@@ -1,4 +1,4 @@
-/*	$NetBSD: heap_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: heap_test.c,v 1.1.1.2 2025/01/26 16:12:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ compare(void *p1, void *p2) {
 	struct e *e1 = p1;
 	struct e *e2 = p2;
 
-	return (e1->value < e2->value);
+	return e1->value < e2->value;
 }
 
 static void

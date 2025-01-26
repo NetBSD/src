@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,8 +102,8 @@ typedef struct isc_radix_node {
 						      * nodes */
 } isc_radix_node_t;
 
-#define RADIX_TREE_MAGIC    ISC_MAGIC('R', 'd', 'x', 'T');
-#define RADIX_TREE_VALID(a) ISC_MAGIC_VALID(a, RADIX_TREE_MAGIC);
+#define RADIX_TREE_MAGIC    ISC_MAGIC('R', 'd', 'x', 'T')
+#define RADIX_TREE_VALID(a) ISC_MAGIC_VALID(a, RADIX_TREE_MAGIC)
 
 typedef struct isc_radix_tree {
 	unsigned int	  magic;
@@ -159,7 +159,7 @@ isc_radix_remove(isc_radix_tree_t *radix, isc_radix_node_t *node);
  * \li	'node' to be valid.
  */
 
-isc_result_t
+void
 isc_radix_create(isc_mem_t *mctx, isc_radix_tree_t **target, int maxbits);
 /*%<
  * Create a radix tree with a maximum depth of 'maxbits';

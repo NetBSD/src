@@ -32,3 +32,8 @@ zone "example" {
 	type primary;
 	file "example.db";
 };
+
+zone "example.tld" {
+	type primary;
+	file "example.tld.db";
+};

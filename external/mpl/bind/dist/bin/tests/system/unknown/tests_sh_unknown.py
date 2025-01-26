@@ -9,6 +9,21 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "check.out",
+        "dig.out.*",
+        "ns2/example-in.bk",
+        "ns3/K*",
+        "ns3/example-in.bk",
+        "ns3/example-in.bk.jbk",
+        "ns3/example-in.bk.signed",
+        "ns3/example-in.bk.signed.jnl",
+    ]
+)
+
 
 def test_unknown(run_tests_sh):
     run_tests_sh()

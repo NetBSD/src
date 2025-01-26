@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -144,7 +144,7 @@ typedef struct isc_token {
  *** Functions
  ***/
 
-isc_result_t
+void
 isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp);
 /*%<
  * Create a lexer.

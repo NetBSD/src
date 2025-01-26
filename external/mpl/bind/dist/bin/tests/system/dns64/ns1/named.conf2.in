@@ -45,6 +45,8 @@ options {
 	};
 };
 
+trust-anchors { };
+
 zone "." {
 	type primary;
 	file "root.db";

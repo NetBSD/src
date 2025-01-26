@@ -168,4 +168,10 @@ ns.managed-future	A	10.53.0.3
 revkey			NS	ns.revkey
 ns.revkey		A	10.53.0.3
 
+rsasha1			NS	ns.rsasha1
+ns.rsasha1		A	10.53.0.3
+
+rsasha1-1024		NS	ns.rsasha1-1024
+ns.rsasha1-1024		A	10.53.0.3
+
 dname-at-apex-nsec3	NS	ns3

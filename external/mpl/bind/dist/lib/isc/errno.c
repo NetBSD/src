@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.c,v 1.1.1.1 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: errno.c,v 1.1.1.2 2025/01/26 16:12:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,5 +22,5 @@
 
 isc_result_t
 isc_errno_toresult(int err) {
-	return (isc___errno2result(err, false, 0, 0));
+	return isc___errno2result(err, false, 0, 0);
 }

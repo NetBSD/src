@@ -27,7 +27,9 @@ options {
 	provide-ixfr no;
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { fd92:7065:b8e:ffff::3; };
+	allow-transfer { any; };
 	notify no;
+	notify-delay 0;
 	recursion no;
 	dnssec-validation no;
 };

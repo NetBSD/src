@@ -9,6 +9,32 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "*.new",
+        "*.signed",
+        "K*",
+        "dsset-*",
+        "inact.key",
+        "keys",
+        "ksk.key",
+        "oldstyle.key",
+        "parent.ksk.key",
+        "parent.zsk.key",
+        "pending.key",
+        "postrev.key",
+        "prerev.key",
+        "rolling.key",
+        "settime*.test*",
+        "sigs",
+        "standby.key",
+        "tmp.out",
+        "zsk.key",
+    ]
+)
+
 
 def test_metadata(run_tests_sh):
     run_tests_sh()

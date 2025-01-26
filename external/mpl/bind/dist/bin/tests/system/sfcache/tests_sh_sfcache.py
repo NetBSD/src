@@ -9,6 +9,25 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "rndc.out.*",
+        "sfcache.*",
+        "ns*/*.db",
+        "ns*/*.signed",
+        "ns*/dsset-*",
+        "ns*/K*.key",
+        "ns*/K*.private",
+        "ns*/managed.conf",
+        "ns*/trusted.conf",
+        "ns5/named.run.*",
+        "ns5/named_dump*",
+    ]
+)
+
 
 def test_sfcache(run_tests_sh):
     run_tests_sh()

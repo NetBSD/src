@@ -9,11 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import dns.message
 import pytest
 
 import isctest
 
-import dns.message
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns2/example.bk",
+        "ns3/example.bk",
+    ]
+)
 
 
 @pytest.mark.parametrize("ns", [2, 3])

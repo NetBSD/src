@@ -35,7 +35,7 @@ options {
 	stale-answer-enable yes;
 	stale-cache-enable yes;
 	stale-refresh-time 30;
-	stale-answer-client-timeout 1800;
+	stale-answer-client-timeout 0;
 	max-cache-ttl 24h;
 };
 

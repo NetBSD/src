@@ -23,6 +23,7 @@ Manual Pages
 .. include:: ../../bin/dnssec/dnssec-importkey.rst
 .. include:: ../../bin/dnssec/dnssec-keyfromlabel.rst
 .. include:: ../../bin/dnssec/dnssec-keygen.rst
+.. include:: ../../bin/dnssec/dnssec-ksr.rst
 .. include:: ../../bin/dnssec/dnssec-revoke.rst
 .. include:: ../../bin/dnssec/dnssec-settime.rst
 .. include:: ../../bin/dnssec/dnssec-signzone.rst

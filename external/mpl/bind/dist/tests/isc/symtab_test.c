@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: symtab_test.c,v 1.1.1.2 2025/01/26 16:12:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/print.h>
 #include <isc/symtab.h>
 #include <isc/util.h>
 

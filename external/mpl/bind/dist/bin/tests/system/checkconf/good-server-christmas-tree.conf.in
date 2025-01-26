@@ -30,6 +30,7 @@ server 0.0.0.0 {
 	request-expire no;
 	request-ixfr no;
 	request-nsid no;
+	require-cookie no;
 	send-cookie no;
 	tcp-keepalive no;
 	tcp-only no;
@@ -52,6 +53,7 @@ server :: {
 	request-expire no;
 	request-ixfr no;
 	request-nsid no;
+	require-cookie no;
 	send-cookie no;
 	tcp-keepalive no;
 	tcp-only no;

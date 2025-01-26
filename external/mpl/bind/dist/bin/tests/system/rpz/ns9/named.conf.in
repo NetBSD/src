@@ -25,12 +25,13 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.9; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	notify yes;
 	minimal-responses no;
 	recursion yes;
 	dnssec-validation yes;
 	dns64-server "example.localdomain.";
-        dns64 64:ff9b::/96 { };
+	dns64 64:ff9b::/96 { };
 	response-policy {
 	    zone "rpz";
 	}
@@ -39,6 +40,8 @@ options {
 	include "../dnsrps.conf";
 	notify-delay 0;
 };
+
+trust-anchors { };
 
 logging { category rpz { default_debug; }; };
 

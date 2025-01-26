@@ -31,10 +31,7 @@ for zn in nsec-to-nsec3 nsec3 nsec3-other nsec3-change nsec3-to-nsec \
   setup "${zn}.kasp"
 done
 
-if (
-  cd ..
-  $SHELL ../testcrypto.sh -q RSASHA1
-); then
+if [ $RSASHA1_SUPPORTED = 1 ]; then
   for zn in rsasha1-to-nsec3 rsasha1-to-nsec3-wait nsec3-to-rsasha1 \
     nsec3-to-rsasha1-ds; do
     setup "${zn}.kasp"

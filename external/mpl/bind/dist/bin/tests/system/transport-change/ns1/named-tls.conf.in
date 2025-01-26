@@ -36,7 +36,11 @@ options {
 	statistics-file "named.stats";
 	dnssec-validation yes;
 	tcp-initial-timeout 1200;
+	allow-proxy { any; };
+	allow-proxy-on { 10.53.0.1; fd92:7065:b8e:ffff::1; };
 };
+
+trust-anchors { };
 
 zone "example" {
 	type primary;

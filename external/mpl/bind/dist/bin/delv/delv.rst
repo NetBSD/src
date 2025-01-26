@@ -102,20 +102,21 @@ Options
 
 .. option:: -a anchor-file
 
-   This option specifies a file from which to read DNSSEC trust anchors. The default
-   is |bind_keys|, which is included with BIND 9 and contains one
-   or more trust anchors for the root zone (".").
+   This option specifies a file from which to read an alternate
+   DNSSEC root zone trust anchor.
 
-   Keys that do not match the root zone name are ignored. An alternate
-   key name can be specified using the :option:`+root` option.
+   By default, keys that do not match the root zone name (`.`) are
+   ignored. If an alternate key name is desired, it can be
+   specified using the :option:`+root` option.
 
-   Note: When reading the trust anchor file, :program:`delv` treats ``trust-anchors``,
-   ``initial-key``, and ``static-key`` identically. That is, for a managed key,
-   it is the *initial* key that is trusted; :rfc:`5011` key management is not
-   supported. :program:`delv` does not consult the managed-keys database maintained by
-   :iscman:`named`, which means that if either of the keys in |bind_keys| is
-   revoked and rolled over, |bind_keys| must be updated to
-   use DNSSEC validation in :program:`delv`.
+   Note: When reading trust anchors, :program:`delv` treats
+   ``trust-anchors``, ``initial-key``, and ``static-key`` identically. That
+   is, for a managed key, it is the *initial* key that is trusted;
+   :rfc:`5011` key management is not supported. :program:`delv` does not
+   consult the managed-keys database maintained by :iscman:`named`. This
+   means that if the default key built in to :program:`delv` is revoked,
+   :program:`delv` must be updated to a newer version in order to continue
+   validating.
 
 .. option:: -b address
 
@@ -229,6 +230,36 @@ assign values to options like the timeout interval. They have the form
    This option controls whether to display the CLASS when printing a record. The
    default is to display the CLASS.
 
+.. option:: +hint=FILE, +nohint
+
+   This option specifies a filename from which to load root hints;
+   this will be used to find the root name servers when name server
+   mode (``delv +ns``) is in use. If the option is not specified,
+   built-in root hints will be used.
+
+.. option:: +ns, +nons
+
+   This option toggles name server mode. When this option is in use,
+   the ``delv`` process instantiates a full recursive resolver, and uses
+   that to look up the requested query name and type. Turning on this
+   option also activates ``+mtrace``, ``+strace`` and ``+rtrace``, so that
+   every iterative query will be logged, including the full response messages
+   from each authoritatve server.  These logged messages will be written
+   to ``stdout`` rather than ``stderr`` as usual, so that the full trace
+   can be captured more easily.
+
+   This is intended to be similar to the behavior of ``dig +trace``, but
+   because it uses the same code as ``named``, it much more accurately
+   replicates the behavior of a recursive name server with a cold cache
+   that is processing a recursive query.
+
+.. option:: +qmin[=MODE], +noqmin
+
+   When used with ``+ns``, this option enables QNAME minimization mode.
+   Valid options of MODE are ``relaxed`` and ``strict``. By default,
+   QNAME minimization is disabled.  If ``+qmin`` is specified but MODE
+   is omitted, then ``relaxed`` mode will be used.
+
 .. option:: +ttl, +nottl
 
    This option controls whether to display the TTL when printing a record. The
@@ -236,11 +267,11 @@ assign values to options like the timeout interval. They have the form
 
 .. option:: +rtrace, +nortrace
 
-   This option toggles resolver fetch logging. This reports the name and type of each
-   query sent by :program:`delv` in the process of carrying out the resolution
-   and validation process, including the original query
-   and all subsequent queries to follow CNAMEs and to establish a chain
-   of trust for DNSSEC validation.
+   This option toggles resolver fetch logging. This reports the name and
+   type of each query sent by :program:`delv` in the process of carrying
+   out the resolution and validation process, including the original query
+   and all subsequent queries to follow CNAMEs and to establish a chain of
+   trust for DNSSEC validation.
 
    This is equivalent to setting the debug level to 1 in the "resolver"
    logging category. Setting the systemwide debug level to 1 using the
@@ -249,13 +280,25 @@ assign values to options like the timeout interval. They have the form
 
 .. option:: +mtrace, +nomtrace
 
-   This option toggles message logging. This produces a detailed dump of the
-   responses received by :program:`delv` in the process of carrying out the
-   resolution and validation process.
+   This option toggles logging of messages received. This produces
+   a detailed dump of the responses received by :program:`delv` in the
+   process of carrying out the resolution and validation process.
 
    This is equivalent to setting the debug level to 10 for the "packets"
    module of the "resolver" logging category. Setting the systemwide
    debug level to 10 using the :option:`-d` option produces the same
+   output, but affects other logging categories as well.
+
+.. option:: +strace, +nostrace
+
+   This option toggles logging of messages sent. This produces a detailed
+   dump of the queries sent by :program:`delv` in the process of carrying
+   out the resolution and validation process. Turning on this option
+   also activates ``+mtrace``.
+
+   This is equivalent to setting the debug level to 11 for the "packets"
+   module of the "resolver" logging category. Setting the systemwide
+   debug level to 11 using the :option:`-d` option produces the same
    output, but affects other logging categories as well.
 
 .. option:: +vtrace, +novtrace
@@ -293,6 +336,18 @@ assign values to options like the timeout interval. They have the form
    common failures. The default is to display the fields. When omitted,
    they are replaced by the string ``[omitted]`` or, in the DNSKEY case, the
    key ID is displayed as the replacement, e.g. ``[ key id = value ]``.
+
+.. option:: +restarts
+
+   When name server mode (``delv +ns``) is in use, this option sets the
+   maximum number of CNAME queries to follow before terminating resolution.
+   This prevents ``delv`` from hanging in the event of a CNAME loop.
+   The default is 11.
+
+.. option:: +maxqueries
+
+   This option specifies the maximum number of queries to send to resolve
+   a name before giving up. The default is 32.
 
 .. option:: +trust, +notrust
 
@@ -353,8 +408,6 @@ assign values to options like the timeout interval. They have the form
 
 Files
 ~~~~~
-
-|bind_keys|
 
 ``/etc/resolv.conf``
 

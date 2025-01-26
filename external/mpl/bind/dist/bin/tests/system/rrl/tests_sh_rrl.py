@@ -9,7 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
 import isctest.mark
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "*mdig.out*",
+        "dig.out.*",
+        "ns*/log-*",
+        "ns2/named.stats",
+    ]
+)
 
 
 # The rrl is known to be quite unstable. GL #172

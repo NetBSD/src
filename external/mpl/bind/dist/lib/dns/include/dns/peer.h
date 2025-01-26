@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
+/*	$NetBSD: peer.h,v 1.1.1.7 2025/01/26 16:12:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -119,6 +119,12 @@ dns_peer_setsendcookie(dns_peer_t *peer, bool newval);
 
 isc_result_t
 dns_peer_getsendcookie(dns_peer_t *peer, bool *retval);
+
+isc_result_t
+dns_peer_setrequirecookie(dns_peer_t *peer, bool newval);
+
+isc_result_t
+dns_peer_getrequirecookie(dns_peer_t *peer, bool *retval);
 
 isc_result_t
 dns_peer_setrequestexpire(dns_peer_t *peer, bool newval);

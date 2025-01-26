@@ -9,6 +9,22 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "tmp",
+        "ns*/trusted.conf",
+        "ns*/dsset-*",
+        "ns*/K*",
+        "ns*/*.signed",
+        "ns3/example.db",
+        "ns3/undelegated.db",
+        "ns4/sub.example.db",
+    ]
+)
+
 
 def test_staticstub(run_tests_sh):
     run_tests_sh()

@@ -1,4 +1,4 @@
-/*	$NetBSD: plugin_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: plugin_test.c,v 1.1.1.2 2025/01/26 16:12:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,9 +32,6 @@
 #include <isc/result.h>
 #include <isc/types.h>
 #include <isc/util.h>
-
-noreturn void
-_fail(const char *const file, const int line);
 
 #include <ns/hooks.h>
 
@@ -160,9 +157,7 @@ ISC_RUN_TEST_IMPL(ns_plugin_expandpath) {
 }
 
 ISC_TEST_LIST_START
-
-ISC_TEST_ENTRY_CUSTOM(ns_plugin_expandpath, setup_managers, teardown_managers)
-
+ISC_TEST_ENTRY(ns_plugin_expandpath)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

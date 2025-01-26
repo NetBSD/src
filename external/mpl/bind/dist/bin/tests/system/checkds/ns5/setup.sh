@@ -16,11 +16,20 @@
 
 echo_i "ns5/setup.sh"
 
-zone="checkds"
-infile="checkds.db.infile"
-zonefile="checkds.db"
+for zn in \
+  ns2 ns2-4 ns2-4-5 ns2-4-6 ns2-5-7 \
+  ns5 ns5-6-7 ns5-7 ns6; do
+  zone="${zn}"
+  infile="${zn}.db.infile"
+  zonefile="${zn}.db"
 
-CSK=$($KEYGEN -k default $zone 2>keygen.out.$zone)
-cat template.db.in "${CSK}.key" >"$infile"
-private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
-$SIGNER -S -g -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile >signer.out.$zone 2>&1
+  CSK=$($KEYGEN -k default $zone 2>keygen.out.$zone)
+  cat "${zn}.db.in" "${CSK}.key" >"$infile"
+  private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
+  $SIGNER -S -g -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile >signer.out.$zone 2>&1
+
+  # Copy key to ns2, the other primary.
+  echo "${CSK}" >"../ns2/${zn}.keyname"
+  cp "${CSK}.key" ../ns2/
+  cp "${CSK}.private" ../ns2/
+done

@@ -9,6 +9,14 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.*.test*",
+    ]
+)
+
 
 def test_names(run_tests_sh):
     run_tests_sh()

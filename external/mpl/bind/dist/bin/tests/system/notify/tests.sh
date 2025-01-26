@@ -115,7 +115,22 @@ wait_for_log_re 45 "transfer of 'example/IN' from 10.53.0.2#.*success" ns3/named
 
 test_start "checking notify message was logged"
 grep 'notify from 10.53.0.2#[0-9][0-9]*: serial 2$' ns3/named.run >/dev/null || ret=1
+grep 'refused notify from non-primary: fd92:7065:b8e:ffff::2#[0-9][0-9]*$' ns3/named.run >/dev/null || ret=1
 test_end
+
+if $FEATURETEST --have-fips-dh; then
+  test_start "checking notify over TLS successful"
+  grep "zone tls-x1/IN: notify to 10.53.0.2#${TLSPORT} successful" ns3/named.run >/dev/null || ret=1
+  grep "zone tls-x2/IN: notify to 10.53.0.2#${EXTRAPORT1} successful" ns3/named.run >/dev/null || ret=1
+  grep "zone tls-x3/IN: notify to 10.53.0.2#${EXTRAPORT1} successful" ns3/named.run >/dev/null || ret=1
+  grep "zone tls-x5/IN: notify to 10.53.0.2#${EXTRAPORT3} successful" ns3/named.run >/dev/null || ret=1
+  test_end
+
+  test_start "checking notify over TLS failed"
+  grep "zone tls-x4/IN: notify to 10.53.0.2#${EXTRAPORT1} failed: TLS peer certificate verification failed" ns3/named.run >/dev/null || ret=1
+  grep "zone tls-x6/IN: notify to 10.53.0.2#${EXTRAPORT4} failed: TLS peer certificate verification failed" ns3/named.run >/dev/null || ret=1
+  test_end
+fi
 
 test_start "checking example2 loaded"
 dig_plus_opts a.example. @10.53.0.2 a >dig.out.ns2.test$n || ret=1
@@ -184,16 +199,16 @@ test_start "checking notify to multiple views using tsig"
 $NSUPDATE <<EOF
 server 10.53.0.5 ${PORT}
 zone x21
-key a aaaaaaaaaaaaaaaaaaaa
+key $DEFAULT_HMAC:a aaaaaaaaaaaaaaaaaaaa
 update add added.x21 0 in txt "test string"
 send
 EOF
 fnb="dig.out.b.ns5.test$n"
 fnc="dig.out.c.ns5.test$n"
 for i in 1 2 3 4 5 6 7 8 9; do
-  dig_plus_opts added.x21. -y b:bbbbbbbbbbbbbbbbbbbb @10.53.0.5 \
+  dig_plus_opts added.x21. -y "${DEFAULT_HMAC}:b:bbbbbbbbbbbbbbbbbbbb" @10.53.0.5 \
     txt >"$fnb" || ret=1
-  dig_plus_opts added.x21. -y c:cccccccccccccccccccc @10.53.0.5 \
+  dig_plus_opts added.x21. -y "${DEFAULT_HMAC}:c:cccccccccccccccccccc" @10.53.0.5 \
     txt >"$fnc" || ret=1
   grep "test string" "$fnb" >/dev/null \
     && grep "test string" "$fnc" >/dev/null \
@@ -214,9 +229,15 @@ test_end
 # above, which should time out at some point; we need to wait for them to
 # appear in the logs in case the tests run faster than the notify timeouts
 
-test_start "checking notify retries expire within 45 seconds"
+test_start "checking notify to retry over TCP within 45 seconds"
 nextpartreset ns3/named.run
-wait_for_log 45 'retries exceeded' ns3/named.run || ret=1
+wait_for_log 45 'retrying over TCP' ns3/named.run || ret=1
+test_end
+
+# the TCP timeout is set to 15 seconds, double that for some leeway
+test_start "checking notify retries expire within 30 seconds"
+nextpartreset ns3/named.run
+wait_for_log 30 'retries exceeded' ns3/named.run || ret=1
 test_end
 
 echo_i "exit status: $status"

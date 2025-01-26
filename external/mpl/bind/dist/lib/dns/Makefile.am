@@ -12,10 +12,10 @@ nodist_libdns_la_SOURCES =		\
 	$(nodist_libdns_la_HEADERS)	\
 	code.h
 
-BUILT_SOURCES =				\
+BUILT_SOURCES +=			\
 	$(nodist_libdns_la_SOURCES)
 
-CLEANFILES =				\
+CLEANFILES +=				\
 	$(nodist_libdns_la_SOURCES)	\
 	gen$(BUILD_EXEEXT)
 
@@ -73,7 +73,6 @@ libdns_la_HEADERS =			\
 	include/dns/dyndb.h		\
 	include/dns/ecs.h		\
 	include/dns/edns.h		\
-	include/dns/events.h		\
 	include/dns/fixedname.h		\
 	include/dns/forward.h		\
 	include/dns/geoip.h		\
@@ -84,15 +83,16 @@ libdns_la_HEADERS =			\
 	include/dns/keydata.h		\
 	include/dns/keyflags.h		\
 	include/dns/keymgr.h		\
+	include/dns/keystore.h		\
 	include/dns/keytable.h		\
 	include/dns/keyvalues.h		\
 	include/dns/librpz.h		\
-	include/dns/lookup.h		\
 	include/dns/log.h		\
 	include/dns/master.h		\
 	include/dns/masterdump.h	\
 	include/dns/message.h		\
 	include/dns/name.h		\
+	include/dns/nametree.h		\
 	include/dns/ncache.h		\
 	include/dns/nsec.h		\
 	include/dns/nsec3.h		\
@@ -101,6 +101,7 @@ libdns_la_HEADERS =			\
 	include/dns/order.h		\
 	include/dns/peer.h		\
 	include/dns/private.h		\
+	include/dns/qp.h		\
 	include/dns/rbt.h		\
 	include/dns/rcode.h		\
 	include/dns/rdata.h		\
@@ -110,6 +111,7 @@ libdns_la_HEADERS =			\
 	include/dns/rdatasetiter.h	\
 	include/dns/rdataslab.h		\
 	include/dns/rdatatype.h		\
+	include/dns/remote.h		\
 	include/dns/request.h		\
 	include/dns/resolver.h		\
 	include/dns/result.h		\
@@ -117,17 +119,17 @@ libdns_la_HEADERS =			\
 	include/dns/rpz.h		\
 	include/dns/rriterator.h	\
 	include/dns/rrl.h		\
-	include/dns/sdb.h		\
 	include/dns/sdlz.h		\
 	include/dns/secalg.h		\
 	include/dns/secproto.h		\
+	include/dns/skr.h		\
 	include/dns/soa.h		\
 	include/dns/ssu.h		\
 	include/dns/stats.h		\
 	include/dns/time.h		\
-	include/dns/transport.h		\
 	include/dns/tkey.h		\
-	include/dns/tsec.h		\
+	include/dns/trace.h		\
+	include/dns/transport.h		\
 	include/dns/tsig.h		\
 	include/dns/ttl.h		\
 	include/dns/types.h		\
@@ -145,9 +147,14 @@ dst_HEADERS =				\
 	include/dst/dst.h		\
 	include/dst/gssapi.h
 
+irsdir = $(includedir)/irs
+irs_HEADERS =				\
+	include/irs/resconf.h
+
 libdns_la_SOURCES =			\
 	$(libdns_la_HEADERS)		\
 	$(dst_HEADERS)			\
+	$(irs_HEADERS)			\
 	acl.c				\
 	adb.c				\
 	badcache.c			\
@@ -155,9 +162,11 @@ libdns_la_SOURCES =			\
 	cache.c				\
 	callbacks.c			\
 	catz.c				\
+	client.c			\
 	clientinfo.c			\
 	compress.c			\
 	db.c				\
+	db_p.h				\
 	dbiterator.c			\
 	diff.c				\
 	dispatch.c			\
@@ -184,13 +193,14 @@ libdns_la_SOURCES =			\
 	key.c				\
 	keydata.c			\
 	keymgr.c			\
+	keystore.c			\
 	keytable.c			\
 	log.c				\
-	lookup.c			\
 	master.c			\
 	masterdump.c			\
 	message.c			\
 	name.c				\
+	nametree.c			\
 	ncache.c			\
 	nsec.c				\
 	nsec3.c				\
@@ -198,31 +208,41 @@ libdns_la_SOURCES =			\
 	openssl_link.c			\
 	openssl_shim.c			\
 	openssl_shim.h			\
-	openssldh_link.c		\
 	opensslecdsa_link.c		\
 	openssleddsa_link.c		\
 	opensslrsa_link.c		\
 	order.c				\
 	peer.c				\
 	private.c			\
+	probes.d			\
+	qp.c				\
+	qp_p.h				\
+	qpzone_p.h			\
+	qpzone.c			\
 	rbt.c				\
-	rbtdb.h				\
+	rbt-cachedb.c			\
+	rbt-zonedb.c			\
 	rbtdb.c				\
+	rbtdb_p.h			\
+	qpcache.c				\
+	qpcache_p.h			\
 	rcode.c				\
 	rdata.c				\
 	rdatalist.c			\
 	rdataset.c			\
 	rdatasetiter.c			\
 	rdataslab.c			\
+	remote.c			\
 	request.c			\
+	resconf.c			\
 	resolver.c			\
 	result.c			\
 	rootns.c			\
 	rpz.c				\
 	rrl.c				\
 	rriterator.c			\
-	sdb.c				\
 	sdlz.c				\
+	skr.c				\
 	soa.c				\
 	ssu.c				\
 	ssu_external.c			\
@@ -230,21 +250,18 @@ libdns_la_SOURCES =			\
 	time.c				\
 	transport.c			\
 	tkey.c				\
-	tsec.c				\
 	tsig.c				\
+	tsig_p.h			\
 	ttl.c				\
 	update.c			\
 	validator.c			\
 	view.c				\
 	xfrin.c				\
 	zone.c				\
+	zone_p.h			\
 	zoneverify.c			\
 	zonekey.c			\
-	zt.c				\
-	client.c			\
-	rdatalist_p.h			\
-	tsig_p.h			\
-	zone_p.h
+	zt.c
 
 if HAVE_GSSAPI
 libdns_la_SOURCES +=			\
@@ -260,6 +277,7 @@ libdns_la_CPPFLAGS =		\
 	$(AM_CPPFLAGS)		\
 	$(LIBDNS_CFLAGS)	\
 	$(LIBISC_CFLAGS)	\
+	$(LIBURCU_CFLAGS)	\
 	$(LIBUV_CFLAGS)		\
 	$(OPENSSL_CFLAGS)
 
@@ -269,6 +287,7 @@ libdns_la_LDFLAGS =		\
 
 libdns_la_LIBADD =		\
 	$(LIBISC_LIBS)		\
+	$(LIBURCU_LIBS)		\
 	$(LIBUV_LIBS)		\
 	$(OPENSSL_LIBS)
 
@@ -323,3 +342,12 @@ if HAVE_LMDB
 libdns_la_CPPFLAGS += $(LMDB_CFLAGS)
 libdns_la_LIBADD += $(LMDB_LIBS)
 endif
+
+if !HAVE_SYSTEMTAP
+DTRACE_DEPS = libdns_la-xfrin.lo
+DTRACE_OBJS = .libs/libdns_la-xfrin.$(OBJEXT)
+endif
+
+include $(top_srcdir)/Makefile.dtrace
+
+libdns_la_LIBADD += $(DTRACE_LIBADD)

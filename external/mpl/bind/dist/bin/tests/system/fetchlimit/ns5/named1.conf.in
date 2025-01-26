@@ -27,6 +27,8 @@ options {
 	max-clients-per-query 10;
 };
 
+trust-anchors { };
+
 server 10.53.0.4 {
 	edns no;
 };

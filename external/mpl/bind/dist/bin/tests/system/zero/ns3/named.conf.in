@@ -24,6 +24,8 @@ options {
 	servfail-ttl 0;
 };
 
+trust-anchors { };
+
 zone "." {
 	type hint;
 	file "root.hint";

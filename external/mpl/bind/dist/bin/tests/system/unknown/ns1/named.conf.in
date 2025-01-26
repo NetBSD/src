@@ -25,6 +25,8 @@ options {
 };
 
 view "in" {
+	allow-transfer { any; };
+
 	zone "example." {
 		type primary;
 		file "example-in.db";

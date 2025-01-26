@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig-keygen.c,v 1.1.1.2 2024/09/22 00:06:08 christos Exp $	*/
+/*	$NetBSD: tsig-keygen.c,v 1.1.1.3 2025/01/26 16:12:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,6 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/net.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -299,5 +298,5 @@ nsupdate -k <keyfile>\n");
 
 	isc_mem_destroy(&mctx);
 
-	return (0);
+	return 0;
 }

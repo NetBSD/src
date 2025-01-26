@@ -24,6 +24,8 @@ options {
 	minimal-responses no;
 };
 
+trust-anchors { };
+
 plugin query "../driver/.libs/test-async.so";
 
 key rndc_key {

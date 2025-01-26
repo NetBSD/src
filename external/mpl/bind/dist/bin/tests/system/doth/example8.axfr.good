@@ -2665,6 +2665,10 @@ unspec01.example8.	3600	IN	UNSPEC	\# 1 04
 uri01.example8.		3600	IN	URI	10 20 "https://www.isc.org/"
 uri02.example8.		3600	IN	URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
 uri03.example8.		3600	IN	URI	30 40 ""
+wallet.example8.	3600	IN	WALLET	"currency-identifer" "wallet-identifier"
+wallet-multiple.example8. 3600	IN	WALLET	"currency-identifer1" "wallet-identifier1"
+wallet-multiple.example8. 3600	IN	WALLET	"currency-identifer1" "wallet-identifier2"
+wallet-multiple.example8. 3600	IN	WALLET	"currency-identifer2" "wallet-identifier3"
 wks01.example8.		3600	IN	WKS	10.0.0.1 6 0 1 2 21 23
 wks02.example8.		3600	IN	WKS	10.0.0.1 17 0 1 2 53
 wks03.example8.		3600	IN	WKS	10.0.0.2 6 65535

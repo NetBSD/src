@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_name_fromtext_target.c,v 1.1.1.5 2024/02/21 21:54:46 christos Exp $	*/
+/*	$NetBSD: dns_name_fromtext_target.c,v 1.1.1.6 2025/01/26 16:12:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,9 +27,8 @@
 bool debug = false;
 
 int
-LLVMFuzzerInitialize(int *argc __attribute__((unused)),
-		     char ***argv __attribute__((unused))) {
-	return (0);
+LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
+	return 0;
 }
 
 int
@@ -50,5 +49,5 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 		fprintf(stderr, "dns_name_fromtext: %s\n",
 			isc_result_totext(result));
 	}
-	return (0);
+	return 0;
 }

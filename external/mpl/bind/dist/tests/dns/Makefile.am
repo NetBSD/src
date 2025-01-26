@@ -3,6 +3,7 @@ include $(top_srcdir)/Makefile.top
 AM_CPPFLAGS +=				\
 	$(LIBISC_CFLAGS)		\
 	$(LIBDNS_CFLAGS)		\
+	$(LIBURCU_CFLAGS)		\
 	$(LIBUV_CFLAGS)			\
 	$(KRB5_CFLAGS)			\
 	-DSRCDIR=\"$(abs_srcdir)\"	\
@@ -12,39 +13,44 @@ AM_CPPFLAGS +=				\
 
 LDADD +=				\
 	$(LIBISC_LIBS)			\
+	$(LIBURCU_LIBS)			\
 	$(LIBUV_LIBS)			\
 	$(LIBDNS_LIBS)
 
 check_PROGRAMS =		\
 	acl_test		\
+	badcache_test		\
 	db_test			\
 	dbdiff_test		\
 	dbiterator_test		\
 	dbversion_test		\
-	dh_test			\
+	diff_test		\
 	dispatch_test		\
 	dns64_test		\
 	dst_test		\
 	keytable_test		\
 	name_test		\
+	nametree_test		\
 	nsec3_test		\
 	nsec3param_test		\
 	private_test		\
+	qp_test			\
+	qpmulti_test		\
+	qpdb_test		\
+	qpzone_test		\
 	rbt_test		\
-	rbtdb_test		\
 	rdata_test		\
 	rdataset_test		\
 	rdatasetstats_test	\
 	resolver_test		\
 	rsa_test		\
 	sigs_test		\
+	skr_test		\
 	time_test		\
 	tsig_test		\
 	update_test		\
 	zonemgr_test		\
 	zt_test
-
-CLEANFILES =
 
 if HAVE_PERL
 

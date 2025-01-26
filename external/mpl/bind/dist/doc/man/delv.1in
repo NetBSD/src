@@ -42,7 +42,7 @@ delv \- DNS lookup and validation utility
 .SH DESCRIPTION
 .sp
 \fBdelv\fP is a tool for sending DNS queries and validating the results,
-using the same internal resolver and validator logic as \X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link'\&.
+using the same internal resolver and validator logic as \fI\%named\fP\&.
 .sp
 \fBdelv\fP sends to a specified name server all queries needed to
 fetch and validate the requested data; this includes the original
@@ -73,11 +73,9 @@ A typical invocation of \fBdelv\fP looks like:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 delv @server name type
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -116,20 +114,21 @@ supplied, \fBdelv\fP performs a lookup for an A record.
 .INDENT 0.0
 .TP
 .B \-a anchor\-file
-This option specifies a file from which to read DNSSEC trust anchors. The default
-is \fB@sysconfdir@/bind.keys\fP, which is included with BIND 9 and contains one
-or more trust anchors for the root zone (\(dq.\(dq).
+This option specifies a file from which to read an alternate
+DNSSEC root zone trust anchor.
 .sp
-Keys that do not match the root zone name are ignored. An alternate
-key name can be specified using the \fI\%+root\fP option.
+By default, keys that do not match the root zone name (\fI\&.\fP) are
+ignored. If an alternate key name is desired, it can be
+specified using the \fI\%+root\fP option.
 .sp
-Note: When reading the trust anchor file, \fBdelv\fP treats \fBtrust\-anchors\fP,
-\fBinitial\-key\fP, and \fBstatic\-key\fP identically. That is, for a managed key,
-it is the \fIinitial\fP key that is trusted; \X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' key management is not
-supported. \fBdelv\fP does not consult the managed\-keys database maintained by
-\X'tty: link #std-iscman-named'\fI\%named\fP\X'tty: link', which means that if either of the keys in \fB@sysconfdir@/bind.keys\fP is
-revoked and rolled over, \fB@sysconfdir@/bind.keys\fP must be updated to
-use DNSSEC validation in \fBdelv\fP\&.
+Note: When reading trust anchors, \fBdelv\fP treats
+\fBtrust\-anchors\fP, \fBinitial\-key\fP, and \fBstatic\-key\fP identically. That
+is, for a managed key, it is the \fIinitial\fP key that is trusted;
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' key management is not supported. \fBdelv\fP does not
+consult the managed\-keys database maintained by \fI\%named\fP\&. This
+means that if the default key built in to \fBdelv\fP is revoked,
+\fBdelv\fP must be updated to a newer version in order to continue
+validating.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -167,7 +166,7 @@ however, that this does not set the CD bit on upstream queries. If the
 server being queried is performing DNSSEC validation, then it does
 not return invalid data; this can cause \fBdelv\fP to time out. When it
 is necessary to examine invalid data to debug a DNSSEC problem, use
-\X'tty: link #cmdoption-dig-arg-cd'\fI\%dig +cd\fP\X'tty: link'\&.)
+\fI\%dig +cd\fP\&.)
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -258,6 +257,39 @@ default is to display the CLASS.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B +hint=FILE, +nohint
+This option specifies a filename from which to load root hints;
+this will be used to find the root name servers when name server
+mode (\fBdelv +ns\fP) is in use. If the option is not specified,
+built\-in root hints will be used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +ns, +nons
+This option toggles name server mode. When this option is in use,
+the \fBdelv\fP process instantiates a full recursive resolver, and uses
+that to look up the requested query name and type. Turning on this
+option also activates \fB+mtrace\fP, \fB+strace\fP and \fB+rtrace\fP, so that
+every iterative query will be logged, including the full response messages
+from each authoritatve server.  These logged messages will be written
+to \fBstdout\fP rather than \fBstderr\fP as usual, so that the full trace
+can be captured more easily.
+.sp
+This is intended to be similar to the behavior of \fBdig +trace\fP, but
+because it uses the same code as \fBnamed\fP, it much more accurately
+replicates the behavior of a recursive name server with a cold cache
+that is processing a recursive query.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +qmin[=MODE], +noqmin
+When used with \fB+ns\fP, this option enables QNAME minimization mode.
+Valid options of MODE are \fBrelaxed\fP and \fBstrict\fP\&. By default,
+QNAME minimization is disabled.  If \fB+qmin\fP is specified but MODE
+is omitted, then \fBrelaxed\fP mode will be used.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B +ttl, +nottl
 This option controls whether to display the TTL when printing a record. The
 default is to display the TTL.
@@ -265,11 +297,11 @@ default is to display the TTL.
 .INDENT 0.0
 .TP
 .B +rtrace, +nortrace
-This option toggles resolver fetch logging. This reports the name and type of each
-query sent by \fBdelv\fP in the process of carrying out the resolution
-and validation process, including the original query
-and all subsequent queries to follow CNAMEs and to establish a chain
-of trust for DNSSEC validation.
+This option toggles resolver fetch logging. This reports the name and
+type of each query sent by \fBdelv\fP in the process of carrying
+out the resolution and validation process, including the original query
+and all subsequent queries to follow CNAMEs and to establish a chain of
+trust for DNSSEC validation.
 .sp
 This is equivalent to setting the debug level to 1 in the \(dqresolver\(dq
 logging category. Setting the systemwide debug level to 1 using the
@@ -279,13 +311,26 @@ logging categories as well.
 .INDENT 0.0
 .TP
 .B +mtrace, +nomtrace
-This option toggles message logging. This produces a detailed dump of the
-responses received by \fBdelv\fP in the process of carrying out the
-resolution and validation process.
+This option toggles logging of messages received. This produces
+a detailed dump of the responses received by \fBdelv\fP in the
+process of carrying out the resolution and validation process.
 .sp
 This is equivalent to setting the debug level to 10 for the \(dqpackets\(dq
 module of the \(dqresolver\(dq logging category. Setting the systemwide
 debug level to 10 using the \fI\%\-d\fP option produces the same
+output, but affects other logging categories as well.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +strace, +nostrace
+This option toggles logging of messages sent. This produces a detailed
+dump of the queries sent by \fBdelv\fP in the process of carrying
+out the resolution and validation process. Turning on this option
+also activates \fB+mtrace\fP\&.
+.sp
+This is equivalent to setting the debug level to 11 for the \(dqpackets\(dq
+module of the \(dqresolver\(dq logging category. Setting the systemwide
+debug level to 11 using the \fI\%\-d\fP option produces the same
 output, but affects other logging categories as well.
 .UNINDENT
 .INDENT 0.0
@@ -331,6 +376,20 @@ key ID is displayed as the replacement, e.g. \fB[ key id = value ]\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B +restarts
+When name server mode (\fBdelv +ns\fP) is in use, this option sets the
+maximum number of CNAME queries to follow before terminating resolution.
+This prevents \fBdelv\fP from hanging in the event of a CNAME loop.
+The default is 11.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +maxqueries
+This option specifies the maximum number of queries to send to resolve
+a name before giving up. The default is 32.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B +trust, +notrust
 This option controls whether to display the trust level when printing a record.
 The default is to display the trust level.
@@ -362,7 +421,7 @@ parsing of the \fBdelv\fP output.
 .TP
 .B +dnssec, +nodnssec
 This option indicates whether to display RRSIG records in the \fBdelv\fP output.
-The default is to do so. Note that (unlike in \X'tty: link #std-iscman-dig'\fI\%dig\fP\X'tty: link') this does
+The default is to do so. Note that (unlike in \fI\%dig\fP) this does
 \fInot\fP control whether to request DNSSEC records or to
 validate them. DNSSEC records are always requested, and validation
 always occurs unless suppressed by the use of \fI\%\-i\fP or
@@ -397,12 +456,10 @@ This option prints response data in YAML format.
 .UNINDENT
 .SH FILES
 .sp
-\fB@sysconfdir@/bind.keys\fP
-.sp
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\X'tty: link #std-iscman-dig'\fI\%dig(1)\fP\X'tty: link', \X'tty: link #std-iscman-named'\fI\%named(8)\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4035.html'\fI\%RFC 4035\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4431.html'\fI\%RFC 4431\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5074.html'\fI\%RFC 5074\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5155.html'\fI\%RFC 5155\fP\X'tty: link'\&.
+\fI\%dig(1)\fP, \fI\%named(8)\fP, \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4035.html'\fI\%RFC 4035\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4431.html'\fI\%RFC 4431\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5074.html'\fI\%RFC 5074\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc5155.html'\fI\%RFC 5155\fP\X'tty: link'\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

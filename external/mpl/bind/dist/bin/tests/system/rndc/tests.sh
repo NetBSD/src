@@ -325,6 +325,16 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
+echo_i "test 'rndc dumpdb' with an unwritable dump-file ($n)"
+ret=0
+touch ns2/named_dump.db
+chmod -w ns2/named_dump.db
+rndc_dumpdb ns2 2>/dev/null && ret=1
+grep -F "failed: permission denied" "rndc.out.test$n" >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "test 'rndc dumpdb' on a empty cache ($n)"
 ret=0
 rndc_dumpdb ns3 || ret=1
@@ -426,6 +436,7 @@ n=$((n + 1))
 echo_i "testing single control channel with multiple algorithms ($n)"
 ret=0
 for i in 1 2 3 4 5 6; do
+  test $i = 1 && $FEATURETEST --have-fips-mode && continue
   $RNDC -s 10.53.0.4 -p ${EXTRAPORT7} -c ns4/key${i}.conf status >/dev/null 2>&1 || ret=1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -435,7 +446,7 @@ n=$((n + 1))
 echo_i "testing automatic zones are reported ($n)"
 ret=0
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf status >rndc.out.1.test$n || ret=1
-grep "number of zones: 203 (200 automatic)" rndc.out.1.test$n >/dev/null || ret=1
+grep "number of zones: 201 (200 automatic)" rndc.out.1.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

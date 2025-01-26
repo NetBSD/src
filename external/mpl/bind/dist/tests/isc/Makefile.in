@@ -97,27 +97,29 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@am__append_1 = \
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
-check_PROGRAMS = aes_test$(EXEEXT) buffer_test$(EXEEXT) \
-	counter_test$(EXEEXT) crc64_test$(EXEEXT) errno_test$(EXEEXT) \
-	file_test$(EXEEXT) hash_test$(EXEEXT) heap_test$(EXEEXT) \
-	hmac_test$(EXEEXT) ht_test$(EXEEXT) lex_test$(EXEEXT) \
-	md_test$(EXEEXT) mem_test$(EXEEXT) netaddr_test$(EXEEXT) \
-	netmgr_test$(EXEEXT) parse_test$(EXEEXT) pool_test$(EXEEXT) \
-	quota_test$(EXEEXT) radix_test$(EXEEXT) random_test$(EXEEXT) \
-	regex_test$(EXEEXT) result_test$(EXEEXT) safe_test$(EXEEXT) \
-	siphash_test$(EXEEXT) sockaddr_test$(EXEEXT) \
-	stats_test$(EXEEXT) symtab_test$(EXEEXT) task_test$(EXEEXT) \
-	taskpool_test$(EXEEXT) time_test$(EXEEXT) timer_test$(EXEEXT) \
-	$(am__EXEEXT_1)
+check_PROGRAMS = ascii_test$(EXEEXT) async_test$(EXEEXT) \
+	buffer_test$(EXEEXT) counter_test$(EXEEXT) crc64_test$(EXEEXT) \
+	dnsstream_utils_test$(EXEEXT) errno_test$(EXEEXT) \
+	file_test$(EXEEXT) hash_test$(EXEEXT) hashmap_test$(EXEEXT) \
+	heap_test$(EXEEXT) histo_test$(EXEEXT) hmac_test$(EXEEXT) \
+	ht_test$(EXEEXT) job_test$(EXEEXT) lex_test$(EXEEXT) \
+	loop_test$(EXEEXT) md_test$(EXEEXT) mem_test$(EXEEXT) \
+	mutex_test$(EXEEXT) netaddr_test$(EXEEXT) parse_test$(EXEEXT) \
+	proxyheader_test$(EXEEXT) proxystream_test$(EXEEXT) \
+	proxyudp_test$(EXEEXT) quota_test$(EXEEXT) radix_test$(EXEEXT) \
+	random_test$(EXEEXT) ratelimiter_test$(EXEEXT) \
+	regex_test$(EXEEXT) result_test$(EXEEXT) rwlock_test$(EXEEXT) \
+	safe_test$(EXEEXT) siphash_test$(EXEEXT) \
+	sockaddr_test$(EXEEXT) spinlock_test$(EXEEXT) \
+	stats_test$(EXEEXT) symtab_test$(EXEEXT) tcp_test$(EXEEXT) \
+	tcpdns_test$(EXEEXT) time_test$(EXEEXT) timer_test$(EXEEXT) \
+	tls_test$(EXEEXT) tlsdns_test$(EXEEXT) udp_test$(EXEEXT) \
+	work_test$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_LIBNGHTTP2_TRUE@am__append_2 = \
 @HAVE_LIBNGHTTP2_TRUE@	doh_test
 
-@HAVE_LIBXML2_TRUE@am__append_3 = $(LIBXML2_CFLAGS)
-@HAVE_LIBXML2_TRUE@am__append_4 = $(LIBXML2_LIBS)
-@HAVE_JSON_C_TRUE@am__append_5 = $(JSON_C_CFLAGS)
-@HAVE_JSON_C_TRUE@am__append_6 = $(JSON_C_LIBS)
-@HAVE_JEMALLOC_TRUE@am__append_7 = $(JEMALLOC_CFLAGS)
-@HAVE_JEMALLOC_TRUE@am__append_8 = $(JEMALLOC_LIBS)
+@HAVE_JEMALLOC_TRUE@am__append_3 = $(JEMALLOC_CFLAGS)
+@HAVE_JEMALLOC_TRUE@am__append_4 = $(JEMALLOC_LIBS)
 subdir = tests/isc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -130,10 +132,10 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -142,73 +144,97 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @HAVE_LIBNGHTTP2_TRUE@am__EXEEXT_1 = doh_test$(EXEEXT)
-aes_test_SOURCES = aes_test.c
-aes_test_OBJECTS = aes_test.$(OBJEXT)
-aes_test_LDADD = $(LDADD)
+ascii_test_SOURCES = ascii_test.c
+ascii_test_OBJECTS = ascii_test.$(OBJEXT)
+ascii_test_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
 @HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
-aes_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+ascii_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+async_test_SOURCES = async_test.c
+async_test_OBJECTS = async_test.$(OBJEXT)
+async_test_LDADD = $(LDADD)
+async_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 buffer_test_SOURCES = buffer_test.c
 buffer_test_OBJECTS = buffer_test.$(OBJEXT)
 buffer_test_LDADD = $(LDADD)
 buffer_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 counter_test_SOURCES = counter_test.c
 counter_test_OBJECTS = counter_test.$(OBJEXT)
 counter_test_LDADD = $(LDADD)
 counter_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 crc64_test_SOURCES = crc64_test.c
 crc64_test_OBJECTS = crc64_test.$(OBJEXT)
 crc64_test_LDADD = $(LDADD)
 crc64_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+am_dnsstream_utils_test_OBJECTS =  \
+	dnsstream_utils_test-dnsstream_utils_test.$(OBJEXT)
+dnsstream_utils_test_OBJECTS = $(am_dnsstream_utils_test_OBJECTS)
+am__DEPENDENCIES_4 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+dnsstream_utils_test_DEPENDENCIES = $(am__DEPENDENCIES_4)
 am__doh_test_SOURCES_DIST = doh_test.c uv_wrap.h
 @HAVE_LIBNGHTTP2_TRUE@am_doh_test_OBJECTS =  \
 @HAVE_LIBNGHTTP2_TRUE@	doh_test-doh_test.$(OBJEXT)
 doh_test_OBJECTS = $(am_doh_test_OBJECTS)
-am__DEPENDENCIES_4 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
 @HAVE_LIBNGHTTP2_TRUE@doh_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
 @HAVE_LIBNGHTTP2_TRUE@	$(am__DEPENDENCIES_1)
 errno_test_SOURCES = errno_test.c
 errno_test_OBJECTS = errno_test.$(OBJEXT)
 errno_test_LDADD = $(LDADD)
 errno_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 file_test_SOURCES = file_test.c
 file_test_OBJECTS = file_test.$(OBJEXT)
 file_test_LDADD = $(LDADD)
 file_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 hash_test_SOURCES = hash_test.c
 hash_test_OBJECTS = hash_test.$(OBJEXT)
 hash_test_LDADD = $(LDADD)
 hash_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+am_hashmap_test_OBJECTS = hashmap_test.$(OBJEXT)
+hashmap_test_OBJECTS = $(am_hashmap_test_OBJECTS)
+hashmap_test_LDADD = $(LDADD)
+hashmap_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
 heap_test_SOURCES = heap_test.c
 heap_test_OBJECTS = heap_test.$(OBJEXT)
 heap_test_LDADD = $(LDADD)
 heap_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+histo_test_SOURCES = histo_test.c
+histo_test_OBJECTS = histo_test.$(OBJEXT)
+histo_test_LDADD = $(LDADD)
+histo_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 hmac_test_SOURCES = hmac_test.c
 hmac_test_OBJECTS = hmac_test-hmac_test.$(OBJEXT)
 hmac_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
@@ -216,14 +242,26 @@ ht_test_SOURCES = ht_test.c
 ht_test_OBJECTS = ht_test.$(OBJEXT)
 ht_test_LDADD = $(LDADD)
 ht_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+job_test_SOURCES = job_test.c
+job_test_OBJECTS = job_test.$(OBJEXT)
+job_test_LDADD = $(LDADD)
+job_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 lex_test_SOURCES = lex_test.c
 lex_test_OBJECTS = lex_test.$(OBJEXT)
 lex_test_LDADD = $(LDADD)
 lex_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+loop_test_SOURCES = loop_test.c
+loop_test_OBJECTS = loop_test.$(OBJEXT)
+loop_test_LDADD = $(LDADD)
+loop_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 md_test_SOURCES = md_test.c
 md_test_OBJECTS = md_test-md_test.$(OBJEXT)
 md_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
@@ -231,110 +269,162 @@ mem_test_SOURCES = mem_test.c
 mem_test_OBJECTS = mem_test.$(OBJEXT)
 mem_test_LDADD = $(LDADD)
 mem_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+mutex_test_SOURCES = mutex_test.c
+mutex_test_OBJECTS = mutex_test.$(OBJEXT)
+mutex_test_LDADD = $(LDADD)
+mutex_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 netaddr_test_SOURCES = netaddr_test.c
 netaddr_test_OBJECTS = netaddr_test.$(OBJEXT)
 netaddr_test_LDADD = $(LDADD)
 netaddr_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
-am_netmgr_test_OBJECTS = netmgr_test-netmgr_test.$(OBJEXT)
-netmgr_test_OBJECTS = $(am_netmgr_test_OBJECTS)
-netmgr_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 parse_test_SOURCES = parse_test.c
 parse_test_OBJECTS = parse_test.$(OBJEXT)
 parse_test_LDADD = $(LDADD)
 parse_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
-pool_test_SOURCES = pool_test.c
-pool_test_OBJECTS = pool_test.$(OBJEXT)
-pool_test_LDADD = $(LDADD)
-pool_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+am_proxyheader_test_OBJECTS =  \
+	proxyheader_test-proxyheader_test.$(OBJEXT)
+proxyheader_test_OBJECTS = $(am_proxyheader_test_OBJECTS)
+proxyheader_test_DEPENDENCIES = $(am__DEPENDENCIES_4)
+am_proxystream_test_OBJECTS =  \
+	proxystream_test-proxystream_test.$(OBJEXT) \
+	proxystream_test-netmgr_common.$(OBJEXT) \
+	proxystream_test-stream_shutdown.$(OBJEXT)
+proxystream_test_OBJECTS = $(am_proxystream_test_OBJECTS)
+proxystream_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_1)
+am_proxyudp_test_OBJECTS = proxyudp_test-proxyudp_test.$(OBJEXT) \
+	proxyudp_test-netmgr_common.$(OBJEXT)
+proxyudp_test_OBJECTS = $(am_proxyudp_test_OBJECTS)
+proxyudp_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_1)
 quota_test_SOURCES = quota_test.c
 quota_test_OBJECTS = quota_test.$(OBJEXT)
 quota_test_LDADD = $(LDADD)
 quota_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 radix_test_SOURCES = radix_test.c
 radix_test_OBJECTS = radix_test.$(OBJEXT)
 radix_test_LDADD = $(LDADD)
 radix_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 random_test_SOURCES = random_test.c
 random_test_OBJECTS = random_test.$(OBJEXT)
 random_test_DEPENDENCIES = $(am__DEPENDENCIES_4)
+ratelimiter_test_SOURCES = ratelimiter_test.c
+ratelimiter_test_OBJECTS = ratelimiter_test.$(OBJEXT)
+ratelimiter_test_LDADD = $(LDADD)
+ratelimiter_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 regex_test_SOURCES = regex_test.c
 regex_test_OBJECTS = regex_test.$(OBJEXT)
 regex_test_LDADD = $(LDADD)
 regex_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 result_test_SOURCES = result_test.c
 result_test_OBJECTS = result_test.$(OBJEXT)
 result_test_LDADD = $(LDADD)
 result_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+rwlock_test_SOURCES = rwlock_test.c
+rwlock_test_OBJECTS = rwlock_test.$(OBJEXT)
+rwlock_test_LDADD = $(LDADD)
+rwlock_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 safe_test_SOURCES = safe_test.c
 safe_test_OBJECTS = safe_test.$(OBJEXT)
 safe_test_LDADD = $(LDADD)
 safe_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 siphash_test_SOURCES = siphash_test.c
 siphash_test_OBJECTS = siphash_test.$(OBJEXT)
 siphash_test_LDADD = $(LDADD)
 siphash_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 sockaddr_test_SOURCES = sockaddr_test.c
 sockaddr_test_OBJECTS = sockaddr_test.$(OBJEXT)
 sockaddr_test_LDADD = $(LDADD)
 sockaddr_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
+spinlock_test_SOURCES = spinlock_test.c
+spinlock_test_OBJECTS = spinlock_test.$(OBJEXT)
+spinlock_test_LDADD = $(LDADD)
+spinlock_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 stats_test_SOURCES = stats_test.c
 stats_test_OBJECTS = stats_test.$(OBJEXT)
 stats_test_LDADD = $(LDADD)
 stats_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 symtab_test_SOURCES = symtab_test.c
 symtab_test_OBJECTS = symtab_test.$(OBJEXT)
 symtab_test_LDADD = $(LDADD)
 symtab_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
-task_test_SOURCES = task_test.c
-task_test_OBJECTS = task_test-task_test.$(OBJEXT)
-@HAVE_LIBXML2_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
-@HAVE_JSON_C_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
-task_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5) \
-	$(am__DEPENDENCIES_6)
-taskpool_test_SOURCES = taskpool_test.c
-taskpool_test_OBJECTS = taskpool_test.$(OBJEXT)
-taskpool_test_LDADD = $(LDADD)
-taskpool_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+am_tcp_test_OBJECTS = tcp_test-tcp_test.$(OBJEXT) \
+	tcp_test-netmgr_common.$(OBJEXT) \
+	tcp_test-stream_shutdown.$(OBJEXT)
+tcp_test_OBJECTS = $(am_tcp_test_OBJECTS)
+tcp_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+am_tcpdns_test_OBJECTS = tcpdns_test-tcpdns_test.$(OBJEXT) \
+	tcpdns_test-netmgr_common.$(OBJEXT)
+tcpdns_test_OBJECTS = $(am_tcpdns_test_OBJECTS)
+tcpdns_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
 time_test_SOURCES = time_test.c
 time_test_OBJECTS = time_test.$(OBJEXT)
 time_test_LDADD = $(LDADD)
 time_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 timer_test_SOURCES = timer_test.c
 timer_test_OBJECTS = timer_test.$(OBJEXT)
 timer_test_LDADD = $(LDADD)
 timer_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
+am_tls_test_OBJECTS = tls_test-tls_test.$(OBJEXT) \
+	tls_test-netmgr_common.$(OBJEXT) \
+	tls_test-stream_shutdown.$(OBJEXT)
+tls_test_OBJECTS = $(am_tls_test_OBJECTS)
+tls_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+am_tlsdns_test_OBJECTS = tlsdns_test-tlsdns_test.$(OBJEXT) \
+	tlsdns_test-netmgr_common.$(OBJEXT)
+tlsdns_test_OBJECTS = $(am_tlsdns_test_OBJECTS)
+tlsdns_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+am_udp_test_OBJECTS = udp_test-udp_test.$(OBJEXT) \
+	udp_test-netmgr_common.$(OBJEXT)
+udp_test_OBJECTS = $(am_udp_test_OBJECTS)
+udp_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+work_test_SOURCES = work_test.c
+work_test_OBJECTS = work_test.$(OBJEXT)
+work_test_LDADD = $(LDADD)
+work_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -350,24 +440,45 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/aes_test.Po \
-	./$(DEPDIR)/buffer_test.Po ./$(DEPDIR)/counter_test.Po \
-	./$(DEPDIR)/crc64_test.Po ./$(DEPDIR)/doh_test-doh_test.Po \
-	./$(DEPDIR)/errno_test.Po ./$(DEPDIR)/file_test.Po \
-	./$(DEPDIR)/hash_test.Po ./$(DEPDIR)/heap_test.Po \
-	./$(DEPDIR)/hmac_test-hmac_test.Po ./$(DEPDIR)/ht_test.Po \
-	./$(DEPDIR)/lex_test.Po ./$(DEPDIR)/md_test-md_test.Po \
-	./$(DEPDIR)/mem_test.Po ./$(DEPDIR)/netaddr_test.Po \
-	./$(DEPDIR)/netmgr_test-netmgr_test.Po \
-	./$(DEPDIR)/parse_test.Po ./$(DEPDIR)/pool_test.Po \
+am__depfiles_remade = ./$(DEPDIR)/ascii_test.Po \
+	./$(DEPDIR)/async_test.Po ./$(DEPDIR)/buffer_test.Po \
+	./$(DEPDIR)/counter_test.Po ./$(DEPDIR)/crc64_test.Po \
+	./$(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po \
+	./$(DEPDIR)/doh_test-doh_test.Po ./$(DEPDIR)/errno_test.Po \
+	./$(DEPDIR)/file_test.Po ./$(DEPDIR)/hash_test.Po \
+	./$(DEPDIR)/hashmap_test.Po ./$(DEPDIR)/heap_test.Po \
+	./$(DEPDIR)/histo_test.Po ./$(DEPDIR)/hmac_test-hmac_test.Po \
+	./$(DEPDIR)/ht_test.Po ./$(DEPDIR)/job_test.Po \
+	./$(DEPDIR)/lex_test.Po ./$(DEPDIR)/loop_test.Po \
+	./$(DEPDIR)/md_test-md_test.Po ./$(DEPDIR)/mem_test.Po \
+	./$(DEPDIR)/mutex_test.Po ./$(DEPDIR)/netaddr_test.Po \
+	./$(DEPDIR)/parse_test.Po \
+	./$(DEPDIR)/proxyheader_test-proxyheader_test.Po \
+	./$(DEPDIR)/proxystream_test-netmgr_common.Po \
+	./$(DEPDIR)/proxystream_test-proxystream_test.Po \
+	./$(DEPDIR)/proxystream_test-stream_shutdown.Po \
+	./$(DEPDIR)/proxyudp_test-netmgr_common.Po \
+	./$(DEPDIR)/proxyudp_test-proxyudp_test.Po \
 	./$(DEPDIR)/quota_test.Po ./$(DEPDIR)/radix_test.Po \
-	./$(DEPDIR)/random_test.Po ./$(DEPDIR)/regex_test.Po \
-	./$(DEPDIR)/result_test.Po ./$(DEPDIR)/safe_test.Po \
+	./$(DEPDIR)/random_test.Po ./$(DEPDIR)/ratelimiter_test.Po \
+	./$(DEPDIR)/regex_test.Po ./$(DEPDIR)/result_test.Po \
+	./$(DEPDIR)/rwlock_test.Po ./$(DEPDIR)/safe_test.Po \
 	./$(DEPDIR)/siphash_test.Po ./$(DEPDIR)/sockaddr_test.Po \
-	./$(DEPDIR)/stats_test.Po ./$(DEPDIR)/symtab_test.Po \
-	./$(DEPDIR)/task_test-task_test.Po \
-	./$(DEPDIR)/taskpool_test.Po ./$(DEPDIR)/time_test.Po \
-	./$(DEPDIR)/timer_test.Po
+	./$(DEPDIR)/spinlock_test.Po ./$(DEPDIR)/stats_test.Po \
+	./$(DEPDIR)/symtab_test.Po \
+	./$(DEPDIR)/tcp_test-netmgr_common.Po \
+	./$(DEPDIR)/tcp_test-stream_shutdown.Po \
+	./$(DEPDIR)/tcp_test-tcp_test.Po \
+	./$(DEPDIR)/tcpdns_test-netmgr_common.Po \
+	./$(DEPDIR)/tcpdns_test-tcpdns_test.Po \
+	./$(DEPDIR)/time_test.Po ./$(DEPDIR)/timer_test.Po \
+	./$(DEPDIR)/tls_test-netmgr_common.Po \
+	./$(DEPDIR)/tls_test-stream_shutdown.Po \
+	./$(DEPDIR)/tls_test-tls_test.Po \
+	./$(DEPDIR)/tlsdns_test-netmgr_common.Po \
+	./$(DEPDIR)/tlsdns_test-tlsdns_test.Po \
+	./$(DEPDIR)/udp_test-netmgr_common.Po \
+	./$(DEPDIR)/udp_test-udp_test.Po ./$(DEPDIR)/work_test.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -387,22 +498,34 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = aes_test.c buffer_test.c counter_test.c crc64_test.c \
+SOURCES = ascii_test.c async_test.c buffer_test.c counter_test.c \
+	crc64_test.c $(dnsstream_utils_test_SOURCES) \
 	$(doh_test_SOURCES) errno_test.c file_test.c hash_test.c \
-	heap_test.c hmac_test.c ht_test.c lex_test.c md_test.c \
-	mem_test.c netaddr_test.c $(netmgr_test_SOURCES) parse_test.c \
-	pool_test.c quota_test.c radix_test.c random_test.c \
-	regex_test.c result_test.c safe_test.c siphash_test.c \
-	sockaddr_test.c stats_test.c symtab_test.c task_test.c \
-	taskpool_test.c time_test.c timer_test.c
-DIST_SOURCES = aes_test.c buffer_test.c counter_test.c crc64_test.c \
+	$(hashmap_test_SOURCES) heap_test.c histo_test.c hmac_test.c \
+	ht_test.c job_test.c lex_test.c loop_test.c md_test.c \
+	mem_test.c mutex_test.c netaddr_test.c parse_test.c \
+	$(proxyheader_test_SOURCES) $(proxystream_test_SOURCES) \
+	$(proxyudp_test_SOURCES) quota_test.c radix_test.c \
+	random_test.c ratelimiter_test.c regex_test.c result_test.c \
+	rwlock_test.c safe_test.c siphash_test.c sockaddr_test.c \
+	spinlock_test.c stats_test.c symtab_test.c $(tcp_test_SOURCES) \
+	$(tcpdns_test_SOURCES) time_test.c timer_test.c \
+	$(tls_test_SOURCES) $(tlsdns_test_SOURCES) $(udp_test_SOURCES) \
+	work_test.c
+DIST_SOURCES = ascii_test.c async_test.c buffer_test.c counter_test.c \
+	crc64_test.c $(dnsstream_utils_test_SOURCES) \
 	$(am__doh_test_SOURCES_DIST) errno_test.c file_test.c \
-	hash_test.c heap_test.c hmac_test.c ht_test.c lex_test.c \
-	md_test.c mem_test.c netaddr_test.c $(netmgr_test_SOURCES) \
-	parse_test.c pool_test.c quota_test.c radix_test.c \
-	random_test.c regex_test.c result_test.c safe_test.c \
-	siphash_test.c sockaddr_test.c stats_test.c symtab_test.c \
-	task_test.c taskpool_test.c time_test.c timer_test.c
+	hash_test.c $(hashmap_test_SOURCES) heap_test.c histo_test.c \
+	hmac_test.c ht_test.c job_test.c lex_test.c loop_test.c \
+	md_test.c mem_test.c mutex_test.c netaddr_test.c parse_test.c \
+	$(proxyheader_test_SOURCES) $(proxystream_test_SOURCES) \
+	$(proxyudp_test_SOURCES) quota_test.c radix_test.c \
+	random_test.c ratelimiter_test.c regex_test.c result_test.c \
+	rwlock_test.c safe_test.c siphash_test.c sockaddr_test.c \
+	spinlock_test.c stats_test.c symtab_test.c $(tcp_test_SOURCES) \
+	$(tcpdns_test_SOURCES) time_test.c timer_test.c \
+	$(tls_test_SOURCES) $(tlsdns_test_SOURCES) $(udp_test_SOURCES) \
+	work_test.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -665,10 +788,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -691,15 +816,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -707,9 +833,14 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSYSTEMD_CFLAGS = @LIBSYSTEMD_CFLAGS@
+LIBSYSTEMD_LIBS = @LIBSYSTEMD_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -733,6 +864,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -759,6 +891,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -772,7 +905,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -841,16 +973,18 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I $(top_srcdir)/m4
 AM_CFLAGS = $(STD_CFLAGS) -I$(top_srcdir)/tests/include $(TEST_CFLAGS) \
-	$(am__append_7)
+	$(am__append_3)
 AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
-	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBUV_CFLAGS) \
-	-I$(top_srcdir)/lib/isc $(CMOCKA_CFLAGS) \
+	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBURCU_CFLAGS) \
+	$(LIBUV_CFLAGS) -I$(top_srcdir)/lib/isc $(CMOCKA_CFLAGS) \
 	-DNAMED_PLUGINDIR=\"$(pkglibdir)\" \
 	-DTESTS_DIR=\"$(abs_srcdir)\"
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
-LDADD = $(LIBISC_LIBS) $(LIBUV_LIBS) \
+LDADD = $(LIBISC_LIBS) $(LIBURCU_LIBS) $(LIBUV_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(CMOCKA_LIBS) \
-	$(am__append_8)
+	$(am__append_4)
+BUILT_SOURCES = 
+CLEANFILES = 
 @HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
 @HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
@@ -861,6 +995,7 @@ LDADD = $(LIBISC_LIBS) $(LIBUV_LIBS) \
 @HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
 @HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
 @HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -868,18 +1003,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -891,12 +1022,6 @@ LIBISCCC_CFLAGS = \
 
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
-
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
 
 @HAVE_LIBNGHTTP2_TRUE@doh_test_CPPFLAGS = \
 @HAVE_LIBNGHTTP2_TRUE@	$(AM_CPPFLAGS)	\
@@ -910,6 +1035,20 @@ LIBBIND9_LIBS = \
 @HAVE_LIBNGHTTP2_TRUE@doh_test_SOURCES = \
 @HAVE_LIBNGHTTP2_TRUE@	doh_test.c	\
 @HAVE_LIBNGHTTP2_TRUE@	uv_wrap.h
+
+dnsstream_utils_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)
+
+dnsstream_utils_test_LDADD = \
+	$(LDADD)
+
+dnsstream_utils_test_SOURCES = \
+	dnsstream_utils_test.c \
+	dnsstream_utils_test_data.h
+
+hashmap_test_SOURCES = \
+	hashmap_test.c	\
+	hashmap_nodes.h
 
 hmac_test_CPPFLAGS = \
 	$(AM_CPPFLAGS)	\
@@ -927,28 +1066,125 @@ md_test_LDADD = \
 	$(LDADD)	\
 	$(OPENSSL_LIBS)
 
-netmgr_test_CPPFLAGS = \
+proxyheader_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)
+
+proxyheader_test_LDADD = \
+	$(LDADD)
+
+proxyheader_test_SOURCES = \
+	proxyheader_test.c \
+	proxyheader_test_data.h
+
+proxystream_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)		\
+	$(OPENSSL_CFLAGS)
+
+proxystream_test_LDADD = \
+	$(LDADD)		\
+	$(OPENSSL_LIBS)
+
+proxystream_test_SOURCES = \
+	proxystream_test.c \
+	netmgr_common.h \
+	netmgr_common.c \
+	stream_shutdown.c
+
+proxyudp_test_CPPFLAGS = \
 	$(AM_CPPFLAGS)	\
 	$(OPENSSL_CFLAGS)
 
-netmgr_test_LDADD = \
+proxyudp_test_LDADD = \
 	$(LDADD)	\
 	$(OPENSSL_LIBS)
 
-netmgr_test_SOURCES = \
-	netmgr_test.c	\
+proxyudp_test_SOURCES = \
+	proxyudp_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
 	uv_wrap.h
 
 random_test_LDADD = \
 	$(LDADD)	\
 	-lm
 
-task_test_CPPFLAGS = $(AM_CPPFLAGS) $(am__append_3) $(am__append_5)
-task_test_LDADD = $(LDADD) $(am__append_4) $(am__append_6)
+tcp_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+tcp_test_LDADD = \
+	$(LDADD)	\
+	$(OPENSSL_LIBS)
+
+tcp_test_SOURCES = \
+	tcp_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
+	stream_shutdown.c \
+	uv_wrap.h
+
+tcpdns_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+tcpdns_test_LDADD = \
+	$(LDADD)	\
+	$(OPENSSL_LIBS)
+
+tcpdns_test_SOURCES = \
+	tcpdns_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
+	uv_wrap.h
+
+tls_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+tls_test_LDADD = \
+	$(LDADD)	\
+	$(OPENSSL_LIBS)
+
+tls_test_SOURCES = \
+	tls_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
+	stream_shutdown.c \
+	uv_wrap.h
+
+tlsdns_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+tlsdns_test_LDADD = \
+	$(LDADD)	\
+	$(OPENSSL_LIBS)
+
+tlsdns_test_SOURCES = \
+	tlsdns_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
+	uv_wrap.h
+
+udp_test_CPPFLAGS = \
+	$(AM_CPPFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+udp_test_LDADD = \
+	$(LDADD)	\
+	$(OPENSSL_LIBS)
+
+udp_test_SOURCES = \
+	udp_test.c	\
+	netmgr_common.h \
+	netmgr_common.c \
+	uv_wrap.h
+
 EXTRA_DIST = testdata
 @HAVE_CMOCKA_TRUE@TESTS = $(check_PROGRAMS)
 LOG_COMPILER = $(top_builddir)/tests/unit-test-driver.sh
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .log .o .obj .test .test$(EXEEXT) .trs
@@ -992,9 +1228,13 @@ clean-checkPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-aes_test$(EXEEXT): $(aes_test_OBJECTS) $(aes_test_DEPENDENCIES) $(EXTRA_aes_test_DEPENDENCIES) 
-	@rm -f aes_test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(aes_test_OBJECTS) $(aes_test_LDADD) $(LIBS)
+ascii_test$(EXEEXT): $(ascii_test_OBJECTS) $(ascii_test_DEPENDENCIES) $(EXTRA_ascii_test_DEPENDENCIES) 
+	@rm -f ascii_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ascii_test_OBJECTS) $(ascii_test_LDADD) $(LIBS)
+
+async_test$(EXEEXT): $(async_test_OBJECTS) $(async_test_DEPENDENCIES) $(EXTRA_async_test_DEPENDENCIES) 
+	@rm -f async_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(async_test_OBJECTS) $(async_test_LDADD) $(LIBS)
 
 buffer_test$(EXEEXT): $(buffer_test_OBJECTS) $(buffer_test_DEPENDENCIES) $(EXTRA_buffer_test_DEPENDENCIES) 
 	@rm -f buffer_test$(EXEEXT)
@@ -1007,6 +1247,10 @@ counter_test$(EXEEXT): $(counter_test_OBJECTS) $(counter_test_DEPENDENCIES) $(EX
 crc64_test$(EXEEXT): $(crc64_test_OBJECTS) $(crc64_test_DEPENDENCIES) $(EXTRA_crc64_test_DEPENDENCIES) 
 	@rm -f crc64_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(crc64_test_OBJECTS) $(crc64_test_LDADD) $(LIBS)
+
+dnsstream_utils_test$(EXEEXT): $(dnsstream_utils_test_OBJECTS) $(dnsstream_utils_test_DEPENDENCIES) $(EXTRA_dnsstream_utils_test_DEPENDENCIES) 
+	@rm -f dnsstream_utils_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dnsstream_utils_test_OBJECTS) $(dnsstream_utils_test_LDADD) $(LIBS)
 
 doh_test$(EXEEXT): $(doh_test_OBJECTS) $(doh_test_DEPENDENCIES) $(EXTRA_doh_test_DEPENDENCIES) 
 	@rm -f doh_test$(EXEEXT)
@@ -1024,9 +1268,17 @@ hash_test$(EXEEXT): $(hash_test_OBJECTS) $(hash_test_DEPENDENCIES) $(EXTRA_hash_
 	@rm -f hash_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(hash_test_OBJECTS) $(hash_test_LDADD) $(LIBS)
 
+hashmap_test$(EXEEXT): $(hashmap_test_OBJECTS) $(hashmap_test_DEPENDENCIES) $(EXTRA_hashmap_test_DEPENDENCIES) 
+	@rm -f hashmap_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(hashmap_test_OBJECTS) $(hashmap_test_LDADD) $(LIBS)
+
 heap_test$(EXEEXT): $(heap_test_OBJECTS) $(heap_test_DEPENDENCIES) $(EXTRA_heap_test_DEPENDENCIES) 
 	@rm -f heap_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(heap_test_OBJECTS) $(heap_test_LDADD) $(LIBS)
+
+histo_test$(EXEEXT): $(histo_test_OBJECTS) $(histo_test_DEPENDENCIES) $(EXTRA_histo_test_DEPENDENCIES) 
+	@rm -f histo_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(histo_test_OBJECTS) $(histo_test_LDADD) $(LIBS)
 
 hmac_test$(EXEEXT): $(hmac_test_OBJECTS) $(hmac_test_DEPENDENCIES) $(EXTRA_hmac_test_DEPENDENCIES) 
 	@rm -f hmac_test$(EXEEXT)
@@ -1036,9 +1288,17 @@ ht_test$(EXEEXT): $(ht_test_OBJECTS) $(ht_test_DEPENDENCIES) $(EXTRA_ht_test_DEP
 	@rm -f ht_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ht_test_OBJECTS) $(ht_test_LDADD) $(LIBS)
 
+job_test$(EXEEXT): $(job_test_OBJECTS) $(job_test_DEPENDENCIES) $(EXTRA_job_test_DEPENDENCIES) 
+	@rm -f job_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(job_test_OBJECTS) $(job_test_LDADD) $(LIBS)
+
 lex_test$(EXEEXT): $(lex_test_OBJECTS) $(lex_test_DEPENDENCIES) $(EXTRA_lex_test_DEPENDENCIES) 
 	@rm -f lex_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(lex_test_OBJECTS) $(lex_test_LDADD) $(LIBS)
+
+loop_test$(EXEEXT): $(loop_test_OBJECTS) $(loop_test_DEPENDENCIES) $(EXTRA_loop_test_DEPENDENCIES) 
+	@rm -f loop_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(loop_test_OBJECTS) $(loop_test_LDADD) $(LIBS)
 
 md_test$(EXEEXT): $(md_test_OBJECTS) $(md_test_DEPENDENCIES) $(EXTRA_md_test_DEPENDENCIES) 
 	@rm -f md_test$(EXEEXT)
@@ -1048,21 +1308,29 @@ mem_test$(EXEEXT): $(mem_test_OBJECTS) $(mem_test_DEPENDENCIES) $(EXTRA_mem_test
 	@rm -f mem_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(mem_test_OBJECTS) $(mem_test_LDADD) $(LIBS)
 
+mutex_test$(EXEEXT): $(mutex_test_OBJECTS) $(mutex_test_DEPENDENCIES) $(EXTRA_mutex_test_DEPENDENCIES) 
+	@rm -f mutex_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(mutex_test_OBJECTS) $(mutex_test_LDADD) $(LIBS)
+
 netaddr_test$(EXEEXT): $(netaddr_test_OBJECTS) $(netaddr_test_DEPENDENCIES) $(EXTRA_netaddr_test_DEPENDENCIES) 
 	@rm -f netaddr_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(netaddr_test_OBJECTS) $(netaddr_test_LDADD) $(LIBS)
-
-netmgr_test$(EXEEXT): $(netmgr_test_OBJECTS) $(netmgr_test_DEPENDENCIES) $(EXTRA_netmgr_test_DEPENDENCIES) 
-	@rm -f netmgr_test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(netmgr_test_OBJECTS) $(netmgr_test_LDADD) $(LIBS)
 
 parse_test$(EXEEXT): $(parse_test_OBJECTS) $(parse_test_DEPENDENCIES) $(EXTRA_parse_test_DEPENDENCIES) 
 	@rm -f parse_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(parse_test_OBJECTS) $(parse_test_LDADD) $(LIBS)
 
-pool_test$(EXEEXT): $(pool_test_OBJECTS) $(pool_test_DEPENDENCIES) $(EXTRA_pool_test_DEPENDENCIES) 
-	@rm -f pool_test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(pool_test_OBJECTS) $(pool_test_LDADD) $(LIBS)
+proxyheader_test$(EXEEXT): $(proxyheader_test_OBJECTS) $(proxyheader_test_DEPENDENCIES) $(EXTRA_proxyheader_test_DEPENDENCIES) 
+	@rm -f proxyheader_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(proxyheader_test_OBJECTS) $(proxyheader_test_LDADD) $(LIBS)
+
+proxystream_test$(EXEEXT): $(proxystream_test_OBJECTS) $(proxystream_test_DEPENDENCIES) $(EXTRA_proxystream_test_DEPENDENCIES) 
+	@rm -f proxystream_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(proxystream_test_OBJECTS) $(proxystream_test_LDADD) $(LIBS)
+
+proxyudp_test$(EXEEXT): $(proxyudp_test_OBJECTS) $(proxyudp_test_DEPENDENCIES) $(EXTRA_proxyudp_test_DEPENDENCIES) 
+	@rm -f proxyudp_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(proxyudp_test_OBJECTS) $(proxyudp_test_LDADD) $(LIBS)
 
 quota_test$(EXEEXT): $(quota_test_OBJECTS) $(quota_test_DEPENDENCIES) $(EXTRA_quota_test_DEPENDENCIES) 
 	@rm -f quota_test$(EXEEXT)
@@ -1076,6 +1344,10 @@ random_test$(EXEEXT): $(random_test_OBJECTS) $(random_test_DEPENDENCIES) $(EXTRA
 	@rm -f random_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(random_test_OBJECTS) $(random_test_LDADD) $(LIBS)
 
+ratelimiter_test$(EXEEXT): $(ratelimiter_test_OBJECTS) $(ratelimiter_test_DEPENDENCIES) $(EXTRA_ratelimiter_test_DEPENDENCIES) 
+	@rm -f ratelimiter_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ratelimiter_test_OBJECTS) $(ratelimiter_test_LDADD) $(LIBS)
+
 regex_test$(EXEEXT): $(regex_test_OBJECTS) $(regex_test_DEPENDENCIES) $(EXTRA_regex_test_DEPENDENCIES) 
 	@rm -f regex_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(regex_test_OBJECTS) $(regex_test_LDADD) $(LIBS)
@@ -1083,6 +1355,10 @@ regex_test$(EXEEXT): $(regex_test_OBJECTS) $(regex_test_DEPENDENCIES) $(EXTRA_re
 result_test$(EXEEXT): $(result_test_OBJECTS) $(result_test_DEPENDENCIES) $(EXTRA_result_test_DEPENDENCIES) 
 	@rm -f result_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(result_test_OBJECTS) $(result_test_LDADD) $(LIBS)
+
+rwlock_test$(EXEEXT): $(rwlock_test_OBJECTS) $(rwlock_test_DEPENDENCIES) $(EXTRA_rwlock_test_DEPENDENCIES) 
+	@rm -f rwlock_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rwlock_test_OBJECTS) $(rwlock_test_LDADD) $(LIBS)
 
 safe_test$(EXEEXT): $(safe_test_OBJECTS) $(safe_test_DEPENDENCIES) $(EXTRA_safe_test_DEPENDENCIES) 
 	@rm -f safe_test$(EXEEXT)
@@ -1096,6 +1372,10 @@ sockaddr_test$(EXEEXT): $(sockaddr_test_OBJECTS) $(sockaddr_test_DEPENDENCIES) $
 	@rm -f sockaddr_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(sockaddr_test_OBJECTS) $(sockaddr_test_LDADD) $(LIBS)
 
+spinlock_test$(EXEEXT): $(spinlock_test_OBJECTS) $(spinlock_test_DEPENDENCIES) $(EXTRA_spinlock_test_DEPENDENCIES) 
+	@rm -f spinlock_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(spinlock_test_OBJECTS) $(spinlock_test_LDADD) $(LIBS)
+
 stats_test$(EXEEXT): $(stats_test_OBJECTS) $(stats_test_DEPENDENCIES) $(EXTRA_stats_test_DEPENDENCIES) 
 	@rm -f stats_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(stats_test_OBJECTS) $(stats_test_LDADD) $(LIBS)
@@ -1104,13 +1384,13 @@ symtab_test$(EXEEXT): $(symtab_test_OBJECTS) $(symtab_test_DEPENDENCIES) $(EXTRA
 	@rm -f symtab_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(symtab_test_OBJECTS) $(symtab_test_LDADD) $(LIBS)
 
-task_test$(EXEEXT): $(task_test_OBJECTS) $(task_test_DEPENDENCIES) $(EXTRA_task_test_DEPENDENCIES) 
-	@rm -f task_test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(task_test_OBJECTS) $(task_test_LDADD) $(LIBS)
+tcp_test$(EXEEXT): $(tcp_test_OBJECTS) $(tcp_test_DEPENDENCIES) $(EXTRA_tcp_test_DEPENDENCIES) 
+	@rm -f tcp_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tcp_test_OBJECTS) $(tcp_test_LDADD) $(LIBS)
 
-taskpool_test$(EXEEXT): $(taskpool_test_OBJECTS) $(taskpool_test_DEPENDENCIES) $(EXTRA_taskpool_test_DEPENDENCIES) 
-	@rm -f taskpool_test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(taskpool_test_OBJECTS) $(taskpool_test_LDADD) $(LIBS)
+tcpdns_test$(EXEEXT): $(tcpdns_test_OBJECTS) $(tcpdns_test_DEPENDENCIES) $(EXTRA_tcpdns_test_DEPENDENCIES) 
+	@rm -f tcpdns_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tcpdns_test_OBJECTS) $(tcpdns_test_LDADD) $(LIBS)
 
 time_test$(EXEEXT): $(time_test_OBJECTS) $(time_test_DEPENDENCIES) $(EXTRA_time_test_DEPENDENCIES) 
 	@rm -f time_test$(EXEEXT)
@@ -1120,44 +1400,85 @@ timer_test$(EXEEXT): $(timer_test_OBJECTS) $(timer_test_DEPENDENCIES) $(EXTRA_ti
 	@rm -f timer_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(timer_test_OBJECTS) $(timer_test_LDADD) $(LIBS)
 
+tls_test$(EXEEXT): $(tls_test_OBJECTS) $(tls_test_DEPENDENCIES) $(EXTRA_tls_test_DEPENDENCIES) 
+	@rm -f tls_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tls_test_OBJECTS) $(tls_test_LDADD) $(LIBS)
+
+tlsdns_test$(EXEEXT): $(tlsdns_test_OBJECTS) $(tlsdns_test_DEPENDENCIES) $(EXTRA_tlsdns_test_DEPENDENCIES) 
+	@rm -f tlsdns_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tlsdns_test_OBJECTS) $(tlsdns_test_LDADD) $(LIBS)
+
+udp_test$(EXEEXT): $(udp_test_OBJECTS) $(udp_test_DEPENDENCIES) $(EXTRA_udp_test_DEPENDENCIES) 
+	@rm -f udp_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(udp_test_OBJECTS) $(udp_test_LDADD) $(LIBS)
+
+work_test$(EXEEXT): $(work_test_OBJECTS) $(work_test_DEPENDENCIES) $(EXTRA_work_test_DEPENDENCIES) 
+	@rm -f work_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(work_test_OBJECTS) $(work_test_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aes_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ascii_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/async_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/buffer_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/counter_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crc64_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doh_test-doh_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/errno_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/file_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashmap_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heap_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/histo_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmac_test-hmac_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ht_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/job_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loop_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_test-md_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mutex_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netaddr_test.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netmgr_test-netmgr_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_test.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxyheader_test-proxyheader_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxystream_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxystream_test-proxystream_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxystream_test-stream_shutdown.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxyudp_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxyudp_test-proxyudp_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/quota_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radix_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ratelimiter_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/result_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rwlock_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/safe_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/siphash_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sockaddr_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spinlock_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stats_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/symtab_test.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task_test-task_test.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/taskpool_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_test-stream_shutdown.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp_test-tcp_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpdns_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpdns_test-tcpdns_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls_test-stream_shutdown.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls_test-tls_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tlsdns_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tlsdns_test-tlsdns_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udp_test-netmgr_common.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udp_test-udp_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/work_test.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1188,6 +1509,20 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+dnsstream_utils_test-dnsstream_utils_test.o: dnsstream_utils_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnsstream_utils_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dnsstream_utils_test-dnsstream_utils_test.o -MD -MP -MF $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Tpo -c -o dnsstream_utils_test-dnsstream_utils_test.o `test -f 'dnsstream_utils_test.c' || echo '$(srcdir)/'`dnsstream_utils_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Tpo $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnsstream_utils_test.c' object='dnsstream_utils_test-dnsstream_utils_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnsstream_utils_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnsstream_utils_test-dnsstream_utils_test.o `test -f 'dnsstream_utils_test.c' || echo '$(srcdir)/'`dnsstream_utils_test.c
+
+dnsstream_utils_test-dnsstream_utils_test.obj: dnsstream_utils_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnsstream_utils_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dnsstream_utils_test-dnsstream_utils_test.obj -MD -MP -MF $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Tpo -c -o dnsstream_utils_test-dnsstream_utils_test.obj `if test -f 'dnsstream_utils_test.c'; then $(CYGPATH_W) 'dnsstream_utils_test.c'; else $(CYGPATH_W) '$(srcdir)/dnsstream_utils_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Tpo $(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnsstream_utils_test.c' object='dnsstream_utils_test-dnsstream_utils_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnsstream_utils_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnsstream_utils_test-dnsstream_utils_test.obj `if test -f 'dnsstream_utils_test.c'; then $(CYGPATH_W) 'dnsstream_utils_test.c'; else $(CYGPATH_W) '$(srcdir)/dnsstream_utils_test.c'; fi`
 
 doh_test-doh_test.o: doh_test.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(doh_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT doh_test-doh_test.o -MD -MP -MF $(DEPDIR)/doh_test-doh_test.Tpo -c -o doh_test-doh_test.o `test -f 'doh_test.c' || echo '$(srcdir)/'`doh_test.c
@@ -1231,33 +1566,257 @@ md_test-md_test.obj: md_test.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o md_test-md_test.obj `if test -f 'md_test.c'; then $(CYGPATH_W) 'md_test.c'; else $(CYGPATH_W) '$(srcdir)/md_test.c'; fi`
 
-netmgr_test-netmgr_test.o: netmgr_test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netmgr_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netmgr_test-netmgr_test.o -MD -MP -MF $(DEPDIR)/netmgr_test-netmgr_test.Tpo -c -o netmgr_test-netmgr_test.o `test -f 'netmgr_test.c' || echo '$(srcdir)/'`netmgr_test.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/netmgr_test-netmgr_test.Tpo $(DEPDIR)/netmgr_test-netmgr_test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_test.c' object='netmgr_test-netmgr_test.o' libtool=no @AMDEPBACKSLASH@
+proxyheader_test-proxyheader_test.o: proxyheader_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyheader_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyheader_test-proxyheader_test.o -MD -MP -MF $(DEPDIR)/proxyheader_test-proxyheader_test.Tpo -c -o proxyheader_test-proxyheader_test.o `test -f 'proxyheader_test.c' || echo '$(srcdir)/'`proxyheader_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyheader_test-proxyheader_test.Tpo $(DEPDIR)/proxyheader_test-proxyheader_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxyheader_test.c' object='proxyheader_test-proxyheader_test.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netmgr_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netmgr_test-netmgr_test.o `test -f 'netmgr_test.c' || echo '$(srcdir)/'`netmgr_test.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyheader_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyheader_test-proxyheader_test.o `test -f 'proxyheader_test.c' || echo '$(srcdir)/'`proxyheader_test.c
 
-netmgr_test-netmgr_test.obj: netmgr_test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netmgr_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netmgr_test-netmgr_test.obj -MD -MP -MF $(DEPDIR)/netmgr_test-netmgr_test.Tpo -c -o netmgr_test-netmgr_test.obj `if test -f 'netmgr_test.c'; then $(CYGPATH_W) 'netmgr_test.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_test.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/netmgr_test-netmgr_test.Tpo $(DEPDIR)/netmgr_test-netmgr_test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_test.c' object='netmgr_test-netmgr_test.obj' libtool=no @AMDEPBACKSLASH@
+proxyheader_test-proxyheader_test.obj: proxyheader_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyheader_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyheader_test-proxyheader_test.obj -MD -MP -MF $(DEPDIR)/proxyheader_test-proxyheader_test.Tpo -c -o proxyheader_test-proxyheader_test.obj `if test -f 'proxyheader_test.c'; then $(CYGPATH_W) 'proxyheader_test.c'; else $(CYGPATH_W) '$(srcdir)/proxyheader_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyheader_test-proxyheader_test.Tpo $(DEPDIR)/proxyheader_test-proxyheader_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxyheader_test.c' object='proxyheader_test-proxyheader_test.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netmgr_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netmgr_test-netmgr_test.obj `if test -f 'netmgr_test.c'; then $(CYGPATH_W) 'netmgr_test.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_test.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyheader_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyheader_test-proxyheader_test.obj `if test -f 'proxyheader_test.c'; then $(CYGPATH_W) 'proxyheader_test.c'; else $(CYGPATH_W) '$(srcdir)/proxyheader_test.c'; fi`
 
-task_test-task_test.o: task_test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(task_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task_test-task_test.o -MD -MP -MF $(DEPDIR)/task_test-task_test.Tpo -c -o task_test-task_test.o `test -f 'task_test.c' || echo '$(srcdir)/'`task_test.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/task_test-task_test.Tpo $(DEPDIR)/task_test-task_test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='task_test.c' object='task_test-task_test.o' libtool=no @AMDEPBACKSLASH@
+proxystream_test-proxystream_test.o: proxystream_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-proxystream_test.o -MD -MP -MF $(DEPDIR)/proxystream_test-proxystream_test.Tpo -c -o proxystream_test-proxystream_test.o `test -f 'proxystream_test.c' || echo '$(srcdir)/'`proxystream_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-proxystream_test.Tpo $(DEPDIR)/proxystream_test-proxystream_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxystream_test.c' object='proxystream_test-proxystream_test.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(task_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task_test-task_test.o `test -f 'task_test.c' || echo '$(srcdir)/'`task_test.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-proxystream_test.o `test -f 'proxystream_test.c' || echo '$(srcdir)/'`proxystream_test.c
 
-task_test-task_test.obj: task_test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(task_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task_test-task_test.obj -MD -MP -MF $(DEPDIR)/task_test-task_test.Tpo -c -o task_test-task_test.obj `if test -f 'task_test.c'; then $(CYGPATH_W) 'task_test.c'; else $(CYGPATH_W) '$(srcdir)/task_test.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/task_test-task_test.Tpo $(DEPDIR)/task_test-task_test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='task_test.c' object='task_test-task_test.obj' libtool=no @AMDEPBACKSLASH@
+proxystream_test-proxystream_test.obj: proxystream_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-proxystream_test.obj -MD -MP -MF $(DEPDIR)/proxystream_test-proxystream_test.Tpo -c -o proxystream_test-proxystream_test.obj `if test -f 'proxystream_test.c'; then $(CYGPATH_W) 'proxystream_test.c'; else $(CYGPATH_W) '$(srcdir)/proxystream_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-proxystream_test.Tpo $(DEPDIR)/proxystream_test-proxystream_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxystream_test.c' object='proxystream_test-proxystream_test.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(task_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task_test-task_test.obj `if test -f 'task_test.c'; then $(CYGPATH_W) 'task_test.c'; else $(CYGPATH_W) '$(srcdir)/task_test.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-proxystream_test.obj `if test -f 'proxystream_test.c'; then $(CYGPATH_W) 'proxystream_test.c'; else $(CYGPATH_W) '$(srcdir)/proxystream_test.c'; fi`
+
+proxystream_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/proxystream_test-netmgr_common.Tpo -c -o proxystream_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-netmgr_common.Tpo $(DEPDIR)/proxystream_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='proxystream_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+proxystream_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/proxystream_test-netmgr_common.Tpo -c -o proxystream_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-netmgr_common.Tpo $(DEPDIR)/proxystream_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='proxystream_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+proxystream_test-stream_shutdown.o: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-stream_shutdown.o -MD -MP -MF $(DEPDIR)/proxystream_test-stream_shutdown.Tpo -c -o proxystream_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-stream_shutdown.Tpo $(DEPDIR)/proxystream_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='proxystream_test-stream_shutdown.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+
+proxystream_test-stream_shutdown.obj: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxystream_test-stream_shutdown.obj -MD -MP -MF $(DEPDIR)/proxystream_test-stream_shutdown.Tpo -c -o proxystream_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxystream_test-stream_shutdown.Tpo $(DEPDIR)/proxystream_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='proxystream_test-stream_shutdown.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxystream_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxystream_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+
+proxyudp_test-proxyudp_test.o: proxyudp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyudp_test-proxyudp_test.o -MD -MP -MF $(DEPDIR)/proxyudp_test-proxyudp_test.Tpo -c -o proxyudp_test-proxyudp_test.o `test -f 'proxyudp_test.c' || echo '$(srcdir)/'`proxyudp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyudp_test-proxyudp_test.Tpo $(DEPDIR)/proxyudp_test-proxyudp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxyudp_test.c' object='proxyudp_test-proxyudp_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyudp_test-proxyudp_test.o `test -f 'proxyudp_test.c' || echo '$(srcdir)/'`proxyudp_test.c
+
+proxyudp_test-proxyudp_test.obj: proxyudp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyudp_test-proxyudp_test.obj -MD -MP -MF $(DEPDIR)/proxyudp_test-proxyudp_test.Tpo -c -o proxyudp_test-proxyudp_test.obj `if test -f 'proxyudp_test.c'; then $(CYGPATH_W) 'proxyudp_test.c'; else $(CYGPATH_W) '$(srcdir)/proxyudp_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyudp_test-proxyudp_test.Tpo $(DEPDIR)/proxyudp_test-proxyudp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='proxyudp_test.c' object='proxyudp_test-proxyudp_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyudp_test-proxyudp_test.obj `if test -f 'proxyudp_test.c'; then $(CYGPATH_W) 'proxyudp_test.c'; else $(CYGPATH_W) '$(srcdir)/proxyudp_test.c'; fi`
+
+proxyudp_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyudp_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/proxyudp_test-netmgr_common.Tpo -c -o proxyudp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyudp_test-netmgr_common.Tpo $(DEPDIR)/proxyudp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='proxyudp_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyudp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+proxyudp_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT proxyudp_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/proxyudp_test-netmgr_common.Tpo -c -o proxyudp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxyudp_test-netmgr_common.Tpo $(DEPDIR)/proxyudp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='proxyudp_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(proxyudp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o proxyudp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+tcp_test-tcp_test.o: tcp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-tcp_test.o -MD -MP -MF $(DEPDIR)/tcp_test-tcp_test.Tpo -c -o tcp_test-tcp_test.o `test -f 'tcp_test.c' || echo '$(srcdir)/'`tcp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-tcp_test.Tpo $(DEPDIR)/tcp_test-tcp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_test.c' object='tcp_test-tcp_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-tcp_test.o `test -f 'tcp_test.c' || echo '$(srcdir)/'`tcp_test.c
+
+tcp_test-tcp_test.obj: tcp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-tcp_test.obj -MD -MP -MF $(DEPDIR)/tcp_test-tcp_test.Tpo -c -o tcp_test-tcp_test.obj `if test -f 'tcp_test.c'; then $(CYGPATH_W) 'tcp_test.c'; else $(CYGPATH_W) '$(srcdir)/tcp_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-tcp_test.Tpo $(DEPDIR)/tcp_test-tcp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcp_test.c' object='tcp_test-tcp_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-tcp_test.obj `if test -f 'tcp_test.c'; then $(CYGPATH_W) 'tcp_test.c'; else $(CYGPATH_W) '$(srcdir)/tcp_test.c'; fi`
+
+tcp_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/tcp_test-netmgr_common.Tpo -c -o tcp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-netmgr_common.Tpo $(DEPDIR)/tcp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tcp_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+tcp_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/tcp_test-netmgr_common.Tpo -c -o tcp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-netmgr_common.Tpo $(DEPDIR)/tcp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tcp_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+tcp_test-stream_shutdown.o: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-stream_shutdown.o -MD -MP -MF $(DEPDIR)/tcp_test-stream_shutdown.Tpo -c -o tcp_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-stream_shutdown.Tpo $(DEPDIR)/tcp_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='tcp_test-stream_shutdown.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+
+tcp_test-stream_shutdown.obj: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp_test-stream_shutdown.obj -MD -MP -MF $(DEPDIR)/tcp_test-stream_shutdown.Tpo -c -o tcp_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcp_test-stream_shutdown.Tpo $(DEPDIR)/tcp_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='tcp_test-stream_shutdown.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+
+tcpdns_test-tcpdns_test.o: tcpdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcpdns_test-tcpdns_test.o -MD -MP -MF $(DEPDIR)/tcpdns_test-tcpdns_test.Tpo -c -o tcpdns_test-tcpdns_test.o `test -f 'tcpdns_test.c' || echo '$(srcdir)/'`tcpdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcpdns_test-tcpdns_test.Tpo $(DEPDIR)/tcpdns_test-tcpdns_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcpdns_test.c' object='tcpdns_test-tcpdns_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcpdns_test-tcpdns_test.o `test -f 'tcpdns_test.c' || echo '$(srcdir)/'`tcpdns_test.c
+
+tcpdns_test-tcpdns_test.obj: tcpdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcpdns_test-tcpdns_test.obj -MD -MP -MF $(DEPDIR)/tcpdns_test-tcpdns_test.Tpo -c -o tcpdns_test-tcpdns_test.obj `if test -f 'tcpdns_test.c'; then $(CYGPATH_W) 'tcpdns_test.c'; else $(CYGPATH_W) '$(srcdir)/tcpdns_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcpdns_test-tcpdns_test.Tpo $(DEPDIR)/tcpdns_test-tcpdns_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tcpdns_test.c' object='tcpdns_test-tcpdns_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcpdns_test-tcpdns_test.obj `if test -f 'tcpdns_test.c'; then $(CYGPATH_W) 'tcpdns_test.c'; else $(CYGPATH_W) '$(srcdir)/tcpdns_test.c'; fi`
+
+tcpdns_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcpdns_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/tcpdns_test-netmgr_common.Tpo -c -o tcpdns_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcpdns_test-netmgr_common.Tpo $(DEPDIR)/tcpdns_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tcpdns_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcpdns_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+tcpdns_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcpdns_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/tcpdns_test-netmgr_common.Tpo -c -o tcpdns_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tcpdns_test-netmgr_common.Tpo $(DEPDIR)/tcpdns_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tcpdns_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tcpdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcpdns_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+tls_test-tls_test.o: tls_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-tls_test.o -MD -MP -MF $(DEPDIR)/tls_test-tls_test.Tpo -c -o tls_test-tls_test.o `test -f 'tls_test.c' || echo '$(srcdir)/'`tls_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-tls_test.Tpo $(DEPDIR)/tls_test-tls_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tls_test.c' object='tls_test-tls_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-tls_test.o `test -f 'tls_test.c' || echo '$(srcdir)/'`tls_test.c
+
+tls_test-tls_test.obj: tls_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-tls_test.obj -MD -MP -MF $(DEPDIR)/tls_test-tls_test.Tpo -c -o tls_test-tls_test.obj `if test -f 'tls_test.c'; then $(CYGPATH_W) 'tls_test.c'; else $(CYGPATH_W) '$(srcdir)/tls_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-tls_test.Tpo $(DEPDIR)/tls_test-tls_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tls_test.c' object='tls_test-tls_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-tls_test.obj `if test -f 'tls_test.c'; then $(CYGPATH_W) 'tls_test.c'; else $(CYGPATH_W) '$(srcdir)/tls_test.c'; fi`
+
+tls_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/tls_test-netmgr_common.Tpo -c -o tls_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-netmgr_common.Tpo $(DEPDIR)/tls_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tls_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+tls_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/tls_test-netmgr_common.Tpo -c -o tls_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-netmgr_common.Tpo $(DEPDIR)/tls_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tls_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+tls_test-stream_shutdown.o: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-stream_shutdown.o -MD -MP -MF $(DEPDIR)/tls_test-stream_shutdown.Tpo -c -o tls_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-stream_shutdown.Tpo $(DEPDIR)/tls_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='tls_test-stream_shutdown.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-stream_shutdown.o `test -f 'stream_shutdown.c' || echo '$(srcdir)/'`stream_shutdown.c
+
+tls_test-stream_shutdown.obj: stream_shutdown.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tls_test-stream_shutdown.obj -MD -MP -MF $(DEPDIR)/tls_test-stream_shutdown.Tpo -c -o tls_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tls_test-stream_shutdown.Tpo $(DEPDIR)/tls_test-stream_shutdown.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stream_shutdown.c' object='tls_test-stream_shutdown.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tls_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tls_test-stream_shutdown.obj `if test -f 'stream_shutdown.c'; then $(CYGPATH_W) 'stream_shutdown.c'; else $(CYGPATH_W) '$(srcdir)/stream_shutdown.c'; fi`
+
+tlsdns_test-tlsdns_test.o: tlsdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tlsdns_test-tlsdns_test.o -MD -MP -MF $(DEPDIR)/tlsdns_test-tlsdns_test.Tpo -c -o tlsdns_test-tlsdns_test.o `test -f 'tlsdns_test.c' || echo '$(srcdir)/'`tlsdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tlsdns_test-tlsdns_test.Tpo $(DEPDIR)/tlsdns_test-tlsdns_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tlsdns_test.c' object='tlsdns_test-tlsdns_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tlsdns_test-tlsdns_test.o `test -f 'tlsdns_test.c' || echo '$(srcdir)/'`tlsdns_test.c
+
+tlsdns_test-tlsdns_test.obj: tlsdns_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tlsdns_test-tlsdns_test.obj -MD -MP -MF $(DEPDIR)/tlsdns_test-tlsdns_test.Tpo -c -o tlsdns_test-tlsdns_test.obj `if test -f 'tlsdns_test.c'; then $(CYGPATH_W) 'tlsdns_test.c'; else $(CYGPATH_W) '$(srcdir)/tlsdns_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tlsdns_test-tlsdns_test.Tpo $(DEPDIR)/tlsdns_test-tlsdns_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tlsdns_test.c' object='tlsdns_test-tlsdns_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tlsdns_test-tlsdns_test.obj `if test -f 'tlsdns_test.c'; then $(CYGPATH_W) 'tlsdns_test.c'; else $(CYGPATH_W) '$(srcdir)/tlsdns_test.c'; fi`
+
+tlsdns_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tlsdns_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/tlsdns_test-netmgr_common.Tpo -c -o tlsdns_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tlsdns_test-netmgr_common.Tpo $(DEPDIR)/tlsdns_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tlsdns_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tlsdns_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+tlsdns_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tlsdns_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/tlsdns_test-netmgr_common.Tpo -c -o tlsdns_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tlsdns_test-netmgr_common.Tpo $(DEPDIR)/tlsdns_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='tlsdns_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tlsdns_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tlsdns_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+
+udp_test-udp_test.o: udp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT udp_test-udp_test.o -MD -MP -MF $(DEPDIR)/udp_test-udp_test.Tpo -c -o udp_test-udp_test.o `test -f 'udp_test.c' || echo '$(srcdir)/'`udp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/udp_test-udp_test.Tpo $(DEPDIR)/udp_test-udp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='udp_test.c' object='udp_test-udp_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o udp_test-udp_test.o `test -f 'udp_test.c' || echo '$(srcdir)/'`udp_test.c
+
+udp_test-udp_test.obj: udp_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT udp_test-udp_test.obj -MD -MP -MF $(DEPDIR)/udp_test-udp_test.Tpo -c -o udp_test-udp_test.obj `if test -f 'udp_test.c'; then $(CYGPATH_W) 'udp_test.c'; else $(CYGPATH_W) '$(srcdir)/udp_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/udp_test-udp_test.Tpo $(DEPDIR)/udp_test-udp_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='udp_test.c' object='udp_test-udp_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o udp_test-udp_test.obj `if test -f 'udp_test.c'; then $(CYGPATH_W) 'udp_test.c'; else $(CYGPATH_W) '$(srcdir)/udp_test.c'; fi`
+
+udp_test-netmgr_common.o: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT udp_test-netmgr_common.o -MD -MP -MF $(DEPDIR)/udp_test-netmgr_common.Tpo -c -o udp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/udp_test-netmgr_common.Tpo $(DEPDIR)/udp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='udp_test-netmgr_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o udp_test-netmgr_common.o `test -f 'netmgr_common.c' || echo '$(srcdir)/'`netmgr_common.c
+
+udp_test-netmgr_common.obj: netmgr_common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT udp_test-netmgr_common.obj -MD -MP -MF $(DEPDIR)/udp_test-netmgr_common.Tpo -c -o udp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/udp_test-netmgr_common.Tpo $(DEPDIR)/udp_test-netmgr_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netmgr_common.c' object='udp_test-netmgr_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(udp_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o udp_test-netmgr_common.obj `if test -f 'netmgr_common.c'; then $(CYGPATH_W) 'netmgr_common.c'; else $(CYGPATH_W) '$(srcdir)/netmgr_common.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1461,9 +2020,16 @@ recheck: all $(check_PROGRAMS)
 	        am__force_recheck=am--force-recheck \
 	        TEST_LOGS="$$log_list"; \
 	exit $$?
-aes_test.log: aes_test$(EXEEXT)
-	@p='aes_test$(EXEEXT)'; \
-	b='aes_test'; \
+ascii_test.log: ascii_test$(EXEEXT)
+	@p='ascii_test$(EXEEXT)'; \
+	b='ascii_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+async_test.log: async_test$(EXEEXT)
+	@p='async_test$(EXEEXT)'; \
+	b='async_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1489,6 +2055,13 @@ crc64_test.log: crc64_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+dnsstream_utils_test.log: dnsstream_utils_test$(EXEEXT)
+	@p='dnsstream_utils_test$(EXEEXT)'; \
+	b='dnsstream_utils_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 errno_test.log: errno_test$(EXEEXT)
 	@p='errno_test$(EXEEXT)'; \
 	b='errno_test'; \
@@ -1510,9 +2083,23 @@ hash_test.log: hash_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+hashmap_test.log: hashmap_test$(EXEEXT)
+	@p='hashmap_test$(EXEEXT)'; \
+	b='hashmap_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 heap_test.log: heap_test$(EXEEXT)
 	@p='heap_test$(EXEEXT)'; \
 	b='heap_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+histo_test.log: histo_test$(EXEEXT)
+	@p='histo_test$(EXEEXT)'; \
+	b='histo_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1531,9 +2118,23 @@ ht_test.log: ht_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+job_test.log: job_test$(EXEEXT)
+	@p='job_test$(EXEEXT)'; \
+	b='job_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 lex_test.log: lex_test$(EXEEXT)
 	@p='lex_test$(EXEEXT)'; \
 	b='lex_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+loop_test.log: loop_test$(EXEEXT)
+	@p='loop_test$(EXEEXT)'; \
+	b='loop_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1552,16 +2153,16 @@ mem_test.log: mem_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-netaddr_test.log: netaddr_test$(EXEEXT)
-	@p='netaddr_test$(EXEEXT)'; \
-	b='netaddr_test'; \
+mutex_test.log: mutex_test$(EXEEXT)
+	@p='mutex_test$(EXEEXT)'; \
+	b='mutex_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-netmgr_test.log: netmgr_test$(EXEEXT)
-	@p='netmgr_test$(EXEEXT)'; \
-	b='netmgr_test'; \
+netaddr_test.log: netaddr_test$(EXEEXT)
+	@p='netaddr_test$(EXEEXT)'; \
+	b='netaddr_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1573,9 +2174,23 @@ parse_test.log: parse_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-pool_test.log: pool_test$(EXEEXT)
-	@p='pool_test$(EXEEXT)'; \
-	b='pool_test'; \
+proxyheader_test.log: proxyheader_test$(EXEEXT)
+	@p='proxyheader_test$(EXEEXT)'; \
+	b='proxyheader_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+proxystream_test.log: proxystream_test$(EXEEXT)
+	@p='proxystream_test$(EXEEXT)'; \
+	b='proxystream_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+proxyudp_test.log: proxyudp_test$(EXEEXT)
+	@p='proxyudp_test$(EXEEXT)'; \
+	b='proxyudp_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1601,6 +2216,13 @@ random_test.log: random_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+ratelimiter_test.log: ratelimiter_test$(EXEEXT)
+	@p='ratelimiter_test$(EXEEXT)'; \
+	b='ratelimiter_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 regex_test.log: regex_test$(EXEEXT)
 	@p='regex_test$(EXEEXT)'; \
 	b='regex_test'; \
@@ -1611,6 +2233,13 @@ regex_test.log: regex_test$(EXEEXT)
 result_test.log: result_test$(EXEEXT)
 	@p='result_test$(EXEEXT)'; \
 	b='result_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+rwlock_test.log: rwlock_test$(EXEEXT)
+	@p='rwlock_test$(EXEEXT)'; \
+	b='rwlock_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1636,6 +2265,13 @@ sockaddr_test.log: sockaddr_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+spinlock_test.log: spinlock_test$(EXEEXT)
+	@p='spinlock_test$(EXEEXT)'; \
+	b='spinlock_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 stats_test.log: stats_test$(EXEEXT)
 	@p='stats_test$(EXEEXT)'; \
 	b='stats_test'; \
@@ -1650,16 +2286,16 @@ symtab_test.log: symtab_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-task_test.log: task_test$(EXEEXT)
-	@p='task_test$(EXEEXT)'; \
-	b='task_test'; \
+tcp_test.log: tcp_test$(EXEEXT)
+	@p='tcp_test$(EXEEXT)'; \
+	b='tcp_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-taskpool_test.log: taskpool_test$(EXEEXT)
-	@p='taskpool_test$(EXEEXT)'; \
-	b='taskpool_test'; \
+tcpdns_test.log: tcpdns_test$(EXEEXT)
+	@p='tcpdns_test$(EXEEXT)'; \
+	b='tcpdns_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1674,6 +2310,34 @@ time_test.log: time_test$(EXEEXT)
 timer_test.log: timer_test$(EXEEXT)
 	@p='timer_test$(EXEEXT)'; \
 	b='timer_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tls_test.log: tls_test$(EXEEXT)
+	@p='tls_test$(EXEEXT)'; \
+	b='tls_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tlsdns_test.log: tlsdns_test$(EXEEXT)
+	@p='tlsdns_test$(EXEEXT)'; \
+	b='tlsdns_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+udp_test.log: udp_test$(EXEEXT)
+	@p='udp_test$(EXEEXT)'; \
+	b='udp_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+work_test.log: work_test$(EXEEXT)
+	@p='work_test$(EXEEXT)'; \
+	b='work_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1735,11 +2399,14 @@ distdir-am: $(DISTFILES)
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile
 installdirs:
-install: install-am
-install-exec: install-exec-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
@@ -1763,6 +2430,7 @@ mostlyclean-generic:
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -1771,44 +2439,70 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/aes_test.Po
+		-rm -f ./$(DEPDIR)/ascii_test.Po
+	-rm -f ./$(DEPDIR)/async_test.Po
 	-rm -f ./$(DEPDIR)/buffer_test.Po
 	-rm -f ./$(DEPDIR)/counter_test.Po
 	-rm -f ./$(DEPDIR)/crc64_test.Po
+	-rm -f ./$(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po
 	-rm -f ./$(DEPDIR)/doh_test-doh_test.Po
 	-rm -f ./$(DEPDIR)/errno_test.Po
 	-rm -f ./$(DEPDIR)/file_test.Po
 	-rm -f ./$(DEPDIR)/hash_test.Po
+	-rm -f ./$(DEPDIR)/hashmap_test.Po
 	-rm -f ./$(DEPDIR)/heap_test.Po
+	-rm -f ./$(DEPDIR)/histo_test.Po
 	-rm -f ./$(DEPDIR)/hmac_test-hmac_test.Po
 	-rm -f ./$(DEPDIR)/ht_test.Po
+	-rm -f ./$(DEPDIR)/job_test.Po
 	-rm -f ./$(DEPDIR)/lex_test.Po
+	-rm -f ./$(DEPDIR)/loop_test.Po
 	-rm -f ./$(DEPDIR)/md_test-md_test.Po
 	-rm -f ./$(DEPDIR)/mem_test.Po
+	-rm -f ./$(DEPDIR)/mutex_test.Po
 	-rm -f ./$(DEPDIR)/netaddr_test.Po
-	-rm -f ./$(DEPDIR)/netmgr_test-netmgr_test.Po
 	-rm -f ./$(DEPDIR)/parse_test.Po
-	-rm -f ./$(DEPDIR)/pool_test.Po
+	-rm -f ./$(DEPDIR)/proxyheader_test-proxyheader_test.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-proxystream_test.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/proxyudp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/proxyudp_test-proxyudp_test.Po
 	-rm -f ./$(DEPDIR)/quota_test.Po
 	-rm -f ./$(DEPDIR)/radix_test.Po
 	-rm -f ./$(DEPDIR)/random_test.Po
+	-rm -f ./$(DEPDIR)/ratelimiter_test.Po
 	-rm -f ./$(DEPDIR)/regex_test.Po
 	-rm -f ./$(DEPDIR)/result_test.Po
+	-rm -f ./$(DEPDIR)/rwlock_test.Po
 	-rm -f ./$(DEPDIR)/safe_test.Po
 	-rm -f ./$(DEPDIR)/siphash_test.Po
 	-rm -f ./$(DEPDIR)/sockaddr_test.Po
+	-rm -f ./$(DEPDIR)/spinlock_test.Po
 	-rm -f ./$(DEPDIR)/stats_test.Po
 	-rm -f ./$(DEPDIR)/symtab_test.Po
-	-rm -f ./$(DEPDIR)/task_test-task_test.Po
-	-rm -f ./$(DEPDIR)/taskpool_test.Po
+	-rm -f ./$(DEPDIR)/tcp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tcp_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/tcp_test-tcp_test.Po
+	-rm -f ./$(DEPDIR)/tcpdns_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tcpdns_test-tcpdns_test.Po
 	-rm -f ./$(DEPDIR)/time_test.Po
 	-rm -f ./$(DEPDIR)/timer_test.Po
+	-rm -f ./$(DEPDIR)/tls_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tls_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/tls_test-tls_test.Po
+	-rm -f ./$(DEPDIR)/tlsdns_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tlsdns_test-tlsdns_test.Po
+	-rm -f ./$(DEPDIR)/udp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/udp_test-udp_test.Po
+	-rm -f ./$(DEPDIR)/work_test.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1858,38 +2552,63 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/aes_test.Po
+		-rm -f ./$(DEPDIR)/ascii_test.Po
+	-rm -f ./$(DEPDIR)/async_test.Po
 	-rm -f ./$(DEPDIR)/buffer_test.Po
 	-rm -f ./$(DEPDIR)/counter_test.Po
 	-rm -f ./$(DEPDIR)/crc64_test.Po
+	-rm -f ./$(DEPDIR)/dnsstream_utils_test-dnsstream_utils_test.Po
 	-rm -f ./$(DEPDIR)/doh_test-doh_test.Po
 	-rm -f ./$(DEPDIR)/errno_test.Po
 	-rm -f ./$(DEPDIR)/file_test.Po
 	-rm -f ./$(DEPDIR)/hash_test.Po
+	-rm -f ./$(DEPDIR)/hashmap_test.Po
 	-rm -f ./$(DEPDIR)/heap_test.Po
+	-rm -f ./$(DEPDIR)/histo_test.Po
 	-rm -f ./$(DEPDIR)/hmac_test-hmac_test.Po
 	-rm -f ./$(DEPDIR)/ht_test.Po
+	-rm -f ./$(DEPDIR)/job_test.Po
 	-rm -f ./$(DEPDIR)/lex_test.Po
+	-rm -f ./$(DEPDIR)/loop_test.Po
 	-rm -f ./$(DEPDIR)/md_test-md_test.Po
 	-rm -f ./$(DEPDIR)/mem_test.Po
+	-rm -f ./$(DEPDIR)/mutex_test.Po
 	-rm -f ./$(DEPDIR)/netaddr_test.Po
-	-rm -f ./$(DEPDIR)/netmgr_test-netmgr_test.Po
 	-rm -f ./$(DEPDIR)/parse_test.Po
-	-rm -f ./$(DEPDIR)/pool_test.Po
+	-rm -f ./$(DEPDIR)/proxyheader_test-proxyheader_test.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-proxystream_test.Po
+	-rm -f ./$(DEPDIR)/proxystream_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/proxyudp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/proxyudp_test-proxyudp_test.Po
 	-rm -f ./$(DEPDIR)/quota_test.Po
 	-rm -f ./$(DEPDIR)/radix_test.Po
 	-rm -f ./$(DEPDIR)/random_test.Po
+	-rm -f ./$(DEPDIR)/ratelimiter_test.Po
 	-rm -f ./$(DEPDIR)/regex_test.Po
 	-rm -f ./$(DEPDIR)/result_test.Po
+	-rm -f ./$(DEPDIR)/rwlock_test.Po
 	-rm -f ./$(DEPDIR)/safe_test.Po
 	-rm -f ./$(DEPDIR)/siphash_test.Po
 	-rm -f ./$(DEPDIR)/sockaddr_test.Po
+	-rm -f ./$(DEPDIR)/spinlock_test.Po
 	-rm -f ./$(DEPDIR)/stats_test.Po
 	-rm -f ./$(DEPDIR)/symtab_test.Po
-	-rm -f ./$(DEPDIR)/task_test-task_test.Po
-	-rm -f ./$(DEPDIR)/taskpool_test.Po
+	-rm -f ./$(DEPDIR)/tcp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tcp_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/tcp_test-tcp_test.Po
+	-rm -f ./$(DEPDIR)/tcpdns_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tcpdns_test-tcpdns_test.Po
 	-rm -f ./$(DEPDIR)/time_test.Po
 	-rm -f ./$(DEPDIR)/timer_test.Po
+	-rm -f ./$(DEPDIR)/tls_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tls_test-stream_shutdown.Po
+	-rm -f ./$(DEPDIR)/tls_test-tls_test.Po
+	-rm -f ./$(DEPDIR)/tlsdns_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/tlsdns_test-tlsdns_test.Po
+	-rm -f ./$(DEPDIR)/udp_test-netmgr_common.Po
+	-rm -f ./$(DEPDIR)/udp_test-udp_test.Po
+	-rm -f ./$(DEPDIR)/work_test.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1916,7 +2635,8 @@ unit: unit-am
 
 unit-am: unit-local
 
-.MAKE: check-am install-am install-strip
+.MAKE: all check check-am install install-am install-exec \
+	install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-TESTS \
 	check-am clean clean-checkPROGRAMS clean-generic clean-libtool \

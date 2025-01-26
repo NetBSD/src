@@ -23,19 +23,25 @@ import time
 
 import pytest
 
+import isctest
+
 pytest.importorskip("dns")
 import dns.message
 import dns.name
-import dns.query
 import dns.rdata
 import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ns1/K*",
+        "ns1/example.nil.db",
+    ]
+)
+
 
 class CraftedTKEYQuery:
-    # pylint: disable=too-few-public-methods
-
     """
     A class for preparing crafted TKEY queries
     """
@@ -80,8 +86,6 @@ class CraftedTKEYQuery:
 
 
 class ASN1Encoder:
-    # pylint: disable=too-few-public-methods
-
     """
     A custom ASN1 encoder which allows preparing malformed GSSAPI tokens
     """
@@ -177,13 +181,13 @@ def send_crafted_tkey_query(opts: argparse.Namespace) -> None:
     print(query.to_text())
     print()
 
-    response = dns.query.tcp(query, opts.server_ip, timeout=2, port=opts.server_port)
+    response = isctest.query.tcp(query, opts.server_ip, timeout=2)
     print("# < " + str(datetime.datetime.now()))
     print(response.to_text())
     print()
 
 
-def test_cve_2020_8625(named_port):
+def test_cve_2020_8625():
     """
     Reproducer for CVE-2020-8625.  When run for an affected BIND 9 version,
     send_crafted_tkey_query() will raise a network-related exception due to
@@ -192,14 +196,13 @@ def test_cve_2020_8625(named_port):
     for i in range(0, 50):
         opts = argparse.Namespace(
             server_ip="10.53.0.1",
-            server_port=named_port,
             real_oid_length=i,
             extra_oid_length=0,
         )
         send_crafted_tkey_query(opts)
 
 
-def test_cve_2021_25216(named_port):
+def test_cve_2021_25216():
     """
     Reproducer for CVE-2021-25216.  When run for an affected BIND 9 version,
     send_crafted_tkey_query() will raise a network-related exception due to
@@ -207,7 +210,6 @@ def test_cve_2021_25216(named_port):
     """
     opts = argparse.Namespace(
         server_ip="10.53.0.1",
-        server_port=named_port,
         real_oid_length=1,
         extra_oid_length=1073741824,
     )

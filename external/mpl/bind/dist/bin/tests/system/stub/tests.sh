@@ -85,8 +85,8 @@ if [ -f ns5/example.db ]; then
   $DIG $DIGOPTS +nodnssec @10.53.0.5 target.example. txt >dig.out.ns5 || ret=1
   grep 'target\.example.*TXT.*"test"' dig.out.ns5 >/dev/null || ret=1
   # Ensure both ipv4 and ipv6 glue records were transferred.
-  grep -E 'ns4[[:space:]]+A[[:space:]]+10.53.0.4' ns5/example.db >/dev/null || ret=1
-  grep -E 'AAAA[[:space:]]+fd92:7065:b8e:ffff::4' ns5/example.db >/dev/null || ret=1
+  grep -E 'ns4.example.[[:space:]]+300 IN A[[:space:]]+10.53.0.4' ns5/example.db >/dev/null || ret=1
+  grep -E 'ns4.example.[[:space:]]+300 IN AAAA[[:space:]]+fd92:7065:b8e:ffff::4' ns5/example.db >/dev/null || ret=1
   [ $ret = 0 ] || {
     status=1
     echo_i "failed"

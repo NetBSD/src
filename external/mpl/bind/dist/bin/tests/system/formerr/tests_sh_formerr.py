@@ -9,6 +9,32 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "badnsec3owner.out",
+        "badrecordname.out",
+        "dupans.out",
+        "dupquestion.out",
+        "keyclass.out",
+        "malformeddeltype.out",
+        "malformedrrsig.out",
+        "nametoolong.out",
+        "noquestions.out",
+        "optwrongname.out",
+        "qtypeasanswer.out",
+        "questionclass.out",
+        "shortquestion.out",
+        "shortrecord.out",
+        "tsignotlast.out",
+        "tsigwrongclass.out",
+        "twoquestionnames.out",
+        "twoquestiontypes.out",
+        "wrongclass.out",
+    ]
+)
+
 
 def test_formerr(run_tests_sh):
     run_tests_sh()

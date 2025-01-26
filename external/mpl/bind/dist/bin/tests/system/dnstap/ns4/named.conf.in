@@ -32,6 +32,8 @@ options {
 	qname-minimization disabled;
 };
 
+trust-anchors { };
+
 server 10.53.0.1 { tcp-only yes; };
 
 key rndc_key {

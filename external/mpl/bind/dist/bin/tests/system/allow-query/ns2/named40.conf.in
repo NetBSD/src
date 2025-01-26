@@ -16,12 +16,12 @@ acl accept { 10.53.0.2; };
 acl badaccept { 10.53.0.1; };
 
 key one {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 
 key two {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234efgh8765";
 };
 

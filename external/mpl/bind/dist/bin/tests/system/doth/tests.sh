@@ -916,5 +916,14 @@ grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+# see GL #4572
+n=$((n + 1))
+echo_i "testing that zone forwarding fails when using a wrong TLS configuration on the server without aborting it (a condition for bug #4572, failure expected) ($n)"
+ret=0
+dig_with_opts test.example.com. -b 10.53.0.10 @10.53.0.2 >dig.out.test$n || ret=1
+grep "status: SERVFAIL" dig.out.test$n >/dev/null || ret=1
+if test $ret != 0; then echo_i "failed"; fi
+status=$((status + ret))
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

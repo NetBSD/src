@@ -1,0 +1,4 @@
+V	20520830202803Z		70B9F4EB2FA19598	unknown	/CN=srv01.crt01.example.nil
+V	220907203409Z		70B9F4EB2FA19599	unknown	/CN=srv01.crt02-expired.example.nil
+V	20520831082017Z		70B9F4EB2FA1959A	unknown	/CN=srv01.client01.example.nil
+V	220908081418Z		70B9F4EB2FA1959B	unknown	/CN=srv01.client02-expired.example.nil

@@ -220,7 +220,7 @@ n=$((n + 1))
 echo_i "ensuring trust anchor telemetry queries are sent upstream for a mirror zone ($n)"
 ret=0
 # ns3 is started with "-T tat=3", so TAT queries should have already been sent.
-grep "_ta-[-0-9a-f]*/NULL" ns1/named.run >/dev/null || ret=1
+wait_for_log_re 3 "_ta-[-0-9a-f]*/NULL" ns1/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

@@ -65,6 +65,21 @@
 #  pattern, only this data will be signed. Currently, this is only
 #  done for TCP.
 #
+# /pattern NOTIMP <key> <key_data>/
+# /pattern NOTIMP/
+#
+# Return a NOTIMP response
+#
+# /pattern EDNS=NOTIMP <key> <key_data>/
+# /pattern EDNS=NOTIMP/
+#
+# Return a NOTIMP response to an EDNS request
+#
+# /pattern EDNS=FORMERR <key> <key_data>/
+# /pattern EDNS=FORMERR/
+#
+# Return a FORMERR response to an EDNS request
+#
 # /pattern bad-id <key> <key_data>/
 # /pattern bad-id/
 #
@@ -95,6 +110,8 @@ my $mainport = int($ENV{'PORT'});
 if (!$mainport) { $mainport = 5300; }
 my $ctrlport = int($ENV{'EXTRAPORT1'});
 if (!$ctrlport) { $ctrlport = 5301; }
+my $hmac_algorithm = $ENV{'DEFAULT_HMAC'};
+if (!defined($hmac_algorithm)) { $hmac_algorithm = "hmac-sha256"; }
 
 # XXX: we should also be able to set the port numbers to listen on.
 my $ctlsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
@@ -174,6 +191,7 @@ sub handleUDP {
 				} else {
 					$tsig = Net::DNS::RR->new(
 							name => $key_name,
+							algorithm => $hmac_algorithm,
 							type => 'TSIG',
 							key  => $key_data);
 				}
@@ -342,6 +360,11 @@ sub handleTCP {
 	my $qtype = $questions[0]->qtype;
 	my $qclass = $questions[0]->qclass;
 	my $id = $request->header->id;
+	my @additional = $request->additional;
+	my $has_opt = 0;
+	foreach (@additional) {
+		$has_opt = 1 if (ref($_) eq 'Net::DNS::RR::OPT');
+	}
 
 	my $opaque;
 
@@ -373,14 +396,50 @@ sub handleTCP {
 		if ("$qname $qtype" =~ /$dbtype/) {
 			$count_these++;
 			my $a;
-			foreach $a (@{$r->{answer}}) {
-				$packet->push("answer", $a);
+			my $done = 0;
+
+			while (defined($key_name) &&
+			       ($key_name eq "NOTIMP" || $key_name eq "EDNS=NOTIMP" ||
+				$key_name eq "EDNS=FORMERR" || $key_name eq "bad-id")) {
+
+				if (defined($key_name) && $key_name eq "NOTIMP") {
+					$packet->header->rcode('NOTIMP') if (!$done);
+					$key_name = $key_data;
+					($key_data, $tname) = split(/ /,$tname);
+					$done = 1;
+				}
+
+				if (defined($key_name) && $key_name eq "EDNS=NOTIMP") {
+					if ($has_opt) {
+						$packet->header->rcode('NOTIMP') if (!$done);
+						$done = 1;
+					}
+					$key_name = $key_data;
+					($key_data, $tname) = split(/ /,$tname);
+				}
+
+				if (defined($key_name) && $key_name eq "EDNS=FORMERR") {
+					if ($has_opt) {
+						$packet->header->rcode('FORMERR') if (!$done);
+						$done = 1;
+					}
+					$key_name = $key_data;
+					($key_data, $tname) = split(/ /,$tname);
+				}
+
+				if (defined($key_name) && $key_name eq "bad-id") {
+					$packet->header->id(($id+50)%0xffff);
+					$key_name = $key_data;
+					($key_data, $tname) = split(/ /,$tname);
+				}
 			}
-			if (defined($key_name) && $key_name eq "bad-id") {
-				$packet->header->id(($id+50)%0xffff);
-				$key_name = $key_data;
-				($key_data, $tname) = split(/ /,$tname)
+
+			if (!$done) {
+				foreach $a (@{$r->{answer}}) {
+					$packet->push("answer", $a);
+				}
 			}
+
 			if (defined($key_name) && defined($key_data)) {
 				my $tsig;
 				# sign the packet
@@ -390,6 +449,7 @@ sub handleTCP {
 				if ($Net::DNS::VERSION < 0.69) {
 					$tsig = Net::DNS::RR->new(
 						   "$key_name TSIG $key_data");
+					$tsig->algorithm = $hmac_algorithm;
 				} elsif ($Net::DNS::VERSION >= 0.81 &&
 					 $continuation) {
 				} elsif ($Net::DNS::VERSION >= 0.75 &&
@@ -398,6 +458,7 @@ sub handleTCP {
 				} else {
 					$tsig = Net::DNS::RR->new(
 							name => $key_name,
+							algorithm => $hmac_algorithm,
 							type => 'TSIG',
 							key  => $key_data);
 				}
@@ -448,6 +509,7 @@ sub handleTCP {
 			}
 			#$packet->print;
 			push(@results,$packet->data);
+			last if ($done);
 			if ($tname eq "") {
 				$tname = $qname;
 			}

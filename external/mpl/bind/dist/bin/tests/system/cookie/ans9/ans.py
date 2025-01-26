@@ -46,8 +46,8 @@ def logquery(type, qname):
 try:
     keyring = dns.tsigkeyring.from_text(
         {
-            "foo": {"hmac-sha256", "aaaaaaaaaaaa"},
-            "fake": {"hmac-sha256", "aaaaaaaaaaaa"},
+            "foo": {os.getenv("DEFAULT_HMAC", "hmac-sha256"), "aaaaaaaaaaaa"},
+            "fake": {os.getenv("DEFAULT_HMAC", "hmac-sha256"), "aaaaaaaaaaaa"},
         }
     )
 except:
@@ -121,10 +121,14 @@ def create_response(msg, tcp, first, ns10):
                     )
                 elif labels[0] != "tcponly" or tcp:
                     cookie = o
-                    if len(o.data) == 8:
-                        cookie.data = o.data + o.data
-                    else:
-                        cookie.data = o.data
+                    try:
+                        if len(o.server) == 0:
+                            cookie.server = o.client
+                    except AttributeError:  # dnspython<2.7.0 compat
+                        if len(o.data) == 8:
+                            cookie.data = o.data + o.data
+                        else:
+                            cookie.data = o.data
                     r.use_edns(options=[cookie])
     r.flags |= dns.flags.AA
     return r

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.5 2024/02/21 21:54:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.6 2025/01/26 16:12:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -119,7 +119,7 @@ main(int argc, char **argv) {
 			argc--;
 		}
 		POST(argc);
-		return (0);
+		return 0;
 	}
 
 	target = (target != NULL) ? target + 1 : argv[0];
@@ -131,7 +131,7 @@ main(int argc, char **argv) {
 
 	test_all_from(corpusdir);
 
-	return (0);
+	return 0;
 }
 
 #elif __AFL_COMPILER
@@ -154,13 +154,13 @@ main(int argc, char **argv) {
 #endif /* ifdef __AFL_LOOP */
 		ret = fread(buf, 1, sizeof(buf), stdin);
 		if (ret < 0) {
-			return (0);
+			return 0;
 		}
 
 		LLVMFuzzerTestOneInput(buf, ret);
 	}
 
-	return (0);
+	return 0;
 }
 
 #endif /* FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */

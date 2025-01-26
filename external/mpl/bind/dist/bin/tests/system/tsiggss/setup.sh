@@ -13,8 +13,6 @@
 
 . ../conf.sh
 
-$SHELL clean.sh
-
 copy_setports ns1/named.conf.in ns1/named.conf
 
 key=$($KEYGEN -Cq -K ns1 -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n HOST -T KEY key.example.nil.)

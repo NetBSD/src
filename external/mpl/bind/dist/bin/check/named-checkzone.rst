@@ -23,7 +23,7 @@ named-checkzone - zone file validation tool
 Synopsis
 ~~~~~~~~
 
-:program:`named-checkzone` [**-d**] [**-h**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-M** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-o** filename] [**-r** mode] [**-s** style] [**-S** mode] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {zonename} {filename}
+:program:`named-checkzone` [**-d**] [**-h**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-C** mode] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-M** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-o** filename] [**-r** mode] [**-s** style] [**-S** mode] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {zonename} {filename}
 
 Description
 ~~~~~~~~~~~
@@ -67,6 +67,15 @@ Options
 .. option:: -c class
 
    This option specifies the class of the zone. If not specified, ``IN`` is assumed.
+
+.. option:: -C mode
+
+   This option controls check mode on zone files when loading.
+   Possible modes are ``check-svcb:fail`` and ``check-svcb:ignore``.
+
+   ``check-svcb:fail`` turns on additional checks on ``_dns`` SVCB
+   records and ``check-svcb:ignore`` disables these checks.  The
+   default is ``check-svcb:fail``.
 
 .. option:: -i mode
 

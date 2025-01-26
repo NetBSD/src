@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,19 @@
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
+
+/*
+ * An `isc__hex_char` table entry is non-zero if the character is a hex digit;
+ * You can subtract the table entry from the character to convert the hex digit
+ * to its value. e.g. 'a' - isc__hex_char['a'] == 10. Unlike <ctype.h>
+ * isxdigit(), this saves you from needing another case analysis.
+ */
+extern const uint8_t isc__hex_char[256];
+
+/*
+ * Wrapper so we don't have to cast all over the place like <ctype.h>
+ */
+#define isc_hex_char(c) isc__hex_char[(uint8_t)(c)]
 
 /***
  *** Functions

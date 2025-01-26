@@ -1,7 +1,9 @@
-/*	$NetBSD: queue.h,v 1.1.1.4 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.5 2025/01/26 16:12:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,46 +13,93 @@
  * information regarding copyright ownership.
  */
 
-#pragma once
-#include <isc/mem.h>
+#include <isc/os.h>
+#include <isc/urcu.h>
 
-typedef struct isc_queue isc_queue_t;
+STATIC_ASSERT(sizeof(struct __cds_wfcq_head) <= ISC_OS_CACHELINE_SIZE,
+	      "size of struct __cds_wfcq_head must be smaller than "
+	      "ISC_OS_CACHELINE_SIZE");
 
-isc_queue_t *
-isc_queue_new(isc_mem_t *mctx, int max_threads);
-/*%<
- * Create a new fetch-and-add array queue.
- *
- * 'max_threads' is currently unused. In the future it can be used
- * to pass a maximum threads parameter when creating hazard pointers,
- * but currently `isc_hp_t` uses a hard-coded value.
- */
+typedef struct isc_queue {
+	struct __cds_wfcq_head head;
+	uint8_t		       __padding[ISC_OS_CACHELINE_SIZE -
+				 sizeof(struct __cds_wfcq_head)];
+	struct cds_wfcq_tail   tail;
+} isc_queue_t;
 
-void
-isc_queue_enqueue(isc_queue_t *queue, uintptr_t item);
-/*%<
- * Enqueue an object pointer 'item' at the tail of the queue.
- *
- * Requires:
- * \li	'item' is not null.
- */
+typedef struct cds_wfcq_node isc_queue_node_t;
 
-uintptr_t
-isc_queue_dequeue(isc_queue_t *queue);
-/*%<
- * Remove an object pointer from the head of the queue and return the
- * pointer. If the queue is empty, return `nulluintptr` (the uintptr_t
- * representation of NULL).
- *
- * Requires:
- * \li	'queue' is not null.
- */
+static inline void
+isc_queue_node_init(isc_queue_node_t *node) {
+	cds_wfcq_node_init(node);
+}
 
-void
-isc_queue_destroy(isc_queue_t *queue);
-/*%<
- * Destroy a queue.
- *
- * Requires:
- * \li	'queue' is not null.
- */
+static inline void
+isc_queue_init(isc_queue_t *queue) {
+	__cds_wfcq_init(&(queue)->head, &(queue)->tail);
+}
+
+static inline void
+isc_queue_destroy(isc_queue_t *queue) {
+	UNUSED(queue);
+}
+
+static inline bool
+isc_queue_empty(isc_queue_t *queue) {
+	return cds_wfcq_empty(&(queue)->head, &(queue)->tail);
+}
+
+static inline bool
+isc_queue_enqueue(isc_queue_t *queue, isc_queue_node_t *node) {
+	return cds_wfcq_enqueue(&(queue)->head, &(queue)->tail, node);
+}
+
+#define isc_queue_enqueue_entry(queue, entry, member) \
+	cds_wfcq_enqueue(&(queue)->head, &(queue)->tail, &((entry)->member))
+
+static inline isc_queue_node_t *
+isc_queue_dequeue(isc_queue_t *queue) {
+	return __cds_wfcq_dequeue_nonblocking(&(queue)->head, &(queue)->tail);
+}
+
+#define isc_queue_entry(ptr, type, member) \
+	caa_container_of_check_null(ptr, type, member)
+
+#define isc_queue_dequeue_entry(queue, type, member) \
+	isc_queue_entry(isc_queue_dequeue(queue), type, member)
+
+static inline bool
+isc_queue_splice(isc_queue_t *dest, isc_queue_t *src) {
+	enum cds_wfcq_ret ret = __cds_wfcq_splice_blocking(
+		&dest->head, &dest->tail, &src->head, &src->tail);
+	INSIST(ret != CDS_WFCQ_RET_WOULDBLOCK &&
+	       ret != CDS_WFCQ_RET_DEST_NON_EMPTY);
+
+	return ret != CDS_WFCQ_RET_SRC_EMPTY;
+}
+
+#define isc_queue_first_entry(queue, type, member)                         \
+	isc_queue_entry(                                                   \
+		__cds_wfcq_first_blocking(&(queue)->head, &(queue)->tail), \
+		type, member)
+
+#define isc_queue_next_entry(queue, node, type, member)                 \
+	isc_queue_entry(__cds_wfcq_next_blocking(&(queue)->head,        \
+						 &(queue)->tail, node), \
+			type, member)
+
+#define isc_queue_for_each_entry(queue, pos, member)                       \
+	for (pos = isc_queue_first_entry(queue, __typeof__(*pos), member); \
+	     pos != NULL;                                                  \
+	     pos = isc_queue_next_entry(queue, &(pos)->member,             \
+					__typeof__(*pos), member))
+
+#define isc_queue_for_each_entry_safe(queue, pos, next, member)            \
+	for (pos = isc_queue_first_entry(queue, __typeof__(*pos), member), \
+	    next = (pos ? isc_queue_next_entry(queue, &(pos)->member,      \
+					       __typeof__(*pos), member)   \
+			: NULL);                                           \
+	     pos != NULL; pos = next,                                      \
+	    next = (pos ? isc_queue_next_entry(queue, &(pos)->member,      \
+					       __typeof__(*pos), member)   \
+			: NULL))

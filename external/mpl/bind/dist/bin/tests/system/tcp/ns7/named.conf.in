@@ -24,7 +24,6 @@ options {
 	notify yes;
 	statistics-file "named.stats";
 	tcp-clients 1;
-	keep-response-order { any; };
 };
 
 key rndc_key {
