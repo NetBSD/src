@@ -1,4 +1,4 @@
-.\" $NetBSD: wctomb.3,v 1.6 2016/06/27 08:18:34 abhinav Exp $
+.\" $NetBSD: wctomb.3,v 1.7 2025/01/26 06:17:01 riastradh Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -99,8 +99,7 @@ returns:
 Number of bytes for the valid multibyte character pointed to by
 .Fa s .
 There are no cases that the value returned is greater than
-.Fa n
-or the value of the
+the value of the
 .Dv MB_CUR_MAX
 macro.
 .It -1
