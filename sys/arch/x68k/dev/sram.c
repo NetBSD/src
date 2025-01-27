@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.22 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: sram.c,v 1.23 2025/01/27 21:20:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.22 2024/01/07 07:58:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.23 2025/01/27 21:20:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ const struct cdevsw sram_cdevsw = {
 static int sram_attached;
 
 /*
- *  functions for probeing.
+ *  functions for probing.
  */
 int
 srammatch(device_t parent, cfdata_t cf, void *aux)

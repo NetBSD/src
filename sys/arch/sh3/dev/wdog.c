@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.c,v 1.19 2023/12/20 15:34:45 thorpej Exp $ */
+/*	$NetBSD: wdog.c,v 1.20 2025/01/27 21:20:25 andvar Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.19 2023/12/20 15:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.20 2025/01/27 21:20:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -107,7 +107,7 @@ wdogmatch(device_t parent, cfdata_t cfp, void *aux)
 }
 
 /*
- *  functions for probeing.
+ *  functions for probing.
  */
 /* ARGSUSED */
 static void

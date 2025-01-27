@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.39 2023/03/26 15:24:21 andvar Exp $	*/
+/*	$NetBSD: view.c,v 1.40 2025/01/27 21:20:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.39 2023/03/26 15:24:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.40 2025/01/27 21:20:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ const struct cdevsw view_cdevsw = {
 };
 
 /*
- *  functions for probeing.
+ *  functions for probing.
  */
 void
 viewattach(int cnt)
