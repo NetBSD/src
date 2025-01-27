@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.14 2025/01/26 05:20:57 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.15 2025/01/27 11:38:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -61,6 +61,7 @@
 	#define FOE_BLEND_ROP	0x00000040	// IBO is used
 	#define FOE_DITHER	0x00000080
 #define VISFX_IBO		0x921110	// ROP in lowest nibble
+#define VISFX_CBR		0x92111c	// constant colour for blending
 #define VISFX_IAA0		0x921200	// XLUT, 16 entries
 #define VISFX_IAA(n)		(0x921200 + ((n) << 2))
 #define VISFX_OTR		0x921148	// overlay transparency
@@ -151,6 +152,28 @@
  * 0x400 or 0x100 by themselves don't start a command either
  */
 
+/*
+ * alpha blending operations
+ * source and destination blend functions are in 0xf0 and 0x0f
+ * how they're combined is in 0x700
+ */
+#define IBO_ROP		0	/* ROP in lower 4 bit */
+#define IBO_ADD		0x200
+#define IBO_S_MINUS_D	0x400	/* source - dest */
+#define IBO_D_MINUS_S	0x500	/* dest - source */
+#define IBO_MIN		0x600
+#define IBO_MAX		0x700
+
+/* the blend functions seem to be: */
+#define IBO_ZERO		0
+#define IBO_ONE			1
+#define IBO_SRC			4	/* src alpha */
+#define IBO_ONE_MINUS_SRC	5	/* 1 - src alpha */
+#define IBO_CBR			14	/* alpha from CBR */
+#define IBO_ONE_MINUS_CBR	15	/* 1 - alpha from CBR */
+
+#define SRC(n) ((n) << 4)
+#define DST(n) (n)
 /*
  * use unbuffered space for cursor registers
  * The _POS, _INDEX and _DATA registers work exactly like on HCRX
