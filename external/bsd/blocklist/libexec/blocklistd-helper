@@ -119,7 +119,7 @@ add)
 		# the "rem" command below!
 		#
 		echo block in log quick $proto \
-		     from $addr/$mask to any $flags group $2 | \
+		    from $addr/$mask to any $flags group $2 | \
 		    /sbin/ipf -A -f - >/dev/null 2>&1 && echo OK
 		;;
 
@@ -169,7 +169,7 @@ rem)
 	case "$pf" in
 	ipf)
 		echo block in log quick $proto \
-		     from $addr/$mask to any $flags group $2 | \
+		    from $addr/$mask to any $flags group $2 | \
 		    /sbin/ipf -A -r -f - >/dev/null 2>&1 && echo OK
 		;;
 
@@ -234,8 +234,8 @@ flush)
 	pf)
 		# dynamically determine which anchors exist
 		for anchor in $(/sbin/pfctl -a "$2" -s Anchors 2> /dev/null); do
-		       /sbin/pfctl -a "$anchor" -t "port${anchor##*/}" -T flush
-		       /sbin/pfctl -a "$anchor" -F rules
+			/sbin/pfctl -a "$anchor" -t "port${anchor##*/}" -T flush
+			/sbin/pfctl -a "$anchor" -F rules
 		done
 		echo OK
 		;;
