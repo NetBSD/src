@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.33 2023/08/01 20:09:12 andvar Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.34 2025/01/27 07:54:30 mlelstv Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -378,7 +378,7 @@ scan_marks(npf_conf_info_t *ctx, const struct mark_keyword_mapent *mk,
 			 */
 			ctx->curmark = m;
 			assert(BM_COUNT < (sizeof(uint64_t) * CHAR_BIT));
-			ctx->seen_marks = UINT64_C(1) << m;
+			ctx->seen_marks |= UINT64_C(1) << m;
 			assert(mk->fwords == nwords);
 
 			if (mk->printfn) {
@@ -499,6 +499,7 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 	/*
 	 * BPF filter criteria described by the byte-code marks.
 	 */
+	ctx->seen_marks = 0;
 	for (unsigned i = 0; i < __arraycount(mark_keyword_map); i++) {
 		const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
 		scan_marks(ctx, mk, marks, mlen);
