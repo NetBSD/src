@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2025/01/23 19:02:43 brad Exp $
+# $NetBSD: mi,v 1.18 2025/01/27 18:30:54 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -161,6 +161,7 @@
 ./usr/share/man/html1/getent.html		man-util-htmlman	html
 ./usr/share/man/html1/getextattr.html		man-util-htmlman	html
 ./usr/share/man/html1/getfacl.html		man-util-htmlman	html
+./usr/share/man/html1/getnameinfo.html		man-netutil-htmlman	html
 ./usr/share/man/html1/getopt.html		man-util-htmlman	html
 ./usr/share/man/html1/gettext.html		man-locale-htmlman	html
 ./usr/share/man/html1/gkermit.html		man-obsolete		html,obsolete

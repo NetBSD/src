@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.462 2025/01/26 22:41:00 kre Exp $
+# $NetBSD: mi,v 1.463 2025/01/27 18:30:53 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -579,10 +579,11 @@
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,gdbserver,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
-./usr/libdata/debug/usr/bin/getaddrinfo.debug	comp-util-debug	debug
+./usr/libdata/debug/usr/bin/getaddrinfo.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getconf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getent.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getextattr.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/getnameinfo.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getopt.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gettext.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/gkermit.debug	comp-obsolete		debug,obsolete

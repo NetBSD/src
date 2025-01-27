@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1795 2025/01/23 19:02:43 brad Exp $
+# $NetBSD: mi,v 1.1796 2025/01/27 18:30:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -201,6 +201,7 @@
 ./usr/share/man/cat1/getent.0			man-util-catman		.cat
 ./usr/share/man/cat1/getextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/getfacl.0			man-util-catman		.cat
+./usr/share/man/cat1/getnameinfo.0		man-netutil-catman	.cat
 ./usr/share/man/cat1/getopt.0			man-util-catman		.cat
 ./usr/share/man/cat1/gettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/gkermit.0			man-obsolete		.cat,obsolete
@@ -3773,6 +3774,7 @@
 ./usr/share/man/man1/getent.1			man-util-man		.man
 ./usr/share/man/man1/getextattr.1		man-util-man		.man
 ./usr/share/man/man1/getfacl.1			man-util-man		.man
+./usr/share/man/man1/getnameinfo.1		man-netutil-man		.man
 ./usr/share/man/man1/getopt.1			man-util-man		.man
 ./usr/share/man/man1/gettext.1			man-locale-man		.man
 ./usr/share/man/man1/gkermit.1			man-obsolete		.man,obsolete
