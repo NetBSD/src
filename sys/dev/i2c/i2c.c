@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.91 2025/01/23 19:05:51 brad Exp $	*/
+/*	$NetBSD: i2c.c,v 1.92 2025/01/27 17:01:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.91 2025/01/23 19:05:51 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.92 2025/01/27 17:01:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,11 +182,11 @@ iic_is_special_address(i2c_addr_t addr)
 	/* 10-bit Slave Addressing prefix */
 	if ((addr & 0x7c) == 0x78)
 		return (true);
-	
+
 	/* Reserved for future purposes */
 	if ((addr & 0x7c) == 0x7c)
 		return (true);
-	
+
 	return (false);
 }
 
@@ -685,7 +685,7 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	i2c_tag_t ic = sc->sc_tag;
 	uint8_t *buf = NULL;
 	void *cmd = NULL;
-	int error=0;
+	int error = 0;
 
 	/* Validate parameters */
 	if (iie->iie_addr > I2C_MAX_ADDR)
