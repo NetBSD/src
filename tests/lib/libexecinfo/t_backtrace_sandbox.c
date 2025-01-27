@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace_sandbox.c,v 1.1 2025/01/23 12:32:38 christos Exp $	*/
+/*	$NetBSD: t_backtrace_sandbox.c,v 1.2 2025/01/27 17:02:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 Kyle Evans <kevans@FreeBSD.org>
@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace_sandbox.c,v 1.1 2025/01/23 12:32:38 christos Exp $");
+__RCSID("$NetBSD: t_backtrace_sandbox.c,v 1.2 2025/01/27 17:02:50 riastradh Exp $");
 
 #include <sys/param.h>
 #ifdef __FreeBSD__
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: t_backtrace_sandbox.c,v 1.1 2025/01/23 12:32:38 christos Exp $
 
 #define	BT_FUNCTIONS		10
 
-ATF_TC(backtrace_sandbox); 
+ATF_TC(backtrace_sandbox);
 ATF_TC_HEAD(backtrace_sandbox, tc)
 {
         atf_tc_set_md_var(tc, "descr",
