@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistctl.8,v 1.2 2020/06/15 02:29:44 christos Exp $
+.\" $NetBSD: blocklistctl.8,v 1.3 2025/01/27 17:23:25 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,25 +27,34 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 7, 2016
+.Dd January 27, 2025
 .Dt BLOCKLISTCTL 8
 .Os
 .Sh NAME
 .Nm blocklistctl
-.Nd display and change the state of blocklistd
+.Nd display and change the state of the blocklistd database
 .Sh SYNOPSIS
 .Nm
 .Cm dump
 .Op Fl abdnrw
 .Sh DESCRIPTION
 .Nm
-is a program used to display the state of
+is a program used to display and change the state of the
 .Xr blocklistd 8
+database.
+The following sub-commands are supported:
+.Ss dump
 .Pp
-The following options are available:
+The following options are available for the
+.Cm dump
+sub-command:
 .Bl -tag -width indent
 .It Fl a
-Show all database entries, by default it shows only the embryonic ones.
+Show all database entries, by default it shows only the active ones.
+Inactive entries will be shown with a last-access (or, with
+.Fl r ,
+the remaining) time of
+.Ql never .
 .It Fl b
 Show only the blocked entries.
 .It Fl d
@@ -58,6 +67,35 @@ Show the remaining blocked time instead of the last activity time.
 Normally the width of addresses is good for IPv4, the
 .Fl w
 flag, makes the display wide enough for IPv6 addresses.
+.El
+.Pp
+The output of the
+.Cm dump
+sub-command consists of a header (unless
+.Fl h
+was given) and one line for each record in the database, where each line
+has the following columns:
+.Bl -tag -width indent
+.It Ql address/ma:port
+The remote address, mask, and local port number of the client connection
+associated with the database entry.
+.It Ql id
+column will show the identifier for the packet filter rule associated
+with the database entry, though this may only be the word
+.Ql OK
+for packet filters which do not creat a unique identifier for each rule.
+.It Ql nfail
+The number of
+.Em failures
+reported for the client on the noted port, as well as the number of
+failures allowed before blocking (or, with
+.Fl a ,
+an asterisk
+.Aq * )
+.It So last access Sc | So remaining time Sc
+The last time a the client was reported as attempting access, or, with
+.Fl r ,
+the time remaining before the rule blocking the client will be removed.
 .El
 .Sh SEE ALSO
 .Xr blocklistd 8
