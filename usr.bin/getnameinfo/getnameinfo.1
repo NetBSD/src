@@ -1,4 +1,4 @@
-.\" $NetBSD: getnameinfo.1,v 1.1 2025/01/27 18:30:19 christos Exp $
+.\" $NetBSD: getnameinfo.1,v 1.2 2025/01/27 19:12:11 wiz Exp $
 .\"
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd resolve IP addresses and ports to host and service names
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46rufnNHS
+.Op Fl 46fHNnrSu
 .Op Fl p Ar port
 .Ar IP-address
 .Sh DESCRIPTION
@@ -63,28 +63,23 @@ configuration, it is not intended to replace DNS-specific tools like
 .Xr dig 1 .
 .Pp
 The following options are available:
-.Bl -tag -width Ds
+.Bl -tag -width 8n
 .It Fl 4
 Restrict the lookup to IPv4 addresses only.
 .It Fl 6
 Restrict the lookup to IPv6 addresses only.
-.It Fl r
-Ensure that a name is returned.
-If no name can be resolved, an error is reported.
-This is equivalent to the
-.Dv NI_NAMEREQD
-flag in
-.Xr getnameinfo 3 .
-.It Fl u
-Use UDP instead of the default TCP.
-This is equivalent to the
-.Dv NI_DGRAM
-flag in
-.Xr getnameinfo 3 .
 .It Fl f
 Suppress the fully-qualified domain name (FQDN).
 This is equivalent to the
 .Dv NI_NOFQDN
+flag in
+.Xr getnameinfo 3 .
+.It Fl H
+Display only the hostname, omitting the service name.
+.It Fl N
+Display the numeric service name instead of resolving to a service name.
+This is equivalent to the
+.Dv NI_NUMERICSERV
 flag in
 .Xr getnameinfo 3 .
 .It Fl n
@@ -93,18 +88,23 @@ This is equivalent to the
 .Dv NI_NUMERICHOST
 flag in
 .Xr getnameinfo 3 .
-.It Fl N
-Display the numeric service name instead of resolving to a service name.
-This is equivalent to the
-.Dv NI_NUMERICSERV
-flag in
-.Xr getnameinfo 3 .
-.It Fl H
-Display only the hostname, omitting the service name.
-.It Fl S
-Display only the service name, omitting the hostname.
 .It Fl p Ar port
 Specify the port number to be used in the lookup.
+.It Fl r
+Ensure that a name is returned.
+If no name can be resolved, an error is reported.
+This is equivalent to the
+.Dv NI_NAMEREQD
+flag in
+.Xr getnameinfo 3 .
+.It Fl S
+Display only the service name, omitting the hostname.
+.It Fl u
+Use UDP instead of the default TCP.
+This is equivalent to the
+.Dv NI_DGRAM
+flag in
+.Xr getnameinfo 3 .
 .El
 .Sh EXIT STATUS
 .Ex -std getnameinfo

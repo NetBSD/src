@@ -1,4 +1,4 @@
-/* $NetBSD: getnameinfo.c,v 1.1 2025/01/27 18:30:19 christos Exp $ */
+/* $NetBSD: getnameinfo.c,v 1.2 2025/01/27 19:12:11 wiz Exp $ */
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.1 2025/01/27 18:30:19 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.2 2025/01/27 19:12:11 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,18 +54,18 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.1 2025/01/27 18:30:19 christos Exp $");
  * similar to the getnameinfo function in the standard library.
  *
  * usage:
- *   getnameinfo [-46rufnNHS] [-p port] <IP-address>
+ *   getnameinfo [-46fHNnrSu] [-p port] <IP-address>
  *
  *   -4: Restrict lookup to IPv4 addresses only
  *   -6: Restrict lookup to IPv6 addresses only
- *   -r: Ensure that the name is returned (error if no name is found)
- *   -u: Use UDP instead of the default TCP
  *   -f: Suppress the fully-qualified domain name (FQDN)
- *   -n: Display the numeric host address instead of the hostname
- *   -N: Display the numeric service name instead of the service name
  *   -H: Display only the hostname, omitting the service name
- *   -S: Display only the service name, omitting the hostname
+ *   -N: Display the numeric service name instead of the service name
+ *   -n: Display the numeric host address instead of the hostname
  *   -p: Specify the port number to be used in the lookup
+ *   -r: Ensure that the name is returned (error if no name is found)
+ *   -S: Display only the service name, omitting the hostname
+ *   -u: Use UDP instead of the default TCP
  */
 
 
@@ -257,6 +257,6 @@ static void __dead
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s", getprogname());
-	(void)fprintf(stderr, " [-46rufnNHS] [-p port] <IP-address>\n");
+	(void)fprintf(stderr, " [-46fHNnrSu] [-p port] <IP-address>\n");
 	exit(EXIT_FAILURE);
 }
