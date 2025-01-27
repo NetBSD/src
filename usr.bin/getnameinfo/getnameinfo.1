@@ -1,0 +1,142 @@
+.\" $NetBSD: getnameinfo.1,v 1.1 2025/01/27 18:30:19 christos Exp $
+.\"
+.\" Copyright (c) 2025 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This documentation is derived from text contributed to The NetBSD
+.\" Foundation by Attaullah Ansari.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 16, 2025
+.Dt GETNAMEINFO 1
+.Os
+.Sh NAME
+.Nm getnameinfo
+.Nd resolve IP addresses and ports to host and service names
+.Sh SYNOPSIS
+.Nm
+.Op Fl 46rufnNHS
+.Op Fl p Ar port
+.Ar IP-address
+.Sh DESCRIPTION
+The
+.Nm
+utility resolves IP addresses and port numbers to hostnames and service names
+as if with the
+.Xr getnameinfo 3
+library routine and formats them to standard output.
+.Pp
+The output is a single line of space-separated fields:
+.Pp
+.Dl hostname service
+.Pp
+Depending on the flags specified, the output may consist only of the hostname
+or service name, or their numeric representations.
+By default, both are shown.
+.Pp
+Although
+.Nm
+may query the DNS or other sources for name resolution depending on the
+system's
+.Xr nsswitch.conf 5
+configuration, it is not intended to replace DNS-specific tools like
+.Xr dig 1 .
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl 4
+Restrict the lookup to IPv4 addresses only.
+.It Fl 6
+Restrict the lookup to IPv6 addresses only.
+.It Fl r
+Ensure that a name is returned.
+If no name can be resolved, an error is reported.
+This is equivalent to the
+.Dv NI_NAMEREQD
+flag in
+.Xr getnameinfo 3 .
+.It Fl u
+Use UDP instead of the default TCP.
+This is equivalent to the
+.Dv NI_DGRAM
+flag in
+.Xr getnameinfo 3 .
+.It Fl f
+Suppress the fully-qualified domain name (FQDN).
+This is equivalent to the
+.Dv NI_NOFQDN
+flag in
+.Xr getnameinfo 3 .
+.It Fl n
+Display the numeric host address instead of resolving to a hostname.
+This is equivalent to the
+.Dv NI_NUMERICHOST
+flag in
+.Xr getnameinfo 3 .
+.It Fl N
+Display the numeric service name instead of resolving to a service name.
+This is equivalent to the
+.Dv NI_NUMERICSERV
+flag in
+.Xr getnameinfo 3 .
+.It Fl H
+Display only the hostname, omitting the service name.
+.It Fl S
+Display only the service name, omitting the hostname.
+.It Fl p Ar port
+Specify the port number to be used in the lookup.
+.El
+.Sh EXIT STATUS
+.Ex -std getnameinfo
+.Sh EXAMPLES
+Look up the hostname and service name for an IPv4 address:
+.Bd -literal -offset indent
+$ getnameinfo -4 -p 80 93.184.216.34
+example.com http
+.Ed
+.Pp
+Look up the numeric host and service for an IPv6 address:
+.Bd -literal -offset indent
+$ getnameinfo -nN -p 443 2606:2800:220:1:248:1893:25c8:1946
+2606:2800:220:1:248:1893:25c8:1946 443
+.Ed
+.Pp
+Resolve an address to its hostname but suppress the service name:
+.Bd -literal -offset indent
+$ getnameinfo -H -p 22 192.0.2.1
+example-host
+.Ed
+.Pp
+Resolve a hostname and service for a UDP connection:
+.Bd -literal -offset indent
+$ getnameinfo -u -p 53 198.51.100.2
+example-dns-server domain
+.Ed
+.Sh SEE ALSO
+.Xr dig 1 ,
+.Xr getaddrinfo 1 ,
+.Xr getaddrinfo 3 ,
+.Xr getnameinfo 3 ,
+.Xr inet 3 ,
+.Xr hosts 5 ,
+.Xr nsswitch.conf 5
