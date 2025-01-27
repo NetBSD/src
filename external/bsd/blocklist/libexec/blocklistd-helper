@@ -14,19 +14,18 @@ if [ -f "/etc/ipfw-blocklist.rc" ]; then
 	pf="ipfw"
 	. /etc/ipfw-blocklist.rc
 	ipfw_offset=${ipfw_offset:-2000}
-else
-	# ipfilter NetBSD, FreeBSD, Linux
-	for f in /etc/ipf.conf /etc/ipf.rules /etc/netscript/ipfilter.conf; do
-		if [ -f "$f" ]; then
-			pf="ipf"
-			break
-		fi
-	done
 fi
 
 if [ -z "$pf" ]; then
-	for f in npf pf; do
-		if [ -f "/etc/$f.conf" ]; then
+	for f in npf pf ipfilter ipfw; do
+		if [ -x /etc/rc.d/$f ]; then
+			if /etc/rc.d/$f status >/dev/null 2>&1; then
+				pf="$f"
+				break
+			fi
+		elif [ -f "/etc/$f.conf" ]; then
+			# xxx assume a config file means it can be enabled --
+			# and the first one wins!
 			pf="$f"
 			break
 		fi
@@ -69,14 +68,19 @@ esac
 case "$1" in
 add)
 	case "$pf" in
-	ipf)
+	ipfilter)
 		# N.B.:  If you reload /etc/ipf.conf then you need to stop and
-		# restart blocklistd (and make sure blocklistd_flags="-r"):
+		# restart blocklistd (and make sure blocklistd_flags="-r").
+		# This should normally already be implemented in
+		# /etc/rc.d/ipfilter, but if then not add the following lines to
+		# the end of the ipfilter_reload() function:
 		#
-		#	/etc/rc.d/ipfilter reload
-		#	/etc/rc.d/blocklistd restart
+		#	if checkyesnox blocklistd; then
+		#		/etc/rc.d/blocklistd restart
+		#	fi
 		#
 		# XXX we assume the following rule is present in /etc/ipf.conf:
+		# (should we check? -- it probably cannot be added dynamically)
 		#
 		#	block in proto tcp/udp from any to any head blocklistd
 		#
@@ -97,8 +101,8 @@ add)
 		# actually block packets, and prevent logging of them as
 		# connections, because they include the "quick" flag.
 		#
-		# N.b.:  $port is not included -- abusers are cut off completely
-		# from all services!
+		# N.b.:  $port is not included/used in rules -- abusers are cut
+		# off completely from all services!
 		#
 		# Note RST packets are not returned for blocked SYN packets of
 		# active attacks, so the port will not appear to be closed.
@@ -111,12 +115,12 @@ add)
 		# to open connections (see $flags above).  This allows us to do
 		# counterespionage against the attacker (or continue to make use
 		# of any other services that might be on the same subnet as the
-		# attacker).  However it does not kill any active connections --
-		# we rely on the reporting daemon to do its own protection and
-		# cleanup.
+		# supposed attacker).  However it does not kill any active
+		# connections -- we rely on the reporting daemon to do its own
+		# protection and cleanup.
 		#
-		# N.B.:  The generated must exactly match the rule generated for
-		# the "rem" command below!
+		# N.B.:  The rule generated here must exactly match the
+		# corresponding rule generated for the "rem" command below!
 		#
 		echo block in log quick $proto \
 		    from $addr/$mask to any $flags group $2 | \
@@ -167,7 +171,10 @@ add)
 	;;
 rem)
 	case "$pf" in
-	ipf)
+	ipfilter)
+		# N.B.:  The rule generated here must exactly match the
+		# corresponding rule generated for the "add" command above!
+		#
 		echo block in log quick $proto \
 		    from $addr/$mask to any $flags group $2 | \
 		    /sbin/ipf -A -r -f - >/dev/null 2>&1 && echo OK
@@ -200,19 +207,36 @@ rem)
 	;;
 flush)
 	case "$pf" in
-	ipf)
-		#
-		# XXX this is a slightly convoluted way to remove all the rules
-		# in the group added for "$2" (i.e. normally by default
-		# "blocklistd").
+	ipfilter)
 		#
 		# N.B. WARNING:  This is obviously not reentrant!
 		#
+		# First we flush all the rules from the inactive set, then we
+		# reload the ones that do not belong to the group "$2", and
+		# finally we swap the active and inactive rule sets.
+		#
 		/sbin/ipf -I -F a
+		#
+		# "ipf -I -F a" also flushes active accounting rules!
+		#
+		# Note that accounting rule groups are unique to accounting
+		# rules and have nothing to do with filter rules, though of
+		# course theoretically one could use the same group name for
+		# them too.
+		#
+		# In theory anyone using any such accounting rules should have a
+		# wrapper /etc/rc.conf.d/blocklistd script (and corresponding
+		# /etc/rc.conf.d/ipfilter script) that will record and
+		# consolidate the values accumulated by such accounting rules
+		# before they are flushed, since otherwise their counts will be
+		# lost forever.
+		#
 		/usr/sbin/ipfstat -io | fgrep -v "group $2" | \
 		    /sbin/ipf -I -f - >/dev/null 2>&1
-		# XXX this MUST be done last and separately as "-s" is executed
+		#
+		# This MUST be done last and separately as "-s" is executed
 		# _while_ the command arguments are being processed!
+		#
 		/sbin/ipf -s && echo OK
 		;;
 
