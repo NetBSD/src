@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.2 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.3 2025/01/27 02:16:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,9 +63,33 @@
  * XXXFANF for now we're logging GC times, but ideally we should
  * accumulate stats more quietly and report via the statschannel
  */
+#ifdef _LP64
 static atomic_uint_fast64_t compact_time;
 static atomic_uint_fast64_t recycle_time;
 static atomic_uint_fast64_t rollback_time;
+#define ISC_QP_ADD(v, a) atomic_fetch_add_relaxed(&(v), (a))
+#define ISC_QP_GET(v) atomic_load_relaxed(v)
+#else
+static uint64_t compact_time;
+static uint64_t recycle_time;
+static uint64_t rollback_time;
+static isc_mutex_t qp_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define ISC_QP_ADD(v, a) \
+	({ \
+		isc_mutex_lock(&qp_mutex); \
+		uint64_t x = (v) + (a); \
+		isc_mutex_unlock(&qp_mutex); \
+		x; \
+	})
+#define ISC_QP_GET(v) \
+	({ \
+		isc_mutex_lock(&qp_mutex); \
+		uint64_t x = (v); \
+		isc_mutex_unlock(&qp_mutex); \
+		x; \
+	})
+#endif
+
 
 /* for LOG_STATS() format strings */
 #define PRItime " %" PRIu64 " ns "
@@ -680,7 +704,7 @@ recycle(dns_qp_t *qp) {
 	}
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
-	atomic_fetch_add_relaxed(&recycle_time, time);
+	ISC_QP_ADD(recycle_time, time);
 
 	if (free > 0) {
 		LOG_STATS("qp recycle" PRItime "free %u chunks", time, free);
@@ -723,7 +747,7 @@ reclaim_chunks_cb(struct rcu_head *arg) {
 			     STRUCT_FLEX_SIZE(rcuctx, chunk, rcuctx->count));
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
-	recycle_time += time;
+	ISC_QP_ADD(recycle_time, time);
 
 	if (free > 0) {
 		LOG_STATS("qp reclaim" PRItime "free %u chunks", time, free);
@@ -816,7 +840,7 @@ marksweep_chunks(dns_qpmulti_t *multi) {
 	}
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
-	recycle_time += time;
+	ISC_QP_ADD(recycle_time, time);
 
 	if (free > 0) {
 		LOG_STATS("qp marksweep" PRItime "free %u chunks", time, free);
@@ -945,7 +969,7 @@ compact(dns_qp_t *qp) {
 	qp->compact_all = false;
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
-	atomic_fetch_add_relaxed(&compact_time, time);
+	ISC_QP_ADD(compact_time, time);
 
 	LOG_STATS("qp compact" PRItime
 		  "leaf %u live %u used %u free %u hold %u",
@@ -1073,9 +1097,9 @@ dns_qpmulti_memusage(dns_qpmulti_t *multi) {
 void
 dns_qp_gctime(isc_nanosecs_t *compact_p, isc_nanosecs_t *recycle_p,
 	      isc_nanosecs_t *rollback_p) {
-	*compact_p = atomic_load_relaxed(&compact_time);
-	*recycle_p = atomic_load_relaxed(&recycle_time);
-	*rollback_p = atomic_load_relaxed(&rollback_time);
+	*compact_p = ISC_QP_GET(compact_time);
+	*recycle_p = ISC_QP_GET(recycle_time);
+	*rollback_p = ISC_QP_GET(rollback_time);
 }
 
 /***********************************************************************
@@ -1300,7 +1324,7 @@ dns_qpmulti_rollback(dns_qpmulti_t *multi, dns_qp_t **qptp) {
 	INSIST(multi->rollback == NULL);
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
-	atomic_fetch_add_relaxed(&rollback_time, time);
+	ISC_QP_ADD(rollback_time, time);
 
 	LOG_STATS("qp rollback" PRItime "free %u chunks", time, free);
 

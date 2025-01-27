@@ -1,4 +1,4 @@
-/*	$NetBSD: histo.c,v 1.2 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: histo.c,v 1.3 2025/01/27 02:16:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,7 +62,11 @@
 #define MAXCHUNK(hg)  EXPONENTS(hg)
 #define CHUNKSIZE(hg) MANTISSAS(hg)
 
+#ifdef _LP64
 typedef atomic_uint_fast64_t hg_bucket_t;
+#else
+typedef atomic_uint_fast32_t hg_bucket_t;
+#endif
 typedef atomic_ptr(hg_bucket_t) hg_chunk_t;
 
 struct isc_histo {

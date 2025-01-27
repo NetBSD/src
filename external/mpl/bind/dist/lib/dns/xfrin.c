@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.16 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.17 2025/01/27 02:16:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,6 +84,34 @@ typedef enum {
 	XFRST_AXFR_END
 } xfrin_state_t;
 
+#ifdef _LP64
+#define ISC_XFRIN_LOAD(a, t)	atomic_load_relaxed(a)
+#define ISC_XFRIN_STORE(a, b)	atomic_store_relaxed(a, b)
+#define ISC_XFRIN_ADD(a, b) 	atomic_fetch_add_relaxed(a, b)
+#else
+static isc_mutex_t xfrin_lock = PTHREAD_MUTEX_INITIALIZER;
+#define ISC_XFRIN_LOAD(a, t) \
+	({ \
+		isc_mutex_lock(&xfrin_lock); \
+		t x = *(a); \
+		isc_mutex_unlock(&xfrin_lock); \
+		x; \
+	})
+#define ISC_XFRIN_STORE(a, b) \
+	({ \
+		isc_mutex_lock(&xfrin_lock); \
+		 *(a) = (b); \
+		isc_mutex_unlock(&xfrin_lock); \
+	})
+#define ISC_XFRIN_ADD(a, b) \
+	({ \
+		isc_mutex_lock(&xfrin_lock); \
+		 *(a) += (b); \
+		isc_mutex_unlock(&xfrin_lock); \
+	})
+#endif
+
+
 /*%
  * Incoming zone transfer context.
  */
@@ -153,8 +181,13 @@ struct dns_xfrin {
 	 */
 	atomic_uint nmsg;	     /*%< Number of messages recvd */
 	atomic_uint nrecs;	     /*%< Number of records recvd */
+#ifdef _LP64
 	atomic_uint_fast64_t nbytes; /*%< Number of bytes received */
 	_Atomic(isc_time_t) start;   /*%< Start time of the transfer */
+#else
+	atomic_uint_fast32_t nbytes; /*%< Number of bytes received */
+	isc_time_t start;	     /*%< Start time of the transfer */
+#endif
 	_Atomic(dns_transport_type_t) soa_transport_type;
 	atomic_uint_fast32_t end_serial;
 
@@ -967,7 +1000,7 @@ isc_time_t
 dns_xfrin_getstarttime(dns_xfrin_t *xfr) {
 	REQUIRE(VALID_XFRIN(xfr));
 
-	return atomic_load_relaxed(&xfr->start);
+	return ISC_XFRIN_LOAD(&xfr->start, isc_time_t);
 }
 
 void
@@ -1030,7 +1063,7 @@ dns_xfrin_getstats(dns_xfrin_t *xfr, unsigned int *nmsgp, unsigned int *nrecsp,
 
 	SET_IF_NOT_NULL(nmsgp, atomic_load_relaxed(&xfr->nmsg));
 	SET_IF_NOT_NULL(nrecsp, atomic_load_relaxed(&xfr->nrecs));
-	SET_IF_NOT_NULL(nbytesp, atomic_load_relaxed(&xfr->nbytes));
+	SET_IF_NOT_NULL(nbytesp, ISC_XFRIN_LOAD(&xfr->nbytes, uint64_t));
 }
 
 const isc_sockaddr_t *
@@ -1218,7 +1251,7 @@ xfrin_create(isc_mem_t *mctx, dns_zone_t *zone, dns_db_t *db, isc_loop_t *loop,
 		atomic_init(&xfr->state, XFRST_ZONEXFRREQUEST);
 	}
 
-	atomic_init(&xfr->start, isc_time_now());
+	ISC_XFRIN_STORE(&xfr->start, isc_time_now());
 
 	if (tsigkey != NULL) {
 		dns_tsigkey_attach(tsigkey, &xfr->tsigkey);
@@ -1588,8 +1621,8 @@ xfrin_send_request(dns_xfrin_t *xfr) {
 
 	atomic_store_relaxed(&xfr->nmsg, 0);
 	atomic_store_relaxed(&xfr->nrecs, 0);
-	atomic_store_relaxed(&xfr->nbytes, 0);
-	atomic_store_relaxed(&xfr->start, isc_time_now());
+	ISC_XFRIN_STORE(&xfr->nbytes, 0);
+	ISC_XFRIN_STORE(&xfr->start, isc_time_now());
 
 	msg->id = xfr->id;
 	if (xfr->tsigctx != NULL) {
@@ -1967,7 +2000,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	 * Update the number of messages and bytes received.
 	 */
 	atomic_fetch_add_relaxed(&xfr->nmsg, 1);
-	atomic_fetch_add_relaxed(&xfr->nbytes, buffer.used);
+	ISC_XFRIN_ADD(&xfr->nbytes, buffer.used);
 
 	/*
 	 * Take the context back.
@@ -2050,12 +2083,12 @@ xfrin_destroy(dns_xfrin_t *xfr) {
 	 * Calculate the length of time the transfer took,
 	 * and print a log message with the bytes and rate.
 	 */
-	isc_time_t start = atomic_load_relaxed(&xfr->start);
+	isc_time_t start = ISC_XFRIN_LOAD(&xfr->start, isc_time_t);
 	msecs = isc_time_microdiff(&now, &start) / 1000;
 	if (msecs == 0) {
 		msecs = 1;
 	}
-	persec = (atomic_load_relaxed(&xfr->nbytes) * 1000) / msecs;
+	persec = (ISC_XFRIN_LOAD(&xfr->nbytes, uint64_t) * 1000) / msecs;
 
 	if (xfr->expireoptset) {
 		sep = ", expire option ";
@@ -2068,7 +2101,7 @@ xfrin_destroy(dns_xfrin_t *xfr) {
 		  "%u.%03u secs (%u bytes/sec) (serial %" PRIuFAST32 "%s%s)",
 		  atomic_load_relaxed(&xfr->nmsg),
 		  atomic_load_relaxed(&xfr->nrecs),
-		  atomic_load_relaxed(&xfr->nbytes),
+		  ISC_XFRIN_LOAD(&xfr->nbytes, uint64_t),
 		  (unsigned int)(msecs / 1000), (unsigned int)(msecs % 1000),
 		  (unsigned int)persec, atomic_load_relaxed(&xfr->end_serial),
 		  sep, expireopt);

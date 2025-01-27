@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.21 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.22 2025/01/27 02:16:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,6 +260,9 @@ struct dns_zone {
 	/* Unlocked */
 	unsigned int magic;
 	isc_mutex_t lock;
+#ifndef _LP64
+	isc_mutex_t atomic_lock;
+#endif
 #ifdef DNS_ZONE_CHECKLOCK
 	bool locked;
 #endif /* ifdef DNS_ZONE_CHECKLOCK */
@@ -289,8 +292,13 @@ struct dns_zone {
 	int32_t journalsize;
 	dns_rdataclass_t rdclass;
 	dns_zonetype_t type;
+#ifdef _LP64
 	atomic_uint_fast64_t flags;
 	atomic_uint_fast64_t options;
+#else
+	uint64_t flags;
+	uint64_t options;
+#endif
 	unsigned int db_argc;
 	char **db_argv;
 	isc_time_t expiretime;
@@ -431,7 +439,11 @@ struct dns_zone {
 	/*%
 	 * Autosigning/key-maintenance options
 	 */
+#ifdef _LP64
 	atomic_uint_fast64_t keyopts;
+#else
+	uint64_t keyopts;
+#endif
 
 	/*%
 	 * True if added by "rndc addzone"
@@ -518,10 +530,38 @@ struct dns_zone {
 		(_z)->diff = (d);          \
 		(_z)->offline = false;     \
 	} while (0)
+#ifdef _LP64
+#define ISC_ZONE_GET(z, f) atomic_load_relaxed(&(z)->f)
+#define ISC_ZONE_SET(z, f, o) atomic_fetch_or(&(z)->f, (o))
+#define DNS_ZONE_CLR(z, f, o) atomic_fetch_and(&(z)->f, ~(o))
+#else
+#define ISC_ZONE_GET(z, f) \
+	({ \
+		isc_mutex_lock(&(z)->atomic_lock); \
+		uint64_t x = (z)->f; \
+		isc_mutex_unlock(&(z)->atomic_lock); \
+		x; \
+	})
+#define ISC_ZONE_SET(z, f, o) \
+	({ \
+		isc_mutex_lock(&(z)->atomic_lock); \
+		uint64_t x = ((z)->f | (o)); \
+		isc_mutex_unlock(&(z)->atomic_lock); \
+		x; \
+	})
+#define ISC_ZONE_CLR(z, f, o) \
+	({ \
+		isc_mutex_lock(&(z)->atomic_lock); \
+		uint64_t x = ((z)->f & ~(o)); \
+		isc_mutex_unlock(&(z)->atomic_lock); \
+		x; \
+	})
+#endif
+#define ISC_ZONE_TEST(z, f, o) ((ISC_ZONE_GET(z, f) & (o)) != 0)
 
-#define DNS_ZONE_FLAG(z, f)    ((atomic_load_relaxed(&(z)->flags) & (f)) != 0)
-#define DNS_ZONE_SETFLAG(z, f) atomic_fetch_or(&(z)->flags, (f))
-#define DNS_ZONE_CLRFLAG(z, f) atomic_fetch_and(&(z)->flags, ~(f))
+#define DNS_ZONE_FLAG(z, f)    ISC_ZONE_TEST(z, flags, f)
+#define DNS_ZONE_SETFLAG(z, f) ISC_ZONE_SET(z, flags, f)
+#define DNS_ZONE_CLRFLAG(z, f) ISC_ZONE_CLR(z, flags, f)
 typedef enum {
 	DNS_ZONEFLG_REFRESH = 0x00000001U,     /*%< refresh check in progress */
 	DNS_ZONEFLG_NEEDDUMP = 0x00000002U,    /*%< zone need consolidation */
@@ -571,14 +611,14 @@ typedef enum {
 	DNS_ZONEFLG___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
 } dns_zoneflg_t;
 
-#define DNS_ZONE_OPTION(z, o)	 ((atomic_load_relaxed(&(z)->options) & (o)) != 0)
-#define DNS_ZONE_SETOPTION(z, o) atomic_fetch_or(&(z)->options, (o))
-#define DNS_ZONE_CLROPTION(z, o) atomic_fetch_and(&(z)->options, ~(o))
 
-#define DNS_ZONEKEY_OPTION(z, o) \
-	((atomic_load_relaxed(&(z)->keyopts) & (o)) != 0)
-#define DNS_ZONEKEY_SETOPTION(z, o) atomic_fetch_or(&(z)->keyopts, (o))
-#define DNS_ZONEKEY_CLROPTION(z, o) atomic_fetch_and(&(z)->keyopts, ~(o))
+#define DNS_ZONE_OPTION(z, o)		ISC_ZONE_TEST(z, options, o)
+#define DNS_ZONE_SETOPTION(z, o)	ISC_ZONE_SET(z, options, o)
+#define DNS_ZONE_CLROPTION(z, o)	ISC_ZONE_CLR(z, options, o)
+#define DNS_ZONEKEY_OPTION(z, o)	ISC_ZONE_TEST(z, keyopts, o)
+#define DNS_ZONEKEY_SETOPTION(z, o)	ISC_ZONE_SET(z, keyopts, o)
+#define DNS_ZONEKEY_CLROPTION(z, o)	ISC_ZONE_CLR(z, keyopts, o)
+
 
 /* Flags for zone_load() */
 typedef enum {
@@ -1166,6 +1206,9 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx, unsigned int tid) {
 
 	isc_mem_attach(mctx, &zone->mctx);
 	isc_mutex_init(&zone->lock);
+#ifndef _LP64
+	isc_mutex_init(&zone->atomic_lock);
+#endif
 	ZONEDB_INITLOCK(&zone->dblock);
 
 	isc_refcount_init(&zone->references, 1);
@@ -1374,6 +1417,9 @@ zone_free(dns_zone_t *zone) {
 	/* last stuff */
 	ZONEDB_DESTROYLOCK(&zone->dblock);
 	isc_mutex_destroy(&zone->lock);
+#ifndef _LP64
+	isc_mutex_destroy(&zone->atomic_lock);
+#endif
 	zone->magic = 0;
 	isc_mem_putanddetach(&zone->mctx, zone, sizeof(*zone));
 }
@@ -5803,7 +5849,7 @@ dns_zoneopt_t
 dns_zone_getoptions(dns_zone_t *zone) {
 	REQUIRE(DNS_ZONE_VALID(zone));
 
-	return atomic_load_relaxed(&zone->options);
+	return ISC_ZONE_GET(zone, options);
 }
 
 void
@@ -5821,7 +5867,7 @@ unsigned int
 dns_zone_getkeyopts(dns_zone_t *zone) {
 	REQUIRE(DNS_ZONE_VALID(zone));
 
-	return atomic_load_relaxed(&zone->keyopts);
+	return ISC_ZONE_GET(zone, keyopts);
 }
 
 isc_result_t
@@ -11431,7 +11477,7 @@ zone_refresh(dns_zone_t *zone) {
 	 * in progress at a time.
 	 */
 
-	oldflags = atomic_load(&zone->flags);
+	oldflags = ISC_ZONE_GET(zone, flags);
 	if (dns_remote_addresses(&zone->primaries) == NULL) {
 		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_NOPRIMARIES);
 		if ((oldflags & DNS_ZONEFLG_NOPRIMARIES) == 0) {

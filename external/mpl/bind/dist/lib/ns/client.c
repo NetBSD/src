@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.22 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.23 2025/01/27 02:16:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,11 @@
 #define NS_CLIENT_DROPPORT 1
 #endif /* ifndef NS_CLIENT_DROPPORT */
 
+#ifdef _LP64
 atomic_uint_fast64_t ns_client_requests = 0;
+#else
+atomic_uint_fast32_t ns_client_requests = 0;
+#endif
 
 static atomic_uint_fast32_t last_sigchecks_quota_log = 0;
 
