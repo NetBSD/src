@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.3 2025/01/27 02:16:05 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.4 2025/01/27 15:40:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@ static atomic_uint_fast64_t compact_time;
 static atomic_uint_fast64_t recycle_time;
 static atomic_uint_fast64_t rollback_time;
 #define ISC_QP_ADD(v, a) atomic_fetch_add_relaxed(&(v), (a))
-#define ISC_QP_GET(v) atomic_load_relaxed(v)
+#define ISC_QP_GET(v) atomic_load_relaxed(&(v))
 #else
 static uint64_t compact_time;
 static uint64_t recycle_time;

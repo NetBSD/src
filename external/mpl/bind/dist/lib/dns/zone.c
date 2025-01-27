@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.22 2025/01/27 02:16:05 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.23 2025/01/27 15:40:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -533,7 +533,7 @@ struct dns_zone {
 #ifdef _LP64
 #define ISC_ZONE_GET(z, f) atomic_load_relaxed(&(z)->f)
 #define ISC_ZONE_SET(z, f, o) atomic_fetch_or(&(z)->f, (o))
-#define DNS_ZONE_CLR(z, f, o) atomic_fetch_and(&(z)->f, ~(o))
+#define ISC_ZONE_CLR(z, f, o) atomic_fetch_and(&(z)->f, ~(o))
 #else
 #define ISC_ZONE_GET(z, f) \
 	({ \
