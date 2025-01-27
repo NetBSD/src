@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.29 2025/01/26 11:21:21 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.30 2025/01/27 12:10:19 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.29 2025/01/26 11:21:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.30 2025/01/27 12:10:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,8 @@ struct	summitfb_softc {
 	struct wsdisplay_font *sc_font;
 	int sc_font_start;	/* x of font area */
 	int sc_cols;		/* chars per line in font area */
-
+	uint32_t sc_palette[16];
 	int sc_video_on;
-	void (*sc_putchar)(void *, int, int, u_int, long);
 	glyphcache sc_gc;
 };
 
@@ -210,6 +209,26 @@ summitfb_write4(struct summitfb_softc *sc, uint32_t offset, uint32_t val)
 	bus_space_handle_t memh = rom->regh[2];
 
 	bus_space_write_stream_4(memt, memh, offset - 0x400000, val);
+}
+
+static inline void
+summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
+{
+	if (sc->sc_write_mode == mode)
+		return;
+	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
+	sc->sc_write_mode = mode;
+}
+
+static inline void
+summitfb_read_mode(struct summitfb_softc *sc, uint32_t mode)
+{
+	if (sc->sc_read_mode == mode)
+		return;
+	summitfb_wait(sc);
+	summitfb_write4(sc, VISFX_VRAM_READ_MODE, mode);
+	sc->sc_read_mode = mode;
 }
 
 void
@@ -347,6 +366,37 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
+#ifdef DEBUG
+	{
+		int i;
+
+		summitfb_rectfill(sc, 0, 824, 1280, 200, 0x00);
+		summitfb_rectfill(sc, 5, 830, 100, 190, 0xe0);	/* red */
+
+		summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl);
+		summitfb_read_mode(sc, OTC01 | BIN332F | BUFovl);
+		summitfb_write4(sc, VISFX_CBR, 0x3f0000ff);
+		summitfb_write4(sc, VISFX_FG_COLOUR, 0x7f00ff00);
+
+		for (i = 0; i < 16; i++) {
+			summitfb_wait_fifo(sc, 10);
+			summitfb_write4(sc, VISFX_IBO, 0x200 | (14 << 4) | i);
+			summitfb_write4(sc, VISFX_COPY_SRC, (5 << 16) | 830);
+			summitfb_write4(sc, VISFX_COPY_WH, (30 << 16) | 90);
+			summitfb_write4(sc, VISFX_COPY_DST,
+			    ((i * 35 + 200) << 16) | 830);
+		}
+		summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl | 0x8c0);
+		summitfb_write4(sc, VISFX_FG_COLOUR, 0x7f00ff00);
+		for (i = 0; i < 16; i++) {
+			summitfb_wait_fifo(sc, 10);
+			summitfb_write4(sc, VISFX_IBO, 0x200 | (i << 4) | 5);
+			summitfb_write4(sc, VISFX_START,
+			    ((i * 35 + 200) << 16) | 930);
+			summitfb_write4(sc, VISFX_SIZE, (30 << 16) | 90);
+		}
+	}
+#endif	
 }
 
 /*
@@ -649,26 +699,6 @@ summitfb_wait(struct summitfb_softc *sc)
 }
 
 static inline void
-summitfb_write_mode(struct summitfb_softc *sc, uint32_t mode)
-{
-	if (sc->sc_write_mode == mode)
-		return;
-	summitfb_wait(sc);
-	summitfb_write4(sc, VISFX_VRAM_WRITE_MODE, mode);
-	sc->sc_write_mode = mode;
-}
-
-static inline void
-summitfb_read_mode(struct summitfb_softc *sc, uint32_t mode)
-{
-	if (sc->sc_read_mode == mode)
-		return;
-	summitfb_wait(sc);
-	summitfb_write4(sc, VISFX_VRAM_READ_MODE, mode);
-	sc->sc_read_mode = mode;
-}
-
-static inline void
 summitfb_setup_fb(struct summitfb_softc *sc)
 {
 
@@ -677,12 +707,14 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
-		summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0); // opaque
+		/* make overlay opaque */
+		summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
 	} else {
 		summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
 		summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
-		summitfb_write4(sc, VISFX_OTR, OTR_A);	// all transparent
+		/* make overlay transparent */
+		summitfb_write4(sc, VISFX_OTR, OTR_A);
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 }
@@ -727,7 +759,8 @@ summitfb_setup(struct summitfb_softc *sc)
 	    ((sc->sc_scr.fbwidth) << 16) | (sc->sc_scr.fbheight));
 	/* turn off the cursor sprite */
 	summitfb_write4(sc, VISFX_CURSOR_POS, 0);
-	summitfb_write4(sc, VISFX_TCR, 0x10001000);	/* disable throttling */
+	/* disable throttling by moving the throttle window way off screen */
+	summitfb_write4(sc, VISFX_TCR, 0x10001000);
 
 	/* make sure the overlay is opaque */
 	summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
@@ -948,7 +981,6 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
 	ri->ri_ops.cursor = summitfb_cursor;
-	sc->sc_putchar = ri->ri_ops.putchar;
 	sc->sc_font = NULL;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = summitfb_putchar_aa;
@@ -1045,6 +1077,12 @@ summitfb_restore_palette(struct summitfb_softc *sc)
 		summitfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
 		j += 3;
 	}
+	for (i = 0; i < 16; i++) {
+		sc->sc_palette[i] = (rasops_cmap[i * 3] << 16) |
+				    (rasops_cmap[i * 3 + 1] << 8) | 
+				     rasops_cmap[i * 3 + 2];
+	}
+
 }
 
 static int
@@ -1345,8 +1383,9 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct summitfb_softc *sc = scr->scr_cookie;
-	int x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg;
+	int x, y, wi, he, rv = GC_NOPE, i, j;
+	uint32_t bg, fg, tmp;
+	uint8_t *data;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1375,9 +1414,49 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
-	summitfb_setup_fb(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);
+	/*
+	 * first we clear the background - we should be able to use the CBR
+	 * register as constant background but so far I couldn't make that work
+	 */
+	summitfb_rectfill(sc, x, y, wi, he, bg);
 
+	/*
+	 * if we ever figure out how to use a constant background colour we can
+	 * skip the read mode setting
+	 */
+	summitfb_read_mode(sc, OTC01 | BIN332F | BUFovl);
+	summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl);
+	/* we need the foreground colour as full RGB8 */
+	fg = sc->sc_palette[(attr >> 24) & 0xf];
+
+	/*
+	 * set the blending equation to
+	 * src_color * src_alpha + dst_color * (1 - src_alpha)
+	 */
+	summitfb_write4(sc, VISFX_IBO,
+	    IBO_ADD | SRC(IBO_SRC) | DST(IBO_ONE_MINUS_SRC));
+
+	/* get the glyph */
+	data = WSFONT_GLYPH(c, font);
+	for (i = 0; i < he; i++) {
+		/*
+		 * make some room in the pipeline
+		 * with just plain ROPs we can just hammer the FIFO without
+		 * having to worry about overflowing it but I suspect with
+		 * alpha blending enabled things may be a little slower
+		 */
+		summitfb_wait_fifo(sc, wi * 2);
+		/* start a new line */
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DEST, ((y + i) << 16) | x);
+		for (j = 0; j < wi; j++) {
+			tmp = *data;
+			/* alpha & RGB -> ARGB */
+			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRX,
+			    (tmp << 24) | fg);
+			data++;
+		}
+	}
+	
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 }
