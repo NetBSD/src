@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.40 2024/12/15 11:24:14 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.41 2025/01/28 21:20:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.40 2024/12/15 11:24:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.41 2025/01/28 21:20:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -419,30 +419,32 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 		}
 
 	if (itstab->tab_indirect) {
-		/* Need to allocate the L2 table. */
 		uint64_t *l1_tab = itstab->tab_l1;
-		struct gicv3_its_page_table *pt;
 		const u_int index = devid / itstab->tab_l2_num_ids;
 
-		pt = kmem_alloc(sizeof(*pt), KM_SLEEP);
-		pt->pt_dev_id = devid;
-		gicv3_dma_alloc(its->its_gic, &pt->pt_dma, itstab->tab_l2_entry_size,
-		    itstab->tab_page_size);
-		LIST_INSERT_HEAD(&itstab->tab_pt, pt, pt_list);
+		if ((l1_tab[index] & GITS_BASER_Valid) == 0) {
+			/* Need to allocate the L2 table. */
+			struct gicv3_its_page_table *pt;
 
-		if (!itstab->tab_shareable) {
-			cpu_dcache_wb_range((vaddr_t)pt->pt_dma.base,
-			    itstab->tab_l2_entry_size);
-		}
-		l1_tab[index] = pt->pt_dma.segs[0].ds_addr | GITS_BASER_Valid;
-		if (!itstab->tab_shareable) {
-			cpu_dcache_wb_range((vaddr_t)&l1_tab[index],
-			    sizeof(l1_tab[index]));
-		}
-		dsb(sy);
+			pt = kmem_alloc(sizeof(*pt), KM_SLEEP);
+			pt->pt_index = index;
+			gicv3_dma_alloc(its->its_gic, &pt->pt_dma, itstab->tab_l2_entry_size,
+			    itstab->tab_page_size);
+			LIST_INSERT_HEAD(&itstab->tab_pt, pt, pt_list);
 
-		DPRINTF(("ITS: Allocated L2 entry at index %u for devid 0x%x\n",
-		    index, devid));
+			if (!itstab->tab_shareable) {
+				cpu_dcache_wb_range((vaddr_t)pt->pt_dma.base,
+				    itstab->tab_l2_entry_size);
+			}
+			l1_tab[index] = pt->pt_dma.segs[0].ds_addr | GITS_BASER_Valid;
+			if (!itstab->tab_shareable) {
+				cpu_dcache_wb_range((vaddr_t)&l1_tab[index],
+				    sizeof(l1_tab[index]));
+			}
+			dsb(sy);
+
+			DPRINTF(("ITS: Allocated L2 entry at index %u\n", index));
+		}
 	}
 
 	dev = kmem_alloc(sizeof(*dev), KM_SLEEP);
