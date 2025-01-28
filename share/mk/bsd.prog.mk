@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.354 2025/01/14 19:45:53 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.355 2025/01/28 20:34:55 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -91,7 +91,6 @@ _LIBLIST=\
 	asn1 \
 	atf_c \
 	atf_cxx \
-	bind9 \
 	blocklist \
 	bluetooth \
 	bsdmalloc \
