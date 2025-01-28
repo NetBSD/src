@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_long.c,v 1.9 2024/03/30 16:47:45 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_long.c,v 1.10 2025/01/28 20:21:59 rillig Exp $	*/
 # 3 "platform_ilp32_long.c"
 
 /*
@@ -111,4 +111,17 @@ array_index(void)
 	u64 += u64_buf[0x7fffffffffffffff];
 	/* expect+1: warning: array subscript -1 cannot be negative [167] */
 	u64 += u64_buf[0xffffffffffffffff];
+}
+
+
+extern const unsigned short *_ctype_tab_;
+
+int
+msg_341(void)
+{
+	// https://mail-index.netbsd.org/current-users/2024/12/15/msg045888.html
+	/* expect+2: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'unsigned int' [341] */
+	/* expect+1: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	return (((int)((_ctype_tab_ + 1)[(0xffffffffu)])));
+
 }

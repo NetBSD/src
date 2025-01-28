@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.14 2024/03/30 17:12:26 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.15 2025/01/28 20:21:59 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -103,4 +103,15 @@ array_index(void)
 	/* expect+2: warning: '18446744073709551615 * 8' overflows 'unsigned long' [141] */
 	/* expect+1: warning: array subscript 2305843009213693951 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffffffffffff];
+}
+
+extern const unsigned short *_ctype_tab_;
+
+int
+msg_341(void)
+{
+	// https://mail-index.netbsd.org/current-users/2024/12/15/msg045888.html
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'unsigned int' [341] */
+	return (((int)((_ctype_tab_ + 1)[(0xffffffffu)])));
+
 }
