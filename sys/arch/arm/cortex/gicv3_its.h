@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.9 2024/12/07 19:53:07 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.10 2025/01/28 21:48:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct gicv3_its_device {
 };
 
 struct gicv3_its_page_table {
-	uint32_t		pt_dev_id;
+	uint32_t		pt_index;
 	struct gicv3_dma	pt_dma;
 	LIST_ENTRY(gicv3_its_page_table) pt_list;
 };
