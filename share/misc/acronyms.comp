@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.397 2025/01/24 19:43:55 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.398 2025/01/29 20:34:30 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1229,6 +1229,7 @@ PATA	parallel ATA
 PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
+PBKDF	password-based key derivation function
 PBR	partition boot record
 PBX	private branch exchange
 PC	personal computer
