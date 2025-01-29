@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.15 2025/01/27 11:38:39 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.16 2025/01/29 15:35:22 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -164,7 +164,14 @@
 #define IBO_MIN		0x600
 #define IBO_MAX		0x700
 
-/* the blend functions seem to be: */
+/* 
+ * here are the blend functions I identified
+ * apparently the upper byte in 32bit mode is not implemented on FX2/4/6, and
+ * neither is any blend mode that takes the colour value from CBR
+ * so no blending with screen-to-screen blits, alpha will always read zero
+ * the only ways to actually use alpha blending is with fills ( the alpha part
+ * of the FG register is used ) and BINC writes, or when using constant alpha
+ */
 #define IBO_ZERO		0
 #define IBO_ONE			1
 #define IBO_SRC			4	/* src alpha */
