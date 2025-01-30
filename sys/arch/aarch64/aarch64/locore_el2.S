@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.9 2021/08/30 22:31:20 jmcneill Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.10 2025/01/30 08:58:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.9 2021/08/30 22:31:20 jmcneill Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.10 2025/01/30 08:58:07 jmcneill Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -103,8 +103,7 @@ no_el2_host_mode:
 	msr	hstr_el2, xzr
 
 	/* Enable access to the physical timers at EL1. */
-	mrs	x2, cnthctl_el2
-	orr	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
+	mov	x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
 	msr	cnthctl_el2, x2
 
 	/* Set the counter offset to a known value. */
