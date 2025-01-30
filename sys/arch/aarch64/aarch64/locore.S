@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.93 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.94 2025/01/30 09:21:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.93 2024/02/07 04:20:26 msaitoh Exp $")
+RCSID("$NetBSD: locore.S,v 1.94 2025/01/30 09:21:13 jmcneill Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -251,8 +251,7 @@ init_sysregs:
 	isb
 
 	/* allow to read CNTVCT_EL0 and CNTFRQ_EL0 from EL0 */
-	mrs	x0, cntkctl_el1
-	orr	x0, x0, #CNTKCTL_EL0VCTEN
+	mov	x0, #(CNTKCTL_EL0VCTEN | CNTKCTL_EL0VTEN)
 	msr	cntkctl_el1, x0
 
 	/* any exception not masked */
