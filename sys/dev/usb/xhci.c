@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.187 2025/01/30 00:42:47 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.187 2025/01/30 00:42:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3446,7 +3446,8 @@ xhci_update_ep0_mps(struct xhci_softc * const sc,
 	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_EP_CONTROL));
 
 	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_EP_CONTROL));
-	cp[1] = htole32(XHCI_EPCTX_1_MAXP_SIZE_SET(mps));
+	cp[1] &= ~htole32(XHCI_EPCTX_1_MAXP_SIZE_MASK);
+	cp[1] |= htole32(XHCI_EPCTX_1_MAXP_SIZE_SET(mps));
 
 	/* sync input contexts before they are read from memory */
 	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
