@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.14 2024/12/09 22:15:33 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.15 2025/01/30 00:42:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.14 2024/12/09 22:15:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.15 2025/01/30 00:42:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,7 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_revision = USBREV_3_0;
-	sc->sc_quirks = 0;
+	sc->sc_quirks = XHCI_32BIT_ACCESS;
 	sc->sc_vendor_init = xhci_acpi_init;
 
 	rv = acpi_resource_parse(sc->sc_dev, asc->sc_handle, "_CRS",

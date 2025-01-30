@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.24 2023/04/09 20:41:29 riastradh Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.25 2025/01/30 00:42:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -149,6 +149,7 @@ struct xhci_softc {
 	int sc_quirks;
 #define XHCI_QUIRK_INTEL	__BIT(0) /* Intel xhci chip */
 #define XHCI_DEFERRED_START	__BIT(1)
+#define XHCI_32BIT_ACCESS	__BIT(2)
 	uint32_t sc_hcc;		/* copy of HCCPARAMS1 */
 	uint32_t sc_hcc2;		/* copy of HCCPARAMS2 */
 

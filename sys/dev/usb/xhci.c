@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.186 2025/01/09 10:17:22 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.187 2025/01/30 00:42:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.186 2025/01/09 10:17:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.187 2025/01/30 00:42:47 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -287,13 +287,25 @@ static const struct usbd_pipe_methods xhci_device_intr_methods = {
 static inline uint32_t
 xhci_read_1(const struct xhci_softc * const sc, bus_size_t offset)
 {
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, offset);
+	if (ISSET(sc->sc_quirks, XHCI_32BIT_ACCESS)) {
+		uint32_t val;
+		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset & ~3);
+		return (val >> ((offset & 3) * NBBY)) & 0xff;
+	} else {
+		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, offset);
+	}
 }
 
 static inline uint32_t
 xhci_read_2(const struct xhci_softc * const sc, bus_size_t offset)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
+	if (ISSET(sc->sc_quirks, XHCI_32BIT_ACCESS)) {
+		uint32_t val;
+		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset & ~3);
+		return (val >> ((offset & 3) * NBBY)) & 0xffff;
+	} else {
+		return bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
+	}
 }
 
 static inline uint32_t
@@ -306,7 +318,16 @@ static inline void
 xhci_write_1(const struct xhci_softc * const sc, bus_size_t offset,
     uint32_t value)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, offset, value);
+	if (ISSET(sc->sc_quirks, XHCI_32BIT_ACCESS)) {
+		const uint32_t mask = 0xffU << ((offset & 3) * NBBY);
+		uint32_t val;
+		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset & ~3);
+		val &= ~mask;
+		val |= __SHIFTIN(value, mask);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, offset & ~3, val);
+	} else {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, offset, value);
+	}
 }
 
 #if 0 /* unused */
