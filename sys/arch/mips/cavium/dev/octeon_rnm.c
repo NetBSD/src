@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.16 2023/03/21 22:07:29 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.17 2025/01/30 02:15:50 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.16 2023/03/21 22:07:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.17 2025/01/30 02:15:50 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -242,7 +242,7 @@ octrnm_rng(size_t nbytes, void *vsc)
 		octrnm_raw_entropy(sc, sc->sc_rogroup);
 
 		/*
-		 * Gather quarter the FIFO at a time -- we are limited
+		 * Gather a quarter of the FIFO at a time -- we are limited
 		 * to 128 bytes because of limits on the CVMSEG buffer.
 		 */
 		CTASSERT(sizeof sc->sc_sample == 512);
@@ -312,7 +312,7 @@ octrnm_conditioned_entropy(struct octrnm_softc *sc)
  * octrnm_raw_entropy(sc, rogroup)
  *
  *	Switch the RNM unit to generate raw ring oscillator samples
- *	from the specified group of eight ring oscillator.
+ *	from the specified group of eight ring oscillators.
  */
 static void
 octrnm_raw_entropy(struct octrnm_softc *sc, unsigned rogroup)
@@ -359,7 +359,7 @@ octrnm_iobdma(struct octrnm_softc *sc, uint64_t *buf, unsigned nwords)
 
 	octeon_iobdma_write_8(iobdma);
 	OCTEON_SYNCIOBDMA;
-	for (; nwords --> 0; scraddr += 8)
+	for (; nwords-- > 0; scraddr += 8)
 		*buf++ = octeon_cvmseg_read_8(scraddr);
 }
 
