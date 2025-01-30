@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.17 2024/12/30 19:17:21 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.18 2025/01/30 00:43:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.17 2024/12/30 19:17:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.18 2025/01/30 00:43:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -153,6 +153,11 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the CPU */
 	cpu_attach(self, mpidr);
+
+	if (ci->ci_dev == NULL) {
+		/* Not configured */
+		return;
+	}
 
 	/* Probe for low-power idle states. */
 	cpu_acpi_probe_lpi(self, ci);
