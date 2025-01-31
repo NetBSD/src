@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.146 2025/01/31 21:20:21 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.147 2025/01/31 22:08:18 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.146 2025/01/31 21:20:21 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.147 2025/01/31 22:08:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -363,7 +363,7 @@ static void
 init_ttinfo(struct ttinfo *s, int_fast32_t utoff, bool isdst,
 	    desigidx_type desigidx)
 {
-  s->tt_utoff = (int_least_32_t)utoff;
+  s->tt_utoff = (int_least32_t)utoff;
   s->tt_isdst = isdst;
   s->tt_desigidx = desigidx;
   s->tt_ttisstd = false;
