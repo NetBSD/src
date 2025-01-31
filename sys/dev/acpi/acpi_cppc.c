@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cppc.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: acpi_cppc.c,v 1.3 2025/01/31 12:29:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cppc.c,v 1.2 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cppc.c,v 1.3 2025/01/31 12:29:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,6 +89,8 @@ struct cppc_softc {
 	int			sc_node_current;
 	ACPI_INTEGER		sc_max_target;
 	ACPI_INTEGER		sc_min_target;
+	u_int			sc_freq_range;
+	u_int			sc_perf_range;
 };
 
 static int		cppc_match(device_t, cfdata_t, void *);
@@ -195,6 +197,23 @@ cppc_parse_cpc(struct cppc_softc *sc)
 }
 
 /*
+ * cppc_perf_to_freq, cppc_freq_to_perf --
+ *
+ *	Convert between abstract performance values and CPU frequencies,
+ *	when possible.
+ */
+static ACPI_INTEGER
+cppc_perf_to_freq(struct cppc_softc *sc, ACPI_INTEGER perf)
+{
+	return howmany(perf * sc->sc_freq_range, sc->sc_perf_range);
+}
+static ACPI_INTEGER
+cppc_freq_to_perf(struct cppc_softc *sc, ACPI_INTEGER freq)
+{
+	return howmany(freq * sc->sc_perf_range, sc->sc_freq_range);
+}
+
+/*
  * cppc_cpufreq_sysctl --
  *
  *	sysctl helper function for machdep.cpu.cpuN.{target,current}
@@ -229,7 +248,7 @@ cppc_cpufreq_sysctl(SYSCTLFN_ARGS)
 	if (val > UINT32_MAX) {
 		return ERANGE;
 	}
-	fq = (u_int)val;
+	fq = (u_int)cppc_perf_to_freq(sc, val);
 
 	if (rnode->sysctl_num == sc->sc_node_target) {
 		oldfq = fq;
@@ -248,7 +267,8 @@ cppc_cpufreq_sysctl(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	rv = cppc_write(sc, CPCDesiredPerformanceReg, fq);
+	rv = cppc_write(sc, CPCDesiredPerformanceReg,
+	    cppc_freq_to_perf(sc, fq));
 	if (ACPI_FAILURE(rv)) {
 		return EIO;
 	}
@@ -270,7 +290,7 @@ cppc_cpufreq_init(struct cppc_softc *sc)
 		CPCLowestNonlinearPerformance,
 		CPCLowestPerformance
 	};
-	ACPI_INTEGER perf[4], last;
+	ACPI_INTEGER perf[4], min_freq = 0, nom_freq = 0, last;
 	const struct sysctlnode *node, *cpunode;
 	struct sysctllog *log = NULL;
 	struct cpu_info *ci = sc->sc_cpuinfo;
@@ -278,8 +298,31 @@ cppc_cpufreq_init(struct cppc_softc *sc)
 	int error, i, n;
 
 	/*
+	 * Read optional nominal and lowest frequencies. These are used,
+	 * when present, to scale units for display in the sysctl interface.
+	 */
+	cppc_read(sc, CPCLowestFrequency, &min_freq);
+	cppc_read(sc, CPCNominalFrequency, &nom_freq);
+	/*
 	 * Read highest, nominal, lowest nonlinear, and lowest performance
-	 * levels and advertise this list of performance levels in the
+	 * levels.
+	 */
+	for (i = 0, n = 0; i < __arraycount(perf_regs); i++) {
+		rv = cppc_read(sc, perf_regs[i], &perf[i]);
+		if (ACPI_FAILURE(rv)) {
+			return rv;
+		}
+	}
+	if (min_freq && nom_freq) {
+		sc->sc_freq_range = nom_freq - min_freq;
+		sc->sc_perf_range = perf[1] - perf[3];
+	} else {
+		sc->sc_freq_range = 1;
+		sc->sc_perf_range = 1;
+	}
+
+	/*
+	 * Build a list of performance levels for the
 	 * machdep.cpufreq.cpuN.available sysctl.
 	 */
 	sc->sc_available = kmem_zalloc(
@@ -293,14 +336,14 @@ cppc_cpufreq_init(struct cppc_softc *sc)
 		if (perf[i] != last) {
 			char buf[12];
 			snprintf(buf, sizeof(buf), n ? " %u" : "%u",
-			    (u_int)perf[i]);
+			    (u_int)cppc_perf_to_freq(sc, perf[i]));
 			strcat(sc->sc_available, buf);
 			last = perf[i];
 			n++;
 		}
 	}
-	sc->sc_max_target = perf[0];
-	sc->sc_min_target = perf[3];
+	sc->sc_max_target = cppc_perf_to_freq(sc, perf[0]);
+	sc->sc_min_target = cppc_perf_to_freq(sc, perf[3]);
 
 	error = sysctl_createv(&log, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
