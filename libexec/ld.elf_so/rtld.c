@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.217 2024/01/19 19:21:34 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.218 2025/01/31 18:44:59 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.217 2024/01/19 19:21:34 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.218 2025/01/31 18:44:59 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	bool            bind_now = 0;
 	const char     *ld_bind_now, *ld_preload, *ld_library_path;
 	const char    **argv;
-	const char     *execname;
+	const char     *execname, *objmain_name;
 	long		argc;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -633,6 +633,14 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 	*oenvp++ = NULL;
 
+	/*
+	 * Set the main name. Prefer the name passed by the kernel first,
+	 * then the argument vector, and fall back to "main program"
+	 * This way the name will be an absolute path if available.
+	 */
+	objmain_name = execname ? execname :
+	    (argv[0] ? argv[0] : "main program");
+
 	if (ld_bind_now != NULL && *ld_bind_now != '\0')
 		bind_now = true;
 	if (_rtld_trust) {
@@ -645,6 +653,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 #endif
 		_rtld_add_paths(execname, &_rtld_paths, ld_library_path);
 	} else {
+		// Prevent $ORIGIN expansion
 		execname = NULL;
 	}
 	_rtld_process_hints(execname, &_rtld_paths, &_rtld_xforms,
@@ -658,9 +667,8 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
          */
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
-		const char *obj_name = argv[0] ? argv[0] : "main program";
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(obj_name, fd, NULL);
+		_rtld_objmain = _rtld_map_object(objmain_name, fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -679,8 +687,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		assert(pAUX_entry != NULL);
 		entry = (caddr_t) pAUX_entry->a_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
-		_rtld_objmain->path = xstrdup(argv[0] ? argv[0] :
-		    "main program");
+		_rtld_objmain->path = xstrdup(objmain_name);
 		_rtld_objmain->pathlen = strlen(_rtld_objmain->path);
 	}
 
