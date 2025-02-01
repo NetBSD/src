@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.22 2025/01/31 18:52:37 christos Exp $
+.\"	$NetBSD: ldd.1,v 1.23 2025/02/01 13:15:17 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Dd January 31, 2025
 .Dt LDD 1
 .Os
+.
 .Sh NAME
 .Nm ldd
 .Nd list dynamic object dependencies
@@ -38,86 +39,100 @@
 .Op Fl ov
 .Op Fl f Ar format
 .Ar program ...
+.
 .Sh DESCRIPTION
 .Nm
 displays all shared objects that are needed to run the given program.
-Contrary to
+Unlike
 .Xr nm 1 ,
 the list includes
 .Dq indirect
 dependencies that are the result of needed shared objects which themselves
 depend on yet other shared objects.
+.Pp
 Zero, one or two
 .Fl f
 options may be given.
-The argument is a format string passed to
-.Xr rtld 1
-and allows customization of
-.Nm ldd Ns 's
+The argument is a format string that allows customization of
+.Nm Ap s
 output.
 The first format argument is used for library objects and defaults to
-.Qq "\et-l%o.%m => %p\en" .
+.Ql \et-l%o.%m => %p\en .
 The second format argument is used for non-library objects and defaults to
-.Qq "\et%o => %p\en" .
+.Ql \et%o => %p\en .
 .Pp
-These arguments are interpreted as format strings a la
+These arguments are interpreted as format strings a\~la
 .Xr printf 3
 to customize the trace output and allow
 .Nm
 to be operated as a filter more conveniently.
 The following conversions can be used:
-.Bl -tag -width xxxx
-.It \&%a
-The main program's name, either set from 
+.Bl -tag -width Ds -offset indent
+.
+.It Li %a
+The main program's name, either set from
 .Dv AT_SUN_EXECNAME
 or from the first element of the argument vector.
-.It \&%A
-The value of the environment variable
-.Ev LD_TRACE_LOADED_OBJECTS_PROGNAME
-in a.out and the program name from the argument vector from elf.
-.It \&%o
+.
+.It Li \&%A \" NB: .%A is a mdoc macro name
+The program name from the argument vector.
+.
+.It Li %o
 The library name.
-.It \&%m
+.
+.It Li %m
 The library's major version number.
-.It \&%n
-The library's minor version number (a.out only, ignored in elf).
-.It \&%p
+.
+.It Li %n
+.Em Obsolete
+.Pq a.out .
+The library's minor version number,
+expands to an empty string in
+.Tn ELF .
+.
+.It Li %p
 The full pathname as determined by
-.Nm rtld Ns 's
+.Nm rtld Ap s
 library search rules.
-.It \&%x
+.
+.It Li %x
 The library's load address
 .El
 .Pp
 Additionally,
-.Sy \en
+.Ql \en
 and
-.Sy \et
+.Ql \et
 are recognized and have their usual meaning.
 .Pp
 The
 .Fl o
-option is an alias for
-.Fl f
-.Ar \&%a:-l\&%o.\&%m => \&%p\en ,
+option is a shorthand to set the format for library objects to
+.Ql %a:-l%o.%m => %p\en ,
 which makes
 .Nm
 behave analogously to
 .Ic nm Fl o .
+It cannot be combined with
+.Fl f .
 .Pp
 The
 .Fl v
 option turns on verbose mode.
+.
 .Sh EXIT STATUS
 .Ex -std
+.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr ld.elf_so 1 ,
 .Xr nm 1 ,
 .Xr rtld 1
+.
 .Sh HISTORY
 A
 .Nm
-utility first appeared in SunOS 4.0, it appeared in its current form
-in
+utility first appeared in
+.Tn SunOS 4.0 .
+It appeared in its current form in
 .Nx 0.9a .
