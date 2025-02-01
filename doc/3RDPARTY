@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2076 2025/01/31 21:51:38 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2077 2025/02/01 23:21:44 kre Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1456,7 +1456,7 @@ Location:	external/bsd/tradcpp
 Notes:
 
 Package:	tz
-Version:	tzcode2025a / tzdata2024bgtz
+Version:	tzcode2025a / tzdata2025agtz
 Current Vers:	tzcode2025a / tzdata2025a
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
@@ -1469,7 +1469,7 @@ Responsible:	kleink, christos, kre
 License:	Public domain
 Location:	lib/libc/time/zoneinfo, external/public-domain/tz/share
 Vendor tag:	?? / TZDATA
-Release tag:	?? / TZDATA2024BTGZ
+Release tag:	?? / TZDATA2025ATGZ
 Notes:
 Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
