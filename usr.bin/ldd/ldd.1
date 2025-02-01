@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.25 2025/02/01 15:51:50 kre Exp $
+.\"	$NetBSD: ldd.1,v 1.26 2025/02/01 17:17:58 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,12 +70,11 @@ The following conversions can be used:
 .Bl -tag -width Ds -offset indent
 .
 .It Li %a
-The main program's name, either set from the
-.Xr elf 5
-auxiliary vector entry
-.Dv AT_SUN_EXECNAME
-passed from the kernel to the dynamic linker,
-or from the first element of the argument vector.
+The main program's absolute path, constructed either from the exact argument
+passed to
+.Nm
+if it is an absolute path, or having the current working path prepended to
+it if not.
 .
 .It Li \&%A \" NB: .%A is a mdoc macro name
 The program name from the argument vector.
