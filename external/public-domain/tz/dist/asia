@@ -149,13 +149,6 @@ Zone	Asia/Baku	3:19:24 -	LMT	1924 May  2
 			4:00	EUAsia	%z	1997
 			4:00	Azer	%z
 
-# Bahrain
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Bahrain	3:22:20 -	LMT	1941 Jul 20  # Manamah
-			3:30	-	+0330	1944 Jan  1
-			4:00	-	+04	1972 Jun
-			3:00	-	+03
-
 # Bangladesh
 # From Alexander Krivenyshev (2009-05-13):
 # According to newspaper Asian Tribune (May 6, 2009) Bangladesh may introduce
@@ -258,12 +251,7 @@ Zone	Indian/Chagos	4:49:40	-	LMT	1907
 			5:00	-	%z	1996
 			6:00	-	%z
 
-# Brunei
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Brunei	7:39:40 -	LMT	1926 Mar # Bandar Seri Begawan
-			7:30	-	+0730	1933
-			8:00	-	+08
-
+# Cocos (Keeling) Islands
 # Myanmar (Burma)
 
 # Milne says 6:24:40 was the meridian of the time ball observatory at Rangoon.
@@ -280,15 +268,6 @@ Zone	Asia/Yangon	6:24:47 -	LMT	1880        # or Rangoon
 			6:30	-	%z	1942 May
 			9:00	-	%z	1945 May  3
 			6:30	-	%z
-
-# Cambodia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Phnom_Penh	6:59:40 -	LMT	1906 Jul  1
-			7:06:30	-	PLMT	1911 May  1
-			7:00	-	+07	1942 Dec 31 23:00
-			8:00	-	+08	1945 Mar 14 23:00
-			9:00	-	+09	1945 Sep  2
-			7:00	-	+07
 
 # China
 
@@ -2730,21 +2709,6 @@ Zone	Asia/Pyongyang	8:23:00 -	LMT	1908 Apr  1
 			8:30	-	KST	2018 May  4 23:30
 			9:00	-	KST
 
-# Kuwait
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Kuwait	3:11:56 -	LMT	1950
-			3:00	-	+03
-
-# Laos
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Vientiane	6:50:24 -	LMT	1906 Jul  1
-			7:06:30	-	PLMT	1911 May  1
-			7:00	-	+07	1942 Dec 31 23:00
-			8:00	-	+08	1945 Mar 14 23:00
-			9:00	-	+09	1945 Sep  2
-			7:00	-	+07	1947 Apr  1
-			8:00	-	+08	1955 Apr 15
-			7:00	-	+07
 
 # Lebanon
 #
@@ -2814,23 +2778,14 @@ Rule	Lebanon	1999	max	-	Oct	lastSun	0:00	0	-
 Zone	Asia/Beirut	2:22:00 -	LMT	1880
 			2:00	Lebanon	EE%sT
 
+# Brunei
 # Malaysia (eastern)
+#
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	NBorneo	1935	1941	-	Sep	14	0:00	0:20	-
 Rule	NBorneo	1935	1941	-	Dec	14	0:00	0	-
 #
-# Peninsular Malaysia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Asia/Kuala_Lumpur	6:46:46 -	LMT	1901 Jan  1
-			6:55:25	-	SMT	1905 Jun  1 # Singapore M.T.
-			7:00	-	+07	1933 Jan  1
-			7:00	0:20	+0720	1936 Jan  1
-			7:20	-	+0720	1941 Sep  1
-			7:30	-	+0730	1942 Feb 16
-			9:00	-	+09	1945 Sep 12
-			7:30	-	+0730	1981 Dec 31 16:00u
-			8:00	-	+08
-
+# For peninsular Malaysia see Asia/Singapore.
 #
 # Sabah & Sarawak
 # From Paul Eggert (2014-08-12):
@@ -3030,11 +2985,6 @@ Zone	Asia/Ulaanbaatar 7:07:32 -	LMT	1905 Aug
 Zone	Asia/Kathmandu	5:41:16 -	LMT	1920
 			5:30	-	%z	1986
 			5:45	-	%z
-
-# Oman
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Muscat	3:54:24 -	LMT	1920
-			4:00	-	+04
 
 # Pakistan
 
@@ -3715,21 +3665,70 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 # be immediately followed by 1845-01-01; see R.H. van Gent's
 # History of the International Date Line
 # https://webspace.science.uu.nl/~gent0113/idl/idl_philippines.htm
-# The rest of the data entries are from Shanks & Pottenger.
 
-# From Jesper Nørgaard Welen (2006-04-26):
-# ... claims that Philippines had DST last time in 1990:
-# http://story.philippinetimes.com/p.x/ct/9/id/145be20cc6b121c0/cid/3e5bbccc730d258c/
-# [a story dated 2006-04-25 by Cris Larano of Dow Jones Newswires,
-# but no details]
-
-# From Paul Eggert (2014-08-14):
-# The following source says DST may be instituted November-January and again
-# March-June, but this is not definite.  It also says DST was last proclaimed
-# during the Ramos administration (1992-1998); but again, no details.
-# Carcamo D. PNoy urged to declare use of daylight saving time.
-# Philippine Star 2014-08-05
-# http://www.philstar.com/headlines/2014/08/05/1354152/pnoy-urged-declare-use-daylight-saving-time
+# From P Chan (2021-05-10):
+# Here's a fairly comprehensive article in Japanese:
+#	https://wiki.suikawiki.org/n/Philippine%20Time
+# (2021-05-16):
+# According to the references listed in the article,
+# the periods that the Philippines (Manila) observed DST or used +9 are:
+#
+# 1936-10-31 24:00 to 1937-01-15 24:00
+#	(Proclamation No. 104, Proclamation No. 126)
+# 1941-12-15 24:00 to 1945-11-30 24:00
+#	(Proclamation No. 789, Proclamation No. 20)
+# 1954-04-11 24:00 to 1954-06-04 24:00
+#	(Proclamation No. 13, Proclamation No. 33)
+# 1977-03-27 24:00 to 1977-09-21 24:00
+#	(Proclamation No. 1629, Proclamation No. 1641)
+# 1990-05-21 00:00 to 1990-07-28 24:00
+#	(National Emergency Memorandum Order No. 17, Executive Order No. 415)
+#
+# Proclamation No. 104 ... October 30, 1936
+#  https://www.officialgazette.gov.ph/1936/10/30/proclamation-no-104-s-1936/
+# Proclamation No. 126 ... January 15, 1937
+#  https://www.officialgazette.gov.ph/1937/01/15/proclamation-no-126-s-1937/
+# Proclamation No. 789 ... December 13, 1941
+#  https://www.officialgazette.gov.ph/1941/12/13/proclamation-no-789-s-1941/
+# Proclamation No. 20 ... November 11, 1945
+#  https://www.officialgazette.gov.ph/1945/11/11/proclamation-no-20-s-1945/
+# Proclamation No. 13 ... April 6, 1954
+#  https://www.officialgazette.gov.ph/1954/04/06/proclamation-no-13-s-1954/
+# Proclamation No. 33 ... June 3, 1954
+#  https://www.officialgazette.gov.ph/1954/06/03/proclamation-no-33-s-1954/
+# Proclamation No. 1629 ... March 25, 1977
+#  https://www.officialgazette.gov.ph/1977/03/25/proclamation-no-1629-s-1977/
+# Proclamation No. 1641 ...May 26, 1977
+#  https://www.officialgazette.gov.ph/1977/05/26/proclamation-no-1641-s-1977/
+# National Emergency Memorandum Order No. 17 ... May 2, 1990
+#  https://www.officialgazette.gov.ph/1990/05/02/national-emergency-memorandum-order-no-17-s-1990/
+# Executive Order No. 415 ... July 20, 1990
+#  https://www.officialgazette.gov.ph/1990/07/20/executive-order-no-415-s-1990/
+#
+# During WWII, Proclamation No. 789 fixed two periods of DST. The first period
+# was set to continue only until January 31, 1942. But Manila was occupied by
+# the Japanese earlier in the month....
+#
+# For the date of the adoption of standard time, Shank[s] gives 1899-05-11.
+# The article is not able to state the basis of that. I guess it was based on
+# a US War Department Circular issued on that date.
+#	https://books.google.com/books?id=JZ1PAAAAYAAJ&pg=RA3-PA8
+#
+# However, according to other sources, standard time was adopted on
+# 1899-09-06.  Also, the LMT was GMT+8:03:52
+#	https://books.google.com/books?id=MOYIAQAAIAAJ&pg=PA521
+#	https://books.google.com/books?id=lSnqqatpYikC&pg=PA21
+#
+# From Paul Eggert (2024-09-05):
+# The penultimate URL in P Chan's email refers to page 521 of
+# Selga M, The Time Service in the Philippines.
+# Proc Pan-Pacific Science Congress. Vol. 1 (1923), 519-532.
+# It says, "The change from the meridian 120° 58' 04" to the 120th implied a
+# change of 3 min. 52s.26 in time; consequently on 6th September, 1899,
+# Manila Observatory gave the noon signal 3 min. 52s.26 later than before".
+#
+# Wikipedia says the US declared Manila liberated on March 4, 1945;
+# this doesn't affect clocks, just our time zone abbreviation and DST flag.
 
 # From Paul Goyette (2018-06-15) with URLs updated by Guy Harris (2024-02-15):
 # In the Philippines, there is a national law, Republic Act No. 10535
@@ -3747,33 +3746,38 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 # influence of the sources.  There is no current abbreviation for DST,
 # so use "PDT", the usual American style.
 
-# From P Chan (2021-05-10):
-# Here's a fairly comprehensive article in Japanese:
-# https://wiki.suikawiki.org/n/Philippine%20Time
-# From Paul Eggert (2021-05-10):
-# The info in the Japanese table has not been absorbed (yet) below.
-
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
-Rule	Phil	1936	only	-	Nov	1	0:00	1:00	D
-Rule	Phil	1937	only	-	Feb	1	0:00	0	S
-Rule	Phil	1954	only	-	Apr	12	0:00	1:00	D
-Rule	Phil	1954	only	-	Jul	1	0:00	0	S
-Rule	Phil	1978	only	-	Mar	22	0:00	1:00	D
-Rule	Phil	1978	only	-	Sep	21	0:00	0	S
+Rule	Phil	1936	only	-	Oct	31	24:00	1:00	D
+Rule	Phil	1937	only	-	Jan	15	24:00	0	S
+Rule	Phil	1941	only	-	Dec	15	24:00	1:00	D
+# The following three rules were canceled by Japan:
+#Rule	Phil	1942	only	-	Jan	31	24:00	0	S
+#Rule	Phil	1942	only	-	Mar	 1	 0:00	1:00	D
+#Rule	Phil	1942	only	-	Jun	30	24:00	0	S
+Rule	Phil	1945	only	-	Nov	30	24:00	0	S
+Rule	Phil	1954	only	-	Apr	11	24:00	1:00	D
+Rule	Phil	1954	only	-	Jun	 4	24:00	0	S
+Rule	Phil	1977	only	-	Mar	27	24:00	1:00	D
+Rule	Phil	1977	only	-	Sep	21	24:00	0	S
+Rule	Phil	1990	only	-	May	21	 0:00	1:00	D
+Rule	Phil	1990	only	-	Jul	28	24:00	0	S
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Manila	-15:56:00 -	LMT	1844 Dec 31
-			8:04:00 -	LMT	1899 May 11
-			8:00	Phil	P%sT	1942 May
-			9:00	-	JST	1944 Nov
+Zone	Asia/Manila	-15:56:08 -	LMT	1844 Dec 31
+			8:03:52 -	LMT	1899 Sep  6  4:00u
+			8:00	Phil	P%sT	1942 Feb 11 24:00
+			9:00	-	JST	1945 Mar  4
 			8:00	Phil	P%sT
 
+# Bahrain
 # Qatar
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Qatar	3:26:08 -	LMT	1920     # Al Dawhah / Doha
 			4:00	-	%z	1972 Jun
 			3:00	-	%z
 
+# Kuwait
 # Saudi Arabia
+# Yemen
 #
 # Japan's year-round bases in Antarctica match this since 1970.
 #
@@ -4079,7 +4083,11 @@ Zone	Asia/Dushanbe	4:35:12 -	LMT	1924 May  2
 			5:00	1:00	%z	1991 Sep  9  2:00s
 			5:00	-	%z
 
+# Cambodia
+# Christmas I
+# Laos
 # Thailand
+# Vietnam (northern)
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Bangkok	6:42:04	-	LMT	1880
 			6:42:04	-	BMT	1920 Apr # Bangkok Mean Time
@@ -4094,6 +4102,9 @@ Zone	Asia/Ashgabat	3:53:32 -	LMT	1924 May  2 # or Ashkhabad
 			4:00 RussiaAsia	%z	1992 Jan 19  2:00
 			5:00	-	%z
 
+# Oman
+# Réunion
+# Seychelles
 # United Arab Emirates
 #
 # The Crozet Is also observe Réunion time; see the 'antarctica' file.
@@ -4215,9 +4226,3 @@ Zone Asia/Ho_Chi_Minh	7:06:30 -	LMT	1906 Jul  1
 # For timestamps in north Vietnam back to 1970 (the tzdb cutoff),
 # use Asia/Bangkok; see the VN entries in the file zone1970.tab.
 # For timestamps before 1970, see Asia/Hanoi in the file 'backzone'.
-
-# Yemen
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Aden	2:59:54	-	LMT	1950
-			3:00	-	+03
-
