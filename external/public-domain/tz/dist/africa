@@ -101,41 +101,6 @@ Zone	Africa/Algiers	0:12:12 -	LMT	1891 Mar 16
 			0:00	Algeria	WE%sT	1981 May
 			1:00	-	CET
 
-# Angola
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Luanda	0:52:56	-	LMT	1892
-			0:52:04	-	LMT	1911 Dec 31 23:00u # Luanda MT?
-			1:00	-	WAT
-
-# Benin
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Porto-Novo	0:10:28	-	LMT	1912 Jan  1
-			0:00	-	GMT	1934 Feb 26
-			1:00	-	WAT
-
-# Botswana
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Gaborone	1:43:40 -	LMT	1885
-			1:30	-	SAST	1903 Mar
-			2:00	-	CAT	1943 Sep 19  2:00
-			2:00	1:00	CAST	1944 Mar 19  2:00
-			2:00	-	CAT
-
-# Burkina Faso
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Ouagadougou	-0:06:04 -	LMT	1912
-			 0:00	-	GMT
-
-# Burundi
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Bujumbura	1:57:28	-	LMT	1890
-			2:00	-	CAT
-
-# Cameroon
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Douala	0:38:48	-	LMT	1912
-			1:00	-	WAT
-
 # Cape Verde / Cabo Verde
 #
 # From Tim Parenti (2024-07-01), per Paul Eggert (2018-02-16):
@@ -149,11 +114,6 @@ Zone Atlantic/Cape_Verde -1:34:04 -	LMT	1912 Jan 01  2:00u # Praia
 			-2:00	-	%z	1975 Nov 25  2:00
 			-1:00	-	%z
 
-# Central African Republic
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Bangui	1:14:20	-	LMT	1912
-			1:00	-	WAT
-
 # Chad
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Ndjamena	1:00:12 -	LMT	1912 Jan  1 # N'Djamena
@@ -161,27 +121,18 @@ Zone	Africa/Ndjamena	1:00:12 -	LMT	1912 Jan  1 # N'Djamena
 			1:00	1:00	WAST	1980 Mar  8
 			1:00	-	WAT
 
-# Comoros
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Indian/Comoro	2:53:04 -	LMT	1911 Jul # Moroni, Gran Comoro
-			3:00	-	EAT
-
-# Democratic Republic of the Congo
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Kinshasa	1:01:12 -	LMT	1897 Nov  9
-			1:00	-	WAT
-
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Lubumbashi	1:49:52 -	LMT	1897 Nov  9
-			1:00	-	WAT	1920 Apr 25
-			2:00	-	CAT
-
-# Republic of the Congo
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Brazzaville	1:01:08 -	LMT	1912
-			1:00	-	WAT
-
+# Burkina Faso
 # Côte d'Ivoire (Ivory Coast)
+# The Gambia
+# Ghana
+# Guinea
+# Iceland
+# Mali
+# Mauritania
+# St Helena
+# Senegal
+# Sierra Leone
+# Togo
 
 # The other parts of the St Helena territory are similar:
 #	Tristan da Cunha: on GMT, say Whitman and the CIA
@@ -193,12 +144,6 @@ Zone Africa/Brazzaville	1:01:08 -	LMT	1912
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Abidjan	-0:16:08 -	LMT	1912 Jan  1
 			 0:00	-	GMT
-
-# Djibouti
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Djibouti	2:52:36 -	LMT	1911 Jul
-			3:00	-	EAT
-
 
 ###############################################################################
 
@@ -397,64 +342,6 @@ Rule	Egypt	2023	max	-	Oct	lastThu	24:00	0	-
 Zone	Africa/Cairo	2:05:09 -	LMT	1900 Oct
 			2:00	Egypt	EE%sT
 
-# Equatorial Guinea
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Malabo	0:35:08 -	LMT	1912
-			0:00	-	GMT	1963 Dec 15
-			1:00	-	WAT
-
-# Eritrea
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Asmara	2:35:32 -	LMT	1870
-			2:35:32	-	AMT	1890        # Asmara Mean Time
-			2:35:20	-	ADMT	1936 May  5 # Adis Dera MT
-			3:00	-	EAT
-
-# Eswatini (formerly Swaziland)
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Mbabane	2:04:24 -	LMT	1903 Mar
-			2:00	-	SAST
-
-# Ethiopia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Addis_Ababa	2:34:48 -	LMT	1870
-			2:35:20	-	ADMT	1936 May  5 # Adis Dera MT
-			3:00	-	EAT
-
-# Gabon
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Libreville	0:37:48 -	LMT	1912
-			1:00	-	WAT
-
-# The Gambia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Banjul	-1:06:36 -	LMT	1912
-			-1:06:36 -	BMT	1933 Apr  1 # Banjul Mean Time
-			-1:00	-	-01	1942 Feb  1  0:00
-			 0:00	-	GMT
-
-# Ghana
-# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
-Rule	Ghana	1919	only	-	Nov	24	0:00	0:20	+0020
-Rule	Ghana	1920	1942	-	Jan	 1	2:00	0	GMT
-Rule	Ghana	1920	1939	-	Sep	 1	2:00	0:20	+0020
-Rule	Ghana	1940	1941	-	May	 1	2:00	0:20	+0020
-Rule	Ghana	1950	1955	-	Sep	 1	2:00	0:30	+0030
-Rule	Ghana	1951	1956	-	Jan	 1	2:00	0	GMT
-
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Accra	-0:00:52 -	LMT	1915 Nov  2
-			 0:00	Ghana	%s	1942 Feb  8
-			 0:30	-	+0030	1946 Jan  6
-			 0:00	Ghana	%s
-
-# Guinea
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Conakry	-0:54:52 -	LMT	1912
-			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	-01	1960
-			 0:00	-	GMT
-
 # Guinea-Bissau
 #
 # From Tim Parenti (2024-07-01), per Paul Eggert (2018-02-16):
@@ -465,7 +352,16 @@ Zone	Africa/Bissau	-1:02:20 -	LMT	1912 Jan  1  1:00u
 			-1:00	-	%z	1975
 			 0:00	-	GMT
 
+# Comoros
+# Djibouti
+# Eritrea
+# Ethiopia
 # Kenya
+# Madagascar
+# Mayotte
+# Somalia
+# Tanzania
+# Uganda
 
 # From P Chan (2020-10-24):
 #
@@ -523,13 +419,6 @@ Zone	Africa/Nairobi	2:27:16	-	LMT	1908 May
 			2:30	-	%z	1936 Dec 31 24:00
 			2:45	-	%z	1942 Jul 31 24:00
 			3:00	-	EAT
-
-# Lesotho
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Maseru	1:50:00 -	LMT	1903 Mar
-			2:00	-	SAST	1943 Sep 19  2:00
-			2:00	1:00	SAST	1944 Mar 19  2:00
-			2:00	-	SAST
 
 # Liberia
 #
@@ -609,35 +498,6 @@ Zone	Africa/Tripoli	0:52:44 -	LMT	1920
 			2:00	-	EET	2012 Nov 10  2:00
 			1:00	Libya	CE%sT	2013 Oct 25  2:00
 			2:00	-	EET
-
-# Madagascar
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Indian/Antananarivo 3:10:04 -	LMT	1911 Jul
-			3:00	-	EAT	1954 Feb 27 23:00s
-			3:00	1:00	EAST	1954 May 29 23:00s
-			3:00	-	EAT
-
-# Malawi
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Blantyre	2:20:00 -	LMT	1911 Jul 24
-			2:21:10	-	ZMT	1914 Jun 30 # Zomba Mean Time
-			2:21	-	ZMT	1925 Jul  1
-			2:00	-	CAT
-
-# Mali
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Bamako	-0:32:00 -	LMT	1912
-			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	-01	1960 Jun 20
-			 0:00	-	GMT
-#PACKRATLIST zone.tab Link Africa/Bamako Africa/Timbuktu
-
-# Mauritania
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Nouakchott	-1:03:48 -	LMT	1912
-			 0:00	-	GMT	1934 Feb 26
-			-1:00	-	-01	1960 Nov 28
-			 0:00	-	GMT
 
 # Mauritius
 
@@ -735,13 +595,6 @@ Zone Indian/Mauritius	3:50:00 -	LMT	1907 # Port Louis
 
 # Morocco
 # See Africa/Ceuta for Spanish Morocco.
-
-# Mayotte
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul # Mamoutzou
-			3:00	-	EAT
-
-# Morocco
 
 # From Alex Krivenyshev (2008-05-09):
 # Here is an article that Morocco plan to introduce Daylight Saving Time between
@@ -1236,7 +1089,14 @@ Zone Africa/El_Aaiun	-0:52:48 -	LMT	1934 Jan # El Aaiún
 			 0:00	Morocco	%z	2018 Oct 28  3:00
 			 1:00	Morocco	%z
 
+# Botswana
+# Burundi
+# Democratic Republic of the Congo (eastern)
+# Malawi
 # Mozambique
+# Rwanda
+# Zambia
+# Zimbabwe
 #
 # From Tim Parenti (2024-07-01):
 # For timestamps before Mozambique's independence, see commentary for
@@ -1338,13 +1198,16 @@ Zone	Africa/Windhoek	1:08:24 -	LMT	1892 Feb 8
 #			2:00	-	CAT
 # End of rearguard section.
 
-# Niger
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Niamey	 0:08:28 -	LMT	1912
-			-1:00	-	-01	1934 Feb 26
-			 0:00	-	GMT	1960
-			 1:00	-	WAT
 
+# Angola
+# Benin
+# Cameroon
+# Central African Republic
+# Democratic Republic of the Congo (western)
+# Republic of the Congo
+# Equatorial Guinea
+# Gabon
+# Niger
 # Nigeria
 
 # From P Chan (2020-12-03):
@@ -1411,34 +1274,6 @@ Zone	Africa/Lagos	0:13:35 -	LMT	1905 Jul  1
 			0:30	-	%z	1919 Sep  1
 			1:00	-	WAT
 
-# Réunion
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Indian/Reunion	3:41:52 -	LMT	1911 Jun # Saint-Denis
-			4:00	-	+04
-#
-# Scattered Islands (Îles Éparses) administered from Réunion are as follows.
-# The following information about them is taken from
-# Îles Éparses (<http://www.outre-mer.gouv.fr/domtom/ile.htm>, 1997-07-22,
-# in French; no longer available as of 1999-08-17).
-# We have no info about their time zone histories.
-#
-# Bassas da India - uninhabited
-# Europa Island - inhabited from 1905 to 1910 by two families
-# Glorioso Is - inhabited until at least 1958
-# Juan de Nova - uninhabited
-# Tromelin - inhabited until at least 1958
-
-# Rwanda
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Kigali	2:00:16 -	LMT	1935 Jun
-			2:00	-	CAT
-
-# St Helena
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Atlantic/St_Helena	-0:22:48 -	LMT	1890 # Jamestown
-			-0:22:48 -	JMT	1951 # Jamestown Mean Time
-			 0:00	-	GMT
-
 # São Tomé and Príncipe
 
 # See Europe/Lisbon for info about the 1912 transition.
@@ -1466,45 +1301,10 @@ Zone	Africa/Sao_Tome	 0:26:56 -	LMT	1884
 			 1:00	-	WAT	2019 Jan  1 02:00
 			 0:00	-	GMT
 
-# Senegal
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Dakar	-1:09:44 -	LMT	1912
-			-1:00	-	-01	1941 Jun
-			 0:00	-	GMT
-
-# Seychelles
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Indian/Mahe	3:41:48 -	LMT	1907 Jan  1 # Victoria
-			4:00	-	+04
-# From Paul Eggert (2001-05-30):
-# Aldabra, Farquhar, and Desroches, originally dependencies of the
-# Seychelles, were transferred to the British Indian Ocean Territory
-# in 1965 and returned to Seychelles control in 1976.  We don't know
-# whether this affected their time zone, so omit this for now.
-# Possibly the islands were uninhabited.
-
-# Sierra Leone
-# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
-Rule	SL	1932	only	-	Dec	 1	 0:00	0:20	-0040
-Rule	SL	1933	1938	-	Mar	31	24:00	0	-01
-Rule	SL	1933	1939	-	Aug	31	24:00	0:20	-0040
-Rule	SL	1939	only	-	May	31	24:00	0	-01
-
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Freetown	-0:53:00 -	LMT	1882
-			-0:53:00 -	FMT	1913 Jul  1 # Freetown MT
-			-1:00	SL	%s	1939 Sep  5
-			-1:00	-	-01	1941 Dec  6 24:00
-			 0:00	-	GMT
-
-# Somalia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Mogadishu	3:01:28 -	LMT	1893 Nov
-			3:00	-	EAT	1931
-			2:30	-	+0230	1957
-			3:00	-	EAT
-
+# Eswatini (Swaziland)
+# Lesotho
 # South Africa
+
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	SA	1942	1943	-	Sep	Sun>=15	2:00	1:00	-
 Rule	SA	1943	1944	-	Mar	Sun>=15	2:00	0	-
@@ -1559,18 +1359,6 @@ Zone	Africa/Juba	2:06:28 -	LMT	1931
 			2:00	Sudan	CA%sT	2000 Jan 15 12:00
 			3:00	-	EAT	2021 Feb  1 00:00
 			2:00	-	CAT
-
-# Tanzania
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone Africa/Dar_es_Salaam 2:37:08 -	LMT	1931
-			3:00	-	EAT	1948
-			2:45	-	+0245	1961
-			3:00	-	EAT
-
-# Togo
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Lome	0:04:52 -	LMT	1893
-			0:00	-	GMT
 
 # Tunisia
 
@@ -1669,22 +1457,3 @@ Rule	Tunisia	2006	2008	-	Oct	lastSun	 2:00s	0	-
 Zone	Africa/Tunis	0:40:44 -	LMT	1881 May 12
 			0:09:21	-	PMT	1911 Mar 11 # Paris Mean Time
 			1:00	Tunisia	CE%sT
-
-# Uganda
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Kampala	2:09:40 -	LMT	1928 Jul
-			3:00	-	EAT	1930
-			2:30	-	+0230	1948
-			2:45	-	+0245	1957
-			3:00	-	EAT
-
-# Zambia
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Lusaka	1:53:08 -	LMT	1903 Mar
-			2:00	-	CAT
-
-# Zimbabwe
-# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Harare	2:04:12 -	LMT	1903 Mar
-			2:00	-	CAT
-
