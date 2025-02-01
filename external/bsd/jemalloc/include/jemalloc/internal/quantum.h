@@ -58,6 +58,9 @@
 #  ifdef __s390__
 #    define LG_QUANTUM		4
 #  endif
+#  ifdef __sh3__
+#    define LG_QUANTUM		3
+#  endif
 #  if (defined (__SH3E__) || defined(__SH4_SINGLE__) || defined(__SH4__) || \
 	defined(__SH4_SINGLE_ONLY__))
 #    define LG_QUANTUM		4
