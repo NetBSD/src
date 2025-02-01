@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_30.h,v 1.1 2023/12/27 19:22:10 thorpej Exp $	*/
+/*	$NetBSD: mmu_30.h,v 1.2 2025/02/01 22:54:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * - Lockable ATC entries
  * - ATC entries defined as Shared Globally
  *
- * Futhermore, the 68030 has some functional differences:
+ * Furthermore, the 68030 has some functional differences:
  * - Only 22 ATC entries
  * - Reduced instruction set for MMU operations
  * - Reduced addressing modes for MMU instructions.
