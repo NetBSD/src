@@ -211,7 +211,14 @@
 /* #undef LG_QUANTUM */
 
 /* One page is 2^LG_PAGE bytes. */
-#define LG_PAGE 12
+#include <machine/vmparam.h>
+#if defined(MAX_PAGE_SHIFT)
+#define LG_PAGE MAX_PAGE_SHIFT
+#elif defined(PAGE_SHIFT)
+#define LG_PAGE PAGE_SHIFT
+#else
+#error "PAGE_SHIFT is not defined"
+#endif
 
 /* Maximum number of regions in a slab. */
 /* #undef CONFIG_LG_SLAB_MAXREGS */
