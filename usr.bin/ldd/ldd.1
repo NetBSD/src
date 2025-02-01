@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.26 2025/02/01 17:17:58 christos Exp $
+.\"	$NetBSD: ldd.1,v 1.27 2025/02/01 22:19:57 kre Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,11 +70,11 @@ The following conversions can be used:
 .Bl -tag -width Ds -offset indent
 .
 .It Li %a
-The main program's absolute path, constructed either from the exact argument
-passed to
+The main program's absolute path,
+constructed either from the exact argument passed to
 .Nm
-if it is an absolute path, or having the current working path prepended to
-it if not.
+if it is an absolute path,
+or having the current working directory prepended to it if not.
 .
 .It Li \&%A \" NB: .%A is a mdoc macro name
 The program name from the argument vector.
