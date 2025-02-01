@@ -1,4 +1,4 @@
-/* $NetBSD: getnameinfo.c,v 1.2 2025/01/27 19:12:11 wiz Exp $ */
+/* $NetBSD: getnameinfo.c,v 1.3 2025/02/01 13:42:57 christos Exp $ */
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.2 2025/01/27 19:12:11 wiz Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.3 2025/02/01 13:42:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -77,17 +77,16 @@ static uint8_t	get_family(const char *);
 int
 main(int argc, char **argv)
 {
-	int hostlen = NI_MAXHOST, servlen = NI_MAXSERV;
-	char hostname[hostlen], service[servlen];
+	socklen_t hostlen = NI_MAXHOST, servlen = NI_MAXSERV, addrlen;
+	char hostname[NI_MAXHOST], service[NI_MAXSERV];
 	bool hostname_only = false, service_only = false;
-	int family = AF_UNSPEC;
+	uint8_t family = AF_UNSPEC;
 	int flags = 0;
 	char *address = NULL; 
 	in_port_t port = 0;
 	struct sockaddr_storage addr_st;
 	struct sockaddr_in *addr_in;
 	struct sockaddr_in6 *addr_in6;
-	int addr_stlen;
 	int ch;
 	int error;
 
@@ -174,7 +173,7 @@ main(int argc, char **argv)
 			warnx("Invalid IPv4 address: %s", address);
 			return EXIT_FAILURE;
 		} 
-		addr_stlen = sizeof(struct sockaddr_in);
+		addrlen = sizeof(*addr_in);
 		break;
 	case AF_INET6:
 		addr_in6 = (struct sockaddr_in6 *)&addr_st;
@@ -184,7 +183,7 @@ main(int argc, char **argv)
 			warnx("Invalid IPv6 address: %s", address);
 			return EXIT_FAILURE;
 		}
-		addr_stlen = sizeof(struct sockaddr_in6);
+		addrlen = sizeof(*addr_in6);
 		break;
 	default:
 		warnx("Unsupported family %d", family);
@@ -196,7 +195,7 @@ main(int argc, char **argv)
 	else if (service_only)
 		hostlen = 0;
 
-	error = getnameinfo((struct sockaddr *)&addr_st, addr_stlen,
+	error = getnameinfo((struct sockaddr *)&addr_st, addrlen,
 	    hostname, hostlen, service, servlen, flags);
 	if (error) 
 		errx(EXIT_FAILURE, "%s", gai_strerror(error));
