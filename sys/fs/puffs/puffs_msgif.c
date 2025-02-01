@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.107 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.108 2025/02/01 22:53:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.107 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.108 2025/02/01 22:53:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -655,7 +655,7 @@ puffs_msgif_getout(void *ctx, size_t maxsize, int nonblock,
 
 		DPRINTF(("puffs_getout: found park at %p, ", park));
 
-		/* If it's a goner, don't process any furher */
+		/* If it's a goner, don't process any further */
 		if (park->park_flags & PARKFLAG_WAITERGONE) {
 			DPRINTF(("waitergone!\n"));
 			puffs_msgpark_release(park);
