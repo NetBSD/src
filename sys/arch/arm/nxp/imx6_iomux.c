@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomux.c,v 1.2.18.1 2023/05/28 10:14:35 martin Exp $	*/
+/*	$NetBSD: imx6_iomux.c,v 1.2.18.2 2025/02/02 14:48:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.2.18.1 2023/05/28 10:14:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.2.18.2 2025/02/02 14:48:21 martin Exp $");
 
 #include "opt_fdt.h"
 
@@ -130,6 +130,7 @@ CFATTACH_DECL_NEW(imxiomux, sizeof(struct imxiomux_softc),
     imxiomux_match, imxiomux_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx6dl-iomuxc" },
 	{ .compat = "fsl,imx6q-iomuxc" },
 	{ .compat = "fsl,imx6sx-iomuxc" },
 	{ .compat = "fsl,imx7d-iomuxc" },
