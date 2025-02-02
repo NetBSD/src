@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.44 2025/01/18 09:07:14 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.45 2025/02/02 03:19:37 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -113,6 +113,9 @@
 #	IMGMAKEFSOPTIONS
 #		options passed to makefs(8) to create root file system
 #		(default: -o bsize=16384,fsize=2048,density=8192)
+#	IMGFFSVERSION
+#		version of FFS created by makefs(8)
+#		(default: 1)
 #	INSTALLBOOTOPTIONS
 #		options passed to installboot(8), e.g., -o console=com0
 #		(default: empty)
@@ -271,6 +274,7 @@ FSTAB_IN?=	${DISTRIBDIR}/common/bootimage/fstab.in
 SPEC_IN?=	${DISTRIBDIR}/common/bootimage/spec.in
 
 IMGMAKEFSOPTIONS?=	-o bsize=16384,fsize=2048,density=8192
+IMGFFSVERSION?=		1
 FATMAKEFSOPTIONS?=	-o fat_type=16
 
 WORKDIR?=       work
@@ -451,7 +455,9 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 	    -B ${TARGET_ENDIANNESS}					\
 	    -xx -F ${WORKSPEC} -N ${WORKDIR}/etc			\
 	    ${MAKEFS_TIMESTAMP}						\
+	    -t ffs							\
 	    ${IMGMAKEFSOPTIONS}						\
+	    -o version=${IMGFFSVERSION}					\
 	    ${WORKFS} ${WORKDIR}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} == "no"
 	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKFS} \

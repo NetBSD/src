@@ -1,4 +1,4 @@
-#	$NetBSD: installimage.mk,v 1.4 2023/08/14 13:54:05 gdt Exp $
+#	$NetBSD: installimage.mk,v 1.5 2025/02/02 03:19:37 tsutsui Exp $
 
 # common code between distrib/amd64/installimage/Makefile and
 # distrib/amd64/installimage-bios/Makefile.
@@ -9,7 +9,8 @@ INSTIMAGEMB?=	2500			# for all installation binaries
 INSTIMAGEMB?=	3800			# for all installation binaries
 .endif
 
-PRIMARY_BOOT=		bootxx_ffsv1
+IMGFFSVERSION=		2
+PRIMARY_BOOT=		bootxx_ffsv2
 SECONDARY_BOOT=		boot
 SECONDARY_BOOT_ARG=	# unnecessary
 

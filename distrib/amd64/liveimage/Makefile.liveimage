@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.liveimage,v 1.3 2024/04/13 18:38:17 maya Exp $
+#	$NetBSD: Makefile.liveimage,v 1.4 2025/02/02 03:19:37 tsutsui Exp $
 
 .include <bsd.own.mk>
 
 KERN_SET=		kern-GENERIC
-PRIMARY_BOOT=		bootxx_ffsv1
+IMGFFSVERSION=		2
+PRIMARY_BOOT=		bootxx_ffsv2
 SECONDARY_BOOT=		boot
 SECONDARY_BOOT_ARG=	# unnecessary
 
