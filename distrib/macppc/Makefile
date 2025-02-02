@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2025/02/02 04:36:27 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20 2025/02/02 10:35:56 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,6 +7,8 @@
 
 .if ${MACHINE_ARCH} != "powerpc64"
 SUBDIR=		floppies cdroms
+SUBDIR+=	.WAIT
+SUBDIR+=	liveimage
 .endif
 TARGETS+=	release
 
@@ -22,5 +24,8 @@ iso_image:
 # etc/Makefile using ${TOOLS_MKHYBRID} for ISO9660/HFS hybrid image
 # with bootable special Apple partition map
 #	${MAKEDIRTARGET} cdroms iso_image
+
+live_image:
+	${MAKEDIRTARGET} liveimage live_image
 
 .include <bsd.subdir.mk>
