@@ -95,7 +95,7 @@ Link	Etc/GMT			GMT0
 Link	Etc/GMT			Greenwich
 # End of rearguard section.
 Link	Asia/Hong_Kong		Hongkong
-Link	Africa/Abidjan		Iceland	#= Atlantic/Reykjavik
+Link	Atlantic/Reykjavik	Iceland
 Link	Asia/Tehran		Iran
 Link	Asia/Jerusalem		Israel
 Link	America/Jamaica		Jamaica
@@ -148,129 +148,23 @@ Link	America/Argentina/Jujuy		America/Jujuy
 Link	America/Indiana/Knox		America/Knox_IN
 Link	America/Kentucky/Louisville	America/Louisville
 Link	America/Argentina/Mendoza	America/Mendoza
-Link	America/Puerto_Rico		America/Virgin	#= America/St_Thomas
+Link	America/St_Thomas	America/Virgin
 Link	Pacific/Pago_Pago		Pacific/Samoa
 
 
 # Pre-2013 practice, which typically had a Zone per zone.tab line
 
 # Link	TARGET			LINK-NAME
-Link	Africa/Abidjan		Africa/Accra
-Link	Africa/Nairobi		Africa/Addis_Ababa
-Link	Africa/Nairobi		Africa/Asmara
-Link	Africa/Abidjan		Africa/Bamako
-Link	Africa/Lagos		Africa/Bangui
-Link	Africa/Abidjan		Africa/Banjul
-Link	Africa/Maputo		Africa/Blantyre
-Link	Africa/Lagos		Africa/Brazzaville
-Link	Africa/Maputo		Africa/Bujumbura
-Link	Africa/Abidjan		Africa/Conakry
-Link	Africa/Abidjan		Africa/Dakar
-Link	Africa/Nairobi		Africa/Dar_es_Salaam
-Link	Africa/Nairobi		Africa/Djibouti
-Link	Africa/Lagos		Africa/Douala
-Link	Africa/Abidjan		Africa/Freetown
-Link	Africa/Maputo		Africa/Gaborone
-Link	Africa/Maputo		Africa/Harare
-Link	Africa/Nairobi		Africa/Kampala
-Link	Africa/Maputo		Africa/Kigali
-Link	Africa/Lagos		Africa/Kinshasa
-Link	Africa/Lagos		Africa/Libreville
-Link	Africa/Abidjan		Africa/Lome
-Link	Africa/Lagos		Africa/Luanda
-Link	Africa/Maputo		Africa/Lubumbashi
-Link	Africa/Maputo		Africa/Lusaka
-Link	Africa/Lagos		Africa/Malabo
-Link	Africa/Johannesburg	Africa/Maseru
-Link	Africa/Johannesburg	Africa/Mbabane
-Link	Africa/Nairobi		Africa/Mogadishu
-Link	Africa/Lagos		Africa/Niamey
-Link	Africa/Abidjan		Africa/Nouakchott
-Link	Africa/Abidjan		Africa/Ouagadougou
-Link	Africa/Lagos		Africa/Porto-Novo
-Link	America/Puerto_Rico	America/Anguilla
-Link	America/Puerto_Rico	America/Antigua
-Link	America/Puerto_Rico	America/Aruba
-Link	America/Panama		America/Atikokan
-Link	America/Puerto_Rico	America/Blanc-Sablon
-Link	America/Panama		America/Cayman
-Link	America/Phoenix		America/Creston
-Link	America/Puerto_Rico	America/Curacao
-Link	America/Puerto_Rico	America/Dominica
-Link	America/Puerto_Rico	America/Grenada
-Link	America/Puerto_Rico	America/Guadeloupe
-Link	America/Puerto_Rico	America/Kralendijk
-Link	America/Puerto_Rico	America/Lower_Princes
-Link	America/Puerto_Rico	America/Marigot
-Link	America/Puerto_Rico	America/Montserrat
-Link	America/Toronto		America/Nassau
-Link	America/Puerto_Rico	America/Port_of_Spain
-Link	America/Puerto_Rico	America/St_Barthelemy
-Link	America/Puerto_Rico	America/St_Kitts
-Link	America/Puerto_Rico	America/St_Lucia
-Link	America/Puerto_Rico	America/St_Thomas
-Link	America/Puerto_Rico	America/St_Vincent
-Link	America/Puerto_Rico	America/Tortola
-Link	Pacific/Port_Moresby	Antarctica/DumontDUrville
-Link	Pacific/Auckland	Antarctica/McMurdo
-Link	Asia/Riyadh		Antarctica/Syowa
-Link	Europe/Berlin		Arctic/Longyearbyen
-Link	Asia/Riyadh		Asia/Aden
-Link	Asia/Qatar		Asia/Bahrain
-Link	Asia/Kuching		Asia/Brunei
-Link	Asia/Singapore		Asia/Kuala_Lumpur
-Link	Asia/Riyadh		Asia/Kuwait
-Link	Asia/Dubai		Asia/Muscat
-Link	Asia/Bangkok		Asia/Phnom_Penh
-Link	Asia/Bangkok		Asia/Vientiane
-Link	Africa/Abidjan		Atlantic/Reykjavik
-Link	Africa/Abidjan		Atlantic/St_Helena
-Link	Europe/Brussels		Europe/Amsterdam
-Link	Europe/Prague		Europe/Bratislava
-Link	Europe/Zurich		Europe/Busingen
-Link	Europe/Berlin		Europe/Copenhagen
-Link	Europe/London		Europe/Guernsey
-Link	Europe/London		Europe/Isle_of_Man
-Link	Europe/London		Europe/Jersey
-Link	Europe/Belgrade		Europe/Ljubljana
-Link	Europe/Brussels		Europe/Luxembourg
-Link	Europe/Helsinki		Europe/Mariehamn
-Link	Europe/Paris		Europe/Monaco
-Link	Europe/Berlin		Europe/Oslo
-Link	Europe/Belgrade		Europe/Podgorica
-Link	Europe/Rome		Europe/San_Marino
-Link	Europe/Belgrade		Europe/Sarajevo
-Link	Europe/Belgrade		Europe/Skopje
-Link	Europe/Berlin		Europe/Stockholm
-Link	Europe/Zurich		Europe/Vaduz
-Link	Europe/Rome		Europe/Vatican
-Link	Europe/Belgrade		Europe/Zagreb
-Link	Africa/Nairobi		Indian/Antananarivo
-Link	Asia/Bangkok		Indian/Christmas
-Link	Asia/Yangon		Indian/Cocos
-Link	Africa/Nairobi		Indian/Comoro
-Link	Indian/Maldives		Indian/Kerguelen
-Link	Asia/Dubai		Indian/Mahe
-Link	Africa/Nairobi		Indian/Mayotte
-Link	Asia/Dubai		Indian/Reunion
-Link	Pacific/Port_Moresby	Pacific/Chuuk
-Link	Pacific/Tarawa		Pacific/Funafuti
-Link	Pacific/Tarawa		Pacific/Majuro
-Link	Pacific/Pago_Pago	Pacific/Midway
-Link	Pacific/Guadalcanal	Pacific/Pohnpei
-Link	Pacific/Guam		Pacific/Saipan
-Link	Pacific/Tarawa		Pacific/Wake
-Link	Pacific/Tarawa		Pacific/Wallis
 
 
 # Non-zone.tab locations with timestamps since 1970 that duplicate
 # those of an existing location
 
 # Link	TARGET			LINK-NAME
-Link	Africa/Abidjan		Africa/Timbuktu
+Link	Africa/Bamako	Africa/Timbuktu
 Link	America/Argentina/Catamarca	America/Argentina/ComodRivadavia
 Link	America/Adak		America/Atka
-Link	America/Panama		America/Coral_Harbour
+Link	America/Atikokan	America/Coral_Harbour
 Link	America/Tijuana		America/Ensenada
 Link	America/Indiana/Indianapolis	America/Fort_Wayne
 Link	America/Toronto		America/Montreal
@@ -283,13 +177,13 @@ Link	America/Tijuana		America/Santa_Isabel
 Link	America/Denver		America/Shiprock
 Link	America/Toronto		America/Thunder_Bay
 Link	America/Edmonton	America/Yellowknife
-Link	Pacific/Auckland	Antarctica/South_Pole
+Link	Antarctica/McMurdo	Antarctica/South_Pole
 Link	Asia/Ulaanbaatar	Asia/Choibalsan
 Link	Asia/Shanghai		Asia/Chongqing
 Link	Asia/Shanghai		Asia/Harbin
 Link	Asia/Urumqi		Asia/Kashgar
 Link	Asia/Jerusalem		Asia/Tel_Aviv
-Link	Europe/Berlin		Atlantic/Jan_Mayen
+Link	Europe/Oslo		Atlantic/Jan_Mayen
 Link	Australia/Sydney	Australia/Canberra
 Link	Australia/Hobart	Australia/Currie
 Link	Europe/London		Europe/Belfast
@@ -298,14 +192,14 @@ Link	Europe/Kyiv		Europe/Uzhgorod
 Link	Europe/Kyiv		Europe/Zaporozhye
 Link	Pacific/Kanton		Pacific/Enderbury
 Link	Pacific/Honolulu	Pacific/Johnston
-Link	Pacific/Port_Moresby	Pacific/Yap
+Link	Pacific/Chuuk		Pacific/Yap
 Link	Europe/Lisbon		WET
 
 
 # Alternate names for the same location
 
 # Link	TARGET			LINK-NAME	#= TARGET1
-Link	Africa/Nairobi		Africa/Asmera	#= Africa/Asmara
+Link	Africa/Asmara	Africa/Asmera
 Link	America/Nuuk		America/Godthab
 Link	Asia/Ashgabat		Asia/Ashkhabad
 Link	Asia/Kolkata		Asia/Calcutta
@@ -327,5 +221,5 @@ Link	Europe/Kyiv		Europe/Kiev
 Link	Asia/Nicosia		Europe/Nicosia
 Link	Pacific/Honolulu	HST
 Link	America/Los_Angeles	PST8PDT
-Link	Pacific/Guadalcanal	Pacific/Ponape	#= Pacific/Pohnpei
-Link	Pacific/Port_Moresby	Pacific/Truk	#= Pacific/Chuuk
+Link	Pacific/Pohnpei		Pacific/Ponape
+Link	Pacific/Chuuk		Pacific/Truk

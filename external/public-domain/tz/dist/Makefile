@@ -930,7 +930,6 @@ sorted.ck: backward backzone
 back.ck: checklinks.awk $(TDATA_TO_CHECK)
 		$(AWK) \
 		  -v DATAFORM=$(DATAFORM) \
-		  -v backcheck=backward \
 		  -f checklinks.awk $(TDATA_TO_CHECK)
 		touch $@
 
