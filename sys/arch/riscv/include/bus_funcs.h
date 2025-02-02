@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.3 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.4 2025/02/02 11:29:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -289,13 +289,13 @@
 /*
  * Copy operations.
  */
-#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
 	__bs_copy(1, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
 	__bs_copy(2, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
 	__bs_copy(4, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 	__bs_copy(8, t, h1, o1, h2, o2, c)
 
 /*
@@ -319,11 +319,11 @@
  */
 
 #define bs_map_proto(f)							\
-int	__bs_c(f,_bs_map)(void *t, bus_addr_t addr,		\
+int	__bs_c(f,_bs_map)(void *t, bus_addr_t addr,			\
 	    bus_size_t size, int cacheable, bus_space_handle_t *bshp);
 
 #define bs_unmap_proto(f)						\
-void	__bs_c(f,_bs_unmap)(void *t, bus_space_handle_t bsh,	\
+void	__bs_c(f,_bs_unmap)(void *t, bus_space_handle_t bsh,		\
 	    bus_size_t size);
 
 #define bs_subregion_proto(f)						\
@@ -332,13 +332,13 @@ int	__bs_c(f,_bs_subregion)(void *t, bus_space_handle_t bsh,	\
 	    bus_space_handle_t *nbshp);
 
 #define bs_alloc_proto(f)						\
-int	__bs_c(f,_bs_alloc)(void *t, bus_addr_t rstart,		\
+int	__bs_c(f,_bs_alloc)(void *t, bus_addr_t rstart,			\
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,		\
 	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,	\
 	    bus_space_handle_t *bshp);
 
 #define bs_free_proto(f)						\
-void	__bs_c(f,_bs_free)(void *t, bus_space_handle_t bsh,	\
+void	__bs_c(f,_bs_free)(void *t, bus_space_handle_t bsh,		\
 	    bus_size_t size);
 
 #define bs_vaddr_proto(f)						\
@@ -348,11 +348,11 @@ void *	__bs_c(f,_bs_vaddr)(void *t, bus_space_handle_t bsh);
 paddr_t	__bs_c(f,_bs_mmap)(void *, bus_addr_t, off_t, int, int);
 
 #define bs_barrier_proto(f)						\
-void	__bs_c(f,_bs_barrier)(void *t, bus_space_handle_t bsh,	\
+void	__bs_c(f,_bs_barrier)(void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, bus_size_t len, int flags);
 
 #define	bs_r_1_proto(f)							\
-uint8_t	__bs_c(f,_bs_r_1)(void *t, bus_space_handle_t bsh,	\
+uint8_t	__bs_c(f,_bs_r_1)(void *t, bus_space_handle_t bsh,		\
 		    bus_size_t offset);
 
 #define	bs_r_2_proto(f)							\
@@ -490,7 +490,7 @@ void	__bs_c(f,_bs_sm_1)(void *t, bus_space_handle_t bsh,		\
 #define	bs_sm_2_proto(f)						\
 void	__bs_c(f,_bs_sm_2)(void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, uint16_t value, bus_size_t count);	\
-void	__bs_c(f,_bs_sm_2_swap)(void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sm_2_swap)(void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, uint16_t value, bus_size_t count);
 
 #define	bs_sm_4_proto(f)						\
