@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.47 2025/01/07 16:17:41 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.48 2025/02/02 14:57:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -720,4 +720,9 @@ sys/ufs/lfs/lfs_vfsops.c			1.383
 
 	ffs: PR 58837: missing locking around fs_fmod/time.
 	[hannken, ticket #1934]
+
+sys/arch/x86/x86/identcpu.c			1.132,1.133
+
+	x86: PR 58982: fix MP boot issues on newer Apollo Lake CPUs.
+	[andvar, ticket #1935]
 
