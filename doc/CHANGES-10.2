@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.6 2025/01/17 12:28:00 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.7 2025/02/02 15:05:07 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -82,4 +82,39 @@ usr.sbin/services_mkdb/services_mkdb.8		1.13
 
 	services(5): PR 58998:  consistently refer to the cdb database.
 	[uwe, ticket #1040]
+
+share/man/man4/bwi.4				1.15
+sys/arch/evbppc/conf/WII			1.7
+sys/dev/ic/bwi.c				1.39-1.41
+sys/dev/ic/bwireg.h				1.5
+sys/dev/ic/bwivar.h				1.11
+sys/dev/sdmmc/files.sdmmc			1.6
+sys/dev/sdmmc/if_bwi_sdio.c			1.1
+sys/dev/sdmmc/sdmmc_cis.c			1.10
+sys/dev/sdmmc/sdmmcvar.h			1.38
+sys/dev/sdmmc/sdmmcdevs				1.9
+sys/dev/sdmmc/sdmmcdevs.h			1.9 (regen)
+
+	evbppc: add Nintendo Wii WLAN support.
+	[jmcneill, ticket #1041]
+
+sys/arch/arm/nxp/imx6_iomux.c			1.4
+
+	evbarm: add support for the RIoTboard i.MX6S IOMUX controller.
+	[skrll, ticket #1042]
+
+sys/arch/x86/x86/identcpu.c			1.132,1.133
+
+	x86: PR 58982: fix MP boot issues on newer Apollo Lake CPUs.
+	[andvar, ticket #1043]
+
+sys/dev/i2c/i2c.c				1.91
+
+	iic(4): make "i2cscan -r ..." work on the Raspberry PI.
+	[brad, ticket #1044]
+
+external/mpl/dhcp/dist/common/options.c		1.8
+
+	dhcpd(8): safety fix.
+	[christos, ticket #1045]
 
