@@ -496,10 +496,33 @@ Rule	GB-Eire 1990	1995	-	Oct	Sun>=22	1:00u	0	GMT
 # Summer Time Order 1997 (S.I. 1997/2982)
 # See EU for rules starting in 1996.
 #
-# Use Europe/London for Jersey, Guernsey, and the Isle of Man.
 
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/London	-0:01:15 -	LMT	1847 Dec  1
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Jersey	-0:08:26 -	LMT	1898 Jun 11 16:00u
+			 0:00	GB-Eire	%s	1940 Jul  2
+			 1:00	C-Eur	CE%sT	1945 May  8
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Guernsey	-0:10:09 -	LMT	1913 Jun 18
+			 0:00	GB-Eire	%s	1940 Jul  2
+			 1:00	C-Eur	CE%sT	1945 May  8
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Isle_of_Man	-0:17:55 -	LMT	1883 Mar 30  0:00s
 			 0:00	GB-Eire	%s	1968 Oct 27
 			 1:00	-	BST	1971 Oct 31  2:00u
 			 0:00	GB-Eire	%s	1996
@@ -866,8 +889,6 @@ Zone	Europe/Minsk	1:50:16 -	LMT	1880
 			3:00	-	%z
 
 # Belgium
-# Luxembourg
-# Netherlands
 #
 # From Michael Deckers (2019-08-25):
 # The exposition in the web page
@@ -951,6 +972,15 @@ Zone	Europe/Brussels	0:17:30 -	LMT	1880
 			1:00	Belgium	CE%sT	1977
 			1:00	EU	CE%sT
 
+# Bosnia & Herzegovina
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Sarajevo	1:13:40	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
+
 # Bulgaria
 #
 # From Plamen Simenov via Steffen Thorsen (1999-09-09):
@@ -976,11 +1006,19 @@ Zone	Europe/Sofia	1:33:16 -	LMT	1880
 			2:00	E-Eur	EE%sT	1997
 			2:00	EU	EE%sT
 
+# Croatia
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Zagreb	1:03:52	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
+
 # Cyprus
 # Please see the 'asia' file for Asia/Nicosia.
 
 # Czech Republic (Czechia)
-# Slovakia
 #
 # From Ivan Benovic (2024-01-30):
 # https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/1946/54/
@@ -1032,6 +1070,29 @@ Zone	Europe/Prague	0:57:44 -	LMT	1850
 # End of rearguard section.
 			1:00	Czech	CE%sT	1979
 			1:00	EU	CE%sT
+
+# Denmark
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Denmark	1916	only	-	May	14	23:00	1:00	S
+Rule	Denmark	1916	only	-	Sep	30	23:00	0	-
+Rule	Denmark	1940	only	-	May	15	 0:00	1:00	S
+Rule	Denmark	1945	only	-	Apr	 2	 2:00s	1:00	S
+Rule	Denmark	1945	only	-	Aug	15	 2:00s	0	-
+Rule	Denmark	1946	only	-	May	 1	 2:00s	1:00	S
+Rule	Denmark	1946	only	-	Sep	 1	 2:00s	0	-
+Rule	Denmark	1947	only	-	May	 4	 2:00s	1:00	S
+Rule	Denmark	1947	only	-	Aug	10	 2:00s	0	-
+Rule	Denmark	1948	only	-	May	 9	 2:00s	1:00	S
+Rule	Denmark	1948	only	-	Aug	 8	 2:00s	0	-
+#
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Copenhagen	 0:50:20 -	LMT	1890
+			 0:50:20 -	CMT	1894 Jan  1 # Copenhagen MT
+			 1:00	Denmark	CE%sT	1942 Nov  2  2:00s
+			 1:00	C-Eur	CE%sT	1945 Apr  2  2:00
+			 1:00	Denmark	CE%sT	1980
+			 1:00	EU	CE%sT
 
 # Faroe Is
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
@@ -1147,7 +1208,7 @@ Zone Atlantic/Faroe	-0:27:04 -	LMT	1908 Jan 11 # Tórshavn
 # However, Greenland will change to Daylight Saving Time again in 2024
 # and onwards.
 
-# From Jule Dabars (2023-10-29):
+# From a contributor who wishes to remain anonymous for now (2023-10-29):
 # https://www.dr.dk/nyheder/seneste/i-nat-skal-uret-stilles-en-time-tilbage-men-foerste-gang-sker-det-ikke-i-groenland
 # with a link to that page:
 # https://naalakkersuisut.gl/Nyheder/2023/10/2710_sommertid
@@ -1307,8 +1368,10 @@ Zone	Europe/Helsinki	1:39:49 -	LMT	1878 May 31
 			2:00	Finland	EE%sT	1983
 			2:00	EU	EE%sT
 
+# Åland Is
+Link	Europe/Helsinki	Europe/Mariehamn
+
 # France
-# Monaco
 
 # From Ciro Discepolo (2000-12-20):
 #
@@ -1446,10 +1509,7 @@ Zone	Europe/Paris	0:09:21 -	LMT	1891 Mar 16
 			1:00	France	CE%sT	1977
 			1:00	EU	CE%sT
 
-# Denmark
 # Germany
-# Norway
-# Sweden
 
 # From Markus Kuhn (1998-09-29):
 # The German time zone web site by the Physikalisch-Technische
@@ -1467,7 +1527,6 @@ Zone	Europe/Paris	0:09:21 -	LMT	1891 Mar 16
 # However, Moscow did not observe daylight saving in 1945, so
 # this was equivalent to UT +03, not +04.
 
-# Svalbard & Jan Mayen
 
 # From Steffen Thorsen (2001-05-01):
 # Although I could not find it explicitly, it seems that Jan Mayen and
@@ -1656,9 +1715,34 @@ Zone	Europe/Budapest	1:16:20 -	LMT	1890 Nov  1
 			1:00	Hungary	CE%sT	1984
 			1:00	EU	CE%sT
 
+# Iceland
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Iceland	1917	1919	-	Feb	19	23:00	1:00	-
+Rule	Iceland	1917	only	-	Oct	21	 1:00	0	-
+Rule	Iceland	1918	1919	-	Nov	16	 1:00	0	-
+Rule	Iceland	1921	only	-	Mar	19	23:00	1:00	-
+Rule	Iceland	1921	only	-	Jun	23	 1:00	0	-
+Rule	Iceland	1939	only	-	Apr	29	23:00	1:00	-
+Rule	Iceland	1939	only	-	Oct	29	 2:00	0	-
+Rule	Iceland	1940	only	-	Feb	25	 2:00	1:00	-
+Rule	Iceland	1940	1941	-	Nov	Sun>=2	 1:00s	0	-
+Rule	Iceland	1941	1942	-	Mar	Sun>=2	 1:00s	1:00	-
+# 1943-1946 - first Sunday in March until first Sunday in winter
+Rule	Iceland	1943	1946	-	Mar	Sun>=1	 1:00s	1:00	-
+Rule	Iceland	1942	1948	-	Oct	Sun>=22	 1:00s	0	-
+# 1947-1967 - first Sunday in April until first Sunday in winter
+Rule	Iceland	1947	1967	-	Apr	Sun>=1	 1:00s	1:00	-
+# 1949 and 1967 Oct transitions delayed by 1 week
+Rule	Iceland	1949	only	-	Oct	30	 1:00s	0	-
+Rule	Iceland	1950	1966	-	Oct	Sun>=22	 1:00s	0	-
+Rule	Iceland	1967	only	-	Oct	29	 1:00s	0	-
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Atlantic/Reykjavik	-1:28	-	LMT	1908
+			-1:00	Iceland	-01/+00	1968 Apr  7  1:00s
+			 0:00	-	GMT
+
 # Italy
-# San Marino
-# Vatican City
 #
 # From Paul Eggert (2001-03-06):
 # Sicily and Sardinia each had their own time zones from 1866 to 1893,
@@ -1778,6 +1862,9 @@ Zone	Europe/Rome	0:49:56 -	LMT	1866 Dec 12
 			1:00	Italy	CE%sT	1980
 			1:00	EU	CE%sT
 
+# Kosovo
+# See Europe/Belgrade.
+
 # Latvia
 
 # From Liene Kanepe (1998-09-17):
@@ -1860,6 +1947,12 @@ Zone	Europe/Riga	1:36:34	-	LMT	1880
 			2:00	-	EET	2001 Jan  2
 			2:00	EU	EE%sT
 
+# Liechtenstein
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Vaduz	0:38:04 -	LMT	1894 Jun
+			1:00	Swiss	CE%sT	1981
+			1:00	EU	CE%sT
+
 # Lithuania
 
 # From Paul Eggert (2016-03-18):
@@ -1911,6 +2004,50 @@ Zone	Europe/Vilnius	1:41:16	-	LMT	1880
 			1:00	EU	CE%sT	1999 Oct 31  1:00u
 			2:00	-	EET	2003 Jan  1
 			2:00	EU	EE%sT
+
+# Luxembourg
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Lux	1916	only	-	May	14	23:00	1:00	S
+Rule	Lux	1916	only	-	Oct	 1	 1:00	0	-
+Rule	Lux	1917	only	-	Apr	28	23:00	1:00	S
+Rule	Lux	1917	only	-	Sep	17	 1:00	0	-
+Rule	Lux	1918	only	-	Apr	Mon>=15	 2:00s	1:00	S
+Rule	Lux	1918	only	-	Sep	Mon>=15	 2:00s	0	-
+Rule	Lux	1919	only	-	Mar	 1	23:00	1:00	S
+Rule	Lux	1919	only	-	Oct	 5	 3:00	0	-
+Rule	Lux	1920	only	-	Feb	14	23:00	1:00	S
+Rule	Lux	1920	only	-	Oct	24	 2:00	0	-
+Rule	Lux	1921	only	-	Mar	14	23:00	1:00	S
+Rule	Lux	1921	only	-	Oct	26	 2:00	0	-
+Rule	Lux	1922	only	-	Mar	25	23:00	1:00	S
+Rule	Lux	1922	only	-	Oct	Sun>=2	 1:00	0	-
+Rule	Lux	1923	only	-	Apr	21	23:00	1:00	S
+Rule	Lux	1923	only	-	Oct	Sun>=2	 2:00	0	-
+Rule	Lux	1924	only	-	Mar	29	23:00	1:00	S
+Rule	Lux	1924	1928	-	Oct	Sun>=2	 1:00	0	-
+Rule	Lux	1925	only	-	Apr	 5	23:00	1:00	S
+Rule	Lux	1926	only	-	Apr	17	23:00	1:00	S
+Rule	Lux	1927	only	-	Apr	 9	23:00	1:00	S
+Rule	Lux	1928	only	-	Apr	14	23:00	1:00	S
+Rule	Lux	1929	only	-	Apr	20	23:00	1:00	S
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Luxembourg	0:24:36 -	LMT	1904 Jun
+			1:00	Lux	CE%sT	1918 Nov 25
+			0:00	Lux	WE%sT	1929 Oct  6  2:00s
+			0:00	Belgium	WE%sT	1940 May 14  3:00
+			1:00	C-Eur	WE%sT	1944 Sep 18  3:00
+			1:00	Belgium	CE%sT	1977
+			1:00	EU	CE%sT
+
+# North Macedonia
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Skopje	1:25:44	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
 
 # Malta
 #
@@ -2006,6 +2143,71 @@ Zone	Europe/Chisinau	1:55:20 -	LMT	1880
 			2:00	E-Eur	EE%sT	1997
 # See Romania commentary for the guessed 1997 transition to EU rules.
 			2:00	Moldova	EE%sT
+
+# Monaco
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Monaco	0:29:32 -	LMT	1892 Jun  1
+			0:09:21	-	PMT	1911 Mar 29 # Paris Mean Time
+			0:00	France	WE%sT	1945 Sep 16  3:00
+			1:00	France	CE%sT	1977
+			1:00	EU	CE%sT
+
+# Montenegro
+Link	Europe/Belgrade	Europe/Podgorica
+
+# Netherlands
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Neth	1916	only	-	May	 1	0:00	1:00	NST	# Netherlands Summer Time
+Rule	Neth	1916	only	-	Oct	 1	0:00	0	AMT	# Amsterdam Mean Time
+Rule	Neth	1917	only	-	Apr	16	2:00s	1:00	NST
+Rule	Neth	1917	only	-	Sep	17	2:00s	0	AMT
+Rule	Neth	1918	1921	-	Apr	Mon>=1	2:00s	1:00	NST
+Rule	Neth	1918	1921	-	Sep	lastMon	2:00s	0	AMT
+Rule	Neth	1922	only	-	Mar	lastSun	2:00s	1:00	NST
+Rule	Neth	1922	1936	-	Oct	Sun>=2	2:00s	0	AMT
+Rule	Neth	1923	only	-	Jun	Fri>=1	2:00s	1:00	NST
+Rule	Neth	1924	only	-	Mar	lastSun	2:00s	1:00	NST
+Rule	Neth	1925	only	-	Jun	Fri>=1	2:00s	1:00	NST
+# From 1926 through 1939 DST began 05-15, except that it was delayed by a week
+# in years when 05-15 fell in the Pentecost weekend.
+Rule	Neth	1926	1931	-	May	15	2:00s	1:00	NST
+Rule	Neth	1932	only	-	May	22	2:00s	1:00	NST
+Rule	Neth	1933	1936	-	May	15	2:00s	1:00	NST
+Rule	Neth	1937	only	-	May	22	2:00s	1:00	NST
+Rule	Neth	1937	only	-	Jul	 1	0:00	1:00	S
+Rule	Neth	1937	1939	-	Oct	Sun>=2	2:00s	0	-
+Rule	Neth	1938	1939	-	May	15	2:00s	1:00	S
+Rule	Neth	1945	only	-	Apr	 2	2:00s	1:00	S
+Rule	Neth	1945	only	-	Sep	16	2:00s	0	-
+		#STDOFF	0:19:32.13
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Amsterdam	0:19:32 -	LMT	1835
+			0:19:32	Neth	%s	1937 Jul  1
+			0:20	Neth +0020/+0120 1940 May 16  0:00
+			1:00	C-Eur	CE%sT	1945 Apr  2  2:00
+			1:00	Neth	CE%sT	1977
+			1:00	EU	CE%sT
+
+# Norway
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Norway	1916	only	-	May	22	1:00	1:00	S
+Rule	Norway	1916	only	-	Sep	30	0:00	0	-
+Rule	Norway	1945	only	-	Apr	 2	2:00s	1:00	S
+Rule	Norway	1945	only	-	Oct	 1	2:00s	0	-
+Rule	Norway	1959	1964	-	Mar	Sun>=15	2:00s	1:00	S
+Rule	Norway	1959	1965	-	Sep	Sun>=15	2:00s	0	-
+Rule	Norway	1965	only	-	Apr	25	2:00s	1:00	S
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Oslo	0:43:00 -	LMT	1895 Jan  1
+			1:00	Norway	CE%sT	1940 Aug 10 23:00
+			1:00	C-Eur	CE%sT	1945 Apr  2  2:00
+			1:00	Norway	CE%sT	1980
+			1:00	EU	CE%sT
+
+# Svalbard & Jan Mayen
+Link	Europe/Oslo	Arctic/Longyearbyen
 
 # Poland
 
@@ -3482,13 +3684,10 @@ Zone Asia/Anadyr	11:49:56 -	LMT	1924 May  2
 			11:00	Russia	%z	2011 Mar 27  2:00s
 			12:00	-	%z
 
-# Bosnia & Herzegovina
-# Croatia
-# Kosovo
-# Montenegro
-# North Macedonia
+# San Marino
+Link	Europe/Rome	Europe/San_Marino
+
 # Serbia
-# Slovenia
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Belgrade	1:22:00	-	LMT	1884
 			1:00	-	CET	1941 Apr 18 23:00
@@ -3498,6 +3697,18 @@ Zone	Europe/Belgrade	1:22:00	-	LMT	1884
 # Metod Koželj reports that the legal date of
 # transition to EU rules was 1982-11-27, for all of Yugoslavia at the time.
 # Shanks & Pottenger don't give as much detail, so go with Koželj.
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
+
+# Slovakia
+Link	Europe/Prague	Europe/Bratislava
+
+# Slovenia
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Ljubljana	0:58:04	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
 			1:00	-	CET	1982 Nov 27
 			1:00	EU	CE%sT
 
@@ -3606,11 +3817,16 @@ Zone	Atlantic/Canary	-1:01:36 -	LMT	1922 Mar # Las Palmas de Gran C.
 # IATA SSIM (1996-09) says the Canaries switch at 2:00u, not 1:00u.
 # Ignore this for now, as the Canaries are part of the EU.
 
+# Sweden
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Stockholm	1:12:12 -	LMT	1879 Jan  1
+			1:00:14	-	SET	1900 Jan  1 # Swedish Time
+			1:00	-	CET	1916 May 14 23:00
+			1:00	1:00	CEST	1916 Oct  1  1:00
+			1:00	-	CET	1980
+			1:00	EU	CE%sT
 
-# Germany (Busingen enclave)
-# Liechtenstein
 # Switzerland
-#
 # From Howse:
 # By the end of the 18th century clocks and watches became commonplace
 # and their performance improved enormously.  Communities began to keep
@@ -3724,6 +3940,7 @@ Zone	Europe/Zurich	0:34:08 -	LMT	1853 Jul 16 # See above comment.
 			0:29:46	-	BMT	1894 Jun    # Bern Mean Time
 			1:00	Swiss	CE%sT	1981
 			1:00	EU	CE%sT
+Link	Europe/Zurich	Europe/Busingen
 
 # Turkey
 
@@ -4025,6 +4242,10 @@ Zone Europe/Kyiv	2:02:04 -	LMT	1880
 			2:00	1:00	EEST	1991 Sep 29  3:00
 			2:00	C-Eur	EE%sT	1996 May 13
 			2:00	EU	EE%sT
+
+# Vatican City
+Link	Europe/Rome	Europe/Vatican
+
 
 ###############################################################################
 

@@ -27,12 +27,9 @@
 # in New York City (1869-10).  His 1870 proposal was based on Washington, DC,
 # but in 1872-05 he moved the proposed origin to Greenwich.
 
-# From Paul Eggert (2024-11-18):
+# From Paul Eggert (2018-03-20):
 # Dowd's proposal left many details unresolved, such as where to draw
-# lines between time zones.  Sandford Fleming of the Canadian Pacific Railway
-# argued for Dowd's proposal in 1876, and Cleveland Abbe of the American
-# Meteorology Society published a report in 1879 recommending four US time
-# zones based on GMT.  However, the key individual who made time zones
+# lines between time zones.  The key individual who made time zones
 # work in the US was William Frederick Allen - railway engineer,
 # managing editor of the Travelers' Guide, and secretary of the
 # General Time Convention, a railway standardization group.  Allen
@@ -1591,6 +1588,10 @@ Zone America/Moncton	-4:19:08 -	LMT	1883 Dec  9
 # See America/Toronto for most of Quebec, including Montreal.
 # See America/Halifax for the Îles de la Madeleine and the Listuguj reserve.
 # See America/Puerto_Rico for east of Natashquan.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Blanc-Sablon -3:48:28 -	LMT	1884
+			-4:00	Canada	A%sT	1970
+			-4:00	-	AST
 
 # Ontario
 
@@ -1709,7 +1710,6 @@ Rule	Toronto	1951	1956	-	Sep	lastSun	2:00	0	S
 # Toronto Star, which said that DST was ending 1971-10-31 as usual.
 Rule	Toronto	1957	1973	-	Oct	lastSun	2:00	0	S
 
-# The Bahamas match Toronto since 1970.
 
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone America/Toronto	-5:17:32 -	LMT	1895
@@ -1718,7 +1718,13 @@ Zone America/Toronto	-5:17:32 -	LMT	1895
 			-5:00	Canada	E%sT	1946
 			-5:00	Toronto	E%sT	1974
 			-5:00	Canada	E%sT
-# For Atikokan see America/Panama.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Atikokan	-6:06:28 -	LMT	1895
+			-6:00	Canada	C%sT	1940 Sep 29
+			-6:00	1:00	CDT	1942 Feb  9  2:00s
+			-6:00	Canada	C%sT	1945 Sep 30  2:00
+			-5:00	-	EST
+#PACKRATLIST zone.tab Link America/Atikokan America/Coral_Harbour
 
 
 # Manitoba
@@ -1962,7 +1968,11 @@ Zone America/Fort_Nelson	-8:10:47 -	LMT	1884
 			-8:00	Vanc	P%sT	1987
 			-8:00	Canada	P%sT	2015 Mar  8  2:00
 			-7:00	-	MST
-# For Creston see America/Phoenix.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Creston	-7:46:04 -	LMT	1884
+			-7:00	-	MST	1916 Oct 1
+			-8:00	-	PST	1918 Jun 2
+			-7:00	-	MST
 
 # Northwest Territories, Nunavut, Yukon
 
@@ -2634,7 +2644,7 @@ Zone America/Dawson	-9:17:40 -	LMT	1900 Aug 20
 # http://puentelibre.mx/noticia/ciudad_juarez_cambio_horario_noviembre_2022/
 
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
-Rule	Mexico	1931	only	-	Apr	30	0:00	1:00	D
+Rule	Mexico	1931	only	-	April	30	0:00	1:00	D
 Rule	Mexico	1931	only	-	Oct	1	0:00	0	S
 Rule	Mexico	1939	only	-	Feb	5	0:00	1:00	D
 Rule	Mexico	1939	only	-	Jun	25	0:00	0	S
@@ -2843,6 +2853,32 @@ Zone America/Tijuana	-7:48:04 -	LMT	1922 Jan  1  7:00u
 # no information
 
 ###############################################################################
+
+# Anguilla
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Anguilla	-4:12:16 -	LMT	1912 Mar  2
+			-4:00	-	AST
+
+# Antigua & Barbuda
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Antigua	-4:07:12 -	LMT	1912 Mar 2
+			-5:00	-	EST	1951
+			-4:00	-	AST
+
+# The Bahamas
+# Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
+Rule	Bahamas	1942	only	-	May	 1	24:00	1:00	W
+Rule	Bahamas	1944	only	-	Dec	31	24:00	0	S
+Rule	Bahamas	1945	only	-	Feb	 1	0:00	1:00	W
+Rule	Bahamas	1945	only	-	Aug	14	23:00u	1:00	P # Peace
+Rule	Bahamas	1945	only	-	Oct	17	24:00	0	S
+Rule	Bahamas	1964	1975	-	Oct	lastSun	2:00	0	S
+Rule	Bahamas	1964	1975	-	Apr	lastSun	2:00	1:00	D
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Nassau	-5:09:30 -	LMT	1912 Mar 2
+			-5:00	Bahamas	E%sT	1976
+			-5:00	US	E%sT
 
 # Barbados
 
@@ -3055,6 +3091,15 @@ Zone Atlantic/Bermuda	-4:19:18 -	LMT	1890	# Hamilton
 			-4:00	Bermuda	A%sT	1974 Apr 28  2:00
 			-4:00	Canada	A%sT	1976
 			-4:00	US	A%sT
+
+# Caribbean Netherlands
+# See America/Kralendijk in southamerica.
+
+# Cayman Is
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Cayman	-5:25:32 -	LMT	1890     # Georgetown
+			-5:07:10 -	KMT	1912 Feb # Kingston Mean Time
+			-5:00	-	EST
 
 # Costa Rica
 
@@ -3281,6 +3326,11 @@ Zone	America/Havana	-5:29:28 -	LMT	1890
 			-5:29:36 -	HMT	1925 Jul 19 12:00 # Havana MT
 			-5:00	Cuba	C%sT
 
+# Dominica
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Dominica	-4:05:36 -	LMT	1911 Jul  1  0:01 # Roseau
+			-4:00	-	AST
+
 # Dominican Republic
 
 # From Steffen Thorsen (2000-10-30):
@@ -3326,6 +3376,22 @@ Rule	Salv	1987	1988	-	Sep	lastSun	0:00	0	S
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone America/El_Salvador -5:56:48 -	LMT	1921 # San Salvador
 			-6:00	Salv	C%sT
+
+# Grenada
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Grenada	-4:07:00 -	LMT	1911 Jul # St George's
+			-4:00	-	AST
+
+# Guadeloupe
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun  8 # Pointe-à-Pitre
+			-4:00	 -	AST
+
+# St Barthélemy
+# See America/St_Barthelemy in southamerica.
+
+# St Martin (French part)
+# See America/Marigot in southamerica.
 
 # Guatemala
 #
@@ -3512,6 +3578,11 @@ Zone America/Martinique	-4:04:20 -      LMT	1890        # Fort-de-France
 			-4:00	1:00	ADT	1980 Sep 28
 			-4:00	-	AST
 
+# Montserrat
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul  1  0:01 # Cork Hill
+			-4:00	-	AST
+
 # Nicaragua
 #
 # This uses Shanks & Pottenger for times before 2005.
@@ -3577,38 +3648,29 @@ Zone	America/Managua	-5:45:08 -	LMT	1890
 			-5:00	-	EST	1997
 			-6:00	Nic	C%sT
 
-# Cayman Is
 # Panama
-#
-# Atikokan and Coral Harbour, Canada, match Panama since 1970.
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Panama	-5:18:08 -	LMT	1890
 			-5:19:36 -	CMT	1908 Apr 22 # Colón Mean Time
 			-5:00	-	EST
 
-# Anguilla
-# Antigua & Barbuda
-# Aruba
-# Caribbean Netherlands
-# Curaçao
-# Dominica
-# Grenada
-# Guadeloupe
-# Montserrat
 # Puerto Rico
-# St Barthélemy
-# St Kitts-Nevis
-# Sint Maarten / St Martin
-# St Lucia
-# St Vincent & the Grenadines
-# Trinidad & Tobago
-# Virgin Is (UK & US)
-#
 # There are too many San Juans elsewhere, so we'll use 'Puerto_Rico'.
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone America/Puerto_Rico -4:24:25 -	LMT	1899 Mar 28 12:00 # San Juan
 			-4:00	-	AST	1942 May  3
 			-4:00	US	A%sT	1946
+			-4:00	-	AST
+
+# St Kitts-Nevis
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/St_Kitts	-4:10:52 -	LMT	1912 Mar  2 # Basseterre
+			-4:00	-	AST
+
+# St Lucia
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/St_Lucia	-4:04:00 -	LMT	1890 # Castries
+			-4:04:00 -	CMT	1912 # Castries Mean Time
 			-4:00	-	AST
 
 # St Pierre and Miquelon
@@ -3618,6 +3680,15 @@ Zone America/Miquelon	-3:44:40 -	LMT	1911 Jun 15 # St Pierre
 			-4:00	-	AST	1980 May
 			-3:00	-	%z	1987
 			-3:00	Canada	%z
+
+# St Vincent & the Grenadines
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/St_Vincent	-4:04:56 -	LMT	1890 # Kingstown
+			-4:04:56 -	KMT	1912 # Kingstown Mean Time
+			-4:00	-	AST
+
+# Sint Maarten
+# See America/Lower_Princes in southamerica.
 
 # Turks and Caicos
 #
@@ -3687,6 +3758,16 @@ Zone America/Grand_Turk	-4:44:32 -	LMT	1890
 			-5:00	US	E%sT	2015 Mar  8  2:00
 			-4:00	-	AST	2018 Mar 11  3:00
 			-5:00	US	E%sT
+
+# British Virgin Is
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Tortola	-4:18:28 -	LMT	1911 Jul # Road Town
+			-4:00	-	AST
+
+# US Virgin Is
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/St_Thomas	-4:19:44 -	LMT	1911 Jul # Charlotte Amalie
+			-4:00	-	AST
 
 # Local Variables:
 # coding: utf-8
