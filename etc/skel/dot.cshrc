@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.9 2024/09/23 12:20:23 uwe Exp $
+#	$NetBSD: dot.cshrc,v 1.10 2025/02/02 03:32:02 tsutsui Exp $
 #
 # This is the default .cshrc file.
 # Users are expected to edit it to meet their own needs.
@@ -62,4 +62,7 @@ if ($?prompt) then
 	# Set the prompt to include the hostname.
 	set mch = `hostname -s`
 	set prompt = "${mch:q}: {\!} "
+
+	# Configure the shell (on su(1) etc.) to load .shrc at startup time.
+	setenv ENV ~/.shrc
 endif
