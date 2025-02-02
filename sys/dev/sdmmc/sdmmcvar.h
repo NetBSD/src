@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.36.18.1 2024/10/26 15:26:43 martin Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.36.18.2 2025/02/02 14:29:59 martin Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ struct sdmmc_cis {
 	u_char		 cis1_minor;
 	char		 cis1_info_buf[256];
 	char		*cis1_info[4];
+	uint8_t		 lan_nid[6];
 };
 
 /*
@@ -393,6 +394,7 @@ int	sdmmc_io_function_enable(struct sdmmc_function *);
 void	sdmmc_io_function_disable(struct sdmmc_function *);
 int	sdmmc_io_function_abort(struct sdmmc_function *);
 
+uint32_t sdmmc_cisptr(struct sdmmc_function *);
 int	sdmmc_read_cis(struct sdmmc_function *, struct sdmmc_cis *);
 void	sdmmc_print_cis(struct sdmmc_function *);
 void	sdmmc_check_cis_quirks(struct sdmmc_function *);
