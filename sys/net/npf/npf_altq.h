@@ -104,4 +104,12 @@ struct npf_altq {
 	} pq_u;
 	u_int32_t		 qid;		/* return value */
 };
+
+TAILQ_HEAD(npf_altqqueue, npf_altq);
+
+extern int npf_get_altqs(void *);
+extern void npf_altq_init(void);
+extern int npf_begin_altq(void);
+extern int npf_add_altq(void *);
+
 #endif /* NPF_ALTQ_H_ */

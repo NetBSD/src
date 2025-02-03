@@ -330,6 +330,9 @@ struct npfioc_altq {
 #define	IOC_NPF_RULE		_IOWR('N', 107, nvlist_ref_t)
 #define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, nvlist_ref_t)
 #define	IOC_NPF_TABLE_REPLACE	_IOWR('N', 109, nvlist_ref_t)
+#define IOC_NPF_BEGIN_ALTQ  _IO('N', 112)
+#define IOC_NPF_ADD_ALTQ	_IOWR('N', 110, struct npfioc_altq)
+#define IOC_NPF_GET_ALTQS	_IOWR('N', 111, struct npfioc_altq)
 
 /*
  * NPF error report.

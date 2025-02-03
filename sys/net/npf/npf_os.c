@@ -274,6 +274,7 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return npfctl_table(npf, data);
 	case IOC_NPF_STATS:
 		return npf_stats_export(npf, data);
+
 	case IOC_NPF_LOAD:
 	case IOC_NPF_SAVE:
 	case IOC_NPF_RULE:

@@ -303,6 +303,31 @@ void		npfctl_build_table(const char *, u_int, const char *);
 
 void		npfctl_setparam(const char *, int);
 
+/* ALTQ related */
+int npfctl_test_altqsupport(int);
+extern int npfctl_open_dev(const char *);
+int npfctl_eval_bw(struct node_queue_bw *, char *);
+int	expand_altq(struct npf_altq *, const char *, struct node_queue *,
+	    struct node_queue_bw bwspec, struct node_queue_opt *);
+int	expand_queue(struct npf_altq *, const char *, struct node_queue *,
+	    struct node_queue_bw, struct node_queue_opt *);
+u_long get_ifmtu(char *);
+uint32_t get_ifspeed(char *);
+uint32_t npf_eval_bwspec(struct node_queue_bw *, uint32_t);
+void npfaltq_store(struct npf_altq *);
+int npfctl_add_altq(struct npf_altq *);
+int npf_eval_queue_opts(struct npf_altq *, struct node_queue_opt *,
+    uint32_t);
+int eval_npfaltq(struct npf_altq *, struct node_queue_bw *,
+    struct node_queue_opt *);
+int eval_npfqueue(struct npf_altq *, struct node_queue_bw *,
+    struct node_queue_opt *);
+struct npf_altq	*qname_to_npfaltq(const char *, const char *);
+uint32_t	 qname_to_qid(const char *);
+struct npf_altq *npfaltq_lookup(const char *ifname);
+char		*rate2str(double);
+int check_commit_altq(void);
+
 /*
  * For the systems which do not define TH_ECE and TW_CRW.
  */
