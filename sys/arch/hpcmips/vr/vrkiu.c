@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.42 2025/02/03 22:30:15 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.42 2025/02/03 22:30:15 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -211,7 +211,7 @@ vrkiu_intr(void *arg)
 {
         struct vrkiu_softc *sc = arg;
 
-	/* When key scan finisshed, this entry is called. */
+	/* When key scan finished, this entry is called. */
 #if 0
 	DPRINTF(("vrkiu_intr: intr=%x scan=%x\n",
 	    vrkiu_read(sc->sc_chip, KIUINT) & 7,

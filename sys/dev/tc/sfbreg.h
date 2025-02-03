@@ -1,4 +1,4 @@
-/* $NetBSD: sfbreg.h,v 1.3 2000/12/19 01:25:46 perseant Exp $ */
+/* $NetBSD: sfbreg.h,v 1.4 2025/02/03 22:30:15 andvar Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 /*
  * Smart ("CXTurbo") Frame Buffer definitions, from:
- * ``DEC 3000 300/400/500/600/700/800/900 AXP Models System Prgrammer's Manual''
+ * ``DEC 3000 300/400/500/600/700/800/900 AXP Models System Programmer's Manual''
  * (DEC order number EK-D3SYS-PM), section 6.
  *
  * All definitions are in "dense" TURBOchannel space.
@@ -91,7 +91,7 @@
 #define	SFB_ASIC_VIDCLK		0x007c	/* VIDCLK count (R/W) */
 
 /*
- * Same as above but in 32-bit units, and named like the corrseponding
+ * Same as above but in 32-bit units, and named like the corresponding
  * TGA registers, for easy comparison.
  */
 typedef u_int32_t sfb_reg_t;
