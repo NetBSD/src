@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.13 2022/05/24 20:50:18 andvar Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.14 2025/02/03 07:40:24 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -82,14 +82,14 @@ struct red;
 } while (0)
 
 #define	TS_ADD_DELTA(a, delta, res) do { \
-	register long xxns = (a)->tv_nsec + (long)(delta); \
-	\
-	(res)->tv_sec = (a)->tv_sec; \
-	while (xxns >= 1000000000) { \
-		++((res)->tv_sec); \
-		xxns -= 1000000000; \
+	KASSERT(delta >= 0); \
+	(res)->tv_sec = (a)->tv_sec + (delta) / 1000000000L; \
+	(res)->tv_nsec = (a)->tv_nsec + (long)((delta) % 1000000000L); \
+	if ((res)->tv_nsec >= 1000000000L) { \
+		(res)->tv_nsec -= 1000000000L; \
+		(res)->tv_sec++; \
 	} \
-	(res)->tv_nsec = xxns; \
+	KASSERT((res)->tv_nsec >= 0); \
 } while (0)
 
 #define	RM_TIMEOUT	2	/* 1 Clock tick. */
