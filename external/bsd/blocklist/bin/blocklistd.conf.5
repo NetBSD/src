@@ -1,6 +1,6 @@
-.\" $NetBSD: blocklistd.conf.5,v 1.3 2024/02/09 00:59:08 wiz Exp $
+.\" $NetBSD: blocklistd.conf.5,v 1.4 2025/02/03 15:40:17 christos Exp $
 .\"
-.\" Copyright (c) 2015 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2015, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 9, 2024
+.Dd February 3, 2025
 .Dt BLOCKLISTD.CONF 5
 .Os
 .Sh NAME
@@ -211,7 +211,7 @@ bnx0:ssh	*	*	*	*	3	6h
 1.2.3.4:ssh	*	*	*	*	*	*
 # Never block the example IPv6 subnet either
 [2001:db8::]/32:ssh	*	*	*	*	*	*
-# For addresses coming from 8.8.0.0/16 block class C networks instead
+# For addresses coming from 8.8.0.0/16 block whole /24 networks instead
 # individual hosts, but keep the rest of the blocking parameters the same.
 8.8.0.0/16:ssh	*	*	*	/24	=	=
 .Ed
