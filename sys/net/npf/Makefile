@@ -4,6 +4,6 @@
 #
 
 INCSDIR=	/usr/include/net
-INCS=		npf.h
+INCS=		npf.h npf_altq.h
 
 .include <bsd.kinc.mk>

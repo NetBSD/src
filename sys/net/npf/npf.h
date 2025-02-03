@@ -202,6 +202,8 @@ bool		npf_autounload_p(void);
 
 #endif	/* _KERNEL */
 
+#include "npf_altq.h"
+
 #define	NPF_SRC		0
 #define	NPF_DST		1
 
@@ -308,6 +310,12 @@ typedef struct npf_ioctl_table {
 		npf_ioctl_buf_t	buf;
 	} nct_data;
 } npf_ioctl_table_t;
+
+/* altq struct for ioctl */
+struct npfioc_altq {
+	u_int32_t	 nq;
+	struct npf_altq	 altq;
+};
 
 /*
  * IOCTL operations.
