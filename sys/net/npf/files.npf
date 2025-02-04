@@ -50,3 +50,6 @@ file	net/npf/npf_alg_icmp.c			npf
 
 # Interfaces
 file	net/npf/if_npflog.c			npf
+
+# queues
+file	net/npf/npf_altq.c			npf

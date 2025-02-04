@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.29 2025/01/08 13:00:04 joe Exp $");
 #include <netinet/in.h>
 
 #if NNPF > 0
-#include <net/npf_altq.h>
+#include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
@@ -107,7 +107,7 @@ static struct priq_if *pif_list = NULL;
 
 #if NNPF > 0
 int
-priq_pfattach(struct npf_altq *a)
+priq_npfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;

@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.34 2025/01/08 13:00:04 joe Exp $");
 #include <netinet/udp.h>
 
 #if NNPF > 0
-#include <net/npf_altq.h>
+#include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #ifdef ALTQ3_COMPAT
@@ -400,13 +400,12 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 	return 0;
 }
 
-#if NNPF > 0
 /*
  * attach a discipline to the interface.  if one already exists, it is
  * overridden.
  */
 int
-altq_pfattach(struct npf_altq *a)
+altq_npfattach(struct npf_altq *a)
 {
 	int error = 0;
 
@@ -415,17 +414,17 @@ altq_pfattach(struct npf_altq *a)
 		break;
 #ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
-		error = cbq_pfattach(a);
+		error = cbq_npfattach(a);
 		break;
 #endif
 #ifdef ALTQ_PRIQ
 	case ALTQT_PRIQ:
-		error = priq_pfattach(a);
+		error = priq_npfattach(a);
 		break;
 #endif
 #ifdef ALTQ_HFSC
 	case ALTQT_HFSC:
-		error = hfsc_pfattach(a);
+		error = hfsc_npfattach(a);
 		break;
 #endif
 	default:
@@ -441,7 +440,7 @@ altq_pfattach(struct npf_altq *a)
  * discipline.
  */
 int
-altq_pfdetach(struct npf_altq *a)
+altq_npfdetach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error = 0;
@@ -628,7 +627,6 @@ altq_getqstats(struct npf_altq *a, void *ubuf, int *nbytes)
 
 	return error;
 }
-#endif /* NNPF > 0 */
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header

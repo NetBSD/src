@@ -18,7 +18,7 @@ DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs_nofifofs -lrumpvfs -lrumpuser
-LDADD+=		-lrumpnet -lrumpnet_net	-lrumpdev_bpf
+LDADD+=		-lrumpnet -lrumpnet_net	-lrumpdev_bpf -lrumpnet_altq
 
 .if ${RUMP_SANITIZE:Uno} != "no"
 LDADD+=	-fsanitize=${RUMP_SANITIZE}

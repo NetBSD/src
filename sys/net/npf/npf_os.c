@@ -31,6 +31,11 @@
  * NPF main: dynamic load/initialisation and unload routines.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_altq.h"
+#include "opt_inet.h"
+#endif
+
 #ifdef _KERNEL
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21 2021/01/27 17:39:13 christos Exp $");
@@ -274,7 +279,18 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return npfctl_table(npf, data);
 	case IOC_NPF_STATS:
 		return npf_stats_export(npf, data);
-
+#ifdef ALTQ
+	case IOC_NPF_ADD_ALTQ:
+		return npf_add_altq(data);
+	case IOC_NPF_GET_ALTQS:
+		return npf_get_altqs(data);
+	case IOC_NPF_BEGIN_ALTQ:
+		/* initialize all queueing components on the first attempt */
+		if (!npf_altq_loaded) {
+			npf_altq_init();
+		}
+		return npf_begin_altq();
+#endif /* ALTQ */
 	case IOC_NPF_LOAD:
 	case IOC_NPF_SAVE:
 	case IOC_NPF_RULE:

@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.31 2025/01/08 13:00:04 joe Exp $");
 #include <netinet/in.h>
 
 #if NNPF > 0
-#include <net/npf_altq.h>
+#include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_hfsc.h>
@@ -175,7 +175,7 @@ static struct hfsc_if *hif_list = NULL;
 
 #if NNPF > 0
 int
-hfsc_pfattach(struct npf_altq *a)
+hfsc_npfattach(struct npf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error;
@@ -242,7 +242,7 @@ hfsc_add_queue(struct npf_altq *a)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl, *parent;
-	struct hfsc_opts *opts;
+	struct npf_hfsc_opts *opts;
 	struct service_curve rtsc, lssc, ulsc;
 
 	if ((hif = a->altq_disc) == NULL)

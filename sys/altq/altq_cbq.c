@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.42 2025/01/08 13:00:04 joe Exp $");
 #include <netinet/in.h>
 
 #if NNPF > 0
-#include <net/npf_altq.h>
+#include <net/npf/npf_altq.h>
 #endif
 #include <altq/altq.h>
 #include <altq/altq_cbq.h>
@@ -244,7 +244,7 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 
 #if NNPF > 0
 int
-cbq_pfattach(struct npf_altq *a)
+cbq_npfattach(struct npf_altq *a)
 {
 	struct ifnet	*ifp;
 	int		 s, error;
@@ -313,7 +313,7 @@ cbq_add_queue(struct npf_altq *a)
 	struct rm_class	*borrow, *parent;
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
-	struct cbq_opts	*opts;
+	struct npf_cbq_opts	*opts;
 	int		i, error;
 
 	if ((cbqp = a->altq_disc) == NULL)
