@@ -294,7 +294,7 @@ void		npfctl_build_group(const char *, int, const char *, bool);
 void		npfctl_build_group_end(void);
 void		npfctl_build_rule(uint32_t, const char *, sa_family_t,
 		    const npfvar_t *, const filt_opts_t *,
-		    const char *, const char *);
+		    const char *, const char *, struct node_qassign);
 void		npfctl_build_natseg(int, int, unsigned, const char *,
 		    const addr_port_t *, const addr_port_t *,
 		    const npfvar_t *, const filt_opts_t *, unsigned);
@@ -327,6 +327,7 @@ uint32_t	 qname_to_qid(const char *);
 struct npf_altq *npfaltq_lookup(const char *ifname);
 char		*rate2str(double);
 int check_commit_altq(void);
+int npf_rule_qnames_exists(const char *);
 
 /*
  * For the systems which do not define TH_ECE and TW_CRW.

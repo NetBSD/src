@@ -2762,6 +2762,7 @@
 ./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-obsolete		obsolete
 ./usr/include/net/npf.h				comp-c-include
+./usr/include/net/npf_altq.h			comp-c-include
 ./usr/include/net/npf_ncode.h			comp-obsolete		obsolete
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include

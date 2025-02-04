@@ -1289,3 +1289,23 @@ check_commit_hfsc(struct npf_altq *pa)
 	}
 	return error;
 }
+
+/* this checks for undefined queues appended on a rule */
+int
+npf_rule_qnames_exists(const char *qname)
+{
+	int found = 0;
+	struct npf_altq* a;
+	TAILQ_FOREACH(a, &altqs, entries) {
+		if (a->qname[0] != 0){
+			if (strcmp(a->qname, qname) == 0){
+				found = 1;
+				break;
+			}
+		}
+	}
+	if (!found)
+		yyerror("no qname named '%s' defined\n", qname);
+
+	return found;
+}

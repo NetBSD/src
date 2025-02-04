@@ -702,7 +702,7 @@ npfctl_build_group_end(void)
 void
 npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
     const npfvar_t *popts, const filt_opts_t *fopts,
-    const char *pcap_filter, const char *rproc)
+    const char *pcap_filter, const char *rproc, struct node_qassign queue)
 {
 	nl_rule_t *rl;
 
@@ -717,6 +717,17 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 
 	if (rproc) {
 		npf_rule_setproc(rl, rproc);
+	}
+
+	/* first ensure a queue is set on rule */
+	if (queue.qname != NULL ) {
+		/* ensure altq config obeys best practices */
+		if (check_commit_altq())
+			errx(EXIT_FAILURE, "error in altq config");
+		/*	ensure the referenced queue is defined */
+		if (npf_rule_qnames_exists(queue.qname))
+			if (npf_rule_setqueue(rl, queue.qname))
+				errx(EXIT_FAILURE, "rule queue %s cannot be set", queue.qname);
 	}
 
 	if (npf_conf) {
