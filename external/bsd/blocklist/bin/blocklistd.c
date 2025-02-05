@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.6 2025/02/05 20:04:18 christos Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.7 2025/02/05 20:14:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklistd.c,v 1.6 2025/02/05 20:04:18 christos Exp $");
+__RCSID("$NetBSD: blocklistd.c,v 1.7 2025/02/05 20:14:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -217,16 +217,19 @@ process(bl_t bl)
 	switch (bi->bi_type) {
 	case BL_ABUSE:
 		/*
-		 * If the application has signaled abusive behavior,
-		 * set the number of fails to be one less than the
-		 * configured limit.  Fallthrough to the normal BL_ADD
-		 * processing, which will increment the failure count
-		 * to the threshhold, and block the abusive address.
+		 * If the application has signaled abusive behavior, set the
+		 * number of fails to be two less than the configured limit.
+		 * Fall through to the normal BL_ADD and BL_BADUSER processing,
+		 * which will increment the failure count to the threshhold, and
+		 * block the abusive address.
 		 */
 		if (c.c_nfail != -1)
-			dbi.count = c.c_nfail - 1;
+			dbi.count = c.c_nfail - 2;
 		/*FALLTHROUGH*/
 	case BL_ADD:
+		dbi.count++;		/* will become += 2 */
+		/*FALLTHROUGH*/
+	case BL_BADUSER:
 		dbi.count++;
 		dbi.last = ts.tv_sec;
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
@@ -254,9 +257,6 @@ process(bl_t bl)
 			goto out;
 		dbi.count = 0;
 		dbi.last = 0;
-		break;
-	case BL_BADUSER:
-		/* ignore for now */
 		break;
 	default:
 		(*lfun)(LOG_ERR, "unknown message %d", bi->bi_type);

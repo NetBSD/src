@@ -1,4 +1,4 @@
-.\" $NetBSD: libblocklist.3,v 1.6 2024/08/18 16:24:40 christos Exp $
+.\" $NetBSD: libblocklist.3,v 1.7 2025/02/05 20:14:30 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 2, 2024
+.Dd February 5, 2025
 .Dt LIBBLOCKLIST 3
 .Os
 .Sh NAME
@@ -106,26 +106,20 @@ The
 .Ar action
 parameter can take these values:
 .Bl -tag -width ".Dv BLOCKLIST_ABUSIVE_BEHAVIOR"
-.It Dv BLOCKLIST_AUTH_FAIL
+.It Va BLOCKLIST_BAD_USER
+The sending daemon has determined the username presented for
+authentication is invalid.
+This is considered as one failure count.
+.It Va BLOCKLIST_AUTH_FAIL
 There was an unsuccessful authentication attempt.
-.It Dv BLOCKLIST_AUTH_OK
-A user successfully authenticated.
-.It Dv BLOCKLIST_ABUSIVE_BEHAVIOR
-The sending daemon has detected abusive behavior
-from the remote system.
-The remote address should
-be blocked as soon as possible.
-.It Dv BLOCKLIST_BAD_USER
-The sending daemon has determined the username
-presented for authentication is invalid.
-The
-.Xr blocklistd 8
-daemon compares the username to a configured list of forbidden
-usernames and
-blocks the address immediately if a forbidden username matches.
-(The
-.Dv BLOCKLIST_BAD_USER
-support is not currently available.)
+This is considered as two failure counts together.
+.It Va BLOCKLIST_ABUSIVE_BEHAVIOR
+The sending daemon has detected abusive behavior from the remote system.
+This is considered as a total immediate failure.
+The remote address will be blocked as soon as possible.
+.It Va BLOCKLIST_AUTH_OK
+A valid user successfully authenticated.
+Any entry for the remote address will be removed as soon as possible.
 .El
 .Pp
 The
