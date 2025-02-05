@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistd.conf.5,v 1.4 2025/02/03 15:40:17 christos Exp $
+.\" $NetBSD: blocklistd.conf.5,v 1.5 2025/02/05 20:07:46 christos Exp $
 .\"
 .\" Copyright (c) 2015, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,34 +48,34 @@ Comments are denoted by a
 at the beginning of a line.
 .Pp
 There are two kinds of configuration lines,
-.Va local
+.Va [local]
 and
-.Va remote .
+.Va [remote] .
 By default, configuration lines are
-.Va local ,
+.Va [local] ,
 i.e. the address specified refers to the addresses on the local machine.
 To switch to between
-.Va local
+.Va [local]
 and
-.Va remote
+.Va [remote]
 configuration lines you can specify the stanzas:
 .Dq [local]
 and
 .Dq [remote] .
 .Pp
 On
-.Va local
+.Va [local]
 and
-.Va remote
+.Va [remote]
 lines
 .Dq *
 means use the default, or wildcard match.
 In addition, for
-.Va remote
+.Va [remote]
 lines
 .Dq =
 means use the values from the matched
-.Va local
+.Va [local]
 configuration line.
 .Pp
 The first four fields,
@@ -85,9 +85,9 @@ The first four fields,
 and
 .Va owner
 are used to match the
-.Va local
+.Va [local]
 or
-.Va remote
+.Va [remote]
 addresses, whereas the last 3 fields
 .Va name ,
 .Va nfail ,
@@ -143,8 +143,8 @@ The
 field, is the name of the packet filter rule to be used.
 If the
 .Va name
-starts with a
-.Dq - ,
+starts with a hyphen
+.Pq Dq - ,
 then the default rulename is prepended to the given name.
 If the
 .Dv name
@@ -160,13 +160,13 @@ field contains the number of failed attempts before access is blocked,
 defaulting to
 .Dq *
 meaning never, and the last field
-.Va disable
+.Va duration
 specifies the amount of time since the last access that the blocking
 rule should be active, defaulting to
 .Dq *
 meaning forever.
 The default unit for
-.Va disable
+.Va duration
 is seconds, but one can specify suffixes for different units, such as
 .Dq m
 for minutes
@@ -176,25 +176,31 @@ for hours and
 for days.
 .Pp
 Matching is done first by checking the
-.Va local
+.Va [local]
 rules individually, in the order of the most specific to the least specific.
-If a match is found, then the
-.Va remote
+If a match is found, then the matching
+.Va [remote]
 rules are applied.
 The
 .Va name ,
 .Va nfail ,
 and
-.Va disable
+.Va duration
 fields can be altered by the
-.Va remote
+.Va [remote]
 rule that matched.
 .Pp
 The
-.Va remote
+.Va [remote]
 rules can be used for allowing specific addresses, changing the mask
-size, the rule that the packet filter uses, the number of failed attempts,
-or the block duration.
+size (via
+.Va name ) ,
+the rule that the packet filter uses (also via
+.Va name ) ,
+the number of failed attempts (via
+.Va nfail ) ,
+or the duration to block (via
+.Va duration ) .
 .Sh FILES
 .Bl -tag -width /etc/blocklistd.conf -compact
 .It Pa /etc/blocklistd.conf
