@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.4 2025/02/05 12:43:10 riastradh Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.5 2025/02/05 12:45:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.4 2025/02/05 12:43:10 riastradh Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.5 2025/02/05 12:45:54 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -202,8 +202,8 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "%s", gai_strerror(error));
 
 	print_result(hostname_only, service_only, hostname, service);
-
-	return EXIT_SUCCESS;
+	fflush(stdout);
+	return ferror(stdout) ? EXIT_FAILURE : EXIT_SUCCESS;
 opt46:
 	warnx("Options -4 and -6 cannot be used together");
 	usage();
@@ -243,16 +243,13 @@ static void
 print_result(bool hostname_only, bool service_only,
     char *hostname, char *service)
 {
-	int n;
 
 	if (hostname_only)
-		n = printf("%s\n", hostname);
+		printf("%s\n", hostname);
 	else if (service_only)
-		n = printf("%s\n", service);
+		printf("%s\n", service);
 	else
-		n = printf("%s %s\n", hostname, service);
-	if (n < 0)
-		err(EXIT_FAILURE, "printf");
+		printf("%s %s\n", hostname, service);
 }
 
 static void __dead
