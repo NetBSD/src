@@ -1,4 +1,4 @@
-/* $NetBSD: getnameinfo.c,v 1.3 2025/02/01 13:42:57 christos Exp $ */
+/*	$NetBSD: getnameinfo.c,v 1.4 2025/02/05 12:43:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,21 +31,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.3 2025/02/01 13:42:57 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.4 2025/02/05 12:43:10 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
+
 #include <sys/socket.h>
-#include <netinet/in.h>
+
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -68,11 +70,10 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.3 2025/02/01 13:42:57 christos Exp $");
  *   -u: Use UDP instead of the default TCP
  */
 
-
-static void	usage(void) __dead;
-static void	print_result(int, int, char *, char *);
+static void		usage(void) __dead;
+static void		print_result(bool, bool, char *, char *);
 static in_port_t	get_port(const char *);
-static uint8_t	get_family(const char *);
+static uint8_t		get_family(const char *);
 
 int
 main(int argc, char **argv)
@@ -82,7 +83,7 @@ main(int argc, char **argv)
 	bool hostname_only = false, service_only = false;
 	uint8_t family = AF_UNSPEC;
 	int flags = 0;
-	char *address = NULL; 
+	char *address = NULL;
 	in_port_t port = 0;
 	struct sockaddr_storage addr_st;
 	struct sockaddr_in *addr_in;
@@ -146,14 +147,14 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	if (argc == 0 && (hostname_only || 
-	    (hostname_only == 0 && service_only == 0))) {
+	if (argc == 0 && (hostname_only ||
+	    (!hostname_only && !service_only))) {
 		warnx("No IP address provided");
 		usage();
 	}
 
 	if (port == 0 && (service_only ||
-	    (hostname_only == 0 && service_only == 0))) {
+	    (!hostname_only && !service_only))) {
 		warnx("No port number provided");
 		usage();
 	}
@@ -172,7 +173,7 @@ main(int argc, char **argv)
 		if (inet_pton(family, address, &addr_in->sin_addr) == 0) {
 			warnx("Invalid IPv4 address: %s", address);
 			return EXIT_FAILURE;
-		} 
+		}
 		addrlen = sizeof(*addr_in);
 		break;
 	case AF_INET6:
@@ -197,7 +198,7 @@ main(int argc, char **argv)
 
 	error = getnameinfo((struct sockaddr *)&addr_st, addrlen,
 	    hostname, hostlen, service, servlen, flags);
-	if (error) 
+	if (error)
 		errx(EXIT_FAILURE, "%s", gai_strerror(error));
 
 	print_result(hostname_only, service_only, hostname, service);
@@ -212,7 +213,7 @@ optHS:
 }
 
 static uint8_t
-get_family(const char* address)
+get_family(const char *address)
 {
 	struct in_addr ipv4_addr;
 	struct in6_addr ipv6_addr;
@@ -230,7 +231,8 @@ static in_port_t
 get_port(const char *port_str)
 {
 	int r;
-	intmax_t port = strtoi(port_str, NULL, 0, 0, 65535, &r);
+
+	const intmax_t port = strtoi(port_str, NULL, 0, 0, 65535, &r);
 	if (r)
 		errc(EXIT_FAILURE, r, "Invalid port number %s", port_str);
 
@@ -238,9 +240,11 @@ get_port(const char *port_str)
 }
 
 static void
-print_result(int hostname_only, int service_only, char *hostname, char *service)
+print_result(bool hostname_only, bool service_only,
+    char *hostname, char *service)
 {
 	int n;
+
 	if (hostname_only)
 		n = printf("%s\n", hostname);
 	else if (service_only)
@@ -251,10 +255,10 @@ print_result(int hostname_only, int service_only, char *hostname, char *service)
 		err(EXIT_FAILURE, "printf");
 }
 
-
 static void __dead
 usage(void)
 {
+
 	(void)fprintf(stderr, "Usage: %s", getprogname());
 	(void)fprintf(stderr, " [-46fHNnrSu] [-p port] <IP-address>\n");
 	exit(EXIT_FAILURE);
