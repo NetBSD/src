@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.6 2025/02/05 12:52:58 riastradh Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.6 2025/02/05 12:52:58 riastradh Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.6 2025/02/05 12:52:58 riastradh Exp $");
  * similar to the getnameinfo function in the standard library.
  *
  * usage:
- *   getnameinfo [-46fHNnrSu] [-p port] <IP-address>
+ *   getnameinfo [-46fHNnrSu] [-p port] [<IP-address>]
  *
  *   -4: Restrict lookup to IPv4 addresses only
  *   -6: Restrict lookup to IPv6 addresses only
@@ -264,6 +264,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "Usage: %s", getprogname());
-	(void)fprintf(stderr, " [-46fHNnrSu] [-p port] <IP-address>\n");
+	(void)fprintf(stderr, " [-46fHNnrSu] [-p port] [<IP-address>]\n");
 	exit(EXIT_FAILURE);
 }
