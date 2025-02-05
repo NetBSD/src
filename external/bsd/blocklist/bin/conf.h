@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2025/02/05 20:09:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 
 struct conf {
+	size_t			c_lineno;
 	struct sockaddr_storage	c_ss;
 	int			c_lmask;
 	int			c_port;

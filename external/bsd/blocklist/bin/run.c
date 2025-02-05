@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.2 2025/02/05 20:09:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.2 2025/02/05 20:09:33 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -131,7 +131,8 @@ run_change(const char *how, const struct conf *c, char *id, size_t len)
 		prname = "udp";
 		break;
 	default:
-		(*lfun)(LOG_ERR, "%s: bad protocol %d", __func__, c->c_proto);
+		(*lfun)(LOG_ERR, "%s: bad protocol %d (line %zu)", __func__,
+		     c->c_proto, c->c_lineno);
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2024/02/09 15:15:32 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2025/02/05 20:09:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.6 2024/02/09 15:15:32 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7 2025/02/05 20:09:33 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -408,6 +408,8 @@ static int
 conf_parseline(const char *f, size_t l, char *p, struct conf *c, bool local)
 {
 	int e;
+
+	c->c_lineno = l;
 
 	while (*p && isspace((unsigned char)*p))
 		p++;
