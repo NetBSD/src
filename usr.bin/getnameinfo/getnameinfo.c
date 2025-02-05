@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.5 2025/02/05 12:45:54 riastradh Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.6 2025/02/05 12:52:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.5 2025/02/05 12:45:54 riastradh Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.6 2025/02/05 12:52:58 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -170,7 +170,10 @@ main(int argc, char **argv)
 		addr_in = (struct sockaddr_in *)&addr_st;
 		addr_in->sin_family = family;
 		addr_in->sin_port = htons(port);
-		if (inet_pton(family, address, &addr_in->sin_addr) == 0) {
+		if (address == NULL) {
+			addr_in->sin_addr.s_addr = INADDR_ANY;
+		} else if (inet_pton(family, address, &addr_in->sin_addr)
+		    == 0) {
 			warnx("Invalid IPv4 address: %s", address);
 			return EXIT_FAILURE;
 		}
@@ -180,7 +183,11 @@ main(int argc, char **argv)
 		addr_in6 = (struct sockaddr_in6 *)&addr_st;
 		addr_in6->sin6_family = family;
 		addr_in6->sin6_port = htons(port);
-		if (inet_pton(family, address, &addr_in6->sin6_addr) == 0) {
+		if (address == NULL) {
+			addr_in6->sin6_addr =
+			    (struct in6_addr)IN6ADDR_ANY_INIT;
+		} else if (inet_pton(family, address, &addr_in6->sin6_addr)
+		    == 0) {
 			warnx("Invalid IPv6 address: %s", address);
 			return EXIT_FAILURE;
 		}
