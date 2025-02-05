@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.9 2023/05/07 12:41:48 skrll Exp $
+#	$NetBSD: majors.riscv,v 1.10 2025/02/05 17:07:18 skrll Exp $
 #
 # Device majors for RISC-V
 #
@@ -27,6 +27,8 @@ device-major	altq		char 64			altq
 device-major	pci		char 66			pci
 
 device-major	kttcp		char 71			kttcp
+device-major	openfirm	char 77			openfirm
+
 
 # obsolete, probably can be safely removed after 4.0 branch
 #device-major	aucom		char 73			aucom
