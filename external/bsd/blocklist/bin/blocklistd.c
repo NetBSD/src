@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.5 2024/08/02 17:11:55 christos Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.6 2025/02/05 20:04:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklistd.c,v 1.5 2024/08/02 17:11:55 christos Exp $");
+__RCSID("$NetBSD: blocklistd.c,v 1.6 2025/02/05 20:04:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -188,10 +188,11 @@ process(bl_t bl)
 	if (getremoteaddress(bi, &rss, &rsl) == -1)
 		goto out;
 
-	if (debug) {
+	if (debug || bi->bi_msg[0]) {
 		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
-		(*lfun)(LOG_DEBUG, "processing type=%d fd=%d remote=%s msg=%s"
-		    " uid=%lu gid=%lu", bi->bi_type, bi->bi_fd, rbuf,
+		(*lfun)(bi->bi_msg[0] ? LOG_INFO : LOG_DEBUG,
+		    "processing type=%d fd=%d remote=%s msg=%s uid=%lu gid=%lu",
+		    bi->bi_type, bi->bi_fd, rbuf,
 		    bi->bi_msg, (unsigned long)bi->bi_uid,
 		    (unsigned long)bi->bi_gid);
 	}
