@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1356 2025/01/27 18:30:53 christos Exp $
+# $NetBSD: mi,v 1.1357 2025/02/05 20:26:04 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2506,6 +2506,7 @@
 ./usr/share/examples/blacklist/npf.conf		base-obsolete		obsolete
 ./usr/share/examples/blocklist			base-sys-examples
 ./usr/share/examples/blocklist/blocklistd.conf	base-sys-examples
+./usr/share/examples/blocklist/ipf.conf		base-sys-examples
 ./usr/share/examples/blocklist/npf.conf		base-sys-examples
 ./usr/share/examples/certctl			base-sysutil-examples
 ./usr/share/examples/certctl/certs.conf		base-sysutil-examples
