@@ -129,5 +129,8 @@ void 	npf_qid_unref(uint32_t);
 extern uint32_t	npf_qname2qid(char *);
 int	npf_altq_start(void);
 int	npf_enable_altq(struct npf_altq *);
+int	npf_disable_altq(struct npf_altq *);
+int	npf_stop_altq(void);
+
 
 #endif /* NPF_ALTQ_H_ */

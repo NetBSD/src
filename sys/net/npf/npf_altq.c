@@ -220,4 +220,47 @@ npf_enable_altq(struct npf_altq *altq)
 	return error;
 }
 
+int
+npf_stop_altq(void)
+{
+		struct npf_altq		*altq;
+		int error;
+	/* disable all altq interfaces on active list */
+	TAILQ_FOREACH(altq, npf_altqs_active, entries) {
+		if (altq->qname[0] == 0) {
+			error = npf_disable_altq(altq);
+			if (error != 0)
+				break;
+		}
+	}
+	return error;
+}
+
+int
+npf_disable_altq(struct npf_altq *altq)
+{
+	struct ifnet		*ifp;
+	struct tb_profile	 tb;
+	int			 s, error;
+	if ((ifp = ifunit(altq->ifname)) == NULL)
+		return EINVAL;
+	/*
+	 * when the discipline is no longer referenced, it was overridden
+	 * by a new one.  if so, just return.
+	 */
+	if (altq->altq_disc != ifp->if_snd.altq_disc)
+		return 0;
+	error = altq_disable(&ifp->if_snd);
+	if (error == 0) {
+		/* clear tokenbucket regulator */
+		tb.rate = 0;
+		s = splnet();
+		error = tbr_set(&ifp->if_snd, &tb);
+		splx(s);
+	}
+	if (error == 0)
+		npf_altq_running = 0;
+	return error;
+}
+
 #endif /* ALTQ */

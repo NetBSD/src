@@ -253,7 +253,10 @@ npfctl_switch(void *data)
 			error = npf_altq_start();
 #endif /* ALTQ */
 	} else {
-
+#ifdef ALTQ
+		if (npf_altq_running)
+			error = npf_stop_altq();
+#endif /* ALTQ */
 		/* Disable: remove pfil hooks. */
 		npf_pfil_unregister(false);
 		error = 0;
