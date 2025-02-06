@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3132 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3133 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -668,5 +668,17 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[brad 20241104]
 	tzcode: Updated to 2025a. [christos 20250123]
 	bind: Import version 9.20.4. [christos 20260126]
+	libc: Switch every port (except sun2 and vax) to jemalloc-5.3.0.
+		[christos 20250131]
+	acpi(4): cppc: Use frequency instead of performance units in
+		sysctl interface. [jmcneill 20250131]
 	tzdata: Updated to 2025a (using 2025agtz) [kre 20250201]
+	build.sh: Add live-image support for alpha, hppa, and macppc.
+		[tsutsui 20250202]
+	rge(4): Add support for RTL8126, from FUKAUMI Naoki.
+		[jmcneill 20250204]
+	riscv: Add ofctl(8) and /dev/openfirm support. [skrll 20250205]
 	ld(4) at virtio(4): Add discard support. [jakllsch 20250206]
+	blocklistd(8): Support multiple configuration files in a
+		configuration directory like /etc/blocklistd.conf.d,
+		from hrosenfeld. [christos 20250206]
