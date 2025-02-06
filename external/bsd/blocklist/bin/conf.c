@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2025/02/06 19:16:03 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2025/02/06 23:01:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.8 2025/02/06 19:16:03 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.9 2025/02/06 23:01:57 kre Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -1290,7 +1290,7 @@ conf_parsedir(DIR *dir, const char *config_path)
 		    strcmp(dent->d_name, "..") == 0)
 			continue;
 
-		(void) snprintf(path, path_max, "%s/%s", config_path,
+		(void) snprintf(path, (size_t)path_max, "%s/%s", config_path,
 		    dent->d_name);
 		if ((fp = fopen(path, "r")) == NULL) {
 			(*lfun)(LOG_ERR, "%s: Cannot open `%s' (%m)", __func__,
