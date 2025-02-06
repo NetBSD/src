@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.115 2025/02/06 20:07:19 jakllsch Exp $ */
+/* $NetBSD: dksubr.c,v 1.116 2025/02/06 20:10:25 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.115 2025/02/06 20:07:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.116 2025/02/06 20:10:25 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 		bp->b_error = 0;
 		bp->b_dev = dev;
 		bp->b_blkno = (daddr_t)(pos / secsize);
-		bp->b_bcount = uimin(len, maxsz);
+		bp->b_bcount = lmin(len, maxsz);
 		bp->b_flags = B_WRITE;
 
 		error = dk_translate(dksc, bp);
