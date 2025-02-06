@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.8 2025/02/06 20:59:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.8 2025/02/06 20:59:00 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -40,6 +40,10 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $");
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netatalk/at.h>
+#include <sys/un.h>
+#include <net/if_dl.h>
+#include <arpa/inet.h>
 
 #include <assert.h>
 #include <err.h>
@@ -51,16 +55,19 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#include "support.h"
+
 /*
  * getnameinfo: Resolve IP addresses and ports to hostnames and service names,
  * similar to the getnameinfo function in the standard library.
  *
  * usage:
- *   getnameinfo [-46fHNnrSu] [-p port] [<IP-address>]
+ *   getnameinfo [-46FHNnrSu] [-f family] [-p port] <IP-address>
  *
  *   -4: Restrict lookup to IPv4 addresses only
  *   -6: Restrict lookup to IPv6 addresses only
- *   -f: Suppress the fully-qualified domain name (FQDN)
+ *   -F: Suppress the fully-qualified domain name (FQDN)
+ *   -f: Specify address family to look up
  *   -H: Display only the hostname, omitting the service name
  *   -N: Display the numeric service name instead of the service name
  *   -n: Display the numeric host address instead of the hostname
@@ -73,7 +80,9 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.7 2025/02/05 13:10:29 riastradh Exp $");
 static void		usage(void) __dead;
 static void		print_result(bool, bool, char *, char *);
 static in_port_t	get_port(const char *);
+static uint8_t		get_family_from_address(const char *);
 static uint8_t		get_family(const char *);
+static void		parse_atalk(const char *, struct sockaddr_at *);
 
 int
 main(int argc, char **argv)
@@ -88,21 +97,23 @@ main(int argc, char **argv)
 	struct sockaddr_storage addr_st;
 	struct sockaddr_in *addr_in;
 	struct sockaddr_in6 *addr_in6;
+	struct sockaddr_un *addr_un;
+	struct sockaddr_dl *addr_dl;
 	int ch;
 	int error;
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "46rufnNHSp:")) != -1) {
+	while ((ch = getopt(argc, argv, "46Ff:HNnp:rSu")) != -1) {
 		switch (ch) {
 		case '4':
 			if (family != AF_UNSPEC)
-				goto opt46;
+				goto opt46f;
 			family = AF_INET;
 			break;
 		case '6':
 			if (family != AF_UNSPEC)
-				goto opt46;
+				goto opt46f;
 			family = AF_INET6;
 			break;
 		case 'r':
@@ -112,6 +123,11 @@ main(int argc, char **argv)
 			flags |= NI_DGRAM;
 			break;
 		case 'f':
+			if (family != AF_UNSPEC)
+				goto opt46f;
+			family = get_family(optarg);
+			break;
+		case 'F':
 			flags |= NI_NOFQDN;
 			break;
 		case 'n':
@@ -162,10 +178,16 @@ main(int argc, char **argv)
 	if (argc == 1) {
 		address = argv[0];
 		if (family == AF_UNSPEC)
-			family = get_family(address);
+			family = get_family_from_address(address);
 	}
 
+	memset(&addr_st, 0, sizeof(addr_st));
+
 	switch (family) {
+	case AF_APPLETALK:
+		parse_atalk(address, (struct sockaddr_at *)&addr_st);
+		addrlen = sizeof(struct sockaddr_at *);
+		break;
 	case AF_INET:
 		addr_in = (struct sockaddr_in *)&addr_st;
 		addr_in->sin_family = family;
@@ -173,10 +195,8 @@ main(int argc, char **argv)
 		if (address == NULL) {
 			addr_in->sin_addr.s_addr = INADDR_ANY;
 		} else if (inet_pton(family, address, &addr_in->sin_addr)
-		    == 0) {
-			warnx("Invalid IPv4 address: %s", address);
-			return EXIT_FAILURE;
-		}
+		    == 0)
+			errx(EXIT_FAILURE, "Invalid IPv4 address: %s", address);
 		addrlen = sizeof(*addr_in);
 		break;
 	case AF_INET6:
@@ -187,15 +207,28 @@ main(int argc, char **argv)
 			addr_in6->sin6_addr =
 			    (struct in6_addr)IN6ADDR_ANY_INIT;
 		} else if (inet_pton(family, address, &addr_in6->sin6_addr)
-		    == 0) {
-			warnx("Invalid IPv6 address: %s", address);
-			return EXIT_FAILURE;
-		}
+		    == 0)
+			errx(EXIT_FAILURE, "Invalid IPv6 address: %s", address);
 		addrlen = sizeof(*addr_in6);
 		break;
+	case AF_LINK:
+		addr_dl = (struct sockaddr_dl *)&addr_st;
+		addr_dl->sdl_len = sizeof(addr_st);
+		link_addr(address, addr_dl);
+		addrlen = addr_dl->sdl_len;
+		break;
+	case AF_LOCAL:
+		addr_un = (struct sockaddr_un *)&addr_st;
+		addr_un->sun_family = family;
+		if (strlen(address) >= sizeof(addr_un->sun_path))
+			errx(EXIT_FAILURE, "Invalid AF_LOCAL address: %s",
+			    address);
+		(void)strncpy(addr_un->sun_path, address,
+		    sizeof(addr_un->sun_path));
+		addrlen = sizeof(*addr_un);
+		break;
 	default:
-		warnx("Unsupported family %d", family);
-		return EXIT_FAILURE;
+		errx(EXIT_FAILURE, "Unsupported family %d", family);
 	}
 
 	if (hostname_only)
@@ -209,18 +242,36 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "%s", gai_strerror(error));
 
 	print_result(hostname_only, service_only, hostname, service);
+
 	fflush(stdout);
 	return ferror(stdout) ? EXIT_FAILURE : EXIT_SUCCESS;
-opt46:
-	warnx("Options -4 and -6 cannot be used together");
+opt46f:
+	warnx("Options -4, -6, -f cannot be used together");
 	usage();
 optHS:
 	warnx("Options -H and -S cannot be used together");
 	usage();
 }
 
+static void
+parse_atalk(const char *address, struct sockaddr_at *addr_at)
+{
+	int net, node, port;
+
+	if (sscanf(address, "%d:%d:%d", &net, &node, &port) != 3)
+badat:		errx(EXIT_FAILURE, "Invalid appletalk address: %s", address);
+
+	if (net < 0 || net > 0xFFFF || node < 0 || node > 0xFF ||
+	     port < 0 || port > 0xFFFF)
+		goto badat;
+	addr_at->sat_family = AF_APPLETALK;
+	addr_at->sat_addr.s_net = htons((u_short)net);
+	addr_at->sat_addr.s_node = (u_char)node;
+	addr_at->sat_port = htons((u_short)port);
+}
+
 static uint8_t
-get_family(const char *address)
+get_family_from_address(const char *address)
 {
 	struct in_addr ipv4_addr;
 	struct in6_addr ipv6_addr;
@@ -232,6 +283,15 @@ get_family(const char *address)
 		return AF_INET6;
 
 	errx(EXIT_FAILURE, "Invalid addrsss %s", address);
+}
+
+static uint8_t
+get_family(const char* str)
+{
+	int fam;
+	if (!parse_af(str, &fam) || fam <= 0 || fam > 255)
+		errx(EXIT_FAILURE, "Invalid family %s", str);
+	return (int8_t)fam;
 }
 
 static in_port_t

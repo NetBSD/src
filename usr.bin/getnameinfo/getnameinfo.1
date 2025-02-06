@@ -1,4 +1,4 @@
-.\" $NetBSD: getnameinfo.1,v 1.4 2025/02/05 15:58:01 uwe Exp $
+.\" $NetBSD: getnameinfo.1,v 1.5 2025/02/06 20:59:00 christos Exp $
 .\"
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 2025
+.Dd February 6, 2025
 .Dt GETNAMEINFO 1
 .Os
 .Sh NAME
@@ -35,7 +35,8 @@
 .Nd resolve IP addresses and ports to host and service names
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46fHNnrSu
+.Op Fl 46FHNnrSu
+.Op Fl f Ar family
 .Op Fl p Ar port
 .Op Ar IP-address
 .Sh DESCRIPTION
@@ -68,12 +69,15 @@ The following options are available:
 Restrict the lookup to IPv4 addresses only.
 .It Fl 6
 Restrict the lookup to IPv6 addresses only.
-.It Fl f
+.It Fl F
 Suppress the fully-qualified domain name (FQDN).
 This is equivalent to the
 .Dv NI_NOFQDN
 flag in
 .Xr getnameinfo 3 .
+.It Fl f
+Specify an address family numerically or as a name, eg.
+.Dq inet .
 .It Fl H
 Display only the hostname, omitting the service name.
 .It Fl N
