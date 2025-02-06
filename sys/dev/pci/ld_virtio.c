@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.36 2025/02/06 20:19:32 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.36 2025/02/06 20:19:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp
 #include <sys/disk.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
+#include <sys/kmem.h>
 
 #include <dev/ldvar.h>
 #include <dev/pci/virtioreg.h>
@@ -57,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp
 #define VIRTIO_BLK_CONFIG_GEOMETRY_S	19 /* 8bit */
 #define VIRTIO_BLK_CONFIG_BLK_SIZE	20 /* 32bit */
 #define VIRTIO_BLK_CONFIG_WRITEBACK	32 /* 8bit */
+#define VIRTIO_BLK_CONFIG_NUM_QUEUES			34 /* 16bit */
+#define VIRTIO_BLK_CONFIG_MAX_DISCARD_SECTORS		36 /* 32bit */
+#define VIRTIO_BLK_CONFIG_MAX_DISCARD_SEG		40 /* 32bit */
+#define VIRTIO_BLK_CONFIG_DISCARD_SECTOR_ALIGNMENT	44 /* 32bit */
 
 /* Feature bits */
 #define VIRTIO_BLK_F_BARRIER	(1<<0)
@@ -69,6 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp
 #define VIRTIO_BLK_F_FLUSH	(1<<9)
 #define VIRTIO_BLK_F_TOPOLOGY	(1<<10)
 #define VIRTIO_BLK_F_CONFIG_WCE	(1<<11)
+#define VIRTIO_BLK_F_MQ			(1<<12)
+#define VIRTIO_BLK_F_DISCARD		(1<<13)
+#define VIRTIO_BLK_F_WRITE_ZEROES	(1<<14)
+#define VIRTIO_BLK_F_LIFETIME		(1<<15)
+#define VIRTIO_BLK_F_SECURE_ERASE	(1<<16)
 
 /*
  * Each block request uses at least two segments - one for the header
@@ -78,6 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp
 
 #define VIRTIO_BLK_FLAG_BITS			\
 	VIRTIO_COMMON_FLAG_BITS			\
+	"b\x10" "SECURE_ERASE\0"		\
+	"b\x0f" "LIFETIME\0"			\
+	"b\x0e" "WRITE_ZEROES\0"		\
+	"b\x0d" "DISCARD\0"			\
+	"b\x0c" "MQ\0"				\
 	"b\x0b" "CONFIG_WCE\0"			\
 	"b\x0a" "TOPOLOGY\0"			\
 	"b\x09" "FLUSH\0"			\
@@ -93,6 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp
 #define VIRTIO_BLK_T_IN		0
 #define VIRTIO_BLK_T_OUT	1
 #define VIRTIO_BLK_T_FLUSH	4
+#define VIRTIO_BLK_T_GET_ID		8
+#define VIRTIO_BLK_T_GET_LIFETIME	10
+#define VIRTIO_BLK_T_DISCARD		11
+#define VIRTIO_BLK_T_WRITE_ZEROES	13
+#define VIRTIO_BLK_T_SECURE_ERASE	14
 #define VIRTIO_BLK_T_BARRIER	0x80000000
 
 /* Sector */
@@ -111,6 +131,17 @@ struct virtio_blk_req_hdr {
 } __packed;
 /* payload and 1 byte status follows */
 
+struct virtio_blk_discard_write_zeroes {
+	uint64_t	sector;
+	uint32_t	num_sectors;
+	union {
+		uint32_t	flags;
+		struct {
+			uint32_t	unmap:1;
+			uint32_t	reserved:31;
+		};
+	};
+} __packed;
 
 /*
  * ld_virtiovar:
@@ -122,6 +153,8 @@ struct virtio_blk_req {
 #define DUMMY_VR_BP				((void *)1)
 	bus_dmamap_t			vr_cmdsts;
 	bus_dmamap_t			vr_payload;
+	void *				vr_datap;
+	size_t				vr_datas;
 };
 
 struct ld_virtio_softc {
@@ -145,6 +178,12 @@ struct ld_virtio_softc {
 	kcondvar_t		sc_sync_wait;
 	kmutex_t		sc_sync_wait_lock;
 	uint8_t			sc_sync_status;
+
+	uint32_t		sc_max_discard_sectors;
+	uint32_t		sc_max_discard_seg;
+#if 0
+	uint32_t		sc_discard_sector_alignment;
+#endif
 };
 
 static int	ld_virtio_match(device_t, cfdata_t, void *);
@@ -169,6 +208,7 @@ static int ld_virtio_vq_done(struct virtqueue *);
 static int ld_virtio_dump(struct ld_softc *, void *, int, int);
 static int ld_virtio_start(struct ld_softc *, struct buf *);
 static int ld_virtio_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
+static int ld_virtio_discard(struct ld_softc *, struct buf *);
 
 static int
 ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
@@ -235,6 +275,8 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 					 "error code %d\n", r);
 			goto err_reqs;
 		}
+		vr->vr_datap = NULL;
+		vr->vr_datas = 0;
 	}
 	return 0;
 
@@ -280,7 +322,8 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	virtio_child_attach_start(vsc, self, IPL_BIO,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
-	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
+	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE |
+	     VIRTIO_BLK_F_DISCARD),
 	    VIRTIO_BLK_FLAG_BITS);
 
 	features = virtio_features(vsc);
@@ -384,6 +427,19 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_virtio_start;
 	ld->sc_ioctl = ld_virtio_ioctl;
 
+	if (features & VIRTIO_BLK_F_DISCARD) {
+		ld->sc_discard = ld_virtio_discard;
+		sc->sc_max_discard_sectors = virtio_read_device_config_4(vsc,
+		    VIRTIO_BLK_CONFIG_MAX_DISCARD_SECTORS);
+		sc->sc_max_discard_seg = virtio_read_device_config_4(vsc,
+		    VIRTIO_BLK_CONFIG_MAX_DISCARD_SEG);
+#if 0
+		sc->sc_discard_sector_alignment =
+		    virtio_read_device_config_4(vsc,
+		    VIRTIO_BLK_CONFIG_DISCARD_SECTOR_ALIGNMENT);
+#endif
+	}
+
 	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 
@@ -473,6 +529,7 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 {
 	struct virtio_blk_req *vr = &sc->sc_reqs[slot];
 	struct buf *bp = vr->vr_bp;
+	const uint32_t rt = virtio_rw32(vsc, vr->vr_hdr.type);
 
 	vr->vr_bp = NULL;
 
@@ -491,10 +548,22 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 		virtio_dequeue_commit(vsc, vq, slot);
 		return;
 	}
-	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
-			0, bp->b_bcount,
-			(bp->b_flags & B_READ)?BUS_DMASYNC_POSTREAD
-					      :BUS_DMASYNC_POSTWRITE);
+	switch (rt) {
+	case VIRTIO_BLK_T_OUT:
+	case VIRTIO_BLK_T_IN:
+		bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+				0, bp->b_bcount,
+				(bp->b_flags & B_READ)?BUS_DMASYNC_POSTREAD
+						      :BUS_DMASYNC_POSTWRITE);
+		break;
+	default:
+		if (vr->vr_datap == NULL)
+			break;
+		bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+				0, vr->vr_datas, BUS_DMASYNC_POSTREAD |
+				BUS_DMASYNC_POSTWRITE);
+		break;
+	}
 	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 
 	if (vr->vr_status != VIRTIO_BLK_S_OK) {
@@ -505,9 +574,23 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 		bp->b_resid = 0;
 	}
 
+	if (vr->vr_datap != NULL) {
+		kmem_free(vr->vr_datap, vr->vr_datas);
+		vr->vr_datap = NULL;
+		vr->vr_datas = 0;
+	}
+
 	virtio_dequeue_commit(vsc, vq, slot);
 
-	lddone(&sc->sc_ld, bp);
+	switch (rt) {
+	case VIRTIO_BLK_T_OUT:
+	case VIRTIO_BLK_T_IN:
+		lddone(&sc->sc_ld, bp);
+		break;
+	case VIRTIO_BLK_T_DISCARD:
+		lddiscardend(&sc->sc_ld, bp);
+		break;
+	}
 }
 
 static int
@@ -801,6 +884,98 @@ ld_virtio_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool 
 	}
 
 	return error;
+}
+
+static int
+ld_virtio_discard(struct ld_softc *ld, struct buf *bp)
+{
+	struct ld_virtio_softc * const sc = device_private(ld->sc_dv);
+	struct virtio_softc * const vsc = sc->sc_virtio;
+	struct virtqueue * const vq = &sc->sc_vq;
+	struct virtio_blk_req *vr;
+	const uint64_t features = virtio_features(vsc);
+	int r;
+	int slot;
+	uint64_t blkno;
+	uint32_t nblks;
+	struct virtio_blk_discard_write_zeroes * dwz;
+
+	if ((features & VIRTIO_BLK_F_DISCARD) == 0 ||
+	    sc->sc_max_discard_seg < 1)
+		return EINVAL;
+
+	if (sc->sc_readonly)
+		return EIO;
+
+	blkno = bp->b_rawblkno * sc->sc_ld.sc_secsize / VIRTIO_BLK_BSIZE;
+	nblks = bp->b_bcount / VIRTIO_BLK_BSIZE;
+
+	if (nblks > sc->sc_max_discard_sectors)
+		return ERANGE;
+
+	r = virtio_enqueue_prep(vsc, vq, &slot);
+	if (r != 0) {
+		return r;
+	}
+
+	vr = &sc->sc_reqs[slot];
+	KASSERT(vr->vr_bp == NULL);
+
+	dwz = kmem_alloc(sizeof(*dwz), KM_SLEEP);
+
+	r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_payload,
+	    dwz, sizeof(*dwz), NULL, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
+	if (r != 0) {
+		device_printf(sc->sc_dev,
+		    "discard payload dmamap failed, error code %d\n", r);
+		virtio_enqueue_abort(vsc, vq, slot);
+		kmem_free(dwz, sizeof(*dwz));
+		return r;
+	}
+
+	KASSERT(vr->vr_payload->dm_nsegs <= sc->sc_seg_max);
+	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
+	    VIRTIO_BLK_CTRL_SEGMENTS);
+	if (r != 0) {
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
+		kmem_free(dwz, sizeof(*dwz));
+		return r;
+	}
+
+	vr->vr_hdr.type = virtio_rw32(vsc, VIRTIO_BLK_T_DISCARD);
+	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
+	vr->vr_hdr.sector = virtio_rw64(vsc, 0);
+	vr->vr_bp = bp;
+
+	KASSERT(vr->vr_datap == NULL);
+	vr->vr_datap = dwz;
+	vr->vr_datas = sizeof(*dwz);
+
+	dwz->sector = virtio_rw64(vsc, blkno);
+	dwz->num_sectors = virtio_rw32(vsc, nblks);
+	dwz->flags = virtio_rw32(vsc, 0);
+
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
+			0, sizeof(struct virtio_blk_req_hdr),
+			BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+			0, vr->vr_datas, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
+			offsetof(struct virtio_blk_req, vr_status),
+			sizeof(uint8_t),
+			BUS_DMASYNC_PREREAD);
+
+	virtio_enqueue_p(vsc, vq, slot, vr->vr_cmdsts,
+			 0, sizeof(struct virtio_blk_req_hdr),
+			 true);
+	virtio_enqueue(vsc, vq, slot, vr->vr_payload, true);
+	virtio_enqueue_p(vsc, vq, slot, vr->vr_cmdsts,
+			 offsetof(struct virtio_blk_req, vr_status),
+			 sizeof(uint8_t),
+			 false);
+	virtio_enqueue_commit(vsc, vq, slot, true);
+
+	return 0;
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_virtio, "ld,virtio");
