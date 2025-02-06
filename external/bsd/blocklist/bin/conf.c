@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2025/02/05 20:09:33 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2025/02/06 19:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.7 2025/02/05 20:09:33 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.8 2025/02/06 19:16:03 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: conf.c,v 1.7 2025/02/05 20:09:33 christos Exp $");
 #include <net/if.h>
 #include <net/route.h>
 #include <sys/socket.h>
+#include <dirent.h>
 
 #include "bl.h"
 #include "internal.h"
@@ -693,6 +694,25 @@ conf_addr_eq(const struct sockaddr_storage *s1,
 static int
 conf_eq(const struct conf *c1, const struct conf *c2)
 {
+	if (!conf_addr_eq(&c1->c_ss, &c2->c_ss, FSTAR))
+		return 0;
+
+#define	CMP(a, b, f) \
+	if ((a)->f != (b)->f) \
+		return 0;
+
+	CMP(c1, c2, c_port);
+	CMP(c1, c2, c_proto);
+	CMP(c1, c2, c_family);
+	CMP(c1, c2, c_uid);
+#undef CMP
+
+	return 1;
+}
+
+static int
+conf_match(const struct conf *c1, const struct conf *c2)
+{
 
 	if (!conf_addr_eq(&c1->c_ss, &c2->c_ss, c2->c_lmask))
 		return 0;
@@ -955,13 +975,54 @@ confset_free(struct confset *cs)
 }
 
 static void
-confset_replace(struct confset *dc, struct confset *sc)
+confset_merge(struct confset *dc, struct confset *sc)
 {
-	struct confset tc;
-	tc = *dc;
-	*dc = *sc;
-	confset_init(sc);
-	confset_free(&tc);
+	size_t i, j;
+	char buf[BUFSIZ];
+
+	/* Check each rule of the src confset (sc) */
+	for (i = 0; i < sc->cs_n; i++) {
+		/* Compare to each rule in the dest confset (dc) */
+		for (j = 0; j < dc->cs_n; j++) {
+			if (conf_eq(&dc->cs_c[j], &sc->cs_c[i])) {
+				break;
+			}
+		}
+
+		if (j == dc->cs_n) {
+			/* This is a new rule to add to the dest confset. */
+			if (confset_full(dc) && confset_grow(dc) == -1)
+				return;
+
+			*confset_get(dc) = sc->cs_c[i];
+			confset_add(dc);
+			continue;
+		}
+
+		/* We had a match above. */
+		/*
+		 * Check whether the rule from the src confset is more
+		 * restrictive than the existing one. Adjust the
+		 * existing rule if necessary.
+		 */
+		if (sc->cs_c[i].c_nfail == dc->cs_c[j].c_nfail &&
+		    sc->cs_c[i].c_duration && dc->cs_c[j].c_duration) {
+			(*lfun)(LOG_DEBUG, "skipping existing rule: %s",
+			conf_print(buf, sizeof (buf), "", "\t", &sc->cs_c[i]));
+			continue;
+		}
+
+		if (sc->cs_c[i].c_nfail < dc->cs_c[j].c_nfail)
+			dc->cs_c[j].c_nfail = sc->cs_c[i].c_nfail;
+
+		if (sc->cs_c[i].c_duration > dc->cs_c[j].c_duration)
+			dc->cs_c[j].c_duration = sc->cs_c[i].c_duration;
+
+		(*lfun)(LOG_DEBUG, "adjusted existing rule: %s",
+		    conf_print(buf, sizeof (buf), "", "\t", &dc->cs_c[j]));
+	}
+
+	confset_free(sc);
 }
 
 static void
@@ -992,7 +1053,7 @@ confset_match(const struct confset *cs, struct conf *c,
 		if (debug)
 			(*lfun)(LOG_DEBUG, "%s", conf_print(buf, sizeof(buf),
 			    "check:\t", "", &cs->cs_c[i]));
-		if (conf_eq(c, &cs->cs_c[i])) {
+		if (conf_match(c, &cs->cs_c[i])) {
 			if (debug)
 				(*lfun)(LOG_DEBUG, "%s",
 				    conf_print(buf, sizeof(buf),
@@ -1162,19 +1223,12 @@ conf_find(int fd, uid_t uid, const struct sockaddr_storage *rss,
 	return cr;
 }
 
-
-void
-conf_parse(const char *f)
+static void
+conf_parsefile(FILE *fp, const char *config_file)
 {
-	FILE *fp;
 	char *line;
 	size_t lineno, len;
 	struct confset lc, rc, *cs;
-
-	if ((fp = fopen(f, "r")) == NULL) {
-		(*lfun)(LOG_ERR, "%s: Cannot open `%s' (%m)", __func__, f);
-		return;
-	}
 
 	lineno = 0;
 
@@ -1199,23 +1253,103 @@ conf_parse(const char *f)
 			if (confset_grow(cs) == -1) {
 				confset_free(&lc);
 				confset_free(&rc);
-				fclose(fp);
 				free(line);
 				return;
 			}
 		}
-		if (conf_parseline(f, lineno, line, confset_get(cs),
+		if (conf_parseline(config_file, lineno, line, confset_get(cs),
 		    cs == &lc) == -1)
 			continue;
 		confset_add(cs);
 	}
 
-	fclose(fp);
-	confset_sort(&lc);
-	confset_sort(&rc);
+	confset_merge(&rconf, &rc);
+	confset_merge(&lconf, &lc);
+}
 
-	confset_replace(&rconf, &rc);
-	confset_replace(&lconf, &lc);
+
+static void
+conf_parsedir(DIR *dir, const char *config_path)
+{
+	long path_max;
+	struct dirent *dent;
+	char *path;
+	FILE *fp;
+
+	if ((path_max = pathconf(config_path, _PC_PATH_MAX)) == -1)
+		path_max = 2048;
+
+	if ((path = malloc((size_t)path_max)) == NULL) {
+		(*lfun)(LOG_ERR, "%s: Failed to allocate memory for path (%m)",
+		    __func__);
+		return;
+	}
+
+	while ((dent = readdir(dir)) != NULL) {
+		if (strcmp(dent->d_name, ".") == 0 ||
+		    strcmp(dent->d_name, "..") == 0)
+			continue;
+
+		(void) snprintf(path, path_max, "%s/%s", config_path,
+		    dent->d_name);
+		if ((fp = fopen(path, "r")) == NULL) {
+			(*lfun)(LOG_ERR, "%s: Cannot open `%s' (%m)", __func__,
+			    path);
+			continue;
+		}
+		conf_parsefile(fp, path);
+		fclose(fp);
+	}
+
+	free(path);
+}
+
+void
+conf_parse(const char *config_path)
+{
+	char *path;
+	DIR *dir;
+	FILE *fp;
+
+	if ((dir = opendir(config_path)) != NULL) {
+		/*
+		 * If config_path is a directory, parse the configuration files
+		 * in the directory. Then we're done here.
+		 */
+		conf_parsedir(dir, config_path);
+		closedir(dir);
+		goto out;
+	} else if ((fp = fopen(config_path, "r")) != NULL) {
+		/* If config_path is a file, parse it. */
+		conf_parsefile(fp, config_path);
+		fclose(fp);
+	}
+
+	/*
+	 * Append ".d" to config_path, and if that is a directory, parse the
+	 * configuration files in the directory.
+	 */
+	if (asprintf(&path, "%s.d", config_path) < 0) {
+		(*lfun)(LOG_ERR, "%s: Failed to allocate memory for path (%m)",
+		    __func__);
+		goto out;
+	}
+
+	if ((dir = opendir(path)) != NULL) {
+		conf_parsedir(dir, path);
+		closedir(dir);
+	}
+	free(path);
+
+out:
+	if (dir == NULL && fp == NULL) {
+		(*lfun)(LOG_ERR, "%s: Cannot open `%s' (%m)", __func__,
+		    config_path);
+		return;
+	}
+
+	confset_sort(&lconf);
+	confset_sort(&rconf);
 
 	if (debug) {
 		confset_list(&lconf, "local", "target");
