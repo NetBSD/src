@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 
-#	$NetBSD: tables.awk,v 1.2 2014/02/27 01:17:13 ginsbach Exp $
+#	$NetBSD: tables.awk,v 1.3 2025/02/06 19:35:28 christos Exp $
 
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,7 @@ $2 ~ /^SOCK_[A-Z0-9_]*$/ {
 
 END {
 	printf("/* Do not edit!  This file was generated automagically! */\n");
+	printf("#include <sys/socket.h>\n");
 
 	printf("\nstatic const char *const address_families[] = {\n");
 	for (i = 0; i < n_afs; i++)

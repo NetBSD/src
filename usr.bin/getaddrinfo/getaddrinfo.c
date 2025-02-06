@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.5 2024/01/10 01:48:16 riastradh Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.6 2025/02/06 19:35:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getaddrinfo.c,v 1.5 2024/01/10 01:48:16 riastradh Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.6 2025/02/06 19:35:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -49,14 +49,10 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.5 2024/01/10 01:48:16 riastradh Exp $");
 #include <util.h>
 
 #include "tables.h"
+#include "support.h"
 
 static void	usage(void) __dead;
 static void	printaddrinfo(struct addrinfo *);
-static bool	parse_af(const char *, int *);
-static bool	parse_protocol(const char *, int *);
-static bool	parse_socktype(const char *, int *);
-static bool	parse_numeric_tabular(const char *, int *, const char *const *,
-		    size_t);
 
 int
 main(int argc, char **argv)
@@ -64,7 +60,8 @@ main(int argc, char **argv)
 	static const struct addrinfo zero_addrinfo;
 	struct addrinfo hints = zero_addrinfo;
 	struct addrinfo *addrinfo;
-	const char *hostname = NULL, *service = NULL;
+	const char *hostname = NULL;
+	char *service = NULL;
 	int ch;
 	int error;
 
@@ -167,88 +164,6 @@ usage(void)
 	    " [-f <family>] [-p <protocol>] [-t <socktype>] [-s <service>]\n");
 	(void)fprintf(stderr, "   [-cnNP] [<hostname>]\n");
 	exit(1);
-}
-
-static bool
-parse_af(const char *string, int *afp)
-{
-
-	return parse_numeric_tabular(string, afp, address_families,
-	    __arraycount(address_families));
-}
-
-static bool
-parse_protocol(const char *string, int *protop)
-{
-	struct protoent *protoent;
-	char *end;
-	long value;
-
-	errno = 0;
-	value = strtol(string, &end, 0);
-	if ((string[0] == '\0') || (*end != '\0'))
-		goto numeric_failed;
-	if ((errno == ERANGE) && ((value == LONG_MAX) || (value == LONG_MIN)))
-		goto numeric_failed;
-	if ((value > INT_MAX) || (value < INT_MIN))
-		goto numeric_failed;
-
-	*protop = value;
-	return true;
-
-numeric_failed:
-	protoent = getprotobyname(string);
-	if (protoent == NULL)
-		goto protoent_failed;
-
-	*protop = protoent->p_proto;
-	return true;
-
-protoent_failed:
-	return false;
-}
-
-static bool
-parse_socktype(const char *string, int *typep)
-{
-
-	return parse_numeric_tabular(string, typep, socket_types,
-	    __arraycount(socket_types));
-}
-
-static bool
-parse_numeric_tabular(const char *string, int *valuep,
-    const char *const *table, size_t n)
-{
-	char *end;
-	long value;
-	size_t i;
-
-	assert((uintmax_t)n <= (uintmax_t)INT_MAX);
-
-	errno = 0;
-	value = strtol(string, &end, 0);
-	if ((string[0] == '\0') || (*end != '\0'))
-		goto numeric_failed;
-	if ((errno == ERANGE) && ((value == LONG_MAX) || (value == LONG_MIN)))
-		goto numeric_failed;
-	if ((value > INT_MAX) || (value < INT_MIN))
-		goto numeric_failed;
-
-	*valuep = value;
-	return true;
-
-numeric_failed:
-	for (i = 0; i < n; i++)
-		if ((table[i] != NULL) && (strcmp(string, table[i]) == 0))
-			break;
-	if (i == n)
-		goto table_failed;
-	*valuep = i;
-	return true;
-
-table_failed:
-	return false;
 }
 
 static void
