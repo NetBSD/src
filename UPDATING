@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.375 2025/01/31 22:33:30 christos Exp $
+$NetBSD: UPDATING,v 1.376 2025/02/06 19:58:50 palle Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,6 +21,7 @@ Recent changes:
 
 20250131:
 	The switch to the new jemalloc requires cleaning in libc.
+
 20241122:
 	Changes to various libraries' build options require cleaning
 	their objdirs in update builds:
