@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.116 2025/02/06 20:10:25 jakllsch Exp $ */
+/* $NetBSD: dksubr.c,v 1.117 2025/02/06 20:11:46 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.116 2025/02/06 20:10:25 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.117 2025/02/06 20:11:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,8 +506,8 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 
 	KASSERT(len >= 0);
 
-	DPRINTF_FOLLOW(("%s(%s, %p, 0x"PRIx64", %jd, %jd)\n", __func__,
-	    dksc->sc_xname, dksc, (intmax_t)pos, (intmax_t)len));
+	DPRINTF_FOLLOW(("%s(%s, %p, 0x%"PRIx64", %jd, %jd)\n", __func__,
+	    dksc->sc_xname, dksc, dev, (intmax_t)pos, (intmax_t)len));
 
 	if (!(dksc->sc_flags & DKF_INITED)) {
 		DPRINTF_FOLLOW(("%s: not inited\n", __func__));
