@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.9 2025/02/05 20:46:26 palle Exp $	*/
+/*	$NetBSD: ldc.c,v 1.10 2025/02/06 19:24:37 palle Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -291,7 +291,7 @@ ldc_send_ack(struct ldc_conn *lc)
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
 		mutex_exit(&lc->lc_txq->lq_mtx);
-		printf("ldc_send_ack() err %d tx_state %lu\n", err, tx_state);
+		printf("ldc_send_ack() err %d tx_state %lu\n", err, (long unsigned int)tx_state);
 		return EIO;
 	}
 
@@ -329,7 +329,7 @@ ldc_send_rts(struct ldc_conn *lc)
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
 		mutex_exit(&lc->lc_txq->lq_mtx);
-		printf("ldc_send_rts() err %d tx_state %lu\n", err, tx_state);
+		printf("ldc_send_rts() err %d tx_state %lu\n", err, (long unsigned int)tx_state);
 		return EIO;
 	}
 
@@ -367,7 +367,7 @@ ldc_send_rtr(struct ldc_conn *lc)
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
 		mutex_exit(&lc->lc_txq->lq_mtx);
-		printf("ldc_send_rtr() err %d state %lu\n", err, tx_state);
+		printf("ldc_send_rtr() err %d state %lu\n", err, (long unsigned int)tx_state);
 		return EIO;
 	}
 
@@ -405,7 +405,7 @@ ldc_send_rdx(struct ldc_conn *lc)
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
 		mutex_exit(&lc->lc_txq->lq_mtx);
-		printf("ldc_send_rdx() err %d state %lu\n", err, tx_state);
+		printf("ldc_send_rdx() err %d state %lu\n", err, (long unsigned int)tx_state);
 		return EIO;
 	}
 
@@ -445,7 +445,7 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK || tx_state != LDC_CHANNEL_UP) {
 		mutex_exit(&lc->lc_txq->lq_mtx);
-		printf("ldc_send_unrealiable() err %d state %lu\n", err, tx_state);
+		printf("ldc_send_unrealiable() err %d state %lu\n", err, (long unsigned int)tx_state);
 		return (EIO);
 	}
 
