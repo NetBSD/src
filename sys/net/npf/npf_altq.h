@@ -119,6 +119,7 @@ struct npf_tagname {
 TAILQ_HEAD(npf_altqqueue, npf_altq);
 
 extern int npf_altq_loaded;
+extern bool npf_altq_running;
 
 extern int	npf_get_altqs(void *);
 extern void	npf_altq_init(void);
@@ -126,5 +127,7 @@ extern int	npf_begin_altq(void);
 extern int	npf_add_altq(void *);
 void 	npf_qid_unref(uint32_t);
 extern uint32_t	npf_qname2qid(char *);
+int	npf_altq_start(void);
+int	npf_enable_altq(struct npf_altq *);
 
 #endif /* NPF_ALTQ_H_ */

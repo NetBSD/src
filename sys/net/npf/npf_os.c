@@ -248,7 +248,12 @@ npfctl_switch(void *data)
 	if (onoff) {
 		/* Enable: add pfil hooks. */
 		error = npf_pfil_register(false);
+#ifdef ALTQ
+		if (!npf_altq_running && npf_altq_loaded)
+			error = npf_altq_start();
+#endif /* ALTQ */
 	} else {
+
 		/* Disable: remove pfil hooks. */
 		npf_pfil_unregister(false);
 		error = 0;
