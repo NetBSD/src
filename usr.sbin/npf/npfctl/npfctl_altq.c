@@ -166,7 +166,7 @@ npfctl_eval_bw(struct node_queue_bw *bw, char *bw_spec)
 /* create root queue for cbq or hfsc */
 static int
 npf_add_root_queue(struct npf_altq pa, const char * ifname,
-	char qname[], struct node_queue_opt *opts)
+	char *qname, struct node_queue_opt *opts)
 {
 	struct node_queue_bw	bw;
 	struct npf_altq pb;
@@ -174,14 +174,12 @@ npf_add_root_queue(struct npf_altq pa, const char * ifname,
 
 	/*
 	 * we cannot use sizeof(qname) directly here as it will give sizeof(char*)
-	 * so the copyably bytes is manually hack the  using sizeof(char) * qname max size
+	 * so use the copyably bytes diectly
 	 */
 	memset(&pb, 0, sizeof(pb));
-	if (strlcpy(qname, "root_", (sizeof(char) * NPF_QNAME_SIZE)) >=
-		(sizeof(char) * NPF_QNAME_SIZE))
+	if (strlcpy(qname, "root_", NPF_QNAME_SIZE) >= NPF_QNAME_SIZE)
 		errx(EXIT_FAILURE, "add_root: strlcpy");
-	if (strlcat(qname, ifname, (sizeof(char) * NPF_QNAME_SIZE)) >=
-		(sizeof(char) * NPF_QNAME_SIZE))
+	if (strlcat(qname, ifname, NPF_QNAME_SIZE) >= NPF_QNAME_SIZE)
 		errx(EXIT_FAILURE, "add_root: strlcat");
 	if (strlcpy(pb.qname, qname,
 		sizeof(pb.qname)) >= sizeof(pb.qname))
@@ -207,7 +205,7 @@ npf_add_root_queue(struct npf_altq pa, const char * ifname,
  */
 static void
 altq_append_queues(struct npf_altq pa, const char *ifname,
-	char qname[], struct node_queue *queue)
+	char *qname, struct node_queue *queue)
 {
 	struct node_queue	*n;
 	n = calloc(1, sizeof(*n));
@@ -319,7 +317,8 @@ expand_altq(struct npf_altq *a, const char *ifname,
 		sizeof(pa.ifname)) >= sizeof(pa.ifname))
 		errx(1, "expand_altq: strlcpy");
 	if (ifdisc_lookup(&pa)) {
-		yyerror("only one scheduler per interface.\n altq already defined on %s", pa.ifname);
+		yyerror("only one scheduler per interface."
+			"\naltq already defined on %s", pa.ifname);
 		errs++;
 	} else {
 		if (eval_npfaltq(&pa, &bwspec, opts))
