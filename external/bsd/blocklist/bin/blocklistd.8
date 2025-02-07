@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistd.8,v 1.6 2025/02/07 01:28:27 kre Exp $
+.\" $NetBSD: blocklistd.8,v 1.7 2025/02/07 13:00:48 kre Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,11 +67,16 @@ Each entry contains a number of tries limit and a duration.
 .Pp
 If
 .Ar configfile
-is a directory, or does not exist but a directory exists with the same name as
+is a directory, or a directory exists with the same name as
 .Ar configfile
 with
 .Qq .d
 appended to it, each file in the directory will be read as configuration file.
+If
+.Ar configfile
+exists as a file it will be processed before the contents of the
+.Ar configfile Ns .d
+directory if that also exists.
 .Pp
 The way
 .Nm
