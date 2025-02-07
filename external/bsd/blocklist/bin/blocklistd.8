@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistd.8,v 1.5 2025/02/06 19:16:03 christos Exp $
+.\" $NetBSD: blocklistd.8,v 1.6 2025/02/07 01:28:27 kre Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ Each entry contains a number of tries limit and a duration.
 .Pp
 If
 .Ar configfile
-is a directory, or a directory exists with the same name as
+is a directory, or does not exist but a directory exists with the same name as
 .Ar configfile
 with
 .Qq .d
@@ -160,7 +160,7 @@ The following options are available:
 .It Fl C Ar controlprog
 Use
 .Ar controlprog
-to communicate with the packet filter, usually
+to communicate with the packet filter, instead of the default, which is
 .Pa /libexec/blocklistd-helper .
 The following arguments are passed to the control program:
 .Bl -tag -width protocol
@@ -191,12 +191,16 @@ identifier of the rule to be removed.
 The add command is expected to return the rule identifier string to stdout.
 .El
 .It Fl c Ar configuration
-The name of the configuration file to read, usually
+The name of the configuration file to read.
+The default when
+.Fl c
+is not given is
 .Pa /etc/blocklistd.conf .
 .It Fl D Ar dbfile
 The Berkeley DB file where
 .Nm
-stores its state, usually
+stores its state.
+It defaults to
 .Pa /var/db/blocklistd.db .
 .It Fl d
 Normally,
