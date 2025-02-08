@@ -1,4 +1,4 @@
-.\"	$NetBSD: CMSG_DATA.3,v 1.4 2025/02/08 13:18:48 riastradh Exp $
+.\"	$NetBSD: CMSG_DATA.3,v 1.5 2025/02/08 13:30:42 riastradh Exp $
 .\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
@@ -116,7 +116,8 @@ if (sendmsg(s, &msg, 0) == -1)
 	err(1, "sendmsg");
 .Ed
 .Pp
-And an example that receives and decomposes the control message:
+And an example that receives the control message and handles all the
+file descriptors it receives:
 .Bd -literal -offset indent
 struct msghdr	 msg;
 struct cmsghdr	*cmsg;
@@ -131,18 +132,39 @@ msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");
-if ((msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC))
-	errx(1, "control message truncated");
+if (msg.msg_flags & MSG_CTRUNC)
+	warnx("control message truncated");
 for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
-	if (cmsg->cmsg_len == CMSG_LEN(sizeof(int)) &&
-	    cmsg->cmsg_level == SOL_SOCKET &&
+	if (cmsg->cmsg_level == SOL_SOCKET &&
 	    cmsg->cmsg_type == SCM_RIGHTS) {
-		fd = *(int *)CMSG_DATA(cmsg);
-		/* Do something with the descriptor. */
+		int *fdp = (int *)CMSG_DATA(cmsg);
+		socklen_t nbytes = cmsg->cmsg_len - CMSG_LEN(0);
+		socklen_t nfds = nbytes/sizeof(fdp[0]);
+
+		assert(nbytes % sizeof(fdp[0]) == 0);
+
+		while (nfds --> 0) {
+			int fd = *fdp++;
+
+			/* Do something with the descriptor. */
+		}
 	}
 }
 .Ed
+.Pp
+Note that even if the receiver
+.Em intends
+to size its control buffer for
+.Em one
+file descriptor with
+.Li CMSG_SPACE(sizeof(int)) ,
+this size may be rounded up for alignment to enough space for more than
+one file descriptor.
+So if the sender may send more than one file descriptor at a time, the
+receiver cannot restrict itself to receiving at most one at a time, and
+must be prepared to handle all of them \(em otherwise they will simply
+leak on the receiver side.
 .Sh SEE ALSO
 .Xr recvmsg 2 ,
 .Xr sendmsg 2 ,
