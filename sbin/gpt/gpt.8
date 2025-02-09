@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.85 2025/01/12 20:48:20 christos Exp $
+.\" $NetBSD: gpt.8,v 1.86 2025/02/09 08:48:39 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd January 12, 2025
+.Dd February 9, 2025
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -92,7 +92,6 @@ Do not print error messages.
 This is not implemented completely yet.
 .It Fl r
 Open the device for reading only.
-.Nm
 Currently this option is primarily useful for the
 .Ic show
 command, but the intent is to use it to implement dry-run behaviour.
@@ -166,7 +165,7 @@ to denote bytes,
 .Sq k
 to denote kilobytes,
 .Sq m
-to denote megabytes and
+to denote megabytes,
 .Sq g
 to denote gigabytes,
 .Sq t
