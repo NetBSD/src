@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.30 2025/01/27 12:10:19 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.31 2025/02/09 10:07:41 skrll Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.30 2025/01/27 12:10:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.31 2025/02/09 10:07:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 			summitfb_write4(sc, VISFX_SIZE, (30 << 16) | 90);
 		}
 	}
-#endif	
+#endif
 }
 
 /*
@@ -1079,7 +1079,7 @@ summitfb_restore_palette(struct summitfb_softc *sc)
 	}
 	for (i = 0; i < 16; i++) {
 		sc->sc_palette[i] = (rasops_cmap[i * 3] << 16) |
-				    (rasops_cmap[i * 3 + 1] << 8) | 
+				    (rasops_cmap[i * 3 + 1] << 8) |
 				     rasops_cmap[i * 3 + 2];
 	}
 
@@ -1456,7 +1456,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			data++;
 		}
 	}
-	
+
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 }
