@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.9 2025/02/09 17:09:51 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.10 2025/02/09 17:10:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -101,35 +101,33 @@ ATF_TC_BODY(3way, tc)
 	int pf[2];
 	int status, i;
 	pid_t pid;
+	ssize_t nwrit;
 
-	pipe(pf);
+	RL(pipe(pf));
 	desc = pf[0];
 
-	pid = fork();
-	ATF_REQUIRE(pid >= 0);
-
+	RL(pid = fork());
 	if (pid == 0) {
-		(void)close(pf[1]);
+		if (close(pf[1]) == -1)
+			_exit(1);
 		child1();
 		_exit(0);
 		/* NOTREACHED */
 	}
 
-	pid = fork();
-	ATF_REQUIRE(pid >= 0);
-
+	RL(pid = fork());
 	if (pid == 0) {
-		(void)close(pf[1]);
+		if (close(pf[1]) == -1)
+			_exit(1);
 		child2();
 		_exit(0);
 		/* NOTREACHED */
 	}
 
-	pid = fork();
-	ATF_REQUIRE( pid >= 0);
-
+	RL(pid = fork());
 	if (pid == 0) {
-		(void)close(pf[1]);
+		if (close(pf[1]) == -1)
+			_exit(1);
 		child3();
 		_exit(0);
 		/* NOTREACHED */
@@ -139,10 +137,11 @@ ATF_TC_BODY(3way, tc)
 
 	(void)printf("parent write\n");
 
-	ATF_REQUIRE(write(pf[1], "konec\n", 6) == 6);
+	RL(nwrit = write(pf[1], "konec\n", 6));
+	ATF_REQUIRE_EQ_MSG(nwrit, 6, "nwrit=%zd", nwrit);
 
-	for(i = 0; i < 3; ++i)
-		(void)wait(&status);
+	for (i = 0; i < 3; i++)
+		RL(wait(&status));
 
 	(void)printf("parent terminated\n");
 }
@@ -160,8 +159,9 @@ ATF_TC_BODY(basic, tc)
 	int fds[2];
 	struct pollfd pfds[2];
 	int ret;
+	ssize_t nwrit;
 
-	ATF_REQUIRE_EQ(pipe(fds), 0);
+	RL(pipe(fds));
 
 	pfds[0].fd = fds[0];
 	pfds[0].events = POLLIN;
@@ -174,16 +174,16 @@ ATF_TC_BODY(basic, tc)
 	 */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(&pfds[0], 1, 1), 0,
-	    "got: %d", ret);
+	RL(ret = poll(&pfds[0], 1, 1));
+	ATF_REQUIRE_EQ_MSG(ret, 0, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, -1, "got: %d", pfds[1].revents);
 
 	/* Check that the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(&pfds[1], 1, 1), 1,
-	    "got: %d", ret);
+	RL(ret = poll(&pfds[1], 1, 1));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, -1, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",\
 	    pfds[1].revents);
@@ -191,27 +191,28 @@ ATF_TC_BODY(basic, tc)
 	/* Check that only the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(pfds, 2, 1), 1,
-	    "got: %d", ret);
+	RL(ret = poll(pfds, 2, 1));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
 	    pfds[1].revents);
 
 	/* Write data to our pipe. */
-	ATF_REQUIRE_EQ(write(fds[1], "", 1), 1);
+	RL(nwrit = write(fds[1], "", 1));
+	ATF_REQUIRE_EQ_MSG(nwrit, 1, "nwrit=%zd", nwrit);
 
 	/* Check that both ends of our pipe are reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(pfds, 2, 1), 2,
-	    "got: %d", ret);
+	RL(ret = poll(pfds, 2, 1));
+	ATF_REQUIRE_EQ_MSG(ret, 2, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, POLLIN, "got: %d",
 	    pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
 	    pfds[1].revents);
 
-	ATF_REQUIRE_EQ(close(fds[0]), 0);
-	ATF_REQUIRE_EQ(close(fds[1]), 0);
+	RL(close(fds[0]));
+	RL(close(fds[1]));
 }
 
 ATF_TC(err);
@@ -240,9 +241,10 @@ static const char	fifo_path[] = "pollhup_fifo";
 static void
 fifo_support(void)
 {
+
 	errno = 0;
 	if (mkfifo(fifo_path, 0600) == 0) {
-		ATF_REQUIRE(unlink(fifo_path) == 0);
+		RL(unlink(fifo_path));
 		return;
 	}
 
@@ -266,19 +268,20 @@ ATF_TC_BODY(fifo_inout, tc)
 	char *buf;
 	int rfd, wfd;
 	long pipe_buf;
+	int ret;
+	ssize_t nwrit, nread;
 
 	fifo_support();
 
-	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
-	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
-	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY | O_NONBLOCK)) >= 0);
+	RL(mkfifo(fifo_path, 0600));
+	RL(rfd = open(fifo_path, O_RDONLY | O_NONBLOCK));
+	RL(wfd = open(fifo_path, O_WRONLY | O_NONBLOCK));
 
 	/* Get the maximum atomic pipe write size. */
 	pipe_buf = fpathconf(wfd, _PC_PIPE_BUF);
-	ATF_REQUIRE(pipe_buf > 1);
+	ATF_REQUIRE_MSG(pipe_buf > 1, "pipe_buf=%ld", pipe_buf);
 
-	buf = malloc(pipe_buf);
-	ATF_REQUIRE(buf != NULL);
+	REQUIRE_LIBC(buf = malloc(pipe_buf), NULL);
 
 	memset(&pfd, 0, sizeof(pfd));
 	pfd[0].fd = rfd;
@@ -287,20 +290,28 @@ ATF_TC_BODY(fifo_inout, tc)
 	pfd[1].events = POLLOUT | POLLWRNORM;
 
 	/* We expect the FIFO to be writable but not readable. */
-	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
-	ATF_REQUIRE(pfd[0].revents == 0);
-	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[0].revents, 0,
+	    "pfd[0].revents=0x%x", pfd[0].revents);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
 	/* Write a single byte of data into the FIFO. */
-	ATF_REQUIRE(write(wfd, buf, 1) == 1);
+	RL(nwrit = write(wfd, buf, 1));
+	ATF_REQUIRE_EQ_MSG(nwrit, 1, "nwrit=%zd", nwrit);
 
 	/* We expect the FIFO to be readable and writable. */
-	ATF_REQUIRE(poll(pfd, 2, 0) == 2);
-	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
-	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 2, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
+	    "pfd[0].revents=0x%x", pfd[0].revents);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
 	/* Read that single byte back out. */
-	ATF_REQUIRE(read(rfd, buf, 1) == 1);
+	RL(nread = read(rfd, buf, 1));
+	ATF_REQUIRE_EQ_MSG(nread, 1, "nread=%zd", nread);
 
 	/*
 	 * Write data into the FIFO until it is full, which is
@@ -310,33 +321,44 @@ ATF_TC_BODY(fifo_inout, tc)
 	while (write(wfd, buf, pipe_buf) != -1) {
 		continue;
 	}
-	ATF_REQUIRE(errno == EAGAIN);
+	ATF_REQUIRE_EQ_MSG(errno, EAGAIN, "errno=%d", errno);
 
 	/* We expect the FIFO to be readble but not writable. */
-	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
-	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
-	ATF_REQUIRE(pfd[1].revents == 0);
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
+	    "pfd[0].revents=0x%x", pfd[0].revents);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, 0,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
 	/* Read a single byte of data from the FIFO. */
-	ATF_REQUIRE(read(rfd, buf, 1) == 1);
+	RL(nread = read(rfd, buf, 1));
+	ATF_REQUIRE_EQ_MSG(nread, 1, "nread=%zd", nread);
 
 	/*
 	 * Because we have read only a single byte out, there will
 	 * be insufficient space for a pipe_buf-sized message, so
 	 * the FIFO should still not be writable.
 	 */
-	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
-	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
-	ATF_REQUIRE(pfd[1].revents == 0);
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
+	    "pfd[0].revents=0x%x", pfd[0].revents);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, 0,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
 	/*
 	 * Now read enough so that exactly pipe_buf space should
 	 * be available.  The FIFO should be writable after that.
 	 * N.B. we don't care if it's readable at this point.
 	 */
-	ATF_REQUIRE(read(rfd, buf, pipe_buf - 1) == pipe_buf - 1);
-	ATF_REQUIRE(poll(pfd, 2, 0) >= 1);
-	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+	RL(nread = read(rfd, buf, pipe_buf - 1));
+	ATF_REQUIRE_EQ_MSG(nread, pipe_buf - 1, "nread=%zd pipe_buf-1=%ld",
+	    nread, pipe_buf - 1);
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_MSG(ret >= 1, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
 	/*
 	 * Now read all of the data out of the FIFO and ensure that
@@ -345,14 +367,17 @@ ATF_TC_BODY(fifo_inout, tc)
 	while (read(rfd, buf, pipe_buf) != -1) {
 		continue;
 	}
-	ATF_REQUIRE(errno == EAGAIN);
+	ATF_REQUIRE_EQ_MSG(errno, EAGAIN, "errno=%d", errno);
 
-	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
-	ATF_REQUIRE(pfd[0].revents == 0);
-	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+	RL(ret = poll(pfd, 2, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
+	ATF_REQUIRE_EQ_MSG(pfd[0].revents, 0,
+	    "pfd[0].revents=0x%x", pfd[0].revents);
+	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
+	    "pfd[1].revents=0x%x", pfd[1].revents);
 
-	(void)close(wfd);
-	(void)close(rfd);
+	RL(close(wfd));
+	RL(close(rfd));
 }
 
 ATF_TC_CLEANUP(fifo_inout, tc)
@@ -371,20 +396,22 @@ ATF_TC_BODY(fifo_hup1, tc)
 {
 	struct pollfd pfd;
 	int rfd, wfd;
+	int ret;
 
 	fifo_support();
 
-	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
-	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
-	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
+	RL(mkfifo(fifo_path, 0600));
+	RL(rfd = open(fifo_path, O_RDONLY | O_NONBLOCK));
+	RL(wfd = open(fifo_path, O_WRONLY));
 
 	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = rfd;
 	pfd.events = POLLIN;
 
-	(void)close(wfd);
+	RL(close(wfd));
 
-	ATF_REQUIRE(poll(&pfd, 1, 0) == 1);
+	RL(ret = poll(&pfd, 1, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
 	    "revents=0x%x expected POLLHUP=0x%x and not POLLOUT=0x%x",
 	    pfd.revents, POLLHUP, POLLOUT);
@@ -398,8 +425,9 @@ ATF_TC_BODY(fifo_hup1, tc)
 	pfd.fd = rfd;
 	pfd.events = POLLIN;
 
-	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
-	ATF_REQUIRE(poll(&pfd, 1, 0) == 0);
+	RL(wfd = open(fifo_path, O_WRONLY));
+	RL(ret = poll(&pfd, 1, 0));
+	ATF_REQUIRE_EQ_MSG(ret, 0, "got: %d", ret);
 }
 
 ATF_TC_CLEANUP(fifo_hup1, tc)
@@ -420,34 +448,39 @@ ATF_TC_BODY(fifo_hup2, tc)
 	int rfd, wfd;
 	pid_t pid;
 	struct timespec ts1, ts2;
+	int ret;
 
 	fifo_support();
 
-	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
-	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
-	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
+	RL(mkfifo(fifo_path, 0600));
+	RL(rfd = open(fifo_path, O_RDONLY | O_NONBLOCK));
+	RL(wfd = open(fifo_path, O_WRONLY));
 
 	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = rfd;
 	pfd.events = POLLIN;
 
-	pid = fork();
-	ATF_REQUIRE(pid >= 0);
-
+	RL(pid = fork());
 	if (pid == 0) {
-		(void)close(rfd);
+		if (close(rfd))
+			_exit(1);
 		sleep(5);
-		(void)close(wfd);
+		if (close(wfd))
+			_exit(1);
 		_exit(0);
 	}
-	(void)close(wfd);
+	RL(close(wfd));
 
-	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts1) == 0);
-	ATF_REQUIRE(poll(&pfd, 1, INFTIM) == 1);
-	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts2) == 0);
+	RL(clock_gettime(CLOCK_MONOTONIC, &ts1));
+	RL(ret = poll(&pfd, 1, INFTIM));
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
+	RL(clock_gettime(CLOCK_MONOTONIC, &ts2));
 
 	/* Make sure at least a couple of seconds have elapsed. */
-	ATF_REQUIRE(ts2.tv_sec - ts1.tv_sec >= 2);
+	ATF_REQUIRE_MSG(ts2.tv_sec - ts1.tv_sec >= 2,
+	    "ts1=%lld.%09ld ts2=%lld.%09ld",
+	    (long long)ts1.tv_sec, ts1.tv_nsec,
+	    (long long)ts2.tv_sec, ts2.tv_nsec);
 
 	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
 	    "revents=0x%x expected POLLHUP=0x%x and not POLLOUT=0x%x",
