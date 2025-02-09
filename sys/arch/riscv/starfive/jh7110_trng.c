@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_trng.c,v 1.1 2025/02/08 16:12:20 skrll Exp $ */
+/* $NetBSD: jh7110_trng.c,v 1.2 2025/02/09 09:09:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_trng.c,v 1.1 2025/02/08 16:12:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_trng.c,v 1.2 2025/02/09 09:09:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -75,7 +75,6 @@ struct jh7110_trng_softc {
 #define JH7110_TRNG_STAT		0x0004
 #define  JH7110_TRNG_STAT_SEEDED		__BIT(9)
 
-//XXXNH check
 #define JH7110_TRNG_MODE		0x0008
 #define  JH7110_TRNG_MODE_R256			__BIT(3)
 #define JH7110_TRNG_SMODE		0x000c
@@ -92,6 +91,25 @@ struct jh7110_trng_softc {
 #define  JH7110_TRNG_ISTATUS_AGE_ALARM		__BIT(2)
 #define  JH7110_TRNG_ISTATUS_SEED_DONE		__BIT(1)
 #define  JH7110_TRNG_ISTATUS_RAND_RDY		__BIT(0)
+#define JH7110_TRNG_FEATURES		0x001c
+#define  JH7110_TRNG_FEATURES_MM_RESET_STATE	__BIT(3)
+#define  JH7110_TRNG_FEATURES_RAND_SEED_AVAIL	__BIT(2)
+#define  JH7110_TRNG_FEATURES_MAX_RAND_LENGTH	__BITS(1,0)
+
+#define  JH7110_TRNG_FEATURES_BITS					       \
+	"\177\020"	/* New bitmask */				       \
+	"f\003\01mode reset state\0"		/* bit  3 (1) */	       \
+	    "=\x0" "test mode\0"					       \
+	    "=\x1" "mission mode\0"					       \
+	"f\002\01ring oscillator\0"		/* bit  2 (1) */	       \
+	    "=\x0" "not preset\0"					       \
+	    "=\x1" "present\0"						       \
+	"f\000\02max rand length\0"		/* bits 0 .. 1 */	       \
+	    "=\x0" "128-bit\0"						       \
+	    "=\x1" "256-bit\0"						       \
+	"\0"
+
+
 #define JH7110_TRNG_DATA0		0x0020
 #define JH7110_TRNG_DATA1		0x0024
 #define JH7110_TRNG_DATA2		0x0028
@@ -100,6 +118,27 @@ struct jh7110_trng_softc {
 #define JH7110_TRNG_DATA5		0x0034
 #define JH7110_TRNG_DATA6		0x0038
 #define JH7110_TRNG_DATA7		0x003c
+
+#define JH7110_TRNG_BCONF		0x0068
+#define  JH7110_TRNG_BCONF_AUTO_RESEED_LOOPBACK	__BIT(5)
+#define  JH7110_TRNG_BCONF_MODE_AFTER_RST	__BIT(4)
+#define  JH7110_TRNG_BCONF_PRNG_LEN_AFTER_RST	__BIT(3)
+#define  JH7110_TRNG_BCONF_MAX_PRNG_LEN		__BIT(2)
+#define  JH7110_TRNG_BCONF_BITS						       \
+	"\177\020"	/* New bitmask */				       \
+	"f\005\01auto reseed loopback\0"	/* bit  5 (1) */	       \
+	    "=\x0" "not present\0"					       \
+	    "=\x1" "present\0"						       \
+	"f\004\01mode after reset\0"		/* bit  4 (1) */	       \
+	    "=\x0" "test mode\0"					       \
+	    "=\x1" "mission mode\0"					       \
+	"f\003\01PRNG after reset\0"		/* bit  3 (1) */	       \
+	    "=\x0" "not preset\0"					       \
+	    "=\x1" "present\0"						       \
+	"f\002\01max PRNG length\0"		/* bit  2 (1) */	       \
+	    "=\x0" "128-bit\0"						       \
+	    "=\x1" "256-bit\0"						       \
+	"\0"
 
 
 #define RD4(sc, reg)							       \
@@ -331,6 +370,16 @@ jh7110_trng_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": JH7110 TRNG\n");
+
+	char buf[256];
+
+	snprintb(buf, sizeof(buf), JH7110_TRNG_FEATURES_BITS,
+	    RD4(sc, JH7110_TRNG_FEATURES));
+	aprint_verbose_dev(sc->sc_dev, "Features    : %s\n", buf);
+
+	snprintb(buf, sizeof(buf), JH7110_TRNG_BCONF_BITS,
+	    RD4(sc, JH7110_TRNG_BCONF));
+	aprint_verbose_dev(sc->sc_dev, "Build config: %s\n", buf);
 
 	char intrstr[128];
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
