@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.8 2021/10/02 17:32:55 thorpej Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.9 2025/02/09 17:09:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -385,7 +385,9 @@ ATF_TC_BODY(fifo_hup1, tc)
 	(void)close(wfd);
 
 	ATF_REQUIRE(poll(&pfd, 1, 0) == 1);
-	ATF_REQUIRE((pfd.revents & POLLHUP) != 0);
+	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
+	    "revents=0x%x expected POLLHUP=0x%x and not POLLOUT=0x%x",
+	    pfd.revents, POLLHUP, POLLOUT);
 
 	/*
 	 * Check that POLLHUP is cleared when a writer re-connects.
@@ -447,7 +449,9 @@ ATF_TC_BODY(fifo_hup2, tc)
 	/* Make sure at least a couple of seconds have elapsed. */
 	ATF_REQUIRE(ts2.tv_sec - ts1.tv_sec >= 2);
 
-	ATF_REQUIRE((pfd.revents & POLLHUP) != 0);
+	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
+	    "revents=0x%x expected POLLHUP=0x%x and not POLLOUT=0x%x",
+	    pfd.revents, POLLHUP, POLLOUT);
 }
 
 ATF_TC_CLEANUP(fifo_hup2, tc)
