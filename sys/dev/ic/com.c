@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.386 2025/01/20 09:24:32 martin Exp $ */
+/* $NetBSD: com.c,v 1.387 2025/02/09 10:27:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.386 2025/01/20 09:24:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.387 2025/02/09 10:27:29 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -667,7 +667,7 @@ com_attach_subr(struct com_softc *sc)
 	/* look for a NS 16550AF UART with FIFOs */
 	if (sc->sc_type == COM_TYPE_INGENIC) {
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 		    FIFO_TRIGGER_14 | FIFO_UART_ON);
 	} else
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
@@ -2574,7 +2574,7 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 			/* no EFR on alchemy */
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
-			if ((type != COM_TYPE_16550_NOERS) && 
+			if ((type != COM_TYPE_16550_NOERS) &&
 			    (type != COM_TYPE_INGENIC)) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
