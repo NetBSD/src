@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.10 2024/03/03 17:37:29 christos Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.11 2025/02/10 15:17:52 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _elftc.h 3975 2022-04-30 20:10:58Z jkoshy
+ * Id: _elftc.h 4042 2024-06-28 12:34:53Z jkoshy
  */
 
 /**
@@ -285,7 +285,7 @@ struct name {							\
 /*
  * VCS Ids.
  *
- * The place holder below is intended to be replaced with a project-specific
+ * The placeholder below is intended to be replaced with a project-specific
  * definition of the ELFTC_VCSID macro.
  */
 
@@ -304,7 +304,8 @@ struct name {							\
 #define	ELFTC_VCSID(ID)		__FBSDID(ID)
 
 #elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__GLIBC__) || \
-    defined(__GNU__) || defined(__linux__) || defined(__minix)
+    defined(__GNU__) || defined(__linux__) || defined(__minix) || \
+    defined(__CYGWIN__)
 
 #if defined(__GNUC__)
 #define	ELFTC_VCSID(ID)		__asm__(".ident\t\"" ID "\"")
@@ -317,10 +318,10 @@ struct name {							\
 #endif	/* ELFTC_VCSID */
 
 /*
- * The place holder below is meant to be replaced by a declaration
+ * The placeholder below is meant to be replaced by a declaration
  * of the downstream project's revision control macro.
  *
- * E.g. on NetBSD, this place holder would be replaced by:
+ * E.g. on NetBSD, this placeholder would be replaced by:
  *
  *   #if !defined(__RCSID)
  *   #define __RCSID(ID)
