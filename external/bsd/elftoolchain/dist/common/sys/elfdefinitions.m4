@@ -1,6 +1,6 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.6 2024/03/03 17:37:29 christos Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.7 2025/02/10 15:54:16 jkoshy Exp $
 /*-
- * Copyright (c) 2010,2021 Joseph Koshy
+ * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,44 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.6 2024/03/03 17:37:29 christos Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 3984 2022-05-06 11:22:42Z jkoshy')
+	`Id: elfdefinitions.m4 4162 2025-02-04 18:52:12Z jkoshy')
 include(`elfconstants.m4')dnl
 
-define(`_',`ifelse(eval(len($1) <= 7),1,
-    `#define	$1		$2',
-    `#define	$1	$2')')
+# Compute the whitespace between a symbol and its definition.
+#
+# - If the symbol is 7 characters or shorter in width, use two tabs.
+# - Otherwise, if the symbol is 15 characters or less in width, use one tab.
+# - Otherwise, use a single space.
+#
+# This makes the generated definitions easier to read.
+define(`_WHITESPACE',
+  `ifelse(eval(len($1) <= 7),1,`		',
+          eval(len($1) <= 15),1,`	',
+          ` ')')
+
+# Format symbol descriptions as C-style comment.
+define(`_DESCRIPTION',
+  `ifelse(eval(len(`$*') > 0),1,` /* $* */',
+          `')')
+
+# Expand the `_' macro to a C preprocessor definition that is suitably
+# vertically aligned.  If a symbol description is present, add it as a
+# C-style comment.
+define(`_',``#'define $1`'_WHITESPACE($1)`'$2`'_DESCRIPTION(`$3')')
+
+# Expand the `__' macro to a C-style comment.
+#
+# - An empty invocation __()) is ignored.
+# - An invocation with a single argument __(COMMENT) is expanded as an inline
+#   C-style comment.
+# - An invocation with two or more arguments __(PREFIX, COMMENT) expands to
+#   `PREFIX/* COMMENT */'.  This form would be used to visually indent the
+#   comment in the generated output.
+undefine(`__')
+define(`__',
+  `ifelse($#, 0, `',
+          $#, 1, `/* $1 */',
+          `$1/* shift($*) */')')
 divert(0)dnl
 
 /*
@@ -42,14 +74,7 @@ divert(0)dnl
  */
 
 /*
- * These definitions are based on:
- * - The public specification of the ELF format as defined in the
- *   October 2009 draft of System V ABI.
- *   See: http://www.sco.com/developers/gabi/latest/ch4.intro.html
- * - The May 1998 (version 1.5) draft of "The ELF-64 object format".
- * - Processor-specific ELF ABI definitions for sparc, i386, amd64, mips,
- *   ia64, powerpc, and RISC-V processors.
- * - The "Linkers and Libraries Guide", from Sun Microsystems.
+patsubst(defn(`COMPATIBILITY_NOTICE'), `^#', ` * ')
  */
 
 #ifndef _SYS_ELFDEFINITIONS_H_
@@ -216,7 +241,17 @@ DEFINE_VERSIONING_NUMBERS()
 /**
  ** Relocation types.
  **/
-DEFINE_RELOCATIONS()
+DEFINE_RELOCATION_TYPES()
+
+/*
+ * Obsolete relocation types.
+ */
+DEFINE_OBSOLETE_RELOCATION_TYPES()
+
+/*
+ * Alternate spellings for relocation type symbols.
+ */
+DEFINE_RELOCATION_TYPE_SYNONYMS()
 
 /*
  * MIPS ABI related.
@@ -713,7 +748,7 @@ typedef struct {
 	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
 	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
 	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
-	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+	uint32_t	gh_shift2;	/* Bloom filter `shift' count. */
 } Elf_GNU_Hash_Header;
 
 #endif	/* _SYS_ELFDEFINITIONS_H_ */
