@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.8 2025/02/10 15:54:16 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.9 2025/02/10 18:52:26 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -1767,7 +1767,7 @@ _(R_386_GOT32X,		43)
 ')
 
 define(`DEFINE_386_RELOCATION_TYPE_SYNONYMS',`
-_(R_386_JMP_SLOT, R_386_JUMP_SLOT)
+_(R_386_JMP_SLOT, 7)
 ')
 
 define(`DEFINE_AARCH64_RELOCATION_TYPES',`
