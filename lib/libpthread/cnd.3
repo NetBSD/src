@@ -1,4 +1,4 @@
-.\"	$NetBSD: cnd.3,v 1.2 2019/04/27 10:57:11 wiz Exp $
+.\"	$NetBSD: cnd.3,v 1.3 2025/02/10 20:40:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,9 +47,9 @@
 .Fn cnd_signal "cnd_t *cond"
 .Ft int
 .Fo cnd_timedwait
-.Fa "cnd_t * __restrict cond"
-.Fa "mtx_t * __restrict mtx"
-.Fa "const struct timespec * __restrict ts"
+.Fa "cnd_t * restrict cond"
+.Fa "mtx_t * restrict mtx"
+.Fa "const struct timespec * restrict ts"
 .Fc
 .Ft int
 .Fn cnd_wait "cnd_t *cond" "mtx_t *mtx"

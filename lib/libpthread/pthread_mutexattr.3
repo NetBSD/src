@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.14 2017/02/02 10:48:22 njoly Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.15 2025/02/10 20:40:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@
 "pthread_mutexattr_t * restrict attr" "int * restrict type"
 .Ft int
 .Fn pthread_mutexattr_getpshared \
-"const pthread_mutexattr_t * __restrict attr" "int * __restrict pshared"
+"const pthread_mutexattr_t * restrict attr" "int * restrict pshared"
 .Ft int
 .Fn pthread_mutexattr_setpshared \
 "pthread_mutexattr_t * attr" "int pshared"

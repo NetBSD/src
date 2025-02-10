@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlockattr.3,v 1.10 2016/07/05 10:04:17 wiz Exp $
+.\" $NetBSD: pthread_rwlockattr.3,v 1.11 2025/02/10 20:40:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn pthread_rwlockattr_destroy "pthread_rwlockattr_t *attr"
 .Ft int
-.Fn pthread_rwlockattr_getpshared "const pthread_rwlockattr_t *__restrict attr" "int * __restrict pshared"
+.Fn pthread_rwlockattr_getpshared "const pthread_rwlockattr_t * restrict attr" "int * restrict pshared"
 .Ft int
 .Fn pthread_rwlockattr_setpshared "pthread_rwlockattr_t *attr" "int pshared"
 .Sh DESCRIPTION

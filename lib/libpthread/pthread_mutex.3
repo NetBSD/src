@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.11 2019/12/27 09:45:26 msaitoh Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.12 2025/02/10 20:40:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,12 +84,12 @@
 .Ft int
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
 .Ft int
-.Fn pthread_mutex_timedlock "pthread_mutex_t *__restrict mutex" "const struct timespec *__restrict timeout"
+.Fn pthread_mutex_timedlock "pthread_mutex_t * restrict mutex" "const struct timespec * restrict timeout"
 .Ft int
-.Fn pthread_mutex_getprioceiling "const pthread_mutex_t * __restrict mutex" "int * __restrict prioceiling"
+.Fn pthread_mutex_getprioceiling "const pthread_mutex_t * restrict mutex" "int * restrict prioceiling"
 .Ft int
-.Fn pthread_mutex_setprioceiling "pthread_mutex_t * __restrict mutex" \
-"int prioceiling" "int * __restrict old_ceiling"
+.Fn pthread_mutex_setprioceiling "pthread_mutex_t * restrict mutex" \
+"int prioceiling" "int * restrict old_ceiling"
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The

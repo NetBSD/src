@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.12 2017/03/28 17:42:52 maya Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.13 2025/02/10 20:40:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,14 +67,14 @@
 .Ft int
 .Fn pthread_condattr_init "pthread_condattr_t *attr"
 .Ft int
-.Fn pthread_condattr_getclock "const pthread_condattr_t *__restrict attr" \
-"clockid_t * __restrict clock_id"
+.Fn pthread_condattr_getclock "const pthread_condattr_t * restrict attr" \
+"clockid_t * restrict clock_id"
 .Ft int
 .Fn pthread_condattr_setclock "pthread_condattr_t *attr" "clockid_t clock"
 .Ft int
 .Fn pthread_condattr_destroy "pthread_condattr_t *attr"
 .Ft int
-.Fn pthread_condattr_getpshared "const pthread_condattr_t * __restrict attr" "int * __restrict pshared"
+.Fn pthread_condattr_getpshared "const pthread_condattr_t * restrict attr" "int * restrict pshared"
 .Ft int
 .Fn pshared_condattr_setpshared "pthread_condattr_t *attr" "int pshared"
 .Sh DESCRIPTION
