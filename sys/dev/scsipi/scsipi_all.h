@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.34 2024/11/09 12:06:22 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.35 2025/02/10 14:42:33 jakllsch Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -190,7 +190,7 @@ struct scsipi_inquiry_evpd_header {
 #define SINQ_VPD_BLOCK_LIMITS	0xb0
 #define SINQ_VPD_BLOCK_CHARS	0xb1
 #define SINQ_VPD_LOGICAL_PROV	0xb2
-#define SINQ_VPD_REFERRASLS	0xb3
+#define SINQ_VPD_REFERRALS	0xb3
 #define SINQ_VPD_SUPPORTED	0xb4
 #define SINQ_VPD_BLOCK_CHARSX	0xb5
 #define SINQ_VPD_BLOCK_ZONED	0xb6
