@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.13 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.14 2025/02/11 12:27:58 jkoshy Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -24,6 +24,7 @@
 #define	R_386_COPY	5
 #define	R_386_GLOB_DAT	6
 #define	R_386_JMP_SLOT	7
+#define	R_386_JUMP_SLOT	7 /* psABI spelling. */
 #define	R_386_RELATIVE	8
 #define	R_386_GOTOFF	9
 #define	R_386_GOTPC	10
