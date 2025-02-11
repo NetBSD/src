@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.337 2024/09/28 08:57:47 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.338 2025/02/11 15:02:42 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.337 2024/09/28 08:57:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.338 2025/02/11 15:02:42 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1089,14 +1089,6 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 		xs->xs_control |= XS_CTL_IGNORE_ILLEGAL_REQUEST;
 		return (retval);
 	}
-
-
-
-	/*
-	 * If the device is not open yet, let the generic code handle it.
-	 */
-	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
-		return (retval);
 
 	/*
 	 * If it isn't a extended or extended/deferred error, let
