@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.7 2025/02/05 20:14:30 christos Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.8 2025/02/11 17:48:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,8 +31,11 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklistd.c,v 1.7 2025/02/05 20:14:30 christos Exp $");
+#endif
+__RCSID("$NetBSD: blocklistd.c,v 1.8 2025/02/11 17:48:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>

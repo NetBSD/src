@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.2 2025/02/05 20:09:33 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.3 2025/02/11 17:48:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,8 +32,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.2 2025/02/05 20:09:33 christos Exp $");
+#endif
+__RCSID("$NetBSD: run.c,v 1.3 2025/02/11 17:48:30 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
