@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklist.h,v 1.3 2024/08/02 17:11:55 christos Exp $	*/
+/*	$NetBSD: blocklist.h,v 1.4 2025/02/11 17:42:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,10 @@
 #include <sys/socket.h>
 #include <syslog.h>
 
-__BEGIN_DECLS
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 struct syslog_data;
 struct blocklist *blocklist_open(void);
 struct blocklist *blocklist_open2(
@@ -45,7 +48,10 @@ int blocklist_r(struct blocklist *, int, int, const char *);
 int blocklist_sa(int, int, const struct sockaddr *, socklen_t, const char *);
 int blocklist_sa_r(struct blocklist *, int, int,
     const struct sockaddr *, socklen_t, const char *);
-__END_DECLS
+
+#if defined(__cplusplus)
+}
+#endif
 
 /* action values for user applications */
 #define BLOCKLIST_API_ENUM	1
