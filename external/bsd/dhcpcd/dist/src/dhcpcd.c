@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,9 @@
  * SUCH DAMAGE.
  */
 
-static const char dhcpcd_copyright[] = "Copyright (c) 2006-2023 Roy Marples";
+static const char dhcpcd_copyright[] = "Copyright (c) 2006-2024 Roy Marples";
 
 #include <sys/file.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -115,7 +114,7 @@ printf("usage: "PACKAGE"\t[-146ABbDdEGgHJKLMNPpqTV]\n"
 	"\t\t[-O, --nooption option] [-o, --option option]\n"
 	"\t\t[-Q, --require option] [-r, --request address]\n"
 	"\t\t[-S, --static value]\n"
-	"\t\t[-s, --inform address[/cidr[/broadcast_address]]]\n [--inform6]"
+	"\t\t[-s, --inform address[/cidr[/broadcast_address]]] [--inform6]\n"
 	"\t\t[-t, --timeout seconds] [-u, --userclass class]\n"
 	"\t\t[-v, --vendor code, value] [-W, --whitelist address[/cidr]] [-w]\n"
 	"\t\t[--waitip [4 | 6]] [-y, --reboot seconds]\n"
@@ -724,6 +723,9 @@ dhcpcd_nocarrier_roaming(struct interface *ifp)
 #ifdef INET
 	dhcp_abort(ifp);
 #endif
+#ifdef INET6
+	ipv6nd_abort(ifp);
+#endif
 #ifdef DHCP6
 	dhcp6_abort(ifp);
 #endif
@@ -963,6 +965,7 @@ dhcpcd_startinterface(void *arg)
 				else if (ifo->options & DHCPCD_INFORM6)
 					d6_state = DH6S_INFORM;
 				else
+					/* CONFIRM lease triggered from RA */
 					d6_state = DH6S_CONFIRM;
 				if (dhcp6_start(ifp, d6_state) == -1)
 					logerr("%s: dhcp6_start", ifp->name);
@@ -2278,8 +2281,7 @@ printpidfile:
 
 #ifndef SMALL
 	if (ctx.options & DHCPCD_DUMPLEASE &&
-	    ioctl(fileno(stdin), FIONREAD, &i, sizeof(i)) == 0 &&
-	    i > 0)
+	    ctx.ifc == 1 && ctx.ifv[0][0] == '-' && ctx.ifv[0][1] == '\0')
 	{
 		ctx.options |= DHCPCD_FORKED; /* pretend child process */
 #ifdef PRIVSEP
@@ -2720,6 +2722,7 @@ exit1:
 	eloop_free(ctx.eloop);
 	logclose();
 	free(ctx.logfile);
+	fflush(stdout);
 	free(ctx.ctl_buf);
 #ifdef SETPROCTITLE_H
 	setproctitle_fini();

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -158,19 +158,6 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
-/*
- * ND6 Advertising is only used for IP address sharing to prefer
- * the address on a specific interface.
- * This just fails to work on OpenBSD and causes erroneous duplicate
- * address messages on BSD's other then DragonFly and NetBSD.
- */
-#if !defined(SMALL) && \
-    ((defined(__DragonFly_version) && __DragonFly_version >= 500703) || \
-    (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 899002800) || \
-    defined(__linux__) || defined(__sun))
-#  define ND6_ADVERTISE
-#endif
-
 #ifdef INET6
 TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
@@ -217,8 +204,8 @@ struct ipv6_addr {
 #define	IPV6_AF_ADDED		(1U << 3)
 #define	IPV6_AF_AUTOCONF	(1U << 4)
 #define	IPV6_AF_DADCOMPLETED	(1U << 5)
-#define	IPV6_AF_DELEGATED	(1U << 6)
-#define	IPV6_AF_DELEGATEDPFX	(1U << 7)
+#define	IPV6_AF_PFXDELEGATION	(1U << 6)
+#define	IPV6_AF_DELEGATED	(1U << 7)
 #define	IPV6_AF_NOREJECT	(1U << 8)
 #define	IPV6_AF_REQUEST		(1U << 9)
 #define	IPV6_AF_STATIC		(1U << 10)
@@ -227,8 +214,9 @@ struct ipv6_addr {
 #define	IPV6_AF_EXTENDED	(1U << 13)
 #define	IPV6_AF_REGEN		(1U << 14)
 #define	IPV6_AF_ROUTER		(1U << 15)
+#define	IPV6_AF_ADVERTISED	(1U << 16)
 #ifdef IPV6_MANAGETEMPADDR
-#define	IPV6_AF_TEMPORARY	(1U << 16)
+#define	IPV6_AF_TEMPORARY	(1U << 17)
 #endif
 
 struct ll_callback {
@@ -266,11 +254,11 @@ int ipv6_userprefix( const struct in6_addr *, short prefix_len,
 void ipv6_checkaddrflags(void *);
 void ipv6_markaddrsstale(struct interface *, unsigned int);
 void ipv6_deletestaleaddrs(struct interface *);
-int ipv6_addaddr(struct ipv6_addr *, const struct timespec *);
+int ipv6_addaddr(struct ipv6_addr *, struct timespec *);
 int ipv6_doaddr(struct ipv6_addr *, struct timespec *);
 ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_deleteaddr(struct ipv6_addr *);
-void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
+void ipv6_freedrop_addrs(struct ipv6_addrhead *, int, unsigned int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
     const char *, const struct in6_addr *, uint8_t, int, pid_t);
@@ -301,7 +289,7 @@ void ipv6_freedrop(struct interface *, int);
 struct ipv6_addr *ipv6_createtempaddr(struct ipv6_addr *,
     const struct timespec *);
 struct ipv6_addr *ipv6_settemptime(struct ipv6_addr *, int);
-void ipv6_addtempaddrs(struct interface *, const struct timespec *);
+void ipv6_addtempaddrs(struct interface *, struct timespec *);
 void ipv6_regentempaddrs(void *);
 #endif
 
