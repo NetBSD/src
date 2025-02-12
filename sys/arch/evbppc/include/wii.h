@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.9 2024/10/13 16:21:36 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.10 2025/02/12 11:31:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -45,8 +45,17 @@
 #define GLOBAL_BASE			0x00000000
 #define GLOBAL_SIZE			0x00003400
 
+#define EFB_BASE			0x08000000
+#define EFB_SIZE			0x00300000	/* 3 MB */
+
 #define BROADWAY_BASE			0x0c000000
 #define BROADWAY_SIZE			0x00000004
+
+#define CP_BASE				0x0c000000
+#define CP_SIZE				0x0c000080
+
+#define PE_BASE				0x0c001000
+#define PE_SIZE				0x00000100
 
 #define VI_BASE				0x0c002000
 #define VI_SIZE				0x00000100
@@ -56,6 +65,9 @@
 
 #define DSP_BASE			0x0c005000
 #define DSP_SIZE			0x00000200
+
+#define WGPIPE_BASE			0x0c008000
+#define WGPIPE_SIZE			0x00000004
 
 #define EXI_BASE			0x0d006800
 #define EXI_SIZE			0x00000080
@@ -98,6 +110,9 @@
 #define PI_INTSR			(PI_BASE + 0x00)
 #define PI_INTMR			(PI_BASE + 0x04)
 
+/* GX registers */
+#define GX_WGPIPE			(GX_BASE + 0x00)
+
 /* Processor IRQs */
 #define PI_IRQ_EXI			4
 #define PI_IRQ_AI			5
@@ -125,8 +140,11 @@
 #define HW_GPIOB_DIR			(HOLLYWOOD_BASE + 0x0c4)
 #define HW_GPIOB_IN			(HOLLYWOOD_BASE + 0x0c8)
 #define HW_GPIO_OWNER			(HOLLYWOOD_PRIV_BASE + 0x0fc)
+#define HW_COMPAT			(HOLLYWOOD_PRIV_BASE + 0x180)
+#define  DVDVIDEO			__BIT(21)
 #define HW_RESETS			(HOLLYWOOD_PRIV_BASE + 0x194)
 #define  RSTB_IOP			__BIT(23)
+#define  RSTB_IODI			__BIT(17)
 #define  RSTBINB			__BIT(0)
 #define HW_VERSION			(HOLLYWOOD_BASE + 0x214)
 #define  HWVER_MASK			__BITS(7,4)
@@ -134,7 +152,9 @@
 
 /* GPIOs */
 #define GPIO_SHUTDOWN			1
+#define GPIO_DI_SPIN			4
 #define GPIO_SLOT_LED			5
+#define GPIO_DO_EJECT			9
 
 /* Command line protocol */
 #define WII_ARGV_MAGIC			0x5f617267
