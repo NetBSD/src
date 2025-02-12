@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.89 2024/12/06 10:53:41 bouyer Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.90 2025/02/12 05:15:39 imil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.89 2024/12/06 10:53:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.90 2025/02/12 05:15:39 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,6 +601,10 @@ device_register(device_t dev, void *aux)
 #if NHYPERV > 0
 	(void)device_hyperv_register(dev, aux);
 #endif
+
+	if (device_is_a(dev, "com") && vm_guest > VM_GUEST_NO)
+		prop_dictionary_set_bool(device_properties(dev),
+		    "skip_attach_delay", true);
 
 	if (isaboot == NULL && pciboot == NULL)
 		return;
