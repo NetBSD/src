@@ -6,7 +6,7 @@
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ const char dhcpcd_embedded_conf[] =
 "definend 31 index embed dnssl\n"
 "embed uint16 reserved\n"
 "embed uint32 lifetime\n"
-"embed domain search\n"
+"embed array domain search\n"
 "define6 1 binhex client_id\n"
 "define6 2 binhex server_id\n"
 "define6 3 norequest index embed ia_na\n"
@@ -101,6 +101,7 @@ const char dhcpcd_embedded_conf[] =
 "embed uint32 pltime\n"
 "embed uint32 vltime\n"
 "encap 13 option\n"
+"define6 7 byte preference\n"
 "define6 12 ip6address unicast\n"
 "define6 13 norequest embed status_code\n"
 "embed uint16 status_code\n"
@@ -353,7 +354,7 @@ const char dhcpcd_embedded_conf[] =
 "definend 31 index embed dnssl\n"
 "embed uint16 reserved\n"
 "embed uint32 lifetime\n"
-"embed domain search\n"
+"embed array domain search\n"
 "define6 1 binhex client_id\n"
 "define6 2 binhex server_id\n"
 "define6 3 norequest index embed ia_na\n"

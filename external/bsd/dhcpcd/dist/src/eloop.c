@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * eloop - portable event based main loop.
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -464,7 +464,7 @@ eloop_timespec_diff(const struct timespec *tsp, const struct timespec *usp,
 	unsigned long long tsecs, usecs, secs;
 	long nsecs;
 
-	if (tsp->tv_sec < 0) /* time wreapped */
+	if (tsp->tv_sec < 0) /* time wrapped */
 		tsecs = UTIME_MAX - (unsigned long long)(-tsp->tv_sec);
 	else
 		tsecs = (unsigned long long)tsp->tv_sec;

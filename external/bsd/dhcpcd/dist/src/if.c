@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -155,18 +155,6 @@ if_ioctl(struct dhcpcd_ctx *ctx, ioctl_request_t req, void *data, size_t len)
 		return (int)ps_root_ioctl(ctx, req, data, len);
 #endif
 	return ioctl(ctx->pf_inet_fd, req, data, len);
-}
-
-int
-if_getflags(struct interface *ifp)
-{
-	struct ifreq ifr = { .ifr_flags = 0 };
-
-	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
-		return -1;
-	ifp->flags = (unsigned int)ifr.ifr_flags;
-	return 0;
 }
 
 int
@@ -852,27 +840,18 @@ if_loopback(struct dhcpcd_ctx *ctx)
 }
 
 int
-if_domtu(const struct interface *ifp, short int mtu)
+if_getmtu(const struct interface *ifp)
 {
-	int r;
-	struct ifreq ifr;
-
 #ifdef __sun
-	if (mtu == 0)
-		return if_mtu_os(ifp);
-#endif
+	return if_mtu_os(ifp);
+#else
+	struct ifreq ifr = { .ifr_mtu = 0 };
 
-	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = mtu;
-	if (mtu != 0)
-		r = if_ioctl(ifp->ctx, SIOCSIFMTU, &ifr, sizeof(ifr));
-	else
-		r = pioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr));
-
-	if (r == -1)
+	if (pioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr)) == -1)
 		return -1;
 	return ifr.ifr_mtu;
+#endif
 }
 
 #ifdef ALIAS_ADDR

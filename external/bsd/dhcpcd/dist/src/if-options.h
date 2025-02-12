@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -56,11 +56,7 @@
 #ifndef HOSTNAME_MAX_LEN
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
 #endif
-#define VENDORCLASSID_MAX_LEN	255
-#define CLIENTID_MAX_LEN	48
-#define USERCLASS_MAX_LEN	255
-#define VENDOR_MAX_LEN		255
-#define	MUDURL_MAX_LEN		255
+#define	DHCP_OPTION_MAX_LEN	255
 
 #define DHCPCD_ARP			(1ULL << 0)
 #define DHCPCD_RELEASE			(1ULL << 1)
@@ -191,6 +187,8 @@
 #define O_REQUEST_TIME		O_BASE + 54
 #define O_FALLBACK_TIME		O_BASE + 55
 #define O_IPV4LL_TIME		O_BASE + 56
+#define O_VSIO			O_BASE + 57
+#define O_VSIO6			O_BASE + 58
 
 extern const struct option cf_options[];
 
@@ -217,10 +215,23 @@ struct if_ia {
 #endif
 };
 
+#ifndef SMALL
 struct vivco {
+	uint32_t en;
 	size_t len;
 	uint8_t *data;
 };
+struct vsio_so {
+	uint16_t opt;
+	uint16_t len;
+	void *data;
+};
+struct vsio {
+	uint32_t en;
+	size_t so_len;
+	struct vsio_so *so;
+};
+#endif
 
 struct if_options {
 	time_t mtime;
@@ -259,13 +270,14 @@ struct if_options {
 
 	char **environ;
 
-	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the length */
+	char hostname[HOSTNAME_MAX_LEN + 1]; /* NUL terminated */
 	uint8_t fqdn;
-	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
-	uint8_t clientid[CLIENTID_MAX_LEN + 2];
-	uint8_t userclass[USERCLASS_MAX_LEN + 2];
-	uint8_t vendor[VENDOR_MAX_LEN + 2];
-	uint8_t mudurl[MUDURL_MAX_LEN + 2];
+	/* The first byte is the option length */
+	uint8_t vendorclassid[DHCP_OPTION_MAX_LEN + 1];
+	uint8_t clientid[DHCP_OPTION_MAX_LEN + 1];
+	uint8_t userclass[DHCP_OPTION_MAX_LEN + 1];
+	uint8_t vendor[DHCP_OPTION_MAX_LEN + 1];
+	uint8_t mudurl[DHCP_OPTION_MAX_LEN + 1];
 
 	size_t blacklist_len;
 	in_addr_t *blacklist;
@@ -287,11 +299,17 @@ struct if_options {
 	size_t nd_override_len;
 	struct dhcp_opt *dhcp6_override;
 	size_t dhcp6_override_len;
-	uint32_t vivco_en;
-	struct vivco *vivco;
-	size_t vivco_len;
 	struct dhcp_opt *vivso_override;
 	size_t vivso_override_len;
+
+#ifndef SMALL
+	size_t vivco_len;
+	struct vivco *vivco;
+	size_t vsio_len;
+	struct vsio *vsio;
+	size_t vsio6_len;
+	struct vsio *vsio6;
+#endif
 
 	struct auth auth;
 };
