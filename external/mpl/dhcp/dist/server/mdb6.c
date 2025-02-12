@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.7 2022/09/23 12:30:52 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.8 2025/02/12 22:17:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.7 2022/09/23 12:30:52 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.8 2025/02/12 22:17:27 christos Exp $");
 
 
 /*!
@@ -487,8 +487,6 @@ ia_remove_iasubopt(struct ia_xx *ia, struct iasubopt *iasubopt,
 
 	for (i=0; i<ia->num_iasubopt; i++) {
 		if (ia->iasubopt[i] == iasubopt) {
-			/* remove this sub option */
-			iasubopt_dereference(&(ia->iasubopt[i]), file, line);
 			/* move remaining suboption pointers down one */
 			for (j=i+1; j < ia->num_iasubopt; j++) {
 				ia->iasubopt[j-1] = ia->iasubopt[j];
@@ -496,6 +494,8 @@ ia_remove_iasubopt(struct ia_xx *ia, struct iasubopt *iasubopt,
 			/* decrease our total count */
 			/* remove the back-reference in the suboption itself */
 			ia_dereference(&iasubopt->ia, file, line);
+			/* remove this sub option */
+			iasubopt_dereference(&iasubopt, file, line);
 			ia->num_iasubopt--;
 			return;
 		}
@@ -2070,8 +2070,9 @@ cleanup_old_expired(struct ipv6_pool *pool) {
 					       ia->iaid_duid.len, MDL);
 			}
 			ia_dereference(&ia, MDL);
+		} else {
+			iasubopt_dereference(&tmp, MDL);
 		}
-		iasubopt_dereference(&tmp, MDL);
 	}
 }
 
