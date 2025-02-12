@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 #include "common.h"
 #include "dhcpcd.h"
+#include "eloop.h"
 #include "if-options.h"
 
 const char *
@@ -213,4 +214,27 @@ is_root_local(void)
 	errno = ENOTSUP;
 	return -1;
 #endif
+}
+
+uint32_t
+lifetime_left(uint32_t lifetime, const struct timespec *acquired, struct timespec *now)
+{
+	uint32_t elapsed;
+	struct timespec n;
+
+	if (lifetime == INFINITE_LIFETIME)
+		return lifetime;
+
+	if (now == NULL) {
+		timespecclear(&n);
+		now = &n;
+	}
+	if (!timespecisset(now))
+		clock_gettime(CLOCK_MONOTONIC, now);
+
+	elapsed = (uint32_t)eloop_timespec_diff(now, acquired, NULL);
+	if (elapsed > lifetime)
+		return 0;
+
+	return lifetime - elapsed;
 }

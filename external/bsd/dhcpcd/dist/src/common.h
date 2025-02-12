@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -70,16 +70,10 @@
 #endif
 
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# ifndef __packed
-#  define __packed __attribute__((__packed__))
-# endif
 # ifndef __unused
 #  define __unused __attribute__((__unused__))
 # endif
 #else
-# ifndef __packed
-#  define __packed
-# endif
 # ifndef __unused
 #  define __unused
 # endif
@@ -147,6 +141,8 @@
 # endif
 #endif
 
+#define INFINITE_LIFETIME (~0U)
+
 const char *hwaddr_ntoa(const void *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);
 ssize_t readfile(const char *, void *, size_t);
@@ -154,4 +150,5 @@ ssize_t writefile(const char *, mode_t, const void *, size_t);
 int filemtime(const char *, time_t *);
 char *get_line(char ** __restrict, ssize_t * __restrict);
 int is_root_local(void);
+uint32_t lifetime_left(uint32_t, const struct timespec *, struct timespec *);
 #endif
