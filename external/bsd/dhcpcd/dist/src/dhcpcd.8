@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: BSD-2-Clause
 .\"
-.\" Copyright (c) 2006-2023 Roy Marples
+.\" Copyright (c) 2006-2024 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 10, 2023
+.Dd June 17, 2024
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -217,16 +217,16 @@ To work with these devices they either need to be specified on the command line,
 be listed in
 .Fl Fl allowinterfaces
 or have an interface directive in
-.Pa /etc/dhcpcd.conf .
+.Pa /dhcpcd.conf .
 .Ss Hooking into events
 .Nm
 runs
-.Pa /libexec/dhcpcd-run-hooks ,
+.Pa /dhcpcd-run-hooks ,
 or the script specified by the
 .Fl c , Fl Fl script
 option.
 This script runs each script found in
-.Pa /libexec/dhcpcd-hooks
+.Pa /dhcpcd-hooks
 in a lexical order.
 The default installation supplies the scripts
 .Pa 01-test ,
@@ -243,9 +243,9 @@ for details on how these scripts work.
 currently ignores the exit code of the script.
 .Pp
 More scripts are supplied in
-.Pa /usr/share/dhcpcd/hooks
+.Pa /dhcpcd/hooks
 and need to be copied to
-.Pa /libexec/dhcpcd-hooks
+.Pa /dhcpcd-hooks
 if you intend to use them.
 For example, you could install
 .Pa 29-lookup-hostname
@@ -266,7 +266,7 @@ carrier status.
 Use this
 .Ar script
 instead of the default
-.Pa /libexec/dhcpcd-run-hooks .
+.Pa /dhcpcd-run-hooks .
 .It Fl D , Fl Fl duid Op Ar ll | lt | uuid | value
 Use a DHCP Unique Identifier.
 If a system UUID is available, that will be used to create a DUID-UUID,
@@ -274,7 +274,7 @@ otherwise if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 The DUID type can be hinted as an optional parameter if the file
-.Pa /var/db/dhcpcd/duid
+.Pa /duid
 does not exist.
 If not
 .Va ll ,
@@ -287,7 +287,7 @@ will be converted from 00:11:22:33 format.
 This, plus the IAID will be used as the
 .Fl I , Fl Fl clientid .
 The DUID generated will be held in
-.Pa /var/db/dhcpcd/duid
+.Pa /duid
 and should not be copied to other hosts.
 This file also takes precedence over the above rules except for setting a value.
 .It Fl d , Fl Fl debug
@@ -336,7 +336,7 @@ encodes the FQDN hostname as specified in
 .Li RFC 1035 .
 .It Fl f , Fl Fl config Ar file
 Specify a config to load instead of
-.Pa /etc/dhcpcd.conf .
+.Pa /dhcpcd.conf .
 .Nm
 always processes the config file before any command line options.
 .It Fl h , Fl Fl hostname Ar hostname
@@ -452,7 +452,7 @@ is not reloaded.
 Request the DHCP
 .Ar option
 variable for use in
-.Pa /libexec/dhcpcd-run-hooks .
+.Pa /dhcpcd-run-hooks .
 .It Fl p , Fl Fl persistent
 .Nm
 de-configures the
@@ -693,7 +693,7 @@ These messages are still logged via
 .Xr syslog 3 .
 .It Fl T , Fl Fl test
 On receipt of DHCP messages just call
-.Pa /libexec/dhcpcd-run-hooks
+.Pa /dhcpcd-run-hooks
 with the reason of TEST which echos the DHCP variables found in the message
 to the console.
 The interface configuration isn't touched and neither are any configuration
@@ -716,7 +716,9 @@ Use the
 or
 .Fl 6
 flags to specify an address family.
-If a lease is piped in via standard input then that is dumped.
+If a lease is piped in via standard input then use the special interface named
+.Ar -
+to dump it.
 In this case, specifying an address family is mandatory.
 .It Fl V , Fl Fl variables
 Display a list of option codes, the associated variable and encoding for use in
@@ -815,56 +817,56 @@ option
 .Nm
 sends to match.
 If using a DUID in place of the ClientID, edit
-.Pa /var/db/dhcpcd/duid
+.Pa /duid
 accordingly.
 .Sh FILES
 .Bl -ohang
-.It Pa /etc/dhcpcd.conf
+.It Pa /dhcpcd.conf
 Configuration file for dhcpcd.
 If you always use the same options, put them here.
-.It Pa /libexec/dhcpcd-run-hooks
+.It Pa /dhcpcd-run-hooks
 Bourne shell script that is run to configure or de-configure an interface.
-.It Pa /lib/dhcpcd/dev
+.It Pa /dhcpcd/dev
 Linux
 .Pa /dev
 management modules.
-.It Pa /libexec/dhcpcd-hooks
+.It Pa /dhcpcd-hooks
 A directory containing Bourne shell scripts that are run by the above script.
 Each script can be disabled by using the
 .Fl C , Fl Fl nohook
 option described above.
-.It Pa /var/db/dhcpcd/duid
+.It Pa /duid
 Text file that holds the DUID used to identify the host.
-.It Pa /var/db/dhcpcd/secret
+.It Pa /secret
 Text file that holds a secret key known only to the host.
-.It Pa /var/db/dhcpcd/ Ns Ar interface Ns Ar -ssid Ns .lease
+.It Pa / Ns Ar interface Ns Ar -ssid Ns .lease
 The actual DHCP message sent by the server.
 We use this when reading the last
 lease and use the file's mtime as when it was issued.
-.It Pa /var/db/dhcpcd/ Ns Ar interface Ns Ar -ssid Ns .lease6
+.It Pa / Ns Ar interface Ns Ar -ssid Ns .lease6
 The actual DHCPv6 message sent by the server.
 We use this when reading the last
 lease and use the file's mtime as when it was issued.
-.It Pa /var/db/dhcpcd/rdm_monotonic
+.It Pa /rdm_monotonic
 Stores the monotonic counter used in the
 .Ar replay
 field in Authentication Options.
-.It Pa /var/run/dhcpcd/pid
+.It Pa /pid
 Stores the PID of
 .Nm
 running on all interfaces.
-.It Pa /var/run/dhcpcd/ Ns Ar interface Ns .pid
+.It Pa / Ns Ar interface Ns .pid
 Stores the PID of
 .Nm
 running on the
 .Ar interface .
-.It Pa /var/run/dhcpcd/sock
+.It Pa /sock
 Control socket to the manager daemon.
-.It Pa /var/run/dhcpcd/unpriv.sock
+.It Pa /unpriv.sock
 Unprivileged socket to the manager daemon, only allows state retrieval.
-.It Pa /var/run/dhcpcd/ Ns Ar interface Ns .sock
+.It Pa / Ns Ar interface Ns .sock
 Control socket to per interface daemon.
-.It Pa /var/run/dhcpcd/ Ns Ar interface Ns .unpriv.sock
+.It Pa / Ns Ar interface Ns .unpriv.sock
 Unprivileged socket to per interface daemon, only allows state retrieval.
 .El
 .Sh SEE ALSO

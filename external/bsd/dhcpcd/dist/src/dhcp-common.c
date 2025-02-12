@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -136,6 +136,7 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 	if (opt->type & OT_NOREQ)
 		printf(" norequest");
 	putchar('\n');
+	fflush(stdout);
 }
 
 struct dhcp_opt *

@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: BSD-2-Clause
 .\"
-.\" Copyright (c) 2006-2023 Roy Marples
+.\" Copyright (c) 2006-2024 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 24, 2024
+.Dd November 1, 2024
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -161,7 +161,7 @@ In most cases,
 will set this automatically.
 .It Ic controlgroup Ar group
 Sets the group ownership of
-.Pa /var/run/dhcpcd/sock
+.Pa /sock
 so that users other than root can connect to
 .Nm dhcpcd .
 .It Ic debug
@@ -220,7 +220,7 @@ otherwise if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 The DUID type can be hinted as an optional parameter if the file
-.Pa /var/db/dhcpcd/duid
+.Pa /duid
 does not exist.
 If not
 .Va ll ,
@@ -233,7 +233,7 @@ will be converted from 00:11:22:33 format.
 This, plus the IAID will be used as the
 .Ic clientid .
 The DUID generated will be held in
-.Pa /var/db/dhcpcd/duid
+.Pa /duid
 and should not be copied to other hosts.
 This file also takes precedence over the above rules except for setting a value.
 .It Ic iaid Ar iaid
@@ -471,6 +471,17 @@ always fork on a RA.
 Enables IPv6 Router Advertisement solicitation.
 This is on by default, but is documented here in the case where it is disabled
 globally but needs to be enabled for one interface.
+.It Ic lastlease
+If
+.Nm dhcpcd
+cannot obtain a lease, then try to use the last lease acquired for the
+interface.
+.It Ic lastleaseextend
+Same as the above, but the lease will be retained even if it expires.
+.Nm dhcpcd
+will give it up if any other host tries to claim it for their own via ARP.
+This violates RFC 2131, section 3.7, which states the lease should be
+dropped once it has expired.
 .It Ic leasetime Ar seconds
 Request DHCP a lease time of
 .Ar seconds .
@@ -657,7 +668,7 @@ will release the lease prior to stopping the interface.
 Use
 .Ar script
 instead of the default
-.Pa /libexec/dhcpcd-run-hooks .
+.Pa /dhcpcd-run-hooks .
 .It Ic request_time Ar seconds
 Request the lease for
 .Ar seconds
@@ -755,7 +766,7 @@ It should only be used for Microsoft DHCP servers and the
 should be set to "MSFT 98" or "MSFT 5.0".
 This option is not RFC compliant.
 .It Ic vendor Ar code , Ns Ar value
-Add an encapsulated vendor option.
+Add an encapsulated vendor-specific information option (DHCP Option 43).
 .Ar code
 should be between 1 and 254 inclusive.
 To add a raw vendor string, omit
@@ -771,6 +782,40 @@ Set the vendor option 03 with an IP address as a string.
 .D1 vendor 03,\e"192.168.0.2\e"
 Set un-encapsulated vendor option to hello world.
 .D1 vendor ,"hello world"
+.It Ic vsio Ar en Ar code, Ns Ar value
+Add an encapsulated vendor-specific information option (DHCP Option 125) with
+IANA assigned Enterprise Number
+.Ar en
+proceeding with the
+.Ar code
+which should be between 1 and 255 inclusive, and the
+.Ar value
+after the comma.
+Examples:
+.Pp
+Set the vsio for enterprise number 155 option 01 with an IPv4 address.
+.D1 vsio 155 01,192.168.1.1
+Set the vsio for enterprise number 155 option 02 with a string.
+.D1 vsio 155 02,"hello world"
+Set the vsio for enterprise number 255 option 01 with a hex code.
+.D1 vsio 255 01,01:02:03:04:05
+.It Ic vsio6 Ar en Ar code, Ns Ar value
+Add an encapsulated vendor-specific information option (DHCPv6 Option 17) with
+IANA assigned Enterprise Number
+.Ar en
+proceeding with the
+.Ar code
+which should be between 1 and 65535 inclusive, and the
+.Ar value
+after the comma.
+Examples:
+.Pp
+Set the vsio for enterprise number 155 option 01 with an IPv6 address.
+.D1 vsio6 155 01,2001:0db8:85a3:0000:0000:8a2e:0370:7334
+Set the vsio for enterprise number 155 option 02 with a string.
+.D1 vsio6 155 02,"hello world"
+Set the vsio for enterprise number 255 option 01 with a hex code.
+.D1 vsio6 255 01,01:02:03:04:05
 .It Ic vendorclassid Ar string
 Set the DHCP Vendor Class.
 DHCPv6 has its own option as shown below.
@@ -1018,7 +1063,7 @@ reset.
 .Bl -tag -width -indent
 .It Ic monocounter
 Read the number in the file
-.Pa /var/db/dhcpcd/dhcpcd-rdm.monotonic
+.Pa /dhcpcd-rdm.monotonic
 and add one to it.
 .It Ic monotime
 Create an NTP timestamp from the system time.

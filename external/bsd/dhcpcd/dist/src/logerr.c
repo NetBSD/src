@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -447,7 +447,7 @@ int
 logopen(const char *path)
 {
 	struct logctx *ctx = &_logctx;
-	int opts = 0;
+	int opts = LOG_NDELAY; /* Ensure openlog gets a fd */
 
 	/* Cache timezone */
 	tzset();

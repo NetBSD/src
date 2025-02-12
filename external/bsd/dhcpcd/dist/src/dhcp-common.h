@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -45,11 +45,6 @@
 #define NS_MAXDNAME MAXDNAME
 #define NS_MAXLABEL MAXLABEL
 #endif
-
-/* Max MTU - defines dhcp option length */
-#define	IP_UDP_SIZE		  28
-#define	MTU_MAX			1500 - IP_UDP_SIZE
-#define	MTU_MIN			 576 + IP_UDP_SIZE
 
 #define	OT_REQUEST		(1 << 0)
 #define	OT_UINT8		(1 << 1)
