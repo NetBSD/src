@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.7 2025/01/19 00:29:28 jmcneill Exp $
+#	$NetBSD: WII,v 1.8 2025/02/12 11:33:34 jmcneill Exp $
 #
 #	Nintendo Wii
 #
@@ -143,7 +143,6 @@ gpioiic0	at gpio0 offset 0 mask 0xc000 flag 1
 iic0		at gpioiic0
 avenc0		at iic0 addr 0x70			# A/V Encoder
 
-#iosipc0 	at hollywood0 addr 0x0d000000 irq 30	# IOS IPC
 resetbtn0	at hollywood0 irq 17			# Reset button
 
 ehci0		at hollywood0 addr 0x0d040000 irq 4	# EHCI
@@ -156,6 +155,8 @@ sdhc1		at hollywood0 addr 0x0d080000 irq 8	# SDIO/BT
 sdmmc*		at sdmmcbus?
 ld*		at sdmmc?
 bwi*		at sdmmc?				# WLAN
+
+di0		at hollywood0 addr 0x0d806000 irq 18	# Drive interface
 
 include "dev/usb/usbdevices.config"
 include "dev/bluetooth/bluetoothdevices.config"

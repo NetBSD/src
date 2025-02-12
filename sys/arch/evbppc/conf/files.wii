@@ -1,4 +1,4 @@
-#	$NetBSD: files.wii,v 1.4 2024/01/25 11:47:53 jmcneill Exp $
+#	$NetBSD: files.wii,v 1.5 2025/02/12 11:33:34 jmcneill Exp $
 #
 #
 maxpartitions 16
@@ -81,3 +81,7 @@ file	arch/evbppc/wii/dev/sdhc_hollywood.c	sdhc_hollywood
 device	avenc
 attach	avenc at iic
 file	arch/evbppc/wii/dev/avenc.c		avenc
+
+device 	di: scsi
+attach	di at hollywood
+file	arch/evbppc/wii/dev/di.c		di
