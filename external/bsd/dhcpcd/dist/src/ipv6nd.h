@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,7 @@ void ipv6nd_advertise(struct ipv6_addr *);
 void ipv6nd_startexpire(struct interface *);
 void ipv6nd_drop(struct interface *);
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, bool);
+void ipv6nd_abort(struct interface *);
 #endif /* INET6 */
 
 #endif /* IPV6ND_H */
