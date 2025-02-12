@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - ARP handler
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -238,7 +238,6 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len,
     unsigned int bpf_flags)
 {
 	size_t fl = bpf_frame_header_len(ifp), falen;
-	const struct interface *ifn;
 	struct arphdr ar;
 	struct arp_msg arm;
 	const struct iarp_state *state;
@@ -282,12 +281,9 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len,
 	if ((size_t)((hw_t + ar.ar_hln + ar.ar_pln) - data) > len)
 		return;
 	/* Ignore messages from ourself */
-	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
-		if (ar.ar_hln == ifn->hwlen &&
-		    memcmp(hw_s, ifn->hwaddr, ifn->hwlen) == 0)
-			break;
-	}
-	if (ifn) {
+	if (ar.ar_hln == ifp->hwlen &&
+	    memcmp(hw_s, ifp->hwaddr, ifp->hwlen) == 0)
+	{
 #ifdef ARP_DEBUG
 		logdebugx("%s: ignoring ARP from self", ifp->name);
 #endif
@@ -424,6 +420,7 @@ out:
 	return NULL;
 }
 
+#ifndef KERNEL_RFC5227
 static void
 arp_announced(void *arg)
 {
@@ -533,32 +530,7 @@ arp_ifannounceaddr(struct interface *ifp, const struct in_addr *ia)
 	arp_announce(astate);
 	return astate;
 }
-
-struct arp_state *
-arp_announceaddr(struct dhcpcd_ctx *ctx, const struct in_addr *ia)
-{
-	struct interface *ifp, *iff = NULL;
-	struct ipv4_addr *iap;
-
-	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (!ifp->active || !if_is_link_up(ifp))
-			continue;
-		iap = ipv4_iffindaddr(ifp, ia, NULL);
-		if (iap == NULL)
-			continue;
-#ifdef IN_IFF_NOTUSEABLE
-		if (iap->addr_flags & IN_IFF_NOTUSEABLE)
-			continue;
 #endif
-		if (iff != NULL && iff->metric < ifp->metric)
-			continue;
-		iff = ifp;
-	}
-	if (iff == NULL)
-		return NULL;
-
-	return arp_ifannounceaddr(iff, ia);
-}
 
 struct arp_state *
 arp_new(struct interface *ifp, const struct in_addr *addr)

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@ void ps_root_signalcb(int, void *);
 ssize_t ps_root_readerror(struct dhcpcd_ctx *, void *, size_t);
 ssize_t ps_root_mreaderror(struct dhcpcd_ctx *, void **, size_t *);
 ssize_t ps_root_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
-ssize_t ps_root_ip6forwarding(struct dhcpcd_ctx *, const char *);
 ssize_t ps_root_unlink(struct dhcpcd_ctx *, const char *);
 ssize_t ps_root_filemtime(struct dhcpcd_ctx *, const char *, time_t *);
 ssize_t ps_root_readfile(struct dhcpcd_ctx *, const char *, void *, size_t);

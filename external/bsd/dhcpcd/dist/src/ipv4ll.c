@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@
 #include "logerr.h"
 #include "sa.h"
 #include "script.h"
+
+static void ipv4ll_start_arp(void *arg);
 
 static const struct in_addr inaddr_llmask = {
 	.s_addr = HTONL(LINKLOCAL_MASK)
@@ -173,18 +175,15 @@ ipv4ll_env(FILE *fp, const char *prefix, const struct interface *ifp)
 	return 5;
 }
 
+#ifndef KERNEL_RFC5227
 static void
 ipv4ll_announced_arp(struct arp_state *astate)
 {
 	struct ipv4ll_state *state = IPV4LL_STATE(astate->iface);
 
 	state->conflicts = 0;
-#ifdef KERNEL_RFC5227
-	arp_free(astate);
-#endif
 }
 
-#ifndef KERNEL_RFC5227
 /* This is the callback by ARP freeing */
 static void
 ipv4ll_free_arp(struct arp_state *astate)
@@ -219,7 +218,6 @@ ipv4ll_not_found(struct interface *ifp)
 {
 	struct ipv4ll_state *state;
 	struct ipv4_addr *ia;
-	struct arp_state *astate;
 
 	state = IPV4LL_STATE(ifp);
 	ia = ipv4_iffindaddr(ifp, &state->pickedaddr, &inaddr_llmask);
@@ -228,11 +226,20 @@ ipv4ll_not_found(struct interface *ifp)
 #endif
 		loginfox("%s: using IPv4LL address %s",
 		  ifp->name, inet_ntoa(state->pickedaddr));
-	if (!(ifp->options->options & DHCPCD_CONFIGURE))
-		goto run;
 	if (ia == NULL) {
-		if (ifp->ctx->options & DHCPCD_TEST)
-			goto test;
+		if (ifp->ctx->options & DHCPCD_TEST) {
+			ia = malloc(sizeof(*ia));
+			if (ia == NULL) {
+				logerr(__func__);
+				return;
+			}
+			ia->iface = ifp;
+			ia->addr = state->pickedaddr;
+		} else if (!(ifp->options->options & DHCPCD_CONFIGURE)) {
+			logwarnx("%s: refusing to add IPv4LL address %s",
+			    ifp->name, inet_ntoa(state->pickedaddr));
+			return;
+		}
 		ia = ipv4_addaddr(ifp, &state->pickedaddr,
 		    &inaddr_llmask, &inaddr_llbcast,
 		    DHCP_INFINITE_LIFETIME, DHCP_INFINITE_LIFETIME);
@@ -245,7 +252,6 @@ ipv4ll_not_found(struct interface *ifp)
 	logdebugx("%s: DAD completed for %s", ifp->name, ia->saddr);
 #endif
 
-test:
 	state->addr = ia;
 	state->down = false;
 	if (ifp->ctx->options & DHCPCD_TEST) {
@@ -254,10 +260,7 @@ test:
 		return;
 	}
 	rt_build(ifp->ctx, AF_INET);
-run:
-	astate = arp_announceaddr(ifp->ctx, &ia->addr);
-	if (astate != NULL)
-		astate->announced_cb = ipv4ll_announced_arp;
+
 	script_runreason(ifp, "IPV4LL");
 	dhcpcd_daemonise(ifp->ctx);
 }
@@ -275,7 +278,7 @@ ipv4ll_found(struct interface *ifp)
 	eloop_timeout_add_sec(ifp->ctx->eloop,
 	    state->conflicts >= MAX_CONFLICTS ?
 	    RATE_LIMIT_INTERVAL : PROBE_WAIT,
-	    ipv4ll_start, ifp);
+	    ipv4ll_start_arp, ifp);
 }
 
 static void
@@ -290,7 +293,7 @@ ipv4ll_defend_failed(struct interface *ifp)
 	rt_build(ifp->ctx, AF_INET);
 	script_runreason(ifp, "IPV4LL");
 	ipv4ll_pickaddr(ifp);
-	ipv4ll_start(ifp);
+	ipv4ll_start_arp(ifp);
 }
 
 #ifndef KERNEL_RFC5227
@@ -323,9 +326,6 @@ ipv4ll_start(void *arg)
 	struct ipv4ll_state *state;
 	struct ipv4_addr *ia;
 	bool repick;
-#ifndef KERNEL_RFC5227
-	struct arp_state *astate;
-#endif
 
 	if ((state = IPV4LL_STATE(ifp)) == NULL) {
 		ifp->if_data[IF_DATA_IPV4LL] = calloc(1, sizeof(*state));
@@ -401,15 +401,30 @@ ipv4ll_start(void *arg)
 #ifdef IN_IFF_DUPLICATED
 		loginfox("%s: using IPv4LL address %s", ifp->name, ia->saddr);
 #endif
-	} else {
+	} else if (ifp->options->options & DHCPCD_CONFIGURE) {
 		loginfox("%s: probing for an IPv4LL address", ifp->name);
 		if (repick || state->pickedaddr.s_addr == INADDR_ANY)
 			ipv4ll_pickaddr(ifp);
+	} else {
+		logwarnx("%s: refusing to configure IPv4LL", ifp->name);
+		return;
 	}
 
+	ipv4ll_start_arp(ifp);
+}
+
+static void
+ipv4ll_start_arp(void *arg)
+{
+	struct interface *ifp = arg;
 #ifdef KERNEL_RFC5227
 	ipv4ll_not_found(ifp);
 #else
+	struct ipv4ll_state *state;
+	struct arp_state *astate;
+
+	state = IPV4LL_STATE(ifp);
+
 	ipv4ll_freearp(ifp);
 	state->arp = astate = arp_new(ifp, &state->pickedaddr);
 	if (state->arp == NULL)

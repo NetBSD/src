@@ -34,11 +34,11 @@ is used by
 .Xr dhcpcd 8
 to run any system and user defined hook scripts.
 System hook scripts are found in
-.Pa /dhcpcd-hooks
+.Pa /libexec/dhcpcd-hooks
 and the user defined hooks are
-.Pa /dhcpcd.enter-hook .
+.Pa /etc/dhcpcd.enter-hook .
 and
-.Pa /dhcpcd.exit-hook .
+.Pa /etc/dhcpcd.exit-hook .
 The default install supplies hook scripts for configuring
 .Pa /etc/resolv.conf
 and the hostname.
@@ -50,7 +50,7 @@ console from DISCOVER message.
 The hooks scripts are loaded into the current shell rather than executed
 in their own process.
 This allows each hook script, such as
-.Pa /dhcpcd.enter-hook
+.Pa /etc/dhcpcd.enter-hook
 to customise environment variables or provide alternative functions to hooks
 further down the chain.
 As such, using the shell builtins
@@ -218,11 +218,11 @@ space-separated list of delegated prefixes.
 When
 .Nm
 runs, it loads
-.Pa /dhcpcd.enter-hook ,
+.Pa /etc/dhcpcd.enter-hook ,
 any scripts found in
-.Pa /dhcpcd-hooks
+.Pa /libexec/dhcpcd-hooks
 in lexical order, then finally
-.Pa /dhcpcd.exit-hook .
+.Pa /etc/dhcpcd.exit-hook .
 .Sh SEE ALSO
 .Xr dhcpcd 8
 .Sh AUTHORS
