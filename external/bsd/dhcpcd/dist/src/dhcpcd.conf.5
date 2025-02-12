@@ -161,7 +161,7 @@ In most cases,
 will set this automatically.
 .It Ic controlgroup Ar group
 Sets the group ownership of
-.Pa /sock
+.Pa /var/run/dhcpcd/sock
 so that users other than root can connect to
 .Nm dhcpcd .
 .It Ic debug
@@ -220,7 +220,7 @@ otherwise if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 The DUID type can be hinted as an optional parameter if the file
-.Pa /duid
+.Pa /var/db/dhcpcd/duid
 does not exist.
 If not
 .Va ll ,
@@ -233,7 +233,7 @@ will be converted from 00:11:22:33 format.
 This, plus the IAID will be used as the
 .Ic clientid .
 The DUID generated will be held in
-.Pa /duid
+.Pa /var/db/dhcpcd/duid
 and should not be copied to other hosts.
 This file also takes precedence over the above rules except for setting a value.
 .It Ic iaid Ar iaid
@@ -668,7 +668,7 @@ will release the lease prior to stopping the interface.
 Use
 .Ar script
 instead of the default
-.Pa /dhcpcd-run-hooks .
+.Pa /libexec/dhcpcd-run-hooks .
 .It Ic request_time Ar seconds
 Request the lease for
 .Ar seconds
@@ -1063,7 +1063,7 @@ reset.
 .Bl -tag -width -indent
 .It Ic monocounter
 Read the number in the file
-.Pa /dhcpcd-rdm.monotonic
+.Pa /var/db/dhcpcd/dhcpcd-rdm.monotonic
 and add one to it.
 .It Ic monotime
 Create an NTP timestamp from the system time.

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -110,8 +110,15 @@
 
 #define	PS_PROCESS_TIMEOUT	5	/* seconds to stop all processes */
 
-#if defined(PRIVSEP) && defined(HAVE_CAPSICUM)
-#define PRIVSEP_RIGHTS
+#ifdef PRIVSEP
+# ifdef HAVE_CAPSICUM
+#  define PRIVSEP_RIGHTS
+# endif
+/* Pledge and Capsicum deny nearly all sysctls.
+ * Linux needs directory access to sysctls. */
+# if defined(HAVE_CAPSICUM) ||defined(HAVE_PLEDGE) || defined(__linux__)
+#  define PRIVSEP_SYSCTL
+# endif
 #endif
 
 #define PS_ROOT_FD(ctx) ((ctx)->ps_root ? (ctx)->ps_root->psp_fd : -1)

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,10 @@
     (((uint32_t)(A) & 0x0000ff00) << 8) | \
     (((uint32_t)(A) & 0x000000ff) << 24))
 #endif /* BYTE_ORDER */
+
+#ifndef IPV4_MMTU
+#define IPV4_MMTU 68
+#endif
 
 #ifdef __sun
    /* Solaris lacks these defines.

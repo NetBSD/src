@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,6 @@ struct iarp_state {
 void arp_packet(struct interface *, uint8_t *, size_t, unsigned int);
 struct arp_state *arp_new(struct interface *, const struct in_addr *);
 void arp_probe(struct arp_state *);
-struct arp_state *arp_announceaddr(struct dhcpcd_ctx *, const struct in_addr *);
 struct arp_state *arp_ifannounceaddr(struct interface *, const struct in_addr *);
 struct arp_state * arp_find(struct interface *, const struct in_addr *);
 void arp_free(struct arp_state *);

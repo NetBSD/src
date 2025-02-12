@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * BSD interface driver for dhcpcd
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -742,15 +742,12 @@ if_route(unsigned char cmd, const struct rt *rt)
 		{
 			rtm->rtm_index = (unsigned short)rt->rt_ifp->index;
 /*
- * OpenBSD rejects the message for on-link routes.
- * FreeBSD-12 kernel apparently panics.
- * I can't replicate the panic, but better safe than sorry!
- * https://roy.marples.name/archives/dhcpcd-discuss/0002286.html
- *
- * Neither OS currently allows IPv6 address sharing anyway, so let's
- * try to encourage someone to fix that by logging a waring during compile.
+ * OpenBSD rejects this for on-link routes when there is no default route
+ * OpenBSD does not allow the same IPv6 address on different
+ * interfaces on the same network, so let's try to encourage someone to
+ * fix that by logging a waring during compile.
  */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#ifdef __OpenBSD__
 #warning kernel does not allow IPv6 address sharing
 			if (!gateway_unspec || rt->rt_dest.sa_family!=AF_INET6)
 #endif
@@ -1355,8 +1352,18 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 
 	/* All BSD's set IFF_UP on the interface when adding an address.
 	 * But not all BSD's emit this via RTM_IFINFO when they do this ... */
-	if (ifam->ifam_type == RTM_NEWADDR && !(ifp->flags & IFF_UP))
-		dhcpcd_handlecarrier(ifp, ifp->carrier, ifp->flags | IFF_UP);
+	if (ifam->ifam_type == RTM_NEWADDR && !(ifp->flags & IFF_UP)) {
+		struct ifreq ifr = { .ifr_flags = 0 };
+
+		/* Don't blindly assume the interface is up though.
+		 * We might get the address via a state change. */
+		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+		if (ioctl(ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
+			return -1;
+		if (ifr.ifr_flags & IFF_UP)
+			dhcpcd_handlecarrier(ifp, ifp->carrier,
+			    ifp->flags | IFF_UP);
+	}
 
 	switch (rti_info[RTAX_IFA]->sa_family) {
 	case AF_LINK:
@@ -1671,8 +1678,7 @@ if_machinearch(char *str, size_t len)
 }
 
 #ifdef INET6
-#if (defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)) || \
-    defined(IPV6CTL_FORWARDING)
+#if (defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV))
 #define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
 #define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
 static int
@@ -1742,39 +1748,6 @@ if_applyra(const struct ra *rap)
 	UNUSED(rap);
 	return 0;
 #endif
-}
-
-#ifndef IPV6CTL_FORWARDING
-#define get_inet6_sysctlbyname(code) inet6_sysctlbyname(code, 0, 0)
-#define set_inet6_sysctlbyname(code, val) inet6_sysctlbyname(code, val, 1)
-static int
-inet6_sysctlbyname(const char *name, int val, int action)
-{
-	size_t size;
-
-	size = sizeof(val);
-	if (action) {
-		if (sysctlbyname(name, NULL, 0, &val, size) == -1)
-			return -1;
-		return 0;
-	}
-	if (sysctlbyname(name, &val, &size, NULL, 0) == -1)
-		return -1;
-	return val;
-}
-#endif
-
-int
-ip6_forwarding(__unused const char *ifname)
-{
-	int val;
-
-#ifdef IPV6CTL_FORWARDING
-	val = get_inet6_sysctl(IPV6CTL_FORWARDING);
-#else
-	val = get_inet6_sysctlbyname("net.inet6.ip6.forwarding");
-#endif
-	return val < 0 ? 0 : val;
 }
 
 #ifdef SIOCIFAFATTACH
