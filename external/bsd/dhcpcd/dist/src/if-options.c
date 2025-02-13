@@ -2951,11 +2951,11 @@ free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 	struct rt *rt;
 #endif
 	struct dhcp_opt *opt;
-	struct vivco *vo;
 #ifdef AUTH
 	struct token *token;
 #endif
 #ifndef SMALL
+	struct vivco *vo;
 	struct vsio *vsio;
 	struct vsio_so *vsio_so;
 #endif
