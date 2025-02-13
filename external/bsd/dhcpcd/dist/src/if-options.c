@@ -655,9 +655,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	uint8_t *request, *require, *no, *reject;
 	struct dhcp_opt **dop, *ndop;
 	size_t *dop_len, dl, odl;
+	struct group *grp;
+#ifndef SMALL
 	struct vivco *vivco;
 	const struct vivco *vivco_endp = ifo->vivco + ifo->vivco_len;
-	struct group *grp;
+#endif
 #ifdef AUTH
 	struct token *token;
 #endif
