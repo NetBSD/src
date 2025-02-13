@@ -626,7 +626,7 @@ ipv6_deletedaddr(struct ipv6_addr *ia)
 #endif
 
 #if !defined(DHCP6) || (!defined(PRIVSEP) && defined(SMALL))
-	UNUSED(ia)
+	UNUSED(ia);
 #endif
 }
 
