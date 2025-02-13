@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.53 2025/02/13 16:07:40 joe Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.54 2025/02/13 23:52:28 joe Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.53 2025/02/13 16:07:40 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.54 2025/02/13 23:52:28 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 			/* Check for "shared-pins = serdes" in FCode. */
 			i = 0;
 			serdes = 0;
-			while (i < (sizeof buf) - sizeof "serdes") {
+			while (i < GEM_TMP_BUFSIZE - sizeof "serdes") {
 				if (!serdes) {
 					if (isserdes(&buf[i]))
 						serdes = 1;
@@ -285,11 +285,11 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 #ifdef GEM_DEBUG
 			/* PROM dump */
 			printf("%s: PROM dump (0x0000 to %04zx)\n",
-			    device_xname(sc->sc_dev), (sizeof buf) - 1);
+			    device_xname(sc->sc_dev), GEM_TMP_BUFSIZE - 1);
 			i = 0;
 			j = 0;
 			printf("  %04x  ", i);
-			while (i < sizeof buf) {
+			while (i < GEM_TMP_BUFSIZE ) {
 				printf("%02x ", buf[i]);
 				if (i && !(i % 8))
 					printf(" ");
