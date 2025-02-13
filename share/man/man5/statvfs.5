@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.16 2021/10/21 13:21:53 andvar Exp $
+.\"	$NetBSD: statvfs.5,v 1.17 2025/02/13 08:14:53 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd September 22, 2019
+.Dd February 13, 2025
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -75,8 +75,8 @@ struct statvfs {
     uint64_t	f_asyncreads;	/* count of async reads since mount */
     uint64_t	f_asyncwrites;	/* count of async writes since mount */
 
-    unsigned long f_fsid;	/* POSIX compliant file system id */
     fsid_t	f_fsidx;	/* NetBSD compatible file system id */
+    unsigned long f_fsid;	/* POSIX compliant file system id */
 
     unsigned long f_namemax;	/* maximum filename length */
     uid_t	f_owner;	/* user that mounted the file system */
