@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.38 2018/10/07 11:51:26 mlelstv Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.39 2025/02/13 01:33:21 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ struct vnd_user {
 /*
  * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
- * an VNDIOCCLR must be used to reset a configuration.  An attempt to
+ * a VNDIOCCLR must be used to reset a configuration.  An attempt to
  * VNDIOCSET an already active unit will return EBUSY.
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
