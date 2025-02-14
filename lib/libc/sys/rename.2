@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.33 2015/01/27 10:11:20 wiz Exp $
+.\"	$NetBSD: rename.2,v 1.34 2025/02/14 22:50:38 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 28, 2013
+.Dd February 14, 2025
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ If both
 .Fa from
 and
 .Fa to
-are pathnames of the same existing file in the file system's name space,
+refer to the same name in the same directory,
 .Fn rename
 returns successfully and performs no other action.
 .Pp
@@ -267,7 +267,7 @@ unless both
 .Fa from
 and
 .Fa to
-are pathnames of the same file in the file system's name space.
+are the same name in the same directory.
 .Pp
 To retain conformance, a compatibility interface is provided by the
 .Lb libposix
