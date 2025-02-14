@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.113 2024/11/10 11:46:11 mlelstv Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.114 2025/02/14 16:42:13 joe Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.113 2024/11/10 11:46:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.114 2025/02/14 16:42:13 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1291,7 +1291,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 
 		for (i = 0; i < vq_num; i++) {
 			maps[i].vnm_hdr = &hdrs[i];
-	
+
 			r = vioif_dmamap_create_load(sc, &maps[i].vnm_hdr_map,
 			    maps[i].vnm_hdr, sc->sc_hdr_size, 1,
 			    dmaparams[dir].dma_flag, dmaparams[dir].msg_hdr);
@@ -1531,7 +1531,7 @@ err:
 			softint_disestablish(txc->txc_deferred_transmit);
 		if (txc->txc_intrq != NULL)
 			pcq_destroy(txc->txc_intrq);
-		kmem_free(txc, sizeof(txc));
+		kmem_free(txc, sizeof(*txc));
 	}
 
 	vioif_work_set(&netq->netq_work, NULL, NULL);
