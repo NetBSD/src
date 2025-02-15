@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2022/02/16 23:49:27 riastradh Exp $ */
+/*	$NetBSD: intr.c,v 1.35 2025/02/15 00:30:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2022/02/16 23:49:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2025/02/15 00:30:49 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -560,12 +560,16 @@ pic_handle_intr(void *cookie)
 	struct cpu_info *ci = curcpu();
 	int picirq;
 
-	picirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
-	if (picirq == 255)
-		return 0;
-
 	const register_t msr = mfmsr();
 	const int pcpl = ci->ci_cpl;
+
+	mtmsr(msr & ~PSL_EE);
+
+	picirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
+	if (picirq == 255) {
+		mtmsr(msr);
+		return 0;
+	}
 
 	do {
 		const int virq = virq_map[picirq + pic->pic_intrbase];
