@@ -1,4 +1,4 @@
-/* $NetBSD: bwai.c,v 1.3 2024/01/23 21:56:07 jmcneill Exp $ */
+/* $NetBSD: bwai.c,v 1.4 2025/02/15 00:35:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.3 2024/01/23 21:56:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.4 2025/02/15 00:35:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,6 +65,8 @@ struct bwai_softc {
 
 	void			(*sc_intr)(void *);
 	void			*sc_intrarg;
+	uint32_t		sc_intrnext;
+	uint32_t		sc_intrstep;
 
 	kmutex_t		*sc_intr_lock;
 };
@@ -92,7 +94,9 @@ bwai_intr(void *priv)
 
 	val = RD4(sc, AI_CONTROL);
 	if ((val & AI_CONTROL_AIINT) != 0) {
-		WR4(sc, AI_CONTROL, val | AI_CONTROL_SCRESET);
+		sc->sc_intrnext += sc->sc_intrstep;
+		WR4(sc, AI_AIIT, sc->sc_intrnext);
+		WR4(sc, AI_CONTROL, val);
 
 		mutex_enter(sc->sc_intr_lock);
 		if (sc->sc_intr) {
@@ -217,7 +221,9 @@ bwai_trigger_output(void *priv, void *start, void *end, int blksize,
 		WR4(sc, AI_CONTROL, 0);
 	}
 
-	WR4(sc, AI_AIIT, blksize / 4);
+	sc->sc_intrstep = blksize / 4;
+	sc->sc_intrnext = sc->sc_intrstep;
+	WR4(sc, AI_AIIT, sc->sc_intrnext);
 
 	val = AI_CONTROL_SCRESET |
 	      AI_CONTROL_AIINT |
