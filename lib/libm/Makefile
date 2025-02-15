@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.240 2024/10/29 01:34:18 nat Exp $
+#  $NetBSD: Makefile,v 1.241 2025/02/15 09:00:38 tsutsui Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -132,6 +132,7 @@ COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
 COMMON_SRCS+= fenv.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
