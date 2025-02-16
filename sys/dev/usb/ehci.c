@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.330 2025/02/16 18:21:19 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.331 2025/02/16 18:24:41 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.330 2025/02/16 18:21:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.331 2025/02/16 18:24:41 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4795,7 +4795,8 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 			xfer->ux_nframes >= (sc->sc_flsize - 4) * 8) {
 		DPRINTF(
 		    "isoc descriptor spans entire frametable", 0, 0, 0, 0);
-		printf("ehci: isoc descriptor requested that spans the entire frametable, too many frames\n");
+		printf("ehci: isoc descriptor requested that spans the entire"
+		    " frametable, too many frames\n");
 		return USBD_INVAL;
 	}
 
@@ -5029,6 +5030,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 
 	epipe->isoc.cur_xfers--;
 	ehci_remove_itd_chain(sc, exfer->ex_sitdstart);
+
 	if (xfer->ux_length)
 		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
