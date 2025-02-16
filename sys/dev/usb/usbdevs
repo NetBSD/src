@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.819 2025/01/23 07:11:27 mrg Exp $
+$NetBSD: usbdevs,v 1.820 2025/02/16 18:28:29 jakllsch Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3193,6 +3193,7 @@ product SILABS LIPOWSKY_HARP	0x8218	Lipowsky HARP-1
 product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
 product SILABS CP210X_1		0xea60	CP210x Serial
 product SILABS CP210X_2		0xea61	CP210x Serial
+product SILABS CP210X_3		0xea70	CP210x Serial
 product SILABS EC3		0x8044	EC3 USB Debug Adapter
 
 /* Silicon Portals Inc. */
