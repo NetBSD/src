@@ -741,3 +741,38 @@ sys_pipe2(struct lwp *l, const struct sys_pipe2_args *uap, register_t *retval)
 	retval[0] = 0;
 	return 0;
 }
+
+int
+sys_close_range(struct lwp *l, const struct sys_close_range_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) first;
+		syscallarg(unsigned int) last;
+		syscallarg(int) flags;
+	} */
+	const unsigned int flags = SCARG(uap, flags);
+	unsigned int fd, last;
+	file_t *fp;
+
+	if (flags & ~(CLOSE_RANGE_CLOEXEC|CLOSE_RANGE_CLOFORK))
+		return EINVAL;
+
+	if (SCARG(uap, first) > SCARG(uap, last))
+		return EINVAL;
+
+	last = MIN(SCARG(uap, last), l->l_proc->p_fd->fd_lastfile);
+	for (fd = SCARG(uap, first); fd <= last; fd++) {
+		fp = fd_getfile(fd);
+		if (fp == NULL)
+			continue;
+
+		if (flags != 0) {
+			fd_set_exclose(l, fd, (flags & CLOSE_RANGE_CLOEXEC) != 0);
+			fd_set_foclose(l, fd, (flags & CLOSE_RANGE_CLOFORK) != 0);
+			fd_putfile(fd);
+		} else
+			fd_close(fd);
+	}
+
+	return 0;
+}

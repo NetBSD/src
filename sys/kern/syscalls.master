@@ -1068,3 +1068,5 @@
 506	STD MODULAR sysv_ipc { int|sys||semtimedop(int semid, \
 			    struct sembuf *sops, size_t nsops, \
 			    struct timespec *timeout); }
+507	STD		{ int|sys||close_range(u_int first, u_int last, \
+			    int flags); }

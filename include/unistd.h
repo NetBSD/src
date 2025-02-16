@@ -338,6 +338,7 @@ int	 pipe2(int *, int);
 #if defined(_NETBSD_SOURCE)
 int	 acct(const char *);
 int	 closefrom(int);
+int	 close_range(unsigned int, unsigned int, int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
 void	 endusershell(void);

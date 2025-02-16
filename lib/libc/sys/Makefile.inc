@@ -102,6 +102,7 @@ ASM=\
 	chdir.S chflags.S chmod.S chown.S chroot.S \
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
+	close_range.S \
 	dup.S dup2.S __dup3100.S \
 	eventfd.S \
 	extattrctl.S \

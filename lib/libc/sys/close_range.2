@@ -1,0 +1,62 @@
+.Dd Jul 19, 2025
+.Dt CLOSE_RANGE 2
+.Os
+.Sh NAME
+.Nm close_range
+.Nd delete open file descriptors
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In unistd.h
+.Ft int
+.Fn close_range "u_int first" "u_int last" "int flags"
+.Sh DESCRIPTION
+The
+.Fn close_range
+system call deletes all open file descriptors between
+.Fa first
+and
+.Fa last
+inclusive, clamped to the range of open file descriptors.
+Any errors encountered while closing file descriptors are ignored.
+Supported
+.Fa flags :
+.Bl -tag -width ".Dv CLOSE_RANGE_CLOEXEC"
+.It Dv CLOSE_RANGE_CLOEXEC
+Set the close-on-exec flag on descriptors in the range instead of closing them.
+.It Dv CLOSE_RANGE_CLOFORK
+Set the close-on-fork flag on descriptors in the range instead of closing them.
+.El
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn close_range
+returns a value
+of 0.
+Otherwise, a value of -1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Fn close_range
+system call
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa last
+argument is lower than the
+.Fa first
+argument.
+.It Bq Er EINVAL
+An invalid flag was set.
+.El
+.Sh SEE ALSO
+.Xr close 2
+.Xr closefrom 3
+.Sh HISTORY
+The
+.Fn close_range
+function comes from Linux and first appeared in
+.Fx 8.0
+and
+.Nx 11.0 .
