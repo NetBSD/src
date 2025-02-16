@@ -1,4 +1,4 @@
-/* $NetBSD: pic_pi.c,v 1.2 2025/02/15 00:31:42 jmcneill Exp $ */
+/* $NetBSD: pic_pi.c,v 1.3 2025/02/16 12:45:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.2 2025/02/15 00:31:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.3 2025/02/16 12:45:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -65,10 +65,12 @@ pi_disable_irq(struct pic_ops *pic, int irq)
 static int
 pi_get_irq(struct pic_ops *pic, int mode)
 {
-	uint32_t pend;
+	static uint32_t pend;
 	int irq;
 
-	pend = RD4(PI_INTSR) & RD4(PI_INTMR);
+	if (mode == PIC_GET_IRQ) {
+		pend = RD4(PI_INTSR) & RD4(PI_INTMR);
+	}
 	if (pend == 0) {
 		return 255;
 	}
