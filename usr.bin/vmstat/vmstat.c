@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.259 2025/02/16 09:44:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.259 2025/02/16 09:44:59 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -1357,8 +1357,23 @@ doevcnt(int verbose, int type)
 			if (rate_max < len)
 				rate_max = len;
 			buflen -= evs->ev_len;
+			counttotal += evs->ev_count;
 			evs = (const void *)
 			    ((const uint64_t *)evs + evs->ev_len);
+		}
+		if (type != EVCNT_TYPE_ANY) {
+			char cbuf[64];
+			size_t len;
+
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    counttotal);
+			if (total_max < len)
+				total_max = len;
+
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    counttotal / uptime);
+			if (rate_max < len)
+				rate_max = len;
 		}
 
 		(void)printf(type == EVCNT_TYPE_ANY ?
@@ -1388,7 +1403,6 @@ doevcnt(int verbose, int type)
 			    (evs->ev_type < __arraycount(evtypes) ?
 			    evtypes[evs->ev_type] : "?"));
 			buflen -= evs->ev_len;
-			counttotal += evs->ev_count;
 			evs = (const void *)
 			    ((const uint64_t *)evs + evs->ev_len);
 		}
