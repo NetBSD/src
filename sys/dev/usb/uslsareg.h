@@ -1,4 +1,4 @@
-/* $NetBSD: uslsareg.h,v 1.1 2012/01/14 21:06:01 jakllsch Exp $ */
+/* $NetBSD: uslsareg.h,v 1.2 2025/02/16 18:31:37 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch.
@@ -60,6 +60,9 @@
 #define SLSA_R_SET_FLOW		0x13
 #define SLSA_R_GET_FLOW		0x14
 #define SLSA_R_EMBED_EVENTS	0x15
+#define SLSA_R_GET_EVENTSTATE	0x16
+#define SLSA_R_SET_RECEIVE	0x17
+#define SLSA_R_GET_RECEIVE	0x18
 #define SLSA_R_SET_CHARS	0x19
 #define SLSA_R_GET_BAUDRATE	0x1d
 #define SLSA_R_SET_BAUDRATE	0x1e
