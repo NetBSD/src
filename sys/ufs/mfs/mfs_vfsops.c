@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.116 2022/03/19 13:53:33 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.117 2025/02/16 18:38:59 joe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.116 2022/03/19 13:53:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.117 2025/02/16 18:38:59 joe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -139,13 +139,9 @@ mfs_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&mfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&mfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;

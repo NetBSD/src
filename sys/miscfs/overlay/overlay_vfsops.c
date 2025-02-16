@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.73 2022/11/04 11:20:39 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.74 2025/02/16 18:38:58 joe Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.73 2022/11/04 11:20:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.74 2025/02/16 18:38:58 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,13 +291,9 @@ overlay_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&overlay_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&overlay_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;
