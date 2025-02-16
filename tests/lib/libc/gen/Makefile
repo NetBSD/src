@@ -15,6 +15,7 @@ TESTS_C+=	t_arc4random
 TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
+TESTS_C+=	t_close_range
 TESTS_C+=	t_cpuset
 TESTS_C+=	t_ctype
 TESTS_C+=	t_dir

@@ -3096,6 +3096,7 @@
 ./usr/tests/lib/libc/gen/t_arc4random			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_assert			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_basedirname			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/gen/t_close_range			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_closefrom			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_cpuset			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_ctype			tests-lib-tests		compattestfile,atf
