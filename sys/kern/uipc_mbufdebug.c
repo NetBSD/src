@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.8 2024/12/06 18:36:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.9 2025/02/16 18:49:59 jakllsch Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.8 2024/12/06 18:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.9 2025/02/16 18:49:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -243,8 +243,23 @@ m_examine_ether(const struct mbuf *m, int off, const char *modif,
 	(*pr)("ETHER: DST = %s\n", str_ethaddr(eh.ether_dhost));
 	(*pr)("ETHER: SRC = %s\n", str_ethaddr(eh.ether_shost));
 
+again:
 	(*pr)("ETHER: TYPE = 0x%04x(", ntohs(eh.ether_type));
 	switch (ntohs(eh.ether_type)) {
+	case ETHERTYPE_VLAN:
+		(*pr)("VLAN)\n");
+		
+		pktlen = m_peek_len(m, modif) - off;
+		if (pktlen < 4) {
+			return m_examine_hex(m, off, modif, pr);
+		}
+		if (m_peek_data(m, off + 2, sizeof(eh.ether_type), (void *)(&eh.ether_type)) < 0) {
+			(*pr)("%s: cannot read header\n", __func__);
+			return m_examine_hex(m, off, modif, pr);
+		}
+		off += 4;
+		goto again;
+		break;
 	case ETHERTYPE_PPPOE:
 		(*pr)("PPPoE)\n");
 		return m_examine_pppoe(m, off, modif, pr);
