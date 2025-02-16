@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.33 2024/02/09 22:08:36 andvar Exp $ */
+/* $NetBSD: if_skreg.h,v 1.34 2025/02/16 18:38:44 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1207,6 +1207,8 @@
 #define SK_TXEND_WM_ON		0x00000003	/* ??? */
 
 /* Transmit MAC FIFO Control/Test */
+#define SK_Y2_TFCTL_VLAN_TAG_ON	0x02000000	
+#define SK_Y2_TFCTL_VLAN_TAG_OFF 0x1000000	
 #define SK_TFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_TFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_TFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
@@ -1690,6 +1692,7 @@ struct sk_tx_desc {
 #define SK_RX_RING_CNT		256
 
 #define SK_Y2_BMUOPC_ADDR64	0x21
+#define SK_Y2_BMUOPC_VLAN	0x22
 
 struct msk_rx_desc {
 	u_int32_t		sk_addr;
@@ -1710,6 +1713,7 @@ struct msk_tx_desc {
 } __packed __aligned(8);
 
 #define SK_Y2_TXCTL_LASTFRAG	0x80
+#define SK_Y2_TXCTL_VLAN_TAG	0x20
 
 #define SK_Y2_TXOPC_BUFFER	0x40
 #define SK_Y2_TXOPC_PACKET	0x41
@@ -1733,6 +1737,12 @@ struct msk_status_desc {
 #define SK_Y2_ST_TXA2_SHIFTL	24
 #define SK_Y2_ST_TXA2_MSKH	0x000f
 #define SK_Y2_ST_TXA2_SHIFTH	8
+
+#define SK_Y2_ST_TXA1_DI(len, stat) \
+    (((stat) >> SK_Y2_ST_TXA1_SHIFT) & SK_Y2_ST_TXA1_MSKL)
+#define SK_Y2_ST_TXA2_DI(len, stat) \
+    ((((len) & SK_Y2_ST_TXA2_MSKH) << SK_Y2_ST_TXA2_SHIFTH) | \
+    (((stat) & SK_Y2_ST_TXA2_MSKL) >> SK_Y2_ST_TXA2_SHIFTL))
 
 #define MSK_TX_RING_CNT		512
 #define MSK_RX_RING_CNT		512
