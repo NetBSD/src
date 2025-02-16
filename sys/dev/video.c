@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.45 2022/03/03 06:23:25 riastradh Exp $ */
+/* $NetBSD: video.c,v 1.46 2025/02/16 21:09:00 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.45 2022/03/03 06:23:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.46 2025/02/16 21:09:00 mlelstv Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -125,6 +125,7 @@ enum video_stream_method {
 struct video_buffer {
 	struct v4l2_buffer		*vb_buf;
 	SIMPLEQ_ENTRY(video_buffer)	entries;
+	u_int				busy;
 };
 
 SIMPLEQ_HEAD(sample_queue, video_buffer);
@@ -1796,7 +1797,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	struct video_buffer *vb;
 	struct scatter_io sio;
 	int err;
-	size_t len;
+	size_t len, done;
 	off_t offset;
 
 	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
@@ -1855,30 +1856,53 @@ retry:
 		goto retry;
 	}
 
-	mutex_exit(&vs->vs_lock);
+	if (vb->busy) {
+		if (vs->vs_flags & O_NONBLOCK) {
+			mutex_exit(&vs->vs_lock);
+			return EAGAIN;
+		}
+
+		while (vb->busy > 0) {
+			err = cv_wait_sig(&vs->vs_sample_cv, &vs->vs_lock);
+			if (err != 0) {
+				mutex_exit(&vs->vs_lock);
+				return EINTR;
+			}
+		}
+	}
+
+	vb->busy++;
 
 	len = uimin(uio->uio_resid, vb->vb_buf->bytesused - vs->vs_bytesread);
 	offset = vb->vb_buf->m.offset + vs->vs_bytesread;
 
+	mutex_exit(&vs->vs_lock);
+
+	done = 0;
 	if (scatter_io_init(&vs->vs_data, offset, len, &sio)) {
 		err = scatter_io_uiomove(&sio, uio);
 		if (err == EFAULT)
 			return EFAULT;
-		vs->vs_bytesread += (len - sio.sio_resid);
+		done = len - sio.sio_resid;
 	} else {
 		DPRINTF(("video: invalid read\n"));
 	}
 
 	/* Move the sample to the ingress queue if everything has
 	 * been read */
+	mutex_enter(&vs->vs_lock);
+
+	if (--vb->busy <= 0)
+		cv_signal(&vs->vs_sample_cv);
+
+	vs->vs_bytesread += done;
 	if (vs->vs_bytesread >= vb->vb_buf->bytesused) {
-		mutex_enter(&vs->vs_lock);
 		vb = video_stream_dequeue(vs);
 		video_stream_enqueue(vs, vb);
-		mutex_exit(&vs->vs_lock);
-
 		vs->vs_bytesread = 0;
 	}
+
+	mutex_exit(&vs->vs_lock);
 
 	return 0;
 }
