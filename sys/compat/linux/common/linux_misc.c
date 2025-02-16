@@ -2062,7 +2062,6 @@ linux_sys_memfd_create(struct lwp *l,
 	return sys_memfd_create(l, &muap, retval);
 }
 
-#define	LINUX_CLOSE_RANGE_UNSHARE	0x02U
 #define	LINUX_CLOSE_RANGE_CLOEXEC	0x04U
 
 /*
@@ -2077,37 +2076,17 @@ linux_sys_close_range(struct lwp *l,
 		syscallarg(unsigned int) last;
 		syscallarg(unsigned int) flags;
 	} */
-	unsigned int fd, last;
-	file_t *fp;
-	filedesc_t *fdp;
-	const unsigned int flags = SCARG(uap, flags);
+	struct sys_close_range_args crap;
+	const unsigned int lflags = SCARG(uap, flags);
+	int flags = 0;
 
-	if (flags & ~(LINUX_CLOSE_RANGE_CLOEXEC|LINUX_CLOSE_RANGE_UNSHARE))
+	if (lflags & ~LINUX_CLOSE_RANGE_CLOEXEC)
 		return EINVAL;
-	if (SCARG(uap, first) > SCARG(uap, last))
-		return EINVAL;
+	if (lflags & LINUX_CLOSE_RANGE_CLOEXEC)
+		flags |= CLOSE_RANGE_CLOEXEC;
+	SCARG(&crap, flags) = flags;
 
-	if (flags & LINUX_CLOSE_RANGE_UNSHARE) {
-		fdp = fd_copy();
-		fd_free();
-	        l->l_proc->p_fd = fdp;
-	        l->l_fd = fdp;
-	}
-
-	last = MIN(SCARG(uap, last), l->l_proc->p_fd->fd_lastfile);
-	for (fd = SCARG(uap, first); fd <= last; fd++) {
-		fp = fd_getfile(fd);
-		if (fp == NULL)
-			continue;
-
-		if (flags & LINUX_CLOSE_RANGE_CLOEXEC) {
-			fd_set_exclose(l, fd, true);
-			fd_putfile(fd);
-		} else
-			fd_close(fd);
-	}
-
-	return 0;
+	return sys_close_range(l, &crap, retval);
 }
 
 /*
