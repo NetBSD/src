@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.259 2025/02/16 09:44:59 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.260 2025/02/16 10:49:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.259 2025/02/16 09:44:59 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.260 2025/02/16 10:49:31 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -2346,7 +2346,7 @@ hist_traverse_sysctl(int todo, const char *histname)
 		} else
 			err(EXIT_FAILURE, "nametomib kern.hist failed");
 	}
- 
+
 	/* get the list of nodenames below kern.hist */
 	mib[2] = CTL_QUERY;
 	memset(&query, 0, sizeof(query));
@@ -2361,12 +2361,12 @@ hist_traverse_sysctl(int todo, const char *histname)
  		warnx("No active kernel history logs.");
  		return;
  	}
- 
+
 	len = len / sizeof(histnode[0]);	/* get # of entries returned */
 
  	if (todo & HISTLIST)
  		(void)printf("Active kernel histories:");
- 
+
 	for (i = 0; i < len; i++) {
  		if (todo & HISTLIST)
 			(void)printf(" %s", histnode[i].sysctl_name);
@@ -2387,13 +2387,13 @@ hist_traverse_sysctl(int todo, const char *histname)
  			}
  		}
  	}
- 
+
  	if (todo & HISTLIST)
  		(void)putchar('\n');
 	else if (mib[2] == CTL_QUERY)
 		warnx("history %s not found", histname);
  }
- 
+
  /*
   * Actually dump the history buffer at the specified KVA.
   */
@@ -2407,7 +2407,7 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	char *strp;
  	unsigned i;
 	char *fmt = NULL, *fn = NULL;
- 
+
 	hist = NULL;
 	histsize = 0;
  	do {
@@ -2421,13 +2421,13 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	} while (errno == ENOMEM);
 	if (errno != 0)
 		err(1, "sysctl failed");
- 
+
 	strp = (char *)(&hist->sh_events[hist->sh_numentries]);
- 
+
 	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
 	    hist->sh_numentries,
 	    hist->sh_nextfree);
- 
+
 	i = hist->sh_nextfree;
 
 	do {
@@ -2450,7 +2450,7 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
  		}
 		i = (i + 1) % hist->sh_numentries;
 	} while (i != hist->sh_nextfree);
- 
+
 	free(hist);
  }
 
