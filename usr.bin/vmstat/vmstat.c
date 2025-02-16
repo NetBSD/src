@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.260 2025/02/16 10:49:31 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.261 2025/02/16 10:50:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.260 2025/02/16 10:49:31 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.261 2025/02/16 10:50:49 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -1304,7 +1304,7 @@ doevcnt(int verbose, int type)
 	counttotal = 0;
 	uptime = getuptime();
 
-	if (memf == NULL) do {
+	if (memf == NULL) {
 		const int mib[4] = { CTL_KERN, KERN_EVCNT, type,
 		    verbose ? KERN_EVCNT_COUNT_ANY : KERN_EVCNT_COUNT_NONZERO };
 		size_t buflen0, buflen = 0;
@@ -1413,7 +1413,7 @@ doevcnt(int verbose, int type)
 			    (int)total_max, counttotal,
 			    (int)rate_max, counttotal / uptime);
 		return;
-	} while (0);
+	}
 
 	if (type == EVCNT_TYPE_ANY)
 		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
