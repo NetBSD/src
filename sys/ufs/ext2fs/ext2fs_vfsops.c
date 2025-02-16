@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.228 2024/12/30 09:01:35 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.229 2025/02/16 16:34:01 joe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.228 2024/12/30 09:01:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.229 2025/02/16 16:34:01 joe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -249,13 +249,9 @@ ext2fs_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&ext2fs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ext2fs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;
