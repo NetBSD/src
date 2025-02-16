@@ -14,6 +14,7 @@ TESTS_C+=		t_chroot
 TESTS_C+=		t_clock_gettime
 TESTS_C+=		t_clock_nanosleep
 TESTS_C+=		t_clone
+TESTS_C+=		t_close_range
 TESTS_C+=		t_connect
 TESTS_C+=		t_dup
 TESTS_C+=		t_eventfd
