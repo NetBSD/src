@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.261 2025/02/16 10:50:49 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.262 2025/02/16 10:56:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.261 2025/02/16 10:50:49 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.262 2025/02/16 10:56:31 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -1375,14 +1375,16 @@ doevcnt(int verbose, int type)
 			if (rate_max < len)
 				rate_max = len;
 		}
+		const char *evdesc = type == EVCNT_TYPE_ANY ?
+		    "event" : "interrupt";
+		const char *typedesc = type == EVCNT_TYPE_ANY ?
+		    " type" : "";
 
-		(void)printf(type == EVCNT_TYPE_ANY ?
-		    "%-*s  %*s %*s %s\n" :
-		    "%-*s  %*s %*s\n",
-		    (int)evlen_max, "interrupt",
+		(void)printf("%-*s  %*s %*s%s\n",
+		    (int)evlen_max, evdesc,
 		    (int)total_max, "total",
 		    (int)rate_max, "rate",
-		    "type");
+		    typedesc);
 
 		buflen = buflen0;
 		evs = buf0;
