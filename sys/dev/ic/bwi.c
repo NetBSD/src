@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.42 2025/02/15 15:41:08 jmcneill Exp $	*/
+/*	$NetBSD: bwi.c,v 1.43 2025/02/16 10:38:55 jmcneill Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.42 2025/02/15 15:41:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.43 2025/02/16 10:38:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -9064,10 +9064,10 @@ bwi_rx_frame_pio(struct bwi_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	const u_int qid = 0;
 	const size_t pio_hdrlen = 20;
+	struct timeval start, diff;
 	uint32_t val;
 	uint16_t pktlen;
 	uint16_t flags2;
-	u_int n;
 
 	/* Check for frame ready bit and acknowledge it */
 	val = CSR_READ_4(sc, BWI_PIO_RXCTL(qid));
@@ -9077,17 +9077,19 @@ bwi_rx_frame_pio(struct bwi_softc *sc)
 	CSR_WRITE_4(sc, BWI_PIO_RXCTL(qid), BWI_PIO_RXCTL_FRAMERDY);
 
 	/* Wait for up to 100us for data ready */
-	for (n = 10; n > 0; n--) {
+	microuptime(&start);
+	for (;;) {
 		val = CSR_READ_4(sc, BWI_PIO_RXCTL(qid));
 		if ((val & BWI_PIO_RXCTL_DATARDY) != 0) {
 			break;
 		}
-		delay(10);
-	}
-	if (n == 0) {
-		device_printf(sc->sc_dev, "RX timeout\n");
-		if_statinc(ifp, if_ierrors);
-		goto ack;
+		microuptime(&diff);
+		timersub(&diff, &start, &diff);
+		if (diff.tv_sec != 0 || diff.tv_usec > 100) {
+			device_printf(sc->sc_dev, "RX timeout\n");
+			if_statinc(ifp, if_ierrors);
+			goto ack;
+		}
 	}
 
 	/* Read 20 bytes of the packet RX header from the FIFO... */
