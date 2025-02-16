@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.72 2025/02/16 17:55:58 jakllsch Exp $
+#	$NetBSD: POWERMAC,v 1.73 2025/02/16 18:04:57 jakllsch Exp $
 #
 # POWERMAC config file
 #
@@ -55,6 +55,7 @@ options 	PCIVERBOSE	# verbose PCI device messages
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_CUSTOM_OUTPUT		# color customization from wsconsctl(8)
+options 	WSDISPLAY_SCROLLSUPPORT
 options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.

@@ -6,7 +6,7 @@ include 	"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32
 
@@ -87,6 +87,7 @@ options 	WSEMUL_VT100			# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_CUSTOM_OUTPUT		# color customization from wsconsctl(8)
+options 	WSDISPLAY_SCROLLSUPPORT
 options 	FONT_GALLANT12x22
 
 # Optional Mac keyboard tweaks

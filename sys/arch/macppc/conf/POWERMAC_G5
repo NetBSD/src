@@ -111,6 +111,7 @@ options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_CUSTOM_OUTPUT		# color customization from wsconsctl(8)
+options 	WSDISPLAY_SCROLLSUPPORT
 options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
