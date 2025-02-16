@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 2025/02/15 00:30:49 jmcneill Exp $ */
+/*	$NetBSD: intr.c,v 1.36 2025/02/16 09:55:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2025/02/15 00:30:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2025/02/16 09:55:00 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -590,7 +590,7 @@ pic_handle_intr(void *cookie)
 			splraise(is->is_ipl);
 			mtmsr(msr | PSL_EE);
 			intr_deliver(is, virq);
-			mtmsr(msr);
+			mtmsr(msr & ~PSL_EE);
 			ci->ci_cpl = pcpl;
 
 			ci->ci_data.cpu_nintr++;
