@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.170 2025/02/17 18:45:01 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.171 2025/02/17 19:01:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.170 2025/02/17 18:45:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.171 2025/02/17 19:01:04 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -84,7 +84,7 @@ int atadebug_mask = ATADEBUG_MASK;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
+#if !defined(ATA_NO_DOWNGRADE_MODE) && NATA_DMA
 static int	ata_downgrade_mode(struct ata_drive_datas *, int);
 #endif
 
@@ -966,7 +966,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	 */
 	drvp->n_dmaerrs++;
 	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
-#ifdef ATA_DOWNGRADE_MODE
+#if !defined(ATA_NO_DOWNGRADE_MODE)
 		ata_downgrade_mode(drvp, flags);
 		drvp->n_dmaerrs = NERRS_MAX-1;
 #else
@@ -1769,7 +1769,7 @@ ata_print_modes(struct ata_channel *chp)
 	}
 }
 
-#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
+#if !defined(ATA_NO_DOWNGRADE_MODE) && NATA_DMA
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
