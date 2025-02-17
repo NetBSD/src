@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.29 2025/02/16 15:56:06 joe Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.30 2025/02/17 23:28:48 joe Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.29 2025/02/16 15:56:06 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.30 2025/02/17 23:28:48 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -1697,7 +1697,7 @@ hvn_bpf_mtap(struct hvn_tx_ring *txr, struct mbuf *m, u_int direction)
 	 */
 
 	eh = mtod(m, struct ether_header *);
-	memcpy(evl.evl_dhost, eh->ether_dhost, ETHER_ADDR_LEN);
+	memcpy(&evl, eh, ETHER_ADDR_LEN * 2);
 	evl.evl_encap_proto = htons(ETHERTYPE_VLAN);
 	evl.evl_tag = htons(vlan_get_tag(m));
 	evl.evl_proto = eh->ether_type;
@@ -4835,8 +4835,7 @@ hvn_rxeof(struct hvn_rx_ring *rxr, uint8_t *buf, uint32_t len)
 			KDASSERT(m != NULL);
 
 			evl = mtod(m, struct ether_vlan_header *);
-			memcpy(evl->evl_dhost, eh.ether_dhost,
-			    ETHER_ADDR_LEN);
+			memcpy(evl, &eh, ETHER_ADDR_LEN * 2);
 			evl->evl_encap_proto = htons(ETHERTYPE_VLAN);
 			evl->evl_tag = htons(t);
 			evl->evl_proto = eh.ether_type;
