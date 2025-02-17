@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.47 2023/10/06 14:48:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.48 2025/02/17 22:56:46 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.47 2023/10/06 14:48:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.48 2025/02/17 22:56:46 andvar Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -4709,7 +4709,7 @@ s32 ixgbe_host_interface_command(struct ixgbe_hw *hw, u32 *buffer,
 	/*
 	 * If there is any thing in data position pull it in
 	 * Read Flash command requires reading buffer length from
-	 * two byes instead of one byte
+	 * two bytes instead of one byte
 	 */
 	if (resp->cmd == IXGBE_HOST_INTERFACE_FLASH_READ_CMD ||
 	    resp->cmd == IXGBE_HOST_INTERFACE_SHADOW_RAM_READ_CMD) {

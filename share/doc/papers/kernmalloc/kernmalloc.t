@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernmalloc.t,v 1.5 2003/08/07 10:30:43 agc Exp $
+.\"	$NetBSD: kernmalloc.t,v 1.6 2025/02/17 22:56:46 andvar Exp $
 .\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -133,7 +133,7 @@ it is not feasible to allocate even moderate blocks of memory on it.
 Consequently, such memory must be allocated through a more dynamic mechanism.
 For example,
 when the system must translate a pathname,
-it must allocate a one kilobye buffer to hold the name.
+it must allocate a one kilobyte buffer to hold the name.
 Other blocks of memory must be more persistent than a single system call
 and really have to be allocated from dynamic memory.
 Examples include protocol control blocks that remain throughout

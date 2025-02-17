@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.19 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: aps.c,v 1.20 2025/02/17 22:56:46 andvar Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.19 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.20 2025/02/17 22:56:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ aps_do_io(bus_space_tag_t iot, bus_space_handle_t ioh,
 	}
 
 	/* write data bytes, init already sent */
-	/* make sure last bye is always written as this will trigger slave */
+	/* make sure last byte is always written as this will trigger slave */
 	wmask |= APS_READ_RET;
 	buf[APS_RET] = 0x01;
 
