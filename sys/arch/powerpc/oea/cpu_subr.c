@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.110 2024/09/08 10:16:04 andvar Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.111 2025/02/17 11:56:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.110 2024/09/08 10:16:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.111 2025/02/17 11:56:56 jmcneill Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -932,6 +932,11 @@ cpu_identify(char *str, size_t len)
 	if (rev == MPC750 && pvr == 15) {
 		revfmt = REVFMT_HEX;
 	}
+ 	if (vers == MPC750 && (pvr & 0xf000) == 0x7000 &&
+			      (pvr & 0x0f00) >= 0x0100) {
+		/* IBM Broadway */
+		revfmt = REVFMT_HEX;
+	}
 
 	if (cp->name[0] != '\0') {
 		n = snprintf(str, len, "%s (Revision ", cp->name);
@@ -1294,6 +1299,16 @@ cpu_tau_setup(struct cpu_info *ci)
 {
 	struct sysmon_envsys *sme;
 	int error, therm_delay;
+	u_int pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+
+ 	if (vers == MPC750 && (pvr & 0xf000) == 0x7000 &&
+			      (pvr & 0x0f00) >= 0x0100) {
+		/* Broadway has dummy TAU registers, just ignore it. */
+		return;
+	}
 
 	mtspr(SPR_THRM1, SPR_THRM_VALID);
 	mtspr(SPR_THRM2, 0);
