@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.128 2024/11/02 10:49:10 nia Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.129 2025/02/17 17:04:15 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -396,8 +396,11 @@ size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
 #if (_POSIX_C_SOURCE - 0) >= 202405L || \
     defined(_NETBSD_SOURCE) || defined(_OPENBSD_SOURCE)
 void	*reallocarray(void *, size_t, size_t);
-int	 mkostemp(char *, int);
 #endif	/* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE || _OPENBSD_SOURCE */
+
+#if (_POSIX_C_SOURCE - 0) >= 202405L || defined(_NETBSD_SOURCE)
+int	 mkostemp(char *, int);
+#endif /* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE */
 
 __END_DECLS
 
