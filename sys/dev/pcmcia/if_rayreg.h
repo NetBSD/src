@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.12 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.13 2025/02/17 22:37:26 andvar Exp $	*/
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -451,7 +451,7 @@ struct ray_cmd_update_mcast {
 };
 
 /* RAY_CMD_UPDATE_APM */
-struct ray_cmd_udpate_apm {
+struct ray_cmd_update_apm {
 	u_int8_t	c_status;		/* ccs generic header */
 	u_int8_t	c_cmd;			/* " */
 	u_int8_t	c_link;			/* " */
