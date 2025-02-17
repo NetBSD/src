@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $	*/
+/*	$NetBSD: ata.c,v 1.170 2025/02/17 18:45:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.170 2025/02/17 18:45:01 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -974,7 +974,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		static const struct timeval serrintvl = { 300, 0 };
 
 		if (ratecheck(&last, &serrintvl)) {
-			aprint_error_dev(drvp->drv_softc,
+			device_printf(drvp->drv_softc,
 			    "excessive DMA errors - %d in last %d transfers\n",
 			    drvp->n_dmaerrs, drvp->n_xfers);
 		}
@@ -1802,7 +1802,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	 */
 	if ((drvp->drive_flags & ATA_DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
 		drvp->UDMA_mode--;
-		aprint_error_dev(drv_dev,
+		device_printf(drv_dev,
 		    "transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drvp->UDMA_mode);
 	}
@@ -1814,7 +1814,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	else if (drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) {
 		drvp->drive_flags &= ~(ATA_DRIVE_DMA | ATA_DRIVE_UDMA);
 		drvp->PIO_mode = drvp->PIO_cap;
-		aprint_error_dev(drv_dev,
+		device_printf(drv_dev,
 		    "transfer error, downgrading to PIO mode %d\n",
 		    drvp->PIO_mode);
 	} else /* already using PIO, can't downgrade */

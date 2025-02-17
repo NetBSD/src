@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.470 2024/09/22 17:31:43 uwe Exp $ */
+/*	$NetBSD: wd.c,v 1.471 2025/02/17 18:45:01 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.470 2024/09/22 17:31:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.471 2025/02/17 18:45:01 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -993,7 +993,7 @@ retry2:
 
 			dbs = kmem_zalloc(sizeof *dbs, KM_NOSLEEP);
 			if (dbs == NULL) {
-				aprint_error_dev(dksc->sc_dev,
+				device_printf(dksc->sc_dev,
 				    "failed to add bad block to list\n");
 				goto out;
 			}
@@ -1841,7 +1841,7 @@ wd_check_error(const struct dk_softc *dksc, const struct ata_xfer *xfer,
 	if (flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		snprintb(sbuf, sizeof(sbuf), at_errbits, flags);
-		aprint_error_dev(dksc->sc_dev, "%s: status=%s\n", func, sbuf);
+		device_printf(dksc->sc_dev, "%s: status=%s\n", func, sbuf);
 		return EIO;
 	}
 	return 0;
