@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2080 2025/02/12 19:33:15 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.2081 2025/02/17 15:34:03 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1255,7 +1255,7 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.8.4
-Current Vers:	3.8.7, 3.9.1
+Current Vers:	3.8.7, 3.9.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	http://www.postfix.org/
