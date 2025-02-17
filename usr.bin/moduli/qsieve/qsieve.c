@@ -1,4 +1,4 @@
-/* $NetBSD: qsieve.c,v 1.3 2011/09/04 20:55:43 joerg Exp $ */
+/* $NetBSD: qsieve.c,v 1.4 2025/02/17 22:58:34 andvar Exp $ */
 
 /*-
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 	}
 
 	if ((TinySieve = (uint32_t *) calloc((size_t) tinywords, sizeof(uint32_t))) == NULL) {
-		errx(1, "Insufficient memory for tiny sieve: need %u byts.",
+		errx(1, "Insufficient memory for tiny sieve: need %u bytes.",
 		     tinywords << SHIFT_BYTE);
 	}
 	tinybits = tinywords << SHIFT_WORD;

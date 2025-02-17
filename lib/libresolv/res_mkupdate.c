@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.3 2022/06/09 14:02:30 andvar Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.4 2025/02/17 22:58:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #if 0
 static const char rcsid[] = "Id: res_mkupdate.c,v 1.10 2008/12/11 09:59:00 marka Exp ";
 #else
-__RCSID("$NetBSD: res_mkupdate.c,v 1.3 2022/06/09 14:02:30 andvar Exp $");
+__RCSID("$NetBSD: res_mkupdate.c,v 1.4 2025/02/17 22:58:34 andvar Exp $");
 #endif
 
 #include "port_before.h"
@@ -981,7 +981,7 @@ res_buildservicelist(void) {
 			free(slp);
 			break;
 		}
-		slp->port = ntohs((u_int16_t)sp->s_port);  /*%< host byt order */
+		slp->port = ntohs((u_int16_t)sp->s_port);  /*%< host byte order */
 		slp->next = servicelist;
 		slp->prev = NULL;
 		if (servicelist)
