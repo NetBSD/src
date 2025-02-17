@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2022/01/29 16:01:19 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.10 2025/02/17 22:16:37 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ md_post_disklabel(struct install_partition_desc *install,
  * up the target disk but immediately before the user is given the
  * ``disks are now set up'' message.
  *
- * On mipsco, we take this opportuinty to update the bootblocks.
+ * On mipsco, we take this opportunity to update the bootblocks.
  */
 int
 md_post_newfs(struct install_partition_desc *install)
