@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 2025/02/16 09:55:00 jmcneill Exp $ */
+/*	$NetBSD: intr.c,v 1.37 2025/02/17 11:14:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2025/02/16 09:55:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2025/02/17 11:14:49 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -180,10 +180,12 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 		    hwirq, type);
 
 	struct intr_source * const is = &intrsources[virq];
+	const bool cascaded = ih_fun == pic_handle_intr;
 
 	switch (is->is_type) {
 	case IST_NONE:
 		is->is_type = type;
+		is->is_cascaded = cascaded;
 		break;
 	case IST_EDGE_FALLING:
 	case IST_EDGE_RISING:
@@ -193,10 +195,15 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 			break;
 		/* FALLTHROUGH */
 	case IST_PULSE:
-		if (type != IST_NONE)
+		if (type != IST_NONE) {
 			panic("intr_establish: can't share %s with %s",
 			    intr_typename(is->is_type),
 			    intr_typename(type));
+		}
+		if (cascaded != is->is_cascaded) {
+			panic("intr_establish: can't share cascaded with "
+			    "non-cascaded interrupt");
+		}
 		break;
 	}
 	if (is->is_hand == NULL) {
@@ -519,11 +526,15 @@ again:
 		struct intr_source * const is = &intrsources[virq];
 		struct pic_ops * const pic = is->is_pic;
 
-		splraise(is->is_ipl);
-		mtmsr(emsr);
+		if (!is->is_cascaded) {
+			splraise(is->is_ipl);
+			mtmsr(emsr);
+		}
 		intr_deliver(is, virq);
-		mtmsr(dmsr);
-		ci->ci_cpl = pcpl; /* Don't use splx... we are here already! */
+		if (!is->is_cascaded) {
+			mtmsr(dmsr);
+			ci->ci_cpl = pcpl; /* Don't use splx... we are here already! */
+		}
 
 		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
 		    is->is_type);
@@ -587,11 +598,15 @@ pic_handle_intr(void *cookie)
 			ci->ci_ipending &= ~v_imen;
 			ci->ci_idepth++;
 
-			splraise(is->is_ipl);
-			mtmsr(msr | PSL_EE);
+			if (!is->is_cascaded) {
+				splraise(is->is_ipl);
+				mtmsr(msr | PSL_EE);
+			}
 			intr_deliver(is, virq);
-			mtmsr(msr & ~PSL_EE);
-			ci->ci_cpl = pcpl;
+			if (!is->is_cascaded) {
+				mtmsr(msr & ~PSL_EE);
+				ci->ci_cpl = pcpl;
+			}
 
 			ci->ci_data.cpu_nintr++;
 			ci->ci_idepth--;
