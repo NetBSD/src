@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.40 2019/09/01 18:04:54 sevan Exp $
+.\"	$NetBSD: sort.1,v 1.41 2025/02/17 13:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -417,7 +417,7 @@ Otherwise with
 set (default) the records are left in their original order,
 or with
 .Fl S
-(posix mode) the whole record is considered as a tie breaker.
+(POSIX mode) the whole record is considered as a tie breaker.
 .\"
 .\" If you fail to understand why it doesn't matter which order
 .\" the records are output when they are wholly identical, there
@@ -481,7 +481,7 @@ implementation appeared in
 and is used since
 .Nx 1.6 .
 .Sh BUGS
-Posix requires the locale's thousands separator be ignored in numbers.
+POSIX requires the locale's thousands separator be ignored in numbers.
 It may be faster to sort very large files in pieces and then explicitly
 merge them.
 .Sh NOTES
