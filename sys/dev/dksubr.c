@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.117 2025/02/06 20:11:46 jakllsch Exp $ */
+/* $NetBSD: dksubr.c,v 1.118 2025/02/18 17:09:34 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.117 2025/02/06 20:11:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.118 2025/02/18 17:09:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -831,7 +831,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	} else {
 		int nsects, sectoff;
 
-		if (p->p_fstype != FS_SWAP) {
+		if (p->p_fstype != FS_SWAP && p->p_fstype != FS_RAID) {
 			DPRINTF(DKDB_DUMP, ("%s: bad fstype %d\n", __func__,
 			    p->p_fstype));
 			return ENXIO;
