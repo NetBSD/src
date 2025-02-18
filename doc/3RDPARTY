@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2081 2025/02/17 15:34:03 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2082 2025/02/18 09:27:44 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1086,7 +1086,7 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	9.9
-Current Vers:	9.9 / portable 9.9p1
+Current Vers:	9.9 / portable 9.9p2
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
