@@ -817,6 +817,7 @@ sshsk_sign
 start_progress_meter
 stop_progress_meter
 strdelimw
+strprefix
 subprocess
 temporarily_use_uid
 timeout_connect

@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.37 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.196 2024/06/06 17:15:25 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.38 2025/02/18 17:53:24 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.197 2024/09/25 01:24:04 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.37 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.38 2025/02/18 17:53:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -90,6 +90,27 @@ rtrim(char *s)
 		if (isspace((unsigned char)s[i]))
 			s[i] = '\0';
 	}
+}
+
+/*
+ * returns pointer to character after 'prefix' in 's' or otherwise NULL
+ * if the prefix is not present.
+ */
+const char *
+strprefix(const char *s, const char *prefix, int ignorecase)
+{
+	size_t prefixlen;
+
+	if ((prefixlen = strlen(prefix)) == 0)
+		return s;
+	if (ignorecase) {
+		if (strncasecmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	} else {
+		if (strncmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	}
+	return s + prefixlen;
 }
 
 /* set/unset filedescriptor to non-blocking */

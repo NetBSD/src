@@ -1,4 +1,4 @@
-/*	$NetBSD: sshsig.c,v 1.13 2024/06/25 16:36:54 christos Exp $	*/
+/*	$NetBSD: sshsig.c,v 1.14 2025/02/18 17:53:24 christos Exp $	*/
 /* $OpenBSD: sshsig.c,v 1.35 2024/03/08 22:16:32 djm Exp $ */
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.13 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.14 2025/02/18 17:53:24 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -876,6 +876,7 @@ cert_filter_principals(const char *path, u_long linenum,
 	}
 	if ((principals = sshbuf_dup_string(nprincipals)) == NULL) {
 		error_f("buffer error");
+		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 	/* success */

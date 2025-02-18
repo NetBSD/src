@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.49 2024/09/24 21:32:19 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.50 2025/02/18 17:53:24 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.375 2024/09/09 02:39:57 djm Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.49 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.50 2025/02/18 17:53:24 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -113,7 +113,7 @@ verify_host_key_callback(struct sshkey *hostkey, struct ssh *ssh)
 	    options.required_rsa_size)) != 0)
 		fatal_r(r, "Bad server host key");
 	if (verify_host_key(xxx_host, xxx_hostaddr, hostkey,
-	    xxx_conn_info) == -1)
+	    xxx_conn_info) != 0)
 		fatal("Host key verification failed.");
 	return 0;
 }
@@ -732,6 +732,7 @@ input_userauth_pk_ok(int type, u_int32_t seq, struct ssh *ssh)
 
 	if ((pktype = sshkey_type_from_name(pkalg)) == KEY_UNSPEC) {
 		debug_f("server sent unknown pkalg %s", pkalg);
+		r = SSH_ERR_INVALID_FORMAT;
 		goto done;
 	}
 	if ((r = sshkey_from_blob(pkblob, blen, &key)) != 0) {
@@ -742,6 +743,7 @@ input_userauth_pk_ok(int type, u_int32_t seq, struct ssh *ssh)
 		error("input_userauth_pk_ok: type mismatch "
 		    "for decoded key (received %d, expected %d)",
 		    key->type, pktype);
+		r = SSH_ERR_INVALID_FORMAT;
 		goto done;
 	}
 
@@ -761,6 +763,7 @@ input_userauth_pk_ok(int type, u_int32_t seq, struct ssh *ssh)
 		    SSH_FP_DEFAULT);
 		error_f("server replied with unknown key: %s %s",
 		    sshkey_type(key), fp == NULL ? "<ERROR>" : fp);
+		r = SSH_ERR_INVALID_FORMAT;
 		goto done;
 	}
 	ident = format_identity(id);

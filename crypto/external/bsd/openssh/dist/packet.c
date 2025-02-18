@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.52 2024/09/24 21:32:18 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.317 2024/08/23 04:51:00 deraadt Exp $ */
+/*	$NetBSD: packet.c,v 1.53 2025/02/18 17:53:24 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.318 2025/02/18 08:02:12 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.52 2024/09/24 21:32:18 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.53 2025/02/18 17:53:24 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1852,6 +1852,14 @@ ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			if ((r = sshpkt_get_string_direct(ssh, &d, &len)) != 0)
 				return r;
 			DBG(debug("Received SSH2_MSG_PING len %zu", len));
+			if (!ssh->state->after_authentication) {
+				DBG(debug("Won't reply to PING in preauth"));
+				break;
+			}
+			if (ssh_packet_is_rekeying(ssh)) {
+				DBG(debug("Won't reply to PING during KEX"));
+				break;
+			}
 			if ((r = sshpkt_start(ssh, SSH2_MSG_PONG)) != 0 ||
 			    (r = sshpkt_put_string(ssh, d, len)) != 0 ||
 			    (r = sshpkt_send(ssh)) != 0)
