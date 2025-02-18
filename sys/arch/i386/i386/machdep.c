@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.843 2025/02/18 10:16:03 imil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.843 2025/02/18 10:16:03 imil Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1105,6 +1105,11 @@ init386_ksyms(void)
 		return;
 #endif
 
+	if (vm_guest == VM_GUEST_GENPVH) {
+		ksyms_addsyms_elf(0, ((int *)&end) + 1, esym);
+		return;
+	}
+
 	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
 		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 		return;
@@ -1184,7 +1189,7 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH)
+	if (vm_guest == VM_GUEST_XENPVH || vm_guest == VM_GUEST_GENPVH)
 		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
 

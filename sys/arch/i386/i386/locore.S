@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.199 2025/02/18 10:16:03 imil Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.199 2025/02/18 10:16:03 imil Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -244,11 +244,12 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $");
 
 #ifdef XEN
 #define __ASSEMBLY__
+#include <xen/include/public/arch-x86/cpuid.h>
 #include <xen/include/public/elfnote.h>
 #include <xen/include/public/xen.h>
 
 #define ELFNOTE(name, type, desctype, descdata...) \
-.pushsection .note.name			;	\
+.pushsection .note.name, "a", @note	;	\
   .align 4				;	\
   .long 2f - 1f		/* namesz */	;	\
   .long 4f - 3f		/* descsz */	;	\
@@ -272,7 +273,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.198 2024/07/31 20:05:28 andvar Exp $");
 	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,          .long,  start)
 #else
 	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .long,  0)
-	ELFNOTE(Xen, XEN_ELFNOTE_PHYS32_ENTRY,   .long,  RELOC(start_xenpvh))
+	ELFNOTE(Xen, XEN_ELFNOTE_PHYS32_ENTRY,   .long,  RELOC(start_pvh))
 #endif /* XENPV */
 	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE, .long,  hypercall_page)
 	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .long,  HYPERVISOR_VIRT_START)
@@ -1193,7 +1194,7 @@ END(start)
 #if defined(XEN)
 #ifndef XENPV
 /* entry point for Xen PVH */
-ENTRY(start_xenpvh)
+ENTRY(start_pvh)
 	/* Xen doesn't start us with a valid gdt */
 	movl    $RELOC(gdtdesc_xenpvh), %eax
 	lgdt    (%eax)
@@ -1217,6 +1218,93 @@ ENTRY(start_xenpvh)
 	stosb
 
 	/*
+	 * Here, we have 2 cases :
+	 *
+	 *  1) We have been started by Xen
+	 *  2) We have been started by another VMM (Qemu, Firecracker, ...)
+	 *
+	 * The main difference is that, when we are started by Xen,
+	 * %ebx (addr of the hvm_start_info structure) is pointing to a
+	 * location that will be mapped correctly later.
+	 *
+	 * In the second case, we have to copy this structure (and all
+	 * the information contained in it) to a location that will be
+	 * mapped later : __kernel_end
+	 *
+	 * To distinguish between the 2 cases, we'll use the 'cpuid' instruction
+	 */
+
+	push %ebx
+	xorl %eax, %eax
+	cpuid
+	cmpl $0x1, %eax		/* Check if we can call CPUID with eax=1 */
+	jb .start_genpvh
+	xorl %eax, %eax
+	inc %eax
+	cpuid
+	shr $31, %ecx
+	testb $1, %cl		/* Check if bit 31 of ECX (hypervisor) is set */
+	jz .start_genpvh
+	xorl %eax, %eax
+	inc %eax
+	shl $30, %eax
+	cpuid			/* Calling cpuid with eax=0x40000000 */
+	cmp $XEN_CPUID_SIGNATURE_EBX, %ebx	/* "VneX" */
+	je .start_xen
+
+	/* We have been started by a VMM that is *not* Xen */
+
+.start_genpvh:
+
+	/* First, copy the hvm_start_info structure to __kernel_end */
+	pop %ebx
+	movl %ebx, %esi
+	movl $RELOC(__kernel_end), %edi
+	movl $HVM_START_INFO_SIZE, %ecx
+	shrl $2, %ecx
+	rep movsl
+
+	/* Copy cmdline_paddr after hvm_start_info */
+	movl CMDLINE_PADDR(%ebx), %esi
+	movl $RELOC(__kernel_end), %ecx
+	movl %edi, CMDLINE_PADDR(%ecx)	/* Set new cmdline_paddr in hvm_start_info */
+	.cmdline_copy:
+	movb (%esi), %al
+	movsb
+	cmp $0, %al
+	jne .cmdline_copy
+
+	/* Copy memmap_paddr after cmdline (only if hvm_start_info->version != 0) */
+	xorl %eax, %eax
+	cmpl START_INFO_VERSION(%ebx), %eax
+	je .reload_ebx
+	movl MMAP_PADDR(%ebx), %esi
+	movl $RELOC(__kernel_end), %ecx
+	movl %edi, MMAP_PADDR(%ecx)	/* Set new memmap_paddr in hvm_start_info */
+	movl MMAP_ENTRIES(%ebx), %eax	/* Get memmap_entries */
+	movl $MMAP_ENTRY_SIZE, %ebx
+	mull %ebx			/* eax * ebx => edx:eax */
+	movl %eax, %ecx
+	shrl $2, %ecx
+	rep movsl
+
+.reload_ebx:
+	movl $RELOC(__kernel_end), %ebx
+
+	/* announce ourself */
+	movl	$VM_GUEST_GENPVH, RELOC(vm_guest)
+
+	jmp .save_hvm_start_paddr
+
+.start_xen:
+	pop %ebx
+	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
+
+.save_hvm_start_paddr:
+	/*
+	 * save addr of the hvm_start_info structure. This is also the end
+	 * of the symbol table
+	/*
 	 * save addr of the hvm_start_info structure. This is also the end
 	 * of the symbol table
 	 */
@@ -1226,22 +1314,25 @@ ENTRY(start_xenpvh)
 	movl	$RELOC(esym),%ebp
 	movl	%eax,(%ebp)
 	/* get a page for HYPERVISOR_shared_info */
+	/* this is only needed if we are running on Xen */
+	cmpl	$VM_GUEST_XENPVH, RELOC(vm_guest)
+	jne	.add_hvm_start_info_page
 	addl	$PAGE_SIZE, %ebx
 	addl	$PGOFSET,%ebx
 	andl	$~PGOFSET,%ebx
 	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
 	movl	%ebx,(%ebp)
 	/* XXX assume hvm_start_info+dependant structure fits in a single page */
+.add_hvm_start_info_page:
 	addl	$PAGE_SIZE, %ebx
 	addl	$PGOFSET,%ebx
 	andl	$~PGOFSET,%ebx
 	addl	$KERNBASE,%ebx
 	movl	$RELOC(eblob),%ebp
 	movl	%ebx,(%ebp)
-	/* announce ourself */
-	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
+
 	jmp	.Lstart_common
-END(start_xenpvh)
+END(start_pvh)
 	.align 8
 gdtdesc_xenpvh:
 	.word	gdt_xenpvhend - gdt_xenpvh
