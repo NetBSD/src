@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.29 2014/02/03 20:22:19 wiz Exp $	*/
+/*	$NetBSD: cut.c,v 1.30 2025/02/19 17:34:14 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.29 2014/02/03 20:22:19 wiz Exp $");
+__RCSID("$NetBSD: cut.c,v 1.30 2025/02/19 17:34:14 gutteridge Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -295,12 +295,12 @@ usage(void)
 	exit(1);
 }
 
-/* make b_put(): */
+/* make b_cut(): */
 #define CUT_BYTE 1
 #include "x_cut.c"
 #undef CUT_BYTE
 
-/* make c_put(): */
+/* make c_cut(): */
 #define CUT_BYTE 0
 #include "x_cut.c"
 #undef CUT_BYTE

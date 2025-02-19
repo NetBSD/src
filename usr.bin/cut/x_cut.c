@@ -1,4 +1,4 @@
-/*	$NetBSD: x_cut.c,v 1.2 2007/07/02 18:41:04 christos Exp $	*/
+/*	$NetBSD: x_cut.c,v 1.3 2025/02/19 17:34:14 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,8 +37,8 @@
  *  single- and multibyte versions of the same code.
  *
  *  In cut.c #define:
- *   CUT_BYTE=0 to define b_cut (singlebyte), and
- *   CUT_BYTE=1 to define c_cut (multibyte).
+ *   CUT_BYTE=1 to define b_cut (singlebyte), and
+ *   CUT_BYTE=0 to define c_cut (multibyte).
  *
  */
 
