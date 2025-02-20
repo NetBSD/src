@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.263 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.264 2025/02/20 21:53:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.263 2025/02/20 20:59:34 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.264 2025/02/20 21:53:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -361,7 +361,7 @@ static const char *const msgs[] = {
 	"conversion of %s to %s requires a cast",			// 303
 	"conversion of %s to %s requires a cast, arg #%d",		// 304
 	"conversion of %s to %s requires a cast, op %s",		// 305
-	"constant truncated by conversion, op '%s'",			// 306
+	"constant %s truncated by conversion, op '%s'",			// 306
 	"static variable '%s' set but not used",			// 307
 	"invalid type for _Complex",					// 308
 	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'",	// 309

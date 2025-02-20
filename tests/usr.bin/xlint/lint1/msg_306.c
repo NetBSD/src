@@ -1,32 +1,40 @@
-/*	$NetBSD: msg_306.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_306.c,v 1.6 2025/02/20 21:53:28 rillig Exp $	*/
 # 3 "msg_306.c"
 
-// Test for message: constant truncated by conversion, op '%s' [306]
+// Test for message: constant %s truncated by conversion, op '%s' [306]
 
 /* lint1-extra-flags: -X 351 */
 
-unsigned char
-to_u8(void)
-{
-	/* expect+1: warning: conversion of 'int' to 'unsigned char' is out of range [119] */
-	return 12345;
-}
+signed char s8;
+unsigned char u8;
 
-unsigned char
-and_u8(unsigned char a)
+void
+msg_306(void)
 {
-	/* XXX: unused bits in constant */
-	return a & 0x1234;
-}
+	u8 = 0xff;
+	/* expect+1: warning: constant truncated by assignment [165] */
+	u8 = 0x100;
 
-unsigned char
-or_u8(unsigned char a)
-{
-	/* expect+1: warning: constant truncated by conversion, op '|=' [306] */
-	a |= 0x1234;
-
+	u8 &= 0xff;
+	/* expect+1: warning: constant 0x100 truncated by conversion, op '&=' [306] */
+	u8 &= 0x100;
 	/* XXX: Lint doesn't care about the expanded form of the same code. */
-	a = a | 0x1234;
+	u8 = u8 & 0x100;
 
-	return a;
+	u8 |= 0xff;
+	/* expect+1: warning: constant 0x100 truncated by conversion, op '|=' [306] */
+	u8 |= 0x100;
+	/* XXX: Lint doesn't care about the expanded form of the same code. */
+	u8 = u8 | 0x100;
+
+	s8 &= 0xff;
+	/* expect+1: warning: constant 0x100 truncated by conversion, op '&=' [306] */
+	s8 &= 0x100;
+	/* XXX: Lint doesn't care about the expanded form of the same code. */
+	s8 = s8 & 0x100;
+	s8 |= 0xff;
+	/* expect+1: warning: constant 0x100 truncated by conversion, op '|=' [306] */
+	s8 |= 0x100;
+	/* XXX: Lint doesn't care about the expanded form of the same code. */
+	s8 = s8 | 0x100;
 }

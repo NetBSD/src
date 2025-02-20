@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.671 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.672 2025/02/20 21:53:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.671 2025/02/20 20:59:34 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.672 2025/02/20 21:53:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4045,17 +4045,27 @@ convert_constant_to_floating(tspec_t nt, val_t *nv,
 	return true;
 }
 
-/*
- * Print a warning if bits which were set are lost due to the conversion.
- * This can happen with operator ORASS only.
- */
+static void
+warn_constant_truncated(op_t op, const val_t *v)
+{
+	char buf[256];
+	bool is_unsigned = is_uinteger(v->v_tspec);
+	int64_t val = v->u.integer;
+	unsigned long long abs_val = is_unsigned || val >= 0
+	    ? (unsigned long long)val
+	    : -(unsigned long long)val;
+	const char *sign = is_unsigned || val >= 0 ? "" : "-";
+	snprintf(buf, sizeof(buf), "%s%#llx", sign, abs_val);
+	/* constant %s truncated by conversion, op '%s' */
+	warning(306, buf, op_name(op));
+}
+
 static void
 convert_constant_check_range_bitor(size_t nsz, size_t osz, const val_t *v,
 				   uint64_t xmask, op_t op)
 {
 	if (nsz < osz && (v->u.integer & xmask) != 0)
-		/* constant truncated by conversion, op '%s' */
-		warning(306, op_name(op));
+		warn_constant_truncated(op, v);
 }
 
 static void
@@ -4073,8 +4083,7 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 	} else if (nsz < osz &&
 	    (v->u.integer & xmask) != xmask &&
 	    (v->u.integer & xmask) != 0)
-		/* constant truncated by conversion, op '%s' */
-		warning(306, op_name(op));
+		warn_constant_truncated(op, v);
 }
 
 static void
