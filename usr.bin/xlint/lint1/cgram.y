@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.517 2025/01/03 03:14:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.518 2025/02/20 20:33:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.517 2025/01/03 03:14:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.518 2025/02/20 20:33:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1033,6 +1033,18 @@ declmod:
 			dcs_set_used();
 		if ($1.noreturn)
 			dcs->d_noreturn = true;
+		if ($1.bit_width == 128) {
+#ifdef INT128_SIZE
+			dcs->d_abstract_type = dcs->d_sign_mod == UNSIGN
+			    ? UINT128 : INT128;
+			dcs->d_sign_mod = NO_TSPEC;
+#else
+			/* Get as close as possible. */
+			dcs->d_rank_mod = LLONG;
+#endif
+		}
+		if ($1.bit_width == 64)
+			dcs->d_rank_mod = LLONG;
 	}
 ;
 
@@ -2550,6 +2562,15 @@ gcc_attribute:
 		    && $3->args_len == 1)
 			dcs_add_alignas($3->args[0]);
 		$$ = (type_attributes){ .used = false };
+		if (is_either(name, "mode", "__mode__")
+		    && $3->args_len == 1
+		    && $3->args[0]->tn_op == NAME) {
+			const char *arg_name = $3->args[0]->u.sym->s_name;
+			if (strcmp(arg_name, "TI") == 0)
+				$$.bit_width = 128;
+			if (strcmp(arg_name, "DI") == 0)
+				$$.bit_width = 64;
+		}
 	}
 |	type_qualifier {
 		if (!$1.tq_const)

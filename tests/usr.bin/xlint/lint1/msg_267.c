@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_267.c,v 1.8 2024/03/12 07:56:08 rillig Exp $	*/
+/*	$NetBSD: msg_267.c,v 1.9 2025/02/20 20:33:10 rillig Exp $	*/
 # 3 "msg_267.c"
 
 // Test for message: shift amount %u equals bit-size of '%s' [267]
@@ -20,15 +20,11 @@ shl32(unsigned int x)
 }
 
 /*
- * As of 2022-08-19, lint ignores the GCC-specific 'mode' attribute, treating
- * the tetra-int as a plain single-int, thus having width 32.
- *
  * https://gcc.gnu.org/onlinedocs/gccint/Machine-Modes.html
  */
 unsigned
 function(unsigned __attribute__((mode(TI))) arg)
 {
-	/* expect+1: warning: shift amount 32 equals bit-size of 'unsigned int' [267] */
 	return (arg >> 32) & 3;
 }
 
