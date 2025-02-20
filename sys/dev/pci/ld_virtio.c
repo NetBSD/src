@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.36 2025/02/06 20:19:32 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.37 2025/02/20 18:34:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.36 2025/02/06 20:19:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.37 2025/02/20 18:34:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	}
 
 	vr->vr_bp = bp;
-	vr->vr_hdr.type   = virtio_rw32(vsc, 
+	vr->vr_hdr.type   = virtio_rw32(vsc,
 			isread ? VIRTIO_BLK_T_IN : VIRTIO_BLK_T_OUT);
 	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
 	vr->vr_hdr.sector = virtio_rw64(vsc,
