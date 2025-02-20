@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.109.2.2 2020/03/21 16:00:39 martin Exp $ */
+/* $NetBSD: dksubr.c,v 1.109.2.3 2025/02/20 19:44:33 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109.2.2 2020/03/21 16:00:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109.2.3 2025/02/20 19:44:33 martin Exp $");
 
 #define	_DKSUBR_PRIVATE
 
@@ -522,6 +522,7 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 
 	while (len > 0) {
 		/* enough data to please the bounds checking code */
+		bp->b_error = 0;
 		bp->b_dev = dev;
 		bp->b_blkno = (daddr_t)(pos / secsize);
 		bp->b_bcount = uimin(len, maxsz);
