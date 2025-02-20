@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.13 2025/02/20 18:33:35 rillig Exp $	*/
+/*	$NetBSD: deroff.c,v 1.14 2025/02/20 19:32:16 rillig Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deroff.c,v 1.13 2025/02/20 18:33:35 rillig Exp $");
+__RCSID("$NetBSD: deroff.c,v 1.14 2025/02/20 19:32:16 rillig Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -250,9 +250,9 @@ static void	 sce(void);
 static void	 refer(int);
 static void	 inpic(void);
 static void	 msputmac(char *, int);
-static void	 msputwords(int);
+static void	 msputwords(void);
 static void	 meputmac(char *, int);
-static void	 meputwords(int);
+static void	 meputwords(void);
 static void	 noblock(char, char);
 static void	 defcomline(pacmac);
 static void	 comline(void);
@@ -361,7 +361,6 @@ main(int ac, char **av)
 	chars['?'] = PUNCT;
 	chars[':'] = PUNCT;
 	work();
-	return 0;
 }
 
 static int
@@ -456,7 +455,7 @@ textline(char *str, int constant)
 {
 
 	if (wordflag) {
-		msputwords(0);
+		msputwords();
 		return;
 	}
 	puts(str);
@@ -674,6 +673,7 @@ sw:
 	case '\\':
 		if (inmacro)
 			goto sw;
+		return;
 
 	default:
 		return;
@@ -799,7 +799,7 @@ inpic(void)
 		else if (c == '\n' && p1 != line) {
 			*p1 = '\0';
 			if (wordflag)
-				msputwords(NO);
+				msputwords();
 			else {
 				puts(line);
 				putchar('\n');
@@ -838,7 +838,7 @@ msputmac(char *s, int constant)
 	last = 0;
 	found = 0;
 	if (wordflag) {
-		msputwords(YES);
+		msputwords();
 		return;
 	}
 	while (*s) {
@@ -876,7 +876,7 @@ msputmac(char *s, int constant)
  *	put out words (for the -w option) with ms and mm conventions
  */
 static void
-msputwords(int macline)
+msputwords(void)
 {
 	char *p, *p1;
 	int i, nlet;
@@ -926,7 +926,7 @@ meputmac(char *cp, int constant)
 	last = 0;
 	found = 0;
 	if (wordflag) {
-		meputwords(YES);
+		meputwords();
 		return;
 	}
 	for (argno = 0; *cp; argno++) {
@@ -1007,10 +1007,10 @@ meputmac(char *cp, int constant)
  *	put out words (for the -w option) with ms and mm conventions
  */
 static void
-meputwords(int macline)
+meputwords(void)
 {
 
-	msputwords(macline);
+	msputwords();
 }
 
 /*
@@ -1304,7 +1304,7 @@ mssnblock(pacmac c12)
 }
 
 static int
-/*ARGUSED*/
+/*ARGSUSED*/
 nf(pacmac unused)
 {
 
@@ -1313,7 +1313,7 @@ nf(pacmac unused)
 }
 
 static int
-/*ARGUSED*/
+/*ARGSUSED*/
 ce(pacmac unused)
 {
 
