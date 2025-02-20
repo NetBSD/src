@@ -1,7 +1,7 @@
-# $NetBSD: msg_004.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: msg_004.ln,v 1.4 2025/02/20 19:04:00 rillig Exp $
 #
 # Test data for message 4 of lint2:
-#	%s value used inconsistently  	%s  ::  %s
+#	%s has its return value used inconsistently by %s and %s
 
 # msg_004_define.c:2: double add(double a, double b) { return a + b; }
 0 s msg_004_define.c

@@ -1,7 +1,7 @@
-# $NetBSD: msg_013.ln,v 1.2 2023/08/05 09:44:18 rillig Exp $
+# $NetBSD: msg_013.ln,v 1.3 2025/02/20 19:04:00 rillig Exp $
 #
 # Test data for message 13 of lint2:
-#	%s: malformed format string  	%s
+#	%s is called with a malformed format string in %s
 #
 
 0 s local.c

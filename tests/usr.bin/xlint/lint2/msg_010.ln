@@ -1,7 +1,7 @@
-# $NetBSD: msg_010.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: msg_010.ln,v 1.4 2025/02/20 19:04:00 rillig Exp $
 #
 # Test data for message 10 of lint2:
-#	%s value is used( %s ), but none returned
+#	%s has its return value used in %s but doesn't return one
 #
 
 0 s msg_010.c

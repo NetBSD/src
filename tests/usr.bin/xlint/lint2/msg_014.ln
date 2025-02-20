@@ -1,6 +1,6 @@
-# $NetBSD: msg_014.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_014.ln,v 1.2 2025/02/20 19:04:00 rillig Exp $
 #
 # Test data for message 14 of lint2:
-#	%s, arg %d inconsistent with format  	%s
+#	%s is called in %s with argument %d being incompatible with format string
 #
 # TODO: add actual test data

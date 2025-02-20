@@ -1,7 +1,7 @@
-# $NetBSD: msg_000.ln,v 1.5 2023/08/02 18:51:25 rillig Exp $
+# $NetBSD: msg_000.ln,v 1.6 2025/02/20 19:04:00 rillig Exp $
 #
 # Test data for message 0 of lint2:
-#	%s used( %s ), but not defined
+#	%s is used in %s but never defined
 #
 
 # Define file number 0.
