@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.670 2025/01/05 06:58:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.671 2025/02/20 20:59:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.670 2025/01/05 06:58:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.671 2025/02/20 20:59:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3055,8 +3055,9 @@ check_assign_pointer_integer(op_t op, int arg,
 	switch (op) {
 	case INIT:
 	case RETURN:
-		/* illegal combination of %s '%s' and %s '%s' */
-		warning(183, lx, type_name(ltp), rx, type_name(rtp));
+		/* illegal combination of %s '%s' and %s '%s' for '%s' */
+		warning(183,
+		    lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 		break;
 	case FARG:
 		/* illegal combination of %s '%s' and %s '%s', arg #%d */

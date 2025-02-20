@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.16 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.17 2025/02/20 20:59:34 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -177,9 +177,9 @@ init_array_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to int' [183] */
+		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to int' for 'init' [183] */
 		L"",
-		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' [183] */
+		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 		"",
 	};
 

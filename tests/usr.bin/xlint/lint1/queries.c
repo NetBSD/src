@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.33 2024/11/30 11:27:20 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.34 2025/02/20 20:59:34 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -378,10 +378,10 @@ Q9(int x)
 # 379 "queries.c" 3 4
 		((void *)0)
 # 381 "queries.c"
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		;
 	case 10:
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		return (void *)(0);
 	default:
 		return 0;

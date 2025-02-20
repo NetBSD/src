@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.262 2025/01/03 03:14:47 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.263 2025/02/20 20:59:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.262 2025/01/03 03:14:47 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.263 2025/02/20 20:59:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -238,7 +238,7 @@ static const char *const msgs[] = {
 	"bit-field initializer does not fit",				// 180
 	"{}-enclosed or constant initializer of type '%s' required",	// 181
 	"'%s' discards '%s' from '%s'",					// 182
-	"illegal combination of %s '%s' and %s '%s'",			// 183
+	"illegal combination of %s '%s' and %s '%s' for '%s'",		// 183
 	"illegal combination of '%s' and '%s'",				// 184
 	"cannot initialize '%s' from '%s'",				// 185
 	"bit-field initializer must be an integer in traditional C",	// 186
