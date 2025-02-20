@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.7 2025/02/02 15:05:07 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.8 2025/02/20 19:43:49 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -117,4 +117,39 @@ external/mpl/dhcp/dist/common/options.c		1.8
 
 	dhcpd(8): safety fix.
 	[christos, ticket #1045]
+
+distrib/common/bootimage/Makefile.bootimage	1.43
+distrib/vax/liveimage/emuimage/Makefile		1.5
+
+	vax: make live image bootable.
+	[tsutsui, ticket #1046]
+
+etc/skel/dot.cshrc				1.10
+
+	PR 59008: set $ENV in the default skel/dot.cshrc as dot.profile
+	for su(1) etc.
+	[tsutsui, ticket #1047]
+
+sys/arch/macppc/stand/ofwboot/boot.c		1.32
+sys/arch/macppc/stand/ofwboot/version		1.16
+
+	macppy: tweak bootpath strings in ofwboot for OpenBIOS used on
+	qemu-system-ppc.
+	[tsutsui, ticket #1048]
+
+sys/altq/altq_rmclass.h				1.14
+
+	altq: cbq: fix a CBQ regression on 32bit platforms.
+	[ozaki-r, ticket #1049]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.61,1.62
+
+	xen: fix attachment of cdrom xbd devices being skipped on kernels
+	without PVHVM. Revert to pre-10 behaviour on pure PV kernels.
+	[sborrill, ticket #1050]
+
+sys/dev/dksubr.c				1.115
+
+	dk_discard: fix stack data leakage.
+	[jakllsch, ticket #1051]
 
