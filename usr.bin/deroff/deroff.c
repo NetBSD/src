@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.12 2019/02/03 03:19:29 mrg Exp $	*/
+/*	$NetBSD: deroff.c,v 1.13 2025/02/20 18:33:35 rillig Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deroff.c,v 1.12 2019/02/03 03:19:29 mrg Exp $");
+__RCSID("$NetBSD: deroff.c,v 1.13 2025/02/20 18:33:35 rillig Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -913,7 +913,6 @@ msputwords(int macline)
  *	put out a macro using the me conventions
  */
 #define SKIPBLANK(cp)	while (*cp == ' ' || *cp == '\t') { cp++; }
-#define SKIPNONBLANK(cp) while (*cp !=' ' && *cp !='\cp' && *cp !='\0') { cp++; }
 
 static void
 meputmac(char *cp, int constant)
