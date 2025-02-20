@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.58.6.1 2023/10/18 15:16:09 martin Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.58.6.2 2025/02/20 19:32:55 martin Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.58.6.1 2023/10/18 15:16:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.58.6.2 2025/02/20 19:32:55 martin Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -453,7 +453,8 @@ xenbus_probe_device_type(const char *path, const char *type,
 					kmem_free(xbusd, xbusd->xbusd_sz);
 					break;
 				}
-				if (strcmp(dtype, "cdrom") == 0) {
+				if (vm_guest == VM_GUEST_XENPVHVM &&
+				    strcmp(dtype, "cdrom") == 0) {
 					aprint_verbose_dev(xenbus_dev,
 					    "ignoring %s type cdrom\n",
 					    xbusd->xbusd_path);
