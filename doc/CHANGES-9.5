@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.48 2025/02/02 14:57:33 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.49 2025/02/20 19:45:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -725,4 +725,9 @@ sys/arch/x86/x86/identcpu.c			1.132,1.133
 
 	x86: PR 58982: fix MP boot issues on newer Apollo Lake CPUs.
 	[andvar, ticket #1935]
+
+sys/dev/dksubr.c				1.115
+
+	dk_discard: fix stack data leakage.
+	[jakllsch, ticket #1936]
 
