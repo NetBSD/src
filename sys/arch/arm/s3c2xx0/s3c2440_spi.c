@@ -59,12 +59,12 @@
  */
 
 /*
- * Support S3C2440's SPI dirver.
+ * Support S3C2440's SPI driver.
  * Real works are done by drivers attached to SPI ports.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.4 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_spi.c,v 1.5 2025/02/21 20:31:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
