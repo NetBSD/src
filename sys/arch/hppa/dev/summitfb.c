@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.31 2025/02/09 10:07:41 skrll Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.32 2025/02/21 21:57:29 andvar Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.31 2025/02/09 10:07:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.32 2025/02/21 21:57:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1765,7 +1765,7 @@ summitfb_copyfont(struct summitfb_softc *sc)
 			src = font + fp->bpc * si;
 			memcpy(dst, src, fp->bpc);
 		} else {
-			/* no mapping - zeeo this cell */
+			/* no mapping - zero this cell */
 			memset(dst, 0, fp->bpc);
 		}
 	}
