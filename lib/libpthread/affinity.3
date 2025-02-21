@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.8 2011/12/05 10:27:40 wiz Exp $
+.\"	$NetBSD: affinity.3,v 1.9 2025/02/21 15:25:37 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2011
+.Dd February 21, 2025
 .Dt AFFINITY 3
 .Os
 .Sh NAME
@@ -95,6 +95,7 @@ thread to the CPU whose ID is 0:
 	cpuset_t *cset;
 	pthread_t pth;
 	cpuid_t ci;
+	int error;
 
 	cset = cpuset_create();
 	if (cset == NULL) {
@@ -106,7 +107,7 @@ thread to the CPU whose ID is 0:
 	pth = pthread_self();
 	error = pthread_setaffinity_np(pth, cpuset_size(cset), cset);
 	if (error) {
-		...
+		err(EXIT_FAILURE, "pthread_setaffinity_np failed");
 	}
 	cpuset_destroy(cset);
 .Ed
