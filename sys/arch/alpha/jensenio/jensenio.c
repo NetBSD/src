@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.24 2025/02/21 03:17:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.23 2023/12/04 00:32:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.24 2025/02/21 03:17:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 	ja.ja_isa.iba_dmat = &jcp->jc_dmat_isa;
 	ja.ja_isa.iba_ic = &jcp->jc_ic;
 	config_found(self, &ja.ja_isa, isabusprint,
-	    CFARGS(.iattr = "eisabus"));
+	    CFARGS(.iattr = "isabus"));
 }
 
 static int
