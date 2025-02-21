@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.399 2025/02/10 15:24:52 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.400 2025/02/21 01:38:38 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1099,6 +1099,7 @@ MVR	multicast VLAN registration
 MVRP	multiple VLAN registration protocol
 MWE	module width encoding
 MX	mail exchange
+MZM	Majorana zero mode
 NACK	negative acknowledgement
 NAK	negative acknowledgement
 NAN	neighbor awareness networking
@@ -1381,6 +1382,7 @@ QDI	quasi delay insensitive
 QOI	quality of implementation
 QOI	quick order interface
 QOS	quality of service
+QPU	quantum processing unit
 QUIC	Quick UDP Internet Connections
 QVL	qualified vendor list
 R/O	read only
