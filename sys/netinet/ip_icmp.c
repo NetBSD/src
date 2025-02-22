@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.179 2025/02/22 09:10:27 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.179 2025/02/22 09:10:27 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -318,7 +318,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	/*
 	 * Allocate the mbuf for the new packet.
 	 */
-	m = m_gethdr(M_DONTWAIT, MT_HEADER);
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m && (totlen > MHLEN)) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -865,7 +865,7 @@ icmp_reflect(struct mbuf *m)
 		 */
 		cp = (u_char *)(ip + 1);
 		if ((opts = ip_srcroute(m)) == NULL &&
-		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
+		    (MGETHDR(opts, M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
 			*mtod(opts, struct in_addr *) = zeroin_addr;
