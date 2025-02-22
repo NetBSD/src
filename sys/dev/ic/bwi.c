@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.38.10.1 2025/02/02 14:29:59 martin Exp $	*/
+/*	$NetBSD: bwi.c,v 1.38.10.2 2025/02/22 12:40:40 martin Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.1 2025/02/02 14:29:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.2 2025/02/22 12:40:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -395,7 +395,7 @@ static void	 bwi_start_tx64(struct bwi_softc *, uint32_t, int);
 static void	 bwi_txeof_status_pio(struct bwi_softc *);
 static void	 bwi_txeof_status32(struct bwi_softc *);
 static void	 bwi_txeof_status64(struct bwi_softc *);
-static void	 _bwi_txeof(struct bwi_softc *, uint16_t);
+static void	 _bwi_txeof(struct bwi_softc *, uint16_t, uint8_t);
 static void	 bwi_txeof_status(struct bwi_softc *, int);
 static void	 bwi_txeof(struct bwi_softc *);
 static int	 bwi_bbp_power_on(struct bwi_softc *, enum bwi_clock_mode);
@@ -9648,10 +9648,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			/* [TRC: XXX Set fallback rate.] */
 		} else {
 			/* AMRR rate control */
-			/* [TRC: XXX amrr] */
-			/* rate = ni->ni_rates.rs_rates[ni->ni_txrate]; */
-			rate = (1 * 2);
-			/* [TRC: XXX Set fallback rate.] */
+			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 		}
 	} else {
 		/* Fixed at 1Mbits/s for mgt frames */
@@ -9924,7 +9921,7 @@ bwi_txeof_status64(struct bwi_softc *sc)
 }
 
 static void
-_bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
+_bwi_txeof(struct bwi_softc *sc, uint16_t tx_id, uint8_t retry_cnt)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct bwi_txbuf_data *tbd;
@@ -9961,6 +9958,14 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 	tb->tb_mbuf = NULL;
 
 	if (tb->tb_ni != NULL) {
+		struct bwi_node *bn = (struct bwi_node *)tb->tb_ni;
+
+		/* Update rate control statistics for the node. */
+		bn->amn.amn_txcnt++;
+		if (retry_cnt) {
+			bn->amn.amn_retrycnt++;
+		}
+
 		ieee80211_free_node(tb->tb_ni);
 		tb->tb_ni = NULL;
 	}
@@ -9986,7 +9991,8 @@ bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 	while (idx != end_idx) {
 		/* [TRC: XXX Filter this out if it is not pending; see
 		   DragonFlyBSD's revision 1.5. */
-		_bwi_txeof(sc, le16toh(st->stats[idx].txs_id));
+		_bwi_txeof(sc, le16toh(st->stats[idx].txs_id),
+		    st->stats[idx].txs_retry_cnt);
 		idx = (idx + 1) % BWI_TXSTATS_NDESC;
 	}
 	st->stats_idx = idx;
@@ -10015,7 +10021,7 @@ bwi_txeof(struct bwi_softc *sc)
 		if (tx_info & 0x30) /* XXX */
 			continue;
 
-		_bwi_txeof(sc, tx_id);
+		_bwi_txeof(sc, tx_id, (tx_info >> 8) & 0xf);
 
 		if_statinc(ifp, if_opackets);
 	}
