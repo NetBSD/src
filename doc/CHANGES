@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3135 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3136 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -682,4 +682,10 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	blocklistd(8): Support multiple configuration files in a
 		configuration directory like /etc/blocklistd.conf.d,
 		from hrosenfeld. [christos 20250206]
+	riscv: Add a JH7110 TRNG driver. [skrll 20250208]
+	elftoolchain: Import version r4175. [jkoshy 20250210]
 	dhcpcd: Import version 10.2.0. [roy 20250212]
+	evbppc: Add support for the Wii DVD drive. [jmcneill 20250212]
+	libm: Expose fma(3) and variants on hppa. [tsutsui 20250215]
+	i386: Add support for non-Xen (QEMU, Firecracker) PVH boot.
+		[imil 20250218]
