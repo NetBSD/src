@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.57.12.1 2025/02/22 11:47:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.57.12.1 2025/02/22 11:47:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbr.h"
@@ -258,10 +258,9 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 	struct vrs_desc *vrsd;
 	uint64_t vrs;
 	int sector_size;
-	int blks, inc;
+	int inc;
 
 	sector_size = a->lp->d_secsize;
-	blks = sector_size / DEV_BSIZE;
 	inc  = MAX(1, 2048 / sector_size);
 
 	/* by definition */
@@ -269,7 +268,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 	        + first_sector;
 
 	/* read first vrs sector */
-	if (read_sector(a, vrs * blks, 1))
+	if (read_sector(a, vrs, 1))
 		return;
 
 	/* skip all CD001 records */
@@ -280,7 +279,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 		*is_iso9660 = first_sector;
 
 		vrs += inc;
-		if (read_sector(a, vrs * blks, 1))
+		if (read_sector(a, vrs, 1))
 			return;
 	}
 
@@ -292,7 +291,7 @@ scan_iso_vrs_session(mbr_args_t *a, uint32_t first_sector,
 
 	/* read successor */
 	vrs += inc;
-	if (read_sector(a, vrs * blks, 1))
+	if (read_sector(a, vrs, 1))
 		return;
 
 	/* check for NSR[23] */
@@ -328,7 +327,7 @@ scan_iso_vrs(mbr_args_t *a)
 		dev = a->bp->b_dev;
 		error = bdev_ioctl(dev, MMCGETDISCINFO, &di, FKIOCTL, curlwp);
 		if (error)
-			return SCAN_CONTINUE;
+			goto notmmc;
 
 		/* go trough all (data) tracks */
 		sessionnr = -1;
@@ -339,7 +338,7 @@ scan_iso_vrs(mbr_args_t *a)
 			error = bdev_ioctl(dev, MMCGETTRACKINFO, &ti,
 					FKIOCTL, curlwp);
 			if (error)
-				return SCAN_CONTINUE;
+				goto notmmc;
 			new_session = (ti.sessionnr != sessionnr);
 			sessionnr = ti.sessionnr;
 			if (new_session) {
@@ -353,6 +352,7 @@ scan_iso_vrs(mbr_args_t *a)
 			}
 		}
 	} else {
+notmmc:
 		/* try start of disc */
 		sector = 0;
 		scan_iso_vrs_session(a, sector, &is_iso9660, &is_udf);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.2.4 2024/10/26 15:28:55 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.4.2.5 2025/02/22 11:47:16 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.4 2024/10/26 15:28:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.5 2025/02/22 11:47:16 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -435,8 +435,14 @@ wii_setup(void)
 	/* Enable PPC access to SHUTDOWN GPIO. */
 	out32(HW_GPIO_OWNER, in32(HW_GPIO_OWNER) | __BIT(GPIO_SHUTDOWN));
 
+	/* Enable PPC access to DI_SPIN GPIO. */
+	out32(HW_GPIO_OWNER, in32(HW_GPIO_OWNER) | __BIT(GPIO_DI_SPIN));
+
 	/* Enable PPC access to EXI bus. */
 	out32(HW_AIPPROT, in32(HW_AIPPROT) | ENAHBIOPI);
+
+	/* Enable DVD video support. */
+	out32(HW_COMPAT, in32(HW_COMPAT) & ~DVDVIDEO);
 }
 
 static void
