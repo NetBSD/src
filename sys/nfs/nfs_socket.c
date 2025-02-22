@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.202 2024/02/05 21:46:06 andvar Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.203 2025/02/22 09:27:05 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.202 2024/02/05 21:46:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.203 2025/02/22 09:27:05 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -913,6 +913,16 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 	int error = 0;
 
 	KASSERT(nmp == rep->r_nmp);
+
+	/*
+	 * For interruptible mounts, we need to poll
+	 * if we are not the process that issued the
+	 * operation as we won't get the signal.
+	 */
+	if (nmp->nm_flag & NFSMNT_INT) {
+		if (rep->r_lwp != curlwp)
+			slptimeo = hz;
+	}
 
 	if (nmp->nm_flag & NFSMNT_SOFT)
 		slptimeo = nmp->nm_retry * nmp->nm_timeo;
