@@ -1,4 +1,4 @@
-/* $NetBSD: sdhc_hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $ */
+/* $NetBSD: sdhc_hollywood.c,v 1.2.2.4 2025/02/22 12:42:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_hollywood.c,v 1.2.2.4 2025/02/22 12:42:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc_hollywood.c,v 1.2.2.3 2024/10/02 12:28:15 marti
 #include "hollywood.h"
 
 #define SDHC_SIZE			0x200
-#define SDHC_HOLLYWOOD_WRITE_DELAY	5
 
 extern struct powerpc_bus_dma_tag wii_mem2_bus_dma_tag;
 
@@ -78,7 +77,6 @@ sdhc_hollywood_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_flags = SDHC_FLAG_SINGLE_POWER_WRITE |
 			       SDHC_FLAG_32BIT_ACCESS |
 			       SDHC_FLAG_USE_DMA;
-	sc->sc_base.sc_write_delay = SDHC_HOLLYWOOD_WRITE_DELAY;
 
 	bst = haa->haa_bst;
 	if (bus_space_map(bst, haa->haa_addr, SDHC_SIZE, 0, &bsh)) {
