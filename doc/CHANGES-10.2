@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.8 2025/02/20 19:43:49 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.9 2025/02/22 13:14:58 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -152,4 +152,91 @@ sys/dev/dksubr.c				1.115
 
 	dk_discard: fix stack data leakage.
 	[jakllsch, ticket #1051]
+
+sys/arch/evbppc/conf/WII			1.8
+sys/arch/evbppc/conf/files.wii			1.5
+sys/arch/evbppc/include/wii.h			1.10
+sys/arch/evbppc/wii/dev/di.c			1.1
+sys/arch/evbppc/wii/machdep.c			1.9
+sys/kern/subr_disk_mbr.c			1.59
+
+	evbppc: add support for Wii DVD drive.
+	[jmcneill, ticket #1052]
+
+sys/dev/pci/if_gem_pci.c			1.53
+
+	gem(4): fix reading of Vital Product Data from ROM.
+	[joe, ticket #1053]
+
+sys/dev/pci/if_gem_pci.c			1.54,1.55
+
+	gem(4): fix shared interrupt pin configuration and debug output.
+	[joe, ticket #1054]
+
+sys/dev/pci/if_vioif.c				1.114
+
+	vioif(4): PR 59086: fix memory size mismatch when freeing
+	memory in an error path.
+	[joe, ticket #1055]
+
+sys/arch/powerpc/pic/intr.c			1.35-1.37
+sys/arch/powerpc/pic/picvar.h			1.14
+
+	powerpc: fix interrupt handling with cascaded PICs.
+	[jmcneill, ticket #1056]
+
+distrib/utils/embedded/conf/evbppc.conf		1.4
+sys/arch/evbppc/conf/WII			1.9
+sys/arch/evbppc/wii/dev/bwai.c			1.4
+sys/arch/evbppc/wii/pic_pi.c			1.2
+sys/arch/powerpc/oea/cpu_subr.c			1.111
+
+	evbppc: Wii: 
+	- simplify processor interface pic code.
+	- Audio playback improvements.
+	- improve CPU identification messages.
+	- remove some kernel options to save memory.
+	- disable ntpd by default.
+	[jmcneill, ticket #1057]
+
+sys/dev/ic/bwi.c				1.42
+
+	bwi(4): update rate control statistics on txeof to enable AMRR.
+	[jmcneill, ticket #1058]
+
+sys/arch/evbppc/wii/dev/sdhc_hollywood.c	1.4
+
+	evbppc: wii: SDHC performance fix.
+	[jmcneill, ticket #1059]
+
+distrib/sun2/liveimage/emuimage/Makefile	1.5
+
+	sun2: fix "live-image" build target.
+	[tsutsui, ticket #1060]
+
+lib/libm/Makefile				1.241
+
+	hppa: libm: add missing fma(3) and variants.
+	[tsutsui, ticket #1061]
+
+sys/dev/ic/bwi.c				1.43
+
+	bwi(4): remove a delay() loop in the PIO RX path.
+	[jmcneill, ticket #1062]
+
+sys/dev/sdmmc/sdhc.c				1.120,1.121
+sys/dev/sdmmc/sdhcvar.h				1.36
+
+	sdhc(4) performance fix.
+	[jmcneill, ticket #1063]
+
+sys/arch/evbppc/wii/pic_pi.c			1.3
+
+	evbppc: wii: fix missed interrupt bug.
+	[jmcneill, ticket #1064]
+
+sys/arch/alpha/jensenio/jensenio.c		1.24
+
+	alpha: fix a bug preventing ISA bus devices to attach.
+	[thorpej, ticket #1065]
 
