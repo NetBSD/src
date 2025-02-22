@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.52 2020/07/02 09:02:04 msaitoh Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.52.20.1 2025/02/22 12:04:11 martin Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.52 2020/07/02 09:02:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.52.20.1 2025/02/22 12:04:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 
 			/* read PCI Expansion PROM Header */
 			bus_space_read_region_1(sc->sc_bustag,
-			    romh, 0, buf, sizeof buf);
+			    romh, 0, buf, GEM_TMP_BUFSIZE);
 
 			/* Check for "shared-pins = serdes" in FCode. */
 			i = 0;
