@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.208 2023/04/09 09:00:56 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.209 2025/02/22 09:36:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.208 2023/04/09 09:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.209 2025/02/22 09:36:29 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1494,7 +1494,10 @@ out: /* Arrive here at splbio */
 	if (vnx->vx_pending == 0) {
 		error = vnx->vx_error;
 		pool_put(&vndxfer_pool, vnx);
-		bp->b_error = error;
+		if (error) {
+			bp->b_resid = bp->b_bcount;
+			bp->b_error = error;
+		}
 		biodone(bp);
 	}
 	splx(s);
@@ -1601,6 +1604,7 @@ sw_reg_iodone(struct work *wk, void *dummy)
 		error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
 			pbp->b_error = error;
+			pbp->b_resid = pbp->b_bcount;
 			biodone(pbp);
 			pool_put(&vndxfer_pool, vnx);
 		}
