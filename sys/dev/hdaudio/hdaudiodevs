@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.9 2024/04/17 11:42:47 andvar Exp $
+$NetBSD: hdaudiodevs,v 1.10 2025/02/22 10:01:39 mlelstv Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@ $NetBSD: hdaudiodevs,v 1.9 2024/04/17 11:42:47 andvar Exp $
  */
 
 vendor	ATI		0x1002	ATI
+vendor	CIRRUS		0x1013	Cirrus Logic
 vendor	NVIDIA		0x10de	NVIDIA
 vendor	REALTEK		0x10ec	Realtek
 vendor	VIATECH		0x1106	VIA
@@ -52,6 +53,9 @@ product	ATI		RS600_HDMI_1	0x7919	RS600 HDMI
 product	ATI		RS600_HDMI_2	0x793c	RS600 HDMI
 product	ATI		RS690_780_HDMI	0x791a	RS690/780 HDMI
 product	ATI		R6xx_HDMI	0xaa01	R6xx HDMI
+
+/* Cirrus Logic */
+product	CIRRUS		CS4206		0x4206	CS4206
 
 /* NVIDIA */
 product	NVIDIA		MCP77_78_HDMI_2	0x0002	MCP77/78 HDMI
