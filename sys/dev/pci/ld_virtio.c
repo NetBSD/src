@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.39 2025/02/22 09:57:09 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.40 2025/02/22 16:53:37 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.39 2025/02/22 09:57:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.40 2025/02/22 16:53:37 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ static int ld_virtio_vq_done(struct virtqueue *);
 static int ld_virtio_dump(struct ld_softc *, void *, int, int);
 static int ld_virtio_start(struct ld_softc *, struct buf *);
 static int ld_virtio_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
-static int ld_virtio_info(struct ld_softc *);
+static int ld_virtio_info(struct ld_softc *, bool);
 static int ld_virtio_discard(struct ld_softc *, struct buf *);
 
 static int
@@ -429,7 +429,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_virtio_start;
 	ld->sc_ioctl = ld_virtio_ioctl;
 
-	if (ld_virtio_info(ld) == 0)
+	if (ld_virtio_info(ld, true) == 0)
 		ld->sc_typename = sc->sc_typename;
 	else
 		ld->sc_typename = __UNCONST("Virtio Block Device");
@@ -457,8 +457,8 @@ err:
 	return;
 }
 
-static int
-ld_virtio_info(struct ld_softc *ld)
+static int __used
+ld_virtio_info(struct ld_softc *ld, bool poll)
 {
 	struct ld_virtio_softc *sc = device_private(ld->sc_dv);
 	struct virtio_softc *vsc = sc->sc_virtio;
@@ -467,15 +467,29 @@ ld_virtio_info(struct ld_softc *ld)
 	int r;
 	int slot;
 	uint8_t id_data[20]; /* virtio v1.2 5.2.6 */
+	bool unload = false;
 
 	if (sc->sc_typename != NULL) {
 		kmem_strfree(sc->sc_typename);
 		sc->sc_typename = NULL;
 	}
 
+	mutex_enter(&sc->sc_sync_wait_lock);
+	while (sc->sc_sync_use != SYNC_FREE) {
+		if (poll) {
+			mutex_exit(&sc->sc_sync_wait_lock);
+			ld_virtio_vq_done(vq);
+			mutex_enter(&sc->sc_sync_wait_lock);
+			continue;
+		}
+		cv_wait(&sc->sc_sync_wait, &sc->sc_sync_wait_lock);
+	}
+	sc->sc_sync_use = SYNC_BUSY;
+	mutex_exit(&sc->sc_sync_wait_lock);
+
 	r = virtio_enqueue_prep(vsc, vq, &slot);
 	if (r != 0)
-		return r;
+		goto done;
 
 	vr = &sc->sc_reqs[slot];
 	KASSERT(vr->vr_bp == NULL);
@@ -487,15 +501,16 @@ ld_virtio_info(struct ld_softc *ld)
 		aprint_error_dev(sc->sc_dev,
 		    "payload dmamap failed, error code %d\n", r);
 		virtio_enqueue_abort(vsc, vq, slot);
-		return r;
+		goto done;
 	}
+	unload = true;
 
 	KASSERT(vr->vr_payload->dm_nsegs <= sc->sc_seg_max);
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
 	    VIRTIO_BLK_CTRL_SEGMENTS);
 	if (r != 0) {
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
-		return r;
+		goto done;
 	}
 
 	vr->vr_bp = DUMMY_VR_BP;
@@ -524,9 +539,17 @@ ld_virtio_info(struct ld_softc *ld)
 	                 false);
 	virtio_enqueue_commit(vsc, vq, slot, true);
 
+done:
 	mutex_enter(&sc->sc_sync_wait_lock);
-	while (sc->sc_sync_use != SYNC_DONE)
+	while (sc->sc_sync_use != SYNC_DONE) {
+		if (poll) {
+			mutex_exit(&sc->sc_sync_wait_lock);
+			ld_virtio_vq_done(vq);
+			mutex_enter(&sc->sc_sync_wait_lock);
+			continue;
+		}
 		cv_wait(&sc->sc_sync_wait, &sc->sc_sync_wait_lock);
+	}
 
 	if (sc->sc_sync_status == VIRTIO_BLK_S_OK)
 		r = 0;
@@ -537,16 +560,16 @@ ld_virtio_info(struct ld_softc *ld)
 	cv_broadcast(&sc->sc_sync_wait);
 	mutex_exit(&sc->sc_sync_wait_lock);
 
-	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
-			0, sizeof(id_data), BUS_DMASYNC_POSTREAD);
-	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
+	if (unload) {
+		bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+				0, sizeof(id_data), BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
+	}
 
-	if (r != 0)
-		return r;
+	if (r == 0)
+		sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
 
-	sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
-
-	return 0;
+	return r;
 }
 
 static int
