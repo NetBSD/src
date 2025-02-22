@@ -387,7 +387,7 @@ extern __inline __m512d
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_load_pd (void const *__P)
 {
-  return *(__m512d *) __P;
+  return *(const __m512d *) __P;
 }
 
 extern __inline __m512d
@@ -428,7 +428,7 @@ extern __inline __m512
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_load_ps (void const *__P)
 {
-  return *(__m512 *) __P;
+  return *(const __m512 *) __P;
 }
 
 extern __inline __m512
@@ -488,7 +488,7 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_load_epi64 (void const *__P)
 {
-  return *(__m512i *) __P;
+  return *(const __m512i *) __P;
 }
 
 extern __inline __m512i
@@ -548,14 +548,14 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_load_si512 (void const *__P)
 {
-  return *(__m512i *) __P;
+  return *(const __m512i *) __P;
 }
 
 extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_load_epi32 (void const *__P)
 {
-  return *(__m512i *) __P;
+  return *(const __m512i *) __P;
 }
 
 extern __inline __m512i
@@ -6298,7 +6298,7 @@ extern __inline __m512d
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_pd (void const *__P)
 {
-  return *(__m512d_u *)__P;
+  return *(const __m512d_u *)__P;
 }
 
 extern __inline __m512d
@@ -6339,7 +6339,7 @@ extern __inline __m512
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_ps (void const *__P)
 {
-  return *(__m512_u *)__P;
+  return *(const __m512_u *)__P;
 }
 
 extern __inline __m512
@@ -6457,7 +6457,7 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_epi64 (void const *__P)
 {
-  return *(__m512i_u *) __P;
+  return *(const __m512i_u *) __P;
 }
 
 extern __inline __m512i
@@ -6498,14 +6498,14 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_si512 (void const *__P)
 {
-  return *(__m512i_u *)__P;
+  return *(const __m512i_u *)__P;
 }
 
 extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_epi32 (void const *__P)
 {
-  return *(__m512i_u *) __P;
+  return *(const __m512i_u *) __P;
 }
 
 extern __inline __m512i

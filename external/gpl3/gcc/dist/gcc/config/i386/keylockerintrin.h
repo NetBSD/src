@@ -99,28 +99,28 @@ extern __inline
 unsigned char __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_aesdecwide128kl_u8(__m128i __A[8], const __m128i __B[8], const void * __P)
 {
-  return __builtin_ia32_aesdecwide128kl_u8 ((__v2di *) __A, (__v2di *) __B, __P);
+  return __builtin_ia32_aesdecwide128kl_u8 ((__v2di *) __A, (const __v2di *) __B, __P);
 }
 
 extern __inline
 unsigned char __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_aesdecwide256kl_u8(__m128i __A[8], const __m128i __B[8], const void * __P)
 {
-  return __builtin_ia32_aesdecwide256kl_u8 ((__v2di *) __A, (__v2di *) __B, __P);
+  return __builtin_ia32_aesdecwide256kl_u8 ((__v2di *) __A, (const __v2di *) __B, __P);
 }
 
 extern __inline
 unsigned char __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_aesencwide128kl_u8(__m128i __A[8], const __m128i __B[8], const void * __P)
 {
-  return __builtin_ia32_aesencwide128kl_u8 ((__v2di *) __A, (__v2di *) __B, __P);
+  return __builtin_ia32_aesencwide128kl_u8 ((__v2di *) __A, (const __v2di *) __B, __P);
 }
 
 extern __inline
 unsigned char __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_aesencwide256kl_u8(__m128i __A[8], const __m128i __B[8], const void * __P)
 {
-  return __builtin_ia32_aesencwide256kl_u8 ((__v2di *) __A, (__v2di *) __B, __P);
+  return __builtin_ia32_aesencwide256kl_u8 ((__v2di *) __A, (const __v2di *) __B, __P);
 }
 #ifdef __DISABLE_WIDEKL__
 #undef __DISABLE_WIDEKL__

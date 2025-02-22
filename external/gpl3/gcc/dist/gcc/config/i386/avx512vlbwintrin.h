@@ -118,7 +118,7 @@ extern __inline __m256i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_loadu_epi16 (void const *__P)
 {
-  return (__m256i) (*(__v16hi_u *) __P);
+  return (__m256i) (*(const __v16hi_u *) __P);
 }
 
 extern __inline __m256i
@@ -144,7 +144,7 @@ extern __inline __m128i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_epi16 (void const *__P)
 {
-  return (__m128i) (*(__v8hi_u *) __P);
+  return (__m128i) (*(const __v8hi_u *) __P);
 }
 
 extern __inline __m128i
@@ -209,7 +209,7 @@ extern __inline __m256i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_loadu_epi8 (void const *__P)
 {
-  return (__m256i) (*(__v32qi_u *) __P);
+  return (__m256i) (*(const __v32qi_u *) __P);
 }
 
 extern __inline __m256i
@@ -235,7 +235,7 @@ extern __inline __m128i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_epi8 (void const *__P)
 {
-  return (__m128i) (*(__v16qi_u *) __P);
+  return (__m128i) (*(const __v16qi_u *) __P);
 }
 
 extern __inline __m128i
