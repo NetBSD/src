@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.37 2025/02/20 18:34:00 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.38 2025/02/22 09:55:31 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.37 2025/02/20 18:34:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.38 2025/02/22 09:55:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,43 +980,28 @@ ld_virtio_discard(struct ld_softc *ld, struct buf *bp)
 
 MODULE(MODULE_CLASS_DRIVER, ld_virtio, "ld,virtio");
 
-#ifdef _MODULE
-/*
- * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
- * XXX it will be defined in the common-code module
- */
-#undef  CFDRIVER_DECL
-#define CFDRIVER_DECL(name, class, attr)
-#include "ioconf.c"
-#endif
-
 static int
 ld_virtio_modcmd(modcmd_t cmd, void *opaque)
 {
-#ifdef _MODULE
-	/*
-	 * We ignore the cfdriver_vec[] that ioconf provides, since
-	 * the cfdrivers are attached already.
-	 */
-	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
-#endif
 	int error = 0;
 
-#ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_init_component(no_cfdriver_vec,
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_ld_virtio,
 		    cfattach_ioconf_ld_virtio, cfdata_ioconf_ld_virtio);
+#endif
 		break;
 	case MODULE_CMD_FINI:
-		error = config_fini_component(no_cfdriver_vec,
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_ld_virtio,
 		    cfattach_ioconf_ld_virtio, cfdata_ioconf_ld_virtio);
+#endif
 		break;
 	default:
 		error = ENOTTY;
 		break;
 	}
-#endif
 
 	return error;
 }
