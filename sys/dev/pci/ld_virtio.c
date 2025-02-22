@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.38 2025/02/22 09:55:31 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.39 2025/02/22 09:57:09 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.38 2025/02/22 09:55:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.39 2025/02/22 09:57:09 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ struct ld_virtio_softc {
 	kcondvar_t		sc_sync_wait;
 	kmutex_t		sc_sync_wait_lock;
 	uint8_t			sc_sync_status;
+	uint8_t			*sc_typename;
 
 	uint32_t		sc_max_discard_sectors;
 	uint32_t		sc_max_discard_seg;
@@ -208,6 +209,7 @@ static int ld_virtio_vq_done(struct virtqueue *);
 static int ld_virtio_dump(struct ld_softc *, void *, int, int);
 static int ld_virtio_start(struct ld_softc *, struct buf *);
 static int ld_virtio_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
+static int ld_virtio_info(struct ld_softc *);
 static int ld_virtio_discard(struct ld_softc *, struct buf *);
 
 static int
@@ -427,6 +429,11 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_virtio_start;
 	ld->sc_ioctl = ld_virtio_ioctl;
 
+	if (ld_virtio_info(ld) == 0)
+		ld->sc_typename = sc->sc_typename;
+	else
+		ld->sc_typename = __UNCONST("Virtio Block Device");
+
 	if (features & VIRTIO_BLK_F_DISCARD) {
 		ld->sc_discard = ld_virtio_discard;
 		sc->sc_max_discard_sectors = virtio_read_device_config_4(vsc,
@@ -448,6 +455,98 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 err:
 	virtio_child_attach_failed(vsc);
 	return;
+}
+
+static int
+ld_virtio_info(struct ld_softc *ld)
+{
+	struct ld_virtio_softc *sc = device_private(ld->sc_dv);
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtqueue *vq = &sc->sc_vq;
+	struct virtio_blk_req *vr;
+	int r;
+	int slot;
+	uint8_t id_data[20]; /* virtio v1.2 5.2.6 */
+
+	if (sc->sc_typename != NULL) {
+		kmem_strfree(sc->sc_typename);
+		sc->sc_typename = NULL;
+	}
+
+	r = virtio_enqueue_prep(vsc, vq, &slot);
+	if (r != 0)
+		return r;
+
+	vr = &sc->sc_reqs[slot];
+	KASSERT(vr->vr_bp == NULL);
+
+	r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_payload,
+			    id_data, sizeof(id_data), NULL,
+			    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (r != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "payload dmamap failed, error code %d\n", r);
+		virtio_enqueue_abort(vsc, vq, slot);
+		return r;
+	}
+
+	KASSERT(vr->vr_payload->dm_nsegs <= sc->sc_seg_max);
+	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
+	    VIRTIO_BLK_CTRL_SEGMENTS);
+	if (r != 0) {
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
+		return r;
+	}
+
+	vr->vr_bp = DUMMY_VR_BP;
+	vr->vr_hdr.type   = virtio_rw32(vsc, VIRTIO_BLK_T_GET_ID);
+	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
+	vr->vr_hdr.sector = virtio_rw64(vsc, 0);
+
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
+			0, sizeof(struct virtio_blk_req_hdr),
+			BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+			0, sizeof(id_data),
+			BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
+			offsetof(struct virtio_blk_req, vr_status),
+			sizeof(uint8_t),
+			BUS_DMASYNC_PREREAD);
+
+	virtio_enqueue_p(vsc, vq, slot, vr->vr_cmdsts,
+			 0, sizeof(struct virtio_blk_req_hdr),
+			 true);
+	virtio_enqueue(vsc, vq, slot, vr->vr_payload, false);
+	virtio_enqueue_p(vsc, vq, slot, vr->vr_cmdsts,
+			 offsetof(struct virtio_blk_req, vr_status),
+			 sizeof(uint8_t),
+	                 false);
+	virtio_enqueue_commit(vsc, vq, slot, true);
+
+	mutex_enter(&sc->sc_sync_wait_lock);
+	while (sc->sc_sync_use != SYNC_DONE)
+		cv_wait(&sc->sc_sync_wait, &sc->sc_sync_wait_lock);
+
+	if (sc->sc_sync_status == VIRTIO_BLK_S_OK)
+		r = 0;
+	else
+		r = EIO;
+
+	sc->sc_sync_use = SYNC_FREE;
+	cv_broadcast(&sc->sc_sync_wait);
+	mutex_exit(&sc->sc_sync_wait_lock);
+
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
+			0, sizeof(id_data), BUS_DMASYNC_POSTREAD);
+	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
+
+	if (r != 0)
+		return r;
+
+	sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+
+	return 0;
 }
 
 static int
@@ -733,6 +832,9 @@ ld_virtio_detach(device_t self, int flags)
 	bus_dmamem_free(dmat, &sc->sc_reqs_seg, 1);
 
 	ldenddetach(ld);
+
+	if (sc->sc_typename != NULL)
+		kmem_strfree(sc->sc_typename);
 
 	cv_destroy(&sc->sc_sync_wait);
 	mutex_destroy(&sc->sc_sync_wait_lock);
