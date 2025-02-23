@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.40 2025/02/22 16:53:37 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.41 2025/02/23 22:04:06 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.40 2025/02/22 16:53:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.41 2025/02/23 22:04:06 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,13 +466,16 @@ ld_virtio_info(struct ld_softc *ld, bool poll)
 	struct virtio_blk_req *vr;
 	int r;
 	int slot;
-	uint8_t id_data[20]; /* virtio v1.2 5.2.6 */
+	uint8_t *id_data; /* virtio v1.2 5.2.6 */
+	size_t id_len = 20;
 	bool unload = false;
 
 	if (sc->sc_typename != NULL) {
 		kmem_strfree(sc->sc_typename);
 		sc->sc_typename = NULL;
 	}
+
+	id_data = kmem_alloc(id_len, KM_SLEEP);
 
 	mutex_enter(&sc->sc_sync_wait_lock);
 	while (sc->sc_sync_use != SYNC_FREE) {
@@ -495,7 +498,7 @@ ld_virtio_info(struct ld_softc *ld, bool poll)
 	KASSERT(vr->vr_bp == NULL);
 
 	r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_payload,
-			    id_data, sizeof(id_data), NULL,
+			    id_data, id_len, NULL,
 			    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -522,7 +525,7 @@ ld_virtio_info(struct ld_softc *ld, bool poll)
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
-			0, sizeof(id_data),
+			0, id_len,
 			BUS_DMASYNC_PREREAD);
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			offsetof(struct virtio_blk_req, vr_status),
@@ -562,12 +565,14 @@ done:
 
 	if (unload) {
 		bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
-				0, sizeof(id_data), BUS_DMASYNC_POSTREAD);
+				0, id_len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 	}
 
 	if (r == 0)
 		sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+
+	kmem_free(id_data, id_len);
 
 	return r;
 }
