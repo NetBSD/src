@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.20 2020/06/07 05:42:25 thorpej Exp $");
+__RCSID("$NetBSD: restore.c,v 1.21 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ static const char *restorehelp[] = {
 	"[-F] [-i infile]",
 };
 
-struct gpt_cmd c_restore = {
+const struct gpt_cmd c_restore = {
 	"restore",
 	cmd_restore,
 	restorehelp, __arraycount(restorehelp),
@@ -111,7 +111,7 @@ restore_mbr(gpt_t gpt, struct mbr *mbr, prop_dictionary_t mbr_dict, off_t last)
 		} else {
 			mbr->mbr_part[0].part_size_lo = htole16((uint16_t)last);
 			mbr->mbr_part[0].part_size_hi = htole16(
-			    (uint16_t)(last >> 16));
+			    (uint16_t)((uint64_t)last >> 16));
 		}
 	} else {
 		PROP_ERR(prop_dictionary_get_uint16(mbr_dict, "lba_size_low",
@@ -125,8 +125,8 @@ restore_mbr(gpt_t gpt, struct mbr *mbr, prop_dictionary_t mbr_dict, off_t last)
 }
 
 static int
-restore_ent(gpt_t gpt, prop_dictionary_t gpt_dict, void *secbuf, u_int gpt_size,
-    u_int entries)
+restore_ent(gpt_t gpt, prop_dictionary_t gpt_dict, void *secbuf,
+    u_int gpt_size __unused, u_int entries)
 {
 	unsigned int i;
 	struct gpt_ent ent;

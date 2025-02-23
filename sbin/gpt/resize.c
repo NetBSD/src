@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.25 2020/05/24 14:42:44 jmcneill Exp $");
+__RCSID("$NetBSD: resize.c,v 1.26 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ static const char *resizehelp[] = {
 	"[-i index | -b blocknr] [-a alignment] [-s size] [-q]",
 };
 
-struct gpt_cmd c_resize = {
+const struct gpt_cmd c_resize = {
 	"resize",
 	cmd_resize,
 	resizehelp, __arraycount(resizehelp),
@@ -66,17 +66,17 @@ struct gpt_cmd c_resize = {
 #define usage() gpt_usage(NULL, &c_resize)
 
 static int
-resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size, bool quiet)
+resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors,
+    off_t size __unused, bool quiet)
 {
 	map_t map;
-	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs, newsize, oldsize;
 	uint64_t end;
 	
 
-	if ((hdr = gpt_hdr(gpt)) == NULL)
+	if (gpt_hdr(gpt) == NULL)
 		return -1;
 
 	i = entry - 1;

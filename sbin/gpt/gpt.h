@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.h,v 1.44 2022/11/20 11:57:02 mlelstv Exp $	*/
+/*	$NetBSD: gpt.h,v 1.45 2025/02/23 20:47:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -138,5 +138,29 @@ int	gpt_uuid_get(gpt_t, gpt_uuid_t *);
 int	gpt_name_get(gpt_t, void *);
 int	gpt_add_hdr(gpt_t, int, off_t);
 void	gpt_show_num(const char *, uintmax_t);
+
+extern const struct gpt_cmd
+	c_add,
+#ifndef HAVE_NBTOOL_CONFIG_H
+	c_backup,
+#endif
+	c_biosboot,
+	c_create,
+	c_destroy,
+	c_header,
+	c_label,
+	c_migrate,
+	c_recover,
+	c_remove,
+	c_resize,
+	c_resizedisk,
+#ifndef HAVE_NBTOOL_CONFIG_H
+	c_restore,
+#endif
+	c_set,
+	c_show,
+	c_type,
+	c_unset,
+	c_uuid;
 
 #endif /* _GPT_H_ */

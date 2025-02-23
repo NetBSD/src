@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.46 2024/11/04 18:36:16 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.47 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -63,7 +63,7 @@ static const char *showhelp[] = {
 #define SHOW_ALL   8
 #define SHOW_HEX   16
 
-struct gpt_cmd c_show = {
+const struct gpt_cmd c_show = {
 	"show",
 	cmd_show,
 	showhelp, __arraycount(showhelp),

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.20 2020/06/08 22:52:09 thorpej Exp $");
+__RCSID("$NetBSD: backup.c,v 1.21 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -59,7 +59,7 @@ static const char *backuphelp[] = {
 
 static int cmd_backup(gpt_t, int, char *[]);
 
-struct gpt_cmd c_backup = {
+const struct gpt_cmd c_backup = {
 	"backup",
 	cmd_backup,
 	backuphelp, __arraycount(backuphelp),
@@ -120,7 +120,8 @@ cleanup:
 }
 
 static int
-store_gpt(gpt_t gpt, const struct gpt_hdr *hdr, prop_dictionary_t *type_dict)
+store_gpt(gpt_t gpt __unused, const struct gpt_hdr *hdr,
+    prop_dictionary_t *type_dict)
 {
 	char buf[128];
 

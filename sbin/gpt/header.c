@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.10 2019/03/14 10:26:10 mlelstv Exp $");
+__RCSID("$NetBSD: header.c,v 1.11 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static const char *headerhelp[] = {
 	"",
 };
 
-struct gpt_cmd c_header = {
+const struct gpt_cmd c_header = {
 	"header",
 	cmd_header,
 	headerhelp, __arraycount(headerhelp),
@@ -99,7 +99,7 @@ header(gpt_t gpt)
 }
 
 static int
-cmd_header(gpt_t gpt, int argc, char *argv[])
+cmd_header(gpt_t gpt, int argc, char *argv[] __unused)
 {
 	if (argc != optind)
 		return usage();

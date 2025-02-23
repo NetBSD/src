@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.15 2019/03/25 20:15:49 martin Exp $");
+__RCSID("$NetBSD: set.c,v 1.16 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static const char *sethelp[] = {
 	"-l",
 };
 
-struct gpt_cmd c_set = {
+const struct gpt_cmd c_set = {
 	"set",
 	cmd_set,
 	sethelp, __arraycount(sethelp),

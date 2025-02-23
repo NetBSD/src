@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.14 2022/11/20 11:57:02 mlelstv Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.15 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static const char *destroyhelp[] = {
 	"[-r]",
 };
 
-struct gpt_cmd c_destroy = {
+const struct gpt_cmd c_destroy = {
 	"destroy",
 	cmd_destroy,
 	destroyhelp, __arraycount(destroyhelp),
@@ -66,7 +66,7 @@ struct gpt_cmd c_destroy = {
 
 
 static int
-destroy(gpt_t gpt, int force, int recoverable)
+destroy(gpt_t gpt, int force __unused, int recoverable)
 {
 	map_t pri_hdr, sec_hdr, pmbr;
 

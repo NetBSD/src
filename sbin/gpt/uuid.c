@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: uuid.c,v 1.3 2024/10/20 08:21:30 mlelstv Exp $");
+__RCSID("$NetBSD: uuid.c,v 1.4 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ static const char *uuidhelp[] = {
 	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type] [-U newuuid]",
 };
 
-struct gpt_cmd c_uuid = {
+const struct gpt_cmd c_uuid = {
 	"uuid",
 	cmd_uuid,
 	uuidhelp, __arraycount(uuidhelp),
@@ -120,10 +120,17 @@ cmd_uuid(gpt_t gpt, int argc, char *argv[])
 				return usage();
 			ctx.uuid = &new_uuid;
 			break;
-		default:
+		case 'L':
+		case 'a':
+		case 'b':
+		case 'i':
+		case 's':
+		case 't':
 			if (gpt_add_find(gpt, &find, ch) == -1)
 				return usage();
 			break;
+		default:
+			return usage();
 		}
 	}
 

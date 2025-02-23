@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.23 2016/09/23 19:36:50 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.24 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ static const char *createhelp[] = {
 	"[-AfP] [-p partitions]",
 };
 
-struct gpt_cmd c_create = {
+const struct gpt_cmd c_create = {
 	"create",
 	cmd_create,
 	createhelp, __arraycount(createhelp),

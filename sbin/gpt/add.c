@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.45 2024/11/02 12:46:49 kre Exp $");
+__RCSID("$NetBSD: add.c,v 1.46 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ static const char *addhelp[] = {
 	"[-s size] [-t type]",
 };
 
-struct gpt_cmd c_add = {
+const struct gpt_cmd c_add = {
 	"add",
 	cmd_add,
 	addhelp, __arraycount(addhelp),
@@ -81,7 +81,7 @@ ent_set(struct gpt_ent *ent, const map_t map, const gpt_uuid_t xtype,
 }
 
 static int
-add(gpt_t gpt, off_t alignment, off_t block, off_t sectors, off_t size,
+add(gpt_t gpt, off_t alignment, off_t block, off_t sectors, off_t size __unused,
     u_int entry, uint8_t *name, gpt_uuid_t type)
 {
 	map_t map;
@@ -184,11 +184,15 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 			if (gpt_uuid_get(gpt, &type) == -1)
 				goto usage;
 			break;
-		default:
+		case 'a':
+		case 's':
+		case 'i':
 			if (gpt_add_ais(gpt, &alignment, &entry, &size, ch)
 			    == -1)
 				goto usage;
 			break;
+		default:
+			goto usage;
 		}
 	}
 

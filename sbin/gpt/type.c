@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.16 2019/06/21 02:14:59 jnemeth Exp $");
+__RCSID("$NetBSD: type.c,v 1.17 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static const char *typehelp[] = {
 	"-l",
 };
 
-struct gpt_cmd c_type = {
+const struct gpt_cmd c_type = {
 	"type",
 	cmd_type,
 	typehelp, __arraycount(typehelp),
@@ -67,7 +67,7 @@ struct gpt_cmd c_type = {
 #define usage() gpt_usage(NULL, &c_type)
 
 static void
-change(struct gpt_ent *ent, void *v, int backup)
+change(struct gpt_ent *ent, void *v, int backup __unused)
 {
 	gpt_uuid_t *newtype = v;
 	gpt_uuid_copy(ent->ent_type, *newtype);
@@ -94,10 +94,17 @@ cmd_type(gpt_t gpt, int argc, char *argv[])
 			if (gpt == NULL || gpt_uuid_get(gpt, &newtype) == -1)
 				return -1;
 			break;
-		default:
+		case 'L':
+		case 'a':
+		case 'b':
+		case 'i':
+		case 's':
+		case 't':
 			if (gpt == NULL || gpt_add_find(gpt, &find, ch) == -1)
 				return usage();
 			break;
+		default:
+			return usage();
 		}
 	}
 

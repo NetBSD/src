@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.24 2024/12/18 20:56:40 andvar Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.25 2025/02/23 20:47:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.24 2024/12/18 20:56:40 andvar Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.25 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <err.h>
@@ -319,7 +319,7 @@ out:
  * passed as input.
  */
 static int 
-gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l)
+gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l __unused)
 {
 	uint64_t x;
 
@@ -338,7 +338,7 @@ gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l)
 	x += gpt->uuidgen++;
 
 	/* Set UUID fields for version 1 */
-	u->time_low = x & 0xffffffff;
+	u->time_low = x & UINT64_C(0xffffffff);
 	u->time_mid = (x >> 32) & 0xffff;
 	u->time_hi_and_version = 0x1000 | ((x >> 48) & 0xfff);
 
@@ -372,7 +372,7 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 		return -1;
 
 	/* Fix the reserved bits.  */
-	u.clock_seq_hi_and_reserved &= (uint8_t)~0x40;
+	u.clock_seq_hi_and_reserved &= (uint8_t)~0x40U;
 	u.clock_seq_hi_and_reserved |= 0x80;
 
 	gpt_dce_to_uuid(&u, t);

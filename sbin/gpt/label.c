@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.30 2019/06/21 02:14:59 jnemeth Exp $");
+__RCSID("$NetBSD: label.c,v 1.31 2025/02/23 20:47:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ static const char *labelhelp[] = {
 	    "<-l label | -f file>",
 };
 
-struct gpt_cmd c_label = {
+const struct gpt_cmd c_label = {
 	"label",
 	cmd_label,
 	labelhelp, __arraycount(labelhelp),
@@ -68,7 +68,7 @@ struct gpt_cmd c_label = {
 #define usage() gpt_usage(NULL, &c_label)
 
 static void
-change(struct gpt_ent *ent, void *v, int backup)
+change(struct gpt_ent *ent, void *v, int backup __unused)
 {
 	uint8_t *name = v;
 	utf8_to_utf16(name, ent->ent_name, __arraycount(ent->ent_name));
@@ -141,10 +141,17 @@ cmd_label(gpt_t gpt, int argc, char *argv[])
 			if (gpt_name_get(gpt, &name) == -1)
 				goto usage;
 			break;
-		default:
+		case 'L':
+		case 'a':
+		case 'b':
+		case 'i':
+		case 's':
+		case 't':
 			if (gpt_add_find(gpt, &find, ch) == -1)
 				goto usage;
 			break;
+		default:
+			goto usage;
 		}
 	}
 
