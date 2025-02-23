@@ -919,7 +919,7 @@ extern __inline __m256i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_stream_load_si256 (__m256i const *__X)
 {
-  return (__m256i) __builtin_ia32_movntdqa256 ((__v4di *) __X);
+  return (__m256i) __builtin_ia32_movntdqa256 ((__v4di *)(unsigned long)__X);
 }
 
 extern __inline __m128
