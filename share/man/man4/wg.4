@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.12 2025/02/23 23:43:50 bad Exp $
+.\"	$NetBSD: wg.4,v 1.13 2025/02/23 23:46:56 bad Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,9 +143,9 @@ so that the interface gets configured automatically during startup:
 A# cat /etc/ifconfig.wg0
 net 10.2.0.1/24
 inet6 fd00:2::1/64
-!wgconfig wg0 set private-key /etc/wg/wg0
-!wgconfig wg0 set listen-port 1234
-!wgconfig wg0 add peer B X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
+!wgconfig $int set private-key /etc/wg/wg0
+!wgconfig $int set listen-port 1234
+!wgconfig $int add peer B X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
     --preshared-key=/etc/wg/wg0.A-B \e
     --allowed-ips=10.2.0.42/32,fd00:2::1/128
 up
@@ -187,8 +187,8 @@ so that the interface gets configured automatically during startup:
 B# cat /etc/ifconfig.wg0
 inet 10.2.0.42/24
 inet6 fd00:2::42/64
-!wgconfig wg0 set private-key /etc/wg/wg0
-!wgconfig wg0 add peer A N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
+!wgconfig $int set private-key /etc/wg/wg0
+!wgconfig $int add peer A N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
     --preshared-key=/etc/wg/wg0.A-B \e
     --allowed-ips=10.2.0.1/32,fd00:2::1/128 \e
     --endpoint=192.0.2.123:1234
