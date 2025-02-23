@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.18 2024/06/20 18:41:45 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.19 2025/02/23 20:48:43 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -717,6 +717,8 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 			sc->sc_tx_cnt = 0;
 			sc->sc_lm->lm_next = 1;
 			sc->sc_lm->lm_count = 1;
+			for (int i = sc->sc_lm->lm_next; i < sc->sc_lm->lm_nentries; i++)
+				sc->sc_lm->lm_slot[i].entry = 0;
 			while (sc->sc_tx_prod != prod)
 			  vdsk_submit_cmd(sc, sc->sc_vsd[sc->sc_tx_prod].vsd_xs);
 			break;
