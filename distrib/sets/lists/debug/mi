@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.463 2025/01/27 18:30:53 christos Exp $
+# $NetBSD: mi,v 1.464 2025/02/24 13:51:21 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -352,6 +352,7 @@
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/efi.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fdisk.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug	comp-ext2fs-debug	debug

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2025/01/27 18:30:54 christos Exp $
+# $NetBSD: mi,v 1.19 2025/02/24 13:51:22 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2559,6 +2559,7 @@
 ./usr/share/man/html8/dumplfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/edquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
+./usr/share/man/html8/efi.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
