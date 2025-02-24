@@ -1,0 +1,439 @@
+.\"	$NetBSD: efi.8,v 1.1 2025/02/24 13:47:56 christos Exp $
+.\"	$NetBSD: efi.8,v 1.1 2025/02/24 13:47:56 christos Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 23, 2025
+.Dt EFI 8
+.Os
+.Sh NAME
+.Nm efi
+.Nd UEFI variable editor
+.Sh SYNOPSIS
+.Nm
+.Op Fl CcDFfhNOqrTVvy
+.Op Fl Fl brief
+.Op Fl Fl debug Ns Op Ar =num
+.Op Fl @ Ar file
+.Op Fl A Op Ar hexnum
+.Op Fl a Op Ar hexnum
+.Op Fl B Op Ar hexnum
+.Op Fl b Ar hexnum
+.Op Fl d Ar disk
+.Op Fl G Op Ar dev
+.Op Fl L Ar label
+.Op Fl l Ar loader
+.Op Fl n Ar hexnum
+.Op Fl o Ar hexnum Ns Op Ar ,hexnum ...
+.Op Fl p Ar num
+.Op Fl R Ar regexp
+.Op Fl t Ar seconds
+.Op Fl w Op Ar sig
+.Op Fl X Ar hexnum Ns Op Ar ,hexnum ...
+.Op Fl x Ar hexnum Ns Op Ar ,hexnum ...
+.\"
+.Sh DESCRIPTION
+.Nm
+can display all UEFI variables visible at runtime.
+It can also create, modify, and delete boot related variables such as
+.Va Boot#### ,
+.Va BootOrder ,
+.Va BootNext ,
+.Va Driver#### ,
+.Va DriverOrder ,
+.Va SysPrep#### ,
+and
+.Va SysPrepOrder .
+It is designed to be API compatible with
+.Nm efibootmgr
+in Linux, so that
+.Nm grub
+can be installed from
+.Nx .
+Future features may be coming.
+.Pp
+Many
+.Nm
+options require a number
+.Pq ####
+indicating which
+.Dq Va Boot####
+argument to modify.
+Many options take this as an argument, but it can also be set with the
+.Fl b
+option.
+Note that the boot number is a hexadecimal in the range of 0 to 0xFFFF.
+It need not have a leading
+.Sq 0x
+prefix and it need not be zero padded to 4 hexdigits.
+By default, the boot number specifies the
+.Dq Va Boot####
+variable, but the
+.Fl r
+and
+.Fl y
+options can override this so that it applies to the
+.Dq Va Driver####
+and
+.Dq Va SysPrep####
+variables.
+.Pp
+The following options are currently available:
+.Bl -tag -width Ds
+.\"
+.It Fl Fl brief
+Only show the variable name, UUID, attributes, and datasize that
+appear in the efi_var_ioc data structure.
+.Po
+See
+.Aq Pa sys/efiio.h .
+.Pc
+This is used when the structure of the data is not known by
+.Nm .
+.\"
+.It Fl Fl debug Ns Op Ar =num
+Increment the debug level or set it to
+.Ar num
+when given.
+It value is bit-mapped:
+.Bl -item -offset indent -compact
+.It
+Bit(0): Show data structure.
+.It
+Bit(1): Show raw data.
+.It
+Bit(2): Show efi_var_ioc structure info.
+.Po
+See
+.Fl Fl brief .
+.Pc
+.El
+.\"
+.It Fl @ , Fl Fl append-binary-args
+Append content of file (use
+.Sq -
+for stdin) to the variable data.
+This data is passed to the boot loader on its command line.
+.\"
+.It Fl A , Fl Fl inactive Op Ar ####
+Set given Boot#### variable inactive.
+.\"
+.It Fl a , Fl Fl active Op Ar ####
+Set given Boot#### variable active.
+.\"
+.It Fl B , Fl Fl delete-bootnum Op Ar ####
+Delete the Boot#### variable.
+.\"
+.It Fl b , Fl Fl bootnum Ar ####
+Specify the boot number (i.e., the #### in Boot####) to use with other
+options.
+.\"
+.It Fl C , Fl Fl create-only
+Create a new Boot#### variable.
+.\"
+.It Fl c , Fl Fl create
+Same as
+.Fl C ,
+but add the bootnum to the bootorder.
+.\"
+.It Fl D , Fl Fl remove-dups
+Remove any duplicate BootOrder entries, retaining the
+first one in the list.
+.\"
+.It Fl d , Fl Fl disk Op Ar dev
+Specify the device containing the boot loader.
+The default is the device containing the current directory.
+.\"
+.It Fl F , Fl Fl no-reconnect
+Do not force a devices reconnect after loading a driver.
+.\"
+.It Fl f , Fl Fl reconnect
+Force a reconnect of devices after loading a driver.
+This has no effect for non-Driver#### variables.
+.\"
+.It Fl G , Fl Fl show-gpt Op Ar dev
+Show the GPT for the specified device.
+The default is the device containing the current directory.
+This currently assumes a widescreen for a readable display.
+.\"
+.It Fl L , Fl Fl label Ar LABEL
+Label name displayed by the boot manager.
+.Po Defaults to
+.Dq Nx .
+.Pc
+.\"
+.It Fl l , Fl Fl loader Ar NAME
+Pathname of the boot loader relative to the specified
+partition.
+.Po Defaults to
+.Pa \eEFI\eNetBSD\egrub.efi .
+.Pc
+Note: EFI partitions are usually formatted as MSDOS partitions.
+Hence, the file separator is a backslash and may need to be escaped
+from the shell.
+.\"
+.It Fl N , Fl Fl delete-bootnext
+Delete the
+.Va BootNext
+variable.
+.\"
+.It Fl n , Fl Fl bootnext Ar ####
+Set the
+.Va BootNext
+variable to
+.Va Boot#### .
+.\"
+.It Fl O , Fl Fl delete-bootorder
+Delete the
+.Va BootOrder
+variable.
+.\"
+.It Fl o , Fl Fl bootorder Ar #### Ns Op Ar ,#### ...
+Set the
+.Va BootOrder
+variable.
+The argument is a non-empty comma separated list of hex values.
+The hex values can range from 0 to FFFF and should correspond to one
+of the Boot#### variables.
+.\"
+.It Fl p , Fl Fl part Ar PART
+Specify the partition index on the device that contains the bootloader
+binary.
+Normally, this is the 'EFI' partition.
+The default is partition index 1.
+.\"
+.It Fl q , Fl Fl quiet
+Run quietly \(em no output.
+(XXX: not yet.)
+.\"
+.It Fl r , Fl Fl driver
+Use the
+.Pa Driver####
+variables instead of
+.Pa Boot####
+variables.
+.\"
+.It Fl T , Fl Fl delete-timeout
+Delete
+.Va Timeout
+variable.
+.\"
+.It Fl t , Fl Fl timeout Ar secs
+Set the boot manager
+.Pa Timeout
+variable, in seconds.
+.\"
+.It Fl V , Fl Fl version
+Print version string and exit.
+To keep
+.Nm grub-install
+happy, this is currently set to version 18.
+.\"
+.It Fl v , Fl Fl verbose
+Increment verboseness.
+This may be used multiple times.
+It is also passed directly to the GPT routines used by the
+.Fl G
+and
+.Fl w
+options.
+.\"
+.It Fl w , Fl Fl write-signature Op Ar sig
+For MBR disks:
+If the MBR partition is missing a signature (i.e., is
+zero), set it to a random value.
+If the
+.Ar sig
+argument is specified, then set the MBR signature to that value
+overriding any previous setting.
+The signature is a four byte value and can be specified in hex, octal,
+or decimal.
+This takes precedence over all other options except
+.Fl c .
+.\"
+.It Fl X , Fl Fl remove-bootorder Ar #### Ns Op Ar ,#### ...
+Remove argument(s) from the
+.Va BootOrder
+variable.
+.\"
+.It Fl x , Fl Fl prefix-bootorder Ar #### Ns Op Ar ,#### ...
+Prefix argument(s) to the
+.Va BootOrder
+variable.
+.\"
+.It Fl y , Fl Fl sysprep
+Operate on SysPrep#### variables instead of Boot####  variables.
+Use
+.Va SysPrep####
+variables instead of the
+.Va Boot####
+variables.
+.El
+.\"
+.Sh IMPLEMENTATION NOTES
+.Nm
+requires kernel EFI runtime support and the device
+.Pa /dev/efi .
+Currently,
+.Nm
+only runs on little-endian machines, as required by the UEFI
+specification.
+.Pp
+As of grub-install 2.12, the following
+.Nm efibootmgr
+options are used
+.Po
+see
+.Pa grub-2.12/grub-core/osdep/unix/platform.c
+.Pc :
+.Bl -item -offset indent -compact
+.It
+.Fl B
+.It
+.Fl L
+efi_distributor
+.It
+.Fl b
+bootnum
+.It
+.Fl c
+.It
+.Fl d
+efidir_disk
+.It
+.Fl l
+efifile_path
+.It
+.Fl p
+efidir_part_idx
+.It
+.Fl q
+.It
+.Fl w
+.It
+.Fl Fl version
+.El
+.Pp
+Currently, the following
+.Nm efibootmgr
+options are not implemented in
+.Nm :
+.Bl -item -offset indent -compact
+.It
+.Fl e , Fl Fl edd
+.It
+.Fl e , Fl Fl edd30
+.It
+.Fl E , Fl Fl edd-device
+.It
+.Fl Fl full-dev-path
+.It
+.Fl Fl file-dev-path
+.It
+.Fl g , Fl Fl gpt
+.It
+.Fl i , Fl Fl iface
+.It
+.Fl m , Fl Fl mirror-below-4G
+.It
+.Fl M , Fl Fl mirror-above-4G
+.It
+.Fl u , Fl Fl unicode
+.It
+.Fl u , Fl Fl UCS-2
+.El
+.Pp
+The following options in
+.Nm
+are not in
+.Nm efibootmgr :
+.Bl -item -offset indent -compact
+.It
+.Fl Fl brief
+.It
+.Fl Fl debug
+.It
+.Fl G , Fl Fl show-gpt
+.It
+.Fl X , Fl Fl remove-bootorder
+.It
+.Fl x , Fl Fl prefix-bootorder
+.El
+.Pp
+In addition, several of the supported
+.Nm efibootmgr
+options now take optional arguments or comma delimited hex number
+arguments for convenience.
+.\"
+.\" <REMOVE_BEFORE_COMMIT>
+.\"
+.\" The following commands should be uncommented and
+.\" used where appropriate.
+.\"
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.\" This next command is for sections 1, 6, 7, 8 and 9 only
+.\"     (command return values (to shell) and
+.\"     fprintf/stderr type diagnostics).
+.\" .Sh DIAGNOSTICS
+.\" .Sh COMPATIBILITY
+.\"
+.\" </REMOVE_BEFORE_COMMIT>
+.\"
+.Sh SEE ALSO
+.Xr gpt 8
+.Sh STANDARDS
+.Nm
+attempts to follow version 2.10 Errata A (Aug 8, 2024) of the
+UEFI Specification
+.Pq Lk http://uefi.org .
+.\"
+.Sh HISTORY
+.Nm
+was intended to be a
+.Nx
+replacement for
+.Nm efibootmgr
+in Linux.
+The later is required by
+.Nm grub-install
+in the
+.Nm grub
+package.
+As a result, the interface is the same with a few exceptions.
+For
+.Nm
+to be used with
+.Nm grub-install
+it obviously needs to be renamed or linked to
+.Nm efibootmgr .
+.\" .Sh AUTHORS
+.Sh BUGS
+Probably way too many to list.
+Currently,
+.Nm
+has had very limited testing.
+Use it at your own risk!
