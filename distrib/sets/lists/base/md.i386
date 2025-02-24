@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.160 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: md.i386,v 1.161 2025/02/24 16:23:42 martin Exp $
 #
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
@@ -14,6 +14,7 @@
 ./lib/libm387.so				base-sys-shlib		dynamicroot,pic
 ./lib/libm387.so.0				base-sys-shlib		dynamicroot,pic
 ./lib/libm387.so.0.1				base-sys-shlib		dynamicroot,pic
+./sbin/efi					base-sysutil-bin
 ./sbin/ldconfig					base-sysutil-root	pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete

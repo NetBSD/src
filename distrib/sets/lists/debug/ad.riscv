@@ -1,3 +1,4 @@
-# $NetBSD: ad.riscv,v 1.23 2025/02/05 17:07:18 skrll Exp $
+# $NetBSD: ad.riscv,v 1.24 2025/02/24 16:23:43 martin Exp $
 #
 ./usr/libdata/debug/usr/sbin/ofctl.debug			comp-util-debug		debug
+./usr/libdata/debug/sbin/efi/efi.debug		comp-sysutil-debug	endian=1234
