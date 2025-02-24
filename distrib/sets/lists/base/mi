@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1359 2025/02/24 16:23:42 martin Exp $
+# $NetBSD: mi,v 1.1360 2025/02/24 18:00:12 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -374,6 +374,7 @@
 ./sbin/dump_lfs					base-sysutil-root
 ./sbin/dumpfs					base-obsolete		obsolete
 ./sbin/dumplfs					base-obsolete		obsolete
+./sbin/efi					base-sysutil-root
 ./sbin/fastboot					base-sysutil-root
 ./sbin/fasthalt					base-sysutil-root
 ./sbin/fdiscard					base-sysutil-root

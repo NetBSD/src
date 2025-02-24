@@ -1,8 +1,7 @@
-# $NetBSD: md.amd64,v 1.301 2025/02/24 16:23:42 martin Exp $
+# $NetBSD: md.amd64,v 1.302 2025/02/24 18:00:12 martin Exp $
 #
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
-./sbin/efi					base-sysutil-bin
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/pmc					base-obsolete		obsolete
 ./usr/lib/libtsan.so				base-sys-shlib		cxx,gcccmds,gcc

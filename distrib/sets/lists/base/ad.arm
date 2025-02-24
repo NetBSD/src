@@ -1,7 +1,6 @@
-# $NetBSD: ad.arm,v 1.90 2025/02/24 16:23:42 martin Exp $
+# $NetBSD: ad.arm,v 1.91 2025/02/24 18:00:12 martin Exp $
 #
 ./libexec/ld.elf_so-oabi			base-obsolete		obsolete
-./sbin/efi					base-sysutil-bin	endian=1234
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libarm.so				base-sys-shlib		pic,compatfile
