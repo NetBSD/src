@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.6 2014/01/18 09:51:08 apb Exp $
+#	$NetBSD: README,v 1.7 2025/02/24 14:41:29 christos Exp $
 
 This is the Intel ACPI Component Architecture, Intel's reference
 implementation of the core operating system ACPI support.  The
@@ -15,6 +15,7 @@ something sane that we can use. The current version of munge is:
 	mv components/* .
 	rmdir components
 
+This is done using the acpica2netbsd script
 Please also update ACPI_DATE in include/acapps.h.
 
 The routines that the operating system must provide are documented
@@ -28,6 +29,7 @@ Copies of the document may be retrieved from:
 
 Structure:
 
+external/bsd/acpica		The iasl build glue
 sys/external/bsd/acpica/dist	The imported source
 sys/external/bsd/acpica/conf	The config glue
 sys/dev/acpi			Device drivers
