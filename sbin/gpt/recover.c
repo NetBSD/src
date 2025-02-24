@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.20 2025/02/23 20:47:19 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.21 2025/02/24 17:07:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -232,17 +232,7 @@ recover(gpt_t gpt)
 static int
 cmd_recover(gpt_t gpt, int argc, char *argv[])
 {
-	int ch;
-
-	while ((ch = getopt(argc, argv, "r")) != -1) {
-		switch(ch) {
-		case 'r':
-		default:
-			return usage();
-		}
-	}
-
-	if (argc != optind)
+	if (argc != 2)
 		return usage();
 
 	return recover(gpt);
