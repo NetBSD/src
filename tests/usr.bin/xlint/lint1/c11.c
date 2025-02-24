@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.8 2024/11/30 11:27:20 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.9 2025/02/24 19:56:27 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -122,7 +122,7 @@ void fvla(int m, int C[m][m])
 	int (*s)[m];
 	/* expect+1: warning: nested 'extern' declaration of 'r' [352] */
 	extern int (*r)[m];
-	/* expect+1: warning: illegal combination of 'pointer to array[1] of int' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: illegal combination of 'pointer to array[1] of int' and 'pointer to array[100] of int', op 'init' [124] */
 	static int (*q)[m] = &B;
 }
 

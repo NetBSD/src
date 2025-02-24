@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_153.c,v 1.10 2025/02/24 19:49:00 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.11 2025/02/24 19:56:27 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: converting '%s' to incompatible '%s' for argument %d [153]
@@ -44,7 +44,5 @@ qualifiers(char *ptr, const volatile char *cvptr)
 void
 pass_pointer_to_array(void)
 {
-	// FIXME: Must be a pointer to 16 bytes, not to 1 byte.
-	/* expect+1: warning: converting 'pointer to unsigned char' to incompatible 'pointer to array[16] of unsigned char' for argument 1 [153] */
 	take_pointer_to_sixteen_bytes(&bytes);
 }

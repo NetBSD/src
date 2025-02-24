@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.264 2025/02/20 21:53:28 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.265 2025/02/24 19:56:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.264 2025/02/20 21:53:28 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.265 2025/02/24 19:56:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -182,7 +182,7 @@ static const char *const msgs[] = {
 	"illegal combination of '%s' and '%s', op '%s'",		// 124
 	"pointers to functions can only be compared for equality",	// 125
 	"incompatible types '%s' and '%s' in conditional",		// 126
-	"'&' before array or function: ignored",			// 127
+	"",			/* no longer used */			// 127
 	"operator '%s' discards '%s' from '%s'",			// 128
 	"expression has null effect",					// 129
 	"enum type mismatch: '%s' '%s' '%s'",				// 130
