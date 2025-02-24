@@ -175,7 +175,7 @@
 
 /* Macros for signons and file headers */
 #ifdef ACPI_REPRO
-#define ACPI_DATE "18 Dec 2021"
+#define ACPI_DATE "12 Dec 2024"
 #define ACPI_TIME "00:00:00"
 #else
 #define ACPI_DATE __DATE__
