@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_153.c,v 1.9 2024/11/23 16:48:35 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.10 2025/02/24 19:49:00 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: converting '%s' to incompatible '%s' for argument %d [153]
@@ -7,10 +7,14 @@
 
 
 typedef double (*unary_operator)(double);
+typedef unsigned char sixteen_bytes[16];
 
 void sink_function_pointer(unary_operator);
 void sink_int_pointer(int *);
 void sink_qualifiers(char *, const char *, volatile char *, const volatile char *);
+void take_pointer_to_sixteen_bytes(sixteen_bytes *);
+
+sixteen_bytes bytes;
 
 void
 to_function_pointer(int *x)
@@ -35,4 +39,12 @@ qualifiers(char *ptr, const volatile char *cvptr)
 	/* expect+2: warning: passing 'pointer to const volatile char' to argument 2 discards 'volatile' [383] */
 	/* expect+1: warning: passing 'pointer to const volatile char' to argument 3 discards 'const' [383] */
 	sink_qualifiers(cvptr, cvptr, cvptr, cvptr);
+}
+
+void
+pass_pointer_to_array(void)
+{
+	// FIXME: Must be a pointer to 16 bytes, not to 1 byte.
+	/* expect+1: warning: converting 'pointer to unsigned char' to incompatible 'pointer to array[16] of unsigned char' for argument 1 [153] */
+	take_pointer_to_sixteen_bytes(&bytes);
 }
