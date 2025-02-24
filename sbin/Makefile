@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2025/02/24 13:47:55 christos Exp $
+#	$NetBSD: Makefile,v 1.141 2025/02/24 15:59:04 martin Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -9,12 +9,22 @@
 SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
 	canconfig ccdconfig cgdconfig chown \
 	devpubd disklabel dkctl dkscan_bsdlabel dmesg dmctl drvctl \
-	efi fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
+	fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
 	mbrlabel mknod modload modstat modunload mount \
 	newbtconf nologin nvmectl \
 	ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
+
+# efi runtime support is currently only available on x86 and little endian
+# ARM and riscv platforms
+.if (${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386" || \
+    ((${MACHINE_CPU} == "riscv" ||  ${MACHINE_CPU} == "arm") && \
+      ${MACHINE_ARCH:M*eb} == ""))
+SUBDIR+= efi
+.endif
+
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs
