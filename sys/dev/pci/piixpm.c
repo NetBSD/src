@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.72 2023/01/12 10:10:10 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.73 2025/02/24 21:31:32 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.72 2023/01/12 10:10:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.73 2025/02/24 21:31:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,9 +305,9 @@ setintr:
 				}
 			}
 		}
-		if (sc->sc_poll)
-			aprint_normal("polling");
 	}
+	if (sc->sc_poll)
+		aprint_normal("polling");
 
 	aprint_normal("\n");
 
