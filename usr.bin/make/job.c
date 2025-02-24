@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.485 2025/01/19 10:57:10 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.486 2025/02/24 23:06:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.485 2025/01/19 10:57:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.486 2025/02/24 23:06:40 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2487,24 +2487,25 @@ JobInterrupt(bool runINTERRUPT, int signo)
 	Job *job;		/* job descriptor in that element */
 	GNode *interrupt;	/* the node describing the .INTERRUPT target */
 	sigset_t mask;
-	GNode *gn;
 
 	aborting = ABORT_INTERRUPT;
 
 	JobSigLock(&mask);
 
 	for (job = job_table; job < job_table_end; job++) {
-		if (job->status != JOB_ST_RUNNING)
-			continue;
-
-		gn = job->node;
-
-		JobDeleteTarget(gn);
-		if (job->pid != 0) {
+		if (job->status == JOB_ST_RUNNING && job->pid != 0) {
 			DEBUG2(JOB,
 			    "JobInterrupt passing signal %d to child %d.\n",
 			    signo, job->pid);
 			KILLPG(job->pid, signo);
+		}
+	}
+
+	for (job = job_table; job < job_table_end; job++) {
+		if (job->status == JOB_ST_RUNNING && job->pid != 0) {
+			int status;
+			(void)waitpid(job->pid, &status, 0);
+			JobDeleteTarget(job->node);
 		}
 	}
 
