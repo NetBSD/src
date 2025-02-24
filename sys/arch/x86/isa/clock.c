@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 2023/01/25 15:54:52 riastradh Exp $	*/
+/*	$NetBSD: clock.c,v 1.42 2025/02/24 07:18:02 imil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2023/01/25 15:54:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2025/02/24 07:18:02 imil Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -326,6 +326,14 @@ void
 startrtclock(void)
 {
 	int s;
+
+	/*
+	 * Check that RTC is present, bits 0 to 6 of register D are
+	 * read-only and must be 0. At least on QEMU/microvm, when
+	 * rtc=off, all bits are set to 1
+	 */
+	if ((mc146818_read(NULL, MC_REGD) & 0x7f) != 0)
+		return;
 
 	if (!rtclock_init)
 		initrtclock(TIMER_FREQ);
