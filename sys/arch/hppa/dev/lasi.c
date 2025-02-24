@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.5 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: lasi.c,v 1.6 2025/02/24 20:23:30 andvar Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.5 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.6 2025/02/24 20:23:30 andvar Exp $");
 
 #undef LASIDEBUG
 
@@ -57,7 +57,7 @@ struct lasi_hwr {
 };
 
 struct lasi_trs {
-	uint32_t lasi_irr;	/* int requset register */
+	uint32_t lasi_irr;	/* int request register */
 	uint32_t lasi_imr;	/* int mask register */
 	uint32_t lasi_ipr;	/* int pending register */
 	uint32_t lasi_icr;	/* int command? register */

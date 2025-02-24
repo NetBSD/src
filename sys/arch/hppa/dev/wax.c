@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: wax.c,v 1.5 2025/02/24 20:23:30 andvar Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.5 2025/02/24 20:23:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $");
 #define	WAX_REGS	0xc000
 
 struct wax_regs {
-	uint32_t wax_irr;	/* int requset register */
+	uint32_t wax_irr;	/* int request register */
 	uint32_t wax_imr;	/* int mask register */
 	uint32_t wax_ipr;	/* int pending register */
 	uint32_t wax_icr;	/* int control register */
