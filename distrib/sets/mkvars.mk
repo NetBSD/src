@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.44 2025/02/24 20:44:15 martin Exp $
+# $NetBSD: mkvars.mk,v 1.45 2025/02/24 20:45:35 martin Exp $
 
 #
 # Extra variables to print.
@@ -10,6 +10,7 @@ MKEXTRAVARS= \
 	EABI \
 	HAVE_ACPI \
 	HAVE_BINUTILS \
+	HAVE_EFI_RT \
 	HAVE_GCC \
 	HAVE_GDB \
 	HAVE_LIBGCC_EH \
@@ -18,7 +19,6 @@ MKEXTRAVARS= \
 	HAVE_OPENSSL \
 	HAVE_SSP \
 	HAVE_UEFI \
-	HAVE_EFI_RT \
 	HAVE_XORG_GLAMOR \
 	HAVE_XORG_SERVER_VER \
 	KERNEL_DIR \
