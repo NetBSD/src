@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3137 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3138 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -690,3 +690,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	i386: Add support for non-Xen (QEMU, Firecracker) PVH boot.
 		[imil 20250218]
 	efi: Add new program to read and write efi variables [christos 20250224]
+	acpi(4): Updated ACPICA to 20241212. [christos 20250224]

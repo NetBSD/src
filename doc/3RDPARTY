@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2084 2025/02/22 16:40:07 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2085 2025/02/24 14:38:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -43,15 +43,15 @@
 #
 
 Package:	acpica
-Version:	20240827
-Current Vers:	20240827
+Version:	20241212
+Current Vers:	20241212
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2024-09-01
+Date:		2025-02-24
 Mailing List:	devel@acpica.org
 License:	BSD-like
-Responsible:	jruoho
+Responsible:	jruoho,christos
 Location:	sys/external/bsd/acpica/dist
 Notes:
 You want the unix2 (dual-licensed) tar file.
