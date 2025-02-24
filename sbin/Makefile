@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2025/02/24 15:59:04 martin Exp $
+#	$NetBSD: Makefile,v 1.142 2025/02/24 17:49:37 martin Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -16,12 +16,7 @@ SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
 
-# efi runtime support is currently only available on x86 and little endian
-# ARM and riscv platforms
-.if (${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386" || \
-    ((${MACHINE_CPU} == "riscv" ||  ${MACHINE_CPU} == "arm") && \
-      ${MACHINE_ARCH:M*eb} == ""))
+.if ${HAVE_EFI_RT} == "yes"
 SUBDIR+= efi
 .endif
 

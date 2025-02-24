@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1411 2025/02/15 11:10:25 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1412 2025/02/24 17:49:38 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -192,6 +192,15 @@ HAVE_ACPI=	no
 HAVE_UEFI=	yes
 .else
 HAVE_UEFI=	no
+.endif
+
+#
+# Does the platform support EFI RT services?
+#
+.if ${HAVE_UEFI} == "yes" && ${MACHINE_ARCH:M*eb} == ""
+HAVE_EFI_RT=	yes
+.else
+HAVE_EFI_RT=	no
 .endif
 
 #
