@@ -331,8 +331,9 @@ dhcp6_makevendor(void *data, const struct interface *ifp)
 				p += vivco->len;
 			}
 		} else if (ifo->vendorclassid[0] != '\0') {
+			optlen = sizeof(uint32_t) + sizeof(uint16_t) + vlen;
 			o.code = htons(D6_OPTION_VENDOR_CLASS);
-			o.len = htons((uint16_t)len);
+			o.len = htons((uint16_t)optlen);
 			memcpy(p, &o, sizeof(o));
 			p += sizeof(o);
 			pen = htonl(DHCPCD_IANA_PEN);
