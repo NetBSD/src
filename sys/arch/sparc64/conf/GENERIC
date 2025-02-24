@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.241 2024/07/16 12:01:19 riastradh Exp $
+# $NetBSD: GENERIC,v 1.242 2025/02/24 21:32:26 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,14 +22,14 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.241 $"
+#ident		"GENERIC-$Revision: 1.242 $"
 
 maxusers	64
 
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 options 	SUN4U		# sun4u - UltraSPARC
 options 	SUN4V		# sun4v - UltraSPARC T1/T2+/T3/T4/T5
 #options 	BLINK		# blink the system LED

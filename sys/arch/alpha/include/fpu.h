@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.h,v 1.8 2021/07/22 01:39:18 thorpej Exp $ */
+/* $NetBSD: fpu.h,v 1.9 2025/02/24 21:32:26 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -91,7 +91,7 @@
  * appear to be identical.
  *
  * Bits 63-48 are reserved for implementation software.
- * Bits 47-23 are reserved for future archiecture definition.
+ * Bits 47-23 are reserved for future architecture definition.
  * Bits 16-12 are reserved for implementation software.
  * Bits 11-7 are reserved for future architecture definition.
  * Bit 0 is reserved for implementation software.

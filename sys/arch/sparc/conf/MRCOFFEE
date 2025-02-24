@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.59 2022/08/07 02:52:29 simonb Exp $
+# $NetBSD: MRCOFFEE,v 1.60 2025/02/24 21:32:26 andvar Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,14 +12,14 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.59 $"
+#ident 		"MRCOFFEE-$Revision: 1.60 $"
 
 maxusers	32
 
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 # We currently support three architecture types; at least one is required.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 

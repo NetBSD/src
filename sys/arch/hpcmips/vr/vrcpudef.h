@@ -28,7 +28,7 @@
 
 /* 
  * definition for identify VR series cpu 
- * $NetBSD: vrcpudef.h,v 1.4 2002/02/10 15:09:32 sato Exp $
+ * $NetBSD: vrcpudef.h,v 1.5 2025/02/24 21:32:26 andvar Exp $
  *
  * REQUIRE #include "opt_vr41xx.h" before using this header.
  */
@@ -49,12 +49,12 @@
 #define	VRID_4181	0x10		/* VR4181 conflict VR4101 */
 
 /*
- * VR cpu architecure group
+ * VR cpu architecture group
  * 
  * vr41xx group:	all vr cpus (some registers are same)
  * vr4181 group:	vr4181 (vrip address and registers are same)
  * vr4101 group:	vr4101???
- * vr4102 group:	vr4102, vr4111, vr4121, vr4122 (some resgiters are same)
+ * vr4102 group:	vr4102, vr4111, vr4121, vr4122 (some registers are same)
  *                or    vr4102, vr4111, vr4121 (vrip address and registers are same)
  * vr4111 group:	vr4111, vr4121, vr4122 (some registers are same)
  *                or	vr4111, vr4121 (vrip address and registers are same)

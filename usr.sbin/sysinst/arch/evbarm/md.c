@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2022/01/29 16:01:17 martin Exp $ */
+/*	$NetBSD: md.c,v 1.23 2025/02/24 21:32:26 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,7 +175,7 @@ md_pre_disklabel(struct install_partition_desc *install,
 	/*
 	 * RAW_PART is 2 on evbarm and bad things happen if we
 	 * write the MBR first and then the disklabel - so postpone
-	 * the MBR to md_post_disklabel(), unlike other architecturs.
+	 * the MBR to md_post_disklabel(), unlike other architectures.
 	 */
 	return true;
 }
@@ -354,7 +354,7 @@ md_mbr_update_check(struct disk_partitions *parts, mbr_info_t *mbri)
 #ifdef HAVE_GPT
 /*
  * New GPT partitions have been written, update bootloader or remember
- * data untill needed in md_post_newfs
+ * data until needed in md_post_newfs
  */
 bool
 md_gpt_post_write(struct disk_partitions *parts, part_id root_id,

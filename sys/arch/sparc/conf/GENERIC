@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.273 2023/02/12 14:50:41 abs Exp $
+# $NetBSD: GENERIC,v 1.274 2025/02/24 21:32:26 andvar Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,14 +22,14 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.273 $"
+#ident 		"GENERIC-$Revision: 1.274 $"
 
 maxusers	32
 
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 # We currently support three architecture types; at least one is required.
 options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.

@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.82 2024/09/15 19:19:58 uwe Exp $
+# $NetBSD: KRUPS,v 1.83 2025/02/24 21:32:26 andvar Exp $
 # From  NetBSD: GENERIC,v 1.273 2023/02/12 14:50:41 abs Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,14 +8,14 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.82 $"
+#ident 		"KRUPS-$Revision: 1.83 $"
 
 maxusers	32
 
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 # We currently support three architecture types; at least one is required.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
