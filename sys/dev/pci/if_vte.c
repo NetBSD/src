@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.38 2024/09/05 17:54:02 andvar Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.39 2025/02/24 07:11:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.38 2024/09/05 17:54:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.39 2025/02/24 07:11:23 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1169,7 +1169,7 @@ vte_rxeof(struct vte_softc *sc)
 		 * A couple of severe issues were seen on sample
 		 * board where the controller continuously emits TX
 		 * pause frames once RX pause threshold crossed.
-		 * Once triggered it never recovered form that
+		 * Once triggered it never recovered from that
 		 * state, I couldn't find a way to make it back to
 		 * work at least.  This issue effectively
 		 * disconnected the system from network.  Also, the

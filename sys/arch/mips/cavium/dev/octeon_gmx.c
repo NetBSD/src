@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.24 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.25 2025/02/24 07:11:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.24 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.25 2025/02/24 07:11:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ octgmx_init(struct octgmx_softc *sc)
 		else
 			sc->sc_port_types[0] = GMX_MII_PORT;
 		if ((inf_mode & INF_MODE_TYPE) == 0) {
-			/* port 1 and 2 are configred as RGMII ports */
+			/* port 1 and 2 are configured as RGMII ports */
 			sc->sc_nports = 3;
 			sc->sc_port_types[1] = GMX_RGMII_PORT;
 			sc->sc_port_types[2] = GMX_RGMII_PORT;

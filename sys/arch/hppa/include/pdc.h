@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.2 2023/03/26 19:10:33 andvar Exp $	*/
+/*	$NetBSD: pdc.h,v 1.3 2025/02/24 07:11:24 andvar Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -685,7 +685,7 @@ struct boot_err {
 		be_chas : 16;	/* error code (interpret as 4 hex digits) */
 };
 
-#define	HPBE_HBOOT_CORRECTABLE	0	/* hard-boot corrctable error */
+#define	HPBE_HBOOT_CORRECTABLE	0	/* hard-boot correctable error */
 #define	HPBE_HBOOT_UNCORRECTBL	1	/* hard-boot uncorrectable error */
 #define	HPBE_SBOOT_CORRECTABLE	2	/* soft-boot correctable error */
 #define	HPBE_SBOOT_UNCORRECTBL	3	/* soft-boot uncorrectable error */

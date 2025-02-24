@@ -1,4 +1,4 @@
-/*	$NetBSD: des_locl.h,v 1.5 2019/02/04 08:23:53 mrg Exp $	*/
+/*	$NetBSD: des_locl.h,v 1.6 2025/02/24 07:11:24 andvar Exp $	*/
 /*	$KAME: des_locl.h,v 1.6 2000/11/06 13:58:09 itojun Exp $	*/
 
 /* crypto/des/des_locl.h */
@@ -129,7 +129,7 @@
 	t=R^s[S+1]
 
 /* The changes to this macro may help or hinder, depending on the
- * compiler and the achitecture.  gcc2 always seems to do well :-).
+ * compiler and the architecture.  gcc2 always seems to do well :-).
  * Inspired by Dana How <how@isl.stanford.edu>
  * DO NOT use the alternative version on machines with 8 byte longs.
  * It does not seem to work on the Alpha, even when DES_LONG is 4
