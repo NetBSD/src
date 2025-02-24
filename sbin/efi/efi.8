@@ -1,4 +1,4 @@
-.\"	$NetBSD: efi.8,v 1.2 2025/02/24 15:49:22 uwe Exp $
+.\"	$NetBSD: efi.8,v 1.3 2025/02/24 16:28:50 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nm
 .Op Fl CcDFfhNOqrTVvy
 .Op Fl Fl brief
-.Op Fl Fl debug Ns Op Ar =num
+.Op Fl Fl debug Ns Op Li = Ns Ar num
 .Op Fl @ Ar file
 .Op Fl A Op Ar hexnum
 .Op Fl a Op Ar hexnum
@@ -45,13 +45,13 @@
 .Op Fl L Ar label
 .Op Fl l Ar loader
 .Op Fl n Ar hexnum
-.Op Fl o Ar hexnum Ns Op Ar ,hexnum ...
+.Op Fl o Ar hexnum Ns Op Li \&, Ns Ar hexnum ...
 .Op Fl p Ar num
 .Op Fl R Ar regexp
 .Op Fl t Ar seconds
 .Op Fl w Op Ar sig
-.Op Fl X Ar hexnum Ns Op Ar ,hexnum ...
-.Op Fl x Ar hexnum Ns Op Ar ,hexnum ...
+.Op Fl X Ar hexnum Ns Op Li \&, Ns Ar hexnum ...
+.Op Fl x Ar hexnum Ns Op Li \&, Ns Ar hexnum ...
 .\"
 .Sh DESCRIPTION
 .Nm
@@ -76,7 +76,7 @@ Future features may be coming.
 Many
 .Nm
 options require a number
-.Pq ####
+.Pq Ar ####
 indicating which
 .Dq Va Boot####
 argument to modify.
@@ -100,57 +100,80 @@ and
 variables.
 .Pp
 The following options are currently available:
-.Bl -tag -width Ds
+.Bl -tag -width Fl
 .\"
 .It Fl Fl brief
 Only show the variable name, UUID, attributes, and datasize that
-appear in the efi_var_ioc data structure.
+appear in the
+.Vt efi_var_ioc
+data structure
 .Po
-See
-.Aq Pa sys/efiio.h .
-.Pc
+see
+.In sys/efiio.h
+.Pc .
 This is used when the structure of the data is not known by
 .Nm .
 .\"
-.It Fl Fl debug Ns Op Ar =num
+.It Fl Fl debug Ns Op Li = Ns Ar num
 Increment the debug level or set it to
 .Ar num
 when given.
-It value is bit-mapped:
+Its value is bit-mapped:
+.Pp
 .Bl -item -offset indent -compact
 .It
 Bit(0): Show data structure.
 .It
 Bit(1): Show raw data.
 .It
-Bit(2): Show efi_var_ioc structure info.
+Bit(2): Show
+.Vt efi_var_ioc
+structure info
 .Po
-See
-.Fl Fl brief .
-.Pc
+see
+.Fl Fl brief
+.Pc .
 .El
 .\"
 .It Fl @ , Fl Fl append-binary-args
-Append content of file (use
-.Sq -
-for stdin) to the variable data.
+Append content of file
+.Po
+use
+.Sq Fl
+for stdin
+.Pc
+to the variable data.
 This data is passed to the boot loader on its command line.
 .\"
 .It Fl A , Fl Fl inactive Op Ar ####
-Set given Boot#### variable inactive.
+Set given
+.Va Boot####
+variable inactive.
 .\"
 .It Fl a , Fl Fl active Op Ar ####
-Set given Boot#### variable active.
+Set given
+.Va Boot####
+variable active.
 .\"
 .It Fl B , Fl Fl delete-bootnum Op Ar ####
-Delete the Boot#### variable.
+Delete the
+.Va Boot####
+variable.
 .\"
 .It Fl b , Fl Fl bootnum Ar ####
-Specify the boot number (i.e., the #### in Boot####) to use with other
-options.
+Specify the boot number
+.Po
+i.e., the
+.Ar ####
+in
+.Va Boot####
+.Pc
+to use with other options.
 .\"
 .It Fl C , Fl Fl create-only
-Create a new Boot#### variable.
+Create a new
+.Va Boot####
+variable.
 .\"
 .It Fl c , Fl Fl create
 Same as
@@ -158,8 +181,9 @@ Same as
 but add the bootnum to the bootorder.
 .\"
 .It Fl D , Fl Fl remove-dups
-Remove any duplicate BootOrder entries, retaining the
-first one in the list.
+Remove any duplicate
+.Va BootOrder
+entries, retaining the first one in the list.
 .\"
 .It Fl d , Fl Fl disk Op Ar dev
 Specify the device containing the boot loader.
@@ -170,7 +194,9 @@ Do not force a devices reconnect after loading a driver.
 .\"
 .It Fl f , Fl Fl reconnect
 Force a reconnect of devices after loading a driver.
-This has no effect for non-Driver#### variables.
+This has no effect for
+.Pf non- Va Driver####
+variables.
 .\"
 .It Fl G , Fl Fl show-gpt Op Ar dev
 Show the GPT for the specified device.
@@ -179,17 +205,16 @@ This currently assumes a widescreen for a readable display.
 .\"
 .It Fl L , Fl Fl label Ar LABEL
 Label name displayed by the boot manager.
-.Po Defaults to
-.Dq Nx .
-.Pc
+Defaults to
+.Ql NetBSD .
 .\"
 .It Fl l , Fl Fl loader Ar NAME
 Pathname of the boot loader relative to the specified
 partition.
-.Po Defaults to
+Defaults to
 .Pa \eEFI\eNetBSD\egrub.efi .
-.Pc
-Note: EFI partitions are usually formatted as MSDOS partitions.
+.Em Note :
+EFI partitions are usually formatted as MSDOS partitions.
 Hence, the file separator is a backslash and may need to be escaped
 from the shell.
 .\"
@@ -209,13 +234,15 @@ Delete the
 .Va BootOrder
 variable.
 .\"
-.It Fl o , Fl Fl bootorder Ar #### Ns Op Ar ,#### ...
+.It Fl o , Fl Fl bootorder Ar #### Ns Op Li \&, Ns Ar #### ...
 Set the
 .Va BootOrder
 variable.
 The argument is a non-empty comma separated list of hex values.
 The hex values can range from 0 to FFFF and should correspond to one
-of the Boot#### variables.
+of the
+.Va Boot####
+variables.
 .\"
 .It Fl p , Fl Fl part Ar PART
 Specify the partition index on the device that contains the bootloader
@@ -225,13 +252,16 @@ The default is partition index 1.
 .\"
 .It Fl q , Fl Fl quiet
 Run quietly \(em no output.
-(XXX: not yet.)
+.Po
+.Sy XXX :
+not yet
+.Pc .
 .\"
 .It Fl r , Fl Fl driver
-Use the
-.Pa Driver####
+Operate on
+.Va Driver####
 variables instead of
-.Pa Boot####
+.Va Boot####
 variables.
 .\"
 .It Fl T , Fl Fl delete-timeout
@@ -241,7 +271,7 @@ variable.
 .\"
 .It Fl t , Fl Fl timeout Ar secs
 Set the boot manager
-.Pa Timeout
+.Va Timeout
 variable, in seconds.
 .\"
 .It Fl V , Fl Fl version
@@ -272,21 +302,20 @@ or decimal.
 This takes precedence over all other options except
 .Fl c .
 .\"
-.It Fl X , Fl Fl remove-bootorder Ar #### Ns Op Ar ,#### ...
+.It Fl X , Fl Fl remove-bootorder Ar #### Ns Op Li \&, Ns Ar #### ...
 Remove argument(s) from the
 .Va BootOrder
 variable.
 .\"
-.It Fl x , Fl Fl prefix-bootorder Ar #### Ns Op Ar ,#### ...
+.It Fl x , Fl Fl prefix-bootorder Ar #### Ns Op Li \&, Ns Ar #### ...
 Prefix argument(s) to the
 .Va BootOrder
 variable.
 .\"
 .It Fl y , Fl Fl sysprep
-Operate on SysPrep#### variables instead of Boot####  variables.
-Use
+Operate on
 .Va SysPrep####
-variables instead of the
+variables instead of
 .Va Boot####
 variables.
 .El
@@ -299,6 +328,7 @@ Currently,
 .Nm
 only runs on little-endian machines, as required by the UEFI
 specification.
+.\"
 .Pp
 As of grub-install 2.12, the following
 .Nm efibootmgr
@@ -307,26 +337,22 @@ options are used
 see
 .Pa grub-2.12/grub-core/osdep/unix/platform.c
 .Pc :
+.Pp
 .Bl -item -offset indent -compact
 .It
 .Fl B
 .It
-.Fl L
-efi_distributor
+.Fl L Ar efi_distributor
 .It
-.Fl b
-bootnum
+.Fl b Ar bootnum
 .It
 .Fl c
 .It
-.Fl d
-efidir_disk
+.Fl d Ar efidir_disk
 .It
-.Fl l
-efifile_path
+.Fl l Ar efifile_path
 .It
-.Fl p
-efidir_part_idx
+.Fl p Ar efidir_part_idx
 .It
 .Fl q
 .It
@@ -334,40 +360,42 @@ efidir_part_idx
 .It
 .Fl Fl version
 .El
+.\"
 .Pp
 Currently, the following
 .Nm efibootmgr
 options are not implemented in
 .Nm :
+.Pp
 .Bl -item -offset indent -compact
+.It
+.Fl E , Fl Fl edd-device
 .It
 .Fl e , Fl Fl edd
 .It
 .Fl e , Fl Fl edd30
 .It
-.Fl E , Fl Fl edd-device
+.Fl Fl file-dev-path
 .It
 .Fl Fl full-dev-path
-.It
-.Fl Fl file-dev-path
 .It
 .Fl g , Fl Fl gpt
 .It
 .Fl i , Fl Fl iface
 .It
-.Fl m , Fl Fl mirror-below-4G
-.It
 .Fl M , Fl Fl mirror-above-4G
 .It
-.Fl u , Fl Fl unicode
+.Fl m , Fl Fl mirror-below-4G
 .It
-.Fl u , Fl Fl UCS-2
+.Fl u , Fl Fl unicode , Fl Fl UCS-2
 .El
+.\"
 .Pp
 The following options in
 .Nm
 are not in
 .Nm efibootmgr :
+.Pp
 .Bl -item -offset indent -compact
 .It
 .Fl Fl brief
@@ -385,23 +413,6 @@ In addition, several of the supported
 .Nm efibootmgr
 options now take optional arguments or comma delimited hex number
 arguments for convenience.
-.\"
-.\" <REMOVE_BEFORE_COMMIT>
-.\"
-.\" The following commands should be uncommented and
-.\" used where appropriate.
-.\"
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
-.\" .Sh EXAMPLES
-.\" This next command is for sections 1, 6, 7, 8 and 9 only
-.\"     (command return values (to shell) and
-.\"     fprintf/stderr type diagnostics).
-.\" .Sh DIAGNOSTICS
-.\" .Sh COMPATIBILITY
-.\"
-.\" </REMOVE_BEFORE_COMMIT>
-.\"
 .Sh SEE ALSO
 .Xr gpt 8
 .Sh STANDARDS
@@ -429,7 +440,6 @@ to be used with
 .Nm grub-install
 it obviously needs to be renamed or linked to
 .Nm efibootmgr .
-.\" .Sh AUTHORS
 .Sh BUGS
 Probably way too many to list.
 Currently,
