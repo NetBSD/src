@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.9 2020/06/21 19:39:11 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.9.6.1 2025/02/24 18:30:56 martin Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -374,7 +374,7 @@
 		<key>description</key>
 		<string>Olimex A20-OLinuXino-MICRO</string>
 		<key>u-boot-pkg</key>
-		<string>a20-olinuxino-micro-emmc</string>
+		<string>a20-olinuxino-micro</string>
 	</dict>
 	<key>olimex,a20-olinuxino-micro-emmc</key>
 	<dict>
