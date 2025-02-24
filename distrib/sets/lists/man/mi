@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1797 2025/02/24 13:51:22 christos Exp $
+# $NetBSD: mi,v 1.1798 2025/02/24 18:22:17 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2822,7 +2822,7 @@
 ./usr/share/man/cat8/editmap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/efi.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/efi.0			man-sysutil-catman	efi_rt,.cat
 ./usr/share/man/cat8/emips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/emips/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/emips/installboot.0		man-obsolete		obsolete
@@ -6396,7 +6396,7 @@
 ./usr/share/man/man8/editmap.8			man-obsolete		obsolete
 ./usr/share/man/man8/edquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man		.man
-./usr/share/man/man8/efi.8			man-sysutil-man		.man
+./usr/share/man/man8/efi.8			man-sysutil-man		efi_rt,.man
 ./usr/share/man/man8/emips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/emips/boot.8		man-sys-man		.man
 ./usr/share/man/man8/emips/installboot.8	man-obsolete		obsolete
