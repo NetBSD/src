@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.162 2025/01/03 16:16:14 rillig Exp $ */
+/*	$NetBSD: fdisk.c,v 1.163 2025/02/24 22:10:51 andvar Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.162 2025/01/03 16:16:14 rillig Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.163 2025/02/24 22:10:51 andvar Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1546,7 +1546,7 @@ configure_bootsel(daddr_t default_ptn)
 	printf("\nBoot selector configuration:\n");
 
 	/* The timeout value is in ticks, ~18.2 Hz. Avoid using floats.
-	 * Ticks are nearly 64k/3600 - so our long timers are sligtly out!
+	 * Ticks are nearly 64k/3600 - so our long timers are slightly out!
 	 * Newer bootcode always waits for 1 tick, so treats 0xffff
 	 * as wait forever.
 	 */
