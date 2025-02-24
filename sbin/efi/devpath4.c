@@ -1,4 +1,4 @@
-/* $NetBSD: devpath4.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath4.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath4.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath4.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -92,7 +92,8 @@ devpath_media_harddisk(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	default:			name_PartitionFormat = "unknown";	break;
 	}
 
-	path->sz = easprintf(&path->cp, "HD(%u,%s,%s,0x%lx,0x%lx)",
+	path->sz = easprintf(&path->cp, "HD(%u,%s,%s,0x%" PRIx64 ",0x%"
+	    PRIx64 ")",
 	    p->PartitionNumber,
 	    name_PartitionFormat,
 	    uuid_str,
@@ -112,8 +113,8 @@ devpath_media_harddisk(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(PartitionNumber: %u\n)
-		    DEVPATH_FMT(PartitionStart:  0x%lx\n)
-		    DEVPATH_FMT(PartitionSize:   0x%lx\n)
+		    DEVPATH_FMT(PartitionStart:) "  0x%" PRIx64 "\n"
+		    DEVPATH_FMT(PartitionSize:) "   0x%" PRIx64 "\n"
 		    DEVPATH_FMT(PartitionSignature: %s\n)
 		    DEVPATH_FMT(PartitionFormat: %s(%u)\n)
 		    DEVPATH_FMT(SignatureType: %s(%u)\n),
@@ -140,15 +141,16 @@ devpath_media_cdrom(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 24);
 
-	path->sz = easprintf(&path->cp, "CDROM(0x%x,0x%016tx,0x%016tx)", p->BootEntry,
+	path->sz = easprintf(&path->cp, "CDROM(0x%x,0x%016" PRIx64 ",0x%016"
+	    PRIx64 ")", p->BootEntry,
 	    p->PartitionStart, p->PartitionSize);
 	
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(BootEntry: 0x%04x\n)
-		    DEVPATH_FMT(PartitionStart: 0x%016tx\n)
-		    DEVPATH_FMT(PartitionSize: 0x%016tx\n),
+		    DEVPATH_FMT(PartitionStart:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(PartitionSize:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->BootEntry,
 		    p->PartitionStart,
@@ -284,15 +286,16 @@ devpath_media_reloff(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 24);
 
-	path->sz = easprintf(&path->cp, "Offset(0x%016tx,0x%016tx)",
+	path->sz = easprintf(&path->cp, "Offset(0x%016" PRIx64 ",0x%016"
+	    PRIx64 ")",
 	    p->StartingOffset, p->EndingOffset);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Reserved: 0x%08x\n)
-		    DEVPATH_FMT(StartingOffset: 0x%016tx\n)
-		    DEVPATH_FMT(EndingOffset: 0x%016tx\n),
+		    DEVPATH_FMT(StartingOffset:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(EndingOffset:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->Reserved,
 		    p->StartingOffset,
@@ -347,19 +350,20 @@ devpath_media_ramdisk(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	type = devpath_media_ramdisk_type(&p->GUID);
 	if (type != NULL)
-		path->sz = easprintf(&path->cp, "%s(0x%016tx,0x%016tx,%u)",
-		    type,
+		path->sz = easprintf(&path->cp, "%s(0x%016" PRIx64 ",0x%016"
+		    PRIx64 ",%u)", type,
 		    p->StartingAddress, p->EndingAddress, p->Instance);
 	else
-		path->sz = easprintf(&path->cp, "RamDisk(0x%016tx,0x%016tx,%u,%s)",
+		path->sz = easprintf(&path->cp, "RamDisk(0x%016" PRIx64
+		    ",0x%016" PRIx64 ",%u,%s)",
 		    p->StartingAddress, p->EndingAddress, p->Instance,
 		    uuid_str);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
-		    DEVPATH_FMT(StartingAddress: 0x%016tx\n)
-		    DEVPATH_FMT(EndingAddress: 0x%016tx\n)
+		    DEVPATH_FMT(StartingAddress:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(EndingAddress:) " 0x%016" PRIx64 "\n"
 		    DEVPATH_FMT(Instance: 0x%08x\n)
 		    DEVPATH_FMT(GUID: %s\n),
 		    DEVPATH_DAT_HDR(dp),

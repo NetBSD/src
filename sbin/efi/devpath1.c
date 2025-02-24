@@ -1,4 +1,4 @@
-/* $NetBSD: devpath1.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath1.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath1.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath1.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -157,15 +157,16 @@ devpath_hw_memmap(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	typename = efi_memory_type_name(p->MemoryType);
 
-	path->sz = easprintf(&path->cp, "MemMap(%s,0x%016tx,0x%016tx)", typename,
+	path->sz = easprintf(&path->cp, "MemMap(%s,0x%016" PRIx64
+	    ",0x%016" PRIx64 ")", typename,
 	    p->StartAddress, p->EndAddress);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(MemoryType: 0x%08x(%s)\n)
-		    DEVPATH_FMT(StartAddress: 0x%016tx\n)
-		    DEVPATH_FMT(EndAddress: 0x%016tx\n),
+		    DEVPATH_FMT(StartAddress:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(EndAddress:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->MemoryType, typename,
 		    p->StartAddress,
@@ -291,13 +292,13 @@ devpath_hw_bmc(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	iftype = devpath_hw_bmc_iftype(p->IfaceType);
 
-	path->sz = easprintf(&path->cp, "(%s,0x%016tx)", iftype, p->BaseAddress);
+	path->sz = easprintf(&path->cp, "(%s,0x%016" PRIx64 ")", iftype, p->BaseAddress);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(IfaceType: %u(%s)\n)
-		    DEVPATH_FMT(BaseAddress: 0x%016tx\n),
+		    DEVPATH_FMT(BaseAddress:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->IfaceType, iftype,
 		    p->BaseAddress);

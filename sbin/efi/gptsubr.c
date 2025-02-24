@@ -1,4 +1,4 @@
-/* $NetBSD: gptsubr.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: gptsubr.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gptsubr.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: gptsubr.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,8 +169,8 @@ get_map_widths(gpt_t gpt)
 		}
 
 	}
-	w.start = (uint)snprintf(NULL, 0, "%zx", max_start);
-	w.size = (uint)snprintf(NULL, 0, "%zx", max_size);
+	w.start = (uint)snprintf(NULL, 0, "%" PRIx64, max_start);
+	w.size = (uint)snprintf(NULL, 0, "%" PRIx64, max_size);
 
 #define MIN_WIDTH_OF(s)	(sizeof(s) - 1)
 	if (w.type_name < MIN_WIDTH_OF("TYPE_NAME"))
@@ -268,7 +268,8 @@ show_map(map_t m, struct map_widths w)
 		break;
 	}
 
-	printf("%2u: %*lx %*lx %08lx %36s %36s %*s %-11s %s\n",
+	printf("%2u: %*" PRIx64 " %*" PRIx64 " %08" PRIx64
+	    " %36s %36s %*s %-11s %s\n",
 	    m->map_index,
 	    w.start,
 	    m->map_start,

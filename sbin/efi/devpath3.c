@@ -1,4 +1,4 @@
-/* $NetBSD: devpath3.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath3.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath3.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath3.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
 #endif /* not lint */
 
 #include <arpa/inet.h>
@@ -215,14 +215,15 @@ devpath_msg_fibre(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 24);
 
-	path->sz = easprintf(&path->cp, "Fibre(0x%016tx,0x%016tx)", p->WWName, p->LUN);
+	path->sz = easprintf(&path->cp, "Fibre(0x%016" PRIx64 ",0x%016"
+	    PRIx64 ")", p->WWName, p->LUN);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Reserved: 0x%08x\n)
-		    DEVPATH_FMT(WWName: 0x%016tx\n)
-		    DEVPATH_FMT(LUN: 0x%016tx\n),
+		    DEVPATH_FMT(WWName:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(LUN:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->Reserved,
 		    p->WWName,
@@ -240,13 +241,13 @@ devpath_msg_11394(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 16);
 
-	path->sz = easprintf(&path->cp, "11394(0x%016lx)", p->GUID);
+	path->sz = easprintf(&path->cp, "11394(0x%016" PRIx64 ")", p->GUID);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Reserved: 0x%08x\n)
-		    DEVPATH_FMT(GUID: 0x%016lx\n),
+		    DEVPATH_FMT(GUID:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->Reserved,
 		    p->GUID);
@@ -321,7 +322,8 @@ devpath_msg_infiniband(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	uuid_snprintf(uuid_str, sizeof(uuid_str), &p->GUID);
 
-	path->sz = easprintf(&path->cp, "Infiniband(%#x,%s,0x%016tx,0x%016tx,0x%016tx)",
+	path->sz = easprintf(&path->cp, "Infiniband(%#x,%s,0x%016" PRIx64
+	    ",0x%016" PRIx64 ",0x%016" PRIx64 ")",
 	    p->Flags, uuid_str, p->ServiceID, p->PortID, p->DeviceID);
 
 	if (dbg != NULL) {
@@ -334,9 +336,9 @@ devpath_msg_infiniband(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Flags: %s\n)
 		    DEVPATH_FMT(GUID: %s\n)
-		    DEVPATH_FMT(ServiceID: 0x%016tx\n)
-		    DEVPATH_FMT(PortID: 0x%016tx\n)
-		    DEVPATH_FMT(DeviceID: 0x%016tx\n),
+		    DEVPATH_FMT(ServiceID:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(PortID:) " 0x%016" PRIx64 "\n"
+		    DEVPATH_FMT(DeviceID:) " 0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    flags_str, uuid_str,
 		    p->ServiceID, p->PortID, p->DeviceID);
@@ -450,22 +452,26 @@ devpath_msg_sas(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	 * 10.67 a bit unclear.
 	 */
 	if (SASINFO_BYTES(p->info.b[0]) == 0) {
-		path->sz = easprintf(&path->cp, "SAS(0x%064lx,0x%064lx)",
+		path->sz = easprintf(&path->cp, "SAS(0x%064" PRIx64
+		    ",0x%064" PRIx64 ")",
 		    htobe64(p->addr), htobe64(p->LUN));
 	}
 	else if (SASINFO_BYTES(p->info.b[0]) == 1) {
 		if (SASINFO_IS_SATA(p->info.b[0])) {
-			path->sz = easprintf(&path->cp, "SAS(0x%064lx,0x%064lx,SATA)",
+			path->sz = easprintf(&path->cp, "SAS(0x%064" PRIx64
+			    ",0x%064" PRIx64 ",SATA)",
 			    htobe64(p->addr), htobe64(p->LUN));
 		}
 		else {
-			path->sz = easprintf(&path->cp, "SAS(0x%064lx,SAS)", htobe64(p->addr));
+			path->sz = easprintf(&path->cp, "SAS(0x%064" PRIx64
+			    ",SAS)", htobe64(p->addr));
 		}
 	}
 	else {
 		assert(SASINFO_BYTES(p->info.b[0]) == 2);
 		uint drivebay = p->info.b[1] + 1;
-		path->sz = easprintf(&path->cp, "SAS(0x%064lx,0x%064lx,0x%04x,%s,%s,%s,%d,0x%04x)",
+		path->sz = easprintf(&path->cp, "SAS(0x%064" PRIx64
+		    ",0x%064" PRIx64 ",0x%04x,%s,%s,%s,%d,0x%04x)",
 		    htobe64(p->addr), htobe64(p->LUN), p->RTP,
 		    SASINFO_SASSATA(p->info.b[0]),
 		    SASINFO_EXTERNAL(p->info.b[0]),
@@ -483,8 +489,8 @@ devpath_msg_sas(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(GUID: %s\n)
 		    DEVPATH_FMT(resv: 0x%08x\n)
-		    DEVPATH_FMT(addr: 0x%064lx(0x%064lx)\n)
-		    DEVPATH_FMT(LUN:  0x%064lx(0x%064lx)\n)
+		    DEVPATH_FMT(addr:) " 0x%064" PRIx64 "(0x%064" PRIx64 ")\n"
+		    DEVPATH_FMT(LUN:) "  0x%064" PRIx64 "(0x%064" PRIx64 ")\n"
 		    DEVPATH_FMT(info: 0x%02x 0x%02x\n)
 		    DEVPATH_FMT(RPT:  0x%04x\n),
 		    DEVPATH_DAT_HDR(dp),
@@ -836,14 +842,14 @@ devpath_msg_uart(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	parity = uart_parity(p->Parity);
 	stopbits = uart_stopbits(p->StopBits);
 
-	path->sz = easprintf(&path->cp, "Uart(%lu,%u,%s,%s)", p->BaudRate, p->DataBits,
-	    parity, stopbits);
+	path->sz = easprintf(&path->cp, "Uart(%" PRIx64 ",%u,%s,%s)",
+	    p->BaudRate, p->DataBits, parity, stopbits);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Reserved: 0x%08x\n)
-		    DEVPATH_FMT(BaudRate: 0x%016lx\n)
+		    DEVPATH_FMT(BaudRate:) " 0x%016" PRIx64 "\n"
 		    DEVPATH_FMT(DataBits: 0x%1x\n)
 		    DEVPATH_FMT(Parity:   0x%1x(%s)\n)
 		    DEVPATH_FMT(StopBits: 0x%1x(%s)\n),
@@ -1104,8 +1110,8 @@ devpath_msg_iscsi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	hdrdgst = hdrdgst_name(p->LoginOptions);
 	proto = protocol_name(p->Protocol);
 
-	path->sz = easprintf(&path->cp, "iSCSI(%s,0x%04x,0x%064lx,%s,%s,%s,%s)",
-	    p->TargetName, p->TargetPortalGrp,
+	path->sz = easprintf(&path->cp, "iSCSI(%s,0x%04x,0x%064" PRIx64
+	    ",%s,%s,%s,%s)", p->TargetName, p->TargetPortalGrp,
 	    htobe64(p->LUN), hdrdgst, datdgst, auth, proto);
 
 	if (dbg != NULL) {
@@ -1116,7 +1122,7 @@ devpath_msg_iscsi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Protocol: 0x%04x(%s)\n)
 		    DEVPATH_FMT(LoginOptions: %s\n)
-		    DEVPATH_FMT(LUN: 0x%064lx\n)
+		    DEVPATH_FMT(LUN:) " 0x%064" PRIx64 "\n"
 		    DEVPATH_FMT(TargetPortalGrp: 0x%04x\n)
 		    DEVPATH_FMT(TargetName: %s\n),
 		    DEVPATH_DAT_HDR(dp),
@@ -1161,14 +1167,14 @@ devpath_msg_fibreex(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 24);
 
-	path->sz = easprintf(&path->cp, "FibreEx(0x%064lx,0x%064lx)",
-	    htobe64(p->WorldWideName), htobe64(p->LUN));
+	path->sz = easprintf(&path->cp, "FibreEx(0x%064" PRIx64 ",0x%064"
+	    PRIx64 ")", htobe64(p->WorldWideName), htobe64(p->LUN));
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
-		    DEVPATH_FMT(WorldWideName: 0x%064lx\n)
-		    DEVPATH_FMT(LUN: 0x%064lx\n),
+		    DEVPATH_FMT(WorldWideName:) " 0x%064" PRIx64 "\n"
+		    DEVPATH_FMT(LUN:) " 0x%064" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    htobe64(p->WorldWideName),
 		    htobe64(p->LUN));
@@ -1195,22 +1201,26 @@ devpath_msg_sasex(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	 * Should we share code?
 	 */
 	if (SASINFO_BYTES(p->info.b[0]) == 0) {
-		path->sz = easprintf(&path->cp, "SasEx(0x%064lx,0x%064lx)",
+		path->sz = easprintf(&path->cp, "SasEx(0x%064" PRIx64
+		    ",0x%064" PRIx64 ")",
 		    htobe64(p->addr), htobe64(p->LUN));
 	}
 	else if (SASINFO_BYTES(p->info.b[0]) == 1) {
 		if (SASINFO_IS_SATA(p->info.b[0])) {
-			path->sz = easprintf(&path->cp, "SasEx(0x%064lx,0x%064lx,SATA)",
+			path->sz = easprintf(&path->cp, "SasEx(0x%064" PRIx64
+			    ",0x%064" PRIx64 ",SATA)",
 			    htobe64(p->addr), htobe64(p->LUN));
 		}
 		else {
-			path->sz = easprintf(&path->cp, "SasEx(0x%064lx,SAS)", htobe64(p->addr));
+			path->sz = easprintf(&path->cp, "SasEx(0x%064" PRIx64
+			    ",SAS)", htobe64(p->addr));
 		}
 	}
 	else {
 		assert(SASINFO_BYTES(p->info.b[0]) == 2);
 		uint drivebay = p->info.b[1] + 1;
-		path->sz = easprintf(&path->cp, "SasEx(0x%064lx,0x%064lx,0x%04x,%s,%s,%s,%d)",
+		path->sz = easprintf(&path->cp, "SasEx(0x%064" PRIx64
+		    ",0x%064" PRIx64 ",0x%04x,%s,%s,%s,%d)",
 		    htobe64(p->addr), htobe64(p->LUN), p->RTP,
 		    SASINFO_SASSATA(p->info.b[0]),
 		    SASINFO_EXTERNAL(p->info.b[0]),
@@ -1221,8 +1231,8 @@ devpath_msg_sasex(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
-		    DEVPATH_FMT(addr: 0x%064lx(0x%064lx)\n)
-		    DEVPATH_FMT(LUN:  0x%064lx(0x%064lx)\n)
+		    DEVPATH_FMT(addr:) " 0x%064" PRIx64 "(0x%064" PRIx64 ")\n"
+		    DEVPATH_FMT(LUN:) "  0x%064" PRIx64 "(0x%064" PRIx64 ")\n"
 		    DEVPATH_FMT(info: 0x%02x 0x%02x\n)
 		    DEVPATH_FMT(RPT:  0x%04x\n),
 		    DEVPATH_DAT_HDR(dp),
@@ -1256,7 +1266,7 @@ devpath_msg_nvme(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(NSID: 0x%08x\n)
-		    DEVPATH_FMT(EUI:  0x%016lx\n),
+		    DEVPATH_FMT(EUI:) "  0x%016" PRIx64 "\n",
 		    DEVPATH_DAT_HDR(dp),
 		    p->NSID, p->EUI.val);
 	}
@@ -1505,7 +1515,7 @@ devpath_msg_dns(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 					tp = bp;
 					dbg->sz += easprintf(&bp,
 					    "%s"
-					    DEVPATH_FMT(addr[%lu]:)
+					    DEVPATH_FMT(addr[%zu]:)
 					    " %02x %02x %02x %02x"
 					    " %02x %02x %02x %02x"
 					    " %02x %02x %02x %02x"
@@ -1615,7 +1625,8 @@ devpath_msg_nvmeof(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		path->sz = easprintf(&path->cp, "NVMEoF(%s)", p->SubsystemNQN);
 		break;
 	case 1:
-		path->sz = easprintf(&path->cp, "NVMEoF(%s,0x%016lx)", p->SubsystemNQN, p->NID.ieuid);
+		path->sz = easprintf(&path->cp, "NVMEoF(%s,0x%016" PRIx64
+		    ")", p->SubsystemNQN, p->NID.ieuid);
 		break;
 	case 2:
 	case 3:
@@ -1634,7 +1645,7 @@ devpath_msg_nvmeof(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(NIDT: 0x%02x\n)
-		    DEVPATH_FMT(NID: 0x%016lx%016lx\n)
+		    DEVPATH_FMT(NID:) " 0x%016" PRIx64 "%016" PRIx64 "\n"
 		    DEVPATH_FMT(SubsystemNQN: '%s'\n),
 		    DEVPATH_DAT_HDR(dp),
 		    p->NIDT,
