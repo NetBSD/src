@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -3350,12 +3350,16 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 			state->state = DH6S_BOUND;
 		state->failed = false;
 
-		if (state->renew && state->renew != ND6_INFINITE_LIFETIME)
+		/* If we CONFIRM we might need to enter RENEW
+		 * or REBIND right away if the timers have expired */
+		if ((state->renew || (state->rebind && confirmed)) &&
+		    state->renew != ND6_INFINITE_LIFETIME)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    state->renew,
 			    state->state == DH6S_INFORMED ?
 			    dhcp6_startinform : dhcp6_startrenew, ifp);
-		if (state->rebind && state->rebind != ND6_INFINITE_LIFETIME)
+		if ((state->rebind || (state->expire && confirmed)) &&
+		    state->rebind != ND6_INFINITE_LIFETIME)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    state->rebind, dhcp6_startrebind, ifp);
 		if (state->expire != ND6_INFINITE_LIFETIME)

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -2170,7 +2170,8 @@ dhcp_finish_dad(struct interface *ifp, struct in_addr *ia)
 
 #ifdef IPV4LL
 	/* Stop IPv4LL now we have a working DHCP address */
-	if (!IN_LINKLOCAL(ntohl(ia->s_addr)))
+	if ((!IN_LINKLOCAL(ntohl(ia->s_addr)))
+		&& (ifp->options->options & DHCPCD_IPV4LL))
 		ipv4ll_drop(ifp);
 #endif
 
@@ -3075,12 +3076,12 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	bool bootp_copied;
 	uint32_t v6only_time = 0;
 	bool use_v6only = false, has_auto_conf = false;
-#ifdef IPV4LL
-	uint8_t tmp;
-#endif
 #ifdef AUTH
 	const uint8_t *auth;
 	size_t auth_len;
+#endif
+#ifdef IPV4LL
+	uint8_t tmp;
 #endif
 #ifdef IN_IFF_DUPLICATED
 	struct ipv4_addr *ia;
@@ -3329,7 +3330,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			switch (tmp) {
 			case 0:
 				LOGDHCP(LOG_WARNING, "IPv4LL disabled from");
-				ipv4ll_drop(ifp);
+				if (ifp->options->options & DHCPCD_IPV4LL)
+					ipv4ll_drop(ifp);
 #ifdef ARP
 				arp_drop(ifp);
 #endif

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -709,9 +709,7 @@ ipv6_addaddr1(struct ipv6_addr *ia, struct timespec *now)
 		 * The saved times will be re-applied to the ia
 		 * before exiting this function. */
 		ia->prefix_vltime = ia->prefix_pltime = ND6_INFINITE_LIFETIME;
-	}
-
-	if (timespecisset(&ia->acquired)) {
+	} else if (timespecisset(&ia->acquired)) {
 		ia->prefix_pltime = lifetime_left(ia->prefix_pltime,
 		    &ia->acquired, now);
 		ia->prefix_vltime = lifetime_left(ia->prefix_vltime,
@@ -2274,12 +2272,9 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 	const struct routeinfo *rinfo;
 	const struct ipv6_addr *addr;
 	struct in6_addr netmask;
-	struct timespec now;
 
 	if (ctx->ra_routers == NULL)
 		return 0;
-
-	timespecclear(&now);
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (rap->expired)
@@ -2302,8 +2297,8 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 			rt->rt_pref = ipv6nd_rtpref(rinfo->flags);
 #endif
 #ifdef HAVE_ROUTE_LIFETIME
-			rt->rt_lifetime = lifetime_left(rinfo->lifetime,
-			    &rinfo->acquired, &now);
+			rt->rt_aquired = rinfo->acquired;
+			rt->rt_lifetime = rinfo->lifetime,
 #endif
 			rt_proto_add(routes, rt);
 		}
@@ -2319,9 +2314,8 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 				rt->rt_pref = ipv6nd_rtpref(rap->flags);
 #endif
 #ifdef HAVE_ROUTE_LIFETIME
-				rt->rt_lifetime =
-				    lifetime_left(addr->prefix_vltime,
-				    &addr->acquired, &now);
+				rt->rt_aquired = addr->acquired;
+				rt->rt_lifetime = addr->prefix_vltime;
 #endif
 
 				rt_proto_add(routes, rt);
@@ -2356,8 +2350,8 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 		rt->rt_pref = ipv6nd_rtpref(rap->flags);
 #endif
 #ifdef HAVE_ROUTE_LIFETIME
-		rt->rt_lifetime = lifetime_left(rap->lifetime,
-		    &rap->acquired, &now);
+		rt->rt_aquired = rap->acquired;
+		rt->rt_lifetime = rap->lifetime;
 #endif
 
 		rt_proto_add(routes, rt);
@@ -2395,6 +2389,10 @@ inet6_dhcproutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx,
 			if (rt == NULL)
 				continue;
 			rt->rt_dflags |= RTDF_DHCP;
+#ifdef HAVE_ROUTE_LIFETIME
+			rt->rt_aquired = ia->acquired;
+			rt->rt_lifetime = ia->prefix_vltime;
+#endif
 			rt_proto_add(routes, rt);
 		}
 	}

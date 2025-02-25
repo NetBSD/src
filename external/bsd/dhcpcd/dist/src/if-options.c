@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fnmatch.h>
 #include <getopt.h>
 #include <grp.h>
 #include <inttypes.h>
@@ -174,6 +175,7 @@ const struct option cf_options[] = {
 	{"request_time",    required_argument, NULL, O_REQUEST_TIME},
 	{"fallback_time",   required_argument, NULL, O_FALLBACK_TIME},
 	{"ipv4ll_time",     required_argument, NULL, O_IPV4LL_TIME},
+	{"nosyslog",        no_argument,       NULL, O_NOSYSLOG},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -650,33 +652,37 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	ssize_t s;
 	struct in_addr addr, addr2;
 	in_addr_t *naddr;
-	struct rt *rt;
 	const struct dhcp_opt *d, *od;
 	uint8_t *request, *require, *no, *reject;
 	struct dhcp_opt **dop, *ndop;
 	size_t *dop_len, dl, odl;
 	struct group *grp;
-#ifndef SMALL
-	struct vivco *vivco;
-	const struct vivco *vivco_endp = ifo->vivco + ifo->vivco_len;
-#endif
 #ifdef AUTH
 	struct token *token;
 #endif
 #ifdef _REENTRANT
 	struct group grpbuf;
 #endif
+#ifdef INET
+	struct rt *rt;
+#endif
 #ifdef DHCP6
-	size_t sl;
 	struct if_ia *ia;
 	uint8_t iaid[4];
+#endif
+#if defined(DHCP6) || ((defined(INET) || defined(INET6)) && !defined(SMALL))
+	size_t sl;
+#endif
 #ifndef SMALL
-	struct in6_addr in6addr;
+#ifdef DHCP6
 	struct if_sla *sla, *slap;
+#endif
+	struct vivco *vivco;
+	const struct vivco *vivco_endp = ifo->vivco + ifo->vivco_len;
+	struct in6_addr in6addr;
 	struct vsio **vsiop = NULL, *vsio;
 	size_t *vsio_lenp = NULL, opt_max, opt_header;
 	struct vsio_so *vsio_so;
-#endif
 #endif
 
 	dop = NULL;
@@ -736,7 +742,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'd':
-		ifo->options |= DHCPCD_DEBUG;
+		logsetopts(loggetopts() | LOGERR_DEBUG);
 		break;
 	case 'e':
 		ARG_REQUIRED;
@@ -1310,6 +1316,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strncmp(arg, "ms_classless_static_routes=",
 		        strlen("ms_classless_static_routes=")) == 0)
 		{
+#ifdef INET
 			struct in_addr addr3;
 
 			if (p == NULL) {
@@ -1339,7 +1346,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_gateway, &addr3);
 			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
 				add_environ(&ifo->config, arg, 0);
+#else
+			logerrx("no inet support for option: %s", arg);
+			return -1;
+#endif
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
+#ifdef INET
 			if (p == NULL) {
 				rt_headclear(&ifo->routes, AF_INET);
 				add_environ(&ifo->config, arg, 1);
@@ -1355,6 +1367,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_gateway, &addr);
 			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
 				add_environ(&ifo->config, arg, 0);
+#else
+			logerrx("no inet support for option: %s", arg);
+			return -1;
+#endif
 		} else if (strncmp(arg, "interface_mtu=",
 		    strlen("interface_mtu=")) == 0 ||
 		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
@@ -1368,6 +1384,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				return -1;
 			}
 		} else if (strncmp(arg, "ip6_address=", strlen("ip6_address=")) == 0) {
+#ifdef INET6
 			if (p == NULL) {
 				memset(&ifo->req_addr6, 0,
 				    sizeof(ifo->req_addr6));
@@ -1398,6 +1415,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				    sizeof(ifo->req_addr6));
 				return -1;
 			}
+#else
+			logerrx("no inet6 support for option: %s", arg);
+			return -1;
+#endif
 		} else
 			add_environ(&ifo->config, arg, p == NULL ? 1 : 0);
 		break;
@@ -2529,6 +2550,14 @@ invalid_token:
 		}
 		break;
 #endif
+	case O_NOSYSLOG:
+		{
+			unsigned int logopts = loggetopts();
+
+			logopts &= ~LOGERR_LOG;
+			logsetopts(logopts);
+		}
+		break;
 	default:
 		return 0;
 	}
@@ -2847,7 +2876,7 @@ read_config(struct dhcpcd_ctx *ctx,
 				skip = 1;
 				continue;
 			}
-			if (ifname && strcmp(line, ifname) == 0)
+			if (ifname && fnmatch(line, ifname, 0) == 0)
 				skip = 0;
 			else
 				skip = 1;

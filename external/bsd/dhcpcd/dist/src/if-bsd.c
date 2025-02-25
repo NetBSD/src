@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * BSD interface driver for dhcpcd
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -887,10 +887,22 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 
 	rt->rt_flags = (unsigned int)rtm->rtm_flags;
 	if_copysa(&rt->rt_dest, rti_info[RTAX_DST]);
+
 	if (rtm->rtm_addrs & RTA_NETMASK) {
 		if_copysa(&rt->rt_netmask, rti_info[RTAX_NETMASK]);
-		if (rt->rt_netmask.sa_family == 255) /* Why? */
-			rt->rt_netmask.sa_family = rt->rt_dest.sa_family;
+		/*
+		 * Netmask family and length are ignored by traditional
+		 * userland tools such as route and netstat and are assumed
+		 * to match the destination sockaddr.
+		 * This is fortunate because BSD kernels use a radix tree
+		 * to store routes which adjusts the netmask at the point
+		 * of insertion where this information is lost.
+		 * We can just sub in the values from the destination address.
+		 *
+		 * This is currently true for all BSD kernels.
+		 */
+		rt->rt_netmask.sa_family = rt->rt_dest.sa_family;
+		rt->rt_netmask.sa_len = rt->rt_dest.sa_len;
 	}
 
 	/* dhcpcd likes an unspecified gateway to indicate via the link.
@@ -953,19 +965,24 @@ if_initrt(struct dhcpcd_ctx *ctx, rb_tree_t *kroutes, int af)
 	struct rt_msghdr *rtm;
 	int mib[6] = { CTL_NET, PF_ROUTE, 0, af, NET_RT_DUMP, 0 };
 	size_t bufl;
-	char *buf, *p, *end;
+	char *buf = NULL, *p, *end;
 	struct rt rt, *rtn;
 
+again:
 	if (if_sysctl(ctx, mib, __arraycount(mib), NULL, &bufl, NULL, 0) == -1)
-		return -1;
-	if (bufl == 0)
+		goto err;
+	if (bufl == 0) {
+		free(buf);
 		return 0;
-	if ((buf = malloc(bufl)) == NULL)
-		return -1;
+	}
+	if ((p = realloc(buf, bufl)) == NULL)
+		goto err;
+	buf = p;
 	if (if_sysctl(ctx, mib, __arraycount(mib), buf, &bufl, NULL, 0) == -1)
 	{
-		free(buf);
-		return -1;
+		if (errno == ENOMEM)
+			goto again;
+		goto err;
 	}
 
 	end = buf + bufl;
@@ -989,6 +1006,10 @@ if_initrt(struct dhcpcd_ctx *ctx, rb_tree_t *kroutes, int af)
 	}
 	free(buf);
 	return p == end ? 0 : -1;
+
+err:
+	free(buf);
+	return -1;
 }
 
 #ifdef INET
@@ -1252,6 +1273,7 @@ if_ifinfo(struct dhcpcd_ctx *ctx, const struct if_msghdr *ifm)
 	if ((ifp = if_findindex(ctx->ifaces, ifm->ifm_index)) == NULL)
 		return 0;
 
+	ifp->mtu = if_mtu(ifp);
 	link_state = if_carrier(ifp, &ifm->ifm_data);
 	dhcpcd_handlecarrier(ifp, link_state, (unsigned int)ifm->ifm_flags);
 	return 0;
