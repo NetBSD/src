@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.32 2025/02/21 21:57:29 andvar Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.33 2025/02/25 04:22:01 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.32 2025/02/21 21:57:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.33 2025/02/25 04:22:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,37 +366,6 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
-#ifdef DEBUG
-	{
-		int i;
-
-		summitfb_rectfill(sc, 0, 824, 1280, 200, 0x00);
-		summitfb_rectfill(sc, 5, 830, 100, 190, 0xe0);	/* red */
-
-		summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl);
-		summitfb_read_mode(sc, OTC01 | BIN332F | BUFovl);
-		summitfb_write4(sc, VISFX_CBR, 0x3f0000ff);
-		summitfb_write4(sc, VISFX_FG_COLOUR, 0x7f00ff00);
-
-		for (i = 0; i < 16; i++) {
-			summitfb_wait_fifo(sc, 10);
-			summitfb_write4(sc, VISFX_IBO, 0x200 | (14 << 4) | i);
-			summitfb_write4(sc, VISFX_COPY_SRC, (5 << 16) | 830);
-			summitfb_write4(sc, VISFX_COPY_WH, (30 << 16) | 90);
-			summitfb_write4(sc, VISFX_COPY_DST,
-			    ((i * 35 + 200) << 16) | 830);
-		}
-		summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl | 0x8c0);
-		summitfb_write4(sc, VISFX_FG_COLOUR, 0x7f00ff00);
-		for (i = 0; i < 16; i++) {
-			summitfb_wait_fifo(sc, 10);
-			summitfb_write4(sc, VISFX_IBO, 0x200 | (i << 4) | 5);
-			summitfb_write4(sc, VISFX_START,
-			    ((i * 35 + 200) << 16) | 930);
-			summitfb_write4(sc, VISFX_SIZE, (30 << 16) | 90);
-		}
-	}
-#endif
 }
 
 /*
@@ -1420,11 +1389,6 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	 */
 	summitfb_rectfill(sc, x, y, wi, he, bg);
 
-	/*
-	 * if we ever figure out how to use a constant background colour we can
-	 * skip the read mode setting
-	 */
-	summitfb_read_mode(sc, OTC01 | BIN332F | BUFovl);
 	summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl);
 	/* we need the foreground colour as full RGB8 */
 	fg = sc->sc_palette[(attr >> 24) & 0xf];
