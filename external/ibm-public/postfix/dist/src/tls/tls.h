@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.6 2025/02/25 19:15:50 christos Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -80,6 +80,7 @@ extern const char *str_tls_level(int);
 #include <openssl/opensslv.h>		/* OPENSSL_VERSION_NUMBER */
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
+#include <openssl/tls1.h>		/* TLS extensions */
 
  /* Appease indent(1) */
 #define x509_stack_t STACK_OF(X509)
@@ -124,6 +125,15 @@ extern const char *str_tls_level(int);
 #define TLS_PEEK_PEER_CERT(ssl) SSL_get_peer_certificate(ssl)
 #define TLS_FREE_PEER_CERT(x)   X509_free(x)
 #define tls_set_bio_callback    BIO_set_callback
+#endif
+
+#if OPENSSL_VERSION_PREREQ(3,2)
+#define TLS_GROUP_NAME(ssl) SSL_get0_group_name(ssl)
+#elif OPENSSL_VERSION_PREREQ(3,0)
+#define TLS_GROUP_NAME(ssl) \
+    SSL_group_to_name((ssl), SSL_get_negotiated_group(ssl))
+#else
+#define TLS_GROUP_NAME(ssl) ((const char *)0)
 #endif
 
  /*
@@ -205,8 +215,8 @@ extern void tls_dane_flush(void);
 extern TLS_DANE *tls_dane_alloc(void);
 extern void tls_tlsa_free(TLS_TLSA *);
 extern void tls_dane_free(TLS_DANE *);
-extern void tls_dane_add_fpt_digests(TLS_DANE *, const char *, const char *,
-				             int);
+extern void tls_dane_add_fpt_digests(TLS_DANE *, int, const char *,
+				             const char *, int);
 extern TLS_DANE *tls_dane_resolve(unsigned, const char *, DNS_RR *, int);
 extern int tls_dane_load_trustfile(TLS_DANE *, const char *);
 
@@ -234,6 +244,8 @@ typedef struct {
     const char *kex_name;		/* shared key-exchange algorithm */
     const char *kex_curve;		/* shared key-exchange ECDHE curve */
     int     kex_bits;			/* shared FFDHE key exchange bits */
+    int     ctos_rpk;			/* Did the client send an RPK? */
+    int     stoc_rpk;			/* Did the server send an RPK? */
     const char *clnt_sig_name;		/* client's signature key algorithm */
     const char *clnt_sig_curve;		/* client's ECDSA curve name */
     int     clnt_sig_bits;		/* client's RSA signature key bits */
@@ -260,19 +272,25 @@ typedef struct {
     int     errordepth;			/* Chain depth of error cert */
     int     errorcode;			/* First error at error depth */
     int     must_fail;			/* Failed to load trust settings */
+    int     rpt_reported;		/* Failure was reported with TLSRPT */
+    char   *ffail_type;			/* Forced verification failure */
 } TLS_SESS_STATE;
 
  /*
   * Peer status bits. TLS_CERT_FLAG_MATCHED implies TLS_CERT_FLAG_TRUSTED
   * only in the case of a hostname match.
   */
-#define TLS_CERT_FLAG_PRESENT		(1<<0)
+#define TLS_CRED_FLAG_CERT		(1<<0)
 #define TLS_CERT_FLAG_ALTNAME		(1<<1)
 #define TLS_CERT_FLAG_TRUSTED		(1<<2)
 #define TLS_CERT_FLAG_MATCHED		(1<<3)
 #define TLS_CERT_FLAG_SECURED		(1<<4)
+#define TLS_CRED_FLAG_RPK		(1<<5)
+#define TLS_CRED_FLAG_ANY	(TLS_CRED_FLAG_CERT|TLS_CRED_FLAG_RPK)
 
-#define TLS_CERT_IS_PRESENT(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_PRESENT))
+#define TLS_CRED_IS_PRESENT(c) ((c) && ((c)->peer_status&TLS_CRED_FLAG_ANY))
+#define TLS_CERT_IS_PRESENT(c) ((c) && ((c)->peer_status&TLS_CRED_FLAG_CERT))
+#define TLS_RPK_IS_PRESENT(c)  ((c) && ((c)->peer_status&TLS_CRED_FLAG_RPK))
 #define TLS_CERT_IS_ALTNAME(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_ALTNAME))
 #define TLS_CERT_IS_TRUSTED(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_TRUSTED))
 #define TLS_CERT_IS_MATCHED(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_MATCHED))
@@ -474,6 +492,7 @@ typedef struct {
     VSTREAM *stream;
     int     fd;				/* Event-driven file descriptor */
     int     timeout;
+    int     enable_rpk;			/* Solicit server raw public keys */
     int     tls_level;			/* Security level */
     const char *nexthop;		/* destination domain */
     const char *host;			/* MX hostname */
@@ -487,6 +506,8 @@ typedef struct {
     const ARGV *matchargv;		/* Cert match patterns */
     const char *mdalg;			/* default message digest algorithm */
     const TLS_DANE *dane;		/* DANE TLSA verification */
+    struct TLSRPT_WRAPPER *tlsrpt;	/* RFC 8460 reporting */
+    char   *ffail_type;			/* Forced verification failure */
 } TLS_CLIENT_START_PROPS;
 
 extern TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *);
@@ -510,12 +531,13 @@ extern TLS_SESS_STATE *tls_client_post_connect(TLS_SESS_STATE *,
     a6, a7, a8, a9, a10, a11, a12, a13, a14))
 
 #define TLS_CLIENT_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
-    a10, a11, a12, a13, a14, a15, a16, a17) \
+    a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) \
     tls_client_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
     ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
-    ((props)->a16), ((props)->a17), (props)))
+    ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), \
+    ((props)->a20), (props)))
 
  /*
   * tls_server.c
@@ -548,6 +570,7 @@ typedef struct {
     VSTREAM *stream;			/* Client stream */
     int     fd;				/* Event-driven file descriptor */
     int     timeout;			/* TLS handshake timeout */
+    int     enable_rpk;			/* Solicit client raw public keys */
     int     requirecert;		/* Insist on client cert? */
     const char *serverid;		/* Server instance (salt cache key) */
     const char *namaddr;		/* Client nam[addr] for logging */
@@ -572,10 +595,12 @@ extern TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *);
     ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), \
     ((props)->a20), (props)))
 
-#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
+#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, \
+    a10, a11) \
     tls_server_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
-    ((props)->a8), ((props)->a9), ((props)->a10), (props)))
+    ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
+    (props)))
 
  /*
   * tls_session.c
@@ -645,7 +670,7 @@ extern void tls_auto_groups(SSL_CTX *, const char *, const char *);
 extern char *tls_peer_CN(X509 *, const TLS_SESS_STATE *);
 extern char *tls_issuer_CN(X509 *, const TLS_SESS_STATE *);
 extern int tls_verify_certificate_callback(int, X509_STORE_CTX *);
-extern void tls_log_verify_error(TLS_SESS_STATE *);
+extern void tls_log_verify_error(TLS_SESS_STATE *, struct TLSRPT_WRAPPER *);
 
  /*
   * tls_dane.c
@@ -662,7 +687,7 @@ extern TLS_TLSA *tlsa_prepend(TLS_TLSA *, uint8_t, uint8_t, uint8_t,
 extern const EVP_MD *tls_digest_byname(const char *, EVP_MD_CTX **);
 extern char *tls_digest_encode(const unsigned char *, int);
 extern char *tls_cert_fprint(X509 *, const char *);
-extern char *tls_pkey_fprint(X509 *, const char *);
+extern char *tls_pkey_fprint(EVP_PKEY *, const char *);
 extern char *tls_serverid_digest(TLS_SESS_STATE *,
 		              const TLS_CLIENT_START_PROPS *, const char *);
 
@@ -698,6 +723,8 @@ extern long tls_bio_dump_cb(BIO *, int, const char *, int, long, long);
 
 #endif
 extern const EVP_MD *tls_validate_digest(const char *);
+extern void tls_enable_client_rpk(SSL_CTX *, SSL *);
+extern void tls_enable_server_rpk(SSL_CTX *, SSL *);
 
  /*
   * tls_seed.c

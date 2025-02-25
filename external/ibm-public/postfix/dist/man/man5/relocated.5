@@ -1,4 +1,4 @@
-.\"	$NetBSD: relocated.5,v 1.3 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: relocated.5,v 1.4 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH RELOCATED 5 
 .ad
@@ -149,8 +149,8 @@ domains that no longer exist.
 .PP
 Other parameters of interest:
 .IP "\fBinet_interfaces (all)\fR"
-The network interface addresses that this mail system receives
-mail on.
+The local network interface addresses that this mail system
+receives mail on.
 .IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
 The list of domains that are delivered via the $local_transport
 mail delivery transport.
@@ -158,7 +158,7 @@ mail delivery transport.
 The domain name that locally\-posted mail appears to come
 from, and that locally posted mail is delivered to.
 .IP "\fBproxy_interfaces (empty)\fR"
-The network interface addresses that this mail system receives mail
+The remote network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
 .SH "SEE ALSO"
 .na

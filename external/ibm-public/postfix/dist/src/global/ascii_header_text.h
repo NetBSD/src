@@ -1,4 +1,4 @@
-/*	$NetBSD: ascii_header_text.h,v 1.1.1.1 2025/02/25 19:11:42 christos Exp $	*/
+/*	$NetBSD: ascii_header_text.h,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _ASCII_HEADER_TEXT_H_INCLUDED_
 #define _ASCII_HEADER_TEXT_H_INCLUDED_

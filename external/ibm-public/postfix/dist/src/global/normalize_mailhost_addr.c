@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize_mailhost_addr.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: normalize_mailhost_addr.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,7 @@
 /*	normalize_mailhost_addr() takes the RFC 2821 string
 /*	representation of an IPv4 or IPv6 network address, and
 /*	normalizes the "IPv6:" prefix and numeric form. An IPv6 or
-/*	IPv4 form is rejected if supposed for that protocol is
+/*	IPv4 form is rejected if support for that protocol is
 /*	disabled or non-existent. If both IPv6 and IPv4 support are
 /*	enabled, a V4-in-V6 address is replaced with the IPv4 form.
 /*

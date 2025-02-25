@@ -1,4 +1,4 @@
-.\"	$NetBSD: postscreen.8,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: postscreen.8,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH POSTSCREEN 8 
 .ad
@@ -325,25 +325,29 @@ Persistent storage for the \fBpostscreen\fR(8) server decisions.
 The amount of time that \fBpostscreen\fR(8) will cache an expired
 temporary allowlist entry before it is removed.
 .IP "\fBpostscreen_bare_newline_ttl (30d)\fR"
-The amount of time that \fBpostscreen\fR(8) will use the result from
-a successful "bare newline" SMTP protocol test.
+The amount of time that \fBpostscreen\fR(8) remembers that a client
+IP address passed a "bare newline" SMTP protocol test, before it
+address is required to pass that test again.
 .IP "\fBpostscreen_dnsbl_max_ttl (${postscreen_dnsbl_ttl?{$postscreen_dnsbl_ttl}:{1}}h)\fR"
-The maximum amount of time that \fBpostscreen\fR(8) will use the
-result from a successful DNS\-based reputation test before a
-client IP address is required to pass that test again.
+The maximum amount of time that \fBpostscreen\fR(8) remembers that a
+client IP address passed a DNS\-based reputation test, before it is
+required to pass that test again.
 .IP "\fBpostscreen_dnsbl_min_ttl (60s)\fR"
-The minimum amount of time that \fBpostscreen\fR(8) will use the
-result from a successful DNS\-based reputation test before a
-client IP address is required to pass that test again.
+The minimum amount of time that \fBpostscreen\fR(8) remembers that a
+client IP address passed a DNS\-based reputation test, before it
+is required to pass that test again.
 .IP "\fBpostscreen_greet_ttl (1d)\fR"
-The amount of time that \fBpostscreen\fR(8) will use the result from
-a successful PREGREET test.
+The amount of time that \fBpostscreen\fR(8) remembers that a client
+IP address passed a PREGREET test, before it is required to pass
+that test again.
 .IP "\fBpostscreen_non_smtp_command_ttl (30d)\fR"
-The amount of time that \fBpostscreen\fR(8) will use the result from
-a successful "non_smtp_command" SMTP protocol test.
+The amount of time that \fBpostscreen\fR(8) remembers that a client
+IP address passed a "non_smtp_command" SMTP protocol test, before
+it is required to pass that test again.
 .IP "\fBpostscreen_pipelining_ttl (30d)\fR"
-The amount of time that \fBpostscreen\fR(8) will use the result from
-a successful "pipelining" SMTP protocol test.
+The amount of time that \fBpostscreen\fR(8) remembers that a client
+IP address passed a "pipelining" SMTP protocol test, before it is
+required to pass that test again.
 .SH "RESOURCE CONTROLS"
 .na
 .nf

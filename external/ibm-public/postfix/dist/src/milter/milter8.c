@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.5 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.6 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -526,7 +526,7 @@ static int milter8_conf_error(MILTER8 *milter)
     if (strcasecmp(milter->def_action, "accept") == 0) {
 	reply = 0;
     } else if (strcasecmp(milter->def_action, "quarantine") == 0) {
-	reply = "H";
+	reply = "Hdefault_action";
     } else {
 	reply = "451 4.3.5 Server configuration problem - try again later";
     }
@@ -560,7 +560,7 @@ static int milter8_comm_error(MILTER8 *milter)
     } else if (strcasecmp(milter->def_action, "tempfail") == 0) {
 	reply = "451 4.7.1 Service unavailable - try again later";
     } else if (strcasecmp(milter->def_action, "quarantine") == 0) {
-	reply = "H";
+	reply = "Hdefault_action";
     } else {
 	msg_warn("milter %s: unrecognized default action: %s",
 		 milter->m.name, milter->def_action);
@@ -1159,7 +1159,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (edit_resp == 0)
 		edit_resp = parent->repl_body(parent->chg_context,
 					      MILTER_BODY_END,
-					      /* unused*/ 0,
+					       /* unused */ 0,
 					      (VSTRING *) 0);
 	    body_edit_lockout = 1;
 	    vstring_free(body_line_buf);
@@ -1334,14 +1334,24 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	     * accept, discard). We should not transition, either, otherwise
 	     * we get out of sync.
 	     */
-	case SMFIR_QUARANTINE:
-	    /* XXX What to do with the "reason" text? */
-	    if (milter8_read_data(milter, &data_size,
-				  MILTER8_DATA_BUFFER, milter->buf,
-				  MILTER8_DATA_END) != 0)
-		MILTER8_EVENT_BREAK(milter->def_reply);
-	    milter8_def_reply(milter, "H");
-	    continue;
+	case SMFIR_QUARANTINE:{
+		VSTRING *reply;
+		ssize_t saved_size = data_size;
+
+		if (milter8_read_data(milter, &data_size,
+				      MILTER8_DATA_BUFFER, milter->buf,
+				      MILTER8_DATA_END) != 0)
+		    MILTER8_EVENT_BREAK(milter->def_reply);
+		/* XXX This should be reported with a call-back. */
+		reply = vstring_alloc(100);
+		if (saved_size > 100)
+		    saved_size=100;
+		vstring_sprintf(reply, "H%.*s", (int) saved_size,
+				STR(milter->buf));
+		milter8_def_reply(milter, STR(reply));
+		vstring_free(reply);
+		continue;
+	    }
 
 	    /*
 	     * Decision: skip further events of this type.
@@ -1555,7 +1565,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			body_line_buf = vstring_alloc(var_line_limit);
 			edit_resp = parent->repl_body(parent->chg_context,
 						      MILTER_BODY_START,
-						      /* unused */ 0,
+						       /* unused */ 0,
 						      (VSTRING *) 0);
 		    }
 		    /* Extract lines from the on-the-wire CRLF format. */

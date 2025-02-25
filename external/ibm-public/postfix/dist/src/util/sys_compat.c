@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_compat.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: sys_compat.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -288,7 +288,7 @@ int     dup2_pass_on_exec(int oldd, int newd)
 
 /* closefrom() - closes all file descriptors from the given one up */
 
-int     closefrom(int lowfd)
+void    closefrom(int lowfd)
 {
     int     fd_limit = open_limit(0);
     int     fd;
@@ -300,14 +300,12 @@ int     closefrom(int lowfd)
      */
     if (lowfd < 0) {
 	errno = EBADF;
-	return (-1);
+	return;
     }
     if (fd_limit > 500)
 	fd_limit = 500;
     for (fd = lowfd; fd < fd_limit; fd++)
 	(void) close(fd);
-
-    return (0);
 }
 
 #endif

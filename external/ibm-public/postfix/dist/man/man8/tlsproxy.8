@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.6 2025/02/25 19:15:43 christos Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -141,8 +141,8 @@ The location of the OpenSSL command line program \fBopenssl\fR(1).
 .PP
 Available in Postfix version 3.2 and later:
 .IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
-The prioritized list of elliptic curves supported by the Postfix
-SMTP client and server.
+The prioritized list of elliptic curves, that should be enabled in the
+Postfix SMTP client and server.
 .PP
 Available in Postfix version 3.4 and later:
 .IP "\fBtls_server_sni_maps (empty)\fR"
@@ -257,6 +257,12 @@ parameters smtpd_use_tls and smtpd_enforce_tls.
 .IP "\fBtlsproxy_tls_chain_files ($smtpd_tls_chain_files)\fR"
 Files with the Postfix \fBtlsproxy\fR(8) server keys and certificate
 chains in PEM format.
+.PP
+Available in Postfix version 3.9 and later:
+.IP "\fBtlsproxy_tls_enable_rpk ($smtpd_tls_enable_rpk)\fR"
+Request that remote SMTP clients send an RFC7250 raw public key
+instead of an X.509 certificate, when asking or requiring client
+authentication.
 .SH "STARTTLS CLIENT CONTROLS"
 .na
 .nf

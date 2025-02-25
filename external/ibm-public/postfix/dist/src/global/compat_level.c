@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_level.c,v 1.3 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: compat_level.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -229,35 +229,35 @@ const char *compat_level_to_string(long compat_level,
      * Sanity check.
      */
     if (compat_level < 0) {
-        msg_fn("%s: bad compatibility level: %ld", myname, compat_level);
-        return (0);
+	msg_fn("%s: bad compatibility level: %ld", myname, compat_level);
+	return (0);
     }
 
     /*
      * Compatibility levels 0..2 have no minor or patch level.
      */
     if (buf == 0)
-        buf = vstring_alloc(10);
+	buf = vstring_alloc(10);
     major = DECODE_MAJOR(compat_level);
     if (!GOOD_MAJOR(major)) {
-        msg_fn("%s: bad compatibility major level: %ld", myname, compat_level);
-        return (0);
+	msg_fn("%s: bad compatibility major level: %ld", myname, compat_level);
+	return (0);
     }
     vstring_sprintf(buf, "%ld", major);
     if (major > 2) {
 
-        /*
-         * Expect that major.minor will be common.
-         */
-        minor = DECODE_MINOR(compat_level);
-        vstring_sprintf_append(buf, ".%ld", minor);
+	/*
+	 * Expect that major.minor will be common.
+	 */
+	minor = DECODE_MINOR(compat_level);
+	vstring_sprintf_append(buf, ".%ld", minor);
 
-        /*
-         * Expect that major.minor.patch will be rare.
-         */
-        patch = DECODE_PATCH(compat_level);
-        if (patch)
-            vstring_sprintf_append(buf, ".%ld", patch);
+	/*
+	 * Expect that major.minor.patch will be rare.
+	 */
+	patch = DECODE_PATCH(compat_level);
+	if (patch)
+	    vstring_sprintf_append(buf, ".%ld", patch);
     }
     return (vstring_str(buf));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.14 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.15 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -1335,6 +1335,13 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #endif
 
  /*
+  * The RFC 5322 Date and Time Specification recommends single space between
+  * date-time tokens. To avoid breaking change, format all numerical days as
+  * two-digit days (i.e. days 1-9 now have a leading zero instead of space).
+  */
+#define TWO_DIGIT_DAY_IN_DATE_TIME
+
+ /*
   * Check for required but missing definitions.
   */
 #if !defined(HAS_FCNTL_LOCK) && !defined(HAS_FLOCK_LOCK)
@@ -1464,6 +1471,10 @@ typedef int WAIT_STATUS_T;
 #undef HAVE_POSIX_GETPW_R
 #endif
 
+#ifdef NO_CLOSEFROM
+#undef HAS_CLOSEFROM
+#endif
+
 #ifdef NO_DB
 #undef HAS_DB
 #endif
@@ -1524,7 +1535,7 @@ extern int setsid(void);
 #endif
 
 #ifndef HAS_CLOSEFROM
-extern int closefrom(int);
+extern void closefrom(int);
 
 #endif
 

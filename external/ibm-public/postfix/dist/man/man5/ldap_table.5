@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldap_table.5,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: ldap_table.5,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH LDAP_TABLE 5 
 .ad
@@ -98,6 +98,10 @@ be possible to give each server in the list a different port
 .nf
     server_host = ldap.example.com:1444
 .fi
+
+NOTE: this client will reconnect immediately after a single
+failure, and will fail a lookup request after a second attempt
+also fails.
 
 With OpenLDAP, a (list of) LDAP URLs can be used to specify both
 the hostname(s) and the port(s):

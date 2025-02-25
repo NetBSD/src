@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.h,v 1.4 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postconf.h,v 1.5 2025/02/25 19:15:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,8 +48,9 @@
 #define PCF_MASTER_PARAM	(1<<19)	/* manage master.cf -o name=value */
 #define PCF_HIDE_VALUE		(1<<20)	/* hide main.cf/master.cf =value */
 #define PCF_SHOW_TLS		(1<<21)	/* TLS support introspection */
+#define PCF_WARN_UNUSED_DEPRECATED (1<<22)	/* As the name says */
 
-#define PCF_DEF_MODE	0
+#define PCF_DEF_MODE	(PCF_WARN_UNUSED_DEPRECATED)
 
  /*
   * Structure for one "valid parameter" (built-in, service-defined or valid
@@ -276,12 +277,12 @@ typedef struct {
  /*
   * postconf_user.c.
   */
-extern void pcf_register_user_parameters(void);
+extern void pcf_register_user_parameters(int);
 
  /*
   * postconf_dbms.c
   */
-extern void pcf_register_dbms_parameters(const char *,
+extern void pcf_register_dbms_parameters(int, const char *,
 	              const char *(*) (const char *, int, PCF_MASTER_ENT *),
 					         PCF_MASTER_ENT *);
 

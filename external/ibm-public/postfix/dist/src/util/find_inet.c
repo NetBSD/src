@@ -1,4 +1,4 @@
-/*	$NetBSD: find_inet.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: find_inet.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -194,7 +194,8 @@ struct test_case test_cases[] = {
     },
 };
 
-int main(int argc, char **argv) {
+int     main(int argc, char **argv)
+{
     struct test_case *tp;
     struct association *ap;
     int     pass = 0;

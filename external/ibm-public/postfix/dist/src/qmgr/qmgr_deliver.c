@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.3 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.4 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -52,6 +52,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -154,7 +157,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
     MSG_STATS stats;
     char   *sender;
     int     flags;
-    int     smtputf8 = message->smtputf8;
+    int     sendopts = message->sendopts;
     const char *addr;
 
     /*
@@ -162,10 +165,10 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
      */
     for (recipient = list.info; recipient < list.info + list.len; recipient++)
 	if (var_smtputf8_enable && (addr = recipient->address)[0]
-	    && !allascii(addr) && valid_utf8_string(addr, strlen(addr))) {
-	    smtputf8 |= SMTPUTF8_FLAG_RECIPIENT;
+	    && !allascii(addr) && valid_utf8_stringz(addr)) {
+	    sendopts |= SMTPUTF8_FLAG_RECIPIENT;
 	    if (message->verp_delims)
-		smtputf8 |= SMTPUTF8_FLAG_SENDER;
+		sendopts |= SMTPUTF8_FLAG_SENDER;
 	}
 
     /*
@@ -194,7 +197,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       SEND_ATTR_LONG(MAIL_ATTR_SIZE, message->cont_length),
 	       SEND_ATTR_STR(MAIL_ATTR_NEXTHOP, entry->queue->nexthop),
 	       SEND_ATTR_STR(MAIL_ATTR_ENCODING, message->encoding),
-	       SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+	       SEND_ATTR_INT(MAIL_ATTR_SENDOPTS, sendopts),
 	       SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 	       SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, message->dsn_envid),
 	       SEND_ATTR_INT(MAIL_ATTR_DSN_RET, message->dsn_ret),
@@ -290,6 +293,7 @@ static void qmgr_deliver_update(int unused_event, void *context)
      * The queue itself won't go away before we dispose of the current queue
      * entry.
      */
+#if 0
     if (status == DELIVER_STAT_CRASH) {
 	message->flags |= DELIVER_STAT_DEFER;
 #if 0
@@ -324,6 +328,7 @@ static void qmgr_deliver_update(int unused_event, void *context)
 	qmgr_defer_transport(transport, &dsb->dsn);
 	return;
     }
+#endif
 
     /*
      * This message must be tried again.
@@ -338,7 +343,9 @@ static void qmgr_deliver_update(int unused_event, void *context)
      */
 #define SUSPENDED	"delivery temporarily suspended: "
 
-    if (status == DELIVER_STAT_DEFER) {
+    if (status == DELIVER_STAT_CRASH)
+	(void) DSN_SIMPLE(&dsb->dsn, "4.3.0", "unknown mail transport error");
+    if (status == DELIVER_STAT_CRASH || status == DELIVER_STAT_DEFER) {
 	message->flags |= DELIVER_STAT_DEFER;
 	if (VSTRING_LEN(dsb->status)) {
 	    /* Sanitize the DSN status/reason from the delivery agent. */

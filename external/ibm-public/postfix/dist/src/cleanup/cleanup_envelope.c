@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.5 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.6 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -352,16 +355,17 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
     /*
      * Initial envelope non-recipient record processing.
      * 
-     * If the message was requeued with "postsuper -r" use their
-     * SMTPUTF8_REQUESTED flag.
+     * If this message was requeued with "postsuper -r", use their sender
+     * options flags, excluding flags derived from headers or envelopes.
+     * Those flags may be derived again, depending on Postfix configuration.
      */
     if (state->flags & CLEANUP_FLAG_INRCPT)
 	/* Tell qmgr that recipient records are mixed with other information. */
 	state->qmgr_opts |= QMGR_READ_FLAG_MIXED_RCPT_OTHER;
     if (type == REC_TYPE_SIZE) {
-	/* Use our own SIZE record, except for the SMTPUTF8_REQUESTED flag. */
-	(void) sscanf(buf, "%*s $*s %*s %*s %*s %d", &state->smtputf8);
-	state->smtputf8 &= SMTPUTF8_FLAG_REQUESTED;
+	/* Ignore their SIZE record, but keep the non-derived sender options. */
+	(void) sscanf(buf, "%*s %*s %*s %*s %*s %d", &state->sendopts);
+	state->sendopts &= ~SOPT_FLAG_DERIVED;
 	return;
     }
     if (mapped_type == REC_TYPE_CTIME)
@@ -387,7 +391,7 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 	return;
     }
     if (type == REC_TYPE_FROM) {
-	off_t after_sender_offs;
+	off_t   after_sender_offs;
 
 	/* Allow only one instance. */
 	if (state->sender != 0) {

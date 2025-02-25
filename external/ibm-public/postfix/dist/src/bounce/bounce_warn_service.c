@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_warn_service.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_warn_service.c,v 1.3 2025/02/25 19:15:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,14 +9,14 @@
 /*	#include "bounce_service.h"
 /*
 /*	int     bounce_warn_service(flags, service, queue_name, queue_id,
-/*					encoding, smtputf8, sender, envid,
+/*					encoding, sendopts, sender, envid,
 /*					dsn_ret, templates)
 /*	int	flags;
 /*	char	*service;
 /*	char	*queue_name;
 /*	char	*queue_id;
 /*	char	*encoding;
-/*	int	smtputf8;
+/*	int	sendopts;
 /*	char	*sender;
 /*	char	*envid;
 /*	int	dsn_ret;
@@ -86,7 +86,7 @@
 
 int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 			            char *queue_id, char *encoding,
-			            int smtputf8, char *recipient,
+			            int sendopts, char *recipient,
 			            char *dsn_envid, int dsn_ret,
 			            BOUNCE_TEMPLATES *ts)
 {
@@ -123,7 +123,7 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
      * notify_classes restrictions.
      */
     bounce_info = bounce_mail_init(service, queue_name, queue_id,
-				   encoding, smtputf8, dsn_envid, ts->delay);
+				   encoding, sendopts, dsn_envid, ts->delay);
 
 #define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
 #define NULL_TRACE_FLAGS	0
@@ -170,7 +170,7 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 						 postmaster,
 						 MAIL_SRC_MASK_BOUNCE,
 						 NULL_TRACE_FLAGS,
-						 smtputf8,
+						 sendopts,
 						 new_id)) != 0) {
 
 		/*
@@ -209,7 +209,7 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 	if ((bounce = post_mail_fopen_nowait(NULL_SENDER, recipient,
 					     MAIL_SRC_MASK_BOUNCE,
 					     NULL_TRACE_FLAGS,
-					     smtputf8,
+					     sendopts,
 					     new_id)) != 0) {
 
 	    /*
@@ -260,7 +260,7 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 						 postmaster,
 						 MAIL_SRC_MASK_BOUNCE,
 						 NULL_TRACE_FLAGS,
-						 smtputf8,
+						 sendopts,
 						 new_id)) != 0) {
 		count = -1;
 		if (bounce_header(bounce, bounce_info, postmaster,

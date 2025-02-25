@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_level.h,v 1.3 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: compat_level.h,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _COMPAT_LEVEL_H_INCLUDED_
 #define _COMPAT_LEVEL_H_INCLUDED_
@@ -22,7 +22,7 @@ extern long compat_level_from_string(const char *,
 extern long compat_level_from_numbers(long, long, long,
 		              void PRINTFLIKE(1, 2) (*) (const char *,...));
 extern const char *compat_level_to_string(long,
-			      void PRINTFLIKE(1, 2) (*) (const char *,...));
+		              void PRINTFLIKE(1, 2) (*) (const char *,...));
 
 #define compat_level_from_major(major, msg_fn) \
 	compat_level_from_major_minor((major), 0, (msg_fn))

@@ -1,4 +1,4 @@
-/*	$NetBSD: posttls-finger.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: posttls-finger.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -105,7 +105,7 @@
 /*	in the DNS).  In Postfix versions prior to 3.6, the default value
 /*	was "md5".
 /* .IP "\fB-f\fR"
-/*	Lookup the associated DANE TLSA RRset even when a hostname is not an
+/*	Look up the associated DANE TLSA RRset even when a hostname is not an
 /*	alias and its address records lie in an unsigned zone.  See
 /*	smtp_tls_force_insecure_host_tlsa_lookup for details.
 /* .IP "\fB-F \fICAfile.pem\fR (default: none)"
@@ -266,6 +266,15 @@
 /*	the SMTP-in-SSL protocol, rather than the STARTTLS protocol.
 /*	The destination \fIdomain\fR:\fIport\fR must of course provide such
 /*	a service.
+/* .IP "\fB-x\fR"
+/*	Prefer RFC7250 non-X.509 raw public key (RPK) server credentials.  By
+/*	default only X.509 certificates are accepted.  This is analogous to
+/*	setting \fBsmtp_tls_enable_rpk = yes\fR in the smtp(8) client.  At the
+/*	fingerprint security level, when raw public keys are enabled, only
+/*	public key (and not certificate) fingerprints will be compared against
+/*	the specified list of \fImatch\fR arguments.  Certificate fingerprints
+/*	are fragile when raw public keys are solicited, the server may at some
+/*	point in time start returning only the public key.
 /* .IP "\fB-X\fR"
 /*	Enable \fBtlsproxy\fR(8) mode. This is an unsupported mode,
 /*	for program development only.
@@ -443,6 +452,9 @@ typedef struct OPTIONS {
     ARGV   *tas;
     char   *host_lookup;
     char   *addr_pref;
+#ifdef USE_TLS
+    int     enable_rpk;
+#endif
 } OPTIONS;
 
  /*
@@ -698,7 +710,7 @@ static void print_stack(STATE *state, x509_stack_t *sk, int trustout)
 	BIO_printf(state->tls_bio, "   cert digest=%s\n", digest);
 	myfree(digest);
 
-	digest = tls_pkey_fprint(cert, state->mdalg);
+	digest = tls_pkey_fprint(X509_get0_pubkey(cert), state->mdalg);
 	BIO_printf(state->tls_bio, "   pkey digest=%s\n", digest);
 	myfree(digest);
 
@@ -811,6 +823,7 @@ static int starttls(STATE *state)
 				    mdalg = state->mdalg);
 	TLS_PROXY_CLIENT_START_PROPS(&start_props,
 				     timeout = smtp_tmout,
+				     enable_rpk = state->options.enable_rpk,
 				     tls_level = state->level,
 				     nexthop = state->nexthop,
 				     host = state->hostname,
@@ -824,11 +837,13 @@ static int starttls(STATE *state)
 				     = vstring_str(cipher_exclusions),
 				     matchargv = state->match,
 				     mdalg = state->mdalg,
+				     tlsrpt = 0,
+				     ffail_type = 0,
 				     dane = state->ddane ?
 				     state->ddane : state->dane);
 
 #define PROXY_OPEN_FLAGS \
-        (TLS_PROXY_FLAG_ROLE_CLIENT | TLS_PROXY_FLAG_SEND_CONTEXT)
+	(TLS_PROXY_FLAG_ROLE_CLIENT | TLS_PROXY_FLAG_SEND_CONTEXT)
 #define var_tlsproxy_service
 
 	if ((cwd_fd = open(".", O_RDONLY)) < 0)
@@ -888,13 +903,19 @@ static int starttls(STATE *state)
 	    state->tls_context = tls_proxy_context_receive(state->stream);
 	    if (state->tls_context) {
 		if (state->log_mask &
-		    (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT))
-		    msg_info("%s: subject_CN=%s, issuer_CN=%s, "
-			     "fingerprint=%s, pkey_fingerprint=%s",
-			     state->namaddrport, state->tls_context->peer_CN,
-			     state->tls_context->issuer_CN,
-			     state->tls_context->peer_cert_fprint,
-			     state->tls_context->peer_pkey_fprint);
+		 (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT)) {
+		    if (state->tls_context->stoc_rpk)
+			msg_info("%s: pkey_fingerprint=%s", state->namaddrport,
+				 state->tls_context->peer_pkey_fprint);
+		    else
+			msg_info("%s: subject_CN=%s, issuer_CN=%s, "
+				 "fingerprint=%s, pkey_fingerprint=%s",
+				 state->namaddrport,
+				 state->tls_context->peer_CN,
+				 state->tls_context->issuer_CN,
+				 state->tls_context->peer_cert_fprint,
+				 state->tls_context->peer_pkey_fprint);
+		}
 		tls_log_summary(TLS_ROLE_CLIENT, TLS_USAGE_NEW,
 				state->tls_context);
 	    } else {
@@ -908,6 +929,7 @@ static int starttls(STATE *state)
 			     stream = stream,
 			     fd = -1,
 			     timeout = smtp_tmout,
+			     enable_rpk = state->options.enable_rpk,
 			     tls_level = state->level,
 			     nexthop = state->nexthop,
 			     host = state->hostname,
@@ -921,6 +943,8 @@ static int starttls(STATE *state)
 			     = vstring_str(cipher_exclusions),
 			     matchargv = state->match,
 			     mdalg = state->mdalg,
+			     tlsrpt = 0,
+			     ffail_type = 0,
 			  dane = state->ddane ? state->ddane : state->dane);
     }						/* tlsproxy_mode */
     vstring_free(cipher_exclusions);
@@ -940,7 +964,7 @@ static int starttls(STATE *state)
 
     if (state->pass == 1) {
 	ehlo(state);
-	if (!TLS_CERT_IS_PRESENT(state->tls_context))
+	if (!TLS_CRED_IS_PRESENT(state->tls_context))
 	    msg_info("Server is anonymous");
 	else if (state->tlsproxy_mode == 0) {
 	    if (state->print_trust)
@@ -1234,7 +1258,7 @@ static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
      * should not clobber a soft error text and status code.
      */
 #define RETRY_AI_ERROR(e) \
-        ((e) == EAI_AGAIN || (e) == EAI_MEMORY || (e) == EAI_SYSTEM)
+	((e) == EAI_AGAIN || (e) == EAI_MEMORY || (e) == EAI_SYSTEM)
 #ifdef EAI_NODATA
 #define DSN_NOHOST(e) \
 	((e) == EAI_AGAIN || (e) == EAI_NODATA || (e) == EAI_NONAME)
@@ -1262,6 +1286,8 @@ static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
 		    msg_fatal("host %s: conversion error for address family %d: %m",
 		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
 		addr_list = dns_rr_append(addr_list, addr);
+		if (DNS_RR_IS_TRUNCATED(addr_list))
+		    break;
 	    }
 	    freeaddrinfo(res0);
 	    if (found == 0) {
@@ -1299,6 +1325,8 @@ static DNS_RR *mx_addr_list(STATE *state, DNS_RR *mx_names)
 	    msg_panic("%s: bad resource type: %d", myname, rr->type);
 	addr_list = addr_one(state, addr_list, (char *) rr->data, res_opt,
 			     rr->pref, rr->port);
+	if (addr_list && DNS_RR_IS_TRUNCATED(addr_list))
+	    break;
     }
     return (addr_list);
 }
@@ -1831,14 +1859,14 @@ static void usage(void)
 #ifdef USE_TLS
     fprintf(stderr, "usage: %s %s \\\n\t%s \\\n\t%s \\\n\t%s \\\n\t%s"
 	    " destination [match ...]\n", var_procname,
-	    "[-acCfSvw] [-t conn_tmout] [-T cmd_tmout] [-L logopts]",
+	    "[-acCfRSvwx] [-t conn_tmout] [-T cmd_tmout] [-L logopts]",
 	 "[-h host_lookup] [-l level] [-d mdalg] [-g grade] [-p protocols]",
 	    "[-A tafile] [-F CAfile.pem] [-P CApath/] [-s servername]",
 	    "[ [-H chainfiles] | [-k certfile [-K keyfile]] ]",
 	    "[-m count] [-r delay] [-o name=value]");
 #else
-    fprintf(stderr, "usage: %s [-acStTv] [-h host_lookup] [-o name=value] destination\n",
-	    var_procname);
+    fprintf(stderr, "usage: %s [-acRStTv] [-h host_lookup] [-o name=value]"
+	    " destination\n", var_procname);
 #endif
     exit(1);
 }
@@ -1908,7 +1936,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
 
 #define OPTS "a:ch:o:RSt:T:v"
 #ifdef USE_TLS
-#define TLSOPTS "A:Cd:fF:g:H:k:K:l:L:m:M:p:P:r:s:wX"
+#define TLSOPTS "A:Cd:fF:g:H:k:K:l:L:m:M:p:P:r:s:wxX"
 
     state->mdalg = 0;
     state->CApath = mystrdup("");
@@ -1919,6 +1947,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
     state->sni = mystrdup("");
     state->options.tas = argv_alloc(1);
     state->options.logopts = 0;
+    state->options.enable_rpk = 0;
     state->level = TLS_LEV_DANE;
     state->mxinsec_level = TLS_LEV_DANE;
     state->tlsproxy_mode = 0;
@@ -2052,6 +2081,9 @@ static void parse_options(STATE *state, int argc, char *argv[])
 	case 'w':
 	    state->wrapper_mode = 1;
 	    break;
+	case 'x':
+	    state->options.enable_rpk = 1;
+	    break;
 	case 'X':
 	    state->tlsproxy_mode = 1;
 	    break;
@@ -2116,7 +2148,19 @@ static void parse_match(STATE *state, int argc, char *argv[])
 #ifdef USE_TLS
     int     smtp_mode = 1;
 
+    /*
+     * DANE match names are configured late, once the TLSA records are in
+     * hand. For now, prepare to fall back to "secure".
+     */
     switch (state->level) {
+    default:
+	state->match = 0;
+	if (*argv)
+	    msg_warn("TLS level '%s' does not implement certificate matching",
+		     str_tls_level(state->level));
+	break;
+    case TLS_LEV_DANE:
+    case TLS_LEV_DANE_ONLY:
     case TLS_LEV_SECURE:
 	state->match = argv_alloc(2);
 	while (*argv)
@@ -2134,13 +2178,8 @@ static void parse_match(STATE *state, int argc, char *argv[])
     case TLS_LEV_FPRINT:
 	state->dane = tls_dane_alloc();
 	while (*argv)
-	    tls_dane_add_fpt_digests((TLS_DANE *) state->dane, *argv++, "",
-				     smtp_mode);
-	break;
-    case TLS_LEV_DANE:
-    case TLS_LEV_DANE_ONLY:
-	state->match = argv_alloc(2);
-	argv_add(state->match, "nexthop", "hostname", ARGV_END);
+	    tls_dane_add_fpt_digests(state->dane, state->options.enable_rpk,
+				     *argv++, "", smtp_mode);
 	break;
     }
 #endif

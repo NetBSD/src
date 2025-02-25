@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.5 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,31 +9,31 @@
 /*	#include <post_mail.h>
 /*
 /*	VSTREAM	*post_mail_fopen(sender, recipient, source_class, trace_flags,
-/*		utf8_flags, queue_id)
+/*		sendopts, queue_id)
 /*	const char *sender;
 /*	const char *recipient;
 /*	int	source_class;
 /*	int	trace_flags;
-/*	int	utf8_flags;
+/*	int	sendopts;
 /*	VSTRING *queue_id;
 /*
 /*	VSTREAM	*post_mail_fopen_nowait(sender, recipient, source_class,
-/*					trace_flags, utf8_flags, queue_id)
+/*					trace_flags, sendopts, queue_id)
 /*	const char *sender;
 /*	const char *recipient;
 /*	int	source_class;
 /*	int	trace_flags;
-/*	int	utf8_flags;
+/*	int	sendopts;
 /*	VSTRING *queue_id;
 /*
 /*	void	post_mail_fopen_async(sender, recipient, source_class,
-/*					trace_flags, utf8_flags,
+/*					trace_flags, sendopts,
 /*					queue_id, notify, context)
 /*	const char *sender;
 /*	const char *recipient;
 /*	int	source_class;
 /*	int	trace_flags;
-/*	int	utf8_flags;
+/*	int	sendopts;
 /*	VSTRING *queue_id;
 /*	void	(*notify)(VSTREAM *stream, void *context);
 /*	void	*context;
@@ -118,9 +118,9 @@
 /*	autodetection.
 /* .IP trace_flags
 /*	Message tracing flags as specified in \fB<deliver_request.h>\fR.
-/* .IP utf8_flags
-/*	Flags defined in <smtputf8.h>. Flags other than
-/*	SMTPUTF8_FLAG_REQUESTED are ignored.
+/* .IP sendopts
+/*	Flags defined in <sendopts.h>. This ignores flags based on
+/*	message header content, or envelope email addresses.
 /* .IP queue_id
 /*	Null pointer, or pointer to buffer that receives the queue
 /*	ID of the new message.
@@ -197,7 +197,7 @@ typedef struct {
     char   *recipient;
     int     source_class;
     int     trace_flags;
-    int     utf8_flags;
+    int     sendopts;
     POST_MAIL_NOTIFY notify;
     void   *context;
     VSTREAM *stream;
@@ -219,7 +219,7 @@ typedef struct {
 static void post_mail_init(VSTREAM *stream, const char *sender,
 			           const char *recipient,
 			           int source_class, int trace_flags,
-			           int utf8_flags, VSTRING *queue_id)
+			           int sendopts, VSTRING *queue_id)
 {
     VSTRING *id = queue_id ? queue_id : vstring_alloc(100);
     struct timeval now;
@@ -227,7 +227,8 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
     int     cleanup_flags =
     int_filt_flags(source_class) | CLEANUP_FLAG_MASK_INTERNAL
     | smtputf8_autodetect(source_class)
-    | ((utf8_flags & SMTPUTF8_FLAG_REQUESTED) ? CLEANUP_FLAG_SMTPUTF8 : 0);
+    | ((sendopts & SMTPUTF8_FLAG_REQUESTED) ? CLEANUP_FLAG_SMTPUTF8 : 0);
+    /* TODO(wietse) REQUIRETLS. */
 
     GETTIMEOFDAY(&now);
     date = mail_date(now.tv_sec);
@@ -291,13 +292,13 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
 
 VSTREAM *post_mail_fopen(const char *sender, const char *recipient,
 			         int source_class, int trace_flags,
-			         int utf8_flags, VSTRING *queue_id)
+			         int sendopts, VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     stream = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     post_mail_init(stream, sender, recipient, source_class, trace_flags,
-		   utf8_flags, queue_id);
+		   sendopts, queue_id);
     return (stream);
 }
 
@@ -305,14 +306,14 @@ VSTREAM *post_mail_fopen(const char *sender, const char *recipient,
 
 VSTREAM *post_mail_fopen_nowait(const char *sender, const char *recipient,
 				        int source_class, int trace_flags,
-				        int utf8_flags, VSTRING *queue_id)
+				        int sendopts, VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     if ((stream = mail_connect(MAIL_CLASS_PUBLIC, var_cleanup_service,
 			       BLOCKING)) != 0)
 	post_mail_init(stream, sender, recipient, source_class, trace_flags,
-		       utf8_flags, queue_id);
+		       sendopts, queue_id);
     else
 	msg_warn("connect to %s/%s: %m",
 		 MAIL_CLASS_PUBLIC, var_cleanup_service);
@@ -341,7 +342,7 @@ static void post_mail_open_event(int event, void *context)
 	non_blocking(vstream_fileno(state->stream), BLOCKING);
 	post_mail_init(state->stream, state->sender,
 		       state->recipient, state->source_class,
-		       state->trace_flags, state->utf8_flags,
+		       state->trace_flags, state->sendopts,
 		       state->queue_id);
 	myfree(state->sender);
 	myfree(state->recipient);
@@ -393,7 +394,7 @@ static void post_mail_open_event(int event, void *context)
 
 void    post_mail_fopen_async(const char *sender, const char *recipient,
 			              int source_class, int trace_flags,
-			              int utf8_flags, VSTRING *queue_id,
+			              int sendopts, VSTRING *queue_id,
 			              void (*notify) (VSTREAM *, void *),
 			              void *context)
 {
@@ -406,7 +407,7 @@ void    post_mail_fopen_async(const char *sender, const char *recipient,
     state->recipient = mystrdup(recipient);
     state->source_class = source_class;
     state->trace_flags = trace_flags;
-    state->utf8_flags = utf8_flags;
+    state->sendopts = sendopts;
     state->notify = notify;
     state->context = context;
     state->stream = stream;

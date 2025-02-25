@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.c,v 1.1.1.3 2025/02/25 19:11:43 christos Exp $	*/
+/*	$NetBSD: own_inet_addr.c,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME

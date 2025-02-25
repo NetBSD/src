@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.5 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postmap.c,v 1.6 2025/02/25 19:15:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -491,7 +491,7 @@ static void postmap(char *map_type, char *path_name, int postmap_flags,
 	     */
 	    if ((mkmap->dict->flags & DICT_FLAG_UTF8_ACTIVE)
 		&& !allascii(STR(line_buffer))
-		&& !valid_utf8_string(STR(line_buffer), LEN(line_buffer))) {
+		&& !valid_utf8_stringz(STR(line_buffer))) {
 		msg_warn("%s, line %d: non-UTF-8 input \"%s\""
 			 " -- ignoring this line",
 			 VSTREAM_PATH(source_fp), lineno, STR(line_buffer));

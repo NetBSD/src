@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_final.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup_final.c,v 1.3 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -76,5 +76,5 @@ void    cleanup_final(CLEANUP_STATE *state)
 		       (REC_TYPE_SIZE_CAST3) state->rcpt_count,
 		       (REC_TYPE_SIZE_CAST4) state->qmgr_opts,
 		       (REC_TYPE_SIZE_CAST5) state->cont_length,
-		       (REC_TYPE_SIZE_CAST6) state->smtputf8);
+		       (REC_TYPE_SIZE_CAST6) state->sendopts);
 }

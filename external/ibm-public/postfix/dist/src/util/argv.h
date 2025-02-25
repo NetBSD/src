@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: argv.h,v 1.5 2025/02/25 19:15:51 christos Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -22,7 +22,7 @@ typedef struct ARGV {
     char  **argv;			/* string array */
 } ARGV;
 
-typedef int (*ARGV_COMPAR_FN)(const void *, const void *);
+typedef int (*ARGV_COMPAR_FN) (const void *, const void *);
 
 extern ARGV *argv_alloc(ssize_t);
 extern ARGV *argv_sort(ARGV *);		/* backwards compatibility */
@@ -30,11 +30,14 @@ extern ARGV *argv_qsort(ARGV *, ARGV_COMPAR_FN);
 extern ARGV *argv_uniq(ARGV *, ARGV_COMPAR_FN);
 extern void argv_add(ARGV *,...);
 extern void argv_addn(ARGV *,...);
+extern ARGV *argv_addv(ARGV *, const char *const *);
 extern void argv_terminate(ARGV *);
 extern void argv_truncate(ARGV *, ssize_t);
 extern void argv_insert_one(ARGV *, ssize_t, const char *);
 extern void argv_replace_one(ARGV *, ssize_t, const char *);
 extern void argv_delete(ARGV *, ssize_t, ssize_t);
+struct VSTRING;
+extern char *argv_join(struct VSTRING *buf, ARGV *, int);
 extern ARGV *argv_free(ARGV *);
 
 extern ARGV *argv_split(const char *, const char *);

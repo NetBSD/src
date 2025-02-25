@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2025/02/25 19:15:53 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -31,12 +31,12 @@ tls_proxy_context_print.c \
 tls_proxy_context_scan.c \
 tls_proxy_server_print.c \
 tls_proxy_server_scan.c \
-tls_rsa.c \
 tls_scache.c \
 tls_seed.c \
 tls_server.c \
 tls_session.c \
 tls_stream.c \
-tls_verify.c
+tls_verify.c \
+tlsrpt_wrapper.c
 
 .include <bsd.lib.mk>

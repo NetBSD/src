@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.4 2022/10/08 16:12:43 christos Exp $
+#	$NetBSD: post-install,v 1.5 2025/02/25 19:15:41 christos Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -207,6 +207,10 @@
 #	Google, Inc.
 #	111 8th Avenue
 #	New York, NY 10011, USA
+#
+#	Wietse Venema
+#	porcupine.org
+#	Amawalk, NY 10501, USA
 #--
 
 umask 022
@@ -293,8 +297,8 @@ test -d "$config_directory" || {
 # XXX Solaris does not have "test -e".
 
 instances=`test ! -f $def_config_directory/main.cf || 
-    $POSTCONF -c $def_config_directory -h multi_instance_directories | 
-	sed 's/,/ /'` || exit 1
+    $POSTCONF -qc $def_config_directory -h multi_instance_directories | 
+	sed 'y/,/ /'` || exit 1
 
 update_shared_files=1
 for name in $instances
@@ -362,7 +366,7 @@ test -f $config_directory/main.cf && {
         case "$junk" in
         "") eval unset $name;;
         esac
-        eval : \${$name=\`$POSTCONF -c $config_directory -h $name\`} || exit 1
+        eval : \${$name=\`$POSTCONF -qc $config_directory -h $name\`} || exit 1
     done
 }
 
@@ -463,14 +467,14 @@ override=
 for name in $MOST_PARAMETERS
 do
     eval junk=\"\$$name\"
-    test "$junk" = "`$POSTCONF -c $config_directory -h $name`" || {
+    test "$junk" = "`$POSTCONF -qc $config_directory -h $name`" || {
 	override=1
 	break
     }
 done
 
 test -n "$override" && {
-    $POSTCONF -c $config_directory -e \
+    $POSTCONF -qc $config_directory -e \
 	"daemon_directory = $daemon_directory" \
 	"command_directory = $command_directory" \
 	"queue_directory = $queue_directory" \
@@ -681,13 +685,13 @@ EOF
     # require now is that defer and deferred are hashed because those
     # can contain lots of files.
 
-    found=`$POSTCONF -c $config_directory -h hash_queue_names`
+    found=`$POSTCONF -qc $config_directory -h hash_queue_names`
     missing=
     (echo "$found" | grep defer >/dev/null)  || missing="$missing defer"
     (echo "$found" | grep deferred>/dev/null)|| missing="$missing deferred"
     test -n "$missing" && {
 	echo fixing main.cf hash_queue_names for missing $missing
-	$POSTCONF -c $config_directory -e hash_queue_names="$found$missing" ||
+	$POSTCONF -qc $config_directory -e hash_queue_names="$found$missing" ||
 	    exit 1
     }
 
@@ -859,14 +863,14 @@ EOF
     # when IPv6 support is not compiled in. See util/sys_defs.h.
 
     test "`$POSTCONF -dh inet_protocols`" = "ipv4" ||
-	test -n "`$POSTCONF -c $config_directory -n inet_protocols`" || {
+	test -n "`$POSTCONF -qc $config_directory -n inet_protocols`" || {
 	cat <<EOF | ${FMT}
     COMPATIBILITY: editing $config_directory/main.cf, setting
     inet_protocols=ipv4.  Specify inet_protocols explicitly if you
     want to enable IPv6.
     In a future release IPv6 will be enabled by default.
 EOF
-	$POSTCONF -c $config_directory inet_protocols=ipv4 || exit 1
+	$POSTCONF -qc $config_directory inet_protocols=ipv4 || exit 1
     }
 
 # Disabled because unhelpful down-stream maintainers disable the safety net.
@@ -877,7 +881,7 @@ EOF
 #    # PLEASE DO NOT REMOVE THIS CODE. ITS PURPOSE IS TO PREVENT
 #    # INBOUND MAIL FROM UNEXPECTEDLY BOUNCING AFTER UPGRADING FROM
 #    # POSTFIX BEFORE 2.10.
-#    test -n "`$POSTCONF -c $config_directory -n smtpd_relay_restrictions`" || {
+#    test -n "`$POSTCONF -qc $config_directory -n smtpd_relay_restrictions`" || {
 #	cat <<EOF | ${FMT}
 #    COMPATIBILITY: editing $config_directory/main.cf, overriding
 #    smtpd_relay_restrictions to prevent inbound mail from
@@ -885,7 +889,7 @@ EOF
 #    Specify an empty smtpd_relay_restrictions value to keep using 
 #    smtpd_recipient_restrictions as before.
 #EOF
-#	$POSTCONF -c $config_directory "smtpd_relay_restrictions = \
+#	$POSTCONF -qc $config_directory "smtpd_relay_restrictions = \
 #	    permit_mynetworks permit_sasl_authenticated \
 #	    defer_unauth_destination" || exit 1
 #    }
@@ -905,14 +909,14 @@ EOF
 
 test -n "$first_install_reminder" && {
 
-    ALIASES=`$POSTCONF -c $config_directory -h alias_database | sed 's/^[^:]*://'`
-    NEWALIASES_PATH=`$POSTCONF -c $config_directory -h newaliases_path`
+    ALIASES=`$POSTCONF -qc $config_directory -h alias_database | sed 's/^[^:]*://'`
+    NEWALIASES_PATH=`$POSTCONF -qc $config_directory -h newaliases_path`
     cat <<EOF | ${FMT}
 
     Warning: you still need to edit myorigin/mydestination/mynetworks
     parameter settings in $config_directory/main.cf.
 
-    See also http://www.postfix.org/STANDARD_CONFIGURATION_README.html
+    See also https://www.postfix.org/STANDARD_CONFIGURATION_README.html
     for information about dialup sites or about sites inside a
     firewalled network.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,8 @@
 #include <mail_error.h>
 #include <dsn_buf.h>
 #include <mail_addr.h>
+#include <valid_hostname.h>
+#include <sendopts.h>
 
 /* DNS library. */
 
@@ -498,6 +500,55 @@ static void smtp_cache_policy(SMTP_STATE *state, const char *dest)
     }
 }
 
+#ifdef USE_TLS
+
+/* smtp_get_effective_tls_level - get the effective TLS security level */
+
+static int smtp_get_effective_tls_level(DSN_BUF *why, SMTP_STATE *state)
+{
+    SMTP_ITERATOR *iter = state->iterator;
+    SMTP_TLS_POLICY *tls = state->tls;
+
+    /*
+     * Determine the TLS level for this destination.
+     */
+    if (!smtp_tls_policy_cache_query(why, tls, iter)) {
+	return (0);
+    }
+
+    /*
+     * If the sender requires verified TLS, the TLS level must enforce a
+     * server certificate match.
+     */
+#if 0
+    else if ((state->request->sendopts & SOPT_REQUIRETLS_ESMTP)) {
+	if (TLS_MUST_MATCH(tls->level) == 0) {
+	    dsb_simple(why, "5.7.10", "Sender requires verified TLS, "
+		       " but my configured TLS security level is '%s %s'",
+		       var_mail_name, str_tls_level(tls->level));
+	    return (0);
+	}
+    }
+#endif
+
+    /*
+     * Otherwise, if the TLS level is not TLS_LEV_NONE or some non-level, and
+     * the message contains a "TLS-Required: no" header, limit the level to
+     * TLS_LEV_MAY.
+     */
+    else if (var_tls_required_enable && tls->level > TLS_LEV_NONE
+	     && (state->request->sendopts & SOPT_REQUIRETLS_HEADER)) {
+	tls->level = TLS_LEV_MAY;
+    }
+
+    /*
+     * Success.
+     */
+    return (1);
+}
+
+#endif
+
 /* smtp_connect_local - connect to local server */
 
 static void smtp_connect_local(SMTP_STATE *state, const char *path)
@@ -553,7 +604,7 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * of SASL-unauthenticated connections.
      */
 #ifdef USE_TLS
-    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+    if (!smtp_get_effective_tls_level(why, state)) {
 	msg_warn("TLS policy lookup error for %s/%s: %s",
 		 STR(iter->host), STR(iter->addr), STR(why->reason));
 	return;
@@ -778,7 +829,7 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
 	}
 	SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
-	if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+	if (!smtp_get_effective_tls_level(why, state)) {
 	    msg_warn("TLS policy lookup error for %s/%s: %s",
 		     STR(iter->dest), STR(iter->host), STR(why->reason));
 	    continue;
@@ -912,6 +963,22 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 #define NO_ADDR	""				/* safety */
 
 	SMTP_ITER_INIT(iter, dest, NO_HOST, NO_ADDR, port, state);
+
+	/*
+	 * TODO(wietse) If the domain publishes a TLSRPT policy, they expect
+	 * that clients use SMTP over TLS. Should we upgrade a TLS security
+	 * level of "may" to "encrypt"? This would disable falling back to
+	 * plaintext, and could break interoperability with receivers that
+	 * crank up security up to 11.
+	 */
+#ifdef USE_TLSRPT
+	if (smtp_mode && var_smtp_tlsrpt_enable
+	    && tls_level_lookup(var_smtp_tls_level) > TLS_LEV_NONE
+	    && !valid_hostaddr(domain, DONT_GRIPE))
+	    smtp_tlsrpt_create_wrapper(state, domain);
+	else
+	    state->tlsrpt = 0;
+#endif						/* USE_TLSRPT */
 
 	/*
 	 * Resolve an SMTP or LMTP server. Skip MX or SRV lookups when a
@@ -1050,7 +1117,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    }
 	    SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
-	    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+	    if (!smtp_get_effective_tls_level(why, state)) {
 		msg_warn("TLS policy lookup for %s/%s: %s",
 			 STR(iter->dest), STR(iter->host), STR(why->reason));
 		continue;
@@ -1078,6 +1145,18 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		session->state = state;
 #ifdef USE_TLS
 		session->tls_nexthop = domain;
+
+		/*
+		 * Update TLSRPT state even if this is a reused SMTP
+		 * connection. If for some unlikely reason we must report a
+		 * problem, then we must report correct information.
+		 */
+#ifdef USE_TLSRPT
+		if (state->tlsrpt) {
+		    smtp_tlsrpt_set_tls_policy(state);
+		    smtp_tlsrpt_set_tcp_connection(state);
+		}
+#endif						/* USE_TLSRPT */
 #endif
 		if (addr->pref == domain_best_pref)
 		    session->features |= SMTP_FEATURE_BEST_MX;

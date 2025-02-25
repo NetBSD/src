@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_conf.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -133,7 +133,7 @@
 
 /* mail_conf_checkdir - authorize non-default directory */
 
-void mail_conf_checkdir(const char *config_dir)
+void    mail_conf_checkdir(const char *config_dir)
 {
     VSTRING *buf;
     VSTREAM *fp;

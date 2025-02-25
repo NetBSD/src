@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: hex_code.h,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _HEX_CODE_H_INCLUDED_
 #define _HEX_CODE_H_INCLUDED_
@@ -23,6 +23,7 @@
   */
 #define HEX_ENCODE_FLAG_NONE		(0)
 #define HEX_ENCODE_FLAG_USE_COLON	(1<<0)
+#define HEX_ENCODE_FLAG_APPEND		(1<<1)
 
 #define HEX_DECODE_FLAG_NONE	(0)
 #define HEX_DECODE_FLAG_ALLOW_COLON	(1<<0)
@@ -51,6 +52,9 @@ extern VSTRING *WARN_UNUSED_RESULT hex_decode_opt(VSTRING *, const char *, ssize
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

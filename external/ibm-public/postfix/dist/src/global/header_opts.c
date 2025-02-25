@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: header_opts.c,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -28,6 +28,9 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -89,6 +92,7 @@ static HEADER_OPTS header_opts[] = {
     "Return-Receipt-To", HDR_RETURN_RECEIPT_TO, HDR_OPT_SENDER,
     "Sender", HDR_SENDER, HDR_OPT_SENDER,
     "To", HDR_TO, HDR_OPT_XRECIP,
+    "TLS-Required", HDR_TLS_REQUIRED, 0,
 };
 
 #define HEADER_OPTS_SIZE (sizeof(header_opts) / sizeof(header_opts[0]))

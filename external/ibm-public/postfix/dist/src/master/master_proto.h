@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_proto.h,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -74,4 +74,3 @@ extern int master_notify(int, unsigned, int);	/* encapsulate status msg */
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
 /*--*/
-

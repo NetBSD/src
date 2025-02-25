@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: cleanup_out.c,v 1.4 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -71,6 +71,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -188,10 +191,10 @@ void    cleanup_out_header(CLEANUP_STATE *state, VSTRING *header_buf)
      * Fix 20140711: Auto-detect the presence of a non-ASCII header.
      */
     if (var_smtputf8_enable && *STR(header_buf) && !allascii(STR(header_buf))) {
-	state->smtputf8 |= SMTPUTF8_FLAG_HEADER;
+	state->sendopts |= SMTPUTF8_FLAG_HEADER;
 	/* Fix 20140713: request SMTPUTF8 support selectively. */
 	if (state->flags & CLEANUP_FLAG_AUTOUTF8)
-	    state->smtputf8 |= SMTPUTF8_FLAG_REQUESTED;
+	    state->sendopts |= SMTPUTF8_FLAG_REQUESTED;
     }
 
     /*

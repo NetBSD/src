@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: vstream.c,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -524,6 +524,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/stat.h>
 #include <stdlib.h>			/* 44BSD stdarg.h uses abort() */
 #include <stdarg.h>
 #include <stddef.h>
@@ -1388,7 +1389,38 @@ VSTREAM *vstream_fopen(const char *path, int flags, mode_t mode)
     VSTREAM *stream;
     int     fd;
 
-    if ((fd = open(path, flags, mode)) < 0) {
+    /*
+     * To set permissions on new files only, we need to distinguish between
+     * creating a new file and opening an existing one.
+     */
+#define open_create(path, flags, mode) \
+	open((path), (flags) | (O_CREAT | O_EXCL), (mode))
+#define open_exist(path, flags, mode) \
+	open((path), (flags) & ~(O_CREAT | O_EXCL), (mode))
+
+    switch (flags & (O_CREAT | O_EXCL)) {
+    case O_CREAT:
+	fd = open_exist(path, flags, mode);
+	if (fd < 0 && errno == ENOENT) {
+	    fd = open_create(path, flags, mode);
+	    if (fd >= 0) {
+		if (fchmod(fd, mode) < 0)	/* can't uncreate */
+		    msg_warn("fchmod %s 0%o: %m", path, (unsigned) mode);
+	    } else if ( /* fd < 0 && */ errno == EEXIST)
+		fd = open_exist(path, flags, mode);
+	}
+	break;
+    case O_CREAT | O_EXCL:
+	fd = open(path, flags, mode);
+	if (fd >= 0)
+	    if (fchmod(fd, mode) < 0)		/* can't uncreate */
+		msg_warn("fchmod %s 0%o: %m", path, (unsigned) mode);
+	break;
+    default:
+	fd = open(path, flags, mode);
+	break;
+    }
+    if (fd < 0) {
 	return (0);
     } else {
 	stream = vstream_fdopen(fd, flags);

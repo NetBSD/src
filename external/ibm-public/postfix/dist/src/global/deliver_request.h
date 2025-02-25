@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: deliver_request.h,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
@@ -44,7 +44,7 @@ typedef struct DELIVER_REQUEST {
     long    data_size;			/* message size */
     char   *nexthop;			/* next hop name */
     char   *encoding;			/* content encoding */
-    int     smtputf8;			/* SMTPUTF8 level */
+    int     sendopts;			/* smtputf8, requiretls, etc. */
     char   *sender;			/* envelope sender */
     MSG_STATS msg_stats;		/* time profile */
     RECIPIENT_LIST rcpt_list;		/* envelope recipients */
@@ -153,6 +153,9 @@ extern int PRINTFLIKE(4, 5) reject_deliver_request(const char *,
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: netstring.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -147,7 +147,7 @@
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
 /* SEE ALSO
-/*	http://cr.yp.to/proto/netstrings.txt, netstring definition
+/*	https://cr.yp.to/proto/netstrings.txt, netstring definition
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -158,6 +158,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -165,6 +168,7 @@
 #include <sys_defs.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -369,12 +373,18 @@ const char *netstring_strerror(int err)
 	case NETSTRING_ERR_EOF:
 	return ("unexpected disconnect");
     case NETSTRING_ERR_TIME:
+	errno = ETIMEDOUT;
 	return ("time limit exceeded");
     case NETSTRING_ERR_FORMAT:
+	errno = 0;
 	return ("input format error");
     case NETSTRING_ERR_SIZE:
+#ifdef EMSGSIZE
+	errno = EMSGSIZE;
+#endif
 	return ("input exceeds size limit");
     default:
+	errno = 0;
 	return ("unknown netstring error");
     }
 }

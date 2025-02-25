@@ -35,6 +35,7 @@
 #	Specifies one or more non-default object libraries. Postfix
 #	3.0 and later specify some of their database library
 #	dependencies with AUXLIBS_CDB, AUXLIBS_LDAP, AUXLIBS_LMDB,
+#	AUXLIBS_MONGODB,
 #	AUXLIBS_MYSQL, AUXLIBS_PCRE, AUXLIBS_PGSQL, AUXLIBS_SDBM,
 #	and AUXLIBS_SQLITE, respectively.
 # .IP \fBCC=\fIcompiler_command\fR
@@ -45,6 +46,8 @@
 #	\fIinclude\fR directory.
 #	The following directives are special:
 # .RS
+# .IP \fB-DNO_CLOSEFROM\fR
+#	Do not use the system closefom() implementation.
 # .IP \fB-DNO_DB\fR
 #	Do not build with Berkeley DB support.
 # .IP \fB-DNO_DEVPOLL\fR
@@ -60,7 +63,8 @@
 #	are known to support it.
 # .IP \fB-DNO_EAI\fR
 #	Do not build with EAI (SMTPUTF8) support. By default, EAI
-#	support is compiled in when the "pkg-config" command is
+#	support is compiled in when the "pkgconf" or "pkg-config"
+#	command are
 #	found, or the deprecated "icu-config" command.
 # .IP \fB-DNO_INLINE\fR
 #	Do not require support for C99 "inline" functions. Instead,
@@ -184,6 +188,9 @@
 #	New York, NY 10011, USA
 #--
 
+# Override all LC_* settings and LANG for reproducibility.
+LC_ALL=C; export LC_ALL
+
 # By now all shells must have functions.
 
 error() {
@@ -216,7 +223,7 @@ echo "#----------------------------------------------------------------"
 echo "# Start of summary of user-configurable 'make makefiles' options."
 echo "# CCARGS=$CCARGS"
 echo "# AUXLIBS=$AUXLIBS"
-env | grep '^AUXLIBS_' | sed 's/^/# /'
+env | grep '^AUXLIBS_' | sed 's/^/# /' | sort
 echo "# shared=$shared"
 echo "# dynamicmaps=$dynamicmaps"
 echo "# pie=$pie"
@@ -235,8 +242,6 @@ case $# in
  # Officially supported usage.
  0) SYSTEM=`(uname -s) 2>/dev/null`
     RELEASE=`(uname -r) 2>/dev/null`
-    # No ${x%%y} support in Solaris 11 /bin/sh
-    RELEASE_MAJOR=`expr "$RELEASE" : '\([0-9]*\)'` || exit 1
     VERSION=`(uname -v) 2>/dev/null`
     case "$VERSION" in
      dcosx*) SYSTEM=$VERSION;;
@@ -245,6 +250,9 @@ case $# in
  2) SYSTEM="$1"; RELEASE="$2";;
  *) echo usage: $0 [system release] 1>&2; exit 1;;
 esac
+
+# No ${x%%y} support in Solaris 11 /bin/sh
+RELEASE_MAJOR=`echo "$RELEASE" | sed 's/[^0-9].*//'` || exit 1
 
 case "$SYSTEM.$RELEASE" in
    SCO_SV.3.2)	SYSTYPE=SCO5
@@ -874,8 +882,10 @@ esac
 case "$CCARGS" in
 *-DNO_EAI*) CCARGS="$CCARGS "'-DDEF_SMTPUTF8_ENABLE=\"no\"';;
 	 *) icu_cppflags=`((pkg-config --cflags icu-uc icu-i18n) ||
+		  (pkgconf --cflags icu-uc icu-i18n) ||
 		  (icu-config --cppflags)) 2>/dev/null` && {
 		icu_ldflags=`((pkg-config --libs icu-uc icu-i18n) ||
+		  (pkgconf --libs icu-uc icu-i18n) ||
 		  (icu-config --ldflags)) 2>/dev/null` && {
 		    trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
 		    cat >makedefs.test.c <<'EOF'
@@ -1242,7 +1252,7 @@ DEFINED_MAP_TYPES=`
 
 # Propagate AUXLIBS_FOO or merge them into global AUXLIBS (i.e. SYSLIBS).
 
-PLUGGABLE_MAPS="CDB LDAP LMDB MYSQL PCRE PGSQL SDBM SQLITE"
+PLUGGABLE_MAPS="CDB LDAP LMDB MONGODB MYSQL PCRE PGSQL SDBM SQLITE"
 
 case "$dynamicmaps" in
 yes) for name in $PLUGGABLE_MAPS

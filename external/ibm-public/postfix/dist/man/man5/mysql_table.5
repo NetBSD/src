@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: mysql_table.5,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -78,6 +78,12 @@ localhost over TCP you have to specify
 .nf
     hosts = 127.0.0.1
 .fi
+
+NOTE: if the \fBhosts\fR setting specifies one server, this client
+assumes that the target is a load balancer and will reconnect
+immediately after a single failure, instead of failing all
+requests temporarily. With older versions of this client,
+specify the same server twice.
 .IP "\fBuser\fR"
 .IP "\fBpassword\fR"
 The user name and password to log into the mysql server.
@@ -91,6 +97,30 @@ The database name on the servers. Example:
 .nf
     dbname = customer_database
 .fi
+.IP "\fBcharset (default: utf8mb4)\fR"
+The default MySQL client character set; this also implies
+the collation order.
+
+This parameter is available with Postfix 3.9 and later.
+With earlier Postfix versions, the default was chosen by
+the MySQL implementation (\fButf8mb4\fR as of MySQL 8.0,
+\fBlatin1\fR historically).
+.IP "\fBidle_interval (default: 60)\fR"
+The number of seconds after which an idle database connection
+will be closed.
+
+This feature is available in Postfix 3.9 and later.
+.IP "\fBretry_interval (default: 60)\fR"
+The number of seconds that a database connection will be
+skipped after an error.
+
+NOTE: if the \fBhosts\fR setting specifies one server, this client
+assumes that the target is a load balancer and will reconnect
+immediately after a single failure, instead of failing all
+requests temporarily. With older versions of this client,
+specify the same server twice.
+
+This feature is available in Postfix 3.9 and later.
 .IP "\fBquery\fR"
 The SQL query template used to search the database, where \fB%s\fR
 is a substitute for the address Postfix is trying to resolve,
@@ -255,6 +285,14 @@ set.  If "\fBno\fR", treat the absence of a result set as
 "not found".
 .sp
 This parameter is available with Postfix 3.2 and later.
+.SH "TLS-RELATED SETTINGS"
+.na
+.nf
+.ad
+.fi
+See https://dev.mysql.com/doc/c\-api/en/mysql\-options.html
+or https://mariadb.com/kb/en/mysql_optionsv/ for details of
+the underlying MYSQL_OPT_SSL_* features.
 .IP "\fBtls_cert_file\fR"
 File containing client's X509 certificate.
 .sp
@@ -264,7 +302,7 @@ File containing the private key corresponding to \fBtls_cert_file\fR.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_CAfile\fR"
-File containing certificates for all of the X509 Certification
+File containing X509 certificates for all of the Certification
 Authorities the client will recognize.  Takes precedence over
 \fBtls_CApath\fR.
 .sp

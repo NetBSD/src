@@ -1,4 +1,4 @@
-/*	$NetBSD: dgram_server.c,v 1.3 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: dgram_server.c,v 1.4 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	NORETURN dgram_server_main(argc, argv, service, key, value, ...)
 /*	int	argc;
 /*	char	**argv;
-/*	void	(*service)(char *buf, int len, char *service_name, char **argv);
+/*	void	(*service)(int sock, char *service_name, char **argv);
 /*	int	key;
 /* DESCRIPTION
 /*	This module implements a skeleton for mail subsystem programs
@@ -23,19 +23,16 @@
 /*	dgram_server_main() is the skeleton entry point. It should
 /*	be called from the application main program. The skeleton
 /*	does the generic command-line options processing, initialization
-/*	of configurable parameters, and receiving datagrams. The
+/*	of configurable parameters, and monitors a datagram socket. The
 /*	skeleton never returns.
 /*
 /*	Arguments:
-/* .IP "void (*service)(char *buf, int len, char *service_name, char **argv)"
+/* .IP "void (*service)(int sock, char *service_name, char **argv)"
 /*	A pointer to a function that is called by the skeleton each
 /*	time a client sends a datagram to the program's service
 /*	port. The function is run after the program has irrevocably
-/*	dropped its privileges.  The buffer argument specifies the
-/*	data read from the datagram port; this data corresponds to
-/*	request.  The len argument specifies how much client data
-/*	is available.  The maximal size of the buffer is specified
-/*	via the DGRAM_BUF_SIZE manifest constant.  The service name
+/*	dropped its privileges. The sock argument specifies the socket
+/*	that the client should receive data from. The service name
 /*	argument corresponds to the service name in the master.cf
 /*	file.  The argv argument specifies command-line arguments
 /*	left over after options processing.
@@ -154,6 +151,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -260,8 +260,6 @@ static void dgram_server_timeout(int unused_event, void *unused_context)
 
 static void dgram_server_wakeup(int fd)
 {
-    char    buf[DGRAM_BUF_SIZE];
-    ssize_t len;
 
     /*
      * Commit suicide when the master process disconnected from us, after
@@ -271,8 +269,7 @@ static void dgram_server_wakeup(int fd)
 	 /* void */ ;
     if (dgram_server_in_flow_delay && mail_flow_get(1) < 0)
 	doze(var_in_flow_delay * 1000000);
-    if ((len = recv(fd, buf, sizeof(buf), 0)) >= 0)
-	dgram_server_service(buf, len, dgram_server_name, dgram_server_argv);
+    dgram_server_service(fd, dgram_server_name, dgram_server_argv);
     if (master_notify(var_pid, dgram_server_generation, MASTER_STAT_AVAIL) < 0)
 	dgram_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     if (var_idle_limit > 0)

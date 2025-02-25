@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_unused.c,v 1.1.1.3 2025/02/25 19:11:44 christos Exp $	*/
+/*	$NetBSD: postconf_unused.c,v 1.2 2025/02/25 19:15:47 christos Exp $	*/
 
 /*++
 /* NAME

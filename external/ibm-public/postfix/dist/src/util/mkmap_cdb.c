@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_cdb.c,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: mkmap_cdb.c,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -55,13 +55,14 @@
 /* This is a dummy module, since CDB has all the functionality
  * built-in, as cdb creation requires one global lock anyway. */
 
-MKMAP *mkmap_cdb_open(const char *unused_path)
+MKMAP  *mkmap_cdb_open(const char *unused_path)
 {
     MKMAP  *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
+
     mkmap->open = dict_cdb_open;
     mkmap->after_open = 0;
     mkmap->after_close = 0;
     return (mkmap);
 }
 
-#endif /* HAS_CDB */
+#endif					/* HAS_CDB */

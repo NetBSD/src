@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/12/23 20:30:46 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2025/02/25 19:15:53 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -37,6 +37,7 @@ byte_mask.c \
 casefold.c \
 chroot_uid.c \
 cidr_match.c \
+clean_ascii_cntrl_space.c \
 clean_env.c \
 close_on_exec.c \
 concatenate.c \
@@ -148,6 +149,7 @@ myaddrinfo.c \
 myflock.c \
 mymalloc.c \
 myrand.c \
+mystrerror.c \
 mystrtok.c \
 name_code.c \
 name_mask.c \
@@ -155,6 +157,7 @@ nbbio.c \
 netstring.c \
 neuter.c \
 non_blocking.c \
+normalize_ws.c \
 nvtable.c \
 open_as.c \
 open_limit.c \
@@ -165,6 +168,7 @@ peekfd.c \
 poll_fd.c \
 posix_signals.c \
 printable.c \
+quote_for_json.c \
 rand_sleep.c \
 readlline.c \
 recv_pass_attr.c \
@@ -176,6 +180,7 @@ sane_basename.c \
 sane_connect.c \
 sane_link.c \
 sane_rename.c \
+sane_sockaddr_to_hostaddr.c \
 sane_socketpair.c \
 sane_strtol.c \
 sane_time.c \

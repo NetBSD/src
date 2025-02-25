@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.19 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.20 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -1323,6 +1323,10 @@ extern bool var_smtpd_tls_ask_ccert;
 #define DEF_SMTPD_TLS_RCERT	0
 extern bool var_smtpd_tls_req_ccert;
 
+#define VAR_SMTPD_TLS_ENABLE_RPK	"smtpd_tls_enable_rpk"
+#define DEF_SMTPD_TLS_ENABLE_RPK	0
+extern bool var_smtpd_tls_enable_rpk;
+
 #define VAR_SMTPD_TLS_CCERT_VD	"smtpd_tls_ccert_verifydepth"
 #define DEF_SMTPD_TLS_CCERT_VD	9
 extern int var_smtpd_tls_ccert_vd;
@@ -1557,6 +1561,12 @@ extern char *var_smtp_tls_mand_excl;
                                 "{md5} : {sha256}}"
 extern char *var_smtp_tls_fpt_dgst;
 
+#define VAR_SMTP_TLS_ENABLE_RPK	"smtp_tls_enable_rpk"
+#define DEF_SMTP_TLS_ENABLE_RPK	0
+#define VAR_LMTP_TLS_ENABLE_RPK	"lmtp_tls_enable_rpk"
+#define DEF_LMTP_TLS_ENABLE_RPK	0
+extern bool var_smtp_tls_enable_rpk;
+
 #define VAR_SMTP_TLS_TAFILE	"smtp_tls_trust_anchor_file"
 #define DEF_SMTP_TLS_TAFILE	""
 #define VAR_LMTP_TLS_TAFILE	"lmtp_tls_trust_anchor_file"
@@ -1652,7 +1662,7 @@ extern bool var_smtp_tls_force_tlsa;
 
  /* SMTP only */
 #define VAR_SMTP_TLS_INSECURE_MX_POLICY "smtp_tls_dane_insecure_mx_policy"
-#define DEF_SMTP_TLS_INSECURE_MX_POLICY "${{$smtp_tls_security_level} == {dane} ? {dane} : {may}}"
+#define DEF_SMTP_TLS_INSECURE_MX_POLICY "dane"
 extern char *var_smtp_tls_insecure_mx_policy;
 
  /*
@@ -1746,6 +1756,12 @@ extern bool var_smtp_sasl_enable;
 #define VAR_SMTP_SASL_PASSWD	"smtp_sasl_password_maps"
 #define DEF_SMTP_SASL_PASSWD	""
 extern char *var_smtp_sasl_passwd;
+
+#define VAR_SMTP_SASL_PASSWD_RES_DELIM	"smtp_sasl_password_result_delimiter"
+#define DEF_SMTP_SASL_PASSWD_RES_DELIM	":"
+#define VAR_LMTP_SASL_PASSWD_RES_DELIM	"lmtp_sasl_password_result_delimiter"
+#define DEF_LMTP_SASL_PASSWD_RES_DELIM	DEF_SMTP_SASL_PASSWD_RES_DELIM
+extern char *var_smtp_sasl_passwd_res_delim;
 
 #define VAR_SMTP_SASL_OPTS	"smtp_sasl_security_options"
 #define DEF_SMTP_SASL_OPTS	"noplaintext, noanonymous"
@@ -2439,7 +2455,7 @@ extern char *var_smtpd_exp_filter;
 extern bool var_smtpd_peername_lookup;
 
 #define VAR_SMTPD_FORBID_UNAUTH_PIPE	"smtpd_forbid_unauth_pipelining"
-#define DEF_SMTPD_FORBID_UNAUTH_PIPE	0
+#define DEF_SMTPD_FORBID_UNAUTH_PIPE	1
 extern bool var_smtpd_forbid_unauth_pipe;
 
  /*
@@ -3074,6 +3090,10 @@ extern bool var_disable_mime_input;
 #define DEF_DISABLE_MIME_OCONV		0
 extern bool var_disable_mime_oconv;
 
+#define VAR_FORCE_MIME_ICONV		"force_mime_input_conversion"
+#define DEF_FORCE_MIME_ICONV		0
+extern bool var_force_mime_iconv;
+
 #define VAR_STRICT_8BITMIME		"strict_8bitmime"
 #define DEF_STRICT_8BITMIME		0
 extern bool var_strict_8bitmime;
@@ -3381,23 +3401,27 @@ extern char *var_tls_null_clist;
 #else
 #define DEF_TLS_EECDH_AUTO_1 ""
 #endif
+
 #if defined(SN_X448) && defined(NID_X448)
 #define DEF_TLS_EECDH_AUTO_2 SN_X448 " "
 #else
 #define DEF_TLS_EECDH_AUTO_2 ""
 #endif
+
 #if defined(SN_X9_62_prime256v1) && defined(NID_X9_62_prime256v1)
 #define DEF_TLS_EECDH_AUTO_3 SN_X9_62_prime256v1 " "
 #else
 #define DEF_TLS_EECDH_AUTO_3 ""
 #endif
-#if defined(SN_secp521r1) && defined(NID_secp521r1)
-#define DEF_TLS_EECDH_AUTO_4 SN_secp521r1 " "
+
+#if defined(SN_secp384r1) && defined(NID_secp384r1)
+#define DEF_TLS_EECDH_AUTO_4 SN_secp384r1 " "
 #else
 #define DEF_TLS_EECDH_AUTO_4 ""
 #endif
-#if defined(SN_secp384r1) && defined(NID_secp384r1)
-#define DEF_TLS_EECDH_AUTO_5 SN_secp384r1
+
+#if defined(SN_secp521r1) && defined(NID_secp521r1)
+#define DEF_TLS_EECDH_AUTO_5 SN_secp521r1 " "
 #else
 #define DEF_TLS_EECDH_AUTO_5 ""
 #endif
@@ -3984,6 +4008,10 @@ extern bool var_tlsp_tls_ask_ccert;
 #define DEF_TLSP_TLS_RCERT	"$" VAR_SMTPD_TLS_RCERT
 extern bool var_tlsp_tls_req_ccert;
 
+#define VAR_TLSP_TLS_ENABLE_RPK	"tlsproxy_tls_enable_rpk"
+#define DEF_TLSP_TLS_ENABLE_RPK	"$" VAR_SMTPD_TLS_ENABLE_RPK
+extern bool var_tlsp_tls_enable_rpk;
+
 #define VAR_TLSP_TLS_CCERT_VD	"tlsproxy_tls_ccert_verifydepth"
 #define DEF_TLSP_TLS_CCERT_VD	"$" VAR_SMTPD_TLS_CCERT_VD
 extern int var_tlsp_tls_ccert_vd;
@@ -4284,10 +4312,17 @@ extern char *var_smtpd_dns_re_filter;
   * Backwards compatibility.
   */
 #define VAR_SMTPD_FORBID_BARE_LF	"smtpd_forbid_bare_newline"
-#define DEF_SMTPD_FORBID_BARE_LF	0
+#define DEF_SMTPD_FORBID_BARE_LF	"normalize"
 
 #define VAR_SMTPD_FORBID_BARE_LF_EXCL	"smtpd_forbid_bare_newline_exclusions"
 #define DEF_SMTPD_FORBID_BARE_LF_EXCL	"$" VAR_MYNETWORKS
+
+#define VAR_SMTPD_FORBID_BARE_LF_CODE	"smtpd_forbid_bare_newline_reject_code"
+#define DEF_SMTPD_FORBID_BARE_LF_CODE	550
+
+#define VAR_CLEANUP_MASK_STRAY_CR_LF	"cleanup_replace_stray_cr_lf"
+#define DEF_CLEANUP_MASK_STRAY_CR_LF	1
+extern int var_cleanup_mask_stray_cr_lf;
 
  /*
   * Share TLS sessions through tlsproxy(8).
@@ -4344,6 +4379,13 @@ extern char *var_smtputf8_autoclass;
 extern int var_idna2003_compat;
 
  /*
+  * REQUIRETLS support (RFC 8689).
+  */
+#define VAR_TLSREQUIRED_ENABLE		"tls_required_enable"
+#define DEF_TLSREQUIRED_ENABLE		"yes"
+extern int var_tls_required_enable;
+
+ /*
   * Workaround for future incompatibility. Our implementation of RFC 2308
   * negative reply caching relies on the promise that res_query() and
   * res_search() invoke res_send(), which returns the server response in an
@@ -4373,6 +4415,10 @@ extern char *var_maillog_file_comp;
 #define VAR_MAILLOG_FILE_STAMP	"maillog_file_rotate_suffix"
 #define DEF_MAILLOG_FILE_STAMP	"%Y%m%d-%H%M%S"
 extern char *var_maillog_file_stamp;
+
+#define VAR_MAILLOG_FILE_PERMS	"maillog_file_permissions"
+#define DEF_MAILLOG_FILE_PERMS	"0600"
+extern char *var_maillog_file_perms;
 
 #define VAR_POSTLOG_SERVICE	"postlog_service_name"
 #define DEF_POSTLOG_SERVICE	MAIL_SERVICE_POSTLOG
@@ -4422,6 +4468,49 @@ extern bool var_ign_srv_lookup_err;
 #define DEF_ALLOW_SRV_FALLBACK	0
 extern bool var_allow_srv_fallback;
 
+ /*
+  * TLSRPT notification support. The lmtp_ names must be defined because the
+  * build system enforces that every smtp_ parameter has an lmtp_ variant.
+  */
+#define VAR_SMTP_TLSRPT_ENABLE	"smtp_tlsrpt_enable"
+#define DEF_SMTP_TLSRPT_ENABLE	"no"
+#define VAR_LMTP_TLSRPT_ENABLE	"lmtp_tlsrpt_enable"
+#define DEF_LMTP_TLSRPT_ENABLE	DEF_SMTP_TLSRPT_ENABLE
+extern bool var_smtp_tlsrpt_enable;
+
+#define VAR_SMTP_TLSRPT_SOCKNAME "smtp_tlsrpt_socket_name"
+#define DEF_SMTP_TLSRPT_SOCKNAME ""
+#define VAR_LMTP_TLSRPT_SOCKNAME "lmtp_tlsrpt_socket_name"
+#define DEF_LMTP_TLSRPT_SOCKNAME DEF_SMTP_TLSRPT_SOCKNAME
+extern char *var_smtp_tlsrpt_sockname;
+
+#define VAR_SMTP_TLSRPT_SKIP_REUSED_HS	"smtp_tlsrpt_skip_reused_handshakes"
+#define DEF_SMTP_TLSRPT_SKIP_REUSED_HS	"yes"
+#define VAR_LMTP_TLSRPT_SKIP_REUSED_HS	"lmtp_tlsrpt_skip_reused_handshakes"
+#define DEF_LMTP_TLSRPT_SKIP_REUSED_HS	DEF_SMTP_TLSRPT_SKIP_REUSED_HS
+extern int var_smtp_tlsrpt_skip_reused_hs;
+
+ /*
+  * RFC 2047 encoding of full name info.
+  */
+#define VAR_FULL_NAME_ENCODING_CHARSET	"full_name_encoding_charset"
+#define DEF_FULL_NAME_ENCODING_CHARSET	"utf-8"
+extern char *var_full_name_encoding_charset;
+
+ /*
+  * Limit for the sockmap reply size
+  */
+#define VAR_SOCKMAP_MAX_REPLY  "socketmap_max_reply_size"
+#define DEF_SOCKMAP_MAX_REPLY  100000	/* reply size limit */
+extern int var_sockmap_max_reply;
+
+ /*
+  * Client privacy.
+  */
+#define VAR_SMTPD_HIDE_CLIENT_SESSION	"smtpd_hide_client_session"
+#define DEF_SMTPD_HIDE_CLIENT_SESSION	"no"
+extern int var_smtpd_hide_client_session;
+
 /* LICENSE
 /* .ad
 /* .fi
@@ -4436,6 +4525,9 @@ extern bool var_allow_srv_fallback;
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

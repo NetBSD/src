@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: bounce.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -16,36 +16,36 @@
 /*	const char *relay;
 /*	DSN	*dsn;
 /*
-/*	int	bounce_flush(flags, queue, id, encoding, smtputf8, sender,
+/*	int	bounce_flush(flags, queue, id, encoding, sendopts, sender,
 /*				dsn_envid, dsn_ret)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
-/*	int	smtputf8;
+/*	int	sendopts;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
 /*
-/*	int	bounce_flush_verp(flags, queue, id, encoding, smtputf8,
+/*	int	bounce_flush_verp(flags, queue, id, encoding, sendopts,
 /*				sender, dsn_envid, dsn_ret, verp_delims)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
-/*	int	smtputf8;
+/*	int	sendopts;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
 /*	const char *verp_delims;
 /*
-/*	int	bounce_one(flags, queue, id, encoding, smtputf8, sender,
+/*	int	bounce_one(flags, queue, id, encoding, sendopts, sender,
 /*				dsn_envid, ret, stats, recipient, relay, dsn)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
-/*	int	smtputf8;
+/*	int	sendopts;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
@@ -67,13 +67,13 @@
 /*	RECIPIENT *rcpt;
 /*	const char *relay;
 /*
-/*	int	bounce_one_intern(flags, queue, id, encoding, smtputf8, sender,
+/*	int	bounce_one_intern(flags, queue, id, encoding, sendopts, sender,
 /*				dsn_envid, ret, stats, recipient, relay, dsn)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
-/*	int	smtputf8;
+/*	int	sendopts;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
@@ -153,8 +153,8 @@
 /*	This information is used for syslogging only.
 /* .IP encoding
 /*	The body content encoding: MAIL_ATTR_ENC_{7BIT,8BIT,NONE}.
-/* .IP smtputf8
-/*	The level of SMTPUTF8 support (to be defined).
+/* .IP sendopts
+/*	Sender-requested SMTPUTF8 or RequireTLS support.
 /* .IP sender
 /*	The sender envelope address.
 /* .IP dsn_envid
@@ -193,6 +193,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -349,7 +352,7 @@ int     bounce_append_intern(int flags, const char *id, MSG_STATS *stats,
 /* bounce_flush - flush the bounce log and deliver to the sender */
 
 int     bounce_flush(int flags, const char *queue, const char *id,
-		             const char *encoding, int smtputf8,
+		             const char *encoding, int sendopts,
 		             const char *sender, const char *dsn_envid,
 		             int dsn_ret)
 {
@@ -367,7 +370,7 @@ int     bounce_flush(int flags, const char *queue, const char *id,
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 			    SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
-			    SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+			    SEND_ATTR_INT(MAIL_ATTR_SENDOPTS, sendopts),
 			    SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 			    SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
 			    SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
@@ -384,7 +387,7 @@ int     bounce_flush(int flags, const char *queue, const char *id,
 /* bounce_flush_verp - verpified notification */
 
 int     bounce_flush_verp(int flags, const char *queue, const char *id,
-			          const char *encoding, int smtputf8,
+			          const char *encoding, int sendopts,
 			          const char *sender, const char *dsn_envid,
 			          int dsn_ret, const char *verp_delims)
 {
@@ -402,7 +405,7 @@ int     bounce_flush_verp(int flags, const char *queue, const char *id,
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
 			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 			    SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
-			    SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+			    SEND_ATTR_INT(MAIL_ATTR_SENDOPTS, sendopts),
 			    SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 			    SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
 			    SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
@@ -420,7 +423,7 @@ int     bounce_flush_verp(int flags, const char *queue, const char *id,
 /* bounce_one - send notice for one recipient */
 
 int     bounce_one(int flags, const char *queue, const char *id,
-		           const char *encoding, int smtputf8,
+		           const char *encoding, int sendopts,
 		           const char *sender, const char *dsn_envid,
 		           int dsn_ret, MSG_STATS *stats, RECIPIENT *rcpt,
 		           const char *relay, DSN *dsn)
@@ -445,14 +448,14 @@ int     bounce_one(int flags, const char *queue, const char *id,
 	    return (defer_append_intern(flags, id, stats, rcpt, relay, dsn_res));
 	my_dsn = *dsn_res;
     }
-    return (bounce_one_intern(flags, queue, id, encoding, smtputf8, sender,
+    return (bounce_one_intern(flags, queue, id, encoding, sendopts, sender,
 			  dsn_envid, dsn_ret, stats, rcpt, relay, &my_dsn));
 }
 
 /* bounce_one_intern - send notice for one recipient */
 
 int     bounce_one_intern(int flags, const char *queue, const char *id,
-			          const char *encoding, int smtputf8,
+			          const char *encoding, int sendopts,
 			          const char *sender, const char *dsn_envid,
 			          int dsn_ret, MSG_STATS *stats,
 			          RECIPIENT *rcpt, const char *relay,
@@ -510,7 +513,7 @@ int     bounce_one_intern(int flags, const char *queue, const char *id,
 				SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
 				SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 				SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
-				SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+				SEND_ATTR_INT(MAIL_ATTR_SENDOPTS, sendopts),
 				SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
 			      SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
 				SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),

@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_smtpd.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: postscreen_smtpd.c,v 1.6 2025/02/25 19:15:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -876,7 +876,8 @@ static void psc_smtpd_read_event(int event, void *context)
 	    }
 
 	    /*
-	     * Bare newline test.
+	     * Bare newline test. Note: at this point, state->cmd_buffer is
+	     * not null-terminated and may contain embedded null bytes.
 	     */
 	    if (ch == '\n') {
 		if ((state->flags & PSC_STATE_MASK_BARLF_TODO_SKIP)
@@ -931,18 +932,19 @@ static void psc_smtpd_read_event(int event, void *context)
 	}
 
 	/*
-	 * Avoid complaints from Postfix maps about malformed content.
+	 * Avoid complaints from Postfix maps about malformed content. Note:
+	 * this will stop at the first null byte, just like the code that
+	 * parses the command name or command arguments.
 	 */
-#define PSC_BAD_UTF8(str, len) \
-	(var_smtputf8_enable && !valid_utf8_string((str), (len)))
+#define PSC_BAD_UTF8(str) \
+	(var_smtputf8_enable && !valid_utf8_stringz(str))
 
 	/*
 	 * Terminate the command buffer, and apply the last-resort command
 	 * editing workaround.
 	 */
 	VSTRING_TERMINATE(state->cmd_buffer);
-	if (psc_cmd_filter != 0 && !PSC_BAD_UTF8(STR(state->cmd_buffer),
-						 LEN(state->cmd_buffer))) {
+	if (psc_cmd_filter != 0 && !PSC_BAD_UTF8(STR(state->cmd_buffer))) {
 	    const char *cp;
 
 	    for (cp = STR(state->cmd_buffer); *cp && IS_SPACE_TAB(*cp); cp++)
@@ -1009,7 +1011,7 @@ static void psc_smtpd_read_event(int event, void *context)
 	if ((state->flags & PSC_STATE_MASK_NSMTP_TODO_SKIP)
 	    == PSC_STATE_FLAG_NSMTP_TODO && cmdp->name == 0
 	    && (is_header(command)
-		|| PSC_BAD_UTF8(command, strlen(command))
+		|| PSC_BAD_UTF8(command)
 	/* Ignore forbid_cmds lookup errors. Non-critical feature. */
 		|| (*var_psc_forbid_cmds
 		    && string_list_match(psc_forbid_cmds, command)))) {

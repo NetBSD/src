@@ -1,4 +1,4 @@
-/*	$NetBSD: user_acl.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: user_acl.h,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 #ifndef _USER_ACL_H_INCLUDED_
 #define _USER_ACL_H_INCLUDED_
@@ -16,8 +16,8 @@
  /*
   * System library
   */
-#include <unistd.h>		/* getuid()/geteuid() */
-#include <sys/types.h>		/* uid_t */
+#include <unistd.h>			/* getuid()/geteuid() */
+#include <sys/types.h>			/* uid_t */
 
  /*
   * Utility library.

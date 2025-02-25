@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_scan.c,v 1.4 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_scan.c,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -115,6 +115,10 @@
 #define TLS_INTERNAL
 #include <tls.h>
 #include <tls_proxy.h>
+#ifdef USE_TLSRPT
+#define TLSRPT_WRAPPER_INTERNAL
+#include <tlsrpt_wrapper.h>
+#endif
 
 #define STR(x) vstring_str(x)
 #define LEN(x) VSTRING_LEN(x)
@@ -331,6 +335,12 @@ void    tls_proxy_client_start_free(TLS_CLIENT_START_PROPS *props)
     myfree((void *) props->mdalg);
     if (props->dane)
 	tls_dane_free((TLS_DANE *) props->dane);
+#ifdef USE_TLSRPT
+    if (props->tlsrpt)
+	trw_free(props->tlsrpt);
+#endif
+    if (props->ffail_type)
+	myfree(props->ffail_type);
     myfree((void *) props);
 }
 
@@ -421,6 +431,92 @@ static int tls_proxy_client_dane_scan(ATTR_SCAN_COMMON_FN scan_fn,
     return (ret);
 }
 
+#define EXPORT_OR_NULL(str, vstr) do { \
+	if (LEN(vstr) > 0) { \
+	    (str) = vstring_export(vstr); \
+	} else { \
+	    (str) = 0; \
+	    vstring_free(vstr); \
+	} \
+    } while (0)
+
+#ifdef USE_TLSRPT
+
+/* tls_proxy_client_tlsrpt_scan - receive TLSRPT_WRAPPER from stream */
+
+static int tls_proxy_client_tlsrpt_scan(ATTR_SCAN_COMMON_FN scan_fn,
+				          VSTREAM *fp, int flags, void *ptr)
+{
+    TLSRPT_WRAPPER *trw = 0;
+    int     ret;
+    int     have_tlsrpt = 0;
+
+    ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
+		  RECV_ATTR_INT(TLS_ATTR_TLSRPT, &have_tlsrpt),
+		  ATTR_TYPE_END);
+    if (msg_verbose)
+	msg_info("tls_proxy_client_tlsrpt_scan have_tlsrpt=%d", have_tlsrpt);
+
+    if (ret == 1 && have_tlsrpt) {
+	VSTRING *rpt_socket_name = vstring_alloc(100);
+	VSTRING *rpt_policy_domain = vstring_alloc(100);
+	VSTRING *rpt_policy_string = vstring_alloc(100);
+	int     tls_policy_type;
+	ARGV   *tls_policy_strings = 0;
+	VSTRING *tls_policy_domain = vstring_alloc(100);
+	ARGV   *mx_host_patterns = 0;
+	VSTRING *snd_mta_addr = vstring_alloc(100);
+	VSTRING *rcv_mta_name = vstring_alloc(100);
+	VSTRING *rcv_mta_addr = vstring_alloc(100);
+	VSTRING *rcv_mta_ehlo = vstring_alloc(100);
+	int     skip_reused_hs;
+	int     trw_flags;
+
+	ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
+		      RECV_ATTR_STR(TRW_RPT_SOCKET_NAME, rpt_socket_name),
+		    RECV_ATTR_STR(TRW_RPT_POLICY_DOMAIN, rpt_policy_domain),
+		    RECV_ATTR_STR(TRW_RPT_POLICY_STRING, rpt_policy_string),
+		      RECV_ATTR_INT(TRW_TLS_POLICY_TYPE, &tls_policy_type),
+		      RECV_ATTR_FUNC(argv_attr_scan, &tls_policy_strings),
+		    RECV_ATTR_STR(TRW_TLS_POLICY_DOMAIN, tls_policy_domain),
+		      RECV_ATTR_FUNC(argv_attr_scan, &mx_host_patterns),
+		      RECV_ATTR_STR(TRW_SRC_MTA_ADDR, snd_mta_addr),
+		      RECV_ATTR_STR(TRW_DST_MTA_NAME, rcv_mta_name),
+		      RECV_ATTR_STR(TRW_DST_MTA_ADDR, rcv_mta_addr),
+		      RECV_ATTR_STR(TRW_DST_MTA_EHLO, rcv_mta_ehlo),
+		      RECV_ATTR_INT(TRW_SKIP_REUSED_HS, &skip_reused_hs),
+		      RECV_ATTR_INT(TRW_FLAGS, &trw_flags),
+		      ATTR_TYPE_END);
+
+	/* Always construct a well-formed structure. */
+	trw = (TLSRPT_WRAPPER *) mymalloc(sizeof(*trw));
+	trw->rpt_socket_name = vstring_export(rpt_socket_name);
+	trw->rpt_policy_domain = vstring_export(rpt_policy_domain);
+	trw->rpt_policy_string = vstring_export(rpt_policy_string);
+	trw->tls_policy_type = tls_policy_type;
+	trw->tls_policy_strings = tls_policy_strings;
+	EXPORT_OR_NULL(trw->tls_policy_domain, tls_policy_domain);
+	trw->mx_host_patterns = mx_host_patterns;
+	EXPORT_OR_NULL(trw->snd_mta_addr, snd_mta_addr);
+	EXPORT_OR_NULL(trw->rcv_mta_name, rcv_mta_name);
+	EXPORT_OR_NULL(trw->rcv_mta_addr, rcv_mta_addr);
+	EXPORT_OR_NULL(trw->rcv_mta_ehlo, rcv_mta_ehlo);
+	trw->skip_reused_hs = skip_reused_hs;
+	trw->flags = trw_flags;
+	ret = (ret == 13 ? 1 : -1);
+	if (ret != 1) {
+	    trw_free(trw);
+	    trw = 0;
+	}
+    }
+    *(TLSRPT_WRAPPER **) ptr = trw;
+    if (msg_verbose)
+	msg_info("tls_proxy_client_tlsrpt_scan ret=%d", ret);
+    return (ret);
+}
+
+#endif
+
 /* tls_proxy_client_start_scan - receive TLS_CLIENT_START_PROPS from stream */
 
 int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
@@ -439,6 +535,13 @@ int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
     VSTRING *cipher_grade = vstring_alloc(25);
     VSTRING *cipher_exclusions = vstring_alloc(25);
     VSTRING *mdalg = vstring_alloc(25);
+    VSTRING *ffail_type = vstring_alloc(25);
+
+#ifdef USE_TLSRPT
+#define EXPECT_START_SCAN_RETURN	17
+#else
+#define EXPECT_START_SCAN_RETURN	16
+#endif
 
     if (msg_verbose)
 	msg_info("begin tls_proxy_client_start_scan");
@@ -453,6 +556,7 @@ int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
     props->dane = 0;				/* scan_fn may return early */
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
 		  RECV_ATTR_INT(TLS_ATTR_TIMEOUT, &props->timeout),
+		  RECV_ATTR_INT(TLS_ATTR_ENABLE_RPK, &props->enable_rpk),
 		  RECV_ATTR_INT(TLS_ATTR_TLS_LEVEL, &props->tls_level),
 		  RECV_ATTR_STR(TLS_ATTR_NEXTHOP, nexthop),
 		  RECV_ATTR_STR(TLS_ATTR_HOST, host),
@@ -468,6 +572,11 @@ int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 		  RECV_ATTR_STR(TLS_ATTR_MDALG, mdalg),
 		  RECV_ATTR_FUNC(tls_proxy_client_dane_scan,
 				 &props->dane),
+#ifdef USE_TLSRPT
+		  RECV_ATTR_FUNC(tls_proxy_client_tlsrpt_scan,
+				 &props->tlsrpt),
+#endif
+		  RECV_ATTR_STR(TLS_ATTR_FFAIL_TYPE, ffail_type),
 		  ATTR_TYPE_END);
     /* Always construct a well-formed structure. */
     props->nexthop = vstring_export(nexthop);
@@ -480,7 +589,8 @@ int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
     props->cipher_grade = vstring_export(cipher_grade);
     props->cipher_exclusions = vstring_export(cipher_exclusions);
     props->mdalg = vstring_export(mdalg);
-    ret = (ret == 14 ? 1 : -1);
+    EXPORT_OR_NULL(props->ffail_type, ffail_type);
+    ret = (ret == EXPECT_START_SCAN_RETURN ? 1 : -1);
     if (ret != 1) {
 	tls_proxy_client_start_free(props);
 	props = 0;

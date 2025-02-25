@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.h,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_check.h,v 1.4 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,7 @@ extern char *smtpd_check_etrn(SMTPD_STATE *, char *);
 extern char *smtpd_check_data(SMTPD_STATE *);
 extern char *smtpd_check_eod(SMTPD_STATE *);
 extern char *smtpd_check_policy(SMTPD_STATE *, char *);
+extern void log_whatsup(SMTPD_STATE *, const char *, const char *);
 
 /* LICENSE
 /* .ad

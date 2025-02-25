@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_active.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: qmgr_active.c,v 1.4 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -77,6 +77,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -237,7 +240,7 @@ int     qmgr_active_feed(QMGR_SCAN *scan_info, const char *queue_id)
      */
 #define QMGR_FLUSH_AFTER	(QMGR_FLUSH_EACH | QMGR_FLUSH_DFXP)
 #define MAYBE_FLUSH_AFTER(mode) \
-	(((mode) & MAIL_QUEUE_STAT_UNTHROTTLE) ? QMGR_FLUSH_AFTER : 0) 
+	(((mode) & MAIL_QUEUE_STAT_UNTHROTTLE) ? QMGR_FLUSH_AFTER : 0)
 #define MAYBE_FORCE_EXPIRE(mode) \
 	(((mode) & MAIL_QUEUE_STAT_EXPIRE) ? QMGR_FORCE_EXPIRE : 0)
 #define MAYBE_UPDATE_MODE(mode) \
@@ -309,7 +312,7 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
 			      message->queue_name,
 			      message->queue_id,
 			      message->encoding,
-			      message->smtputf8,
+			      message->sendopts,
 			      message->sender,
 			      message->dsn_envid,
 			      message->dsn_ret,
@@ -320,7 +323,7 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
 				   message->queue_name,
 				   message->queue_id,
 				   message->encoding,
-				   message->smtputf8,
+				   message->sendopts,
 				   message->sender,
 				   message->dsn_envid,
 				   message->dsn_ret,
@@ -405,7 +408,7 @@ static void qmgr_active_done_2_generic(QMGR_MESSAGE *message)
 		     message->queue_name,
 		     message->queue_id,
 		     message->encoding,
-		     message->smtputf8,
+		     message->sendopts,
 		     message->sender,
 		     message->dsn_envid,
 		     message->dsn_ret,
@@ -467,7 +470,7 @@ static void qmgr_active_done_25_generic(QMGR_MESSAGE *message)
 			     message->queue_name,
 			     message->queue_id,
 			     message->encoding,
-			     message->smtputf8,
+			     message->sendopts,
 			     message->sender,
 			     message->dsn_envid,
 			     message->dsn_ret,
@@ -478,7 +481,7 @@ static void qmgr_active_done_25_generic(QMGR_MESSAGE *message)
 				  message->queue_name,
 				  message->queue_id,
 				  message->encoding,
-				  message->smtputf8,
+				  message->sendopts,
 				  message->sender,
 				  message->dsn_envid,
 				  message->dsn_ret,
@@ -494,7 +497,7 @@ static void qmgr_active_done_25_generic(QMGR_MESSAGE *message)
 			message->queue_name,
 			message->queue_id,
 			message->encoding,
-			message->smtputf8,
+			message->sendopts,
 			message->sender,
 			message->dsn_envid,
 			message->dsn_ret,

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_mask.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: byte_mask.c,v 1.3 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -293,7 +293,7 @@ int     main(int argc, char **argv)
 	vstream_printf("%s -> 0x%x -> %s\n",
 		       STR(in_buf), demo_mask,
 		       demo_str ? demo_str : "(null)");
-	demo_mask <<=1;
+	demo_mask <<= 1;
 	demo_str = str_byte_mask_opt(out_buf, "mask", demo_table,
 				     demo_mask, out_feature_mask);
 	vstream_printf("0x%x -> %s\n",

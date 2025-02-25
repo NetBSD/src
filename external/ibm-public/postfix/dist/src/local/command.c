@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: command.c,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,8 @@
 /*	Duplicate commands for the same recipient are suppressed.
 /*	A limited amount of information is exported via the environment:
 /*	HOME, SHELL, LOGNAME, USER, EXTENSION, DOMAIN, RECIPIENT (entire
-/*	address) LOCAL (just the local part) and SENDER. The exported
+/*	address) LOCAL (just the local part), SENDER, and ENVID
+/*	(see RFC 3461). The exported
 /*	information is censored with var_cmd_filter.
 /*
 /*	Arguments:
@@ -171,6 +172,8 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
     if (state.msg_attr.rcpt.orig_addr && state.msg_attr.rcpt.orig_addr[0])
 	argv_add(env, "ORIGINAL_RECIPIENT", state.msg_attr.rcpt.orig_addr,
 		 ARGV_END);
+    if (state.request->dsn_envid[0])
+	argv_add(env, "ENVID", state.request->dsn_envid, ARGV_END);
 
 #define EXPORT_REQUEST(name, value) \
 	if ((value)[0]) argv_add(env, (name), (value), ARGV_END);

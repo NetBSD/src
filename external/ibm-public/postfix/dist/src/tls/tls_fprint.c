@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_fprint.c,v 1.4 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls_fprint.c,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -26,7 +26,7 @@
 /*	const char *mdalg;
 /*
 /*	char	*tls_pkey_fprint(peercert, mdalg)
-/*	X509	*peercert;
+/*	EVP_PKEY *peerpkey;
 /*	const char *mdalg;
 /* DESCRIPTION
 /*	tls_digest_byname() constructs, and optionally returns, an EVP_MD_CTX
@@ -50,8 +50,6 @@
 /*
 /*	tls_pkey_fprint() returns a public-key fingerprint; in all
 /*	other respects the function behaves as tls_cert_fprint().
-/*	The var_tls_bc_pkey_fprint variable enables an incorrect
-/*	algorithm that was used in Postfix versions 2.9.[0-5].
 /*	The return value is dynamically allocated with mymalloc(),
 /*	and the caller must eventually free it with myfree().
 /*
@@ -276,6 +274,9 @@ char   *tls_serverid_digest(TLS_SESS_STATE *TLScontext,
     CHECK_OK_AND_DIGEST_CHARS(mdctx, props->protocols);
     CHECK_OK_AND_DIGEST_CHARS(mdctx, ciphers);
 
+    /* Just in case we make this destination-policy specific */
+    CHECK_OK_AND_DIGEST_OBJECT(mdctx, &props->enable_rpk);
+
     /*
      * Ensure separation of caches for sessions where DANE trust
      * configuration succeeded from those where it did not.  The latter
@@ -400,38 +401,24 @@ char   *tls_cert_fprint(X509 *peercert, const char *mdalg)
     return (result);
 }
 
-/* tls_pkey_fprint - extract public key fingerprint from certificate */
+/* tls_pkey_fprint - extract public key fingerprint */
 
-char   *tls_pkey_fprint(X509 *peercert, const char *mdalg)
+char   *tls_pkey_fprint(EVP_PKEY *peerpkey, const char *mdalg)
 {
-    if (var_tls_bc_pkey_fprint) {
-	const char *myname = "tls_pkey_fprint";
-	ASN1_BIT_STRING *key;
-	char   *result;
+    int     len;
+    unsigned char *buf;
+    unsigned char *buf2;
+    char   *result;
 
-	key = X509_get0_pubkey_bitstr(peercert);
-	if (key == 0)
-	    msg_fatal("%s: error extracting legacy public-key fingerprint: %m",
-		      myname);
+    len = i2d_PUBKEY(peerpkey, NULL);
+    buf2 = buf = mymalloc(len);
+    i2d_PUBKEY(peerpkey, &buf2);
+    if (buf2 - buf != len)
+	msg_panic("i2d_PUBKEY invalid result length");
 
-	result = tls_data_fprint(key->data, key->length, mdalg);
-	return (result);
-    } else {
-	int     len;
-	unsigned char *buf;
-	unsigned char *buf2;
-	char   *result;
-
-	len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), NULL);
-	buf2 = buf = mymalloc(len);
-	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), &buf2);
-	if (buf2 - buf != len)
-	    msg_panic("i2d_X509_PUBKEY invalid result length");
-
-	result = tls_data_fprint(buf, len, mdalg);
-	myfree(buf);
-	return (result);
-    }
+    result = tls_data_fprint(buf, len, mdalg);
+    myfree(buf);
+    return (result);
 }
 
 #endif

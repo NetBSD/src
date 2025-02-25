@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -181,10 +181,10 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
 	    if ((addr = dns_sa_to_rr(host, pref, res0->ai_addr)) == 0)
 		msg_fatal("host %s: conversion error for address family "
 			  "%d: %m", host, res0->ai_addr->sa_family);
-	    addr_list = dns_rr_append(addr_list, addr);
 	    addr->pref = pref;
 	    addr->port = port;
-	    if (msg_verbose)
+	    addr_list = dns_rr_append(addr_list, addr);
+	    if (msg_verbose && !DNS_RR_IS_TRUNCATED(addr_list))
 		msg_info("%s: using numerical host %s", myname, host);
 	    freeaddrinfo(res0);
 	    return (addr_list);
@@ -264,6 +264,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
 		    msg_fatal("host %s: conversion error for address family "
 			      "%d: %m", host, res0->ai_addr->sa_family);
 		addr_list = dns_rr_append(addr_list, addr);
+		if (DNS_RR_IS_TRUNCATED(addr_list))
+		    break;
 		if (msg_verbose) {
 		    MAI_HOSTADDR_STR hostaddr_str;
 
@@ -299,7 +301,8 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
     if (mx_names->dnssec_valid)
 	res_opt = RES_USE_DNSSEC;
 #ifdef USE_TLS
-    else if (smtp_tls_insecure_mx_policy > TLS_LEV_MAY)
+    else if (smtp_tls_insecure_mx_policy > TLS_LEV_MAY
+	     && smtp_dns_support == SMTP_DNS_DNSSEC)
 	res_opt = RES_USE_DNSSEC;
 #endif
 
@@ -329,6 +332,8 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
 	    msg_panic("smtp_addr_list: bad resource type: %d", rr->type);
 	addr_list = smtp_addr_one(addr_list, (char *) rr->data, res_opt,
 				  rr->pref, rr->port, why);
+	if (addr_list && DNS_RR_IS_TRUNCATED(addr_list))
+	    break;
     }
     return (addr_list);
 }
@@ -421,6 +426,13 @@ static DNS_RR *smtp_balance_inet_proto(DNS_RR *addr_list, int misc_flags,
      * preference than 'myself' have been eliminated. Postcondition: the
      * relative list order is unchanged, but some elements are removed.
      */
+
+    /*
+     * Ensure that dns_rr_append() won't interfere with the protocol
+     * balancing goals.
+     */
+    if (addr_limit > var_dns_rr_list_limit)
+	addr_limit = var_dns_rr_list_limit;
 
     /*
      * Count the number of IPv6 and IPv4 addresses.
@@ -858,7 +870,7 @@ DNS_RR *smtp_service_addr(const char *name, const char *service, DNS_RR **mxrr,
 
     /*
      * Only if we're not falling back.
-     */ 
+     */
     else {
 	*found_myself |= (self != 0);
     }

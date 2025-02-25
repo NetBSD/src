@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.4 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -86,6 +86,11 @@
 typedef struct {
     DICT    dict;			/* generic members */
     struct cdb cdb;			/* cdb structure */
+    VSTRING *val_buf;			/* value result */
+#ifdef TINYCDB_VERSION
+    VSTRING *key_buf;			/* key result */
+    unsigned seq_cptr;			/* current sequence pointer */
+#endif
 } DICT_CDBQ;				/* query interface */
 
 typedef struct {
@@ -95,15 +100,31 @@ typedef struct {
     char   *tmp_path;			/* temporary pathname (.tmp) */
 } DICT_CDBM;				/* rebuild interface */
 
+/* dict_cdbq_getdata - get data out of the cdb using given buffer */
+
+static const char *dict_cdbq_get_data(DICT_CDBQ *dict_cdbq,
+			         VSTRING **bufp, unsigned len, unsigned pos)
+{
+    VSTRING *buf = *bufp;
+
+    if (!buf)
+	buf = *bufp = vstring_alloc(len < 20 ? 20 : len);
+    VSTRING_RESET(buf);
+    VSTRING_SPACE(buf, len);
+
+    if (cdb_read(&dict_cdbq->cdb, vstring_str(buf), len, pos) < 0)
+	msg_fatal("error reading %s: %m", dict_cdbq->dict.name);
+    vstring_set_payload_size(buf, len);
+    VSTRING_TERMINATE(buf);
+    return vstring_str(buf);
+}
+
 /* dict_cdbq_lookup - find database entry, query mode */
 
 static const char *dict_cdbq_lookup(DICT *dict, const char *name)
 {
     DICT_CDBQ *dict_cdbq = (DICT_CDBQ *) dict;
-    unsigned vlen;
     int     status = 0;
-    static char *buf;
-    static unsigned len;
     const char *result = 0;
 
     dict->error = 0;
@@ -143,24 +164,55 @@ static const char *dict_cdbq_lookup(DICT *dict, const char *name)
 	msg_fatal("error reading %s: %m", dict->name);
 
     if (status) {
-	vlen = cdb_datalen(&dict_cdbq->cdb);
-	if (len < vlen) {
-	    if (buf == 0)
-		buf = mymalloc(vlen + 1);
-	    else
-		buf = myrealloc(buf, vlen + 1);
-	    len = vlen;
-	}
-	if (cdb_read(&dict_cdbq->cdb, buf, vlen,
-		     cdb_datapos(&dict_cdbq->cdb)) < 0)
-	    msg_fatal("error reading %s: %m", dict->name);
-	buf[vlen] = '\0';
-	result = buf;
+	result = dict_cdbq_get_data(dict_cdbq, &dict_cdbq->val_buf,
+		cdb_datalen(&dict_cdbq->cdb), cdb_datapos(&dict_cdbq->cdb));
     }
     /* No locking so not release the lock.  */
 
     return (result);
 }
+
+#ifdef TINYCDB_VERSION
+
+/* dict_cdbq_sequence - traverse the dictionary */
+
+static int dict_cdbq_sequence(DICT *dict, int function,
+			              const char **key, const char **value)
+{
+    const char *myname = "dict_cdbq_sequence";
+    DICT_CDBQ *dict_cdbq = (DICT_CDBQ *) dict;
+    int     status;
+
+    switch (function) {
+    case DICT_SEQ_FUN_FIRST:
+	cdb_seqinit(&dict_cdbq->seq_cptr, &dict_cdbq->cdb);
+	break;
+    case DICT_SEQ_FUN_NEXT:
+	if (!dict_cdbq->seq_cptr)
+	    msg_panic("%s: %s: no cursor", myname, dict_cdbq->dict.name);
+	break;
+    default:
+	msg_panic("%s: invalid function %d", myname, function);
+    }
+
+    status = cdb_seqnext(&dict_cdbq->seq_cptr, &dict_cdbq->cdb);
+
+    if (status < 0)
+	msg_fatal("error seeking %s: %m", dict_cdbq->dict.name);
+
+    if (!status) {
+	dict_cdbq->seq_cptr = 0;
+	return -1;				/* not found */
+    }
+    *key = dict_cdbq_get_data(dict_cdbq, &dict_cdbq->key_buf,
+		  cdb_keylen(&dict_cdbq->cdb), cdb_keypos(&dict_cdbq->cdb));
+    *value = dict_cdbq_get_data(dict_cdbq, &dict_cdbq->val_buf,
+		cdb_datalen(&dict_cdbq->cdb), cdb_datapos(&dict_cdbq->cdb));
+
+    return 0;
+}
+
+#endif					/* TINYCDB_VERSION */
 
 /* dict_cdbq_close - close data base, query mode */
 
@@ -172,6 +224,12 @@ static void dict_cdbq_close(DICT *dict)
     close(dict->stat_fd);
     if (dict->fold_buf)
 	vstring_free(dict->fold_buf);
+    if (dict_cdbq->val_buf)
+	vstring_free(dict_cdbq->val_buf);
+#ifdef TINYCDB_VERSION
+    if (dict_cdbq->key_buf)
+	vstring_free(dict_cdbq->key_buf);
+#endif
     dict_free(dict);
 }
 
@@ -202,9 +260,13 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
 
     dict_cdbq = (DICT_CDBQ *) dict_alloc(DICT_TYPE_CDB,
 					 cdb_path, sizeof(*dict_cdbq));
+    dict_cdbq->val_buf = 0;
 #if defined(TINYCDB_VERSION)
+    dict_cdbq->key_buf = 0;
+    dict_cdbq->seq_cptr = 0;
     if (cdb_init(&(dict_cdbq->cdb), fd) != 0)
 	msg_fatal("dict_cdbq_open: unable to init %s: %m", cdb_path);
+    dict_cdbq->dict.sequence = dict_cdbq_sequence;
 #else
     cdb_init(&(dict_cdbq->cdb), fd);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_util_tester.c,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: bounce_notify_util_tester.c,v 1.3 2025/02/25 19:15:43 christos Exp $	*/
 
  /*
   * System library.
@@ -62,7 +62,7 @@ static void test_driver(int argc, char **argv)
     if (chdir(var_queue_dir) < 0)
 	msg_fatal("chdir %s: %m", var_queue_dir);
 
-    bounce_hfrom_format = 
+    bounce_hfrom_format =
 	hfrom_format_parse(VAR_HFROM_FORMAT, var_hfrom_format);
 
     /*

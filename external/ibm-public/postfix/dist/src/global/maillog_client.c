@@ -1,4 +1,4 @@
-/*	$NetBSD: maillog_client.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: maillog_client.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -60,7 +60,7 @@
 /*	unitialized and the process environment does not specify
 /*	POSTLOG_SERVICE, the program will log to the syslog service
 /*	instead.
-/* .IP "myhostname (default: see postconf -d output)"
+/* .IP "myhostname (default: see 'postconf -d' output)"
 /*	The internet hostname of this mail system.
 /* .IP "postlog_service_name (postlog)"
 /*	The name of the internal postlog logging service.
@@ -77,6 +77,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
  /*
@@ -122,6 +125,7 @@ static int maillog_client_flags;
 static void maillog_client_logwriter_fallback(const char *text)
 {
     static int fallback_guard = 0;
+    static VSTREAM *fp;
 
     /*
      * Guard against recursive calls.
@@ -131,10 +135,20 @@ static void maillog_client_logwriter_fallback(const char *text)
      * logfile. All we can do is to hope that stderr logging will bring out
      * the bad news.
      */
-    if (fallback_guard == 0 && var_maillog_file && *var_maillog_file
-	&& logwriter_one_shot(var_maillog_file, text, strlen(text)) < 0) {
-	fallback_guard = 1;
-	msg_fatal("logfile '%s' write error: %m", var_maillog_file);
+    if (fallback_guard++ == 0 && var_maillog_file && *var_maillog_file) {
+	if (text == 0 && fp != 0) {
+	    (void) vstream_fclose(fp);
+	    fp = 0;
+	}
+	if (fp == 0) {
+	    fp = logwriter_open_or_die(var_maillog_file);
+	    close_on_exec(vstream_fileno(fp), CLOSE_ON_EXEC);
+	}
+	if (text && (logwriter_write(fp, text, strlen(text)) != 0 ||
+		     vstream_fflush(fp) != 0)) {
+	    msg_fatal("logfile '%s' write error: %m", var_maillog_file);
+	}
+	fallback_guard = 0;
     }
 }
 
@@ -240,8 +254,8 @@ void    maillog_client_init(const char *progname, int flags)
 
 	    /*
 	     * var_postlog_service == 0, therefore var_maillog_file == 0.
-	     * logger_mode == MAILLOG_CLIENT_MODE_POSTLOG && var_maillog_file ==
-	     * 0, therefore import_service_path != 0.
+	     * logger_mode == MAILLOG_CLIENT_MODE_POSTLOG && var_maillog_file
+	     * == 0, therefore import_service_path != 0.
 	     */
 	    service_path = import_service_path;
 	}

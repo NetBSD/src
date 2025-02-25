@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.6 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postfix.c,v 1.7 2025/02/25 19:15:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -39,7 +39,7 @@
 /*	when running as PID 1.
 /*	This command requires that multi-instance support is
 /*	disabled (i.e. the multi_instance_directories parameter
-/*	value must be empty). 
+/*	value must be empty).
 /*
 /*	When running Postfix inside a container, see MAILLOG_README
 /*	for logging to stdout. Postfix logs to syslog by default,
@@ -305,7 +305,7 @@
 /*
 /*	Table-driven mechanisms:
 /*	access(5), Postfix SMTP access control table
-/*	aliases(5), Postfix alias database
+/*	aliases(5), Postfix local aliasing
 /*	canonical(5), Postfix input address rewriting
 /*	generic(5), Postfix output address rewriting
 /*	header_checks(5), body_checks(5), Postfix content inspection
@@ -318,6 +318,7 @@
 /*	ldap_table(5), Postfix LDAP client
 /*	lmdb_table(5), Postfix LMDB database driver
 /*	memcache_table(5), Postfix memcache client
+/*	mongodb_table(5), Postfix MongoDB client
 /*	mysql_table(5), Postfix MYSQL client
 /*	nisplus_table(5), Postfix NIS+ client
 /*	pcre_table(5), Associate PCRE pattern with value
@@ -591,7 +592,7 @@ int     main(int argc, char **argv)
      */
     if (compat_level < compat_level_from_string(LAST_COMPAT_LEVEL, msg_panic)) {
 	msg_info("Postfix is using backwards-compatible default settings");
-	msg_info("See http://www.postfix.org/COMPATIBILITY_README.html "
+	msg_info("See https://www.postfix.org/COMPATIBILITY_README.html "
 		 "for details");
 	msg_info("To disable backwards compatibility use \"postconf "
 		 VAR_COMPAT_LEVEL "=%s\" and \"postfix reload\"",

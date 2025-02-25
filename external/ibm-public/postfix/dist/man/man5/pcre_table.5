@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcre_table.5,v 1.4 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: pcre_table.5,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH PCRE_TABLE 5 
 .ad
@@ -195,9 +195,10 @@ master.cf:
     \fB.. \-o { \fIparameter\fR \fB= .. pcre:{ { \fIrule\-1\fB }, { \fIrule\-2\fB } .. } .. } ..\fR
 .fi
 
-Postfix ignores whitespace after '{' and before '}', and
-writes each \fIrule\fR as one text line to an in\-memory
-file:
+Postfix recursively expands any \fI$parametername\fR instances
+in the above parameter value, ignores whitespace after '{'
+and before '}', and writes each \fIrule\fR as one text line to
+an in\-memory file:
 
 .nf
 in\-memory file:
@@ -207,10 +208,35 @@ in\-memory file:
 .fi
 
 Postfix parses the result as if it is a file in /etc/postfix.
-
-Note: if a rule contains \fB$\fR, specify \fB$$\fR to keep
-Postfix from trying to do \fI$name\fR expansion as it
-evaluates a parameter value.
+.SH "INLINE SPECIFICATION CAVEATS"
+.na
+.nf
+.ad
+.fi
+.IP \(bu
+When using \fI$parametername\fR inside an inlined pattern,
+use \eQ\fI$parametername\fR\eE to disable metacharacters such as
+\&'.' in the \fI$parametername\fR expansion. Otherwise, the pattern
+may have unexpected matches.
+.IP \(bu
+When an inlined rule must contain \fB$\fR, specify \fB$$\fR
+to keep Postfix from trying to do \fI$name\fR expansion as
+it evaluates a parameter value. To check an inline configuration,
+use the "\fBpostconf \-x\fR" option as shown below:
+.RS
+.IP \(bu
+When a main.cf "\fIparametername = \fI value\fR" setting contains
+an inline pcre: table, use the command "\fBpostconf \-x
+\fIparametername\fR". Verify that there are no "undefined
+parameter" warnings, and that the output has the syntax that
+one would use in a non\-inlined Postfix pcre: file.
+.IP \(bu
+When a master.cf "\fB\-o { \fIparametername = value\fB }\fR"
+override contains an inline pcre: table, use the command
+"\fBpostconf \-Px '*/*/\fIparametername\fB' \fR". Verify that there
+are no "undefined parameter" warnings, and that the output has
+the syntax that one would use in a non\-inlined Postfix pcre: file.
+.RE
 .SH "EXAMPLE SMTPD ACCESS MAP"
 .na
 .nf

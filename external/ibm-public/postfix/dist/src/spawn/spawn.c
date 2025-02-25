@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: spawn.c,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -8,17 +8,23 @@
 /* SYNOPSIS
 /*	\fBspawn\fR [generic Postfix daemon options] command_attributes...
 /* DESCRIPTION
-/*	The \fBspawn\fR(8) daemon provides the Postfix equivalent
-/*	of \fBinetd\fR.
-/*	It listens on a port as specified in the Postfix \fBmaster.cf\fR file
-/*	and spawns an external command whenever a connection is established.
-/*	The connection can be made over local IPC (such as UNIX-domain
-/*	sockets) or over non-local IPC (such as TCP sockets).
-/*	The command's standard input, output and error streams are connected
-/*	directly to the communication endpoint.
+/*	The \fBspawn\fR(8) daemon monitors a TCP or UNIX-domain stream
+/*	socket, configured in \fBmaster.cf\fR with a service type
+/*	\fBinet\fR or \fBunix\fR.
 /*
-/*	This daemon expects to be run from the \fBmaster\fR(8) process
-/*	manager.
+/*	This daemon spawns an external command whenever a connection
+/*	is established, with the standard input, output and error file
+/*	descriptors connected to the remote client.
+/*
+/*	The command process is subject to the time limit specified
+/*	with the parameter \fItransport\fR_time_limit (default:
+/*	command_time_limit) where \fItransport\fR equals the service
+/*	name field in master.cf. A process that exceeds the time limit
+/*	will receive a SIGKILL signal.
+/*
+/*	The \fBspawn\fR(8) daemon service typically has a process limit >
+/*	1 in its \fBmaster.cf\fR service definition, so that the number
+/*	of processes can scale with demand.
 /* COMMAND ATTRIBUTE SYNTAX
 /* .ad
 /* .fi
@@ -37,22 +43,27 @@
 /*	last command attribute.
 /*	The command is executed directly, i.e. without interpretation of
 /*	shell meta characters by a shell command interpreter.
-/* BUGS
-/*	In order to enforce standard Postfix process resource controls,
-/*	the \fBspawn\fR(8) daemon runs only one external command at a time.
-/*	As such, it presents a noticeable overhead by wasting precious
-/*	process resources. The \fBspawn\fR(8) daemon is expected to be
-/*	replaced by a more structural solution.
+/* .sp
+/*	If a command argument must contain whitespace, or if a command
+/*	argument must begin with "{", enclose the argument with "{" and
+/*	"}". This form will ignore whitespace after the outer "{" and
+/*	before the outer "}". Example:
+/* .sp
+/* .fi
+/*	    argv=/bin/sh -c { shell syntax here }
 /* DIAGNOSTICS
 /*	The \fBspawn\fR(8) daemon reports abnormal child exits.
 /*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8).
 /* SECURITY
 /* .fi
 /* .ad
-/*	This program needs root privilege in order to execute external
-/*	commands as the specified user. It is therefore security sensitive.
-/*	However the \fBspawn\fR(8) daemon does not talk to the external command
-/*	and thus is not vulnerable to data-driven attacks.
+/*	The \fBspawn\fR(8) daemon needs root privilege in order to
+/*	execute external commands as the specified user. It is therefore
+/*	security sensitive.
+/*
+/*	However, the \fBspawn\fR(8) daemon does not receive data from
+/*	or about service clients or external commands, and thus is not
+/*	vulnerable to data-driven attacks.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi

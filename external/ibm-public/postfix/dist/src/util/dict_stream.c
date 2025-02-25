@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_stream.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_stream.c,v 1.3 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -53,7 +53,7 @@
 /*	content as specified above.
 /* .IP st
 /*	File metadata with the file owner, or fake metadata with the
-/*	real UID and GID of the dict_stream_open() caller. This is 
+/*	real UID and GID of the dict_stream_open() caller. This is
 /*	used for "taint" tracking (zero=trusted, non-zero=untrusted).
 /* IP why
 /*	Pointer to pointer to error message storage. dict_stream_open()

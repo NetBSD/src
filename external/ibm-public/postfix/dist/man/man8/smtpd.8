@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: smtpd.8,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -359,7 +359,8 @@ the list of available
 features depends on the SASL server implementation that is selected
 with \fBsmtpd_sasl_type\fR.
 .IP "\fBsmtpd_sender_login_maps (empty)\fR"
-Optional lookup table with the SASL login names that own the sender
+Optional lookup table with the SASL login names that own the
+envelope sender
 (MAIL FROM) addresses.
 .PP
 Available in Postfix version 2.1 and later:
@@ -504,7 +505,7 @@ fingerprints or public key fingerprints (Postfix 2.9 and later) for
 \fBcheck_ccert_access\fR and \fBpermit_tls_clientcerts\fR.
 .PP
 Available in Postfix version 2.6 and later:
-.IP "\fBsmtpd_tls_protocols (see postconf -d output)\fR"
+.IP "\fBsmtpd_tls_protocols (see 'postconf -d' output)\fR"
 TLS protocols accepted by the Postfix SMTP server with opportunistic
 TLS encryption.
 .IP "\fBsmtpd_tls_ciphers (medium)\fR"
@@ -544,8 +545,8 @@ Algorithm used to encrypt RFC5077 TLS session tickets.
 .PP
 Available in Postfix version 3.2 and later:
 .IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
-The prioritized list of elliptic curves supported by the Postfix
-SMTP client and server.
+The prioritized list of elliptic curves, that should be enabled in the
+Postfix SMTP client and server.
 .PP
 Available in Postfix version 3.4 and later:
 .IP "\fBsmtpd_tls_chain_files (empty)\fR"
@@ -573,6 +574,12 @@ Optional configuration file with baseline OpenSSL settings.
 .IP "\fBtls_config_name (empty)\fR"
 The application name passed by Postfix to OpenSSL library
 initialization functions.
+.PP
+Available in Postfix version 3.9 and later:
+.IP "\fBsmtpd_tls_enable_rpk (no)\fR"
+Request that remote SMTP clients send an RFC7250 raw public key
+instead of an X.509 certificate, when asking for or requiring client
+authentication.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -586,7 +593,8 @@ Opportunistic TLS: announce STARTTLS support to remote SMTP clients,
 but do not require that clients use TLS encryption.
 .IP "\fBsmtpd_enforce_tls (no)\fR"
 Mandatory TLS: announce STARTTLS support to remote SMTP clients,
-and require that clients use TLS encryption.
+and reject all plaintext commands except HELO, EHLO, XCLIENT,
+STARTTLS, NOOP, QUIT, and (Postfix >= 3.9) HELP.
 .IP "\fBsmtpd_tls_cipherlist (empty)\fR"
 Obsolete Postfix < 2.3 control for the Postfix SMTP server TLS
 cipher list.
@@ -708,18 +716,17 @@ Parameters concerning known/unknown local recipients:
 The list of domains that are delivered via the $local_transport
 mail delivery transport.
 .IP "\fBinet_interfaces (all)\fR"
-The local network interface addresses that this mail system receives
-mail on.
+The local network interface addresses that this mail system
+receives mail on.
 .IP "\fBproxy_interfaces (empty)\fR"
 The remote network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
-.IP "\fBinet_protocols (see 'postconf -d output')\fR"
+.IP "\fBinet_protocols (see 'postconf -d' output)\fR"
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBlocal_recipient_maps (proxy:unix:passwd.byname $alias_maps)\fR"
-Lookup tables with all names or addresses of local recipients:
-a recipient address is local when its domain matches $mydestination,
-$inet_interfaces or $proxy_interfaces.
+Lookup tables with all names or addresses of valid local
+recipients.
 .IP "\fBunknown_local_recipient_reject_code (550)\fR"
 The numerical Postfix SMTP server response code when a recipient
 address is local, and $local_recipient_maps specifies a list of
@@ -744,8 +751,11 @@ Postfix is the final destination for the specified list of virtual
 alias domains, that is, domains for which all addresses are aliased
 to addresses in other local or remote domains.
 .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
-Optional lookup tables that alias specific mail addresses or domains
-to other local or remote addresses.
+Optional lookup tables that are often searched with a full email
+address (including domain) and that apply to all recipients: \fBlocal\fR(8),
+virtual, and remote; this is unlike alias_maps that are only searched
+with an email address localpart (no domain) and that apply
+only to \fBlocal\fR(8) recipients.
 .IP "\fBunknown_virtual_alias_reject_code (550)\fR"
 The Postfix SMTP server reply code when a recipient address matches
 $virtual_alias_domains, and $virtual_alias_maps specifies a list
@@ -865,13 +875,18 @@ Disconnect remote SMTP clients that violate RFC 2920 (or 5321)
 command pipelining constraints.
 .PP
 Available in Postfix 3.9, 3.8.4, 3.7.9, 3.6.13, 3.5.23 and later:
-.IP "\fBsmtpd_forbid_bare_newline (Postfix < 3.9: no)\fR"
-Reply with "Error: bare <LF> received" and disconnect
-when a remote SMTP client sends a line ending in <LF>, violating
-the RFC 5321 requirement that lines must end in <CR><LF>.
+.IP "\fBsmtpd_forbid_bare_newline (Postfix >= 3.9: normalize)\fR"
+Reject or restrict input lines from an SMTP client that end in
+<LF> instead of the standard <CR><LF>.
 .IP "\fBsmtpd_forbid_bare_newline_exclusions ($mynetworks)\fR"
 Exclude the specified clients from smtpd_forbid_bare_newline
 enforcement.
+.PP
+Available in Postfix 3.9, 3.8.5, 3.7.10, 3.6.14, 3.5.24 and
+later:
+.IP "\fBsmtpd_forbid_bare_newline_reject_code (550)\fR"
+The numerical Postfix SMTP server response code when rejecting a
+request with "smtpd_forbid_bare_newline = reject".
 .SH "TARPIT CONTROLS"
 .na
 .nf
@@ -1127,7 +1142,7 @@ The numerical Postfix SMTP server response code when a remote SMTP
 client request is blocked by the reject_multi_recipient_bounce
 restriction.
 .IP "\fBrbl_reply_maps (empty)\fR"
-Optional lookup tables with RBL response templates.
+Optional lookup tables with RBL or RHSBL response templates.
 .PP
 Available in Postfix version 2.6 and later:
 .IP "\fBaccess_map_defer_code (450)\fR"
@@ -1219,6 +1234,11 @@ Available in Postfix 3.4 and later:
 .IP "\fBsmtpd_reject_footer_maps (empty)\fR"
 Lookup tables, indexed by the complete Postfix SMTP server 4xx or
 5xx response, with reject footer templates.
+.PP
+Available in Postfix 3.10 and later:
+.IP "\fBsmtpd_hide_client_session (no)\fR"
+Do not include SMTP client session information in the Postfix
+SMTP server's Received: message header.
 .SH "SEE ALSO"
 .na
 .nf
@@ -1273,6 +1293,9 @@ Wietse Venema
 Google, Inc.
 111 8th Avenue
 New York, NY 10011, USA
+
+Wietse Venema
+porcupine.org
 
 SASL support originally by:
 Till Franke

@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_log.h,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
+/*	$NetBSD: bounce_log.h,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _BOUNCE_LOG_H_INCLUDED_
 #define _BOUNCE_LOG_H_INCLUDED_

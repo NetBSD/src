@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_utf8_string.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: valid_utf8_string.c,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -11,24 +11,24 @@
 /*	int	valid_utf8_string(str, len)
 /*	const char *str;
 /*	ssize_t	len;
+/*
+/*	int	valid_utf8_stringz(str)
+/*	const char *str;
+/*	ssize_t	len;
 /* DESCRIPTION
-/*	valid_utf8_string() determines if a string satisfies the UTF-8
-/*	definition in RFC 3629. That is, it contains proper encodings
-/*	of code points U+0000..U+10FFFF, excluding over-long encodings
-/*	and excluding U+D800..U+DFFF surrogates.
+/*	valid_utf8_string() determines if all bytes in a string
+/*	satisfy parse_utf8_char(3h) checks. See there for any
+/*	implementation limitations.
+/*
+/*	valid_utf8_stringz() determines the same for zero-terminated
+/*	strings.
 /*
 /*	A zero-length string is considered valid.
 /* DIAGNOSTICS
 /*	The result value is zero when the caller specifies a negative
-/*	length, or a string that violates RFC 3629, for example a
-/*	string that is truncated in the middle of a multi-byte
-/*	sequence.
-/* BUGS
-/*	But wait, there is more. Code points in the range U+FDD0..U+FDEF
-/*	and ending in FFFE or FFFF are non-characters in UNICODE. This
-/*	function does not block these.
+/*	length, or a string that does not pass parse_utf8_char(3h) checks.
 /* SEE ALSO
-/*	RFC 3629
+/*	parse_utf8_char(3h), parse one UTF-8 multibyte character
 /* LICENSE
 /* .ad
 /* .fi
@@ -38,6 +38,10 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
+/*	Amawalk, NY 10501, USA
 /*--*/
 
 /* System library. */
@@ -47,66 +51,50 @@
 /* Utility library. */
 
 #include <stringops.h>
+#include <parse_utf8_char.h>
 
 /* valid_utf8_string - validate string according to RFC 3629 */
 
 int     valid_utf8_string(const char *str, ssize_t len)
 {
-    const unsigned char *end = (const unsigned char *) str + len;
-    const unsigned char *cp;
-    unsigned char c0, ch;
+    const char *ep = str + len;
+    const char *cp;
+    const char *last;
 
     if (len < 0)
 	return (0);
-    if (len <= 0)
+    if (len == 0)
 	return (1);
 
     /*
-     * Optimized for correct input, time, space, and for CPUs that have a
-     * decent number of registers.
+     * Ideally, the compiler will inline parse_utf8_char().
      */
-    for (cp = (const unsigned char *) str; cp < end; cp++) {
-	/* Single-byte encodings. */
-	if (EXPECTED((c0 = *cp) <= 0x7f) /* we know that c0 >= 0x0 */ ) {
-	     /* void */ ;
-	}
-	/* Two-byte encodings. */
-	else if (EXPECTED(c0 <= 0xdf) /* we know that c0 >= 0x80 */ ) {
-	    /* Exclude over-long encodings. */
-	    if (UNEXPECTED(c0 < 0xc2)
-		|| UNEXPECTED(cp + 1 >= end)
-	    /* Require UTF-8 tail byte. */
-		|| UNEXPECTED(((ch = *++cp) & 0xc0) != 0x80))
-		return (0);
-	}
-	/* Three-byte encodings. */
-	else if (EXPECTED(c0 <= 0xef) /* we know that c0 >= 0xe0 */ ) {
-	    if (UNEXPECTED(cp + 2 >= end)
-	    /* Exclude over-long encodings. */
-		|| UNEXPECTED((ch = *++cp) < (c0 == 0xe0 ? 0xa0 : 0x80))
-	    /* Exclude U+D800..U+DFFF. */
-		|| UNEXPECTED(ch > (c0 == 0xed ? 0x9f : 0xbf))
-	    /* Require UTF-8 tail byte. */
-		|| UNEXPECTED(((ch = *++cp) & 0xc0) != 0x80))
-		return (0);
-	}
-	/* Four-byte encodings. */
-	else if (EXPECTED(c0 <= 0xf4) /* we know that c0 >= 0xf0 */ ) {
-	    if (UNEXPECTED(cp + 3 >= end)
-	    /* Exclude over-long encodings. */
-		|| UNEXPECTED((ch = *++cp) < (c0 == 0xf0 ? 0x90 : 0x80))
-	    /* Exclude code points above U+10FFFF. */
-		|| UNEXPECTED(ch > (c0 == 0xf4 ? 0x8f : 0xbf))
-	    /* Require UTF-8 tail byte. */
-		|| UNEXPECTED(((ch = *++cp) & 0xc0) != 0x80)
-	    /* Require UTF-8 tail byte. */
-		|| UNEXPECTED(((ch = *++cp) & 0xc0) != 0x80))
-		return (0);
-	}
-	/* Invalid: c0 >= 0xf5 */
-	else {
+    for (cp = str; cp < ep; cp++) {
+	if ((last = parse_utf8_char(cp, ep)) != 0)
+	    cp = last;
+	else
 	    return (0);
-	}
+    }
+    return (1);
+}
+
+/* valid_utf8_stringz - validate string according to RFC 3629 */
+
+int     valid_utf8_stringz(const char *str)
+{
+    const char *cp;
+    const char *last;
+
+    /*
+     * Ideally, the compiler will inline parse_utf8_char(), propagate the
+     * null pointer constant value, and eliminate code branches that test
+     * whether 0 != 0.
+     */
+    for (cp = str; *cp; cp++) {
+	if ((last = parse_utf8_char(cp, 0)) != 0)
+	    cp = last;
+	else
+	    return (0);
     }
     return (1);
 }
@@ -116,26 +104,139 @@ int     valid_utf8_string(const char *str, ssize_t len)
   */
 #ifdef TEST
 #include <stdlib.h>
+#include <string.h>
+#include <msg.h>
 #include <vstream.h>
-#include <vstring.h>
-#include <vstring_vstream.h>
+#include <msg_vstream.h>
 
-#define STR(x) vstring_str(x)
-#define LEN(x) VSTRING_LEN(x)
+ /*
+  * Test cases for 1-, 2-, and 3-byte encodings. See printable.c for UTF8
+  * parser resychronization tests.
+  * 
+  * XXX Need a test for 4-byte encodings, preferably with strings that can be
+  * displayed.
+  * 
+  * XXX Need tests with hand-crafted over-long encodings and surrogates.
+  */
+struct testcase {
+    const char *name;
+    const char *input;
+    int     expected;
+};
 
-int     main(void)
+#define T_VALID		(1)
+#define T_INVALID	(0)
+#define valid_to_str(v)	((v) ? "VALID" : "INVALID")
+
+static const struct testcase testcases[] = {
+    {"Printable ASCII",
+	"printable", T_VALID,
+    },
+    {"Latin script, accented, no error",
+	"na\303\257ve", T_VALID,
+    },
+    {"Latin script, accented, missing non-leading byte",
+	"na\303ve", T_INVALID,
+    },
+    {"Latin script, accented, missing leading byte",
+	"na\257ve", T_INVALID,
+    },
+    {"Viktor, Cyrillic, no error",
+	"\320\262\320\270\320\272\321\202\320\276\321\200", T_VALID,
+    },
+    {"Viktor, Cyrillic, missing non-leading byte",
+	"\320\262\320\320\272\321\202\320\276\321\200", T_INVALID,
+    },
+    {"Viktor, Cyrillic, missing leading byte",
+	"\320\262\270\320\272\321\202\320\276\321\200", T_INVALID,
+    },
+    {"Viktor, Cyrillic, truncated",
+	"\320\262\320\270\320\272\321\202\320\276\321", T_INVALID,
+    },
+    {"Viktor, Hebrew, no error",
+	"\327\225\327\231\327\247\327\230\327\225\326\274\327\250", T_VALID,
+    },
+    {"Viktor, Hebrew, missing leading byte",
+	"\327\225\231\327\247\327\230\327\225\326\274\327\250", T_INVALID,
+    },
+    {"Chinese (Simplified), no error",
+	"\344\270\255\345\233\275\344\272\222\350\201\224\347\275\221\347"
+	"\273\234\345\217\221\345\261\225\347\212\266\345\206\265\347\273"
+	"\237\350\256\241\346\212\245\345\221\212", T_VALID,
+    },
+    {"Chinese (Simplified), missing leading byte",
+	"\344\270\255\345\233\275\344\272\222\350\201\224\275\221\347"
+	"\273\234\345\217\221\345\261\225\347\212\266\345\206\265\347\273"
+	"\237\350\256\241\346\212\245\345\221\212", T_INVALID,
+    },
+    {"Chinese (Simplified), missing first non-leading byte",
+	"\344\270\255\345\233\275\344\272\222\350\201\224\347\221\347"
+	"\273\234\345\217\221\345\261\225\347\212\266\345\206\265\347\273"
+	"\237\350\256\241\346\212\245\345\221\212", T_INVALID,
+    },
+    {"Chinese (Simplified), missing second non-leading byte",
+	"\344\270\255\345\233\275\344\272\222\350\201\224\347\275\347"
+	"\273\234\345\217\221\345\261\225\347\212\266\345\206\265\347\273"
+	"\237\350\256\241\346\212\245\345\221\212", T_INVALID,
+    },
+    {"Chinese (Simplified), truncated",
+	"\344\270\255\345\233\275\344\272\222\350\201\224\347\275\221\347"
+	"\273\234\345\217\221\345\261\225\347\212\266\345\206\265\347\273"
+	"\237\350\256\241\346\212\245\345", T_INVALID,
+    },
+};
+
+int     main(int argc, char **argv)
 {
-    VSTRING *buf = vstring_alloc(1);
+    const struct testcase *tp;
+    int     pass;
+    int     fail;
 
-    while (vstring_get_nonl(buf, VSTREAM_IN) != VSTREAM_EOF) {
-	vstream_printf("%c", (LEN(buf) && !valid_utf8_string(STR(buf), LEN(buf))) ?
-		       '!' : ' ');
-	vstream_fwrite(VSTREAM_OUT, STR(buf), LEN(buf));
-	vstream_printf("\n");
+#define NUM_TESTS       sizeof(testcases)/sizeof(testcases[0])
+
+    msg_vstream_init(basename(argv[0]), VSTREAM_ERR);
+    util_utf8_enable = 1;
+
+    for (pass = fail = 0, tp = testcases; tp < testcases + NUM_TESTS; tp++) {
+	int     actual_l;
+	int     actual_z;
+	int     ok = 0;
+
+	/*
+	 * Notes:
+	 * 
+	 * - The msg(3) functions use printable() which interferes when logging
+	 * inputs and outputs. Use vstream_fprintf() instead.
+	 */
+	vstream_fprintf(VSTREAM_ERR, "RUN  %s\n", tp->name);
+	actual_l = valid_utf8_string(tp->input, strlen(tp->input));
+	actual_z = valid_utf8_stringz(tp->input);
+
+	if (actual_l != tp->expected) {
+	    vstream_fprintf(VSTREAM_ERR,
+			  "input: >%s<, 'actual_l' got: >%s<, want: >%s<\n",
+			    tp->input, valid_to_str(actual_l),
+			    valid_to_str(tp->expected));
+	} else if (actual_z != tp->expected) {
+	    vstream_fprintf(VSTREAM_ERR,
+			  "input: >%s<, 'actual_z' got: >%s<, want: >%s<\n",
+			    tp->input, valid_to_str(actual_z),
+			    valid_to_str(tp->expected));
+	} else {
+	    vstream_fprintf(VSTREAM_ERR, "input: >%s<, got and want: >%s<\n",
+			    tp->input, valid_to_str(actual_l));
+	    ok = 1;
+	}
+	if (ok) {
+	    vstream_fprintf(VSTREAM_ERR, "PASS %s\n", tp->name);
+	    pass++;
+	} else {
+	    vstream_fprintf(VSTREAM_ERR, "FAIL %s\n", tp->name);
+	    fail++;
+	}
     }
-    vstream_fflush(VSTREAM_OUT);
-    vstring_free(buf);
-    exit(0);
+    msg_info("PASS=%d FAIL=%d", pass, fail);
+    return (fail > 0);
 }
 
 #endif

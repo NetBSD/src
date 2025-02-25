@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: mac_expand.h,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _MAC_EXPAND_H_INCLUDED_
 #define _MAC_EXPAND_H_INCLUDED_
@@ -47,7 +47,7 @@ typedef enum MAC_EXP_OP_RES {
     MAC_EXP_OP_RES_TRUE,
     MAC_EXP_OP_RES_FALSE,
     MAC_EXP_OP_RES_ERROR,
-} MAC_EXP_OP_RES;
+}       MAC_EXP_OP_RES;
 
 
 extern MAC_EXP_OP_RES mac_exp_op_res_bool[2];
@@ -59,7 +59,7 @@ extern MAC_EXP_OP_RES mac_exp_op_res_bool[2];
 #define MAC_EXP_MODE_USE	(1)
 
 typedef const char *(*MAC_EXP_LOOKUP_FN) (const char *, int, void *);
-typedef MAC_EXP_OP_RES (*MAC_EXPAND_RELOP_FN) (const char *, int, const char *);
+typedef MAC_EXP_OP_RES(*MAC_EXPAND_RELOP_FN) (const char *, int, const char *);
 
 extern int mac_expand(VSTRING *, const char *, int, const char *, MAC_EXP_LOOKUP_FN, void *);
 void    mac_expand_add_relop(int *, const char *, MAC_EXPAND_RELOP_FN);

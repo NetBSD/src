@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.8 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.9 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -86,6 +86,12 @@
 /*	All name results are validated by \fIvalid_hostname\fR();
 /*	an invalid name is reported as a DNS_INVAL result, while
 /*	malformed replies are reported as transient errors.
+/*
+/*	Note: in dns_lookup*() results and queries, a name may start
+/*	with a "*" label, which is valid according to RFC 1034
+/*	section 4.3.3. Such a name will not pass valid_hostname()
+/*	checks in the rest of Postfix, because it is not a valid
+/*	host or domain name.
 /*
 /*	dns_get_h_errno() returns the last error. This deprecates
 /*	usage of the global h_errno variable. We should not rely
@@ -302,7 +308,7 @@ typedef struct DNS_REPLY {
 
  /*
   * Use the threadsafe resolver API if available, not because it is
-  * theadsafe, but because it has more functionality.
+  * threadsafe, but because it has more functionality.
   */
 #ifdef USE_RES_NCALLS
 static struct __res_state dns_res_state;
@@ -741,6 +747,7 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 		              DNS_FIXED *fixed)
 {
     char    temp[DNS_NAME_LEN];
+    char    ltemp[USHRT_MAX];
     char   *tempbuf = temp;
     UINT32_TYPE soa_buf[5];
     int     comp_len;
@@ -750,6 +757,7 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
     unsigned port = 0;
     unsigned char *src;
     unsigned char *dst;
+    int     frag_len;
     int     ch;
 
 #define MIN2(a, b)	((unsigned)(a) < (unsigned)(b) ? (a) : (b))
@@ -822,17 +830,28 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 #endif
 
 	/*
-	 * We impose the same length limit here as for DNS names. However,
-	 * see T_TLSA discussion below.
+	 * Impose the maximum length (65536) limit for TXT records.
 	 */
     case T_TXT:
-	data_len = MIN2(pos[0] + 1, MIN2(fixed->length + 1, sizeof(temp)));
-	for (src = pos + 1, dst = (unsigned char *) (temp);
-	     dst < (unsigned char *) (temp) + data_len - 1; /* */ ) {
-	    ch = *src++;
-	    *dst++ = (ISPRINT(ch) ? ch : ' ');
+	for (src = pos, dst = (unsigned char *) ltemp;
+	     src < pos + fixed->length; /* */ ) {
+	    frag_len = *src++;
+	    if (msg_verbose)
+		msg_info("frag_len=%d text=\"%.*s\"",
+			 (int) frag_len, (int) frag_len, (char *) src);
+	    if (frag_len > reply->end - src
+	    || frag_len >= ((unsigned char *) ltemp + sizeof(ltemp)) - dst) {
+		msg_warn("extract_answer: bad TXT string length: %d", frag_len);
+		return (DNS_RETRY);
+	    }
+	    while (frag_len-- > 0) {
+		ch = *src++;
+		*dst++ = (ISPRINT(ch) ? ch : ' ');
+	    }
 	}
-	*dst = 0;
+	*dst++ = 0;
+	tempbuf = ltemp;
+	data_len = dst - (unsigned char *) tempbuf;
 	break;
 
 	/*
@@ -980,6 +999,8 @@ static int dns_get_answer(const char *orig_name, DNS_REPLY *reply, int type,
 		    resource_found++;
 		    rr->dnssec_valid = *maybe_secure ? reply->dnssec_ad : 0;
 		    *rrlist = dns_rr_append(*rrlist, rr);
+		    if (DNS_RR_IS_TRUNCATED(*rrlist))
+			break;
 		} else if (status == DNS_NULLMX || status == DNS_NULLSRV) {
 		    CORRUPT(status);		/* TODO: use better name */
 		} else if (not_found_status != DNS_RETRY)
@@ -1210,8 +1231,11 @@ int     dns_lookup_rl(const char *name, unsigned flags, DNS_RR **rrlist,
 		     name, dns_strtype(type), dns_str_resflags(flags));
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
-	if (rrlist && rr)
+	if (rrlist && rr) {
 	    *rrlist = dns_rr_append(*rrlist, rr);
+	    if (DNS_RR_IS_TRUNCATED(*rrlist))
+		break;
+	}
 	if (status == DNS_OK) {
 	    if (lflags & DNS_REQ_FLAG_STOP_OK)
 		break;
@@ -1262,8 +1286,11 @@ int     dns_lookup_rv(const char *name, unsigned flags, DNS_RR **rrlist,
 		     name, dns_strtype(type), dns_str_resflags(flags));
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
-	if (rrlist && rr)
+	if (rrlist && rr) {
 	    *rrlist = dns_rr_append(*rrlist, rr);
+	    if (DNS_RR_IS_TRUNCATED(*rrlist))
+		break;
+	}
 	if (status == DNS_OK) {
 	    if (lflags & DNS_REQ_FLAG_STOP_OK)
 		break;

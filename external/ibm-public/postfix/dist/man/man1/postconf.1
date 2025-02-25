@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: postconf.1,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -14,7 +14,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging main.cf:\fR
 
-\fBpostconf\fR [\fB\-dfhHnopvx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR [\fB\-dfhHnopqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fB\-C \fIclass,...\fR] [\fIparameter ...\fR]
 
 \fBpostconf\fR [\fB\-epv\fR] [\fB\-c \fIconfig_dir\fR]
@@ -29,7 +29,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service entries:\fR
 
-\fBpostconf\fR \fB\-M\fR [\fB\-fovx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-M\fR [\fB\-foqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR]\fI ...\fR]
 
 \fBpostconf\fR \fB\-M\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -44,7 +44,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service fields:\fR
 
-\fBpostconf\fR \fB\-F\fR [\fB\-fhHovx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-F\fR [\fB\-fhHoqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR[\fB/\fIfield\fR]]\fI ...\fR]
 
 \fBpostconf\fR \fB\-F\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -53,7 +53,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service parameters:\fR
 
-\fBpostconf\fR \fB\-P\fR [\fB\-fhHovx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-P\fR [\fB\-fhHoqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR[\fB/\fIparameter\fR]]\fI ...\fR]
 
 \fBpostconf\fR \fB\-P\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -301,6 +301,11 @@ Memcache database client. This is described in
 \fBmemcache_table\fR(5).
 
 This feature is available with Postfix 2.9 and later.
+.IP "\fBmongodb\fR"
+MongoDB database client. This is described in
+\fBmongodb_table\fR(5).
+
+This feature is available with Postfix 3.9 and later.
 .IP "\fBmysql\fR (read\-only)"
 MySQL database client.  Available on systems with support
 for MySQL databases.  This is described in \fBmysql_table\fR(5).
@@ -460,6 +465,10 @@ service type fields that are omitted will be handled as "*"
 wildcard fields.
 
 This feature is available with Postfix 2.11 and later.
+.IP \fB\-q\fR
+Do not log warnings for deprecated or unused parameters.
+
+This feature is available with Postfix 3.9 and later.
 .IP "\fB\-t\fR [\fItemplate_file\fR]"
 Display the templates for text that appears at the beginning
 of delivery status notification (DSN) messages, without

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.5 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -135,10 +135,8 @@ extern NORETURN trigger_server_main(int, char **, TRIGGER_SERVER_FN,...);
  /*
   * dgram_server.c
   */
-typedef void (*DGRAM_SERVER_FN) (char *, ssize_t, char *, char **);
+typedef void (*DGRAM_SERVER_FN) (int, char *, char **);
 extern NORETURN dgram_server_main(int, char **, DGRAM_SERVER_FN,...);
-
-#define DGRAM_BUF_SIZE	4096
 
 /* LICENSE
 /* .ad
@@ -154,4 +152,7 @@ extern NORETURN dgram_server_main(int, char **, DGRAM_SERVER_FN,...);
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/

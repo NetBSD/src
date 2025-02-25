@@ -1,4 +1,4 @@
-.\"	$NetBSD: pgsql_table.5,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: pgsql_table.5,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH PGSQL_TABLE 5 
 .ad
@@ -57,22 +57,37 @@ return the key itself or a constant value.
 .fi
 .IP "\fBhosts\fR"
 The hosts that Postfix will try to connect to and query
-from. Besides a \fBpostgresql://\fR connection URI, this
+from. Besides a PostgreSQL connection URI, this
 setting supports the historical forms \fBunix:/\fIpathname\fR
 for UNIX\-domain sockets and \fBinet:\fIhost:port\fR for TCP
 connections, where the \fBunix:\fR and \fBinet:\fR prefixes
 are accepted and ignored for backwards compatibility.
 Examples:
 .nf
-    hosts = postgresql://username@example.com/tablename?sslmode=require
+    hosts = postgresql://username@example.com/\fIdatabasename\fR?sslmode=require
+    hosts = postgres://user:secret@localhost
     hosts = inet:host1.some.domain inet:host2.some.domain:port
     hosts = host1.some.domain host2.some.domain:port
     hosts = unix:/file/name
 .fi
 
+See https://www.postgresql.org/docs/current/libpq\-connect.html
+for the supported connection URI syntax.
+
 The hosts are tried in random order. The connections are
 automatically closed after being idle for about 1 minute,
-and are re\-opened as necessary.
+and are re\-opened as necessary. See \fBidle_interval\fR
+for details.
+
+NOTE: if the \fBhosts\fR setting specifies a PostgreSQL connection
+URI, the Postfix PostgreSQL client will ignore the \fBdbname\fR,
+\fBuser\fR, and \fBpassword\fR settings for that connection.
+
+NOTE: if the \fBhosts\fR setting specifies one server, this client
+assumes that the target is a load balancer and will reconnect
+immediately after a single failure, instead of failing all
+requests temporarily. With older versions of this client,
+specify the same server twice.
 .IP "\fBuser\fR"
 .IP "\fBpassword\fR"
 The user name and password to log into the pgsql server.
@@ -81,21 +96,48 @@ Example:
     user = someone
     password = some_password
 .fi
+.sp
+The \fBuser\fR and \fBpassword\fR settings are ignored for
+\fBhosts\fR connections that are specified as an URI.
 .IP "\fBdbname\fR"
 The database name on the servers. Example:
 .nf
     dbname = customer_database
 .fi
+.sp
+The \fBdbname\fR setting is ignored for \fBhosts\fR connections
+that are specified as an URI.
+
+The \fBdbname\fR setting is required with Postfix 3.10 and later,
+when \fBhosts\fR specifies any non\-URI connection; it is always
+required with earlier Postfix versions.
 .IP "\fBencoding\fR"
 The encoding used by the database client. The default setting
 is:
 .nf
     encoding = UTF8
 .fi
+
 Historically, the database client was hard coded to use
 LATIN1 in an attempt to disable multibyte character support.
 
 This feature is available in Postfix 3.8 and later.
+.IP "\fBidle_interval (default: 60)\fR"
+The number of seconds after which an idle database connection
+will be closed.
+
+This feature is available in Postfix 3.9 and later.
+.IP "\fBretry_interval (default: 60)\fR"
+The number of seconds that a database connection will be
+skipped after an error.
+
+NOTE: if the \fBhosts\fR setting specifies one server, this client
+assumes that the target is a load balancer and will reconnect
+immediately after a single failure, instead of failing all
+requests temporarily. With older versions of this client,
+specify the same server twice.
+
+This feature is available in Postfix 3.9 and later.
 .IP "\fBquery\fR"
 The SQL query template used to search the database, where \fB%s\fR
 is a substitute for the address Postfix is trying to resolve,

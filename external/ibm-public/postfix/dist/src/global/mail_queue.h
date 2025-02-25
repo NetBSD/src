@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -95,7 +95,7 @@ extern int mail_queue_id_ok(const char *);
   * - the inode number (base 51 encoded so that it contains no 'z').
   */
 #define MQID_LG_SEC_BASE	52	/* seconds safe alphabet base */
-#define MQID_LG_SEC_PAD	6	/* seconds minimum field width */
+#define MQID_LG_SEC_PAD	6		/* seconds minimum field width */
 #define MQID_LG_USEC_BASE	52	/* microseconds safe alphabet base */
 #define MQID_LG_USEC_PAD	4	/* microseconds exact field width */
 #define MQID_LG_TIME_PAD	(MQID_LG_SEC_PAD + MQID_LG_USEC_PAD)

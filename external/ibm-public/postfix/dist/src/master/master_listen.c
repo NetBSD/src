@@ -1,4 +1,4 @@
-/*	$NetBSD: master_listen.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_listen.c,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -155,7 +155,7 @@ void    master_listen_init(MASTER_SERV *serv)
 	set_eugid(var_owner_uid, var_owner_gid);
 	serv->listen_fd[0] =
 	    LOCAL_LISTEN(serv->name, serv->max_proc > var_proc_limit ?
-			serv->max_proc : var_proc_limit, NON_BLOCKING);
+			 serv->max_proc : var_proc_limit, NON_BLOCKING);
 	close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
 	set_ugid(getuid(), getgid());
 	break;

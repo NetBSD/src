@@ -1,4 +1,4 @@
-/*	$NetBSD: dup2_pass_on_exec.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dup2_pass_on_exec.c,v 1.3 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -51,14 +51,14 @@ int     main(int unused_argc, char **unused_argv)
     DO((res = fcntl(3, F_GETFD, 0)));
     if (res & 1)
 	printf(
-"Yes, a newly dup2()ed file-descriptor has the close-on-exec \
+	       "Yes, a newly dup2()ed file-descriptor has the close-on-exec \
 flag cloned.\n\
 THIS VIOLATES Posix1003.1 section 6.2.1.2 or 6.5.2.2!\n\
 You should #define DUP2_DUPS_CLOSE_ON_EXEC in sys_defs.h \
 for your OS.\n");
     else
 	printf(
-"No, a newly dup2()ed file-descriptor has the close-on-exec \
+	       "No, a newly dup2()ed file-descriptor has the close-on-exec \
 flag cleared.\n\
 This complies with Posix1003.1 section 6.2.1.2 and 6.5.2.2!\n");
 

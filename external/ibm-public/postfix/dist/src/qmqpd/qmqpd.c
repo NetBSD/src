@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.5 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@
 /*	Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 /* .IP "\fBsmtputf8_enable (yes)\fR"
 /*	Enable preliminary SMTPUTF8 support for the protocols described
-/*	in RFC 6531..6533.
+/*	in RFC 6531, RFC 6532, and RFC 6533.
 /* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 /*	Detect that a message requires SMTPUTF8 support for the specified
 /*	mail origin classes.
@@ -147,7 +147,7 @@
 /* .IP "\fBservice_name (read-only)\fR"
 /*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
-/*	http://cr.yp.to/proto/qmqp.html, QMQP protocol
+/*	https://cr.yp.to/proto/qmqp.html, QMQP protocol
 /*	cleanup(8), message canonicalization
 /*	master(8), process manager
 /*	postlogd(8), Postfix logging
@@ -273,6 +273,7 @@ static void qmqpd_open_file(QMQPD_STATE *state)
     cleanup_flags = input_transp_cleanup(CLEANUP_FLAG_MASK_EXTERNAL,
 					 qmqpd_input_transp_mask);
     cleanup_flags |= smtputf8_autodetect(MAIL_SRC_MASK_QMQPD);
+    /* TODO(wietse) REQUIRETLS? */
     state->dest = mail_stream_service(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (state->dest == 0
 	|| attr_print(state->dest->stream, ATTR_FLAG_NONE,

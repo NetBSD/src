@@ -1,16 +1,18 @@
-.\"	$NetBSD: smtp.8,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: smtp.8,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH SMTP 8 
 .ad
 .fi
 .SH NAME
-smtp
+smtp, lmtp
 \-
 Postfix SMTP+LMTP client
 .SH "SYNOPSIS"
 .na
 .nf
 \fBsmtp\fR [generic Postfix daemon options] [flags=DORX]
+
+\fBlmtp\fR [generic Postfix daemon options] [flags=DORX]
 .SH DESCRIPTION
 .ad
 .fi
@@ -19,7 +21,9 @@ delivery protocols. It processes message delivery requests from
 the queue manager. Each request specifies a queue file, a sender
 address, a domain or host to deliver to, and recipient information.
 This program expects to be run from the \fBmaster\fR(8) process
-manager.
+manager. The process name, \fBsmtp\fR or \fBlmtp\fR, controls
+the protocol, and the names of the configuration parameters
+that will be used.
 
 The SMTP+LMTP client updates the queue file and marks recipients
 as finished, or it informs the queue manager that delivery should
@@ -27,13 +31,9 @@ be tried again at a later time. Delivery status reports are sent
 to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
 appropriate.
 
-The SMTP+LMTP client looks up a list of mail exchanger addresses for
-the destination host, sorts the list by preference, and connects
-to each listed address until it finds a server that responds.
-
-When a server is not reachable, or when mail delivery fails due
-to a recoverable error condition, the SMTP+LMTP client will try to
-deliver the mail to an alternate host.
+The server lookup strategy is different for SMTP and LMTP,
+as described in the sections "SMTP SERVER LOOKUP" and "LMTP
+SERVER LOOKUP".
 
 After a successful mail transaction, a connection may be saved
 to the \fBscache\fR(8) connection cache server, so that it
@@ -43,48 +43,62 @@ By default, connection caching is enabled temporarily for
 destinations that have a high volume of mail in the active
 queue. Connection caching can be enabled permanently for
 specific destinations.
-.SH "SMTP DESTINATION SYNTAX"
+.SH "SMTP SERVER LOOKUP"
 .na
 .nf
 .ad
 .fi
-The Postfix SMTP+LMTP client supports multiple destinations
+The Postfix SMTP client supports multiple destinations
 separated by comma or whitespace (Postfix 3.5 and later).
+Each destination is tried in the specified order.
+
 SMTP destinations have the following form:
 .IP \fIdomainname\fR
-.IP \fIdomainname\fR:\fIport\fR
+.IP \fIdomainname\fR:\fIservice\fR
 Look up the mail exchangers for the specified domain, and
-connect to the specified port (default: \fBsmtp\fR).
+connect to the specified service (default: \fBsmtp\fR).
+Optionally, mail exchangers may be looked up with SRV queries
+instead of MX; this requires that \fIservice\fR is given
+in symbolic form.
 .IP [\fIhostname\fR]
-.IP [\fIhostname\fR]:\fIport\fR
-Look up the address(es) of the specified host, and connect to
-the specified port (default: \fBsmtp\fR).
+.IP [\fIhostname\fR]:\fIservice\fR
+Look up the address(es) for the specified host, and connect to
+the specified service (default: \fBsmtp\fR).
 .IP [\fIaddress\fR]
-.IP [\fIaddress\fR]:\fIport\fR
+.IP [\fIaddress\fR]:\fIservice\fR
 Connect to the host at the specified address, and connect
-to the specified port (default: \fBsmtp\fR). An IPv6 address
+to the specified service (default: \fBsmtp\fR). An IPv6 address
 must be formatted as [\fBipv6\fR:\fIaddress\fR].
-.SH "LMTP DESTINATION SYNTAX"
+.SH "LMTP SERVER LOOKUP"
 .na
 .nf
 .ad
 .fi
-The Postfix SMTP+LMTP client supports multiple destinations
+The Postfix LMTP client supports multiple destinations
 separated by comma or whitespace (Postfix 3.5 and later).
+Each destination is tried in the specified order.
+
 LMTP destinations have the following form:
 .IP \fBunix\fR:\fIpathname\fR
 Connect to the local UNIX\-domain server that is bound to the specified
 \fIpathname\fR. If the process runs chrooted, an absolute pathname
 is interpreted relative to the Postfix queue directory.
+.IP \fBinet\fR:\fIdomainname\fR
+.IP \fBinet\fR:\fIdomainname\fR:\fIservice\fR
+Look up the LMTP servers for the specified domain and service
+(default: \fBlmtp\fR).
+This form is supported when SRV lookups are enabled, and
+requires that \fIservice\fR is in symbolic form.
 .IP \fBinet\fR:\fIhostname\fR
-.IP \fBinet\fR:\fIhostname\fR:\fIport\fR
+.IP \fBinet\fR:\fIhostname\fR:\fIservice\fR
+Look up the address(es) for the specified host, and connect to
+the specified service (default: \fBlmtp\fR). When SRV lookups
+are enabled, use the form \fB[\fIhostname\fB]\fR to force
+address lookups.
 .IP \fBinet\fR:[\fIaddress\fR]
-.IP \fBinet\fR:[\fIaddress\fR]:\fIport\fR
-Connect to the specified TCP port on the specified local or
-remote host. If no port is specified, connect to the port defined as
-\fBlmtp\fR in \fBservices\fR(4).
-If no such service is found, the \fBlmtp_tcp_port\fR configuration
-parameter (default value of 24) will be used.
+.IP \fBinet\fR:[\fIaddress\fR]:\fIservice\fR
+Connect to the specified local or remote host and service
+(default: \fBlmtp\fR).
 An IPv6 address must be formatted as [\fBipv6\fR:\fIaddress\fR].
 .SH "SINGLE-RECIPIENT DELIVERY"
 .na
@@ -148,6 +162,8 @@ This feature is available as of Postfix 3.5.
 .SH "SECURITY"
 .na
 .nf
+.ad
+.fi
 The SMTP+LMTP client is moderately security\-sensitive. It
 talks to SMTP or LMTP servers and to DNS servers on the
 network. The SMTP+LMTP client can be run chrooted at fixed
@@ -176,6 +192,7 @@ RFC 5321 (SMTP protocol)
 RFC 6531 (Internationalized SMTP)
 RFC 6533 (Internationalized Delivery Status Notifications)
 RFC 7672 (SMTP security via opportunistic DANE TLS)
+RFC 8689 (TLS\-Required message header)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -201,11 +218,10 @@ address and TCP port.
 .nf
 .ad
 .fi
-Before Postfix version 2.3, the LMTP client is a separate
-program that implements only a subset of the functionality
-available with SMTP: there is no support for TLS, and
-connections are cached in\-process, making it ineffective
-when the client is used for multiple domains.
+Postfix versions 2.3 and later implement the SMTP and LMTP
+client with the same program, and choose the protocol and
+configuration parameters based on the process name, \fBsmtp\fR
+or \fBlmtp\fR.
 
 Most smtp_\fIxxx\fR configuration parameters have an
 lmtp_\fIxxx\fR "mirror" parameter for the equivalent LMTP
@@ -466,6 +482,11 @@ Available in Postfix version 2.9 and later:
 .IP "\fBsmtp_send_dummy_mail_auth (no)\fR"
 Whether or not to append the "AUTH=<>" option to the MAIL
 FROM command in SASL\-authenticated SMTP sessions.
+.PP
+Available in Postfix version 3.9 and later:
+.IP "\fBsmtp_sasl_password_result_delimiter (:)\fR"
+The delimiter between username and password in sasl_passwd_maps lookup
+results.
 .SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -568,7 +589,7 @@ The message digest algorithm used to construct remote SMTP server
 certificate fingerprints.
 .PP
 Available in Postfix version 2.6 and later:
-.IP "\fBsmtp_tls_protocols (see postconf -d output)\fR"
+.IP "\fBsmtp_tls_protocols (see 'postconf -d' output)\fR"
 TLS protocols that the Postfix SMTP client will use with
 opportunistic TLS encryption.
 .IP "\fBsmtp_tls_ciphers (medium)\fR"
@@ -609,18 +630,19 @@ The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 Available in Postfix version 3.0 and later:
 .IP "\fBsmtp_tls_wrappermode (no)\fR"
 Request that the Postfix SMTP client connects using the
-SUBMISSIONS/SMTPS protocol instead of using the STARTTLS command.
+SUBMISSIONS (formerly called SMTPS) protocol instead of using the
+STARTTLS command.
 .PP
 Available in Postfix version 3.1 and later:
-.IP "\fBsmtp_tls_dane_insecure_mx_policy (see 'postconf -d' output)\fR"
+.IP "\fBsmtp_tls_dane_insecure_mx_policy (dane)\fR"
 The TLS policy for MX hosts with "secure" TLSA records when the
 nexthop destination security level is \fBdane\fR, but the MX
 record was found via an "insecure" MX lookup.
 .PP
 Available in Postfix version 3.2 and later:
 .IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
-The prioritized list of elliptic curves supported by the Postfix
-SMTP client and server.
+The prioritized list of elliptic curves, that should be enabled in the
+Postfix SMTP client and server.
 .PP
 Available in Postfix version 3.4 and later:
 .IP "\fBsmtp_tls_connection_reuse (no)\fR"
@@ -649,6 +671,25 @@ Optional configuration file with baseline OpenSSL settings.
 .IP "\fBtls_config_name (empty)\fR"
 The application name passed by Postfix to OpenSSL library
 initialization functions.
+.PP
+Available in Postfix version 3.9 and later:
+.IP "\fBsmtp_tls_enable_rpk (no)\fR"
+Request that remote SMTP servers send an RFC7250 raw public key
+instead of an X.509 certificate.
+.PP
+Available in Postfix version 3.10 and later:
+.IP "\fBsmtp_tlsrpt_enable (no)\fR"
+Enable support for RFC 8460 TLSRPT notifications.
+.IP "\fBsmtp_tlsrpt_socket_name (empty)\fR"
+The pathname of a UNIX\-domain datagram socket that is managed
+by a local TLSRPT reporting service.
+.IP "\fBsmtp_tlsrpt_skip_reused_handshakes (yes)\fR"
+Do not report the TLSRPT status for TLS protocol handshakes
+that reuse a previously\-negotiated TLS session (there is no new
+information to report).
+.IP "\fBtls_required_enable (yes)\fR"
+Enable support for the "TLS\-Required: no" message header, defined
+in RFC 8689.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -841,13 +882,13 @@ How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub\-second delay values.
+delay values.
 .IP "\fBdisable_dns_lookups (no)\fR"
 Disable DNS lookups in the Postfix SMTP and LMTP clients.
 .IP "\fBinet_interfaces (all)\fR"
-The local network interface addresses that this mail system receives
-mail on.
-.IP "\fBinet_protocols (see 'postconf -d output')\fR"
+The local network interface addresses that this mail system
+receives mail on.
+.IP "\fBinet_protocols (see 'postconf -d' output)\fR"
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBipc_timeout (3600s)\fR"

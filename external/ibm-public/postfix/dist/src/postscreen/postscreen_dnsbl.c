@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_dnsbl.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: postscreen_dnsbl.c,v 1.5 2025/02/25 19:15:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -233,7 +233,7 @@ static void psc_dnsbl_add_site(const char *site)
     int     weight;
     HTABLE_INFO *ht;
     char   *parse_err;
-    const char  *safe_dnsbl;
+    const char *safe_dnsbl;
 
     /*
      * Parse the required DNSBL domain name, the optional reply filter and

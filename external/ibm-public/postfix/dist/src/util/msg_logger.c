@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_logger.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: msg_logger.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -61,6 +61,9 @@
 /*	Override the fallback setting (see above) with the specified
 /*	function pointer. This remains in effect until the next
 /*	msg_logger_init() or msg_logger_control() call.
+/*	When the function is called with a null argument, it should
+/*	allocate resources immediately. This is needed in programs
+/*	that drop privileges after process initialization.
 /* .IP CA_MSG_LOGGER_CTL_DISABLE
 /*	Disable the msg_logger. This remains in effect until the
 /*	next msg_logger_init() call.
@@ -82,6 +85,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
  /*
@@ -322,6 +328,9 @@ void    msg_logger_control(int name,...)
 	    msg_logger_disconnect();
 	    if (MSG_LOGGER_NEED_SOCKET())
 		msg_logger_connect();
+	    if (msg_logger_sock == MSG_LOGGER_SOCK_NONE
+		&& msg_logger_fallback_fn)
+		msg_logger_fallback_fn((char *) 0);
 	    break;
 	default:
 	    msg_panic("%s: bad name %d", myname, name);

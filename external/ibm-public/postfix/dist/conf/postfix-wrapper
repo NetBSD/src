@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-wrapper,v 1.1.1.2 2025/02/25 19:11:35 christos Exp $
+#	$NetBSD: postfix-wrapper,v 1.2 2025/02/25 19:15:41 christos Exp $
 #
 
 #++

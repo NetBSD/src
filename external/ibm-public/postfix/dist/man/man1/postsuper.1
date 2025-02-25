@@ -1,4 +1,4 @@
-.\"	$NetBSD: postsuper.1,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: postsuper.1,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH POSTSUPER 1 
 .ad
@@ -48,7 +48,7 @@ from standard input. For example, to delete all mail
 with exactly one recipient \fBuser@example.com\fR:
 .sp
 .nf
-postqueue \-j | jq -r '
+postqueue \-j | jq \-r '
     # See JSON OBJECT FORMAT section in the postqueue(1) manpage
     select(.recipients[0].address == "user@example.com")
     | select(.recipients[1].address == null)
@@ -56,7 +56,7 @@ postqueue \-j | jq -r '
  ' | postsuper \-d \-
 .fi
 .sp
-(note the "jq -r" option), or the historical form:
+(note the "jq \-r" option), or the historical form:
 .sp
 .nf
 mailq | tail \-n +2 | grep \-v '^ *(' | awk  'BEGIN { RS = "" }
@@ -304,7 +304,7 @@ the hash_queue_names parameter.
 The names of queue directories that are split across multiple
 subdirectory levels.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
+The list of environment variables that a privileged Postfix
 process will import from a non\-Postfix parent process, or name=value
 environment overrides.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"

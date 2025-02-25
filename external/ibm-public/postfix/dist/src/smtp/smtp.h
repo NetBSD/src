@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtp.h,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -109,7 +109,28 @@ typedef struct SMTP_TLS_POLICY {
     TLS_DANE *dane;			/* DANE TLSA digests */
     char   *sni;			/* Optional SNI name when not DANE */
     int     conn_reuse;			/* enable connection reuse */
+    int     enable_rpk;			/* Enable server->client RPK */
+    /* External policy info, for TLSRPT. */
+    int     ext_policy_ttl;		/* TTL from DNS etc. */
+    char   *ext_policy_type;		/* (sts) */
+    ARGV   *ext_policy_strings;		/* policy strings from DNS etc. */
+    char   *ext_policy_domain;		/* policy scope */
+    ARGV   *ext_mx_host_patterns;	/* (sts) MX host patterns */
+    char   *ext_policy_failure;		/* (sts) policy failure */
 } SMTP_TLS_POLICY;
+
+ /*
+  * Names and values for external policy attributes in smtp_tls_policy_maps.
+  * These are not #ifdef USE_TLSRPT, so that a TLSRPT-aware STS plugin can be
+  * used whether or not Postfix was built with TLSRPT support.
+  */
+#define EXT_POLICY_TTL		"policy_ttl"
+#define EXT_POLICY_TTL_UNSET	(-1)
+#define EXT_POLICY_TYPE		"policy_type"
+#define EXT_POLICY_DOMAIN	"policy_domain"
+#define EXT_POLICY_STRING	"policy_string"
+#define EXT_MX_HOST_PATTERN	"mx_host_pattern"
+#define EXT_POLICY_FAILURE	"policy_failure"
 
  /*
   * smtp_tls_policy.c
@@ -144,6 +165,13 @@ extern void smtp_tls_policy_cache_flush(void);
 	_tls_policy_init_tmp->dane = 0; \
 	_tls_policy_init_tmp->sni = 0; \
 	_tls_policy_init_tmp->conn_reuse = 0; \
+	_tls_policy_init_tmp->enable_rpk = 0; \
+	_tls_policy_init_tmp->ext_policy_ttl = EXT_POLICY_TTL_UNSET; \
+	_tls_policy_init_tmp->ext_policy_type = 0; \
+	_tls_policy_init_tmp->ext_policy_domain = 0; \
+	_tls_policy_init_tmp->ext_policy_strings = 0; \
+	_tls_policy_init_tmp->ext_mx_host_patterns = 0; \
+	_tls_policy_init_tmp->ext_policy_failure = 0; \
     } while (0)
 
 #endif
@@ -171,6 +199,9 @@ typedef struct SMTP_STATE {
      */
 #ifdef USE_TLS
     SMTP_TLS_POLICY tls[1];		/* Usage: state->tls->member */
+#ifdef USE_TLSRPT
+    struct TLSRPT_WRAPPER *tlsrpt;
+#endif
 #endif
 
     /*
@@ -490,8 +521,8 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
 	(session->expire_time = (when))
 
  /*
-  * Encapsulate the following so that we don't expose details of
-  * connection management and error handling to the SMTP protocol engine.
+  * Encapsulate the following so that we don't expose details of connection
+  * management and error handling to the SMTP protocol engine.
   */
 #ifdef USE_SASL_AUTH
 #define HAVE_SASL_CREDENTIALS \
@@ -756,6 +787,18 @@ extern void smtp_quote_821_address(VSTRING *, const char *);
   * header_from_format support, for postmaster notifications.
   */
 extern int smtp_hfrom_format;
+
+ /*
+  * smtp_tlsrpt.c.
+  */
+#if defined(USE_TLS) && defined(USE_TLSRPT)
+extern int smtp_tlsrpt_post_jail(const char *sockname_pname, const char *sockname_pval);
+extern void smtp_tlsrpt_create_wrapper(SMTP_STATE *state, const char *domain);
+extern void smtp_tlsrpt_set_tls_policy(SMTP_STATE *state);
+extern void smtp_tlsrpt_set_tcp_connection(SMTP_STATE *state);
+extern void smtp_tlsrpt_set_ehlo_resp(SMTP_STATE *, const char *ehlo_resp);
+
+#endif					/* USE_TLSRPT && USE_TLS */
 
 /* LICENSE
 /* .ad

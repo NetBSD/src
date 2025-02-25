@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_prefix_top.c,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: inet_prefix_top.c,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -166,6 +166,7 @@ int     main(int argc, char **argv)
 	    msg_info("PASS %s/%d", str_name_code(af_map, tp->in_af),
 		     tp->in_prefix_len);
 	}
+	myfree(act_prefix);
     }
     msg_info("PASS=%d FAIL=%d", pass, fail);
     return (fail > 0);

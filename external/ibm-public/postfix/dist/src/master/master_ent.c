@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.5 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -371,8 +371,12 @@ MASTER_SERV *get_master_ent()
 	} else {
 	    MASTER_INET_ADDRLIST(serv) =
 		strcasecmp(saved_interfaces, INET_INTERFACES_ALL) ?
-		own_inet_addr_list() :		/* virtual */
-		wildcard_inet_addr_list();	/* wild-card */
+		own_inet_addr_list() :		/* result can be empty */
+		wildcard_inet_addr_list();	/* result can't be empty */
+	    if (MASTER_INET_ADDRLIST(serv)->used == 0)
+		fatal_with_context("service definition requires valid"
+				   " host name or address, or non-empty"
+				   " %s setting", VAR_INET_INTERFACES);
 	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}

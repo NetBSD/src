@@ -1,4 +1,4 @@
-/*	$NetBSD: proxymap.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: proxymap.c,v 1.5 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -39,7 +39,7 @@
 /* .IP \(bu
 /*	To provide single-updater functionality for lookup tables
 /*	that do not reliably support multiple writers (i.e. all
-/*	file-based tables).
+/*	file-based tables that are not based on \fBlmdb\fR).
 /* .PP
 /*	The \fBproxymap\fR(8) server implements the following requests:
 /* .IP "\fBopen\fR \fImaptype:mapname flags\fR"
@@ -754,8 +754,10 @@ static void post_jail_init(char *service_name, char **unused_argv)
     if (strcmp(service_name, MAIL_SERVICE_PROXYWRITE) == 0)
 	proxy_writer = 1;
     else if (strcmp(service_name, MAIL_SERVICE_PROXYMAP) != 0)
-	msg_fatal("service name must be one of %s or %s",
-		  MAIL_SERVICE_PROXYMAP, MAIL_SERVICE_PROXYMAP);
+	msg_fatal("invalid service name: \"%s\" - "
+		  "service name must be \"%s\" or \"%s\"",
+		  service_name, MAIL_SERVICE_PROXYWRITE,
+		  MAIL_SERVICE_PROXYMAP);
 
     /*
      * Pre-allocate buffers.
@@ -843,6 +845,36 @@ int     main(int argc, char **argv)
      */
     MAIL_VERSION_STAMP_ALLOCATE;
 
+    /*
+     * XXX When invoked with the master.cf service name "proxywrite", the
+     * proxymap daemon will allow update requests. To update a table that is
+     * not multi-writer safe (for example, some versions of Berkeley DB), the
+     * "proxywrite" service should run as a single updater (i.e. a process
+     * limit of 1, which could be enforced below by requesting
+     * CA_MAIL_SERVER_SOLITARY).
+     * 
+     * In the default master.cf file, the "proxywrite" service has a process
+     * limit of 1. Assuming that updates will be rare, this process limit
+     * will suffice. Latency-sensitive services such as postscreen must not
+     * use the proxywrite service (in fact, postscreen has a latency check
+     * built-in).
+     * 
+     * Optimizing for multi-writer operation would suffer from all kinds of
+     * complexity that would make it hard to use:
+     * 
+     * - The master daemon specifies the "proxywrite" service name with the -n
+     * command-line option. This information is not known here, before the
+     * multi_server_main() call. The multi_server_main() function could
+     * reveal process limit information to its call-back functions, and leave
+     * single-updater enforcement to its call-back functions.
+     * 
+     * - If we really want multi-writer update support, the "proxywrite" service
+     * would have to parse the $proxy_write_maps value, and permit
+     * multi-writer operation only if all tables are multi-writer safe. That
+     * would require a new dict(3) method, to query each lookup table
+     * implementation if it is multi-writer safe, without instantiating a
+     * lookup table client.
+     */
     multi_server_main(argc, argv, proxymap_service,
 		      CA_MAIL_SERVER_STR_TABLE(str_table),
 		      CA_MAIL_SERVER_POST_INIT(post_jail_init),

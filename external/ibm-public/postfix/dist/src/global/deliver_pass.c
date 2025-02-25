@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -56,6 +56,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -111,7 +114,7 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       SEND_ATTR_LONG(MAIL_ATTR_SIZE, request->data_size),
 	       SEND_ATTR_STR(MAIL_ATTR_NEXTHOP, nexthop),
 	       SEND_ATTR_STR(MAIL_ATTR_ENCODING, request->encoding),
-	       SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, request->smtputf8),
+	       SEND_ATTR_INT(MAIL_ATTR_SENDOPTS, request->sendopts),
 	       SEND_ATTR_STR(MAIL_ATTR_SENDER, request->sender),
 	       SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, request->dsn_envid),
 	       SEND_ATTR_INT(MAIL_ATTR_DSN_RET, request->dsn_ret),

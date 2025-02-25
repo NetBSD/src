@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: hex_code.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,8 @@
 /*	functionality.
 /* .IP HEX_ENCODE_FLAG_USE_COLON
 /*	Inserts one ":" between bytes.
+/* .IP HEX_ENCODE_FLAG_APPEND
+/*	Append output to the buffer.
 /* .PP
 /*	hex_decode_opt() enables extended functionality as controlled
 /*	with \fIflags\fR.
@@ -71,6 +73,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -109,7 +114,8 @@ VSTRING *hex_encode_opt(VSTRING *result, const char *in, ssize_t len, int flags)
     int     ch;
     ssize_t count;
 
-    VSTRING_RESET(result);
+    if ((flags & HEX_ENCODE_FLAG_APPEND) == 0)
+	VSTRING_RESET(result);
     for (cp = UCHAR_PTR(in), count = len; count > 0; count--, cp++) {
 	ch = *cp;
 	VSTRING_ADDCH(result, hex_chars[(ch >> 4) & 0xf]);
@@ -179,67 +185,122 @@ VSTRING *hex_decode_opt(VSTRING *result, const char *in, ssize_t len, int flags)
 }
 
 #ifdef TEST
-#include <argv.h>
 
  /*
   * Proof-of-concept test program: convert to hexadecimal and back.
   */
-
 #define STR(x)	vstring_str(x)
 #define LEN(x)	VSTRING_LEN(x)
 
+typedef struct TEST_CASE {
+    const char *label;			/* identifies test case */
+    VSTRING *(*func) (VSTRING *, const char *, ssize_t, int);
+    const char *input;			/* input string */
+    ssize_t inlen;			/* input size */
+    int     flags;			/* flags */
+    const char *exp_output;		/* expected output or null */
+    ssize_t exp_outlen;			/* expected size */
+} TEST_CASE;
+
+/*
+  * The test cases.
+  */
+#define OUTPUT_INIT	"thrash:"	/* output buffer initial content */
+#define OUTPUT_INIT_SZ	(sizeof(OUTPUT_INIT) - 1)
+
+static const TEST_CASE test_cases[] = {
+    {"hex_encode_no_options", hex_encode_opt,
+	"this is a test",
+	sizeof("this is a test") - 1,
+	HEX_ENCODE_FLAG_NONE,
+	"7468697320697320612074657374",
+	sizeof("7468697320697320612074657374") - 1,
+    },
+    {"hex_decode_no_options", hex_decode_opt,
+	"7468697320697320612074657374",
+	sizeof("7468697320697320612074657374") - 1,
+	HEX_DECODE_FLAG_NONE,
+	"this is a test",
+	sizeof("this is a test") - 1,
+    },
+    {"hex_decode_no_colon_allow_colon", hex_decode_opt,
+	"7468697320697320612074657374",
+	sizeof("7468697320697320612074657374") - 1,
+	HEX_DECODE_FLAG_ALLOW_COLON,
+	"this is a test",
+	sizeof("this is a test") - 1,
+    },
+    {"hex_encode_appends", hex_encode_opt,
+	"this is a test",
+	sizeof("this is a test") - 1,
+	HEX_ENCODE_FLAG_APPEND,
+	OUTPUT_INIT "7468697320697320612074657374",
+	sizeof(OUTPUT_INIT "7468697320697320612074657374") - 1,
+    },
+    {"hex_encode_with_colon", hex_encode_opt,
+	"this is a test",
+	sizeof("this is a test") - 1,
+	HEX_ENCODE_FLAG_USE_COLON,
+	"74:68:69:73:20:69:73:20:61:20:74:65:73:74",
+	sizeof("74:68:69:73:20:69:73:20:61:20:74:65:73:74") - 1,
+    },
+    {"hex_encode_with_colon_and_append", hex_encode_opt,
+	"this is a test",
+	sizeof("this is a test") - 1,
+	HEX_ENCODE_FLAG_USE_COLON | HEX_ENCODE_FLAG_APPEND,
+	OUTPUT_INIT "74:68:69:73:20:69:73:20:61:20:74:65:73:74",
+	sizeof(OUTPUT_INIT "74:68:69:73:20:69:73:20:61:20:74:65:73:74") - 1,
+    },
+    {"hex_decode_error", hex_decode_opt,
+	"this is a test",
+	sizeof("this is a test") - 1,
+	HEX_DECODE_FLAG_ALLOW_COLON,
+	0,
+	0,
+    },
+    {0},
+};
+
 int     main(int unused_argc, char **unused_argv)
 {
-    VSTRING *b1 = vstring_alloc(1);
-    VSTRING *b2 = vstring_alloc(1);
-    char   *test = "this is a test";
-    ARGV   *argv;
+    VSTRING *buf = vstring_alloc(1);
+    int     pass = 0;
+    int     fail = 0;
+    const TEST_CASE *tp;
 
-#define DECODE(b,x,l) { \
-	if (hex_decode((b),(x),(l)) == 0) \
-	    msg_panic("bad hex: %s", (x)); \
+    for (tp = test_cases; tp->label != 0; tp++) {
+	VSTRING *out;
+	int     ok = 0;
+
+	msg_info("RUN  %s", tp->label);
+	vstring_memcpy(buf, OUTPUT_INIT, OUTPUT_INIT_SZ);
+	out = tp->func(buf, tp->input, tp->inlen, tp->flags);
+	if (out == 0 && tp->exp_output == 0) {
+	    ok = 1;
+	} else if (out != buf) {
+	    msg_warn("got result '%p', want: '%p'",
+		     (void *) out, (void *) buf);
+	} else if (LEN(out) != tp->exp_outlen) {
+	    msg_warn("got result length '%ld', want: '%ld'",
+		     (long) LEN(out), (long) tp->exp_outlen);
+	} else if (memcmp(STR(out), tp->exp_output, tp->exp_outlen) != 0) {
+	    msg_warn("got result '%*s', want: '%*s'",
+		     (int) LEN(out), STR(out),
+		     (int) tp->exp_outlen, tp->exp_output);
+	} else {
+	    ok = 1;
+	}
+	if (ok) {
+	    msg_info("PASS %s", tp->label);
+	    pass++;
+	} else {
+	    msg_info("FAIL %s", tp->label);
+	    fail++;
+	}
     }
-#define VERIFY(b,t) { \
-	if (strcmp((b), (t)) != 0) \
-	    msg_panic("bad test: %s", (b)); \
-    }
-
-    hex_encode(b1, test, strlen(test));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    hex_encode(b1, test, strlen(test));
-    hex_encode(b2, STR(b1), LEN(b1));
-    hex_encode(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    hex_encode(b1, test, strlen(test));
-    hex_encode(b2, STR(b1), LEN(b1));
-    hex_encode(b1, STR(b2), LEN(b2));
-    hex_encode(b2, STR(b1), LEN(b1));
-    hex_encode(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    hex_encode_opt(b1, test, strlen(test), HEX_ENCODE_FLAG_USE_COLON);
-    argv = argv_split(STR(b1), ":");
-    if (argv->argc != strlen(test))
-	msg_panic("HEX_ENCODE_FLAG_USE_COLON");
-    if (hex_decode_opt(b2, STR(b1), LEN(b1), HEX_DECODE_FLAG_ALLOW_COLON) == 0)
-	msg_panic("HEX_DECODE_FLAG_ALLOW_COLON");
-    VERIFY(STR(b2), test);
-    argv_free(argv);
-
-    vstring_free(b1);
-    vstring_free(b2);
-    return (0);
+    vstring_free(buf);
+    msg_info("PASS=%d FAIL=%d", pass, fail);
+    return (fail > 0);
 }
 
 #endif

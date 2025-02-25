@@ -1,4 +1,4 @@
-/*	$NetBSD: postlogd.c,v 1.3 2022/10/08 16:12:47 christos Exp $	*/
+/*	$NetBSD: postlogd.c,v 1.4 2025/02/25 19:15:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,8 +9,8 @@
 /*	\fBpostlogd\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	This program logs events on behalf of Postfix programs
-/*	when the maillog configuration parameter specifies a non-empty
-/*	value.
+/*	when the maillog_file configuration parameter specifies a
+/*	non-empty value.
 /* BUGS
 /*	Non-daemon Postfix programs don't know that they should log
 /*	to the internal logging service before they have processed
@@ -33,10 +33,10 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	Changes to \fBmain.cf\fR are picked up automatically, as
-/*	\fBpostlogd\fR(8) processes run for only a limited amount
-/*	of time. Use the command "\fBpostfix reload\fR" to speed
-/*	up a change.
+/*	Changes to \fBmain.cf\fR are not picked up automatically,
+/*	because \fBpostlogd\fR(8) terminates only after reaching
+/*	the \fBmax_idle\fR time limit.
+/*	Use the command "\fBpostfix reload\fR" to speed up a change.
 /*
 /*	The text below provides only a parameter summary. See
 /*	\fBpostconf\fR(5) for more details including examples.
@@ -58,6 +58,12 @@
 /* .IP "\fBpostlogd_watchdog_timeout (10s)\fR"
 /*	How much time a \fBpostlogd\fR(8) process may take to process a request
 /*	before it is terminated by a built-in watchdog timer.
+/* .PP
+/*	Available in Postfix 3.9 and later:
+/* .IP "\fBmaillog_file_permissions (0600)\fR"
+/*	The file access permissions that will be set when the file
+/*	$maillog_file is created for the first time, or when the file is
+/*	created after an existing file is rotated.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	syslogd(8), system logging
@@ -82,12 +88,16 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
  /*
   * System library.
   */
 #include <sys_defs.h>
+#include <sys/socket.h>
 
  /*
   * Utility library.
@@ -127,6 +137,11 @@ int     var_postlogd_watchdog;
   */
 static VSTREAM *postlogd_stream = 0;
 
+ /*
+  * Receive buffer management.
+  */
+#define DGRAM_BUF_SIZE	4096
+
 /* postlogd_fallback - log messages from postlogd(8) itself */
 
 static void postlogd_fallback(const char *buf)
@@ -136,10 +151,16 @@ static void postlogd_fallback(const char *buf)
 
 /* postlogd_service - perform service for client */
 
-static void postlogd_service(char *buf, ssize_t len, char *unused_service,
+static void postlogd_service(int sock, char *unused_service,
 			             char **unused_argv)
 {
+    char    buf[DGRAM_BUF_SIZE];
+    ssize_t len;
 
+    if ((len = recv(sock, buf, sizeof(buf), 0)) < 0) {
+	msg_warn("failed to receive message with recv: %m");
+	return;
+    }
     if (postlogd_stream) {
 	(void) logwriter_write(postlogd_stream, buf, len);
     }

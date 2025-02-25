@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -74,7 +74,7 @@ typedef struct DELIVER_ATTR {
     char   *queue_id;			/* mail queue id */
     long    offset;			/* data offset */
     char   *encoding;			/* MIME encoding */
-    int     smtputf8;			/* from delivery request */
+    int     sendopts;			/* from delivery request */
     const char *sender;			/* taken from envelope */
     char   *dsn_envid;			/* DSN envelope ID */
     int     dsn_ret;			/* DSN headers/full */
@@ -137,7 +137,7 @@ typedef struct LOCAL_STATE {
 	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
 	DSN_FROM_DSN_BUF(attr.why)
 #define BOUNCE_ONE_ATTR(attr) \
-	attr.queue_name, attr.queue_id, attr.encoding, attr.smtputf8, \
+	attr.queue_name, attr.queue_id, attr.encoding, attr.sendopts, \
 	attr.sender, attr.dsn_envid, attr.dsn_ret, \
 	&attr.msg_stats, &attr.rcpt, attr.relay, \
 	DSN_FROM_DSN_BUF(attr.why)

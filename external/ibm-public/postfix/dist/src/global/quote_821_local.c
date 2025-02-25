@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_821_local.c,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
+/*	$NetBSD: quote_821_local.c,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME

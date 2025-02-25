@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.5 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.6 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -127,9 +127,10 @@
 /*	bool	var_long_queue_ids;
 /*	bool	var_daemon_open_fatal;
 /*	char	*var_dsn_filter;
-/*	int	var_smtputf8_enable
+/*	int	var_smtputf8_enable;
 /*	int	var_strict_smtputf8;
 /*	char	*var_smtputf8_autoclass;
+/*	int	var_tls_required_enable;
 /*	int     var_idna2003_compat;
 /*	char	*var_compatibility_level;
 /*	char	*var_drop_hdrs;
@@ -161,6 +162,7 @@
 /*	char	*var_maillog_file_pfxs;
 /*	char	*var_maillog_file_comp;
 /*	char	*var_maillog_file_stamp;
+/*	char	*var_maillog_file_perms;
 /*	char	*var_postlog_service;
 /*
 /*	char	*var_dnssec_probe;
@@ -224,10 +226,12 @@
 #include <dict.h>
 #include <dict_db.h>
 #include <dict_lmdb.h>
+#include <dict_sockmap.h>
 #include <inet_proto.h>
 #include <vstring_vstream.h>
 #include <iostuff.h>
 #include <midna_domain.h>
+#include <logwriter.h>
 
 /* Global library. */
 
@@ -352,6 +356,7 @@ int     var_strict_encoding;
 int     var_verify_neg_cache;
 int     var_oldlog_compat;
 int     var_delay_max_res;
+int     var_sockmap_max_reply;
 char   *var_int_filt_classes;
 int     var_cyrus_sasl_authzid;
 
@@ -367,6 +372,7 @@ char   *var_dsn_filter;
 int     var_smtputf8_enable;
 int     var_strict_smtputf8;
 char   *var_smtputf8_autoclass;
+int     var_tls_required_enable;
 int     var_idna2003_compat;
 char   *var_compatibility_level;
 char   *var_drop_hdrs;
@@ -377,6 +383,7 @@ char   *var_maillog_file;
 char   *var_maillog_file_pfxs;
 char   *var_maillog_file_comp;
 char   *var_maillog_file_stamp;
+char   *var_maillog_file_perms;
 char   *var_postlog_service;
 
 char   *var_dnssec_probe;
@@ -517,9 +524,11 @@ static void check_mail_owner(void)
      */
     if ((pwd = getpwuid(var_owner_uid)) != 0
 	&& strcmp(pwd->pw_name, var_mail_owner) != 0)
-	msg_fatal("file %s/%s: parameter %s: user %s has same user ID as %s",
+	msg_fatal("file %s/%s: parameter %s: user %s has the same"
+		  " user ID %ld as user %s",
 		  var_config_dir, MAIN_CONF_FILE,
-		  VAR_MAIL_OWNER, var_mail_owner, pwd->pw_name);
+		  VAR_MAIL_OWNER, var_mail_owner,
+		  (long) var_owner_uid, pwd->pw_name);
 }
 
 /* check_sgid_group - lookup setgid group attributes and validate */
@@ -544,9 +553,11 @@ static void check_sgid_group(void)
      */
     if ((grp = getgrgid(var_sgid_gid)) != 0
 	&& strcmp(grp->gr_name, var_sgid_group) != 0)
-	msg_fatal("file %s/%s: parameter %s: group %s has same group ID as %s",
+	msg_fatal("file %s/%s: parameter %s: group %s has the same"
+		  " group ID %ld as group %s",
 		  var_config_dir, MAIN_CONF_FILE,
-		  VAR_SGID_GROUP, var_sgid_group, grp->gr_name);
+		  VAR_SGID_GROUP, var_sgid_group,
+		  (long) var_sgid_gid, grp->gr_name);
 }
 
 /* check_overlap - disallow UID or GID sharing */
@@ -731,6 +742,7 @@ void    mail_params_init()
 	VAR_MAILLOG_FILE_PFXS, DEF_MAILLOG_FILE_PFXS, &var_maillog_file_pfxs, 1, 0,
 	VAR_MAILLOG_FILE_COMP, DEF_MAILLOG_FILE_COMP, &var_maillog_file_comp, 1, 0,
 	VAR_MAILLOG_FILE_STAMP, DEF_MAILLOG_FILE_STAMP, &var_maillog_file_stamp, 1, 0,
+	VAR_MAILLOG_FILE_PERMS, DEF_MAILLOG_FILE_PERMS, &var_maillog_file_perms, 1, 0,
 	VAR_POSTLOG_SERVICE, DEF_POSTLOG_SERVICE, &var_postlog_service, 1, 0,
 	VAR_DNSSEC_PROBE, DEF_DNSSEC_PROBE, &var_dnssec_probe, 0, 0,
 	VAR_KNOWN_TCP_PORTS, DEF_KNOWN_TCP_PORTS, &var_known_tcp_ports, 0, 0,
@@ -747,6 +759,7 @@ void    mail_params_init()
 	VAR_SMTPUTF8_ENABLE, DEF_SMTPUTF8_ENABLE, &var_smtputf8_enable,
 	VAR_IDNA2003_COMPAT, DEF_IDNA2003_COMPAT, &var_idna2003_compat,
 	VAR_RESPECTFUL_LOGGING, DEF_RESPECTFUL_LOGGING, &var_respectful_logging,
+	VAR_TLSREQUIRED_ENABLE, DEF_TLSREQUIRED_ENABLE, &var_tls_required_enable,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults[] = {
@@ -832,6 +845,7 @@ void    mail_params_init()
 	VAR_MIME_BOUND_LEN, DEF_MIME_BOUND_LEN, &var_mime_bound_len, 1, 0,
 	VAR_DELAY_MAX_RES, DEF_DELAY_MAX_RES, &var_delay_max_res, MIN_DELAY_MAX_RES, MAX_DELAY_MAX_RES,
 	VAR_INET_WINDOW, DEF_INET_WINDOW, &var_inet_windowsize, 0, 0,
+	VAR_SOCKMAP_MAX_REPLY, DEF_SOCKMAP_MAX_REPLY, &var_sockmap_max_reply, 1, 0,
 	0,
     };
     static const CONFIG_LONG_TABLE long_defaults[] = {
@@ -980,7 +994,11 @@ void    mail_params_init()
     check_overlap();
     dict_db_cache_size = var_db_read_buf;
     dict_lmdb_map_size = var_lmdb_map_size;
+    dict_sockmap_max_reply = var_sockmap_max_reply;
     inet_windowsize = var_inet_windowsize;
+    if (set_logwriter_create_perms(var_maillog_file_perms) < 0)
+	msg_warn("ignoring bad permissions: %s = %s",
+		 VAR_MAILLOG_FILE_PERMS, var_maillog_file_perms);
 
     /*
      * Variables whose defaults are determined at runtime, after other

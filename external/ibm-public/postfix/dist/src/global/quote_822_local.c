@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_822_local.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: quote_822_local.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -278,7 +278,7 @@ int     main(int unused_argc, char **argv)
 		flags = quote_flags_from_string(cmd);
 		quote_822_local_flags(out, bp, flags);
 		vstream_printf("'%s' quoted flags=%s '%s'\n",
-			       bp, quote_flags_to_string((VSTRING *) 0, flags), STR(out));
+		 bp, quote_flags_to_string((VSTRING *) 0, flags), STR(out));
 	    } else if (strcmp(cmd, "unquote") == 0) {
 		unquote_822_local(out, bp);
 		vstream_printf("'%s' unquoted '%s'\n", bp, STR(out));

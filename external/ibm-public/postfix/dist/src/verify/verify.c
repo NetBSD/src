@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -536,6 +536,7 @@ static void verify_query_service(VSTREAM *client_stream)
 	    post_mail_fopen_async(make_verify_sender_addr(), STR(addr),
 				  MAIL_SRC_MASK_VERIFY,
 				  DEL_REQ_FLAG_MTA_VRFY,
+				  /* TODO(wietse) disable REQUIRETLS? */
 				  SMTPUTF8_FLAG_NONE,
 				  (VSTRING *) 0,
 				  verify_post_mail_action,

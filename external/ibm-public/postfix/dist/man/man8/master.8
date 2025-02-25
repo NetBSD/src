@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: master.8,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -153,13 +153,13 @@ The directory with Postfix support programs and daemon programs.
 The external command to execute when a Postfix daemon program is
 invoked with the \-D option.
 .IP "\fBinet_interfaces (all)\fR"
-The network interface addresses that this mail system receives
-mail on.
-.IP "\fBinet_protocols (see 'postconf -d output')\fR"
+The local network interface addresses that this mail system
+receives mail on.
+.IP "\fBinet_protocols (see 'postconf -d' output)\fR"
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
+The list of environment variables that a privileged Postfix
 process will import from a non\-Postfix parent process, or name=value
 environment overrides.
 .IP "\fBmail_owner (postfix)\fR"

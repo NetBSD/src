@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy.h,v 1.4 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls_proxy.h,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
 
 #ifndef _TLS_PROXY_H_INCLUDED_
 #define _TLS_PROXY_H_INCLUDED_
@@ -34,8 +34,10 @@
 #ifdef USE_TLS
 
  /*
-  * TLS_CLIENT_PARAMS structure. If this changes, update all
-  * TLS_CLIENT_PARAMS related functions in tls_proxy_client_*.c.
+  * TLS_CLIENT_PARAMS structure, to communicate global TLS library settings
+  * that are the same for all TLS client contexts. This information is used
+  * in tlsproxy(8) to detect inconsistencies. If this structure is changed,
+  * update all TLS_CLIENT_PARAMS related functions in tls_proxy_client_*.c.
   * 
   * In the serialization these attributes are identified by their configuration
   * parameter names.
@@ -108,11 +110,12 @@ extern VSTREAM *tls_proxy_open(const char *, int, VSTREAM *, const char *,
     ((props)->a12), ((props)->a13), ((props)->a14))
 
 #define TLS_PROXY_CLIENT_START_PROPS(props, a1, a2, a3, a4, a5, a6, a7, a8, \
-    a9, a10, a11, a12, a13, a14) \
+    a9, a10, a11, a12, a13, a14, a15, a16, a17) \
     (((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
     ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), \
-    ((props)->a12), ((props)->a13), ((props)->a14))
+    ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
+    ((props)->a16), ((props)->a17))
 
 extern TLS_SESS_STATE *tls_proxy_context_receive(VSTREAM *);
 extern void tls_proxy_context_free(TLS_SESS_STATE *);
@@ -170,6 +173,8 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
 #define TLS_ATTR_KEX_NAME	"key_exchange"
 #define TLS_ATTR_KEX_CURVE	"key_exchange_curve"
 #define TLS_ATTR_KEX_BITS	"key_exchange_bits"
+#define TLS_ATTR_CTOS_RPK	"ctos_rpk"
+#define TLS_ATTR_STOC_RPK	"stoc_rpk"
 #define TLS_ATTR_CLNT_SIG_NAME	"clnt_signature"
 #define TLS_ATTR_CLNT_SIG_CURVE	"clnt_signature_curve"
 #define TLS_ATTR_CLNT_SIG_BITS	"clnt_signature_bits"
@@ -179,6 +184,7 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
 #define TLS_ATTR_SRVR_SIG_BITS	"srvr_signature_bits"
 #define TLS_ATTR_SRVR_SIG_DGST	"srvr_signature_digest"
 #define TLS_ATTR_NAMADDR	"namaddr"
+#define TLS_ATTR_RPT_REPORTED	"rpt_reported"
 
  /*
   * TLS_SERVER_INIT_PROPS attributes.
@@ -239,6 +245,7 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
   * TLS_CLIENT_START_PROPS attributes.
   */
 #define TLS_ATTR_TIMEOUT	"timeout"
+#define TLS_ATTR_ENABLE_RPK	"enable_rpk"
 #define TLS_ATTR_TLS_LEVEL	"tls_level"
 #define TLS_ATTR_NEXTHOP	"nexthop"
 #define TLS_ATTR_HOST		"host"
@@ -251,7 +258,9 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
 #define TLS_ATTR_CIPHER_EXCLUSIONS "cipher_exclusions"
 #define TLS_ATTR_MATCHARGV	"matchargv"
 #define TLS_ATTR_MDALG		"mdalg"
-#define	TLS_ATTR_DANE		"dane"
+#define TLS_ATTR_DANE		"dane"
+#define TLS_ATTR_TLSRPT		"tlsrpt"
+#define TLS_ATTR_FFAIL_TYPE	"forced_failure_type"
 
  /*
   * TLS_TLSA attributes.

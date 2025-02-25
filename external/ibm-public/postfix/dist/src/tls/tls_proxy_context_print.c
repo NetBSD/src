@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_context_print.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_proxy_context_print.c,v 1.4 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -90,6 +90,10 @@ int     tls_proxy_context_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
 				 STRING_OR_EMPTY(tp->kex_curve)),
 		   SEND_ATTR_INT(TLS_ATTR_KEX_BITS,
 				 tp->kex_bits),
+		   SEND_ATTR_INT(TLS_ATTR_CTOS_RPK,
+				 tp->ctos_rpk),
+		   SEND_ATTR_INT(TLS_ATTR_STOC_RPK,
+				 tp->stoc_rpk),
 		   SEND_ATTR_STR(TLS_ATTR_CLNT_SIG_NAME,
 				 STRING_OR_EMPTY(tp->clnt_sig_name)),
 		   SEND_ATTR_STR(TLS_ATTR_CLNT_SIG_CURVE,
@@ -108,6 +112,8 @@ int     tls_proxy_context_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
 				 STRING_OR_EMPTY(tp->srvr_sig_dgst)),
 		   SEND_ATTR_STR(TLS_ATTR_NAMADDR,
 				 STRING_OR_EMPTY(tp->namaddr)),
+		   SEND_ATTR_INT(TLS_ATTR_RPT_REPORTED,
+				 tp->rpt_reported),
 		   ATTR_TYPE_END);
     /* Do not flush the stream. */
     return (ret);

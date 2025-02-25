@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_proxy.c,v 1.2 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: mkmap_proxy.c,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,7 +48,7 @@
 
 MKMAP  *mkmap_proxy_open(const char *unused_path)
 {
-    MKMAP *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
+    MKMAP  *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
 
     /*
      * Fill in the generic members.

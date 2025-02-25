@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.4 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -347,7 +347,7 @@ struct QMGR_MESSAGE {
     char   *sender;			/* complete address */
     char   *dsn_envid;			/* DSN envelope ID */
     int     dsn_ret;			/* DSN headers/full */
-    int     smtputf8;			/* requires unicode */
+    int     sendopts;			/* smtputf8, requiretls, etc. */
     char   *verp_delims;		/* VERP delimiters */
     char   *filter_xport;		/* filtering transport */
     char   *inspect_xport;		/* inspecting transport */
@@ -540,6 +540,9 @@ extern char *qmgr_error_nexthop(DSN *);
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*
 /*	Preemptive scheduler enhancements:
 /*	Patrik Rak

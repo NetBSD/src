@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: cleanup_out_recipient.c,v 1.5 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -220,9 +220,9 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
      * in the expansion because that results in multiple verify(8) updates
      * for one verify(8) request.
      * 
-     * Multiple verify(8) updates for one verify(8) request would overwrite
-     * each other's status, and if the last status update is "undeliverable",
-     * then the whole alias is flagged as undeliverable.
+     * Multiple verify(8) updates for one verify(8) request would overwrite each
+     * other's status, and if the last status update is "undeliverable", then
+     * the whole alias is flagged as undeliverable.
      */
     else {
 	RECIPIENT rcpt;

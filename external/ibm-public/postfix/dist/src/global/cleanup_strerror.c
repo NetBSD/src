@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_strerror.c,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: cleanup_strerror.c,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -75,6 +75,7 @@ static const CLEANUP_STAT_DETAIL cleanup_stat_map[] = {
     CLEANUP_STAT_CONT, 550, "5.7.1", "message content rejected",
     CLEANUP_STAT_WRITE, 451, "4.3.0", "queue file write error",
     CLEANUP_STAT_NOPERM, 550, "5.7.1", "service denied",
+    CLEANUP_STAT_BARE_LF, 521, "5.5.2", "bare <LF> received",
 };
 
 static CLEANUP_STAT_DETAIL cleanup_stat_success = {

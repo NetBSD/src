@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.5 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -70,9 +73,11 @@
 #include <mymalloc.h>
 #include <stringops.h>
 #include <nvtable.h>
+#include <clean_ascii_cntrl_space.h>
 
 /* Global library. */
 
+#include <ascii_header_text.h>
 #include <record.h>
 #include <rec_type.h>
 #include <cleanup_user.h>
@@ -92,6 +97,8 @@
 #include <conv_time.h>
 #include <info_log_addr_form.h>
 #include <hfrom_format.h>
+#include <rfc2047_code.h>
+#include <sendopts.h>
 
 /* Application-specific. */
 
@@ -627,9 +634,15 @@ static void cleanup_header_callback(void *context, int header_class,
      * MAY remove Return-path headers before adding their own.
      */
     else {
-	state->headers_seen |= (1 << hdr_opts->type);
-	if (hdr_opts->type == HDR_MESSAGE_ID)
+	state->headers_seen |= HDRS_SEEN_MASK(hdr_opts->type);
+	if (hdr_opts->type == HDR_MESSAGE_ID) {
+	    ssize_t len;
+
 	    msg_info("%s: message-id=%s", state->queue_id, hdrval);
+	    if (state->message_id == 0 && (len = balpar(hdrval, "<>")) > 0)
+		/* This Message ID may end up in threaded bounces. */
+		state->message_id = printable(mystrndup(hdrval, len), ' ');
+	}
 	if (hdr_opts->type == HDR_RESENT_MESSAGE_ID)
 	    msg_info("%s: resent-message-id=%s", state->queue_id, hdrval);
 	if (hdr_opts->type == HDR_RECEIVED) {
@@ -641,6 +654,17 @@ static void cleanup_header_callback(void *context, int header_class,
 	    /* Save our Received: header after maybe updating headers above. */
 	    if (state->hop_count == 1)
 		argv_add(state->auto_hdrs, vstring_str(header_buf), ARGV_END);
+	}
+	if (hdr_opts->type == HDR_TLS_REQUIRED && var_tls_required_enable) {
+	    char   *cp = vstring_str(header_buf) + strlen(hdr_opts->name) + 1;
+
+	    while (ISSPACE(*cp))
+		cp++;
+	    if (strcasecmp(cp, "no") == 0)
+		state->sendopts |= SOPT_REQUIRETLS_HEADER;
+	    else
+		msg_warn("ignoring malformed header: '%.100s'",
+			 vstring_str(header_buf));
 	}
 	if (CLEANUP_OUT_OK(state)) {
 	    if (hdr_opts->flags & HDR_OPT_RR)
@@ -658,6 +682,43 @@ static void cleanup_header_callback(void *context, int header_class,
     }
 }
 
+/* get_fullname_hdr_text - helper wrapper */
+
+static char *get_fullname_hdr_text(VSTRING *result, const char *raw_name,
+				           const char *separator)
+{
+    VSTRING *sanitized;
+    char   *ret;
+
+    if (raw_name == 0 || *raw_name == 0)
+	return (0);
+
+    /*
+     * TODO(wietse) in the ASCII-only path, add support to insert newline
+     * instead of space, to enable header folding with cleanup_fold_header().
+     */
+    sanitized = vstring_alloc(100);
+    if (clean_ascii_cntrl_space(sanitized, raw_name, strlen(raw_name)) == 0) {
+	ret = 0;
+    } else if (allascii(vstring_str(sanitized))) {
+	ret = make_ascii_header_text(result,
+			     cleanup_hfrom_format == HFROM_FORMAT_CODE_STD ?
+				     HDR_TEXT_FLAG_PHRASE :
+				     HDR_TEXT_FLAG_COMMENT,
+				     vstring_str(sanitized));
+    } else {
+	ret = rfc2047_encode(result,
+			     cleanup_hfrom_format == HFROM_FORMAT_CODE_STD ?
+			     RFC2047_HEADER_CONTEXT_PHRASE :
+			     RFC2047_HEADER_CONTEXT_COMMENT,
+			     var_full_name_encoding_charset,
+			     vstring_str(sanitized),
+			     VSTRING_LEN(sanitized), separator);
+    }
+    vstring_free(sanitized);
+    return (ret);
+}
+
 /* cleanup_header_done_callback - insert missing message headers */
 
 static void cleanup_header_done_callback(void *context)
@@ -666,8 +727,6 @@ static void cleanup_header_done_callback(void *context)
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
     char    time_stamp[1024];		/* XXX locale dependent? */
     struct tm *tp;
-    TOK822 *token;
-    TOK822 *dummy_token;
     time_t  tv;
 
     /*
@@ -713,8 +772,8 @@ static void cleanup_header_done_callback(void *context)
      * complicate future code that wants to log more name=value attributes.
      */
     if ((state->hdr_rewrite_context || var_always_add_hdrs)
-	&& (state->headers_seen & (1 << (state->resent[0] ?
-			   HDR_RESENT_MESSAGE_ID : HDR_MESSAGE_ID))) == 0) {
+	&& (state->headers_seen & HDRS_SEEN_MASK(state->resent[0] ?
+			    HDR_RESENT_MESSAGE_ID : HDR_MESSAGE_ID)) == 0) {
 	if (var_long_queue_ids) {
 	    vstring_sprintf(state->temp1, "%s@%s",
 			    state->queue_id, var_myhostname);
@@ -725,15 +784,20 @@ static void cleanup_header_done_callback(void *context)
 	    vstring_sprintf(state->temp1, "%s.%s@%s",
 			    time_stamp, state->queue_id, var_myhostname);
 	}
-	cleanup_out_format(state, REC_TYPE_NORM, "%sMessage-Id: <%s>",
-			   state->resent, vstring_str(state->temp1));
+	vstring_sprintf(state->temp2, "%sMessage-Id: <%s>",
+			state->resent, vstring_str(state->temp1));
+	cleanup_out_header(state, state->temp2);
 	msg_info("%s: %smessage-id=<%s>",
 		 state->queue_id, *state->resent ? "resent-" : "",
 		 vstring_str(state->temp1));
-	state->headers_seen |= (1 << (state->resent[0] ?
-				   HDR_RESENT_MESSAGE_ID : HDR_MESSAGE_ID));
+	state->headers_seen |= HDRS_SEEN_MASK(state->resent[0] ?
+				    HDR_RESENT_MESSAGE_ID : HDR_MESSAGE_ID);
+	if (state->resent[0] == 0 && state->message_id == 0)
+	    state->message_id = concatenate("<", vstring_str(state->temp1),
+					    ">", (char *) 0);
+
     }
-    if ((state->headers_seen & (1 << HDR_MESSAGE_ID)) == 0)
+    if ((state->headers_seen & HDRS_SEEN_MASK(HDR_MESSAGE_ID)) == 0)
 	msg_info("%s: message-id=<>", state->queue_id);
 
     /*
@@ -741,61 +805,44 @@ static void cleanup_header_done_callback(void *context)
      * with the GMT offset at the end.
      */
     if ((state->hdr_rewrite_context || var_always_add_hdrs)
-	&& (state->headers_seen & (1 << (state->resent[0] ?
-				       HDR_RESENT_DATE : HDR_DATE))) == 0) {
-	cleanup_out_format(state, REC_TYPE_NORM, "%sDate: %s",
+	&& (state->headers_seen & HDRS_SEEN_MASK(state->resent[0] ?
+					HDR_RESENT_DATE : HDR_DATE)) == 0) {
+	vstring_sprintf(state->temp2, "%sDate: %s",
 		      state->resent, mail_date(state->arrival_time.tv_sec));
+	cleanup_out_header(state, state->temp2);
     }
 
     /*
      * Add a missing (Resent-)From: header.
      */
     if ((state->hdr_rewrite_context || var_always_add_hdrs)
-	&& (state->headers_seen & (1 << (state->resent[0] ?
-				       HDR_RESENT_FROM : HDR_FROM))) == 0) {
+	&& (state->headers_seen & HDRS_SEEN_MASK(state->resent[0] ?
+					HDR_RESENT_FROM : HDR_FROM)) == 0) {
+	char   *fullname;
+
 	quote_822_local(state->temp1, *state->sender ?
 			state->sender : MAIL_ADDR_MAIL_DAEMON);
-	if (*state->sender && state->fullname && *state->fullname) {
-	    char   *cp;
-
-	    /* Enforce some sanity on full name content. */
-	    while ((cp = strchr(state->fullname, '\r')) != 0
-		   || (cp = strchr(state->fullname, '\n')) != 0)
-		*cp = ' ';
+	if (*state->sender != 0
+	    && (fullname = get_fullname_hdr_text(state->temp3,
+						 state->fullname, "\n")) != 0
+	    && *fullname != 0) {
 
 	    /*
-	     * "From: phrase <route-addr>". Quote the phrase if it contains
-	     * specials or the "%!" legacy address operators.
+	     * "From: phrase <addr-spec>".
 	     */
 	    if (cleanup_hfrom_format == HFROM_FORMAT_CODE_STD) {
-		vstring_sprintf(state->temp2, "%sFrom: ", state->resent);
-		if (state->fullname[strcspn(state->fullname,
-					    "%!" LEX_822_SPECIALS)] == 0) {
-		    /* Normalize whitespace. */
-		    token = tok822_scan_limit(state->fullname, &dummy_token,
-					      var_token_limit);
-		} else {
-		    token = tok822_alloc(TOK822_QSTRING, state->fullname);
-		}
-		if (token) {
-		    tok822_externalize(state->temp2, token, TOK822_STR_NONE);
-		    tok822_free(token);
-		    vstring_strcat(state->temp2, " ");
-		}
-		vstring_sprintf_append(state->temp2, "<%s>",
-				       vstring_str(state->temp1));
+		vstring_sprintf(state->temp2, "%sFrom: %s\n<%s>",
+				state->resent, fullname,
+				vstring_str(state->temp1));
 	    }
 
 	    /*
 	     * "From: addr-spec (ctext)". This is the obsolete form.
 	     */
 	    else {
-		vstring_sprintf(state->temp2, "%sFrom: %s ",
-				state->resent, vstring_str(state->temp1));
-		vstring_sprintf(state->temp1, "(%s)", state->fullname);
-		token = tok822_parse(vstring_str(state->temp1));
-		tok822_externalize(state->temp2, token, TOK822_STR_NONE);
-		tok822_free_tree(token);
+		vstring_sprintf(state->temp2, "%sFrom: %s\n(%s)",
+				state->resent, vstring_str(state->temp1),
+				fullname);
 	    }
 	}
 
@@ -807,7 +854,7 @@ static void cleanup_header_done_callback(void *context)
 	    vstring_sprintf(state->temp2, "%sFrom: %s",
 			    state->resent, vstring_str(state->temp1));
 	}
-	CLEANUP_OUT_BUF(state, REC_TYPE_NORM, state->temp2);
+	cleanup_fold_header(state, state->temp2);
     }
 
     /*
@@ -836,8 +883,10 @@ static void cleanup_header_done_callback(void *context)
     /*
      * Add a missing destination header.
      */
-#define VISIBLE_RCPT	((1 << HDR_TO) | (1 << HDR_RESENT_TO) \
-			| (1 << HDR_CC) | (1 << HDR_RESENT_CC))
+#define VISIBLE_RCPT	(HDRS_SEEN_MASK(HDR_TO) \
+			| HDRS_SEEN_MASK(HDR_RESENT_TO) \
+			| HDRS_SEEN_MASK(HDR_CC) \
+			| HDRS_SEEN_MASK(HDR_RESENT_CC))
 
     if ((state->hdr_rewrite_context || var_always_add_hdrs)
 	&& (state->headers_seen & VISIBLE_RCPT) == 0 && *var_rcpt_witheld) {
@@ -925,6 +974,23 @@ static void cleanup_message_headerbody(CLEANUP_STATE *state, int type,
     const MIME_STATE_DETAIL *detail;
     const char *cp;
     char   *dst;
+
+    /*
+     * Replace each stray CR or LF with one space. These are not allowed in
+     * SMTP, and can be used to enable outbound (remote) SMTP smuggling.
+     * Replacing these early ensures that our later DKIM etc. signature will
+     * not be invalidated. Besides preventing SMTP smuggling, replacing stray
+     * <CR> or <LF> ensures that the result of signature validation by a
+     * later mail system will not depend on how that mail system handles
+     * those stray characters in an implementation-dependent manner.
+     * 
+     * The input length is not changed, therefore it is safe to overwrite the
+     * input.
+     */
+    if (var_cleanup_mask_stray_cr_lf)
+	for (dst = (char *) buf; dst < buf + len; dst++)
+	    if (*dst == '\r' || *dst == '\n')
+		*dst = ' ';
 
     /*
      * Reject unwanted characters.
@@ -1054,6 +1120,9 @@ void    cleanup_message(CLEANUP_STATE *state, int type, const char *buf, ssize_t
      */
     mime_options = 0;
     if (var_disable_mime_input) {
+	if (var_force_mime_iconv)
+	    msg_fatal("do not specify both %s=yes and %s=yes",
+		      VAR_DISABLE_MIME_INPUT, VAR_FORCE_MIME_ICONV);
 	mime_options |= MIME_OPT_DISABLE_MIME;
     } else {
 	/* Turn off content checks if bouncing or forwarding mail. */
@@ -1070,6 +1139,8 @@ void    cleanup_message(CLEANUP_STATE *state, int type, const char *buf, ssize_t
 		|| *var_nesthdr_checks)
 		mime_options |= MIME_OPT_REPORT_NESTING;
 	}
+	if (var_force_mime_iconv)
+	    mime_options |= MIME_OPT_DOWNGRADE;
     }
     state->mime_state = mime_state_alloc(mime_options,
 					 cleanup_header_callback,

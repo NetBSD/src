@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_test.c,v 1.1.1.1 2025/02/25 19:11:42 christos Exp $	*/
+/*	$NetBSD: dns_rr_test.c,v 1.2 2025/02/25 19:15:44 christos Exp $	*/
 
  /*
   * System library.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
 
     static const CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -6,6 +6,7 @@
 	VAR_BESTMX_TRANSP, DEF_BESTMX_TRANSP, &var_bestmx_transp, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
 	VAR_SMTP_SASL_PASSWD, DEF_SMTP_SASL_PASSWD, &var_smtp_sasl_passwd, 0, 0,
+	VAR_SMTP_SASL_PASSWD_RES_DELIM, DEF_SMTP_SASL_PASSWD_RES_DELIM, &var_smtp_sasl_passwd_res_delim, 1, 1,
 	VAR_SMTP_SASL_OPTS, DEF_SMTP_SASL_OPTS, &var_smtp_sasl_opts, 0, 0,
 	VAR_SMTP_SASL_PATH, DEF_SMTP_SASL_PATH, &var_smtp_sasl_path, 0, 0,
 #ifdef USE_TLS
@@ -69,6 +70,7 @@
 	VAR_TLSPROXY_SERVICE, DEF_TLSPROXY_SERVICE, &var_tlsproxy_service, 1, 0,
 	VAR_HFROM_FORMAT, DEF_HFROM_FORMAT, &var_hfrom_format, 1, 0,
 	VAR_USE_SRV_LOOKUP, DEF_USE_SRV_LOOKUP, &var_use_srv_lookup, 0, 0,
+	VAR_SMTP_TLSRPT_SOCKNAME, DEF_SMTP_TLSRPT_SOCKNAME, &var_smtp_tlsrpt_sockname, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE smtp_time_table[] = {
@@ -126,6 +128,7 @@
 	VAR_SMTP_TLS_NOTEOFFER, DEF_SMTP_TLS_NOTEOFFER, &var_smtp_tls_note_starttls_offer,
 	VAR_SMTP_TLS_BLK_EARLY_MAIL_REPLY, DEF_SMTP_TLS_BLK_EARLY_MAIL_REPLY, &var_smtp_tls_blk_early_mail_reply,
 	VAR_SMTP_TLS_FORCE_TLSA, DEF_SMTP_TLS_FORCE_TLSA, &var_smtp_tls_force_tlsa,
+	VAR_SMTP_TLS_ENABLE_RPK, DEF_SMTP_TLS_ENABLE_RPK, &var_smtp_tls_enable_rpk,
 #endif
 	VAR_SMTP_TLS_WRAPPER, DEF_SMTP_TLS_WRAPPER, &var_smtp_tls_wrappermode,
 	VAR_SMTP_SENDER_AUTH, DEF_SMTP_SENDER_AUTH, &var_smtp_sender_auth,
@@ -141,5 +144,7 @@
     };
     static const CONFIG_NBOOL_TABLE smtp_nbool_table[] = {
 	VAR_SMTP_REQ_DEADLINE, DEF_SMTP_REQ_DEADLINE, &var_smtp_req_deadline,
+	VAR_SMTP_TLSRPT_ENABLE, DEF_SMTP_TLSRPT_ENABLE, &var_smtp_tlsrpt_enable,
+	VAR_SMTP_TLSRPT_SKIP_REUSED_HS, DEF_SMTP_TLSRPT_SKIP_REUSED_HS, &var_smtp_tlsrpt_skip_reused_hs,
 	0,
     };

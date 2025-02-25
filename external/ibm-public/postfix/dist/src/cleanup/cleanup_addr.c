@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_addr.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_addr.c,v 1.4 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -70,6 +70,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -150,11 +153,11 @@ off_t   cleanup_addr_sender(CLEANUP_STATE *state, const char *buf)
     }
     /* Fix 20140711: Auto-detect an UTF8 sender. */
     if (var_smtputf8_enable && *STR(clean_addr) && !allascii(STR(clean_addr))
-	&& valid_utf8_string(STR(clean_addr), LEN(clean_addr))) {
-	state->smtputf8 |= SMTPUTF8_FLAG_SENDER;
+	&& valid_utf8_stringz(STR(clean_addr))) {
+	state->sendopts |= SMTPUTF8_FLAG_SENDER;
 	/* Fix 20140713: request SMTPUTF8 support selectively. */
 	if (state->flags & CLEANUP_FLAG_AUTOUTF8)
-	    state->smtputf8 |= SMTPUTF8_FLAG_REQUESTED;
+	    state->sendopts |= SMTPUTF8_FLAG_REQUESTED;
     }
     CLEANUP_OUT_BUF(state, REC_TYPE_FROM, clean_addr);
     if (state->sender)				/* XXX Can't happen */
@@ -218,15 +221,15 @@ void    cleanup_addr_recipient(CLEANUP_STATE *state, const char *buf)
     }
     /* Fix 20140711: Auto-detect an UTF8 recipient. */
     if (var_smtputf8_enable && *STR(clean_addr) && !allascii(STR(clean_addr))
-	&& valid_utf8_string(STR(clean_addr), LEN(clean_addr))) {
+	&& valid_utf8_stringz(STR(clean_addr))) {
 	/* Fix 20140713: request SMTPUTF8 support selectively. */
 	if (state->flags & CLEANUP_FLAG_AUTOUTF8)
-	    state->smtputf8 |= SMTPUTF8_FLAG_REQUESTED;
+	    state->sendopts |= SMTPUTF8_FLAG_REQUESTED;
     }
     /* Fix 20141024: Don't fake up a "bare" DSN original rcpt in smtp(8). */
     if (state->dsn_orcpt == 0 && *STR(clean_addr) != 0)
 	state->dsn_orcpt = concatenate((!allascii(STR(clean_addr))
-			   && (state->smtputf8 & SMTPUTF8_FLAG_REQUESTED)) ?
+			   && (state->sendopts & SMTPUTF8_FLAG_REQUESTED)) ?
 		      "utf-8" : "rfc822", ";", STR(clean_addr), (char *) 0);
     cleanup_out_recipient(state, state->dsn_orcpt, state->dsn_notify,
 			  state->orig_rcpt, STR(clean_addr));
@@ -277,10 +280,10 @@ void    cleanup_addr_bcc_dsn(CLEANUP_STATE *state, const char *bcc,
     }
     /* Fix 20140711: Auto-detect an UTF8 recipient. */
     if (var_smtputf8_enable && *STR(clean_addr) && !allascii(STR(clean_addr))
-	&& valid_utf8_string(STR(clean_addr), LEN(clean_addr))) {
+	&& valid_utf8_stringz(STR(clean_addr))) {
 	/* Fix 20140713: request SMTPUTF8 support selectively. */
 	if (state->flags & CLEANUP_FLAG_AUTOUTF8)
-	    state->smtputf8 |= SMTPUTF8_FLAG_REQUESTED;
+	    state->sendopts |= SMTPUTF8_FLAG_REQUESTED;
     }
     cleanup_out_recipient(state, dsn_orcpt, dsn_notify,
 			  STR(clean_addr), STR(clean_addr));

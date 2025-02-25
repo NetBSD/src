@@ -1,4 +1,4 @@
-.\"	$NetBSD: bounce.8,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: bounce.8,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH BOUNCE 8 
 .ad
@@ -148,6 +148,11 @@ header with the original Message\-ID value.
 Available in Postfix 3.7 and later:
 .IP "\fBheader_from_format (standard)\fR"
 The format of the Postfix\-generated \fBFrom:\fR header.
+.PP
+Available in Postfix 3.10 and later:
+.IP "\fBtls_required_enable (yes)\fR"
+Enable support for the "TLS\-Required: no" message header, defined
+in RFC 8689.
 .SH "FILES"
 .na
 .nf
@@ -182,3 +187,6 @@ Wietse Venema
 Google, Inc.
 111 8th Avenue
 New York, NY 10011, USA
+
+Wietse Venema
+porcupine.org

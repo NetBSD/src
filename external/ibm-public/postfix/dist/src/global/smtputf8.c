@@ -1,4 +1,4 @@
-/*	$NetBSD: smtputf8.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: smtputf8.c,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -26,7 +26,7 @@
 /* .IP MAIL_SRC_MASK_FORWARD
 /*	Local forwarding or aliasing.
 /* .IP MAIL_SRC_MASK_BOUNCE
-/*	Submission by the bounce(8) daemon. 
+/*	Submission by the bounce(8) daemon.
 /* .IP MAIL_SRC_MASK_NOTIFY
 /*	Postmaster notification from the smtp(8) or smtpd(8) daemon.
 /* .IP MAIL_SRC_MASK_VERIFY

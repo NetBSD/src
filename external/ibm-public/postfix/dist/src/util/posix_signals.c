@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_signals.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
+/*	$NetBSD: posix_signals.c,v 1.2 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME

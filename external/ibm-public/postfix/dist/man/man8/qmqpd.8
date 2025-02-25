@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmqpd.8,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: qmqpd.8,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH QMQPD 8 
 .ad
@@ -77,7 +77,7 @@ filtering, or address mapping.
 Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 .IP "\fBsmtputf8_enable (yes)\fR"
 Enable preliminary SMTPUTF8 support for the protocols described
-in RFC 6531..6533.
+in RFC 6531, RFC 6532, and RFC 6533.
 .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 Detect that a message requires SMTPUTF8 support for the specified
 mail origin classes.
@@ -175,7 +175,7 @@ The master.cf service name of a Postfix daemon process.
 .SH "SEE ALSO"
 .na
 .nf
-http://cr.yp.to/proto/qmqp.html, QMQP protocol
+https://cr.yp.to/proto/qmqp.html, QMQP protocol
 cleanup(8), message canonicalization
 master(8), process manager
 postlogd(8), Postfix logging

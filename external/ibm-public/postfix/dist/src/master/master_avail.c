@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -159,7 +159,7 @@ void    master_avail_listen(MASTER_SERV *serv)
 			 serv->ext_name, serv->name, serv->max_proc);
 		msg_warn("to avoid this condition, increase the process count "
 		      "in master.cf or reduce the service time per client");
-		msg_warn("see http://www.postfix.org/STRESS_README.html for "
+		msg_warn("see https://www.postfix.org/STRESS_README.html for "
 		      "examples of stress-adapting configuration settings");
 	    }
 	}

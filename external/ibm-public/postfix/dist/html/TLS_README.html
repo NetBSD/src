@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -552,8 +552,8 @@ and OE (5.01 Mac on all ports). </p>
 <p> It is strictly discouraged to use this mode from <a href="postconf.5.html">main.cf</a>. If
 you want to support this service, enable a special port in <a href="master.5.html">master.cf</a>
 and specify "-o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a>=yes" (note: no space around
-the "=") as an <a href="smtpd.8.html">smtpd(8)</a> command line option.  Port 465 (smtps) was
-once chosen for this feature.
+the "=") as an <a href="smtpd.8.html">smtpd(8)</a> command line option.  Port 465 (submissions,
+formerly called smtps) is the most common example.
 </p>
 
 <p> Example: </p>
@@ -561,7 +561,7 @@ once chosen for this feature.
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    smtps    inet  n       -       n       -       -       smtpd
+    submissions inet  n       -       n       -       -       smtpd
       -o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a>=yes -o <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a>=yes
 </pre>
 </blockquote>
@@ -1065,7 +1065,7 @@ key configuration </a>
 
 <li> <a href="#client_cipher">Client-side cipher controls </a>
 
-<li> <a href="#client_smtps">Client-side SMTPS support </a>
+<li> <a href="#client_smtps">Client-side submissions (formerly called smtps) support </a>
 
 <li> <a href="#client_misc"> Miscellaneous client controls </a>
 
@@ -2214,9 +2214,9 @@ the applicability of verified TLS on the public Internet. </p>
 related features were new with Postfix 2.3, the issue was well
 understood before Postfix 1.0, when Lutz J&auml;nicke was designing
 the first unofficial Postfix TLS patch. See his original post <a
-href="http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html">http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html</a>
+href="https://web.archive.org/web/20070816181658/http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html">https://web.archive.org/web/20070816181658/http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html</a>
 and the first response <a
-href="http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html">http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html</a>.
+href="https://web.archive.org/web/20070807073846/http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html">https://web.archive.org/web/20070807073846/http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html</a>.
 The problem is not even unique to SMTP or even TLS, similar issues exist
 for secure connections via aliases for HTTPS and Kerberos. SMTP merely
 uses indirect naming (via MX records) more frequently. </p>
@@ -2266,82 +2266,124 @@ describe the corresponding table syntax: </p>
 additional attributes are supported at this level. </dd>
 
 <dt><b>may</b></dt> <dd><a href="#client_tls_may">Opportunistic TLS</a>.
-The optional "ciphers", "exclude" and "protocols" attributes
-(available for opportunistic TLS with Postfix &ge; 2.6) override the
-"<a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>", "<a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a>" and "<a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a>"
-configuration parameters.  At this level and higher, the optional
-"servername" attribute (available with Postfix &ge; 3.4) overrides the
-global "<a href="postconf.5.html#smtp_tls_servername">smtp_tls_servername</a>" parameter, enabling per-destination
-configuration of the SNI extension sent to the remote SMTP server. </dd>
+The optional "ciphers", "exclude", and "protocols" attributes (available
+for opportunistic TLS with Postfix &ge; 2.6) and "connection_reuse"
+attribute (Postfix &ge; 3.4) override the "<a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>",
+"<a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a>", "<a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a>", and
+"<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a>" configuration parameters.  At this level and
+higher, the optional "servername" attribute (available with Postfix &ge;
+3.4) overrides the global "<a href="postconf.5.html#smtp_tls_servername">smtp_tls_servername</a>" parameter, enabling
+per-destination configuration of the SNI extension sent to the remote
+SMTP server.  The optional "enable_rpk" attribute (Postfix &ge; 3.9)
+overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_enable_rpk">smtp_tls_enable_rpk</a> parameter.  When opportunistic
+TLS handshakes fail, Postfix retries the connection with TLS disabled.
+This allows mail delivery to sites with non-interoperable TLS
+implementations.</dd>
 
 <dt><b>encrypt</b></dt> <dd><a href="#client_tls_encrypt"> Mandatory encryption</a>.
-Mail is delivered only if the remote SMTP server offers STARTTLS
-and the TLS handshake succeeds. At this level and higher, the optional
+Mail is delivered only if the remote SMTP server offers STARTTLS and the
+TLS handshake succeeds. At this level and higher, the optional
 "protocols" attribute overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>
-parameter, the optional "ciphers" attribute overrides the
-<a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> parameter, and the optional
-"exclude" attribute (Postfix &ge; 2.6) overrides the <a href="postconf.5.html">main.cf</a>
-<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a> parameter.  </dd>
+parameter, the optional "ciphers" attribute overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> parameter, the optional "exclude" attribute
+(Postfix &ge; 2.6) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a> parameter, and the optional
+"connection_reuse" attribute (Postfix &ge; 3.4) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter. The optional "enable_rpk" attribute
+(Postfix &ge; 3.9) overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_enable_rpk">smtp_tls_enable_rpk</a> parameter.
+</dd>
 
 <dt><b>dane</b></dt> <dd><a href="#client_tls_dane">Opportunistic DANE TLS</a>.
 The TLS policy for the destination is obtained via TLSA records in
-DNSSEC.  If no TLSA records are found, the effective security level
-used is <a href="#client_tls_may">may</a>.  If TLSA records are
-found, but none are usable, the effective security level is <a
-href="#client_tls_encrypt">encrypt</a>.  When usable TLSA records
-are obtained for the remote SMTP server, SSLv2+3 are automatically
-disabled (see <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>), and the server certificate
-must match the TLSA records.  <a href="https://tools.ietf.org/html/rfc7672">RFC 7672</a> (DANE) TLS authentication
-and DNSSEC support is available with Postfix 2.11 and later.  </dd>
+DNSSEC.  If no TLSA records are found, the effective security level used
+is <a href="#client_tls_may">may</a>.  If TLSA records are found, but
+none are usable, the effective security level is <a
+href="#client_tls_encrypt">encrypt</a>.  When usable TLSA records are
+obtained for the remote SMTP server, the server certificate must match
+the TLSA records (and the SNI name is unconditionally set to the TLSA
+<i>base domain</i>).  <a href="https://tools.ietf.org/html/rfc7672">RFC 7672</a> (DANE) TLS authentication and DNSSEC
+support is available with Postfix 2.11 and later. The optional
+"connection_reuse" attribute (Postfix &ge; 3.4) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter.  When the effective security level
+used is <a href="#client_tls_may">may</a>, the optional "ciphers",
+"exclude", and "protocols" attributes (Postfix &ge; 2.6) override the
+"<a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>", "<a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a>", and "<a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a>"
+configuration parameters.  When the effective security level used is <a
+href="#client_tls_encrypt">encrypt</a>, the optional "ciphers",
+"exclude", and "protocols" attributes (Postfix &ge; 2.6) override the
+"<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>", "<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a>", and
+"<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>" configuration parameters.  </dd>
 
 <dt><b>dane-only</b></dt> <dd><a href="#client_tls_dane">Mandatory DANE TLS</a>.
 The TLS policy for the destination is obtained via TLSA records in
-DNSSEC.  If no TLSA records are found, or none are usable, no
-connection is made to the server.  When usable TLSA records are
-obtained for the remote SMTP server, SSLv2+3 are automatically disabled
-(see <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>), and the server certificate must
-match the TLSA records.  <a href="https://tools.ietf.org/html/rfc7672">RFC 7672</a> (DANE) TLS authentication and
-DNSSEC support is available with Postfix 2.11 and later.  </dd>
+DNSSEC.  If no TLSA records are found, or none are usable, no connection
+is made to the server.  When usable TLSA records are obtained for the
+remote SMTP server, the server certificate must match the TLSA records.
+<a href="https://tools.ietf.org/html/rfc7672">RFC 7672</a> (DANE) TLS authentication and DNSSEC support is available with
+Postfix 2.11 and later. The optional "ciphers", "exclude", and
+"protocols" attributes (Postfix &ge; 2.6) override the
+"<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>", "<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a>", and
+"<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>" configuration parameters. The optional
+"connection_reuse" attribute (Postfix &ge; 3.4) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter.  </dd>
 
 <dt><b>fingerprint</b></dt> <dd><a href="#client_tls_fprint">Certificate
-fingerprint verification.</a> Available with Postfix 2.5 and
-later. At this security level, there are no trusted Certification
-Authorities. The certificate trust chain, expiration date, ... are
-not checked. Instead, the optional <b>match</b> attribute, or else
-the <a href="postconf.5.html">main.cf</a> <b><a href="postconf.5.html#smtp_tls_fingerprint_cert_match">smtp_tls_fingerprint_cert_match</a></b> parameter, lists
-the server certificate fingerprints or public key fingerprints
-(Postfix 2.9 and later).  The
-digest algorithm used to calculate fingerprints is selected by the
-<b><a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a></b> parameter. Multiple fingerprints can
-be combined with a "|" delimiter in a single match attribute, or multiple
-match attributes can be employed. The ":" character is not used as a
-delimiter as it occurs between each pair of fingerprint (hexadecimal)
-digits. </dd>
+fingerprint verification.</a> Available with Postfix 2.5 and later. At
+this security level, there are no trusted Certification Authorities. The
+certificate trust chain, expiration date, ... are not checked. Instead,
+the optional "match" attribute, or else the <a href="postconf.5.html">main.cf</a>
+<b><a href="postconf.5.html#smtp_tls_fingerprint_cert_match">smtp_tls_fingerprint_cert_match</a></b> parameter, lists the certificate
+fingerprints or the public key fingerprints (Postfix 2.9 and later) of
+acceptable server certificates. The digest algorithm used to calculate
+the fingerprint is selected by the <b><a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a></b>
+parameter. Multiple fingerprints can be combined with a "|" delimiter in
+a single match attribute, or multiple match attributes can be employed.
+The ":" character is not used as a delimiter as it occurs between each
+pair of fingerprint (hexadecimal) digits. The optional "ciphers",
+"exclude", and "protocols" attributes (Postfix &ge; 2.6) override the
+"<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>", "<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a>", and
+"<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>" configuration parameters. The optional
+"connection_reuse" attribute (Postfix &ge; 3.4) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter.  The optional "enable_rpk"
+attribute (Postfix &ge; 3.9) overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_enable_rpk">smtp_tls_enable_rpk</a>
+parameter. </dd>
 
 <dt><b>verify</b></dt> <dd><a href="#client_tls_verify">Mandatory
-server certificate verification</a>.  Mail is delivered only if the
-TLS handshake succeeds, if the remote SMTP server certificate can
-be validated (not expired or revoked, and signed by a trusted
-Certification Authority), and if the server certificate name matches
-the optional "match" attribute (or the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_verify_cert_match">smtp_tls_verify_cert_match</a>
-parameter value when no optional "match" attribute is specified).
-With Postfix &ge; 2.11 the "tafile" attribute optionally modifies
-trust chain verification in the same manner as the
-"<a href="postconf.5.html#smtp_tls_trust_anchor_file">smtp_tls_trust_anchor_file</a>" parameter.  The "tafile" attribute
-may be specified multiple times to load multiple trust-anchor
-files.  </dd>
+server certificate verification</a>.  Mail is delivered only if the TLS
+handshake succeeds, the remote SMTP server certificate chain can be
+validated, and a DNS name in the certificate matches the specified match
+criteria. At this security level, DNS MX lookups are presumed to be
+secure enough, and the name verified in the server certificate is
+potentially obtained via unauthenticated DNS MX lookups.  The server
+certificate name must match either the optional "match" attribute, or
+else the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_verify_cert_match">smtp_tls_verify_cert_match</a> parameter value.  With
+Postfix &ge; 2.11 the "tafile" attribute optionally modifies trust chain
+verification in the same manner as the "<a href="postconf.5.html#smtp_tls_trust_anchor_file">smtp_tls_trust_anchor_file</a>"
+parameter.  The "tafile" attribute may be specified multiple times to
+load multiple trust-anchor files. The optional "connection_reuse"
+attribute (Postfix &ge; 3.4) overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter.  </dd>
 
 <dt><b>secure</b></dt> <dd><a href="#client_tls_secure">Secure certificate
-verification.</a> Mail is delivered only if the TLS handshake succeeds,
-and DNS forgery resistant remote SMTP certificate verification succeeds
-(not expired or revoked, and signed by a trusted Certification Authority),
-and if the server certificate name matches the optional "match" attribute
-(or the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> parameter value when no optional
-"match" attribute is specified).  With Postfix &ge; 2.11 the "tafile"
-attribute optionally modifies trust chain verification in the same manner
-as the "<a href="postconf.5.html#smtp_tls_trust_anchor_file">smtp_tls_trust_anchor_file</a>" parameter.  The "tafile" attribute
-may be specified multiple times to load multiple trust-anchor
-files.  </dd>
+verification.</a>
+Mail is delivered only if the TLS handshake succeeds, the remote SMTP
+server certificate chain can be validated, and a DNS name in the
+certificate matches the specified match criteria.  At this security
+level, DNS MX lookups, though potentially used to determine the
+candidate next-hop gateway IP addresses, are <b>not</b> presumed to be
+secure enough for TLS peername verification.  Instead, the default name
+verified in the server certificate is obtained directly from the
+next-hop, or is explicitly specified via the optional "match" attribute
+which overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> parameter.  The
+optional "ciphers", "exclude", and "protocols" attributes (Postfix &ge;
+2.6) override the "<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>",
+"<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a>", and "<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>"
+configuration parameters.  With Postfix &ge; 2.11 the "tafile" attribute
+optionally modifies trust chain verification in the same manner as the
+"<a href="postconf.5.html#smtp_tls_trust_anchor_file">smtp_tls_trust_anchor_file</a>" parameter.  The "tafile" attribute may be
+specified multiple times to load multiple trust-anchor files. The
+optional "connection_reuse" attribute (Postfix &ge; 3.4) overrides the
+<a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_connection_reuse">smtp_tls_connection_reuse</a> parameter.  </dd>
 
 </dl>
 
@@ -2518,32 +2560,33 @@ the TLS protocols used with opportunistic TLS. </p>
 </pre>
 </blockquote>
 
-<h3> <a name="client_smtps">Client-side SMTPS support </a> </h3>
+<h3> <a name="client_smtps">Client-side submissions (formerly called smtps) support </a> </h3>
 
 <p> These sections show how to send mail to a server that does not
-support STARTTLS, but that provides the SMTPS service
+support STARTTLS, but that provides the submissions (smtps) service
 on TCP port 465.  Depending on the Postfix version, some additional
 tooling may be required. </p>
 
 <h4> Postfix &ge; 3.0 </h4>
 
-<p> The Postfix SMTP client has SMTPS support built-in as of version
+<p> The Postfix SMTP client has submissions service support built-in
+as of version
 3.0.  Use one of the following examples, to send all remote mail,
-or to send only some remote mail, to an SMTPS server.  </p>
+or to send only some remote mail, to a submissions (smtps) server.  </p>
 
-<h5> Postfix &ge; 3.0: Sending all remote mail to an SMTPS server </h5>
+<h5> Postfix &ge; 3.0: Sending all remote mail to a submissions (formerly called smtps) server </h5>
 
-<p> The first example will send all remote mail over SMTPS through
-a provider's server called "mail.example.com": </p>
+<p> The first example will send all remote mail to through a
+provider's submissions server called "mail.example.com": </p>
 
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Client-side SMTPS requires "encrypt" or stronger.
+    # Client-side submissions requires "encrypt" or stronger.
     <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = encrypt
     <a href="postconf.5.html#smtp_tls_wrappermode">smtp_tls_wrappermode</a> = yes
     # The [] suppress MX lookups.
-    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.example.com]:465
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.example.com]:submissions
 </pre>
 </blockquote>
 
@@ -2553,11 +2596,12 @@ a provider's server called "mail.example.com": </p>
 </p>
 
 <h5> Postfix &ge; 3.0: Sending only mail for a specific destination
-via SMTPS </h5>
+to a submissions (formerly called smtps) service </h5>
 
-<p> The second example will send only mail for "example.com" via
-SMTPS.  This time, Postfix uses a transport map to deliver only
-mail for "example.com" via SMTPS: </p>
+<p> The second example will send only mail for "example.com" using
+the submissions (smtps) service.
+This time, Postfix uses a transport map to deliver only
+mail for "example.com" using the submissions (smtps) service: </p>
 
 <blockquote>
 <pre>
@@ -2565,11 +2609,11 @@ mail for "example.com" via SMTPS: </p>
     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 
 /etc/postfix/transport:
-    example.com  relay-smtps:example.com:465
+    example.com  relay-submissions:example.com:submissions
 
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    relay-smtps  unix  -       -       n       -       -       smtp
-        # Client-side SMTPS requires "encrypt" or stronger.
+    relay-submissions  unix  -       -       n       -       -       smtp
+        # Client-side submissions service requires "encrypt" or stronger.
         -o <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>=encrypt
         -o <a href="postconf.5.html#smtp_tls_wrappermode">smtp_tls_wrappermode</a>=yes
 </pre>
@@ -2583,81 +2627,7 @@ authentication. </p>
 
 <h4> Postfix &lt; 3.0 </h4>
 
-<p> Although older Postfix SMTP client versions do not support TLS
-wrapper mode, it is relatively easy to forward a connection through
-the stunnel program if Postfix needs to deliver mail to some legacy
-system that doesn't support STARTTLS. </p>
-
-<h5> Postfix &lt; 3.0: Sending all remote mail to an SMTPS server </h5>
-
-<p> The first example uses SMTPS to send all remote mail to a
-provider's mail server called "mail.example.com".  </p>
-
-<p> A minimal stunnel.conf file is sufficient to set up a tunnel
-from local port 11125 to the remote destination "mail.example.com"
-and port "smtps". Postfix will later use this tunnel to connect to
-the remote server. </p>
-
-<blockquote>
-<pre>
-/path/to/stunnel.conf:
-    [smtp-tls-wrapper]
-    accept = 11125
-    client = yes
-    connect = mail.example.com:smtps
-</pre>
-</blockquote>
-
-<p> To test this tunnel, use: </p>
-
-<blockquote>
-<pre>
-$ telnet localhost 11125
-</pre>
-</blockquote>
-
-<p> This should produce the greeting from the remote SMTP server
-at mail.example.com. </p>
-
-<p> On the Postfix side, the <a href="postconf.5.html#relayhost">relayhost</a> feature sends all remote
-mail through the local stunnel listener on port 11125: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#relayhost">relayhost</a> = [127.0.0.1]:11125
-</pre>
-</blockquote>
-
-<p> Use "postfix reload" to make the change effective. </p>
-
-<p> See <a href="SOHO_README.html">SOHO_README</a> for additional information about SASL
-authentication. </p>
-
-<h4> Postfix &lt; 3.0: Sending only mail for a specific destination via SMTPS </h4>
-
-<p> The second example will use SMTPS to send only mail for
-"example.com" via SMTPS. It uses the same stunnel configuration
-file as the first example, so it won't be repeated here. </p>
-
-<p> This time, the Postfix side uses a transport map to direct only
-mail for "example.com" through the tunnel: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
-
-/etc/postfix/transport:
-    example.com  relay:[127.0.0.1]:11125
-</pre>
-</blockquote>
-
-<p> Use "postmap <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport" and "postfix reload"
-to make the change effective. </p>
-
-<p> See <a href="SOHO_README.html">SOHO_README</a> for additional information about SASL authentication.
-</p>
+<p> Please see <a href="TLS_LEGACY_README.html">TLS_LEGACY_README</a>. </p>
 
 <h3> <a name="client_misc"> Miscellaneous client controls </a> </h3>
 
@@ -2668,7 +2638,7 @@ tries the next network address on the mail exchanger list, and
 defers delivery if no alternative server is available. </p>
 
 <p> Example: </p>
- 
+  
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
@@ -2685,7 +2655,7 @@ are disabled in the default value of the parameter when linked with
 an OpenSSL library that could be vulnerable. </p>
 
 <p> Example: </p>
- 
+
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
@@ -2696,7 +2666,7 @@ an OpenSSL library that could be vulnerable. </p>
 
 <p> Note: Disabling LEGACY_SERVER_CONNECT is not wise at this
 time, lots of servers are still unpatched and Postfix is <a
-href="http://www.postfix.org/wip.html#tls-renegotiation">not
+href="https://www.postfix.org/wip.html#tls-renegotiation">not
 significantly vulnerable</a> to the renegotiation issue in the TLS
 protocol. </p>
 
@@ -3222,7 +3192,7 @@ you can start using Postfix as soon as it is installed.  </p>
 <h2> <a name="problems"> Reporting problems </a> </h2>
 
 <p> Problems are preferably reported via &lt;postfix-users@postfix.org&gt;.
-See <a href="http://www.postfix.org/lists.html">http://www.postfix.org/lists.html</a> for subscription information.
+See <a href="https://www.postfix.org/lists.html">https://www.postfix.org/lists.html</a> for subscription information.
 When reporting a problem, please be thorough in the report.  Patches,
 when possible, are greatly appreciated too. </p>
 

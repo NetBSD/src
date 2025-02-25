@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: myaddrinfo.h,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _MYADDRINFO_H_INCLUDED_
 #define _MYADDRINFO_H_INCLUDED_
@@ -111,12 +111,12 @@ extern char *gai_strerror(int);
   * they suggest that space for the null terminator is not included.
   */
 #ifdef HAS_IPV6
-# define MAI_HOSTADDR_STRSIZE	INET6_ADDRSTRLEN
+#define MAI_HOSTADDR_STRSIZE	INET6_ADDRSTRLEN
 #else
-# ifndef INET_ADDRSTRLEN
-#  define INET_ADDRSTRLEN	16
-# endif
-# define MAI_HOSTADDR_STRSIZE	INET_ADDRSTRLEN
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN	16
+#endif
+#define MAI_HOSTADDR_STRSIZE	INET_ADDRSTRLEN
 #endif
 
 #define MAI_HOSTNAME_STRSIZE	1025
@@ -211,6 +211,12 @@ extern void myaddrinfo_control(int,...);
 	if (_aierr) \
 	    msg_fatal("sockaddr_to_hostname: %s", MAI_STRERROR(_aierr)); \
     } while (0)
+
+ /*
+  * sane_sockaddr_to_hostaddr.c
+  */
+extern int WARN_UNUSED_RESULT sane_sockaddr_to_hostaddr(const struct sockaddr *,
+	        SOCKADDR_SIZE, MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *, int);
 
 /* LICENSE
 /* .ad

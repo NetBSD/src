@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_str.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_conf_str.c,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,7 @@
 /*	void	check_mail_conf_str(name, strval, min, max)
 /*	const char *name;
 /*	const char *strval;
-/*	int	min; 
+/*	int	min;
 /*	int	max;
 /* DESCRIPTION
 /*	This module implements support for string-valued global

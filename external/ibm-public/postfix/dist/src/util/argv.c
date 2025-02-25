@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: argv.c,v 1.5 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -33,6 +33,10 @@
 /*	char	*arg;
 /*	ssize_t	arg_len;
 /*
+/*	ARGV	*argv_addv(argvp, argv)
+/*	ARGV	*argvp;
+/*	const char **argv;
+/*
 /*	void	argv_terminate(argvp);
 /*	ARGV	*argvp;
 /*
@@ -54,6 +58,11 @@
 /*	ARGV	*argvp;
 /*	ssize_t	pos;
 /*	ssize_t	how_many;
+/*
+/*	char	*argv_join(buf, argvp, delim)
+/*	VSTRING	*buf;
+/*	ARGV	*argvp;
+/*	int	delim;
 /*
 /*	void	ARGV_FAKE_BEGIN(argv, arg)
 /*	const char *arg;
@@ -91,6 +100,10 @@
 /*	argv_addn() is like argv_add(), but each string is followed
 /*	by a string length argument.
 /*
+/*	argv_addv() optionally creates an ARGV when the first argument
+/*	is a null pointer, and appends a null-terminated list of
+/*	strings. The result is null terminated.
+/*
 /*	argv_free() releases storage for a string array, and conveniently
 /*	returns a null pointer.
 /*
@@ -110,6 +123,10 @@
 /*	argv_delete() deletes the specified number of elements
 /*	starting at the specified array position. The result is
 /*	null-terminated.
+/*
+/*	argv_join() joins all elements in an array using the
+/*	specified delimiter value, and appends the result to the
+/*	specified buffer.
 /*
 /*	ARGV_FAKE_BEGIN/END are an optimization for the case where
 /*	a single string needs to be passed into an ARGV-based
@@ -137,6 +154,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System libraries. */
@@ -150,6 +170,7 @@
 
 #include "mymalloc.h"
 #include "msg.h"
+#include "vstring.h"
 #include "argv.h"
 
 #ifdef TEST
@@ -293,6 +314,23 @@ void    argv_addn(ARGV *argvp,...)
     argvp->argv[argvp->argc] = 0;
 }
 
+/* argv_addv - optionally create ARGV, append string vector */
+
+ARGV   *argv_addv(ARGV *argvp, const char *const * argv)
+{
+    const char *const * cpp;
+
+    if (argvp == 0) {
+	for (cpp = argv; *cpp; cpp++)
+	     /* void */ ;
+	argvp = argv_alloc(cpp - argv);
+    }
+    for (cpp = argv; *cpp; cpp++)
+	argv_add(argvp, *cpp, (char *) 0);
+    argvp->argv[argvp->argc] = 0;
+    return (argvp);
+}
+
 /* argv_terminate - terminate string array */
 
 void    argv_terminate(ARGV *argvp)
@@ -381,6 +419,20 @@ void    argv_delete(ARGV *argvp, ssize_t first, ssize_t how_many)
     argvp->argc -= how_many;
 }
 
+/* argv_join - concatenate array elements with delimiter */
+
+char   *argv_join(VSTRING *buf, ARGV *argv, int delim)
+{
+    char  **cpp;
+
+    for (cpp = argv->argv; *cpp; cpp++) {
+	vstring_strcat(buf, *cpp);
+	if (cpp[1])
+	    VSTRING_ADDCH(buf, delim);
+    }
+    return (vstring_str(buf));
+}
+
 #ifdef TEST
 
  /*
@@ -404,6 +456,7 @@ typedef struct TEST_CASE {
     const char *exp_panic_msg;		/* expected panic */
     int     exp_argc;			/* expected array length */
     const char *exp_argv[ARRAY_LEN];	/* expected array content */
+    int     join_delim;			/* argv_join() delimiter */
 } TEST_CASE;
 
 #define TERMINATE_ARRAY	(1)
@@ -561,6 +614,41 @@ static ARGV *test_argv_bad_delete3(const TEST_CASE *tp, ARGV *argvp)
     return (argvp);
 }
 
+/* test_argv_join - populate, join, and overwrite */
+
+static ARGV *test_argv_join(const TEST_CASE *tp, ARGV *argvp)
+{
+    VSTRING *buf = vstring_alloc(100);
+
+    /*
+     * Impedance mismatch: argv_join() produces output to VSTRING, but the
+     * test fixture wants output to ARGV.
+     */
+    test_argv_populate(tp, argvp);
+    argv_join(buf, argvp, tp->join_delim);
+    argv_delete(argvp, 0, argvp->argc);
+    argv_add(argvp, vstring_str(buf), ARGV_END);
+    vstring_free(buf);
+    return (argvp);
+}
+
+/* test_argv_addv_appends - populate result */
+
+static ARGV *test_argv_addv_appends(const TEST_CASE *tp, ARGV *argvp)
+{
+    argvp = argv_addv(argvp, tp->inputs);
+    return (argvp);
+}
+
+/* test_argv_addv_creates_appends - populate result */
+
+static ARGV *test_argv_addv_creates(const TEST_CASE *tp, ARGV *argvp)
+{
+    argv_free(argvp);
+    argvp = argv_addv((ARGV *) 0, tp->inputs);
+    return (argvp);
+}
+
 /* test_argv_verify - verify result */
 
 static int test_argv_verify(const TEST_CASE *tp, ARGV *argvp)
@@ -575,7 +663,7 @@ static int test_argv_verify(const TEST_CASE *tp, ARGV *argvp)
 	}
 	if (strcmp(vstring_str(test_panic_str), tp->exp_panic_msg) != 0) {
 	    msg_warn("test case '%s': got '%s', want: '%s'",
-		     tp->label, vstring_str(test_panic_str), tp->exp_panic_msg);
+		 tp->label, vstring_str(test_panic_str), tp->exp_panic_msg);
 	    return (FAIL);
 	}
 	return (PASS);
@@ -684,6 +772,26 @@ static const TEST_CASE test_cases[] = {
 	{"foo", "baz", "bar", 0}, 0, test_argv_bad_delete3,
 	"argv_delete bad range: (start=100 count=1)"
     },
+    {"argv_join, multiple strings",
+	{"foo", "baz", "bar", 0}, 0, test_argv_join,
+	0, 1, {"foo:baz:bar", 0}, ':'
+    },
+    {"argv_join, one string",
+	{"foo", 0}, 0, test_argv_join,
+	0, 1, {"foo", 0}, ':'
+    },
+    {"argv_join, empty",
+	{0}, 0, test_argv_join,
+	0, 1, {"", 0}, ':'
+    },
+    {"argv_addv appends to ARGV",
+	{"foo", "baz", "bar", 0}, /* ignored */ 0, test_argv_addv_appends,
+	0, 3, {"foo", "baz", "bar", 0}
+    },
+    {"argv_addv creates ARGV",
+	{"foo", "baz", "bar", 0}, /* ignored */ 0, test_argv_addv_creates,
+	0, 3, {"foo", "baz", "bar", 0}
+    },
     0,
 };
 
@@ -701,7 +809,7 @@ int     main(int argc, char **argv)
 
 	argvp = argv_alloc(1);
 	if (setjmp(test_panic_jbuf) == 0)
-	    tp->populate_fn(tp, argvp);
+	    argvp = tp->populate_fn(tp, argvp);
 	test_failed = test_argv_verify(tp, argvp);
 	if (test_failed) {
 	    msg_info("%s: FAIL", tp->label);

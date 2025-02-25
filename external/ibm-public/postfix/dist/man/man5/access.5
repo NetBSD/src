@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: access.5,v 1.5 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -64,7 +64,7 @@ are lines whose first non\-whitespace character is a `#'.
 .IP "multi\-line text"
 A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
-.SH "EMAIL ADDRESS PATTERNS"
+.SH "EMAIL ADDRESS PATTERNS IN INDEXED TABLES"
 .na
 .nf
 .ad
@@ -101,7 +101,7 @@ When a mail address localpart contains the optional recipient delimiter
 (e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
 \fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIdomain\fR,
 \fIuser+foo\fR@, and \fIuser\fR@.
-.SH "HOST NAME/ADDRESS PATTERNS"
+.SH "HOST NAME/ADDRESS PATTERNS IN INDEXED TABLES"
 .na
 .nf
 .ad
@@ -331,8 +331,12 @@ After the message is queued, send the message to the specified
 address instead of the intended recipient(s).  When multiple
 \fBREDIRECT\fR actions fire, only the last one takes effect.
 .sp
-Note: this action overrides the FILTER action, and currently
+Note 1: this action overrides the FILTER action, and currently
 overrides all recipients of the message.
+.sp
+Note 2: a REDIRECT address is subject to canonicalization
+(add missing domain) but NOT subject to canonical, masquerade,
+bcc, or virtual alias mapping.
 .sp
 This feature is available in Postfix 2.1 and later.
 .IP "\fBINFO \fIoptional text...\fR

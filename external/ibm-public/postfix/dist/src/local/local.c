@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: local.c,v 1.5 2025/02/25 19:15:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -209,27 +209,30 @@
 /*	is specified with the \fBcommand_expansion_filter\fR configuration
 /*	parameter.
 /* .IP \fBSHELL\fR
-/*	The recipient user's login shell.
+/*	The envelope recipient user's login shell.
 /* .IP \fBHOME\fR
-/*	The recipient user's home directory.
+/*	The envelope recipient user's home directory.
 /* .IP \fBUSER\fR
-/*	The bare recipient name.
+/*	The bare envelope recipient name.
 /* .IP \fBEXTENSION\fR
-/*	The optional recipient address extension.
+/*	The optional envelope recipient address extension.
 /* .IP \fBDOMAIN\fR
-/*	The recipient address domain part.
+/*	The envelope recipient address domain part.
 /* .IP \fBLOGNAME\fR
-/*	The bare recipient name.
+/*	The bare envelope recipient name.
 /* .IP \fBLOCAL\fR
-/*	The entire recipient address localpart (text to the left of the
-/*	rightmost @ character).
+/*	The entire envelope recipient address localpart (text to
+/*	the left of the rightmost @ character).
 /* .IP \fBORIGINAL_RECIPIENT\fR
-/*	The entire recipient address, before any address rewriting
-/*	or aliasing (Postfix 2.5 and later).
+/*	The entire envelope recipient address, before any address
+/*	rewriting or aliasing (Postfix 2.5 and later).
 /* .IP \fBRECIPIENT\fR
-/*	The entire recipient address.
+/*	The entire envelope recipient address.
 /* .IP \fBSENDER\fR
-/*	The entire sender address.
+/*	The entire envelope sender address.
+/* .IP \fBENVID\fR
+/*	The optional RFC 3461 envelope ID. Available as of Postfix
+/*	3.9.
 /* .PP
 /*	Additional remote client information is made available via
 /*	the following environment variables:
@@ -415,7 +418,11 @@
 /*	home_mailbox, mail_spool_directory, fallback_transport_maps,
 /*	fallback_transport, and luser_relay.
 /* .IP "\fBalias_maps (see 'postconf -d' output)\fR"
-/*	The alias databases that are used for \fBlocal\fR(8) delivery.
+/*	Optional lookup tables that are searched only with an email address
+/*	localpart (no domain) and that apply only to \fBlocal\fR(8) recipients;
+/*	this is unlike virtual_alias_maps that are often searched with a
+/*	full email address (including domain) and that apply to all recipients:
+/*	\fBlocal\fR(8), virtual, and remote.
 /* .IP "\fBforward_path (see 'postconf -d' output)\fR"
 /*	The \fBlocal\fR(8) delivery agent search list for finding a .forward
 /*	file with user-specified delivery methods.
@@ -525,7 +532,7 @@
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBdelay_logging_resolution_limit (2)\fR"
 /*	The maximal number of digits after the decimal point when logging
-/*	sub-second delay values.
+/*	delay values.
 /* .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 /*	The list of environment variables that a Postfix process will export
 /*	to non-Postfix processes.
@@ -614,6 +621,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -742,7 +752,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.fp = rqst->fp;
     state.msg_attr.offset = rqst->data_offset;
     state.msg_attr.encoding = rqst->encoding;
-    state.msg_attr.smtputf8 = rqst->smtputf8;
+    state.msg_attr.sendopts = rqst->sendopts;
     state.msg_attr.sender = rqst->sender;
     state.msg_attr.dsn_envid = rqst->dsn_envid;
     state.msg_attr.dsn_ret = rqst->dsn_ret;

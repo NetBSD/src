@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_milter.h,v 1.1.1.2 2025/02/25 19:11:46 christos Exp $	*/
+/*	$NetBSD: smtpd_milter.h,v 1.2 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME

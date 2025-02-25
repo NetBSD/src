@@ -1,4 +1,4 @@
-.\"	$NetBSD: aliases.5,v 1.5 2023/12/23 20:30:43 christos Exp $
+.\"	$NetBSD: aliases.5,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH ALIASES 5 
 .ad
@@ -12,12 +12,22 @@ Postfix local alias database format
 .nf
 .fi
 \fBnewaliases\fR
+
+\fBpostalias \-q \fIname\fB [\fIfile\-type\fB]:[\fIfile\-name\fB]\fR
 .SH DESCRIPTION
 .ad
 .fi
-The \fBaliases\fR(5) table provides a system\-wide mechanism to
-redirect mail for local recipients. The redirections are
-processed by the Postfix \fBlocal\fR(8) delivery agent.
+The optional \fBaliases\fR(5) table (alias_maps) redirects
+mail for local recipients. The redirections are processed
+by the Postfix \fBlocal\fR(8) delivery agent. This table
+is always searched with an email address localpart (no
+domain portion).
+
+This is unlike \fBvirtual\fR(5) aliasing (virtual_alias_maps)
+which applies to all recipients: local(8), virtual, and remote,
+and which is implemented by the \fBcleanup\fR(8) daemon. That
+table is often searched with a full email address (including
+domain).
 
 Normally, the \fBaliases\fR(5) table is specified as a text file
 that serves as input to the \fBpostalias\fR(1) command. The
@@ -93,7 +103,7 @@ defines the expected exit status codes. For example, use
 .IP \fB:include:\fI/file/name\fR
 Mail is sent to the destinations listed in the named file.
 Lines in \fB:include:\fR files have the same syntax
-as the right\-hand side of alias entries.
+as the right\-hand side of \fBaliases\fR(5) entries.
 .sp
 A destination can be any destination that is described in this
 manual page. However, delivery to "|\fIcommand\fR" and
@@ -167,7 +177,11 @@ The text below provides only a parameter summary. See
 The alias databases for \fBlocal\fR(8) delivery that are updated with
 "\fBnewaliases\fR" or with "\fBsendmail \-bi\fR".
 .IP "\fBalias_maps (see 'postconf -d' output)\fR"
-The alias databases that are used for \fBlocal\fR(8) delivery.
+Optional lookup tables that are searched only with an email address
+localpart (no domain) and that apply only to \fBlocal\fR(8) recipients;
+this is unlike virtual_alias_maps that are often searched with a
+full email address (including domain) and that apply to all recipients:
+\fBlocal\fR(8), virtual, and remote.
 .IP "\fBallow_mail_to_commands (alias, forward)\fR"
 Restrict \fBlocal\fR(8) mail delivery to external commands.
 .IP "\fBallow_mail_to_files (alias, forward)\fR"

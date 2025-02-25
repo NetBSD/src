@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.5 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.6 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -121,6 +121,7 @@
 #include <dsn_util.h>
 #include <xtext.h>
 #include <info_log_addr_form.h>
+#include <header_opts.h>
 
 /* Application-specific. */
 
@@ -756,14 +757,26 @@ static const char *cleanup_add_header(void *context, const char *name,
      */
 }
 
+/* hidden_header - respect milter header hiding protocol */
+
+static int hidden_header(VSTRING *buf, ARGV *auto_hdrs, int *hide_done)
+{
+    char  **cpp;
+    int     mask;
+
+    for (cpp = auto_hdrs->argv, mask = 1; *cpp; cpp++, mask <<= 1)
+	if ((*hide_done & mask) == 0 && strncmp(*cpp, STR(buf), LEN(buf)) == 0)
+	    return (*hide_done |= mask);
+    return (0);
+}
+
 /* cleanup_find_header_start - find specific header instance */
 
 static off_t cleanup_find_header_start(CLEANUP_STATE *state, ssize_t index,
 				               const char *header_label,
 				               VSTRING *buf,
 				               int *prec_type,
-				               int allow_ptr_backup,
-				               int skip_headers)
+				               int allow_ptr_backup)
 {
     const char *myname = "cleanup_find_header_start";
     off_t   curr_offset;		/* offset after found record */
@@ -772,7 +785,7 @@ static off_t cleanup_find_header_start(CLEANUP_STATE *state, ssize_t index,
     int     rec_type = REC_TYPE_ERROR;
     int     last_type;
     ssize_t len;
-    int     hdr_count = 0;
+    int     hide_done = 0;
 
     if (msg_verbose)
 	msg_info("%s: index %ld name \"%s\"",
@@ -914,11 +927,10 @@ static off_t cleanup_find_header_start(CLEANUP_STATE *state, ssize_t index,
 	    break;
 	}
 	/* This the start of a message header. */
-	else if (hdr_count++ < skip_headers)
-	     /* Reset the saved PTR record and update last_type. */ ;
 	else if ((header_label == 0
 		  || (strncasecmp(header_label, STR(buf), len) == 0
-		      && (strlen(header_label) == len)))
+		      && strlen(header_label) == len
+		      && !hidden_header(buf, state->auto_hdrs, &hide_done)))
 		 && --index == 0) {
 	    /* If we have a saved PTR record, it points to start of header. */
 	    break;
@@ -1184,15 +1196,12 @@ static const char *cleanup_ins_header(void *context, ssize_t index,
      */
 #define NO_HEADER_NAME	((char *) 0)
 #define ALLOW_PTR_BACKUP	1
-#define SKIP_ONE_HEADER		1
-#define DONT_SKIP_HEADERS	0
 
     if (index < 1)
 	index = 1;
     old_rec_offset = cleanup_find_header_start(state, index, NO_HEADER_NAME,
 					       old_rec_buf, &old_rec_type,
-					       ALLOW_PTR_BACKUP,
-					       DONT_SKIP_HEADERS);
+					       ALLOW_PTR_BACKUP);
     if (old_rec_offset == CLEANUP_FIND_HEADER_IOERROR)
 	/* Warning and errno->error mapping are done elsewhere. */
 	CLEANUP_INS_HEADER_RETURN(cleanup_milter_error(state, 0));
@@ -1272,8 +1281,7 @@ static const char *cleanup_upd_header(void *context, ssize_t index,
     rec_buf = vstring_alloc(100);
     old_rec_offset = cleanup_find_header_start(state, index, new_hdr_name,
 					       rec_buf, &last_type,
-					       NO_PTR_BACKUP,
-					       SKIP_ONE_HEADER);
+					       NO_PTR_BACKUP);
     if (old_rec_offset == CLEANUP_FIND_HEADER_IOERROR)
 	/* Warning and errno->error mapping are done elsewhere. */
 	CLEANUP_UPD_HEADER_RETURN(cleanup_milter_error(state, 0));
@@ -1335,8 +1343,7 @@ static const char *cleanup_del_header(void *context, ssize_t index,
 
     rec_buf = vstring_alloc(100);
     header_offset = cleanup_find_header_start(state, index, hdr_name, rec_buf,
-					      &last_type, NO_PTR_BACKUP,
-					      SKIP_ONE_HEADER);
+					      &last_type, NO_PTR_BACKUP);
     if (header_offset == CLEANUP_FIND_HEADER_IOERROR)
 	/* Warning and errno->error mapping are done elsewhere. */
 	CLEANUP_DEL_HEADER_RETURN(cleanup_milter_error(state, 0));
@@ -2058,19 +2065,22 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 	return (0);
     switch (resp[0]) {
     case 'H':
-	/* XXX Should log the reason here. */
 	if (state->flags & CLEANUP_FLAG_HOLD)
 	    return (0);
 	state->flags |= CLEANUP_FLAG_HOLD;
 	action = "milter-hold";
-	text = "milter triggers HOLD action";
+	text = resp[1] ? resp + 1 : "milter triggers HOLD action";
 	break;
     case 'D':
+	if (state->flags & CLEANUP_FLAG_DISCARD)
+	    return (0);
 	state->flags |= CLEANUP_FLAG_DISCARD;
 	action = "milter-discard";
 	text = "milter triggers DISCARD action";
 	break;
     case 'S':
+	if (state->flags & CLEANUP_STAT_CONT)
+	    return (0);
 	/* XXX Can this happen after end-of-message? */
 	state->flags |= CLEANUP_STAT_CONT;
 	action = "milter-reject";
@@ -2439,6 +2449,7 @@ static void open_queue_file(CLEANUP_STATE *state, const char *path)
     long    data_offset;
     long    rcpt_count;
     long    qmgr_opts;
+    const HEADER_OPTS *opts;
 
     if (state->dst != 0) {
 	msg_warn("closing %s", cleanup_path);
@@ -2450,6 +2461,7 @@ static void open_queue_file(CLEANUP_STATE *state, const char *path)
     if ((state->dst = vstream_fopen(path, O_RDWR, 0)) == 0) {
 	msg_warn("open %s: %m", path);
     } else {
+	var_drop_hdrs = "";
 	cleanup_path = mystrdup(path);
 	for (;;) {
 	    if ((curr_offset = vstream_ftell(state->dst)) < 0)
@@ -2506,9 +2518,16 @@ static void open_queue_file(CLEANUP_STATE *state, const char *path)
 			    msg_fatal("file %s: vstream_ftell: %m", cleanup_path);
 		    }
 		}
+	    } else if (rec_type == REC_TYPE_NORM && state->hop_count == 0
+		       && (opts = header_opts_find(STR(buf))) != 0
+		       && opts->type == HDR_RECEIVED) {
+		state->hop_count += 1;
+		/* XXX Only the first line of the first Received: header. */
+		argv_add(state->auto_hdrs, STR(buf), ARGV_END);
 	    }
 	    if (state->append_rcpt_pt_offset > 0
 		&& state->append_hdr_pt_offset > 0
+		&& state->hop_count > 0
 		&& (rec_type == REC_TYPE_END
 		    || state->append_meta_pt_offset > 0))
 		break;

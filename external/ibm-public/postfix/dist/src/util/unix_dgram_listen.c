@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_dgram_listen.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: unix_dgram_listen.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -57,6 +57,7 @@
 int     unix_dgram_listen(const char *path, int block_mode)
 {
     const char myname[] = "unix_dgram_listen";
+
 #undef sun
     struct sockaddr_un sun;
     ssize_t path_len;
@@ -79,16 +80,16 @@ int     unix_dgram_listen(const char *path, int block_mode)
      */
     if ((sock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
 	msg_fatal("%s: socket: %m", myname);
-    if (unlink(path) < 0 && errno != ENOENT) 
-        msg_fatal( "remove %s: %m", path);
-    if (bind(sock, (struct sockaddr *) & sun, sizeof(sun)) < 0) 
-        msg_fatal( "bind: %s: %m", path);
+    if (unlink(path) < 0 && errno != ENOENT)
+	msg_fatal("remove %s: %m", path);
+    if (bind(sock, (struct sockaddr *) &sun, sizeof(sun)) < 0)
+	msg_fatal("bind: %s: %m", path);
 #ifdef FCHMOD_UNIX_SOCKETS
     if (fchmod(sock, 0666) < 0)
-        msg_fatal("fchmod socket %s: %m", path);
+	msg_fatal("fchmod socket %s: %m", path);
 #else
     if (chmod(path, 0666) < 0)
-        msg_fatal("chmod socket %s: %m", path);
+	msg_fatal("chmod socket %s: %m", path);
 #endif
     non_blocking(sock, block_mode);
     return (sock);

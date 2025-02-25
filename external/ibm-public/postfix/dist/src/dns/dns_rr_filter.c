@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_filter.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: dns_rr_filter.c,v 1.3 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -108,7 +108,7 @@ static DNS_RR *dns_rr_action(const char *cmd, DNS_RR *rr, const char *rr_text)
 	msg_info("ignoring DNS RR: %s", rr_text);
 	return (0);
     } else {
-	msg_warn("%s: unknown DNS filter action: \"%s\"", 
+	msg_warn("%s: unknown DNS filter action: \"%s\"",
 		 dns_rr_filter_maps->title, cmd);
 	return (dns_rr_filter_error);
     }

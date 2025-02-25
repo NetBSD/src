@@ -1,4 +1,4 @@
-/*	$NetBSD: readlline.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: readlline.c,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -87,8 +87,14 @@ VSTRING *readllines(VSTRING *buf, VSTREAM *fp, int *lineno, int *first_line)
     int     next;
     ssize_t start;
     char   *cp;
+    int     my_lineno = 0, my_first_line, got_null = 0;
 
     VSTRING_RESET(buf);
+
+    if (lineno == 0)
+	lineno = &my_lineno;
+    if (first_line == 0)
+	first_line = &my_first_line;
 
     /*
      * Ignore comment lines, all whitespace lines, and empty lines. Terminate
@@ -97,16 +103,19 @@ VSTRING *readllines(VSTRING *buf, VSTREAM *fp, int *lineno, int *first_line)
     for (;;) {
 	/* Read one line, possibly not newline terminated. */
 	start = LEN(buf);
-	while ((ch = VSTREAM_GETC(fp)) != VSTREAM_EOF && ch != '\n')
+	while ((ch = VSTREAM_GETC(fp)) != VSTREAM_EOF && ch != '\n') {
 	    VSTRING_ADDCH(buf, ch);
-	if (lineno != 0 && (ch == '\n' || LEN(buf) > start))
+	    if (ch == 0)
+		got_null = 1;
+	}
+	if (ch == '\n' || LEN(buf) > start)
 	    *lineno += 1;
 	/* Ignore comment line, all whitespace line, or empty line. */
 	for (cp = STR(buf) + start; cp < END(buf) && ISSPACE(*cp); cp++)
 	     /* void */ ;
 	if (cp == END(buf) || *cp == '#')
 	    vstring_truncate(buf, start);
-	else if (start == 0 && lineno != 0 && first_line != 0)
+	if (start == 0)
 	    *first_line = *lineno;
 	/* Terminate at EOF or at the beginning of the next logical line. */
 	if (ch == VSTREAM_EOF)
@@ -119,6 +128,20 @@ VSTRING *readllines(VSTRING *buf, VSTREAM *fp, int *lineno, int *first_line)
 	}
     }
     VSTRING_TERMINATE(buf);
+
+    /*
+     * This code does not care about embedded null bytes, but callers do.
+     */
+    if (got_null) {
+	const char *why = "text after null byte may be ignored";
+
+	if (*first_line == *lineno)
+	    msg_warn("%s, line %d: %s",
+		     VSTREAM_PATH(fp), *lineno, why);
+	else
+	    msg_warn("%s, line %d-%d: %s",
+		     VSTREAM_PATH(fp), *first_line, *lineno, why);
+    }
 
     /*
      * Invalid input: continuing text without preceding text. Allowing this
@@ -138,3 +161,205 @@ VSTRING *readllines(VSTRING *buf, VSTREAM *fp, int *lineno, int *first_line)
      */
     return (LEN(buf) > 0 ? buf : 0);
 }
+
+ /*
+  * Stand-alone test program.
+  */
+#ifdef TEST
+#include <stdlib.h>
+#include <string.h>
+#include <msg.h>
+#include <msg_vstream.h>
+#include <stringops.h>
+#include <vstream.h>
+#include <vstring.h>
+
+ /*
+  * Test cases. Note: the input and exp_output fields are converted with
+  * unescape(). Embedded null bytes must be specified as \\0.
+  */
+struct testcase {
+    const char *name;
+    const char *input;
+    const char *exp_output;
+    int     exp_first_line;
+    int     exp_last_line;
+};
+
+static const struct testcase testcases[] = {
+    {"leading space before non-comment",
+	" abcde\nfghij\n",
+	"fghij",
+	2, 2
+	/* Expect "logical line must not start with whitespace" */
+    },
+    {"leading space before leading comment",
+	" #abcde\nfghij\n",
+	"fghij",
+	2, 2
+    },
+    {"leading #comment at beginning of line",
+	"#abc\ndef",
+	"def",
+	2, 2,
+    },
+    {"empty line before non-comment",
+	"\nabc\n",
+	"abc",
+	2, 2,
+    },
+    {"whitespace line before non-comment",
+	" \nabc\n",
+	"abc",
+	2, 2,
+    },
+    {"missing newline at end of non-comment",
+	"abc def",
+	"abc def",
+	1, 1,
+    },
+    {"missing newline at end of comment",
+	"#abc def",
+	"",
+	1, 1,
+    },
+    {"embedded null, single-line",
+	"abc\\0def",
+	"abc\\0def",
+	1, 1,
+	/* Expect "line 1: text after null byte may be ignored" */
+    },
+    {"embedded null, multiline",
+	"abc\\0\n def",
+	"abc\\0 def",
+	1, 2,
+	/* Expect "line 1-2: text after null byte may be ignored" */
+    },
+    {"embedded null in comment",
+	"#abc\\0\ndef",
+	"def",
+	2, 2,
+	/* Expect "line 2: text after null byte may be ignored" */
+    },
+    {"multiline input",
+	"abc\n def\n",
+	"abc def",
+	1, 2,
+    },
+    {"multiline input with embedded #comment after space",
+	"abc\n #def\n ghi",
+	"abc ghi",
+	1, 3,
+    },
+    {"multiline input with embedded #comment flush left",
+	"abc\n#def\n ghi",
+	"abc ghi",
+	1, 3,
+    },
+    {"multiline input with embedded whitespace line",
+	"abc\n \n ghi",
+	"abc ghi",
+	1, 3,
+    },
+    {"multiline input with embedded empty line",
+	"abc\n\n ghi",
+	"abc ghi",
+	1, 3,
+    },
+    {"multiline input with embedded #comment after space",
+	"abc\n #def\n",
+	"abc",
+	1, 2,
+    },
+    {"multiline input with embedded #comment flush left",
+	"abc\n#def\n",
+	"abc",
+	1, 2,
+    },
+    {"empty line at end of file",
+	"\n",
+	"",
+	1, 1,
+    },
+    {"whitespace line at end of file",
+	"\n \n",
+	"",
+	2, 2,
+    },
+    {"whitespace at end of file",
+	"abc\n ",
+	"abc",
+	1, 2,
+    },
+};
+
+int     main(int argc, char **argv)
+{
+    const struct testcase *tp;
+    VSTRING *inp_buf = vstring_alloc(100);
+    VSTRING *exp_buf = vstring_alloc(100);
+    VSTRING *out_buf = vstring_alloc(100);
+    VSTRING *esc_buf = vstring_alloc(100);
+    VSTREAM *fp;
+    int     last_line;
+    int     first_line;
+    int     pass;
+    int     fail;
+
+#define NUM_TESTS       sizeof(testcases)/sizeof(testcases[0])
+
+    msg_vstream_init(basename(argv[0]), VSTREAM_ERR);
+    util_utf8_enable = 1;
+
+    for (pass = fail = 0, tp = testcases; tp < testcases + NUM_TESTS; tp++) {
+	int     ok = 0;
+
+	vstream_fprintf(VSTREAM_ERR, "RUN  %s\n", tp->name);
+	unescape(inp_buf, tp->input);
+	unescape(exp_buf, tp->exp_output);
+	if ((fp = vstream_memopen(inp_buf, O_RDONLY)) == 0)
+	    msg_panic("open memory stream for reading: %m");
+	vstream_control(fp, CA_VSTREAM_CTL_PATH("memory buffer"),
+			CA_VSTREAM_CTL_END);
+	last_line = 0;
+	if (readllines(out_buf, fp, &last_line, &first_line) == 0) {
+	    VSTRING_RESET(out_buf);
+	    VSTRING_TERMINATE(out_buf);
+	}
+	if (LEN(out_buf) != LEN(exp_buf)) {
+	    msg_warn("unexpected output length, got: %ld, want: %ld",
+		     (long) LEN(out_buf), (long) LEN(exp_buf));
+	} else if (memcmp(STR(out_buf), STR(exp_buf), LEN(out_buf)) != 0) {
+	    msg_warn("unexpected output: got: >%s<, want: >%s<",
+		     STR(escape(esc_buf, STR(out_buf), LEN(out_buf))),
+		     tp->exp_output);
+	} else if (first_line != tp->exp_first_line) {
+	    msg_warn("unexpected first_line: got: %d, want: %d",
+		     first_line, tp->exp_first_line);
+	} else if (last_line != tp->exp_last_line) {
+	    msg_warn("unexpected last_line: got: %d, want: %d",
+		     last_line, tp->exp_last_line);
+	} else {
+	    vstream_fprintf(VSTREAM_ERR, "got and want: >%s<\n",
+			    tp->exp_output);
+	    ok = 1;
+	}
+	if (ok) {
+	    vstream_fprintf(VSTREAM_ERR, "PASS %s\n", tp->name);
+	    pass++;
+	} else {
+	    vstream_fprintf(VSTREAM_ERR, "FAIL %s\n", tp->name);
+	    fail++;
+	}
+	vstream_fclose(fp);
+    }
+    vstring_free(inp_buf);
+    vstring_free(exp_buf);
+    vstring_free(out_buf);
+    vstring_free(esc_buf);
+
+    msg_info("PASS=%d FAIL=%d", pass, fail);
+    return (fail > 0);
+}
+
+#endif

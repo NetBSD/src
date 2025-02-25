@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.10 2023/12/23 20:30:42 christos Exp $
+#	$NetBSD: main.cf,v 1.11 2025/02/25 19:15:41 christos Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -11,7 +11,7 @@
 # For common configuration examples, see BASIC_CONFIGURATION_README
 # and STANDARD_CONFIGURATION_README. To find these documents, use
 # the command "postconf html_directory readme_directory", or go to
-# http://www.postfix.org/BASIC_CONFIGURATION_README.html etc.
+# https://www.postfix.org/BASIC_CONFIGURATION_README.html etc.
 #
 # For best results, change no more than 2-3 parameters at a time,
 # and test if Postfix still works after every change.
@@ -33,7 +33,7 @@
 #
 # The level below is what should be used with new (not upgrade) installs.
 #
-compatibility_level = 3.8
+compatibility_level = 3.10
 
 # On NetBSD we are built without EAI support, so we must disable utf8
 smtputf8_enable=no
@@ -465,7 +465,7 @@ unknown_local_recipient_reject_code = 550
 # The mailbox_command parameter specifies the optional external
 # command to use instead of mailbox delivery. The command is run as
 # the recipient with proper HOME, SHELL and LOGNAME environment settings.
-# Exception:  delivery for root is done as $default_user.
+# Exception:  delivery for root is done as $default_privs.
 #
 # Other environment variables of interest: USER (recipient username),
 # EXTENSION (address extension), DOMAIN (domain part of address),

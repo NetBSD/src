@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.5 2025/02/25 19:15:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -414,9 +414,10 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBremote_header_rewrite_domain (empty)\fR"
-/*	Don't rewrite message headers from remote clients at all when
-/*	this parameter is empty; otherwise, rewrite message headers and
-/*	append the specified domain name to incomplete addresses.
+/*	Rewrite or add message headers in mail from remote clients if
+/*	the remote_header_rewrite_domain parameter value is non-empty,
+/*	updating incomplete addresses with the domain specified in the
+/*	remote_header_rewrite_domain parameter, and adding missing headers.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"

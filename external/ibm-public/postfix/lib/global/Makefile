@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/12/23 20:30:46 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2025/02/25 19:15:53 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,6 +13,7 @@ SRCS= \
 abounce.c \
 addr_match_list.c \
 anvil_clnt.c \
+ascii_header_text.c \
 attr_override.c \
 been_here.c \
 bounce.c \
@@ -141,6 +142,7 @@ remove.c \
 resolve_clnt.c \
 resolve_local.c \
 rewrite_clnt.c \
+rfc2047_code.c \
 safe_ultostr.c \
 sasl_mech_filter.c \
 scache.c \

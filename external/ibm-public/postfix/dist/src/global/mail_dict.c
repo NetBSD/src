@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_dict.c,v 1.3 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: mail_dict.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,7 @@
 #include <dict_pgsql.h>
 #include <dict_sqlite.h>
 #include <dict_memcache.h>
+#include <dict_mongodb.h>
 #include <mail_dict.h>
 #include <mail_params.h>
 #include <mail_dict.h>
@@ -72,6 +73,9 @@ static const DICT_OPEN_INFO dict_open_info[] = {
 #endif
 #ifdef HAS_SQLITE
     DICT_TYPE_SQLITE, dict_sqlite_open, 0,
+#endif
+#ifdef HAS_MONGODB
+    DICT_TYPE_MONGODB, dict_mongodb_open, 0,
 #endif
 #endif					/* !USE_DYNAMIC_MAPS */
     DICT_TYPE_MEMCACHE, dict_memcache_open, 0,

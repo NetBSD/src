@@ -1,4 +1,4 @@
-/*	$NetBSD: argv_split.c,v 1.1.1.3 2025/02/25 19:11:46 christos Exp $	*/
+/*	$NetBSD: argv_split.c,v 1.2 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME

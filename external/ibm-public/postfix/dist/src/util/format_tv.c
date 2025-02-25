@@ -1,4 +1,4 @@
-/*	$NetBSD: format_tv.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: format_tv.c,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,7 @@
 /*	The maximal number of all digits after the decimal point.
 /*	Specify a number in the range 0..6.
 /* LICENSE
-/* .ad 
+/* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this
 /*	software.

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.4 2023/12/23 20:30:42 christos Exp $
+#	$NetBSD: postfix-script,v 1.5 2025/02/25 19:15:41 christos Exp $
 #
 
 #++
@@ -30,6 +30,10 @@
 #	Google, Inc.
 #	111 8th Avenue
 #	New York, NY 10011, USA
+#
+#	Wietse Venema
+#	porcupine.org
+#	Amawalk, NY 10501, USA
 #--
 
 # Avoid POSIX death due to SIGHUP when some parent process exits.
@@ -94,8 +98,8 @@ def_config_directory=`$command_directory/postconf -dh config_directory` || {
 # If this is a secondary instance, don't touch shared files.
 
 instances=`test ! -f $def_config_directory/main.cf ||
-    $command_directory/postconf -c $def_config_directory \
-    -h multi_instance_directories | sed 's/,/ /'` || {
+    $command_directory/postconf -qc $def_config_directory \
+    -h multi_instance_directories | sed 'y/,/ /'` || {
 	$FATAL cannot execute $command_directory/postconf!
 	exit 1
 }
@@ -218,6 +222,9 @@ abort)
 
 reload)
 
+	# Warn once for deprecated parameters.
+	$command_directory/postconf >/dev/null
+
 	$daemon_directory/master -t 2>/dev/null && {
 		$FATAL the Postfix mail system is not running
 		exit 1
@@ -246,6 +253,9 @@ check)
 
 status)
 
+	# Warn once for deprecated parameters.
+	$command_directory/postconf >/dev/null
+
 	$daemon_directory/master -t 2>/dev/null && {
 		$INFO the Postfix mail system is not running
 		exit 1
@@ -270,12 +280,12 @@ check-fatal)
 		exit 1
 	}
 
-	maillog_file=`$command_directory/postconf -h maillog_file` || {
+	maillog_file=`$command_directory/postconf -qh maillog_file` || {
 		$FATAL cannot execute $command_directory/postconf!
 		exit 1
 	}
 	test -n "$maillog_file" && {
-		$command_directory/postconf -M postlog/unix-dgram 2>/dev/null \
+		$command_directory/postconf -qM postlog/unix-dgram 2>/dev/null \
 		    | grep . >/dev/null || {
 			$FATAL "missing 'postlog' service in master.cf - run 'postfix upgrade-configuration'"
 			exit 1
@@ -292,6 +302,9 @@ check-fatal)
 
 check-warn)
 	# This command is NOT part of the public interface.
+
+	# Warn once for deprecated parameters.
+	$command_directory/postconf >/dev/null
 
 	# Check Postfix root-owned directory owner/permissions.
 
@@ -415,7 +428,7 @@ logrotate)
 	for name in maillog_file maillog_file_compressor \
 	   maillog_file_rotate_suffix
 	do
-	    value="`$command_directory/postconf -h $name`"
+	    value="`$command_directory/postconf -qh $name`"
 	    case "$value" in
 	    "") $FATAL "empty '$name' parameter value - logfile rotation failed"
 		exit 1;;

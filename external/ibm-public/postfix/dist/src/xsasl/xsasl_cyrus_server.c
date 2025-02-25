@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.5 2025/02/25 19:15:53 christos Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,10 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
+/*	Amawalk, NY 10501, USA
 /*--*/
 
 /* System library. */
@@ -619,7 +623,6 @@ static int xsasl_cyrus_server_next(XSASL_SERVER *xp, const char *request,
 
 static const char *xsasl_cyrus_server_get_username(XSASL_SERVER *xp)
 {
-    const char *myname = "xsasl_cyrus_server_get_username";
     XSASL_CYRUS_SERVER *server = (XSASL_CYRUS_SERVER *) xp;
     VOID_SERVEROUT_TYPE serverout = 0;
     int     sasl_status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: logwriter.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: logwriter.h,v 1.3 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _LOGWRITER_H_INCLUDED_
 #define _LOGWRITER_H_INCLUDED_
@@ -25,6 +25,7 @@ extern VSTREAM *logwriter_open_or_die(const char *);
 extern int logwriter_write(VSTREAM *, const char *, ssize_t);
 extern int logwriter_close(VSTREAM *);
 extern int logwriter_one_shot(const char *, const char *, ssize_t);
+extern int set_logwriter_create_perms(const char *);
 
 /* LICENSE
 /* .ad

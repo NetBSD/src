@@ -1,4 +1,4 @@
-/*	$NetBSD: mvect.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mvect.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -75,7 +75,7 @@
 /* mvect_alloc - allocate memory vector */
 
 char   *mvect_alloc(MVECT *vect, ssize_t elsize, ssize_t nelm,
-               void (*init_fn) (char *, ssize_t), void (*wipe_fn) (char *, ssize_t))
+        void (*init_fn) (char *, ssize_t), void (*wipe_fn) (char *, ssize_t))
 {
     vect->init_fn = init_fn;
     vect->wipe_fn = wipe_fn;

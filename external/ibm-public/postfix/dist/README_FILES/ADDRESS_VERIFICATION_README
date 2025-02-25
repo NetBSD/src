@@ -224,8 +224,8 @@ verification for specific domains that often appear in forged email.
         ... etcetera ...
 
 At some point in cyberspace/time, a list of frequently forged MAIL FROM domains
-could be found at http://www.monkeys.com/anti-spam/filtering/sender-domain-
-validate.in.
+was archived at https://web.archive.org/web/20080526153208/http://
+www.monkeys.com/anti-spam/filtering/sender-domain-validate.in.
 
 NOTE: One of the first things you might want to do is to turn on sender address
 verification for all your own domains.

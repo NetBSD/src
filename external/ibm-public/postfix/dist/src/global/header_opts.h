@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: header_opts.h,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
 
 #ifndef _HEADER_OPTS_H_INCLUDED_
 #define _HEADER_OPTS_H_INCLUDED_
@@ -22,8 +22,7 @@ typedef struct {
 } HEADER_OPTS;
 
  /*
-  * Header types. If we reach 31, we must group the headers we need to
-  * remember at the beginning, or we should use fd_set bit sets.
+  * Header types.
   */
 #define HDR_OTHER			0
 #define HDR_APPARENTLY_TO		1
@@ -57,6 +56,7 @@ typedef struct {
 #define HDR_CONTENT_ID			29
 #define HDR_MIME_VERSION		30
 #define HDR_DISP_NOTIFICATION		31
+#define HDR_TLS_REQUIRED		32	/* RFC 8689 */
 
  /*
   * Header flags.
@@ -81,6 +81,9 @@ extern const HEADER_OPTS *header_opts_find(const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

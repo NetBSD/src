@@ -1,4 +1,4 @@
-/*	$NetBSD: load_file.h,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
+/*	$NetBSD: load_file.h,v 1.2 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef LOAD_FILE_H_INCLUDED_
 #define LOAD_FILE_H_INCLUDED_

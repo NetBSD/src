@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.5 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postlog.c,v 1.6 2025/02/25 19:15:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,10 +19,10 @@
 /*	line, \fBpostlog\fR(1) reads from standard input and logs each input
 /*	line as one record.
 /*
-/*	By default, logging is sent to \fBsyslogd\fR(8) or
-/*	\fBpostlogd\fR(8); when the
-/*	standard error stream is connected to a terminal, logging
-/*	is sent there as well.
+/*	Logging is sent to \fBsyslogd\fR(8) or \fBpostlogd\fR(8), and
+/*	to the standard error stream (with Postfix < 3.8, \fBpostlog\fR(1)
+/*	writes to the standard error stream only if that stream is
+/*	connected to a terminal).
 /*
 /*	The following options are implemented:
 /* .IP "\fB-c \fIconfig_dir\fR"
@@ -84,6 +84,12 @@
 /*	\fBpostlogd\fR(8) service.
 /* .IP "\fBpostlog_service_name (postlog)\fR"
 /*	The name of the \fBpostlogd\fR(8) service entry in master.cf.
+/* .PP
+/*	Available in Postfix 3.9 and later:
+/* .IP "\fBmaillog_file_permissions (0600)\fR"
+/*	The file access permissions that will be set when the file
+/*	$maillog_file is created for the first time, or when the file is
+/*	created after an existing file is rotated.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	postlogd(8), Postfix logging

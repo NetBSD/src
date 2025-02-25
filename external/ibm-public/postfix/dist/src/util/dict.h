@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict.h,v 1.6 2025/02/25 19:15:51 christos Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -327,7 +327,7 @@ extern const char *dict_file_lookup(DICT *dict, const char *);
   * dict_stream(3)
   */
 extern VSTREAM *dict_stream_open(const char *dict_type, const char *mapname,
-            int open_flags, int dict_flags, struct stat * st, VSTRING **why);
+           int open_flags, int dict_flags, struct stat * st, VSTRING **why);
 
 /* LICENSE
 /* .ad

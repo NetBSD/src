@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.6 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.7 2025/02/25 19:15:51 christos Exp $	*/
 
 /*++
 /* NAME
@@ -125,8 +125,8 @@
 /* .PP
 /*	Available in Postfix version 3.2 and later:
 /* .IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
-/*	The prioritized list of elliptic curves supported by the Postfix
-/*	SMTP client and server.
+/*	The prioritized list of elliptic curves, that should be enabled in the
+/*	Postfix SMTP client and server.
 /* .PP
 /*	Available in Postfix version 3.4 and later:
 /* .IP "\fBtls_server_sni_maps (empty)\fR"
@@ -239,6 +239,12 @@
 /* .IP "\fBtlsproxy_tls_chain_files ($smtpd_tls_chain_files)\fR"
 /*	Files with the Postfix \fBtlsproxy\fR(8) server keys and certificate
 /*	chains in PEM format.
+/* .PP
+/*	Available in Postfix version 3.9 and later:
+/* .IP "\fBtlsproxy_tls_enable_rpk ($smtpd_tls_enable_rpk)\fR"
+/*	Request that remote SMTP clients send an RFC7250 raw public key
+/*	instead of an X.509 certificate, when asking or requiring client
+/*	authentication.
 /* STARTTLS CLIENT CONTROLS
 /* .ad
 /* .fi
@@ -422,6 +428,7 @@
 #define TLS_INTERNAL			/* XXX */
 #include <tls.h>
 #include <tls_proxy.h>
+#include <tlsrpt_wrapper.h>
 
  /*
   * Application-specific.
@@ -438,6 +445,7 @@ bool    var_smtpd_use_tls;
 bool    var_smtpd_enforce_tls;
 bool    var_smtpd_tls_ask_ccert;
 bool    var_smtpd_tls_req_ccert;
+bool    var_smtpd_tls_enable_rpk;
 bool    var_smtpd_tls_set_sessid;
 char   *var_smtpd_relay_ccerts;
 char   *var_smtpd_tls_chain_files;
@@ -467,6 +475,7 @@ bool    var_tlsp_use_tls;
 bool    var_tlsp_enforce_tls;
 bool    var_tlsp_tls_ask_ccert;
 bool    var_tlsp_tls_req_ccert;
+bool    var_tlsp_tls_enable_rpk;
 bool    var_tlsp_tls_set_sessid;
 char   *var_tlsp_tls_chain_files;
 char   *var_tlsp_tls_cert_file;
@@ -725,6 +734,20 @@ static int tlsp_eval_tls_error(TLSP_STATE *state, int err)
 	    state->flags |= TLSP_FLAG_NO_MORE_CIPHERTEXT_IO;
 	    return (TLSP_STAT_OK);
 	}
+
+	/*
+	 * Report a generic failure only if a more specific failure wasn't
+	 * already reported.
+	 */
+#ifdef USE_TLSRPT
+	if (state->is_server_role == 0
+	    && (state->flags & TLSP_FLAG_DO_HANDSHAKE)
+	    && state->client_start_props->tlsrpt)
+	    trw_report_failure(state->client_start_props->tlsrpt,
+			       TLSRPT_VALIDATION_FAILURE,
+			        /* additional_info= */ (char *) 0,
+			       "tls-handshake-failure");
+#endif
 	tlsp_state_free(state);
 	return (TLSP_STAT_ERR);
     }
@@ -1083,6 +1106,7 @@ static int tlsp_server_start_pre_handshake(TLSP_STATE *state)
 			 timeout = 0,		/* unused */
 			 requirecert = (var_tlsp_tls_req_ccert
 					&& var_tlsp_enforce_tls),
+			 enable_rpk = var_tlsp_tls_enable_rpk,
 			 serverid = state->server_id,
 			 namaddr = state->remote_endpt,
 			 cipher_grade = cipher_grade,
@@ -1829,6 +1853,7 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_ENFORCE_TLS, DEF_SMTPD_ENFORCE_TLS, &var_smtpd_enforce_tls,
 	VAR_SMTPD_TLS_ACERT, DEF_SMTPD_TLS_ACERT, &var_smtpd_tls_ask_ccert,
 	VAR_SMTPD_TLS_RCERT, DEF_SMTPD_TLS_RCERT, &var_smtpd_tls_req_ccert,
+	VAR_SMTPD_TLS_ENABLE_RPK, DEF_SMTPD_TLS_ENABLE_RPK, &var_smtpd_tls_enable_rpk,
 	VAR_SMTPD_TLS_SET_SESSID, DEF_SMTPD_TLS_SET_SESSID, &var_smtpd_tls_set_sessid,
 	VAR_SMTP_USE_TLS, DEF_SMTP_USE_TLS, &var_smtp_use_tls,
 	VAR_SMTP_ENFORCE_TLS, DEF_SMTP_ENFORCE_TLS, &var_smtp_enforce_tls,
@@ -1839,6 +1864,7 @@ int     main(int argc, char **argv)
 	VAR_TLSP_ENFORCE_TLS, DEF_TLSP_ENFORCE_TLS, &var_tlsp_enforce_tls,
 	VAR_TLSP_TLS_ACERT, DEF_TLSP_TLS_ACERT, &var_tlsp_tls_ask_ccert,
 	VAR_TLSP_TLS_RCERT, DEF_TLSP_TLS_RCERT, &var_tlsp_tls_req_ccert,
+	VAR_TLSP_TLS_ENABLE_RPK, DEF_TLSP_TLS_ENABLE_RPK, &var_tlsp_tls_enable_rpk,
 	VAR_TLSP_TLS_SET_SESSID, DEF_TLSP_TLS_SET_SESSID, &var_tlsp_tls_set_sessid,
 	VAR_TLSP_CLNT_USE_TLS, DEF_TLSP_CLNT_USE_TLS, &var_tlsp_clnt_use_tls,
 	VAR_TLSP_CLNT_ENFORCE_TLS, DEF_TLSP_CLNT_ENFORCE_TLS, &var_tlsp_clnt_enforce_tls,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.5 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.6 2025/02/25 19:15:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -906,7 +906,7 @@ static int attrdesc_subtype(const char *a1, const char *a2)
 
 /* url_attrs - attributes we want from LDAP URL */
 
-static char **url_attrs(DICT_LDAP *dict_ldap, LDAPURLDesc * url)
+static char **url_attrs(DICT_LDAP *dict_ldap, LDAPURLDesc *url)
 {
     static ARGV *attrs;
     char  **a1;
@@ -1236,7 +1236,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * Don't frustrate future attempts to make Postfix UTF-8 transparent.
      */
     if ((dict->flags & DICT_FLAG_UTF8_ACTIVE) == 0
-	&& !valid_utf8_string(name, strlen(name))) {
+	&& !valid_utf8_stringz(name)) {
 	if (msg_verbose)
 	    msg_info("%s: %s: Skipping lookup of non-UTF-8 key '%s'",
 		     myname, dict_ldap->parser->name, name);

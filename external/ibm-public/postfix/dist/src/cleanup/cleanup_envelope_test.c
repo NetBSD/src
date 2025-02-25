@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope_test.c,v 1.1.1.1 2025/02/25 19:11:41 christos Exp $	*/
+/*	$NetBSD: cleanup_envelope_test.c,v 1.2 2025/02/25 19:15:44 christos Exp $	*/
 
 
  /*

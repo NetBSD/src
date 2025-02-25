@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_print.c,v 1.4 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_print.c,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -81,6 +81,10 @@
 #include <tls.h>
 #include <tls_proxy.h>
 
+#ifdef USE_TLSRPT
+#define TLSRPT_WRAPPER_INTERNAL
+#include <tlsrpt_wrapper.h>
+#endif
 
 #define STR(x) vstring_str(x)
 #define LEN(x) VSTRING_LEN(x)
@@ -98,7 +102,7 @@ int     tls_proxy_client_param_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
 
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
 		   SEND_ATTR_STR(TLS_ATTR_CNF_FILE, params->tls_cnf_file),
-		   SEND_ATTR_STR(TLS_ATTR_CNF_NAME,  params->tls_cnf_name),
+		   SEND_ATTR_STR(TLS_ATTR_CNF_NAME, params->tls_cnf_name),
 		   SEND_ATTR_STR(VAR_TLS_HIGH_CLIST, params->tls_high_clist),
 		   SEND_ATTR_STR(VAR_TLS_MEDIUM_CLIST,
 				 params->tls_medium_clist),
@@ -244,6 +248,61 @@ static int tls_proxy_client_dane_print(ATTR_PRINT_COMMON_FN print_fn,
     return (ret);
 }
 
+#ifdef USE_TLSRPT
+
+/* tls_proxy_client_tlsrpt_print - send TLSRPT_WRAPPER over stream */
+
+static int tls_proxy_client_tlsrpt_print(ATTR_PRINT_COMMON_FN print_fn,
+			            VSTREAM *fp, int flags, const void *ptr)
+{
+    const TLSRPT_WRAPPER *trw = (const TLSRPT_WRAPPER *) ptr;
+    int     have_trw = trw != 0;
+    int     ret;
+
+    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
+		   SEND_ATTR_INT(TLS_ATTR_TLSRPT, have_trw),
+		   ATTR_TYPE_END);
+    if (msg_verbose)
+	msg_info("tls_proxy_client_tlsrpt_print have_trw=%d", have_trw);
+
+    if (ret == 0 && have_trw) {
+	ret = print_fn(fp, flags | ATTR_FLAG_MORE,
+		       SEND_ATTR_STR(TRW_RPT_SOCKET_NAME,
+				     STRING_OR_EMPTY(trw->rpt_socket_name)),
+		       SEND_ATTR_STR(TRW_RPT_POLICY_DOMAIN,
+				   STRING_OR_EMPTY(trw->rpt_policy_domain)),
+		       SEND_ATTR_STR(TRW_RPT_POLICY_STRING,
+				   STRING_OR_EMPTY(trw->rpt_policy_string)),
+		       SEND_ATTR_INT(TRW_TLS_POLICY_TYPE,
+				     (int) trw->tls_policy_type),
+		       SEND_ATTR_FUNC(argv_attr_print,
+				    (const void *) trw->tls_policy_strings),
+		       SEND_ATTR_STR(TRW_TLS_POLICY_DOMAIN,
+				   STRING_OR_EMPTY(trw->tls_policy_domain)),
+		       SEND_ATTR_FUNC(argv_attr_print,
+				      (const void *) trw->mx_host_patterns),
+		       SEND_ATTR_STR(TRW_SRC_MTA_ADDR,
+				     STRING_OR_EMPTY(trw->snd_mta_addr)),
+		       SEND_ATTR_STR(TRW_DST_MTA_NAME,
+				     STRING_OR_EMPTY(trw->rcv_mta_name)),
+		       SEND_ATTR_STR(TRW_DST_MTA_ADDR,
+				     STRING_OR_EMPTY(trw->rcv_mta_addr)),
+		       SEND_ATTR_STR(TRW_DST_MTA_EHLO,
+				     STRING_OR_EMPTY(trw->rcv_mta_ehlo)),
+		       SEND_ATTR_INT(TRW_SKIP_REUSED_HS,
+				     trw->skip_reused_hs),
+		       SEND_ATTR_INT(TRW_FLAGS,
+				     trw->flags),
+		       ATTR_TYPE_END);
+    }
+    /* Do not flush the stream. */
+    if (msg_verbose)
+	msg_info("tls_proxy_client_tlsrpt_print ret=%d", ret);
+    return (ret);
+}
+
+#endif
+
 /* tls_proxy_client_start_print - send TLS_CLIENT_START_PROPS over stream */
 
 int     tls_proxy_client_start_print(ATTR_PRINT_COMMON_FN print_fn,
@@ -259,6 +318,7 @@ int     tls_proxy_client_start_print(ATTR_PRINT_COMMON_FN print_fn,
 
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
 		   SEND_ATTR_INT(TLS_ATTR_TIMEOUT, props->timeout),
+		   SEND_ATTR_INT(TLS_ATTR_ENABLE_RPK, props->enable_rpk),
 		   SEND_ATTR_INT(TLS_ATTR_TLS_LEVEL, props->tls_level),
 		   SEND_ATTR_STR(TLS_ATTR_NEXTHOP,
 				 STRING_OR_EMPTY(props->nexthop)),
@@ -284,6 +344,12 @@ int     tls_proxy_client_start_print(ATTR_PRINT_COMMON_FN print_fn,
 				 STRING_OR_EMPTY(props->mdalg)),
 		   SEND_ATTR_FUNC(tls_proxy_client_dane_print,
 				  (const void *) props->dane),
+#ifdef USE_TLSRPT
+		   SEND_ATTR_FUNC(tls_proxy_client_tlsrpt_print,
+				  (const void *) props->tlsrpt),
+#endif
+		   SEND_ATTR_STR(TLS_ATTR_FFAIL_TYPE,
+				 STRING_OR_EMPTY(props->ffail_type)),
 		   ATTR_TYPE_END);
     /* Do not flush the stream. */
     if (msg_verbose)

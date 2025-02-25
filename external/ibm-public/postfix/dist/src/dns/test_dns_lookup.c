@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dns_lookup.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: test_dns_lookup.c,v 1.4 2025/02/25 19:15:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -82,13 +82,16 @@ int     main(int argc, char **argv)
     var_dnssec_probe = "";
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    while ((ch = GETOPT(argc, argv, "f:npvs")) > 0) {
+    while ((ch = GETOPT(argc, argv, "f:l:npvs")) > 0) {
 	switch (ch) {
 	case 'v':
 	    msg_verbose++;
 	    break;
 	case 'f':
 	    dns_rr_filter_compile("DNS reply filter", optarg);
+	    break;
+	case 'l':
+	    var_dns_rr_list_limit = atoi(optarg);
 	    break;
 	case 'n':
 	    lflags |= DNS_REQ_FLAG_NCACHE_TTL;
@@ -123,9 +126,11 @@ int     main(int argc, char **argv)
 	    vstream_printf("%s: fqdn: %s\n", name, vstring_str(fqdn));
 	    buf = vstring_alloc(100);
 	    print_rr(buf, rr);
+	    vstream_fflush(VSTREAM_OUT);
+	    if (DNS_RR_IS_TRUNCATED(rr))
+		msg_warn("one or more excess DNS_RR records were dropped");
 	    dns_rr_free(rr);
 	    vstring_free(buf);
-	    vstream_fflush(VSTREAM_OUT);
 	}
     }
     myfree((void *) types);

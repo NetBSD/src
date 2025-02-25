@@ -1,4 +1,4 @@
-.\"	$NetBSD: posttls-finger.1,v 1.5 2023/12/23 20:30:42 christos Exp $
+.\"	$NetBSD: posttls-finger.1,v 1.6 2025/02/25 19:15:42 christos Exp $
 .\"
 .TH POSTTLS-FINGER 1 
 .ad
@@ -111,7 +111,7 @@ fingerprints (with DANE TLSA records the algorithm is specified
 in the DNS).  In Postfix versions prior to 3.6, the default value
 was "md5".
 .IP "\fB\-f\fR"
-Lookup the associated DANE TLSA RRset even when a hostname is not an
+Look up the associated DANE TLSA RRset even when a hostname is not an
 alias and its address records lie in an unsigned zone.  See
 smtp_tls_force_insecure_host_tlsa_lookup for details.
 .IP "\fB\-F \fICAfile.pem\fR (default: none)"
@@ -272,6 +272,15 @@ is typically provided on port 465 by servers that are compatible with
 the SMTP\-in\-SSL protocol, rather than the STARTTLS protocol.
 The destination \fIdomain\fR:\fIport\fR must of course provide such
 a service.
+.IP "\fB\-x\fR"
+Prefer RFC7250 non\-X.509 raw public key (RPK) server credentials.  By
+default only X.509 certificates are accepted.  This is analogous to
+setting \fBsmtp_tls_enable_rpk = yes\fR in the smtp(8) client.  At the
+fingerprint security level, when raw public keys are enabled, only
+public key (and not certificate) fingerprints will be compared against
+the specified list of \fImatch\fR arguments.  Certificate fingerprints
+are fragile when raw public keys are solicited, the server may at some
+point in time start returning only the public key.
 .IP "\fB\-X\fR"
 Enable \fBtlsproxy\fR(8) mode. This is an unsupported mode,
 for program development only.

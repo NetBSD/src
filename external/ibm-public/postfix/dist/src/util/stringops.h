@@ -1,4 +1,4 @@
-/*	$NetBSD: stringops.h,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: stringops.h,v 1.6 2025/02/25 19:15:52 christos Exp $	*/
 
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
@@ -62,14 +62,20 @@ extern int allascii_len(const char *, ssize_t);
 extern const char *WARN_UNUSED_RESULT split_nameval(char *, char **, char **);
 extern const char *WARN_UNUSED_RESULT split_qnameval(char *, char **, char **);
 extern int valid_utf8_string(const char *, ssize_t);
+extern int valid_utf8_stringz(const char *);
 extern size_t balpar(const char *, const char *);
 extern char *WARN_UNUSED_RESULT extpar(char **, const char *, int);
 extern int strcasecmp_utf8x(int, const char *, const char *);
 extern int strncasecmp_utf8x(int, const char *, const char *, ssize_t);
+extern char *quote_for_json(VSTRING *, const char *, ssize_t);
+extern char *quote_for_json_append(VSTRING *, const char *, ssize_t);
+extern const char *mystrerror(int);
+extern char *normalize_ws(char *);
 
 #define EXTPAR_FLAG_NONE	(0)
 #define EXTPAR_FLAG_STRIP	(1<<0)	/* "{ text }" -> "text" */
 #define EXTPAR_FLAG_EXTRACT	(1<<1)	/* hint from caller's caller */
+#define EXTPAR_FLAG_NORMAL_WS	(1<<2)	/* normalize 'isspace' members */
 
 #define CASEF_FLAG_UTF8		(1<<0)
 #define CASEF_FLAG_APPEND	(1<<1)

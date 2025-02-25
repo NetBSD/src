@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf_print.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: vbuf_print.c,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -69,6 +69,7 @@
 #include "mymalloc.h"
 #include "vbuf.h"
 #include "vstring.h"
+#include "stringops.h"
 #include "vbuf_print.h"
 
  /*
@@ -292,8 +293,7 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
 		break;
 	    case 'm':
 		/* Ignore the 'l' modifier, width and precision. */
-		VBUF_STRCAT(bp, saved_errno ?
-			    strerror(saved_errno) : "Application error");
+		VBUF_STRCAT(bp, mystrerror(saved_errno));
 		break;
 	    case 'p':
 		if (long_flag)
