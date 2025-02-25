@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/02/24 13:47:55 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2025/02/25 20:23:19 rillig Exp $
 
 WARNS=9	
 
@@ -15,10 +15,6 @@ LDADD+= 	-lutil
 
 PROG=		efi
 MAN=		${PROG}.8
-
-LINTFLAGS.certs.c += -X177
-LINTFLAGS.devpath3.c += -X177
-LINTFLAGS.devpath4.c += -X177
 
 SRCS=		main.c
 SRCS+=		bootvar.c
