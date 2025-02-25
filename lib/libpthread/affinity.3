@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.9 2025/02/21 15:25:37 wiz Exp $
+.\"	$NetBSD: affinity.3,v 1.10 2025/02/25 10:15:41 riastradh Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,7 +107,7 @@ thread to the CPU whose ID is 0:
 	pth = pthread_self();
 	error = pthread_setaffinity_np(pth, cpuset_size(cset), cset);
 	if (error) {
-		err(EXIT_FAILURE, "pthread_setaffinity_np failed");
+		errc(EXIT_FAILURE, error, "pthread_setaffinity_np failed");
 	}
 	cpuset_destroy(cset);
 .Ed
