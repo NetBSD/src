@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -506,17 +506,34 @@ rt_recvrt(int cmd, const struct rt *rt, pid_t pid)
 static bool
 rt_cmp_misc(struct rt *nrt, struct rt *ort)
 {
-	/* MTU changed */
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	/* FreeBSD puts the interface MTU into the route MTU
+	 * if the route does not define it's own. */
+	unsigned int nmtu, omtu;
+
+	nmtu = nrt->rt_mtu ? nrt->rt_mtu : nrt->rt_ifp->mtu;
+	omtu = ort->rt_mtu ? ort->rt_mtu : ort->rt_ifp->mtu;
+	if (omtu != nmtu)
+		return false;
+#else
 	if (ort->rt_mtu != nrt->rt_mtu)
 		return false;
+#endif
 
 #ifdef HAVE_ROUTE_LIFETIME
-	uint32_t deviation;
-
 	/* There might be a minor difference between kernel route
 	 * lifetime and our lifetime due to processing times.
 	 * We allow a small deviation to avoid needless route changes.
-	 * dhcpcd will expire the route regardless of route lifetime support. */
+	 * dhcpcd will expire the route regardless of route lifetime support.
+	 */
+	struct timespec ts;
+	uint32_t deviation;
+
+	timespecsub(&nrt->rt_aquired, &ort->rt_aquired, &ts);
+	if (ts.tv_sec < 0)
+		ts.tv_sec = -ts.tv_sec;
+	if (ts.tv_sec > RTLIFETIME_DEV_MAX)
+		return false;
 	if (nrt->rt_lifetime > ort->rt_lifetime)
 		deviation = nrt->rt_lifetime - ort->rt_lifetime;
 	else

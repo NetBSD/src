@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -471,7 +471,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		if (efprintf(fp, "af_waiting=%d", af) == -1)
 			goto eexit;
 	}
-	if (ifo->options & DHCPCD_DEBUG) {
+	if (loggetopts() & LOGERR_DEBUG) {
 		if (efprintf(fp, "syslog_debug=true") == -1)
 			goto eexit;
 	}

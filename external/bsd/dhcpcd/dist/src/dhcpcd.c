@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-static const char dhcpcd_copyright[] = "Copyright (c) 2006-2024 Roy Marples";
+static const char dhcpcd_copyright[] = "Copyright (c) 2006-2025 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -1156,10 +1156,8 @@ dhcpcd_checkcarrier(void *arg)
 	struct interface *ifp0 = arg, *ifp;
 
 	ifp = if_find(ifp0->ctx->ifaces, ifp0->name);
-	if (ifp == NULL || ifp->carrier == ifp0->carrier)
-		return;
-
-	dhcpcd_handlecarrier(ifp, ifp0->carrier, ifp0->flags);
+	if (ifp != NULL)
+		dhcpcd_handlecarrier(ifp, ifp0->carrier, ifp0->flags);
 	if_free(ifp0);
 }
 
@@ -2174,9 +2172,6 @@ main(int argc, char **argv, char **envp)
 #ifdef THERE_IS_NO_FORK
 	ctx.options &= ~DHCPCD_DAEMONISE;
 #endif
-
-	if (ctx.options & DHCPCD_DEBUG)
-		logsetopts(logopts | LOGERR_DEBUG);
 
 	if (!(ctx.options & (DHCPCD_TEST | DHCPCD_DUMPLEASE))) {
 printpidfile:

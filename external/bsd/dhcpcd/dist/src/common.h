@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,24 @@
 #ifndef timespecclear
 #define timespecclear(tsp)      (tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
 #define timespecisset(tsp)      ((tsp)->tv_sec || (tsp)->tv_nsec)
+#define timespecadd(tsp, usp, vsp)                                      \
+	do {                                                            \
+		(vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;          \
+		(vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;       \
+		if ((vsp)->tv_nsec >= 1000000000L) {                    \
+			(vsp)->tv_sec++;                                \
+			(vsp)->tv_nsec -= 1000000000L;                  \
+		}                                                       \
+	} while (0)
+#define timespecsub(tsp, usp, vsp)                                      \
+	do {                                                            \
+		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;          \
+		(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;       \
+		if ((vsp)->tv_nsec < 0) {                               \
+			(vsp)->tv_sec--;                                \
+			(vsp)->tv_nsec += 1000000000L;                  \
+		}                                                       \
+	} while (0)
 #endif
 
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)

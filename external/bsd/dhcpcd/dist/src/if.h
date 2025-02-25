@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,7 @@ int if_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
 #define	pioctl(ctx, req, data, len) ioctl((ctx)->pf_inet_fd, (req),(data),(len))
 #endif
 int if_setflag(struct interface *, short, short);
+unsigned int if_mtu(struct interface *);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
 #define if_down(ifp) if_setflag((ifp), 0, IFF_UP);
 bool if_is_link_up(const struct interface *);
