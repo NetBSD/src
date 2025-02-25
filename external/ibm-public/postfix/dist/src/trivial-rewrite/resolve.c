@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.10 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.11 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -429,7 +429,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	if (!valid_mailhost_literal(rcpt_domain, DONT_GRIPE))
 	    *flags |= RESOLVE_FLAG_ERROR;
     } else if (var_smtputf8_enable
-	       && valid_utf8_string(STR(nextrcpt), LEN(nextrcpt)) == 0) {
+	       && valid_utf8_stringz(STR(nextrcpt)) == 0) {
 	*flags |= RESOLVE_FLAG_ERROR;
     } else if (!valid_utf8_hostname(var_smtputf8_enable, rcpt_domain,
 				    DONT_GRIPE)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: sent.h,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
 
 #ifndef _SENT_H_INCLUDED_
 #define _SENT_H_INCLUDED_
@@ -30,8 +30,8 @@
   */
 #define SENT_FLAG_NONE	(0)
 
-extern int sent(int, const char *, MSG_STATS *, RECIPIENT *, const char *, 
-			DSN *);
+extern int sent(int, const char *, MSG_STATS *, RECIPIENT *, const char *,
+		        DSN *);
 
 /* LICENSE
 /* .ad

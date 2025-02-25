@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_lockfile_as.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dot_lockfile_as.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -79,7 +79,7 @@ int     dot_lockfile_as(const char *path, VSTRING *why, uid_t euid, gid_t egid)
 
 /* dot_unlockfile_as - dotlock file as user */
 
-void     dot_unlockfile_as(const char *path, uid_t euid, gid_t egid)
+void    dot_unlockfile_as(const char *path, uid_t euid, gid_t egid)
 {
     uid_t   saved_euid = geteuid();
     gid_t   saved_egid = getegid();

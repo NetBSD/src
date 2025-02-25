@@ -1,0 +1,481 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "https://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix TLSRPT notification Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix TLSRPT Howto</h1>
+
+<hr>
+
+<h2> Table of Contents </h2>
+
+<ul>
+
+<li> <a href="#intro"> Introduction </a> </li>
+<li> <a href="#building"> Building Postfix with TLSRPT support </a>
+<li> <a href="#using"> Turning on TLSRPT </a> </li>
+<li> <a href="#logging"> TLSRPT Status logging </a> </li>
+<li> <a href="#delivering"> Delivering TLSRPT summaries via email</a> </li>
+<li> <a href="#mta-sts"> MTA-STS Support via smtp_tls_policy_maps </a> </li>
+<li> <a href="#limitations"> Limitations </a></li>
+<li> <a href="#credits"> Credits </a> </li>
+
+</ul>
+
+<h2> <a name="intro"> Introduction </a> </h2>
+
+<p> The TLSRPT protocol is defined in RFC 8460. With this, an email
+receiving domain can publish a policy in DNS, and request daily
+summary reports for successful and failed SMTP over TLS connections
+to that domain's MX hosts. Support for TLSRPT was added in Postfix
+3.10. </p>
+
+<p> A policy for domain <tt>example.com</tt> could look like this: </p>
+
+<blockquote>
+<pre>
+_smtp._tls.example.com. IN TXT "v=TLSRPTv1; rua=mailto:smtp-tls-report@example.com"
+</pre>
+</blockquote>
+
+<p> Instead of <tt>mailto:</tt>, a policy may specify an <tt>https:</tt>
+destination. </p>
+
+<p> The diagram below shows how Postfix TLS handshake success and
+failure events are collected and processed into daily summary
+reports. </p>
+
+<blockquote>
+
+<table>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> Postfix SMTP and TLS
+client engines </td> <td> <tt> &rarr; </tt> </td>
+
+<td align="center" bgcolor="#f0f0ff"> <a
+href="https://github.com/sys4/libtlsrpt">TLSRPT client library </a>
+(linked into Postfix) </td> <td> <tt> &rarr; </tt> </td>
+
+<td align="center" bgcolor="#f0f0ff"> <a
+href="https://github.com/sys4/tlsrpt-reporter">TLSRPT collector,
+fetcher, and summary generator</a> </td> <td> <tt> &rarr; </tt>
+</td>
+
+<td align="center" bgcolor="#f0f0ff"> Email or HTTP delivery </td>
+</tr>
+
+</table>
+
+</blockquote>
+
+<ul>
+
+<li> <p> The Postfix SMTP and TLS client engines will generate a
+"success" or "failure" event for each TLS handshake, </p>
+
+<li> <p> They will pass those events to an in-process TLSRPT client
+library that sends data over a local socket to </p>
+
+<li> <p> A local TLSRPT collector that runs on each Postfix machine.
+A TLSRPT fetcher gathers information from individual collectors,
+and a central TLSRPT report generator produces daily summary reports.
+</p>
+
+</ul>
+
+<p> The TLSRPT client library, and the infrastructure to collect,
+fetch, and report TLSRPT information, are implemented and maintained
+by sys4 at https://github.com/sys4/libtlsrpt and
+https://github.com/sys4/tlsrpt-reporter, respectively. </p>
+
+<p> The Postfix implementation supports TLSRPT or domains with DANE
+(Postfix built-in) and MTA-STS (through an <a href="#mta-sts">
+smtp_tls_policy_maps plug-in</a>). </p>
+
+<p> The Postfix smtp(8) client process implements the SMTP client
+engine. With "smtp_tls_connection_reuse = no", the smtp(8) client
+process also implements the TLS client engine. With
+"smtp_tls_connection_reuse = yes", the smtp(8) client process
+delegates TLS processing to a Postfix tlsproxy(8) process. Either
+way, Postfix will generate the exact same TLSRPT events. </p>
+
+<h2> <a name="building"> Building Postfix with TLSRPT support </a>
+</h2>
+
+<p> These instructions assume that you build Postfix from source
+code as described in the INSTALL document. Some modification may
+be required if you build Postfix from a vendor-specific source
+package. </p>
+
+<p> The Postfix TLSRPT client builds on a TLSRPT library which may
+be available as a built package (rpm, deb, etc.), or which you can
+build from source code from: </p>
+
+<blockquote>
+<p> https://github.com/sys4/libtlsrpt </p>
+</blockquote>
+
+<p> The library is typically installed as a header file in
+/usr/local/include/tlsrpt.h and an object library in
+/usr/local/lib/libtlsrpt.a or /usr/local/lib/libtlsrpt.so. The
+actual pathnames will depend on OS platform conventions. </p>
+
+<p> In order to build Postfix with TLSRPT support, you will need
+to add compiler options <tt>-DUSE_TLSRPT</tt> (to build with TLSRPT
+support) and <tt>-I</tt> (with the directory containing the tlsrpt.h
+header file), and you will need to add linker options to link with
+the TLSRPT client library, for example: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+  "CCARGS=-DUSE_TLSRPT -I/usr/local/include" \
+  "AUXLIBS=-L/usr/local/lib -Wl,-rpath,/usr/local/lib -ltlsrpt"
+</pre>
+</blockquote>
+
+<p> (On Solaris systems you may need to use "<tt>-Wl,-R</tt>" instead
+of "<tt>-Wl,-rpath</tt>".) </p>
+
+<p> Then, just run 'make'. </p>
+
+<blockquote>
+
+<p> Note: if your build command line already has CCARGS or AUXLIBS
+settings, then simply append the above settings to the existing CCARGS
+or AUXLIBS values: </p>
+
+<pre>
+make -f Makefile.init makefiles \
+  "CCARGS=... -DUSE_TLSRPT -I/usr/local/include" \
+  "AUXLIBS=... -L/usr/local/lib -Wl,-rpath,/usr/local/lib -ltlsrpt"
+</pre>
+</blockquote>
+
+<h2> <a name="using"> Turning on TLSRPT </a> </h2>
+
+<p> After installing Postfix TLSRPT support, you can enable TLSRPT
+support in main.cf like this: </p>
+
+<blockquote>
+<pre>
+smtp_tlsrpt_enable = yes
+smtp_tlsrpt_socket_name = path/to/socket
+</pre>
+</blockquote>
+
+<p> The smtp_tlsrpt_socket_name parameter specifies either an
+absolute pathname, or a pathname that is relative to $queue_directory.
+</p>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The recommended socket location is still to be determined.
+A good socket location would be under the Postfix queue directory,
+for example: "smtp_tlsrpt_socket_name = run/tlsrpt/tlsrpt.sock".
+The advantage of using a relative name is that it will work equally
+well whether or not Postfix chroot is turned on. </p>
+
+<li> <p> Regardless of whether Postfix chroot is enabled, the TLSRPT
+receiver (<tt>tlsrpt_collectd</tt>) will need to be configured with
+the socket's absolute pathname. </p>
+
+<li> <p> Do not specify a TLSRPT socket location under a Postfix socket
+directory such as <tt>private</tt> or <tt>public</tt>. Only Postfix
+programs should create sockets there. </p>
+
+</ul>
+
+<p> For details on how to run the TLSRPT collection and reporting
+infrastructure, see the documentation at
+https://github.com/sys4/tlsrpt-reporter.
+
+<h2> <a name="logging"> TLSRPT Status logging </a> </h2>
+
+<p> With TLSRPT support turned on, the Postfix TLSRPT client will
+not only report an event to an invisible daily success/fail summary
+queue, but it will also log a visible record to the mail logfile.
+</p>
+
+<p> Below are a few examples of logging from a Postfix SMTP client
+or tlsproxy daemon: </p>
+
+<blockquote>
+<pre>
+TLSRPT: status=success, domain=example.com, receiving_mx=mail.example.com[ipaddr]
+&nbsp;
+TLSRPT: status=failure, domain=example.org, receiving_mx=mail.example.org[ipaddr],
+    failure_type=starttls_not_supported
+&nbsp;
+TLSRPT: status=failure, domain=example.net, receiving_mx=mail.example.net[ipaddr],
+    failure_type=validation_failure, failure_reason=self-signed_certificate
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> Postfix logs and reports the TLSRPT status only for TLS
+handshakes on a new SMTP connection. There is no TLS handshake, and
+thus no TLSRPT status logging, when an SMTP connection is reused.
+Such connections have Postfix SMTP client logging like this: </p>
+
+<pre>
+Verified <b>TLS connection reused</b> to mail.example.com[ipaddr]:25:
+    TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
+&nbsp;
+Untrusted <b>TLS connection reused</b> to mail.example.com[ipaddr]:25:
+    TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
+</pre>
+
+<li> <p> By default, Postfix does not report the TLSRPT status for
+a TLS handshake that reuses a previously-negotiated TLS session
+(there would be no new information to report). Specify
+"smtp_tlsrpt_skip_reused_handshakes = no" to report the TLSRPT
+status for all TLS handshakes. This may be useful for troubleshooting.
+</p>
+
+<li> <p> Postfix logging for certificate verification failures may
+differ between new or reused TLS sessions. </p>
+
+<ul>
+
+<li> <p> New TLS session:
+</p>
+
+<pre>
+TLSRPT: status=failure, domain=example.org, receiving_mx=mail.example.org[ipaddr],
+    <b>failure_type=validation_failure</b>, <b>failure_reason=self-signed_certificate</b>
+</pre>
+
+<li> <p> Reused TLS session: </p>
+
+<pre>
+mail.example.org[ipaddr]:25: <b>re-using session</b> with untrusted peer
+    credential, look for details earlier in the log
+TLSRPT: status=failure, domain=example.org, receiving_mx=mail.example.org[ipaddr],
+    <b>failure_type=certificate_not_trusted</b>
+</pre>
+
+</ul>
+
+<p> The logging may differ because a reused TLS session does not
+have the details for why TLS authentication failed. </p>
+
+</ul>
+
+<h2> <a name="delivering"> Delivering TLSRPT summaries via email</a> </h2>
+
+<p> <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3">RFC
+8460 Section 3</a> specifies that an MTA must not enforce TLS
+security when sending failure reports via email. </p>
+
+<p> Options:
+
+<ul>
+
+<li> <p> In an email report, specify the "<b>TLS-Required: no</b>"
+message header,
+defined in RFC 8689, to reduce the Postfix SMTP client TLS security
+level to "<b>may</b>" (that is, do not verify remote SMTP server
+certificates, and fall back to plaintext if TLS is unavailable).
+<br> <br> This feature is available in Postfix 3.10 and later. If
+your outbound MTAs run an older version, you can use one of the
+options described below. </p>
+
+<li> <p> Do nothing. When TLS security enforcement is required but
+fails, a TLSRPT summary message will be delayed
+until the problem is addressed, or until the message expires
+in the mail queue. Keep in mind that TLSRPT is not a real-time
+monitoring service; it takes on average 12 hours before a failure
+is reported through TLSRPT. </p>
+
+<li> <p> On outbound MTAs that don't support the "<b>TLS-Required:
+no</b>" header feature (such as Postfix 3.9 and earlier), disable
+TLS security enforcement for the sender of TLSRPT summaries.
+Implement the configuration below on outbound MTA instances (replace
+noreply-smtp-tls-reporting@example.com with your actual report
+generator's sender address): </p>
+
+<pre>
+/etc/postfix/main.cf:
+    # Limitation: this setting is overruled with transport_maps.
+    sender_dependent_default_transport_maps = inline:{
+        { noreply-smtp-tls-reporting@example.com = allow-plaintext } }
+&nbsp
+/etc/postfix/master.cf:
+    # service name    type    private unpriv  chroot  wakeup  maxproc command
+    allow-plaintext   unix    -       -       -       -       -       smtp
+        -o { smtp_tls_security_level = may }
+        -o { smtp_tls_policy_maps = static:may }
+</pre>
+
+</ul>
+
+<h2> <a name="mta-sts"> MTA-STS Support via smtp_tls_policy_maps
+</a></h2>
+
+<p> Postfix supports MTA-STS though an smtp_tls_policy_maps policy
+plugin, which replies with a TLS security level and name=value
+attributes with certificate matching requirements. Postfix 3.10 and
+later extend the policy plugin response with additional name=value
+attributes that are needed for TLSRPT. </p>
+
+<p> Examples of smtp_tls_policy_maps plugins with MTA-STS support
+are: </p>
+
+<ul>
+
+<li> <p> <a href="https://github.com/Zuplu/postfix-tlspol">
+postfix-tlspol</a>, supports domains with DANE (using Postfix
+built-in DANE), and domains with MTA-STS. </p>
+
+<li> <p> <a href="https://github.com/Snawoot/postfix-mta-sts-resolver">
+postfix-mta-sts-resolver</a>, supports domains with MTA-STS as of
+release 1.5.0 (February 2025). </p>
+
+</ul>
+
+<p> Both plugins can generate the additional name=value attributes
+that Postfix needs for TLSRPT support (as of February 2025). This
+is enabled by setting a <tt>tlsrpt</tt> boolean in a plugin
+configuration file.  This setting is safe with Postfix 3.10 and
+later, even if Postfix TLSRPT support is disabled (at build time
+or at run time). Postfix versions 3.9 and earlier will report a
+policy error with "<tt>invalid attribute name</tt>". </p>
+
+<p> The examples in the text below apply to this MTA-STS policy example
+given in <a
+href="https://datatracker.ietf.org/doc/html/rfc8461#section-3.2">
+RFC 8461 Section 3.2</a>: </p>
+
+<blockquote>
+<pre>
+version: STSv1
+mode: enforce
+mx: mail.example.com
+mx: *.example.net
+mx: backupmx.example.com
+max_age: 604800
+</pre>
+</blockquote>
+
+<p> The list of supported attributes is given below. Instead of
+<tt>name=value</tt>, specify <tt>{ name = value }</tt> when a value
+may contain whitespace. A policy response may contain line breaks.
+</p>
+
+<ul>
+
+<li> <p> <tt> policy_type=<i>type</i> </tt> </p>
+
+<p> Specify <tt>sts</tt> or <tt>no-policy-found</tt>. </p>
+
+<p> Example: <tt>policy_type=sts</tt> </p> </li>
+
+<li> <p> <tt> policy_domain=<i>name</i> </tt> </p>
+
+<p> The domain that the MTA-STS policy applies to. </p>
+
+<p> Example: <tt>policy_domain=example.com</tt> </p>
+
+</li>
+
+<li> <p> <tt> { policy_string = <i>value</i> } </tt> </p>
+
+<p> Specify one <tt>policy_string</tt> instance for each MTA-STS
+policy feature, enclosed inside "{" and "}" to protect whitespace
+in attribute values. <p>
+
+<p> Example: <tt> { policy_string = version: STSv1 } { policy_string
+= mode: enforce } ...</tt> </p>
+
+<p> The above form ignores whitespace after the opening "{", around
+the "=", and before the closing "}".</p> </li>
+
+<li> <p> <tt> mx_host_pattern=<i>pattern</i> </tt> </p>
+
+<p> Specify one <tt>mx_host_pattern</tt> instance for each "mx:" feature
+in the MTA-STS policy. </p>
+
+<p> Example: <tt>mx_host_pattern=mail.example.com
+mx_host_pattern=*.example.net ...</tt> </p> </li>
+
+<li> <p> <tt> policy_failure=<i>type</i> </tt> </p>
+
+<p> If specified, forces MTA-STS policy enforcement to fail with
+the indicated error, even if a server certificate would satisfy
+conventional PKI constraints. Valid errors are <tt>sts-policy-fetch-error,
+sts-policy-invalid</tt>, <tt>sts-webpki-invalid</tt>, or the less
+informative <tt>validation-failure</tt>. </p>
+
+<p> Example: <tt>policy_failure=sts-webpki-invalid</tt> </p> </li>
+
+<li> <p> <tt> policy_ttl=<i>time</i> </tt> (deprecated) </p>
+
+<p> This attribute is deprecated. The <i>time</i> value is not used,
+and support for this attribute will eventually be removed from the
+code. </p> </li>
+
+</ul>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> Postfix 3.10 and later will accept these additional
+attributes in an MTA-STS response even if Postfix TLSRPT support
+is disabled (at build time or at run time). With Postfix TLSRPT
+support turned off, Postfix may still use the <tt>policy_failure</tt>
+attribute, and will ignore the attributes that are used only for
+TLSRPT. </p>
+
+<li> <p> It is an error to specify these attributes for a non-STS
+policy. </p>
+
+</ul>
+
+<h2> <a name="limitations"> Limitations </a></h2>
+
+<p> The Postfix TLSRPT implementation reports only TLS handshake
+success or failure. It does not report failure to connect, or
+connections that break before or after a TLS handshake. </p>
+
+<p> The Postfix TLSRPT implementation reports at most one final TLS
+handshake status (either 'success' or 'failure') per SMTP connection.
+Postfix TLSRPT will not report a recoverable failure and then later
+report a final status of 'success' for that same connection. The
+reason is that it's too complicated to filter TLS errors and to
+report error details from the TLS engine back to the SMTP protocol
+engine. It just is not how Postfix works internally. </p>
+
+<h2> <a name="credits"> Credits </a> </h2>
+
+<ul>
+
+<li> The TLSRPT client library, and the infrastructure to collect,
+fetch, and report TLSRPT information, are implemented and maintained
+by sys4. </li>
+
+<li> Wietse Venema implemented the integration with Postfix.
+</li>
+
+</ul>
+
+</body>
+
+</html>

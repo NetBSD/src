@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.7 2020/03/18 18:59:36 christos Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.8 2025/02/25 19:11:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -208,7 +208,7 @@
 /*	parameter value, where \fItransport\fR is the master.cf name of
 /*	the message delivery transport.
 /* .IP "\fBdefault_recipient_refill_delay (5s)\fR"
-/*	The default per-transport maximum delay between recipients refills.
+/*	The default per-transport maximum delay between refilling recipients.
 /* .IP "\fBtransport_recipient_refill_delay ($default_recipient_refill_delay)\fR"
 /*	A transport-specific override for the default_recipient_refill_delay
 /*	parameter value, where \fItransport\fR is the master.cf name of

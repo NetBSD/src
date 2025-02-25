@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,14 +7,14 @@
 </head> <body> <pre>
 POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        posttls-finger - Probe the TLS properties of an ESMTP or LMTP server.
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>posttls-finger</b> [<i>options</i>] [<b>inet:</b>]<i>domain</i>[:<i>port</i>] [<i>match ...</i>]
        <b>posttls-finger</b> -S [<i>options</i>] <b>unix:</b><i>pathname</i> [<i>match ...</i>]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        <a href="posttls-finger.1.html"><b>posttls-finger</b>(1)</a>  connects  to  the  specified destination and reports
        TLS-related information about the server. With SMTP, the destination is
        a  domainname;  with LMTP it is either a domainname prefixed with <b>inet:</b>
@@ -112,7 +112,7 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               ified in the DNS).   In  Postfix  versions  prior  to  3.6,  the
               default value was "md5".
 
-       <b>-f</b>     Lookup  the  associated  DANE TLSA RRset even when a hostname is
+       <b>-f</b>     Look  up  the associated DANE TLSA RRset even when a hostname is
               not an alias and its address records lie in  an  unsigned  zone.
               See <a href="postconf.5.html#smtp_tls_force_insecure_host_tlsa_lookup">smtp_tls_force_insecure_host_tlsa_lookup</a> for details.
 
@@ -302,6 +302,16 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               protocol.   The  destination  <i>domain</i>:<i>port</i> must of course provide
               such a service.
 
+       <b>-x</b>     Prefer <a href="https://tools.ietf.org/html/rfc7250">RFC7250</a> non-X.509 raw public  key  (RPK)  server  creden-
+              tials.   By  default only X.509 certificates are accepted.  This
+              is analogous to setting <b><a href="postconf.5.html#smtp_tls_enable_rpk">smtp_tls_enable_rpk</a> = yes</b> in the <a href="smtp.8.html">smtp(8)</a>
+              client.  At the fingerprint security level, when raw public keys
+              are enabled, only public key (and not certificate)  fingerprints
+              will  be compared against the specified list of <i>match</i> arguments.
+              Certificate fingerprints are fragile when raw  public  keys  are
+              solicited,  the server may at some point in time start returning
+              only the public key.
+
        <b>-X</b>     Enable <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> mode. This is an unsupported mode,  for  pro-
               gram development only.
 
@@ -331,21 +341,21 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               is <b>dane</b>, or <b>dane-only</b> the match names are ignored, and <b>hostname,</b>
               <b>nexthop</b> strategies are used.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        <b>MAIL_CONFIG</b>
               Read configuration parameters from a non-default location.
 
        <b>MAIL_VERBOSE</b>
               Same as <b>-v</b> option.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtp-source.1.html">smtp-source(1)</a>, SMTP/LMTP message source
        <a href="smtp-sink.1.html">smtp-sink(1)</a>, SMTP/LMTP message dump
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="TLS_README.html">TLS_README</a>, Postfix STARTTLS howto
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -45,7 +45,7 @@ in main.cf</a>
 <li><a href="#change">When you need to change the local_recipient_maps
 setting in main.cf</a>
 
-<li><a href="#format">Local recipient table format </a>
+<li><a href="#format">Local recipient table query format </a>
 
 </ul>
 
@@ -57,11 +57,14 @@ all names or addresses of local recipients. A recipient address is
 local when its domain matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or
 $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. If a local username or address is not listed in
 $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, then the Postfix SMTP server will reject
-the address with "User unknown in local recipient table".  </p>
+the address with "User unknown in local recipient table". Other
+interfaces such as the Postfix <a href="sendmail.1.html">sendmail(1)</a> command may still accept
+an "unknown" recipient.  </p>
 
 <p> The default setting, shown below, assumes that you use the
 default Postfix <a href="local.8.html">local(8)</a> delivery agent for local delivery, where
-recipients are either UNIX accounts or local aliases: </p>
+recipients are either UNIX accounts (typically, in /etc/passwd) or
+local aliases (typically, in /etc/aliases): </p>
 
 <blockquote>
 <pre>
@@ -111,22 +114,23 @@ setting in main.cf</a></h2>
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
 </pre>
 
-    <p> If you use a different delivery agent for $<a href="postconf.5.html#mydestination">mydestination</a>
+    <p> If you don't use the <a href="local.8.html">local(8)</a> or <a href="virtual.8.html">virtual(8)</a> delivery agent
+    for $<a href="postconf.5.html#mydestination">mydestination</a>
     etc. domains, see the section "<a href="#format">Local recipient
     table format</a>" below for a description of how the table
     should be populated.  </p>
 
     <li> <p> Problem: you use the <a href="postconf.5.html#mailbox_transport">mailbox_transport</a> or <a href="postconf.5.html#fallback_transport">fallback_transport</a>
     feature of the Postfix <a href="local.8.html">local(8)</a> delivery agent in order to
-    deliver mail to non-UNIX accounts. </p>
+    deliver mail to non-UNIX recipients. </p>
 
     <p> Solution: you need to add the database that lists the
-    non-UNIX users: </p>
+    non-UNIX recipients: </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = <a href="proxymap.8.html">proxy</a>:unix:passwd.byname, $<a href="postconf.5.html#alias_maps">alias_maps</a>,
-        &lt;the database with non-UNIX accounts&gt;
+        &lt;the database with non-UNIX recipients&gt;
 </pre>
 
     <p> See the section "<a href="#format">Local recipient table
@@ -137,8 +141,8 @@ setting in main.cf</a></h2>
     local delivery agent. </p>
 
     <p> Solution: you must disable the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> feature
-    completely, so that Postfix accepts mail for all local addresses:
-    </p>
+    completely, so that the Postfix SMTP server accepts mail for
+    all local addresses: </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>
@@ -147,34 +151,59 @@ setting in main.cf</a></h2>
 
 </ul>
 
-<h2><a name="format">Local recipient table format</a> </h2>
+<h2><a name="format">Local recipient table query format</a> </h2>
 
-<p> If you use local files in <a href="postmap.1.html">postmap(1)</a> format, then
-<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> expects the following table format:  </p>
+<p> If <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> specifies local files, such as files in
+<a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> format, then the Postfix SMTP server
+generates the following queries:  </p>
 
 <ul>
 
-<li> <p> In the left-hand side, specify a bare username, an
-"@domain.tld" wild-card, or specify a complete "user@domain.tld"
-address.  </p>
+<li> <p> The full recipient address. This query supports a non-default
+<a href="postconf.5.html#local_transport">local_transport</a> setting with a delivery agent such as <a href="lmtp.8.html">lmtp(8)</a> or
+virtual(8). See "<a href="#main_config">Configuring local_recipient_maps
+in main.cf</a>: for additional guidance for what lookup tables to
+specify. </p>
 
-<li> <p> You have to specify something on the right-hand side of
-the table, but the value is ignored by <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>.
+<li> <p> The recipient address local-part. This query supports the
+default <a href="postconf.5.html#local_transport">local_transport</a> setting with the UNIX-compatible <a href="local.8.html">local(8)</a>
+delivery agent; the Postfix SMTP server makes this query only when
+the recipient domain matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or
+$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. </p>
+
+<li> <p> The recipient @domain. This query supports a non-default
+<a href="postconf.5.html#local_transport">local_transport</a> setting with a delivery agent such as <a href="virtual.8.html">virtual(8)</a>;
+it is a wildcard for domains that do not have a valid recipient
+list. </p>
 
 </ul>
 
-<p> If you use lookup tables based on NIS, LDAP, MYSQL, or PGSQL,
-then <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> does the same queries as for local files
-in <a href="postmap.1.html">postmap(1)</a> format, and expects the same results.  </p>
+<p> NOTES: </p>
 
-<p> With regular expression tables, Postfix only queries with the
-full recipient address, and not with the bare username or the
-"@domain.tld" wild-card. </p>
+<ul>
 
-<p> NOTE: a lookup table should always return a result when the address
-exists, and should always return "not found" when the address does
-not exist. In particular, a zero-length result does not count as
-a "not found" result. </p>
+<li> <p> A lookup table should return a non-empty result when the
+address exists, and should return "not found" when the address does
+not exist. In particular, a zero-length (empty) result does not
+count as a "not found" result. </p>
+
+<li> <p> When <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> specifies a lookup table based
+on <a href="ldap_table.5.html">ldap</a>:, <a href="memcache_table.5.html">memcache</a>:, <a href="mongodb_table.5.html">mongodb</a>:, <a href="mysql_table.5.html">mysql</a>:, <a href="pgsql_table.5.html">pgsql</a>:, <a href="sqlite_table.5.html">sqlite</a>:, or other
+external database, then the Postfix SMTP server queries that lookup
+table with the same queries as described at the start of this
+section, and expects the same results. </p>
+
+<li> <p> To suppress lookups for the <i>local-part</i> and the
+<i>@domain</i> wild-card, specify the <b>domain</b> setting in a
+Postfix <a href="ldap_table.5.html">ldap</a>:, <a href="memcache_table.5.html">memcache</a>:, <a href="mongodb_table.5.html">mongodb</a>:, <a href="mysql_table.5.html">mysql</a>:, <a href="pgsql_table.5.html">pgsql</a>:, <a href="sqlite_table.5.html">sqlite</a>:, etc.,
+database client configuration file. </p>
+
+<li> <p> When <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> specifies a lookup table based
+on <a href="pcre_table.5.html">pcre</a>:, <a href="regexp_table.5.html">regexp</a>:, <a href="socketmap_table.html">socketmap</a>: or <a href="tcp_table.5.html">tcp</a>:, Postfix queries that table
+only with the full recipient address, and not with the <i>local-part</i>
+or the <i>@domain</i> wild-card. </p>
+
+</ul>
 
 </body>
 

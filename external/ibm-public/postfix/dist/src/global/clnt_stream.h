@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_stream.h,v 1.1.1.2 2022/10/08 16:09:07 christos Exp $	*/
+/*	$NetBSD: clnt_stream.h,v 1.1.1.3 2025/02/25 19:11:42 christos Exp $	*/
 
 #ifndef _CLNT_STREAM_H_INCLUDED_
 #define _CLNT_STREAM_H_INCLUDED_
@@ -22,7 +22,7 @@
   * External interface.
   */
 typedef struct CLNT_STREAM CLNT_STREAM;
-typedef int (*CLNT_STREAM_HANDSHAKE_FN)(VSTREAM *);
+typedef int (*CLNT_STREAM_HANDSHAKE_FN) (VSTREAM *);
 
 extern CLNT_STREAM *clnt_stream_create(const char *, const char *, int, int,
 				               CLNT_STREAM_HANDSHAKE_FN);

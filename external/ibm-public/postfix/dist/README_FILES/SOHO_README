@@ -28,7 +28,7 @@ PPoossttffiixx oonn aa ssttaanndd--aalloonnee IInntteer
 
 Postfix should work out of the box without change on a stand-alone machine that
 has direct Internet access. At least, that is how Postfix installs when you
-download the Postfix source code via http://www.postfix.org/.
+download the Postfix source code via https://www.postfix.org/.
 
 You can use the command "ppoossttccoonnff --nn" to find out what settings are overruled
 by your main.cf. Besides a few pathname settings, few parameters should be set

@@ -1,4 +1,4 @@
-/*	$NetBSD: set_eugid.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: set_eugid.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -23,7 +23,7 @@
 /*	effective group id.
 /*
 /*	SAVE_AND_SET_EUGID() opens a block that executes with the
-/*	specified privilege. RESTORE_SAVED_EUGID() closes the block. 
+/*	specified privilege. RESTORE_SAVED_EUGID() closes the block.
 /* DIAGNOSTICS
 /*	All system call errors are fatal.
 /* SEE ALSO

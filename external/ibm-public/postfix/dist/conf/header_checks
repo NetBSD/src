@@ -346,10 +346,15 @@
 #               message is queued, it will be sent to the specified
 #               address instead of the intended recipient(s).
 # 
-#               Note: this action overrides the FILTER action,  and
-#               affects  all recipients of the message. If multiple
-#               REDIRECT actions fire, only the last  one  is  exe-
-#               cuted.
+#               Note 1: this action overrides  the  FILTER  action,
+#               and  affects all recipients of the message. If mul-
+#               tiple REDIRECT actions fire, only the last  one  is
+#               executed.
+# 
+#               Note 2: a REDIRECT address is subject to canonical-
+#               ization (add missing domain)  but  NOT  subject  to
+#               canonical,  masquerade,  bcc, or virtual alias map-
+#               ping.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
@@ -357,34 +362,34 @@
 #               checks.
 # 
 #        REPLACE text...
-#               Replace  the  current line with the specified text,
+#               Replace the current line with the  specified  text,
 #               and inspect the next input line.
 # 
 #               This feature is available in Postfix 2.2 and later.
-#               The  description below applies to Postfix 2.2.2 and
+#               The description below applies to Postfix 2.2.2  and
 #               later.
 # 
 #               Notes:
 # 
-#               o      When replacing a message  header  line,  the
-#                      replacement  text  must  begin  with a valid
+#               o      When  replacing  a  message header line, the
+#                      replacement text must  begin  with  a  valid
 #                      header label.
 # 
-#               o      The replaced text remains part of the  input
-#                      stream.  Unlike  the result from the PREPEND
-#                      action, a replaced  message  header  may  be
-#                      subject  to address rewriting and may affect
-#                      the way that Postfix  adds  missing  message
+#               o      The  replaced text remains part of the input
+#                      stream. Unlike the result from  the  PREPEND
+#                      action,  a  replaced  message  header may be
+#                      subject to address rewriting and may  affect
+#                      the  way  that  Postfix adds missing message
 #                      headers.
 # 
 #        REJECT optional text...
-#               Reject  the  entire  message.  Do  not  inspect the
-#               remainder  of  the  input  message.    Reply   with
-#               optional  text...  when the optional text is speci-
+#               Reject the  entire  message.  Do  not  inspect  the
+#               remainder   of   the  input  message.   Reply  with
+#               optional text... when the optional text  is  speci-
 #               fied, otherwise reply with a generic error message.
 # 
-#               Note:   this  action  disables  further  header  or
-#               body_checks inspection of the current  message  and
+#               Note:  this  action  disables  further  header   or
+#               body_checks  inspection  of the current message and
 #               affects all recipients.
 # 
 #               Postfix version 2.3 and later support enhanced sta-
@@ -398,94 +403,80 @@
 #        STRIP optional text...
 #               Log a "strip:" record with the optional text... (or
 #               log a generic text), delete the input line from the
-#               input,  and inspect the next input line. See IGNORE
+#               input, and inspect the next input line. See  IGNORE
 #               for a silent alternative.
 # 
 #               This feature is available in Postfix 3.2 and later.
 # 
 #        WARN optional text...
-#               Log  a  "warning:" record with the optional text...
+#               Log a "warning:" record with the  optional  text...
 #               (or log a generic text), and inspect the next input
-#               line.  This  action is useful for debugging and for
-#               testing a  pattern  before  applying  more  drastic
+#               line. This action is useful for debugging  and  for
+#               testing  a  pattern  before  applying  more drastic
 #               actions.
 # 
 # BUGS
 #        Empty lines never match, because some map types mis-behave
-#        when given a zero-length search string.   This  limitation
-#        may  be  removed for regular expression tables in a future
+#        when  given  a zero-length search string.  This limitation
+#        may be removed for regular expression tables in  a  future
 #        release.
 # 
-#        Many people overlook the main limitations  of  header  and
+#        Many  people  overlook  the main limitations of header and
 #        body_checks rules.
 # 
-#        o      These  rules  operate on one logical message header
+#        o      These rules operate on one logical  message  header
 #               or one body line at a time. A decision made for one
 #               line is not carried over to the next line.
 # 
-#        o      If  text  in the message body is encoded (RFC 2045)
+#        o      If text in the message body is encoded  (RFC  2045)
 #               then the rules need to be specified for the encoded
 #               form.
 # 
-#        o      Likewise,  when  message  headers  are encoded (RFC
-#               2047) then the rules need to be specified  for  the
+#        o      Likewise, when message  headers  are  encoded  (RFC
+#               2047)  then  the rules need to be specified for the
 #               encoded form.
 # 
-#        Message  headers added by the cleanup(8) daemon itself are
+#        Message headers added by the cleanup(8) daemon itself  are
 #        excluded from inspection. Examples of such message headers
 #        are From:, To:, Message-ID:, Date:.
 # 
-#        Message  headers  deleted by the cleanup(8) daemon will be
+#        Message headers deleted by the cleanup(8) daemon  will  be
 #        examined before they are deleted. Examples are: Bcc:, Con-
 #        tent-Length:, Return-Path:.
 # 
 # CONFIGURATION PARAMETERS
-#        body_checks
-#               Lookup tables with content filter rules for message
-#               body lines.  These filters see one physical line at
-#               a  time,  in  chunks  of at most $line_length_limit
-#               bytes.
+#        body_checks (empty)
+#               Optional lookup tables for  content  inspection  as
+#               specified in the body_checks(5) manual page.
 # 
-#        body_checks_size_limit
-#               The amount of  content  per  message  body  segment
-#               (attachment) that is subjected to $body_checks fil-
-#               tering.
+#        body_checks_size_limit (51200)
+#               How much text in a message body segment (or attach-
+#               ment, if you prefer to use that term) is  subjected
+#               to body_checks inspection.
 # 
-#        header_checks
+#        header_checks (empty)
+#               Optional  lookup  tables  for content inspection of
+#               primary non-MIME message headers, as  specified  in
+#               the header_checks(5) manual page.
 # 
-#        mime_header_checks (default: $header_checks)
+#        mime_header_checks ($header_checks)
+#               Optional  lookup  tables  for content inspection of
+#               MIME related message headers, as described  in  the
+#               header_checks(5) manual page.
 # 
-#        nested_header_checks (default: $header_checks)
-#               Lookup tables with content filter rules for message
-#               header  lines:  respectively,  these are applied to
-#               the initial message  headers  (not  including  MIME
-#               headers),  to the MIME headers anywhere in the mes-
-#               sage, and to the initial headers of  attached  mes-
-#               sages.
+#        nested_header_checks ($header_checks)
+#               Optional  lookup  tables  for content inspection of
+#               non-MIME message headers in attached  messages,  as
+#               described in the header_checks(5) manual page.
 # 
-#               Note:  these filters see one logical message header
-#               at a time, even when a message header spans  multi-
-#               ple  lines.  Message  headers  that are longer than
-#               $header_size_limit characters are truncated.
-# 
-#        disable_mime_input_processing
-#               While receiving mail, give no special treatment  to
-#               MIME  related  message  headers; all text after the
-#               initial message headers is considered to be part of
-#               the  message body. This means that header_checks is
-#               applied to all the  initial  message  headers,  and
-#               that body_checks is applied to the remainder of the
-#               message.
-# 
-#               Note: when used in this  manner,  body_checks  will
-#               process  a  multi-line message header one line at a
-#               time.
+#        disable_mime_input_processing (no)
+#               Turn off MIME processing while receiving mail.
 # 
 # EXAMPLES
-#        Header pattern to block attachments  with  bad  file  name
-#        extensions.   For  convenience, the PCRE /x flag is speci-
-#        fied, so that there is no need  to  collapse  the  pattern
-#        into   a   single  line  of  text.   The  purpose  of  the
+#        Header  pattern  to  block  attachments with bad file name
+#        extensions.  For convenience, the PCRE /x flag  is  speci-
+#        fied,  so  that  there  is no need to collapse the pattern
+#        into  a  single  line  of  text.   The  purpose   of   the
 #        [[:xdigit:]] sub-expressions is to recognize Windows CLSID
 #        strings.
 # 
@@ -524,7 +515,7 @@
 #        RFC 2047, message header encoding for non-ASCII text
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        DATABASE_README, Postfix lookup table overview
 #        CONTENT_INSPECTION_README, Postfix content inspection overview
@@ -532,7 +523,7 @@
 #        BACKSCATTER_README, blocking returned forged mail
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

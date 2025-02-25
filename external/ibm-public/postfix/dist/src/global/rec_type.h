@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.4 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.1.1.5 2025/02/25 19:11:43 christos Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -179,7 +179,8 @@
   * See also: REC_TYPE_SIZE_FORMAT above.
   */
 #define REC_TYPE_PTR_FORMAT	"%15ld"
-#define REC_TYPE_PTR_PAYL_SIZE	15	/* Payload only, excludes record header. */
+#define REC_TYPE_PTR_PAYL_SIZE	15	/* Payload only, excludes record
+					 * header. */
 
  /*
   * Programmatic interface.

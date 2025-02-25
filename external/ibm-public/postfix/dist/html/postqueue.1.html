@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,10 +7,10 @@
 </head> <body> <pre>
 POSTQUEUE(1)                                                      POSTQUEUE(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postqueue - Postfix queue control
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
    <b>To flush the mail queue</b>:
 
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-f</b>
@@ -25,7 +25,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-p</b>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postqueue.1.html"><b>postqueue</b>(1)</a>  command  implements  the  Postfix user interface for
        queue management.  It  implements  operations  that  are  traditionally
        available  via  the  <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command.  See the <a href="postsuper.1.html"><b>postsuper</b>(1)</a> command
@@ -99,7 +99,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               options make the software increasingly verbose.  As  of  Postfix
               2.3, this option is available for the super-user only.
 
-<b>JSON OBJECT FORMAT</b>
+<b><a name="json_object_format">JSON OBJECT FORMAT</a></b>
        Each  JSON  object represents one queue file; it is emitted as a single
        text line followed by a newline character.
 
@@ -150,18 +150,18 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
                      delivery is in progress, or after the system was  stopped
                      before it could record the reason.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        This  program  is designed to run with set-group ID privileges, so that
        it can connect to Postfix daemon processes.
 
-<b>STANDARDS</b>
+<b><a name="standards">STANDARDS</a></b>
        <a href="https://tools.ietf.org/html/rfc7159">RFC 7159</a> (JSON notation)
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>, and to  the  standard
        error stream.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        MAIL_CONFIG
               Directory  with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid exploitation
               of set-group ID privileges, a non-standard directory is  allowed
@@ -172,7 +172,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 
               <b>o</b>      The command is invoked by the super-user.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
        gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
@@ -221,10 +221,10 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
               List of users who are authorized to view the queue.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        /var/spool/postfix, mail queue
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="showq.8.html">showq(8)</a>, list mail queue
        <a href="flush.8.html">flush(8)</a>, fast flush service
@@ -233,13 +233,13 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The postqueue command was introduced with Postfix version 1.1.
 
 <b>AUTHOR(S)</b>

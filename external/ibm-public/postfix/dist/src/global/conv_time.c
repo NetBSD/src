@@ -1,4 +1,4 @@
-/*	$NetBSD: conv_time.c,v 1.1.1.3 2017/02/14 01:13:40 christos Exp $	*/
+/*	$NetBSD: conv_time.c,v 1.1.1.4 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -75,7 +75,7 @@ int     conv_time(const char *strval, int *timval, int def_unit)
     errno = 0;
     intval = longval = strtol(strval, &end, 10);
     if (*strval == 0 || errno == ERANGE || longval != intval || intval < 0
-	/* || (*end != 0 && end[1] != 0) */)
+	 /* || (*end != 0 && end[1] != 0) */ )
 	return (0);
 
     switch (*end ? *end : def_unit) {

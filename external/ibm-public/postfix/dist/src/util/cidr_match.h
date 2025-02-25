@@ -1,4 +1,4 @@
-/*	$NetBSD: cidr_match.h,v 1.1.1.2 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: cidr_match.h,v 1.1.1.3 2025/02/25 19:11:46 christos Exp $	*/
 
 #ifndef _CIDR_MATCH_H_INCLUDED_
 #define _CIDR_MATCH_H_INCLUDED_
@@ -31,9 +31,9 @@
   * strings should be.
   */
 #ifdef HAS_IPV6
-# define CIDR_MATCH_ABYTES	MAI_V6ADDR_BYTES
+#define CIDR_MATCH_ABYTES	MAI_V6ADDR_BYTES
 #else
-# define CIDR_MATCH_ABYTES	MAI_V4ADDR_BYTES
+#define CIDR_MATCH_ABYTES	MAI_V4ADDR_BYTES
 #endif
 
  /*

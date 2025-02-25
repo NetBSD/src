@@ -17,7 +17,7 @@ impractical.
 
 Postfix uses the same SMTP protocol over IPv6 as it already uses over the older
 IPv4 network, and does AAAA record lookups in the DNS in addition to the older
-A records. Information about IPv6 can be found at http://www.ipv6.org/.
+A records.
 
 This document provides information on the following topics:
 
@@ -238,8 +238,9 @@ Dean Strik.
 
   * Dean Strik extended IPv6 support to platforms other than KAME and USAGI,
     updated the patch to keep up with Postfix development, and provided a
-    combined IPv6 + TLS patch. Information about his effort can be found on
-    Dean Strik's Postfix website at http://www.ipnet6.org/postfix/.
+    combined IPv6 + TLS patch. Information about his effort is found in an
+    archived copy of Dean Strik's Postfix website at https://web.archive.org/
+    web/20080603102834/http://www.ipnet6.org/postfix/.
 
   * Wietse Venema took Dean Strik's IPv6 patch, merged it into Postfix 2.2, and
     took the opportunity to eliminate all IPv4-specific code from Postfix that

@@ -1,4 +1,4 @@
-/*	$NetBSD: casefold.c,v 1.1.1.2 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: casefold.c,v 1.1.1.3 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -302,7 +302,7 @@ int     main(int argc, char **argv)
 		    encode_utf8(buffer, codepoint);
 		    if (msg_verbose)
 			vstream_printf("U+%X -> %s\n", codepoint, STR(buffer));
-		    if (valid_utf8_string(STR(buffer), LEN(buffer)) == 0)
+		    if (valid_utf8_stringz(STR(buffer)) == 0)
 			msg_fatal("bad utf-8 encoding for U+%X\n", codepoint);
 		    casefold(dest, STR(buffer));
 		}

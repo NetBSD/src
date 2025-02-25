@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_map.c,v 1.1.1.4 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: mail_addr_map.c,v 1.1.1.5 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -361,12 +361,12 @@ static MAIL_ADDR_MAP_TEST pass_tests[] = {
 	{"\"a@a\"@example.net"}, 1,
     },
     {
-        "12 external -external-> external, extension, propagation",
-        "inline:{ aa@example.com=bb@example.com }",
-        DO_PROPAGATE_UNMATCHED_EXTENSION, DOT_RECIPIENT_DELIMITER,
-        MA_FORM_EXTERNAL, MA_FORM_EXTERNAL, MA_FORM_EXTERNAL,
-        "aa.ext@example.com",
-        {"bb.ext@example.com"}, 1,
+	"12 external -external-> external, extension, propagation",
+	"inline:{ aa@example.com=bb@example.com }",
+	DO_PROPAGATE_UNMATCHED_EXTENSION, DOT_RECIPIENT_DELIMITER,
+	MA_FORM_EXTERNAL, MA_FORM_EXTERNAL, MA_FORM_EXTERNAL,
+	"aa.ext@example.com",
+	{"bb.ext@example.com"}, 1,
     },
     0,
 };

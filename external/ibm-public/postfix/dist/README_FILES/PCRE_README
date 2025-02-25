@@ -11,8 +11,8 @@ This is because the pcre implementation is often more efficient than the POSIX
 regular expression implementation that you find on many systems.
 
 A description of how to use pcre tables, including examples, is given in the
-pcre_table(5) manual page. Information about PCRE itself can be found at http:/
-/www.pcre.org/.
+pcre_table(5) manual page. Information about PCRE itself can be found at https:
+//www.pcre.org/.
 
 UUssiinngg PPoossttffiixx ppaacckkaaggeess wwiitthh PPCCRREE ssuuppppoorrtt
 

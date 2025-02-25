@@ -28,7 +28,7 @@ Postfix.
 The Postfix MySQL client utilizes the mysql client library, which can be
 obtained from:
 
-    http://www.mysql.com/downloads/
+    https://www.mysql.com/downloads/
 
 In order to build Postfix with mysql map support, you will need to add -
 DHAS_MYSQL and -I for the directory containing the mysql headers, and the

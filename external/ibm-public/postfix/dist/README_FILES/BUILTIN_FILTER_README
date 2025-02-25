@@ -165,7 +165,7 @@ LLiimmiittaattiioonnss ooff PPoossttffiixx hheeaaddeer
 
 PPrreevveennttiinngg ddaaiillyy mmaaiill ssttaattuuss rreeppoorrttss ffrroomm bbeeiinngg bblloocckkeedd
 
-The following is quoted from Jim Seymour's Pflogsumm FAQ at http://
+The following is quoted from Jim Seymour's Pflogsumm FAQ at https://
 jimsun.linxnet.com/downloads/pflogsumm-faq.txt. Pflogsumm is a program that
 analyzes Postfix logs, including the logging from rejected mail. If these logs
 contain text that was rejected by Postfix body_checks patterns, then the
@@ -235,7 +235,7 @@ server IP addresses in master.cf:
             -o receive_override_options=no_header_body_checks
         127.0.0.1:smtp inet  n       -       n       -       -       smtpd
             -o receive_override_options=no_header_body_checks
-        pickup         fifo  n       -       n       60      1       pickup
+        pickup         unix  n       -       n       60      1       pickup
             -o receive_override_options=no_header_body_checks
 
   * Add some firewall rule to prevent access to 1.2.3.4:smtp from the outside

@@ -1,4 +1,4 @@
-/*	$NetBSD: midna_domain.h,v 1.1.1.3 2020/05/25 23:40:37 christos Exp $	*/
+/*	$NetBSD: midna_domain.h,v 1.1.1.4 2025/02/25 19:11:47 christos Exp $	*/
 
 #ifndef _MIDNA_H_INCLUDED_
 #define _MIDNA_H_INCLUDED_
@@ -24,6 +24,7 @@ extern void midna_domain_pre_chroot(void);
 
 extern int midna_domain_cache_size;
 extern int midna_domain_transitional;
+
 /* LICENSE
 /* .ad
 /* .fi

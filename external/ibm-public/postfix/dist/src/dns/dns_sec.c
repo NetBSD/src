@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_sec.c,v 1.1.1.1 2022/10/08 16:09:06 christos Exp $	*/
+/*	$NetBSD: dns_sec.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -130,7 +130,7 @@ void    dns_sec_probe(int rflags)
     default:
 	if (!DNS_SEC_STATS_TEST(DNS_SEC_FLAG_AVAILABLE))
 	    msg_warn("reason: " VAR_DNSSEC_PROBE
-		     " '%s' received a response that is not DNSSEC validated",
+		   " '%s' received a response that is not DNSSEC validated",
 		     var_dnssec_probe);
 	if (rrlist)
 	    dns_rr_free(rrlist);

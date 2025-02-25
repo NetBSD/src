@@ -30,8 +30,14 @@ problems for systemd-based systems.
  2. Configure Postfix to write logging, to, for example, /var/log/postfix.log.
     See also the "Logfile rotation" section below for logfile management.
 
+    In the example below, specifying maillog_file_permissions is optional
+    (Postfix 3.9 and later). The default value is 0600, i.e., only the super-
+    user can access the file; the value 0644 also adds 'group' and 'other' read
+    access.
+
         # postfix stop
         # postconf maillog_file=/var/log/postfix.log
+        # postconf maillog_file_permissions=0644 # (Postfix 3.9 and later)
         # postfix start
 
     By default, the logfile name must start with "/var" or "/dev/stdout" (the
@@ -70,6 +76,10 @@ implements the following steps:
 
   * After a brief pause, compress the old logfile. The compression program is
     configured with the maillog_file_compressor parameter (default: gzip).
+
+  * The next time it logs an event, postlogd(8) will create a new logfile, with
+    permissions specified with the maillog_file_permissions parameter (default:
+    0600).
 
 Notes:
 

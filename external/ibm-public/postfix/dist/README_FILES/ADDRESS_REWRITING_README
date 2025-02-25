@@ -51,8 +51,7 @@ Topics covered in this document:
 
   * Address rewriting when mail is delivered
 
-      o Resolve address to destination
-      o Mail transport switch
+      o Resolve address to (transport, next-hop destination)
       o Relocated users table
 
   * Address rewriting with remote delivery
@@ -131,59 +130,57 @@ this document for the first time, skip forward to "Address rewriting when mail
 is received". Once you've finished reading the remainder of this document, the
 table will help you to quickly find what you need.
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |AAddddrreessss     |SSccooppee   |DDaaeemmoonn  |GGlloobbaall ttuurrnn--oonn      |SSeelleeccttiivvee ttuurrnn--ooffff ccoonnttrrooll   |
-    |mmaanniippuullaattiioonn|        |        |ccoonnttrrooll             |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Rewrite     |        |trivial-|append_at_myorigin, |                             |
-    |addresses to|all mail|rewrite |append_dot_mydomain,|local_header_rewrite_clients,|
-    |standard    |        |(8)     |swap_bangpath,      |remote_header_rewrite_domain |
-    |form        |        |        |allow_percent_hack  |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Canonical   |        |cleanup |                    |receive_override_options,    |
-    |address     |all mail|(8)     |canonical_maps      |local_header_rewrite_clients,|
-    |mapping     |        |        |                    |remote_header_rewrite_domain |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Address     |        |cleanup |                    |receive_override_options,    |
-    |masquerading|all mail|(8)     |masquerade_domains  |local_header_rewrite_clients,|
-    |            |        |        |                    |remote_header_rewrite_domain |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Automatic   |        |cleanup |always_bcc,         |                             |
-    |BCC         |new mail|(8)     |sender_bcc_maps,    |receive_override_options     |
-    |recipients  |        |        |recipient_bcc_maps  |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Virtual     |all mail|cleanup |virtual_alias_maps  |receive_override_options     |
-    |aliasing    |        |(8)     |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Resolve     |        |trivial-|                    |                             |
-    |address to  |all mail|rewrite |none                |none                         |
-    |destination |        |(8)     |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Mail        |        |trivial-|                    |                             |
-    |transport   |all mail|rewrite |transport_maps      |none                         |
-    |switch      |        |(8)     |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Relocated   |        |trivial-|                    |                             |
-    |users table |all mail|rewrite |relocated_maps      |none                         |
-    |            |        |(8)     |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Generic     |outgoing|        |                    |                             |
-    |mapping     |SMTP    |smtp(8) |smtp_generic_maps   |none                         |
-    |table       |mail    |        |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Local alias |local   |        |                    |                             |
-    |database    |mail    |local(8)|alias_maps          |none                         |
-    |            |only    |        |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Local per-  |local   |        |                    |                             |
-    |user        |mail    |local(8)|forward_path        |none                         |
-    |.forward    |only    |        |                    |                             |
-    |files       |        |        |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |Local catch-|local   |        |                    |                             |
-    |all address |mail    |local(8)|luser_relay         |none                         |
-    |            |only    |        |                    |                             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |AAddddrreessss     |SSccooppee   |DDaaeemmoonn  |TTuurrnn--oonn ccoonnttrroollss                       |TTuurrnn--ooffff ccoonnttrroollss            |
+    |mmaanniippuullaattiioonn|        |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Rewrite     |        |trivial-|append_at_myorigin,                    |                             |
+    |addresses to|all mail|rewrite |append_dot_mydomain, swap_bangpath,    |local_header_rewrite_clients,|
+    |standard    |        |(8)     |allow_percent_hack                     |remote_header_rewrite_domain |
+    |form        |        |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Canonical   |        |cleanup |                                       |receive_override_options,    |
+    |address     |all mail|(8)     |canonical_maps                         |local_header_rewrite_clients,|
+    |mapping     |        |        |                                       |remote_header_rewrite_domain |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Address     |        |cleanup |                                       |receive_override_options,    |
+    |masquerading|all mail|(8)     |masquerade_domains                     |local_header_rewrite_clients,|
+    |            |        |        |                                       |remote_header_rewrite_domain |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Automatic   |        |cleanup |always_bcc, sender_bcc_maps,           |                             |
+    |BCC         |new mail|(8)     |recipient_bcc_maps                     |receive_override_options     |
+    |recipients  |        |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Virtual     |all mail|cleanup |virtual_alias_maps                     |receive_override_options     |
+    |aliasing    |        |(8)     |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Resolve     |        |        |local_transport, virtual_transport,    |                             |
+    |address to  |        |trivial-|relay_transport, default_transport,    |                             |
+    |(transport, |all mail|rewrite |relayhost,                             |content_filter               |
+    |next-hop    |        |(8)     |sender_dependent_relayhost_maps,       |                             |
+    |destination)|        |        |sender_dependent_default_transport_maps|                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Relocated   |        |trivial-|                                       |                             |
+    |users table |all mail|rewrite |relocated_maps                         |none                         |
+    |            |        |(8)     |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Generic     |outgoing|        |                                       |                             |
+    |mapping     |SMTP    |smtp(8) |smtp_generic_maps                      |none                         |
+    |table       |mail    |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local alias |local   |        |                                       |                             |
+    |database    |mail    |local(8)|alias_maps                             |none                         |
+    |            |only    |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local per-  |local   |        |                                       |                             |
+    |user        |mail    |local(8)|forward_path                           |none                         |
+    |.forward    |only    |        |                                       |                             |
+    |files       |        |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local catch-|local   |        |                                       |                             |
+    |all address |mail    |local(8)|luser_relay                            |none                         |
+    |            |only    |        |                                       |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 AAddddrreessss rreewwrriittiinngg wwhheenn mmaaiill iiss rreecceeiivveedd
 
@@ -492,6 +489,10 @@ transform " Firstname.Lastname " back into UNIX login names, although it seems
 that local aliases may be a more appropriate vehicle. See the VIRTUAL_README
 document for an overview of methods to host virtual domains with Postfix.
 
+Note: virtual aliasing (virtual_alias_maps) applies to all recipients: local
+(8), virtual, and remote.  This is unlike local aliasing (alias_maps) which
+applies only to local(8) recipients.
+
 Virtual aliasing is disabled by default. To enable, edit the virtual_alias_maps
 parameter in the main.cf file and specify one or more lookup tables, separated
 by whitespace or commas.
@@ -537,8 +538,7 @@ manipulations to the trivial-rewrite(8) server.
 
 Address manipulations at this stage are:
 
-  * Resolve address to destination
-  * Mail transport switch
+  * Resolve address to (transport, next-hop destination)
   * Relocated users table
 
 Each Postfix delivery agent tries to deliver the mail to its destination, while
@@ -560,49 +560,82 @@ Address manipulations when mail is delivered via the local(8) delivery agent:
 The remainder of this document presents each address manipulation step in more
 detail, with specific examples or with pointers to documentation with examples.
 
-RReessoollvvee aaddddrreessss ttoo ddeessttiinnaattiioonn
+RReessoollvvee aaddddrreessss ttoo ((ttrraannssppoorrtt,, nneexxtt--hhoopp ddeessttiinnaattiioonn))
 
 The Postfix qmgr(8) queue manager selects new mail from the incoming queue or
-old mail from the deferred queue, and asks the trivial-rewrite(8) address
-rewriting and resolving daemon where it should be delivered.
+old mail from the deferred queue. First it looks for overrides:
 
-As of version 2.0, Postfix distinguishes four major address classes. Each class
-has its own list of domain names, and each class has its own default delivery
+  * The REDIRECT action in access(5), header_checks(5) or body_checks(5)
+    overrides all recipients of the message, and overrides a content_filter
+    setting, and FILTER action in access(5), header_checks(5) or body_checks
+    (5). The REDIRECT action was implemented as a short-cut to retaliate for
+    abuse.
+
+  * A content_filter setting and FILTER action in access(5), header_checks(5)
+    or body_checks(5) provide their own (transport, next-hop destination)
+    information. This bypasses all the steps that are described in the
+    remainder of this section.
+
+When there is no content filter override, the qmgr(8) queue manager asks the
+trivial-rewrite(8) address rewriting and resolving daemon for each recipient
+how to deliver it (which message delivery transport) and where to deliver it
+(what next-hop destination).
+
+As of version 2.0, Postfix distinguishes four major domain classes. Each class
+has its own list of recipient domain names, and each class has its own delivery
 method, as shown in the table below. See the ADDRESS_CLASS_README document for
 the fine details. Postfix versions before 2.0 only distinguish between local
 delivery and everything else.
 
+Note that the table does not match recipients against virtual_alias_domains.
+The reason is that all valid recipients in a virtual alias domain must be
+aliased to an address in a different domain. All other recipients in a virtual
+alias domain are by definition undeliverable, and do not need to be considered
+here.
+
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |DDeessttiinnaattiioonn ddoommaaiinn lliisstt          |DDeeffaauulltt ddeelliivveerryy mmeetthhoodd|AAvvaaiillaabbiilliittyy|
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
-    |$mydestination, $inet_interfaces,|$local_transport       |Postfix 1.0 |
-    |$proxy_interfaces                |                       |            |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
-    |$virtual_mailbox_domains         |$virtual_transport     |Postfix 2.0 |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
-    |$relay_domains                   |$relay_transport       |Postfix 2.0 |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
-    |none                             |$default_transport     |Postfix 1.0 |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |DDoommaaiinn ccllaassss   |RReecciippiieenntt ddoommaaiinn mmaattcchh |DDeelliivveerryy mmeetthhoodd  |AAvvaaiillaabbiilliittyy|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |               |mydestination,         |                 |            |
+    |Local          |inet_interfaces,       |local_transport  |Postfix 1.0 |
+    |               |proxy_interfaces       |                 |            |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |Virtual mailbox|virtual_mailbox_domains|virtual_transport|Postfix 2.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |Relay          |relay_domains          |relay_transport  |Postfix 2.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |Default        |none                   |default_transport|Postfix 1.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
 
-MMaaiill ttrraannssppoorrtt sswwiittcchh
+The delivery methods in the above table may include a next-hop destination in
+addition to a delivery transport. This may override the next-hop destination
+that is by default taken from the recipient domain.
 
-Once the trivial-rewrite(8) daemon has determined a default delivery method it
-searches the optional transport(5) table for information that overrides the
-message destination and/or delivery method. Typical use of the transport(5)
-table is to send mail to a system that is not connected to the Internet, or to
-use a special SMTP client configuration for destinations that have special
-requirements. See, for example, the STANDARD_CONFIGURATION_README and
-UUCP_README documents, and the examples in the transport(5) manual page.
+Over time, features have been added to override the above transport and/or
+next-hop destination information. The following table lists where a transport
+or next-hop destination may be taken from, depending on the recipient domain
+class.
 
-Transport table lookups are disabled by default. To enable, edit the
-transport_maps parameter in the main.cf file and specify one or more lookup
-tables, separated by whitespace or commas.
-
-Example:
-
-    /etc/postfix/main.cf:
-        transport_maps = hash:/etc/postfix/transport
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |DDoommaaiinn |TTrraannssppoorrtt ssoouurrcceess ((iinn oorrddeerr ooff          |NNeexxtt hhoopp ssoouurrcceess ((iinn oorrddeerr ooff ddeesscceennddiinngg|
+    |ccllaassss  |ddeesscceennddiinngg pprreecceeddeennccee))                  |pprreecceeddeennccee))                             |
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local  |transport_maps, local_transport         |transport_maps, local_transport,        |
+    |       |                                        |recipient domain                        |
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Virtual|transport_maps, virtual_transport       |transport_maps, virtual_transport,      |
+    |mailbox|                                        |recipient domain                        |
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |       |                                        |transport_maps, relay_transport,        |
+    |Relay  |transport_maps, relay_transport         |sender_dependent_relayhost_maps,        |
+    |       |                                        |relayhost, recipient domain             |
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |       |                                        |transport_maps,                         |
+    |       |transport_maps,                         |sender_dependent_default_transport_maps,|
+    |Default|sender_dependent_default_transport_maps,|default_transport,                      |
+    |       |default_transport                       |sender_dependent_relayhost_maps,        |
+    |       |                                        |relayhost, recipient domain             |
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 RReellooccaatteedd uusseerrss ttaabbllee
 
@@ -673,6 +706,10 @@ affect addresses in message headers. Local aliases are typically used to
 implement distribution lists, or to direct mail for standard aliases such as
 postmaster to real people. The table can also be used to map
 "Firstname.Lastname" addresses to login names.
+
+Note: local aliasing (alias_maps) applies only to local(8) recipients. This is
+unlike virtual aliasing (virtual_alias_maps) which applies to all recipients:
+local(8), virtual, and remote.
 
 Alias lookups are enabled by default. The default configuration depends on the
 operating system environment, but it is typically one of the following:

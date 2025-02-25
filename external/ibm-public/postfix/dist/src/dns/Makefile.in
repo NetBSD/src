@@ -11,7 +11,8 @@ DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 INCL	=
 LIB	= lib$(LIB_PREFIX)dns$(LIB_SUFFIX)
-TESTPROG= test_dns_lookup dns_rr_to_pa dns_rr_to_sa dns_sa_to_rr dns_rr_eq_sa
+TESTPROG= test_dns_lookup dns_rr_to_pa dns_rr_to_sa dns_sa_to_rr dns_rr_eq_sa \
+	dns_rr_test
 LIBS	= ../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
@@ -31,7 +32,7 @@ test:	$(TESTPROG)
 tests:	test dns_rr_to_pa_test dns_rr_to_sa_test dns_sa_to_rr_test \
 	dns_rr_eq_sa_test no-a-test no-aaaa-test no-mx-test \
 	error-filter-test nullmx_test nxdomain_test mxonly_test \
-	dnsbl_tests
+	dnsbl_tests dns_rr_tests
 
 dnsbl_tests: \
 	dnsbl_ttl_127.0.0.2_bind_plain_test \
@@ -57,7 +58,7 @@ DNSBL_EXIST_REPLY_FIX = \
 	    -e 's/ [0-9]* [0-9]* [0-9]* [0-9]* [0-9]*/ D D D D D/' \
 	    -e 's/127.0.0.[0-9]*$$/127.0.0.D/' \
 	    | uniq 
-
+	
 root_tests:
 
 $(LIB):	$(OBJS)
@@ -240,20 +241,14 @@ dnsbl_ttl_127.0.0.2_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_p
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_priv_ncache.tmp
 	rm -f dnsbl_ttl_127.0.0.2_priv_ncache.tmp
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
+dns_rr_tests: dns_rr_test
+	$(SHLIB_ENV) $(VALGRIND) ./dns_rr_test
 
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
+dns_rr_test: dns_rr_test.o $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk
-	rm -rf printfck
 
 tidy:	clean
 
@@ -319,6 +314,19 @@ dns_rr_filter.o: ../../include/vstream.h
 dns_rr_filter.o: ../../include/vstring.h
 dns_rr_filter.o: dns.h
 dns_rr_filter.o: dns_rr_filter.c
+dns_rr_test.o: ../../include/check_arg.h
+dns_rr_test.o: ../../include/msg.h
+dns_rr_test.o: ../../include/msg_vstream.h
+dns_rr_test.o: ../../include/myaddrinfo.h
+dns_rr_test.o: ../../include/mymalloc.h
+dns_rr_test.o: ../../include/sock_addr.h
+dns_rr_test.o: ../../include/stringops.h
+dns_rr_test.o: ../../include/sys_defs.h
+dns_rr_test.o: ../../include/vbuf.h
+dns_rr_test.o: ../../include/vstream.h
+dns_rr_test.o: ../../include/vstring.h
+dns_rr_test.o: dns.h
+dns_rr_test.o: dns_rr_test.c
 dns_rr_to_pa.o: ../../include/check_arg.h
 dns_rr_to_pa.o: ../../include/msg.h
 dns_rr_to_pa.o: ../../include/myaddrinfo.h

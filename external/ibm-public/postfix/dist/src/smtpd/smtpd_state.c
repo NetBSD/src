@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.6 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.7 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -137,6 +137,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->instance = vstring_alloc(10);
     state->seqno = 0;
     state->rewrite_context = 0;
+    state->notes = 0;
 #if 0
     state->ehlo_discard_mask = ~0;
 #else

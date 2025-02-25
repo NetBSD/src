@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_date.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_date.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	time_t	when;
 /* DESCRIPTION
 /*	mail_date() converts the time specified in \fIwhen\fR to the
-/*	form: "Mon, 9 Dec 1996 05:38:26 -0500 (EST)" and returns
+/*	form: "Mon, 09 Dec 1996 05:38:26 -0500 (EST)" and returns
 /*	a pointer to the result. The result is overwritten upon
 /*	each call.
 /* DIAGNOSTICS
@@ -100,8 +100,13 @@ const char *mail_date(time_t when)
      * First, format the date and wall-clock time. XXX The %e format (day of
      * month, leading zero replaced by blank) isn't in my POSIX book, but
      * many vendors seem to support it.
+     * 
+     * The RFC 5322 Date and Time Specification recommends (i.e., should) "that
+     * a single space be used in each place that FWS appears". To avoid a
+     * potentially breaking change, we prefer the %d (two-digit day) format,
+     * i.e. days 1-9 now have a leading zero instead of a leading space.
      */
-#ifdef MISSING_STRFTIME_E
+#if defined(MISSING_STRFTIME_E) || defined(TWO_DIGIT_DAY_IN_DATE_TIME)
 #define STRFTIME_FMT "%a, %d %b %Y %H:%M:%S "
 #else
 #define STRFTIME_FMT "%a, %e %b %Y %H:%M:%S "

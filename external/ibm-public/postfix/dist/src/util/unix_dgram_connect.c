@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_dgram_connect.c,v 1.1.1.2 2022/10/08 16:09:12 christos Exp $	*/
+/*	$NetBSD: unix_dgram_connect.c,v 1.1.1.3 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -62,6 +62,7 @@
 int     unix_dgram_connect(const char *path, int block_mode)
 {
     const char myname[] = "unix_dgram_connect";
+
 #undef sun
     struct sockaddr_un sun;
     ssize_t path_len;

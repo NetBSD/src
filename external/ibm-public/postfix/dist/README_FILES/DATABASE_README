@@ -28,7 +28,7 @@ Examples of lookup tables that appear often in the Postfix documentation:
         alias_maps = hash:/etc/postfix/aliases            (local aliasing)
         header_checks = regexp:/etc/postfix/header_checks (content filtering)
         transport_maps = hash:/etc/postfix/transport      (routing table)
-        virtual_alias_maps = hash:/etc/postfix/virtual    (address rewriting)
+        virtual_alias_maps = hash:/etc/postfix/virtual    (virtual aliasing)
 
 All Postfix lookup tables store information as (key, value) pairs. This
 interface may seem simplistic at first, but it turns out to be very powerful.
@@ -236,6 +236,9 @@ To find out what database types your Postfix system supports, use the "ppooss
     mmeemmccaacchhee
         Memcache database client. Configuration details are given in
         memcache_table(5).
+    mmoonnggooddbb (read-only)
+        MongoDB database client. Configuration details are given in
+        mongodb_table(5), with examples in MONGODB_README.
     mmyyssqqll (read-only)
         MySQL database client. Configuration details are given in mysql_table
         (5).

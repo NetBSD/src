@@ -1,4 +1,4 @@
-/*	$NetBSD: info_log_addr_form.c,v 1.1.1.1 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: info_log_addr_form.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@ static void info_log_addr_form_init(void)
 	INFO_LOG_ADDR_FORM_NAME_INTERNAL, INFO_LOG_ADDR_FORM_VAL_INTERNAL,
 	0, INFO_LOG_ADDR_FORM_VAL_NOT_SET,
     };
+
     info_log_addr_form_form = name_code(info_log_addr_form_table,
 					NAME_CODE_FLAG_NONE,
 					var_info_log_addr_form);

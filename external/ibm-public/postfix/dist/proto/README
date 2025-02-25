@@ -21,7 +21,7 @@ configuration parameters, README file names, RFC documents, Postfix
 address class names, and URLs.  Therefore you should not hyperlink
 those elements yourself.
 
-- URLs (such as "http://www.example.com") cannot contain quote, comma,
+- URLs (such as "https://www.example.com") cannot contain quote, comma,
 or space characters. 
 
 - An URL that appears at the end of a line must be followed by one

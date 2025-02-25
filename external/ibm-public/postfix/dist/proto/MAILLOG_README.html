@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -63,10 +63,16 @@ Postfix version. </p>
 /var/log/postfix.log. See also the "<a href="#logrotate">Logfile
 rotation</a>" section below for logfile management. </p>
 
+<p> In the example below, specifying maillog_file_permissions is
+optional (Postfix 3.9 and later). The default value is 0600, i.e.,
+only the super-user can access the file; the value 0644 also
+adds 'group' and 'other' read access. </p>
+
 <blockquote>
 <pre>
 # postfix stop
 # postconf maillog_file=/var/log/postfix.log
+# postconf maillog_file_permissions=0644 # (Postfix 3.9 and later)
 # postfix start
 </pre>
 </blockquote>
@@ -123,6 +129,10 @@ old logfile. </p>
 <li> <p> After a brief pause, compress the old logfile. The compression
 program is configured with the maillog_file_compressor parameter
 (default: gzip). </p>
+
+<li> <p> The next time it logs an event, postlogd(8) will create a
+new logfile, with permissions specified with the maillog_file_permissions
+parameter (default: 0600). </p>
 
 </ul>
 

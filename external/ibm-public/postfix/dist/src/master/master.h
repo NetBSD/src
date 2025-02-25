@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.5 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.6 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -17,10 +17,10 @@
   * when idle for a configurable amount of time, or after servicing a
   * configurable number of requests; the master process spawns new processes
   * on demand up to a configurable concurrency limit and/or periodically.
-  * 
+  *
   * The canonical service name is what we use internally, so that we correctly
   * handle a request to "reload" after someone changes "smtp" into "25".
-  * 
+  *
   * We use the external service name from master.cf when reporting problems, so
   * that the user can figure out what we are talking about. Of course we also
   * include the canonical service name so that the UNIX-domain smtp service
@@ -143,8 +143,8 @@ extern void master_start_service(MASTER_SERV *);
 extern void master_stop_service(MASTER_SERV *);
 extern void master_restart_service(MASTER_SERV *, int);
 
-#define DO_CONF_RELOAD	1	/* config files were reloaded */
-#define NO_CONF_RELOAD	0	/* no config file was reloaded */
+#define DO_CONF_RELOAD	1		/* config files were reloaded */
+#define NO_CONF_RELOAD	0		/* no config file was reloaded */
 
  /*
   * master_events.c

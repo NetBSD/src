@@ -93,6 +93,8 @@ sub emit_text
 	$block =~ s/&ge;/>=/g;
 	$block =~ s/&lt;/</g;
 	$block =~ s/&gt;/>/g;
+	$block =~ s/<sup>/^/g;
+	$block =~ s;</sup>;;g;
 
 	# Peep-hole optimizer.
 	$block =~ s/^\s+//g;

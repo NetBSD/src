@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.5 2020/03/18 18:59:36 christos Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.6 2025/02/25 19:11:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -202,7 +202,9 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 	if (session->sasl_username)
 	    myfree(session->sasl_username);
 	session->sasl_username = mystrdup(value);
-	passwd = split_at(session->sasl_username, ':');
+	/* Historically, the delimiter may appear in the password. */
+	passwd = split_at(session->sasl_username,
+			  *var_smtp_sasl_passwd_res_delim);
 	if (session->sasl_passwd)
 	    myfree(session->sasl_passwd);
 	session->sasl_passwd = mystrdup(passwd ? passwd : "");

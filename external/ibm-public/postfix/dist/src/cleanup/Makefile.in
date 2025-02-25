@@ -15,7 +15,7 @@ HDRS	=
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG= cleanup_masquerade cleanup_milter
+TESTPROG= cleanup_masquerade cleanup_milter cleanup_envelope_test
 PROG	= cleanup
 INC_DIR	= ../../include
 LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
@@ -40,20 +40,8 @@ update: ../../libexec/$(PROG)
 ../../libexec/$(PROG): $(PROG)
 	cp $(PROG) ../../libexec
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile > printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk 
-	rm -rf printfck
 
 tidy:	clean
 
@@ -69,7 +57,15 @@ cleanup_milter: cleanup_milter.o $(CLEANUP_MILTER_OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(CLEANUP_MILTER_OBJS) $(LIBS) $(SYSLIBS)
 	mv junk cleanup_milter.o
 
-tests:	cleanup_masquerade_test milter_tests
+CLEANUP_SIZE_TEST_OBJS = cleanup_envelope.o cleanup_state.o cleanup_out.o \
+	cleanup_final.o
+cleanup_envelope_test: cleanup_envelope_test.o $(CLEANUP_SIZE_TEST_OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(CLEANUP_SIZE_TEST_OBJS) $(LIBS) $(SYSLIBS)
+
+tests:	cleanup_masquerade_test milter_tests test_cleanup_envelope
+
+test_cleanup_envelope: cleanup_envelope_test
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_envelope_test
 
 milter_tests: cleanup_milter_test bug_tests \
 	cleanup_milter_test2 cleanup_milter_test3 cleanup_milter_test4 \
@@ -88,7 +84,9 @@ milter_tests: cleanup_milter_test bug_tests \
 	cleanup_milter_test15g cleanup_milter_test15h cleanup_milter_test15i \
 	cleanup_milter_test16a cleanup_milter_test16b cleanup_milter_test17a \
 	cleanup_milter_test17b cleanup_milter_test17c cleanup_milter_test17d \
-	cleanup_milter_test17e cleanup_milter_test17f cleanup_milter_test17g
+	cleanup_milter_test17e cleanup_milter_test17f cleanup_milter_test17g \
+	cleanup_milter_test18a cleanup_milter_test18b cleanup_milter_test18c \
+	cleanup_milter_test18d
 
 root_tests:
 
@@ -671,6 +669,46 @@ cleanup_milter_test17g: cleanup_milter test-queue-file17 cleanup_milter.in17g \
 	diff cleanup_milter.ref17g2 cleanup_milter.tmp2
 	rm -f test-queue-file17g.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
+cleanup_milter_test18a: cleanup_milter test-queue-file18 cleanup_milter.in18a \
+	cleanup_milter.ref18a1 ../postcat/postcat cleanup_milter.ref18a2
+	cp test-queue-file18 test-queue-file18a.tmp
+	chmod u+w test-queue-file18a.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_milter <cleanup_milter.in18a 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref18a1 cleanup_milter.tmp1
+	$(SHLIB_ENV) $(VALGRIND) ../postcat/postcat -ov test-queue-file18a.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref18a2 cleanup_milter.tmp2
+	rm -f test-queue-file18a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test18b: cleanup_milter test-queue-file18 cleanup_milter.in18b \
+	cleanup_milter.ref18b1 ../postcat/postcat cleanup_milter.ref18b2
+	cp test-queue-file18 test-queue-file18b.tmp
+	chmod u+w test-queue-file18b.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_milter <cleanup_milter.in18b 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref18b1 cleanup_milter.tmp1
+	$(SHLIB_ENV) $(VALGRIND) ../postcat/postcat -ov test-queue-file18b.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref18b2 cleanup_milter.tmp2
+	rm -f test-queue-file18b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test18c: cleanup_milter test-queue-file18 cleanup_milter.in18c \
+	cleanup_milter.ref18c1 ../postcat/postcat cleanup_milter.ref18c2
+	cp test-queue-file18 test-queue-file18c.tmp
+	chmod u+w test-queue-file18c.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_milter <cleanup_milter.in18c 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref18c1 cleanup_milter.tmp1
+	$(SHLIB_ENV) $(VALGRIND) ../postcat/postcat -ov test-queue-file18c.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref18c2 cleanup_milter.tmp2
+	rm -f test-queue-file18c.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test18d: cleanup_milter test-queue-file18 cleanup_milter.in18d \
+	cleanup_milter.ref18d1 ../postcat/postcat cleanup_milter.ref18d2
+	cp test-queue-file18 test-queue-file18d.tmp
+	chmod u+w test-queue-file18d.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_milter <cleanup_milter.in18d 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref18d1 cleanup_milter.tmp1
+	$(SHLIB_ENV) $(VALGRIND) ../postcat/postcat -ov test-queue-file18d.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref18d2 cleanup_milter.tmp2
+	rm -f test-queue-file18d.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -748,6 +786,7 @@ cleanup_addr.o: ../../include/nvtable.h
 cleanup_addr.o: ../../include/rec_type.h
 cleanup_addr.o: ../../include/record.h
 cleanup_addr.o: ../../include/resolve_clnt.h
+cleanup_addr.o: ../../include/sendopts.h
 cleanup_addr.o: ../../include/smtputf8.h
 cleanup_addr.o: ../../include/string_list.h
 cleanup_addr.o: ../../include/stringops.h
@@ -791,6 +830,7 @@ cleanup_api.o: ../../include/nvtable.h
 cleanup_api.o: ../../include/rec_type.h
 cleanup_api.o: ../../include/recipient_list.h
 cleanup_api.o: ../../include/resolve_clnt.h
+cleanup_api.o: ../../include/sendopts.h
 cleanup_api.o: ../../include/smtputf8.h
 cleanup_api.o: ../../include/string_list.h
 cleanup_api.o: ../../include/sys_defs.h
@@ -907,6 +947,7 @@ cleanup_envelope.o: ../../include/rec_type.h
 cleanup_envelope.o: ../../include/recipient_list.h
 cleanup_envelope.o: ../../include/record.h
 cleanup_envelope.o: ../../include/resolve_clnt.h
+cleanup_envelope.o: ../../include/sendopts.h
 cleanup_envelope.o: ../../include/smtputf8.h
 cleanup_envelope.o: ../../include/string_list.h
 cleanup_envelope.o: ../../include/stringops.h
@@ -918,6 +959,42 @@ cleanup_envelope.o: ../../include/vstream.h
 cleanup_envelope.o: ../../include/vstring.h
 cleanup_envelope.o: cleanup.h
 cleanup_envelope.o: cleanup_envelope.c
+cleanup_envelope_test.o: ../../include/argv.h
+cleanup_envelope_test.o: ../../include/attr.h
+cleanup_envelope_test.o: ../../include/been_here.h
+cleanup_envelope_test.o: ../../include/check_arg.h
+cleanup_envelope_test.o: ../../include/cleanup_user.h
+cleanup_envelope_test.o: ../../include/dict.h
+cleanup_envelope_test.o: ../../include/dsn_mask.h
+cleanup_envelope_test.o: ../../include/header_body_checks.h
+cleanup_envelope_test.o: ../../include/header_opts.h
+cleanup_envelope_test.o: ../../include/htable.h
+cleanup_envelope_test.o: ../../include/mail_conf.h
+cleanup_envelope_test.o: ../../include/mail_params.h
+cleanup_envelope_test.o: ../../include/mail_stream.h
+cleanup_envelope_test.o: ../../include/maps.h
+cleanup_envelope_test.o: ../../include/match_list.h
+cleanup_envelope_test.o: ../../include/milter.h
+cleanup_envelope_test.o: ../../include/mime_state.h
+cleanup_envelope_test.o: ../../include/msg.h
+cleanup_envelope_test.o: ../../include/msg_vstream.h
+cleanup_envelope_test.o: ../../include/myflock.h
+cleanup_envelope_test.o: ../../include/mymalloc.h
+cleanup_envelope_test.o: ../../include/nvtable.h
+cleanup_envelope_test.o: ../../include/rec_type.h
+cleanup_envelope_test.o: ../../include/record.h
+cleanup_envelope_test.o: ../../include/resolve_clnt.h
+cleanup_envelope_test.o: ../../include/sendopts.h
+cleanup_envelope_test.o: ../../include/smtputf8.h
+cleanup_envelope_test.o: ../../include/string_list.h
+cleanup_envelope_test.o: ../../include/stringops.h
+cleanup_envelope_test.o: ../../include/sys_defs.h
+cleanup_envelope_test.o: ../../include/tok822.h
+cleanup_envelope_test.o: ../../include/vbuf.h
+cleanup_envelope_test.o: ../../include/vstream.h
+cleanup_envelope_test.o: ../../include/vstring.h
+cleanup_envelope_test.o: cleanup.h
+cleanup_envelope_test.o: cleanup_envelope_test.c
 cleanup_extracted.o: ../../include/argv.h
 cleanup_extracted.o: ../../include/attr.h
 cleanup_extracted.o: ../../include/been_here.h
@@ -1127,9 +1204,11 @@ cleanup_masquerade.o: ../../include/vstring.h
 cleanup_masquerade.o: cleanup.h
 cleanup_masquerade.o: cleanup_masquerade.c
 cleanup_message.o: ../../include/argv.h
+cleanup_message.o: ../../include/ascii_header_text.h
 cleanup_message.o: ../../include/attr.h
 cleanup_message.o: ../../include/been_here.h
 cleanup_message.o: ../../include/check_arg.h
+cleanup_message.o: ../../include/clean_ascii_cntrl_space.h
 cleanup_message.o: ../../include/cleanup_user.h
 cleanup_message.o: ../../include/conv_time.h
 cleanup_message.o: ../../include/dict.h
@@ -1163,6 +1242,8 @@ cleanup_message.o: ../../include/quote_flags.h
 cleanup_message.o: ../../include/rec_type.h
 cleanup_message.o: ../../include/record.h
 cleanup_message.o: ../../include/resolve_clnt.h
+cleanup_message.o: ../../include/rfc2047_code.h
+cleanup_message.o: ../../include/sendopts.h
 cleanup_message.o: ../../include/split_at.h
 cleanup_message.o: ../../include/string_list.h
 cleanup_message.o: ../../include/stringops.h
@@ -1243,6 +1324,7 @@ cleanup_out.o: ../../include/nvtable.h
 cleanup_out.o: ../../include/rec_type.h
 cleanup_out.o: ../../include/record.h
 cleanup_out.o: ../../include/resolve_clnt.h
+cleanup_out.o: ../../include/sendopts.h
 cleanup_out.o: ../../include/smtputf8.h
 cleanup_out.o: ../../include/split_at.h
 cleanup_out.o: ../../include/string_list.h

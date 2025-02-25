@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_inline.c,v 1.1.1.3 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: dict_inline.c,v 1.1.1.4 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -89,7 +89,7 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
      */
     if (DICT_NEED_UTF8_ACTIVATION(util_utf8_enable, dict_flags)
 	&& allascii(name) == 0
-	&& valid_utf8_string(name, strlen(name)) == 0)
+	&& valid_utf8_stringz(name) == 0)
 	DICT_INLINE_RETURN(dict_surrogate(DICT_TYPE_INLINE, name,
 					  open_flags, dict_flags,
 					  "bad UTF-8 syntax: \"%s:%s\"; "

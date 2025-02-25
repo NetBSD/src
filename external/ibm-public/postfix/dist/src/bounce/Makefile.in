@@ -39,12 +39,7 @@ Makefile: Makefile.in
 test:	$(TESTPROG)
 
 tests:	update template_test obs_template_test 2template_test \
-	with-msgid-with-long-line_test \
-	with-msgid-with-eoh-event_test \
-	with-msgid-no-eoh-event_test \
-	no-msgid-with-eoh-event_test \
-	no-msgid-no-eoh-event_test \
-	with-msgid-with-filter_test
+	with-message-id_test no-message-id_test
 
 root_tests:
 
@@ -53,20 +48,8 @@ update: ../../libexec/$(PROG) $(SAMPLES)
 ../../libexec/$(PROG): $(PROG)
 	cp $(PROG) ../../libexec
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile > printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk main.cf
-	rm -rf printfck
 
 tidy:	clean
 
@@ -84,9 +67,9 @@ template_test: $(PROG) template_test.ref
 	echo myhostname=example.com >>main.cf
 	echo header_from_format=standard >>main.cf
 	touch -t 197101010000 main.cf
-	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates >template_test.tmp
+	MAIL_CONFIG=. $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -SVzndump_templates >template_test.tmp
 	diff template_test.ref template_test.tmp
-	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates \
+	MAIL_CONFIG=. $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -SVzndump_templates \
 	    -o bounce_template_file=template_test.ref > template_test.tmp
 	diff template_test.ref template_test.tmp
 	rm -f template_test.tmp main.cf
@@ -96,7 +79,7 @@ obs_template_test: $(PROG) obs_template_test.ref
 	echo myhostname=example.com >>main.cf
 	echo header_from_format=obsolete >>main.cf
 	touch -t 197101010000 main.cf
-	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates >template_test.tmp
+	MAIL_CONFIG=. $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -SVzndump_templates >template_test.tmp
 	diff obs_template_test.ref template_test.tmp
 	rm -f template_test.tmp main.cf
 
@@ -104,29 +87,31 @@ obs_template_test: $(PROG) obs_template_test.ref
 	echo queue_directory=. >main.cf
 	echo myhostname=example.com >>main.cf
 	touch -t 197101010000 main.cf
-	MAIL_CONFIG=. ./$(PROG) -SVzndump_templates \
+	MAIL_CONFIG=. $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -SVzndump_templates \
 	    -o bounce_template_file=2template_test.in > template_test.tmp
 	diff template_test.ref template_test.tmp
 	rm -f template_test.tmp main.cf
 
-with-msgid-with-long-line_test: bounce_notify_util_tester \
-	msgfile-with-msgid-with-long-line logfile-with-msgid-with-long-line \
-	with-msgid-with-long-line-no-thread.ref \
-	with-msgid-with-long-line-with-thread.ref
+# This tests only the handling of an extracted message ID. The
+# tests for extracting a message ID belong with the cleanup code.
+with-message-id_test: bounce_notify_util_tester \
+	msgfile-with-message-id logfile-with-message-id \
+	with-message-id-no-thread.ref \
+	with-message-id-with-thread.ref
 	rm -rf queue main.cf
 	echo 'enable_threaded_bounces = no' >main.cf 
 	echo 'queue_directory = queue' >>main.cf 
 	echo 'myhostname = mail.example' >>main.cf 
 	touch -t 197101010000 main.cf
 	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-long-line queue/bounce/msgid
-	cp msgfile-with-msgid-with-long-line queue/active/msgid
+	cp logfile-with-message-id queue/bounce/msgid
+	cp msgfile-with-message-id queue/active/msgid
 	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
 	    -c. bounce active msgid 2>&1 | \
 	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-long-line-no-thread.tmp
-	diff with-msgid-with-long-line-no-thread.ref with-msgid-with-long-line-no-thread.tmp
-	rm -f with-msgid-with-long-line-no-thread.tmp
+	    > with-message-id-no-thread.tmp
+	diff with-message-id-no-thread.ref with-message-id-no-thread.tmp
+	rm -f with-message-id-no-thread.tmp
 	:
 	rm -rf queue main.cf
 	echo 'enable_threaded_bounces = yes' >main.cf 
@@ -134,34 +119,34 @@ with-msgid-with-long-line_test: bounce_notify_util_tester \
 	echo 'myhostname = mail.example' >>main.cf 
 	touch -t 197101010000 main.cf
 	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-long-line queue/bounce/msgid
-	cp msgfile-with-msgid-with-long-line queue/active/msgid
+	cp logfile-with-message-id queue/bounce/msgid
+	cp msgfile-with-message-id queue/active/msgid
 	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
 	    -c. bounce active msgid 2>&1 | \
 	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-long-line-with-thread.tmp
-	diff with-msgid-with-long-line-with-thread.ref with-msgid-with-long-line-with-thread.tmp
-	rm -f with-msgid-with-long-line-with-thread.tmp
+	    > with-message-id-with-thread.tmp
+	diff with-message-id-with-thread.ref with-message-id-with-thread.tmp
+	rm -f with-message-id-with-thread.tmp
 	rm -rf queue main.cf
 
-with-msgid-with-eoh-event_test: bounce_notify_util_tester \
-	msgfile-with-msgid-with-eoh-event logfile-with-msgid-with-eoh-event \
-	with-msgid-with-eoh-event-no-thread.ref \
-	with-msgid-with-eoh-event-with-thread.ref
+no-message-id_test: bounce_notify_util_tester \
+	msgfile-no-message-id logfile-no-message-id \
+	no-message-id-no-thread.ref \
+	no-message-id-with-thread.ref
 	rm -rf queue main.cf
 	echo 'enable_threaded_bounces = no' >main.cf 
 	echo 'queue_directory = queue' >>main.cf 
 	echo 'myhostname = mail.example' >>main.cf 
 	touch -t 197101010000 main.cf
 	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-eoh-event queue/bounce/msgid
-	cp msgfile-with-msgid-with-eoh-event queue/active/msgid
+	cp logfile-no-message-id queue/bounce/msgid
+	cp msgfile-no-message-id queue/active/msgid
 	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
 	    -c. bounce active msgid 2>&1 | \
 	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-eoh-event-no-thread.tmp
-	diff with-msgid-with-eoh-event-no-thread.ref with-msgid-with-eoh-event-no-thread.tmp
-	rm -f with-msgid-with-eoh-event-no-thread.tmp
+	    > no-message-id-no-thread.tmp
+	diff no-message-id-no-thread.ref no-message-id-no-thread.tmp
+	rm -f no-message-id-no-thread.tmp
 	:
 	rm -rf queue main.cf
 	echo 'enable_threaded_bounces = yes' >main.cf 
@@ -169,154 +154,14 @@ with-msgid-with-eoh-event_test: bounce_notify_util_tester \
 	echo 'myhostname = mail.example' >>main.cf 
 	touch -t 197101010000 main.cf
 	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-eoh-event queue/bounce/msgid
-	cp msgfile-with-msgid-with-eoh-event queue/active/msgid
+	cp logfile-no-message-id queue/bounce/msgid
+	cp msgfile-no-message-id queue/active/msgid
 	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
 	    -c. bounce active msgid 2>&1 | \
 	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-eoh-event-with-thread.tmp
-	diff with-msgid-with-eoh-event-with-thread.ref with-msgid-with-eoh-event-with-thread.tmp
-	rm -f with-msgid-with-eoh-event-with-thread.tmp
-	rm -rf queue main.cf
-
-with-msgid-no-eoh-event_test: bounce_notify_util_tester \
-	msgfile-with-msgid-no-eoh-event logfile-with-msgid-no-eoh-event \
-	with-msgid-no-eoh-event-no-thread.ref \
-	with-msgid-no-eoh-event-with-thread.ref
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = no' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-no-eoh-event queue/bounce/msgid
-	cp msgfile-with-msgid-no-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-no-eoh-event-no-thread.tmp
-	diff with-msgid-no-eoh-event-no-thread.ref with-msgid-no-eoh-event-no-thread.tmp
-	rm -f with-msgid-no-eoh-event-no-thread.tmp
-	:
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = yes' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-no-eoh-event queue/bounce/msgid
-	cp msgfile-with-msgid-no-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-no-eoh-event-with-thread.tmp
-	diff with-msgid-no-eoh-event-with-thread.ref with-msgid-no-eoh-event-with-thread.tmp
-	rm -f with-msgid-no-eoh-event-with-thread.tmp
-	rm -rf queue main.cf
-
-no-msgid-with-eoh-event_test: bounce_notify_util_tester \
-	msgfile-no-msgid-with-eoh-event logfile-no-msgid-with-eoh-event \
-	no-msgid-with-eoh-event-no-thread.ref \
-	no-msgid-with-eoh-event-with-thread.ref
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = no' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-no-msgid-with-eoh-event queue/bounce/msgid
-	cp msgfile-no-msgid-with-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > no-msgid-with-eoh-event-no-thread.tmp
-	diff no-msgid-with-eoh-event-no-thread.ref no-msgid-with-eoh-event-no-thread.tmp
-	rm -f no-msgid-with-eoh-event-no-thread.tmp
-	:
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = yes' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-no-msgid-with-eoh-event queue/bounce/msgid
-	cp msgfile-no-msgid-with-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > no-msgid-with-eoh-event-with-thread.tmp
-	diff no-msgid-with-eoh-event-with-thread.ref no-msgid-with-eoh-event-with-thread.tmp
-	rm -f no-msgid-with-eoh-event-with-thread.tmp
-	rm -rf queue main.cf
-
-no-msgid-no-eoh-event_test: bounce_notify_util_tester \
-	msgfile-no-msgid-no-eoh-event logfile-no-msgid-no-eoh-event \
-	no-msgid-no-eoh-event-no-thread.ref \
-	no-msgid-no-eoh-event-with-thread.ref
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = no' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-no-msgid-no-eoh-event queue/bounce/msgid
-	cp msgfile-no-msgid-no-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > no-msgid-no-eoh-event-no-thread.tmp
-	diff no-msgid-no-eoh-event-no-thread.ref no-msgid-no-eoh-event-no-thread.tmp
-	rm -f no-msgid-no-eoh-event-no-thread.tmp
-	:
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = yes' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-no-msgid-no-eoh-event queue/bounce/msgid
-	cp msgfile-no-msgid-no-eoh-event queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > no-msgid-no-eoh-event-with-thread.tmp
-	diff no-msgid-no-eoh-event-with-thread.ref no-msgid-no-eoh-event-with-thread.tmp
-	rm -f no-msgid-no-eoh-event-with-thread.tmp
-	rm -rf queue main.cf
-
-with-msgid-with-filter_test: bounce_notify_util_tester \
-	msgfile-with-msgid-with-filter logfile-with-msgid-with-filter \
-	with-msgid-with-filter-no-thread.ref \
-	with-msgid-with-filter-with-thread.ref
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = no' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-filter queue/bounce/msgid
-	cp msgfile-with-msgid-with-filter queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-filter-no-thread.tmp
-	diff with-msgid-with-filter-no-thread.ref with-msgid-with-filter-no-thread.tmp
-	rm -f with-msgid-with-filter-no-thread.tmp
-	:
-	rm -rf queue main.cf
-	echo 'enable_threaded_bounces = yes' >main.cf 
-	echo 'queue_directory = queue' >>main.cf 
-	echo 'myhostname = mail.example' >>main.cf 
-	touch -t 197101010000 main.cf
-	mkdir -p queue/active queue/bounce
-	cp logfile-with-msgid-with-filter queue/bounce/msgid
-	cp msgfile-with-msgid-with-filter queue/active/msgid
-	$(SHLIB_ENV) $(VALGRIND) ./bounce_notify_util_tester \
-	    -c. bounce active msgid 2>&1 | \
-	    sed 's;msgid.[0-9]*/mail.example;msgid.unix-time/mail.example;' \
-	    > with-msgid-with-filter-with-thread.tmp
-	diff with-msgid-with-filter-with-thread.ref with-msgid-with-filter-with-thread.tmp
-	rm -f with-msgid-with-filter-with-thread.tmp
+	    > no-message-id-with-thread.tmp
+	diff no-message-id-with-thread.ref no-message-id-with-thread.tmp
+	rm -f no-message-id-with-thread.tmp
 	rm -rf queue main.cf
 
 depend: $(MAKES)
@@ -434,6 +279,7 @@ bounce_notify_service.o: ../../include/post_mail.h
 bounce_notify_service.o: ../../include/rcpt_buf.h
 bounce_notify_service.o: ../../include/rec_type.h
 bounce_notify_service.o: ../../include/recipient_list.h
+bounce_notify_service.o: ../../include/sendopts.h
 bounce_notify_service.o: ../../include/smtputf8.h
 bounce_notify_service.o: ../../include/stringops.h
 bounce_notify_service.o: ../../include/sys_defs.h
@@ -477,6 +323,7 @@ bounce_notify_util.o: ../../include/rcpt_buf.h
 bounce_notify_util.o: ../../include/rec_type.h
 bounce_notify_util.o: ../../include/recipient_list.h
 bounce_notify_util.o: ../../include/record.h
+bounce_notify_util.o: ../../include/sendopts.h
 bounce_notify_util.o: ../../include/smtputf8.h
 bounce_notify_util.o: ../../include/stringops.h
 bounce_notify_util.o: ../../include/sys_defs.h
@@ -537,6 +384,7 @@ bounce_notify_verp.o: ../../include/post_mail.h
 bounce_notify_verp.o: ../../include/rcpt_buf.h
 bounce_notify_verp.o: ../../include/rec_type.h
 bounce_notify_verp.o: ../../include/recipient_list.h
+bounce_notify_verp.o: ../../include/sendopts.h
 bounce_notify_verp.o: ../../include/smtputf8.h
 bounce_notify_verp.o: ../../include/stringops.h
 bounce_notify_verp.o: ../../include/sys_defs.h
@@ -572,6 +420,7 @@ bounce_one_service.o: ../../include/post_mail.h
 bounce_one_service.o: ../../include/rcpt_buf.h
 bounce_one_service.o: ../../include/rec_type.h
 bounce_one_service.o: ../../include/recipient_list.h
+bounce_one_service.o: ../../include/sendopts.h
 bounce_one_service.o: ../../include/smtputf8.h
 bounce_one_service.o: ../../include/stringops.h
 bounce_one_service.o: ../../include/sys_defs.h
@@ -652,6 +501,7 @@ bounce_trace_service.o: ../../include/post_mail.h
 bounce_trace_service.o: ../../include/rcpt_buf.h
 bounce_trace_service.o: ../../include/rec_type.h
 bounce_trace_service.o: ../../include/recipient_list.h
+bounce_trace_service.o: ../../include/sendopts.h
 bounce_trace_service.o: ../../include/smtputf8.h
 bounce_trace_service.o: ../../include/stringops.h
 bounce_trace_service.o: ../../include/sys_defs.h
@@ -684,6 +534,7 @@ bounce_warn_service.o: ../../include/post_mail.h
 bounce_warn_service.o: ../../include/rcpt_buf.h
 bounce_warn_service.o: ../../include/rec_type.h
 bounce_warn_service.o: ../../include/recipient_list.h
+bounce_warn_service.o: ../../include/sendopts.h
 bounce_warn_service.o: ../../include/smtputf8.h
 bounce_warn_service.o: ../../include/stringops.h
 bounce_warn_service.o: ../../include/sys_defs.h

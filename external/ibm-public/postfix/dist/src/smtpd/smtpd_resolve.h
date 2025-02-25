@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_resolve.h,v 1.1.1.3 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: smtpd_resolve.h,v 1.1.1.4 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
   * External interface.
   */
 extern void smtpd_resolve_init(int);
-extern const RESOLVE_REPLY *smtpd_resolve_addr(const char*, const char *);
+extern const RESOLVE_REPLY *smtpd_resolve_addr(const char *, const char *);
 
 /* LICENSE
 /* .ad

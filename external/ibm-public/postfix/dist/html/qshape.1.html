@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,17 +7,17 @@
 </head> <body> <pre>
 QSHAPE(1)                                                            QSHAPE(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        qshape - Print Postfix queue domain and age distribution
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>qshape</b> [<b>-s</b>] [<b>-p</b>] [<b>-m</b> <i>min</i><b>_</b><i>subdomains</i>]
                [<b>-b</b> <i>bucket</i><b>_</b><i>count</i>] [<b>-t</b> <i>bucket</i><b>_</b><i>time</i>]
                [<b>-l</b>] [<b>-w</b> <i>terminal</i><b>_</b><i>width</i>]
                [<b>-N</b> <i>batch</i><b>_</b><i>msg</i><b>_</b><i>count</i>] [<b>-n</b> <i>batch</i><b>_</b><i>top</i><b>_</b><i>domains</i>]
                [<b>-c</b> <i>config</i><b>_</b><i>directory</i>] [<i>queue</i><b>_</b><i>name</i> ...]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The <b>qshape</b> program helps the administrator understand the Postfix queue
        message distribution in time and by sender domain or recipient  domain.
        The program needs read access to the queue directories and queue files,
@@ -103,11 +103,11 @@ QSHAPE(1)                                                            QSHAPE(1)
               tory even if you want the default <a href="QSHAPE_README.html#incoming_queue">incoming</a> and <a href="QSHAPE_README.html#active_queue">active queue</a> dis-
               tribution.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="mailq.1.html">mailq(1)</a>, List all messages in the queue.
        <a href="QSHAPE_README.html">QSHAPE_README</a> Examples and background material.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        $<a href="postconf.5.html#config_directory">config_directory</a>/<a href="postconf.5.html">main.cf</a>, Postfix installation parameters.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/maildrop/, local submission directory.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/incoming/, new message queue.
@@ -115,7 +115,7 @@ QSHAPE(1)                                                            QSHAPE(1)
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/active/, messages scheduled for delivery.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/deferred/, messages postponed for later delivery.
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

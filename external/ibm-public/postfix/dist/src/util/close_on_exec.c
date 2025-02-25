@@ -1,4 +1,4 @@
-/*	$NetBSD: close_on_exec.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: close_on_exec.c,v 1.1.1.2 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,9 +48,7 @@
 
 /* close_on_exec - set/clear close-on-exec flag */
 
-int     close_on_exec(fd, on)
-int     fd;
-int     on;
+int     close_on_exec(int fd, int on)
 {
     int     flags;
 

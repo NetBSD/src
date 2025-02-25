@@ -41,6 +41,10 @@ blackholes.mail-abuse.org	$rbl_code client=$client
  rbl_code=$rbl_code rbl_domain=$rbl_domain rbl_txt=$rbl_txt rbl_what=$rbl_what
  rbl_class=$rbl_class
 
+dnsbltest.porcupine.org=127.0.0.3	 $rbl_code service unavailable; $rbl_class [$rbl_what] blocked using $rbl_domain=127.0.0.3 ${rbl_reason?; $rbl_reason}
+
+dnsbltest.porcupine.org	 $rbl_code SERVICE UNAVAILABLE; $rbl_class [$rbl_what] blocked using $rbl_domain${rbl_reason?; $rbl_reason}
+
 rhsbl.porcupine.org	$rbl_code client=$client
  client_address=$client_address
  client_name=$client_name helo_name=$helo_name 

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        smtp-source - parallelized SMTP/LMTP test generator
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>smtp-source</b> [<i>options</i>] [<b>inet:</b>]<i>host</i>[:<i>port</i>]
 
        <b>smtp-source</b> [<i>options</i>] <b>unix:</b><i>pathname</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        <b>smtp-source</b>  connects to the named <i>host</i> and TCP <i>port</i> (default: port 25)
        and sends one or more messages to it, either sequentially or in  paral-
        lel. The program speaks either SMTP (default) or LMTP.  Connections can
@@ -49,7 +49,7 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
               over the same connection.
 
        <b>-f</b> <i>from</i>
-              Use the specified sender address (default: &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
+              Use the specified sender address (default: &lt;foo@my-hostname&gt;).
 
        <b>-F</b> <i>file</i>
               Send the pre-formatted message header and body in the  specified
@@ -65,28 +65,42 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
        <b>-m</b> <i>message</i><b>_</b><i>count</i>
               Send the specified number of messages (default: 1).
 
-       <b>-M</b> <i><a href="postconf.5.html#myhostname">myhostname</a></i>
+       <b>-M</b> <i>my-hostname</i>
               Use  the specified hostname or [address] in the HELO command and
               in the default sender and recipient addresses,  instead  of  the
               machine hostname.
 
-       <b>-N</b>     Prepend  a  non-repeating  sequence  number  to  each  recipient
-              address. This avoids the artificial 100% hit rate in the resolve
-              and rewrite client caches and exercises the trivial-rewrite dae-
-              mon, better approximating Postfix  performance  under  real-life
-              work-loads.
+       <b>-N</b>     Generate  each  recipient  address  by  appending  a  number  (a
+              per-process recipient counter) to the recipient  address  local-
+              part specified with the <b>-t</b> option.
+
+              Note:  to  use  the  number  as an address extension, specify an
+              explicit address delimiter at the end of  the  recipient  local-
+              part, as in "<b>-t localpart+@domain</b>" or "<b>-t localpart+</b>", where "<b>+</b>"
+              is a Postfix recipient address delimiter.
+
+              Benefits:
+
+              <b>o</b>      A non-constant recipient address  avoids  an  unrealistic
+                     100% cache hit rate in clients of the Postfix trivial-re-
+                     write service,  better  approximating  performance  under
+                     real-life work-loads.
+
+              <b>o</b>      A  fixed recipient address local-part with a non-constant
+                     address extension avoids the need to  configure  a  large
+                     number  of  valid  recipient  addresses  in the receiving
+                     Postfix server.
 
        <b>-o</b>     Old mode: don't send HELO, and don't send message headers.
 
        <b>-r</b> <i>recipient</i><b>_</b><i>count</i>
-              Send   the   specified  number  of  recipients  per  transaction
-              (default: 1).  Recipient names are  generated  by  prepending  a
-              number to the recipient address.
+              Send  the  specified  number  of  recipients   per   transaction
+              (default:  1),  and  generate  recipient  addresses as described
+              under the <b>-N</b> option.
 
        <b>-R</b> <i>interval</i>
-              Wait for a random period of time 0 &lt;= n &lt;= interval between mes-
-              sages.  Suspending one thread does  not  affect  other  delivery
-              threads.
+              Wait a random time (0 &lt;= n &lt;= <i>interval</i>) between messages.   Sus-
+              pending one thread does not affect other delivery threads.
 
        <b>-s</b> <i>session</i><b>_</b><i>count</i>
               Run  the specified number of SMTP sessions in parallel (default:
@@ -95,7 +109,8 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
        <b>-S</b> <i>subject</i>
               Send mail with the named subject line (default: none).
 
-       <b>-t</b> <i>to</i>  Use the specified recipient address (default: &lt;foo@<a href="postconf.5.html#myhostname">myhostname</a>&gt;).
+       <b>-t</b> <i>to</i>  Use the  specified  recipient  address  (default:  &lt;foo@my-host-
+              name&gt;).
 
        <b>-T</b> <i>windowsize</i>
               Override  the default TCP window size. To work around broken TCP
@@ -114,13 +129,13 @@ SMTP-SOURCE(1)                                                  SMTP-SOURCE(1)
        <b>unix:</b><i>pathname</i>
               Connect to the UNIX-domain socket at <i>pathname</i>.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        No SMTP command pipelining support.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtp-sink.1.html">smtp-sink(1)</a>, SMTP/LMTP message dump
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

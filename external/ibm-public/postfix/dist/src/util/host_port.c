@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.c,v 1.1.1.4 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: host_port.c,v 1.1.1.5 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -159,7 +159,7 @@ const char *host_port(char *buf, char **host, char *def_host,
      * Final sanity checks. We're still sloppy, allowing bare numerical
      * network addresses instead of requiring proper [ipaddress] forms.
      */
-    if (*host != def_host 
+    if (*host != def_host
 	&& !valid_utf8_hostname(util_utf8_enable, *host, DONT_GRIPE)
 	&& !valid_hostaddr(*host, DONT_GRIPE))
 	return ("valid hostname or network address required");

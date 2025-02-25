@@ -17,6 +17,7 @@ OK
 >>> recipient_restrictions permit_mx_backup,reject
 OK
 >>> rcpt wietse@wzv.porcupine.org
+./smtpd_check: warning: support for restriction "permit_mx_backup" will be removed from Postfix; instead, specify "relay_domains"
 OK
 >>> rcpt wietse@backup.porcupine.org
 OK

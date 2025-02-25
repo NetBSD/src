@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 POSTFIX(1)                                                          POSTFIX(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postfix - Postfix control program
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postfix</b> [<b>-Dv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <i>command</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        This  command  is  reserved  for the superuser. To submit mail, use the
        Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command.
 
@@ -138,7 +138,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        The <a href="postfix.1.html"><b>postfix</b>(1)</a> command  exports  the  following  environment  variables
        before executing the <b>postfix-script</b> file:
 
@@ -167,7 +167,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <b>POSTLOG_HOSTNAME</b>
               The hostname to prepend to internal logging.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> configuration parameters are exported as environ-
        ment variables with the same names:
 
@@ -303,7 +303,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <b><a href="postconf.5.html#postlog_service_name">postlog_service_name</a> (postlog)</b>
               The name of the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> service entry in <a href="master.5.html">master.cf</a>.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        Prior  to Postfix version 2.6, all of the following files were in <b>$<a href="postconf.5.html#config_directory">con</a>-</b>
        <b><a href="postconf.5.html#config_directory">fig_directory</a></b>. Some files are now in <b>$<a href="postconf.5.html#daemon_directory">daemon_directory</a></b> or  <b>$meta_direc-</b>
        <b>tory</b>  so  that they can be shared among multiple instances that run the
@@ -319,7 +319,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        $<a href="postconf.5.html#meta_directory">meta_directory</a>/dynamicmaps.cf, plug-in database clients
        $<a href="postconf.5.html#meta_directory">meta_directory</a>/postfix-files, file/directory permissions
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        Commands:
        <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database
        <a href="postcat.1.html">postcat(1)</a>, examine Postfix queue file
@@ -346,19 +346,20 @@ POSTFIX(1)                                                          POSTFIX(1)
 
        Table-driven mechanisms:
        <a href="access.5.html">access(5)</a>, Postfix SMTP access control table
-       <a href="aliases.5.html">aliases(5)</a>, Postfix alias database
+       <a href="aliases.5.html">aliases(5)</a>, Postfix <a href="ADDRESS_REWRITING_README.html#aliases">local aliasing</a>
        <a href="canonical.5.html">canonical(5)</a>, Postfix input address rewriting
        <a href="generic.5.html">generic(5)</a>, Postfix output address rewriting
        <a href="header_checks.5.html">header_checks(5)</a>, <a href="header_checks.5.html">body_checks(5)</a>, Postfix content inspection
        <a href="relocated.5.html">relocated(5)</a>, Users that have moved
        <a href="transport.5.html">transport(5)</a>, Postfix routing table
-       <a href="virtual.5.html">virtual(5)</a>, Postfix virtual aliasing
+       <a href="virtual.5.html">virtual(5)</a>, Postfix <a href="ADDRESS_REWRITING_README.html#virtual">virtual aliasing</a>
 
        Table lookup mechanisms:
        <a href="cidr_table.5.html">cidr_table(5)</a>, Associate CIDR pattern with value
        <a href="ldap_table.5.html">ldap_table(5)</a>, Postfix LDAP client
        <a href="lmdb_table.5.html">lmdb_table(5)</a>, Postfix LMDB database driver
        <a href="memcache_table.5.html">memcache_table(5)</a>, Postfix memcache client
+       <a href="mongodb_table.5.html">mongodb_table(5)</a>, Postfix MongoDB client
        <a href="mysql_table.5.html">mysql_table(5)</a>, Postfix MYSQL client
        <a href="nisplus_table.5.html">nisplus_table(5)</a>, Postfix NIS+ client
        <a href="pcre_table.5.html">pcre_table(5)</a>, Associate PCRE pattern with value
@@ -400,7 +401,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        Other:
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="OVERVIEW.html">OVERVIEW</a>, overview of Postfix commands and processes
        <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a>, Postfix basic configuration
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, Postfix address rewriting
@@ -408,7 +409,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="CONTENT_INSPECTION_README.html">CONTENT_INSPECTION_README</a>, Postfix content inspection
        <a href="QSHAPE_README.html">QSHAPE_README</a>, Postfix queue analysis
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

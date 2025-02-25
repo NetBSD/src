@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -52,20 +52,25 @@ address classes are very important for the operation of Postfix. </p>
 <ul>
 
 <li> <p> The list of domains that are a member of that address
-class: for example, all <a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a>, or all <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a>. </p>
+class. </p>
 
-<li> <p> The default delivery transport for that address class. For
-example, the local,
-virtual or relay delivery transport (delivery transports are defined
-in <a href="master.5.html">master.cf</a>). This helps to keep Postfix configurations simple,
-by avoiding the need for explicit routing information in transport
-maps. </p>
+<p> Examples: all <a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a>, or all <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a>. </p>
+
+<li> <p> The default delivery transport for domains in that address
+class. </p>
+
+<p> Examples: <a href="postconf.5.html#local_transport">local_transport</a> or <a href="postconf.5.html#relay_transport">relay_transport</a> (these point
+to services defined in <a href="master.5.html">master.cf</a>). </p>
+
+<p> Benefit: this avoids the need for explicit routing information
+in transport maps. </p>
 
 <li> <p> The list of valid recipient addresses for that address
-class. The Postfix SMTP server rejects invalid recipients with
-"User unknown in &lt;name of address class here&gt; table".  This
-helps to keep the Postfix queue free of undeliverable MAILER-DAEMON
-messages. </p>
+class. </p>
+
+<p> Benefit: the Postfix SMTP server rejects an invalid recipient
+with "User unknown in &lt;name of address class&gt; table", and
+avoids sending a MAILER-DAEMON message with backscatter spam. </p>
 
 </ul>
 
@@ -92,12 +97,12 @@ This domain class also includes mail for <i>user@[ipaddress]</i>
 when the IP address is listed with the <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or
 <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> parameters. </p>
 
-<li> <p> Valid recipient addresses are listed with the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>
-parameter, as described in <a href="LOCAL_RECIPIENT_README.html">LOCAL_RECIPIENT_README</a>. The Postfix SMTP
-server rejects invalid recipients with "User unknown in local
-recipient table". If the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> parameter value is
-empty, then the Postfix SMTP server accepts any address in the
-<a href="ADDRESS_CLASS_README.html#local_domain_class">local domain</a> class. </p>
+<li> <p> Valid recipient addresses for those domains are
+listed with the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> parameter, as described in
+<a href="LOCAL_RECIPIENT_README.html">LOCAL_RECIPIENT_README</a>. The Postfix SMTP server rejects invalid recipients
+with "User unknown in local recipient table". If the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>
+parameter value is empty, then the Postfix SMTP server accepts any
+address in the <a href="ADDRESS_CLASS_README.html#local_domain_class">local domain</a> class. </p>
 
 <li> <p> The mail delivery transport is specified with the
 <a href="postconf.5.html#local_transport">local_transport</a> parameter. The default value is <b><a href="local.8.html">local</a>:$<a href="postconf.5.html#myhostname">myhostname</a></b>
@@ -111,21 +116,25 @@ class. </p>
 <ul>
 
 <li> <p> Purpose: <a href="VIRTUAL_README.html#canonical">hosted domains</a> where each recipient address is
-aliased to an address in a different domain, for example, a local
-UNIX system account or a remote address.  A
+aliased to an address in a different domain class, for example, a
+local UNIX system account or a remote address. A
 <a href="VIRTUAL_README.html#virtual_alias">virtual alias example</a> is given in the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file. </p>
 
 <li> <p> Domain names are listed in <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>. The
 default value is $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> for Postfix 1.1 compatibility.
 </p>
 
-<li> <p> Valid recipient addresses are listed with the <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>
-parameter. The Postfix SMTP server rejects invalid recipients with
-"User unknown in virtual alias table".  The default value is
-$<a href="postconf.5.html#virtual_maps">virtual_maps</a> for Postfix 1.1 compatibility. </p>
+<li> <p> Valid recipient addresses for those domains are listed with the
+<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> parameter. The Postfix SMTP server rejects invalid
+recipients with "User unknown in virtual alias table". The default
+value is $<a href="postconf.5.html#virtual_maps">virtual_maps</a> for Postfix 1.1 compatibility. </p>
 
-<li> <p> There is no mail delivery transport parameter. Every
-address must be aliased to an address in some other domain. </p>
+<blockquote ><p> Note: for historical reasons, <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>
+apply to recipients in all domain classes, not only the virtual
+alias domain class. </p> </blockquote>
+
+<li> <p> There is no configurable mail delivery transport. Every
+address must be aliased to an address in some other domain class. </p>
 
 </ul>
 
@@ -136,18 +145,19 @@ class. </p>
 
 <li> <p> Purpose: final delivery for <a href="VIRTUAL_README.html#canonical">hosted domains</a> where each
 recipient address can have its own mailbox, and where users do not
-need to have a UNIX system account.  A <a href="VIRTUAL_README.html#virtual_mailbox">virtual mailbox example</a> is
+need to have a UNIX system account. A <a href="VIRTUAL_README.html#virtual_mailbox">virtual mailbox example</a> is
 given in the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file. </p>
 
 <li> <p> Domain names are listed with the <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>
 parameter. The default value is $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> for Postfix
 1.1 compatibility. </p>
 
-<li> <p> Valid recipient addresses are listed with the <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
-parameter. The Postfix SMTP server rejects invalid recipients with
-"User unknown in virtual mailbox table". If this parameter value
-is empty, the Postfix SMTP server accepts all recipients for domains
-listed in $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.  </p>
+<li> <p> Valid recipient addresses for those domains are listed
+with the <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> parameter. The Postfix SMTP server
+rejects invalid recipients with "User unknown in virtual mailbox
+table". If this parameter value is empty, the Postfix SMTP server
+accepts all recipients for domains listed in $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
+</p>
 
 <li> <p> The mail delivery transport is specified with the
 <a href="postconf.5.html#virtual_transport">virtual_transport</a> parameter. The default value is <b>virtual</b>
@@ -169,11 +179,12 @@ file. </p>
 <li> <p> Domain names are listed with the <a href="postconf.5.html#relay_domains">relay_domains</a> parameter.
 </p>
 
-<li> <p> Valid recipient addresses are listed with the <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>
-parameter. The Postfix SMTP server rejects invalid recipients with
-"User unknown in relay recipient table". If this parameter value
-is empty, the Postfix SMTP server accepts all recipients for domains
-listed with the <a href="postconf.5.html#relay_domains">relay_domains</a> parameter. </p>
+<li> <p> Valid recipient addresses for those domains are listed
+with the <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> parameter. The Postfix SMTP server
+rejects invalid recipients with "User unknown in relay recipient
+table". If this parameter value is empty, the Postfix SMTP server
+accepts all recipients for domains listed with the <a href="postconf.5.html#relay_domains">relay_domains</a>
+parameter. </p>
 
 <li> <p> The mail delivery transport is specified with the
 <a href="postconf.5.html#relay_transport">relay_transport</a> parameter. The default value is <b>relay</b> which

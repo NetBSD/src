@@ -217,8 +217,7 @@ EExxaammppllee 33:: CCoonnggeessttiioonn iinn tthhee aa
 This example is taken from a Feb 2004 discussion on the Postfix Users list.
 Congestion was reported with the "active" and "incoming" queues large and not
 shrinking despite very large delivery agent process limits. The thread is
-archived at: http://groups.google.com/
-groups?threadm=c0b7js$2r65$1@FreeBSD.csie.NCTU.edu.tw and http://
+archived at: https://web.archive.org/web/20120227170207/http://
 archives.neohapsis.com/archives/postfix/2004-02/thread.html#1371
 
 Using an older version of qshape(1) it was quickly determined that all the

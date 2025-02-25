@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.h,v 1.1.1.1 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: dict_sockmap.h,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 #ifndef _DICT_SOCKMAP_H_INCLUDED_
 #define _DICT_SOCKMAP_H_INCLUDED_
@@ -24,6 +24,7 @@
 #define DICT_TYPE_SOCKMAP	"socketmap"
 
 extern DICT *dict_sockmap_open(const char *, int, int);
+extern int dict_sockmap_max_reply;
 
 /* LICENSE
 /* .ad

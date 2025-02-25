@@ -1,4 +1,4 @@
-/*	$NetBSD: open_limit.c,v 1.1.1.2 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: open_limit.c,v 1.1.1.3 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,7 @@ int     open_limit(int limit)
 {
 #ifdef RLIMIT_NOFILE
     struct rlimit rl;
+
 #endif
 
     if (limit < 0) {
@@ -99,4 +100,3 @@ int     open_limit(int limit)
     return (getdtablesize());
 #endif
 }
-

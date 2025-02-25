@@ -141,3 +141,13 @@
 ./valid_hostname: testing: "a::b:"
 ./valid_hostname: warning: valid_hostname: invalid character 58(decimal): a::b:
 ./valid_hostname: warning: valid_ipv6_hostaddr: bad null last field in IPv6 address: a::b:
+./valid_hostname: testing: "*.foo.bar"
+./valid_hostname: testing: "*foo.bar"
+./valid_hostname: warning: valid_hostname: '*' can be the first label only: *foo.bar
+./valid_hostname: testing: "foo.*.bar"
+./valid_hostname: warning: valid_hostname: '*' can be the first label only: foo.*.bar
+./valid_hostname: testing: "foo*bar"
+./valid_hostname: warning: valid_hostname: '*' can be the first label only: foo*bar
+./valid_hostname: testing: "foo.bar*"
+./valid_hostname: warning: valid_hostname: '*' can be the first label only: foo.bar*
+./valid_hostname: testing: "*"

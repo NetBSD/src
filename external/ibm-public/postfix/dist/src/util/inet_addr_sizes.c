@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_sizes.c,v 1.1.1.1 2023/12/23 20:24:59 christos Exp $	*/
+/*	$NetBSD: inet_addr_sizes.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,9 +66,9 @@ static const INET_ADDR_SIZES table[] = {
 
 /* inet_addr_sizes - get address size metrics for address family */
 
-const   INET_ADDR_SIZES *inet_addr_sizes(int af)
+const INET_ADDR_SIZES *inet_addr_sizes(int af)
 {
-    const   INET_ADDR_SIZES *sp;
+    const INET_ADDR_SIZES *sp;
 
     for (sp = table; /* see below */ ; sp++) {
 	if (sp >= table + sizeof(table) / sizeof(*table))

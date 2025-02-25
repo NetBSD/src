@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_server.c,v 1.1.1.2 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: xsasl_server.c,v 1.1.1.3 2025/02/25 19:11:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -125,7 +125,10 @@
 /*	reply.
 /*
 /*	xsasl_server_get_username() returns the stored username
-/*	after successful authentication.
+/*	after successful authentication. The username may be null
+/*	after authentication failure, depending on the kind of
+/*	failure and on authentication backend implementation
+/*	details. A non-null result is converted to printable text.
 /*
 /*	Arguments:
 /* .IP addr_family
@@ -209,6 +212,10 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
+/*	Amawalk, NY 10501, USA
 /*--*/
 
 /* System library. */

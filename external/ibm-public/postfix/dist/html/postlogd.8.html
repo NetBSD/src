@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,17 +7,17 @@
 </head> <body> <pre>
 POSTLOGD(8)                                                        POSTLOGD(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postlogd - Postfix internal log server
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postlogd</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
-       This program logs events on behalf of Postfix programs when the maillog
-       configuration parameter specifies a non-empty value.
+<b><a name="description">DESCRIPTION</a></b>
+       This  program  logs events on behalf of Postfix programs when the <a href="postconf.5.html#maillog_file">mail</a>-
+       <a href="postconf.5.html#maillog_file">log_file</a> configuration parameter specifies a non-empty value.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        Non-daemon Postfix programs don't know that  they  should  log  to  the
        internal  logging  service  before  they  have  processed  command-line
        options and <a href="postconf.5.html">main.cf</a> parameters. These programs still log earlier events
@@ -35,10 +35,10 @@ POSTLOGD(8)                                                        POSTLOGD(8)
        mission. Do not set this permission on programs other than <a href="postdrop.1.html"><b>postdrop</b>(1)</a>,
        <a href="postqueue.1.html"><b>postqueue</b>(1)</a> and (Postfix &gt;= 3.7) <a href="postlog.1.html"><b>postlog</b>(1)</a>.
 
-<b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked up automatically, as <a href="postlogd.8.html"><b>postlogd</b>(8)</a> pro-
-       cesses run for only a limited amount of time. Use the command  "<b>postfix</b>
-       <b>reload</b>" to speed up a change.
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are not picked up automatically, because <a href="postlogd.8.html"><b>postlogd</b>(8)</a>
+       terminates only after reaching the <b><a href="postconf.5.html#max_idle">max_idle</a></b> time limit.  Use  the  com-
+       mand "<b>postfix reload</b>" to speed up a change.
 
        The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
        more details including examples.
@@ -68,19 +68,26 @@ POSTLOGD(8)                                                        POSTLOGD(8)
               How  much  time  a  <a href="postlogd.8.html"><b>postlogd</b>(8)</a>  process  may  take to process a
               request before it is terminated by a built-in watchdog timer.
 
-<b>SEE ALSO</b>
+       Available in Postfix 3.9 and later:
+
+       <b><a href="postconf.5.html#maillog_file_permissions">maillog_file_permissions</a> (0600)</b>
+              The file access permissions that  will  be  set  when  the  file
+              $<a href="postconf.5.html#maillog_file">maillog_file</a> is created for the first time, or when the file is
+              created after an existing file is rotated.
+
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        syslogd(8), system logging
 
-<b>README_FILES</b>
+<b><a name="readme_files">README_FILES</a></b>
        Use "<b>postconf <a href="postconf.5.html#readme_directory">readme_directory</a></b>" or "<b>postconf <a href="postconf.5.html#html_directory">html_directory</a></b>" to  locate
        this information.
        <a href="MAILLOG_README.html">MAILLOG_README</a>, Postfix logging to file or stdout
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        This service was introduced with Postfix version 3.4.
 
 <b>AUTHOR(S)</b>
@@ -88,6 +95,9 @@ POSTLOGD(8)                                                        POSTLOGD(8)
        Google, Inc.
        111 8th Avenue
        New York, NY 10011, USA
+
+       Wietse Venema
+       porcupine.org
 
                                                                    POSTLOGD(8)
 </pre> </body> </html>

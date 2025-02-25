@@ -1,4 +1,4 @@
-/*	$NetBSD: balpar.c,v 1.1.1.1 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: balpar.c,v 1.1.1.2 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	const char *string;
 /*	const char *parens;
 /* DESCRIPTION
-/*	balpar() determines the length of a string enclosed in 
+/*	balpar() determines the length of a string enclosed in
 /*	the specified parentheses, zero in case of error.
 /* SEE ALSO
 /*	A balpar() routine appears in Brian W. Kernighan, P.J. Plauger:

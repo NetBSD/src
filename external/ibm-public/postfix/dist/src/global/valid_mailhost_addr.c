@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_mailhost_addr.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: valid_mailhost_addr.c,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -94,7 +94,7 @@ int     valid_mailhost_literal(const char *addr, int gripe)
     const char *myname = "valid_mailhost_literal";
     MAI_HOSTADDR_STR hostaddr;
     const char *last;
-    size_t address_bytes;
+    size_t  address_bytes;
 
     if (*addr != '[') {
 	if (gripe)

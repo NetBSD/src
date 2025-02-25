@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.c,v 1.1.1.4 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: vbuf.c,v 1.1.1.5 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -177,7 +177,7 @@ int     vbuf_unget(VBUF *bp, int ch)
 int     vbuf_get(VBUF *bp)
 {
     return (bp->get_ready(bp) ?
-	((bp->flags |= VBUF_FLAG_EOF), VBUF_EOF) : VBUF_GET(bp));
+	    ((bp->flags |= VBUF_FLAG_EOF), VBUF_EOF) : VBUF_GET(bp));
 }
 
 /* vbuf_put - handle write buffer full condition */

@@ -1,0 +1,240 @@
+#++
+# NAME
+#	mongodb_table 5
+# SUMMARY
+#	Postfix MongoDB client configuration
+# SYNOPSIS
+#	\fBpostmap -q "\fIstring\fB" mongodb:/etc/postfix/\fIfilename\fR
+#
+#	\fBpostmap -q - mongodb:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+# DESCRIPTION
+#	The Postfix mail system uses optional tables for address
+#	rewriting or mail routing. These tables are usually in
+#	\fBdbm\fR or \fBdb\fR format.
+#
+#	Alternatively, lookup tables can be specified as MongoDB
+#	databases.  In order to use MongoDB lookups, define a MongoDB
+#	source as a lookup table in main.cf, for example:
+# .nf
+#	    alias_maps = mongodb:/etc/postfix/mongodb-aliases.cf
+# .fi
+#
+#	In this example, the file /etc/postfix/mongodb-aliases.cf
+#	has the same format as the Postfix main.cf file, and can
+#	specify the parameters described below. It is also possible
+#	to have the configuration in main.cf; see "OBSOLETE MAIN.CF
+#	PARAMETERS" below.
+#
+#	It is strongly recommended to use proxy:mongodb, in order
+#	to reduce the number of database connections. For example:
+# .nf
+#	    alias_maps = proxy:mongodb:/etc/postfix/mongodb-aliases.cf
+# .fi
+#
+#	Note: when using proxy:mongodb:/\fIfile\fR, the file must
+#	be readable by the unprivileged postfix user (specified
+#	with the Postfix mail_owner configuration parameter).
+# MONGODB PARAMETERS
+# .ad
+# .fi
+# .IP "\fBuri\fR"
+#	The URI of mongo server/cluster that Postfix will try to
+#	connect to and query from. Please see
+# .nf
+#	https://www.mongodb.com/docs/manual/reference/connection-string/
+# .fi
+#
+#	Example:
+# .nf
+#	    uri = mongodb+srv://user:pass@loclhost:27017/mail
+# .fi
+# .IP "\fBdbname\fR"
+#	Name of the database to read the information from.
+#	Example:
+# .nf
+#	    dbname = mail
+# .fi
+# .IP "\fBcollection\fR"
+#	Name of the collection (table) to read the information from.
+#	Example:
+# .nf
+#	    collection = mailbox
+# .fi
+# .IP "\fBquery_filter\fR"
+#	The MongoDB query template used to search the database,
+#	where \fB%s\fR is a substitute for the email address that
+#	Postfix is trying to resolve. Please see:
+# .nf
+#	https://www.mongodb.com/docs/manual/tutorial/query-documents/
+# .fi
+#
+#	Example:
+# .nf
+#	    query_filter = {"$or": [{"username": "%s"}, {"alias.address": "%s"}], "active": 1}
+# .fi
+#
+#	This parameter supports the following '%' expansions:
+# .RS
+# .IP "\fB%%\fR"
+#	This is replaced by a literal '%' character.
+# .IP "\fB%s\fR"
+#	This is replaced by the input key. The %s must appear in
+#	quotes, because all Postfix queries are strings containing
+#	(parts from) a domain or email address. Postfix makes no
+#	numerical queries.
+# .IP "\fB%u\fR"
+#	When the input key is an address of the form user@domain,
+#	\fB%u\fR is replaced by the local part of the address.
+#	Otherwise, \fB%u\fR is replaced by the entire search string.
+# .IP "\fB%d\fR"
+#	When the input key is an address of the form user@domain,
+#	\fB%d\fR is replaced by the domain part of the address.
+# .IP "\fB%[1-9]\fR"
+#	The patterns %1, %2, ... %9 are replaced by the corresponding
+#	most significant component of the input key's domain. If
+#	the input key is \fIuser@mail.example.com\fR, then %1 is
+#	\fBcom\fR, %2 is \fBexample\fR and %3 is \fBmail\fR.
+# .RE
+# .IP
+#	In the above substitutions, characters will be quoted as
+#	required by RFC 4627. For example, each double quote or
+#	backslash character will be escaped with a backslash
+#	characacter.
+# .IP "\fBprojection\fR"
+#	Advanced MongoDB query projections. Please see:
+# .nf
+#	https://www.mongodb.com/docs/manual/tutorial/project-fields-from-query-results/
+# .fi
+#
+# .RS
+# .IP \(bu
+#	If \fBprojection\fR is non-empty, then \fBresult_attribute\fR
+#	must be empty.
+# .IP \(bu
+#	This implementation can extract information only from result
+#	fields that have type \fBstring\fR (UTF8), \fBinteger\fR
+#	(int32, int64) and \fBarray\fR. Other result fields will
+#	be ignored with a warning. Please see:
+# .nf
+#	https://mongoc.org/libbson/current/bson_type_t.html
+# .fi
+# .IP \(bu
+#	As with \fBresult_attribute\fR, the top-level _id field
+#	(type OID) is automatically removed from projection results.
+# .RE
+# .IP "\fBresult_attribute\fR"
+#	Comma or whitespace separated list with the names of fields
+#	to be returned in a lookup result.
+#
+# .RS
+# .IP \(bu
+#	If \fBresult_attribute\fR is non-empty, then \fBprojection\fR
+#	must be empty.
+# .IP \(bu
+#	As with \fBprojection\fR, the top-level _id field (type
+#	OID) is automatically removed from lookup results.
+# .RE
+# .IP "\fBresult_format (default: \fB%s\fR)\fR"
+#	Format template applied to the result from \fBprojection\fR
+#	or \fBresult_attribute\fR. Most commonly used to append (or
+#	prepend) text to the result. This parameter supports the
+#	following '%' expansions:
+# .RS
+# .IP "\fB%%\fR"
+#	This is replaced by a literal '%' character.
+# .IP "\fB%s\fR"
+#	This is replaced by the value of the result attribute. When
+#	result is empty it is skipped.
+# .IP "\fB%u\fR
+#	When the result attribute value is an address of the form
+#	user@domain, \fB%u\fR is replaced by the local part of the
+#	address. When the result has an empty localpart it is
+#	skipped.
+# .IP "\fB%d\fR"
+#	When a result attribute value is an address of the form
+#	user@domain, \fB%d\fR is replaced by the domain part of the
+#	attribute value. When the result is unqualified it is
+#	skipped.
+# .IP "\fB%[SUD1-9]\fR"
+#	The upper-case and decimal digit expansions interpolate the
+#	parts of the input key rather than the result. Their behavior
+#	is identical to that described with \fBquery_filter\fR, and
+#	in fact because the input key is known in advance, lookups
+#	whose key does not contain all the information specified
+#	in the result template are suppressed and return no results.
+# .RE
+# .IP
+#	For example, using "result_format = smtp:[%s]" allows one
+#	to use a mailHost attribute as the basis of a transport(5)
+#	table. After applying the result format, multiple values
+#	are concatenated as comma separated strings. The expansion_limit
+#	parameter explained below allows one to restrict the number
+#	of values in the result, which is especially useful for
+#	maps that should return a single value.
+#
+#	The default value \fB%s\fR specifies that each
+#	attribute value should be used as is.
+#
+#	NOTE: DO NOT put quotes around the result format! The result
+#	is not a JSON string.
+# .IP "\fBdomain (default: no domain list)\fR"
+#	This is a list of domain names, paths to files, or "type:table"
+#	databases. When specified, only fully qualified search keys
+#	with a *non-empty* localpart and a matching domain are
+#	eligible for lookup: 'user' lookups, bare domain lookups
+#	and "@domain" lookups are not performed. This can significantly
+#	reduce the query load on the backend database. Example:
+# .nf
+#	    domain = postfix.org, hash:/etc/postfix/searchdomains
+# .fi
+# .IP "\fBexpansion_limit (default: 0)\fR"
+#	A limit on the total number of result elements returned (as
+#	a comma separated list) by a lookup against the map.  A
+#	setting of zero disables the limit. Lookups fail with a
+#	temporary error if the limit is exceeded. Setting the limit
+#	to 1 ensures that lookups do not return multiple values.
+# OBSOLETE MAIN.CF PARAMETERS
+# .ad
+# .fi
+#	MongoDB parameters can also be defined in main.cf. Specify
+#	as MongoDB source a name that doesn't begin with a slash
+#	or a dot. The MongoDB parameters will then be accessible
+#	as the name you've given the source in its definition, an
+#	underscore, and the name of the parameter. For example, if
+#	a map is specified as "mongodb:\fImongodb_source\fR", the
+#	"uri" parameter would be defined in main.cf as
+#	"\fImongodb_source\fR_uri".
+#
+#	Note: with this form, passwords are written in main.cf,
+#	which is normally world-readable, and '$' in a mongodb
+#	parameter setting needs to be written as '$$'.
+# SEE ALSO
+#	postmap(1), Postfix lookup table maintenance
+#	postconf(5), configuration parameters
+# README FILES
+# .ad
+# .fi
+#	Use "\fBpostconf readme_directory\fR" or "\fBpostconf
+#	html_directory\fR" to locate this information.
+# .na
+# .nf
+#	DATABASE_README, Postfix lookup table overview
+#	MONGODB_README, Postfix MONGODB client guide
+# LICENSE
+# .ad
+# .fi
+#	The Secure Mailer license must be distributed with this software.
+# HISTORY
+#	MongoDB support was introduced with Postfix version 3.9.
+# AUTHOR(S)
+#	Hamid Maadani (hamid@dexo.tech)
+#	Dextrous Technologies, LLC
+#
+#	Edited by:
+#	Wietse Venema
+#	porcupine.org
+#
+#	Based on prior work by:
+#	Stephan Ferraro
+#	Aionda GmbH
+#--

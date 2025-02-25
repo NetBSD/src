@@ -1,4 +1,4 @@
-/*	$NetBSD: master_watch.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_watch.c,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -102,8 +102,8 @@ void    master_str_watch(const MASTER_STR_WATCH *str_watch_table)
 
 	/*
 	 * Initialize the backed up parameter value, or update it if this
-	 * parameter supports updates after initialization. Optionally 
-	 * notify the application that this parameter has changed.
+	 * parameter supports updates after initialization. Optionally notify
+	 * the application that this parameter has changed.
 	 */
 	if (wp->backup[0] == 0) {
 	    if (wp->notify != 0)
@@ -140,8 +140,8 @@ void    master_int_watch(MASTER_INT_WATCH *int_watch_table)
 
 	/*
 	 * Initialize the backed up parameter value, or update if it this
-	 * parameter supports updates after initialization. Optionally 
-	 * notify the application that this parameter has changed.
+	 * parameter supports updates after initialization. Optionally notify
+	 * the application that this parameter has changed.
 	 */
 	if ((wp->flags & MASTER_WATCH_FLAG_ISSET) == 0) {
 	    if (wp->notify != 0)

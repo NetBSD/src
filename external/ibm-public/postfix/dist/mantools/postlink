@@ -169,6 +169,7 @@ while (<>) {
     s;\bdisable_dns_lookups\b;<a href="postconf.5.html#disable_dns_lookups">$&</a>;g;
     s;\bdisable_mime_input_processing\b;<a href="postconf.5.html#disable_mime_input_processing">$&</a>;g;
     s;\bdisable_mime_output_conversion\b;<a href="postconf.5.html#disable_mime_output_conversion">$&</a>;g;
+    s;\bforce_mime_input_conversion\b;<a href="postconf.5.html#force_mime_input_conversion">$&</a>;g;
     s;\bdisable_verp_bounces\b;<a href="postconf.5.html#disable_verp_bounces">$&</a>;g;
     s;\bdisable_vrfy_command\b;<a href="postconf.5.html#disable_vrfy_command">$&</a>;g;
     s;\bdont_remove\b;<a href="postconf.5.html#dont_remove">$&</a>;g;
@@ -231,6 +232,8 @@ while (<>) {
     s;\blmtp_min_data_rate\b;<a href="postconf.5.html#lmtp_min_data_rate">$&</a>;g;
     s;\blmtp_reply_filter\b;<a href="postconf.5.html#lmtp_reply_filter">$&</a>;g;
     s;\blmtp_sasl_password_maps\b;<a href="postconf.5.html#lmtp_sasl_password_maps">$&</a>;g;
+    s;\bsmtp_sasl_password_result_delimiter\b;<a href="postconf.5.html#smtp_sasl_password_result_delimiter">$&</a>;g;
+    s;\blmtp_sasl_password_result_delimiter\b;<a href="postconf.5.html#lmtp_sasl_password_result_delimiter">$&</a>;g;
     s;\blmtp_send_dummy_mail_auth\b;<a href="postconf.5.html#lmtp_send_dummy_mail_auth">$&</a>;g;
     s;\blmtp_balance_inet_protocols\b;<a href="postconf.5.html#lmtp_balance_inet_protocols">$&</a>;g;
     s;\blmtp_sender_dependent_authentication\b;<a href="postconf.5.html#lmtp_sender_dependent_authentication">$&</a>;g;
@@ -273,6 +276,7 @@ while (<>) {
     s;\blmtp_tls_loglevel\b;<a href="postconf.5.html#lmtp_tls_loglevel">$&</a>;g;
     s;\blmtp_tls_session_cache_database\b;<a href="postconf.5.html#lmtp_tls_session_cache_database">$&</a>;g;
     s;\blmtp_tls_session_cache_timeout\b;<a href="postconf.5.html#lmtp_tls_session_cache_timeout">$&</a>;g;
+    s;\blmtp_tls_enable_rpk\b;<a href="postconf.5.html#lmtp_tls_enable_rpk">$&</a>;g;
     s;\blmtp_tls_wrappermode\b;<a href="postconf.5.html#lmtp_tls_wrappermode">$&</a>;g;
     s;\blmtp_generic_maps\b;<a href="postconf.5.html#lmtp_generic_maps">$&</a>;g;
     s;\blmtp_pix_workaround_threshold_time\b;<a href="postconf.5.html#lmtp_pix_workaround_threshold_time">$&</a>;g;
@@ -401,6 +405,7 @@ while (<>) {
     s;\bqmqpd_authorized_clients\b;<a href="postconf.5.html#qmqpd_authorized_clients">$&</a>;g;
     s;\bservice_name\b;<a href="postconf.5.html#service_name">$&</a>;g;
 
+    s;\bsocket[-</Bb>]*\n* *[<Bb>]*map_max_reply_size\b;<a href="postconf.5.html#socketmap_max_reply_size">$&</a>;g;
     s;\bdefault_desti[-</Bb>]*\n* *[<Bb>]*na[-</Bb>]*\n* *[<Bb>]*tion_con[-</Bb>]*\n* *[<Bb>]*cur[-</Bb>]*\n* *[<Bb>]*rency_negative_feedback\b;<a href="postconf.5.html#default_destination_concurrency_negative_feedback">$&</a>;g;
     s;\bdefault_desti[-</Bb>]*\n* *[<Bb>]*na[-</Bb>]*\n* *[<Bb>]*tion_con[-</Bb>]*\n* *[<Bb>]*cur[-</Bb>]*\n* *[<Bb>]*rency_positive_feedback\b;<a href="postconf.5.html#default_destination_concurrency_positive_feedback">$&</a>;g;
     s;\bdefault_desti[-</Bb>]*\n* *[<Bb>]*na[-</Bb>]*\n* *[<Bb>]*tion_con[-</Bb>]*\n* *[<Bb>]*cur[-</Bb>]*\n* *[<Bb>]*rency_failed_cohort_limit\b;<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">$&</a>;g;
@@ -557,8 +562,10 @@ while (<>) {
     s;\bsmtpd_etrn_restrictions\b;<a href="postconf.5.html#smtpd_etrn_restrictions">$&</a>;g;
     s;\bsmtpd_expansion_filter\b;<a href="postconf.5.html#smtpd_expansion_filter">$&</a>;g;
     s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bidden_commands\b;<a href="postconf.5.html#smtpd_forbidden_commands">$&</a>;g;
-    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_newline\b;<a href="postconf.5.html#smtpd_forbid_bare_newline">$&</a>;g;
-    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_newline_exclusions\b;<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_new[-</bB>]*\n*[ <bB>]*line\b;<a href="postconf.5.html#smtpd_forbid_bare_newline">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_new[-</bB>]*\n*[ <bB>]*line_reject_code\b;<a href="postconf.5.html#smtpd_forbid_bare_newline_reject_code">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_new[-</bB>]*\n*[ <bB>]*line_exclusions\b;<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">$&</a>;g;
+    s;\bcleanup_replace_stray_cr_lf\b;<a href="postconf.5.html#cleanup_replace_stray_cr_lf">$&</a>;g;
     s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_unauth_pipelining\b;<a href="postconf.5.html#smtpd_forbid_unauth_pipelining">$&</a>;g;
     s;\bsmtpd_hard_error_limit\b;<a href="postconf.5.html#smtpd_hard_error_limit">$&</a>;g;
     s;\bsmtpd_helo_required\b;<a href="postconf.5.html#smtpd_helo_required">$&</a>;g;
@@ -697,6 +704,7 @@ while (<>) {
     s;\bsmtp_tls_block_early_mail_reply\b;<a href="postconf.5.html#smtp_tls_block_early_mail_reply">$&</a>;g;
     s;\bsmtp_tls_dane_insecure_mx_policy\b;<a href="postconf.5.html#smtp_tls_dane_insecure_mx_policy">$&</a>;g;
     s;\bsmtp_tls_force_insecure_host_tlsa_lookup\b;<a href="postconf.5.html#smtp_tls_force_insecure_host_tlsa_lookup">$&</a>;g;
+    s;\bsmtp_tls_enable_rpk\b;<a href="postconf.5.html#smtp_tls_enable_rpk">$&</a>;g;
     s;\bsmtp_tls_wrappermode\b;<a href="postconf.5.html#smtp_tls_wrappermode">$&</a>;g;
     s;\bsmtp_use_tls\b;<a href="postconf.5.html#smtp_use_tls">$&</a>;g;
     s;\bsmtp_header_checks\b;<a href="postconf.5.html#smtp_header_checks">$&</a>;g;
@@ -714,6 +722,12 @@ while (<>) {
     s;\bdnssec_probe\b;<a href="postconf.5.html#dnssec_probe">$&</a>;g;
     s;\bsmtp_tls_connection_reuse\b;<a href="postconf.5.html#smtp_tls_connection_reuse">$&</a>;g;
     s;\blmtp_tls_connection_reuse\b;<a href="postconf.5.html#lmtp_tls_connection_reuse">$&</a>;g;
+    s;\bsmtp_tlsrpt_enable\b;<a href="postconf.5.html#smtp_tlsrpt_enable">$&</a>;g;
+    s;\bsmtp_tlsrpt_socket_name\b;<a href="postconf.5.html#smtp_tlsrpt_socket_name">$&</a>;g;
+    s;\bsmtp_tlsrpt_skip_reused_handshakes\b;<a href="postconf.5.html#smtp_tlsrpt_skip_reused_handshakes">$&</a>;g;
+    s;\blmtp_tlsrpt_enable\b;<a href="postconf.5.html#lmtp_tlsrpt_enable">$&</a>;g;
+    s;\blmtp_tlsrpt_socket_name\b;<a href="postconf.5.html#lmtp_tlsrpt_socket_name">$&</a>;g;
+    s;\blmtp_tlsrpt_skip_reused_handshakes\b;<a href="postconf.5.html#lmtp_tlsrpt_skip_reused_handshakes">$&</a>;g;
     s;\bsmtpd_enforce_tls\b;<a href="postconf.5.html#smtpd_enforce_tls">$&</a>;g;
     s;\bsmtpd_sasl_tls_security_options\b;<a href="postconf.5.html#smtpd_sasl_tls_security_options">$&</a>;g;
     s;\bsmtpd_sasl_type\b;<a href="postconf.5.html#smtpd_sasl_type">$&</a>;g;
@@ -750,6 +764,7 @@ while (<>) {
     s;\bsmtpd_tls_ses[-</bB>]*\n*[ <bB>]*sion_cache_database\b;<a href="postconf.5.html#smtpd_tls_session_cache_database">$&</a>;g;
     s;\bsmtpd_tls_ses[-</bB>]*\n*[ <bB>]*sion_cache_timeout\b;<a href="postconf.5.html#smtpd_tls_session_cache_timeout">$&</a>;g;
     s;\bsmtpd_tls_always_issue_ses[-</bB>]*\n*[ <bB>]*sion_ids\b;<a href="postconf.5.html#smtpd_tls_always_issue_session_ids">$&</a>;g;
+    s;\bsmtpd_tls_enable_rpk\b;<a href="postconf.5.html#smtpd_tls_enable_rpk">$&</a>;g;
     s;\bsmtpd_tls_wrappermode\b;<a href="postconf.5.html#smtpd_tls_wrappermode">$&</a>;g;
     s;\bsmtpd_use_tls\b;<a href="postconf.5.html#smtpd_use_tls">$&</a>;g;
     s;\bsmtpd_reject_footer\b;<a href="postconf.5.html#smtpd_reject_footer">$&</a>;g;
@@ -887,6 +902,7 @@ while (<>) {
     s/[<bB>]*lmdb[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="lmdb_table.5.html">$&<\/a>/g;
     s/[<bB>]*mas[-<\/bB>]*\n* *[<bB>]*ter[<\/bB>]*\(5\)/<a href="master.5.html">$&<\/a>/g;
     s/[<bB>]*mem[-<\/bB>]*\n* *[<bB>]*cache[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="memcache_table.5.html">$&<\/a>/g;
+    s/[<bB>]*mongodb[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="mongodb_table.5.html">$&<\/a>/g;
     s/[<bB>]*mysql[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="mysql_table.5.html">$&<\/a>/g;
     s/[<bB>]*nisplus[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="nisplus_table.5.html">$&<\/a>/g;
     s/[<bB>]*pcre[<\/bBiI>]*_[<\/iIbB>]*ta[-<\/bB>]*\n*[ <bB>]*ble[<\/bB>]*\(5\)/<a href="pcre_table.5.html">$&<\/a>/g;
@@ -1122,6 +1138,7 @@ while (<>) {
     s;\btlsproxy_tls_protocols\b;<a href="postconf.5.html#tlsproxy_tls_protocols">$&</a>;g;
     s;\btlsproxy_tls_req_ccert\b;<a href="postconf.5.html#tlsproxy_tls_req_ccert">$&</a>;g;
     s;\btlsproxy_tls_security_level\b;<a href="postconf.5.html#tlsproxy_tls_security_level">$&</a>;g;
+    s;\btlsproxy_tls_enable_rpk\b;<a href="postconf.5.html#tlsproxy_tls_enable_rpk">$&</a>;g;
     s;\btlsproxy_use_tls\b;<a href="postconf.5.html#tlsproxy_use_tls">$&</a>;g;
 
     s;\btlsproxy_client_CAfile\b;<a href="postconf.5.html#tlsproxy_client_CAfile">$&</a>;g;
@@ -1158,6 +1175,7 @@ while (<>) {
     s;\bmail[-</bB>]*\n*[ <bB>]*log_file_compressor\b;<a href="postconf.5.html#maillog_file_compressor">$&</a>;g;
     s;\bmail[-</bB>]*\n*[ <bB>]*log_file_prefixes\b;<a href="postconf.5.html#maillog_file_prefixes">$&</a>;g;
     s;\bmail[-</bB>]*\n*[ <bB>]*log_file_rotate_suffix\b;<a href="postconf.5.html#maillog_file_rotate_suffix">$&</a>;g;
+    s;\bmail[-</bB>]*\n*[ <bB>]*log_file_permissions\b;<a href="postconf.5.html#maillog_file_permissions">$&</a>;g;
     s;\bpostlog_service_name\b;<a href="postconf.5.html#postlog_service_name">$&</a>;g;
     s;\bpostlogd_watchdog_timeout\b;<a href="postconf.5.html#postlogd_watchdog_timeout">$&</a>;g;
 
@@ -1167,6 +1185,10 @@ while (<>) {
     s;\buse_srv_lookup\b;<a href="postconf.5.html#use_srv_lookup">$&</a>;g;
     s;\ballow_srv_lookup_fallback\b;<a href="postconf.5.html#allow_srv_lookup_fallback">$&</a>;g;
     s;\bignore_srv_lookup_error\b;<a href="postconf.5.html#ignore_srv_lookup_error">$&</a>;g;
+
+    s;\btls_required_enable\b;<a href="postconf.5.html#tls_required_enable">$&</a>;g;
+    s;\bfull_name_encoding_charset\b;<a href="postconf.5.html#full_name_encoding_charset">$&</a>;g;
+    s;\bsmtpd_hide_client_session\b;<a href="postconf.5.html#smtpd_hide_client_session">$&</a>;g;
 
     # Service-defined parameters...
 
@@ -1226,6 +1248,8 @@ while (<>) {
     s/\b"*hold"* *queues*\b/<a href="QSHAPE_README.html#hold_queue">$&<\/a>/g;
     s/\b("*hold"*),/<a href="QSHAPE_README.html#hold_queue">$1<\/a>,/g;
     s/\b(postfix  *tls)\b/<a href="postfix-tls.1.html">$1<\/a>/g;
+    s/\b(local\s*aliasing)\b/<a href="ADDRESS_REWRITING_README.html#aliases">$1<\/a>/g;
+    s/\b(virtual\s*aliasing)\b/<a href="ADDRESS_REWRITING_README.html#virtual">$1<\/a>/g;
 
     # Hyperlink map types.
 
@@ -1240,6 +1264,7 @@ while (<>) {
     s/\b(ldap[is]?):/<a href="ldap_table.5.html">$1<\/a>:/g;
     s/\b(lmdb):/<a href="lmdb_table.5.html">$1<\/a>:/g;
     s/\b(memcache):/<a href="memcache_table.5.html">$1<\/a>:/g;
+    s/\b(mongodb):/<a href="mongodb_table.5.html">$1<\/a>:/g;
     s/\b(mysql):/<a href="mysql_table.5.html">$1<\/a>:/g;
     s/\b(nisplus):/<a href="nisplus_table.5.html">$1<\/a>:/g;
     s/\b(pcre):/<a href="pcre_table.5.html">$1<\/a>:/g;
@@ -1247,7 +1272,7 @@ while (<>) {
     s;\b(pipe[-</bB>]*\n*[ <bB>]*map):;<a href="DATABASE_README.html#types">$1<\/a>:;g;
     s/\b(proxy):/<a href="proxymap.8.html">$1<\/a>:/g;
     s/\b(randmap):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
-    s/\b(regexp):/<a href="regexp_table.5.html">$1<\/a>:/g;
+    s;\b(reg[-</bB>]*\n*[ <bB>]*exp):;<a href="regexp_table.5.html">$1<\/a>:;g;
     s/\b(sdbm):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
     s/\b(socketmap):/<a href="socketmap_table.html">$1<\/a>:/g;
     s/\b(sqlite):/<a href="sqlite_table.5.html">$1<\/a>:/g;
@@ -1257,6 +1282,10 @@ while (<>) {
     #s/\b(unix):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
     s/\b(unionmap):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
     s/\b(inline):/<a href="DATABASE_README.html#types">$1<\/a>:/g;
+
+    if ($ARGV == "postconf.proto") {
+	s/\b(overload):/<a href="STRESS_README.html">$1<\/a>:/g;
+    }
 
     # Do nice links for smtp:host:port etc.
 

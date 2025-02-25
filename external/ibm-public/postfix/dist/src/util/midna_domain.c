@@ -1,4 +1,4 @@
-/*	$NetBSD: midna_domain.c,v 1.1.1.3 2020/05/25 23:40:37 christos Exp $	*/
+/*	$NetBSD: midna_domain.c,v 1.1.1.4 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@
 /*
 /*	midna_domain_pre_chroot() does some pre-chroot initialization.
 /* SEE ALSO
-/*	http://unicode.org/reports/tr46/ Unicode IDNA Compatibility processing
+/*	https://unicode.org/reports/tr46/ Unicode IDNA Compatibility processing
 /*	msg(3) diagnostics interface
 /* DIAGNOSTICS
 /*	Fatal errors: memory allocation problem.
@@ -180,7 +180,7 @@ static void *midna_domain_to_ascii_create(const char *name, void *unused_context
     /*
      * Paranoia: do not expose uidna_*() to unfiltered network data.
      */
-    if (allascii(name) == 0 && valid_utf8_string(name, strlen(name)) == 0) {
+    if (allascii(name) == 0 && valid_utf8_stringz(name) == 0) {
 	msg_warn("%s: Problem translating domain \"%.100s\" to ASCII form: %s",
 		 myname, name, "malformed UTF-8");
 	return (0);
@@ -234,7 +234,7 @@ static void *midna_domain_to_utf8_create(const char *name, void *unused_context)
     /*
      * Paranoia: do not expose uidna_*() to unfiltered network data.
      */
-    if (allascii(name) == 0 && valid_utf8_string(name, strlen(name)) == 0) {
+    if (allascii(name) == 0 && valid_utf8_stringz(name) == 0) {
 	msg_warn("%s: Problem translating domain \"%.100s\" to UTF-8 form: %s",
 		 myname, name, "malformed UTF-8");
 	return (0);

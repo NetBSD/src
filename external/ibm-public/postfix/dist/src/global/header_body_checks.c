@@ -1,4 +1,4 @@
-/*	$NetBSD: header_body_checks.c,v 1.1.1.5 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: header_body_checks.c,v 1.1.1.6 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -297,7 +297,7 @@ static char *hbc_action(void *context, HBC_CALL_BACKS *cb,
     if (STREQUAL(cmd, "IGNORE", cmd_len))
 	/* XXX Not logged for compatibility with cleanup(8). */
 	return (HBC_CHECKS_STAT_IGNORE);
- 
+
     if (STREQUAL(cmd, "DUNNO", cmd_len)		/* preferred */
 	||STREQUAL(cmd, "OK", cmd_len))		/* compatibility */
 	return ((char *) line);

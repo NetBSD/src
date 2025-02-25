@@ -20,7 +20,7 @@ CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 	transport.5.html virtual.5.html pcre_table.5.html regexp_table.5.html \
 	cidr_table.5.html tcp_table.5.html header_checks.5.html \
 	ldap_table.5.html lmdb_table.5.html mysql_table.5.html \
-	pgsql_table.5.html memcache_table.5.html \
+	pgsql_table.5.html memcache_table.5.html mongodb_table.5.html \
 	master.5.html nisplus_table.5.html generic.5.html bounce.5.html \
 	postfix-wrapper.5.html sqlite_table.5.html socketmap_table.5.html
 OTHER	= postfix-manuals.html
@@ -28,7 +28,7 @@ AWK	= awk '{ print; if (NR == 2) print ".pl 99999\n.ll 78" }'
 MAN2HTML = man2html -t "Postfix manual - `IFS=.; set \`echo $@\`; echo \"$$1($$2)\"`"
 NROFF	= LANG=C GROFF_NO_SGR=1 nroff
 
-update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(OTHER)
+update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(OTHER) index.html
 
 clean:
 	echo clean
@@ -37,6 +37,12 @@ tidy:	clean
 
 clobber:
 	rm -f $(DAEMONS) $(COMMANDS) $(CONFIG)
+
+# The following would add man2html to $? in rules for individual files.
+#$(DAEMONS) $(COMMANDS) $(CONFIG): ../mantools/man2html
+
+index.html: ../proto/index.html
+	cp $? $@
 
 bounce.8.html: ../src/bounce/bounce.c
 	PATH=../mantools:$$PATH; \
@@ -295,6 +301,10 @@ master.5.html: ../proto/master
 	srctoman - $? | $(AWK) | $(NROFF) -man | uniq | $(MAN2HTML) | postlink >$@
 
 memcache_table.5.html: ../proto/memcache_table
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | $(NROFF) -man | uniq | $(MAN2HTML) | postlink >$@
+
+mongodb_table.5.html: ../proto/mongodb_table
 	PATH=../mantools:$$PATH; \
 	srctoman - $? | $(AWK) | $(NROFF) -man | uniq | $(MAN2HTML) | postlink >$@
 

@@ -45,20 +45,8 @@ update: $(LIB_DIR)/$(LIB) $(HDRS)
 	done
 	cd $(INC_DIR); chmod 644 $(HDRS)
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk
-	rm -rf printfck
 
 tidy:	clean
 

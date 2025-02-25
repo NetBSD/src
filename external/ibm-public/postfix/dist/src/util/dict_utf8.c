@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_utf8.c,v 1.1.1.2 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: dict_utf8.c,v 1.1.1.3 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -102,7 +102,7 @@ static char *dict_utf8_check_fold(DICT *dict, const char *string,
     /*
      * Validate UTF-8 without casefolding.
      */
-    if (!allascii(string) && valid_utf8_string(string, strlen(string)) == 0) {
+    if (!allascii(string) && valid_utf8_stringz(string) == 0) {
 	if (err)
 	    *err = "malformed UTF-8 or invalid codepoint";
 	return (0);
@@ -125,7 +125,7 @@ static char *dict_utf8_check_fold(DICT *dict, const char *string,
 
 static int dict_utf8_check(const char *string, CONST_CHAR_STAR *err)
 {
-    if (!allascii(string) && valid_utf8_string(string, strlen(string)) == 0) {
+    if (!allascii(string) && valid_utf8_stringz(string) == 0) {
 	if (err)
 	    *err = "malformed UTF-8 or invalid codepoint";
 	return (0);

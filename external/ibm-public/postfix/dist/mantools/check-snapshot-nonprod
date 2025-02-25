@@ -1,0 +1,30 @@
+#!/bin/sh
+
+version=$(basename $(env - pwd)) || exit 1
+case "$version" in
+postfix-[0-9]*.[0-9]*.[0-9]*) 
+    test -f conf/makedefs.out || {
+	echo "Error: no conf/makedefs.out" 1>&2; exit 1; }
+    grep 'CCARGS.*-DSNAPSHOT' conf/makedefs.out && {
+	echo "Error: stable release builds with -DSNAPSHOT" 1>&2; exit 1; }
+    grep 'CCARGS.*-DNONPROD' conf/makedefs.out && {
+	echo "Error: stable release builds with -DNONPROD" 1>&2; exit 1; }
+    mail_version=$(sh postfix-env.sh bin/postconf -h mail_version) || exit 1
+    test "postfix-$mail_version" = "$version" || {
+	echo "Error: version '$mail_version' in src/global/mail_version.h does not match version in pathname '$(env - pwd)'" 1>&2; exit 1; }
+    ;;
+postfix-[0-9]*.[0-9]*-*nonprod*)
+    grep 'CCARGS.*-DNONPROD' conf/makedefs.out || {
+	echo "Error: non-prod release builds without -DNONPROD" 1>&2; exit 1; }
+    mail_version=$(sh postfix-env.sh bin/postconf -h mail_version) || exit 1
+    test "postfix-$mail_version" = "$version" || {
+	echo "Error: version '$mail_version' in src/global/mail_version.h does not match version in pathname '$(env - pwd)'" 1>&2; exit 1; }
+    ;;
+postfix-[0-9]*.[0-9]*-*)
+    grep 'CCARGS.*-DNONPROD' conf/makedefs.out && {
+	echo "Error: snapshot release builds with -DNONPROD" 1>&2; exit 1; }
+    mail_version=$(sh postfix-env.sh bin/postconf -h mail_version) || exit 1
+    test "postfix-$mail_version" = "$version" || {
+	echo "Error: version '$mail_version' in src/global/mail_version.h does not match version in pathname '$(env - pwd)'" 1>&2; exit 1; }
+    ;;
+esac

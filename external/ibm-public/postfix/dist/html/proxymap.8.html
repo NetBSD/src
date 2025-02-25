@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 PROXYMAP(8)                                                        PROXYMAP(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        proxymap - Postfix lookup table proxy server
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>proxymap</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  provides read-only or read-write table lookup
        service to Postfix processes. These services are implemented with  dis-
        tinct service names: <b>proxymap</b> and <b>proxywrite</b>, respectively. The purpose
@@ -41,7 +41,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
 
        <b>o</b>      To provide single-updater functionality for lookup  tables  that
               do  not  reliably  support multiple writers (i.e. all file-based
-              tables).
+              tables that are not based on <b>lmdb</b>).
 
        The <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server implements the following requests:
 
@@ -90,7 +90,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        client  disconnects.  The  purpose  is  to  share tables among multiple
        client processes.
 
-<b>SERVER PROCESS MANAGEMENT</b>
+<b><a name="server_process_management">SERVER PROCESS MANAGEMENT</a></b>
        <a href="proxymap.8.html"><b>proxymap</b>(8)</a> servers run under control by the Postfix <a href="master.8.html"><b>master</b>(8)</a>  server.
        Each  server  can  handle  multiple simultaneous connections.  When all
        servers are busy while a client connects, the <a href="master.8.html"><b>master</b>(8)</a> creates  a  new
@@ -98,7 +98,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        exceeded.  Each server  terminates  after  serving  at  least  <b>$<a href="postconf.5.html#max_use">max_use</a></b>
        clients or after <b>$<a href="postconf.5.html#max_idle">max_idle</a></b> seconds of idle time.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  opens  only  tables that are approved via the
        <b><a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a></b> or <b><a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a></b> configuration parameters, does  not
        talk  to  users,  and  can run at fixed low privilege, chrooted or not.
@@ -123,10 +123,10 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        where ownership of a file or directory does not match the  provider  of
        its content.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server provides service to multiple clients, and must
        therefore not be used for tables that have high-latency lookups.
 
@@ -138,7 +138,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        Tables  that  support  "sync  on  update"  should be safe (for example,
        Berkeley DB) as should tables that are implemented by a real DBMS.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        On busy mail systems a long time may pass before  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  relevant
        changes  to  <a href="postconf.5.html"><b>main.cf</b></a> are picked up. Use the command "<b>postfix reload</b>" to
        speed up a change.
@@ -195,17 +195,17 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The proxymap service was introduced with Postfix 2.0.
 
 <b>AUTHOR(S)</b>

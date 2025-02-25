@@ -1,0 +1,188 @@
+PPoossttffiixx MMoonnggooDDBB HHoowwttoo
+
+-------------------------------------------------------------------------------
+
+MMoonnggooDDBB SSuuppppoorrtt iinn PPoossttffiixx
+
+Postfix can use MongoDB as a source for any of its lookups: aliases(5), virtual
+(5), canonical(5), etc. This allows you to keep information for your mail
+service in a replicated noSQL database with fine-grained access controls. By
+not storing it locally on the mail server, the administrators can maintain it
+from anywhere, and the users can control whatever bits of it you think
+appropriate. You can have multiple mail servers using the same information,
+without the hassle and delay of having to copy it to each.
+
+Topics covered in this document:
+
+  * Building Postfix with MongoDB support
+  * Configuring MongoDB lookups
+  * Example: virtual alias maps
+  * Example: Mailing lists
+  * Example: MongoDB projections
+  * Feedback
+  * Credits
+
+BBuuiillddiinngg PPoossttffiixx wwiitthh MMoonnggooDDBB ssuuppppoorrtt
+
+These instructions assume that you build Postfix from source code as described
+in the INSTALL document. Some modification may be required if you build Postfix
+from a vendor-specific source package.
+
+The Postfix MongoDB client requires the mmoonnggoo--cc--ddrriivveerr library. This can be
+built from source code from the mongod-c project, or this can be installed as a
+binary package from your OS distribution, typically named mmoonnggoo--cc--ddrriivveerr,
+mmoonnggoo--cc--ddrriivveerr--ddeevveell or lliibbmmoonnggoocc--ddeevv. Installing the mongo-c-driver library
+may also install lliibbbbssoonn as a dependency.
+
+To build Postfix with mongodb map support, add to the CCARGS environment
+variable the options -DHAS_MONGODB and -I for the directory containing the
+mongodb headers, and specify the AUXLIBS_MONGODB with the libmongoc and libbson
+libraries, for example:
+
+    % make tidy
+    % make -f Makefile.init makefiles \
+        CCARGS="$CCARGS -DHAS_MONGODB -I/usr/include/libmongoc-1.0 \
+        -I/usr/include/libbson-1.0" \
+        AUXLIBS_MONGODB="-lmongoc-1.0 -lbson-1.0"
+
+The 'make tidy' command is needed only if you have previously built Postfix
+without MongoDB support.
+
+If your MongoDB shared library is in a directory that the RUN-TIME linker does
+not know about, add a "-Wl,-R,/path/to/directory" option after "-lbson-1.0".
+Then, just run 'make'.
+
+CCoonnffiigguurriinngg MMoonnggooDDBB llooookkuuppss
+
+In order to use MongoDB lookups, define a MongoDB source as a table lookup in
+main.cf, for example:
+
+    alias_maps = hash:/etc/aliases, proxy:mongodb:/etc/postfix/mongo-aliases.cf
+
+The file /etc/postfix/mongo-aliases.cf can specify a number of parameters. For
+a complete description, see the mongodb_table(5) manual page.
+
+EExxaammppllee:: vviirrttuuaall((55)) aalliiaass mmaappss
+
+Here's a basic example for using MongoDB to look up virtual(5) aliases. Assume
+that in main.cf, you have:
+
+    virtual_alias_maps = hash:/etc/postfix/virtual_aliases,
+        proxy:mongodb:/etc/postfix/mongo-virtual-aliases.cf
+
+and in mongodb:/etc/postfix/mongo-virtual-aliases.cf you have:
+
+    uri = mongodb+srv://user_name:password@some_server
+    dbname = mail
+    collection = mailbox
+    query_filter = {"$or": [{"username":"%s"}, {"alias.address": "%s"}],
+    "active": 1}
+    result_attribute = username
+
+This example assumes mailbox names are stored in a MongoDB backend, in a format
+like:
+
+    { "username": "user@example.com",
+      "alias": [
+        {"address": "admin@example.com"},
+        {"address": "abuse@example.com"}
+      ],
+      "active": 1
+    }
+
+Upon receiving mail for "admin@example.com" that isn't found in the /etc/
+postfix/virtual_aliases database, Postfix will search the MongoDB server/
+cluster listening at port 27017 on some_server. It will connect using the
+provided credentials, and search for any entries whose username is, or alias
+field has "admin@example.com". It will return the username attribute of those
+found, and build a list of their email addresses.
+
+Notes:
+
+  * As with pprroojjeeccttiioonn (see below), the Postfix mongodb client automatically
+    removes the top-level '_id' field from a result_attribute result.
+
+  * The Postfix mongodb client will only parse result fields with data types
+    UTF8, INT32, INT64 and ARRAY. Other fields will be ignored, with a warning
+    in the logs.
+
+EExxaammppllee:: MMaaiilliinngg lliissttss
+
+When it comes to mailing lists, one way of implementing one would be as below:
+
+    { "name": "dev@example.com", "active": 1, "address":
+      [ "hamid@example.com", "wietse@example.com", "viktor@example.com" ] }
+
+using the filter below, will result in a comma separated string with all email
+addresses in this list.
+
+    query_filter = {"name": "%s", "active": 1}
+    result_attribute = address
+
+Notes:
+
+  * As with pprroojjeeccttiioonn (see below), the Postfix mongodb client automatically
+    removes the top-level '_id' field from a result_attribute result.
+
+  * The Postfix mongodb client will only parse result fields with data types
+    UTF8, INT32, INT64 and ARRAY. Other fields will be ignored, with a warning
+    in the logs.
+
+EExxaammppllee:: aaddvvaanncceedd pprroojjeeccttiioonnss
+
+This module also supports the use of more complex MongoDB projections. There
+may be some use cases where operations such as concatenation are necessary to
+be performed on the data retrieved from the database. Although it is encouraged
+to keep the database design simple enough so this is not necessary, postfix
+supports the use of MongoDB projections to achieve the goal.
+
+Consider the example below:
+
+    { "username": "user@example.com",
+      "local_part": "user",
+      "domain": "example.com",
+      "alias": [
+        {"address": "admin@example.com"},
+        {"address": "abuse@example.com"}
+      ],
+      "active": 1
+    }
+
+virtual_mailbox_maps can be created using below parameters in a mongodb:/etc/
+postfix/mongo-virtual-mailboxes.cf file:
+
+    uri = mongodb+srv://user_name:password@some_server
+    dbname = mail
+    collection = mailbox
+    query_filter = {"$or": [{"username":"%s"}, {"alias.address": "%s"}],
+    "active": 1}
+    projection = { "mail_path": {"$concat": ["$domain", "/", "$local_part"]} }
+
+This will return 'example.com/user' path built from the database fields.
+
+A couple of considerations when using projections:
+
+  * As with rreessuulltt__aattttrriibbuuttee, the Postfix mongodb client automatically removes
+    the top-level '_id' field from a projection result.
+
+  * The Postfix mongodb client will only parse fields with data types UTF8,
+    INT32, INT64 and ARRAY. Other fields will be ignored, with a warning in the
+    logs. It is suggested to exclude any unnecessary fields when using a
+    projection.
+
+FFeeeeddbbaacckk
+
+If you have questions, send them to postfix-users@postfix.org. Please include
+relevant information about your Postfix setup: MongoDB-related output from
+postconf, which libraries you built with, and such. If your question involves
+your database contents, please include the applicable bits of some database
+entries.
+
+CCrreeddiittss
+
+  * Stephan Ferraro (Aionda GmbH) implemented an early version of the Postfix
+    MongoDB client.
+  * Hamid Maadani (Dextrous Technologies, LLC) added support for projections
+    and %letter interpolation, and added documentation.
+  * Wietse Venema adopted and restructured the code and documentation.
+

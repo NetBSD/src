@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -9,6 +9,21 @@
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+
+<script type="text/javascript">
+
+// Kludge for https://support.google.com/chrome/thread/11993079
+const isChrome = /Chrome/.test(navigator.userAgent)
+    && /Google Inc/.test(navigator.vendor);
+const hash = window.location.hash;
+if (hash && isChrome) {
+    setTimeout(function() {
+        window.location.hash = "";
+        window.location.hash = hash;
+    }, 1000);
+}
+
+</script>
 
 </head>
 

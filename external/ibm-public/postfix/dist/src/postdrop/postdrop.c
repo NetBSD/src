@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.7 2022/10/08 16:09:09 christos Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.8 2025/02/25 19:11:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
+/*	The list of environment variables that a privileged Postfix
 /*	process will import from a non-Postfix parent process, or name=value
 /*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"

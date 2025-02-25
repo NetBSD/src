@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_recv_fd.c,v 1.1.1.2 2011/03/02 19:32:45 tron Exp $	*/
+/*	$NetBSD: stream_recv_fd.c,v 1.1.1.3 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,7 @@ int     stream_recv_fd(int fd)
 	return (-1);
     return (fdinfo.fd);
 #else
-    msg_fatal("stream connections are not implemented");
+            msg_fatal("stream connections are not implemented");
 #endif
 }
 

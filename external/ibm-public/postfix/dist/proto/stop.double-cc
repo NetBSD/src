@@ -333,3 +333,13 @@ void  void cleanup_milter_receive state count
  Available in in Postfix version 2 3 3 7 
 length  length of 0 31 0 127 
 address  address string length 
+ whether the standard End of DATA sequence CRLF CRLF is required and
+ Require CRLF CRLF 
+ must start with a version field v TLSRPTv1 followed by WSP WSP
+ policies policy policy type 
+ policies policy policy string Ignored if the tls_policy_type
+ policies policy policy domain 
+additional_info  additional_info 
+ignored  ignored 
+USE_TLSRPT  USE_TLSRPT 
+encoded  encoded text can contain only alpha digit 

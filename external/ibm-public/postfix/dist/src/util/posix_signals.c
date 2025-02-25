@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_signals.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: posix_signals.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@ int     sigaddset(sigset_t *set, int signum)
 
 int     sigprocmask(int how, sigset_t *set, sigset_t *old)
 {
-    int previous;
+    int     previous;
 
     if (how == SIG_BLOCK)
 	previous = sigblock(*set);
@@ -93,7 +93,7 @@ static int sighandle(int signum)
     actions[signum].sa_handler(signum);
 }
 
-int     sigaction(int sig, struct sigaction *act, struct sigaction *oact)
+int     sigaction(int sig, struct sigaction * act, struct sigaction * oact)
 {
     static int initialized = 0;
 

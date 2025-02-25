@@ -1,0 +1,3 @@
+./postconf: warning: ignoring earlier request: 'mail_version = x'
+config_directory = .
+mail_version = y

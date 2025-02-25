@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,24 +7,30 @@
 </head> <body> <pre>
 SPAWN(8)                                                              SPAWN(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        spawn - Postfix external command spawner
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>spawn</b> [generic Postfix daemon options] command_attributes...
 
-<b>DESCRIPTION</b>
-       The  <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon provides the Postfix equivalent of <b>inetd</b>.  It lis-
-       tens on a port as specified in the Postfix <a href="master.5.html"><b>master.cf</b></a> file and spawns an
-       external  command whenever a connection is established.  The connection
-       can be made over local  IPC  (such  as  UNIX-domain  sockets)  or  over
-       non-local  IPC  (such  as  TCP sockets).  The command's standard input,
-       output and error streams are connected directly  to  the  communication
-       endpoint.
+<b><a name="description">DESCRIPTION</a></b>
+       The  <a href="spawn.8.html"><b>spawn</b>(8)</a>  daemon monitors a TCP or UNIX-domain stream socket, con-
+       figured in <a href="master.5.html"><b>master.cf</b></a> with a service type <b>inet</b> or <b>unix</b>.
 
-       This daemon expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
+       This daemon spawns an external command whenever a connection is  estab-
+       lished, with the standard input, output and error file descriptors con-
+       nected to the remote client.
 
-<b>COMMAND ATTRIBUTE SYNTAX</b>
+       The command process is subject to the time  limit  specified  with  the
+       parameter   <a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a>  (default:  <a href="postconf.5.html#command_time_limit">command_time_limit</a>)  where
+       <i>transport</i> equals the service name field in <a href="master.5.html">master.cf</a>.  A  process  that
+       exceeds the time limit will receive a SIGKILL signal.
+
+       The  <a href="spawn.8.html"><b>spawn</b>(8)</a>  daemon  service typically has a process limit &gt; 1 in its
+       <a href="master.5.html"><b>master.cf</b></a> service definition, so that the number of processes can scale
+       with demand.
+
+<b><a name="command_attribute_syntax">COMMAND ATTRIBUTE SYNTAX</a></b>
        The  external command attributes are given in the <a href="master.5.html"><b>master.cf</b></a> file at the
        end of a service definition.  The syntax is as follows:
 
@@ -43,63 +49,65 @@ SPAWN(8)                                                              SPAWN(8)
               out interpretation of shell meta characters by a  shell  command
               interpreter.
 
-<b>BUGS</b>
-       In  order  to  enforce  standard Postfix process resource controls, the
-       <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon runs only one external command at a time.  As such,  it
-       presents  a  noticeable overhead by wasting precious process resources.
-       The <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon is expected to be replaced  by  a  more  structural
-       solution.
+              If  a  command argument must contain whitespace, or if a command
+              argument must begin with "{", enclose the argument with "{"  and
+              "}".  This  form  will ignore whitespace after the outer "{" and
+              before the outer "}". Example:
 
-<b>DIAGNOSTICS</b>
-       The  <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon reports abnormal child exits.  Problems are logged
+                  argv=/bin/sh -c { shell syntax here }
+
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
+       The <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon reports abnormal child exits.  Problems are  logged
        to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>SECURITY</b>
-       This program needs root privilege in order to execute external commands
-       as the specified user. It is therefore security sensitive.  However the
-       <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon does not talk to the external command and thus  is  not
-       vulnerable to data-driven attacks.
+<b><a name="security">SECURITY</a></b>
+       The  <a href="spawn.8.html"><b>spawn</b>(8)</a>  daemon needs root privilege in order to execute external
+       commands as the specified user. It is therefore security sensitive.
 
-<b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are picked up automatically as <a href="spawn.8.html"><b>spawn</b>(8)</a> processes
+       However, the <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon does not receive data from or  about  ser-
+       vice  clients  or  external  commands,  and  thus  is not vulnerable to
+       data-driven attacks.
+
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically  as  <a href="spawn.8.html"><b>spawn</b>(8)</a>  processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
 
-       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
-       In the text below, <i>transport</i> is the first field of  the  entry  in  the
+       In  the  text  below,  <i>transport</i> is the first field of the entry in the
        <a href="master.5.html"><b>master.cf</b></a> file.
 
-<b>RESOURCE AND RATE CONTROL</b>
+<b><a name="resource_and_rate_control">RESOURCE AND RATE CONTROL</a></b>
        <b><a href="postconf.5.html#transport_time_limit">transport_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
               A transport-specific override for the <a href="postconf.5.html#command_time_limit">command_time_limit</a> parame-
-              ter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the  message
+              ter  value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the message
               delivery transport.
 
-<b>MISCELLANEOUS</b>
+<b><a name="miscellaneous">MISCELLANEOUS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process  may  take  to  handle  a
+              How  much  time  a  Postfix  daemon process may take to handle a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment variables that a Postfix process will
+              The list of environment variables that a  Postfix  process  will
               export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending  or  receiving  information  over  an
+              The  time  limit  for  sending  or receiving information over an
               internal communication channel.
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The  UNIX  system  account  that owns the Postfix queue and most
+              The UNIX system account that owns the  Postfix  queue  and  most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time that an idle Postfix  daemon  process
+              The  maximum  amount of time that an idle Postfix daemon process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -119,7 +127,7 @@ SPAWN(8)                                                              SPAWN(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
+              A prefix that  is  prepended  to  the  process  name  in  syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix 3.3 and later:
@@ -127,13 +135,13 @@ SPAWN(8)                                                              SPAWN(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.8.html">master(8)</a>, process manager
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

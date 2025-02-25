@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 SCACHE(8)                                                            SCACHE(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        scache - Postfix shared connection cache server
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>scache</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="scache.8.html"><b>scache</b>(8)</a>  server  maintains a shared multi-connection cache. This
        information can be used by, for example, Postfix SMTP clients or  other
        Postfix delivery agents.
@@ -65,7 +65,7 @@ SCACHE(8)                                                            SCACHE(8)
               ties,  and  a  cached  file descriptor for the specified logical
               destination.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The <a href="scache.8.html"><b>scache</b>(8)</a> server is not security-sensitive. It does not talk to the
        network, and it does not talk to local users.  The <a href="scache.8.html"><b>scache</b>(8)</a> server can
        run chrooted at fixed low privilege.
@@ -73,16 +73,16 @@ SCACHE(8)                                                            SCACHE(8)
        The <a href="scache.8.html"><b>scache</b>(8)</a> server is not a trusted process. It must not be  used  to
        store information that is security sensitive.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The session cache cannot be shared among multiple machines.
 
        When  a  connection  expires  from  the cache, it is closed without the
        appropriate protocol specific handshake.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as  <a href="scache.8.html"><b>scache</b>(8)</a>  processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
@@ -90,7 +90,7 @@ SCACHE(8)                                                            SCACHE(8)
        The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
-<b>RESOURCE CONTROLS</b>
+<b><a name="resource_controls">RESOURCE CONTROLS</a></b>
        <b><a href="postconf.5.html#connection_cache_ttl_limit">connection_cache_ttl_limit</a> (2s)</b>
               The  maximal  time-to-live  value  that the <a href="scache.8.html"><b>scache</b>(8)</a> connection
               cache server allows.
@@ -100,7 +100,7 @@ SCACHE(8)                                                            SCACHE(8)
               connection cache hit and miss rates for logical destinations and
               for physical endpoints.
 
-<b>MISCELLANEOUS CONTROLS</b>
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
@@ -135,20 +135,20 @@ SCACHE(8)                                                            SCACHE(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtp.8.html">smtp(8)</a>, SMTP client
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.8.html">master(8)</a>, process manager
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="CONNECTION_CACHE_README.html">CONNECTION_CACHE_README</a>, Postfix connection cache
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        This service was introduced with Postfix version 2.2.
 
 <b>AUTHOR(S)</b>

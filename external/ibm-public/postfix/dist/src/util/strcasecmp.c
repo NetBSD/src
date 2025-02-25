@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -35,6 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
+
 #endif					/* LIBC_SCCS and not lint */
 
 #include <sys_defs.h>

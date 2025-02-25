@@ -392,9 +392,9 @@ ccoommmmaa wwiitthhiinn aa vvaalluuee oorr aarroouunndd
 DDiiffffeerreenntt sseettttiinnggss ffoorr ddiiffffeerreenntt SSMMTTPP cclliieennttss
 
 The smtpd_milter_maps feature supports different Milter settings for different
-client IP addresses. Lookup results override the the global smtpd_milters
-setting, and have the same syntax. For example, to disable Milter settings for
-local address ranges:
+client IP addresses. Lookup results override the global smtpd_milters setting,
+and have the same syntax. For example, to disable Milter settings for local
+address ranges:
 
 /etc/postfix/main.cf:
     smtpd_milter_maps = cidr:/etc/postfix/smtpd_milter_map
@@ -663,10 +663,24 @@ the CONTENT_INSPECTION_README document for a discussion.
     command information; they have no access to the message header or body, and
     cannot make modifications to the message or to the envelope.
 
-  * Postfix 2.6 ignores the optional ESMTP parameters in requests to replace
-    the sender (SMFIR_CHGFROM) or to append a recipient (SMFIR_ADDRCPT_PAR).
-    Postfix logs a warning message when a Milter application supplies such
-    ESMTP parameters:
+  * Postfix 3.3 and later support the ESMTP parameters RET and ENVID in
+    requests to replace the envelope sender (SMFIR_CHGFROM). Postfix logs a
+    warning message when a Milter application supplies other ESMTP parameters:
+
+    warning: queue-id: cleanup_chg_from: ignoring bad ESMTP
+        parameter "whatever" in SMFI_CHGFROM request
+
+  * Postfix 3.0 and later support the ESMTP parameters NOTIFY and ORCPT in
+    requests to add an envelope recipient. Postfix logs a warning message when
+    a Milter application supplies other ESMTP parameters:
+
+    warning: queue-id: cleanup_add_rcpt: ignoring ESMTP argument
+        from Milter or header/body_checks: "whatever"
+
+  * Postfix 2.6 and later ignore optional ESMTP parameters in requests to
+    replace the sender (SMFIR_CHGFROM) or to append a recipient
+    (SMFIR_ADDRCPT_PAR). Postfix logs a warning message when a Milter
+    application supplies such ESMTP parameters:
 
     warning: queue-id: cleanup_chg_from: ignoring ESMTP arguments "whatever"
     warning: queue-id: cleanup_add_rcpt: ignoring ESMTP arguments "whatever"

@@ -1,4 +1,4 @@
-/*	$NetBSD: binhash.c,v 1.1.1.4 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: binhash.c,v 1.1.1.5 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -348,8 +348,7 @@ void    binhash_walk(BINHASH *table, void (*action) (BINHASH_INFO *, void *),
 
 /* binhash_list - list all table members */
 
-BINHASH_INFO **binhash_list(table)
-BINHASH *table;
+BINHASH_INFO **binhash_list(BINHASH *table)
 {
     BINHASH_INFO **list;
     BINHASH_INFO *member;

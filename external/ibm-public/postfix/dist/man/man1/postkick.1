@@ -1,4 +1,4 @@
-.\"	$NetBSD: postkick.1,v 1.1.1.4 2020/03/18 18:59:30 christos Exp $
+.\"	$NetBSD: postkick.1,v 1.1.1.5 2025/02/25 19:11:38 christos Exp $
 .\"
 .TH POSTKICK 1 
 .ad
@@ -68,7 +68,7 @@ configuration files.
 How long the \fBpostkick\fR(1) command waits for a request to enter the
 Postfix daemon process input buffer before giving up.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
+The list of environment variables that a privileged Postfix
 process will import from a non\-Postfix parent process, or name=value
 environment overrides.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"

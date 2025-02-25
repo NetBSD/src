@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_service.h,v 1.1.1.3 2022/10/08 16:09:06 christos Exp $	*/
+/*	$NetBSD: bounce_service.h,v 1.1.1.4 2025/02/25 19:11:41 christos Exp $	*/
 
 /*++
 /* NAME
@@ -92,7 +92,7 @@ typedef struct {
     DSN_BUF *dsn_buf;			/* delivery status info */
     BOUNCE_LOG *log_handle;		/* open logfile */
     char   *mail_name;			/* $mail_name, cooked */
-    int     smtputf8;			/* SMTPUTF8 requested */
+    int     sendopts;			/* smtputf8, requiretls, etc. */
 } BOUNCE_INFO;
 
  /* */

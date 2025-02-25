@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_strtol.c,v 1.1.1.1 2022/10/08 16:09:12 christos Exp $	*/
+/*	$NetBSD: sane_strtol.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,8 +9,8 @@
 /*	#include <sane_strtol.h>
 /*
 /*	long	sane_strtol(
-/*	const char *start, 
-/*	char **restrict end, 
+/*	const char *start,
+/*	char **restrict end,
 /*	int	base)
 /*
 /*	unsigned long sane_strtoul(

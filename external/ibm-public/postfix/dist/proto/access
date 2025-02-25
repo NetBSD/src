@@ -52,7 +52,7 @@
 # .IP "multi-line text"
 #	A logical line starts with non-whitespace text. A line that
 #	starts with whitespace continues a logical line.
-# EMAIL ADDRESS PATTERNS
+# EMAIL ADDRESS PATTERNS IN INDEXED TABLES
 # .ad
 # .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
@@ -85,7 +85,7 @@
 #	(e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
 #	\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIdomain\fR,
 #	\fIuser+foo\fR@, and \fIuser\fR@.
-# HOST NAME/ADDRESS PATTERNS
+# HOST NAME/ADDRESS PATTERNS IN INDEXED TABLES
 # .ad
 # .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
@@ -334,8 +334,12 @@
 #	address instead of the intended recipient(s).  When multiple
 #	\fBREDIRECT\fR actions fire, only the last one takes effect.
 # .sp
-#	Note: this action overrides the FILTER action, and currently
+#	Note 1: this action overrides the FILTER action, and currently
 #	overrides all recipients of the message.
+# .sp
+#	Note 2: a REDIRECT address is subject to canonicalization
+#	(add missing domain) but NOT subject to canonical, masquerade,
+#	bcc, or virtual alias mapping.
 # .sp
 #	This feature is available in Postfix 2.1 and later.
 # .IP "\fBINFO \fIoptional text...\fR

@@ -176,6 +176,7 @@
 #	post-install(1) post-installation procedure
 # FILES
 #	$config_directory/main.cf, Postfix installation configuration.
+#	$config_directory/makedefs.out, Postfix 'make makefiles' options.
 #	$meta_directory/postfix-files, installation control file.
 #	$config_directory/install.cf, obsolete configuration file.
 # LICENSE
@@ -192,6 +193,10 @@
 #	Google, Inc.
 #	111 8th Avenue
 #	New York, NY 10011, USA
+#
+#	Wietse Venema
+#	porcupine.org
+#	Amawalk, NY 10501, USA
 #--
 
 # Initialize.
@@ -520,7 +525,7 @@ test -f $CONFIG_DIRECTORY/main.cf && {
 	case "$junk" in
 	"") eval unset $name;;
 	esac
-	eval : \${$name=\`bin/postconf -c $CONFIG_DIRECTORY -hx $name\`} ||
+	eval : \${$name=\`bin/postconf -qc $CONFIG_DIRECTORY -hx $name\`} ||
 	    exit 1
     done
 }
@@ -861,7 +866,7 @@ do
     esac
 done
 
-bin/postconf -c $CONFIG_DIRECTORY -e \
+bin/postconf -qc $CONFIG_DIRECTORY -e \
     "daemon_directory = $daemon_directory" \
     "data_directory = $data_directory" \
     "command_directory = $command_directory" \

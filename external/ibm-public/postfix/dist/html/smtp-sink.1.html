@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 SMTP-SINK(1)                                                      SMTP-SINK(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        smtp-sink - parallelized SMTP/LMTP test server
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>smtp-sink</b> [<i>options</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
 
        <b>smtp-sink</b> [<i>options</i>] <b>unix:</b><i>pathname backlog</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        <b>smtp-sink</b>  listens  on  the named host (or address) and port.  It takes
        SMTP messages from the network and throws them away.  The purpose is to
        measure client performance, not protocol compliance.
@@ -217,7 +217,7 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               The  maximum  length  of  the  queue  of pending connections, as
               defined by the <b>listen</b>(2) system call.
 
-<b>DUMP FILE FORMAT</b>
+<b><a name="dump_file_format">DUMP FILE FORMAT</a></b>
        Each dumped message contains a sequence of text lines, terminated  with
        the newline character. The sequence of information is as follows:
 
@@ -272,10 +272,10 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               <i>time-stamp</i>
                      A time stamp as defined in <a href="https://tools.ietf.org/html/rfc2822">RFC 2822</a>.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtp-source.1.html">smtp-source(1)</a>, SMTP/LMTP message generator
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
