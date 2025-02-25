@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,18 +7,18 @@
 </head> <body> <pre>
 DNSBLOG(8)                                                          DNSBLOG(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        dnsblog - Postfix DNS allow/denylist logger
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>dnsblog</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>  server  implements an ad-hoc DNS allow/denylist lookup
        service. This may eventually be replaced by an UDP client that is built
        directly into the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server.
 
-<b>PROTOCOL</b>
+<b><a name="protocol">PROTOCOL</a></b>
        With   each   connection,   the   <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>   server  receives  a  DNS
        allow/denylist domain name, an IP  address,  and  an  ID.   If  the  IP
        address  is  listed under the DNS allow/denylist, the <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server
@@ -29,10 +29,10 @@ DNSBLOG(8)                                                          DNSBLOG(8)
        reply, or a negative reply that contains no SOA record.   Finally,  the
        <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server closes the connection.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
@@ -49,8 +49,8 @@ DNSBLOG(8)                                                          DNSBLOG(8)
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> (empty)</b>
-              Optional list of DNS allow/denylist domains, filters and  weight
-              factors.
+              Optional list of patterns with DNS allow/denylist domains,  fil-
+              ters and weight factors.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
               The  time  limit  for  sending  or receiving information over an
@@ -77,16 +77,16 @@ DNSBLOG(8)                                                          DNSBLOG(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        This service was introduced with Postfix version 2.8.
 
 <b>AUTHOR(S)</b>

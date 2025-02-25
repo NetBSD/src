@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_test.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: stream_test.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 #include "sys_defs.h"
 #include <sys/stat.h>
@@ -105,9 +105,11 @@ int     main(int argc, char **argv)
 	msg_fatal("close server fd");
     return (0);
 }
+
 #else
 int     main(int argc, char **argv)
 {
     return (0);
 }
+
 #endif

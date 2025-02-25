@@ -549,9 +549,9 @@ exec sed '
 
 	# Hyperlink URLs and RFC documents
 
-	s/\(http:\/\/[^ ,"()]*[^ ,"():;!?.]\)/<a href="\1">\1<\/a>/
+	s/\(https?:\/\/[^ ,"()]*[^ ,"():;!?.]\)/<a href="\1">\1<\/a>/
 	s/\(ftp:\/\/[^ ,"()]*[^ ,"():;!?.]\)/<a href="\1">\1<\/a>/
-	s/[[:<:]]RFC *\([1-9][0-9]*\)/<a href="http:\/\/www.faqs.org\/rfcs\/rfc\1.html">&<\/a>/
+	s/[[:<:]]RFC *\([1-9][0-9]*\)/<a href="https:\/\/www.faqs.org\/rfcs\/rfc\1.html">&<\/a>/
 
 	# Hyperlink phrases not in headers.
 

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        sqlite_table - Postfix SQLite configuration
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="sqlite_table.5.html">sqlite</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="sqlite_table.5.html">sqlite</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
        mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
 
@@ -27,7 +27,7 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
        The file /etc/postfix/sqlite-aliases.cf has  the  same  format  as  the
        Postfix <a href="postconf.5.html">main.cf</a> file, and can specify the parameters described below.
 
-<b>LIST MEMBERSHIP</b>
+<b><a name="list_membership">LIST MEMBERSHIP</a></b>
        When  using  SQL  to  store  lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydestination</a>,
        $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to  under-
        stand that the table must store each list member as a separate key. The
@@ -41,7 +41,7 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
        value.  With  SQL databases it is not uncommon to return the key itself
        or a constant value.
 
-<b>SQLITE PARAMETERS</b>
+<b><a name="sqlite_parameters">SQLITE PARAMETERS</a></b>
        <b>dbpath</b> The SQLite database file location. Example:
                   dbpath = customer_database
 
@@ -180,7 +180,7 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
        example,  if the map is specified as "<a href="sqlite_table.5.html">sqlite</a>:<i>sqlitename</i>", the parameter
        "query" would be defined in <a href="postconf.5.html">main.cf</a> as "<i>sqlitename</i>_query".
 
-<b>OBSOLETE QUERY INTERFACE</b>
+<b><a name="obsolete_query_interface">OBSOLETE QUERY INTERFACE</a></b>
        This section describes an interface that is deprecated  as  of  Postfix
        2.2.  It  is  replaced  by  the  more general <b>query</b> interface described
        above.  If the  <b>query</b>  parameter  is  defined,  the  legacy  parameters
@@ -214,21 +214,21 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
               Additional conditions to the SQL query. Example:
                   <b>additional_conditions</b> = AND status = 'paid'
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table maintenance
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="ldap_table.5.html">ldap_table(5)</a>, LDAP lookup tables
        <a href="mysql_table.5.html">mysql_table(5)</a>, MySQL lookup tables
        <a href="pgsql_table.5.html">pgsql_table(5)</a>, PostgreSQL lookup tables
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="SQLITE_README.html">SQLITE_README</a>, Postfix SQLITE howto
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        SQLite support was introduced with Postfix version 2.8.
 
 <b>AUTHOR(S)</b>

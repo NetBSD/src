@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,17 +7,17 @@
 </head> <body> <pre>
 GENERIC(5)                                                          GENERIC(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        generic - Postfix generic table format
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap /etc/postfix/generic</b>
 
        <b>postmap -q "</b><i>string</i><b>" /etc/postfix/generic</b>
 
        <b>postmap -q - /etc/postfix/generic</b> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The optional <a href="generic.5.html"><b>generic</b>(5)</a> table specifies an address mapping that applies
        when mail is delivered. This is the opposite of  <a href="canonical.5.html"><b>canonical</b>(5)</a>  mapping,
        which applies when mail is received.
@@ -48,13 +48,13 @@ GENERIC(5)                                                          GENERIC(5)
        a slightly different way as described below under  "REGULAR  EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
-<b>CASE FOLDING</b>
+<b><a name="case_folding">CASE FOLDING</a></b>
        The  search string is folded to lowercase before database lookup. As of
        Postfix 2.3, the search string is not case folded with  database  types
        such  as  <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both upper and
        lower case.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern result</i>
@@ -69,7 +69,7 @@ GENERIC(5)                                                          GENERIC(5)
               A logical line starts with  non-whitespace  text.  A  line  that
               starts with whitespace continues a logical line.
 
-<b>TABLE SEARCH ORDER</b>
+<b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
        With  lookups  from  indexed files such as DB or DBM, or from networked
        tables such as NIS, LDAP or SQL,  each  <i>user</i>@<i>domain</i>  query  produces  a
        sequence of query patterns as described below.
@@ -90,7 +90,7 @@ GENERIC(5)                                                          GENERIC(5)
               Replace other addresses in <i>domain</i> by <i>address</i>.  This form has the
               lowest precedence.
 
-<b>RESULT ADDRESS REWRITING</b>
+<b><a name="result_address_rewriting">RESULT ADDRESS REWRITING</a></b>
        The lookup result is subject to address rewriting:
 
        <b>o</b>      When the result has the form @<i>otherdomain</i>,  the  result  becomes
@@ -102,7 +102,7 @@ GENERIC(5)                                                          GENERIC(5)
        <b>o</b>      When "<b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>=yes</b>", append "<b>.$<a href="postconf.5.html#mydomain">mydomain</a></b>" to addresses
               without ".domain".
 
-<b>ADDRESS EXTENSION</b>
+<b><a name="address_extension">ADDRESS EXTENSION</a></b>
        When a mail address localpart contains the optional recipient delimiter
        (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order  becomes:  <i>user+foo</i>@<i>domain</i>,
        <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and @<i>domain</i>.
@@ -111,7 +111,7 @@ GENERIC(5)                                                          GENERIC(5)
        unmatched address extension (<i>+foo</i>) is propagated to the result of table
        lookup.
 
-<b>REGULAR EXPRESSION TABLES</b>
+<b><a name="regular_expression_tables">REGULAR EXPRESSION TABLES</a></b>
        This  section  describes how the table lookups change when the table is
        given in the form of regular expressions. For a description of  regular
        expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
@@ -128,7 +128,7 @@ GENERIC(5)                                                          GENERIC(5)
        feature that parenthesized substrings from the pattern can be  interpo-
        lated as <b>$1</b>, <b>$2</b> and so on.
 
-<b>TCP-BASED TABLES</b>
+<b><a name="tcp-based_tables">TCP-BASED TABLES</a></b>
        This  section  describes  how the table lookups change when lookups are
        directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
        client/server  lookup  protocol,  see  <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.   This  feature is
@@ -140,7 +140,7 @@ GENERIC(5)                                                          GENERIC(5)
 
        Results are the same as with indexed file lookups.
 
-<b>EXAMPLE</b>
+<b><a name="example">EXAMPLE</a></b>
        The following shows a generic mapping with an indexed file.  When  mail
        is  sent to a remote host via SMTP, this replaces <i>his@localdomain.local</i>
        by his ISP mail address, replaces <i>her@localdomain.local</i> by her ISP mail
@@ -161,10 +161,10 @@ GENERIC(5)                                                          GENERIC(5)
        find  out  what  tables  your system supports use the command "<b>postconf</b>
        <b>-m</b>".
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The table format does not understand quoting conventions.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant.   The  text
        below  provides  only  a  parameter  summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more
        details including examples.
@@ -182,41 +182,42 @@ GENERIC(5)                                                          GENERIC(5)
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
-              The network interface addresses that this mail  system  receives
-              mail on.
+              The local network interface  addresses  that  this  mail  system
+              receives mail on.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
-              The  network  interface addresses that this mail system receives
-              mail on by way of a proxy or network address translation unit.
+              The  remote  network  interface  addresses that this mail system
+              receives mail on by way of a proxy or network  address  transla-
+              tion unit.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a> ($<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost)</b>
-              The list of domains that are delivered via the  $<a href="postconf.5.html#local_transport">local_transport</a>
+              The  list of domains that are delivered via the $<a href="postconf.5.html#local_transport">local_transport</a>
               mail delivery transport.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The  domain  name that locally-posted mail appears to come from,
+              The domain name that locally-posted mail appears to  come  from,
               and that locally posted mail is delivered to.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a> (yes)</b>
-              Enable special  treatment  for  owner-<i>listname</i>  entries  in  the
+              Enable  special  treatment  for  owner-<i>listname</i>  entries  in the
               <a href="aliases.5.html"><b>aliases</b>(5)</a>  file,  and  don't  split  owner-<i>listname</i>  and  <i>list-</i>
-              <i>name</i>-request address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>  is
+              <i>name</i>-request  address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> is
               set to "-".
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="smtp.8.html">smtp(8)</a>, Postfix SMTP client
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a>, configuration examples
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        A genericstable feature appears in the Sendmail MTA.
 
        This feature is available in Postfix 2.2 and later.

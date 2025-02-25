@@ -3,7 +3,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	canon_addr.c cfg_parser.c cleanup_strerror.c cleanup_strflags.c \
 	clnt_stream.c conv_time.c db_common.c debug_peer.c debug_process.c \
 	defer.c deliver_completed.c deliver_flock.c deliver_pass.c \
-	deliver_request.c dict_ldap.c dict_mysql.c dict_pgsql.c \
+	deliver_request.c dict_ldap.c dict_mongodb.c dict_mysql.c dict_pgsql.c \
 	dict_proxy.c dict_sqlite.c domain_list.c dot_lockfile.c dot_lockfile_as.c \
 	dsb_scan.c dsn.c dsn_buf.c dsn_mask.c dsn_print.c dsn_util.c \
 	ehlo_mask.c ext_prop.c file_id.c flush_clnt.c header_opts.c \
@@ -37,7 +37,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	normalize_mailhost_addr.c map_search.c reject_deliver_request.c \
 	info_log_addr_form.c sasl_mech_filter.c login_sender_match.c \
 	test_main.c compat_level.c config_known_tcp_ports.c \
-	hfrom_format.c
+	hfrom_format.c rfc2047_code.c ascii_header_text.c sendopts.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -76,17 +76,17 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	normalize_mailhost_addr.o map_search.o reject_deliver_request.o \
 	info_log_addr_form.o sasl_mech_filter.o login_sender_match.o \
 	test_main.o compat_level.o config_known_tcp_ports.o \
-	hfrom_format.o
+	hfrom_format.o rfc2047_code.o ascii_header_text.o sendopts.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these maps, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
-MAP_OBJ = dict_ldap.o dict_mysql.o dict_pgsql.o dict_sqlite.o
+MAP_OBJ = dict_ldap.o dict_mysql.o dict_pgsql.o dict_sqlite.o dict_mongodb.o
 
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
 	deliver_completed.h deliver_flock.h deliver_pass.h deliver_request.h \
-	dict_ldap.h dict_mysql.h dict_pgsql.h dict_proxy.h dict_sqlite.h domain_list.h \
+	dict_ldap.h dict_mysql.h dict_pgsql.h dict_mongodb.h dict_proxy.h dict_sqlite.h domain_list.h \
 	dot_lockfile.h dot_lockfile_as.h dsb_scan.h dsn.h dsn_buf.h \
 	dsn_mask.h dsn_print.h dsn_util.h ehlo_mask.h ext_prop.h \
 	file_id.h flush_clnt.h header_opts.h header_token.h input_transp.h \
@@ -113,7 +113,7 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	maillog_client.h normalize_mailhost_addr.h map_search.h \
 	info_log_addr_form.h sasl_mech_filter.h login_sender_match.h \
 	test_main.h compat_level.h config_known_tcp_ports.h \
-	hfrom_format.h
+	hfrom_format.h rfc2047_code.h ascii_header_text.h sendopts.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -130,13 +130,14 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	mail_version mail_dict server_acl uxtext mail_parm_split \
 	fold_addr smtp_reply_footer mail_addr_map normalize_mailhost_addr \
 	haproxy_srvr map_search delivered_hdr login_sender_match \
-	compat_level config_known_tcp_ports hfrom_format
+	compat_level config_known_tcp_ports hfrom_format rfc2047_code \
+	ascii_header_text sendopts_test
 
 LIBS	= ../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
 PLUGIN_MAP_SO = $(LIB_PREFIX)ldap$(LIB_SUFFIX) $(LIB_PREFIX)mysql$(LIB_SUFFIX) \
-	$(LIB_PREFIX)pgsql$(LIB_SUFFIX) $(LIB_PREFIX)sqlite$(LIB_SUFFIX)
+	$(LIB_PREFIX)pgsql$(LIB_SUFFIX) $(LIB_PREFIX)sqlite$(LIB_SUFFIX) $(LIB_PREFIX)mongodb$(LIB_SUFFIX)
 MAKES	=
 
 .c.o:;	$(CC) $(SHLIB_CFLAGS) $(CFLAGS) -c $*.c
@@ -172,6 +173,9 @@ $(LIB_PREFIX)pgsql$(LIB_SUFFIX): dict_pgsql.o
 
 $(LIB_PREFIX)sqlite$(LIB_SUFFIX): dict_sqlite.o
 	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ dict_sqlite.o $(AUXLIBS_SQLITE)
+
+$(LIB_PREFIX)mongodb$(LIB_SUFFIX): dict_mongodb.o
+	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ dict_mongodb.o $(AUXLIBS_MONGODB)
 
 update: $(LIB_DIR)/$(LIB) $(HDRS) $(PLUGIN_MAP_SO_UPDATE)
 	-for i in $(HDRS); \
@@ -395,6 +399,15 @@ compat_level: compat_level.c $(LIB) $(LIBS)
 hfrom_format: hfrom_format.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
+rfc2047_code: rfc2047_code.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+ascii_header_text: ascii_header_text.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+sendopts_test: sendopts_test.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
 config_known_tcp_ports: config_known_tcp_ports.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
@@ -407,7 +420,8 @@ tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	mail_addr_find_test mail_addr_map_test quote_822_local_test \
 	normalize_mailhost_addr_test haproxy_srvr_test map_search_test \
 	delivered_hdr_test login_sender_match_test compat_level_test \
-	config_known_tcp_ports_test hfrom_format_test
+	config_known_tcp_ports_test hfrom_format_test rfc2047_code_test \
+	ascii_header_text_test test_sendopts
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
@@ -773,20 +787,17 @@ hfrom_format_test: update hfrom_format \
 	diff hfrom_format.ref hfrom_format.tmp
 	rm -f hfrom_format.tmp
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
+rfc2047_code_test: update rfc2047_code
+	$(SHLIB_ENV) $(VALGRIND) ./rfc2047_code
 
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
+ascii_header_text_test: update ascii_header_text 
+	$(SHLIB_ENV) $(VALGRIND) ./ascii_header_text
+
+test_sendopts: update sendopts_test
+	-$(SHLIB_ENV) $(VALGRIND) ./sendopts_test
 
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk $(MAPS)
-	rm -rf printfck
 
 tidy:	clean
 
@@ -847,6 +858,18 @@ anvil_clnt.o: anvil_clnt.c
 anvil_clnt.o: anvil_clnt.h
 anvil_clnt.o: mail_params.h
 anvil_clnt.o: mail_proto.h
+ascii_header_text.o: ../../include/check_arg.h
+ascii_header_text.o: ../../include/msg.h
+ascii_header_text.o: ../../include/stringops.h
+ascii_header_text.o: ../../include/sys_defs.h
+ascii_header_text.o: ../../include/vbuf.h
+ascii_header_text.o: ../../include/vstring.h
+ascii_header_text.o: ascii_header_text.c
+ascii_header_text.o: ascii_header_text.h
+ascii_header_text.o: lex_822.h
+ascii_header_text.o: mail_params.h
+ascii_header_text.o: resolve_clnt.h
+ascii_header_text.o: tok822.h
 attr_override.o: ../../include/check_arg.h
 attr_override.o: ../../include/msg.h
 attr_override.o: ../../include/stringops.h
@@ -1210,6 +1233,24 @@ dict_memcache.o: dict_memcache.c
 dict_memcache.o: dict_memcache.h
 dict_memcache.o: memcache_proto.h
 dict_memcache.o: string_list.h
+dict_mongodb.o: ../../include/argv.h
+dict_mongodb.o: ../../include/auto_clnt.h
+dict_mongodb.o: ../../include/check_arg.h
+dict_mongodb.o: ../../include/dict.h
+dict_mongodb.o: ../../include/match_list.h
+dict_mongodb.o: ../../include/msg.h
+dict_mongodb.o: ../../include/myflock.h
+dict_mongodb.o: ../../include/mymalloc.h
+dict_mongodb.o: ../../include/stringops.h
+dict_mongodb.o: ../../include/sys_defs.h
+dict_mongodb.o: ../../include/vbuf.h
+dict_mongodb.o: ../../include/vstream.h
+dict_mongodb.o: ../../include/vstring.h
+dict_mongodb.o: cfg_parser.h
+dict_mongodb.o: db_common.h
+dict_mongodb.o: dict_mongodb.c
+dict_mongodb.o: dict_mongodb.h
+dict_mongodb.o: string_list.h
 dict_mysql.o: ../../include/argv.h
 dict_mysql.o: ../../include/check_arg.h
 dict_mysql.o: ../../include/dict.h
@@ -1243,6 +1284,7 @@ dict_pgsql.o: ../../include/myrand.h
 dict_pgsql.o: ../../include/split_at.h
 dict_pgsql.o: ../../include/stringops.h
 dict_pgsql.o: ../../include/sys_defs.h
+dict_pgsql.o: ../../include/valid_uri_scheme.h
 dict_pgsql.o: ../../include/vbuf.h
 dict_pgsql.o: ../../include/vstream.h
 dict_pgsql.o: ../../include/vstring.h
@@ -1861,6 +1903,7 @@ mail_dict.o: ../../include/vstream.h
 mail_dict.o: ../../include/vstring.h
 mail_dict.o: dict_ldap.h
 mail_dict.o: dict_memcache.h
+mail_dict.o: dict_mongodb.h
 mail_dict.o: dict_mysql.h
 mail_dict.o: dict_pgsql.h
 mail_dict.o: dict_proxy.h
@@ -1906,11 +1949,13 @@ mail_params.o: ../../include/check_arg.h
 mail_params.o: ../../include/dict.h
 mail_params.o: ../../include/dict_db.h
 mail_params.o: ../../include/dict_lmdb.h
+mail_params.o: ../../include/dict_sockmap.h
 mail_params.o: ../../include/get_hostname.h
 mail_params.o: ../../include/htable.h
 mail_params.o: ../../include/inet_addr_list.h
 mail_params.o: ../../include/inet_proto.h
 mail_params.o: ../../include/iostuff.h
+mail_params.o: ../../include/logwriter.h
 mail_params.o: ../../include/midna_domain.h
 mail_params.o: ../../include/mkmap.h
 mail_params.o: ../../include/msg.h
@@ -2360,6 +2405,7 @@ post_mail.o: post_mail.c
 post_mail.o: post_mail.h
 post_mail.o: rec_type.h
 post_mail.o: record.h
+post_mail.o: sendopts.h
 post_mail.o: smtputf8.h
 quote_821_local.o: ../../include/check_arg.h
 quote_821_local.o: ../../include/sys_defs.h
@@ -2555,6 +2601,16 @@ rewrite_clnt.o: quote_822_local.h
 rewrite_clnt.o: quote_flags.h
 rewrite_clnt.o: rewrite_clnt.c
 rewrite_clnt.o: rewrite_clnt.h
+rfc2047_code.o: ../../include/base64_code.h
+rfc2047_code.o: ../../include/check_arg.h
+rfc2047_code.o: ../../include/msg.h
+rfc2047_code.o: ../../include/stringops.h
+rfc2047_code.o: ../../include/sys_defs.h
+rfc2047_code.o: ../../include/vbuf.h
+rfc2047_code.o: ../../include/vstring.h
+rfc2047_code.o: lex_822.h
+rfc2047_code.o: rfc2047_code.c
+rfc2047_code.o: rfc2047_code.h
 safe_ultostr.o: ../../include/check_arg.h
 safe_ultostr.o: ../../include/msg.h
 safe_ultostr.o: ../../include/mymalloc.h
@@ -2623,6 +2679,24 @@ scache_single.o: ../../include/vbuf.h
 scache_single.o: ../../include/vstring.h
 scache_single.o: scache.h
 scache_single.o: scache_single.c
+sendopts.o: ../../include/check_arg.h
+sendopts.o: ../../include/msg.h
+sendopts.o: ../../include/name_mask.h
+sendopts.o: ../../include/sys_defs.h
+sendopts.o: ../../include/vbuf.h
+sendopts.o: ../../include/vstring.h
+sendopts.o: sendopts.c
+sendopts.o: sendopts.h
+sendopts_test.o: ../../include/check_arg.h
+sendopts_test.o: ../../include/msg.h
+sendopts_test.o: ../../include/msg_vstream.h
+sendopts_test.o: ../../include/stringops.h
+sendopts_test.o: ../../include/sys_defs.h
+sendopts_test.o: ../../include/vbuf.h
+sendopts_test.o: ../../include/vstream.h
+sendopts_test.o: ../../include/vstring.h
+sendopts_test.o: sendopts.h
+sendopts_test.o: sendopts_test.c
 sent.o: ../../include/attr.h
 sent.o: ../../include/check_arg.h
 sent.o: ../../include/htable.h
@@ -2703,6 +2777,7 @@ smtputf8.o: ../../include/vstring.h
 smtputf8.o: cleanup_user.h
 smtputf8.o: mail_params.h
 smtputf8.o: mail_proto.h
+smtputf8.o: sendopts.h
 smtputf8.o: smtputf8.c
 smtputf8.o: smtputf8.h
 split_addr.o: ../../include/check_arg.h

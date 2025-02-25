@@ -131,8 +131,8 @@
 #        Other parameters of interest:
 # 
 #        inet_interfaces (all)
-#               The network interface addresses that this mail sys-
-#               tem receives mail on.
+#               The  local  network  interface  addresses that this
+#               mail system receives mail on.
 # 
 #        mydestination  ($myhostname,  localhost.$mydomain,  local-
 #        host)
@@ -145,9 +145,9 @@
 #               ered to.
 # 
 #        proxy_interfaces (empty)
-#               The network interface addresses that this mail sys-
-#               tem receives mail on by way of a proxy  or  network
-#               address translation unit.
+#               The  remote  network  interface addresses that this
+#               mail system receives mail on by way of a  proxy  or
+#               network address translation unit.
 # 
 # SEE ALSO
 #        trivial-rewrite(8), address resolver

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -329,7 +329,7 @@ or more recipient addresses. The <a href="discard.8.html">discard(8)</a> and <a 
 agents are special: they discard or bounce all mail, and are not
 shown in the figure above.  </p>
 
-<p> The queue manager maintains a small <a href="QSHAPE_README.html#active_queue">active queue</a> with the
+<p> The queue manager maintains a limited <a href="QSHAPE_README.html#active_queue">active queue</a> with the
 messages that it has opened for delivery. The <a href="QSHAPE_README.html#active_queue">active queue</a> acts as
 a limited window on potentially large <a href="QSHAPE_README.html#incoming_queue">incoming</a> or <a href="QSHAPE_README.html#deferred_queue">deferred queues</a>.
 The limited <a href="QSHAPE_README.html#active_queue">active queue</a> prevents the queue manager from running
@@ -349,12 +349,13 @@ can be specified with the optional <a href="transport.5.html">transport(5)</a> t
 for recipients whose address has changed; mail for such recipients is
 returned to the sender with an explanation. </p>
 
-<li> <p> The <a href="smtp.8.html">smtp(8)</a> client looks up a list of mail exchangers for
-the destination host, sorts the list by preference, and tries each
-server in turn until it finds a server that responds. It then
-encapsulates the sender, recipient and message content as required
-by the SMTP protocol; this includes conversion of 8-bit MIME to
-7-bit encoding. </p>
+<li> <p> The <a href="smtp.8.html">smtp(8)</a> client looks up a list of SMTP servers for
+the destination(s) in a delivery request, sorts the list by preference,
+and tries each server in turn until it has delivered or bounced all
+recipients in the delivery request. It encapsulates the sender,
+recipients and message content as required by the SMTP protocol;
+this includes message body conversion from 8-bit MIME to 7-bit
+encoding, but does not include <a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a> header encoding. </p>
 
 <li> <p> The <a href="lmtp.8.html">lmtp(8)</a> client speaks a protocol similar to SMTP that
 is optimized for delivery to mailbox servers such as Cyrus.  The
@@ -384,10 +385,12 @@ small domains on a single machine.  This is described in the
 
 <li> <p> The <a href="pipe.8.html">pipe(8)</a> mailer is the outbound interface to other mail
 processing systems (the Postfix <a href="sendmail.1.html">sendmail(1)</a> command being the
-inbound interface).  The interface is UNIX compatible: it provides
-information on the command line and on the standard input stream,
-and expects a process exit status code as defined in &lt;sysexits.h&gt;.
-Examples of delivery via the <a href="pipe.8.html">pipe(8)</a> mailer are in the <a href="MAILDROP_README.html">MAILDROP_README</a>
+inbound interface). The interface is UNIX compatible: the <a href="pipe.8.html">pipe(8)</a>
+mailer provides information to a child process command line,
+environment variables, and standard input stream, and expects a
+child process exit status code as defined in &lt;sysexits.h&gt;.
+Examples of delivery via the <a href="pipe.8.html">pipe(8)</a> mailer are in the <a href="FILTER_README.html">FILTER_README</a>,
+<a href="MAILDROP_README.html">MAILDROP_README</a>,
 and <a href="UUCP_README.html">UUCP_README</a> documents.
 
 </ul>
@@ -502,7 +505,9 @@ Per- <br> message<br> logfiles </td> </tr>
 </table>
 
 <li> <p> The <a href="flush.8.html">flush(8)</a> servers maintain per-destination logs and
-implement both ETRN and "sendmail -qRdestination", as described
+implement "sendmail -qR<i>site</i>", "sendmail -qI<i>queueid</i>"
+"postqueue -s <i>site</i>", "postqueue -i <i>queueid</i>", and ETRN
+as described
 in the <a href="ETRN_README.html">ETRN_README</a> document. This moves selected queue files from
 the <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> back to the <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> and requests their
 delivery.  The <a href="flush.8.html">flush(8)</a> service is available with Postfix version
@@ -586,15 +591,7 @@ the overhead of connection setup and improves message delivery
 rates. After a Postfix <a href="smtp.8.html">smtp(8)</a> client connects to a remote SMTP
 server and sends plaintext EHLO and STARTTLS commands, the <a href="smtp.8.html">smtp(8)</a>
 client inserts a <a href="tlsproxy.8.html">tlsproxy(8)</a> process into the connection as shown
-below. </p>
-
-<p> After the mail transaction completes, the Postfix <a href="smtp.8.html">smtp(8)</a> client
-gives the <a href="smtp.8.html">smtp(8)</a>-to-<a href="tlsproxy.8.html">tlsproxy(8)</a> connection to the <a href="scache.8.html">scache(8)</a>
-server, which keeps the connection open for a limited amount of
-time. The <a href="smtp.8.html">smtp(8)</a> client continues with some other mail delivery
-request. Meanwhile, any Postfix <a href="smtp.8.html">smtp(8)</a> client can ask the <a href="scache.8.html">scache(8)</a>
-server for that cached connection and reuse it for mail delivery.
-</p>
+in the top of the figure below. </p>
 
 <table>
 
@@ -618,6 +615,14 @@ align="center"><tt>^<br>|</tt></td> </tr>
 bgcolor="#f0f0ff"> <a href="scache.8.html">scache(8)</a> </td> </tr>
 
 </table>
+
+<p> After the mail transaction completes, the Postfix <a href="smtp.8.html">smtp(8)</a> client
+gives the <a href="smtp.8.html">smtp(8)</a>-to-<a href="tlsproxy.8.html">tlsproxy(8)</a> connection to the <a href="scache.8.html">scache(8)</a>
+server, which keeps the connection open for a limited amount of
+time. The <a href="smtp.8.html">smtp(8)</a> client continues with some other mail delivery
+request. Meanwhile, any Postfix <a href="smtp.8.html">smtp(8)</a> client can ask the <a href="scache.8.html">scache(8)</a>
+server for that cached connection and reuse it for mail delivery.
+</p>
 
 <li> <p> The <a href="showq.8.html">showq(8)</a> servers list the Postfix queue status. This
 is the queue listing service that does the work for the <a href="mailq.1.html">mailq(1)</a>

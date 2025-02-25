@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <head>
 
@@ -64,8 +64,8 @@ worms or viruses with easy-to-recognize signatures. </p>
 
 <li> <p> The fourth layer provides heavy-weight content inspection
 with external content filters. Typical examples are <a
-href="http://www.ijs.si/software/amavisd/">Amavisd-new</a>, <a
-href="http://spamassassin.apache.org/">SpamAssassin</a>, and <a
+href="https://www.ijs.si/software/amavisd/">Amavisd-new</a>, <a
+href="https://spamassassin.apache.org/">SpamAssassin</a>, and <a
 href="MILTER_README.html">Milter applications</a>. </p>
 
 </ul>
@@ -120,7 +120,7 @@ of time to deliver spam before their IP address becomes denylisted.
 To speed up spam deliveries, zombies make compromises in their SMTP
 protocol implementation.  For example, they speak before their turn,
 or they ignore responses from SMTP servers and continue sending
-mail even when the server tells them to go away. </p>
+commands even when the server tells them to go away. </p>
 
 <p> postscreen(8) uses a variety of measurements to recognize
 zombies.  First, postscreen(8) determines if the remote SMTP client
@@ -159,7 +159,7 @@ overhead for legitimate clients. </p>
 
 <h2> <a name="quick">Quick tests before everything else</a> </h2>
 
-<p> Before engaging in SMTP-level tests. postscreen(8) queries a
+<p> Before engaging in SMTP-level tests, postscreen(8) queries a
 number of local deny and allowlists. These tests speed up the
 handling of known clients. </p>
 
@@ -1201,7 +1201,7 @@ that decrypts/encrypts the sessions for multiple SMTP clients. </p>
 
 <p> The tlsproxy(8) implementation led to the discovery of a "new"
 class of vulnerability (<a
-href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-0411"
+href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-0411"
 >CVE-2011-0411</a>) that affected multiple implementations of SMTP,
 POP, IMAP, NNTP, and FTP over TLS. </p>
 

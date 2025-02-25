@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -61,23 +61,23 @@ default setting append_dot_mydomain=yes </a> </p>
 <li> <p> <a href="#chroot"> Using backwards-compatible default setting
 chroot=y</a> </p>
 
+<li><p> <a href="#relay_restrictions"> Using backwards-compatible
+default setting "smtpd_relay_restrictions = (empty)"</a> </p>
+
+<li> <p> <a href="#smtputf8_enable"> Using backwards-compatible
+default setting smtputf8_enable=no</a> </p>
+
 </ul>
 
 <p> Logged with compatibility_level &lt; 2: </p>
 
 <ul>
 
-<li><p> <a href="#relay_restrictions"> Using backwards-compatible
-default setting "smtpd_relay_restrictions = (empty)"</a> </p>
-
 <li> <p> <a href="#mynetworks_style"> Using backwards-compatible
 default setting mynetworks_style=subnet </a> </p>
 
 <li> <p> <a href="#relay_domains"> Using backwards-compatible default
 setting relay_domains=$mydestination </a> </p>
-
-<li> <p> <a href="#smtputf8_enable"> Using backwards-compatible
-default setting smtputf8_enable=no</a> </p>
 
 </ul>
 
@@ -241,6 +241,48 @@ administrator should make the backwards-compatible setting
 </pre>
 </blockquote>
 
+<h2> <a name="smtputf8_enable"> Using backwards-compatible default
+setting smtputf8_enable=no</a> </h2>
+
+<p> The smtputf8_enable default value has changed from "no" to "yes".
+With the new "yes" setting, the Postfix SMTP server rejects non-ASCII
+addresses from clients that don't request SMTPUTF8 support, after
+Postfix is updated from an older version. The backwards-compatibility
+safety net is designed to prevent such surprises. </p>
+
+<p> As long as the smtputf8_enable parameter is left at its implicit
+default value, and the compatibility_level setting is
+less than 1, Postfix logs a warning each time an SMTP command uses a
+non-ASCII address localpart without requesting SMTPUTF8 support: </p>
+
+<blockquote>
+<pre>
+postfix/smtpd[27560]: using backwards-compatible default setting
+    smtputf8_enable=no to accept non-ASCII sender address
+    "??@example.org" from localhost[127.0.0.1]
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+postfix/smtpd[27560]: using backwards-compatible default setting
+    smtputf8_enable=no to accept non-ASCII recipient address
+    "??@example.com" from localhost[127.0.0.1]
+</pre>
+</blockquote>
+
+<p> If the address should not be rejected, and the client cannot
+be updated to use SMTPUTF8, then the system administrator should
+make the backwards-compatible setting "smtputf8_enable = no" permanent
+in main.cf:
+
+<blockquote>
+<pre>
+# <b>postconf smtputf8_enable=no</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
 <h2> <a name="mynetworks_style"> Using backwards-compatible default
 setting mynetworks_style=subnet</a> </h2>
 
@@ -351,48 +393,6 @@ administrator should make the backwards-compatible setting
 
 <p> Instead of $mydestination, it may be better to specify an
 explicit list of domain names. </p>
-
-<h2> <a name="smtputf8_enable"> Using backwards-compatible default
-setting smtputf8_enable=no</a> </h2>
-
-<p> The smtputf8_enable default value has changed from "no" to "yes".
-With the new "yes" setting, the Postfix SMTP server rejects non-ASCII
-addresses from clients that don't request SMTPUTF8 support, after
-Postfix is updated from an older version. The backwards-compatibility
-safety net is designed to prevent such surprises. </p>
-
-<p> As long as the smtputf8_enable parameter is left at its implicit
-default value, and the compatibility_level setting is
-less than 1, Postfix logs a warning each time an SMTP command uses a
-non-ASCII address localpart without requesting SMTPUTF8 support: </p>
-
-<blockquote>
-<pre>
-postfix/smtpd[27560]: using backwards-compatible default setting
-    smtputf8_enable=no to accept non-ASCII sender address
-    "??@example.org" from localhost[127.0.0.1]
-</pre>
-</blockquote>
-
-<blockquote>
-<pre>
-postfix/smtpd[27560]: using backwards-compatible default setting
-    smtputf8_enable=no to accept non-ASCII recipient address
-    "??@example.com" from localhost[127.0.0.1]
-</pre>
-</blockquote>
-
-<p> If the address should not be rejected, and the client cannot
-be updated to use SMTPUTF8, then the system administrator should
-make the backwards-compatible setting "smtputf8_enable = no" permanent
-in main.cf:
-
-<blockquote>
-<pre>
-# <b>postconf smtputf8_enable=no</b>
-# <b>postfix reload</b>
-</pre>
-</blockquote>
 
 <h2> <a name="smtpd_digest"> Using backwards-compatible
 default setting smtpd_tls_fingerprint_digest=md5</a> </h2>

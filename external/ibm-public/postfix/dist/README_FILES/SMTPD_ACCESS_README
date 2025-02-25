@@ -24,7 +24,7 @@ In a distant past, the Internet was a friendly environment. Mail servers
 happily forwarded mail on behalf of anyone towards any destination. On today's
 Internet, spammers abuse servers that forward mail from arbitrary systems, and
 abused systems end up on anti-spammer denylists. See, for example, the
-information on http://www.mail-abuse.org/ and other websites.
+information on https://www.spamhaus.org/ and other websites.
 
 By default, Postfix has a moderately restrictive approach to mail relaying.
 Postfix forwards mail only from clients in trusted networks, from clients that

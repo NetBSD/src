@@ -1,0 +1,411 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+       "https://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Replacements for Deprecated Features </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Replacements for Deprecated Features</h1>
+
+<hr>
+
+<h2>Purpose of this document </h2>
+
+<p> This document describes Postfix features that are deprecated
+(will be removed) or that have already been removed. It also has
+tips for making an existing Postfix configuration more future-proof.
+</p>
+
+<p> Overview: </p>
+
+<ul>
+
+<li> <a href="#why"> Why deprecate? </a> 
+
+<li> <a href="#process"> Deprecation process </a> 
+
+<li> <a href="#features"> Deprecated features </a> 
+
+</ul>
+
+<h2> <a name="why"> Why deprecate? </a> </h2>
+
+<p> Sometimes, a Postfix feature needs to be replaced with a different
+one. To give an example: </p>
+
+<ul>
+
+<li> <p> The initial Postfix TLS implementation used multiple boolean
+parameters: one parameter to enable opportunistic TLS (for example, 
+"smtp_enforce_tls = yes") and one parameter to enable mandatory TLS
+(for example, "smtp_require_tls = yes"). </p>
+
+<li> <p> As we added support more features such as fingerprint,
+dane, and so on, we decided not to add more boolean parameters.
+Instead we introduced one configuration parameter to select from
+multiple deployment models (for example, smtp_tls_security_level =
+may | encrypt | dane, etc...). </p>
+
+</ul>
+
+<!--
+
+<p> Over time it has become clear that 'level' is too rigid, so this may
+have to change again. Wietse and Viktor have been discussing a way to
+specify a range with minimum properties that are required (e.g., encrypt)
+and nice-to-have properties if they are available (dane or mta-sts). </p>
+
+-->
+
+<p> Having both the "old" and "new" way to configure Postfix is
+convenient for existing Postfix installations, because their
+configuration does not break after an upgrade to a new version.
+Unfortunately, there are also disadvantages. Having multiple ways
+to do similar things is not only confusing for newcomers, it also
+makes Postfix harder to change. </p>
+
+<h2> <a name="process"> Deprecation process </a> </h2>
+
+<p> The basic process steps are: </p>
+
+<ol>
+
+<li> <p> Inform humans that a feature will be removed, and suggest
+replacements, in logging and documentation. </p>
+
+<li> <p> Remove the feature, and update logging and documentation.  </p>
+
+</ol>
+
+<p> Disclaimer: it has taken 20 years for some features to be
+removed. This past is not a guarantee for the future. </p>
+
+<h2> <a name="features"> Deprecated features </a> </h2>
+
+<p> The table summarizes removed or deprecated features and
+replacements. Click on the "obsolete feature" name for a more
+detailed description. </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th> Obsolete feature name </th> <th> Warning as <br> of version
+</th> <th> Removed <br> in version </th> <th> Replacement </th>
+</tr>
+
+<tr> <td> <a href="#disable_dns_lookups"> disable_dns_lookups </a>
+</td> <td align="center"> 3.9 </td> <td align="center"> - </td>
+<td> smtp_dns_support_level </td> </tr>
+
+<tr> <td> <a href="#xxx_enforce_tls"> <i>xxx</i>_use_tls </a> </td>
+<td align="center"> 3.9 </td> <td align="center"> - </td> <td>
+<i>xxx</i>_tls_security_level </td> </tr>
+
+<tr> <td> <a href="#xxx_enforce_tls"> <i>xxx</i>_enforce_tls </a>
+</td> <td align="center"> 3.9 </td> <td align="center"> - </td>
+<td> <i>xxx</i>_tls_security_level </td> </tr>
+
+<tr> <td> <a href="#xxx_per_site"> <i>xxx</i>_per_site </a> </td>
+<td align="center"> 3.9 </td> <td align="center"> - </td> <td>
+<i>xxx</i>_policy_maps </td> </tr>
+
+<tr> <td> <a href="#smtpd_tls_dh1024_param_file">
+smtpd_tls_dh1024_param_file </a> </td> <td align="center"> 3.9 </td>
+<td align="center"> - </td> <td> do not specify (leave at default)
+</td> </tr>
+
+<tr> <td> <a href="#smtpd_tls_eecdh_grade"> smtpd_tls_eecdh_grade
+</a> </td> <td align="center"> 3.9 </td> <td align="center"> - </td>
+<td> do not specify (leave at default) </td> </tr>
+
+<tr> <td> <a href="#permit_mx_backup"> permit_mx_backup </a> </td>
+<td align="center"> 3.9 </td> <td align="center"> - </td> <td>
+relay_domains </td> </tr>
+
+<tr> <td> <a href="#check_relay_domains"> check_relay_domains </a>
+</td> <td align="center"> 2.2 </td> <td align="center"> 3.9 </td>
+<td> permit_mynetworks, reject_unauth_destination </td> </tr>
+
+<tr> <td> <a href="#reject_maps_rbl"> reject_maps_rbl </a> </td>
+<td align="center"> 2.1 </td> <td align="center"> 3.9 </td> <td>
+reject_rbl_client </td> </tr>
+
+<tr> <td> <a href="#permit_naked_ip_address"> permit_naked_ip_address
+</a> </td> <td align="center"> 2.0 </td> <td align="center"> 3.9
+</td> <td> permit_mynetworks, permit_sasl_authenticated </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h3> <a name="disable_dns_lookups"> Obsolete DNS on/off configuration
+</a> </h3>
+
+<p> The postconf(1) command logs the following: </p>
+
+<ul>
+
+<li> support for parameter "disable_dns_lookups" will be removed; instead, specify "smtp_dns_support_level"
+
+</ul>
+
+<p> Replace obsolete configuration with its replacement: </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th width="33%"> Goal </th> <th width="33%"> Obsolete configuration
+</th> <th> Replacement configuration </th> </tr>
+
+<tr> <td> To disable DNS lookups in the Postfix SMTP/LMTP client
+</td> <td> disable_dns_lookups = yes </td> <td> smtp_dns_support_level
+= disabled </td> </tr>
+
+<tr> <td> To enable DNS lookups in the Postfix SMTP/LMTP client </td> <td> 
+disable_dns_lookups = no </td> <td> 
+Leave smtp_dns_support_level at the implicit default which is empty, unless
+you need a higher support level such as DNSSEC. </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h3> <a name="xxx_use_tls"> Obsolete opportunistic TLS configuration
+</a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "lmtp_use_tls" will be removed; instead, specify "lmtp_tls_security_level"
+
+<li> support for parameter "smtp_use_tls" will be removed; instead, specify "smtp_tls_security_level"
+
+<li> support for parameter "smtpd_use_tls" will be removed; instead, specify "smtpd_tls_security_level"
+
+</ul>
+
+<p> There are similarly-named parameters and warnings for postscreen(8)
+and tlsproxy(8), but those parameters should rarely be specified
+by hand. </p>
+
+<p> Replace obsolete configuration with its replacement: </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th width="33%"> Goal </th> <th width="33%"> Obsolete configuration </th> <th> Replacement configuration </th> </tr>
+
+<tr> <td> To turn off TLS </td> <td> <i>xxx</i>_use_tls = no </td>
+<td> <i>xxx</i>_security_level = none </td> </tr>
+
+<tr> <td> To turn on opportunistic TLS </td> <td> <i>xxx</i>_use_tls
+= yes </td> <td> <i>xxx</i>_security_level = may </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h3> <a name="xxx_enforce_tls"> Obsolete mandatory TLS configuration
+</a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "lmtp_enforce_tls" will be removed; instead, specify "lmtp_tls_security_level"
+
+<li> support for parameter "smtp_enforce_tls" will be removed; instead, specify "smtp_tls_security_level"
+
+<li> support for parameter "smtpd_enforce_tls" will be removed; instead, specify "smtpd_tls_security_level"
+
+</ul>
+
+<p> There are similarly-named parameters and warnings for postscreen(8)
+and tlsproxy(8), but those parameters should rarely be specified
+by hand. </p>
+
+<p> Replace obsolete configuration with its replacement: </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th width="33%"> Goal </th> <th width="33%"> Obsolete configuration </th> <th> Replacement configuration </th> </tr>
+
+<tr> <td> To turn off mandatory TLS </td> <td> <i>xxx</i>_enforce_tls
+= no </td> <td> <i>xxx</i>_security_level = may </td> </tr>
+
+<tr> <td> To turn on mandatory TLS </td> <td> <i>xxx</i>_enforce_tls
+= yes </td> <td> <i>xxx</i>_security_level = encrypt </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h3> <a name="xxx_per_site"> Obsolete TLS policy table configuration
+</a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "lmtp_tls_per_site" will be removed;
+instead, specify "lmtp_tls_policy_maps"
+
+<li> support for parameter "smtp_tls_per_site" will be removed;
+instead, specify "smtp_tls_policy_maps"
+
+</ul>
+
+<p> There is similarly-named parameter and warning for tlsproxy(8),
+but that parameter should rarely be specified by hand. </p>
+
+<p> Unfortunately, this is more than a name change: the table format
+has changed too, as has the table search process. There is no simple
+conversion of the obsolete form to its replacement. </p>
+
+<h3> <a name="check_relay_domains"> check_relay_domains </a> </h3>
+
+<p> Depending on the Postfix version, the Postfix SMTP daemon logs
+following warning: </p>
+
+<ul>
+
+<li> support for restriction "check_relay_domains" has been removed
+in Postfix 3.9"; instead, specify "reject_unauth_destination"
+
+<li> support for restriction "check_relay_domains" will be removed
+from Postfix; use "reject_unauth_destination" instead
+
+</ul>
+
+<p> This feature was removed because it would relay based on the
+client domain name, which is not robust. </p>
+
+<p> Recommended configuration to prevent an "open relay" problem
+with the SMTP service on port 25:
+</p>
+
+<blockquote>
+<pre>
+main.cf:
+    smtpd_recipient_restrictions = 
+	permit_mynetworks, 
+	permit_sasl_authenticated, 
+	reject_unauth_destination
+	...other restrictions...
+</pre>
+</blockquote>
+
+<p> Or equivalent in smtpd_relay_restrictions. </p>
+
+<h3> <a name="permit_mx_backup"> permit_mx_backup</a> </h3>
+
+<p> The Postfix version 3.9 and later SMTP daemon logs the following
+warning: </p>
+
+<ul>
+
+<li> support for restriction "permit_mx_backup" will be removed
+from Postfix; instead, specify "relay_domains"
+
+</ul>
+
+<p> This feature will be removed because it is too difficult to
+configure recipient address validation, making Postfix a source of
+backscatter bounces. </p>
+
+<p> To specify the domains that Postfix will provide MX backup
+service for, see <a href="STANDARD_CONFIGURATION_README.html#backup">
+Configuring Postfix as primary or backup MX host for a remote
+site</a>. </p>
+
+<h3> <a name="reject_maps_rbl"> reject_maps_rbl</a> </h3>
+
+<p> Depending on the Postfix version, the SMTP daemon logs one of
+the following warnings: </p>
+
+<ul>
+
+<li> support for restriction "reject_maps_rbl" has been removed in
+Postfix 3.9"; instead, specify "reject_rbl_client domain-name"
+
+<li> support for restriction "reject_maps_rbl" will be removed from
+Postfix; use "reject_rbl_client domain-name" instead
+
+</ul>
+
+<p> This feature was replaced because "MAPS RBL" is the name of a
+specific reputation service. The reject_rbl_client feature provides
+a superset of the reject_maps_rbl functionality. </p>
+
+<p> Recommended configuration: </p>
+
+<blockquote>
+<pre>
+main.cf:
+    smtpd_recipient_restrictions =
+        permit_mynetworks,
+        permit_sasl_authenticated,
+        reject_unauth_destination
+	reject_rbl_client <i>domain-name</i>
+	...other restrictions...
+</pre>
+</blockquote>
+
+<p> Where <i>domain-name</i> is the domain name of a DNS reputation service. </p>
+
+<h3> <a name="permit_naked_ip_address"> permit_naked_ip_address</a> </h3>
+
+<p> Depending on the Postfix version, the SMTP daemon logs one of
+the following warnings: </p>
+
+<ul>
+
+<li> support for restriction "permit_naked_ip_address" has been
+removed in Postfix 3.9"; instead, specify "permit_mynetworks" or
+"permit_sasl_authenticated"
+
+<li> restriction permit_naked_ip_address is deprecated. Use
+permit_mynetworks or permit_sasl_authenticated instead
+
+</ul>
+
+<p> This feature was removed because it was easy to get a false
+match when smtpd_recipient_restrictions was intended to match a
+remote SMTP client IP address. </p>
+
+<p> Recommended configuration: </p>
+
+<blockquote>
+<pre>
+main.cf:
+    smtpd_recipient_restrictions =
+        permit_mynetworks,
+        permit_sasl_authenticated,
+        reject_unauth_destination
+        reject_rbl_client <i>domain-name</i>
+        ...other restrictions...
+</pre>
+</blockquote>
+
+<p> That is, no restriction on HELO or EHLO syntax. Such restrictions
+ar rarely useful nowadays.
+
+</body>
+
+</html>

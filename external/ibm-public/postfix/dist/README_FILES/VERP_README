@@ -19,7 +19,7 @@ Thus, undeliverable mail can reveal the undeliverable recipient address without
 requiring the list owner to parse bounce messages.
 
 The VERP concept was popularized by the qmail MTA and by the ezmlm mailing list
-manager. See http://cr.yp.to/proto/verp.txt for the ideas behind this concept.
+manager. See https://cr.yp.to/proto/verp.txt for the ideas behind this concept.
 
 Topics covered in this document:
 

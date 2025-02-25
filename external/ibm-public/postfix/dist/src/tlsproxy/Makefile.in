@@ -35,19 +35,8 @@ update: ../../libexec/$(PROG)
 ../../libexec/$(PROG): $(PROG)
 	cp $(PROG) ../../libexec
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk 
-	rm -rf printfck
 
 tidy:	clean
 
@@ -86,6 +75,7 @@ tlsproxy.o: ../../include/split_at.h
 tlsproxy.o: ../../include/sys_defs.h
 tlsproxy.o: ../../include/tls.h
 tlsproxy.o: ../../include/tls_proxy.h
+tlsproxy.o: ../../include/tlsrpt_wrapper.h
 tlsproxy.o: ../../include/vbuf.h
 tlsproxy.o: ../../include/vstream.h
 tlsproxy.o: ../../include/vstring.h

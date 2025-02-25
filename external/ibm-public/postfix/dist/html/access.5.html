@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,17 +7,17 @@
 </head> <body> <pre>
 ACCESS(5)                                                            ACCESS(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        access - Postfix SMTP server access table
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap /etc/postfix/access</b>
 
        <b>postmap -q "</b><i>string</i><b>" /etc/postfix/access</b>
 
        <b>postmap -q - /etc/postfix/access</b> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        This  document  describes access control on remote SMTP client informa-
        tion: host names, network addresses, and envelope sender  or  recipient
        addresses;   it  is  implemented  by  the  Postfix  SMTP  server.   See
@@ -39,13 +39,13 @@ ACCESS(5)                                                            ACCESS(5)
        a  slightly  different way as described below under "REGULAR EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
-<b>CASE FOLDING</b>
+<b><a name="case_folding">CASE FOLDING</a></b>
        The search string is folded to lowercase before database lookup. As  of
        Postfix  2.3,  the search string is not case folded with database types
        such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both  upper  and
        lower case.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern action</i>
@@ -60,7 +60,7 @@ ACCESS(5)                                                            ACCESS(5)
               A  logical  line  starts  with  non-whitespace text. A line that
               starts with whitespace continues a logical line.
 
-<b>EMAIL ADDRESS PATTERNS</b>
+<b><a name="email_address_patterns_in_indexed_tables">EMAIL ADDRESS PATTERNS IN INDEXED TABLES</a></b>
        With lookups from indexed files such as DB or DBM,  or  from  networked
        tables  such  as  NIS,  LDAP or SQL, patterns are tried in the order as
        listed below:
@@ -87,12 +87,12 @@ ACCESS(5)                                                            ACCESS(5)
        addresses. The value is specified with the <b><a href="postconf.5.html#smtpd_null_access_lookup_key">smtpd_null_access_lookup_key</a></b>
        parameter in the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file.
 
-<b>EMAIL ADDRESS EXTENSION</b>
+<b><a name="email_address_extension">EMAIL ADDRESS EXTENSION</a></b>
        When a mail address localpart contains the optional recipient delimiter
        (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order  becomes:  <i>user+foo</i>@<i>domain</i>,
        <i>user</i>@<i>domain</i>, <i>domain</i>, <i>user+foo</i>@, and <i>user</i>@.
 
-<b>HOST NAME/ADDRESS PATTERNS</b>
+<b>HOST NAME/ADDRESS PATTERNS IN INDEXED TABLES</b>
        With  lookups  from  indexed files such as DB or DBM, or from networked
        tables such as NIS, LDAP or SQL,  the  following  lookup  patterns  are
        examined in the order as listed:
@@ -149,7 +149,7 @@ ACCESS(5)                                                            ACCESS(5)
 
               IPv6 support is available in Postfix 2.2 and later.
 
-<b>ACCEPT ACTIONS</b>
+<b><a name="accept_actions">ACCEPT ACTIONS</a></b>
        <b>OK</b>     Accept the address etc. that matches the pattern.
 
        <i>all-numerical</i>
@@ -159,7 +159,7 @@ ACCESS(5)                                                            ACCESS(5)
 
        For other accept actions, see "OTHER ACTIONS" below.
 
-<b>REJECT ACTIONS</b>
+<b><a name="reject_actions">REJECT ACTIONS</a></b>
        Postfix  version 2.3 and later support enhanced status codes as defined
        in <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code is specified at the beginning  of  the  <i>text</i>
        below, Postfix inserts a default enhanced status code of "5.7.1" in the
@@ -226,7 +226,7 @@ ACCESS(5)                                                            ACCESS(5)
 
        For other reject actions, see "OTHER ACTIONS" below.
 
-<b>OTHER ACTIONS</b>
+<b><a name="other_actions">OTHER ACTIONS</a></b>
        <i>restriction...</i>
               Apply    the   named   UCE   restriction(s)   (<b>permit</b>,   <b>reject</b>,
               <b><a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a></b>, and so on).
@@ -320,8 +320,12 @@ ACCESS(5)                                                            ACCESS(5)
               address instead of the intended recipient(s).  When multiple <b>RE-</b>
               <b>DIRECT</b> actions fire, only the last one takes effect.
 
-              Note:  this  action  overrides  the FILTER action, and currently
+              Note  1:  this action overrides the FILTER action, and currently
               overrides all recipients of the message.
+
+              Note 2: a REDIRECT address is subject to  canonicalization  (add
+              missing  domain)  but NOT subject to canonical, masquerade, bcc,
+              or virtual alias mapping.
 
               This feature is available in Postfix 2.1 and later.
 
@@ -339,7 +343,7 @@ ACCESS(5)                                                            ACCESS(5)
 
               This feature is available in Postfix 2.1 and later.
 
-<b>ENHANCED STATUS CODES</b>
+<b><a name="enhanced_status_codes">ENHANCED STATUS CODES</a></b>
        Postfix version 2.3 and later support enhanced status codes as  defined
        in  <a href="https://tools.ietf.org/html/rfc3463">RFC  3463</a>.   When an enhanced status code is specified in an access
        table, it is subject to modification. The following transformations are
@@ -356,7 +360,7 @@ ACCESS(5)                                                            ACCESS(5)
               Postfix  SMTP  server  will  transform a sender or recipient DSN
               status into a generic non-address DSN status (e.g., 4.0.0).
 
-<b>REGULAR EXPRESSION TABLES</b>
+<b><a name="regular_expression_tables">REGULAR EXPRESSION TABLES</a></b>
        This section describes how the table lookups change when the  table  is
        given  in the form of regular expressions. For a description of regular
        expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
@@ -375,7 +379,7 @@ ACCESS(5)                                                            ACCESS(5)
        feature that parenthesized substrings from the pattern can be  interpo-
        lated as <b>$1</b>, <b>$2</b> and so on.
 
-<b>TCP-BASED TABLES</b>
+<b><a name="tcp-based_tables">TCP-BASED TABLES</a></b>
        This  section  describes  how the table lookups change when lookups are
        directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
        client/server  lookup  protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature is not
@@ -390,7 +394,7 @@ ACCESS(5)                                                            ACCESS(5)
 
        Actions are the same as with indexed file lookups.
 
-<b>EXAMPLE</b>
+<b><a name="example">EXAMPLE</a></b>
        The  following example uses an indexed file, so that the order of table
        entries does not matter. The example permits access by  the  client  at
        address 1.2.3.4 but rejects all other clients in 1.2.3.0/24. Instead of
@@ -408,20 +412,20 @@ ACCESS(5)                                                            ACCESS(5)
        Execute  the  command  "<b>postmap  /etc/postfix/access</b>" after editing the
        file.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The table format does not understand quoting conventions.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="smtpd.8.html">smtpd(8)</a>, SMTP server
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="transport.5.html">transport(5)</a>, transport:nexthop syntax
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a>, built-in SMTP server access control
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

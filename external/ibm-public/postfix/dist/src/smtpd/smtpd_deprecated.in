@@ -1,0 +1,20 @@
+#
+# permit_naked_ip_address
+#
+client foo 127.0.0.2
+recipient_restrictions permit_naked_ip_address
+helo 127.0.0.2
+mail sname@sdomain.example
+rcpt rname@rdomain.example
+#
+# check_relay_domains
+#
+client foo 127.0.0.2
+recipient_restrictions check_relay_domains
+relay_domains foo
+helo 127.0.0.2
+mail sname@sdomain.example
+rcpt rname@rdomain.example
+#
+# reject_maps_rbl is already covered elsewhere.
+#

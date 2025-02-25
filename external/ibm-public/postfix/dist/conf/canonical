@@ -225,57 +225,56 @@
 #        Other parameters of interest:
 # 
 #        inet_interfaces (all)
-#               The network interface addresses that this mail sys-
-#               tem receives mail on.
+#               The  local  network  interface  addresses that this
+#               mail system receives mail on.
 # 
 #        local_header_rewrite_clients (permit_inet_interfaces)
-#               Rewrite message header addresses in mail from these
-#               clients  and  update  incomplete addresses with the
-#               domain name in $myorigin or $mydomain; either don't
-#               rewrite  message headers from other clients at all,
-#               or rewrite message headers  and  update  incomplete
-#               addresses   with   the   domain  specified  in  the
-#               remote_header_rewrite_domain parameter.
+#               Rewrite or add message headers in mail  from  these
+#               clients,  updating  incomplete  addresses  with the
+#               domain name in $myorigin or $mydomain,  and  adding
+#               missing headers.
 # 
 #        proxy_interfaces (empty)
-#               The network interface addresses that this mail sys-
-#               tem  receives  mail on by way of a proxy or network
-#               address translation unit.
+#               The  remote  network  interface addresses that this
+#               mail system receives mail on by way of a  proxy  or
+#               network address translation unit.
 # 
-#        masquerade_classes    (envelope_sender,     header_sender,
+#        masquerade_classes     (envelope_sender,    header_sender,
 #        header_recipient)
 #               What addresses are subject to address masquerading.
 # 
 #        masquerade_domains (empty)
-#               Optional  list of domains whose subdomain structure
+#               Optional list of domains whose subdomain  structure
 #               will be stripped off in email addresses.
 # 
 #        masquerade_exceptions (empty)
-#               Optional list of user names that are not  subjected
-#               to  address masquerading, even when their addresses
+#               Optional  list of user names that are not subjected
+#               to address masquerading, even when their  addresses
 #               match $masquerade_domains.
 # 
 #        mydestination  ($myhostname,  localhost.$mydomain,  local-
 #        host)
-#               The list of domains  that  are  delivered  via  the
+#               The  list  of  domains  that  are delivered via the
 #               $local_transport mail delivery transport.
 # 
 #        myorigin ($myhostname)
 #               The domain name that locally-posted mail appears to
-#               come from, and that locally posted mail  is  deliv-
+#               come  from,  and that locally posted mail is deliv-
 #               ered to.
 # 
 #        owner_request_special (yes)
 #               Enable special treatment for owner-listname entries
 #               in the aliases(5) file, and don't split owner-list-
-#               name  and  listname-request address localparts when
+#               name and listname-request address  localparts  when
 #               the recipient_delimiter is set to "-".
 # 
 #        remote_header_rewrite_domain (empty)
-#               Don't rewrite message headers from  remote  clients
-#               at all when this parameter is empty; otherwise, re-
-#               write message  headers  and  append  the  specified
-#               domain name to incomplete addresses.
+#               Rewrite  or add message headers in mail from remote
+#               clients if the remote_header_rewrite_domain parame-
+#               ter   value   is   non-empty,  updating  incomplete
+#               addresses  with  the  domain   specified   in   the
+#               remote_header_rewrite_domain  parameter, and adding
+#               missing headers.
 # 
 # SEE ALSO
 #        cleanup(8), canonicalize and enqueue mail
@@ -284,13 +283,13 @@
 #        virtual(5), virtual aliasing
 # 
 # README FILES
-#        Use  "postconf  readme_directory" or "postconf html_direc-
+#        Use "postconf readme_directory" or  "postconf  html_direc-
 #        tory" to locate this information.
 #        DATABASE_README, Postfix lookup table overview
 #        ADDRESS_REWRITING_README, address rewriting guide
 # 
 # LICENSE
-#        The Secure Mailer license must be  distributed  with  this
+#        The  Secure  Mailer  license must be distributed with this
 #        software.
 # 
 # AUTHOR(S)

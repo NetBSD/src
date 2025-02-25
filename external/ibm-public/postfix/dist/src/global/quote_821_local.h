@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_821_local.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: quote_821_local.h,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,7 @@
   * External interface.
   */
 extern VSTRING *quote_821_local_flags(VSTRING *, const char *, int);
+
 #define quote_821_local(dst, src) \
 	quote_821_local_flags((dst), (src), QUOTE_FLAG_8BITCLEAN)
 

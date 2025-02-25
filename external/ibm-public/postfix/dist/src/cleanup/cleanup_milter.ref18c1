@@ -1,0 +1,1 @@
+./cleanup_milter: flags = enable_header_body_filter enable_milters

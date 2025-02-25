@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_trigger.c,v 1.1.1.3 2013/09/25 19:06:31 tron Exp $	*/
+/*	$NetBSD: mail_trigger.c,v 1.1.1.4 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -84,7 +84,7 @@ int     mail_trigger(const char *class, const char *service,
      */
     path = mail_pathname(class, service);
     if ((status = stat(path, &st)) < 0) {
-	 msg_warn("unable to look up %s: %m", path);
+	msg_warn("unable to look up %s: %m", path);
     } else if (S_ISFIFO(st.st_mode)) {
 	status = fifo_trigger(path, req_buf, req_len, var_trigger_timeout);
 	if (status < 0 && S_ISSOCK(st.st_mode))

@@ -1,4 +1,4 @@
-/*	$NetBSD: wildcard_inet_addr.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: wildcard_inet_addr.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
 /*	wildcard_inet_addr() determines all wild-card addresses
 /*	for all supported address families.
 /* DIAGNOSTICS
-/*	Fatal errors: out of memory.
+/*	Fatal errors: out of memory; no wildcard addresses.
 /* SEE ALSO
 /*	inet_addr_list(3) address list management
 /* LICENSE

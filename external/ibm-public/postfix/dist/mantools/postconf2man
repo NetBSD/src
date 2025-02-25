@@ -58,8 +58,8 @@ while(<>) {
     $block =~ s/^(<p(re)?>)/.PP\n\1/ if ($wantpp);
     $block =~ s/<p> */\n/g;
     $block =~ s/ *<\/p>/\n/g;
-    $block =~ s/<pre>/\n.nf\n.na\n.ft C\n/g;
-    $block =~ s/<\/pre>/\n.fi\n.ad\n.ft R\n/g;
+    $block =~ s/<pre>/\n.nf\n.na\n/g;
+    $block =~ s/<\/pre>/\n.fi\n.ad\n/g;
     $block =~ s/<dl[^>]*>/\n/g;
     $block =~ s/<ul>/\n/g;
     #$block =~ s/<\/dl>/\n.PP\n/g;
@@ -86,6 +86,8 @@ while(<>) {
     $block =~ s/&amp;/\&/g;
     $block =~ s/&ndash;/-/g;
     $block =~ s/&mdash;/-/g;
+    $block =~ s/<sup>/^/g;
+    $block =~ s;</sup>;;g;
     $block =~ s/\s+\n/\n/g;
     $block =~ s/^\n//g;
     $block =~ s/\s*<\s*nroffescape\s+([^ >]+)\s*>\s*/\n\1\n/g;

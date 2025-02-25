@@ -1,0 +1,9 @@
+#verbose on
+open test-queue-file18c.tmp
+#
+# Update the first Received: header.  This adds a new header, because
+# there is no header that was exposed to the Milter.
+#
+upd_header 1 Received whatever
+
+close

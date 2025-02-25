@@ -376,27 +376,29 @@ whistles. Support for third-party databases etc. must be configured when
 Postfix is compiled. The following documents describe how to build Postfix with
 support for optional features:
 
-     _____________________________________________________________
-    |Optional feature		       |Document     |Availability|
-    |__________________________________|_____________|____________|
-    |Berkeley DB database	       |DB_README    |Postfix 1.0 |
-    |__________________________________|_____________|____________|
-    |LMDB database		       |LMDB_README  |Postfix 2.11|
-    |__________________________________|_____________|____________|
-    |LDAP database		       |LDAP_README  |Postfix 1.0 |
-    |__________________________________|_____________|____________|
-    |MySQL database		       |MYSQL_README |Postfix 1.0 |
-    |__________________________________|_____________|____________|
-    |Perl compatible regular expression|PCRE_README  |Postfix 1.0 |
-    |__________________________________|_____________|____________|
-    |PostgreSQL database	       |PGSQL_README |Postfix 2.0 |
-    |__________________________________|_____________|____________|
-    |SASL authentication	       |SASL_README  |Postfix 1.0 |
-    |__________________________________|_____________|____________|
-    |SQLite database		       |SQLITE_README|Postfix 2.8 |
-    |__________________________________|_____________|____________|
-    |STARTTLS session encryption       |TLS_README   |Postfix 2.2 |
-    |__________________________________|_____________|____________|
+     ______________________________________________________________
+    |Optional feature		       |Document      |Availability|
+    |__________________________________|______________|____________|
+    |Berkeley DB database	       |DB_README     |Postfix 1.0 |
+    |__________________________________|______________|____________|
+    |LMDB database		       |LMDB_README   |Postfix 2.11|
+    |__________________________________|______________|____________|
+    |LDAP database		       |LDAP_README   |Postfix 1.0 |
+    |__________________________________|______________|____________|
+    |MongoDB database		       |MONGODB_README|Postfix 3.9 |
+    |__________________________________|______________|____________|
+    |MySQL database		       |MYSQL_README  |Postfix 1.0 |
+    |__________________________________|______________|____________|
+    |Perl compatible regular expression|PCRE_README   |Postfix 1.0 |
+    |__________________________________|______________|____________|
+    |PostgreSQL database	       |PGSQL_README  |Postfix 2.0 |
+    |__________________________________|______________|____________|
+    |SASL authentication	       |SASL_README   |Postfix 1.0 |
+    |__________________________________|______________|____________|
+    |SQLite database		       |SQLITE_README |Postfix 2.8 |
+    |__________________________________|______________|____________|
+    |STARTTLS session encryption       |TLS_README    |Postfix 2.2 |
+    |__________________________________|______________|____________|
 
 Note: IP version 6 support is compiled into Postfix on operating systems that
 have IPv6 support. See the IPV6_README file for details.
@@ -679,7 +681,7 @@ is successful, then you can proceed to install Postfix (section 6).
 If the command produces compiler error messages, it may be time to search the
 web or to ask the postfix-users@postfix.org mailing list, but be sure to search
 the mailing list archives first. Some mailing list archives are linked from
-http://www.postfix.org/.
+https://www.postfix.org/.
 
 5 - Porting Postfix to an unsupported system
 

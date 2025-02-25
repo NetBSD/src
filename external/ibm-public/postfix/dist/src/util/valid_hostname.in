@@ -53,3 +53,9 @@ g:a:a:a:a:a:a:a
 a::b
 :a::b
 a::b:
+*.foo.bar
+*foo.bar
+foo.*.bar
+foo*bar
+foo.bar*
+*

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 QMGR(8)                                                                QMGR(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        qmgr - Postfix queue manager
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>qmgr</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon awaits the arrival of incoming mail and arranges for
        its delivery via Postfix delivery processes.  The actual  mail  routing
        strategy  is  delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> daemon.  This program
@@ -23,7 +23,7 @@ QMGR(8)                                                                QMGR(8)
        carded.   This  stops  potential  loops  caused by undeliverable bounce
        notifications.
 
-<b>MAIL QUEUES</b>
+<b><a name="mail_queues">MAIL QUEUES</a></b>
        The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon maintains the following queues:
 
        <b>incoming</b>
@@ -45,7 +45,7 @@ QMGR(8)                                                                QMGR(8)
        <b>hold</b>   Messages that are kept "on hold" are  kept  here  until  someone
               sets them free.
 
-<b>DELIVERY STATUS REPORTS</b>
+<b><a name="delivery_status_reports">DELIVERY STATUS REPORTS</a></b>
        The  <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon keeps an eye on per-message delivery status reports
        in the following directories. Each status report file has the same name
        as the corresponding message file:
@@ -63,7 +63,7 @@ QMGR(8)                                                                QMGR(8)
        The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon is responsible for asking the <a href="bounce.8.html"><b>bounce</b>(8)</a>, <a href="defer.8.html"><b>defer</b>(8)</a> or
        <a href="trace.8.html"><b>trace</b>(8)</a> daemons to send delivery reports.
 
-<b>STRATEGIES</b>
+<b><a name="strategies">STRATEGIES</a></b>
        The queue manager implements a variety of strategies for either opening
        queue files (input) or for message delivery (output).
 
@@ -103,7 +103,7 @@ QMGR(8)                                                                QMGR(8)
               delay  while  still  preserving  the correct per-message delays,
               using a sophisticated preemptive message scheduling.
 
-<b>TRIGGERS</b>
+<b><a name="triggers">TRIGGERS</a></b>
        On an idle system, the queue manager waits for the arrival  of  trigger
        events, or it waits for a timer to go off. A trigger is a one-byte mes-
        sage.  Depending on the message received, the  queue  manager  performs
@@ -138,18 +138,18 @@ QMGR(8)                                                                QMGR(8)
        <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> run, one would request <b>A F D</b>; in  order  to  notify  the
        queue manager of the arrival of new mail one would request <b>I</b>.
 
-<b>STANDARDS</b>
+<b><a name="standards">STANDARDS</a></b>
        <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
        <a href="https://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon is not security sensitive. It reads single-character
        messages from untrusted local users, and thus  may  be  susceptible  to
        denial of service attacks. The <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon does not talk to the out-
        side world, and it can be run at fixed  low  privilege  in  a  chrooted
        environment.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems  and  transactions  are  logged  to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
        Corrupted message files are saved to  the  <b>corrupt</b>  queue  for  further
        inspection.
@@ -157,12 +157,12 @@ QMGR(8)                                                                QMGR(8)
        Depending  on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b> parameter, the postmas-
        ter is notified of bounces and of other trouble.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        A single queue manager process has to compete for disk access with mul-
        tiple front-end processes such as <a href="cleanup.8.html"><b>cleanup</b>(8)</a>. A sudden burst of inbound
        mail can negatively impact outbound delivery rates.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are not picked up automatically as <a href="qmgr.8.html"><b>qmgr</b>(8)</a> is a per-
        sistent process. Use the "<b>postfix reload</b>" command after a configuration
        change.
@@ -172,7 +172,7 @@ QMGR(8)                                                                QMGR(8)
 
        In the text below, <i>transport</i> is the first field in a <a href="master.5.html"><b>master.cf</b></a> entry.
 
-<b>COMPATIBILITY CONTROLS</b>
+<b><a name="compatibility_controls">COMPATIBILITY CONTROLS</a></b>
        Available before Postfix version 2.5:
 
        <b><a href="postconf.5.html#allow_min_user">allow_min_user</a> (no)</b>
@@ -186,7 +186,7 @@ QMGR(8)                                                                QMGR(8)
               next-hop  destination, use $<a href="postconf.5.html#default_filter_nexthop">default_filter_nexthop</a> instead; when
               that value is empty, use the domain in the recipient address.
 
-<b><a href="QSHAPE_README.html#active_queue">ACTIVE QUEUE</a> CONTROLS</b>
+<b><a name="active_queue_controls">ACTIVE QUEUE CONTROLS</a></b>
        <b><a href="postconf.5.html#qmgr_clog_warn_time">qmgr_clog_warn_time</a> (300s)</b>
               The minimal delay between warnings that a  specific  destination
               is clogging up the Postfix <a href="QSHAPE_README.html#active_queue">active queue</a>.
@@ -232,15 +232,15 @@ QMGR(8)                                                                QMGR(8)
               ter.cf</a> name of the message delivery transport.
 
        <b><a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a> (5s)</b>
-              The  default  per-transport  maximum  delay  between  recipients
-              refills.
+              The default per-transport maximum delay between refilling recip-
+              ients.
 
        <b><a href="postconf.5.html#transport_recipient_refill_delay">transport_recipient_refill_delay</a> ($<a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a>)</b>
               A    transport-specific   override   for   the   <a href="postconf.5.html#default_recipient_refill_delay">default_recipi</a>-
               <a href="postconf.5.html#default_recipient_refill_delay">ent_refill_delay</a> parameter value, where <i>transport</i>  is  the  <a href="master.5.html">mas-
               ter.cf</a> name of the message delivery transport.
 
-<b>DELIVERY CONCURRENCY CONTROLS</b>
+<b><a name="delivery_concurrency_controls">DELIVERY CONCURRENCY CONTROLS</a></b>
        <b><a href="postconf.5.html#initial_destination_concurrency">initial_destination_concurrency</a> (5)</b>
               The  initial  per-destination  concurrency  level  for  parallel
               delivery to the same destination.
@@ -300,7 +300,7 @@ QMGR(8)                                                                QMGR(8)
               Make  the queue manager's feedback algorithm verbose for perfor-
               mance analysis purposes.
 
-<b>RECIPIENT SCHEDULING CONTROLS</b>
+<b><a name="recipient_scheduling_controls">RECIPIENT SCHEDULING CONTROLS</a></b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipient_limit</a> (50)</b>
               The default maximal number of recipients per message delivery.
 
@@ -310,7 +310,7 @@ QMGR(8)                                                                QMGR(8)
               <a href="postconf.5.html#default_destination_recipient_limit">ient_limit</a>  parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a>
               name of the message delivery transport.
 
-<b>MESSAGE SCHEDULING CONTROLS</b>
+<b><a name="message_scheduling_controls">MESSAGE SCHEDULING CONTROLS</a></b>
        <b><a href="postconf.5.html#default_delivery_slot_cost">default_delivery_slot_cost</a> (5)</b>
               How often the Postfix queue manager's scheduler  is  allowed  to
               preempt delivery of one message with another.
@@ -347,7 +347,7 @@ QMGR(8)                                                                QMGR(8)
               parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the
               message delivery transport.
 
-<b>OTHER RESOURCE AND RATE CONTROLS</b>
+<b><a name="other_resource_and_rate_controls">OTHER RESOURCE AND RATE CONTROLS</a></b>
        <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (300s)</b>
               The minimal time between attempts to deliver a deferred message;
               prior to Postfix 2.4 the default value was 1000s.
@@ -400,7 +400,7 @@ QMGR(8)                                                                QMGR(8)
               the parameter name is the <a href="master.5.html">master.cf</a> name of the message delivery
               transport.
 
-<b>SAFETY CONTROLS</b>
+<b><a name="safety_controls">SAFETY CONTROLS</a></b>
        <b><a href="postconf.5.html#qmgr_daemon_timeout">qmgr_daemon_timeout</a> (1000s)</b>
               How much time a Postfix queue manager process may take to handle
               a request before it is terminated by a built-in watchdog  timer.
@@ -415,7 +415,7 @@ QMGR(8)                                                                QMGR(8)
               A safety limit that prevents address verification requests  from
               overwhelming the Postfix queue.
 
-<b>MISCELLANEOUS CONTROLS</b>
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
@@ -465,7 +465,7 @@ QMGR(8)                                                                QMGR(8)
               The  email  address  form that will be used in non-debug logging
               (info, warning, etc.).
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        /var/spool/postfix/incoming, <a href="QSHAPE_README.html#incoming_queue">incoming queue</a>
        /var/spool/postfix/active, <a href="QSHAPE_README.html#active_queue">active queue</a>
        /var/spool/postfix/deferred, <a href="QSHAPE_README.html#deferred_queue">deferred queue</a>
@@ -473,7 +473,7 @@ QMGR(8)                                                                QMGR(8)
        /var/spool/postfix/defer, non-delivery status
        /var/spool/postfix/trace, delivery status
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, address routing
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
@@ -482,11 +482,11 @@ QMGR(8)                                                                QMGR(8)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="SCHEDULER_README.html">SCHEDULER_README</a>, scheduling algorithm
        <a href="QSHAPE_README.html">QSHAPE_README</a>, Postfix queue analysis
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

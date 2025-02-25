@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_821_local.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: quote_821_local.c,v 1.1.1.2 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -136,7 +136,7 @@ static VSTRING *make_821_quoted_string(VSTRING *dst, const char *local_part,
 
 VSTRING *quote_821_local_flags(VSTRING *dst, const char *addr, int flags)
 {
-    const char   *at;
+    const char *at;
 
     /*
      * According to RFC 821, a local-part is a dot-string or a quoted-string.

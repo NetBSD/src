@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_log.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: bounce_log.h,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 #ifndef _BOUNCE_LOG_H_INCLUDED_
 #define _BOUNCE_LOG_H_INCLUDED_
@@ -32,8 +32,8 @@
 typedef struct {
     VSTREAM *fp;			/* open file */
     VSTRING *buf;			/* I/O buffer */
-    char    *compat_status;		/* old logfile compatibility */
-    char    *compat_action;		/* old logfile compatibility */
+    char   *compat_status;		/* old logfile compatibility */
+    char   *compat_action;		/* old logfile compatibility */
 } BOUNCE_LOG;
 
 extern BOUNCE_LOG *bounce_log_open(const char *, const char *, int, mode_t);

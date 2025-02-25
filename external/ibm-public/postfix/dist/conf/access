@@ -59,7 +59,7 @@
 #               line that starts with whitespace continues a  logi-
 #               cal line.
 # 
-# EMAIL ADDRESS PATTERNS
+# EMAIL ADDRESS PATTERNS IN INDEXED TABLES
 #        With lookups from indexed files such as DB or DBM, or from
 #        networked tables such as NIS, LDAP or  SQL,  patterns  are
 #        tried in the order as listed below:
@@ -97,7 +97,7 @@
 #        becomes:  user+foo@domain, user@domain, domain, user+foo@,
 #        and user@.
 # 
-# HOST NAME/ADDRESS PATTERNS
+# HOST NAME/ADDRESS PATTERNS IN INDEXED TABLES
 #        With lookups from indexed files such as DB or DBM, or from
 #        networked  tables  such as NIS, LDAP or SQL, the following
 #        lookup patterns are examined in the order as listed:
@@ -349,95 +349,101 @@
 #               recipient(s).  When multiple REDIRECT actions fire,
 #               only the last one takes effect.
 # 
-#               Note:  this action overrides the FILTER action, and
-#               currently overrides all recipients of the  message.
+#               Note  1:  this  action overrides the FILTER action,
+#               and currently overrides all recipients of the  mes-
+#               sage.
+# 
+#               Note 2: a REDIRECT address is subject to canonical-
+#               ization (add missing domain)  but  NOT  subject  to
+#               canonical,  masquerade,  bcc, or virtual alias map-
+#               ping.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        INFO optional text...
 #               Log an informational record with the optional text,
-#               together  with client information and if available,
-#               with helo, sender, recipient and protocol  informa-
+#               together with client information and if  available,
+#               with  helo, sender, recipient and protocol informa-
 #               tion.
 # 
 #               This feature is available in Postfix 3.0 and later.
 # 
 #        WARN optional text...
 #               Log a warning with the optional text, together with
-#               client  information  and  if  available, with helo,
+#               client information and  if  available,  with  helo,
 #               sender, recipient and protocol information.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 # ENHANCED STATUS CODES
-#        Postfix  version  2.3  and  later  support enhanced status
-#        codes as defined in RFC 3463.   When  an  enhanced  status
-#        code  is  specified  in  an access table, it is subject to
-#        modification. The  following  transformations  are  needed
-#        when  the  same  access  table  is  used for client, helo,
-#        sender, or  recipient  access  restrictions;  they  happen
+#        Postfix version 2.3  and  later  support  enhanced  status
+#        codes  as  defined  in  RFC 3463.  When an enhanced status
+#        code is specified in an access table,  it  is  subject  to
+#        modification.  The  following  transformations  are needed
+#        when the same access  table  is  used  for  client,  helo,
+#        sender,  or  recipient  access  restrictions;  they happen
 #        regardless of whether Postfix replies to a MAIL FROM, RCPT
 #        TO or other SMTP command.
 # 
-#        o      When a sender address matches a REJECT action,  the
-#               Postfix  SMTP server will transform a recipient DSN
-#               status (e.g., 4.1.1-4.1.6) into  the  corresponding
+#        o      When  a sender address matches a REJECT action, the
+#               Postfix SMTP server will transform a recipient  DSN
+#               status  (e.g.,  4.1.1-4.1.6) into the corresponding
 #               sender DSN status, and vice versa.
 # 
-#        o      When   non-address  information  matches  a  REJECT
-#               action (such as the HELO command  argument  or  the
-#               client  hostname/address),  the Postfix SMTP server
-#               will transform a sender  or  recipient  DSN  status
-#               into   a  generic  non-address  DSN  status  (e.g.,
+#        o      When  non-address  information  matches  a   REJECT
+#               action  (such  as  the HELO command argument or the
+#               client hostname/address), the Postfix  SMTP  server
+#               will  transform  a  sender  or recipient DSN status
+#               into  a  generic  non-address  DSN  status   (e.g.,
 #               4.0.0).
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
+#        a  description  of regular expression lookup table syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each  pattern  is  a regular expression that is applied to
+#        Each pattern is a regular expression that  is  applied  to
 #        the entire string being looked up. Depending on the appli-
-#        cation,  that  string  is  an  entire  client hostname, an
+#        cation, that string  is  an  entire  client  hostname,  an
 #        entire client IP address, or an entire mail address. Thus,
 #        no  parent  domain  or  parent  network  search  is  done,
-#        user@domain mail addresses are not broken  up  into  their
+#        user@domain  mail  addresses  are not broken up into their
 #        user@ and domain constituent parts, nor is user+foo broken
 #        up into user and foo.
 # 
-#        Patterns are applied in the order as specified in the  ta-
-#        ble,  until  a  pattern  is  found that matches the search
+#        Patterns  are applied in the order as specified in the ta-
+#        ble, until a pattern is  found  that  matches  the  search
 #        string.
 # 
-#        Actions are the same as with indexed  file  lookups,  with
-#        the  additional feature that parenthesized substrings from
+#        Actions  are  the  same as with indexed file lookups, with
+#        the additional feature that parenthesized substrings  from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
 # TCP-BASED TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
 #        Postfix version 2.4.
 # 
-#        Each lookup operation uses the entire query  string  once.
-#        Depending  on  the  application,  that string is an entire
+#        Each  lookup  operation uses the entire query string once.
+#        Depending on the application, that  string  is  an  entire
 #        client hostname, an entire client IP address, or an entire
-#        mail  address.   Thus,  no parent domain or parent network
-#        search is done, user@domain mail addresses are not  broken
-#        up  into  their user@ and domain constituent parts, nor is
+#        mail address.  Thus, no parent domain  or  parent  network
+#        search  is done, user@domain mail addresses are not broken
+#        up into their user@ and domain constituent parts,  nor  is
 #        user+foo broken up into user and foo.
 # 
 #        Actions are the same as with indexed file lookups.
 # 
 # EXAMPLE
-#        The following example uses an indexed file,  so  that  the
-#        order  of  table entries does not matter. The example per-
-#        mits access by the client at address 1.2.3.4  but  rejects
-#        all  other  clients  in 1.2.3.0/24. Instead of hash lookup
-#        tables, some systems use dbm.  Use the  command  "postconf
-#        -m"  to  find  out  what lookup tables Postfix supports on
+#        The  following  example  uses an indexed file, so that the
+#        order of table entries does not matter. The  example  per-
+#        mits  access  by the client at address 1.2.3.4 but rejects
+#        all other clients in 1.2.3.0/24. Instead  of  hash  lookup
+#        tables,  some  systems use dbm.  Use the command "postconf
+#        -m" to find out what lookup  tables  Postfix  supports  on
 #        your system.
 # 
 #        /etc/postfix/main.cf:
@@ -448,11 +454,11 @@
 #            1.2.3   REJECT
 #            1.2.3.4 OK
 # 
-#        Execute the command  "postmap  /etc/postfix/access"  after
+#        Execute  the  command  "postmap /etc/postfix/access" after
 #        editing the file.
 # 
 # BUGS
-#        The  table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
 # 
 # SEE ALSO
 #        postmap(1), Postfix lookup table manager
@@ -461,13 +467,13 @@
 #        transport(5), transport:nexthop syntax
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        SMTPD_ACCESS_README, built-in SMTP server access control
 #        DATABASE_README, Postfix lookup table overview
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

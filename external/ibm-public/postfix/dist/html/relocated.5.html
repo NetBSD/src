@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 RELOCATED(5)                                                      RELOCATED(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        relocated - Postfix relocated table format
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap /etc/postfix/relocated</b>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  optional  <a href="relocated.5.html"><b>relocated</b>(5)</a> table provides the information that is used
        in "user has moved to <i>new</i><b>_</b><i>location</i>" bounce messages.
 
@@ -34,13 +34,13 @@ RELOCATED(5)                                                      RELOCATED(5)
 
        Table lookups are case insensitive.
 
-<b>CASE FOLDING</b>
+<b><a name="case_folding">CASE FOLDING</a></b>
        The  search string is folded to lowercase before database lookup. As of
        Postfix 2.3, the search string is not case folded with  database  types
        such  as  <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both upper and
        lower case.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <b>o</b>      An entry has one of the following form:
@@ -56,7 +56,7 @@ RELOCATED(5)                                                      RELOCATED(5)
        <b>o</b>      A  logical  line  starts  with  non-whitespace text. A line that
               starts with whitespace continues a logical line.
 
-<b>TABLE SEARCH ORDER</b>
+<b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
        With lookups from indexed files such as DB or DBM,  or  from  networked
        tables  such  as  NIS,  LDAP or SQL, patterns are tried in the order as
        listed below:
@@ -73,12 +73,12 @@ RELOCATED(5)                                                      RELOCATED(5)
               Matches  other  addresses  in  <i>domain</i>.  This form has the lowest
               precedence.
 
-<b>ADDRESS EXTENSION</b>
+<b><a name="address_extension">ADDRESS EXTENSION</a></b>
        When a mail address localpart contains the optional recipient delimiter
        (e.g.,  <i>user+foo</i>@<i>domain</i>),  the  lookup  order becomes: <i>user+foo</i>@<i>domain</i>,
        <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and @<i>domain</i>.
 
-<b>REGULAR EXPRESSION TABLES</b>
+<b><a name="regular_expression_tables">REGULAR EXPRESSION TABLES</a></b>
        This section describes how the table lookups change when the  table  is
        given  in  the form of regular expressions or when lookups are directed
        to a TCP-based server. For a description of regular  expression  lookup
@@ -98,7 +98,7 @@ RELOCATED(5)                                                      RELOCATED(5)
        feature that parenthesized substrings from the pattern can be  interpo-
        lated as <b>$1</b>, <b>$2</b> and so on.
 
-<b>TCP-BASED TABLES</b>
+<b><a name="tcp-based_tables">TCP-BASED TABLES</a></b>
        This  section  describes  how the table lookups change when lookups are
        directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
        client/server  lookup  protocol,  see  <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.   This  feature is
@@ -110,10 +110,10 @@ RELOCATED(5)                                                      RELOCATED(5)
 
        Results are the same as with indexed file lookups.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The table format does not understand quoting conventions.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant.   The  text
        below  provides  only  a  parameter  summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more
        details including examples.
@@ -125,8 +125,8 @@ RELOCATED(5)                                                      RELOCATED(5)
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
-              The  network  interface addresses that this mail system receives
-              mail on.
+              The  local  network  interface  addresses  that this mail system
+              receives mail on.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a> ($<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost)</b>
               The list of domains that are delivered via the  $<a href="postconf.5.html#local_transport">local_transport</a>
@@ -137,19 +137,20 @@ RELOCATED(5)                                                      RELOCATED(5)
               and that locally posted mail is delivered to.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
-              The network interface addresses that this mail  system  receives
-              mail on by way of a proxy or network address translation unit.
+              The remote network interface addresses  that  this  mail  system
+              receives  mail  on by way of a proxy or network address transla-
+              tion unit.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, address resolver
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

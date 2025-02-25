@@ -44,10 +44,20 @@ decode:		root
 # SYNOPSIS
 #        newaliases
 # 
+#        postalias -q name [file-type]:[file-name]
+# 
 # DESCRIPTION
-#        The  aliases(5)  table provides a system-wide mechanism to
-#        redirect mail for local recipients. The  redirections  are
-#        processed by the Postfix local(8) delivery agent.
+#        The  optional aliases(5) table (alias_maps) redirects mail
+#        for local recipients. The redirections  are  processed  by
+#        the  Postfix local(8) delivery agent. This table is always
+#        searched with an email address localpart (no  domain  por-
+#        tion).
+# 
+#        This  is  unlike  virtual(5) aliasing (virtual_alias_maps)
+#        which applies to all recipients:  local(8),  virtual,  and
+#        remote, and which is implemented by the cleanup(8) daemon.
+#        That table is often searched with  a  full  email  address
+#        (including domain).
 # 
 #        Normally, the aliases(5) table is specified as a text file
 #        that serves as input  to  the  postalias(1)  command.  The
@@ -133,7 +143,8 @@ decode:		root
 #        :include:/file/name
 #               Mail is sent to  the  destinations  listed  in  the
 #               named file.  Lines in :include: files have the same
-#               syntax as the right-hand side of alias entries.
+#               syntax  as  the  right-hand  side   of   aliases(5)
+#               entries.
 # 
 #               A  destination  can  be  any  destination  that  is
 #               described in this manual page. However, delivery to
@@ -143,12 +154,12 @@ decode:		root
 # 
 # ADDRESS EXTENSION
 #        When alias database search fails, and the recipient local-
-#        part  contains  the  optional  recipient  delimiter (e.g.,
-#        user+foo), the  search  is  repeated  for  the  unextended
+#        part contains  the  optional  recipient  delimiter  (e.g.,
+#        user+foo),  the  search  is  repeated  for  the unextended
 #        address (e.g., user).
 # 
-#        The   propagate_unmatched_extensions   parameter  controls
-#        whether an unmatched address extension  (+foo)  is  propa-
+#        The  propagate_unmatched_extensions   parameter   controls
+#        whether  an  unmatched  address extension (+foo) is propa-
 #        gated to the result of table lookup.
 # 
 # CASE FOLDING
@@ -156,47 +167,52 @@ decode:		root
 #        to lowercase before database lookup.
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
-#        see  regexp_table(5) or pcre_table(5). NOTE: these formats
+#        a  description  of regular expression lookup table syntax,
+#        see regexp_table(5) or pcre_table(5). NOTE: these  formats
 #        do not use ":" at the end of a pattern.
 # 
-#        Each regular expression is applied to  the  entire  search
-#        string.  Thus,  a  search string user+foo is not broken up
+#        Each  regular  expression  is applied to the entire search
+#        string. Thus, a search string user+foo is  not  broken  up
 #        into user and foo.
 # 
-#        Regular expressions are applied in the order as  specified
-#        in  the  table,  until  a regular expression is found that
+#        Regular  expressions are applied in the order as specified
+#        in the table, until a regular  expression  is  found  that
 #        matches the search string.
 # 
-#        Lookup results are the same as with indexed file  lookups.
-#        For  security  reasons there is no support for $1, $2 etc.
+#        Lookup  results are the same as with indexed file lookups.
+#        For security reasons there is no support for $1,  $2  etc.
 #        substring interpolation.
 # 
 # SECURITY
-#        The local(8) delivery agent disallows  regular  expression
-#        substitution  of $1 etc. in alias_maps, because that would
+#        The  local(8)  delivery agent disallows regular expression
+#        substitution of $1 etc. in alias_maps, because that  would
 #        open a security hole.
 # 
-#        The local(8) delivery agent will silently ignore  requests
-#        to  use  the proxymap(8) server within alias_maps. Instead
-#        it will open the table directly.  Before  Postfix  version
-#        2.2,  the  local(8)  delivery  agent will terminate with a
+#        The  local(8) delivery agent will silently ignore requests
+#        to use the proxymap(8) server within  alias_maps.  Instead
+#        it  will  open the table directly.  Before Postfix version
+#        2.2, the local(8) delivery agent  will  terminate  with  a
 #        fatal error.
 # 
 # CONFIGURATION PARAMETERS
-#        The following main.cf parameters are especially  relevant.
-#        The  text  below  provides  only  a parameter summary. See
+#        The  following main.cf parameters are especially relevant.
+#        The text below provides  only  a  parameter  summary.  See
 #        postconf(5) for more details including examples.
 # 
 #        alias_database (see 'postconf -d' output)
-#               The alias databases for local(8) delivery that  are
+#               The  alias databases for local(8) delivery that are
 #               updated with "newaliases" or with "sendmail -bi".
 # 
 #        alias_maps (see 'postconf -d' output)
-#               The  alias  databases  that  are  used for local(8)
-#               delivery.
+#               Optional lookup tables that are searched only  with
+#               an  email  address  localpart  (no domain) and that
+#               apply only to local(8) recipients; this  is  unlike
+#               virtual_alias_maps  that  are often searched with a
+#               full email  address  (including  domain)  and  that
+#               apply  to  all  recipients:  local(8), virtual, and
+#               remote.
 # 
 #        allow_mail_to_commands (alias, forward)
 #               Restrict local(8) mail delivery  to  external  com-

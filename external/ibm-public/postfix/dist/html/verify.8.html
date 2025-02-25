@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 VERIFY(8)                                                            VERIFY(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        verify - Postfix address verification server
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>verify</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="verify.8.html"><b>verify</b>(8)</a>  address  verification server maintains a record of what
        recipient addresses are known to be deliverable or undeliverable.
 
@@ -41,7 +41,7 @@ VERIFY(8)                                                            VERIFY(8)
               status  is  unknown, a probe is sent and an "in progress" status
               is returned.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The address verification server is not security-sensitive. It does  not
        talk  to  the network, and it does not talk to local users.  The verify
        server can run chrooted at fixed low privilege.
@@ -58,10 +58,10 @@ VERIFY(8)                                                            VERIFY(8)
        directory  is  redirected  to  the  Postfix-owned <b><a href="postconf.5.html#data_directory">data_directory</a></b>, and a
        warning is logged.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        Address verification probe messages add additional traffic to the  mail
        queue.    Recipient   verification  may  cause  an  increased  load  on
        down-stream servers in the case of a dictionary attack or  a  flood  of
@@ -72,7 +72,7 @@ VERIFY(8)                                                            VERIFY(8)
        an  end and human intervention is needed. This violates a basic Postfix
        principle.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are not picked up automatically, as  <a href="verify.8.html"><b>verify</b>(8)</a>  pro-
        cesses are long-lived. Use the command "<b>postfix reload</b>" after a config-
        uration change.
@@ -80,7 +80,7 @@ VERIFY(8)                                                            VERIFY(8)
        The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
-<b>PROBE MESSAGE CONTROLS</b>
+<b><a name="probe_message_controls">PROBE MESSAGE CONTROLS</a></b>
        <b><a href="postconf.5.html#address_verify_sender">address_verify_sender</a> ($<a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a>)</b>
               The  sender address to use in address verification probes; prior
               to Postfix 2.5 the default was "postmaster".
@@ -91,7 +91,7 @@ VERIFY(8)                                                            VERIFY(8)
               The time  between  changes  in  the  time-dependent  portion  of
               address verification probe sender addresses.
 
-<b>CACHE CONTROLS</b>
+<b><a name="cache_controls">CACHE CONTROLS</a></b>
        <b><a href="postconf.5.html#address_verify_map">address_verify_map</a> (see 'postconf -d' output)</b>
               Lookup table for persistent address verification status storage.
 
@@ -120,7 +120,7 @@ VERIFY(8)                                                            VERIFY(8)
               The amount of time between <a href="verify.8.html"><b>verify</b>(8)</a> address verification  data-
               base cleanup runs.
 
-<b>PROBE MESSAGE ROUTING CONTROLS</b>
+<b><a name="probe_message_routing_controls">PROBE MESSAGE ROUTING CONTROLS</a></b>
        By  default, probe messages are delivered via the same route as regular
        messages.  The following parameters can be used  to  override  specific
        message routing mechanisms.
@@ -163,7 +163,7 @@ VERIFY(8)                                                            VERIFY(8)
               Overrides the <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>  parameter
               setting for address verification probes.
 
-<b>SMTPUTF8 CONTROLS</b>
+<b><a name="smtputf8_controls">SMTPUTF8 CONTROLS</a></b>
        Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 
        <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
@@ -177,7 +177,7 @@ VERIFY(8)                                                            VERIFY(8)
               IDNA2008,  when  converting UTF-8 domain names to/from the ASCII
               form that is used for DNS lookups.
 
-<b>MISCELLANEOUS CONTROLS</b>
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
@@ -211,20 +211,20 @@ VERIFY(8)                                                            VERIFY(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="cleanup.8.html">cleanup(8)</a>, enqueue Postfix message
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, address verification howto
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        This service was introduced with Postfix version 2.1.
 
 <b>AUTHOR(S)</b>

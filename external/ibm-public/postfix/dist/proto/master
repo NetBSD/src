@@ -186,21 +186,38 @@
 #	the \fBdebugger_command\fR variable in the main.cf
 #	configuration file.  See DEBUG_README for hints and tips.
 # .IP "\fB-o { \fIname\fR = \fIvalue\fB }\fR (long form, Postfix >= 3.0)"
+#	Override the named main.cf configuration parameter. The
+#	parameter value can refer to other parameters as \fI$name\fR
+#	etc., just like in main.cf.  See \fBpostconf\fR(5) for
+#	syntax.
+# .sp
+#	The "long form" supports whitespace in parameter values.
+#	Whitespace after the outer "{", around "=", and before the
+#	outer "}" is ignored. Example:
+# .sp
+# .nf
+#	/etc/postfix/master.cf:
+#	    submission inet .... smtpd
+#		-o { smtpd_xxx_yyy = text with whitespace... }
+# .fi
+# .sp
+#	NOTE: Over-zealous use of parameter overrides makes the
+#	Postfix configuration hard to understand and maintain.  At
+#	a certain point, it might be easier to configure multiple
+#	instances of Postfix, instead of configuring multiple
+#	personalities via master.cf.
 # .IP "\fB-o \fIname\fR=\fIvalue\fR (short form)"
 #	Override the named main.cf configuration parameter. The
 #	parameter value can refer to other parameters as \fI$name\fR
 #	etc., just like in main.cf.  See \fBpostconf\fR(5) for
 #	syntax.
 # .sp
-#	NOTE 1: With the "long form" shown above, whitespace
-#	after "{", around "=", and before "}" is ignored, and
-#	whitespace within the parameter value is preserved.
-# .sp
-#	NOTE 2: with the "short form" shown above, do not specify
-#	whitespace around the "=" or in
+#	The "short form" does not support whitespace around the
+#	"=" or in
 #	parameter values. To specify a parameter value that contains
 #	whitespace, use the long form described above, or use commas
-#	instead of spaces, or specify the value in main.cf. Example:
+#	instead of spaces if the parameter supports that, or specify
+#	the value in main.cf. Example:
 # .sp
 # .nf
 #	/etc/postfix/master.cf:
@@ -211,7 +228,7 @@
 #	    submission_xxx_yyy = text with whitespace...
 # .fi
 # .sp
-#	NOTE 3: Over-zealous use of parameter overrides makes the
+#	NOTE: Over-zealous use of parameter overrides makes the
 #	Postfix configuration hard to understand and maintain.  At
 #	a certain point, it might be easier to configure multiple
 #	instances of Postfix, instead of configuring multiple
@@ -219,10 +236,13 @@
 # .IP \fB-v\fR
 #	Increase the verbose logging level. Specify multiple \fB-v\fR
 #	options to make a Postfix daemon process increasingly verbose.
-# .IP "Other command-line arguments"
-#	Specify "{" and "}" around command arguments that contain
-#	whitespace (Postfix 3.0 and later). Whitespace
-#	after "{" and before "}" is ignored.
+# .IP "\fBCommand-line arguments that start with {\fR"
+# .IP "\fBCommand-line arguments that contain whitespace\fR"
+# .IP "\fBCommand-line arguments that must be empty\fR"
+#	Specify "{" and "}" around such arguments (Postfix 3.0 and
+#	later). The outer "{" and "}" will be removed, together
+#	with any leading or trailing whitespace in the remaining
+#	text.
 # SEE ALSO
 #	master(8), process manager
 #	postconf(5), configuration parameters

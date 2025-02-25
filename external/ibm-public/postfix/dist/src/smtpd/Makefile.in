@@ -53,20 +53,8 @@ smtpd_check: smtpd_check.o smtpd_check.c $(SMTPD_CHECK_OBJ) $(LIBS)
 		$(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk *.db *.out *.tmp
-	rm -rf printfck
 
 tidy:	clean
 
@@ -75,7 +63,8 @@ broken-tests: smtpd_check_test smtpd_check_test2
 tests:	smtpd_acl_test smtpd_addr_valid_test smtpd_exp_test \
 	smtpd_token_test smtpd_check_test4 smtpd_check_dsn_test \
 	smtpd_check_backup_test smtpd_dnswl_test smtpd_error_test \
-	smtpd_server_test smtpd_nullmx_test smtpd_dns_filter_test
+	smtpd_server_test smtpd_nullmx_test smtpd_dns_filter_test \
+	smtpd_deprecated_test
 
 root_tests:
 
@@ -114,7 +103,8 @@ smtpd_addr_valid_test: smtpd_check smtpd_addr_valid.in smtpd_addr_valid.ref
 
 # This requires that the DNS server can query porcupine.org.
 
-ADDRINFO_FIX = sed 's/No address associated with hostname/hostname nor servname provided, or not known/'
+ADDRINFO_FIX = sed -e 's/No address associated with hostname/hostname nor servname provided, or not known/' \
+		-e 's/Name or service not known/hostname nor servname provided, or not known/'
 
 smtpd_exp_test: smtpd_check smtpd_exp.in smtpd_exp.ref
 	$(SHLIB_ENV) $(VALGRIND) ../postmap/postmap hash:smtpd_check_access
@@ -168,6 +158,11 @@ smtpd_dnswl_test: smtpd_check smtpd_dnswl.in smtpd_dnswl.ref
 smtpd_error_test: smtpd_check smtpd_error.in smtpd_error.ref
 	$(SHLIB_ENV) $(VALGRIND) ./smtpd_check <smtpd_error.in >smtpd_check.tmp 2>&1
 	diff smtpd_error.ref smtpd_check.tmp
+	rm -f smtpd_check.tmp
+
+smtpd_deprecated_test: smtpd_check smtpd_deprecated.in smtpd_deprecated.ref
+	$(SHLIB_ENV) $(VALGRIND) ./smtpd_check <smtpd_deprecated.in >smtpd_check.tmp 2>&1
+	diff smtpd_deprecated.ref smtpd_check.tmp
 	rm -f smtpd_check.tmp
 
 depend: $(MAKES)
@@ -232,6 +227,7 @@ smtpd.o: ../../include/rec_type.h
 smtpd.o: ../../include/recipient_list.h
 smtpd.o: ../../include/record.h
 smtpd.o: ../../include/resolve_clnt.h
+smtpd.o: ../../include/sendopts.h
 smtpd.o: ../../include/smtp_stream.h
 smtpd.o: ../../include/smtputf8.h
 smtpd.o: ../../include/sock_addr.h
@@ -293,6 +289,7 @@ smtpd_chat.o: ../../include/nvtable.h
 smtpd_chat.o: ../../include/post_mail.h
 smtpd_chat.o: ../../include/rec_type.h
 smtpd_chat.o: ../../include/record.h
+smtpd_chat.o: ../../include/sendopts.h
 smtpd_chat.o: ../../include/smtp_reply_footer.h
 smtpd_chat.o: ../../include/smtp_stream.h
 smtpd_chat.o: ../../include/smtputf8.h

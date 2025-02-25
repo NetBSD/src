@@ -1,4 +1,4 @@
-/*	$NetBSD: load_file.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: load_file.h,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 #ifndef LOAD_FILE_H_INCLUDED_
 #define LOAD_FILE_H_INCLUDED_
@@ -16,7 +16,7 @@
  /*
   * External interface.
   */
-typedef void (*LOAD_FILE_FN)(VSTREAM *, void *);
+typedef void (*LOAD_FILE_FN) (VSTREAM *, void *);
 
 extern void load_file(const char *, LOAD_FILE_FN, void *);
 

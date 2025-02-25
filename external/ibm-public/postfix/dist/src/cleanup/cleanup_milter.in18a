@@ -1,0 +1,8 @@
+#verbose on
+open test-queue-file18a.tmp
+#
+# Update a prepended header. 
+#
+upd_header 1 Header-Label new-header-value
+
+close

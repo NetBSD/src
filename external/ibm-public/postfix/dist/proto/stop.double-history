@@ -12,7 +12,6 @@
  Fix by Viktor Dukhovni Files tls tls h tls tls_dane c 
  Discovered by Benny Pedersen File postscreen postscreen c 
  proto postconf proto src tlsproxy tlsproxy c src smtpd smtpd c 
- proto postconf proto src tlsproxy tlsproxy c src smtpd smtpd c 
  src tls tls h src tls tls_proxy_client_misc c src tls tls_misc c 
  src global mail_params h src smtp smtp c 
  attacks Fix by Viktor Dukhovni Files tls tls h tls_client c 
@@ -25,18 +24,145 @@
  arguments Files src dns dns h src dns dns_rr_eq_sa c 
  only a subset of all arguments Files src dns dns h 
  global mail_params h smtp smtp c smtpd smtpd c tls tls_misc c 
- global mail_params h smtp smtp c smtpd smtpd c tls tls_misc c 
  tls tls_proxy_client_scan c tls tls_proxy h tlsproxy tlsproxy c 
- smtp smtp c smtpd smtpd c tls tls_misc c 
  smtp smtp c smtpd smtpd c tls tls_misc c 
 proto  proto SASL_README html proto SQLITE_README html 
  proto postconf proto global mail_params h smtp smtp c 
  smtpd smtpd c tls tls_misc c tls tls_proxy_client_misc c 
  tls tls_proxy h tlsproxy tlsproxy c 
  postfix postfix c postlog postlog c 
- postfix postfix c postlog postlog c 
  util net_mask_top hc smtpd smtpd c smtpd smtpd_peer c 
  util inet_prefix_top hc smtpd smtpd c smtpd smtpd_peer c 
  File smtp smtp h 
  manpage File postscreen postscreen c 
  Files postconf postconf h postconf postconf_dbms c 
+proto  proto ADDRESS_REWRITING_README html 
+ proto postconf proto proto ADDRESS_REWRITING_README html 
+ cleanup cleanup c local local c smtpd smtpd c 
+ postfix postfix c 
+ aliasing Files proto aliases proto virtual postfix postfix c 
+proto  proto aliases proto virtual proto ADDRESS_REWRITING_README html 
+ master master c postlog postlog c postlogd postlogd c 
+ proto postconf proto proto aliases proto virtual 
+ posttls finger posttls finger c smtp smtp c smtp smtp_proto c 
+ tls tls_client c tls tls h tls tls_misc c 
+ tls tls_proxy h tls tls_server c tlsproxy tlsproxy c 
+ Cleanup removed some the the instances Files 
+ clients Files posttls finger posttls finger c smtp smtp c 
+ smtp smtp c smtp smtp_proto c tls tls_client c tls tls h 
+ smtp smtp c smtpd smtpd c tls tls_client c tls tls h 
+ smtp smtp_proto c tls tls h tls tls_proxy_client_misc c 
+ tls tls_server c tlsproxy tlsproxy c 
+ tlsproxy tlsproxy c 
+ proto postconf proto smtp smtp c smtpd smtpd c 
+ pipelining before the server greeting File smtpd smtpd c 
+ before the server greeting File smtpd smtpd c 
+ global mail_params h smtpd smtpd c proto postconf proto 
+ Typo fix by Trent W Buck Files proto postconf proto proto stop 
+ smtp smtp c smtp smtp h smtp smtp_params c smtp smtp_proto c 
+ smtp smtp_tls_policy c smtpd smtpd c smtpd smtpd_check c 
+ tls tls h tls tls_client c tls tls_dane c tls tls_fprint c 
+ reported by Serg File smtp smtp h 
+ smtp lmtp_params c smtp smtp c smtp smtp_params c 
+ plaintext Problem reported by Serg File smtp smtp h 
+ cleanup cleanup c cleanup cleanup_init c proto postconf proto 
+ smtpd smtpd c 
+ proto postconf proto postscreen postscreen c 
+ global maillog_client c master master c smtp smtp c 
+ src postalias postalias c src postmap postmap c 
+ src postalias postalias c src postmap postmap c 
+ src smtpd smtpd c src smtpd smtpd_check c 
+ not proxymap or proxywrite File proxymap proxymap c 
+ still has its all zero SIZE record File postcat postcat c 
+ manpage text File smtp smtp c 
+ manpage text Files smtp smtp c global mail_proto h 
+ File proxymap proxymap c 
+ on process name Files smtp smtp c global mail_proto h 
+ client process name File proxymap proxymap c 
+ available Files local command c local local c 
+ ID if available File pipe pipe c 
+ global smtp_stream h smtpd smtpd c 
+ global smtp_stream c global smtp_stream h smtpd smtpd c 
+ log the helo mail and rcpt information Files smtpd smtpd c 
+ LF LF or LF CR LF before responding This increases
+ smtpd smtpd c global smtp_stream hc global cleanup_user h 
+ smtpd smtpd c smtpd smtpd_check c 
+ keep reading message content after an unexpected LF LF 
+ forms Files proto postconf proto smtpd smtpd c 
+ CR LF CR CR LF File global smtp_stream c 
+ CR LF CR CR LF There is no smuggling vulnerability
+ sequence mail systems send CR LF CR CR LF instead 
+ global mail_params h cleanup cleanup c cleanup cleanup_message c 
+ Files smtpd smtpd c proto postconf proto RELEASE_NOTES 
+ stable releases Files global smtp_stream hc smtpd smtpd c
+ Files global smtp_stream hc smtpd smtpd c 
+ Files smtpd smtpd c proto postconf proto 
+ names Files smtpd smtpd hc 
+ or access control limitations Files smtpd smtpd hc 
+ spam the log with a warning message File tlsmgr tlsmgr c 
+ Cleanup tlsmgr c fix 20240124 File tlsmgr tlsmgr c 
+ MX or SRV records File smtp smtp c 
+ a list of comma separated names Files smtpd smtpd hc 
+ dnsblog dnsblog c postkick postkick c postlock postlock c 
+ postdrop postdrop c postsuper postsuper c sendmail sendmail c 
+ postlogd postlogd c 
+ qmgr qmgr c qmqpd qmqpd c trivial rewrite trivial rewrite c 
+ strategies File smtp smtp c 
+ postconf postconf c postconf postconf_dbms c postconf postconf h 
+ postconf postconf c postconf postconf_unused c 
+ postfix start start fg check reload status Files 
+ Files postconf postconf c postconf postconf_unused c 
+ the commands postfix start start fg check reload or
+ status Files postconf postconf c postconf postconf_dbms c 
+ postconf postconf h conf postfix script conf post install 
+ postconf postconf c postconf postconf_dbms c 
+ File tlsmgr tlsmgr c 
+ restrictions Files dns dns h dns dns_lookup c dns dns_rr c 
+ systems 6 bytes for LP64 File dns dns h 
+ xxfi_unknown return values File smtpd smtpd c 
+ or unimplemented commands File smtpd smtpd c 
+proto  proto mysql_table proto pgsql_table proto ldap_table 
+ File pickup pickup c 
+ a domain File postalias postalias c 
+ File spawn spawn c 
+ an unknown or unimplemented command File smtpd smtpd c 
+ inside more consistent Files proto master pipe pipe c 
+ unimplemented commands in the SMTP server File smtpd smtpd c 
+ cleanup cleanup h cleanup cleanup_extracted c 
+ File postcat postcat c 
+ Files src tls tls h src tls tls_dh c src tls tls_misc c 
+ proto TLSRPT_README html proto postconf proto smtp smtp c 
+ proto aliases cleanup cleanup c local local c smtpd smtpd c 
+ bounce bounce_one_service c cleanup cleanup c 
+ dns dns h dns dns_lookup c dns dns_rr_filter c dns dns_sec c 
+ local command c master master c master master h 
+ pipe pipe c postfix postfix c postscreen postscreen_dnsbl c 
+ qmgr qmgr_entry c qmqpd qmqpd_peer c smtp smtp h 
+ Piekert File tlsproxy tlsproxy c
+ dns dns h examples smtpd policy README SPF html index html 
+ postfix postfix c proto ADDRESS_CLASS_README html 
+proto  proto socketmap_table qmqpd qmqpd c tls tls_misc c 
+ proto socketmap_table qmqpd qmqpd c tls tls_misc c 
+ a dependency for html html File html Makefile in 
+ master dgram_server c master mail_server h postlogd postlogd c 
+ reload etc File spawn spawn c 
+ proto postconf proto cleanup cleanup c cleanup cleanup_init c 
+ logging to the standard error stream File postlog postlog c 
+ Files mantools postlink proto postconf proto cleanup cleanup c 
+ many errors I O timeout lost connection File smtpd smtpd c 
+ that is unknown or known but disabled File smtpd smtpd c 
+proto  proto socketmap_table 
+ Files bounce bounce c bounce bounce_notify_service c 
+ cleanup cleanup h cleanup cleanup_addr c cleanup cleanup_api c 
+ local forward c local local c local local h oqmgr qmgr h 
+ pickup pickup c qmgr qmgr h qmgr qmgr_active c 
+ qmgr qmgr_deliver c qmgr qmgr_message c qmqpd qmqpd c 
+ smtp smtp_proto c smtpd smtpd c verify verify c 
+ operations Files cleanup cleanup h cleanup cleanup_message c 
+ proto postconf proto pipe pipe c 
+ bounce bounce c bounce bounce_notify_util c cleanup cleanup c 
+ cleanup cleanup_message c smtp smtp c smtp smtp_connect c 
+ Documentation edited for clarity Files pipe pipe c 
+ global mail_params h smtpd smtpd c 
+ global mail_params h proto postconf proto smtp smtp c 
+ proto postconf proto proto TLS_README html 

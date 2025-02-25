@@ -8,7 +8,7 @@ Despite a serious lack of sex-appeal, email via UUCP over TCP is a practical
 option for sites without permanent Internet connections, and for sites without
 a fixed IP address. For first-hand information, see the following guides:
 
-  * Jim Seymour's guide for using UUCP over TCP at http://jimsun.LinxNet.com/
+  * Jim Seymour's guide for using UUCP over TCP at https://jimsun.LinxNet.com/
     jdp/uucp_over_tcp/index.html,
   * Craig Sanders's guide for SSL-encrypted UUCP over TCP using stunnel at
     http://taz.net.au/postfix/uucp/.

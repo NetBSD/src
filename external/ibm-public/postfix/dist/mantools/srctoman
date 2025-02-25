@@ -63,7 +63,9 @@ do
 	/^NAME[ 	]*$/{
 	    N
 	    s/^.*\n'"$B"'[ 	]*//
+	    s/[ 	]*$//
 	    h
+	    s/,.*\( [0-9][^ ]*\)$/\1/
 	    y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/
 	    s/^.*$/.TH & '"$SECT"'\
 .ad\

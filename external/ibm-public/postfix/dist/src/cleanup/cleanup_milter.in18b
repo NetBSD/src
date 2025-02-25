@@ -1,0 +1,8 @@
+#verbose on
+open test-queue-file18b.tmp
+#
+# Delete a prepended header. 
+#
+del_header 1 Header-Label
+
+close

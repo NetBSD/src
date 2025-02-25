@@ -2,9 +2,162 @@ Wish list:
 
 	Things to do before the stable release:
 
+	For the stable releases, make the spawn_command fix conditional
+	on compatibility_level.
+
 	make pre-release-check, HTML validator check.
 
 	Disable -DSNAPSHOT and -DNONPROD in makedefs.
+
+	Add a mail_version chek to each pluggable database client.
+
+	Unify conf/postfix-wrapper and proto/postfix-wrapper (make
+	one a dependency of the other). They have diverged.
+
+	Should the SMTP client log the queue ID with the TLS status?
+
+	relay_recipient_maps empty should default to 'no valid
+	recipients'. Subject to compatibility level.
+
+	Replace static result buffers with per-instance buffers in
+	dict_unix.c, dict_ni*c.
+
+	The Milter 'quarantine' action should be reported with a
+	call-back function, instead of setting the Milter default
+	reply. However, we still need the existing 'reply' based
+	channel to support "milter_default_action = quarantine".
+
+	In pipe_command() and spawn_command(), the child process
+	should call initgroups() to corrrectly the access rights
+	of interactive shell users.
+
+	relay_recipient_maps empty should default to 'no valid
+	recipients'. Subject to compatibility level.
+
+	In mantools/postlink, allow newline etc. in "<a href".
+
+	Add an option for a TLSRPT built-in JSON generator. This
+	would simplify TLSRPT adoption by eliminating a build-time
+	and run-time dependency on the libtlsrpt client library.
+	Prior art: this approach was previously used to implement
+	Postfix Milter support.
+
+	Make TLSRPT support pluggable (postfix-tlsrpt.so, like
+	postfix-ldap.so, postfix-mysql.so and so on). This avods a
+	hard install-time dependency on sys4 libtlsrpt. The sys4
+	code would still be a required build-time dependency, but
+	it would become an optional install-time dependency.
+
+	Add smtp_tlsrpt_allow_list feature (default: static:all) to limit
+	the domains for which Postfix generates TLSRPT daily summaries.
+
+	Rename TLS_SESS_STATE.rpt_reported to skip_tlsrpt_report.
+
+	Add unit tests for smtp_tlsrpt.c, tlstrpd_wrapper.c, ...
+
+	Add sample master.cf entries for dovecot-lmtp and dovecot-pipe
+	with flags=DORX as appropriate, and single-recipient hints.
+
+	Add unit test for extpar.c
+
+	Add tests for Message-ID extraction in the cleanup daemon.
+
+	When debug logging is enabled, dict_db_open() logs a newline
+	character after the version info.
+
+	postsuper fails to write the maillog file while Postfix is
+	down (the fallback to 'direct write' happens after an
+	irreversible set_ugid() call). Possible solution: figure
+	out if we can open the maillog file before dropping privileges.
+
+	The postdrop code should be more explicit about what
+	attrributes it will pass through. rec_attr_map() is not
+	supposed to be an approver.
+
+	Many master.cf services don't expect wakeup calls, resulting
+	in weird warnings. Maybe the master daemon could signal the
+	wakeup intent through a child process command-line option,
+	so that the child can log "do not enable wakeups". Or the
+	client could announce to the xxx_server-main() skeleton
+	whether it wants wakeups. Or the child process could
+	special-case messages that consist only of a "W". We're not
+	using FIFOs anymore, and trigger servers could use a proper
+	(attribute, value) protocol.
+
+	The Sendmail feature _FFR_MDS_NEGOTIATE allows negotiating
+	a larger milter command data size limit. To be investigated:
+	what parts of the protocol are included in this limit when
+	sending a message header (header name, protocol formatting,
+	etc.) and how this will interact with the Postfix built-in
+	header_size_limit (default: 102400).
+
+	SEND_ATTR_FUNC should send the name of the object being sent,
+	so that SCAN_ATTR_FUNC can check it.
+
+	Send XFORWARD attributes in the SMTPD policy delegation
+	protocol.
+
+	With "smtpd_reject_unlisted_mumble = no" the Postfix SMTP
+	server should still reject recipients that resolve to the
+	error or retry transport.
+
+	bounce/annotate.sh should include the 'QUICK INSTRUCTIONS'
+	into the bounce.cf.default file.
+
+	Should smtp_tls_wrappermode have an SMTP_TLS_POLICY override?
+
+	The postsceen NON-SMTP test should log the command in
+	the same format as the BARE NEWLINE and PREGREET tests.
+	Consider logging the entire unadulterated command line.
+
+	"postconf -d" should not complain about a missing master.cf
+	file.
+
+	qmgr_message.c should do the right thing when the
+	double_bounce_sender value contains @.
+
+	migrate rbl -> dnsbl
+
+	migrate smtpd_sasl_tls_security_options to "noanonymous"
+	(drop the "noplaintext" part).
+
+	Safety: restrict sender-dependent features to, for example,
+	mail from an authorized client (SASL, TLS, or IP address).
+	If this becomes the default then it needs to be subject to
+	comptibility_level.
+
+	Make some of the message editing features available for
+	non-Milter configurations (for example, set envelope.from
+	from primary header.from). 
+
+	The postconf command needs more mongodb tests.
+
+	The mongodb client needs tests.
+
+	Change Postfix SMTP debug logging to display the entire
+	input, instead of stopping at the first null byte.
+
+	SRS-friendly envelope.from output rewrite in the SMTP client.
+	TBD: before or after smtp_generic_maps. The two mechanisms
+	are unlikely to be useful in combination.
+
+	Cleanup: In documentation, replace DBM with LMDB (*.lmdb).
+
+	Cleanup: Is it time to remove SDBM support? Its iterator
+	was unusable, when the SDBM client was adopted in Postfix
+	2.2.
+
+	In documentation and configuration file examples, replace
+	IPv4 address prefixes from Cloud9 with 192.168.* from RFC
+	1918, and replace IPv6 address prefixes with unique local
+	IPv6 address prefixes fd00:* from RFC 4193.
+
+	Add a pre-release check for '.' instead of ','. Generalize
+	from grep '[a-zA-Z0-9]\.  *[a-z]' proto/*|egrep -v
+	'i\.e\.|etc\.|e\.g\.|\.  *[a-zA-Z0-9]*\('
+
+	Update DKIM examples for signing with the benefits of forced
+	MIME converison with "force_mime_input_conversion = yes"
 
 	Scan Postfix code with github.com/googleprojectzero/weggli
 	(depends on "rust").
@@ -14,15 +167,15 @@ Wish list:
 
 	Check out https://github.com/milter-manager/milter-manager/
 
-	Check out https://cutter.osdn.jp/ (C/C++ unit tests).
+	Check out https://github.com/clear-code/cutter
+	(https://cutter.osdn.jp/) for C/C++ unit tests.
 
-	Follow https://github.com/vdukhovni/postfix/commits/rpk
+	postscreen hints to smtpd to suppress the server greeting
+	after a remote SMTP client has pregreeted. This makes the
+	PIPELINING detection more meaningful.
 
 	Multi-recipient support in sender/recipient_bcc_maps and
 	always_bcc.
-
-	Test for dns_rr_copy() + dns_rr_free().
-
 
 	mail_conf_xxx supprt for non-negative numbers (i.e. 
 	numbers with a lower bound of zero).

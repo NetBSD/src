@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postfix-tls - Postfix TLS management
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b><a href="postfix-tls.1.html">postfix tls</a></b> <i>subcommand</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  "<b><a href="postfix-tls.1.html">postfix  tls</a></b> <i>subcommand</i>" feature enables opportunistic TLS in the
        Postfix SMTP client or server, and manages Postfix SMTP server  private
        keys and certificates.
@@ -148,7 +148,7 @@ POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
               The  default  <i>keyfile</i>  list  consists of the two supported algo-
               rithms <b>rsa</b> and <b>ecdsa</b>.
 
-<b>AUXILIARY COMMANDS</b>
+<b><a name="auxiliary_commands">AUXILIARY COMMANDS</a></b>
        <b>all-default-client</b>
               Exit with status 0 (success) if all SMTP client TLS settings are
               at their default values.  Otherwise, exit with a non-zero status.
@@ -165,7 +165,7 @@ POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
               <b><a href="postfix-tls.1.html">postfix tls</a> all-default-server</b> &amp;&amp;
                       <b><a href="postfix-tls.1.html">postfix tls</a> enable-server</b>
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The "<b><a href="postfix-tls.1.html">postfix tls</a></b> <i>subcommand</i>" feature reads  or  updates  the  following
        configuration parameters.
 
@@ -221,17 +221,17 @@ POSTFIX-TLS(1)                                                  POSTFIX-TLS(1)
               The  external  entropy source for the in-memory <a href="tlsmgr.8.html"><b>tlsmgr</b>(8)</a> pseudo
               random number generator (PRNG) pool.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="master.8.html">master(8)</a> Postfix master program
        <a href="postfix.1.html">postfix(1)</a> Postfix administrative interface
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="TLS_README.html">TLS_README</a>, Postfix TLS configuration and operation
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The "<b><a href="postfix-tls.1.html">postfix tls</a></b>" command was introduced with Postfix version 3.1.
 
 <b>AUTHOR(S)</b>

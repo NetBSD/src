@@ -113,7 +113,7 @@
 #	POSTCONF=$command_directory/postconf
 #	POSTFIX=$command_directory/postfix
 #	instance_dirs=\`$POSTCONF -h multi_instance_directories |
-#			sed 's/,/ /'\` || exit 1
+#			sed 'y/,/ /'\` || exit 1
 #
 #	err=0
 #	for dir in $config_directory $instance_dirs

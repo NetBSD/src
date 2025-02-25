@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -32,7 +32,7 @@ can be found in the Postfix source code, in the directory
 examples/smtpd-policy. </p>
 
 <p> Another example of policy delegation is the SPF policy server
-at <a href="https://web.archive.org/web/20190221142057/http://www.openspf.org/Software">https://web.archive.org/web/20190221142057/http://www.openspf.org/Software</a>.  </p>
+at <a href="http://www.open-spf.org/Software/">http://www.open-spf.org/Software/</a>  </p>
 
 <p> Policy delegation is now the preferred method for adding policies
 to Postfix. It's much easier to develop a new feature in few lines
@@ -480,7 +480,7 @@ different default actions with different SMTP status codes or text:
 4         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 5         <a href="postconf.5.html#check_policy_service">check_policy_service</a> {
 6           inet:host:port1, 
-7           { default_action = 451 4.3.5 See <a href="http://www.example.com/support1">http://www.example.com/support1</a> }
+7           { default_action = 451 4.3.5 See <a href="https://www.example.com/support1">https://www.example.com/support1</a> }
 8         } 
 9         ...
 </pre>
@@ -489,10 +489,12 @@ different default actions with different SMTP status codes or text:
 <h2><a name="greylist">Example: greylist policy server</a></h2>
 
 <p> Greylisting is a defense against junk email that is described at
-<a href="http://www.greylisting.org/">http://www.greylisting.org/</a>. The idea was discussed on the
+<a href="https://www.greylisting.org/">https://www.greylisting.org/</a>. The idea was discussed on the
 postfix-users mailing list <a
-href="http://archives.neohapsis.com/archives/postfix/2002-03/0846.html">
-one year before it was popularized</a>. </p>
+href="https://marc.info/?l=postfix-users&m=101594914212564&w=2">
+one year before it was popularized</a> (<a
+href="http://archives.neohapsis.com/archives/postfix/2002-03/0846.html">alternative
+version</a>). </p>
 
 <p> The file examples/smtpd-policy/greylist.pl in the Postfix source
 tree implements a simplified greylist policy server. This server

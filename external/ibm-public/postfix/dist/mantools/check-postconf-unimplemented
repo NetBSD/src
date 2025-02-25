@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# Reports parameters that are documented in the postconf(5 mapage),
+# but not implemented according to postconf(1) output.
+
+LANG=C; export LANG
+LC_ALL=C; export LC_ALL
+
+bin/postconf mail_version >/dev/null || exit 1
+
+trap 'rm -f have.tmp want.tmp stoplist.tmp 2>/dev/null' 0 1 2 3 15
+
+# Extract the implemented parameter names from postconf(1) output, using
+# the stock configurations.
+
+bin/postconf -dHc conf | sort >have.tmp || exit 1
+
+# Build a stoplist for postconf(5) output.
+
+# Eliminate dynamic parameter names for delivery agents. These are
+# documented as transport_mumble.
+
+cat <<EOF >stoplist.tmp
+transport_delivery_slot_cost
+transport_delivery_slot_discount
+transport_delivery_slot_loan
+transport_destination_concurrency_failed_cohort_limit
+transport_destination_concurrency_limit
+transport_destination_concurrency_negative_feedback
+transport_destination_concurrency_positive_feedback
+transport_destination_rate_delay
+transport_destination_recipient_limit
+transport_extra_recipient_limit
+transport_initial_destination_concurrency
+transport_minimum_delivery_slots
+transport_recipient_limit
+transport_recipient_refill_delay
+transport_recipient_refill_limit
+transport_transport_rate_delay
+EOF
+
+# Eliminate other per-service transport_mumble parameters.
+
+cat <<EOF >>stoplist.tmp
+transport_time_limit
+EOF
+
+# Eliminate obsolete parameters. These are no longer implemented, but
+# still documented.
+
+cat >>stoplist.tmp <<'EOF'
+authorized_verp_clients
+enable_errors_to
+extract_recipient_limit
+fallback_relay
+lmtp_cache_connection
+lmtp_per_record_deadline
+postscreen_blacklist_action
+postscreen_dnsbl_ttl
+postscreen_dnsbl_whitelist_threshold
+postscreen_whitelist_interfaces
+sender_based_routing
+smtp_per_record_deadline
+smtp_skip_4xx_greeting
+smtp_tls_cipherlist
+smtpd_per_record_deadline
+smtpd_sasl_application_name
+smtpd_tls_cipherlist
+tls_dane_digest_agility
+tls_dane_trust_anchor_digest_enable
+tlsproxy_client_level
+tlsproxy_client_policy
+tlsproxy_tls_session_cache_timeout
+virtual_maps
+EOF
+
+# Extract parameters from the postconf(5) manpage.
+
+awk '/^%PARAM/ { print $2 }' proto/postconf.proto | 
+	grep -F -vx -f stoplist.tmp | sort > want.tmp || exit 1
+
+# Report names from the postconf(5) manpage that have no implementation.
+
+comm -23 want.tmp have.tmp

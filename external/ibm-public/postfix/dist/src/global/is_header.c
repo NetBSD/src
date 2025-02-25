@@ -1,4 +1,4 @@
-/*	$NetBSD: is_header.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: is_header.c,v 1.1.1.2 2025/02/25 19:11:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,7 @@ ssize_t is_header_buf(const char *str, ssize_t str_len)
      * XXX Don't run off the end in case some non-standard iscntrl()
      * implementation considers null a non-control character...
      */
-    for (len = 0, state = INIT, cp = CU_CHAR_PTR(str); /* see below */; cp++) {
+    for (len = 0, state = INIT, cp = CU_CHAR_PTR(str); /* see below */ ; cp++) {
 	if (str_len != IS_HEADER_NULL_TERMINATED && str_len-- <= 0)
 	    return (0);
 	switch (c = *cp) {

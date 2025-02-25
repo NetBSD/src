@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        ldap_table - Postfix LDAP client configuration
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="ldap_table.5.html">ldap</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="ldap_table.5.html">ldap</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
        mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
 
@@ -37,7 +37,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        For  details  about  LDAP  SSL and STARTTLS, see the section on SSL and
        STARTTLS below.
 
-<b>LIST MEMBERSHIP</b>
+<b><a name="list_membership">LIST MEMBERSHIP</a></b>
        When using LDAP to store lists  such  as  $<a href="postconf.5.html#mynetworks">mynetworks</a>,  $<a href="postconf.5.html#mydestination">mydestination</a>,
        $<a href="postconf.5.html#relay_domains">relay_domains</a>,  $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to under-
        stand that the table must store each list member as a separate key. The
@@ -60,7 +60,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
            query_filter = domain=%s
            result_attribute = domain
 
-<b>GENERAL LDAP PARAMETERS</b>
+<b><a name="general_ldap_parameters">GENERAL LDAP PARAMETERS</a></b>
        In  the  text  below,  default  values are given in parentheses.  Note:
        don't use quotes in these variables; at least, not  until  the  Postfix
        configuration routines understand how to deal with quoted strings.
@@ -77,6 +77,10 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               riding <b>server_port</b> below), by naming them like
 
                   server_host = ldap.example.com:1444
+
+              NOTE:  this  client  will  reconnect  immediately after a single
+              failure, and will fail a lookup request after a  second  attempt
+              also fails.
 
               With OpenLDAP, a (list of) LDAP URLs can be used to specify both
               the hostname(s) and the port(s):
@@ -478,7 +482,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        <b>debuglevel (default: 0)</b>
               What level to set for debugging in the OpenLDAP libraries.
 
-<b>LDAP SASL PARAMETERS</b>
+<b><a name="ldap_sasl_parameters">LDAP SASL PARAMETERS</a></b>
        If you're using the OpenLDAP  libraries  compiled  with  SASL  support,
        Postfix  2.8  and  later  built  with LDAP SASL support as described in
        <a href="LDAP_README.html">LDAP_README</a> can authenticate to LDAP servers via SASL.
@@ -518,7 +522,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               The minimum required sasl security factor required to  establish
               a connection.
 
-<b>LDAP SSL AND STARTTLS PARAMETERS</b>
+<b><a name="ldap_ssl_and_starttls_parameters">LDAP SSL AND STARTTLS PARAMETERS</a></b>
        If you're using the OpenLDAP libraries compiled with SSL support, Post-
        fix can connect to LDAP SSL servers and can issue the STARTTLS command.
 
@@ -615,7 +619,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        <b>tls_cipher_suite (No default)</b>
               Cipher suite to use in SSL/TLS negotiations.
 
-<b>EXAMPLE</b>
+<b><a name="example">EXAMPLE</a></b>
        Here's  a  basic  example  for  using LDAP to look up <a href="local.8.html">local(8)</a> aliases.
        Assume that in <a href="postconf.5.html">main.cf</a>, you have:
 
@@ -648,7 +652,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        <a href="postconf.5.html">main.cf</a>,  which is normally world-readable.  Support for this form will
        be removed in a future Postfix version.
 
-<b>OTHER OBSOLETE FEATURES</b>
+<b><a name="other_obsolete_features">OTHER OBSOLETE FEATURES</a></b>
        <b>result_filter (No default)</b>
               For backwards compatibility  with  the  pre  2.2  LDAP  clients,
               <b>result_filter</b> can for now be used instead of <b>result_format</b>, when
@@ -656,17 +660,17 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               reflects  the  function  of  the  parameter.  This compatibility
               interface may be removed in a future release.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="mysql_table.5.html">mysql_table(5)</a>, MySQL lookup tables
        <a href="pgsql_table.5.html">pgsql_table(5)</a>, PostgreSQL lookup tables
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="LDAP_README.html">LDAP_README</a>, Postfix LDAP client guide
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

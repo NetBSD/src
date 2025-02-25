@@ -51,6 +51,6 @@ good reasons: writing an MTA requires different skills than writing a SPAM or
 virus killer. Postfix encourages the use of external filters and standard
 protocols because this allows you to choose the best MTA and the best content
 inspection software for your purpose. Information about external content
-inspection software can be found on the Postfix website at http://
+inspection software can be found on the Postfix website at https://
 www.postfix.org/, and on the postfix-users@postfix.org mailing list.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_service.c,v 1.1.1.2 2013/01/02 18:59:01 tron Exp $	*/
+/*	$NetBSD: master_service.c,v 1.1.1.3 2025/02/25 19:11:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -25,7 +25,7 @@
 /*	master_restart_service() requests all running child processes to
 /*	commit suicide.  The conf_reload argument is either DO_CONF_RELOAD
 /*	(configuration files were reloaded, re-evaluate the child process
-/*	creation policy) or NO_CONF_RELOAD. 
+/*	creation policy) or NO_CONF_RELOAD.
 /* DIAGNOSTICS
 /* BUGS
 /* SEE ALSO

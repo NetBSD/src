@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 ANVIL(8)                                                              ANVIL(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        anvil - Postfix session count and request rate control
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>anvil</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  <a href="anvil.8.html"><b>anvil</b>(8)</a> server maintains statistics about client connec-
        tion counts or client request rates. This information can  be  used  to
        defend against clients that hammer a server with either too many simul-
@@ -50,7 +50,7 @@ ANVIL(8)                                                              ANVIL(8)
 
            <b>status=0</b>
 
-<b>MESSAGE RATE CONTROL</b>
+<b><a name="message_rate_control">MESSAGE RATE CONTROL</a></b>
        To register a message delivery request send the  following  request  to
        the <a href="anvil.8.html"><b>anvil</b>(8)</a> server:
 
@@ -64,7 +64,7 @@ ANVIL(8)                                                              ANVIL(8)
            <b>status=0</b>
            <b>rate=</b><i>number</i>
 
-<b>RECIPIENT RATE CONTROL</b>
+<b><a name="recipient_rate_control">RECIPIENT RATE CONTROL</a></b>
        To  register  a  recipient  request  send  the following request to the
        <a href="anvil.8.html"><b>anvil</b>(8)</a> server:
 
@@ -77,7 +77,7 @@ ANVIL(8)                                                              ANVIL(8)
            <b>status=0</b>
            <b>rate=</b><i>number</i>
 
-<b>TLS SESSION NEGOTIATION RATE CONTROL</b>
+<b><a name="tls_session_negotiation_rate_control">TLS SESSION NEGOTIATION RATE CONTROL</a></b>
        The  features  described in this section are available with Postfix 2.3
        and later.
 
@@ -107,7 +107,7 @@ ANVIL(8)                                                              ANVIL(8)
            <b>status=0</b>
            <b>rate=</b><i>number</i>
 
-<b>AUTH RATE CONTROL</b>
+<b><a name="auth_rate_control">AUTH RATE CONTROL</a></b>
        To register an AUTH request send the following request to the  <a href="anvil.8.html"><b>anvil</b>(8)</a>
        server:
 
@@ -120,7 +120,7 @@ ANVIL(8)                                                              ANVIL(8)
            <b>status=0</b>
            <b>rate=</b><i>number</i>
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The <a href="anvil.8.html"><b>anvil</b>(8)</a> server does not talk to the network or to local users, and
        can run chrooted at fixed low privilege.
 
@@ -134,7 +134,7 @@ ANVIL(8)                                                              ANVIL(8)
        clients.  To reduce memory usage, reduce the time unit over which state
        is kept.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
        Upon  exit, and every <b><a href="postconf.5.html#anvil_status_update_time">anvil_status_update_time</a></b> seconds, the server logs
@@ -143,7 +143,7 @@ ANVIL(8)                                                              ANVIL(8)
        In order to avoid unnecessary overhead, no measurements  are  done  for
        activity that isn't concurrency limited or rate limited.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        Systems behind network address translating routers or proxies appear to
        have the same client address and can run into connection  count  and/or
        rate limits falsely.
@@ -159,7 +159,7 @@ ANVIL(8)                                                              ANVIL(8)
        service  should  always register connect/disconnect events even when it
        does not explicitly limit them.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        On low-traffic mail systems, changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automati-
        cally  as  <a href="anvil.8.html"><b>anvil</b>(8)</a> processes run for only a limited amount of time. On
        other mail systems, use the command "<b>postfix  reload</b>"  to  speed  up  a
@@ -214,18 +214,18 @@ ANVIL(8)                                                              ANVIL(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="TUNING_README.html">TUNING_README</a>, performance tuning
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The anvil service is available in Postfix 2.2 and later.
 
 <b>AUTHOR(S)</b>

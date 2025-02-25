@@ -13,7 +13,7 @@
 #	\fBpostmap -q - socketmap:unix:\fIpathname\fB:\fIname\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
-#	rewriting. mail routing or policy lookup.
+#	rewriting, mail routing or policy lookup.
 #
 #	The Postfix socketmap client expects TCP endpoint names of
 #	the form \fBinet:\fIhost\fB:\fIport\fB:\fIname\fR, or
@@ -44,9 +44,7 @@
 # REPLY FORMAT
 # .ad
 # .fi
-#	The Postfix socketmap client requires that replies are not
-#	longer than 100000 characters (not including the netstring
-#	encapsulation). Replies must have the following form:
+#	Replies must have the following form:
 # .IP "\fBOK <space> \fIdata\fR"
 #	The requested data was found.
 # .IP "\fBNOTFOUND <space>"
@@ -56,11 +54,33 @@
 # .IP "\fBPERM <space> \fIreason\fR"
 #	The request failed. The reason, if non-empty, is descriptive
 #	text.
+# PROTOCOL LIMITS
+# .ad
+# .fi
+#	The Postfix socketmap client requires that replies are no
+#	longer than 100000 bytes (not including the netstring
+#	encapsulation). This limit can be changed with the
+#	socketmap_max_reply_size configuration parameter (Postfix 3.10
+#	and later).
+#
+#	The Postfix socketmap client enforces a 100s time limit to
+#	connect to a socketmap server, to send a request, and to receive
+#	a reply. It closes an idle connection after 10s, and closes
+#	an active connection after 100s. These limits are not (yet)
+#	configurable.
 # SECURITY
+# .ad
+# .fi
 #	This map cannot be used for security-sensitive information,
 #	because neither the connection nor the server are authenticated.
+# CONFIGURATION PARAMETERS
+# .ad
+# .fi
+# .IP "\fBsocketmap_max_reply_size (100000)\fR"
+#	The maximum allowed reply size from a socketmap server, not
+#	including the netstring encapsulation.
 # SEE ALSO
-#	http://cr.yp.to/proto/netstrings.txt, netstring definition
+#	https://cr.yp.to/proto/netstrings.txt, netstring definition
 #	postconf(1), Postfix supported lookup tables
 #	postmap(1), Postfix lookup table manager
 #	regexp_table(5), format of regular expression tables
@@ -75,13 +95,15 @@
 # .nf
 #	DATABASE_README, Postfix lookup table overview
 # BUGS
-#	The protocol limits are not yet configurable.
+#	The protocol time limits are not yet configurable.
 # LICENSE
 # .ad
 # .fi
 #	The Secure Mailer license must be distributed with this software.
 # HISTORY
 #	Socketmap support was introduced with Postfix version 2.10.
+#
+#	The socketmap protocol was published with Sendmail v8.13.
 # AUTHOR(S)
 #	Wietse Venema
 #	IBM T.J. Watson Research
@@ -92,5 +114,8 @@
 #	Google, Inc.
 #	111 8th Avenue
 #	New York, NY 10011, USA
+#
+#	Wietse Venema
+#	porcupine.org
 #--
 

@@ -1,0 +1,29 @@
+*** ENVELOPE RECORDS test-queue-file18c.tmp ***
+        0 message_size:             342             290               1               0             342               0
+       97 message_arrival_time: Tue Dec 12 14:29:04 2023
+      116 create_time: Tue Dec 12 14:29:04 2023
+      140 named_attribute: rewrite_context=local
+      163 sender_fullname: Wietse Venema
+      178 sender: user@example.com
+      196 named_attribute: dsn_orig_rcpt=rfc822;user@example.com
+      235 original_recipient: user@example.com
+      253 recipient: user@example.com
+      271 pointer_record:               0
+      288 *** MESSAGE CONTENTS test-queue-file18c.tmp ***
+      290 regular_text: Header-Label: header-value
+      318 regular_text: Received: by wzv.porcupine.org (Postfix, from userid 1000)
+      378 regular_text: 	id 4SqTFD6TVpz4w4n; Tue, 12 Dec 2023 14:29:04 -0500 (EST)
+      438 regular_text: Subject: test
+      453 padding: 0
+      456 regular_text: Message-Id: <4SqTFD6TVpz4w4n@wzv.porcupine.org>
+      505 regular_text: Date: Tue, 12 Dec 2023 14:29:04 -0500 (EST)
+      550 regular_text: From: Wietse Venema <user@example.com>
+      590 pointer_record:             653
+      653 regular_text: Received: whatever
+      673 pointer_record:             607
+      607 regular_text: 
+      609 regular_text: test
+      615 pointer_record:               0
+      632 *** HEADER EXTRACTED test-queue-file18c.tmp ***
+      634 pointer_record:               0
+      651 *** MESSAGE FILE END test-queue-file18c.tmp ***

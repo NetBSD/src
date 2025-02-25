@@ -134,9 +134,10 @@
 #	    \fB.. -o { \fIparameter\fR \fB= .. regexp:{ { \fIrule-1\fB }, { \fIrule-2\fB } .. } .. } ..\fR
 # .fi
 #
-#	Postfix ignores whitespace after '{' and before '}', and
-#	writes each \fIrule\fR as one text line to an in-memory
-#	file:
+#	Postfix recursively expands any \fi$parametername\fR instances
+#	in the above parameter value, ignores whitespace after '{'
+#	and before '}', and writes each \fIrule\fR as one text line to
+#	an in-memory file:
 #
 # .nf
 #	in-memory file:
@@ -146,10 +147,35 @@
 # .fi
 #
 #	Postfix parses the result as if it is a file in /etc/postfix.
-#
-#	Note: if a rule contains \fB$\fR, specify \fB$$\fR to keep
-#	Postfix from trying to do \fI$name\fR expansion as it
-#	evaluates a parameter value.
+# INLINE SPECIFICATION CAVEATS
+# .ad
+# .fi
+# .IP \(bu
+#	Avoid using \fI$parametername\fR inside an inlined regexp:
+#	pattern.  The pattern would have unexpected matches when there
+#	are metacharacters such as '.' in the \fI$parametername\fR
+#	expansion. To prevent unexpected matches, use a pcre: table,
+#	and specify \eQ\fI$parametername\fR\eE.
+# .IP \(bu
+#	When an inlined rule must contain \fB$\fR, specify \fB$$\fR
+#	to keep Postfix from trying to do \fI$name\fR expansion as
+#	it evaluates a parameter value. To check an inline configuration,
+#	use the "\fBpostconf -x\fR" option as shown below:
+# .RS
+# .IP \(bu
+#	When a main.cf "\fIparametername = \fI value\fR" setting
+#	contains an inline regexp: table, use the command "\fBpostconf
+#	-x \fIparametername\fR". Verify that there are no "undefined
+#	parameter" warnings, and that the output has the syntax that
+#	one would use in a non-inlined Postfix regexp: file.
+# .IP \(bu
+#	When a master.cf "\fB-o { \fIparametername = value\fB }\fR"
+#	override contains an inline regexp: table, use the command
+#	"\fBpostconf -Px '*/*/\fIparametername\fB' \fR". Verify that there
+#	are no "undefined parameter" warnings, and that the output has
+#	the syntax that one would use in a non-inlined Postfix regexp:
+#	file.
+# .RE
 # EXAMPLE SMTPD ACCESS MAP
 #	# Disallow sender-specified routing. This is a must if you relay mail
 #	# for other domains.

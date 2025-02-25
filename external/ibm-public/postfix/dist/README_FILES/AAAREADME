@@ -11,10 +11,12 @@ GGeenneerraall ccoonnffiigguurraattiioonn
   * SASL_README: SASL Authentication
   * TLS_README: TLS Encryption and authentication
   * FORWARD_SECRECY_README: TLS Forward Secrecy
+  * TLSRPT_README: TLSRPT Protocol Support
   * IPV6_README: IP Version 6 Support
   * SMTPUTF8_README: SMTPUTF8 Support
   * MAILLOG_README: Postfix logging to file or stdout
   * COMPATIBILITY_README: Backwards-Compatibility Safety Net
+  * DEPRECATION_README: Deprecated features and alternatives
   * INSTALL: Installation from source code
 
 PPrroobblleemm ssoollvviinngg
@@ -52,6 +54,7 @@ LLooookkuupp ttaabblleess ((ddaattaabbaasseess))
   * LDAP_README: LDAP Howto
   * LMDB_README: LMDB Howto
   * MEMCACHE_README: Memcache Howto
+  * MONGODB_README: MongoDB Howto
   * MYSQL_README: MySQL Howto
   * PCRE_README: PCRE Howto
   * PGSQL_README: PostgreSQL Howto

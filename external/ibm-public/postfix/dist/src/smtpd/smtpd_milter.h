@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_milter.h,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_milter.h,v 1.1.1.2 2025/02/25 19:11:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -26,4 +26,3 @@ extern const char *smtpd_milter_eval(const char *, void *);
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*--*/
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: duplex_pipe.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: duplex_pipe.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,4 +48,3 @@ int     duplex_pipe(int *fds)
     return (sane_socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
 #endif
 }
-

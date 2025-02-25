@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        regexp_table - format of Postfix regular expression tables
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail  system  uses optional tables for address rewriting,
        mail routing, or access control. These tables are usually in <b>dbm</b> or  <b>db</b>
        format.
@@ -33,12 +33,12 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        terns,  and  "<b>postmap -bmq -</b> &lt;<i>file</i>" for <a href="header_checks.5.html">body_checks(5)</a> (Postfix 2.6 and
        later).
 
-<b>COMPATIBILITY</b>
+<b><a name="compatibility">COMPATIBILITY</a></b>
        With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>" to  query  a
        table that contains case sensitive patterns. Patterns are case insensi-
        tive by default.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The general form of a Postfix regular expression table is:
 
        <b>/</b><i>pattern</i><b>/</b><i>flags result</i>
@@ -106,7 +106,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
               Toggles the extended expression syntax flag. By default, support
               for extended expression syntax is enabled.
 
-<b>TABLE SEARCH ORDER</b>
+<b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
        Patterns are applied in the order as specified in the  table,  until  a
        pattern is found that matches the input string.
 
@@ -117,7 +117,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        ken  up  into  their <i>user</i> and <i>domain</i> constituent parts, nor is <i>user+foo</i>
        broken up into <i>user</i> and <i>foo</i>.
 
-<b>TEXT SUBSTITUTION</b>
+<b><a name="text_substitution">TEXT SUBSTITUTION</a></b>
        Substitution of substrings (text that  matches  patterns  inside  "()")
        from  the  matched  expression into the result string is requested with
        $1, $2, etc.; specify $$ to produce  a  $  character  as  output.   The
@@ -128,7 +128,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        the  expression  does  not  match,  substitutions are not available for
        negated patterns.
 
-<b>INLINE SPECIFICATION</b>
+<b><a name="inline_specification">INLINE SPECIFICATION</a></b>
        The contents of a table may be specified in the table name (Postfix 3.7
        and later).  The basic syntax is:
 
@@ -138,8 +138,9 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        <a href="master.5.html">master.cf</a>:
            <b>.. -o {</b> <i>parameter</i> <b>= .. <a href="regexp_table.5.html">regexp</a>:{ {</b> <i>rule-1</i> <b>}, {</b> <i>rule-2</i> <b>} .. } .. } ..</b>
 
-       Postfix  ignores  whitespace  after '{' and before '}', and writes each
-       <i>rule</i> as one text line to an in-memory file:
+       Postfix  recursively  expands any $parametername instances in the above
+       parameter value, ignores whitespace  after  '{'  and  before  '}',  and
+       writes each <i>rule</i> as one text line to an in-memory file:
 
        in-memory file:
            rule-1
@@ -148,10 +149,32 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
 
        Postfix parses the result as if it is a file in /etc/postfix.
 
-       Note: if a rule contains <b>$</b>, specify <b>$$</b> to keep Postfix from  trying  to
-       do <i>$name</i> expansion as it evaluates a parameter value.
+<b><a name="inline_specification_caveats">INLINE SPECIFICATION CAVEATS</a></b>
+       <b>o</b>      Avoid  using  <i>$parametername</i>  inside an inlined <a href="regexp_table.5.html">regexp</a>: pattern.
+              The  pattern  would  have  unexpected  matches  when  there  are
+              metacharacters  such  as '.' in the <i>$parametername</i> expansion. To
+              prevent unexpected matches,  use  a  <a href="pcre_table.5.html">pcre</a>:  table,  and  specify
+              \Q<i>$parametername</i>\E.
 
-<b>EXAMPLE SMTPD ACCESS MAP</b>
+       <b>o</b>      When  an inlined rule must contain <b>$</b>, specify <b>$$</b> to keep Postfix
+              from trying to do <i>$name</i> expansion as it  evaluates  a  parameter
+              value.  To  check an inline configuration, use the "<b>postconf -x</b>"
+              option as shown below:
+
+              <b>o</b>      When a <a href="postconf.5.html">main.cf</a> "<i>parametername =  value</i>" setting  contains
+                     an  inline  <a href="regexp_table.5.html">regexp</a>:  table,  use the command "<b>postconf -x</b>
+                     <i>parametername</i>".  Verify  that  there  are  no  "undefined
+                     parameter"  warnings,  and that the output has the syntax
+                     that one would use in a non-inlined Postfix <a href="regexp_table.5.html">regexp</a>: file.
+
+              <b>o</b>      When  a <a href="master.5.html">master.cf</a> "<b>-o {</b> <i>parametername = value</i> <b>}</b>" override
+                     contains an inline <a href="regexp_table.5.html">regexp</a>: table, use the command  "<b>post-</b>
+                     <b>conf  -Px '*/*/</b><i>parametername</i><b>'</b> ". Verify that there are no
+                     "undefined parameter" warnings, and that the  output  has
+                     the  syntax  that  one would use in a non-inlined Postfix
+                     <a href="regexp_table.5.html">regexp</a>: file.
+
+<b><a name="example_smtpd_access_map">EXAMPLE SMTPD ACCESS MAP</a></b>
        # Disallow sender-specified routing. This is a must if you relay mail
        # for other domains.
        /[%!@].*[%!@]/       550 Sender-specified routing rejected
@@ -165,23 +188,23 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        /^(.*)-outgoing@(.*)$/  550 Use ${1}@${2} instead
        endif
 
-<b>EXAMPLE HEADER FILTER MAP</b>
+<b><a name="example_header_filter_map">EXAMPLE HEADER FILTER MAP</a></b>
        # These were once common in junk mail.
        /^Subject: make money fast/     REJECT
        /^To: friend@public\.com/       REJECT
 
-<b>EXAMPLE BODY FILTER MAP</b>
+<b><a name="example_body_filter_map">EXAMPLE BODY FILTER MAP</a></b>
        # First skip over base 64 encoded text to save CPU cycles.
        ~^[[:alnum:]+/]{60,}$~          OK
 
        # Put your own body patterns here.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="pcre_table.5.html">pcre_table(5)</a>, format of PCRE tables
        <a href="cidr_table.5.html">cidr_table(5)</a>, format of CIDR tables
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>AUTHOR(S)</b>

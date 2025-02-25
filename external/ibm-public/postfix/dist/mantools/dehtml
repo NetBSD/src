@@ -3,7 +3,7 @@
 for i
 do
     case $i in
-    /*) lynx -dump file://localhost$i;;
-     *) lynx -dump file://localhost`pwd`/$i;;
+    /*) lynx -width=256 -dump file://$i;;
+     *) lynx -width=256 -dump file://`pwd`/$i;;
     esac
-done
+done | grep -v 'file:///'
