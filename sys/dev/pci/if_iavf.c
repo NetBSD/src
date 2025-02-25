@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.19 2025/02/25 02:10:13 joe Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.19 2025/02/25 02:10:13 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2518,6 +2518,7 @@ iavf_rxfill(struct iavf_softc *sc, struct iavf_rx_ring *rxr)
 	if (slots == 0)
 		return 0;
 
+	post = 0;
 	error = 0;
 	prod = rxr->rxr_prod;
 
