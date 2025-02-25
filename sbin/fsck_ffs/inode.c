@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.78 2023/07/05 10:59:08 riastradh Exp $	*/
+/*	$NetBSD: inode.c,v 1.79 2025/02/25 15:29:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.78 2023/07/05 10:59:08 riastradh Exp $");
+__RCSID("$NetBSD: inode.c,v 1.79 2025/02/25 15:29:00 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -909,7 +909,7 @@ readblk(union dinode *dp, off_t offset, struct bufarea **bp)
 			blkno -= nblks;
 	}
 	if (ilevel > UFS_NIADDR)
-		errexit("bad ofsset %" PRIu64 " to readblk", offset);
+		errexit("bad offset %" PRIu64 " to readblk", offset);
 
 	/* get the first indirect block */
 	iblkno = is_ufs2 ? iswap64(dp->dp2.di_ib[ilevel - 1]) :

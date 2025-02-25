@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.28 2013/11/16 23:54:01 mrg Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.29 2025/02/25 15:29:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.28 2013/11/16 23:54:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.29 2025/02/25 15:29:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,7 +96,7 @@ static struct intrhand level14 = { .ih_fun = statintr_msiiep  };
  */
 static struct counter {
 	u_int limit;		/* limit we count up to */
-	u_int offset;		/* accumulated offet due to wraps */
+	u_int offset;		/* accumulated offset due to wraps */
 } cntr;
 
 /*

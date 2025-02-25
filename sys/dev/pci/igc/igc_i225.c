@@ -1,4 +1,4 @@
-/*	$NetBSD: igc_i225.c,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
+/*	$NetBSD: igc_i225.c,v 1.3 2025/02/25 15:29:00 andvar Exp $	*/
 /*	$OpenBSD: igc_i225.c,v 1.4 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igc_i225.c,v 1.2 2023/10/04 07:35:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igc_i225.c,v 1.3 2025/02/25 15:29:00 andvar Exp $");
 
 #include <dev/pci/igc/igc_api.h>
 
@@ -844,7 +844,7 @@ igc_update_flash_i225(struct igc_hw *hw)
 				goto out;
 			}
 
-			/* Write CurrentOffseData to FLSWDATA register */
+			/* Write CurrentOffsetData to FLSWDATA register */
 			IGC_WRITE_REG(hw, IGC_I225_FLSWDATA,
 			    current_offset_data);
 			current_offset++;
