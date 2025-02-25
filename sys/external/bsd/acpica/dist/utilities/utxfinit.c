@@ -276,6 +276,8 @@ AcpiEnableSubsystem (
      */
     AcpiGbl_EarlyInitialization = FALSE;
 
+#if (!ACPI_REDUCED_HARDWARE)
+
     /*
      * Obtain a permanent mapping for the FACS. This is required for the
      * Global Lock and the Firmware Waking Vector
@@ -289,8 +291,6 @@ AcpiEnableSubsystem (
             return_ACPI_STATUS (Status);
         }
     }
-
-#if (!ACPI_REDUCED_HARDWARE)
 
     /* Enable ACPI mode */
 
