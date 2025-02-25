@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@
 #define DHCPCD_RTBUILD			(1ULL << 2)
 #define DHCPCD_GATEWAY			(1ULL << 3)
 #define DHCPCD_STATIC			(1ULL << 4)
-#define DHCPCD_DEBUG			(1ULL << 5)
+//#define DHCPCD_DEBUG			(1ULL << 5)
 #define DHCPCD_ARP_PERSISTDEFENCE	(1ULL << 6)
 #define DHCPCD_LASTLEASE		(1ULL << 7)
 #define DHCPCD_INFORM			(1ULL << 8)
@@ -189,6 +189,7 @@
 #define O_IPV4LL_TIME		O_BASE + 56
 #define O_VSIO			O_BASE + 57
 #define O_VSIO6			O_BASE + 58
+#define O_NOSYSLOG		O_BASE + 59
 
 extern const struct option cf_options[];
 

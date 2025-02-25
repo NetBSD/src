@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, network proxy
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -215,6 +215,7 @@ ps_inet_startcb(struct ps_process *psp)
 	return ret;
 }
 
+#if defined(INET) || defined(DHCP6)
 static bool
 ps_inet_validudp(struct msghdr *msg, uint16_t sport, uint16_t dport)
 {
@@ -233,6 +234,7 @@ ps_inet_validudp(struct msghdr *msg, uint16_t sport, uint16_t dport)
 	}
 	return true;
 }
+#endif
 
 #ifdef INET6
 static bool
