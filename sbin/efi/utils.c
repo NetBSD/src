@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.1 2025/02/24 13:47:57 christos Exp $ */
+/* $NetBSD: utils.c,v 1.2 2025/02/25 22:11:36 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.1 2025/02/24 13:47:57 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.2 2025/02/25 22:11:36 christos Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -375,9 +375,7 @@ strtous(const char *str, char **endptr, int base)
 
 	switch (rstatus) {
 	case EINVAL:
-/*###378 [lint] warning constant in conditional context [161]%%%*/
 		assert(0);
-/*###379 [lint] warning 'break' statement not reached [193]%%%*/
 		break;
 	case ENOTSUP:
 		if (endptr != NULL)

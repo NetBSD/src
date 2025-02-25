@@ -1,4 +1,4 @@
-/* $NetBSD: showvar.c,v 1.1 2025/02/24 13:47:57 christos Exp $ */
+/* $NetBSD: showvar.c,v 1.2 2025/02/25 22:11:36 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: showvar.c,v 1.1 2025/02/24 13:47:57 christos Exp $");
+__RCSID("$NetBSD: showvar.c,v 1.2 2025/02/25 22:11:36 christos Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -110,8 +110,7 @@ show_filelist_data(efi_var_t *v, bool dbg)
 }
 
 static int
-/*###113 [lint] warning parameter 'dbg' unused in function 'show_asciiz_data' [231]%%%*/
-show_asciiz_data(efi_var_t *v, bool dbg)
+show_asciiz_data(efi_var_t *v, bool dbg __unused)
 {
 	char *cp, *ep;
 
@@ -128,8 +127,7 @@ show_asciiz_data(efi_var_t *v, bool dbg)
 }
 
 static int
-/*###130 [lint] warning parameter 'dbg' unused in function 'show_array8_data' [231]%%%*/
-show_array8_data(efi_var_t *v, bool dbg)
+show_array8_data(efi_var_t *v, bool dbg __unused)
 {
 	size_t cnt, i;
 	uint8_t *array = v->ev.data;
@@ -150,8 +148,7 @@ show_array8_data(efi_var_t *v, bool dbg)
 }
 
 static int
-/*###151 [lint] warning parameter 'dbg' unused in function 'show_array16_data' [231]%%%*/
-show_array16_data(efi_var_t *v, bool dbg)
+show_array16_data(efi_var_t *v, bool dbg __unused)
 {
 	size_t cnt, i;
 	uint16_t *array = v->ev.data;
@@ -317,8 +314,7 @@ format_optional_data(char *od, size_t sz)
 
 	for (i = 0; i < sz; i++) {
 		char c = od[i];
-/*###317 [lint] warning argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'int' [342]%%%*/
-		bp[i] = isprint((int)c) ? c : '.';
+		bp[i] = isprint((unsigned char)c) ? c : '.';
 	}
 	bp[i] = '\0';
 	return bp;
@@ -408,8 +404,7 @@ show_boot_data(efi_var_t *v, int debug, uint max_namelen)
 /************************************************************************/
 
 static int
-/*###407 [lint] warning parameter 'dbg' unused in function 'show_OsIndications_data' [231]%%%*/
-show_OsIndications_data(efi_var_t *e, bool dbg)
+show_OsIndications_data(efi_var_t *e, bool dbg __unused)
 {
 	uint64_t OsIndications;
 	char buf[256];
@@ -422,8 +417,7 @@ show_OsIndications_data(efi_var_t *e, bool dbg)
 }
 
 static int
-/*###420 [lint] warning parameter 'dbg' unused in function 'show_BootOptionSupport_data' [231]%%%*/
-show_BootOptionSupport_data(efi_var_t *e, bool dbg)
+show_BootOptionSupport_data(efi_var_t *e, bool dbg __unused)
 {
 	uint32_t boot_option_support;
 	char buf[256];
@@ -437,8 +431,7 @@ show_BootOptionSupport_data(efi_var_t *e, bool dbg)
 }
 
 static int
-/*###434 [lint] warning parameter 'dbg' unused in function 'show_Timeout_data' [231]%%%*/
-show_Timeout_data(efi_var_t *e, bool dbg)
+show_Timeout_data(efi_var_t *e, bool dbg __unused)
 {
 	uint16_t *timeout = e->ev.data;
 
