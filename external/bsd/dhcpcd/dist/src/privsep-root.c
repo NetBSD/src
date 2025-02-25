@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, privileged proxy
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -251,8 +251,7 @@ ps_root_doioctl(unsigned long req, void *data, size_t len)
 	case SIOCGIFPRIORITY:	/* FALLTHROUGH */
 #endif
 	case SIOCSIFFLAGS:	/* FALLTHROUGH */
-	case SIOCGIFMTU:	/* FALLTHROUGH */
-	case SIOCSIFMTU:
+	case SIOCGIFMTU:
 		break;
 	default:
 		errno = EPERM;

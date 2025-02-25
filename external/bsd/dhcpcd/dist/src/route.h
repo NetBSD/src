@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2024 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * rEDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS, WITH OR WITHOUT
@@ -126,6 +126,7 @@ struct rt {
 	size_t			rt_order;
 	rb_node_t		rt_tree;
 #ifdef HAVE_ROUTE_LIFETIME
+	struct timespec		rt_aquired;	/* timestamp of aquisition */
 	uint32_t		rt_lifetime;	/* current lifetime of route */
 #define	RTLIFETIME_DEV_MAX	2 		/* max deviation for cmp */
 #endif
