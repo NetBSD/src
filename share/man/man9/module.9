@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.54 2022/08/12 15:43:38 riastradh Exp $
+.\"	$NetBSD: module.9,v 1.55 2025/02/25 08:51:27 martin Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ macro creates a reference to the module's
 function.
 This function is defined as:
 .Bl -tag -width modcmd -offset indent
-.It Ft modcmd_t
+.It Ft int
 .Fn xxx_modcmd "modcmd_t cmd" "void *data"
 .El
 .Pp
