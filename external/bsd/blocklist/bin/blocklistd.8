@@ -1,4 +1,4 @@
-.\" $NetBSD: blocklistd.8,v 1.7 2025/02/07 13:00:48 kre Exp $
+.\" $NetBSD: blocklistd.8,v 1.8 2025/02/25 22:13:34 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 6, 2025
+.Dd February 25, 2025
 .Dt BLOCKLISTD 8
 .Os
 .Sh NAME
@@ -220,7 +220,7 @@ are deleted by invoking the control script as:
 .Bd -literal -offset indent
 control flush <rulename>
 .Ed
-.It Fl P Ar sockspathsfile
+.It Fl P Ar sockpathsfile
 A file containing a list of pathnames, one per line that
 .Nm
 will create sockets to listen to.
