@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.49 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.50 2025/02/26 04:49:46 andvar Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.49 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.50 2025/02/26 04:49:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -4572,7 +4572,7 @@ aq_update_statistics(struct aq_softc *sc)
 
 	/*
 	 * some aq's internal statistics counters are 32bit.
-	 * cauculate delta, and add to evcount
+	 * calculate delta, and add to evcount
 	 */
 #define ADD_DELTA(cur, prev, name)				\
 	do {							\

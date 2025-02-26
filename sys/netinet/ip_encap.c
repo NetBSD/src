@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.77 2022/12/07 08:33:02 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.78 2025/02/26 04:49:45 andvar Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 /* XXX is M_NETADDR correct? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.77 2022/12/07 08:33:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.78 2025/02/26 04:49:45 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -757,7 +757,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 			/*
 		 	* Depending on the value of "valid" and routing table
 		 	* size (mtudisc_{hi,lo}wat), we will:
-		 	* - recalcurate the new MTU and create the
+		 	* - recalculate the new MTU and create the
 		 	*   corresponding routing entry, or
 		 	* - ignore the MTU change notification.
 		 	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.48 2021/08/09 19:24:33 andvar Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.49 2025/02/26 04:49:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.48 2021/08/09 19:24:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.49 2025/02/26 04:49:46 andvar Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -362,7 +362,7 @@ tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
 	u_long addr, size;
 	int error;
 
-	/* calcurate frame buffer size */
+	/* calculate frame buffer size */
 	size = (chip->vc_fbwidth * chip->vc_fbheight * chip->vc_fbdepth) /
 	    NBBY;
 

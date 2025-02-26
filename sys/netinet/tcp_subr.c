@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.297 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.298 2025/02/26 04:49:45 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.297 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.298 2025/02/26 04:49:45 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1344,7 +1344,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			/*
 			 * Depending on the value of "valid" and routing table
 			 * size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */

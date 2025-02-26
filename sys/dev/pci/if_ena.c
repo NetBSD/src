@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.42 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.43 2025/02/26 04:49:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3764,7 +3764,7 @@ ena_attach(device_t parent, device_t self, void *aux)
 
 	adapter->max_mtu = get_feat_ctx.dev_attr.max_mtu;
 
-	/* calculatre ring sizes */
+	/* calculate ring sizes */
 	queue_size = ena_calc_queue_size(adapter,&tx_sgl_size,
 	    &rx_sgl_size, &get_feat_ctx);
 	if (unlikely((queue_size <= 0) || (io_queue_num <= 0))) {

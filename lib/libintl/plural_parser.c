@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.c,v 1.4 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: plural_parser.c,v 1.5 2025/02/26 04:49:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plural_parser.c,v 1.4 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: plural_parser.c,v 1.5 2025/02/26 04:49:45 andvar Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -785,7 +785,7 @@ main(int argc, char **argv)
 #endif /* TEST_PARSER */
 
 /* ----------------------------------------------------------------------
- * calcurate plural number
+ * calculate plural number
  */
 static unsigned long
 calculate_plural(const struct parser_element *pe, unsigned long n)
