@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2025/02/24 18:22:18 martin Exp $
+# $NetBSD: mi,v 1.21 2025/02/26 16:34:43 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -829,6 +829,7 @@
 ./usr/share/man/html4/altmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/altq.html			man-sys-htmlman		html
 ./usr/share/man/html4/am2315temp.html		man-sys-htmlman		html
+./usr/share/man/html4/amdgpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amhphy.html		man-sys-htmlman		html
