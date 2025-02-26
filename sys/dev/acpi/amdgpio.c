@@ -1,4 +1,4 @@
-/* $NetBSD: amdgpio.c,v 1.1 2025/02/26 15:18:46 ryoon Exp $ */
+/* $NetBSD: amdgpio.c,v 1.2 2025/02/26 21:49:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpio.c,v 1.1 2025/02/26 15:18:46 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpio.c,v 1.2 2025/02/26 21:49:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -410,11 +410,8 @@ amdgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 		KASSERT((irqmode & GPIO_INTR_EDGE_MASK) != 0);
 		if ((irqmode & GPIO_INTR_NEG_EDGE) != 0) {
 			dect = AMDGPIO_CONF_ACTLO;
-#if 0
-/* XXX */
 		} else if ((irqmode & GPIO_INTR_POS_EDGE) != 0) {
-			dect = TLMM_GPIO_INTR_CFG_INTR_DECT_CTL_EDGE_POS;
-#endif
+			dect = 0;
 		} else {
 			KASSERT((irqmode & GPIO_INTR_DOUBLE_EDGE) != 0);
 			dect = AMDGPIO_CONF_ACTBOTH;
