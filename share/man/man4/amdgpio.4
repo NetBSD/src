@@ -1,4 +1,4 @@
-.\" $NetBSD: amdgpio.4,v 1.1 2025/02/26 15:18:45 ryoon Exp $
+.\" $NetBSD: amdgpio.4,v 1.2 2025/02/26 17:23:49 uwe Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,24 +41,45 @@
 provides a
 .Xr gpio 4
 interface for the following AMD chipsets:
-.Bl -tag -width autoselect -compact
-.It AMD Ryzen 7 5800U with Radeon Graphics
-.It AMD Ryzen 7 8840HS w/ Radeon 780M Graphics
+.Pp
+.Bl -item -offset indent -compact
+.It
+AMD Ryzen 7 5800U with Radeon Graphics
+.It
+AMD Ryzen 7 8840HS with Radeon 780M Graphics
 .El
 .Pp
-The driver supports
-.Dv GPIO_PIN_INPUT ,
-.Dv GPIO_PIN_OUTPUT ,
-.Dv GPIO_PIN_INOUT ,
-.Dv GPIO_PIN_ININ ,
-.Dv GPIO_PIN_PULLUP ,
-.Dv GPIO_PIN_PULLDOWN ,
+The driver supports pin configuration flags
+.Pp
+.Bl -item -offset indent -compact
+.It
+.Dv GPIO_PIN_INPUT
+.It
+.Dv GPIO_PIN_OUTPUT
+.It
+.Dv GPIO_PIN_INOUT
+.It
+.Dv GPIO_PIN_ININ
+.It
+.Dv GPIO_PIN_PULLUP
+.It
+.Dv GPIO_PIN_PULLDOWN
+.El
+.Pp
 and interrupt capabilies
-.Dv GPIO_INTR_POS_EDGE ,
-.Dv GPIO_INTR_NEG_EDGE ,
-.Dv GPIO_INTR_DOUBLE_EDGE ,
-.Dv GPIO_INTR_HIGH_LEVEL ,
-.Dv GPIO_INTR_LOW_LEVEL .
+.Pp
+.Bl -item -offset indent -compact
+.It
+.Dv GPIO_INTR_POS_EDGE
+.It
+.Dv GPIO_INTR_NEG_EDGE
+.It
+.Dv GPIO_INTR_DOUBLE_EDGE
+.It
+.Dv GPIO_INTR_HIGH_LEVEL
+.It
+.Dv GPIO_INTR_LOW_LEVEL
+.El
 .Sh SEE ALSO
 .Xr gpio 4
 .Sh HISTORY
@@ -70,9 +91,10 @@ driver first appeared in
 .An -nosplit
 The
 .Nm
-driver are derived from
+driver is derived from
 .Xr qcomgpio 4
-and OpenBSD's
+and
+.Ox Ap s
 .Xr amdgpio 4 .
 Man page was written by
 .An Ryo ONODERA
