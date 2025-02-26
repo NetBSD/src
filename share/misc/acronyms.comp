@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.400 2025/02/21 01:38:38 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.401 2025/02/26 19:32:57 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -693,6 +693,7 @@ GRE	generic routing encapsulation
 GRO	generic receive offload
 GSI	global system interrupt
 GSO	generic send offload
+GUA	global unicast address
 GUI	graphical user interface
 GUID	globally unique identifier
 GUS	Gravis UltraSound
@@ -1816,6 +1817,7 @@ UICC	universal integrated circuit card
 UID	unique identifier
 UID	user identifier
 UL	upload
+ULA	unique local address
 UMA	uniform memory access
 UMA	upper memory area
 UMB	upper memory block
