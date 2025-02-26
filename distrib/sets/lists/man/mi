@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1798 2025/02/24 18:22:17 martin Exp $
+# $NetBSD: mi,v 1.1799 2025/02/26 15:18:45 ryoon Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -907,6 +907,7 @@
 ./usr/share/man/cat4/altmem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/altq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/am2315temp.0		man-sys-catman		.cat
+./usr/share/man/cat4/amdgpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
@@ -4482,6 +4483,7 @@
 ./usr/share/man/man4/altmem.4			man-sys-man		.man
 ./usr/share/man/man4/altq.4			man-sys-man		.man
 ./usr/share/man/man4/am2315temp.4		man-sys-man		.man
+./usr/share/man/man4/amdgpio.4			man-sys-man		.man
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
 ./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
