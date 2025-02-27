@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c99.c,v 1.3 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: init_c99.c,v 1.4 2025/02/27 06:48:29 rillig Exp $	*/
 # 3 "init_c99.c"
 
 // Tests for initialization in C99 or later, mainly for designators.
@@ -570,17 +570,17 @@ struct {
 	char *s;
 } struct_array[] = {
 	{
-		.i =  2,
+		.i = 2,
 	},
 	{
-		.s =  "foo"
+		.s = "foo"
 	},
 	{
-		.i =  1,
+		.i = 1,
 		.s = "bar"
 	},
 	{
-		.s =  "foo",
+		.s = "foo",
 		.i = -1
 	},
 };

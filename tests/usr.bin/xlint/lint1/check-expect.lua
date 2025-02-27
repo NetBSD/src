@@ -1,5 +1,5 @@
-#!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.13 2025/01/03 02:14:52 rillig Exp $
+#! /usr/bin/lua
+-- $NetBSD: check-expect.lua,v 1.14 2025/02/27 06:48:29 rillig Exp $
 
 --[[
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.232 2024/12/08 17:12:01 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.233 2025/02/27 06:48:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.232 2024/12/08 17:12:01 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.233 2025/02/27 06:48:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1064,7 +1064,7 @@ set_csrc_pos(void)
 	outsrc(transform_filename(curr_pos.p_file, strlen(curr_pos.p_file)));
 }
 
-/* # lineno ["filename" [GCC-flag...]]  */
+/* # lineno ["filename" [GCC-flag...]] */
 static void
 set_location(const char *p)
 {

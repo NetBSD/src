@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.68 2024/11/30 18:17:11 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.69 2025/02/27 06:48:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.68 2024/11/30 18:17:11 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.69 2025/02/27 06:48:29 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -433,16 +433,15 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 /*
  * Check a single argument in a function call.
  *
- *  hte		a pointer to the hash table entry of the function
- *  n		the number of the argument (1..)
- *  def		the function definition or NULL
- *  decl	prototype declaration, old-style declaration or NULL
- *  pos1p	position of definition, declaration of first call
- *  call1	first call, if both def and decl are old-style def/decl
- *  call	checked call
- *  arg1	currently checked argument of def/decl/call1
- *  arg2	currently checked argument of call
- *
+ *	hte	a pointer to the hash table entry of the function
+ *	n	the number of the argument (1..)
+ *	def	the function definition or NULL
+ *	decl	prototype declaration, old-style declaration or NULL
+ *	pos1p	position of definition, declaration of first call
+ *	call1	first call, if both def and decl are old-style def/decl
+ *	call	checked call
+ *	arg1	currently checked argument of def/decl/call1
+ *	arg2	currently checked argument of call
  */
 static void
 chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
@@ -480,9 +479,9 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 * argument does not match exactly the expected type. The result are
 	 * lots of warnings which are really not necessary.
 	 * We print a warning only if
-	 *   (0) at least one type is not an integer type and types differ
-	 *   (1) hflag is set and types differ
-	 *   (2) types differ, except in signedness
+	 *	(0) at least one type is not an integer type and types differ
+	 *	(1) hflag is set and types differ
+	 *	(2) types differ, except in signedness
 	 *
 	 * If the argument is an integer constant whose msb is not set,
 	 * signedness is ignored (e.g. 0 matches both signed and unsigned int).

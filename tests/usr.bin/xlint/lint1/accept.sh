@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.17 2025/01/03 03:14:47 rillig Exp $
+# $NetBSD: accept.sh,v 1.18 2025/02/27 06:48:29 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,7 +86,7 @@ for pattern in "$@"; do
 			continue
 		fi
 
-		if [ -f "$exp_file" ] && cmp -s "$exp_tmp_file"  "$exp_file"; then
+		if [ -f "$exp_file" ] && cmp -s "$exp_tmp_file" "$exp_file"; then
 			rm "$exp_tmp_file"
 		else
 			mv "$exp_tmp_file" "$exp_file"

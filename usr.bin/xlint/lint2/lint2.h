@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.27 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.28 2025/02/27 06:48:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -178,7 +178,7 @@ typedef struct hte {
 	usym_t	*h_usyms;	/* usage info */
 	usym_t	**h_lusym;	/* points to u_next of last usage info */
 	struct hte *h_link;	/* next hte with same hash function */
-	struct  hte *h_hte;	/* pointer to other htes (for renames) */
+	struct hte *h_hte;	/* pointer to other htes (for renames) */
 } hte_t;
 
 #include "externs2.h"

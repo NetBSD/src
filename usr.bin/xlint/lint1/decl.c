@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.412 2025/01/03 03:14:47 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.413 2025/02/27 06:48:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.412 2025/01/03 03:14:47 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.413 2025/02/27 06:48:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2297,8 +2297,8 @@ types_compatible(const type_t *tp1, const type_t *tp2,
  * second compatible type.
  *
  * Following lines are legal:
- *  "typedef a[]; a b; a b[10]; a c; a c[20];"
- *  "typedef ft(); ft f; f(int); ft g; g(long);"
+ *	"typedef a[]; a b; a b[10]; a c; a c[20];"
+ *	"typedef ft(); ft f; f(int); ft g; g(long);"
  * This means that, if a type is completed, the type structure must be
  * duplicated.
  */
