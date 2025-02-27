@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.36 2025/02/27 14:49:56 jakllsch Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.37 2025/02/27 15:07:45 jakllsch Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -370,7 +370,7 @@ union scsi_disk_pages {
 #define CTL1_GLTSD		0x02	/* Glob. Log Targ. Save Disable */
 #define CTL1_RLEC		0x01	/* Rpt Logging Exception Condition */
 		u_int8_t ctl_flags2;	/* Second set of flags */
-#define CTL2_QAM_UNRESTRICT 0x10	/* Unrestricted reordering allowed */
+#define CTL2_QAM_UNRESTRICT	0x10	/* Unrestricted reordering allowed */
 #define CTL2_QAM_FIELD		0xf0	/* Full Queue alogo. modifier field */
 #define CTL2_QERR_ABRT		0x02	/* Queue error - abort all */
 #define CTL2_QERR_ABRT_SELF	0x06	/* Queue error - abort intr's */
