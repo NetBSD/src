@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.66 2024/01/03 18:13:19 andvar Exp $ */
+/* $NetBSD: armreg.h,v 1.67 2025/02/27 08:39:54 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -832,7 +832,7 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_TDZ		__BIT(28)	// trap DC ZVA
 #define	HCR_EL2_TGE		__BIT(27)	// trap general exceptions
 #define	HCR_EL2_TVM		__BIT(26)	// trap VM control regs write
-#define	HCR_EL2_TTLB		__BIT(25)	// trap TLB maintanance op
+#define	HCR_EL2_TTLB		__BIT(25)	// trap TLB maintenance op
 #define	HCR_EL2_TPU		__BIT(24)	// trap IC {IVAU,IALLU,IALLUIS},DC CVAU
 #define	HCR_EL2_TPC		__BIT(23)	// trap DC {IVAC,CIVAC,CVAC}
 #define	HCR_EL2_TSW		__BIT(22)	// trap DC {ISW,CSW,CISW}

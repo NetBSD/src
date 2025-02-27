@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clrpcops.c,v 1.4 2024/07/05 04:31:52 rin Exp $	*/
+/*	$NetBSD: nfs_clrpcops.c,v 1.5 2025/02/27 08:39:53 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_clrpcops.c,v 1.4 2024/07/05 04:31:52 rin Exp $");
+__RCSID("$NetBSD: nfs_clrpcops.c,v 1.5 2025/02/27 08:39:53 andvar Exp $");
 
 /*
  * Rpc op calls, generally called from the vnode op calls or through the
@@ -2669,7 +2669,7 @@ nfsrpc_rmdir(vnode_t dvp, char *name, int namelen, struct ucred *cred,
  * end of the directory, or uio_resid == 0, with all DIRBLKSIZ chunks
  * filled in.
  * I felt this would allow caching of directory blocks more easily
- * than returning a pertially filled block.
+ * than returning a partially filled block.
  * Directory offset cookies:
  * Oh my, what to do with them...
  * I can think of three ways to deal with them:

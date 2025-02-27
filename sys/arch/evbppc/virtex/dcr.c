@@ -1,4 +1,4 @@
-/* 	$NetBSD: dcr.c,v 1.3 2022/03/10 00:14:16 riastradh Exp $ */
+/* 	$NetBSD: dcr.c,v 1.4 2025/02/27 08:39:54 andvar Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -31,13 +31,13 @@
 
 /*
  * DCR bus space size & base addresses are hardcoded and runtime-checked,
- * so there's no point in maintaning extents etc -- just provide placebo
+ * so there's no point in maintaining extents etc -- just provide placebo
  * implementations so that we can use bus_space as usual (add more as
  * needed).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.3 2022/03/10 00:14:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.4 2025/02/27 08:39:54 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>

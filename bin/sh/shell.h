@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.33 2024/10/09 13:43:33 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.34 2025/02/27 08:39:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -103,7 +103,7 @@ extern	int		ShNest;
 #define	DBG_EXTRAS(n)	((DBG_VBOSE_SHIFT * 2) + (n))
 
 /*
- * Macros to enable tracing, so the mainainer can control
+ * Macros to enable tracing, so the maintainer can control
  * just how much debug output is dumped to the trace file
  *
  * In the X forms, "xtra" can be any legal C statement(s) without (bare) commas

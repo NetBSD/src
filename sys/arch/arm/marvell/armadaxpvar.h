@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxpvar.h,v 1.3 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: armadaxpvar.h,v 1.4 2025/02/27 08:39:54 andvar Exp $	*/
 /*
  * Copyright (c) 2015 SUENAGA Hiroki
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include <arm/marvell/mvsocvar.h>
 #include <machine/bus_defs.h>
 
-/* l2cache maintanance */
+/* l2cache maintenance */
 extern void armadaxp_sdcache_inv_all(void);
 extern void armadaxp_sdcache_wb_all(void);
 extern void armadaxp_sdcache_wbinv_all(void);
