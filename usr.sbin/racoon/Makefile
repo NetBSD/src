@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2023/06/03 08:53:01 lukem Exp $
+# $NetBSD: Makefile,v 1.44 2025/02/27 23:48:22 rillig Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -89,5 +89,7 @@ COPTS.rsalist.c+= -Wno-error=deprecated-declarations
 COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
 COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
 
+# Has to be fixed upstream.
+LINTFLAGS+=	-X 384		# function definition with identifier list
 
 .include <bsd.prog.mk>
