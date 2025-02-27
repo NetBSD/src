@@ -1,4 +1,4 @@
-/* $NetBSD: showvar.c,v 1.2 2025/02/25 22:11:36 christos Exp $ */
+/* $NetBSD: showvar.c,v 1.3 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: showvar.c,v 1.2 2025/02/25 22:11:36 christos Exp $");
+__RCSID("$NetBSD: showvar.c,v 1.3 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -321,7 +321,7 @@ format_optional_data(char *od, size_t sz)
 }
 
 static int
-show_boot_data(efi_var_t *v, int debug, uint max_namelen)
+show_boot_data(efi_var_t *v, uint debug, uint max_namelen)
 {
 	struct {
 		char *name;
@@ -481,7 +481,7 @@ varcmpsrchfn(const void *a, const void *b)
 }
 
 PUBLIC int
-show_variable(efi_var_t *v, int debug, uint max_namelen)
+show_variable(efi_var_t *v, uint debug, uint max_namelen)
 {
 #define REGEXP_BOOTXXXX	"^((Key)|(Boot)|(lBoot)|(Driver)|(SysPrep)|(OsRecovery))[0-9,A-F]{4}$"
 	static regex_t preg = { .re_magic = 0, };

@@ -1,4 +1,4 @@
-/* $NetBSD: devpath2.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath2.c,v 1.2 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath2.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath2.c,v 1.2 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -261,12 +261,13 @@ devpath_acpi_nvdimm(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	}
 }
 
+#ifdef notdef
 static inline void
 devpath_acpi_unknown(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {
 
 	path->sz = easprintf(&path->cp, "Msg(%d,%s)", dp->SubType,
-	    encode_data(dp->Data, dp->Length - 4));
+	    encode_data(((uint8_t *)dp) + 4, dp->Length - 4));
 	
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
@@ -274,6 +275,7 @@ devpath_acpi_unknown(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    DEVPATH_DAT_HDR(dp));
 	}
 }
+#endif
 
 PUBLIC void
 devpath_acpi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)

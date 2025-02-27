@@ -1,4 +1,4 @@
-/* $NetBSD: showvar.h,v 1.1 2025/02/24 13:47:57 christos Exp $ */
+/* $NetBSD: showvar.h,v 1.2 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 #define _SHOWEFI_H_
 
 #ifndef lint
-__RCSID("$NetBSD: showvar.h,v 1.1 2025/02/24 13:47:57 christos Exp $");
+__RCSID("$NetBSD: showvar.h,v 1.2 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 int show_generic_data(efi_var_t *, uint);
-int show_variable(efi_var_t *, int, uint);
+int show_variable(efi_var_t *, uint, uint);
 
 #endif /* _SHOWEFI_H_ */

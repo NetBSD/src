@@ -1,4 +1,4 @@
-/* $NetBSD: devpath.h,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath.h,v 1.2 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #define _DEVPATH_H_
 
 #ifndef lint
-__RCSID("$NetBSD: devpath.h,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath.h,v 1.2 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -38,7 +38,7 @@ typedef struct EFI_DEVICE_PATH_PROTOCOL {
 	uint8_t SubType;
 //	uint8_t Length[2];
 	uint16_t Length;
-	uint8_t	Data[];
+//	uint8_t	Data[];
 } EFI_DEVICE_PATH_PROTOCOL;
 
 typedef EFI_DEVICE_PATH_PROTOCOL devpath_t;

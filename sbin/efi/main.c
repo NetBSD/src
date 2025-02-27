@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1 2025/02/24 13:47:57 christos Exp $ */
+/* $NetBSD: main.c,v 1.2 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2025/02/24 13:47:57 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -153,7 +153,7 @@ enum {
   _X(show,			NULL) \
   _X(show_gpt,			show_gpt)
 
-static void __dead
+static void __dead __printflike(1, 2)
 usage(const char *fmt, ...)
 {
 	const char *progname = getprogname();

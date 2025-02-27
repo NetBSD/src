@@ -1,4 +1,4 @@
-/* $NetBSD: certs.c,v 1.2 2025/02/25 20:23:19 rillig Exp $ */
+/* $NetBSD: certs.c,v 1.3 2025/02/27 17:26:56 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: certs.c,v 1.2 2025/02/25 20:23:19 rillig Exp $");
+__RCSID("$NetBSD: certs.c,v 1.3 2025/02/27 17:26:56 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -220,7 +220,8 @@ sigfn256(const void *vp, size_t sz, int indent)
 	printf("%*sOwner: ", indent, "");
 	uuid_printf(&s->uuid);
 	printf("\n");
-	show_data((void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash), "  ");
+	show_data((const void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash),
+	    "  ");
 	printf("%*sTimeOfRevocation: ", indent, "");
 	show_time(&s->TimeOfRevocation, indent);
 	return 0;
@@ -239,7 +240,8 @@ sigfn384(const void *vp, size_t sz, int indent)
 	printf("%*sOwner: ", indent, "");
 	uuid_printf(&s->uuid);
 	printf("\n");
-	show_data((void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash), "  ");
+	show_data((const void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash),
+	    "  ");
 	printf("%*sTimeOfRevocation: ", indent, "");
 	show_time(&s->TimeOfRevocation, indent);
 	return 0;
@@ -258,7 +260,8 @@ sigfn512(const void *vp, size_t sz, int indent)
 	printf("%*sOwner: ", indent, "");
 	uuid_printf(&s->uuid);
 	printf("\n");
-	show_data((void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash), "  ");
+	show_data((const void *)&s->ToBeSignedHash, sizeof(s->ToBeSignedHash),
+	    "  ");
 	printf("%*sTimeOfRevocation: ", indent, "");
 	show_time(&s->TimeOfRevocation, indent);
 	return 0;
