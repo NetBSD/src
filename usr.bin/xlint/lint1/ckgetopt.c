@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.27 2024/03/19 23:19:03 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.28 2025/02/27 22:37:37 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.27 2024/03/19 23:19:03 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.28 2025/02/27 22:37:37 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -65,6 +65,7 @@ static struct {
 	 * ':' should remain.
 	 */
 	pos_t options_pos;
+	int options_lwarn;
 	char *options;
 
 	/*
@@ -134,8 +135,11 @@ check_unhandled_option(void)
 		if (*opt == ' ' || *opt == ':')
 			continue;
 
+		int prev_lwarn = lwarn;
+		lwarn = ck.options_lwarn;
 		/* option '%c' should be handled in the switch */
 		warning_at(338, &ck.options_pos, *opt);
+		lwarn = prev_lwarn;
 	}
 }
 
@@ -146,6 +150,7 @@ check_getopt_begin_while(const tnode_t *tn)
 	if (ck.while_level == 0) {
 		if (!is_getopt_condition(tn, &ck.options))
 			return;
+		ck.options_lwarn = lwarn;
 		ck.options_pos = curr_pos;
 	}
 	ck.while_level++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.10 2025/02/27 22:37:37 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -155,4 +155,28 @@ unreachable_colon(int argc, char **argv)
 		}
 	}
 	return 0;
+}
+
+void
+suppressed_warning(int argc, char **argv)
+{
+	int c;
+
+	/* expect+2: warning: option 'a' should be handled in the switch [338] */
+	/* expect+1: warning: option 'b' should be handled in the switch [338] */
+	while ((c = getopt(argc, argv, "ab")) != -1) {
+		switch (c) {
+		}
+	}
+	/* LINTED 338 */
+	while ((c = getopt(argc, argv, "ab")) != -1) {
+		switch (c) {
+		}
+	}
+	/* expect+2: warning: option 'a' should be handled in the switch [338] */
+	/* expect+1: warning: option 'b' should be handled in the switch [338] */
+	while ((c = getopt(argc, argv, "ab")) != -1) {
+		switch (c) {
+		}
+	}
 }
