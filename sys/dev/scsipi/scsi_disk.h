@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.37 2025/02/27 15:07:45 jakllsch Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.38 2025/02/27 17:17:00 jakllsch Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -393,5 +393,40 @@ union scsi_disk_pages {
 		u_int8_t ctl_selt[2];	/* extended self-test completion time */
 	} control_params;
 };
+
+struct scsi_vpd_logical_block_provisioning {
+	struct {
+/*1*/		u_int8_t	device;
+/*2*/		u_int8_t	pagecode;
+/*3*/		u_int8_t	length[2];
+	};
+/*4*/	u_int8_t	threshold_exponent;
+/*5*/	u_int8_t	flags;
+#define VPD_LBP_LBPU		0x80
+#define VPD_LBP_LBPWS		0x40
+#define VPD_LBP_LBPWS10		0x20
+/*6*/	u_int8_t	reserved6[2];
+} __packed;
+
+#define	UNMAP_10		0x42
+struct scsi_unmap_10 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved3[4];
+	u_int8_t byte7;
+	u_int8_t length[2];
+	u_int8_t control;
+} __packed;
+
+struct scsi_unmap_10_data {
+	u_int8_t	unmap_data_length[2];
+	u_int8_t	unmap_block_descriptor_data_length[2];
+	u_int8_t	reserved5[4];
+	struct {
+		u_int8_t	addr[8];
+		u_int8_t	len[4];
+		u_int8_t	reserved13[4];
+	} unmap_block_descriptor[1];
+} __packed;
 
 #endif /* _DEV_SCSIPI_SCSI_DISK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.41 2025/02/27 17:03:46 jakllsch Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.42 2025/02/27 17:17:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ struct sd_softc {
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_FLUSHING	0x40		/* flushing, for sddone() */
+#define	SDF_LBPME	0x80		/* logical block provisioning management enabled */
+#define	SDF_LBPU	0x100		/* logical block provisioning unmap */
 
 	struct scsipi_periph *sc_periph;/* contains our targ, lun, etc. */
 

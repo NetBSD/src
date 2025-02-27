@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.340 2025/02/27 17:03:46 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.341 2025/02/27 17:17:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.340 2025/02/27 17:03:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.341 2025/02/27 17:17:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -105,6 +105,7 @@ static void	sd_iosize(device_t, int *);
 static int	sd_lastclose(device_t);
 static int	sd_firstopen(device_t, dev_t, int, int);
 static void	sd_label(device_t, struct disklabel *);
+static int	sd_discard(device_t, off_t, off_t);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
@@ -158,6 +159,7 @@ static dev_type_ioctl(sdioctl);
 static dev_type_strategy(sdstrategy);
 static dev_type_dump(sddump);
 static dev_type_size(sdsize);
+static dev_type_discard(sddiscard);
 
 const struct bdevsw sd_bdevsw = {
 	.d_open = sdopen,
@@ -166,7 +168,7 @@ const struct bdevsw sd_bdevsw = {
 	.d_ioctl = sdioctl,
 	.d_dump = sddump,
 	.d_psize = sdsize,
-	.d_discard = nodiscard,
+	.d_discard = sddiscard,
 	.d_cfdriver = &sd_cd,
 	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
@@ -183,7 +185,7 @@ const struct cdevsw sd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
+	.d_discard = sddiscard,
 	.d_cfdriver = &sd_cd,
 	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
@@ -200,6 +202,7 @@ static const struct dkdriver sddkdriver = {
 	.d_firstopen = sd_firstopen,
 	.d_lastclose = sd_lastclose,
 	.d_label = sd_label,
+	.d_discard = sd_discard,
 };
 
 static const struct scsipi_periphsw sd_switch = {
@@ -1047,6 +1050,51 @@ sd_label(device_t self, struct disklabel *lp)
 		lp->d_flags |= D_REMOVABLE;
 }
 
+static int
+sd_unmap(struct sd_softc *sd, off_t pos, off_t len)
+{
+	struct scsi_unmap_10 cmd;
+	struct scsi_unmap_10_data data;
+	int flags = 0;
+	uint64_t bno;
+	uint32_t size;
+
+	/* round the start up and the end down */
+	bno = (pos + sd->params.blksize - 1) / sd->params.blksize;
+	size = ((pos + len) / sd->params.blksize) - bno;
+
+	if (size == 0)
+		return 0;
+
+	memset(&data, 0, sizeof(data));
+	_lto2b(sizeof(data) - 2, data.unmap_data_length);
+	_lto2b(sizeof(data) - 8, data.unmap_block_descriptor_data_length);
+	_lto8b(bno, data.unmap_block_descriptor[0].addr);
+	_lto4b(size, data.unmap_block_descriptor[0].len);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = UNMAP_10;
+	cmd.byte2 = 0;
+	_lto2b(sizeof(data), cmd.length);
+
+	scsipi_command(sd->sc_periph,
+	    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
+	    SDRETRIES, 2000000, NULL,
+	    flags | XS_CTL_DATA_OUT);
+
+	return 0;
+}
+
+static int
+sd_discard(device_t self, off_t pos, off_t len)
+{
+	struct sd_softc *sd = device_private(self);
+	if (sd->flags & SDF_LBPU) {
+		return sd_unmap(sd, pos, len);
+	}
+	return ENODEV;
+}
+
 static bool
 sd_shutdown(device_t self, int how)
 {
@@ -1420,6 +1468,11 @@ sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 	rv = _8btol(datap->data16.addr) + 1;
 	sd->params.lbppbe = datap->data16.byte14 & SRC16D_LBPPB_EXPONENT;
 	sd->params.lalba = _2btol(datap->data16.lowest_aligned) & SRC16D_LALBA;
+	if (_2btol(datap->data16.lowest_aligned) & SRC16D_LBPME) {
+		sd->flags |= SDF_LBPME;
+	} else {
+		sd->flags &= ~SDF_LBPME;
+	}
 
  out:
 	free(datap, M_TEMP);
@@ -1579,6 +1632,26 @@ printf("page 0 ok\n");
 
 	dp->blksize = blksize;
 	dp->disksize512 = (blocks * dp->blksize) / DEV_BSIZE;
+
+	if ((sd->flags & SDF_LBPME) == 0)
+		goto end;
+	struct scsipi_inquiry cmd;
+	struct scsi_vpd_logical_block_provisioning vpdbuf;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = INQUIRY;
+	cmd.length = sizeof(vpdbuf);
+	cmd.byte2 |= SINQ_EVPD;
+	cmd.pagecode = SINQ_VPD_LOGICAL_PROV;
+
+	sd->flags &= ~SDF_LBPU;
+	if (scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd), (void *)&vpdbuf, sizeof(vpdbuf),
+	    SDRETRIES, 100000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_IGNORE_ILLEGAL_REQUEST))
+		goto end;
+
+	if (vpdbuf.flags & VPD_LBP_LBPU)
+		sd->flags |= SDF_LBPU;
+
+end:
 	return (0);
 }
 
@@ -1963,3 +2036,16 @@ sd_set_geometry(struct sd_softc *sd)
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sd->typename);
 }
+
+static int
+sddiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct sd_softc *sd;
+	int unit;
+
+	unit = SDUNIT(dev);
+	sd = device_lookup_private(&sd_cd, unit);
+
+	return dk_discard(&sd->sc_dksc, dev, pos, len);
+}
+
