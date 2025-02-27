@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.7 2013/09/08 13:15:53 matt Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.8 2025/02/27 02:05:03 christos Exp $");
 
 #include "namespace.h"
 
@@ -44,12 +44,17 @@ __RCSID("$NetBSD: arm_initfini.c,v 1.7 2013/09/08 13:15:53 matt Exp $");
 #include <sys/sysctl.h>
 
 #include <stdbool.h>
+#include <string.h>
 #include <stddef.h>
 
 __dso_hidden int _libc_arm_fpu_present;
 #ifndef __ARM_ARCH_EXT_IDIV__
 __dso_hidden int _libc_arm_hwdiv_present;
+# define NENTRIES 2
+#else
+# define NENTRIES 1
 #endif
+
 static bool _libc_aapcs_initialized;
 
 void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
@@ -57,14 +62,39 @@ void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
 void __section(".text.startup")
 _libc_aapcs_init(void)
 {
-	if (!_libc_aapcs_initialized) {
-		size_t len = sizeof(_libc_arm_fpu_present);
-		_libc_aapcs_initialized = true;
-		(void)sysctlbyname("machdep.fpu_present",
-		    &_libc_arm_fpu_present, &len, NULL, 0);
+	if (_libc_aapcs_initialized)
+		return;
+
+	struct sysctlnode query, md[64];
+	int mib[2];
+	size_t len, mlen = sizeof(_libc_arm_fpu_present), nentries = 0;
+
+	_libc_aapcs_initialized = true;
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CTL_QUERY;
+	memset(&query, 0, sizeof(query));
+	query.sysctl_flags = SYSCTL_VERSION;
+	len = sizeof(md);
+	if (sysctl(mib, 2, md, &len, &query, sizeof(query)) == -1)
+		return;
+
+	for (size_t i = 0; i < len / sizeof(md[0]); i++) {
+		if (strcmp(md[i].sysctl_name, "fpu_present") == 0) {
+			mib[1] = md[i].sysctl_num;
+			(void)sysctl(mib, 2, &_libc_arm_fpu_present, &mlen,
+			    NULL, 0);
+			nentries++;
+
+		}
 #ifndef __ARM_ARCH_EXT_IDIV__
-		(void)sysctlbyname("machdep.hwdiv_present",
-		    &_libc_arm_hwdiv_present, &len, NULL, 0);
+		else if (strcmp(md[i].sysctl_name, "hwdiv_present") == 0) {
+			mib[1] = md[i].sysctl_num;
+			(void)sysctl(mib, 2, &_libc_arm_hwdiv_present, &mlen,
+			    NULL, 0);
+			nentries++;
+		}
 #endif
+		if (nentries >= NENTRIES)
+			return;
 	}
 }
