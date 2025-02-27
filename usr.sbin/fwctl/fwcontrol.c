@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.17 2019/02/01 08:29:04 mrg Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.18 2025/02/27 21:09:23 rillig Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.17 2019/02/01 08:29:04 mrg Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.18 2025/02/27 21:09:23 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -136,7 +136,7 @@ str2node(int fd, const char *nodestr)
 	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(EX_SOFTWARE, "%s: data malloc", __func__);
-	get_dev(fd,data);
+	get_dev(fd, data);
 
 	for (i = 0; i < data->info_len; i++) {
 		fweui2eui64(&data->dev[i].eui, &tmpeui);
@@ -148,8 +148,7 @@ str2node(int fd, const char *nodestr)
 		}
 	}
 	if (i >= data->info_len) {
-		if (data != NULL)
-			free(data);
+		free(data);
 		return -1;
 	}
 
@@ -765,12 +764,8 @@ main(int argc, char **argv)
 		for (current_board = 0; current_board < MAX_BOARDS; current_board++) {
 			snprintf(devbase, sizeof(devbase), "%s%d.0", device_string, current_board);
 			if (open_dev(&fd, devbase) < 0) {
-				if (current_board == 0) {
+				if (current_board == 0)
 					usage();
-					err(EX_IOERR, "%s: Error opening "
-					    "firewire controller #%d %s",
-					    __func__, current_board, devbase);
-				}
 				return EIO;
 			}
 			list_dev(fd);
@@ -928,26 +923,18 @@ main(int argc, char **argv)
 			command_set = true;
 			display_board_only = false;
 			break;
-		case '?':
 		default:
 			usage();
-			errx(EINVAL, "%s: Unknown command line arguments",
-			    __func__);
-			return 0;
 		}
-	} /* end while */
+	}
 
 	/*
 	 * Catch the error case when the user
 	 * executes the command with non ''-''
 	 * delimited arguments.
-	 * Generate the usage() display and exit.
 	 */
-	if (!command_set && !display_board_only) {
+	if (!command_set && !display_board_only)
 		usage();
-		errx(EINVAL, "%s: Unknown command line arguments", __func__);
-		return 0;
-	}
 
 	/*
 	 * If -u <bus_number> is passed, execute

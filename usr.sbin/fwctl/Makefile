@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/10/13 17:23:29 plunky Exp $
+# $NetBSD: Makefile,v 1.8 2025/02/27 21:09:23 rillig Exp $
 
 WARNS?=	4
 PROG=	fwctl
@@ -9,5 +9,6 @@ MAN=	fwctl.8
 
 SDIR= ${.CURDIR}/../../sys
 CPPFLAGS+=-I${.CURDIR} -I${SDIR}
+LINTFLAGS+= -X 34	# unportable bit-field type 'unsigned char'
 
 .include <bsd.prog.mk>
