@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.674 2025/02/27 06:23:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.675 2025/02/27 23:46:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.674 2025/02/27 06:23:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.675 2025/02/27 23:46:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -152,8 +152,8 @@ si_mult_sat(const type_t *tp, int64_t l, int64_t r)
 	uint64_t al = s64_abs(l);
 	uint64_t ar = s64_abs(r);
 	bool neg = (l >= 0) != (r >= 0);
-	uint64_t max = ui_max_value(tp);
-	uint64_t max_prod = (uint64_t)max + (neg ? 1 : 0);
+	uint64_t max = (uint64_t)si_max_value(tp);
+	uint64_t max_prod = max + (neg ? 1 : 0);
 	if (al == 0 || ar <= max_prod / al)
 		return l * r;
 	else if (neg)
