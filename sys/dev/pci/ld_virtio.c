@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.41 2025/02/23 22:04:06 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.42 2025/02/27 16:21:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.41 2025/02/23 22:04:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.42 2025/02/27 16:21:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.41 2025/02/23 22:04:06 mlelstv Exp $
 #define VIRTIO_BLK_CONFIG_GEOMETRY_H	18 /* 8bit */
 #define VIRTIO_BLK_CONFIG_GEOMETRY_S	19 /* 8bit */
 #define VIRTIO_BLK_CONFIG_BLK_SIZE	20 /* 32bit */
+#define VIRTIO_BLK_CONFIG_PHYSICAL_BLOCK_EXP		24 /* 8bit */
+#define VIRTIO_BLK_CONFIG_ALIGNMENT_OFFSET		25 /* 8bit */
+#define VIRTIO_BLK_CONFIG_MIN_IO_SIZE			26 /* 16bit */
+#define VIRTIO_BLK_CONFIG_OPT_IO_SIZE			28 /* 32bit */
 #define VIRTIO_BLK_CONFIG_WRITEBACK	32 /* 8bit */
 #define VIRTIO_BLK_CONFIG_NUM_QUEUES			34 /* 16bit */
 #define VIRTIO_BLK_CONFIG_MAX_DISCARD_SECTORS		36 /* 32bit */
@@ -324,8 +328,8 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	virtio_child_attach_start(vsc, self, IPL_BIO,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
-	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE |
-	     VIRTIO_BLK_F_DISCARD),
+	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_TOPOLOGY |
+	     VIRTIO_BLK_F_CONFIG_WCE | VIRTIO_BLK_F_DISCARD),
 	    VIRTIO_BLK_FLAG_BITS);
 
 	features = virtio_features(vsc);
@@ -415,6 +419,13 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 					VIRTIO_BLK_CONFIG_GEOMETRY_H);
 		ld->sc_nsectors   = virtio_read_device_config_1(vsc,
 					VIRTIO_BLK_CONFIG_GEOMETRY_S);
+	}
+	if (features & VIRTIO_BLK_F_TOPOLOGY) {
+		ld->sc_alignedsec = virtio_read_device_config_1(vsc,
+		    VIRTIO_BLK_CONFIG_ALIGNMENT_OFFSET);
+		ld->sc_physsecsize = ld->sc_secsize <<
+		    virtio_read_device_config_1(vsc,
+		    VIRTIO_BLK_CONFIG_PHYSICAL_BLOCK_EXP);
 	}
 	ld->sc_maxqueuecnt = qsize - 1; /* reserve slot for dumps, flushes */
 
