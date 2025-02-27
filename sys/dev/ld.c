@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.112 2021/05/30 11:24:02 riastradh Exp $	*/
+/*	$NetBSD: ld.c,v 1.113 2025/02/27 16:20:26 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.112 2021/05/30 11:24:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.113 2025/02/27 16:20:26 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,9 +404,10 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
-	int unit, error;
+	int unit, part, error;
 
 	unit = DISKUNIT(dev);
+	part = DISKPART(dev);
 	sc = device_lookup_private(&ld_cd, unit);
 	dksc = &sc->sc_dksc;
 
@@ -427,6 +428,26 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		else
 			error = 0;
 		break;
+	case DIOCGSECTORALIGN: {
+		struct disk_sectoralign *dsa = addr;
+		dsa->dsa_alignment = sc->sc_physsecsize / sc->sc_secsize;
+		dsa->dsa_alignment = MAX(1, dsa->dsa_alignment);
+		dsa->dsa_firstaligned = sc->sc_alignedsec;
+		if (part != RAW_PART) {
+			struct disklabel *lp = dksc->sc_dkdev.dk_label;
+			daddr_t offset = lp->d_partitions[part].p_offset;
+			uint32_t r = offset % dsa->dsa_alignment;
+
+			if (r < dsa->dsa_firstaligned)
+				dsa->dsa_firstaligned = dsa->dsa_firstaligned
+				    - r;
+			else
+				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
+				    + dsa->dsa_alignment) - r;
+		}
+		dsa->dsa_firstaligned %= dsa->dsa_alignment;
+		return 0;
+	}
 	}
 
 	if (error != 0)
