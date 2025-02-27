@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_binary.c,v 1.8 2023/07/14 08:53:52 rillig Exp $	*/
+/*	$NetBSD: expr_binary.c,v 1.9 2025/02/27 07:02:39 rillig Exp $	*/
 # 3 "expr_binary.c"
 
 /*
@@ -133,33 +133,103 @@ struct point {
 	int x, y;
 };
 
+static void
+return_void(void)
+{
+}
+
+static _Bool
+return_bool(void)
+{
+	return sizeof(char) == 1;
+}
+
 static struct point
-returning_struct(void)
+return_sou(void)
 {
 	return (struct point){ 0, 0 };
 }
 
-static void
-returning_void(void)
+static int
+return_integer(void)
 {
+	return 4;
+}
+
+static double
+return_floating(void)
+{
+	return 3.5;
+}
+
+static char *
+return_pointer(void)
+{
+	return (void *)0;
 }
 
 static inline void
 op_colon(_Bool cond)
 {
+	cond ? return_void() : return_void();
+	/* expect+1: warning: incompatible types 'void' and '_Bool' in conditional [126] */
+	cond ? return_void() : return_bool();
+	/* expect+1: warning: incompatible types 'void' and 'struct point' in conditional [126] */
+	cond ? return_void() : return_sou();
+	/* expect+1: warning: incompatible types 'void' and 'int' in conditional [126] */
+	cond ? return_void() : return_integer();
+	/* expect+1: warning: incompatible types 'void' and 'double' in conditional [126] */
+	cond ? return_void() : return_floating();
+	/* expect+1: warning: incompatible types 'void' and 'pointer to char' in conditional [126] */
+	cond ? return_void() : return_pointer();
+	/* expect+1: warning: incompatible types '_Bool' and 'void' in conditional [126] */
+	cond ? return_bool() : return_void();
+	cond ? return_bool() : return_bool();
+	/* expect+1: error: incompatible types '_Bool' and 'struct point' in conditional [126] */
+	cond ? return_bool() : return_sou();
+	cond ? return_bool() : return_integer();
+	cond ? return_bool() : return_floating();
+	/* expect+1: warning: illegal combination of integer '_Bool' and pointer 'pointer to char', op ':' [123] */
+	cond ? return_bool() : return_pointer();
 	// FIXME: GCC doesn't warn, as the 'type mismatch' is not wrong.
 	/* expect+1: warning: incompatible types 'struct point' and 'void' in conditional [126] */
-	cond ? returning_struct() : returning_void();
-
-	// TODO: Test the other combinations as well.
-	// |         | void | bool | arith | sou | int | flt | ptr | nullptr |
-	// |---------|------|------|-------|-----|-----|-----|-----|---------|
-	// | void    | ok   |      |       |     |     |     |     |         |
-	// | bool    |      | ok   |       |     |     |     |     |         |
-	// | arith   |      |      | ok    |     |     |     |     |         |
-	// | sou     |      |      |       | ok  |     |     |     |         |
-	// | int     |      |      |       |     |     |     | ok  |         |
-	// | flt     |      |      |       |     |     |     |     |         |
-	// | ptr     |      |      |       |     | ok  |     |     | ok      |
-	// | nullptr |      |      |       |     |     |     | ok  |         |
+	cond ? return_sou() : return_void();
+	/* expect+1: error: incompatible types 'struct point' and '_Bool' in conditional [126] */
+	cond ? return_sou() : return_bool();
+	cond ? return_sou() : return_sou();
+	/* expect+1: error: incompatible types 'struct point' and 'int' in conditional [126] */
+	cond ? return_sou() : return_integer();
+	/* expect+1: error: incompatible types 'struct point' and 'double' in conditional [126] */
+	cond ? return_sou() : return_floating();
+	/* expect+1: error: incompatible types 'struct point' and 'pointer to char' in conditional [126] */
+	cond ? return_sou() : return_pointer();
+	/* expect+1: warning: incompatible types 'int' and 'void' in conditional [126] */
+	cond ? return_integer() : return_void();
+	cond ? return_integer() : return_bool();
+	/* expect+1: error: incompatible types 'int' and 'struct point' in conditional [126] */
+	cond ? return_integer() : return_sou();
+	cond ? return_integer() : return_integer();
+	cond ? return_integer() : return_floating();
+	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to char', op ':' [123] */
+	cond ? return_integer() : return_pointer();
+	/* expect+1: warning: incompatible types 'double' and 'void' in conditional [126] */
+	cond ? return_floating() : return_void();
+	cond ? return_floating() : return_bool();
+	/* expect+1: error: incompatible types 'double' and 'struct point' in conditional [126] */
+	cond ? return_floating() : return_sou();
+	cond ? return_floating() : return_integer();
+	cond ? return_floating() : return_floating();
+	/* expect+1: error: incompatible types 'double' and 'pointer to char' in conditional [126] */
+	cond ? return_floating() : return_pointer();
+	/* expect+1: warning: incompatible types 'pointer to char' and 'void' in conditional [126] */
+	cond ? return_pointer() : return_void();
+	/* expect+1: warning: illegal combination of pointer 'pointer to char' and integer '_Bool', op ':' [123] */
+	cond ? return_pointer() : return_bool();
+	/* expect+1: error: incompatible types 'pointer to char' and 'struct point' in conditional [126] */
+	cond ? return_pointer() : return_sou();
+	/* expect+1: warning: illegal combination of pointer 'pointer to char' and integer 'int', op ':' [123] */
+	cond ? return_pointer() : return_integer();
+	/* expect+1: error: incompatible types 'pointer to char' and 'double' in conditional [126] */
+	cond ? return_pointer() : return_floating();
+	cond ? return_pointer() : return_pointer();
 }
