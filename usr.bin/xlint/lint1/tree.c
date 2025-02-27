@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.673 2025/02/24 19:56:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.674 2025/02/27 06:23:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.673 2025/02/24 19:56:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.674 2025/02/27 06:23:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4126,8 +4126,8 @@ warn_constant_check_range_truncated(op_t op, int arg, const type_t *tp,
 		/* initializer does not fit */
 		warning(178);
 	else if (op == CASE)
-		/* case label affected by conversion */
-		warning(196);
+		/* case label is converted from '%s' to '%s' */
+		warning(196, tspec_name(ot), type_name(tp));
 	else if (op == FARG)
 		/* conversion of '%s' to '%s' is out of range, arg #%d */
 		warning(295, type_name(gettyp(ot)), type_name(tp), arg);
@@ -4147,8 +4147,8 @@ warn_constant_check_range_loss(op_t op, int arg, const type_t *tp,
 		/* bit-field initializer out of range */
 		warning(11);
 	else if (op == CASE)
-		/* case label affected by conversion */
-		warning(196);
+		/* case label is converted from '%s' to '%s' */
+		warning(196, tspec_name(ot), type_name(tp));
 	else if (op == FARG)
 		/* conversion of '%s' to '%s' is out of range, arg #%d */
 		warning(295, type_name(gettyp(ot)), type_name(tp), arg);
