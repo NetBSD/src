@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.23 2017/11/04 21:02:37 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.24 2025/02/27 17:00:47 jakllsch Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -129,7 +129,14 @@ struct scsipi_read_capacity_16_data {
 	u_int8_t byte13;
 #define	SRC16D_PROT_EN		0x01
 #define	SRC16D_RTO_EN		0x02
-	u_int8_t reserved[19];
+	u_int8_t byte14;
+#define	SRC16D_LBPPB_EXPONENT	0x0f
+#define	SRC16D_P_I_EXPONENT	0xf0
+	u_int8_t lowest_aligned[2];
+#define	SRC16D_LALBA		0x3fff
+#define	SRC16D_LBPRZ		0x4000
+#define	SRC16D_LBPME		0x8000
+	u_int8_t reserved17[16];
 } __packed;
 
 /* XXX SBC-2 says this is vendor-specific */
