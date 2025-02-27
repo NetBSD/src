@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.8 2025/02/27 02:05:03 christos Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.9 2025/02/27 10:55:27 christos Exp $");
 
 #include "namespace.h"
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: arm_initfini.c,v 1.8 2025/02/27 02:05:03 christos Exp $");
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 __dso_hidden int _libc_arm_fpu_present;
 #ifndef __ARM_ARCH_EXT_IDIV__
@@ -76,7 +77,7 @@ _libc_aapcs_init(void)
 	query.sysctl_flags = SYSCTL_VERSION;
 	len = sizeof(md);
 	if (sysctl(mib, 2, md, &len, &query, sizeof(query)) == -1)
-		return;
+		abort();
 
 	for (size_t i = 0; i < len / sizeof(md[0]); i++) {
 		if (strcmp(md[i].sysctl_name, "fpu_present") == 0) {
