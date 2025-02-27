@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.84 2024/12/22 23:25:15 riastradh Exp $
+# $NetBSD: Makefile,v 1.85 2025/02/27 00:55:31 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ TESTSDIR=	${TESTSBASE}/kernel
 TESTS_SUBDIRS+=	kqueue
 TESTS_C+=	t_cloexec
 #TESTS_C+=	t_epoll
+TESTS_C+=	t_execregs
 TESTS_C+=	t_fcntl
 .if ${MKRUMP} != "no"
 TESTS_C+=	t_fdrestart
@@ -51,6 +52,7 @@ TESTS_SH+=	t_umount
 
 BINDIR=		${TESTSDIR}
 PROGS+=		h_cloexec
+PROGS+=		h_execregs
 PROGS+=		h_fexecve
 PROGS+=		h_fpufork
 PROGS+=		h_getprocpath
@@ -131,5 +133,17 @@ SANITIZER_RENAME_SYMBOL.t_subr_prf+=	vasprintf
 CLEANFILES+=	t_subr_prf.c
 
 LDADD.h_segv+=	-lm
+
+.if exists(arch/${MACHINE_ARCH}/execregs.h)
+ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
+.PATH:			${ARCHDIR}
+CPPFLAGS.t_execregs.c+=	-I${ARCHDIR}
+CPPFLAGS.t_execregs.c+=	-DHAVE_EXECREGS_TEST
+SRCS.t_execregs+=	t_execregs.c
+SRCS.t_execregs+=	execregs.c
+LDFLAGS.h_execregs+=	-static -Wl,-e,execregs_start
+.else
+SRCS.h_execregs=	h_execregs_unimpl.c
+.endif
 
 .include <bsd.test.mk>
