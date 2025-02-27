@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.40 2022/08/28 10:26:37 mlelstv Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.41 2025/02/27 17:03:46 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ struct disk_parms {
 	u_long	rot_rate;		/* rotational rate, in RPM */
 	u_int64_t disksize;		/* total number sectors */
 	u_int64_t disksize512;		/* total number sectors */
+	uint8_t	lbppbe;			/* logical blocks per physical block exponent */
+	uint16_t lalba;			/* lowest aligned logical block address */
 };
 
 struct sd_softc {

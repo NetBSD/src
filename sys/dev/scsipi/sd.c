@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.339 2025/02/27 15:23:44 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.340 2025/02/27 17:03:46 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.339 2025/02/27 15:23:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.340 2025/02/27 17:03:46 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -111,7 +111,7 @@ static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int);
 static int	sd_validate_blksize(struct scsipi_periph *, int);
-static u_int64_t sd_read_capacity(struct scsipi_periph *, int *, int flags);
+static u_int64_t sd_read_capacity(struct sd_softc *, int *, int flags);
 static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
 		    int);
 static int	sd_get_capacity(struct sd_softc *, struct disk_parms *, int);
@@ -1002,6 +1002,28 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		return (0);
 
+	case DIOCGSECTORALIGN: {
+		struct disk_sectoralign *dsa = addr;
+
+		dsa->dsa_alignment = 1u << sd->params.lbppbe;
+		dsa->dsa_firstaligned = sd->params.lalba;
+		if (part != RAW_PART) {
+			struct disklabel *lp = dksc->sc_dkdev.dk_label;
+			daddr_t offset = lp->d_partitions[part].p_offset;
+			uint32_t r = offset % dsa->dsa_alignment;
+
+			if (r < dsa->dsa_firstaligned)
+				dsa->dsa_firstaligned = dsa->dsa_firstaligned
+				    - r;
+			else
+				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
+				    + dsa->dsa_alignment) - r;
+		}
+		dsa->dsa_firstaligned %= dsa->dsa_alignment;
+
+		return 0;
+	}
+
 	default:
 		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
 		if (error == ENOTTY)
@@ -1328,8 +1350,9 @@ sd_validate_blksize(struct scsipi_periph *periph, int len)
  *	Find out from the device what its capacity is.
  */
 static u_int64_t
-sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
+sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 {
+	struct scsipi_periph *periph = sd->sc_periph;
 	union {
 		struct scsipi_read_capacity_10 cmd;
 		struct scsipi_read_capacity_16 cmd16;
@@ -1339,6 +1362,9 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 		struct scsipi_read_capacity_16_data data16;
 	} *datap;
 	uint64_t rv;
+
+	sd->params.lbppbe = 0;
+	sd->params.lalba = 0;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd.opcode = READ_CAPACITY_10;
@@ -1352,6 +1378,9 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	datap = malloc(sizeof(*datap), M_TEMP, M_WAITOK);
 	if (datap == NULL)
 		return 0;
+
+	if (periph->periph_version >= 5) /* SPC-3 */
+		goto rc16;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
@@ -1375,6 +1404,7 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	 * Try READ CAPACITY (16).
 	 */
 
+ rc16:
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd16.opcode = READ_CAPACITY_16;
 	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
@@ -1388,6 +1418,8 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 
 	*blksize = _4btol(datap->data16.length);
 	rv = _8btol(datap->data16.addr) + 1;
+	sd->params.lbppbe = datap->data16.byte14 & SRC16D_LBPPB_EXPONENT;
+	sd->params.lalba = _2btol(datap->data16.lowest_aligned) & SRC16D_LALBA;
 
  out:
 	free(datap, M_TEMP);
@@ -1419,7 +1451,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * XXX probably differs for removable media
 	 */
 	dp->blksize = SD_DEFAULT_BLKSIZE;
-	if ((blocks = sd_read_capacity(sd->sc_periph, &blksize, flags)) == 0)
+	if ((blocks = sd_read_capacity(sd, &blksize, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
@@ -1467,8 +1499,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	u_int8_t *p;
 #endif
 
-	dp->disksize = blocks = sd_read_capacity(sd->sc_periph, &blksize,
-	    flags);
+	dp->disksize = blocks = sd_read_capacity(sd, &blksize, flags);
 	if (blocks == 0) {
 		struct scsipi_read_format_capacities cmd;
 		struct {
