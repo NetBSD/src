@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.338 2025/02/11 15:02:42 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.339 2025/02/27 15:23:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.338 2025/02/11 15:02:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.339 2025/02/27 15:23:44 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -298,11 +298,11 @@ sdattach(device_t parent, device_t self, void *aux)
 	periph->periph_dev = dksc->sc_dev;
 	periph->periph_switch = &sd_switch;
 
-        /*
-         * Increase our openings to the maximum-per-periph
-         * supported by the adapter.  This will either be
-         * clamped down or grown by the adapter if necessary.
-         */
+	/*
+	 * Increase our openings to the maximum-per-periph
+	 * supported by the adapter.  This will either be
+	 * clamped down or grown by the adapter if necessary.
+	 */
 	periph->periph_openings =
 	    SCSIPI_CHAN_MAX_PERIPH(periph->periph_channel);
 	periph->periph_flags |= PERIPH_GROW_OPENINGS;
@@ -329,7 +329,7 @@ sdattach(device_t parent, device_t self, void *aux)
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
-	        aprint_normal(
+		aprint_normal(
 		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    (unsigned long long)dp->disksize);
@@ -951,7 +951,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (scsipi_prevent(periph,
 			    (*(int *)addr) ?
 			    SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
-		else 
+		else
 			return (ENOTTY);
 
 	case DIOCEJECT:
@@ -1003,7 +1003,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return (0);
 
 	default:
-		error = dk_ioctl(dksc, dev, cmd, addr, flag, l); 
+		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
 		if (error == ENOTTY)
 			error = scsipi_do_ioctl(periph, dev, cmd, addr, flag, l);
 		return (error);
@@ -1016,7 +1016,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 static void
 sd_label(device_t self, struct disklabel *lp)
-{               
+{
 	struct sd_softc *sd = device_private(self);
 
 	strncpy(lp->d_typename, sd->name, 16);
@@ -1301,7 +1301,7 @@ sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 /*
  * sd_validate_blksize:
  *
- *	Validate the block size.  Print error if periph is specified, 
+ *	Validate the block size.  Print error if periph is specified,
  */
 static int
 sd_validate_blksize(struct scsipi_periph *periph, int len)
