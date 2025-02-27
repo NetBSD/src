@@ -1,4 +1,4 @@
-.\"	$NetBSD: ippool.8,v 1.1.1.1 2012/03/23 21:20:12 christos Exp $
+.\"	$NetBSD: ippool.8,v 1.2 2025/02/27 04:14:17 gutteridge Exp $
 .\"
 .TH IPPOOL 8
 .SH NAME
@@ -80,7 +80,7 @@ Display IP pool statistical information.
 .TP
 .B -i <ipaddr>[/<netmask>]
 Sets the IP address for the operation being undertaken with an
-all-one's mask or, optionally, a specific netmask given in either
+all-ones mask or, optionally, a specific netmask given in either
 the dotted-quad notation or a single integer.
 .TP
 .B -m <name>
@@ -91,7 +91,7 @@ Specify an alternative path to /dev/kmem to retrieve statistical information
 from.
 .TP
 .B -N <namelist>
-Specify an alternative path to lookup symbol name information from when
+Specify an alternative path to look up symbol name information from when
 retrieving statistical information.
 .TP
 .B -o <role>
@@ -108,7 +108,7 @@ Sets the hashing seed to the number specified.  Only for use with
 type pools.
 .TP
 .B -t <type>
-Sets the type of pool being defined.  Myst be one of
+Sets the type of pool being defined.  Must be one of
 .B tree,
 .B hash,
 .B group-map.
