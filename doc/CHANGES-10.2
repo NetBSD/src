@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.10 2025/02/24 18:31:26 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.11 2025/02/27 10:21:27 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -244,4 +244,57 @@ share/installboot/evbarm/boards.plist		1.13
 
 	installboot(8): fix Olimex A20-OLinuXino-MICRO.
 	[gutteridge, ticket #1066]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.28
+xsrc/external/mit/xorg-server/dist/configure         up to 1.21
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.23
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.18
+xsrc/external/mit/xorg-server/dist/Xext/sync.c       up to 1.14
+xsrc/external/mit/xorg-server/dist/Xi/xibarriers.c   up to 1.5
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c up to 1.8
+xsrc/external/mit/xorg-server/dist/composite/compalloc.c up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/config/10-quirks.conf up to 1.1.1.2
+xsrc/external/mit/xorg-server/dist/dix/devices.c     up to 1.16
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c    up to 1.9
+xsrc/external/mit/xorg-server/dist/dix/enterleave.c  up to 1.10
+xsrc/external/mit/xorg-server/dist/dix/eventconvert.c up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/dix/main.c        up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/glamor/glamor_program.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86Configure.c up to 1.13
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86sbusBus.c up to 1.8
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2.c up to 1.6
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/driver.c up to 1.8
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/drmmode_display.c up to 1.12
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/drmmode_display.h up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/present.c up to 1.9
+xsrc/external/mit/xorg-server/dist/hw/xfree86/fbdevhw/fbdevhw.c up to 1.6
+xsrc/external/mit/xorg-server/dist/include/dix-config.h.in up to 1.10
+xsrc/external/mit/xorg-server/dist/include/do-not-use-config.h.in up to 1.1.1.17
+xsrc/external/mit/xorg-server/dist/include/meson.build up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/os/WaitFor.c      up to 1.6
+xsrc/external/mit/xorg-server/dist/os/access.c       up to 1.8
+xsrc/external/mit/xorg-server/dist/os/connection.c   up to 1.9
+xsrc/external/mit/xorg-server/dist/render/picture.c  up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/test/sync/sync.c  up to 1.1.1.2
+xsrc/external/mit/xorg-server/dist/xkb/XKBMAlloc.c   up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/xkb/XKBMisc.c     up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c         up to 1.11
+xsrc/external/mit/xorg-server/dist/xkb/xkbUtils.c    up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/xkb/xkbtext.c     up to 1.1.1.7
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.54
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.24
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.34
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.34
+share/mk/bsd.x11.mk					(apply patch)
+
+	Update xorg-server to 21.1.16, fixing various CVEs
+	CVE-2025-26594, ZDI-CAN-25544                
+	CVE-2025-26595, ZDI-CAN-25545                  
+	CVE-2025-26596, ZDI-CAN-25543                    
+	CVE-2025-26597, ZDI-CAN-25683                      
+	CVE-2025-26598, ZDI-CAN-25740                        
+	CVE-2025-26599, ZDI-CAN-25851                        
+	CVE-2025-26600, ZDI-CAN-25871                          
+	CVE-2025-26601, ZDI-CAN-25870                            
+	[mrg, ticket #1067]
 
