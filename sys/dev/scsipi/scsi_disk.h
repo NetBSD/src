@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.35 2023/12/07 07:04:13 andvar Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.36 2025/02/27 14:49:56 jakllsch Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -136,9 +136,9 @@ struct scsi_defect_descriptor_psf {
 };
 
 /*
- * XXX for now this isn't in the ATAPI specs, but if there are on day
+ * XXX for now this isn't in the ATAPI specs, but if there are one day
  * ATAPI hard disks, it is likely that they implement this command (or a
- * command like this ?
+ * command like this?).
  */
 #define	SCSI_REASSIGN_BLOCKS		0x07
 struct scsi_reassign_blocks {
@@ -298,7 +298,7 @@ union scsi_disk_pages {
 		u_int8_t rpm[2];	/* media rotation speed */
 		u_int8_t reserved2;
 		u_int8_t reserved3;
-    	} rigid_geometry;
+	} rigid_geometry;
 	struct page_flex_geometry {
 		u_int8_t pg_code;	/* page code (should be 5) */
 		u_int8_t pg_length;	/* page length (should be 0x1e) */
@@ -364,7 +364,7 @@ union scsi_disk_pages {
 		u_int8_t pg_code;	/* page code (should be 0x0a) */
 		u_int8_t pg_length;	/* page length (should be 0x0a) */
 		u_int8_t ctl_flags1;	/* First set of flags */
-#define CTL1_TST_PER_INTR 	0x40	/* Task set per initiator */
+#define CTL1_TST_PER_INTR	0x40	/* Task set per initiator */
 #define CTL1_TST_FIELD		0xe0	/* Full field */
 #define CTL1_D_SENSE		0x04	/* Descriptor-format sense return */
 #define CTL1_GLTSD		0x02	/* Glob. Log Targ. Save Disable */
