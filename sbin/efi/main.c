@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2025/02/27 17:26:56 christos Exp $ */
+/* $NetBSD: main.c,v 1.3 2025/02/27 19:32:28 jakllsch Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2025/02/27 17:26:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2025/02/27 19:32:28 jakllsch Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -234,7 +234,7 @@ typedef enum {
   _X(const char *,	loader,		  DEFAULT_LOADER ) \
   _X(const char *,	target,		  NULL ) \
   _X(int,		verbose,	  0 ) \
-  _X(int,		debug,		  0 ) \
+  _X(uint,		debug,		  0 ) \
   _X(mbr_sig_write_t,	mbr_sig_write,    MBR_SIG_WRITE_NEVER ) \
   _X(uint16_t,		bootnum,	  0 ) \
   _X(uint16_t,		partnum,	  DEFAULT_PARTITION ) \
@@ -641,7 +641,7 @@ main(int argc, char **argv)
 			 * Prompt user for confirmation.
 			 * XXX: Should this go away?
 			 */
-			opt.debug &= (int)~DEBUG_BRIEF_BIT;
+			opt.debug &= (uint)~DEBUG_BRIEF_BIT;
 			opt.debug |= DEBUG_VERBOSE_BIT;
 			show_variable(&v, opt.debug, 0);
 			
@@ -678,7 +678,7 @@ main(int argc, char **argv)
 
 	case act_show: {
 		uint max_namelen = get_max_namelen(var_array, var_cnt);
-		int flags = opt.debug;
+		uint flags = opt.debug;
 
 		if (opt.verbose)
 			flags |= DEBUG_VERBOSE_BIT;
