@@ -1,4 +1,4 @@
-/*	$NetBSD: execregs.h,v 1.1 2025/02/27 00:55:32 riastradh Exp $	*/
+/*	$NetBSD: execregs.h,v 1.2 2025/02/28 16:08:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-#define	NEXECREGS	31
+#define	NEXECREGS	96
 
 #ifndef _LOCORE
 
@@ -77,6 +77,74 @@ static const char *const regname[] = {
 	"r31",
 	"cr27",
 	"cr28",
+
+	"psw",	/* user-visible PSW bits: C/B and V */
+
+	/* Floating-point registers */
+	"fr0l",
+	"fr0r",
+	"fr1l",
+	"fr1r",
+	"fr2l",
+	"fr2r",
+	"fr3l",
+	"fr3r",
+	"fr4l",
+	"fr4r",
+	"fr5l",
+	"fr5r",
+	"fr6l",
+	"fr6r",
+	"fr7l",
+	"fr7r",
+	"fr8l",
+	"fr8r",
+	"fr9l",
+	"fr9r",
+	"fr10l",
+	"fr10r",
+	"fr11l",
+	"fr11r",
+	"fr12l",
+	"fr12r",
+	"fr13l",
+	"fr13r",
+	"fr14l",
+	"fr14r",
+	"fr15l",
+	"fr15r",
+	"fr16l",
+	"fr16r",
+	"fr17l",
+	"fr17r",
+	"fr18l",
+	"fr18r",
+	"fr19l",
+	"fr19r",
+	"fr20l",
+	"fr20r",
+	"fr21l",
+	"fr21r",
+	"fr22l",
+	"fr22r",
+	"fr23l",
+	"fr23r",
+	"fr24l",
+	"fr24r",
+	"fr25l",
+	"fr25r",
+	"fr26l",
+	"fr26r",
+	"fr27l",
+	"fr27r",
+	"fr28l",
+	"fr28r",
+	"fr29l",
+	"fr29r",
+	"fr30l",
+	"fr30r",
+	"fr31l",
+	"fr31r",
 };
 
 __CTASSERT(NEXECREGS == __arraycount(regname));

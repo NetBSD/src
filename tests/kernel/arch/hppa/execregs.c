@@ -1,4 +1,4 @@
-/*	$NetBSD: execregs.c,v 1.1 2025/02/27 00:55:32 riastradh Exp $	*/
+/*	$NetBSD: execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: execregs.c,v 1.1 2025/02/27 00:55:32 riastradh Exp $");
+__RCSID("$NetBSD: execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $");
 
 #include "execregs.h"
 
 #include <errno.h>
 #include <spawn.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 extern char **environ;
@@ -45,6 +46,105 @@ nonnull(unsigned long x)
 	x |= x << 8;
 	x |= x << 16;
 	return x;
+}
+
+/*
+ * setfpregs()
+ *
+ *	Set up all the floating-point registers with something nonzero
+ *	in each one.  We initialize the floating-point status register
+ *	to set various bits so it's not all zero, but nothing that
+ *	would trigger traps.
+ */
+static void
+setfpregs(void)
+{
+	static const uint64_t fpe[] = {
+		(__BITS(63,59)		/* all exception flags (VZOUI) set */
+		    | __BIT(58)		/* C bit (comparison) set */
+		    | __BITS(54,43)	/* CQ (comparison queue) all set */
+		    | __SHIFTIN(1, __BITS(42,41))	/* round toward zero */
+		    | __SHIFTIN(0, __BIT(38))	/* no delayed trap */
+		    | __SHIFTIN(1, __BIT(37))	/* Denormalized As Zero */
+		    | __SHIFTIN(0, __BITS(36,32))	/* exceptions masked */
+		    | 0x10101010),
+		0x9191919111111111,
+		0x9292929212121212,
+		0x9393939313131313,
+	};
+	const uint64_t *fpep = fpe;
+
+	static const double fr[28] = {
+		0x1.04p0, 0x1.05p0, 0x1.06p0, 0x1.07p0,
+		0x1.08p0, 0x1.09p0, 0x1.0ap0, 0x1.0bp0,
+		0x1.0cp0, 0x1.0dp0, 0x1.0ep0, 0x1.0fp0,
+		0x1.10p0, 0x1.11p0, 0x1.12p0, 0x1.13p0,
+		0x1.14p0, 0x1.15p0, 0x1.16p0, 0x1.17p0,
+		0x1.18p0, 0x1.19p0, 0x1.1ap0, 0x1.1bp0,
+		0x1.1cp0, 0x1.1dp0, 0x1.1ep0, 0x1.1fp0,
+	};
+	const double *frp = fr;
+
+	__asm volatile(
+		"fldds,ma	8(%0), %%fr0\n\t"
+		"fldds,ma	8(%0), %%fr1\n\t"
+		"fldds,ma	8(%0), %%fr2\n\t"
+		"fldds		0(%0), %%fr3"
+	    : "+r"(fpep)
+	    : "m"(fpe));
+
+	__asm volatile(
+		"fldds,ma	8(%0), %%fr4\n\t"
+		"fldds,ma	8(%0), %%fr5\n\t"
+		"fldds,ma	8(%0), %%fr6\n\t"
+		"fldds,ma	8(%0), %%fr7\n\t"
+		"fldds,ma	8(%0), %%fr8\n\t"
+		"fldds,ma	8(%0), %%fr9\n\t"
+		"fldds,ma	8(%0), %%fr10\n\t"
+		"fldds,ma	8(%0), %%fr11\n\t"
+		"fldds,ma	8(%0), %%fr12\n\t"
+		"fldds,ma	8(%0), %%fr13\n\t"
+		"fldds,ma	8(%0), %%fr14\n\t"
+		"fldds,ma	8(%0), %%fr15\n\t"
+		"fldds,ma	8(%0), %%fr16\n\t"
+		"fldds,ma	8(%0), %%fr17\n\t"
+		"fldds,ma	8(%0), %%fr18\n\t"
+		"fldds,ma	8(%0), %%fr19\n\t"
+		"fldds,ma	8(%0), %%fr20\n\t"
+		"fldds,ma	8(%0), %%fr21\n\t"
+		"fldds,ma	8(%0), %%fr22\n\t"
+		"fldds,ma	8(%0), %%fr23\n\t"
+		"fldds,ma	8(%0), %%fr24\n\t"
+		"fldds,ma	8(%0), %%fr25\n\t"
+		"fldds,ma	8(%0), %%fr26\n\t"
+		"fldds,ma	8(%0), %%fr27\n\t"
+		"fldds,ma	8(%0), %%fr28\n\t"
+		"fldds,ma	8(%0), %%fr29\n\t"
+		"fldds,ma	8(%0), %%fr30\n\t"
+		"fldds		0(%0), %%fr31"
+	    : "+r"(frp)
+	    : "m"(fr));
+}
+
+/*
+ * setpsw()
+ *
+ *	Set some bits in PSW, the processor status word.
+ */
+static void
+setpsw(void)
+{
+	uint32_t x = 0xe0000000, y = 0xffffffff, sum;
+
+	/*
+	 * Trigger some arithmetic that causes the carry/borrow
+	 * (PSW[C/B]) bits to be set.
+	 *
+	 * XXX Also set PSW[V].
+	 */
+	__asm volatile("sh3add %[sum], %[x], %[y]"
+	    : /* outputs */ [sum] "=r"(sum)
+	    : /* inputs */ [x] "r"(x), [y] "r"(y));
 }
 
 int
@@ -110,6 +210,9 @@ execregschild(char *path)
 
 	char *argv[] = {path, NULL};
 	char **envp = environ;
+
+	setfpregs();
+	setpsw();
 
 	/*
 	 * Not perfect -- compiler might use some registers for
@@ -229,6 +332,9 @@ spawnregschild(char *path, int fd)
 	error = posix_spawnattr_init(&attr);
 	if (error)
 		goto out;
+
+	setfpregs();
+	setpsw();
 
 	/*
 	 * Not perfect -- compiler might use some registers for

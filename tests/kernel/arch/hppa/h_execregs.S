@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execregs.S,v 1.1 2025/02/27 00:55:32 riastradh Exp $	*/
+/*	$NetBSD: h_execregs.S,v 1.2 2025/02/28 16:08:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -98,6 +98,45 @@ _ENTRY(execregs_start)
 	stw	%cr28, (4*(30 - NEXECREGS))(%sp)
 	/* cr30/fpregs: privileged */
 	/* cr31: privileged */
+
+	addc	%t1, %r0, %r0	/* t1 := PSW[C/B]{0} */
+	zdep	%t1, 23, 8, %t1	/* t1 := PSW */
+	stw	%t1, (4*(31 - NEXECREGS))(%sp)
+
+	/* store the fp registers */
+	ldo	(4*(32 - NEXECREGS))(%sp), %t1
+	fstd,ma	%fr0, 8(%t1)
+	fstd,ma	%fr1, 8(%t1)
+	fstd,ma	%fr2, 8(%t1)
+	fstd,ma	%fr3, 8(%t1)
+	fstd,ma	%fr4, 8(%t1)
+	fstd,ma	%fr5, 8(%t1)
+	fstd,ma	%fr6, 8(%t1)
+	fstd,ma	%fr7, 8(%t1)
+	fstd,ma	%fr8, 8(%t1)
+	fstd,ma	%fr9, 8(%t1)
+	fstd,ma	%fr10, 8(%t1)
+	fstd,ma	%fr11, 8(%t1)
+	fstd,ma	%fr12, 8(%t1)
+	fstd,ma	%fr13, 8(%t1)
+	fstd,ma	%fr14, 8(%t1)
+	fstd,ma	%fr15, 8(%t1)
+	fstd,ma	%fr16, 8(%t1)
+	fstd,ma	%fr17, 8(%t1)
+	fstd,ma	%fr18, 8(%t1)
+	fstd,ma	%fr19, 8(%t1)
+	fstd,ma	%fr20, 8(%t1)
+	fstd,ma	%fr21, 8(%t1)
+	fstd,ma	%fr22, 8(%t1)
+	fstd,ma	%fr23, 8(%t1)
+	fstd,ma	%fr24, 8(%t1)
+	fstd,ma	%fr25, 8(%t1)
+	fstd,ma	%fr26, 8(%t1)
+	fstd,ma	%fr27, 8(%t1)
+	fstd,ma	%fr28, 8(%t1)
+	fstd,ma	%fr29, 8(%t1)
+	fstd,ma	%fr30, 8(%t1)
+	fstd	%fr31, 0(%t1)
 
 	/* call write(STDOUT_FILENO, regs, sizeof(regs)) */
 	ldi	1, %arg0			/* arg0 := STDOUT_FILENO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_execregs.c,v 1.1 2025/02/27 00:55:31 riastradh Exp $	*/
+/*	$NetBSD: t_execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_execregs.c,v 1.1 2025/02/27 00:55:31 riastradh Exp $");
+__RCSID("$NetBSD: t_execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: t_execregs.c,v 1.1 2025/02/27 00:55:31 riastradh Exp $");
 #ifdef HAVE_EXECREGS_TEST
 
 #include "execregs.h"
+#include "isqemu.h"
 #include "h_macros.h"
 
 static void
@@ -70,6 +71,13 @@ static void
 checkregs(const register_t regs[static NEXECREGS])
 {
 	unsigned i;
+
+#ifdef __hppa__
+	if (isQEMU()) {
+		atf_tc_expect_fail("PR port-hppa/59114: hppa:"
+		    " eager fpu switching for qemu and/or spectre mitigation");
+	}
+#endif
 
 #if defined(__hppa__) || \
     defined(__ia64__) || \
