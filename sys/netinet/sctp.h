@@ -1,5 +1,5 @@
 /*	$KAME: sctp.h,v 1.18 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp.h,v 1.6 2024/03/17 21:48:01 andvar Exp $ */
+/*	$NetBSD: sctp.h,v 1.7 2025/02/28 09:07:12 andvar Exp $ */
 
 #ifndef _NETINET_SCTP_H_
 #define _NETINET_SCTP_H_
@@ -285,7 +285,7 @@ struct sctp_error_unrecognized_chunk {
 
 #define SCTP_SAT_NETWORK_MIN	     400	/* min ms for RTT to set satellite time */
 #define SCTP_SAT_NETWORK_BURST_INCR  2		/* how many times to multiply maxburst in sat */
-/* Data Chuck Specific Flags */
+/* Data Chunk Specific Flags */
 #define SCTP_DATA_FRAG_MASK	0x03
 #define SCTP_DATA_MIDDLE_FRAG	0x00
 #define SCTP_DATA_LAST_FRAG	0x01

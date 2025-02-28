@@ -1,4 +1,4 @@
-/*	$NetBSD: fatboot.S,v 1.4 2012/03/10 23:59:36 dsl Exp $	*/
+/*	$NetBSD: fatboot.S,v 1.5 2025/02/28 09:07:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ read_data_block:
 	cmp	%ax, fat_cache
 	je	lookup_fat
 
-/* We must read a different chuck of the FAT */
+/* We must read a different chunk of the FAT */
 	mov	%ax, fat_cache
 	cwtl
 	shl	$1, %ax

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.25 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.26 2025/02/28 09:07:11 andvar Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -141,7 +141,7 @@ typedef pcireg_t ahc_dev_softc_t;
  * transfer is as fragmented as possible and unaligned, this turns out to
  * be the number of paged sized transfers in MAXPHYS plus an extra element
  * to handle any unaligned residual.  The sequencer fetches SG elements
- * in cacheline sized chucks, so make the number per-transaction an even
+ * in cacheline sized chunks, so make the number per-transaction an even
  * multiple of 16 which should align us on even the largest of cacheline
  * boundaries.
  */

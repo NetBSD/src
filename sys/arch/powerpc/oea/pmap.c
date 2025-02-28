@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2023/12/15 09:42:33 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2025/02/28 09:07:11 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2023/12/15 09:42:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2025/02/28 09:07:11 andvar Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2991,7 +2991,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 }
 
 /*
- * Find a chuck of memory with right size and alignment.
+ * Find a chunk of memory with right size and alignment.
  */
 paddr_t
 pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)

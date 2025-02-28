@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.27 2019/04/11 09:14:07 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.28 2025/02/28 09:07:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -132,7 +132,7 @@
 #define	ANAR_X_PAUSE_SYM	(1 << 7)
 #define	ANAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
-	/* 37.2.1.5 Remore Fault */
+	/* 37.2.1.5 Remote Fault */
 #define	ANAR_X_RF1	0x1000
 #define	ANAR_X_RF2	0x2000
 #define ANAR_X_RF_MASK		(ANAR_X_RF1 | ANAR_X_RF2)
@@ -167,7 +167,7 @@
 #define	ANLPAR_X_PAUSE_SYM	(1 << 7)
 #define	ANLPAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANLPAR_X_PAUSE_TOWARDS	(3 << 7)
-	/* 37.2.1.5 Remore Fault */
+	/* 37.2.1.5 Remote Fault */
 #define	ANLPAR_X_RF1	0x1000
 #define	ANLPAR_X_RF2	0x2000
 #define	ANLPAR_X_RF_MASK	(ANLPAR_X_RF1 | ANLPAR_X_RF2)
