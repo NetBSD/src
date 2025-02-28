@@ -1,4 +1,4 @@
-/*	$NetBSD: t_execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $	*/
+/*	$NetBSD: t_execregs.c,v 1.3 2025/02/28 16:08:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_execregs.c,v 1.2 2025/02/28 16:08:19 riastradh Exp $");
+__RCSID("$NetBSD: t_execregs.c,v 1.3 2025/02/28 16:08:42 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -63,8 +63,9 @@ readregs(int rfd, register_t regs[static NEXECREGS])
 		p += (size_t)nread;
 		n -= (size_t)nread;
 	}
-	ATF_REQUIRE_EQ_MSG(n, 0,
-	    "truncated read, missing %zu bytes", n);
+	ATF_CHECK_EQ_MSG(n, 0,
+	    "truncated read, missing %zu of %zu bytes",
+	    n, NEXECREGS*sizeof(regs[0]));
 }
 
 static void
