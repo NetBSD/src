@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.8 2025/02/28 17:58:06 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.9 2025/02/28 18:30:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.8 2025/02/28 17:58:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.9 2025/02/28 18:30:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.8 2025/02/28 17:58:06 chris
 
 struct uvm_object *emul_netbsd32_object;
 
-#if defined(__amd64__) || defined(__amd64__) || defined(__arm__) || defined(__mips__) || defined(__sparc64__)
+#if  defined(__amd64__) || defined(__arm__) || defined(__mips__) || defined(__sparc64__)
 #define __HAVE_MD_NETBSD32_SIGRETURN14
 #endif
 
-#if defined(__arm__) || defined(__mips__) || defined(__powerpc__) || defined(__riscv__)
+#if defined(__amd64__) || defined(__arm__) || defined(__mips__) || defined(__powerpc__) || defined(__riscv__)
 #define __HAVE_MD_NETBSD32_SIGCODE
 #endif
 
