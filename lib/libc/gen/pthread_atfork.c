@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.22 2025/03/01 18:19:50 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.23 2025/03/01 20:31:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.22 2025/03/01 18:19:50 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.23 2025/03/01 20:31:58 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -85,6 +85,7 @@ static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 static struct atfork_callback *
 af_alloc(void)
 {
+
 	for (size_t i = 0; i < __arraycount(atfork_builtin); i++) {
 		if (atfork_builtin[i].fn == NULL)
 			return &atfork_builtin[i];
@@ -96,14 +97,12 @@ af_alloc(void)
 static void
 af_free(struct atfork_callback *af)
 {
-	for (size_t i = 0; i < __arraycount(atfork_builtin); i++) {
-		if (af == &atfork_builtin[i]) {
-			atfork_builtin[i].fn = NULL;
-			return;
-		}
-	}
-			
-	free(af);
+
+	if (af >= atfork_builtin
+	    && af < atfork_builtin + __arraycount(atfork_builtin))
+		af->fn = NULL;
+	else
+		free(af);
 }
 
 int
