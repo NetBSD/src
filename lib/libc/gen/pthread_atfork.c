@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.21 2025/03/01 16:34:03 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.22 2025/03/01 18:19:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.21 2025/03/01 16:34:03 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.22 2025/03/01 18:19:50 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,13 +59,20 @@ struct atfork_callback {
 	void (*fn)(void);
 };
 
+
+/*
+ * Keep a cache for of 3, one for prepare, one for parent, one for child.
+ * This is so that we don't have to allocate memory for the call from the
+ * pthread_tsd_init() constructor, where it is too early to call malloc(3).
+ */
+static struct atfork_callback atfork_builtin[3];
+
 /*
  * Hypothetically, we could protect the queues with a rwlock which is
  * write-locked by pthread_atfork() and read-locked by fork(), but
  * since the intended use of the functions is obtaining locks to hold
  * across the fork, forking is going to be serialized anyway.
  */
-static struct atfork_callback atfork_builtin;
 #ifdef _REENTRANT
 static mutex_t atfork_lock = MUTEX_INITIALIZER;
 #endif
@@ -78,9 +85,10 @@ static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 static struct atfork_callback *
 af_alloc(void)
 {
-
-	if (atfork_builtin.fn == NULL)
-		return &atfork_builtin;
+	for (size_t i = 0; i < __arraycount(atfork_builtin); i++) {
+		if (atfork_builtin[i].fn == NULL)
+			return &atfork_builtin[i];
+	}
 
 	return malloc(sizeof(atfork_builtin));
 }
@@ -88,9 +96,14 @@ af_alloc(void)
 static void
 af_free(struct atfork_callback *af)
 {
-
-	if (af != &atfork_builtin)
-		free(af);
+	for (size_t i = 0; i < __arraycount(atfork_builtin); i++) {
+		if (af == &atfork_builtin[i]) {
+			atfork_builtin[i].fn = NULL;
+			return;
+		}
+	}
+			
+	free(af);
 }
 
 int
