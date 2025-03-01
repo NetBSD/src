@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.20 2025/02/28 23:59:55 kre Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.21 2025/03/01 16:34:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,17 +31,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.20 2025/02/28 23:59:55 kre Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.21 2025/03/01 16:34:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#include <sys/queue.h>
-#include <sys/mman.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <sys/queue.h>
 #include "extern.h"
 #include "reentrant.h"
 
@@ -80,14 +78,11 @@ static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 static struct atfork_callback *
 af_alloc(void)
 {
-	void *rv;
 
 	if (atfork_builtin.fn == NULL)
 		return &atfork_builtin;
 
-	rv = mmap(0, sizeof(atfork_builtin), PROT_READ|PROT_WRITE,
-	    MAP_PRIVATE | MAP_ANON, -1, 0);
-	return rv == MAP_FAILED ? NULL : rv;
+	return malloc(sizeof(atfork_builtin));
 }
 
 static void
@@ -95,7 +90,7 @@ af_free(struct atfork_callback *af)
 {
 
 	if (af != &atfork_builtin)
-		munmap(af, sizeof(*af));
+		free(af);
 }
 
 int
