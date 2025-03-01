@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casreg.h,v 1.6 2022/05/28 10:36:23 andvar Exp $ */
+/*	$NetBSD: if_casreg.h,v 1.7 2025/03/01 09:20:53 andvar Exp $ */
 /*	$OpenBSD: if_casreg.h,v 1.10 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
@@ -492,7 +492,7 @@
 #define	CAS_MII_STATUS_GB_FDX	0x00000400	/* can perform GBit FDX */
 #define	CAS_MII_STATUS_GB_HDX	0x00000200	/* can perform GBit HDX */
 #define	CAS_MII_STATUS_UNK	0x00000100
-#define	CAS_MII_STATUS_ANEG_CPT	0x00000020	/* auto negotiate compete */
+#define	CAS_MII_STATUS_ANEG_CPT	0x00000020	/* auto negotiate complete */
 #define	CAS_MII_STATUS_REM_FLT	0x00000010	/* remote fault detected */
 #define	CAS_MII_STATUS_ACFG	0x00000008	/* can auto negotiate */
 #define	CAS_MII_STATUS_LINK_STS	0x00000004	/* link status */
