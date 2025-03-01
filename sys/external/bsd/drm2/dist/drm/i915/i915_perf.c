@@ -3034,9 +3034,9 @@ static ssize_t i915_perf_read(struct file *file,
 	struct i915_perf_stream *stream = file->f_data;
 #else
 	struct i915_perf_stream *stream = file->private_data;
-	size_t offset = 0;
 #endif
 	struct i915_perf *perf = stream->perf;
+	size_t offset2 = 0;
 	int ret;
 
 	/* To ensure it's handled consistently we simply treat all reads of a
@@ -3066,20 +3066,12 @@ static ssize_t i915_perf_read(struct file *file,
 				return ret;
 
 			mutex_lock(&perf->lock);
-#ifdef __NetBSD__
-			ret = stream->ops->read(stream, buf, count, offset);
-#else
-			ret = stream->ops->read(stream, buf, count, &offset);
-#endif
+			ret = stream->ops->read(stream, buf, count, &offset2);
 			mutex_unlock(&perf->lock);
-		} while (!offset && !ret);
+		} while (!offset2 && !ret);
 	} else {
 		mutex_lock(&perf->lock);
-#ifdef __NetBSD__
-		ret = stream->ops->read(stream, buf, count, offset);
-#else
-		ret = stream->ops->read(stream, buf, count, &offset);
-#endif
+		ret = stream->ops->read(stream, buf, count, &offset2);
 		mutex_unlock(&perf->lock);
 	}
 
