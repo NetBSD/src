@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.25 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.26 2025/03/01 18:21:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.25 2022/04/10 10:38:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.26 2025/03/01 18:21:49 christos Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -89,7 +89,12 @@ pthread_tsd_init(size_t *tlen)
 	size_t alen;
 	char *arena;
 
-	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork_child);
+	/*
+	 * This pthread_atfork() call will not call malloc, since it
+	 * has a cache of 3 entries, specially for this purpose.
+	 */
+	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork,
+	    pthread_tsd_postfork_child);
 
 	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
 		pthread_keys_max = (int)strtol(pkm, NULL, 0);
