@@ -1,4 +1,4 @@
-/* $NetBSD: gptsubr.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: gptsubr.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gptsubr.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: gptsubr.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -525,8 +525,12 @@ find_partition_idx(const char *fname, int verbose)
 
 			printf("num_parts: %u\n", dl.d_npartitions);
 			printf("partition %d\n", pnum);
-			printf("  offset = %u (%#x)\n", dl.d_partitions[pnum].p_offset, dl.d_partitions[pnum].p_offset);
-			printf("  size = %u (%#x)\n",   dl.d_partitions[pnum].p_size,   dl.d_partitions[pnum].p_size);
+			printf("  offset = %u (%#x)\n",
+			    dl.d_partitions[pnum].p_offset,
+			    dl.d_partitions[pnum].p_offset);
+			printf("  size = %u (%#x)\n",
+			    dl.d_partitions[pnum].p_size,
+			    dl.d_partitions[pnum].p_size);
 
 			parent = p;	// vfsbuf.f_mntfromname;
 			offset = dl.d_partitions[pnum].p_offset;

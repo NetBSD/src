@@ -1,4 +1,4 @@
-/* $NetBSD: devpath2.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: devpath2.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath2.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: devpath2.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -117,10 +117,12 @@ devpath_acpi_acpi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	const char *str;
 
 	str = devpath_acpi_acpi_eisaid(p->_HID);
-	if (str == NULL)
-		path->sz = easprintf(&path->cp, "ACPI(%s,0x%x)", eisaid_to_str(p->_HID), p->_UID);
-	else
+	if (str == NULL) {
+		path->sz = easprintf(&path->cp, "ACPI(%s,0x%x)",
+		    eisaid_to_str(p->_HID), p->_UID);
+	} else {
 		path->sz = easprintf(&path->cp, "%s(0x%x)", str, p->_UID);
+	}
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,

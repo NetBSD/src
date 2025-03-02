@@ -1,4 +1,4 @@
-/* $NetBSD: devpath3.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: devpath3.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath3.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: devpath3.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <arpa/inet.h>
@@ -166,7 +166,8 @@ devpath_msg_atapi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 8);
 
-	path->sz = easprintf(&path->cp, "ATAPI(%u,%u,%u)", p->IsSecondary, p->IsSlave, p->LUN);
+	path->sz = easprintf(&path->cp, "ATAPI(%u,%u,%u)",
+	    p->IsSecondary, p->IsSlave, p->LUN);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
@@ -191,7 +192,8 @@ devpath_msg_scsi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 8);
 
-	path->sz = easprintf(&path->cp, "SCSI(%u,%u)", p->SCSITargetID, p->SCSILogicalUnitNum);
+	path->sz = easprintf(&path->cp, "SCSI(%u,%u)",
+	    p->SCSITargetID, p->SCSILogicalUnitNum);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
@@ -264,7 +266,8 @@ devpath_msg_usb(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 6);
 
-	path->sz = easprintf(&path->cp, "USB(%u,%u)", p->USBParentPortNum, p->USBInterfaceNum);
+	path->sz = easprintf(&path->cp, "USB(%u,%u)",
+	    p->USBParentPortNum, p->USBInterfaceNum);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
@@ -906,13 +909,16 @@ devpath_msg_usbclass(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	name = usbclass_name(p->DeviceClass, p->DeviceSubClass);
 	if (name == NULL) {
-		path->sz = easprintf(&path->cp, "UsbClass(0x%04x,0x%04x,0x%02x,0x%02x,0x%02x,)",
+		path->sz = easprintf(&path->cp,
+		    "UsbClass(0x%04x,0x%04x,0x%02x,0x%02x,0x%02x,)",
 		    p->VendorID, p->ProductID, p->DeviceClass,
 		    p->DeviceSubClass, p->DeviceProtocol);
 	}
 	else if (p->DeviceClass != 254) {
-		path->sz = easprintf(&path->cp, "%s(0x%04x,0x%04x,0x%02x,0x%02x,)",
-		    name, p->VendorID, p->ProductID, p->DeviceSubClass, p->DeviceProtocol);
+		path->sz = easprintf(&path->cp,
+		    "%s(0x%04x,0x%04x,0x%02x,0x%02x,)",
+		    name, p->VendorID, p->ProductID, p->DeviceSubClass,
+		    p->DeviceProtocol);
 	}
 	else {
 		path->sz = easprintf(&path->cp, "%s(0x%04x,0x%04x,0x%02x,)",
@@ -1422,7 +1428,8 @@ devpath_msg_bluetoothle(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 11);
 
-	path->sz = easprintf(&path->cp, "BluetoothLE(%02x:%02x:%02x:%02x:%02x:%02x,%d)",
+	path->sz = easprintf(&path->cp,
+	    "BluetoothLE(%02x:%02x:%02x:%02x:%02x:%02x,%d)",
 	    p->bdaddr[0], p->bdaddr[1], p->bdaddr[2],
 	    p->bdaddr[3], p->bdaddr[4], p->bdaddr[5],
 	    p->addr_type);
@@ -1578,7 +1585,8 @@ devpath_msg_restservice(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 6);
 
-	path->sz = easprintf(&path->cp, "RestService(%d,%d)", p->RestService, p->AccessMode);
+	path->sz = easprintf(&path->cp, "RestService(%d,%d)",
+	    p->RestService, p->AccessMode);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
@@ -1591,7 +1599,8 @@ devpath_msg_restservice(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    p->RestService == REST_SERVICE_ODATA ? "OData" : "???",
 		    p->AccessMode,
 		    p->AccessMode == ACCESS_MODE_IN_BAND ? "In-Band" :
-		    p->AccessMode == ACCESS_MODE_OUT_OF_BAND ? "Out-of-Band" : "???");
+		    p->AccessMode == ACCESS_MODE_OUT_OF_BAND ? "Out-of-Band"
+			: "???");
 	}
 }
 
@@ -1627,13 +1636,16 @@ devpath_msg_nvmeof(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	case 2:
 	case 3:
 		uuid_snprintf(uuid_str, sizeof(uuid_str), &p->NID.uuid);
-		path->sz = easprintf(&path->cp, "NVMEoF(%s,%s)", p->SubsystemNQN, uuid_str);
+		path->sz = easprintf(&path->cp, "NVMEoF(%s,%s)",
+		    p->SubsystemNQN, uuid_str);
 		break;
 	case 4:
-		path->sz = easprintf(&path->cp, "NVMEoF(%s,0x%02x)", p->SubsystemNQN, p->NID.csi);
+		path->sz = easprintf(&path->cp, "NVMEoF(%s,0x%02x)",
+		    p->SubsystemNQN, p->NID.csi);
 		break;
 	default:
-		path->sz = easprintf(&path->cp, "NVMEoF(%s,unknown)", p->SubsystemNQN);
+		path->sz = easprintf(&path->cp, "NVMEoF(%s,unknown)",
+		    p->SubsystemNQN);
 		break;
 	}
 

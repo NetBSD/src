@@ -1,4 +1,4 @@
-/* $NetBSD: devpath4.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: devpath4.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath4.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: devpath4.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -226,7 +226,8 @@ devpath_media_protocol(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 }
 
 static void
-devpath_media_PIWGfwfile(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
+devpath_media_PIWGfwfile(devpath_t *dp, devpath_elm_t *path,
+    devpath_elm_t *dbg)
 {	/* See 10.3.5.6 */
 	/* See UEFI PI Version 1.8 Errata A (March 5, 2024) II-8.3 */
 	struct {			/* Sub-Type 6 */

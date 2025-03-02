@@ -1,4 +1,4 @@
-/* $NetBSD: devpath1.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: devpath1.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath1.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: devpath1.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -53,8 +53,9 @@ __RCSID("$NetBSD: devpath1.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
  */
 /* Used in subtype 4 */
 #if 1
- #define EFI_EDD10_PATH_GUID\
-  ((uuid_t){0xcf31fac5,0xc24e,0x11d2,0x85,0xf3,{0x00,0xa0,0xc9,0x3e,0xc9,0x3b}})
+#define EFI_EDD10_PATH_GUID						      \
+	((uuid_t){0xcf31fac5,0xc24e,0x11d2,0x85,0xf3,			      \
+	    {0x00,0xa0,0xc9,0x3e,0xc9,0x3b}})
 #endif
 
 #define EFI_MEMORY_TYPE \
@@ -292,7 +293,8 @@ devpath_hw_bmc(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	iftype = devpath_hw_bmc_iftype(p->IfaceType);
 
-	path->sz = easprintf(&path->cp, "(%s,0x%016" PRIx64 ")", iftype, p->BaseAddress);
+	path->sz = easprintf(&path->cp, "(%s,0x%016" PRIx64 ")",
+	    iftype, p->BaseAddress);
 
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,

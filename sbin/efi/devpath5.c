@@ -1,4 +1,4 @@
-/* $NetBSD: devpath5.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath5.c,v 1.2 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath5.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath5.c,v 1.2 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -97,8 +97,8 @@ devpath_bios_BBS(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	typename = devpath_bios_typename(p->DeviceType);
 
-	path->sz = easprintf(&path->cp, "BBS(%s(%#x),0x%04x,%s)", typename, p->DeviceType,
-	    p->StatusFlag, p->Description);
+	path->sz = easprintf(&path->cp, "BBS(%s(%#x),0x%04x,%s)",
+	    typename, p->DeviceType, p->StatusFlag, p->Description);
 
 	if (dbg != NULL) {
 		char statusflag[128];

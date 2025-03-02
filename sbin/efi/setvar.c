@@ -1,4 +1,4 @@
-/* $NetBSD: setvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: setvar.c,v 1.3 2025/03/02 00:23:59 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: setvar.c,v 1.3 2025/03/02 00:23:59 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -79,7 +79,8 @@ parse_csus(const char *csus, uint16_t **array, int base)
 }
 
 PUBLIC int
-prefix_bootorder(int fd, const char *target, const char *csus, uint16_t bootnum)
+prefix_bootorder(int fd, const char *target, const char *csus,
+    uint16_t bootnum)
 {
 	struct efi_var_ioc ev;
 	char *targetorder;
@@ -121,7 +122,8 @@ prefix_bootorder(int fd, const char *target, const char *csus, uint16_t bootnum)
 }
 
 PUBLIC int
-remove_bootorder(int fd, const char *target, const char *csus, uint16_t bootnum)
+remove_bootorder(int fd, const char *target, const char *csus,
+    uint16_t bootnum)
 {
 	struct efi_var_ioc ev;
 	char *targetorder;
