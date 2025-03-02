@@ -1,4 +1,4 @@
-/* $NetBSD: bootvar.c,v 1.1 2025/02/24 13:47:55 christos Exp $ */
+/* $NetBSD: bootvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootvar.c,v 1.1 2025/02/24 13:47:55 christos Exp $");
+__RCSID("$NetBSD: bootvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -79,7 +79,7 @@ new_blk(uint8_t type, uint8_t subtype, uint16_t length)
 
 	if (type == 0)		/* non-devpath */
 		return bb;
-	
+
 	bb->u.path->Type = type;
 	bb->u.path->SubType = subtype;
 	bb->u.path->Length = length;
@@ -113,7 +113,7 @@ create_bootbody(const char *label, uint32_t attrib)
 	body_size = sizeof(*bb->u.body) + desc_size;
 
 	bb = new_blk(0, 0, (uint16_t)body_size);
-	
+
 	bb->u.body->Attributes = attrib;
 
 	size = desc_size;
@@ -135,7 +135,7 @@ create_devpath_media_hd(const char *dev, uint partnum)
 		uint8_t		PartitionFormat;
 #define PARTITION_FORMAT_MBR	0x01
 #define PARTITION_FORMAT_GPT	0x02
-			
+
 		uint8_t		SignatureType;
 #define SIGNATURE_TYPE_NONE	0x00
 #define SIGNATURE_TYPE_MBR	0x01
@@ -211,7 +211,7 @@ static boot_blk_t *
 create_optdata(const char *fname)
 {
 	boot_blk_t *bb;
-	
+
 	bb = new_blk(0, 0, 0);
 	bb->u.vp = read_file(fname, &bb->size);
 	return bb;
@@ -241,7 +241,7 @@ make_bootvar_data(const char *dev, uint partnum, uint32_t attrib,
 	bb = create_devpath_end();
 	SIMPLEQ_INSERT_TAIL(&head, bb, entry);
 	FilePathListLength += bb->size;
-	
+
 	if (fname == NULL) {
 		OptDataLength = 0;
 	}
@@ -280,6 +280,6 @@ find_new_bootvar(efi_var_t **var_array, size_t var_cnt, const char *target)
 			break;
 		}
 		lastidx = idx;
-	}	
+	}
 	return lastidx + 1;
 }

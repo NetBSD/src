@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2025/02/25 20:23:19 rillig Exp $
+#	$NetBSD: Makefile,v 1.3 2025/03/02 00:03:41 riastradh Exp $
 
-WARNS=9	
+WARNS=9
 
 .include <bsd.init.mk>
 

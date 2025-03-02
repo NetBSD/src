@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2025/02/27 19:32:28 jakllsch Exp $ */
+/* $NetBSD: main.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2025/02/27 19:32:28 jakllsch Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -137,7 +137,6 @@ enum {
 
 #define IS_TARGET_DRIVER(opt)	((opt).target[0] == TARGET_DRIVER[0])
 
-
 #define ACTION_LIST \
   _X(active,			NULL) \
   _X(create,			NULL) \
@@ -175,7 +174,7 @@ usage(const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_list ap;
-		
+
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
@@ -193,7 +192,6 @@ usage(const char *fmt, ...)
 	}
 	exit(EXIT_SUCCESS);
 }
-
 
 static int __used
 append_optional_data(const char *fname, efi_var_ioc_t *ev)
@@ -243,7 +241,7 @@ typedef enum {
 
 #define IS_MBR_SIG_FORCE(o)	((o).mbr_sig_write == MBR_SIG_WRITE_FORCE)
 
-static struct options {	/* setable options */	
+static struct options {	/* setable options */
 #define _X(t,n,v)	t n;
 	OPT_LIST
 #undef _X
@@ -565,7 +563,7 @@ main(int argc, char **argv)
 	case act_show_gpt:		assert(0); break; /* handled above */
 	default:			break;
 	}
-		
+
 	/*
 	 * The following actions are handled below and require a call
 	 * to get_variables() using a regexp.  Setup the regexp here.
@@ -617,7 +615,7 @@ main(int argc, char **argv)
 		 */
 		bootnum = (uint16_t)find_new_bootvar(var_array, var_cnt, opt.target);
 		easprintf(&v.name, "%s%04X", opt.target, bootnum);
-		
+
 		if (!opt.quiet)
 			printf("creating: %s\n", v.name);
 
@@ -644,7 +642,7 @@ main(int argc, char **argv)
 			opt.debug &= (uint)~DEBUG_BRIEF_BIT;
 			opt.debug |= DEBUG_VERBOSE_BIT;
 			show_variable(&v, opt.debug, 0);
-			
+
 			printf("are you sure? [y/n] ");
 			if (getchar() != 'y')
 				goto done;
@@ -702,10 +700,10 @@ main(int argc, char **argv)
 		assert(0);
 		break;
 	}
-	
+
  done:
 	free_variables(var_hdl);
 	close(efi_fd);
-	
+
 	return 0;
 }

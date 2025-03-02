@@ -1,4 +1,4 @@
-/* $NetBSD: devpath3.c,v 1.3 2025/02/25 22:11:36 christos Exp $ */
+/* $NetBSD: devpath3.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath3.c,v 1.3 2025/02/25 22:11:36 christos Exp $");
+__RCSID("$NetBSD: devpath3.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <arpa/inet.h>
@@ -143,7 +143,7 @@ ipv6_addr(struct in6_addr *addr)
 static inline char *
 ipv6_type(uint8_t type)
 {
-	
+
 	switch (type) {
 	case 0:		return estrdup("Static");
 	case 1:		return estrdup("StatelessAutoConfigure");
@@ -389,7 +389,7 @@ devpath_msg_uartflowctl(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	case 2:		fc_str = "XonXoff";	break;
 	default:	fc_str = "????";	break;
 	}
-	
+
 	path->sz = easprintf(&path->cp, "UartFlowCtrl(%s)", fc_str);
 
 	if (dbg != NULL) {
@@ -800,7 +800,7 @@ devpath_msg_ipv6(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 static inline const char *
 uart_parity(uint8_t n)
 {
-	
+
 	switch (n) {
 	case 0:		return "D";
 	case 1:		return "N";
@@ -1047,7 +1047,6 @@ datdgst_name(uint16_t LoginOptions)
 	}
 }
 
-
 static inline const char *
 auth_name(uint16_t LoginOptions)
 {
@@ -1272,7 +1271,6 @@ devpath_msg_nvme(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	}
 }
 
-
 static void
 devpath_msg_uri(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {	/* See 10.3.4.22 */
@@ -1283,7 +1281,7 @@ devpath_msg_uri(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	__CTASSERT(sizeof(*p) == 4);
 	size_t len;
 	char *buf;
-	
+
 	len = dp->Length - 4;
 
 	buf = emalloc(len + 1);
@@ -1542,8 +1540,6 @@ devpath_msg_dns(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 				}
 			}
 		}
-
-
 	}
 }
 

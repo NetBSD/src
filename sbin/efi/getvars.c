@@ -1,4 +1,4 @@
-/* $NetBSD: getvars.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: getvars.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getvars.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: getvars.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -150,7 +150,7 @@ get_variables(int fd, const char *regexp, efi_var_t ***array_ptr,
 	args.list_head = &list_head;
 	if (regcomp(&args.preg, regexp, REG_EXTENDED) != 0)
 		err(EXIT_FAILURE, "regcomp: %s", regexp);
-	
+
 	var_cnt = get_variable_info(fd, choose_variable, save_variable, &args);
 
 	regfree(&args.preg);
@@ -161,7 +161,7 @@ get_variables(int fd, const char *regexp, efi_var_t ***array_ptr,
 		var_array[i++] = &elm->v;
 	}
 	qsort(var_array, var_cnt, sizeof(*var_array), var_name_cmp);
-	
+
 	*array_ptr = var_array;
 	*array_cnt = var_cnt;
 
@@ -171,7 +171,7 @@ get_variables(int fd, const char *regexp, efi_var_t ***array_ptr,
 static void
 free_efi_var_ioc(efi_var_ioc_t *ev)
 {
-	
+
 	free(ev->name);
 	free(ev->data);
 	memset(ev, 0, sizeof(*ev));
@@ -180,7 +180,7 @@ free_efi_var_ioc(efi_var_ioc_t *ev)
 static void
 free_efi_var(efi_var_t *v)
 {
-	
+
 	free(v->name);
 	memset(v, 0, sizeof(*v));
 }
@@ -190,7 +190,7 @@ free_variables(void *vp)
 {
 	efi_var_head_t *list_head = vp;
 	efi_var_elm_t *elm;
-	
+
 	while (!SLIST_EMPTY(list_head)) {
 		elm = SLIST_FIRST(list_head);
 		SLIST_REMOVE_HEAD(list_head, entry);

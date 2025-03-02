@@ -1,4 +1,4 @@
-/* $NetBSD: devpath2.c,v 1.2 2025/02/27 17:26:56 christos Exp $ */
+/* $NetBSD: devpath2.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath2.c,v 1.2 2025/02/27 17:26:56 christos Exp $");
+__RCSID("$NetBSD: devpath2.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: devpath2.c,v 1.2 2025/02/27 17:26:56 christos Exp $");
  * See 19.3.4 of ACPI Specification, Release 6.5 for compressed EISAID
  * algorithm.
  */
-
 
 #define PNP0A03		0x0a0341d0
 #define PNP0A08		0x0a0841d0
@@ -268,7 +267,7 @@ devpath_acpi_unknown(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	path->sz = easprintf(&path->cp, "Msg(%d,%s)", dp->SubType,
 	    encode_data(((uint8_t *)dp) + 4, dp->Length - 4));
-	
+
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR,

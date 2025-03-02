@@ -1,4 +1,4 @@
-/* $NetBSD: devpath.h,v 1.2 2025/02/27 17:26:56 christos Exp $ */
+/* $NetBSD: devpath.h,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #define _DEVPATH_H_
 
 #ifndef lint
-__RCSID("$NetBSD: devpath.h,v 1.2 2025/02/27 17:26:56 christos Exp $");
+__RCSID("$NetBSD: devpath.h,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ enum {
 	DEVPATH_TYPE_MEDIA = 4,
 	DEVPATH_TYPE_BIOS  = 5,
 	DEVPATH_TYPE_END   = 0x7f,
-};	
+};
 
 #define DEVPATH_END_ALL \
   ((EFI_DEVICE_PATH_PROTOCOL){.Type = 0x7f, .SubType = 0xff, .Length = 0x04})
@@ -105,7 +105,7 @@ devpath_type_name(size_t type)
 static inline void
 devpath_hdr(devpath_t *dp, devpath_elm_t *elm)
 {
-	
+
 	elm->sz = (size_t)easprintf(&elm->cp,
 	    DEVPATH_FMT_HDR, DEVPATH_DAT_HDR(dp));
 }

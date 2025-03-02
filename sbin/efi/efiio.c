@@ -1,4 +1,4 @@
-/* $NetBSD: efiio.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: efiio.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: efiio.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: efiio.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -149,7 +149,7 @@ get_variable_info(int fd, bool (*choose)(struct efi_var_ioc *, void *),
 
 			if (errno == ENOENT)
 				break;
-			
+
 			/* XXX: ev is likely to be zero */
 			buf = ucs2_to_utf8(ev.name, ev.namesize, NULL, NULL);
 			err(EXIT_FAILURE, "%s: '%s'", __func__, buf);
@@ -165,7 +165,7 @@ get_variable_info(int fd, bool (*choose)(struct efi_var_ioc *, void *),
 
 		cnt++;
 		fn(&ev, arg);
-		
+
 		free(ev.data);
 	}
 	free(ev.name);

@@ -1,4 +1,4 @@
-/* $NetBSD: setvar.c,v 1.1 2025/02/24 13:47:57 christos Exp $ */
+/* $NetBSD: setvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setvar.c,v 1.1 2025/02/24 13:47:57 christos Exp $");
+__RCSID("$NetBSD: setvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -112,7 +112,7 @@ prefix_bootorder(int fd, const char *target, const char *csus, uint16_t bootnum)
 
 	ev.data = data;
 	ev.datasize = datasize;
-	
+
 	rv = set_variable(fd, &ev);
 	free(ev.data);
 	if (rv == -1)
@@ -159,7 +159,7 @@ remove_bootorder(int fd, const char *target, const char *csus, uint16_t bootnum)
 	}
 	ev.data = data;
 	ev.datasize = j * sizeof(*data);
-	
+
 	rv = set_variable(fd, &ev);
 	free(ev.data);
 	if (rv == -1)
@@ -207,7 +207,7 @@ delete_variable(int fd, const char *varname)
 	    EFI_VARIABLE_NON_VOLATILE |
 	    EFI_VARIABLE_BOOTSERVICE_ACCESS |
 	    EFI_VARIABLE_RUNTIME_ACCESS);
-	
+
 	rv = set_variable(fd, &ev);
 	free(ev.name);
 	return rv;
@@ -279,7 +279,7 @@ set_bootnext(int fd, uint16_t bootnum)
 
 	ev.data = &bootnum;
 	ev.datasize = sizeof(bootnum);
-	
+
 	printf("set BootNext = Boot%04X\n", bootnum);
 
 	rv = set_variable(fd, &ev);
@@ -308,7 +308,6 @@ set_timeout(int fd, uint16_t timeout)
 	struct efi_var_ioc ev;
 	int rv;
 
-
 	efi_var_init(&ev, TIMEOUT,
 	    &EFI_GLOBAL_VARIABLE,
 	    EFI_VARIABLE_NON_VOLATILE |
@@ -317,7 +316,7 @@ set_timeout(int fd, uint16_t timeout)
 
 	ev.data = &timeout;
 	ev.datasize = sizeof(timeout);
-	
+
 	printf("set Timeout = %u seconds\n", timeout);
 
 	rv = set_variable(fd, &ev);
@@ -347,7 +346,7 @@ set_active(int efi_fd, const char *target, uint16_t bootnum, bool active)
 	boot_var_t *bb;
 	char *name;
 	int rv;
-		
+
 	easprintf(&name, "%s%04X", target, bootnum);
 	ev = get_variable(efi_fd, name, &EFI_GLOBAL_VARIABLE, 0);
 	free(name);
@@ -357,7 +356,7 @@ set_active(int efi_fd, const char *target, uint16_t bootnum, bool active)
 		bb->Attributes |= LOAD_OPTION_ACTIVE;
 	else
 		bb->Attributes &= (uint32_t)(~LOAD_OPTION_ACTIVE);
-	
+
 	rv = set_variable(efi_fd, &ev);
 	if (rv == -1)
 		err(EXIT_FAILURE, "set_variable");
@@ -377,7 +376,7 @@ del_variable(int fd, const char *varname)
 	    EFI_VARIABLE_NON_VOLATILE |
 	    EFI_VARIABLE_BOOTSERVICE_ACCESS |
 	    EFI_VARIABLE_RUNTIME_ACCESS);
-	
+
 	rv = set_variable(fd, &ev);
 	free(ev.name);
 	return rv;
@@ -397,10 +396,10 @@ del_variable(int efi_fd, const char *target, uint16_t bootnum)
 
 	if (rv == -1)
 		err(EXIT_FAILURE, "del_variable");
-	
+
 	rv = remove_bootorder(efi_fd, target, NULL, bootnum);
 	if (rv == -1)
 		err(EXIT_FAILURE, "remove_bootorder");
-	
+
 	return rv;
 }

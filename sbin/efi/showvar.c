@@ -1,4 +1,4 @@
-/* $NetBSD: showvar.c,v 1.3 2025/02/27 17:26:56 christos Exp $ */
+/* $NetBSD: showvar.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: showvar.c,v 1.3 2025/02/27 17:26:56 christos Exp $");
+__RCSID("$NetBSD: showvar.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -279,7 +279,7 @@ show_key_data(efi_var_t *v, bool dbg)
 
 	if (c != '\0')
 		*cp = c;	/* restore the buffer */
-	    
+
 	for (uint i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++)
 		printf(" {%04x, %04x}", u.ko->Keys[i].ScanCode,
 		    u.ko->Keys[i].UnicodeChar);
@@ -291,9 +291,9 @@ show_key_data(efi_var_t *v, bool dbg)
 		printf("  BootOption:    Boot%04X\n", u.ko->BootOption);
 		for (uint i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++) {
 			printf("  Keys[%u].ScanCode:    0x%04x\n", i,
-			    u.ko->Keys[i].ScanCode); 
+			    u.ko->Keys[i].ScanCode);
 			printf("  Keys[%u].UnicodeChar: 0x%04x\n", i,
-			    u.ko->Keys[i].UnicodeChar); 
+			    u.ko->Keys[i].UnicodeChar);
 		}
 		if (desc)
 			printf("  Desc: %s\n", desc);
@@ -373,7 +373,7 @@ show_boot_data(efi_var_t *v, uint debug, uint max_namelen)
 
 		args = format_optional_data(info.OptionalData,
 		    info.OptionalDataSize);
-		
+
 		printf("\t%s%s", path, args);/* XXX: make this conditional on verbose? */
 		free(args);
 		free(path);
@@ -383,7 +383,7 @@ show_boot_data(efi_var_t *v, uint debug, uint max_namelen)
 
 	if (dbg) {
 		char attr_str[256];
-				
+
 		snprintb(attr_str, sizeof(attr_str),
 		    LOAD_OPTION_BITS, info.Attributes);
 		printf("  Attr: %s\n", attr_str);
@@ -399,7 +399,7 @@ show_boot_data(efi_var_t *v, uint debug, uint max_namelen)
 
 	free(info.Description);
 	return 0;
-}	
+}
 
 /************************************************************************/
 

@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.2 2025/02/25 22:11:36 christos Exp $ */
+/* $NetBSD: utils.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.2 2025/02/25 22:11:36 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -252,7 +252,6 @@ utf8_to_ucs2(const char *ibuf, size_t isz, uint16_t *obuf, size_t *osz)
 		*osz = (j + 1) * sizeof(*dst);
 	return dst;
 }
-
 
 PUBLIC size_t
 utf8_to_ucs2_size(const char *src)

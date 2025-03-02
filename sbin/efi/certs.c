@@ -1,4 +1,4 @@
-/* $NetBSD: certs.c,v 1.3 2025/02/27 17:26:56 christos Exp $ */
+/* $NetBSD: certs.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: certs.c,v 1.3 2025/02/27 17:26:56 christos Exp $");
+__RCSID("$NetBSD: certs.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -350,9 +350,9 @@ show_signature_list_header(EFI_SIGNATURE_LIST_t *lp, int indent)
 	    lp->SignatureHeaderSize, lp->SignatureHeaderSize);
 	printf("%*sSigSize: %d (0x%x)\n", indent, "",
 	    lp->SignatureSize, lp->SignatureSize);
-	
+
 	return tp;
-}	
+}
 
 static int
 parse_signature_list(const uint8_t *bp, size_t sz, int indent)

@@ -1,4 +1,4 @@
-/* $NetBSD: devpath4.c,v 1.3 2025/02/25 22:11:36 christos Exp $ */
+/* $NetBSD: devpath4.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath4.c,v 1.3 2025/02/25 22:11:36 christos Exp $");
+__RCSID("$NetBSD: devpath4.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -95,7 +95,7 @@ devpath_media_harddisk(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	    uuid_str,
 	    p->PartitionStart,
 	    p->PartitionSize);
-	
+
 	if (dbg != NULL) {
 		const char *name_SignatureType;
 
@@ -105,7 +105,7 @@ devpath_media_harddisk(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		case SIGNATURE_TYPE_GUID:	name_SignatureType = "GUID";	break;
 		default:			name_SignatureType = "unknown";	break;
 		}
-		
+
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(PartitionNumber: %u\n)
@@ -140,7 +140,7 @@ devpath_media_cdrom(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	path->sz = easprintf(&path->cp, "CDROM(0x%x,0x%016" PRIx64 ",0x%016"
 	    PRIx64 ")", p->BootEntry,
 	    p->PartitionStart, p->PartitionSize);
-	
+
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
@@ -169,7 +169,7 @@ devpath_media_vendor(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	uuid_snprintf(uuid_str, sizeof(uuid_str), &p->VendorGUID);
 
 	path->sz = easprintf(&path->cp, "VenMedia(%s)", uuid_str);
-	
+
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
@@ -192,7 +192,7 @@ devpath_media_filepath(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	PathName = ucs2_to_utf8(p->PathName, sz, NULL, NULL);
 	path->sz = easprintf(&path->cp, "File(%s)", PathName);
-	
+
 	if (dbg != NULL) {
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR

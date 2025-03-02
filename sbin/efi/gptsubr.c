@@ -1,4 +1,4 @@
-/* $NetBSD: gptsubr.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
+/* $NetBSD: gptsubr.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gptsubr.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
+__RCSID("$NetBSD: gptsubr.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -222,21 +222,21 @@ show_map(map_t m, struct map_widths w)
 		uuid_to_string(&uuid, &part_guid, &status);
 		type_uuid = estrdup("");
 		break;
-		
+
 	case MAP_TYPE_GPT_PART:
 		ent = m->map_data;
 
 		memcpy(&uuid, ent->ent_type, sizeof(uuid));
 		uuid_to_string(&uuid, &type_uuid, &status);
-			
+
 		memcpy(&uuid, ent->ent_guid, sizeof(uuid));
 		uuid_to_string(&uuid, &part_guid, &status);
-		
+
 		ent_attr = ent->ent_attr;
 
 		memcpy(&gpt_uuid, ent->ent_type, sizeof(uuid));
 		gpt_uuid_snprintf(ent_type, sizeof(ent_type), "%s", gpt_uuid);
-		
+
 		/*
 		 * Use the gpt.c code here rather than our
 		 * ucs2_to_utf8() as we are in their world.
@@ -245,7 +245,7 @@ show_map(map_t m, struct map_widths w)
 		    ent_desc, sizeof(ent_desc));
 
 		break;
-		
+
 	case MAP_TYPE_MBR_PART:
 		part_guid = estrdup("");
 		type_uuid = estrdup("");
@@ -282,7 +282,7 @@ show_map(map_t m, struct map_widths w)
 	    ent_type,
 	    map_type_name(m->map_type),
 	    ent_desc);
-	    
+
 	free(part_guid);
 	free(type_uuid);
 }
@@ -334,11 +334,11 @@ parent_of_fname(const char *fname)
 	b = basename(vfsb.f_mntfromname);
 	d = dirname(vfsb.f_mntfromname);
 	easprintf(&p, "%s/r%s", d, b);
-	
+
 	fd = open(p, O_RDONLY);
 	if (fd == -1)
 		err(EXIT_FAILURE, "open");
-		
+
 	rv = ioctl(fd, DIOCGWEDGEINFO, &dkinfo);
 	close(fd);
 
@@ -348,7 +348,7 @@ parent_of_fname(const char *fname)
 	}
 
 	warn("ioctl: DIOCGWEDGEINFO");
-			
+
 	/*
 	 * Hum.  No wedges?  Assume we have the old disklabel
 	 * "/dev/rwd0x" syntax.  Convert it to "/dev/rwd0d".
@@ -502,7 +502,7 @@ find_partition_idx(const char *fname, int verbose)
 		int fd = open(p, O_RDONLY);
 		if (fd == -1)
 			err(EXIT_FAILURE, "open");
-		
+
 		rv = ioctl(fd, DIOCGWEDGEINFO, &dkinfo);
 		if (rv != -1) {
 			parent = dkinfo.dkw_parent;
@@ -511,28 +511,28 @@ find_partition_idx(const char *fname, int verbose)
 		}
 		else {
 			struct disklabel dl;
-			
+
 			warn("ioctl: DIOCGWEDGEINFO");
-			
+
 			rv = ioctl(fd, DIOCGDINFO, &dl);
 			if (rv == -1)
 				err(EXIT_FAILURE, "ioctl: DIOCGDINFO");
-			
+
 			size_t n = strlen(p);
-			
+
 			int pnum = p[n - 1] - 'a';
 			p[n - 1] = 'd';
-			
+
 			printf("num_parts: %u\n", dl.d_npartitions);
 			printf("partition %d\n", pnum);
 			printf("  offset = %u (%#x)\n", dl.d_partitions[pnum].p_offset, dl.d_partitions[pnum].p_offset);
 			printf("  size = %u (%#x)\n",   dl.d_partitions[pnum].p_size,   dl.d_partitions[pnum].p_size);
-			
+
 			parent = p;	// vfsbuf.f_mntfromname;
 			offset = dl.d_partitions[pnum].p_offset;
 			size   = dl.d_partitions[pnum].p_size;
 		}
-		
+
 		close(fd);
 		free(p);
 	}
@@ -604,7 +604,7 @@ find_partition_pathname(const char *fname)
 	if (vfsbuf.f_mntonname[i] != '\0')
 		errx(EXIT_FAILURE, "mntonname mismatch: %s",
 		    vfsbuf.f_mntonname + i);
-	
+
 	pname = estrdup(rname + i);
 	free(rname);
 

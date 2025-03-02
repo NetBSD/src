@@ -1,4 +1,4 @@
-/* $NetBSD: devpath1.c,v 1.2 2025/02/24 15:42:05 martin Exp $ */
+/* $NetBSD: devpath1.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath1.c,v 1.2 2025/02/24 15:42:05 martin Exp $");
+__RCSID("$NetBSD: devpath1.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -171,7 +171,7 @@ devpath_hw_memmap(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 		    p->MemoryType, typename,
 		    p->StartAddress,
 		    p->EndAddress);
-		    
+
 	}
 }
 
