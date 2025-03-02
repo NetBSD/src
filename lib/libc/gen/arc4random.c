@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.40 2025/03/02 22:46:23 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.41 2025/03/02 22:53:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,17 +42,16 @@
  *
  * The arc4random(3) API may abort the process if:
  *
- * (a) the crypto self-test fails,
- * (b) pthread_atfork or thr_keycreate fail, or
- * (c) sysctl(KERN_ARND) fails when reseeding the PRNG.
+ * (a) the crypto self-test fails, or
+ * (b) sysctl(KERN_ARND) fails when reseeding the PRNG.
  *
- * The crypto self-test, pthread_atfork, and thr_keycreate occur only
- * once, on the first use of any of the arc4random(3) API.  KERN_ARND
- * is unlikely to fail later unless the kernel is seriously broken.
+ * The crypto self-test occurs only once, on the first use of any of
+ * the arc4random(3) API.  KERN_ARND is unlikely to fail later unless
+ * the kernel is seriously broken.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.40 2025/03/02 22:46:23 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.41 2025/03/02 22:53:45 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
