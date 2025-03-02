@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.129 2025/02/17 17:04:15 nia Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.130 2025/03/02 16:35:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -317,8 +317,12 @@ int	 getenv_r(const char *, char *, size_t);
 void	 cfree(void *);
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 heapsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
 int	 mergesort(void *, size_t, size_t,
 	    int (*)(const void *, const void *));
+int	 mergesort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
 int	 ptsname_r(int, char *, size_t);
 int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
@@ -400,6 +404,8 @@ void	*reallocarray(void *, size_t, size_t);
 
 #if (_POSIX_C_SOURCE - 0) >= 202405L || defined(_NETBSD_SOURCE)
 int	 mkostemp(char *, int);
+void	 qsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
 #endif /* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE */
 
 __END_DECLS

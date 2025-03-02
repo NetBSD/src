@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1359 2025/02/27 00:55:31 riastradh Exp $
+# $NetBSD: mi,v 1.1360 2025/03/02 16:35:40 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3267,6 +3267,7 @@
 ./usr/tests/lib/libc/stdlib/h_atexit			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/h_getopt			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/h_getopt_long		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdlib/h_sort			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_a64l			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_abs			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_atexit			tests-lib-tests		compattestfile,atf
@@ -3284,6 +3285,7 @@
 ./usr/tests/lib/libc/stdlib/t_mktemp			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_random			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdlib/t_sort			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_strtod			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_strtoi			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_strtol			tests-lib-tests		compattestfile,atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.147 2024/11/01 21:11:37 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.148 2025/03/02 16:35:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -476,7 +476,10 @@ void	 hexdump(void (*)(const char *, ...) __printflike(1, 2),
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
-		   void *);
+	    void *);
+int	 kheapsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *,
+	    void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #if __GNUC_PREREQ__(4, 5) \
     && (defined(__alpha_cix__) || defined(__mips_popcount))

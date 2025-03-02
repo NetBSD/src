@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.16 2018/05/23 21:21:27 joerg Exp $	*/
+/*	$NetBSD: merge.c,v 1.17 2025/03/02 16:35:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.16 2018/05/23 21:21:27 joerg Exp $");
+__RCSID("$NetBSD: merge.c,v 1.17 2025/03/02 16:35:41 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,12 +65,13 @@ __RCSID("$NetBSD: merge.c,v 1.16 2018/05/23 21:21:27 joerg Exp $");
 
 #ifdef __weak_alias
 __weak_alias(mergesort,_mergesort)
+__weak_alias(mergesort_r,_mergesort_r)
 #endif
 
 static void setup(u_char *, u_char *, size_t, size_t,
-    int (*)(const void *, const void *));
+    int (*)(const void *, const void *, void *), void *);
 static void insertionsort(u_char *, size_t, size_t,
-    int (*)(const void *, const void *));
+    int (*)(const void *, const void *, void *), void *);
 
 #define ISIZE sizeof(int)
 #define PSIZE sizeof(u_char *)
@@ -93,7 +94,7 @@ static void insertionsort(u_char *, size_t, size_t,
 	do					\
 		*dst++ = *src++;		\
 	while (i -= 1)
-		
+
 /*
  * Find the next possible pointer head.  (Trickery for forcing an array
  * to do double duty as a linked list when objects do not align with word
@@ -107,8 +108,8 @@ static void insertionsort(u_char *, size_t, size_t,
  * Arguments are as for qsort.
  */
 int
-mergesort(void *base, size_t nmemb, size_t size,
-    int (*cmp)(const void *, const void *))
+mergesort_r(void *base, size_t nmemb, size_t size,
+    int (*cmp)(const void *, const void *, void *), void *cookie)
 {
 	size_t i;
 	int sense;
@@ -139,7 +140,7 @@ mergesort(void *base, size_t nmemb, size_t size,
 		return (-1);
 
 	list1 = base;
-	setup(list1, list2, nmemb, size, cmp);
+	setup(list1, list2, nmemb, size, cmp, cookie);
 	last = list2 + nmemb * size;
 	i = big = 0;
 	while (*EVAL(list2) != last) {
@@ -153,7 +154,7 @@ mergesort(void *base, size_t nmemb, size_t size,
 	    		p2 = *EVAL(p2);
 	    	l2 = list1 + (p2 - list2);
 	    	while (f1 < l1 && f2 < l2) {
-	    		if ((*cmp)(f1, f2) <= 0) {
+	    		if ((*cmp)(f1, f2, cookie) <= 0) {
 	    			q = f2;
 	    			b = f1, t = l1;
 	    			sense = -1;
@@ -166,7 +167,8 @@ mergesort(void *base, size_t nmemb, size_t size,
 #if 0
 LINEAR:
 #endif
-				while ((b += size) < t && cmp(q, b) >sense)
+	    			while ((b += size) < t &&
+	    			    cmp(q, b, cookie) >sense)
 	    				if (++i == 6) {
 	    					big = 1;
 	    					goto EXPONENTIAL;
@@ -175,15 +177,17 @@ LINEAR:
 EXPONENTIAL:	    		for (i = size; ; i <<= 1)
 	    				if ((p = (b + i)) >= t) {
 	    					if ((p = t - size) > b &&
-						    (*cmp)(q, p) <= sense)
+	    					    ((*cmp)(q, p, cookie) <=
+	    						sense))
 	    						t = p;
 	    					else
 	    						b = p;
 	    					break;
-	    				} else if ((*cmp)(q, p) <= sense) {
+	    				} else if ((*cmp)(q, p, cookie) <=
+	    				    sense) {
 	    					t = p;
 	    					if (i == size)
-	    						big = 0; 
+	    						big = 0;
 	    					goto FASTCASE;
 	    				} else
 	    					b = p;
@@ -192,19 +196,21 @@ SLOWCASE:
 #endif
 				while (t > b+size) {
 	    				i = (((t - b) / size) >> 1) * size;
-	    				if ((*cmp)(q, p = b + i) <= sense)
+	    				if ((*cmp)(q, p = b + i, cookie) <=
+	    				    sense)
 	    					t = p;
 	    				else
 	    					b = p;
 	    			}
 	    			goto COPY;
-FASTCASE:	    		while (i > size)
-	    				if ((*cmp)(q,
-	    					p = b +
-						    (i = (unsigned int) i >> 1)) <= sense)
+FASTCASE:	    		while (i > size) {
+	    				i = (unsigned int)i >> 1;
+	    				p = b + i;
+	    				if ((*cmp)(q, p, cookie) <= sense)
 	    					t = p;
 	    				else
 	    					b = p;
+	    			}
 COPY:	    			b = t;
 	    		}
 	    		i = size;
@@ -277,11 +283,9 @@ COPY:	    			b = t;
  * when THRESHOLD/2 pairs compare with same sense.  (Only used when NATURAL
  * is defined.  Otherwise simple pairwise merging is used.)
  */
-
-/* XXX: shouldn't this function be static? - lukem 990810 */
-void
+static void
 setup(u_char *list1, u_char *list2, size_t n, size_t size,
-    int (*cmp)(const void *, const void *))
+    int (*cmp)(const void *, const void *, void *), void *cookie)
 {
 	int length, tmp, sense;
 	u_char *f1, *f2, *s, *l2, *last, *p2;
@@ -293,7 +297,7 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
 
 	size2 = size*2;
 	if (n <= 5) {
-		insertionsort(list1, n, size, cmp);
+		insertionsort(list1, n, size, cmp, cookie);
 		*EVAL(list2) = list2 + n*size;
 		return;
 	}
@@ -302,19 +306,19 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
 	 * for simplicity.
 	 */
 	i = 4 + (n & 1);
-	insertionsort(list1 + (n - i) * size, i, size, cmp);
+	insertionsort(list1 + (n - i) * size, i, size, cmp, cookie);
 	last = list1 + size * (n - i);
 	*EVAL(list2 + (last - list1)) = list2 + n * size;
 
 #ifdef NATURAL
 	p2 = list2;
 	f1 = list1;
-	sense = (cmp(f1, f1 + size) > 0);
+	sense = (cmp(f1, f1 + size, cookie) > 0);
 	for (; f1 < last; sense = !sense) {
 		length = 2;
 					/* Find pairs with same sense. */
 		for (f2 = f1 + size2; f2 < last; f2 += size2) {
-			if ((cmp(f2, f2+ size) > 0) != sense)
+			if ((cmp(f2, f2 + size, cookie) > 0) != sense)
 				break;
 			length += 2;
 		}
@@ -327,7 +331,7 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
 		} else {				/* Natural merge */
 			l2 = f2;
 			for (f2 = f1 + size2; f2 < l2; f2 += size2) {
-				if ((cmp(f2-size, f2) > 0) != sense) {
+				if ((cmp(f2-size, f2, cookie) > 0) != sense) {
 					p2 = *EVAL(p2) = f2 - list1 + list2;
 					if (sense > 0)
 						reverse(f1, f2 - size);
@@ -337,7 +341,7 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
 			if (sense > 0)
 				reverse(f1, f2 - size);
 			f1 = f2;
-			if (f2 < last || cmp(f2 - size, f2) > 0)
+			if (f2 < last || cmp(f2 - size, f2, cookie) > 0)
 				p2 = *EVAL(p2) = f2 - list1 + list2;
 			else
 				p2 = *EVAL(p2) = list2 + n*size;
@@ -346,7 +350,7 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
 #else		/* pairwise merge only. */
 	for (f1 = list1, p2 = list2; f1 < last; f1 += size2) {
 		p2 = *EVAL(p2) = p2 + size2;
-		if (cmp (f1, f1 + size) > 0)
+		if (cmp(f1, f1 + size, cookie) > 0)
 			swap(f1, f1 + size);
 	}
 #endif /* NATURAL */
@@ -358,7 +362,7 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size,
  */
 static void
 insertionsort(u_char *a, size_t n, size_t size,
-    int (*cmp)(const void *, const void *))
+    int (*cmp)(const void *, const void *, void *), void *cookie)
 {
 	u_char *ai, *s, *t, *u, tmp;
 	size_t i;
@@ -369,8 +373,24 @@ insertionsort(u_char *a, size_t n, size_t size,
 	for (ai = a+size; --n >= 1; ai += size)
 		for (t = ai; t > a; t -= size) {
 			u = t - size;
-			if (cmp(u, t) <= 0)
+			if (cmp(u, t, cookie) <= 0)
 				break;
 			swap(u, t);
 		}
+}
+
+static int
+cmpnocookie(const void *a, const void *b, void *cookie)
+{
+	int (*cmp)(const void *, const void *) = cookie;
+
+	return cmp(a, b);
+}
+
+int
+mergesort(void *a, size_t n, size_t es,
+    int (*cmp)(const void *, const void *))
+{
+
+	return mergesort_r(a, n, es, cmpnocookie, cmp);
 }

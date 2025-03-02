@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2485 2025/01/26 16:35:42 christos Exp $
+#	$NetBSD: mi,v 1.2486 2025/03/02 16:35:40 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8183,6 +8183,7 @@
 ./usr/share/man/cat3/hdestroy1_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hdestroy_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/heapsort.0			comp-c-catman		.cat
+./usr/share/man/cat3/heapsort_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/herror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hesiod.0			comp-c-catman		hesiod,.cat
 ./usr/share/man/cat3/hesiod_end.0		comp-c-catman		hesiod,.cat
@@ -9292,6 +9293,7 @@
 ./usr/share/man/cat3/menu_win.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menus.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mergesort.0		comp-c-catman		.cat
+./usr/share/man/cat3/mergesort_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/meta.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mi_vector_hash.0		comp-c-catman		.cat
 ./usr/share/man/cat3/minor.0			comp-c-catman		.cat
@@ -10149,6 +10151,7 @@
 ./usr/share/man/cat3/qdiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/qiflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/qsort.0			comp-c-catman		.cat
+./usr/share/man/cat3/qsort_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/queue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/quick_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_close.0		comp-c-catman		.cat
@@ -16723,6 +16726,7 @@
 ./usr/share/man/html3/hdestroy1_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/hdestroy_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/heapsort.html		comp-c-htmlman		html
+./usr/share/man/html3/heapsort_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/herror.html		comp-c-htmlman		html
 ./usr/share/man/html3/hesiod.html		comp-c-htmlman		hesiod,html
 ./usr/share/man/html3/hesiod_end.html		comp-c-htmlman		hesiod,html
@@ -17800,6 +17804,7 @@
 ./usr/share/man/html3/menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/menus.html		comp-c-htmlman		html
 ./usr/share/man/html3/mergesort.html		comp-c-htmlman		html
+./usr/share/man/html3/mergesort_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/meta.html			comp-c-htmlman		html
 ./usr/share/man/html3/mi_vector_hash.html	comp-c-htmlman		html
 ./usr/share/man/html3/minor.html		comp-c-htmlman		html
@@ -18674,6 +18679,7 @@
 ./usr/share/man/html3/qdiv.html			comp-c-htmlman		html
 ./usr/share/man/html3/qiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/qsort.html		comp-c-htmlman		html
+./usr/share/man/html3/qsort_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/queue.html		comp-c-htmlman		html
 ./usr/share/man/html3/quick_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/quota_close.html		comp-c-htmlman		html
@@ -25207,6 +25213,7 @@
 ./usr/share/man/man3/hdestroy1_r.3		comp-c-man		.man
 ./usr/share/man/man3/hdestroy_r.3		comp-c-man		.man
 ./usr/share/man/man3/heapsort.3			comp-c-man		.man
+./usr/share/man/man3/heapsort_r.3		comp-c-man		.man
 ./usr/share/man/man3/herror.3			comp-c-man		.man
 ./usr/share/man/man3/hesiod.3			comp-c-man		hesiod,.man
 ./usr/share/man/man3/hesiod_end.3		comp-c-man		hesiod,.man
@@ -26317,6 +26324,7 @@
 ./usr/share/man/man3/menu_win.3			comp-c-man		.man
 ./usr/share/man/man3/menus.3			comp-c-man		.man
 ./usr/share/man/man3/mergesort.3		comp-c-man		.man
+./usr/share/man/man3/mergesort_r.3		comp-c-man		.man
 ./usr/share/man/man3/meta.3			comp-c-man		.man
 ./usr/share/man/man3/mi_vector_hash.3		comp-c-man		.man
 ./usr/share/man/man3/minor.3			comp-c-man		.man
@@ -27197,6 +27205,7 @@
 ./usr/share/man/man3/qdiv.3			comp-c-man		.man
 ./usr/share/man/man3/qiflush.3			comp-c-man		.man
 ./usr/share/man/man3/qsort.3			comp-c-man		.man
+./usr/share/man/man3/qsort_r.3			comp-c-man		.man
 ./usr/share/man/man3/queue.3			comp-c-man		.man
 ./usr/share/man/man3/quick_exit.3		comp-c-man		.man
 ./usr/share/man/man3/quota_close.3		comp-c-man		.man

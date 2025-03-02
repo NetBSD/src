@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.3 2008/11/17 10:21:30 jnemeth Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.4 2025/03/02 16:35:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,6 +39,7 @@
  * XXX rename the versions found in the host's headers by mistake!
  */
 #undef heapsort
+#undef heapsort_r
 #endif
 
 #include <sys/cdefs.h>
@@ -46,7 +47,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.3 2008/11/17 10:21:30 jnemeth Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.4 2025/03/02 16:35:40 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +66,12 @@ __RCSID("$NetBSD: heapsort.c,v 1.3 2008/11/17 10:21:30 jnemeth Exp $");
 #if HAVE_NBTOOL_CONFIG_H
 /* XXX Now, re-apply the renaming that we undid above. */
 #define heapsort	__nbcompat_heapsort
+#define heapsort_r	__nbcompat_heapsort_r
 #endif
 
 #ifdef __weak_alias
 __weak_alias(heapsort,_heapsort)
+__weak_alias(heapsort_r,_heapsort_r)
 #endif
 #endif	/* _KERNEL || _STANDALONE */
 
@@ -109,12 +112,13 @@ __weak_alias(heapsort,_heapsort)
 	for (par_i = initval; (child_i = par_i * 2) <= nmemb; \
 	    par_i = child_i) { \
 		child = base + child_i * size; \
-		if (child_i < nmemb && compar(child, child + size) < 0) { \
+		if (child_i < nmemb && \
+		    compar(child, child + size, cookie) < 0) { \
 			child += size; \
 			++child_i; \
 		} \
 		par = base + par_i * size; \
-		if (compar(child, par) <= 0) \
+		if (compar(child, par, cookie) <= 0) \
 			break; \
 		SWAP(par, child, count, size, tmp); \
 	} \
@@ -140,7 +144,8 @@ __weak_alias(heapsort,_heapsort)
 #define SELECT(par_i, child_i, nmemb, par, child, size, k, count, tmp1, tmp2) { \
 	for (par_i = 1; (child_i = par_i * 2) <= nmemb; par_i = child_i) { \
 		child = base + child_i * size; \
-		if (child_i < nmemb && compar(child, child + size) < 0) { \
+		if (child_i < nmemb && \
+		    compar(child, child + size, cookie) < 0) { \
 			child += size; \
 			++child_i; \
 		} \
@@ -152,7 +157,7 @@ __weak_alias(heapsort,_heapsort)
 		par_i = child_i / 2; \
 		child = base + child_i * size; \
 		par = base + par_i * size; \
-		if (child_i == 1 || compar(k, par) < 0) { \
+		if (child_i == 1 || compar(k, par, cookie) < 0) { \
 			COPY(child, k, count, size, tmp1, tmp2); \
 			break; \
 		} \
@@ -169,12 +174,13 @@ __weak_alias(heapsort,_heapsort)
  */
 #if defined(_KERNEL) || defined(_STANDALONE)
 int
-kheapsort(void *vbase, size_t nmemb, size_t size,
-    int (*compar)(const void *, const void *), void *k)
+kheapsort_r(void *vbase, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *, void *), void *cookie,
+    void *k)
 #else
 int
-heapsort(void *vbase, size_t nmemb, size_t size,
-    int (*compar)(const void *, const void *))
+heapsort_r(void *vbase, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *, void *), void *cookie)
 #endif
 {
 	size_t cnt, i, j, l;
@@ -226,4 +232,30 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 	free(k);
 #endif
 	return (0);
+}
+
+static int
+cmpnocookie(const void *a, const void *b, void *cookie)
+{
+	int (*cmp)(const void *, const void *) = cookie;
+
+	return cmp(a, b);
+}
+
+int
+#if defined(_KERNEL) || defined(_STANDALONE)
+kheapsort(void *a, size_t n, size_t es,
+    int (*cmp)(const void *, const void *),
+    void *k)
+#else
+heapsort(void *a, size_t n, size_t es,
+    int (*cmp)(const void *, const void *))
+#endif
+{
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+	return kheapsort_r(a, n, es, cmpnocookie, cmp, k);
+#else
+	return heapsort_r(a, n, es, cmpnocookie, cmp);
+#endif
 }

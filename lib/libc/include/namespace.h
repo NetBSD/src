@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.205 2024/08/17 21:24:53 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.206 2025/03/02 16:35:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -437,6 +437,7 @@
 #define gmtime_r		_gmtime_r
 #define group_from_gid		_group_from_gid
 #define heapsort		_heapsort
+#define heapsort_r		_heapsort_r
 #define herror			_herror
 #define hes_error		_hes_error
 #define hes_free		_hes_free
@@ -521,6 +522,7 @@
 #define mbrtoc8_l		_mbrtoc8_l
 #define membar_producer		_membar_producer
 #define mergesort		_mergesort
+#define mergesort_r		_mergesort_r
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
 #define mktime_z		_mktime_z

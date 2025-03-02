@@ -1,4 +1,4 @@
-.\"	$NetBSD: qsort.3,v 1.14 2014/09/19 16:02:58 wiz Exp $
+.\"	$NetBSD: qsort.3,v 1.15 2025/03/02 16:35:41 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,10 +47,16 @@
 .In stdlib.h
 .Ft void
 .Fn qsort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
+.Ft void
+.Fn qsort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
 .Ft int
 .Fn heapsort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
 .Ft int
+.Fn heapsort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
+.Ft int
 .Fn mergesort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
+.Ft int
+.Fn mergesort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
 .Sh DESCRIPTION
 The
 .Fn qsort
@@ -104,6 +110,14 @@ the sorted array is undefined.
 The function
 .Fn mergesort
 is stable.
+.Pp
+The
+.Fn qsort_r ,
+.Fn heapsort_r ,
+and
+.Fn mergesort_r
+functions pass an additional cookie argument through to the comparison
+function.
 .Pp
 The
 .Fn qsort
@@ -233,6 +247,10 @@ were unable to allocate memory.
 .Sh STANDARDS
 The
 .Fn qsort
-function
-conforms to
+function conforms to
 .St -ansiC .
+.Pp
+The
+.Fn qsort_r
+function conforms to
+.St -p1003.1-2024 .
