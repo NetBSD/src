@@ -3090,7 +3090,7 @@ static ssize_t i915_perf_read(struct file *file,
 		stream->pollin = false;
 
 	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
-	return offset ?: (ret ?: -EAGAIN);
+	return offset2 ?: (ret ?: -EAGAIN);
 }
 
 static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
