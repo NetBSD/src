@@ -1,4 +1,4 @@
-/* $NetBSD: amdgpio.c,v 1.2 2025/02/26 21:49:11 jmcneill Exp $ */
+/*	$NetBSD: amdgpio.c,v 1.3 2025/03/02 13:47:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpio.c,v 1.2 2025/02/26 21:49:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpio.c,v 1.3 2025/03/02 13:47:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ static int	amdgpio_pin_read(void *, int);
 static void	amdgpio_pin_write(void *, int, int);
 static void	amdgpio_pin_ctl(void *, int, int);
 static void *	amdgpio_intr_establish(void *, int, int, int,
-					int (*)(void *), void *);
+		    int (*)(void *), void *);
 static void	amdgpio_intr_disestablish(void *, void *);
 static bool	amdgpio_intr_str(void *, int, int, char *, size_t);
 static void	amdgpio_intr_mask(void *, void *);
@@ -94,7 +94,7 @@ static void	amdgpio_intr_unmask(void *, void *);
 
 static int	amdgpio_acpi_translate(void *, ACPI_RESOURCE_GPIO *, void **);
 static void	amdgpio_register_event(void *, struct acpi_event *,
-					ACPI_RESOURCE_GPIO *);
+		    ACPI_RESOURCE_GPIO *);
 static int	amdgpio_intr(void *);
 
 CFATTACH_DECL_NEW(amdgpio, sizeof(struct amdgpio_softc),
@@ -198,7 +198,10 @@ amdgpio_attach(device_t parent, device_t self, void *aux)
 		    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
 		    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_HIGH_LEVEL |
 		    GPIO_INTR_LOW_LEVEL | GPIO_INTR_MPSAFE;
-		/* It's not safe to read all pins, so leave pin state unknown */
+		/*
+		 * It's not safe to read all pins, so leave pin state
+		 * unknown
+		 */
 		sc->sc_pins[pin].pin_state = 0;
 	}
 
@@ -236,7 +239,7 @@ amdgpio_attach(device_t parent, device_t self, void *aux)
 	    CFARGS(.iattr = "gpiobus"));
 	if (sc->sc_gpiodev != NULL) {
 		acpi_gpio_register(aa->aa_node, self,
-		    amdgpio_acpi_translate, sc); 
+		    amdgpio_acpi_translate, sc);
 	}
 
 done:
@@ -369,7 +372,7 @@ amdgpio_pin_ctl(void *priv, int pin, int flags)
 
 static void *
 amdgpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
-			int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg)
 {
 	struct amdgpio_softc * const sc = priv;
 	struct amdgpio_intr_handler *aih, *aihp;
@@ -515,7 +518,8 @@ amdgpio_intr(void *priv)
 		if ((val & AMDGPIO_CONF_INTR_STATUS) != 0) {
 			rv |= aih->ih_func(aih->ih_arg);
 
-			val &= ~(AMDGPIO_CONF_INTR_MASK_EN | AMDGPIO_CONF_INTR_EN);
+			val &= ~(AMDGPIO_CONF_INTR_MASK_EN |
+			    AMDGPIO_CONF_INTR_EN);
 			WR4(sc, AMDGPIO_PIN_REG(pin), val);
 		}
 	}
