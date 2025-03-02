@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.25 2025/02/28 09:05:06 simonb Exp $ */
+/* $NetBSD: time.c,v 1.26 2025/03/02 14:20:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.25 2025/02/28 09:05:06 simonb Exp $");
+__RCSID("$NetBSD: time.c,v 1.26 2025/03/02 14:20:38 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,8 @@ pdeltat(FILE *fp, int prec, struct timeval *t1, struct timeval *t0)
     struct timeval td;
 
     timersub(t1, t0, &td);
-    (void)fprintf(fp, "%0.*f", prec, (double)td.tv_sec + td.tv_usec / 1000000.0);
+    (void)fprintf(fp, "%0.*f", prec,
+	(double)td.tv_sec + td.tv_usec / 1000000.0);
 }
 
 #define  P2DIG(fp, i) (void)fprintf(fp, "%ld%ld", (i) / 10, (i) % 10)
