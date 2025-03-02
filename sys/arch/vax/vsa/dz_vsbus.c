@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.48 2025/03/02 11:11:48 hans Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.49 2025/03/02 13:43:39 hans Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.48 2025/03/02 11:11:48 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.49 2025/03/02 13:43:39 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,22 +89,11 @@ cons_decl(dz);
 static int
 dz_print(void *aux, const char *name)
 {
-#if 0
-#if NDZKBD > 0 || NDZMS > 0
-	struct dz_attach_args *dz_args = aux;
-	if (name == NULL) {
-		aprint_normal (" line %d", dz_args->line);
-		if (dz_args->hwflags & DZ_HWFLAG_CONSOLE)
-			aprint_normal (" (console)");
-	}
+	struct dzkm_attach_args *daa = aux;
+
+	aprint_normal (" line %d", daa->daa_line);
+
 	return (QUIET);
-#else
-	if (name)
-		aprint_normal ("lkc at %s", name);
-	return (UNCONF);
-#endif
-#endif
-	return (UNCONF);
 }
 #endif
 
