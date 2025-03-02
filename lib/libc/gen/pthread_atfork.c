@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.23 2025/03/01 20:31:58 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.24 2025/03/02 22:46:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,15 +31,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.23 2025/03/01 20:31:58 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.24 2025/03/02 22:46:23 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <sys/queue.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/queue.h>
+
+#include "atfork.h"
 #include "extern.h"
 #include "reentrant.h"
 
@@ -53,12 +56,6 @@ __locked_fork(int *my_errno)
 {
 	return __fork();
 }
-
-struct atfork_callback {
-	SIMPLEQ_ENTRY(atfork_callback) next;
-	void (*fn)(void);
-};
-
 
 /*
  * Keep a cache for of 3, one for prepare, one for parent, one for child.
@@ -105,6 +102,53 @@ af_free(struct atfork_callback *af)
 		free(af);
 }
 
+static void
+__libc_atfork_locked(
+    struct atfork_callback *restrict newprepare, void (*prepare)(void),
+    struct atfork_callback *restrict newparent, void (*parent)(void),
+    struct atfork_callback *restrict newchild, void (*child)(void))
+{
+
+	/*
+	 * The order in which the functions are called is specified as
+	 * LIFO for the prepare handler and FIFO for the others; insert
+	 * at the head and tail as appropriate so that SIMPLEQ_FOREACH()
+	 * produces the right order.
+	 */
+	if (prepare) {
+		newprepare->fn = prepare;
+		SIMPLEQ_INSERT_HEAD(&prepareq, newprepare, next);
+	}
+	if (parent) {
+		newparent->fn = parent;
+		SIMPLEQ_INSERT_TAIL(&parentq, newparent, next);
+	}
+	if (child) {
+		newchild->fn = child;
+		SIMPLEQ_INSERT_TAIL(&childq, newchild, next);
+	}
+}
+
+void
+__libc_atfork(
+    struct atfork_callback *restrict newprepare, void (*prepare)(void),
+    struct atfork_callback *restrict newparent, void (*parent)(void),
+    struct atfork_callback *restrict newchild, void (*child)(void))
+{
+	sigset_t mask, omask;
+
+	sigfillset(&mask);
+	thr_sigsetmask(SIG_SETMASK, &mask, &omask);
+
+	mutex_lock(&atfork_lock);
+	__libc_atfork_locked(newprepare, prepare,
+	    newparent, parent,
+	    newchild, child);
+	mutex_unlock(&atfork_lock);
+
+	thr_sigsetmask(SIG_SETMASK, &omask, NULL);
+}
+
 int
 pthread_atfork(void (*prepare)(void), void (*parent)(void),
     void (*child)(void))
@@ -125,7 +169,6 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 			error = ENOMEM;
 			goto out;
 		}
-		newprepare->fn = prepare;
 	}
 
 	if (parent != NULL) {
@@ -136,7 +179,6 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 			error = ENOMEM;
 			goto out;
 		}
-		newparent->fn = parent;
 	}
 
 	if (child != NULL) {
@@ -149,21 +191,11 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 			error = ENOMEM;
 			goto out;
 		}
-		newchild->fn = child;
 	}
 
-	/*
-	 * The order in which the functions are called is specified as
-	 * LIFO for the prepare handler and FIFO for the others; insert
-	 * at the head and tail as appropriate so that SIMPLEQ_FOREACH()
-	 * produces the right order.
-	 */
-	if (prepare)
-		SIMPLEQ_INSERT_HEAD(&prepareq, newprepare, next);
-	if (parent)
-		SIMPLEQ_INSERT_TAIL(&parentq, newparent, next);
-	if (child)
-		SIMPLEQ_INSERT_TAIL(&childq, newchild, next);
+	__libc_atfork_locked(newprepare, prepare,
+	    newparent, parent,
+	    newchild, child);
 	error = 0;
 
 out:	mutex_unlock(&atfork_lock);
