@@ -1,4 +1,4 @@
-/*	$NetBSD: h_sort.c,v 1.2 2025/03/02 20:00:32 riastradh Exp $	*/
+/*	$NetBSD: h_sort.c,v 1.3 2025/03/02 23:11:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_sort.c,v 1.2 2025/03/02 20:00:32 riastradh Exp $");
+__RCSID("$NetBSD: h_sort.c,v 1.3 2025/03/02 23:11:19 riastradh Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -137,10 +137,10 @@ main(int argc, char **argv)
 	 * embedded NULs so we can use strcmp(3) to compare lines.
 	 */
 	off = 0;
-	while ((nread = read(STDIN_FILENO, buf + off, nbuf - off)) != 0) {
+	while ((nread = read(STDIN_FILENO, buf + off, nbuf - off - 1)) != 0) {
 		if (nread == -1)
 			err(1, "read");
-		if ((size_t)nread > nbuf - off)
+		if ((size_t)nread > nbuf - off - 1)
 			errx(1, "overlong read: %zu", (size_t)nread);
 		if (memchr(buf + off, '\0', (size_t)nread) != NULL)
 			errx(1, "NUL byte in input");
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 		 * If we filled the buffer, reallocate it with double
 		 * the size.  Bail if that would overflow.
 		 */
-		if (nbuf - off == 0) {
+		if (nbuf - off == 1) {
 			if (nbuf > SIZE_MAX/2)
 				errx(1, "input overflow");
 			nbuf *= 2;
