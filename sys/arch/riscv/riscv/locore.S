@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.45 2024/02/09 22:08:33 andvar Exp $ */
+/* $NetBSD: locore.S,v 1.46 2025/03/02 08:14:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -702,7 +702,7 @@ hart_boot:
 	 * bootstrap L1PT
 	 */
 
-	.section "_init_memory", "aw", %nobits
+//	.section "_init_memory", "aw", %nobits
 	.align PGSHIFT
 	.global _C_LABEL(lwp0uspace)
 _C_LABEL(lwp0uspace):
@@ -713,7 +713,7 @@ bootstk:
 	.space	BOOT_AP_STACKSIZE * (MAXCPUS - 1)
 #endif
 
-	.section "_init_memory", "aw", %nobits
+//	.section "_init_memory", "aw", %nobits
 	.align PGSHIFT
 mmutables_start:
 bootstrap_pde:

@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.42 2025/01/04 14:23:03 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.43 2025/03/02 08:14:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.42 2025/01/04 14:23:03 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.43 2025/03/02 08:14:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -571,6 +571,7 @@ cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
 	fdt_memory_remove_range(kernstart_phys,
 	    kernend_phys - kernstart_phys);
 
+#if 0
 	/*
 	 * Don't give these pages to UVM.
 	 *
@@ -590,6 +591,7 @@ cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
 		    " end %#" PRIxPADDR "\n", __func__, spa, epa);
 		fdt_memory_remove_range(spa, epa - spa);
 	}
+#endif
 
 #ifdef _LP64
 	paddr_t pa = memory_start & ~XSEGOFSET;
