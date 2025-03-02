@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.41 2025/03/02 22:53:45 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.42 2025/03/02 22:54:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.41 2025/03/02 22:53:45 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.42 2025/03/02 22:54:11 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -187,8 +187,6 @@ crypto_core(uint8_t *out, const uint8_t *in, const uint8_t *k,
 
 /* ChaCha self-test */
 
-#ifdef _DIAGNOSTIC
-
 /*
  * Test vector for ChaCha20 from
  * <http://tools.ietf.org/html/draft-strombergson-chacha-test-vectors-00>,
@@ -281,17 +279,6 @@ crypto_core_selftest(void)
 
 	return 0;
 }
-
-#else  /* !_DIAGNOSTIC */
-
-static int
-crypto_core_selftest(void)
-{
-
-	return 0;
-}
-
-#endif
 
 /* PRNG */
 
