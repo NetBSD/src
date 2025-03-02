@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.341 2025/02/27 17:17:00 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.342 2025/03/02 14:13:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,11 +43,12 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
+ * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au)
+ * Sept 1992
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.341 2025/02/27 17:17:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.342 2025/03/02 14:13:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -109,8 +110,8 @@ static int	sd_discard(device_t, off_t, off_t);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
-static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t, int,
-		    int);
+static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t,
+		    int, int);
 static int	sd_validate_blksize(struct scsipi_periph *, int);
 static u_int64_t sd_read_capacity(struct sd_softc *, int *, int flags);
 static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
@@ -262,10 +263,13 @@ sdattach(device_t parent, device_t self, void *aux)
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	memcpy(sd->name, sa->sa_inqbuf.product, uimin(16, sizeof(sd->name)));
-	memcpy(sd->typename, sa->sa_inqbuf.product, uimin(16, sizeof(sd->typename)));
+	memcpy(sd->typename, sa->sa_inqbuf.product,
+	    uimin(16, sizeof(sd->typename)));
 
-	if (sd->type == T_SIMPLE_DIRECT)
-		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
+	if (sd->type == T_SIMPLE_DIRECT) {
+		periph->periph_quirks |= PQUIRK_ONLYBIG;
+		periph->periph_quirks |= PQUIRK_NOBIGMODESENSE;
+	}
 
 	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
@@ -289,7 +293,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	dk_attach(dksc);
 	disk_attach(&dksc->sc_dkdev);
 
-	bufq_alloc(&dksc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&dksc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT,
+	    BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&sd->sc_callout, 0);
 
@@ -332,8 +337,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
-		aprint_normal(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
+		aprint_normal("%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect"
+		    " x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    (unsigned long long)dp->disksize);
 		break;
@@ -379,7 +384,8 @@ sddetach(device_t self, int flags)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int bmaj, cmaj, i, mn, rc;
 
-	if ((rc = disk_begindetach(&dksc->sc_dkdev, sd_lastclose, self, flags)) != 0)
+	rc = disk_begindetach(&dksc->sc_dkdev, sd_lastclose, self, flags);
+	if (rc)
 		return rc;
 
 	/* locate the major number */
@@ -1029,8 +1035,10 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	default:
 		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
-		if (error == ENOTTY)
-			error = scsipi_do_ioctl(periph, dev, cmd, addr, flag, l);
+		if (error == ENOTTY) {
+			error = scsipi_do_ioctl(periph, dev, cmd, addr, flag,
+			    l);
+		}
 		return (error);
 	}
 
@@ -1605,15 +1613,17 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
-		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-		if (!error) {
-			if (big) {
-				bdesc = (void *)(&scsipi_sense.header.big + 1);
-				bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
-			} else {
-				bdesc = (void *)(&scsipi_sense.header.small + 1);
-				bsize = scsipi_sense.header.small.blk_desc_len;
-			}
+		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT,
+		    &big);
+		if (error)
+			goto next;
+		if (big) {
+			bdesc = (void *)(&scsipi_sense.header.big + 1);
+			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			bdesc = (void *)(&scsipi_sense.header.small + 1);
+			bsize = scsipi_sense.header.small.blk_desc_len;
+		}
 
 #if 0
 printf("page 0 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
@@ -1621,12 +1631,11 @@ printf("page 0 bsize=%d\n", bsize);
 printf("page 0 ok\n");
 #endif
 
-			if (bsize >= 8) {
-				blksize = _3btol(bdesc->blklen);
-			}
+		if (bsize >= 8) {
+			blksize = _3btol(bdesc->blklen);
 		}
 	}
-
+next:
 	if (!sd_validate_blksize(sd->sc_periph, blksize))
 		blksize = SD_DEFAULT_BLKSIZE;
 
@@ -1644,8 +1653,10 @@ printf("page 0 ok\n");
 	cmd.pagecode = SINQ_VPD_LOGICAL_PROV;
 
 	sd->flags &= ~SDF_LBPU;
-	if (scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd), (void *)&vpdbuf, sizeof(vpdbuf),
-	    SDRETRIES, 100000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_IGNORE_ILLEGAL_REQUEST))
+	if (scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd),
+		(void *)&vpdbuf, sizeof(vpdbuf),
+		SDRETRIES, 100000, NULL,
+		flags | XS_CTL_DATA_IN | XS_CTL_IGNORE_ILLEGAL_REQUEST))
 		goto end;
 
 	if (vpdbuf.flags & VPD_LBP_LBPU)
