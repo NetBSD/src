@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 2024/12/10 07:42:03 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 2025/03/02 01:23:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2024/12/10 07:42:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2025/03/02 01:23:11 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -1563,7 +1563,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		pmap_extract(pmap, vaddr, &curaddr);
+		if (!pmap_extract(pmap, vaddr, &curaddr))
+			return EFAULT;
 
 		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
 		    "va %#" PRIxVADDR " curaddr %#" PRIxBUSADDR, vaddr, curaddr);
