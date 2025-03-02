@@ -1,4 +1,4 @@
-/* $NetBSD: devpath3.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $ */
+/* $NetBSD: devpath3.c,v 1.6 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath3.c,v 1.5 2025/03/02 00:23:59 riastradh Exp $");
+__RCSID("$NetBSD: devpath3.c,v 1.6 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <arpa/inet.h>
@@ -578,7 +578,8 @@ devpath_msg_vendor(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 
 	vt = devpath_msg_vendor_type(&p->GUID);
 	if (vt == NULL) {
-		path->sz = easprintf(&path->cp, "VenMsg(%s,%s)", uuid_str, data_str);
+		path->sz = easprintf(&path->cp, "VenMsg(%s,%s)",
+		    uuid_str, data_str);
 	}
 	else if (vt->fn == NULL) {
 		assert(vt->name != NULL);
@@ -963,7 +964,8 @@ devpath_msg_usbwwid(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	}
 	else {
 		size_t sz = p->hdr.Length - sizeof(*p);
-		serialnum = ucs2_to_utf8((uint16_t *)p->SerialNum, sz, NULL, NULL);
+		serialnum = ucs2_to_utf8((uint16_t *)p->SerialNum, sz, NULL,
+		    NULL);
 	}
 
 	path->sz = easprintf(&path->cp, "UsbWwid(0x%04x,0x%04x,0x%02x,%s)",
@@ -1122,7 +1124,8 @@ devpath_msg_iscsi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	if (dbg != NULL) {
 		char liopt[256];
 
-		snprintb(liopt, sizeof(liopt), LOGIN_OPTION_BITS, p->LoginOptions);
+		snprintb(liopt, sizeof(liopt), LOGIN_OPTION_BITS,
+		    p->LoginOptions);
 		dbg->sz = easprintf(&dbg->cp,
 		    DEVPATH_FMT_HDR
 		    DEVPATH_FMT(Protocol: 0x%04x(%s)\n)
@@ -1358,7 +1361,8 @@ devpath_msg_bluetooth(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 	} __packed *p = (void *)dp;
 	__CTASSERT(sizeof(*p) == 10);
 
-	path->sz = easprintf(&path->cp, "Bluetooth(%02x:%02x:%02x:%02x:%02x:%02x)",
+	path->sz = easprintf(&path->cp,
+	    "Bluetooth(%02x:%02x:%02x:%02x:%02x:%02x)",
 	    p->bdaddr[0], p->bdaddr[1], p->bdaddr[2],
 	    p->bdaddr[3], p->bdaddr[4], p->bdaddr[5]);
 

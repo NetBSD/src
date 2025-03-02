@@ -1,4 +1,4 @@
-/* $NetBSD: bootvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: bootvar.c,v 1.3 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootvar.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: bootvar.c,v 1.3 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -168,7 +168,8 @@ create_devpath_media_hd(const char *dev, uint partnum)
 	pp->PartitionNumber = m->map_index;
 	pp->PartitionStart  = (uint64_t)m->map_start;
 	pp->PartitionSize   = (uint64_t)m->map_size;
-	memcpy(&pp->PartitionSignature, ent->ent_guid, sizeof(pp->PartitionSignature));
+	memcpy(&pp->PartitionSignature, ent->ent_guid,
+	    sizeof(pp->PartitionSignature));
 	pp->PartitionFormat = PARTITION_FORMAT_GPT;
 	pp->SignatureType   = SIGNATURE_TYPE_GUID;
 
@@ -270,7 +271,8 @@ find_new_bootvar(efi_var_t **var_array, size_t var_cnt, const char *target)
 	n = strlen(target);
 	lastidx = -1;
 	for (size_t i = 0; i < var_cnt; i++) {
-		idx = (int)strtou(var_array[i]->name + n, NULL, 16, 0, 0xffff, &rstatus);
+		idx = (int)strtou(var_array[i]->name + n, NULL, 16, 0, 0xffff,
+		    &rstatus);
 		if (rstatus != 0)
 			err(EXIT_FAILURE, "strtou: %s", var_array[i]->name);
 

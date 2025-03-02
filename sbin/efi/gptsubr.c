@@ -1,4 +1,4 @@
-/* $NetBSD: gptsubr.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $ */
+/* $NetBSD: gptsubr.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gptsubr.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $");
+__RCSID("$NetBSD: gptsubr.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -163,7 +163,8 @@ get_map_widths(gpt_t gpt)
 			char ent_type[128];
 
 			memcpy(&gpt_uuid, ent->ent_type, sizeof(gpt_uuid));
-			n = (uint)gpt_uuid_snprintf(ent_type, sizeof(ent_type), "%s", gpt_uuid);
+			n = (uint)gpt_uuid_snprintf(ent_type, sizeof(ent_type),
+			    "%s", gpt_uuid);
 			if (w.type_name < n)
 				w.type_name = n;
 		}
@@ -254,7 +255,8 @@ show_map(map_t m, struct map_widths w)
 	case MAP_TYPE_MBR: {
 		struct mbr *mbr = m->map_data;
 
-		easprintf(&part_guid, "%02x%02x%02x%02x-0000-0000-0000-000000000000",
+		easprintf(&part_guid,
+		    "%02x%02x%02x%02x-0000-0000-0000-000000000000",
 		    mbr->mbr_code[440],
 		    mbr->mbr_code[441],
 		    mbr->mbr_code[442],
@@ -602,7 +604,8 @@ find_partition_pathname(const char *fname)
 	DPRINTF("mount: %s\n", vfsbuf.f_mntonname);
 
 	i = 0;
-	while (vfsbuf.f_mntonname[i] == rname[i] && vfsbuf.f_mntonname[i] != '\0')
+	while (vfsbuf.f_mntonname[i] == rname[i] &&
+	    vfsbuf.f_mntonname[i] != '\0')
 		i++;
 
 	if (vfsbuf.f_mntonname[i] != '\0')

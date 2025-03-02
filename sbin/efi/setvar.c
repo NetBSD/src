@@ -1,4 +1,4 @@
-/* $NetBSD: setvar.c,v 1.3 2025/03/02 00:23:59 riastradh Exp $ */
+/* $NetBSD: setvar.c,v 1.4 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setvar.c,v 1.3 2025/03/02 00:23:59 riastradh Exp $");
+__RCSID("$NetBSD: setvar.c,v 1.4 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -67,7 +67,8 @@ parse_csus(const char *csus, uint16_t **array, int base)
 	for (;;) {
 		data[n++] = strtous(p, &q, base);
 		if (*q != ',' && *q != '\0')
-			errx(EXIT_FAILURE, "invalid CSUS string: '%s' (at %s)\n",
+			errx(EXIT_FAILURE, "invalid CSUS string:"
+			    " '%s' (at %s)\n",
 			    csus, p);
 		if (*q == '\0')
 			break;

@@ -1,4 +1,4 @@
-/* $NetBSD: showvar.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: showvar.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: showvar.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: showvar.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -242,6 +242,7 @@ show_key_data(efi_var_t *v, bool dbg)
 		uint8_t        *bp;
 	} u = { .bp = v->ev.data, };
 	char buf[256], c, *cp, *desc;
+	uint i;
 
 	printf("%s:", v->name);
 
@@ -280,7 +281,7 @@ show_key_data(efi_var_t *v, bool dbg)
 	if (c != '\0')
 		*cp = c;	/* restore the buffer */
 
-	for (uint i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++)
+	for (i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++)
 		printf(" {%04x, %04x}", u.ko->Keys[i].ScanCode,
 		    u.ko->Keys[i].UnicodeChar);
 	printf("\n");
@@ -289,7 +290,7 @@ show_key_data(efi_var_t *v, bool dbg)
 		printf("  KeyData: %s\n", buf);
 		printf("  BootOptionCrc: 0x%08x\n", u.ko->BootOptionCrc);
 		printf("  BootOption:    Boot%04X\n", u.ko->BootOption);
-		for (uint i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++) {
+		for (i = 0; i < u.ko->KeyData.Options.InputKeyCount; i++) {
 			printf("  Keys[%u].ScanCode:    0x%04x\n", i,
 			    u.ko->Keys[i].ScanCode);
 			printf("  Keys[%u].UnicodeChar: 0x%04x\n", i,

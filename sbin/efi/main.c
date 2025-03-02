@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: main.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -304,7 +304,8 @@ main(int argc, char **argv)
 	    byte_order.b[1] != 3 ||
 	    byte_order.b[2] != 2 ||
 	    byte_order.b[3] != 1) {
-		errx(EXIT_FAILURE, "sorry: %s only runs on little-endian machines!",
+		errx(EXIT_FAILURE,
+		    "sorry: %s only runs on little-endian machines!",
 		    getprogname());
 	}
 
@@ -459,7 +460,8 @@ main(int argc, char **argv)
 		case 'w':
 			if (optarg != NULL) {
 				opt.mbr_sig_write = MBR_SIG_WRITE_FORCE;
-				opt.mbr_sig = (uint32_t)estrtou(optarg, 0, 0, 0xffffffff);
+				opt.mbr_sig = (uint32_t)estrtou(optarg, 0,
+				    0, 0xffffffff);
 			}
 			else {
 				opt.mbr_sig_write = MBR_SIG_WRITE_MAYBE;
@@ -471,7 +473,8 @@ main(int argc, char **argv)
 		case 'X':
 			action = act_remove_bootorder;
 			if (opt.csus != NULL) {
-				usage("Comma Separated Hex list already specified!\n");
+				usage("Comma Separated Hex list"
+				    " already specified!\n");
 			}
 			opt.csus = estrdup(optarg);
 			break;
@@ -479,7 +482,8 @@ main(int argc, char **argv)
 		case 'x':
 			action = act_prefix_bootorder;
 			if (opt.csus != NULL) {
-				usage("Comma Separated Hex list already specified!\n");
+				usage("Comma Separated Hex list"
+				    " already specified!\n");
 			}
 			opt.csus = estrdup(optarg);
 			break;
@@ -579,10 +583,12 @@ main(int argc, char **argv)
 		if (opt.regexp != NULL)
 			break;
 
-		if (opt.b_flag)
-			easprintf(&opt.regexp, "^%s%04X$", opt.target, opt.bootnum);
-		else
+		if (opt.b_flag) {
+			easprintf(&opt.regexp, "^%s%04X$",
+			    opt.target, opt.bootnum);
+		} else {
 			easprintf(&opt.regexp, "^%s", opt.target);
+		}
 		break;
 	}
 
@@ -613,7 +619,8 @@ main(int argc, char **argv)
 		/*
 		 * Get a new variable name
 		 */
-		bootnum = (uint16_t)find_new_bootvar(var_array, var_cnt, opt.target);
+		bootnum = (uint16_t)find_new_bootvar(var_array, var_cnt,
+		    opt.target);
 		easprintf(&v.name, "%s%04X", opt.target, bootnum);
 
 		if (!opt.quiet)
@@ -632,7 +639,8 @@ main(int argc, char **argv)
 		 * Setup the efi_ioc data section
 		 */
 		v.ev.data = make_bootvar_data(opt.device, opt.partnum,
-		    attrib, opt.label, opt.loader, opt.opt_fname, &v.ev.datasize);
+		    attrib, opt.label, opt.loader, opt.opt_fname,
+		    &v.ev.datasize);
 #if 1
 		if (!opt.quiet) {
 			/*
