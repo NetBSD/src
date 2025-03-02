@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.38 2024/08/29 13:39:42 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.39 2025/03/02 21:35:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.38 2024/08/29 13:39:42 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.39 2025/03/02 21:35:59 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -581,8 +581,8 @@ arc4random_initialize(void)
 			abort();
 #ifdef _REENTRANT
 		if (thr_keycreate(&arc4random_global.thread_key,
-			&arc4random_tsd_destructor) != 0)
-			abort();
+			&arc4random_tsd_destructor) == 0)
+			arc4random_global.per_thread = true;
 #endif
 		arc4random_global.initialized = true;
 	}
@@ -600,8 +600,10 @@ arc4random_prng_get(void)
 
 #ifdef _REENTRANT
 	/* Get or create the per-thread PRNG state.  */
-	prng = thr_getspecific(arc4random_global.thread_key);
-	if (__predict_false(prng == NULL)) {
+	prng = __predict_true(arc4random_global.per_thread)
+	    ? thr_getspecific(arc4random_global.thread_key)
+	    : NULL;
+	if (__predict_false(prng == NULL) && arc4random_global.per_thread) {
 		prng = arc4random_prng_create();
 		thr_setspecific(arc4random_global.thread_key, prng);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.1 2024/08/27 13:43:02 riastradh Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.2 2025/03/02 21:35:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.1 2024/08/27 13:43:02 riastradh Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.2 2025/03/02 21:35:59 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/sysctl.h>
@@ -389,13 +389,13 @@ ATF_TC_BODY(fork, tc)
 	    status);
 }
 
-ATF_TC(global);
-ATF_TC_HEAD(global, tc)
+ATF_TC(global_aslimit);
+ATF_TC_HEAD(global_aslimit, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test the global state is used when address space limit is hit");
 }
-ATF_TC_BODY(global, tc)
+ATF_TC_BODY(global_aslimit, tc)
 {
 	unsigned char buf[32], buf1[32];
 
@@ -417,6 +417,50 @@ ATF_TC_BODY(global, tc)
 	arc4random_buf(buf1, sizeof(buf1));
 	ATF_CHECK(!iszero(buf1, sizeof(buf1)));	/* Pr[fail] = 1/2^256 */
 	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+}
+
+ATF_TC(global_threadkeylimit);
+ATF_TC_HEAD(global_threadkeylimit, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the global state is used we run out of thread keys");
+}
+ATF_TC_BODY(global_threadkeylimit, tc)
+{
+	unsigned char buf[32], buf1[32];
+
+	/*
+	 * Get a sample from the global state (and verify it was using
+	 * the global state).
+	 */
+	arc4random_global_buf(buf, sizeof(buf));
+
+	/*
+	 * Verify we got a sample.
+	 */
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+
+	/*
+	 * Artificially disable the per-thread state and clear the
+	 * epoch.
+	 */
+	arc4random_global.per_thread = false;
+	arc4random_global.prng.arc4_epoch = 0;
+
+	/*
+	 * Get a sample again and make sure it wasn't repeated, which
+	 * happens only with probability 1/2^256.
+	 */
+	arc4random_buf(buf1, sizeof(buf1));
+	ATF_CHECK(!iszero(buf1, sizeof(buf1)));	/* Pr[fail] = 1/2^256 */
+	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+
+	/*
+	 * Verify this had the effect of updating the global epoch,
+	 * meaning we used the global state and not the per-thread
+	 * state.
+	 */
+	ATF_CHECK(arc4random_global.prng.arc4_epoch != 0);
 }
 
 ATF_TC(local);
@@ -460,7 +504,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, addrandom);
 	ATF_TP_ADD_TC(tp, consolidate);
 	ATF_TP_ADD_TC(tp, fork);
-	ATF_TP_ADD_TC(tp, global);
+	ATF_TP_ADD_TC(tp, global_aslimit);
+	ATF_TP_ADD_TC(tp, global_threadkeylimit);
 	ATF_TP_ADD_TC(tp, local);
 
 	return atf_no_error();
