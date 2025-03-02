@@ -1,4 +1,4 @@
-/*	$NetBSD: h_sort.c,v 1.1 2025/03/02 16:35:41 riastradh Exp $	*/
+/*	$NetBSD: h_sort.c,v 1.2 2025/03/02 20:00:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_sort.c,v 1.1 2025/03/02 16:35:41 riastradh Exp $");
+__RCSID("$NetBSD: h_sort.c,v 1.2 2025/03/02 20:00:32 riastradh Exp $");
 
+#include <assert.h>
 #include <err.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,25 +55,41 @@ mergesort_r_wrapper(void *a, size_t n, size_t sz,
 		err(1, "mergesort_r");
 }
 
+struct context {
+	const char	*buf;
+	const size_t	*linepos;
+};
+
 static int
 cmp(const void *va, const void *vb, void *cookie)
 {
-	const char *buf = cookie;
+	const struct context *C = cookie;
 	const size_t *a = va;
 	const size_t *b = vb;
 
-	return strcmp(buf + *a, buf + *b);
+	return strcmp(C->buf + C->linepos[*a], C->buf + C->linepos[*b]);
+}
+
+static void __dead
+usage(void)
+{
+
+	fprintf(stderr, "Usage: %s [-n] <sortfn>\n", getprogname());
+	exit(1);
 }
 
 int
 main(int argc, char **argv)
 {
+	int ch;
+	int nflag = 0;
 	void (*sortfn)(void *, size_t, size_t,
 	    int (*)(const void *, const void *, void *), void *);
 	char *buf = NULL;
 	size_t nbuf;
-	size_t *lines = NULL;
+	size_t *linepos = NULL;
 	size_t nlines;
+	size_t *permutation = NULL;
 	size_t off;
 	ssize_t nread;
 	char *p;
@@ -82,16 +100,29 @@ main(int argc, char **argv)
 	 * Parse arguments.
 	 */
 	setprogname(argv[0]);
-	if (argc < 2)
-		errx(1, "Usage: %s <sortfn>", getprogname());
-	if (strcmp(argv[1], "heapsort_r") == 0)
+	while ((ch = getopt(argc, argv, "hn")) != -1) {
+		switch (ch) {
+		case 'n':
+			nflag = 1;
+			break;
+		case '?':
+		case 'h':
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (argc != 1)
+		usage();
+	if (strcmp(argv[0], "heapsort_r") == 0)
 		sortfn = &heapsort_r_wrapper;
-	else if (strcmp(argv[1], "mergesort_r") == 0)
+	else if (strcmp(argv[0], "mergesort_r") == 0)
 		sortfn = &mergesort_r_wrapper;
-	else if (strcmp(argv[1], "qsort_r") == 0)
+	else if (strcmp(argv[0], "qsort_r") == 0)
 		sortfn = &qsort_r;
 	else
-		errx(1, "unknown sort: %s", argv[1]);
+		errx(1, "unknown sort: %s", argv[0]);
 
 	/*
 	 * Allocate an initial 4K buffer.
@@ -99,7 +130,7 @@ main(int argc, char **argv)
 	nbuf = 0x1000;
 	error = reallocarr(&buf, nbuf, 1);
 	if (error)
-		err(1, "reallocarr");
+		errc(1, error, "reallocarr");
 
 	/*
 	 * Read the input into a contiguous buffer.  Reject input with
@@ -125,7 +156,7 @@ main(int argc, char **argv)
 			nbuf *= 2;
 			error = reallocarr(&buf, nbuf, 1);
 			if (error)
-				err(1, "reallocarr");
+				errc(1, error, "reallocarr");
 		}
 	}
 
@@ -148,30 +179,47 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Create an array of line offsets to sort.  NUL-terminate each
-	 * line so we can use strcmp(3).
+	 * Create an array of line positions to sort.  NUL-terminate
+	 * each line so we can use strcmp(3).
 	 */
-	error = reallocarr(&lines, nlines, sizeof(lines[0]));
-	if (lines == NULL)
-		err(1, "reallocarr");
+	error = reallocarr(&linepos, nlines, sizeof(linepos[0]));
+	if (error)
+		errc(1, error, "reallocarr");
 	i = 0;
-	for (p = buf; lines[i++] = p - buf, (p = strchr(p, '\n')) != NULL;) {
+	for (p = buf; linepos[i++] = p - buf, (p = strchr(p, '\n')) != NULL;) {
 		*p = '\0';
 		if (*++p == '\0')
 			break;
 	}
+	assert(i == nlines);
 
 	/*
-	 * Sort the array of line offsets via comparison function that
-	 * consults the buffer as a cookie.
+	 * Create an array of permuted line numbers.
 	 */
-	(*sortfn)(lines, nlines, sizeof(lines[0]), &cmp, buf);
-
-	/*
-	 * Print the lines in sorted order.
-	 */
+	error = reallocarr(&permutation, nlines, sizeof(permutation[0]));
+	if (error)
+		errc(1, error, "reallocarr");
 	for (i = 0; i < nlines; i++)
-		printf("%s\n", buf + lines[i]);
+		permutation[i] = i;
+
+	/*
+	 * Sort the lines via comparison function that consults the
+	 * buffer as a cookie.
+	 */
+	(*sortfn)(permutation, nlines, sizeof(permutation[0]), &cmp,
+	    &(struct context) { .buf = buf, .linepos = linepos });
+
+	/*
+	 * Print the lines in sorted order with the original line
+	 * numbers.
+	 */
+	for (i = 0; i < nlines; i++) {
+		const size_t j = permutation[i];
+		if (nflag)
+			printf("%zu %s\n", j, buf + linepos[j]);
+		else
+			printf("%s\n", buf + linepos[j]);
+	}
 	fflush(stdout);
 	return ferror(stdout);
 }

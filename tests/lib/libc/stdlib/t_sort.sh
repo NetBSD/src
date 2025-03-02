@@ -1,4 +1,4 @@
-#	$NetBSD: t_sort.sh,v 1.1 2025/03/02 16:35:41 riastradh Exp $
+#	$NetBSD: t_sort.sh,v 1.2 2025/03/02 20:00:32 riastradh Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,17 +28,59 @@ check_sort()
 {
 	local sortfn
 
-	set -Ceu
+	set -eu
 
 	sortfn="$1"
 
 	printf 'foo\nbar\nbaz\nquux' >in1
-	printf 'bar\nbaz\nfoo\nquux\n' >out
-	atf_check -s exit:0 -o file:out \
-		"$(atf_get_srcdir)"/h_sort "$sortfn" <in1
+	printf '1 bar\n2 baz\n0 foo\n3 quux\n' >out1
+	atf_check -s exit:0 -o file:out1 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in1
+
 	atf_check -s exit:0 -o empty sh -c 'exec shuffle -f - <in1 >in2'
-	atf_check -s exit:0 -o file:out \
+	printf 'bar\nbaz\nfoo\nquux\n' >out2
+	atf_check -s exit:0 -o file:out2 \
 		"$(atf_get_srcdir)"/h_sort "$sortfn" <in2
+}
+
+check_stablesort()
+{
+	local sortfn
+
+	set -eu
+
+	sortfn="$1"
+
+	printf 'foo\nfoo\nfoo\nfoo\nfoo' >in1
+	printf '0 foo\n1 foo\n2 foo\n3 foo\n4 foo\n' >out1
+	atf_check -s exit:0 -o file:out1 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in1
+
+	printf 'foo\nfoo\nfoo\nfoo\nfoo\nbar\nbar\nbar\nbar\nbar' >in2
+	printf '5 bar\n6 bar\n7 bar\n8 bar\n9 bar\n' >out2
+	printf '0 foo\n1 foo\n2 foo\n3 foo\n4 foo\n' >>out2
+	atf_check -s exit:0 -o file:out2 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in2
+
+	printf 'foo\nfoo\nbar\nbaz\nquux' >in3
+	printf '2 bar\n3 baz\n0 foo\n1 foo\n4 quux\n' >out3
+	atf_check -s exit:0 -o file:out3 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in3
+
+	printf 'foo\nbar\nbar\nbaz\nquux' >in4
+	printf '1 bar\n2 bar\n3 baz\n0 foo\n4 quux\n' >out4
+	atf_check -s exit:0 -o file:out4 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in4
+
+	printf 'foo\nbar\nbaz\nbaz\nquux' >in5
+	printf '1 bar\n2 baz\n3 baz\n0 foo\n4 quux\n' >out5
+	atf_check -s exit:0 -o file:out5 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in5
+
+	printf 'foo\nbar\nbaz\nquux\nquux' >in6
+	printf '1 bar\n2 baz\n0 foo\n3 quux\n4 quux\n' >out6
+	atf_check -s exit:0 -o file:out6 \
+		"$(atf_get_srcdir)"/h_sort -n "$sortfn" <in6
 }
 
 sortfn_case()
@@ -52,10 +94,22 @@ sortfn_case()
 	atf_add_test_case "$sortfn"
 }
 
+stablesortfn_case()
+{
+	local sortfn
+
+	sortfn="$1"
+
+	eval "${sortfn}_stable_head() { atf_set descr \"Test ${sortfn}\"; }"
+	eval "${sortfn}_stable_body() { check_stablesort $sortfn; }"
+	atf_add_test_case "${sortfn}_stable"
+}
+
 atf_init_test_cases()
 {
 
 	sortfn_case heapsort_r
 	sortfn_case mergesort_r
 	sortfn_case qsort_r
+	stablesortfn_case mergesort_r
 }
