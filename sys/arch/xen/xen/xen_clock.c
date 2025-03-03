@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.20 2024/12/01 20:36:00 andvar Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.21 2025/03/03 09:05:07 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.20 2024/12/01 20:36:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.21 2025/03/03 09:05:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -867,7 +867,7 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 	 * Re-arm the timer.  If it fails, it's probably because the
 	 * time is in the past, possibly because we're in the
 	 * process of catching up missed hardclock calls.
-	 * In this case schedule a tick in the nead future.
+	 * In this case schedule a tick in the near future.
 	 */
 	next = ci->ci_xen_hardclock_systime_ns + ns_per_tick;
 	error = HYPERVISOR_set_timer_op(next);
