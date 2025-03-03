@@ -1,5 +1,4 @@
 /*	$NetBSD: intel_dp.c,v 1.7 2021/12/19 12:41:54 riastradh Exp $	*/
-		.ops = &icl_tc_phy_aux_power_well_ops,
 
 /*
  * Copyright © 2008 Intel Corporation
