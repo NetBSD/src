@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.6 2025/03/03 19:02:30 riastradh Exp $ */
+/* $NetBSD: pci_resource.c,v 1.7 2025/03/03 19:38:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.6 2025/03/03 19:02:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.7 2025/03/03 19:38:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -134,20 +134,20 @@ struct pci_resources {
 	struct pci_bus **pr_bus;	/* Bus list */
 	pci_chipset_tag_t pr_pc;	/* Chipset tag */
 	uint8_t		pr_startbus;	/* First bus number */
-	uint8_t		pr_endbus;	/* Last bus number */
+	struct pci_resource_arena *pr_busranges;
 
 	struct pci_resource_arena *pr_ranges[NUM_PCI_RANGES];
 };
 
 struct pci_resource_arena {
 	vmem_t					*vmem;
-	SLIST_HEAD(, pci_resource_range)	list;
+	SIMPLEQ_HEAD(, pci_resource_range)	list;
 };
 
 struct pci_resource_range {
-	uint64_t			start;
-	uint64_t			end;
-	SLIST_ENTRY(pci_resource_range)	entry;
+	uint64_t				start;
+	uint64_t				end;
+	SIMPLEQ_ENTRY(pci_resource_range)	entry;
 };
 
 static int	pci_resource_scan_bus(struct pci_resources *,
@@ -165,6 +165,18 @@ static int	pci_resource_scan_bus(struct pci_resources *,
 #define	PCICONF_BUS_DEVICE(_pb, _devno, _funcno)		\
 	(&(_pb)->pb_device[(_devno) * PCI_MAX_FUNC + (_funcno)])
 
+static bool
+pci_bus_in_range(struct pci_resources *pr, int busno)
+{
+	struct pci_resource_range *range;
+
+	SIMPLEQ_FOREACH(range, &pr->pr_busranges->list, entry) {
+		if (busno >= range->start && busno <= range->end)
+			return true;
+	}
+	return false;
+}
+
 static void
 pci_resource_arena_add_range(struct pci_resource_arena **arenas,
     enum pci_range_type type, uint64_t start, uint64_t end)
@@ -172,6 +184,21 @@ pci_resource_arena_add_range(struct pci_resource_arena **arenas,
 	struct pci_resource_arena *arena;
 	struct pci_resource_range *new, *range, *prev;
 	int error;
+
+	KASSERTMSG(start <= end, "type=%d start=%" PRIu64 " end=%" PRIu64,
+	    type, start, end);
+
+	/*
+	 * Warn if this is a bus range and the start/end are bad.  The
+	 * other types of ranges can have larger addresses.
+	 */
+	if (type == PCI_RANGE_BUS &&
+	    (start > UINT8_MAX || end > UINT8_MAX)) {
+		aprint_error("PCI: unexpected bus range"
+		    " %" PRIu64 "-%" PRIu64 ", ignoring\n",
+		    start, end);
+		return;
+	}
 
 	/*
 	 * Create an arena if we haven't already.
@@ -181,25 +208,7 @@ pci_resource_arena_add_range(struct pci_resource_arena **arenas,
 		    KM_SLEEP);
 		arena->vmem = vmem_create(pci_resource_typename(type),
 		    0, 0, 1, NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
-		SLIST_INIT(&arena->list);
-	}
-
-	/*
-	 * Warn if this is a bus range and there already is a bus
-	 * range, or if the start/end are bad.  The other types of
-	 * ranges can have more than one range and larger addresses.
-	 *
-	 * XXX Not accurate: some machines do have multiple bus ranges.
-	 * But currently this logic can't handle that -- requires some
-	 * extra work to iterate over all the bus ranges.  TBD.
-	 */
-	if (type == PCI_RANGE_BUS &&
-	    (start > UINT8_MAX || end > UINT8_MAX ||
-		!SLIST_EMPTY(&arena->list))) {
-		aprint_error("PCI: unexpected bus range"
-		    " %" PRIu64 "-%" PRIu64 ", ignoring\n",
-		    start, end);
-		return;
+		SIMPLEQ_INIT(&arena->list);
 	}
 
 	/*
@@ -225,15 +234,16 @@ pci_resource_arena_add_range(struct pci_resource_arena **arenas,
 	new->start = start;
 	new->end = end;
 	prev = NULL;
-	SLIST_FOREACH(range, &arena->list, entry) {
+	SIMPLEQ_FOREACH(range, &arena->list, entry) {
 		if (new->start < range->start)
 			break;
+		KASSERT(new->start > range->end);
 		prev = range;
 	}
 	if (prev) {
-		SLIST_INSERT_AFTER(prev, new, entry);
+		SIMPLEQ_INSERT_AFTER(&arena->list, prev, new, entry);
 	} else {
-		SLIST_INSERT_HEAD(&arena->list, new, entry);
+		SIMPLEQ_INSERT_HEAD(&arena->list, new, entry);
 	}
 }
 
@@ -333,7 +343,7 @@ pci_resource_device_print(struct pci_resources *pr,
 		    PCI_BRIDGE_BUS_NUM_SUBORDINATE(pd->pd_bridge.bridge_bus));
 
 		if (pd->pd_bridge.ranges[PCI_RANGE_IO]) {
-			SLIST_FOREACH(range,
+			SIMPLEQ_FOREACH(range,
 			    &pd->pd_bridge.ranges[PCI_RANGE_IO]->list,
 			    entry) {
 				DPRINT("PCI: " PCI_SBDF_FMT
@@ -346,7 +356,7 @@ pci_resource_device_print(struct pci_resources *pr,
 			}
 		}
 		if (pd->pd_bridge.ranges[PCI_RANGE_MEM]) {
-			SLIST_FOREACH(range,
+			SIMPLEQ_FOREACH(range,
 			    &pd->pd_bridge.ranges[PCI_RANGE_MEM]->list,
 			    entry) {
 				DPRINT("PCI: " PCI_SBDF_FMT
@@ -359,7 +369,7 @@ pci_resource_device_print(struct pci_resources *pr,
 			}
 		}
 		if (pd->pd_bridge.ranges[PCI_RANGE_PMEM]) {
-			SLIST_FOREACH(range,
+			SIMPLEQ_FOREACH(range,
 			    &pd->pd_bridge.ranges[PCI_RANGE_PMEM]->list,
 			    entry) {
 				DPRINT("PCI: " PCI_SBDF_FMT
@@ -609,12 +619,16 @@ pci_resource_scan_device(struct pci_resources *pr,
 	    PCI_SUBCLASS(pd->pd_class) == PCI_SUBCLASS_BRIDGE_PCI) {
 		bridge_bus = pci_conf_read(pr->pr_pc, tag, PCI_BRIDGE_BUS_REG);
 		sec_bus = PCI_BRIDGE_BUS_NUM_SECONDARY(bridge_bus);
-		if (sec_bus <= pr->pr_endbus) {
+		if (pci_bus_in_range(pr, sec_bus)) {
 			if (pci_resource_scan_bus(pr, pd, sec_bus) != 0) {
 				DPRINT("PCI: " PCI_SBDF_FMT " bus %u "
 				       "already scanned (firmware bug!)\n",
 				       PCI_SBDF_FMT_ARGS(pr, pd), sec_bus);
 			}
+		} else {
+			DPRINT("PCI: " PCI_SBDF_FMT " bus %u "
+			    "out of range (firmware bug!)\n",
+			    PCI_SBDF_FMT_ARGS(pr, pd), sec_bus);
 		}
 	}
 
@@ -635,7 +649,7 @@ pci_resource_scan_bus(struct pci_resources *pr,
 	uint8_t nfunc;
 
 	KASSERT(busno >= pr->pr_startbus);
-	KASSERT(busno <= pr->pr_endbus);
+	KASSERT(pci_bus_in_range(pr, busno));
 
 	if (PCICONF_RES_BUS(pr, busno) != NULL) {
 		/*
@@ -855,7 +869,7 @@ pci_resource_init_bus(struct pci_resources *pr, uint8_t busno)
 	int error;
 
 	KASSERT(busno >= pr->pr_startbus);
-	KASSERT(busno <= pr->pr_endbus);
+	KASSERT(pci_bus_in_range(pr, busno));
 
 	pb = PCICONF_RES_BUS(pr, busno);
 	bridge = pb->pb_bridge;
@@ -884,7 +898,7 @@ pci_resource_init_bus(struct pci_resources *pr, uint8_t busno)
 			    bridge->pd_bridge.ranges[prtype] == NULL) {
 				continue;
 			}
-			SLIST_FOREACH(range,
+			SIMPLEQ_FOREACH(range,
 			    &bridge->pd_bridge.ranges[prtype]->list,
 			    entry) {
 				error = pci_resource_claim(
@@ -920,6 +934,7 @@ pci_resource_init_bus(struct pci_resources *pr, uint8_t busno)
 			if (pd->pd_ppb) {
 				uint8_t sec_bus = PCI_BRIDGE_BUS_NUM_SECONDARY(
 				    pd->pd_bridge.bridge_bus);
+				KASSERT(pci_bus_in_range(pr, sec_bus));
 				pci_resource_init_bus(pr, sec_bus);
 			}
 			pci_resource_init_device(pr, pd);
@@ -937,9 +952,9 @@ pci_resource_probe(struct pci_resources *pr,
     const struct pci_resource_info *info)
 {
 	struct pci_resource_arena *busarena = info->ranges[PCI_RANGE_BUS];
-	struct pci_resource_range *busrange = SLIST_FIRST(&busarena->list);
-	uint8_t startbus = (uint8_t)busrange->start;
-	uint8_t endbus = (uint8_t)busrange->end;
+	uint8_t startbus = SIMPLEQ_FIRST(&busarena->list)->start;
+	uint8_t endbus = SIMPLEQ_LAST(&busarena->list, pci_resource_range,
+	    entry)->end;
 	u_int nbus;
 
 	KASSERT(startbus <= endbus);
@@ -949,8 +964,8 @@ pci_resource_probe(struct pci_resources *pr,
 
 	pr->pr_pc = info->pc;
 	pr->pr_startbus = startbus;
-	pr->pr_endbus = endbus;
-	pr->pr_bus = kmem_zalloc(nbus * sizeof(struct pci_bus *), KM_SLEEP);
+	pr->pr_busranges = busarena;
+	pr->pr_bus = kmem_zalloc(nbus * sizeof(pr->pr_bus[0]), KM_SLEEP);
 	memcpy(pr->pr_ranges, info->ranges, sizeof(pr->pr_ranges));
 
 	/* Scan devices */
@@ -1107,7 +1122,7 @@ pci_resource_init(const struct pci_resource_info *info)
 		aprint_error("PCI: no buses\n");
 		return;
 	}
-	KASSERT(!SLIST_EMPTY(&info->ranges[PCI_RANGE_BUS]->list));
+	KASSERT(!SIMPLEQ_EMPTY(&info->ranges[PCI_RANGE_BUS]->list));
 	pci_resource_probe(&pr, info);
 	pci_resource_alloc_bus(&pr, pr.pr_startbus);
 }
