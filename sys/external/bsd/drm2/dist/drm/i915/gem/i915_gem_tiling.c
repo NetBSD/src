@@ -190,7 +190,7 @@ i915_gem_object_fence_prepare(struct drm_i915_gem_object *obj,
 {
 	struct i915_ggtt *ggtt = &to_i915(obj->base.dev)->ggtt;
 	struct i915_vma *vma, *vn;
-	LIST_HEAD(unbind);
+	LINUX_LIST_HEAD(unbind);
 	int ret = 0;
 
 	if (tiling_mode == I915_TILING_NONE)
