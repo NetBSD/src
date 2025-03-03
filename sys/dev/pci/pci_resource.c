@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.5 2024/06/30 09:30:45 jmcneill Exp $ */
+/* $NetBSD: pci_resource.c,v 1.6 2025/03/03 19:02:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,12 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.5 2024/06/30 09:30:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.6 2025/03/03 19:02:30 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/bus.h>
-#include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
 #include <sys/vmem.h>
 
 #include <dev/pci/pcireg.h>
@@ -109,7 +112,7 @@ struct pci_device {
 	union {
 		struct {
 			pcireg_t	bridge_bus;
-			struct pci_resource_range ranges[NUM_PCI_RANGES];
+			struct pci_resource_arena *ranges[NUM_PCI_RANGES];
 		} pd_bridge;
 	};
 };
@@ -122,8 +125,9 @@ struct pci_bus {
 					/* Devices on bus */
 	u_int		pb_lastdevno;	/* Last device found */
 
-	struct pci_resource_range pb_ranges[NUM_PCI_RANGES];
-	vmem_t		*pb_res[NUM_PCI_RANGES];
+	/* XXX Nothing seems to use pb_ranges? */
+	struct pci_resource_arena *pb_ranges[NUM_PCI_RANGES];
+	struct pci_resource_arena *pb_res[NUM_PCI_RANGES];
 };
 
 struct pci_resources {
@@ -132,8 +136,18 @@ struct pci_resources {
 	uint8_t		pr_startbus;	/* First bus number */
 	uint8_t		pr_endbus;	/* Last bus number */
 
-	struct pci_resource_range pr_ranges[NUM_PCI_RANGES];
-	vmem_t		*pr_res[NUM_PCI_RANGES];
+	struct pci_resource_arena *pr_ranges[NUM_PCI_RANGES];
+};
+
+struct pci_resource_arena {
+	vmem_t					*vmem;
+	SLIST_HEAD(, pci_resource_range)	list;
+};
+
+struct pci_resource_range {
+	uint64_t			start;
+	uint64_t			end;
+	SLIST_ENTRY(pci_resource_range)	entry;
 };
 
 static int	pci_resource_scan_bus(struct pci_resources *,
@@ -151,24 +165,90 @@ static int	pci_resource_scan_bus(struct pci_resources *,
 #define	PCICONF_BUS_DEVICE(_pb, _devno, _funcno)		\
 	(&(_pb)->pb_device[(_devno) * PCI_MAX_FUNC + (_funcno)])
 
-/*
- * pci_create_vmem --
- *
- *   Create a vmem arena covering the specified range, used for tracking
- *   PCI resources.
- */
-static vmem_t *
-pci_create_vmem(const char *name, bus_addr_t start, bus_addr_t end)
+static void
+pci_resource_arena_add_range(struct pci_resource_arena **arenas,
+    enum pci_range_type type, uint64_t start, uint64_t end)
 {
-	vmem_t *arena;
-	int error __diagused;
+	struct pci_resource_arena *arena;
+	struct pci_resource_range *new, *range, *prev;
+	int error;
 
-	arena = vmem_create(name, 0, 0, 1, NULL, NULL, NULL, 0, VM_SLEEP,
-	    IPL_NONE);
-	error = vmem_add(arena, start, end - start + 1, VM_SLEEP);
-	KASSERTMSG(error == 0, "error=%d", error);
+	/*
+	 * Create an arena if we haven't already.
+	 */
+	if ((arena = arenas[type]) == NULL) {
+		arena = arenas[type] = kmem_zalloc(sizeof(*arenas[type]),
+		    KM_SLEEP);
+		arena->vmem = vmem_create(pci_resource_typename(type),
+		    0, 0, 1, NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
+		SLIST_INIT(&arena->list);
+	}
 
-	return arena;
+	/*
+	 * Warn if this is a bus range and there already is a bus
+	 * range, or if the start/end are bad.  The other types of
+	 * ranges can have more than one range and larger addresses.
+	 *
+	 * XXX Not accurate: some machines do have multiple bus ranges.
+	 * But currently this logic can't handle that -- requires some
+	 * extra work to iterate over all the bus ranges.  TBD.
+	 */
+	if (type == PCI_RANGE_BUS &&
+	    (start > UINT8_MAX || end > UINT8_MAX ||
+		!SLIST_EMPTY(&arena->list))) {
+		aprint_error("PCI: unexpected bus range"
+		    " %" PRIu64 "-%" PRIu64 ", ignoring\n",
+		    start, end);
+		return;
+	}
+
+	/*
+	 * Reserve the range in the vmem for allocation.  If there's
+	 * already an overlapping range, just drop this one.
+	 */
+	error = vmem_add(arena->vmem, start, end - start + 1, VM_SLEEP);
+	if (error) {
+		/* XXX show some more context */
+		aprint_error("overlapping %s range: %#" PRIx64 "-%#" PRIx64 ","
+		    " discarding\n",
+		    pci_resource_typename(type), start, end);
+		return;
+	}
+
+	/*
+	 * Add an entry to the list so we can iterate over them, in
+	 * ascending address order for the sake of legible printing.
+	 * (We don't expect to have so many entries that the linear
+	 * time of insertion will cause trouble.)
+	 */
+	new = kmem_zalloc(sizeof(*new), KM_SLEEP);
+	new->start = start;
+	new->end = end;
+	prev = NULL;
+	SLIST_FOREACH(range, &arena->list, entry) {
+		if (new->start < range->start)
+			break;
+		prev = range;
+	}
+	if (prev) {
+		SLIST_INSERT_AFTER(prev, new, entry);
+	} else {
+		SLIST_INSERT_HEAD(&arena->list, new, entry);
+	}
+}
+
+/*
+ * pci_resource_add_range --
+ *
+ *   Add a contiguous range of addresses (inclusive of both bounds) for
+ *   the specified type of resource.
+ */
+void
+pci_resource_add_range(struct pci_resource_info *info,
+    enum pci_range_type type, uint64_t start, uint64_t end)
+{
+
+	pci_resource_arena_add_range(info->ranges, type, start, end);
 }
 
 /*
@@ -180,7 +260,7 @@ static struct pci_bus *
 pci_new_bus(struct pci_resources *pr, uint8_t busno, struct pci_device *bridge)
 {
 	struct pci_bus *pb;
-	struct pci_resource_range *ranges;
+	struct pci_resource_arena **ranges;
 
 	pb = kmem_zalloc(sizeof(*pb), KM_SLEEP);
 	pb->pb_busno = busno;
@@ -234,6 +314,7 @@ pci_resource_device_print(struct pci_resources *pr,
     struct pci_device *pd)
 {
 	struct pci_iores *pi;
+	struct pci_resource_range *range;
 	u_int res;
 
 	DPRINT("PCI: " PCI_SBDF_FMT " %04x:%04x %02x 0x%06x",
@@ -251,29 +332,44 @@ pci_resource_device_print(struct pci_resources *pr,
 		    PCI_BRIDGE_BUS_NUM_SECONDARY(pd->pd_bridge.bridge_bus),
 		    PCI_BRIDGE_BUS_NUM_SUBORDINATE(pd->pd_bridge.bridge_bus));
 
-		if (pd->pd_bridge.ranges[PCI_RANGE_IO].end) {
-			DPRINT("PCI: " PCI_SBDF_FMT
-			       " [bridge] window io  %#" PRIx64 "-%#" PRIx64
-			       "\n",
-			       PCI_SBDF_FMT_ARGS(pr, pd),
-			       pd->pd_bridge.ranges[PCI_RANGE_IO].start,
-			       pd->pd_bridge.ranges[PCI_RANGE_IO].end);
+		if (pd->pd_bridge.ranges[PCI_RANGE_IO]) {
+			SLIST_FOREACH(range,
+			    &pd->pd_bridge.ranges[PCI_RANGE_IO]->list,
+			    entry) {
+				DPRINT("PCI: " PCI_SBDF_FMT
+				    " [bridge] window io "
+				    " %#" PRIx64 "-%#" PRIx64
+				    "\n",
+				    PCI_SBDF_FMT_ARGS(pr, pd),
+				    range->start,
+				    range->end);
+			}
 		}
-		if (pd->pd_bridge.ranges[PCI_RANGE_MEM].end) {
-			DPRINT("PCI: " PCI_SBDF_FMT
-			       " [bridge] window mem %#" PRIx64 "-%#" PRIx64
-			       " (non-prefetchable)\n",
-			       PCI_SBDF_FMT_ARGS(pr, pd),
-			       pd->pd_bridge.ranges[PCI_RANGE_MEM].start,
-			       pd->pd_bridge.ranges[PCI_RANGE_MEM].end);
+		if (pd->pd_bridge.ranges[PCI_RANGE_MEM]) {
+			SLIST_FOREACH(range,
+			    &pd->pd_bridge.ranges[PCI_RANGE_MEM]->list,
+			    entry) {
+				DPRINT("PCI: " PCI_SBDF_FMT
+				    " [bridge] window mem"
+				    " %#" PRIx64 "-%#" PRIx64
+				    " (non-prefetchable)\n",
+				    PCI_SBDF_FMT_ARGS(pr, pd),
+				    range->start,
+				    range->end);
+			}
 		}
-		if (pd->pd_bridge.ranges[PCI_RANGE_PMEM].end) {
-			DPRINT("PCI: " PCI_SBDF_FMT
-			       " [bridge] window mem %#" PRIx64 "-%#" PRIx64
-			       " (prefetchable)\n",
-			       PCI_SBDF_FMT_ARGS(pr, pd),
-			       pd->pd_bridge.ranges[PCI_RANGE_PMEM].start,
-			       pd->pd_bridge.ranges[PCI_RANGE_PMEM].end);
+		if (pd->pd_bridge.ranges[PCI_RANGE_PMEM]) {
+			SLIST_FOREACH(range,
+			    &pd->pd_bridge.ranges[PCI_RANGE_PMEM]->list,
+			    entry) {
+				DPRINT("PCI: " PCI_SBDF_FMT
+				    " [bridge] window mem"
+				    " %#" PRIx64 "-%#" PRIx64
+				    " (prefetchable)\n",
+				    PCI_SBDF_FMT_ARGS(pr, pd),
+				    range->start,
+				    range->end);
+			}
 		}
 
 		break;
@@ -413,64 +509,54 @@ pci_resource_scan_bridge(struct pci_resources *pr,
 	pci_chipset_tag_t pc = pr->pr_pc;
 	pcitag_t tag = pd->pd_tag;
 	pcireg_t res, reshigh;
+	uint64_t iostart, ioend;
+	uint64_t memstart, memend;
+	uint64_t pmemstart, pmemend;
 
 	pd->pd_ppb = true;
 
 	res = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
 	pd->pd_bridge.bridge_bus = res;
-	pd->pd_bridge.ranges[PCI_RANGE_BUS].start =
-	    PCI_BRIDGE_BUS_NUM_SECONDARY(res);
-	pd->pd_bridge.ranges[PCI_RANGE_BUS].end =
-	    PCI_BRIDGE_BUS_NUM_SUBORDINATE(res);
+	pci_resource_arena_add_range(pd->pd_bridge.ranges,
+	    PCI_RANGE_BUS,
+	    PCI_BRIDGE_BUS_NUM_SECONDARY(res),
+	    PCI_BRIDGE_BUS_NUM_SUBORDINATE(res));
 
 	res = pci_conf_read(pc, tag, PCI_BRIDGE_STATIO_REG);
-	pd->pd_bridge.ranges[PCI_RANGE_IO].start =
-	    PCI_BRIDGE_STATIO_IOBASE_ADDR(res);
-	pd->pd_bridge.ranges[PCI_RANGE_IO].end =
-	    PCI_BRIDGE_STATIO_IOLIMIT_ADDR(res);
+	iostart = PCI_BRIDGE_STATIO_IOBASE_ADDR(res);
+	ioend = PCI_BRIDGE_STATIO_IOLIMIT_ADDR(res);
 	if (PCI_BRIDGE_IO_32BITS(res)) {
 		reshigh = pci_conf_read(pc, tag, PCI_BRIDGE_IOHIGH_REG);
-		pd->pd_bridge.ranges[PCI_RANGE_IO].start |=
-		    __SHIFTOUT(reshigh, PCI_BRIDGE_IOHIGH_BASE) << 16;
-		pd->pd_bridge.ranges[PCI_RANGE_IO].end |=
-		    __SHIFTOUT(reshigh, PCI_BRIDGE_IOHIGH_LIMIT) << 16;
+		iostart |= __SHIFTOUT(reshigh, PCI_BRIDGE_IOHIGH_BASE) << 16;
+		ioend |= __SHIFTOUT(reshigh, PCI_BRIDGE_IOHIGH_LIMIT) << 16;
 	}
-	if (pd->pd_bridge.ranges[PCI_RANGE_IO].start >=
-	    pd->pd_bridge.ranges[PCI_RANGE_IO].end) {
-		pd->pd_bridge.ranges[PCI_RANGE_IO].start = 0;
-		pd->pd_bridge.ranges[PCI_RANGE_IO].end = 0;
+	if (iostart < ioend) {
+		pci_resource_arena_add_range(pd->pd_bridge.ranges,
+		    PCI_RANGE_IO, iostart, ioend);
 	}
 
 	res = pci_conf_read(pc, tag, PCI_BRIDGE_MEMORY_REG);
-	pd->pd_bridge.ranges[PCI_RANGE_MEM].start =
-	    PCI_BRIDGE_MEMORY_BASE_ADDR(res);
-	pd->pd_bridge.ranges[PCI_RANGE_MEM].end =
-	    PCI_BRIDGE_MEMORY_LIMIT_ADDR(res);
-	if (pd->pd_bridge.ranges[PCI_RANGE_MEM].start >=
-	    pd->pd_bridge.ranges[PCI_RANGE_MEM].end) {
-		pd->pd_bridge.ranges[PCI_RANGE_MEM].start = 0;
-		pd->pd_bridge.ranges[PCI_RANGE_MEM].end = 0;
+	memstart = PCI_BRIDGE_MEMORY_BASE_ADDR(res);
+	memend = PCI_BRIDGE_MEMORY_LIMIT_ADDR(res);
+	if (memstart < memend) {
+		pci_resource_arena_add_range(pd->pd_bridge.ranges,
+		    PCI_RANGE_MEM, memstart, memend);
 	}
 
 	res = pci_conf_read(pc, tag, PCI_BRIDGE_PREFETCHMEM_REG);
-	pd->pd_bridge.ranges[PCI_RANGE_PMEM].start =
-	    PCI_BRIDGE_PREFETCHMEM_BASE_ADDR(res);
-	pd->pd_bridge.ranges[PCI_RANGE_PMEM].end =
-	    PCI_BRIDGE_PREFETCHMEM_LIMIT_ADDR(res);
+	pmemstart = PCI_BRIDGE_PREFETCHMEM_BASE_ADDR(res);
+	pmemend = PCI_BRIDGE_PREFETCHMEM_LIMIT_ADDR(res);
 	if (PCI_BRIDGE_PREFETCHMEM_64BITS(res)) {
 		reshigh = pci_conf_read(pc, tag,
 		    PCI_BRIDGE_PREFETCHBASEUP32_REG);
-		pd->pd_bridge.ranges[PCI_RANGE_PMEM].start |=
-		    (uint64_t)reshigh << 32;
+		pmemstart |= (uint64_t)reshigh << 32;
 		reshigh = pci_conf_read(pc, tag,
 		    PCI_BRIDGE_PREFETCHLIMITUP32_REG);
-		pd->pd_bridge.ranges[PCI_RANGE_PMEM].end |=
-		    (uint64_t)reshigh << 32;
+		pmemend |= (uint64_t)reshigh << 32;
 	}
-	if (pd->pd_bridge.ranges[PCI_RANGE_PMEM].start >=
-	    pd->pd_bridge.ranges[PCI_RANGE_PMEM].end) {
-		pd->pd_bridge.ranges[PCI_RANGE_PMEM].start = 0;
-		pd->pd_bridge.ranges[PCI_RANGE_PMEM].end = 0;
+	if (pmemstart < pmemend) {
+		pci_resource_arena_add_range(pd->pd_bridge.ranges,
+		    PCI_RANGE_PMEM, pmemstart, pmemend);
 	}
 }
 
@@ -584,11 +670,12 @@ pci_resource_scan_bus(struct pci_resources *pr,
  *   resource manager about resources already configured by system firmware.
  */
 static int
-pci_resource_claim(vmem_t *arena, vmem_addr_t start, vmem_addr_t end)
+pci_resource_claim(struct pci_resource_arena *arena,
+    vmem_addr_t start, vmem_addr_t end)
 {
 	KASSERT(end >= start);
 
-	return vmem_xalloc(arena, end - start + 1, 0, 0, 0, start, end,
+	return vmem_xalloc(arena->vmem, end - start + 1, 0, 0, 0, start, end,
 	    VM_BESTFIT | VM_NOSLEEP, NULL);
 }
 
@@ -599,7 +686,8 @@ pci_resource_claim(vmem_t *arena, vmem_addr_t start, vmem_addr_t end)
  *   devices that were not already configured by system firmware.
  */
 static int
-pci_resource_alloc(vmem_t *arena, vmem_size_t size, vmem_size_t align,
+pci_resource_alloc(struct pci_resource_arena *arena, vmem_size_t size,
+    vmem_size_t align,
     uint64_t *base)
 {
 	vmem_addr_t addr;
@@ -607,7 +695,7 @@ pci_resource_alloc(vmem_t *arena, vmem_size_t size, vmem_size_t align,
 
 	KASSERT(size != 0);
 
-	error = vmem_xalloc(arena, size, align, 0, 0, VMEM_ADDR_MIN,
+	error = vmem_xalloc(arena->vmem, size, align, 0, 0, VMEM_ADDR_MIN,
 	    VMEM_ADDR_MAX, VM_BESTFIT | VM_NOSLEEP, &addr);
 	if (error == 0) {
 		*base = (uint64_t)addr;
@@ -629,9 +717,9 @@ pci_resource_init_device(struct pci_resources *pr,
 {
 	struct pci_iores *pi;
 	struct pci_bus *pb = pd->pd_bus;
-	vmem_t *res_io = pb->pb_res[PCI_RANGE_IO];
-	vmem_t *res_mem = pb->pb_res[PCI_RANGE_MEM];
-	vmem_t *res_pmem = pb->pb_res[PCI_RANGE_PMEM];
+	struct pci_resource_arena *res_io = pb->pb_res[PCI_RANGE_IO];
+	struct pci_resource_arena *res_mem = pb->pb_res[PCI_RANGE_MEM];
+	struct pci_resource_arena *res_pmem = pb->pb_res[PCI_RANGE_PMEM];
 	pcireg_t cmd;
 	u_int enabled, required;
 	u_int iores;
@@ -778,8 +866,8 @@ pci_resource_init_bus(struct pci_resources *pr, uint8_t busno)
 	if (bridge == NULL) {
 		/* Use resources provided by firmware. */
 		PCI_RANGE_FOREACH(prtype) {
-			pb->pb_res[prtype] = pr->pr_res[prtype];
-			pr->pr_res[prtype] = NULL;
+			pb->pb_res[prtype] = pr->pr_ranges[prtype];
+			pr->pr_ranges[prtype] = NULL;
 		}
 	} else {
 		/*
@@ -790,28 +878,33 @@ pci_resource_init_bus(struct pci_resources *pr, uint8_t busno)
 		KASSERT(bridge->pd_bus != NULL);
 		parent_bus = bridge->pd_bus;
 		PCI_RANGE_FOREACH(prtype) {
+			struct pci_resource_range *range;
+
 			if (parent_bus->pb_res[prtype] == NULL ||
-			    !bridge->pd_bridge.ranges[prtype].end) {
+			    bridge->pd_bridge.ranges[prtype] == NULL) {
 				continue;
 			}
-			error = pci_resource_claim(
-			    parent_bus->pb_res[prtype],
-			    bridge->pd_bridge.ranges[prtype].start,
-			    bridge->pd_bridge.ranges[prtype].end);
-			if (error == 0) {
-				pb->pb_res[prtype] = pci_create_vmem(
-				    pci_resource_typename(prtype),
-				    bridge->pd_bridge.ranges[prtype].start,
-				    bridge->pd_bridge.ranges[prtype].end);
+			SLIST_FOREACH(range,
+			    &bridge->pd_bridge.ranges[prtype]->list,
+			    entry) {
+				error = pci_resource_claim(
+				    parent_bus->pb_res[prtype],
+				    range->start, range->end);
+				if (error) {
+					DPRINT("PCI: " PCI_SBDF_FMT
+					    " bridge (bus %u)"
+					    " %-4s %#" PRIx64 "-%#" PRIx64
+					    " invalid\n",
+					    PCI_SBDF_FMT_ARGS(pr, bridge),
+					    busno,
+					    pci_resource_typename(prtype),
+					    range->start, range->end);
+					continue;
+				}
+				pci_resource_arena_add_range(
+				    pb->pb_res, prtype,
+				    range->start, range->end);
 				KASSERT(pb->pb_res[prtype] != NULL);
-			} else {
-				DPRINT("PCI: " PCI_SBDF_FMT " bridge (bus %u)"
-				       " %-4s %#" PRIx64 "-%#" PRIx64
-				       " invalid\n",
-				       PCI_SBDF_FMT_ARGS(pr, bridge), busno,
-				       pci_resource_typename(prtype),
-				       bridge->pd_bridge.ranges[prtype].start,
-				       bridge->pd_bridge.ranges[prtype].end);
 			}
 		}
 	}
@@ -843,8 +936,10 @@ static void
 pci_resource_probe(struct pci_resources *pr,
     const struct pci_resource_info *info)
 {
-	uint8_t startbus = (uint8_t)info->ranges[PCI_RANGE_BUS].start;
-	uint8_t endbus = (uint8_t)info->ranges[PCI_RANGE_BUS].end;
+	struct pci_resource_arena *busarena = info->ranges[PCI_RANGE_BUS];
+	struct pci_resource_range *busrange = SLIST_FIRST(&busarena->list);
+	uint8_t startbus = (uint8_t)busrange->start;
+	uint8_t endbus = (uint8_t)busrange->end;
 	u_int nbus;
 
 	KASSERT(startbus <= endbus);
@@ -857,15 +952,6 @@ pci_resource_probe(struct pci_resources *pr,
 	pr->pr_endbus = endbus;
 	pr->pr_bus = kmem_zalloc(nbus * sizeof(struct pci_bus *), KM_SLEEP);
 	memcpy(pr->pr_ranges, info->ranges, sizeof(pr->pr_ranges));
-	PCI_RANGE_FOREACH(prtype) {
-		if (prtype == PCI_RANGE_BUS || info->ranges[prtype].end) {
-			pr->pr_res[prtype] = pci_create_vmem(
-			    pci_resource_typename(prtype),
-			    info->ranges[prtype].start,
-			    info->ranges[prtype].end);
-			KASSERT(pr->pr_res[prtype] != NULL);
-		}
-	}
 
 	/* Scan devices */
 	pci_resource_scan_bus(pr, NULL, pr->pr_startbus);
@@ -886,7 +972,7 @@ static void
 pci_resource_alloc_device(struct pci_resources *pr, struct pci_device *pd)
 {
 	struct pci_iores *pi;
-	vmem_t *arena;
+	struct pci_resource_arena *arena;
 	pcireg_t cmd, ocmd, base;
 	uint64_t addr;
 	u_int enabled;
@@ -941,7 +1027,7 @@ pci_resource_alloc_device(struct pci_resources *pr, struct pci_device *pd)
 			return;
 		}
 		DPRINT("PCI: " PCI_SBDF_FMT " BAR%u assigned range"
-		       " 0x%#" PRIx64 "-0x%#" PRIx64 "\n",
+		       " %#" PRIx64 "-%#" PRIx64 "\n",
 		       PCI_SBDF_FMT_ARGS(pr, pd),
 		       pi->pi_bar, addr, addr + pi->pi_size - 1);
 
@@ -1017,6 +1103,11 @@ pci_resource_init(const struct pci_resource_info *info)
 {
 	struct pci_resources pr = {};
 
+	if (info->ranges[PCI_RANGE_BUS] == NULL) {
+		aprint_error("PCI: no buses\n");
+		return;
+	}
+	KASSERT(!SLIST_EMPTY(&info->ranges[PCI_RANGE_BUS]->list));
 	pci_resource_probe(&pr, info);
 	pci_resource_alloc_bus(&pr, pr.pr_startbus);
 }

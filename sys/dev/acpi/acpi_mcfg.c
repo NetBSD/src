@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.30 2024/11/10 10:45:37 mlelstv Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.31 2025/03/03 19:02:30 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.30 2024/11/10 10:45:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.31 2025/03/03 19:02:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -755,8 +755,7 @@ acpimcfg_configure_bus_cb(ACPI_RESOURCE *res, void *ctx)
 	}
 
 	if (size > 0) {
-		pciinfo->ranges[type].start = addr;
-		pciinfo->ranges[type].end = addr + size - 1;
+		pci_resource_add_range(pciinfo, type, addr, addr + size - 1);
 	}
 
 	return AE_OK;
@@ -824,8 +823,7 @@ acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
 
 	memset(&pciinfo, 0, sizeof(pciinfo));
 	pciinfo.pc = pc;
-	pciinfo.ranges[PCI_RANGE_BUS].start = bus;
-	pciinfo.ranges[PCI_RANGE_BUS].end = endbus;
+	pci_resource_add_range(&pciinfo, PCI_RANGE_BUS, bus, endbus);
 	rv = AcpiWalkResources(handle, "_CRS", acpimcfg_configure_bus_cb,
 	    &pciinfo);
 	if (ACPI_FAILURE(rv)) {

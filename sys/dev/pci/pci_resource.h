@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.h,v 1.1 2022/10/14 22:10:15 jmcneill Exp $ */
+/* $NetBSD: pci_resource.h,v 1.2 2025/03/03 19:02:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,10 @@
  * SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef	_DEV_PCI_PCI_RESOURCE_H_
+#define	_DEV_PCI_PCI_RESOURCE_H_
+
+#include <sys/types.h>
 
 enum pci_range_type {
 	PCI_RANGE_BUS,
@@ -36,15 +39,14 @@ enum pci_range_type {
 	NUM_PCI_RANGES
 };
 
-struct pci_resource_range {
-	uint64_t	start;
-	uint64_t	end;
-};
-
 struct pci_resource_info {
 	pci_chipset_tag_t		pc;
-	struct pci_resource_range	ranges[NUM_PCI_RANGES];
+	struct pci_resource_arena	*ranges[NUM_PCI_RANGES];
 };
 
+void		pci_resource_add_range(struct pci_resource_info *,
+		    enum pci_range_type, uint64_t, uint64_t);
 void		pci_resource_init(const struct pci_resource_info *);
 const char *	pci_resource_typename(enum pci_range_type);
+
+#endif	/* _DEV_PCI_PCI_RESOURCE_H_ */
