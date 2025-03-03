@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.91 2025/01/23 22:47:38 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.92 2025/03/03 22:22:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.91 2025/01/23 22:47:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.92 2025/03/03 22:22:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,8 +301,8 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_CX700_IDE,
 	  0,
-	  NULL,
-	  via_sata_chip_map_new,
+	  "VIA Technologies CX700(M2)/VX700/VX800 SATA/IDE RAID Controller",
+	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_CX700M2_IDE,
 	  0,
@@ -316,7 +316,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VT6410_RAID,
 	  0,
-	  NULL,
+	  "VIA Technologies VT6410 IDE controller",
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
@@ -477,8 +477,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_VIATECH_VT6410_RAID:
-			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "VIA Technologies VT6410 IDE controller\n");
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_CX700_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 			    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
