@@ -253,12 +253,13 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
+	const gen8_pte_t pte_encode = gen8_pte_encode(0, level, 0);
 #else
 	struct sgt_iter sgt_iter;
 	gen8_pte_t __iomem *gtt_entries;
-#endif
 	gen8_pte_t __iomem *gte;
 	gen8_pte_t __iomem *end;
+#endif
 	dma_addr_t addr;
 
 	/*
