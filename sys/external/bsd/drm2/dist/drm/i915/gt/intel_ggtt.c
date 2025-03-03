@@ -248,12 +248,12 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 				     enum i915_cache_level level,
 				     u32 flags)
 {
+	const gen8_pte_t pte_encode = gen8_ggtt_pte_encode(0, level, 0);
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 #ifdef __NetBSD__
 	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
-	const gen8_pte_t pte_encode = gen8_pte_encode(0, level, 0);
 #else
 	struct sgt_iter sgt_iter;
 	gen8_pte_t __iomem *gtt_entries;
@@ -290,10 +290,11 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	for_each_sgt_daddr(addr, iter, vma->pages)
 		gen8_set_pte(gte++, pte_encode | addr);
 	GEM_BUG_ON(gte > end);
-#endif
+
 	/* Fill the allocated but "unused" space beyond the end of the buffer */
 	while (gte < end)
 		gen8_set_pte(gte++, vm->scratch[0].encode);
+#endif
 
 	/*
 	 * We want to flush the TLBs only after we're certain all the PTE
