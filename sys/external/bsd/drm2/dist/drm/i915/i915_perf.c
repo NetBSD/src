@@ -3023,21 +3023,11 @@ static int i915_perf_read(struct file *file,
 			  struct uio *buf,
 			  kauth_cred_t count, /* XXX dummy */
 			  int ppos)	      /* XXX dummy */
-#else
-static ssize_t i915_perf_read(struct file *file,
-			      char __user *buf,
-			      size_t count,
-			      loff_t *ppos)
-#endif
 {
-#ifdef __NetBSD__
 	struct i915_perf_stream *stream = file->f_data;
-#else
-	struct i915_perf_stream *stream = file->private_data;
-#endif
 	struct i915_perf *perf = stream->perf;
-	size_t offset2 = 0;
 	int ret;
+	size_t offset_delta = 0;
 
 	/* To ensure it's handled consistently we simply treat all reads of a
 	 * disabled stream as an error. In particular it might otherwise lead
@@ -3046,12 +3036,8 @@ static ssize_t i915_perf_read(struct file *file,
 	if (!stream->enabled)
 		return -EIO;
 
-#ifdef __NetBSD__
 	buf->uio_offset = *offset;
 	if (!(file->f_flag & FNONBLOCK))
-#else
-	if (!(file->f_flags & O_NONBLOCK))
-#endif
 	{
 		/* There's the small chance of false positives from
 		 * stream->ops->wait_unlocked.
@@ -3066,12 +3052,16 @@ static ssize_t i915_perf_read(struct file *file,
 				return ret;
 
 			mutex_lock(&perf->lock);
-			ret = stream->ops->read(stream, buf, count, &offset2);
+			offset_delta=buf->uio_offset;
+			ret = stream->ops->read(stream, buf, count, 0);
+			offset_delta=buf->uio_offset-offset_delta;
 			mutex_unlock(&perf->lock);
-		} while (!offset2 && !ret);
+		} while (!(*offset) && !ret);
 	} else {
 		mutex_lock(&perf->lock);
-		ret = stream->ops->read(stream, buf, count, &offset2);
+		offset_delta=buf->uio_offset;
+		ret = stream->ops->read(stream, buf, count, 0);
+		offset_delta=buf->uio_offset-offset_delta;
 		mutex_unlock(&perf->lock);
 	}
 
@@ -3090,8 +3080,69 @@ static ssize_t i915_perf_read(struct file *file,
 		stream->pollin = false;
 
 	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
-	return offset2 ?: (ret ?: -EAGAIN);
+	return (offset_delta) ?: (ret ?: -EAGAIN);
 }
+
+#else
+static ssize_t i915_perf_read(struct file *file,
+			      char __user *buf,
+			      size_t count,
+			      loff_t *ppos)
+{
+	struct i915_perf_stream *stream = file->private_data;
+	struct i915_perf *perf = stream->perf;
+	size_t offset = 0;
+	int ret;
+
+	/* To ensure it's handled consistently we simply treat all reads of a
+	 * disabled stream as an error. In particular it might otherwise lead
+	 * to a deadlock for blocking file descriptors...
+	 */
+	if (!stream->enabled)
+		return -EIO;
+
+	if (!(file->f_flags & O_NONBLOCK))
+	{
+		/* There's the small chance of false positives from
+		 * stream->ops->wait_unlocked.
+		 *
+		 * E.g. with single context filtering since we only wait until
+		 * oabuffer has >= 1 report we don't immediately know whether
+		 * any reports really belong to the current context
+		 */
+		do {
+			ret = stream->ops->wait_unlocked(stream);
+			if (ret)
+				return ret;
+
+			mutex_lock(&perf->lock);
+			ret = stream->ops->read(stream, buf, count, &offset);
+			mutex_unlock(&perf->lock);
+		} while (!offset2 && !ret);
+	} else {
+		mutex_lock(&perf->lock);
+		ret = stream->ops->read(stream, buf, count, &offset);
+		mutex_unlock(&perf->lock);
+	}
+
+	/* We allow the poll checking to sometimes report false positive EPOLLIN
+	 * events where we might actually report EAGAIN on read() if there's
+	 * not really any data available. In this situation though we don't
+	 * want to enter a busy loop between poll() reporting a EPOLLIN event
+	 * and read() returning -EAGAIN. Clearing the oa.pollin state here
+	 * effectively ensures we back off until the next hrtimer callback
+	 * before reporting another EPOLLIN event.
+	 * The exception to this is if ops->read() returned -ENOSPC which means
+	 * that more OA data is available than could fit in the user provided
+	 * buffer. In this case we want the next poll() call to not block.
+	 */
+	if (ret != -ENOSPC)
+		stream->pollin = false;
+
+	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
+	return offset ?: (ret ?: -EAGAIN);
+}
+#endif 
 
 static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
 {
