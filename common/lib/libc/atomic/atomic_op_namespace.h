@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.7 2014/10/13 07:31:12 martin Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.8 2025/03/04 00:40:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@
 #define	atomic_inc_ptr_nv	_atomic_inc_ptr_nv
 #define	atomic_inc_64_nv	_atomic_inc_64_nv
 
+#define	membar_acquire		_membar_acquire
+#define	membar_release		_membar_release
 #define	membar_enter		_membar_enter
 #define	membar_exit		_membar_exit
 #define	membar_producer		_membar_producer
