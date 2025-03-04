@@ -254,7 +254,7 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
-	unsigned pgextra;
+	unsigned pgend;
 #else
 	struct sgt_iter sgt_iter;
 	gen8_pte_t __iomem *gtt_entries;
@@ -278,16 +278,16 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 		KASSERT((len % I915_GTT_PAGE_SIZE) == 0);
 		for (;
 		     len >= I915_GTT_PAGE_SIZE;
-		     addr += I915_GTT_PAGE_SIZE, len -= I915_GTT_PAGE_SIZE)
+		     addr += I915_GTT_PAGE_SIZE, len -= I915_GTT_PAGE_SIZE) {
 			gen8_set_pte(ggtt->gsmt, ggtt->gsmh, pgno++,
 			    pte_encode | addr);
 		}
 		KASSERT(len == 0);
 		/* Fill the allocated but "unused" space beyond the end of the buffer */
 		KASSERT(pgno <= pgend);
-		for (;pgno<pgend;pgno++)
+		for (;pgno<pgend;)
 		{
-			gen8_set_pte(ggtt->gsmt + pgno, vm->scratch[0].encode);
+			gen8_set_pte(ggtt->gsmt, ggtt->gsmh, pgno++, vm->scratch[0].encode);
 		}
 	}
 #else
