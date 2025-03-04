@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_once.c,v 1.4 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_once.c,v 1.5 2025/03/04 00:41:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_once.c,v 1.4 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_once.c,v 1.5 2025/03/04 00:41:00 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -64,9 +64,12 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 		pthread_cleanup_push(&once_cleanup, &once_control->pto_mutex);
 		if (once_control->pto_done == 0) {
 			routine();
+			membar_release();
 			once_control->pto_done = 1;
 		}
 		pthread_cleanup_pop(1);
+	} else {
+		membar_acquire();
 	}
 
 	return 0;
