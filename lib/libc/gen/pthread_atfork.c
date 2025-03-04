@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.25 2025/03/04 00:33:01 riastradh Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.26 2025/03/04 16:40:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.25 2025/03/04 00:33:01 riastradh Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.26 2025/03/04 16:40:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -61,11 +61,15 @@ struct atfork_callback {
 
 
 /*
- * Keep a cache for of 3, one for prepare, one for parent, one for child.
- * This is so that we don't have to allocate memory for the call from the
- * pthread_tsd_init() constructor, where it is too early to call malloc(3).
+ * We need to keep a cache for of at least 6, one for prepare, one for parent,
+ * one for child x 2 bexause of the two uses in the libpthread (pthread_init,
+ * pthread_tsd_init) constructors, where it is too early to call malloc(3).
+ * This does not guarantee that we will have enough, because other libraries
+ * can also call pthread_atfork() from their own constructors, so this is not
+ * a complete solution and will need to be fixed properly. For now a keep
+ * space for 16 since it is just 256 bytes.
  */
-static struct atfork_callback atfork_builtin[3];
+static struct atfork_callback atfork_builtin[16];
 
 /*
  * Hypothetically, we could protect the queues with a rwlock which is
