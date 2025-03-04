@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.118 2017/05/22 16:53:05 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.118.40.1 2025/03/04 12:25:51 martin Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.118 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.118.40.1 2025/03/04 12:25:51 martin Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -124,6 +124,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
 	cf->ca_maskpsw = 0x20000000;	/* CALLS stack frame, no registers */
+	cf->ca_ap = 0;
+	cf->ca_fp = 0;
 	cf->ca_pc = (uintptr_t)&sret;	/* return PC; userspace trampoline */
 	cf->ca_argno = 1;
 	cf->ca_arg1 = 0;		/* unused */
