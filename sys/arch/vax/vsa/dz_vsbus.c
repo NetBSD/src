@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.47 2022/12/12 18:22:32 jakllsch Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.47.2.1 2025/03/04 12:21:41 martin Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.47 2022/12/12 18:22:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.47.2.1 2025/03/04 12:21:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 	 * due to the nature of how bus_space_* works on VAX, this will
 	 * be perfectly good until everything is converted.
 	 */
-	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
+	if (major(cn_tab->cn_dev) != cdevsw_lookup_major(&dz_cdevsw)) {
 		dz_regs = vax_map_physmem(va->va_paddr, 1);
 		consline = -1;
 	} else
@@ -180,6 +180,8 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 	aprint_normal_dev(self, "4 lines");
+	if (consline != -1)
+		aprint_normal(", console on line %d", consline);
 
 	dzattach(sc, NULL, consline);
 	DELAY(10000);
