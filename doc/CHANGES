@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3140 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3141 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -693,3 +693,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	acpi(4): Updated ACPICA to 20241212. [christos 20250224]
 	dhcpcd: Import version 10.2.2. [roy 20250225]
 	postfix(1): Import version 3.10.1. [christos 20250225]
+	cut(1): Implement -n option [gutteridge 20250304]
