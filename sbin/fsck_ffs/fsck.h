@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.58 2023/07/04 20:40:53 riastradh Exp $	*/
+/*	$NetBSD: fsck.h,v 1.59 2025/03/04 07:42:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -194,7 +194,7 @@ struct inodesc {
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	const char *id_name;	/* for DATA nodes, name to find or enter */
 	char id_type;		/* type of descriptor, DATA or ADDR */
-	uid_t id_uid;		/* ownerchip of inode described */
+	uid_t id_uid;		/* ownership of inode described */
 	gid_t id_gid;
 };
 /* file types */
