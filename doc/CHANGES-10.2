@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.11 2025/02/27 10:21:27 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.12 2025/03/04 12:29:01 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -297,4 +297,31 @@ share/mk/bsd.x11.mk					(apply patch)
 	CVE-2025-26600, ZDI-CAN-25871                          
 	CVE-2025-26601, ZDI-CAN-25870                            
 	[mrg, ticket #1067]
+
+external/bsd/ipf/dist/man/ippool.5		1.4
+
+	ippool(5): PR 59106: fix address pool example syntax.
+	[gutteridge, ticket #1068]
+
+sys/arch/vax/vsa/lcg.c				1.13
+
+	vax: PR 59109: avoid trying to attach a lcg(4) framebuffer
+	on machines that do not have one.
+	[hans, ticket #1069]
+
+sys/arch/vax/vsa/dz_vsbus.c			1.48
+
+	vax: fix dz(4) console detection when it's not on line 0.
+	[hans, ticket #1070]
+
+sys/arch/vax/vax/vm_machdep.c			1.119
+
+	vax: fix recursive panic when ddb(4) tries to trace the stack
+	back across cpu_lwp_bootstrap().
+	[hans, ticket #1071]
+
+sys/arch/vax/vax/db_disasm.c			1.25
+
+	vax: fix ddb(4) disassembly of functions.
+	[hans, ticket #1072]
 
