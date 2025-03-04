@@ -282,12 +282,13 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 			gen8_set_pte(ggtt->gsmt, ggtt->gsmh, pgno++,
 			    pte_encode | addr);
 		}
+		KASSERT(len == 0);
 		/* Fill the allocated but "unused" space beyond the end of the buffer */
-		for (;pgno<pgend;pgno++,len--)
+		KASSERT(pgno <= pgend);
+		for (;pgno<pgend;pgno++)
 		{
 			gen8_set_pte(ggtt->gsmt + pgno, vm->scratch[0].encode);
 		}
-		KASSERT(len == 0);
 	}
 #else
 	gte = (gen8_pte_t __iomem *)ggtt->gsm;
