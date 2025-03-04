@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.33 2025/03/04 16:18:27 hans Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.34 2025/03/04 17:00:28 hans Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.33 2025/03/04 16:18:27 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.34 2025/03/04 17:00:28 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,10 +175,23 @@ dzkbd_attach(device_t parent, device_t self, void *aux)
 	DELAY(100000);
 	lk201_init(&dzi->dzi_ks);
 
-	/* XXX should identify keyboard ID here XXX */
-	/* XXX layout and the number of LED is varying XXX */
+	/*
+	 * Set the keyboard type according to what lk201_init()
+	 * detected.
+	 *
+	 * XXX: should also do something about the layout, which
+	 * presently hardcodes LK401 layout.
+	 */
+	switch (dzi->dzi_ks.kbdtype) {
+	default:
+	case KBD_LK201:
+		dzkbd->kbd_type = WSKBD_TYPE_LK201;
+		break;
 
-	dzkbd->kbd_type = WSKBD_TYPE_LK201;
+	case KBD_LK401:
+		dzkbd->kbd_type = WSKBD_TYPE_LK401;
+		break;
+	}
 
 	dzkbd->sc_enabled = 1;
 
