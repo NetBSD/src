@@ -1,4 +1,4 @@
-.\"	$NetBSD: cut.1,v 1.18 2012/06/20 17:53:19 wiz Exp $
+.\"	$NetBSD: cut.1,v 1.19 2025/03/04 03:54:19 gutteridge Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 12, 2012
+.Dd March 4, 2025
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -110,11 +110,29 @@ specifies fields, separated by the field delimiter character.
 The selected fields are output,
 separated by the field delimiter character.
 .It Fl n
-Do not split multi-byte characters.
+Do not split multi-byte characters when the
+.Fl b
+option is used.
+Characters will only be output if at least one byte is selected, and,
+after a prefix of zero or more unselected bytes, the rest of the bytes
+that form the character are selected.
 .It Fl s
 Suppress lines with no field delimiter characters.
 Unless specified, lines with no delimiters are passed through unmodified.
 .El
+.Sh ENVIRONMENT
+The
+.Ev LANG ,
+.Ev LC_ALL ,
+and
+.Ev LC_CTYPE
+environment variables affect the execution of
+.Nm
+if the
+.Fl n
+option is specified.
+Their effect is described in
+.Xr environ 7 .
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
