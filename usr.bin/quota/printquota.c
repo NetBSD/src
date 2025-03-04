@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.6 2011/03/24 17:05:46 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.7 2025/03/04 07:36:02 andvar Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.6 2011/03/24 17:05:46 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.7 2025/03/04 07:36:02 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ intprt(char *buf, size_t len, uint64_t val, int flags, int hflag)
 		return buf;
 	}
 	if (flags & HN_B) {
-		/* traditionnal display: blocks are in kilobytes */
+		/* traditional display: blocks are in kilobytes */
 		val = val / 1024;
 	}
 	(void)snprintf(buf, len, "%" PRId64, val);
