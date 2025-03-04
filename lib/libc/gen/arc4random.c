@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.42 2025/03/02 22:54:11 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.43 2025/03/04 00:33:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,16 +42,17 @@
  *
  * The arc4random(3) API may abort the process if:
  *
- * (a) the crypto self-test fails, or
- * (b) sysctl(KERN_ARND) fails when reseeding the PRNG.
+ * (a) the crypto self-test fails,
+ * (b) pthread_atfork fails, or
+ * (c) sysctl(KERN_ARND) fails when reseeding the PRNG.
  *
- * The crypto self-test occurs only once, on the first use of any of
- * the arc4random(3) API.  KERN_ARND is unlikely to fail later unless
- * the kernel is seriously broken.
+ * The crypto self-test and pthread_atfork occur only once, on the
+ * first use of any of the arc4random(3) API.  KERN_ARND is unlikely to
+ * fail later unless the kernel is seriously broken.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.42 2025/03/02 22:54:11 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.43 2025/03/04 00:33:01 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -72,7 +73,6 @@ __RCSID("$NetBSD: arc4random.c,v 1.42 2025/03/02 22:54:11 riastradh Exp $");
 #include <unistd.h>
 
 #include "arc4random.h"
-#include "atfork.h"
 #include "reentrant.h"
 
 #ifdef __weak_alias
@@ -521,7 +521,6 @@ struct arc4random_global_state arc4random_global = {
 	.initialized	= false,
 };
 
-static struct atfork_callback arc4random_atfork_prepare_cb;
 static void
 arc4random_atfork_prepare(void)
 {
@@ -531,7 +530,6 @@ arc4random_atfork_prepare(void)
 	    sizeof arc4random_global.prng);
 }
 
-static struct atfork_callback arc4random_atfork_parent_cb;
 static void
 arc4random_atfork_parent(void)
 {
@@ -539,7 +537,6 @@ arc4random_atfork_parent(void)
 	mutex_unlock(&arc4random_global.lock);
 }
 
-static struct atfork_callback arc4random_atfork_child_cb;
 static void
 arc4random_atfork_child(void)
 {
@@ -565,10 +562,10 @@ arc4random_initialize(void)
 	if (!arc4random_global.initialized) {
 		if (crypto_core_selftest() != 0)
 			abort();
-		__libc_atfork(
-		    &arc4random_atfork_prepare_cb, &arc4random_atfork_prepare,
-		    &arc4random_atfork_parent_cb, &arc4random_atfork_parent,
-		    &arc4random_atfork_child_cb, &arc4random_atfork_child);
+		if (pthread_atfork(&arc4random_atfork_prepare,
+			&arc4random_atfork_parent, &arc4random_atfork_child)
+		    != 0)
+			abort();
 #ifdef _REENTRANT
 		if (thr_keycreate(&arc4random_global.thread_key,
 			&arc4random_tsd_destructor) == 0)
