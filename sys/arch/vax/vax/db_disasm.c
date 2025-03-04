@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24 2021/07/24 21:31:36 andvar Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.24.10.1 2025/03/04 12:27:35 martin Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2021/07/24 21:31:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.10.1 2025/03/04 12:27:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -157,9 +157,9 @@ db_disasm(db_addr_t loc, bool altfmt)
 		db_symbol_values(sym, &symname, 0);
 
 		if (symname && !diff) { /* symbol at loc */
-			db_printf("function \"%s()\", entry-mask 0x%x\n\t\t",
+			db_printf("function \"%s()\", entry-mask 0x%x\n",
 				  symname, (unsigned short) get_word(&ib));
-			ib.ppc += 2;
+			return ((u_int) ib.ppc);
 		}
 	}
 	get_opcode(&ib);
