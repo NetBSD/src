@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.49 2025/03/02 13:43:39 hans Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.50 2025/03/04 14:31:07 hans Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.49 2025/03/02 13:43:39 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.50 2025/03/04 14:31:07 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,9 @@ static	struct dz_linestate dz_conslinestate = { NULL, -1, NULL, NULL, NULL };
 
 static  int     dz_vsbus_match(device_t, cfdata_t, void *);
 static  void    dz_vsbus_attach(device_t, device_t, void *);
+#if NDZKBD > 0 || NDZMS > 0
+static	void	dz_vsbus_attach_deferred(device_t);
+#endif
 
 static	vaddr_t dz_regs; /* Used for console */
 
@@ -128,12 +131,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct dz_softc * const sc = device_private(self);
 	struct vsbus_attach_args * const va = aux;
-#if NDZKBD > 0
 	extern const struct cdevsw dz_cdevsw;
-#endif
-#if NDZKBD > 0 || NDZMS > 0
-	struct dzkm_attach_args daa;
-#endif
 	int s, consline;
 
 	sc->sc_dev = self;
@@ -178,11 +176,28 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 	if (consline != -1)
 		cn_set_magic("\033D"); /* set VAX DDB escape sequence */
 
+	s = spltty();
+	dzrint(sc);
+	dzxint(sc);
+	splx(s);
+
+#if NDZKBD > 0 || NDZMS > 0
+	config_defer(self, dz_vsbus_attach_deferred);
+#endif
+}
+
+#if NDZKBD > 0 || NDZMS > 0
+static void
+dz_vsbus_attach_deferred(device_t self)
+{
+	struct dzkm_attach_args daa;
 #if NDZKBD > 0
+	extern const struct cdevsw dz_cdevsw;
+
 	/* Don't touch this port if this is the console */
 	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
-		    | DZ_LPR_8_BIT_CHAR;
+		    | DZ_LPR_8_BIT_CHAR | 0 /* line */;
 		daa.daa_line = 0;
 		daa.daa_flags =
 		    (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
@@ -196,11 +211,8 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 	daa.daa_flags = 0;
 	config_found(self, &daa, dz_print, CFARGS_NONE);
 #endif
-	s = spltty();
-	dzrint(sc);
-	dzxint(sc);
-	splx(s);
 }
+#endif
 
 int
 dzcngetc(dev_t dev)
