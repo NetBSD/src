@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.520 2025/03/05 22:48:59 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.521 2025/03/05 22:51:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.520 2025/03/05 22:48:59 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.521 2025/03/05 22:51:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1755,8 +1755,6 @@ abstract_declaration:		/* specific to lint */
 abstract_decl_param_list:	/* specific to lint */
 	abstract_decl_lparen T_RPAREN type_attribute_list_opt {
 		$$ = (parameter_list){ .used = $3.used };
-		if (allow_c99)
-
 	}
 |	abstract_decl_lparen vararg_parameter_type_list T_RPAREN
 	    type_attribute_list_opt {
