@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.342 2025/03/02 14:13:22 riastradh Exp $	*/
+/*	$NetBSD: sd.c,v 1.343 2025/03/05 00:41:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.342 2025/03/02 14:13:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.343 2025/03/05 00:41:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -341,6 +341,14 @@ sdattach(device_t parent, device_t self, void *aux)
 		    " x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    (unsigned long long)dp->disksize);
+		if (dp->lbppbe) {
+			aprint_normal(" (%lu bytes/physsect", dp->blksize <<
+			    dp->lbppbe);
+			if (dp->lalba)
+				aprint_normal("; first aligned sector %u",
+				    dp->lalba);
+			aprint_normal(")");
+		}
 		break;
 
 	case SDGP_RESULT_OFFLINE:
