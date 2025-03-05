@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2023/08/03 08:06:11 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2025/03/05 22:21:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2023/08/03 08:06:11 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2025/03/05 22:21:11 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2773,7 +2773,7 @@ udf_copy_VDS_area(void *destbuf, void *srcbuf)
 }
 
 
-/* XXX why two buffers and not just read descritor by descriptor XXX */
+/* XXX why two buffers and not just read descriptor by descriptor XXX */
 static int
 udf_check_VDS_areas(void) {
 	union dscrptr *vds1_buf, *vds2_buf;
