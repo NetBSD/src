@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.24 2025/03/05 14:01:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.24 2025/03/05 14:01:20 riastradh Exp $");
 
 /*
  * Futexes
@@ -59,7 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp
  *				// then retry.
  *				if (atomic_cas_uint(&lock, v, v | 2) != v)
  *					continue;
- *				futex(FUTEX_WAIT, &lock, v | 2, NULL, NULL, 0);
+ *				futex(&lock, FUTEX_WAIT, v | 2, NULL, NULL, 0,
+ *				    0);
  *				continue;
  *			}
  *		} while (atomic_cas_uint(&lock, v, v | 1) != v);
@@ -75,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp
  *			v = atomic_swap_uint(&lock, 0);
  *			// If there are still waiters, wake one.
  *			if (v & 2)
- *				futex(FUTEX_WAKE, &lock, 1, NULL, NULL, 0);
+ *				futex(&lock, FUTEX_WAKE, 1, NULL, NULL, 0, 0);
  *		}
  *
  *	The goal is to avoid the futex system call unless there is
@@ -92,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp
  *	waiters into buckets by hashing the lock addresses to reduce
  *	the incidence of spurious wakeups.  But this is not all.
  *
- *	The futex(FUTEX_CMP_REQUEUE, &lock, n, &lock2, m, val)
+ *	The futex(&lock, FUTEX_CMP_REQUEUE, n, timeout, &lock2, m, val)
  *	operation not only wakes n waiters on lock if lock == val, but
  *	also _transfers_ m additional waiters to lock2.  Unless wakeups
  *	on lock2 also trigger wakeups on lock, we cannot move waiters
