@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.24 2025/03/05 14:01:20 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.25 2025/03/05 14:01:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.24 2025/03/05 14:01:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.25 2025/03/05 14:01:34 riastradh Exp $");
 
 /*
  * Futexes
@@ -1196,12 +1196,17 @@ futex_queue_unlock2(struct futex *f, struct futex *f2)
 }
 
 /*
- * futex_func_wait(uaddr, val, val3, timeout, clkid, clkflags, retval)
+ * futex_func_wait(uaddr, cmpval@val, bitset@val3, timeout, clkid, clkflags,
+ *     retval)
  *
- *	Implement futex(FUTEX_WAIT).
+ *	Implement futex(FUTEX_WAIT) and futex(FUTEX_WAIT_BITSET): If
+ *	*uaddr == cmpval, wait until futex-woken on any of the bits in
+ *	bitset.  But if *uaddr != cmpval, fail with EAGAIN.
+ *
+ *	For FUTEX_WAIT, bitset has all bits set and val3 is ignored.
  */
 static int
-futex_func_wait(bool shared, int *uaddr, int val, int val3,
+futex_func_wait(bool shared, int *uaddr, int cmpval, int bitset,
     const struct timespec *timeout, clockid_t clkid, int clkflags,
     register_t *retval)
 {
@@ -1215,11 +1220,11 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	 * If there's nothing to wait for, and nobody will ever wake
 	 * us, then don't set anything up to wait -- just stop here.
 	 */
-	if (val3 == 0)
+	if (bitset == 0)
 		return EINVAL;
 
 	/* Optimistically test before anything else.  */
-	if (!futex_test(uaddr, val))
+	if (!futex_test(uaddr, cmpval))
 		return EAGAIN;
 
 	/* Determine a deadline on the specified clock.  */
@@ -1240,7 +1245,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	KASSERT(f);
 
 	/* Get ready to wait.  */
-	futex_wait_init(fw, val3);
+	futex_wait_init(fw, bitset);
 
 	/*
 	 * Under the queue lock, check the value again: if it has
@@ -1250,7 +1255,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	 * is immaterial.
 	 */
 	futex_queue_lock(f);
-	if (!futex_test(uaddr, val)) {
+	if (!futex_test(uaddr, cmpval)) {
 		futex_queue_unlock(f);
 		error = EAGAIN;
 		goto out;
@@ -1283,19 +1288,26 @@ out:	if (f != NULL)
 }
 
 /*
- * futex_func_wake(uaddr, val, val3, retval)
+ * futex_func_wake(uaddr, nwake@val, bitset@val3, retval)
  *
- *	Implement futex(FUTEX_WAKE) and futex(FUTEX_WAKE_BITSET).
+ *	Implement futex(FUTEX_WAKE) and futex(FUTEX_WAKE_BITSET): Wake
+ *	up to nwake waiters on uaddr waiting on any of the bits in
+ *	bitset.
+ *
+ *	Return the number of waiters woken.
+ *
+ *	For FUTEX_WAKE, bitset has all bits set and val3 is ignored.
  */
 static int
-futex_func_wake(bool shared, int *uaddr, int val, int val3, register_t *retval)
+futex_func_wake(bool shared, int *uaddr, int nwake, int bitset,
+    register_t *retval)
 {
 	struct futex *f;
 	unsigned int nwoken = 0;
 	int error = 0;
 
 	/* Reject negative number of wakeups.  */
-	if (val < 0) {
+	if (nwake < 0) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1314,8 +1326,7 @@ futex_func_wake(bool shared, int *uaddr, int val, int val3, register_t *retval)
 	 * number woken.
 	 */
 	futex_queue_lock(f);
-	nwoken = futex_wake(f, /*nwake*/val, NULL, /*nrequeue*/0,
-	    /*bitset*/val3);
+	nwoken = futex_wake(f, nwake, NULL, /*nrequeue*/0, bitset);
 	futex_queue_unlock(f);
 
 	/* Release the futex.  */
@@ -1330,20 +1341,29 @@ out:
 }
 
 /*
- * futex_func_requeue(op, uaddr, val, uaddr2, val2, val3, retval)
+ * futex_func_requeue(op, uaddr, nwake@val, uaddr2, nrequeue@val2,
+ *     cmpval@val3, retval)
  *
- *	Implement futex(FUTEX_REQUEUE) and futex(FUTEX_CMP_REQUEUE).
+ *	Implement futex(FUTEX_REQUEUE) and futex(FUTEX_CMP_REQUEUE): If
+ *	*uaddr == cmpval or if op == FUTEX_REQUEUE, wake up to nwake
+ *	waiters at uaddr and then requeue up to nrequeue waiters from
+ *	uaddr to uaddr2.
+ *
+ *	Return the number of waiters woken or requeued.
+ *
+ *	For FUTEX_CMP_REQUEUE, if *uaddr != cmpval, fail with EAGAIN
+ *	and no wakeups.
  */
 static int
-futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
-    int val2, int val3, register_t *retval)
+futex_func_requeue(bool shared, int op, int *uaddr, int nwake, int *uaddr2,
+    int nrequeue, int cmpval, register_t *retval)
 {
 	struct futex *f = NULL, *f2 = NULL;
 	unsigned nwoken_or_requeued = 0; /* default to zero on early return */
 	int error;
 
 	/* Reject negative number of wakeups or requeues. */
-	if (val < 0 || val2 < 0) {
+	if (nwake < 0 || nrequeue < 0) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1376,15 +1396,15 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 
 	/*
 	 * Under the futexes' queue locks, check the value; if
-	 * unchanged from val3, wake the waiters.
+	 * unchanged from cmpval, or if this is the unconditional
+	 * FUTEX_REQUEUE operation, wake the waiters.
 	 */
 	futex_queue_lock2(f, f2);
-	if (op == FUTEX_CMP_REQUEUE && !futex_test(uaddr, val3)) {
+	if (op == FUTEX_CMP_REQUEUE && !futex_test(uaddr, cmpval)) {
 		error = EAGAIN;
 	} else {
 		error = 0;
-		nwoken_or_requeued = futex_wake(f, /*nwake*/val,
-		    f2, /*nrequeue*/val2,
+		nwoken_or_requeued = futex_wake(f, nwake, f2, nrequeue,
 		    FUTEX_BITSET_MATCH_ANY);
 	}
 	futex_queue_unlock2(f, f2);
@@ -1418,19 +1438,19 @@ futex_opcmp_arg(int arg)
 }
 
 /*
- * futex_validate_op_cmp(val3)
+ * futex_validate_op_cmp(opcmp)
  *
  *	Validate an op/cmp argument for FUTEX_WAKE_OP.
  */
 static int
-futex_validate_op_cmp(int val3)
+futex_validate_op_cmp(int opcmp)
 {
-	int op = __SHIFTOUT(val3, FUTEX_OP_OP_MASK);
-	int cmp = __SHIFTOUT(val3, FUTEX_OP_CMP_MASK);
+	int op = __SHIFTOUT(opcmp, FUTEX_OP_OP_MASK);
+	int cmp = __SHIFTOUT(opcmp, FUTEX_OP_CMP_MASK);
 
 	if (op & FUTEX_OP_OPARG_SHIFT) {
 		int oparg =
-		    futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_OPARG_MASK));
+		    futex_opcmp_arg(__SHIFTOUT(opcmp, FUTEX_OP_OPARG_MASK));
 		if (oparg < 0)
 			return EINVAL;
 		if (oparg >= 32)
@@ -1465,15 +1485,15 @@ futex_validate_op_cmp(int val3)
 }
 
 /*
- * futex_compute_op(oldval, val3)
+ * futex_compute_op(oldval, opcmp)
  *
  *	Apply a FUTEX_WAKE_OP operation to oldval.
  */
 static int
-futex_compute_op(int oldval, int val3)
+futex_compute_op(int oldval, int opcmp)
 {
-	int op = __SHIFTOUT(val3, FUTEX_OP_OP_MASK);
-	int oparg = futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_OPARG_MASK));
+	int op = __SHIFTOUT(opcmp, FUTEX_OP_OP_MASK);
+	int oparg = futex_opcmp_arg(__SHIFTOUT(opcmp, FUTEX_OP_OPARG_MASK));
 
 	if (op & FUTEX_OP_OPARG_SHIFT) {
 		KASSERT(oparg >= 0);
@@ -1509,15 +1529,15 @@ futex_compute_op(int oldval, int val3)
 }
 
 /*
- * futex_compute_cmp(oldval, val3)
+ * futex_compute_cmp(oldval, opcmp)
  *
  *	Apply a FUTEX_WAKE_OP comparison to oldval.
  */
 static bool
-futex_compute_cmp(int oldval, int val3)
+futex_compute_cmp(int oldval, int opcmp)
 {
-	int cmp = __SHIFTOUT(val3, FUTEX_OP_CMP_MASK);
-	int cmparg = futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_CMPARG_MASK));
+	int cmp = __SHIFTOUT(opcmp, FUTEX_OP_CMP_MASK);
+	int cmparg = futex_opcmp_arg(__SHIFTOUT(opcmp, FUTEX_OP_CMPARG_MASK));
 
 	switch (cmp) {
 	case FUTEX_OP_CMP_EQ:
@@ -1544,13 +1564,23 @@ futex_compute_cmp(int oldval, int val3)
 }
 
 /*
- * futex_func_wake_op(uaddr, val, uaddr2, val2, val3, retval)
+ * futex_func_wake_op(uaddr, nwake@val, uaddr2, nwake2@val2, opcmp@val3,
+ *     retval)
  *
- *	Implement futex(FUTEX_WAKE_OP).
+ *	Implement futex(FUTEX_WAKE_OP):
+ *
+ *	1. Update *uaddr2 according to the r/m/w operation specified in
+ *	   opcmp.
+ *
+ *	2. If uaddr is nonnull, wake up to nwake waiters at uaddr.
+ *
+ *	3. If what was previously at *uaddr2 matches the comparison
+ *	   operation specified in opcmp, additionally wake up to nwake2
+ *	   waiters at uaddr2.
  */
 static int
-futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
-    int val3, register_t *retval)
+futex_func_wake_op(bool shared, int *uaddr, int nwake, int *uaddr2, int nwake2,
+    int opcmp, register_t *retval)
 {
 	struct futex *f = NULL, *f2 = NULL;
 	int oldval, newval, actual;
@@ -1558,13 +1588,13 @@ futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
 	int error;
 
 	/* Reject negative number of wakeups.  */
-	if (val < 0 || val2 < 0) {
+	if (nwake < 0 || nwake2 < 0) {
 		error = EINVAL;
 		goto out;
 	}
 
 	/* Reject invalid operations before we start doing things.  */
-	if ((error = futex_validate_op_cmp(val3)) != 0)
+	if ((error = futex_validate_op_cmp(opcmp)) != 0)
 		goto out;
 
 	/* Look up the first futex, if any.  */
@@ -1580,16 +1610,17 @@ futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
 	/*
 	 * Under the queue locks:
 	 *
-	 * 1. Read/modify/write: *uaddr2 op= oparg.
+	 * 1. Read/modify/write: *uaddr2 op= oparg, as in opcmp.
 	 * 2. Unconditionally wake uaddr.
-	 * 3. Conditionally wake uaddr2, if it previously matched val2.
+	 * 3. Conditionally wake uaddr2, if it previously matched the
+	 *    comparison in opcmp.
 	 */
 	futex_queue_lock2(f, f2);
 	do {
 		error = futex_load(uaddr2, &oldval);
 		if (error)
 			goto out_unlock;
-		newval = futex_compute_op(oldval, val3);
+		newval = futex_compute_op(oldval, opcmp);
 		error = ucas_int(uaddr2, oldval, newval, &actual);
 		if (error)
 			goto out_unlock;
@@ -1597,11 +1628,11 @@ futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
 	if (f == NULL) {
 		nwoken = 0;
 	} else {
-		nwoken = futex_wake(f, /*nwake*/val, NULL, /*nrequeue*/0,
+		nwoken = futex_wake(f, nwake, NULL, /*nrequeue*/0,
 		    FUTEX_BITSET_MATCH_ANY);
 	}
-	if (f2 && futex_compute_cmp(oldval, val3)) {
-		nwoken += futex_wake(f2, /*nwake*/val2, NULL, /*nrequeue*/0,
+	if (f2 && futex_compute_cmp(oldval, opcmp)) {
+		nwoken += futex_wake(f2, nwake2, NULL, /*nrequeue*/0,
 		    FUTEX_BITSET_MATCH_ANY);
 	}
 
@@ -1639,30 +1670,49 @@ do_futex(int *uaddr, int op, int val, const struct timespec *timeout,
 	op &= FUTEX_CMD_MASK;
 
 	switch (op) {
-	case FUTEX_WAIT:
-		return futex_func_wait(shared, uaddr, val,
-		    FUTEX_BITSET_MATCH_ANY, timeout, clkid, TIMER_RELTIME,
-		    retval);
+	case FUTEX_WAIT: {
+		const int cmpval = val;
+		const int bitset = FUTEX_BITSET_MATCH_ANY;
 
-	case FUTEX_WAKE:
-		val3 = FUTEX_BITSET_MATCH_ANY;
-		/* FALLTHROUGH */
-	case FUTEX_WAKE_BITSET:
-		return futex_func_wake(shared, uaddr, val, val3, retval);
+		return futex_func_wait(shared, uaddr, cmpval, bitset, timeout,
+		    clkid, TIMER_RELTIME, retval);
+	}
+	case FUTEX_WAKE: {
+		const int nwake = val;
+		const int bitset = FUTEX_BITSET_MATCH_ANY;
 
+		return futex_func_wake(shared, uaddr, nwake, bitset, retval);
+	}
+	case FUTEX_WAKE_BITSET: {
+		const int nwake = val;
+		const int bitset = val3;
+
+		return futex_func_wake(shared, uaddr, nwake, bitset, retval);
+	}
 	case FUTEX_REQUEUE:
-	case FUTEX_CMP_REQUEUE:
-		return futex_func_requeue(shared, op, uaddr, val, uaddr2,
-		    val2, val3, retval);
+	case FUTEX_CMP_REQUEUE: {
+		const int nwake = val;
+		const int nrequeue = val2;
+		const int cmpval = val3; /* ignored if op=FUTEX_REQUEUE */
 
-	case FUTEX_WAIT_BITSET:
-		return futex_func_wait(shared, uaddr, val, val3, timeout,
+		return futex_func_requeue(shared, op, uaddr, nwake, uaddr2,
+		    nrequeue, cmpval, retval);
+	}
+	case FUTEX_WAIT_BITSET: {
+		const int cmpval = val;
+		const int bitset = val3;
+
+		return futex_func_wait(shared, uaddr, cmpval, bitset, timeout,
 		    clkid, TIMER_ABSTIME, retval);
+	}
+	case FUTEX_WAKE_OP: {
+		const int nwake = val;
+		const int nwake2 = val2;
+		const int opcmp = val3;
 
-	case FUTEX_WAKE_OP:
-		return futex_func_wake_op(shared, uaddr, val, uaddr2, val2,
-		    val3, retval);
-
+		return futex_func_wake_op(shared, uaddr, nwake, uaddr2, nwake2,
+		    opcmp, retval);
+	}
 	case FUTEX_FD:
 	default:
 		return ENOSYS;
