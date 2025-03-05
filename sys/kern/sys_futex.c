@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.25 2025/03/05 14:01:34 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.26 2025/03/05 14:01:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.25 2025/03/05 14:01:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.26 2025/03/05 14:01:55 riastradh Exp $");
 
 /*
  * Futexes
@@ -966,9 +966,17 @@ futex_wait(struct futex_wait *fw, const struct timespec *deadline,
 			/* Count how much time is left.  */
 			timespecsub(deadline, &ts, &ts);
 
-			/* Wait for that much time, allowing signals.  */
+			/*
+			 * Wait for that much time, allowing signals.
+			 * Ignore EWOULDBLOCK, however: we will detect
+			 * timeout ourselves on the next iteration of
+			 * the loop -- and the timeout may have been
+			 * truncated by tstohz, anyway.
+			 */
 			error = cv_timedwait_sig(&fw->fw_cv, &fw->fw_lock,
-			    tstohz(&ts));
+			    MAX(1, tstohz(&ts)));
+			if (error == EWOULDBLOCK)
+				error = 0;
 		} else {
 			/* Wait indefinitely, allowing signals. */
 			error = cv_wait_sig(&fw->fw_cv, &fw->fw_lock);
@@ -978,14 +986,10 @@ futex_wait(struct futex_wait *fw, const struct timespec *deadline,
 	/*
 	 * If we were woken up, the waker will have removed fw from the
 	 * queue.  But if anything went wrong, we must remove fw from
-	 * the queue ourselves.  While here, convert EWOULDBLOCK to
-	 * ETIMEDOUT.
+	 * the queue ourselves.
 	 */
-	if (error) {
+	if (error)
 		futex_wait_abort(fw);
-		if (error == EWOULDBLOCK)
-			error = ETIMEDOUT;
-	}
 
 	mutex_exit(&fw->fw_lock);
 
