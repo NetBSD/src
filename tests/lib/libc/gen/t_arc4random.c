@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.2 2025/03/02 21:35:59 riastradh Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.3 2025/03/05 21:30:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,13 +29,17 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.2 2025/03/02 21:35:59 riastradh Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.3 2025/03/05 21:30:34 riastradh Exp $");
 
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
+#include <err.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -277,6 +281,106 @@ ATF_TC_BODY(consolidate, tc)
 	    "global epoch unchanged from %u", globalepoch);
 }
 
+ATF_TC(chroot);
+ATF_TC_HEAD(chroot, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random in an empty chroot");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(chroot, tc)
+{
+	pid_t pid;
+	int status;
+
+	/*
+	 * Create an empty chroot.
+	 */
+	RL(mkdir("root", 0500));
+
+	/*
+	 * In a child process, enter the chroot and verify that we
+	 * can't open /dev/urandom but we can use arc4random.
+	 *
+	 * (atf gets unhappy if we chroot in the same process, when it
+	 * later tries to create a results file.)
+	 */
+	RL(pid = fork());
+	if (pid == 0) {
+		unsigned char buf[32] = {0};
+
+		if (chroot("root") == -1)
+			err(1, "chroot");
+		if (open(_PATH_URANDOM, O_RDONLY) != -1)
+			errx(1, "open /dev/urandom must fail in empty chroot");
+		if (errno != ENOENT) {
+			err(1, "expected open to fail with %d=ENOENT, not %d",
+			    ENOENT, errno);
+		}
+		arc4random_buf(buf, sizeof(buf));
+		if (iszero(buf, sizeof(buf))) /* Pr[fail] = 1/2^256 */
+			errx(1, "arc4random returned all-zero");
+		if (arc4random_prng()->arc4_epoch == 0)
+			errx(1, "arc4random failed to observe entropy epoch");
+		_exit(0);
+	}
+
+	/*
+	 * Wait for the child process to finish.
+	 */
+	RL(waitpid(pid, &status, 0));
+	ATF_CHECK_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child exited status 0x%x", status);
+}
+
+ATF_TC(fdlimit);
+ATF_TC_HEAD(fdlimit, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random works even if we have hit the fd limit");
+}
+ATF_TC_BODY(fdlimit, tc)
+{
+	pid_t pid;
+	int status;
+
+	/*
+	 * In a child process, clamp down on the file descriptor
+	 * resource limit and verify that we can't open /dev/urandom
+	 * but we can use arc4random.
+	 *
+	 * (atf gets unhappy if we chroot in the same process, when it
+	 * later tries to create a results file.)
+	 */
+	RL(pid = fork());
+	if (pid == 0) {
+		struct rlimit rlim = {.rlim_cur = 0, .rlim_max = 0};
+		unsigned char buf[32] = {0};
+
+		if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
+			err(1, "setrlimit(RLIMIT_NOFILE)");
+		if (open(_PATH_URANDOM, O_RDONLY) != -1)
+			errx(1, "open must fail with zero RLIMIT_NOFILE");
+		if (errno != EMFILE) {
+			err(1, "expected open to fail with %d=EMFILE, not %d",
+			    EMFILE, errno);
+		}
+		arc4random_buf(buf, sizeof(buf));
+		if (iszero(buf, sizeof(buf))) /* Pr[fail] = 1/2^256 */
+			errx(1, "arc4random returned all-zero");
+		if (arc4random_prng()->arc4_epoch == 0)
+			errx(1, "arc4random failed to observe entropy epoch");
+		_exit(0);
+	}
+
+	/*
+	 * Wait for the child process to finish.
+	 */
+	RL(waitpid(pid, &status, 0));
+	ATF_CHECK_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child exited status 0x%x", status);
+}
+
 ATF_TC(fork);
 ATF_TC_HEAD(fork, tc)
 {
@@ -502,7 +606,9 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, addrandom);
+	ATF_TP_ADD_TC(tp, chroot);
 	ATF_TP_ADD_TC(tp, consolidate);
+	ATF_TP_ADD_TC(tp, fdlimit);
 	ATF_TP_ADD_TC(tp, fork);
 	ATF_TP_ADD_TC(tp, global_aslimit);
 	ATF_TP_ADD_TC(tp, global_threadkeylimit);
