@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.12 2025/03/05 00:02:58 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.13 2025/03/05 00:03:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.12 2025/03/05 00:02:58 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.13 2025/03/05 00:03:12 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -1042,6 +1042,25 @@ do_futex_wake_op_op_test(int flags)
 		0, NULL, &futex_word1, 0, op));
 	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
 	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+
+	/*
+	 * Verify oparg is sign-extended.
+	 */
+	atf_tc_expect_fail("PR kern/59129: futex(3):"
+	    " missing sign extension in FUTEX_WAKE_OP");
+	futex_word1 = 0;
+	op = FUTEX_OP(FUTEX_OP_SET, 0xfff, FUTEX_OP_CMP_EQ, 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, -1, "futex_word1=%d", futex_word1);
+
+	futex_word1 = 0;
+	op = (int)FUTEX_OP(FUTEX_OP_SET, -1, FUTEX_OP_CMP_EQ, 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, -1, "futex_word1=%d", futex_word1);
 }
 
 ATF_TC_WITH_CLEANUP(futex_wake_op_op);
@@ -1122,13 +1141,30 @@ do_futex_wake_op_cmp_test(int flags)
 	create_wake_op_test_lwps(flags);
 
 	/* #LWPs = 6 */
+	atf_tc_expect_fail("PR kern/59129: futex(3):"
+	    " missing sign extension in FUTEX_WAKE_OP");
+	futex_word1 = 0xfff;
+	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 0xfff);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+
+	futex_word1 = 0xfff;
+	op = (int)FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, -1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+
 	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 1);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
 	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
 	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 
-	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
+	futex_word1 = -1;
+	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0xfff);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
 	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
