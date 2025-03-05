@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.172 2025/03/05 20:24:03 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.172 2025/03/05 20:24:03 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1798,6 +1798,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		else
 			dsa->dsa_firstaligned = (dsa->dsa_firstaligned +
 			    dsa->dsa_alignment) - r;
+		dsa->dsa_firstaligned %= dsa->dsa_alignment;
 		break;
 	}
 	default:
