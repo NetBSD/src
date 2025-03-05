@@ -1,4 +1,4 @@
-/*	$NetBSD: futex.h,v 1.6 2025/03/04 12:43:40 riastradh Exp $	*/
+/*	$NetBSD: futex.h,v 1.7 2025/03/05 12:02:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
@@ -98,10 +98,10 @@
 #define FUTEX_OP_CMPARG_MASK		__BITS(0,11)
 
 #define FUTEX_OP(op, oparg, cmp, cmparg)		 \
-	(__SHIFTIN(op, FUTEX_OP_OP_MASK)		|\
-	 __SHIFTIN(oparg, FUTEX_OP_OPARG_MASK)		|\
-	 __SHIFTIN(cmp, FUTEX_OP_CMP_MASK)		|\
-	 __SHIFTIN(cmparg, FUTEX_OP_CMPARG_MASK))
+	(__SHIFTIN((op) & 0xf, FUTEX_OP_OP_MASK)	|\
+	 __SHIFTIN((oparg) & 0xfff, FUTEX_OP_OPARG_MASK)|\
+	 __SHIFTIN((cmp) & 0xf, FUTEX_OP_CMP_MASK)	|\
+	 __SHIFTIN((cmparg) & 0xfff, FUTEX_OP_CMPARG_MASK))
 
 #define FUTEX_OP_SET		0
 #define FUTEX_OP_ADD		1

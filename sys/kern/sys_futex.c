@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.22 2025/01/18 07:26:21 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.22 2025/01/18 07:26:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.23 2025/03/05 12:02:00 riastradh Exp $");
 
 /*
  * Futexes
@@ -1401,6 +1401,22 @@ out:
 }
 
 /*
+ * futex_opcmp_arg(arg)
+ *
+ *	arg is either the oparg or cmparg field of a FUTEX_WAKE_OP
+ *	operation, a 12-bit string in either case.  Map it to a numeric
+ *	argument value by sign-extending it in two's-complement
+ *	representation.
+ */
+static int
+futex_opcmp_arg(int arg)
+{
+
+	KASSERT(arg == (arg & __BITS(11,0)));
+	return arg - 0x1000*__SHIFTOUT(arg, __BIT(11));
+}
+
+/*
  * futex_validate_op_cmp(val3)
  *
  *	Validate an op/cmp argument for FUTEX_WAKE_OP.
@@ -1412,7 +1428,8 @@ futex_validate_op_cmp(int val3)
 	int cmp = __SHIFTOUT(val3, FUTEX_OP_CMP_MASK);
 
 	if (op & FUTEX_OP_OPARG_SHIFT) {
-		int oparg = __SHIFTOUT(val3, FUTEX_OP_OPARG_MASK);
+		int oparg =
+		    futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_OPARG_MASK));
 		if (oparg < 0)
 			return EINVAL;
 		if (oparg >= 32)
@@ -1449,13 +1466,13 @@ futex_validate_op_cmp(int val3)
 /*
  * futex_compute_op(oldval, val3)
  *
- *	Apply a FUTEX_WAIT_OP operation to oldval.
+ *	Apply a FUTEX_WAKE_OP operation to oldval.
  */
 static int
 futex_compute_op(int oldval, int val3)
 {
 	int op = __SHIFTOUT(val3, FUTEX_OP_OP_MASK);
-	int oparg = __SHIFTOUT(val3, FUTEX_OP_OPARG_MASK);
+	int oparg = futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_OPARG_MASK));
 
 	if (op & FUTEX_OP_OPARG_SHIFT) {
 		KASSERT(oparg >= 0);
@@ -1493,13 +1510,13 @@ futex_compute_op(int oldval, int val3)
 /*
  * futex_compute_cmp(oldval, val3)
  *
- *	Apply a FUTEX_WAIT_OP comparison to oldval.
+ *	Apply a FUTEX_WAKE_OP comparison to oldval.
  */
 static bool
 futex_compute_cmp(int oldval, int val3)
 {
 	int cmp = __SHIFTOUT(val3, FUTEX_OP_CMP_MASK);
-	int cmparg = __SHIFTOUT(val3, FUTEX_OP_CMPARG_MASK);
+	int cmparg = futex_opcmp_arg(__SHIFTOUT(val3, FUTEX_OP_CMPARG_MASK));
 
 	switch (cmp) {
 	case FUTEX_OP_CMP_EQ:
