@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.10 2025/01/18 07:26:21 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.11 2025/03/05 00:02:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.10 2025/01/18 07:26:21 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.11 2025/03/05 00:02:47 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: t_futex_ops.c,v 1.10 2025/01/18 07:26:21 riastradh Exp $");
 #include <atf-c.h>
 
 #include <libc/include/futex_private.h>
+
+#include "h_macros.h"
 
 #define	LOAD(x)		(*(volatile int *)(x))
 #define	STORE(x, y)	*(volatile int *)(x) = (y)
@@ -104,7 +106,7 @@ static long bs_pagesize;
 static void
 create_lwp_waiter(struct lwp_data *d)
 {
-	ATF_REQUIRE(_lwp_create(&d->context, 0, &d->lwpid) == 0);
+	RL(_lwp_create(&d->context, 0, &d->lwpid));
 }
 
 static void
@@ -116,7 +118,7 @@ exit_lwp_waiter(void)
 static void
 reap_lwp_waiter(struct lwp_data *d)
 {
-	ATF_REQUIRE(_lwp_wait(d->lwpid, NULL) == 0);
+	RL(_lwp_wait(d->lwpid, NULL));
 }
 
 static void
@@ -124,7 +126,7 @@ create_proc_waiter(struct lwp_data *d)
 {
 	pid_t pid;
 
-	ATF_REQUIRE((pid = fork()) != -1);
+	RL(pid = fork());
 	if (pid == 0) {
 		(*d->func)(d);
 		_exit(666);		/* backstop */
@@ -141,11 +143,14 @@ exit_proc_waiter(void)
 static void
 reap_proc_waiter(struct lwp_data *d)
 {
+	pid_t pid;
 	int status;
 
-	ATF_REQUIRE(waitpid(d->child, &status, 0) == d->child);
-	ATF_REQUIRE(WIFEXITED(status));
-	ATF_REQUIRE(WEXITSTATUS(status) == 0);
+	RL(pid = waitpid(d->child, &status, 0));
+	ATF_REQUIRE_EQ_MSG(pid, d->child,
+	    "pid=%lld d->child=%lld", (long long)pid, (long long)d->child);
+	ATF_REQUIRE_MSG(WIFEXITED(status), "status=0x%x", status);
+	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), 0, "status=0x%x", status);
 }
 
 static void
@@ -153,10 +158,12 @@ setup_lwp_context(struct lwp_data *d, void (*func)(void *))
 {
 
 	memset(d, 0, sizeof(*d));
-	d->stack_base = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
-	    MAP_ANON | MAP_STACK | MAP_PRIVATE, -1, 0);
-	ATF_REQUIRE(d->stack_base != MAP_FAILED);
-	_lwp_makecontext(&d->context, func, d, NULL, d->stack_base, STACK_SIZE);
+	REQUIRE_LIBC(d->stack_base = mmap(NULL, STACK_SIZE,
+		PROT_READ | PROT_WRITE, MAP_ANON | MAP_STACK | MAP_PRIVATE,
+		-1, 0),
+	    MAP_FAILED);
+	_lwp_makecontext(&d->context, func, d, NULL, d->stack_base,
+	    STACK_SIZE);
 	d->threadid = 0;
 	d->func = func;
 }
@@ -173,7 +180,7 @@ simple_test_waiter_lwp(void *arg)
 	membar_sync();
 
 	if (__futex(d->futex_ptr, d->wait_op | d->op_flags,
-		    d->block_val, NULL, NULL, 0, d->bitset) == -1) {
+		d->block_val, NULL, NULL, 0, d->bitset) == -1) {
 		d->futex_error = errno;
 		membar_sync();
 		atomic_dec_uint(&nlwps_running);
@@ -191,14 +198,15 @@ simple_test_waiter_lwp(void *arg)
 static bool
 verify_zero_bs(void)
 {
+	ssize_t nread;
 
 	if (bs_verify_buffer == NULL) {
-		bs_verify_buffer = malloc(bs_pagesize);
-		ATF_REQUIRE(bs_verify_buffer != NULL);
+		REQUIRE_LIBC(bs_verify_buffer = malloc(bs_pagesize), NULL);
 	}
 
-	ATF_REQUIRE(pread(bs_fd, bs_verify_buffer,
-			  bs_pagesize, 0) == bs_pagesize);
+	RL(nread = pread(bs_fd, bs_verify_buffer, bs_pagesize, 0));
+	ATF_REQUIRE_EQ_MSG(nread, bs_pagesize, "nread=%zu bs_pagesize=%lu",
+	    nread, bs_pagesize);
 
 	return (memcmp(bs_verify_buffer, bs_source_buffer, bs_pagesize) == 0);
 }
@@ -206,25 +214,24 @@ verify_zero_bs(void)
 static void
 create_bs(int map_flags)
 {
+	ssize_t nwrit;
 
 	bs_pagesize = sysconf(_SC_PAGESIZE);
-	ATF_REQUIRE(bs_pagesize > 0);
+	ATF_REQUIRE_MSG(bs_pagesize > 0, "bs_pagesize=%ld", bs_pagesize);
 
 	if ((map_flags & (MAP_FILE | MAP_ANON)) == MAP_FILE) {
-		bs_source_buffer = calloc(1, bs_pagesize);
-		ATF_REQUIRE(bs_source_buffer != NULL);
+		REQUIRE_LIBC(bs_source_buffer = calloc(1, bs_pagesize), NULL);
 
-		bs_fd = open(bs_path, O_RDWR | O_CREAT | O_EXCL, 0644);
-		ATF_REQUIRE(bs_fd != -1);
-
-		ATF_REQUIRE(pwrite(bs_fd, bs_source_buffer,
-				   bs_pagesize, 0) == bs_pagesize);
+		RL(bs_fd = open(bs_path, O_RDWR | O_CREAT | O_EXCL, 0644));
+		RL(nwrit = pwrite(bs_fd, bs_source_buffer, bs_pagesize, 0));
+		ATF_REQUIRE_EQ_MSG(nwrit, bs_pagesize,
+		    "nwrit=%zu bs_pagesize=%lu", nwrit, bs_pagesize);
 		ATF_REQUIRE(verify_zero_bs());
 	}
 
-	bs_addr = mmap(NULL, bs_pagesize, PROT_READ | PROT_WRITE,
-		       map_flags | MAP_HASSEMAPHORE, bs_fd, 0);
-	ATF_REQUIRE(bs_addr != MAP_FAILED);
+	REQUIRE_LIBC(bs_addr = mmap(NULL, bs_pagesize, PROT_READ | PROT_WRITE,
+		map_flags | MAP_HASSEMAPHORE, bs_fd, 0),
+	    MAP_FAILED);
 }
 
 static void
@@ -283,7 +290,7 @@ wait_wake_test_waiter_lwp(void *arg)
 
 	/* This will block because *futex_ptr == 1. */
 	if (__futex(d->futex_ptr, FUTEX_WAIT | d->op_flags,
-		    1, NULL, NULL, 0, 0) == -1) {
+		1, NULL, NULL, 0, 0) == -1) {
 		STORE(d->error_ptr, errno);
 		(*d->exit_func)();
 	} else {
@@ -305,7 +312,7 @@ wait_wake_test_waiter_lwp(void *arg)
 
 	/* This will not block because futex_word != 666. */
 	if (__futex(d->futex_ptr, FUTEX_WAIT | d->op_flags,
-		    666, NULL, NULL, 0, 0) == -1) {
+		666, NULL, NULL, 0, 0) == -1) {
 		/* This SHOULD be EAGAIN. */
 		STORE(d->error_ptr, errno);
 	}
@@ -318,13 +325,14 @@ wait_wake_test_waiter_lwp(void *arg)
 
 static void
 do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
-			void (*create_func)(struct lwp_data *),
-			void (*exit_func)(void),
-			void (*reap_func)(struct lwp_data *),
-			int flags)
+    void (*create_func)(struct lwp_data *),
+    void (*exit_func)(void),
+    void (*reap_func)(struct lwp_data *),
+    int flags)
 {
 	struct lwp_data *wlwp = &lwp_data[WAITER_LWP0];
 	int tries;
+	int n;
 
 	if (error_ptr == NULL)
 		error_ptr = &wlwp->futex_error;
@@ -359,7 +367,7 @@ do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(LOAD(futex_ptr) == 1);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(futex_ptr)), 1, "LOAD(futex_ptr)=%d", n);
 
 	/*
 	 * If the LWP is blocked in the futex, it will not have yet
@@ -374,16 +382,16 @@ do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(LOAD(error_ptr) == -1);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(error_ptr)), -1, "error=%d", n);
 
 	/* Make sure invalid #wakes in rejected. */
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(futex_ptr, FUTEX_WAKE | flags,
-		    -1, NULL, NULL, 0, 0) == -1);
+		-1, NULL, NULL, 0, 0) == -1);
 
 	DPRINTF(("futex_basic_wait_wake: waking 1 waiter\n"));
-	ATF_REQUIRE(__futex(futex_ptr, FUTEX_WAKE | flags,
-			    1, NULL, NULL, 0, 0) == 1);
+	RL(n = __futex(futex_ptr, FUTEX_WAKE | flags, 1, NULL, NULL, 0, 0));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d wakeups", n);
 
 	DPRINTF(("futex_basic_wait_wake: checking for successful wake (%d)\n",
 	    LOAD(error_ptr)));
@@ -394,7 +402,7 @@ do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(LOAD(error_ptr) == 0);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(error_ptr)), 0, "error=%d", n);
 
 	STORE(futex_ptr, 0);
 	membar_sync();
@@ -407,7 +415,7 @@ do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(LOAD(futex_ptr) == 2);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(futex_ptr)), 2, "LOAD(futex_ptr)=%d", n);
 
 	STORE(futex_ptr, 3);
 	membar_sync();
@@ -420,10 +428,10 @@ do_futex_wait_wake_test(volatile int *futex_ptr, volatile int *error_ptr,
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(LOAD(futex_ptr) == 4);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(futex_ptr)), 4, "error=%d", n);
 
 	DPRINTF(("futex_basic_wait_wake: checking for expected EGAIN\n"));
-	ATF_REQUIRE(LOAD(error_ptr) == EAGAIN);
+	ATF_REQUIRE_EQ_MSG((n = LOAD(error_ptr)), EAGAIN, "error=%d", n);
 
 	DPRINTF(("futex_basic_wait_wake: reaping LWP %d\n", wlwp->lwpid));
 	(*reap_func)(wlwp);
@@ -438,8 +446,8 @@ ATF_TC_HEAD(futex_basic_wait_wake_private, tc)
 ATF_TC_BODY(futex_basic_wait_wake_private, tc)
 {
 	do_futex_wait_wake_test(&futex_word, NULL,
-				NULL, NULL, NULL,
-				FUTEX_PRIVATE_FLAG);
+	    NULL, NULL, NULL,
+	    FUTEX_PRIVATE_FLAG);
 }
 ATF_TC_CLEANUP(futex_basic_wait_wake_private, tc)
 {
@@ -455,8 +463,8 @@ ATF_TC_HEAD(futex_basic_wait_wake_shared, tc)
 ATF_TC_BODY(futex_basic_wait_wake_shared, tc)
 {
 	do_futex_wait_wake_test(&futex_word, NULL,
-				NULL, NULL, NULL,
-				0);
+	    NULL, NULL, NULL,
+	    0);
 }
 ATF_TC_CLEANUP(futex_basic_wait_wake_shared, tc)
 {
@@ -473,8 +481,8 @@ ATF_TC_BODY(futex_wait_wake_anon_bs_private, tc)
 {
 	create_bs(MAP_ANON | MAP_PRIVATE);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				FUTEX_PRIVATE_FLAG);
+	    NULL, NULL, NULL,
+	    FUTEX_PRIVATE_FLAG);
 }
 ATF_TC_CLEANUP(futex_wait_wake_anon_bs_private, tc)
 {
@@ -491,8 +499,8 @@ ATF_TC_BODY(futex_wait_wake_anon_bs_shared, tc)
 {
 	create_bs(MAP_ANON | MAP_PRIVATE);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				0);
+	    NULL, NULL, NULL,
+	    0);
 }
 ATF_TC_CLEANUP(futex_wait_wake_anon_bs_shared, tc)
 {
@@ -514,9 +522,9 @@ ATF_TC_BODY(futex_wait_wake_file_bs_private, tc)
 	 */
 	create_bs(MAP_FILE | MAP_SHARED);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				FUTEX_PRIVATE_FLAG);
-	ATF_REQUIRE(! verify_zero_bs());
+	    NULL, NULL, NULL,
+	    FUTEX_PRIVATE_FLAG);
+	ATF_REQUIRE(!verify_zero_bs());
 }
 ATF_TC_CLEANUP(futex_wait_wake_file_bs_private, tc)
 {
@@ -533,8 +541,8 @@ ATF_TC_BODY(futex_wait_wake_file_bs_cow_private, tc)
 {
 	create_bs(MAP_FILE | MAP_PRIVATE);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				FUTEX_PRIVATE_FLAG);
+	    NULL, NULL, NULL,
+	    FUTEX_PRIVATE_FLAG);
 	ATF_REQUIRE(verify_zero_bs());
 }
 ATF_TC_CLEANUP(futex_wait_wake_file_bs_cow_private, tc)
@@ -552,9 +560,9 @@ ATF_TC_BODY(futex_wait_wake_file_bs_shared, tc)
 {
 	create_bs(MAP_FILE | MAP_SHARED);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				0);
-	ATF_REQUIRE(! verify_zero_bs());
+	    NULL, NULL, NULL,
+	    0);
+	ATF_REQUIRE(!verify_zero_bs());
 }
 ATF_TC_CLEANUP(futex_wait_wake_file_bs_shared, tc)
 {
@@ -576,8 +584,8 @@ ATF_TC_BODY(futex_wait_wake_file_bs_cow_shared, tc)
 	 */
 	create_bs(MAP_FILE | MAP_PRIVATE);
 	do_futex_wait_wake_test(&bs_addr[0], NULL,
-				NULL, NULL, NULL,
-				0);
+	    NULL, NULL, NULL,
+	    0);
 	ATF_REQUIRE(verify_zero_bs());
 }
 ATF_TC_CLEANUP(futex_wait_wake_file_bs_cow_shared, tc)
@@ -595,10 +603,10 @@ ATF_TC_BODY(futex_wait_wake_anon_bs_shared_proc, tc)
 {
 	create_bs(MAP_ANON | MAP_SHARED);
 	do_futex_wait_wake_test(&bs_addr[0], &bs_addr[1],
-				create_proc_waiter,
-				exit_proc_waiter,
-				reap_proc_waiter,
-				0);
+	    create_proc_waiter,
+	    exit_proc_waiter,
+	    reap_proc_waiter,
+	    0);
 }
 ATF_TC_CLEANUP(futex_wait_wake_anon_bs_shared_proc, tc)
 {
@@ -615,10 +623,10 @@ ATF_TC_BODY(futex_wait_wake_file_bs_shared_proc, tc)
 {
 	create_bs(MAP_FILE | MAP_SHARED);
 	do_futex_wait_wake_test(&bs_addr[0], &bs_addr[1],
-				create_proc_waiter,
-				exit_proc_waiter,
-				reap_proc_waiter,
-				0);
+	    create_proc_waiter,
+	    exit_proc_waiter,
+	    reap_proc_waiter,
+	    0);
 }
 ATF_TC_CLEANUP(futex_wait_wake_file_bs_shared_proc, tc)
 {
@@ -647,7 +655,7 @@ do_futex_wait_wake_bitset_test(int flags)
 {
 	struct lwp_data *wlwp0 = &lwp_data[WAITER_LWP0];
 	struct lwp_data *wlwp1 = &lwp_data[WAITER_LWP1];
-	int i, tries;
+	int i, tries, n;
 
 	for (i = WAITER_LWP0; i <= WAITER_LWP1; i++) {
 		setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
@@ -662,8 +670,8 @@ do_futex_wait_wake_bitset_test(int flags)
 	STORE(&futex_word, 1);
 	membar_sync();
 
-	ATF_REQUIRE(_lwp_create(&wlwp0->context, 0, &wlwp0->lwpid) == 0);
-	ATF_REQUIRE(_lwp_create(&wlwp1->context, 0, &wlwp1->lwpid) == 0);
+	RL(_lwp_create(&wlwp0->context, 0, &wlwp0->lwpid));
+	RL(_lwp_create(&wlwp1->context, 0, &wlwp1->lwpid));
 
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -672,25 +680,30 @@ do_futex_wait_wake_bitset_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "waiters failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2,
+	    "waiters failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure they're blocked. */
-	ATF_REQUIRE(wlwp0->futex_error == -1);
-	ATF_REQUIRE(wlwp1->futex_error == -1);
+	ATF_REQUIRE_EQ_MSG(wlwp0->futex_error, -1, "wlwp0->futex_error=%d",
+	    wlwp0->futex_error);
+	ATF_REQUIRE_EQ_MSG(wlwp1->futex_error, -1, "wlwp1->futex_error=%d",
+	    wlwp1->futex_error);
 
 	/* Make sure invalid #wakes in rejected. */
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(&futex_word, FUTEX_WAKE_BITSET | flags,
-		    -1, NULL, NULL, 0, 0) == -1);
+		-1, NULL, NULL, 0, 0) == -1);
 
 	/* This should result in no wakeups because no bits are set. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_BITSET | flags,
-			    INT_MAX, NULL, NULL, 0, 0) == 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_BITSET | flags,
+		INT_MAX, NULL, NULL, 0, 0));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d wakeups", n);
 
 	/* This should result in no wakeups because the wrongs bits are set. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_BITSET | flags,
-			    INT_MAX, NULL, NULL, 0,
-			    ~(wlwp0->bitset | wlwp1->bitset)) == 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_BITSET | flags,
+		INT_MAX, NULL, NULL, 0,
+		~(wlwp0->bitset | wlwp1->bitset)));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d wakeups", n);
 
 	/* Trust, but verify. */
 	sleep(1);
@@ -701,12 +714,13 @@ do_futex_wait_wake_bitset_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "waiters exited unexpectedly");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2,
+	    "waiters exited unexpectedly, nlwps_running=%u", nlwps_running);
 
 	/* Wake up the first LWP. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_BITSET | flags,
-			    INT_MAX, NULL, NULL, 0,
-			    wlwp0->bitset) == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_BITSET | flags,
+		INT_MAX, NULL, NULL, 0, wlwp0->bitset));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d wakeups", n);
 	sleep(1);
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -715,14 +729,16 @@ do_futex_wait_wake_bitset_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(nlwps_running == 1);
-	ATF_REQUIRE(wlwp0->futex_error == 0);
-	ATF_REQUIRE(_lwp_wait(wlwp0->lwpid, NULL) == 0);
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "nlwps_running=%u",
+	    nlwps_running);
+	ATF_REQUIRE_EQ_MSG(wlwp0->futex_error, 0, "wlwp0->futex_error=%d",
+	    wlwp0->futex_error);
+	RL(_lwp_wait(wlwp0->lwpid, NULL));
 
 	/* Wake up the second LWP. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_BITSET | flags,
-			    INT_MAX, NULL, NULL, 0,
-			    wlwp1->bitset) == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_BITSET | flags,
+		INT_MAX, NULL, NULL, 0, wlwp1->bitset));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d wakeups", n);
 	sleep(1);
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -731,9 +747,11 @@ do_futex_wait_wake_bitset_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(nlwps_running == 0);
-	ATF_REQUIRE(wlwp1->futex_error == 0);
-	ATF_REQUIRE(_lwp_wait(wlwp1->lwpid, NULL) == 0);
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "nlwps_running=%u",
+	    nlwps_running);
+	ATF_REQUIRE_EQ_MSG(wlwp1->futex_error, 0, "wlwp1->futex_error=%d",
+	    wlwp1->futex_error);
+	RL(_lwp_wait(wlwp1->lwpid, NULL));
 }
 
 ATF_TC_WITH_CLEANUP(futex_wait_wake_bitset);
@@ -762,7 +780,7 @@ do_futex_requeue_test(int flags, int op)
 	struct lwp_data *wlwp3 = &lwp_data[WAITER_LWP3];
 	const int good_val3 = (op == FUTEX_CMP_REQUEUE) ?   1 : 0;
 	const int bad_val3  = (op == FUTEX_CMP_REQUEUE) ? 666 : 0;
-	int i, tries;
+	int i, tries, n;
 
 	for (i = WAITER_LWP0; i <= WAITER_LWP3; i++) {
 		setup_lwp_context(&lwp_data[i], simple_test_waiter_lwp);
@@ -778,10 +796,10 @@ do_futex_requeue_test(int flags, int op)
 	STORE(&futex_word1, 1);
 	membar_sync();
 
-	ATF_REQUIRE(_lwp_create(&wlwp0->context, 0, &wlwp0->lwpid) == 0);
-	ATF_REQUIRE(_lwp_create(&wlwp1->context, 0, &wlwp1->lwpid) == 0);
-	ATF_REQUIRE(_lwp_create(&wlwp2->context, 0, &wlwp2->lwpid) == 0);
-	ATF_REQUIRE(_lwp_create(&wlwp3->context, 0, &wlwp3->lwpid) == 0);
+	RL(_lwp_create(&wlwp0->context, 0, &wlwp0->lwpid));
+	RL(_lwp_create(&wlwp1->context, 0, &wlwp1->lwpid));
+	RL(_lwp_create(&wlwp2->context, 0, &wlwp2->lwpid));
+	RL(_lwp_create(&wlwp3->context, 0, &wlwp3->lwpid));
 
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -790,22 +808,27 @@ do_futex_requeue_test(int flags, int op)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 4, "waiters failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 4,
+	    "waiters failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure they're blocked. */
-	ATF_REQUIRE(wlwp0->futex_error == -1);
-	ATF_REQUIRE(wlwp1->futex_error == -1);
-	ATF_REQUIRE(wlwp2->futex_error == -1);
-	ATF_REQUIRE(wlwp3->futex_error == -1);
+	ATF_REQUIRE_EQ_MSG(wlwp0->futex_error, -1, "wlwp0->futex_error=%d",
+	    wlwp0->futex_error);
+	ATF_REQUIRE_EQ_MSG(wlwp1->futex_error, -1, "wlwp1->futex_error=%d",
+	    wlwp1->futex_error);
+	ATF_REQUIRE_EQ_MSG(wlwp2->futex_error, -1, "wlwp2->futex_error=%d",
+	    wlwp2->futex_error);
+	ATF_REQUIRE_EQ_MSG(wlwp3->futex_error, -1, "wlwp3->futex_error=%d",
+	    wlwp3->futex_error);
 
 	/* Make sure invalid #wakes and #requeues are rejected. */
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(&futex_word, op | flags,
-		    -1, NULL, &futex_word1, INT_MAX, bad_val3) == -1);
+		-1, NULL, &futex_word1, INT_MAX, bad_val3) == -1);
 
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(&futex_word, op | flags,
-		    0, NULL, &futex_word1, -1, bad_val3) == -1);
+		0, NULL, &futex_word1, -1, bad_val3) == -1);
 
 	/*
 	 * FUTEX 0: 4 LWPs
@@ -816,7 +839,7 @@ do_futex_requeue_test(int flags, int op)
 		/* This should fail because the futex_word value is 1. */
 		ATF_REQUIRE_ERRNO(EAGAIN,
 		    __futex(&futex_word, op | flags,
-			    0, NULL, &futex_word1, INT_MAX, bad_val3) == -1);
+			0, NULL, &futex_word1, INT_MAX, bad_val3) == -1);
 	}
 
 	/*
@@ -825,8 +848,9 @@ do_futex_requeue_test(int flags, int op)
 	 */
 
 	/* Move all waiters from 0 to 1. */
-	ATF_CHECK(__futex(&futex_word, op | flags,
-		0, NULL, &futex_word1, INT_MAX, good_val3) == 4);
+	RL(n = __futex(&futex_word, op | flags, 0, NULL, &futex_word1,
+		INT_MAX, good_val3));
+	ATF_CHECK_EQ_MSG(n, 4, "n=%d woken or requeued", n);
 
 	/*
 	 * FUTEX 0: 0 LWPs
@@ -837,7 +861,7 @@ do_futex_requeue_test(int flags, int op)
 		/* This should fail because the futex_word1 value is 1. */
 		ATF_REQUIRE_ERRNO(EAGAIN,
 		    __futex(&futex_word1, op | flags,
-			    1, NULL, &futex_word, 1, bad_val3) == -1);
+			1, NULL, &futex_word, 1, bad_val3) == -1);
 	}
 
 	/*
@@ -846,8 +870,9 @@ do_futex_requeue_test(int flags, int op)
 	 */
 
 	/* Wake one waiter on 1, move one waiter to 0. */
-	ATF_CHECK(__futex(&futex_word1, op | flags,
-		1, NULL, &futex_word, 1, good_val3) == 2);
+	RL(n = __futex(&futex_word1, op | flags, 1, NULL, &futex_word,
+		1, good_val3));
+	ATF_CHECK_EQ_MSG(n, 2, "n=%d woken or requeued", n);
 
 	/*
 	 * FUTEX 0: 1 LWP
@@ -855,12 +880,14 @@ do_futex_requeue_test(int flags, int op)
 	 */
 
 	/* Wake all waiters on 0 (should be 1). */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE | flags,
-			    INT_MAX, NULL, NULL, 0, 0) == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE | flags, INT_MAX, NULL, NULL,
+		0, 0));
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
 
 	/* Wake all waiters on 1 (should be 2). */
-	ATF_REQUIRE(__futex(&futex_word1, FUTEX_WAKE | flags,
-			    INT_MAX, NULL, NULL, 0, 0) == 2);
+	RL(n = __futex(&futex_word1, FUTEX_WAKE | flags, INT_MAX, NULL, NULL,
+		0, 0));
+	ATF_CHECK_EQ_MSG(n, 2, "n=%d woken", n);
 
 	/* Trust, but verify. */
 	sleep(1);
@@ -871,12 +898,13 @@ do_futex_requeue_test(int flags, int op)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "waiters failed to exit");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0,
+	    "waiters failed to exit, nlwps_running=%u", nlwps_running);
 
-	ATF_REQUIRE(_lwp_wait(wlwp0->lwpid, NULL) == 0);
-	ATF_REQUIRE(_lwp_wait(wlwp1->lwpid, NULL) == 0);
-	ATF_REQUIRE(_lwp_wait(wlwp2->lwpid, NULL) == 0);
-	ATF_REQUIRE(_lwp_wait(wlwp3->lwpid, NULL) == 0);
+	RL(_lwp_wait(wlwp0->lwpid, NULL));
+	RL(_lwp_wait(wlwp1->lwpid, NULL));
+	RL(_lwp_wait(wlwp2->lwpid, NULL));
+	RL(_lwp_wait(wlwp3->lwpid, NULL));
 }
 
 ATF_TC_WITH_CLEANUP(futex_requeue);
@@ -938,7 +966,7 @@ ATF_TC_BODY(futex_cmp_requeue_trivial, tc)
 static void
 do_futex_wake_op_op_test(int flags)
 {
-	int op;
+	int op, n;
 
 	futex_word = 0;
 	futex_word1 = 0;
@@ -954,59 +982,66 @@ do_futex_wake_op_op_test(int flags)
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex((int *)1, FUTEX_WAKE_OP | flags,
-		    0, NULL, &futex_word1, 0, op) == -1);
-	ATF_REQUIRE(futex_word1 == 0);
+		0, NULL, &futex_word1, 0, op) == -1);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
-		    0, NULL, (int *)1, 0, op) == -1);
-	ATF_REQUIRE(futex_word == 0);
+		0, NULL, (int *)1, 0, op) == -1);
+	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	/* Check unmapped uaddr2 handling, too. */
 	ATF_REQUIRE_ERRNO(EFAULT,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
-		    0, NULL, NULL, 0, op) == -1);
-	ATF_REQUIRE(futex_word == 0);
+		0, NULL, NULL, 0, op) == -1);
+	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_ADD, 1, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_OR, 2, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* This should fail because of invalid shift value 32. */
 	op = FUTEX_OP(FUTEX_OP_OR | FUTEX_OP_OPARG_SHIFT, 32,
-		      FUTEX_OP_CMP_EQ, 0);
+	    FUTEX_OP_CMP_EQ, 0);
 	ATF_REQUIRE_ERRNO(EINVAL,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
-		    0, NULL, &futex_word1, 0, op) == -1);
-	ATF_REQUIRE(futex_word1 == 2);
+		0, NULL, &futex_word1, 0, op) == -1);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_OR | FUTEX_OP_OPARG_SHIFT, 31,
-		      FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == (int)0x80000002);
+	    FUTEX_OP_CMP_EQ, 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, (int)0x80000002,
+	    "futex_word1=0x%x", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_ANDN | FUTEX_OP_OPARG_SHIFT, 31,
-		      FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == 2);
+	    FUTEX_OP_CMP_EQ, 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_XOR, 2, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 0, op) == 0);
-	ATF_REQUIRE(futex_word1 == 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 }
 
 ATF_TC_WITH_CLEANUP(futex_wake_op_op);
@@ -1040,8 +1075,7 @@ create_wake_op_test_lwps(int flags)
 		lwp_data[i].block_val = 0;
 		lwp_data[i].bitset = 0;
 		lwp_data[i].wait_op = FUTEX_WAIT;
-		ATF_REQUIRE(_lwp_create(&lwp_data[i].context, 0,
-					&lwp_data[i].lwpid) == 0);
+		RL(_lwp_create(&lwp_data[i].context, 0, &lwp_data[i].lwpid));
 	}
 
 	for (i = 0; i < 5; i++) {
@@ -1051,11 +1085,14 @@ create_wake_op_test_lwps(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 6, "waiters failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 6,
+	    "waiters failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure they're blocked. */
 	for (i = WAITER_LWP0; i <= WAITER_LWP5; i++) {
-		ATF_REQUIRE(lwp_data[i].futex_error == -1);
+		ATF_REQUIRE_EQ_MSG(lwp_data[i].futex_error, -1,
+		    "i=%d lwp_data[i].futex_error=%d",
+		    i, lwp_data[i].futex_error);
 	}
 }
 
@@ -1065,14 +1102,14 @@ reap_wake_op_test_lwps(void)
 	int i;
 
 	for (i = WAITER_LWP0; i <= WAITER_LWP5; i++) {
-		ATF_REQUIRE(_lwp_wait(lwp_data[i].lwpid, NULL) == 0);
+		RL(_lwp_wait(lwp_data[i].lwpid, NULL));
 	}
 }
 
 static void
 do_futex_wake_op_cmp_test(int flags)
 {
-	int tries, op;
+	int tries, op, n;
 
 	futex_word = 0;
 	membar_sync();
@@ -1086,69 +1123,81 @@ do_futex_wake_op_cmp_test(int flags)
 
 	/* #LWPs = 6 */
 	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 1);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
-	ATF_REQUIRE(futex_word1 == 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 5 */
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_NE, 1);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
 	ATF_REQUIRE(futex_word1 == 1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_NE, 2);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 4 */
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_LT, 2);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_LT, 3);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 3 */
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_LE, 1);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
-	ATF_REQUIRE(futex_word1 == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_LE, 1);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 2 */
 	op = FUTEX_OP(FUTEX_OP_SET, 3, FUTEX_OP_CMP_GT, 3);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
-	ATF_REQUIRE(futex_word1 == 3);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_GT, 2);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 1 */
 	op = FUTEX_OP(FUTEX_OP_SET, 3, FUTEX_OP_CMP_GE, 4);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 0);
-	ATF_REQUIRE(futex_word1 == 3);
-	
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
+
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_GE, 3);
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE_OP | flags,
-			    0, NULL, &futex_word1, 1, op) == 1);
-	ATF_REQUIRE(futex_word1 == 2);
+	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
+		0, NULL, &futex_word1, 1, op));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 0 */
 
@@ -1161,7 +1210,8 @@ do_futex_wake_op_cmp_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "waiters failed to exit");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0,
+	    "waiters failed to exit, nlwps_running=%u", nlwps_running);
 
 	reap_wake_op_test_lwps();
 
@@ -1173,11 +1223,12 @@ do_futex_wake_op_cmp_test(int flags)
 	create_wake_op_test_lwps(flags);
 
 	/* #LWPs = 6 */
-	ATF_REQUIRE(futex_word == 0);
+	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 666);
-	ATF_REQUIRE(__futex(&futex_word1, FUTEX_WAKE_OP | flags,
-			    INT_MAX, NULL, &futex_word, 0, op) == 6);
-	ATF_REQUIRE(futex_word == 0);
+	RL(n = __futex(&futex_word1, FUTEX_WAKE_OP | flags,
+		INT_MAX, NULL, &futex_word, 0, op));
+	ATF_REQUIRE_EQ_MSG(n, 6, "n=%d woken", n);
+	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	/* #LWPs = 0 */
 
@@ -1190,7 +1241,8 @@ do_futex_wake_op_cmp_test(int flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "waiters failed to exit");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0,
+	    "waiters failed to exit, nlwps_running=%u", nlwps_running);
 
 	reap_wake_op_test_lwps();
 }
@@ -1212,6 +1264,10 @@ ATF_TC_CLEANUP(futex_wake_op_cmp, tc)
 
 /*****************************************************************************/
 
+
+
+/*****************************************************************************/
+
 static void
 do_futex_wait_timeout(bool relative, clockid_t clock)
 {
@@ -1222,7 +1278,7 @@ do_futex_wait_timeout(bool relative, clockid_t clock)
 	if (clock == CLOCK_REALTIME)
 		op |= FUTEX_CLOCK_REALTIME;
 
-	ATF_REQUIRE(clock_gettime(clock, &deadline) == 0);
+	RL(clock_gettime(clock, &deadline));
 	deadline.tv_sec += 2;
 	if (relative) {
 		ts.tv_sec = 2;
@@ -1234,14 +1290,20 @@ do_futex_wait_timeout(bool relative, clockid_t clock)
 	futex_word = 1;
 	ATF_REQUIRE_ERRNO(ETIMEDOUT,
 	    __futex(&futex_word, op | FUTEX_PRIVATE_FLAG,
-		    1, &ts, NULL, 0, FUTEX_BITSET_MATCH_ANY) == -1);
+		1, &ts, NULL, 0, FUTEX_BITSET_MATCH_ANY) == -1);
 
 	/* Can't reliably check CLOCK_REALTIME in the presence of NTP. */
 	if (clock != CLOCK_REALTIME) {
-		ATF_REQUIRE(clock_gettime(clock, &ts) == 0);
-		ATF_REQUIRE(ts.tv_sec >= deadline.tv_sec);
-		ATF_REQUIRE(ts.tv_sec > deadline.tv_sec ||
-			    ts.tv_nsec >= deadline.tv_nsec);
+		RL(clock_gettime(clock, &ts));
+		ATF_REQUIRE_MSG(ts.tv_sec >= deadline.tv_sec,
+		    "ts=%lld.%09ldsec deadline=%lld.%09ldsec",
+		    (long long)ts.tv_sec, ts.tv_nsec,
+		    (long long)deadline.tv_sec, deadline.tv_nsec);
+		ATF_REQUIRE_MSG((ts.tv_sec > deadline.tv_sec ||
+			ts.tv_nsec >= deadline.tv_nsec),
+		    "ts=%lld.%09ldsec deadline=%lld.%09ldsec",
+		    (long long)ts.tv_sec, ts.tv_nsec,
+		    (long long)deadline.tv_sec, deadline.tv_nsec);
 	}
 }
 
@@ -1305,8 +1367,7 @@ do_futex_wait_evil_unmapped(int map_flags)
 
 	create_bs(map_flags);
 
-	old_act = signal(SIGUSR1, sig_noop);
-	ATF_REQUIRE(old_act != SIG_ERR);
+	REQUIRE_LIBC(signal(SIGUSR1, sig_noop), SIG_ERR);
 
 	setup_lwp_context(&lwp_data[0], simple_test_waiter_lwp);
 	lwp_data[0].op_flags = 0;
@@ -1315,8 +1376,7 @@ do_futex_wait_evil_unmapped(int map_flags)
 	lwp_data[0].block_val = 0;
 	lwp_data[0].bitset = 0;
 	lwp_data[0].wait_op = FUTEX_WAIT;
-	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
-				&lwp_data[0].lwpid) == 0);
+	RL(_lwp_create(&lwp_data[0].context, 0, &lwp_data[0].lwpid));
 
 	for (i = 0; i < 5; i++) {
 		membar_sync();
@@ -1325,16 +1385,18 @@ do_futex_wait_evil_unmapped(int map_flags)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "waiters failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1,
+	    "waiters failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure it's blocked. */
-	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE_EQ_MSG(lwp_data[0].futex_error, -1,
+	    "lwp_data[0].futex_error=%d", lwp_data[0].futex_error);
 
 	/* Rudely unmap the backing store. */
 	cleanup_bs();
 
 	/* Signal the waiter so that it leaves the futex. */
-	ATF_REQUIRE(_lwp_kill(lwp_data[0].threadid, SIGUSR1) == 0);
+	RL(_lwp_kill(lwp_data[0].threadid, SIGUSR1));
 
 	/* Yay! No panic! */
 
@@ -1371,10 +1433,10 @@ lowpri_simple_test_waiter_lwp(void *arg)
 
 	d->threadid = _lwp_self();
 
-	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
+	RL(_sched_getparam(getpid(), d->threadid, &policy, &sp));
 	policy = SCHED_RR;
 	sp.sched_priority = pri_min;
-	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
+	RL(_sched_setparam(getpid(), d->threadid, policy, &sp));
 
 	simple_test_waiter_lwp(arg);
 }
@@ -1388,10 +1450,10 @@ highpri_simple_test_waiter_lwp(void *arg)
 
 	d->threadid = _lwp_self();
 
-	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
+	RL(_sched_getparam(getpid(), d->threadid, &policy, &sp));
 	policy = SCHED_RR;
 	sp.sched_priority = pri_max;
-	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
+	RL(_sched_setparam(getpid(), d->threadid, policy, &sp));
 
 	simple_test_waiter_lwp(arg);
 }
@@ -1402,10 +1464,11 @@ do_test_wake_highest_pri(void)
 	lwpid_t waiter;
 	int tries;
 	long pri;
+	int n;
 
-	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MIN)) != -1);
+	RL(pri = sysconf(_SC_SCHED_PRI_MIN));
 	pri_min = (int)pri;
-	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MAX)) != -1);
+	RL(pri = sysconf(_SC_SCHED_PRI_MAX));
 	pri_max = (int)pri;
 
 	futex_word = 0;
@@ -1418,8 +1481,7 @@ do_test_wake_highest_pri(void)
 	lwp_data[0].block_val = 0;
 	lwp_data[0].bitset = 0;
 	lwp_data[0].wait_op = FUTEX_WAIT;
-	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
-				&lwp_data[0].lwpid) == 0);
+	RL(_lwp_create(&lwp_data[0].context, 0, &lwp_data[0].lwpid));
 
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -1428,10 +1490,12 @@ do_test_wake_highest_pri(void)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "lowpri waiter failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1,
+	    "lowpri waiter failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure it's blocked. */
-	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+	ATF_REQUIRE_EQ_MSG(lwp_data[0].futex_error, -1,
+	    "lwp_data[0].futex_error=%d", lwp_data[0].futex_error);
 
 	setup_lwp_context(&lwp_data[1], highpri_simple_test_waiter_lwp);
 	lwp_data[1].op_flags = FUTEX_PRIVATE_FLAG;
@@ -1440,8 +1504,7 @@ do_test_wake_highest_pri(void)
 	lwp_data[1].block_val = 0;
 	lwp_data[1].bitset = 0;
 	lwp_data[1].wait_op = FUTEX_WAIT;
-	ATF_REQUIRE(_lwp_create(&lwp_data[1].context, 0,
-				&lwp_data[1].lwpid) == 0);
+	RL(_lwp_create(&lwp_data[1].context, 0, &lwp_data[1].lwpid));
 
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -1450,14 +1513,17 @@ do_test_wake_highest_pri(void)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "highpri waiter failed to start");
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2,
+	    "highpri waiter failed to start, nlwps_running=%u", nlwps_running);
 
 	/* Ensure it's blocked. */
-	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+	ATF_REQUIRE_EQ_MSG(lwp_data[1].futex_error, -1,
+	    "lwp_data[1].futex_error=%d", lwp_data[1].futex_error);
 
 	/* Wake the first LWP.  We should get the highpri thread. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
-			    1, NULL, NULL, 0, 0) == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
+		1, NULL, NULL, 0, 0));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
 	sleep(1);
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -1466,13 +1532,17 @@ do_test_wake_highest_pri(void)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(nlwps_running == 1);
-	ATF_REQUIRE(_lwp_wait(0, &waiter) == 0);
-	ATF_REQUIRE(waiter == lwp_data[1].threadid);
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "nlwps_running=%u",
+	    nlwps_running);
+	RL(_lwp_wait(0, &waiter));
+	ATF_REQUIRE_EQ_MSG(waiter, lwp_data[1].threadid,
+	    "waiter=%ld lwp_data[1].threadid=%ld",
+	    (long)waiter, (long)lwp_data[1].threadid);
 
 	/* Wake the second LWP.  We should get the lowpri thread. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
-			    1, NULL, NULL, 0, 0) == 1);
+	RL(n = __futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
+		1, NULL, NULL, 0, 0));
+	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
 	sleep(1);
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
@@ -1481,9 +1551,12 @@ do_test_wake_highest_pri(void)
 		sleep(1);
 	}
 	membar_sync();
-	ATF_REQUIRE(nlwps_running == 0);
-	ATF_REQUIRE(_lwp_wait(0, &waiter) == 0);
-	ATF_REQUIRE(waiter == lwp_data[0].threadid);
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 0, "nlwps_running=%u",
+	    nlwps_running);
+	RL(_lwp_wait(0, &waiter));
+	ATF_REQUIRE_EQ_MSG(waiter, lwp_data[0].threadid,
+	    "waiter=%ld lwp_data[0].threadid=%ld",
+	    (long)waiter, (long)lwp_data[0].threadid);
 }
 
 ATF_TC_WITH_CLEANUP(futex_wake_highest_pri);
