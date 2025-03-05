@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.113 2025/02/27 16:20:26 jakllsch Exp $	*/
+/*	$NetBSD: ld.c,v 1.114 2025/03/05 00:41:17 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.113 2025/02/27 16:20:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.114 2025/03/05 00:41:17 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,9 +665,17 @@ ld_set_geometry(struct ld_softc *sc)
 	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
 	aprint_normal_dev(dksc->sc_dev, "%s, %d cyl, %d head, %d sec, "
-	    "%d bytes/sect x %"PRIu64" sectors\n",
+	    "%d bytes/sect x %"PRIu64" sectors",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
+	if (sc->sc_physsecsize != sc->sc_secsize) {
+		aprint_normal(" (%d bytes/physsect", sc->sc_physsecsize);
+		if (sc->sc_alignedsec != 0)
+			aprint_normal("; first aligned sector %u",
+			    sc->sc_alignedsec);
+		aprint_normal(")");
+	}
+	aprint_normal("\n");
 
 	memset(dg, 0, sizeof(*dg));
 	dg->dg_secperunit = sc->sc_secperunit;
