@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.11 2025/03/05 00:02:47 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.12 2025/03/05 00:02:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.11 2025/03/05 00:02:47 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.12 2025/03/05 00:02:58 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -147,10 +147,10 @@ reap_proc_waiter(struct lwp_data *d)
 	int status;
 
 	RL(pid = waitpid(d->child, &status, 0));
-	ATF_REQUIRE_EQ_MSG(pid, d->child,
+	ATF_CHECK_EQ_MSG(pid, d->child,
 	    "pid=%lld d->child=%lld", (long long)pid, (long long)d->child);
-	ATF_REQUIRE_MSG(WIFEXITED(status), "status=0x%x", status);
-	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), 0, "status=0x%x", status);
+	ATF_CHECK_MSG(WIFEXITED(status), "status=0x%x", status);
+	ATF_CHECK_EQ_MSG(WEXITSTATUS(status), 0, "status=0x%x", status);
 }
 
 static void
@@ -980,68 +980,68 @@ do_futex_wake_op_op_test(int flags)
 	 * rejecting unaligned futex addresses here.
 	 */
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE_ERRNO(EINVAL,
+	ATF_CHECK_ERRNO(EINVAL,
 	    __futex((int *)1, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op) == -1);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 
-	ATF_REQUIRE_ERRNO(EINVAL,
+	ATF_CHECK_ERRNO(EINVAL,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, (int *)1, 0, op) == -1);
-	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
+	ATF_CHECK_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	/* Check unmapped uaddr2 handling, too. */
-	ATF_REQUIRE_ERRNO(EFAULT,
+	ATF_CHECK_ERRNO(EFAULT,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, NULL, 0, op) == -1);
-	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
+	ATF_CHECK_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_ADD, 1, FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_OR, 2, FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* This should fail because of invalid shift value 32. */
 	op = FUTEX_OP(FUTEX_OP_OR | FUTEX_OP_OPARG_SHIFT, 32,
 	    FUTEX_OP_CMP_EQ, 0);
-	ATF_REQUIRE_ERRNO(EINVAL,
+	ATF_CHECK_ERRNO(EINVAL,
 	    __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op) == -1);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_OR | FUTEX_OP_OPARG_SHIFT, 31,
 	    FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, (int)0x80000002,
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, (int)0x80000002,
 	    "futex_word1=0x%x", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_ANDN | FUTEX_OP_OPARG_SHIFT, 31,
 	    FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_XOR, 2, FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 }
 
 ATF_TC_WITH_CLEANUP(futex_wake_op_op);
@@ -1125,79 +1125,79 @@ do_futex_wake_op_cmp_test(int flags)
 	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 1);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 0, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_EQ, 0);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 5 */
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_NE, 1);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE(futex_word1 == 1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_NE, 2);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 4 */
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_LT, 2);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_LT, 3);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 3 */
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_LE, 1);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 1, FUTEX_OP_CMP_LE, 1);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 1, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 2 */
 	op = FUTEX_OP(FUTEX_OP_SET, 3, FUTEX_OP_CMP_GT, 3);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_GT, 2);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 1 */
 	op = FUTEX_OP(FUTEX_OP_SET, 3, FUTEX_OP_CMP_GE, 4);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 0, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 0, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 3, "futex_word1=%d", futex_word1);
 
 	op = FUTEX_OP(FUTEX_OP_SET, 2, FUTEX_OP_CMP_GE, 3);
 	RL(n = __futex(&futex_word, FUTEX_WAKE_OP | flags,
 		0, NULL, &futex_word1, 1, op));
-	ATF_REQUIRE_EQ_MSG(n, 1, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
+	ATF_CHECK_EQ_MSG(n, 1, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word1, 2, "futex_word1=%d", futex_word1);
 
 	/* #LWPs = 0 */
 
@@ -1223,12 +1223,12 @@ do_futex_wake_op_cmp_test(int flags)
 	create_wake_op_test_lwps(flags);
 
 	/* #LWPs = 6 */
-	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
+	ATF_CHECK_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 	op = FUTEX_OP(FUTEX_OP_SET, 0, FUTEX_OP_CMP_EQ, 666);
 	RL(n = __futex(&futex_word1, FUTEX_WAKE_OP | flags,
 		INT_MAX, NULL, &futex_word, 0, op));
-	ATF_REQUIRE_EQ_MSG(n, 6, "n=%d woken", n);
-	ATF_REQUIRE_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
+	ATF_CHECK_EQ_MSG(n, 6, "n=%d woken", n);
+	ATF_CHECK_EQ_MSG(futex_word, 0, "futex_word=%d", futex_word);
 
 	/* #LWPs = 0 */
 
@@ -1295,11 +1295,11 @@ do_futex_wait_timeout(bool relative, clockid_t clock)
 	/* Can't reliably check CLOCK_REALTIME in the presence of NTP. */
 	if (clock != CLOCK_REALTIME) {
 		RL(clock_gettime(clock, &ts));
-		ATF_REQUIRE_MSG(ts.tv_sec >= deadline.tv_sec,
+		ATF_CHECK_MSG(ts.tv_sec >= deadline.tv_sec,
 		    "ts=%lld.%09ldsec deadline=%lld.%09ldsec",
 		    (long long)ts.tv_sec, ts.tv_nsec,
 		    (long long)deadline.tv_sec, deadline.tv_nsec);
-		ATF_REQUIRE_MSG((ts.tv_sec > deadline.tv_sec ||
+		ATF_CHECK_MSG((ts.tv_sec > deadline.tv_sec ||
 			ts.tv_nsec >= deadline.tv_nsec),
 		    "ts=%lld.%09ldsec deadline=%lld.%09ldsec",
 		    (long long)ts.tv_sec, ts.tv_nsec,
