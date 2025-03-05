@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.33 2024/11/30 11:27:20 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.34 2025/03/05 22:48:59 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -320,3 +320,18 @@ typedef fprint_function (*change_logger)
 // Provoke a long type name to test reallocation in type_name.
 /* expect+1: error: redeclaration of 'static_function' with type 'function(pointer to function(pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void) returning pointer to function(int, pointer to const char, ...) returning void) returning void', expected 'function(void) returning void' [347] */
 void static_function(change_logger);
+
+
+void no_prototype_declaration();
+void prototype_declaration(void);
+
+// TODO: Warn about the missing 'void', for C99 and later.
+void
+no_prototype_definition()
+{
+}
+
+void
+prototype_definition(void)
+{
+}
