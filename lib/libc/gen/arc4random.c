@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.44 2025/03/06 00:53:26 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.45 2025/03/06 00:54:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.44 2025/03/06 00:53:26 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.45 2025/03/06 00:54:27 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -810,7 +810,9 @@ main(int argc __unused, char **argv __unused)
 		 */
 		struct arc4random_prng *prng = NULL;
 #ifdef _REENTRANT
-		prng = thr_getspecific(arc4random_global.thread_key);
+		prng = arc4random_global.per_thread
+		    ? thr_getspecific(arc4random_global.thread_key)
+		    : NULL;
 #endif
 		if (prng == NULL)
 			prng = &arc4random_global.prng;

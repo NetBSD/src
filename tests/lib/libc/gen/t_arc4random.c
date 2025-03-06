@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.3 2025/03/05 21:30:34 riastradh Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.4 2025/03/06 00:54:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.3 2025/03/05 21:30:34 riastradh Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.4 2025/03/06 00:54:27 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -83,7 +83,7 @@ arc4random_prng(void)
 	 * (i.e., libc was built with _REENTRANT), get the thread-local
 	 * arc4random state if there is one.
 	 */
-	if (arc4random_global.initialized)
+	if (arc4random_global.per_thread)
 		prng = thr_getspecific(arc4random_global.thread_key);
 
 	/*
@@ -545,11 +545,15 @@ ATF_TC_BODY(global_threadkeylimit, tc)
 	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
 
 	/*
-	 * Artificially disable the per-thread state and clear the
-	 * epoch.
+	 * Artificially disable the per-thread state, make it an
+	 * invalid thread key altogether, and clear the epoch.  Make
+	 * sure we're using the global PRNG state now.
 	 */
 	arc4random_global.per_thread = false;
+	memset(&arc4random_global.thread_key, 0x5a,
+	    sizeof(arc4random_global.thread_key));
 	arc4random_global.prng.arc4_epoch = 0;
+	ATF_CHECK(arc4random_prng() == &arc4random_global.prng);
 
 	/*
 	 * Get a sample again and make sure it wasn't repeated, which
