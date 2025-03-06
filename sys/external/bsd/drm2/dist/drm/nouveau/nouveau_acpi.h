@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_acpi.h,v 1.4 2024/04/16 14:34:02 riastradh Exp $	*/
+/*	$NetBSD: nouveau_acpi.h,v 1.5 2025/03/06 01:14:51 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_ACPI_H__
@@ -8,7 +8,7 @@
 
 #define ROM_BIOS_PAGE 4096
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_X86)
+#if defined(CONFIG_ACPI)
 bool nouveau_is_optimus(void);
 bool nouveau_is_v1_dsm(void);
 void nouveau_register_dsm_handler(void);
