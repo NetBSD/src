@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.145 2024/03/16 23:40:25 ryoon Exp $	*/
+/*	$NetBSD: kdump.c,v 1.146 2025/03/06 06:36:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.145 2024/03/16 23:40:25 ryoon Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.146 2025/03/06 06:36:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1405,7 +1405,7 @@ ktrpsig(void *v, int len)
 		switch (si->si_signo) {
 		case SIGCHLD:
 			printf(": code=%s child pid=%d, uid=%d, "
-			    " status=%u, utime=%lu, stime=%lu)\n",
+			    "status=%u, utime=%lu, stime=%lu)\n",
 			    code, si->si_pid,
 			    si->si_uid, si->si_status,
 			    (unsigned long) si->si_utime,
