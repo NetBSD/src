@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.43 2025/03/04 00:33:01 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.44 2025/03/06 00:53:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.43 2025/03/04 00:33:01 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.44 2025/03/06 00:53:26 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -518,7 +518,7 @@ struct arc4random_global_state arc4random_global = {
 #ifdef _REENTRANT
 	.lock		= MUTEX_INITIALIZER,
 #endif
-	.initialized	= false,
+	.once		= ONCE_INITIALIZER,
 };
 
 static void
@@ -558,22 +558,39 @@ static void
 arc4random_initialize(void)
 {
 
-	mutex_lock(&arc4random_global.lock);
-	if (!arc4random_global.initialized) {
-		if (crypto_core_selftest() != 0)
-			abort();
-		if (pthread_atfork(&arc4random_atfork_prepare,
-			&arc4random_atfork_parent, &arc4random_atfork_child)
-		    != 0)
-			abort();
+	/*
+	 * If the crypto software is broken, abort -- something is
+	 * severely wrong with this process image.
+	 */
+	if (crypto_core_selftest() != 0)
+		abort();
+
+	/*
+	 * Set up a pthread_atfork handler to lock the global state
+	 * around fork so that if forked children can't use the
+	 * per-thread state, they can take the lock and use the global
+	 * state without deadlock.
+	 */
+	if (pthread_atfork(&arc4random_atfork_prepare,
+		&arc4random_atfork_parent, &arc4random_atfork_child)
+	    != 0)
+		abort();
+
+	/*
+	 * For multithreaded builds, try to allocate a per-thread PRNG
+	 * state to avoid contention due to arc4random.
+	 */
 #ifdef _REENTRANT
-		if (thr_keycreate(&arc4random_global.thread_key,
-			&arc4random_tsd_destructor) == 0)
-			arc4random_global.per_thread = true;
+	if (thr_keycreate(&arc4random_global.thread_key,
+		&arc4random_tsd_destructor) == 0)
+		arc4random_global.per_thread = true;
 #endif
-		arc4random_global.initialized = true;
-	}
-	mutex_unlock(&arc4random_global.lock);
+
+	/*
+	 * Note that the arc4random library state has been initialized
+	 * for the sake of automatic tests.
+	 */
+	arc4random_global.initialized = true;
 }
 
 static struct arc4random_prng *
@@ -582,8 +599,7 @@ arc4random_prng_get(void)
 	struct arc4random_prng *prng = NULL;
 
 	/* Make sure the library is initialized.  */
-	if (__predict_false(!arc4random_global.initialized))
-		arc4random_initialize();
+	thr_once(&arc4random_global.once, &arc4random_initialize);
 
 #ifdef _REENTRANT
 	/* Get or create the per-thread PRNG state.  */
