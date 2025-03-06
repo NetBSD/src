@@ -1,4 +1,4 @@
-/* $NetBSD: identcpu_subr.c,v 1.11 2025/03/06 09:02:46 imil Exp $ */
+/* $NetBSD: identcpu_subr.c,v 1.12 2025/03/06 09:31:05 imil Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.11 2025/03/06 09:02:46 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.12 2025/03/06 09:31:05 imil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.11 2025/03/06 09:02:46 imil Exp 
 #include "cpuctl_i386.h"
 #endif
 
-#if defined(_KERNEL) && NLAPIC > 0
+#ifdef _KERNEL
 static uint64_t
 tsc_freq_vmware_cpuid(struct cpu_info *ci)
 {
@@ -81,12 +81,14 @@ tsc_freq_vmware_cpuid(struct cpu_info *ci)
 	aprint_verbose(
 	    "got tsc frequency from vmware compatible cpuid\n");
 
+#if NLAPIC > 0
 	if (descs[1] > 0) {
 		aprint_verbose(
 		    "got lapic frequency from vmware compatible cpuid\n");
 		lapic_per_second = descs[1] * 1000;
 		lapic_from_cpuid = true;
 	}
+#endif
 
 	return freq * 1000;
 }
@@ -179,7 +181,7 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 
 	if (cpu_vendor == CPUVENDOR_INTEL)
 		freq = tsc_freq_cpuid(ci);
-#if defined(_KERNEL) && NLAPIC > 0
+#ifdef _KERNEL
 	/* VMware compatible tsc frequency query */
 	if (freq == 0 && vm_guest > VM_GUEST_NO)
 		freq = tsc_freq_vmware_cpuid(ci);
