@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2025/02/27 23:48:22 rillig Exp $
+# $NetBSD: Makefile,v 1.45 2025/03/07 15:56:37 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -75,8 +75,8 @@ DPADD+= ${LIBIPSEC} ${LIBCRYPT}
 
 .PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon
 
-prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
-	${LEX} -Pprsa -o${.TARGET} ${.ALLSRC}
+prsa_tok.c prsa_tok.h: ${DIST}/src/racoon/prsa_tok.l
+	${LEX} -Pprsa --header-file=prsa_tok.h -oprsa_tok.c ${.ALLSRC}
 
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
@@ -88,8 +88,5 @@ COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
 COPTS.rsalist.c+= -Wno-error=deprecated-declarations
 COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
 COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
-
-# Has to be fixed upstream.
-LINTFLAGS+=	-X 384		# function definition with identifier list
 
 .include <bsd.prog.mk>
