@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2025/03/07 15:56:37 christos Exp $
+# $NetBSD: Makefile,v 1.46 2025/03/07 20:08:21 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -81,6 +81,7 @@ prsa_tok.c prsa_tok.h: ${DIST}/src/racoon/prsa_tok.l
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
 
+CLEANFILES+=prsa_tok.h
 CWARNFLAGS.gcc+=        ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 COPTS+=		-fcommon
