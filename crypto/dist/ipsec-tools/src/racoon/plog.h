@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.h,v 1.5 2007/10/02 09:47:40 vanhu Exp $	*/
+/*	$NetBSD: plog.h,v 1.6 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: plog.h,v 1.7 2006/06/20 09:57:31 vanhu Exp */
 
@@ -59,7 +59,7 @@
 #define LLV_BASE	LLV_INFO /* by default log less than this value. */
 
 extern char *pname;
-extern u_int32_t loglevel;
+extern uint32_t loglevel;
 extern int f_foreground;
 extern int print_location;
 
@@ -69,14 +69,14 @@ struct sockaddr;
 		if ((pri) <= loglevel) \
 			_plog((pri), __VA_ARGS__); \
 	} while (0)
-extern void _plog __P((int, const char *, struct sockaddr *, const char *, ...))
+extern void _plog(int, const char *, struct sockaddr *, const char *, ...)
 	__attribute__ ((__format__ (__printf__, 4, 5)));
-extern void plogv __P((int, const char *, struct sockaddr *,
-	const char *, va_list));
-extern void plogdump __P((int, void *, size_t));
-extern void ploginit __P((void));
-extern void plogset __P((char *));
+extern void plogv(int, const char *, struct sockaddr *,
+	const char *, va_list);
+extern void plogdump(int, void *, size_t);
+extern void ploginit(void);
+extern void plogset(char *);
 
-extern char* binsanitize __P((char*, size_t));
+extern char* binsanitize(char*, size_t);
 
 #endif /* _PLOG_H */

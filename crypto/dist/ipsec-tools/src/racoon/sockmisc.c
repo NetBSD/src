@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.19 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.20 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -86,9 +86,7 @@ const int niflags = 0;
  *	1: not equal.
  */
 int
-cmpsaddr(addr1, addr2)
-	const struct sockaddr *addr1;
-	const struct sockaddr *addr2;
+cmpsaddr(const struct sockaddr *addr1, const struct sockaddr *addr2)
 {
 	caddr_t sa1, sa2;
 	u_short port1 = IPSEC_PORT_ANY;
@@ -144,8 +142,7 @@ cmpsaddr(addr1, addr2)
 
 /* get local address against the destination. */
 struct sockaddr *
-getlocaladdr(remote)
-	struct sockaddr *remote;
+getlocaladdr(struct sockaddr *remote)
 {
 	struct sockaddr *local;
 	u_int local_len = sizeof(struct sockaddr_storage);
@@ -195,19 +192,12 @@ getlocaladdr(remote)
  * setsockopt() have already performed on socket.
  */
 int
-recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
-	int s;
-	void *buf;
-	size_t buflen;
-	int flags;
-	struct sockaddr *from;
-	socklen_t *fromlen;
-	struct sockaddr *to;
-	u_int *tolen;
+recvfromto(int s, void *buf, size_t buflen, int flags, struct sockaddr *from,
+    socklen_t *fromlen, struct sockaddr *to, u_int *tolen)
 {
 	int otolen;
 	socklen_t slen;
-	int len;
+	ssize_t len;
 	union sockaddr_any sa;
 	struct msghdr m;
 	struct cmsghdr *cm;
@@ -337,16 +327,12 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 
 /* send packet, with fixing src/dst address pair. */
 int
-sendfromto(s, buf, buflen, src, dst, cnt)
-	int s, cnt;
-	const void *buf;
-	size_t buflen;
-	struct sockaddr *src;
-	struct sockaddr *dst;
+sendfromto(int s, const void *buf, size_t buflen, struct sockaddr *src,
+    struct sockaddr *dst, int cnt)
 {
 	struct sockaddr_storage ss;
 	socklen_t slen;
-	int len = 0;
+	ssize_t len = 0;
 	int i;
 
 	if (src->sa_family != dst->sa_family) {
@@ -594,8 +580,7 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 }
 
 int
-setsockopt_bypass(so, family)
-	int so, family;
+setsockopt_bypass(int so, int family)
 {
 	int level;
 	char *buf;
@@ -658,8 +643,7 @@ setsockopt_bypass(so, family)
 }
 
 struct sockaddr *
-newsaddr(len)
-	int len;
+newsaddr(int len)
 {
 	struct sockaddr *new;
 
@@ -683,8 +667,7 @@ out:
 }
 
 struct sockaddr *
-dupsaddr(src)
-	struct sockaddr *src;
+dupsaddr(struct sockaddr *src)
 {
 	struct sockaddr *dst;
 
@@ -701,8 +684,7 @@ dupsaddr(src)
 }
 
 char *
-saddr2str(saddr)
-	const struct sockaddr *saddr;
+saddr2str(const struct sockaddr *saddr)
 {
 	static char buf[NI_MAXHOST + NI_MAXSERV + 10];
 	char addr[NI_MAXHOST], port[NI_MAXSERV];
@@ -721,8 +703,7 @@ saddr2str(saddr)
 }
 
 char *
-saddrwop2str(saddr)
-	const struct sockaddr *saddr;
+saddrwop2str(const struct sockaddr *saddr)
 {
 	static char buf[NI_MAXHOST + NI_MAXSERV + 10];
 	char addr[NI_MAXHOST];
@@ -775,10 +756,8 @@ naddrwop2str_fromto(const char *format, const struct netaddr *saddr,
 }
 
 char *
-saddr2str_fromto(format, saddr, daddr)
-	const char *format;
-	const struct sockaddr *saddr;
-	const struct sockaddr *daddr;
+saddr2str_fromto(const char *format, const struct sockaddr *saddr,
+    const struct sockaddr *daddr)
 {
 	static char buf[2*(NI_MAXHOST + NI_MAXSERV + 10) + 100];
 	char *src, *dst;
@@ -797,9 +776,7 @@ saddr2str_fromto(format, saddr, daddr)
 }
 
 struct sockaddr *
-str2saddr(host, port)
-	char *host;
-	char *port;
+str2saddr(char *host, char *port)
 {
 	struct addrinfo hints, *res;
 	struct sockaddr *saddr;
@@ -838,23 +815,20 @@ str2saddr(host, port)
 }
 
 void
-mask_sockaddr(a, b, l)
-	struct sockaddr *a;
-	const struct sockaddr *b;
-	size_t l;
+mask_sockaddr(struct sockaddr *a, const struct sockaddr *b, size_t l)
 {
 	size_t i;
-	u_int8_t *p, alen;
+	uint8_t *p, alen;
 
 	switch (b->sa_family) {
 	case AF_INET:
 		alen = sizeof(struct in_addr);
-		p = (u_int8_t *)&((struct sockaddr_in *)a)->sin_addr;
+		p = (uint8_t *)&((struct sockaddr_in *)a)->sin_addr;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		alen = sizeof(struct in6_addr);
-		p = (u_int8_t *)&((struct sockaddr_in6 *)a)->sin6_addr;
+		p = (uint8_t *)&((struct sockaddr_in6 *)a)->sin6_addr;
 		break;
 #endif
 	default:
@@ -891,7 +865,7 @@ naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr)
 {
 	static const struct netaddr naddr_any;	/* initialized to all-zeros */
 	struct sockaddr sa;
-	u_int16_t naddr_port, saddr_port;
+	uint16_t naddr_port, saddr_port;
 	int port_score;
 
 	if (!naddr || !saddr) {
@@ -943,10 +917,10 @@ naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr)
 }
 
 /* Some useful functions for sockaddr port manipulations. */
-u_int16_t
+uint16_t
 extract_port (const struct sockaddr *addr)
 {
-  u_int16_t port = 0;
+  uint16_t port = 0;
   
   if (!addr)
     return port;
@@ -968,10 +942,10 @@ extract_port (const struct sockaddr *addr)
   return ntohs(port);
 }
 
-u_int16_t *
+uint16_t *
 get_port_ptr (struct sockaddr *addr)
 {
-  u_int16_t *port_ptr;
+  uint16_t *port_ptr;
 
   if (!addr)
     return NULL;
@@ -986,16 +960,15 @@ get_port_ptr (struct sockaddr *addr)
     default:
       plog(LLV_ERROR, LOCATION, NULL, "unknown AF: %u\n", addr->sa_family);
       return NULL;
-      break;
   }
 
   return port_ptr;
 }
 
-u_int16_t *
-set_port (struct sockaddr *addr, u_int16_t new_port)
+uint16_t *
+set_port (struct sockaddr *addr, uint16_t new_port)
 {
-  u_int16_t *port_ptr;
+  uint16_t *port_ptr;
 
   port_ptr = get_port_ptr (addr);
 

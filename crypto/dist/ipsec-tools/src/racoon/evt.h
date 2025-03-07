@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.h,v 1.7 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: evt.h,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: evt.h,v 1.5 2006/01/19 10:24:09 fredsen Exp */
 
@@ -79,7 +79,7 @@ struct evt_async {
 
 	struct sockaddr_storage ec_ph1src;
 	struct sockaddr_storage ec_ph1dst;
-	u_int32_t ec_ph2msgid;
+	uint32_t ec_ph2msgid;
 
 	/*
 	 * Optionnal list of struct isakmp_data
@@ -118,14 +118,14 @@ struct evt_listener {
 LIST_HEAD(evt_listener_list, evt_listener);
 #define EVT_LISTENER_LIST(x) struct evt_listener_list x
 
-void evt_generic __P((int type, vchar_t *optdata));
-void evt_phase1 __P((const struct ph1handle *ph1, int type, vchar_t *optdata));
-void evt_phase2 __P((const struct ph2handle *ph2, int type, vchar_t *optdata));
-vchar_t *evt_dump __P((void));
+void evt_generic(int type, vchar_t *optdata);
+void evt_phase1(const struct ph1handle *ph1, int type, vchar_t *optdata);
+void evt_phase2(const struct ph2handle *ph2, int type, vchar_t *optdata);
+vchar_t *evt_dump(void);
 
-int  evt_subscribe __P((struct evt_listener_list *list, int fd));
-void evt_list_init __P((struct evt_listener_list *list));
-void evt_list_cleanup __P((struct evt_listener_list *list));
+int  evt_subscribe(struct evt_listener_list *list, int fd);
+void evt_list_init(struct evt_listener_list *list);
+void evt_list_cleanup(struct evt_listener_list *list);
 
 #else
 

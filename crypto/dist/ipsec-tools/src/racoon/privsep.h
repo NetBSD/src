@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.h,v 1.6 2008/12/08 06:00:54 tteras Exp $	*/
+/*	$NetBSD: privsep.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: privsep.h,v 1.5 2005/06/07 12:22:11 fredsen Exp */
 
@@ -58,19 +58,19 @@ struct privsep_com_msg {
 	struct admin_com_bufs bufs;
 };
 
-int privsep_init __P((void));
+int privsep_init(void);
 
-vchar_t *privsep_eay_get_pkcs1privkey __P((char *));
-int privsep_script_exec __P((char *, int, char * const *));
-int privsep_setsockopt __P((int, int, int, const void *, socklen_t));
-int privsep_socket __P((int, int, int));
-int privsep_bind __P((int, const struct sockaddr *, socklen_t));
-vchar_t *privsep_getpsk __P((const char *, const int));
-int privsep_xauth_login_system __P((char *, char *));
+vchar_t *privsep_eay_get_pkcs1privkey(char *);
+int privsep_script_exec(char *, int, char * const *);
+int privsep_setsockopt(int, int, int, const void *, socklen_t);
+int privsep_socket(int, int, int);
+int privsep_bind(int, const struct sockaddr *, socklen_t);
+vchar_t *privsep_getpsk(const char *, const int);
+int privsep_xauth_login_system(char *, char *);
 #ifdef HAVE_LIBPAM
-int privsep_accounting_pam __P((int, int));
-int privsep_xauth_login_pam __P((int, struct sockaddr *, char *, char *));
-void privsep_cleanup_pam __P((int));
+int privsep_accounting_pam(int, int);
+int privsep_xauth_login_pam(int, struct sockaddr *, char *, char *);
+void privsep_cleanup_pam(int);
 #endif
-int privsep_accounting_system __P((int, struct sockaddr *, char *, int));
+int privsep_accounting_system(int, struct sockaddr *, char *, int);
 #endif /* _PRIVSEP_H */

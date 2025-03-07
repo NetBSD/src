@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.18 2010/11/12 09:08:26 tteras Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.19 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -87,25 +87,25 @@
 
 char *adminsock_path = ADMINSOCK_PATH;
 
-static void usage __P((void));
-static vchar_t *get_combuf __P((int, char **));
-static int handle_recv __P((vchar_t *));
-static vchar_t *f_reload __P((int, char **));
-static vchar_t *f_getsched __P((int, char **));
-static vchar_t *f_getsa __P((int, char **));
-static vchar_t *f_getsacert __P((int, char **));
-static vchar_t *f_flushsa __P((int, char **));
-static vchar_t *f_deletesa __P((int, char **));
-static vchar_t *f_exchangesa __P((int, char **));
-static vchar_t *f_vpnc __P((int, char **));
-static vchar_t *f_vpnd __P((int, char **));
-static vchar_t *f_getevt __P((int, char **));
+static void usage(void);
+static vchar_t *get_combuf(int, char **);
+static int handle_recv(vchar_t *);
+static vchar_t *f_reload(int, char **);
+static vchar_t *f_getsched(int, char **);
+static vchar_t *f_getsa(int, char **);
+static vchar_t *f_getsacert(int, char **);
+static vchar_t *f_flushsa(int, char **);
+static vchar_t *f_deletesa(int, char **);
+static vchar_t *f_exchangesa(int, char **);
+static vchar_t *f_vpnc(int, char **);
+static vchar_t *f_vpnd(int, char **);
+static vchar_t *f_getevt(int, char **);
 #ifdef ENABLE_HYBRID
-static vchar_t *f_logoutusr __P((int, char **));
+static vchar_t *f_logoutusr(int, char **);
 #endif
 
 struct cmd_tag {
-	vchar_t *(*func) __P((int, char **));
+	vchar_t *(*func)(int, char **);
 	char *str;
 } cmdtab[] = {
 	{ f_reload,	"reload-config" },
@@ -158,13 +158,13 @@ struct evtmsg {
 	{ EVT_PHASE2_NO_RESPONSE,	"Phase 2 error: no response" },
 };
 
-static vchar_t *get_proto_and_index __P((int, char **, u_int16_t *));
-static int get_proto __P((char *));
-static vchar_t *get_index __P((int, char **));
-static int get_family __P((char *));
-static vchar_t *get_comindexes __P((int, int, char **));
-static int get_comindex __P((char *, char **, char **, char **));
-static int get_ulproto __P((char *));
+static vchar_t *get_proto_and_index(int, char **, uint16_t *);
+static int get_proto(char *);
+static vchar_t *get_index(int, char **);
+static int get_family(char *);
+static vchar_t *get_comindexes(int, int, char **);
+static int get_comindex(char *, char **, char **, char **);
+static int get_ulproto(char *);
 
 struct proto_tag {
 	int proto;
@@ -198,12 +198,12 @@ char *pname;
 int long_format = 0;
 int evt_quit_event = 0;
 
-void dump_isakmp_sa __P((char *, int));
-void dump_internal __P((char *, int));
-char *pindex_isakmp __P((isakmp_index *));
-void print_schedule __P((caddr_t, int));
-void print_evt __P((struct evt_async *));
-char * fixed_addr __P((char *, char *, int));
+void dump_isakmp_sa(char *, int);
+void dump_internal(char *, int);
+char *pindex_isakmp(isakmp_index *);
+void print_schedule(caddr_t, int);
+void print_evt(struct evt_async *);
+char * fixed_addr(char *, char *, int);
 
 static void
 usage()
@@ -360,7 +360,7 @@ get_combuf(ac, av)
 }
 
 static vchar_t *
-make_request(u_int16_t cmd, u_int16_t proto, size_t len)
+make_request(uint16_t cmd, uint16_t proto, size_t len)
 {
 	vchar_t *buf;
 	struct admin_com *head;
@@ -520,7 +520,7 @@ f_deleteallsadst(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	u_int16_t proto;
+	uint16_t proto;
 
 	index = get_proto_and_index(ac, av, &proto);
 	if (index == NULL)
@@ -545,7 +545,7 @@ f_exchangesa(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	u_int16_t proto;
+	uint16_t proto;
 	int cmd = ADMIN_ESTABLISH_SA;
 	size_t com_len = 0;
 	char *id = NULL;
@@ -764,7 +764,7 @@ static vchar_t *
 get_proto_and_index(ac, av, proto)
 	int ac;
 	char **av;
-	u_int16_t *proto;
+	uint16_t *proto;
 {
 	vchar_t *index = NULL;
 
@@ -772,7 +772,7 @@ get_proto_and_index(ac, av, proto)
 	if (ac < 1)
 		errx(1, "insufficient arguments");
 	*proto = get_proto(*av);
-	if (*proto == (u_int16_t) -1)
+	if (*proto == (uint16_t) -1)
 		errx(1, "unknown protocol %s", *av);
 
 	/* get index(es) */
@@ -910,11 +910,11 @@ get_comindexes(family, ac, av)
 
 	ci = (struct admin_com_indexes *)buf->v;
 	if(p_prefs)
-		ci->prefs = (u_int8_t)atoi(p_prefs); /* XXX should be handled error. */
+		ci->prefs = (uint8_t)atoi(p_prefs); /* XXX should be handled error. */
 	else
 		ci->prefs = 32;
 	if(p_prefd)
-		ci->prefd = (u_int8_t)atoi(p_prefd); /* XXX should be handled error. */
+		ci->prefd = (uint8_t)atoi(p_prefd); /* XXX should be handled error. */
 	else
 		ci->prefd = 32;
 	ci->ul_proto = ulproto;
@@ -1427,7 +1427,7 @@ handle_recv(combuf)
 
 	com = (struct admin_com *)combuf->v;
 	if (com->ac_cmd & ADMIN_FLAG_LONG_REPLY)
-		len = ((u_int32_t)com->ac_len) + (((u_int32_t)com->ac_len_high) << 16);
+		len = ((uint32_t)com->ac_len) + (((uint32_t)com->ac_len_high) << 16);
 	else
 		len = com->ac_len;
 	len -= sizeof(*com);

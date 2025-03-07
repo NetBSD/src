@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.79 2021/12/05 07:56:10 msaitoh Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.80 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -108,6 +108,7 @@
 #include "isakmp_frag.h"
 #endif
 #include "strnames.h"
+#include "str2val.h"
 
 #include <fcntl.h>
 
@@ -130,13 +131,10 @@
 #  define SOL_UDP IPPROTO_UDP
 # endif /* __NetBSD__ / __FreeBSD__ */
 
-static int nostate1 __P((struct ph1handle *, vchar_t *));
-static int nostate2 __P((struct ph2handle *, vchar_t *));
+static int nostate1(struct ph1handle *, vchar_t *);
+static int nostate2(struct ph2handle *, vchar_t *);
 
-extern caddr_t val2str(const char *, size_t);
-
-static int (*ph1exchange[][2][PHASE1ST_MAX])
-	__P((struct ph1handle *, vchar_t *)) = {
+static int (*ph1exchange[][2][PHASE1ST_MAX])(struct ph1handle *, vchar_t *) = {
  /* error */
  { { 0 }, { 0 }, },
  /* Identity Protection exchange */
@@ -162,8 +160,7 @@ static int (*ph1exchange[][2][PHASE1ST_MAX])
  },
 };
 
-static int (*ph2exchange[][2][PHASE2ST_MAX])
-	__P((struct ph2handle *, vchar_t *)) = {
+static int (*ph2exchange[][2][PHASE2ST_MAX])(struct ph2handle *, vchar_t *) = {
  /* error */
  { { 0 }, { 0 }, },
  /* Quick mode for IKE */
@@ -177,17 +174,17 @@ static int (*ph2exchange[][2][PHASE2ST_MAX])
 
 static u_char r_ck0[] = { 0,0,0,0,0,0,0,0 }; /* used to verify the r_ck. */
 
-static int isakmp_main __P((vchar_t *, struct sockaddr *, struct sockaddr *));
-static int ph1_main __P((struct ph1handle *, vchar_t *));
-static int quick_main __P((struct ph2handle *, vchar_t *));
-static int isakmp_ph1begin_r __P((vchar_t *,
-	struct sockaddr *, struct sockaddr *, u_int8_t));
-static int isakmp_ph2begin_i __P((struct ph1handle *, struct ph2handle *));
-static int isakmp_ph2begin_r __P((struct ph1handle *, vchar_t *));
-static int etypesw1 __P((int));
-static int etypesw2 __P((int));
-static int isakmp_ph1resend __P((struct ph1handle *));
-static int isakmp_ph2resend __P((struct ph2handle *));
+static int isakmp_main(vchar_t *, struct sockaddr *, struct sockaddr *);
+static int ph1_main(struct ph1handle *, vchar_t *);
+static int quick_main(struct ph2handle *, vchar_t *);
+static int isakmp_ph1begin_r(vchar_t *, struct sockaddr *, struct sockaddr *,
+    uint8_t);
+static int isakmp_ph2begin_i(struct ph1handle *, struct ph2handle *);
+static int isakmp_ph2begin_r(struct ph1handle *, vchar_t *);
+static int etypesw1(int);
+static int etypesw2(int);
+static int isakmp_ph1resend(struct ph1handle *);
+static int isakmp_ph2resend(struct ph2handle *);
 
 #ifdef ENABLE_FRAG
 static int frag_handler(struct ph1handle *,
@@ -197,13 +194,14 @@ static int frag_handler(struct ph1handle *,
 /*
  * isakmp packet handler
  */
+/*ARGSUSED*/
 static int
-isakmp_handler(void *ctx, int so_isakmp)
+isakmp_handler(void *ctx __unused, int so_isakmp)
 {
 	struct isakmp isakmp;
 	union {
 		char		buf[sizeof (isakmp) + 4];
-		u_int32_t	non_esp[2];
+		uint32_t	non_esp[2];
 		struct		{
 				     struct udphdr udp;
 #ifdef __linux
@@ -218,7 +216,8 @@ isakmp_handler(void *ctx, int so_isakmp)
 	struct sockaddr_storage local;
 	unsigned int remote_len = sizeof(remote);
 	unsigned int local_len = sizeof(local);
-	int len = 0, extralen = 0;
+	ssize_t len = 0;
+	int extralen = 0;
 	vchar_t *buf = NULL, *tmpbuf = NULL;
 	int error = -1, res;
 
@@ -389,13 +388,11 @@ end:
  * main processing to handle isakmp payload
  */
 static int
-isakmp_main(msg, remote, local)
-	vchar_t *msg;
-	struct sockaddr *remote, *local;
+isakmp_main(vchar_t *msg, struct sockaddr *remote, struct sockaddr *local)
 {
 	struct isakmp *isakmp = (struct isakmp *)msg->v;
-	isakmp_index *index = (isakmp_index *)isakmp;
-	u_int32_t msgid = isakmp->msgid;
+	isakmp_index *index1 = (isakmp_index *)isakmp;
+	uint32_t msgid = isakmp->msgid;
 	struct ph1handle *iph1;
 
 #ifdef HAVE_PRINT_ISAKMP_C
@@ -451,7 +448,7 @@ isakmp_main(msg, remote, local)
 		}
 	}
 
-	iph1 = getph1byindex(index);
+	iph1 = getph1byindex(index1);
 	if (iph1 != NULL) {
 		/* validity check */
 		if (memcmp(&isakmp->r_ck, r_ck0, sizeof(cookie_t)) == 0 &&
@@ -551,7 +548,7 @@ isakmp_main(msg, remote, local)
 			 */
 
 			/* search for phase1 handle by index without r_ck */
-			iph1 = getph1byindex0(index);
+			iph1 = getph1byindex0(index1);
 			if (iph1 == NULL) {
 				/*it must be the 1st message from a initiator.*/
 				if (memcmp(&isakmp->r_ck, r_ck0,
@@ -627,7 +624,7 @@ isakmp_main(msg, remote, local)
 		 * NOTE: We think such informational exchange should be ignored.
 		 */
 		if (iph1 == NULL) {
-			iph1 = getph1byindex0(index);
+			iph1 = getph1byindex0(index1);
 			if (iph1 == NULL) {
 				plog(LLV_ERROR, LOCATION, remote,
 					"unknown Informational "
@@ -768,9 +765,7 @@ isakmp_main(msg, remote, local)
  * main function of phase 1.
  */
 static int
-ph1_main(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ph1_main(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error;
 #ifdef ENABLE_STATS
@@ -960,9 +955,7 @@ ph1_main(iph1, msg)
  * main function of quick mode.
  */
 static int
-quick_main(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg;
+quick_main(struct ph2handle *iph2, vchar_t *msg)
 {
 	struct isakmp *isakmp = (struct isakmp *)msg->v;
 	int error;
@@ -1039,9 +1032,8 @@ quick_main(iph2, msg)
 
 /* new negotiation of phase 1 for initiator */
 struct ph1handle *
-isakmp_ph1begin_i(rmconf, remote, local)
-	struct remoteconf *rmconf;
-	struct sockaddr *remote, *local;
+isakmp_ph1begin_i(struct remoteconf *rmconf,
+    struct sockaddr *remote, struct sockaddr *local)
 {
 	struct ph1handle *iph1;
 #ifdef ENABLE_STATS
@@ -1135,10 +1127,8 @@ isakmp_ph1begin_i(rmconf, remote, local)
 
 /* new negotiation of phase 1 for responder */
 static int
-isakmp_ph1begin_r(msg, remote, local, etype)
-	vchar_t *msg;
-	struct sockaddr *remote, *local;
-	u_int8_t etype;
+isakmp_ph1begin_r(vchar_t *msg, struct sockaddr *remote, struct sockaddr *local,
+    uint8_t etype)
 {
 	struct isakmp *isakmp = (struct isakmp *)msg->v;
 	struct ph1handle *iph1;
@@ -1263,9 +1253,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 /* new negotiation of phase 2 for initiator */
 static int
-isakmp_ph2begin_i(iph1, iph2)
-	struct ph1handle *iph1;
-	struct ph2handle *iph2;
+isakmp_ph2begin_i(struct ph1handle *iph1, struct ph2handle *iph2)
 {
 #ifdef ENABLE_HYBRID
 	if (xauth_check(iph1) != 0) {
@@ -1314,9 +1302,7 @@ isakmp_ph2begin_i(iph1, iph2)
 
 /* new negotiation of phase 2 for responder */
 static int
-isakmp_ph2begin_r(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+isakmp_ph2begin_r(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct isakmp *isakmp = (struct isakmp *)msg->v;
 	struct ph2handle *iph2 = 0;
@@ -1425,10 +1411,7 @@ isakmp_ph2begin_r(iph1, msg)
  * parse ISAKMP payloads, without ISAKMP base header.
  */
 vchar_t *
-isakmp_parsewoh(np0, gen, len)
-	int np0;
-	struct isakmp_gen *gen;
-	int len;
+isakmp_parsewoh(int np0, struct isakmp_gen *gen, int len)
 {
 	u_char np = np0 & 0xff;
 	int tlen, plen;
@@ -1476,7 +1459,7 @@ isakmp_parsewoh(np0, gen, len)
 		p->ptr = gen;
 		p++;
 		if (ep <= p) {
-			int off;
+			off_t off;
 
 			off = p - (struct isakmp_parse_t *)result->v;
 			result = vrealloc(result, result->l * 2);
@@ -1510,12 +1493,11 @@ isakmp_parsewoh(np0, gen, len)
  * parse ISAKMP payloads, including ISAKMP base header.
  */
 vchar_t *
-isakmp_parse(buf)
-	vchar_t *buf;
+isakmp_parse(vchar_t *buf)
 {
 	struct isakmp *isakmp = (struct isakmp *)buf->v;
 	struct isakmp_gen *gen;
-	int tlen;
+	size_t tlen;
 	vchar_t *result;
 	u_char np;
 
@@ -1544,9 +1526,7 @@ isakmp_init()
  * make strings containing i_cookie + r_cookie + msgid
  */
 const char *
-isakmp_pindex(index, msgid)
-	const isakmp_index *index;
-	const u_int32_t msgid;
+isakmp_pindex(const isakmp_index *index1, const uint32_t msgid)
 {
 	static char buf[64];
 	const u_char *p;
@@ -1555,7 +1535,7 @@ isakmp_pindex(index, msgid)
 	memset(buf, 0, sizeof(buf));
 
 	/* copy index */
-	p = (const u_char *)index;
+	p = (const u_char *)index1;
 	for (j = 0, i = 0; i < sizeof(isakmp_index); i++) {
 		snprintf((char *)&buf[j], sizeof(buf) - j, "%02x", p[i]);
 		j += 2;
@@ -1745,9 +1725,7 @@ isakmp_close(int fd)
 }
 
 int
-isakmp_send(iph1, sbuf)
-	struct ph1handle *iph1;
-	vchar_t *sbuf;
+isakmp_send(struct ph1handle *iph1, vchar_t *sbuf)
 {
 	int len = 0;
 	int s;
@@ -1759,7 +1737,7 @@ isakmp_send(iph1, sbuf)
 	/* Check if NON_ESP_MARKER_LEN is already there (happens when resending packets)
 	 */
 	if(extralen == NON_ESP_MARKER_LEN &&
-	   *(u_int32_t *)sbuf->v == 0)
+	   *(uint32_t *)sbuf->v == 0)
 		extralen = 0;
 
 #ifdef ENABLE_FRAG
@@ -1783,7 +1761,7 @@ isakmp_send(iph1, sbuf)
 			    "vbuf allocation failed\n");
 			return -1;
 		}
-		*(u_int32_t *)vbuf->v = 0;
+		*(uint32_t *)vbuf->v = 0;
 		memcpy (vbuf->v + extralen, sbuf->v, sbuf->l);
 		/* ensures that the modified buffer will be sent back to the caller, so
 		 * add_recvdpkt() will add the correct buffer
@@ -1838,8 +1816,7 @@ isakmp_ph1resend_stub(struct sched *p)
 }
 
 static int
-isakmp_ph1resend(iph1)
-	struct ph1handle *iph1;
+isakmp_ph1resend(struct ph1handle *iph1)
 {
 	/* Note: NEVER do the rem/del here, it will be done by the caller or by the _stub function
 	 */
@@ -1875,8 +1852,7 @@ isakmp_ph1resend(iph1)
 }
 
 int
-isakmp_ph1send(iph1)
-	struct ph1handle *iph1;
+isakmp_ph1send(struct ph1handle *iph1)
 {
 	iph1->retry_counter = lcconf->retry_counter;
 	return isakmp_ph1resend(iph1);
@@ -1895,8 +1871,7 @@ isakmp_ph2resend_stub(struct sched *p)
 }
 
 static int
-isakmp_ph2resend(iph2)
-	struct ph2handle *iph2;
+isakmp_ph2resend(struct ph2handle *iph2)
 {
 	/* Note: NEVER do the unbind/rem/del here, it will be done by the caller or by the _stub function
 	 */
@@ -1937,8 +1912,7 @@ isakmp_ph2resend(iph2)
 }
 
 int
-isakmp_ph2send(iph2)
-	struct ph2handle *iph2;
+isakmp_ph2send(struct ph2handle *iph2)
 {
 	iph2->retry_counter = lcconf->retry_counter;
 	return isakmp_ph2resend(iph2);
@@ -1946,16 +1920,14 @@ isakmp_ph2send(iph2)
 
 /* called from scheduler */
 void
-isakmp_ph1dying_stub(p)
-	struct sched *p;
+isakmp_ph1dying_stub(struct sched *p)
 {
 
 	isakmp_ph1dying(container_of(p, struct ph1handle, sce));
 }
 
 void
-isakmp_ph1dying(iph1)
-	struct ph1handle *iph1;
+isakmp_ph1dying(struct ph1handle *iph1)
 {
 	struct ph1handle *new_iph1;
 	struct ph2handle *p;
@@ -1996,15 +1968,13 @@ isakmp_ph1dying(iph1)
 
 /* called from scheduler */
 void
-isakmp_ph1expire_stub(p)
-	struct sched *p;
+isakmp_ph1expire_stub(struct sched *p)
 {
 	isakmp_ph1expire(container_of(p, struct ph1handle, sce));
 }
 
 void
-isakmp_ph1expire(iph1)
-	struct ph1handle *iph1;
+isakmp_ph1expire(struct ph1handle *iph1)
 {
 	char *src, *dst;
 
@@ -2028,16 +1998,14 @@ isakmp_ph1expire(iph1)
 
 /* called from scheduler */
 void
-isakmp_ph1delete_stub(p)
-	struct sched *p;
+isakmp_ph1delete_stub(struct sched *p)
 {
 
 	isakmp_ph1delete(container_of(p, struct ph1handle, sce));
 }
 
 void
-isakmp_ph1delete(iph1)
-	struct ph1handle *iph1;
+isakmp_ph1delete(struct ph1handle *iph1)
 {
 	struct ph2handle *p, *next;
 	struct ph1handle *new_iph1;
@@ -2088,16 +2056,14 @@ isakmp_ph1delete(iph1)
  * expires in the userland.
  */
 void
-isakmp_ph2expire_stub(p)
-	struct sched *p;
+isakmp_ph2expire_stub(struct sched *p)
 {
 
 	isakmp_ph2expire(container_of(p, struct ph2handle, sce));
 }
 
 void
-isakmp_ph2expire(iph2)
-	struct ph2handle *iph2;
+isakmp_ph2expire(struct ph2handle *iph2)
 {
 	char *src, *dst;
 
@@ -2117,16 +2083,14 @@ isakmp_ph2expire(iph2)
 
 /* called from scheduler */
 void
-isakmp_ph2delete_stub(p)
-	struct sched *p;
+isakmp_ph2delete_stub(struct sched *p)
 {
 
 	isakmp_ph2delete(container_of(p, struct ph2handle, sce));
 }
 
 void
-isakmp_ph2delete(iph2)
-	struct ph2handle *iph2;
+isakmp_ph2delete(struct ph2handle *iph2)
 {
 	char *src, *dst;
 
@@ -2154,10 +2118,8 @@ isakmp_ph2delete(iph2)
  * if phase1 has been finished, begin phase2.
  */
 int
-isakmp_post_acquire(iph2, iph1hint, nopassive)
-	struct ph2handle *iph2;
-	struct ph1handle *iph1hint;
-	int nopassive;
+isakmp_post_acquire(struct ph2handle *iph2, struct ph1handle *iph1hint,
+    int nopassive)
 {
 	struct remoteconf *rmconf;
 	struct ph1handle *iph1 = NULL;
@@ -2245,9 +2207,8 @@ isakmp_post_acquire(iph2, iph1hint, nopassive)
 }
 
 int
-isakmp_get_sainfo(iph2, sp_out, sp_in)
-	struct ph2handle *iph2;
-	struct secpolicy *sp_out, *sp_in;
+isakmp_get_sainfo(struct ph2handle *iph2, struct secpolicy *sp_out,
+    struct secpolicy *sp_in)
 {
 	struct remoteconf *conf;
 	uint32_t remoteid = 0;
@@ -2311,8 +2272,7 @@ isakmp_get_sainfo(iph2, sp_out, sp_in)
  * receive GETSPI from kernel.
  */
 int
-isakmp_post_getspi(iph2)
-	struct ph2handle *iph2;
+isakmp_post_getspi(struct ph2handle *iph2)
 {
 #ifdef ENABLE_STATS
 	struct timeval start, end;
@@ -2346,15 +2306,13 @@ isakmp_post_getspi(iph2)
 
 /* called by scheduler */
 void
-isakmp_chkph1there_stub(p)
-	struct sched *p;
+isakmp_chkph1there_stub(struct sched *p)
 {
 	isakmp_chkph1there(container_of(p, struct ph2handle, sce));
 }
 
 void
-isakmp_chkph1there(iph2)
-	struct ph2handle *iph2;
+isakmp_chkph1there(struct ph2handle *iph2)
 {
 	struct ph1handle *iph1;
 
@@ -2413,17 +2371,13 @@ isakmp_chkph1there(iph2)
 
 /* copy variable data into ALLOCATED buffer. */
 caddr_t
-isakmp_set_attr_v(buf, type, val, len)
-	caddr_t buf;
-	int type;
-	caddr_t val;
-	int len;
+isakmp_set_attr_v(caddr_t buf, int type, caddr_t val, int len)
 {
 	struct isakmp_data *data;
 
 	data = (struct isakmp_data *)buf;
-	data->type = htons((u_int16_t)type | ISAKMP_GEN_TLV);
-	data->lorv = htons((u_int16_t)len);
+	data->type = htons((uint16_t)type | ISAKMP_GEN_TLV);
+	data->lorv = htons((uint16_t)len);
 	memcpy(data + 1, val, len);
 
 	return buf + sizeof(*data) + len;
@@ -2431,32 +2385,25 @@ isakmp_set_attr_v(buf, type, val, len)
 
 /* copy fixed length data into ALLOCATED buffer. */
 caddr_t
-isakmp_set_attr_l(buf, type, val)
-	caddr_t buf;
-	int type;
-	u_int32_t val;
+isakmp_set_attr_l(caddr_t buf, int type, uint32_t val)
 {
 	struct isakmp_data *data;
 
 	data = (struct isakmp_data *)buf;
-	data->type = htons((u_int16_t)type | ISAKMP_GEN_TV);
-	data->lorv = htons((u_int16_t)val);
+	data->type = htons((uint16_t)type | ISAKMP_GEN_TV);
+	data->lorv = htons((uint16_t)val);
 
 	return buf + sizeof(*data);
 }
 
 /* add a variable data attribute to the buffer by reallocating it. */
 vchar_t *
-isakmp_add_attr_v(buf0, type, val, len)
-	vchar_t *buf0;
-	int type;
-	caddr_t val;
-	int len;
+isakmp_add_attr_v(vchar_t *buf0, int type, caddr_t val, int len)
 {
 	vchar_t *buf = NULL;
 	struct isakmp_data *data;
-	int tlen;
-	int oldlen = 0;
+	size_t tlen;
+	size_t oldlen = 0;
 
 	tlen = sizeof(*data) + len;
 
@@ -2472,8 +2419,8 @@ isakmp_add_attr_v(buf0, type, val, len)
 	}
 
 	data = (struct isakmp_data *)(buf->v + oldlen);
-	data->type = htons((u_int16_t)type | ISAKMP_GEN_TLV);
-	data->lorv = htons((u_int16_t)len);
+	data->type = htons((uint16_t)type | ISAKMP_GEN_TLV);
+	data->lorv = htons((uint16_t)len);
 	memcpy(data + 1, val, len);
 
 	return buf;
@@ -2481,15 +2428,12 @@ isakmp_add_attr_v(buf0, type, val, len)
 
 /* add a fixed data attribute to the buffer by reallocating it. */
 vchar_t *
-isakmp_add_attr_l(buf0, type, val)
-	vchar_t *buf0;
-	int type;
-	u_int32_t val;
+isakmp_add_attr_l(vchar_t *buf0, int type, uint32_t val)
 {
 	vchar_t *buf = NULL;
 	struct isakmp_data *data;
-	int tlen;
-	int oldlen = 0;
+	size_t tlen;
+	size_t oldlen = 0;
 
 	tlen = sizeof(*data);
 
@@ -2505,8 +2449,8 @@ isakmp_add_attr_l(buf0, type, val)
 	}
 
 	data = (struct isakmp_data *)(buf->v + oldlen);
-	data->type = htons((u_int16_t)type | ISAKMP_GEN_TV);
-	data->lorv = htons((u_int16_t)val);
+	data->type = htons((uint16_t)type | ISAKMP_GEN_TV);
+	data->lorv = htons((uint16_t)val);
 
 	return buf;
 }
@@ -2515,15 +2459,12 @@ isakmp_add_attr_l(buf0, type, val)
  * calculate cookie and set.
  */
 int
-isakmp_newcookie(place, remote, local)
-	caddr_t place;
-	struct sockaddr *remote;
-	struct sockaddr *local;
+isakmp_newcookie(caddr_t place, struct sockaddr *remote, struct sockaddr *local)
 {
 	vchar_t *buf = NULL, *buf2 = NULL;
 	char *p;
-	int blen;
-	int alen;
+	size_t blen;
+	size_t alen;
 	caddr_t sa1, sa2;
 	time_t t;
 	int error = -1;
@@ -2611,9 +2552,7 @@ end:
  * save partner's(payload) data into phhandle.
  */
 int
-isakmp_p2ph(buf, gen)
-	vchar_t **buf;
-	struct isakmp_gen *gen;
+isakmp_p2ph( vchar_t **buf, struct isakmp_gen *gen)
 {
 	/* XXX to be checked in each functions for logging. */
 	if (*buf) {
@@ -2633,11 +2572,10 @@ isakmp_p2ph(buf, gen)
 	return 0;
 }
 
-u_int32_t
-isakmp_newmsgid2(iph1)
-	struct ph1handle *iph1;
+uint32_t
+isakmp_newmsgid2(struct ph1handle *iph1)
 {
-	u_int32_t msgid2;
+	uint32_t msgid2;
 
 	do {
 		msgid2 = eay_random();
@@ -2651,7 +2589,7 @@ isakmp_newmsgid2(iph1)
  */
 static caddr_t
 set_isakmp_header(vchar_t *vbuf, struct ph1handle *iph1, int nptype,
-    u_int8_t etype, u_int8_t flags, u_int32_t msgid)
+    uint8_t etype, uint8_t flags, uint32_t msgid)
 {
 	struct isakmp *isakmp;
 
@@ -2676,10 +2614,7 @@ set_isakmp_header(vchar_t *vbuf, struct ph1handle *iph1, int nptype,
  * set values into allocated buffer of isakmp header for phase 1
  */
 caddr_t
-set_isakmp_header1(vbuf, iph1, nptype)
-	vchar_t *vbuf;
-	struct ph1handle *iph1;
-	int nptype;
+set_isakmp_header1(vchar_t *vbuf, struct ph1handle *iph1, int nptype)
 {
 	return set_isakmp_header (vbuf, iph1, nptype, iph1->etype, iph1->flags, iph1->msgid);
 }
@@ -2688,10 +2623,7 @@ set_isakmp_header1(vbuf, iph1, nptype)
  * set values into allocated buffer of isakmp header for phase 2
  */
 caddr_t
-set_isakmp_header2(vbuf, iph2, nptype)
-	vchar_t *vbuf;
-	struct ph2handle *iph2;
-	int nptype;
+set_isakmp_header2(vchar_t *vbuf, struct ph2handle *iph2, int nptype)
 {
 	return set_isakmp_header (vbuf, iph2->ph1, nptype, ISAKMP_ETYPE_QUICK, iph2->flags, iph2->msgid);
 }
@@ -2700,10 +2632,7 @@ set_isakmp_header2(vbuf, iph2, nptype)
  * set values into allocated buffer of isakmp payload.
  */
 caddr_t
-set_isakmp_payload(buf, src, nptype)
-	caddr_t buf;
-	vchar_t *src;
-	int nptype;
+set_isakmp_payload(caddr_t buf, vchar_t *src, int nptype)
 {
 	struct isakmp_gen *gen;
 	caddr_t p = buf;
@@ -2722,8 +2651,7 @@ set_isakmp_payload(buf, src, nptype)
 }
 
 static int
-etypesw1(etype)
-	int etype;
+etypesw1(int etype)
 {
 	switch (etype) {
 	case ISAKMP_ETYPE_IDENT:
@@ -2739,8 +2667,7 @@ etypesw1(etype)
 }
 
 static int
-etypesw2(etype)
-	int etype;
+etypesw2(int etype)
 {
 	switch (etype) {
 	case ISAKMP_ETYPE_QUICK:
@@ -2754,13 +2681,13 @@ etypesw2(etype)
 #ifdef HAVE_PRINT_ISAKMP_C
 /* for print-isakmp.c */
 char *snapend;
-extern void isakmp_print __P((const u_char *, u_int, const u_char *));
+extern void isakmp_print(const u_char *, u_int, const u_char *);
 
-char *getname __P((const u_char *));
+char *getname(const u_char *);
 #ifdef INET6
-char *getname6 __P((const u_char *));
+char *getname6(const u_char *);
 #endif
-int safeputchar __P((int));
+int safeputchar(int);
 
 /*
  * Return a name for the IP address pointed to by ap.  This address
@@ -2849,7 +2776,7 @@ isakmp_printpacket(msg, from, my, decoded)
 
 	gettimeofday(&tv, NULL);
 	s = tv.tv_sec % 3600;
-	printf("%02d:%02d.%06u ", s / 60, s % 60, (u_int32_t)tv.tv_usec);
+	printf("%02d:%02d.%06u ", s / 60, s % 60, (uint32_t)tv.tv_usec);
 
 	if (from) {
 		if (getnameinfo(from, sysdep_sa_len(from), hostbuf, sizeof(hostbuf),
@@ -2904,12 +2831,10 @@ isakmp_printpacket(msg, from, my, decoded)
 #endif /*HAVE_PRINT_ISAKMP_C*/
 
 int
-copy_ph1addresses(iph1, rmconf, remote, local)
-	struct ph1handle *iph1;
-	struct remoteconf *rmconf;
-	struct sockaddr *remote, *local;
+copy_ph1addresses(struct ph1handle *iph1, struct remoteconf *rmconf,
+    struct sockaddr *remote, struct sockaddr *local)
 {
-	u_int16_t port = 0;
+	uint16_t port = 0;
 
 	/* address portion must be grabbed from real remote address "remote" */
 	iph1->remote = dupsaddr(remote);
@@ -2956,20 +2881,18 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	return 0;
 }
 
+/*ARGSUSED*/
 static int
-nostate1(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+nostate1(struct ph1handle *iph1, vchar_t *msg __unused)
 {
 	plog(LLV_ERROR, LOCATION, iph1->remote, "wrong state %u.\n",
 			iph1->status);
 	return -1;
 }
 
+/*ARGSUSED*/
 static int
-nostate2(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg;
+nostate2(struct ph2handle *iph2, vchar_t *msg __unused)
 {
 	plog(LLV_ERROR, LOCATION, iph2->ph1->remote, "wrong state %u.\n",
 		iph2->status);
@@ -2977,8 +2900,7 @@ nostate2(iph2, msg)
 }
 
 void
-log_ph1established(iph1)
-	const struct ph1handle *iph1;
+log_ph1established(const struct ph1handle *iph1)
 {
 	char *src, *dst;
 
@@ -3004,7 +2926,7 @@ log_ph1established(iph1)
 
 struct payload_list *
 isakmp_plist_append_full (struct payload_list *plist, vchar_t *payload,
-			  u_int8_t payload_type, u_int8_t free_payload)
+			  uint8_t payload_type, uint8_t free_payload)
 {
 	if (! plist) {
 		plist = racoon_malloc (sizeof (struct payload_list));
@@ -3078,11 +3000,8 @@ end:
 
 #ifdef ENABLE_FRAG
 int
-frag_handler(iph1, msg, remote, local)
-	struct ph1handle *iph1;
-	vchar_t *msg;
-	struct sockaddr *remote;
-	struct sockaddr *local;
+frag_handler(struct ph1handle *iph1, vchar_t *msg, struct sockaddr *remote,
+    struct sockaddr *local)
 {
 	vchar_t *newmsg;
 
@@ -3100,9 +3019,7 @@ frag_handler(iph1, msg, remote, local)
 #endif
 
 void
-script_hook(iph1, script)
-	struct ph1handle *iph1;
-	int script;
+script_hook(struct ph1handle *iph1, int script)
 {
 #define IP_MAX 40
 #define PORT_MAX 6
@@ -3178,11 +3095,7 @@ out:
 }
 
 int
-script_env_append(envp, envc, name, value)
-	char ***envp;
-	int *envc;
-	char *name;
-	char *value;
+script_env_append(char ***envp, int *envc, char *name, char *value)
 {
 	char *envitem;
 	char **newenvp;
@@ -3214,10 +3127,7 @@ script_env_append(envp, envc, name, value)
 }
 
 int
-script_exec(script, name, envp)
-	char *script;
-	int name;
-	char *const envp[];
+script_exec(char *script, int name, char *const envp[])
 {
 	char *argv[] = { NULL, NULL, NULL };
 
@@ -3232,12 +3142,10 @@ script_exec(script, name, envp)
 		    "execve(\"%s\") failed: %s\n",
 		    argv[0], strerror(errno));
 		_exit(1);
-		break;
 	case -1:
 		plog(LLV_ERROR, LOCATION, NULL,
 		    "Cannot fork: %s\n", strerror(errno));
 		return -1;
-		break;
 	default:
 		break;
 	}
@@ -3246,8 +3154,7 @@ script_exec(script, name, envp)
 }
 
 void
-purge_remote(iph1)
-	struct ph1handle *iph1;
+purge_remote(struct ph1handle *iph1)
 {
 	vchar_t *buf = NULL;
 	struct sadb_msg *msg, *next, *end;
@@ -3397,13 +3304,11 @@ purge_remote(iph1)
 }
 
 void
-delete_spd(iph2, created)
-	struct ph2handle *iph2;
- 	u_int64_t created;
+delete_spd(struct ph2handle *iph2, u_int64_t created)
 {
 	struct policyindex spidx;
 	struct sockaddr_storage addr;
-	u_int8_t pref;
+	uint8_t pref;
 	struct sockaddr *src;
 	struct sockaddr *dst;
 	int error;
@@ -3664,9 +3569,8 @@ purge:
 
 
 #ifdef INET6
-u_int32_t
-setscopeid(sp_addr0, sa_addr0)
-	struct sockaddr *sp_addr0, *sa_addr0;
+uint32_t
+setscopeid(struct sockaddr *sp_addr0, struct sockaddr *sa_addr0)
 {
 	struct sockaddr_in6 *sp_addr, *sa_addr;
 
@@ -3682,13 +3586,13 @@ setscopeid(sp_addr0, sa_addr0)
 	if (sa_addr->sin6_family != AF_INET6) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"can't get scope ID: family mismatch\n");
-		return -1;
+		return (uint32_t)-1;
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&sa_addr->sin6_addr)) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"scope ID is not supported except of lladdr.\n");
-		return -1;
+		return (uint32_t)-1;
 	}
 
 	sp_addr->sin6_scope_id = sa_addr->sin6_scope_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.35 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: session.c,v 1.36 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -110,11 +110,11 @@ struct fd_monitor {
 
 #define NUM_PRIORITIES 2
 
-static void close_session __P((void));
-static void init_signal __P((void));
-static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
-static void check_sigreq __P((void));
-static int close_sockets __P((void));
+static void close_session(void);
+static void init_signal(void);
+static int set_signal(int sig, RETSIGTYPE (*func)(int));
+static void check_sigreq(void);
+static int close_sockets(void);
 
 static fd_set preset_mask, active_mask;
 static struct fd_monitor fd_monitors[FD_SETSIZE];
@@ -283,7 +283,7 @@ session(void)
 	for (i = 0; i <= NSIG; i++)
 		sigreq[i] = 0;
 
-	while (1) {
+	for (;;) {
 		/*
 		 * asynchronous requests via signal.
 		 * make sure to reset sigreq to 0.
@@ -365,8 +365,7 @@ static int signals[] = {
  * main loop in session().
  */
 RETSIGTYPE
-signal_handler(sig)
-	int sig;
+signal_handler(int sig)
 {
 	sigreq[sig] = 1;
 }
@@ -506,9 +505,7 @@ init_signal()
 }
 
 static int
-set_signal(sig, func)
-	int sig;
-	RETSIGTYPE (*func) __P((int));
+set_signal(int sig, RETSIGTYPE (*func)(int))
 {
 	struct sigaction sa;
 
@@ -526,7 +523,7 @@ set_signal(sig, func)
 }
 
 static int
-close_sockets()
+close_sockets(void)
 {
 	myaddr_close();
 	pfkey_close(lcconf->sock_pfkey);

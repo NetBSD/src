@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.6 2015/05/19 15:16:00 christos Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
@@ -449,7 +449,7 @@ int
 gssapi_get_itokens(struct ph1handle *iph1, vchar_t **tokens)
 {
 	struct gssapi_ph1_state *gps;
-	int len, i;
+	size_t len, i;
 	vchar_t *toks;
 	char *p;
 
@@ -484,7 +484,7 @@ int
 gssapi_get_rtokens(struct ph1handle *iph1, vchar_t **tokens)
 {
 	struct gssapi_ph1_state *gps;
-	int len, i;
+	size_t len, i;
 	vchar_t *toks;
 	char *p;
 

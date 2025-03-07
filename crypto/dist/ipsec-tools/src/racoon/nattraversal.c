@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.15 2018/05/19 18:51:59 maxv Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.16 2025/03/07 15:55:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -188,7 +188,7 @@ natt_compare_addr_hash (struct ph1handle *iph1, vchar_t *natd_received,
 			int natd_seq)
 {
   vchar_t *natd_computed;
-  u_int32_t flag;
+  uint32_t flag;
   int verified = 0;
 
   if (iph1->rmconf != NULL &&
@@ -307,8 +307,9 @@ natt_float_ports(struct ph1handle *iph1)
 	natt_keepalive_add_ph1(iph1);
 }
 
+/*ARGSUSED*/
 static int
-natt_is_enabled(struct remoteconf *rmconf, void *args)
+natt_is_enabled(struct remoteconf *rmconf, void *args __unused)
 {
 	if (rmconf->nat_traversal)
 		return 1;
@@ -353,11 +354,12 @@ natt_keepalive_delete (struct natt_ka_addrs *ka)
 }
 
 /* NAT keepalive functions */
+/*ARGSUSED*/
 static void
-natt_keepalive_send (struct sched *param)
+natt_keepalive_send (struct sched *param __unused)
 {
   struct natt_ka_addrs	*ka, *next = NULL;
-  char keepalive_packet[] = { 0xff };
+  char keepalive_packet[] = { (char)0xff };
   size_t len;
   int s;
 
@@ -373,7 +375,7 @@ natt_keepalive_send (struct sched *param)
 	  saddr2str_fromto("%s->%s", ka->src, ka->dst));
     len = sendfromto(s, keepalive_packet, sizeof (keepalive_packet),
 		     ka->src, ka->dst, 1);
-    if (len == -1)
+    if (len == (size_t)-1)
       plog(LLV_ERROR, LOCATION, NULL, "KA: sendfromto failed: %s\n",
 	   strerror (errno));
   }
@@ -475,8 +477,9 @@ natt_keepalive_remove (struct sockaddr *src, struct sockaddr *dst)
   }
 }
 
+/*ARGSUSED*/
 static int
-natt_enabled_in_rmconf_stub (struct remoteconf *rmconf, void *data)
+natt_enabled_in_rmconf_stub (struct remoteconf *rmconf, void *data __unused)
 {
   return rmconf->nat_traversal ? 1 : 0;
 }

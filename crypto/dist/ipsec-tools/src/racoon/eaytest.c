@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.10 2010/01/17 23:02:48 wiz Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.11 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: eaytest.c,v 1.22 2005/06/19 18:02:54 manubsd Exp */
 
@@ -71,19 +71,19 @@
 
 /* prototype */
 
-static vchar_t *pem_read_buf __P((char *));
-void Usage __P((void));
+static vchar_t *pem_read_buf(char *);
+void Usage(void);
 
-int rsatest __P((int, char **));
-int ciphertest __P((int, char **));
-int hmactest __P((int, char **));
-int sha1test __P((int, char **));
-int md5test __P((int, char **));
-int dhtest __P((int, char **));
-int bntest __P((int, char **));
+int rsatest(int, char **);
+int ciphertest(int, char **);
+int hmactest(int, char **);
+int sha1test(int, char **);
+int md5test(int, char **);
+int dhtest(int, char **);
+int bntest(int, char **);
 #ifndef CERTTEST_BROKEN
-static char **getcerts __P((char *));
-int certtest __P((int, char **));
+static char **getcerts(char *);
+int certtest(int, char **);
 #endif
 
 /* test */
@@ -992,7 +992,7 @@ bntest(ac, av)
 
 	printf("\n**Test for generate a random number.**\n");
 
-	rn = eay_set_random((u_int32_t)96);
+	rn = eay_set_random((uint32_t)96);
 	PVDUMP(rn);
 	vfree(rn);
 
@@ -1001,7 +1001,7 @@ bntest(ac, av)
 
 struct {
 	char *name;
-	int (*func) __P((int, char **));
+	int (*func)(int, char **);
 } func[] = {
 	{ "random", bntest, },
 	{ "dh", dhtest, },

@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.y,v 1.8 2022/01/23 14:55:28 christos Exp $	*/
+/*	$NetBSD: prsa_par.y,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: prsa_par.y,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -391,7 +391,7 @@ param:
 int prsaparse(void);
 
 int
-prsa_parse_file(struct genlist *list, char *fname, enum rsa_key_type type)
+prsa_parse_file(struct genlist *list, const char *fname, enum rsa_key_type type)
 {
 	FILE *fp = NULL;
 	int ret;
@@ -417,7 +417,7 @@ prsa_parse_file(struct genlist *list, char *fname, enum rsa_key_type type)
 		return -1;
 	prsain = fp;
 	prsa_cur_lineno = 1;
-	prsa_cur_fname = fname;
+	prsa_cur_fname = (char *)(intptr_t)(fname);
 	prsa_cur_list = list;
 	prsa_cur_type = type;
 	rsa_cur = RSA_new();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.53 2020/11/25 18:11:00 bouyer Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.54 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -143,14 +143,14 @@ static struct sainfo *cur_sainfo = NULL;
 static int cur_algclass = 0;
 static int oldloglevel = LLV_BASE;
 
-static struct secprotospec *newspspec __P((void));
-static void insspspec __P((struct remoteconf *, struct secprotospec *));
-void dupspspec_list __P((struct remoteconf *dst, struct remoteconf *src));
-void flushspspec __P((struct remoteconf *));
-static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
+static struct secprotospec *newspspec(void);
+static void insspspec(struct remoteconf *, struct secprotospec *);
+void dupspspec_list(struct remoteconf *dst, struct remoteconf *src);
+void flushspspec(struct remoteconf *);
+static void adminsock_conf(vchar_t *, vchar_t *, vchar_t *, int);
 
-static int set_isakmp_proposal __P((struct remoteconf *));
-static void clean_tmpalgtype __P((void));
+static int set_isakmp_proposal(struct remoteconf *);
+static void clean_tmpalgtype(void);
 static int expand_isakmpspec __P((int, int, int *,
 	int, int, time_t, int, int, int, char *, struct remoteconf *));
 

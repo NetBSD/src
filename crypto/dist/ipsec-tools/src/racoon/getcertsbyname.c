@@ -1,4 +1,4 @@
-/*	$NetBSD: getcertsbyname.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: getcertsbyname.c,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 
@@ -63,13 +63,11 @@
 /* XXX should it use ci_errno to hold errno instead of h_errno ? */
 extern int h_errno;
 
-static struct certinfo *getnewci __P((int, int, int, int, int, 
-			unsigned char *));
+static struct certinfo *getnewci(int, int, int, int, int, unsigned char *);
 
 static struct certinfo *
-getnewci(qtype, keytag, algorithm, flags, certlen, cert)
-	int qtype, keytag, algorithm, flags, certlen;
-	unsigned char *cert;
+getnewci(int qtype, int keytag, int algorithm, int flags, int certlen,
+    unsigned char *cert)
 {
 	struct certinfo *res;
 
@@ -94,8 +92,7 @@ getnewci(qtype, keytag, algorithm, flags, certlen, cert)
 }
 
 void
-freecertinfo(ci)
-	struct certinfo *ci;
+freecertinfo(struct certinfo *ci)
 {
 	struct certinfo *next;
 
@@ -118,9 +115,7 @@ freecertinfo(ci)
 #endif
 #if defined(HAVE_LWRES_GETRRSETBYNAME) || defined(AHVE_GETRRSETBYNAME)
 int
-getcertsbyname(name, res)
-	char *name;
-	struct certinfo **res;
+getcertsbyname(char *name, struct certinfo **res)
 {
 	int rdlength;
 	char *cp;
@@ -201,9 +196,7 @@ end:
 }
 #else	/*!HAVE_LWRES_GETRRSETBYNAME*/
 int
-getcertsbyname(name, res)
-	char *name;
-	struct certinfo **res;
+getcertsbyname(char *name, struct certinfo **res)
 {
 	unsigned char *answer = NULL, *p;
 	int buflen, anslen, len;

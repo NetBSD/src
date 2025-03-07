@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.11 2018/05/19 19:47:47 maxv Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.12 2025/03/07 15:55:28 christos Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -83,21 +83,20 @@ static char *strmon[12] = {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-static char *str2tmx __P((char *, struct tm *));
-static int str2num __P((char *, int));
+static char *str2tmx(char *, struct tm *);
+static int str2num(char *, int);
 
 /*
  * output the sa parameter.
  */
 int
-backupsa_to_file(sa_args)
-	struct pfkey_send_sa_args *sa_args;
+backupsa_to_file(struct pfkey_send_sa_args *sa_args)
 {
 	char buf[1024];
 	struct tm *tm;
 	time_t t;
 	char *p, *k;
-	int len, l, i;
+	int i, l, len;
 	FILE *fp;
 
 	p = buf;
@@ -237,31 +236,31 @@ backupsa_from_file()
 		created = mktime(&tm);
 		p++;
 
-		for (q = p; *q != '\0' && !isspace((int)*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		if ((sa_args.src = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
-		for (q = p; *q != '\0' && !isspace((int)*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		if ((sa_args.dst = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
-#define GETNEXTNUM(value, function) 				\
-do { 								\
-	char *y; 						\
-	for (q = p; *q != '\0' && !isspace((int)*q); q++) 	\
-		; 						\
-	*q = '\0'; 						\
-	(value) = function(p, &y, 10); 				\
-	if ((value) == 0 && *y != '\0') 			\
-		goto next; 					\
-	p = q + 1; 						\
-} while (/*CONSTCOND*/0);
+#define GETNEXTNUM(value, function) 					\
+do { 									\
+	char *y; 							\
+	for (q = p; *q != '\0' && !isspace((unsigned char )*q); q++) 	\
+		; 							\
+	*q = '\0'; 							\
+	(value) = function(p, &y, 10); 					\
+	if ((value) == 0 && *y != '\0') 				\
+		goto next; 						\
+	p = q + 1; 							\
+} while (/*CONSTCOND*/0)
 
 		GETNEXTNUM(sa_args.satype, strtoul);
 		GETNEXTNUM(sa_args.spi, strtoul);
@@ -425,15 +424,13 @@ str2tmx(char *p, struct tm *tm)
 }
 
 static int
-str2num(p, len)
-	char *p;
-	int len;
+str2num(char *p, int len)
 {
 	int res, i;
 
 	res = 0;
         for (i = len; i > 0; i--) {
-		if (!isdigit((int)*p))
+		if (!isdigit((unsigned char)*p))
 			return -1;
 		res *= 10;
 		res += *p - '0';
@@ -446,7 +443,7 @@ str2num(p, len)
 #ifdef TEST
 #include <stdio.h>
 int
-main()
+main(void)
 {
 	struct tm tm;
 	time_t t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.26 2017/01/24 19:23:56 christos Exp $	*/
+/*	$NetBSD: handler.h,v 1.27 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -129,15 +129,15 @@ struct ph1handle {
 	vchar_t *authstr;		/* place holder of string for auth. */
 					/* for example pre-shared key */
 
-	u_int8_t version;		/* ISAKMP version */
-	u_int8_t etype;			/* Exchange type actually for use */
-	u_int8_t flags;			/* Flags */
-	u_int32_t msgid;		/* message id */
+	uint8_t version;		/* ISAKMP version */
+	uint8_t etype;			/* Exchange type actually for use */
+	uint8_t flags;			/* Flags */
+	uint32_t msgid;		/* message id */
 
-	u_int32_t vendorid_mask;	/* bitmask of received supported vendor ids*/
+	uint32_t vendorid_mask;	/* bitmask of received supported vendor ids*/
 #ifdef ENABLE_NATT
 	struct ph1natt_options *natt_options;	/* Selected NAT-T IKE version */
-	u_int32_t natt_flags;		/* NAT-T related flags */
+	uint32_t natt_flags;		/* NAT-T related flags */
 #endif
 #ifdef ENABLE_FRAG
 	int frag;			/* IKE phase 1 fragmentation */
@@ -203,13 +203,13 @@ struct ph1handle {
 
 #ifdef ENABLE_DPD
 	int		dpd_support;	/* Does remote supports DPD ? */
-	u_int32_t	dpd_last_ack;
-	u_int32_t	dpd_seq;		/* DPD seq number to receive */
-	u_int8_t	dpd_fails;		/* number of failures */
+	uint32_t	dpd_last_ack;
+	uint32_t	dpd_seq;		/* DPD seq number to receive */
+	uint8_t	dpd_fails;		/* number of failures */
 	struct sched	dpd_r_u;
 #endif
 
-	u_int32_t msgid2;		/* msgid counter for Phase 2 */
+	uint32_t msgid2;		/* msgid counter for Phase 2 */
 	int ph2cnt;	/* the number which is negotiated by this phase 1 */
 	LIST_HEAD(_ph2ofph1_, ph2handle) ph2tree;
 
@@ -287,10 +287,10 @@ struct ph2handle {
 	struct sockaddr *natoa_dst;	/* peer's view of his address */
 #endif
 
-	u_int32_t spid;			/* policy id by kernel */
+	uint32_t spid;			/* policy id by kernel */
 
 	int status;			/* ipsec sa status */
-	u_int8_t side;			/* INITIATOR or RESPONDER */
+	uint8_t side;			/* INITIATOR or RESPONDER */
 
 	struct sched sce;		/* schedule for expire */
 	struct sched scr;		/* schedule for resend */
@@ -302,27 +302,27 @@ struct ph2handle {
 	int retry_checkph1;		/* counter to wait phase 1 finished. */
 					/* NOTE: actually it's timer. */
 
-	u_int32_t seq;			/* sequence number used by PF_KEY */
+	uint32_t seq;			/* sequence number used by PF_KEY */
 			/*
 			 * NOTE: In responder side, we can't identify each SAs
 			 * with same destination address for example, when
 			 * socket based SA is required.  So we set a identifier
 			 * number to "seq", and sent kernel by pfkey.
 			 */
-	u_int8_t satype;		/* satype in PF_KEY */
+	uint8_t satype;		/* satype in PF_KEY */
 			/*
 			 * saved satype in the original PF_KEY request from
 			 * the kernel in order to reply a error.
 			 */
 
-	u_int8_t flags;			/* Flags for phase 2 */
-	u_int32_t msgid;		/* msgid for phase 2 */
+	uint8_t flags;			/* Flags for phase 2 */
+	uint32_t msgid;		/* msgid for phase 2 */
 
 	struct sainfo *sainfo;		/* place holder of sainfo */
 	struct saprop *proposal;	/* SA(s) proposal. */
 	struct saprop *approval;	/* SA(s) approved. */
-	u_int32_t lifetime_secs;	/* responder lifetime (seconds) */
-	u_int32_t lifetime_kb;		/* responder lifetime (kbytes) */
+	uint32_t lifetime_secs;	/* responder lifetime (seconds) */
+	uint32_t lifetime_kb;		/* responder lifetime (kbytes) */
 	caddr_t spidx_gen;		/* policy from peer's proposal */
 
 	struct dhgroup *pfsgrp;		/* DH; prime number */
@@ -358,7 +358,7 @@ struct ph2handle {
 
 /* For limiting enumeration of ph2 tree */
 struct ph2selector {
-	u_int32_t spid;
+	uint32_t spid;
 	struct sockaddr *src;
 	struct sockaddr *dst;
 };
@@ -450,8 +450,8 @@ struct ph1dump {
 	int side;
 	struct sockaddr_storage remote;
 	struct sockaddr_storage local;
-	u_int8_t version;
-	u_int8_t etype;
+	uint8_t version;
+	uint8_t etype;
 	time_t created;
 	int ph2cnt;
 };
@@ -461,77 +461,71 @@ struct ph1handle;
 struct ph2handle;
 struct policyindex;
 
-extern struct ph1handle *getph1byindex __P((isakmp_index *));
-extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
+extern struct ph1handle *getph1byindex(isakmp_index *);
+extern struct ph1handle *getph1byindex0(isakmp_index *);
 
-extern int enumph1 __P((struct ph1selector *ph1sel,
-			int (* enum_func)(struct ph1handle *iph1, void *arg),
-			void *enum_arg));
+extern int enumph1(struct ph1selector *ph1sel,
+    int (* enum_func)(struct ph1handle *iph1, void *arg), void *enum_arg);
 
 #define GETPH1_F_ESTABLISHED		0x0001
 
-extern struct ph1handle *getph1 __P((struct ph1handle *ph1hint,
-				     struct sockaddr *local,
-				     struct sockaddr *remote,
-				     int flags));
+extern struct ph1handle *getph1(struct ph1handle *ph1hint,
+    struct sockaddr *local, struct sockaddr *remote, int flags);
 
 #define getph1byaddr(local, remote, est) \
-	getph1(NULL, local, remote, est ? GETPH1_F_ESTABLISHED : 0)
+	getph1(NULL, local, remote, /*CONSTCOND*/est ? GETPH1_F_ESTABLISHED : 0)
 #define getph1bydstaddr(remote) \
 	getph1(NULL, NULL, remote, 0)
 
 #ifdef ENABLE_HYBRID
-struct ph1handle *getph1bylogin __P((char *));
-int purgeph1bylogin __P((char *));
+struct ph1handle *getph1bylogin(char *);
+int purgeph1bylogin(char *);
 #endif
-extern void migrate_ph12 __P((struct ph1handle *old_iph1, struct ph1handle *new_iph1));
-extern void migrate_dying_ph12 __P((struct ph1handle *iph1));
-extern vchar_t *dumpph1 __P((void));
-extern struct ph1handle *newph1 __P((void));
-extern void delph1 __P((struct ph1handle *));
-extern int insph1 __P((struct ph1handle *));
-extern void remph1 __P((struct ph1handle *));
-extern int resolveph1rmconf __P((struct ph1handle *));
-extern void flushph1 __P((void));
-extern void initph1tree __P((void));
-extern int ph1_rekey_enabled __P((struct ph1handle *));
+extern void migrate_ph12(struct ph1handle *old_iph1, struct ph1handle *new_iph1);
+extern void migrate_dying_ph12(struct ph1handle *iph1);
+extern vchar_t *dumpph1(void);
+extern struct ph1handle *newph1(void);
+extern void delph1(struct ph1handle *);
+extern int insph1(struct ph1handle *);
+extern void remph1(struct ph1handle *);
+extern int resolveph1rmconf(struct ph1handle *);
+extern void flushph1(void);
+extern void initph1tree(void);
+extern int ph1_rekey_enabled(struct ph1handle *);
 
-extern int enumph2 __P((struct ph2selector *ph2sel,
-			int (* enum_func)(struct ph2handle *iph2, void *arg),
-			void *enum_arg));
-extern struct ph2handle *getph2byseq __P((u_int32_t));
-extern struct ph2handle *getph2bysaddr __P((struct sockaddr *,
-	struct sockaddr *));
-extern struct ph2handle *getph2bymsgid __P((struct ph1handle *, u_int32_t));
-extern struct ph2handle *getph2byid __P((struct sockaddr *,
-	struct sockaddr *, u_int32_t));
-extern struct ph2handle *getph2bysaidx __P((struct sockaddr *,
-	struct sockaddr *, u_int, u_int32_t));
-extern struct ph2handle *newph2 __P((void));
-extern void initph2 __P((struct ph2handle *));
-extern void delph2 __P((struct ph2handle *));
-extern int insph2 __P((struct ph2handle *));
-extern void remph2 __P((struct ph2handle *));
-extern void flushph2 __P((void));
-extern void deleteallph2 __P((struct sockaddr *, struct sockaddr *, u_int));
-extern void initph2tree __P((void));
+extern int enumph2(struct ph2selector *ph2sel,
+    int (* enum_func)(struct ph2handle *iph2, void *arg), void *enum_arg);
+extern struct ph2handle *getph2byseq(uint32_t);
+extern struct ph2handle *getph2bysaddr(struct sockaddr *, struct sockaddr *);
+extern struct ph2handle *getph2bymsgid(struct ph1handle *, uint32_t);
+extern struct ph2handle *getph2byid(struct sockaddr *,
+    struct sockaddr *, uint32_t);
+extern struct ph2handle *getph2bysaidx(struct sockaddr *, struct sockaddr *,
+    u_int, uint32_t);
+extern struct ph2handle *newph2(void);
+extern void initph2(struct ph2handle *);
+extern void delph2(struct ph2handle *);
+extern int insph2(struct ph2handle *);
+extern void remph2(struct ph2handle *);
+extern void flushph2(void);
+extern void deleteallph2(struct sockaddr *, struct sockaddr *, u_int);
+extern void initph2tree(void);
 
-extern void bindph12 __P((struct ph1handle *, struct ph2handle *));
-extern void unbindph12 __P((struct ph2handle *));
+extern void bindph12(struct ph1handle *, struct ph2handle *);
+extern void unbindph12(struct ph2handle *);
 
-extern struct contacted *getcontacted __P((struct sockaddr *));
-extern int inscontacted __P((struct sockaddr *));
-extern void remcontacted __P((struct sockaddr *));
-extern void initctdtree __P((void));
+extern struct contacted *getcontacted(struct sockaddr *);
+extern int inscontacted(struct sockaddr *);
+extern void remcontacted(struct sockaddr *);
+extern void initctdtree(void);
 
-extern int check_recvdpkt __P((struct sockaddr *,
-	struct sockaddr *, vchar_t *));
-extern int add_recvdpkt __P((struct sockaddr *, struct sockaddr *,
-	vchar_t *, vchar_t *));
-extern void init_recvdpkt __P((void));
+extern int check_recvdpkt(struct sockaddr *, struct sockaddr *, vchar_t *);
+extern int add_recvdpkt(struct sockaddr *, struct sockaddr *, vchar_t *,
+    vchar_t *);
+extern void init_recvdpkt(void);
 
 #ifdef ENABLE_HYBRID
-extern int exclude_cfg_addr __P((const struct sockaddr *));
+extern int exclude_cfg_addr(const struct sockaddr *);
 #endif
 
 extern int revalidate_ph12(void);

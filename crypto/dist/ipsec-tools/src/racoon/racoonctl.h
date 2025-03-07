@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: racoonctl.h,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: racoonctl.h,v 1.3 2005/06/19 22:37:47 manubsd Exp */
 
@@ -36,13 +36,13 @@
 
 /* bumped on any change to the interface */
 #define RACOONCTL_INTERFACE	20050619
-extern u_int32_t racoonctl_interface;
+extern uint32_t racoonctl_interface;
 
 /* bumped when introducing changes that break backward compatibility */
 #define RACOONCTL_INTERFACE_MAJOR	1	
-extern u_int32_t racoonctl_interface_major;
+extern uint32_t racoonctl_interface_major;
 
-extern u_int32_t loglevel;
+extern uint32_t loglevel;
 
 int com_init(void);
 int com_send(vchar_t *);

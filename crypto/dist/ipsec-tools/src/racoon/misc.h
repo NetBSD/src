@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.6 2008/07/15 00:47:09 mgrooms Exp $	*/
+/*	$NetBSD: misc.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: misc.h,v 1.9 2006/04/06 14:00:06 manubsd Exp */
 
@@ -42,15 +42,15 @@
 #define LOCATION        debug_location(__FILE__, __LINE__, NULL)
 #endif
 
-extern int racoon_hexdump __P((void *, size_t));
-extern char *bit2str __P((int, int));
-extern void *get_newbuf __P((void *, size_t));
-extern const char *debug_location __P((const char *, int, const char *));
-extern int getfsize __P((char *));
+extern int racoon_hexdump(void *, size_t);
+extern char *bit2str(int, int);
+extern void *get_newbuf(void *, size_t);
+extern const char *debug_location(const char *, int, const char *);
+extern int getfsize(char *);
 struct timeval;
-extern double timedelta __P((struct timeval *, struct timeval *));
-char *strdup __P((const char *));
-extern void close_on_exec __P((int fd));
+extern double timedelta(struct timeval *, struct timeval *);
+char *strdup(const char *);
+extern void close_on_exec(int fd);
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define RACOON_TAILQ_FOREACH_REVERSE(var, head, headname ,field)	\

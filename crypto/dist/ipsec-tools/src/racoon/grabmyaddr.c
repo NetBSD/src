@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.40 2023/02/27 13:39:09 kardel Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.41 2025/03/07 15:55:29 christos Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -67,9 +67,9 @@
 #include "gcmalloc.h"
 #include "nattraversal.h"
 
-static int kernel_receive __P((void *ctx, int fd));
-static int kernel_open_socket __P((void));
-static void kernel_sync __P((void));
+static int kernel_receive(void *ctx, int fd);
+static int kernel_open_socket(void);
+static void kernel_sync(void);
 
 struct myaddr {
 	LIST_ENTRY(myaddr) chain;
@@ -200,15 +200,13 @@ myaddr_flush_list(struct _myaddr_list_ *list)
 }
 
 void
-myaddr_flush()
+myaddr_flush(void)
 {
 	myaddr_flush_list(&configured);
 }
 
 int
-myaddr_listen(addr, udp_encap)
-	struct sockaddr *addr;
-	int udp_encap;
+myaddr_listen(struct sockaddr *addr, int udp_encap)
 {
 	struct myaddr *my;
 
@@ -249,8 +247,7 @@ myaddr_sync()
 }
 
 int
-myaddr_getfd(addr)
-        struct sockaddr *addr;
+myaddr_getfd(struct sockaddr *addr)
 {
 	struct myaddr *my;
 
@@ -263,8 +260,7 @@ myaddr_getfd(addr)
 }
 
 int
-myaddr_getsport(addr)
-	struct sockaddr *addr;
+myaddr_getsport(struct sockaddr *addr)
 {
 	struct myaddr *my;
 	int port = 0, wport;
@@ -693,7 +689,7 @@ kernel_sync()
 static size_t
 parse_address(caddr_t start, caddr_t end, struct sockaddr_storage *dest)
 {
-	int len;
+	size_t len;
 
 	if (start >= end)
 		return 0;
@@ -709,11 +705,8 @@ parse_address(caddr_t start, caddr_t end, struct sockaddr_storage *dest)
 }
 
 static void
-parse_addresses(start, end, flags, addr)
-	caddr_t start;
-	caddr_t end;
-	int flags;
-	struct sockaddr_storage *addr;
+parse_addresses(caddr_t start, caddr_t end, int flags,
+    struct sockaddr_storage *addr)
 {
 	memset(addr, 0, sizeof(*addr));
 	if (flags & RTA_DST)
@@ -743,12 +736,12 @@ kernel_handle_message(caddr_t msg)
 
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
-		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
+		parse_addresses((caddr_t)(ifa + 1), msg + ifa->ifam_msglen,
 				ifa->ifam_addrs, &addr);
 		myaddr_open_all_configured((struct sockaddr *) &addr);
 		break;
 	case RTM_DELADDR:
-		parse_addresses(ifa + 1, msg + ifa->ifam_msglen,
+		parse_addresses((caddr_t)(ifa + 1), msg + ifa->ifam_msglen,
 				ifa->ifam_addrs, &addr);
 		myaddr_close_all_open((struct sockaddr *) &addr);
 		break;
@@ -786,14 +779,13 @@ kernel_handle_message(caddr_t msg)
 	}
 }
 
+/*ARGSUSED*/
 static int
-kernel_receive(ctx, fd)
-	void *ctx;
-	int fd;
+kernel_receive(void *ctx __unused, int fd)
 {
 	char buf[16*1024];
 	struct rt_msghdr *rtm = (struct rt_msghdr *) buf;
-	int len;
+	ssize_t len;
 
 	len = read(fd, &buf, sizeof(buf));
 	if (len <= 0) {

@@ -1,16 +1,8 @@
-/*	$NetBSD: gnuc.h,v 1.5 2022/04/21 19:14:46 rillig Exp $	*/
+/*	$NetBSD: gnuc.h,v 1.6 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: gnuc.h,v 1.4 2004/11/18 15:14:44 ludvigm Exp */
 
-/* Define __P() macro, if necessary */
-#undef __P
-#ifndef __P
-#if __STDC__
-#define __P(protos) protos
-#else
-#define __P(protos) ()
-#endif
-#endif
+/* Define macro, if necessary */
 
 /* inline foo */
 #if defined(__GNUC__) || defined(lint)

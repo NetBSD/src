@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_newg.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_newg.c,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: isakmp_newg.c,v 1.10 2002/09/27 05:55:52 itojun Exp $	*/
 
@@ -65,10 +65,9 @@
 /*
  * New group mode as responder
  */
+/*ARGSUSED*/
 int
-isakmp_newgroup_r(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+isakmp_newgroup_r(struct ph1handle *iph1 __unused, vchar_t *msg __unused)
 {
 #if 0
 	struct isakmp *isakmp = (struct isakmp *)msg->v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.c,v 1.11 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: evt.c,v 1.12 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
@@ -96,11 +96,7 @@ static struct {
 };
 
 static void
-evt_push(src, dst, type, optdata)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	int type;
-	vchar_t *optdata;
+evt_push(struct sockaddr_storage *src, struct sockaddr_storage *dst, int type, vchar_t *optdata)
 {
 	struct evtdump *evtdump;
 	struct evt *evt;
@@ -157,9 +153,9 @@ evt_push(src, dst, type, optdata)
 	}
 
 	if (src)
-		memcpy(&evtdump->src, src, sysdep_sa_len(src));
+		memcpy(&evtdump->src, src, sysdep_sa_len((struct sockaddr *)src));
 	if (dst)
-		memcpy(&evtdump->dst, dst, sysdep_sa_len(dst));
+		memcpy(&evtdump->dst, dst, sysdep_sa_len((struct sockaddr *)dst));
 	evtdump->len = len;
 	evtdump->type = type;
 	time(&evtdump->timestamp);
@@ -256,8 +252,9 @@ evt_unsubscribe(struct evt_listener *l)
 	racoon_free(l);
 }
 
+/*ARGSUSED*/
 static int
-evt_unsubscribe_cb(void *ctx, int fd)
+evt_unsubscribe_cb(void *ctx, int fd __unused)
 {
 	evt_unsubscribe((struct evt_listener *) ctx);
 	return 0;
@@ -280,9 +277,7 @@ evtmsg_broadcast(const struct evt_listener_list *ll, struct evt_message *e)
 }
 
 void
-evt_generic(type, optdata)
-	int type;
-	vchar_t *optdata;
+evt_generic(int type, vchar_t *optdata)
 {
 	struct evt_message *e;
 
@@ -296,10 +291,7 @@ evt_generic(type, optdata)
 }
 
 void
-evt_phase1(ph1, type, optdata)
-	const struct ph1handle *ph1;
-	int type;
-	vchar_t *optdata;
+evt_phase1(const struct ph1handle *ph1, int type, vchar_t *optdata)
 {
 	struct evt_message *e;
 
@@ -319,10 +311,7 @@ evt_phase1(ph1, type, optdata)
 }
 
 void
-evt_phase2(ph2, type, optdata)
-	const struct ph2handle *ph2;
-	int type;
-	vchar_t *optdata;
+evt_phase2(const struct ph2handle *ph2, int type, vchar_t *optdata)
 {
 	struct evt_message *e;
 	struct ph1handle *ph1 = ph2->ph1;
@@ -348,9 +337,7 @@ evt_phase2(ph2, type, optdata)
 }
 
 int
-evt_subscribe(list, fd)
-	struct evt_listener_list *list;
-	int fd;
+evt_subscribe(struct evt_listener_list *list, int fd)
 {
 	struct evt_listener *l;
 
@@ -375,15 +362,13 @@ evt_subscribe(list, fd)
 }
 
 void
-evt_list_init(list)
-	struct evt_listener_list *list;
+evt_list_init(struct evt_listener_list *list)
 {
 	LIST_INIT(list);
 }
 
 void
-evt_list_cleanup(list)
-	struct evt_listener_list *list;
+evt_list_cleanup(struct evt_listener_list *list)
 {
 	while (!LIST_EMPTY(list))
 		evt_unsubscribe(LIST_FIRST(list));

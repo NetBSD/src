@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.7 2011/01/28 12:51:40 tteras Exp $	*/
+/*	$NetBSD: plog.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
@@ -71,7 +71,7 @@
 #endif
 
 char *pname = NULL;
-u_int32_t loglevel = LLV_BASE;
+uint32_t loglevel = LLV_BASE;
 int f_foreground = 0;
 
 int print_location = 0;
@@ -79,7 +79,7 @@ int print_location = 0;
 static struct log *logp = NULL;
 static char *logfile = NULL;
 
-static char *plog_common __P((int, const char *, const char *, struct sockaddr *));
+static char *plog_common(int, const char *, const char *, struct sockaddr *);
 
 static struct plogtags {
 	char *name;
@@ -95,15 +95,13 @@ static struct plogtags {
 };
 
 static char *
-plog_common(pri, fmt, func, sa)
-	int pri;
-	const char *fmt, *func;
-	struct sockaddr *sa;
+plog_common(int pri, const char *fmt, const char *func, struct sockaddr *sa)
 {
 	static char buf[800];	/* XXX shoule be allocated every time ? */
 	void *addr;
 	char *p;
-	int reslen, len;
+	size_t reslen;
+	size_t len;
 
 	p = buf;
 	reslen = sizeof(buf);
@@ -202,10 +200,7 @@ plogv(int pri, const char *func, struct sockaddr *sa,
 }
 
 void
-plogdump(pri, data, len)
-	int pri;
-	void *data;
-	size_t len;
+plogdump(int pri, void *data, size_t len)
 {
 	caddr_t buf;
 	size_t buflen;
@@ -244,7 +239,7 @@ plogdump(pri, data, len)
 }
 
 void
-ploginit()
+ploginit(void)
 {
 	if (logfile) {
 		logp = log_open(250, logfile);
@@ -257,8 +252,7 @@ ploginit()
 }
 
 void
-plogset(file)
-	char *file;
+plogset(char *file)
 {
 	if (logfile != NULL)
 		racoon_free(logfile);
@@ -272,16 +266,14 @@ plogset(file)
    XXX Maybe the printable chars range is too large...
  */
 char*
-binsanitize(binstr, n)
-	char *binstr;
-	size_t n;
+binsanitize(char *binstr, size_t n)
 {
 	int p,q;
 	char* d;
 
 	d = racoon_malloc(n + 1);
 	for (p = 0, q = 0; p < n; p++) {
-		if (isgraph((int)binstr[p])) {
+		if (isgraph((unsigned char)binstr[p])) {
 			d[q++] = binstr[p];
 		} else {
 			if (q && d[q - 1] != ' ')

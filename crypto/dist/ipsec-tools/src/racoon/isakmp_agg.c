@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.17 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.18 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -108,9 +108,7 @@
  * 	     <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
 int
-agg_i1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg; /* must be null */
+agg_i1send(struct ph1handle *iph1, vchar_t *msg) /* must be null */
 {
 	struct payload_list *plist = NULL;
 	int error = -1;
@@ -320,9 +318,7 @@ end:
  * 	rev: HDR, SA, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDir_b>Ke_r, HASH_R
  */
 int
-agg_i2recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+agg_i2recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -442,7 +438,7 @@ agg_i2recv(iph1, msg)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see isakmp_ident_r1() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -588,9 +584,7 @@ end:
  * 	rev: HDR, HASH_I
  */
 int
-agg_i2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+agg_i2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	int need_cert = 0;
@@ -752,9 +746,7 @@ end:
  * 	     <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
 int
-agg_r1recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+agg_r1recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error = -1;
 	vchar_t *pbuf = NULL;
@@ -906,9 +898,7 @@ end:
  * 	rev: HDR, SA, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDir_b>Ke_r, HASH_R
  */
 int
-agg_r1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+agg_r1send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	int need_cert = 0;
@@ -1275,9 +1265,7 @@ end:
  * 	rev: HDR, HASH_I
  */
 int
-agg_r2recv(iph1, msg0)
-	struct ph1handle *iph1;
-	vchar_t *msg0;
+agg_r2recv(struct ph1handle *iph1, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;
@@ -1363,7 +1351,7 @@ agg_r2recv(iph1, msg0)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see isakmp_ident_r1() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -1417,9 +1405,7 @@ end:
  * status update and establish isakmp sa.
  */
 int
-agg_r2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+agg_r2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error = -1;
 

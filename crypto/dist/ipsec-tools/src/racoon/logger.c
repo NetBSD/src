@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.5 2018/10/13 15:17:45 maxv Exp $	*/
+/*	$NetBSD: logger.c,v 1.6 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: logger.c,v 1.9 2002/09/03 14:37:03 itojun Exp $	*/
 
@@ -61,9 +61,7 @@
 #include "gcmalloc.h"
 
 struct log *
-log_open(siz, fname)
-	size_t siz;
-	char *fname;
+log_open(size_t siz, char *fname)
 {
 	struct log *p;
 
@@ -100,9 +98,7 @@ log_open(siz, fname)
  * even if not, we'll add \n to avoid formatting mistake (see log_close()).
  */
 void
-log_add(p, str)
-	struct log *p;
-	char *str;
+log_add(struct log *p, char *str)
 {
 	/* syslog if p->fname == NULL? */
 	if (p->buf[p->head])
@@ -119,9 +115,7 @@ log_add(p, str)
  * format may be broken.
  */
 int
-log_print(p, str)
-	struct log *p;
-	char *str;
+log_print(struct log *p, char *str)
 {
 	FILE *fp;
 
@@ -177,8 +171,7 @@ log_vaprint(struct log *p, const char *fmt, va_list ap)
  * write out content of ring buffer, and reclaim the log structure
  */
 int
-log_close(p)
-	struct log *p;
+log_close(struct log *p)
 {
 	FILE *fp;
 	int i, j;
@@ -209,8 +202,7 @@ nowrite:
 }
 
 void
-log_free(p)
-	struct log *p;
+log_free(struct log *p)
 {
 	int i;
 

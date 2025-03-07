@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.18 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.19 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -61,82 +61,81 @@ struct ipsecdoi_pl_id;	/* XXX */
 struct isakmp_pl_ke;	/* XXX */
 struct isakmp_pl_nonce;	/* XXX */
 
-extern struct ph1handle *isakmp_ph1begin_i __P((struct remoteconf *,
-	struct sockaddr *, struct sockaddr *));
+extern struct ph1handle *isakmp_ph1begin_i(struct remoteconf *,
+    struct sockaddr *, struct sockaddr *);
 
-extern vchar_t *isakmp_parsewoh __P((int, struct isakmp_gen *, int));
-extern vchar_t *isakmp_parse __P((vchar_t *));
+extern vchar_t *isakmp_parsewoh(int, struct isakmp_gen *, int);
+extern vchar_t *isakmp_parse(vchar_t *);
 
-extern int isakmp_init __P((void));
-extern const char *isakmp_pindex __P((const isakmp_index *, const u_int32_t));
-extern int isakmp_open __P((struct sockaddr *, int));
-extern void isakmp_close __P((int fd));
-extern int isakmp_send __P((struct ph1handle *, vchar_t *));
+extern int isakmp_init(void);
+extern const char *isakmp_pindex(const isakmp_index *, const uint32_t);
+extern int isakmp_open(struct sockaddr *, int);
+extern void isakmp_close(int fd);
+extern int isakmp_send(struct ph1handle *, vchar_t *);
 
-extern int isakmp_ph1send __P((struct ph1handle *));
-extern int isakmp_ph2send __P((struct ph2handle *));
-extern void isakmp_ph1dying_stub __P((struct sched *));
-extern void isakmp_ph1dying __P((struct ph1handle *));
-extern void isakmp_ph1expire_stub __P((struct sched *));
-extern void isakmp_ph1expire __P((struct ph1handle *));
-extern void isakmp_ph1delete_stub __P((struct sched *));
-extern void isakmp_ph1delete __P((struct ph1handle *));
-extern void isakmp_ph2expire_stub __P((struct sched *));
-extern void isakmp_ph2expire __P((struct ph2handle *));
-extern void isakmp_ph2delete_stub __P((struct sched *));
-extern void isakmp_ph2delete __P((struct ph2handle *));
+extern int isakmp_ph1send(struct ph1handle *);
+extern int isakmp_ph2send(struct ph2handle *);
+extern void isakmp_ph1dying_stub(struct sched *);
+extern void isakmp_ph1dying(struct ph1handle *);
+extern void isakmp_ph1expire_stub(struct sched *);
+extern void isakmp_ph1expire(struct ph1handle *);
+extern void isakmp_ph1delete_stub(struct sched *);
+extern void isakmp_ph1delete(struct ph1handle *);
+extern void isakmp_ph2expire_stub(struct sched *);
+extern void isakmp_ph2expire(struct ph2handle *);
+extern void isakmp_ph2delete_stub(struct sched *);
+extern void isakmp_ph2delete(struct ph2handle *);
 
-extern int isakmp_get_sainfo __P((struct ph2handle *, struct secpolicy *, struct secpolicy *));
-extern int isakmp_post_acquire __P((struct ph2handle *, struct ph1handle *, int));
-extern int isakmp_post_getspi __P((struct ph2handle *));
-extern void isakmp_chkph1there_stub __P((struct sched *));
-extern void isakmp_chkph1there __P((struct ph2handle *));
+extern int isakmp_get_sainfo(struct ph2handle *, struct secpolicy *, struct secpolicy *);
+extern int isakmp_post_acquire(struct ph2handle *, struct ph1handle *, int);
+extern int isakmp_post_getspi(struct ph2handle *);
+extern void isakmp_chkph1there_stub(struct sched *);
+extern void isakmp_chkph1there(struct ph2handle *);
 
-extern caddr_t isakmp_set_attr_v __P((caddr_t, int, caddr_t, int));
-extern caddr_t isakmp_set_attr_l __P((caddr_t, int, u_int32_t));
-extern vchar_t *isakmp_add_attr_v __P((vchar_t *, int, caddr_t, int));
-extern vchar_t *isakmp_add_attr_l __P((vchar_t *, int, u_int32_t));
+extern caddr_t isakmp_set_attr_v(caddr_t, int, caddr_t, int);
+extern caddr_t isakmp_set_attr_l(caddr_t, int, uint32_t);
+extern vchar_t *isakmp_add_attr_v(vchar_t *, int, caddr_t, int);
+extern vchar_t *isakmp_add_attr_l(vchar_t *, int, uint32_t);
 
-extern int isakmp_newcookie __P((caddr_t, struct sockaddr *, struct sockaddr *));
+extern int isakmp_newcookie(caddr_t, struct sockaddr *, struct sockaddr *);
 
-extern int isakmp_p2ph __P((vchar_t **, struct isakmp_gen *));
+extern int isakmp_p2ph(vchar_t **, struct isakmp_gen *);
 
-extern u_int32_t isakmp_newmsgid2 __P((struct ph1handle *));
-extern caddr_t set_isakmp_header1 __P((vchar_t *, struct ph1handle *, int));
-extern caddr_t set_isakmp_header2 __P((vchar_t *, struct ph2handle *, int));
-extern caddr_t set_isakmp_payload __P((caddr_t, vchar_t *, int));
+extern uint32_t isakmp_newmsgid2(struct ph1handle *);
+extern caddr_t set_isakmp_header1(vchar_t *, struct ph1handle *, int);
+extern caddr_t set_isakmp_header2(vchar_t *, struct ph2handle *, int);
+extern caddr_t set_isakmp_payload(caddr_t, vchar_t *, int);
 
-extern struct payload_list *isakmp_plist_append_full __P((
-	struct payload_list *plist, vchar_t *payload,
-	u_int8_t payload_type, u_int8_t free));
+extern struct payload_list *isakmp_plist_append_full(
+    struct payload_list *, vchar_t *, uint8_t, uint8_t);
 
 static inline struct payload_list *
-isakmp_plist_append(struct payload_list *plist, vchar_t *payload, u_int8_t payload_type)
+isakmp_plist_append(struct payload_list *plist, vchar_t *payload, uint8_t payload_type)
 {
 	return isakmp_plist_append_full(plist, payload, payload_type, 0);
 }
 
 
-extern vchar_t *isakmp_plist_set_all __P((struct payload_list **plist,
-	struct ph1handle *iph1));
+extern vchar_t *isakmp_plist_set_all(struct payload_list **plist,
+	struct ph1handle *iph1);
 
 #ifdef HAVE_PRINT_ISAKMP_C
-extern void isakmp_printpacket __P((vchar_t *, struct sockaddr *,
-	struct sockaddr *, int));
+extern void isakmp_printpacket(vchar_t *, struct sockaddr *,
+	struct sockaddr *, int);
 #endif
 
-extern int copy_ph1addresses __P(( struct ph1handle *,
-	struct remoteconf *, struct sockaddr *, struct sockaddr *));
-extern void log_ph1established __P((const struct ph1handle *));
+extern int copy_ph1addresses( struct ph1handle *,
+	struct remoteconf *, struct sockaddr *, struct sockaddr *);
+extern void log_ph1established(const struct ph1handle *);
 
-extern void script_hook __P((struct ph1handle *, int));
-extern int script_env_append __P((char ***, int *, char *, char *));
-extern int script_exec __P((char *, int, char * const *));
+extern void script_hook(struct ph1handle *, int);
+extern int script_env_append(char ***, int *, char *, char *);
+extern int script_exec(char *, int, char * const *);
 
-void purge_remote __P((struct ph1handle *));
-void delete_spd __P((struct ph2handle *, u_int64_t));
+void purge_remote(struct ph1handle *);
+void delete_spd(struct ph2handle *, u_int64_t);
 #ifdef INET6
-u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
+uint32_t setscopeid(struct sockaddr *, struct sockaddr *);
 #endif
 
 #endif /* _ISAKMP_VAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.7 2010/11/12 09:08:26 tteras Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -89,11 +89,11 @@
 #include "admin_var.h"
 #include "ipsec_doi.h"
 
-u_int32_t racoonctl_interface = RACOONCTL_INTERFACE;
-u_int32_t racoonctl_interface_major = RACOONCTL_INTERFACE_MAJOR;
+uint32_t racoonctl_interface = RACOONCTL_INTERFACE;
+uint32_t racoonctl_interface_major = RACOONCTL_INTERFACE_MAJOR;
 
 static int so;
-u_int32_t loglevel = 0;
+uint32_t loglevel = 0;
 
 int
 com_init()
@@ -160,7 +160,7 @@ com_recv(combufp)
 
 	/* real length */
 	if (h.ac_cmd & ADMIN_FLAG_LONG_REPLY)
-		rlen = ((u_int32_t)h.ac_len) + (((u_int32_t)h.ac_len_high) << 16);
+		rlen = ((uint32_t)h.ac_len) + (((uint32_t)h.ac_len_high) << 16);
 	else
 		rlen = h.ac_len;
 

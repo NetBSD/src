@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.16 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.17 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -90,9 +90,9 @@
 #include "isakmp_frag.h"
 #endif
 
-static vchar_t *ident_ir2mx __P((struct ph1handle *));
-static vchar_t *ident_ir3mx __P((struct ph1handle *));
-static int ident_recv_n __P((struct ph1handle *, struct isakmp_gen *));
+static vchar_t *ident_ir2mx(struct ph1handle *);
+static vchar_t *ident_ir3mx(struct ph1handle *);
+static int ident_recv_n(struct ph1handle *, struct isakmp_gen *);
 
 /* %%%
  * begin Identity Protection Mode as initiator.
@@ -105,9 +105,7 @@ static int ident_recv_n __P((struct ph1handle *, struct isakmp_gen *));
  * 	rev: HDR, SA
  */
 int
-ident_i1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg; /* must be null */
+ident_i1send(struct ph1handle *iph1, vchar_t *msg) /* must be null */
 {
 	struct payload_list *plist = NULL;
 	int error = -1;
@@ -251,9 +249,7 @@ end:
  * 	rev: HDR, SA
  */
 int
-ident_i2recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_i2recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -350,9 +346,7 @@ end:
  * 	          <IDi1_b>Ke_i, [<<Cert-I_b>Ke_i]
  */
 int
-ident_i2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_i2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error = -1;
 
@@ -420,9 +414,7 @@ end:
  * 	rev: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r,
  */
 int
-ident_i3recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_i3recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -503,7 +495,7 @@ ident_i3recv(iph1, msg)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see ident_r1recv() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -568,9 +560,7 @@ end:
  * 	rev: HDR*, HASH_I
  */
 int
-ident_i3send(iph1, msg0)
-	struct ph1handle *iph1;
-	vchar_t *msg0;
+ident_i3send(struct ph1handle *iph1, vchar_t *msg0)
 {
 	int error = -1;
 	int dohash = 1;
@@ -662,9 +652,7 @@ end:
  * 	rev: HDR*, HASH_R
  */
 int
-ident_i4recv(iph1, msg0)
-	struct ph1handle *iph1;
-	vchar_t *msg0;
+ident_i4recv(struct ph1handle *iph1, vchar_t *msg0)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -816,10 +804,9 @@ end:
 /*
  * status update and establish isakmp sa.
  */
+/*ARGSUSED*/
 int
-ident_i4send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_i4send(struct ph1handle *iph1, vchar_t *msg __unused)
 {
 	int error = -1;
 
@@ -849,9 +836,7 @@ end:
  * 	rev: HDR, SA
  */
 int
-ident_r1recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_r1recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -952,9 +937,7 @@ end:
  * 	rev: HDR, SA
  */
 int
-ident_r1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_r1send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	int error = -1;
@@ -1108,9 +1091,7 @@ end:
  * 	          <IDi1_b>Ke_i, [<<Cert-I_b>Ke_i]
  */
 int
-ident_r2recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_r2recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -1189,7 +1170,7 @@ ident_r2recv(iph1, msg)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see ident_r1recv() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -1246,9 +1227,7 @@ end:
  * 	rev: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r,
  */
 int
-ident_r2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_r2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error = -1;
 
@@ -1326,9 +1305,7 @@ end:
  * 	rev: HDR*, HASH_I
  */
 int
-ident_r3recv(iph1, msg0)
-	struct ph1handle *iph1;
-	vchar_t *msg0;
+ident_r3recv(struct ph1handle *iph1, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;
@@ -1545,9 +1522,7 @@ end:
  * 	rev: HDR*, HASH_R
  */
 int
-ident_r3send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+ident_r3send(struct ph1handle *iph1, vchar_t *msg)
 {
 	int error = -1;
 	int dohash = 1;
@@ -1630,8 +1605,7 @@ end:
  * 	rev: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r,
  */
 static vchar_t *
-ident_ir2mx(iph1)
-	struct ph1handle *iph1;
+ident_ir2mx(struct ph1handle *iph1)
 {
 	vchar_t *buf = 0;
 	struct payload_list *plist = NULL;
@@ -1738,8 +1712,7 @@ end:
  * 	rev: HDR*, HASH_R
  */
 static vchar_t *
-ident_ir3mx(iph1)
-	struct ph1handle *iph1;
+ident_ir3mx(struct ph1handle *iph1)
 {
 	struct payload_list *plist = NULL;
 	vchar_t *buf = NULL, *new = NULL;
@@ -1879,9 +1852,7 @@ end:
  * called only when the packet has been verified to be encrypted.
  */
 static int
-ident_recv_n(iph1, gen)
-	struct ph1handle *iph1;
-	struct isakmp_gen *gen;
+ident_recv_n(struct ph1handle *iph1, struct isakmp_gen *gen)
 {
 	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;
 	u_int type;
@@ -1897,4 +1868,3 @@ ident_recv_n(iph1, gen)
 	}
 	return 0;
 }
-

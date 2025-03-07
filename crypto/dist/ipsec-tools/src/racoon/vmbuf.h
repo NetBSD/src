@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbuf.h,v 1.5 2018/05/20 06:15:45 maxv Exp $	*/
+/*	$NetBSD: vmbuf.h,v 1.6 2025/03/07 15:55:30 christos Exp $	*/
 
 /* Id: vmbuf.h,v 1.4 2005/10/30 10:28:44 vanhu Exp */
 
@@ -43,7 +43,7 @@
  */
 typedef struct _vchar_t_ {
 #if notyet
-	u_int32_t t;	/* type of the value */
+	uint32_t t;	/* type of the value */
 	vchar_t *n;	/* next vchar_t buffer */
 	size_t bl;	/* length of the buffer */
 	caddr_t bp;	/* pointer to the buffer */
@@ -58,16 +58,16 @@ do { \
 		vfree(p); \
 		(p) = NULL; \
 	} \
-} while(0);
+} while(0)
 
 #if defined(__APPLE__) && defined(__MACH__)
 /* vfree is already defined in Apple's system libraries */
 #define vfree	vmbuf_free
 #endif
 
-extern vchar_t *vmalloc __P((size_t));
-extern vchar_t *vrealloc __P((vchar_t *, size_t));
-extern void vfree __P((vchar_t *));
-extern vchar_t *vdup __P((vchar_t *));
+extern vchar_t *vmalloc(size_t);
+extern vchar_t *vrealloc(vchar_t *, size_t);
+extern void vfree(vchar_t *);
+extern vchar_t *vdup(vchar_t *);
 
 #endif /* _VMBUF_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: proposal.h,v 1.7 2010/02/09 23:05:16 wiz Exp $	*/
+/*	$NetBSD: proposal.h,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: proposal.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -79,8 +79,8 @@ struct saproto {
 
 	/* XXX should be vchar_t * */
 	/* these are network byte order */
-	u_int32_t spi;			/* inbound. i.e. --SA-> me */
-	u_int32_t spi_p;		/* outbound. i.e. me -SA-> */
+	uint32_t spi;			/* inbound. i.e. --SA-> me */
+	uint32_t spi_p;		/* outbound. i.e. me -SA-> */
 
 	vchar_t *keymat;		/* KEYMAT */
 	vchar_t *keymat_p;		/* peer's KEYMAT */
@@ -184,31 +184,31 @@ struct prop_pair {
 struct sainfo;
 struct ph1handle;
 struct secpolicy;
-extern struct saprop *newsaprop __P((void));
-extern struct saproto *newsaproto __P((void));
-extern void inssaprop __P((struct saprop **, struct saprop *));
-extern void inssaproto __P((struct saprop *, struct saproto *));
-extern void inssaprotorev __P((struct saprop *, struct saproto *));
-extern struct satrns *newsatrns __P((void));
-extern void inssatrns __P((struct saproto *, struct satrns *));
-extern struct saprop *cmpsaprop_alloc __P((struct ph1handle *,
-	const struct saprop *, const struct saprop *, int));
-extern int cmpsaprop __P((const struct saprop *, const struct saprop *));
-extern int cmpsatrns __P((int, const struct satrns *, const struct satrns *, int));
-extern int set_satrnsbysainfo __P((struct saproto *, struct sainfo *));
-extern struct saprop *aproppair2saprop __P((struct prop_pair *));
-extern void free_proppair __P((struct prop_pair **));
-extern void flushsaprop __P((struct saprop *));
-extern void flushsaproto __P((struct saproto *));
-extern void flushsatrns __P((struct satrns *));
-extern void printsaprop __P((const int, const struct saprop *));
-extern void printsaprop0 __P((const int, const struct saprop *));
-extern void printsaproto __P((const int, const struct saproto *));
-extern void printsatrns __P((const int, const int, const struct satrns *));
-extern void print_proppair0 __P((int, struct prop_pair *, int));
-extern void print_proppair __P((int, struct prop_pair *));
-extern int set_proposal_from_policy __P((struct ph2handle *,
-	struct secpolicy *, struct secpolicy *));
-extern int set_proposal_from_proposal __P((struct ph2handle *));
+extern struct saprop *newsaprop(void);
+extern struct saproto *newsaproto(void);
+extern void inssaprop(struct saprop **, struct saprop *);
+extern void inssaproto(struct saprop *, struct saproto *);
+extern void inssaprotorev(struct saprop *, struct saproto *);
+extern struct satrns *newsatrns(void);
+extern void inssatrns(struct saproto *, struct satrns *);
+extern struct saprop *cmpsaprop_alloc(struct ph1handle *,
+    const struct saprop *, const struct saprop *, int);
+extern int cmpsaprop(const struct saprop *, const struct saprop *);
+extern int cmpsatrns(int, const struct satrns *, const struct satrns *, int);
+extern int set_satrnsbysainfo(struct saproto *, struct sainfo *);
+extern struct saprop *aproppair2saprop(struct prop_pair *);
+extern void free_proppair(struct prop_pair **);
+extern void flushsaprop(struct saprop *);
+extern void flushsaproto(struct saproto *);
+extern void flushsatrns(struct satrns *);
+extern void printsaprop(const int, const struct saprop *);
+extern void printsaprop0(const int, const struct saprop *);
+extern void printsaproto(const int, const struct saproto *);
+extern void printsatrns(const int, const int, const struct satrns *);
+extern void print_proppair0(int, struct prop_pair *, int);
+extern void print_proppair(int, struct prop_pair *);
+extern int set_proposal_from_policy(struct ph2handle *,
+    struct secpolicy *, struct secpolicy *);
+extern int set_proposal_from_proposal(struct ph2handle *);
 
 #endif /* _PROPOSAL_H */

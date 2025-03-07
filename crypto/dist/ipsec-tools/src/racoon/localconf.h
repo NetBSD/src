@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.h,v 1.8 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: localconf.h,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: localconf.h,v 1.13 2005/11/06 18:13:18 monas Exp */
 
@@ -71,8 +71,8 @@ struct localconf {
 	uid_t uid;
 	gid_t gid;
 	char *chroot;			/* chroot path */
-	u_int16_t port_isakmp;		/* port for isakmp as default */
-	u_int16_t port_isakmp_natt;	/* port for NAT-T use */
+	uint16_t port_isakmp;		/* port for isakmp as default */
+	uint16_t port_isakmp_natt;	/* port for NAT-T use */
 	int default_af;			/* default address family */
 
 	int sock_admin;
@@ -117,19 +117,19 @@ struct localconf {
 
 extern struct localconf *lcconf;
 
-extern void lcconf_setchroot __P((char* chroot));
-extern int lcconf_setpath __P((char*, unsigned int));
+extern void lcconf_setchroot(char* chroot);
+extern int lcconf_setpath(char*, unsigned int);
 
-extern void initlcconf __P((void));
-extern void flushlcconf __P((void));
-extern vchar_t *getpskbyname __P((vchar_t *));
-extern vchar_t *getpskbyaddr __P((struct sockaddr *));
-extern void getpathname __P((char *, int, int, const char *));
-extern int sittype2doi __P((int));
-extern int doitype2doi __P((int));
-extern vchar_t *getpsk __P((const char *, const int)); 
+extern void initlcconf(void);
+extern void flushlcconf(void);
+extern vchar_t *getpskbyname(vchar_t *);
+extern vchar_t *getpskbyaddr(struct sockaddr *);
+extern void getpathname(char *, int, int, const char *);
+extern int sittype2doi(int);
+extern int doitype2doi(int);
+extern vchar_t *getpsk(const char *, const int); 
 
-extern void restore_params __P((void));
-extern void save_params __P((void));
+extern void restore_params(void);
+extern void save_params(void);
 
 #endif /* _LOCALCONF_H */

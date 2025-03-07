@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.41 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: admin.c,v 1.42 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -93,18 +93,20 @@ gid_t adminsock_group = 0;
 mode_t adminsock_mode = 0600;
 
 static struct sockaddr_un sunaddr;
-static int admin_process __P((int, char *));
-static int admin_reply __P((int, struct admin_com *, int, vchar_t *));
+static int admin_process(int, char *);
+static int admin_reply(int, struct admin_com *, int, vchar_t *);
 
 static int
-admin_handler(void *ctx, int fd)
+/*ARGSUSED*/
+admin_handler(void *ctx __unused, int fd __unused)
 {
 	int so2;
 	struct sockaddr_storage from;
 	socklen_t fromlen = sizeof(from);
 	struct admin_com com;
 	char *combuf = NULL;
-	int len, error = -1;
+	ssize_t len;
+	int error = -1;
 
 	so2 = accept(lcconf->sock_admin, (struct sockaddr *)&from, &fromlen);
 	if (so2 < 0) {
@@ -165,7 +167,9 @@ end:
 	return error;
 }
 
-static int admin_ph1_delete_sa(struct ph1handle *iph1, void *arg)
+/*ARGSUSED*/
+static int
+admin_ph1_delete_sa(struct ph1handle *iph1, void *arg __unused)
 {
 	if (iph1->status >= PHASE1ST_ESTABLISHED)
 		isakmp_info_send_d1(iph1);
@@ -177,15 +181,12 @@ static int admin_ph1_delete_sa(struct ph1handle *iph1, void *arg)
  * main child's process.
  */
 static int
-admin_process(so2, combuf)
-	int so2;
-	char *combuf;
+admin_process(int so2, char *combuf)
 {
 	struct admin_com *com = (struct admin_com *)combuf;
 	vchar_t *buf = NULL;
 	vchar_t *id = NULL;
 	vchar_t *key = NULL;
-	int idtype = 0;
 	int error = 0, l_ac_errno = 0;
 	struct evt_listener_list *event_list = NULL;
 
@@ -232,7 +233,7 @@ admin_process(so2, combuf)
 		case ADMIN_PROTO_IPSEC:
 		case ADMIN_PROTO_AH:
 		case ADMIN_PROTO_ESP: {
-			u_int p;
+			int p;
 			p = admin2pfkey_proto(com->ac_proto);
 			if (p != -1) {
 				buf = pfkey_dump_sadb(p);
@@ -382,8 +383,6 @@ admin_process(so2, combuf)
 		acp = (struct admin_com_psk *)
 		    ((char *)com + sizeof(*com) +
 		    sizeof(struct admin_com_indexes));
-
-		idtype = acp->id_type;
 
 		if ((id = vmalloc(acp->id_len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -629,12 +628,10 @@ out:
 }
 
 static int
-admin_reply(so, req, l_ac_errno, buf)
-	int so, l_ac_errno;
-	struct admin_com *req;
-	vchar_t *buf;
+admin_reply(int so, struct admin_com *req, int l_ac_errno, vchar_t *buf)
 {
-	int tlen;
+	size_t tlen;
+	ssize_t slen;
 	struct admin_com *combuf;
 	char *retbuf = NULL;
 
@@ -651,11 +648,11 @@ admin_reply(so, req, l_ac_errno, buf)
 	}
 
 	combuf = (struct admin_com *) retbuf;
-	combuf->ac_len = (u_int16_t) tlen;
+	combuf->ac_len = (uint16_t) tlen;
 	combuf->ac_cmd = req->ac_cmd & ~ADMIN_FLAG_VERSION;
-	if (tlen != (u_int32_t) combuf->ac_len &&
+	if (tlen != (uint32_t) combuf->ac_len &&
 	    l_ac_errno == 0) {
-		combuf->ac_len_high = tlen >> 16;
+		combuf->ac_len_high = (unsigned short)(tlen >> 16);
 		combuf->ac_cmd |= ADMIN_FLAG_LONG_REPLY;
 	} else {
 		combuf->ac_errno = l_ac_errno;
@@ -665,9 +662,9 @@ admin_reply(so, req, l_ac_errno, buf)
 	if (buf != NULL)
 		memcpy(retbuf + sizeof(*combuf), buf->v, buf->l);
 
-	tlen = send(so, retbuf, tlen, 0);
+	slen = send(so, retbuf, tlen, 0);
 	racoon_free(retbuf);
-	if (tlen < 0) {
+	if (slen < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to send admin command: %s\n",
 			strerror(errno));
@@ -679,8 +676,7 @@ admin_reply(so, req, l_ac_errno, buf)
 
 /* ADMIN_PROTO -> SADB_SATYPE */
 int
-admin2pfkey_proto(proto)
-	u_int proto;
+admin2pfkey_proto(u_int proto)
 {
 	switch (proto) {
 	case ADMIN_PROTO_IPSEC:
@@ -698,7 +694,7 @@ admin2pfkey_proto(proto)
 }
 
 int
-admin_init()
+admin_init(void)
 {
 	if (adminsock_path == NULL) {
 		lcconf->sock_admin = -1;

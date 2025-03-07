@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.16 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.17 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -183,61 +183,58 @@ struct rmconfselector {
 	vchar_t *certificate_request;
 };
 
-extern void rmconf_selector_from_ph1 __P((struct rmconfselector *rmsel,
-					  struct ph1handle *iph1));
-extern int enumrmconf __P((struct rmconfselector *rmsel,
-			   int (* enum_func)(struct remoteconf *rmconf, void *arg),
-			   void *enum_arg));
+extern void rmconf_selector_from_ph1(struct rmconfselector *rmsel,
+    struct ph1handle *iph1);
+extern int enumrmconf(struct rmconfselector *rmsel,
+    int (* enum_func)(struct remoteconf *rmconf, void *arg), void *enum_arg);
 
 #define GETRMCONF_F_NO_ANONYMOUS	0x0001
 #define GETRMCONF_F_NO_PASSIVE		0x0002
 
 #define RMCONF_ERR_MULTIPLE		((struct remoteconf *) -1)
 
-extern int rmconf_match_identity __P((struct remoteconf *rmconf,
-				      vchar_t *id_p));
-extern struct remoteconf *getrmconf __P((struct sockaddr *remote, int flags));
-extern struct remoteconf *getrmconf_by_ph1 __P((struct ph1handle *iph1));
-extern struct remoteconf *getrmconf_by_name __P((const char *name));
+extern int rmconf_match_identity(struct remoteconf *rmconf, vchar_t *id_p);
+extern struct remoteconf *getrmconf(struct sockaddr *remote, int flags);
+extern struct remoteconf *getrmconf_by_ph1(struct ph1handle *iph1);
+extern struct remoteconf *getrmconf_by_name(const char *name);
 
-extern struct remoteconf *newrmconf __P((void));
-extern struct remoteconf *duprmconf_shallow __P((struct remoteconf *));
-extern int duprmconf_finish __P((struct remoteconf *));
-extern void delrmconf __P((struct remoteconf *));
-extern void deletypes __P((struct etypes *));
-extern struct etypes * dupetypes __P((struct etypes *));
-extern void insrmconf __P((struct remoteconf *));
-extern void remrmconf __P((struct remoteconf *));
-extern void flushrmconf __P((void));
-extern void dupspspec_list __P((struct remoteconf *, struct remoteconf *));
-extern void flushspspec __P((struct remoteconf *));
-extern void initrmconf __P((void));
-extern void rmconf_start_reload __P((void));
-extern void rmconf_finish_reload __P((void));
+extern struct remoteconf *newrmconf(void);
+extern struct remoteconf *duprmconf_shallow(struct remoteconf *);
+extern int duprmconf_finish(struct remoteconf *);
+extern void delrmconf(struct remoteconf *);
+extern void deletypes(struct etypes *);
+extern struct etypes * dupetypes(struct etypes *);
+extern void insrmconf(struct remoteconf *);
+extern void remrmconf(struct remoteconf *);
+extern void flushrmconf(void);
+extern void dupspspec_list(struct remoteconf *, struct remoteconf *);
+extern void flushspspec(struct remoteconf *);
+extern void initrmconf(void);
+extern void rmconf_start_reload(void);
+extern void rmconf_finish_reload(void);
 
-extern int check_etypeok __P((struct remoteconf *, void *));
+extern int check_etypeok(struct remoteconf *, void *);
 
-extern struct isakmpsa *newisakmpsa __P((void));
-extern struct isakmpsa *dupisakmpsa __P((struct isakmpsa *));
-extern void delisakmpsa __P((struct isakmpsa *));
-extern void insisakmpsa __P((struct isakmpsa *, struct remoteconf *));
+extern struct isakmpsa *newisakmpsa(void);
+extern struct isakmpsa *dupisakmpsa(struct isakmpsa *);
+extern void delisakmpsa(struct isakmpsa *);
+extern void insisakmpsa(struct isakmpsa *, struct remoteconf *);
 #ifdef ENABLE_HYBRID
-extern int isakmpsa_switch_authmethod __P((int authmethod));
+extern int isakmpsa_switch_authmethod(int authmethod);
 #else
 static inline int isakmpsa_switch_authmethod(int authmethod)
 {
 	return authmethod;
 }
 #endif
-extern struct isakmpsa * checkisakmpsa __P((int pcheck,
-					    struct isakmpsa *proposal,
-					    struct isakmpsa *acceptable));
+extern struct isakmpsa * checkisakmpsa(int pcheck, struct isakmpsa *proposal,
+    struct isakmpsa *acceptable);
 
 
-extern void dumprmconf __P((void));
+extern void dumprmconf(void);
 
-extern struct idspec *newidspec __P((void));
+extern struct idspec *newidspec(void);
 
-extern vchar_t *script_path_add __P((vchar_t *));
+extern vchar_t *script_path_add(vchar_t *);
 
 #endif /* _REMOTECONF_H */

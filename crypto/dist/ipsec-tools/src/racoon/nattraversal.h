@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.h,v 1.8 2018/05/19 18:51:59 maxv Exp $	*/
+/*	$NetBSD: nattraversal.h,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -46,7 +46,7 @@
 
 #define	NAT_DETECTED	(NAT_DETECTED_ME | NAT_DETECTED_PEER)
 
-#define	NON_ESP_MARKER_LEN	sizeof(u_int32_t)
+#define	NON_ESP_MARKER_LEN	sizeof(uint32_t)
 #define	NON_ESP_MARKER_USE(_ph1)	((_ph1)->natt_flags & NAT_ADD_NON_ESP_MARKER)
 
 /*
@@ -58,21 +58,21 @@
 
 struct ph1natt_options {
 	int version;
-	u_int16_t float_port;
-	u_int16_t mode_udp_tunnel;
-	u_int16_t mode_udp_transport;
-	u_int16_t encaps_type; /* ESPINUDP / ESPINUDP_NON_IKE */
-	u_int16_t mode_udp_diff;
-	u_int16_t payload_nat_d;
-	u_int16_t payload_nat_oa;
+	uint16_t float_port;
+	uint16_t mode_udp_tunnel;
+	uint16_t mode_udp_transport;
+	uint16_t encaps_type; /* ESPINUDP / ESPINUDP_NON_IKE */
+	uint16_t mode_udp_diff;
+	uint16_t payload_nat_d;
+	uint16_t payload_nat_oa;
 };
 
 struct ph2natt {
-	u_int8_t type;
-	u_int16_t sport;
-	u_int16_t dport;
+	uint8_t type;
+	uint16_t sport;
+	uint16_t dport;
 	struct sockaddr *oa;
-	u_int16_t frag;
+	uint16_t frag;
 };
 
 int natt_vendorid(int vid);

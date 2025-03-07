@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.5 2007/06/06 15:37:15 vanhu Exp $	*/
+/*	$NetBSD: var.h,v 1.6 2025/03/07 15:55:30 christos Exp $	*/
 
 /* Id: var.h,v 1.6 2004/11/20 16:16:59 monas Exp */
 
@@ -83,7 +83,7 @@ do { \
 		if (z != NULL) \
 			strncpy((z), "(invalid)", sizeof(z)); \
 	} \
-} while (0);
+} while (0)
 
 #define GETNAMEINFO_NULL(x, y) \
 do { \
@@ -92,7 +92,7 @@ do { \
 		if (y != NULL) \
 			strncpy((y), "(invalid)", sizeof(y)); \
 	} \
-} while (0);
+} while (0)
 
 #include <sys/queue.h>
 #ifndef LIST_FOREACH

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.34 2021/12/05 02:59:50 msaitoh Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.35 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -96,7 +96,7 @@
 
 #ifdef HAVE_LIBRADIUS
 #include <radlib.h>
-struct rad_handle *radius_auth_state = NULL;
+static struct rad_handle *radius_auth_state = NULL;
 struct rad_handle *radius_acct_state = NULL;
 struct xauth_rad_config xauth_rad_config;
 #endif
@@ -118,8 +118,7 @@ struct xauth_ldap_config xauth_ldap_config;
 #endif
 
 void 
-xauth_sendreq(iph1)
-	struct ph1handle *iph1;
+xauth_sendreq(struct ph1handle *iph1)
 {
 	vchar_t *buffer;
 	struct isakmp_pl_attr *attr;
@@ -184,10 +183,7 @@ xauth_sendreq(iph1)
 }
 
 int
-xauth_attr_reply(iph1, attr, id)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
-	int id;
+xauth_attr_reply(struct ph1handle *iph1, struct isakmp_data *attr, int id)
 {
 	char **outlet = NULL;
 	size_t alen = 0;
@@ -356,8 +352,7 @@ skip_auth:
 }
 
 void 
-xauth_reply_stub(sc)
-	struct sched *sc;
+xauth_reply_stub(struct sched *sc)
 {
 	struct xauth_reply_arg *xra = container_of(sc, struct xauth_reply_arg, sc);
 	struct ph1handle *iph1;
@@ -406,10 +401,7 @@ xauth_reply(struct ph1handle *iph1, int port, int id, int res)
 }
 
 void
-xauth_sendstatus(iph1, status, id)
-	struct ph1handle *iph1;
-	int status;
-	int id;
+xauth_sendstatus(struct ph1handle *iph1, int status, int id)
 {
 	vchar_t *buffer;
 	struct isakmp_pl_attr *attr;
@@ -561,10 +553,7 @@ xauth_radius_init(void)
 }
 
 int
-xauth_login_radius(iph1, usr, pwd)
-	struct ph1handle *iph1;
-	char *usr;
-	char *pwd;
+xauth_login_radius(struct ph1handle *iph1, char *usr, char *pwd)
 {
 	int res;
 	const void *data;
@@ -623,36 +612,29 @@ xauth_login_radius(iph1, usr, pwd)
 		}
 
 		return 0;
-		break;
 
 	case RAD_ACCESS_REJECT:
 		return -1;
-		break;
 
 	case -1:
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_send_request failed: %s\n", 
 		    rad_strerror(radius_auth_state));
 		return -1;
-		break;
 	default:
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_send_request returned %d\n", res);
 		return -1;
-		break;
 	}
 
-	return -1;
 }
 #endif
 
 #ifdef HAVE_LIBPAM
+/*ARGSUSED*/
 static int 
-PAM_conv(msg_count, msg, rsp, dontcare)
-	int msg_count;
-	const struct pam_message **msg;
-	struct pam_response **rsp;
-	void *dontcare;
+PAM_conv(int msg_count, const struct pam_message **msg,
+    struct pam_response **rsp, void *dontcare __unused)
 {
 	int i;
 	struct pam_response *reply = NULL;
@@ -693,7 +675,6 @@ PAM_conv(msg_count, msg, rsp, dontcare)
 			if (reply != NULL)
 				racoon_free(reply);
 			return PAM_CONV_ERR;
-			break;
 		}
 	}
 
@@ -704,11 +685,7 @@ PAM_conv(msg_count, msg, rsp, dontcare)
 }
 
 int
-xauth_login_pam(port, raddr, usr, pwd)
-	int port;
-	struct sockaddr *raddr;
-	char *usr;
-	char *pwd;
+xauth_login_pam(int port, struct sockaddr *raddr, char *usr, char *pwd)
 {
 	int error;
 	char *remote = NULL;
@@ -799,7 +776,7 @@ out:
 int 
 xauth_ldap_init_conf(void)
 {
-	int tmplen;
+	size_t tmplen;
 	int error = -1;
 
 	xauth_ldap_config.pver = 3;
@@ -871,10 +848,7 @@ out:
 }
 
 int
-xauth_login_ldap(iph1, usr, pwd)
-	struct ph1handle *iph1;
-	char *usr;
-	char *pwd;
+xauth_login_ldap(struct ph1handle *iph1, char *usr, char *pwd)
 {
 	int rtn = -1;
 	int res = -1;
@@ -889,7 +863,7 @@ xauth_login_ldap(iph1, usr, pwd)
 	char *atlist[3];
 	char *basedn = NULL;
 	char *userdn = NULL;
-	int tmplen = 0;
+	size_t tmplen = 0;
 	int ecount = 0;
 	int scope = LDAP_SCOPE_ONE;
 
@@ -945,11 +919,11 @@ xauth_login_ldap(iph1, usr, pwd)
 	}
 
 	if (xauth_ldap_config.timeout > 0) {
-		static struct timeval timeout;
-		timeout.tv_sec = xauth_ldap_config.timeout;
-		timeout.tv_usec = 0;
+		static struct timeval timeout1;
+		timeout1.tv_sec = xauth_ldap_config.timeout;
+		timeout1.tv_usec = 0;
 		if ((res = ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT,
-			(void *)&timeout)) != LDAP_OPT_SUCCESS) {
+			(void *)&timeout1)) != LDAP_OPT_SUCCESS) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"LDAP_OPT_NETWORK_TIMEOUT %d failed: %s\n",
 				xauth_ldap_config.timeout,
@@ -1153,10 +1127,8 @@ ldap_end:
 	return rtn;
 }
 
-int
-xauth_group_ldap(udn, grp)
-	char * udn;
-	char * grp;
+static int
+xauth_group_ldap(char * udn, char * grp)
 {
 	int rtn = -1;
 	int res = -1;
@@ -1169,7 +1141,7 @@ xauth_group_ldap(udn, grp)
 	char *filter = NULL;
 	char *basedn = NULL;
 	char *groupdn = NULL;
-	int tmplen = 0;
+	size_t tmplen = 0;
 	int ecount = 0;
 	int scope = LDAP_SCOPE_ONE;
 
@@ -1320,9 +1292,7 @@ ldap_group_end:
 #endif
 
 int
-xauth_login_system(usr, pwd)
-	char *usr;
-	char *pwd;
+xauth_login_system(char *usr, char *pwd)
 {
 	struct passwd *pw;
 	char *cryptpwd;
@@ -1361,7 +1331,7 @@ xauth_group_system(char *usr, char *grp)
 {
 	struct group * gr;
 	char * member;
-	int index = 0;
+	int index1 = 0;
 
 	gr = getgrnam(grp);
 	if (gr == NULL) {
@@ -1371,7 +1341,7 @@ xauth_group_system(char *usr, char *grp)
 		return -1;
 	}
 
-	while ((member = gr->gr_mem[index++])!=NULL) {
+	while ((member = gr->gr_mem[index1++])!=NULL) {
 		if (!strcmp(member,usr)) {
 			plog(LLV_INFO, LOCATION, NULL,
 		                "membership validated\n");
@@ -1383,8 +1353,7 @@ xauth_group_system(char *usr, char *grp)
 }
 
 int 
-xauth_check(iph1)
-	struct ph1handle *iph1;
+xauth_check(struct ph1handle *iph1)
 {
 	struct xauth_state *xst = &iph1->mode_cfg->xauth;
 
@@ -1417,20 +1386,13 @@ xauth_check(iph1)
 		}
 
 		return 0;
-		break;
 	default:
 		return 0;
-		break;
 	}
-
-	return 0;
 }
 
 int
-group_check(iph1, grp_list, grp_count)
-	struct ph1handle *iph1;
-	char **grp_list;
-	int grp_count;
+group_check(struct ph1handle *iph1, char **grp_list, int grp_count)
 {
 	int res = -1;
 	int grp_index = 0;
@@ -1501,9 +1463,7 @@ group_check(iph1, grp_list, grp_count)
 }
 
 vchar_t *
-isakmp_xauth_req(iph1, attr)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
+isakmp_xauth_req(struct ph1handle *iph1, struct isakmp_data *attr)
 {
 	int type;
 	size_t dlen = 0;
@@ -1614,7 +1574,6 @@ isakmp_xauth_req(iph1, attr)
 		plog(LLV_WARNING, LOCATION, NULL,
 		    "Ignored attribute %s\n", s_isakmp_cfg_type(type));
 		return NULL;
-		break;
 	}
 
 	if ((buffer = vmalloc(sizeof(*attr) + dlen)) == NULL) {
@@ -1657,13 +1616,10 @@ out:
 }
 
 vchar_t *
-isakmp_xauth_set(iph1, attr)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
+isakmp_xauth_set(struct ph1handle *iph1, struct isakmp_data *attr)
 {
 	int type;
 	vchar_t *buffer = NULL;
-	struct xauth_state *xst;
 	size_t dlen = 0;
 	char* mraw = NULL, *mdata;
 
@@ -1682,7 +1638,6 @@ isakmp_xauth_set(iph1, attr)
 		 * We should only receive ISAKMP mode_cfg SET XAUTH_STATUS
 		 * when running as a client (initiator).
 		 */
-		xst = &iph1->mode_cfg->xauth;
 		switch (iph1->approval->authmethod) {
 		case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 		case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I:
@@ -1697,7 +1652,6 @@ isakmp_xauth_set(iph1, attr)
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Unexpected XAUTH_STATUS_OK\n");
 			return NULL;
-			break;
 		}
 
 		/* If we got a failure, delete iph1 */
@@ -1732,12 +1686,12 @@ isakmp_xauth_set(iph1, attr)
 				racoon_free(mdata);
 			}
 		}
+		break;
 
 	default:
 		plog(LLV_WARNING, LOCATION, NULL,
 		    "Ignored attribute %s\n", s_isakmp_cfg_type(type));
 		return NULL;
-		break;
 	}
 
 	if ((buffer = vmalloc(sizeof(*attr))) == NULL) {
@@ -1755,8 +1709,7 @@ isakmp_xauth_set(iph1, attr)
 
 
 void 
-xauth_rmstate(xst)
-	struct xauth_state *xst;
+xauth_rmstate(struct xauth_state *xst)
 {
 	switch (xst->authtype) {
 	case XAUTH_TYPE_GENERIC:
@@ -1789,8 +1742,7 @@ xauth_rmstate(xst)
 }
 
 int
-xauth_rmconf_used(xauth_rmconf)
-	struct xauth_rmconf **xauth_rmconf;
+xauth_rmconf_used(struct xauth_rmconf **xauth_rmconf)
 {
 	if (*xauth_rmconf == NULL) {
 		*xauth_rmconf = racoon_malloc(sizeof(**xauth_rmconf));
@@ -1809,8 +1761,7 @@ xauth_rmconf_used(xauth_rmconf)
 }
 
 void 
-xauth_rmconf_delete(xauth_rmconf)
-	struct xauth_rmconf **xauth_rmconf;
+xauth_rmconf_delete(struct xauth_rmconf **xauth_rmconf)
 {
 	if (*xauth_rmconf != NULL) { 
 		if ((*xauth_rmconf)->login != NULL)
@@ -1826,8 +1777,7 @@ xauth_rmconf_delete(xauth_rmconf)
 }
 
 struct xauth_rmconf *
-xauth_rmconf_dup(xauth_rmconf)
-	struct xauth_rmconf *xauth_rmconf;
+xauth_rmconf_dup(struct xauth_rmconf *xauth_rmconf)
 {
 	struct xauth_rmconf *new;
 

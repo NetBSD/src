@@ -1,4 +1,4 @@
-/*	$NetBSD: throttle.c,v 1.7 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: throttle.c,v 1.8 2025/03/07 15:55:30 christos Exp $	*/
 
 /* Id: throttle.c,v 1.5 2006/04/05 20:54:50 manubsd Exp */
 
@@ -55,8 +55,7 @@ static struct throttle_list throttle_list =
 	TAILQ_HEAD_INITIALIZER(throttle_list);
 
 struct throttle_entry *
-throttle_add(addr)
-	struct sockaddr *addr;
+throttle_add(struct sockaddr *addr)
 {
 	struct throttle_entry *te;
 	struct timeval now, penalty;
@@ -81,9 +80,7 @@ throttle_add(addr)
 }
 
 int
-throttle_host(addr, authfail) 
-	struct sockaddr *addr;
-	int authfail;
+throttle_host(struct sockaddr *addr, int authfail)
 {
 	struct throttle_entry *te;
 	struct timeval now, res;

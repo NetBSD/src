@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME$ */
 
@@ -162,7 +162,7 @@ struct isakmp_cfg_state {
 	int local_count;		/* Number of SPLIT_LOCAL */
 	struct xauth_state xauth;	/* Xauth state, if revelant */		
 	struct isakmp_ivm *ivm;		/* XXX Use iph1's ivm? */
-	u_int32_t last_msgid;           /* Last message-ID */
+	uint32_t last_msgid;           /* Last message-ID */
 };
 
 /* flags */
@@ -186,12 +186,12 @@ struct isakmp_pl_attr;
 struct ph1handle;
 struct isakmp_ivm;
 void isakmp_cfg_r(struct ph1handle *, vchar_t *);
-int isakmp_cfg_attr_r(struct ph1handle *, u_int32_t, struct isakmp_pl_attr *);
+int isakmp_cfg_attr_r(struct ph1handle *, uint32_t, struct isakmp_pl_attr *);
 int isakmp_cfg_reply(struct ph1handle *, struct isakmp_pl_attr *);
 int isakmp_cfg_request(struct ph1handle *, struct isakmp_pl_attr *);
 int isakmp_cfg_set(struct ph1handle *, struct isakmp_pl_attr *);
-int isakmp_cfg_send(struct ph1handle *, vchar_t *, u_int32_t, int, int);
-struct isakmp_ivm *isakmp_cfg_newiv(struct ph1handle *, u_int32_t);
+int isakmp_cfg_send(struct ph1handle *, vchar_t *, uint32_t, int, int);
+struct isakmp_ivm *isakmp_cfg_newiv(struct ph1handle *, uint32_t);
 void isakmp_cfg_rmstate(struct ph1handle *);
 struct isakmp_cfg_state *isakmp_cfg_mkstate(void);
 vchar_t *isakmp_cfg_copy(struct ph1handle *, struct isakmp_data *);

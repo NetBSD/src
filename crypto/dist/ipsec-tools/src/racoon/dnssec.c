@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.5 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.6 2025/03/07 15:55:28 christos Exp $	*/
 
 /*	$KAME: dnssec.c,v 1.2 2001/08/05 18:46:07 itojun Exp $	*/
 
@@ -56,15 +56,14 @@
 extern int h_errno;
 
 vchar_t *
-dnssec_getcert(id)
-	vchar_t *id;
+dnssec_getcert(vchar_t *id)
 {
 	vchar_t *cert = NULL;
 	struct certinfo *res = NULL;
 	struct ipsecdoi_id_b *id_b;
 	int type;
 	char *name = NULL;
-	int namelen;
+	size_t namelen;
 	int error;
 
 	id_b = (struct ipsecdoi_id_b *)id->v;

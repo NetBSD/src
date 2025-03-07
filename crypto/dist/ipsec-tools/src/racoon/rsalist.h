@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.h,v 1.6 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: rsalist.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: rsalist.h,v 1.2 2004/07/12 20:43:51 ludvigm Exp */
 /*
@@ -63,5 +63,8 @@ RSA *rsa_try_check_rsasign(vchar_t *source, vchar_t *sig, struct genlist *list);
 unsigned long rsa_list_count(struct genlist *list);
 
 int rsa_parse_file(struct genlist *list, const char *fname, enum rsa_key_type type);
+
+/* prsa_par.y */
+int prsa_parse_file(struct genlist *list, const char *fname, enum rsa_key_type type);
 
 #endif /* _RSALIST_H */

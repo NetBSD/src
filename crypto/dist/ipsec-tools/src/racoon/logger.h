@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: logger.h,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: logger.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 
@@ -42,12 +42,12 @@ struct log {
 	char *fname;
 };
 
-extern struct log *log_open __P((size_t, char *));
-extern void log_add __P((struct log *, char *));
-extern int log_print __P((struct log *, char *));
-extern int log_vprint __P((struct log *, const char *, ...));
-extern int log_vaprint __P((struct log *, const char *, va_list));
-extern int log_close __P((struct log *));
-extern void log_free __P((struct log *));
+extern struct log *log_open(size_t, char *);
+extern void log_add(struct log *, char *);
+extern int log_print(struct log *, char *);
+extern int log_vprint(struct log *, const char *, ...);
+extern int log_vaprint(struct log *, const char *, va_list);
+extern int log_close(struct log *);
+extern void log_free(struct log *);
 
 #endif /* _LOGGER_H */

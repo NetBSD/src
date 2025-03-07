@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.14 2012/11/29 15:31:25 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.15 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -147,15 +147,15 @@
 struct ipsecdoi_pl_sa {
 	struct isakmp_gen h;
 	struct ipsecdoi_sa_b {
-		u_int32_t doi; /* Domain of Interpretation */
-		u_int32_t sit; /* Situation */
+		uint32_t doi; /* Domain of Interpretation */
+		uint32_t sit; /* Situation */
 	} b;
 	/* followed by Leveled Domain Identifier and so on. */
 } __attribute__((__packed__));
 
 struct ipsecdoi_secrecy_h {
-	u_int16_t len;
-	u_int16_t reserved;
+	uint16_t len;
+	uint16_t reserved;
 	/* followed by the value */
 } __attribute__((__packed__));
 
@@ -163,9 +163,9 @@ struct ipsecdoi_secrecy_h {
 struct ipsecdoi_pl_id {
 	struct isakmp_gen h;
 	struct ipsecdoi_id_b {
-		u_int8_t type;		/* ID Type */
-		u_int8_t proto_id;	/* Protocol ID */
-		u_int16_t port;		/* Port */
+		uint8_t type;		/* ID Type */
+		uint8_t proto_id;	/* Protocol ID */
+		uint16_t port;		/* Port */
 	} b;
 	/* followed by Identification Data */
 } __attribute__((__packed__));
@@ -213,44 +213,44 @@ struct saproto;
 struct satrns;
 struct prop_pair;
 
-extern int ipsecdoi_checkph1proposal __P((vchar_t *, struct ph1handle *));
-extern int ipsecdoi_selectph2proposal __P((struct ph2handle *));
-extern int ipsecdoi_checkph2proposal __P((struct ph2handle *));
+extern int ipsecdoi_checkph1proposal(vchar_t *, struct ph1handle *);
+extern int ipsecdoi_selectph2proposal(struct ph2handle *);
+extern int ipsecdoi_checkph2proposal(struct ph2handle *);
 
-extern struct prop_pair **get_proppair __P((vchar_t *, int));
-extern vchar_t *get_sabyproppair __P((u_int32_t, u_int32_t, struct prop_pair *));
-extern int ipsecdoi_updatespi __P((struct ph2handle *iph2));
-extern vchar_t *get_sabysaprop __P((struct saprop *, vchar_t *));
+extern struct prop_pair **get_proppair(vchar_t *, int);
+extern vchar_t *get_sabyproppair(uint32_t, uint32_t, struct prop_pair *);
+extern int ipsecdoi_updatespi(struct ph2handle *iph2);
+extern vchar_t *get_sabysaprop(struct saprop *, vchar_t *);
 extern int ipsecdoi_chkcmpids( const vchar_t *, const vchar_t *, int );
-extern int ipsecdoi_checkid1 __P((struct ph1handle *));
-extern int ipsecdoi_setid1 __P((struct ph1handle *));
-extern int set_identifier __P((vchar_t **, int, const vchar_t * const));
-extern int set_identifier_qual __P((vchar_t **, int, const vchar_t * const, int));
-extern int ipsecdoi_setid2 __P((struct ph2handle *));
-extern vchar_t *ipsecdoi_sockaddr2id __P((struct sockaddr *, u_int, u_int));
-extern int ipsecdoi_id2sockaddr __P((vchar_t *, struct sockaddr *,
-	u_int8_t *, u_int16_t *));
-extern char *ipsecdoi_id2str __P((const vchar_t *));
-extern vchar_t *ipsecdoi_sockrange2id __P((	struct sockaddr *,
-	struct sockaddr *, u_int));
+extern int ipsecdoi_checkid1(struct ph1handle *);
+extern int ipsecdoi_setid1(struct ph1handle *);
+extern int set_identifier(vchar_t **, int, const vchar_t * const);
+extern int set_identifier_qual(vchar_t **, int, const vchar_t * const, int);
+extern int ipsecdoi_setid2(struct ph2handle *);
+extern vchar_t *ipsecdoi_sockaddr2id(struct sockaddr *, u_int, u_int);
+extern int ipsecdoi_id2sockaddr(vchar_t *, struct sockaddr *, uint8_t *,
+    uint16_t *);
+extern char *ipsecdoi_id2str(const vchar_t *);
+extern vchar_t *ipsecdoi_sockrange2id(struct sockaddr *, struct sockaddr *,
+    u_int);
 
-extern vchar_t *ipsecdoi_setph1proposal __P((struct remoteconf *,
-					     struct isakmpsa *));
-extern int ipsecdoi_setph2proposal __P((struct ph2handle *));
-extern int ipsecdoi_transportmode __P((struct saprop *));
-extern int ipsecdoi_get_defaultlifetime __P((void));
-extern int ipsecdoi_checkalgtypes __P((int, int, int, int));
-extern int ipproto2doi __P((int));
-extern int doi2ipproto __P((int));
+extern vchar_t *ipsecdoi_setph1proposal(struct remoteconf *,
+    struct isakmpsa *);
+extern int ipsecdoi_setph2proposal(struct ph2handle *);
+extern int ipsecdoi_transportmode(struct saprop *);
+extern int ipsecdoi_get_defaultlifetime(void);
+extern int ipsecdoi_checkalgtypes(int, int, int, int);
+extern int ipproto2doi(int);
+extern int doi2ipproto(int);
 
-extern int ipsecdoi_t2satrns __P((struct isakmp_pl_t *,
-	struct saprop *, struct saproto *, struct satrns *));
-extern int ipsecdoi_authalg2trnsid __P((int));
-extern int idtype2doi __P((int));
-extern int doi2idtype __P((int));
+extern int ipsecdoi_t2satrns(struct isakmp_pl_t *,
+    struct saprop *, struct saproto *, struct satrns *);
+extern int ipsecdoi_authalg2trnsid(int);
+extern int idtype2doi(int);
+extern int doi2idtype(int);
 
-extern int ipsecdoi_parse_responder_lifetime __P((struct isakmp_pl_n *notify,
-	u_int32_t *lifetime_sec, u_int32_t *liftime_kb));
+extern int ipsecdoi_parse_responder_lifetime(struct isakmp_pl_n *notify,
+    uint32_t *lifetime_sec, uint32_t *liftime_kb);
 
 
 #endif /* _IPSEC_DOI_H */

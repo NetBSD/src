@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.29 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.30 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -95,24 +95,22 @@
 #endif
 
 /* quick mode */
-static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
-static int get_sainfo_r __P((struct ph2handle *));
-static int get_proposal_r __P((struct ph2handle *));
-static int ph2_recv_n __P((struct ph2handle *, struct isakmp_gen *));
-static void quick_timeover_stub __P((struct sched *));
-static void quick_timeover __P((struct ph2handle *));
+static vchar_t *quick_ir1mx(struct ph2handle *, vchar_t *, vchar_t *);
+static int get_sainfo_r(struct ph2handle *);
+static int get_proposal_r(struct ph2handle *);
+static int ph2_recv_n(struct ph2handle *, struct isakmp_gen *);
+static void quick_timeover_stub(struct sched *);
+static void quick_timeover(struct ph2handle *);
 
 /* called from scheduler */
 static void
-quick_timeover_stub(p)
-	struct sched *p;
+quick_timeover_stub(struct sched *p)
 {
 	quick_timeover(container_of(p, struct ph2handle, sce));
 }
 
 static void
-quick_timeover(iph2)
-	struct ph2handle *iph2;
+quick_timeover(struct ph2handle *iph2)
 {
 	plog(LLV_ERROR, LOCATION, NULL,
 		"%s give up to get IPsec-SA due to time up to wait.\n",
@@ -132,10 +130,9 @@ quick_timeover(iph2)
 /*
  * begin Quick Mode as initiator.  send pfkey getspi message to kernel.
  */
+/*ARGSUSED*/
 int
-quick_i1prep(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg; /* must be null pointer */
+quick_i1prep(struct ph2handle *iph2, vchar_t *msg __unused) /* must be null pointer */
 {
 	int error = ISAKMP_INTERNAL_ERROR;
 
@@ -179,15 +176,13 @@ end:
  * 	HDR*, HASH(1), SA, Ni [, KE ] [, IDi2, IDr2 ] [, NAT-OAi, NAT-OAr ]
  */
 int
-quick_i1send(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg; /* must be null pointer */
+quick_i1send(struct ph2handle *iph2, vchar_t *msg) /* must be null pointer */
 {
 	vchar_t *body = NULL;
 	vchar_t *hash = NULL;
 	struct isakmp_gen *gen;
 	char *p;
-	int tlen;
+	size_t tlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 	int natoa = ISAKMP_NPTYPE_NONE;
 	int pfsgroup, idci, idcr;
@@ -395,9 +390,7 @@ end:
  * 	HDR*, HASH(2), SA, Nr [, KE ] [, IDi2, IDr2 ] [, NAT-OAi, NAT-OAr ]
  */
 int
-quick_i2recv(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_i2recv(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *hbuf = NULL;	/* for hash computing. */
@@ -542,8 +535,8 @@ quick_i2recv(iph2, msg0)
 		    {
 			struct sockaddr_storage addr;
 			struct sockaddr *daddr;
-			u_int8_t prefix;
-			u_int16_t ul_proto;
+			uint8_t prefix;
+			uint16_t ul_proto;
 			vchar_t *vp = NULL;
 
 			if (isakmp_p2ph(&vp, pa->ptr) < 0)
@@ -601,8 +594,8 @@ quick_i2recv(iph2, msg0)
 	/* identity check */
 	if (idci != NULL) {
 		struct sockaddr_storage proposed_addr, got_addr;
-		u_int8_t proposed_prefix, got_prefix;
-		u_int16_t proposed_ulproto, got_ulproto;
+		uint8_t proposed_prefix, got_prefix;
+		uint16_t proposed_ulproto, got_ulproto;
 
 		error = ipsecdoi_id2sockaddr(iph2->id,
 					(struct sockaddr *) &proposed_addr,
@@ -648,8 +641,8 @@ quick_i2recv(iph2, msg0)
 	}
 	if (idcr != NULL) {
 		struct sockaddr_storage proposed_addr, got_addr;
-		u_int8_t proposed_prefix, got_prefix;
-		u_int16_t proposed_ulproto, got_ulproto;
+		uint8_t proposed_prefix, got_prefix;
+		uint16_t proposed_ulproto, got_ulproto;
 
 		error = ipsecdoi_id2sockaddr(iph2->id_p,
 					(struct sockaddr *) &proposed_addr,
@@ -780,9 +773,7 @@ end:
  * 	HDR*, HASH(3)
  */
 int
-quick_i2send(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_i2send(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *buf = NULL;
@@ -918,9 +909,7 @@ end:
  * 	HDR#*, HASH(4), notify
  */
 int
-quick_i3recv(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_i3recv(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;	/* for payload parsing */
@@ -1061,9 +1050,7 @@ end:
  * 	HDR*, HASH(1), SA, Ni [, KE ] [, IDi2, IDr2 ] [, NAT-OAi, NAT-OAr ]
  */
 int
-quick_r1recv(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_r1recv(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *hbuf = NULL;	/* for hash computing. */
@@ -1242,8 +1229,8 @@ quick_r1recv(iph2, msg0)
 		    {
 			struct sockaddr_storage addr;
 			struct sockaddr *daddr;
-			u_int8_t prefix;
-			u_int16_t ul_proto;
+			uint8_t prefix;
+			uint16_t ul_proto;
 			vchar_t *vp = NULL;
 
 			if (isakmp_p2ph(&vp, pa->ptr) < 0)
@@ -1432,10 +1419,9 @@ end:
 /*
  * call pfkey_getspi.
  */
+/*ARGSUSED*/
 int
-quick_r1prep(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg;
+quick_r1prep(struct ph2handle *iph2, vchar_t *msg __unused)
 {
 	int error = ISAKMP_INTERNAL_ERROR;
 
@@ -1468,19 +1454,17 @@ end:
  * 	HDR*, HASH(2), SA, Nr [, KE ] [, IDi2, IDr2 ] [, NAT-OAi, NAT-OAr ]
  */
 int
-quick_r2send(iph2, msg)
-	struct ph2handle *iph2;
-	vchar_t *msg;
+quick_r2send(struct ph2handle *iph2, vchar_t *msg)
 {
 	vchar_t *body = NULL;
 	vchar_t *hash = NULL;
 	struct isakmp_gen *gen;
 	char *p;
-	int tlen;
+	size_t tlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 	int natoa = ISAKMP_NPTYPE_NONE;
 	int pfsgroup;
-	u_int8_t *np_p = NULL;
+	uint8_t *np_p = NULL;
 #ifdef ENABLE_NATT
 	vchar_t *nat_oai = NULL;
 	vchar_t *nat_oar = NULL;
@@ -1618,7 +1602,7 @@ quick_r2send(iph2, msg)
 	struct saproto *pr;
 
 	if (pp->claim & IPSECDOI_ATTR_SA_LD_TYPE_SEC) {
-		u_int32_t v = htonl((u_int32_t)pp->lifetime);
+		uint32_t v = htonl((uint32_t)pp->lifetime);
 		data = isakmp_add_attr_l(data, IPSECDOI_ATTR_SA_LD_TYPE,
 					IPSECDOI_ATTR_SA_LD_TYPE_SEC);
 		if (!data)
@@ -1629,7 +1613,7 @@ quick_r2send(iph2, msg)
 			goto end;
 	}
 	if (pp->claim & IPSECDOI_ATTR_SA_LD_TYPE_KB) {
-		u_int32_t v = htonl((u_int32_t)pp->lifebyte);
+		uint32_t v = htonl((uint32_t)pp->lifebyte);
 		data = isakmp_add_attr_l(data, IPSECDOI_ATTR_SA_LD_TYPE,
 					IPSECDOI_ATTR_SA_LD_TYPE_KB);
 		if (!data)
@@ -1719,9 +1703,7 @@ end:
 
  */
 int
-quick_r3recv(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_r3recv(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;	/* for payload parsing */
@@ -1839,16 +1821,14 @@ end:
  * 	HDR#*, HASH(4), notify
  */
 int
-quick_r3send(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_r3send(struct ph2handle *iph2, vchar_t *msg0)
 {
 	vchar_t *buf = NULL;
 	vchar_t *myhash = NULL;
 	struct isakmp_pl_n *n;
 	vchar_t *notify = NULL;
 	char *p;
-	int tlen;
+	size_t tlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 
 	/* validity check */
@@ -1941,8 +1921,7 @@ end:
 }
 
 int
-tunnel_mode_prop(p)
-	struct saprop *p;
+tunnel_mode_prop(struct saprop *p)
 {
 	struct saproto *pr;
 
@@ -1955,10 +1934,9 @@ tunnel_mode_prop(p)
 /*
  * set SA to kernel.
  */
+/*ARGSUSED*/
 int
-quick_r3prep(iph2, msg0)
-	struct ph2handle *iph2;
-	vchar_t *msg0;
+quick_r3prep(struct ph2handle *iph2, vchar_t *msg0 __unused)
 {
 	int error = ISAKMP_INTERNAL_ERROR;
 
@@ -2005,7 +1983,7 @@ quick_r3prep(iph2, msg0)
 
 		struct policyindex *spidx;
 		struct sockaddr_storage addr;
-		u_int8_t pref;
+		uint8_t pref;
 		struct sockaddr *src = iph2->src;
 		struct sockaddr *dst = iph2->dst;
 
@@ -2071,14 +2049,12 @@ end:
  * create HASH, body (SA, NONCE) payload with isakmp header.
  */
 static vchar_t *
-quick_ir1mx(iph2, body, hash)
-	struct ph2handle *iph2;
-	vchar_t *body, *hash;
+quick_ir1mx(struct ph2handle *iph2, vchar_t *body, vchar_t *hash)
 {
 	struct isakmp *isakmp;
 	vchar_t *buf = NULL, *new = NULL;
 	char *p;
-	int tlen;
+	size_t tlen;
 	struct isakmp_gen *gen;
 	int error = ISAKMP_INTERNAL_ERROR;
 
@@ -2138,8 +2114,7 @@ end:
  * NOTE: this function is for responder.
  */
 static int
-get_sainfo_r(iph2)
-	struct ph2handle *iph2;
+get_sainfo_r(struct ph2handle *iph2)
 {
 	vchar_t *idsrc = NULL, *iddst = NULL, *client = NULL;
 	int error = ISAKMP_INTERNAL_ERROR;
@@ -2235,8 +2210,7 @@ end:
  * NOTE: This function is only for responder.
  */
 static int
-get_proposal_r(iph2)
-	struct ph2handle *iph2;
+get_proposal_r(struct ph2handle *iph2)
 {
 	struct policyindex spidx;
 	struct secpolicy *sp_in, *sp_out;
@@ -2485,7 +2459,7 @@ get_proposal_r(iph2)
 	/* get outbound policy */
     {
 	struct sockaddr_storage addr;
-	u_int8_t pref;
+	uint8_t pref;
 
 	spidx.dir = IPSEC_DIR_OUTBOUND;
 	addr = spidx.src;
@@ -2541,9 +2515,7 @@ get_proposal_r(iph2)
  * for explicitely.
  */
 static int
-ph2_recv_n(iph2, gen)
-	struct ph2handle *iph2;
-	struct isakmp_gen *gen;
+ph2_recv_n(struct ph2handle *iph2, struct isakmp_gen *gen)
 {
 	struct ph1handle *iph1 = iph2->ph1;
 	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;

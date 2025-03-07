@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.h,v 1.7 2009/05/20 07:54:50 vanhu Exp $	*/
+/*	$NetBSD: isakmp.h,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp.h,v 1.11 2005/04/25 22:19:39 manubsd Exp */
 
@@ -64,12 +64,12 @@
 struct isakmp {
 	cookie_t i_ck;		/* Initiator Cookie */
 	cookie_t r_ck;		/* Responder Cookie */
-	u_int8_t np;		/* Next Payload Type */
-	u_int8_t v;
-	u_int8_t etype;		/* Exchange Type */
-	u_int8_t flags;		/* Flags */
-	u_int32_t msgid;
-	u_int32_t len;		/* Length */
+	uint8_t np;		/* Next Payload Type */
+	uint8_t v;
+	uint8_t etype;		/* Exchange Type */
+	uint8_t flags;		/* Flags */
+	uint32_t msgid;
+	uint32_t len;		/* Length */
 } __attribute__((__packed__));
 
 /* Next Payload Type */
@@ -155,9 +155,9 @@ struct isakmp {
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 struct isakmp_gen {
-	u_int8_t np;		/* Next Payload */
-	u_int8_t reserved;	/* RESERVED, unused, must set to 0 */
-	u_int16_t len;		/* Payload Length */
+	uint8_t np;		/* Next Payload */
+	uint8_t reserved;	/* RESERVED, unused, must set to 0 */
+	uint16_t len;		/* Payload Length */
 } __attribute__((__packed__));
 
 /* 3.3 Data Attributes
@@ -171,8 +171,8 @@ struct isakmp_gen {
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 struct isakmp_data {
-	u_int16_t type;		/* defined by DOI-spec, and Attribute Format */
-	u_int16_t lorv;		/* if f equal 1, Attribute Length */
+	uint16_t type;		/* defined by DOI-spec, and Attribute Format */
+	uint16_t lorv;		/* if f equal 1, Attribute Length */
 				/* if f equal 0, Attribute Value */
 	/* if f equal 1, Attribute Value */
 } __attribute__((__packed__));
@@ -186,8 +186,8 @@ struct isakmp_data {
 /* 3.4 Security Association Payload */
 struct isakmp_pl_sa {
 	struct isakmp_gen h;
-	u_int32_t doi;		/* Domain of Interpretation */
-	u_int32_t sit;		/* Situation */
+	uint32_t doi;		/* Domain of Interpretation */
+	uint32_t sit;		/* Situation */
 } __attribute__((__packed__));
 #endif
 
@@ -201,10 +201,10 @@ struct isakmp_pl_sa {
 	*/
 struct isakmp_pl_p {
 	struct isakmp_gen h;
-	u_int8_t p_no;		/* Proposal # */
-	u_int8_t proto_id;	/* Protocol */
-	u_int8_t spi_size;	/* SPI Size */
-	u_int8_t num_t;		/* Number of Transforms */
+	uint8_t p_no;		/* Proposal # */
+	uint8_t proto_id;	/* Protocol */
+	uint8_t spi_size;	/* SPI Size */
+	uint8_t num_t;		/* Number of Transforms */
 	/* SPI */
 } __attribute__((__packed__));
 
@@ -217,9 +217,9 @@ struct isakmp_pl_p {
 	*/
 struct isakmp_pl_t {
 	struct isakmp_gen h;
-	u_int8_t t_no;		/* Transform # */
-	u_int8_t t_id;		/* Transform-Id */
-	u_int16_t reserved;	/* RESERVED2 */
+	uint8_t t_no;		/* Transform # */
+	uint8_t t_id;		/* Transform-Id */
+	uint16_t reserved;	/* RESERVED2 */
 	/* SA Attributes */
 } __attribute__((__packed__));
 
@@ -235,8 +235,8 @@ struct isakmp_pl_ke {
 struct isakmp_pl_id {
 	struct isakmp_gen h;
 	union {
-		u_int8_t id_type;	/* ID Type */
-		u_int32_t doi_data;	/* DOI Specific ID Data */
+		uint8_t id_type;	/* ID Type */
+		uint32_t doi_data;	/* DOI Specific ID Data */
 	} d;
 	/* Identification Data */
 } __attribute__((__packed__));
@@ -273,7 +273,7 @@ struct isakmp_pl_cert {
 /* 3.10 Certificate Request Payload */
 struct isakmp_pl_cr {
 	struct isakmp_gen h;
-	u_int8_t num_cert; /* # Cert. Types */
+	uint8_t num_cert; /* # Cert. Types */
 	/*
 	Certificate Types (variable length)
 	  -- Contains a list of the types of certificates requested,
@@ -305,10 +305,10 @@ struct isakmp_pl_nonce {
 /* 3.14 Notification Payload */
 struct isakmp_pl_n {
 	struct isakmp_gen h;
-	u_int32_t doi;		/* Domain of Interpretation */
-	u_int8_t proto_id;	/* Protocol-ID */
-	u_int8_t spi_size;	/* SPI Size */
-	u_int16_t type;		/* Notify Message Type */
+	uint32_t doi;		/* Domain of Interpretation */
+	uint8_t proto_id;	/* Protocol-ID */
+	uint8_t spi_size;	/* SPI Size */
+	uint16_t type;		/* Notify Message Type */
 	/* SPI */
 	/* Notification Data */
 } __attribute__((__packed__));
@@ -369,27 +369,27 @@ struct isakmp_pl_n {
 /* 3.15 Delete Payload */
 struct isakmp_pl_d {
 	struct isakmp_gen h;
-	u_int32_t doi;		/* Domain of Interpretation */
-	u_int8_t proto_id;	/* Protocol-Id */
-	u_int8_t spi_size;	/* SPI Size */
-	u_int16_t num_spi;	/* # of SPIs */
+	uint32_t doi;		/* Domain of Interpretation */
+	uint8_t proto_id;	/* Protocol-Id */
+	uint8_t spi_size;	/* SPI Size */
+	uint16_t num_spi;	/* # of SPIs */
 	/* SPI(es) */
 } __attribute__((__packed__));
 
 struct payload_list {
 	struct payload_list	*next, *prev;
 	vchar_t			*payload;
-	u_int8_t		payload_type;
-	u_int8_t		free_payload;
+	uint8_t		payload_type;
+	uint8_t		free_payload;
 };
 
 
 /* See draft-ietf-ipsec-isakmp-mode-cfg-04.txt, 3.2 */
 struct isakmp_pl_attr {
 	struct isakmp_gen h;
-	u_int8_t type;		/* Exchange type */
-	u_int8_t res2;
-	u_int16_t id;		/* Per transaction id */
+	uint8_t type;		/* Exchange type */
+	uint8_t res2;
+	uint16_t id;		/* Per transaction id */
 } __attribute__((__packed__));
             
 /* Exchange type */
@@ -400,11 +400,11 @@ struct isakmp_pl_attr {
 
 /* IKE fragmentation payload */
 struct isakmp_frag {
-	u_int16_t unknown0;	/* always set to zero? */
-	u_int16_t len;
-	u_int16_t unknown1;	/* always set to 1? */
-	u_int8_t index;
-	u_int8_t flags;
+	uint16_t unknown0;	/* always set to zero? */
+	uint16_t len;
+	uint16_t unknown1;	/* always set to 1? */
+	uint8_t index;
+	uint8_t flags;
 } __attribute__((__packed__)); 
 
 /* flags */
@@ -413,13 +413,13 @@ struct isakmp_frag {
 /* DPD R-U-THERE / R-U-THERE-ACK Payload */
 struct isakmp_pl_ru {
 	struct isakmp_gen h;
-	u_int32_t doi;		/* Domain of Interpretation */
-	u_int8_t proto_id;	/* Protocol-Id */
-	u_int8_t spi_size;	/* SPI Size */
-	u_int16_t type;		/* Notify type */
+	uint32_t doi;		/* Domain of Interpretation */
+	uint8_t proto_id;	/* Protocol-Id */
+	uint8_t spi_size;	/* SPI Size */
+	uint16_t type;		/* Notify type */
 	cookie_t  i_ck;	/* Initiator Cookie */
 	cookie_t r_ck;	/* Responder cookie*/
-	u_int32_t data;		/* Notification data */
+	uint32_t data;		/* Notification data */
 } __attribute__((__packed__));
 
 #endif /* _ISAKMP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.10 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: localconf.c,v 1.11 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -65,7 +65,7 @@
 
 struct localconf *lcconf = NULL;
 
-static void setdefault __P((void));
+static void setdefault(void);
 
 void
 initlcconf()
@@ -166,8 +166,7 @@ setdefault()
  * get PSK by string.
  */
 vchar_t *
-getpskbyname(id0)
-	vchar_t *id0;
+getpskbyname(vchar_t *id0)
 {
 	char *id;
 	vchar_t *key = NULL;
@@ -194,8 +193,7 @@ end:
  * get PSK by address.
  */
 vchar_t *
-getpskbyaddr(remote)
-	struct sockaddr *remote;
+getpskbyaddr(struct sockaddr *remote)
 {
 	vchar_t *key = NULL;
 	char addr[NI_MAXHOST], port[NI_MAXSERV];
@@ -208,9 +206,7 @@ getpskbyaddr(remote)
 }
 
 vchar_t *
-getpsk(str, len)
-	const char *str;
-	const int len;
+getpsk(const char *str, const int len)
 {
 	FILE *fp;
 	char buf[1024];	/* XXX how is variable length ? */
@@ -242,8 +238,8 @@ getpsk(str, len)
 			continue;	/* no 2nd parameter */
 		*p = '\0';
 		/* search the 1st of 2nd string. */
-		while (isspace((int)*++p))
-			;
+		while (isspace((unsigned char)*++p))
+			continue;
 		if (*p == '\0')
 			continue;	/* no 2nd parameter */
 		p--;
@@ -291,10 +287,7 @@ end:
  * get a file name of a type specified.
  */
 void
-getpathname(path, len, type, name)
-	char *path;
-	int len, type;
-	const char *name;
+getpathname(char *path, int len, int type, const char *name)
 {
 	snprintf(path, len, "%s%s%s", 
 		name[0] == '/' ? "" : lcconf->pathinfo[type],
@@ -347,8 +340,7 @@ static int lc_sittype2doi[] = {
  *	other: converted.
  */
 int
-sittype2doi(sittype)
-	int sittype;
+sittype2doi(int sittype)
 {
 	if (ARRAYLEN(lc_sittype2doi) > sittype)
 		return lc_sittype2doi[sittype];
@@ -365,8 +357,7 @@ static int lc_doitype2doi[] = {
  *	other: converted.
  */
 int
-doitype2doi(doitype)
-	int doitype;
+doitype2doi(int doitype)
 {
 	if (ARRAYLEN(lc_doitype2doi) > doitype)
 		return lc_doitype2doi[doitype];
@@ -378,7 +369,7 @@ doitype2doi(doitype)
 static void
 saverestore_params(int f)
 {
-	static u_int16_t s_port_isakmp;
+	static uint16_t s_port_isakmp;
 
 	/* 0: save, 1: restore */
 	if (f) {

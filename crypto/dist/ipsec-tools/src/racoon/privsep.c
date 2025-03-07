@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.26 2021/09/14 21:49:31 rillig Exp $	*/
+/*	$NetBSD: privsep.c,v 1.27 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -102,10 +102,7 @@ struct bind_args {
 };
 
 static int
-privsep_send(sock, buf, len)
-	int sock;
-	struct privsep_com_msg *buf;
-	size_t len;
+privsep_send(int sock, struct privsep_com_msg *buf, size_t len)
 {
 	if (buf == NULL)
 		return 0;
@@ -124,14 +121,11 @@ privsep_send(sock, buf, len)
 
 
 static int
-privsep_recv(sock, bufp, lenp)
-	int sock;
-	struct privsep_com_msg **bufp;
-	size_t *lenp;
+privsep_recv(int sock, struct privsep_com_msg **bufp, size_t *lenp)
 {
 	struct admin_com com;
 	struct admin_com *combuf;
-	size_t len;
+	ssize_t len;
 
 	*bufp = NULL;
 	*lenp = 0;
@@ -194,8 +188,9 @@ privsep_recv(sock, bufp, lenp)
 	return 0;
 }
 
+/*ARGSUSED*/
 static int
-privsep_do_exit(void *ctx, int fd)
+privsep_do_exit(void *ctx __unused, int fd __unused)
 {
 	kill(getpid(), SIGTERM);
 	return 0;
@@ -204,7 +199,7 @@ privsep_do_exit(void *ctx, int fd)
 int
 privsep_init(void)
 {
-	int i;
+	long sc;
 	pid_t child_pid;
 
 	/* If running as root, we don't use the privsep code path */
@@ -234,7 +229,6 @@ privsep_init(void)
 		plog(LLV_ERROR, LOCATION, NULL, "Cannot fork privsep: %s\n", 
 		    strerror(errno));
 		return -1;
-		break;
 
 	case 0: /* Child: drop privileges */
 		(void)close(privsep_sock[0]);
@@ -284,7 +278,6 @@ privsep_init(void)
 		monitor_fd(privsep_sock[1], privsep_do_exit, NULL, 0);
 
 		return 0;
-		break;
 
 	default: /* Parent: privileged process */
 		break;
@@ -294,12 +287,12 @@ privsep_init(void)
 	 * Close everything except the socketpair, 
 	 * and stdout if running in the forground.
 	 */
-	for (i = sysconf(_SC_OPEN_MAX); i > 0; i--) {
-		if (i == privsep_sock[0])
+	for (sc = sysconf(_SC_OPEN_MAX); sc > 0; sc--) {
+		if (sc == privsep_sock[0])
 			continue;
-		if ((f_foreground) && (i == 1))
+		if ((f_foreground) && (sc == 1))
 			continue;
-		(void)close(i);
+		(void)close((int)sc);
 	}
 
 	/* Above trickery closed the log file, reopen it */
@@ -327,7 +320,7 @@ privsep_init(void)
 	signal(SIGUSR2, SIG_DFL);
 	signal(SIGCHLD, SIG_DFL);
 
-	while (1) {
+	for (;;) {
 		size_t len;
 		struct privsep_com_msg *combuf;
 		struct privsep_com_msg *reply;
@@ -873,7 +866,6 @@ privsep_init(void)
 			    "unexpected privsep command %d\n", 
 			    combuf->hdr.ac_cmd);
 			goto out;
-			break;
 		}
 
 		/* This frees reply */
@@ -894,8 +886,7 @@ out:
 
 
 vchar_t *
-privsep_eay_get_pkcs1privkey(path) 
-	char *path;
+privsep_eay_get_pkcs1privkey(char *path)
 {
 	vchar_t *privkey;
 	struct privsep_com_msg *msg;
@@ -940,10 +931,7 @@ out:
 }
 
 int
-privsep_script_exec(script, name, envp)
-	char *script;
-	int name;
-	char *const envp[];
+privsep_script_exec(char *script, int name, char *const envp[])
 {
 	int count = 0;
 	char *const *c;
@@ -1051,9 +1039,7 @@ out:
 }
 
 vchar_t *
-privsep_getpsk(str, keylen)
-	const char *str;
-	int keylen;
+privsep_getpsk(const char *str, int keylen)
 {
 	vchar_t *psk;
 	struct privsep_com_msg *msg;
@@ -1110,10 +1096,7 @@ out:
  * succeed but will be ineffective if performed on an unprivileged socket.
  */
 int
-privsep_socket(domain, type, protocol)
-	int domain;
-	int type;
-	int protocol;
+privsep_socket(int domain, int type, int protocol)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1173,10 +1156,7 @@ out:
  * privilege to do so, it will ask a privileged process to do it.
  */
 int
-privsep_bind(s, addr, addrlen)
-	int s;
-	const struct sockaddr *addr;
-	socklen_t addrlen;
+privsep_bind(int s, const struct sockaddr *addr, socklen_t addrlen)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1246,12 +1226,8 @@ out:
  * have the privilege to do so, it will ask a privileged process to do it.
  */
 int
-privsep_setsockopt(s, level, optname, optval, optlen)
-	int s;
-	int level;
-	int optname;
-	const void *optval;
-	socklen_t optlen;
+privsep_setsockopt(int s, int level, int optname, const void *optval,
+    socklen_t optlen)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1324,9 +1300,7 @@ out:
 
 #ifdef ENABLE_HYBRID
 int
-privsep_xauth_login_system(usr, pwd)
-	char *usr;
-	char *pwd;
+privsep_xauth_login_system(char *usr, char *pwd)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1371,11 +1345,8 @@ out:
 }
 
 int 
-privsep_accounting_system(port, raddr, usr, inout)
-	int port;
-	struct sockaddr *raddr;
-	char *usr;
-	int inout;
+privsep_accounting_system(int port, struct sockaddr *raddr, char *usr,
+    int inout)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1437,8 +1408,7 @@ out:
 }
 
 static int
-port_check(port)
-	int port;
+port_check(int port)
 {
 	if ((port < 0) || (port >= isakmp_cfg_config.pool_size)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1452,9 +1422,7 @@ port_check(port)
 #endif
 
 static int 
-safety_check(msg, index)
-	struct privsep_com_msg *msg;
-	int index;
+safety_check(struct privsep_com_msg *msg, int index)
 {
 	if (index >= PRIVSEP_NBUF_MAX) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1475,8 +1443,7 @@ safety_check(msg, index)
  * Filter unsafe environment variables
  */
 static int
-unsafe_env(envp)
-	char *const *envp;
+unsafe_env(char *const *envp)
 {
 	char *const *e;
 	char *const *be;
@@ -1501,9 +1468,7 @@ found:
  * Check path safety
  */
 static int 
-unsafe_path(script, pathtype)
-	char *script;
-	int pathtype;
+unsafe_path(char *script, int pathtype)
 {
 	char *path;
 	char rpath[MAXPATHLEN + 1];
@@ -1532,8 +1497,7 @@ unsafe_path(script, pathtype)
 }
 
 static int 
-unknown_name(name)
-	int name;
+unknown_name(int name)
 {
 	if ((name < 0) || (name > SCRIPT_MAX)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1546,13 +1510,11 @@ unknown_name(name)
 
 /* Receive a file descriptor through the argument socket */
 static int
-rec_fd(s)
-	int s;
+rec_fd(int s)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
 	int *fdptr;
-	int fd;
 	char cmsbuf[1024];
 	struct iovec iov;
 	char iobuf[1];
@@ -1560,7 +1522,7 @@ rec_fd(s)
 	iov.iov_base = iobuf;
 	iov.iov_len = 1;
 
-	if (sizeof(cmsbuf) < CMSG_SPACE(sizeof(fd))) {
+	if (sizeof(cmsbuf) < CMSG_SPACE(sizeof(int))) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "send_fd: buffer size too small\n");
 		return -1;
@@ -1571,7 +1533,7 @@ rec_fd(s)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = cmsbuf;
-	msg.msg_controllen = CMSG_SPACE(sizeof(fd));
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 
 	if (recvmsg(s, &msg, MSG_WAITALL) == -1)
 		return -1;
@@ -1583,9 +1545,7 @@ rec_fd(s)
 
 /* Send the file descriptor fd through the argument socket s */
 static int
-send_fd(s, fd)
-	int s;
-	int fd;
+send_fd(int s, int fd)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
@@ -1626,9 +1586,7 @@ send_fd(s, fd)
 
 #ifdef HAVE_LIBPAM
 int 
-privsep_accounting_pam(port, inout)
-	int port;
-	int inout;
+privsep_accounting_pam(int port, int inout)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1685,11 +1643,7 @@ out:
 }
 
 int 
-privsep_xauth_login_pam(port, raddr, usr, pwd)
-	int port;
-	struct sockaddr *raddr;
-	char *usr;
-	char *pwd;
+privsep_xauth_login_pam(int port, struct sockaddr *raddr, char *usr, char *pwd)
 {
 	struct privsep_com_msg *msg;
 	size_t len;
@@ -1755,8 +1709,7 @@ out:
 }
 
 void
-privsep_cleanup_pam(port)
-	int port;
+privsep_cleanup_pam(int port)
 {
 	struct privsep_com_msg *msg;
 	size_t len;

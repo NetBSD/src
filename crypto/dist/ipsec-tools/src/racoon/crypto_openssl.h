@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.h,v 1.9 2018/02/07 03:59:03 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.h,v 1.10 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: crypto_openssl.h,v 1.11 2004/11/13 11:28:01 manubsd Exp */
 
@@ -208,12 +208,13 @@ extern vchar_t *eay_md5_one(vchar_t *);
 extern int eay_md5_hashlen(void);
 
 /* RNG */
-extern vchar_t *eay_set_random(u_int32_t);
-extern u_int32_t eay_random(void);
+extern vchar_t *eay_set_random(uint32_t);
+extern uint32_t eay_random(void);
 
 /* DH */
-extern int eay_dh_generate(vchar_t *, u_int32_t, u_int, vchar_t **, vchar_t **);
-extern int eay_dh_compute(vchar_t *, u_int32_t, vchar_t *, vchar_t *,
+extern int eay_dh_generate(vchar_t *, uint32_t, u_int, vchar_t **,
+    vchar_t **);
+extern int eay_dh_compute(vchar_t *, uint32_t, vchar_t *, vchar_t *,
     vchar_t *, vchar_t **);
 
 /* Base 64 */

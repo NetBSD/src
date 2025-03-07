@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.h,v 1.8 2011/02/02 15:21:34 vanhu Exp $	*/
+/*	$NetBSD: sainfo.h,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: sainfo.h,v 1.5 2006/07/09 17:19:38 manubsd Exp */
 
@@ -72,21 +72,21 @@ struct sainfoalg {
 	struct sainfoalg *next;
 };
 
-extern struct sainfo *getsainfo __P((const vchar_t *,
-	const vchar_t *, const vchar_t *, const vchar_t *, uint32_t));
-extern struct sainfo *newsainfo __P((void));
-extern void delsainfo __P((struct sainfo *));
-extern void inssainfo __P((struct sainfo *));
-extern void remsainfo __P((struct sainfo *));
-extern void flushsainfo __P((void));
-extern void initsainfo __P((void));
-extern struct sainfoalg *newsainfoalg __P((void));
-extern void delsainfoalg __P((struct sainfoalg *));
-extern void inssainfoalg __P((struct sainfoalg **, struct sainfoalg *));
-extern const char * sainfo2str __P((const struct sainfo *));
+extern struct sainfo *getsainfo(const vchar_t *,
+    const vchar_t *, const vchar_t *, const vchar_t *, uint32_t);
+extern struct sainfo *newsainfo(void);
+extern void delsainfo(struct sainfo *);
+extern void inssainfo(struct sainfo *);
+extern void remsainfo(struct sainfo *);
+extern void flushsainfo(void);
+extern void initsainfo(void);
+extern struct sainfoalg *newsainfoalg(void);
+extern void delsainfoalg(struct sainfoalg *);
+extern void inssainfoalg(struct sainfoalg **, struct sainfoalg *);
+extern const char * sainfo2str(const struct sainfo *);
 
-extern void sainfo_start_reload __P((void));
-extern void sainfo_finish_reload __P((void));
-extern void save_sainfotree_restore __P((void));
+extern void sainfo_start_reload(void);
+extern void sainfo_finish_reload(void);
+extern void save_sainfotree_restore(void);
 
 #endif /* _SAINFO_H */

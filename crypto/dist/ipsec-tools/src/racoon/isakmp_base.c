@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.13 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.14 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -100,9 +100,7 @@
  * 	rev: HDR, SA, [HASH(1),] <Ni_b>Pubkey_r, <IDii_b>Ke_i
  */
 int
-base_i1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg; /* must be null */
+base_i1send(struct ph1handle *iph1, vchar_t *msg) /* must be null */
 {
 	struct payload_list *plist = NULL;
 	int error = -1;
@@ -289,9 +287,7 @@ end:
  * 	rev: HDR, SA, <Nr_b>PubKey_i, <IDir_b>Ke_r
  */
 int
-base_i2recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_i2recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -404,9 +400,7 @@ end:
  * 	rev: HDR, <KE>Ke_i, HASH_I
  */
 int
-base_i2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_i2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	vchar_t *vid = NULL;
@@ -575,9 +569,7 @@ end:
  * 	rev: HDR, <KE>_Ke_r, HASH_R
  */
 int
-base_i3recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_i3recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -651,7 +643,7 @@ base_i3recv(iph1, msg)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see ident_r1recv() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -745,10 +737,9 @@ end:
 /*
  * status update and establish isakmp sa.
  */
+/*ARGSUSED*/
 int
-base_i3send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_i3send(struct ph1handle *iph1, vchar_t *msg __unused)
 {
 	int error = -1;
 
@@ -775,9 +766,7 @@ end:
  * 	rev: HDR, SA, [HASH(1),] <Ni_b>Pubkey_r, <IDii_b>Ke_i
  */
 int
-base_r1recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_r1recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -893,9 +882,7 @@ end:
  * 	rev: HDR, SA, <Nr_b>PubKey_i, <IDir_b>Ke_r
  */
 int
-base_r1send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_r1send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	int error = -1;
@@ -1056,9 +1043,7 @@ end:
  * 	rev: HDR, <KE>Ke_i, HASH_I
  */
 int
-base_r2recv(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_r2recv(struct ph1handle *iph1, vchar_t *msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
@@ -1131,7 +1116,7 @@ base_r2recv(iph1, msg)
 			}
 			/* passthrough to default... */
 #endif
-
+			/*FALLTHROUGH*/
 		default:
 			/* don't send information, see ident_r1recv() */
 			plog(LLV_ERROR, LOCATION, iph1->remote,
@@ -1204,9 +1189,7 @@ end:
  * 	rev: HDR, <KE>_Ke_r, HASH_R
  */
 int
-base_r2send(iph1, msg)
-	struct ph1handle *iph1;
-	vchar_t *msg;
+base_r2send(struct ph1handle *iph1, vchar_t *msg)
 {
 	struct payload_list *plist = NULL;
 	vchar_t *vid = NULL;

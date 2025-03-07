@@ -1,4 +1,4 @@
-/*	$NetBSD: admin_var.h,v 1.5 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: admin_var.h,v 1.6 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: admin_var.h,v 1.7 2004/12/30 00:08:30 manubsd Exp */
 
@@ -34,7 +34,7 @@
 #ifndef _ADMIN_VAR_H
 #define _ADMIN_VAR_H
 
-extern int admin_init __P((void));
-extern int admin_close __P((void));
+extern int admin_init(void);
+extern int admin_close(void);
 
 #endif /* _ADMIN_VAR_H */

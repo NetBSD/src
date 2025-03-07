@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.9 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.10 2025/03/07 15:55:30 christos Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -94,7 +94,7 @@ static struct vendor_id all_vendor_ids[] = {
 #define DPD_MAJOR_VERSION	0x01
 #define DPD_MINOR_VERSION	0x00
 
-const char vendorid_dpd_hash[] = {
+static const unsigned char vendorid_dpd_hash[] = {
 	0xAF, 0xCA, 0xD7, 0x13,
 	0x68, 0xA1, 0xF1, 0xC9,
 	0x6B, 0x86, 0x96, 0xFC,
@@ -122,7 +122,7 @@ vid_string_by_id (int id)
 	struct vendor_id *current;
 
 	if (id == VENDORID_DPD)
-		return vendorid_dpd_hash;
+		return (const char *)vendorid_dpd_hash;
 
 	current = lookup_vendor_id_by_id(id);
 
@@ -284,9 +284,7 @@ handle_vendorid(struct ph1handle *iph1, struct isakmp_gen *gen)
 }
 
 static vchar_t * 
-vendorid_fixup(vendorid, vidhash)
-	int vendorid;		 
-	vchar_t *vidhash;
+vendorid_fixup(int vendorid, vchar_t *vidhash)
 {			   
 	switch(vendorid) {
 	case VENDORID_XAUTH: {	/* The vendor Id is truncated */

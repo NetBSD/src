@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.53 2018/05/19 19:47:47 maxv Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.54 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -99,15 +99,15 @@
 #endif
 
 /* information exchange */
-static int isakmp_info_recv_n (struct ph1handle *, struct isakmp_pl_n *, u_int32_t, int);
-static int isakmp_info_recv_d (struct ph1handle *, struct isakmp_pl_d *, u_int32_t, int);
+static int isakmp_info_recv_n (struct ph1handle *, struct isakmp_pl_n *, uint32_t, int);
+static int isakmp_info_recv_d (struct ph1handle *, struct isakmp_pl_d *, uint32_t, int);
 
 #ifdef ENABLE_DPD
-static int isakmp_info_recv_r_u __P((struct ph1handle *,
-	struct isakmp_pl_ru *, u_int32_t));
-static int isakmp_info_recv_r_u_ack __P((struct ph1handle *,
-	struct isakmp_pl_ru *, u_int32_t));
-static void isakmp_info_send_r_u __P((struct sched *));
+static int isakmp_info_recv_r_u(struct ph1handle *, struct isakmp_pl_ru *,
+    uint32_t);
+static int isakmp_info_recv_r_u_ack(struct ph1handle *, struct isakmp_pl_ru *,
+    uint32_t);
+static void isakmp_info_send_r_u(struct sched *);
 #endif
 
 /* %%%
@@ -117,13 +117,11 @@ static void isakmp_info_send_r_u __P((struct sched *));
  * receive Information
  */
 int
-isakmp_info_recv(iph1, msg0)
-	struct ph1handle *iph1;
-	vchar_t *msg0;
+isakmp_info_recv(struct ph1handle *iph1, vchar_t *msg0)
 {
 	vchar_t *msg = NULL;
 	vchar_t *pbuf = NULL;
-	u_int32_t msgid = 0;
+	uint32_t msgid = 0;
 	int error = -1;
 	struct isakmp *isakmp;
 	struct isakmp_gen *gen;
@@ -131,7 +129,7 @@ isakmp_info_recv(iph1, msg0)
 	void *p;
 	vchar_t *hash, *payload;
 	struct isakmp_gen *nd;
-	u_int8_t np;
+	uint8_t np;
 	int encrypted;
 
 	plog(LLV_DEBUG, LOCATION, NULL, "receive Information.\n");
@@ -328,10 +326,8 @@ isakmp_info_recv(iph1, msg0)
  * log unhandled / unallowed Notification payload
  */
 int
-isakmp_log_notify(iph1, notify, exchange)
-	struct ph1handle *iph1;
-	struct isakmp_pl_n *notify;
-	const char *exchange;
+isakmp_log_notify(struct ph1handle *iph1, struct isakmp_pl_n *notify,
+    const char *exchange)
 {
 	u_int type;
 	char *nraw, *ndata, *nhex;
@@ -386,11 +382,8 @@ isakmp_log_notify(iph1, notify, exchange)
  * handling of Notification payload
  */
 static int
-isakmp_info_recv_n(iph1, notify, msgid, encrypted)
-	struct ph1handle *iph1;
-	struct isakmp_pl_n *notify;
-	u_int32_t msgid;
-	int encrypted;
+isakmp_info_recv_n(struct ph1handle *iph1, struct isakmp_pl_n *notify,
+    uint32_t msgid, int encrypted)
 {
 	u_int type;
 
@@ -443,18 +436,16 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 /*
  * handling of Deletion payload
  */
+/*ARGSUSED*/
 static int
-isakmp_info_recv_d(iph1, delete, msgid, encrypted)
-	struct ph1handle *iph1;
-	struct isakmp_pl_d *delete;
-	u_int32_t msgid;
-	int encrypted;
+isakmp_info_recv_d(struct ph1handle *iph1, struct isakmp_pl_d *delete,
+    uint32_t msgid __unused, int encrypted)
 {
 	int tlen, num_spi;
 	struct ph1handle *del_ph1;
 	union {
-		u_int32_t spi32;
-		u_int16_t spi16[2];
+		uint32_t spi32;
+		uint16_t spi16[2];
 	} spi;
 
 	if (ntohl(delete->doi) != IPSEC_DOI) {
@@ -522,7 +513,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 
 	case IPSECDOI_PROTO_IPSEC_AH:
 	case IPSECDOI_PROTO_IPSEC_ESP:
-		if (delete->spi_size != sizeof(u_int32_t)) {
+		if (delete->spi_size != sizeof(uint32_t)) {
 			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"delete payload with strange spi "
 				"size %d(proto_id:%d)\n",
@@ -530,7 +521,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 			return 0;
 		}
 		purge_ipsec_spi(iph1->remote, delete->proto_id,
-		    (u_int32_t *)(delete + 1), num_spi);
+		    (uint32_t *)(delete + 1), num_spi);
 		break;
 
 	case IPSECDOI_PROTO_IPCOMP:
@@ -569,8 +560,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
  * send Delete payload (for ISAKMP SA) in Informational exchange.
  */
 int
-isakmp_info_send_d1(iph1)
-	struct ph1handle *iph1;
+isakmp_info_send_d1(struct ph1handle *iph1)
 {
 	struct isakmp_pl_d *d;
 	vchar_t *payload = NULL;
@@ -613,16 +603,15 @@ isakmp_info_send_d1(iph1)
  * pfkey msg.  It sends always single SPI.
  */
 int
-isakmp_info_send_d2(iph2)
-	struct ph2handle *iph2;
+isakmp_info_send_d2( struct ph2handle *iph2)
 {
 	struct ph1handle *iph1;
 	struct saproto *pr;
 	struct isakmp_pl_d *d;
 	vchar_t *payload = NULL;
-	int tlen;
+	size_t tlen;
 	int error = 0;
-	u_int8_t *spi;
+	uint8_t *spi;
 
 	if (iph2->status != PHASE2ST_ESTABLISHED)
 		return 0;
@@ -667,7 +656,7 @@ isakmp_info_send_d2(iph2)
 		 * XXX SPI bits are left-filled, for use with IPComp.
 		 * we should be switching to variable-length spi field...
 		 */
-		spi = (u_int8_t *)&pr->spi;
+		spi = (uint8_t *)&pr->spi;
 		spi += sizeof(pr->spi);
 		spi -= pr->spisize;
 		memcpy(d + 1, spi, pr->spisize);
@@ -684,15 +673,12 @@ isakmp_info_send_d2(iph2)
  * send Notification payload (for without ISAKMP SA) in Informational exchange
  */
 int
-isakmp_info_send_nx(isakmp, remote, local, type, data)
-	struct isakmp *isakmp;
-	struct sockaddr *remote, *local;
-	int type;
-	vchar_t *data;
+isakmp_info_send_nx(struct isakmp *isakmp, struct sockaddr *remote,
+    struct sockaddr *local, int type, vchar_t *data)
 {
 	struct ph1handle *iph1 = NULL;
 	vchar_t *payload = NULL;
-	int tlen;
+	size_t tlen;
 	int error = -1;
 	struct isakmp_pl_n *n;
 	int spisiz = 0;		/* see below */
@@ -759,13 +745,10 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
  * send Notification payload (for ISAKMP SA) in Informational exchange
  */
 int
-isakmp_info_send_n1(iph1, type, data)
-	struct ph1handle *iph1;
-	int type;
-	vchar_t *data;
+isakmp_info_send_n1(struct ph1handle *iph1, int type, vchar_t *data)
 {
 	vchar_t *payload = NULL;
-	int tlen;
+	size_t tlen;
 	int error = 0;
 	struct isakmp_pl_n *n;
 	int spisiz;
@@ -817,14 +800,11 @@ isakmp_info_send_n1(iph1, type, data)
  * send Notification payload (for IPsec SA) in Informational exchange
  */
 int
-isakmp_info_send_n2(iph2, type, data)
-	struct ph2handle *iph2;
-	int type;
-	vchar_t *data;
+isakmp_info_send_n2(struct ph2handle *iph2, int type, vchar_t *data)
 {
 	struct ph1handle *iph1 = iph2->ph1;
 	vchar_t *payload = NULL;
-	int tlen;
+	size_t tlen;
 	int error = 0;
 	struct isakmp_pl_n *n;
 	struct saproto *pr;
@@ -852,7 +832,7 @@ isakmp_info_send_n2(iph2, type, data)
 	n->proto_id = pr->proto_id;		/* IPSEC AH/ESP/whatever*/
 	n->spi_size = pr->spisize;
 	n->type = htons(type);
-	*(u_int32_t *)(n + 1) = pr->spi;
+	*(uint32_t *)(n + 1) = pr->spi;
 	if (data)
 		memcpy((caddr_t)(n + 1) + pr->spisize, data->v, data->l);
 
@@ -868,18 +848,15 @@ isakmp_info_send_n2(iph2, type, data)
  * When ph1->skeyid_a == NULL, send message without encoding.
  */
 int
-isakmp_info_send_common(iph1, payload, np, flags)
-	struct ph1handle *iph1;
-	vchar_t *payload;
-	u_int32_t np;
-	int flags;
+isakmp_info_send_common(struct ph1handle *iph1, vchar_t *payload, uint32_t np,
+    int flags)
 {
 	struct ph2handle *iph2 = NULL;
 	vchar_t *hash = NULL;
 	struct isakmp *isakmp;
 	struct isakmp_gen *gen;
 	char *p;
-	int tlen;
+	size_t tlen;
 	int error = -1;
 
 	/* add new entry to isakmp status table */
@@ -1023,17 +1000,13 @@ err:
  * XXX Which is SPI to be included, inbound or outbound ?
  */
 vchar_t *
-isakmp_add_pl_n(buf0, np_p, type, pr, data)
-	vchar_t *buf0;
-	u_int8_t **np_p;
-	int type;
-	struct saproto *pr;
-	vchar_t *data;
+isakmp_add_pl_n(vchar_t *buf0, uint8_t **np_p, int type, struct saproto *pr,
+    vchar_t *data)
 {
 	vchar_t *buf = NULL;
 	struct isakmp_pl_n *n;
-	int tlen;
-	int oldlen = 0;
+	size_t tlen;
+	size_t oldlen = 0;
 
 	if (*np_p)
 		**np_p = ISAKMP_NPTYPE_N;
@@ -1060,7 +1033,7 @@ isakmp_add_pl_n(buf0, np_p, type, pr, data)
 	n->proto_id = pr->proto_id;		/* IPSEC AH/ESP/whatever*/
 	n->spi_size = pr->spisize;
 	n->type = htons(type);
-	*(u_int32_t *)(n + 1) = pr->spi;	/* XXX */
+	*(uint32_t *)(n + 1) = pr->spi;	/* XXX */
 	if (data)
 		memcpy((caddr_t)(n + 1) + pr->spisize, data->v, data->l);
 
@@ -1071,11 +1044,7 @@ isakmp_add_pl_n(buf0, np_p, type, pr, data)
 }
 
 void
-purge_ipsec_spi(dst0, proto, spi, n)
-	struct sockaddr *dst0;
-	int proto;
-	u_int32_t *spi;	/*network byteorder*/
-	size_t n;
+purge_ipsec_spi(struct sockaddr *dst0, int proto, uint32_t *spi, size_t n)
 {
 	vchar_t *buf = NULL;
 	struct sadb_msg *msg, *next, *end;
@@ -1203,9 +1172,8 @@ purge_ipsec_spi(dst0, proto, spi, n)
  * restarts.
  */
 int
-isakmp_info_recv_initialcontact(iph1, protectedph2)
-	struct ph1handle *iph1;
-	struct ph2handle *protectedph2;
+isakmp_info_recv_initialcontact(struct ph1handle *iph1,
+    struct ph2handle *protectedph2)
 {
 	vchar_t *buf = NULL;
 	struct sadb_msg *msg, *next, *end;
@@ -1375,11 +1343,10 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 
 
 #ifdef ENABLE_DPD
+/*ARGSUSED*/
 static int
-isakmp_info_recv_r_u (iph1, ru, msgid)
-	struct ph1handle *iph1;
-	struct isakmp_pl_ru *ru;
-	u_int32_t msgid;
+isakmp_info_recv_r_u(struct ph1handle *iph1, struct isakmp_pl_ru *ru,
+    uint32_t msgid __unused)
 {
 	struct isakmp_pl_ru *ru_ack;
 	vchar_t *payload = NULL;
@@ -1421,13 +1388,12 @@ isakmp_info_recv_r_u (iph1, ru, msgid)
 	return error;
 }
 
+/*ARGSUSED*/
 static int
-isakmp_info_recv_r_u_ack (iph1, ru, msgid)
-	struct ph1handle *iph1;
-	struct isakmp_pl_ru *ru;
-	u_int32_t msgid;
+isakmp_info_recv_r_u_ack(struct ph1handle *iph1, struct isakmp_pl_ru *ru,
+    uint32_t msgid __unused)
 {
-	u_int32_t seq;
+	uint32_t seq;
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote,
 		 "DPD R-U-There-Ack received\n");
@@ -1467,8 +1433,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
  * send DPD R-U-THERE payload in Informational exchange.
  */
 static void
-isakmp_info_send_r_u(sc)
-	struct sched *sc;
+isakmp_info_send_r_u(struct sched *sc)
 {
 	struct ph1handle *iph1 = container_of(sc, struct ph1handle, dpd_r_u);
 
@@ -1550,9 +1515,7 @@ isakmp_info_send_r_u(sc)
 
 /* Schedule a new R-U-THERE */
 int
-isakmp_sched_r_u(iph1, retry)
-	struct ph1handle *iph1;
-	int retry;
+isakmp_sched_r_u(struct ph1handle *iph1, int retry)
 {
 	if(iph1 == NULL ||
 	   iph1->rmconf == NULL)

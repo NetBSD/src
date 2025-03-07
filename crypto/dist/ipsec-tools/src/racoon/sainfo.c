@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.16 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.17 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -77,9 +77,8 @@ static sainfo_tailq_head_t sitree, sitree_save;
  * First pass is for sainfo from a specified peer, second for others.
  */
 struct sainfo *
-getsainfo(loc, rmt, peer, client, remoteid)
-	const vchar_t *loc, *rmt, *peer, *client;
-	uint32_t remoteid;
+getsainfo(const vchar_t *loc, const vchar_t *rmt, const vchar_t *peer,
+    const vchar_t *client, uint32_t remoteid)
 {
 	struct sainfo *s = NULL;
 
@@ -201,8 +200,7 @@ newsainfo()
 }
 
 void
-delsainfo(si)
-	struct sainfo *si;
+delsainfo(struct sainfo *si)
 {
 	int i;
 
@@ -252,8 +250,7 @@ prisainfo(struct sainfo *s)
 }
 
 void
-inssainfo(new)
-	struct sainfo *new;
+inssainfo(struct sainfo *new)
 {
 	if(LIST_EMPTY(&sitree)) {
 
@@ -273,7 +270,7 @@ inssainfo(new)
 		npri = prisainfo(new);
 
 		s = LIST_FIRST(&sitree);
-		while (1) {
+		for (;;) {
 
 			spri = prisainfo(s);
 			n = LIST_NEXT(s, chain);
@@ -298,8 +295,7 @@ inssainfo(new)
 }
 
 void
-remsainfo(si)
-	struct sainfo *si;
+remsainfo(struct sainfo *si)
 {
 	LIST_REMOVE(si, chain);
 }
@@ -335,8 +331,7 @@ newsainfoalg()
 }
 
 void
-delsainfoalg(alg)
-	struct sainfoalg *alg;
+delsainfoalg(struct sainfoalg *alg)
 {
 	struct sainfoalg *a, *next;
 
@@ -347,9 +342,7 @@ delsainfoalg(alg)
 }
 
 void
-inssainfoalg(head, new)
-	struct sainfoalg **head;
-	struct sainfoalg *new;
+inssainfoalg(struct sainfoalg **head, struct sainfoalg *new)
 {
 	struct sainfoalg *a;
 
@@ -362,8 +355,7 @@ inssainfoalg(head, new)
 }
 
 const char *
-sainfo2str(si)
-	const struct sainfo *si;
+sainfo2str(const struct sainfo *si)
 {
         static char buf[256];
 

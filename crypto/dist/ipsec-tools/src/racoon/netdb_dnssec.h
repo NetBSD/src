@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb_dnssec.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: netdb_dnssec.h,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: netdb_dnssec.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -68,7 +68,7 @@ struct certinfo {
 	struct certinfo *ci_next;	/* next structure */
 };
 
-extern void freecertinfo __P((struct certinfo *));
-extern int getcertsbyname __P((char *, struct certinfo **));
+extern void freecertinfo(struct certinfo *);
+extern int getcertsbyname(char *, struct certinfo **);
 
 #endif /* _NETDB_DNSSEC_H */

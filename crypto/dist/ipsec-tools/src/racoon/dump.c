@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.3 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: dump.c,v 1.4 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: dump.c,v 1.3 2000/09/23 15:31:05 itojun Exp $	*/
 
@@ -69,14 +69,14 @@
 
 /* copied from pcap-int.h */
 struct pcap_timeval {
-	u_int32_t tv_sec;	/* seconds */
-	u_int32_t tv_usec;	/* microseconds */
+	uint32_t tv_sec;	/* seconds */
+	uint32_t tv_usec;	/* microseconds */
 };
 
 struct pcap_sf_pkthdr {
 	struct pcap_timeval ts;	/* time stamp */
-	u_int32_t caplen;	/* length of portion present */
-	u_int32_t len;		/* length this packet (off wire) */
+	uint32_t caplen;	/* length of portion present */
+	uint32_t len;		/* length this packet (off wire) */
 };
 
 #define TCPDUMP_MAGIC	0xa1b2c3d4

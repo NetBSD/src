@@ -1,4 +1,4 @@
-/*	$NetBSD: safefile.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: safefile.c,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: safefile.c,v 1.5 2001/03/05 19:54:06 thorpej Exp $	*/
 
@@ -45,9 +45,7 @@
 #include "safefile.h"
 
 int
-safefile(path, secret)
-	const char *path;
-	int secret;
+safefile(const char *path, int secret)
 {
 	struct stat s;
 	uid_t me;

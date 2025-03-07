@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.11 2012/01/10 12:07:30 tteras Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.12 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
@@ -86,9 +86,7 @@ static vchar_t *isakmp_cfg_split(struct ph1handle *,
     struct isakmp_data *, struct unity_netentry*,int);
 
 vchar_t *
-isakmp_unity_req(iph1, attr)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
+isakmp_unity_req(struct ph1handle *iph1, struct isakmp_data *attr)
 {
 	int type;
 	vchar_t *reply_attr = NULL;
@@ -127,7 +125,7 @@ isakmp_unity_req(iph1, attr)
 		char buf[MAXMOTD + 1];
 		int fd;
 		char *filename = &isakmp_cfg_config.motd[0];
-		int len;
+		ssize_t len;
 
 		if ((fd = open(filename, O_RDONLY, 0)) == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, 
@@ -196,23 +194,20 @@ isakmp_unity_req(iph1, attr)
 		plog(LLV_DEBUG, LOCATION, NULL,
 		     "Ignored attribute %s\n", s_isakmp_cfg_type(type));
 		return NULL;
-		break;
 	}
 
 	return reply_attr;
 }
 
 void
-isakmp_unity_reply(iph1, attr)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
+isakmp_unity_reply(struct ph1handle *iph1, struct isakmp_data *attr)
 {
 	int type = ntohs(attr->type);
 	int alen = ntohs(attr->lorv);
 
 	struct unity_network *network = (struct unity_network *)(attr + 1);
-	int index = 0;
-	int count = 0;
+	int index1 = 0;
+	size_t count = 0;
 
 	switch(type) {
 	case UNITY_SPLIT_INCLUDE:
@@ -220,10 +215,10 @@ isakmp_unity_reply(iph1, attr)
 		if (alen)
 			count = alen / sizeof(struct unity_network);
 
-		for(;index < count; index++)
+		for(;index1 < count; index1++)
 			splitnet_list_add(
 				&iph1->mode_cfg->split_include,
-				&network[index],
+				&network[index1],
 				&iph1->mode_cfg->include_count);
 
 		iph1->mode_cfg->flags |= ISAKMP_CFG_GOT_SPLIT_INCLUDE;
@@ -234,10 +229,10 @@ isakmp_unity_reply(iph1, attr)
 		if (alen)
 			count = alen / sizeof(struct unity_network);
 
-		for(;index < count; index++)
+		for(;index1 < count; index1++)
 			splitnet_list_add(
 				&iph1->mode_cfg->split_local,
-				&network[index],
+				&network[index1],
 				&iph1->mode_cfg->local_count);
 
 		iph1->mode_cfg->flags |= ISAKMP_CFG_GOT_SPLIT_LOCAL;
@@ -261,17 +256,14 @@ isakmp_unity_reply(iph1, attr)
 }
 
 static vchar_t *
-isakmp_cfg_split(iph1, attr, netentry, count)
-	struct ph1handle *iph1;
-	struct isakmp_data *attr;
-	struct unity_netentry *netentry;
-	int count;
+isakmp_cfg_split(struct ph1handle *iph1, struct isakmp_data *attr,
+    struct unity_netentry *netentry, int count)
 {
 	vchar_t *buffer;
 	struct isakmp_data *new;
 	struct unity_network * network;
 	size_t len;
-	int index = 0;
+	int index1 = 0;
 
 	char tmp1[40];
 	char tmp2[40];
@@ -287,9 +279,9 @@ isakmp_cfg_split(iph1, attr, netentry, count)
 	new->lorv = htons(len);
 
 	network = (struct unity_network *)(new + 1);
-	for (; index < count; index++) {
+	for (; index1 < count; index1++) {
 
-		memcpy(&network[index],
+		memcpy(&network[index1],
 			&netentry->network,
 			sizeof(struct unity_network));
 
@@ -303,10 +295,8 @@ isakmp_cfg_split(iph1, attr, netentry, count)
 	return buffer;
 }
 
-int  splitnet_list_add(list, network, count)
-	struct unity_netentry ** list;
-	struct unity_network * network;
-	int *count;
+int  splitnet_list_add(struct unity_netentry ** list,
+    struct unity_network * network, int *count)
 {
 	struct unity_netentry * nentry;
 
@@ -350,9 +340,8 @@ int  splitnet_list_add(list, network, count)
 	return 0;
 }
 
-void splitnet_list_free(list, count)
-	struct unity_netentry * list;
-	int *count;
+void
+splitnet_list_free(struct unity_netentry * list, int *count)
 {
 	struct unity_netentry * netentry = list;
 	struct unity_netentry * delentry;
@@ -366,15 +355,15 @@ void splitnet_list_free(list, count)
 	}
 }
 
-char * splitnet_list_2str(list, splitnet_ipaddr)
-	struct unity_netentry * list;
-	enum splinet_ipaddr splitnet_ipaddr;
+char *
+splitnet_list_2str(struct unity_netentry * list,
+    enum splinet_ipaddr splitnet_ipaddr)
 {
 	struct unity_netentry * netentry;
 	char tmp1[40];
 	char tmp2[40];
 	char * str;
-	int len;
+	size_t len;
 
 	/* determine string length */
 	len = 0;

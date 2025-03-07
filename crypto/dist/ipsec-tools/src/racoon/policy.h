@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.8 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: policy.h,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -40,9 +40,9 @@
 #ifdef HAVE_SECCTX
 #define MAX_CTXSTR_SIZE 50
 struct security_ctx {
-	u_int8_t ctx_doi;       /* Security Context DOI */
-	u_int8_t ctx_alg;       /* Security Context Algorithm */
-	u_int16_t ctx_strlen;   /* Security Context stringlength
+	uint8_t ctx_doi;       /* Security Context DOI */
+	uint8_t ctx_alg;       /* Security Context Algorithm */
+	uint16_t ctx_strlen;   /* Security Context stringlength
 				 * (includes terminating NULL)
 				 */
 	char ctx_str[MAX_CTXSTR_SIZE];  /* Security Context string */
@@ -58,13 +58,13 @@ struct security_ctx {
  *	0 to (~0 - 1): is one of the number of each value.
  */
 struct policyindex {
-	u_int8_t dir;			/* direction of packet flow, see blow */
+	uint8_t dir;			/* direction of packet flow, see blow */
 	struct sockaddr_storage src;	/* IP src address for SP */
 	struct sockaddr_storage dst;	/* IP dst address for SP */
-	u_int8_t prefs;			/* prefix length in bits for src */
-	u_int8_t prefd;			/* prefix length in bits for dst */
-	u_int16_t ul_proto;		/* upper layer Protocol */
-	u_int32_t priority;		/* priority for the policy */
+	uint8_t prefs;			/* prefix length in bits for src */
+	uint8_t prefd;			/* prefix length in bits for dst */
+	uint16_t ul_proto;		/* upper layer Protocol */
+	uint32_t priority;		/* priority for the policy */
  	u_int64_t created;		/* Used for generated SPD entries deletion */
 #ifdef HAVE_SECCTX
 	struct security_ctx sec_ctx;    /* Security Context */
@@ -76,7 +76,7 @@ struct secpolicy {
 	TAILQ_ENTRY(secpolicy) chain;
 
 	struct policyindex spidx;	/* selector */
-	u_int32_t id;			/* It's unique number on the system. */
+	uint32_t id;			/* It's unique number on the system. */
 
 	u_int policy;		/* DISCARD, NONE or IPSEC, see keyv2.h */
 	struct ipsecrequest *req;
@@ -95,9 +95,9 @@ struct secpolicy {
 struct secasindex {
 	struct sockaddr_storage src;	/* srouce address for SA */
 	struct sockaddr_storage dst;	/* destination address for SA */
-	u_int16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
-	u_int8_t mode;			/* mode of protocol, see ipsec.h */
-	u_int32_t reqid;		/* reqid id who owned this SA */
+	uint16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
+	uint8_t mode;			/* mode of protocol, see ipsec.h */
+	uint32_t reqid;		/* reqid id who owned this SA */
 					/* see IPSEC_MANUAL_REQID_MAX. */
 };
 
@@ -143,27 +143,27 @@ do {                                                                         \
 
 struct ph2handle;
 struct policyindex;
-extern struct secpolicy *getsp __P((struct policyindex *));
-extern struct secpolicy *getsp_r __P((struct policyindex *));
-struct secpolicy *getspbyspid __P((u_int32_t));
-extern int cmpspidxstrict __P((struct policyindex *, struct policyindex *));
-extern int cmpspidxwild __P((struct policyindex *, struct policyindex *));
-extern struct secpolicy *newsp __P((void));
-extern void delsp __P((struct secpolicy *));
-extern void delsp_bothdir __P((struct policyindex *));
-extern void inssp __P((struct secpolicy *));
-extern void remsp __P((struct secpolicy *));
-extern void flushsp __P((void));
-extern void initsp __P((void));
-extern struct ipsecrequest *newipsecreq __P((void));
+extern struct secpolicy *getsp(struct policyindex *);
+extern struct secpolicy *getsp_r(struct policyindex *);
+struct secpolicy *getspbyspid(uint32_t);
+extern int cmpspidxstrict(struct policyindex *, struct policyindex *);
+extern int cmpspidxwild(struct policyindex *, struct policyindex *);
+extern struct secpolicy *newsp(void);
+extern void delsp(struct secpolicy *);
+extern void delsp_bothdir(struct policyindex *);
+extern void inssp(struct secpolicy *);
+extern void remsp(struct secpolicy *);
+extern void flushsp(void);
+extern void initsp(void);
+extern struct ipsecrequest *newipsecreq(void);
 
-extern const char *spidx2str __P((const struct policyindex *));
+extern const char *spidx2str(const struct policyindex *);
 #ifdef HAVE_SECCTX
 #include <selinux/selinux.h>
-extern int get_security_context __P((vchar_t *, struct policyindex *));
-extern void init_avc __P((void));
-extern int within_range __P((security_context_t, security_context_t));
-extern void set_secctx_in_proposal __P((struct ph2handle *, struct policyindex));
+extern int get_security_context(vchar_t *, struct policyindex *);
+extern void init_avc(void);
+extern int within_range(security_context_t, security_context_t);
+extern void set_secctx_in_proposal(struct ph2handle *, struct policyindex);
 #endif
 
 #endif /* _POLICY_H */

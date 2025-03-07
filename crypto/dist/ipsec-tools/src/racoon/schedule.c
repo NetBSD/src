@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.7 2009/01/23 09:10:13 tteras Exp $	*/
+/*	$NetBSD: schedule.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
@@ -61,8 +61,7 @@
 static TAILQ_HEAD(_schedtree, sched) sctree;
 
 void
-sched_get_monotonic_time(tv)
-	struct timeval *tv;
+sched_get_monotonic_time(struct timeval *tv)
 {
 #ifdef HAVE_CLOCK_MONOTONIC
 	struct timespec ts;
@@ -75,9 +74,9 @@ sched_get_monotonic_time(tv)
 #endif
 }
 
+/*ARGSUSED*/
 time_t
-sched_monotonic_to_time_t(tv, now)
-	struct timeval *tv, *now;
+sched_monotonic_to_time_t(struct timeval *tv, struct timeval *now __unused)
 {
 #ifdef HAVE_CLOCK_MONOTONIC
 	struct timeval mynow, res;
@@ -131,10 +130,7 @@ schedular()
  * add new schedule to schedule table.
  */
 void
-sched_schedule(sc, tick, func)
-	struct sched *sc;
-	time_t tick;
-	void (*func) __P((struct sched *));
+sched_schedule(struct sched *sc, time_t tick, void (*func)(struct sched *))
 {
 	static long id = 1;
 	struct sched *p;
@@ -164,8 +160,7 @@ sched_schedule(sc, tick, func)
  * cancel scheduled callback
  */
 void
-sched_cancel(sc)
-	struct sched *sc;
+sched_cancel(struct sched *sc)
 {
 	if (sc->func != NULL) {
 		TAILQ_REMOVE(&sctree, sc, chain);
@@ -177,9 +172,7 @@ sched_cancel(sc)
  * for debug
  */
 int
-sched_dump(buf, len)
-	caddr_t *buf;
-	int *len;
+sched_dump(caddr_t *buf, int *len)
 {
 	caddr_t new;
 	struct sched *p;
@@ -227,7 +220,7 @@ sched_dump(buf, len)
 
 /* initialize schedule table */
 void
-sched_init()
+sched_init(void)
 {
 	TAILQ_INIT(&sctree);
 }
@@ -239,15 +232,14 @@ sched_init()
 #include <err.h>
 
 void
-test(tick)
-	int *tick;
+test(int *tick)
 {
 	printf("execute %d\n", *tick);
 	racoon_free(tick);
 }
 
 void
-getstdin()
+getstdin(void)
 {
 	int *tick;
 	char buf[16];
@@ -274,7 +266,7 @@ getstdin()
 }
 
 int
-main()
+main(void)
 {
 	static fd_set mask0;
 	int nfds = 0;

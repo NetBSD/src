@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: gssapi.h,v 1.5 2005/02/11 06:59:01 manubsd Exp */
 
@@ -74,18 +74,18 @@ struct gssapi_ph1_state {
 #define	gssapi_more_tokens(ph)						\
 	((gssapi_get_state(ph)->gss_status & GSS_S_CONTINUE_NEEDED) != 0)
 
-int gssapi_get_itoken __P((struct ph1handle *, int *));
-int gssapi_get_rtoken __P((struct ph1handle *, int *));
-int gssapi_save_received_token __P((struct ph1handle *, vchar_t *));
-int gssapi_get_token_to_send __P((struct ph1handle *, vchar_t **));
-int gssapi_get_itokens __P((struct ph1handle *, vchar_t **));
-int gssapi_get_rtokens __P((struct ph1handle *, vchar_t **));
-vchar_t *gssapi_wraphash __P((struct ph1handle *));
-vchar_t *gssapi_unwraphash __P((struct ph1handle *));
-void gssapi_set_id_sent __P((struct ph1handle *));
-int gssapi_id_sent __P((struct ph1handle *));
-void gssapi_set_id_rcvd __P((struct ph1handle *));
-int gssapi_id_rcvd __P((struct ph1handle *));
-void gssapi_free_state __P((struct ph1handle *));
-vchar_t *gssapi_get_id __P((struct ph1handle *));
-vchar_t *gssapi_get_default_gss_id __P((void));
+int gssapi_get_itoken(struct ph1handle *, int *);
+int gssapi_get_rtoken(struct ph1handle *, int *);
+int gssapi_save_received_token(struct ph1handle *, vchar_t *);
+int gssapi_get_token_to_send(struct ph1handle *, vchar_t **);
+int gssapi_get_itokens(struct ph1handle *, vchar_t **);
+int gssapi_get_rtokens(struct ph1handle *, vchar_t **);
+vchar_t *gssapi_wraphash(struct ph1handle *);
+vchar_t *gssapi_unwraphash(struct ph1handle *);
+void gssapi_set_id_sent(struct ph1handle *);
+int gssapi_id_sent(struct ph1handle *);
+void gssapi_set_id_rcvd(struct ph1handle *);
+int gssapi_id_rcvd(struct ph1handle *);
+void gssapi_free_state(struct ph1handle *);
+vchar_t *gssapi_get_id(struct ph1handle *);
+vchar_t *gssapi_get_default_gss_id(void);

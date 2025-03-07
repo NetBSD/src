@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.h,v 1.13 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: sockmisc.h,v 1.14 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: sockmisc.h,v 1.9 2005/10/05 16:55:41 manubsd Exp */
 
@@ -61,37 +61,36 @@ extern const int niflags;
 #define CMPSADDR_WOP_MATCH	2
 #define CMPSADDR_MISMATCH	3
 
-extern int cmpsaddr __P((const struct sockaddr *, const struct sockaddr *));
+extern int cmpsaddr(const struct sockaddr *, const struct sockaddr *);
 
-extern struct sockaddr *getlocaladdr __P((struct sockaddr *));
+extern struct sockaddr *getlocaladdr(struct sockaddr *);
 
-extern int recvfromto __P((int, void *, size_t, int,
-	struct sockaddr *, socklen_t *, struct sockaddr *, unsigned int *));
-extern int sendfromto __P((int, const void *, size_t,
-	struct sockaddr *, struct sockaddr *, int));
+extern int recvfromto(int, void *, size_t, int,
+    struct sockaddr *, socklen_t *, struct sockaddr *, unsigned int *);
+extern int sendfromto(int, const void *, size_t,
+    struct sockaddr *, struct sockaddr *, int);
 
-extern int setsockopt_bypass __P((int, int));
+extern int setsockopt_bypass(int, int);
 
-extern struct sockaddr *newsaddr __P((int));
-extern struct sockaddr *dupsaddr __P((struct sockaddr *));
-extern char *saddr2str __P((const struct sockaddr *));
-extern char *saddrwop2str __P((const struct sockaddr *));
-extern char *saddr2str_fromto __P((const char *format, 
-				   const struct sockaddr *saddr, 
-				   const struct sockaddr *daddr));
-extern struct sockaddr *str2saddr __P((char *, char *));
-extern void mask_sockaddr __P((struct sockaddr *, const struct sockaddr *,
-	size_t));
+extern struct sockaddr *newsaddr(int);
+extern struct sockaddr *dupsaddr(struct sockaddr *);
+extern char *saddr2str(const struct sockaddr *);
+extern char *saddrwop2str(const struct sockaddr *);
+extern char *saddr2str_fromto(const char *format, 
+    const struct sockaddr *saddr, 
+    const struct sockaddr *daddr);
+extern struct sockaddr *str2saddr(char *, char *);
+extern void mask_sockaddr(struct sockaddr *, const struct sockaddr *, size_t);
 
 /* struct netaddr functions */
-extern char *naddrwop2str __P((const struct netaddr *naddr));
-extern char *naddrwop2str_fromto __P((const char *format, const struct netaddr *saddr,
-				      const struct netaddr *daddr));
+extern char *naddrwop2str(const struct netaddr *naddr);
+extern char *naddrwop2str_fromto(const char *format,
+    const struct netaddr *saddr, const struct netaddr *daddr);
 extern int naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr);
 
 /* Some useful functions for sockaddr port manipulations. */
-extern u_int16_t extract_port __P((const struct sockaddr *addr));
-extern u_int16_t *set_port __P((struct sockaddr *addr, u_int16_t new_port));
-extern u_int16_t *get_port_ptr __P((struct sockaddr *addr));
+extern uint16_t extract_port(const struct sockaddr *addr);
+extern uint16_t *set_port(struct sockaddr *addr, uint16_t new_port);
+extern uint16_t *get_port_ptr(struct sockaddr *addr);
 
 #endif /* _SOCKMISC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken_proto.h,v 1.5 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: cftoken_proto.h,v 1.6 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: cftoken_proto.h,v 1.3 2004/06/11 16:00:15 ludvigm Exp */
 
@@ -36,13 +36,13 @@
 
 extern int yyerrorcount;
 
-extern int yylex __P((void));
-extern void yyerror __P((const char *, ...));
-extern void yywarn __P((const char *, ...));
+extern int yylex(void);
+extern void yyerror(const char *, ...);
+extern void yywarn(const char *, ...);
 
-extern int yycf_switch_buffer __P((char *));
-extern int yycf_set_buffer __P((char *));
-extern void yycf_init_buffer __P((void));
-extern void yycf_clean_buffer __P((void));
+extern int yycf_switch_buffer(char *);
+extern int yycf_set_buffer(char *);
+extern void yycf_init_buffer(void);
+extern void yycf_clean_buffer(void);
 
 #endif /* _CFTOKEN_PROTO_H */

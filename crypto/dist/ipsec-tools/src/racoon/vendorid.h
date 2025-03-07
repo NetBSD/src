@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.h,v 1.6 2009/01/23 08:06:56 tteras Exp $	*/
+/*	$NetBSD: vendorid.h,v 1.7 2025/03/07 15:55:30 christos Exp $	*/
 
 /* Id: vendorid.h,v 1.11 2006/02/17 14:09:10 vanhu Exp */
 
@@ -96,10 +96,10 @@ struct vendor_id {
 	vchar_t		*hash;
 };
 
-vchar_t *set_vendorid __P((int));
-int handle_vendorid __P((struct ph1handle *, struct isakmp_gen *));
+vchar_t *set_vendorid(int);
+int handle_vendorid(struct ph1handle *, struct isakmp_gen *);
 
-void compute_vendorids __P((void));
-const char *vid_string_by_id __P((int id));
+void compute_vendorids(void);
+const char *vid_string_by_id(int id);
 
 #endif /* _VENDORID_H */

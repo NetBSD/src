@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.8 2010/11/12 09:08:26 tteras Exp $	*/
+/*	$NetBSD: admin.h,v 1.9 2025/03/07 15:55:28 christos Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -44,14 +44,14 @@ extern mode_t adminsock_mode;
 /* command for administration. */
 /* NOTE: host byte order. */
 struct admin_com {
-	u_int16_t ac_len;	/* total packet length including data */
-	u_int16_t ac_cmd;
+	uint16_t ac_len;	/* total packet length including data */
+	uint16_t ac_cmd;
 	union {
 		int16_t ac_un_errno;
 		uint16_t ac_un_version;
 		uint16_t ac_un_len_high;
 	} u;
-	u_int16_t ac_proto;
+	uint16_t ac_proto;
 };
 #define ac_errno u.ac_un_errno
 #define ac_version u.ac_un_version
@@ -109,10 +109,10 @@ struct admin_com {
 #define ADMIN_PROTO_INTERNAL	0x0301
 
 struct admin_com_indexes {
-	u_int8_t prefs;
-	u_int8_t prefd;
-	u_int8_t ul_proto;
-	u_int8_t reserved;
+	uint8_t prefs;
+	uint8_t prefd;
+	uint8_t ul_proto;
+	uint8_t reserved;
 	struct sockaddr_storage src;
 	struct sockaddr_storage dst;
 };
@@ -124,6 +124,6 @@ struct admin_com_psk {
 	/* Followed by id and key */
 }; 
 
-extern int admin2pfkey_proto __P((u_int));
+extern int admin2pfkey_proto(u_int);
 
 #endif /* _ADMIN_H */

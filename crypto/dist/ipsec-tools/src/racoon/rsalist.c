@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.c,v 1.7 2018/02/07 03:59:03 christos Exp $	*/
+/*	$NetBSD: rsalist.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
 
 /* Id: rsalist.c,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -47,6 +47,7 @@
 
 #include "misc.h"
 #include "plog.h"
+#include "prsa_tok.h"
 #include "sockmisc.h"
 #include "rsalist.h"
 #include "genlist.h"
@@ -60,9 +61,6 @@
 #ifndef LIST_NEXT
 #define LIST_NEXT(elm, field)   ((elm)->field.le_next)
 #endif
-
-/* from prsa_tok.l */
-int prsa_parse_file(struct genlist *list, const char *fname, enum rsa_key_type type);
 
 int
 rsa_key_insert(struct genlist *list, struct netaddr *src,
@@ -149,8 +147,9 @@ rsa_key_free(void *data)
 	free(rsa_key);
 }
 
+/*ARGSUSED*/
 static void *
-rsa_key_dump_one(void *entry, void *arg)
+rsa_key_dump_one(void *entry, void *arg __unused)
 {
 	struct rsa_key *key = entry;
 
@@ -169,8 +168,9 @@ rsa_key_dump(struct genlist *list)
 	genlist_foreach(list, rsa_key_dump_one, NULL);
 }
 
+/*ARGSUSED*/
 static void *
-rsa_list_count_one(void *entry, void *arg)
+rsa_list_count_one(void *entry __unused, void *arg)
 {
 	if (arg)
 		(*(unsigned long *)arg)++;
