@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2023/05/09 20:14:37 christos Exp $
+# $NetBSD: Makefile,v 1.3 2025/03/07 20:07:03 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -13,7 +13,7 @@ MAN=	plainrsa-gen.8
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+=	-I${DIST}/src/racoon -I${DIST}/src/racoon/missing
 CPPFLAGS+=	-I${DIST}/src/libipsec
-CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libipsec
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libipsec -I.
 CPPFLAGS+=	-DHAVE_CONFIG_H -DNOUSE_PRIVSEP
 .if ${HAVE_OPENSSL} < 11
 CPPFLAGS+=	-DHAVE_OPENSSL_RC5_H
@@ -33,8 +33,11 @@ COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
 LPREFIX=prsa
 YPREFIX=prsa
 YFLAGS=-d
+LFLAGS+=--header-file=prsa_tok.h
+CLEANFILES+=prsa_tok.h
 
 prsa_tok.c: prsa_par.c
+rsa_list.c: prsa_tok.c
 
 .include <bsd.prog.mk>
 
