@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.148 2024/12/10 00:41:30 msaitoh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.149 2025/03/08 21:00:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.148 2024/12/10 00:41:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.149 2025/03/08 21:00:45 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -1429,7 +1429,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * contiguous area then this area is already mapped.  Let's see if we
 	 * avoid having a separate mapping for it.
 	 */
-	if (nsegs == 1 && (flags & BUS_DMA_PREFETCHABLE) == 0) {
+	if (nsegs == 1 &&
+	    (flags & (BUS_DMA_PREFETCHABLE|BUS_DMA_NOCACHE)) == 0) {
 		/*
 		 * If this is a non-COHERENT mapping, then the existing kernel
 		 * mapping is already compatible with it.
@@ -1515,7 +1516,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		for (pa = segs[curseg].ds_addr;
 		    pa < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
-			bool uncached = (flags & BUS_DMA_COHERENT);
+			bool uncached =
+			    (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE)) != 0;
 			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
 			printf("wiring P%#" PRIxPADDR
@@ -1530,7 +1532,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * If this dma region is coherent then there is
 			 * no need for an uncached mapping.
 			 */
-			if (dr != NULL
+			if ((flags & BUS_DMA_NOCACHE) == 0 &&
+			    dr != NULL
 			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
 				uncached = false;
 			}
