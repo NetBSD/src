@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.19 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.20 2025/03/08 19:09:46 kre Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -85,7 +85,7 @@
 #include "ipsec_doi.h"
 #include "evt.h"
 
-char *adminsock_path = ADMINSOCK_PATH;
+const char *adminsock_path = ADMINSOCK_PATH;
 
 static void usage(void);
 static vchar_t *get_combuf(int, char **);

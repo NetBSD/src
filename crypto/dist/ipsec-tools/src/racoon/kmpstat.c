@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.9 2025/03/08 19:09:46 kre Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -204,7 +204,7 @@ _plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 void
 plogdump(pri, data, len) 
 	int pri;
-	void *data;
+	const void *data;
 	size_t len;
 {
 	return;
