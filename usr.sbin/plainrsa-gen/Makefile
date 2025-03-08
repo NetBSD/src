@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2025/03/07 20:07:03 christos Exp $
+# $NetBSD: Makefile,v 1.4 2025/03/08 00:10:54 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -25,19 +25,7 @@ CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
 LDADD+= -lcrypto -lipsec
 DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
 
-COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
-COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
-COPTS.rsalist.c+= -Wno-error=deprecated-declarations
-COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
-
-LPREFIX=prsa
-YPREFIX=prsa
-YFLAGS=-d
-LFLAGS+=--header-file=prsa_tok.h
-CLEANFILES+=prsa_tok.h
-
-prsa_tok.c: prsa_par.c
-rsa_list.c: prsa_tok.c
+.include "${.CURDIR}/../racoon/Makefile.racoon"
 
 .include <bsd.prog.mk>
 

@@ -1,0 +1,14 @@
+COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
+COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
+COPTS.rsalist.c+= -Wno-error=deprecated-declarations
+COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
+
+LPREFIX.prsa_tok.l=prsa
+YPREFIX.prsa_par.y=prsa
+YFLAGS=-d
+LFLAGS.prsa_tok.l+=--header-file=prsa_tok.h
+CLEANFILES+=prsa_tok.h prsa_tok.c prsa_par.c  prsa_par.h
+
+
+prsa_tok.c: prsa_par.c
+rsa_list.c: prsa_tok.c
