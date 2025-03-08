@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.9 2025/03/08 19:09:46 kre Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.10 2025/03/08 19:43:19 christos Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -96,7 +96,7 @@ static int so;
 uint32_t loglevel = 0;
 
 int
-com_init()
+com_init(void)
 {
 	struct sockaddr_un name;
 
@@ -118,12 +118,9 @@ com_init()
 }
 
 int
-com_send(combuf)
-	vchar_t *combuf;
+com_send(vchar_t *combuf)
 {
-	int len;
-
-	if ((len = send(so, combuf->v, combuf->l, 0)) == -1) {
+	if (send(so, combuf->v, combuf->l, 0) == -1) {
 		perror("send");
 		(void)close(so);
 		return -1;
@@ -133,12 +130,10 @@ com_send(combuf)
 }
 
 int
-com_recv(combufp) 
-	vchar_t **combufp;
+com_recv(vchar_t **combufp)
 {
-	struct admin_com h, *com;
-	caddr_t buf;
-	int len, rlen;
+	struct admin_com h;
+	ssize_t len, rlen;
 	int l = 0;
 	caddr_t p;
 
@@ -191,8 +186,9 @@ bad1:
 /*
  * Dumb plog functions (used by sockmisc.c) 
  */
+/*ARGSUSED*/
 void
-_plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
+_plog(int pri __unused, const char *func __unused, struct sockaddr *sa __unused, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -201,19 +197,14 @@ _plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 	va_end(ap);
 }
 
+/*ARGSUSED*/
 void
-plogdump(pri, data, len) 
-	int pri;
-	const void *data;
-	size_t len;
+plogdump(int pri __unused, const void *data __unused, size_t len __unused)
 {
-	return;
 }
 
 struct sockaddr *
-get_sockaddr(family, name, port)
-	int family;
-	char *name, *port;
+get_sockaddr(int family, char *name, char *port)
 {
 	struct addrinfo hint, *ai;
 	int error;
