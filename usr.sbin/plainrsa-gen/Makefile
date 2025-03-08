@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2025/03/08 00:10:54 christos Exp $
+# $NetBSD: Makefile,v 1.5 2025/03/08 09:34:33 mlelstv Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -7,7 +7,7 @@ NOCLANGERROR=	# defined
 
 PROG=	plainrsa-gen
 SRCS=	plainrsa-gen.c plog.c crypto_openssl.c logger.c vmbuf.c misc.c \
-	rsalist.c sockmisc.c genlist.c prsa_tok.c prsa_par.c
+	rsalist.c sockmisc.c genlist.c prsa_tok.l prsa_par.c
 MAN=	plainrsa-gen.8
 
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
