@@ -1,33 +1,23 @@
-# $NetBSD: Makefile,v 1.47 2025/03/08 00:10:53 christos Exp $
+# $NetBSD: Makefile,v 1.48 2025/03/08 16:40:44 christos Exp $
 
-WARNS?=	0	# XXX third-party program, many issues
-NOCLANGERROR=	# defined
+USE_FORT?= yes	# network client and server
+WARNS=3
 
 .include <bsd.own.mk>
 
-USE_FORT?= yes	# network client and server
 
 PROG=	racoon
-SRCS=	main.c session.c isakmp.c handler.c 			\
-	isakmp_ident.c isakmp_agg.c isakmp_base.c 		\
-	isakmp_quick.c isakmp_inf.c isakmp_newg.c 		\
-	gssapi.c dnssec.c getcertsbyname.c privsep.c		\
-	pfkey.c admin.c evt.c ipsec_doi.c oakley.c 		\
-	grabmyaddr.c vendorid.c policy.c localconf.c 		\
-	remoteconf.c crypto_openssl.c algorithm.c		\
-	proposal.c sainfo.c strnames.c plog.c logger.c 		\
-	schedule.c str2val.c safefile.c backupsa.c 		\
-	genlist.c rsalist.c cftoken.l cfparse.y 		\
-	prsa_tok.l prsa_par.y isakmp_xauth.c isakmp_cfg.c 	\
-	isakmp_unity.c throttle.c isakmp_frag.c 		\
-	nattraversal.c vmbuf.c sockmisc.c misc.c
+SRCS+= admin.c algorithm.c backupsa.c cfparse.y cftoken.l dnssec.c evt.c \
+    getcertsbyname.c grabmyaddr.c gssapi.c handler.c ipsec_doi.c isakmp.c \
+    isakmp_agg.c isakmp_base.c isakmp_cfg.c isakmp_frag.c isakmp_ident.c \
+    isakmp_inf.c isakmp_newg.c isakmp_quick.c isakmp_unity.c isakmp_xauth.c \
+    localconf.c main.c nattraversal.c oakley.c pfkey.c policy.c privsep.c \
+    proposal.c remoteconf.c safefile.c sainfo.c schedule.c session.c \
+    str2val.c strnames.c throttle.c vendorid.c
+
 MAN=	racoon.8 racoon.conf.5
 
-DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
-CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/racoon/missing
-CPPFLAGS+= -I${DIST}/src/libipsec
-CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
-CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H -DENABLE_WILDCARD_MATCH
+CPPFLAGS+= -DIPSEC_DEBUG -DENABLE_WILDCARD_MATCH
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 .if ${HAVE_OPENSSL} < 11
@@ -73,12 +63,15 @@ DPADD+= ${LIBCRYPTO} ${LIBCRYPT}
 #CFLAGS+=-fsanitize=address
 #LDFLAGS+=-fsanitize=address
 
-.PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon
 
 CWARNFLAGS.gcc+=        ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.cftoken.c+=-Wno-error=unused-function
+COPTS.isakmp.c+=${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.isakmp_cfg.c+=${CC_WNO_STRINGOP_TRUNCATION} ${${ACTIVE_CC} == "gcc" :? -Wno-error=format-truncation :}
 
-COPTS+=		-fcommon
+#COPTS+=		-fcommon
 
 .include "${.CURDIR}/Makefile.racoon"
+.PATH:  ${NETBSDSRCDIR}/lib/libipsec
 
 .include <bsd.prog.mk>

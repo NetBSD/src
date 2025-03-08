@@ -1,15 +1,31 @@
-# $NetBSD: Makefile.racoon,v 1.3 2025/03/08 00:21:37 christos Exp $
+# $NetBSD: Makefile.racoon,v 1.4 2025/03/08 16:40:44 christos Exp $
+
+DIST=   ${NETBSDSRCDIR}/crypto/dist/ipsec-tools
+CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/racoon/missing
+CPPFLAGS+= -I${DIST}/src/libipsec
+CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I. -DHAVE_CONFIG_H
+.if ${HAVE_OPENSSL} < 11
+CPPFLAGS+= -DHAVE_OPENSSL_RC5_H
+CPPFLAGS+= -DOPENSSL_API_COMPAT=0x10100000L
+.endif
+
+SRCS+=crypto_openssl.c genlist.c logger.c misc.c plog.c prsa_par.y \
+    prsa_tok.l rsalist.c sockmisc.c vmbuf.c
 
 COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
 COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
 COPTS.rsalist.c+= -Wno-error=deprecated-declarations
 COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
+COPTS.prsa_tok.c+=-Wno-error=unused-function
 
 LPREFIX.prsa_tok.l=prsa
 YPREFIX.prsa_par.y=prsa
 YFLAGS=-d
 LFLAGS.prsa_tok.l+=--header-file=prsa_tok.h
+
 CLEANFILES+=prsa_tok.h prsa_tok.c prsa_par.c  prsa_par.h
+
+.PATH: ${DIST}/src/racoon
 
 
 prsa_tok.c: prsa_par.c
