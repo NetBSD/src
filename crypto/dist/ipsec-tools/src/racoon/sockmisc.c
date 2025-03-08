@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.20 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.21 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -88,7 +88,7 @@ const int niflags = 0;
 int
 cmpsaddr(const struct sockaddr *addr1, const struct sockaddr *addr2)
 {
-	caddr_t sa1, sa2;
+	const void *sa1, *sa2;
 	u_short port1 = IPSEC_PORT_ANY;
 	u_short port2 = IPSEC_PORT_ANY;
 
@@ -106,23 +106,23 @@ cmpsaddr(const struct sockaddr *addr1, const struct sockaddr *addr2)
 	case AF_UNSPEC:
 		break;
 	case AF_INET:
-		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
-		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
-		port1 = ((struct sockaddr_in *)addr1)->sin_port;
-		port2 = ((struct sockaddr_in *)addr2)->sin_port;
+		sa1 = &((const struct sockaddr_in *)addr1)->sin_addr;
+		sa2 = &((const struct sockaddr_in *)addr2)->sin_addr;
+		port1 = ((const struct sockaddr_in *)addr1)->sin_port;
+		port2 = ((const struct sockaddr_in *)addr2)->sin_port;
 		if (memcmp(sa1, sa2, sizeof(struct in_addr)) != 0)
 			return CMPSADDR_MISMATCH;
 		break;
 #ifdef INET6
 	case AF_INET6:
-		sa1 = (caddr_t)&((struct sockaddr_in6 *)addr1)->sin6_addr;
-		sa2 = (caddr_t)&((struct sockaddr_in6 *)addr2)->sin6_addr;
-		port1 = ((struct sockaddr_in6 *)addr1)->sin6_port;
-		port2 = ((struct sockaddr_in6 *)addr2)->sin6_port;
+		sa1 = &((const struct sockaddr_in6 *)addr1)->sin6_addr;
+		sa2 = &((const struct sockaddr_in6 *)addr2)->sin6_addr;
+		port1 = ((const struct sockaddr_in6 *)addr1)->sin6_port;
+		port2 = ((const struct sockaddr_in6 *)addr2)->sin6_port;
 		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
 			return CMPSADDR_MISMATCH;
-		if (((struct sockaddr_in6 *)addr1)->sin6_scope_id !=
-		    ((struct sockaddr_in6 *)addr2)->sin6_scope_id)
+		if (((const struct sockaddr_in6 *)addr1)->sin6_scope_id !=
+		    ((const struct sockaddr_in6 *)addr2)->sin6_scope_id)
 			return CMPSADDR_MISMATCH;
 		break;
 #endif
@@ -392,7 +392,7 @@ sendfromto(int s, const void *buf, size_t buflen, struct sockaddr *src,
 		memset(&m, 0, sizeof(m));
 		m.msg_name = (caddr_t)&dst6;
 		m.msg_namelen = sizeof(dst6);
-		iov[0].iov_base = (char *)buf;
+		iov[0].iov_base = __UNCONST(buf);
 		iov[0].iov_len = buflen;
 		m.msg_iov = iov;
 		m.msg_iovlen = 1;
@@ -426,11 +426,11 @@ sendfromto(int s, const void *buf, size_t buflen, struct sockaddr *src,
 				return -1;
 			}
 			plog(LLV_DEBUG, LOCATION, NULL,
-				"%d times of %d bytes message will be sent "
+				"%d times of %zd bytes message will be sent "
 				"to %s\n",
 				i + 1, len, saddr2str(dst));
 		}
-		plogdump(LLV_DEBUG, (char *)buf, buflen);
+		plogdump(LLV_DEBUG, buf, buflen);
 
 		return len;
 	    }
@@ -565,11 +565,11 @@ sendfromto(int s, const void *buf, size_t buflen, struct sockaddr *src,
 				return len;
 			}
 			plog(LLV_DEBUG, LOCATION, NULL,
-				"%d times of %d bytes message will be sent "
+				"%d times of %zd bytes message will be sent "
 				"to %s\n",
 				i + 1, len, saddr2str(dst));
 		}
-		plogdump(LLV_DEBUG, (char *)buf, buflen);
+		plogdump(LLV_DEBUG, buf, buflen);
 
 		if (needclose)
 			close(sendsock);
@@ -584,7 +584,7 @@ setsockopt_bypass(int so, int family)
 {
 	int level;
 	char *buf;
-	char *policy;
+	const char *policy;
 
 	switch (family) {
 	case AF_INET:
@@ -929,10 +929,10 @@ extract_port (const struct sockaddr *addr)
     case AF_UNSPEC:
       break;
     case AF_INET:
-      port = ((struct sockaddr_in *)addr)->sin_port;
+      port = ((const struct sockaddr_in *)addr)->sin_port;
       break;
     case AF_INET6:
-      port = ((struct sockaddr_in6 *)addr)->sin6_port;
+      port = ((const struct sockaddr_in6 *)addr)->sin6_port;
       break;
     default:
       plog(LLV_ERROR, LOCATION, NULL, "unknown AF: %u\n", addr->sa_family);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcertsbyname.c,v 1.5 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: getcertsbyname.c,v 1.6 2025/03/08 16:39:08 christos Exp $	*/
 
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 
@@ -265,6 +265,7 @@ getcertsbyname(char *name, struct certinfo **res)
 	cp += len;
 	GETSHORT(qtype, cp);		/* QTYPE */
 	GETSHORT(qclass, cp);		/* QCLASS */
+	(void)qclass;
 
 	/* answer section */
 	while (ancount-- && cp < eom) {

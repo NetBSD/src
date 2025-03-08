@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.30 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.31 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -2400,7 +2400,7 @@ base64_encode(char *in, long inlen)
 	bio = BIO_push(b64, bio);
 
 	BIO_write(bio, in, inlen);
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 
 	plen = BIO_get_mem_data(bio, &ptr);
 	res = vmalloc(plen+1);
@@ -2420,7 +2420,7 @@ out:
 static RSA *
 binbuf_pubkey2rsa(vchar_t *binbuf)
 {
-	BIGNUM *exp, *mod;
+	BIGNUM *exp = NULL, *mod;
 	RSA *rsa_pub = NULL;
 
 	if (binbuf->v[0] > binbuf->l - 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.53 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.54 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -2799,7 +2799,7 @@ setph1attr(struct isakmpsa *sa, caddr_t buf)
 					goto gssid_done;
 				}
 				odst = dst;
-				rv = iconv(cd, (__iconv_const char **)&src,
+				rv = iconv(cd, (__iconv_const char **)(intptr_t)&src,
 				    &srcleft, &dst, &dstleft);
 				if (rv != 0) {
 					if (rv == (size_t)-1) {
@@ -4452,11 +4452,11 @@ ipsecdoi_t2satrns(struct isakmp_pl_t *t, struct saprop *pp,
 		switch (type) {
 		case IPSECDOI_ATTR_SA_LD_TYPE:
 		{
-			int type = ntohs(d->lorv);
-			switch (type) {
+			int xtype = ntohs(d->lorv);
+			switch (xtype) {
 			case IPSECDOI_ATTR_SA_LD_TYPE_SEC:
 			case IPSECDOI_ATTR_SA_LD_TYPE_KB:
-				life_t = type;
+				life_t = xtype;
 				break;
 			default:
 				plog(LLV_WARNING, LOCATION, NULL,

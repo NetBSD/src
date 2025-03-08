@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.19 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.20 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -129,7 +129,7 @@ extern int copy_ph1addresses( struct ph1handle *,
 extern void log_ph1established(const struct ph1handle *);
 
 extern void script_hook(struct ph1handle *, int);
-extern int script_env_append(char ***, int *, char *, char *);
+extern int script_env_append(char ***, int *, const char *, char *);
 extern int script_exec(char *, int, char * const *);
 
 void purge_remote(struct ph1handle *);

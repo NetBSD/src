@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2018/05/19 20:40:40 maxv Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2025/03/08 16:39:08 christos Exp $	*/
 
 /*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 
@@ -68,7 +68,7 @@ racoon_hexdump(void *buf0, size_t len)
 	return 0;
 }
 
-char *
+const char *
 bit2str(int n, int bl)
 {
 #define MAXBITLEN 128

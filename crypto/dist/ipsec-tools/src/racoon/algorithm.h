@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.h,v 1.7 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: algorithm.h,v 1.8 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: algorithm.h,v 1.10 2005/04/09 16:25:23 manubsd Exp */
 
@@ -128,7 +128,7 @@ enum algtype {
 };
 
 struct hmac_algorithm {
-	char *name;
+	const char *name;
 	int type;
 	int doi;
 	caddr_t (*init)(vchar_t *);
@@ -139,7 +139,7 @@ struct hmac_algorithm {
 };
 
 struct hash_algorithm {
-	char *name;
+	const char *name;
 	int type;
 	int doi;
 	caddr_t (*init)(void);
@@ -150,7 +150,7 @@ struct hash_algorithm {
 };
 
 struct enc_algorithm {
-	char *name;
+	const char *name;
 	int type;
 	int doi;
 	int blocklen;
@@ -162,7 +162,7 @@ struct enc_algorithm {
 
 /* dh group */
 struct dh_algorithm {
-	char *name;
+	const char *name;
 	int type;
 	int doi;
 	struct dhgroup *dhgroup;
@@ -170,7 +170,7 @@ struct dh_algorithm {
 
 /* ipcomp, auth meth, dh group */
 struct misc_algorithm {
-	char *name;
+	const char *name;
 	int type;
 	int doi;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.41 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.42 2025/03/08 16:39:08 christos Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -797,7 +797,7 @@ kernel_receive(void *ctx __unused, int fd)
 
 	if (rtm->rtm_msglen != len) {
 		plog(LLV_WARNING, LOCATION, NULL,
-		     "kernel_receive: rtm->rtm_msglen %d, len %d, type %d\n",
+		     "kernel_receive: rtm->rtm_msglen %d, len %zd, type %d\n",
 		     rtm->rtm_msglen, len, rtm->rtm_type);
 		return FALSE;
 	}

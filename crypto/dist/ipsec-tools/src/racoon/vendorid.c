@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.10 2025/03/07 15:55:30 christos Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.11 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -65,28 +65,28 @@
 #endif
 
 static struct vendor_id all_vendor_ids[] = {
-{ VENDORID_IPSEC_TOOLS, "IPSec-Tools" },
-{ VENDORID_GSSAPI_LONG, "A GSS-API Authentication Method for IKE" },
-{ VENDORID_GSSAPI     , "GSSAPI" },
-{ VENDORID_MS_NT5     , "MS NT5 ISAKMPOAKLEY" },
-{ VENDORID_NATT_00    , "draft-ietf-ipsec-nat-t-ike-00" },
-{ VENDORID_NATT_01    , "draft-ietf-ipsec-nat-t-ike-01" },
-{ VENDORID_NATT_02    , "draft-ietf-ipsec-nat-t-ike-02" },
-{ VENDORID_NATT_02_N  , "draft-ietf-ipsec-nat-t-ike-02\n" },
-{ VENDORID_NATT_03    , "draft-ietf-ipsec-nat-t-ike-03" },
-{ VENDORID_NATT_04    , "draft-ietf-ipsec-nat-t-ike-04" },
-{ VENDORID_NATT_05    , "draft-ietf-ipsec-nat-t-ike-05" },
-{ VENDORID_NATT_06    , "draft-ietf-ipsec-nat-t-ike-06" },
-{ VENDORID_NATT_07    , "draft-ietf-ipsec-nat-t-ike-07" },
-{ VENDORID_NATT_08    , "draft-ietf-ipsec-nat-t-ike-08" },
-{ VENDORID_NATT_RFC   , "RFC 3947" },
-{ VENDORID_XAUTH      , "draft-ietf-ipsra-isakmp-xauth-06.txt" },
-{ VENDORID_UNITY      , "CISCO-UNITY" },
-{ VENDORID_FRAG       , "FRAGMENTATION" },
+{ VENDORID_IPSEC_TOOLS, "IPSec-Tools", NULL },
+{ VENDORID_GSSAPI_LONG, "A GSS-API Authentication Method for IKE", NULL },
+{ VENDORID_GSSAPI     , "GSSAPI", NULL },
+{ VENDORID_MS_NT5     , "MS NT5 ISAKMPOAKLEY", NULL },
+{ VENDORID_NATT_00    , "draft-ietf-ipsec-nat-t-ike-00", NULL },
+{ VENDORID_NATT_01    , "draft-ietf-ipsec-nat-t-ike-01", NULL },
+{ VENDORID_NATT_02    , "draft-ietf-ipsec-nat-t-ike-02", NULL },
+{ VENDORID_NATT_02_N  , "draft-ietf-ipsec-nat-t-ike-02\n", NULL },
+{ VENDORID_NATT_03    , "draft-ietf-ipsec-nat-t-ike-03", NULL },
+{ VENDORID_NATT_04    , "draft-ietf-ipsec-nat-t-ike-04", NULL },
+{ VENDORID_NATT_05    , "draft-ietf-ipsec-nat-t-ike-05", NULL },
+{ VENDORID_NATT_06    , "draft-ietf-ipsec-nat-t-ike-06", NULL },
+{ VENDORID_NATT_07    , "draft-ietf-ipsec-nat-t-ike-07", NULL },
+{ VENDORID_NATT_08    , "draft-ietf-ipsec-nat-t-ike-08", NULL },
+{ VENDORID_NATT_RFC   , "RFC 3947", NULL },
+{ VENDORID_XAUTH      , "draft-ietf-ipsra-isakmp-xauth-06.txt", NULL },
+{ VENDORID_UNITY      , "CISCO-UNITY", NULL },
+{ VENDORID_FRAG       , "FRAGMENTATION", NULL },
 /* Just a readable string for DPD ... */
-{ VENDORID_DPD        , "DPD" },
+{ VENDORID_DPD        , "DPD", NULL },
 /* Other known Vendor IDs */
-{ VENDORID_KAME       , "KAME/racoon" },
+{ VENDORID_KAME       , "KAME/racoon", NULL },
 };
 
 #define NUMVENDORIDS	(sizeof(all_vendor_ids)/sizeof(all_vendor_ids[0]))
@@ -162,7 +162,7 @@ compute_vendorids (void)
 			continue;
 		}
 
-		vid.v = (char *) all_vendor_ids[i].string;
+		vid.v = (char *)(intptr_t)all_vendor_ids[i].string;
 		vid.l = strlen(vid.v);
 
 		all_vendor_ids[i].hash = eay_md5_one(&vid);

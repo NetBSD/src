@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.11 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.12 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -301,9 +301,8 @@ static struct dh_algorithm *alg_oakley_dhdef(int);
 static struct hash_algorithm *
 alg_oakley_hashdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_hashdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hashdef); i++)
 		if (doi == oakley_hashdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hash(%s)\n",
 				oakley_hashdef[i].name);
@@ -327,9 +326,9 @@ alg_oakley_hashdef_ok(int doi)
 int
 alg_oakley_hashdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_hashdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hashdef); i++)
 		if (type == oakley_hashdef[i].type) {
 			res = oakley_hashdef[i].doi;
 			break;
@@ -377,9 +376,8 @@ alg_oakley_hashdef_one(int doi, vchar_t *buf)
 static struct hmac_algorithm *
 alg_oakley_hmacdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
 		if (doi == oakley_hmacdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				oakley_hmacdef[i].name);
@@ -391,9 +389,9 @@ alg_oakley_hmacdef(int doi)
 int
 alg_oakley_hmacdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
 		if (type == oakley_hmacdef[i].type) {
 			res = oakley_hmacdef[i].doi;
 			break;
@@ -433,9 +431,8 @@ alg_oakley_hmacdef_one(int doi, vchar_t *key, vchar_t *buf)
 static struct enc_algorithm *
 alg_oakley_encdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_encdef); i++)
 		if (doi == oakley_encdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "encryption(%s)\n",
 				oakley_encdef[i].name);
@@ -459,9 +456,9 @@ alg_oakley_encdef_ok(int doi)
 int
 alg_oakley_encdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_encdef); i++)
 		if (type == oakley_encdef[i].type) {
 			res = oakley_encdef[i].doi;
 			break;
@@ -563,9 +560,8 @@ alg_oakley_encdef_encrypt(int doi, vchar_t *buf, vchar_t *key, vchar_t *iv)
 static struct enc_algorithm *
 alg_ipsec_encdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(ipsec_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_encdef); i++)
 		if (doi == ipsec_encdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "encryption(%s)\n",
 				ipsec_encdef[i].name);
@@ -577,9 +573,9 @@ alg_ipsec_encdef(int doi)
 int
 alg_ipsec_encdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_encdef); i++)
 		if (type == ipsec_encdef[i].type) {
 			res = ipsec_encdef[i].doi;
 			break;
@@ -603,9 +599,8 @@ alg_ipsec_encdef_keylen(int doi, int len)
 static struct hmac_algorithm *
 alg_ipsec_hmacdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
 		if (doi == ipsec_hmacdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				ipsec_hmacdef[i].name);
@@ -617,9 +612,9 @@ alg_ipsec_hmacdef(int doi)
 int
 alg_ipsec_hmacdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
 		if (type == ipsec_hmacdef[i].type) {
 			res = ipsec_hmacdef[i].doi;
 			break;
@@ -643,9 +638,9 @@ alg_ipsec_hmacdef_hashlen(int doi)
 int
 alg_ipsec_compdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_compdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_compdef); i++)
 		if (type == ipsec_compdef[i].type) {
 			res = ipsec_compdef[i].doi;
 			break;
@@ -657,9 +652,8 @@ alg_ipsec_compdef_doi(int type)
 static struct dh_algorithm *
 alg_oakley_dhdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_dhdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_dhdef); i++)
 		if (doi == oakley_dhdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				oakley_dhdef[i].name);
@@ -683,9 +677,9 @@ alg_oakley_dhdef_ok(int doi)
 int
 alg_oakley_dhdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_dhdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_dhdef); i++)
 		if (type == oakley_dhdef[i].type) {
 			res = oakley_dhdef[i].doi;
 			break;
@@ -720,9 +714,9 @@ alg_oakley_dhdef_name(int doi)
 int
 alg_oakley_authdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_authdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_authdef); i++)
 		if (type == oakley_authdef[i].type) {
 			res = oakley_authdef[i].doi;
 			break;
@@ -733,9 +727,8 @@ alg_oakley_authdef_doi(int type)
 const char *
 alg_oakley_authdef_name(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_authdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_authdef); i++)
 		if (doi == oakley_authdef[i].doi) {
 			return oakley_authdef[i].name;
 		}

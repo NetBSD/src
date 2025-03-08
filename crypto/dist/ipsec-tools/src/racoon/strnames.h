@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.h,v 1.5 2025/03/07 15:55:30 christos Exp $	*/
+/*	$NetBSD: strnames.h,v 1.6 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: strnames.h,v 1.7 2005/04/18 10:04:26 manubsd Exp */
 
@@ -34,47 +34,47 @@
 #ifndef _STRNAMES_H
 #define _STRNAMES_H
 
-extern char *num2str(int n);
+extern const char *num2str(int n);
 
-extern char *s_isakmp_state(int, int, int);
-extern char *s_isakmp_certtype(int);
-extern char *s_isakmp_etype(int);
-extern char *s_isakmp_notify_msg(int);
-extern char *s_isakmp_nptype(int);
-extern char *s_ipsecdoi_proto(int);
-extern char *s_ipsecdoi_trns_isakmp(int);
-extern char *s_ipsecdoi_trns_ah(int);
-extern char *s_ipsecdoi_trns_esp(int);
-extern char *s_ipsecdoi_trns_ipcomp(int);
-extern char *s_ipsecdoi_trns(int, int);
-extern char *s_ipsecdoi_attr(int);
-extern char *s_ipsecdoi_ltype(int);
-extern char *s_ipsecdoi_encmode(int);
-extern char *s_ipsecdoi_auth(int);
-extern char *s_ipsecdoi_attr_v(int, int);
-extern char *s_ipsecdoi_ident(int);
-extern char *s_oakley_attr(int);
-extern char *s_attr_isakmp_enc(int);
-extern char *s_attr_isakmp_hash(int);
-extern char *s_oakley_attr_method(int);
-extern char *s_attr_isakmp_desc(int);
-extern char *s_attr_isakmp_group(int);
-extern char *s_attr_isakmp_ltype(int);
-extern char *s_oakley_attr_v(int, int);
-extern char *s_ipsec_level(int);
-extern char *s_algclass(int);
-extern char *s_algtype(int, int);
-extern char *s_pfkey_type(int);
-extern char *s_pfkey_satype(int);
-extern char *s_direction(int);
-extern char *s_proto(int);
-extern char *s_doi(int);
-extern char *s_etype(int);
-extern char *s_idtype(int);
-extern char *s_switch(int);
+extern const char *s_isakmp_state(int, int, int);
+extern const char *s_isakmp_certtype(int);
+extern const char *s_isakmp_etype(int);
+extern const char *s_isakmp_notify_msg(int);
+extern const char *s_isakmp_nptype(int);
+extern const char *s_ipsecdoi_proto(int);
+extern const char *s_ipsecdoi_trns_isakmp(int);
+extern const char *s_ipsecdoi_trns_ah(int);
+extern const char *s_ipsecdoi_trns_esp(int);
+extern const char *s_ipsecdoi_trns_ipcomp(int);
+extern const char *s_ipsecdoi_trns(int, int);
+extern const char *s_ipsecdoi_attr(int);
+extern const char *s_ipsecdoi_ltype(int);
+extern const char *s_ipsecdoi_encmode(int);
+extern const char *s_ipsecdoi_auth(int);
+extern const char *s_ipsecdoi_attr_v(int, int);
+extern const char *s_ipsecdoi_ident(int);
+extern const char *s_oakley_attr(int);
+extern const char *s_attr_isakmp_enc(int);
+extern const char *s_attr_isakmp_hash(int);
+extern const char *s_oakley_attr_method(int);
+extern const char *s_attr_isakmp_desc(int);
+extern const char *s_attr_isakmp_group(int);
+extern const char *s_attr_isakmp_ltype(int);
+extern const char *s_oakley_attr_v(int, int);
+extern const char *s_ipsec_level(int);
+extern const char *s_algclass(int);
+extern const char *s_algtype(int, int);
+extern const char *s_pfkey_type(int);
+extern const char *s_pfkey_satype(int);
+extern const char *s_direction(int);
+extern const char *s_proto(int);
+extern const char *s_doi(int);
+extern const char *s_etype(int);
+extern const char *s_idtype(int);
+extern const char *s_switch(int);
 #ifdef ENABLE_HYBRID
-extern char *s_isakmp_cfg_type(int);
-extern char *s_isakmp_cfg_ptype(int);
+extern const char *s_isakmp_cfg_type(int);
+extern const char *s_isakmp_cfg_ptype(int);
 #endif
 
 #endif /* _STRNAMES_H */

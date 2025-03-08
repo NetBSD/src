@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.42 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: admin.c,v 1.43 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -87,7 +87,7 @@
 #include "gcmalloc.h"
 
 #ifdef ENABLE_ADMINPORT
-char *adminsock_path = ADMINSOCK_PATH;
+const char *adminsock_path = ADMINSOCK_PATH;
 uid_t adminsock_owner = 0;
 gid_t adminsock_group = 0;
 mode_t adminsock_mode = 0600;
@@ -128,7 +128,7 @@ admin_handler(void *ctx __unused, int fd __unused)
 	}
 
 	/* sanity check */
-	if (len < sizeof(com)) {
+	if (len < (ssize_t)sizeof(com)) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid header length of admin command\n");
 		goto end;
@@ -757,7 +757,7 @@ admin_init(void)
 }
 
 int
-admin_close()
+admin_close(void)
 {
 	unmonitor_fd(lcconf->sock_admin);
 	close(lcconf->sock_admin);

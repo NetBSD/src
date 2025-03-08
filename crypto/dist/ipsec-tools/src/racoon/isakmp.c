@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.80 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.81 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -272,8 +272,8 @@ isakmp_handler(void *ctx __unused, int so_isakmp)
 	/* check isakmp header length, as well as sanity of header length */
 	if (len < sizeof(isakmp) || ntohl(isakmp.len) < sizeof(isakmp)) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
-			"packet shorter than isakmp header size (%u, %u, %zu)\n",
-			len, ntohl(isakmp.len), sizeof(isakmp));
+		    "packet shorter than isakmp header size (%zu, %u, %zu)\n",
+		    len, ntohl(isakmp.len), sizeof(isakmp));
 		/* dummy receive */
 		if ((len = recvfrom(so_isakmp, (char *)&isakmp, sizeof(isakmp),
 			    0, (struct sockaddr *)&remote, &remote_len)) < 0) {
@@ -325,7 +325,7 @@ isakmp_handler(void *ctx __unused, int so_isakmp)
 
 	if ((buf = vmalloc(len - extralen)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate reading buffer (%u Bytes)\n",
+			"failed to allocate reading buffer (%zu Bytes)\n",
 			(len - extralen));
 		goto end;
 	}
@@ -336,14 +336,14 @@ isakmp_handler(void *ctx __unused, int so_isakmp)
 
 	if (len != buf->l) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
-			"received invalid length (%d != %zu), why ?\n",
+			"received invalid length (%zd != %zu), why ?\n",
 			len, buf->l);
 		goto end;
 	}
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 	plog(LLV_DEBUG, LOCATION, NULL,
-		"%d bytes message received %s\n",
+		"%zd bytes message received %s\n",
 		len, saddr2str_fromto("from %s to %s",
 			(struct sockaddr *)&remote,
 			(struct sockaddr *)&local));
@@ -1662,7 +1662,7 @@ isakmp_open(struct sockaddr *addr, int udp_encap)
 		pktinfo = IPV6_RECVDSTADDR;
 #endif
 		if (setsockopt(fd, IPPROTO_IPV6, pktinfo,
-			       (const void *) &yes, sizeof(yes)) < 0) {
+			       &yes, sizeof(yes)) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			     "setsockopt IPV6_RECVDSTADDR (%d):%s\n",
 			     pktinfo, strerror(errno));
@@ -1671,7 +1671,7 @@ isakmp_open(struct sockaddr *addr, int udp_encap)
 
 #ifdef IPV6_USE_MIN_MTU
 		if (setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
-			       (void *) &yes, sizeof(yes)) < 0) {
+			       &yes, sizeof(yes)) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			     "setsockopt IPV6_USE_MIN_MTU (%s)\n",
 			     strerror(errno));
@@ -1688,7 +1688,7 @@ isakmp_open(struct sockaddr *addr, int udp_encap)
 #else
 		       SO_REUSEPORT,
 #endif
-		       (void *) &yes, sizeof(yes)) < 0) {
+		       &yes, sizeof(yes)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "failed to set REUSE flag on %s (%s).\n",
 		     saddr2str(addr), strerror(errno));
@@ -3095,7 +3095,7 @@ out:
 }
 
 int
-script_env_append(char ***envp, int *envc, char *name, char *value)
+script_env_append(char ***envp, int *envc, const char *name, char *value)
 {
 	char *envitem;
 	char **newenvp;
@@ -3132,7 +3132,7 @@ script_exec(char *script, int name, char *const envp[])
 	char *argv[] = { NULL, NULL, NULL };
 
 	argv[0] = script;
-	argv[1] = script_names[name];
+	argv[1] = __UNCONST(script_names[name]);
 	argv[2] = NULL;
 
 	switch (fork()) {

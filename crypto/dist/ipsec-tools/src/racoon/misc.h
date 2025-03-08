@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.8 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: misc.h,v 1.9 2006/04/06 14:00:06 manubsd Exp */
 
@@ -43,7 +43,7 @@
 #endif
 
 extern int racoon_hexdump(void *, size_t);
-extern char *bit2str(int, int);
+extern const char *bit2str(int, int);
 extern void *get_newbuf(void *, size_t);
 extern const char *debug_location(const char *, int, const char *);
 extern int getfsize(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.7 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.8 2025/03/08 16:39:08 christos Exp $	*/
 
 /*	$KAME$ */
 
@@ -196,8 +196,8 @@ void isakmp_cfg_rmstate(struct ph1handle *);
 struct isakmp_cfg_state *isakmp_cfg_mkstate(void);
 vchar_t *isakmp_cfg_copy(struct ph1handle *, struct isakmp_data *);
 vchar_t *isakmp_cfg_short(struct ph1handle *, struct isakmp_data *, int);
-vchar_t *isakmp_cfg_varlen(struct ph1handle *, struct isakmp_data *, char *, size_t);
-vchar_t *isakmp_cfg_string(struct ph1handle *, struct isakmp_data *, char *);
+vchar_t *isakmp_cfg_varlen(struct ph1handle *, struct isakmp_data *, const char *, size_t);
+vchar_t *isakmp_cfg_string(struct ph1handle *, struct isakmp_data *, const char *);
 int isakmp_cfg_getconfig(struct ph1handle *);
 int isakmp_cfg_setenv(struct ph1handle *, char ***, int *);
 

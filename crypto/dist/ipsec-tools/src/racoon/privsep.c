@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.27 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.28 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -73,7 +73,7 @@ static int privsep_sock[2] = { -1, -1 };
 
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
-static int safety_check(struct privsep_com_msg *, int i);
+static int safety_check(struct privsep_com_msg *, int);
 static int port_check(int);
 static int unsafe_env(char *const *);
 static int unknown_name(int);
@@ -416,7 +416,7 @@ privsep_init(void)
 			char **envp = NULL;
 			int envc = 0;
 			int count = 0;
-			int i;
+			int j;
 
 			/*
 			 * First count the bufs, and make sure strings
@@ -474,8 +474,8 @@ privsep_init(void)
 			}
 			memcpy((char *)&name, bufs[count++], sizeof(name));
 
-			for (i = 0; combuf->bufs.buflen[count]; count++)
-				envp[i++] = bufs[count];
+			for (j = 0; combuf->bufs.buflen[count]; count++)
+				envp[j++] = bufs[count];
 
 			count++;		/* void */
 
@@ -1446,8 +1446,8 @@ static int
 unsafe_env(char *const *envp)
 {
 	char *const *e;
-	char *const *be;
-	char *const bad_env[] = { "PATH=", "LD_LIBRARY_PATH=", "IFS=", NULL };
+	const char *const *be;
+	const char *const bad_env[] = { "PATH=", "LD_LIBRARY_PATH=", "IFS=", NULL };
 
 	for (e = envp; *e; e++) {
 		for (be = bad_env; *be; be++) {
@@ -1553,7 +1553,7 @@ send_fd(int s, int fd)
 	struct iovec iov;
 	int *fdptr;
 
-	iov.iov_base = " ";
+	iov.iov_base = __UNCONST(" ");
 	iov.iov_len = 1;
 
 	if (sizeof(cmsbuf) < CMSG_SPACE(sizeof(fd))) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: schedule.h,v 1.10 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
@@ -61,7 +61,7 @@
 #ifndef container_of
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (char *)(intptr_t)__mptr - offsetof(type,member) );})
 #endif
 
 
@@ -75,7 +75,7 @@ struct sched {
 	long id;				/* for debug */
 };
 
-#define SCHED_INITIALIZER() { NULL, }
+#define SCHED_INITIALIZER() { .func = NULL, }
 
 struct scheddump {
 	time_t xtime;

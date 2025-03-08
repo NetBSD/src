@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.11 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.12 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -315,7 +315,7 @@ isakmp_frag_extract(struct ph1handle *iph1, vchar_t *msg)
 		
 	return 0;
 out:
-	plog(LLV_ERROR, LOCATION, NULL, m);
+	plog(LLV_ERROR, LOCATION, NULL, "%s", m);
 	racoon_free(item);
 	vfree(buf);
 	return -1;

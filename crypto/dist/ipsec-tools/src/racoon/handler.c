@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.43 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: handler.c,v 1.44 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1186,7 +1186,7 @@ exclude_cfg_addr(const struct sockaddr *addr)
 		if ((p->mode_cfg != NULL) &&
 		    (p->mode_cfg->flags & ISAKMP_CFG_GOT_ADDR4) &&
 		    (addr->sa_family == AF_INET)) {
-			sin = (struct sockaddr_in *)addr;
+			sin = (const struct sockaddr_in *)addr;
 			if (sin->sin_addr.s_addr == p->mode_cfg->addr4.s_addr)
 				return 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.11 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: localconf.c,v 1.12 2025/03/08 16:39:08 christos Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -80,7 +80,7 @@ initlcconf()
 	}
 
 	setdefault();
-	lcconf->racoon_conf = LC_DEFAULT_CF;
+	lcconf->racoon_conf = __UNCONST(LC_DEFAULT_CF);
 }
 
 void
@@ -232,8 +232,8 @@ getpsk(const char *str, const int len)
 			continue;
 
 		/* search the end of 1st string. */
-		for (p = buf; *p != '\0' && !isspace((int)*p); p++)
-			;
+		for (p = buf; *p != '\0' && !isspace((unsigned char)*p); p++)
+			continue;
 		if (*p == '\0')
 			continue;	/* no 2nd parameter */
 		*p = '\0';

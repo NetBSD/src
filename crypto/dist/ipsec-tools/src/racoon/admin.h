@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.9 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: admin.h,v 1.10 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -36,7 +36,7 @@
 
 #define ADMINSOCK_PATH ADMINPORTDIR "/racoon.sock"
 
-extern char *adminsock_path;
+extern const char *adminsock_path;
 extern uid_t adminsock_owner;
 extern gid_t adminsock_group;
 extern mode_t adminsock_mode;

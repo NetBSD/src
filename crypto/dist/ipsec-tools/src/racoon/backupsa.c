@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.12 2025/03/07 15:55:28 christos Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.13 2025/03/08 16:39:08 christos Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -77,8 +77,8 @@
  *    e_type e_keylen a_type a_keylen flags \
  *    l_alloc l_bytes l_addtime l_usetime seq keymat
  */
-static char *format = "%b %d %T %Y";	/* time format */
-static char *strmon[12] = {
+#define FORMAT "%b %d %T %Y"	/* time format */
+static const char *strmon[12] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
@@ -104,7 +104,7 @@ backupsa_to_file(struct pfkey_send_sa_args *sa_args)
 
 	t = time(NULL);
 	tm = localtime(&t);
-	l = strftime(p, len, format, tm);
+	l = strftime(p, len, FORMAT, tm);
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -193,7 +193,7 @@ err:
 }
 
 int
-backupsa_from_file()
+backupsa_from_file(void)
 {
 	FILE *fp;
 	char buf[512];
@@ -334,7 +334,7 @@ next:
 }
 
 int
-backupsa_clean()
+backupsa_clean(void)
 {
 	FILE *fp;
 
@@ -356,12 +356,12 @@ backupsa_clean()
 /*
  * convert fixed string into the tm structure.
  * The fixed string is like 'Nov 24 18:22:48 1986'.
- * static char *format = "%b %d %T %Y";
  */
 static char *
 str2tmx(char *p, struct tm *tm)
 {
-	int i, len;
+	int len;
+	size_t i;
 
 	/* Month */
         for (i = 0; i < sizeof(strmon)/sizeof(strmon[0]); i++) {

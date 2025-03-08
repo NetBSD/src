@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.y,v 1.9 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: prsa_par.y,v 1.10 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: prsa_par.y,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -113,7 +113,7 @@ prsaerror(const char *s, ...)
 	va_end(ap);
 }
 
-void
+static void
 prsawarning(const char *s, ...)
 {
 	char fmt[512];

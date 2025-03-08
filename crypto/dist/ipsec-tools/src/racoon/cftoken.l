@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.29 2020/11/25 18:11:00 bouyer Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.30 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -99,7 +99,7 @@ static struct include_stack {
 	YY_BUFFER_STATE prevstate;
 	int lineno;
 	glob_t matches;
-	int matchon;
+	size_t matchon;
 } incstack[MAX_INCLUDE_DEPTH];
 static int incstackp = 0;
 
@@ -718,8 +718,7 @@ yywarn(const char *s, ...)
 }
 
 int
-yycf_switch_buffer(path)
-	char *path;
+yycf_switch_buffer(char *path)
 {
 	char *filepath = NULL;
 
@@ -760,8 +759,7 @@ yycf_switch_buffer(path)
 }
 
 int
-yycf_set_buffer(path)
-	char *path;
+yycf_set_buffer(char *path)
 {
 	yyin = fopen(path, "r");
 	if (yyin == NULL) {
@@ -787,7 +785,7 @@ yycf_set_buffer(path)
 }
 
 void
-yycf_init_buffer()
+yycf_init_buffer(void)
 {
 	int i;
 
@@ -797,7 +795,7 @@ yycf_init_buffer()
 }
 
 void
-yycf_clean_buffer()
+yycf_clean_buffer(void)
 {
 	int i;
 

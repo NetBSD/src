@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.29 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: oakley.c,v 1.30 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1322,6 +1322,7 @@ oakley_validate_auth(struct ph1handle *iph1)
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
 		no_verify_needed = 0;
+		__attribute__((__fallthrough__));
 		/*FALLTHROUGH*/
 #endif
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:

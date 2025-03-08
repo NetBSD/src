@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.31 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.32 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -86,7 +86,7 @@ static remoteconf_tailq_head_t rmtree, rmtree_save;
 /*
  * Script hook names and script hook paths
  */
-char *script_names[SCRIPT_MAX + 1] = {
+const char *script_names[SCRIPT_MAX + 1] = {
 	"phase1_up", "phase1_down", "phase1_dead" };
 
 /*%%%*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.h,v 1.6 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: plog.h,v 1.7 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: plog.h,v 1.7 2006/06/20 09:57:31 vanhu Exp */
 
@@ -73,7 +73,7 @@ extern void _plog(int, const char *, struct sockaddr *, const char *, ...)
 	__attribute__ ((__format__ (__printf__, 4, 5)));
 extern void plogv(int, const char *, struct sockaddr *,
 	const char *, va_list);
-extern void plogdump(int, void *, size_t);
+extern void plogdump(int, const void *, size_t);
 extern void ploginit(void);
 extern void plogset(char *);
 

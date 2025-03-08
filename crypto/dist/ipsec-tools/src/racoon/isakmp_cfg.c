@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.30 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.31 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -962,7 +962,7 @@ isakmp_cfg_short(struct ph1handle *iph1 __unused, struct isakmp_data *attr, int 
 /*ARGSUSED*/
 vchar_t *
 isakmp_cfg_varlen(struct ph1handle *iph1 __unused, struct isakmp_data *attr,
-    char *string, size_t len)
+    const char *string, size_t len)
 {
 	vchar_t *buffer;
 	struct isakmp_data *new;
@@ -989,7 +989,7 @@ isakmp_cfg_varlen(struct ph1handle *iph1 __unused, struct isakmp_data *attr,
 
 vchar_t *
 isakmp_cfg_string(struct ph1handle *iph1, struct isakmp_data *attr,
-    char *string)
+    const char *string)
 {
 	size_t len = strlen(string);
 	return isakmp_cfg_varlen(iph1, attr, string, len);
@@ -1771,7 +1771,7 @@ isakmp_cfg_iplist_to_str(char *dest, int count, void *addr, int withmask)
 		else
 			l = sizeof(struct in_addr);
 		memcpy(&tmp, addr, l);
-		addr += l;
+		addr = (char *)addr + l;
 		if((uint32_t)tmp.addr4.s_addr == 0)
 			break;
 	
@@ -2013,7 +2013,7 @@ isakmp_cfg_resize_pool(int size)
 			if (isakmp_cfg_config.port_pool[i].used) {
 				plog(LLV_ERROR, LOCATION, NULL, 
 				    "resize pool from %zu to %d impossible "
-				    "port %d is in use\n", 
+				    "port %zu is in use\n", 
 				    isakmp_cfg_config.pool_size, size, i);
 				size = i;
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.7 2022/01/23 14:35:45 christos Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.8 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: plainrsa-gen.c,v 1.6 2005/04/21 09:08:40 monas Exp */
 /*
@@ -65,8 +65,8 @@
 
 #define DEFAULT_PUBEXP RSA_F4
 
-void
-usage (char *argv0)
+static void
+usage(char *argv0)
 {
 	fprintf(stderr, "Plain RSA key generator, part of %s\n", TOP_PACKAGE_STRING);
 	fprintf(stderr, "By Michal Ludvig (http://www.logix.cz/michal)\n");
@@ -74,7 +74,7 @@ usage (char *argv0)
 	fprintf(stderr, "Usage: %s [options]\n", argv0);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "  -b bits       Generate <bits> long RSA key (default=1024)\n");
-	fprintf(stderr, "  -e pubexp     Public exponent to use (default=%#x)\n", DEFAULT_PUBEXP);
+	fprintf(stderr, "  -e pubexp     Public exponent to use (default=%#lx)\n", DEFAULT_PUBEXP);
 	fprintf(stderr, "  -f filename   Filename to store the key to (default=stdout)\n");
 	fprintf(stderr, "  -i filename   Input source for format conversion\n");
 	fprintf(stderr, "  -h            Help\n");
@@ -86,12 +86,11 @@ usage (char *argv0)
 /*
  * See RFC 2065, section 3.5 for details about the output format.
  */
-vchar_t *
+static vchar_t *
 mix_b64_pubkey(const RSA *key)
 {
 	char *binbuf;
 	long binlen, ret;
-	vchar_t *res;
 	
 	binlen = 1 + BN_num_bytes(RSA_get0_e(key)) + BN_num_bytes(RSA_get0_n(key));
 	binbuf = malloc(binlen);
@@ -107,20 +106,18 @@ mix_b64_pubkey(const RSA *key)
 	return base64_encode(binbuf, binlen);
 }
 
-char *
+static char *
 lowercase(char *input)
 {
-	char *ptr = input;
-	while (*ptr) {
+	for (char *ptr = input; *ptr; ptr++) {
 		if (*ptr >= 'A' && *ptr <= 'F')
 			*ptr -= 'A' - 'a';
-		*ptr++;
 	}
 
 	return input;
 }
 
-int
+static int
 print_rsa_key(FILE *fp, const RSA *key)
 {
 	vchar_t *pubkey64 = NULL;
@@ -149,7 +146,7 @@ print_rsa_key(FILE *fp, const RSA *key)
 	return 0;
 }
 
-int
+static int
 print_public_rsa_key(FILE *fp, const RSA *key)
 {
 	vchar_t *pubkey64 = NULL;
@@ -166,11 +163,11 @@ print_public_rsa_key(FILE *fp, const RSA *key)
 	return 0;
 }
 
-int
+static int
 convert_rsa_key(FILE *fpout, FILE *fpin)
 {
 	int ret;
-	RSA *key = NULL;
+	RSA *key;
 
 	key = PEM_read_RSAPrivateKey(fpin, NULL, NULL, NULL);
 	if (key) {
@@ -201,7 +198,7 @@ convert_rsa_key(FILE *fpout, FILE *fpin)
 	return -1;
 }
 
-int
+static int
 gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
 {
 	int ret;
@@ -229,7 +226,6 @@ main (int argc, char *argv[])
 	FILE *fp = stdout, *fpin = NULL;
 	size_t bits = 1024;
 	unsigned int pubexp = DEFAULT_PUBEXP;
-	struct stat st;
 	extern char *optarg;
 	extern int optind;
 	int c, fd = -1, fdin = -1;

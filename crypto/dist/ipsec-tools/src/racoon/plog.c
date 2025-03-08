@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.8 2025/03/07 15:55:29 christos Exp $	*/
+/*	$NetBSD: plog.c,v 1.9 2025/03/08 16:39:08 christos Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
@@ -82,7 +82,7 @@ static char *logfile = NULL;
 static char *plog_common(int, const char *, const char *, struct sockaddr *);
 
 static struct plogtags {
-	char *name;
+	const char *name;
 	int priority;
 } ptab[] = {
 	{ "(not defined)",	0, },
@@ -200,7 +200,7 @@ plogv(int pri, const char *func, struct sockaddr *sa,
 }
 
 void
-plogdump(int pri, void *data, size_t len)
+plogdump(int pri, const void *data, size_t len)
 {
 	caddr_t buf;
 	size_t buflen;
@@ -225,7 +225,7 @@ plogdump(int pri, void *data, size_t len)
 		if (j % 4 == 0)
 			buf[i++] = ' ';
 		snprintf(&buf[i], buflen - i, "%02x",
-			((unsigned char *)data)[j] & 0xff);
+			((const unsigned char *)data)[j] & 0xff);
 		i += 2;
 		j++;
 	}
