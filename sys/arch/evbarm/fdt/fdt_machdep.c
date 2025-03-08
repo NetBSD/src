@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.109 2025/03/08 14:30:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.109 2025/03/08 14:30:05 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill E
 #include "opt_multiprocessor.h"
 
 #include "genfb.h"
+#include "pci.h"
 #include "ukbd.h"
 #include "wsdisplay.h"
 
@@ -108,6 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.108 2024/06/30 17:55:28 jmcneill E
 #endif
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
+#endif
+
+#if NPCI > 0
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #endif
 
 BootConfig bootconfig;
@@ -488,6 +494,27 @@ fdt_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint64(dict,
 		    "simplefb-physaddr", arm_simplefb_physaddr());
 	}
+
+#if NPCI > 0
+	/*
+	 * Gross hack to allow handoff of console from genfb to a PCI DRM
+	 * display driver. Will match the first device that attaches, which
+	 * is not ideal, but better than nothing for now. Similar to how
+	 * this is handled on x86.
+	 */
+	if (device_parent(self) != NULL &&
+	    device_is_a(device_parent(self), "pci")) {
+		static bool found_pci_console = false;
+		struct pci_attach_args *pa = aux;
+
+		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+		    !found_pci_console) {
+			prop_dictionary_t dict = device_properties(self);
+			prop_dictionary_set_bool(dict, "is_console", true);
+			found_pci_console = true;
+		}
+	}
+#endif
 #endif
 
 	if (plat && plat->fp_device_register)
