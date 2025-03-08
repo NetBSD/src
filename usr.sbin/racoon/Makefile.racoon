@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.racoon,v 1.2 2025/03/08 00:15:06 christos Exp $
+# $NetBSD: Makefile.racoon,v 1.3 2025/03/08 00:21:37 christos Exp $
 
 COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
 COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
@@ -13,4 +13,3 @@ CLEANFILES+=prsa_tok.h prsa_tok.c prsa_par.c  prsa_par.h
 
 
 prsa_tok.c: prsa_par.c
-rsa_list.c: prsa_tok.c
