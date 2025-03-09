@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.199 2025/03/09 01:06:42 thorpej Exp $
+# $NetBSD: files.alpha,v 1.200 2025/03/09 01:13:49 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -10,6 +10,8 @@ maxusers 8 16 64
 # Common Alpha system support attributes.
 define	alpha_pci_bootdev
 define	alpha_pci_consinit
+define	alpha_sgmap
+define	alpha_shared_intr
 define	alpha_tc_bootdev
 
 #
@@ -32,46 +34,55 @@ defflag		DEC_2100A_A500: alpha_pci_bootdev, alpha_pci_consinit
 defflag		DEC_3000_300: alpha_tc_bootdev
 
 # Flamingo etc:	3000/[4-9]00*
-defflag		DEC_3000_500: alpha_tc_bootdev
+defflag		DEC_3000_500: alpha_tc_bootdev, alpha_sgmap
 
 # Miata:	Personal Workstation (550)
-defflag		DEC_550: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_550: alpha_pci_bootdev, alpha_pci_consinit,
+			 alpha_shared_intr
 
 # NoName:	AXPpci33, etc.
 defflag		DEC_AXPPCI_33: alpha_pci_bootdev, alpha_pci_consinit
 
 # EB164:	AlphaPC 164
-defflag		DEC_EB164: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_EB164: alpha_pci_bootdev, alpha_pci_consinit,
+			   alpha_shared_intr
 
 # EB64+:	AlphaPC 64, etc.
-defflag		DEC_EB64PLUS: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_EB64PLUS: alpha_pci_bootdev, alpha_pci_consinit,
+			      alpha_shared_intr
 
 # KN20AA:	AlphaStation 500 and 600
-defflag		DEC_KN20AA: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_KN20AA: alpha_pci_bootdev, alpha_pci_consinit,
+			    alpha_shared_intr
 
 # KN7AA:	DEC 7000 and 10000
 defflag		DEC_KN7AA
 
 # KN8AE:	AlphaServer 8200 and 8400
-defflag		DEC_KN8AE: alpha_pci_bootdev
+defflag		DEC_KN8AE: alpha_pci_bootdev, alpha_shared_intr
 
 # KN300:	AlphaServer 4X00
-defflag		DEC_KN300: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_KN300: alpha_pci_bootdev, alpha_pci_consinit,
+			   alpha_shared_intr
 
 # Mikasa etc:	AlphaServer 1000
-defflag		DEC_1000: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_1000: alpha_pci_bootdev, alpha_pci_consinit,
+			  alpha_shared_intr
 
 # Corelle etc:	AlphaServer 800 and 1000A
-defflag		DEC_1000A: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_1000A: alpha_pci_bootdev, alpha_pci_consinit,
+			   alpha_shared_intr
 
 # AlphaBook1:	Tadpole/DEC AlphaBook
 defflag		DEC_ALPHABOOK1: alpha_pci_bootdev, alpha_pci_consinit
 
 # EB66:		21066 Evaluation Board
-defflag		DEC_EB66: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_EB66: alpha_pci_bootdev, alpha_pci_consinit,
+			  alpha_shared_intr
 
 # Tsunami/Titan	Tsunami/Titan EV6 workstation and server systems
-defflag		DEC_6600: alpha_pci_bootdev, alpha_pci_consinit
+defflag		DEC_6600: alpha_pci_bootdev, alpha_pci_consinit,
+			  alpha_shared_intr
 
 # Nautilus	Alpha Processor, Inc. UP1000 (EV6 + AMD-751)
 defflag		API_UP1000: alpha_pci_bootdev, alpha_pci_consinit
@@ -83,14 +94,8 @@ defflag		ZS_IOASIC_DMA
 # realtime clock compatible to OSF/1
 defflag		CLOCK_COMPAT_OSF1
 
-# this loses, but there's no way to define attributes which have attributes
-define	alpha_shared_intr
-file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
-					dec_eb64plus | dec_kn20aa | dec_kn8ae |
-					dec_kn300 | dec_550 | dec_1000 |
-					dec_1000a | dec_eb66 | dec_6600
-define	alpha_sgmap
-file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
+file	arch/alpha/common/shared_intr.c	alpha_shared_intr
+file	arch/alpha/common/sgmap_common.c alpha_sgmap
 
 #
 # Bus-independent devices
