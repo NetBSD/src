@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/10/12 11:43:11 nia Exp $
+#	$NetBSD: Makefile,v 1.12 2025/03/09 08:26:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ XINITDIR=	${X11ETCDIR}/xinit
 
 CPPFLAGS+=	${X11FLAGS.CONNECTION} -DBINDIR=\"${X11BINDIR}\" \
 		-DRETSIGTYPE=void
+CPPFLAGS+=	-DHAVE_ASPRINTF
 
 CPPSCRIPTS=	startx xinitrc
 CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR} \

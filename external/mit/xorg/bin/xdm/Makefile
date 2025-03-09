@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2024/04/29 22:09:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2025/03/09 08:26:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ DEF_USER_PATH=	/sbin:/usr/sbin:/bin:/usr/bin:/usr/games:/usr/pkg/sbin:/usr/pkg/b
 DEF_SYSTEM_PATH=/sbin:/usr/sbin:/bin:/usr/bin:${X11BINDIR}
 
 CPPFLAGS+=		-DRETSIGTYPE=void
+CPPFLAGS+= 		-DHAVE_ASPRINTF
 CPPFLAGS.auth.c+=	-DBSD44SOCKETS
 CPPFLAGS.socket.c+=	-DBSD44SOCKETS
 CPPFLAGS.xdmcp.c+=	-DBSD44SOCKETS
