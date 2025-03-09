@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/01/08 09:10:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2025/03/09 06:03:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,8 @@ INCSDIR=${X11INCDIR}/X11/SM
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 # XXX not yet; libuuid_ul is not yet ready.
 #CPPFLAGS+=	-DHAVE_LIBUUID
+CPPFLAGS+=	-DHAVE_GETADDRINFO -DHAVE_INET_NTOP \
+		-DHAVE_STRUCT_SOCKADDR_STORAGE
 
 CONN_DEFINES=	${X11FLAGS.CONNECTION} -DICE_t
 
