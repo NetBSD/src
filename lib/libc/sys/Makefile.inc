@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.258 2025/03/09 16:10:22 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.259 2025/03/09 17:02:56 martin Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -261,7 +261,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_getcpuclockid2.2 \
 	clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 eventfd.2 execve.2 _exit.2 extattr_get_file.2 \
-	extattctl.2 \
+	extattrctl.2 \
 	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
