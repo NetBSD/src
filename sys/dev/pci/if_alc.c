@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.55 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.56 2025/03/09 06:37:06 mlelstv Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2433,6 +2433,7 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, bool init)
 	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		m_freem(m);
