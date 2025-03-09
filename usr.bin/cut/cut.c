@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.31 2025/03/04 03:54:19 gutteridge Exp $	*/
+/*	$NetBSD: cut.c,v 1.32 2025/03/09 05:04:54 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.31 2025/03/04 03:54:19 gutteridge Exp $");
+__RCSID("$NetBSD: cut.c,v 1.32 2025/03/09 05:04:54 gutteridge Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -166,12 +166,10 @@ get_list(char *list)
 	}
 
 	/*
-	 * set a byte in the positions array to indicate if a field or
+	 * Set a byte in the positions array to indicate if a field or
 	 * column is to be selected; use +1, it's 1-based, not 0-based.
-	 * This parser is less restrictive than the Draft 9 POSIX spec.
-	 * POSIX doesn't allow lists that aren't in increasing order or
-	 * overlapping lists.  We also handle "-3-5" although there's no
-	 * real reason to.
+	 * Numbers and number ranges may be overlapping, repeated, and in
+	 * any order. We handle "-3-5" although there's no real reason to.
 	 */
 	for (; (p = strtok(list, ", \t")) != NULL; list = NULL) {
 		setautostart = start = stop = 0;
