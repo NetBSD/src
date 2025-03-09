@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.55 2025/03/08 16:39:08 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.56 2025/03/09 10:59:03 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2775,7 +2775,7 @@ set_isakmp_proposal(struct remoteconf *rmconf)
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			"encklen=%d\n", s->encklen);
 
-		memset(types, 0, ARRAYLEN(types));
+		memset(types, 0, sizeof(types));
 		types[algclass_isakmp_enc] = s->algclass[algclass_isakmp_enc];
 		types[algclass_isakmp_hash] = s->algclass[algclass_isakmp_hash];
 		types[algclass_isakmp_dh] = s->algclass[algclass_isakmp_dh];
