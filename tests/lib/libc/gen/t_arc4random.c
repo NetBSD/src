@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.4 2025/03/06 00:54:27 riastradh Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.5 2025/03/09 18:11:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.4 2025/03/06 00:54:27 riastradh Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.5 2025/03/09 18:11:55 riastradh Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -606,6 +606,53 @@ ATF_TC_BODY(local, tc)
 	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
 }
 
+ATF_TC(stackfallback);
+ATF_TC_HEAD(stackfallback, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random with pthread_atfork and thr_keycreate failure");
+}
+ATF_TC_BODY(stackfallback, tc)
+{
+	unsigned char buf[32], buf1[32];
+	struct arc4random_prng *local;
+
+	/*
+	 * Get a sample to start things off.  This makes the library
+	 * gets initialized.
+	 */
+	arc4random_buf(buf, sizeof(buf));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+
+	/*
+	 * Clear the arc4random global state, and the local state if it
+	 * exists, and pretend pthread_atfork and thr_keycreate had
+	 * both failed.
+	 */
+	memset(&arc4random_global.prng, 0, sizeof(arc4random_global.prng));
+	if ((local = arc4random_prng()) != NULL)
+		memset(local, 0, sizeof(*local));
+	arc4random_global.forksafe = false;
+	arc4random_global.per_thread = false;
+
+	/*
+	 * Make sure it still works to get a sample.
+	 */
+	arc4random_buf(buf1, sizeof(buf1));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+
+	/*
+	 * Make sure the global and local epochs did not change.
+	 */
+	ATF_CHECK_EQ_MSG(arc4random_global.prng.arc4_epoch, 0,
+	    "global epoch: %d", arc4random_global.prng.arc4_epoch);
+	if (local != NULL) {
+		ATF_CHECK_EQ_MSG(local->arc4_epoch, 0,
+		    "local epoch: %d", local->arc4_epoch);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -617,6 +664,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, global_aslimit);
 	ATF_TP_ADD_TC(tp, global_threadkeylimit);
 	ATF_TP_ADD_TC(tp, local);
+	ATF_TP_ADD_TC(tp, stackfallback);
 
 	return atf_no_error();
 }

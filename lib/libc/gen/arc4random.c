@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.45 2025/03/06 00:54:27 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.46 2025/03/09 18:11:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,17 +42,16 @@
  *
  * The arc4random(3) API may abort the process if:
  *
- * (a) the crypto self-test fails,
- * (b) pthread_atfork fails, or
- * (c) sysctl(KERN_ARND) fails when reseeding the PRNG.
+ * (a) the crypto self-test fails, or
+ * (b) sysctl(KERN_ARND) fails when reseeding the PRNG.
  *
- * The crypto self-test and pthread_atfork occur only once, on the
- * first use of any of the arc4random(3) API.  KERN_ARND is unlikely to
- * fail later unless the kernel is seriously broken.
+ * The crypto self-test occurs only once, on the first use of any of
+ * the arc4random(3) API.  KERN_ARND is unlikely to fail later unless
+ * the kernel is seriously broken.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.45 2025/03/06 00:54:27 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.46 2025/03/09 18:11:55 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -569,12 +568,14 @@ arc4random_initialize(void)
 	 * Set up a pthread_atfork handler to lock the global state
 	 * around fork so that if forked children can't use the
 	 * per-thread state, they can take the lock and use the global
-	 * state without deadlock.
+	 * state without deadlock.  If this fails, we will fall back to
+	 * PRNG state on the stack reinitialized from the kernel
+	 * entropy pool at every call.
 	 */
 	if (pthread_atfork(&arc4random_atfork_prepare,
 		&arc4random_atfork_parent, &arc4random_atfork_child)
-	    != 0)
-		abort();
+	    == 0)
+		arc4random_global.forksafe = true;
 
 	/*
 	 * For multithreaded builds, try to allocate a per-thread PRNG
@@ -594,7 +595,7 @@ arc4random_initialize(void)
 }
 
 static struct arc4random_prng *
-arc4random_prng_get(void)
+arc4random_prng_get(struct arc4random_prng *fallback)
 {
 	struct arc4random_prng *prng = NULL;
 
@@ -612,10 +613,20 @@ arc4random_prng_get(void)
 	}
 #endif
 
-	/* If we can't create it, fall back to the global PRNG.  */
+	/*
+	 * If we can't create it, fall back to the global PRNG -- or an
+	 * on-stack PRNG, in the unlikely event that pthread_atfork
+	 * failed, which we have to seed from scratch each time
+	 * (suboptimal, but unlikely, so not worth optimizing).
+	 */
 	if (__predict_false(prng == NULL)) {
-		mutex_lock(&arc4random_global.lock);
-		prng = &arc4random_global.prng;
+		if (__predict_true(arc4random_global.forksafe)) {
+			mutex_lock(&arc4random_global.lock);
+			prng = &arc4random_global.prng;
+		} else {
+			prng = fallback;
+			memset(prng, 0, sizeof(*prng));
+		}
 	}
 
 	/* Guarantee the PRNG is seeded.  */
@@ -626,8 +637,20 @@ arc4random_prng_get(void)
 }
 
 static void
-arc4random_prng_put(struct arc4random_prng *prng)
+arc4random_prng_put(struct arc4random_prng *prng,
+    struct arc4random_prng *fallback)
 {
+
+	/*
+	 * If we had to use a stack fallback, zero it before we return
+	 * so that after we return we avoid leaving secrets on the
+	 * stack that could recover the parent's future outputs in an
+	 * unprivileged forked child (of course, we can't guarantee
+	 * that the compiler hasn't spilled anything; this is
+	 * best-effort, not a guarantee).
+	 */
+	if (__predict_false(prng == fallback))
+		explicit_memset(fallback, 0, sizeof(*fallback));
 
 	/* If we had fallen back to the global PRNG, unlock it.  */
 	if (__predict_false(prng == &arc4random_global.prng))
@@ -639,12 +662,12 @@ arc4random_prng_put(struct arc4random_prng *prng)
 uint32_t
 arc4random(void)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 	uint32_t v;
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	crypto_prng_buf(&prng->arc4_prng, &v, sizeof v);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 
 	return v;
 }
@@ -652,18 +675,18 @@ arc4random(void)
 void
 arc4random_buf(void *buf, size_t len)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
 	if (len <= crypto_prng_MAXOUTPUTBYTES) {
-		prng = arc4random_prng_get();
+		prng = arc4random_prng_get(&fallback);
 		crypto_prng_buf(&prng->arc4_prng, buf, len);
-		arc4random_prng_put(prng);
+		arc4random_prng_put(prng, &fallback);
 	} else {
 		uint8_t seed[crypto_onetimestream_SEEDBYTES];
 
-		prng = arc4random_prng_get();
+		prng = arc4random_prng_get(&fallback);
 		crypto_prng_buf(&prng->arc4_prng, seed, sizeof seed);
-		arc4random_prng_put(prng);
+		arc4random_prng_put(prng, &fallback);
 
 		crypto_onetimestream(seed, buf, len);
 		(void)explicit_memset(seed, 0, sizeof seed);
@@ -673,7 +696,7 @@ arc4random_buf(void *buf, size_t len)
 uint32_t
 arc4random_uniform(uint32_t bound)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 	uint32_t minimum, r;
 
 	/*
@@ -693,10 +716,10 @@ arc4random_uniform(uint32_t bound)
 	 */
 	minimum = (-bound % bound);
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	do crypto_prng_buf(&prng->arc4_prng, &r, sizeof r);
 	while (__predict_false(r < minimum));
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 
 	return (r % bound);
 }
@@ -704,11 +727,11 @@ arc4random_uniform(uint32_t bound)
 void
 arc4random_stir(void)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	arc4random_prng_addrandom(prng, NULL, 0);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 }
 
 /*
@@ -718,13 +741,13 @@ arc4random_stir(void)
 void
 arc4random_addrandom(u_char *data, int datalen)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
 	_DIAGASSERT(0 <= datalen);
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	arc4random_prng_addrandom(prng, data, datalen);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 }
 
 #ifdef _ARC4RANDOM_TEST

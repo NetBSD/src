@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.h,v 1.3 2025/03/06 00:53:26 riastradh Exp $	*/
+/*	$NetBSD: arc4random.h,v 1.4 2025/03/09 18:11:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ struct arc4random_global_state {
 	struct arc4random_prng	prng;
 	once_t			once;
 	bool			initialized;
+	bool			forksafe;
 	bool			per_thread;
 };
 
