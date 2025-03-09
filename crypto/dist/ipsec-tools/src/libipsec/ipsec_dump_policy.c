@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.11 2018/05/28 20:45:38 maxv Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.12 2025/03/09 18:32:20 christos Exp $	*/
 
 /* Id: ipsec_dump_policy.c,v 1.10 2005/06/29 09:12:37 manubsd Exp */
 
@@ -64,11 +64,11 @@ static const char *ipsp_policy_strs[] = {
 };
 
 static char *ipsec_dump_ipsecrequest(char *, size_t,
-	struct sadb_x_ipsecrequest *, size_t, int);
-static char *ipsec_dump_policy1(void *, const char *, int);
-static int set_addresses(char *, size_t, struct sockaddr *,
-	struct sockaddr *, int);
-static char *set_address(char *, size_t, struct sockaddr *, int);
+	const struct sadb_x_ipsecrequest *, size_t, int);
+static char *ipsec_dump_policy1(const void *, const char *, int);
+static int set_addresses(char *, size_t, const struct sockaddr *,
+	const struct sockaddr *, int);
+static char *set_address(char *, size_t, const struct sockaddr *, int);
 
 /*
  * policy is sadb_x_policy buffer.
@@ -88,11 +88,11 @@ ipsec_dump_policy_withports(void *policy, const char *delimiter)
 }
 
 static char *
-ipsec_dump_policy1(void *policy, const char *delimiter, int withports)
+ipsec_dump_policy1(const void *policy, const char *delimiter, int withports)
 {
-	struct sadb_x_policy *xpl = policy;
-	struct sadb_x_ipsecrequest *xisr;
-	size_t off, buflen;
+	const struct sadb_x_policy *xpl = policy;
+	const struct sadb_x_ipsecrequest *xisr;
+	size_t off, buflen, extlen;
 	char *buf;
 	char isrbuf[1024];
 	char *newbuf;
@@ -227,32 +227,33 @@ ipsec_dump_policy1(void *policy, const char *delimiter, int withports)
 
 	/* count length of buffer for use */
 	off = sizeof(*xpl);
-	while (off < PFKEY_EXTLEN(xpl)) {
-		xisr = (void *)((caddr_t)(void *)xpl + off);
+	extlen = PFKEY_EXTLEN(xpl);
+	while (off < extlen) {
+		xisr = (const void *)((const char *)xpl + off);
 		off += xisr->sadb_x_ipsecrequest_len;
 	}
 
 	/* validity check */
-	if (off != PFKEY_EXTLEN(xpl)) {
+	if (off != extlen) {
 		__ipsec_errcode = EIPSEC_INVAL_SADBMSG;
 		free(buf);
 		return NULL;
 	}
 
 	off = sizeof(*xpl);
-	while (off < PFKEY_EXTLEN(xpl)) {
-		int offset;
-		xisr = (void *)((caddr_t)(void *)xpl + off);
+	while (off < extlen) {
+		size_t offset;
+		xisr = (const void *)((const char *)xpl + off);
 
 		if (ipsec_dump_ipsecrequest(isrbuf, sizeof(isrbuf), xisr,
-		    PFKEY_EXTLEN(xpl) - off, withports) == NULL) {
+		    extlen - off, withports) == NULL) {
 			free(buf);
 			return NULL;
 		}
 
 		offset = strlen(buf);
 		buflen = offset + strlen(delimiter) + strlen(isrbuf) + 1;
-		newbuf = (char *)realloc(buf, buflen);
+		newbuf = realloc(buf, buflen);
 		if (newbuf == NULL) {
 			__ipsec_errcode = EIPSEC_NO_BUFS;
 			free(buf);
@@ -269,11 +270,12 @@ ipsec_dump_policy1(void *policy, const char *delimiter, int withports)
 }
 
 static char *
-ipsec_dump_ipsecrequest(char *buf, size_t len, struct sadb_x_ipsecrequest *xisr,
+ipsec_dump_ipsecrequest(char *buf, size_t len,
+    const struct sadb_x_ipsecrequest *xisr,
     size_t bound /* boundary */, int withports)
 {
 	const char *proto, *mode, *level;
-	char abuf[NI_MAXHOST * 2 + 2];
+	char abuf[(NI_MAXHOST + NI_MAXSERV + 3) * 2 + 2];
 
 	if (xisr->sadb_x_ipsecrequest_len > bound) {
 		__ipsec_errcode = EIPSEC_INVAL_PROTO;
@@ -312,12 +314,12 @@ ipsec_dump_ipsecrequest(char *buf, size_t len, struct sadb_x_ipsecrequest *xisr,
 
 	abuf[0] = '\0';
 	if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
-		struct sockaddr *sa1, *sa2;
-		caddr_t p;
+		const struct sockaddr *sa1, *sa2;
+		const char *p;
 
-		p = (void *)(xisr + 1);
-		sa1 = (void *)p;
-		sa2 = (void *)(p + sysdep_sa_len(sa1));
+		p = (const void *)(xisr + 1);
+		sa1 = (const void *)p;
+		sa2 = (const void *)(p + sysdep_sa_len(sa1));
 		if (sizeof(*xisr) + sysdep_sa_len(sa1) + sysdep_sa_len(sa2) !=
 		    xisr->sadb_x_ipsecrequest_len) {
 			__ipsec_errcode = EIPSEC_INVAL_ADDRESS;
@@ -365,10 +367,10 @@ ipsec_dump_ipsecrequest(char *buf, size_t len, struct sadb_x_ipsecrequest *xisr,
 }
 
 static int
-set_addresses(char *buf, size_t len, struct sockaddr *sa1, struct sockaddr *sa2,
-    int withports)
+set_addresses(char *buf, size_t len, const struct sockaddr *sa1,
+    const struct sockaddr *sa2, int withports)
 {
-	char tmp1[NI_MAXHOST], tmp2[NI_MAXHOST];
+	char tmp1[NI_MAXHOST + NI_MAXSERV + 3], tmp2[sizeof(tmp1)];
 
 	if (set_address(tmp1, sizeof(tmp1), sa1, withports) == NULL ||
 	    set_address(tmp2, sizeof(tmp2), sa2, withports) == NULL)
@@ -380,7 +382,7 @@ set_addresses(char *buf, size_t len, struct sockaddr *sa1, struct sockaddr *sa2,
 }
 
 static char *
-set_address(char *buf, size_t len, struct sockaddr *sa, int withports)
+set_address(char *buf, size_t len, const struct sockaddr *sa, int withports)
 {
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
 	char host[NI_MAXHOST];

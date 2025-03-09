@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.26 2018/05/28 20:45:38 maxv Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.27 2025/03/09 18:32:20 christos Exp $	*/
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ static int supported_map[] = {
 static int
 findsupportedmap(int satype)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(supported_map)/sizeof(supported_map[0]); i++)
 		if (supported_map[i] == satype)
@@ -157,7 +157,7 @@ findsupportedalg(u_int satype, u_int alg_id)
 		- sizeof(struct sadb_supported);
 	p = (void *)(ipsec_supported[algno] + 1);
 	while (tlen > 0) {
-		if (tlen < sizeof(struct sadb_alg)) {
+		if (tlen < (int)sizeof(struct sadb_alg)) {
 			/* invalid format */
 			break;
 		}
@@ -698,7 +698,7 @@ pfkey_send_register(int so, u_int satype)
 
 	if (satype == SADB_SATYPE_UNSPEC) {
 		for (algno = 0;
-		     algno < sizeof(supported_map)/sizeof(supported_map[0]);
+		     algno < (int)__arraycount(supported_map);
 		     algno++) {
 			if (ipsec_supported[algno]) {
 				free(ipsec_supported[algno]);
@@ -743,7 +743,7 @@ pfkey_recv_register(int so)
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
 		if (newmsg->sadb_msg_type == SADB_REGISTER &&
-		    newmsg->sadb_msg_pid == pid)
+		    (pid_t)newmsg->sadb_msg_pid == pid)
 			break;
 		free(newmsg);
 	}
@@ -791,7 +791,7 @@ pfkey_set_supported(struct sadb_msg *msg, int tlen)
 	while (p < ep) {
 		sup = (void *)p;
 		if (ep < p + sizeof(*sup) ||
-		    PFKEY_EXTLEN(sup) < sizeof(*sup) ||
+		    PFKEY_EXTLEN(sup) < (int)sizeof(*sup) ||
 		    ep < p + sup->sadb_supported_len) {
 			/* invalid format */
 			break;
@@ -1632,7 +1632,7 @@ pfkey_send_x4(int so, u_int type, struct sockaddr *src, u_int prefs,
 	struct sadb_msg *newmsg;
 	int len;
 	caddr_t p;
-	int plen;
+	size_t plen;
 	caddr_t ep;
 
 	/* validity check */
@@ -1881,7 +1881,7 @@ pfkey_recv(int so)
 		return NULL;
 	}
 
-	if (len < sizeof(buf)) {
+	if (len < (int)sizeof(buf)) {
 		recv(so, (void *)&buf, sizeof(buf), 0);
 		__ipsec_errcode = EIPSEC_MAX;
 		return NULL;
@@ -1980,7 +1980,8 @@ pfkey_align(struct sadb_msg *msg, caddr_t *mhp)
 
 	while (p < ep) {
 		ext = (void *)p;
-		if (ep < p + sizeof(*ext) || PFKEY_EXTLEN(ext) < sizeof(*ext) ||
+		if (ep < p + sizeof(*ext) ||
+		    PFKEY_EXTLEN(ext) < (int)sizeof(*ext) ||
 		    ep < p + PFKEY_EXTLEN(ext)) {
 			/* invalid format */
 			break;
