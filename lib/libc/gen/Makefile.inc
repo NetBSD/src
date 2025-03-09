@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.221 2024/10/02 18:12:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.222 2025/03/09 16:31:18 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -112,8 +112,7 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 vwarnc.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execlpe.3 \
 	exec.3 execv.3 exec.3 execvp.3 exec.3 execvpe.3 exec.3 exect.3 
-MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
-	extattr_copy_file.3 extattr_copy_fd.3 \
+MLINKS+=extattr_copy_file.3 extattr_copy_fd.3 \
 	extattr_copy_file.3 extattr_copy_link.3 \
 	extattr_copy_file.3 cpxattr.3 \
 	extattr_copy_file.3 fcpxattr.3 \
