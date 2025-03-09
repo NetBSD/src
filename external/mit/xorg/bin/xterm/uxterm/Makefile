@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2025/03/09 23:32:34 mrg Exp $
 
 .include <bsd.own.mk>
 
 SCRIPTS=uxterm
 
-APPDEFS=UXTerm.ad
+APPDEFS=	UXTerm.ad UXTerm-color.ad
+
+BUILDSYMLINKS+=	XTerm-col.ad UXTerm-color.ad
 
 .PATH:	${X11SRCDIR.xterm}
 

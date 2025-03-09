@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.176 2024/04/29 22:09:11 mrg Exp $
+# $NetBSD: mi,v 1.177 2025/03/09 23:32:34 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -297,6 +297,7 @@
 ./usr/X11R7/lib/X11/app-defaults/Editres-color		xbase-editres-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/SshAskpass		xbase-ssh-askpass-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/UXTerm			xbase-xterm-bin		xorg
+./usr/X11R7/lib/X11/app-defaults/UXTerm-color		xbase-xterm-bin		xorg
 ./usr/X11R7/lib/X11/app-defaults/Viewres		xbase-viewres-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/Viewres-color		xbase-viewres-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XCalc			xbase-xcalc-bin		xorg
