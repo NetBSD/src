@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.59 2024/03/31 19:06:30 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.60 2025/03/09 01:06:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2024/03/31 19:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2025/03/09 01:06:41 thorpej Exp $");
 
 #include "pci.h"
 
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2024/03/31 19:06:30 thorpej Exp $"
 #include <machine/intr.h>
 
 struct bootdev_data	*bootdev_data;
+bool			 bootdev_is_disk;
+bool			 bootdev_is_net;
 
 static void	parse_prom_bootdev(void);
 
@@ -186,8 +188,7 @@ netboot_find_rootdev_planb(void)
 	char ifname[IFNAMSIZ];
 	int i;
 
-	if (strncasecmp(bootinfo.booted_dev, "BOOTP ", 6) != 0 &&
-	    strncasecmp(bootinfo.booted_dev, "MOP ", 4) != 0) {
+	if (!bootdev_is_net) {
 		/* We weren't netbooted. */
 		return;
 	}
@@ -313,6 +314,18 @@ parse_prom_bootdev(void)
 #endif
 
 	bootdev_data = &bd;
+
+	bootdev_is_disk = (strcasecmp(bd.protocol, "SCSI") == 0) ||
+			  (strcasecmp(bd.protocol, "RAID") == 0) ||
+			  (strcasecmp(bd.protocol, "I2O") == 0)  ||
+			  (strcasecmp(bd.protocol, "IDE") == 0);
+
+	bootdev_is_net  = (strcasecmp(bd.protocol, "BOOTP") == 0) ||
+			  (strcasecmp(bd.protocol, "MOP") == 0);
+#if 0
+	printf("bootdev_is_disk = %d, bootdev_is_net = %d\n",
+	    bootdev_is_disk, bootdev_is_net);
+#endif
 }
 
 void

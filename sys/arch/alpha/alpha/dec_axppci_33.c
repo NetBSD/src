@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.70 2024/03/31 19:06:30 thorpej Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.71 2025/03/09 01:06:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,60 +30,26 @@
  * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
  */
 
-#include "opt_kgdb.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.70 2024/03/31 19:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.71 2025/03/09 01:06:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/termios.h>
-#include <sys/conf.h>
-#include <dev/cons.h>
 
 #include <machine/rpb.h>
-#include <machine/alpha.h>
 #include <machine/autoconf.h>
 #include <machine/cpuconf.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-
-#include "pckbd.h"
-
-#ifndef CONSPEED
-#define CONSPEED TTYDEF_SPEED
-#endif
-static int comcnrate = CONSPEED;
-
 void dec_axppci_33_init(void);
 static void dec_axppci_33_cons_init(void);
 static void dec_axppci_33_device_register(device_t, void *);
-
-#ifdef KGDB
-#include <machine/db_machdep.h>
-
-static const char *kgdb_devlist[] = {
-	"com",
-	NULL,
-};
-#endif /* KGDB */
 
 const struct alpha_variation_table dec_axppci_33_variations[] = {
 	{ 0, "Alpha PC AXPpci33 (\"NoName\")" },
@@ -160,155 +126,16 @@ dec_axppci_33_init(void)
 static void
 dec_axppci_33_cons_init(void)
 {
-	struct ctb *ctb;
 	struct lca_config *lcp;
 
 	lcp = lca_preinit();
 
-	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
-
-	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT:
-		/* serial console ... */
-		/* XXX */
-		{
-			/*
-			 * Delay to allow PROM putchars to complete.
-			 * FIFO depth * character time,
-			 * character time = (1000000 / (defaultrate / 10))
-			 */
-			DELAY(160000000 / comcnrate);
-
-			if(comcnattach(&lcp->lc_iot, 0x3f8, comcnrate,
-			    COM_FREQ, COM_TYPE_NORMAL,
-			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-				panic("can't init serial console");
-
-			break;
-		}
-
-	case CTB_GRAPHICS:
-#if NPCKBD > 0
-		/* display console ... */
-		/* XXX */
-		(void) pckbc_cnattach(&lcp->lc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT, 0);
-
-		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
-		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(&lcp->lc_iot, &lcp->lc_memt);
-		else
-			pci_display_console(&lcp->lc_iot, &lcp->lc_memt,
-			    &lcp->lc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
-			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
-#else
-		panic("not configured to use display && keyboard console");
-#endif
-		break;
-
-	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
-		panic("consinit: unknown console type %ld",
-		    ctb->ctb_term_type);
-	}
-#ifdef KGDB
-	/* Attach the KGDB device. */
-	alpha_kgdb_init(kgdb_devlist, &lcp->lc_iot);
-#endif /* KGDB */
+	pci_consinit(&lcp->lc_pc, &lcp->lc_iot, &lcp->lc_memt,
+	    &lcp->lc_iot, &lcp->lc_memt);
 }
 
 static void
 dec_axppci_33_device_register(device_t dev, void *aux)
 {
-	static int found, initted, diskboot, netboot;
-	static device_t pcidev, ctrlrdev;
-	struct bootdev_data *b = bootdev_data;
-	device_t parent = device_parent(dev);
-
-	if (b == NULL || found)
-		return;
-
-	if (!initted) {
-		diskboot = (strcasecmp(b->protocol, "SCSI") == 0);
-		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
-		    (strcasecmp(b->protocol, "MOP") == 0);
-#if 0
-		printf("diskboot = %d, netboot = %d\n", diskboot, netboot);
-#endif
-		initted =1;
-	}
-
-	if (pcidev == NULL) {
-		if (!device_is_a(dev, "pci"))
-			return;
-		else {
-			struct pcibus_attach_args *pba = aux;
-
-			if ((b->slot / 1000) != pba->pba_bus)
-				return;
-	
-			pcidev = dev;
-#if 0
-			printf("\npcidev = %s\n", device_xname(dev));
-#endif
-			return;
-		}
-	}
-
-	if (ctrlrdev == NULL) {
-		if (parent != pcidev)
-			return;
-		else {
-			struct pci_attach_args *pa = aux;
-			int slot;
-
-			slot = pa->pa_bus * 1000 + pa->pa_function * 100 +
-			    pa->pa_device;
-			if (b->slot != slot)
-				return;
-	
-			if (netboot) {
-				booted_device = dev;
-#if 0
-				printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-				found = 1;
-			} else {
-				ctrlrdev = dev;
-#if 0
-				printf("\nctrlrdev = %s\n", device_xname(dev));
-#endif
-			}
-			return;
-		}
-	}
-
-	if (!diskboot)
-		return;
-
-	if (device_is_a(dev, "sd") ||
-	    device_is_a(dev, "st") ||
-	    device_is_a(dev, "cd")) {
-		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_periph *periph = sa->sa_periph;
-		int unit;
-
-		if (device_parent(parent) != ctrlrdev)
-			return;
-
-		unit = periph->periph_target * 100 + periph->periph_lun;
-		if (b->unit != unit)
-			return;
-		if (b->channel != periph->periph_channel->chan_channel)
-			return;
-
-		/* we've found it! */
-		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-		found = 1;
-	}
+	pci_find_bootdev(NULL, dev, aux);
 }

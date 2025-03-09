@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.45 2025/03/09 01:06:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -30,33 +30,21 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_kgdb.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.45 2025/03/09 01:06:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/termios.h>
-#include <sys/conf.h>
-#include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/alpha.h>
 #include <machine/autoconf.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
+#include <machine/logout.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <uvm/uvm_extern.h>
@@ -65,37 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $
 #include <alpha/mcbus/mcbusvar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <machine/logout.h>
-
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-
-#include <dev/ic/mlxio.h>
-#include <dev/ic/mlxvar.h>
-
-
-#include "pckbd.h"
-
-#ifndef	CONSPEED
-#define	CONSPEED	TTYDEF_SPEED
-#endif
-static int comcnrate = CONSPEED;
 
 void dec_kn300_init(void);
 void dec_kn300_cons_init(void);
 static void dec_kn300_device_register(device_t, void *);
 static void dec_kn300_mcheck_handler
 (unsigned long, struct trapframe *, unsigned long, unsigned long);
-
-#ifdef KGDB
-#include <machine/db_machdep.h>
-
-static const char *kgdb_devlist[] = {
-	"com",
-	NULL,
-};
-#endif /* KGDB */
 
 #define	ALPHASERVER_4100	"AlphaServer 4100"
 
@@ -160,215 +123,43 @@ dec_kn300_init(void)
 void
 dec_kn300_cons_init(void)
 {
-	struct ctb *ctb;
 	struct mcpcia_config *ccp;
 	extern struct mcpcia_config mcpcia_console_configuration;
 
 	ccp = &mcpcia_console_configuration;
 	/* It's already initialized. */
 
-	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
-
-	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT:
-		/* serial console ... */
-		/*
-		 * Delay to allow PROM putchars to complete.
-		 * FIFO depth * character time,
-		 * character time = (1000000 / (defaultrate / 10))
-		 */
-		DELAY(160000000 / comcnrate);
-		if (comcnattach(&ccp->cc_iot, 0x3f8, comcnrate,
-		    COM_FREQ, COM_TYPE_NORMAL,
-		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)) {
-			panic("can't init serial console");
-
-		}
-		break;
-
-	case CTB_GRAPHICS:
-#if NPCKBD > 0
-		/* display console ... */
-		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT, 0);
-
-		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
-		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
-		else
-			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
-			    &ccp->cc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
-			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
-#else
-		panic("not configured to use display && keyboard console");
-#endif
-		break;
-
-	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
-		panic("consinit: unknown console type %ld",
-		    ctb->ctb_term_type);
-	}
-#ifdef KGDB
-	/* Attach the KGDB device. */
-	alpha_kgdb_init(kgdb_devlist, &ccp->cc_iot);
-#endif /* KGDB */
+	pci_consinit(&ccp->cc_pc, &ccp->cc_iot, &ccp->cc_memt,
+	    &ccp->cc_iot, &ccp->cc_memt);
 }
 
 /* #define	BDEBUG	1 */
 static void
 dec_kn300_device_register(device_t dev, void *aux)
 {
-	static int found, initted, diskboot, netboot;
-	static device_t primarydev, pcidev, ctrlrdev;
+	static device_t primarydev;
 	struct bootdev_data *b = bootdev_data;
-	device_t parent = device_parent(dev);
 
-	if (b == NULL || found)
+	if (booted_device != NULL || b == NULL) {
 		return;
-
-	if (!initted) {
-		diskboot = (strcasecmp(b->protocol, "SCSI") == 0) ||
-		    (strcasecmp(b->protocol, "RAID") == 0);
-		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
-		    (strcasecmp(b->protocol, "MOP") == 0);
-#ifdef BDEBUG
-		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
-		    b->bus, b->slot, b->channel);
-		if (b->remote_address)
-			printf(" remote_addr:%s", b->remote_address);
-		printf(" un:%d bdt:%d", b->unit, b->boot_dev_type);
-		if (b->ctrl_dev_type)
-			printf(" cdt:%s\n", b->ctrl_dev_type);
-		else
-			printf("\n");
-		printf("diskboot = %d, netboot = %d\n", diskboot, netboot);
-#endif
-		initted = 1;
 	}
 
 	if (primarydev == NULL) {
-		if (!device_is_a(dev, "mcpcia"))
-			return;
-		else {
+		if (device_is_a(dev, "mcpcia")) {
 			struct mcbus_dev_attach_args *ma = aux;
 
-			if (b->bus != ma->ma_mid - 4)
-				return;
-			primarydev = dev;
+			if (b->bus == ma->ma_mid - 4) {
+				primarydev = dev;
 #ifdef BDEBUG
-			printf("\nprimarydev = %s\n", device_xname(dev));
-#endif
-			return;
-		}
-	}
-
-	if (pcidev == NULL) {
-		if (!device_is_a(dev, "pci"))
-			return;
-		/*
-		 * Try to find primarydev anywhere in the ancestry.  This is
-		 * necessary if the PCI bus is hidden behind a bridge.
-		 */
-		while (parent) {
-			if (parent == primarydev)
-				break;
-			parent = device_parent(parent);
-		}
-		if (!parent)
-			return;
-		else {
-			struct pcibus_attach_args *pba = aux;
-
-			if ((b->slot / 1000) != pba->pba_bus)
-				return;
-	
-			pcidev = dev;
-#ifdef BDEBUG
-			printf("\npcidev = %s\n", device_xname(dev));
-#endif
-			return;
-		}
-	}
-
-	if (ctrlrdev == NULL) {
-		if (parent != pcidev)
-			return;
-		else {
-			struct pci_attach_args *pa = aux;
-			int slot;
-
-			slot = pa->pa_bus * 1000 + pa->pa_function * 100 +
-			    pa->pa_device;
-			if (b->slot != slot)
-				return;
-	
-			if (netboot) {
-				booted_device = dev;
-#ifdef BDEBUG
-				printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-				found = 1;
-			} else {
-				ctrlrdev = dev;
-#ifdef BDEBUG
-				printf("\nctrlrdev = %s\n", device_xname(dev));
+				printf("\nprimarydev = %s\n",
+				    device_xname(dev));
 #endif
 			}
-			return;
 		}
-	}
-
-	if (!diskboot)
 		return;
-
-	if (device_is_a(dev, "sd") ||
-	    device_is_a(dev, "st") ||
-	    device_is_a(dev, "cd")) {
-		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_periph *periph = sa->sa_periph;
-		int unit;
-
-		if (device_parent(parent) != ctrlrdev)
-			return;
-
-		unit = periph->periph_target * 100 + periph->periph_lun;
-		if (b->unit != unit)
-			return;
-		if (b->channel != periph->periph_channel->chan_channel)
-			return;
-
-		/* we've found it! */
-		booted_device = dev;
-#ifdef BDEBUG
-		printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-		found = 1;
 	}
 
-	if (device_is_a(dev, "ld") && device_is_a(parent, "mlx")) {
-		/*
-		 * Argh!  The attach arguments for ld devices is not
-		 * consistent, so each supported raid controller requires
-		 * different checks.
-		 */
-		struct mlx_attach_args *mlxa = aux;
-
-		if (parent != ctrlrdev)
-			return;
-
-		if (b->unit != mlxa->mlxa_unit)
-			return;
-		/* we've found it! */
-		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-		found = 1;
-	}
+	pci_find_bootdev(primarydev, dev, aux);
 }
 
 

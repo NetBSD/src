@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.22 2024/03/31 19:06:30 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.23 2025/03/09 01:06:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.22 2024/03/31 19:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.23 2025/03/09 01:06:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,47 +199,38 @@ dec_2000_300_cons_init(void)
 static void
 dec_2000_300_device_register(device_t dev, void *aux)
 {
-	static int found, initted, scsiboot, netboot;
 	static device_t eisadev, isadev, scsidev;
 	struct bootdev_data *b = bootdev_data;
 	device_t parent = device_parent(dev);
 
-	if (b == NULL || found)
+	if (booted_device != NULL || b == NULL) {
 		return;
-
-	if (!initted) {
-		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
-#if 0
-		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
-#endif
-		initted = 1;
 	}
 
-	if (eisadev == NULL && device_is_a(dev, "eisa"))
+	if (eisadev == NULL && device_is_a(dev, "eisa")) {
 		eisadev = dev;
+	}
 
-	if (isadev == NULL && device_is_a(dev, "isa"))
+	if (isadev == NULL && device_is_a(dev, "isa")) {
 		isadev = dev;
+	}
 
-	if (scsiboot && (scsidev == NULL)) {
-		if (eisadev == NULL || parent != eisadev)
-			return;
-		else {
+	if (bootdev_is_disk && scsidev == NULL) {
+		if (eisadev != NULL && parent == eisadev) {
 			struct eisa_attach_args *ea = aux;
 
-			if (b->slot != ea->ea_slot)
-				return;
-
-			scsidev = dev;
+			if (b->slot == ea->ea_slot) {
+				scsidev = dev;
 #if 0
-			printf("\nscsidev = %s\n", device_xname(scsidev));
+				printf("\nscsidev = %s\n",
+				    device_xname(scsidev));
 #endif
-			return;
+			}
 		}
+		return;
 	}
 
-	if (scsiboot &&
+	if (bootdev_is_disk &&
 	    (device_is_a(dev, "sd") ||
 	     device_is_a(dev, "st") ||
 	     device_is_a(dev, "cd"))) {
@@ -267,33 +258,27 @@ dec_2000_300_device_register(device_t dev, void *aux)
 			return;
 		}
 
-		/* we've found it! */
-		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", device_xname(booted_device));
-#endif
-		found = 1;
-		return;
+		goto foundit;
 	}
 
-	if (netboot) {
+	if (bootdev_is_net) {
 		/*
 		 * XXX WHAT ABOUT ISA NETWORK CARDS?
 		 */
-		if (eisadev == NULL || parent != eisadev)
-			return;
-		else {
+		if (eisadev != NULL && parent == eisadev) {
 			struct eisa_attach_args *ea = aux;
 
-			if (b->slot != ea->ea_slot)
-				return;
-
-			booted_device = dev;
-#if 0
-			printf("\nbooted_device = %s\n", device_xname(booted_device));
-#endif
-			found = 1;
-			return;
+			if (b->slot == ea->ea_slot) {
+				goto foundit;
+			}
 		}
 	}
+
+	return;
+
+ foundit:
+	booted_device = dev;
+#if 0
+	printf("\nbooted_device = %s\n", device_xname(booted_device));
+#endif
 }

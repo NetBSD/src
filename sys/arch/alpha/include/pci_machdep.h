@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.24 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.25 2025/03/09 01:06:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -130,8 +130,11 @@ void	pci_intr_disestablish(pci_chipset_tag_t, void *);
  * alpha-specific PCI functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
+void	pci_consinit(pci_chipset_tag_t, bus_space_tag_t, bus_space_tag_t,
+	    bus_space_tag_t, bus_space_tag_t);
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
+void	pci_find_bootdev(device_t, device_t, void *);
 void	device_pci_register(device_t, void *);
 
 void	alpha_pci_intr_init(void *, bus_space_tag_t, bus_space_tag_t,

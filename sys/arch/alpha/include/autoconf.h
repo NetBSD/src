@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.23 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: autoconf.h,v 1.24 2025/03/09 01:06:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -110,6 +110,7 @@ struct alpha_variation_table {
 #ifdef _KERNEL
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
+extern bool bootdev_is_disk, bootdev_is_net;
 
 const char *alpha_variation_name(uint64_t,
     const struct alpha_variation_table *);

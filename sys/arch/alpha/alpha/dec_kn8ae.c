@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.45 2025/03/09 01:06:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,16 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.45 2025/03/09 01:06:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
-#include <sys/termios.h>
-#include <sys/conf.h>
-
-#include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
@@ -50,23 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $
 #include <machine/alpha.h>
 #include <machine/logout.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
 
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
 #include <alpha/tlsb/kftxxreg.h>
 #include <alpha/tlsb/kftxxvar.h>
-#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
+#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 void dec_kn8ae_init(void);
 void dec_kn8ae_cons_init(void);
@@ -119,131 +106,29 @@ dec_kn8ae_cons_init(void)
 static void
 dec_kn8ae_device_register(device_t dev, void *aux)
 {
-	static int found, initted, diskboot, netboot;
-	static device_t primarydev, pcidev, ctrlrdev;
+	static device_t primarydev;
 	struct bootdev_data *b = bootdev_data;
-	device_t parent = device_parent(dev);
 
-	if (b == NULL || found)
+	if (booted_device != NULL || b == NULL) {
 		return;
-
-	if (!initted) {
-		diskboot = (strcasecmp(b->protocol, "SCSI") == 0);
-		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
-		    (strcasecmp(b->protocol, "MOP") == 0);
-#if	BDEBUG
-		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
-		    b->bus, b->slot, b->channel);
-		if (b->remote_address)
-			printf(" remote_addr:%s", b->remote_address);
-		printf(" un:%d bdt:%d", b->unit, b->boot_dev_type);
-		if (b->ctrl_dev_type)
-			printf(" cdt:%s\n", b->ctrl_dev_type);
-		else
-			printf("\n");
-		printf("diskboot = %d, netboot = %d\n", diskboot, netboot);
-#endif
-		initted = 1;
 	}
 
 	if (primarydev == NULL) {
-		if (!device_is_a(dev, "dwlpx"))
-			return;
-		else {
+		if (device_is_a(dev, "dwlpx")) {
 			struct kft_dev_attach_args *ka = aux;
 
-			if (b->bus != ka->ka_hosenum)
-				return;
-			primarydev = dev;
+			if (b->bus == ka->ka_hosenum) {
+				primarydev = dev;
 #ifdef BDEBUG
-			printf("\nprimarydev = %s\n", device_xname(dev));
-#endif
-			return;
-		}
-	}
-
-	if (pcidev == NULL) {
-		if (!device_is_a(dev, "pci"))
-			return;
-		/*
-		 * Try to find primarydev anywhere in the ancestry.  This is
-		 * necessary if the PCI bus is hidden behind a bridge.
-		 */
-		while (parent) {
-			if (parent == primarydev)
-				break;
-			parent = device_parent(parent);
-		}
-		if (!parent)
-			return;
-		else {
-			struct pcibus_attach_args *pba = aux;
-
-			if ((b->slot / 1000) != pba->pba_bus)
-				return;
-	
-			pcidev = dev;
-#if	BDEBUG
-			printf("\npcidev = %s\n", device_xname(dev));
-#endif
-			return;
-		}
-	}
-
-	if (ctrlrdev == NULL) {
-		if (parent != pcidev)
-			return;
-		else {
-			struct pci_attach_args *pa = aux;
-			int slot;
-
-			slot = pa->pa_bus * 1000 + pa->pa_function * 100 +
-			    pa->pa_device;
-			if (b->slot != slot)
-				return;
-	
-			if (netboot) {
-				booted_device = dev;
-#ifdef BDEBUG
-				printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-				found = 1;
-			} else {
-				ctrlrdev = dev;
-#if	BDEBUG
-				printf("\nctrlrdev = %s\n", device_xname(dev));
+				printf("\nprimarydev = %s\n",
+				    device_xname(dev));
 #endif
 			}
-			return;
 		}
-	}
-
-	if (!diskboot)
 		return;
-
-	if (device_is_a(dev, "sd") ||
-	    device_is_a(dev, "st") ||
-	    device_is_a(dev, "cd")) {
-		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_periph *periph = sa->sa_periph;
-		int unit;
-
-		if (device_parent(parent) != ctrlrdev)
-			return;
-
-		unit = periph->periph_target * 100 + periph->periph_lun;
-		if (b->unit != unit)
-			return;
-		if (b->channel != periph->periph_channel->chan_channel)
-			return;
-
-		/* we've found it! */
-		booted_device = dev;
-#if	BDEBUG
-		printf("\nbooted_device = %s\n", device_xname(dev));
-#endif
-		found = 1;
 	}
+
+	pci_find_bootdev(primarydev, dev, aux);
 }
 
 /*
