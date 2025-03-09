@@ -63,6 +63,7 @@ MAN+=	acl.3				\
 	acl_strip_np.3			\
 	acl_to_text.3			\
 	acl_valid.3			\
+	extattr.3			\
 	posix1e.3
 
 MLINKS+=acl_create_entry.3 acl_create_entry_np.3 \
@@ -81,7 +82,5 @@ MLINKS+=acl_create_entry.3 acl_create_entry_np.3 \
 	acl_to_text.3 acl_to_text_np.3		\
 	acl_valid.3 acl_valid_file_np.3		\
 	acl_valid.3 acl_valid_fd_np.3		\
-
-
-#	extattr.3 extattr_namespace_to_string.3	\
-#	extattr.3 extattr_string_to_namespace.3
+	extattr.3 extattr_namespace_to_string.3	\
+	extattr.3 extattr_string_to_namespace.3
