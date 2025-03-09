@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.401 2025/02/26 19:32:57 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.402 2025/03/09 22:06:28 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -479,6 +479,7 @@ DRN	Discovery of Network-designated Resolvers
 DRRS	display refresh rate switching
 DS	debug store
 DS	differentiated services
+DS	delegation signer
 DS9000	DeathStation 9000
 DS9K	DeathStation 9000
 DSA	digital signature algorithm
@@ -884,6 +885,7 @@ KEM	key encapsulation mechanism
 KLOC	thousand lines of code
 KMS	kernel-mode setting
 KPI	kernel programming interface
+KSK	key signing key
 KVA	kernel virtual address
 KVM	kernel virtual machine
 KVM	kernel virtual memory
@@ -1464,7 +1466,9 @@ RPM	revolutions per minute
 RPN	reverse Polish notation
 RPVST	Rapid Per-VLAN Spanning Tree
 RR	random replacement
+RR	resource record
 RR	round robin
+RRSIG	resource record signature
 RS	relay station
 RSA	Rivest, Shamir, [and] Adleman
 RSC	Receive Segment Coalescing
@@ -1974,4 +1978,5 @@ ZMA	zone multicast address
 ZOI	zero one infinity
 ZOI	zone of influence
 ZPL	ZFS Posix layer
+ZSK	zone signing key
 ZVOL	ZFS Volume
