@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.18 2012/01/04 15:55:36 drochner Exp $
+# $NetBSD: Makefile,v 1.19 2025/03/09 18:31:29 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
 USE_SHLIBDIR=	yes
-WARNS=	0	# Will be fixed later
+WARNS=	5
 
 .include <bsd.own.mk>
 
