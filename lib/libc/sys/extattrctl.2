@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.1 2025/03/09 16:10:22 christos Exp $
+.\" $NetBSD: extattrctl.2,v 1.2 2025/03/09 16:38:36 christos Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -42,14 +42,13 @@ The
 .Fn extattrctl
 system call provides low-level control over extended attributes on a UFS1
 filesystem.
-It allows enabling, disabling, and managing extended attribute storage
-through direct interaction with the filesystem.
+It allows enabling, disabling, and managing extended attributes.
 .Sh PARAMETERS
 .Bl -tag -width indent
 .It Fa path
 The path to the mount point of the filesystem.
 .It Fa cmd
-The command to execute. Valid commands include:
+The command to execute. Valid commands are:
 .Bl -tag -width indent
 .It Dv EXTATTR_CMD_ENABLE
 Enable a specific extended attribute.
@@ -106,10 +105,10 @@ if (extattrctl("/home", EXTATTR_CMD_ENABLE,
 	err(EXIT_FAILURE, "extattrctl");
 .Ed
 .Sh SEE ALSO
-.Xr extattr_get_file 2 ,
-.Xr extattr_set_file 2 ,
 .Xr extattr_delete_file 2 ,
+.Xr extattr_get_file 2 ,
 .Xr extattr_list_file 2
+.Xr extattr_set_file 2 ,
 .Sh HISTORY
 The
 .Fn extattrctl
