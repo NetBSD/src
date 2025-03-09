@@ -1,0 +1,119 @@
+.\" $NetBSD: extattrctl.2,v 1.1 2025/03/09 16:10:22 christos Exp $
+.\" Copyright (c) 2025 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 9, 2025
+.Dt EXTATTRCTL 2
+.Os NetBSD
+.Sh NAME
+.Nm extattrctl
+.Nd control extended attributes on a UFS1 filesystem
+.Sh SYNOPSIS
+.In sys/extattr.h
+.In ufs/ufs/extattr.h
+.Ft int
+.Fn extattrctl "const char *path" "int cmd" "const char *attrname" "int attrnamespace" "const char *filename"
+.Sh DESCRIPTION
+The
+.Fn extattrctl
+system call provides low-level control over extended attributes on a UFS1
+filesystem.
+It allows enabling, disabling, and managing extended attribute storage
+through direct interaction with the filesystem.
+.Sh PARAMETERS
+.Bl -tag -width indent
+.It Fa path
+The path to the mount point of the filesystem.
+.It Fa cmd
+The command to execute. Valid commands include:
+.Bl -tag -width indent
+.It Dv EXTATTR_CMD_ENABLE
+Enable a specific extended attribute.
+.It Dv EXTATTR_CMD_DISABLE
+Disable a specific extended attribute.
+.It Dv EXTATTR_CMD_START
+Start extended attribute support on the filesystem.
+.It Dv EXTATTR_CMD_STOP
+Stop extended attribute support on the filesystem.
+.El
+.It Fa attrname
+The name of the extended attribute (for relevant commands).
+.It Fa attrnamespace
+The attribute namespace, such as
+.Dv EXTATTR_NAMESPACE_USER
+or
+.Dv EXTATTR_NAMESPACE_SYSTEM.
+.It Fa filename
+The path to a backing file for extended attribute storage
+(if required by the command).
+.El
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn extattrctl
+returns 
+.Dv 0 .
+Otherwise,
+.Dv -1
+is returned, and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Fn extattrctl
+system call may fail with the following errors:
+.Bl -tag -width indent
+.It Bq Er ENOTSUP
+The filesystem does not support extended attributes.
+.It Bq Er EACCES
+Permission denied.
+.It Bq Er EINVAL
+Invalid arguments were provided.
+.It Bq Er ENOENT
+The specified path, attribute, or file does not exist.
+.El
+.Sh EXAMPLES
+Enable an attribute on a filesystem:
+.Bd -literal -offset indent
+#include <sys/extattr.h>
+#include <ufs/ufs/extattr.h>
+
+if (extattrctl("/home", EXTATTR_CMD_ENABLE,
+    "user.comment", EXTATTR_NAMESPACE_USER, NULL) == -1)
+	err(EXIT_FAILURE, "extattrctl");
+.Ed
+.Sh SEE ALSO
+.Xr extattr_get_file 2 ,
+.Xr extattr_set_file 2 ,
+.Xr extattr_delete_file 2 ,
+.Xr extattr_list_file 2
+.Sh HISTORY
+The
+.Fn extattrctl
+system call was imported from
+.Fx 5.0
+in
+.Nx 4.0 .
