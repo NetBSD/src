@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2024/01/08 05:10:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2025/03/09 12:43:09 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2024/01/08 05:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2025/03/09 12:43:09 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,20 @@ cpu_configure(void)
 	spl0();
 }
 
+/* Maximum size is NAME=wedgename\0 */
+static char bootspec_buf[128 + 6 + 1];
+
 void
 cpu_rootconf(void)
 {
+
 	bootinfo_setup_initrd();
+
+	if (bootinfo_getarg("root", bootspec_buf, sizeof(bootspec_buf))) {
+		if (bootspec_buf[0] != '\0')
+			bootspec = bootspec_buf;
+	}
+
 	rootconf();
 }
 
@@ -96,26 +106,6 @@ void
 device_register(device_t dev, void *aux)
 {
 	device_t parent = device_parent(dev);
-	char rootname[DEVICE_XNAME_SIZE];
-	bool rootname_valid = false;
-
-	if (booted_device == NULL) {
-		rootname_valid = bootinfo_getarg("root",
-		    rootname, sizeof(rootname));
-		if (rootname_valid) {
-			size_t len = strlen(rootname);
-			while (len) {
-				len--;
-				if (isdigit(rootname[len])) {
-					break;
-				}
-				rootname[len] = '\0';
-			}
-			if (strcmp(device_xname(dev), rootname) == 0) {
-				booted_device = dev;
-			}
-		}
-	}
 
 	if (device_is_a(parent, "mainbus")) {
 		struct mainbus_attach_args *ma = aux;
