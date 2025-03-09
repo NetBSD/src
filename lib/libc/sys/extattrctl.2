@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.2 2025/03/09 16:38:36 christos Exp $
+.\" $NetBSD: extattrctl.2,v 1.3 2025/03/09 18:58:18 wiz Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .Dd March 9, 2025
 .Dt EXTATTRCTL 2
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm extattrctl
 .Nd control extended attributes on a UFS1 filesystem
@@ -48,7 +48,8 @@ It allows enabling, disabling, and managing extended attributes.
 .It Fa path
 The path to the mount point of the filesystem.
 .It Fa cmd
-The command to execute. Valid commands are:
+The command to execute.
+Valid commands are:
 .Bl -tag -width indent
 .It Dv EXTATTR_CMD_ENABLE
 Enable a specific extended attribute.
@@ -65,7 +66,7 @@ The name of the extended attribute (for relevant commands).
 The attribute namespace, such as
 .Dv EXTATTR_NAMESPACE_USER
 or
-.Dv EXTATTR_NAMESPACE_SYSTEM.
+.Dv EXTATTR_NAMESPACE_SYSTEM .
 .It Fa filename
 The path to a backing file for extended attribute storage
 (if required by the command).
@@ -73,27 +74,13 @@ The path to a backing file for extended attribute storage
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn extattrctl
-returns 
+returns
 .Dv 0 .
 Otherwise,
 .Dv -1
 is returned, and
 .Va errno
 is set to indicate the error.
-.Sh ERRORS
-The
-.Fn extattrctl
-system call may fail with the following errors:
-.Bl -tag -width indent
-.It Bq Er ENOTSUP
-The filesystem does not support extended attributes.
-.It Bq Er EACCES
-Permission denied.
-.It Bq Er EINVAL
-Invalid arguments were provided.
-.It Bq Er ENOENT
-The specified path, attribute, or file does not exist.
-.El
 .Sh EXAMPLES
 Enable an attribute on a filesystem:
 .Bd -literal -offset indent
@@ -104,11 +91,25 @@ if (extattrctl("/home", EXTATTR_CMD_ENABLE,
     "user.comment", EXTATTR_NAMESPACE_USER, NULL) == -1)
 	err(EXIT_FAILURE, "extattrctl");
 .Ed
+.Sh ERRORS
+The
+.Fn extattrctl
+system call may fail with the following errors:
+.Bl -tag -width Bq -offset indent
+.It Bq Er EACCES
+Permission denied.
+.It Bq Er EINVAL
+Invalid arguments were provided.
+.It Bq Er ENOENT
+The specified path, attribute, or file does not exist.
+.It Bq Er ENOTSUP
+The filesystem does not support extended attributes.
+.El
 .Sh SEE ALSO
 .Xr extattr_delete_file 2 ,
 .Xr extattr_get_file 2 ,
-.Xr extattr_list_file 2
-.Xr extattr_set_file 2 ,
+.Xr extattr_list_file 2 ,
+.Xr extattr_set_file 2
 .Sh HISTORY
 The
 .Fn extattrctl
