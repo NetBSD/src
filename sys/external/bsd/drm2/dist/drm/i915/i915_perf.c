@@ -3118,7 +3118,7 @@ static ssize_t i915_perf_read(struct file *file,
 			mutex_lock(&perf->lock);
 			ret = stream->ops->read(stream, buf, count, &offset);
 			mutex_unlock(&perf->lock);
-		} while (!offset2 && !ret);
+		} while (!offset && !ret);
 	} else {
 		mutex_lock(&perf->lock);
 		ret = stream->ops->read(stream, buf, count, &offset);
