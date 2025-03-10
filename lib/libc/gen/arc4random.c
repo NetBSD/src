@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.46 2025/03/09 18:11:55 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.47 2025/03/10 21:21:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.46 2025/03/09 18:11:55 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.47 2025/03/10 21:21:32 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -319,6 +319,52 @@ crypto_prng_buf(struct crypto_prng *prng, void *buf, size_t n)
 	(void)explicit_memset(output, 0, sizeof output);
 }
 
+static int
+crypto_prng_selftest(void)
+{
+	const uint8_t expected[32] = {
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x2b,	/* first call */
+		0x2d,0x41,0xa5,0x9c,0x90,0xe4,0x1a,0x8e, /* second call */
+		0x7a,0x4d,0xcc,0xaa,0x1c,0x46,0x06,0x99,
+		0x83,0xb1,0xa3,0x33,0xce,0x25,0x71,0x9e,
+		0xc3,0x43,0x77,0x68,0xab,0x57,
+		0x5f,	/* third call */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#elif _BYTE_ORDER == _BIG_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0xae,	/* first call */
+		0x97,0x14,0x5a,0x05,0xad,0xa8,0x48,0xf1, /* second call */
+		0x3a,0x81,0x84,0xd7,0x05,0xda,0x20,0x5d,
+		0xc0,0xef,0x86,0x65,0x98,0xbd,0xb0,0x16,
+		0x1b,0xfc,0xff,0xc4,0xc2,0xfd,
+		0xa0,	/* third call */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#else
+#  error Byte order must be little-endian or big-endian.
+#endif
+	};
+	uint8_t seed[crypto_prng_SEEDBYTES];
+	struct crypto_prng prng;
+	uint8_t output[32];
+	unsigned i;
+
+	for (i = 0; i < __arraycount(seed); i++)
+		seed[i] = i;
+	crypto_prng_seed(&prng, seed);
+	crypto_prng_buf(&prng, output, 1);
+	crypto_prng_buf(&prng, output + 1, 30);
+	crypto_prng_buf(&prng, output + 31, 1);
+	if (memcmp(output, expected, 32) != 0)
+		return EIO;
+	return 0;
+}
+
 /* One-time stream: expand short single-use secret into long secret */
 
 #define	crypto_onetimestream_SEEDBYTES	crypto_core_KEYBYTES
@@ -384,6 +430,60 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 
 	if (ni | nf)
 		(void)explicit_memset(block, 0, sizeof block);
+}
+
+static int
+crypto_onetimestream_selftest(void)
+{
+	const uint8_t expected[70] = {
+		0x5a,			/* guard byte */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x39,0xfd,0x2b,		/* initial block */
+		0x18,0xb8,0x42,0x31,0xad,0xe6,0xa6,0xd1,
+		0x13,0x61,0x5c,0x61,0xaf,0x43,0x4e,0x27,
+		0xf8,0xb1,0xf3,0xf5,0xe1,0xad,0x5b,0x5c,
+		0xec,0xf8,0xfc,0x12,0x2a,0x35,0x75,0x5c,
+		0x72,0x08,0x08,0x6d,0xd1,0xee,0x3c,0x5d,
+		0x9d,0x81,0x58,0x24,0x64,0x0e,0x00,0x3c,
+		0x9b,0xa0,0xf6,0x5e,0xde,0x5d,0x59,0xce,
+		0x0d,0x2a,0x4a,0x7f,0x31,0x95,0x5a,0xcd,
+		0x42,			/* final block */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#elif _BYTE_ORDER == _BIG_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x20,0xf0,0x66,		/* initial block */
+		0xc9,0x06,0x63,0xc5,0x45,0x38,0xd1,0xb1,
+		0xe6,0x3e,0xbf,0x68,0x19,0xd6,0xf1,0xbe,
+		0x09,0xb9,0x49,0xc4,0xf5,0x55,0x95,0xc1,
+		0x54,0x56,0xeb,0xe4,0x8c,0xa5,0xbb,0x55,
+		0x17,0x89,0x8e,0x90,0x51,0x53,0xea,0x17,
+		0x29,0xf5,0x7e,0xe4,0x78,0x08,0x53,0xc8,
+		0x54,0xa8,0xba,0x76,0xce,0x0e,0x8d,0x2f,
+		0xe1,0x07,0xc8,0x46,0x73,0x3e,0x61,0x0c,
+		0x02,			/* final block */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#else
+#  error Byte order must be little-endian or big-endian.
+#endif
+		0xcc,			/* guard byte */
+	};
+	uint8_t seed[crypto_prng_SEEDBYTES];
+	uint8_t output[70] __aligned(4);
+	unsigned i;
+
+	for (i = 0; i < __arraycount(seed); i++)
+		seed[i] = i;
+	output[0] = 0x5a;
+	output[69] = 0xcc;
+	crypto_onetimestream(seed, output + 1, 68);
+	if (memcmp(output, expected, 70) != 0)
+		return EIO;
+	return 0;
 }
 
 /*
@@ -561,7 +661,9 @@ arc4random_initialize(void)
 	 * If the crypto software is broken, abort -- something is
 	 * severely wrong with this process image.
 	 */
-	if (crypto_core_selftest() != 0)
+	if (crypto_core_selftest() != 0 ||
+	    crypto_prng_selftest() != 0 ||
+	    crypto_onetimestream_selftest() != 0)
 		abort();
 
 	/*
