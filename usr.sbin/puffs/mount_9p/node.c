@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.31 2022/03/02 07:48:20 ozaki-r Exp $	*/
+/*	$NetBSD: node.c,v 1.32 2025/03/10 21:21:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.31 2022/03/02 07:48:20 ozaki-r Exp $");
+__RCSID("$NetBSD: node.c,v 1.32 2025/03/10 21:21:20 riastradh Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -645,4 +645,16 @@ puffs9p_node_reclaim(struct puffs_usermount *pu, void *opc)
 	puffs_pn_put(pn);
 
 	return 0;
+}
+
+int
+puffs9p_node_pathconf(struct puffs_usermount *pu, void *opc, int name,
+    register_t *retval)
+{
+
+	/*
+	 * Without this, pathconf(2) and fpathconf(2) fail with
+	 * ENOTSUPP instead of EINVAL.
+	 */
+	return EINVAL;
 }
