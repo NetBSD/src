@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_385.c,v 1.1 2024/12/08 17:12:01 rillig Exp $	*/
+/*	$NetBSD: msg_385.c,v 1.2 2025/03/10 22:08:36 rillig Exp $	*/
 # 3 "msg_385.c"
 
 // Test for message: do-while macro '%.*s' ends with semicolon [385]
@@ -52,3 +52,7 @@ call_correct_stmt(int x)
 	else
 		do { } while (0);
 }
+
+// The macro expansion does start with "do", but not with the keyword "do",
+// so don't warn in this case.
+#define unrelated() do_something();

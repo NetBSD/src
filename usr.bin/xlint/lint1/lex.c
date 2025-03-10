@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.233 2025/02/27 06:48:28 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.234 2025/03/10 22:08:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.233 2025/02/27 06:48:28 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.234 2025/03/10 22:08:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1137,7 +1137,7 @@ check_stmt_macro(const char *text)
 	while (*p == ' ')
 		p++;
 
-	if (strncmp(p, "do", 2) == 0 && !ch_isalnum(p[2]))
+	if (strncmp(p, "do", 2) == 0 && !ch_isalnum(p[2]) && p[2] != '_')
 		/* do-while macro '%.*s' ends with semicolon */
 		warning(385, (int)(name_end - name_start), name_start);
 }
