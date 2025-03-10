@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.25 2025/03/09 18:32:21 christos Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.26 2025/03/10 15:59:04 christos Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -701,7 +701,7 @@ str_ipport(struct sockaddr *sa)
 static const char *
 str_prefport(u_int family, u_int pref, u_int port, u_int ulp)
 {
-	static char buf[128];
+	static char buf[256];
 	char prefbuf[128];
 	char portbuf[128];
 	size_t plen;

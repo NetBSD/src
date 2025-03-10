@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.12 2025/03/09 18:32:20 christos Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.13 2025/03/10 15:59:04 christos Exp $	*/
 
 /* Id: ipsec_dump_policy.c,v 1.10 2005/06/29 09:12:37 manubsd Exp */
 
@@ -94,7 +94,7 @@ ipsec_dump_policy1(const void *policy, const char *delimiter, int withports)
 	const struct sadb_x_ipsecrequest *xisr;
 	size_t off, buflen, extlen;
 	char *buf;
-	char isrbuf[1024];
+	char isrbuf[4096];
 	char *newbuf;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
