@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.3 2025/03/09 18:58:18 wiz Exp $
+.\" $NetBSD: extattrctl.2,v 1.4 2025/03/10 22:18:07 christos Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -43,6 +43,22 @@ The
 system call provides low-level control over extended attributes on a UFS1
 filesystem.
 It allows enabling, disabling, and managing extended attributes.
+.Pp
+Since was no provision in the UFS1 filesystem for attributes,
+they are stored as regular files and directories in the filesystem under the
+.Pa "/.attribute"
+directory.
+By convention, are usually two directories directly under, separating two
+namespaces:
+.Dq user
+and
+.Dq system .
+Under these, named attributes that can be created and managed using
+.Xr extattrctl 8 .
+.Pp
+This programming interface is currently only used by
+.Xr extattrctl 8 ,
+and is not intended for general use.
 .Sh PARAMETERS
 .Bl -tag -width indent
 .It Fa path
@@ -51,13 +67,13 @@ The path to the mount point of the filesystem.
 The command to execute.
 Valid commands are:
 .Bl -tag -width indent
-.It Dv EXTATTR_CMD_ENABLE
+.It Dv UFS_EXTATTR_CMD_ENABLE
 Enable a specific extended attribute.
-.It Dv EXTATTR_CMD_DISABLE
+.It Dv UFS_EXTATTR_CMD_DISABLE
 Disable a specific extended attribute.
-.It Dv EXTATTR_CMD_START
+.It Dv UFS_EXTATTR_CMD_START
 Start extended attribute support on the filesystem.
-.It Dv EXTATTR_CMD_STOP
+.It Dv UFS_EXTATTR_CMD_STOP
 Stop extended attribute support on the filesystem.
 .El
 .It Fa attrname
@@ -87,8 +103,9 @@ Enable an attribute on a filesystem:
 #include <sys/extattr.h>
 #include <ufs/ufs/extattr.h>
 
-if (extattrctl("/home", EXTATTR_CMD_ENABLE,
-    "user.comment", EXTATTR_NAMESPACE_USER, NULL) == -1)
+if (extattrctl("/home", UFS_EXTATTR_CMD_ENABLE,
+    "comment", EXTATTR_NAMESPACE_USER,
+    "/.attribute/user/comment") == -1)
 	err(EXIT_FAILURE, "extattrctl");
 .Ed
 .Sh ERRORS
@@ -109,7 +126,8 @@ The filesystem does not support extended attributes.
 .Xr extattr_delete_file 2 ,
 .Xr extattr_get_file 2 ,
 .Xr extattr_list_file 2 ,
-.Xr extattr_set_file 2
+.Xr extattr_set_file 2 ,
+.Xr extattrctl 8 .
 .Sh HISTORY
 The
 .Fn extattrctl
