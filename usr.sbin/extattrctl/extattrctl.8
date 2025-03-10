@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattrctl.8,v 1.5 2011/06/17 18:20:40 wiz Exp $
+.\"	$NetBSD: extattrctl.8,v 1.6 2025/03/10 22:19:53 christos Exp $
 .\"
 .\" Copyright (c) 2000-2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" Developed by the TrustedBSD Project.
 .\" Support for file system extended attribute.
 .\"
-.Dd June 17, 2011
+.Dd March 10, 2025
 .Dt EXTATTRCTL 8
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ sparse file used for storing the attributes.
 Enable an attribute named md5 on the root file system, backed from the file
 .Pa /.attribute/system/md5 .
 .Pp
-.Dl extattrctl disable / md5
+.Dl extattrctl disable / system md5
 .Pp
 Disable the attribute named md5 on the root file system.
 .Pp
@@ -195,6 +195,7 @@ Stop extended attributes on the root file system.
 .Sh SEE ALSO
 .Xr getextattr 1 ,
 .Xr extattr_get_file 2 ,
+.Xr extattrctl 2 ,
 .\" .Xr ffs 7 ,
 .Xr extattr 9
 .Sh HISTORY
