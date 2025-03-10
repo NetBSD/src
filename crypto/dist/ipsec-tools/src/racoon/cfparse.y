@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.56 2025/03/09 10:59:03 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.57 2025/03/10 15:13:33 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -151,8 +151,8 @@ static void adminsock_conf(vchar_t *, vchar_t *, vchar_t *, int);
 
 static int set_isakmp_proposal(struct remoteconf *);
 static void clean_tmpalgtype(void);
-static int expand_isakmpspec __P((int, int, int *,
-	int, int, time_t, int, int, int, char *, struct remoteconf *));
+static int expand_isakmpspec(int, int, int *,
+    int, int, time_t, int, int, int, char *, struct remoteconf *);
 
 void freeetypes (struct etypes **etypes);
 
