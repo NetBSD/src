@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.68 2025/03/10 11:29:25 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.69 2025/03/10 11:32:24 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.68 2025/03/10 11:29:25 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.69 2025/03/10 11:32:24 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -496,13 +496,6 @@ sbc_drq_intr(void *p)
 		return;
 	}
 
-#define CHECKMORE	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0) {	\
-				dh->dh_len -= dcount - count;		\
-				dh->dh_addr += dcount - count;		\
-				if (dh->dh_len)				\
-					goto no_more;			\
-			}
-
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
 		dcount = 0;
 
@@ -515,7 +508,7 @@ sbc_drq_intr(void *p)
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			data = (u_int8_t *)dh->dh_addr;
 
-#define W1		CHECKMORE *drq++ = *data++
+#define W1		*drq++ = *data++
 			while (count) {
 				W1; count--;
 			}
@@ -528,7 +521,7 @@ sbc_drq_intr(void *p)
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
-#define W4		CHECKMORE *long_drq++ = *long_data++; count -= 4
+#define W4		*long_drq++ = *long_data++; count -= 4
 
 			dcount = count = uimin(dh->dh_len, MAX_DMA_LEN);
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
@@ -545,7 +538,7 @@ sbc_drq_intr(void *p)
 			data = (u_int8_t *)long_data;
 			drq = (volatile u_int8_t *)long_drq;
 
-#define W1		CHECKMORE *drq++ = *data++
+#define W1		*drq++ = *data++
 			while (count) {
 				W1; count--;
 			}
@@ -580,7 +573,7 @@ sbc_drq_intr(void *p)
 			data = (u_int8_t *)dh->dh_addr;
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			while (count) {
-				CHECKMORE *data++ = *drq++;
+				*data++ = *drq++;
 				count--;
 			}
 			dh->dh_addr += dcount;
@@ -595,7 +588,7 @@ sbc_drq_intr(void *p)
 			long_data = (u_int32_t *)dh->dh_addr;
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 
-#define R4		CHECKMORE *long_data++ = *long_drq++; count -= 4
+#define R4		*long_data++ = *long_drq++; count -= 4
 			while (count >= 64) {
 				R4; R4; R4; R4; R4; R4; R4; R4;
 				R4; R4; R4; R4; R4; R4; R4; R4;	/* 64 */
@@ -607,7 +600,7 @@ sbc_drq_intr(void *p)
 			data = (u_int8_t *)long_data;
 			drq = (volatile u_int8_t *)long_drq;
 			while (count) {
-				CHECKMORE *data++ = *drq++;
+				*data++ = *drq++;
 				count--;
 			}
 			dh->dh_len -= dcount;
@@ -615,9 +608,7 @@ sbc_drq_intr(void *p)
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 	}
-#undef CHECKMORE
 
-no_more:
 	/*
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
