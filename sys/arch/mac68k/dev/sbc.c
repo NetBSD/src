@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.67 2024/11/22 07:27:17 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.68 2025/03/10 11:29:25 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.67 2024/11/22 07:27:17 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.68 2025/03/10 11:29:25 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -254,9 +254,12 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	    (ncr_sc->sc_current->sr_xs->xs_control & XS_CTL_POLL)))
 		return ncr5380_pio_in(ncr_sc, phase, datalen, data);
 
+	mutex_enter(&sc->sc_drq_lock);
 	s = splbio();
 	if (sbc_wait_busy(ncr_sc)) {
 		splx(s);
+		mutex_exit(&sc->sc_drq_lock);
+
 		return 0;
 	}
 
@@ -298,6 +301,8 @@ interrupt:
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = 0;
 	splx(s);
+	mutex_exit(&sc->sc_drq_lock);
+
 	return (datalen - resid);
 }
 
@@ -323,9 +328,12 @@ sbc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	    (ncr_sc->sc_current->sr_xs->xs_control & XS_CTL_POLL)))
 		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
 
+	mutex_enter(&sc->sc_drq_lock);
 	s = splbio();
 	if (sbc_wait_busy(ncr_sc)) {
 		splx(s);
+		mutex_exit(&sc->sc_drq_lock);
+
 		return 0;
 	}
 
@@ -395,6 +403,8 @@ done:
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = icmd;
 	splx(s);
+	mutex_exit(&sc->sc_drq_lock);
+
 	return (datalen - resid);
 }
 
