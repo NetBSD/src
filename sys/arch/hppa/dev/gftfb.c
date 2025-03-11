@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.27 2024/11/13 08:21:16 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.28 2025/03/11 05:48:26 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -1042,30 +1042,35 @@ gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
 	} while (reg < slots);
 }
 
-static void
-gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
-		      uint32_t bg)
+static inline void
+gftfb_fillmode(struct gftfb_softc *sc)
 {
-	uint32_t mask = 0xffffffff;
-
 	if (sc->sc_hwmode != HW_FILL) {
 		gftfb_wait_fifo(sc, 3);
 		/* plane mask */
 		gftfb_write4(sc, NGLE_REG_13, 0xff);
 		/* bitmap op */
 		gftfb_write4(sc, NGLE_REG_14,
-		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
+		    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0,
+		        0, 0));
 		/* dst bitmap access */
 		gftfb_write4(sc, NGLE_REG_11,
-		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
+		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I,
+			0));
 		sc->sc_hwmode = HW_FILL;
 	}
+}
+
+static void
+gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
+		      uint32_t bg)
+{
+	gftfb_fillmode(sc);
+
 	gftfb_wait_fifo(sc, 4);
 
-	if (wi < 32)
-		mask = 0xffffffff << (32 - wi);
 	/* transfer data */
-	gftfb_write4(sc, NGLE_REG_8, mask);
+	gftfb_write4(sc, NGLE_REG_8, 0xffffffff);
 	gftfb_write4(sc, NGLE_REG_35, bg);
 	/* dst XY */
 	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
@@ -1179,27 +1184,20 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
 		return;
 
-	/* clear the character cell */
-	gftfb_rectfill(sc, x, y, wi, he, bg);
-
 	data = WSFONT_GLYPH(c, font);
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
-	/*
-	* we're in rectangle mode with transparency enabled from the call to
-	* gftfb_rectfill() above, so all we need to do is reset the starting
-	* cordinates, then hammer mask and size/start. Starting coordinates
-	* will automatically move down the y-axis
-	*/
-	gftfb_wait_fifo(sc, 2);
+	gftfb_fillmode(sc);
+	gftfb_wait_fifo(sc, 3);
 
 	/* character colour */
 	gftfb_write4(sc, NGLE_REG_35, fg);
+	gftfb_write4(sc, NGLE_REG_36, bg);
 	/* dst XY */
 	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
 
@@ -1370,7 +1368,7 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
  * cursor sprite handling
  * like most hw info, xf86 3.3 -> nglehdw.h was used as documentation
  * problem is, the PCI EG doesn't quite behave like an S9000_ID_ARTIST
- * the cursor position register bahaves like the one on HCRX while using
+ * the cursor position register behaves like the one on HCRX while using
  * the same address as Artist, incuding the enable bit and weird handling
  * of negative coordinates. The rest of it, colour map, sprite image etc.,
  * behave like Artist.
