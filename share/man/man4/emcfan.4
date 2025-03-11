@@ -1,0 +1,152 @@
+.\" $NetBSD: emcfan.4,v 1.1 2025/03/11 13:56:46 brad Exp $
+.\"
+.\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd Feburary 19, 2025
+.Dt EMCFAN 4
+.Os
+.Sh NAME
+.Nm emcfan
+.Nd Driver for the Microchip Technology EMC210x and EMC230x fan controllers
+via I2C bus
+.Sh SYNOPSIS
+.Cd "emcfan* at iic? addr 0x2c"
+.Cd "emcfan* at iic? addr 0x2d"
+.Cd "emcfan* at iic? addr 0x2e"
+.Cd "emcfan* at iic? addr 0x2f"
+.Cd "emcfan* at iic? addr 0x4c"
+.Cd "emcfan* at iic? addr 0x4d"
+.Sh DESCRIPTION
+.Sh DESCRIPTION
+The
+.Nm
+driver support the EMC210x family with the following models:
+EMC2101, EMC2101-R, EMC2103-1, EMC2103-2, EMC2103-4, EMC2104, and EMC2106
+and for the EMC230x family with the following models:
+EMC2301, EMC2302, EMC2303, and EMC2305.  All chips have one or more tachometers,
+and some of the chips have a number of temperature sensors and GPIO.
+The
+.Nm
+driver provides
+.Xr envsys 4
+framework measurements for the RPM as determined by the tachometers.  If the chip
+has temperature sensors, the
+.Xr envsys 4
+framework will provide an entry for every possible temperature sensor that a
+particular chip can support.  GPIO support is provided by
+.Xr gpio 4
+framework and the pins can be accessed with the
+.Xr gpioctl 8
+command.
+.Pp
+The EMC fan controllers are arranged as a set of registers.  These registers are accessed
+by a /dev device per attached chip.  The program
+.Xr emcfanctl 8
+makes use of this device and allows all valid registers for particular chip to be read or
+written and provides some higher level commands that allow the drive level and frequency
+divider for a particular fan to be adjusted.
+.Sh GPIO
+The EMC2103-2, EMC2103-4, EMC2104 and EMC2106 chips have gpio pins.
+For the EMC2103-2 and EMC2103-4, these pins are only gpio and are not
+shared with any other function.
+For the EMC2104 and EMC2106, the following is how
+the pins maps to the altN flags in the
+.Xr gpio 4
+framework.
+.TS
+box tab(:);
+l | l | l
+= | = | =
+l | l | l
+- | - | -
+l | l | l
+- | - | -
+l | l | l
+- | - | -
+l | l | l
+- | - | -
+l | l | l.
+Pin:ALT0:ALT1
+GPIO1:CLK_IN: -
+GPIO2:TACH2: -
+GPIO3:PWM2: -
+GPIO4:OVERT2#:PWM3
+GPIO5:OVERT3#:PWM4
+.TE
+.Pp
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 8
+variables are provided:
+.Bl -tag -width Li
+.It Li hw.emcfan0.debug
+If the driver is compiled with
+.Dv EMCFAN_DEBUG ,
+this node will appear and can be used to set the debugging level.
+.It Li hw.emcfan0.poles<n>
+For a number of the chips in the two chip families, the tachometer
+calcuation algorithm needs to know the number of poles that the
+tachometer has in order to calculate the RPM correctly.
+Usually this will be 2, but if the situation is otherwise, set this
+node to the number of poles that the particular fan has.
+The calculation is also effected by the number of edges present in the tachometer signal.
+The number of edges is set with the
+.Xr emcfanctl 8
+command.
+.It Li hw.emcfan0.ftach
+Many of the chips in the two famlies have a pin that can be used to
+drive an alternative 32.767khz clock for the tachometers.
+The EMC2103-1, EMC2103-2 and EMC2103-4 does not have this alternative
+clock pin, and while it is likely that the chip is running at the
+default 32.000khz, it might not be.
+This variable lets one set an alternative clock.
+The units for this node are in hz.
+.It Li hw.emcfan0.vin4_temp_zone
+The EMC2104 and EMC2106 have a special temperature sensor pin called VIN4, if this sensor is wired up,
+then this variable can be set to 1 and meaningful values will appear in the
+.Xr envsys 4
+framework.
+.El
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /dev/emcfan Ns Ar u
+The device unit
+.Ar u
+file.
+.El
+.Sh SEE ALSO
+.Xr emcfanctl 8 ,
+.Xr envsys 4 ,
+.Xr iic 4 ,
+.Xr envstat 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+The driver does not support the EMC2105 chip.
+.Pp
+While not exactly a bug, the driver does nothing with the alert
+interrupts that can be generated from many of the chips.  It would be
+more typical for this to be tied to a GPIO pin which can interrupt
+using CPU interrupts.

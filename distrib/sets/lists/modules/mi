@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 2025/01/23 19:02:43 brad Exp $
+# $NetBSD: mi,v 1.164 2025/03/11 13:56:47 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -165,6 +165,8 @@
 ./@MODULEDIR@/dtv_math/dtv_math.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/efs				modules-base-kernel	kmod
 ./@MODULEDIR@/efs/efs.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/emcfan				modules-base-kernel	kmod
+./@MODULEDIR@/emcfan/emcfan.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/exec_script			modules-base-kernel	kmod
 ./@MODULEDIR@/exec_script/exec_script.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ext2fs				modules-base-kernel	kmod

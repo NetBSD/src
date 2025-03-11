@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1362 2025/02/24 21:47:08 martin Exp $
+# $NetBSD: mi,v 1.1363 2025/03/11 13:56:47 brad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1509,6 +1509,7 @@
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
+./usr/sbin/emcfanctl				base-sysutil-bin
 ./usr/sbin/envstat				base-sysutil-bin
 ./usr/sbin/eshconfig				base-obsolete		obsolete
 ./usr/sbin/etcupdate				base-sysutil-bin

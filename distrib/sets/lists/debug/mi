@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.467 2025/03/02 16:35:40 riastradh Exp $
+# $NetBSD: mi,v 1.468 2025/03/11 13:56:48 brad Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1111,6 +1111,7 @@
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/emcfanctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/envstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug

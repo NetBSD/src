@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2025/02/26 16:34:43 martin Exp $
+# $NetBSD: mi,v 1.22 2025/03/11 13:56:48 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1057,6 +1057,7 @@
 ./usr/share/man/html4/eisa.html			man-sys-htmlman		html
 ./usr/share/man/html4/el.html			man-sys-htmlman		html
 ./usr/share/man/html4/elmc.html			man-sys-htmlman		html
+./usr/share/man/html4/emcfan.html		man-sys-htmlman		html
 ./usr/share/man/html4/emdtv.html		man-sys-htmlman		html
 ./usr/share/man/html4/emips/ace.html		man-sys-htmlman		html
 ./usr/share/man/html4/emips/autoconf.html	man-sys-htmlman		html
@@ -2562,6 +2563,7 @@
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/efi.html			man-sysutil-htmlman	efi_rt,html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
+./usr/share/man/html8/emcfanctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-obsolete		obsolete

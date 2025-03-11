@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.104 2024/12/16 16:37:38 brad Exp $
+# $NetBSD: majors,v 1.105 2025/03/11 13:56:46 brad Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -98,3 +98,4 @@ device-major scmd      char 363		   scmd
 device-major viocon    char 364		   viocon
 device-major gpioirq   char 365		   gpioirq
 device-major umcpmio   char 366		   umcpmio
+device-major emcfan    char 367		   emcfan

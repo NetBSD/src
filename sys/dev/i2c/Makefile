@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2011/10/02 16:39:47 jmcneill Exp $
+# $NetBSD: Makefile,v 1.4 2025/03/11 13:56:46 brad Exp $
 
 INCSDIR= /usr/include/dev/i2c
-INCS=	i2c_io.h
+INCS=	emcfanreg.h emcfaninfo.h i2c_io.h
 
 .include <bsd.kinc.mk>

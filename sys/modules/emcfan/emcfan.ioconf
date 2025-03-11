@@ -1,0 +1,12 @@
+ioconf emcfan
+
+include "conf/files"
+
+pseudo-root iic*
+
+emcfan* at iic? addr 0x2c
+emcfan* at iic? addr 0x2d
+emcfan* at iic? addr 0x2e
+emcfan* at iic? addr 0x2f
+emcfan* at iic? addr 0x4c
+emcfan* at iic? addr 0x4d

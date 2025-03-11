@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.31 2025/01/23 19:02:43 brad Exp $
+# $NetBSD: module.mi,v 1.32 2025/03/11 13:56:48 brad Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
@@ -147,6 +147,8 @@
 ./usr/libdata/debug/@MODULEDIR@/dtv_math/dtv_math.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/efs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/efs/efs.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/emcfan				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/emcfan/emcfan.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_script			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_script/exec_script.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ext2fs				modules-base-kernel	kmod,debug

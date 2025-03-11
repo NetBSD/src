@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.235 2024/12/16 16:37:40 brad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.236 2025/03/11 13:56:48 brad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -867,6 +867,11 @@ audio)
 	lndev audio0 audio
 	lndev mixer0 mixer
 	lndev audioctl0 audioctl
+	;;
+
+emcfan[0-9]*)
+	unit=${i#emcfan}
+	mkdev emcfan$unit c %emcfan_chr% $unit 660
 	;;
 
 gpio)

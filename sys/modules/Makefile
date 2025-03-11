@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.295 2025/01/23 19:02:42 brad Exp $
+#	$NetBSD: Makefile,v 1.296 2025/03/11 13:56:46 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -63,6 +63,7 @@ SUBDIR+=	drvctl
 SUBDIR+=	ds2482ow
 SUBDIR+=	ds28e17iic
 SUBDIR+=	efs
+SUBDIR+=	emcfan
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
 SUBDIR+=	fdesc
