@@ -1,4 +1,4 @@
-.\" $NetBSD: emcfan.4,v 1.1 2025/03/11 13:56:46 brad Exp $
+.\" $NetBSD: emcfan.4,v 1.2 2025/03/11 16:44:07 uwe Exp $
 .\"
 .\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -29,30 +29,32 @@ via I2C bus
 .Cd "emcfan* at iic? addr 0x4c"
 .Cd "emcfan* at iic? addr 0x4d"
 .Sh DESCRIPTION
-.Sh DESCRIPTION
 The
 .Nm
 driver support the EMC210x family with the following models:
 EMC2101, EMC2101-R, EMC2103-1, EMC2103-2, EMC2103-4, EMC2104, and EMC2106
 and for the EMC230x family with the following models:
-EMC2301, EMC2302, EMC2303, and EMC2305.  All chips have one or more tachometers,
-and some of the chips have a number of temperature sensors and GPIO.
+EMC2301, EMC2302, EMC2303, and EMC2305.
+All chips have one or more tachometers, and some of the chips have a
+number of temperature sensors and GPIO.
 The
 .Nm
 driver provides
 .Xr envsys 4
-framework measurements for the RPM as determined by the tachometers.  If the chip
-has temperature sensors, the
+framework measurements for the RPM as determined by the tachometers.
+If the chip has temperature sensors, the
 .Xr envsys 4
 framework will provide an entry for every possible temperature sensor that a
-particular chip can support.  GPIO support is provided by
+particular chip can support.
+GPIO support is provided by
 .Xr gpio 4
 framework and the pins can be accessed with the
 .Xr gpioctl 8
 command.
 .Pp
-The EMC fan controllers are arranged as a set of registers.  These registers are accessed
-by a /dev device per attached chip.  The program
+The EMC fan controllers are arranged as a set of registers.
+These registers are accessed by a /dev device per attached chip.
+The program
 .Xr emcfanctl 8
 makes use of this device and allows all valid registers for particular chip to be read or
 written and provides some higher level commands that allow the drive level and frequency
@@ -147,6 +149,6 @@ driver was written by
 The driver does not support the EMC2105 chip.
 .Pp
 While not exactly a bug, the driver does nothing with the alert
-interrupts that can be generated from many of the chips.  It would be
-more typical for this to be tied to a GPIO pin which can interrupt
-using CPU interrupts.
+interrupts that can be generated from many of the chips.
+It would be more typical for this to be tied to a GPIO pin which can
+interrupt using CPU interrupts.
