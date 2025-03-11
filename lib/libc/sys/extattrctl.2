@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.4 2025/03/10 22:18:07 christos Exp $
+.\" $NetBSD: extattrctl.2,v 1.5 2025/03/11 07:44:55 wiz Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm extattrctl
-.Nd control extended attributes on a UFS1 filesystem
+.Nd control extended attributes on a UFS1 file system
 .Sh SYNOPSIS
 .In sys/extattr.h
 .In ufs/ufs/extattr.h
@@ -41,19 +41,20 @@
 The
 .Fn extattrctl
 system call provides low-level control over extended attributes on a UFS1
-filesystem.
+file system.
 It allows enabling, disabling, and managing extended attributes.
 .Pp
-Since was no provision in the UFS1 filesystem for attributes,
-they are stored as regular files and directories in the filesystem under the
+Since there was no provision in the UFS1 file system for attributes,
+they are stored as regular files and directories in the file system under the
 .Pa "/.attribute"
 directory.
-By convention, are usually two directories directly under, separating two
-namespaces:
+By convention, there are usually two directories directly under it,
+separating two namespaces:
 .Dq user
 and
 .Dq system .
-Under these, named attributes that can be created and managed using
+Under these, there are named attributes that can be created and
+managed using
 .Xr extattrctl 8 .
 .Pp
 This programming interface is currently only used by
@@ -62,7 +63,7 @@ and is not intended for general use.
 .Sh PARAMETERS
 .Bl -tag -width indent
 .It Fa path
-The path to the mount point of the filesystem.
+The path to the mount point of the file system.
 .It Fa cmd
 The command to execute.
 Valid commands are:
@@ -72,9 +73,9 @@ Enable a specific extended attribute.
 .It Dv UFS_EXTATTR_CMD_DISABLE
 Disable a specific extended attribute.
 .It Dv UFS_EXTATTR_CMD_START
-Start extended attribute support on the filesystem.
+Start extended attribute support on the file system.
 .It Dv UFS_EXTATTR_CMD_STOP
-Stop extended attribute support on the filesystem.
+Stop extended attribute support on the file system.
 .El
 .It Fa attrname
 The name of the extended attribute (for relevant commands).
@@ -88,17 +89,9 @@ The path to a backing file for extended attribute storage
 (if required by the command).
 .El
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn extattrctl
-returns
-.Dv 0 .
-Otherwise,
-.Dv -1
-is returned, and
-.Va errno
-is set to indicate the error.
+.Rv -std extattrctl
 .Sh EXAMPLES
-Enable an attribute on a filesystem:
+Enable an attribute on a file system:
 .Bd -literal -offset indent
 #include <sys/extattr.h>
 #include <ufs/ufs/extattr.h>
@@ -120,14 +113,14 @@ Invalid arguments were provided.
 .It Bq Er ENOENT
 The specified path, attribute, or file does not exist.
 .It Bq Er ENOTSUP
-The filesystem does not support extended attributes.
+The file system does not support extended attributes.
 .El
 .Sh SEE ALSO
 .Xr extattr_delete_file 2 ,
 .Xr extattr_get_file 2 ,
 .Xr extattr_list_file 2 ,
 .Xr extattr_set_file 2 ,
-.Xr extattrctl 8 .
+.Xr extattrctl 8
 .Sh HISTORY
 The
 .Fn extattrctl
