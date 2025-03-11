@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.5 2025/03/11 07:44:55 wiz Exp $
+.\" $NetBSD: extattrctl.2,v 1.6 2025/03/11 14:10:19 riastradh Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -36,7 +36,7 @@
 .In sys/extattr.h
 .In ufs/ufs/extattr.h
 .Ft int
-.Fn extattrctl "const char *path" "int cmd" "const char *attrname" "int attrnamespace" "const char *filename"
+.Fn extattrctl "const char *path" "int cmd" "const char *filename" "int attrnamespace" "const char *attrname"
 .Sh DESCRIPTION
 The
 .Fn extattrctl
@@ -97,8 +97,8 @@ Enable an attribute on a file system:
 #include <ufs/ufs/extattr.h>
 
 if (extattrctl("/home", UFS_EXTATTR_CMD_ENABLE,
-    "comment", EXTATTR_NAMESPACE_USER,
-    "/.attribute/user/comment") == -1)
+    "/.attribute/user/comment",
+    EXTATTR_NAMESPACE_USER, "comment") == -1)
 	err(EXIT_FAILURE, "extattrctl");
 .Ed
 .Sh ERRORS
@@ -107,12 +107,15 @@ The
 system call may fail with the following errors:
 .Bl -tag -width Bq -offset indent
 .It Bq Er EACCES
-Permission denied.
+The calling user does not have permission to access the file
+specified.
+.It Bq Er EPERM
+The calling user is not permitted to change extended attributes.
 .It Bq Er EINVAL
 Invalid arguments were provided.
 .It Bq Er ENOENT
 The specified path, attribute, or file does not exist.
-.It Bq Er ENOTSUP
+.It Bq Er EOPNOTSUPP
 The file system does not support extended attributes.
 .El
 .Sh SEE ALSO
@@ -127,4 +130,4 @@ The
 system call was imported from
 .Fx 5.0
 in
-.Nx 4.0 .
+.Nx 3.0 .
