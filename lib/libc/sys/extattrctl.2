@@ -1,4 +1,4 @@
-.\" $NetBSD: extattrctl.2,v 1.6 2025/03/11 14:10:19 riastradh Exp $
+.\" $NetBSD: extattrctl.2,v 1.7 2025/03/11 14:13:45 wiz Exp $
 .\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -109,14 +109,14 @@ system call may fail with the following errors:
 .It Bq Er EACCES
 The calling user does not have permission to access the file
 specified.
-.It Bq Er EPERM
-The calling user is not permitted to change extended attributes.
 .It Bq Er EINVAL
 Invalid arguments were provided.
 .It Bq Er ENOENT
 The specified path, attribute, or file does not exist.
 .It Bq Er EOPNOTSUPP
 The file system does not support extended attributes.
+.It Bq Er EPERM
+The calling user is not permitted to change extended attributes.
 .El
 .Sh SEE ALSO
 .Xr extattr_delete_file 2 ,
