@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.48 2025/03/11 12:34:09 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.49 2025/03/11 13:35:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.48 2025/03/11 12:34:09 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.49 2025/03/11 13:35:54 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -412,19 +412,25 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 
 	if (ni) {
 		crypto_core(block, nonce8, seed, crypto_core_constant32);
-		nonce[0]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
 		(void)memcpy(p8, block, ni);
 	}
 	while (nb--) {
 		crypto_core(p32, nonce8, seed, crypto_core_constant32);
-		if (++nonce[0] == 0)
-			nonce[1]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
+		if (crypto_le32dec(&nonce[0]) == 0) {
+			crypto_le32enc(&nonce[1],
+			    1 + crypto_le32dec(&nonce[1]));
+		}
 		p32 += crypto_core_OUTPUTBYTES;
 	}
 	if (nf) {
 		crypto_core(block, nonce8, seed, crypto_core_constant32);
-		if (++nonce[0] == 0)
-			nonce[1]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
+		if (crypto_le32dec(&nonce[0]) == 0) {
+			crypto_le32enc(&nonce[1],
+			    1 + crypto_le32dec(&nonce[1]));
+		}
 		(void)memcpy(p32, block, nf);
 	}
 
