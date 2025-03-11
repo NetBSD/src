@@ -1,4 +1,4 @@
-.\" $NetBSD: emcfan.4,v 1.2 2025/03/11 16:44:07 uwe Exp $
+.\" $NetBSD: emcfan.4,v 1.3 2025/03/11 17:46:12 uwe Exp $
 .\"
 .\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -64,30 +64,34 @@ The EMC2103-2, EMC2103-4, EMC2104 and EMC2106 chips have gpio pins.
 For the EMC2103-2 and EMC2103-4, these pins are only gpio and are not
 shared with any other function.
 For the EMC2104 and EMC2106, the following is how
-the pins maps to the altN flags in the
+the pins maps to the
+.Li alt Ns Ar N
+flags in the
 .Xr gpio 4
 framework.
+.Bd -unfilled -offset indent
 .TS
 box tab(:);
-l | l | l
+ci | ci | ci
 = | = | =
-l | l | l
+l | l | c
 - | - | -
-l | l | l
+l | l | c
 - | - | -
-l | l | l
+l | l | c
 - | - | -
 l | l | l
 - | - | -
 l | l | l.
 Pin:ALT0:ALT1
-GPIO1:CLK_IN: -
-GPIO2:TACH2: -
-GPIO3:PWM2: -
+GPIO1:CLK_IN:\-
+GPIO2:TACH2:\-
+GPIO3:PWM2:\-
 GPIO4:OVERT2#:PWM3
 GPIO5:OVERT3#:PWM4
 .TE
-.Pp
+.Ed
+\& \" force vertical space
 .Sh SYSCTL VARIABLES
 The following
 .Xr sysctl 8
@@ -109,12 +113,12 @@ The number of edges is set with the
 command.
 .It Li hw.emcfan0.ftach
 Many of the chips in the two famlies have a pin that can be used to
-drive an alternative 32.767khz clock for the tachometers.
+drive an alternative 32.767\~kHz clock for the tachometers.
 The EMC2103-1, EMC2103-2 and EMC2103-4 does not have this alternative
 clock pin, and while it is likely that the chip is running at the
-default 32.000khz, it might not be.
+default 32.000\~kHz, it might not be.
 This variable lets one set an alternative clock.
-The units for this node are in hz.
+The units for this node are in Hz.
 .It Li hw.emcfan0.vin4_temp_zone
 The EMC2104 and EMC2106 have a special temperature sensor pin called VIN4, if this sensor is wired up,
 then this variable can be set to 1 and meaningful values will appear in the
