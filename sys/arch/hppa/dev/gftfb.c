@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.28 2025/03/11 05:48:26 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.29 2025/03/11 06:04:19 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -1388,9 +1388,8 @@ gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
 	if (y < 0) y = 0x1000 - y;
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= 0x80000000;
-	gftfb_wait(sc);
+	gftfb_wait_fifo(sc, 2);
 	gftfb_write4(sc, NGLE_REG_17, pos);
-	gftfb_write4(sc, NGLE_REG_18, 0x80);
 }
 
 static int
