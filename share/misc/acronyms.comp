@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.402 2025/03/09 22:06:28 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.403 2025/03/11 14:13:32 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -737,6 +737,7 @@ HPC	high performance computing
 HPD	hot plug detection
 HPET	high precision event timer
 HPKE	hybrid public key encryption
+HQC	Hamming Quasi-Cyclic
 HSM	hardware security module
 HSM	hierarchical storage management
 HSRP	hot standby router protocol
