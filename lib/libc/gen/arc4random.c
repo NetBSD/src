@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.49 2025/03/11 13:35:54 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.50 2025/03/11 14:30:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.49 2025/03/11 13:35:54 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.50 2025/03/11 14:30:27 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: arc4random.c,v 1.49 2025/03/11 13:35:54 riastradh Exp $");
 
 #include <assert.h>
 #include <sha2.h>
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -511,34 +510,9 @@ crypto_onetimestream_selftest(void)
 static unsigned
 entropy_epoch(void)
 {
-	static atomic_int mib0[3];
-	static atomic_bool initialized = false;
-	int mib[3];
+	const int mib[] = { CTL_KERN, KERN_ENTROPY, KERN_ENTROPY_EPOCH };
 	unsigned epoch = (unsigned)-1;
 	size_t epochlen = sizeof(epoch);
-
-	/*
-	 * Resolve kern.entropy.epoch if we haven't already.  Cache it
-	 * for the next caller.  Initialization is idempotent, so it's
-	 * OK if two threads do it at once.
-	 */
-	if (atomic_load_explicit(&initialized, memory_order_acquire)) {
-		mib[0] = atomic_load_explicit(&mib0[0], memory_order_relaxed);
-		mib[1] = atomic_load_explicit(&mib0[1], memory_order_relaxed);
-		mib[2] = atomic_load_explicit(&mib0[2], memory_order_relaxed);
-	} else {
-		size_t nmib = __arraycount(mib);
-
-		if (sysctlnametomib("kern.entropy.epoch", mib, &nmib) == -1)
-			return (unsigned)-1;
-		if (nmib != __arraycount(mib))
-			return (unsigned)-1;
-		atomic_store_explicit(&mib0[0], mib[0], memory_order_relaxed);
-		atomic_store_explicit(&mib0[1], mib[1], memory_order_relaxed);
-		atomic_store_explicit(&mib0[2], mib[2], memory_order_relaxed);
-		atomic_store_explicit(&initialized, true,
-		    memory_order_release);
-	}
 
 	if (sysctl(mib, __arraycount(mib), &epoch, &epochlen, NULL, 0) == -1)
 		return (unsigned)-1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.239 2024/01/20 13:15:46 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.240 2025/03/11 14:30:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -275,6 +275,7 @@ struct ctlname {
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
 #define	KERN_EVCNT		84	/* struct: evcnts */
 #define	KERN_SOFIXEDBUF		85	/* bool: fixed socket buffer sizes */
+#define	KERN_ENTROPY		86	/* node: entropy(9) subsystem */
 
 /*
  *  KERN_CLOCKRATE structure
@@ -778,6 +779,12 @@ struct hashstat_sysctl {
 };
 typedef int	(*hashstat_func_t)(struct hashstat_sysctl *, bool);
 void		hashstat_register(const char *, hashstat_func_t);
+
+/*
+ * kern.entropy.* variables
+ */
+
+#define	KERN_ENTROPY_EPOCH	1	/* int: PRNG reseed epoch */
 
 /*
  * CTL_VM identifiers in <uvm/uvm_param.h>

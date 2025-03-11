@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.72 2024/08/27 00:56:47 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.73 2025/03/11 14:30:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.72 2024/08/27 00:56:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.73 2025/03/11 14:30:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -358,7 +358,7 @@ entropy_init(void)
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "entropy",
 	    SYSCTL_DESCR("Entropy (random number sources) options"),
 	    NULL, 0, NULL, 0,
-	    CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTL_KERN, KERN_ENTROPY, CTL_EOL);
 
 	/* Create the sysctl knobs.  */
 	/* XXX These shouldn't be writable at securelevel>0.  */
@@ -402,7 +402,7 @@ entropy_init(void)
 	sysctl_createv(&entropy_sysctllog, 0, &entropy_sysctlroot, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "epoch", SYSCTL_DESCR("Entropy epoch"),
-	    NULL, 0, &E->epoch, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, &E->epoch, 0, KERN_ENTROPY_EPOCH, CTL_EOL);
 
 	/* Initialize the global state for multithreaded operation.  */
 	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
