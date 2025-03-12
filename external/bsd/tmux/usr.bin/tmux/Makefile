@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.37 2024/11/09 13:14:09 wiz Exp $
+# $NetBSD: Makefile,v 1.38 2025/03/12 07:57:05 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -169,7 +169,7 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
-# ENABLE_SIXEL, HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually
+# ENABLE_SIXEL, HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_UTEMPTER, HAVE_VIS added manually
 #
 # HAVE_BSD_GETOPT:
 # Use the NetBSD libc getopt functions instead of the compat functions
@@ -233,6 +233,7 @@ CPPFLAGS+=	\
 -DHAVE_TIPARM=1 \
 -DHAVE_TREE_H=1 \
 -DHAVE_UNISTD_H=1 \
+-DHAVE_UTEMPTER=1 \
 -DHAVE_UTIL_H=1 \
 -DHAVE_VIS=1 \
 -DHAVE___PROGNAME=1 \
