@@ -1,4 +1,4 @@
-/*	$NetBSD: emcfanctloutputs.c,v 1.1 2025/03/11 13:56:48 brad Exp $	*/
+/*	$NetBSD: emcfanctloutputs.c,v 1.2 2025/03/12 14:01:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifdef __RCSID
-__RCSID("$NetBSD: emcfanctloutputs.c,v 1.1 2025/03/11 13:56:48 brad Exp $");
+__RCSID("$NetBSD: emcfanctloutputs.c,v 1.2 2025/03/12 14:01:49 brad Exp $");
 #endif
 
 #include <inttypes.h>
@@ -58,9 +58,9 @@ output_emcfan_info(int fd, uint8_t product_id, int product_family, bool jsonify,
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "revision", "integer", res);
-		mj_append_field(&obj, "product_id", "integer", product_id);
-		mj_append_field(&obj, "product_family", "integer", product_family);
+		mj_append_field(&obj, "revision", "integer", (int64_t)res);
+		mj_append_field(&obj, "product_id", "integer", (int64_t)product_id);
+		mj_append_field(&obj, "product_family", "integer", (int64_t)product_family);
 		pn = emcfan_product_to_name(product_id);
 		mj_append_field(&obj, "chip_name", "string", pn, strlen(pn));
 		emcfan_family_to_name(product_family, fn, sizeof(fn));
@@ -108,7 +108,7 @@ output_emcfan_generic_reg_list(uint8_t product_id, const struct emcfan_registers
 				memset(&obj, 0x0, sizeof(obj));
 				mj_create(&obj, "object");
 				mj_append_field(&obj, "register_name", "string", the_registers[i].name, strlen(the_registers[i].name));
-				mj_append_field(&obj, "register", "integer", the_registers[i].reg);
+				mj_append_field(&obj, "register", "integer", (int64_t)the_registers[i].reg);
 				mj_append(&array, "object", &obj);
 				mj_delete(&obj);
 			} else {
@@ -198,8 +198,8 @@ output_emcfan_230x_read_reg(int fd, uint8_t product_id, int product_family, uint
 				mj_create(&obj, "object");
 				rn = emcfan_regname_by_reg(product_id, product_family, i);
 				mj_append_field(&obj, "register_name", "string", rn, strlen(rn));
-				mj_append_field(&obj, "register", "integer", i);
-				mj_append_field(&obj, "register_value", "integer", res);
+				mj_append_field(&obj, "register", "integer", (int64_t)i);
+				mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 				mj_append(&array, "object", &obj);
 				mj_delete(&obj);
 			} else {
@@ -265,9 +265,9 @@ output_emcfan_minexpected_rpm(int fd, uint8_t product_id, int product_family, ui
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "minimum_expected_rpm", "integer", human_value);
-		mj_append_field(&obj, "register", "integer", config_reg);
-		mj_append_field(&obj, "register_value", "integer", raw_res);
+		mj_append_field(&obj, "minimum_expected_rpm", "integer", (int64_t)human_value);
+		mj_append_field(&obj, "register", "integer", (int64_t)config_reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)raw_res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -306,9 +306,9 @@ output_emcfan_edges(int fd, uint8_t product_id, int product_family, uint8_t conf
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "num_edges", "integer", human_value);
-		mj_append_field(&obj, "register", "integer", config_reg);
-		mj_append_field(&obj, "register_value", "integer", raw_res);
+		mj_append_field(&obj, "num_edges", "integer", (int64_t)human_value);
+		mj_append_field(&obj, "register", "integer", (int64_t)config_reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)raw_res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -336,9 +336,9 @@ output_emcfan_simple_int(int fd, uint8_t product_id, int product_family, uint8_t
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, whatj, "integer", res);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, whatj, "integer", (int64_t)res);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer",(int64_t) res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -384,10 +384,10 @@ output_emcfan_pwm_basefreq(int fd, uint8_t product_id, int product_family, uint8
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "fan", "integer", the_fan+1);
-		mj_append_field(&obj, "pwm_base_frequency", "integer", fan_pwm_basefreq[tindex].human_int);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, "fan", "integer", (int64_t)the_fan+1);
+		mj_append_field(&obj, "pwm_base_frequency", "integer", (int64_t)fan_pwm_basefreq[tindex].human_int);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -427,10 +427,10 @@ output_emcfan_polarity(int fd, uint8_t product_id, int product_family, uint8_t r
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "fan", "integer", the_fan+1);
-		mj_append_field(&obj, "inverted", "integer", inverted);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, "fan", "integer", (int64_t)the_fan+1);
+		mj_append_field(&obj, "inverted", "integer", (int64_t)inverted);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -465,10 +465,10 @@ output_emcfan_pwm_output_type(int fd, uint8_t product_id, int product_family, ui
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "fan", "integer", the_fan+1);
-		mj_append_field(&obj, "pwm_output_type", "integer", pushpull);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, "fan", "integer", (int64_t)the_fan+1);
+		mj_append_field(&obj, "pwm_output_type", "integer", (int64_t)pushpull);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -551,18 +551,18 @@ output_emcfan_fan_status(int fd, uint8_t product_id, int product_family, uint8_t
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "fan", "integer", the_fan+1);
-		mj_append_field(&obj, "stalled", "integer", stalled);
-		mj_append_field(&obj, "spin_up_fail", "integer", spin_up_fail);
-		mj_append_field(&obj, "drive_fail", "integer", drive_fail);
-		mj_append_field(&obj, "register1", "integer", start_reg);
-		mj_append_field(&obj, "register1_value", "integer", res[0]);
-		mj_append_field(&obj, "register2", "integer", start_reg+1);
-		mj_append_field(&obj, "register2_value", "integer", res[1]);
-		mj_append_field(&obj, "register3", "integer", start_reg+2);
-		mj_append_field(&obj, "register3_value", "integer", res[2]);
-		mj_append_field(&obj, "register4", "integer", start_reg+3);
-		mj_append_field(&obj, "register4_value", "integer", res[3]);
+		mj_append_field(&obj, "fan", "integer", (int64_t)the_fan+1);
+		mj_append_field(&obj, "stalled", "integer", (int64_t)stalled);
+		mj_append_field(&obj, "spin_up_fail", "integer", (int64_t)spin_up_fail);
+		mj_append_field(&obj, "drive_fail", "integer", (int64_t)drive_fail);
+		mj_append_field(&obj, "register1", "integer", (int64_t)start_reg);
+		mj_append_field(&obj, "register1_value", "integer", (int64_t)res[0]);
+		mj_append_field(&obj, "register2", "integer", (int64_t)start_reg+1);
+		mj_append_field(&obj, "register2_value", "integer", (int64_t)res[1]);
+		mj_append_field(&obj, "register3", "integer", (int64_t)start_reg+2);
+		mj_append_field(&obj, "register3_value", "integer", (int64_t)res[2]);
+		mj_append_field(&obj, "register4", "integer", (int64_t)start_reg+3);
+		mj_append_field(&obj, "register4_value", "integer", (int64_t)res[3]);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -596,9 +596,9 @@ output_emcfan_apd(int fd, uint8_t product_id, int product_family, uint8_t reg, b
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "apd", "integer", antiparalleldiode);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, "apd", "integer", (int64_t)antiparalleldiode);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
@@ -630,20 +630,21 @@ output_emcfan_smbusto(int fd, uint8_t product_id, int product_family, uint8_t re
 	if (debug)
 		fprintf(stderr,"%s: reg=%d 0x%02X, res=0x%02x, tindex=%d, instance=%d\n",__func__,reg,reg,res,tindex,instance);
 
-	smbusto = (res & smbus_timeout[tindex].clear_mask) ? true : false;
+	/* The logic is inverted for the timeout */
+	smbusto = (res & smbus_timeout[tindex].clear_mask) ? false : true;
 
 	if (jsonify) {
 		memset(&obj, 0x0, sizeof(obj));
 		mj_create(&obj, "object");
-		mj_append_field(&obj, "smbus_timeout", "integer", smbusto);
-		mj_append_field(&obj, "register", "integer", reg);
-		mj_append_field(&obj, "register_value", "integer", res);
+		mj_append_field(&obj, "smbus_timeout", "integer", (int64_t)smbusto);
+		mj_append_field(&obj, "register", "integer", (int64_t)reg);
+		mj_append_field(&obj, "register_value", "integer", (int64_t)res);
 		mj_asprint(&s, &obj, MJ_JSON_ENCODE);
 		printf("%s",s);
 		if (s != NULL)
 			free(s);
 	} else {
-		printf("SMBUS timeout:%s\n",(smbusto ? "Off" : "On"));
+		printf("SMBUS timeout:%s\n",(smbusto ? "On" : "Off"));
 	}
 
  out:
