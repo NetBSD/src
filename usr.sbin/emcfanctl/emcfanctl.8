@@ -1,4 +1,4 @@
-.\" $NetBSD: emcfanctl.8,v 1.1 2025/03/11 13:56:48 brad Exp $
+.\" $NetBSD: emcfanctl.8,v 1.2 2025/03/12 00:43:28 uwe Exp $
 .\"
 .\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -21,114 +21,146 @@
 .Nm emcfanctl
 .Nd Command line utility to interact with EMC fan controllers
 .Sh SYNOPSIS
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar info
+.Cm info
+.
+.Pp
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar register list
+.Cm register list
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar register read start_register [end_register]
+.Cm register read Ar start_register Op Ar end_register
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar register write register value
+.Cm register write Ar register value
+.
+.Pp
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> status
+.Cm fan Ar n Cm status
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> drive read
+.Cm fan Ar n Cm drive read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> drive write value
+.Cm fan Ar n Cm drive write value
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> divider read
+.Cm fan Ar n Cm divider read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> divider write value
+.Cm fan Ar n Cm divider write value
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> min_expected_rpm read
+.Cm fan Ar n Cm min_expected_rpm read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> min_expected_rpm write 500|1000|2000|4000
+.Cm fan Ar n Cm min_expected_rpm write Li 500|1000|2000|4000
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> edges read
+.Cm fan Ar n Cm edges read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> edges write 3|5|7|9
+.Cm fan Ar n Cm edges write Li 3|5|7|9
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> polarity read
+.Cm fan Ar n Cm polarity read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> polarity inverted
+.Cm fan Ar n Cm polarity inverted
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> polarity non-inverted
+.Cm fan Ar n Cm polarity non-inverted
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> pwm_base_frequency read
+.Cm fan Ar n Cm pwm_base_frequency read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> pwm_base_frequency write 26000|19531|4882|2441
+.Cm fan Ar n Cm pwm_base_frequency write Li 26000|19531|4882|2441
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> pwm_output_type read
+.Cm fan Ar n Cm pwm_output_type read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> pwm_output_type push-pull
+.Cm fan Ar n Cm pwm_output_type push-pull
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar fan <n> pwm_output_type open-drain
+.Cm fan Ar n Cm pwm_output_type open-drain
+.
+.Pp
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar apd read
+.Cm apd read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar apd on
+.Cm apd on
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar apd off
+.Cm apd off
+.
+.Pp
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar smbus_timeout read
+.Cm smbus_timeout read
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar smbus_timeout on
+.Cm smbus_timeout on
+.
 .Nm
-.Op Fl djh
+.Op Fl dhj
 .Ar device
-.Ar smbus_timeout off
+.Cm smbus_timeout off
+.
 .Sh DESCRIPTION
 The
 .Nm
@@ -137,111 +169,157 @@ utility interacts with a Microchip Technology EMC-210x or EMC-230x fan controlle
 driver.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
-.It Fl d Ar debug mode
-.It Fl j Ar for the commands that produce output, output the result in JSON
-.It Fl h Ar displays help
+.Bl -tag -width Fl
+.It Fl d
+Debug mode.
+.It Fl h
+Display help.
+.It Fl j
+For the commands that produce output, output the result in JSON.
 .El
 .Pp
 The commands are as follows:
-.Bl -tag -width indent
-.It Ar info
-Print the family, chip id and chip revision for the specific device.
-.It Ar register list
-Print the valid registers for the particular chip at the specific device.
-.It Ar register read start_register [end_register]
-Print the values present in the range of registers from start_register to
-end_register.  If end_register is missing, just print one register at
-start_register.  It is possible to use the text names given out by the list
-command for start_register or end_register.
-.It Ar register write a_register value
-Write value into the register called a_register.
+.
+.Bl -tag -width Cm
+.It Cm info
+Print the family, chip id and chip revision for the specific
+.Ar device .
+.It Cm register list
+Print the valid registers for the particular chip at the specific
+.Ar device .
+.It Cm register read Ar start_register Op Ar end_register
+Print the values present in the range of registers from
+.Ar start_register
+to
+.Ar end_register .
+If
+.Ar end_register
+is missing, just print one register at
+.Ar start_register .
+It is possible to use the text names given out by the
+.Cm list
+command for
+.Ar start_register
+or
+.Ar end_register .
+.It Cm register write Ar a_register value
+Write
+.Ar value
+into the register called
+.Ar a_register .
 .El
+.
 .Pp
 The EMC210X and EMC230X fan controllers have a tremendous number of
 features and options and can run in number of different modes.
 What follows are some short cut commands that can be used for some of
 the more common things one might want to do with a particular
 controller.
-.Bl -tag -width indent
-.It Ar fan <n> status
-Print the stall, spin up and drive status for a particular fan.  Note
-that the fan will be marked as stalled if the RPMs are below the
+.Pp \" XXX: compact hack alert
+.Bl -tag -width Cm -compact
+.It Cm fan Ar n Cm status
+Print the stall, spin up and drive status for a particular fan.
+Note that the fan will be marked as stalled if the RPMs are below the
 minumum expected RPM level.
-.It Ar fan <n> drive read
+.Pp
+.It Cm fan Ar n Cm drive read
 Print the current value of the drive level for a particular fan.
-.It Ar fan <n> drive write value
+.Pp
+.It Cm fan Ar n Cm drive write value
 Set the drive level for a particular fan to value.
-.It Ar fan <n> divider read
+.Pp
+.It Cm fan Ar n Cm divider read
 Print the current value of the frequency divider for a particular fan.
-.It Ar fan <n> drive write value
+.Pp
+.It Cm fan Ar n Cm drive write value
 Set the frequency divider for a particular fan to value.
-.It Ar fan <n> drive min_expected_rpm read
+.Pp
+.It Cm fan Ar n Cm drive min_expected_rpm read
 Print the current minimum expected RPM that a fan is suppose to run
 at.
 If the RPMs are lower than the expected value, the fan will be
 marked as stalled and the RPM value in
 .Xr envstat 8
-will be N/A.
-.It Ar fan <n> drive min_expected_rpm write 500|1000|2000|4000
+will be
+.Ql N/A .
+.Pp
+.It Cm fan Ar n Cm drive min_expected_rpm write Li 500|1000|2000|4000
 Set the minimum expected RPM value for a fan.
-.It Ar fan <n> drive edges read
+.Pp
+.It Cm fan Ar n Cm drive edges read
 Print the number of edges that a particular fan has.
 This value, along with hw.emcfan0.poles, is used in the tachometer
 algorithm to determine the RPM.
-.It Ar fan <n> drive edges write 3|5|7|9
+.Pp
+.It Cm fan Ar n Cm drive edges write Li 3|5|7|9
 Set the number of edges that the fan has.
-.It Ar fan <n> polarity read
-.It Ar fan <n> polarity inverted
-.It Ar fan <n> polarity non-inverted
+.Pp
+.It Cm fan Ar n Cm polarity read
+.It Cm fan Ar n Cm polarity inverted
+.It Cm fan Ar n Cm polarity non-inverted
 Print or set the polarity of the drive level for the fan.
 When the polarity is inverted a drive level of 0 will be maximum
 drive, and when the polarity is non-inverted, a drive level of 0 is
 minimum drive.
-.It Ar fan <n> drive pwm_base_frequency read
+.Pp
+.It Cm fan Ar n Cm drive pwm_base_frequency read
 Print the number of PWM base frequency for a particular fan.
-.It Ar fan <n> drive pwm_base_frequency write 26000|19531|4882|2441
+.Pp
+.It Cm fan Ar n Cm drive pwm_base_frequency write Li 26000|19531|4882|2441
 Set the base PWM frequency for a particular fan.
-.It Ar fan <n> pwm_output_type read
-.It Ar fan <n> pwm_output_type push-pull
-.It Ar fan <n> pwm_output_type open-drain
+.Pp
+.It Cm fan Ar n Cm pwm_output_type read
+.It Cm fan Ar n Cm pwm_output_type push-pull
+.It Cm fan Ar n Cm pwm_output_type open-drain
 Print or set the PWM output type for a particular fan.
-.It Ar apd read
-.It Ar apd on
-.It Ar apd off
+.Pp
+.It Cm apd read
+.It Cm apd on
+.It Cm apd off
 Print, turn on or turn off the anti-parallel diode mode on the chip.
 The EMC2103-2/4, EMC2104 and EMC2106 have the ability to connect two
 temperature sensor diodes together with just two wires.
 In order to be able to read both diodes, APD needs to be turned on.
-.It Ar smbus_timeout read
-.It Ar smbus_timeout on
-.It Ar smbus_timeout off
-Print, turn on or turn off SMBUS timeout.
-I2C and SMBUS are very simular, but a difference is that SMBUS clients
-can trigger a bus timeout if operations are not performed against the
-chip in a certain amount of time.
-In order to be completely I2C compliant, the SMBUS timeout should be
-turned off.
+.Pp
+.It Cm smbus_timeout read
+.It Cm smbus_timeout on
+.It Cm smbus_timeout off
+Print, turn on or turn off
+.Tn SMBUS
+timeout.
+.Tn I2C
+and
+.Tn SMBUS
+are very simular, but a difference is that
+.Tn SMBUS
+clients can trigger a bus timeout if operations are not performed
+against the chip in a certain amount of time.
+In order to be completely
+.Tn I2C
+compliant, the
+.Tn SMBUS
+timeout should be turned off.
 Some of the EMC product default this to on and some default it to off.
 .El
 .Pp
 Not all of the above options apply to all chip types and the
 .Nm
 command will error if the option does not apply to a particular device.
+.
 .Sh EXAMPLES
-.Pp
-This will print the chip family and product id for a particular device.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 info"
-.Bd -literal
+.
+This will print the chip family and product id for a particular device:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 info
 Product Family: EMC230x
 Chip name: EMC2301
 Revision: 1
+.Ed
+.
 .Pp
-This is the same, except in JSON.
-.Pp
-.Dl "emcfanctl -j /dev/emcfan0 info | json_pp"
-.Bd -literal
+This is the same, except in JSON:
+.Bd -literal -offset indent
+# emcfanctl -j /dev/emcfan0 info | json_pp
 {
    "chip_name" : "EMC2301",
    "family_name" : "EMC230x",
@@ -249,12 +327,12 @@ This is the same, except in JSON.
    "product_id" : 55,
    "revision" : 1
 }
+.Ed
 .Pp
 This reads a number of registers from the chip and output the result
-in a JSON array.
-.Pp
-.Dl "emcfanctl -j /dev/emcfan0 register read 0x20 0x29 | json_pp"
-.Bd -literal
+in a JSON array:
+.Bd -literal -offset indent
+# emcfanctl -j /dev/emcfan0 register read 0x20 0x29 | json_pp
 [
    {
       "register" : 32,
@@ -287,103 +365,119 @@ in a JSON array.
       "register_value" : 0
    }
 ]
+.Ed
 .Pp
-You can use names for the registers.  The following produces the same
-result as the previous example, except not in JSON.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 register read configuration drive_fail_status"
-.Bd -literal
+You can use names for the registers.
+The following produces the same result as the previous example, except
+not in JSON:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 register read configuration drive_fail_status
 configuration;32 (0x20);64 (0x40)
 fan_status;36 (0x24);0 (0x00)
 fan_stall_status;37 (0x25);0 (0x00)
 fan_spin_status;38 (0x26);0 (0x00)
 drive_fail_status;39 (0x27);0 (0x00)
+.Ed
 .Pp
-This writes a uint8_t value to a particular register.
+This writes a
+.Vt uint8_t
+value to a particular register:
 .Pp
-.Dl "emcfanctl /dev/emcfan0 register write configuration 0xc0"
+.Dl "# emcfanctl /dev/emcfan0 register write configuration 0xc0"
 .Pp
-This read back the 0x20 register, also known as "configuration" as a
-JSON array.  Using the jq command the value is extracted.
-.Pp
-.Dl "emcfanctl -j /dev/emcfan0 register read 0x20 | jq -r '.[0].register_value'"
-.Bd -literal
+This read back the 0x20 register, also known as
+.Ql configuration
+as a JSON array.
+Using the
+.Xr jq 1
+command the value is extracted.
+.Bd -literal -offset indent
+# emcfanctl -j /dev/emcfan0 register read 0x20 | jq -r '.[0].register_value'
 192
+.Ed
 .Pp
-Read the current drive level for fan #1 on a particular device.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 drive read"
-.Pp
-.Bd -literal
+Read the current drive level for fan #1 on a particular device:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 fan 1 drive read
 Drive:96
+.Ed
 .Pp
-Change the drive level for fan #1.  A number of other variables effect
-such as polarity and the PWM divider effect what the drive level
-means.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 drive write 0x80"
-.Dl "emcfanctl /dev/emcfan0 fan 1 drive read"
-.Bd -literal
+Change the drive level for fan #1.
+A number of other variables such as polarity and the PWM divider
+affect what the drive level means.
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 fan 1 drive write 0x80
+# emcfanctl /dev/emcfan0 fan 1 drive read
 Drive:128
+.Ed
 .Pp
-If the envstat command is used to look at the RPM of a fan, it will
-produce something like the following
-.Bd -literal
+If the
+.Xr envstat 8
+command is used to look at the RPM of a fan, it will produce something
+like the following:
+.Bd -literal -offset indent
                     Current  CritMax  WarnMax  WarnMin  CritMin  Unit
 [emcfan0]
            FAN 1:      1159                                       RPM
+.Ed
 .Pp
-This is below the minumum expected RPM that the fan is suppose to run at.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 min_expected_rpm read"
-.Bd -literal
+This is below the minumum expected RPM that the fan is suppose to run at:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 fan 1 min_expected_rpm read
 Minumum expected rpm:500
+.Ed
 .Pp
 If the minimum expected RPM is changed to be higher than what the fan
 is able to run at, that will simulate a stalled fan.
 .Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 min_expected rpm write 4000"
+.Dl "# emcfanctl /dev/emcfan0 fan 1 min_expected rpm write 4000"
 .Pp
-Using the envstat command again should produce the following if the
-fan is not able to run at 4000 RPM.
-.Bd -literal
+Using the
+.Xr envstat 8
+command again should produce the following if the fan is not able to
+run at 4000\~RPM:
+.Bd -literal -offset indent
                     Current  CritMax  WarnMax  WarnMin  CritMin  Unit
 [emcfan0]
            FAN 1:       N/A
+.Ed
 .Pp
-The fan will be marked as having stalled.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 status"
-.Bd -literal
+The fan will be marked as having stalled:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 fan 1 status
 Stalled: Yes
 Spin up failed: No
 Drive failed: No
+.Ed
 .Pp
 The minimum expected RPM should be set to just below the lowest value
-that the fan is expected to run at.  The minumum expected RPM effects
-the accuracy of the tachometers and should be as high as it can be
-made while still producing usable RPM values.
+that the fan is expected to run at.
+The minumum expected RPM effects the accuracy of the tachometers and
+should be as high as it can be made while still producing usable RPM
+values.
 .Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 min_expected rpm write 500"
+.Dl "# emcfanctl /dev/emcfan0 fan 1 min_expected rpm write 500"
 .Pp
-Using the envstat command again
-.Pp
-.Bd -literal
+Using the
+.Xr envstat 8
+command again:
+.Bd -literal -offset indent
                     Current  CritMax  WarnMax  WarnMin  CritMin  Unit
 [emcfan0]
            FAN 1:      1176                                       RPM
+.Ed
 .Pp
-The fan is not marked as having stalled.
-.Pp
-.Dl "emcfanctl /dev/emcfan0 fan 1 status"
-.Bd -literal
+The fan is not marked as having stalled:
+.Bd -literal -offset indent
+# emcfanctl /dev/emcfan0 fan 1 status
 Stalled: No
 Spin up failed: No
 Drive failed: No
-.Pp
+.Ed
 .Sh SEE ALSO
 .Xr emcfan 4 ,
 .Xr iic 4 ,
+.Xr envstat 8
 .Sh HISTORY
 The
 .Nm
