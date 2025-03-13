@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.409 2024/02/10 09:24:18 andvar Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.410 2025/03/13 12:48:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.409 2024/02/10 09:24:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.410 2025/03/13 12:48:21 riastradh Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -123,7 +123,6 @@ sigset_t		stopsigmask	__cacheline_aligned;
 static sigset_t		vforksigmask	__cacheline_aligned;
 sigset_t		sigcantmask	__cacheline_aligned;
 
-static void	ksiginfo_exechook(struct proc *, void *);
 static void	proc_stop(struct proc *, int);
 static void	proc_stop_done(struct proc *, int);
 static void	proc_stop_callout(void *);
@@ -217,8 +216,6 @@ signal_init(void)
 	    &sigactspool_allocator : NULL, IPL_NONE, sigacts_ctor, NULL, NULL);
 	ksiginfo_cache = pool_cache_init(sizeof(ksiginfo_t), 0, 0, 0,
 	    "ksiginfo", NULL, IPL_VM, NULL, NULL, NULL);
-
-	exechook_establish(ksiginfo_exechook, NULL);
 
 	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
@@ -435,29 +432,6 @@ execsigs(struct proc *p)
 	l->l_sigstk = SS_INIT;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
-	mutex_exit(p->p_lock);
-
-	ksiginfo_queue_drain(&kq);
-}
-
-/*
- * ksiginfo_exechook:
- *
- *	Free all pending ksiginfo entries from a process on exec.
- *	Additionally, drain any unused ksiginfo structures in the
- *	system back to the pool.
- *
- *	XXX This should not be a hook, every process has signals.
- */
-static void
-ksiginfo_exechook(struct proc *p, void *v)
-{
-	ksiginfoq_t kq;
-
-	ksiginfo_queue_init(&kq);
-
-	mutex_enter(p->p_lock);
-	sigclearall(p, NULL, &kq);
 	mutex_exit(p->p_lock);
 
 	ksiginfo_queue_drain(&kq);

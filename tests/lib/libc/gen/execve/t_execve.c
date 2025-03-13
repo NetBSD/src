@@ -1,4 +1,4 @@
-/*	$NetBSD: t_execve.c,v 1.3 2025/03/13 01:27:27 riastradh Exp $	*/
+/*	$NetBSD: t_execve.c,v 1.4 2025/03/13 12:48:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_execve.c,v 1.3 2025/03/13 01:27:27 riastradh Exp $");
+__RCSID("$NetBSD: t_execve.c,v 1.4 2025/03/13 12:48:22 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -73,10 +73,6 @@ ATF_TC_BODY(t_execve_sig, tc)
 
 	snprintf(h_execsig, sizeof(h_execsig), "%s/../h_execsig", srcdir);
 	REQUIRE_LIBC(signal(SIGPIPE, SIG_IGN), SIG_ERR);
-
-	atf_tc_expect_fail("PR kern/580911: after fork/execve or posix_spawn,"
-	    " parent kill(child, SIGTERM) has race condition"
-	    " making it unreliable");
 
 	for (start = time(NULL); time(NULL) - start <= 10;) {
 		int fd[2];
