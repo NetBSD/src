@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.11 2018/02/04 01:13:45 mrg Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.12 2025/03/13 06:36:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ int	setcontext(const ucontext_t *);
 #pragma GCC diagnostic push
 #ifndef  __cplusplus
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
+/* LINTED 287 "function declaration is not a prototype" */
 #endif
 void	makecontext(ucontext_t *, void (*)(), int, ...);
 #pragma GCC diagnostic pop
