@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.52 2025/01/25 19:12:12 christos Exp $
+# $NetBSD: Makefile.inc,v 1.53 2025/03/13 06:35:34 rillig Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -333,6 +333,7 @@ COPTS.${src}+=	-D__SOFT_FP__
 .endfor
 
 LINTFLAGS.GCDAProfiling.c += -X 123,132,351 # Ok, this is just sloppy
+LINTFLAGS.GCDAProfiling.c += -X 286,287 # missing prototypes
 LINTFLAGS.GCDAProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfiling.c += -X 351
