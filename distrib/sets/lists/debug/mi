@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.468 2025/03/11 13:56:48 brad Exp $
+# $NetBSD: mi,v 1.469 2025/03/13 01:27:27 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2016,6 +2016,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db/t_db_hash_seq.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/exect/t_exect.debug		tests-kernel-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve/t_execve.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/gen/h_execsig.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawnattr.debug	tests-kernel-tests	debug,atf,compattestfile

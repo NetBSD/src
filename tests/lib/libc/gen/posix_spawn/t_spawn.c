@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawn.c,v 1.8 2022/05/31 11:22:34 andvar Exp $ */
+/* $NetBSD: t_spawn.c,v 1.9 2025/03/13 01:27:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2012, 2021 The NetBSD Foundation, Inc.
@@ -29,27 +29,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spawn.c,v 1.8 2022/05/31 11:22:34 andvar Exp $");
+__RCSID("$NetBSD: t_spawn.c,v 1.9 2025/03/13 01:27:27 riastradh Exp $");
 
 #include <atf-c.h>
 
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
 #include <spawn.h>
-#include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <fcntl.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "fa_spawn_utils.h"
-
+#include "h_macros.h"
 
 static void check_success(const char *, int, ...);
 
@@ -583,6 +587,47 @@ ATF_TC_BODY(t_spawn_fchdir_closed, tc)
 	posix_spawnattr_destroy(&attr);
 }
 
+ATF_TC(t_spawn_sig);
+ATF_TC_HEAD(t_spawn_sig, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that posix_spawn does not drop pending signals");
+}
+ATF_TC_BODY(t_spawn_sig, tc)
+{
+	const char *srcdir = atf_tc_get_config_var(tc, "srcdir");
+	char h_execsig[PATH_MAX];
+	time_t start;
+
+	snprintf(h_execsig, sizeof(h_execsig), "%s/../h_execsig", srcdir);
+	REQUIRE_LIBC(signal(SIGPIPE, SIG_IGN), SIG_ERR);
+
+	atf_tc_expect_fail("PR kern/580911: after fork/execve or posix_spawn,"
+	    " parent kill(child, SIGTERM) has race condition"
+	    " making it unreliable");
+
+	for (start = time(NULL); time(NULL) - start <= 10;) {
+		int fd[2];
+		char *const argv[] = {h_execsig, NULL};
+		pid_t pid;
+		int status;
+
+		RL(pipe(fd));
+		RZ(posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL));
+		RL(close(fd[0]));
+		RL(kill(pid, SIGTERM));
+		if (write(fd[1], (char[]){0}, 1) == -1 && errno != EPIPE)
+			atf_tc_fail("write failed: %s", strerror(errno));
+		RL(waitpid(pid, &status, 0));
+		ATF_REQUIRE_MSG(WIFSIGNALED(status),
+		    "child exited with status 0x%x", status);
+		ATF_REQUIRE_EQ_MSG(WTERMSIG(status), SIGTERM,
+		    "child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+		RL(close(fd[1]));
+	}
+}
+
 #undef CHDIR
 #undef FCHDIR
 #undef CHDIRPATH
@@ -607,6 +652,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, t_spawn_fchdir_file);
 	ATF_TP_ADD_TC(tp, t_spawn_fchdir_neg_fd);
 	ATF_TP_ADD_TC(tp, t_spawn_fchdir_closed);
+	ATF_TP_ADD_TC(tp, t_spawn_sig);
 
 	return atf_no_error();
 }
