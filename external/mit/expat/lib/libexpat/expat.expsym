@@ -53,6 +53,7 @@ XML_SetNotStandaloneHandler
 XML_SetNotationDeclHandler
 XML_SetParamEntityParsing
 XML_SetProcessingInstructionHandler
+XML_SetReparseDeferralEnabled
 XML_SetReturnNSTriplet
 XML_SetSkippedEntityHandler
 XML_SetStartCdataSectionHandler
@@ -82,6 +83,7 @@ XmlSizeOfUnknownEncoding
 XmlUtf16Encode
 XmlUtf8Encode
 _INTERNAL_trim_to_complete_utf8_characters
+g_reparseDeferralEnabledDefault
 testingAccountingGetCountBytesDirect
 testingAccountingGetCountBytesIndirect
 unsignedCharToPrintable
