@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $ */
+/* $NetBSD: expr.y,v 1.47 2025/03/14 21:48:10 rillig Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $");
+__RCSID("$NetBSD: expr.y,v 1.47 2025/03/14 21:48:10 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -400,6 +400,8 @@ yylex(void)
 
 	if (!p)
 		retval = 0;
+	else if (p[0] == '\0')
+		retval = STRING;
 	else if (p[1] == '\0') {
 		const char *w = strchr(x, p[0]);
 		if (w) {
