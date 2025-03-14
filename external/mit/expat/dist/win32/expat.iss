@@ -14,7 +14,9 @@
 ; Copyright (c) 2001      Tim Peters <tim.peters@gmail.com>
 ; Copyright (c) 2001-2005 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
 ; Copyright (c) 2006-2017 Karl Waclawek <karl@waclawek.net>
-; Copyright (c) 2007-2022 Sebastian Pipping <sebastian@pipping.org>
+; Copyright (c) 2007-2025 Sebastian Pipping <sebastian@pipping.org>
+; Copyright (c) 2022      Johnny Jazeix <jazeix@gmail.com>
+; Copyright (c) 2024      Dag-Erling Smørgrav <des@des.dev>
 ; Licensed under the MIT license:
 ;
 ; Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -36,14 +38,14 @@
 ; OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 ; USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define expatVer "2.4.6"
+#define expatVer "2.7.0"
 
 [Setup]
 AppName=Expat
 AppId=expat
 AppVersion={#expatVer}
 AppVerName=Expat {#expatVer}
-AppCopyright=Copyright © 1997-2022 Thai Open Source Software Center, Clark Cooper, and the Expat maintainers
+AppCopyright=Copyright © 1997-2025 Thai Open Source Software Center, Clark Cooper, and the Expat maintainers
 AppPublisher=The Expat Developers
 AppPublisherURL=https://libexpat.github.io/
 AppSupportURL=https://libexpat.github.io/
@@ -73,9 +75,10 @@ Flags: ignoreversion; Source: COPYING;                      DestDir: "{app}"; De
 Flags: ignoreversion; Source: README.md;                    DestDir: "{app}"; DestName: README.txt
 Flags: ignoreversion; Source: doc\*.html;                   DestDir: "{app}\Doc"
 Flags: ignoreversion; Source: doc\*.css;                    DestDir: "{app}\Doc"
-Flags: ignoreversion; Source: doc\*.xml;                    DestDir: "{app}\Doc"
+Flags: ignoreversion; Source: doc\*.xml;                    DestDir: "{app}\Source\doc"
 Flags: ignoreversion; Source: win32\bin\Release\*.dll;      DestDir: "{app}\Bin"
 Flags: ignoreversion; Source: win32\bin\Release\*.lib;      DestDir: "{app}\Bin"
+Flags: ignoreversion; Source: win32\version.rc.cmake;       DestDir: "{app}\Source\win32"
 Flags: ignoreversion; Source: win32\README.txt;             DestDir: "{app}\Source"
 Flags: ignoreversion; Source: AUTHORS;                      DestDir: "{app}\Source"
 Flags: ignoreversion; Source: Changes;                      DestDir: "{app}\Source"
@@ -89,12 +92,12 @@ Flags: ignoreversion; Source: cmake\expat-config.cmake.in;  DestDir: "{app}\Sour
 Flags: ignoreversion; Source: fuzz\*.c;                     DestDir: "{app}\Source\fuzz"
 Flags: ignoreversion; Source: lib\*.c;                      DestDir: "{app}\Source\lib"
 Flags: ignoreversion; Source: lib\*.h;                      DestDir: "{app}\Source\lib"
-Flags: ignoreversion; Source: lib\*.def;                    DestDir: "{app}\Source\lib"
+Flags: ignoreversion; Source: lib\*.def.cmake;              DestDir: "{app}\Source\lib"
 Flags: ignoreversion; Source: examples\*.c;                 DestDir: "{app}\Source\examples"
 Flags: ignoreversion; Source: tests\*.c;                    DestDir: "{app}\Source\tests"
 Flags: ignoreversion; Source: tests\*.cpp;                  DestDir: "{app}\Source\tests"
 Flags: ignoreversion; Source: tests\*.h;                    DestDir: "{app}\Source\tests"
-Flags: ignoreversion; Source: tests\README.txt;             DestDir: "{app}\Source\tests"
+Flags: ignoreversion; Source: tests\README.md;              DestDir: "{app}\Source\tests"
 Flags: ignoreversion; Source: tests\benchmark\*.c;          DestDir: "{app}\Source\tests\benchmark"
 Flags: ignoreversion; Source: tests\benchmark\README.txt;   DestDir: "{app}\Source\tests\benchmark"
 Flags: ignoreversion; Source: xmlwf\*.c*;                   DestDir: "{app}\Source\xmlwf"
