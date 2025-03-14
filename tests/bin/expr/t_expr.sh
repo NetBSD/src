@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.7 2023/05/02 00:11:27 gutteridge Exp $
+# $NetBSD: t_expr.sh,v 1.8 2025/03/14 22:12:00 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -103,7 +103,7 @@ overflow_body() {
 
 atf_test_case gtkmm
 gtkmm_head() {
-	atf_set "descr" "Test from gtk-- configure that cause problems on old expr"
+	atf_set "descr" "Tests from gtk-- configure that cause problems on old expr"
 }
 gtkmm_body() {
 	test_expr '3 \> 3 \| 3 = 3 \& 4 \> 4 \| 3 = 3 \& 4 = 4 \& 5 \>= 5' '1'
@@ -125,7 +125,7 @@ colon_vs_math_body() {
 
 atf_test_case arithmetic_ops
 arithmetic_ops_head() {
-	atf_set "descr" "Dangling arithemtic operator"
+	atf_set "descr" "Dangling arithmetic operator"
 }
 arithmetic_ops_body() {
 	test_expr '.java_wrapper : /' '0'
@@ -232,6 +232,20 @@ regex_body() {
 	test_expr '1/2 : .\*/\\\(.\*\\\)' '2'
 }
 
+atf_test_case string_length
+string_length_head() {
+	atf_set "descr" "Test the string length operator"
+}
+string_length_body() {
+	test_expr 'length ""' '0'
+	test_expr 'length +' 'expr: syntax error'
+	test_expr 'length \!' '1'
+	test_expr 'length ++' '2'
+
+	# POSIX says "unspecified results"
+	test_expr 'length length' '6'
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case lang
@@ -248,4 +262,5 @@ atf_init_test_cases()
 	atf_add_test_case math_precedence
 	atf_add_test_case precedence
 	atf_add_test_case regex
+	atf_add_test_case string_length
 }
