@@ -124,7 +124,7 @@ bsd_kvm_target_open (const char *arg, int from_tty)
 	filename = gdb_abspath (filename.c_str ());
     }
 
-  execfile = get_exec_file (0);
+  execfile = get_exec_file (1);
   temp_kd = kvm_openfiles (execfile, filename.c_str (), NULL,
 			   write_files ? O_RDWR : O_RDONLY, errbuf);
   if (temp_kd == NULL)
