@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.47 2025/03/14 21:48:10 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.48 2025/03/15 09:33:02 rillig Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.47 2025/03/14 21:48:10 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.48 2025/03/15 09:33:02 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,9 @@ static void yyerror(const char *, ...) __dead;
 static int yylex(void);
 static int is_zero_or_null(const char *);
 static int is_integer(const char *);
-static int64_t perform_arith_op(const char *, const char *, const char *);
+static const char *eval_arith(const char *, const char *, const char *);
+static int eval_compare(const char *, const char *, const char *);
+static const char *eval_match(const char *, const char *);
 
 #define YYSTYPE	const char *
 
@@ -70,154 +72,37 @@ static int64_t perform_arith_op(const char *, const char *, const char *);
 
 %%
 
-exp:	expr = {
+exp:	expr {
 		(void) printf("%s\n", $1);
 		return (is_zero_or_null($1));
 		}
 	;
 
 expr:	item { $$ = $1; }
-	| expr SPEC_OR expr = {
-		/*
-		 * Return evaluation of first expression if it is neither
-		 * an empty string nor zero; otherwise, returns the evaluation
-		 * of second expression.
-		 */
+	| expr SPEC_OR expr {
 		if (!is_zero_or_null($1))
 			$$ = $1;
 		else
 			$$ = $3;
 		}
-	| expr SPEC_AND expr = {
-		/*
-		 * Returns the evaluation of first expr if neither expression
-		 * evaluates to an empty string or zero; otherwise, returns
-		 * zero.
-		 */
+	| expr SPEC_AND expr {
 		if (!is_zero_or_null($1) && !is_zero_or_null($3))
 			$$ = $1;
 		else
 			$$ = "0";
 		}
-	| expr SPEC_REG expr = {
-		/*
-		 * The ``:'' operator matches first expr against the second,
-		 * which must be a regular expression.
-		 */
-		regex_t rp;
-		regmatch_t rm[2];
-		int eval;
-
-		/* compile regular expression */
-		if ((eval = regcomp(&rp, $3, REG_BASIC)) != 0) {
-			char errbuf[256];
-			(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
-			yyerror("%s", errbuf);
-			/* NOT REACHED */
+	| expr SPEC_REG expr {
+		$$ = eval_match($1, $3);
 		}
-		
-		/* compare string against pattern --  remember that patterns 
-		   are anchored to the beginning of the line */
-		if (regexec(&rp, $1, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
-			char *val;
-			if (rm[1].rm_so >= 0) {
-				(void) asprintf(&val, "%.*s",
-					(int) (rm[1].rm_eo - rm[1].rm_so),
-					$1 + rm[1].rm_so);
-			} else {
-				(void) asprintf(&val, "%d",
-					(int)(rm[0].rm_eo - rm[0].rm_so));
-			}
-			if (val == NULL)
-				err(1, NULL);
-			$$ = val;
-		} else {
-			if (rp.re_nsub == 0) {
-				$$ = "0";
-			} else {
-				$$ = "";
-			}
-		}
-
-		}
-	| expr ADD_SUB_OPERATOR expr = {
-		/* Returns the results of addition, subtraction */
-		char *val;
-		int64_t res;
-		
-		res = perform_arith_op($1, $2, $3);
-		(void) asprintf(&val, "%lld", (long long int) res);
-		if (val == NULL)
-			err(1, NULL);
-		$$ = val;
+	| expr ADD_SUB_OPERATOR expr {
+		$$ = eval_arith($1, $2, $3);
                 }
 
-	| expr MUL_DIV_MOD_OPERATOR expr = {
-		/* 
-		 * Returns the results of multiply, divide or remainder of 
-		 * numeric-valued arguments.
-		 */
-		char *val;
-		int64_t res;
-
-		res = perform_arith_op($1, $2, $3);
-		(void) asprintf(&val, "%lld", (long long int) res);
-		if (val == NULL)
-			err(1, NULL);
-		$$ = val;
-
+	| expr MUL_DIV_MOD_OPERATOR expr {
+		$$ = eval_arith($1, $2, $3);
 		}
-	| expr COMPARE expr = {
-		/*
-		 * Returns the results of integer comparison if both arguments
-		 * are integers; otherwise, returns the results of string
-		 * comparison using the locale-specific collation sequence.
-		 * The result of each comparison is 1 if the specified relation
-		 * is true, or 0 if the relation is false.
-		 */
-
-		int64_t l, r;
-		int res;
-
-		res = 0;
-
-		/*
-		 * Slight hack to avoid differences in the compare code
-		 * between string and numeric compare.
-		 */
-		if (is_integer($1) && is_integer($3)) {
-			/* numeric comparison */
-			l = strtoll($1, NULL, 10);
-			r = strtoll($3, NULL, 10);
-		} else {
-			/* string comparison */
-			l = strcoll($1, $3);
-			r = 0;
-		}
-
-		switch($2[0]) {	
-		case '=': /* equal */
-			res = (l == r);
-			break;
-		case '>': /* greater or greater-equal */
-			if ($2[1] == '=')
-				res = (l >= r);
-			else
-				res = (l > r);
-			break;
-		case '<': /* lower or lower-equal */
-			if ($2[1] == '=')
-				res = (l <= r);
-			else
-				res = (l < r);
-			break;
-		case '!': /* not equal */
-			/* the check if this is != was done in yylex() */
-			res = (l != r);
-		}
-
-		$$ = (res) ? "1" : "0";
-
+	| expr COMPARE expr {
+		$$ = eval_compare($1, $2, $3) ? "1" : "0";
 		}
 	| LEFT_PARENT expr RIGHT_PARENT { $$ = $2; }
 	| LENGTH expr {
@@ -270,8 +155,8 @@ is_integer(const char *str)
 	return (endptr[0] == '\0');
 }
 
-static int64_t
-perform_arith_op(const char *left, const char *op, const char *right)
+static const char *
+eval_arith(const char *left, const char *op, const char *right)
 {
 	int64_t res, l, r;
 
@@ -380,7 +265,77 @@ perform_arith_op(const char *left, const char *op, const char *right)
 		}
 		break;
 	}
-	return res;
+
+	char *val;
+	(void)asprintf(&val, "%lld", (long long int)res);
+	if (val == NULL)
+		err(1, NULL);
+	return val;
+}
+
+static int
+eval_compare(const char *left, const char *op, const char *right)
+{
+	int64_t l, r;
+
+	if (is_integer(left) && is_integer(right)) {
+		l = strtoll(left, NULL, 10);
+		r = strtoll(right, NULL, 10);
+	} else {
+		l = strcoll(left, right);
+		r = 0;
+	}
+
+	switch (op[0]) {
+	case '=':
+		return l == r;
+	case '>':
+		if (op[1] == '=')
+			return l >= r;
+		else
+			return l > r;
+	case '<':
+		if (op[1] == '=')
+			return l <= r;
+		else
+			return l < r;
+	default:
+		return l != r;
+	}
+}
+
+static const char *
+eval_match(const char *str, const char *re)
+{
+	regex_t rp;
+	regmatch_t rm[2];
+	int eval;
+
+	if ((eval = regcomp(&rp, re, REG_BASIC)) != 0) {
+		char errbuf[256];
+		(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
+		yyerror("%s", errbuf);
+	}
+
+	if (regexec(&rp, str, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
+		char *val;
+		if (rm[1].rm_so >= 0) {
+			(void)asprintf(&val, "%.*s",
+				(int)(rm[1].rm_eo - rm[1].rm_so),
+				str + rm[1].rm_so);
+		} else {
+			(void)asprintf(&val, "%d",
+				(int)(rm[0].rm_eo - rm[0].rm_so));
+		}
+		if (val == NULL)
+			err(1, NULL);
+		return val;
+	}
+
+	if (rp.re_nsub == 0)
+		return "0";
+	else
+		return "";
 }
 
 static const char *x = "|&=<>+-*/%:()";
