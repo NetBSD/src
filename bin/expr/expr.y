@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.50 2025/03/15 10:31:28 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.51 2025/03/15 14:26:16 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.50 2025/03/15 10:31:28 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.51 2025/03/15 14:26:16 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -60,7 +60,10 @@ static const char *eval_match(const char *, const char *);
 #define YYSTYPE	const char *
 
 %}
-%token STRING
+
+%expect 0
+
+%token STRING LPAREN RPAREN
 %left SPEC_OR
 %left SPEC_AND
 %left COMPARE
@@ -68,7 +71,6 @@ static const char *eval_match(const char *, const char *);
 %left MUL_DIV_MOD_OPERATOR
 %left SPEC_REG
 %left LENGTH
-%left LEFT_PARENT RIGHT_PARENT
 
 %%
 
@@ -84,10 +86,7 @@ expr:	item
 		if ($$)
 			skip_level++;
 	} expr {
-		if ($3)
-			$$ = $1;
-		else
-			$$ = $4;
+		$$ = $3 ? $1 : $4;
 		if ($3)
 			skip_level--;
 	}
@@ -96,10 +95,7 @@ expr:	item
 		if (!$$)
 			skip_level++;
 	} expr {
-		if ($3 && !is_empty_or_zero($4))
-			$$ = $1;
-		else
-			$$ = "0";
+		$$ = $3 && !is_empty_or_zero($4) ? $1 : "0";
 		if (!$3)
 			skip_level--;
 	}
@@ -115,13 +111,13 @@ expr:	item
 |	expr COMPARE expr {
 		$$ = skip_level == 0 && eval_compare($1, $2, $3) ? "1" : "0";
 	}
-|	LEFT_PARENT expr RIGHT_PARENT {
+|	LPAREN expr RPAREN {
 		$$ = $2;
 	}
 |	LENGTH expr {
 		char *ln;
 
-		asprintf(&ln, "%ld", (long) strlen($2));
+		asprintf(&ln, "%ld", (long)strlen($2));
 		if (ln == NULL)
 			err(1, NULL);
 		$$ = ln;
@@ -129,14 +125,15 @@ expr:	item
 ;
 
 item:	STRING
-	| ADD_SUB_OPERATOR
-	| MUL_DIV_MOD_OPERATOR
-	| COMPARE
-	| SPEC_OR
-	| SPEC_AND
-	| SPEC_REG
-	| LENGTH
-	;
+|	ADD_SUB_OPERATOR
+|	MUL_DIV_MOD_OPERATOR
+|	COMPARE
+|	SPEC_OR
+|	SPEC_AND
+|	SPEC_REG
+|	LENGTH
+;
+
 %%
 
 static int
@@ -312,11 +309,11 @@ eval_match(const char *str, const char *re)
 		return "";
 }
 
-static const char *x = "|&=<>+-*/%:()";
+static const char x[] = "|&=<>+-*/%:()";
 static const int x_token[] = {
 	SPEC_OR, SPEC_AND, COMPARE, COMPARE, COMPARE, ADD_SUB_OPERATOR,
 	ADD_SUB_OPERATOR, MUL_DIV_MOD_OPERATOR, MUL_DIV_MOD_OPERATOR, 
-	MUL_DIV_MOD_OPERATOR, SPEC_REG, LEFT_PARENT, RIGHT_PARENT
+	MUL_DIV_MOD_OPERATOR, SPEC_REG, LPAREN, RPAREN
 };
 
 static int handle_ddash = 1;
@@ -327,35 +324,24 @@ yylex(void)
 	const char *p = *av++;
 	int retval;
 
-	if (!p)
+	if (p == NULL)
 		retval = 0;
 	else if (p[0] == '\0')
 		retval = STRING;
 	else if (p[1] == '\0') {
 		const char *w = strchr(x, p[0]);
-		if (w) {
-			retval = x_token[w-x];
-		} else {
-			retval = STRING;
-		}
+		retval = w != NULL ? x_token[w - x] : STRING;
 	} else if (p[1] == '=' && p[2] == '\0'
-			&& (p[0] == '>' || p[0] == '<' || p[0] == '!'))
+		    && (p[0] == '>' || p[0] == '<' || p[0] == '!'))
 		retval = COMPARE;
-	else if (handle_ddash && p[0] == '-' && p[1] == '-' && p[2] == '\0') {
-		/* ignore "--" if passed as first argument and isn't followed
-		 * by another STRING */
+	else if (handle_ddash && strcmp(p, "--") == 0) {
 		retval = yylex();
-		if (retval != STRING && retval != LEFT_PARENT
-		    && retval != RIGHT_PARENT) {
-			/* is not followed by string or parenthesis, use as
-			 * STRING */
+		if (retval != STRING && retval != LPAREN && retval != RPAREN) {
 			retval = STRING;
 			av--;	/* was increased in call to yylex() above */
 			p = "--";
-		} else {
-			/* "--" is to be ignored */
+		} else
 			p = yylval;
-		}
 	} else if (strcmp(p, "length") == 0)
 		retval = LENGTH;
 	else
