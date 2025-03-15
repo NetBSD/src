@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.11 2025/03/15 10:31:28 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.12 2025/03/15 14:33:39 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+: "${expr_prog:=expr}"
+
 # usage: test_expr operand ... result|error
 test_expr() {
 	i=1
@@ -36,7 +38,7 @@ test_expr() {
 	shift
 
 	# shellcheck disable=SC2003
-	actual=$(expr "$@" 2>&1 || :)
+	actual=$("$expr_prog" "$@" 2>&1 || :)
 
 	printf "%s => '%s'\n" "$*" "$expected" >> expected
 	printf "%s => '%s'\n" "$*" "$actual" >> actual
@@ -172,6 +174,9 @@ basic_functional_body() {
 	test_expr 2 '2'
 	test_expr -4 '-4'
 	test_expr hello 'hello'
+	test_expr -- double-dash 'double-dash'
+	test_expr -- -- -- six-dashes 'expr: syntax error'
+	test_expr 3 -- + 4 'expr: syntax error'
 
 	test_finish
 }

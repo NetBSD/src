@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.51 2025/03/15 14:26:16 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.52 2025/03/15 14:33:39 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.51 2025/03/15 14:26:16 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.52 2025/03/15 14:33:39 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -335,6 +335,7 @@ yylex(void)
 		    && (p[0] == '>' || p[0] == '<' || p[0] == '!'))
 		retval = COMPARE;
 	else if (handle_ddash && strcmp(p, "--") == 0) {
+		handle_ddash = 0;
 		retval = yylex();
 		if (retval != STRING && retval != LPAREN && retval != RPAREN) {
 			retval = STRING;
