@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.9 2025/03/15 06:53:06 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.10 2025/03/15 07:02:07 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -266,17 +266,32 @@ regex_body() {
 	test_finish
 }
 
+atf_test_case short_circuit
+short_circuit_head() {
+	atf_set "descr" "Test short-circuit evaluation of '|' and '&'"
+}
+short_circuit_body() {
+	test_expr 0 \| 1 / 0 "expr: second argument to '/' must not be zero"
+	# FIXME: The right-hand side of '|' must not be evaluated.
+	test_expr 123 \| 1 / 0 "expr: second argument to '/' must not be zero"
+
+	# FIXME: The right-hand side of '&' must not be evaluated.
+	test_expr 0 \& 1 / 0 "expr: second argument to '/' must not be zero"
+	test_expr 123 \& 1 / 0 "expr: second argument to '/' must not be zero"
+
+	test_finish
+}
+
 atf_test_case string_length
 string_length_head() {
 	atf_set "descr" "Test the string length operator"
 }
 string_length_body() {
+	# The 'length' operator is an extension to POSIX 2024.
 	test_expr length "" '0'
 	test_expr length + 'expr: syntax error'
 	test_expr length \! '1'
 	test_expr length ++ '2'
-
-	# POSIX says "unspecified results"
 	test_expr length length '6'
 
 	test_finish
@@ -298,5 +313,6 @@ atf_init_test_cases()
 	atf_add_test_case math_precedence
 	atf_add_test_case precedence
 	atf_add_test_case regex
+	atf_add_test_case short_circuit
 	atf_add_test_case string_length
 }
