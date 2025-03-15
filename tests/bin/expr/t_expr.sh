@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.14 2025/03/15 15:36:12 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.15 2025/03/15 22:01:16 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,8 @@
 # usage: test_expr operand ... result|error
 test_expr() {
 	i=1
-	while [ $((i++)) -lt $# ]; do
+	while [ $i -lt $# ]; do
+		i=$((i + 1))
 		set -- "$@" "$1"
 		shift
 	done
