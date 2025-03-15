@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawn.c,v 1.10 2025/03/13 12:48:22 riastradh Exp $ */
+/* $NetBSD: t_spawn.c,v 1.11 2025/03/15 12:09:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2012, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spawn.c,v 1.10 2025/03/13 12:48:22 riastradh Exp $");
+__RCSID("$NetBSD: t_spawn.c,v 1.11 2025/03/15 12:09:41 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -605,11 +605,14 @@ ATF_TC_BODY(t_spawn_sig, tc)
 	for (start = time(NULL); time(NULL) - start <= 10;) {
 		int fd[2];
 		char *const argv[] = {h_execsig, NULL};
+		posix_spawn_file_actions_t fa;
 		pid_t pid;
 		int status;
 
-		RL(pipe(fd));
-		RZ(posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL));
+		RL(pipe2(fd, O_CLOEXEC));
+		RZ(posix_spawn_file_actions_init(&fa));
+		RZ(posix_spawn_file_actions_adddup2(&fa, fd[0], STDIN_FILENO));
+		RZ(posix_spawn(&pid, argv[0], &fa, NULL, argv, NULL));
 		RL(close(fd[0]));
 		RL(kill(pid, SIGTERM));
 		if (write(fd[1], (char[]){0}, 1) == -1 && errno != EPIPE)
@@ -621,6 +624,7 @@ ATF_TC_BODY(t_spawn_sig, tc)
 		    "child exited on signal %d (%s)",
 		    WTERMSIG(status), strsignal(WTERMSIG(status)));
 		RL(close(fd[1]));
+		RZ(posix_spawn_file_actions_destroy(&fa));
 	}
 }
 
