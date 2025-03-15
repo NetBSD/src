@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.13 2025/03/15 15:33:00 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.14 2025/03/15 15:36:12 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -167,8 +167,7 @@ basic_functional_body() {
 	test_expr 1111 \| 00		'1111'
 	test_expr 0000 \| 2222		'2222'
 	test_expr 0000 \| 00		'00'
-	# FIXME: POSIX says the result must be zero.
-	test_expr 0000 \| ''		''
+	test_expr 0000 \| ''		'0'
 
 	test_finish
 }

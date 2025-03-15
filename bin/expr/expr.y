@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.52 2025/03/15 14:33:39 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.53 2025/03/15 15:36:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.52 2025/03/15 14:33:39 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.53 2025/03/15 15:36:12 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -86,7 +86,7 @@ expr:	item
 		if ($$)
 			skip_level++;
 	} expr {
-		$$ = $3 ? $1 : $4;
+		$$ = $3 ? $1 : $4[0] != '\0' ? $4 : "0";
 		if ($3)
 			skip_level--;
 	}
