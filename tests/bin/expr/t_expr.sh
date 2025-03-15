@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.10 2025/03/15 07:02:07 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.11 2025/03/15 10:31:28 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -272,11 +272,11 @@ short_circuit_head() {
 }
 short_circuit_body() {
 	test_expr 0 \| 1 / 0 "expr: second argument to '/' must not be zero"
-	# FIXME: The right-hand side of '|' must not be evaluated.
-	test_expr 123 \| 1 / 0 "expr: second argument to '/' must not be zero"
+	test_expr 123 \| 1 / 0 '123'
+	test_expr 123 \| a : '***' '123'
 
-	# FIXME: The right-hand side of '&' must not be evaluated.
-	test_expr 0 \& 1 / 0 "expr: second argument to '/' must not be zero"
+	test_expr 0 \& 1 / 0 '0'
+	test_expr 0 \& a : '***' '0'
 	test_expr 123 \& 1 / 0 "expr: second argument to '/' must not be zero"
 
 	test_finish

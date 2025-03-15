@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.49 2025/03/15 10:00:56 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.50 2025/03/15 10:31:28 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.49 2025/03/15 10:00:56 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.50 2025/03/15 10:31:28 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: expr.y,v 1.49 2025/03/15 10:00:56 rillig Exp $");
 #include <string.h>
 
 static const char * const *av;
+static unsigned skip_level;
 
 static void yyerror(const char *, ...) __dead;
 static int yylex(void);
@@ -78,29 +79,41 @@ exp:	expr {
 ;
 
 expr:	item
-|	expr SPEC_OR expr {
-		if (!is_empty_or_zero($1))
+|	expr SPEC_OR {
+		$$ = is_empty_or_zero($1) ? NULL : "1";
+		if ($$)
+			skip_level++;
+	} expr {
+		if ($3)
 			$$ = $1;
 		else
-			$$ = $3;
+			$$ = $4;
+		if ($3)
+			skip_level--;
 	}
-|	expr SPEC_AND expr {
-		if (!is_empty_or_zero($1) && !is_empty_or_zero($3))
+|	expr SPEC_AND {
+		$$ = is_empty_or_zero($1) ? NULL : "1";
+		if (!$$)
+			skip_level++;
+	} expr {
+		if ($3 && !is_empty_or_zero($4))
 			$$ = $1;
 		else
 			$$ = "0";
+		if (!$3)
+			skip_level--;
 	}
 |	expr SPEC_REG expr {
-		$$ = eval_match($1, $3);
+		$$ = skip_level == 0 ? eval_match($1, $3) : "";
 	}
 |	expr ADD_SUB_OPERATOR expr {
-		$$ = eval_arith($1, $2, $3);
+		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
 	}
 |	expr MUL_DIV_MOD_OPERATOR expr {
-		$$ = eval_arith($1, $2, $3);
+		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
 	}
 |	expr COMPARE expr {
-		$$ = eval_compare($1, $2, $3) ? "1" : "0";
+		$$ = skip_level == 0 && eval_compare($1, $2, $3) ? "1" : "0";
 	}
 |	LEFT_PARENT expr RIGHT_PARENT {
 		$$ = $2;
