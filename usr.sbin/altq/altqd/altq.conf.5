@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.19 2021/07/14 08:32:13 ozaki-r Exp $
+.\"	$NetBSD: altq.conf.5,v 1.20 2025/03/15 20:29:05 gutteridge Exp $
 .\"	$KAME: altq.conf.5,v 1.15 2002/11/17 02:51:49 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -209,7 +209,7 @@ and
 .Ar sport
 are port numbers of the destination and the source respectively.
 .Ar proto
-is a protocol number defined for IP packets (e.g. 6 for TCP).
+is a protocol number defined for IP packets (e.g., 6 for TCP).
 .Cm tos
 keyword can be used to specify the type of service field value.
 .Cm gpi
@@ -258,7 +258,7 @@ and
 .Ar sport
 are port numbers of the destination and the source respectively.
 .Ar proto
-is a protocol number defined for IPv6 packets (e.g. 6 for TCP).
+is a protocol number defined for IPv6 packets (e.g., 6 for TCP).
 .Cm flowlabel
 keyword can be used to specify the flowlabel field value.
 .Cm tclass
@@ -606,7 +606,7 @@ enables RED/ECN on this class queue.
 clears diffserv codepoint in the IP header.
 .El
 .Ss PRIQ Commands
-PRIQ (Priority Queueing) implements a simple priority-based queueing.
+PRIQ (Priority Queueing) implements simple priority-based queueing.
 A higher priority class is always served first.
 Up to 16 priorities can be used with PRIQ.
 .Bl -tag -width interface -offset indent
