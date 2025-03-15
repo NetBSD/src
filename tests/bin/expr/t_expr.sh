@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.12 2025/03/15 14:33:39 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.13 2025/03/15 15:33:00 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,12 +53,13 @@ lang_head() {
 	atf_set "descr" "Test that expr(1) works with non-C LANG (PR bin/2486)"
 }
 lang_body() {
+	# When setlocale fails, ensure that no error message is printed,
+	# like for most other utilities.
 
-	export LANG=nonexistent
-	atf_check -s exit:0 -o inline:"21\n" -e empty -x "expr 10 + 11"
-
-	export LANG=ru_RU.KOI8-R
-	atf_check -s exit:0 -o inline:"21\n" -e empty -x "expr 10 + 11"
+	atf_check -o inline:"21\n" \
+	    env LANG=nonexistent "$expr_prog" 10 + 11
+	atf_check -o inline:"21\n" \
+	    env LANG=ru_RU.KOI8-R "$expr_prog" 10 + 11
 }
 
 atf_test_case overflow
@@ -130,17 +131,6 @@ gtkmm_body() {
 	test_finish
 }
 
-atf_test_case colon_vs_math
-colon_vs_math_head() {
-	atf_set "descr" "Basic precendence test with the : operator vs. math"
-}
-colon_vs_math_body() {
-	test_expr 2 : 4 / 2 '0'
-	test_expr 4 : 4 % 3 '1'
-
-	test_finish
-}
-
 atf_test_case arithmetic_ops
 arithmetic_ops_head() {
 	atf_set "descr" "Dangling arithmetic operator"
@@ -156,37 +146,29 @@ arithmetic_ops_body() {
 	test_finish
 }
 
-atf_test_case basic_math
-basic_math_head() {
-	atf_set "descr" "Basic math test"
-}
-basic_math_body() {
-	test_expr 2 + 4 \* 5 '22'
-
-	test_finish
-}
-
 atf_test_case basic_functional
 basic_functional_head() {
 	atf_set "descr" "Basic functional tests"
 }
 basic_functional_body() {
-	test_expr 2 '2'
-	test_expr -4 '-4'
-	test_expr hello 'hello'
-	test_expr -- double-dash 'double-dash'
-	test_expr -- -- -- six-dashes 'expr: syntax error'
-	test_expr 3 -- + 4 'expr: syntax error'
+	test_expr 2			'2'
+	test_expr -4			'-4'
+	test_expr hello			'hello'
+	test_expr -- double-dash	'double-dash'
+	test_expr -- -- -- six-dashes	'expr: syntax error'
+	test_expr 3 -- + 4		'expr: syntax error'
+	test_expr 0000005		'0000005'
+	test_expr 0 + 0000005		'5'
 
-	test_finish
-}
+	test_expr 111 \& 222 \& 333	'111'
+	test_expr 111 \& 222 \& 0	'0'
 
-atf_test_case compare_ops_precedence
-compare_ops_precedence_head() {
-	atf_set "descr" "Compare operator precendence test"
-}
-compare_ops_precedence_body() {
-	test_expr 2 \> 1 \* 17 '0'
+	test_expr 1111 \| 2222		'1111'
+	test_expr 1111 \| 00		'1111'
+	test_expr 0000 \| 2222		'2222'
+	test_expr 0000 \| 00		'00'
+	# FIXME: POSIX says the result must be zero.
+	test_expr 0000 \| ''		''
 
 	test_finish
 }
@@ -241,22 +223,32 @@ negative_body() {
 	test_finish
 }
 
-atf_test_case math_precedence
-math_precedence_head() {
-	atf_set "descr" "More complex math test for precedence"
-}
-math_precedence_body() {
-	test_expr -3 + -1 \* 4 + 3 / -6 '-7'
-
-	test_finish
-}
-
 atf_test_case precedence
 precedence_head() {
-	atf_set "descr" "Test precedence between ':' and '|'"
+	atf_set "descr" "Tests for operator precedence"
 }
 precedence_body() {
+	test_expr or \| '' \& and	'or'
+	test_expr '' \& and \| or	'or'
 	test_expr X1/2/3 : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| . : '\(.\)' '1/2'
+	test_expr and \& 001 = 00001	'and'
+	test_expr 001 = 00001 \& and	'1'
+	test_expr 1 = 2 = 3 = 4 = 5	'0'
+	test_expr 1 = 2 = 3 = 4 = 0	'1'
+	test_expr 2 \> 1 \* 17		'0'
+	test_expr 900 + 101 = 1000 + 1	'1'
+	test_expr 1000 - 101 = 900 - 1	'1'
+	test_expr 1 + 100 - 10 + 1000	'1091'
+	test_expr 50 + 3 \* 4 + 80	'142'
+	test_expr 12345 / 1000 \* 1000	'12000'
+	test_expr 12345 % 1000 / 10	'34'
+	test_expr 2 : 4 / 2		'0'
+	test_expr 4 : 4 % 3		'1'
+	test_expr 6 \* 1111100 : 1\*	'30'
+	test_expr -3 + -1 \* 4 + 3 / -6	'-7'
+	test_expr 10 \* \( 3 + 5 \)	'80'
+	test_expr length 123456 : '\([1236]*\)' '6'
+	test_expr length \( 123456 : '\([1236]*\)' \) '3'
 
 	test_finish
 }
@@ -307,15 +299,11 @@ atf_init_test_cases()
 	atf_add_test_case lang
 	atf_add_test_case overflow
 	atf_add_test_case gtkmm
-	atf_add_test_case colon_vs_math
 	atf_add_test_case arithmetic_ops
-	atf_add_test_case basic_math
 	atf_add_test_case basic_functional
-	atf_add_test_case compare_ops_precedence
 	atf_add_test_case compare_ops
 	atf_add_test_case multiply
 	atf_add_test_case negative
-	atf_add_test_case math_precedence
 	atf_add_test_case precedence
 	atf_add_test_case regex
 	atf_add_test_case short_circuit
