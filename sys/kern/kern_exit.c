@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.298 2023/10/08 12:38:58 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.299 2025/03/16 15:51:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
@@ -68,46 +68,48 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.298 2023/10/08 12:38:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.299 2025/03/16 15:51:50 riastradh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/wait.h>
-#include <sys/file.h>
-#include <sys/fstrans.h>
-#include <sys/vnode.h>
-#include <sys/syslog.h>
-#include <sys/pool.h>
-#include <sys/uidinfo.h>
-#include <sys/ptrace.h>
+#include <sys/types.h>
+
 #include <sys/acct.h>
+#include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/cpu.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/ras.h>
-#include <sys/signalvar.h>
-#include <sys/sched.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
+#include <sys/fstrans.h>
+#include <sys/ioctl.h>
 #include <sys/kauth.h>
-#include <sys/sleepq.h>
+#include <sys/kernel.h>
+#include <sys/ktrace.h>
 #include <sys/lock.h>
 #include <sys/lockdebug.h>
-#include <sys/ktrace.h>
-#include <sys/cpu.h>
 #include <sys/lwpctl.h>
-#include <sys/atomic.h>
-#include <sys/sdt.h>
+#include <sys/mount.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/psref.h>
+#include <sys/ptrace.h>
+#include <sys/ras.h>
+#include <sys/resource.h>
+#include <sys/sched.h>
+#include <sys/sdt.h>
+#include <sys/signalvar.h>
+#include <sys/sleepq.h>
+#include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/tty.h>
+#include <sys/uidinfo.h>
+#include <sys/vnode.h>
+#include <sys/wait.h>
 
 #include <uvm/uvm_extern.h>
 
