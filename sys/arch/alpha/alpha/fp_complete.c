@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.31 2023/11/21 22:19:12 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.32 2025/03/16 19:27:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.31 2023/11/21 22:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.32 2025/03/16 19:27:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,8 @@ __CTASSERT(FP_C_ALLBITS == MDLWP_FP_C);
 
 #define	CRBLIT(sw, hw, m, offs) (((sw) & ~(m)) | ((hw) >> (offs) & (m)))
 
-struct evcnt fpevent_use;
-struct evcnt fpevent_reuse;
+static struct evcnt fpevent_use;
+static struct evcnt fpevent_reuse;
 
 /*
  * Temporary trap shadow instrumentation. The [un]resolved counters
@@ -816,6 +816,18 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 		l->l_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
 	}
 	return sig;
+}
+
+/*
+ * Initialize FP handling.
+ */
+void
+alpha_fp_init(void)
+{
+	evcnt_attach_dynamic_nozero(&fpevent_use, EVCNT_TYPE_MISC, NULL,
+	    "FP", "proc use");
+	evcnt_attach_dynamic_nozero(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
+	    "FP", "proc re-use");
 }
 
 /*

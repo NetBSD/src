@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.381 2025/03/16 17:38:06 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.382 2025/03/16 19:27:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.381 2025/03/16 17:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2025/03/16 19:27:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,7 +886,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern struct evcnt fpevent_use, fpevent_reuse;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 #if defined(DEBUG)
@@ -951,12 +950,9 @@ cpu_startup(void)
 	hwrpb_primary_init();
 
 	/*
-	 * Initialize some trap event counters.
+	 * Initialize FP handling.
 	 */
-	evcnt_attach_dynamic_nozero(&fpevent_use, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc use");
-	evcnt_attach_dynamic_nozero(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc re-use");
+	alpha_fp_init();
 }
 
 /*

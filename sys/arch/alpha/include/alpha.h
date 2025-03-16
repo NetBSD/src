@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.47 2021/07/23 03:50:32 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.48 2025/03/16 19:27:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,6 +177,7 @@ void alpha_write_fpcr(uint64_t);				/* MAGIC */
 uint64_t alpha_read_fp_c(struct lwp *);
 void alpha_write_fp_c(struct lwp *, uint64_t);
 
+void alpha_fp_init(void);
 int alpha_fp_complete(u_long, u_long, struct lwp *, uint64_t *);
 int alpha_fp_complete_at(u_long, struct lwp *, uint64_t *);
 
