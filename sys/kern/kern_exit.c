@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.299 2025/03/16 15:51:50 riastradh Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.300 2025/03/16 15:52:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020, 2023
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.299 2025/03/16 15:51:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.300 2025/03/16 15:52:18 riastradh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1017,7 +1017,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 
 	if (options & ~WALLOPTS) {
 		*child_p = NULL;
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if ((options & WSELECTOPTS) == 0) {
@@ -1028,7 +1028,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		 * indefinitely.
 		 */
 		*child_p = NULL;
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if ((pid_t)id == WAIT_MYPGRP && (idtype == P_PID || idtype == P_PGID)) {
@@ -1134,7 +1134,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
 			*child_p = child;
-			return error;
+			return SET_ERROR(error);
 		}
 
 		/*
