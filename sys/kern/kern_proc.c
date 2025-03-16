@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.276 2024/07/14 05:10:40 kre Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.277 2025/03/16 15:51:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.276 2024/07/14 05:10:40 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.277 2025/03/16 15:51:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -79,36 +79,38 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.276 2024/07/14 05:10:40 kre Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/resourcevar.h>
-#include <sys/buf.h>
+#include <sys/types.h>
+
 #include <sys/acct.h>
-#include <sys/wait.h>
-#include <sys/file.h>
-#include <ufs/ufs/quota.h>
-#include <sys/uio.h>
-#include <sys/pool.h>
-#include <sys/pset.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/signalvar.h>
-#include <sys/ras.h>
-#include <sys/filedesc.h>
-#include <sys/syscall_stats.h>
-#include <sys/kauth.h>
-#include <sys/sleepq.h>
 #include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/compat_stub.h>
+#include <sys/cpu.h>
+#include <sys/dtrace_bsd.h>
+#include <sys/exec.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/futex.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
-#include <sys/dtrace_bsd.h>
-#include <sys/sysctl.h>
-#include <sys/exec.h>
-#include <sys/cpu.h>
-#include <sys/compat_stub.h>
-#include <sys/futex.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/pset.h>
+#include <sys/ras.h>
+#include <sys/resourcevar.h>
+#include <sys/signalvar.h>
+#include <sys/sleepq.h>
+#include <sys/syscall_stats.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
+#include <ufs/ufs/quota.h>
 
 #include <uvm/uvm_extern.h>
 
