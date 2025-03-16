@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.32 2025/03/16 19:27:30 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.33 2025/03/16 22:34:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.32 2025/03/16 19:27:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.33 2025/03/16 22:34:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,21 +130,22 @@ static struct evcnt fpevent_reuse;
  * user code has met AARM trap shadow generation requirements.
  */
 
+static struct evcnt ts_scans;      /* trap shadow scans */
+static struct evcnt ts_insns;      /* total scanned insns */
+static struct evcnt ts_insns_max;  /* per-scan high water mark */
+static struct evcnt ts_resolved;   /* cases trigger pc found */
+static struct evcnt ts_unresolved; /* cases it wasn't, code problems? */
+
+static struct evcnt fp_ill_opc;    /* unexpected op codes */
+static struct evcnt fp_ill_func;   /* unexpected function codes */
+static struct evcnt fp_ill_anyop;  /* this "cannot happen" */
+
+static struct evcnt fp_vax;        /* traps from VAX FP insns */
+
 struct alpha_shadow {
-	uint64_t resolved;	/* cases trigger pc found */
-	uint64_t unresolved;	/* cases it wasn't, code problems? */
-	uint64_t scans;		/* trap shadow scans */
-	uint64_t len;		/* number of instructions examined */
 	uint64_t uop;		/* bit mask of unexpected opcodes */
-	uint64_t sqrts;	/* ev6+ square root single count */
-	uint64_t sqrtt;	/* ev6+ square root double count */
-	uint32_t ufunc;	/* bit mask of unexpected functions */
-	uint32_t max;		/* max trap shadow scan */
-	uint32_t nilswop;	/* unexpected op codes */
-	uint32_t nilswfunc;	/* unexpected function codes */
-	uint32_t nilanyop;	/* this "cannot happen" */
-	uint32_t vax;		/* sigs from vax fp opcodes */
-} alpha_shadow, alpha_shadow_zero;
+	uint32_t ufunc;		/* bit mask of unexpected functions */
+} alpha_shadow;
 
 static float64 float64_unk(float64, float64);
 static float64 compare_un(float64, float64);
@@ -178,7 +179,7 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 	static uint64_t reported;
 
 	inst.bits = bits;
-	++alpha_shadow.nilswfunc;
+	atomic_inc_ulong(&fp_ill_func.ev_count);
 	if (bits != -1)
 		alpha_shadow.uop |= 1UL << inst.generic_format.opcode;
 	if (1UL << what_cannot_happen & reported)
@@ -567,6 +568,7 @@ alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 	switch(inst.generic_format.opcode) {
 	default:
 		/* this "cannot happen" */
+		atomic_inc_ulong(&fp_ill_opc.ev_count);
 		this_cannot_happen(2, inst.bits);
 		return;
 	case op_any_float:
@@ -577,12 +579,13 @@ alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 			alpha_lds(inst.float_detail.fc, &sfc);
 			float_raise(FP_X_INV);
 		} else {
-			++alpha_shadow.nilanyop;
+			atomic_inc_ulong(&fp_ill_anyop.ev_count);
 			this_cannot_happen(3, inst.bits);
 		}
 		break;
 	case op_vax_float:
-		++alpha_shadow.vax;	/* fall thru */
+		atomic_inc_ulong(&fp_vax.ev_count);
+		/* FALLTHROUGH */		/* XXX */
 	case op_ieee_float:
 	case op_fix_float:
 		switch(inst.float_detail.src) {
@@ -682,13 +685,13 @@ alpha_fp_complete_at(unsigned long trigger_pc, struct lwp *l, uint64_t *ucode)
 int
 alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 {
-	int t;
-	int sig;
 	uint64_t op_class;
 	alpha_instruction inst;
 	/* "trigger_pc" is Compaq's term for the earliest faulting op */
 	alpha_instruction *trigger_pc, *usertrap_pc;
 	alpha_instruction *pc, *win_begin, tsw[TSWINSIZE];
+	long insn_count = 0;
+	int sig;
 
 	if (alpha_fp_complete_debug) {
 		printf("%s: [%s:%d] a0[AESR]=0x%lx a1[regmask]=0x%lx "
@@ -731,10 +734,9 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
  */
 	trigger_pc = 0;
 	win_begin = pc;
-	++alpha_shadow.scans;
-	t = alpha_shadow.len;
+	atomic_inc_ulong(&ts_scans.ev_count);
 	for (--pc; a1; --pc) {
-		++alpha_shadow.len;
+		insn_count++;
 		if (pc < win_begin) {
 			win_begin = pc - TSWINSIZE + 1;
 			if (copyin(win_begin, tsw, sizeof tsw)) {
@@ -768,15 +770,16 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 		}
 		/* Some shadow-safe op, probably load, store, or FPTI class */
 	}
-	t = alpha_shadow.len - t;
-	if (t > alpha_shadow.max)
-		alpha_shadow.max = t;
+	if (insn_count > atomic_load_relaxed(&ts_insns_max.ev_count)) {
+		atomic_store_relaxed(&ts_insns_max.ev_count, insn_count);
+	}
+	atomic_add_long(&ts_insns.ev_count, insn_count);
 	if (__predict_true(trigger_pc != 0 && a1 == 0)) {
-		++alpha_shadow.resolved;
+		atomic_inc_ulong(&ts_resolved.ev_count);
 		sig = alpha_fp_complete_at((u_long)trigger_pc, l, ucode);
 		goto resolved;
 	} else {
-		++alpha_shadow.unresolved;
+		atomic_inc_ulong(&ts_unresolved.ev_count);
 	}
 
  unresolved: /* obligatory statement */;
@@ -828,6 +831,24 @@ alpha_fp_init(void)
 	    "FP", "proc use");
 	evcnt_attach_dynamic_nozero(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
 	    "FP", "proc re-use");
+
+	evcnt_attach_dynamic_nozero(&ts_scans, EVCNT_TYPE_MISC, NULL,
+	    "FP", "TS scans");
+	evcnt_attach_dynamic_nozero(&ts_insns, EVCNT_TYPE_MISC, NULL,
+	    "FP", "TS total insns");
+	evcnt_attach_dynamic_nozero(&ts_insns_max, EVCNT_TYPE_MISC, NULL,
+	    "FP", "TS max single-scan insns");
+	evcnt_attach_dynamic_nozero(&ts_resolved, EVCNT_TYPE_MISC, NULL,
+	    "FP", "TS resolved");
+	evcnt_attach_dynamic_nozero(&ts_unresolved, EVCNT_TYPE_MISC, NULL,
+	    "FP", "TS unresolved");
+
+	evcnt_attach_dynamic_nozero(&fp_ill_opc, EVCNT_TYPE_MISC, NULL,
+	    "FP", "illegal op code");
+	evcnt_attach_dynamic_nozero(&fp_ill_func, EVCNT_TYPE_MISC, NULL,
+	    "FP", "illegal function code");
+	evcnt_attach_dynamic_nozero(&fp_ill_anyop, EVCNT_TYPE_MISC, NULL,
+	    "FP", "illegal any_float function code");
 }
 
 /*
