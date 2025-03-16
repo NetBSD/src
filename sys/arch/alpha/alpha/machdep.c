@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.380 2025/03/16 15:34:59 riastradh Exp $ */
+/* $NetBSD: machdep.c,v 1.381 2025/03/16 17:38:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.380 2025/03/16 15:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.381 2025/03/16 17:38:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1017,15 +1017,25 @@ identifycpu(void)
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s", cpu_getmodel());
-	for(s = cpu_getmodel(); *s; ++s)
-		if(strncasecmp(s, "MHz", 3) == 0)
+	s = cpu_getmodel();
+	printf("%s", s);
+	for (; *s != '\0'; s++) {
+		if (strncasecmp(s, "MHz", 3) == 0) {
 			goto skipMHz;
+		}
+	}
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
-skipMHz:
-	printf(", s/n ");
-	for (i = 0; i < 10; i++)
+ skipMHz:
+	for (i = 0; i < 10; i++) {
+		/* Only so long as there are printable characters. */
+		if (! isprint((unsigned char)hwrpb->rpb_ssn[i])) {
+			break;
+		}
+		if (i == 0) {
+			printf(", s/n ");
+		}
 		printf("%c", hwrpb->rpb_ssn[i]);
+	}
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
