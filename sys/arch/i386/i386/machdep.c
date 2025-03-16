@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.843 2025/02/18 10:16:03 imil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.844 2025/03/16 15:34:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.843 2025/02/18 10:16:03 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.844 2025/03/16 15:34:59 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -859,6 +859,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	x86_dbregs_clear(l);
 
 	tf = l->l_md.md_regs;
+	memset(tf, 0, sizeof(*tf));
+
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);

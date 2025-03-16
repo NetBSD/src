@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.113 2023/12/20 15:34:45 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.114 2025/03/16 15:34:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.113 2023/12/20 15:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.114 2025/03/16 15:34:59 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -518,6 +518,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	l->l_md.md_flags &= ~(MDL_USEDFPU | MDL_SSTEP);
 
 	tf = l->l_md.md_regs;
+	memset(tf, 0, sizeof(*tf));
 
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_spc = pack->ep_entry;

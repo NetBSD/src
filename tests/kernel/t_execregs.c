@@ -1,4 +1,4 @@
-/*	$NetBSD: t_execregs.c,v 1.3 2025/02/28 16:08:42 riastradh Exp $	*/
+/*	$NetBSD: t_execregs.c,v 1.4 2025/03/16 15:35:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_execregs.c,v 1.3 2025/02/28 16:08:42 riastradh Exp $");
+__RCSID("$NetBSD: t_execregs.c,v 1.4 2025/03/16 15:35:00 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -78,13 +78,6 @@ checkregs(const register_t regs[static NEXECREGS])
 		atf_tc_expect_fail("PR port-hppa/59114: hppa:"
 		    " eager fpu switching for qemu and/or spectre mitigation");
 	}
-#endif
-
-#if defined(__hppa__) || \
-    defined(__ia64__) || \
-    defined(__vax__) || \
-    defined(__x86_64__)
-	atf_tc_expect_fail("PR kern/59084: exec/spawn leaks register content");
 #endif
 
 	for (i = 0; i < NEXECREGS; i++) {

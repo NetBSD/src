@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2023/10/05 19:41:06 ad Exp $     */
+/*	$NetBSD: trap.c,v 1.139 2025/03/16 15:35:00 riastradh Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2023/10/05 19:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2025/03/16 15:35:00 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -370,6 +370,8 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
+
+	memset(tf, 0, sizeof(*tf));
 
 	tf->tf_pc = pack->ep_entry + 2;
 	tf->tf_sp = stack;
