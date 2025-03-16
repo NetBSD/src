@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.277 2025/03/16 15:51:34 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.278 2025/03/16 15:52:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.277 2025/03/16 15:51:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.278 2025/03/16 15:52:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.277 2025/03/16 15:51:34 riastradh Ex
 #include <sys/pset.h>
 #include <sys/ras.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/sleepq.h>
 #include <sys/syscall_stats.h>
@@ -631,25 +632,25 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 	int error;
 
 	if (pg_id <= INT_MIN)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(&proc_lock);
 	if (pg_id < 0) {
 		struct proc *p1 = proc_find(-pg_id);
 		if (p1 == NULL) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto fail;
 		}
 		pgrp = p1->p_pgrp;
 	} else {
 		pgrp = pgrp_find(pg_id);
 		if (pgrp == NULL) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto fail;
 		}
 	}
 	session = pgrp->pg_session;
-	error = (session != p->p_pgrp->pg_session) ? EPERM : 0;
+	error = (session != p->p_pgrp->pg_session) ? SET_ERROR(EPERM) : 0;
 fail:
 	mutex_exit(&proc_lock);
 	return error;
@@ -1301,37 +1302,36 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	new_pgrp = kmem_alloc(sizeof(*new_pgrp), KM_SLEEP);
 
 	mutex_enter(&proc_lock);
-	rval = EPERM;	/* most common error (to save typing) */
 
 	/* Check pgrp exists or can be created */
 	pgrp = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 	if (pgrp != NULL && pgrp->pg_id != pgid)
-		goto done;
+		goto eperm;
 
 	/* Can only set another process under restricted circumstances. */
 	if (pid != curp->p_pid) {
 		/* Must exist and be one of our children... */
 		p = proc_find_internal(pid, false);
 		if (p == NULL || !p_inferior(p, curp)) {
-			rval = ESRCH;
+			rval = SET_ERROR(ESRCH);
 			goto done;
 		}
 		/* ... in the same session... */
 		if (sess != NULL || p->p_session != curp->p_session)
-			goto done;
+			goto eperm;
 		/* ... existing pgid must be in same session ... */
 		if (pgrp != NULL && pgrp->pg_session != p->p_session)
-			goto done;
+			goto eperm;
 		/* ... and not done an exec. */
 		if (p->p_flag & PK_EXEC) {
-			rval = EACCES;
+			rval = SET_ERROR(EACCES);
 			goto done;
 		}
 	} else {
 		/* ... setsid() cannot re-enter a pgrp */
 		if (mksess && (curp->p_pgid == curp->p_pid ||
 		    pgrp_find(curp->p_pid)))
-			goto done;
+			goto eperm;
 		p = curp;
 	}
 
@@ -1341,31 +1341,31 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 		if (sess == NULL && p->p_pgrp == pgrp)
 			/* unless it's a definite noop */
 			rval = 0;
-		goto done;
+		goto eperm;
 	}
 
 	/* Can only create a process group with id of process */
 	if (pgrp == NULL && pgid != pid)
-		goto done;
+		goto eperm;
 
 	/* Can only create a session if creating pgrp */
 	if (sess != NULL && pgrp != NULL)
-		goto done;
+		goto eperm;
 
 	/* Check we allocated memory for a pgrp... */
 	if (pgrp == NULL && new_pgrp == NULL)
-		goto done;
+		goto eperm;
 
 	/* Don't attach to 'zombie' pgrp */
 	if (pgrp != NULL && LIST_EMPTY(&pgrp->pg_members))
-		goto done;
+		goto eperm;
 
 	/* Expect to succeed now */
 	rval = 0;
 
 	if (pgrp == p->p_pgrp)
 		/* nothing to do */
-		goto done;
+		goto eperm;
 
 	/* Ok all setup, link up required structures */
 
@@ -1422,8 +1422,11 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 
 	/* Done with the swap; we can release the tty mutex. */
 	mutex_spin_exit(&tty_lock);
+	goto done;
 
-    done:
+eperm:
+	rval = SET_ERROR(EPERM);
+done:
 	if (pg_id != NO_PGID) {
 		/* Releases proc_lock. */
 		pg_delete(pg_id);
@@ -1790,7 +1793,7 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 
 	if ((p != curproc && (p->p_sflag & PS_WEXIT) != 0) ||
 	    (p->p_vmspace->vm_refcnt < 1)) {
-		return EFAULT;
+		return SET_ERROR(EFAULT);
 	}
 
 	uvmspace_addref(p->p_vmspace);
@@ -1948,19 +1951,18 @@ proc_setspecific(struct proc *p, specificdata_key_t key, void *data)
 int
 proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
 {
-	int r = 0;
 
 	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
 	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
 		/*
 		 * suid proc of ours or proc not ours
 		 */
-		r = EPERM;
+		return SET_ERROR(EPERM);
 	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
 		/*
 		 * sgid proc has sgid back to us temporarily
 		 */
-		r = EPERM;
+		return SET_ERROR(EPERM);
 	} else {
 		/*
 		 * our rgid must be in target's group list (ie,
@@ -1971,10 +1973,10 @@ proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
 		if (kauth_cred_ismember_gid(cred,
 		    kauth_cred_getgid(target), &ismember) != 0 ||
 		    !ismember)
-			r = EPERM;
+			return SET_ERROR(EPERM);
 	}
 
-	return (r);
+	return 0;
 }
 
 /*
@@ -2088,16 +2090,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 	if (type == KERN_PROC) {
 		if (namelen == 0)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		switch (op = name[0]) {
 		case KERN_PROC_ALL:
 			if (namelen != 1)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			arg = 0;
 			break;
 		default:
 			if (namelen != 2)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			arg = name[1];
 			break;
 		}
@@ -2105,7 +2107,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		kelem_size = elem_size = sizeof(kbuf->kproc);
 	} else {
 		if (namelen != 4)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		op = name[0];
 		arg = name[1];
 		elem_size = name[2];
@@ -2213,7 +2215,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			break;
 
 		default:
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			mutex_exit(p->p_lock);
 			goto cleanup;
 		}
@@ -2287,7 +2289,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	if (where != NULL) {
 		*oldlenp = dp - where;
 		if (needed > *oldlenp) {
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			goto out;
 		}
 	} else {
@@ -2354,7 +2356,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (newp != NULL || namelen != 2)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	pid = name[0];
 	type = name[1];
 
@@ -2378,7 +2380,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		/* ok */
 		break;
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	sysctl_unlock();
@@ -2386,7 +2388,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	/* check pid */
 	mutex_enter(&proc_lock);
 	if ((p = proc_find(pid)) == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out_locked;
 	}
 	mutex_enter(p->p_lock);
@@ -2399,7 +2401,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENV), NULL, NULL);
 	else
-		error = EINVAL; /* XXXGCC */
+		error = SET_ERROR(EINVAL); /* XXXGCC */
 	if (error) {
 		mutex_exit(p->p_lock);
 		goto out_locked;
@@ -2420,12 +2422,12 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 * System processes also don't have a user stack.
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		mutex_exit(p->p_lock);
 		goto out_locked;
 	}
 
-	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
+	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : SET_ERROR(EBUSY);
 	mutex_exit(p->p_lock);
 	if (error) {
 		goto out_locked;
@@ -2504,12 +2506,12 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 		argvlen = pss.ps_nenvstr;
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto done;
 	}
 
 	if (argvlen < 0) {
-		error = EIO;
+		error = SET_ERROR(EIO);
 		goto done;
 	}
 
@@ -2952,7 +2954,7 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 	if (*p == NULL) {
 		if (pid != -1)
 			mutex_exit(&proc_lock);
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 	if (pid != -1)
 		mutex_enter((*p)->p_lock);
@@ -2980,7 +2982,7 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	if (p->p_path == NULL) {
 		if (pid != -1)
 			mutex_exit(p->p_lock);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	size_t len = strlen(p->p_path) + 1;
@@ -2988,7 +2990,7 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 		size_t copylen = uimin(len, *oldlenp);
 		error = sysctl_copyout(l, p->p_path, oldp, copylen);
 		if (error == 0 && *oldlenp < len)
-			error = ENOSPC;
+			error = SET_ERROR(ENOSPC);
 	}
 	*oldlenp = len;
 	if (pid != -1)
@@ -3033,7 +3035,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 		size_t copylen = uimin(lenused, *oldlenp);
 		error = sysctl_copyout(l, bp, oldp, copylen);
 		if (error == 0 && *oldlenp < lenused)
-			error = ENOSPC;
+			error = SET_ERROR(ENOSPC);
 	}
 	*oldlenp = lenused;
 out:
@@ -3054,11 +3056,11 @@ proc_getauxv(struct proc *p, void **buf, size_t *len)
 	if ((error = copyin_psstrings(p, &pss)) != 0)
 		return error;
 	if (pss.ps_envstr == NULL)
-		return EIO;
+		return SET_ERROR(EIO);
 
 	size = p->p_execsw->es_arglen;
 	if (size == 0)
-		return EIO;
+		return SET_ERROR(EIO);
 
 	size_t ptrsz = PROC_PTRSZ(p);
 	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
@@ -3093,7 +3095,7 @@ sysctl_security_expose_address(SYSCTLFN_ARGS)
 
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_KERNADDR,
 	    0, NULL, NULL, NULL))
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	switch (expose_address) {
 	case 0:
@@ -3101,7 +3103,7 @@ sysctl_security_expose_address(SYSCTLFN_ARGS)
 	case 2:
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	*(int *)rnode->sysctl_data = expose_address;
