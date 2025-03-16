@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.7 2021/11/07 15:46:20 christos Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.8 2025/03/16 15:35:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,34 +29,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fileactions.c,v 1.7 2021/11/07 15:46:20 christos Exp $");
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_fileactions.c,v 1.8 2025/03/16 15:35:36 riastradh Exp $");
+
+#include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <atf-c.h>
-
-#include <sys/wait.h>
-#include <sys/stat.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "fa_spawn_utils.h"
-
-
-ATF_TC(t_spawn_openmode);
-
-ATF_TC_HEAD(t_spawn_openmode, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test the proper handling of 'mode' for 'open' fileactions");
-	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
-}
+#include "h_macros.h"
 
 #define TESTFILE	"./the_input_data"
 #define CHECKFILE	"./the_output_data"
@@ -66,18 +56,24 @@ static void
 make_testfile(const char *restrict file)
 {
 	FILE *f;
-	size_t written;
+	ssize_t written;
 
-	f = fopen(file, "w");
-	ATF_REQUIRE(f != NULL);
-	written = fwrite(TESTCONTENT, 1, strlen(TESTCONTENT), f);
-	fclose(f);
-	ATF_REQUIRE(written == strlen(TESTCONTENT));
+	REQUIRE_LIBC(f = fopen(file, "w"), NULL);
+	RL(written = fwrite(TESTCONTENT, 1, strlen(TESTCONTENT), f));
+	REQUIRE_LIBC(fclose(f), EOF);
+	ATF_REQUIRE((size_t)written == strlen(TESTCONTENT));
 }
 
+ATF_TC(t_spawn_openmode);
+ATF_TC_HEAD(t_spawn_openmode, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the proper handling of 'mode' for 'open' fileactions");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
 ATF_TC_BODY(t_spawn_openmode, tc)
 {
-	int status, err;
+	int status;
 	pid_t pid;
 	size_t insize, outsize;
 	char * const args[2] = { __UNCONST("cat"), NULL };
@@ -87,27 +83,28 @@ ATF_TC_BODY(t_spawn_openmode, tc)
 	 * try a "cat < testfile > checkfile"
 	 */
 	make_testfile(TESTFILE);
-	unlink(CHECKFILE);
 
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
-	    TESTFILE, O_RDONLY, 0);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
-	    CHECKFILE, O_WRONLY|O_CREAT, 0600);
-	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
-
-	ATF_REQUIRE(err == 0);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+		TESTFILE, O_RDONLY, 0));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+		CHECKFILE, O_WRONLY|O_CREAT, 0600));
+	RZ(posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
 	/* ok, wait for the child to finish */
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
 
 	/* now check that input and output have the same size */
 	insize = filesize(TESTFILE);
 	outsize = filesize(CHECKFILE);
-	ATF_REQUIRE(insize == strlen(TESTCONTENT));
-	ATF_REQUIRE(insize == outsize);
+	ATF_CHECK_MSG(insize == strlen(TESTCONTENT),
+	    "insize=%zu strlen(TESTCONTENT)=%zu", insize, strlen(TESTCONTENT));
+	ATF_CHECK_MSG(insize == outsize,
+	    "insize=%zu outsize=%zu", insize, outsize);
 
 	/*
 	 * try a "cat < testfile >> checkfile"
@@ -115,25 +112,27 @@ ATF_TC_BODY(t_spawn_openmode, tc)
 	make_testfile(TESTFILE);
 	make_testfile(CHECKFILE);
 
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
-	    TESTFILE, O_RDONLY, 0);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
-	    CHECKFILE, O_WRONLY|O_APPEND, 0);
-	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
-
-	ATF_REQUIRE(err == 0);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+		TESTFILE, O_RDONLY, 0));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+		CHECKFILE, O_WRONLY|O_APPEND, 0));
+	RZ(posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
 	/* ok, wait for the child to finish */
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
 
 	/* now check that output is twice as long as input */
 	insize = filesize(TESTFILE);
 	outsize = filesize(CHECKFILE);
-	ATF_REQUIRE(insize == strlen(TESTCONTENT));
-	ATF_REQUIRE(insize*2 == outsize);
+	ATF_CHECK_MSG(insize == strlen(TESTCONTENT),
+	    "insize=%zu strlen(TESTCONTENT)=%zu", insize, strlen(TESTCONTENT));
+	ATF_CHECK_MSG(insize*2 == outsize,
+	    "insize*2=%zu outsize=%zu", insize*2, outsize);
 
 	/*
 	 * try a "cat < testfile  > checkfile" with input and output swapped
@@ -141,39 +140,39 @@ ATF_TC_BODY(t_spawn_openmode, tc)
 	make_testfile(TESTFILE);
 	empty_outfile(CHECKFILE);
 
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
-	    TESTFILE, O_RDONLY, 0);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
-	    CHECKFILE, O_WRONLY, 0);
-	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
-
-	ATF_REQUIRE(err == 0);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+		TESTFILE, O_RDONLY, 0));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+		CHECKFILE, O_WRONLY, 0));
+	RZ(posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
 	/* ok, wait for the child to finish */
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_FAILURE);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_FAILURE),
+	    "status=0x%x", status);
 
 	/* now check that input and output are still the same size */
 	insize = filesize(TESTFILE);
 	outsize = filesize(CHECKFILE);
-	ATF_REQUIRE(insize == strlen(TESTCONTENT));
-	ATF_REQUIRE(outsize == 0);
+	ATF_CHECK_MSG(insize == strlen(TESTCONTENT),
+	    "insize=%zu strlen(TESTCONTENT)=%zu", insize, strlen(TESTCONTENT));
+	ATF_CHECK_MSG(outsize == 0,
+	    "outsize=%zu", outsize);
 }
 
 ATF_TC(t_spawn_reopen);
-
 ATF_TC_HEAD(t_spawn_reopen, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "an open filehandle can be replaced by a 'open' fileaction");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
 }
-
 ATF_TC_BODY(t_spawn_reopen, tc)
 {
-	int status, err;
+	int status;
 	pid_t pid;
 	char * const args[2] = { __UNCONST("cat"), NULL };
 	posix_spawn_file_actions_t fa;
@@ -181,31 +180,29 @@ ATF_TC_BODY(t_spawn_reopen, tc)
 	/*
 	 * make sure stdin is open in the parent
 	 */
-	freopen("/dev/zero", "r", stdin);
+	REQUIRE_LIBC(freopen("/dev/zero", "r", stdin), NULL);
 	/*
 	 * now request an open for this fd again in the child
 	 */
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
-	    "/dev/null", O_RDONLY, 0);
-	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+		"/dev/null", O_RDONLY, 0));
+	RZ(posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
-	ATF_REQUIRE(err == 0);
-
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
 }
 
 ATF_TC(t_spawn_open_nonexistent);
-
 ATF_TC_HEAD(t_spawn_open_nonexistent, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "posix_spawn fails when a file to open does not exist");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
 }
-
 ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 {
 	int err, status;
@@ -213,9 +210,9 @@ ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 	char * const args[2] = { __UNCONST("cat"), NULL };
 	posix_spawn_file_actions_t fa;
 
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
-	    "./non/ex/ist/ent", O_RDONLY, 0);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
+		"./non/ex/ist/ent", O_RDONLY, 0));
 	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
 	if (err == 0) {
 		/*
@@ -229,13 +226,13 @@ ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 		 * The error has been noticed early enough, no child has
 		 * been run
 		 */
-		ATF_REQUIRE(err == ENOENT);
+		ATF_REQUIRE_MSG(err == ENOENT, "err=%d (%s)",
+		    err, strerror(err));
 	}
-	posix_spawn_file_actions_destroy(&fa);
+	RZ(posix_spawn_file_actions_destroy(&fa));
 }
 
 ATF_TC(t_spawn_open_nonexistent_diag);
-
 ATF_TC_HEAD(t_spawn_open_nonexistent_diag, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
@@ -243,7 +240,6 @@ ATF_TC_HEAD(t_spawn_open_nonexistent_diag, tc)
 	    "and delivers proper diagnostic");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
 }
-
 ATF_TC_BODY(t_spawn_open_nonexistent_diag, tc)
 {
 	int err;
@@ -252,7 +248,7 @@ ATF_TC_BODY(t_spawn_open_nonexistent_diag, tc)
 	posix_spawnattr_t attr;
 	posix_spawn_file_actions_t fa;
 
-	posix_spawnattr_init(&attr);
+	RZ(posix_spawnattr_init(&attr));
 	/*
 	 * POSIX_SPAWN_RETURNERROR is a NetBSD specific flag that
 	 * will cause a "proper" return value from posix_spawn(2)
@@ -260,72 +256,68 @@ ATF_TC_BODY(t_spawn_open_nonexistent_diag, tc)
 	 * status from the child process (c.f. the non-diag variant
 	 * of this test).
 	 */
-	posix_spawnattr_setflags(&attr, POSIX_SPAWN_RETURNERROR);
-	posix_spawn_file_actions_init(&fa);
-	posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
-	    "./non/ex/ist/ent", O_RDONLY, 0);
+	RZ(posix_spawnattr_setflags(&attr, POSIX_SPAWN_RETURNERROR));
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
+		"./non/ex/ist/ent", O_RDONLY, 0));
 	err = posix_spawn(&pid, "/bin/cat", &fa, &attr, args, NULL);
-	ATF_REQUIRE(err == ENOENT);
-	posix_spawn_file_actions_destroy(&fa);
-	posix_spawnattr_destroy(&attr);
+	ATF_REQUIRE_MSG(err == ENOENT, "err=%d (%s)", err, strerror(err));
+	RZ(posix_spawn_file_actions_destroy(&fa));
+	RZ(posix_spawnattr_destroy(&attr));
 }
 
 ATF_TC(t_spawn_fileactions);
-
 ATF_TC_HEAD(t_spawn_fileactions, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Tests various complex fileactions");
 }
-
 ATF_TC_BODY(t_spawn_fileactions, tc)
 {
-	int fd1, fd2, fd3, status, err;
+	int fd1, fd2, fd3, status;
 	pid_t pid;
 	char * const args[2] = { __UNCONST("h_fileactions"), NULL };
 	char helper[FILENAME_MAX];
 	posix_spawn_file_actions_t fa;
 
-	posix_spawn_file_actions_init(&fa);
+	RZ(posix_spawn_file_actions_init(&fa));
 
-	closefrom(fileno(stderr)+1);
+	RL(closefrom(fileno(stderr) + 1));
 
-	fd1 = open("/dev/null", O_RDONLY);
+	RL(fd1 = open("/dev/null", O_RDONLY));
 	ATF_REQUIRE(fd1 == 3);
 
-	fd2 = open("/dev/null", O_WRONLY, O_CLOEXEC);
+	RL(fd2 = open("/dev/null", O_WRONLY, O_CLOEXEC));
 	ATF_REQUIRE(fd2 == 4);
 
-	fd3 = open("/dev/null", O_WRONLY);
+	RL(fd3 = open("/dev/null", O_WRONLY));
 	ATF_REQUIRE(fd3 == 5);
 
-	posix_spawn_file_actions_addclose(&fa, fd1);
-	posix_spawn_file_actions_addopen(&fa, 6, "/dev/null", O_RDWR, 0);
-	posix_spawn_file_actions_adddup2(&fa, 1, 7); 
+	RZ(posix_spawn_file_actions_addclose(&fa, fd1));
+	RZ(posix_spawn_file_actions_addopen(&fa, 6, "/dev/null", O_RDWR, 0));
+	RZ(posix_spawn_file_actions_adddup2(&fa, 1, 7));
 
 	snprintf(helper, sizeof helper, "%s/h_fileactions",
 	    atf_tc_get_config_var(tc, "srcdir"));
-	err = posix_spawn(&pid, helper, &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
+	RZ(posix_spawn(&pid, helper, &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
-	ATF_REQUIRE(err == 0);
-
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
 }
 
 ATF_TC(t_spawn_empty_fileactions);
-
 ATF_TC_HEAD(t_spawn_empty_fileactions, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "posix_spawn with empty fileactions (PR kern/46038)");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
 }
-
 ATF_TC_BODY(t_spawn_empty_fileactions, tc)
 {
-	int status, err;
+	int status;
 	pid_t pid;
 	char * const args[2] = { __UNCONST("cat"), NULL };
 	posix_spawn_file_actions_t fa;
@@ -336,30 +328,32 @@ ATF_TC_BODY(t_spawn_empty_fileactions, tc)
 	 * already in the parent and pass empty file actions to the child.
 	 */
 	make_testfile(TESTFILE);
-	unlink(CHECKFILE);
 
-	freopen(TESTFILE, "r", stdin);
-	freopen(CHECKFILE, "w", stdout);
+	REQUIRE_LIBC(freopen(TESTFILE, "r", stdin), NULL);
+	REQUIRE_LIBC(freopen(CHECKFILE, "w", stdout), NULL);
 
-	posix_spawn_file_actions_init(&fa);
-	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
-	posix_spawn_file_actions_destroy(&fa);
-
-	ATF_REQUIRE(err == 0);
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
 
 	/* ok, wait for the child to finish */
-	waitpid(pid, &status, 0);
-	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
 
 	/* now check that input and output have the same size */
 	insize = filesize(TESTFILE);
 	outsize = filesize(CHECKFILE);
-	ATF_REQUIRE(insize == strlen(TESTCONTENT));
-	ATF_REQUIRE(insize == outsize);
+	ATF_CHECK_MSG(insize == strlen(TESTCONTENT),
+	    "insize=%zu strlen(TESTCONTENT)=%zu", insize, strlen(TESTCONTENT));
+	ATF_CHECK_MSG(insize == outsize,
+	    "insize=%zu outsize=%zu", insize, outsize);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, t_spawn_fileactions);
 	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent);
 	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent_diag);
