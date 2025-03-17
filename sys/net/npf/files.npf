@@ -32,7 +32,7 @@ file	net/npf/npf_portmap.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
 file	net/npf/npf_worker.c			npf
-
+file	net/npf/npf_socket.c			npf
 file	net/npf/npf_os.c			npf
 file	net/npf/npf_ifaddr.c			npf
 
