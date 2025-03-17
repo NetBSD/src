@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.21 2025/03/05 07:03:16 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.22 2025/03/17 06:54:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.21 2025/03/05 07:03:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.22 2025/03/17 06:54:17 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.21 2025/03/05 07:03:16 macallan Exp $"
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
-#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
@@ -103,7 +102,6 @@ struct	hyperfb_softc {
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
 	int sc_video_on;
-	glyphcache sc_gc;
 };
 
 extern struct cfdriver hyperfb_cd;
@@ -419,14 +417,8 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &hyperfb_accessops);
 	sc->vd.init_screen = hyperfb_init_screen;
-	sc->vd.show_screen_cookie = &sc->sc_gc;
-	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	ri = &sc->sc_console_screen.scr_ri;
-
-	//sc->sc_gc.gc_bitblt = hyperfb_bitblt;
-	//sc->sc_gc.gc_blitcookie = sc;
-	//sc->sc_gc.gc_rop = RopSrc;
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -435,15 +427,6 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-
-#if 0
-	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			sc->sc_scr.fbheight - sc->sc_height - 5,
-			sc->sc_scr.fbwidth,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			defattr);
-#endif
 
 	hyperfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
@@ -469,36 +452,6 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	hyperfb_setup_fb(sc);
-	
-#ifdef HYPERFB_DEBUG
-	int i;
-
-	hyperfb_wait_fifo(sc, 4);
-	/* transfer data */
-	hyperfb_write4(sc, NGLE_REG_8, 0xff00ff00);
-	/* plane mask */
-	hyperfb_write4(sc, NGLE_REG_13, 0xff);
-	/* bitmap op */
-	hyperfb_write4(sc, NGLE_REG_14,
-	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 1, 0));
-	/* dst bitmap access */
-	hyperfb_write4(sc, NGLE_REG_11,
-	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly, 0));
-
-	hyperfb_wait_fifo(sc, 3);
-	hyperfb_write4(sc, NGLE_REG_35, 0xe0);
-	hyperfb_write4(sc, NGLE_REG_36, 0x1c);
-	/* dst XY */
-	hyperfb_write4(sc, NGLE_REG_6, (2 << 16) | 902);
-	/* len XY start */
-	hyperfb_write4(sc, NGLE_REG_9, (28 << 16) | 32);
-
-	for (i = 0; i < 32; i++)
-		hyperfb_write4(sc, NGLE_REG_8, (i & 4) ? 0xff00ff00 : 0x00ff00ff);
-
-	hyperfb_rectfill(sc, 70, 902, 16, 32, 0xe0);
-	hyperfb_rectfill(sc, 50, 902, 16, 32, 0x1c);
-#endif
 }
 
 static void
@@ -585,9 +538,6 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
 				hyperfb_setup(sc);
 				hyperfb_restore_palette(sc);
-#if 0
-				glyphcache_wipe(&sc->sc_gc);
-#endif
 				hyperfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -1125,12 +1075,6 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-#if 0
-	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
-#endif
-
 	data = WSFONT_GLYPH(c, font);
 
 	hyperfb_fillmode(sc);
@@ -1167,10 +1111,6 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data16++;
 		}
 	}
-#if 0
-	if (rv == GC_ADD)
-		glyphcache_add(&sc->sc_gc, c, x, y);
-#endif
 }
 
 static void
