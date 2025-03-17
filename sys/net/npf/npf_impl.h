@@ -427,11 +427,17 @@ void		npf_ruleset_gc(npf_ruleset_t *);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
 		    const int, const int);
+int		npf_rule_reverse(npf_cache_t *, npf_match_info_t *, int);
+int		npf_uid_gid_match(npf_rule_t *, npf_cache_t *, int);
+int		npf_rule_match_usrgrp(npf_rule_t *, npf_cache_t *, int);
+int		npf_rule_match_user(npf_rule_t *, npf_cache_t *, int);
 int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
 
 /* Rule interface. */
 npf_rule_t *	npf_rule_alloc(npf_t *, const nvlist_t *);
 void		npf_rule_setcode(npf_rule_t *, int, void *, size_t);
+void		npf_rule_setuid(npf_rule_t *, r_uid_t *);
+void		npf_rule_setgid(npf_rule_t *, r_gid_t *);
 void		npf_rule_setrproc(npf_rule_t *, npf_rproc_t *);
 void		npf_rule_free(npf_rule_t *);
 uint64_t	npf_rule_getid(const npf_rule_t *);
@@ -474,6 +480,12 @@ int		npf_state_tcp_timeout(npf_t *, const npf_state_t *);
 /* Portmap. */
 void		npf_portmap_sysinit(void);
 void		npf_portmap_sysfini(void);
+
+/* uid/gid process matching */
+int		npf_socket_lookup_uid(npf_cache_t *, int, uint32_t *);
+int		npf_socket_lookup_gid(npf_cache_t *, int, uint32_t *);
+int		npf_match_gid(struct r_gid *, uint32_t);
+int		npf_match_uid(struct r_uid *, uint32_t);
 
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);

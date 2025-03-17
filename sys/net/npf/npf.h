@@ -382,6 +382,19 @@ typedef enum {
 	NPF_STATS_COUNT
 } npf_stats_t;
 
+/* unary and binary operators */
+enum {
+	NPF_OP_NONE,
+	NPF_OP_EQ,
+	NPF_OP_NE,
+	NPF_OP_LE,
+	NPF_OP_LT,
+	NPF_OP_GE,
+	NPF_OP_GT,
+	NPF_OP_XRG,
+	NPF_OP_IRG
+};
+
 #define	NPF_STATS_SIZE		(sizeof(uint64_t) * NPF_STATS_COUNT)
 
 #endif	/* _NPF_NET_H_ */

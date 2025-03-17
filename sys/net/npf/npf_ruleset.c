@@ -954,6 +954,102 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 }
 
 /*
+  * just exchange the flag attributes for pass/block for the diff protocols.
+  * for passing, we set the STATEFULNESS for TCP connection establishment
+  * if ret == 0, it is for a pass to be changed to block
+  * non-zero ret indicates a block to pass
+  * when we change to block, we assume the default RST rerturn for TCP
+  * when we change to pass, we ensure no bit field for RST for tcp and ICMP for udp
+  * finally change the ret condition too
+  */
+int
+npf_rule_reverse(npf_cache_t *npc, npf_match_info_t *mi, int ret)
+{
+
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
+	switch(npc->npc_proto) {
+		case IPPROTO_TCP:
+			if (ret == 0) /* switch pass to block */ {
+				mi->mi_retfl &= !(NPF_RULE_PASS | NPF_RULE_STATEFUL |
+					NPF_RULE_GSTATEFUL);
+				mi->mi_retfl |= NPF_RULE_RETRST;
+			}
+			else /* block to pass */ {
+				mi->mi_retfl &= !(NPF_RULE_RETRST);
+				mi->mi_retfl |= (NPF_RULE_PASS | NPF_RULE_STATEFUL |
+					NPF_RULE_GSTATEFUL);
+			}
+			break;
+		case IPPROTO_UDP:
+			if (ret == 0) /* pass to block */ {
+				mi->mi_retfl &= !(NPF_RULE_PASS);
+				mi->mi_retfl |= NPF_RULE_RETICMP;
+			}
+			else /* block to pass */ {
+				mi->mi_retfl &= !(NPF_RULE_RETICMP);
+				mi->mi_retfl |= NPF_RULE_PASS;
+			}
+			break;
+	}
+
+	return (ret == 0) ? ENETUNREACH : 0;
+}
+
+/* only perform uid/gid checks when set */
+int
+npf_uid_gid_match(npf_rule_t *rl, npf_cache_t *npc, int dir)
+{
+	int matched;
+	if (rl->uid == NULL && rl->gid == NULL)
+		return -1;
+
+	matched = 0;
+	if ( rl->uid)
+		matched |= npf_rule_match_user(rl, npc, dir);
+	if (rl->gid)
+		matched |= npf_rule_match_usrgrp(rl, npc, dir);
+
+	return matched;
+}
+
+/*
+* lookup process sockets and match rule ids to socket user id
+* if socket id doesn't match any of rule ids, reverse action
+*/
+int
+npf_rule_match_user(npf_rule_t *rl, npf_cache_t *npc, int dir)
+{
+	int error;
+	uid_t sk_uid;
+
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
+
+	error = npf_socket_lookup_uid(npc, dir, &sk_uid);
+	if (error == -1) {
+		return ENOTCONN;
+	}
+
+	return npf_match_uid(rl->uid, sk_uid);
+}
+
+int
+npf_rule_match_usrgrp(npf_rule_t *rl, npf_cache_t *npc, int dir)
+{
+	uid_t sk_gid;
+	int error;
+
+	KASSERT(npf_iscached(npc, NPC_IP46)); /* assert layer3 cache info*/
+	KASSERT(npf_iscached(npc, NPC_LAYER4)); /* assert layer4 cache info */
+
+	error = npf_socket_lookup_gid(npc, dir, &sk_gid);
+	if (error == -1)
+		return ENOTCONN;
+
+	return npf_match_gid(rl->gid, sk_gid);
+}
+
+/*
  * npf_rule_conclude: return decision and the flags for conclusion.
  *
  * => Returns ENETUNREACH if "block" and 0 if "pass".
