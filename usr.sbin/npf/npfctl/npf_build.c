@@ -715,6 +715,14 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 		npfctl_build_code(rl, family, popts, fopts);
 	}
 
+	if (fopts->uid) {
+		npf_rule_setruser(rl, fopts->uid);
+	}
+
+	if (fopts->gid) {
+		npf_rule_setrugrp(rl, fopts->gid);
+	}
+
 	if (rproc) {
 		npf_rule_setproc(rl, rproc);
 	}

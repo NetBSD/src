@@ -168,6 +168,8 @@ yyerror(const char *fmt, ...)
 %token			TO
 %token			TREE
 %token			TYPE
+%token			USER
+%token			USERGROUP
 %token	<num>		ICMP
 %token	<num>		ICMP6
 
@@ -188,13 +190,16 @@ yyerror(const char *fmt, ...)
 %type	<num>		block_or_pass rule_dir group_dir block_opts
 %type	<num>		maybe_not opt_stateful icmp_type table_type
 %type	<num>		map_sd map_algo map_flags map_type
-%type	<num>		param_val
+%type	<num>		param_val op_unary op_binary
+%type	<guid>		uid gid
 %type	<var>		static_ifaddrs filt_addr_element
 %type	<var>		filt_port filt_port_list port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
 %type	<var>		procs proc_call proc_param_list proc_param
 %type	<var>		element list_elems list value filt_addr_list
 %type	<var>		opt_proto proto proto_elems
+%type	<uid>		uids uid_item uid_list user_id
+%type	<gid>		gids gid_item gid_list group_id
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts all_or_filt_opts
 %type	<optproto>	rawproto
@@ -203,12 +208,15 @@ yyerror(const char *fmt, ...)
 %union {
 	char *		str;
 	unsigned long	num;
+	uint32_t	guid;
 	double		fpnum;
 	npfvar_t *	var;
 	addr_port_t	addrport;
 	filt_opts_t	filtopts;
 	opt_proto_t	optproto;
 	rule_group_t	rulegroup;
+	struct		r_uid *uid;
+	struct		r_gid *gid;
 }
 
 %%
@@ -655,7 +663,7 @@ opt_proto
 	;
 
 all_or_filt_opts
-	: ALL
+	: ALL user_id group_id
 	{
 		$$.fo_finvert = false;
 		$$.fo_from.ap_netaddr = NULL;
@@ -663,6 +671,8 @@ all_or_filt_opts
 		$$.fo_tinvert = false;
 		$$.fo_to.ap_netaddr = NULL;
 		$$.fo_to.ap_portrange = NULL;
+		$$.uid = $2;
+		$$.gid = $3;
 	}
 	| filt_opts	{ $$ = $1; }
 	;
@@ -687,6 +697,7 @@ block_opts
 
 filt_opts
 	: FROM maybe_not filt_addr filt_port TO maybe_not filt_addr filt_port
+	user_id group_id
 	{
 		$$.fo_finvert = $2;
 		$$.fo_from.ap_netaddr = $3;
@@ -694,8 +705,10 @@ filt_opts
 		$$.fo_tinvert = $6;
 		$$.fo_to.ap_netaddr = $7;
 		$$.fo_to.ap_portrange = $8;
+		$$.uid = $9;
+		$$.gid = $10;
 	}
-	| FROM maybe_not filt_addr filt_port
+	| FROM maybe_not filt_addr filt_port user_id group_id
 	{
 		$$.fo_finvert = $2;
 		$$.fo_from.ap_netaddr = $3;
@@ -703,8 +716,10 @@ filt_opts
 		$$.fo_tinvert = false;
 		$$.fo_to.ap_netaddr = NULL;
 		$$.fo_to.ap_portrange = NULL;
+		$$.uid = $5;
+		$$.gid = $6;
 	}
-	| TO maybe_not filt_addr filt_port
+	| TO maybe_not filt_addr filt_port user_id group_id
 	{
 		$$.fo_finvert = false;
 		$$.fo_from.ap_netaddr = NULL;
@@ -712,6 +727,8 @@ filt_opts
 		$$.fo_tinvert = $2;
 		$$.fo_to.ap_netaddr = $3;
 		$$.fo_to.ap_portrange = $4;
+		$$.uid = $5;
+		$$.gid = $6;
 	}
 	;
 
@@ -969,6 +986,183 @@ ifref
 		$$ = ifna->ifna_name;
 	}
 	;
+
+user_id
+	: /* empty */ { $$ = NULL; }
+	| USER uids	{ $$ = $2; }
+	;
+
+uids
+	: uid_item	{ $$ = $1; }
+	;
+
+uid_item
+	: uid
+	{
+		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->uid[0] = $1;
+		$$->uid[1] = $1;
+		$$->op = NPF_OP_EQ;
+	}
+	| op_unary uid
+	{
+		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->uid[0] = $2;
+		$$->uid[1] = $2;
+		$$->op = $1;
+	}
+	| uid op_binary uid
+	{
+		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->uid[0] = $1;
+		$$->uid[1] = $3;
+		$$->op = $2;
+	}
+	;
+
+uid
+	: NUM
+	{
+		if ($1 >= UID_MAX) {
+			yyerror("illegal uid value %lu", $1);
+			YYERROR;
+		}
+		$$ = $1;
+	}
+	| IDENTIFIER
+	{
+		if (($$ = npfctl_parse_user($1)) == 1) {
+			yyerror("unknown user %s", $1);
+			YYERROR;
+		}
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		int type = npfvar_get_type(vp, 0);
+		char *usr;
+
+		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			usr = npfvar_expand_string(vp);
+			if (($$ = npfctl_parse_user(usr)) == 1) {
+				yyerror("unknown user %s", $1);
+				YYERROR;
+			}
+			break;
+		case NPFVAR_NUM:
+			$$ = npfvar_expand_number(vp);
+			break;
+		case -1:
+			yyerror("undefined variable '%s'", $1);
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for user id",
+				$1, npfvar_type(type));
+			break;
+		}
+	}
+	;
+
+group_id
+	: /* empty */ { $$ = NULL; }
+	| USERGROUP gids	{ $$ = $2; }
+	;
+
+gids
+	: gid_item	{ $$ = $1; }
+	;
+
+gid_item
+	: gid
+	{
+		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->gid[0] = $1;
+		$$->gid[1] = $1;
+		$$->op = NPF_OP_EQ;
+	}
+	| op_unary gid
+	{
+		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->gid[0] = $2;
+		$$->gid[1] = $2;
+		$$->op = $1;
+	}
+	| gid op_binary gid
+	{
+		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
+			errx(EXIT_FAILURE, "uid_item: calloc");
+		$$->gid[0] = $1;
+		$$->gid[1] = $3;
+		$$->op = $2;
+	}
+	;
+
+gid
+	: NUM
+	{
+		if ($1 >= GID_MAX) {
+			yyerror("illegal gid value %lu", $1);
+			YYERROR;
+		}
+		$$ = $1;
+	}
+	| IDENTIFIER
+	{
+		if (($$ = npfctl_parse_usergroup($1)) == 1) {
+			yyerror("unknown user group %s", $1);
+			YYERROR;
+		}
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		int type = npfvar_get_type(vp, 0);
+		char *user_group;
+
+		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			user_group = npfvar_expand_string(vp);
+			if (($$ = npfctl_parse_usergroup(user_group)) == 1) {
+				yyerror("unknown user group %s", $1);
+				YYERROR;
+			}
+			break;
+		case NPFVAR_NUM:
+			$$ = npfvar_expand_number(vp);
+			break;
+		case -1:
+			yyerror("undefined variable '%s'", $1);
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for group id",
+				$1, npfvar_type(type));
+			break;
+		}
+	}
+	;
+
+op_unary
+	: EQ	{ $$ = NPF_OP_EQ; }
+	| EXCL_MARK EQ	{ $$ = NPF_OP_NE; }
+	| LT EQ { $$ = NPF_OP_LE; }
+	| LT	{ $$ = NPF_OP_LT; }
+	| GT EQ	{ $$ = NPF_OP_GE; }
+	| GT	{ $$ = NPF_OP_GT; }
+	;
+
+op_binary
+	: XRG	{ $$ = NPF_OP_XRG; }
+	| IRG	{ $$ = NPF_OP_IRG; }
+	;
+
 
 number
 	: HEX		{ $$ = $1; }

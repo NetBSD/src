@@ -78,6 +78,8 @@ typedef struct filt_opts {
 	addr_port_t	fo_to;
 	bool		fo_finvert;
 	bool		fo_tinvert;
+	struct r_uid	*uid;
+	struct r_gid	*gid;
 } filt_opts_t;
 
 typedef struct opt_proto {
@@ -139,6 +141,8 @@ npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *, npfvar_t *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
+uint32_t	npfctl_parse_user(const char *);
+uint32_t	npfctl_parse_usergroup(const char *);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);

@@ -59,6 +59,16 @@ typedef union {
 	uint32_t		word32[4];
 } npf_addr_t;
 
+struct r_uid {
+	uid_t		uid[2];
+	uint8_t		 op;
+};
+
+struct r_gid {
+	gid_t		gid[2];
+	uint8_t		op;
+};
+
 typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)

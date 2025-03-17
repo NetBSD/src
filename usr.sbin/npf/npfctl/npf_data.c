@@ -52,6 +52,8 @@ __RCSID("$NetBSD: npf_data.c,v 1.30 2019/01/19 21:19:32 rmind Exp $");
 #include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "npfctl.h"
 
@@ -266,6 +268,41 @@ npfctl_parse_table_id(const char *name)
 	}
 	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
+
+uint32_t
+npfctl_parse_user(const char *user)
+{
+	uint32_t uid;
+	if (!(strcmp(user, "unknown")))
+		uid = UID_MAX;
+	else {
+		struct passwd	*pw;
+
+		if ((pw = getpwnam(user)) == NULL) {
+			return 1;
+		}
+		uid = pw->pw_uid;
+	}
+	return uid;
+}
+
+uint32_t
+npfctl_parse_usergroup(const char *usergroup)
+{
+	uint32_t gid;
+	if (!(strcmp(usergroup, "unknown")))
+		gid = GID_MAX;
+	else {
+		struct group	*grp;
+
+		if ((grp = getgrnam(usergroup)) == NULL) {
+			return 1;
+		}
+		gid = grp->gr_gid;
+	}
+	return gid;
+}
+
 
 /*
  * npfctl_parse_port_range: create a port-range variable.  Note that the
