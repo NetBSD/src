@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.19 2023/12/28 04:43:55 rin Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.20 2025/03/17 07:39:55 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.19 2023/12/28 04:43:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.20 2025/03/17 07:39:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,8 +91,6 @@ rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 		start = 0x90000000;
 		size  = 0x10000000;
 	}
-
-	oea_iobat_add(start, size);
 
 	return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
 }
