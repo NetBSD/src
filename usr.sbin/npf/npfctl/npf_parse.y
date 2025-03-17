@@ -999,27 +999,15 @@ uids
 uid_item
 	: uid
 	{
-		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->uid[0] = $1;
-		$$->uid[1] = $1;
-		$$->op = NPF_OP_EQ;
+		$$ = npfctl_init_uid($1, $1, NPF_OP_EQ);
 	}
 	| op_unary uid
 	{
-		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->uid[0] = $2;
-		$$->uid[1] = $2;
-		$$->op = $1;
+		$$ = npfctl_init_uid($2, $2, $1);
 	}
 	| uid op_binary uid
 	{
-		if (($$ = calloc(1, sizeof(struct r_uid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->uid[0] = $1;
-		$$->uid[1] = $3;
-		$$->op = $2;
+		$$ = npfctl_init_uid($1, $3, $2);
 	}
 	;
 
@@ -1034,7 +1022,7 @@ uid
 	}
 	| IDENTIFIER
 	{
-		if (($$ = npfctl_parse_user($1)) == 1) {
+		if (npfctl_parse_user($1, &$$) == -1) {
 			yyerror("unknown user %s", $1);
 			YYERROR;
 		}
@@ -1049,7 +1037,7 @@ uid
 		case NPFVAR_IDENTIFIER:
 		case NPFVAR_STRING:
 			usr = npfvar_expand_string(vp);
-			if (($$ = npfctl_parse_user(usr)) == 1) {
+			if (npfctl_parse_user(usr, &$$) == -1) {
 				yyerror("unknown user %s", $1);
 				YYERROR;
 			}
@@ -1070,7 +1058,7 @@ uid
 
 group_id
 	: /* empty */ { $$ = NULL; }
-	| USERGROUP gids	{ $$ = $2; }
+	| GROUP gids	{ $$ = $2; }
 	;
 
 gids
@@ -1080,27 +1068,15 @@ gids
 gid_item
 	: gid
 	{
-		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->gid[0] = $1;
-		$$->gid[1] = $1;
-		$$->op = NPF_OP_EQ;
+		$$ = npfctl_init_gid($1, $1, NPF_OP_EQ);
 	}
 	| op_unary gid
 	{
-		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->gid[0] = $2;
-		$$->gid[1] = $2;
-		$$->op = $1;
+		$$ = npfctl_init_gid($2, $2, $1);
 	}
 	| gid op_binary gid
 	{
-		if (($$ = calloc(1, sizeof(struct r_gid))) == NULL)
-			errx(EXIT_FAILURE, "uid_item: calloc");
-		$$->gid[0] = $1;
-		$$->gid[1] = $3;
-		$$->op = $2;
+		$$ = npfctl_init_gid($1, $3, $2);
 	}
 	;
 
@@ -1115,7 +1091,7 @@ gid
 	}
 	| IDENTIFIER
 	{
-		if (($$ = npfctl_parse_usergroup($1)) == 1) {
+		if (npfctl_parse_usergroup($1, &$$) == -1) {
 			yyerror("unknown user group %s", $1);
 			YYERROR;
 		}
@@ -1130,7 +1106,7 @@ gid
 		case NPFVAR_IDENTIFIER:
 		case NPFVAR_STRING:
 			user_group = npfvar_expand_string(vp);
-			if (($$ = npfctl_parse_usergroup(user_group)) == 1) {
+			if (npfctl_parse_usergroup(user_group, &$$) == -1) {
 				yyerror("unknown user group %s", $1);
 				YYERROR;
 			}

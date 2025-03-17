@@ -1004,7 +1004,7 @@ npf_uid_gid_match(npf_rule_t *rl, npf_cache_t *npc, int dir)
 		return -1;
 
 	matched = 0;
-	if ( rl->uid)
+	if (rl->uid)
 		matched |= npf_rule_match_user(rl, npc, dir);
 	if (rl->gid)
 		matched |= npf_rule_match_usrgrp(rl, npc, dir);

@@ -141,8 +141,10 @@ npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *, npfvar_t *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
-uint32_t	npfctl_parse_user(const char *);
-uint32_t	npfctl_parse_usergroup(const char *);
+int		npfctl_parse_user(const char *, uint32_t *);
+int		npfctl_parse_usergroup(const char *, uint32_t *);
+struct r_uid *	npfctl_init_uid(uint32_t, uint32_t, uint8_t);
+struct r_gid *	npfctl_init_gid(uint32_t, uint32_t, uint8_t);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);

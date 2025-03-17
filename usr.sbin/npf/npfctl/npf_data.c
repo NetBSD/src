@@ -269,40 +269,57 @@ npfctl_parse_table_id(const char *name)
 	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
 
-uint32_t
-npfctl_parse_user(const char *user)
+int
+npfctl_parse_user(const char *user, uint32_t *uid)
 {
-	uint32_t uid;
-	if (!(strcmp(user, "unknown")))
-		uid = UID_MAX;
+	if (strcmp(user, "unknown"))
+		*uid = UID_MAX;
 	else {
 		struct passwd	*pw;
 
 		if ((pw = getpwnam(user)) == NULL) {
-			return 1;
+			return -1;
 		}
-		uid = pw->pw_uid;
+		*uid = pw->pw_uid;
 	}
-	return uid;
+	return 0;
 }
 
-uint32_t
-npfctl_parse_usergroup(const char *usergroup)
+int
+npfctl_parse_usergroup(const char *usergroup, *uint32_t *gid)
 {
-	uint32_t gid;
-	if (!(strcmp(usergroup, "unknown")))
-		gid = GID_MAX;
+	if (!strcmp(usergroup, "unknown"))
+		*gid = GID_MAX;
 	else {
 		struct group	*grp;
 
 		if ((grp = getgrnam(usergroup)) == NULL) {
-			return 1;
+			return -1;
 		}
-		gid = grp->gr_gid;
+		*gid = grp->gr_gid;
 	}
-	return gid;
+	return 0;
 }
 
+struct r_uid *
+npfctl_init_uid(uint32_t uid1, uint32_t uid2, uint8_t op)
+{
+	struct r_uid *ruid = ecalloc(1, sizeof(*ruid));
+	ruid->uid[0] = uid1;
+	ruid->uid[1] = uid2;
+	ruid->op = op;
+	return ruid;
+}
+
+struct r_gid *
+npfctl_init_gid(uint32_t gid1, uint32_t gid2, uint8_t op)
+{
+	struct r_gid *rgid = ecalloc(1, sizeof(*rgid));
+	rgid->gid[0] = gid1;
+	rgid->gid[1] = gid2;
+	rgid->op = op;
+	return rgid;
+}
 
 /*
  * npfctl_parse_port_range: create a port-range variable.  Note that the
