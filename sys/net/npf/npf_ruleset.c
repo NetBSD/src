@@ -118,6 +118,9 @@ struct npf_rule {
 	LIST_ENTRY(npf_rule)	r_aentry;
 	nvlist_t *		r_info;
 	size_t			r_info_len;
+
+	r_uid_t *uid;
+	r_gid_t *gid;
 };
 
 #define	SKIPTO_ADJ_FLAG		(1U << 31)
@@ -716,6 +719,20 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 	rl->r_jcode = npf_bpf_compile(code, size);
 }
 
+void
+npf_rule_setuid(npf_rule_t *rl, r_uid_t *uid)
+{
+	rl->uid = kmem_alloc(sizeof(*(rl->uid)), KM_SLEEP);
+	memcpy(rl->uid, uid, sizeof(*uid));
+}
+
+void
+npf_rule_setgid(npf_rule_t *rl, r_gid_t *gid)
+{
+	rl->gid = kmem_alloc(sizeof(*(rl->gid)), KM_SLEEP);
+	memcpy(rl->gid, gid, sizeof(*gid));
+}
+
 /*
  * npf_rule_setrproc: assign a rule procedure and hold a reference on it.
  */
@@ -753,6 +770,13 @@ npf_rule_free(npf_rule_t *rl)
 	}
 	if (rl->r_info) {
 		kmem_free(rl->r_info, rl->r_info_len);
+	}
+
+	if (rl->uid) {
+		kmem_free(rl->uid, sizeof(*(rl->uid)));
+	}
+	if (rl->gid) {
+		kmem_free(rl->gid, sizeof(*(rl->gid)));
 	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
