@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.278 2025/03/16 15:52:03 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.279 2025/03/17 19:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.278 2025/03/16 15:52:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.279 2025/03/17 19:02:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1338,9 +1338,11 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	/* Changing the process group/session of a session
 	   leader is definitely off limits. */
 	if (SESS_LEADER(p)) {
-		if (sess == NULL && p->p_pgrp == pgrp)
+		if (sess == NULL && p->p_pgrp == pgrp) {
 			/* unless it's a definite noop */
 			rval = 0;
+			goto done;
+		}
 		goto eperm;
 	}
 
@@ -1365,7 +1367,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 
 	if (pgrp == p->p_pgrp)
 		/* nothing to do */
-		goto eperm;
+		goto done;
 
 	/* Ok all setup, link up required structures */
 
