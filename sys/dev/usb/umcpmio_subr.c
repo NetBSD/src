@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_subr.c,v 1.1 2024/12/16 16:37:38 brad Exp $	*/
+/*	$NetBSD: umcpmio_subr.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,44 +17,47 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio_subr.c,v 1.1 2024/12/16 16:37:38 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio_subr.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/device.h>
-#include <sys/sysctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
-#include <sys/kauth.h>
 #include <sys/lwp.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
+#include <dev/hid/hid.h>
+
+#include <dev/usb/uhidev.h>
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
-
+#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdevs.h>
-#include <dev/usb/uhidev.h>
-#include <dev/hid/hid.h>
+#include <dev/usb/usbhid.h>
 
 #include <dev/usb/umcpmio.h>
 #include <dev/usb/umcpmio_subr.h>
 #include <dev/usb/umcpmio_hid_reports.h>
 
-int umcpmio_send_report(struct umcpmio_softc *, uint8_t *, size_t, uint8_t *, int);
+int umcpmio_send_report(struct umcpmio_softc *, uint8_t *, size_t, uint8_t *,
+    int);
 
 #define UMCPMIO_DEBUG 1
 #ifdef UMCPMIO_DEBUG
-#define DPRINTF(x)	if (umcpmiodebug) printf x
-#define DPRINTFN(n, x)	if (umcpmiodebug > (n)) printf x
+#define DPRINTF(x)	do { if (umcpmiodebug) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (umcpmiodebug > (n)) printf x; } while (0)
 extern int	umcpmiodebug;
 #else
 #define DPRINTF(x)	__nothing
@@ -75,16 +78,17 @@ umcpmio_get_status(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 void
-umcpmio_set_i2c_speed(struct mcp2221_status_req *req,
-    int flags)
+umcpmio_set_i2c_speed(struct mcp2221_status_req *req, int flags)
 {
 	int i2cbaud = MCP2221_DEFAULT_I2C_SPEED;
 
@@ -95,9 +99,10 @@ umcpmio_set_i2c_speed(struct mcp2221_status_req *req,
 	if (i2cbaud <= 0)
 		i2cbaud = MCP2221_DEFAULT_I2C_SPEED;
 
-	/* Everyone and their brother seems to store the I2C divider like this,
-	 * so do likewise */
-
+	/*
+	 * Everyone and their brother seems to store the I2C divider like this,
+	 * so do likewise
+	 */
 	req->i2c_clock_divider = (MCP2221_INTERNAL_CLOCK / i2cbaud) - 3;
 }
 
@@ -112,11 +117,13 @@ umcpmio_put_status(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 int
@@ -135,7 +142,7 @@ umcpmio_set_i2c_speed_one(struct umcpmio_softc *sc,
 			err = EBUSY;
 	}
 
-	return(err);
+	return err;
 }
 
 int
@@ -150,11 +157,13 @@ umcpmio_get_sram(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 int
@@ -168,11 +177,13 @@ umcpmio_put_sram(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 /* We call the dedicated function ALT3 everywhere */
@@ -197,23 +208,25 @@ umcpmio_sram_gpio_to_flags(uint8_t gp_setting)
 		break;
 	case MCP2221_SRAM_PIN_IS_GPIO:
 	default:
-		if ((gp_setting & MCP2221_SRAM_GPIO_TYPE_MASK) == MCP2221_SRAM_GPIO_INPUT)
+		if ((gp_setting & MCP2221_SRAM_GPIO_TYPE_MASK) ==
+		    MCP2221_SRAM_GPIO_INPUT)
 			r |= GPIO_PIN_INPUT;
 		else
 			r |= GPIO_PIN_OUTPUT;
 		break;
 	}
 
-	return(r);
+	return r;
 }
 
 void
-umcpmio_set_gpio_value_sram(struct mcp2221_set_sram_req *req, int pin, bool value)
+umcpmio_set_gpio_value_sram(struct mcp2221_set_sram_req *req, int pin,
+    bool value)
 {
 	uint8_t *alter = NULL;
 	uint8_t *newvalue = NULL;
 
-	if (pin >=0 && pin < MCP2221_NPINS) {
+	if (pin >= 0 && pin < MCP2221_NPINS) {
 		switch (pin) {
 		case 0:
 			alter = &req->alter_gpio_config;
@@ -251,7 +264,7 @@ umcpmio_set_gpio_dir_sram(struct mcp2221_set_sram_req *req, int pin, int flags)
 	uint8_t *alter = NULL;
 	uint8_t *newvalue = NULL;
 
-	if (pin >=0 && pin < MCP2221_NPINS) {
+	if (pin >= 0 && pin < MCP2221_NPINS) {
 		switch (pin) {
 		case 0:
 			alter = &req->alter_gpio_config;
@@ -284,13 +297,15 @@ umcpmio_set_gpio_dir_sram(struct mcp2221_set_sram_req *req, int pin, int flags)
 }
 
 void
-umcpmio_set_gpio_designation_sram(struct mcp2221_set_sram_req *req, int pin, int flags)
+umcpmio_set_gpio_designation_sram(struct mcp2221_set_sram_req *req, int pin,
+    int flags)
 {
 	uint8_t *alter = NULL;
 	uint8_t *newvalue = NULL;
-	uint32_t altmask = GPIO_PIN_ALT0 | GPIO_PIN_ALT1 | GPIO_PIN_ALT2 | GPIO_PIN_ALT3;
+	uint32_t altmask =
+	    GPIO_PIN_ALT0 | GPIO_PIN_ALT1 | GPIO_PIN_ALT2 | GPIO_PIN_ALT3;
 
-	if (pin >=0 && pin < MCP2221_NPINS) {
+	if (pin >= 0 && pin < MCP2221_NPINS) {
 		switch (pin) {
 		case 0:
 			alter = &req->alter_gpio_config;
@@ -331,8 +346,12 @@ umcpmio_set_gpio_designation_sram(struct mcp2221_set_sram_req *req, int pin, int
 				case GPIO_PIN_ALT2:
 					nv |= MCP2221_SRAM_PIN_IS_ALT2;
 					break;
-					/* ALT3 will always be used as the dedicated function specific to the pin.
-					 * Not all of the pins will have the alt functions below #3.
+					/*
+					 * ALT3 will always be used as
+					 * the dedicated function
+					 * specific to the pin.  Not
+					 * all of the pins will have
+					 * the alt functions below #3.
 					 */
 				case GPIO_PIN_ALT3:
 					nv |= MCP2221_SRAM_PIN_IS_DED;
@@ -352,22 +371,32 @@ umcpmio_set_gpio_irq_sram(struct mcp2221_set_sram_req *req, int irqmode)
 	req->alter_gpio_config = MCP2221_SRAM_ALTER_GPIO;
 
 	if (irqmode & (GPIO_INTR_POS_EDGE | GPIO_INTR_DOUBLE_EDGE)) {
-		req->irq_config |= MCP2221_SRAM_ALTER_IRQ | MCP2221_SRAM_ALTER_POS_EDGE | MCP2221_SRAM_ENABLE_POS_EDGE | MCP2221_SRAM_CLEAR_IRQ;
+		req->irq_config |= MCP2221_SRAM_ALTER_IRQ |
+		    MCP2221_SRAM_ALTER_POS_EDGE |
+		    MCP2221_SRAM_ENABLE_POS_EDGE |
+		    MCP2221_SRAM_CLEAR_IRQ;
 	}
 	if (irqmode & (GPIO_INTR_NEG_EDGE | GPIO_INTR_DOUBLE_EDGE)) {
-		req->irq_config |= MCP2221_SRAM_ALTER_IRQ | MCP2221_SRAM_ALTER_NEG_EDGE | MCP2221_SRAM_ENABLE_NEG_EDGE | MCP2221_SRAM_CLEAR_IRQ;
+		req->irq_config |= MCP2221_SRAM_ALTER_IRQ |
+		    MCP2221_SRAM_ALTER_NEG_EDGE |
+		    MCP2221_SRAM_ENABLE_NEG_EDGE |
+		    MCP2221_SRAM_CLEAR_IRQ;
 	}
 
 	if (req->irq_config != 0) {
 		req->gp1_settings = MCP2221_SRAM_PIN_IS_ALT2;
 	} else {
-		req->irq_config = MCP2221_SRAM_ALTER_IRQ | MCP2221_SRAM_CLEAR_IRQ;
-		req->gp1_settings = MCP2221_SRAM_PIN_IS_GPIO | MCP2221_SRAM_GPIO_INPUT;
+		req->irq_config = MCP2221_SRAM_ALTER_IRQ |
+		    MCP2221_SRAM_CLEAR_IRQ;
+		req->gp1_settings = MCP2221_SRAM_PIN_IS_GPIO |
+		    MCP2221_SRAM_GPIO_INPUT;
 	}
 }
 
-/* It is unfortunate that the GET and PUT requests are not symertric.  That is,
- * the bits sort of line up but not quite between a GET and PUT. */
+/*
+ * It is unfortunate that the GET and PUT requests are not symertric.  That is,
+ * the bits sort of line up but not quite between a GET and PUT.
+ */
 
 static struct umcpmio_mapping_put umcpmio_vref_puts[] = {
 	{
@@ -407,11 +436,13 @@ umcpmio_set_dac_vref(struct mcp2221_set_sram_req *req, char *newvref)
 	if (i == __arraycount(umcpmio_vref_puts))
 		return;
 
-	req->dac_voltage_reference |= umcpmio_vref_puts[i].mask | MCP2221_SRAM_CHANGE_DAC_VREF;
+	req->dac_voltage_reference |= umcpmio_vref_puts[i].mask |
+	    MCP2221_SRAM_CHANGE_DAC_VREF;
 }
 
 int
-umcpmio_set_dac_vref_one(struct umcpmio_softc *sc, char *newvref, bool takemutex)
+umcpmio_set_dac_vref_one(struct umcpmio_softc *sc, char *newvref,
+    bool takemutex)
 {
 	struct mcp2221_set_sram_req req;
 	struct mcp2221_set_sram_res res;
@@ -427,11 +458,13 @@ umcpmio_set_dac_vref_one(struct umcpmio_softc *sc, char *newvref, bool takemutex
 void
 umcpmio_set_dac_value(struct mcp2221_set_sram_req *req, uint8_t newvalue)
 {
-	req->set_dac_output_value |= (newvalue & MCP2221_SRAM_DAC_VALUE_MASK) | MCP2221_SRAM_CHANGE_DAC_VREF;
+	req->set_dac_output_value |= (newvalue & MCP2221_SRAM_DAC_VALUE_MASK) |
+	    MCP2221_SRAM_CHANGE_DAC_VREF;
 }
 
 int
-umcpmio_set_dac_value_one(struct umcpmio_softc *sc, uint8_t newvalue, bool takemutex)
+umcpmio_set_dac_value_one(struct umcpmio_softc *sc, uint8_t newvalue,
+    bool takemutex)
 {
 	struct mcp2221_set_sram_req req;
 	struct mcp2221_set_sram_res res;
@@ -459,11 +492,13 @@ umcpmio_set_adc_vref(struct mcp2221_set_sram_req *req, char *newvref)
 	if (i == __arraycount(umcpmio_vref_puts))
 		return;
 
-	req->adc_voltage_reference |= umcpmio_vref_puts[i].mask | MCP2221_SRAM_CHANGE_ADC_VREF;
+	req->adc_voltage_reference |= umcpmio_vref_puts[i].mask |
+	    MCP2221_SRAM_CHANGE_ADC_VREF;
 }
 
 int
-umcpmio_set_adc_vref_one(struct umcpmio_softc *sc, char *newvref, bool takemutex)
+umcpmio_set_adc_vref_one(struct umcpmio_softc *sc, char *newvref,
+    bool takemutex)
 {
 	struct mcp2221_set_sram_req req;
 	struct mcp2221_set_sram_res res;
@@ -514,7 +549,8 @@ umcpmio_set_gpioclock_dc(struct mcp2221_set_sram_req *req, char *new_dc)
 }
 
 int
-umcpmio_set_gpioclock_dc_one(struct umcpmio_softc *sc, char *new_dutycycle, bool takemutex)
+umcpmio_set_gpioclock_dc_one(struct umcpmio_softc *sc, char *new_dutycycle,
+    bool takemutex)
 {
 	struct mcp2221_get_sram_res current_sram_res;
 	struct mcp2221_set_sram_req req;
@@ -525,9 +561,18 @@ umcpmio_set_gpioclock_dc_one(struct umcpmio_softc *sc, char *new_dutycycle, bool
 	if (! err) {
 		memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
 		umcpmio_set_gpioclock_dc(&req, new_dutycycle);
-		DPRINTF(("umcpmio_set_gpioclock_dc_one: req.clock_output_divider=%02x,current mask=%02x\n",req.clock_output_divider,current_sram_res.clock_divider & MCP2221_SRAM_GPIO_CLOCK_CD_MASK));
-		req.clock_output_divider |= (current_sram_res.clock_divider & MCP2221_SRAM_GPIO_CLOCK_CD_MASK) | MCP2221_SRAM_GPIO_CHANGE_DCCD;
-		DPRINTF(("umcpmio_set_gpioclock_dc_one: SET req.clock_output_divider=%02x\n",req.clock_output_divider));
+		DPRINTF(("umcpmio_set_gpioclock_dc_one:"
+			" req.clock_output_divider=%02x, current mask=%02x\n",
+			req.clock_output_divider,
+			(current_sram_res.clock_divider &
+			    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
+		req.clock_output_divider |=
+		    (current_sram_res.clock_divider &
+			MCP2221_SRAM_GPIO_CLOCK_CD_MASK) |
+		    MCP2221_SRAM_GPIO_CHANGE_DCCD;
+		DPRINTF(("umcpmio_set_gpioclock_dc_one:"
+			" SET req.clock_output_divider=%02x\n",
+			req.clock_output_divider));
 		err = umcpmio_put_sram(sc, &req, &res, takemutex);
 	}
 
@@ -584,7 +629,8 @@ umcpmio_set_gpioclock_cd(struct mcp2221_set_sram_req *req, char *new_cd)
 }
 
 int
-umcpmio_set_gpioclock_cd_one(struct umcpmio_softc *sc, char *new_clockdivider, bool takemutex)
+umcpmio_set_gpioclock_cd_one(struct umcpmio_softc *sc, char *new_clockdivider,
+    bool takemutex)
 {
 	struct mcp2221_get_sram_res current_sram_res;
 	struct mcp2221_set_sram_req req;
@@ -595,9 +641,18 @@ umcpmio_set_gpioclock_cd_one(struct umcpmio_softc *sc, char *new_clockdivider, b
 	if (! err) {
 		memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
 		umcpmio_set_gpioclock_cd(&req, new_clockdivider);
-		DPRINTF(("umcpmio_set_gpioclock_cd_one: req.clock_output_divider=%02x,current mask=%02x\n",req.clock_output_divider,current_sram_res.clock_divider & MCP2221_SRAM_GPIO_CLOCK_CD_MASK));
-		req.clock_output_divider |= (current_sram_res.clock_divider & MCP2221_SRAM_GPIO_CLOCK_DC_MASK) | MCP2221_SRAM_GPIO_CHANGE_DCCD;
-		DPRINTF(("umcpmio_set_gpioclock_cd_one: SET req.clock_output_divider=%02x\n",req.clock_output_divider));
+		DPRINTF(("umcpmio_set_gpioclock_cd_one:"
+			" req.clock_output_divider=%02x, current mask=%02x\n",
+			req.clock_output_divider,
+			(current_sram_res.clock_divider &
+			    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
+		req.clock_output_divider |=
+		    (current_sram_res.clock_divider &
+			MCP2221_SRAM_GPIO_CLOCK_DC_MASK) |
+		    MCP2221_SRAM_GPIO_CHANGE_DCCD;
+		DPRINTF(("umcpmio_set_gpioclock_cd_one:"
+			" SET req.clock_output_divider=%02x\n",
+			req.clock_output_divider));
 		err = umcpmio_put_sram(sc, &req, &res, takemutex);
 	}
 
@@ -616,11 +671,13 @@ umcpmio_get_gpio_cfg(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 int
@@ -634,11 +691,13 @@ umcpmio_put_gpio_cfg(struct umcpmio_softc *sc,
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 /* So... if the pin isn't set to GPIO, just call the output LOW */
@@ -657,36 +716,45 @@ umcpmio_get_gpio_value(struct umcpmio_softc *sc,
 		    get_gpio_cfg_res.completion == MCP2221_CMD_COMPLETE_OK) {
 			switch (pin) {
 			case 0:
-				if (get_gpio_cfg_res.gp0_pin_value != MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp0_pin_value == 0x01)
+				if (get_gpio_cfg_res.gp0_pin_value !=
+				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+					if (get_gpio_cfg_res.gp0_pin_value ==
+					    0x01)
 						r = GPIO_PIN_HIGH;
 				break;
 			case 1:
-				if (get_gpio_cfg_res.gp1_pin_value != MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp1_pin_value == 0x01)
+				if (get_gpio_cfg_res.gp1_pin_value !=
+				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+					if (get_gpio_cfg_res.gp1_pin_value ==
+					    0x01)
 						r = GPIO_PIN_HIGH;
 				break;
 			case 2:
-				if (get_gpio_cfg_res.gp2_pin_value != MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp2_pin_value == 0x01)
+				if (get_gpio_cfg_res.gp2_pin_value !=
+				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+					if (get_gpio_cfg_res.gp2_pin_value ==
+					    0x01)
 						r = GPIO_PIN_HIGH;
 				break;
 			case 3:
-				if (get_gpio_cfg_res.gp3_pin_value != MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp3_pin_value == 0x01)
+				if (get_gpio_cfg_res.gp3_pin_value !=
+				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+					if (get_gpio_cfg_res.gp3_pin_value ==
+					    0x01)
 						r = GPIO_PIN_HIGH;
 				break;
 			default:
 				break;
 			}
 		} else {
-			device_printf(sc->sc_dev, "umcpmio_get_gpio_value: wrong command or error: %02x %02x\n",
+			device_printf(sc->sc_dev, "umcpmio_get_gpio_value:"
+			    " wrong command or error: %02x %02x\n",
 			    get_gpio_cfg_res.cmd,
 			    get_gpio_cfg_res.completion);
 		}
 	}
 
-	return(r);
+	return r;
 }
 
 void
@@ -696,7 +764,7 @@ umcpmio_set_gpio_value(struct mcp2221_set_gpio_cfg_req *req,
 	uint8_t *alter = NULL;
 	uint8_t *newvalue = NULL;
 
-	if (pin >=0 && pin < MCP2221_NPINS) {
+	if (pin >= 0 && pin < MCP2221_NPINS) {
 		switch (pin) {
 		case 0:
 			alter = &req->alter_gp0_value;
@@ -743,13 +811,14 @@ umcpmio_set_gpio_value_one(struct umcpmio_softc *sc,
 		    res.completion == MCP2221_CMD_COMPLETE_OK) {
 		} else {
 			err = EIO;
-			device_printf(sc->sc_dev, "umcpmio_gpio_pin_write:  not the command desired, or error: %02x %02x\n",
+			device_printf(sc->sc_dev, "umcpmio_gpio_pin_write:"
+			    "  not the command desired, or error: %02x %02x\n",
 			    res.cmd,
 			    res.completion);
 		}
 	}
 
-	return(err);
+	return err;
 }
 
 int
@@ -764,17 +833,19 @@ umcpmio_get_flash(struct umcpmio_softc *sc, uint8_t subcode,
 
 	if (subcode < MCP2221_FLASH_SUBCODE_CS ||
 	    subcode > MCP2221_FLASH_SUBCODE_CHIPSN)
-		return(EINVAL);
+		return EINVAL;
 
 	req.subcode = subcode;
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)&req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
 
 int
@@ -787,16 +858,19 @@ umcpmio_put_flash(struct umcpmio_softc *sc, struct mcp2221_put_flash_req *req,
 
 	if (req->subcode < MCP2221_FLASH_SUBCODE_CS ||
 	    req->subcode > MCP2221_FLASH_SUBCODE_CHIPSN) {
-		DPRINTF(("umcpmio_put_flash: subcode out of range: subcode=%d\n",req->subcode));
-		return(EINVAL);
+		DPRINTF(("umcpmio_put_flash: subcode out of range:"
+			" subcode=%d\n",
+			req->subcode));
+		return EINVAL;
 	}
 
 	if (takemutex)
 		mutex_enter(&sc->sc_action_mutex);
-	err = umcpmio_send_report(sc, (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE, (uint8_t *)res, sc->sc_cv_wait);
+	err = umcpmio_send_report(sc,
+	    (uint8_t *)req, MCP2221_REQ_BUFFER_SIZE,
+	    (uint8_t *)res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
 
-	return(err);
+	return err;
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_hid_reports.h,v 1.1 2024/12/16 16:37:38 brad Exp $	*/
+/*	$NetBSD: umcpmio_hid_reports.h,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -16,16 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-#ifndef _UMCPMIO_HID_REPORTS_H_
-#define _UMCPMIO_HID_REPORTS_H_
-
+#ifndef	_UMCPMIO_HID_REPORTS_H_
+#define	_UMCPMIO_HID_REPORTS_H_
 
 #include <sys/types.h>
 
-
-/* It is nice that all HID reports want a 64 byte request and return a 64 byte
- * response.
+/*
+ * It is nice that all HID reports want a 64 byte request and return a
+ * 64 byte response.
  */
 
 #define MCP2221_REQ_BUFFER_SIZE 64
@@ -251,7 +249,6 @@ struct mcp2221_get_gpio_cfg_res {
 #define MCP2221_SRAM_PIN_IS_ALT0	0x02
 #define MCP2221_SRAM_PIN_IS_ALT1	0x03
 #define MCP2221_SRAM_PIN_IS_ALT2	0x04
-
 
 struct mcp2221_set_sram_req {
 	uint8_t		cmd; /* MCP2221_CMD_SET_SRAM */
@@ -499,4 +496,4 @@ struct mcp2221_put_flash_res {
 
 /* XXX - missing is the submit password call to unlock the chip */
 
-#endif
+#endif	/* _UMCPMIO_HID_REPORTS_H_ */

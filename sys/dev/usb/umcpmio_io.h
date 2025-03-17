@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_io.h,v 1.1 2024/12/16 16:37:38 brad Exp $	*/
+/*	$NetBSD: umcpmio_io.h,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -16,9 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef _UMCPMIO_IO_H_
 #define _UMCPMIO_IO_H_
+
+#include <sys/types.h>
+
+#include <sys/ioccom.h>
 
 #include <dev/usb/umcpmio_hid_reports.h>
 
@@ -39,5 +42,4 @@ struct umcpmio_ioctl_put_flash {
 #define UMCPMIO_GET_FLASH	_IOWR('m', 4, struct umcpmio_ioctl_get_flash)
 #define UMCPMIO_PUT_FLASH	_IOWR('m', 5, struct umcpmio_ioctl_put_flash)
 
-
-#endif
+#endif	/* _UMCPMIO_IO_H_ */

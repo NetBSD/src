@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.h,v 1.1 2024/12/16 16:37:38 brad Exp $	*/
+/*	$NetBSD: umcpmio.h,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -16,33 +16,37 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef _UMCPMIO_H_
 #define _UMCPMIO_H_
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/condvar.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/file.h>
+#include <sys/gpio.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/device.h>
-#include <sys/sysctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
-#include <sys/kauth.h>
 #include <sys/lwp.h>
+#include <sys/mutex.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
-#include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
+
+#include <dev/hid/hid.h>
 
 #include <dev/i2c/i2cvar.h>
 
+#include <dev/usb/uhidev.h>
+#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdevs.h>
-#include <dev/usb/uhidev.h>
-#include <dev/hid/hid.h>
 
 #define UMCPMIO_VREF_NAME 7
 #define UMCPMIO_CD_NAME 7
@@ -103,4 +107,4 @@ struct umcpmio_sysctl_name {
 	const char	*text;
 };
 
-#endif
+#endif	/* _UMCPMIO_H_ */
