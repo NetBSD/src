@@ -106,6 +106,8 @@ nl_rule_t *	npf_rule_create(const char *, uint32_t, const char *);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
 int		npf_rule_setprio(nl_rule_t *, int);
 int		npf_rule_setproc(nl_rule_t *, const char *);
+int		npf_rule_setruser(nl_rule_t *, struct r_uid *);
+int		npf_rule_setrugrp(nl_rule_t *, struct r_gid *);
 int		npf_rule_setkey(nl_rule_t *, const void *, size_t);
 int		npf_rule_setinfo(nl_rule_t *, const void *, size_t);
 const char *	npf_rule_getname(nl_rule_t *);
