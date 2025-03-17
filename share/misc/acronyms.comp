@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.403 2025/03/11 14:13:32 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.404 2025/03/17 14:07:44 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -247,6 +247,7 @@ CFB	cipher feedback
 CFG	context-free grammar
 CFG	control-flow graph
 CFI	control-flow integrity
+CFRG	Crypto Forum Research Group (IRTF)
 CG	control gate
 CGA	Color Graphics Adapter
 CGI	common gateway interface
