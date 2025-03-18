@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.26 2025/03/18 07:57:34 ozaki-r Exp $
+#	$NetBSD: t_vlan.sh,v 1.27 2025/03/18 07:58:09 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -918,6 +918,93 @@ test_l2tp6()
 	vlan_l2tp_body_common "inet6"
 }
 
+check_link_state()
+{
+	local ifname=$1
+	local state=$2
+
+	atf_check -s exit:0 -o match:"linkstate: $state" $HIJACKING rump.ifconfig -v $ifname
+}
+
+create_interfaces()
+{
+
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+}
+
+destroy_interfaces()
+{
+
+	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+}
+
+test_link_state_sync()
+{
+	local ifconfig="atf_check -s exit:0 rump.ifconfig"
+
+	rump_server_start $SOCK_LOCAL vlan
+
+	export RUMP_SERVER=${SOCK_LOCAL}
+
+	## Alone
+	$ifconfig        vlan0 create
+	# The default state is "down"
+	check_link_state vlan0 down
+	$ifconfig        vlan0 up
+	check_link_state vlan0 down
+	$ifconfig        vlan0 down
+	check_link_state vlan0 down
+	$ifconfig        vlan0 destroy
+
+	## "unknown" parent
+	create_interfaces
+	# shmif0 is "unknown" until ifconfig linkstr
+	check_link_state shmif0 unknown
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	# vlan0 syncs with the parent
+	check_link_state vlan0 unknown
+	$ifconfig        vlan0 up
+	check_link_state vlan0 unknown
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+
+	## "up" parent
+	create_interfaces
+	$ifconfig        shmif0 linkstr $BUS
+	check_link_state shmif0 up
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	# vlan0 syncs with the parent
+	check_link_state vlan0 up
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+
+	## Change parent's link state to "up", "down", then "up"
+	create_interfaces
+	$ifconfig        shmif0 linkstr $BUS
+	check_link_state shmif0 up
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	check_link_state vlan0 up
+	# Down the parent
+	$ifconfig        shmif0 media none
+	check_link_state shmif0 down
+	# vlan0 syncs with the parent
+	check_link_state vlan0 down
+	# Up the parent again
+	$ifconfig        shmif0 media auto
+	# vlan0 syncs with the parent
+	check_link_state vlan0 up
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+}
+
 add_test()
 {
 	local name=$1
@@ -960,4 +1047,5 @@ atf_init_test_cases()
 	add_test l2tp6            "tests of vlan(IPv6) over l2tp(IPv4)"
 
 	add_test promisc          "tests of IFF_PROMISC of vlan"
+	add_test link_state_sync  "tests of link state sync with its parent"
 }
