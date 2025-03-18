@@ -1091,8 +1091,8 @@ gid
 	}
 	| IDENTIFIER
 	{
-		if (npfctl_parse_usergroup($1, &$$) == -1) {
-			yyerror("unknown user group %s", $1);
+		if (npfctl_parse_group($1, &$$) == -1) {
+			yyerror("unknown group %s", $1);
 			YYERROR;
 		}
 	}
@@ -1100,14 +1100,14 @@ gid
 	{
 		npfvar_t *vp = npfvar_lookup($1);
 		int type = npfvar_get_type(vp, 0);
-		char *user_group;
+		char *group;
 
 		switch (type) {
 		case NPFVAR_IDENTIFIER:
 		case NPFVAR_STRING:
-			user_group = npfvar_expand_string(vp);
-			if (npfctl_parse_usergroup(user_group, &$$) == -1) {
-				yyerror("unknown user group %s", $1);
+			group = npfvar_expand_string(vp);
+			if (npfctl_parse_group(group, &$$) == -1) {
+				yyerror("unknown group %s", $1);
 				YYERROR;
 			}
 			break;

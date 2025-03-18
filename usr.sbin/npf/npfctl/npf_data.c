@@ -272,7 +272,7 @@ npfctl_parse_table_id(const char *name)
 int
 npfctl_parse_user(const char *user, uint32_t *uid)
 {
-	if (strcmp(user, "unknown"))
+	if (!strcmp(user, "unknown"))
 		*uid = UID_MAX;
 	else {
 		struct passwd	*pw;
@@ -286,14 +286,14 @@ npfctl_parse_user(const char *user, uint32_t *uid)
 }
 
 int
-npfctl_parse_usergroup(const char *usergroup, *uint32_t *gid)
+npfctl_parse_group(const char *group, *uint32_t *gid)
 {
-	if (!strcmp(usergroup, "unknown"))
+	if (!strcmp(group, "unknown"))
 		*gid = GID_MAX;
 	else {
 		struct group	*grp;
 
-		if ((grp = getgrnam(usergroup)) == NULL) {
+		if ((grp = getgrnam(group)) == NULL) {
 			return -1;
 		}
 		*gid = grp->gr_gid;
