@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.7 2025/03/19 14:27:05 pho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.7 2025/03/19 14:27:05 pho Exp $");
 
 #include <sys/param.h>
 
@@ -285,12 +285,46 @@ ATF_TC_BODY(clock_gettime_thread_cputime_is_monotonic, tc)
 	    CLOCK_THREAD_CPUTIME_ID, &waste_user_time);
 }
 
+static void
+check_resolution(const char *clockname, clockid_t clockid)
+{
+	struct timespec ts;
+	int rv;
+
+	RLF(rv = clock_getres(clockid, &ts), "%s", clockname);
+	if (rv != -1) {
+		ATF_CHECK_MSG(ts.tv_sec == 0,
+		    "The resolution of the clock %s is reported as %jd.%09jd which is"
+		    " lower than a second; most likely an wrong value",
+		    clockname, ts.tv_sec, ts.tv_nsec);
+	}
+}
+
+ATF_TC(clock_getres);
+ATF_TC_HEAD(clock_getres, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that clock_getres(2) returns some reasonable resolution for all supported clocks");
+}
+ATF_TC_BODY(clock_getres, tc)
+{
+	check_resolution("CLOCK_REALTIME", CLOCK_REALTIME);
+	check_resolution("CLOCK_MONOTONIC", CLOCK_MONOTONIC);
+	atf_tc_expect_fail("These clocks aren't supported but are documented in clock_gettime(2) for some reason");
+	check_resolution("CLOCK_VIRTUAL", CLOCK_VIRTUAL);
+	check_resolution("CLOCK_PROF", CLOCK_PROF);
+	atf_tc_expect_pass();
+	check_resolution("CLOCK_PROCESS_CPUTIME_ID", CLOCK_PROCESS_CPUTIME_ID);
+	check_resolution("CLOCK_THREAD_CPUTIME_ID", CLOCK_THREAD_CPUTIME_ID);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, clock_gettime_real);
 	ATF_TP_ADD_TC(tp, clock_gettime_process_cputime_is_monotonic);
 	ATF_TP_ADD_TC(tp, clock_gettime_thread_cputime_is_monotonic);
+	ATF_TP_ADD_TC(tp, clock_getres);
 
 	return atf_no_error();
 }

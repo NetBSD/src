@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.227 2024/12/22 23:24:20 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.228 2025/03/19 14:27:05 pho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.227 2024/12/22 23:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.228 2025/03/19 14:27:05 pho Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -339,6 +339,8 @@ clock_getres1(clockid_t clock_id, struct timespec *ts)
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
+	case CLOCK_PROCESS_CPUTIME_ID:
+	case CLOCK_THREAD_CPUTIME_ID:
 		ts->tv_sec = 0;
 		if (tc_getfrequency() > 1000000000)
 			ts->tv_nsec = 1;
