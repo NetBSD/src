@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.7 2025/03/19 14:27:05 pho Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.8 2025/03/19 18:15:27 kre Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.7 2025/03/19 14:27:05 pho Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.8 2025/03/19 18:15:27 kre Exp $");
 
 #include <sys/param.h>
 
@@ -294,7 +294,7 @@ check_resolution(const char *clockname, clockid_t clockid)
 	RLF(rv = clock_getres(clockid, &ts), "%s", clockname);
 	if (rv != -1) {
 		ATF_CHECK_MSG(ts.tv_sec == 0,
-		    "The resolution of the clock %s is reported as %jd.%09jd which is"
+		    "The resolution of the clock %s is reported as %jd.%09ld which is"
 		    " lower than a second; most likely an wrong value",
 		    clockname, ts.tv_sec, ts.tv_nsec);
 	}
