@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.162 2024/05/13 00:32:09 msaitoh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.163 2025/03/19 03:46:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.162 2024/05/13 00:32:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.163 2025/03/19 03:46:15 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -706,8 +706,12 @@ module_autoload(const char *filename, modclass_t modclass)
 
 	kernconfig_lock();
 
+	module_print("Autoload for `%s' requested by pid %d (%s)",
+	    filename, p->p_pid, p->p_comm);
+
 	/* Nothing if the user has disabled it. */
 	if (!module_autoload_on) {
+		module_print("Autoload disabled for `%s' ", filename);
 		kernconfig_unlock();
 		return EPERM;
 	}
@@ -715,6 +719,7 @@ module_autoload(const char *filename, modclass_t modclass)
         /* Disallow path separators and magic symlinks. */
         if (strchr(filename, '/') != NULL || strchr(filename, '@') != NULL ||
             strchr(filename, '.') != NULL) {
+		module_print("Autoload illegal path for `%s' ", filename);
 		kernconfig_unlock();
         	return EPERM;
 	}
@@ -723,12 +728,14 @@ module_autoload(const char *filename, modclass_t modclass)
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
 	    0, (void *)(uintptr_t)MODCTL_LOAD, (void *)(uintptr_t)1, NULL);
 
-	if (error == 0)
-		error = module_do_load(filename, false, 0, NULL, NULL, modclass,
-		    true);
+	if (error != 0) {
+		module_print("Autoload  not authorized for `%s' ", filename);
+		kernconfig_unlock();
+		return error;
+	}
+	error = module_do_load(filename, false, 0, NULL, NULL, modclass, true);
 
-	module_print("Autoload for `%s' requested by pid %d (%s), status %d",
-	    filename, p->p_pid, p->p_comm, error);
+	module_print("Autoload for `%s' status %d", filename, error);
 	kernconfig_unlock();
 	return error;
 }
@@ -1468,7 +1475,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(kernconfig_is_held());
 	KASSERT(name != NULL);
 
-	module_print("unload requested for '%s' (%s)", name,
+	module_print("unload requested for '%s' (requires_force %s)", name,
 	    load_requires_force ? "TRUE" : "FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
