@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.72 2022/09/25 21:30:29 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.73 2025/03/19 10:53:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.72 2022/09/25 21:30:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.73 2025/03/19 10:53:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,8 +1094,7 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 			continue;
 		u = off - mo->mo_uaddr;
 		if (mo->mo_size == 0) {
-			flags = BUS_SPACE_MAP_LINEAR |
-				BUS_SPACE_MAP_PREFETCHABLE;
+			flags = BUS_SPACE_MAP_LINEAR;
 			sz = sc->sc_ramsize;
 		} else {
 			flags = BUS_SPACE_MAP_LINEAR;
