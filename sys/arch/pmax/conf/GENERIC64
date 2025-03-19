@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.37 2024/09/21 06:42:21 andvar Exp $
+# $NetBSD: GENERIC64,v 1.38 2025/03/19 21:03:40 jakllsch Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.38 $"
 
 maxusers	64
 
@@ -46,7 +46,7 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 
-options 	LKM			# loadable kernel modules
+#options 	MODULAR
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

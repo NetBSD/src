@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.54 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: HPT5325,v 1.55 2025/03/19 21:03:40 jakllsch Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -107,7 +107,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
+#options 	MODULAR
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages

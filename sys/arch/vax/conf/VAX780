@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.34 2023/02/06 13:13:05 tsutsui Exp $
+# $NetBSD: VAX780,v 1.35 2025/03/19 21:03:40 jakllsch Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -121,7 +121,7 @@ options 	COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
 options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility.
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 
-options 	LKM
+#options 	MODULAR
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
