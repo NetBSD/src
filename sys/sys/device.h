@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.189 2024/08/27 13:44:55 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.190 2025/03/19 20:47:49 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -436,14 +436,6 @@ struct cfdriver __CONCAT(name,_cd) = {					\
 struct cfattachinit {
 	const char *cfai_name;		 /* driver name */
 	struct cfattach * const *cfai_list;/* list of attachments */
-};
-/*
- * the same, but with a non-constant list so it can be modified
- * for module bookkeeping
- */
-struct cfattachlkminit {
-	const char *cfai_name;		/* driver name */
-	struct cfattach **cfai_list;	/* list of attachments */
 };
 
 /*
