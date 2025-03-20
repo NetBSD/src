@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21 2021/01/27 17:39:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.22 2025/03/20 09:49:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -185,10 +185,13 @@ npf_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		return npf_fini();
 	case MODULE_CMD_AUTOUNLOAD:
-		if (npf_autounload_p()) {
-			return EBUSY;
-		}
-		break;
+/*
+ * XXX npf_autounload_p() is insufficient here.  At least one other
+ * XXX path leads to unloading while something tries later on to
+ * XXX continue (perhaps closing of an open fd).  For now, just
+ * XXX disabble autounload.
+ */
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}
