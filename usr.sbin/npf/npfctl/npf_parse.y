@@ -135,6 +135,7 @@ yyerror(const char *fmt, ...)
 %token			IPSET
 %token			LPM
 %token			MAP
+%token			NEWLINE
 %token			NO_PORTS
 %token			MINUS
 %token			NAME
@@ -158,7 +159,7 @@ yyerror(const char *fmt, ...)
 %token			RETURNRST
 %token			ROUNDROBIN
 %token			RULESET
-%token			SEPLINE
+%token			SEMICOLON
 %token			SET
 %token			SLASH
 %token			STATEFUL
@@ -193,7 +194,7 @@ yyerror(const char *fmt, ...)
 %type	<var>		filt_port filt_port_list port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
 %type	<var>		procs proc_call proc_param_list proc_param
-%type	<var>		element list_elems list value filt_addr_list
+%type	<var>		element list_elems list_trail list value filt_addr_list
 %type	<var>		opt_proto proto proto_elems
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts all_or_filt_opts
@@ -220,7 +221,7 @@ input
 	;
 
 lines
-	: lines SEPLINE line
+	: lines sepline line
 	| line
 	;
 
@@ -240,6 +241,11 @@ alg
 	{
 		npfctl_build_alg($2);
 	}
+	;
+
+sepline
+	: NEWLINE
+	| SEMICOLON
 	;
 
 param_val
@@ -272,18 +278,17 @@ value
 	;
 
 list
-	: CURLY_OPEN list_elems CURLY_CLOSE
+	: CURLY_OPEN opt_nl list_elems CURLY_CLOSE
 	{
-		$$ = $2;
+		$$ = $3;
 	}
 	;
 
 list_elems
-	: list_elems COMMA element
+	: element list_trail
 	{
-		npfvar_add_elements($1, $3);
+		$$ = npfvar_add_elements($1, $2);
 	}
-	| element
 	;
 
 element
@@ -311,6 +316,24 @@ element
 	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
 	| static_ifaddrs	{ $$ = $1; }
 	| addr_and_mask		{ $$ = $1; }
+	;
+
+list_trail
+	: element_sep element list_trail
+	{
+		$$ = npfvar_add_elements($2, $3);
+	}
+	| opt_nl 		{ $$ = NULL; }
+	| element_sep 		{ $$ = NULL; }
+	;
+
+element_sep
+	: opt_nl COMMA opt_nl
+	;
+
+opt_nl
+	: opt_nl NEWLINE
+	|
 	;
 
 /*
@@ -430,7 +453,7 @@ rproc
 	;
 
 procs
-	: procs SEPLINE proc_call
+	: procs sepline proc_call
 	{
 		$$ = npfvar_add_elements($1, $3);
 	}
@@ -531,7 +554,7 @@ ruleset_block
 	;
 
 ruleset_def
-	: ruleset_def SEPLINE rule_group
+	: ruleset_def sepline rule_group
 	| rule_group
 	;
 

@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.91 2020/05/30 14:16:56 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.92 2025/03/20 17:52:23 christos Exp $
 .\"
 .\" Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,9 +76,14 @@ Variables are defined by assigning a value to them as follows:
 .Dl $var1 = 10.0.0.1
 .Pp
 A variable may also be defined as a set:
+.Bd -literal -offset indent
+$var2 = {
+    10.0.0.1,   # First host
+    10.0.0.2,   # Second host
+}
+.Ed
 .Pp
-.Dl $var2 = { 10.0.0.1, 10.0.0.2 }
-.Pp
+Newlines within curly braces are ignored, and trailing commas are optional.
 Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
@@ -531,6 +536,8 @@ The backslash
 .Pq Sq \e
 character at the end of a line marks a continuation line,
 i.e., the next line is considered an extension of the present line.
+Additionally, within curly braces of variable definitions, newlines are
+allowed without continuation characters.
 .Sh GRAMMAR
 The following is a non-formal BNF-like definition of the grammar.
 The definition is simplified and is intended to be human readable,
@@ -547,7 +554,7 @@ syntax		= var-def | set-param | alg | table-def |
 
 var-name	= "$" . string
 interface	= interface-name | var-name
-var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
+var-def		= var "=" ( var-value | "{" value *[ "," value ] [ "," ] "}" )
 
 # Parameter setting.
 set-param	= "set" param-value
@@ -638,8 +645,15 @@ $int_if = { inet4(wm1) }
 table <blocklist> type ipset file "/etc/npf_blocklist"
 table <limited> type lpm
 
-$services_tcp = { http, https, smtp, domain, 6000, 9022 }
-$services_udp = { domain, ntp, 6000 }
+$services_tcp = {
+	http,    # Web traffic
+	https,   # Secure web traffic
+	smtp,    # Email sending
+	domain,  # DNS queries
+	6000,    # Custom service
+	9022,    # SSH forwarding
+}
+$services_udp = { domain, ntp, 6000, }
 $localnet = { 10.1.1.0/24 }
 
 alg "icmp"
