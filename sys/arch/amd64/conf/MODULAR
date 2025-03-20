@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.19 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: MODULAR,v 1.20 2025/03/20 22:16:58 pgoyette Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -21,8 +21,9 @@ include "arch/amd64/conf/GENERIC"
 -no options 	COMPAT_50	# NetBSD 5.0,
 -no options 	COMPAT_60	# NetBSD 6.0,
 -no options 	COMPAT_70	# NetBSD 7.0,
--no options 	COMPAT_80	# NetBSD 8.0, and
--no options 	COMPAT_90	# NetBSD 9.0 binary compatibility.
+-no options 	COMPAT_80	# NetBSD 8.0,
+-no options 	COMPAT_90	# NetBSD 9.0, and
+-no options 	COMPAT_100	# NetBSD 10.0 binary compatibility.
 -no options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
