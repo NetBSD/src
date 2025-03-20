@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.8 2021/05/17 04:01:57 rin Exp $ */
+/*	$NetBSD: regcomp.c,v 1.9 2025/03/20 18:39:17 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.4 (Berkeley) 3/19/94";
 #endif /* LIBC_SCCS and not lint */
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.8 2021/05/17 04:01:57 rin Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.9 2025/03/20 18:39:17 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -307,7 +307,7 @@ p_ere(struct parse *p, int stop, size_t reclimit)
                          
          			/* character this ERE should end at */
 {
-	char c;
+	unsigned char c;
 	sopno prevback = 0;
 	sopno prevfwd = 0;
 	sopno conc;
@@ -356,7 +356,7 @@ p_ere(struct parse *p, int stop, size_t reclimit)
 static void
 p_ere_exp(struct parse *p, size_t reclimit)
 {
-	char c;
+	unsigned char c;
 	sopno pos;
 	int count;
 	int count2;
