@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.163 2025/03/19 03:46:15 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.164 2025/03/20 13:24:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.163 2025/03/19 03:46:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.164 2025/03/20 13:24:05 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -454,7 +454,7 @@ module_init(void)
 
 	__link_set_foreach(mip, modules) {
 		if ((rv = module_builtin_add(mip, 1, false)) != 0)
-			module_error("builtin %s failed: %d\n",
+			module_error("builtin `%s' failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
 
@@ -916,7 +916,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * successfully linked without the dependencies.
 		 */
-		module_error("built-in module %s can't find builtin "
+		module_error("built-in module `%s' can't find builtin "
 		    "dependency `%s'", pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
@@ -941,8 +941,8 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			alloc_required(mod);
 			error = module_do_builtin(mod, buf, &mod2, NULL);
 			if (error != 0) {
-				module_error("built-in module %s prerequisite "
-				    "%s failed, error %d", name, buf, error);
+				module_error("built-in module `%s' prerequisite "
+				    "`%s' failed, error %d", name, buf, error);
 				goto fail;
 			}
 			(*mod->mod_required)[mod->mod_nrequired++] = mod2;
@@ -957,7 +957,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = prev_active;
 	if (error != 0) {
-		module_error("built-in module %s failed its MODULE_CMD_INIT, "
+		module_error("built-in module `%s' failed its MODULE_CMD_INIT, "
 		    "error %d", mi->mi_name, error);
 		goto fail;
 	}
@@ -1475,7 +1475,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(kernconfig_is_held());
 	KASSERT(name != NULL);
 
-	module_print("unload requested for '%s' (requires_force %s)", name,
+	module_print("unload requested for `%s' (requires_force %s)", name,
 	    load_requires_force ? "TRUE" : "FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
