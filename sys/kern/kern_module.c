@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.165 2025/03/20 15:04:55 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.166 2025/03/20 15:10:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.165 2025/03/20 15:04:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.166 2025/03/20 15:10:25 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1736,7 +1736,7 @@ module_thread(void *cookie)
 			if (error == 0 ||
 			    (error == ENOTTY && module_autounload_unsafe)) {
 				module_print("requesting autounload for"
-				    "\%s', mi->mi_name);
+				    "\%s'", mi->mi_name);
 				(void)module_do_unload(mi->mi_name, false);
 			} else
 				module_print("module `%s' declined to be "
