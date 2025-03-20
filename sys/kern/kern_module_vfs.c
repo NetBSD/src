@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.18 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.19 2025/03/20 13:26:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.18 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.19 2025/03/20 13:26:54 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -116,8 +116,8 @@ module_load_vfs(const char *name, int flags, bool autoload,
 		} else if (autoload) {
 			noload = prop_dictionary_get(moduledict, "noautoload");
 			if (noload != NULL && prop_bool_true(noload)) {
-				module_error("autoloading is disallowed for %s",
-				    path);
+				module_error("autoloading is disallowed for "
+				    "`%s'", path);
 				prop_object_release(moduledict);
 				error = EPERM;
 				goto fail;
