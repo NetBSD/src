@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.32 2024/10/09 01:49:20 rin Exp $	*/
+/*	$NetBSD: auth2.c,v 1.33 2025/03/21 14:05:14 christos Exp $	*/
 /* $OpenBSD: auth2.c,v 1.169 2024/05/17 00:30:23 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.32 2024/10/09 01:49:20 rin Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.33 2025/03/21 14:05:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: auth2.c,v 1.32 2024/10/09 01:49:20 rin Exp $");
 #include "dispatch.h"
 #include "pathnames.h"
 #include "canohost.h"
-#include "pfilter.h"
 
 #ifdef GSSAPI
 #include "ssh-gss.h"
