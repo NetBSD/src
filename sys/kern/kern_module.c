@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.167 2025/03/20 15:18:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.168 2025/03/21 07:09:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.167 2025/03/20 15:18:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.168 2025/03/21 07:09:58 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -141,7 +141,7 @@ static void	module_callback_unload(struct module *);
 static void
 module_incompat(const modinfo_t *mi, int modclass)
 {
-	module_error("incompatible module class %d for `%s' (wanted %d)",
+	module_error("Incompatible module class %d for `%s' (wanted %d)",
 	    mi->mi_class, mi->mi_name, modclass);
 }
 
@@ -454,7 +454,7 @@ module_init(void)
 
 	__link_set_foreach(mip, modules) {
 		if ((rv = module_builtin_add(mip, 1, false)) != 0)
-			module_error("builtin `%s' failed: %d\n",
+			module_error("Builtin `%s' failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
 
@@ -674,7 +674,7 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 	mod = module_lookup(filename);
 	if (mod != NULL) {
 		module_print("%s module `%s' already loaded",
-		    "requested", filename);
+		    "Requested", filename);
 		error = EEXIST;
 		goto out;
 	}
@@ -916,7 +916,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * successfully linked without the dependencies.
 		 */
-		module_error("built-in module `%s' can't find builtin "
+		module_error("Built-in module `%s' can't find builtin "
 		    "dependency `%s'", pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
@@ -941,7 +941,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			alloc_required(mod);
 			error = module_do_builtin(mod, buf, &mod2, NULL);
 			if (error != 0) {
-				module_error("built-in module `%s' prerequisite "
+				module_error("Built-in module `%s' prerequisite "
 				    "`%s' failed, error %d", name, buf, error);
 				goto fail;
 			}
@@ -957,7 +957,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = prev_active;
 	if (error != 0) {
-		module_error("built-in module `%s' failed its MODULE_CMD_INIT, "
+		module_error("Built-in module `%s' failed its MODULE_CMD_INIT, "
 		    "error %d", mi->mi_name, error);
 		goto fail;
 	}
@@ -1147,7 +1147,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE) &&
 		    !ISSET(flags, MODCTL_LOAD_FORCE)) {
 			if (!autoload) {
-				module_error("use -f to reinstate "
+				module_error("Use -f to reinstate "
 				    "builtin module `%s'", name);
 			}
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
@@ -1181,14 +1181,14 @@ module_do_load(const char *name, bool isdep, int flags,
 				*modp = mod;
 			}
 			module_print("%s module `%s' already loaded",
-			    isdep ? "dependent" : "requested", name);
+			    isdep ? "Dependent" : "Requested", name);
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			return EEXIST;
 		}
 
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
-			module_error("out of memory for `%s'", name);
+			module_error("Out of memory for `%s'", name);
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			return ENOMEM;
 		}
@@ -1216,7 +1216,7 @@ module_do_load(const char *name, bool isdep, int flags,
 
 		error = module_fetch_info(mod);
 		if (error != 0) {
-			module_error("cannot fetch info for `%s', error %d",
+			module_error("Cannot fetch info for `%s', error %d",
 			    name, error);
 			goto fail;
 		}
@@ -1228,22 +1228,22 @@ module_do_load(const char *name, bool isdep, int flags,
 	mi = mod->mod_info;
 	if (strnlen(mi->mi_name, MAXMODNAME) >= MAXMODNAME) {
 		error = EINVAL;
-		module_error("module name `%s' longer than %d", mi->mi_name,
+		module_error("Module name `%s' longer than %d", mi->mi_name,
 		    MAXMODNAME);
 		goto fail;
 	}
 	if (mi->mi_class <= MODULE_CLASS_ANY ||
 	    mi->mi_class >= MODULE_CLASS_MAX) {
 		error = EINVAL;
-		module_error("module `%s' has invalid class %d",
+		module_error("Module `%s' has invalid class %d",
 		    mi->mi_name, mi->mi_class);
 		    goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		module_error("module `%s' built for `%d', system `%d'",
+		module_error("Module `%s' built for `%d', system `%d'",
 		    mi->mi_name, mi->mi_version, __NetBSD_Version__);
 		if (ISSET(flags, MODCTL_LOAD_FORCE)) {
-			module_error("forced load, system may be unstable");
+			module_error("Forced load, system may be unstable");
 		} else {
 			error = EPROGMISMATCH;
 			goto fail;
@@ -1265,7 +1265,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * The name must match.
 	 */
 	if (isdep && strcmp(mi->mi_name, name) != 0) {
-		module_error("dependency name mismatch (`%s' != `%s')",
+		module_error("Dependency name mismatch (`%s' != `%s')",
 		    name, mi->mi_name);
 		error = ENOENT;
 		goto fail;
@@ -1281,7 +1281,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
 		mod2 = module_lookup(mod->mod_info->mi_name);
 		if ( mod2 && mod2 != mod) {
-			module_error("module with name `%s' already loaded",
+			module_error("Module with name `%s' already loaded",
 			    mod2->mod_info->mi_name);
 			error = EEXIST;
 			if (modp != NULL)
@@ -1299,7 +1299,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 		if (strcmp(mod2->mod_info->mi_name, mi->mi_name) == 0) {
 			error = EDEADLK;
-			module_error("circular dependency detected for `%s'",
+			module_error("Circular dependency detected for `%s'",
 			    mi->mi_name);
 			goto fail;
 		}
@@ -1319,7 +1319,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			len = p - s + 1;
 			if (len >= MAXMODNAME) {
 				error = EINVAL;
-				module_error("required module name `%s' "
+				module_error("Required module name `%s' "
 				    "longer than %d", mi->mi_required,
 				    MAXMODNAME);
 				goto fail;
@@ -1330,14 +1330,14 @@ module_do_load(const char *name, bool isdep, int flags,
 			alloc_required(mod);
 			if (strcmp(buf, mi->mi_name) == 0) {
 				error = EDEADLK;
-				module_error("self-dependency detected for "
+				module_error("Self-dependency detected for "
 				   "`%s'", mi->mi_name);
 				goto fail;
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
 			if (error != 0 && error != EEXIST) {
-				module_error("recursive load failed for `%s' "
+				module_error("Recursive load failed for `%s' "
 				    "(`%s' required), error %d", mi->mi_name,
 				    buf, error);
 				goto fail;
@@ -1361,7 +1361,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		strlcpy(xname, mi->mi_name, MAXMODNAME);
 		error = kobj_affix(mod->mod_kobj, mi->mi_name);
 		if (error != 0) {
-			module_error("unable to affix module `%s', error %d",
+			module_error("Unable to affix module `%s', error %d",
 			    xname, error);
 			goto fail2;
 		}
@@ -1369,7 +1369,7 @@ module_do_load(const char *name, bool isdep, int flags,
 
 	if (filedict) {
 		if (!module_merge_dicts(filedict, props)) {
-			module_error("module properties failed for %s", name);
+			module_error("Module properties failed for %s", name);
 			error = EINVAL;
 			goto fail;
 		}
@@ -1406,7 +1406,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	 */
 	mod2 = module_lookup(mi->mi_name);
 	if (mod2 && mod2 != mod) {
-		module_error("recursive load causes duplicate module `%s'",
+		module_error("Recursive load causes duplicate module `%s'",
 		    mi->mi_name);
 		error = EEXIST;
 		goto fail1;
@@ -1431,7 +1431,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_thread_kick();
 	}
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
-	module_print("module `%s' loaded successfully", mi->mi_name);
+	module_print("Module `%s' loaded successfully", mi->mi_name);
 	module_callback_load(mod);
 	return 0;
 
@@ -1475,15 +1475,15 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(kernconfig_is_held());
 	KASSERT(name != NULL);
 
-	module_print("unload requested for `%s' (requires_force %s)", name,
+	module_print("Unload requested for `%s' (requires_force %s)", name,
 	    load_requires_force ? "TRUE" : "FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
-		module_error("module `%s' not found", name);
+		module_error("Module `%s' not found", name);
 		return ENOENT;
 	}
 	if (mod->mod_refcnt != 0) {
-		module_print("module `%s' busy (%d refs)", name,
+		module_print("Module `%s' busy (%d refs)", name,
 		    mod->mod_refcnt);
 		return EBUSY;
 	}
@@ -1493,7 +1493,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	 */
 	if (mod->mod_source == MODULE_SOURCE_KERNEL &&
 	    mod->mod_info->mi_class == MODULE_CLASS_SECMODEL) {
-		module_print("cannot unload built-in secmodel module `%s'",
+		module_print("Cannot unload built-in secmodel module `%s'",
 		    name);
 		return EPERM;
 	}
@@ -1517,7 +1517,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	}
 	module_active = prev_active;
 	if (error != 0) {
-		module_print("could not unload module `%s' error=%d", name,
+		module_print("Could not unload module `%s' error=%d", name,
 		    error);
 		return error;
 	}
@@ -1526,7 +1526,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	for (i = 0; i < mod->mod_nrequired; i++) {
 		(*mod->mod_required)[i]->mod_refcnt--;
 	}
-	module_print("unloaded module `%s'", name);
+	module_print("Unloaded module `%s'", name);
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
@@ -1574,7 +1574,7 @@ module_prime(const char *name, void *base, size_t size)
 		if (*mip == &module_dummy)
 			continue;
 		if (strcmp((*mip)->mi_name, name) == 0) {
-			module_error("module `%s' pushed by boot loader "
+			module_error("Module `%s' pushed by boot loader "
 			    "already exists", name);
 			return EEXIST;
 		}
@@ -1584,7 +1584,7 @@ module_prime(const char *name, void *base, size_t size)
 
 	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 		if (strcmp(mod->mod_info->mi_name, name) == 0) {
-			module_error("duplicate bootlist entry for module "
+			module_error("Duplicate bootlist entry for module "
 			    "`%s'", name);
 			return EEXIST;
 		}
@@ -1598,7 +1598,7 @@ module_prime(const char *name, void *base, size_t size)
 	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
 		module_free(mod);
-		module_error("unable to load `%s' pushed by boot loader, "
+		module_error("Unable to load `%s' pushed by boot loader, "
 		    "error %d", name, error);
 		return error;
 	}
@@ -1606,7 +1606,7 @@ module_prime(const char *name, void *base, size_t size)
 	if (error != 0) {
 		kobj_unload(mod->mod_kobj);
 		module_free(mod);
-		module_error("unable to fetch_info for `%s' pushed by boot "
+		module_error("Unable to fetch_info for `%s' pushed by boot "
 		    "loader, error %d", name, error);
 		return error;
 	}
@@ -1735,11 +1735,11 @@ module_thread(void *cookie)
 			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
 			if (error == 0 ||
 			    (error == ENOTTY && module_autounload_unsafe)) {
-				module_print("requesting autounload for"
+				module_print("Requesting autounload for"
 				    "`%s'", mi->mi_name);
 				(void)module_do_unload(mi->mi_name, false);
 			} else
-				module_print("module `%s' declined to be "
+				module_print("Module `%s' declined to be "
 				    "auto-unloaded error=%d", mi->mi_name,
 				    error);
 		}
