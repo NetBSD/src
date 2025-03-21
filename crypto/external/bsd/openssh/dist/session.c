@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.40 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.41 2025/03/21 14:04:33 christos Exp $	*/
 /* $OpenBSD: session.c,v 1.338 2024/05/17 00:30:24 djm Exp $ */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.40 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.41 2025/03/21 14:04:33 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -722,7 +722,7 @@ do_login(struct ssh *ssh, Session *s, const char *command)
 		if (getpeername(ssh_packet_get_connection_in(ssh),
 		    (struct sockaddr *)&from, &fromlen) == -1) {
 			debug("getpeername: %.100s", strerror(errno));
-			cleanup_exit(254);
+			cleanup_exit(255);
 		}
 	}
 

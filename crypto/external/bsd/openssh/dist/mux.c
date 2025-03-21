@@ -1,4 +1,4 @@
-/*	$NetBSD: mux.c,v 1.36 2024/09/24 21:32:18 christos Exp $	*/
+/*	$NetBSD: mux.c,v 1.37 2025/03/21 14:04:33 christos Exp $	*/
 /* $OpenBSD: mux.c,v 1.102 2024/07/25 22:40:08 djm Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.36 2024/09/24 21:32:18 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.37 2025/03/21 14:04:33 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1311,7 +1311,7 @@ muxserver_listen(struct ssh *ssh)
 			return;
 		} else {
 			/* unix_listener() logs the error */
-			cleanup_exit(254);
+			cleanup_exit(255);
 		}
 	}
 

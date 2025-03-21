@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.46 2024/09/24 21:32:18 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.47 2025/03/21 14:04:33 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.244 2024/09/15 01:09:40 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.46 2024/09/24 21:32:18 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.47 2025/03/21 14:04:33 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1575,7 +1575,7 @@ mm_record_login(struct ssh *ssh, Session *s, struct passwd *pw)
 		if (getpeername(ssh_packet_get_connection_in(ssh),
 		    (struct sockaddr *)&from, &fromlen) == -1) {
 			debug("getpeername: %.100s", strerror(errno));
-			cleanup_exit(254);
+			cleanup_exit(255);
 		}
 	}
 	/* Record that there was a login on that tty from the remote host. */

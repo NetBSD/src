@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.6 2025/01/08 21:49:32 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.7 2025/03/21 14:04:33 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.9 2024/09/09 02:39:57 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.6 2025/01/08 21:49:32 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.7 2025/03/21 14:04:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1452,9 +1452,6 @@ cleanup_exit(int i)
 {
 	extern int auth_attempted; /* monitor.c */
 
-	if (i == 255)
-		pfilter_notify(1);
-
 	if (the_active_state != NULL && the_authctxt != NULL) {
 		do_cleanup(the_active_state, the_authctxt);
 		if (privsep_is_preauth &&
@@ -1468,7 +1465,9 @@ cleanup_exit(int i)
 		}
 	}
 	/* Override default fatal exit value when auth was attempted */
-	if (i == 255 && auth_attempted)
+	if (i == 255 && auth_attempted) {
+		pfilter_notify(1);
 		_exit(EXIT_AUTH_ATTEMPTED);
+	}
 	_exit(i);
 }

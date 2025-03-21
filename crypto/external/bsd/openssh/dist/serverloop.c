@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.36 2024/07/08 22:33:44 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.37 2025/03/21 14:04:33 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.240 2024/06/17 08:28:31 djm Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.36 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.37 2025/03/21 14:04:33 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -289,7 +289,7 @@ process_input(struct ssh *ssh, int connection_in)
 		logit("Read error from remote host %s port %d: %s",
 		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
 		    strerror(errno));
-		cleanup_exit(254);
+		cleanup_exit(255);
 	}
 	return -1;
 }
