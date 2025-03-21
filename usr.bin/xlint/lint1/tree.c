@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.676 2025/03/11 22:12:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.677 2025/03/21 20:37:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.676 2025/03/11 22:12:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.677 2025/03/21 20:37:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3868,8 +3868,7 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 	}
 
 	if (hflag && alignment(nstp) > alignment(ostp) &&
-	    ost != CHAR && ost != UCHAR &&
-	    !is_incomplete(ostp) &&
+	    !is_incomplete(ostp) && alignment(ostp) > 1 &&
 	    !(nst == UNION && union_contains(nstp, ostp))) {
 		/* converting '%s' to '%s' increases alignment ... */
 		warning(135, type_name(otp), type_name(ntp),
