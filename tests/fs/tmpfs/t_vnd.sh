@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.14 2024/04/28 07:27:41 rillig Exp $
+# $NetBSD: t_vnd.sh,v 1.15 2025/03/21 16:39:30 christos Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,7 +44,17 @@ basic_body() {
 	    dd if=/dev/zero of=disk.img bs=1m count=10
 	atf_check -s exit:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
 
+	atf_check -s exit:0 -o ignore -e ignore disklabel -i -I ${vnddev} << EOF
+a
+4.2BSD
+0
+$
+W
+y
+Q
+EOF
 	atf_check -s exit:0 -o ignore -e ignore newfs -I ${rvnd}
+
 
 	atf_check -s exit:0 -o empty -e empty mkdir mnt
 	atf_check -s exit:0 -o empty -e empty mount ${vnd} mnt
