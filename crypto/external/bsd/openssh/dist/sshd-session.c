@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.7 2025/03/21 14:04:33 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.8 2025/03/21 14:06:14 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.9 2024/09/09 02:39:57 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.7 2025/03/21 14:04:33 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.8 2025/03/21 14:06:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1260,8 +1260,10 @@ main(int ac, char **av)
 	}
 
 	if ((r = kex_exchange_identification(ssh, -1,
-	    options.version_addendum)) != 0)
+	    options.version_addendum)) != 0) {
+		pfilter_notify(1);
 		sshpkt_fatal(ssh, r, "banner exchange");
+	}
 
 	ssh_packet_set_nonblocking(ssh);
 
