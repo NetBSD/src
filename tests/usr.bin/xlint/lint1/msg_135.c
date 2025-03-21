@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.15 2023/04/23 11:52:43 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.16 2025/03/21 20:33:47 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
@@ -106,4 +106,24 @@ cast_to_union(void)
 	both = (union both *)&align_4;
 	both = (union both *)&align_8;
 	return both->p_align_8;
+}
+
+void
+from_alignment_1_to_8(void)
+{
+	struct alignment_1 {
+		char filler[32];
+	};
+	struct alignment_8 {
+		char filler[32];
+		double numbers[4];
+	};
+
+	static struct alignment_1 *pointer_1;
+	static struct alignment_8 *pointer_8;
+
+	// FIXME: Don't warn when the old alignment is 1.
+	/* expect+1: warning: converting 'pointer to struct alignment_1' to 'pointer to struct alignment_8' increases alignment from 1 to 8 [135] */
+	pointer_8 = (struct alignment_8 *)pointer_1;
+	pointer_1 = (struct alignment_1 *)pointer_8;
 }
