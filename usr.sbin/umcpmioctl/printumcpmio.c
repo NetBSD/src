@@ -1,4 +1,4 @@
-/*	$NetBSD: printumcpmio.c,v 1.1 2024/12/16 16:37:40 brad Exp $	*/
+/*	$NetBSD: printumcpmio.c,v 1.2 2025/03/22 05:46:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifdef __RCSID
-__RCSID("$NetBSD: printumcpmio.c,v 1.1 2024/12/16 16:37:40 brad Exp $");
+__RCSID("$NetBSD: printumcpmio.c,v 1.2 2025/03/22 05:46:32 rillig Exp $");
 #endif
 
 /* Functions to print stuff */
@@ -104,9 +104,9 @@ print_status(struct mcp2221_status_res *r)
 		NULL
 	};
 
-	for(int n = 0; n < MCP2221_RES_BUFFER_SIZE;n++) {
+	for (int n = 0; n < MCP2221_RES_BUFFER_SIZE; n++) {
 		if (outputs[n] != NULL)
-			printf("%02d:%s%d (0x%02X)\n",n,outputs[n],br[n],br[n]);
+			printf("%02d:%s%d (0x%02X)\n", n, outputs[n], br[n], br[n]);
 	}
 }
 
@@ -182,9 +182,9 @@ print_sram(struct mcp2221_get_sram_res *r)
 		NULL
 	};
 
-	for(int n = 0; n < MCP2221_RES_BUFFER_SIZE;n++) {
+	for (int n = 0; n < MCP2221_RES_BUFFER_SIZE; n++) {
 		if (outputs[n] != NULL)
-			printf("%02d:%s%d (0x%02X)\n",n,outputs[n],br[n],br[n]);
+			printf("%02d:%s%d (0x%02X)\n", n, outputs[n], br[n], br[n]);
 	}
 }
 
@@ -260,9 +260,9 @@ print_gpio_cfg(struct mcp2221_get_gpio_cfg_res *r)
 		NULL
 	};
 
-	for(int n = 0; n < MCP2221_RES_BUFFER_SIZE;n++) {
+	for (int n = 0; n < MCP2221_RES_BUFFER_SIZE; n++) {
 		if (outputs[n] != NULL)
-			printf("%02d:%s%d (0x%02X)\n",n,outputs[n],br[n],br[n]);
+			printf("%02d:%s%d (0x%02X)\n", n, outputs[n], br[n], br[n]);
 	}
 }
 
@@ -423,24 +423,24 @@ print_flash(struct mcp2221_get_flash_res *r, int subcode)
 	};
 
 	int n = 0;
-	for(;n <= 2;n++) {
+	for (; n <= 2; n++) {
 		if (outputs1[n] != NULL)
-			printf("%02d:%s%d (0x%02X)\n",n,outputs1[n],br[n],br[n]);
+			printf("%02d:%s%d (0x%02X)\n", n, outputs1[n], br[n], br[n]);
 	}
 
 	if (subcode == 0 ||
 	    subcode == 1) {
-		for(;n < MCP2221_RES_BUFFER_SIZE;n++) {
-			if (outputs2[subcode][n-3] != NULL)
-				printf("%02d:%s%d (0x%02X)\n",n,outputs2[subcode][n-3],br[n],br[n]);
+		for (; n < MCP2221_RES_BUFFER_SIZE; n++) {
+			if (outputs2[subcode][n - 3] != NULL)
+				printf("%02d:%s%d (0x%02X)\n", n, outputs2[subcode][n - 3], br[n], br[n]);
 		}
 	} else {
 		int c = 1;
 		int l = br[2];
-		printf("%02d:%s%d (0x%02X)\n",n,outputs2[subcode][n-3],br[n],br[n]);
+		printf("%02d:%s%d (0x%02X)\n", n, outputs2[subcode][n - 3], br[n], br[n]);
 		n++;
-		for(c = 1;c <= l;c++) {
-			printf("%02d:%s%02d:\t\t%d (0x%02X)\n",n,outputs2[subcode][1],c,br[n],br[n]);
+		for (c = 1; c <= l; c++) {
+			printf("%02d:%s%02d:\t\t%d (0x%02X)\n", n, outputs2[subcode][1], c, br[n], br[n]);
 			n++;
 		}
 	}
