@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.140 2025/03/22 10:37:19 hans Exp $     */
+/*	$NetBSD: trap.c,v 1.141 2025/03/22 13:28:35 riastradh Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2025/03/22 10:37:19 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2025/03/22 13:28:35 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -379,6 +379,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_r7 = 0;				/* for ELF */
 	tf->tf_r8 = 0;				/* for ELF */
 	tf->tf_r9 = l->l_proc->p_psstrp;		/* for ELF */
+	tf->tf_psl = PSL_U|PSL_PREVU;
 }
 
 
