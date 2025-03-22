@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.90 2025/01/24 21:47:51 jmcneill Exp $
+# $NetBSD: mkimage,v 1.91 2025/03/22 09:25:14 hgutch Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -414,5 +414,9 @@ if $compress; then
 	${GZIP_CMD} -n -9 ${image}
 	image="${image}.gz"
 fi
+
+cd "${IMAGEDIR}"
+${CKSUM} -a MD5 "$(basename "${image}")" > MD5
+${CKSUM} -a SHA512 "$(basename "${image}")" > SHA512
 
 echo ${bar} Image is ${image} ${bar}
