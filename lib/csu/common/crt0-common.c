@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $ */
+/* $NetBSD: crt0-common.c,v 1.29 2025/03/22 16:59:02 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.29 2025/03/22 16:59:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -317,9 +317,6 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 		__progname = empty_string;
 	}
 
-	if (cleanup != NULL)
-		atexit(cleanup);
-
 	_libc_init();
 
 	if (&rtld_DYNAMIC == NULL) {
@@ -332,6 +329,9 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	}
 
 	_preinit();
+
+	if (cleanup != NULL)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
