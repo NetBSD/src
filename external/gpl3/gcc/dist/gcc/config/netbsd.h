@@ -203,9 +203,29 @@ along with GCC; see the file COPYING3.  If not see
   do {									\
     netbsd_patch_builtins ();						\
   } while(0)
-
+/* Link -lasan early on the command line.  For -static-libasan, don't link
+   it for -shared link, the executable should be compiled with -static-libasan
+   in that case, and for executable link with --{,no-}whole-archive around
+   it to force everything into the executable.  And similarly for -ltsan,
+   -lhwasan, and -llsan.  */
 #if defined(HAVE_LD_STATIC_DYNAMIC)
+#undef LIBASAN_EARLY_SPEC
+#define LIBASAN_EARLY_SPEC "%{!shared:libasan_preinit%O%s} " \
+  "%{static-libasan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -lasan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libasan:-lasan}"
+#undef LIBHWASAN_EARLY_SPEC
+#define LIBHWASAN_EARLY_SPEC "%{static-libhwasan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -lhwasan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libhwasan:-lhwasan}"
 #undef LIBTSAN_EARLY_SPEC
-#define LIBTSAN_EARLY_SPEC "%{static-libtsan:" LD_STATIC_OPTION "}"	\
-  " -ltsan %{static-libtsan:" LD_DYNAMIC_OPTION "} -lpthread"
+#define LIBTSAN_EARLY_SPEC "%{!shared:libtsan_preinit%O%s} " \
+  "%{static-libtsan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -ltsan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libtsan:-ltsan}"
+#undef LIBLSAN_EARLY_SPEC
+#define LIBLSAN_EARLY_SPEC "%{!shared:liblsan_preinit%O%s} " \
+  "%{static-liblsan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -llsan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-liblsan:-llsan}"
 #endif

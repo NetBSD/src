@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.37 2024/09/30 00:32:12 kalvisd Exp $
+# $NetBSD: Makefile,v 1.38 2025/03/22 17:05:48 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -60,5 +60,7 @@ COPTS.asan_interceptors.cpp += -O1
 COPTS.asan_interceptors.cpp += -fno-jump-tables -Os
 COPTS.asan_interceptors.cpp += -mlong-jump-table-offsets -Os
 .endif
+
+.include "../preinit.mk"
 
 .include <bsd.lib.mk>
