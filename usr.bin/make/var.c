@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1144 2025/01/11 21:21:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1145 2025/03/22 12:23:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1144 2025/01/11 21:21:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1145 2025/03/22 12:23:00 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1037,7 +1037,13 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			 * See ExistsInCmdline.
 			 */
 			Var *gl = VarFind(name, SCOPE_GLOBAL, false);
-			if (gl != NULL && gl->readOnlyLoud)
+			if (gl != NULL && strcmp(gl->val.data, val) == 0) {
+				DEBUG3(VAR,
+				    "%s: ignoring to override the global "
+				    "'%s = %s' from a command line variable "
+				    "as the value wouldn't change\n",
+				    scope->name, name, val);
+			} else if (gl != NULL && gl->readOnlyLoud)
 				Parse_Error(PARSE_FATAL,
 				    "Cannot override "
 				    "read-only global variable \"%s\" "
