@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.c,v 1.1 2024/12/16 16:37:40 brad Exp $	*/
+/*	$NetBSD: umcpmioctl.c,v 1.2 2025/03/22 05:36:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: umcpmioctl.c,v 1.1 2024/12/16 16:37:40 brad Exp $");
+__RCSID("$NetBSD: umcpmioctl.c,v 1.2 2025/03/22 05:36:27 rillig Exp $");
 #endif
 
 /* Main userland program that can pull the SRAM and FLASH content from a MCP2221
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: umcpmioctl.c,v 1.1 2024/12/16 16:37:40 brad Exp $");
 #include "umcpmioctlconst.h"
 #include "printumcpmio.h"
 #include "putflash.h"
-
-int	valid_cmd(const struct umcpmioctlcmd[], long unsigned int, char *);
 
 static void
 usage(void)
@@ -85,14 +83,14 @@ usage(void)
 	fprintf(stderr,"chipsn - Chip Serial Number\n");
 }
 
-int
+static int
 valid_cmd(const struct umcpmioctlcmd c[], long unsigned int csize, char *cmdtocheck)
 {
 	int r = -1;
 
 	for(long unsigned int i = 0;i < csize;i++) {
 		if (strncmp(cmdtocheck,c[i].cmd,16) == 0) {
-			r = i;
+			r = (int)i;
 			break;
 		}
 	}
@@ -189,7 +187,6 @@ main(int argc, char *argv[])
 									fprintf(stderr,"Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
 									usage();
 									exit(1);
-									break;
 								}
 								error = ioctl(fd, UMCPMIO_GET_FLASH, &ioctl_get_flash);
 							} else {
@@ -207,7 +204,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to get: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to get: %s\n\n", argv[2]);
@@ -252,7 +248,6 @@ main(int argc, char *argv[])
 									fprintf(stderr,"Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
 									usage();
 									exit(1);
-									break;
 								};
 							} else {
 								fprintf(stderr,"Unknown subcommand to put flash: %s %d\n\n", argv[3], validsubsub);
@@ -269,7 +264,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to put: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					};
 				} else {
 					fprintf(stderr,"Unknown subcommand to put: %s\n\n", argv[2]);
@@ -292,7 +286,6 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr,"Unknown handling of command: %d\n",valid);
 			exit(2);
-			break;
 		}
 		if (! error) {
 			switch (umcpmioctlcmds[valid].id) {
@@ -312,7 +305,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand in print for get (debug): %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 					for(int i=0; i < MCP2221_RES_BUFFER_SIZE; i++) {
 						printf(" %02x",buf[i]);
@@ -334,7 +326,6 @@ main(int argc, char *argv[])
 					fprintf(stderr,"Unhandled subcommand in print for get: %s %d\n\n", argv[2], validsub);
 					usage();
 					exit(1);
-					break;
 				}
 
 				break;
@@ -348,7 +339,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand in print for put (debug): %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 					for(int i=0; i < MCP2221_RES_BUFFER_SIZE; i++) {
 						printf(" %02x",buf[i]);
@@ -362,11 +352,9 @@ main(int argc, char *argv[])
 					case MCP2221_CMD_COMPLETE_NO_SUPPORT:
 						printf("Command not supported\n");
 						exit(2);
-						break;
 					case MCP2221_CMD_COMPLETE_EPERM:
 						printf("Permission denied\n");
 						exit(2);
-						break;
 					case MCP2221_CMD_COMPLETE_OK:
 					default:
 						break;
@@ -375,7 +363,6 @@ main(int argc, char *argv[])
 					fprintf(stderr,"Unhandled subcommand in print for put: %s %d %s %d\n\n", argv[2], validsub, argv[3], validsubsub);
 					usage();
 					exit(1);
-					break;
 				}
 				break;
 			case UMCPMIO_STATUS:
@@ -391,7 +378,6 @@ main(int argc, char *argv[])
 			default:
 				fprintf(stderr,"Unknown printing of command: %d\n",valid);
 				exit(2);
-				break;
 			}
 		} else {
 			fprintf(stderr,"Error: %d\n", error);
