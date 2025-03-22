@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.20 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.21 2025/03/22 10:37:19 hans Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,6 +34,7 @@
  * Modified for vax out of i386 code.
  */
 
+#include <sys/stdbool.h>
 #include <sys/param.h>
 #include <uvm/uvm.h>
 #include <machine/trap.h>
@@ -77,6 +78,7 @@ extern	db_regs_t	ddb_regs;	/* register state */
 
 /* Prototypes */
 void	kdb_trap(struct trapframe *);
+bool	db_validate_address(vaddr_t);
 
 /*
  * We use a.out symbols in DDB (unless we are ELF then we use ELF symbols).

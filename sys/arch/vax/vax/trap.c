@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2025/03/16 15:35:00 riastradh Exp $     */
+/*	$NetBSD: trap.c,v 1.140 2025/03/22 10:37:19 hans Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2025/03/16 15:35:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2025/03/22 10:37:19 hans Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -225,7 +225,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 					tf->tf_r0 = rv;
 					return;
 				}
-				printf("r0=%08lx r1=%08lx r2=%08lx r3=%08lx ",
+				printf("r0=%08lx r1=%08lx r2=%08lx r3=%08lx\n",
 				    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
 				printf("r4=%08lx r5=%08lx r6=%08lx r7=%08lx\n",
 				    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 2025/02/28 18:08:51 hans Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.26 2025/03/22 10:37:19 hans Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.25 2025/02/28 18:08:51 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26 2025/03/22 10:37:19 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.25 2025/02/28 18:08:51 hans Exp $");
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_command.h>
 
 #include <vax/vax/db_disasm.h>
 
@@ -145,6 +146,12 @@ db_disasm(db_addr_t loc, bool altfmt)
 	const char	*symname;
 
 	inst_buffer	ib;
+
+	if (!db_validate_address(loc)) {
+		db_printf("location 0x%lx inaccessible\n", loc);
+		db_error(NULL);
+		/*NOTREACHED*/
+	}
 
 	memset(&ib, 0, sizeof(ib));
 	ib.ppc = (void *) loc;
