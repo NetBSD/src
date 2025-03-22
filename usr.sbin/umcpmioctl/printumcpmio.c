@@ -1,4 +1,4 @@
-/*	$NetBSD: printumcpmio.c,v 1.2 2025/03/22 05:46:32 rillig Exp $	*/
+/*	$NetBSD: printumcpmio.c,v 1.3 2025/03/22 06:09:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -16,8 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: printumcpmio.c,v 1.2 2025/03/22 05:46:32 rillig Exp $");
+__RCSID("$NetBSD: printumcpmio.c,v 1.3 2025/03/22 06:09:48 rillig Exp $");
 #endif
 
 /* Functions to print stuff */

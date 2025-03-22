@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.c,v 1.3 2025/03/22 05:46:32 rillig Exp $	*/
+/*	$NetBSD: umcpmioctl.c,v 1.4 2025/03/22 06:09:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: umcpmioctl.c,v 1.3 2025/03/22 05:46:32 rillig Exp $");
+__RCSID("$NetBSD: umcpmioctl.c,v 1.4 2025/03/22 06:09:48 rillig Exp $");
 #endif
 
 /* Main userland program that can pull the SRAM and FLASH content from a MCP2221
@@ -44,8 +44,8 @@ __RCSID("$NetBSD: umcpmioctl.c,v 1.3 2025/03/22 05:46:32 rillig Exp $");
 #include "printumcpmio.h"
 #include "putflash.h"
 
-static void
-usage(void)
+__dead static void
+usage(int status)
 {
 	const char *p = getprogname();
 
@@ -81,6 +81,7 @@ usage(void)
 	fprintf(stderr, "usbprod - USB Product Descriptor\n");
 	fprintf(stderr, "usbsn - USB Serial Number\n");
 	fprintf(stderr, "chipsn - Chip Serial Number\n");
+	exit(status);
 }
 
 static int
@@ -111,9 +112,9 @@ main(int argc, char *argv[])
 			debug = true;
 			break;
 		case 'h':
+			usage(0);
 		default:
-			usage();
-			exit(0);
+			usage(1);
 		}
 	}
 
@@ -126,10 +127,8 @@ main(int argc, char *argv[])
 		    argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 	}
 
-	if (argc <= 1) {
-		usage();
-		exit(0);
-	}
+	if (argc <= 1)
+		usage(0);
 
 	fd = open(argv[0], O_RDWR, 0);
 	if (fd == -1) {
@@ -185,35 +184,29 @@ main(int argc, char *argv[])
 									break;
 								default:
 									fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-									usage();
-									exit(1);
+									usage(1);
 								}
 								error = ioctl(fd, UMCPMIO_GET_FLASH, &ioctl_get_flash);
 							} else {
 								fprintf(stderr, "Unknown subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-								usage();
-								exit(1);
+								usage(1);
 							}
 						} else {
 							fprintf(stderr, "Missing arguments to get flash command\n\n");
-							usage();
-							exit(1);
+							usage(1);
 						}
 						break;
 					default:
 						fprintf(stderr, "Unhandled subcommand to get: %s %d\n\n", argv[2], validsub);
-						usage();
-						exit(1);
+						usage(1);
 					}
 				} else {
 					fprintf(stderr, "Unknown subcommand to get: %s\n\n", argv[2]);
-					usage();
-					exit(1);
+					usage(1);
 				}
 			} else {
 				fprintf(stderr, "Missing arguments to get command\n\n");
-				usage();
-				exit(1);
+				usage(1);
 			}
 			break;
 		case UMCPMIO_PUT:
@@ -246,34 +239,28 @@ main(int argc, char *argv[])
 									break;
 								default:
 									fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-									usage();
-									exit(1);
+									usage(1);
 								};
 							} else {
 								fprintf(stderr, "Unknown subcommand to put flash: %s %d\n\n", argv[3], validsubsub);
-								usage();
-								exit(1);
+								usage(1);
 							}
 						} else {
 							fprintf(stderr, "Missing arguments to put flash command\n\n");
-							usage();
-							exit(1);
+							usage(1);
 						}
 						break;
 					default:
 						fprintf(stderr, "Unhandled subcommand to put: %s %d\n\n", argv[2], validsub);
-						usage();
-						exit(1);
+						usage(1);
 					};
 				} else {
 					fprintf(stderr, "Unknown subcommand to put: %s\n\n", argv[2]);
-					usage();
-					exit(1);
+					usage(1);
 				}
 			} else {
 				fprintf(stderr, "Missing arguments to put command\n\n");
-				usage();
-				exit(1);
+				usage(1);
 			}
 			break;
 		case UMCPMIO_STATUS:
@@ -303,8 +290,7 @@ main(int argc, char *argv[])
 						break;
 					default:
 						fprintf(stderr, "Unhandled subcommand in print for get (debug): %s %d\n\n", argv[2], validsub);
-						usage();
-						exit(1);
+						usage(1);
 					}
 					for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
 						printf(" %02x", buf[i]);
@@ -324,8 +310,7 @@ main(int argc, char *argv[])
 					break;
 				default:
 					fprintf(stderr, "Unhandled subcommand in print for get: %s %d\n\n", argv[2], validsub);
-					usage();
-					exit(1);
+					usage(1);
 				}
 
 				break;
@@ -337,8 +322,7 @@ main(int argc, char *argv[])
 						break;
 					default:
 						fprintf(stderr, "Unhandled subcommand in print for put (debug): %s %d\n\n", argv[2], validsub);
-						usage();
-						exit(1);
+						usage(1);
 					}
 					for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
 						printf(" %02x", buf[i]);
@@ -361,8 +345,7 @@ main(int argc, char *argv[])
 					}
 				} else {
 					fprintf(stderr, "Unhandled subcommand in print for put: %s %d %s %d\n\n", argv[2], validsub, argv[3], validsubsub);
-					usage();
-					exit(1);
+					usage(1);
 				}
 				break;
 			case UMCPMIO_STATUS:
@@ -385,10 +368,9 @@ main(int argc, char *argv[])
 		}
 	} else {
 		fprintf(stderr, "Unknown command: %s\n\n", argv[1]);
-		usage();
-		exit(1);
+		usage(1);
 	}
 
-	close(fd);
+	(void)close(fd);
 	exit(0);
 }
