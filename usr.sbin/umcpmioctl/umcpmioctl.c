@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.c,v 1.4 2025/03/22 06:09:48 rillig Exp $	*/
+/*	$NetBSD: umcpmioctl.c,v 1.5 2025/03/22 06:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: umcpmioctl.c,v 1.4 2025/03/22 06:09:48 rillig Exp $");
+__RCSID("$NetBSD: umcpmioctl.c,v 1.5 2025/03/22 06:24:55 rillig Exp $");
 #endif
 
 /* Main userland program that can pull the SRAM and FLASH content from a MCP2221
@@ -138,237 +138,227 @@ main(int argc, char *argv[])
 	/* Parse out the command line into what the requested action is */
 
 	valid = valid_cmd(umcpmioctlcmds, __arraycount(umcpmioctlcmds), argv[1]);
-
-	if (valid != -1) {
-		uint8_t *buf;
-		struct mcp2221_status_res status_res;
-		struct mcp2221_get_sram_res get_sram_res;
-		struct mcp2221_get_gpio_cfg_res get_gpio_cfg_res;
-		struct umcpmio_ioctl_get_flash ioctl_get_flash;
-		struct umcpmio_ioctl_put_flash ioctl_put_flash;
-
-		switch (umcpmioctlcmds[valid].id) {
-		case UMCPMIO_GET:
-			if (argc >= 3) {
-				validsub = valid_cmd(getsubcmds, __arraycount(getsubcmds), argv[2]);
-				if (validsub != -1) {
-					switch (getsubcmds[validsub].id) {
-					case UMCPMIO_IOCTL_GET_SRAM:
-						error = ioctl(fd, UMCPMIO_GET_SRAM, &get_sram_res);
-						break;
-					case UMCPMIO_IOCTL_GET_GP_CFG:
-						error = ioctl(fd, UMCPMIO_GET_GP_CFG, &get_gpio_cfg_res);
-						break;
-					case UMCPMIO_IOCTL_GET_FLASH:
-						if (argc == 4) {
-							validsubsub = valid_cmd(getflashsubcmds, __arraycount(getflashsubcmds), argv[3]);
-							if (validsubsub != -1) {
-								switch (getflashsubcmds[validsubsub].id) {
-								case UMCPMIO_IOCTL_GET_FLASH_CS:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_CS;
-									break;
-								case UMCPMIO_IOCTL_GET_FLASH_GP:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_GP;
-									break;
-								case UMCPMIO_IOCTL_GET_FLASH_USBMAN:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBMAN;
-									break;
-								case UMCPMIO_IOCTL_GET_FLASH_USBPROD:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBPROD;
-									break;
-								case UMCPMIO_IOCTL_GET_FLASH_USBSN:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBSN;
-									break;
-								case UMCPMIO_IOCTL_GET_FLASH_CHIPSN:
-									ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_CHIPSN;
-									break;
-								default:
-									fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-									usage(1);
-								}
-								error = ioctl(fd, UMCPMIO_GET_FLASH, &ioctl_get_flash);
-							} else {
-								fprintf(stderr, "Unknown subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-								usage(1);
-							}
-						} else {
-							fprintf(stderr, "Missing arguments to get flash command\n\n");
-							usage(1);
-						}
-						break;
-					default:
-						fprintf(stderr, "Unhandled subcommand to get: %s %d\n\n", argv[2], validsub);
-						usage(1);
-					}
-				} else {
-					fprintf(stderr, "Unknown subcommand to get: %s\n\n", argv[2]);
-					usage(1);
-				}
-			} else {
-				fprintf(stderr, "Missing arguments to get command\n\n");
-				usage(1);
-			}
-			break;
-		case UMCPMIO_PUT:
-			if (argc > 3) {
-				validsub = valid_cmd(putsubcmds, __arraycount(putsubcmds), argv[2]);
-				if (validsub != -1) {
-					switch (putsubcmds[validsub].id) {
-					case UMCPMIO_IOCTL_PUT_FLASH:
-						if (argc >= 4) {
-							validsubsub = valid_cmd(putflashsubcmds, __arraycount(putflashsubcmds), argv[3]);
-							if (validsubsub != -1) {
-								switch (putflashsubcmds[validsubsub].id) {
-								case UMCPMIO_IOCTL_PUT_FLASH_GP:
-									memset(&ioctl_put_flash, 0, sizeof(ioctl_put_flash));
-									ioctl_put_flash.subcode = MCP2221_FLASH_SUBCODE_GP;
-									error = parse_flash_gp_req(fd, &ioctl_put_flash.put_flash_req, argv, 4, argc, debug);
-
-									if (debug) {
-										fprintf(stderr, "REQ FOR FLASH GP PUT: error=%d:\n", error);
-										buf = (uint8_t *)&ioctl_put_flash.put_flash_req.cmd;
-										for (int i = 0; i < MCP2221_REQ_BUFFER_SIZE; i++) {
-											fprintf(stderr, " %02x", buf[i]);
-										}
-										fprintf(stderr, "\n----\n");
-									}
-
-									if (!error)
-										error = ioctl(fd, UMCPMIO_PUT_FLASH, &ioctl_put_flash);
-
-									break;
-								default:
-									fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
-									usage(1);
-								};
-							} else {
-								fprintf(stderr, "Unknown subcommand to put flash: %s %d\n\n", argv[3], validsubsub);
-								usage(1);
-							}
-						} else {
-							fprintf(stderr, "Missing arguments to put flash command\n\n");
-							usage(1);
-						}
-						break;
-					default:
-						fprintf(stderr, "Unhandled subcommand to put: %s %d\n\n", argv[2], validsub);
-						usage(1);
-					};
-				} else {
-					fprintf(stderr, "Unknown subcommand to put: %s\n\n", argv[2]);
-					usage(1);
-				}
-			} else {
-				fprintf(stderr, "Missing arguments to put command\n\n");
-				usage(1);
-			}
-			break;
-		case UMCPMIO_STATUS:
-			if (debug)
-				fprintf(stderr, "Doing status\n");
-			error = ioctl(fd, UMCPMIO_GET_STATUS, &status_res);
-			if (debug)
-				fprintf(stderr, "UMCPMIO_GET_STATUS: error=%d, \n", error);
-			break;
-		default:
-			fprintf(stderr, "Unknown handling of command: %d\n", valid);
-			exit(2);
-		}
-		if (!error) {
-			switch (umcpmioctlcmds[valid].id) {
-			case UMCPMIO_GET:
-				if (debug) {
-					switch (getsubcmds[validsub].id) {
-					case UMCPMIO_IOCTL_GET_SRAM:
-						buf = (uint8_t *)&get_sram_res;
-						break;
-					case UMCPMIO_IOCTL_GET_GP_CFG:
-						buf = (uint8_t *)&get_gpio_cfg_res;
-						break;
-					case UMCPMIO_IOCTL_GET_FLASH:
-						buf = (uint8_t *)&ioctl_get_flash.get_flash_res.cmd;
-						break;
-					default:
-						fprintf(stderr, "Unhandled subcommand in print for get (debug): %s %d\n\n", argv[2], validsub);
-						usage(1);
-					}
-					for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
-						printf(" %02x", buf[i]);
-					}
-					printf("\n");
-				}
-
-				switch (getsubcmds[validsub].id) {
-				case UMCPMIO_IOCTL_GET_SRAM:
-					print_sram(&get_sram_res);
-					break;
-				case UMCPMIO_IOCTL_GET_GP_CFG:
-					print_gpio_cfg(&get_gpio_cfg_res);
-					break;
-				case UMCPMIO_IOCTL_GET_FLASH:
-					print_flash(&ioctl_get_flash.get_flash_res, getflashsubcmds[validsubsub].id);
-					break;
-				default:
-					fprintf(stderr, "Unhandled subcommand in print for get: %s %d\n\n", argv[2], validsub);
-					usage(1);
-				}
-
-				break;
-			case UMCPMIO_PUT:
-				if (debug) {
-					switch (putsubcmds[validsub].id) {
-					case UMCPMIO_IOCTL_PUT_FLASH:
-						buf = (uint8_t *)&ioctl_put_flash.put_flash_res.cmd;
-						break;
-					default:
-						fprintf(stderr, "Unhandled subcommand in print for put (debug): %s %d\n\n", argv[2], validsub);
-						usage(1);
-					}
-					for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
-						printf(" %02x", buf[i]);
-					}
-					printf("\n");
-				}
-
-				if (putsubcmds[validsub].id == UMCPMIO_IOCTL_PUT_FLASH &&
-				    putflashsubcmds[validsubsub].id == UMCPMIO_IOCTL_PUT_FLASH_GP) {
-					switch (ioctl_put_flash.put_flash_res.completion) {
-					case MCP2221_CMD_COMPLETE_NO_SUPPORT:
-						printf("Command not supported\n");
-						exit(2);
-					case MCP2221_CMD_COMPLETE_EPERM:
-						printf("Permission denied\n");
-						exit(2);
-					case MCP2221_CMD_COMPLETE_OK:
-					default:
-						break;
-					}
-				} else {
-					fprintf(stderr, "Unhandled subcommand in print for put: %s %d %s %d\n\n", argv[2], validsub, argv[3], validsubsub);
-					usage(1);
-				}
-				break;
-			case UMCPMIO_STATUS:
-				if (debug) {
-					buf = &status_res.cmd;
-					for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
-						fprintf(stderr, " %02x", buf[i]);
-					}
-					fprintf(stderr, "\n");
-				}
-				print_status(&status_res);
-				break;
-			default:
-				fprintf(stderr, "Unknown printing of command: %d\n", valid);
-				exit(2);
-			}
-		} else {
-			fprintf(stderr, "Error: %d\n", error);
-			exit(1);
-		}
-	} else {
+	if (valid == -1) {
 		fprintf(stderr, "Unknown command: %s\n\n", argv[1]);
 		usage(1);
+	}
+
+	uint8_t *buf;
+	struct mcp2221_status_res status_res;
+	struct mcp2221_get_sram_res get_sram_res;
+	struct mcp2221_get_gpio_cfg_res get_gpio_cfg_res;
+	struct umcpmio_ioctl_get_flash ioctl_get_flash;
+	struct umcpmio_ioctl_put_flash ioctl_put_flash;
+
+	switch (umcpmioctlcmds[valid].id) {
+	case UMCPMIO_GET:
+		if (argc < 3) {
+			fprintf(stderr, "Missing arguments to get command\n\n");
+			usage(1);
+		}
+		validsub = valid_cmd(getsubcmds, __arraycount(getsubcmds), argv[2]);
+		if (validsub == -1) {
+			fprintf(stderr, "Unknown subcommand to get: %s\n\n", argv[2]);
+			usage(1);
+		}
+		switch (getsubcmds[validsub].id) {
+		case UMCPMIO_IOCTL_GET_SRAM:
+			error = ioctl(fd, UMCPMIO_GET_SRAM, &get_sram_res);
+			break;
+		case UMCPMIO_IOCTL_GET_GP_CFG:
+			error = ioctl(fd, UMCPMIO_GET_GP_CFG, &get_gpio_cfg_res);
+			break;
+		case UMCPMIO_IOCTL_GET_FLASH:
+			if (argc != 4) {
+				fprintf(stderr, "Missing arguments to get flash command\n\n");
+				usage(1);
+			}
+			validsubsub = valid_cmd(getflashsubcmds, __arraycount(getflashsubcmds), argv[3]);
+			if (validsubsub == -1) {
+				fprintf(stderr, "Unknown subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
+				usage(1);
+			}
+			switch (getflashsubcmds[validsubsub].id) {
+			case UMCPMIO_IOCTL_GET_FLASH_CS:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_CS;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH_GP:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_GP;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH_USBMAN:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBMAN;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH_USBPROD:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBPROD;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH_USBSN:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_USBSN;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH_CHIPSN:
+				ioctl_get_flash.subcode = MCP2221_FLASH_SUBCODE_CHIPSN;
+				break;
+			default:
+				fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
+				usage(1);
+			}
+			error = ioctl(fd, UMCPMIO_GET_FLASH, &ioctl_get_flash);
+			break;
+		default:
+			fprintf(stderr, "Unhandled subcommand to get: %s %d\n\n", argv[2], validsub);
+			usage(1);
+		}
+		break;
+	case UMCPMIO_PUT:
+		if (argc <= 3) {
+			fprintf(stderr, "Missing arguments to put command\n\n");
+			usage(1);
+		}
+		validsub = valid_cmd(putsubcmds, __arraycount(putsubcmds), argv[2]);
+		if (validsub == -1) {
+			fprintf(stderr, "Unknown subcommand to put: %s\n\n", argv[2]);
+			usage(1);
+		}
+		switch (putsubcmds[validsub].id) {
+		case UMCPMIO_IOCTL_PUT_FLASH:
+			if (argc < 4) {
+				fprintf(stderr, "Missing arguments to put flash command\n\n");
+				usage(1);
+			}
+			validsubsub = valid_cmd(putflashsubcmds, __arraycount(putflashsubcmds), argv[3]);
+			if (validsubsub == -1) {
+				fprintf(stderr, "Unknown subcommand to put flash: %s %d\n\n", argv[3], validsubsub);
+				usage(1);
+			}
+			switch (putflashsubcmds[validsubsub].id) {
+			case UMCPMIO_IOCTL_PUT_FLASH_GP:
+				memset(&ioctl_put_flash, 0, sizeof(ioctl_put_flash));
+				ioctl_put_flash.subcode = MCP2221_FLASH_SUBCODE_GP;
+				error = parse_flash_gp_req(fd, &ioctl_put_flash.put_flash_req, argv, 4, argc, debug);
+
+				if (debug) {
+					fprintf(stderr, "REQ FOR FLASH GP PUT: error=%d:\n", error);
+					buf = (uint8_t *)&ioctl_put_flash.put_flash_req.cmd;
+					for (int i = 0; i < MCP2221_REQ_BUFFER_SIZE; i++) {
+						fprintf(stderr, " %02x", buf[i]);
+					}
+					fprintf(stderr, "\n----\n");
+				}
+
+				if (!error)
+					error = ioctl(fd, UMCPMIO_PUT_FLASH, &ioctl_put_flash);
+
+				break;
+			default:
+				fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
+				usage(1);
+			}
+			break;
+		default:
+			fprintf(stderr, "Unhandled subcommand to put: %s %d\n\n", argv[2], validsub);
+			usage(1);
+		}
+		break;
+	case UMCPMIO_STATUS:
+		if (debug)
+			fprintf(stderr, "Doing status\n");
+		error = ioctl(fd, UMCPMIO_GET_STATUS, &status_res);
+		if (debug)
+			fprintf(stderr, "UMCPMIO_GET_STATUS: error=%d, \n", error);
+		break;
+	default:
+		fprintf(stderr, "Unknown handling of command: %d\n", valid);
+		exit(2);
+	}
+	if (error) {
+		fprintf(stderr, "Error: %d\n", error);
+		exit(1);
+	}
+	switch (umcpmioctlcmds[valid].id) {
+	case UMCPMIO_GET:
+		if (debug) {
+			switch (getsubcmds[validsub].id) {
+			case UMCPMIO_IOCTL_GET_SRAM:
+				buf = (uint8_t *)&get_sram_res;
+				break;
+			case UMCPMIO_IOCTL_GET_GP_CFG:
+				buf = (uint8_t *)&get_gpio_cfg_res;
+				break;
+			case UMCPMIO_IOCTL_GET_FLASH:
+				buf = (uint8_t *)&ioctl_get_flash.get_flash_res.cmd;
+				break;
+			default:
+				fprintf(stderr, "Unhandled subcommand in print for get (debug): %s %d\n\n", argv[2], validsub);
+				usage(1);
+			}
+			for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
+				printf(" %02x", buf[i]);
+			}
+			printf("\n");
+		}
+
+		switch (getsubcmds[validsub].id) {
+		case UMCPMIO_IOCTL_GET_SRAM:
+			print_sram(&get_sram_res);
+			break;
+		case UMCPMIO_IOCTL_GET_GP_CFG:
+			print_gpio_cfg(&get_gpio_cfg_res);
+			break;
+		case UMCPMIO_IOCTL_GET_FLASH:
+			print_flash(&ioctl_get_flash.get_flash_res, getflashsubcmds[validsubsub].id);
+			break;
+		default:
+			fprintf(stderr, "Unhandled subcommand in print for get: %s %d\n\n", argv[2], validsub);
+			usage(1);
+		}
+
+		break;
+	case UMCPMIO_PUT:
+		if (debug) {
+			switch (putsubcmds[validsub].id) {
+			case UMCPMIO_IOCTL_PUT_FLASH:
+				buf = (uint8_t *)&ioctl_put_flash.put_flash_res.cmd;
+				break;
+			default:
+				fprintf(stderr, "Unhandled subcommand in print for put (debug): %s %d\n\n", argv[2], validsub);
+				usage(1);
+			}
+			for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
+				printf(" %02x", buf[i]);
+			}
+			printf("\n");
+		}
+
+		if (putsubcmds[validsub].id == UMCPMIO_IOCTL_PUT_FLASH &&
+		    putflashsubcmds[validsubsub].id == UMCPMIO_IOCTL_PUT_FLASH_GP) {
+			switch (ioctl_put_flash.put_flash_res.completion) {
+			case MCP2221_CMD_COMPLETE_NO_SUPPORT:
+				printf("Command not supported\n");
+				exit(2);
+			case MCP2221_CMD_COMPLETE_EPERM:
+				printf("Permission denied\n");
+				exit(2);
+			case MCP2221_CMD_COMPLETE_OK:
+			default:
+				break;
+			}
+		} else {
+			fprintf(stderr, "Unhandled subcommand in print for put: %s %d %s %d\n\n", argv[2], validsub, argv[3], validsubsub);
+			usage(1);
+		}
+		break;
+	case UMCPMIO_STATUS:
+		if (debug) {
+			buf = &status_res.cmd;
+			for (int i = 0; i < MCP2221_RES_BUFFER_SIZE; i++) {
+				fprintf(stderr, " %02x", buf[i]);
+			}
+			fprintf(stderr, "\n");
+		}
+		print_status(&status_res);
+		break;
+	default:
+		fprintf(stderr, "Unknown printing of command: %d\n", valid);
+		exit(2);
 	}
 
 	(void)close(fd);
