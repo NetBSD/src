@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2489 2025/03/11 13:56:47 brad Exp $
+#	$NetBSD: mi,v 1.2490 2025/03/22 17:09:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3864,6 +3864,7 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libasan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcccmds,gcc
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
@@ -4025,6 +4026,7 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
+./usr/lib/liblsan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcccmds,gcc
 ./usr/lib/liblua.a				comp-c-lib		compatfile
