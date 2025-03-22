@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.c,v 1.5 2025/03/22 06:24:55 rillig Exp $	*/
+/*	$NetBSD: umcpmioctl.c,v 1.6 2025/03/22 06:37:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: umcpmioctl.c,v 1.5 2025/03/22 06:24:55 rillig Exp $");
+__RCSID("$NetBSD: umcpmioctl.c,v 1.6 2025/03/22 06:37:22 rillig Exp $");
 #endif
 
 /* Main userland program that can pull the SRAM and FLASH content from a MCP2221
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 
 				break;
 			default:
-				fprintf(stderr, "Unhandled subcommand to get flash: %s %d\n\n", argv[3], validsubsub);
+				fprintf(stderr, "Unhandled subcommand to put flash: %s %d\n\n", argv[3], validsubsub);
 				usage(1);
 			}
 			break;
