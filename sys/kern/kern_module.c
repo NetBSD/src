@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.168 2025/03/21 07:09:58 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.169 2025/03/22 00:41:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.168 2025/03/21 07:09:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.169 2025/03/22 00:41:20 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -94,7 +94,11 @@ bool		module_autoload_on = true;
 #else
 bool		module_autoload_on = false;
 #endif
-bool		module_autounload_unsafe = 0;
+#ifdef MODULAR_DEFAULT_AUTOUNLOAD_UNSAFE
+bool		module_autounload_unsafe = true;
+#else
+bool		module_autounload_unsafe = false;
+#endif
 u_int		module_count;
 u_int		module_builtinlist;
 u_int		module_autotime = 10;

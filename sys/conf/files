@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1314 2025/01/08 22:55:35 jmcneill Exp $
+#	$NetBSD: files,v 1.1315 2025/03/22 00:41:20 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -26,6 +26,7 @@ defflag	opt_ptrace.h		PTRACE PTRACE_HOOKS
 defflag				COREDUMP
 defflag	opt_modular.h		MODULAR
 defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
+defflag	opt_modular.h		MODULAR_DEFAULT_AUTOUNLOAD_UNSAFE
 defflag	opt_modular.h		MODULAR_DEFAULT_VERBOSE
 defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
