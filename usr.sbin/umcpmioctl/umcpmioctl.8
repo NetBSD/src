@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmioctl.8,v 1.1 2024/12/16 16:37:40 brad Exp $
+.\" $NetBSD: umcpmioctl.8,v 1.2 2025/03/22 06:42:33 wiz Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -61,26 +61,45 @@
 .Op Fl dh
 .Ar device
 .Ar put flash gp GPn PIN_FUNCTION ...
-.Pp
-GPn is one of GP0, GP1, GP2 or GP3
-.Pp
-PIN_FUNCTION is one of GPIO_PIN_INPUT, GPIO_PIN_OUTPUT, GPIO_PIN_ALT0,
-GPIO_PIN_ALT1, GPIO_PIN_ALT2, GPIO_PIN_ALT3, DEFAULT_OUTPUT_ZERO, or
-DEFAULT_OUTPUT_ONE
-.Pp
-For a
-.Ar put flash
-the GPn and PIN_FUNCTION pairs may be repeated
 .Sh DESCRIPTION
 The
 .Nm
 utility interacts with a MCP2221 / MCP2221A and can be used to pull
 the status of the chip, get the SRAM values, get the values from the
-onboard FLASH and can be used to set some of the FLASH values
-assoicated with the gpio pins.  The values from flash are copied into
-the SRAM when the chip enumerates or powers up.
-.Sh EXAMPLES
+on-board FLASH and can be used to set some of the FLASH values
+associated with the GPIO pins.
+The values from flash are copied into the SRAM when the chip
+enumerates or powers up.
 .Pp
+For the
+Ar put flash
+command, GPn is one of
+.Cm GP0 ,
+.Cm GP1 ,
+.Cm GP2
+or
+.Cm GP3 ,
+and
+.Ar PIN_FUNCTION
+is one of
+.Cm GPIO_PIN_INPUT ,
+.Cm GPIO_PIN_OUTPUT ,
+.Cm GPIO_PIN_ALT0 ,
+.Cm GPIO_PIN_ALT1 ,
+.Cm GPIO_PIN_ALT2 ,
+.Cm GPIO_PIN_ALT3 ,
+.Cm DEFAULT_OUTPUT_ZERO ,
+or
+.Cm DEFAULT_OUTPUT_ONE .
+.Pp
+For a
+.Ar put flash
+the
+.Ar GPn
+and
+.Ar PIN_FUNCTION
+pairs may be repeated.
+.Sh EXAMPLES
 .Dl "umcpmioctl /dev/umcpmio0ctl status"
 .Pp
 Query the chip for its status.
@@ -102,8 +121,8 @@ This will set the GP0 pin to be an input pin on start up of the chip.
 This will set the GP2 pin to be an output pin and GP0 pin to have the
 ALT0 function upon chip start up.
 .Sh SEE ALSO
+.Xr gpio 4 ,
 .Xr umcpmio 4
-.Xr gpio 4
 .Sh HISTORY
 The
 .Nm
@@ -118,6 +137,6 @@ utility was written by
 .Sh BUGS
 Only the gpio settings can be changed in FLASH.
 .Pp
-The output is not very pleasent to use and one will probably need to
-have the datasheet for the MCP2221 / MCP2221A on hand to make sense of
+The output is not very pleasant to use and one will probably need to
+have the data sheet for the MCP2221 / MCP2221A on hand to make sense of
 it.
