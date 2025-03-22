@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmioctl.8,v 1.2 2025/03/22 06:42:33 wiz Exp $
+.\" $NetBSD: umcpmioctl.8,v 1.3 2025/03/22 06:52:54 rillig Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -19,48 +19,49 @@
 .Os
 .Sh NAME
 .Nm umcpmioctl
-.Nd Command line utility to interact with a MCP2221 / MCP2221A multi-io chip
+.Nd interact with a MCP2221 / MCP2221A multi-io chip
 .Sh SYNOPSIS
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar status
+.Cm status
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get sram
+.Cm get sram
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get gp
+.Cm get gp
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash cs
+.Cm get flash cs
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash gp
+.Cm get flash gp
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash usbman
+.Cm get flash usbman
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash usbprod
+.Cm get flash usbprod
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash usbsn
+.Cm get flash usbsn
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar get flash chipsn
+.Cm get flash chipsn
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Ar put flash gp GPn PIN_FUNCTION ...
+.Cm put flash gp
+.Ar GPn PIN_FUNCTION ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,8 +73,10 @@ The values from flash are copied into the SRAM when the chip
 enumerates or powers up.
 .Pp
 For the
-Ar put flash
-command, GPn is one of
+.Cm put flash
+command,
+.Ar GPn
+is one of
 .Cm GP0 ,
 .Cm GP1 ,
 .Cm GP2
@@ -88,13 +91,13 @@ is one of
 .Cm GPIO_PIN_ALT1 ,
 .Cm GPIO_PIN_ALT2 ,
 .Cm GPIO_PIN_ALT3 ,
-.Cm DEFAULT_OUTPUT_ZERO ,
+.Cm DEFAULT_OUTPUT_ZERO
 or
 .Cm DEFAULT_OUTPUT_ONE .
 .Pp
-For a
+For the
 .Ar put flash
-the
+command, the
 .Ar GPn
 and
 .Ar PIN_FUNCTION
