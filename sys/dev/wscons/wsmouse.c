@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.73 2023/07/30 10:45:11 riastradh Exp $ */
+/* $NetBSD: wsmouse.c,v 1.74 2025/03/23 12:19:32 hans Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.73 2023/07/30 10:45:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.74 2025/03/23 12:19:32 hans Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -381,12 +381,12 @@ wsmouse_input(device_t wsmousedev, u_int btns /* 0 is up */,
 	if (evar == NULL)
 		goto out;
 
-#ifdef DIAGNOSTIC
 	if (evar->q == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmouse_input: evar->q=NULL\n");
+#endif
 		goto out;
 	}
-#endif
 
 #if NWSMUX > 0
 	DPRINTFN(5,("wsmouse_input: %s mux=%p, evar=%p\n",
@@ -789,12 +789,12 @@ wsmouseread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-#ifdef DIAGNOSTIC
 	if (sc->sc_base.me_evp == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmouseread: evp == NULL\n");
+#endif
 		return (EINVAL);
 	}
-#endif
 
 	sc->sc_refcnt++;
 	error = wsevent_read(sc->sc_base.me_evp, uio, flags);
