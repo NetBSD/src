@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.144 2020/12/27 16:09:33 tsutsui Exp $ */
+/* $NetBSD: wskbd.c,v 1.145 2025/03/23 12:09:05 hans Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.144 2020/12/27 16:09:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.145 2025/03/23 12:09:05 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -737,12 +737,12 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 		return;
 	}
 
-#ifdef DIAGNOSTIC
 	if (evar->q == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wskbd_input: evar->q=NULL\n");
+#endif
 		return;
 	}
-#endif
 
 	event.type = type;
 	event.value = 0;
@@ -958,12 +958,12 @@ wskbdread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-#ifdef DIAGNOSTIC
 	if (sc->sc_base.me_evp == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wskbdread: evp == NULL\n");
+#endif
 		return (EINVAL);
 	}
-#endif
 
 	sc->sc_refcnt++;
 	error = wsevent_read(sc->sc_base.me_evp, uio, flags);
