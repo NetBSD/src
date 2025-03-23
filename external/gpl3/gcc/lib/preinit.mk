@@ -1,8 +1,8 @@
-# $NetBSD: preinit.mk,v 1.1 2025/03/22 17:05:48 christos Exp $
+# $NetBSD: preinit.mk,v 1.2 2025/03/23 18:56:43 christos Exp $
 
 FILE=lib${LIB}_preinit.o
 FILES+=${FILE}
-FILESDIR=/usr/lib
+FILESDIR=${LIBDIR}
 CLEANFILES+=${FILE} ${LIB}_preinit.o
 
 ${FILE}: ${LIB}_preinit.o
