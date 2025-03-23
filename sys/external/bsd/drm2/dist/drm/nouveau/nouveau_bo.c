@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.19 2021/12/19 10:51:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.20 2025/03/23 17:04:09 joe Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.19 2021/12/19 10:51:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.20 2025/03/23 17:04:09 joe Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -234,8 +234,7 @@ nouveau_bo_alloc(struct nouveau_cli *cli, u64 *size, int *align, u32 flags,
 	if (cli->device.info.family >= NV_DEVICE_INFO_V0_FERMI) {
 		nvbo->kind = (tile_flags & 0x0000ff00) >> 8;
 		if (!nvif_mmu_kind_valid(mmu, nvbo->kind)) {
-			kfree(nvbo);
-			return ERR_PTR(-EINVAL);
+			goto err;
 		}
 
 		nvbo->comp = mmu->kind[nvbo->kind] != nvbo->kind;
@@ -244,8 +243,7 @@ nouveau_bo_alloc(struct nouveau_cli *cli, u64 *size, int *align, u32 flags,
 		nvbo->kind = (tile_flags & 0x00007f00) >> 8;
 		nvbo->comp = (tile_flags & 0x00030000) >> 16;
 		if (!nvif_mmu_kind_valid(mmu, nvbo->kind)) {
-			kfree(nvbo);
-			return ERR_PTR(-EINVAL);
+			goto err;
 		}
 	} else {
 		nvbo->zeta = (tile_flags & 0x00000007);
@@ -282,7 +280,7 @@ nouveau_bo_alloc(struct nouveau_cli *cli, u64 *size, int *align, u32 flags,
 	}
 
 	if (WARN_ON(pi < 0))
-		return ERR_PTR(-EINVAL);
+		goto err;
 
 	/* Disable compression if suitable settings couldn't be found. */
 	if (nvbo->comp && !vmm->page[pi].comp) {
@@ -295,6 +293,10 @@ nouveau_bo_alloc(struct nouveau_cli *cli, u64 *size, int *align, u32 flags,
 	nouveau_bo_fixup_align(nvbo, flags, align, size);
 
 	return nvbo;
+
+err:
+	kfree(nvbo);
+	return ERR_PTR(-EINVAL);
 }
 
 int
