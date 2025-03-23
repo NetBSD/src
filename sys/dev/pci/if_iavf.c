@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.19 2025/02/25 02:10:13 joe Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.20 2025/03/23 18:38:49 joe Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.19 2025/02/25 02:10:13 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.20 2025/03/23 18:38:49 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1870,12 +1870,15 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 fail:
 	if (affinity != NULL)
 		kcpuset_destroy(affinity);
-	for (vector = 0; vector < num; vector++) {
-		if (sc->sc_ihs[vector] == NULL)
-			continue;
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ihs[vector]);
+
+	if (sc->sc_ihs != NULL) {
+		for (vector = 0; vector < num; vector++) {
+			if (sc->sc_ihs[vector] == NULL)
+				continue;
+			pci_intr_disestablish(pa->pa_pc, sc->sc_ihs[vector]);
+		}
+		kmem_free(sc->sc_ihs, sizeof(sc->sc_ihs[0]) * num);
 	}
-	kmem_free(sc->sc_ihs, sizeof(sc->sc_ihs[0]) * num);
 	pci_intr_release(pa->pa_pc, sc->sc_ihp, num);
 
 	return -1;
