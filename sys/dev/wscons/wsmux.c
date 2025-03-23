@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.67 2025/03/23 12:23:49 hans Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.67 2025/03/23 12:23:49 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -241,16 +241,18 @@ wsmux_mux_open(struct wsevsrc *me, struct wseventvar *evar)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)me;
 
-#ifdef DIAGNOSTIC
 	if (sc->sc_base.me_evp != NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmux_mux_open: busy\n");
+#endif
 		return (EBUSY);
 	}
 	if (sc->sc_base.me_parent == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmux_mux_open: no parent\n");
+#endif
 		return (EINVAL);
 	}
-#endif
 
 	wsmux_do_open(sc, evar);
 
@@ -270,20 +272,23 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 		DPRINTF(("wsmuxopen: %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
-#ifdef DIAGNOSTIC
 		if (me->me_evp != NULL) {
+#ifdef DIAGNOSTIC
 			printf("wsmuxopen: dev already in use\n");
+#endif
 			continue;
 		}
 		if (me->me_parent != sc) {
+#ifdef DIAGNOSTIC
 			printf("wsmux_do_open: bad child=%p\n", me);
+#endif
 			continue;
 		}
-		{
+#ifdef DIAGNOSTIC
 		int error = wsevsrc_open(me, evar);
+
 		if (error) {
 			DPRINTF(("wsmuxopen: open failed %d\n", error));
-		}
 		}
 #else
 		/* ignore errors, failing children will not be marked open */
@@ -341,12 +346,12 @@ wsmux_do_close(struct wsmux_softc *sc)
 		DPRINTF(("wsmuxclose %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
-#ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
+#ifdef DIAGNOSTIC
 			printf("wsmuxclose: bad child=%p\n", me);
+#endif
 			continue;
 		}
-#endif
 		(void)wsevsrc_close(me);
 		me->me_evp = NULL;
 	}
@@ -545,13 +550,13 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 	error = 0;
 	ok = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
-#ifdef DIAGNOSTIC
 		/* XXX check evp? */
 		if (me->me_parent != sc) {
+#ifdef DIAGNOSTIC
 			printf("wsmux_do_ioctl: bad child %p\n", me);
+#endif
 			continue;
 		}
-#endif
 		error = wsevsrc_ioctl(me, cmd, data, flag, lwp);
 		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n",
 			 device_xname(sc->sc_base.me_dv), me,
@@ -679,12 +684,12 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	DPRINTF(("wsmux_attach_sc: %s(%p): type=%d\n",
 		 device_xname(sc->sc_base.me_dv), sc, me->me_ops->type));
 
-#ifdef DIAGNOSTIC
 	if (me->me_parent != NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmux_attach_sc: busy\n");
+#endif
 		return (EBUSY);
 	}
-#endif
 	me->me_parent = sc;
 	TAILQ_INSERT_TAIL(&sc->sc_cld, me, me_next);
 
@@ -746,13 +751,13 @@ wsmux_detach_sc(struct wsevsrc *me)
 	DPRINTF(("wsmux_detach_sc: %s(%p) parent=%p\n",
 		 device_xname(me->me_dv), me, sc));
 
-#ifdef DIAGNOSTIC
 	if (sc == NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsmux_detach_sc: %s has no parent\n",
 		       device_xname(me->me_dv));
+#endif
 		return;
 	}
-#endif
 
 #if NWSDISPLAY > 0
 	if (sc->sc_base.me_dispdv != NULL) {
@@ -802,12 +807,12 @@ wsmux_do_displayioctl(device_t dv, u_long cmd, void *data, int flag,
 	ok = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmux_displayioctl: me=%p\n", me));
-#ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
+#ifdef DIAGNOSTIC
 			printf("wsmux_displayioctl: bad child %p\n", me);
+#endif
 			continue;
 		}
-#endif
 		if (me->me_ops->ddispioctl != NULL) {
 			error = wsevsrc_display_ioctl(me, cmd, data, flag, l);
 			DPRINTF(("wsmux_displayioctl: me=%p dev=%s ==> %d\n",
@@ -864,12 +869,12 @@ wsmux_set_display(struct wsmux_softc *sc, device_t displaydv)
 	ok = 0;
 	error = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld,me_next) {
-#ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
+#ifdef DIAGNOSTIC
 			printf("wsmux_set_display: bad child parent %p\n", me);
+#endif
 			continue;
 		}
-#endif
 		if (me->me_ops->dsetdisplay != NULL) {
 			error = wsevsrc_set_display(me, &nsc->sc_base);
 			DPRINTF(("wsmux_set_display: m=%p dev=%s error=%d\n",
