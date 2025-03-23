@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.16 2023/05/10 00:12:44 riastradh Exp $	*/
+/*	$NetBSD: uts.c,v 1.17 2025/03/23 12:07:24 hans Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.16 2023/05/10 00:12:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.17 2025/03/23 12:07:24 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,12 +331,12 @@ uts_disable(void *v)
 	struct uts_softc *sc = v;
 
 	DPRINTFN(1,("uts_disable: sc=%p\n", sc));
-#ifdef DIAGNOSTIC
 	if (!sc->sc_enabled) {
+#ifdef DIAGNOSTIC
 		printf("uts_disable: not enabled\n");
+#endif
 		return;
 	}
-#endif
 
 	sc->sc_enabled = 0;
 	uhidev_close(sc->sc_hdev);
