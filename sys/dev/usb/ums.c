@@ -1,4 +1,5 @@
-/*	$NetBSD: ums.c,v 1.106 2024/03/18 15:15:27 jakllsch Exp $	*/
+
+/*	$NetBSD: ums.c,v 1.107 2025/03/23 12:08:13 hans Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.106 2024/03/18 15:15:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.107 2025/03/23 12:08:13 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -375,12 +376,12 @@ ums_disable(void *v)
 
 	UMSHIST_FUNC(); UMSHIST_CALLARGS("sc=%jx\n", (uintptr_t)sc, 0, 0, 0);
 
-#ifdef DIAGNOSTIC
 	if (!sc->sc_enabled) {
+#ifdef DIAGNOSTIC
 		printf("ums_disable: not enabled\n");
+#endif
 		return;
 	}
-#endif
 
 	if (sc->sc_enabled) {
 		sc->sc_enabled = 0;
