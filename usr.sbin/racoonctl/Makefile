@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.6 2011/05/30 14:41:27 joerg Exp $
+# $NetBSD: Makefile,v 1.7 2025/03/24 00:13:58 christos Exp $
 
-WARNS?=	0	# XXX third-party program, many issues
-NOCLANGERROR=	# defined
-
+WARNS?=3
 .include <bsd.own.mk>
 
 PROG=	racoonctl
