@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.49 2016/09/15 19:27:47 scole Exp $
+.\"$NetBSD: hardware,v 1.50 2025/03/24 12:25:40 gutteridge Exp $
 .
 Currently,
 .Nx*M
@@ -356,16 +356,6 @@ Audio
 .(bullet -compact
 On-board audio on most models
 .Pq Em awacs No or Em snapper
-.(Note
-The
-.Pq Em awacs
-driver is considered
-.Dq experimental No ,
-meaning that it may cause your system to crash and/or is lacking
-some features you may expect.
-Due to interrupt conflicts with some G4 models, this driver is disabled
-by default and you will need to build a kernel with it enabled.
-.Note)
 .Pp
 .It
 USB audio devices
