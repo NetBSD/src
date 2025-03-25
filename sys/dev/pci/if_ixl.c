@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.99 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.100 2025/03/25 19:24:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.99 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.100 2025/03/25 19:24:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -3538,7 +3538,7 @@ ixl_other_intr(void *xsc)
 {
 	struct ixl_softc *sc = xsc;
 	uint32_t icr, mask, reg;
-	int rv;
+	int rv = 0;
 
 	icr = ixl_rd(sc, I40E_PFINT_ICR0);
 	mask = ixl_rd(sc, I40E_PFINT_ICR0_ENA);
