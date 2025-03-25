@@ -1,5 +1,5 @@
 
-/*	$NetBSD: ums.c,v 1.107 2025/03/23 12:08:13 hans Exp $	*/
+/*	$NetBSD: ums.c,v 1.108 2025/03/25 10:37:39 hans Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.107 2025/03/23 12:08:13 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.108 2025/03/25 10:37:39 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -383,11 +383,9 @@ ums_disable(void *v)
 		return;
 	}
 
-	if (sc->sc_enabled) {
-		sc->sc_enabled = 0;
-		if (!sc->sc_alwayson)
-			uhidev_close(sc->sc_hdev);
-	}
+	sc->sc_enabled = 0;
+	if (!sc->sc_alwayson)
+		uhidev_close(sc->sc_hdev);
 }
 
 Static int
