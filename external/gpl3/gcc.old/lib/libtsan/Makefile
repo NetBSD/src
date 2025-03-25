@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2023/02/20 02:12:28 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2025/03/25 18:03:33 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=     # defined
 NOSANITIZER=    # defined
@@ -67,5 +67,7 @@ LIBDPLIBS+= m  ${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 CPPFLAGS+=-DCAN_SANITIZE_UB=0
 COPTS.tsan_interceptors.cc += -Wno-unused-function
+
+.include "../preinit.mk"
 
 .include <bsd.lib.mk>

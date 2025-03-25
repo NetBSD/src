@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2023/10/07 12:15:50 rin Exp $
+# $NetBSD: Makefile,v 1.12 2025/03/25 18:03:32 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -52,5 +52,7 @@ CPPFLAGS+=-DCAN_SANITIZE_UB=0
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 COPTS.asan_interceptors.cc += -O1
 .endif
+
+.include "../preinit.mk"
 
 .include <bsd.lib.mk>

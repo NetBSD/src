@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2023/10/07 12:15:50 rin Exp $
+# $NetBSD: Makefile,v 1.8 2025/03/25 18:03:32 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,5 +23,7 @@ LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 CWARNFLAGS.clang+=	-Wno-error=unused-private-field
+
+.include "../preinit.mk"
 
 .include <bsd.lib.mk>
