@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.4 2025/03/25 20:38:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.4 2025/03/25 20:38:54 riastradh Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -348,7 +348,7 @@ umcpmio_gpio_pin_write(void *arg, int pin, int value)
  */
 
 static int
-umcpmio_gpio_pin_ctlctl(void *arg, int pin, int flags, bool takemutex)
+umcpmio_gpio_pin_ctlctl(void *arg, int pin, int flags)
 {
 	struct umcpmio_softc *sc = arg;
 	struct mcp2221_set_sram_req set_sram_req;
@@ -360,8 +360,7 @@ umcpmio_gpio_pin_ctlctl(void *arg, int pin, int flags, bool takemutex)
 	if (sc->sc_dying)
 		return 0;
 
-	if (takemutex)
-		mutex_enter(&sc->sc_action_mutex);
+	KASSERT(mutex_owned(&sc->sc_action_mutex));
 
 	err = umcpmio_get_sram(sc, &current_sram_res, false);
 	if (err)
@@ -475,9 +474,6 @@ umcpmio_gpio_pin_ctlctl(void *arg, int pin, int flags, bool takemutex)
 	err = 0;
 
  out:
-	if (takemutex)
-		mutex_exit(&sc->sc_action_mutex);
-
 	return err;
 }
 
@@ -489,7 +485,9 @@ umcpmio_gpio_pin_ctl(void *arg, int pin, int flags)
 	if (sc->sc_dying)
 		return;
 
-	umcpmio_gpio_pin_ctlctl(sc, pin, flags, true);
+	mutex_enter(&sc->sc_action_mutex);
+	umcpmio_gpio_pin_ctlctl(sc, pin, flags);
+	mutex_exit(&sc->sc_action_mutex);
 }
 
 /*
@@ -1177,13 +1175,13 @@ umcpmio_dev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		 */
 		if (flags & FREAD) {
 			error = umcpmio_gpio_pin_ctlctl(sc, pin,
-			    GPIO_PIN_ALT0, false);
+			    GPIO_PIN_ALT0);
 		} else {
 			if (pin == 1) {
 				error = EINVAL;
 			} else {
 				error = umcpmio_gpio_pin_ctlctl(sc,
-				    pin, GPIO_PIN_ALT1, false);
+				    pin, GPIO_PIN_ALT1);
 			}
 		}
 	}
@@ -1334,8 +1332,7 @@ umcpmio_dev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 		 * maybe the gpio config and save out what the
 		 * pin was set to.
 		 */
-		error = umcpmio_gpio_pin_ctlctl(sc, pin,
-		    GPIO_PIN_INPUT, false);
+		error = umcpmio_gpio_pin_ctlctl(sc, pin, GPIO_PIN_INPUT);
 	}
 out:
 	sc->sc_dev_open[dunit] = false;
