@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_subr.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
+/*	$NetBSD: umcpmio_subr.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio_subr.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio_subr.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,11 +137,11 @@ umcpmio_set_i2c_speed_one(struct umcpmio_softc *sc,
 	memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
 	umcpmio_set_i2c_speed(&req, flags);
 	err = umcpmio_put_status(sc, &req, &res, takemutex);
-	if (! err) {
-		if (res.set_i2c_speed == MCP2221_I2C_SPEED_BUSY)
-			err = EBUSY;
-	}
-
+	if (err)
+		goto out;
+	if (res.set_i2c_speed == MCP2221_I2C_SPEED_BUSY)
+		err = EBUSY;
+out:
 	return err;
 }
 
@@ -558,24 +558,25 @@ umcpmio_set_gpioclock_dc_one(struct umcpmio_softc *sc, char *new_dutycycle,
 	int err = 0;
 
 	err = umcpmio_get_sram(sc, &current_sram_res, takemutex);
-	if (! err) {
-		memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
-		umcpmio_set_gpioclock_dc(&req, new_dutycycle);
-		DPRINTF(("umcpmio_set_gpioclock_dc_one:"
-			" req.clock_output_divider=%02x, current mask=%02x\n",
-			req.clock_output_divider,
-			(current_sram_res.clock_divider &
-			    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
-		req.clock_output_divider |=
-		    (current_sram_res.clock_divider &
-			MCP2221_SRAM_GPIO_CLOCK_CD_MASK) |
-		    MCP2221_SRAM_GPIO_CHANGE_DCCD;
-		DPRINTF(("umcpmio_set_gpioclock_dc_one:"
-			" SET req.clock_output_divider=%02x\n",
-			req.clock_output_divider));
-		err = umcpmio_put_sram(sc, &req, &res, takemutex);
-	}
+	if (err)
+		goto out;
 
+	memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
+	umcpmio_set_gpioclock_dc(&req, new_dutycycle);
+	DPRINTF(("umcpmio_set_gpioclock_dc_one:"
+		" req.clock_output_divider=%02x, current mask=%02x\n",
+		req.clock_output_divider,
+		(current_sram_res.clock_divider &
+		    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
+	req.clock_output_divider |=
+	    (current_sram_res.clock_divider &
+		MCP2221_SRAM_GPIO_CLOCK_CD_MASK) |
+	    MCP2221_SRAM_GPIO_CHANGE_DCCD;
+	DPRINTF(("umcpmio_set_gpioclock_dc_one:"
+		" SET req.clock_output_divider=%02x\n",
+		req.clock_output_divider));
+	err = umcpmio_put_sram(sc, &req, &res, takemutex);
+out:
 	return err;
 }
 
@@ -638,24 +639,25 @@ umcpmio_set_gpioclock_cd_one(struct umcpmio_softc *sc, char *new_clockdivider,
 	int err = 0;
 
 	err = umcpmio_get_sram(sc, &current_sram_res, takemutex);
-	if (! err) {
-		memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
-		umcpmio_set_gpioclock_cd(&req, new_clockdivider);
-		DPRINTF(("umcpmio_set_gpioclock_cd_one:"
-			" req.clock_output_divider=%02x, current mask=%02x\n",
-			req.clock_output_divider,
-			(current_sram_res.clock_divider &
-			    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
-		req.clock_output_divider |=
-		    (current_sram_res.clock_divider &
-			MCP2221_SRAM_GPIO_CLOCK_DC_MASK) |
-		    MCP2221_SRAM_GPIO_CHANGE_DCCD;
-		DPRINTF(("umcpmio_set_gpioclock_cd_one:"
-			" SET req.clock_output_divider=%02x\n",
-			req.clock_output_divider));
-		err = umcpmio_put_sram(sc, &req, &res, takemutex);
-	}
+	if (err)
+		goto out;
 
+	memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
+	umcpmio_set_gpioclock_cd(&req, new_clockdivider);
+	DPRINTF(("umcpmio_set_gpioclock_cd_one:"
+		" req.clock_output_divider=%02x, current mask=%02x\n",
+		req.clock_output_divider,
+		(current_sram_res.clock_divider &
+		    MCP2221_SRAM_GPIO_CLOCK_CD_MASK)));
+	req.clock_output_divider |=
+	    (current_sram_res.clock_divider &
+		MCP2221_SRAM_GPIO_CLOCK_DC_MASK) |
+	    MCP2221_SRAM_GPIO_CHANGE_DCCD;
+	DPRINTF(("umcpmio_set_gpioclock_cd_one:"
+		" SET req.clock_output_divider=%02x\n",
+		req.clock_output_divider));
+	err = umcpmio_put_sram(sc, &req, &res, takemutex);
+out:
 	return err;
 }
 
@@ -711,49 +713,47 @@ umcpmio_get_gpio_value(struct umcpmio_softc *sc,
 	int r = GPIO_PIN_LOW;
 
 	err = umcpmio_get_gpio_cfg(sc, &get_gpio_cfg_res, takemutex);
-	if (! err) {
-		if (get_gpio_cfg_res.cmd == MCP2221_CMD_GET_GPIO_CFG &&
-		    get_gpio_cfg_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			switch (pin) {
-			case 0:
-				if (get_gpio_cfg_res.gp0_pin_value !=
-				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp0_pin_value ==
-					    0x01)
-						r = GPIO_PIN_HIGH;
-				break;
-			case 1:
-				if (get_gpio_cfg_res.gp1_pin_value !=
-				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp1_pin_value ==
-					    0x01)
-						r = GPIO_PIN_HIGH;
-				break;
-			case 2:
-				if (get_gpio_cfg_res.gp2_pin_value !=
-				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp2_pin_value ==
-					    0x01)
-						r = GPIO_PIN_HIGH;
-				break;
-			case 3:
-				if (get_gpio_cfg_res.gp3_pin_value !=
-				    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
-					if (get_gpio_cfg_res.gp3_pin_value ==
-					    0x01)
-						r = GPIO_PIN_HIGH;
-				break;
-			default:
-				break;
-			}
-		} else {
-			device_printf(sc->sc_dev, "umcpmio_get_gpio_value:"
-			    " wrong command or error: %02x %02x\n",
-			    get_gpio_cfg_res.cmd,
-			    get_gpio_cfg_res.completion);
-		}
+	if (err)
+		goto out;
+
+	if (get_gpio_cfg_res.cmd != MCP2221_CMD_GET_GPIO_CFG ||
+	    get_gpio_cfg_res.completion != MCP2221_CMD_COMPLETE_OK) {
+		device_printf(sc->sc_dev, "umcpmio_get_gpio_value:"
+		    " wrong command or error: %02x %02x\n",
+		    get_gpio_cfg_res.cmd,
+		    get_gpio_cfg_res.completion);
+		goto out;
 	}
 
+	switch (pin) {
+	case 0:
+		if (get_gpio_cfg_res.gp0_pin_value !=
+		    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+			if (get_gpio_cfg_res.gp0_pin_value == 0x01)
+				r = GPIO_PIN_HIGH;
+		break;
+	case 1:
+		if (get_gpio_cfg_res.gp1_pin_value !=
+		    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+			if (get_gpio_cfg_res.gp1_pin_value == 0x01)
+				r = GPIO_PIN_HIGH;
+		break;
+	case 2:
+		if (get_gpio_cfg_res.gp2_pin_value !=
+		    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+			if (get_gpio_cfg_res.gp2_pin_value == 0x01)
+				r = GPIO_PIN_HIGH;
+		break;
+	case 3:
+		if (get_gpio_cfg_res.gp3_pin_value !=
+		    MCP2221_GPIO_CFG_VALUE_NOT_GPIO)
+			if (get_gpio_cfg_res.gp3_pin_value == 0x01)
+				r = GPIO_PIN_HIGH;
+		break;
+	default:
+		break;
+	}
+out:
 	return r;
 }
 
@@ -764,35 +764,34 @@ umcpmio_set_gpio_value(struct mcp2221_set_gpio_cfg_req *req,
 	uint8_t *alter = NULL;
 	uint8_t *newvalue = NULL;
 
-	if (pin >= 0 && pin < MCP2221_NPINS) {
-		switch (pin) {
-		case 0:
-			alter = &req->alter_gp0_value;
-			newvalue = &req->new_gp0_value;
-			break;
-		case 1:
-			alter = &req->alter_gp1_value;
-			newvalue = &req->new_gp1_value;
-			break;
-		case 2:
-			alter = &req->alter_gp2_value;
-			newvalue = &req->new_gp2_value;
-			break;
-		case 3:
-			alter = &req->alter_gp3_value;
-			newvalue = &req->new_gp3_value;
-			break;
-		default:
-			break;
-		}
+	if (pin < 0 || pin >= MCP2221_NPINS)
+		return;
 
-		if (alter != NULL) {
-			*alter = MCP2221_GPIO_CFG_ALTER;
-			*newvalue = 0;
-			if (value)
-				*newvalue = 1;
-		}
+	switch (pin) {
+	case 0:
+		alter = &req->alter_gp0_value;
+		newvalue = &req->new_gp0_value;
+		break;
+	case 1:
+		alter = &req->alter_gp1_value;
+		newvalue = &req->new_gp1_value;
+		break;
+	case 2:
+		alter = &req->alter_gp2_value;
+		newvalue = &req->new_gp2_value;
+		break;
+	case 3:
+		alter = &req->alter_gp3_value;
+		newvalue = &req->new_gp3_value;
+		break;
+	default:
+		return;
 	}
+
+	*alter = MCP2221_GPIO_CFG_ALTER;
+	*newvalue = 0;
+	if (value)
+		*newvalue = 1;
 }
 
 int
@@ -806,18 +805,17 @@ umcpmio_set_gpio_value_one(struct umcpmio_softc *sc,
 	memset(&req, 0, MCP2221_REQ_BUFFER_SIZE);
 	umcpmio_set_gpio_value(&req, pin, value);
 	err = umcpmio_put_gpio_cfg(sc, &req, &res, takemutex);
-	if (! err) {
-		if (res.cmd == MCP2221_CMD_SET_GPIO_CFG &&
-		    res.completion == MCP2221_CMD_COMPLETE_OK) {
-		} else {
-			err = EIO;
-			device_printf(sc->sc_dev, "umcpmio_gpio_pin_write:"
-			    "  not the command desired, or error: %02x %02x\n",
-			    res.cmd,
-			    res.completion);
-		}
+	if (err)
+		goto out;
+	if (res.cmd != MCP2221_CMD_SET_GPIO_CFG ||
+	    res.completion != MCP2221_CMD_COMPLETE_OK) {
+		err = EIO;
+		device_printf(sc->sc_dev, "umcpmio_gpio_pin_write:"
+		    "  not the command desired, or error: %02x %02x\n",
+		    res.cmd,
+		    res.completion);
 	}
-
+out:
 	return err;
 }
 

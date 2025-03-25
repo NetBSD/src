@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.2 2025/03/17 18:24:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.3 2025/03/25 20:38:27 riastradh Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -455,21 +455,24 @@ umcpmio_gpio_pin_ctlctl(void *arg, int pin, int flags, bool takemutex)
 	}
 
 	err = umcpmio_put_sram(sc, &set_sram_req, &set_sram_res, false);
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_gpio_pin_ctlctl set sram buffer copy");
-		if (set_sram_res.cmd == MCP2221_CMD_SET_SRAM &&
-		    set_sram_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			sc->sc_gpio_pins[pin].pin_flags = flags;
-		} else {
-			device_printf(sc->sc_dev, "umcpmio_gpio_pin_ctlctl:"
-			    " not the command desired, or error: %02x %02x\n",
-			    set_sram_res.cmd,
-			    set_sram_res.completion);
-			err = EIO;
-		}
+	if (err)
+		goto out;
+
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_gpio_pin_ctlctl set sram buffer copy");
+	if (set_sram_res.cmd != MCP2221_CMD_SET_SRAM ||
+	    set_sram_res.completion != MCP2221_CMD_COMPLETE_OK) {
+		device_printf(sc->sc_dev, "umcpmio_gpio_pin_ctlctl:"
+		    " not the command desired, or error: %02x %02x\n",
+		    set_sram_res.cmd,
+		    set_sram_res.completion);
+		err = EIO;
+		goto out;
 	}
+
+	sc->sc_gpio_pins[pin].pin_flags = flags;
+	err = 0;
 
  out:
 	if (takemutex)
@@ -530,24 +533,25 @@ umcpmio_gpio_intr_establish(void *vsc, int pin, int ipl, int irqmode,
 	set_sram_req.gp3_settings = current_sram_res.gp3_settings;
 	umcpmio_set_gpio_irq_sram(&set_sram_req, irqmode);
 	err = umcpmio_put_sram(sc, &set_sram_req, &set_sram_res, false);
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_intr_establish set sram buffer copy");
-		if (set_sram_res.cmd == MCP2221_CMD_SET_SRAM &&
-		    set_sram_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			sc->sc_gpio_pins[1].pin_flags = GPIO_PIN_ALT2;
-		} else {
-			device_printf(sc->sc_dev, "umcpmio_intr_establish:"
-			    " not the command desired, or error: %02x %02x\n",
-			    set_sram_res.cmd,
-			    set_sram_res.completion);
-		}
-	} else {
+	if (err) {
 		device_printf(sc->sc_dev, "umcpmio_intr_establish:"
 		    " set sram error: err=%d\n",
 		    err);
+		goto out;
 	}
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_intr_establish set sram buffer copy");
+	if (set_sram_res.cmd != MCP2221_CMD_SET_SRAM ||
+	    set_sram_res.completion != MCP2221_CMD_COMPLETE_OK) {
+		device_printf(sc->sc_dev, "umcpmio_intr_establish:"
+		    " not the command desired, or error: %02x %02x\n",
+		    set_sram_res.cmd,
+		    set_sram_res.completion);
+		goto out;
+	}
+
+	sc->sc_gpio_pins[1].pin_flags = GPIO_PIN_ALT2;
 
  out:
 	mutex_exit(&sc->sc_action_mutex);
@@ -581,24 +585,27 @@ umcpmio_gpio_intr_disestablish(void *vsc, void *ih)
 	set_sram_req.gp3_settings = current_sram_res.gp3_settings;
 	umcpmio_set_gpio_irq_sram(&set_sram_req, 0);
 	err = umcpmio_put_sram(sc, &set_sram_req, &set_sram_res, true);
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_intr_disestablish set sram buffer copy");
-		if (set_sram_res.cmd == MCP2221_CMD_SET_SRAM &&
-		    set_sram_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			sc->sc_gpio_pins[1].pin_flags = GPIO_PIN_INPUT;
-		} else {
-			device_printf(sc->sc_dev, "umcpmio_intr_disestablish:"
-			    " not the command desired, or error: %02x %02x\n",
-			    set_sram_res.cmd,
-			    set_sram_res.completion);
-		}
-	} else {
+	if (err) {
 		device_printf(sc->sc_dev, "umcpmio_intr_disestablish:"
 		    " set sram error: err=%d\n",
 		    err);
+		goto out;
 	}
+
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&set_sram_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_intr_disestablish set sram buffer copy");
+	if (set_sram_res.cmd == MCP2221_CMD_SET_SRAM &&
+	    set_sram_res.completion == MCP2221_CMD_COMPLETE_OK) {
+		device_printf(sc->sc_dev, "umcpmio_intr_disestablish:"
+		    " not the command desired, or error: %02x %02x\n",
+		    set_sram_res.cmd,
+		    set_sram_res.completion);
+		goto out;
+	}
+
+	sc->sc_gpio_pins[1].pin_flags = GPIO_PIN_INPUT;
+
  out:
 	mutex_exit(&sc->sc_action_mutex);
 }
@@ -645,30 +652,33 @@ umcpmio_i2c_clear(struct umcpmio_softc *sc, bool takemutex)
 	    (uint8_t *)&status_res, sc->sc_cv_wait);
 	if (takemutex)
 		mutex_exit(&sc->sc_action_mutex);
-
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&status_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_i2c_clear buffer copy");
-		if (status_res.cmd == MCP2221_CMD_STATUS &&
-		    status_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			umcpmio_dump_buffer(true,
-			    (uint8_t *)&status_res, MCP2221_RES_BUFFER_SIZE,
-			    "umcpmio_i2c_clear res buffer");
-		} else {
-			device_printf(sc->sc_dev, "umcpmio_i2c_clear:"
-			    " cmd exec: not the command desired, or error:"
-			    " %02x %02x\n",
-			    status_res.cmd,
-			    status_res.completion);
-			err = EIO;
-		}
-	} else {
+	if (err) {
 		device_printf(sc->sc_dev, "umcpmio_i2c_clear: request error:"
 		    " err=%d\n", err);
 		err = EIO;
+		goto out;
 	}
 
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&status_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_i2c_clear buffer copy");
+
+	if (status_res.cmd != MCP2221_CMD_STATUS &&
+	    status_res.completion != MCP2221_CMD_COMPLETE_OK) {
+		device_printf(sc->sc_dev, "umcpmio_i2c_clear:"
+		    " cmd exec: not the command desired, or error:"
+		    " %02x %02x\n",
+		    status_res.cmd,
+		    status_res.completion);
+		err = EIO;
+		goto out;
+	}
+
+	umcpmio_dump_buffer(true,
+	    (uint8_t *)&status_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_i2c_clear res buffer");
+
+out:
 	return err;
 }
 
@@ -775,118 +785,103 @@ umcpmio_i2c_write(struct umcpmio_softc *sc, i2c_op_t op, i2c_addr_t addr,
 	    (uint8_t *)&i2c_req, MCP2221_REQ_BUFFER_SIZE,
 	    (uint8_t *)&i2c_res, sc->sc_cv_wait);
 	mutex_exit(&sc->sc_action_mutex);
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&i2c_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_i2c_write: write res buffer copy");
-		if (i2c_res.cmd == cmd &&
-		    i2c_res.completion == MCP2221_CMD_COMPLETE_OK) {
-			/*
-			 * Adafruit does a read back of the status at
-			 * this point.  We choose not to do that.  That
-			 * is done later anyway, and it seemed to be
-			 * redundent.
-			 */
-		} else {
-			if (i2c_res.cmd == cmd &&
-			    i2c_res.completion == MCP2221_I2C_ENGINE_BUSY) {
-				DPRINTF(("umcpmio_i2c_write:"
-					" I2C engine busy\n"));
-
-				const uint8_t state =
-				    i2c_res.internal_i2c_state;
-				if (umcpmio_i2c_fatal(state)) {
-					err = EIO;
-				} else {
-					wretry--;
-					if (wretry > 0) {
-						WAITMS(sc->sc_busy_delay);
-						goto again;
-					} else {
-						err = EBUSY;
-					}
-				}
-			} else {
-				device_printf(sc->sc_dev, "umcpmio_i2c_write:"
-				    "  not the command desired, or error:"
-				    " %02x %02x\n",
-				    i2c_res.cmd,
-				    i2c_res.completion);
-				err = EIO;
-			}
-		}
-	} else {
+	if (err) {
 		device_printf(sc->sc_dev, "umcpmio_i2c_write request error:"
 		    " err=%d\n", err);
 		err = EIO;
+		goto out;
 	}
 
-	if (! err) {
-		while (wsretry > 0) {
-			wsretry--;
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&i2c_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_i2c_write: write res buffer copy");
+	if (i2c_res.cmd == cmd &&
+	    i2c_res.completion == MCP2221_CMD_COMPLETE_OK) {
+		/*
+		 * Adafruit does a read back of the status at
+		 * this point.  We choose not to do that.  That
+		 * is done later anyway, and it seemed to be
+		 * redundent.
+		 */
+	} else if (i2c_res.cmd == cmd &&
+	    i2c_res.completion == MCP2221_I2C_ENGINE_BUSY) {
+		DPRINTF(("umcpmio_i2c_write:"
+			" I2C engine busy\n"));
 
-			DPRINTF(("umcpmio_i2c_write: checking status loop:"
-				" wcretry=%d\n", wsretry));
-
-			err = umcpmio_get_status(sc, &status_res, true);
-			if (! err) {
-				umcpmio_dump_buffer(sc->sc_dumpbuffer,
-				    (uint8_t *)&status_res,
-				    MCP2221_RES_BUFFER_SIZE,
-				    "umcpmio_i2c_write post check status");
-				/*
-				 * Since there isn't any documentation on what
-				 * some of the internal state means, it isn't
-				 * clear that this is any different than than
-				 * MCP2221_ENGINE_ADDRNACK in the other state
-				 * register.
-				 */
-
-				const uint8_t state20 =
-				    status_res.internal_i2c_state20;
-				if (state20 & MCP2221_ENGINE_T1_MASK_NACK) {
-					DPRINTF(("umcpmio_i2c_write"
-						" post check:"
-						" engine internal state T1"
-						" says NACK\n"));
-					err = EIO;
-					break;
-				}
-				if (status_res.internal_i2c_state == 0) {
-					DPRINTF(("umcpmio_i2c_write"
-						" post check:"
-						" engine internal state"
-						" is ZERO\n"));
-					err = 0;
-					break;
-				}
-				if (status_res.internal_i2c_state ==
-				    MCP2221_ENGINE_WRITINGNOSTOP &&
-				    cmd == MCP2221_I2C_WRITE_DATA_NS) {
-					DPRINTF(("umcpmio_i2c_write"
-						" post check:"
-						" engine internal state"
-						" is WRITINGNOSTOP\n"));
-					err = 0;
-					break;
-				}
-				const uint8_t state =
-				    status_res.internal_i2c_state;
-				if (umcpmio_i2c_fatal(state)) {
-					DPRINTF(("umcpmio_i2c_write"
-						" post check:"
-						" engine internal state"
-						" is fatal: %02x\n",
-						state));
-					err = EIO;
-					break;
-				}
-				WAITMS(sc->sc_busy_delay);
-			} else {
-				err = EIO;
-				break;
-			}
+		if (umcpmio_i2c_fatal(i2c_res.internal_i2c_state)) {
+			err = EIO;
+			goto out;
 		}
+		wretry--;
+		if (wretry > 0) {
+			WAITMS(sc->sc_busy_delay);
+			goto again;
+		} else {
+			err = EBUSY;
+			goto out;
+		}
+	} else {
+		device_printf(sc->sc_dev, "umcpmio_i2c_write:"
+		    "  not the command desired, or error:"
+		    " %02x %02x\n",
+		    i2c_res.cmd,
+		    i2c_res.completion);
+		err = EIO;
+		goto out;
+	}
+
+	while (wsretry > 0) {
+		wsretry--;
+
+		DPRINTF(("umcpmio_i2c_write: checking status loop:"
+			" wcretry=%d\n", wsretry));
+
+		err = umcpmio_get_status(sc, &status_res, true);
+		if (err) {
+			err = EIO;
+			break;
+		}
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&status_res,
+		    MCP2221_RES_BUFFER_SIZE,
+		    "umcpmio_i2c_write post check status");
+		/*
+		 * Since there isn't any documentation on what
+		 * some of the internal state means, it isn't
+		 * clear that this is any different than than
+		 * MCP2221_ENGINE_ADDRNACK in the other state
+		 * register.
+		 */
+
+		if (status_res.internal_i2c_state20 &
+		    MCP2221_ENGINE_T1_MASK_NACK) {
+			DPRINTF(("umcpmio_i2c_write post check:"
+				" engine internal state T1 says NACK\n"));
+			err = EIO;
+			break;
+		}
+		if (status_res.internal_i2c_state == 0) {
+			DPRINTF(("umcpmio_i2c_write post check:"
+				" engine internal state is ZERO\n"));
+			err = 0;
+			break;
+		}
+		if (status_res.internal_i2c_state ==
+		    MCP2221_ENGINE_WRITINGNOSTOP &&
+		    cmd == MCP2221_I2C_WRITE_DATA_NS) {
+			DPRINTF(("umcpmio_i2c_write post check:"
+				" engine internal state is WRITINGNOSTOP\n"));
+			err = 0;
+			break;
+		}
+		if (umcpmio_i2c_fatal(status_res.internal_i2c_state)) {
+			DPRINTF(("umcpmio_i2c_write post check:"
+				" engine internal state is fatal: %02x\n",
+				status_res.internal_i2c_state));
+			err = EIO;
+			break;
+		}
+		WAITMS(sc->sc_busy_delay);
 	}
 
  out:
@@ -951,8 +946,7 @@ umcpmio_i2c_read(struct umcpmio_softc *sc, i2c_op_t op, i2c_addr_t addr,
 	 * with a STOP.  This won't work for a lot of devices.
 	 */
 
-	if (!I2C_OP_STOP_P(op) &&
-	    sc->sc_reportreadnostop) {
+	if (!I2C_OP_STOP_P(op) && sc->sc_reportreadnostop) {
 		device_printf(sc->sc_dev,
 		    "umcpmio_i2c_read: ************ called with READ"
 		    " without STOP ***************\n");
@@ -976,108 +970,96 @@ umcpmio_i2c_read(struct umcpmio_softc *sc, i2c_op_t op, i2c_addr_t addr,
 	    (uint8_t *)&i2c_res, sc->sc_cv_wait);
 	mutex_exit(&sc->sc_action_mutex);
 
-	if (! err) {
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&i2c_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_i2c_read read-request response buffer copy");
-
-		while (rretry > 0) {
-			rretry--;
-			DPRINTF(("umcpmio_i2c_read: fetch loop: rretry=%d\n",
-				rretry));
-			err = 0;
-			memset(&i2c_fetch_req, 0, MCP2221_REQ_BUFFER_SIZE);
-			i2c_fetch_req.cmd = MCP2221_CMD_I2C_FETCH_READ_DATA;
-			mutex_enter(&sc->sc_action_mutex);
-			err = umcpmio_send_report(sc,
-			    (uint8_t *)&i2c_fetch_req, MCP2221_REQ_BUFFER_SIZE,
-			    (uint8_t *)&i2c_fetch_res, sc->sc_cv_wait);
-			mutex_exit(&sc->sc_action_mutex);
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&i2c_fetch_req, MCP2221_RES_BUFFER_SIZE,
-			    "umcpmio_i2c_read fetch res buffer copy");
-
-			if (i2c_fetch_res.cmd ==
-			    MCP2221_CMD_I2C_FETCH_READ_DATA) {
-				if (i2c_fetch_res.completion ==
-				    MCP2221_FETCH_READ_PARTIALDATA ||
-				    i2c_fetch_res.fetchlen ==
-				    MCP2221_FETCH_READERROR) {
-					DPRINTF(("umcpmio_i2c_read:"
-						" fetch loop:"
-						" partial data or read error:"
-						" completion=%02x,"
-						" fetchlen=%02x\n",
-						i2c_fetch_res.completion,
-						i2c_fetch_res.fetchlen));
-					WAITMS(sc->sc_busy_delay);
-					err = EAGAIN;
-					continue;
-				}
-				if (i2c_fetch_res.internal_i2c_state ==
-				    MCP2221_ENGINE_ADDRNACK) {
-					DPRINTF(("umcpmio_i2c_read:"
-						" fetch loop: engine NACK\n"));
-					err = EIO;
-					break;
-				}
-				if (i2c_fetch_res.internal_i2c_state == 0 &&
-				    i2c_fetch_res.fetchlen == 0) {
-					DPRINTF(("umcpmio_i2c_read:"
-						" fetch loop:"
-						" internal state and"
-						" fetch len are ZERO\n"));
-					err = 0;
-					break;
-				}
-				if (i2c_fetch_res.internal_i2c_state ==
-				    MCP2221_ENGINE_READPARTIAL ||
-				    i2c_fetch_res.internal_i2c_state ==
-				    MCP2221_ENGINE_READCOMPLETE) {
-					int state =
-					    i2c_fetch_res.internal_i2c_state;
-					DPRINTF(("umcpmio_i2c_read:"
-						" fetch loop: read partial or"
-						" read complete:"
-						" internal_i2c_state=%02x\n",
-						state));
-					err = 0;
-					break;
-				}
-			} else {
-				device_printf(sc->sc_dev, "umcpmio_i2c_read:"
-				    " fetch2: not the command desired: %02x\n",
-				    i2c_fetch_res.cmd);
-				err = EIO;
-				break;
-			}
-		}
-		if (err == EAGAIN)
-			err = ETIMEDOUT;
-
-		if (! err) {
-			if (databuf != NULL &&
-			    i2c_fetch_res.fetchlen !=
-			    MCP2221_FETCH_READERROR) {
-				int size = uimin(i2c_fetch_res.fetchlen,
-				    datalen);
-				DPRINTF(("umcpmio_i2c_read: copy data:"
-					" size=%d, fetchlen=%d\n",
-					size, i2c_fetch_res.fetchlen));
-				if (size > 0) {
-					memcpy(databuf, &i2c_fetch_res.data[0],
-					    size);
-				}
-			} else {
-				DPRINTF(("umcpmio_i2c_read: copy data:"
-					" databuf is NULL\n"));
-			}
-		}
-	} else {
+	if (err) {
 		device_printf(sc->sc_dev, "umcpmio_i2c_read request error:"
 		    " cmd=%02x, err=%d\n", cmd, err);
 		err = EIO;
+		goto out;
 	}
+
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&i2c_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_i2c_read read-request response buffer copy");
+
+	while (rretry > 0) {
+		rretry--;
+		DPRINTF(("umcpmio_i2c_read: fetch loop: rretry=%d\n", rretry));
+		err = 0;
+		memset(&i2c_fetch_req, 0, MCP2221_REQ_BUFFER_SIZE);
+		i2c_fetch_req.cmd = MCP2221_CMD_I2C_FETCH_READ_DATA;
+		mutex_enter(&sc->sc_action_mutex);
+		err = umcpmio_send_report(sc,
+		    (uint8_t *)&i2c_fetch_req, MCP2221_REQ_BUFFER_SIZE,
+		    (uint8_t *)&i2c_fetch_res, sc->sc_cv_wait);
+		mutex_exit(&sc->sc_action_mutex);
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&i2c_fetch_req, MCP2221_RES_BUFFER_SIZE,
+		    "umcpmio_i2c_read fetch res buffer copy");
+
+		if (i2c_fetch_res.cmd != MCP2221_CMD_I2C_FETCH_READ_DATA) {
+			device_printf(sc->sc_dev, "umcpmio_i2c_read:"
+			    " fetch2: not the command desired: %02x\n",
+			    i2c_fetch_res.cmd);
+			err = EIO;
+			break;
+		}
+		if (i2c_fetch_res.completion ==
+		    MCP2221_FETCH_READ_PARTIALDATA ||
+		    i2c_fetch_res.fetchlen == MCP2221_FETCH_READERROR) {
+			DPRINTF(("umcpmio_i2c_read: fetch loop:"
+				" partial data or read error:"
+				" completion=%02x, fetchlen=%02x\n",
+				i2c_fetch_res.completion,
+				i2c_fetch_res.fetchlen));
+			WAITMS(sc->sc_busy_delay);
+			err = EAGAIN;
+			continue;
+		}
+		if (i2c_fetch_res.internal_i2c_state ==
+		    MCP2221_ENGINE_ADDRNACK) {
+			DPRINTF(("umcpmio_i2c_read:"
+				" fetch loop: engine NACK\n"));
+			err = EIO;
+			break;
+		}
+		if (i2c_fetch_res.internal_i2c_state == 0 &&
+		    i2c_fetch_res.fetchlen == 0) {
+			DPRINTF(("umcpmio_i2c_read: fetch loop:"
+				" internal state and fetch len are ZERO\n"));
+			err = 0;
+			break;
+		}
+		if (i2c_fetch_res.internal_i2c_state ==
+		    MCP2221_ENGINE_READPARTIAL ||
+		    i2c_fetch_res.internal_i2c_state ==
+		    MCP2221_ENGINE_READCOMPLETE) {
+			DPRINTF(("umcpmio_i2c_read:"
+				" fetch loop: read partial or"
+				" read complete: internal_i2c_state=%02x\n",
+				i2c_fetch_res.internal_i2c_state));
+			err = 0;
+			break;
+		}
+	}
+	if (err == EAGAIN)
+		err = ETIMEDOUT;
+	if (err)
+		goto out;
+
+	if (databuf == NULL ||
+	    i2c_fetch_res.fetchlen == MCP2221_FETCH_READERROR) {
+		DPRINTF(("umcpmio_i2c_read: copy data:"
+			" databuf is NULL\n"));
+		goto out;
+	}
+
+	const int size = uimin(i2c_fetch_res.fetchlen, datalen);
+	DPRINTF(("umcpmio_i2c_read: copy data: size=%d, fetchlen=%d\n",
+		size, i2c_fetch_res.fetchlen));
+	if (size > 0) {
+		memcpy(databuf, &i2c_fetch_res.data[0], size);
+	}
+
  out:
 	return err;
 }
@@ -1186,29 +1168,29 @@ umcpmio_dev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 			break;
 		default:
 			error = EINVAL;
-			break;
+			goto out;
 		}
-		if (! error) {
-			/*
-			 * XXX - we can probably do better here...  it
-			 * doesn't remember what the pin was set to and
-			 * probably should.
-			 */
-			   if (flags & FREAD) {
-				error = umcpmio_gpio_pin_ctlctl(sc, pin,
-				    GPIO_PIN_ALT0, false);
+		/*
+		 * XXX - we can probably do better here...  it
+		 * doesn't remember what the pin was set to and
+		 * probably should.
+		 */
+		if (flags & FREAD) {
+			error = umcpmio_gpio_pin_ctlctl(sc, pin,
+			    GPIO_PIN_ALT0, false);
+		} else {
+			if (pin == 1) {
+				error = EINVAL;
 			} else {
-				if (pin == 1) {
-					error = EINVAL;
-				} else {
-					error = umcpmio_gpio_pin_ctlctl(sc,
-					    pin, GPIO_PIN_ALT1, false);
-				}
+				error = umcpmio_gpio_pin_ctlctl(sc,
+				    pin, GPIO_PIN_ALT1, false);
 			}
 		}
 	}
-	if (! error)
-		sc->sc_dev_open[dunit] = true;
+	if (error)
+		goto out;
+	sc->sc_dev_open[dunit] = true;
+out:
 	mutex_exit(&sc->sc_action_mutex);
 
 	DPRINTF(("umcpmio_dev_open: Opened dunit=%d, pin=%d, error=%d\n",
@@ -1236,43 +1218,43 @@ umcpmio_dev_read(dev_t dev, struct uio *uio, int flags)
 
 	dunit = UMCPMIO_DEV_WHAT(minor(dev));
 
-	if (dunit != CONTROL_DEV) {
-		while (uio->uio_resid &&
-		    !sc->sc_dying) {
-			error = umcpmio_get_status(sc, &status_res, true);
-			if (! error) {
-				switch (dunit) {
-				case GP1_DEV:
-					adc_lsb = status_res.adc_channel0_lsb;
-					adc_msb = status_res.adc_channel0_msb;
-					break;
-				case GP2_DEV:
-					adc_lsb = status_res.adc_channel1_lsb;
-					adc_msb = status_res.adc_channel1_msb;
-					break;
-				case GP3_DEV:
-					adc_lsb = status_res.adc_channel2_lsb;
-					adc_msb = status_res.adc_channel2_msb;
-					break;
-				default:
-					error = EINVAL;
-					break;
-				}
-
-				if (! error) {
-					if (sc->sc_dying)
-						break;
-
-					buf = adc_msb << 8;
-					buf |= adc_lsb;
-					error = uiomove(&buf, 2, uio);
-				}
-			}
-		}
-	} else {
+	if (dunit == CONTROL_DEV) {
 		error = EINVAL;
+		goto out;
 	}
 
+	while (uio->uio_resid && !sc->sc_dying) {
+		error = umcpmio_get_status(sc, &status_res, true);
+		if (error)
+			continue; /* XXX goto out? */
+		switch (dunit) {
+		case GP1_DEV:
+			adc_lsb = status_res.adc_channel0_lsb;
+			adc_msb = status_res.adc_channel0_msb;
+			break;
+		case GP2_DEV:
+			adc_lsb = status_res.adc_channel1_lsb;
+			adc_msb = status_res.adc_channel1_msb;
+			break;
+		case GP3_DEV:
+			adc_lsb = status_res.adc_channel2_lsb;
+			adc_msb = status_res.adc_channel2_msb;
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
+		if (error)
+			continue; /* XXX goto out? */
+		if (sc->sc_dying)
+			break;
+
+		buf = adc_msb << 8;
+		buf |= adc_lsb;
+		error = uiomove(&buf, 2, uio);
+		/* XXX missing error test */
+	}
+out:
 	return error;
 }
 
@@ -1291,25 +1273,25 @@ umcpmio_dev_write(dev_t dev, struct uio *uio, int flags)
 
 	dunit = UMCPMIO_DEV_WHAT(minor(dev));
 
-	if (dunit != CONTROL_DEV) {
-		while (uio->uio_resid &&
-		    !sc->sc_dying) {
-			uint8_t buf;
-
-			if ((error = uiomove(&buf, 1, uio)) != 0)
-				break;
-
-			if (sc->sc_dying)
-				break;
-
-			error = umcpmio_set_dac_value_one(sc, buf, true);
-			if (error)
-				break;
-		}
-	} else {
+	if (dunit == CONTROL_DEV) {
 		error = EINVAL;
+		goto out;
 	}
 
+	while (uio->uio_resid && !sc->sc_dying) {
+		uint8_t buf;
+
+		if ((error = uiomove(&buf, 1, uio)) != 0)
+			break;
+
+		if (sc->sc_dying)
+			break;
+
+		error = umcpmio_set_dac_value_one(sc, buf, true);
+		if (error)
+			break;
+	}
+out:
 	return error;
 }
 
@@ -1343,20 +1325,19 @@ umcpmio_dev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 			break;
 		default:
 			error = EINVAL;
+			goto out;
 			break;
 		}
-		if (! error) {
-			/*
-			 * XXX - Ya, this really could be done better.
-			 * Probably should read the sram config and
-			 * maybe the gpio config and save out what the
-			 * pin was set to.
-			*/
-
-			error = umcpmio_gpio_pin_ctlctl(sc, pin,
-			    GPIO_PIN_INPUT, false);
-		}
+		/*
+		 * XXX - Ya, this really could be done better.
+		 * Probably should read the sram config and
+		 * maybe the gpio config and save out what the
+		 * pin was set to.
+		 */
+		error = umcpmio_gpio_pin_ctlctl(sc, pin,
+		    GPIO_PIN_INPUT, false);
 	}
+out:
 	sc->sc_dev_open[dunit] = false;
 	mutex_exit(&sc->sc_action_mutex);
 
@@ -1414,10 +1395,10 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    "umcpmio_dev_ioctl: UMCPMIO_GET_STATUS: get_status_res");
 		DPRINTF(("umcpmio_dev_ioctl: UMCPMIO_GET_STATUS:"
 			" umcpmio_get_status error=%d\n", error));
-		if (! error) {
-			memcpy(ioctl_get_status, &get_status_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		}
+		if (error)
+			break;
+		memcpy(ioctl_get_status, &get_status_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 
 	case UMCPMIO_GET_SRAM:
@@ -1428,10 +1409,10 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    "umcpmio_dev_ioctl: UMCPMIO_GET_SRAM: get_sram_res");
 		DPRINTF(("umcpmio_dev_ioctl: UMCPMIO_GET_SRAM:"
 			" umcpmio_get_sram error=%d\n", error));
-		if (! error) {
-			memcpy(ioctl_get_sram, &get_sram_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		}
+		if (error)
+			break;
+		memcpy(ioctl_get_sram, &get_sram_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 
 	case UMCPMIO_GET_GP_CFG:
@@ -1442,10 +1423,10 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    "umcpmio_dev_ioctl: UMCPMIO_GET_GP_CFG: get_gpio_cfg_res");
 		DPRINTF(("umcpmio_dev_ioctl: UMCPMIO_GET_GP_CFG:"
 			" umcpmio_get_gpio_cfg error=%d\n", error));
-		if (! error) {
-			memcpy(ioctl_get_gpio_cfg, &get_gpio_cfg_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		}
+		if (error)
+			break;
+		memcpy(ioctl_get_gpio_cfg, &get_gpio_cfg_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 
 	case UMCPMIO_GET_FLASH:
@@ -1458,10 +1439,10 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		DPRINTF(("umcpmio_dev_ioctl: UMCPMIO_GET_FLASH:"
 			" umcpmio_get_flash subcode=%d, error=%d\n",
 			ioctl_get_flash->subcode, error));
-		if (!error) {
-			memcpy(&ioctl_get_flash->get_flash_res, &get_flash_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		}
+		if (error)
+			break;
+		memcpy(&ioctl_get_flash->get_flash_res, &get_flash_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 
 	case UMCPMIO_PUT_FLASH:
@@ -1475,38 +1456,39 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		DPRINTF(("umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
 			" umcpmio_put_flash subcode=%d\n",
 			ioctl_put_flash->subcode));
-		if (ioctl_put_flash->subcode == MCP2221_FLASH_SUBCODE_GP) {
-			memset(&put_flash_req, 0, MCP2221_REQ_BUFFER_SIZE);
-			put_flash_req.subcode = ioctl_put_flash->subcode;
-			put_flash_req.u.gp.gp0_settings =
-			    ioctl_put_flash->put_flash_req.u.gp.gp0_settings;
-			put_flash_req.u.gp.gp1_settings =
-			    ioctl_put_flash->put_flash_req.u.gp.gp1_settings;
-			put_flash_req.u.gp.gp2_settings =
-			    ioctl_put_flash->put_flash_req.u.gp.gp2_settings;
-			put_flash_req.u.gp.gp3_settings =
-			    ioctl_put_flash->put_flash_req.u.gp.gp3_settings;
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&ioctl_put_flash->put_flash_req,
-			    MCP2221_REQ_BUFFER_SIZE,
-			    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
-			    " ioctl put_flash_req");
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&put_flash_req, MCP2221_REQ_BUFFER_SIZE,
-			    "umcpmio_dev_ioctl:"
-			    " UMCPMIO_PUT_FLASH: put_flash_req");
-			memset(&put_flash_res, 0, MCP2221_RES_BUFFER_SIZE);
-			error = umcpmio_put_flash(sc, &put_flash_req,
-			    &put_flash_res, false);
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
-			    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
-			    " put_flash_res");
-			memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		} else {
+		if (ioctl_put_flash->subcode != MCP2221_FLASH_SUBCODE_GP) {
 			error = EINVAL;
+			break;
 		}
+		memset(&put_flash_req, 0, MCP2221_REQ_BUFFER_SIZE);
+		put_flash_req.subcode = ioctl_put_flash->subcode;
+		put_flash_req.u.gp.gp0_settings =
+		    ioctl_put_flash->put_flash_req.u.gp.gp0_settings;
+		put_flash_req.u.gp.gp1_settings =
+		    ioctl_put_flash->put_flash_req.u.gp.gp1_settings;
+		put_flash_req.u.gp.gp2_settings =
+		    ioctl_put_flash->put_flash_req.u.gp.gp2_settings;
+		put_flash_req.u.gp.gp3_settings =
+		    ioctl_put_flash->put_flash_req.u.gp.gp3_settings;
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&ioctl_put_flash->put_flash_req,
+		    MCP2221_REQ_BUFFER_SIZE,
+		    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
+		    " ioctl put_flash_req");
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&put_flash_req, MCP2221_REQ_BUFFER_SIZE,
+		    "umcpmio_dev_ioctl:"
+		    " UMCPMIO_PUT_FLASH: put_flash_req");
+		memset(&put_flash_res, 0, MCP2221_RES_BUFFER_SIZE);
+		error = umcpmio_put_flash(sc, &put_flash_req,
+		    &put_flash_res, false);
+		/* XXX missing error test? */
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
+		    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
+		    " put_flash_res");
+		memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 	default:
 		error = EINVAL;
@@ -1627,17 +1609,18 @@ umcpmio_verify_dac_sysctl(SYSCTLFN_ARGS)
 			break;
 		}
 	}
-
-	if (i == __arraycount(umcpmio_vref_names))
+	if (i == __arraycount(umcpmio_vref_names)) {
 		error = EINVAL;
-
-	if (! error) {
-		if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) != 0) {
-			DPRINTF(("umcpmio_verify_dac_sysctl: setting DAC vref:"
-				" %s\n", buf));
-			error = umcpmio_set_dac_vref_one(sc, buf, false);
-		}
+		goto out;
 	}
+
+	if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) == 0) {
+		error = 0;
+		goto out;
+	}
+
+	DPRINTF(("umcpmio_verify_dac_sysctl: setting DAC vref: %s\n", buf));
+	error = umcpmio_set_dac_vref_one(sc, buf, false);
 
  out:
 	mutex_exit(&sc->sc_action_mutex);
@@ -1698,17 +1681,18 @@ umcpmio_verify_adc_sysctl(SYSCTLFN_ARGS)
 			break;
 		}
 	}
-
-	if (i == __arraycount(umcpmio_vref_names))
+	if (i == __arraycount(umcpmio_vref_names)) {
 		error = EINVAL;
-
-	if (! error) {
-		if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) != 0) {
-			DPRINTF(("umcpmio_verify_adc_sysctl: setting ADC vref:"
-				" %s\n", buf));
-			error = umcpmio_set_adc_vref_one(sc, buf, false);
-		}
+		goto out;
 	}
+
+	if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) == 0) {
+		error = 0;
+		goto out;
+	}
+
+	DPRINTF(("umcpmio_verify_adc_sysctl: setting ADC vref: %s\n", buf));
+	error = umcpmio_set_adc_vref_one(sc, buf, false);
 
  out:
 	mutex_exit(&sc->sc_action_mutex);
@@ -1781,17 +1765,19 @@ umcpmio_verify_gpioclock_dc_sysctl(SYSCTLFN_ARGS)
 			break;
 		}
 	}
-
-	if (i == __arraycount(umcpmio_dc_names))
+	if (i == __arraycount(umcpmio_dc_names)) {
 		error = EINVAL;
-
-	if (! error) {
-		if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) != 0) {
-			DPRINTF(("umcpmio_verify_gpioclock_dc_sysctl:"
-				" setting GPIO clock duty cycle: %s\n", buf));
-			error = umcpmio_set_gpioclock_dc_one(sc, buf, false);
-		}
+		goto out;
 	}
+
+	if (strncmp(cbuf, buf, UMCPMIO_VREF_NAME) == 0) {
+		error = 0;
+		goto out;
+	}
+
+	DPRINTF(("umcpmio_verify_gpioclock_dc_sysctl:"
+		" setting GPIO clock duty cycle: %s\n", buf));
+	error = umcpmio_set_gpioclock_dc_one(sc, buf, false);
 
  out:
 	mutex_exit(&sc->sc_action_mutex);
@@ -1885,18 +1871,20 @@ umcpmio_verify_gpioclock_cd_sysctl(SYSCTLFN_ARGS)
 			break;
 		}
 	}
-
-	if (i == __arraycount(umcpmio_cd_names))
+	if (i == __arraycount(umcpmio_cd_names)) {
 		error = EINVAL;
-
-	if (! error) {
-		if (strncmp(cbuf, buf, UMCPMIO_CD_NAME) != 0) {
-			DPRINTF(("umcpmio_verify_gpioclock_cd_sysctl:"
-				" setting GPIO clock clock divider: %s\n",
-				buf));
-			error = umcpmio_set_gpioclock_cd_one(sc, buf, false);
-		}
+		goto out;
 	}
+
+	if (strncmp(cbuf, buf, UMCPMIO_CD_NAME) == 0) {
+		error = 0;
+		goto out;
+	}
+
+	DPRINTF(("umcpmio_verify_gpioclock_cd_sysctl:"
+		" setting GPIO clock clock divider: %s\n",
+		buf));
+	error = umcpmio_set_gpioclock_cd_one(sc, buf, false);
 
  out:
 	mutex_exit(&sc->sc_action_mutex);
@@ -2114,8 +2102,8 @@ umcpmio_attach(device_t parent, device_t self, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	struct gpiobus_attach_args gba;
 	struct i2cbus_attach_args iba;
-	int err;
 	struct mcp2221_status_res status_res;
+	int err;
 
 	sc->sc_dev = self;
 	sc->sc_hdev = uha->parent;
@@ -2150,6 +2138,11 @@ umcpmio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_res_ready = false;
 
 	err = uhidev_open(sc->sc_hdev, &umcpmio_uhidev_intr, sc);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "umcpmio_attach: "
+		    " uhidev_open: err=%d\n", err);
+		return;
+	}
 
 	/*
 	 * It is not clear that this should be needed, but it was noted
@@ -2160,149 +2153,135 @@ umcpmio_attach(device_t parent, device_t self, void *aux)
 
 	delay(1000);
 
+	err = umcpmio_get_status(sc, &status_res, true);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "umcpmio_attach: "
-		    " open uhidev_open: err=%d\n", err);
+		    " umcpmio_get_status: err=%d\n", err);
+		return;
 	}
 
-	if (!err)
-		err = umcpmio_get_status(sc, &status_res, true);
+	aprint_normal_dev(sc->sc_dev,
+	    "Hardware revision: %d.%d, Firmware revision: %d.%d\n",
+	    status_res.mcp2221_hardware_rev_major,
+	    status_res.mcp2221_hardware_rev_minor,
+	    status_res.mcp2221_firmware_rev_major,
+	    status_res.mcp2221_firmware_rev_minor);
 
-	if (!err) {
-		aprint_normal_dev(sc->sc_dev,
-		    "Hardware revision: %d.%d, Firmware revision: %d.%d\n",
-		    status_res.mcp2221_hardware_rev_major,
-		    status_res.mcp2221_hardware_rev_minor,
-		    status_res.mcp2221_firmware_rev_major,
-		    status_res.mcp2221_firmware_rev_minor);
-
-		/*
-		 * The datasheet suggests that it is possble for this
-		 * to fail if the I2C port is currently being used.
-		 * However...  since you just plugged in the chip, the
-		 * I2C port should not really be in use at that moment.
-		 * In any case, try hard to set this and don't make it
-		 * fatal if it did not get set.
-		 */
-		int i2cspeed = 0;
-		while (! err && i2cspeed < 3) {
-			err = umcpmio_set_i2c_speed_one(sc, I2C_SPEED_SM, true);
-			if (err) {
-				aprint_error_dev(sc->sc_dev, "umcpmio_attach:"
-				    " set I2C speed: err=%d\n",
-				    err);
-				delay(300);
-			}
-			i2cspeed++;
-		}
-
-		struct mcp2221_get_sram_res get_sram_res;
-		err = umcpmio_get_sram(sc, &get_sram_res, true);
-
-		if (! err) {
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&get_sram_res, MCP2221_RES_BUFFER_SIZE,
-			    "umcpmio_attach get sram buffer copy");
-
-			/*
-			 * There are only 4 pins right now, just unroll
-			 * any loops
-			 */
-
-			sc->sc_gpio_pins[0].pin_num = 0;
-			sc->sc_gpio_pins[0].pin_caps = GPIO_PIN_INPUT;
-			sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_OUTPUT;
-			sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_ALT0;
-			sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_ALT3;
-			sc->sc_gpio_pins[0].pin_flags =
-			    umcpmio_sram_gpio_to_flags(
-				get_sram_res.gp0_settings);
-			sc->sc_gpio_pins[0].pin_intrcaps = 0;
-			snprintf(sc->sc_gpio_pins[0].pin_defname, 4, "GP0");
-
-			sc->sc_gpio_pins[1].pin_num = 1;
-			sc->sc_gpio_pins[1].pin_caps = GPIO_PIN_INPUT;
-			sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_OUTPUT;
-			sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT0;
-			sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT1;
-			sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT2;
-			sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT3;
-			sc->sc_gpio_pins[1].pin_flags =
-			    umcpmio_sram_gpio_to_flags(
-				get_sram_res.gp1_settings);
-			/* XXX - lets not advertise this right now... */
-#if 0
-			sc->sc_gpio_pins[1].pin_intrcaps = GPIO_INTR_POS_EDGE;
-			sc->sc_gpio_pins[1].pin_intrcaps |= GPIO_INTR_NEG_EDGE;
-			sc->sc_gpio_pins[1].pin_intrcaps |=
-			    GPIO_INTR_DOUBLE_EDGE;
-			sc->sc_gpio_pins[1].pin_intrcaps |= GPIO_INTR_MPSAFE;
-#endif
-			sc->sc_gpio_pins[1].pin_intrcaps = 0;
-			snprintf(sc->sc_gpio_pins[1].pin_defname, 4, "GP1");
-
-			sc->sc_gpio_pins[2].pin_num = 2;
-			sc->sc_gpio_pins[2].pin_caps = GPIO_PIN_INPUT;
-			sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_OUTPUT;
-			sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT0;
-			sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT1;
-			sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT3;
-			sc->sc_gpio_pins[2].pin_flags =
-			    umcpmio_sram_gpio_to_flags(
-				get_sram_res.gp2_settings);
-			sc->sc_gpio_pins[2].pin_intrcaps = 0;
-			snprintf(sc->sc_gpio_pins[2].pin_defname, 4, "GP2");
-
-			sc->sc_gpio_pins[3].pin_num = 3;
-			sc->sc_gpio_pins[3].pin_caps = GPIO_PIN_INPUT;
-			sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_OUTPUT;
-			sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT0;
-			sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT1;
-			sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT3;
-			sc->sc_gpio_pins[3].pin_flags =
-			    umcpmio_sram_gpio_to_flags(
-				get_sram_res.gp3_settings);
-			sc->sc_gpio_pins[3].pin_intrcaps = 0;
-			snprintf(sc->sc_gpio_pins[3].pin_defname, 4, "GP3");
-
-			sc->sc_gpio_gc.gp_cookie = sc;
-			sc->sc_gpio_gc.gp_pin_read = umcpmio_gpio_pin_read;
-			sc->sc_gpio_gc.gp_pin_write = umcpmio_gpio_pin_write;
-			sc->sc_gpio_gc.gp_pin_ctl = umcpmio_gpio_pin_ctl;
-
-			sc->sc_gpio_gc.gp_intr_establish =
-			    umcpmio_gpio_intr_establish;
-			sc->sc_gpio_gc.gp_intr_disestablish =
-			    umcpmio_gpio_intr_disestablish;
-			sc->sc_gpio_gc.gp_intr_str = umcpmio_gpio_intrstr;
-
-			gba.gba_gc = &sc->sc_gpio_gc;
-			gba.gba_pins = sc->sc_gpio_pins;
-			gba.gba_npins = MCP2221_NPINS;
-
-			sc->sc_gpio_dev =
-			    config_found(self, &gba, gpiobus_print,
-				CFARGS(.iattr = "gpiobus"));
-
-			iic_tag_init(&sc->sc_i2c_tag);
-			sc->sc_i2c_tag.ic_cookie = sc;
-			sc->sc_i2c_tag.ic_acquire_bus = umcpmio_acquire_bus;
-			sc->sc_i2c_tag.ic_release_bus = umcpmio_release_bus;
-			sc->sc_i2c_tag.ic_exec = umcpmio_i2c_exec;
-
-			memset(&iba, 0, sizeof(iba));
-			iba.iba_tag = &sc->sc_i2c_tag;
-			sc->sc_i2c_dev = config_found(self, &iba, iicbus_print,
-			    CFARGS(.iattr = "i2cbus"));
-		} else {
+	/*
+	 * The datasheet suggests that it is possble for this
+	 * to fail if the I2C port is currently being used.
+	 * However...  since you just plugged in the chip, the
+	 * I2C port should not really be in use at that moment.
+	 * In any case, try hard to set this and don't make it
+	 * fatal if it did not get set.
+	 */
+	int i2cspeed;
+	for (i2cspeed = 0; i2cspeed < 3; i2cspeed++) {
+		err = umcpmio_set_i2c_speed_one(sc, I2C_SPEED_SM, true);
+		if (err) {
 			aprint_error_dev(sc->sc_dev, "umcpmio_attach:"
-			    " get sram error: err=%d\n",
+			    " set I2C speed: err=%d\n",
 			    err);
+			delay(300);
 		}
-	} else {
-		aprint_error_dev(sc->sc_dev, "umcpmio_attach:"
-		    " open uhidev_open: err=%d\n", err);
+		break;
 	}
+
+	struct mcp2221_get_sram_res get_sram_res;
+	err = umcpmio_get_sram(sc, &get_sram_res, true);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "umcpmio_attach:"
+		    " get sram error: err=%d\n",
+		    err);
+		return;
+	}
+
+	umcpmio_dump_buffer(sc->sc_dumpbuffer,
+	    (uint8_t *)&get_sram_res, MCP2221_RES_BUFFER_SIZE,
+	    "umcpmio_attach get sram buffer copy");
+
+	/*
+	 * There are only 4 pins right now, just unroll
+	 * any loops
+	 */
+
+	sc->sc_gpio_pins[0].pin_num = 0;
+	sc->sc_gpio_pins[0].pin_caps = GPIO_PIN_INPUT;
+	sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_OUTPUT;
+	sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_ALT0;
+	sc->sc_gpio_pins[0].pin_caps |= GPIO_PIN_ALT3;
+	sc->sc_gpio_pins[0].pin_flags =
+	    umcpmio_sram_gpio_to_flags(get_sram_res.gp0_settings);
+	sc->sc_gpio_pins[0].pin_intrcaps = 0;
+	snprintf(sc->sc_gpio_pins[0].pin_defname, 4, "GP0");
+
+	sc->sc_gpio_pins[1].pin_num = 1;
+	sc->sc_gpio_pins[1].pin_caps = GPIO_PIN_INPUT;
+	sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_OUTPUT;
+	sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT0;
+	sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT1;
+	sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT2;
+	sc->sc_gpio_pins[1].pin_caps |= GPIO_PIN_ALT3;
+	sc->sc_gpio_pins[1].pin_flags =
+	    umcpmio_sram_gpio_to_flags(get_sram_res.gp1_settings);
+	/* XXX - lets not advertise this right now... */
+#if 0
+	sc->sc_gpio_pins[1].pin_intrcaps = GPIO_INTR_POS_EDGE;
+	sc->sc_gpio_pins[1].pin_intrcaps |= GPIO_INTR_NEG_EDGE;
+	sc->sc_gpio_pins[1].pin_intrcaps |= GPIO_INTR_DOUBLE_EDGE;
+	sc->sc_gpio_pins[1].pin_intrcaps |= GPIO_INTR_MPSAFE;
+#endif
+	sc->sc_gpio_pins[1].pin_intrcaps = 0;
+	snprintf(sc->sc_gpio_pins[1].pin_defname, 4, "GP1");
+
+	sc->sc_gpio_pins[2].pin_num = 2;
+	sc->sc_gpio_pins[2].pin_caps = GPIO_PIN_INPUT;
+	sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_OUTPUT;
+	sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT0;
+	sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT1;
+	sc->sc_gpio_pins[2].pin_caps |= GPIO_PIN_ALT3;
+	sc->sc_gpio_pins[2].pin_flags =
+	    umcpmio_sram_gpio_to_flags(get_sram_res.gp2_settings);
+	sc->sc_gpio_pins[2].pin_intrcaps = 0;
+	snprintf(sc->sc_gpio_pins[2].pin_defname, 4, "GP2");
+
+	sc->sc_gpio_pins[3].pin_num = 3;
+	sc->sc_gpio_pins[3].pin_caps = GPIO_PIN_INPUT;
+	sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_OUTPUT;
+	sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT0;
+	sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT1;
+	sc->sc_gpio_pins[3].pin_caps |= GPIO_PIN_ALT3;
+	sc->sc_gpio_pins[3].pin_flags =
+	    umcpmio_sram_gpio_to_flags(get_sram_res.gp3_settings);
+	sc->sc_gpio_pins[3].pin_intrcaps = 0;
+	snprintf(sc->sc_gpio_pins[3].pin_defname, 4, "GP3");
+
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = umcpmio_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = umcpmio_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = umcpmio_gpio_pin_ctl;
+
+	sc->sc_gpio_gc.gp_intr_establish = umcpmio_gpio_intr_establish;
+	sc->sc_gpio_gc.gp_intr_disestablish = umcpmio_gpio_intr_disestablish;
+	sc->sc_gpio_gc.gp_intr_str = umcpmio_gpio_intrstr;
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = MCP2221_NPINS;
+
+	sc->sc_gpio_dev = config_found(self, &gba, gpiobus_print,
+	    CFARGS(.iattr = "gpiobus"));
+
+	iic_tag_init(&sc->sc_i2c_tag);
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_acquire_bus = umcpmio_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = umcpmio_release_bus;
+	sc->sc_i2c_tag.ic_exec = umcpmio_i2c_exec;
+
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = &sc->sc_i2c_tag;
+	sc->sc_i2c_dev = config_found(self, &iba, iicbus_print,
+	    CFARGS(.iattr = "i2cbus"));
 }
 
 static int
