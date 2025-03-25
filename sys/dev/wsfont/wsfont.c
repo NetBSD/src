@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.82 2025/03/25 03:12:36 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.83 2025/03/25 10:50:12 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.82 2025/03/25 03:12:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.83 2025/03/25 10:50:12 macallan Exp $");
 
 #include "opt_wsfont.h"
 
@@ -205,6 +205,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.82 2025/03/25 03:12:36 macallan Exp $")
 #include <dev/wsfont/Comic_Mono_12x25.h>
 #endif
 
+#ifdef FONT_COMIC16x34
+#define HAVE_FONT 1
+#include <dev/wsfont/Comic_Mono_16x34.h>
+#endif
+
 /* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -332,6 +337,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_COMIC12x25
 	{ { NULL, NULL }, &Comic_Mono_12x25, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_COMIC16x34
+	{ { NULL, NULL }, &Comic_Mono_16x34, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
