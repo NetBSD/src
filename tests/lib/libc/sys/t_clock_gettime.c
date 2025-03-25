@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.9 2025/03/20 04:19:25 pho Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.10 2025/03/25 19:51:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.9 2025/03/20 04:19:25 pho Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.10 2025/03/25 19:51:32 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -117,10 +117,12 @@ check_timecounter(void)
 
 		if (diff < 0 || diff > MINPOSDIFF) {
 			long long elapsed;
-			(void)printf("%stime TSA: 0x%jx.%08jx, TSB: 0x%jx.%08jx, "
+			(void)printf("%stime"
+			    " TSA: 0x%jx.%08jx, TSB: 0x%jx.%08jx, "
 			    "diff = %lld nsec, ", (diff < 0) ? "BAD " : "",
 			    (uintmax_t)tsa.tv_sec, (uintmax_t)tsa.tv_nsec,
-			    (uintmax_t)tsb.tv_sec, (uintmax_t)tsb.tv_nsec, diff);
+			    (uintmax_t)tsb.tv_sec, (uintmax_t)tsb.tv_nsec,
+			    diff);
 
 			elapsed = 1000000000LL * (tsb.tv_sec - tsl.tv_sec)
 			    + tsb.tv_nsec - tsl.tv_nsec;
@@ -294,8 +296,8 @@ check_resolution(const char *clockname, clockid_t clockid)
 	RLF(rv = clock_getres(clockid, &ts), "%s", clockname);
 	if (rv != -1) {
 		ATF_CHECK_MSG(ts.tv_sec == 0,
-		    "The resolution of the clock %s is reported as %jd.%09ld which is"
-		    " lower than a second; most likely a wrong value",
+		    "The resolution of the clock %s is reported as %jd.%09ld"
+		    " which is lower than a second; most likely a wrong value",
 		    clockname, ts.tv_sec, ts.tv_nsec);
 	}
 }
@@ -304,13 +306,15 @@ ATF_TC(clock_getres);
 ATF_TC_HEAD(clock_getres, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Checks that clock_getres(2) returns some reasonable resolution for all supported clocks");
+	    "Checks that clock_getres(2) returns some reasonable resolution"
+	    " for all supported clocks");
 }
 ATF_TC_BODY(clock_getres, tc)
 {
 	check_resolution("CLOCK_REALTIME", CLOCK_REALTIME);
 	check_resolution("CLOCK_MONOTONIC", CLOCK_MONOTONIC);
-	atf_tc_expect_fail("These clocks aren't supported but are documented in clock_gettime(2) for some reason");
+	atf_tc_expect_fail("These clocks aren't supported but are documented"
+	    " in clock_gettime(2) for some reason");
 	check_resolution("CLOCK_VIRTUAL", CLOCK_VIRTUAL);
 	check_resolution("CLOCK_PROF", CLOCK_PROF);
 	atf_tc_expect_pass();
