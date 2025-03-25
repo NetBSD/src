@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.54 2025/03/25 19:01:11 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.55 2025/03/25 21:51:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.54 2025/03/25 19:01:11 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.55 2025/03/25 21:51:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,12 +198,12 @@ umountfs(const char *name, const char **typelist, int raw)
 	char *hostp = NULL;
 	struct addrinfo *ai = NULL, hints;
 	const char *proto = NULL;
+	struct statvfs sfs;
 #endif /* !SMALL */
 	const char *mntpt;
 	char *type, rname[MAXPATHLEN], umountprog[MAXPATHLEN];
 	mntwhat what;
 	struct stat sb;
-	struct statvfs sfs;
 
 	if (raw) {
 		mntpt = name;
