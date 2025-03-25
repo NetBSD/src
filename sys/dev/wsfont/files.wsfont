@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.31 2022/10/31 13:24:58 macallan Exp $
+# 	$NetBSD: files.wsfont,v 1.32 2025/03/25 02:42:33 macallan Exp $
 
 defpseudo wsfont
 
@@ -9,6 +9,7 @@ file	dev/wsfont/wsfont.c	(wsfont_glue & rasops_rotation) |
 
 defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_BOLD16x32
+				FONT_COMIC12x23
 				FONT_GLASS10x19
 				FONT_GLASS10x25
 				FONT_GALLANT12x22
