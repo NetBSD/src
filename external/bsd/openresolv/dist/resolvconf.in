@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2023 Roy Marples
+# Copyright (c) 2007-2025 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.13.2"
+OPENRESOLV_VERSION="3.14.0"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -34,7 +34,7 @@ RESTARTCMD=@RESTARTCMD@
 
 if [ "$1" = "--version" ]; then
 	echo "openresolv $OPENRESOLV_VERSION"
-	echo "Copyright (c) 2007-2020 Roy Marples"
+	echo "Copyright (c) 2007-2025 Roy Marples"
 	exit 0
 fi
 
@@ -47,6 +47,27 @@ local_nameservers="127.* 0.0.0.0 255.255.255.255 ::1"
 dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* wg[0-9]* ppp[0-9]* ippp[0-9]*"
 interface_order="lo lo[0-9]*"
 name_server_blacklist="0.0.0.0"
+
+# Poor mans cat
+# /usr might not be available
+cat()
+{
+	OIFS="$IFS"
+	IFS=''
+	if [ -n "$1" ]; then
+		while read -r line; do
+			printf "%s\n" "$line"
+		done < "$1"
+	else
+		while read -r line; do
+			printf "%s\n" "$line"
+		done
+	fi
+	retval=$?
+	IFS="$OIFS"
+	return $retval
+}
+
 
 # Support original resolvconf configuration layout
 # as well as the openresolv config file
@@ -98,6 +119,7 @@ usage()
                    pattern
 	  -l [\$PATTERN]    Show DNS information, optionally from interfaces
 	                   that match the specified pattern
+	  -L [\$PATTERN]    Same as -l, but adjusted by our config
 
 	  -u               Run updates from our current DNS information
 	  --version        Echo the ${RESOLVCONF##*/} version
@@ -329,7 +351,7 @@ detect_init()
 		   fi'
 	elif [ -x /usr/bin/s6-rc ] && [ -x /usr/bin/s6-svc ]; then
 		RESTARTCMD='
-		   if s6-rc -a list | grep -qFx $1-srv
+		   if s6-rc -a list 2>/dev/null | grep -qFx $1-srv
 		   then
 			s6-svc -r /run/service/$1-srv
 		   fi'
@@ -434,12 +456,68 @@ deprecated_interface()
 	return 1
 }
 
+match()
+{
+	match="$1"
+	file="$2"
+	retval=1
+	count=0
+
+	while read -r keyword value; do
+		new_match=
+		for om in $match; do
+			m="$om"
+			keep=
+			while [ -n "$m" ]; do
+				k="${m%%/*}"
+				r="${m#*/}"
+				f="${r%%/*}"
+				r="${r#*/}"
+				# If the length of m is the same as k/f then
+				# we know that we are done
+				if [ ${#m} = $((${#k} + 1 + ${#f})) ]; then
+					r=
+				fi
+				m="$r"
+				matched=false
+				case "$keyword" in
+				$k)
+					case "$value" in
+					$f)
+						matched=true
+						;;
+					esac
+					;;
+				esac
+				if ! $matched; then
+					keep="$keep${keep:+/}$k/$f"
+				fi
+			done
+			if [ -n "$om" ] && [ -z "$keep" ]; then
+				retval=0
+				break 2
+			fi
+			new_match="${new_match}${new_match:+ }${keep}"
+		done
+		match="${new_match}"
+	done < "$file"
+	return $retval
+}
+
 list_resolv()
 {
 	[ -d "$IFACEDIR" ] || return 0
 
-	cmd="$1"
-	shift
+	OPTIND=
+	list_cmd=
+	while getopts iLl OPT; do
+		case "$OPT" in
+		'?') exit 1;;
+		*) list_cmd="$OPT";;
+		esac
+	done
+	shift $(($OPTIND - 1))
+
 	pattern_specified="$1"
 
 	excl=false
@@ -540,7 +618,7 @@ list_resolv()
 			continue
 		fi
 
-		if ! $ALLIFACES; then
+		if [ "$list_cmd" = L ]; then
 			if [ -n "$allow_interfaces" ]; then
 				x=false
 				for j in $allow_interfaces; do
@@ -555,16 +633,20 @@ list_resolv()
 					continue 2
 				fi
 			done
+
+			if [ -n "$exclude" ] && match "$exclude" "$i"; then
+				continue
+			fi
 		fi
 
-		if [ "$cmd" = i ] || [ "$cmd" = "-i" ]; then
+		if [ "$list_cmd" = i ]; then
 			printf %s "$i "
 		else
 			echo_resolv "$i" && echo
 		fi
 		[ $? = 0 ] && [ "$retval" = 1 ] && retval=0
 	done
-	[ "$cmd" = i ] || [ "$cmd" = "-i" ] && echo
+	[ "$list_cmd" = i ] && echo
 	return $retval
 }
 
@@ -674,7 +756,7 @@ make_vars()
 	if [ -z "$VFLAG" ]; then
 		IF_EXCLUSIVE=1
 		list_resolv -i "$@" >/dev/null || IF_EXCLUSIVE=0
-		eval "$(list_resolv -l "$@" | replace | parse_resolv)"
+		eval "$(list_resolv -L "$@" | replace | parse_resolv)"
 	fi
 	if [ -n "${name_servers_append}${search_domains_append}" ]; then
 		eval "$(echo_append | parse_resolv)"
@@ -724,7 +806,7 @@ make_vars()
 
 force=false
 VFLAG=
-while getopts a:C:c:Dd:fhIilm:pRruvVx OPT; do
+while getopts a:C:c:Dd:fhIiLlm:pRruvVx OPT; do
 	case "$OPT" in
 	f) force=true;;
 	h) usage;;
@@ -762,11 +844,14 @@ fi
 
 # -l lists our resolv files, optionally for a specific interface
 if [ "$cmd" = l ] || [ "$cmd" = i ]; then
-	ALLIFACES=true
-	list_resolv "$cmd" "$args"
+	list_resolv "-$cmd" "$args"
 	exit $?
 fi
-ALLIFACES=false
+# -L is the same as -l, but post-processed from our config
+if [ "$cmd" = L ]; then
+	list_resolv "-$cmd" "$args" | replace
+	exit $?2
+fi
 
 # Restart a service or echo the command to restart a service
 if [ "$cmd" = r ] || [ "$cmd" = R ]; then
@@ -1077,7 +1162,7 @@ export RESTARTCMD RCDIR _NOINIT_WARNED
 
 eval "$(make_vars)"
 export RESOLVCONF DOMAINS SEARCH NAMESERVERS LOCALNAMESERVERS
-: ${list_resolv:=list_resolv -l}
+: ${list_resolv:=list_resolv -L}
 retval=0
 
 # Run scripts in the same directory resolvconf is run from
