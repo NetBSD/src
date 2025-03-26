@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.47 2025/03/21 14:04:33 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.48 2025/03/26 00:08:20 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.244 2024/09/15 01:09:40 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.47 2025/03/21 14:04:33 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.48 2025/03/26 00:08:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1273,7 +1273,6 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 	} else {
 		/* Log failed attempt */
 		auth_log(ssh, 0, 0, auth_method, NULL);
-		pfilter_notify(1);
 		free(cuser);
 		free(chost);
 	}
