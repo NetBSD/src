@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3147 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3148 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -713,3 +713,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		EINVAL for these two clocks. [pho 20250319]
 	npfctl(8): Allow comments inside lists in npf.conf (from Attaulah).
 		[christos 20250320]
+	openresolv: Import version 3.14.0. [roy 20250326]

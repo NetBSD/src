@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2089 2025/03/14 21:28:06 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2090 2025/03/26 10:02:52 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1060,8 +1060,8 @@ Location:	external/bsd/openpam/dist
 Notes:
 
 Package:	openresolv
-Version:	3.13.2
-Current Vers:	3.13.2
+Version:	3.14.0
+Current Vers:	3.14.0
 Maintainer:	roy
 Archive Site:	https://github.com/NetworkConfiguration/openresolv/releases
 Home Page:	http://roy.marples.name/projects/openresolv/
