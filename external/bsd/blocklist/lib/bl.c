@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.6 2025/03/26 13:52:47 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.7 2025/03/26 16:45:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: bl.c,v 1.6 2025/03/26 13:52:47 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.7 2025/03/26 16:45:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -465,7 +465,7 @@ bl_recv(bl_t b)
 	msg.msg_flags = 0;
 
 	msg.msg_control = ua.ctrl;
-	msg.msg_controllen = sizeof(ua.ctrl) + 100;
+	msg.msg_controllen = sizeof(ua.ctrl);
 
         rlen = recvmsg(b->b_fd, &msg, 0);
         if (rlen == -1) {
@@ -484,10 +484,15 @@ bl_recv(bl_t b)
 		switch (cmsg->cmsg_type) {
 		case SCM_RIGHTS:
 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(int))) {
+				int *fd = (void *)CMSG_DATA(cmsg);
+				size_t len = cmsg->cmsg_len / sizeof(int);
 				bl_log(b, LOG_ERR,
 				    "%s: unexpected cmsg_len %d != %zu",
 				    __func__, cmsg->cmsg_len,
-				    CMSG_LEN(2 * sizeof(int)));
+				    CMSG_LEN(sizeof(int)));
+
+				for (size_t i = 0;  i < len; i++)
+					(void)close(fd[i]);
 				continue;
 			}
 			memcpy(&bi->bi_fd, CMSG_DATA(cmsg), sizeof(bi->bi_fd));
