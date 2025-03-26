@@ -485,8 +485,8 @@ void		npf_portmap_sysfini(void);
 /* uid/gid process matching */
 int		npf_socket_lookup_uid(npf_cache_t *, int, uint32_t *);
 int		npf_socket_lookup_gid(npf_cache_t *, int, uint32_t *);
-int		npf_match_gid(struct r_id *, uint32_t);
-int		npf_match_uid(struct r_id *, uint32_t);
+int		npf_match_gid(rid_t *, uint32_t);
+int		npf_match_uid(rid_t *, uint32_t);
 
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);

@@ -720,11 +720,11 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 }
 
 /* again, use a single rule getid function both uid and gids */
-static struct r_id
+static rid_t
 npf_rule_getrid(const nvlist_t *req, const char *name)
 {
 	size_t nitems;
-	struct r_id id;
+	rid_t id;
 	const uint64_t *rid = nvlist_get_number_array(req, name, &nitems);
 	KASSERT(nitems == 3);
 
@@ -736,9 +736,9 @@ npf_rule_getrid(const nvlist_t *req, const char *name)
 }
 
 static void
-npf_rule_setrid(const nvlist_t *req, struct r_id** rid, const char *name)
+npf_rule_setrid(const nvlist_t *req, rid_t** rid, const char *name)
 {
-	struct r_id id;
+	rid_t id;
 
 	id = npf_rule_getrid(req, name);
 	*rid = kmem_alloc(sizeof(**rid), KM_SLEEP);

@@ -50,13 +50,13 @@
  */
 
 int
-npf_match_uid(struct r_id *uid, uint32_t uid_lookup)
+npf_match_uid(rid_t *uid, uint32_t uid_lookup)
 {
 	return npf_match(uid->op, uid->id[0], uid->id[1], uid_lookup);
 }
 
 int
-npf_match_gid(struct r_id *gid, uint32_t gid_lookup)
+npf_match_gid(rid_t *gid, uint32_t gid_lookup)
 {
 	return npf_match(gid->op, gid->id[0], gid->id[1], gid_lookup);
 }
