@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.208 2023/09/30 18:06:24 shm Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.209 2025/03/26 00:05:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.208 2023/09/30 18:06:24 shm Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.209 2025/03/26 00:05:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1432,7 +1432,8 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 				exit(0);
 			}
 			return;
-		}
+		} else
+			pfilter_notify(0, "success");
 	}
 
 			/* password ok; check if anything else prevents login */
