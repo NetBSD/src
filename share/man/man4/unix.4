@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.31 2025/03/26 15:06:06 riastradh Exp $
+.\"	$NetBSD: unix.4,v 1.32 2025/03/26 15:14:09 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,6 +131,7 @@ transport protocols that support the
 and
 .Dv SOCK_DGRAM
 abstractions.
+.Pp
 .Dv SOCK_STREAM
 and
 .Dv SOCK_SEQPACKET
@@ -144,22 +145,15 @@ argument to
 .Xr sendmsg 2
 and
 .Xr recvmsg 2 .
+Supported file descriptors may be sent in control messages of type
+.Dv SCM_RIGHTS
+holding an array of
+.Vt int
+file descriptor objects; see
+.Xr cmsg 3
+for details on assembling and examining control messages.
 .Pp
-Any valid descriptor may be sent in a message.
-The file descriptor(s) to be passed are described using a
-.Vt struct cmsghdr
-that is defined in the include file
-.In sys/socket.h .
-The type of the message is
-.Dv SCM_RIGHTS ,
-and the data portion of the messages is an array of integers
-representing the file descriptors to be passed.
-The number of descriptors being passed is defined
-by the length field of the message;
-the length field is the sum of the size of the header
-plus the size of the array of file descriptors.
-.Pp
-The received descriptor is a
+A file descriptor received this way is a
 .Em duplicate
 of the sender's descriptor, as if it were created with a call to
 .Xr dup 2 .
@@ -180,7 +174,7 @@ and
 .Xr getsockopt 2
 at the level
 .Dv SOL_LOCAL :
-.Bl -tag
+.Bl -tag -width 6n
 .It Dv LOCAL_CONNWAIT Pq Vt int
 May be enabled with
 .Xr setsockopt 2
