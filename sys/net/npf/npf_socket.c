@@ -66,23 +66,23 @@ npf_match(uint8_t op, uint32_t rid1, uint32_t rid2, uint32_t id_lp)
 {
 	switch (op) {
 	case NPF_OP_IRG:
-		return ((id_lp > rid1) && (id_lp < rid2));
+		return id_lp > rid1 && id_lp < rid2;
 	case NPF_OP_XRG:
-		return ((id_lp < rid1) || (id_lp > rid2));
+		return id_lp < rid1 || id_lp > rid2;
 	case NPF_OP_EQ:
-		return (id_lp == rid1);
+		return id_lp == rid1;
 	case NPF_OP_NE:
-		return (id_lp != rid1);
+		return id_lp != rid1;
 	case NPF_OP_LT:
-		return (id_lp < rid1);
+		return id_lp < rid1;
 	case NPF_OP_LE:
-		return (id_lp <= rid1);
+		return id_lp <= rid1;
 	case NPF_OP_GT:
-		return (id_lp > rid1);
+		return id_lp > rid1;
 	case NPF_OP_GE:
-		return (id_lp >= rid1);
+		return id_lp >= rid1;
 	}
-	return (0); /* never reached */
+	return 0; /* never reached */
 }
 
 int
