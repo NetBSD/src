@@ -1054,11 +1054,11 @@ npf_rule_match_user(npf_rule_t *rl, npf_cache_t *npc, int dir)
 		return ENOTCONN;
 	}
 
-	return npf_match_uid(rl->uid, sk_uid);
+	return npf_match_rid(rl->uid, sk_uid);
 }
 
 int
-npf_rule_match_usrgrp(npf_rule_t *rl, npf_cache_t *npc, int dir)
+npf_rule_match_grp(npf_rule_t *rl, npf_cache_t *npc, int dir)
 {
 	uid_t sk_gid;
 	int error;
@@ -1070,7 +1070,7 @@ npf_rule_match_usrgrp(npf_rule_t *rl, npf_cache_t *npc, int dir)
 	if (error == -1)
 		return ENOTCONN;
 
-	return npf_match_gid(rl->gid, sk_gid);
+	return npf_match_rid(rl->gid, sk_gid);
 }
 
 /*

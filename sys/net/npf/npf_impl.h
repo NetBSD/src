@@ -430,7 +430,7 @@ npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
 		    const int, const int);
 int		npf_rule_reverse(npf_cache_t *, npf_match_info_t *, int);
 int		npf_uid_gid_match(npf_rule_t *, npf_cache_t *, int);
-int		npf_rule_match_usrgrp(npf_rule_t *, npf_cache_t *, int);
+int		npf_rule_match_grp(npf_rule_t *, npf_cache_t *, int);
 int		npf_rule_match_user(npf_rule_t *, npf_cache_t *, int);
 int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
 
@@ -485,8 +485,7 @@ void		npf_portmap_sysfini(void);
 /* uid/gid process matching */
 int		npf_socket_lookup_uid(npf_cache_t *, int, uint32_t *);
 int		npf_socket_lookup_gid(npf_cache_t *, int, uint32_t *);
-int		npf_match_gid(rid_t *, uint32_t);
-int		npf_match_uid(rid_t *, uint32_t);
+int		npf_match_rid(rid_t *, uint32_t);
 
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);

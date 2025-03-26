@@ -23,42 +23,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
- #include <netinet/tcp.h>
- #include <netinet/udp.h>
- #include <netinet/in_pcb.h>
- #include <sys/socketvar.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/in_pcb.h>
+#include <sys/socketvar.h>
 
- #ifdef INET6
- #include <netinet/ip6.h>
- #include <netinet6/ip6_var.h>
- #ifdef __NetBSD__
- #include <netinet6/in6_pcb.h>
- #endif /* __NetBSD__ */
- #endif /* INET6 */
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#ifdef __NetBSD__
+#include <netinet6/in6_pcb.h>
+#endif /* __NetBSD__ */
+#endif /* INET6 */
 
- #include "npf_impl.h"
+#include "npf_impl.h"
 
- extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
- extern	struct inpcbtable udbtable;
+extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
+extern	struct inpcbtable udbtable;
 
- static struct socket *	npf_ip6_socket(npf_cache_t *, struct inpcbtable *, int);
- static struct socket *	npf_ip_socket(npf_cache_t *, struct inpcbtable *, int);
- static int		npf_match(uint8_t, uint32_t, uint32_t, uint32_t);
+static struct socket *	npf_lookup_socket(npf_cache_t *, int);
+static struct socket *	npf_ip6_socket(npf_cache_t *, int);
+static struct socket *	npf_ip_socket(npf_cache_t *, int);
+static int		npf_match(uint8_t, uint32_t, uint32_t, uint32_t);
 
  /*
  * NPF process socket module
  */
 
 int
-npf_match_uid(rid_t *uid, uint32_t uid_lookup)
+npf_match_rid(rid_t *rid, uint32_t uid_lookup)
 {
-	return npf_match(uid->op, uid->id[0], uid->id[1], uid_lookup);
-}
-
-int
-npf_match_gid(rid_t *gid, uint32_t gid_lookup)
-{
-	return npf_match(gid->op, gid->id[0], gid->id[1], gid_lookup);
+	return npf_match(rid->op, rid->id[0], rid->id[1], uid_lookup);
 }
 
 static int
@@ -85,21 +80,28 @@ npf_match(uint8_t op, uint32_t rid1, uint32_t rid2, uint32_t id_lp)
 	return 0; /* never reached */
 }
 
-int
-npf_socket_lookup_uid(npf_cache_t *npc, int dir, uint32_t *uid)
+static struct socket *
+npf_lookup_socket(npf_cache_t *npc, int dir)
 {
-	struct inpcbtable	*tb = NULL;
 	struct socket		*so = NULL;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		so = npf_ip_socket(npc, tb, dir);
-
+		so = npf_ip_socket(npc, dir);
 	} else if (npf_iscached(npc, NPC_IP6)) {
-		so = npf_ip6_socket(npc, tb, dir);
+		so = npf_ip6_socket(npc, dir);
 	}
 
+	return so;
+}
+
+int
+npf_socket_lookup_uid(npf_cache_t *npc, int dir, uint32_t *uid)
+{
+	struct socket		*so;
+
+	so = npf_lookup_socket(npc, dir);
 	if (so == NULL || so->so_cred == NULL)
 		return -1;
 
@@ -110,18 +112,9 @@ npf_socket_lookup_uid(npf_cache_t *npc, int dir, uint32_t *uid)
 int
 npf_socket_lookup_gid(npf_cache_t *npc, int dir, uint32_t *gid)
 {
-	struct inpcbtable	*tb = NULL;
-	struct socket		*so = NULL;
+	struct socket		*so;
 
-	KASSERT(npf_iscached(npc, NPC_IP46));
-
-	if (npf_iscached(npc, NPC_IP4)) {
-		so = npf_ip_socket(npc, tb, dir);
-
-	} else if (npf_iscached(npc, NPC_IP6)) {
-		so = npf_ip6_socket(npc, tb, dir);
-	}
-
+	so = npf_lookup_socket(npc, dir);
 	if (so == NULL || so->so_cred == NULL)
 		return -1;
 
@@ -130,8 +123,9 @@ npf_socket_lookup_gid(npf_cache_t *npc, int dir, uint32_t *gid)
 }
 
 static struct socket *
-npf_ip_socket(npf_cache_t *npc, struct inpcbtable *tb, int dir)
+npf_ip_socket(npf_cache_t *npc, int dir)
 {
+	struct inpcbtable	*tb = NULL;
 	struct in_addr	saddr, daddr;
 	uint16_t		sport, dport;
 	struct socket		*so = NULL;
@@ -180,7 +174,6 @@ npf_ip_socket(npf_cache_t *npc, struct inpcbtable *tb, int dir)
 	inp = in_pcbhashlookup(tb, saddr, sport, daddr, dport);
 	if (inp == NULL) {
 		inp = in_pcblookup_listen(tb, daddr, dport);
-
 		if (inp == NULL) {
 			return NULL;
 		}
@@ -191,8 +184,9 @@ npf_ip_socket(npf_cache_t *npc, struct inpcbtable *tb, int dir)
 }
 
 static struct socket *
-npf_ip6_socket(npf_cache_t *npc, struct inpcbtable *tb, int dir)
+npf_ip6_socket(npf_cache_t *npc, int dir)
 {
+	struct inpcbtable	*tb = NULL;
 	const struct in6_addr	*s6addr, *d6addr;
 	uint16_t	sport, dport;
 	struct inpcb		*in6p = NULL;
