@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.c,v 1.24 2025/03/26 00:08:19 christos Exp $	*/
+/*	$NetBSD: auth-pam.c,v 1.25 2025/03/26 01:33:02 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -53,7 +53,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.24 2025/03/26 00:08:19 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.25 2025/03/26 01:33:02 htodd Exp $");
 #define _LIB_PTHREAD_H
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
@@ -111,6 +111,7 @@ __RCSID("$NetBSD: auth-pam.c,v 1.24 2025/03/26 00:08:19 christos Exp $");
 #include "msg.h"
 #include "packet.h"
 #include "misc.h"
+#include "pfilter.h"
 #include "servconf.h"
 #include "srclimit.h"
 #include "ssh2.h"
