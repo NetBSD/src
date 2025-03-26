@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.404 2025/03/17 14:07:44 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.405 2025/03/26 13:00:53 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -623,6 +623,7 @@ FFS	Fast File System
 FFS	find first set
 FFT	fast Fourier transform
 FG	floating gate
+FHE	fully homomorphic encryption
 FHRP	first hop redundancy protocol
 FHSS	frequency hop spread spectrum
 FID	frequency identifier
