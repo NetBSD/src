@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.30 2022/12/06 15:06:40 uwe Exp $
+.\"	$NetBSD: unix.4,v 1.31 2025/03/26 15:06:06 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,16 +174,29 @@ when the destination socket is closed.
 .Pp
 A
 .Ux Ns -domain
-socket supports several
-.Dv SOL_LOCAL
-level options for use with
+socket supports the following socket options for use with
 .Xr setsockopt 2
 and
-.Xr getsockopt 2 :
-.Pp
-The
-.Dv LOCAL_CREDS
-option may be enabled on a
+.Xr getsockopt 2
+at the level
+.Dv SOL_LOCAL :
+.Bl -tag
+.It Dv LOCAL_CONNWAIT Pq Vt int
+May be enabled with
+.Xr setsockopt 2
+on a
+.Dv SOCK_SEQPACKET
+or
+.Dv SOCK_STREAM
+socket.
+If enabled,
+.Xr connect 2
+will block until a peer is waiting in
+.Xr accept 2 .
+.It Dv LOCAL_CREDS Pq Vt int
+May be enabled with
+.Xr setsockopt 2
+on a
 .Dv SOCK_DGRAM ,
 .Dv SOCK_SEQPACKET ,
 or a
@@ -206,21 +219,19 @@ length
 structure, defined in
 .In sys/socket.h
 as follows:
-.Bd -literal -offset indent
+.Bd -literal
 struct sockcred {
-        pid_t   sc_pid;         /* process id */
-        uid_t   sc_uid;         /* real user id */
-        uid_t   sc_euid;        /* effective user id */
-        gid_t   sc_gid;         /* real group id */
-        gid_t   sc_egid;        /* effective group id */
-        int     sc_ngroups;     /* number of supplemental groups */
-        gid_t   sc_groups[1];   /* variable length */
+        pid_t   sc_pid;       /* process id */
+        uid_t   sc_uid;       /* real user id */
+        uid_t   sc_euid;      /* effective user id */
+        gid_t   sc_gid;       /* real group id */
+        gid_t   sc_egid;      /* effective group id */
+        int     sc_ngroups;   /* number of supplemental groups */
+        gid_t   sc_groups[1]; /* variable length */
 };
 .Ed
-.Pp
-The
-.Dv LOCAL_PEEREID
-option may be used with
+.It Dv LOCAL_PEEREID Pq Vt "struct unpcbid"
+May be queried with
 .Xr getsockopt 2
 to get the PID and effective user and group IDs of a
 .Dv SOCK_STREAM
@@ -231,11 +242,11 @@ peer when it did
 or
 .Xr bind 2 .
 The returned structure is
-.Bd -literal -offset indent
+.Bd -literal
 struct unpcbid {
-        pid_t unp_pid;          /* process id */
-        uid_t unp_euid;         /* effective user id */
-        gid_t unp_egid;         /* effective group id */
+        pid_t unp_pid;        /* process id */
+        uid_t unp_euid;       /* effective user id */
+        gid_t unp_egid;       /* effective group id */
 };
 .Ed
 .Pp
@@ -255,6 +266,7 @@ cmsg_len = CMSG_LEN(SOCKCREDSIZE(ngroups))
 cmsg_level = SOL_SOCKET
 cmsg_type = SCM_CREDS
 .Ed
+.El
 .Sh EXAMPLES
 The following code fragment shows how to bind a socket to pathname:
 .Bd -literal -offset indent
