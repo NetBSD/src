@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1363 2025/03/11 13:56:47 brad Exp $
+# $NetBSD: mi,v 1.1364 2025/03/26 17:36:01 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1633,8 +1633,8 @@
 ./usr/sbin/named-checkconf			base-bind-bin
 ./usr/sbin/named-checkzone			base-bind-bin
 ./usr/sbin/named-compilezone			base-bind-bin
-./usr/sbin/named-rrchecker			base-bind-bin
 ./usr/sbin/named-journalprint			base-bind-bin
+./usr/sbin/named-rrchecker			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root	binutils
@@ -1831,12 +1831,12 @@
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
 ./usr/sbin/tsig-keygen				base-bind-bin
+./usr/sbin/umcpmioctl				base-sysutil-bin
 ./usr/sbin/unbound				base-netutil-bin	unbound
 ./usr/sbin/unbound-anchor			base-netutil-bin	unbound
 ./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
 ./usr/sbin/unbound-control			base-netutil-bin	unbound
 ./usr/sbin/unbound-control-setup		base-netutil-bin	unbound
-./usr/sbin/umcpmioctl				base-sysutil-bin
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
 ./usr/sbin/usbdevs				base-sysutil-bin
@@ -2063,11 +2063,11 @@
 ./usr/share/certs/mozilla/all/Telekom_Security_TLS_RSA_Root_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TeliaSonera_Root_CA_v1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telia_Root_CA_v2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustCor_ECA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-2.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Trustwave_Global_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-mozcerts-share	share
