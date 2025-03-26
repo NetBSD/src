@@ -84,6 +84,7 @@ typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_conn		npf_conn_t;
+typedef struct r_id		rid_t;
 
 struct npf_conndb;
 struct npf_table;
@@ -436,8 +437,8 @@ int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
 /* Rule interface. */
 npf_rule_t *	npf_rule_alloc(npf_t *, const nvlist_t *);
 void		npf_rule_setcode(npf_rule_t *, int, void *, size_t);
-void		npf_rule_setuid(npf_rule_t *, r_uid_t *);
-void		npf_rule_setgid(npf_rule_t *, r_gid_t *);
+void		npf_rule_setuid(const nvlist_t *, npf_rule_t *, const char *);
+void		npf_rule_setgid(const nvlist_t *, npf_rule_t *, const char *);
 void		npf_rule_setrproc(npf_rule_t *, npf_rproc_t *);
 void		npf_rule_free(npf_rule_t *);
 uint64_t	npf_rule_getid(const npf_rule_t *);
@@ -484,8 +485,8 @@ void		npf_portmap_sysfini(void);
 /* uid/gid process matching */
 int		npf_socket_lookup_uid(npf_cache_t *, int, uint32_t *);
 int		npf_socket_lookup_gid(npf_cache_t *, int, uint32_t *);
-int		npf_match_gid(struct r_gid *, uint32_t);
-int		npf_match_uid(struct r_uid *, uint32_t);
+int		npf_match_gid(struct r_id *, uint32_t);
+int		npf_match_uid(struct r_id *, uint32_t);
 
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);

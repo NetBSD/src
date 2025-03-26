@@ -301,24 +301,18 @@ npfctl_parse_group(const char *group, *uint32_t *gid)
 	return 0;
 }
 
-struct r_uid *
-npfctl_init_uid(uint32_t uid1, uint32_t uid2, uint8_t op)
+ /*
+  * this function is called for both gid and uid init in parser
+  * both uid and gid are both uint32_t
+  */
+struct r_id *
+npfctl_init_rid(uint32_t uid1, uint32_t uid2, uint8_t op)
 {
-	struct r_uid *ruid = ecalloc(1, sizeof(*ruid));
-	ruid->uid[0] = uid1;
-	ruid->uid[1] = uid2;
-	ruid->op = op;
-	return ruid;
-}
-
-struct r_gid *
-npfctl_init_gid(uint32_t gid1, uint32_t gid2, uint8_t op)
-{
-	struct r_gid *rgid = ecalloc(1, sizeof(*rgid));
-	rgid->gid[0] = gid1;
-	rgid->gid[1] = gid2;
-	rgid->op = op;
-	return rgid;
+	struct r_id *rid = ecalloc(1, sizeof(*rid));
+	rid->id[0] = uid1;
+	rid->id[1] = uid2;
+	rid->op = op;
+	return rid;
 }
 
 /*

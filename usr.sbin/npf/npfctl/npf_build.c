@@ -716,11 +716,11 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 	}
 
 	if (fopts->uid) {
-		npf_rule_setruser(rl, fopts->uid);
+		npf_rule_setrid(rl, fopts->uid, "r_user");
 	}
 
 	if (fopts->gid) {
-		npf_rule_setrugrp(rl, fopts->gid);
+		npf_rule_setrid(rl, fopts->gid, "r_group");
 	}
 
 	if (rproc) {

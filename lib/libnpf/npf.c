@@ -736,23 +736,11 @@ npf_rule_setproc(nl_rule_t *rl, const char *name)
 }
 
 int
-npf_rule_setruser(nl_rule_t *rl, struct r_uid *uid)
+npf_rule_setrid(nl_rule_t *rl, struct r_id *rid, const char *name)
 {
-	int error = 0;
-	uint64_t uid_element[3] = { uid->uid[0], uid->uid[1], uid->op };
-	nvlist_add_number_array(rl->rule_dict, "r_user", uid_element, 3);
-	error = nvlist_error(rl->rule_dict);
-	return error;
-}
-
-int
-npf_rule_setrugrp(nl_rule_t *rl, struct r_gid *gid)
-{
-	int error = 0;
-	uint64_t gid_element[3] = { gid->gid[0], gid->gid[1], gid->op };
-	nvlist_add_number_array(rl->rule_dict, "r_group", gid_element, 3);
-	error = nvlist_error(rl->rule_dict);
-	return error;
+	uint64_t uid_element[3] = { rid->id[0], rid->id[1], rid->op };
+	nvlist_add_number_array(rl->rule_dict, name, uid_element, 3);
+	return nvlist_error(rl->rule_dict);
 }
 
 void *

@@ -50,15 +50,15 @@
  */
 
 int
-npf_match_uid(struct r_uid *uid, uint32_t uid_lookup)
+npf_match_uid(struct r_id *uid, uint32_t uid_lookup)
 {
-	return npf_match(uid->op, uid->uid[0], uid->uid[1], uid_lookup);
+	return npf_match(uid->op, uid->id[0], uid->id[1], uid_lookup);
 }
 
 int
-npf_match_gid(struct r_gid *gid, uint32_t gid_lookup)
+npf_match_gid(struct r_id *gid, uint32_t gid_lookup)
 {
-	return npf_match(gid->op, gid->gid[0], gid->gid[1], gid_lookup);
+	return npf_match(gid->op, gid->id[0], gid->id[1], gid_lookup);
 }
 
 static int
@@ -184,7 +184,6 @@ npf_ip_socket(npf_cache_t *npc, struct inpcbtable *tb, int dir)
 		if (inp == NULL) {
 			return NULL;
 		}
-
 	}
 
 	so = inp->inp_socket;

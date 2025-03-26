@@ -380,27 +380,11 @@ npf_mk_singlerule(npf_t *npf, const nvlist_t *req, nvlist_t *resp,
 
 	/* user and group ids filt option if set */
 	if (nvlist_exists_number_array(req, "r_user")) {
-		size_t uitems;
-		struct r_uid r_uid;
-		const uint64_t *uid = nvlist_get_number_array(req, "r_user", &uitems);
-		KASSERT(uitems == 3);
-
-		r_uid.uid[0] = (uint32_t)uid[0];
-		r_uid.uid[1] = (uint32_t)uid[1];
-		r_uid.op = (uint8_t)uid[2];
-		npf_rule_setuid(rl, &r_uid);
+		npf_rule_setuid(req, rl, "r_user");
 	}
 
 	if (nvlist_exists_number_array(req, "r_group")) {
-		size_t gitems;
-		struct r_gid r_gid;
-		const uint64_t *gid = nvlist_get_number_array(req, "r_group", &gitems);
-		KASSERT(gitems == 3);
-
-		r_gid.gid[0] = (uint32_t)gid[0];
-		r_gid.gid[1] = (uint32_t)gid[1];
-		r_gid.op = (uint8_t)gid[2];
-		npf_rule_setgid(rl, &r_gid);
+		npf_rule_setgid(req, rl, "r_group");
 	}
 
 	*rlret = rl;

@@ -119,8 +119,8 @@ struct npf_rule {
 	nvlist_t *		r_info;
 	size_t			r_info_len;
 
-	r_uid_t *uid;
-	r_gid_t *gid;
+	rid_t *uid;
+	rid_t *gid;
 };
 
 #define	SKIPTO_ADJ_FLAG		(1U << 31)
@@ -719,18 +719,42 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 	rl->r_jcode = npf_bpf_compile(code, size);
 }
 
-void
-npf_rule_setuid(npf_rule_t *rl, r_uid_t *uid)
+/* again, use a single rule getid function both uid and gids */
+static struct r_id
+npf_rule_getrid(const nvlist_t *req, const char *name)
 {
-	rl->uid = kmem_alloc(sizeof(*(rl->uid)), KM_SLEEP);
-	memcpy(rl->uid, uid, sizeof(*uid));
+	size_t nitems;
+	struct r_id id;
+	const uint64_t *rid = nvlist_get_number_array(req, name, &nitems);
+	KASSERT(nitems == 3);
+
+	id.id[0] = (uid_t)rid[0];
+	id.id[1] = (uid_t)rid[1];
+	id.op = (uint8_t)rid[2];
+
+	return id;
+}
+
+static void
+npf_rule_setrid(const nvlist_t *req, struct r_id** rid, const char *name)
+{
+	struct r_id id;
+
+	id = npf_rule_getrid(req, name);
+	*rid = kmem_alloc(sizeof(**rid), KM_SLEEP);
+	memcpy(*rid, &id, sizeof(**rid));
 }
 
 void
-npf_rule_setgid(npf_rule_t *rl, r_gid_t *gid)
+npf_rule_setuid(const nvlist_t *req, npf_rule_t *rl, const char *name)
 {
-	rl->gid = kmem_alloc(sizeof(*(rl->gid)), KM_SLEEP);
-	memcpy(rl->gid, gid, sizeof(*gid));
+	npf_rule_setrid(req, &rl->uid, name);
+}
+
+void
+npf_rule_setgid(const nvlist_t *req, npf_rule_t *rl, const char *name)
+{
+	npf_rule_setrid(req, &rl->gid, name);
 }
 
 /*

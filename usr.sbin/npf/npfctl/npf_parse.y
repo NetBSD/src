@@ -215,8 +215,8 @@ yyerror(const char *fmt, ...)
 	filt_opts_t	filtopts;
 	opt_proto_t	optproto;
 	rule_group_t	rulegroup;
-	struct		r_uid *uid;
-	struct		r_gid *gid;
+	struct r_id 	*uid;
+	struct r_id 	*gid;
 }
 
 %%
@@ -999,15 +999,15 @@ uids
 uid_item
 	: uid
 	{
-		$$ = npfctl_init_uid($1, $1, NPF_OP_EQ);
+		$$ = npfctl_init_rid($1, $1, NPF_OP_EQ);
 	}
 	| op_unary uid
 	{
-		$$ = npfctl_init_uid($2, $2, $1);
+		$$ = npfctl_init_rid($2, $2, $1);
 	}
 	| uid op_binary uid
 	{
-		$$ = npfctl_init_uid($1, $3, $2);
+		$$ = npfctl_init_rid($1, $3, $2);
 	}
 	;
 
@@ -1068,15 +1068,15 @@ gids
 gid_item
 	: gid
 	{
-		$$ = npfctl_init_gid($1, $1, NPF_OP_EQ);
+		$$ = npfctl_init_rid($1, $1, NPF_OP_EQ);
 	}
 	| op_unary gid
 	{
-		$$ = npfctl_init_gid($2, $2, $1);
+		$$ = npfctl_init_rid($2, $2, $1);
 	}
 	| gid op_binary gid
 	{
-		$$ = npfctl_init_gid($1, $3, $2);
+		$$ = npfctl_init_rid($1, $3, $2);
 	}
 	;
 

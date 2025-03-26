@@ -59,13 +59,12 @@ typedef union {
 	uint32_t		word32[4];
 } npf_addr_t;
 
-struct r_uid {
-	uid_t		uid[2];
-	uint8_t		 op;
-};
-
-struct r_gid {
-	gid_t		gid[2];
+/*
+ * use a single type for both user id and group id
+ * since both gid and uid are uint32_t
+ */
+struct r_id {
+	uint32_t	id[2];
 	uint8_t		op;
 };
 
