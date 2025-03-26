@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.4 2025/02/11 17:45:01 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.5 2025/03/26 00:03:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: bl.c,v 1.4 2025/02/11 17:45:01 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.5 2025/03/26 00:03:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -538,10 +538,11 @@ bl_recv(bl_t b)
 	bi->bi_uid = -1;
 	bi->bi_gid = -1;
 #endif
-	rem = MIN(sizeof(bi->bi_msg), rem);
 	if (rem == 0)
 		bi->bi_msg[0] = '\0';
-	else
+	else {
+		rem = MIN(sizeof(bi->bi_msg), rem + 1);
 		strlcpy(bi->bi_msg, ub.bl.bl_data, rem);
+	}
 	return bi;
 }
