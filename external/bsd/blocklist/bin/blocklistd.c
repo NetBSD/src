@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.8 2025/02/11 17:48:30 christos Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.9 2025/03/26 00:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: blocklistd.c,v 1.8 2025/02/11 17:48:30 christos Exp $");
+__RCSID("$NetBSD: blocklistd.c,v 1.9 2025/03/26 00:12:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -178,6 +178,7 @@ process(bl_t bl)
 	struct dbinfo dbi;
 	struct timespec ts;
 
+	memset(&dbi, 0, sizeof(dbi));
 	if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
 		(*lfun)(LOG_ERR, "clock_gettime failed (%m)");
 		return;
