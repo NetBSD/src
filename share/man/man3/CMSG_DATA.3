@@ -1,4 +1,4 @@
-.\"	$NetBSD: CMSG_DATA.3,v 1.5 2025/02/08 13:30:42 riastradh Exp $
+.\"	$NetBSD: CMSG_DATA.3,v 1.6 2025/03/26 14:12:16 riastradh Exp $
 .\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
@@ -64,12 +64,19 @@ This routine determines the size in bytes of a control message,
 which includes the control message header.
 .Fa len
 specifies the length of the data held by the control message.
+.Pp
 This value is what is normally stored in the
 .Fa cmsg_len
 of each control message.
+.Pp
 This routine accounts for any alignment constraints on the beginning of
 ancillary data.
-This macro might not evaluate to a compile-time constant.
+.Pp
+If
+.Fa len
+is an integer constant expression, then
+.Fn CMSG_LEN len
+is an integer constant expression.
 .It Fn CMSG_NXTHDR mhdr cmsg
 This routine returns the location of the control message following
 .Fa cmsg
@@ -84,11 +91,18 @@ This routine determines the size in bytes needed to hold a control
 message and its contents of length
 .Fa len ,
 which includes the control message header.
+.Pp
 This value is what is normally stored in
 .Fa msg_msgcontrollen .
+.Pp
 This routine accounts for any alignment constraints on the beginning of
 ancillary data as well as any needed to pad the next control message.
-This macro might not evaluate to a compile-time constant.
+.Pp
+If
+.Fa len
+is an integer constant expression, then
+.Fn CMSG_SPACE len
+is an integer constant expression.
 .El
 .Sh EXAMPLES
 The following example constructs a control message containing a file
