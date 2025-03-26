@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.169 2025/03/22 00:41:20 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.170 2025/03/26 02:03:43 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.169 2025/03/22 00:41:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.170 2025/03/26 02:03:43 gutteridge Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -458,7 +458,7 @@ module_init(void)
 
 	__link_set_foreach(mip, modules) {
 		if ((rv = module_builtin_add(mip, 1, false)) != 0)
-			module_error("Builtin `%s' failed: %d\n",
+			module_error("Built-in `%s' failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
 
@@ -920,7 +920,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * successfully linked without the dependencies.
 		 */
-		module_error("Built-in module `%s' can't find builtin "
+		module_error("Built-in module `%s' can't find built-in "
 		    "dependency `%s'", pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
