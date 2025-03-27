@@ -1,4 +1,4 @@
-# $NetBSD: MIPSSIM,v 1.11 2024/07/16 12:01:19 riastradh Exp $
+# $NetBSD: MIPSSIM,v 1.12 2025/03/27 12:22:43 riastradh Exp $
 #
 # Kernel config for the QEMU MIPS "mipssim" simulator
 #
@@ -8,7 +8,7 @@
 
 include 	"arch/evbmips/conf/std.mipssim"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -121,13 +121,10 @@ com*		at mainbus?
 
 # Virtio devices
 virtio*		at mainbus?		# Virtio PCI device
-#viomb*		at virtio?		# Virtio memory balloon device
-ld*		at virtio?		# Virtio disk device
-viocon*		at virtio?		# Virtio serial device
-vioif*		at virtio?		# Virtio network device
-viornd*		at virtio?		# Virtio entropy device
-vioscsi*	at virtio?		# Virtio SCSI device
-#vio9p*		at virtio?		# Virtio 9P device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
 
 # SCSI bus support
 scsibus* at scsi?

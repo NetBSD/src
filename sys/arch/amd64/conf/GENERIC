@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.614 2024/08/27 00:56:16 riastradh Exp $
+# $NetBSD: GENERIC,v 1.615 2025/03/27 12:22:43 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.614 $"
+#ident		"GENERIC-$Revision: 1.615 $"
 
 maxusers	64		# estimated number of users
 
@@ -1127,13 +1127,9 @@ weasel* at pci?
 
 # Virtio devices
 virtio* at pci? dev ? function ?	# Virtio PCI device
-viomb*	at virtio?			# Virtio memory balloon device
-ld*	at virtio?			# Virtio disk device
-viocon* at virtio?			# Virtio serial device
-vioif*	at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-vioscsi* at virtio?			# Virtio SCSI device
-#vio9p*	at virtio?			# Virtio 9P device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
 
 # Hyper-V devices
 vmbus*		at acpi?		# Hyper-V VMBus

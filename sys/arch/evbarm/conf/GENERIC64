@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.222 2024/12/30 12:31:09 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.223 2025/03/27 12:22:43 riastradh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -579,12 +579,10 @@ pseudo-device	sequencer			# MIDI sequencer
 virtio* 	at fdt?			# Virtio MMIO device
 virtio* 	at acpi?
 virtio* 	at pci? dev ? function ?
-#viomb*		at virtio?		# Virtio memory balloon device
-ld*		at virtio?		# Virtio disk device
-viocon*		at virtio?		# Virtio serial device
-vioif*		at virtio?		# Virtio network device
-viornd* 	at virtio?		# Virtio entropy device
-vioscsi*	at virtio?		# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
 
 # SCSI controllers
 mpt*		at pci? dev ? function ?

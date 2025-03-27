@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.242 2025/02/24 21:32:26 andvar Exp $
+# $NetBSD: GENERIC,v 1.243 2025/03/27 12:22:44 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.242 $"
+#ident		"GENERIC-$Revision: 1.243 $"
 
 maxusers	64
 
@@ -406,13 +406,10 @@ ld*	at mlx? unit ?
 
 # Virtio devices
 virtio* at pci? dev ? function ?	# Virtio PCI device
-# the baloon driver can not work on machines with non-4k pages
-#viomb*	at virtio?			# Virtio memory balloon device
-ld*	at virtio?			# Virtio disk device
-viocon*	at virtio?			# Virtio serial device
-vioif*	at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-vioscsi* at virtio?			# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
+no viomb* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
 
 ## Floppy controller and drive found on SPARCstations.
 

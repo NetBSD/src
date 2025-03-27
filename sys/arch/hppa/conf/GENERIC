@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2025/02/10 14:05:07 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.49 2025/03/27 12:22:43 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32		# estimated number of users
 
@@ -694,12 +694,11 @@ ucom*	at ugensa?
 
 # Virtio devices
 virtio* at pci? dev ? function ?	# Virtio PCI device
-#viomb*	at virtio?			# Virtio memory balloon device
-ld*	at virtio?			# Virtio disk device
-vioif*	at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-vioscsi* at virtio?			# Virtio SCSI device
-#vio9p*	at virtio?			# Virtio 9P device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viocon* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
 
 # Pseudo-Devices
 

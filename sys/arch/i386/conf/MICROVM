@@ -1,4 +1,4 @@
-# $NetBSD: MICROVM,v 1.1 2025/02/18 10:16:03 imil Exp $
+# $NetBSD: MICROVM,v 1.2 2025/03/27 12:22:44 riastradh Exp $
 #
 # MICROVM kernel configuration, for use with Qemu microvm machine type
 # or Firecracker.
@@ -112,16 +112,10 @@ pv* at pvbus?
 virtio* at pv?
 #virtio* at acpi?
 #virtio* at pci? dev ? function ?	# Virtio PCI device
-#viomb*	at virtio?			# Virtio memory balloon device
 
-ld*	at virtio?			# Virtio disk device
-vioif*	at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-viocon* at virtio?
-
-vio9p*	at virtio?			# Virtio 9P device
-#vioscsi* at virtio?
-#scsibus* at vioscsi?
+include "dev/virtio/virtio.config"
+no viomb* at virtio?			# XXX ?
+no vioscsi* at virtio?			# XXX ?
 
 pseudo-device	md			# memory disk device (ramdisk)
 #options 	MEMORY_DISK_HOOKS	# enable md specific hooks
