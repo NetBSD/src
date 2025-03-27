@@ -1,4 +1,4 @@
-/* $NetBSD: pic_pi.c,v 1.1.2.4 2025/02/22 13:10:17 martin Exp $ */
+/* $NetBSD: pic_pi.c,v 1.1.2.5 2025/03/27 19:00:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.1.2.4 2025/02/22 13:10:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.1.2.5 2025/03/27 19:00:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.1.2.4 2025/02/22 13:10:17 martin Exp $"
 #include <arch/powerpc/pic/picvar.h>
 #include <machine/wii.h>
 
+static uint32_t pic_irqmask;
+static uint32_t pic_actmask;
+
 void pi_init_intr(void);
 
 #define WR4(reg, val)	out32(reg, val)
@@ -53,29 +56,32 @@ void pi_init_intr(void);
 static void
 pi_enable_irq(struct pic_ops *pic, int irq, int type)
 {
-	WR4(PI_INTMR, RD4(PI_INTMR) | __BIT(irq));
+	pic_irqmask |= __BIT(irq);
+	WR4(PI_INTMR, pic_irqmask & ~pic_actmask);
 }
 
 static void
 pi_disable_irq(struct pic_ops *pic, int irq)
 {
-	WR4(PI_INTMR, RD4(PI_INTMR) & ~__BIT(irq));
+	pic_irqmask &= ~__BIT(irq);
+	WR4(PI_INTMR, pic_irqmask & ~pic_actmask);
 }
 
 static int
 pi_get_irq(struct pic_ops *pic, int mode)
 {
-	static uint32_t pend;
+	uint32_t raw, pend;
 	int irq;
 
-	if (mode == PIC_GET_IRQ) {
-		pend = RD4(PI_INTSR) & RD4(PI_INTMR);
-	}
+	raw = RD4(PI_INTSR);
+	pend = raw & pic_irqmask;
 	if (pend == 0) {
 		return 255;
 	}
 	irq = ffs32(pend) - 1;
-	pend &= ~__BIT(irq);
+
+	pic_actmask |= __BIT(irq);
+	WR4(PI_INTMR, pic_irqmask & ~pic_actmask);
 
 	return irq;
 }
@@ -83,6 +89,8 @@ pi_get_irq(struct pic_ops *pic, int mode)
 static void
 pi_ack_irq(struct pic_ops *pic, int irq)
 {
+	pic_actmask &= ~__BIT(irq);
+	WR4(PI_INTMR, pic_irqmask & ~pic_actmask);
 	WR4(PI_INTSR, __BIT(irq));
 }
 
@@ -101,6 +109,9 @@ static struct pic_ops pic = {
 void
 pi_init_intr(void)
 {
+	pic_irqmask = 0;
+	pic_actmask = 0;
+
 	/* Mask and clear all interrupts. */
 	WR4(PI_INTMR, 0);
 	WR4(PI_INTSR, ~0U);
