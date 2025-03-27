@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.26 2025/03/27 10:57:10 riastradh Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.27 2025/03/27 10:57:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.26 2025/03/27 10:57:10 riastradh Exp $");
+__RCSID("$Id: t_unix.c,v 1.27 2025/03/27 10:57:30 riastradh Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -372,6 +372,8 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 
 	free(sock_addr);
 	free(sun);
+	if (forkit && clntpid == getpid())
+		_exit(0);
 	return 0;
 fail:
 	if (srvrpid == getpid()) {
@@ -386,6 +388,8 @@ fail:
 	}
 	free(sock_addr);
 	free(sun);
+	if (forkit && clntpid == getpid())
+		_exit(0);
 	return -1;
 }
 
