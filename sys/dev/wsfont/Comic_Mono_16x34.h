@@ -29,7 +29,7 @@ SOFTWARE.
 static u_char Comic_Mono_16x34_data[];
 
 static struct wsdisplay_font Comic_Mono_16x34 = {
-	"Comic Mono",			/* typeface name */
+	"Comic Mono 16x34",		/* typeface name */
 	32,				/* firstchar */
 	127 - 32,			/* numchar */
 	WSDISPLAY_FONTENC_ISO,		/* encoding */
