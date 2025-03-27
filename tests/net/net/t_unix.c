@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.25 2021/08/08 20:54:49 nia Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.26 2025/03/27 10:57:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.25 2021/08/08 20:54:49 nia Exp $");
+__RCSID("$Id: t_unix.c,v 1.26 2025/03/27 10:57:10 riastradh Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -49,20 +49,23 @@ __RCSID("$Id: t_unix.c,v 1.25 2021/08/08 20:54:49 nia Exp $");
 #else
 #define LX
 #endif
+
 #include <sys/param.h>
+
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
-#include <stdio.h>
+
 #include <err.h>
 #include <errno.h>
-#include <string.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 #include "test.h"
 
