@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.223 2025/03/27 12:22:43 riastradh Exp $
+#	$NetBSD: GENERIC64,v 1.224 2025/03/27 12:23:19 riastradh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -581,7 +581,6 @@ virtio* 	at acpi?
 virtio* 	at pci? dev ? function ?
 
 include "dev/virtio/virtio.config"
-no vio9p* 	at virtio?		# XXX ?
 no viomb* 	at virtio?		# XXX ?
 
 # SCSI controllers
