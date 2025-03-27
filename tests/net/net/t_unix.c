@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.27 2025/03/27 10:57:30 riastradh Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.28 2025/03/27 11:01:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.27 2025/03/27 10:57:30 riastradh Exp $");
+__RCSID("$Id: t_unix.c,v 1.28 2025/03/27 11:01:07 riastradh Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -59,6 +59,7 @@ __RCSID("$Id: t_unix.c,v 1.27 2025/03/27 10:57:30 riastradh Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -395,6 +396,8 @@ fail:
 
 #ifndef TEST
 
+#include "h_macros.h"
+
 ATF_TC(sockaddr_un_len_exceed);
 ATF_TC_HEAD(sockaddr_un_len_exceed, tc)
 {
@@ -439,6 +442,86 @@ ATF_TC_BODY(sockaddr_un_closed, tc)
 	    "test(false, true, false, 100): %s", strerror(errno));
 }
 
+ATF_TC(sockaddr_un_local_connwait);
+ATF_TC_HEAD(sockaddr_un_local_connwait, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that LOCAL_CONNWAIT works");
+}
+
+ATF_TC_BODY(sockaddr_un_local_connwait, tc)
+{
+	/* too annoying to fit this into the test(...) framework above */
+	struct sockaddr_un sun = {.sun_family = AF_UNIX, .sun_path = "sock"};
+	int listener, conn, acc;
+	const int one = 1;
+	struct pollfd pfd;
+	int nfd, error;
+	socklen_t errorlen = sizeof(error);
+
+	/*
+	 * Create and bind a listening socket.
+	 */
+	RL(listener = socket(PF_LOCAL, SOCK_STREAM|SOCK_NONBLOCK, 0));
+	RL(bind(listener, (const struct sockaddr *)&sun, sizeof(sun)));
+	RL(listen(listener, 5));
+
+	/*
+	 * Nobody's trying to connect, so accept would block.
+	 */
+	ATF_REQUIRE_ERRNO(EAGAIN, accept(listener, NULL, NULL) == -1);
+
+	/*
+	 * Connect should succeed immediately even though nobody is
+	 * waiting to accept on the other end yet.
+	 */
+	RL(conn = socket(PF_LOCAL, SOCK_STREAM|SOCK_NONBLOCK, 0));
+	RL(connect(conn, (const struct sockaddr *)&sun, sizeof(sun)));
+
+	/*
+	 * Accept should succeed now that a client connected.  Close
+	 * both sides; we're done with this connection and will try
+	 * again with LOCAL_CONNWAIT next.
+	 */
+	RL(acc = accept(listener, NULL, NULL));
+	RL(close(acc));
+	RL(close(conn));
+
+	/*
+	 * If we set LOCAL_CONNWAIT, connect should fail, but with
+	 * EINPROGRESS -- note: not EAGAIN, because it has changed
+	 * state.  If we try to connect again, it should fail with
+	 * EALREADY because the connection is already pending.
+	 */
+	RL(conn = socket(PF_LOCAL, SOCK_STREAM|SOCK_NONBLOCK, 0));
+	RL(setsockopt(conn, SOL_LOCAL, LOCAL_CONNWAIT, &one, sizeof(one)));
+	ATF_REQUIRE_ERRNO(EINPROGRESS,
+	    connect(conn, (const struct sockaddr *)&sun, sizeof(sun)) == -1);
+	ATF_REQUIRE_ERRNO(EALREADY,
+	    connect(conn, (const struct sockaddr *)&sun, sizeof(sun)) == -1);
+
+	/*
+	 * Accept should succeed immediately now.
+	 */
+	RL(acc = accept(listener, NULL, NULL));
+
+	/*
+	 * Verify via poll(2) that the pending connect(2) has finished
+	 * -- it will report POLLOUT when that happens.  And then
+	 * verify that there was no error.
+	 */
+	pfd = (struct pollfd){.fd = conn, .events = POLLOUT};
+	RL(nfd = poll(&pfd, 1, 0));
+	ATF_REQUIRE_MSG(pfd.revents & POLLOUT, "revents=0x%x", pfd.revents);
+	RL(getsockopt(conn, SOL_SOCKET, SO_ERROR, &error, &errorlen));
+	ATF_REQUIRE_MSG(errorlen == sizeof(error), "errorlen=%d", errorlen);
+	ATF_REQUIRE_MSG(error == 0, "error=%d", error);
+
+	RL(close(acc));
+	RL(close(conn));
+	RL(close(listener));
+}
+
 ATF_TC(sockaddr_un_local_peereid);
 ATF_TC_HEAD(sockaddr_un_local_peereid, tc)
 {
@@ -473,6 +556,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sockaddr_un_len_exceed);
 	ATF_TP_ADD_TC(tp, sockaddr_un_len_max);
 	ATF_TP_ADD_TC(tp, sockaddr_un_closed);
+	ATF_TP_ADD_TC(tp, sockaddr_un_local_connwait);
 	ATF_TP_ADD_TC(tp, sockaddr_un_local_peereid);
 	ATF_TP_ADD_TC(tp, sockaddr_un_fstat);
 	return atf_no_error();
