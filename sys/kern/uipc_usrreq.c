@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.207 2024/12/07 02:31:14 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.208 2025/03/27 11:00:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.207 2024/12/07 02:31:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.208 2025/03/27 11:00:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -839,8 +839,8 @@ unp_accept(struct socket *so, struct sockaddr *nam)
 	}
 	so2 = unp->unp_conn->unp_socket;
 	if (so2->so_state & SS_ISCONNECTING) {
-		KASSERT(solocked2(so, so->so_head));
-		KASSERT(solocked2(so2, so->so_head));
+		KASSERT(so->so_head == NULL || solocked2(so, so->so_head));
+		KASSERT(so->so_head == NULL || solocked2(so2, so->so_head));
 		soisconnected(so2);
 	}
 	/*
