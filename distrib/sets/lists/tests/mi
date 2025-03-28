@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1361 2025/03/13 01:27:27 riastradh Exp $
+# $NetBSD: mi,v 1.1362 2025/03/28 18:41:55 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3009,6 +3009,7 @@
 ./usr/tests/lib/libc/gen/t_basedirname			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_closefrom			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_cpuset			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/gen/t_ctype			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_dir				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_floatunditf			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_fmtcheck			tests-lib-tests		compattestfile,atf

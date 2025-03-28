@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2025/03/13 01:27:27 riastradh Exp $
+# $NetBSD: Makefile,v 1.58 2025/03/28 18:41:55 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -16,6 +16,7 @@ TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
 TESTS_C+=	t_cpuset
+TESTS_C+=	t_ctype
 TESTS_C+=	t_dir
 TESTS_C+=	t_floatunditf
 TESTS_C+=	t_fmtcheck

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.469 2025/03/13 01:27:27 riastradh Exp $
+# $NetBSD: mi,v 1.470 2025/03/28 18:41:55 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2029,6 +2029,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_closefrom.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_cpuset.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_ctype.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_floatunditf.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf,compattestfile
