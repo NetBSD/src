@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.2 2025/03/28 18:54:09 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.3 2025/03/28 19:13:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.2 2025/03/28 18:54:09 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.3 2025/03/28 19:13:22 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -800,8 +800,6 @@ ATF_TC_BODY(abuse_##FN##_macro_locale, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	atf_tc_expect_fail("PR lib/58208:"				      \
-	    " ctype(3) provides poor runtime feedback of abuse");	      \
 	for (i = 0; i < __arraycount(locales); i++) {			      \
 		char buf[128];						      \
 									      \
@@ -825,8 +823,6 @@ ATF_TC_BODY(abuse_##FN##_function_locale, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	atf_tc_expect_fail("PR lib/58208:"				      \
-	    " ctype(3) provides poor runtime feedback of abuse");	      \
 	for (i = 0; i < __arraycount(locales); i++) {			      \
 		char buf[128];						      \
 									      \

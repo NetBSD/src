@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.47 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: rune.c,v 1.48 2025/03/28 19:13:22 riastradh Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -54,15 +54,67 @@
 
 typedef struct {
 	_RuneLocale rl;
+#ifdef __CHAR_UNSIGNED__
 	unsigned short	rlp_ctype_tab  [_CTYPE_NUM_CHARS + 1];
 	short		rlp_tolower_tab[_CTYPE_NUM_CHARS + 1];
 	short		rlp_toupper_tab[_CTYPE_NUM_CHARS + 1];
+#else
+	unsigned short	*rlp_ctype_tab;
+	short		*rlp_tolower_tab;
+	short		*rlp_toupper_tab;
+#endif
 	char		rlp_codeset[33]; /* XXX */
 
 #ifdef __BUILD_LEGACY
 	unsigned char	rlp_compat_bsdctype[_CTYPE_NUM_CHARS + 1];
 #endif
 } _RuneLocalePriv;
+
+#ifndef __CHAR_UNSIGNED__
+
+#define	roundup(X, N)	((((X) + ((N) - 1))/(N))*(N))
+
+static void *
+alloc_guarded(size_t elemsize, size_t nelem)
+{
+	const unsigned page_size = sysconf(_SC_PAGESIZE);
+	size_t nbytes = 0;
+	void *p = MAP_FAILED, *q = NULL;
+
+	_DIAGASSERT(elemsize != 0);
+	if (nelem > SIZE_MAX/elemsize)
+		goto fail;
+	nbytes = page_size + roundup(elemsize*nelem, page_size);
+	p = mmap(NULL, nbytes, PROT_READ|PROT_WRITE, MAP_ANON,
+	    /*fd*/-1, /*offset*/0);
+	if (p == MAP_FAILED)
+		goto fail;
+	if (mprotect(p, page_size, PROT_NONE) == -1)
+		goto fail;
+	q = (char *)p + page_size;
+	return q;
+
+fail:	if (p != MAP_FAILED)
+		(void)munmap(p, nbytes);
+	return NULL;
+}
+
+static void
+free_guarded(void *q, size_t elemsize, size_t nelem)
+{
+	const unsigned page_size = sysconf(_SC_PAGESIZE);
+	size_t nbytes = 0;
+	void *p;
+
+	if (q == NULL)
+		return;
+	_DIAGASSERT(elemsize <= SIZE_MAX/nelem);
+	nbytes = page_size + roundup(elemsize*nelem, page_size);
+	p = (char *)q - page_size;
+	(void)munmap(p, nbytes);
+}
+
+#endif	/* !__CHAR_UNSIGNED__ */
 
 static __inline void
 _rune_wctype_init(_RuneLocale *rl)
@@ -213,6 +265,22 @@ _rune_read_file(const char * __restrict var, size_t lenvar,
 	rlp = (_RuneLocalePriv *)malloc(n);
 	if (rlp == NULL)
 		return ENOMEM;
+#ifndef __CHAR_UNSIGNED__
+	rlp->rlp_ctype_tab = NULL;
+	rlp->rlp_tolower_tab = NULL;
+	rlp->rlp_toupper_tab = NULL;
+	if ((rlp->rlp_ctype_tab = alloc_guarded(sizeof(rlp->rlp_ctype_tab[0]),
+		    _CTYPE_NUM_CHARS + 1)) == NULL ||
+	    (rlp->rlp_tolower_tab =
+		alloc_guarded(sizeof(rlp->rlp_tolower_tab[0]),
+		    _CTYPE_NUM_CHARS + 1)) == NULL ||
+	    (rlp->rlp_toupper_tab =
+		alloc_guarded(sizeof(rlp->rlp_toupper_tab[0]),
+		    _CTYPE_NUM_CHARS + 1)) == NULL) {
+		ret = ENOMEM;
+		goto err;
+	}
+#endif	/* !__CHAR_UNSIGNED__ */
 	_rune_init_priv(rlp);
 
 	rl = &rlp->rl;
@@ -324,6 +392,14 @@ do {									\
 	return 0;
 
 err:
+#ifndef __CHAR_UNSIGNED__
+	free_guarded(rlp->rlp_ctype_tab, sizeof(rlp->rlp_ctype_tab[0]),
+	    _CTYPE_NUM_CHARS + 1);
+	free_guarded(rlp->rlp_tolower_tab, sizeof(rlp->rlp_tolower_tab[0]),
+	    _CTYPE_NUM_CHARS + 1);
+	free_guarded(rlp->rlp_toupper_tab, sizeof(rlp->rlp_toupper_tab[0]),
+	    _CTYPE_NUM_CHARS + 1);
+#endif
 	free(rlp);
 	return ret;
 }
