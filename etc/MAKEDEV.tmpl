@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.236 2025/03/11 13:56:48 brad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.237 2025/03/28 18:41:25 riastradh Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@
 #	lua	Lua device
 #	wscons	make wscons devices
 #	usbs	make USB devices
+#	virtio	virtio(4)-related devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -948,6 +949,12 @@ usbs)
 	makedev ttyHS0
 	makedev utoppy0 utoppy1
 	makedev ugen0 ugen1 ugen2 ugen3
+	;;
+
+virtio)
+	makedev ttyVI
+	makedev vio9p0 vio9p1 vio9p2 vio9p3
+	makedev vio9p4 vio9p5 vio9p6 vio9p7
 	;;
 
 std)
