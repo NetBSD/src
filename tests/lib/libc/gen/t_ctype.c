@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.4 2025/03/28 19:24:03 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.5 2025/03/28 22:51:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.4 2025/03/28 19:24:03 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.5 2025/03/28 22:51:58 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -259,7 +259,7 @@ test_isalpha_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'a': case 'A':
 		case 'b': case 'B':
@@ -302,7 +302,7 @@ test_isupper_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'A':
 		case 'B':
@@ -345,7 +345,7 @@ test_islower_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'a':
 		case 'b':
@@ -388,7 +388,7 @@ test_isdigit_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case '0':
 		case '1':
@@ -415,7 +415,7 @@ test_isxdigit_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case '0':
 		case '1':
@@ -448,7 +448,7 @@ test_isalnum_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'a': case 'A':
 		case 'b': case 'B':
@@ -501,7 +501,7 @@ test_isspace_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case ' ':
 		case '\f':
@@ -524,7 +524,7 @@ test_ispunct_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		default:
 			ATF_CHECK_MSG((*ctypefn)(ch), "ch=0x%x", ch);
@@ -583,7 +583,7 @@ test_isprint_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 0x20:	/* space is printing but not graphic */
 		default:
@@ -604,7 +604,7 @@ test_isgraph_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		default:
 			ATF_CHECK_MSG((*ctypefn)(ch), "ch=0x%x", ch);
@@ -625,7 +625,7 @@ test_iscntrl_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 0 ... 0x1f:
 		case 0x7f:
@@ -644,7 +644,7 @@ test_isblank_c(int (*ctypefn)(int))
 	int ch;
 
 	ATF_CHECK(!(*ctypefn)(EOF));
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case ' ':
 		case '\t':
@@ -664,7 +664,7 @@ test_toupper_c(int (*ctypefn)(int))
 
 	ATF_CHECK_MSG((result = (*ctypefn)(EOF)) == EOF,
 	    "result=%d, expected EOF=%d", result, EOF);
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'a': case 'A': expected = 'A'; break;
 		case 'b': case 'B': expected = 'B'; break;
@@ -708,7 +708,7 @@ test_tolower_c(int (*ctypefn)(int))
 
 	ATF_CHECK_MSG((result = (*ctypefn)(EOF)) == EOF,
 	    "result=%d, expected EOF=%d", result, EOF);
-	for (ch = 0; ch < UCHAR_MAX; ch++) {
+	for (ch = 0; ch <= UCHAR_MAX; ch++) {
 		switch (ch) {
 		case 'a': case 'A': expected = 'a'; break;
 		case 'b': case 'B': expected = 'b'; break;
