@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.170 2025/03/26 02:03:43 gutteridge Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.171 2025/03/28 23:26:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.170 2025/03/26 02:03:43 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.171 2025/03/28 23:26:34 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1159,6 +1159,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		} else {
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			error = module_do_builtin(mod, name, modp, props);
+			module_print("module_do_builtin() returned %d", error);
 			return error;
 		}
 	}
@@ -1209,9 +1210,12 @@ module_do_load(const char *name, bool isdep, int flags,
 			 */
 			if ((modclass != MODULE_CLASS_EXEC || error != ENOENT)
 			    && root_device != NULL)
-				module_error("vfs load failed for `%s', "
-				    "error %d", name, error);
+				module_error("module_load_vfs_vec() failed "
+				    "for `%s', error %d", name, error);
+			else
 #endif
+				module_print("module_load_vfs_vec() failed "
+				    "for `%s', error %d", name, error);
 			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			module_free(mod);
 			return error;
@@ -1461,6 +1465,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	TAILQ_REMOVE(pending, mod, mod_chain);
 	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 	module_free(mod);
+	module_print("Load failed, error %d", error);
 	return error;
 }
 
