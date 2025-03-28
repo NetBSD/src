@@ -119,8 +119,8 @@ struct npf_rule {
 	nvlist_t *		r_info;
 	size_t			r_info_len;
 
-	rid_t *uid;
-	rid_t *gid;
+	rid_t uid;
+	rid_t gid;
 };
 
 #define	SKIPTO_ADJ_FLAG		(1U << 31)
@@ -658,6 +658,9 @@ npf_rule_alloc(npf_t *npf, const nvlist_t *rule)
 		}
 		memcpy(rl->r_key, key, len);
 	}
+
+	/* init uid/gids to none */
+	rl->gid.op = rl->uid.op = NPF_OP_NONE;
 	return rl;
 }
 
@@ -728,21 +731,20 @@ npf_rule_getrid(const nvlist_t *req, const char *name)
 	const uint64_t *rid = nvlist_get_number_array(req, name, &nitems);
 	KASSERT(nitems == 3);
 
-	id.id[0] = (uid_t)rid[0];
-	id.id[1] = (uid_t)rid[1];
+	id.id[0] = (uint32_t)rid[0];
+	id.id[1] = (uint32_t)rid[1];
 	id.op = (uint8_t)rid[2];
 
 	return id;
 }
 
 static void
-npf_rule_setrid(const nvlist_t *req, rid_t** rid, const char *name)
+npf_rule_setrid(const nvlist_t *req, rid_t* rid, const char *name)
 {
 	rid_t id;
 
 	id = npf_rule_getrid(req, name);
-	*rid = kmem_alloc(sizeof(**rid), KM_SLEEP);
-	memcpy(*rid, &id, sizeof(**rid));
+	memcpy(rid, &id, sizeof(*rid));
 }
 
 void
@@ -796,12 +798,6 @@ npf_rule_free(npf_rule_t *rl)
 		kmem_free(rl->r_info, rl->r_info_len);
 	}
 
-	if (rl->uid) {
-		kmem_free(rl->uid, sizeof(*(rl->uid)));
-	}
-	if (rl->gid) {
-		kmem_free(rl->gid, sizeof(*(rl->gid)));
-	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
 
@@ -1024,13 +1020,13 @@ int
 npf_uid_gid_match(npf_rule_t *rl, npf_cache_t *npc, int dir)
 {
 	int matched;
-	if (rl->uid == NULL && rl->gid == NULL)
+	if (rl->uid.op == NPF_OP_NONE && rl->gid.op == NPF_OP_NONE)
 		return -1;
 
 	matched = 0;
-	if (rl->uid)
+	if (rl->uid.op == NPF_OP_NONE)
 		matched |= npf_rule_match_user(rl, npc, dir);
-	if (rl->gid)
+	if (rl->gid.op == NPF_OP_NONE)
 		matched |= npf_rule_match_usrgrp(rl, npc, dir);
 
 	return matched;
