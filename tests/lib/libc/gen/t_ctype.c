@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.7 2025/03/28 23:01:51 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.8 2025/03/28 23:30:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.7 2025/03/28 23:01:51 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.8 2025/03/28 23:30:34 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -45,7 +45,7 @@ enum { CHAR_UNSIGNED = 1 };
 enum { CHAR_UNSIGNED = 0 };
 #endif
 
-static const char *locales[] = { "C.UTF-8", "fr_FR.ISO8859-1", "C" };
+static const char *const locales[] = { "C.UTF-8", "fr_FR.ISO8859-1", "C" };
 
 static int isalpha_wrapper(int ch) { return isalpha(ch); }
 static int isupper_wrapper(int ch) { return isupper(ch); }
