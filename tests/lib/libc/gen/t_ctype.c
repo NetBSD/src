@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.3 2025/03/28 19:13:22 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.4 2025/03/28 19:24:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.3 2025/03/28 19:13:22 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.4 2025/03/28 19:24:03 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -45,7 +45,7 @@ enum { CHAR_UNSIGNED = 1 };
 enum { CHAR_UNSIGNED = 0 };
 #endif
 
-static const char *locales[] = { "C.UTF-8", "fr_FR.ISO8859-1" };
+static const char *locales[] = { "C.UTF-8", "fr_FR.ISO8859-1", "C" };
 
 static int isalpha_wrapper(int ch) { return isalpha(ch); }
 static int isupper_wrapper(int ch) { return isupper(ch); }
@@ -806,7 +806,13 @@ ATF_TC_BODY(abuse_##FN##_macro_locale, tc)				      \
 		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,      \
 		    "locales[i]=%s", locales[i]);			      \
 		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], #FN);	      \
+		if (strcmp(locales[i], "C") == 0) {			      \
+			atf_tc_expect_fail("PR lib/58208: ctype(3)"	      \
+			    " provides poor runtime feedback of abuse");      \
+		}							      \
 		test_abuse(buf, &FN##_wrapper);				      \
+		if (strcmp(locales[i], "C") == 0)			      \
+			atf_tc_expect_pass();				      \
 	}								      \
 }									      \
 ATF_TC(abuse_##FN##_function_locale);					      \
@@ -829,7 +835,13 @@ ATF_TC_BODY(abuse_##FN##_function_locale, tc)				      \
 		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,      \
 		    "locales[i]=%s", locales[i]);			      \
 		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], #FN);	      \
+		if (strcmp(locales[i], "C") == 0) {			      \
+			atf_tc_expect_fail("PR lib/58208: ctype(3)"	      \
+			    " provides poor runtime feedback of abuse");      \
+		}							      \
 		test_abuse(buf, &FN);					      \
+		if (strcmp(locales[i], "C") == 0)			      \
+			atf_tc_expect_pass();				      \
 	}								      \
 }
 
