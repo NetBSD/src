@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.5 2025/03/28 22:51:58 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.6 2025/03/28 22:52:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.5 2025/03/28 22:51:58 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.6 2025/03/28 22:52:35 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -931,6 +931,114 @@ DEF_TEST_USE(isblank)
 DEF_TEST_USE(toupper)
 DEF_TEST_USE(tolower)
 
+ATF_TC(eof_confusion_iso8859_1);
+ATF_TC_HEAD(eof_confusion_iso8859_1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test potential confusion with EOF in ISO-8859-1");
+}
+ATF_TC_BODY(eof_confusion_iso8859_1, tc)
+{
+	int ydots = 0xff;	/* ÿ, LATIN SMALL LETTER Y WITH DIAERESIS */
+	int ch;
+
+	/*
+	 * The LATIN SMALL LETTER Y WITH DIAERESIS code point 0xff in
+	 * ISO-8859-1 is curious primarily because its bit pattern
+	 * coincides with an 8-bit signed -1, which is to say, EOF as
+	 * an 8-bit quantity; of course, for EOF, all of the is*
+	 * functions are supposed to return false (as we test above).
+	 * It also has the curious property that it lacks any
+	 * corresponding uppercase code point in ISO-8859-1, so we
+	 * can't distinguish it from EOF by tolower/toupper.
+	 */
+	ATF_REQUIRE(setlocale(LC_CTYPE, "fr_FR.ISO8859-1") != NULL);
+	ATF_CHECK(isalpha(ydots));
+	ATF_CHECK(!isupper(ydots));
+	ATF_CHECK(islower(ydots));
+	ATF_CHECK(!isdigit(ydots));
+	ATF_CHECK(!isxdigit(ydots));
+	ATF_CHECK(isalnum(ydots));
+	ATF_CHECK(!isspace(ydots));
+	ATF_CHECK(!ispunct(ydots));
+	ATF_CHECK(isprint(ydots));
+	ATF_CHECK(isgraph(ydots));
+	ATF_CHECK(!iscntrl(ydots));
+	ATF_CHECK(!isblank(ydots));
+	ATF_CHECK_MSG((ch = toupper(ydots)) == ydots, "ch=0x%x", ch);
+	ATF_CHECK_MSG((ch = tolower(ydots)) == ydots, "ch=0x%x", ch);
+}
+
+ATF_TC(eof_confusion_koi8_u);
+ATF_TC_HEAD(eof_confusion_koi8_u, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test potential confusion with EOF in KOI8-U");
+}
+ATF_TC_BODY(eof_confusion_koi8_u, tc)
+{
+	int Hard = 0xff;	/* Ъ, CYRILLIC CAPITAL LETTER HARD SIGN */
+	int hard = 0xdf;	/* ъ, CYRILLIC SMALL LETTER HARD SIGN */
+	int ch;
+
+	/*
+	 * The CYRILLIC CAPITAL LETTER HARD SIGN code point 0xff in
+	 * KOI8-U (and KOI8-R) also coincides with the bit pattern of
+	 * an 8-bit signed -1.  Unlike LATIN SMALL LETTER Y WITH
+	 * DIAERESIS, it has a lowercase equivalent in KOI8-U.
+	 */
+	ATF_REQUIRE(setlocale(LC_CTYPE, "uk_UA.KOI8-U") != NULL);
+	ATF_CHECK(isalpha(Hard));
+	ATF_CHECK(isupper(Hard));
+	ATF_CHECK(!islower(Hard));
+	ATF_CHECK(!isdigit(Hard));
+	ATF_CHECK(!isxdigit(Hard));
+	ATF_CHECK(isalnum(Hard));
+	ATF_CHECK(!isspace(Hard));
+	ATF_CHECK(!ispunct(Hard));
+	ATF_CHECK(isprint(Hard));
+	ATF_CHECK(isgraph(Hard));
+	ATF_CHECK(!iscntrl(Hard));
+	ATF_CHECK(!isblank(Hard));
+	ATF_CHECK_MSG((ch = toupper(Hard)) == Hard, "ch=0x%x", ch);
+	ATF_CHECK_MSG((ch = tolower(Hard)) == hard, "ch=0x%x", ch);
+}
+
+ATF_TC(eof_confusion_pt154);
+ATF_TC_HEAD(eof_confusion_pt154, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test potential confusion with EOF in PT154");
+}
+ATF_TC_BODY(eof_confusion_pt154, tc)
+{
+	int ya = 0xff;		/* я, CYRILLIC SMALL LETTER YA */
+	int Ya = 0xdf;		/* Я, CYRILLIC CAPITAL LETTER YA */
+	int ch;
+
+	/*
+	 * The CYRILLIC SMALL LETTER YA code point 0xff in PT154 also
+	 * coincides with the bit pattern of an 8-bit signed -1, and is
+	 * lowercase with a corresponding uppercase code point in
+	 * PT154.
+	 */
+	ATF_REQUIRE(setlocale(LC_CTYPE, "kk_KZ.PT154") != NULL);
+	ATF_CHECK(isalpha(ya));
+	ATF_CHECK(!isupper(ya));
+	ATF_CHECK(islower(ya));
+	ATF_CHECK(!isdigit(ya));
+	ATF_CHECK(!isxdigit(ya));
+	ATF_CHECK(isalnum(ya));
+	ATF_CHECK(!isspace(ya));
+	ATF_CHECK(!ispunct(ya));
+	ATF_CHECK(isprint(ya));
+	ATF_CHECK(isgraph(ya));
+	ATF_CHECK(!iscntrl(ya));
+	ATF_CHECK(!isblank(ya));
+	ATF_CHECK_MSG((ch = toupper(ya)) == Ya, "ch=0x%x", ch);
+	ATF_CHECK_MSG((ch = tolower(ya)) == ya, "ch=0x%x", ch);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -963,6 +1071,10 @@ ATF_TP_ADD_TCS(tp)
 	ADD_TEST_USE(tp, isblank);
 	ADD_TEST_USE(tp, toupper);
 	ADD_TEST_USE(tp, tolower);
+
+	ATF_TP_ADD_TC(tp, eof_confusion_iso8859_1);
+	ATF_TP_ADD_TC(tp, eof_confusion_koi8_u);
+	ATF_TP_ADD_TC(tp, eof_confusion_pt154);
 
 	return atf_no_error();
 }
