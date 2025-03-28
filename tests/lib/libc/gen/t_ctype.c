@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.6 2025/03/28 22:52:35 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.7 2025/03/28 23:01:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.6 2025/03/28 22:52:35 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.7 2025/03/28 23:01:51 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -98,6 +98,27 @@ test_abuse(const char *name, int (*ctypefn)(int))
 
 	for (; ch <= CHAR_MAX; ch++)
 		ATF_REQUIRE_MSG(ch == (int)(unsigned char)ch, "ch=%d", ch);
+}
+
+static void
+test_abuse_in_locales(const char *name, int (*ctypefn)(int))
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(locales); i++) {
+		char buf[128];
+
+		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,
+		    "locales[i]=%s", locales[i]);
+		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], name);
+		if (strcmp(locales[i], "C") == 0) {
+			atf_tc_expect_fail("PR lib/58208: ctype(3)"
+			    " provides poor runtime feedback of abuse");
+		}
+		test_abuse(buf, ctypefn);
+		if (strcmp(locales[i], "C") == 0)
+			atf_tc_expect_pass();
+	}
 }
 
 static void
@@ -794,26 +815,11 @@ ATF_TC_HEAD(abuse_##FN##_macro_locale, tc)				      \
 }									      \
 ATF_TC_BODY(abuse_##FN##_macro_locale, tc)				      \
 {									      \
-	size_t i;							      \
-									      \
 	if (CHAR_UNSIGNED) {						      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	for (i = 0; i < __arraycount(locales); i++) {			      \
-		char buf[128];						      \
-									      \
-		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,      \
-		    "locales[i]=%s", locales[i]);			      \
-		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], #FN);	      \
-		if (strcmp(locales[i], "C") == 0) {			      \
-			atf_tc_expect_fail("PR lib/58208: ctype(3)"	      \
-			    " provides poor runtime feedback of abuse");      \
-		}							      \
-		test_abuse(buf, &FN##_wrapper);				      \
-		if (strcmp(locales[i], "C") == 0)			      \
-			atf_tc_expect_pass();				      \
-	}								      \
+	test_abuse_in_locales(#FN, &FN##_wrapper);			      \
 }									      \
 ATF_TC(abuse_##FN##_function_locale);					      \
 ATF_TC_HEAD(abuse_##FN##_function_locale, tc)				      \
@@ -823,26 +829,11 @@ ATF_TC_HEAD(abuse_##FN##_function_locale, tc)				      \
 }									      \
 ATF_TC_BODY(abuse_##FN##_function_locale, tc)				      \
 {									      \
-	size_t i;							      \
-									      \
 	if (CHAR_UNSIGNED) {						      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	for (i = 0; i < __arraycount(locales); i++) {			      \
-		char buf[128];						      \
-									      \
-		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,      \
-		    "locales[i]=%s", locales[i]);			      \
-		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], #FN);	      \
-		if (strcmp(locales[i], "C") == 0) {			      \
-			atf_tc_expect_fail("PR lib/58208: ctype(3)"	      \
-			    " provides poor runtime feedback of abuse");      \
-		}							      \
-		test_abuse(buf, &FN);					      \
-		if (strcmp(locales[i], "C") == 0)			      \
-			atf_tc_expect_pass();				      \
-	}								      \
+	test_abuse_in_locales(#FN, &FN);				      \
 }
 
 #define	ADD_TEST_USE(TP, FN) do						      \
