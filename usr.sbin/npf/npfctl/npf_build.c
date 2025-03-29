@@ -715,6 +715,14 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 		npfctl_build_code(rl, family, popts, fopts);
 	}
 
+	if (fopts->uid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->uid, "r_user");
+	}
+
+	if (fopts->gid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->gid, "r_group");
+	}
+
 	if (rproc) {
 		npf_rule_setproc(rl, rproc);
 	}

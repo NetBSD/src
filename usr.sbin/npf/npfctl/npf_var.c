@@ -183,6 +183,17 @@ npfvar_expand_string(const npfvar_t *vp)
 	return npfvar_get_data(vp, NPFVAR_STRING, 0);
 }
 
+uint32_t
+npfvar_expand_number(const npfvar_t *vp)
+{
+	uint32_t *number;
+	if (npfvar_get_count(vp) != 1) {
+		yyerror("variable '%s' has multiple elements", vp->v_key);
+	}
+	number =  (uint32_t *)npfvar_get_data(vp, NPFVAR_NUM, 0);
+	return *number;
+}
+
 size_t
 npfvar_get_count(const npfvar_t *vp)
 {

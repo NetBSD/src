@@ -735,6 +735,16 @@ npf_rule_setproc(nl_rule_t *rl, const char *name)
 	return nvlist_error(rl->rule_dict);
 }
 
+
+/* use a single id hack for both user and group */
+int
+npf_rule_setrid(nl_rule_t *rl, struct r_id rid, const char *name)
+{
+	uint64_t uid_element[3] = { rid.id[0], rid.id[1], rid.op };
+	nvlist_add_number_array(rl->rule_dict, name, uid_element, 3);
+	return nvlist_error(rl->rule_dict);
+}
+
 void *
 npf_rule_export(nl_rule_t *rl, size_t *length)
 {
