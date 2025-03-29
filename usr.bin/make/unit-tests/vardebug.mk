@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.16 2025/01/11 21:21:33 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.17 2025/03/29 16:44:14 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -55,9 +55,6 @@ VAR+=		3
 # expect: Global: delete VAR
 .undef ${:UVAR}			# Var_Delete
 
-# When ApplyModifiers results in an error, this appears in the debug log
-# as "is error", without surrounding quotes.
-# expect: Result of ${:unknown} is error (eval, defined)
 # expect+1: Unknown modifier "unknown"
 .if ${:Uvariable:unknown}
 .endif

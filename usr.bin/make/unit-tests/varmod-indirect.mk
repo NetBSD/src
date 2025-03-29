@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.21 2024/08/29 20:20:36 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.22 2025/03/29 16:44:14 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -44,16 +44,13 @@
 
 # If an expression for an indirect modifier evaluates to anything else than an
 # empty string and is neither followed by a ':' nor '}', this produces a parse
-# error.  Because of this parse error, this feature cannot be used reasonably
+# error.  Due to this parse error, this construct cannot be used reasonably
 # in practice.
 #
 # expect+2: Unknown modifier "${"
 #.MAKEFLAGS: -dvc
-.if ${value:L:${:UM*}S,value,replaced,} == "M*S,value,replaced,}"
-# expect+1: warning: FIXME: this expression should have resulted in a parse error rather than returning the unparsed portion of the expression.
-.  warning	FIXME: this expression should have resulted in a parse $\
- 		error rather than returning the unparsed portion of the $\
- 		expression.
+.if ${value:L:${:UM*}S,value,replaced,} == "anything"
+.  error
 .else
 .  error
 .endif

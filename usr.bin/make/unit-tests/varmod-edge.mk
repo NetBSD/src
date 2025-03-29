@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.34 2025/03/29 11:51:54 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.35 2025/03/29 16:44:14 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -188,8 +188,7 @@ EXP=	value
 
 INP=	value
 MOD=	${INP::::}
-EXP=	# empty
-# expect+2: Unknown modifier ":"
+EXP=	:}
 # expect+1: Unknown modifier ":"
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"

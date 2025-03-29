@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1149 2025/03/29 12:02:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1150 2025/03/29 16:44:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1149 2025/03/29 12:02:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1150 2025/03/29 16:44:14 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3843,18 +3843,15 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 {
 	const Expr *expr = ch->expr;
 	const char *value = Expr_Str(expr);
-	const char *quot = value == var_Error ? "" : "\"";
 
 	if (ShouldLogInSimpleFormat(expr)) {
-		debug_printf("Result of ${%s:%.*s} is %s%s%s\n",
-		    expr->name, (int)(p - mod), mod,
-		    quot, value == var_Error ? "error" : value, quot);
+		debug_printf("Result of ${%s:%.*s} is \"%s\"\n",
+		    expr->name, (int)(p - mod), mod, value);
 		return;
 	}
 
-	debug_printf("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
-	    expr->name, (int)(p - mod), mod,
-	    quot, value == var_Error ? "error" : value, quot,
+	debug_printf("Result of ${%s:%.*s} is \"%s\" (%s, %s)\n",
+	    expr->name, (int)(p - mod), mod, value,
 	    VarEvalMode_Name[expr->emode],
 	    ExprDefined_Name[expr->defined]);
 }
@@ -4019,8 +4016,9 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 		Parse_Error(PARSE_FATAL, "Unknown modifier \"%.*s\"",
 		    (int)(p - mod), mod);
 		Expr_SetValueRefer(ch->expr, var_Error);
+		res = AMR_CLEANUP;
 	}
-	if (res == AMR_CLEANUP || res == AMR_BAD) {
+	if (res != AMR_OK) {
 		*pp = p;
 		return res;
 	}
