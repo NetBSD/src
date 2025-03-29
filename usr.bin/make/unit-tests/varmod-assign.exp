@@ -51,7 +51,7 @@ make: Unknown modifier ":x"
 	in command "@echo ${ASSIGN::x}"
 	in target "mod-assign-parse-1"
 sysv:y
-make: Unfinished modifier ('}' missing)
+make: Unfinished modifier after "value	# missing closing brace", expecting "}"
 	while evaluating variable "ASSIGN" with value ""
 	in command "@echo ${ASSIGN::=value	# missing closing brace"
 	in target "mod-assign-parse-3"

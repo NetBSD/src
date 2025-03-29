@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.41 2024/08/29 20:20:36 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.42 2025/03/29 11:51:54 rillig Exp $
 #
 # various modifier error tests
 
@@ -41,14 +41,14 @@ unclosed-indirect:
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 unfinished-indirect:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "v", expecting ","
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
 unfinished-loop-1:
-# expect: make: Unfinished modifier ('@' missing)
+# expect: make: Unfinished modifier after "var}", expecting "@"
 	@echo ${UNDEF:U1 2 3:@var}
 unfinished-loop-2:
-# expect: make: Unfinished modifier ('@' missing)
+# expect: make: Unfinished modifier after "...}", expecting "@"
 	@echo ${UNDEF:U1 2 3:@var@...}
 unfinished-loop-3:
 	@echo ${UNDEF:U1 2 3:@var@${var}@}
@@ -66,10 +66,10 @@ loop-close-2:
 	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
 words-1:
-# expect: make: Unfinished modifier (']' missing)
+# expect: make: Unfinished modifier after "}", expecting "]"
 	@echo ${UNDEF:U1 2 3:[}
 words-2:
-# expect: make: Unfinished modifier (']' missing)
+# expect: make: Unfinished modifier after "#}", expecting "]"
 	@echo ${UNDEF:U1 2 3:[#}
 
 words-3:
@@ -96,30 +96,30 @@ words-3:
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
 
 exclam-1:
-# expect: make: Unfinished modifier ('!' missing)
+# expect: make: Unfinished modifier after "echo}", expecting "!"
 	@echo ${VARNAME:!echo}
 	# When the final exclamation mark is missing, there is no
 	# fallback to the SysV substitution modifier.
 	# If there were a fallback, the output would be "exclam",
 	# and the above would have produced an "Unknown modifier '!'".
 exclam-2:
-# expect: make: Unfinished modifier ('!' missing)
+# expect: make: Unfinished modifier after "=exclam}", expecting "!"
 	@echo ${!:L:!=exclam}
 
 mod-subst-delimiter-1:
 # expect: make: Missing delimiter for modifier ':S'
 	@echo 1: ${VAR:S
 mod-subst-delimiter-2:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "", expecting ","
 	@echo 2: ${VAR:S,
 mod-subst-delimiter-3:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "from", expecting ","
 	@echo 3: ${VAR:S,from
 mod-subst-delimiter-4:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "", expecting ","
 	@echo 4: ${VAR:S,from,
 mod-subst-delimiter-5:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "to", expecting ","
 	@echo 5: ${VAR:S,from,to
 mod-subst-delimiter-6:
 # expect: make: Unclosed expression, expecting '}' for modifier "S,from,to,"
@@ -131,16 +131,16 @@ mod-regex-delimiter-1:
 # expect: make: Missing delimiter for modifier ':C'
 	@echo 1: ${VAR:C
 mod-regex-delimiter-2:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "", expecting ","
 	@echo 2: ${VAR:C,
 mod-regex-delimiter-3:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "from", expecting ","
 	@echo 3: ${VAR:C,from
 mod-regex-delimiter-4:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "", expecting ","
 	@echo 4: ${VAR:C,from,
 mod-regex-delimiter-5:
-# expect: make: Unfinished modifier (',' missing)
+# expect: make: Unfinished modifier after "to", expecting ","
 	@echo 5: ${VAR:C,from,to
 mod-regex-delimiter-6:
 # expect: make: Unclosed expression, expecting '}' for modifier "C,from,to,"
@@ -176,16 +176,16 @@ mod-t-parse-4:
 	@echo ${FIB:t:M*}
 
 mod-ifelse-parse-1:
-# expect: make: Unfinished modifier (':' missing)
+# expect: make: Unfinished modifier after "", expecting ":"
 	@echo ${FIB:?
 mod-ifelse-parse-2:
-# expect: make: Unfinished modifier (':' missing)
+# expect: make: Unfinished modifier after "then", expecting ":"
 	@echo ${FIB:?then
 mod-ifelse-parse-3:
-# expect: make: Unfinished modifier ('}' missing)
+# expect: make: Unfinished modifier after "", expecting "}"
 	@echo ${FIB:?then:
 mod-ifelse-parse-4:
-# expect: make: Unfinished modifier ('}' missing)
+# expect: make: Unfinished modifier after "else", expecting "}"
 	@echo ${FIB:?then:else
 mod-ifelse-parse-5:
 	@echo ${FIB:?then:else}

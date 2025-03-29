@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.33 2025/01/11 20:54:45 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.34 2025/03/29 11:51:54 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -174,7 +174,7 @@ EXP=	file.c file.ext
 INP=	file.c file...
 MOD=	${INP:a\=b}
 EXP=	# empty
-# expect+1: Unfinished modifier ('=' missing)
+# expect+1: Unfinished modifier after "a\=b}", expecting "="
 .if ${MOD} != ${EXP}
 .  warning expected "${EXP}", got "${MOD}"
 .endif
@@ -209,7 +209,7 @@ EXP=	# empty
 # variable name with quotes, leading to the rather confusing "Unfinished
 # modifier for  (',' missing)", having two spaces in a row.
 #
-# expect+1: Unfinished modifier (',' missing)
+# expect+1: Unfinished modifier after "}", expecting ","
 .if ${:S,}
 .  error
 .else

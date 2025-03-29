@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1147 2025/03/29 11:24:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1148 2025/03/29 11:51:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1147 2025/03/29 11:24:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1148 2025/03/29 11:51:53 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2232,13 +2232,15 @@ ParseModifierPart(
 			ParseModifierPartExpr(&p, part, ch, emode);
 	}
 
-	*pp = p;
 	if (*p != end1 && *p != end2) {
 		Parse_Error(PARSE_FATAL,
-		    "Unfinished modifier ('%c' missing)", end2);
+		    "Unfinished modifier after \"%.*s\", expecting \"%c\"",
+		    (int)(p - *pp), *pp, end2);
 		LazyBuf_Done(part);
+		*pp = p;
 		return false;
 	}
+	*pp = p;
 	if (end1 == end2)
 		(*pp)++;
 
