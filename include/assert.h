@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.26 2023/09/12 22:08:24 rillig Exp $	*/
+/*	$NetBSD: assert.h,v 1.27 2025/03/29 01:43:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,12 +52,12 @@
 #else /* !NDEBUG */
 # if __STDC__
 #  define assert(e)							\
-	((e) ? __static_cast(void,0) : __assert13(__FILE__, __LINE__,	\
-	                                          __assert_function__, #e))
+	(__predict_true(e) ? __static_cast(void,0)			\
+	    : __assert13(__FILE__, __LINE__, __assert_function__, #e))
 # else	/* PCC */
 #  define assert(e)							\
-	((e) ? __static_cast(void,0) : __assert13(__FILE__, __LINE__,	\
-	                                          __assert_function__, "e"))
+	(__predict_true(e) ? __static_cast(void,0)			\
+	    : __assert13(__FILE__, __LINE__, __assert_function__, "e"))
 # endif /* !__STDC__ */
 #endif /* NDEBUG */
 
@@ -67,12 +67,12 @@
 #else /* _DIAGNOSTIC */
 # if __STDC__
 #  define _DIAGASSERT(e)						\
-	((e) ? __static_cast(void,0) : __diagassert13(__FILE__, __LINE__, \
-	                                              __assert_function__, #e))
+	(__predict_true(e) ? __static_cast(void,0)			\
+	    : __diagassert13(__FILE__, __LINE__, __assert_function__, #e))
 # else	/* !__STDC__ */
 #  define _DIAGASSERT(e)	 					\
-	((e) ? __static_cast(void,0) : __diagassert13(__FILE__, __LINE__, \
-	                                              __assert_function__, "e"))
+	(__predict_true(e) ? __static_cast(void,0)			\
+	    : __diagassert13(__FILE__, __LINE__, __assert_function__, "e"))
 # endif
 #endif /* _DIAGNOSTIC */
 
