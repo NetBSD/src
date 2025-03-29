@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.163 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.164 2025/03/29 15:48:26 riastradh Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -546,10 +546,17 @@
  *	  seldomly (e.g. at subsystem initialization time) as the
  *	  basic block reordering that this affects can often generate
  *	  larger code.
+ *
+ * We use an explicit ternary operator to map any value to exactly 0 or
+ * 1 so that (a) we can specify one value to expect, and (b) the given
+ * expression occurs only in the position of a conditional so that C++
+ * classes with conversion to bool work as if this were a conditional.
+ * In contrast, say, `(exp) != 0' would require the type of exp to
+ * support conversion to integer as well.
  */
 #if __GNUC_PREREQ__(2, 96) || defined(__lint__)
-#define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
-#define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
+#define	__predict_true(exp)	__builtin_expect((exp) ? 1 : 0, 1)
+#define	__predict_false(exp)	__builtin_expect((exp) ? 1 : 0, 0)
 #else
 #define	__predict_true(exp)	(exp)
 #define	__predict_false(exp)	(exp)
