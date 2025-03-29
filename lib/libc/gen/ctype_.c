@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.20 2013/04/13 10:21:20 joerg Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.21 2025/03/29 19:40:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,12 +39,16 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-__RCSID("$NetBSD: ctype_.c,v 1.20 2013/04/13 10:21:20 joerg Exp $");
+__RCSID("$NetBSD: ctype_.c,v 1.21 2025/03/29 19:40:42 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/ctype_bits.h>
+#include <sys/mman.h>
+
 #include <stdio.h>
+
+#include "ctype_guard.h"
 #include "ctype_local.h"
 
 #if EOF != -1
@@ -61,8 +65,12 @@ __RCSID("$NetBSD: ctype_.c,v 1.20 2013/04/13 10:21:20 joerg Exp $");
 #define	_B	_COMPAT_B
 #define	_N	_COMPAT_N
 
-const unsigned char _C_compat_bsdctype[1 + _CTYPE_NUM_CHARS] = {
-	0,
+__ctype_table_guarded(_C_compat_bsdctype, _C_compat_bsdctype_guarded);
+__ctype_table
+static
+const unsigned char _C_compat_bsdctype_guarded[_C_COMPAT_BSDCTYPE_GUARD +
+    1 + _CTYPE_NUM_CHARS] = {
+	[_C_COMPAT_BSDCTYPE_GUARD] = 0,
 	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
 	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
 	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
@@ -109,8 +117,11 @@ const unsigned char *_ctype_ = &_C_compat_bsdctype[0];
 #define	_U	_CTYPE_U
 #define	_X	_CTYPE_X
 
-const unsigned short _C_ctype_tab_[1 + _CTYPE_NUM_CHARS] = {
-	0,
+__ctype_table_guarded(_C_ctype_tab_, _C_ctype_tab_guarded_);
+__ctype_table
+static const unsigned short _C_ctype_tab_guarded_[_C_CTYPE_TAB_GUARD +
+    1 + _CTYPE_NUM_CHARS] = {
+	[_C_CTYPE_TAB_GUARD] = 0,
 	_C,		_C,		_C,		_C,
 	_C,		_C,		_C,		_C,
 	_C,		_BL|_C|_S,	_C|_S,		_C|_S,
@@ -158,3 +169,18 @@ const unsigned short _C_ctype_tab_[1 + _CTYPE_NUM_CHARS] = {
 #undef _X
 
 const unsigned short *_ctype_tab_ = &_C_ctype_tab_[0];
+
+#if _CTYPE_GUARD_PAGE
+__attribute__((constructor))
+static void
+_C_ctype_tab_guard_init(void)
+{
+
+#ifdef __BUILD_LEGACY
+	(void)mprotect(__UNCONST(_C_compat_bsdctype_guarded),
+	    _CTYPE_GUARD_SIZE, PROT_NONE);
+#endif	/* __BUILD_LEGACY */
+	(void)mprotect(__UNCONST(_C_ctype_tab_guarded_),
+	    _CTYPE_GUARD_SIZE, PROT_NONE);
+}
+#endif	/* _CTYPE_GUARD_PAGE */

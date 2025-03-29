@@ -1,4 +1,4 @@
-/*	$NetBSD: toupper_.c,v 1.14 2013/04/13 10:16:27 joerg Exp $	*/
+/*	$NetBSD: toupper_.c,v 1.15 2025/03/29 19:40:42 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,19 +7,26 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: toupper_.c,v 1.14 2013/04/13 10:16:27 joerg Exp $");
+__RCSID("$NetBSD: toupper_.c,v 1.15 2025/03/29 19:40:42 riastradh Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <sys/ctype_bits.h>
+#include <sys/mman.h>
+
 #include <stdio.h>
+
+#include "ctype_guard.h"
 #include "ctype_local.h"
 
 #if EOF != -1
 #error "EOF != -1"
 #endif
 
-const short _C_toupper_tab_[1 + _CTYPE_NUM_CHARS] = {
-	EOF,
+__ctype_table_guarded(_C_toupper_tab_, _C_toupper_tab_guarded_);
+__ctype_table
+static const short _C_toupper_tab_guarded_[_C_TOUPPER_TAB_GUARD +
+    1 + _CTYPE_NUM_CHARS] = {
+	[_C_TOUPPER_TAB_GUARD] = EOF,
 	0x00,	0x01,	0x02,	0x03,	0x04,	0x05,	0x06,	0x07,
 	0x08,	0x09,	0x0a,	0x0b,	0x0c,	0x0d,	0x0e,	0x0f,
 	0x10,	0x11,	0x12,	0x13,	0x14,	0x15,	0x16,	0x17,
@@ -61,3 +68,14 @@ __weak_alias(_C_toupper_, _C_toupper_tab_)
 #endif
 
 const short *_toupper_tab_ = &_C_toupper_tab_[0];
+
+#if _CTYPE_GUARD_PAGE
+__attribute__((constructor))
+static void
+_C_toupper_tab_guard_init(void)
+{
+
+	(void)mprotect(__UNCONST(_C_toupper_tab_guarded_), _CTYPE_GUARD_SIZE,
+	    PROT_NONE);
+}
+#endif	/* _CTYPE_GUARD_PAGE */
