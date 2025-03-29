@@ -84,6 +84,7 @@ typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_conn		npf_conn_t;
+typedef struct r_id		rid_t;
 
 struct npf_conndb;
 struct npf_table;
@@ -95,6 +96,7 @@ typedef struct npf_conndb	npf_conndb_t;
 typedef struct npf_table	npf_table_t;
 typedef struct npf_tableset	npf_tableset_t;
 typedef struct npf_algset	npf_algset_t;
+typedef uint32_t (*get_rid_t)(kauth_cred_t);
 
 #ifdef __NetBSD__
 typedef void			ebr_t;
@@ -428,6 +430,7 @@ void		npf_ruleset_gc(npf_ruleset_t *);
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
 		    const int, const int);
 int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
+int		npf_rule_reverse(npf_cache_t *, npf_match_info_t *, int);
 
 /* Rule interface. */
 npf_rule_t *	npf_rule_alloc(npf_t *, const nvlist_t *);
@@ -438,6 +441,10 @@ uint64_t	npf_rule_getid(const npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
 npf_rproc_t *	npf_rule_getrproc(const npf_rule_t *);
+
+int		npf_socket_lookup_rid(npf_cache_t *, get_rid_t, uint32_t *, int);
+void		npf_rule_setrid(const nvlist_t *, npf_rule_t *, const char *);
+int		npf_rule_match_rid(npf_rule_t *, npf_cache_t *, int);
 
 void		npf_ext_init(npf_t *);
 void		npf_ext_fini(npf_t *);
@@ -470,6 +477,8 @@ void		npf_state_tcp_sysinit(npf_t *);
 void		npf_state_tcp_sysfini(npf_t *);
 bool		npf_state_tcp(npf_cache_t *, npf_state_t *, npf_flow_t);
 int		npf_state_tcp_timeout(npf_t *, const npf_state_t *);
+/* uid/gid process matching */
+int		npf_match_rid(rid_t, uint32_t);
 
 /* Portmap. */
 void		npf_portmap_sysinit(void);
