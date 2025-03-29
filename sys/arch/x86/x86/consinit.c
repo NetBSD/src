@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.35.4.2 2023/10/18 16:53:03 martin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.35.4.3 2025/03/29 10:32:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.35.4.2 2023/10/18 16:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.35.4.3 2025/03/29 10:32:43 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -171,12 +171,20 @@ consinit(void)
 #if (NCOM > 0)
 	int rv;
 #endif
+	char console_devname[16] = "";
 
 #ifdef XENPVHVM
 	if (vm_guest == VM_GUEST_XENPVH) {
 		if (xen_pvh_consinit() != 0)
 			return;
 		/* fallback to native console selection, usefull for dom0 PVH */
+	}
+	if (vm_guest == VM_GUEST_GENPVH) {
+		union xen_cmdline_parseinfo xcp;
+		/* get console= parameter from generic PVH VMM */
+		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
+		strncpy(console_devname, xcp.xcp_console,
+			sizeof(console_devname));
 	}
 #endif
 	if (initted)
@@ -188,7 +196,10 @@ consinit(void)
 	if (!consinfo)
 #endif
 		consinfo = &default_consinfo;
-
+	/* console= parameter was not passed via a generic PVH VMM */
+	if (!console_devname[0])
+		strncpy(console_devname, consinfo->devname,
+			sizeof(console_devname));
 #if (NGENFB > 0)
 #if defined(XENPVHVM) && defined(DOM0OPS)
 	if (vm_guest == VM_GUEST_XENPVH && xendomain_is_dom0())
@@ -197,8 +208,7 @@ consinit(void)
 #endif /* XENPVHVM */
 		fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
 #endif
-
-	if (!strcmp(consinfo->devname, "pc")) {
+	if (!strcmp(console_devname, "pc")) {
 		int error;
 #if (NGENFB > 0)
 		if (fbinfo && fbinfo->physaddr > 0) {
@@ -254,7 +264,7 @@ dokbd:
 		return;
 	}
 #if (NCOM > 0)
-	if (!strcmp(consinfo->devname, "com")) {
+	if (!strcmp(console_devname, "com")) {
 		int addr = consinfo->addr;
 		int speed = consinfo->speed;
 
@@ -278,14 +288,14 @@ dokbd:
 	}
 #endif
 #if (NNULLCONS > 0)
-	if (!strcmp(consinfo->devname, "nullcons")) {
+	if (!strcmp(console_devname, "nullcons")) {
 		void nullcninit(struct consdev *cn);
 
 		nullcninit(0);
 		return;
 	}
 #endif
-	panic("invalid console device %s", consinfo->devname);
+	panic("invalid console device %s", console_devname);
 }
 
 #ifdef KGDB

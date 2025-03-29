@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.89 2022/09/07 00:40:18 knakahara Exp $
+#	$NetBSD: genassym.cf,v 1.89.4.1 2025/03/29 10:32:43 martin Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -365,6 +365,7 @@ define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 define	VM_GUEST_XENPV		VM_GUEST_XENPV
 define	VM_GUEST_XENPVH		VM_GUEST_XENPVH
+define	VM_GUEST_GENPVH		VM_GUEST_GENPVH
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
@@ -373,6 +374,12 @@ define SIR_XENIPL_VM		SIR_XENIPL_VM
 define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
 define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+define HVM_START_INFO_SIZE	sizeof(struct hvm_start_info)
+define START_INFO_VERSION	offsetof(struct hvm_start_info, version)
+define MMAP_PADDR		offsetof(struct hvm_start_info, memmap_paddr)
+define MMAP_ENTRIES		offsetof(struct hvm_start_info, memmap_entries)
+define MMAP_ENTRY_SIZE		sizeof(struct hvm_memmap_table_entry)
+define CMDLINE_PADDR		offsetof(struct hvm_start_info, cmdline_paddr)
 ifdef XENPV
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)

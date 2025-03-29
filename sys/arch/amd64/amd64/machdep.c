@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366 2022/10/26 23:38:06 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.1 2025/03/29 10:32:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366.2.1 2025/03/29 10:32:43 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1525,8 +1525,10 @@ init_x86_64_ksyms(void)
 	} else {
 		uintptr_t endp = (uintptr_t)(void *)&end;
 
-		ksyms_addsyms_elf(*(long *)endp,
-		    ((long *)endp) + 1, esym);
+		if (vm_guest == VM_GUEST_GENPVH)
+			ksyms_addsyms_elf(0, ((long *)endp) + 1, esym);
+		else
+			ksyms_addsyms_elf(*(long *)endp, ((long *)endp) + 1, esym);
 	}
 #endif
 }
@@ -1710,7 +1712,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH)
+	if (vm_guest == VM_GUEST_XENPVH || vm_guest == VM_GUEST_GENPVH)
 		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
 	init_pte();

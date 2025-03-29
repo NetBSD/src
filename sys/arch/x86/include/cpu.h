@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133.4.1 2023/08/09 17:42:01 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133.4.2 2025/03/29 10:32:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -514,6 +514,7 @@ typedef enum vm_guest {
 	VM_GUEST_VMWARE,
 	VM_GUEST_KVM,
 	VM_GUEST_VIRTUALBOX,
+	VM_GUEST_GENPVH,
 	VM_LAST
 } vm_guest_t;
 extern vm_guest_t vm_guest;
@@ -537,6 +538,18 @@ vm_guest_is_xenpvh_or_pvhvm(void)
 	switch(vm_guest) {
 	case VM_GUEST_XENPVH:
 	case VM_GUEST_XENPVHVM:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static __inline bool __unused
+vm_guest_is_pvh(void)
+{
+	switch(vm_guest) {
+	case VM_GUEST_XENPVH:
+	case VM_GUEST_GENPVH:
 		return true;
 	default:
 		return false;
