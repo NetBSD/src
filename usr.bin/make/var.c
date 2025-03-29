@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1152 2025/03/29 21:30:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1153 2025/03/29 23:50:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1152 2025/03/29 21:30:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1153 2025/03/29 23:50:07 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3438,17 +3438,17 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 		else if (mod[1] == 'x')
 			cmp = NULL;
 		else
-			goto bad;
+			return AMR_UNKNOWN;
 		*pp += 2;
 	} else if (IsDelimiter(mod[3], ch)) {
 		if ((mod[1] == 'n' && mod[2] == 'r') ||
 		    (mod[1] == 'r' && mod[2] == 'n'))
 			cmp = SubNumDesc;
 		else
-			goto bad;
+			return AMR_UNKNOWN;
 		*pp += 3;
 	} else
-		goto bad;
+		return AMR_UNKNOWN;
 
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
@@ -3463,10 +3463,6 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	Expr_SetValueOwn(ch->expr, SubstringWords_JoinFree(words));
 
 	return AMR_OK;
-
-bad:
-	(*pp)++;
-	return AMR_BAD;
 }
 
 /* :? then : else */

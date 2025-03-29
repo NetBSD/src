@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.21 2025/03/29 21:30:48 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.22 2025/03/29 23:50:07 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -66,10 +66,10 @@ VAR.${:U:Z}post=	unknown modifier with text in the variable name
 #
 #.MAKEFLAGS: -dv
 IND=	${:OX}
-# expect+4: Bad modifier ":OX"
-# expect+3: Bad modifier ":OX"
-# expect+2: Bad modifier ":OX"
-# expect+1: Bad modifier ":OX"
+# expect+4: Unknown modifier ":OX"
+# expect+3: Unknown modifier ":OX"
+# expect+2: Unknown modifier ":OX"
+# expect+1: Unknown modifier ":OX"
 _:=	${:U:OX:U${IND}} ${:U:OX:U${IND}}
 #.MAKEFLAGS: -d0
 
