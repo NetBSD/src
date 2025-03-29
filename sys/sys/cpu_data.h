@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.56 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.57 2025/03/29 17:29:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ int	mi_cpu_attach(struct cpu_info *);
 do {								\
 	extern bool kpreempt_disabled(void);			\
 	KASSERT(kpreempt_disabled());				\
-	KASSERT((unsigned)idx < CPU_COUNT_MAX);			\
+	KASSERT((unsigned)(idx) < CPU_COUNT_MAX);		\
 	curcpu()->ci_counts[(idx)] += (d);			\
 } while (0)
 
