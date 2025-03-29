@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.20 2025/03/29 19:08:53 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.21 2025/03/29 21:30:48 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -105,3 +105,23 @@ UNCLOSED:=	${:U:_
 UNCLOSED:=	${:U:gmtime
 # expect+1: Unclosed expression, expecting '}' for modifier "localtime"
 UNCLOSED:=	${:U:localtime
+
+
+# In a stack trace that has both evaluation details and included files, list
+# the current file twice: Once in the first line and once in the call
+# hierarchy. While this is redundant, omitting the current file from the
+# call hierarchy is more confusing, as the '.include' line does not contain
+# the faulty expression.
+#
+# expect: make: "varparse-errors.tmp" line 1: Unknown modifier ":Z"
+# expect:	while evaluating "${:Z}" with value ""
+# expect:	while evaluating variable "INDIRECT" with value "${:Z}"
+# expect:	while evaluating variable "VALUE" with value "${INDIRECT}"
+# expect:	in varparse-errors.tmp:1
+# expect:	in varparse-errors.mk:126
+_!=	echo '.info $${VALUE}' > varparse-errors.tmp
+VALUE=	${INDIRECT}
+INDIRECT=	${:Z}
+# The "./" is necessary to skip the directory cache.
+.include "./varparse-errors.tmp"
+_!=	rm -f varparse-errors.tmp

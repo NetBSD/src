@@ -40,6 +40,13 @@ make: "varparse-errors.mk" line 105: Unclosed expression, expecting '}' for modi
 	while evaluating "${:U:gmtime" with value "<timestamp>"
 make: "varparse-errors.mk" line 107: Unclosed expression, expecting '}' for modifier "localtime"
 	while evaluating "${:U:localtime" with value "<timestamp>"
+make: "varparse-errors.tmp" line 1: Unknown modifier ":Z"
+	while evaluating "${:Z}" with value ""
+	while evaluating variable "INDIRECT" with value "${:Z}"
+	while evaluating variable "VALUE" with value "${INDIRECT}"
+	in varparse-errors.tmp:1
+	in varparse-errors.mk:126
+make: "varparse-errors.tmp" line 1: 
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.350 2025/03/07 06:50:34 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.351 2025/03/29 21:30:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1055,7 +1055,7 @@ void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
 void Global_Set_ReadOnly(const char *, const char *);
 
-void EvalStack_PrintDetails(void);
+bool EvalStack_PrintDetails(void) MAKE_ATTR_USE;
 
 /* util.c */
 typedef void (*SignalProc)(int);

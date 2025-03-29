@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1151 2025/03/29 19:08:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1152 2025/03/29 21:30:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1151 2025/03/29 19:08:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1152 2025/03/29 21:30:47 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -370,7 +370,7 @@ EvalStack_Pop(void)
 	evalStack.len--;
 }
 
-void
+bool
 EvalStack_PrintDetails(void)
 {
 	size_t i;
@@ -397,6 +397,7 @@ EvalStack_PrintDetails(void)
 		    value != NULL ? "\" with value \"" : "",
 		    value != NULL ? value : "");
 	}
+	return evalStack.len > 0;
 }
 
 static Var *

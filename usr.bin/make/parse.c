@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.738 2025/01/14 21:34:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.739 2025/03/29 21:30:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.738 2025/01/14 21:34:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.739 2025/03/29 21:30:47 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -395,14 +395,15 @@ PrintStackTrace(bool includingInnermost)
 	const IncludedFile *entries;
 	size_t i, n;
 
-	EvalStack_PrintDetails();
+	bool hasDetails = EvalStack_PrintDetails();
 
 	n = includes.len;
 	if (n == 0)
 		return;
 
 	entries = GetInclude(0);
-	if (!includingInnermost && entries[n - 1].forLoop == NULL)
+	if (!includingInnermost && !(hasDetails && n > 1)
+	    && entries[n - 1].forLoop == NULL)
 		n--;		/* already in the diagnostic */
 
 	for (i = n; i-- > 0;) {
