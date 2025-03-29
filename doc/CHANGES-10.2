@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.12 2025/03/04 12:29:01 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.13 2025/03/29 10:57:06 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -324,4 +324,47 @@ sys/arch/vax/vax/db_disasm.c			1.25
 
 	vax: fix ddb(4) disassembly of functions.
 	[hans, ticket #1072]
+
+sys/arch/evbppc/wii/pic_pi.c			1.4
+
+	wii: revert pic_pi.c r1.2 and r1.3.
+	[jmcneill, ticket #1073]
+
+sys/arch/amd64/amd64/genassym.cf		1.98
+sys/arch/amd64/amd64/locore.S			1.226,1.227
+sys/arch/amd64/amd64/machdep.c			1.370
+sys/arch/x86/acpi/acpi_machdep.c		1.37,1.38
+sys/arch/x86/include/cpu.h			1.137,1.138
+sys/arch/x86/x86/consinit.c			1.40
+sys/arch/x86/x86/identcpu.c			1.131
+sys/arch/x86/x86/x86_autoconf.c			1.88,1.89
+sys/arch/x86/x86/x86_machdep.c			1.155,1.156
+sys/arch/xen/xen/hypervisor.c			1.97,1.98
+
+	amd64: add PVH boot capability for non-Xen guests.
+	[imil, ticket #1074]
+
+tests/net/if_vlan/t_vlan.sh			1.26,1.27
+
+	tests, vlan: add a test case for link state sync.
+	[ozaki-r, ticket #1075]
+
+sys/arch/amd64/conf/XEN3_DOMU			1.101,1.102
+
+	amd64/XEN3_DOMU: Enable KDTRACE_HOOKS.
+	[sborrill, ticket #1076]
+
+distrib/notes/macppc/hardware			1.50
+
+	macppc: update hardware notes, the awacs(4) driver is enabled in
+	the GENERIC kernel.
+	[gutteridge, ticket #1077]
+
+share/installboot/evbarm/boards.plist		1.11
+
+	installboot(8): evbarm: add
+	 - FriendlyElec NanoPi R2S
+	 - PineCube IP Camera
+	 - TI AM335x BeagleBone Green
+	[gutteridge, ticket #1078]
 
