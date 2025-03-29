@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.8 2025/03/28 23:30:34 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.9 2025/03/29 01:06:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.8 2025/03/28 23:30:34 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.9 2025/03/29 01:06:36 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -65,7 +65,7 @@ static int tolower_wrapper(int ch) { return tolower(ch); }
 jmp_buf env;
 
 static void
-handle_sigsegv(int signo)
+handle_signal(int signo)
 {
 
 	longjmp(env, 1);
@@ -77,22 +77,23 @@ test_abuse(const char *name, int (*ctypefn)(int))
 	volatile int ch;	/* for longjmp */
 
 	for (ch = CHAR_MIN; ch < 0; ch++) {
-		void (*h)(int) = SIG_DFL;
 		volatile int result;
 
 		if (ch == EOF)
 			continue;
 		ATF_REQUIRE_MSG(ch != (int)(unsigned char)ch, "ch=%d", ch);
 		if (setjmp(env) == 0) {
-			REQUIRE_LIBC(h = signal(SIGSEGV, &handle_sigsegv),
-			    SIG_ERR);
+			REQUIRE_LIBC(signal(SIGABRT, &handle_signal), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, &handle_signal), SIG_ERR);
 			result = (*ctypefn)(ch);
-			REQUIRE_LIBC(signal(SIGSEGV, h), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGABRT, SIG_DFL), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, SIG_DFL), SIG_ERR);
 			atf_tc_fail_nonfatal("%s failed to detect invalid %d,"
 			    " returned %d",
 			    name, ch, result);
 		} else {
-			REQUIRE_LIBC(signal(SIGSEGV, h), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGABRT, SIG_DFL), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, SIG_DFL), SIG_ERR);
 		}
 	}
 
@@ -101,7 +102,7 @@ test_abuse(const char *name, int (*ctypefn)(int))
 }
 
 static void
-test_abuse_in_locales(const char *name, int (*ctypefn)(int))
+test_abuse_in_locales(const char *name, int (*ctypefn)(int), bool macro)
 {
 	size_t i;
 
@@ -111,7 +112,7 @@ test_abuse_in_locales(const char *name, int (*ctypefn)(int))
 		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,
 		    "locales[i]=%s", locales[i]);
 		snprintf(buf, sizeof(buf), "[%s]%s", locales[i], name);
-		if (strcmp(locales[i], "C") == 0) {
+		if (macro && strcmp(locales[i], "C") == 0) {
 			atf_tc_expect_fail("PR lib/58208: ctype(3)"
 			    " provides poor runtime feedback of abuse");
 		}
@@ -127,19 +128,20 @@ test_use(const char *name, int (*ctypefn)(int))
 	volatile int ch;	/* for longjmp */
 
 	for (ch = EOF; ch <= CHAR_MAX; ch = (ch == EOF ? 0 : ch + 1)) {
-		void (*h)(int) = SIG_DFL;
 		volatile int result;
 
 		if (setjmp(env) == 0) {
-			REQUIRE_LIBC(h = signal(SIGSEGV, &handle_sigsegv),
-			    SIG_ERR);
+			REQUIRE_LIBC(signal(SIGABRT, &handle_signal), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, &handle_signal), SIG_ERR);
 			result = (*ctypefn)(ch);
-			REQUIRE_LIBC(signal(SIGSEGV, h), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGABRT, SIG_DFL), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, SIG_DFL), SIG_ERR);
 			(void)result;
 		} else {
+			REQUIRE_LIBC(signal(SIGABRT, SIG_DFL), SIG_ERR);
+			REQUIRE_LIBC(signal(SIGSEGV, SIG_DFL), SIG_ERR);
 			atf_tc_fail_nonfatal("%s(%d) raised SIGSEGV",
 			    name, ch);
-			REQUIRE_LIBC(signal(SIGSEGV, h), SIG_ERR);
 		}
 	}
 }
@@ -803,8 +805,6 @@ ATF_TC_BODY(abuse_##FN##_function_c, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	atf_tc_expect_fail("PR lib/58208:"				      \
-	    " ctype(3) provides poor runtime feedback of abuse");	      \
 	test_abuse(#FN, &FN);						      \
 }									      \
 ATF_TC(abuse_##FN##_macro_locale);					      \
@@ -819,7 +819,7 @@ ATF_TC_BODY(abuse_##FN##_macro_locale, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	test_abuse_in_locales(#FN, &FN##_wrapper);			      \
+	test_abuse_in_locales(#FN, &FN##_wrapper, /*macro*/true);	      \
 }									      \
 ATF_TC(abuse_##FN##_function_locale);					      \
 ATF_TC_HEAD(abuse_##FN##_function_locale, tc)				      \
@@ -833,7 +833,7 @@ ATF_TC_BODY(abuse_##FN##_function_locale, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
-	test_abuse_in_locales(#FN, &FN);				      \
+	test_abuse_in_locales(#FN, &FN, /*macro*/false);		      \
 }
 
 #define	ADD_TEST_USE(TP, FN) do						      \

@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.26 2024/06/07 13:53:22 riastradh Exp $ */
+/* $NetBSD: isctype.c,v 1.27 2025/03/29 01:06:36 riastradh Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,18 +28,23 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.26 2024/06/07 13:53:22 riastradh Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.27 2025/03/29 01:06:36 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ctype_bits.h>
 #define _CTYPE_NOINLINE
+#include <assert.h>
 #include <ctype.h>
 #include <langinfo.h>
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #if EOF != -1
 #error "EOF != -1"
 #endif
@@ -50,15 +55,38 @@ __RCSID("$NetBSD: isctype.c,v 1.26 2024/06/07 13:53:22 riastradh Exp $");
 #define _RUNE_LOCALE(loc) \
     ((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))
 
+static void __noinline __dead
+ctype_nasaldemon(const char *func, int c)
+{
+	char buf[128];
+
+	snprintf_ss(buf, sizeof(buf), "ctype(3) %s: invalid input: %d\n", func,
+	    c);
+	(void)write(STDERR_FILENO, buf, strlen(buf));
+	abort();
+}
+
+static inline void
+ctype_check(const char *func, int c)
+{
+
+	if (__predict_false((c != EOF && c < 0) || c > UCHAR_MAX))
+		ctype_nasaldemon(func, c);
+}
+
+#define	CTYPE_CHECK(c)	ctype_check(__func__, c)
+
 #define _ISCTYPE_FUNC(name, bit) \
 int \
 is##name(int c) \
 { \
+	CTYPE_CHECK(c); \
 	return (int)_ctype_tab_[c + 1] & (bit); \
 } \
 int \
 is##name ## _l(int c, locale_t loc) \
 { \
+	CTYPE_CHECK(c); \
 	return (int)((_RUNE_LOCALE(loc)->rl_ctype_tab[c + 1]) & (bit)); \
 }
 
@@ -78,24 +106,28 @@ _ISCTYPE_FUNC(xdigit, _CTYPE_X)
 int
 toupper(int c)
 {
+	CTYPE_CHECK(c);
 	return (int)_toupper_tab_[c + 1];
 }
 
 int
 toupper_l(int c, locale_t loc)
 {
+	CTYPE_CHECK(c);
 	return (int)(_RUNE_LOCALE(loc)->rl_toupper_tab[c + 1]);
 }
 
 int
 tolower(int c)
 {
+	CTYPE_CHECK(c);
 	return (int)_tolower_tab_[c + 1];
 }
 
 int
 tolower_l(int c, locale_t loc)
 {
+	CTYPE_CHECK(c);
 	return (int)(_RUNE_LOCALE(loc)->rl_tolower_tab[c + 1]);
 }
 
