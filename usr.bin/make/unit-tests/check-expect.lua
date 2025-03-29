@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.10 2025/01/11 20:16:40 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.11 2025/03/29 10:39:48 rillig Exp $
 
 --[[
 
@@ -23,6 +23,9 @@ expected text in the corresponding .exp file.
 # expect-not: <substring>
         The substring must not occur as part of any line of the .exp file.
 
+# expect-not-matches: <pattern>
+        The pattern (see https://lua.org/manual/5.4/manual.html#6.4.1)
+        must not occur as part of any line of the .exp file.
 ]]
 
 
@@ -120,13 +123,24 @@ local function check_mk(mk_fname)
       end
     end
 
+    for text in mk_line:gmatch("#%s*expect%-not%-matches:%s*(.*)") do
+      local i = 1
+      while i <= #exp_lines and not exp_lines[i]:find(text, 1) do
+        i = i + 1
+      end
+      if i <= #exp_lines then
+        print_error("error: %s:%d: %s must not match '%s'",
+          mk_fname, mk_lineno, exp_fname, text)
+      end
+    end
+
     for text in mk_line:gmatch("#%s*expect:%s*(.*)") do
       local i = prev_expect_line
       -- As of 2022-04-15, some lines in the .exp files contain trailing
       -- whitespace.  If possible, this should be avoided by rewriting the
-      -- debug logging.  When done, the gsub can be removed.
+      -- debug logging.  When done, the trailing gsub can be removed.
       -- See deptgt-phony.exp lines 14 and 15.
-      while i < #exp_lines and text ~= exp_lines[i + 1]:gsub("%s*$", "") do
+      while i < #exp_lines and text ~= exp_lines[i + 1]:gsub("^%s*", ""):gsub("%s*$", "") do
         i = i + 1
       end
       if i < #exp_lines then

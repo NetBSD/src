@@ -39,17 +39,21 @@ Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d 0
 make: Bad modifier ":"
 	while evaluating "${::=value}" with value ""
+	in command "@echo $@: ${::=value}"
 	in target "mod-assign-empty-1"
 make: Bad modifier ":"
 	while evaluating "${:Uvalue::=overwritten}" with value "value"
+	in command "@echo $@: ${:Uvalue::=overwritten}"
 	in target "mod-assign-empty-2"
 mod-assign-empty-3: VAR=overwritten
 make: Unknown modifier ":x"
 	while evaluating variable "ASSIGN" with value ""
+	in command "@echo ${ASSIGN::x}"
 	in target "mod-assign-parse-1"
 sysv:y
 make: Unfinished modifier ('}' missing)
 	while evaluating variable "ASSIGN" with value ""
+	in command "@echo ${ASSIGN::=value	# missing closing brace"
 	in target "mod-assign-parse-3"
 ok=word
 make: warning: Command " echo word; (exit 13) " exited with status 13

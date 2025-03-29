@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1145 2025/03/22 12:23:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1146 2025/03/29 10:39:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1145 2025/03/22 12:23:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1146 2025/03/29 10:39:48 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -257,6 +257,7 @@ typedef struct SepBuf {
 
 typedef enum {
 	VSK_TARGET,
+	VSK_COMMAND,
 	VSK_VARNAME,
 	VSK_COND,
 	VSK_COND_THEN,
@@ -376,6 +377,7 @@ EvalStack_PrintDetails(void)
 	for (i = evalStack.len; i > 0; i--) {
 		static const char descr[][42] = {
 			"in target",
+			"in command",
 			"while evaluating variable",
 			"while evaluating condition",
 			"while evaluating then-branch of condition",
@@ -4766,7 +4768,9 @@ Var_SubstInTarget(const char *str, GNode *scope)
 {
 	char *res;
 	EvalStack_Push(VSK_TARGET, scope->name, NULL);
+	EvalStack_Push(VSK_COMMAND, str, NULL);
 	res = Var_Subst(str, scope, VARE_EVAL);
+	EvalStack_Pop();
 	EvalStack_Pop();
 	return res;
 }
