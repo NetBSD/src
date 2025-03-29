@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.21 2025/03/29 19:40:42 riastradh Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.22 2025/03/29 20:57:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-__RCSID("$NetBSD: ctype_.c,v 1.21 2025/03/29 19:40:42 riastradh Exp $");
+__RCSID("$NetBSD: ctype_.c,v 1.22 2025/03/29 20:57:58 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,8 @@ const unsigned char _C_compat_bsdctype_guarded[_C_COMPAT_BSDCTYPE_GUARD +
 	_L,	_L,	_L,	_L,	_L,	_L,	_L,	_L,
 	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
 };
+__ctype_table_size(_C_compat_bsdctype, _C_compat_bsdctype_guarded,
+    1 + _CTYPE_NUM_CHARS, /*sizeof(char)*/1);
 
 #undef _C
 #undef _S
@@ -155,6 +157,8 @@ static const unsigned short _C_ctype_tab_guarded_[_C_CTYPE_TAB_GUARD +
 	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_G|_R|_P,
 	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_C,
 };
+__ctype_table_size(_C_ctype_tab_, _C_ctype_tab_guarded_,
+    1 + _CTYPE_NUM_CHARS, __SIZEOF_SHORT__);
 
 #undef _A
 #undef _BL

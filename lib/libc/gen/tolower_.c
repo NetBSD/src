@@ -1,4 +1,4 @@
-/*	$NetBSD: tolower_.c,v 1.15 2025/03/29 19:40:42 riastradh Exp $	*/
+/*	$NetBSD: tolower_.c,v 1.16 2025/03/29 20:57:58 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: tolower_.c,v 1.15 2025/03/29 19:40:42 riastradh Exp $");
+__RCSID("$NetBSD: tolower_.c,v 1.16 2025/03/29 20:57:58 riastradh Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <sys/ctype_bits.h>
@@ -60,6 +60,8 @@ static const short _C_tolower_tab_guarded_[_C_TOLOWER_TAB_GUARD +
 	0xf0,	0xf1,	0xf2,	0xf3,	0xf4,	0xf5,	0xf6,	0xf7,
 	0xf8,	0xf9,	0xfa,	0xfb,	0xfc,	0xfd,	0xfe,	0xff
 };
+__ctype_table_size(_C_tolower_tab_, _C_tolower_tab_guarded_,
+    1 + _CTYPE_NUM_CHARS, __SIZEOF_SHORT__);
 
 #ifdef __BUILD_LEGACY
 #ifdef __weak_alias
