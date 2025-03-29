@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1146 2025/03/29 10:39:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1147 2025/03/29 11:24:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1146 2025/03/29 10:39:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1147 2025/03/29 11:24:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -259,6 +259,7 @@ typedef enum {
 	VSK_TARGET,
 	VSK_COMMAND,
 	VSK_VARNAME,
+	VSK_INDIRECT_MODIFIERS,
 	VSK_COND,
 	VSK_COND_THEN,
 	VSK_COND_ELSE,
@@ -379,6 +380,7 @@ EvalStack_PrintDetails(void)
 			"in target",
 			"in command",
 			"while evaluating variable",
+			"while evaluating indirect modifiers",
 			"while evaluating condition",
 			"while evaluating then-branch of condition",
 			"while evaluating else-branch of condition",
@@ -3960,7 +3962,9 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 
 	if (ModChain_ShouldEval(ch) && mods.str[0] != '\0') {
 		const char *modsp = mods.str;
+		EvalStack_Push(VSK_INDIRECT_MODIFIERS, mods.str, NULL);
 		ApplyModifiers(expr, &modsp, '\0', '\0');
+		EvalStack_Pop();
 		if (Expr_Str(expr) == var_Error || *modsp != '\0') {
 			FStr_Done(&mods);
 			*pp = p;

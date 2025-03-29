@@ -12,6 +12,7 @@ make: "varmod.mk" line 128: Bad modifier ":[2147483648]"
 make: "varmod.mk" line 134: Invalid number "99333000222000111000}" for ':range' modifier
 	while evaluating variable "word" with value "word"
 make: "varmod.mk" line 141: Invalid time value "\"
+	while evaluating indirect modifiers "gmtime=\"
 	while evaluating "${:${:Ugmtime=\\}}" with value ""
 make: "varmod.mk" line 156: Dollar followed by nothing
 	while evaluating variable "VAR" with value "value$"

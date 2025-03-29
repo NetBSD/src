@@ -10,6 +10,7 @@ make: "varmod-indirect.mk" line 151: after
 make: "varmod-indirect.mk" line 159: before
 make: "varmod-indirect.mk" line 159: after
 make: "varmod-indirect.mk" line 164: Unknown modifier "Z"
+	while evaluating indirect modifiers "Z"
 	while evaluating variable "UNDEF" with value ""
 make: "varmod-indirect.mk" line 167: before
 make: "varmod-indirect.mk" line 167: after
@@ -35,6 +36,7 @@ Var_Parse: ${UNDEF:${:UZ}} after (eval-keep-dollar-and-undefined)
 Indirect modifier "Z" from "${:UZ}"
 Evaluating modifier ${UNDEF:Z} on value "" (eval-keep-dollar-and-undefined, undefined)
 make: "varmod-indirect.mk" line 195: Unknown modifier "Z"
+	while evaluating indirect modifiers "Z"
 	while evaluating variable "UNDEF" with value ""
 Result of ${UNDEF:Z} is error (eval-keep-dollar-and-undefined, undefined)
 Global: _ = before ${UNDEF:Z} after
