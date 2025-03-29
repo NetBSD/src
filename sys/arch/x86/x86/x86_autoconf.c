@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.87.4.1 2025/03/29 10:32:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.87.4.1 2025/03/29 10:32:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ void
 cpu_bootconf(void)
 {
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH) {
+	if (vm_guest_is_pvh()) {
 		xen_bootconf();
 		return;
 	}
