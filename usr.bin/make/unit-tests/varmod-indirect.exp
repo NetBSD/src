@@ -1,6 +1,6 @@
-make: "varmod-indirect.mk" line 19: Unknown modifier "${"
+make: "varmod-indirect.mk" line 19: Unknown modifier ":${"
 	while evaluating variable "value" with value "value"
-make: "varmod-indirect.mk" line 52: Unknown modifier "${"
+make: "varmod-indirect.mk" line 52: Unknown modifier ":${"
 	while evaluating variable "value" with value "value"
 make: "varmod-indirect.mk" line 140: before
 make: "varmod-indirect.mk" line 140: after
@@ -8,7 +8,7 @@ make: "varmod-indirect.mk" line 148: before
 make: "varmod-indirect.mk" line 148: after
 make: "varmod-indirect.mk" line 156: before
 make: "varmod-indirect.mk" line 156: after
-make: "varmod-indirect.mk" line 161: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 161: Unknown modifier ":Z"
 	while evaluating indirect modifiers "Z"
 	while evaluating variable "UNDEF" with value ""
 make: "varmod-indirect.mk" line 164: before
@@ -34,7 +34,7 @@ Parsing varmod-indirect.mk:192: _:=	before ${UNDEF:${:UZ}} after
 Var_Parse: ${UNDEF:${:UZ}} after (eval-keep-dollar-and-undefined)
 Indirect modifier "Z" from "${:UZ}"
 Evaluating modifier ${UNDEF:Z} on value "" (eval-keep-dollar-and-undefined, undefined)
-make: "varmod-indirect.mk" line 192: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 192: Unknown modifier ":Z"
 	while evaluating indirect modifiers "Z"
 	while evaluating variable "UNDEF" with value ""
 Global: _ = before ${UNDEF:Z} after

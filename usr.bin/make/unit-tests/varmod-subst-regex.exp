@@ -57,7 +57,7 @@ make: Regex compilation error: (details omitted)
 	while evaluating variable "UNDEF" with value "value"
 	in command "@echo $@: ${UNDEF:Uvalue:C,[,,}"
 	in target "mod-regex-errors-1"
-make: Unknown modifier "Z"
+make: Unknown modifier ":Z"
 	while evaluating "${:U:Z}y,W}" with value ""
 	while evaluating variable "word" with value "word"
 	in command "@echo $@: ${word:L:C,.*,x${:U:Z}y,W}"

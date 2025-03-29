@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.16 2025/01/11 20:54:46 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.17 2025/03/29 19:08:52 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -72,7 +72,7 @@
 # The upper limit of the range must always be given in decimal.
 # This parse error stops at the 'x', trying to parse it as a variable
 # modifier.
-# expect+1: Unknown modifier "x0"
+# expect+1: Unknown modifier ":x0"
 .if "${:U:range=0x0}Rest" != "Rest"
 .  error
 .else
@@ -89,7 +89,7 @@
 #.endif
 
 # modifier name too short
-# expect+1: Unknown modifier "rang"
+# expect+1: Unknown modifier ":rang"
 .if "${a b c:L:rang}Rest" != "Rest"
 .  error
 .else
@@ -97,7 +97,7 @@
 .endif
 
 # misspelled modifier name
-# expect+1: Unknown modifier "rango"
+# expect+1: Unknown modifier ":rango"
 .if "${a b c:L:rango}Rest" != "Rest"
 .  error
 .else
@@ -105,7 +105,7 @@
 .endif
 
 # modifier name too long
-# expect+1: Unknown modifier "ranger"
+# expect+1: Unknown modifier ":ranger"
 .if "${a b c:L:ranger}Rest" != "Rest"
 .  error
 .else

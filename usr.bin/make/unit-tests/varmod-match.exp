@@ -16,7 +16,7 @@ make: "varmod-match.mk" line 356: Unfinished character range in pattern '[^x-' o
 	while evaluating variable "WORDS" with value "[x- x x- y yyyyy"
 make: "varmod-match.mk" line 363: Unfinished character list in pattern '[' of modifier ':M'
 	while evaluating variable " : :: " with value " : :: "
-make: "varmod-match.mk" line 363: Unknown modifier "]"
+make: "varmod-match.mk" line 363: Unknown modifier ":]"
 	while evaluating variable " : :: " with value ""
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests

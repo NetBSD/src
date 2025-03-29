@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.44 2025/03/29 16:44:14 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.45 2025/03/29 19:08:52 rillig Exp $
 #
 # various modifier error tests
 
@@ -25,11 +25,11 @@ all:	mod-remember-parse
 all:	mod-sysv-parse-{1,2,3,4}
 
 mod-unknown-direct:
-# expect: make: Unknown modifier "Z"
+# expect: make: Unknown modifier ":Z"
 	@echo 'VAR:Z=before-${VAR:Z}-after'
 
 mod-unknown-indirect:
-# expect: make: Unknown modifier "Z"
+# expect: make: Unknown modifier ":Z"
 	@echo 'VAR:${MOD_UNKN}=before-${VAR:${MOD_UNKN}:inner}-after'
 
 unclosed-direct:
@@ -192,11 +192,11 @@ mod-ifelse-parse-5:
 
 mod-remember-parse:
 	@echo ${FIB:_}		# ok
-# expect: make: Unknown modifier "__"
+# expect: make: Unknown modifier ":__"
 	@echo ${FIB:__}		# modifier name too long
 
 mod-sysv-parse-1:
-# expect: make: Unknown modifier "3"
+# expect: make: Unknown modifier ":3"
 	@echo ${FIB:3
 mod-sysv-parse-2:
 # expect: make: Unfinished modifier after "", expecting "}"

@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.22 2025/01/11 20:54:45 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.23 2025/03/29 19:08:52 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed expressions.
@@ -70,7 +70,7 @@ ${UNDEF}: ${UNDEF}
 # variable modifier had to be separated by colons.  This was wrong though
 # since make always fell back trying to parse the indirect modifier as a
 # SysV modifier.
-# expect+1: Unknown modifier "${"
+# expect+1: Unknown modifier ":${"
 .if ${value:${:UL}PL} != "LPL}"		# FIXME: "LPL}" is unexpected here.
 .  error ${value:${:UL}PL}
 .endif

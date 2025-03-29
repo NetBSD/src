@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.17 2025/01/11 20:16:40 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.18 2025/03/29 19:08:52 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -51,7 +51,7 @@ DQUOT=	"
 # When the expression in a filename cannot be evaluated, the failing
 # expression is skipped and the file is included nevertheless.
 # FIXME: Add proper error handling, no file must be included here.
-# expect+2: Unknown modifier "Z"
+# expect+2: Unknown modifier ":Z"
 # expect+1: Could not find nonexistent.mk
 .include "nonexistent${:U123:Z}.mk"
 

@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.17 2025/03/29 16:44:14 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.18 2025/03/29 19:08:52 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -55,7 +55,7 @@ VAR+=		3
 # expect: Global: delete VAR
 .undef ${:UVAR}			# Var_Delete
 
-# expect+1: Unknown modifier "unknown"
+# expect+1: Unknown modifier ":unknown"
 .if ${:Uvariable:unknown}
 .endif
 

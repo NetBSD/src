@@ -46,7 +46,7 @@ make: Bad modifier ":"
 	in command "@echo $@: ${:Uvalue::=overwritten}"
 	in target "mod-assign-empty-2"
 mod-assign-empty-3: VAR=overwritten
-make: Unknown modifier ":x"
+make: Unknown modifier "::x"
 	while evaluating variable "ASSIGN" with value ""
 	in command "@echo ${ASSIGN::x}"
 	in target "mod-assign-parse-1"

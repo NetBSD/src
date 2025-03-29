@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1150 2025/03/29 16:44:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1151 2025/03/29 19:08:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1150 2025/03/29 16:44:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1151 2025/03/29 19:08:52 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4013,7 +4013,7 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 		 */
 		for (p++; !IsDelimiter(*p, ch); p++)
 			continue;
-		Parse_Error(PARSE_FATAL, "Unknown modifier \"%.*s\"",
+		Parse_Error(PARSE_FATAL, "Unknown modifier \":%.*s\"",
 		    (int)(p - mod), mod);
 		Expr_SetValueRefer(ch->expr, var_Error);
 		res = AMR_CLEANUP;

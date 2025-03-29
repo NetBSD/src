@@ -8,7 +8,7 @@ make: "varmod-mtime.mk" line 78: Invalid argument 'errorhandler-no' for modifier
 	while evaluating variable "MAKEFILE" with value "varmod-mtime.mk"
 make: "varmod-mtime.mk" line 86: Invalid argument 'warn' for modifier ':mtime'
 	while evaluating variable "MAKEFILE" with value "varmod-mtime.mk"
-make: "varmod-mtime.mk" line 110: Unknown modifier "mtim"
+make: "varmod-mtime.mk" line 110: Unknown modifier ":mtim"
 	while evaluating variable "anything" with value "anything"
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests

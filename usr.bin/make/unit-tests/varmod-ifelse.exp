@@ -51,10 +51,10 @@ make: "varmod-ifelse.mk" line 289: no
 CondParser_Eval: ${DELAYED} == "two"
 Comparing "two" == "two"
 make: "varmod-ifelse.mk" line 292: yes
-make: "varmod-ifelse.mk" line 314: Unknown modifier "X-then"
+make: "varmod-ifelse.mk" line 314: Unknown modifier ":X-then"
 	while evaluating "${:X-then}:${:X-else}}" with value ""
 	while evaluating then-branch of condition "1"
-make: "varmod-ifelse.mk" line 314: Unknown modifier "X-else"
+make: "varmod-ifelse.mk" line 314: Unknown modifier ":X-else"
 	while parsing "${:X-else}}"
 	while evaluating else-branch of condition "1"
 make: Fatal errors encountered -- cannot continue
