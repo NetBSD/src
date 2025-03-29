@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.27 2025/03/29 01:06:36 riastradh Exp $ */
+/* $NetBSD: isctype.c,v 1.28 2025/03/29 21:45:08 riastradh Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,14 +28,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.27 2025/03/29 01:06:36 riastradh Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.28 2025/03/29 21:45:08 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ctype_bits.h>
 #define _CTYPE_NOINLINE
-#include <assert.h>
 #include <ctype.h>
 #include <langinfo.h>
 #define __SETLOCALE_SOURCE__
