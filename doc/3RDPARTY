@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2092 2025/03/28 06:40:09 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2093 2025/03/29 22:45:08 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -78,13 +78,12 @@ Update date of release in external/bsd/am-utils/man/Makefile (two places).
 
 Package:	Automated Testing Framework (ATF)
 Version:	0.20
-Current Vers:	0.21
-Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	https://github.com/jmmv/atf/releases
-Home page:	https://github.com/jmmv/atf
-Date:		2023-04-27
-Mailing List:	atf-discuss@googlegroups.com
-Responsible:	jmmv
+Current Vers:	0.23
+Maintainer:	The FreeBSD Foundation
+Archive site:	https://github.com/freebsd/atf/releases
+Home page:	https://github.com/freebsd/atf
+Date:		2025-03.29
+Responsible:	-
 License:	The NetBSD Foundation's license (BSD 2-clause)
 Location:	external/bsd/atf/dist
 Notes:
@@ -662,13 +661,12 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	kyua-atf-compat
 Version:	0.1
-Current Vers:	0.13
-Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	https://github.com/jmmv/kyua
-Home page:	https://github.com/jmmv/kyua
-Date:		2020-06-13
-Mailing List:	kyua-discuss@googlegroups.com
-Responsible:	jmmv
+Current Vers:	0.14.1
+Maintainer:	The FreeBSD Foundation
+Archive site:	https://github.com/freebsd/kyua/releases
+Home page:	https://github.com/freebsd/kyua
+Date:		2025-03-29
+Responsible:	-
 License:	BSD 3-clause
 Location:	external/bsd/kyua-atf-compat/dist
 Notes:
@@ -678,13 +676,12 @@ directory.
 
 Package:	kyua-cli
 Version:	0.7
-Current Vers:	0.9
-Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	https://github.com/jmmv/kyua
-Home page:	https://github.com/jmmv/kyua
-Date:		2020-06-13
-Mailing List:	kyua-discuss@googlegroups.com
-Responsible:	jmmv
+Current Vers:	0.14.1
+Maintainer:	The FreeBSD Foundation
+Archive site:	https://github.com/freebsd/kyua/releases
+Home page:	https://github.com/freebsd/kyua
+Date:		2025-03-29
+Responsible:	-
 License:	BSD 3-clause
 Location:	external/bsd/kyua-cli/dist
 Notes:
@@ -693,13 +690,12 @@ Use external/bsd/kyua-cli/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	kyua-testers
 Version:	0.1
-Current Vers:	0.3
-Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	https://github.com/jmmv/kyua
-Home page:	https://github.com/jmmv/kyua
-Date:		2020-06-13
-Mailing List:	kyua-discuss@googlegroups.com
-Responsible:	jmmv
+Current Vers:	0.14.1
+Maintainer:	The FreeBSD Foundation
+Archive site:	https://github.com/freebsd/kyua/releases
+Home page:	https://github.com/freebsd/kyua
+Date:		2025-03-29
+Responsible:	-
 License:	BSD 3-clause
 Location:	external/bsd/kyua-testers/dist
 Notes:
@@ -862,13 +858,12 @@ have been applied.
 
 Package:	Lutok
 Version:	0.3
-Current Vers:	0.4
-Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	https://github.com/jmmv/lutok/releases
-Home page:	https://github.com/jmmv/lutok
-Date:		2020-06-13
-Mailing List:	lutok-discuss@googlegroups.com
-Responsible:	jmmv
+Current Vers:	0.6
+Maintainer:	The FreeBSD Foundation
+Archive site:	https://github.com/freebsd/lutok/releases
+Home page:	https://github.com/freebsd/lutok
+Date:		2025-03-29
+Responsible:	-
 License:	BSD 3-clause
 Location:	external/bsd/lutok/dist
 Notes:
