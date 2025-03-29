@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1148 2025/03/29 11:51:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1149 2025/03/29 12:02:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1148 2025/03/29 11:51:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1149 2025/03/29 12:02:40 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3707,17 +3707,17 @@ IsSysVModifier(const char *p, char startc, char endc)
 	bool eqFound = false;
 
 	int depth = 1;
-	while (*p != '\0' && depth > 0) {
+	while (*p != '\0') {
 		if (*p == '=')	/* XXX: should also test depth == 1 */
 			eqFound = true;
-		else if (*p == endc)
-			depth--;
-		else if (*p == startc)
+		else if (*p == endc) {
+			if (--depth == 0)
+				break;
+		} else if (*p == startc)
 			depth++;
-		if (depth > 0)
-			p++;
+		p++;
 	}
-	return *p == endc && eqFound;
+	return eqFound;
 }
 
 /* :from=to */

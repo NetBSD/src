@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.42 2025/03/29 11:51:54 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.43 2025/03/29 12:02:41 rillig Exp $
 #
 # various modifier error tests
 
@@ -200,12 +200,10 @@ mod-sysv-parse-1:
 # expect: make: Unclosed expression, expecting '}' for modifier "3"
 	@echo ${FIB:3
 mod-sysv-parse-2:
-# expect: make: Unknown modifier "3="
-# expect: make: Unclosed expression, expecting '}' for modifier "3="
+# expect: make: Unfinished modifier after "", expecting "}"
 	@echo ${FIB:3=
 mod-sysv-parse-3:
-# expect: make: Unknown modifier "3=x3"
-# expect: make: Unclosed expression, expecting '}' for modifier "3=x3"
+# expect: make: Unfinished modifier after "x3", expecting "}"
 	@echo ${FIB:3=x3
 mod-sysv-parse-4:
 	@echo ${FIB:3=x3}	# ok
