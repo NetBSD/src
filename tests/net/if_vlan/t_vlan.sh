@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.24.2.1 2023/11/03 10:10:49 martin Exp $
+#	$NetBSD: t_vlan.sh,v 1.24.2.2 2025/03/29 10:45:08 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -87,50 +87,19 @@ vlan_create_destroy_body_common()
 
 }
 
-atf_test_case vlan_create_destroy cleanup
-vlan_create_destroy_head()
-{
-
-	atf_set "descr" "tests of creation and deletion of vlan interface"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_create_destroy_body()
+test_create_destroy()
 {
 	rump_server_start $SOCK_LOCAL vlan
 
 	vlan_create_destroy_body_common
 }
 
-
-vlan_create_destroy_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_create_destroy6 cleanup
-vlan_create_destroy6_head()
-{
-
-	atf_set "descr" "tests of creation and deletion of vlan interface with IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_create_destroy6_body()
+test_create_destroy6()
 {
 
 	rump_server_start $SOCK_LOCAL vlan netinet6
 
 	vlan_create_destroy_body_common
-}
-
-vlan_create_destroy6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
 }
 
 vlan_basic_body_common()
@@ -208,15 +177,7 @@ vlan_basic_body_common()
 	atf_check -s exit:0 -o not-match:' 0 bytes' cat $outfile
 }
 
-atf_test_case vlan_basic cleanup
-vlan_basic_head()
-{
-
-	atf_set "descr" "tests of communications over vlan interfaces"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_basic_body()
+test_basic()
 {
 	rump_server_start $SOCK_LOCAL vlan
 	rump_server_start $SOCK_REMOTE vlan
@@ -225,34 +186,12 @@ vlan_basic_body()
 
 }
 
-vlan_basic_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_basic6 cleanup
-vlan_basic6_head()
-{
-
-	atf_set "descr" "tests of communications over vlan interfaces using IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_basic6_body()
+test_basic6()
 {
 	rump_server_start $SOCK_LOCAL vlan netinet6
 	rump_server_start $SOCK_REMOTE vlan netinet6
 
 	vlan_basic_body_common inet6
-}
-
-vlan_basic6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
 }
 
 vlan_auto_follow_mtu_body_common()
@@ -336,15 +275,7 @@ vlan_auto_follow_mtu_body_common()
 	fi
 }
 
-atf_test_case vlan_auto_follow_mtu cleanup
-vlan_auto_follow_mtu_head()
-{
-
-	atf_set "descr" "tests of setting vlan mtu using IPv4"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_auto_follow_mtu_body()
+test_auto_follow_mtu()
 {
 	rump_server_start $SOCK_LOCAL vlan
 	rump_server_start $SOCK_REMOTE vlan
@@ -352,34 +283,12 @@ vlan_auto_follow_mtu_body()
 	vlan_auto_follow_mtu_body_common inet
 }
 
-vlan_auto_follow_mtu_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_auto_follow_mtu6 cleanup
-vlan_auto_follow_mtu6_head()
-{
-
-	atf_set "descr" "tests of setting vlan mtu using IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_auto_follow_mtu6_body()
+test_auto_follow_mtu6()
 {
 	rump_server_start $SOCK_LOCAL vlan netinet6
 	rump_server_start $SOCK_REMOTE vlan netinet6
 
 	vlan_auto_follow_mtu_body_common inet6
-}
-
-vlan_auto_follow_mtu6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
 }
 
 vlanid_config_and_ping()
@@ -529,15 +438,7 @@ vlan_vlanid_body_common()
 	atf_check -s exit:0 -o ignore $ping_cmd $remote1
 }
 
-atf_test_case vlan_vlanid cleanup
-vlan_vlanid_head()
-{
-
-	atf_set "descr" "tests of configuration for vlan id"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_vlanid_body()
+test_vlanid()
 {
 	rump_server_start $SOCK_LOCAL vlan
 	rump_server_start $SOCK_REMOTE vlan
@@ -545,35 +446,12 @@ vlan_vlanid_body()
 	vlan_vlanid_body_common inet
 }
 
-vlan_vlanid_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_vlanid6 cleanup
-vlan_vlanid6_head()
-{
-
-	atf_set "descr" "tests of configuration for vlan id using IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-
-vlan_vlanid6_body()
+test_vlanid6()
 {
 	rump_server_start $SOCK_LOCAL vlan netinet6
 	rump_server_start $SOCK_REMOTE vlan netinet6
 
 	vlan_vlanid_body_common inet6
-}
-
-vlan_vlanid6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
 }
 
 vlan_configs_body_common()
@@ -627,14 +505,7 @@ vlan_configs_body_common()
 	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 }
 
-atf_test_case vlan_configs cleanup
-vlan_configs_head()
-{
-	atf_set "descr" "tests of configuration except vlan id"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_configs_body()
+test_configs()
 {
 
 	rump_server_start $SOCK_LOCAL vlan
@@ -643,31 +514,11 @@ vlan_configs_body()
 
 }
 
-vlan_configs_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_configs6 cleanup
-vlan_configs6_head()
-{
-	atf_set "descr" "tests of configuration except vlan id using IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_configs6_body()
+test_configs6()
 {
 	rump_server_start $SOCK_LOCAL vlan netinet6
 
 	vlan_configs_body_common
-}
-
-vlan_configs6_cleanup()
-{
-	$DEBUG && dump
-	cleanup
 }
 
 vlan_bridge_body_common()
@@ -752,48 +603,18 @@ vlan_bridge_body_common()
 	rump_server_destroy_ifaces
 }
 
-atf_test_case vlan_bridge cleanup
-vlan_bridge_head()
-{
-
-	atf_set "descr" "tests of vlan interfaces with bridges (IPv4)"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_bridge_body()
+test_bridge()
 {
 
 	rump_server_start $SOCK_LOCAL vlan bridge
 	vlan_bridge_body_common
 }
 
-vlan_bridge_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_bridge6 cleanup
-vlan_bridge6_head()
-{
-
-	atf_set "descr" "tests of vlan interfaces with bridges (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_bridge6_body()
+test_bridge6()
 {
 
 	rump_server_start $SOCK_LOCAL vlan netinet6 bridge
 	vlan_bridge_body_common
-}
-
-vlan_bridge6_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
 }
 
 vlan_multicast_body_common()
@@ -875,55 +696,21 @@ vlan_multicast_body_common()
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 }
 
-atf_test_case vlan_multicast cleanup
-vlan_multicast_head()
-{
-	atf_set "descr" "tests of multicast address adding and deleting"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_multicast_body()
+test_multicast()
 {
 	rump_server_start $SOCK_LOCAL vlan
 
 	vlan_multicast_body_common inet
 }
 
-vlan_multicast_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_multicast6 cleanup
-vlan_multicast6_head()
-{
-	atf_set "descr" "tests of multicast address adding and deleting with IPv6"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_multicast6_body()
+test_multicast6()
 {
 	rump_server_start $SOCK_LOCAL vlan netinet6
 
 	vlan_multicast_body_common inet6
 }
 
-vlan_multicast6_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_promisc cleanup
-vlan_promisc_head()
-{
-
-	atf_set "descr" "tests of IFF_PROMISC of vlan"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_promisc_body()
+test_promisc()
 {
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local atf_brconfig="atf_check -s exit:0 $HIJACKING /sbin/brconfig"
@@ -1028,13 +815,6 @@ vlan_promisc_body()
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 }
 
-vlan_promisc_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
 vlan_l2tp_body_common()
 {
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
@@ -1120,15 +900,7 @@ vlan_l2tp_body_common()
 	$atf_ifconfig l2tp0 destroy
 }
 
-atf_test_case vlan_l2tp cleanup
-vlan_l2tp_head()
-{
-
-	atf_set "descr" "tests of vlan(IPv4) over l2tp(IPv4)"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_l2tp_body()
+test_l2tp()
 {
 
 	rump_server_start $SOCK_LOCAL  vlan l2tp
@@ -1137,22 +909,7 @@ vlan_l2tp_body()
 	vlan_l2tp_body_common "inet"
 }
 
-vlan_l2tp_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case vlan_l2tp6 cleanup
-vlan_l2tp6_head()
-{
-
-	atf_set "descr" "tests of vlan(IPv6) over l2tp(IPv4)"
-	atf_set "require.progs" "rump_server"
-}
-
-vlan_l2tp6_body()
+test_l2tp6()
 {
 
 	rump_server_start $SOCK_LOCAL  vlan l2tp netinet6
@@ -1161,32 +918,134 @@ vlan_l2tp6_body()
 	vlan_l2tp_body_common "inet6"
 }
 
-vlan_l2tp6_cleanup()
+check_link_state()
+{
+	local ifname=$1
+	local state=$2
+
+	atf_check -s exit:0 -o match:"linkstate: $state" $HIJACKING rump.ifconfig -v $ifname
+}
+
+create_interfaces()
 {
 
-	$DEBUG && dump
-	cleanup
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+}
+
+destroy_interfaces()
+{
+
+	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+}
+
+test_link_state_sync()
+{
+	local ifconfig="atf_check -s exit:0 rump.ifconfig"
+
+	rump_server_start $SOCK_LOCAL vlan
+
+	export RUMP_SERVER=${SOCK_LOCAL}
+
+	## Alone
+	$ifconfig        vlan0 create
+	# The default state is "down"
+	check_link_state vlan0 down
+	$ifconfig        vlan0 up
+	check_link_state vlan0 down
+	$ifconfig        vlan0 down
+	check_link_state vlan0 down
+	$ifconfig        vlan0 destroy
+
+	## "unknown" parent
+	create_interfaces
+	# shmif0 is "unknown" until ifconfig linkstr
+	check_link_state shmif0 unknown
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	# vlan0 syncs with the parent
+	check_link_state vlan0 unknown
+	$ifconfig        vlan0 up
+	check_link_state vlan0 unknown
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+
+	## "up" parent
+	create_interfaces
+	$ifconfig        shmif0 linkstr $BUS
+	check_link_state shmif0 up
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	# vlan0 syncs with the parent
+	check_link_state vlan0 up
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+
+	## Change parent's link state to "up", "down", then "up"
+	create_interfaces
+	$ifconfig        shmif0 linkstr $BUS
+	check_link_state shmif0 up
+	$ifconfig        vlan0 vlan 1 vlanif shmif0
+	check_link_state vlan0 up
+	# Down the parent
+	$ifconfig        shmif0 media none
+	check_link_state shmif0 down
+	# vlan0 syncs with the parent
+	check_link_state vlan0 down
+	# Up the parent again
+	$ifconfig        shmif0 media auto
+	# vlan0 syncs with the parent
+	check_link_state vlan0 up
+	$ifconfig        vlan0 -vlanif
+	# Back to the default
+	check_link_state vlan0 down
+	destroy_interfaces
+}
+
+add_test()
+{
+	local name=$1
+	local desc="$2"
+
+	atf_test_case "vlan_${name}" cleanup
+	eval "vlan_${name}_head() {
+			atf_set descr \"${desc}\"
+			atf_set require.progs rump_server
+		}
+	    vlan_${name}_body() {
+			test_${name}
+		}
+	    vlan_${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case "vlan_${name}"
 }
 
 atf_init_test_cases()
 {
 
-	atf_add_test_case vlan_create_destroy
-	atf_add_test_case vlan_basic
-	atf_add_test_case vlan_auto_follow_mtu
-	atf_add_test_case vlan_vlanid
-	atf_add_test_case vlan_configs
-	atf_add_test_case vlan_bridge
-	atf_add_test_case vlan_multicast
-	atf_add_test_case vlan_promisc
-	atf_add_test_case vlan_l2tp
+	add_test create_destroy   "tests of creation and deletion of vlan interface"
+	add_test basic            "tests of communications over vlan interfaces"
+	add_test auto_follow_mtu  "tests of setting vlan mtu using IPv4"
+	add_test vlanid           "tests of configuration for vlan id"
+	add_test configs          "tests of configuration except vlan id"
+	add_test bridge           "tests of vlan interfaces with bridges (IPv4)"
+	add_test multicast        "tests of multicast address adding and deleting"
+	add_test l2tp             "tests of vlan(IPv4) over l2tp(IPv4)"
 
-	atf_add_test_case vlan_create_destroy6
-	atf_add_test_case vlan_basic6
-	atf_add_test_case vlan_auto_follow_mtu6
-	atf_add_test_case vlan_vlanid6
-	atf_add_test_case vlan_configs6
-	atf_add_test_case vlan_bridge6
-	atf_add_test_case vlan_multicast6
-	atf_add_test_case vlan_l2tp6
+	add_test create_destroy6  "tests of creation and deletion of vlan interface with IPv6"
+	add_test basic6           "tests of communications over vlan interfaces using IPv6"
+	add_test auto_follow_mtu6 "tests of setting vlan mtu using IPv6"
+	add_test vlanid6          "tests of configuration for vlan id using IPv6"
+	add_test configs6         "tests of configuration except vlan id using IPv6"
+	add_test bridge6          "tests of vlan interfaces with bridges (IPv6)"
+	add_test multicast6       "tests of multicast address adding and deleting with IPv6"
+	add_test l2tp6            "tests of vlan(IPv6) over l2tp(IPv4)"
+
+	add_test promisc          "tests of IFF_PROMISC of vlan"
+	add_test link_state_sync  "tests of link state sync with its parent"
 }
