@@ -43,7 +43,7 @@ make: Unfinished modifier after "#}", expecting "]"
 	in command "@echo ${UNDEF:U1 2 3:[#}"
 	in target "words-2"
 13=
-make: Bad modifier ":[123451234512345123451234512345]"
+make: Invalid modifier ":[123451234512345123451234512345]"
 	while evaluating variable "UNDEF" with value "1 2 3"
 	in command "@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}"
 	in target "words-3"

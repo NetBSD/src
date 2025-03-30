@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1156 2025/03/30 01:09:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1157 2025/03/30 01:27:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1156 2025/03/30 01:09:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1157 2025/03/30 01:27:12 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1966,10 +1966,6 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * and stores the result back in ch->expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
  *
- * If evaluating fails, the fallback error message "Bad modifier" is printed.
- * TODO: Add proper error handling to Var_Subst, Var_Parse, ApplyModifiers and
- * ModifyWords.
- *
  * Some modifiers such as :D and :U turn undefined expressions into defined
  * expressions using Expr_Define.
  */
@@ -3232,7 +3228,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
 	int first, last;
-	const char *p, *mod = *pp;
+	const char *p;
 	LazyBuf argBuf;
 	FStr arg;
 
@@ -3243,8 +3239,12 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	arg = LazyBuf_DoneGet(&argBuf);
 	p = arg.str;
 
-	if (!IsDelimiter(**pp, ch))
-		goto bad_modifier;		/* Found junk after ']' */
+	if (!IsDelimiter(**pp, ch)) {
+		Parse_Error(PARSE_FATAL,
+		    "Extra text after \"[%s]\"", arg.str);
+		FStr_Done(&arg);
+		return AMR_CLEANUP;
+	}
 
 	if (!ModChain_ShouldEval(ch))
 		goto ok;
@@ -3309,10 +3309,8 @@ ok:
 	return AMR_OK;
 
 bad_modifier:
+	Parse_Error(PARSE_FATAL, "Invalid modifier \":[%s]\"", arg.str);
 	FStr_Done(&arg);
-	/* Take a guess at where the modifier ends. */
-	Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
-	    (int)strcspn(mod, ":)}"), mod);
 	return AMR_CLEANUP;
 }
 
