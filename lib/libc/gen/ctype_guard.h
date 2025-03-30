@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.3 2025/03/30 00:07:51 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.4 2025/03/30 15:38:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -94,9 +94,11 @@
  * additional arithmetic relative to _C_ctype_tab_guarded_.
  */
 
-#ifndef __CHAR_UNSIGNED__
+#if defined(__CHAR_UNSIGNED__)	/* disable if char is unsigned */
+#  define	_CTYPE_GUARD_PAGE	0
+#elif defined(__PIC__)		/* enable in shared libc */
 #  define	_CTYPE_GUARD_PAGE	1
-#else
+#else	/* static libc -- let's aim for space-efficiency for now */
 #  define	_CTYPE_GUARD_PAGE	0
 #endif
 

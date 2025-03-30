@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.10 2025/03/29 19:40:42 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.11 2025/03/30 15:38:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.10 2025/03/29 19:40:42 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.11 2025/03/30 15:38:38 riastradh Exp $");
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -43,6 +43,20 @@ __RCSID("$NetBSD: t_ctype.c,v 1.10 2025/03/29 19:40:42 riastradh Exp $");
 enum { CHAR_UNSIGNED = 1 };
 #else
 enum { CHAR_UNSIGNED = 0 };
+#endif
+
+/*
+ * libc has a guard page for the LC_CTYPE=C ctype(3) tables only on
+ * some platforms.  We skip it if char is unsigned (in which case the
+ * common kind of ctype(3) abuse is unlikely).  We also skip it in
+ * static builds -- this is determined in the Makefile.
+ */
+#ifndef _CTYPE_GUARD_PAGE
+#  ifdef __CHAR_UNSIGNED__
+#    define	_CTYPE_GUARD_PAGE	0
+#  else
+#    define	_CTYPE_GUARD_PAGE	1
+#  endif
 #endif
 
 static const char *const locales[] = { "C.UTF-8", "fr_FR.ISO8859-1", "C" };
@@ -108,6 +122,12 @@ test_abuse_in_locales(const char *name, int (*ctypefn)(int), bool macro)
 
 	for (i = 0; i < __arraycount(locales); i++) {
 		char buf[128];
+
+		if (!_CTYPE_GUARD_PAGE && macro &&
+		    strcmp(locales[i], "C") == 0) {
+			fprintf(stderr, "skip LC_CTYPE=C ctype(3) abuse --"
+			    " no libc guard page on this platform\n");
+		}
 
 		ATF_REQUIRE_MSG(setlocale(LC_CTYPE, locales[i]) != NULL,
 		    "locales[i]=%s", locales[i]);
@@ -783,6 +803,8 @@ ATF_TC_BODY(abuse_##FN##_macro_c, tc)					      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
+	if (!_CTYPE_GUARD_PAGE)						      \
+		atf_tc_skip("no LC_CTYPE=C guard page on this platform");     \
 	test_abuse(#FN, &FN##_wrapper);					      \
 }									      \
 ATF_TC(abuse_##FN##_function_c);					      \
@@ -797,6 +819,8 @@ ATF_TC_BODY(abuse_##FN##_function_c, tc)				      \
 		atf_tc_skip("runtime ctype(3) abuse is impossible with"	      \
 		    " unsigned char");					      \
 	}								      \
+	if (!_CTYPE_GUARD_PAGE)						      \
+		atf_tc_skip("no LC_CTYPE=C guard page on this platform");     \
 	test_abuse(#FN, &FN);						      \
 }									      \
 ATF_TC(abuse_##FN##_macro_locale);					      \
