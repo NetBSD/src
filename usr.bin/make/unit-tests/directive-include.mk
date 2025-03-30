@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.18 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.19 2025/03/30 09:51:50 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -70,7 +70,7 @@ include
 # The following include directive behaves differently, depending on whether
 # the current file has a slash or is a relative filename.  In the first case,
 # make opens the directory of the current file and tries to read from it,
-# resulting in the error message """ line 1: Zero byte read from file".
+# resulting in the error message ":1: Zero byte read from file".
 # In the second case, the error message is "Could not find ", without quotes
 # or any other indicator for the empty filename at the end of the line.
 #include ${:U}

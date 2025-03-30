@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.739 2025/03/29 21:30:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.740 2025/03/30 09:51:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.739 2025/03/29 21:30:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.740 2025/03/30 09:51:49 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -497,7 +497,7 @@ PrintLocation(FILE *f, bool useVars, const GNode *gn)
 		return;
 
 	if (!useVars || fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
-		(void)fprintf(f, "\"%s\" line %u: ", fname, lineno);
+		(void)fprintf(f, "%s:%u: ", fname, lineno);
 		return;
 	}
 
@@ -511,7 +511,7 @@ PrintLocation(FILE *f, bool useVars, const GNode *gn)
 	if (base.str == NULL)
 		base.str = str_basename(fname);
 
-	(void)fprintf(f, "\"%s/%s\" line %u: ", dir.str, base.str, lineno);
+	(void)fprintf(f, "%s/%s:%u: ", dir.str, base.str, lineno);
 
 	FStr_Done(&base);
 	FStr_Done(&dir);

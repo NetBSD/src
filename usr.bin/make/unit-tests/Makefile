@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.355 2025/01/25 22:46:30 sjg Exp $
+# $NetBSD: Makefile,v 1.356 2025/03/30 09:51:49 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -572,8 +572,8 @@ SED_CMDS.varparse-errors+=	${STD_SED_CMDS.timestamp}
 SED_CMDS.varname-dot-make-meta-ignore_filter+= ${SED_CMDS.meta-ignore}
 SED_CMDS.varname-dot-make-meta-ignore_paths+= ${SED_CMDS.meta-ignore}
 SED_CMDS.varname-dot-make-meta-ignore_patterns+= ${SED_CMDS.meta-ignore}
-SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
-SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
+SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: [^:]*:,make: <normalized>:,'
+SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: [^:]*:,make: <normalized>:,'
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
 SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'

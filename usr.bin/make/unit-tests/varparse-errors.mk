@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.23 2025/03/30 01:51:51 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.24 2025/03/30 09:51:51 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of expressions.
 #
@@ -113,7 +113,7 @@ UNCLOSED:=	${:U:localtime
 # call hierarchy is more confusing, as the '.include' line does not contain
 # the faulty expression.
 #
-# expect: make: "varparse-errors.tmp" line 1: Unknown modifier ":Z"
+# expect: make: varparse-errors.tmp:1: Unknown modifier ":Z"
 # expect:	while evaluating "${:Z}" with value ""
 # expect:	while evaluating variable "INDIRECT" with value "${:Z}"
 # expect:	while evaluating variable "VALUE" with value "${INDIRECT}"
