@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1154 2025/03/30 00:35:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1155 2025/03/30 00:50:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1154 2025/03/30 00:35:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1155 2025/03/30 00:50:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2103,9 +2103,7 @@ typedef enum ApplyModifierResult {
 	AMR_OK,
 	/* Not a match, try the ':from=to' modifier as well. */
 	AMR_UNKNOWN,
-	/* Error out with "Bad modifier" message. */
-	AMR_BAD,
-	/* Error out without the standard error message. */
+	/* Error out without further error message. */
 	AMR_CLEANUP
 } ApplyModifierResult;
 
@@ -3234,7 +3232,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
 	int first, last;
-	const char *p;
+	const char *p, *mod = *pp;
 	LazyBuf argBuf;
 	FStr arg;
 
@@ -3312,7 +3310,10 @@ ok:
 
 bad_modifier:
 	FStr_Done(&arg);
-	return AMR_BAD;
+	/* Take a guess at where the modifier ends. */
+	Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
+	    (int)strcspn(mod, ":)}"), mod);
+	return AMR_CLEANUP;
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -3555,7 +3556,10 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 found_op:
 	if (expr->name[0] == '\0') {
 		*pp = mod + 1;
-		return AMR_BAD;
+		/* Take a guess at where the modifier ends. */
+		Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
+		    (int)strcspn(mod, ":)}"), mod);
+		return AMR_CLEANUP;
 	}
 
 	*pp = mod + (op[0] != '=' ? 3 : 2);
@@ -4058,7 +4062,6 @@ ApplyModifiers(
 {
 	ModChain ch = ModChain_Init(expr, startc, endc, ' ', false);
 	const char *p;
-	const char *mod;
 
 	assert(startc == '(' || startc == '{' || startc == '\0');
 	assert(endc == ')' || endc == '}' || endc == '\0');
@@ -4089,23 +4092,14 @@ ApplyModifiers(
 				break;
 		}
 
-		mod = p;
-
 		res = ApplySingleModifier(&p, &ch);
 		if (res == AMR_CLEANUP)
 			goto cleanup;
-		if (res == AMR_BAD)
-			goto bad_modifier;
 	}
 
 	*pp = p;
 	assert(Expr_Str(expr) != NULL);	/* Use var_Error or varUndefined. */
 	return;
-
-bad_modifier:
-	/* Take a guess at where the modifier ends. */
-	Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
-	    (int)strcspn(mod, ":)}"), mod);
 
 cleanup:
 	/*
