@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.2 2025/03/29 20:57:58 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.3 2025/03/30 00:07:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -138,11 +138,12 @@ enum {
 };
 
 #  define	__ctype_table	__aligned(_CTYPE_GUARD_SIZE)
-#  define	__ctype_table_guarded(name, guard)			      \
+#  define	__ctype_table_guarded(name, guard, nelem, elemsize)	      \
 	__ctype_table_object(name);					      \
 	__asm(".global " _C_LABEL_STRING(#name));			      \
 	__asm(_C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#guard) " + "      \
-	    ___STRING(_CTYPE_GUARD_SIZE))
+	    ___STRING(_CTYPE_GUARD_SIZE));				      \
+	__ctype_table_size(name, guard, nelem, elemsize)
 
 #else  /* !_CTYPE_GUARD_PAGE */
 
@@ -159,9 +160,10 @@ enum {
 
 /* Compiler can't see into __strong_alias, so mark it __used. */
 #  define	__ctype_table	__used
-#  define	__ctype_table_guarded(name, guard)			      \
+#  define	__ctype_table_guarded(name, guard, nelem, elemsize)	      \
 	__ctype_table_object(name);					      \
-	__strong_alias(name, guard)
+	__strong_alias(name, guard);					      \
+	__ctype_table_size(name, guard, nelem, elemsize)
 
 #endif	/* _CTYPE_GUARD_PAGE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: toupper_.c,v 1.16 2025/03/29 20:57:58 riastradh Exp $	*/
+/*	$NetBSD: toupper_.c,v 1.17 2025/03/30 00:07:51 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: toupper_.c,v 1.16 2025/03/29 20:57:58 riastradh Exp $");
+__RCSID("$NetBSD: toupper_.c,v 1.17 2025/03/30 00:07:51 riastradh Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <sys/ctype_bits.h>
@@ -22,7 +22,6 @@ __RCSID("$NetBSD: toupper_.c,v 1.16 2025/03/29 20:57:58 riastradh Exp $");
 #error "EOF != -1"
 #endif
 
-__ctype_table_guarded(_C_toupper_tab_, _C_toupper_tab_guarded_);
 __ctype_table
 static const short _C_toupper_tab_guarded_[_C_TOUPPER_TAB_GUARD +
     1 + _CTYPE_NUM_CHARS] = {
@@ -60,7 +59,7 @@ static const short _C_toupper_tab_guarded_[_C_TOUPPER_TAB_GUARD +
 	0xf0,	0xf1,	0xf2,	0xf3,	0xf4,	0xf5,	0xf6,	0xf7,
 	0xf8,	0xf9,	0xfa,	0xfb,	0xfc,	0xfd,	0xfe,	0xff
 };
-__ctype_table_size(_C_toupper_tab_, _C_toupper_tab_guarded_,
+__ctype_table_guarded(_C_toupper_tab_, _C_toupper_tab_guarded_,
     1 + _CTYPE_NUM_CHARS, __SIZEOF_SHORT__);
 
 #ifdef __BUILD_LEGACY
