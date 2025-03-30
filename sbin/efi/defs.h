@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: defs.h,v 1.2 2025/03/30 14:36:48 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #define _DEFS_H_
 
 #ifndef lint
-__RCSID("$NetBSD: defs.h,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: defs.h,v 1.2 2025/03/30 14:36:48 riastradh Exp $");
 #endif /* not lint */
 
 #define PUBLIC
@@ -74,13 +74,13 @@ __RCSID("$NetBSD: defs.h,v 1.1 2025/02/24 13:47:56 christos Exp $");
 
 /*
  * XXX: It would be nice to have QueryVariableInfo() support to get
- * maximum variable size ... or at least export EFI_VARNAME_MAXLENGTH
+ * maximum variable size ... or at least export EFI_VARNAME_MAXBYTES
  * from efi.h!
  */
 /* From sys/arch/x86/include/efi.h */
 #define	EFI_PAGE_SHIFT		12
 #define	EFI_PAGE_SIZE		(1 << EFI_PAGE_SHIFT)
-#define	EFI_VARNAME_MAXLENGTH	EFI_PAGE_SIZE
+#define	EFI_VARNAME_MAXBYTES	EFI_PAGE_SIZE
 
 /* XXX: Why is this not exposed in sys/uuid.h? */
 #define	UUID_STR_LEN	_UUID_STR_LEN

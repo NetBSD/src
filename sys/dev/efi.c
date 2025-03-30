@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.9 2023/05/24 00:02:51 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.10 2025/03/30 14:36:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.9 2023/05/24 00:02:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.10 2025/03/30 14:36:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.9 2023/05/24 00:02:51 riastradh Exp $");
 #include "ioconf.h"
 
 /*
- * Maximum length of an EFI variable name. The UEFI spec doesn't specify a
- * constraint, but we want to limit the size to act as a guard rail against
- * allocating too much kernel memory.
+ * Maximum length of an EFI variable name in bytes. The UEFI spec
+ * doesn't specify a constraint, but we want to limit the size to act
+ * as a guard rail against allocating too much kernel memory.
  */
-#define	EFI_VARNAME_MAXLENGTH		EFI_PAGE_SIZE
+#define	EFI_VARNAME_MAXBYTES		EFI_PAGE_SIZE
 
 /*
  * Pointer to arch specific EFI backend.
@@ -345,7 +345,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 	    (var->data != NULL && var->datasize == 0)) {
 		return EINVAL;
 	}
-	if (var->namesize > EFI_VARNAME_MAXLENGTH) {
+	if (var->namesize > EFI_VARNAME_MAXBYTES) {
 		return ENOMEM;
 	}
 	if (var->datasize > ULONG_MAX) { /* XXX stricter limit */
@@ -405,7 +405,7 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 	if (var->name == NULL || var->namesize == 0) {
 		return EINVAL;
 	}
-	if (var->namesize > EFI_VARNAME_MAXLENGTH) {
+	if (var->namesize > EFI_VARNAME_MAXBYTES) {
 		return ENOMEM;
 	}
 
@@ -416,7 +416,7 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 		goto done;
 	}
 
-	CTASSERT(EFI_VARNAME_MAXLENGTH <= ULONG_MAX);
+	CTASSERT(EFI_VARNAME_MAXBYTES <= ULONG_MAX);
 	namesize = namebufsize;
 	status = efi_ops->efi_nextvar(&namesize, namebuf, &var->vendor);
 	if (status != EFI_SUCCESS && status != EFI_BUFFER_TOO_SMALL) {
