@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.5 2025/03/30 16:17:05 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.6 2025/03/30 16:23:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -104,16 +104,17 @@
 
 #ifdef __arm__
 #  define	__ctype_table_object(name)				      \
-	__asm(".type " #name ",%object")
+	__asm(".type " _C_LABEL_STRING(#name) ",%object")
 #else
 #  define	__ctype_table_object(name)				      \
-	__asm(".type " #name ",@object")
+	__asm(".type " _C_LABEL_STRING(#name) ",@object")
 #endif
 
 #define	__ctype_table_size(name, guard, nelem, elemsize)		      \
 	__CTASSERT(sizeof((guard)[0]) == (elemsize));			      \
 	__CTASSERT(sizeof(guard) == _CTYPE_GUARD_SIZE + (nelem)*(elemsize));  \
-	__asm(".size " #name "," ___STRING((nelem) * (elemsize)))
+	__asm(".size " _C_LABEL_STRING(#name) ","			      \
+	    ___STRING((nelem) * (elemsize)))
 
 #if _CTYPE_GUARD_PAGE
 
