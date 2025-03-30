@@ -1,4 +1,4 @@
-/* $NetBSD: t_once.c,v 1.2 2017/08/25 22:59:47 ginsbach Exp $ */
+/* $NetBSD: t_once.c,v 1.3 2025/03/30 23:03:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,17 +29,21 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_once.c,v 1.2 2017/08/25 22:59:47 ginsbach Exp $");
+__RCSID("$NetBSD: t_once.c,v 1.3 2025/03/30 23:03:06 riastradh Exp $");
 
 #include <sys/time.h>
+#include <sys/wait.h>
+
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <atf-c.h>
 
 #include "h_common.h"
+#include "h_macros.h"
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -51,6 +55,12 @@ static void
 ofunc(void)
 {
 	printf("Variable x has value %d\n", x);
+	x++;
+}
+
+static void
+ofunc_silent(void)
+{
 	x++;
 }
 
@@ -187,11 +197,75 @@ ATF_TC_BODY(once3, tc)
 	printf("Test succeeded\n");
 }
 
+static long trial;
+
+static void *
+fork_and_once(void *cookie)
+{
+	pthread_barrier_t *bar = cookie;
+	pid_t pid, child;
+	int status;
+
+	(void)pthread_barrier_wait(bar);
+	RL(pid = fork());
+	if (pid == 0) {
+		(void)alarm(1);
+		(void)pthread_once(&once, &ofunc_silent);
+		_exit(x - 1);
+	}
+	RL(child = waitpid(pid, &status, 0));
+	ATF_REQUIRE_EQ_MSG(child, pid, "child=%lld pid=%lld",
+	    (long long)child, (long long)pid);
+	ATF_REQUIRE_MSG(!WIFSIGNALED(status),
+	    "child exited on signal %d (%s) in trial %ld",
+	    WTERMSIG(status), strsignal(WTERMSIG(status)), trial);
+	ATF_REQUIRE_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child exited 0x%x in trial %ld", status, trial);
+	return NULL;
+}
+
+ATF_TC(oncefork);
+ATF_TC_HEAD(oncefork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test racing pthread_once with fork");
+}
+ATF_TC_BODY(oncefork, tc)
+{
+	static pthread_once_t once0 = PTHREAD_ONCE_INIT;
+	pthread_barrier_t bar;
+	long ntrials = atf_tc_get_config_var_as_long_wd(tc,
+	    "pthread_once_forktrials", 0);
+
+	if (ntrials <= 0) {
+		atf_tc_skip("pthread_once takes thousands of fork trials"
+		    " on a multicore system to detect a race; set"
+		    " pthread_once_forktrials to the number of trials to"
+		    " enable this test");
+	}
+
+	RZ(pthread_barrier_init(&bar, NULL, 2));
+
+	for (trial = 0; trial < ntrials; trial++) {
+		pthread_t t;
+
+		once = once0;
+		x = 0;
+
+		RZ(pthread_create(&t, NULL, &fork_and_once, &bar));
+		(void)alarm(1);
+		(void)pthread_barrier_wait(&bar);
+		(void)pthread_once(&once, &ofunc_silent);
+		(void)alarm(0);
+		RZ(pthread_join(t, NULL));
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, once1);
 	ATF_TP_ADD_TC(tp, once2);
 	ATF_TP_ADD_TC(tp, once3);
+	ATF_TP_ADD_TC(tp, oncefork);
 
 	return atf_no_error();
 }
