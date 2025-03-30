@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.576 2024/06/06 00:21:28 snj Exp $
+.\"	$NetBSD: main,v 1.577 2025/03/30 14:38:14 rillig Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -546,7 +546,7 @@ More details are available in
 .Lk https://wiki.netbsd.org/tutorials/acls_and_extended_attributes_on_ffs "this guide" .
 .Pp
 If you are upgrading from a version of
-.Nx -current
+.Nx Ns -current
 please also check the
 .Sx "Compatibility Issues With Previous NetBSD Releases" .
 .PP
@@ -817,7 +817,7 @@ filesystems. Starting from
 this order has been reversed.
 .Pp
 If you have ever run a version of
-.Nx -current
+.Nx Ns -current
 between April 18, 2020 and September 23, 2022 (the version numbers
 used in the affected time range are between 9.99.56 and 9.99.106)
 your FFS file systems might have broken extended attributes stored.
@@ -828,7 +828,7 @@ before booting the updated system multi-user for the first time.
 .Pp
 .Em Note that you do not need to do anything special if you never did run any affected kernel,
 especially if you have never run
-.Nx -current .
+.Nx Ns -current .
 .Pp
 A number of things have been removed from the
 .Nx
