@@ -1,4 +1,4 @@
-/* $NetBSD: efiio.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: efiio.c,v 1.3 2025/03/30 14:30:40 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: efiio.c,v 1.2 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: efiio.c,v 1.3 2025/03/30 14:30:40 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -140,7 +140,7 @@ get_variable_info(int fd, bool (*choose)(struct efi_var_ioc *, void *),
 
 	memset(&ev, 0, sizeof(ev));
 
-	ev.name = ecalloc(EFI_VARNAME_MAXLENGTH, sizeof(*ev.name));
+	ev.name = ecalloc(EFI_VARNAME_MAXLENGTH, 1);
 	cnt = 0;
 	for (;;) {
 		ev.namesize = EFI_VARNAME_MAXLENGTH;
