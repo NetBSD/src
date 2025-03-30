@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.24 2025/03/29 23:50:07 rillig Exp $
+# $NetBSD: varmod.mk,v 1.25 2025/03/30 00:35:52 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -62,7 +62,7 @@
 # | q            | strict       |                    | yes      |
 # | range        | strict       |                    | no       |
 # | sh           | strict       |                    | yes      |
-# | t            | strict       |                    | no       |
+# | t            | strict       |                    | yes      |
 # | u            | strict       |                    | yes      |
 # | from=to      | greedy       | SysV, fallback     | ---      |
 

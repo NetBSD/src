@@ -1,4 +1,4 @@
-# $NetBSD: moderrs.mk,v 1.45 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.46 2025/03/30 00:35:52 rillig Exp $
 #
 # various modifier error tests
 
@@ -153,26 +153,26 @@ mod-ts-parse-1:
 mod-ts-parse-2:
 	@echo ${FIB:ts\65}	# octal 065 == U+0035 == '5'
 mod-ts-parse-3:
-# expect: make: Bad modifier ":ts\65oct"
+# expect: make: Unknown modifier ":ts\65oct"
 	@echo ${FIB:ts\65oct}	# bad modifier
 mod-ts-parse-4:
-# expect: make: Bad modifier ":ts\65oct"
+# expect: make: Unknown modifier ":ts\65oct"
 	@echo ${:U${FIB}:ts\65oct} # bad modifier, variable name is ""
 mod-ts-parse-5:
-# expect: make: Bad modifier ":tsxy"
+# expect: make: Unknown modifier ":tsxy"
 	@echo ${FIB:tsxy}	# modifier too long
 
 mod-t-parse-1:
-# expect: make: Bad modifier ":t"
+# expect: make: Unknown modifier ":t"
 	@echo ${FIB:t
 mod-t-parse-2:
-# expect: make: Bad modifier ":txy"
+# expect: make: Unknown modifier ":txy"
 	@echo ${FIB:txy}
 mod-t-parse-3:
-# expect: make: Bad modifier ":t"
+# expect: make: Unknown modifier ":t"
 	@echo ${FIB:t}
 mod-t-parse-4:
-# expect: make: Bad modifier ":t"
+# expect: make: Unknown modifier ":t"
 	@echo ${FIB:t:M*}
 
 mod-ifelse-parse-1:

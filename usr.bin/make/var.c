@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1153 2025/03/29 23:50:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1154 2025/03/30 00:35:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1153 2025/03/29 23:50:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1154 2025/03/30 00:35:52 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3096,11 +3096,8 @@ ApplyModifier_ToSep(const char **pp, ModChain *ch)
 		goto ok;
 	}
 
-	/* ":ts<unrecognized><unrecognized>". */
-	if (sep[0] != '\\') {
-		(*pp)++;	/* just for backwards compatibility */
-		return AMR_BAD;
-	}
+	if (sep[0] != '\\')
+		return AMR_UNKNOWN;
 
 	/* ":ts\n" */
 	if (sep[1] == 'n') {
@@ -3124,20 +3121,16 @@ ApplyModifier_ToSep(const char **pp, ModChain *ch)
 		if (sep[1] == 'x') {
 			base = 16;
 			p++;
-		} else if (!ch_isdigit(sep[1])) {
-			(*pp)++;	/* just for backwards compatibility */
-			return AMR_BAD;	/* ":ts<backslash><unrecognized>". */
-		}
+		} else if (!ch_isdigit(sep[1]))
+			return AMR_UNKNOWN;	/* ":ts\..." */
 
 		if (!TryParseChar(&p, base, &ch->sep)) {
 			Parse_Error(PARSE_FATAL,
 			    "Invalid character number at \"%s\"", p);
 			return AMR_CLEANUP;
 		}
-		if (!IsDelimiter(*p, ch)) {
-			(*pp)++;	/* just for backwards compatibility */
-			return AMR_BAD;
-		}
+		if (!IsDelimiter(*p, ch))
+			return AMR_UNKNOWN;
 
 		*pp = p;
 	}
@@ -3190,18 +3183,14 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 	const char *mod = *pp;
 	assert(mod[0] == 't');
 
-	if (IsDelimiter(mod[1], ch)) {
-		*pp = mod + 1;
-		return AMR_BAD;	/* Found ":t<endc>" or ":t:". */
-	}
+	if (IsDelimiter(mod[1], ch))
+		return AMR_UNKNOWN;		/* ":t<endc>" or ":t:" */
 
 	if (mod[1] == 's')
 		return ApplyModifier_ToSep(pp, ch);
 
-	if (!IsDelimiter(mod[2], ch)) {			/* :t<any><any> */
-		*pp = mod + 1;
-		return AMR_BAD;
-	}
+	if (!IsDelimiter(mod[2], ch))
+		return AMR_UNKNOWN;
 
 	if (mod[1] == 'A') {				/* :tA */
 		*pp = mod + 2;
@@ -3236,9 +3225,7 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 		return AMR_OK;
 	}
 
-	/* Found ":t<unrecognized>:" or ":t<unrecognized><endc>". */
-	*pp = mod + 1;		/* XXX: unnecessary but observable */
-	return AMR_BAD;
+	return AMR_UNKNOWN;		/* ":t<any>:" or ":t<any><endc>" */
 }
 
 /* :[#], :[1], :[-1..1], etc. */
