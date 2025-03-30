@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.22 2024/11/01 16:36:58 nia Exp $
+.\"	$NetBSD: strlcpy.3,v 1.23 2025/03/30 01:15:23 riastradh Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -52,56 +52,86 @@ strings respectively.
 .Pp
 The
 .Fn strlcpy
-function copies up to
+function computes the length
+.Pq like Xr strlen 3
+of
+.Fa src ,
+which
+.Em MUST
+be
+.Tn NUL Ns -terminated ,
+and copies up to
 .Fa size Li "- 1"
-bytes from the
-.Tn NUL Ns -terminated
-string
+bytes from
 .Fa src
 to
 .Fa dst ,
 .Tn NUL Ns -terminating
 the result.
 .Pp
-The
+If the bytes
+.Fa dst Ns Li "[0]" ,
+.Fa dst Ns Li "[1]" ,
+\&...,
+.Fa dst Ns Li "[" Ns Fa size Li - 1 Ns Li "]"
+are all
+.No non- Ns Tn NUL ,
+then the
 .Fn strlcat
-function appends the
-.Tn NUL Ns -terminated
-string
+function returns
+.Fa size + Fn strlen src
+without writing to memory.
+Otherwise, the
+.Fn strlcat
+function computes the sum of the lengths of
+.Fa dst
+and
+.Fa src ,
+which
+.Em MUST
+be
+.Tn NUL Ns -terminated ,
+and copies the content of
 .Fa src
-to the end of
-.Fa dst .
-It will append at most
-.Fa size Li "-" Fn strlen dst Li "- 1"
-bytes,
+to the position of the first
+.Tn NUL
+byte in
+.Fa dst ,
 .Tn NUL Ns -terminating
 the result.
+.Fn strlcat
+will append at most
+.Fa size Li "-" Fn strlen dst Li "- 1"
+.No non- Ns Tn NUL
+bytes, followed by one
+.Ns NUL
+byte.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
 Unlike
-.Xr strncpy 3
-and
-.Xr strncat 3 ,
+.Xr strncpy 3 ,
 .Fn strlcpy
-and
-.Fn strlcat
-are guaranteed to
+is guaranteed to
 .Tn NUL Ns -terminate
 the result (as long as
 .Fa size
-is larger than 0 or, in the case of
-.Fn strlcat ,
-as long as there is at least one byte free in
-.Fa dst ) .
+is larger than 0).
 Note that you should include a byte for the
 .Tn NUL
 in
 .Fa size .
 .Pp
-.Sy WARNING :
-Also unlike
-.Xr strncpy 3
-and
+Unlike
 .Xr strncat 3 ,
+.Fn strlcat
+is guaranteed to
+.Tn NUL Ns -terminate
+the result if
+.Fa dst
+is
+.Tn NUL Ns -terminated
+to begin with.
+.Pp
+.Sy WARNING :
 .Fn strlcpy
 and
 .Fn strlcat
@@ -114,33 +144,64 @@ bytes of
 are left uninitialized.
 This can lead to security vulnerabilities such as leaking secrets from
 uninitialized stack or heap buffers.
+You
+.Em MUST NOT
+simply replace
+.Xr strncpy 3
+and
+.Xr strncat 3
+by
+.Fn strlcpy
+and
+.Fn strlcat
+without proving it is safe to leave some of the output uninitialized.
 .Pp
 .Sy WARNING :
-.Fn strlcpy
-and
 .Fn strlcat
-only operate on true
-.Dq C
-strings.
-This means that for
-.Fn strlcpy
-.Fa src
-must be
-.Tn NUL Ns -terminated
-and for
-.Fn strlcat
-both
-.Fa src
-and
+does not guarantee to
+.Tn NUL Ns -terminate
 .Fa dst
-must be
+even if there is space for it.
+In particular, if
+.Fa dst
+is not
+.Tn NUL Ns -terminated
+on entry, then
+.Fn strlcat
+will leave it without a
+.Tn NUL Ns -terminator
+on return.
+.Pp
+.Sy WARNING :
+The
+.Fa src
+argument
+.Em MUST
+be
 .Tn NUL Ns -terminated .
+Both
+.Fn strlcpy
+and
+.Fn strlcat
+will read through
+.Fa src
+until they find a
+.Tn NUL
+terminator, reading
+.Fa src Ns Li "[" Ns Fa size Ns Li "]" Ns ,
+.Fa src Ns Li "[" Ns Fa size Li + 1 Ns Li "]" Ns ,
+.Fa src Ns Li "[" Ns Fa size Li + 2 Ns Li "]" Ns ,
+and beyond if there was no earlier
+.Tn NUL
+terminator.
 Applications handling fixed-width fields with
 .Pq possibly empty
 .Tn NUL
 padding, instead of
 .Tn NUL Ns -terminated
-C strings, MUST use
+C strings,
+.Em MUST
+use
 .Xr strncpy 3
 and
 .Xr strncat 3
