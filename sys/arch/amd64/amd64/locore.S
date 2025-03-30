@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.227 2024/12/03 15:16:42 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.228 2025/03/30 19:48:15 khorben Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1146,9 +1146,6 @@ ENTRY(start_pvh)
  	/*
  	 * save addr of the hvm_start_info structure. This is also the end
  	 * of the symbol table
-	/*
-	 * save addr of the hvm_start_info structure. This is also the end
-	 * of the symbol table
 	 */
 	movl	%ebx, RELOC(hvm_start_paddr)
 	movl	%ebx, %eax
