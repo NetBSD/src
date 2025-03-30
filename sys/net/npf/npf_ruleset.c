@@ -1012,13 +1012,13 @@ npf_rule_match_rid(npf_rule_t *rl, npf_cache_t *npc, int dir)
 		if (npf_socket_lookup_rid(npc, kauth_cred_getegid, &sock_gid, dir) == -1)
 			return ENOTCONN;
 
-		matched |= npf_match_rid(rl->gid, sock_gid);
+		matched |= npf_match_rid(&rl->gid, sock_gid);
 	}
 	if (rl->uid.op != NPF_OP_NONE) {
 		if (npf_socket_lookup_rid(npc, kauth_cred_geteuid, &sock_uid, dir) == -1)
 			return ENOTCONN;
 
-		matched |= npf_match_rid(rl->uid, sock_uid);
+		matched |= npf_match_rid(&rl->uid, sock_uid);
 	}
 
 	return matched;

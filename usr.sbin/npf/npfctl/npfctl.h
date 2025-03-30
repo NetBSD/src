@@ -144,7 +144,7 @@ npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 
 int		npfctl_parse_user(const char *, uint32_t *);
 int		npfctl_parse_group(const char *, uint32_t *);
-struct r_id	npfctl_init_rid(uint32_t, uint32_t, uint8_t);
+void		npfctl_init_rid(rid_t *, uint32_t, uint32_t, uint8_t);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);

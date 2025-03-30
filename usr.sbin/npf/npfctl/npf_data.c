@@ -305,14 +305,12 @@ npfctl_parse_group(const char *group, uint32_t *gid)
  * this function is called for both gid and uid init in parser
  * both uid and gid are both uint32_t
  */
-struct r_id
-npfctl_init_rid(uint32_t id1, uint32_t id2, uint8_t op)
+void
+npfctl_init_rid(rid_t *rid, uint32_t id1, uint32_t id2, uint8_t op)
 {
-	struct r_id rid;
-	rid.id[0] = id1;
-	rid.id[1] = id2;
-	rid.op = op;
-	return rid;
+	rid->id[0] = id1;
+	rid->id[1] = id2;
+	rid->op = op;
 }
 
 /*
