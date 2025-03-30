@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1155 2025/03/30 00:50:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1156 2025/03/30 01:09:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1155 2025/03/30 00:50:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1156 2025/03/30 01:09:41 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3555,10 +3555,14 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 
 found_op:
 	if (expr->name[0] == '\0') {
+		const char *value = op[0] == '=' ? op + 1 : op + 2;
 		*pp = mod + 1;
 		/* Take a guess at where the modifier ends. */
-		Parse_Error(PARSE_FATAL, "Bad modifier \":%.*s\"",
-		    (int)strcspn(mod, ":)}"), mod);
+		Parse_Error(PARSE_FATAL,
+		    "Invalid attempt to assign \"%.*s\" to variable \"\" "
+		    "via modifier \"::%.*s\"",
+		    (int)strcspn(value, ":)}"), value,
+		    (int)(value - op), op);
 		return AMR_CLEANUP;
 	}
 
