@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.351 2025/03/29 21:30:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.352 2025/03/30 21:24:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -530,6 +530,7 @@ extern enum PosixState {
 	PS_NOT_YET,
 	PS_MAYBE_NEXT_LINE,
 	PS_NOW_OR_NEVER,
+	PS_SET,
 	PS_TOO_LATE
 } posix_state;
 

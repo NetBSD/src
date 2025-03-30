@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.740 2025/03/30 09:51:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.741 2025/03/30 21:24:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.740 2025/03/30 09:51:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.741 2025/03/30 21:24:57 sjg Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1313,6 +1313,7 @@ HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 			 * otherwise it is an extension.
 			 */
 			Global_Set("%POSIX", "1003.2");
+			posix_state = PS_SET;
 			IncludeFile("posix.mk", true, false, true);
 		}
 		break;

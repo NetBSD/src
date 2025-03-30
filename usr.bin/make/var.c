@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1157 2025/03/30 01:27:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1158 2025/03/30 21:24:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1157 2025/03/30 01:27:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1158 2025/03/30 21:24:57 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3987,9 +3987,14 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 	if (DEBUG(VAR))
 		LogBeforeApply(ch, mod);
 
-	res = ApplyModifier(&p, ch);
+	if (posix_state == PS_SET)
+		res = ApplyModifier_SysV(&p, ch);
+	else
+		res = AMR_UNKNOWN;
+	if (res == AMR_UNKNOWN)
+		res = ApplyModifier(&p, ch);
 
-	if (res == AMR_UNKNOWN) {
+	if (res == AMR_UNKNOWN && posix_state != PS_SET) {
 		assert(p == mod);
 		res = ApplyModifier_SysV(&p, ch);
 	}
