@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.4 2025/03/30 15:38:38 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.5 2025/03/30 16:17:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #if defined(__CHAR_UNSIGNED__)	/* disable if char is unsigned */
 #  define	_CTYPE_GUARD_PAGE	0
-#elif defined(__PIC__)		/* enable in shared libc */
+#elif defined(_CTYPE_DYNAMIC)	/* enable in shared libc */
 #  define	_CTYPE_GUARD_PAGE	1
 #else	/* static libc -- let's aim for space-efficiency for now */
 #  define	_CTYPE_GUARD_PAGE	0
