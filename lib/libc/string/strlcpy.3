@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.23 2025/03/30 01:15:23 riastradh Exp $
+.\"	$NetBSD: strlcpy.3,v 1.24 2025/03/30 16:28:57 riastradh Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -80,7 +80,9 @@ then the
 .Fn strlcat
 function returns
 .Fa size + Fn strlen src
-without writing to memory.
+without writing anything to
+.Fa dst .
+.Pp
 Otherwise, the
 .Fn strlcat
 function computes the sum of the lengths of
@@ -103,7 +105,9 @@ the result.
 will append at most
 .Fa size Li "-" Fn strlen dst Li "- 1"
 .No non- Ns Tn NUL
-bytes, followed by one
+bytes from
+.Fa src ,
+followed by one
 .Ns NUL
 byte.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
@@ -139,9 +143,15 @@ are not guaranteed to initialize all
 .Fa size
 bytes of
 .Fa dst
-\(em bytes past
+\(em
+.Fn strlcpy
+leaves bytes past
 .Fa dst Ns Li "[" Fn strlen src Li "+ 1" Ns Li "]"
-are left uninitialized.
+uninitialized, and
+.Fn strlcat
+leaves bytes past
+.Fa dst Ns Li "[" Fn strlen dst Li + Fn strlen src Li + 1 Ns Li "]"
+uninitialized.
 This can lead to security vulnerabilities such as leaking secrets from
 uninitialized stack or heap buffers.
 You
