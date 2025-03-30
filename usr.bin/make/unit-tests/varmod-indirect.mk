@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.23 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.24 2025/03/30 16:43:10 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -159,9 +159,7 @@ M_NoPrimes=	${PRIMES:${M_ListToSkip}}
 # An error in an indirect modifier.
 # expect+1: Unknown modifier ":Z"
 .for var in before ${UNDEF:${:UZ}} after
-# expect+2: before
-# expect+1: after
-.  info ${var}
+.  error
 .endfor
 
 
