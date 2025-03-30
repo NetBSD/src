@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.35 2024/02/08 20:11:56 andvar Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.36 2025/03/30 14:13:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -74,7 +74,8 @@ struct ecoff_syms {
 	char   *stringtab;
 };
 
-static int     debug = 0;
+int debug = 0;
+
 static int     needswap;
 
 static int     phcmp(Elf32_Phdr *, Elf32_Phdr *);
