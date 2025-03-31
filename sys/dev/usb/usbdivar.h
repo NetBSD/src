@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.138 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.139 2025/03/31 14:45:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -74,9 +74,11 @@
  *
  */
 
+#include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/mutex.h>
-#include <sys/bus.h>
+
+#include <dev/usb/usbdi.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;
