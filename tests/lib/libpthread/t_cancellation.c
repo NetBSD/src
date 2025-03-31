@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cancellation.c,v 1.2 2025/03/31 14:07:10 riastradh Exp $	*/
+/*	$NetBSD: t_cancellation.c,v 1.3 2025/03/31 14:23:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cancellation.c,v 1.2 2025/03/31 14:07:10 riastradh Exp $");
+__RCSID("$NetBSD: t_cancellation.c,v 1.3 2025/03/31 14:23:11 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/msg.h>
@@ -961,9 +961,7 @@ ATF_TC_BODY(CANCELPOINT, tc)						      \
 	ATF_TP_ADD_TC(tp, CANCELPOINT)
 
 TEST_CANCELPOINT(cancelpoint_accept, __nothing)
-TEST_CANCELPOINT(cancelpoint_accept4,
-    atf_tc_expect_signal(SIGALRM,
-	"PR lib/59240: POSIX.1-2024: cancellation point audit"))
+TEST_CANCELPOINT(cancelpoint_accept4, __nothing)
 TEST_CANCELPOINT(cancelpoint_aio_suspend, __nothing)
 TEST_CANCELPOINT(cancelpoint_clock_nanosleep, __nothing)
 TEST_CANCELPOINT(cancelpoint_close, __nothing)
@@ -1012,8 +1010,7 @@ TEST_CANCELPOINT(cancelpoint_sigtimedwait, __nothing)
 TEST_CANCELPOINT(cancelpoint_sigwait, __nothing)
 TEST_CANCELPOINT(cancelpoint_sigwaitinfo, __nothing)
 TEST_CANCELPOINT(cancelpoint_sleep, __nothing)
-TEST_CANCELPOINT(cancelpoint_tcdrain,
-    atf_tc_expect_fail("PR lib/59240: POSIX.1-2024: cancellation point audit"))
+TEST_CANCELPOINT(cancelpoint_tcdrain, __nothing)
 TEST_CANCELPOINT(cancelpoint_thrd_join, __nothing)
 TEST_CANCELPOINT(cancelpoint_thrd_sleep, __nothing)
 TEST_CANCELPOINT(cancelpoint_wait, __nothing)

@@ -87,6 +87,7 @@ _sigwait
 _write
 _writev
 accept
+accept4
 call_once
 clock_nanosleep
 close
@@ -266,6 +267,7 @@ sendmsg
 sendto
 setcontext
 sigwait
+tcdrain
 thrd_create
 thrd_current
 thrd_detach

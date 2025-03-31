@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.998 2025/03/14 21:27:10 wiz Exp $
+# $NetBSD: shl.mi,v 1.999 2025/03/31 14:23:10 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -84,7 +84,7 @@
 ./lib/libprop.so.1.2				base-sys-shlib		dynamicroot
 ./lib/libpthread.so				base-sys-shlib		dynamicroot
 ./lib/libpthread.so.1				base-sys-shlib		dynamicroot
-./lib/libpthread.so.1.4				base-sys-shlib		dynamicroot
+./lib/libpthread.so.1.5				base-sys-shlib		dynamicroot
 ./lib/libradius.so				base-sys-shlib		dynamicroot
 ./lib/libradius.so.5				base-sys-shlib		dynamicroot
 ./lib/libradius.so.5.0				base-sys-shlib		dynamicroot
@@ -513,7 +513,7 @@
 ./usr/lib/libprop.so.1.2			base-sys-shlib		compatfile
 ./usr/lib/libpthread.so				base-sys-shlib		compatfile
 ./usr/lib/libpthread.so.1			base-sys-shlib		compatfile
-./usr/lib/libpthread.so.1.4			base-sys-shlib		compatfile
+./usr/lib/libpthread.so.1.5			base-sys-shlib		compatfile
 ./usr/lib/libpthread_dbg.so			base-obsolete		obsolete
 ./usr/lib/libpuffs.so				base-puffs-shlib	compatfile
 ./usr/lib/libpuffs.so.2				base-puffs-shlib	compatfile

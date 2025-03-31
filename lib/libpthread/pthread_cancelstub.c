@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.46 2025/03/31 14:07:10 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.47 2025/03/31 14:23:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.46 2025/03/31 14:07:10 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.47 2025/03/31 14:23:11 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.46 2025/03/31 14:07:10 riastradh Exp 
 #include <poll.h>
 #include <stdatomic.h>
 #include <stdarg.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include <signal.h>
@@ -122,6 +123,7 @@ int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 int	__nanosleep50(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
 int	_sys_openat(int, const char *, int, ...);
+int	_sys_paccept(int, struct sockaddr *, socklen_t *, int);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 int	_sys___pollts50(struct pollfd *, nfds_t, const struct timespec *,
 	    const sigset_t *);
@@ -168,6 +170,20 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_accept(s, addr, addrlen);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+accept4(int s, struct sockaddr *addr, socklen_t *addrlen, int flags)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_paccept(s, addr, addrlen, flags);
 	TESTCANCEL(self);
 
 	return retval;
@@ -661,6 +677,19 @@ sendmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
 	return retval;
 }
 
+int
+tcdrain(int fd)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = ioctl(fd, TIOCDRAIN, 0);
+	TESTCANCEL(self);
+
+	return retval;
+}
 
 pid_t
 __wait450(pid_t wpid, int *status, int options, struct rusage *rusage)

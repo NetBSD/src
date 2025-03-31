@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.358 2025/03/14 21:27:10 wiz Exp $
+# $NetBSD: shl.mi,v 1.359 2025/03/31 14:23:10 riastradh Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -27,7 +27,7 @@
 ./usr/libdata/debug/lib/libpcap.so.10.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libprop.so.1.2.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libpthread.so.1.4.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libpthread.so.1.5.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libradius.so.5.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-rump-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/librumpres.so.0.0.debug			comp-rump-debug	debug,dynamicroot,rump
@@ -177,7 +177,7 @@
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libproc.so.1.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libprop.so.1.2.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libpthread.so.1.4.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libpthread.so.1.5.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug		comp-puffs-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libradius.so.5.0.debug		comp-net-debug	debug,compatfile
