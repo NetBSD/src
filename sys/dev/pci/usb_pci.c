@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.c,v 1.8 2025/03/31 14:45:35 riastradh Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.9 2025/03/31 14:45:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.8 2025/03/31 14:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.9 2025/03/31 14:45:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,5 +71,6 @@ usb_pci_rem(struct usb_pci *up)
 
 	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_pci_alldevs */
 
-	TAILQ_REMOVE(&ehci_pci_alldevs, up, next);
+	if (up->usb)
+		TAILQ_REMOVE(&ehci_pci_alldevs, up, next);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.38 2025/03/31 14:45:35 riastradh Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.39 2025/03/31 14:45:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.38 2025/03/31 14:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.39 2025/03/31 14:45:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,5 +248,6 @@ usb_cardbus_rem(struct usb_cardbus *up)
 
 	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_cardbus_alldevs */
 
-	TAILQ_REMOVE(&ehci_cardbus_alldevs, up, next);
+	if (up->usb)
+		TAILQ_REMOVE(&ehci_cardbus_alldevs, up, next);
 }

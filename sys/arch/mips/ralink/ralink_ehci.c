@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.10 2025/03/31 14:45:35 riastradh Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.11 2025/03/31 14:45:57 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.10 2025/03/31 14:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.11 2025/03/31 14:45:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,5 +217,6 @@ ralink_usb_hc_rem(struct ralink_usb_hc *ruh)
 
 	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ralink_usb_alldevs */
 
-	TAILQ_REMOVE(&ralink_usb_alldevs, ruh, next);
+	if (ruh->usb)
+		TAILQ_REMOVE(&ralink_usb_alldevs, ruh, next);
 }
