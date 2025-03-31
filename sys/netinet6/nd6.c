@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.282 2024/04/11 07:34:37 knakahara Exp $	*/
+/*	$NetBSD: nd6.c,v 1.283 2025/03/31 05:55:43 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.282 2024/04/11 07:34:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.283 2025/03/31 05:55:43 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1596,7 +1596,10 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	ln = nd6_lookup(&dst->sin6_addr, ifp, false);
 
 	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0 &&
-	    ln->ln_state == ND_LLINFO_REACHABLE) {
+	    /* Only STALE needs to go the slow path to change its state. */
+	    (ln->ln_state == ND_LLINFO_REACHABLE ||
+	     ln->ln_state == ND_LLINFO_DELAY ||
+	     ln->ln_state == ND_LLINFO_PROBE)) {
 		/* Fast path */
 		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
 		LLE_RUNLOCK(ln);
