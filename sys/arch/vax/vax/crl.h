@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.h,v 1.2 1999/04/12 20:57:52 pk Exp $	*/
+/*	$NetBSD: crl.h,v 1.3 2025/03/31 19:22:09 andvar Exp $	*/
 /* 
  * @(#)crl.h	7.1 (Berkeley) 6/5/86
  */
@@ -31,7 +31,7 @@
  */
 #define CRL_S_XCMPLT	1		/* transaction complete */
 #define CRL_S_XCONT	2		/* continue transaction */
-#define CRL_S_ABORT	3		/* transation abort */
+#define CRL_S_ABORT	3		/* transaction abort */
 #define CRL_S_RETSTS	4		/* return device status */
 #define CRL_S_HNDSHK	0x80		/* handshake err during transaction */
 #define CRL_S_HWERR	0x81		/* hardware err during transaction */
