@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1362 2025/03/28 18:41:55 riastradh Exp $
+# $NetBSD: mi,v 1.1363 2025/03/31 13:57:06 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4077,6 +4077,7 @@
 ./usr/tests/lib/libpthread/t_barrier			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_call_once			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cancel			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_cancellation		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cnd			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cond			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_condwait			tests-lib-tests		compattestfile,atf

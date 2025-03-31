@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2023/11/24 16:21:17 riastradh Exp $
+# $NetBSD: Makefile,v 1.17 2025/03/31 13:57:06 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -17,6 +17,7 @@ CPPFLAGS.t_condwait.c+=	-I${.CURDIR}/../libc/gen
 TESTS_SH+=	t_atexit
 TESTS_C+=	t_barrier
 TESTS_SH+=	t_cancel
+TESTS_C+=	t_cancellation
 TESTS_C+=	t_cond
 TESTS_C+=	t_condwait
 TESTS_C+=	t_detach
@@ -43,6 +44,7 @@ TESTS_SH+=	t_thread_local_dtor
 TESTS_C+=	t_timedmutex
 
 LDADD.t_sem+=	-lrt
+LDADD.t_cancellation+=	-lrt
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_atexit
