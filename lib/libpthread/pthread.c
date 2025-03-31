@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $	*/
+/*	$NetBSD: pthread.c,v 1.186 2025/03/31 14:07:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.186 2025/03/31 14:07:10 riastradh Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $");
 #include <errno.h>
 #include <lwp.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -68,6 +69,15 @@ __RCSID("$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $");
 #include "pthread_int.h"
 #include "pthread_makelwp.h"
 #include "reentrant.h"
+
+#define	atomic_load_relaxed(p)						      \
+	atomic_load_explicit(p, memory_order_relaxed)
+
+#define	atomic_store_relaxed(p, v)					      \
+	atomic_store_explicit(p, v, memory_order_relaxed)
+
+#define	atomic_store_release(p, v)					      \
+	atomic_store_explicit(p, v, memory_order_release)
 
 __BEGIN_DECLS
 void _malloc_thread_cleanup(void) __weak;
@@ -647,10 +657,7 @@ pthread_exit(void *retval)
 	self = pthread__self();
 
 	/* Disable cancellability. */
-	pthread_mutex_lock(&self->pt_lock);
-	self->pt_flags |= PT_FLAG_CS_DISABLED;
-	self->pt_cancel = 0;
-	pthread_mutex_unlock(&self->pt_lock);
+	atomic_store_relaxed(&self->pt_cancel, PT_CANCEL_DISABLED);
 
 	/* Call any cancellation cleanup handlers */
 	if (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
@@ -868,20 +875,34 @@ pthread_self(void)
 int
 pthread_cancel(pthread_t thread)
 {
+	unsigned old, new;
+	bool wake;
 
 	pthread__error(EINVAL, "Invalid thread",
 	    thread->pt_magic == PT_MAGIC);
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-	pthread_mutex_lock(&thread->pt_lock);
-	thread->pt_flags |= PT_FLAG_CS_PENDING;
-	if ((thread->pt_flags & PT_FLAG_CS_DISABLED) == 0) {
-		thread->pt_cancel = 1;
-		pthread_mutex_unlock(&thread->pt_lock);
+
+	/*
+	 * membar_release matches membar_acquire in
+	 * pthread_setcancelstate and pthread__testcancel.
+	 */
+	membar_release();
+
+	do {
+		old = atomic_load_relaxed(&thread->pt_cancel);
+		new = old | PT_CANCEL_PENDING;
+		wake = false;
+		if ((old & PT_CANCEL_DISABLED) == 0) {
+			new |= PT_CANCEL_CANCELLED;
+			wake = true;
+		}
+	} while (__predict_false(atomic_cas_uint(&thread->pt_cancel, old, new)
+		!= old));
+
+	if (wake)
 		_lwp_wakeup(thread->pt_lid);
-	} else
-		pthread_mutex_unlock(&thread->pt_lock);
 
 	return 0;
 }
@@ -891,50 +912,76 @@ int
 pthread_setcancelstate(int state, int *oldstate)
 {
 	pthread_t self;
-	int retval;
+	unsigned flags, old, new;
+	bool cancelled;
 
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_setcancelstate_stub(state, oldstate);
 
 	self = pthread__self();
-	retval = 0;
 
-	pthread_mutex_lock(&self->pt_lock);
+	switch (state) {
+	case PTHREAD_CANCEL_ENABLE:
+		flags = 0;
+		break;
+	case PTHREAD_CANCEL_DISABLE:
+		flags = PT_CANCEL_DISABLED;
+		break;
+	default:
+		return EINVAL;
+	}
 
-	if (oldstate != NULL) {
-		if (self->pt_flags & PT_FLAG_CS_DISABLED)
+	do {
+		old = atomic_load_relaxed(&self->pt_cancel);
+		new = (old & ~PT_CANCEL_DISABLED) | flags;
+		/*
+		 * If we disable while cancelled, switch back to
+		 * pending so future cancellation tests will not fire
+		 * until enabled again.
+		 *
+		 * If a cancellation was requested while cancellation
+		 * was disabled, note that fact for future
+		 * cancellation tests.
+		 */
+		cancelled = false;
+		if (__predict_false((flags | (old & PT_CANCEL_CANCELLED)) ==
+			(PT_CANCEL_DISABLED|PT_CANCEL_CANCELLED))) {
+			new &= ~PT_CANCEL_CANCELLED;
+			new |= PT_CANCEL_PENDING;
+		} else if (__predict_false((flags |
+			    (old & PT_CANCEL_PENDING)) ==
+			PT_CANCEL_PENDING)) {
+			new |= PT_CANCEL_CANCELLED;
+			/* This is not a deferred cancellation point. */
+			if (__predict_false(old & PT_CANCEL_ASYNC))
+				cancelled = true;
+		}
+	} while (__predict_false(atomic_cas_uint(&self->pt_cancel, old, new)
+		!= old));
+
+	/*
+	 * If we transitioned from PTHREAD_CANCEL_DISABLED to
+	 * PTHREAD_CANCEL_ENABLED, there was a pending cancel, and we
+	 * are configured with asynchronous cancellation, we are now
+	 * cancelled -- make it happen.
+	 */
+	if (__predict_false(cancelled)) {
+		/*
+		 * membar_acquire matches membar_release in
+		 * pthread_cancel.
+		 */
+		membar_acquire();
+		pthread__cancelled();
+	}
+
+	if (oldstate) {
+		if (old & PT_CANCEL_DISABLED)
 			*oldstate = PTHREAD_CANCEL_DISABLE;
 		else
 			*oldstate = PTHREAD_CANCEL_ENABLE;
 	}
 
-	if (state == PTHREAD_CANCEL_DISABLE) {
-		self->pt_flags |= PT_FLAG_CS_DISABLED;
-		if (self->pt_cancel) {
-			self->pt_flags |= PT_FLAG_CS_PENDING;
-			self->pt_cancel = 0;
-		}
-	} else if (state == PTHREAD_CANCEL_ENABLE) {
-		self->pt_flags &= ~PT_FLAG_CS_DISABLED;
-		/*
-		 * If a cancellation was requested while cancellation
-		 * was disabled, note that fact for future
-		 * cancellation tests.
-		 */
-		if (self->pt_flags & PT_FLAG_CS_PENDING) {
-			self->pt_cancel = 1;
-			/* This is not a deferred cancellation point. */
-			if (self->pt_flags & PT_FLAG_CS_ASYNC) {
-				pthread_mutex_unlock(&self->pt_lock);
-				pthread__cancelled();
-			}
-		}
-	} else
-		retval = EINVAL;
-
-	pthread_mutex_unlock(&self->pt_lock);
-
-	return retval;
+	return 0;
 }
 
 
@@ -942,34 +989,45 @@ int
 pthread_setcanceltype(int type, int *oldtype)
 {
 	pthread_t self;
-	int retval;
+	unsigned flags, old, new;
+	bool cancelled;
 
 	self = pthread__self();
-	retval = 0;
 
-	pthread_mutex_lock(&self->pt_lock);
+	switch (type) {
+	case PTHREAD_CANCEL_DEFERRED:
+		flags = 0;
+		break;
+	case PTHREAD_CANCEL_ASYNCHRONOUS:
+		flags = PT_CANCEL_ASYNC;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	do {
+		old = atomic_load_relaxed(&self->pt_cancel);
+		new = (old & ~PT_CANCEL_ASYNC) | flags;
+		cancelled = false;
+		if (__predict_false((flags | (old & PT_CANCEL_CANCELLED)) ==
+			(PT_CANCEL_ASYNC|PT_CANCEL_CANCELLED)))
+			cancelled = true;
+	} while (__predict_false(atomic_cas_uint(&self->pt_cancel, old, new)
+		!= old));
+
+	if (__predict_false(cancelled)) {
+		membar_acquire();
+		pthread__cancelled();
+	}
 
 	if (oldtype != NULL) {
-		if (self->pt_flags & PT_FLAG_CS_ASYNC)
+		if (old & PT_CANCEL_ASYNC)
 			*oldtype = PTHREAD_CANCEL_ASYNCHRONOUS;
 		else
 			*oldtype = PTHREAD_CANCEL_DEFERRED;
 	}
 
-	if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
-		self->pt_flags |= PT_FLAG_CS_ASYNC;
-		if (self->pt_cancel) {
-			pthread_mutex_unlock(&self->pt_lock);
-			pthread__cancelled();
-		}
-	} else if (type == PTHREAD_CANCEL_DEFERRED)
-		self->pt_flags &= ~PT_FLAG_CS_ASYNC;
-	else
-		retval = EINVAL;
-
-	pthread_mutex_unlock(&self->pt_lock);
-
-	return retval;
+	return 0;
 }
 
 
@@ -979,8 +1037,8 @@ pthread_testcancel(void)
 	pthread_t self;
 
 	self = pthread__self();
-	if (self->pt_cancel)
-		pthread__cancelled();
+
+	pthread__testcancel(self);
 }
 
 
@@ -1008,8 +1066,19 @@ void
 pthread__testcancel(pthread_t self)
 {
 
-	if (self->pt_cancel)
+	/*
+	 * We use atomic_load_relaxed and then a conditional
+	 * membar_acquire, rather than atomic_load_acquire, in order to
+	 * avoid incurring the cost of an acquire barrier in the common
+	 * case of not having been cancelled.
+	 *
+	 * membar_acquire matches membar_release in pthread_cancel.
+	 */
+	if (__predict_false(atomic_load_relaxed(&self->pt_cancel) &
+		PT_CANCEL_CANCELLED)) {
+		membar_acquire();
 		pthread__cancelled();
+	}
 }
 
 
@@ -1191,7 +1260,9 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 			}
 		}
 		/* Check for cancellation. */
-		if (cancelpt && self->pt_cancel)
+		if (cancelpt &&
+		    (atomic_load_relaxed(&self->pt_cancel) &
+			PT_CANCEL_CANCELLED))
 			rv = EINTR;
 	} while (self->pt_sleepobj != NULL && rv == 0);
 	return rv;

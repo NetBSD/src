@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cancellation.c,v 1.1 2025/03/31 13:57:06 riastradh Exp $	*/
+/*	$NetBSD: t_cancellation.c,v 1.2 2025/03/31 14:07:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cancellation.c,v 1.1 2025/03/31 13:57:06 riastradh Exp $");
+__RCSID("$NetBSD: t_cancellation.c,v 1.2 2025/03/31 14:07:10 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <sys/msg.h>
@@ -1497,8 +1497,6 @@ ATF_TC_BODY(sigsafecancelstate, tc)
 		    memory_order_relaxed);
 	}
 
-	atf_tc_expect_signal(SIGALRM, "PR lib/59134: POSIX-1.2024:"
-	    " pthread_setcancelstate must be async-signal-safe");
 	alarm(1);
 	RZ(pthread_join(t, &result));
 	ATF_CHECK_MSG(result == NULL, "result=%p", result);
@@ -1619,4 +1617,3 @@ ATF_TP_ADD_TCS(tp)
 
 	return atf_no_error();
 }
-

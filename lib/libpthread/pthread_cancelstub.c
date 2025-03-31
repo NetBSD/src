@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.46 2025/03/31 14:07:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.46 2025/03/31 14:07:10 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $
 #include <fcntl.h>
 #include <mqueue.h>
 #include <poll.h>
+#include <stdatomic.h>
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -87,6 +88,9 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $
 #include "pthread.h"
 #include "pthread_int.h"
 #include "reentrant.h"
+
+#define	atomic_load_relaxed(p)						      \
+	atomic_load_explicit(p, memory_order_relaxed)
 
 int	pthread__cancel_stub_binder;
 
@@ -147,8 +151,11 @@ int	__sigsuspend14(const sigset_t *);
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_true(!__uselibcstub) &&				\
-	    __predict_false((id)->pt_cancel))				\
+	    __predict_false(atomic_load_relaxed(&(id)->pt_cancel) &	\
+		PT_CANCEL_CANCELLED)) {					\
+		membar_acquire();					\
 		pthread__cancelled();					\
+	}								\
 	} while (0)
 
 

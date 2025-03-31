@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.77 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.78 2025/03/31 14:07:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.77 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.78 2025/03/31 14:07:10 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -43,6 +44,9 @@ __RCSID("$NetBSD: pthread_cond.c,v 1.77 2022/02/12 14:59:32 riastradh Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 #include "reentrant.h"
+
+#define	atomic_load_relaxed(p)						      \
+	atomic_load_explicit(p, memory_order_relaxed)
 
 int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 
@@ -139,7 +143,9 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self = pthread__self();
 	pthread__assert(self->pt_lid != 0);
 
-	if (__predict_false(self->pt_cancel)) {
+	if (__predict_false(atomic_load_relaxed(&self->pt_cancel) &
+		PT_CANCEL_CANCELLED)) {
+		membar_acquire();
 		pthread__cancelled();
 	}
 
@@ -166,7 +172,9 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	/* Drop the interlock and wait. */
 	error = 0;
 	pthread_mutex_unlock(mutex);
-	while (waiter.lid && !(cancel = self->pt_cancel)) {
+	while (waiter.lid &&
+	    !(cancel = atomic_load_relaxed(&self->pt_cancel) &
+		PT_CANCEL_CANCELLED)) {
 		int rv = _lwp_park(clkid, TIMER_ABSTIME, __UNCONST(abstime),
 		    0, NULL, NULL);
 		if (rv == 0) {
@@ -209,6 +217,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * held if this happens.
 	 */
 	if (cancel) {
+		membar_acquire();
 		pthread__cancelled();
 	}
 
