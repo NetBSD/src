@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.c,v 1.7 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.8 2025/03/31 14:45:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,31 +30,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.7 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.8 2025/03/31 14:45:35 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
+#include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
 struct usb_pci_alldevs ehci_pci_alldevs =
-	TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
+    TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
 
 void
 usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, device_t bu)
 {
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_pci_alldevs */
+
 	TAILQ_INSERT_TAIL(&ehci_pci_alldevs, up, next);
 	up->bus = pa->pa_bus;
 	up->device = pa->pa_device;
@@ -65,5 +68,8 @@ usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, device_t bu)
 void
 usb_pci_rem(struct usb_pci *up)
 {
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_pci_alldevs */
+
 	TAILQ_REMOVE(&ehci_pci_alldevs, up, next);
 }

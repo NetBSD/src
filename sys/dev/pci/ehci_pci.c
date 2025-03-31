@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.77 2024/03/24 03:29:02 mrg Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.78 2025/03/31 14:45:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.77 2024/03/24 03:29:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.78 2025/03/31 14:45:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	const u_int maxncomp = EHCI_HCS_N_CC(EREAD4(&sc->sc, EHCI_HCSPARAMS));
 	KASSERT(maxncomp <= EHCI_COMPANION_MAX);
 	ncomp = 0;
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_pci_alldevs */
 	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
 		if (up->bus == pa->pa_bus && up->device == pa->pa_device &&
 		    !up->claimed) {

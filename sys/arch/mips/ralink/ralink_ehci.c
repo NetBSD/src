@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.10 2025/03/31 14:45:35 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.10 2025/03/31 14:45:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,15 +57,11 @@ static void ralink_ehci_attach(device_t, device_t, void *);
 static int  ralink_ehci_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(ralink_ehci, sizeof(struct ralink_ehci_softc),
-	ralink_ehci_match, ralink_ehci_attach, ralink_ehci_detach,
-	ehci_activate, NULL, ehci_childdet);
+    ralink_ehci_match, ralink_ehci_attach, ralink_ehci_detach,
+    ehci_activate, NULL, ehci_childdet);
 
 static TAILQ_HEAD(, ralink_usb_hc) ralink_usb_alldevs =
-	TAILQ_HEAD_INITIALIZER(ralink_usb_alldevs);
-
-#if 0
-struct usb_hc_alldevs ralink_usb_alldevs = TAILQ_HEAD_INITIALIZER(ralink_usb_alldevs);
-#endif
+    TAILQ_HEAD_INITIALIZER(ralink_usb_alldevs);
 
 /*
  * ralink_ehci_match
@@ -144,6 +140,7 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	 * have lower function numbers so they should be enumerated already.
 	 */
 	int ncomp = 0;
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ralink_usb_alldevs */
 	TAILQ_FOREACH(ruh, &ralink_usb_alldevs, next) {
 		aprint_normal_dev(self, "companion %s\n",
 			device_xname(ruh->usb));
@@ -207,6 +204,9 @@ ralink_ehci_detach(device_t self, int flags)
 void
 ralink_usb_hc_add(struct ralink_usb_hc *ruh, device_t usbp)
 {
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ralink_usb_alldevs */
+
 	TAILQ_INSERT_TAIL(&ralink_usb_alldevs, ruh, next);
 	ruh->usb = usbp;
 }
@@ -214,5 +214,8 @@ ralink_usb_hc_add(struct ralink_usb_hc *ruh, device_t usbp)
 void
 ralink_usb_hc_rem(struct ralink_usb_hc *ruh)
 {
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ralink_usb_alldevs */
+
 	TAILQ_REMOVE(&ralink_usb_alldevs, ruh, next);
 }
