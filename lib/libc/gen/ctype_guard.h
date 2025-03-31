@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.6 2025/03/30 16:23:13 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.7 2025/03/31 23:48:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ enum {
 #  define	__ctype_table	__used
 #  define	__ctype_table_guarded(name, guard, nelem, elemsize)	      \
 	__ctype_table_object(name);					      \
-	__strong_alias(name, guard);					      \
+	__strong_alias(name, guard)					      \
 	__ctype_table_size(name, guard, nelem, elemsize)
 
 #endif	/* _CTYPE_GUARD_PAGE */
