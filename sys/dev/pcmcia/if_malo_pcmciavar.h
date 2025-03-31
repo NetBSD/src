@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmciavar.h,v 1.3 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_malo_pcmciavar.h,v 1.4 2025/03/31 23:15:41 gutteridge Exp $	*/
 /*	$OpenBSD: if_malovar.h,v 1.27 2007/10/09 20:37:32 mglocker Exp $ */
 
 /*
@@ -30,7 +30,7 @@
 #define	MALO_READ_MULTI_2(sc, reg, off, size) \
 	bus_space_read_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), (size))
 #else
-#error not support bus_space_write_multi_stream_2()
+#error bus_space_read_multi_stream_2() is not supported
 #endif
 #endif
 #define MALO_WRITE_1(sc, reg, val) \
@@ -45,7 +45,7 @@
 #define MALO_WRITE_MULTI_2(sc, reg, off, size) \
 	bus_space_write_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), (size))
 #else
-#error not support bus_space_write_multi_stream_2()
+#error bus_space_write_multi_stream_2() is not supported
 #endif
 #endif
 
