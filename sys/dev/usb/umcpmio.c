@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.4 2025/03/25 20:38:54 riastradh Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.5 2025/03/31 18:32:35 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.4 2025/03/25 20:38:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.5 2025/03/31 18:32:35 brad Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -1224,7 +1224,7 @@ umcpmio_dev_read(dev_t dev, struct uio *uio, int flags)
 	while (uio->uio_resid && !sc->sc_dying) {
 		error = umcpmio_get_status(sc, &status_res, true);
 		if (error)
-			continue; /* XXX goto out? */
+			break;
 		switch (dunit) {
 		case GP1_DEV:
 			adc_lsb = status_res.adc_channel0_lsb;
@@ -1243,14 +1243,15 @@ umcpmio_dev_read(dev_t dev, struct uio *uio, int flags)
 			break;
 		}
 		if (error)
-			continue; /* XXX goto out? */
+			break;
 		if (sc->sc_dying)
 			break;
 
 		buf = adc_msb << 8;
 		buf |= adc_lsb;
 		error = uiomove(&buf, 2, uio);
-		/* XXX missing error test */
+		if (error)
+			break;
 	}
 out:
 	return error;
@@ -1479,13 +1480,14 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		memset(&put_flash_res, 0, MCP2221_RES_BUFFER_SIZE);
 		error = umcpmio_put_flash(sc, &put_flash_req,
 		    &put_flash_res, false);
-		/* XXX missing error test? */
-		umcpmio_dump_buffer(sc->sc_dumpbuffer,
-		    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
-		    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
-		    " put_flash_res");
-		memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
-		    MCP2221_RES_BUFFER_SIZE);
+		if (!error) {
+			umcpmio_dump_buffer(sc->sc_dumpbuffer,
+			    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
+			    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
+			    " put_flash_res");
+			memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
+			    MCP2221_RES_BUFFER_SIZE);
+		}
 		break;
 	default:
 		error = EINVAL;
