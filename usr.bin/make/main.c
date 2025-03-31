@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.640 2025/03/30 21:24:57 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.641 2025/03/31 14:35:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -108,7 +108,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.640 2025/03/30 21:24:57 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.641 2025/03/31 14:35:22 riastradh Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2116,7 +2116,7 @@ PrintOnError(GNode *gn, const char *msg)
 	{
 		char *errorVarsValues;
 		enum PosixState p_s = posix_state;
-		
+
 		posix_state = PS_TOO_LATE;
 		errorVarsValues = Var_Subst(
 		    "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
