@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.63 2024/09/22 14:05:47 jmcneill Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.64 2025/03/31 14:46:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ typedef struct ohci_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+	bool sc_attached;
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
@@ -172,7 +173,7 @@ struct ohci_xfer {
 
 int		ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
-int		ohci_detach(ohci_softc_t *, int);
+void		ohci_detach(ohci_softc_t *);
 bool		ohci_shutdown(device_t, int);
 void		ohci_childdet(device_t, device_t);
 int		ohci_activate(device_t, enum devact);

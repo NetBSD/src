@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.60 2025/03/31 14:46:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.60 2025/03/31 14:46:42 riastradh Exp $");
 
 #include "ehci.h"
 
@@ -187,33 +187,58 @@ static int
 ohci_pci_detach(device_t self, int flags)
 {
 	struct ohci_pci_softc *sc = device_private(self);
-	int rv;
+	int error;
 
-	rv = ohci_detach(&sc->sc, flags);
-	if (rv)
-		return rv;
+	/*
+	 * Detach the USB child first.  Disconnects all USB devices and
+	 * prevents connecting new ones.
+	 */
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
+	/*
+	 * Stop listing this as a possible companion controller for
+	 * ehci(4).
+	 */
+#if NEHCI > 0
+	usb_pci_rem(&sc->sc_pci);
+#endif
+
+	/*
+	 * Shut down the controller and block interrupts at the device
+	 * level.  Once we have shut down the controller, the shutdown
+	 * handler no longer needed -- deregister it from PMF.
+	 * (Harmless to call ohci_shutdown more than once, so no
+	 * synchronization needed.)
+	 */
+	ohci_shutdown(self, 0);
 	pmf_device_deregister(self);
 
-	ohci_shutdown(self, flags);
-
-	if (sc->sc.sc_size) {
-		/* Disable interrupts, so we don't get any spurious ones. */
-		bus_space_write_4(sc->sc.iot, sc->sc.ioh,
-				  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
-	}
-
+	/*
+	 * Interrupts are blocked at the device level by ohci_shutdown.
+	 * Disestablish the interrupt handler.  This waits for it to
+	 * complete on all CPUs.
+	 */
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
+
+	/*
+	 * Free the bus-independent ohci(4) state now that the
+	 * interrupt handler has ceased to run on all CPUs.
+	 */
+	ohci_detach(&sc->sc);
+
+	/*
+	 * Unmap the registers now that we're all done with them.
+	 */
 	if (sc->sc.sc_size) {
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
-#if NEHCI > 0
-	usb_pci_rem(&sc->sc_pci);
-#endif
+
 	return 0;
 }
 

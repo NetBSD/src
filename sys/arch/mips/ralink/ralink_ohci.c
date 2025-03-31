@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.8 2025/03/31 14:46:42 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.8 2025/03/31 14:46:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,28 +162,58 @@ static int
 ralink_ohci_detach(device_t self, int flags)
 {
 	struct ralink_ohci_softc *sc = device_private(self);
-	int rv;
+	int error;
 
+	/*
+	 * Detach the USB child first.  Disconnects all USB devices and
+	 * prevents connecting new ones.
+	 */
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
+	/*
+	 * Stop listing this as a possible companion controller for
+	 * ehci(4).
+	 */
+#if NEHCI > 0
+	ralink_usb_hc_rem(&sc->sc_hc);
+#endif
+
+	/*
+	 * Shut down the controller and block interrupts at the device
+	 * level.  Once we have shut down the controller, the shutdown
+	 * handler no longer needed -- deregister it from PMF.
+	 * (Harmless to call ohci_shutdown more than once, so no
+	 * synchronization needed.)
+	 */
+	ohci_shutdown(self, 0);
 	pmf_device_deregister(self);
 
-	rv = ohci_detach(&sc->sc_ohci, flags);
-	if (rv != 0)
-		return rv;
-
+	/*
+	 * Interrupts are blocked at the device level by ohci_shutdown.
+	 * Disestablish the interrupt handler.  This waits for it to
+	 * complete on all CPUs.
+	 */
 	if (sc->sc_ih != NULL) {
 		ra_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 
-	if (sc->sc_ohci.sc_size == 0) {
+	/*
+	 * Free the bus-independent ohci(4) state now that the
+	 * interrupt handler has ceased to run on all CPUs.
+	 */
+	ohci_detach(&sc->sc_ohci);
+
+	/*
+	 * Unmap the registers now that we're all done with them.
+	 */
+	if (sc->sc_ohci.sc_size) {
 		bus_space_unmap(sc->sc_ohci.iot, sc->sc_ohci.ioh,
-			sc->sc_ohci.sc_size);
+		    sc->sc_ohci.sc_size);
 		sc->sc_ohci.sc_size = 0;
 	}
-
-#if NEHCI > 0
-	ralink_usb_hc_rem(&sc->sc_hc);
-#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.329 2024/09/22 14:05:47 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.330 2025/03/31 14:46:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.329 2024/09/22 14:05:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.330 2025/03/31 14:46:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -368,16 +368,14 @@ ohci_childdet(device_t self, device_t child)
 	sc->sc_child = NULL;
 }
 
-int
-ohci_detach(struct ohci_softc *sc, int flags)
+void
+ohci_detach(struct ohci_softc *sc)
 {
-	int rv = 0;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
+	KASSERT(sc->sc_child == NULL);
 
-	if (rv != 0)
-		return rv;
+	if (!sc->sc_attached)
+		return;
 
 	softint_disestablish(sc->sc_rhsc_si);
 
@@ -391,8 +389,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 		usb_freemem(&sc->sc_hccadma);
 	pool_cache_destroy(sc->sc_xferpool);
 	cv_destroy(&sc->sc_abort_cv);
-
-	return rv;
 }
 
 ohci_soft_ed_t *
@@ -1092,6 +1088,7 @@ ohci_init(ohci_softc_t *sc)
 	DPRINTF("enabling %#jx", sc->sc_eintrs | OHCI_MIE, 0, 0, 0);
 	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 
+	sc->sc_attached = true;
 	return 0;
 
  bad5:
@@ -1165,6 +1162,9 @@ ohci_shutdown(device_t self, int flags)
 	ohci_softc_t *sc = device_private(self);
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
+
+	if (!sc->sc_attached)
+		return true;
 
 	DPRINTF("stopping the HC", 0, 0, 0, 0);
 	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);

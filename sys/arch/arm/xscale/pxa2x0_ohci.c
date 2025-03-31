@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.13 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.14 2025/03/31 14:46:42 riastradh Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -123,11 +123,7 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if 0
-	sc->sc.sc_powerhook = powerhook_establish(device_xname(sc->sc.sc_bus.bdev),
-	    pxaohci_power, sc);
-	if (sc->sc.sc_powerhook == NULL) {
-		aprint_error_dev(sc->sc.sc_dev->sc_bus.bdev, "cannot establish powerhook\n");
-	}
+	pmf_device_register1(self, ohci_suspend, ohci_resume, ohci_shutdown);
 #endif
 
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
@@ -151,27 +147,57 @@ pxaohci_detach(device_t self, int flags)
 	struct pxaohci_softc *sc = device_private(self);
 	int error;
 
-	error = ohci_detach(&sc->sc, flags);
+	/*
+	 * Detach the USB child first.  Disconnects all USB devices and
+	 * prevents connecting new ones.
+	 */
+	error = config_detach_children(self, flags);
 	if (error)
 		return error;
 
+	/*
+	 * Shut down the controller and block interrupts at the device
+	 * level.  Once we have shut down the controller, the shutdown
+	 * handler no longer needed -- deregister it from PMF.
+	 * (Harmless to call ohci_shutdown more than once, so no
+	 * synchronization needed.)
+	 */
+	ohci_shutdown(self, 0);
 #if 0
-	if (sc->sc.sc_powerhook) {
-		powerhook_disestablish(sc->sc.sc_powerhook);
-		sc->sc.sc_powerhook = NULL;
-	}
+	pmf_device_deregister(self);
 #endif
 
+	/*
+	 * Interrupts are blocked at the device level by ohci_shutdown.
+	 * Disestablish the interrupt handler.  This waits for it to
+	 * complete on all CPUs.
+	 */
 	if (sc->sc_ih) {
 		pxa2x0_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 
+	/*
+	 * Free the bus-independent ohci(4) state now that the
+	 * interrupt handler has ceased to run on all CPUs.
+	 */
+	ohci_detach(&sc->sc);
+
+	/*
+	 * Issue a Full Host Reset to disable the host controller
+	 * interface.
+	 *
+	 * XXX Is this necessary or is it redundant with ohci_shutdown?
+	 * Should it be done in ohci_shutdown as well?
+	 */
 	pxaohci_disable(sc);
 
 	/* stop clock */
 	pxa2x0_clkman_config(CKEN_USBHC, 0);
 
+	/*
+	 * Unmap the registers now that we're all done with them.
+	 */
 	if (sc->sc.sc_size) {
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
