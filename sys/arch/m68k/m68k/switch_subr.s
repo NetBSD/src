@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.39 2025/03/30 04:44:26 nat Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.40 2025/03/31 13:03:23 nat Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -68,6 +68,21 @@
  *        the call.
  */
 
+/*
+ * LC_NOP is for compatabiltiy with buggy lc040 cpus where by using fpu
+ * emulation the system would become unstable.
+ *
+ * These insertions are necessary as we might be switching to/from an f-line
+ * instruction.
+ *
+ *  Refer to: NetBSD PR #13078.
+ */
+#if 1
+#define LC_NOP 	nop
+#else
+#define LC_NOP
+#endif
+
 	.data
 GLOBAL(curpcb)
 GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
@@ -80,7 +95,7 @@ GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
 ASENTRY_NOPROFILE(cpu_idle)
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
-	nop
+	LC_NOP
 	rts
 
 /*
@@ -208,7 +223,7 @@ ENTRY(cpu_switchto)
 .Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
 	movl	%d0,%a0			| (in a0, too)
-	nop
+	LC_NOP
 	rts
 
 /*
@@ -257,7 +272,7 @@ ENTRY(savectx)
 #endif /* FPCOPROC */
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 	moveq	#0,%d0			| return 0
-	nop
+	LC_NOP
 	rts
 
 #if !defined(M68010)
@@ -289,7 +304,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 	frestore (%sp)
 	fnop
 	addql	#4,%sp
-	nop
+	LC_NOP
 	rts
 #endif
 
@@ -311,7 +326,7 @@ ENTRY(m68881_save)
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
 .Lm68881sdone:
-	nop
+	LC_NOP
 	rts
 #endif
 #if defined(M68060)
@@ -323,7 +338,7 @@ ENTRY(m68881_save)
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
 .Lm68060sdone:
-	nop
+	LC_NOP
         rts
 #endif
 
@@ -341,7 +356,7 @@ ENTRY(m68881_restore)
 	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
 .Lm68881rdone:
 	frestore (%a0)			| restore state
-	nop
+	LC_NOP
 	rts
 #endif
 #if defined(M68060)
@@ -354,7 +369,7 @@ ENTRY(m68881_restore)
 	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
 .Lm68060fprdone:
 	frestore (%a0)			| restore state
-	nop
+	LC_NOP
 	rts
 #endif
 #endif
