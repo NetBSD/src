@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $	*/
+/*	$NetBSD: t_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024-2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $");
+__RCSID("$NetBSD: t_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $");
 
 #include <sys/timearith.h>
 
@@ -90,32 +90,25 @@ const struct itimer_transition {
 	 */
 	[0] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {0,1}, {1,0}, 0,
-	       /* 1.709551617 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[1] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {0,500000000}, {1,0}, 0,
-	       /* 1.709551615 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[2] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {0,999999999}, {1,0}, 0,
-	       /* 2.709551613 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[3] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {1,0}, {2,0}, 0,
-	       /* 2.709551615 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[4] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {1,1}, {2,0}, 0,
-	       /* 2.709551617 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[5] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {1,500000000}, {2,0}, 0,
-	       /* 2.709551615 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[6] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {1,999999999}, {2,0}, 0,
-	       /* 3.709551613 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 
 	/*
 	 * Fired exactly one interval early.  Treat this too as clock
@@ -123,8 +116,7 @@ const struct itimer_transition {
 	 */
 	[7] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {2,0}, {3,0}, 0,
-	       /* 3.709551615 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 
 	/*
 	 * Fired less than one interval early -- callouts and real-time
@@ -133,16 +125,13 @@ const struct itimer_transition {
 	 */
 	[8] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {2,1}, {3,0}, 0,
-	       /* 3.000000001 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[9] = {{.it_value = {3,0}, .it_interval = {1,0}},
 	       {2,500000000}, {3,0}, 0,
-	       /* 3.999999999 */
-	       "PR kern/58925: itimer(9) responds erratically to clock wound back"},
+	       NULL},
 	[10] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{2,999999999}, {3,0}, 0,
-		/* 4.999999997 */
-		"PR kern/58925: itimer(9) responds erratically to clock wound back"},
+		NULL},
 
 	/*
 	 * Fired exactly on time.  Advance by one interval.
@@ -168,8 +157,7 @@ const struct itimer_transition {
 	 */
 	[16] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{4,0}, {5,0}, 1,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 
 	/*
 	 * Fired late by more than one interval but less than two --
@@ -177,24 +165,20 @@ const struct itimer_transition {
 	 */
 	[17] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{4,1}, {5,0}, 1,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 	[18] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{4,500000000}, {5,0}, 1,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 	[19] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{4,999999999}, {5,0}, 1,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 
 	/*
 	 * Fired late by exactly two intervals -- two overruns.
 	 */
 	[20] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{5,0}, {6,0}, 2,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 
 	/*
 	 * Fired late by more intervals plus slop, up to 32.
@@ -204,12 +188,10 @@ const struct itimer_transition {
 	 */
 	[21] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{13,123456789}, {14,0}, 10,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 	[22] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{34,999999999}, {35,0}, 31,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 
 	/*
 	 * Fired late by roughly INT_MAX intervals.
@@ -218,20 +200,17 @@ const struct itimer_transition {
 		{(time_t)3 + INT_MAX - 1, 0},
 		{(time_t)3 + INT_MAX, 0},
 		INT_MAX - 1,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58927: itimer(9): overrun accounting is broken"},
+		NULL},
 	[24] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{(time_t)3 + INT_MAX, 0},
 		{(time_t)3 + INT_MAX + 1, 0},
 		INT_MAX,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58926: itimer(9) integer overflow in overrun counting"},
+		NULL},
 	[25] = {{.it_value = {3,0}, .it_interval = {1,0}},
 		{(time_t)3 + INT_MAX + 1, 0},
 		{(time_t)3 + INT_MAX + 2, 0},
 		INT_MAX,
-		/* 4.000000000, overruns=0 */
-		"PR kern/58926: itimer(9) integer overflow in overrun counting"},
+		NULL},
 
 	/* (2^63 - 1) ns */
 	[26] = {{.it_value = {3,0}, .it_interval = {9223372036,854775807}},
@@ -253,67 +232,67 @@ const struct itimer_transition {
 	/* (2^64 - 1) ns */
 	[29] = {{.it_value = {3,0}, .it_interval = {18446744073,709551615}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* 2^64 ns */
 	[30] = {{.it_value = {3,0}, .it_interval = {18446744073,709551616}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* (2^64 + 1) ns */
 	[31] = {{.it_value = {3,0}, .it_interval = {18446744073,709551617}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* (2^63 - 1) us */
 	[32] = {{.it_value = {3,0}, .it_interval = {9223372036854,775807}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* 2^63 us */
 	[33] = {{.it_value = {3,0}, .it_interval = {9223372036854,775808}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* (2^63 + 1) us */
 	[34] = {{.it_value = {3,0}, .it_interval = {9223372036854,775809}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* (2^64 - 1) us */
 	[35] = {{.it_value = {3,0}, .it_interval = {18446744073709,551615}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* 2^64 us */
 	[36] = {{.it_value = {3,0}, .it_interval = {18446744073709,551616}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* (2^64 + 1) us */
 	[37] = {{.it_value = {3,0}, .it_interval = {18446744073709,551617}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* (2^63 - 1) ms */
 	[38] = {{.it_value = {3,0}, .it_interval = {9223372036854775,807}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* 2^63 ms */
 	[39] = {{.it_value = {3,0}, .it_interval = {9223372036854775,808}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* (2^63 + 1) ms */
 	[40] = {{.it_value = {3,0}, .it_interval = {9223372036854775,809}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* (2^64 - 1) ms */
 	[41] = {{.it_value = {3,0}, .it_interval = {18446744073709551,615}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* 2^64 ms */
 	[42] = {{.it_value = {3,0}, .it_interval = {18446744073709551,616}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	/* (2^64 + 1) ms */
 	[43] = {{.it_value = {3,0}, .it_interval = {18446744073709551,617}},
 		{2,999999999}, {0,0}, 0,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* invalid intervals */
 	[44] = {{.it_value = {3,0}, .it_interval = {-1,0}},
@@ -335,48 +314,45 @@ const struct itimer_transition {
 		 .it_interval = {4611686018,427387904}},
 		/* XXX needless overflow */
 		{4611686019,0}, {0,0}, 1,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	/* interval ~ 1/4 * (2^63 - 1) ns, now ~ 3/4 * (2^63 - 1) ns */
 	[48] = {{.it_value = {0,1},
 		 .it_interval = {2305843009,213693952}},
 		/* XXX needless overflow */
 		{6917529028,0}, {0,0}, 3,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[49] = {{.it_value = {6917529027,0},
 		 .it_interval = {2305843009,213693952}},
 		{6917529028,0}, {9223372036,213693952}, 0, NULL},
 	[50] = {{.it_value = {6917529029,0},
 		 .it_interval = {2305843009,213693952}},
 		{6917529028,0}, {6917529029,0}, 0,
-		/* 11529215045.427387903 */
-		"PR kern/58925: itimer(9) responds erratically to clock wound back"},
+		NULL},
 
 	/* interval ~ 1/2 * (2^63 - 1) ns, now ~ 3/4 * (2^63 - 1) ns */
 	[51] = {{.it_value = {0,1},
 		 .it_interval = {4611686018,427387904}},
 		/* XXX needless overflow */
 		{6917529028,0}, {0,0}, 1,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[52] = {{.it_value = {2305843009,213693951}, /* ~1/4 * (2^63 - 1) */
 		 .it_interval = {4611686018,427387904}},
 		/* XXX needless overflow */
 		{6917529028,0}, {0,0}, 1,
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[54] = {{.it_value = {6917529027,0},
 		 .it_interval = {4611686018,427387904}},
 		{6917529028,0}, {11529215045,427387904}, 0, NULL},
 	[55] = {{.it_value = {6917529029,0},
 		 .it_interval = {4611686018,427387904}},
 		{6917529028,0}, {6917529029,0}, 0,
-		/* XXX */
-		"PR kern/58925: itimer(9) responds erratically to clock wound back"},
+		NULL},
 
 	[56] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
 		/* XXX needless overflow */
 		{INT64_MAX - 2,999999999}, {0,0}, 0,
-		/* 18446744073.709551613 */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[57] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
 		{INT64_MAX - 1,0}, {INT64_MAX,0}, 0, NULL},
 	[58] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
@@ -385,37 +361,29 @@ const struct itimer_transition {
 		{INT64_MAX - 1,999999999}, {INT64_MAX,0}, 0, NULL},
 	[60] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
 		{INT64_MAX,0}, {0,0}, 0,
-		/* 9223372036854775807.000000000 (INT_MAX) */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[61] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
 		{INT64_MAX,1}, {0,0}, 0,
-		/* 9223372036854775807.000000000 (INT_MAX) */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[62] = {{.it_value = {INT64_MAX - 1,0}, .it_interval = {1,0}},
 		{INT64_MAX,999999999}, {0,0}, 0,
-		/* 9223372036854775807.000000000 (INT_MAX) */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 
 	[63] = {{.it_value = {INT64_MAX,0}, .it_interval = {1,0}},
 		{INT64_MAX - 1,1}, {0,0}, 0,
-		/* 18446744072.709551617 (UINT64_MAX+2 ns - 1 sec) */
-		"PR kern/58925: itimer(9) responds erratically to clock wound back"},
+		NULL},
 	[64] = {{.it_value = {INT64_MAX,0}, .it_interval = {1,0}},
 		{INT64_MAX - 1,999999999}, {0,0}, 0,
-		/* 0.999999997 */
-		"PR kern/58925: itimer(9) responds erratically to clock wound back"},
+		NULL},
 	[65] = {{.it_value = {INT64_MAX,0}, .it_interval = {1,0}},
 		{INT64_MAX,0}, {0,0}, 0,
-		/* 18446744073.709551615 (UINT64_MAX ns) */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[66] = {{.it_value = {INT64_MAX,0}, .it_interval = {1,0}},
 		{INT64_MAX,1}, {0,0}, 0,
-		/* 18446744072.709551617 (UINT64_MAX+2 ns - 1 sec) */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 	[67] = {{.it_value = {INT64_MAX,0}, .it_interval = {1,0}},
 		{INT64_MAX,999999999}, {0,0}, 0,
-		/* 0.999999997 */
-		"PR kern/58922: itimer(9): arithmetic overflow"},
+		NULL},
 };
 
 ATF_TC(itimer_transitions);

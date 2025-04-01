@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $	*/
+/*	$NetBSD: subr_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -88,6 +88,7 @@ extern int hz;
 extern int tick;
 
 #define	KASSERT		assert
+#define	MIN(X, Y)	((X) < (Y) ? (X) : (Y))
 
 #endif
 
@@ -418,6 +419,15 @@ timespecsubok(const struct timespec *tsp, const struct timespec *usp)
 	return true;
 }
 
+static bool
+timespec2nsok(const struct timespec *ts)
+{
+
+	return ts->tv_sec < INT64_MAX/1000000000 ||
+	    (ts->tv_sec == INT64_MAX/1000000000 &&
+		ts->tv_nsec <= INT64_MAX - (INT64_MAX/1000000000)*1000000000);
+}
+
 /*
  * itimer_transition(it, now, next, &overruns)
  *
@@ -442,7 +452,7 @@ itimer_transition(const struct itimerspec *restrict it,
     struct timespec *restrict next,
     int *restrict overrunsp)
 {
-	uint64_t last_val, next_val, interval, now_ns;
+	int64_t last_val, next_val, interval, remainder, now_ns;
 	int backwards;
 
 	/*
@@ -460,31 +470,126 @@ itimer_transition(const struct itimerspec *restrict it,
 		return;
 	}
 
+	/* Did the clock wind backwards? */
 	backwards = (timespeccmp(&it->it_value, now, >));
+
+	/* Valid value and interval guaranteed by itimerfix. */
+	KASSERT(it->it_value.tv_sec >= 0);
+	KASSERT(it->it_value.tv_nsec < 1000000000);
+	KASSERT(it->it_interval.tv_sec >= 0);
+	KASSERT(it->it_interval.tv_nsec < 1000000000);
 
 	/* Nonnegative interval guaranteed by itimerfix.  */
 	KASSERT(it->it_interval.tv_sec >= 0);
 	KASSERT(it->it_interval.tv_nsec >= 0);
 
 	/* Handle the easy case of non-overflown timers first. */
-	if (!backwards &&
-	    timespecaddok(&it->it_value, &it->it_interval)) {
-		timespecadd(&it->it_value, &it->it_interval,
-		    next);
-	} else {
-		now_ns = timespec2ns(now);
-		last_val = timespec2ns(&it->it_value);
-		interval = timespec2ns(&it->it_interval);
-
-		next_val = now_ns +
-		    (now_ns - last_val + interval - 1) % interval;
-
-		if (backwards)
-			next_val += interval;
-		else
-			*overrunsp = (now_ns - last_val) / interval;
-
-		next->tv_sec = next_val / 1000000000;
-		next->tv_nsec = next_val % 1000000000;
+	if (__predict_true(!backwards)) {
+		if (__predict_false(!timespecaddok(&it->it_value,
+			    &it->it_interval)))
+			goto overflow;
+		timespecadd(&it->it_value, &it->it_interval, next);
+		if (__predict_true(timespeccmp(now, next, <)))
+			return;
 	}
+
+	/*
+	 * If we can't represent the input as a number of nanoseconds,
+	 * bail.  This is good up to the year 2262, if we start
+	 * counting from 1970 (2^63 nanoseconds ~ 292 years).
+	 */
+	if (__predict_false(!timespec2nsok(now)) ||
+	    __predict_false(!timespec2nsok(&it->it_value)) ||
+	    __predict_false(!timespec2nsok(&it->it_interval)))
+		goto overflow;
+
+	now_ns = timespec2ns(now);
+	last_val = timespec2ns(&it->it_value);
+	interval = timespec2ns(&it->it_interval);
+
+	KASSERT(now_ns >= 0);
+	KASSERT(last_val >= 0);
+	KASSERT(interval >= 0);
+
+	/*
+	 *            now [backwards]         overruns    now [forwards]
+	 *           |                      v    v    v  |
+	 * |--+----+-*--x----+----+----|----+----+----+--*-x----+-->
+	 *            \/               |               \/
+	 *         remainder        last_val        remainder
+	 *     (zero or negative)                (zero or positive)
+	 *
+	 * Set next_val to last_value + k*interval for some k.
+	 *
+	 * The interval is always positive, and division in C
+	 * truncates, so dividing a positive duration by the interval
+	 * always gives zero or a positive remainder, and dividing a
+	 * negative duration by the interval always gives zero or a
+	 * negative remainder.  Hence:
+	 *
+	 * - If now_ns < last_val -- which happens iff backwards, i.e.,
+	 *   the clock was wound backwards -- then remainder is zero or
+	 *   negative, so subtracting it stays in place or moves
+	 *   forward in time, and thus this finds the _earliest_ value
+	 *   that is not earlier than now_ns.  We will advance this by
+	 *   one more interval if we are already firing exactly on the
+	 *   interval to find the earliest value _after_ now_ns.
+	 *
+	 * - If now_ns > last_val -- which happens iff !backwards,
+	 *   i.e., the clock ran fast -- then remainder is zero or
+	 *   positive positive, so this finds the _latest_ value not
+	 *   later than now_ns.  We will always advance this by one
+	 *   more interval to find the earliest value _after_ now_ns.
+	 *   We will also count overflows.
+	 *
+	 * (now_ns == last_val is not possible at this point because it
+	 * only happens if the addition of struct timespec would
+	 * overflow, and that is only possible when timespec2ns would
+	 * also overflow for at least one of the inputs.)
+	 */
+	KASSERT(last_val != now_ns);
+	remainder = (now_ns - last_val) % interval;
+	next_val = now_ns - remainder;
+	KASSERT((last_val - next_val) % interval == 0);
+	if (backwards) {
+		/*
+		 * If the clock was wound back to an exact multiple of
+		 * the interval, so next_val = now_ns, don't demand to
+		 * fire again in the same instant -- advance to the
+		 * next interval.  Overflow is not possible; proof is
+		 * asserted.
+		 */
+		if (remainder == 0) {
+			KASSERT(now_ns < last_val);
+			KASSERT(next_val == now_ns);
+			KASSERT(last_val - next_val >= interval);
+			KASSERT(interval <= last_val - next_val);
+			KASSERT(next_val <= last_val - interval);
+			KASSERT(next_val <= INT64_MAX - interval);
+			next_val += interval;
+		}
+	} else {
+		/*
+		 * next_val is the largest integer multiple of interval
+		 * not later than now_ns.  Count the number of full
+		 * intervals that were skipped (division should be
+		 * exact here), not counting any partial interval
+		 * between next_val and now_ns, as the number of
+		 * overruns.  Advance by one interval -- unless that
+		 * would overflow.
+		 */
+		*overrunsp += MIN(INT_MAX - *overrunsp,
+		    (next_val - last_val) / interval);
+		if (__predict_false(next_val > INT64_MAX - interval))
+			goto overflow;
+		next_val += interval;
+	}
+
+	next->tv_sec = next_val / 1000000000;
+	next->tv_nsec = next_val % 1000000000;
+	return;
+
+overflow:
+	next->tv_sec = 0;
+	next->tv_nsec = 0;
 }
