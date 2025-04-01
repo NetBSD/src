@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.38 2024/03/01 04:32:38 mrg Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.39 2025/04/01 03:16:41 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.38 2024/03/01 04:32:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.39 2025/04/01 03:16:41 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -277,7 +277,7 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	}
 
 	if ((flags & XC_HIGHPRI) != 0) {
-		int ipl = xc_extract_ipl(flags);
+		unsigned int ipl = xc_extract_ipl(flags);
 		return xc_highpri(func, arg1, arg2, NULL, ipl);
 	} else {
 		return xc_lowpri(func, arg1, arg2, NULL);
@@ -339,7 +339,7 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 	}
 
 	if ((flags & XC_HIGHPRI) != 0) {
-		int ipl = xc_extract_ipl(flags);
+		unsigned int ipl = xc_extract_ipl(flags);
 		return xc_highpri(func, arg1, arg2, ci, ipl);
 	} else {
 		return xc_lowpri(func, arg1, arg2, ci);
