@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.21 2025/03/27 12:22:44 riastradh Exp $
+#	$NetBSD: GENERIC.common,v 1.22 2025/04/01 20:16:57 nia Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -167,6 +167,11 @@ pseudo-device 	sequencer		# MIDI sequencer
 nvme* 		at pci? dev ? function ?
 ld* 		at nvme? nsid ?
 
+# Audio
+audio*		at audiobus?
+auich*		at pci? dev ? function ?	# Intel AC'97 Audio (QEMU)
+eap*		at pci? dev ? function ?	# Ensoniq AudioPCI (QEMU)
+
 # I2C controllers
 dwiic* 		at fdt?			# Designware I2C
 iic* 		at i2cbus?
@@ -207,7 +212,7 @@ pseudo-device 	crypto			# /dev/crypto device
 pseudo-device 	lockstat		# lock profiling
 pseudo-device 	ksyms			# /dev/ksyms
 pseudo-device 	openfirm		# /dev/openfirm
-#pseudo-device 	pad			# pseudo audio device
+pseudo-device 	pad			# pseudo audio device
 pseudo-device 	pty			# pseudo-terminals
 #options 	RND_COM
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
