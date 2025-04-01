@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time_arith.c,v 1.1 2024/12/22 23:24:20 riastradh Exp $	*/
+/*	$NetBSD: subr_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.1 2024/12/22 23:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.2 2025/04/01 23:02:29 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.1 2024/12/22 23:24:20 riastrad
 #include <stdbool.h>
 
 extern int hz;
-extern long tick;
+extern int tick;
 
 #define	KASSERT		assert
 
