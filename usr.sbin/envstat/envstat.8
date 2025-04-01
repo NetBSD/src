@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.69 2025/04/01 16:24:10 uwe Exp $
+.\"	$NetBSD: envstat.8,v 1.70 2025/04/01 16:35:46 uwe Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,33 +188,21 @@ of this sensor are returned, not a list of sensors.
 .Sh UNITS
 The display mode may show some values with abbreviated units;
 for example:
-.Bl -tag -width "12345678" -compact -offset indent
-.It A
-Amperes
-.It Ah
-Ampere-hours
-.It degC
-degrees Celsius
-.It degF
-degrees Fahrenheit
-.It K
-Kelvin
-.It Ohms
-Ohms
-.It RPM
-Revolutions per minute
-.It V
-Volts DC
-.It VAC
-Volts AC
-.It W
-Watts
-.It Wh
-Watt-hours
-.It %rH
-relative Humidity
-.It hPa
-Hectopascals
+
+.Bl -column -offset indent "degC" "..."
+.It Li A    Ta Amperes
+.It Li Ah   Ta Ampere-hours
+.It Li degC Ta degrees Celsius
+.It Li degF Ta degrees Fahrenheit
+.It Li K    Ta Kelvin
+.It Li Ohms Ta Ohms
+.It Li RPM  Ta Revolutions per minute
+.It Li V    Ta Volts DC
+.It Li VAC  Ta Volts AC
+.It Li W    Ta Watts
+.It Li Wh   Ta Watt-hours
+.It Li %rH  Ta relative Humidity
+.It Li hPa  Ta Hectopascals
 .El
 .Sh EXAMPLES
 To display the
