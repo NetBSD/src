@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.67 2022/11/21 21:24:02 brad Exp $
+.\"	$NetBSD: envstat.8,v 1.68 2025/04/01 11:39:19 brad Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl DfIklnSTW
+.Op Fl DfIjklnSTtW
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
@@ -98,6 +98,15 @@ See the individual device's manual page for meaningful values for
 If not specified, or specified as 0,
 .Nm
 produces one round of values and exits.
+When the
+.Ar j
+flag is used to get JSON output the string #------- is placed
+between each JSON block.
+.It Fl j
+Output the results in JSON format.
+Each output will be a correct JSON object that consists of objects,
+arrays, integers, floats and strings included, as needed, for any particular
+sensor.
 .It Fl k
 Display temperature values in Kelvin.
 The default is to display temperature values in degrees Celsius.
@@ -135,6 +144,14 @@ otherwise statistics cannot be collected up.
 Please note that to get realistic
 values a lower interval value should be used, but that will also increase
 overhead.
+.It Fl t
+Output a time stamp along with the rest of the sensor data.
+When the
+.Ar j
+flag is not specified, the time stamp will be on the first line and
+be in human readable format.
+When the output is JSON, two objects will be included that contain the
+Julian Unix time and another with the time stamp in human readable format.
 .It Fl w Ar width
 Use
 .Ar width
@@ -237,6 +254,10 @@ To return values of multiple temperature sensors from a single device
 To return values of temperature sensors from multiple devices:
 .Pp
 .Dl $ envstat -s 'coretemp0:cpu0 temperature,coretemp1:cpu 2 temperature' -x /coretemp0/0/cur-value /coretemp1/0/cur-value
+.Pp
+To output the sensor data in JSON with a timestamp:
+.Pp
+.Dl $ envstat -d owtemp0 -jt
 .Sh SEE ALSO
 .Xr units 1 ,
 .Xr proplib 3 ,

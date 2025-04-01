@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $ */
+/* $NetBSD: envstat.c,v 1.105 2025/04/01 11:39:19 brad Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.105 2025/04/01 11:39:19 brad Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,8 +40,10 @@ __RCSID("$NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $");
 #include <fcntl.h>
 #include <err.h>
 #include <errno.h>
+#include <mj.h>
 #include <paths.h>
 #include <syslog.h>
+#include <time.h>
 #include <sys/envsys.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -60,6 +62,8 @@ __RCSID("$NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $");
 #define ENVSYS_TFLAG	0x00000040	/* make statistics */
 #define ENVSYS_NFLAG	0x00000080	/* print value only */
 #define ENVSYS_KFLAG	0x00000100	/* show temp in kelvin */
+#define ENVSYS_JFLAG	0x00000200	/* print the output in JSON */
+#define ENVSYS_tFLAG	0x00000400	/* print a timestamp */
 
 /* Sensors */
 typedef struct envsys_sensor {
@@ -73,6 +77,7 @@ typedef struct envsys_sensor {
 	int32_t	warnmax_value;
 	char	desc[ENVSYS_DESCLEN];
 	char	type[ENVSYS_DESCLEN];
+	char	index[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
 	char	battcap[ENVSYS_DESCLEN];
 	char 	dvname[ENVSYS_DESCLEN];
@@ -108,12 +113,14 @@ static unsigned int 	interval, flags, width;
 static char 		*mydevname, *sensors;
 static bool 		statistics;
 static u_int		header_passes;
+static time_t		timestamp;
 
 static int 		parse_dictionary(int);
 static int		add_sensors(prop_dictionary_t, prop_dictionary_t, const char *, const char *);
 static int 		send_dictionary(FILE *);
 static int 		find_sensors(prop_array_t, const char *, dvprops_t);
 static void 		print_sensors(void);
+static void 		print_sensors_json(void);
 static int 		check_sensors(const char *);
 static int 		usage(void);
 
@@ -131,7 +138,7 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "c:Dd:fIi:klnrSs:Tw:Wx")) != -1) {
+	while ((c = getopt(argc, argv, "c:Dd:fIi:jklnrSs:Ttw:Wx")) != -1) {
 		switch (c) {
 		case 'c':	/* configuration file */
 			configfile = optarg;
@@ -152,6 +159,9 @@ int main(int argc, char **argv)
 			interval = (unsigned int)strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
 				errx(EXIT_FAILURE, "bad interval '%s'", optarg);
+			break;
+		case 'j':
+			flags |= ENVSYS_JFLAG;
 			break;
 		case 'k':	/* display temperature in Kelvin */
 			flags |= ENVSYS_KFLAG;
@@ -176,6 +186,9 @@ int main(int argc, char **argv)
 			break;
 		case 'T':	/* make statistics */
 			flags |= ENVSYS_TFLAG;
+			break;
+		case 't':	/* produce a timestamp */
+			flags |= ENVSYS_tFLAG;
 			break;
 		case 'w':	/* width value for the lines */
 			width = (unsigned int)strtoul(optarg, &endptr, 10);
@@ -327,6 +340,7 @@ int main(int argc, char **argv)
 	/* Show sensors with interval */
 	} else if (interval) {
 		for (;;) {
+			timestamp = time(NULL);
 			rval = parse_dictionary(sysmonfd);
 			if (rval)
 				break;
@@ -336,6 +350,7 @@ int main(int argc, char **argv)
 		}
 	/* Show sensors without interval */
 	} else {
+		timestamp = time(NULL);
 		rval = parse_dictionary(sysmonfd);
 	}
 
@@ -580,10 +595,19 @@ parse_dictionary(int fd)
 	/* print sensors now */
 	if (sensors)
 		rval = check_sensors(sensors);
-	if ((flags & ENVSYS_LFLAG) == 0 && (flags & ENVSYS_DFLAG) == 0)
+	if ((flags & ENVSYS_LFLAG) == 0 &&
+	    (flags & ENVSYS_DFLAG) == 0 &&
+	    (flags & ENVSYS_JFLAG) == 0)
 		print_sensors();
-	if (interval && ((flags & ENVSYS_NFLAG) == 0 || sensors == NULL))
+	if ((flags & ENVSYS_LFLAG) == 0 &&
+	    (flags & ENVSYS_DFLAG) == 0 &&
+	    (flags & ENVSYS_JFLAG))
+		print_sensors_json();
+	if (interval && ((flags & ENVSYS_NFLAG) == 0 || sensors == NULL)) {
 		(void)printf("\n");
+		if (flags & ENVSYS_JFLAG)
+			(void)printf("#-------\n");
+	}
 
 out:
 	while ((sensor = SIMPLEQ_FIRST(&sensors_list))) {
@@ -651,6 +675,18 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 			(void)strlcpy(sensor->type,
 		    	    prop_string_value(obj1),
 		    	    sizeof(sensor->type));
+		} else {
+			free(sensor);
+			continue;
+		}
+
+		/* index string */
+		obj1  = prop_dictionary_get(obj, "index");
+		if (obj1) {
+			/* copy type */
+			(void)strlcpy(sensor->index,
+		    	    prop_string_value(obj1),
+		    	    sizeof(sensor->index));
 		} else {
 			free(sensor);
 			continue;
@@ -852,6 +888,10 @@ out:
 	return EINVAL;
 }
 
+/* When adding a new sensor type, be sure to address both
+ * print_sensors() and print_sensors_json()
+ */
+
 static void
 print_sensors(void)
 {
@@ -864,6 +904,8 @@ print_sensors(void)
 	const char *sep;
 	int flen;
 	bool nflag = (flags & ENVSYS_NFLAG) != 0;
+	char tbuf[26];
+	bool tflag = (flags & ENVSYS_tFLAG) != 0;
 
 	tmpstr = stype = d = e = NULL;
 
@@ -894,6 +936,11 @@ print_sensors(void)
 		c = "WarnMax";
 		d = "WarnMin";
 		e = "CritMin";
+	}
+
+	if (tflag) {
+		if (ctime_r(&timestamp, tbuf) != NULL)
+			(void)printf("%s\n",tbuf);
 	}
 
 	if (!nflag) {
@@ -1310,10 +1357,405 @@ do {									\
 	}
 }
 
+static void
+print_sensors_json(void)
+{
+	sensor_t sensor;
+	sensor_stats_t stats = NULL;
+	double temp = 0;
+
+	const char *degrees, *tmpstr, *stype;
+	const char *d, *e;
+	mj_t envstatj;
+	mj_t devices;
+	mj_t sensors_per_dev;
+	mj_t this_sensor;
+	mj_t a_float;
+	bool tflag = (flags & ENVSYS_tFLAG) != 0;
+	char tbuf[26];
+	char *output_s = NULL;
+	size_t output_size = 0;
+
+	tmpstr = stype = d = e = NULL;
+
+	memset(&envstatj, 0x0, sizeof(envstatj));
+	mj_create(&envstatj, "object");
+	memset(&devices, 0x0, sizeof(devices));
+	mj_create(&devices, "object");
+
+	/* print the sensors */
+	SIMPLEQ_FOREACH(sensor, &sensors_list, entries) {
+		/* completely skip sensors that were not marked as visible */
+		if (sensors && !sensor->visible)
+			continue;
+
+		/* completely skip invalid sensors if -I is set */
+		if ((flags & ENVSYS_IFLAG) && sensor->invalid)
+			continue;
+
+		/* find out the statistics sensor */
+		if (statistics) {
+			stats = find_stats_sensor(sensor->desc);
+			if (stats == NULL) {
+				/* No statistics for this sensor, completely skip */
+				continue;
+			}
+		}
+
+		if (tmpstr == NULL || strcmp(tmpstr, sensor->dvname)) {
+			if (tmpstr != NULL) {
+				mj_append_field(&devices, tmpstr, "array", &sensors_per_dev);
+				mj_delete(&sensors_per_dev);
+			}
+
+			memset(&sensors_per_dev, 0x0, sizeof(sensors_per_dev));
+			mj_create(&sensors_per_dev, "array");
+
+			tmpstr = sensor->dvname;
+		}
+
+		/* Any condition that that causes the sensor to be
+		 * completely skipped should be checked before we are
+		 * at this point */
+
+		memset(&this_sensor, 0x0, sizeof(this_sensor));
+		mj_create(&this_sensor, "object");
+
+		mj_append_field(&this_sensor, "index", "string",
+		    sensor->index, strlen(sensor->index));
+		mj_append_field(&this_sensor, "description", "string",
+		    sensor->desc, strlen(sensor->desc));
+		mj_append_field(&this_sensor, "type", "string",
+		    sensor->type, strlen(sensor->type));
+		mj_append_field(&this_sensor, "invalid", "integer",
+		    (int64_t)sensor->invalid);
+
+		/* The sensor is invalid, semi-skip it */
+		if (sensor->invalid) {
+			goto around;
+		}
+
+		/*
+		 * Indicator and Battery charge sensors.
+		 */
+		if ((strcmp(sensor->type, "Indicator") == 0) ||
+		    (strcmp(sensor->type, "Battery charge") == 0)) {
+
+			mj_append_field(&this_sensor, "cur-value", "integer",
+			    (int64_t)sensor->cur_value);
+
+/* convert and print a temp value in degC, degF, or Kelvin */
+#define PRINTTEMP(a,b)						\
+do {								\
+    if (a) {							\
+	temp = ((a) / 1000000.0);				\
+	if (flags & ENVSYS_FFLAG) {				\
+		temp = temp * (9.0 / 5.0) - 459.67;		\
+		degrees = "degF";				\
+	} else if (flags & ENVSYS_KFLAG) {			\
+		degrees = "K";					\
+	} else {						\
+		temp = temp - 273.15;				\
+		degrees = "degC";				\
+	}							\
+	memset(&a_float, 0x0, sizeof(a_float));			\
+	mj_create(&a_float, "number", temp);			\
+	mj_append_field(&this_sensor, b, "object", &a_float);	\
+	mj_delete(&a_float);					\
+    }								\
+} while (0)
+
+		/* temperatures */
+		} else if (strcmp(sensor->type, "Temperature") == 0) {
+
+			degrees = "";
+			PRINTTEMP(sensor->cur_value, "cur-value");
+			stype = degrees;
+
+			if (statistics) {
+				/* show statistics if flag set */
+				PRINTTEMP(stats->max, "max");
+				PRINTTEMP(stats->min, "min");
+				PRINTTEMP(stats->avg, "avg");
+			}
+			
+			PRINTTEMP(sensor->critmax_value, "critical-max");
+			PRINTTEMP(sensor->warnmax_value, "warning-max");
+			PRINTTEMP(sensor->warnmin_value, "warning-min");
+			PRINTTEMP(sensor->critmin_value, "critical-min");
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+#undef PRINTTEMP
+
+		/* fans */
+		} else if (strcmp(sensor->type, "Fan") == 0) {
+			stype = "RPM";
+
+			mj_append_field(&this_sensor, "cur-value", "integer",
+			    (int64_t)sensor->cur_value);
+
+			if (statistics) {
+				/* show statistics if flag set */
+				mj_append_field(&this_sensor, "max", "integer",
+				    (int64_t)stats->max);
+				mj_append_field(&this_sensor, "min", "integer",
+				    (int64_t)stats->min);
+				mj_append_field(&this_sensor, "avg", "integer",
+				    (int64_t)stats->avg);
+			}
+			mj_append_field(&this_sensor, "critical-max", "integer",
+			    (int64_t)sensor->critmax_value);
+			mj_append_field(&this_sensor, "warning-max", "integer",
+			    (int64_t)sensor->warnmax_value);
+			mj_append_field(&this_sensor, "warning-min", "integer",
+			    (int64_t)sensor->warnmin_value);
+			mj_append_field(&this_sensor, "critical-min", "integer",
+			    (int64_t)sensor->critmin_value);
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+
+		/* integers */
+		} else if (strcmp(sensor->type, "Integer") == 0) {
+
+			stype = "none";
+
+			mj_append_field(&this_sensor, "cur-value", "integer",
+			    (int64_t)sensor->cur_value);
+
+/* Print percentage of max_value */
+#define PRINTPCT(a,b)							\
+do {									\
+	if ((a) && sensor->max_value) {					\
+		mj_append_field(&this_sensor, b, "integer",		\
+		    (int64_t)((a) * 100.0) / sensor->max_value);	\
+	}								\
+} while ( /* CONSTCOND*/ 0 )
+			if (statistics) {
+				if (sensor->percentage) {
+					PRINTPCT(stats->max, "max");
+					PRINTPCT(stats->min, "min");
+					PRINTPCT(stats->avg, "avg");
+				} else {
+					mj_append_field(&this_sensor, "max", "integer",
+					    (int64_t)stats->max);
+					mj_append_field(&this_sensor, "min", "integer",
+					    (int64_t)stats->min);
+					mj_append_field(&this_sensor, "avg", "integer",
+					    (int64_t)stats->avg);
+				}
+			}
+			if (sensor->percentage) {
+				PRINTPCT(sensor->critmax_value, "critical-max");
+				PRINTPCT(sensor->warnmax_value, "warning-max");
+				PRINTPCT(sensor->warnmin_value, "warning-min");
+				PRINTPCT(sensor->critmin_value, "critical-min");
+			} else {
+				mj_append_field(&this_sensor, "critmax_value", "integer",
+				    (int64_t)sensor->critmax_value);
+				mj_append_field(&this_sensor, "warning-max", "integer",
+				    (int64_t)sensor->warnmax_value);
+				mj_append_field(&this_sensor, "warning-min", "integer",
+				    (int64_t)sensor->warnmin_value);
+				mj_append_field(&this_sensor, "critical-min", "integer",
+				    (int64_t)sensor->critmin_value);
+			}
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+		/* drives  */
+		} else if (strcmp(sensor->type, "Drive") == 0) {
+			mj_append_field(&this_sensor, "drvstate", "string",
+			    sensor->drvstate, strlen(sensor->drvstate));
+		/* Battery capacity */
+		} else if (strcmp(sensor->type, "Battery capacity") == 0) {
+			mj_append_field(&this_sensor, "battcap", "string",
+			    sensor->battcap, strlen(sensor->battcap));
+		/* Illuminance */
+		} else if (strcmp(sensor->type, "Illuminance") == 0) {
+
+			stype = "lux";
+
+			mj_append_field(&this_sensor, "cur-value", "integer",
+			    (int64_t)sensor->cur_value);
+
+			if (statistics) {
+				/* show statistics if flag set */
+				mj_append_field(&this_sensor, "max", "integer",
+				    (int64_t)stats->max);
+				mj_append_field(&this_sensor, "min", "integer",
+				    (int64_t)stats->min);
+				mj_append_field(&this_sensor, "avg", "integer",
+				    (int64_t)stats->avg);
+			}
+
+			mj_append_field(&this_sensor, "critmax_value", "integer",
+			    (int64_t)sensor->critmax_value);
+			mj_append_field(&this_sensor, "warning-max", "integer",
+			    (int64_t)sensor->warnmax_value);
+			mj_append_field(&this_sensor, "warning-min", "integer",
+			    (int64_t)sensor->warnmin_value);
+			mj_append_field(&this_sensor, "critical-min", "integer",
+			    (int64_t)sensor->critmin_value);
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+		/* Pressure */
+		} else if (strcmp(sensor->type, "pressure") == 0) {
+#define PRINTFLOAT(a,b)						\
+do {								\
+    if (a) {							\
+	memset(&a_float, 0x0, sizeof(a_float));			\
+	mj_create(&a_float, "number", a);			\
+	mj_append_field(&this_sensor, b, "object", &a_float);	\
+	mj_delete(&a_float);					\
+    }								\
+} while (0)
+			stype = "hPa";
+
+			PRINTFLOAT(sensor->cur_value / 10000.0, "cur-value");
+
+			if (statistics) {
+				/* show statistics if flag set */
+				PRINTFLOAT(stats->max / 10000.0, "max");
+				PRINTFLOAT(stats->min / 10000.0, "min");
+				PRINTFLOAT(stats->avg / 10000.0, "avg");
+			}
+
+			PRINTFLOAT(sensor->critmax_value, "critmax_value");
+			PRINTFLOAT(sensor->warnmax_value, "warning-max");
+			PRINTFLOAT(sensor->warnmin_value, "warning-min");
+			PRINTFLOAT(sensor->critmin_value, "critical-min");
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+		/* everything else */
+		} else {
+			if (strcmp(sensor->type, "Voltage DC") == 0)
+				stype = "V";
+			else if (strcmp(sensor->type, "Voltage AC") == 0)
+				stype = "VAC";
+			else if (strcmp(sensor->type, "Ampere") == 0)
+				stype = "A";
+			else if (strcmp(sensor->type, "Watts") == 0)
+				stype = "W";
+			else if (strcmp(sensor->type, "Ohms") == 0)
+				stype = "Ohms";
+			else if (strcmp(sensor->type, "Watt hour") == 0)
+				stype = "Wh";
+			else if (strcmp(sensor->type, "Ampere hour") == 0)
+				stype = "Ah";
+			else if (strcmp(sensor->type, "relative Humidity") == 0)
+				stype = "%rH";
+			else
+				stype = "?";
+
+			PRINTFLOAT(sensor->cur_value / 1000000.0, "cur-value");
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+#undef PRINTFLOAT
+
+/* Print a generic sensor value */
+#define PRINTVAL(a,b)							\
+do {									\
+	if ((a)) {							\
+		memset(&a_float, 0x0, sizeof(a_float));			\
+		mj_create(&a_float, "number", a / 1000000.0);		\
+		mj_append_field(&this_sensor, b, "object", &a_float);	\
+		mj_delete(&a_float);					\
+	}								\
+} while ( /* CONSTCOND*/ 0 )
+
+			if (statistics) {
+				if (sensor->percentage) {
+					PRINTPCT(stats->max, "max");
+					PRINTPCT(stats->min, "min");
+					PRINTPCT(stats->avg, "avg");
+				} else {
+					PRINTVAL(stats->max, "max");
+					PRINTVAL(stats->min, "min");
+					PRINTVAL(stats->avg, "avg");
+				}
+			}
+			if (sensor->percentage) {
+				PRINTPCT(sensor->critmax_value, "critmax_value");
+				PRINTPCT(sensor->warnmax_value, "warning-max");
+				PRINTPCT(sensor->warnmin_value, "warning-min");
+				PRINTPCT(sensor->critmin_value, "critical-min");
+			} else {
+
+				PRINTVAL(sensor->critmax_value, "critmax_value");
+				PRINTVAL(sensor->warnmax_value, "warning-max");
+				PRINTVAL(sensor->warnmin_value, "warning-min");
+				PRINTVAL(sensor->critmin_value, "critical-min");
+			}
+#undef PRINTPCT
+#undef PRINTVAL
+
+			mj_append_field(&this_sensor, "units", "string",
+			    stype, strlen(stype));
+			if (sensor->percentage && sensor->max_value) {
+				memset(&a_float, 0x0, sizeof(a_float));
+				mj_create(&a_float, "number",
+				    (sensor->cur_value * 100.0) / sensor->max_value);
+				mj_append_field(&this_sensor, "pct", "object",
+				    &a_float);
+				mj_delete(&a_float);
+			}
+		}
+around:
+		mj_append(&sensors_per_dev, "object", &this_sensor);
+		mj_delete(&this_sensor);
+	}
+
+	if (tmpstr != NULL) {
+		mj_append_field(&devices, tmpstr, "array", &sensors_per_dev);
+		mj_delete(&sensors_per_dev);
+	
+		mj_append_field(&envstatj, "devices", "object", &devices);
+		if (tflag) {
+			mj_append_field(&envstatj, "timestamp", "integer", (int64_t)timestamp);
+			if (ctime_r(&timestamp, tbuf) != NULL)
+				/* Pull off the newline */
+				mj_append_field(&envstatj, "human_timestamp", "string", tbuf, strlen(tbuf) - 1);
+		}
+
+#ifdef __NOT
+		mj_asprint(&output_s, &envstatj, MJ_JSON_ENCODE);
+		printf("%s", output_s);
+		if (output_s != NULL)
+			free(output_s);
+#endif
+		/* Work around lib/59230 for now.  Way over allocate
+		 * the output buffer.  Summary of the problem:
+		 * mj_string_size does not appear to allocate enough
+		 * space if there are arrays present in the serialized
+		 * superatom.  It appears that for every array that is
+		 * placed inside of another object (or probably array)
+		 * the resulting buffer is a single character too
+		 * small.  So just do what mj_asprint() does, except
+		 * make the size much larger than is needed.
+		 */
+
+		output_size = mj_string_size(&envstatj) * 3;
+		output_s = calloc(1, output_size);
+		if (output_s != NULL) {
+			mj_snprint(output_s, output_size, &envstatj, MJ_JSON_ENCODE);
+			printf("%s", output_s);
+			free(output_s);
+		}
+	}
+
+	mj_delete(&devices);
+	mj_delete(&envstatj);
+}
+
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-DfIklnrST] ", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-DfIjklnrSTt] ", getprogname());
 	(void)fprintf(stderr, "[-c file] [-d device] [-i interval] ");
 	(void)fprintf(stderr, "[-s device:sensor,...] [-w width]\n");
 	(void)fprintf(stderr, "       %s ", getprogname());
