@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.68 2025/04/01 11:39:19 brad Exp $
+.\"	$NetBSD: envstat.8,v 1.69 2025/04/01 16:24:10 uwe Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,13 +39,13 @@
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
-.Op Fl s Ar "device:sensor,..."
+.Op Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
 .Op Fl w Ar width
 .Nm
 .Fl x
 .Op Fl d Ar device
-.Op Fl s Ar "device:sensor,..."
-.Op Ar property...
+.Op Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
+.Op Ar property ...
 .Sh DESCRIPTION
 .Nm
 is a utility that handles various aspects of the sensors
@@ -62,7 +62,7 @@ If critical limits were set previously, the display mode will show
 the critical limits in addition to the current values.
 .Pp
 The following options are available:
-.Bl -tag -width flag
+.Bl -tag -width Fl
 .It Fl c
 Accepts a file as argument to set properties for sensors in
 devices registered with the framework.
@@ -74,7 +74,7 @@ Display the names of the devices that are currently registered with
 the
 .Xr envsys 4
 framework, one per line, along with some properties for the device
-(for example, its refresh timeout value).
+.Pq for example, its refresh timeout value .
 .It Fl d Ar device
 Display only the sensors for the given
 .Ar device .
@@ -86,7 +86,7 @@ The default is to display temperature values in degrees Celsius.
 .It Fl I
 This flag skips the sensors with invalid state; these are normally
 shown using the
-.Qq N/A
+.Ql N/A
 string by default.
 .It Fl i Ar interval
 Repeat the display every
@@ -99,9 +99,10 @@ If not specified, or specified as 0,
 .Nm
 produces one round of values and exits.
 When the
-.Ar j
-flag is used to get JSON output the string #------- is placed
-between each JSON block.
+.Fl j
+flag is used to get JSON output the string
+.Ql #-------
+is placed between each JSON block.
 .It Fl j
 Output the results in JSON format.
 Each output will be a correct JSON object that consists of objects,
@@ -131,23 +132,28 @@ the framework.
 This will remove all properties that were set in
 the configuration file to the setting that the devices use by
 default.
-.It Fl s Ar "device:sensor,..."
+.It Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
 Restrict the display to the named devices and sensors.
-The pair device and sensor description must be supplied as a comma separated list.
+The pair
+.Ar device
+and
+.Ar sensor
+description must be supplied as a comma separated list.
 Device as well as sensor descriptions are case sensitive.
 Note that the order of the arguments given does not influence the order of output.
 .It Fl T
 Create and display max, min and average statistics for a sensor.
 Must be used with an
-.Ar interval ,
+.Fl i ,
 otherwise statistics cannot be collected up.
 Please note that to get realistic
-values a lower interval value should be used, but that will also increase
-overhead.
+values a lower
+.Ar interval
+value should be used, but that will also increase overhead.
 .It Fl t
 Output a time stamp along with the rest of the sensor data.
 When the
-.Ar j
+.Fl j
 flag is not specified, the time stamp will be on the first line and
 be in human readable format.
 When the output is JSON, two objects will be included that contain the
