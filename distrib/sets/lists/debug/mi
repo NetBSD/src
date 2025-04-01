@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.471 2025/03/31 13:57:06 riastradh Exp $
+# $NetBSD: mi,v 1.472 2025/04/01 00:33:54 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1757,6 +1757,7 @@
 ./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/t_netdb.debug			tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/t_paths.debug			tests-include-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/include/t_stddef.debug			tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/t_types.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/amd64/t_ptrace_wait.debug	tests-obsolete		obsolete,compattestfile

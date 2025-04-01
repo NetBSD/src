@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1363 2025/03/31 13:57:06 riastradh Exp $
+# $NetBSD: mi,v 1.1364 2025/04/01 00:33:55 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1754,6 +1754,7 @@
 ./usr/tests/include/t_limits				tests-include-tests	compattestfile,atf
 ./usr/tests/include/t_netdb				tests-include-tests	compattestfile,atf
 ./usr/tests/include/t_paths				tests-include-tests	compattestfile,atf
+./usr/tests/include/t_stddef				tests-include-tests	compattestfile,atf
 ./usr/tests/include/t_stdint				tests-include-tests	compattestfile,atf
 ./usr/tests/include/t_types				tests-obsolete		obsolete
 ./usr/tests/ipf						tests-ipf-tests		compattestfile,atf

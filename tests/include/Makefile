@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/05/26 12:56:32 joerg Exp $
+# $NetBSD: Makefile,v 1.11 2025/04/01 00:33:55 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_inttypes
 TESTS_C+=	t_limits
 TESTS_C+=	t_netdb
 TESTS_C+=	t_paths
+TESTS_C+=	t_stddef
 TESTS_C+=	t_stdint
 
 FILESDIR=	${TESTSDIR}
