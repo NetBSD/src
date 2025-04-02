@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.27 2025/04/02 01:23:45 nat Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.28 2025/04/02 01:25:35 nat Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.27 2025/04/02 01:23:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.28 2025/04/02 01:25:35 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,6 +139,8 @@ sbc_obio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
 		sc->sc_drq_addr = (vaddr_t)(SCSIBase + SBC_HSK_OFS); /*??*/
 		sc->sc_nodrq_addr = (vaddr_t)(SCSIBase + SBC_DMA_OFS_PB500);
+		if (sc->sc_options & SBC_INTR)
+			sc->sc_options |= SBC_PDMA;
 		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
 		break;
 	case MACH_MACPB210:
