@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.186 2025/03/31 14:07:10 riastradh Exp $	*/
+/*	$NetBSD: pthread.c,v 1.187 2025/04/02 14:23:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.186 2025/03/31 14:07:10 riastradh Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.187 2025/04/02 14:23:34 riastradh Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -898,8 +898,9 @@ pthread_cancel(pthread_t thread)
 			new |= PT_CANCEL_CANCELLED;
 			wake = true;
 		}
-	} while (__predict_false(atomic_cas_uint(&thread->pt_cancel, old, new)
-		!= old));
+	} while (__predict_false(!atomic_compare_exchange_weak_explicit(
+			&thread->pt_cancel, &old, new,
+			memory_order_relaxed, memory_order_relaxed)));
 
 	if (wake)
 		_lwp_wakeup(thread->pt_lid);
@@ -956,8 +957,9 @@ pthread_setcancelstate(int state, int *oldstate)
 			if (__predict_false(old & PT_CANCEL_ASYNC))
 				cancelled = true;
 		}
-	} while (__predict_false(atomic_cas_uint(&self->pt_cancel, old, new)
-		!= old));
+	} while (__predict_false(!atomic_compare_exchange_weak_explicit(
+			&self->pt_cancel, &old, new,
+			memory_order_relaxed, memory_order_relaxed)));
 
 	/*
 	 * If we transitioned from PTHREAD_CANCEL_DISABLED to
@@ -1012,8 +1014,9 @@ pthread_setcanceltype(int type, int *oldtype)
 		if (__predict_false((flags | (old & PT_CANCEL_CANCELLED)) ==
 			(PT_CANCEL_ASYNC|PT_CANCEL_CANCELLED)))
 			cancelled = true;
-	} while (__predict_false(atomic_cas_uint(&self->pt_cancel, old, new)
-		!= old));
+	} while (__predict_false(!atomic_compare_exchange_weak_explicit(
+			&self->pt_cancel, &old, new,
+			memory_order_relaxed, memory_order_relaxed)));
 
 	if (__predict_false(cancelled)) {
 		membar_acquire();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.113 2025/03/31 14:07:10 riastradh Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.114 2025/04/02 14:23:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -96,7 +96,7 @@ struct	__pthread_st {
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_state;	/* running, blocked, etc. */
 	int		pt_flags;	/* see PT_FLAG_* below */
-	volatile unsigned int	pt_cancel;	/* Cancellation */
+	_Atomic unsigned int	pt_cancel;	/* Cancellation */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	bool		pt_stack_allocated;
