@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.94 2025/01/23 22:44:22 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.95 2025/04/02 14:18:56 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.94 2025/01/23 22:44:22 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.95 2025/04/02 14:18:56 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -661,6 +661,8 @@ close_file(FILE *stream, char const *dir, char const *name,
   char const *e = (ferror(stream) ? _("I/O error")
 		   : fclose(stream) != 0 ? strerror(errno) : NULL);
   if (e) {
+    if (name && *name == '/')
+      dir = NULL;
     fprintf(stderr, "%s: %s%s%s%s%s\n", progname,
 	    dir ? dir : "", dir ? "/" : "",
 	    name ? name : "", name ? ": " : "",
@@ -962,6 +964,9 @@ static const char *	lcltime;
 static const char *	directory;
 static const char *	tzdefault;
 
+/* True if DIRECTORY ends in '/'.  */
+static bool directory_ends_in_slash;
+
 /* -1 if the TZif output file should be slim, 0 if default, 1 if the
    output should be fat for backward compatibility.  ZIC_BLOAT_DEFAULT
    determines the default.  */
@@ -1146,6 +1151,7 @@ _("%s: invalid time range: %s\n"),
 		return EXIT_FAILURE;
 	associate();
 	change_directory(directory);
+	directory_ends_in_slash = directory[strlen(directory) - 1] == '/';
 	catch_signals();
 	for (i = 0; i < nzones; i = j) {
 		/*
@@ -1347,6 +1353,20 @@ random_dirent(char const **name, char **namealloc)
   }
 }
 
+/* For diagnostics the directory, and file name relative to that
+   directory, respectively.  A diagnostic routine can name FILENAME by
+   outputting diagdir(FILENAME), then diagslash(FILENAME), then FILENAME.  */
+static char const *
+diagdir(char const *filename)
+{
+  return *filename == '/' ? "" : directory;
+}
+static char const *
+diagslash(char const *filename)
+{
+  return &"/"[*filename == '/' || directory_ends_in_slash];
+}
+
 /* Prepare to write to the file *OUTNAME, using *TEMPNAME to store the
    name of the temporary file that will eventually be renamed to
    *OUTNAME.  Assign the temporary file's name to both *OUTNAME and
@@ -1375,8 +1395,9 @@ open_outfile(char const **outname, char **tempname)
     } else if (fopen_errno == EEXIST)
       random_dirent(outname, tempname);
     else {
-      fprintf(stderr, _("%s: Can't create %s/%s: %s\n"),
-	      progname, directory, *outname, strerror(fopen_errno));
+      fprintf(stderr, _("%s: Can't create %s%s%s: %s\n"),
+	      progname, diagdir(*outname), diagslash(*outname), *outname,
+	      strerror(fopen_errno));
       exit(EXIT_FAILURE);
     }
   }
@@ -1394,8 +1415,9 @@ rename_dest(char *tempname, char const *name)
     if (rename(tempname, name) != 0) {
       int rename_errno = errno;
       remove(tempname);
-      fprintf(stderr, _("%s: rename to %s/%s: %s\n"),
-	      progname, directory, name, strerror(rename_errno));
+      fprintf(stderr, _("%s: rename to %s%s%s: %s\n"),
+	      progname, diagdir(name), diagslash(name), name,
+	      strerror(rename_errno));
       exit(EXIT_FAILURE);
     }
     free(tempname);
@@ -1405,7 +1427,8 @@ rename_dest(char *tempname, char const *name)
 /* Create symlink contents suitable for symlinking TARGET to LINKNAME, as a
    freshly allocated string.  TARGET should be a relative file name, and
    is relative to the global variable DIRECTORY.  LINKNAME can be either
-   relative or absolute.  */
+   relative or absolute.  Return a null pointer if the symlink contents
+   was not computed because LINKNAME is absolute but DIRECTORY is not.  */
 static char *
 relname(char const *target, char const *linkname)
 {
@@ -1418,6 +1441,8 @@ relname(char const *target, char const *linkname)
     size_t len = strlen(directory);
     size_t lenslash = len + (len && directory[len - 1] != '/');
     size_t targetsize = strlen(target) + 1;
+    if (*directory != '/')
+      return NULL;
     linksize = size_sum(lenslash, targetsize);
     f = result = xmalloc(linksize);
     memcpy(result, directory, len);
@@ -1469,8 +1494,9 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	    return;
 	  else {
 	    char const *e = strerror(errno);
-	    fprintf(stderr, _("%s: Can't remove %s/%s: %s\n"),
-		    progname, directory, linkname, e);
+	    fprintf(stderr, _("%s: Can't remove %s%s%s: %s\n"),
+		    progname, diagdir(linkname), diagslash(linkname), linkname,
+		    e);
 	    exit(EXIT_FAILURE);
 	  }
 	}
@@ -1513,8 +1539,9 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	    mkdirs(linkname, true);
 	    linkdirs_made = true;
 	  } else {
-	    fprintf(stderr, _("%s: Can't link %s/%s to %s/%s: %s\n"),
-		    progname, directory, target, directory, outname,
+	    fprintf(stderr, _("%s: Can't link %s%s%s to %s%s%s: %s\n"),
+		    progname, diagdir(target), diagslash(target), target,
+		    diagdir(outname), diagslash(outname), outname,
 		    strerror(link_errno));
 	    exit(EXIT_FAILURE);
 	  }
@@ -1523,21 +1550,23 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	  bool absolute = *target == '/';
 	  char *linkalloc = absolute ? NULL : relname(target, linkname);
 	  char const *contents = absolute ? target : linkalloc;
-	  int symlink_errno;
+	  int symlink_errno = -1;
 
-	  while (true) {
-	    if (symlink(contents, outname) == 0) {
-	      symlink_errno = 0;
-	      break;
+	  if (contents) {
+	    while (true) {
+	      if (symlink(contents, outname) == 0) {
+		symlink_errno = 0;
+		break;
+	      }
+	      symlink_errno = errno;
+	      if (symlink_errno == EEXIST)
+		random_dirent(&outname, &tempname);
+	      else if (symlink_errno == ENOENT && !linkdirs_made) {
+		mkdirs(linkname, true);
+		linkdirs_made = true;
+	      } else
+		break;
 	    }
-	    symlink_errno = errno;
-	    if (symlink_errno == EEXIST)
-	      random_dirent(&outname, &tempname);
-	    else if (symlink_errno == ENOENT && !linkdirs_made) {
-	      mkdirs(linkname, true);
-	      linkdirs_made = true;
-	    } else
-	      break;
 	  }
 	  free(linkalloc);
 	  if (symlink_errno == 0) {
@@ -1550,8 +1579,8 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	    fp = fopen(target, "rb");
 	    if (!fp) {
 	      char const *e = strerror(errno);
-	      fprintf(stderr, _("%s: Can't read %s/%s: %s\n"),
-		      progname, directory, target, e);
+	      fprintf(stderr, _("%s: Can't read %s%s%s: %s\n"),
+		      progname, diagdir(target), diagslash(target), target, e);
 	      exit(EXIT_FAILURE);
 	    }
 	    tp = open_outfile(&outname, &tempname);
@@ -1562,6 +1591,8 @@ dolink(char const *target, char const *linkname, bool staysymlink)
 	    if (link_errno != ENOTSUP)
 	      warning(_("copy used because hard link failed: %s"),
 		      strerror(link_errno));
+	    else if (symlink_errno < 0)
+	      warning(_("copy used because symbolic link not obvious"));
 	    else if (symlink_errno != ENOTSUP)
 	      warning(_("copy used because symbolic link failed: %s"),
 		      strerror(symlink_errno));
