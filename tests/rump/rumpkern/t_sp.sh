@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.20 2025/04/02 01:49:45 riastradh Exp $
+#	$NetBSD: t_sp.sh,v 1.21 2025/04/02 14:37:44 riastradh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -129,6 +129,11 @@ sigsafe()
 	cat stderr >&2
 	atf_check -s exit:0 sh -c "$RUN_CLIENT" -- \
 	    "$(atf_get_srcdir)"/h_client/h_sigcli
+	if [ -f rump_server.core ]; then
+		gdb -ex bt /usr/bin/rump_server rump_server.core
+		# Extract kernel logs including a panic message
+		strings rump_server.core |grep -E '^\[.+\] '
+	fi
 }
 
 signal()
