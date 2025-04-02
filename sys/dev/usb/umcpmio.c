@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.5 2025/03/31 18:32:35 brad Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.6 2025/04/02 01:22:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.5 2025/03/31 18:32:35 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.6 2025/04/02 01:22:20 riastradh Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -1480,14 +1480,14 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		memset(&put_flash_res, 0, MCP2221_RES_BUFFER_SIZE);
 		error = umcpmio_put_flash(sc, &put_flash_req,
 		    &put_flash_res, false);
-		if (!error) {
-			umcpmio_dump_buffer(sc->sc_dumpbuffer,
-			    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
-			    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
-			    " put_flash_res");
-			memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
-			    MCP2221_RES_BUFFER_SIZE);
-		}
+		if (error)
+			break;
+		umcpmio_dump_buffer(sc->sc_dumpbuffer,
+		    (uint8_t *)&put_flash_res, MCP2221_RES_BUFFER_SIZE,
+		    "umcpmio_dev_ioctl: UMCPMIO_PUT_FLASH:"
+		    " put_flash_res");
+		memcpy(&ioctl_put_flash->put_flash_res, &put_flash_res,
+		    MCP2221_RES_BUFFER_SIZE);
 		break;
 	default:
 		error = EINVAL;
