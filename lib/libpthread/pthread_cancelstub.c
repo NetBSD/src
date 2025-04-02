@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.47 2025/03/31 14:23:11 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.47 2025/03/31 14:23:11 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -123,7 +123,8 @@ int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 int	__nanosleep50(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
 int	_sys_openat(int, const char *, int, ...);
-int	_sys_paccept(int, struct sockaddr *, socklen_t *, int);
+int	_sys_paccept(int, struct sockaddr *, socklen_t *, const sigset_t *,
+	    int);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 int	_sys___pollts50(struct pollfd *, nfds_t, const struct timespec *,
 	    const sigset_t *);
@@ -183,7 +184,7 @@ accept4(int s, struct sockaddr *addr, socklen_t *addrlen, int flags)
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys_paccept(s, addr, addrlen, flags);
+	retval = _sys_paccept(s, addr, addrlen, NULL, flags);
 	TESTCANCEL(self);
 
 	return retval;
