@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.35 2025/04/02 17:44:07 riastradh Exp $
+.\"	$NetBSD: accept.2,v 1.36 2025/04/02 19:30:37 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -158,16 +158,15 @@ flag of
 instead, it accepts the following flags:
 .Fa flags
 on the returned file descriptor:
-.Bl -tag -width SOCK_NOSIGPIPEXX -offset indent
-.It Dv SOCK_CLOEXEC
-Set the close-on-exec property.
-.It Dv SOCK_NONBLOCK
-Sets non-blocking I/O.
-.It Dv SOCK_NOSIGPIPE
+.Bl -column -offset indent ".Dv SOCK_NOSIGPIPE"
+.It Dv SOCK_CLOEXEC   Ta Set the close-on-exec property.
+.It Dv SOCK_NONBLOCK  Ta Sets non-blocking I/O.
+.It Dv SOCK_NOSIGPIPE Ta Xo
 Return
 .Er EPIPE
 instead of raising
 .Dv SIGPIPE .
+.Xc
 .El
 .Pp
 The
@@ -209,10 +208,11 @@ integer that is a descriptor for the accepted socket.
 The
 .Fn accept
 implementation makes the new file descriptor inherit file flags
-(like
-.Dv O_NONBLOCK )
+.Pq like Dv O_NONBLOCK
 from the listening socket.
-It's a traditional behaviour for BSD derivative systems.
+It's a traditional behaviour for
+.Bx
+derivative systems.
 On the other hand, there are implementations which don't do so.
 Linux is an example of such implementations.
 Portable programs should not rely on either of the behaviours.
@@ -249,10 +249,13 @@ The
 .Fn accept
 call has been interrupted by a signal.
 .It Bq Er EINVAL
-The socket has not been set up to accept connections (using
+The socket has not been set up to accept connections
+.Po
+using
 .Xr bind 2
 and
-.Xr listen 2 ) .
+.Xr listen 2
+.Pc .
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
