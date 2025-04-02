@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.34 2019/10/27 12:28:13 pgoyette Exp $
+.\"	$NetBSD: accept.2,v 1.35 2025/04/02 17:44:07 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,21 +138,29 @@ call with providing only the control information,
 or by calling
 .Xr setsockopt 2 .
 .Pp
-The
-.Fn accept4
-function is equivalent to paccept with sigmask
-.Dv NULL .
+The socket returned by
+.Fn accept
+inherits the
+.Dv O_NONBLOCK
+setting of
+.Fa s .
+This is a nonstandard guarantee; portable applications should not rely
+it.
 .Pp
 The
-.Fn paccept
+.Fn accept4
 function behaves exactly like
 .Fn accept ,
-but it also allows to set the following
+but the socket it returns does not inherit the
+.Dv O_NONBLOCK
+flag of
+.Fa s ;
+instead, it accepts the following flags:
 .Fa flags
 on the returned file descriptor:
 .Bl -tag -width SOCK_NOSIGPIPEXX -offset indent
 .It Dv SOCK_CLOEXEC
-Set the close on exec property.
+Set the close-on-exec property.
 .It Dv SOCK_NONBLOCK
 Sets non-blocking I/O.
 .It Dv SOCK_NOSIGPIPE
@@ -162,23 +170,39 @@ instead of raising
 .Dv SIGPIPE .
 .El
 .Pp
-It can also temporarily replace the signal mask of the calling thread if
-.Fa sigmask
-is a
-.Pf non- Dv NULL
-pointer, then the
+The
 .Fn paccept
-function shall replace the signal mask of the caller by the set of
-signals pointed to by
+function behaves exactly like
+.Fn accept4 ,
+but it also accepts a signal mask
+.Fa sigmask .
+If
 .Fa sigmask
-before waiting for a connection, and shall restore the signal mask
-of the calling thread before returning.
+is
+.Pf non- Dv NULL ,
+.Fn paccept
+replaces the signal mask of the calling thread by it while
+.Fn paccept
+is waiting for a connection, and then restores the signal mask on
+return.
+.Pp
+The
+.Fn accept4
+function is equivalent to
+.Fn paccept
+with
+.Dv NULL
+as the argument for
+.Fa sigmask .
 .Sh RETURN VALUES
 The
-.Fn accept
+.Fn accept ,
+.Fn accept4 ,
 and
 .Fn paccept
-calls return \-1 on error.
+functions return \-1 and set
+.Xr errno 2
+on error.
 If they succeed, they return a non-negative
 integer that is a descriptor for the accepted socket.
 .Sh COMPATIBILITY
@@ -192,9 +216,16 @@ It's a traditional behaviour for BSD derivative systems.
 On the other hand, there are implementations which don't do so.
 Linux is an example of such implementations.
 Portable programs should not rely on either of the behaviours.
-The
 .Pp
+The
+.Fn accept
+and
 .Fn accept4
+functions conform to
+.St -p1003.1-2024 .
+.Pp
+The non-standard
+.Fn paccept
 function is compatible with the Linux implementation.
 .Sh ERRORS
 The
@@ -245,10 +276,10 @@ The
 function appeared in
 .Bx 4.2 .
 The
-.Fn accept4
-function matches Linux semantics and appeared in
-.Nx 8.0 .
-The
 .Fn paccept
-function is inspired from Linux and appeared in
+function appeared in
 .Nx 6.0 .
+The
+.Fn accept4
+function appeared in
+.Nx 8.0 .
