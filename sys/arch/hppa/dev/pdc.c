@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.4 2019/04/15 20:40:37 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.5 2025/04/02 18:10:50 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.4 2019/04/15 20:40:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.5 2025/04/02 18:10:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,10 @@ pdc_init(void)
 
 	pdc = (pdcio_t)PAGE0->mem_pdc;
 
-	/* XXX should we reset the console/kbd here?
-	   well, /boot did that for us anyway */
+	/*
+	 * XXX should we reset the console/kbd here?
+	 * well, /boot did that for us anyway
+	 */
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
 	      &pdcret1, pz_cons->pz_hpa, IODC_IO, cn_iodc, IODC_MAXSIZE)) < 0 ||
 	    (err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
