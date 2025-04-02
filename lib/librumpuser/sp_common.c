@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.44 2025/04/02 01:49:45 riastradh Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.45 2025/04/02 07:25:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -67,7 +67,7 @@
 #define __printflike(a,b) __attribute__((__format__(__printf__, a, b))))
 #endif
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define DPRINTF(x) mydprintf x
 static __printflike(1, 2) void
