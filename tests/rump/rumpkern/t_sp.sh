@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.19 2024/04/04 21:19:25 riastradh Exp $
+#	$NetBSD: t_sp.sh,v 1.20 2025/04/02 01:49:45 riastradh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,7 +73,9 @@ RUN_CLIENT='
 		status=$?
 	fi
 	RUMP_SERVER=unix://commsock rump.halt
+	echo Post-halt stdout:
 	cat stdout
+	echo Post-halt stderr: >&2
 	cat stderr >&2
 	exit $status
 '
@@ -119,8 +121,11 @@ sigsafe()
 	export RUMP_SERVER=unix://commsock
 	export RUMP_STDOUT="$(pwd)/stdout"
 	export RUMP_STDERR="$(pwd)/stderr"
+	export RUMPUSER_DEBUG=1
 	atf_check -s exit:0 rump_server -v ${RUMP_SERVER}
+	echo Pre-test stdout:
 	cat stdout
+	echo Pre-test stderr: >&2
 	cat stderr >&2
 	atf_check -s exit:0 sh -c "$RUN_CLIENT" -- \
 	    "$(atf_get_srcdir)"/h_client/h_sigcli

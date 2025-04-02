@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.43 2021/12/07 10:39:33 gson Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.44 2025/04/02 01:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -67,7 +67,7 @@
 #define __printflike(a,b) __attribute__((__format__(__printf__, a, b))))
 #endif
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DPRINTF(x) mydprintf x
 static __printflike(1, 2) void
@@ -75,6 +75,8 @@ mydprintf(const char *fmt, ...)
 {
 	va_list ap;
 
+	if (getenv("RUMPUSER_DEBUG") == NULL)
+		return;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
