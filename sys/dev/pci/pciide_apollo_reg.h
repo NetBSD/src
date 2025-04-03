@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.20 2011/07/10 20:01:37 jakllsch Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.21 2025/04/03 15:35:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -96,6 +96,8 @@
 /* misc. configuration registers */
 #define APO_IDECONF(sc) ((sc)->sc_apo_regbase + 0x00)
 #define APO_IDECONF_EN(channel) (0x00000001 << (1 - (channel)))
+/* Emulate missing enable bits for VIA VT6410/VT6415. */
+#define APO_IDECONF_ALWAYS_EN	0x00000003
 #define APO_IDECONF_SERR_EN	0x00000100 /* VIA 580 only */
 #define APO_IDECONF_DS_SOURCE	0x00000200 /* VIA 580 only */
 #define APO_IDECONF_ALT_INTR_EN	0x00000400 /* VIA 580 only */
