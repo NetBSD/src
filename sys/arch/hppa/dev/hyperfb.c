@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.22 2025/03/17 06:54:17 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.23 2025/04/03 05:14:35 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.22 2025/03/17 06:54:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.23 2025/04/03 05:14:35 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -144,9 +144,6 @@ static int	hyperfb_do_cursor(struct hyperfb_softc *,
 		    struct wsdisplay_cursor *);
 
 static inline void hyperfb_wait_fifo(struct hyperfb_softc *, uint32_t);
-
-#define	ngle_bt458_write(sc, r, v) \
-	hyperfb_write4(sc, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
 
 struct wsdisplay_accessops hyperfb_accessops = {
 	hyperfb_ioctl,
@@ -745,7 +742,6 @@ void
 hyperfb_setup(struct hyperfb_softc *sc)
 {
 	int i;
-	uint32_t reg;
 
 	sc->sc_hwmode = HW_FB;
 	sc->sc_hot_x = 0;
@@ -753,18 +749,11 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
 
-	/* set Bt458 read mask register to all planes */
-	/* XXX I'm not sure HCRX even has one of these */
+	/* first enable all planes */
 	hyperfb_wait(sc);
-	ngle_bt458_write(sc, 0x08, 0x04);
-	ngle_bt458_write(sc, 0x0a, 0xff);
-
-	reg = hyperfb_read4(sc, NGLE_REG_32);
-	DPRINTF("planereg %08x\n", reg);
 	hyperfb_write4(sc, NGLE_REG_32, 0xffffffff);
 
 	/* hyperbowl */
-	hyperfb_wait(sc);
 	if (sc->sc_24bit) {
 		/* write must happen twice because hw bug */
 		hyperfb_write4(sc, NGLE_REG_40,
@@ -790,12 +779,25 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	}
 
 	/* attr. planes */
+	/*
+	 * XXX
+	 * This is odd.
+	 * We tell the blitter to write 8 bit deep but expect a 32bit value
+	 * to be written. Then again, writing to BINattr is already special 
+	 * by using NGLE_REG_12 as source instead of the fg/bg registers, it 
+	 * may always write all planes, who knows. This is what the NGLE code
+	 * in XFree86 3.3 does.
+	 * Also, the value itself is not one of the CMAP defines in nglehdw.h,
+	 * but it's used in hyperResetPlanes() and does what we want.
+	 * Then there are HYPER_CMAP* defines with yet another set of 
+	 * different values that aren't used anywhere.
+	 */
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_REG_11,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINattr, 0));
 	hyperfb_write4(sc, NGLE_REG_14,
 	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 1, 0));
-	hyperfb_write4(sc, NGLE_REG_12, 0x04000F00/*NGLE_BUFF0_CMAP0*/);
+	hyperfb_write4(sc, NGLE_REG_12, 0x04000F00);
 	hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
 
 	hyperfb_wait(sc);
@@ -821,11 +823,18 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		hyperfb_wait_fifo(sc, 7);
 		hyperfb_write4(sc, NGLE_REG_11,
 		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-		hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
-		hyperfb_write4(sc, NGLE_REG_3, 0x000017f0);
+		hyperfb_write4(sc, NGLE_REG_14, 
+		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
+		            0, 0)); //0x03000300
+		/*
+		 * apparently the overlay transparency register lives at a
+		 * magical location in the overlay plane, outside visible
+		 * memory. Normal blits cut off beyond X 1280.
+		 */
+		hyperfb_write4(sc, NGLE_REG_3, 0x000017f0);	// BINC dst
 		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
 		hyperfb_write4(sc, NGLE_REG_22, 0xffffffff);
-		hyperfb_write4(sc, NGLE_REG_23, 0x0);
+		hyperfb_write4(sc, NGLE_REG_23, 0x0);		// BINC data
 
 		hyperfb_wait(sc);
 		hyperfb_write4(sc, NGLE_REG_12, 0x00000000);
