@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2025/03/11 13:56:48 brad Exp $
+# $NetBSD: mi,v 1.23 2025/04/03 05:00:31 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1395,6 +1395,7 @@
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/cpi.html		man-sys-htmlman		html
+./usr/share/man/html4/mac68k/pbbat.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/iwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/kmem.html		man-sys-htmlman		html
