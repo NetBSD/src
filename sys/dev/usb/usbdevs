@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.820 2025/02/16 18:28:29 jakllsch Exp $
+$NetBSD: usbdevs,v 1.821 2025/04/03 14:51:37 bouyer Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2701,8 +2701,12 @@ product PEGATRON RT3072		0x0011	RT3072
 
 /* Future Bits products */
 product FUTUREBITS 4PI		0x6019	4Pi reprap
+product FUTUREBITS CDL_CAN	0x606f	candleLight USB CAN interfaces
 /* Moonbase Otago share vendor ID with Future Bits products */
 product	FUTUREBITS ONERNG	0x6086	OneRNG Random Number Generator
+
+/* candleLight uses INTERBIO vendor id ? */
+product INTERBIO CDL_CAN	0x2323	candleLight USB CAN interfaces
 
 /* Pen Driver */
 product PEN USBDISKPRO		0x0120	USB Disk Pro
