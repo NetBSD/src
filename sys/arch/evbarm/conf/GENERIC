@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.122 2025/03/27 12:22:43 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.123 2025/04/03 16:33:48 bouyer Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -409,6 +409,7 @@ wskbd* 		at tcakp? console ?
 options 	CAN			# Controller Area Network protocol
 pseudo-device 	canloop			# CAN loopback interface
 sunxican* 	at fdt?			# A10/A20 CAN controller
+gscan*		at uhub? port ?		# Geschwister Schneider USB to CAN
 
 # SPI
 imxspi* 	at fdt?			# i.MX SPI

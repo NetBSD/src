@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 2025/04/03 05:00:31 martin Exp $
+# $NetBSD: mi,v 1.24 2025/04/03 16:33:47 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1145,6 +1145,7 @@
 ./usr/share/man/html4/gpiopwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
+./usr/share/man/html4/gscan.html		man-sys-htmlman		html
 ./usr/share/man/html4/gsip.html			man-sys-htmlman		html
 ./usr/share/man/html4/gtp.html			man-sys-htmlman		html
 ./usr/share/man/html4/gus.html			man-sys-htmlman		html

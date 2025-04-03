@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.181 2025/01/20 13:54:55 maya Exp $
+#	$NetBSD: files.usb,v 1.182 2025/04/03 16:33:48 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -514,6 +514,11 @@ file	dev/usb/utoppy.c		utoppy
 device	zyd: ether, ifnet, arp, wlan, firmload
 attach	zyd at usbdevif
 file	dev/usb/if_zyd.c		zyd
+
+# Geschwister Schneider USB to CAN interface (and clones)
+device gscan: ifnet
+attach gscan at usbdevif
+file	dev/usb/if_gscan.c		gscan
 
 # DisplayLink DL-1x0/DL-1x5
 device	udl: wsemuldisplaydev, rasops16, edid, firmload

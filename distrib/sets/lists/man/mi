@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1801 2025/04/03 01:54:46 nat Exp $
+# $NetBSD: mi,v 1.1802 2025/04/03 16:33:47 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1263,6 +1263,7 @@
 ./usr/share/man/cat4/gpiopwm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
+./usr/share/man/cat4/gscan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gsip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gtp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
@@ -4842,6 +4843,7 @@
 ./usr/share/man/man4/gpiopwm.4			man-sys-man		.man
 ./usr/share/man/man4/gpiosim.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
+./usr/share/man/man4/gscan.4			man-sys-man		.man
 ./usr/share/man/man4/gsip.4			man-sys-man		.man
 ./usr/share/man/man4/gtp.4			man-sys-man		.man
 ./usr/share/man/man4/gus.4			man-sys-man		.man

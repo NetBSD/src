@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.191 2025/03/27 12:22:43 riastradh Exp $
+# $NetBSD: ALL,v 1.192 2025/04/03 16:33:48 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.191 $"
+#ident		"ALL-$Revision: 1.192 $"
 
 maxusers	64		# estimated number of users
 
@@ -1284,6 +1284,9 @@ upgt*	at uhub? port ?		# Intersil PrismGT
 urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
 urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 zyd*	at uhub? port ?		# Zydas ZD1211
+
+# USB CAN adapters
+gscan*  at uhub? port ?         # Geschwister Schneider USB to CAN interface
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
