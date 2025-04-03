@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.247 2024/09/23 07:35:44 rin Exp $
+# $NetBSD: HACKS,v 1.248 2025/04/03 12:02:24 nat Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1167,4 +1167,15 @@ descr
 	cacheline-aligned objects (typically >=64-byte).  To work
 	around this, allocate n + 63 bytes and pick whichever pointer
 	in that interval is aligned (PR lib/58349).
+kcah
+
+hack	binutils: 68lc040 needs support for fpu emulation on some cpus.
+cdate	Thu Apr 3 11:52:14 UTC 2025
+port	m68k
+who	nat
+file	external/gpl3/binutils/dist/gas/config/tc-m68k.c : 1.13
+descr	Early buggy revisions of 68LC040 cpu cannot use fpu emulation without
+	some binutils supprt. Adding NOP before F-LINE instructions.
+	(PR port-mac68k/13078 and binutils PATCH request
+	- https://sourceware.org/pipermail/binutils/2025-March/140270.html)
 kcah
