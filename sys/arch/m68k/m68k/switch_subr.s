@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.41 2025/04/03 13:07:39 nat Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.42 2025/04/03 13:44:06 nat Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -80,7 +80,6 @@ GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
 ASENTRY_NOPROFILE(cpu_idle)
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
-	nop
 	rts
 
 /*
@@ -208,7 +207,6 @@ ENTRY(cpu_switchto)
 .Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
 	movl	%d0,%a0			| (in a0, too)
-	nop
 	rts
 
 /*
@@ -257,7 +255,6 @@ ENTRY(savectx)
 #endif /* FPCOPROC */
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 	moveq	#0,%d0			| return 0
-	nop
 	rts
 
 #if !defined(M68010)
@@ -289,7 +286,6 @@ ENTRY(m68k_make_fpu_idle_frame)
 	frestore (%sp)
 	fnop
 	addql	#4,%sp
-	nop
 	rts
 #endif
 
@@ -311,7 +307,6 @@ ENTRY(m68881_save)
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
 .Lm68881sdone:
-	nop
 	rts
 #endif
 #if defined(M68060)
@@ -323,7 +318,6 @@ ENTRY(m68881_save)
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
 .Lm68060sdone:
-	nop
         rts
 #endif
 
@@ -341,7 +335,6 @@ ENTRY(m68881_restore)
 	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
 .Lm68881rdone:
 	frestore (%a0)			| restore state
-	nop
 	rts
 #endif
 #if defined(M68060)
@@ -354,7 +347,6 @@ ENTRY(m68881_restore)
 	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
 .Lm68060fprdone:
 	frestore (%a0)			| restore state
-	nop
 	rts
 #endif
 #endif
