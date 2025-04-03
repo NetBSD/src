@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.42 2025/01/12 05:56:59 nat Exp $	*/
+/*	$NetBSD: aed.c,v 1.43 2025/04/03 01:54:46 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.42 2025/01/12 05:56:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.43 2025/04/03 01:54:46 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -163,6 +163,10 @@ aedattach(device_t parent, device_t self, void *aux)
 	    aed_brightness_down, TRUE);
 
 	printf("ADB Event device\n");
+
+#if 1
+	(void)config_found(self, &aa_args, NULL, CFARGS_NONE);
+#endif
 
 	return;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.238 2024/01/29 18:27:13 christos Exp $
+# $NetBSD: GENERIC,v 1.239 2025/04/03 01:54:46 nat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238 $"
+#ident 		"GENERIC-$Revision: 1.239 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -203,6 +203,9 @@ adb0	at obio?
 aed*	at adb?				# ADB event device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
+
+# Powerbook 1xx AC adaptor and battery
+#pbbat*	at aed?
 
 # Basic frame buffer support
 intvid0	at obio?			# Internal video hardware

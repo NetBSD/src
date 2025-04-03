@@ -1,0 +1,111 @@
+.\" $NetBSD: pbbat.4,v 1.1 2025/04/03 01:54:46 nat Exp $
+.\"
+.\" Copyright (c) 2025 Nathaial Sloss <nathanialsloss@yahoo.com.au>
+.\" All rights reserved.
+.\"
+.\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 28, 2025
+.Dt PBBAT 4
+.Os
+.Sh NAME
+.Nm pbbat
+.Nd PowerBook 1xx Battery and AC adaptor
+.Sh SYNOPSIS
+.Cd "pbbat* at aed?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports
+.Tn PowerBook
+1xx batteries and AC adaptors.
+.Pp
+The battery and adaptor status are made available through the
+.Xr envsys 4
+.Tn API .
+The battery information can be displayed also with the
+.Xr envstat 8
+command:
+.Bd -literal -offset 2n
+$ envstat
+                Current  CritMax  WarnMax  WarnMin  CritMin Unit
+[AC Adaptor]
+     connected:    TRUE
+[pbbat0]
+       present:    TRUE
+design voltage:   6.000                                        V
+       voltage:   7.267                                        V
+    design cap:  60.000                                       Wh
+ last full cap:     N/A
+        charge:  47.910                      3.674%   2.799%  Wh (47.91%)
+   charge rate:     N/A
+discharge rate:   5.641                                        W
+      charging:    TRUE
+  charge state:  NORMAL
+.Ed
+.Sh EVENTS
+The
+.Nm
+driver is able to send events to
+.Xr powerd 8
+daemon when a capacity state has been changed.
+The new state will be reported as the
+.Em fourth
+argument to the
+.Pa /etc/powerd/scripts/sensor_battery
+script.
+If a custom capacity limit was set via
+.Xr envstat 8 ,
+the
+.Nm
+driver will report a
+.Em user-capacity
+event to the same script when current capacity limit has been reached.
+AC Adaptor events are passed to the
+.Pa /etc/powerd/scripts/acadaptor
+script as pressed and released events when power is connected or disconnected
+respectively.
+.Sh SEE ALSO
+.Xr adb 4 ,
+.Xr envsys 4 ,
+.Xr envstat 8 ,
+.Xr powerd 8
+.Sh AUTHORS
+.An Nathanial Sloss
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Nx 11 .
+.Sh BUGS
+This driver currently only supports the
+.Tn PowerBook
+100 series batteries excluding the 150 and 190 computers.
+.Pp
+The design capacity is an approximation of charge based on a new battery.
+.Pp
+The charge and discharge rates are approximations between successive reads of
+the battery capacity and should not be relied upon for accurate running time
+calculations.
