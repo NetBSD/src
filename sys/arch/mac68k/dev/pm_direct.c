@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.37 2025/01/12 05:53:45 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.38 2025/04/03 02:04:57 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.37 2025/01/12 05:53:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.38 2025/04/03 02:04:57 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.37 2025/01/12 05:53:45 nat Exp $");
 /* #define	PM_GRAB_SI	1 */
 
 #include <sys/types.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -165,6 +166,9 @@ char pm_receive_cmd_type[] = {
 };
 
 
+/* Spin mutex to seriaize powermanager requests. */
+kmutex_t pm_mutex;
+
 /*
  * Define the private functions
  */
@@ -253,6 +257,7 @@ pm_printerr(const char *ttl, int rval, int num, char *data)
 void
 pm_setup_adb(void)
 {
+	mutex_init(&pm_mutex, MUTEX_DEFAULT, IPL_HIGH);
 	switch (mac68k_machine.machineid) {
 		case MACH_MACPB140:
 		case MACH_MACPB145:
@@ -429,6 +434,8 @@ pm_pmgrop_pm1(PMData *pmdata)
 	u_char pm_data;
 	u_char *pm_buf;
 
+	mutex_spin_enter(&pm_mutex);
+
 	/* disable all interrupts but PM */
 	via1_vIER = via_reg(VIA1, vIER);
 	PM_VIA_INTR_DISABLE();
@@ -446,6 +453,7 @@ pm_pmgrop_pm1(PMData *pmdata)
 					/* restore formar value */
 					via_reg(VIA1, vDirA) = via1_vDirA;
 					via_reg(VIA1, vIER) = via1_vIER;
+					mutex_spin_exit(&pm_mutex);
 					return 0xffffcd38;
 				}
 
@@ -467,6 +475,7 @@ pm_pmgrop_pm1(PMData *pmdata)
 								via_reg(VIA2, vDirA) = 0x00;
 								/* restore formar value */
 								via_reg(VIA1, vIER) = via1_vIER;
+								mutex_spin_exit(&pm_mutex);
 								return 0xffffcd38;
 							}
 						}
@@ -493,6 +502,7 @@ pm_pmgrop_pm1(PMData *pmdata)
 				via_reg(VIA1, vIER) = via1_vIER;
 				if (s != 0x81815963)
 					splx(s);
+				mutex_spin_exit(&pm_mutex);
 				return 0xffffcd38;
 			}
 
@@ -549,6 +559,8 @@ pm_pmgrop_pm1(PMData *pmdata)
 	via_reg(VIA1, vIER) = via1_vIER;
 	if (s != 0x81815963)
 		splx(s);
+
+	mutex_spin_exit(&pm_mutex);
 
 	return rval;
 }
@@ -701,6 +713,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 	u_char pm_data;
 	u_char *pm_buf;
 
+	mutex_spin_enter(&pm_mutex);
 	s = splhigh();
 
 	/* disable all interrupts but PM */
@@ -815,6 +828,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 	via_reg(VIA1, vIER) = via1_vIER;
 	splx(s);
 
+	mutex_spin_exit(&pm_mutex);
 	return rval;
 }
 
