@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.35 2024/09/09 18:38:38 rillig Exp $	*/
+/*	$NetBSD: endian.h,v 1.36 2025/04/04 04:23:29 rin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -117,10 +117,10 @@ __END_DECLS
 #define	htonl(x)	(x)
 #define	htons(x)	(x)
 
-#define	NTOHL(x)	(void) (x)
-#define	NTOHS(x)	(void) (x)
-#define	HTONL(x)	(void) (x)
-#define	HTONS(x)	(void) (x)
+#define	NTOHL(x)	__CAST(void, (x))
+#define	NTOHS(x)	__CAST(void, (x))
+#define	HTONL(x)	__CAST(void, (x))
+#define	HTONS(x)	__CAST(void, (x))
 
 #else	/* LITTLE_ENDIAN || defined(__lint__) */
 
