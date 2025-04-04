@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.49 2025/04/04 20:40:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.49 2025/04/04 20:40:58 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -83,8 +83,10 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp 
 #include <compat/sys/event.h>
 #include <compat/sys/wait.h>
 #include <compat/sys/resource.h>
+#include <compat/include/aio.h>
 #include <compat/include/mqueue.h>
 #include <compat/include/signal.h>
+#include <compat/include/time.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -95,62 +97,55 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.48 2025/04/02 17:18:44 riastradh Exp 
 
 int	pthread__cancel_stub_binder;
 
-int	_sys_accept(int, struct sockaddr *, socklen_t *);
-int	_sys___aio_suspend50(const struct aiocb * const [], int,
-	    const struct timespec *);
-int	__aio_suspend50(const struct aiocb * const [], int,
-	    const struct timespec *);
-int	_sys_clock_nanosleep(clockid_t clock_id, int flags,
-		   const struct timespec *rqtp, struct timespec *rmtp);
-int	_sys_close(int);
-int	_sys_connect(int, const struct sockaddr *, socklen_t);
-int	_sys_fcntl(int, int, ...);
-int	_sys_fdatasync(int);
-int	_sys_fsync(int);
-int	_sys_fsync_range(int, int, off_t, off_t);
-int	_sys___kevent100(int, const struct kevent *, size_t, struct kevent *,
-	    size_t, const struct timespec *);
-int	_sys_mq_send(mqd_t, const char *, size_t, unsigned);
-ssize_t	_sys_mq_receive(mqd_t, char *, size_t, unsigned *);
-int	_sys___mq_timedsend50(mqd_t, const char *, size_t, unsigned,
-	    const struct timespec *);
-ssize_t	_sys___mq_timedreceive50(mqd_t, char *, size_t, unsigned *,
-	    const struct timespec *);
-ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
-int	_sys_msgsnd(int, const void *, size_t, int);
-int	_sys___msync13(void *, size_t, int);
-int	_sys___nanosleep50(const struct timespec *, struct timespec *);
-int	__nanosleep50(const struct timespec *, struct timespec *);
-int	_sys_open(const char *, int, ...);
-int	_sys_openat(int, const char *, int, ...);
-int	_sys_paccept(int, struct sockaddr *, socklen_t *, const sigset_t *,
-	    int);
-int	_sys_poll(struct pollfd *, nfds_t, int);
-int	_sys___pollts50(struct pollfd *, nfds_t, const struct timespec *,
-	    const sigset_t *);
-ssize_t	_sys_pread(int, void *, size_t, off_t);
-int	_sys___pselect50(int, fd_set *, fd_set *, fd_set *,
-	    const struct timespec *, const sigset_t *);
-ssize_t	_sys_pwrite(int, const void *, size_t, off_t);
-ssize_t	_sys_read(int, void *, size_t);
-ssize_t	_sys_readv(int, const struct iovec *, int);
-ssize_t	_sys_recvfrom(int, void * restrict, size_t, int,
-    struct sockaddr * restrict, socklen_t * restrict);
-ssize_t _sys_recvmsg(int, struct msghdr *, int);
-int _sys_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int,
-    struct timespec *);
-ssize_t _sys_sendto(int, const void *, size_t, int, const struct sockaddr *,
-    socklen_t);
-ssize_t _sys_sendmsg(int, const struct msghdr *, int);
-int _sys_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
-int	_sys___select50(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int	_sys___wait450(pid_t, int *, int, struct rusage *);
-ssize_t	_sys_write(int, const void *, size_t);
-ssize_t	_sys_writev(int, const struct iovec *, int);
-int	_sys___sigsuspend14(const sigset_t *);
-int	____sigtimedwait50(const sigset_t * __restrict, siginfo_t * __restrict,
-	    struct timespec * __restrict);
-int	__sigsuspend14(const sigset_t *);
+/*
+ * Provide declarations for the underlying libc syscall stubs.  These
+ * _sys_* functions are symbols defined by libc which invoke the system
+ * call, without testing for cancellation.  Below, we define non-_sys_*
+ * wrappers which surround calls to _sys_* by the equivalent of
+ * pthread_testcancel().  Both libc and libpthread define the
+ * non-_sys_* wrappers, but they are weak in libc and strong in
+ * libpthread, so programs linked against both will get the libpthread
+ * wrappers that test for cancellation.
+ */
+__typeof(accept) _sys_accept;
+__typeof(__aio_suspend50) _sys___aio_suspend50;
+__typeof(clock_nanosleep) _sys_clock_nanosleep;
+__typeof(close) _sys_close;
+__typeof(connect) _sys_connect;
+__typeof(fcntl) _sys_fcntl;
+__typeof(fdatasync) _sys_fdatasync;
+__typeof(fsync) _sys_fsync;
+__typeof(fsync_range) _sys_fsync_range;
+__typeof(__kevent100) _sys___kevent100;
+__typeof(mq_send) _sys_mq_send;
+__typeof(mq_receive) _sys_mq_receive;
+__typeof(__mq_timedsend50) _sys___mq_timedsend50;
+__typeof(__mq_timedreceive50) _sys___mq_timedreceive50;
+__typeof(msgrcv) _sys_msgrcv;
+__typeof(msgsnd) _sys_msgsnd;
+__typeof(__msync13) _sys___msync13;
+__typeof(__nanosleep50) _sys___nanosleep50;
+__typeof(open) _sys_open;
+__typeof(openat) _sys_openat;
+__typeof(paccept) _sys_paccept;
+__typeof(poll) _sys_poll;
+__typeof(__pollts50) _sys___pollts50;
+__typeof(pread) _sys_pread;
+__typeof(__pselect50) _sys___pselect50;
+__typeof(pwrite) _sys_pwrite;
+__typeof(read) _sys_read;
+__typeof(readv) _sys_readv;
+__typeof(recvfrom) _sys_recvfrom;
+__typeof(recvmsg) _sys_recvmsg;
+__typeof(recvmmsg) _sys_recvmmsg;
+__typeof(sendto) _sys_sendto;
+__typeof(sendmsg) _sys_sendmsg;
+__typeof(sendmmsg) _sys_sendmmsg;
+__typeof(__select50) _sys___select50;
+__typeof(__wait450) _sys___wait450;
+__typeof(write) _sys_write;
+__typeof(writev) _sys_writev;
+__typeof(__sigsuspend14) _sys___sigsuspend14;
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_true(!__uselibcstub) &&				\
