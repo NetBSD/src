@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.47.2.2 2025/04/04 16:05:30 martin Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.47.2.3 2025/04/04 16:09:50 martin Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.47.2.2 2025/04/04 16:05:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.47.2.3 2025/04/04 16:09:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,9 +350,12 @@ dzcnpollc(dev_t dev, int pollflag)
 int
 dzgetc(struct dz_linestate *ls)
 {
-	int line = ls->dz_line;
+	int line = 0;
 	int s;
 	u_short rbuf;
+
+	if (ls != NULL)
+		line = ls->dz_line;
 
 	s = spltty();
 	for (;;) {
