@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.164 2025/03/29 15:48:26 riastradh Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.165 2025/04/04 20:52:32 rillig Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -555,8 +555,8 @@
  * support conversion to integer as well.
  */
 #if __GNUC_PREREQ__(2, 96) || defined(__lint__)
-#define	__predict_true(exp)	__builtin_expect((exp) ? 1 : 0, 1)
-#define	__predict_false(exp)	__builtin_expect((exp) ? 1 : 0, 0)
+#define	__predict_true(exp)	__builtin_expect(/*CONSTCOND*/(exp) ? 1 : 0, 1)
+#define	__predict_false(exp)	__builtin_expect(/*CONSTCOND*/(exp) ? 1 : 0, 0)
 #else
 #define	__predict_true(exp)	(exp)
 #define	__predict_false(exp)	(exp)
