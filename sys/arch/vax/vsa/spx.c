@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $ */
+/*	$NetBSD: spx.c,v 1.12.6.1 2025/04/04 16:23:47 martin Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.12.6.1 2025/04/04 16:23:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -991,9 +991,14 @@ spx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			if (savescr != NULL)
 				spx_show_screen(NULL, savescr, 0, NULL, NULL);
 			savescr = NULL;
-		} else {		/* WSDISPLAYIO_MODE_MAPPED */
-			savescr = curscr;
-			curscr = NULL;
+		} else { /* WSDISPLAYIO_MODE_{MAPPED,DUMBFB} */
+			if (curscr != NULL) {
+				savescr = curscr;
+				curscr = NULL;
+
+				/* disable cursor */
+				set_btreg(SPXDAC_REG_CCR, 0x01);
+			}
 			/* clear screen? */
 		}
 
@@ -1094,9 +1099,11 @@ spx_show_screen(void *v, void *cookie, int waitok,
 			c = ss->ss_image[idx].data;
 
 			/* check if cell requires updating */
-			if ((c != prevscr->ss_image[idx].data) ||
+			if (prevscr == NULL ||
+			    (c != prevscr->ss_image[idx].data) ||
 			    (attr != prevscr->ss_image[idx].attr)) {
-				if (c < 32) c = 32;
+				if (c < 32)
+					c = 32;
 				spx_putchar(ss, row, col, c, attr);
 			}
 		}
