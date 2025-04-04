@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.383 2025/04/04 17:02:43 sjg Exp $
+.\"	$NetBSD: make.1,v 1.384 2025/04/04 18:36:47 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1117,10 +1117,13 @@ A reference to the variable
 .Va .OODATE
 can be leveraged to block comparison of certain commands.
 For example:
-.Ql ${.OODATE:MNO_METACMP}
-should expand to nothing and have no impact on the target,
+.Ql ${.OODATE:M}
+will expand to nothing and have no impact on the target,
 its side-effect though,
 will be to prevent comparison of any command line it appears on.
+For documentation purposes
+.Ql ${.OODATE:MNOMETA_CMP}
+is useful.
 .Pp
 If necessary,
 .Nm
