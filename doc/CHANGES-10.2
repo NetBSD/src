@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.13 2025/03/29 10:57:06 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.14 2025/04/04 16:24:50 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -367,4 +367,58 @@ share/installboot/evbarm/boards.plist		1.11
 	 - PineCube IP Camera
 	 - TI AM335x BeagleBone Green
 	[gutteridge, ticket #1078]
+
+sys/dev/hyperv/vmbus.c				1.19
+
+	vmbus(4): Fix missing conversion to condvar(9).
+	[nonaka, ticket #1079]
+
+sys/dev/mscp/mscp.c				1.39
+sys/dev/mscp/mscp_disk.c			1.91
+sys/dev/mscp/mscp_tape.c			1.44
+sys/dev/mscp/mscpvar.h				1.19
+
+	mscp(4): defer handling of "online" events to thread context.
+	[hans, ticket #1080]
+
+sys/arch/vax/vsa/lcg.c				1.12
+
+	vax/lcg(4): PR 59109: fix device_t/softc split straggler.
+	[hans, ticket #1081]
+
+sys/arch/vax/vsa/dz_vsbus.c			1.50
+
+	vax/dz(4): defer configuring children lkkbd and lkms
+	to make keyboard type detection work.
+	[hans, ticket #1082]
+
+sys/arch/vax/vsa/dz_vsbus.c			1.51
+
+	vax/dz(4): fix NULL pointer dereference in dzgetc().
+	[hans, ticket #1083]
+
+sys/dev/dec/dzkbd.c				1.33
+
+	dzkbd: perform keyboard initialization again for console keyboards
+	and make keyboard type detection work on framebuffer console.
+	[hans, ticket #1084]
+
+sys/arch/vax/include/db_machdep.h		1.21
+sys/arch/vax/vax/db_disasm.c			1.26
+sys/arch/vax/vax/db_machdep.c			1.61
+sys/arch/vax/vax/trap.c				1.140
+
+	vax/ddb(4): clean up machine dependent code and improve usability.
+	[hans, ticket #1085]
+
+sys/arch/vax/vax/machdep.c			1.201
+
+	vax: avoid panic when booting into ddb on machines with
+	console on dz(4).
+	[hans, ticket #1086]
+
+sys/arch/vax/vsa/spx.c				1.13
+
+	vax/spx(4): fix a few X11-related bugs.
+	[hans, ticket #1087]
 
