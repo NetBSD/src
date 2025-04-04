@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.30.6.1 2024/02/17 16:17:17 martin Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.30.6.2 2025/04/04 16:17:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.30.6.1 2024/02/17 16:17:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.30.6.2 2025/04/04 16:17:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,23 +160,20 @@ dzkbd_attach(device_t parent, device_t self, void *aux)
 
 	isconsole = (daa->daa_flags & DZKBD_CONSOLE);
 
-	if (isconsole) {
+	if (isconsole)
 		dzi = &dzkbd_console_internal;
-	} else {
-		dzi = malloc(sizeof(struct dzkbd_internal),
-				       M_DEVBUF, M_WAITOK);
-		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
-		dzi->dzi_ks.attmt.cookie = ls;
-	}
+	else
+		dzi = malloc(sizeof(struct dzkbd_internal), M_DEVBUF, M_WAITOK);
+	
+	dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
+	dzi->dzi_ks.attmt.cookie = ls;
 	dzi->dzi_ls = ls;
 	dzkbd->sc_itl = dzi;
 
 	printf("\n");
 
-	if (!isconsole) {
-		DELAY(100000);
-		lk201_init(&dzi->dzi_ks);
-	}
+	DELAY(100000);
+	lk201_init(&dzi->dzi_ks);
 
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */
