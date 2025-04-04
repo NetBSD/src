@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.18 2022/05/20 13:55:17 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.18.4.1 2025/04/04 15:58:03 martin Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.18 2022/05/20 13:55:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.18.4.1 2025/04/04 15:58:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1328,7 +1328,7 @@ vmbus_subchannel_get(struct vmbus_channel *prich, int subchan_cnt)
 			mutex_exit(&sc->sc_chevq_lock);
 			mutex_enter(&prich->ch_subchannel_lock);
 		} else {
-			mtsleep(prich, PRIBIO, "hvsubch", 1,
+			cv_wait(&prich->ch_subchannel_cv,
 			    &prich->ch_subchannel_lock);
 		}
 	}
@@ -2352,8 +2352,8 @@ vmbus_subchannel_devq_thread(void *arg)
 				TAILQ_REMOVE(&prich->ch_subchannels, ch,
 				    ch_subentry);
 				prich->ch_subchannel_count--;
+				cv_signal(&prich->ch_subchannel_cv);
 				mutex_exit(&prich->ch_subchannel_lock);
-				wakeup(prich);
 
 				vmbus_channel_free(ch);
 				break;
