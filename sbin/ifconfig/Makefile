@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.61 2017/10/10 19:30:06 christos Exp $
+#	$NetBSD: Makefile,v 1.62 2025/04/04 04:12:22 rin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
 # also needed for src/distrib/utils/x_ifconfig.
-# such stuff should be into Makefile.inc.
+# such stuff should be into Makefile.common.
 
 .include <bsd.own.mk>
 
