@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.48 2025/03/28 19:13:22 riastradh Exp $	*/
+/*	$NetBSD: rune.c,v 1.49 2025/04/04 21:52:19 riastradh Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -77,7 +77,7 @@ typedef struct {
 static void *
 alloc_guarded(size_t elemsize, size_t nelem)
 {
-	const unsigned page_size = sysconf(_SC_PAGESIZE);
+	const unsigned long page_size = sysconf(_SC_PAGESIZE);
 	size_t nbytes = 0;
 	void *p = MAP_FAILED, *q = NULL;
 
@@ -102,7 +102,7 @@ fail:	if (p != MAP_FAILED)
 static void
 free_guarded(void *q, size_t elemsize, size_t nelem)
 {
-	const unsigned page_size = sysconf(_SC_PAGESIZE);
+	const unsigned long page_size = sysconf(_SC_PAGESIZE);
 	size_t nbytes = 0;
 	void *p;
 
