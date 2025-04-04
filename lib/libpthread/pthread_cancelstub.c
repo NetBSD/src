@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.49 2025/04/04 20:40:58 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.50 2025/04/04 20:52:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.49 2025/04/04 20:40:58 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.50 2025/04/04 20:52:29 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -117,10 +117,10 @@ __typeof(fdatasync) _sys_fdatasync;
 __typeof(fsync) _sys_fsync;
 __typeof(fsync_range) _sys_fsync_range;
 __typeof(__kevent100) _sys___kevent100;
-__typeof(mq_send) _sys_mq_send;
 __typeof(mq_receive) _sys_mq_receive;
-__typeof(__mq_timedsend50) _sys___mq_timedsend50;
+__typeof(mq_send) _sys_mq_send;
 __typeof(__mq_timedreceive50) _sys___mq_timedreceive50;
+__typeof(__mq_timedsend50) _sys___mq_timedsend50;
 __typeof(msgrcv) _sys_msgrcv;
 __typeof(msgsnd) _sys_msgsnd;
 __typeof(__msync13) _sys___msync13;
@@ -136,16 +136,16 @@ __typeof(pwrite) _sys_pwrite;
 __typeof(read) _sys_read;
 __typeof(readv) _sys_readv;
 __typeof(recvfrom) _sys_recvfrom;
-__typeof(recvmsg) _sys_recvmsg;
 __typeof(recvmmsg) _sys_recvmmsg;
-__typeof(sendto) _sys_sendto;
-__typeof(sendmsg) _sys_sendmsg;
-__typeof(sendmmsg) _sys_sendmmsg;
+__typeof(recvmsg) _sys_recvmsg;
 __typeof(__select50) _sys___select50;
+__typeof(sendmmsg) _sys_sendmmsg;
+__typeof(sendmsg) _sys_sendmsg;
+__typeof(sendto) _sys_sendto;
+__typeof(__sigsuspend14) _sys___sigsuspend14;
 __typeof(__wait450) _sys___wait450;
 __typeof(write) _sys_write;
 __typeof(writev) _sys_writev;
-__typeof(__sigsuspend14) _sys___sigsuspend14;
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_true(!__uselibcstub) &&				\
@@ -195,21 +195,6 @@ __aio_suspend50(const struct aiocb * const list[], int nent,
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys___aio_suspend50(list, nent, timeout);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
-__kevent100(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
-    size_t nrev, const struct timespec *ts)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys___kevent100(fd, ev, nev, rev, nrev, ts);
 	TESTCANCEL(self);
 
 	return retval;
@@ -318,14 +303,15 @@ fsync_range(int d, int f, off_t s, off_t e)
 }
 
 int
-mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
+__kevent100(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
+    size_t nrev, const struct timespec *ts)
 {
 	int retval;
 	pthread_t self;
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys_mq_send(mqdes, msg_ptr, msg_len, msg_prio);
+	retval = _sys___kevent100(fd, ev, nev, rev, nrev, ts);
 	TESTCANCEL(self);
 
 	return retval;
@@ -346,6 +332,36 @@ mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio)
 }
 
 int
+mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_mq_send(mqdes, msg_ptr, msg_len, msg_prio);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+__mq_timedreceive50(mqd_t mqdes, char *msg_ptr, size_t msg_len,
+    unsigned *msg_prio, const struct timespec *abst)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys___mq_timedreceive50(mqdes, msg_ptr, msg_len, msg_prio,
+	    abst);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
 __mq_timedsend50(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
     unsigned msg_prio, const struct timespec *abst)
 {
@@ -354,22 +370,8 @@ __mq_timedsend50(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys___mq_timedsend50(mqdes, msg_ptr, msg_len, msg_prio, abst);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-ssize_t
-__mq_timedreceive50(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio,
-    const struct timespec *abst)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys___mq_timedreceive50(mqdes, msg_ptr, msg_len, msg_prio, abst);
+	retval = _sys___mq_timedsend50(mqdes, msg_ptr, msg_len, msg_prio,
+	    abst);
 	TESTCANCEL(self);
 
 	return retval;
@@ -418,6 +420,24 @@ __msync13(void *addr, size_t len, int flags)
 }
 
 int
+__nanosleep50(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	/*
+	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
+	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
+	 */
+	retval = _sys___nanosleep50(rqtp, rmtp);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
 open(const char *path, int flags, ...)
 {
 	int retval;
@@ -446,24 +466,6 @@ openat(int fd, const char *path, int flags, ...)
 	va_start(ap, flags);
 	retval = _sys_openat(fd, path, flags, va_arg(ap, mode_t));
 	va_end(ap);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
-__nanosleep50(const struct timespec *rqtp, struct timespec *rmtp)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	/*
-	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
-	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
-	 */
-	retval = _sys___nanosleep50(rqtp, rmtp);
 	TESTCANCEL(self);
 
 	return retval;
@@ -585,20 +587,6 @@ recvfrom(int s, void * restrict buf, size_t len, int flags,
 	return retval;
 }
 
-ssize_t
-recvmsg(int s, struct msghdr *msg, int flags)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_recvmsg(s, msg, flags);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
 int
 recvmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
     unsigned int flags, struct timespec *timeout)
@@ -609,6 +597,20 @@ recvmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_recvmmsg(s, mmsg, vlen, flags, timeout);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+recvmsg(int s, struct msghdr *msg, int flags)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_recvmsg(s, msg, flags);
 	TESTCANCEL(self);
 
 	return retval;
@@ -629,16 +631,16 @@ __select50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	return retval;
 }
 
-ssize_t
-sendto(int s, const void *msg, size_t len, int flags,
-    const struct sockaddr *to, socklen_t tolen)
+int
+sendmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
+    unsigned int flags)
 {
 	int retval;
 	pthread_t self;
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys_sendto(s, msg, len, flags, to, tolen);
+	retval = _sys_sendmmsg(s, mmsg, vlen, flags);
 	TESTCANCEL(self);
 
 	return retval;
@@ -658,72 +660,16 @@ sendmsg(int s, const struct msghdr *msg, int flags)
 	return retval;
 }
 
-int
-sendmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
-    unsigned int flags)
+ssize_t
+sendto(int s, const void *msg, size_t len, int flags,
+    const struct sockaddr *to, socklen_t tolen)
 {
 	int retval;
 	pthread_t self;
 
 	self = pthread__self();
 	TESTCANCEL(self);
-	retval = _sys_sendmmsg(s, mmsg, vlen, flags);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
-tcdrain(int fd)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = ioctl(fd, TIOCDRAIN, 0);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-pid_t
-__wait450(pid_t wpid, int *status, int options, struct rusage *rusage)
-{
-	pid_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys___wait450(wpid, status, options, rusage);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-ssize_t
-write(int d, const void *buf, size_t nbytes)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_write(d, buf, nbytes);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-ssize_t
-writev(int d, const struct iovec *iov, int iovcnt)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_writev(d, iov, iovcnt);
+	retval = _sys_sendto(s, msg, len, flags, to, tolen);
 	TESTCANCEL(self);
 
 	return retval;
@@ -787,14 +733,70 @@ sigwait(const sigset_t * __restrict set, int * __restrict sig)
 	return 0;
 }
 
-__strong_alias(_close, close)
+int
+tcdrain(int fd)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = ioctl(fd, TIOCDRAIN, 0);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+pid_t
+__wait450(pid_t wpid, int *status, int options, struct rusage *rusage)
+{
+	pid_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys___wait450(wpid, status, options, rusage);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+write(int d, const void *buf, size_t nbytes)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_write(d, buf, nbytes);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+writev(int d, const struct iovec *iov, int iovcnt)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_writev(d, iov, iovcnt);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
 __strong_alias(_clock_nanosleep, clock_nanosleep)
+__strong_alias(_close, close)
 __strong_alias(_fcntl, fcntl)
 __strong_alias(_fdatasync, fdatasync)
 __strong_alias(_fsync, fsync)
 __weak_alias(fsync_range, _fsync_range)
-__strong_alias(_mq_send, mq_send)
 __strong_alias(_mq_receive, mq_receive)
+__strong_alias(_mq_send, mq_send)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
@@ -807,10 +809,10 @@ __strong_alias(_pwrite, pwrite)
 __strong_alias(_read, read)
 __strong_alias(_readv, readv)
 __strong_alias(_recvfrom, recvfrom)
-__strong_alias(_recvmsg, recvmsg)
 __strong_alias(_recvmmsg, recvmmsg)
-__strong_alias(_sendmsg, sendmsg)
+__strong_alias(_recvmsg, recvmsg)
 __strong_alias(_sendmmsg, sendmmsg)
+__strong_alias(_sendmsg, sendmsg)
 __strong_alias(_sendto, sendto)
 __strong_alias(_sigwait, sigwait)
 __strong_alias(_write, write)
