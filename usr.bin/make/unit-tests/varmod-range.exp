@@ -1,4 +1,5 @@
-make: varmod-range.mk:43: Malformed conditional '${:range=5} != ""'
+make: varmod-range.mk:43: Variable "" is undefined
+	while evaluating "${:range=5} != """ with value "1 2 3 4 5"
 make: varmod-range.mk:66: Invalid number "x}Rest" != "Rest"" for ':range' modifier
 	while evaluating "${:U:range=x}Rest" != "Rest"" with value ""
 make: varmod-range.mk:76: Unknown modifier ":x0"

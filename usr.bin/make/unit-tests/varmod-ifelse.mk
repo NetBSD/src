@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.36 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.37 2025/04/04 18:57:01 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -38,11 +38,11 @@
 # expect+1: Bad condition
 COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 
-# In a condition, undefined variables generate a "Malformed conditional"
-# error.  That error message is wrong though.  In lint mode, the correct
-# "Undefined variable" error message is generated.
-# The difference to the ':=' variable assignment is the additional
-# "Malformed conditional" error message.
+# In a conditional directive, undefined variables are reported as such.  In a
+# ':?' modifier, though, the "variable name" is expanded first, and in that
+# context, an undefined expression is not an error. The "variable name" then
+# becomes the condition, in this case ' == ""', which is malformed because the
+# left-hand side looks empty.
 # expect+1: Bad condition
 .if ${${UNDEF} == "":?bad-cond:bad-cond}
 .  error

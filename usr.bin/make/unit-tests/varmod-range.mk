@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.17 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: varmod-range.mk,v 1.18 2025/04/04 18:57:01 rillig Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -39,7 +39,7 @@
 # XXX: As of 2023-12-17, the ':range=n' modifier does not turn the undefined
 # expression into a defined one, even though it does not depend on the value
 # of the expression.  This looks like an oversight.
-# expect+1: Malformed conditional '${:range=5} != ""'
+# expect+1: Variable "" is undefined
 .if ${:range=5} != ""
 .  error
 .else

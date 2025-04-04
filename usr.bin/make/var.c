@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1158 2025/03/30 21:24:57 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1159 2025/04/04 18:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1158 2025/03/30 21:24:57 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1159 2025/04/04 18:57:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4316,16 +4316,18 @@ FindLocalLegacyVar(Substring varname, GNode *scope,
 
 static FStr
 EvalUndefined(bool dynamic, const char *start, const char *p,
-	      Substring varname, VarEvalMode emode)
+	      Substring varname, VarEvalMode emode, int parseErrorsBefore)
 {
 	if (dynamic)
 		return FStr_InitOwn(bmake_strsedup(start, p));
 
 	if (emode == VARE_EVAL_DEFINED_LOUD
 	    || (emode == VARE_EVAL_DEFINED && opts.strict)) {
-		Parse_Error(PARSE_FATAL,
-		    "Variable \"%.*s\" is undefined",
-		    (int)Substring_Length(varname), varname.start);
+		if (parseErrors == parseErrorsBefore) {
+			Parse_Error(PARSE_FATAL,
+			    "Variable \"%.*s\" is undefined",
+			    (int) Substring_Length(varname), varname.start);
+		}
 		return FStr_InitRefer(var_Error);
 	}
 
@@ -4347,6 +4349,7 @@ ParseVarnameLong(
 	GNode *scope,
 	VarEvalMode emode,
 	VarEvalMode nested_emode,
+	int parseErrorsBefore,
 
 	const char **out_false_pp,
 	FStr *out_false_val,
@@ -4413,7 +4416,7 @@ ParseVarnameLong(
 			p++;	/* skip endc */
 			*out_false_pp = p;
 			*out_false_val = EvalUndefined(dynamic, start, p,
-			    name, emode);
+			    name, emode, parseErrorsBefore);
 			LazyBuf_Done(&varname);
 			return false;
 		}
@@ -4545,6 +4548,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		? VARE_EVAL : emode,
 	    scope, DEF_REGULAR);
 	FStr val;
+	int parseErrorsBefore = parseErrors;
 
 	if (Var_Parse_U(pp, emode, &val))
 		return val;
@@ -4567,6 +4571,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		p++;
 	} else {
 		if (!ParseVarnameLong(&p, startc, scope, emode, expr.emode,
+		    parseErrorsBefore,
 		    pp, &val,
 		    &endc, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &expr.defined))
@@ -4641,14 +4646,10 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	*pp = p;
 
 	if (expr.defined == DEF_UNDEF) {
-		if (dynamic)
-			Expr_SetValueOwn(&expr, bmake_strsedup(start, p));
-		else {
-			Expr_SetValueRefer(&expr,
-			    emode == VARE_EVAL_DEFINED
-			    || emode == VARE_EVAL_DEFINED_LOUD
-				? var_Error : varUndefined);
-		}
+		Substring varname = Substring_InitStr(expr.name);
+		FStr value = EvalUndefined(dynamic, start, p, varname, emode,
+		    parseErrorsBefore);
+		Expr_SetValue(&expr, value);
 	}
 
 	if (v->shortLived) {

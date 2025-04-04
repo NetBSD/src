@@ -16,9 +16,12 @@ Var_Parse: ${VAR.param$U} (eval-defined-loud)
 Var_Parse: $U} (eval)
 Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
-make: cond-token-var.mk:134: Malformed conditional '${UNDEF:M*}'
-make: cond-token-var.mk:144: Malformed conditional '${UNDEF:M*} != ""'
-make: cond-token-var.mk:154: Malformed conditional '${:U} != ${UNDEF:M*}'
+make: cond-token-var.mk:133: Variable "UNDEF" is undefined
+	while evaluating variable "UNDEF" with value ""
+make: cond-token-var.mk:142: Variable "UNDEF" is undefined
+	while evaluating variable "UNDEF" with value ""
+make: cond-token-var.mk:151: Variable "UNDEF" is undefined
+	while evaluating variable "UNDEF" with value ""
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

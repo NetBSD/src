@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.23 2025/03/29 19:08:52 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.24 2025/04/04 18:57:01 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed expressions.
@@ -71,8 +71,10 @@ ${UNDEF}: ${UNDEF}
 # since make always fell back trying to parse the indirect modifier as a
 # SysV modifier.
 # expect+1: Unknown modifier ":${"
-.if ${value:${:UL}PL} != "LPL}"		# FIXME: "LPL}" is unexpected here.
+.if ${value:${:UL}PL} != ""
 .  error ${value:${:UL}PL}
+.else
+.  error
 .endif
 
 # Typically, an indirect modifier is followed by a colon or the closing
