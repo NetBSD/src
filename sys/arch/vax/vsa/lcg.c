@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.11.2.1 2025/03/04 11:51:34 martin Exp $ */
+/*	$NetBSD: lcg.c,v 1.11.2.2 2025/04/04 16:03:21 martin Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.11.2.1 2025/03/04 11:51:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.11.2.2 2025/04/04 16:03:21 martin Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -991,7 +991,7 @@ lcg_init_common(struct device *self, struct vsbus_attach_args *va)
 	int cookie;
 	struct wsdisplay_font *wf;
 
-	struct lcg_softc *sc = (void *)self;
+	struct lcg_softc *sc = device_private(self);
 	bus_dma_segment_t seg;
 	int rseg, err;
 	void *fifo_mem_vaddr;
