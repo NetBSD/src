@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.50 2025/04/04 20:52:29 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.51 2025/04/04 20:53:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.50 2025/04/04 20:52:29 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.51 2025/04/04 20:53:38 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -690,8 +690,8 @@ __sigsuspend14(const sigset_t *sigmask)
 }
 
 int
-__sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
-    const struct timespec * __restrict timeout)
+__sigtimedwait50(const sigset_t * restrict set, siginfo_t * restrict info,
+    const struct timespec * restrict timeout)
 {
 	pthread_t self;
 	int retval;
@@ -712,7 +712,7 @@ __sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
 }
 
 int
-sigwait(const sigset_t * __restrict set, int * __restrict sig)
+sigwait(const sigset_t * restrict set, int * restrict sig)
 {
 	pthread_t	self;
 	int		saved_errno;
