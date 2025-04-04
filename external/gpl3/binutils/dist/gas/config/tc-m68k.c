@@ -74,7 +74,6 @@ int flag_want_pic;
 static int flag_short_refs;	/* -l option.  */
 static int flag_long_jumps;	/* -S option.  */
 static int flag_keep_pcrel;	/* --pcrel option.  */
-static bool lcfix = true;
 
 #ifdef REGISTER_PREFIX_OPTIONAL
 int flag_reg_prefix_optional = REGISTER_PREFIX_OPTIONAL;
@@ -4273,24 +4272,8 @@ md_assemble (char *str)
 	}
     }
 
-  bool hasnop = false;
-  char nop[4] = "nop";
-  toP = NULL;
-next:
   memset (&the_ins, '\0', sizeof (the_ins));
-
   m68k_ip (str);
-
-  if (lcfix == true && hasnop == false &&
-       (the_ins.opcode[0] & 0xf000) == 0xf000)
-    {
-      memset (&the_ins, '\0', sizeof (the_ins));
-      m68k_ip (nop);
-      hasnop = true;
-    }
-  else
-    hasnop = false;
-
   er = the_ins.error;
   if (!er)
     {
@@ -4366,8 +4349,6 @@ next:
 	  if (the_ins.reloc[m].wid == 'B')
 	    fixP->fx_signed = 1;
 	}
-      if (hasnop == true)
-	goto next;
       return;
     }
 
@@ -4466,8 +4447,6 @@ next:
 					  the_ins.reloc[m].pic_reloc));
       fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
     }
-  if (hasnop == true)
-    goto next;
 }
 
 /* Comparison function used by qsort to rank the opcode entries by name.  */
@@ -7476,8 +7455,6 @@ md_parse_option (int c, const char *arg)
 	;
       else if (m68k_set_cpu (arg, 0, 1))
 	;
-      else if (startswith (arg, "no-lcfix"))
-	lcfix = false;
       else
 	return 0;
       break;
@@ -7579,7 +7556,6 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
 -march=<arch>		set architecture\n\
 -mcpu=<cpu>		set cpu [default %s]\n\
--mno-lcfix		no compatability with lc040 nop before f-line\n\
 "), default_cpu);
   for (i = 0; m68k_extensions[i].name; i++)
     fprintf (stream, _("\
