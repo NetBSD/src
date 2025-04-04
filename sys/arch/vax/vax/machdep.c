@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.196.20.3 2024/06/17 16:48:57 martin Exp $	 */
+/* $NetBSD: machdep.c,v 1.196.20.4 2025/04/04 16:21:59 martin Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.20.3 2024/06/17 16:48:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.20.4 2025/04/04 16:21:59 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -319,6 +319,7 @@ consinit(void)
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
+	config_init();
 	cninit();
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
