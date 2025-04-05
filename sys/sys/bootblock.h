@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.60 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.61 2025/04/05 19:57:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -985,6 +985,17 @@ struct hp300_load {
 #define	HP300_DIR_TYPE		0xe942	/* "SYS9k Series 9000" */
 #define	HP300_DIR_FLAG		0x8001	/* don't ask me! */
 #define	HP300_SECTSIZE		256
+
+#define	HP300_LIF_NUMDIR	8
+
+#define	HP300_LIF_VOLSTART	0
+#define	HP300_LIF_VOLSIZE	sizeof(struct hp300_lifvol)
+#define	HP300_LIF_DIRSTART	512
+#define	HP300_LIF_DIRSIZE	(HP300_LIF_NUMDIR * sizeof(struct hp300_lifdir))
+#define	HP300_LIF_FILESTART	8192
+
+#define	hp300_btolifs(b)	(((b) + (HP300_SECTSIZE - 1)) / HP300_SECTSIZE)
+#define	hp300_lifstob(s)	((s) * HP300_SECTSIZE)
 
 
 /* ------------------------------------------

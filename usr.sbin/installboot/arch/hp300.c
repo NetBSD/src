@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.20 2025/03/30 03:03:27 tsutsui Exp $ */
+/* $NetBSD: hp300.c,v 1.21 2025/04/05 19:57:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.20 2025/03/30 03:03:27 tsutsui Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.21 2025/04/05 19:57:47 tsutsui Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -65,6 +65,9 @@ __RCSID("$NetBSD: hp300.c,v 1.20 2025/03/30 03:03:27 tsutsui Exp $");
 #define HP300_MAXBLOCKS	1	/* Only contiguous blocks are expected. */
 #define LIF_VOLDIRSIZE	1024	/* size of LIF volume header and directory */
 
+/* XXX: should be HP300_LIF_FILESTART? */
+#define LIF_PRESERVED	(HP300_SECTSIZE * 16)
+
 static int hp300_setboot(ib_params *);
 
 struct ib_mach ib_mach_hp300 = {
@@ -80,11 +83,11 @@ hp300_setboot(ib_params *params)
 {
 	int		retval;
 	uint8_t		*bootstrap;
-	size_t		bootstrap_size;
+	size_t		bootstrap_mapsize;
 	ssize_t		rv;
 	struct partition *boot;
 	struct hp300_lifdir *lifdir;
-	int		offset;
+	int		size, offset;
 	int		i;
 	unsigned int	secsize = HP300_SECTSIZE;
 	uint64_t	boot_size, boot_offset;
@@ -104,7 +107,7 @@ hp300_setboot(ib_params *params)
 	bootstrap = MAP_FAILED;
 
 	/* needs whole LIF volume/directory and actual bootstrap by default */
-	bootstrap_size = params->s1stat.st_size;
+	bootstrap_mapsize = params->s1stat.st_size;
 
 	label = malloc(params->sectorsize);
 	if (label == NULL) {
@@ -160,7 +163,7 @@ hp300_setboot(ib_params *params)
 
 		boot_offset = blocks[0].block * params->fstype->blocksize;
 		/* need to read only LIF volume and directories */
-		bootstrap_size = LIF_VOLDIRSIZE;
+		bootstrap_mapsize = LIF_VOLDIRSIZE;
 
 		if ((params->flags & IB_VERBOSE) != 0) {
 			printf("Bootstrap `%s' found at offset %lu in `%s'\n",
@@ -170,7 +173,7 @@ hp300_setboot(ib_params *params)
 
 	} else
 #endif
-	if (params->flags & IB_APPEND) {
+	if ((params->flags & IB_APPEND) != 0) {
 		if (!S_ISREG(params->fsstat.st_mode)) {
 			warnx(
 		    "`%s' must be a regular file to append a bootstrap",
@@ -193,7 +196,7 @@ hp300_setboot(ib_params *params)
 		secsize = be32toh(label->d_secsize);
 		if (label->d_magic != htobe32(DISKMAGIC) ||
 		    label->d_magic2 != htobe32(DISKMAGIC) ||
-		    secsize == 0 || secsize & (secsize - 1) ||
+		    secsize == 0 || !powerof2(secsize) ||
 		    be16toh(label->d_npartitions) > MAXMAXPARTITIONS) {
 			warnx("Invalid disklabel in %s", params->filesystem);
 			goto done;
@@ -227,7 +230,7 @@ hp300_setboot(ib_params *params)
 	}
 
 	/* Read LIF volume/directory (and bootstrap) from stage1 */
-	bootstrap = mmap(NULL, bootstrap_size,
+	bootstrap = mmap(NULL, bootstrap_mapsize,
 	    PROT_READ | PROT_WRITE, MAP_PRIVATE, params->s1fd, 0);
 	if (bootstrap == MAP_FAILED) {
 		warn("mmapping `%s'", params->stage1);
@@ -235,23 +238,22 @@ hp300_setboot(ib_params *params)
 	}
 
 	/* Relocate files, sanity check LIF directory on the way */
-	lifdir = (void *)(bootstrap + HP300_SECTSIZE * 2);
-	for (i = 0; i < 8; lifdir++, i++) {
+	lifdir = (void *)(bootstrap + HP300_LIF_DIRSTART);
+	for (i = 0; i < HP300_LIF_NUMDIR; lifdir++, i++) {
 		uint32_t addr = be32toh(lifdir->dir_addr);
-		uint32_t limit = (params->s1stat.st_size - 1) / HP300_SECTSIZE
-		    + 1;
+		uint32_t limit = hp300_btolifs(params->s1stat.st_size);
 		uint32_t end = addr + be32toh(lifdir->dir_length);
 		if (end > limit) {
 			warnx("LIF entry %d larger (%u %u) than LIF file",
-				i, end, limit);
+			    i, end, limit);
 			goto done;
 		}
 		if (addr != 0 && boot_offset != 0)
-			lifdir->dir_addr = htobe32(addr + boot_offset
-							    / HP300_SECTSIZE);
+			lifdir->dir_addr =
+			    htobe32(boot_offset / HP300_SECTSIZE + addr);
 	}
 
-	if (params->flags & IB_NOWRITE) {
+	if ((params->flags & IB_NOWRITE) != 0) {
 		retval = 1;
 		goto done;
 	}
@@ -277,17 +279,20 @@ hp300_setboot(ib_params *params)
 	}
 #endif
 
-	/* Write files to BOOT partition */
-	offset = boot_offset <= HP300_SECTSIZE * 16 ? HP300_SECTSIZE * 16 : 0;
-	i = roundup(params->s1stat.st_size, secsize) - offset;
-	rv = pwrite(params->fsfd, bootstrap + offset, i, boot_offset + offset);
-	if (rv != i) {
+	/* Write bootstrap to BOOT partition (or at EOF in IB_APPEND case) */
+	/* LIF header and directories, and disklabel should be preserved */
+	offset = (boot_offset <= LIF_PRESERVED) ? LIF_PRESERVED : 0;
+	size = roundup(params->s1stat.st_size, secsize) - offset;
+
+	rv = pwrite(params->fsfd, bootstrap + offset, size,
+	    boot_offset + offset);
+	if (rv != size) {
 		if (rv == -1)
 			warn("Writing boot filesystem of `%s'",
-				params->filesystem);
+			    params->filesystem);
 		else
 			warnx("Writing boot filesystem of `%s': short write",
-				params->filesystem);
+			    params->filesystem);
 		goto done;
 	}
 
@@ -297,6 +302,6 @@ hp300_setboot(ib_params *params)
 	if (label != NULL)
 		free(label);
 	if (bootstrap != MAP_FAILED)
-		munmap(bootstrap, bootstrap_size);
+		munmap(bootstrap, bootstrap_mapsize);
 	return retval;
 }

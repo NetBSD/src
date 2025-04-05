@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.20 2024/05/11 22:29:36 tsutsui Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.21 2025/04/05 19:57:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ The Regents of the University of California.  All rights reserved.");
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.20 2024/05/11 22:29:36 tsutsui Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.21 2025/04/05 19:57:46 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,23 +69,12 @@ __RCSID("$NetBSD: mkboot.c,v 1.20 2024/05/11 22:29:36 tsutsui Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#define LIF_NUMDIR	8
-
-#define LIF_VOLSTART	0
-#define LIF_VOLSIZE	sizeof(struct hp300_lifvol)
-#define LIF_DIRSTART	512
-#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct hp300_lifdir))
-#define LIF_FILESTART	8192
-
-#define btolifs(b)	(((b) + (HP300_SECTSIZE - 1)) / HP300_SECTSIZE)
-#define lifstob(s)	((s) * HP300_SECTSIZE)
-
 #define bintobcd(bin)	((((bin) / 10) << 4) | ((bin) % 10))
 
 static uint32_t loadpoint = ULONG_MAX;
 static struct hp300_load ld;
 static struct hp300_lifvol lifv;
-static struct hp300_lifdir lifd[LIF_NUMDIR];
+static struct hp300_lifdir lifd[HP300_LIF_NUMDIR];
 static time_t repro_epoch = 0;
 
 int	 main(int, char **);
@@ -175,18 +164,18 @@ main(int argc, char **argv)
 	/* record volume info */
 	lifv.vol_id = htobe16(HP300_VOL_ID);
 	CLEAR(lifv.vol_label, "BOOT43", sizeof(lifv.vol_label));
-	lifv.vol_addr = htobe32(btolifs(LIF_DIRSTART));
+	lifv.vol_addr = htobe32(hp300_btolifs(HP300_LIF_DIRSTART));
 	lifv.vol_oct = htobe16(HP300_VOL_OCT);
-	lifv.vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
+	lifv.vol_dirsize = htobe32(hp300_btolifs(HP300_LIF_DIRSIZE));
 	lifv.vol_version = htobe16(1);
 
 	/* output bootfile one */
-	lseek(to, LIF_FILESTART, SEEK_SET);
+	lseek(to, HP300_LIF_FILESTART, SEEK_SET);
 	count = putfile(name1, to);
-	nsec = btolifs(count);
+	nsec = hp300_btolifs(count);
 	strcpy(lifd[0].dir_name, lifname(name1));
 	lifd[0].dir_type = htobe16(HP300_DIR_TYPE);
-	lifd[0].dir_addr = htobe32(btolifs(LIF_FILESTART));
+	lifd[0].dir_addr = htobe32(hp300_btolifs(HP300_LIF_FILESTART));
 	lifd[0].dir_length = htobe32(nsec);
 	bcddate(name1, lifd[0].dir_toc);
 	lifd[0].dir_flag = htobe16(HP300_DIR_FLAG);
@@ -196,9 +185,9 @@ main(int argc, char **argv)
 
 	/* if there is an optional second boot program, output it */
 	if (name2 != NULL) {
-		lseek(to, LIF_FILESTART + lifstob(nsec), SEEK_SET);
+		lseek(to, HP300_LIF_FILESTART + hp300_lifstob(nsec), SEEK_SET);
 		count = putfile(name2, to);
-		nsec = btolifs(count);
+		nsec = hp300_btolifs(count);
 		strcpy(lifd[1].dir_name, lifname(name2));
 		lifd[1].dir_type = htobe16(HP300_DIR_TYPE);
 		lifd[1].dir_addr = htobe32(lifv.vol_length);
@@ -212,10 +201,10 @@ main(int argc, char **argv)
 
 	/* ditto for three */
 	if (name3 != NULL) {
-		lseek(to, LIF_FILESTART + lifstob(lifd[0].dir_length + nsec),
-		    SEEK_SET);
+		lseek(to, HP300_LIF_FILESTART + hp300_lifstob(lifd[0].dir_length
+		    + nsec), SEEK_SET);
 		count = putfile(name3, to);
-		nsec = btolifs(count);
+		nsec = hp300_btolifs(count);
 		strcpy(lifd[2].dir_name, lifname(name3));
 		lifd[2].dir_type = htobe16(HP300_DIR_TYPE);
 		lifd[2].dir_addr = htobe32(lifv.vol_length);
@@ -228,10 +217,10 @@ main(int argc, char **argv)
 	}
 
 	/* output volume/directory header info */
-	lseek(to, LIF_VOLSTART, SEEK_SET);
-	write(to, &lifv, LIF_VOLSIZE);
-	lseek(to, LIF_DIRSTART, SEEK_SET);
-	write(to, lifd, LIF_DIRSIZE);
+	lseek(to, HP300_LIF_VOLSTART, SEEK_SET);
+	write(to, &lifv, HP300_LIF_VOLSIZE);
+	lseek(to, HP300_LIF_DIRSTART, SEEK_SET);
+	write(to, lifd, HP300_LIF_DIRSIZE);
 
 	return EXIT_SUCCESS;
 }
