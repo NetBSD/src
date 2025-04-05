@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cancellation.c,v 1.3 2025/03/31 14:23:11 riastradh Exp $	*/
+/*	$NetBSD: t_cancellation.c,v 1.4 2025/04/05 11:22:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cancellation.c,v 1.3 2025/03/31 14:23:11 riastradh Exp $");
+__RCSID("$NetBSD: t_cancellation.c,v 1.4 2025/04/05 11:22:32 riastradh Exp $");
 
+#include <sys/event.h>
 #include <sys/mman.h>
 #include <sys/msg.h>
 #include <sys/socket.h>
@@ -50,6 +51,7 @@ __RCSID("$NetBSD: t_cancellation.c,v 1.3 2025/03/31 14:23:11 riastradh Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include "cancelpoint.h"
 #include "h_macros.h"
 
 static const char *
@@ -77,14 +79,6 @@ c11thrd_err(int error)
 
 pthread_barrier_t bar;
 bool cleanup_done;
-
-static void
-cleanup(void *cookie)
-{
-	bool *cleanup_donep = cookie;
-
-	*cleanup_donep = true;
-}
 
 /* POSIX style */
 static void *
@@ -139,21 +133,6 @@ cleanup_msgid(void *cookie)
  *
  * https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_09_05_02
  */
-
-#if 0
-atomic_bool cancelpointreadydone;
-#endif
-
-static void
-cancelpointready(void)
-{
-
-	(void)pthread_barrier_wait(&bar);
-	RL(pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL));
-#if 0
-	atomic_store_release(&cancelpointreadydone, true);
-#endif
-}
 
 static int
 acceptsetup(void)
@@ -332,6 +311,21 @@ cancelpoint_fsync(void)
 	RL(fd = open("file", O_RDWR|O_CREAT, 0666));
 	cancelpointready();
 	RL(fsync(fd));
+}
+
+static void
+cancelpoint_kevent(void)
+{
+	int kq;
+	struct kevent ev;
+
+	EV_SET(&ev, SIGUSR1, EVFILT_SIGNAL, EV_ADD|EV_ENABLE,
+	    /*fflags*/0, /*data*/0, /*udata*/0);
+
+	RL(kq = kqueue());
+	RL(kevent(kq, &ev, 1, NULL, 1, &(const struct timespec){0,0}));
+	cancelpointready();
+	RL(kevent(kq, NULL, 0, &ev, 1, NULL));
 }
 
 static void
@@ -891,75 +885,6 @@ cancelpoint_writev(void)
 	RL(writev(fd, &iov, 1));
 }
 
-static void *
-thread_cancelpoint(void *cookie)
-{
-	void (*cancelpoint)(void) = cookie;
-
-	RL(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL));
-	(void)pthread_barrier_wait(&bar);
-
-	pthread_cleanup_push(&cleanup, &cleanup_done);
-	(*cancelpoint)();
-	pthread_cleanup_pop(/*execute*/0);
-
-	return NULL;
-}
-
-static void
-test_cancelpoint_before(void (*cancelpoint)(void))
-{
-	pthread_t t;
-	void *result;
-
-	RZ(pthread_barrier_init(&bar, NULL, 2));
-	RZ(pthread_create(&t, NULL, &thread_cancelpoint, cancelpoint));
-
-	(void)pthread_barrier_wait(&bar);
-	fprintf(stderr, "cancel\n");
-	RZ(pthread_cancel(t));
-	(void)pthread_barrier_wait(&bar);
-
-	alarm(1);
-	RZ(pthread_join(t, &result));
-	ATF_CHECK_MSG(result == PTHREAD_CANCELED,
-	    "result=%p PTHREAD_CANCELED=%p", result, PTHREAD_CANCELED);
-	ATF_CHECK(cleanup_done);
-}
-
-#if 0
-static void
-test_cancelpoint_wakeup(void (*cancelpoint)(void))
-{
-	pthread_t t;
-
-	RZ(pthread_barrier_init(&bar, NULL, 2));
-	RZ(pthread_create(&t, NULL, &cancelpoint_thread, cancelpoint));
-
-	(void)pthread_barrier_wait(&bar);
-	while (!atomic_load_acquire(&cancelpointreadydone))
-		continue;
-	while (!pthread_sleeping(t)) /* XXX find a way to do this */
-		continue;
-	RZ(pthread_cancel(t));
-}
-#endif
-
-#define	TEST_CANCELPOINT(CANCELPOINT, XFAIL)				      \
-ATF_TC(CANCELPOINT);							      \
-ATF_TC_HEAD(CANCELPOINT, tc)						      \
-{									      \
-	atf_tc_set_md_var(tc, "descr", "Test cancellation point: "	      \
-	    #CANCELPOINT);						      \
-}									      \
-ATF_TC_BODY(CANCELPOINT, tc)						      \
-{									      \
-	XFAIL;								      \
-	test_cancelpoint_before(&CANCELPOINT);				      \
-}
-#define	ADD_TEST_CANCELPOINT(CANCELPOINT)				      \
-	ATF_TP_ADD_TC(tp, CANCELPOINT)
-
 TEST_CANCELPOINT(cancelpoint_accept, __nothing)
 TEST_CANCELPOINT(cancelpoint_accept4, __nothing)
 TEST_CANCELPOINT(cancelpoint_aio_suspend, __nothing)
@@ -973,6 +898,7 @@ TEST_CANCELPOINT(cancelpoint_fcntl_F_SETLKW, __nothing)
 TEST_CANCELPOINT(cancelpoint_fcntl_F_OFD_SETLKW, __nothing)
 TEST_CANCELPOINT(cancelpoint_fdatasync, __nothing)
 TEST_CANCELPOINT(cancelpoint_fsync, __nothing)
+TEST_CANCELPOINT(cancelpoint_kevent, __nothing)
 TEST_CANCELPOINT(cancelpoint_lockf_F_LOCK, __nothing)
 TEST_CANCELPOINT(cancelpoint_mq_receive, __nothing)
 TEST_CANCELPOINT(cancelpoint_mq_send, __nothing)
@@ -1553,6 +1479,7 @@ ATF_TP_ADD_TCS(tp)
 	ADD_TEST_CANCELPOINT(cancelpoint_fcntl_F_OFD_SETLKW);
 	ADD_TEST_CANCELPOINT(cancelpoint_fdatasync);
 	ADD_TEST_CANCELPOINT(cancelpoint_fsync);
+	ADD_TEST_CANCELPOINT(cancelpoint_kevent);
 	ADD_TEST_CANCELPOINT(cancelpoint_lockf_F_LOCK);
 	ADD_TEST_CANCELPOINT(cancelpoint_mq_receive);
 	ADD_TEST_CANCELPOINT(cancelpoint_mq_send);
