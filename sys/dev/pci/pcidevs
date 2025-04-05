@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1520 2025/04/03 15:35:54 andvar Exp $
+$NetBSD: pcidevs,v 1.1521 2025/04/05 20:51:49 andvar Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -10178,8 +10178,9 @@ product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
 product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
 product VIATECH VT8261_SATA	0x9000	VT8261 Integrated SATA Controller
-product VIATECH VX900_IDE	0x9001	VX900 IDE Controller
+product VIATECH VX900_IDE	0x9001	VX900/VX11 Integrated SATA Controller
 product VIATECH VT8261_RAID	0x9040	VT8261 Integrated SATA Controller (RAID mode)
+product VIATECH VX900_RAID	0x9041	VX900/VX11 Integrated SATA Controller (RAID mode)
 product VIATECH K8T890_PPB_A238	0xa238	K8T890 PCI-PCI Bridge
 product VIATECH VX800_0		0xa353	VX8xx/VX900 South-North Module Interface Control
 product VIATECH P4M900_PPB_1	0xa364	CN896/P4M900 PCI-PCI Bridge

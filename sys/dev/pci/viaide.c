@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.95 2025/04/03 15:35:54 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.96 2025/04/05 20:51:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.95 2025/04/03 15:35:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.96 2025/04/05 20:51:49 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,12 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VX900_IDE,
 	  0,
-	  "VIA Technologies VX900 SATA controller",
+	  "VIA Technologies VX900/VX11 SATA controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VX900_RAID,
+	  0,
+	  "VIA Technologies VX900/VX11 SATA controller (RAID mode)",
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6410_RAID,
@@ -500,6 +505,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		case PCI_PRODUCT_VIATECH_VT8261_SATA:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_IDE:
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VX900_RAID:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
