@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.11 2017/01/10 15:43:59 maya Exp $ */
+/* $NetBSD: t_sleep.c,v 1.12 2025/04/06 14:24:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -186,12 +186,12 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 }
 
 ATF_TC(nanosleep);
-ATF_TC_HEAD(nanosleep, tc) 
+ATF_TC_HEAD(nanosleep, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test nanosleep(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(nanosleep, tc)
 {
@@ -200,12 +200,12 @@ ATF_TC_BODY(nanosleep, tc)
 }
 
 ATF_TC(select);
-ATF_TC_HEAD(select, tc) 
+ATF_TC_HEAD(select, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test select(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(select, tc)
 {
@@ -214,12 +214,12 @@ ATF_TC_BODY(select, tc)
 }
 
 ATF_TC(poll);
-ATF_TC_HEAD(poll, tc) 
+ATF_TC_HEAD(poll, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test poll(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(poll, tc)
 {
@@ -228,12 +228,12 @@ ATF_TC_BODY(poll, tc)
 }
 
 ATF_TC(sleep);
-ATF_TC_HEAD(sleep, tc) 
+ATF_TC_HEAD(sleep, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test sleep(3) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(sleep, tc)
 {
@@ -242,12 +242,12 @@ ATF_TC_BODY(sleep, tc)
 }
 
 ATF_TC(kevent);
-ATF_TC_HEAD(kevent, tc) 
+ATF_TC_HEAD(kevent, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test kevent(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(kevent, tc)
 {
@@ -279,7 +279,7 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 	while (tslp.tv_sec <= MAXSLEEP) {
 		/*
 		 * disturb sleep by signal on purpose
-		 */ 
+		 */
 		if (tslp.tv_sec > ALARM && sig == 0)
 			alarm(ALARM);
 
@@ -328,13 +328,13 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 	atf_tc_pass();
 }
 
-ATF_TP_ADD_TCS(tp) 
+ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, nanosleep);
 	ATF_TP_ADD_TC(tp, select);
-	ATF_TP_ADD_TC(tp, poll); 
+	ATF_TP_ADD_TC(tp, poll);
 	ATF_TP_ADD_TC(tp, sleep);
 	ATF_TP_ADD_TC(tp, kevent);
- 
+
 	return atf_no_error();
 }
