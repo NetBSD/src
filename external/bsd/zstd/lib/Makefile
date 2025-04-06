@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2025/01/17 10:40:09 riastradh Exp $
+# $NetBSD: Makefile,v 1.9 2025/04/06 23:03:05 rillig Exp $
 
 LIBISPRIVATE=pic
 NOLINT=yes	# XXX
@@ -53,7 +53,7 @@ SRCS+= huf_decompress.c
 .endif
 
 # XXX: emmintrin.h causes lint pain
-LINTFLAGS += -X 96,117,129,161,174,214,226,231,298
+LINTFLAGS += -X 96,117,129,174,214,226,231,298
 
 CPPFLAGS+= -I${SRCDIR} -DZSTD_MULTITHREAD
 

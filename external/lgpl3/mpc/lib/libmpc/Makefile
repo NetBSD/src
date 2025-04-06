@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/03/05 22:36:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2025/04/06 23:03:05 rillig Exp $
 
 .include <bsd.init.mk>
 
@@ -110,8 +110,6 @@ CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/src
 
-# mostly mpfr.h, MPFR_VALUE_OF
-LINTFLAGS+=	-X 161		# constant in conditional context
 # mostly mpc.h, MPC_RND_IM;
 # mpc_rnd_t is declared as int even though only 8 bits are actually used
 LINTFLAGS+=	-X 117		# bitwise '>>' on signed value possibly nonportable

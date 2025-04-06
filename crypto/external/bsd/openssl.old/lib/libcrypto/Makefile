@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2023/04/18 14:19:03 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2025/04/06 23:03:05 rillig Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -31,7 +31,6 @@ CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-impli
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
 
-LINTFLAGS+=	-X 161	# constant in conditional context
 LINTFLAGS+=	-X 129	# expression has null effect
 LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
 LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'

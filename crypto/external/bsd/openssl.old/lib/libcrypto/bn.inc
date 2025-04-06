@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.1.1.2 2023/04/18 14:19:03 christos Exp $
+#	$NetBSD: bn.inc,v 1.2 2025/04/06 23:03:05 rillig Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -50,5 +50,4 @@ CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
 .endfor
 
 LINTFLAGS.bn_nist.c+=	-X 132	# conversion from 'unsigned long' to 'int'
-LINTFLAGS.bn_nist.c+=	-X 161	# constant in conditional context
 LINTFLAGS.bn_nist.c+=	-X 275	# cast discards 'const' from type 'pointer to const unsigned long'
