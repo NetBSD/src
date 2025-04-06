@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gscan.c,v 1.1 2025/04/03 16:33:48 bouyer Exp $	*/
+/*	$NetBSD: if_gscan.c,v 1.2 2025/04/06 03:33:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gscan.c,v 1.1 2025/04/03 16:33:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gscan.c,v 1.2 2025/04/06 03:33:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -208,7 +208,7 @@ gscan_rx(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (++sc->sc_rx_nerr > 100) {
 			log(LOG_ERR, "%s: too many rx errors, disabling\n",
 			    device_xname(sc->sc_dev));
-			gscan_activate(sc->sc_dev, DVACT_DEACTIVATE);     
+			gscan_activate(sc->sc_dev, DVACT_DEACTIVATE);
 		}
 		goto out;
 	}
@@ -254,7 +254,7 @@ gscan_rx(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m->m_len = m->m_pkthdr.len = CAN_MTU;
 	m_set_rcvif(m, ifp);
 	if_statadd(ifp, if_ibytes, m->m_len);
-	can_bpf_mtap(ifp, m, 1);      
+	can_bpf_mtap(ifp, m, 1);
 	can_input(ifp, m);
 	return;
 
@@ -299,7 +299,7 @@ gscan_tx(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			mutex_exit(&sc->sc_txlock);
-			return;      
+			return;
 		}
 		DPRINTF("rx error: %s\n", usbd_errstr(status), 0, 0, 0);
 		if (status == USBD_STALLED)
@@ -394,14 +394,14 @@ gscan_ifup(struct gscan_softc * const sc)
 	gscan_bt.bt_brp = sc->sc_timings.clt_brp;
 
 	if (sc->sc_timings.clt_ps1 > sc->sc_timecaps.cltc_ps1_max ||
-	   sc->sc_timings.clt_ps1 < sc->sc_timecaps.cltc_ps1_min)       
+	   sc->sc_timings.clt_ps1 < sc->sc_timecaps.cltc_ps1_min)
 		return EINVAL;
 	gscan_bt.bt_phase_seg1 = sc->sc_timings.clt_ps1;
 	if (sc->sc_timings.clt_ps2 > sc->sc_timecaps.cltc_ps2_max ||
-	   sc->sc_timings.clt_ps2 < sc->sc_timecaps.cltc_ps2_min)       
+	   sc->sc_timings.clt_ps2 < sc->sc_timecaps.cltc_ps2_min)
 		return EINVAL;
 	gscan_bt.bt_phase_seg2 = sc->sc_timings.clt_ps2;
-	if (sc->sc_timings.clt_sjw > sc->sc_timecaps.cltc_sjw_max ||    
+	if (sc->sc_timings.clt_sjw > sc->sc_timecaps.cltc_sjw_max ||
 	    sc->sc_timings.clt_sjw < 1)
 		return EINVAL;
 	gscan_bt.bt_swj = sc->sc_timings.clt_sjw;
@@ -508,7 +508,7 @@ gscan_stop(struct gscan_softc * const sc, struct ifnet *ifp, int disable)
 		sc->sc_tx_xfer = NULL;
 		sc->sc_tx_pipe = NULL;
 	}
-		
+
 	gscan_set_mode.mode_mode = MODE_RESET;
 	gscan_set_mode.mode_flags = 0;
 	err = gscan_write_device(sc, GSCAN_SET_MODE,
@@ -521,7 +521,7 @@ gscan_stop(struct gscan_softc * const sc, struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
-static void     
+static void
 gscan_ifstop(struct ifnet *ifp, int disable)
 {
 	struct gscan_softc * const sc = ifp->if_softc;
@@ -532,7 +532,7 @@ gscan_ifstop(struct ifnet *ifp, int disable)
 
 static int
 gscan_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
-{				
+{
 	struct gscan_softc * const sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int error = 0;
