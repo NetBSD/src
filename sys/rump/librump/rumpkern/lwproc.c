@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.58 2023/10/15 11:11:37 riastradh Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.59 2025/04/06 01:13:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.58 2023/10/15 11:11:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.59 2025/04/06 01:13:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -394,21 +394,17 @@ int
 rump_lwproc_newlwp(pid_t pid)
 {
 	struct proc *p;
-	struct lwp *l;
 
-	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(&proc_lock);
 	p = proc_find_raw(pid);
 	if (p == NULL) {
 		mutex_exit(&proc_lock);
-		kmem_free(l, sizeof(*l));
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
 	if (p->p_sflag & PS_RUMP_LWPEXIT) {
 		mutex_exit(&proc_lock);
 		mutex_exit(p->p_lock);
-		kmem_free(l, sizeof(*l));
 		return EBUSY;
 	}
 	mutex_exit(p->p_lock);
