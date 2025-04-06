@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.3 2018/06/19 09:20:46 gson Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.4 2025/04/06 19:18:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.3 2018/06/19 09:20:46 gson Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.4 2025/04/06 19:18:00 riastradh Exp $");
 
 #include <sys/fcntl.h>
 
@@ -103,15 +103,12 @@ ATF_TC_BODY(posix_fadvise, tc)
 	 * only check return values here.
 	 */
 
-	/* posix_fadvise shouldn't affect errno. */
-
 #define CE(x, exp) \
 	do { \
-		int save = errno; \
-		errno = 999; \
-		ATF_CHECK_EQ_MSG(ret = (x), exp, "got: %d", ret); \
-		ATF_CHECK_EQ_MSG(errno, 999, "got: %s", strerror(errno)); \
-		errno = save; \
+		ATF_CHECK_EQ_MSG(ret = (x), (exp), \
+		    "got %d (%s), expected %d (%s)", \
+		    ret, strerror(ret), \
+		    (exp), strerror(exp)); \
 	} while (0)
 
 	CE(posix_fadvise(fd, 0, 0, -1), EINVAL);
