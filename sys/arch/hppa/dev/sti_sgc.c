@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.3 2021/07/11 13:36:02 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.4 2025/04/06 03:31:52 riastradh Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.3 2021/07/11 13:36:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4 2025/04/06 03:31:52 riastradh Exp $");
 
 #include "opt_cputype.h"
 
@@ -76,7 +76,7 @@ extern int stidebug;
 /*
  * hpa addresses to check on-board variants
  * XXX should check via device_register(9)?
- * 
+ *
  * 0xf4000000: HPA1991AC19 on 715/33, 715/50
  * 0xf8000000: HPA1439A on 735/99, HPA208LCxxx on 715/80, 715/100, 712
  */

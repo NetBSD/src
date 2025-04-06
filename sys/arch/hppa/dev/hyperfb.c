@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.23 2025/04/03 05:14:35 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.24 2025/04/06 03:31:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.23 2025/04/03 05:14:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.24 2025/04/06 03:31:52 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -783,13 +783,13 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	 * XXX
 	 * This is odd.
 	 * We tell the blitter to write 8 bit deep but expect a 32bit value
-	 * to be written. Then again, writing to BINattr is already special 
-	 * by using NGLE_REG_12 as source instead of the fg/bg registers, it 
+	 * to be written. Then again, writing to BINattr is already special
+	 * by using NGLE_REG_12 as source instead of the fg/bg registers, it
 	 * may always write all planes, who knows. This is what the NGLE code
 	 * in XFree86 3.3 does.
 	 * Also, the value itself is not one of the CMAP defines in nglehdw.h,
 	 * but it's used in hyperResetPlanes() and does what we want.
-	 * Then there are HYPER_CMAP* defines with yet another set of 
+	 * Then there are HYPER_CMAP* defines with yet another set of
 	 * different values that aren't used anywhere.
 	 */
 	hyperfb_wait(sc);
@@ -823,7 +823,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		hyperfb_wait_fifo(sc, 7);
 		hyperfb_write4(sc, NGLE_REG_11,
 		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-		hyperfb_write4(sc, NGLE_REG_14, 
+		hyperfb_write4(sc, NGLE_REG_14,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
 		            0, 0)); //0x03000300
 		/*
@@ -966,7 +966,7 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 	hyperfb_wait_fifo(sc, 4);
 	/*
 	 * XXX - the NGLE code calls this 'transfer data'
-	 * in reality it's a bit mask applied per pixel, 
+	 * in reality it's a bit mask applied per pixel,
 	 * foreground colour in reg 35, bg in 36
 	 */
 	hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
@@ -1078,7 +1078,7 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 
 	/* if we're drawing a space we're done here */
-	if (c == 0x20) { 
+	if (c == 0x20) {
 		/* clear the character cell */
 		hyperfb_rectfill(sc, x, y, wi, he, bg);
 		return;
@@ -1106,7 +1106,7 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			hyperfb_wait_fifo(sc, 2);
 			mask = *data8;
-			hyperfb_write4(sc, NGLE_REG_8, mask << 24);	
+			hyperfb_write4(sc, NGLE_REG_8, mask << 24);
 			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
 			data8++;
 		}
@@ -1115,7 +1115,7 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			hyperfb_wait_fifo(sc, 2);
 			mask = *data16;
-			hyperfb_write4(sc, NGLE_REG_8, mask << 16);	
+			hyperfb_write4(sc, NGLE_REG_8, mask << 16);
 			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
 			data16++;
 		}
