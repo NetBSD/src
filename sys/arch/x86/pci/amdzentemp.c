@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.22 2024/10/17 14:16:48 msaitoh Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.23 2025/04/06 15:44:15 pgoyette Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.22 2024/10/17 14:16:48 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.23 2025/04/06 15:44:15 pgoyette Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	aprint_naive("\n");
-	aprint_normal(": AMD CPU Temperature Sensors (Family%xh)", family);
+	aprint_normal(": AMD CPU Temperature Sensors (Family %xh)", family);
 
 	sc->sc_smn = parent;
 
