@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.34 2025/03/04 17:00:28 hans Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.35 2025/04/06 03:36:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.34 2025/03/04 17:00:28 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.35 2025/04/06 03:36:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ dzkbd_attach(device_t parent, device_t self, void *aux)
 		dzi = &dzkbd_console_internal;
 	else
 		dzi = malloc(sizeof(struct dzkbd_internal), M_DEVBUF, M_WAITOK);
-	
+
 	dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 	dzi->dzi_ks.attmt.cookie = ls;
 	dzi->dzi_ls = ls;
