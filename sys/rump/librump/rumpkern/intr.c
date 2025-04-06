@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56 2020/11/01 20:58:38 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.57 2025/04/06 01:58:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.56 2020/11/01 20:58:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57 2025/04/06 01:58:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -326,11 +326,13 @@ softint_init(struct cpu_info *ci)
 		panic("clock thread creation failed: %d", rv);
 
 	/* not one either, but at least a softint helper */
-	rumpuser_mutex_init(&sicpumtx, RUMPUSER_MTX_SPIN);
-	rumpuser_cv_init(&sicpucv);
-	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
-	    NULL, sithread_cpu_bouncer, NULL, NULL, "sipbnc")) != 0)
-		panic("softint cpu bouncer creation failed: %d", rv);
+	if (CPU_IS_PRIMARY(ci)) {
+		rumpuser_mutex_init(&sicpumtx, RUMPUSER_MTX_SPIN);
+		rumpuser_cv_init(&sicpucv);
+		if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
+		    NULL, sithread_cpu_bouncer, NULL, NULL, "sipbnc")) != 0)
+			panic("softint cpu bouncer creation failed: %d", rv);
+	}
 }
 
 void *
