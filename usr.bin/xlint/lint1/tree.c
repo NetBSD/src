@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.677 2025/03/21 20:37:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.678 2025/04/06 20:56:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.677 2025/03/21 20:37:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.678 2025/04/06 20:56:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2104,15 +2104,6 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 
 	if (mp->m_possible_precedence_confusion)
 		check_precedence_confusion(ntn);
-
-	if (hflag && !suppress_constcond &&
-	    mp->m_compares_with_zero &&
-	    (ln->tn_op == CON ||
-	     (mp->m_binary && op != QUEST && rn->tn_op == CON)) &&
-	    /* XXX: rn->tn_system_dependent should be checked as well */
-	    !ln->tn_system_dependent)
-		/* constant in conditional context */
-		warning(161);
 
 	if (mp->m_fold_constant_operands && ln->tn_op == CON) {
 		if (!mp->m_binary || rn->tn_op == CON) {
@@ -4662,13 +4653,6 @@ integer_constant(tnode_t *tn, bool required)
 	return v;
 }
 
-static bool
-is_constcond_false(const tnode_t *tn, tspec_t t)
-{
-	return (t == BOOL || t == INT) &&
-	    tn->tn_op == CON && tn->u.value.u.integer == 0;
-}
-
 /*
  * Perform some tests on expressions which can't be done in build_binary()
  * and functions called by build_binary(). These tests must be done here
@@ -4696,13 +4680,6 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while,
 		if (hflag && cond)
 			/* assignment in conditional context */
 			warning(159);
-	} else if (tn->tn_op == CON) {
-		if (hflag && cond && !suppress_constcond &&
-		    !tn->tn_system_dependent &&
-		    !(is_do_while &&
-		      is_constcond_false(tn, tn->tn_type->t_tspec)))
-			/* constant in conditional context */
-			warning(161);
 	}
 	if (!modtab[tn->tn_op].m_has_side_effect) {
 		/*

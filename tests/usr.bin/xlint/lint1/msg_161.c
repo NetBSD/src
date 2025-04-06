@@ -1,14 +1,16 @@
-/*	$NetBSD: msg_161.c,v 1.12 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.13 2025/04/06 20:56:14 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
+// This message is not used.  There is no evidence that it detects real bugs,
+// instead it produces noise for perfectly valid code.
 
 /* lint1-extra-flags: -h -X 351 */
 
 void
 while_1(void)
 {
-	/* expect+1: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	while (1)
 		continue;
 }
@@ -16,7 +18,7 @@ while_1(void)
 void
 while_0(void)
 {
-	/* expect+1: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	while (0) {
 		/* expect+1: warning: 'continue' statement not reached [193] */
 		continue;
@@ -41,7 +43,7 @@ void
 do_while_1(void)
 {
 	do {
-		/* expect+1: warning: constant in conditional context [161] */
+		/* was: warning: constant in conditional context [161] */
 	} while (1);
 }
 
@@ -67,14 +69,14 @@ const _Bool conditions[] = {
 	0 < 0,
 	/* XXX: Why no warning here? */
 	0 != 0,
-	/* expect+1: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	0 == 0 && 1 == 0,
-	/* expect+1: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	1 == 0 || 2 == 1,
-	/* expect+2: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	/* expect+1: error: non-constant initializer [177] */
 	0 == 0 && ""[0] == '\0',
-	/* expect+2: warning: constant in conditional context [161] */
+	/* was: warning: constant in conditional context [161] */
 	/* expect+1: error: non-constant initializer [177] */
 	""[0] == '\0' && 0 == 0,
 	/* C99 6.6p3: Constant expressions shall not contain [...] comma */

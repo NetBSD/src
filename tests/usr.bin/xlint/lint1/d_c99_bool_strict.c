@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.51 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.52 2025/04/06 20:56:14 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -122,11 +122,9 @@ strict_bool_constant(void)
 
 enum strict_bool_constant_expressions {
 	/* Ok: __lint_false is a boolean constant expression. */
-	/* expect+1: warning: constant in conditional context [161] */
 	FALSE = __lint_false ? 100 : 101,
 
 	/* Ok: __lint_true is a boolean constant expression. */
-	/* expect+1: warning: constant in conditional context [161] */
 	TRUE = __lint_true ? 100 : 101,
 
 	/* Not ok: an integer is not a boolean constant expression. */
@@ -159,14 +157,12 @@ enum strict_bool_constant_expressions {
 	UNARY_PLUS = (+0) ? 100 : 101,
 
 	/* The main operator '>' has return type bool. */
-	/* expect+1: warning: constant in conditional context [161] */
 	Q1 = (13 > 12) ? 100 : 101,
 
 	/*
 	 * The parenthesized expression has type int and thus cannot be
 	 * used as the controlling expression in the '?:' operator.
 	 */
-	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
 	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
 
@@ -182,14 +178,12 @@ enum strict_bool_constant_expressions {
 	BINOR_BOOL = __lint_false | __lint_true,
 	BINOR_INT = 0 | 1,
 
-	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: error: integral constant expression expected [55] */
 	LOGOR_BOOL = __lint_false || __lint_true,
 	/* expect+2: error: left operand of '||' must be bool, not 'int' [331] */
 	/* expect+1: error: right operand of '||' must be bool, not 'int' [332] */
 	LOGOR_INT = 0 || 1,
 
-	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: error: integral constant expression expected [55] */
 	LOGAND_BOOL = __lint_false && __lint_true,
 	/* expect+2: error: left operand of '&&' must be bool, not 'int' [331] */
@@ -407,12 +401,10 @@ strict_bool_conversion_from_bool_to_scalar(bool b)
 void
 strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 {
-	/* expect+1: warning: constant in conditional context [161] */
 	if (__lint_false)
 		/* expect+1: warning: 'call' statement not reached [193] */
 		do_nothing();
 
-	/* expect+1: warning: constant in conditional context [161] */
 	if (__lint_true)
 		do_nothing();
 
@@ -455,7 +447,6 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 
 	// An endless loop. The preferred form is 'for (;;)' instead.
 	do {
-	/* expect+1: warning: constant in conditional context [161] */
 	} while (__lint_true);
 
 	// A do-once "loop", often used in statement macros.
@@ -465,8 +456,7 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 
 	// This form is too unusual to be allowed in strict bool mode.
 	do {
-	/* expect+2: error: controlling expression must be bool, not 'int' [333] */
-	/* expect+1: warning: constant in conditional context [161] */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	} while (1);
 
 	// Even though 0 is an integer instead of a bool, this idiom is so
@@ -490,10 +480,8 @@ strict_bool_operand_unary_not(void)
 
 	b = !b;
 	b = !!!b;
-	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_false;
-	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_true;
 
