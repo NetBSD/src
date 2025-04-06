@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2490 2025/03/22 17:09:09 christos Exp $
+#	$NetBSD: mi,v 1.2491 2025/04/06 16:20:47 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -535,10 +535,10 @@
 ./usr/include/dev/hdmicec/hdmicecio.h		comp-c-include
 ./usr/include/dev/hid/hid.h			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
-./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
-./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
 ./usr/include/dev/i2c/emcfaninfo.h		comp-c-include
 ./usr/include/dev/i2c/emcfanreg.h		comp-c-include
+./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
+./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_io.h			comp-c-include
 ./usr/include/dev/i2o/i2o.h			comp-c-include
 ./usr/include/dev/i2o/iopio.h			comp-c-include
@@ -3864,9 +3864,9 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasan.a				comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,cxx,gcccmds,gcc
+./usr/lib/libasan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -4026,9 +4026,9 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
-./usr/lib/liblsan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblsan.a				comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,cxx,gcccmds,gcc
+./usr/lib/liblsan_preinit.o			comp-c-lib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
@@ -10897,6 +10897,8 @@
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strfmon_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
+./usr/share/man/cat3/strftime_l.0		comp-c-catman		.cat
+./usr/share/man/cat3/strftime_lz.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strftime_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string_to_flags.0		comp-c-catman		.cat
@@ -10920,6 +10922,7 @@
 ./usr/share/man/cat3/strpbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strpct.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strptime.0			comp-c-catman		.cat
+./usr/share/man/cat3/strptime_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strsep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strsignal.0		comp-c-catman		.cat
@@ -19405,6 +19408,8 @@
 ./usr/share/man/html3/strfmon.html		comp-c-htmlman		html
 ./usr/share/man/html3/strfmon_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/strftime.html		comp-c-htmlman		html
+./usr/share/man/html3/strftime_l.html		comp-c-htmlman		html
+./usr/share/man/html3/strftime_lz.html		comp-c-htmlman		html
 ./usr/share/man/html3/strftime_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/string.html		comp-c-htmlman		html
 ./usr/share/man/html3/string_to_flags.html	comp-c-htmlman		html
@@ -19428,6 +19433,7 @@
 ./usr/share/man/html3/strpbrk.html		comp-c-htmlman		html
 ./usr/share/man/html3/strpct.html		comp-c-htmlman		html
 ./usr/share/man/html3/strptime.html		comp-c-htmlman		html
+./usr/share/man/html3/strptime_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/strrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strsep.html		comp-c-htmlman		html
 ./usr/share/man/html3/strsignal.html		comp-c-htmlman		html
@@ -27949,6 +27955,8 @@
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
 ./usr/share/man/man3/strfmon_l.3		comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
+./usr/share/man/man3/strftime_l.3		comp-c-man		.man
+./usr/share/man/man3/strftime_lz.3		comp-c-man		.man
 ./usr/share/man/man3/strftime_z.3		comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
 ./usr/share/man/man3/string_to_flags.3		comp-c-man		.man
@@ -27972,6 +27980,7 @@
 ./usr/share/man/man3/strpbrk.3			comp-c-man		.man
 ./usr/share/man/man3/strpct.3			comp-c-man		.man
 ./usr/share/man/man3/strptime.3			comp-c-man		.man
+./usr/share/man/man3/strptime_l.3		comp-c-man		.man
 ./usr/share/man/man3/strrchr.3			comp-c-man		.man
 ./usr/share/man/man3/strsep.3			comp-c-man		.man
 ./usr/share/man/man3/strsignal.3		comp-c-man		.man
