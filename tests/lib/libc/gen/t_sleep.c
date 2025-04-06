@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.12 2025/04/06 14:24:23 riastradh Exp $ */
+/* $NetBSD: t_sleep.c,v 1.13 2025/04/06 14:24:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -272,38 +272,63 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		round = 1000000000;
 		delta3 = round;
 	}
+	fprintf(stderr, "round=%"PRId64" delta3=%"PRId64"\n", round, delta3);
 
 	tslp.tv_sec = delta3 / 1000000000;
 	tslp.tv_nsec = delta3 % 1000000000;
+	fprintf(stderr, "initial tslp = %lld.%09ld sec\n",
+	    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 
 	while (tslp.tv_sec <= MAXSLEEP) {
+		fprintf(stderr, "\n");
+
 		/*
 		 * disturb sleep by signal on purpose
 		 */
-		if (tslp.tv_sec > ALARM && sig == 0)
+		if (tslp.tv_sec > ALARM && sig == 0) {
+			fprintf(stderr, "request alarm after %d sec\n", ALARM);
 			alarm(ALARM);
+		}
+
+		fprintf(stderr, "sleep for %lld.%09ld sec\n",
+		    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 
 		clock_gettime(CLOCK_REALTIME, &tsa);
 		(*test)(&tslp, &tremain);
 		clock_gettime(CLOCK_REALTIME, &tsb);
+
+		fprintf(stderr, "slept from %lld.%09ld to %lld.%09ld\n",
+		    (long long)tsa.tv_sec, (long)tsa.tv_nsec,
+		    (long long)tsb.tv_sec, (long)tsb.tv_nsec);
 
 		if (sim_remain) {
 			timespecsub(&tsb, &tsa, &tremain);
 			timespecsub(&tslp, &tremain, &tremain);
 		}
 
+		fprintf(stderr, "remaining %lld.%09ld sec\n",
+		    (long long)tremain.tv_sec, (long)tremain.tv_nsec);
+
 		delta1 = (int64_t)tsb.tv_sec - (int64_t)tsa.tv_sec;
 		delta1 *= BILLION;
 		delta1 += (int64_t)tsb.tv_nsec - (int64_t)tsa.tv_nsec;
 
+		fprintf(stderr, "delta1=%"PRId64"\n", delta1);
+
 		delta2 = (int64_t)tremain.tv_sec * BILLION;
 		delta2 += (int64_t)tremain.tv_nsec;
+
+		fprintf(stderr, "delta2=%"PRId64"\n", delta2);
 
 		delta3 = (int64_t)tslp.tv_sec * BILLION;
 		delta3 += (int64_t)tslp.tv_nsec - delta1 - delta2;
 
+		fprintf(stderr, "delta3=%"PRId64"\n", delta3);
+
 		delta3 /= round;
 		delta3 *= round;
+
+		fprintf(stderr, "     ->%"PRId64"\n", delta3);
 
 		if (delta3 > FUZZ || delta3 < -FUZZ) {
 			if (!sim_remain)
@@ -316,12 +341,17 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
 		delta3 += (int64_t)tslp.tv_nsec * 2;
 
+		fprintf(stderr, "delta3=%"PRId64"\n", delta3);
+
 		delta3 /= round;
 		delta3 *= round;
+		fprintf(stderr, "     ->%"PRId64"\n", delta3);
 		if (delta3 < FUZZ)
 			break;
 		tslp.tv_sec = delta3 / BILLION;
 		tslp.tv_nsec = delta3 % BILLION;
+		fprintf(stderr, "tslp = %lld.%ld sec\n",
+		    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 	}
 	ATF_REQUIRE_MSG(sig == 1, "Alarm did not fire!");
 
