@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.15 2025/04/07 14:36:28 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.15 2025/04/07 14:36:28 hgutch Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,6 +494,35 @@ gr_potion(object *obj)
 	}
 }
 
+void
+set_weapon_damage(object *obj)
+{
+	switch(obj->which_kind) {
+	case BOW:
+	case DART:
+		obj->damage = "1d1";
+		break;
+	case ARROW:
+		obj->damage = "1d2";
+		break;
+	case DAGGER:
+		obj->damage = "1d3";
+		break;
+	case SHURIKEN:
+		obj->damage = "1d4";
+		break;
+	case MACE:
+		obj->damage = "2d3";
+		break;
+	case LONG_SWORD:
+		obj->damage = "3d4";
+		break;
+	case TWO_HANDED_SWORD:
+		obj->damage = "4d5";
+		break;
+	}
+}
+
 static void
 gr_weapon(object *obj, int assign_wk)
 {
@@ -532,30 +561,7 @@ gr_weapon(object *obj, int assign_wk)
 			}
 		}
 	}
-	switch(obj->which_kind) {
-	case BOW:
-	case DART:
-		obj->damage = "1d1";
-		break;
-	case ARROW:
-		obj->damage = "1d2";
-		break;
-	case DAGGER:
-		obj->damage = "1d3";
-		break;
-	case SHURIKEN:
-		obj->damage = "1d4";
-		break;
-	case MACE:
-		obj->damage = "2d3";
-		break;
-	case LONG_SWORD:
-		obj->damage = "3d4";
-		break;
-	case TWO_HANDED_SWORD:
-		obj->damage = "4d5";
-		break;
-	}
+	set_weapon_damage(obj);
 }
 
 static void

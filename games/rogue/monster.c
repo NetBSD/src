@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.17 2013/08/11 03:44:27 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.18 2025/04/07 14:36:28 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.17 2013/08/11 03:44:27 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.18 2025/04/07 14:36:28 hgutch Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,17 @@ static int mtry(object *, short, short);
 static int no_room_for_monster(int);
 static void put_m_at(short, short, object *);
 static int rogue_is_around(int, int);
+
+void
+set_monster_damage(object *obj)
+{
+	for (short i = 0; i < MONSTERS; i++) {
+		if (obj->ichar == mon_tab[i].ichar) {
+			obj->damage = mon_tab[i].damage;
+			break;
+		}
+	}
+}
 
 void
 put_mons(void)

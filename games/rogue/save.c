@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.14 2021/05/02 12:50:46 rillig Exp $	*/
+/*	$NetBSD: save.c,v 1.15 2025/04/07 14:36:28 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.14 2021/05/02 12:50:46 rillig Exp $");
+__RCSID("$NetBSD: save.c,v 1.15 2025/04/07 14:36:28 hgutch Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,6 +201,9 @@ restore(const char *fname)
 
 	r_read(fp, &party_room, sizeof(party_room));
 	read_pack(&level_monsters, fp, 0);
+	for (object *mon = &level_monsters; mon != NULL;
+	    mon = mon->next_object)
+		set_monster_damage(mon);
 	read_pack(&level_objects, fp, 0);
 	r_read(fp, &saved_file_id, sizeof(saved_file_id));
 	if (new_file_id != saved_file_id) {
@@ -210,6 +213,11 @@ restore(const char *fname)
 	r_read(fp, &foods, sizeof(foods));
 	r_read(fp, &rogue, sizeof(fighter));
 	read_pack(&rogue.pack, fp, 1);
+	for (object *obj = &rogue.pack; obj != NULL;
+	    obj = obj->next_object) {
+		if (obj->what_is == WEAPON)
+			set_weapon_damage(obj);
+	}
 	rw_id(id_potions, fp, POTIONS, 0);
 	rw_id(id_scrolls, fp, SCROLS, 0);
 	rw_id(id_wands, fp, WANDS, 0);
