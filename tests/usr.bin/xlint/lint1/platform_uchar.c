@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_uchar.c,v 1.5 2024/06/08 06:37:06 rillig Exp $	*/
+/*	$NetBSD: platform_uchar.c,v 1.6 2025/04/07 16:06:18 rillig Exp $	*/
 # 3 "platform_uchar.c"
 
 /*
@@ -6,7 +6,7 @@
  * representation as unsigned char.
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z -X 161,351 */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 /* lint1-only-if: uchar */
 
 /* expect+1: warning: nonportable character comparison '< 128' [230] */

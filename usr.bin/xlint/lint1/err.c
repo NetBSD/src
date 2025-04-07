@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.266 2025/02/27 06:23:07 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.267 2025/04/07 16:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.266 2025/02/27 06:23:07 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.267 2025/04/07 16:06:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -216,7 +216,7 @@ static const char *const msgs[] = {
 	"'%s' may be used before set",					// 158
 	"assignment in conditional context",				// 159
 	"operator '==' found where '=' was expected",			// 160
-	"constant in conditional context",				// 161
+	"",			/* no longer used */			// 161
 	"operator '%s' compares '%s' with '%s'",			// 162
 	"a cast does not yield an lvalue",				// 163
 	"assignment of negative constant %lld to unsigned type '%s'",	// 164
