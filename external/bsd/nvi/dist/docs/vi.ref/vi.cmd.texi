@@ -959,7 +959,7 @@ option.
 @cindex #
 @deftypefn Command {[count]} {#} {#|+|-}
 
-Increment or decrement the number referenced by the cursor.
+Increment or decrement the number under the cursor.
 If the trailing character is a
 @LI{+}or
 @LI{#},
@@ -985,7 +985,7 @@ have a leading
 @LI{-}sign.
 The current number begins at the first non-blank character at or after
 the current cursor position, and extends up to the end of the line or
-the first character that isn't a possible character for the numeric type.
+the first character that isn't a valid character for the numeric type.
 The format of the number (e.g. leading 0's, signs) is retained unless
 the new value cannot be represented in the previous format.
 @sp 1
