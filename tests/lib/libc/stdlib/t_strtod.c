@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.37 2024/06/15 12:20:22 rillig Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.38 2025/04/07 02:23:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.37 2024/06/15 12:20:22 rillig Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.38 2025/04/07 02:23:21 riastradh Exp $");
 
 #include <errno.h>
 #include <fenv.h>
@@ -324,14 +324,54 @@ ATF_TC_HEAD(strtod_gherman_bug, tc)
 
 ATF_TC_BODY(strtod_gherman_bug, tc)
 {
-
-	const char *str =
+	/*
+	 * Input is _just barely below_ halfway from one binary64
+	 * (p=53) floating-point number 0x1.d34fd8378ea83p+0 to the
+	 * next one 0x1.d34fd8378ea84p+0:
+	 *
+	 *                                                       v
+	 * 1.110100110100111111011000001101111000111010101000001101111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110..._2
+	 */
+	const char *volatile str =
 	    "1.8254370818746402660437411213933955878019332885742187";
+	int error;
 
 	errno = 0;
 	volatile double d = strtod(str, NULL);
+	error = errno;
+	ATF_CHECK_MSG(error == 0, "errno=%d (%s)", error, strerror(error));
 
+#if DBL_MANT_DIG == 53
 	ATF_CHECK_EQ_MSG(d, 0x1.d34fd8378ea83p+0, "d=%g=%a", d, d);
+#elif DBL_MANT_DIG == 56
+	/* a.k.a. 0xe.9a7ec1bc7541cp-3 */
+	ATF_CHECK_EQ_MSG(d, 0x1.d34fd8378ea838p+0, "d=%g=%a", d, d);
+#else
+#  error Unknown DBL_MANT_DIG value!
+#endif
+
+#if DBL_MANG_DIG >= 56
+	/*
+	 * Same deal, but VAX D (p=56) between 0xe.9a7ec1bc7541fp-3 and
+	 * 0xe.9a7ec1bc75420p-3 (a.k.a. 0x1.d34fd8378ea83ep+0 and
+	 * 0x1.d34fd8378ea840p+0, respectively):
+	 *
+	 *                                                          v
+	 * 1.11010011010011111101100000110111100011101010100000111110111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110..._2
+	 *
+	 * (Not actually sure if this would have triggered the bug!
+	 * Maybe someone with a VAX can try and find out.)
+	 */
+	str = "1.8254370818746403631882557760945928748697042465209960";
+
+	errno = 0;
+	volatile double d = strtod(str, NULL);
+	error = errno;
+	ATF_CHECK(error == 0, "errno=%d (%s)", error, strerror(error));
+
+	/* a.k.a. 0x1.d34fd8378ea83ep+0 */
+	ATF_CHECK_EQ_MSG(d, 0xe.9a7ec1bc7541fp-3, "d=%g=%a", d, d);
+#endif
 }
 
 ATF_TP_ADD_TCS(tp)
