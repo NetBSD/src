@@ -1,4 +1,4 @@
-/*	$NetBSD: t_next.c,v 1.7 2024/05/12 20:17:57 riastradh Exp $	*/
+/*	$NetBSD: t_next.c,v 1.8 2025/04/07 01:31:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_next.c,v 1.7 2024/05/12 20:17:57 riastradh Exp $");
+__RCSID("$NetBSD: t_next.c,v 1.8 2025/04/07 01:31:18 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -325,7 +325,7 @@ ATF_TC_BODY(next_signed_0, tc)
 {
 	volatile double z_pos = +0.;
 	volatile double z_neg = -0.;
-#ifdef __DBL_HAS_DENORM__
+#if __DBL_HAS_DENORM__
 	volatile double m = __DBL_DENORM_MIN__;
 #else
 	volatile double m = DBL_MIN;
@@ -380,7 +380,7 @@ ATF_TC_BODY(next_near_0, tc)
 {
 	static const double x[] = {
 		[0] = 0,
-#ifdef __DBL_HAS_DENORM__
+#if __DBL_HAS_DENORM__
 		[1] = __DBL_DENORM_MIN__,
 		[2] = 2*__DBL_DENORM_MIN__,
 		[3] = 3*__DBL_DENORM_MIN__,
@@ -404,7 +404,7 @@ ATF_TC_HEAD(next_near_sub_normal, tc)
 }
 ATF_TC_BODY(next_near_sub_normal, tc)
 {
-#ifdef __DBL_HAS_DENORM__
+#if __DBL_HAS_DENORM__
 	static const double x[] = {
 		[0] = DBL_MIN - 3*__DBL_DENORM_MIN__,
 		[1] = DBL_MIN - 2*__DBL_DENORM_MIN__,
@@ -512,7 +512,7 @@ ATF_TC_BODY(nextf_signed_0, tc)
 {
 	volatile float z_pos = +0.;
 	volatile float z_neg = -0.;
-#ifdef __FLT_HAS_DENORM__
+#if __FLT_HAS_DENORM__
 	volatile float m = __FLT_DENORM_MIN__;
 #else
 	volatile float m = FLT_MIN;
@@ -564,7 +564,7 @@ ATF_TC_BODY(nextf_near_0, tc)
 {
 	static const float x[] = {
 		[0] = 0,
-#ifdef __FLT_HAS_DENORM__
+#if __FLT_HAS_DENORM__
 		[1] = __FLT_DENORM_MIN__,
 		[2] = 2*__FLT_DENORM_MIN__,
 		[3] = 3*__FLT_DENORM_MIN__,
@@ -588,7 +588,7 @@ ATF_TC_HEAD(nextf_near_sub_normal, tc)
 }
 ATF_TC_BODY(nextf_near_sub_normal, tc)
 {
-#ifdef __FLT_HAS_DENORM__
+#if __FLT_HAS_DENORM__
 	static const float x[] = {
 		[0] = FLT_MIN - 3*__FLT_DENORM_MIN__,
 		[1] = FLT_MIN - 2*__FLT_DENORM_MIN__,
@@ -696,7 +696,7 @@ ATF_TC_BODY(nextl_signed_0, tc)
 {
 	volatile long double z_pos = +0.;
 	volatile long double z_neg = -0.;
-#ifdef __LDBL_HAS_DENORM__
+#if __LDBL_HAS_DENORM__
 	volatile long double m = __LDBL_DENORM_MIN__;
 #else
 	volatile long double m = LDBL_MIN;
@@ -748,7 +748,7 @@ ATF_TC_BODY(nextl_near_0, tc)
 {
 	static const long double x[] = {
 		[0] = 0,
-#ifdef __LDBL_HAS_DENORM__
+#if __LDBL_HAS_DENORM__
 		[1] = __LDBL_DENORM_MIN__,
 		[2] = 2*__LDBL_DENORM_MIN__,
 		[3] = 3*__LDBL_DENORM_MIN__,
@@ -772,7 +772,7 @@ ATF_TC_HEAD(nextl_near_sub_normal, tc)
 }
 ATF_TC_BODY(nextl_near_sub_normal, tc)
 {
-#ifdef __LDBL_HAS_DENORM__
+#if __LDBL_HAS_DENORM__
 	static const long double x[] = {
 		[0] = LDBL_MIN - 3*__LDBL_DENORM_MIN__,
 		[1] = LDBL_MIN - 2*__LDBL_DENORM_MIN__,

@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.6 2024/05/09 14:44:39 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.7 2025/04/07 01:31:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	    d0, f, e, 0.5, FLT_MIN_EXP);
 	d1 = d0;
 
-#ifdef __FLT_HAS_DENORM__
+#if __FLT_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < FLT_MANT_DIG; i++) {
 		d1 /= 2;
@@ -138,7 +138,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	    d0, f, e, 0.5, DBL_MIN_EXP);
 	d1 = d0;
 
-#ifdef __DBL_HAS_DENORM__
+#if __DBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < DBL_MANT_DIG; i++) {
 		d1 /= 2;
@@ -216,7 +216,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	    d0, f, e, 0.5L, LDBL_MIN_EXP);
 	d1 = d0;
 
-#ifdef __LDBL_HAS_DENORM__
+#if __LDBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < LDBL_MANT_DIG; i++) {
 		d1 /= 2;
