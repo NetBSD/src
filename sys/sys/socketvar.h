@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.170 2024/11/02 21:33:30 andvar Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.171 2025/04/07 21:02:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -575,7 +575,7 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
  *      buffer overflow in earlier normal/lower-priority messages .
  *
  * SB_PRIO_BESTEFFORT: Ignore  limits entirely.  Intended only for
- * 	kernel-generated messages to specially-marked scokets which
+ * 	kernel-generated messages to specially-marked sockets which
  *	require "reliable" delivery, nd where the source socket/protocol
  *	message generator enforce some hard limit (but possibly well
  *	above kern.sbmax). It is entirely up to the in-kernel source to
