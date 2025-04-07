@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2024/11/22 15:51:34 riastradh Exp $
+#	$NetBSD: Makefile,v 1.100 2025/04/07 16:07:05 rillig Exp $
 #
 
 NOSANITIZER=	# defined
@@ -124,6 +124,8 @@ pthread_specific.po: pthread_specific.o
 
 COPTS.pthread.c += -Wno-stack-protector -Wno-format-nonliteral
 COPTS.pthread_attr.c += -Wno-format-nonliteral
+
+LINTFLAGS+=	-Ac11		# for _Atomic
 
 MAN+=	affinity.3 pthread.3 \
 	pthread_attr.3 \
