@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.145 2025/03/23 12:09:05 hans Exp $ */
+/* $NetBSD: wskbd.c,v 1.146 2025/04/07 11:25:42 hans Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.145 2025/03/23 12:09:05 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.146 2025/04/07 11:25:42 hans Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -732,15 +732,8 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 
 	evar = sc->sc_base.me_evp;
 
-	if (evar == NULL) {
+	if (evar == NULL || evar->q == NULL) {
 		DPRINTF(("wskbd_input: not open\n"));
-		return;
-	}
-
-	if (evar->q == NULL) {
-#ifdef DIAGNOSTIC
-		printf("wskbd_input: evar->q=NULL\n");
-#endif
 		return;
 	}
 
@@ -922,9 +915,15 @@ wskbdclose(dev_t dev, int flags, int mode,
 	    device_lookup_private(&wskbd_cd, minor(dev));
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
-	if (evar == NULL)
+#if NWSMUX > 0
+	DPRINTF(("wskbdclose: %s mux=%p p=%p\n", device_xname(sc->sc_base.me_dv),
+		 sc->sc_base.me_parent, l));
+#endif
+
+	if (evar == NULL) {
 		/* not open for read */
 		return (0);
+	}
 
 	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
@@ -958,12 +957,7 @@ wskbdread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (sc->sc_base.me_evp == NULL) {
-#ifdef DIAGNOSTIC
-		printf("wskbdread: evp == NULL\n");
-#endif
-		return (EINVAL);
-	}
+	KASSERTMSG(sc->sc_base.me_evp != NULL, "wskbdread: evp == NULL\n");
 
 	sc->sc_refcnt++;
 	error = wsevent_read(sc->sc_base.me_evp, uio, flags);
