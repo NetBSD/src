@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2094 2025/04/02 14:20:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2095 2025/04/07 19:32:27 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2402,3 +2402,20 @@ Location:	external/lgpl2/userspace-rcu
 Vendor tag:	URCU
 Release tag:	liburcu-
 Notes:
+
+Package:	isl
+Version:	0.26
+Current Vers:	0.26
+Maintainer:	INRIA
+Archive Site:	https://libisl.sourceforge.io/
+Home Page:	https://libisl.sourceforge.io/
+Date:		2025-04-07
+Mailing List:	https://groups.google.com/g/isl-announce?pli=1
+License:	MIT
+Responsible:	mrg
+Location:	external/mit/isl
+Vendor tag:	isl
+Release tag:	isl-	
+Notes:
+Integer Set Library
+Prerequisite for gcc to enable additional optimizations
