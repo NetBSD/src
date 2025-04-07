@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.14 2025/01/22 17:07:17 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.15 2025/04/07 18:38:58 gutteridge Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -118,6 +118,13 @@
 	<!--
 	  imx boards
 	  -->
+	<key>embest,imx6q-marsboard</key>
+	<dict>
+		<key>description</key>
+		<string>Embest MarS Board i.MX6Dual</string>
+		<key>u-boot-pkg</key>
+		<string>marsboard</string>
+	</dict>
 	<key>riot,imx6s-riotboard</key>
 	<dict>
 		<key>description</key>
