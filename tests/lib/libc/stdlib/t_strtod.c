@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.38 2025/04/07 02:23:21 riastradh Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.39 2025/04/07 02:28:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.38 2025/04/07 02:23:21 riastradh Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.39 2025/04/07 02:28:00 riastradh Exp $");
 
 #include <errno.h>
 #include <fenv.h>
@@ -350,7 +350,7 @@ ATF_TC_BODY(strtod_gherman_bug, tc)
 #  error Unknown DBL_MANT_DIG value!
 #endif
 
-#if DBL_MANG_DIG >= 56
+#if DBL_MANT_DIG >= 56
 	/*
 	 * Same deal, but VAX D (p=56) between 0xe.9a7ec1bc7541fp-3 and
 	 * 0xe.9a7ec1bc75420p-3 (a.k.a. 0x1.d34fd8378ea83ep+0 and
@@ -365,9 +365,9 @@ ATF_TC_BODY(strtod_gherman_bug, tc)
 	str = "1.8254370818746403631882557760945928748697042465209960";
 
 	errno = 0;
-	volatile double d = strtod(str, NULL);
+	d = strtod(str, NULL);
 	error = errno;
-	ATF_CHECK(error == 0, "errno=%d (%s)", error, strerror(error));
+	ATF_CHECK_MSG(error == 0, "errno=%d (%s)", error, strerror(error));
 
 	/* a.k.a. 0x1.d34fd8378ea83ep+0 */
 	ATF_CHECK_EQ_MSG(d, 0xe.9a7ec1bc7541fp-3, "d=%g=%a", d, d);
