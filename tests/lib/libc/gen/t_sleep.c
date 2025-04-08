@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.13 2025/04/06 14:24:33 riastradh Exp $ */
+/* $NetBSD: t_sleep.c,v 1.14 2025/04/08 01:29:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -165,10 +165,14 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	    tmo/1000 < delay->tv_sec && tmo/500 > delay->tv_sec)
 		delay->tv_sec = MAXSLEEP;
 
+	fprintf(stderr, "kevent: set EVFILT_TIMER tmo=%d\n", tmo);
 	EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, tmo, 0);
 
+	fprintf(stderr, "kevent: wait up to %lld.%09ld sec\n",
+	    (long long)delay->tv_sec, (long)delay->tv_nsec);
 	rtc = kevent(kq, &ktimer, 1, &kresult, 1, delay);
 	kerrno = errno;
+	fprintf(stderr, "kevent returned rtc=%d\n", rtc);
 
 	(void)close(kq);
 
@@ -179,7 +183,7 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	}
 
 	if (delay->tv_sec * BILLION + delay->tv_nsec > tmo * MILLION)
-		ATF_REQUIRE_MSG(rtc > 0,
+		ATF_CHECK_MSG(rtc > 0,
 		    "kevent: KEVNT_TIMEOUT did not cause EVFILT_TIMER event");
 
 	return 0;
@@ -303,6 +307,8 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 
 		if (sim_remain) {
 			timespecsub(&tsb, &tsa, &tremain);
+			fprintf(stderr, "slept %lld.%09ld sec\n",
+			    (long long)tremain.tv_sec, (long)tremain.tv_nsec);
 			timespecsub(&tslp, &tremain, &tremain);
 		}
 
