@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.40 2025/04/08 21:28:02 riastradh Exp $
+.\"	$NetBSD: strftime.3,v 1.41 2025/04/08 21:28:48 riastradh Exp $
 .\"
 .Dd April 6, 2025
 .Dt STRFTIME 3
@@ -55,11 +55,11 @@
 .Fa "size_t maxsize"
 .Fa "const char * restrict format"
 .Fa "const struct tm * restrict timeptr"
-.Fa "locale_t loc" 
+.Fa "locale_t loc"
 .Fc
 .Ft size_t
 .Fo strftime_z
-.Fa "const timezone_t tz" 
+.Fa "const timezone_t tz"
 .Fa "char * restrict buf"
 .Fa "size_t maxsize"
 .Fa "const char * restrict format"
@@ -67,12 +67,12 @@
 .Fc
 .Ft size_t
 .Fo strftime_lz
-.Fa "const timezone_t tz" 
+.Fa "const timezone_t tz"
 .Fa "char * restrict buf"
 .Fa "size_t maxsize"
 .Fa "const char * restrict format"
 .Fa "const struct tm * restrict timeptr"
-.Fa "locale_t loc" 
+.Fa "locale_t loc"
 .Fc
 .Sh DESCRIPTION
 The
@@ -90,7 +90,7 @@ does the same as
 .Fn strftime
 but takes an explicit locale specified in the
 .Ft "locale_t"
-.Fa loc 
+.Fa loc
 argument, rather than using the current locale.
 .Pp
 The function
