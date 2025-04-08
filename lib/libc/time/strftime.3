@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.39 2025/04/06 16:17:30 christos Exp $
+.\"	$NetBSD: strftime.3,v 1.40 2025/04/08 21:28:02 riastradh Exp $
 .\"
 .Dd April 6, 2025
 .Dt STRFTIME 3
@@ -412,7 +412,7 @@ time zone abbreviation begins with
 .Dq Li [-] .
 .It Cm %+
 is replaced by locale's date and time in
-.Xr date 1 
+.Xr date 1
 format.
 On
 .Nx
@@ -455,7 +455,7 @@ own use.
 If the conversion is successful,
 .Nm
 returns the number of bytes placed into the array, not counting the
-terminating 
+terminating
 .Dv NUL ;
 .Va errno
 is unchanged if the returned value is zero.
@@ -478,7 +478,7 @@ The format includes an
 conversion and the number of seconds since the Epoch cannot be represented
 in a
 .Ft time_t .
-.El 
+.El
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,
