@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.64 2025/04/08 04:15:21 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.64 2025/04/08 04:15:21 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ logread(dev_t dev, struct uio *uio, int flag)
 		if (l == 0)
 			break;
 		mutex_spin_exit(&log_lock);
-		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], (int)l, uio);
+		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], l, uio);
 		mutex_spin_enter(&log_lock);
 		if (error)
 			break;
