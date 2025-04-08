@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlgreg.h,v 1.3 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: hdlgreg.h,v 1.4 2025/04/08 13:47:03 rin Exp $	*/
 
 /*-
  * Copyright (C) 2005, 2006 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -63,13 +63,23 @@
  */
 
 /*
+ * XXXTODO
+ * Stop using devmap for HDLG_IOW_VBASE and HDLG_80321_VBASE;
+ * let arm/xscale/i80321* codes use bus_space_handle_t instead of
+ * virtual address itself.
+ */
+/*
  * We allocate a page table for VA 0xfe400000 (4MB) and map the
  * PCI I/O space (64K) and i80321 memory-mapped registers (4K) there.
  */
 #define	HDLG_IOPXS_VBASE	0xfe400000UL
 #define	HDLG_IOW_VBASE		HDLG_IOPXS_VBASE
-#define	HDLG_80321_VBASE	(HDLG_IOW_VBASE + \
-				 VERDE_OUT_XLATE_IO_WIN_SIZE)
+/*
+ * We choose HDLG_80321_VBASE which satisfies two constraints:
+ * - not in the same L1 section of HDLG_IOW_VBASE
+ * - same L1 section offset with VERDE_PMMR_BASE
+ */
+#define	HDLG_80321_VBASE	0xfe5fe000UL
 
 /*
  * The GIGALANDISK on-board devices are mapped VA==PA during bootstrap.
