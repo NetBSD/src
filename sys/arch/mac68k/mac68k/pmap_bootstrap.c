@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.96 2021/07/24 21:31:33 andvar Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.97 2025/04/08 23:42:08 nat Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.96 2021/07/24 21:31:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.97 2025/04/08 23:42:08 nat Exp $");
 
+#include "audio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
@@ -503,7 +504,18 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
 
 	maxaddr = high[numranges - 1] - m68k_ptob(1);
+
+#if NAUDIO > 0
+	/*
+	 * Reduce high by an extra 7 pages which are used by the EASC on some
+	 * machines.  maxaddr is unchanged as the last page can still be
+	 * safetly used to reboot the system.
+	 */
+	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(8));
+#else
 	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+#endif
+
 	avail_end = high[numranges - 1];
 	mem_size = m68k_ptob(physmem);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
