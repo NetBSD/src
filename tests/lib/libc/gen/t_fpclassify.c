@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.7 2025/04/07 01:31:18 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.8 2025/04/08 00:29:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@ ATF_TC_HEAD(fpclassify_float, tc)
 
 ATF_TC_BODY(fpclassify_float, tc)
 {
-	float d0, d1, d2, f, ip;
-	int e, i;
+	float d0, d1, f;
+	int e;
 
 	d0 = FLT_MIN;
 	ATF_CHECK_EQ_MSG(fpclassify(d0), FP_NORMAL,
@@ -62,7 +62,9 @@ ATF_TC_BODY(fpclassify_float, tc)
 
 #if __FLT_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
-	for (i = 1; i < FLT_MANT_DIG; i++) {
+	for (int i = 1; i < FLT_MANT_DIG; i++) {
+		float d2, ip;
+
 		d1 /= 2;
 		ATF_CHECK_EQ_MSG(fpclassify(d1), FP_SUBNORMAL,
 		    "[%d] fpclassify(%a)=%d FP_SUBNORMAL=%d",
@@ -120,8 +122,8 @@ ATF_TC_HEAD(fpclassify_double, tc)
 
 ATF_TC_BODY(fpclassify_double, tc)
 {
-	double d0, d1, d2, f, ip;
-	int e, i;
+	double d0, d1, f;
+	int e;
 
 	d0 = DBL_MIN;
 	ATF_CHECK_EQ_MSG(fpclassify(d0), FP_NORMAL,
@@ -140,7 +142,9 @@ ATF_TC_BODY(fpclassify_double, tc)
 
 #if __DBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
-	for (i = 1; i < DBL_MANT_DIG; i++) {
+	for (int i = 1; i < DBL_MANT_DIG; i++) {
+		double d2, ip;
+
 		d1 /= 2;
 		ATF_CHECK_EQ_MSG(fpclassify(d1), FP_SUBNORMAL,
 		    "[%d] fpclassify(%a)=%d FP_SUBNORMAL=%d",
@@ -198,8 +202,8 @@ ATF_TC_HEAD(fpclassify_long_double, tc)
 
 ATF_TC_BODY(fpclassify_long_double, tc)
 {
-	long double d0, d1, d2, f, ip;
-	int e, i;
+	long double d0, d1, f;
+	int e;
 
 	d0 = LDBL_MIN;
 	ATF_CHECK_EQ_MSG(fpclassify(d0), FP_NORMAL,
@@ -218,7 +222,9 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 
 #if __LDBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
-	for (i = 1; i < LDBL_MANT_DIG; i++) {
+	for (int i = 1; i < LDBL_MANT_DIG; i++) {
+		long double d2, ip;
+
 		d1 /= 2;
 		ATF_CHECK_EQ_MSG(fpclassify(d1), FP_SUBNORMAL,
 		    "[%d] fpclassify(%La)=%d FP_SUBNORMAL=%d",
