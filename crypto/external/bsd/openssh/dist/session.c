@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.338 2024/05/17 00:30:24 djm Exp $ */
+/* $OpenBSD: session.c,v 1.341 2025/04/09 07:00:03 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1155,7 +1155,7 @@ do_pwchange(Session *s)
 	fprintf(stderr, "WARNING: Your password has expired.\n");
 	if (s->ttyfd != -1) {
 		fprintf(stderr,
-		    "You must change your password now and login again!\n");
+		    "You must change your password now and log in again!\n");
 		execl(_PATH_PASSWD_PROG, "passwd", (char *)NULL);
 		perror("passwd");
 	} else {
@@ -1224,8 +1224,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 
 	sshpkt_fmt_connection_id(ssh, remote_id, sizeof(remote_id));
 
-	/* remove hostkey from the child's memory */
-	destroy_sensitive_data();
+	/* remove keys from memory */
 	ssh_packet_clear_keys(ssh);
 
 	/* Force a password change */
@@ -1827,10 +1826,6 @@ session_signal_req(struct ssh *ssh, Session *s)
 		    signame, s->forced ? "forced-command" : "subsystem");
 		goto out;
 	}
-	if (mm_is_monitor()) {
-		error_f("session signalling requires privilege separation");
-		goto out;
-	}
 
 	debug_f("signal %s, killpg(%ld, %d)", signame, (long)s->pid, sig);
 	temporarily_use_uid(s->pw);
@@ -1858,7 +1853,8 @@ session_auth_agent_req(struct ssh *ssh, Session *s)
 	if ((r = sshpkt_get_end(ssh)) != 0)
 		sshpkt_fatal(ssh, r, "%s: parse packet", __func__);
 	if (!auth_opts->permit_agent_forwarding_flag ||
-	    !options.allow_agent_forwarding) {
+	    !options.allow_agent_forwarding ||
+	    options.disable_forwarding) {
 		debug_f("agent forwarding disabled");
 		return 0;
 	}
@@ -2241,7 +2237,7 @@ session_setup_x11fwd(struct ssh *ssh, Session *s)
 		ssh_packet_send_debug(ssh, "X11 forwarding disabled by key options.");
 		return 0;
 	}
-	if (!options.x11_forwarding) {
+	if (!options.x11_forwarding || options.disable_forwarding) {
 		debug("X11 forwarding disabled in server configuration file.");
 		return 0;
 	}

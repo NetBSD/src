@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.196 2024/06/06 17:15:25 djm Exp $ */
+/* $OpenBSD: misc.c,v 1.198 2024/10/24 03:14:37 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005-2020 Damien Miller.  All rights reserved.
@@ -85,6 +85,27 @@ rtrim(char *s)
 		if (isspace((unsigned char)s[i]))
 			s[i] = '\0';
 	}
+}
+
+/*
+ * returns pointer to character after 'prefix' in 's' or otherwise NULL
+ * if the prefix is not present.
+ */
+const char *
+strprefix(const char *s, const char *prefix, int ignorecase)
+{
+	size_t prefixlen;
+
+	if ((prefixlen = strlen(prefix)) == 0)
+		return s;
+	if (ignorecase) {
+		if (strncasecmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	} else {
+		if (strncmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	}
+	return s + prefixlen;
 }
 
 /* set/unset filedescriptor to non-blocking */
@@ -2278,7 +2299,8 @@ valid_domain(char *name, int makelower, const char **errstr)
 		strlcpy(errbuf, "empty domain name", sizeof(errbuf));
 		goto bad;
 	}
-	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0])) {
+	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0]) &&
+	   name[0] != '_' /* technically invalid, but common */) {
 		snprintf(errbuf, sizeof(errbuf), "domain name \"%.100s\" "
 		    "starts with invalid character", name);
 		goto bad;
