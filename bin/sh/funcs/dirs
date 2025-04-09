@@ -1,4 +1,4 @@
-#	$NetBSD: dirs,v 1.9 2023/04/07 10:34:13 kre Exp $
+#	$NetBSD: dirs,v 1.10 2025/04/09 13:44:12 kre Exp $
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -32,36 +32,100 @@
 # Pixel Computer Inc. ...!wjh12!pixel!pixutl!chris
 # as modified by Patrick Elam of GTRI and Kenneth Almquist at UW
 
+# produce decidely sub-optimal quoting, but adequate for the purpose
+__ds_quote()
+{
+	local A QA PP
+
+	case "$1" in
+	-z)	DSTACK=;&		# zero, then...
+	-a)	PP=false;;		# append (retain arg order)
+
+	-r)	DSTACK=;&		# zero, then...
+	-p)	PP=true;;		# prepend (reverse arg order)
+
+	*)	printf '__ds_quote usage error\n' >&2; return 1;;
+	esac
+	shift
+
+	for A
+	do
+		QA=
+		while case "${A}" in
+		\'?*)
+			QA="${QA}'\\''"
+			A=${A#?}
+			;;
+		?*\'?*)
+			QA="${QA}${A%%\'*}"
+			A=\'${A#*\'}
+			;;
+		*\')
+			QA="${QA}'\\"
+			A=
+			;&
+		*)
+			false
+			;;
+		esac do
+			continue
+		done
+
+		if "${PP}"
+		then
+			DSTACK="'${QA}${A}'${DSTACK:+ }${DSTACK}"
+		else
+			DSTACK="${DSTACK}${DSTACK:+ }'${QA}${A}'"
+		fi
+	done
+	return 0
+}
+
 pushd () {
-	SAVE=`pwd`
-	if [ "$1" = "" ]
-	then	if [ "$DSTACK" = "" ]
-		then	echo "pushd: directory stack empty."
+	local IFS=' ' SAVE
+
+	SAVE=${PWD}
+	if [ "$#" = 0 ]
+	then
+		if [ "${#DSTACK}" = 0 ]
+		then
+			printf 'pushd: directory stack empty.\n' >&2
 			return 1
 		fi
-		set $DSTACK
-		cd $1 || return
-		shift 1
-		DSTACK="$*"
-	else	cd $1 > /dev/null || return
+		eval set -- ${DSTACK}
+		cd -P ${1:+"$1"} || return
+		shift
+		__ds_quote -z "$@" || return
+	else
+		cd -P ${1:+"$1"} > /dev/null || return
 	fi
-	DSTACK="$SAVE $DSTACK"
+
+	__ds_quote -p "${SAVE}" || return
+
 	dirs
 }
 
 popd () {
-	if [ "$DSTACK" = "" ]
-	then	echo "popd: directory stack empty."
+	local IFS=' '
+
+	if [ "${#DSTACK}" = 0 ]
+	then
+		printf 'popd: directory stack empty.\n' >&2
 		return 1
 	fi
-	set $DSTACK
-	cd $1
+	eval set -- ${DSTACK}
+	cd -P ${1:+"$1"}
 	shift
-	DSTACK=$*
+	__ds_quote -z "$@" || return
 	dirs
 }
 
 dirs () {
-	echo "`pwd` $DSTACK"
+	local IFS=' '
+
+	printf %s "${PWD}"
+	eval set -- ${DSTACK}
+	test "$#" != 0 && printf " %s" "$@"
+	printf \\n
 	return 0
 }
