@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.27 2024/11/30 01:04:11 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.28 2025/04/09 06:00:38 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ typedef struct {
 
 #define	__UCONTEXT_SIZE_O32	(40 + 296 +  56)	/* 392 */
 #define	__UCONTEXT_SIZE_N32	(40 + 568 +  56)	/* 664 */
-#define	__UCONTEXT_SIZE_N64	(56 + 576 + 112)	/* 774 */
+#define	__UCONTEXT_SIZE_N64	(56 + 576 + 112)	/* 744 */
 
 #ifdef __mips_o32
 #define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_O32
