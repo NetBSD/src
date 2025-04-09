@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2025/04/09 00:04:41 nat Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2025/04/09 00:04:41 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,9 @@ fpu_probe(void)
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
+#if defined(M68040)
+	__asm("nop");		/* buggy lc040 workaround. */
+#endif
 	__asm("fnop");
 
 	nofault = NULL;
