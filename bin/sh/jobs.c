@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.123 2024/10/09 13:43:32 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.124 2025/04/09 12:04:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.123 2024/10/09 13:43:32 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.124 2025/04/09 12:04:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -770,6 +770,9 @@ waitcmd(int argc, char **argv)
 	 */
 	found = 0;
 	last = NULL;
+#ifdef	DEBUG
+	job = NULL;
+#endif
 	for (arg = argptr; *arg; arg++) {
 		last = jp = getjob(*arg, 1);
 		if (!jp)
@@ -799,7 +802,9 @@ waitcmd(int argc, char **argv)
 			found++;
 			jp->flags |= JOBWANTED;
 		}
+#ifdef DEBUG
 		job = jp;
+#endif
 	}
 
 	VTRACE(DBG_WAIT, ("wait %s%s%sfound %d candidates (last %s)\n",
