@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.59 2025/01/13 16:23:48 riastradh Exp $	*/
+/*	$NetBSD: asc.c,v 1.60 2025/04/09 13:09:49 nat Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.59 2025/01/13 16:23:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.60 2025/04/09 13:09:49 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.59 2025/01/13 16:23:48 riastradh Exp $");
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
+#include <mac68k/obio/ascreg.h>
 #include <mac68k/obio/ascvar.h>
 #include <mac68k/obio/obiovar.h>
 
@@ -135,7 +136,7 @@ const struct cdevsw asc_cdevsw = {
 	.d_flag = 0
 };
 
-static const uint8_t easc_version_tab[] = { 0xb0 };
+static const uint8_t easc_version_tab[] = { EASC_VER, EASC_VER2 };
 
 static int
 ascmatch(device_t parent, cfdata_t cf, void *aux)
@@ -165,7 +166,7 @@ ascmatch(device_t parent, cfdata_t cf, void *aux)
 		 * Enhanced Apple Sound Chip (EASC) does not support wavetable
 		 * mode, exclude it for now.
 		 */
-		ver = bus_space_read_1(oa->oa_tag, bsh, 0x800);
+		ver = bus_space_read_1(oa->oa_tag, bsh, VERLOC);
 		for (size_t i = 0; i < __arraycount(easc_version_tab); i++)
 			if (ver == easc_version_tab[i]) {
 				rval = 0;
@@ -342,13 +343,15 @@ asc_ring_bell(void *arg, int freq, int length, int volume)
 		}		/* frequency; should put cur_beep.freq in here
 				 * somewhere. */
 
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x807, 3); /* 44 ? */
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x806,
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCRATE, F44KHZ);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL,
 		    255 * volume / 100);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x805, 0);
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80f, 0);
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x802, 2); /* sampled */
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 2); /* enable sampled */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTRL, 2);
+		/* XXX NS 2 is identified in ascreg.h as STEREO, sampled */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE,
+		    MODEWAVE); /* enable sampled */
 		sc->sc_ringing = 1;
 		callout_reset(&sc->sc_bell_ch, length, asc_stop_bell, sc);
 	}
@@ -367,8 +370,10 @@ asc_stop_bell(void *arg)
 	if (sc->sc_ringing > 1000 || sc->sc_ringing < 0)
 		panic("bell got out of sync?");
 
-	if (--sc->sc_ringing == 0)	/* disable ASC */
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 0);
+	if (--sc->sc_ringing == 0) {	/* disable ASC */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE,
+		    MODESTOP);
+	}
 }
 
 #if __notyet__
