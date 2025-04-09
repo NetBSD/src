@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.35 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.120 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.36 2025/04/09 15:49:31 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.122 2024/12/12 09:09:09 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,13 +27,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.35 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.36 2025/04/09 15:49:31 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
 #include <errno.h>
 #include <paths.h>
 #include <pwd.h>
+#include <glob.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -325,20 +326,51 @@ match_principals_file(struct passwd *pw, char *file,
     struct sshkey_cert *cert, struct sshauthopt **authoptsp)
 {
 	FILE *f;
-	int success;
+	int r, success = 0;
+	size_t i;
+	glob_t gl;
+	struct sshauthopt *opts = NULL;
 
 	if (authoptsp != NULL)
 		*authoptsp = NULL;
 
 	temporarily_use_uid(pw);
-	debug("trying authorized principals file %s", file);
-	if ((f = auth_openprincipals(file, pw, options.strict_modes)) == NULL) {
-		restore_uid();
-		return 0;
-	}
-	success = auth_process_principals(f, file, cert, authoptsp);
-	fclose(f);
+	r = glob(file, 0, NULL, &gl);
 	restore_uid();
+	if (r != 0) {
+		if (r != GLOB_NOMATCH) {
+			logit_f("glob \"%s\" failed", file);
+		}
+		return 0;
+	} else if (gl.gl_pathc > INT_MAX) {
+		fatal_f("too many glob results for \"%s\"", file);
+	} else if (gl.gl_pathc > 1) {
+		debug2_f("glob \"%s\" returned %zu matches", file,
+		    gl.gl_pathc);
+	}
+	for (i = 0; !success && i < gl.gl_pathc; i++) {
+		temporarily_use_uid(pw);
+		debug("trying authorized principals file %s", file);
+		if ((f = auth_openprincipals(gl.gl_pathv[i], pw,
+		    options.strict_modes)) == NULL) {
+			restore_uid();
+			continue;
+		}
+		success = auth_process_principals(f, gl.gl_pathv[i],
+		    cert, &opts);
+		fclose(f);
+		restore_uid();
+		if (!success) {
+			sshauthopt_free(opts);
+			opts = NULL;
+		}
+	}
+	globfree(&gl);
+	if (success && authoptsp != NULL) {
+		*authoptsp = opts;
+		opts = NULL;
+	}
+	sshauthopt_free(opts);
 	return success;
 }
 
@@ -759,8 +791,8 @@ int
 user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
     int auth_attempt, struct sshauthopt **authoptsp)
 {
-	u_int success = 0, i;
-	char *file, *conn_id;
+	u_int success = 0, i, j;
+	char *file = NULL, *conn_id;
 	struct sshauthopt *opts = NULL;
 	const char *rdomain, *remote_ip, *remote_host;
 
@@ -782,17 +814,40 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	    remote_ip, ssh_remote_port(ssh));
 
 	for (i = 0; !success && i < options.num_authkeys_files; i++) {
+		int r;
+		glob_t gl;
+
 		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
 			continue;
 		file = expand_authorized_keys(
 		    options.authorized_keys_files[i], pw);
-		success = user_key_allowed2(pw, key, file,
-		    remote_ip, remote_host, &opts);
-		free(file);
-		if (!success) {
-			sshauthopt_free(opts);
-			opts = NULL;
+		temporarily_use_uid(pw);
+		r = glob(file, 0, NULL, &gl);
+		restore_uid();
+		if (r != 0) {
+			if (r != GLOB_NOMATCH) {
+				logit_f("glob \"%s\" failed", file);
+			}
+			free(file);
+			file = NULL;
+			continue;
+		} else if (gl.gl_pathc > INT_MAX) {
+			fatal_f("too many glob results for \"%s\"", file);
+		} else if (gl.gl_pathc > 1) {
+			debug2_f("glob \"%s\" returned %zu matches", file,
+			    gl.gl_pathc);
 		}
+		for (j = 0; !success && j < gl.gl_pathc; j++) {
+			success = user_key_allowed2(pw, key, gl.gl_pathv[j],
+			    remote_ip, remote_host, &opts);
+			if (!success) {
+				sshauthopt_free(opts);
+				opts = NULL;
+			}
+		}
+		free(file);
+		file = NULL;
+		globfree(&gl);
 	}
 	if (success)
 		goto out;

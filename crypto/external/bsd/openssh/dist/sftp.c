@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.41 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.239 2024/06/26 23:14:14 deraadt Exp $ */
+/*	$NetBSD: sftp.c,v 1.42 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.240 2025/03/28 06:04:07 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.41 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.42 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2459,6 +2459,7 @@ main(int argc, char **argv)
 	addargs(&args, "-oForwardX11 no");
 	addargs(&args, "-oPermitLocalCommand no");
 	addargs(&args, "-oClearAllForwardings yes");
+	addargs(&args, "-oControlMaster no");
 
 	ll = SYSLOG_LEVEL_INFO;
 	infile = stdin;

@@ -1,5 +1,6 @@
-/*	$NetBSD: kexmlkem768x25519.c,v 1.3 2024/10/29 03:20:32 rin Exp $	*/
+/*	$NetBSD: kexmlkem768x25519.c,v 1.4 2025/04/09 15:49:32 christos Exp $	*/
 /* $OpenBSD: kexmlkem768x25519.c,v 1.2 2024/10/27 02:06:59 djm Exp $ */
+
 /*
  * Copyright (c) 2023 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexmlkem768x25519.c,v 1.3 2024/10/29 03:20:32 rin Exp $");
+__RCSID("$NetBSD: kexmlkem768x25519.c,v 1.4 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/types.h>
 

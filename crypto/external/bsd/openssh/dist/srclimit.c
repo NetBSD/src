@@ -1,4 +1,4 @@
-/*	$NetBSD: srclimit.c,v 1.5 2024/09/24 21:32:19 christos Exp $	*/
+/*	$NetBSD: srclimit.c,v 1.6 2025/04/09 15:49:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 Darren Tucker <dtucker@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: srclimit.c,v 1.5 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: srclimit.c,v 1.6 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -388,7 +388,7 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 		reason = "penalty: connection prohibited by RefuseConnection";
 		break;
 	case SRCLIMIT_PENALTY_GRACE_EXCEEDED:
-		penalty_secs = penalty_cfg.penalty_crash;
+		penalty_secs = penalty_cfg.penalty_grace;
 		reason = "penalty: exceeded LoginGraceTime";
 		break;
 	default:

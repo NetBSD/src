@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.33 2025/03/21 14:05:14 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.169 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.34 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.170 2025/01/17 00:09:41 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.33 2025/03/21 14:05:14 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.34 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -252,7 +252,7 @@ user_specific_delay(const char *user)
 	/* 0-4.2 ms of delay */
 	delay = (double)PEEK_U32(hash) / 1000 / 1000 / 1000 / 1000;
 	freezero(hash, len);
-	debug3_f("user specific delay %0.3lfms", delay/1000);
+	debug3_f("user specific delay %0.3lfms", delay*1000);
 	return MIN_FAIL_DELAY_SECONDS + delay;
 }
 

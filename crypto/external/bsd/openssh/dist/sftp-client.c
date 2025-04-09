@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.36 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.176 2024/05/17 02:39:11 jsg Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.37 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.177 2025/03/11 07:48:51 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -23,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.36 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.37 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2073,6 +2073,7 @@ sftp_upload(struct sftp_conn *conn, const char *local_path,
 			close(local_fd);
 			return -1;
 		}
+		highwater = c.size;
 	}
 
 	openmode = SSH2_FXF_WRITE|SSH2_FXF_CREAT;

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.40 2025/02/18 17:53:24 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.306 2024/03/09 05:12:13 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.41 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.310 2025/02/18 08:02:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.40 2025/02/18 17:53:24 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.41 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -87,6 +87,9 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.40 2025/02/18 17:53:24 christos Exp $");
 
 #ifndef DEFAULT_ALLOWED_PROVIDERS
 # define DEFAULT_ALLOWED_PROVIDERS "/usr/lib*/*,/usr/pkg/lib*/*"
+#endif
+#ifndef DEFAULT_WEBSAFE_ALLOWLIST
+# define DEFAULT_WEBSAFE_ALLOWLIST "ssh:*"
 #endif
 
 /* Maximum accepted message length */
@@ -156,7 +159,8 @@ int max_fd = 0;
 pid_t parent_pid = -1;
 time_t parent_alive_interval = 0;
 
-sig_atomic_t signalled = 0;
+static sig_atomic_t signalled_exit;
+static sig_atomic_t signalled_keydrop;
 
 /* pid of process for which cleanup_socket is applicable */
 pid_t cleanup_pid = 0;
@@ -191,6 +195,7 @@ static int fingerprint_hash = SSH_FP_HASH_DEFAULT;
 
 /* Refuse signing of non-SSH messages for web-origin FIDO keys */
 static int restrict_websafe = 1;
+static char *websafe_allowlist;
 
 static void
 close_socket(SocketEntry *e)
@@ -918,7 +923,8 @@ process_sign_request2(SocketEntry *e)
 	}
 	if (sshkey_is_sk(id->key)) {
 		if (restrict_websafe &&
-		    strncmp(id->key->sk_application, "ssh:", 4) != 0 &&
+		    match_pattern_list(id->key->sk_application,
+		    websafe_allowlist, 0) != 1 &&
 		    !check_websafe_message_contents(key, data)) {
 			/* error already logged */
 			goto send;
@@ -1015,7 +1021,7 @@ process_remove_identity(SocketEntry *e)
 }
 
 static void
-process_remove_all_identities(SocketEntry *e)
+remove_all_identities(void)
 {
 	Identity *id;
 
@@ -1029,6 +1035,12 @@ process_remove_all_identities(SocketEntry *e)
 
 	/* Mark that there are no identities. */
 	idtab->nentries = 0;
+}
+
+static void
+process_remove_all_identities(SocketEntry *e)
+{
+	remove_all_identities();
 
 	/* Send success. */
 	send_status(e, 1);
@@ -1701,6 +1713,10 @@ process_ext_session_bind(SocketEntry *e)
 		error_fr(r, "parse");
 		goto out;
 	}
+	if (sshbuf_len(sid) > AGENT_MAX_SID_LEN) {
+		error_f("session ID too long");
+		goto out;
+	}
 	if ((fp = sshkey_fingerprint(key, SSH_FP_HASH_DEFAULT,
 	    SSH_FP_DEFAULT)) == NULL)
 		fatal_f("fingerprint failed");
@@ -2159,7 +2175,13 @@ cleanup_exit(int i)
 static void
 cleanup_handler(int sig)
 {
-	signalled = sig;
+	signalled_exit = sig;
+}
+
+static void
+keydrop_handler(int sig)
+{
+	signalled_keydrop = sig;
 }
 
 static void
@@ -2217,6 +2239,7 @@ main(int ac, char **av)
 	int c_flag = 0, d_flag = 0, D_flag = 0, k_flag = 0, s_flag = 0;
 	int sock, ch, result, saved_errno;
 	char *shell, *pidstr, *agentsocket = NULL;
+	const char *ccp;
 	struct rlimit rlim;
 	void (*f_setenv)(const char *, const char *);
 	void (*f_unsetenv)(const char *);
@@ -2266,7 +2289,12 @@ main(int ac, char **av)
 				restrict_websafe = 0;
 			else if (strcmp(optarg, "allow-remote-pkcs11") == 0)
 				remote_add_provider = 1;
-			else
+			else if ((ccp = strprefix(optarg,
+			    "websafe-allow=", 0)) != NULL) {
+				if (websafe_allowlist != NULL)
+					fatal("websafe-allow already set");
+				websafe_allowlist = xstrdup(ccp);
+			} else
 				fatal("Unknown -O option");
 			break;
 		case 'P':
@@ -2310,6 +2338,8 @@ main(int ac, char **av)
 
 	if (allowed_providers == NULL)
 		allowed_providers = xstrdup(DEFAULT_ALLOWED_PROVIDERS);
+	if (websafe_allowlist == NULL)
+		websafe_allowlist = xstrdup(DEFAULT_WEBSAFE_ALLOWLIST);
 
 	if (ac == 0 && !c_flag && !s_flag) {
 		shell = getenv("SHELL");
@@ -2467,11 +2497,13 @@ skip:
 	ssh_signal(SIGINT, (d_flag | D_flag) ? cleanup_handler : SIG_IGN);
 	ssh_signal(SIGHUP, cleanup_handler);
 	ssh_signal(SIGTERM, cleanup_handler);
+	ssh_signal(SIGUSR1, keydrop_handler);
 
 	sigemptyset(&nsigset);
 	sigaddset(&nsigset, SIGINT);
 	sigaddset(&nsigset, SIGHUP);
 	sigaddset(&nsigset, SIGTERM);
+	sigaddset(&nsigset, SIGUSR1);
 
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath cpath unix id proc exec", NULL) == -1)
@@ -2480,9 +2512,15 @@ skip:
 
 	while (1) {
 		sigprocmask(SIG_BLOCK, &nsigset, &osigset);
-		if (signalled != 0) {
-			logit("exiting on signal %d", (int)signalled);
+		if (signalled_exit != 0) {
+			logit("exiting on signal %d", (int)signalled_exit);
 			cleanup_exit(2);
+		}
+		if (signalled_keydrop) {
+			logit("signal %d received; removing all keys",
+			    signalled_keydrop);
+			remove_all_identities();
+			signalled_keydrop = 0;
 		}
 		ptimeout_init(&timeout);
 		prepare_poll(&pfd, &npfd, &timeout, maxfds);

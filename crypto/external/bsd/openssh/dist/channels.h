@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.28 2024/09/24 21:32:18 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.157 2024/07/25 22:40:08 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.29 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.158 2024/10/13 22:20:06 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -386,6 +386,7 @@ int	 x11_connect_display(struct ssh *);
 int	 x11_create_display_inet(struct ssh *, int, int, int, u_int *, int **);
 void	 x11_request_forwarding_with_spoofing(struct ssh *, int,
 	    const char *, const char *, const char *, int);
+int      x11_channel_used_recently(struct ssh *ssh);
 
 /* channel close */
 

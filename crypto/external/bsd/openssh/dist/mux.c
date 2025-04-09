@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.37 2025/03/21 14:04:33 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.102 2024/07/25 22:40:08 djm Exp $ */
+/*	$NetBSD: mux.c,v 1.38 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.103 2024/10/12 10:50:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
@@ -20,7 +20,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.37 2025/03/21 14:04:33 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.38 2025/04/09 15:49:32 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: mux.c,v 1.37 2025/03/21 14:04:33 christos Exp $");
 #include "readconf.h"
 #include "clientloop.h"
 #include "ssherr.h"
-#include "misc.h"
 
 /* from ssh.c */
 extern int tty_flag;

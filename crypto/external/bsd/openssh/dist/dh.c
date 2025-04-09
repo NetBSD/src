@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.20 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.74 2021/04/03 06:18:40 djm Exp $ */
+/*	$NetBSD: dh.c,v 1.21 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.75 2024/12/03 16:27:53 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.21 2025/04/09 15:49:32 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -197,9 +197,9 @@ choose_dh(int min, int wantbits, int max)
 
 	if (bestcount == 0) {
 		fclose(f);
-		logit("WARNING: no suitable primes in %s",
-		    get_moduli_filename());
-		return (dh_new_group_fallback(max));
+		logit("WARNING: no suitable primes (size %d/%d/%d) in %s",
+		    min, wantbits, max, get_moduli_filename());
+		return NULL;
 	}
 	which = arc4random_uniform(bestcount);
 

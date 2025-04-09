@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.21 2024/09/24 21:32:19 christos Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.65 2024/09/04 05:33:34 djm Exp $ */
+/*	$NetBSD: sshkey.h,v 1.22 2025/04/09 15:49:33 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.66 2025/04/02 04:28:03 tb Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -32,7 +32,9 @@
 
 #ifdef WITH_OPENSSL
 #include <openssl/rsa.h>
+#ifdef WITH_DSA
 #include <openssl/dsa.h>
+#endif
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>

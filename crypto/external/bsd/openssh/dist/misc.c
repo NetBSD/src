@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.38 2025/02/18 17:53:24 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.197 2024/09/25 01:24:04 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.39 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.198 2024/10/24 03:14:37 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.38 2025/02/18 17:53:24 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.39 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2329,7 +2329,8 @@ valid_domain(char *name, int makelower, const char **errstr)
 		strlcpy(errbuf, "empty domain name", sizeof(errbuf));
 		goto bad;
 	}
-	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0])) {
+	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0]) &&
+	   name[0] != '_' /* technically invalid, but common */) {
 		snprintf(errbuf, sizeof(errbuf), "domain name \"%.100s\" "
 		    "starts with invalid character", name);
 		goto bad;

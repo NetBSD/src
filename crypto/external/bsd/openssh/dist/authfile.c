@@ -1,5 +1,6 @@
-/*	$NetBSD: authfile.c,v 1.28 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.144 2023/03/14 07:26:25 dtucker Exp $ */
+/*	$NetBSD: authfile.c,v 1.29 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.145 2024/09/22 12:56:21 jsg Exp $ */
+
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.28 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.29 2025/04/09 15:49:32 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -48,8 +49,6 @@ __RCSID("$NetBSD: authfile.c,v 1.28 2023/07/26 17:58:15 christos Exp $");
 #include "sshbuf.h"
 #include "ssherr.h"
 #include "krl.h"
-
-#define MAX_KEY_FILE_SIZE	(1024 * 1024)
 
 /* Save a key blob to a file */
 static int

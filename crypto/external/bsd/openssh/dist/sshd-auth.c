@@ -1,4 +1,6 @@
+/*	$NetBSD: sshd-auth.c,v 1.2 2025/04/09 15:49:33 christos Exp $	*/
 /* $OpenBSD: sshd-auth.c,v 1.3 2025/01/16 06:37:10 dtucker Exp $ */
+
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -27,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sshd-auth.c,v 1.2 2025/04/09 15:49:33 christos Exp $");
+
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -98,13 +104,19 @@
 #define PRIVSEP_LOG_FD			(STDERR_FILENO + 2)
 #define PRIVSEP_MIN_FREE_FD		(STDERR_FILENO + 3)
 
+#ifdef LIBWRAP
+#include <syslog.h>
+int allow_severity = LOG_INFO;
+int deny_severity = LOG_WARNING;
+#endif
+
 extern char *__progname;
 
 /* Server configuration options. */
 ServerOptions options;
 
 /* Name of the server configuration file. */
-char *config_file_name = _PATH_SERVER_CONFIG_FILE;
+const char *config_file_name = _PATH_SERVER_CONFIG_FILE;
 
 /*
  * Debug mode flag.  This can be set on the command line.  If debug
@@ -129,6 +141,9 @@ struct sshkey	**host_pubkeys;		/* all public host keys */
 struct sshkey	**host_certificates;	/* all public host certificates */
 
 /* record remote hostname or ip */
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX	MAXHOSTNAMELEN
+#endif
 u_int utmp_len = HOST_NAME_MAX+1;
 
 /* variables used for privilege separation */
@@ -196,8 +211,10 @@ privsep_child_demote(void)
 	}
 
 	/* sandbox ourselves */
+#ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		fatal_f("pledge()");
+#endif
 }
 
 static void

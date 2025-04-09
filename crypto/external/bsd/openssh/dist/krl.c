@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.24 2025/02/18 17:53:24 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.25 2025/04/09 15:49:32 christos Exp $	*/
 /* $OpenBSD: krl.c,v 1.60 2025/02/18 08:02:48 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: krl.c,v 1.24 2025/02/18 17:53:24 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.25 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>

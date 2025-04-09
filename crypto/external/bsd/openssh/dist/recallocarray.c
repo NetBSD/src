@@ -20,6 +20,7 @@
 
 #include "includes.h"
 #ifndef HAVE_RECALLOCARRAY
+__RCSID("$NetBSD: recallocarray.c,v 1.3 2025/04/09 15:49:32 christos Exp $");
 
 #include <errno.h>
 #include <stdlib.h>

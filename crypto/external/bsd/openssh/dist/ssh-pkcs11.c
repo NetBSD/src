@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.28 2024/09/24 21:32:19 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.63 2024/08/15 00:51:51 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11.c,v 1.29 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.64 2024/09/20 02:00:46 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.28 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.29 2025/04/09 15:49:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1176,7 +1176,7 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
-			debug2_f("key already included");;
+			debug2_f("key already included");
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */
@@ -1288,7 +1288,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
-			debug2_f("key already included");;
+			debug2_f("key already included");
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */

@@ -7,21 +7,14 @@ Blowfish_stream2word
 a2port
 a2tun
 addr_and
-addr_host_is_all0s
 addr_host_to_all1s
-addr_hostmask
 addr_increment
-addr_invert
 addr_netmask
 addr_netmatch
 addr_ntop
-addr_or
 addr_pton
 addr_pton_cidr
-addr_sa_pton
 addr_sa_to_xaddr
-addr_unicast_masklen
-addr_xaddr_to_sa
 argv_assemble
 argv_consume
 argv_free
@@ -258,6 +251,8 @@ log_is_on_stderr
 log_level_get
 log_level_name
 log_level_number
+log_ratelimit
+log_ratelimit_init
 log_redirect_stderr_to
 log_verbose_add
 log_verbose_reset
@@ -341,7 +336,6 @@ ssh_add_host_to_hostfile
 ssh_add_identity_constrained
 ssh_addargs
 ssh_addr_cmp
-ssh_addr_is_all0s
 ssh_addr_match_cidr_list
 ssh_addr_match_list
 ssh_addr_to_byte
@@ -841,6 +835,7 @@ verify_host_key_dns
 wots_pkgen
 wots_set_params
 wots_sign
+x11_channel_used_recently
 x11_connect_display
 x11_create_display_inet
 x11_request_forwarding_with_spoofing

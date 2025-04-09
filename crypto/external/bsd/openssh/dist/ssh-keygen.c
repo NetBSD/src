@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.48 2024/09/24 21:32:19 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.475 2024/09/15 00:47:01 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.49 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.477 2024/12/04 14:24:20 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.48 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.49 2025/04/09 15:49:32 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -991,7 +991,7 @@ do_fingerprint(struct passwd *pw)
 	while (getline(&line, &linesize, f) != -1) {
 		lnum++;
 		cp = line;
-		cp[strcspn(cp, "\n")] = '\0';
+		cp[strcspn(cp, "\r\n")] = '\0';
 		/* Trim leading space and comments */
 		cp = line + strspn(line, " \t");
 		if (*cp == '#' || *cp == '\0')
@@ -3010,7 +3010,9 @@ do_moduli_gen(const char *out_file, char **opts, size_t nopts)
 		}
 	}
 
-	if ((out = fopen(out_file, "w")) == NULL) {
+	if (strcmp(out_file, "-") == 0)
+		out = stdout;
+	else if ((out = fopen(out_file, "w")) == NULL) {
 		fatal("Couldn't open modulus candidate file \"%s\": %s",
 		    out_file, strerror(errno));
 	}
@@ -3075,7 +3077,9 @@ do_moduli_screen(const char *out_file, char **opts, size_t nopts)
 		}
 	}
 
-	if ((out = fopen(out_file, "a")) == NULL) {
+	if (strcmp(out_file, "-") == 0)
+		out = stdout;
+	else if ((out = fopen(out_file, "a")) == NULL) {
 		fatal("Couldn't open moduli file \"%s\": %s",
 		    out_file, strerror(errno));
 	}

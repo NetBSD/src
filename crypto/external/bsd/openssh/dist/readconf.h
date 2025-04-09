@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.35 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.156 2024/03/04 02:16:11 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.36 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.159 2025/02/15 01:48:30 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,7 +20,6 @@
 /* Data structure for representing option data. */
 
 #define SSH_MAX_HOSTS_FILES	32
-#define MAX_CANON_DOMAINS	32
 #define PATH_MAX_SUN		(sizeof((struct sockaddr_un *)0)->sun_path)
 
 struct allowed_cname {
@@ -205,6 +204,8 @@ typedef struct {
 	char	**channel_timeouts;	/* inactivity timeout by channel type */
 	u_int	num_channel_timeouts;
 
+	char	*version_addendum;
+
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;
 
@@ -259,9 +260,9 @@ int      fill_default_options(Options *);
 void	 fill_default_options_for_canonicalization(Options *);
 void	 free_options(Options *o);
 int	 process_config_line(Options *, struct passwd *, const char *,
-    const char *, char *, const char *, int, int *, int);
+    const char *, const char *, char *, const char *, int, int *, int);
 int	 read_config_file(const char *, struct passwd *, const char *,
-    const char *, Options *, int, int *);
+    const char *, const char *, Options *, int, int *);
 int	 parse_forward(struct Forward *, const char *, int, int);
 int	 parse_jump(const char *, Options *, int);
 int	 parse_ssh_uri(const char *, char **, char **, int *);

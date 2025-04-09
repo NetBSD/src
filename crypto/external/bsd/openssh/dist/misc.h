@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.30 2025/02/18 17:53:24 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.31 2025/04/09 15:49:32 christos Exp $	*/
 /* $OpenBSD: misc.h,v 1.110 2024/09/25 01:24:04 djm Exp $ */
 
 /*

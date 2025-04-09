@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.50 2025/02/18 17:53:24 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.375 2024/09/09 02:39:57 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.51 2025/04/09 15:49:33 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.377 2025/02/18 08:02:48 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.50 2025/02/18 17:53:24 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.51 2025/04/09 15:49:33 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1921,10 +1921,8 @@ userauth_pubkey(struct ssh *ssh)
 			debug("Trying private key: %s", id->filename);
 			id->key = load_identity_file(id);
 			if (id->key != NULL) {
-				if (id->key != NULL) {
-					id->isprivate = 1;
-					sent = sign_and_send_pubkey(ssh, id);
-				}
+				id->isprivate = 1;
+				sent = sign_and_send_pubkey(ssh, id);
 				sshkey_free(id->key);
 				id->key = NULL;
 				id->isprivate = 0;

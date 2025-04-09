@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.39 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.368 2024/04/30 02:10:49 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.40 2025/04/09 15:49:33 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.369 2024/12/06 16:21:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.39 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.40 2025/04/09 15:49:33 christos Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -1640,7 +1640,8 @@ ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
 	lowercase(host);
 
 	/* Exchange protocol version identification strings with the server. */
-	if ((r = kex_exchange_identification(ssh, timeout_ms, NULL)) != 0)
+	if ((r = kex_exchange_identification(ssh, timeout_ms,
+	    options.version_addendum)) != 0)
 		sshpkt_fatal(ssh, r, "banner exchange");
 
 	/* Put the connection into non-blocking mode. */

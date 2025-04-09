@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.42 2025/04/09 11:08:44 kim Exp $	*/
-/* $OpenBSD: session.c,v 1.338 2024/05/17 00:30:24 djm Exp $ */
+/*	$NetBSD: session.c,v 1.43 2025/04/09 15:49:32 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.341 2025/04/09 07:00:03 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.42 2025/04/09 11:08:44 kim Exp $");
+__RCSID("$NetBSD: session.c,v 1.43 2025/04/09 15:49:32 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1276,7 +1276,7 @@ do_pwchange(Session *s)
 	fprintf(stderr, "WARNING: Your password has expired.\n");
 	if (s->ttyfd != -1) {
 		fprintf(stderr,
-		    "You must change your password now and login again!\n");
+		    "You must change your password now and log in again!\n");
 		execl(_PATH_PASSWD_PROG, "passwd", (char *)NULL);
 		perror("passwd");
 	} else {
@@ -1345,8 +1345,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 
 	sshpkt_fmt_connection_id(ssh, remote_id, sizeof(remote_id));
 
-	/* remove hostkey from the child's memory */
-	destroy_sensitive_data();
+	/* remove keys from memory */
 	ssh_packet_clear_keys(ssh);
 
 	/* Force a password change */
@@ -1965,10 +1964,6 @@ session_signal_req(struct ssh *ssh, Session *s)
 	if (s->forced || s->is_subsystem) {
 		error_f("refusing to send signal %s to %s session",
 		    signame, s->forced ? "forced-command" : "subsystem");
-		goto out;
-	}
-	if (mm_is_monitor()) {
-		error_f("session signalling requires privilege separation");
 		goto out;
 	}
 
