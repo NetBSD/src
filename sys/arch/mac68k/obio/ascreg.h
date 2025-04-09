@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.3 2025/01/13 16:23:48 riastradh Exp $ */
+/* $NetBSD: ascreg.h,v 1.4 2025/04/09 13:07:54 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -30,6 +30,9 @@
 #define _SYS_ARCH_MAC68K_OBIO_ASCREG_H
 
 #define ASCIRQ		5
+
+#define EASC_VER	0xb0
+#define EASC_VER2	0xbb
 
 #define FIFO_A		0
 #define FIFO_B		0x400

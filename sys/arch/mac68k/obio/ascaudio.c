@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.4 2025/01/13 16:23:48 riastradh Exp $ */
+/* $NetBSD: ascaudio.c,v 1.5 2025/04/09 13:07:54 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.4 2025/01/13 16:23:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.5 2025/04/09 13:07:54 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,9 +135,6 @@ static const struct audio_hw_if ascaudio_hw_if = {
 	.round_blocksize = ascaudio_round_blocksize,
 	.get_locks	 = ascaudio_get_locks,
 };
-
-#define EASC_VER	0xb0
-#define EASC_VER2	0xbb
 
 enum {
 	ASC_OUTPUT_CLASS,
