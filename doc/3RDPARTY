@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2095 2025/04/07 19:32:27 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2096 2025/04/09 09:02:33 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1082,11 +1082,11 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	9.9
-Current Vers:	9.9 / portable 9.9p2
+Current Vers:	10.0 / portable 10.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
-Date:		2024-09-24
+Date:		2025-04-09
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
