@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1365 2025/04/05 13:13:34 riastradh Exp $
+# $NetBSD: mi,v 1.1366 2025/04/09 15:51:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3329,6 +3329,7 @@
 ./usr/tests/lib/libc/sys/t_clock_gettime		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_clock_nanosleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_clone			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_close_range			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_connect			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_context			tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup				tests-lib-tests		compattestfile,atf

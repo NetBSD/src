@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1365 2025/03/26 17:36:16 kre Exp $
+# $NetBSD: mi,v 1.1366 2025/04/09 15:51:44 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1395,6 +1395,7 @@
 ./usr/libexec/ssh-keysign			base-secsh-bin
 ./usr/libexec/ssh-pkcs11-helper			base-secsh-bin
 ./usr/libexec/ssh-sk-helper			base-secsh-bin
+./usr/libexec/sshd-auth				base-secsh-bin
 ./usr/libexec/sshd-session			base-secsh-bin
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftp-proxy			base-pf-bin		pf
