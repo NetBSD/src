@@ -1,4 +1,4 @@
-/* $NetBSD: pbbat.c,v 1.1 2025/04/03 01:54:46 nat Exp $ */
+/* $NetBSD: pbbat.c,v 1.2 2025/04/09 00:10:02 nat Exp $ */
 
 /*-
  * Copyright (c) 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbbat.c,v 1.1 2025/04/03 01:54:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbbat.c,v 1.2 2025/04/09 00:10:02 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -556,7 +556,10 @@ bat_get_status(device_t dv)
 		sc->sc_ac_state = PBBAT_AC_CONNECTED;
 	} else if (val > VOLTS_CHARGING) {
 		sc->sc_bat_sensor[PBBAT_CHARGING].state = ENVSYS_SVALID;
-		sc->sc_bat_sensor[PBBAT_CHARGING].value_cur = 1;
+		if (sc->sc_chargerate)
+			sc->sc_bat_sensor[PBBAT_CHARGING].value_cur = 1;
+		else
+			sc->sc_bat_sensor[PBBAT_CHARGING].value_cur = 0;
 		sc->sc_bat_sensor[PBBAT_CHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_bat_sensor[PBBAT_CHARGERATE].value_cur =
 		    sc->sc_chargerate;
