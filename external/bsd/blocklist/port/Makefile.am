@@ -4,7 +4,7 @@ lib_LTLIBRARIES = libblocklist.la
 include_HEADERS = ../include/blocklist.h
 
 exampledir = $(datarootdir)/examples/blocklistd
-example_DATA = ../etc/blocklistd.conf ../etc/npf.conf
+example_DATA = ../etc/blocklistd.conf ../etc/npf.conf ../etc/ipf.conf
 
 sbin_PROGRAMS = blocklistd blocklistctl
 noinst_PROGRAMS = srvtest cltest
