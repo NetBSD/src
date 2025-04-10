@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.41 2025/04/09 15:49:32 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.42 2025/04/10 13:27:57 martin Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.310 2025/02/18 08:02:48 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.41 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.42 2025/04/10 13:27:57 martin Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2518,7 +2518,7 @@ skip:
 		}
 		if (signalled_keydrop) {
 			logit("signal %d received; removing all keys",
-			    signalled_keydrop);
+			    (int)signalled_keydrop);
 			remove_all_identities();
 			signalled_keydrop = 0;
 		}
