@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.139 2024/04/12 16:54:37 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.140 2025/04/10 20:21:44 bad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.139 2024/04/12 16:54:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.140 2025/04/10 20:21:44 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -1424,7 +1424,8 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 
 	if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
 		/* XXX: Recover from this, please! */
-		printf("%s: err=%s\n", __func__, usbd_errstr(err));
+		device_printf(sc->sc_dev, "%s: err=%s\n",
+		    __func__, usbd_errstr(err));
 		return EIO;
 	}
 
@@ -1460,7 +1461,8 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		if (status == USBD_STALLED) {
 			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 		} else {
-			printf("ucomreadcb: wonky status=%s\n",
+			device_printf(sc->sc_dev,
+			    "ucomreadcb: wonky status=%s\n",
 			    usbd_errstr(status));
 		}
 
