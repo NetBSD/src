@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.679 2025/04/10 20:16:29 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.680 2025/04/10 20:37:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.679 2025/04/10 20:16:29 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.680 2025/04/10 20:37:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1107,7 +1107,7 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 	case BITOR:
 		return l | r;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 		/* NOTREACHED */
 	}
 }
@@ -1202,7 +1202,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 	case BITOR:
 		return l | r;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 		/* NOTREACHED */
 	}
 }
@@ -1818,7 +1818,7 @@ fold_constant_compare_zero(tnode_t *tn)
 		v->u.integer = l || r ? 1 : 0;
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 	}
 
 	return build_constant(tn->tn_type, v);
@@ -1929,7 +1929,7 @@ fold_constant_floating(tnode_t *tn)
 		v->u.integer = lv != rv ? 1 : 0;
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 	}
 
 	// XXX: Must not access u.floating after setting u.integer.
@@ -3976,7 +3976,7 @@ convert_constant_from_floating(op_t op, int arg, const type_t *ntp,
 		/* LINTED 248; see floating_error_value. */
 		max = LDBL_MAX;		min = -max;		break;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 	}
 	if (ov->u.floating > max || ov->u.floating < min) {
 		lint_assert(nt != LDOUBLE);

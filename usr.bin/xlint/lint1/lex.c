@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.235 2025/04/10 20:16:29 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.236 2025/04/10 20:37:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.235 2025/04/10 20:16:29 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.236 2025/04/10 20:37:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -81,7 +81,7 @@ bool in_system_header;
  * conflict with user-defined identifiers.
  */
 #define kwdef(name, token, detail,	since, gcc, deco) \
-	{ /* CONSTCOND */ \
+	{ \
 		name, token, detail, \
 		(since) == 90, \
 		(since) == 99 || (since) == 11, \
@@ -665,7 +665,7 @@ lex_floating_constant(const char *text, size_t len)
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
 	} else if (t == DOUBLE
-	    || /* CONSTCOND */ LDOUBLE_SIZE == DOUBLE_SIZE) {
+	    || LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */

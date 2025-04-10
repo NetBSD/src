@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.69 2025/02/27 06:48:29 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.70 2025/04/10 20:37:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.69 2025/02/27 06:48:29 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.70 2025/04/10 20:37:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -512,7 +512,6 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			} else if (t1 == SHORT) {
 				t1 = INT;
 			} else if (t1 == USHORT) {
-				/* CONSTCOND */
 				t1 = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
 			}
 		}
@@ -1218,7 +1217,6 @@ types_compatible(type_t *tp1, type_t *tp2,
 			} else if (t == SHORT) {
 				t = INT;
 			} else if (t == USHORT) {
-				/* CONSTCOND */
 				t = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
 			}
 		}

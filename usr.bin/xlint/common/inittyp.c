@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.44 2025/04/10 20:37:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.44 2025/04/10 20:37:48 rillig Exp $");
 #endif
 
 #if IS_LINT1
@@ -46,11 +46,11 @@ __RCSID("$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $");
 #include "lint2.h"
 #endif
 
-#define INT_RANK	(/*CONSTCOND*/INTPTR_TSPEC == LONG ? 4 : 5)
+#define INT_RANK	(INTPTR_TSPEC == LONG ? 4 : 5)
 
 #if IS_LINT1
 #define typeinfo(name, signed_type, unsigned_type, size_in_bits, rv, c) \
-	{ /*CONSTCOND*/ \
+	{ \
 		size_in_bits, \
 		(c) == 'u' || (c) == 's' || (c) == 'p' ? RK_INTEGER : \
 		    (c) == 'f' ? RK_FLOATING : \
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: inittyp.c,v 1.43 2024/08/29 20:35:18 rillig Exp $");
 	}
 #else
 #define typeinfo(name, signed_type, unsigned_type, size_in_bits, rank, c) \
-	{ /*CONSTCOND*/ \
+	{ \
 		signed_type, unsigned_type, \
 		(c) == 's' || (c) == 'u', \
 		name, \

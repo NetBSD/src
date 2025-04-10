@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.53 2025/04/10 20:16:30 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.54 2025/04/10 20:37:48 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -412,16 +412,16 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 		do_nothing();
 
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
-	if (/*CONSTCOND*/0)
+	if (0)
 		/* expect+1: warning: 'call' statement not reached [193] */
 		do_nothing();
 
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
-	if (/*CONSTCOND*/1)
+	if (1)
 		do_nothing();
 
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
-	if (/*CONSTCOND*/2)
+	if (2)
 		do_nothing();
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */

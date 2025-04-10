@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.414 2025/03/10 22:35:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.415 2025/04/10 20:37:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.414 2025/03/10 22:35:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.415 2025/04/10 20:37:48 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -574,7 +574,7 @@ end_declaration_level(void)
 		/* there is nothing around an external declaration */
 		/* FALLTHROUGH */
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 	}
 	free(dl);
 	debug_leave();
@@ -2250,7 +2250,6 @@ types_compatible(const type_t *tp1, const type_t *tp2,
 			else if (t == SHORT)
 				t = INT;
 			else if (t == USHORT) {
-				/* CONSTCOND */
 				t = TARG_INT_MAX < TARG_USHRT_MAX || !allow_c90
 				    ? UINT : INT;
 			}
@@ -2586,7 +2585,7 @@ check_local_hiding(const sym_t *dsym, const sym_t *rdsym)
 		/* Already checked in declare_external_in_block. */
 		break;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(false);
 	}
 }
 
