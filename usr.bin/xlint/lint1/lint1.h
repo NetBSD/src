@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.233 2025/02/20 20:33:10 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.234 2025/04/10 20:16:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -496,7 +496,6 @@ typedef struct designation {
 typedef enum {
 	LC_ARGSUSED,
 	LC_BITFIELDTYPE,
-	LC_CONSTCOND,
 	LC_FALLTHROUGH,
 	LC_LINTLIBRARY,
 	LC_LINTED,

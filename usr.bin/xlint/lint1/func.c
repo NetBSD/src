@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.192 2025/03/10 22:35:02 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.193 2025/04/10 20:16:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.192 2025/03/10 22:35:02 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.193 2025/04/10 20:16:29 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -115,9 +115,6 @@ pos_t scanflike_pos;
  * definitions to the output file.
  */
 bool plibflg;
-
-/* Temporarily suppress warnings about constants in conditional context. */
-bool suppress_constcond;
 
 /*
  * Whether a lint library shall be created. The effect of this flag is that
@@ -1134,7 +1131,6 @@ handle_lint_comment(lint_comment comment, int arg)
 	switch (comment) {
 	case LC_ARGSUSED:	argsused(arg);			break;
 	case LC_BITFIELDTYPE:	suppress_bitfieldtype = true;	break;
-	case LC_CONSTCOND:	suppress_constcond = true;	break;
 	case LC_FALLTHROUGH:	suppress_fallthrough = true;	break;
 	case LC_LINTLIBRARY:	lintlib();			break;
 	case LC_LINTED:		debug_step("set lwarn %d", arg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.238 2024/12/08 17:12:01 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.239 2025/04/10 20:16:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -330,7 +330,6 @@ extern int printflike_argnum;
 extern pos_t printflike_pos;
 extern int scanflike_argnum;
 extern pos_t scanflike_pos;
-extern bool suppress_constcond;
 extern bool llibflg;
 extern int lwarn;
 extern bool suppress_bitfieldtype;

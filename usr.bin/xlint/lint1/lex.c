@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.234 2025/03/10 22:08:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.235 2025/04/10 20:16:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.234 2025/03/10 22:08:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.235 2025/04/10 20:16:29 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1262,9 +1262,6 @@ lex_comment(void)
 	} keywtab[] = {
 		{ "ARGSUSED",		true,	LC_ARGSUSED	},
 		{ "BITFIELDTYPE",	false,	LC_BITFIELDTYPE	},
-		{ "CONSTCOND",		false,	LC_CONSTCOND	},
-		{ "CONSTANTCOND",	false,	LC_CONSTCOND	},
-		{ "CONSTANTCONDITION",	false,	LC_CONSTCOND	},
 		{ "FALLTHRU",		false,	LC_FALLTHROUGH	},
 		{ "FALLTHROUGH",	false,	LC_FALLTHROUGH	},
 		{ "FALL THROUGH",	false,	LC_FALLTHROUGH	},
@@ -1363,7 +1360,6 @@ reset_suppressions(void)
 
 	lwarn = LWARN_ALL;
 	suppress_longlong = false;
-	suppress_constcond = false;
 }
 
 int

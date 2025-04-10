@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.52 2025/04/06 20:56:14 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.53 2025/04/10 20:16:30 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -480,9 +480,7 @@ strict_bool_operand_unary_not(void)
 
 	b = !b;
 	b = !!!b;
-	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_false;
-	/* expect+1: warning: constant operand to '!' [239] */
 	b = !__lint_true;
 
 	int i = 0;
