@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2025/04/06 23:03:06 rillig Exp $
+#	$NetBSD: Makefile,v 1.35 2025/04/10 20:22:18 rillig Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -40,7 +40,6 @@ DPADD=	${LIBBLOCKLIST} ${LIBCRYPT} ${LIBLUA} ${LIBM}
 
 WARNS?=	4
 LINTFLAGS+=	-X 193	# statement not reached
-LINTFLAGS+=	-X 239	# constant operand to '!'
 
 .if defined(.OS.MAKE)
 OPSYS=	${.OS.MAKE}
