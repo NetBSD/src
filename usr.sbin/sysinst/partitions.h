@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.29 2023/01/06 18:19:27 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.30 2025/04/10 20:35:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 #define	MAX_SHORTCUT_LEN	8	/* max. length of a shortcut ("a:") */
 
 /*
- * A partition index / handle, identifies a singlepartition within
+ * A partition index / handle, identifies a single partition within
  * a struct disk_partitions. This is just an iterator/index - whenever
  * changes to the set of partitions are done, partitions may get a new
  * part_id.
@@ -510,7 +510,7 @@ struct disk_partitioning_scheme {
 	 * Optional:
 	 * Get or set a name for the whole disk (most partitioning
 	 * schemes do not provide this). Used for disklabel "pack names",
-	 * which then may be used for aut-discovery of wedges, so it
+	 * which then may be used for auto-discovery of wedges, so it
 	 * makes sense for the user to edit them.
 	 */
 	bool (*get_disk_pack_name)(const struct disk_partitions *,
