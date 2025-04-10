@@ -849,7 +849,9 @@ port_range
 	}
 	| VAR_ID
 	{
-		npfvar_t *vp = npfvar_lookup($1);
+		npfvar_t *vp;
+		if ((vp = npfvar_lookup($1)) == NULL)
+			yyerror("undefined port variable %s", $1);
 		$$ = npfctl_parse_port_range_variable($1, vp);
 	}
 	;
