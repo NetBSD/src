@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.212 2025/03/06 15:35:05 imil Exp $	*/
+/*	$NetBSD: cpu.c,v 1.213 2025/04/11 04:54:02 imil Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.212 2025/03/06 15:35:05 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.213 2025/04/11 04:54:02 imil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1488,6 +1488,16 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	}
 
 	ci->ci_data.cpu_cc_freq = freq;
+}
+
+bool
+has_lapic(void)
+{
+#if NLAPIC > 0
+	return true;
+#else
+	return false;
+#endif
 }
 
 void

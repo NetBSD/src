@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.86 2025/03/09 19:16:47 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.87 2025/04/11 04:54:02 imil Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.86 2025/03/09 19:16:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.87 2025/04/11 04:54:02 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.86 2025/03/09 19:16:47 riastradh 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#include <x86/apicvar.h>
 #include <x86/cputypes.h>
 #include <x86/specialreg.h>
 #include <x86/dbregs.h>
@@ -839,7 +840,7 @@ svm_inkernel_advance(struct vmcb *vmcb)
 }
 
 #define SVM_CPUID_MAX_BASIC		0xD
-#define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+#define SVM_CPUID_MAX_HYPERVISOR	0x40000010
 #define SVM_CPUID_MAX_EXTENDED		0x8000001F
 static uint32_t svm_cpuid_max_basic __read_mostly;
 static uint32_t svm_cpuid_max_extended __read_mostly;
@@ -1000,6 +1001,15 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RBX], "___ ", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
+		break;
+	case 0x40000010: /* VMware-style TSC and LAPIC freq */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = curcpu()->ci_data.cpu_cc_freq / 1000;
+		if (has_lapic())
+			cpudata->gprs[NVMM_X64_GPR_RBX] = lapic_per_second / 1000;
+		else
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 
 	/*
