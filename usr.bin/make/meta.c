@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.210 2024/06/02 15:31:26 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.211 2025/04/11 17:33:47 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1007,7 +1007,7 @@ meta_ignore(GNode *gn, const char *p)
  * Setting oodate true will have that effect.
  */
 #define CHECK_VALID_META(p) if (!(p != NULL && *p != '\0')) { \
-    warnx("%s: %u: malformed", fname, lineno); \
+    warnx("%s:%u: malformed", fname, lineno); \
     oodate = true; \
     continue; \
     }
@@ -1152,7 +1152,7 @@ meta_oodate(GNode *gn, bool oodate)
 	    if (buf[x - 1] == '\n')
 		buf[x - 1] = '\0';
 	    else {
-		warnx("%s: %u: line truncated at %u", fname, lineno, x);
+		warnx("%s:%u: line truncated at %u", fname, lineno, x);
 		oodate = true;
 		break;
 	    }
@@ -1173,7 +1173,7 @@ meta_oodate(GNode *gn, bool oodate)
 	    /* Delimit the record type. */
 	    p = buf;
 #ifdef DEBUG_META_MODE
-	    DEBUG3(META, "%s: %u: %s\n", fname, lineno, buf);
+	    DEBUG3(META, "%s:%u: %s\n", fname, lineno, buf);
 #endif
 	    strsep(&p, " ");
 	    if (have_filemon) {
@@ -1241,7 +1241,7 @@ meta_oodate(GNode *gn, bool oodate)
 			continue;
 #ifdef DEBUG_META_MODE
 		    if (DEBUG(META))
-			debug_printf("%s: %u: %d: %c: cwd=%s lcwd=%s ldir=%s\n",
+			debug_printf("%s:%u: %d: %c: cwd=%s lcwd=%s ldir=%s\n",
 				     fname, lineno,
 				     pid, buf[0], cwd, lcwd, latestdir);
 #endif
@@ -1272,7 +1272,7 @@ meta_oodate(GNode *gn, bool oodate)
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
 				debug_printf(
-					"%s: %u: %d: cwd=%s lcwd=%s ldir=%s\n",
+					"%s:%u: %d: cwd=%s lcwd=%s ldir=%s\n",
 					fname, lineno,
 					child, cwd, lcwd, latestdir);
 #endif
@@ -1287,7 +1287,7 @@ meta_oodate(GNode *gn, bool oodate)
 		    Global_Set(lcwd_vname, lcwd);
 		    Global_Set(ldir_vname, lcwd);
 #ifdef DEBUG_META_MODE
-		    DEBUG4(META, "%s: %u: cwd=%s ldir=%s\n",
+		    DEBUG4(META, "%s:%u: cwd=%s ldir=%s\n",
 			   fname, lineno, cwd, lcwd);
 #endif
 		    break;
@@ -1440,7 +1440,7 @@ meta_oodate(GNode *gn, bool oodate)
 
 			for (sdp = sdirs; *sdp != NULL && !found; sdp++) {
 #ifdef DEBUG_META_MODE
-			    DEBUG3(META, "%s: %u: looking for: %s\n",
+			    DEBUG3(META, "%s:%u: looking for: %s\n",
 				   fname, lineno, *sdp);
 #endif
 			    if (cached_stat(*sdp, &cst) == 0) {
@@ -1450,12 +1450,12 @@ meta_oodate(GNode *gn, bool oodate)
 			}
 			if (found) {
 #ifdef DEBUG_META_MODE
-			    DEBUG3(META, "%s: %u: found: %s\n",
+			    DEBUG3(META, "%s:%u: found: %s\n",
 				   fname, lineno, p);
 #endif
 			    if (!S_ISDIR(cst.cst_mode) &&
 				cst.cst_mtime > gn->mtime) {
-				DEBUG3(META, "%s: %u: file '%s' is newer than the target...\n",
+				DEBUG3(META, "%s:%u: file '%s' is newer than the target...\n",
 				       fname, lineno, p);
 				oodate = true;
 			    } else if (S_ISDIR(cst.cst_mode)) {
@@ -1487,7 +1487,7 @@ meta_oodate(GNode *gn, bool oodate)
 		 * meta data file.
 		 */
 		if (cmdNode == NULL) {
-		    DEBUG2(META, "%s: %u: there were more build commands in the meta data file than there are now...\n",
+		    DEBUG2(META, "%s:%u: there were more build commands in the meta data file than there are now...\n",
 			   fname, lineno);
 		    oodate = true;
 		} else {
@@ -1504,7 +1504,7 @@ meta_oodate(GNode *gn, bool oodate)
 		    }
 		    if (hasOODATE) {
 			needOODATE = true;
-			DEBUG2(META, "%s: %u: cannot compare command using .OODATE\n",
+			DEBUG2(META, "%s:%u: cannot compare command using .OODATE\n",
 			       fname, lineno);
 		    }
 		    cmd = Var_Subst(cmd, gn, VARE_EVAL_DEFINED);
@@ -1527,7 +1527,7 @@ meta_oodate(GNode *gn, bool oodate)
 			    x = n;
 			    lineno++;
 			    if (buf[x - 1] != '\n') {
-				warnx("%s: %u: line truncated at %u", fname, lineno, x);
+				warnx("%s:%u: line truncated at %u", fname, lineno, x);
 				break;
 			    }
 			    cp = strchr(cp + 1, '\n');
@@ -1539,7 +1539,7 @@ meta_oodate(GNode *gn, bool oodate)
 			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
 			(meta_cmd_cmp(gn, p, cmd, cmp_filter) != 0)) {
-			DEBUG4(META, "%s: %u: a build command has changed\n%s\nvs\n%s\n",
+			DEBUG4(META, "%s:%u: a build command has changed\n%s\nvs\n%s\n",
 			       fname, lineno, p, cmd);
 			if (!metaIgnoreCMDs)
 			    oodate = true;
@@ -1553,13 +1553,13 @@ meta_oodate(GNode *gn, bool oodate)
 		 * that weren't in the meta data file.
 		 */
 		if (!oodate && cmdNode != NULL) {
-		    DEBUG2(META, "%s: %u: there are extra build commands now that weren't in the meta data file\n",
+		    DEBUG2(META, "%s:%u: there are extra build commands now that weren't in the meta data file\n",
 			   fname, lineno);
 		    oodate = true;
 		}
 		CHECK_VALID_META(p);
 		if (strcmp(p, cwd) != 0) {
-		    DEBUG4(META, "%s: %u: the current working directory has changed from '%s' to '%s'\n",
+		    DEBUG4(META, "%s:%u: the current working directory has changed from '%s' to '%s'\n",
 			   fname, lineno, p, curdir);
 		    oodate = true;
 		}
