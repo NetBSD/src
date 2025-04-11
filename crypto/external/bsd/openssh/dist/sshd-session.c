@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.9 2025/04/09 15:49:33 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.10 2025/04/11 17:09:23 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.12 2025/03/12 22:43:44 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.9 2025/04/09 15:49:33 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.10 2025/04/11 17:09:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -945,16 +945,6 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-#ifdef WITH_LDAP_PUBKEY
-	/* ldap_options_print(&options.lpk); */
-	/* XXX initialize/check ldap connection and set *LD */
-	if (options.lpk.on) {
-	    if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
-		error("[LDAP] could not parse %s", options.lpk.l_conf);
-	    if (ldap_xconnect(&options.lpk) < 0)
-		error("[LDAP] could not initialize ldap connection");
-	}
-#endif
 	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 	if (!rexeced_flag)
@@ -1014,6 +1004,16 @@ main(int ac, char **av)
 
 	debug("sshd-session version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
+#ifdef WITH_LDAP_PUBKEY
+	/* ldap_options_print(&options.lpk); */
+	/* XXX initialize/check ldap connection and set *LD */
+	if (options.lpk.on) {
+	    if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
+		error("[LDAP] could not parse %s", options.lpk.l_conf);
+	    if (ldap_xconnect(&options.lpk) < 0)
+		error("[LDAP] could not initialize ldap connection");
+	}
+#endif
 	if (!debug_flag && !inetd_flag) {
 		if ((startup_pipe = dup(REEXEC_CONFIG_PASS_FD)) == -1)
 			fatal("internal error: no startup pipe");
