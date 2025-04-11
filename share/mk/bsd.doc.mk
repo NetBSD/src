@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.68 2015/08/04 08:36:14 dholland Exp $
+#	$NetBSD: bsd.doc.mk,v 1.69 2025/04/11 19:15:42 rillig Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -43,10 +43,10 @@
 # 20130908 dholland: Make sure all makefiles have been converted to the
 # new scheme.
 .if !defined(SECTION)
-.error "bsd.doc.mk: SECTION must be defined"
+.error SECTION must be defined
 .endif
 .if target(paper.ps)
-.error "bsd.doc.mk: target(paper.ps) is true -- this is not allowed"
+.error target(paper.ps) is defined -- this is not allowed
 .endif
 
 # 20130908 dholland: right now we cannot generate pdf from roff sources,
@@ -196,9 +196,9 @@ print: ;
 .PHONY: print
 .for SA in ${SUBARTICLES}
 print: print.${SA}
-.PHONY: print.{SA}
+.PHONY: print.${SA}
 print.${SA}: ${SA}.ps
-	lpr -P${PRINTER} ${.ALLSRC}
+	lpr ${PRINTER:D-P${PRINTER}} ${.ALLSRC}
 .endfor
 .endif
 
@@ -206,9 +206,9 @@ spell: ;
 .PHONY: spell
 .for SA in ${SUBARTICLES}
 spell: spell.${SA}
-.PHONY: spell.{SA}
-spell.${SA}: ${SRCS2} ${DEPSRCS2}
-	spell ${SRCS2} | sort | comm -23 - spell.ok > paper.spell
+.PHONY: spell.${SA}
+spell.${SA}: ${SRCS2.${SA}} ${DEPSRCS2.${SA}}
+	spell ${SRCS2.${SA}} | sort | comm -23 - spell.ok > paper.spell
 .endfor
 
 ##### Pull in related .mk logic
