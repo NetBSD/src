@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.405 2025/03/26 13:00:53 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.406 2025/04/11 20:31:24 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1468,6 +1468,7 @@ RPL	requested privilege level
 RPM	revolutions per minute
 RPN	reverse Polish notation
 RPVST	Rapid Per-VLAN Spanning Tree
+RPZ	response policy zone
 RR	random replacement
 RR	resource record
 RR	round robin
