@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_refresh.3,v 1.13 2017/01/05 09:46:32 wiz Exp $
+.\"	$NetBSD: curses_refresh.3,v 1.14 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -66,16 +66,16 @@
 .Fn is_leaveok "const WINDOW *win"
 .Sh DESCRIPTION
 These functions update the terminal with the contents of
-.Dv stdscr
+.Va stdscr
 or of the specified window(s).
 .Pp
 The
 .Fn refresh
 function causes curses to propagate changes made to
-.Dv stdscr
+.Va stdscr
 to the terminal display.
 Any changes made to subwindows of
-.Dv stdscr
+.Va stdscr
 are also propagated.
 .Pp
 The

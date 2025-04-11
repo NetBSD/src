@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_attributes.3,v 1.11 2021/08/03 07:58:50 nia Exp $
+.\"	$NetBSD: curses_attributes.3,v 1.12 2025/04/11 23:57:20 uwe Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -94,7 +94,7 @@
 .Fn wattr_get "WINDOW *win" "attr_t *attr" "short *pair" "void *opt"
 .Sh DESCRIPTION
 These functions manipulate attributes on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 The attributes that can be manipulated are:
 .Pp
@@ -129,18 +129,18 @@ The
 function turns on the attributes specified in
 .Fa attr
 on
-.Dv stdscr ,
+.Va stdscr ,
 while the
 .Fn attroff
 function turns off the attributes specified in
 .Fa attr
 on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The function
 .Fn attrset
 sets the attributes of
-.Dv stdscr
+.Va stdscr
 to those specified in
 .Fa attr ,
 turning off any others.
@@ -188,7 +188,7 @@ specified by
 .Fa win .
 .Pp
 The following functions additionally manipulate wide attributes on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 The additional wide attributes that can be manipulated are:
 .Pp
@@ -231,18 +231,18 @@ The
 function turns on the wide attributes specified in
 .Fa attr
 on
-.Dv stdscr ,
+.Va stdscr ,
 while the
 .Fn attr_off
 function turns off the wide attributes specified in
 .Fa attr
 on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The function
 .Fn attr_set
 sets the wide attributes of
-.Dv stdscr
+.Va stdscr
 to those specified in
 .Fa attr
 and
@@ -260,7 +260,7 @@ sets
 to the wide attributes and
 .Fa pair
 to the color pair currently applied to
-.Dv stdscr .
+.Va stdscr .
 Either of
 .Fa attr
 and

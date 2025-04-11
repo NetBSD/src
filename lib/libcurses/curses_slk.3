@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_slk.3,v 1.2 2018/09/29 22:04:57 kamil Exp $
+.\"	$NetBSD: curses_slk.3,v 1.3 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ For those terminals that do not have soft labels, Curses takes over the bottom
 line of
 .Dv stdstr ,
 reducing the size of
-.Dv stdscr
+.Va stdscr
 and the value of the
 .Dv LINES
 external variable.
@@ -109,7 +109,7 @@ is called.
 If
 .Xr newterm 3
 eventually uses a line from
-.Dv stdscr
+.Va stdscr
 to emulate the soft labels, then
 .Fa fmt
 determines how the labels are arranged on the screen from the following list:

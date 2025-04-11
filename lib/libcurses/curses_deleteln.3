@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_deleteln.3,v 1.4 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_deleteln.3,v 1.5 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -48,13 +48,13 @@
 .Fn wdeleteln "WINDOW *win"
 .Sh DESCRIPTION
 These functions delete a single line from
-.Dv stdscr
+.Va stdscr
 or from the specified window.
 .Pp
 The
 .Fn deleteln
 function deletes the screen line containing the cursor in the
-.Dv stdscr .
+.Va stdscr .
 The
 .Fn wdeleteln
 function is the same as the

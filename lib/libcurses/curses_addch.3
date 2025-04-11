@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_addch.3,v 1.10 2018/10/25 10:36:56 uwe Exp $
+.\"	$NetBSD: curses_addch.3,v 1.11 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -54,7 +54,7 @@
 .Fn mvwaddch "WINDOW *win" "int y" "int x" "chtype ch"
 .Sh DESCRIPTION
 These functions add characters to
-.Dv stdscr
+.Va stdscr
 or to the specified window.
 .Pp
 The
@@ -62,12 +62,12 @@ The
 function adds the character given in
 .Fa ch
 to
-.Dv stdscr
+.Va stdscr
 at the current cursor position and advances the current cursor position by one.
 Any character attributes set in
 .Fa ch
 will be merged with the background attributes currently set on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The
 .Fn waddch

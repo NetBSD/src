@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.29 2024/05/17 23:32:50 uwe Exp $
+.\"	$NetBSD: curses_screen.3,v 1.30 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -174,7 +174,7 @@ changed terminal geometry.
 The
 .Dv curscr
 and
-.Dv stdscr
+.Va stdscr
 windows and any of their subwindows will be resized to fit the new
 screen size.
 The application must redraw the screen after a call to
@@ -219,7 +219,7 @@ Set lines equal to 1.
 The
 .Fn ripoffline
 function will rip a line from
-.Dv stdscr
+.Va stdscr
 at the top if
 .Fa line
 is positive, or at the bottom if negative.

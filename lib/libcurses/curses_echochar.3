@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_echochar.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: curses_echochar.3,v 1.4 2025/04/11 23:57:20 uwe Exp $
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -46,7 +46,7 @@
 .Fn pechochar "WINDOW *pad" "const chtype ch"
 .Sh DESCRIPTION
 These functions add characters to
-.Dv stdscr
+.Va stdscr
 or to the specified window or pad and then cause an immediate
 .Fn refresh
 of that window or pad.
@@ -56,13 +56,13 @@ The
 function adds the character given in
 .Fa ch
 to
-.Dv stdscr
+.Va stdscr
 at the current cursor position and advances the current cursor position by one.
 Any character attributes set in
 .Fa ch
 will be merged with the background attributes currently set on
-.Dv stdscr .
-.Dv stdscr
+.Va stdscr .
+.Va stdscr
 is then refreshed.
 Calling
 .Fn echochar

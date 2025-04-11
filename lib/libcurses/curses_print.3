@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_print.3,v 1.7 2011/04/06 08:38:43 jruoho Exp $
+.\"	$NetBSD: curses_print.3,v 1.8 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -57,13 +57,13 @@
 .Fn unctrl "chtype ch"
 .Sh DESCRIPTION
 These functions print formatted strings on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 The
 .Fn printw
 function formats and prints its arguments on
-.Dv stdscr .
+.Va stdscr .
 The behavior is deliberately similar to that of
 .Xr printf 3 ,
 but, notably, the return value differs.

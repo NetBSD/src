@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_line.3,v 1.6 2010/02/20 10:23:04 wiz Exp $
+.\"	$NetBSD: curses_line.3,v 1.7 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -66,7 +66,7 @@
 .Fn mvwhline "WINDOW *win" "int y" "int x" "chtype c" "int n"
 .Sh DESCRIPTION
 These functions draw lines on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 The
@@ -74,11 +74,11 @@ The
 function draws a horizontal line of the character
 .Fa ch
 on
-.Dv stdscr
+.Va stdscr
 starting at the current cursor position and extending for
 .Fa n
 characters, or until the right hand side of
-.Dv stdscr
+.Va stdscr
 is reached.
 If the text portion of
 .Fa ch
@@ -98,11 +98,11 @@ The
 function draws a vertical line of character
 .Fa ch
 on
-.Dv stdscr
+.Va stdscr
 starting at the current cursor position and moving down until either
 .Fa n
 characters have been drawn or the bottom of
-.Dv stdscr
+.Va stdscr
 is reached.
 If the text portion of
 .Fa ch

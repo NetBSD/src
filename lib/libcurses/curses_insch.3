@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_insch.3,v 1.2 2018/10/25 10:41:00 uwe Exp $
+.\"	$NetBSD: curses_insch.3,v 1.3 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -54,7 +54,7 @@
 .Fn mvwinsch "WINDOW *win" "int y" "int x" "chtype ch"
 .Sh DESCRIPTION
 These functions insert characters on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 The
@@ -62,7 +62,7 @@ The
 function inserts the character given in
 .Fa ch
 at the current cursor position on
-.Dv stdscr .
+.Va stdscr .
 The cursor is not advanced and wrapping is not performed.
 .Pp
 The

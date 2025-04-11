@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_scanw.3,v 1.5 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_scanw.3,v 1.6 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -54,7 +54,7 @@
 .Fn mvwscanw "WINDOW *win" "int y" "int x" "const char *fmt" "..."
 .Sh DESCRIPTION
 These functions read formatted data from
-.Dv stdscr
+.Va stdscr
 or from the specified window.
 .Pp
 The
@@ -63,7 +63,7 @@ function is the same as the
 .Fn scanf
 function, excepting that the input data stream is read from the current
 cursor position on
-.Dv stdscr ,
+.Va stdscr ,
 .Pp
 The
 .Fn wscanw

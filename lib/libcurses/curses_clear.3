@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_clear.3,v 1.4 2019/01/11 06:14:39 dholland Exp $
+.\"	$NetBSD: curses_clear.3,v 1.5 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -69,7 +69,7 @@
 .Fn wclrtoeol "WINDOW *win"
 .Sh DESCRIPTION
 These functions clear all or part of
-.Dv stdscr
+.Va stdscr
 or of the specified window.
 .Pp
 The
@@ -77,7 +77,7 @@ The
 and
 .Fn erase
 functions erase all characters on
-.Dv stdscr .
+.Va stdscr .
 These differ in that
 .Fn clear
 uses
@@ -108,11 +108,11 @@ to clear and completely redraw the window given in
 The function
 .Fn clrtobot
 will clear
-.Dv stdscr
+.Va stdscr
 from the current row to the bottom of the screen.
 .Fn clrtoeol
 will clear
-.Dv stdscr
+.Va stdscr
 from the current column position to the end of the line.
 .Fn wclrtobot
 and
@@ -122,7 +122,7 @@ are the same as
 and
 .Fn clrtoeol ,
 respectively, excepting the window specified is operated on instead of
-.Dv stdscr .
+.Va stdscr .
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL

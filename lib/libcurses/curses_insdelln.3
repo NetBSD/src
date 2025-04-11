@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_insdelln.3,v 1.3 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_insdelln.3,v 1.4 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -48,7 +48,7 @@
 .Fn winsdelln "WINDOW *win" "int n"
 .Sh DESCRIPTION
 These functions insert or delete lines on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 If
@@ -56,7 +56,7 @@ If
 is called with a positive number in
 .Fa n ,
 then the specified number of lines are inserted before the current line on
-.Dv stdscr .
+.Va stdscr .
 The last
 .Fa n
 lines of the screen are no longer displayed.
@@ -65,12 +65,12 @@ If
 is negative, then
 .Fa n
 lines are deleted from
-.Dv stdscr ,
+.Va stdscr ,
 starting at the current line.
 The last
 .Fa n
 lines of
-.Dv stdscr
+.Va stdscr
 are cleared.
 .Pp
 The

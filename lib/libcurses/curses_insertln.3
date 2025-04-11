@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_insertln.3,v 1.4 2006/02/05 17:07:13 jdc Exp $
+.\"	$NetBSD: curses_insertln.3,v 1.5 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -48,13 +48,13 @@
 .Fn winsertln "WINDOW *win"
 .Sh DESCRIPTION
 These functions insert a single line on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 The
 .Fn insertln
 function inserts a blank line before the current line on
-.Dv stdscr .
+.Va stdscr .
 The current line and all lines below are moved down one line away from
 the cursor and the bottom line of the window is lost.
 .Pp

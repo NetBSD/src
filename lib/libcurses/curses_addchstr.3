@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_addchstr.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: curses_addchstr.3,v 1.4 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Douwe Kiela (virtus@wanadoo.nl)
@@ -65,7 +65,7 @@
 .Fn mvwaddchnstr "WINDOW *win" "int y" "int x" "const chtype *chstr" "int n"
 .Sh DESCRIPTION
 These functions add character strings and attributes to
-.Dv stdscr
+.Va stdscr
 or to the specified window.
 .Pp
 The
@@ -73,12 +73,12 @@ The
 function will add the characters and their attributes passed in
 .Fa chstr
 to
-.Dv stdscr
+.Va stdscr
 starting at the current cursor position.
 Any character attributes set in
 .Fa chstr
 will be merged with the background attributes currently set on
-.Dv stdscr .
+.Va stdscr .
 The
 .Fn waddstr
 function does the same as
@@ -91,7 +91,7 @@ The
 function will add the contents of
 .Fa string
 to
-.Dv stdscr
+.Va stdscr
 but will limit the number of characters added to be, at most,
 .Fa n .
 If
@@ -103,7 +103,7 @@ will add the number of characters contained in the null terminated string
 Any character attributes set in
 .Fa chstr
 will be merged with the background attributes currently set on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The
 .Fn waddchnstr

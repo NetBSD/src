@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_inch.3,v 1.14 2018/10/29 21:06:13 wiz Exp $
+.\"	$NetBSD: curses_inch.3,v 1.15 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -96,13 +96,13 @@
 .Fn mvwinstr "WINDOW *win" "int y" "int x" "char *str"
 .Sh DESCRIPTION
 These functions read the contents of
-.Dv stdscr
+.Va stdscr
 or of the specified window.
 .Pp
 The
 .Fn inch
 function returns the character that is displayed on
-.Dv stdscr
+.Va stdscr
 at the current cursor position.
 .Pp
 The
@@ -117,7 +117,7 @@ The
 function fills an array of
 .Ft chtype
 with characters read from
-.Dv stdscr ,
+.Va stdscr ,
 the characters are read starting from the current cursor position and
 continuing until either n \- 1 characters are read or the right hand
 side of the screen is reached.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_delch.3,v 1.4 2018/10/25 10:36:56 uwe Exp $
+.\"	$NetBSD: curses_delch.3,v 1.5 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -48,13 +48,13 @@
 .Fn wdelch "WINDOW *win"
 .Sh DESCRIPTION
 These functions delete characters from
-.Dv stdscr
+.Va stdscr
 or from the specified window.
 .Pp
 The
 .Fn delch
 function deletes the character at the current cursor position on
-.Dv stdscr .
+.Va stdscr .
 Characters to the right of the deleted character are moved one position
 to the left.
 The cursor position is unchanged.

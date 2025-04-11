@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.32 2024/05/14 10:40:41 uwe Exp $
+.\"	$NetBSD: curses_input.3,v 1.33 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -118,7 +118,7 @@ descriptor.
 The
 .Fn getch
 function reads a character from the
-.Dv stdscr
+.Va stdscr
 input file descriptor and returns it.
 If the
 .Fn keypad
@@ -138,7 +138,7 @@ Calling
 will cause an implicit
 .Fn refresh
 on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The
 .Fn wgetch
@@ -336,7 +336,7 @@ The
 function affects the behaviour of
 .Fn getch
 when reading a character from
-.Dv stdscr .
+.Va stdscr .
 If
 .Fa delay
 is negative, then
