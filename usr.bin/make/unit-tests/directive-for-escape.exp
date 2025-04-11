@@ -108,7 +108,7 @@ For: loop body with i = "
 ":
 Parsing directive-for-escape.mk:236: .for i in "${.newline}"
 For: end for 1
-Parse_PushInput: .for loop in directive-for-escape.mk, line 236
+Parse_PushInput: .for loop in directive-for-escape.mk:236
 make: directive-for-escape.mk:236: newline in .for value
 	in .for loop from directive-for-escape.mk:236 with i = "
 "
@@ -118,7 +118,7 @@ For: loop body with i = "
 SetFilenameVars: ${.PARSEDIR} = <some-dir> ${.PARSEFILE} = `directive-for-escape.mk'
 Parsing directive-for-escape.mk:237: : ${:U" "}
 ParseDependency(: " ")
-ParseEOF: returning to file directive-for-escape.mk, line 239
+ParseEOF: returning to directive-for-escape.mk:239
 SetFilenameVars: ${.PARSEDIR} = <some-dir> ${.PARSEFILE} = `directive-for-escape.mk'
 Parsing directive-for-escape.mk:239: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)

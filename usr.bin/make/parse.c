@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.741 2025/03/30 21:24:57 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.742 2025/04/11 17:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.741 2025/03/30 21:24:57 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.742 2025/04/11 17:21:31 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2158,8 +2158,8 @@ Parse_PushInput(const char *name, unsigned lineno, unsigned readLines,
 	else
 		TrackInput(name);
 
-	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %u\n",
-	    forLoop != NULL ? ".for loop in": "file", name, lineno);
+	DEBUG3(PARSE, "Parse_PushInput: %s%s:%u\n",
+	    forLoop != NULL ? ".for loop in ": "", name, lineno);
 
 	curFile = Vector_Push(&includes);
 	curFile->name = FStr_InitOwn(bmake_strdup(name));
@@ -2337,7 +2337,7 @@ ParseEOF(void)
 	}
 
 	curFile = CurFile();
-	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %u\n",
+	DEBUG2(PARSE, "ParseEOF: returning to %s:%u\n",
 	    curFile->name.str, curFile->readLines + 1);
 
 	SetParseFile(curFile->name.str);
