@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.13 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: curses_color.3,v 1.14 2025/04/11 23:41:14 uwe Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -66,9 +66,9 @@
 .Ft attr_t
 .Fn no_color_attributes void
 .Pp
-.Va extern int COLOR_PAIRS ;
+.Vt extern int Va COLORS ;
 .Pp
-.Va extern int COLORS ;
+.Vt extern int Va COLOR_PAIRS ;
 .Sh DESCRIPTION
 These functions manipulate color on terminals that support color attributes.
 .Pp
@@ -100,7 +100,7 @@ blue, magenta, cyan and white) that are specified using the color macros
 (such as
 .Dv COLOR_BLACK )
 defined in
-.Em <curses.h> .
+.In curses.h .
 .Fn start_color
 also initializes the global external variables
 .Va COLORS
@@ -130,23 +130,24 @@ for color-pair number
 The valid range for the color-pair
 .Fa pair
 is from 1 to
-.Va COLOR_PAIRS
-\&- 1
+.Va COLOR_PAIRS Ns No \|\-\|1
 and the valid range for the colors is any number less than
 .Va COLORS .
 Specifying a negative number will set that color to the default foreground
 or background color.
 The 8 initial colors are defined as:
-.Bl -tag -width "COLOR_MAGENTA" -compact -offset indent
-.It COLOR_BLACK
-.It COLOR_RED
-.It COLOR_GREEN
-.It COLOR_YELLOW
-.It COLOR_BLUE
-.It COLOR_MAGENTA
-.It COLOR_CYAN
-.It COLOR_WHITE
+.Pp
+.Bl -inset -compact -offset indent
+.It Dv COLOR_BLACK
+.It Dv COLOR_RED
+.It Dv COLOR_GREEN
+.It Dv COLOR_YELLOW
+.It Dv COLOR_BLUE
+.It Dv COLOR_MAGENTA
+.It Dv COLOR_CYAN
+.It Dv COLOR_WHITE
 .El
+.Pp
 Color-pair 0 is used as the default color pair, so changing this will
 have no effect.
 Use the function
@@ -212,7 +213,11 @@ The functions
 .Fn init_color
 and
 .Fn color_content
-return OK on success and ERR on failure.
+return
+.Dv OK
+on success and
+.Dv ERR
+on failure.
 .Sh SEE ALSO
 .Xr curses_attributes 3 ,
 .Xr curses_background 3 ,
