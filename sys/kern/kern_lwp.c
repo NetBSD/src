@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.269 2023/12/20 21:03:50 andvar Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.270 2025/04/11 16:04:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -168,7 +168,7 @@
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSONPROC, LSZOMB, LSSUPENDED:
+ *	LSIDL, LSONPROC, LSZOMB, LSSUSPENDED:
  *
  *		Always covered by spc_lwplock, which protects LWPs not
  *		associated with any other sync object.  This is a per-CPU
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.269 2023/12/20 21:03:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.270 2025/04/11 16:04:43 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
