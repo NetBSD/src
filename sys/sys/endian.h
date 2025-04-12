@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.31.4.1 2024/10/11 19:07:20 martin Exp $	*/
+/*	$NetBSD: endian.h,v 1.31.4.2 2025/04/12 12:56:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -112,15 +112,15 @@ __END_DECLS
  * Macros for network/external number representation conversion.
  */
 #if BYTE_ORDER == BIG_ENDIAN && !defined(__lint__)
-#define	ntohl(x)	(x)
-#define	ntohs(x)	(x)
-#define	htonl(x)	(x)
-#define	htons(x)	(x)
+#define	ntohl(x)	__CAST(uint32_t, (x))
+#define	ntohs(x)	__CAST(uint16_t, (x))
+#define	htonl(x)	__CAST(uint32_t, (x))
+#define	htons(x)	__CAST(uint16_t, (x))
 
-#define	NTOHL(x)	(void) (x)
-#define	NTOHS(x)	(void) (x)
-#define	HTONL(x)	(void) (x)
-#define	HTONS(x)	(void) (x)
+#define	NTOHL(x)	__CAST(void, (x))
+#define	NTOHS(x)	__CAST(void, (x))
+#define	HTONL(x)	__CAST(void, (x))
+#define	HTONS(x)	__CAST(void, (x))
 
 #else	/* LITTLE_ENDIAN || defined(__lint__) */
 
@@ -141,9 +141,9 @@ __END_DECLS
 
 #if BYTE_ORDER == BIG_ENDIAN
 
-#define htobe16(x)	(x)
-#define htobe32(x)	(x)
-#define htobe64(x)	(x)
+#define htobe16(x)	__CAST(uint16_t, (x))
+#define htobe32(x)	__CAST(uint32_t, (x))
+#define htobe64(x)	__CAST(uint64_t, (x))
 #define htole16(x)	bswap16(__CAST(uint16_t, (x)))
 #define htole32(x)	bswap32(__CAST(uint32_t, (x)))
 #define htole64(x)	bswap64(__CAST(uint64_t, (x)))
@@ -160,9 +160,9 @@ __END_DECLS
 #define htobe16(x)	bswap16(__CAST(uint16_t, (x)))
 #define htobe32(x)	bswap32(__CAST(uint32_t, (x)))
 #define htobe64(x)	bswap64(__CAST(uint64_t, (x)))
-#define htole16(x)	(x)
-#define htole32(x)	(x)
-#define htole64(x)	(x)
+#define htole16(x)	__CAST(uint16_t, (x))
+#define htole32(x)	__CAST(uint32_t, (x))
+#define htole64(x)	__CAST(uint64_t, (x))
 
 #define HTOBE16(x)	(x) = bswap16(__CAST(uint16_t, (x)))
 #define HTOBE32(x)	(x) = bswap32(__CAST(uint32_t, (x)))
