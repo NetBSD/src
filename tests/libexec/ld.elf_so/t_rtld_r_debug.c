@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.7 2025/04/12 18:02:38 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.8 2025/04/12 18:17:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@ get_dynamic_section(void)
 	phdr = (void *)getauxval(AT_PHDR);
 	phnum = (Elf_Half)getauxval(AT_PHNUM);
 
+	printf("AT_PHDR=%p\n", phdr);
+	printf("AT_PHNUM=%d\n", phnum);
+
 	ATF_REQUIRE(phdr != NULL);
 	ATF_REQUIRE(phnum != (Elf_Half)~0);
 
@@ -67,6 +70,14 @@ get_dynamic_section(void)
 	dynphdr = NULL;
 
 	for (; phdr < phlimit; ++phdr) {
+		printf("phdr %p: type=%d flags=0x%x"
+		    " vaddr=0x%lx paddr=0x%lx"
+		    " filesz=0x%lx memsz=0x%lx"
+		    " align=0x%lx\n",
+		    phdr, phdr->p_type, phdr->p_flags,
+		    (long)phdr->p_vaddr, (long)phdr->p_paddr,
+		    (long)phdr->p_filesz, (long)phdr->p_memsz,
+		    (long)phdr->p_align);
 		if (phdr->p_type == PT_DYNAMIC)
 			dynphdr = phdr;
 		if (phdr->p_type == PT_PHDR)
@@ -83,6 +94,8 @@ get_rtld_r_debug(void)
 	Elf_Dyn *dynp;
 
 	for (dynp = get_dynamic_section(); dynp->d_tag != DT_NULL; dynp++) {
+		printf("dynp %p: tag=%ld val=0x%lx\n", dynp,
+		    (long)dynp->d_tag, (long)dynp->d_un.d_val);
 		if (dynp->d_tag == DT_DEBUG) {
 			debug = (void *)dynp->d_un.d_val;
 			break;
