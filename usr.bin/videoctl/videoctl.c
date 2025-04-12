@@ -1,4 +1,4 @@
-/* $NetBSD: videoctl.c,v 1.3 2021/02/19 11:39:11 rillig Exp $ */
+/* $NetBSD: videoctl.c,v 1.4 2025/04/12 07:54:39 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,9 +29,10 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: videoctl.c,v 1.3 2021/02/19 11:39:11 rillig Exp $");
+__RCSID("$NetBSD: videoctl.c,v 1.4 2025/04/12 07:54:39 mlelstv Exp $");
 
 #include <sys/types.h>
+#include <sys/endian.h>
 #include <sys/ioctl.h>
 #include <sys/videoio.h>
 
@@ -46,6 +47,7 @@ __RCSID("$NetBSD: videoctl.c,v 1.3 2021/02/19 11:39:11 rillig Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <util.h>
+#include <vis.h>
 
 __dead static void	usage(void);
 static void		video_print(const char *);
@@ -237,36 +239,94 @@ video_print_caps(const char *name)
 }
 
 static bool
-video_print_formats(const char *name)
+video_print_one_format(unsigned long fmtnum, unsigned long sizenum)
 {
 	struct v4l2_fmtdesc fmtdesc;
+	struct v4l2_frmsizeenum framesize;
+	unsigned long n;
 	int error;
 
 	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmtdesc.index = fmtnum;
+	error = ioctl(video_fd, VIDIOC_ENUM_FMT, &fmtdesc);
+	if (error)
+		return false;
+
+	printf("info.format.%u=%s\n", fmtdesc.index,
+	    fmtdesc.description);
+
+	if (sizenum == ULONG_MAX)
+		n = 0;
+	else
+		n = sizenum;
+		
+	while (n <= sizenum) {
+		framesize.index = n++;
+		framesize.pixel_format = fmtdesc.pixelformat;
+		error = ioctl(video_fd, VIDIOC_ENUM_FRAMESIZES, &framesize);
+		if (error)
+			break;
+
+		switch (framesize.type) {
+		case V4L2_FRMIVAL_TYPE_DISCRETE:
+		case V4L2_FRMIVAL_TYPE_CONTINUOUS:
+			printf("info.format.%u.size.%u=%ux%u\n",
+				fmtdesc.index, framesize.index,
+				framesize.discrete.width,
+				framesize.discrete.height);
+			break;
+		case V4L2_FRMIVAL_TYPE_STEPWISE:
+			printf("info.format.%u.size.%u=(%u,%u,%u)x(%u,%u,%u)\n",
+				fmtdesc.index, framesize.index,
+				framesize.stepwise.min_width,
+				framesize.stepwise.max_width,
+				framesize.stepwise.step_width,
+				framesize.stepwise.min_height,
+				framesize.stepwise.max_height,
+				framesize.stepwise.step_height);
+			break;
+		default:
+			printf("info.format.%u.size.%u=type %u\n",
+				fmtdesc.index, framesize.index,
+				framesize.type);
+		}
+	}
+
+	return true;
+}
+
+static bool
+video_print_formats(const char *name)
+{
+	unsigned long n, m = ULONG_MAX;
+	const char *p;
+
 	if (name == NULL) {
 		/* enumerate formats */
-		for (fmtdesc.index = 0; ; fmtdesc.index++) {
-			error = ioctl(video_fd, VIDIOC_ENUM_FMT, &fmtdesc);
-			if (error)
+		for (n = 0; ; n++) {
+			if (!video_print_one_format(n, m))
 				break;
-			printf("info.format.%u=%s\n", fmtdesc.index,
-			    fmtdesc.description);
 		}
 	} else {
-		unsigned long n;
-
-		if (strtok(NULL, ".") != NULL)
-			return false;
-
+		p = strtok(NULL, ".");
 		n = strtoul(name, NULL, 10);
 		if (n == ULONG_MAX)
 			return false;
-		fmtdesc.index = n;
-		error = ioctl(video_fd, VIDIOC_ENUM_FMT, &fmtdesc);
-		if (error)
-			return false;
-		printf("info.format.%u=%s\n", fmtdesc.index,
-		    fmtdesc.description);
+
+		if (p != NULL) {
+			if (strcmp(p, "size") == 0) {
+				p = strtok(NULL, ".");
+				if (p != NULL) {
+					m = strtoul(p, NULL, 10);
+					if (m == ULONG_MAX)
+						return false;
+				}
+			} else
+				return false;
+		}
+
+
+		video_print_one_format(n, m);
 	}
 
 	return true;
