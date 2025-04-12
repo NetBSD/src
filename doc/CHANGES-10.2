@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.14 2025/04/04 16:24:50 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.15 2025/04/12 12:58:19 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -421,4 +421,71 @@ sys/arch/vax/vsa/spx.c				1.13
 
 	vax/spx(4): fix a few X11-related bugs.
 	[hans, ticket #1087]
+
+usr.sbin/installboot/arch/hp300.c		1.20
+
+	hp300: fix installboot(8) for ISO9660 images
+	[tsutsui, ticket #1088]
+
+sys/netinet6/nd6.c				1.283
+
+	IPv6: optimize ND processing slightly.
+	[ozaki-r, ticket #1089]
+
+games/rogue/monster.c				1.18
+games/rogue/object.c				1.15
+games/rogue/play.c				1.11
+games/rogue/rogue.h				1.25
+games/rogue/save.c				1.15
+
+	rogue(6): fix two segmentation faults.
+	[hgutch, ticket #1090]
+
+sys/dev/usb/if_axen.c				1.95,1.96
+
+	axen(4): add support for AX88179A.
+	[hgutch, ticket #1091]
+
+sys/kern/subr_log.c				1.64-1.66
+
+	logread: stop reading msgbuf without log_lock being held.
+	[rin, ticket #1092]
+
+external/public-domain/tz/dist/zoneinfo2tdf.pl  delete
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.9
+external/public-domain/tz/dist/Makefile         up to 1.3
+external/public-domain/tz/dist/NEWS             up to 1.3
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.41
+external/public-domain/tz/dist/africa           up to 1.2
+external/public-domain/tz/dist/antarctica       up to 1.3
+external/public-domain/tz/dist/asia             up to 1.14
+external/public-domain/tz/dist/australasia      up to 1.11
+external/public-domain/tz/dist/backward         up to 1.12
+external/public-domain/tz/dist/backzone         up to 1.2
+external/public-domain/tz/dist/checknow.awk     up to 1.3
+external/public-domain/tz/dist/checktab.awk     up to 1.3
+external/public-domain/tz/dist/etcetera         up to 1.3
+external/public-domain/tz/dist/europe           up to 1.3
+external/public-domain/tz/dist/factory          up to 1.3
+external/public-domain/tz/dist/leap-seconds.list up to 1.9
+external/public-domain/tz/dist/leapseconds      up to 1.9
+external/public-domain/tz/dist/northamerica     up to 1.3
+external/public-domain/tz/dist/southamerica     up to 1.3
+external/public-domain/tz/dist/theory.html      up to 1.3
+external/public-domain/tz/dist/version          up to 1.14
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.11
+external/public-domain/tz/dist/zone.tab         up to 1.3
+external/public-domain/tz/dist/zone1970.tab     up to 1.3
+external/public-domain/tz/dist/zonenow.tab      up to 1.3
+distrib/sets/lists/base/mi			(apply patch)
+doc/3RDPARTY					(apply patch)
+
+	Updated tzdata to 2025b (using 2025btgz)
+	[kre, ticket #1094]
+
+sys/sys/endian.h				1.36,1.37
+
+	endian.h: PR 57478: fix returned types for byte-order-conversion
+	macros.
+	[rin, ticket #1095]
 
