@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.227 2024/10/23 00:45:58 kalvisd Exp $
+#	$NetBSD: Makefile,v 1.228 2025/04/12 10:07:53 rin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -65,7 +65,7 @@ DTRACE_BITS+= .WAIT elftoolchain/libdwarf
 DTRACE_BITS+= .WAIT libctf
 .endif
 .if ${MKCTF} != "no"
-DTRACE_BITS+= .WAIT ctfconvert ctfmerge
+DTRACE_BITS+= .WAIT ctfconvert ctfdump ctfmerge
 .endif
 
 LINT_BITS=
