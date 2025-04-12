@@ -1,12 +1,12 @@
-/*	$NetBSD: msg_036.c,v 1.4 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_036.c,v 1.5 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_036.c"
 
-// Test for message: illegal bit-field size: %d [36]
+// Test for message: invalid bit-field size: %d [36]
 
 struct example {
-	/* expect+1: error: illegal bit-field size: 160 [36] */
+	/* expect+1: error: invalid bit-field size: 160 [36] */
 	unsigned int too_large: 100000;
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/* expect+1: error: invalid bit-field size: 255 [36] */
 	unsigned int negative: -1;
 	unsigned int ok: 3;
 };

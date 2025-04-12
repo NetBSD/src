@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.680 2025/04/10 20:37:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.681 2025/04/12 15:49:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.680 2025/04/10 20:37:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.681 2025/04/12 15:49:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1727,7 +1727,7 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 		t = FLOAT;
 		break;
 	default:
-		/* '__%s__' is illegal for type '%s' */
+		/* '__%s__' is invalid for type '%s' */
 		error(276, op == REAL ? "real" : "imag",
 		    type_name(ln->tn_type));
 		return NULL;
@@ -2260,10 +2260,10 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (sou != NULL) {
 		if (eq && !allow_c90)
-			/* illegal use of member '%s' */
+			/* invalid use of member '%s' */
 			warning(102, msym->s_name);
 		else
-			/* illegal use of member '%s' */
+			/* invalid use of member '%s' */
 			error(102, msym->s_name);
 		return msym;
 	}
@@ -2477,7 +2477,7 @@ warn_incompatible_types(op_t op,
 	bool binary = modtab[op].m_binary;
 
 	if (lt == VOID || (binary && rt == VOID)) {
-		/* void type illegal in expression */
+		/* void type invalid in expression */
 		error(109);
 	} else if (op == ASSIGN)
 		/* cannot assign to '%s' from '%s' */
@@ -2518,7 +2518,7 @@ typeok_minus(op_t op,
 	}
 	if (lt == PTR && rt == PTR &&
 	    !types_compatible(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
-		/* illegal pointer subtraction */
+		/* invalid pointer subtraction */
 		error(116);
 	}
 	return true;
@@ -2627,7 +2627,7 @@ warn_incompatible_pointers(op_t op, const type_t *ltp, const type_t *rtp)
 
 	if (is_struct_or_union(lt) && is_struct_or_union(rt)) {
 		if (op == RETURN)
-			/* illegal structure pointer combination */
+			/* invalid structure pointer combination */
 			warning(244);
 		else {
 			/* incompatible structure pointers: '%s' '%s' '%s' */
@@ -2636,10 +2636,10 @@ warn_incompatible_pointers(op_t op, const type_t *ltp, const type_t *rtp)
 		}
 	} else {
 		if (op == RETURN)
-			/* illegal combination of '%s' and '%s' */
+			/* invalid combination of '%s' and '%s' */
 			warning(184, type_name(ltp), type_name(rtp));
 		else {
-			/* illegal combination of '%s' and '%s', op '%s' */
+			/* invalid combination of '%s' and '%s', op '%s' */
 			warning(124,
 			    type_name(ltp), type_name(rtp), op_name(op));
 		}
@@ -2699,7 +2699,7 @@ typeok_compare(op_t op,
 
 	const char *lx = lt == PTR ? "pointer" : "integer";
 	const char *rx = rt == PTR ? "pointer" : "integer";
-	/* illegal combination of %s '%s' and %s '%s', op '%s' */
+	/* invalid combination of %s '%s' and %s '%s', op '%s' */
 	warning(123, lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 	return true;
 }
@@ -2763,7 +2763,7 @@ typeok_colon(const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	if ((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)) {
 		const char *lx = lt == PTR ? "pointer" : "integer";
 		const char *rx = rt == PTR ? "pointer" : "integer";
-		/* illegal combination of %s '%s' and %s '%s', op '%s' */
+		/* invalid combination of %s '%s' and %s '%s', op '%s' */
 		warning(123, lx, type_name(ltp),
 		    rx, type_name(rtp), op_name(COLON));
 		return true;
@@ -3034,17 +3034,17 @@ check_assign_pointer_integer(op_t op, int arg,
 	switch (op) {
 	case INIT:
 	case RETURN:
-		/* illegal combination of %s '%s' and %s '%s' for '%s' */
+		/* invalid combination of %s '%s' and %s '%s' for '%s' */
 		warning(183,
 		    lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 		break;
 	case FARG:
-		/* illegal combination of %s '%s' and %s '%s', arg #%d */
+		/* invalid combination of %s '%s' and %s '%s', arg #%d */
 		warning(154,
 		    lx, type_name(ltp), rx, type_name(rtp), arg);
 		break;
 	default:
-		/* illegal combination of %s '%s' and %s '%s', op '%s' */
+		/* invalid combination of %s '%s' and %s '%s', op '%s' */
 		warning(123,
 		    lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 		break;
@@ -3595,7 +3595,7 @@ should_warn_about_prototype_conversion(tspec_t nt,
  * would happen to the same argument in the absence of a prototype.  This
  * check is intended for code that needs to stay compatible with pre-C90 C.
  *
- * Errors/warnings about illegal type combinations are already printed
+ * Errors/warnings about invalid type combinations are already printed
  * in check_assign_types_compatible().
  */
 static void

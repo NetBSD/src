@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_183.c,v 1.7 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: msg_183.c,v 1.8 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_183.c"
 
-// Test for message: illegal combination of %s '%s' and %s '%s' for '%s' [183]
+// Test for message: invalid combination of %s '%s' and %s '%s' for '%s' [183]
 
 /* lint1-extra-flags: -X 351 */
 
@@ -9,7 +9,7 @@
 void *
 example(double x, int i, void *vp, int *ip, double *dp, void (*fp)(void))
 {
-	/* expect+1: warning: illegal combination of pointer 'pointer to void' and integer 'int' for 'init' [183] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to void' and integer 'int' for 'init' [183] */
 	void *local_vp = i;
 
 	if (i < 0)
@@ -17,7 +17,7 @@ example(double x, int i, void *vp, int *ip, double *dp, void (*fp)(void))
 		return x;
 
 	if (i < 1)
-		/* expect+1: warning: illegal combination of pointer 'pointer to void' and integer 'int' for 'return' [183] */
+		/* expect+1: warning: invalid combination of pointer 'pointer to void' and integer 'int' for 'return' [183] */
 		return i;
 
 	if (i < 2)

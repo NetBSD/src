@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.18 2024/05/03 19:16:13 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.19 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -175,7 +175,7 @@ sizeof_errors(void)
 	 * A 'void array' gets replaced with an 'int array' before
 	 * type_size_in_bits gets to see it, thus the 256 * 4 = 1024.
 	 */
-	/* expect+2: error: illegal use of 'void' [18] */
+	/* expect+2: error: invalid use of 'void' [18] */
 	/* expect+1: error: negative array dimension (-1024) [20] */
 	typedef int sizeof_void_array[-(int)sizeof(void[256])];
 

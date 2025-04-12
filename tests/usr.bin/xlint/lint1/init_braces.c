@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.10 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.11 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -44,14 +44,14 @@ init_string(void)
 	/* gcc-expect+4: warning: initialization of 'char' from 'char *' makes integer from pointer without a cast */
 	/* clang-expect+3: warning: incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [1]' */
 	/* clang-expect+2: warning: braces around scalar initializer */
-	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
+	/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 	char name2[] = {{ "" }};
 	/* gcc-expect+6: warning: braces around scalar initializer */
 	/* gcc-expect+5: warning: braces around scalar initializer */
 	/* gcc-expect+4: warning: initialization of 'char' from 'char *' makes integer from pointer without a cast */
 	/* clang-expect+3: warning: too many braces around scalar initializer */
 	/* clang-expect+2: warning: incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [1]' */
-	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
+	/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 	char name3[] = {{{ "" }}};
 	/* gcc-expect+8: warning: braces around scalar initializer */
 	/* gcc-expect+7: warning: braces around scalar initializer */
@@ -60,7 +60,7 @@ init_string(void)
 	/* clang-expect+4: warning: too many braces around scalar initializer */
 	/* clang-expect+3: warning: too many braces around scalar initializer */
 	/* clang-expect+2: warning: incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [1]' */
-	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
+	/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 	char name4[] = {{{{ "" }}}};
 }
 

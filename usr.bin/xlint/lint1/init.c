@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.271 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.272 2025/04/12 15:49:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.271 2024/11/13 04:32:49 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.272 2025/04/12 15:49:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -681,7 +681,7 @@ initialization_lbrace(initialization *in)
 		check_trad_no_auto_aggregate(in->in_sym);
 
 	if (!allow_c90 && tp->t_tspec == UNION)
-		/* initialization of union is illegal in traditional C */
+		/* initialization of union is invalid in traditional C */
 		warning(238);
 
 	if (is_struct_or_union(tp->t_tspec) && tp->u.sou->sou_incomplete) {

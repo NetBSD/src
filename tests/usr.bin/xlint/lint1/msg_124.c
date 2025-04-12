@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_124.c,v 1.15 2023/08/26 10:43:53 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.16 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_124.c"
 
-// Test for message: illegal combination of '%s' and '%s', op '%s' [124]
+// Test for message: invalid combination of '%s' and '%s', op '%s' [124]
 
 /* lint1-extra-flags: -s -X 191,351 */
 
@@ -15,11 +15,11 @@ typedef int(*printflike)(const char *, ...)
 void
 example(int *ptr)
 {
-	/* expect+1: warning: illegal combination of 'pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
 	signal_handler handler = ptr;
-	/* expect+1: warning: illegal combination of 'pointer to function(pointer to function(int) returning void) returning pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to function(pointer to function(int) returning void) returning pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
 	sys_signal signal = ptr;
-	/* expect+1: warning: illegal combination of 'pointer to function(pointer to const char, ...) returning int' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to function(pointer to const char, ...) returning int' and 'pointer to int', op 'init' [124] */
 	printflike printf = ptr;
 }
 
@@ -34,9 +34,9 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 	ok(vp == ip);
 	/* expect+1: warning: C90 or later forbid comparison of 'void *' with function pointer [274] */
 	ok(vp == fp);
-	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to const int', op '==' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to const char' and 'pointer to const int', op '==' [124] */
 	not_ok(cp == ip);
-	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to function(int) returning void', op '==' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to const char' and 'pointer to function(int) returning void', op '==' [124] */
 	not_ok(cp == fp);
 	ok(vp == (void *)0);
 	ok(cp == (void *)0);

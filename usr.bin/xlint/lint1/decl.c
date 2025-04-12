@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.415 2025/04/10 20:37:48 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.416 2025/04/12 15:49:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.415 2025/04/10 20:37:48 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.416 2025/04/12 15:49:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -647,7 +647,7 @@ dcs_adjust_storage_class(void)
 {
 	if (dcs->d_kind == DLK_EXTERN) {
 		if (dcs->d_scl == REG || dcs->d_scl == AUTO) {
-			/* illegal storage class */
+			/* invalid storage class */
 			error(8);
 			dcs->d_scl = NO_SCL;
 		}
@@ -707,7 +707,7 @@ dcs_merge_declaration_specifiers(void)
 		t = LDOUBLE;
 	}
 	if (t == LDOUBLE && !allow_c90)
-		/* 'long double' is illegal in traditional C */
+		/* 'long double' is invalid in traditional C */
 		warning(266);
 	if (l == LONG && t == DCOMPLEX) {
 		l = NO_TSPEC;
@@ -737,7 +737,7 @@ dcs_end_type(void)
 		/* only one storage class allowed */
 		error(7);
 	if (dcs->d_invalid_type_combination)
-		/* illegal type combination */
+		/* invalid type combination */
 		error(4);
 
 	dcs_adjust_storage_class();
@@ -891,7 +891,7 @@ check_type(sym_t *sym)
 		}
 		if (to == FUNC) {
 			if (t == FUNC || t == ARRAY) {
-				/* function returns illegal type '%s' */
+				/* function returns invalid type '%s' */
 				error(15, type_name(tp));
 				*tpp = block_derive_type(
 				    t == FUNC ? *tpp : (*tpp)->t_subt, PTR);
@@ -906,7 +906,7 @@ check_type(sym_t *sym)
 			}
 		} else if (to == ARRAY) {
 			if (t == FUNC) {
-				/* array of function is illegal */
+				/* array of function is invalid */
 				error(16);
 				*tpp = gettyp(INT);
 				return;
@@ -917,7 +917,7 @@ check_type(sym_t *sym)
 				return;
 			}
 			if (t == VOID) {
-				/* illegal use of 'void' */
+				/* invalid use of 'void' */
 				error(18);
 				*tpp = gettyp(INT);
 			}
@@ -996,7 +996,7 @@ check_bit_field_type(sym_t *dsym, type_t **inout_tp, tspec_t *inout_t)
 
 		type_t *btp = block_dup_type(tp);
 		btp->t_bitfield = false;
-		/* illegal bit-field type '%s' */
+		/* invalid bit-field type '%s' */
 		warning(35, type_name(btp));
 
 		unsigned int width = tp->t_bit_field_width;
@@ -1018,7 +1018,7 @@ check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **inout_tp)
 	tspec_t t = *inout_t;
 	unsigned int t_width = size_in_bits(t);
 	if (tp->t_bit_field_width > t_width) {
-		/* illegal bit-field size: %d */
+		/* invalid bit-field size: %d */
 		error(36, (int)tp->t_bit_field_width);
 		tp->t_bit_field_width = t_width;
 	} else if (tp->t_bit_field_width == 0 && dsym->s_name != unnamed) {
@@ -1128,7 +1128,7 @@ declare_member(sym_t *dsym)
 	if (dsym->s_bitfield)
 		check_bit_field(dsym, &t, &tp);
 	else if (t == FUNC) {
-		/* function illegal in structure or union */
+		/* function invalid in structure or union */
 		error(38);
 		dsym->s_type = tp = block_derive_type(tp, t = PTR);
 	}
@@ -1385,7 +1385,7 @@ add_function(sym_t *decl, parameter_list params)
 
 	if (params.prototype) {
 		if (!allow_c90)
-			/* function prototypes are illegal in traditional C */
+			/* function prototypes are invalid in traditional C */
 			warning(270);
 		check_prototype_parameters(params.first);
 		if (params.first != NULL
@@ -1764,7 +1764,7 @@ enumeration_constant(sym_t *sym, int val, bool implicit)
 
 	if (sym->s_scl != NO_SCL) {
 		if (sym->s_block_level == block_level) {
-			/* no hflag, because this is illegal */
+			/* no hflag, because this is invalid */
 			if (sym->s_param)
 				/* enumeration constant '%s' hides parameter */
 				warning(57, sym->s_name);
@@ -2412,7 +2412,7 @@ void
 check_func_lint_directives(void)
 {
 
-	/* check for illegal combinations of lint directives */
+	/* check for invalid combinations of lint directives */
 	if (printflike_argnum != -1 && scanflike_argnum != -1) {
 		/* ** PRINTFLIKE ** and ** SCANFLIKE ** cannot be combined */
 		warning(289);
@@ -2598,7 +2598,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 
 	} else if (rdsym->s_block_level == block_level) {
 
-		/* no hflag, because it's illegal! */
+		/* no hflag, because it's invalid! */
 		if (rdsym->s_param) {
 			/*
 			 * if allow_c90, a "redeclaration of '%s'" error is
@@ -2697,7 +2697,7 @@ declare_local(sym_t *dsym, bool has_initializer)
 			warning(93, dsym->s_name);
 			dsym->s_scl = EXTERN;
 		} else if (dsym->s_scl != EXTERN && dsym->s_scl != TYPEDEF) {
-			/* function '%s' has illegal storage class */
+			/* function '%s' has invalid storage class */
 			error(94, dsym->s_name);
 			dsym->s_scl = EXTERN;
 		}

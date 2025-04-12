@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_105.c,v 1.4 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: msg_105.c,v 1.5 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_105.c"
 
 /* Test for message: non-unique member requires struct/union %s [105] */
@@ -41,6 +41,6 @@ int
 member_of_wrong_struct(t)
 	struct three *t;
 {
-	/* expect+1: error: illegal use of member 'member' [102] */
+	/* expect+1: error: invalid use of member 'member' [102] */
 	return t->member;
 }

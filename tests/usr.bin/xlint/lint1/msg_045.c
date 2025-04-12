@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_045.c,v 1.7 2023/08/26 10:43:53 rillig Exp $	*/
+/*	$NetBSD: msg_045.c,v 1.8 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_045.c"
 
 /* Test for message: base type is really '%s %s' [45] */
@@ -16,6 +16,6 @@ function()
 	/* expect+2: error: 'counter' has incomplete type 'incomplete union counter' [31] */
 	/* expect+1: warning: union 'counter' never defined [234] */
 	union counter counter;
-	/* expect+1: warning: illegal use of member 'value' [102] */
+	/* expect+1: warning: invalid use of member 'value' [102] */
 	counter.value++;
 }

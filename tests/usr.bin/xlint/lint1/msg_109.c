@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_109.c,v 1.7 2023/08/06 19:44:50 rillig Exp $	*/
+/*	$NetBSD: msg_109.c,v 1.8 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_109.c"
 
-// Test for message: void type illegal in expression [109]
+// Test for message: void type invalid in expression [109]
 
 /* lint1-extra-flags: -X 351 */
 
@@ -9,7 +9,7 @@
 int
 example(int arg)
 {
-	/* expect+2: error: void type illegal in expression [109] */
+	/* expect+2: error: void type invalid in expression [109] */
 	/* expect+1: error: function 'example' expects to return value [214] */
 	return arg + (void)4;
 }

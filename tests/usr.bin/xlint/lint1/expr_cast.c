@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_cast.c,v 1.6 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: expr_cast.c,v 1.7 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "expr_cast.c"
 
 /*
@@ -45,7 +45,7 @@ cast_from_error(void)
 
 	/* expect+1: error: 'p' undefined [99] */
 	f1 = (void (*)(void))p;
-	/* expect+2: error: function returns illegal type 'function(void) returning pointer to void' [15] */
+	/* expect+2: error: function returns invalid type 'function(void) returning pointer to void' [15] */
 	/* expect+1: error: invalid cast from 'int' to 'function() returning pointer to function(void) returning pointer to void' [147] */
 	f1 = (void *()(void))p;		/* crash before 2021-02-28 */
 }

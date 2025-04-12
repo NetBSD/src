@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c99.c,v 1.4 2025/02/27 06:48:29 rillig Exp $	*/
+/*	$NetBSD: init_c99.c,v 1.5 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "init_c99.c"
 
 // Tests for initialization in C99 or later, mainly for designators.
@@ -254,7 +254,7 @@ struct ends_with_unnamed_bit_field {
 
 char prefixed_message[] = {
 	'E', ':', ' ',
-	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
+	/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 	"message\n",
 };
 

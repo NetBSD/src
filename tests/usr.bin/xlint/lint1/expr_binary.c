@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_binary.c,v 1.9 2025/02/27 07:02:39 rillig Exp $	*/
+/*	$NetBSD: expr_binary.c,v 1.10 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "expr_binary.c"
 
 /*
@@ -189,7 +189,7 @@ op_colon(_Bool cond)
 	cond ? return_bool() : return_sou();
 	cond ? return_bool() : return_integer();
 	cond ? return_bool() : return_floating();
-	/* expect+1: warning: illegal combination of integer '_Bool' and pointer 'pointer to char', op ':' [123] */
+	/* expect+1: warning: invalid combination of integer '_Bool' and pointer 'pointer to char', op ':' [123] */
 	cond ? return_bool() : return_pointer();
 	// FIXME: GCC doesn't warn, as the 'type mismatch' is not wrong.
 	/* expect+1: warning: incompatible types 'struct point' and 'void' in conditional [126] */
@@ -210,7 +210,7 @@ op_colon(_Bool cond)
 	cond ? return_integer() : return_sou();
 	cond ? return_integer() : return_integer();
 	cond ? return_integer() : return_floating();
-	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to char', op ':' [123] */
+	/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to char', op ':' [123] */
 	cond ? return_integer() : return_pointer();
 	/* expect+1: warning: incompatible types 'double' and 'void' in conditional [126] */
 	cond ? return_floating() : return_void();
@@ -223,11 +223,11 @@ op_colon(_Bool cond)
 	cond ? return_floating() : return_pointer();
 	/* expect+1: warning: incompatible types 'pointer to char' and 'void' in conditional [126] */
 	cond ? return_pointer() : return_void();
-	/* expect+1: warning: illegal combination of pointer 'pointer to char' and integer '_Bool', op ':' [123] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to char' and integer '_Bool', op ':' [123] */
 	cond ? return_pointer() : return_bool();
 	/* expect+1: error: incompatible types 'pointer to char' and 'struct point' in conditional [126] */
 	cond ? return_pointer() : return_sou();
-	/* expect+1: warning: illegal combination of pointer 'pointer to char' and integer 'int', op ':' [123] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to char' and integer 'int', op ':' [123] */
 	cond ? return_pointer() : return_integer();
 	/* expect+1: error: incompatible types 'pointer to char' and 'double' in conditional [126] */
 	cond ? return_pointer() : return_floating();

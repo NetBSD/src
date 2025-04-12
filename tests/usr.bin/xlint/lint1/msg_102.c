@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_102.c,v 1.6 2023/06/30 21:06:18 rillig Exp $	*/
+/*	$NetBSD: msg_102.c,v 1.7 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_102.c"
 
-// Test for message: illegal use of member '%s' [102]
+// Test for message: invalid use of member '%s' [102]
 
 // Anonymous members are defined in C11 6.7.2.1p2.
 
@@ -41,7 +41,7 @@ eq(int x)
 	 * possible but discouraged to access members of other structs via
 	 * their plain name.
 	 */
-	/* expect+2: error: illegal use of member 'bits' [102] */
-	/* expect+1: error: illegal use of member 'bits' [102] */
+	/* expect+2: error: invalid use of member 'bits' [102] */
+	/* expect+1: error: invalid use of member 'bits' [102] */
 	return b1->bits == b2->bits;
 }

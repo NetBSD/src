@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_111.c,v 1.3 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_111.c,v 1.4 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "msg_111.c"
 
 /* Test for message: unacceptable operand of '%s' [111] */
@@ -10,9 +10,9 @@ struct s {
 };
 
 void
-illegal_member_access()
+invalid_member_access()
 {
 	/* expect+2: warning: left operand of '.' must be struct or union, not 'function() returning void' [103] */
 	/* expect+1: error: unacceptable operand of '.' [111] */
-	return illegal_member_access.member;
+	return invalid_member_access.member;
 }

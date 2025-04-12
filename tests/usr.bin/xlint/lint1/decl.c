@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.34 2025/03/05 22:48:59 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.35 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -68,7 +68,7 @@ declarators(void)
 
 	/* expect+1: warning: converting 'pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(pc);
-	/* expect+1: warning: illegal combination of pointer 'pointer to double' and integer 'char', arg #1 [154] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to double' and integer 'char', arg #1 [154] */
 	sink(c);
 	/* expect+1: warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(ppc);
@@ -274,7 +274,7 @@ offsetof_on_array_member(void)
 int
 long_double_vs_long_int(long double *a, long int *b)
 {
-	/* expect+1: warning: illegal combination of 'pointer to long double' and 'pointer to long', op '==' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to long double' and 'pointer to long', op '==' [124] */
 	return a == b;
 }
 

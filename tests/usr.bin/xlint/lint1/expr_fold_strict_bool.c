@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold_strict_bool.c,v 1.3 2024/06/08 09:09:20 rillig Exp $	*/
+/*	$NetBSD: expr_fold_strict_bool.c,v 1.4 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "expr_fold_strict_bool.c"
 
 /*
@@ -16,15 +16,15 @@ typedef unsigned long long uint64_t;
 struct fold_64_bit {
 
 	_Bool lt_signed_small_ok: -3LL < 1LL ? 1 : -1;
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/* expect+1: error: invalid bit-field size: 255 [36] */
 	_Bool lt_signed_small_bad: 1LL < -3LL ? 1 : -1;
 
 	_Bool lt_signed_big_ok: (int64_t)(1ULL << 63) < 1LL ? 1 : -1;
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/* expect+1: error: invalid bit-field size: 255 [36] */
 	_Bool lt_signed_big_bad: 1LL < (int64_t)(1ULL << 63) ? 1 : -1;
 
 	_Bool lt_unsigned_small_ok: 1ULL < 3ULL ? 1 : -1;
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/* expect+1: error: invalid bit-field size: 255 [36] */
 	_Bool lt_unsigned_small_bad: 3ULL < 1ULL ? 1 : -1;
 
 	/*
@@ -35,6 +35,6 @@ struct fold_64_bit {
 	 * default mode, or '_Bool' in strict bool mode.
 	 */
 	_Bool lt_unsigned_big_ok: 1ULL < 1ULL << 63 ? 1 : -1;
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/* expect+1: error: invalid bit-field size: 255 [36] */
 	_Bool lt_unsigned_big_bad: 1ULL << 63 < 1ULL ? 1 : -1;
 };

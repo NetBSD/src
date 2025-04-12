@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.54 2025/04/10 20:37:48 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.55 2025/04/12 15:49:49 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -322,12 +322,12 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 
 	/* Implicitly converting int to bool (arg #1). */
 	/* expect+2: error: parameter 1 expects '_Bool', gets passed 'int' [334] */
-	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer 'int', arg #3 [154] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to const char' and integer 'int', arg #3 [154] */
 	take_arguments(i, i, i);
 
 	/* Implicitly converting pointer to bool (arg #1). */
 	/* expect+2: error: parameter 1 expects '_Bool', gets passed 'pointer' [334] */
-	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to const char', arg #2 [154] */
+	/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to const char', arg #2 [154] */
 	take_arguments(p, p, p);
 
 	/* Passing bool as vararg. */

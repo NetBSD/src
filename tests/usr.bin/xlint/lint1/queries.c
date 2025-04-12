@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.34 2025/02/20 20:59:34 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.35 2025/04/12 15:49:50 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -378,10 +378,10 @@ Q9(int x)
 # 379 "queries.c" 3 4
 		((void *)0)
 # 381 "queries.c"
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
+		/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		;
 	case 10:
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
+		/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		return (void *)(0);
 	default:
 		return 0;
@@ -542,9 +542,9 @@ Q20_void_pointer_conversion(void)
 	void_ptr = char_ptr;
 	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
 	int_ptr = void_ptr;
-	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to char', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to int' and 'pointer to char', op '=' [124] */
 	int_ptr = char_ptr;
-	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to int', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to char' and 'pointer to int', op '=' [124] */
 	char_ptr = int_ptr;
 
 	int_ptr = (void *)0;

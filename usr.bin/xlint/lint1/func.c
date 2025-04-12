@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.193 2025/04/10 20:16:29 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.194 2025/04/12 15:49:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.193 2025/04/10 20:16:29 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.194 2025/04/12 15:49:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -238,7 +238,7 @@ begin_function(sym_t *fsym)
 
 	if (fsym->s_scl == TYPEDEF) {
 		fsym->s_scl = EXTERN;
-		/* illegal storage class */
+		/* invalid storage class */
 		error(8);
 	}
 

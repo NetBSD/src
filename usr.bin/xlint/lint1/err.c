@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.268 2025/04/10 20:27:47 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.269 2025/04/12 15:49:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.268 2025/04/10 20:27:47 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.269 2025/04/12 15:49:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -59,21 +59,21 @@ static const char *const msgs[] = {
 	"old-style declaration; add 'int'",				// 1
 	"empty declaration",						// 2
 	"'%s' declared in parameter declaration list",			// 3
-	"illegal type combination",					// 4
+	"invalid type combination",					// 4
 	"modifying typedef with '%s'; only qualifiers allowed",		// 5
 	"use 'double' instead of 'long float'",				// 6
 	"only one storage class allowed",				// 7
-	"illegal storage class",					// 8
+	"invalid storage class",					// 8
 	"only 'register' is valid as storage class in parameter",	// 9
 	"duplicate '%s'",						// 10
 	"bit-field initializer out of range",				// 11
 	"compiler takes size of function",				// 12
 	"incomplete enum type '%s'",					// 13
 	"",								// 14
-	"function returns illegal type '%s'",				// 15
-	"array of function is illegal",					// 16
+	"function returns invalid type '%s'",				// 15
+	"array of function is invalid",					// 16
 	"null dimension",						// 17
-	"illegal use of 'void'",					// 18
+	"invalid use of 'void'",					// 18
 	"void type for '%s'",						// 19
 	"negative array dimension (%d)",				// 20
 	"redeclaration of formal parameter '%s'",			// 21
@@ -90,10 +90,10 @@ static const char *const msgs[] = {
 	"type of parameter '%s' defaults to 'int'",			// 32
 	"duplicate member name '%s'",					// 33
 	"nonportable bit-field type '%s'",				// 34
-	"illegal bit-field type '%s'",					// 35
-	"illegal bit-field size: %d",					// 36
+	"invalid bit-field type '%s'",					// 35
+	"invalid bit-field size: %d",					// 36
 	"zero size bit-field",						// 37
-	"function illegal in structure or union",			// 38
+	"function invalid in structure or union",			// 38
 	"zero-sized array '%s' in struct requires C99 or later",	// 39
 	"",			/* never used */			// 40
 	"bit-field in union is very unusual",				// 41
@@ -149,37 +149,37 @@ static const char *const msgs[] = {
 	"declaration of '%s' hides parameter",				// 91
 	"inconsistent redeclaration of static '%s'",			// 92
 	"dubious static function '%s' at block level",			// 93
-	"function '%s' has illegal storage class",			// 94
+	"function '%s' has invalid storage class",			// 94
 	"declaration of '%s' hides earlier one",			// 95
 	"cannot dereference non-pointer type '%s'",			// 96
-	"suffix 'U' is illegal in traditional C",			// 97
-	"suffixes 'F' and 'L' are illegal in traditional C",		// 98
+	"suffix 'U' is invalid in traditional C",			// 97
+	"suffixes 'F' and 'L' are invalid in traditional C",		// 98
 	"'%s' undefined",						// 99
-	"unary '+' is illegal in traditional C",			// 100
+	"unary '+' is invalid in traditional C",			// 100
 	"type '%s' does not have member '%s'",				// 101
-	"illegal use of member '%s'",					// 102
+	"invalid use of member '%s'",					// 102
 	"left operand of '.' must be struct or union, not '%s'",	// 103
 	"left operand of '->' must be pointer to struct or union, not '%s'", // 104
 	"non-unique member requires struct/union %s",			// 105
 	"left operand of '->' must be pointer",				// 106
 	"operands of '%s' have incompatible types '%s' and '%s'",	// 107
 	"operand of '%s' has invalid type '%s'",			// 108
-	"void type illegal in expression",				// 109
+	"void type invalid in expression",				// 109
 	"pointer to function is not allowed here",			// 110
 	"unacceptable operand of '%s'",					// 111
 	"cannot take address of bit-field",				// 112
 	"cannot take address of register '%s'",				// 113
 	"%soperand of '%s' must be lvalue",				// 114
 	"%soperand of '%s' must be modifiable lvalue",			// 115
-	"illegal pointer subtraction",					// 116
+	"invalid pointer subtraction",					// 116
 	"bitwise '%s' on signed value possibly nonportable",		// 117
 	"semantics of '%s' change in C90; use explicit cast",		// 118
 	"conversion of '%s' to '%s' is out of range",			// 119
 	"bitwise '%s' on signed value nonportable",			// 120
 	"negative shift",						// 121
 	"shift amount %llu is greater than bit-size %llu of '%s'",	// 122
-	"illegal combination of %s '%s' and %s '%s', op '%s'",		// 123
-	"illegal combination of '%s' and '%s', op '%s'",		// 124
+	"invalid combination of %s '%s' and %s '%s', op '%s'",		// 123
+	"invalid combination of '%s' and '%s', op '%s'",		// 124
 	"pointers to functions can only be compared for equality",	// 125
 	"incompatible types '%s' and '%s' in conditional",		// 126
 	"",			/* no longer used */			// 127
@@ -209,7 +209,7 @@ static const char *const msgs[] = {
 	"void expressions may not be arguments, arg #%d",		// 151
 	"argument cannot have unknown size, arg #%d",			// 152
 	"converting '%s' to incompatible '%s' for argument %d",		// 153
-	"illegal combination of %s '%s' and %s '%s', arg #%d",		// 154
+	"invalid combination of %s '%s' and %s '%s', arg #%d",		// 154
 	"passing '%s' to incompatible '%s', arg #%d",			// 155
 	"function expects '%s', passing '%s' for arg #%d",		// 156
 	"C90 treats constant as unsigned",				// 157
@@ -238,8 +238,8 @@ static const char *const msgs[] = {
 	"bit-field initializer does not fit",				// 180
 	"{}-enclosed or constant initializer of type '%s' required",	// 181
 	"'%s' discards '%s' from '%s'",					// 182
-	"illegal combination of %s '%s' and %s '%s' for '%s'",		// 183
-	"illegal combination of '%s' and '%s'",				// 184
+	"invalid combination of %s '%s' and %s '%s' for '%s'",		// 183
+	"invalid combination of '%s' and '%s'",				// 184
 	"cannot initialize '%s' from '%s'",				// 185
 	"bit-field initializer must be an integer in traditional C",	// 186
 	"string literal too long (%ju) for target array (%ju)",		// 187
@@ -274,7 +274,7 @@ static const char *const msgs[] = {
 	"function '%s' has 'return expr' and 'return'",			// 216
 	"function '%s' falls off bottom without returning value",	// 217
 	"C90 treats constant as unsigned, op '%s'",			// 218
-	"concatenated strings are illegal in traditional C",		// 219
+	"concatenated strings are invalid in traditional C",		// 219
 	"fallthrough on case statement",				// 220
 	"initialization of unsigned type '%s' with negative constant %lld", // 221
 	"conversion of negative constant %lld to unsigned type '%s'",	// 222
@@ -293,13 +293,13 @@ static const char *const msgs[] = {
 	"enum '%s' never defined",					// 235
 	"static function '%s' unused",					// 236
 	"redeclaration of formal parameter '%s'",			// 237
-	"initialization of union is illegal in traditional C",		// 238
+	"initialization of union is invalid in traditional C",		// 238
 	"",			/* no longer used */			// 239
 	"",			/* unused */				// 240
 	"dubious operation '%s' on enum",				// 241
 	"combination of '%s' and '%s', op '%s'",			// 242
 	"operator '%s' assumes that '%s' is ordered",			// 243
-	"illegal structure pointer combination",			// 244
+	"invalid structure pointer combination",			// 244
 	"incompatible structure pointers: '%s' '%s' '%s'",		// 245
 	"dubious conversion of enum to '%s'",				// 246
 	"pointer cast from '%s' to unrelated '%s'",			// 247
@@ -321,17 +321,17 @@ static const char *const msgs[] = {
 	"\\? undefined in traditional C",				// 263
 	"\\v undefined in traditional C",				// 264
 	"%s does not support 'long long'",				// 265
-	"'long double' is illegal in traditional C",			// 266
+	"'long double' is invalid in traditional C",			// 266
 	"shift amount %u equals bit-size of '%s'",			// 267
 	"variable '%s' declared inline",				// 268
 	"parameter '%s' declared inline",				// 269
-	"function prototypes are illegal in traditional C",		// 270
+	"function prototypes are invalid in traditional C",		// 270
 	"switch expression must be of type 'int' in traditional C",	// 271
 	"empty translation unit",					// 272
 	"bit-field type '%s' invalid in C90 or later",			// 273
 	"C90 or later forbid comparison of %s with %s",			// 274
 	"cast discards 'const' from type '%s'",				// 275
-	"'__%s__' is illegal for type '%s'",				// 276
+	"'__%s__' is invalid for type '%s'",				// 276
 	"initialization of '%s' with '%s'",				// 277
 	"combination of '%s' and '%s', arg #%d",			// 278
 	"combination of '%s' and '%s' in return",			// 279
