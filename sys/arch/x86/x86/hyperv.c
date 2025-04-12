@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.16 2023/10/16 17:27:03 bouyer Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.17 2025/04/12 19:31:44 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.16 2023/10/16 17:27:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.17 2025/04/12 19:31:44 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -101,8 +101,11 @@ struct hyperv_percpu_data {
 
 static struct hyperv_hypercall_ctx hyperv_hypercall_ctx;
 
-static char hyperv_hypercall_page[PAGE_SIZE]
-    __section(".text") __aligned(PAGE_SIZE) = { 0xcc };
+static void __attribute__((naked)) __aligned(PAGE_SIZE)
+hyperv_hypercall_page(void)
+{
+	__asm__ __volatile__ (".fill %c0, 1, 0xcc" :: "i" (PAGE_SIZE));
+}
 
 static u_int	hyperv_get_timecount(struct timecounter *);
 
