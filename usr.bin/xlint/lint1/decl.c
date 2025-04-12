@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.416 2025/04/12 15:49:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.417 2025/04/12 15:57:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.416 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.417 2025/04/12 15:57:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -707,7 +707,7 @@ dcs_merge_declaration_specifiers(void)
 		t = LDOUBLE;
 	}
 	if (t == LDOUBLE && !allow_c90)
-		/* 'long double' is invalid in traditional C */
+		/* 'long double' requires C90 or later */
 		warning(266);
 	if (l == LONG && t == DCOMPLEX) {
 		l = NO_TSPEC;
@@ -1385,7 +1385,7 @@ add_function(sym_t *decl, parameter_list params)
 
 	if (params.prototype) {
 		if (!allow_c90)
-			/* function prototypes are invalid in traditional C */
+			/* function prototypes require C90 or later */
 			warning(270);
 		check_prototype_parameters(params.first);
 		if (params.first != NULL

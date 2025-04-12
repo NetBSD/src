@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.237 2025/04/12 15:49:49 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.238 2025/04/12 15:57:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.237 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.238 2025/04/12 15:57:25 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -149,7 +149,7 @@ static const struct keyword {
 	kwdef_keyword(	"do",		T_DO),
 	kwdef_type(	"double",	DOUBLE,			78),
 	kwdef_keyword(	"else",		T_ELSE),
-	// XXX: enum is not available in traditional C.
+	// XXX: enum requires C90 or later.
 	kwdef_keyword(	"enum",		T_ENUM),
 	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
 	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
@@ -194,7 +194,7 @@ static const struct keyword {
 #endif
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
-	// XXX: void is not available in traditional C.
+	// XXX: void requires C90 or later.
 	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	tq_volatile,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
@@ -578,7 +578,7 @@ lex_integer_constant(const char *text, size_t len, int base)
 			u_suffix = 1;
 	}
 	if (!allow_c90 && u_suffix > 0)
-		/* suffix 'U' is invalid in traditional C */
+		/* suffix 'U' requires C90 or later */
 		warning(97);
 
 	bool warned = false;
@@ -647,7 +647,7 @@ lex_floating_constant(const char *text, size_t len)
 		t = imaginary ? DCOMPLEX : DOUBLE;
 
 	if (!allow_c90 && t != DOUBLE)
-		/* suffixes 'F' and 'L' are invalid in traditional C */
+		/* suffixes 'F' or 'L' require C90 or later */
 		warning(98);
 
 	errno = 0;
@@ -876,7 +876,7 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			/* no hex digits follow \x */
 			error(74);
 		if (it.hex_digits > 0 && !allow_c90)
-			/* \x undefined in traditional C */
+			/* \x requires C90 or later */
 			warning(82);
 		else if (!it.invalid_escape)
 			;
@@ -884,16 +884,16 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			/* bad octal digit '%c' */
 			warning(77, (int)it.value);
 		else if (it.literal_escape && it.value == '?')
-			/* \? undefined in traditional C */
+			/* \? requires C90 or later */
 			warning(263);
 		else if (it.literal_escape && it.value == '"')
-			/* \" inside character constants undefined in ... */
+			/* \" inside a character constant requires C90 ... */
 			warning(262);
 		else if (it.named_escape && it.value == '\a')
-			/* \a undefined in traditional C */
+			/* \a requires C90 or later */
 			warning(81);
 		else if (it.named_escape && it.value == '\v')
-			/* \v undefined in traditional C */
+			/* \v requires C90 or later */
 			warning(264);
 		else {
 			unsigned char ch = buf->data[it.end - 1];

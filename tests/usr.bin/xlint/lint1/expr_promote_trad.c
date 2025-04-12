@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_promote_trad.c,v 1.5 2024/11/05 04:53:28 rillig Exp $	*/
+/*	$NetBSD: expr_promote_trad.c,v 1.6 2025/04/12 15:57:26 rillig Exp $	*/
 # 3 "expr_promote_trad.c"
 
 /*
@@ -10,9 +10,9 @@
 sink();
 
 struct arithmetic_types {
-	/* _Bool is not available in traditional C */
+	/* _Bool requires C90 or later */
 	char plain_char;
-	/* signed char is not available in traditional C */
+	/* signed char requires C90 or later */
 	unsigned char unsigned_char;
 	short signed_short;
 	unsigned short unsigned_short;
@@ -20,13 +20,13 @@ struct arithmetic_types {
 	unsigned int unsigned_int;
 	long signed_long;
 	unsigned long unsigned_long;
-	/* (unsigned) long long is not available in traditional C */
-	/* __int128_t is not available in traditional C */
-	/* __uint128_t is not available in traditional C */
+	/* (unsigned) long long requires C90 or later */
+	/* __int128_t requires C90 or later */
+	/* __uint128_t requires C90 or later */
 	float single_floating;
 	double double_floating;
-	/* long double is not available in traditional C */
-	/* _Complex is not available in traditional C */
+	/* long double requires C90 or later */
+	/* _Complex requires C90 or later */
 	enum {
 		E
 	} enumerator;

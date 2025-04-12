@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.269 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.270 2025/04/12 15:57:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.269 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.270 2025/04/12 15:57:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -136,8 +136,8 @@ static const char *const msgs[] = {
 	"",			/* unused */				// 78
 	"dubious escape \\%c",						// 79
 	"dubious escape \\%o",						// 80
-	"\\a undefined in traditional C",				// 81
-	"\\x undefined in traditional C",				// 82
+	"\\a requires C90 or later",					// 81
+	"\\x requires C90 or later",					// 82
 	"storage class after type is obsolescent",			// 83
 	"C90 to C17 require formal parameter before '...'",		// 84
 	"dubious tag declaration '%s %s'",				// 85
@@ -152,10 +152,10 @@ static const char *const msgs[] = {
 	"function '%s' has invalid storage class",			// 94
 	"declaration of '%s' hides earlier one",			// 95
 	"cannot dereference non-pointer type '%s'",			// 96
-	"suffix 'U' is invalid in traditional C",			// 97
-	"suffixes 'F' and 'L' are invalid in traditional C",		// 98
+	"suffix 'U' requires C90 or later",				// 97
+	"suffixes 'F' or 'L' require C90 or later",			// 98
 	"'%s' undefined",						// 99
-	"unary '+' is invalid in traditional C",			// 100
+	"unary '+' requires C90 or later",				// 100
 	"type '%s' does not have member '%s'",				// 101
 	"invalid use of member '%s'",					// 102
 	"left operand of '.' must be struct or union, not '%s'",	// 103
@@ -243,7 +243,7 @@ static const char *const msgs[] = {
 	"cannot initialize '%s' from '%s'",				// 185
 	"bit-field initializer must be an integer in traditional C",	// 186
 	"string literal too long (%ju) for target array (%ju)",		// 187
-	"no automatic aggregate initialization in traditional C",	// 188
+	"automatic aggregate initialization requires C90 or later",	// 188
 	"",			/* no longer used */			// 189
 	"empty array declaration for '%s'",				// 190
 	"'%s' set but not used in function '%s'",			// 191
@@ -274,7 +274,7 @@ static const char *const msgs[] = {
 	"function '%s' has 'return expr' and 'return'",			// 216
 	"function '%s' falls off bottom without returning value",	// 217
 	"C90 treats constant as unsigned, op '%s'",			// 218
-	"concatenated strings are invalid in traditional C",		// 219
+	"concatenated strings require C90 or later",			// 219
 	"fallthrough on case statement",				// 220
 	"initialization of unsigned type '%s' with negative constant %lld", // 221
 	"conversion of negative constant %lld to unsigned type '%s'",	// 222
@@ -293,7 +293,7 @@ static const char *const msgs[] = {
 	"enum '%s' never defined",					// 235
 	"static function '%s' unused",					// 236
 	"redeclaration of formal parameter '%s'",			// 237
-	"initialization of union is invalid in traditional C",		// 238
+	"initialization of union requires C90 or later",		// 238
 	"",			/* no longer used */			// 239
 	"",			/* unused */				// 240
 	"dubious operation '%s' on enum",				// 241
@@ -317,15 +317,15 @@ static const char *const msgs[] = {
 	"argument %d is converted from '%s' to '%s' due to prototype",	// 259
 	"previous declaration of '%s'",					// 260
 	"previous definition of '%s'",					// 261
-	"\\\" inside character constants undefined in traditional C",	// 262
-	"\\? undefined in traditional C",				// 263
-	"\\v undefined in traditional C",				// 264
+	"\\\" inside a character constant requires C90 or later",	// 262
+	"\\? requires C90 or later",					// 263
+	"\\v requires C90 or later",					// 264
 	"%s does not support 'long long'",				// 265
-	"'long double' is invalid in traditional C",			// 266
+	"'long double' requires C90 or later",				// 266
 	"shift amount %u equals bit-size of '%s'",			// 267
 	"variable '%s' declared inline",				// 268
 	"parameter '%s' declared inline",				// 269
-	"function prototypes are invalid in traditional C",		// 270
+	"function prototypes require C90 or later",			// 270
 	"switch expression must be of type 'int' in traditional C",	// 271
 	"empty translation unit",					// 272
 	"bit-field type '%s' invalid in C90 or later",			// 273

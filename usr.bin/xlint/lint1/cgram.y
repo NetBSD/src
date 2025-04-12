@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.522 2025/04/12 15:49:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.523 2025/04/12 15:57:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.522 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.523 2025/04/12 15:57:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -524,7 +524,7 @@ string:
 	T_STRING
 |	string T_STRING {
 		if (!allow_c90)
-			/* concatenated strings are invalid in traditional C */
+			/* concatenated strings require C90 or later */
 			warning(219);
 		$$ = cat_strings($1, $2);
 	}
@@ -777,7 +777,7 @@ unary_expression:
 	}
 |	T_ADDITIVE sys cast_expression {
 		if (!allow_c90 && $1 == PLUS)
-			/* unary '+' is invalid in traditional C */
+			/* unary '+' requires C90 or later */
 			warning(100);
 		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2, $3);
 	}
