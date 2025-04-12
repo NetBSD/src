@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.24 2013/08/11 03:44:27 dholland Exp $	*/
+/*	$NetBSD: rogue.h,v 1.24.36.1 2025/04/12 12:09:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -601,6 +601,8 @@ void	save_game(void);
 void	save_into_file(const char *);
 void	search(short, boolean);
 boolean	seek_gold(object *);
+void	set_weapon_damage(object *);
+void	set_monster_damage(object *);
 void	show_average_hp(void);
 void	show_monsters(void);
 void	show_objects(void);
