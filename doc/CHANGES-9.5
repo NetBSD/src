@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.51 2025/03/29 10:53:06 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.52 2025/04/12 12:54:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -742,3 +742,39 @@ distrib/notes/macppc/hardware			1.50
 	the GENERIC kernel.
 	[gutteridge, ticket #1938]
 
+sys/kern/subr_log.c				1.64-1.66
+
+	logread: stop reading msgbuf without log_lock being held.
+	[rin, ticket #1939]
+
+external/public-domain/tz/dist/zoneinfo2tdf.pl	delete
+external/public-domain/tz/dist/CONTRIBUTING	up to 1.1.1.9
+external/public-domain/tz/dist/Makefile 	up to 1.3
+external/public-domain/tz/dist/NEWS		up to 1.3
+external/public-domain/tz/dist/TZDATA_VERSION	up to 1.41
+external/public-domain/tz/dist/africa		up to 1.2
+external/public-domain/tz/dist/antarctica	up to 1.3
+external/public-domain/tz/dist/asia		up to 1.14
+external/public-domain/tz/dist/australasia	up to 1.11
+external/public-domain/tz/dist/backward 	up to 1.12
+external/public-domain/tz/dist/backzone 	up to 1.2
+external/public-domain/tz/dist/checknow.awk	up to 1.3
+external/public-domain/tz/dist/checktab.awk	up to 1.3
+external/public-domain/tz/dist/etcetera 	up to 1.3
+external/public-domain/tz/dist/europe		up to 1.3
+external/public-domain/tz/dist/factory		up to 1.3
+external/public-domain/tz/dist/leap-seconds.list up to 1.9
+external/public-domain/tz/dist/leapseconds	up to 1.9
+external/public-domain/tz/dist/northamerica	up to 1.3
+external/public-domain/tz/dist/southamerica	up to 1.3
+external/public-domain/tz/dist/theory.html	up to 1.3
+external/public-domain/tz/dist/version		up to 1.14
+external/public-domain/tz/dist/ziguard.awk	up to 1.1.1.11
+external/public-domain/tz/dist/zone.tab 	up to 1.3
+external/public-domain/tz/dist/zone1970.tab	up to 1.3
+external/public-domain/tz/dist/zonenow.tab	up to 1.3
+distrib/sets/lists/base/mi			(apply patch)	 
+doc/3RDPARTY					(apply patch)	     
+
+	Updated tzdata to 2025b (using 2025btgz)
+	[kre, ticket #1940]
