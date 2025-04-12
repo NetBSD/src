@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.19 2016/10/12 21:18:46 wiz Exp $
+.\"	$NetBSD: ucom.9,v 1.20 2025/04/12 10:22:50 bad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ This is usually the same as
 .Dv ibufsize .
 .It Dv u_int ucaa_obufsize
 the size of the write requests on the bulk out pipe.
-.It Dv u_int ucaa_ibufsizepad
+.It Dv u_int ucaa_obufsizepad
 the size of the output buffer.
 This is usually the same as
 .Dv ucaa_obufsize .
