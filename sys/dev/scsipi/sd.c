@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.343 2025/03/05 00:41:00 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.344 2025/04/12 10:25:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.343 2025/03/05 00:41:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.344 2025/04/12 10:25:26 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1285,10 +1285,13 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	struct dk_softc *dksc = &sd->sc_dksc;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct scsipi_rw_10 cmd;	/* write command */
+	struct scsipi_rw_16 cmd16;	/* write command */
+	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;		/* ... convenience */
 	struct scsipi_periph *periph;
 	struct scsipi_channel *chan;
 	size_t sectorsize;
+	int cmdlen;
 
 	periph = sd->sc_periph;
 	chan = periph->periph_channel;
@@ -1301,10 +1304,22 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	/*
 	 *  Fill out the scsi command
 	 */
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = WRITE_10;
-	_lto4b(blkno, cmd.addr);
-	_lto2b(nblk, cmd.length);
+	if ((blkno & 0xffffffff) == blkno) {
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.opcode = WRITE_10;
+		_lto4b(blkno, cmd.addr);
+		_lto2b(nblk, cmd.length);
+		cmdlen = sizeof(cmd);
+		cmdp = (struct scsipi_generic *)&cmd;
+	} else {
+		memset(&cmd16, 0, sizeof(cmd16));
+		cmd16.opcode = WRITE_16;
+		_lto8b(blkno, cmd16.addr);
+		_lto4b(nblk, cmd16.length);
+		cmdlen = sizeof(cmd16);
+		cmdp = (struct scsipi_generic *)&cmd16;
+	}
+
 	/*
 	 * Fill out the scsipi_xfer structure
 	 *    Note: we cannot sleep as we may be an interrupt
@@ -1318,8 +1333,8 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	xs->xs_periph = periph;
 	xs->xs_retries = SDRETRIES;
 	xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
-	xs->cmd = (struct scsipi_generic *)&cmd;
-	xs->cmdlen = sizeof(cmd);
+	xs->cmd = cmdp;
+	xs->cmdlen = cmdlen;
 	xs->resid = nblk * sectorsize;
 	xs->error = XS_NOERROR;
 	xs->bp = 0;
