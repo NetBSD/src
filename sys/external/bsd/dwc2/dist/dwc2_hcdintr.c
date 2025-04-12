@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.15 2018/08/12 09:59:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.16 2025/04/12 08:22:31 mlelstv Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.15 2018/08/12 09:59:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.16 2025/04/12 08:22:31 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -575,6 +575,7 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 {
 	struct dwc2_hcd_iso_packet_desc *frame_desc;
 	struct dwc2_hcd_urb *urb = qtd->urb;
+	u32 len;
 
 	if (!urb)
 		return DWC2_HC_XFER_NO_HALT_STATUS;
@@ -584,11 +585,11 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 	switch (halt_status) {
 	case DWC2_HC_XFER_COMPLETE:
 		frame_desc->status = 0;
-		frame_desc->actual_length = dwc2_get_actual_xfer_length(hsotg,
-					chan, chnum, qtd, halt_status, NULL);
+		len = dwc2_get_actual_xfer_length(hsotg,
+			chan, chnum, qtd, halt_status, NULL);
 
 		/* Non DWORD-aligned buffer case handling */
-		if (chan->align_buf && frame_desc->actual_length) {
+		if (chan->align_buf && len) {
 			dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n",
 				 __func__);
 			usb_dma_t *ud = &chan->qh->dw_align_buf_usbdma;
@@ -600,11 +601,17 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 				memcpy(urb->buf + frame_desc->offset +
 					qtd->isoc_split_offset,
 					chan->qh->dw_align_buf,
-					frame_desc->actual_length);
+					len);
 			usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
 			    chan->ep_is_in ?
 			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
+
+		frame_desc->actual_length += len;
+
+		if (qtd->isoc_split_pos != DWC2_HCSPLT_XACTPOS_ALL)
+			return DWC2_HC_XFER_COMPLETE;
+
 		break;
 	case DWC2_HC_XFER_FRAME_OVERRUN:
 		urb->error_count++;
@@ -1126,11 +1133,10 @@ static void dwc2_hc_xfercomp_intr(struct dwc2_hsotg *hsotg,
 	case USB_ENDPOINT_XFER_ISOC:
 		if (dbg_perio())
 			dev_vdbg(hsotg->dev, "  Isochronous transfer complete\n");
-		if (qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_ALL)
-			halt_status = dwc2_update_isoc_urb_state(hsotg, chan,
-					chnum, qtd, DWC2_HC_XFER_COMPLETE);
+		halt_status = dwc2_update_isoc_urb_state(hsotg, chan,
+		    chnum, qtd, DWC2_HC_XFER_COMPLETE);
 		dwc2_complete_periodic_xfer(hsotg, chan, chnum, qtd,
-					    halt_status);
+		    halt_status);
 		break;
 	}
 

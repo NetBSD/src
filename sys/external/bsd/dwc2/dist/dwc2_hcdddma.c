@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.11 2023/04/09 12:31:10 riastradh Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.12 2025/04/12 08:22:31 mlelstv Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.11 2023/04/09 12:31:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.12 2025/04/12 08:22:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1029,10 +1029,8 @@ static void dwc2_complete_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 			if (!rc)
 				continue;
 
-			if (rc == DWC2_CMPL_DONE)
-				break;
-
-			/* rc == DWC2_CMPL_STOP */
+			if (rc == DWC2_CMPL_DONE || rc == DWC2_CMPL_STOP)
+				goto stop_scan;
 
 			if (qh->interval >= 32)
 				goto stop_scan;

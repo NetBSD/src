@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.13 2016/02/24 22:17:54 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.14 2025/04/12 08:22:31 mlelstv Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.13 2016/02/24 22:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.14 2025/04/12 08:22:31 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -2283,10 +2283,10 @@ u32 dwc2_calc_frame_interval(struct dwc2_hsotg *hsotg)
 
 	if ((hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT == HPRT0_SPD_HIGH_SPEED)
 		/* High speed case */
-		return 125 * clock;
+		return 125 * clock - 1;
 	else
 		/* FS/LS case */
-		return 1000 * clock;
+		return 1000 * clock - 1;
 }
 
 /**
