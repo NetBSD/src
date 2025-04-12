@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.10 2024/10/13 11:09:47 martin Exp $
+# $NetBSD: mi,v 1.1314.2.11 2025/04/12 12:47:25 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5697,6 +5697,7 @@
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
+./usr/share/zoneinfo/America/Coyhaique		base-sys-share		share
 ./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
