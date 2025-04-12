@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.63.2.1 2025/04/12 12:17:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63.2.1 2025/04/12 12:17:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,20 +219,25 @@ logread(dev_t dev, struct uio *uio, int flag)
 		}
 	}
 	while (uio->uio_resid > 0) {
+		char buf[128]; /* taken from FreeBSD */
+
 		l = mbp->msg_bufx - mbp->msg_bufr;
 		if (l < 0)
 			l = mbp->msg_bufs - mbp->msg_bufr;
-		l = uimin(l, uio->uio_resid);
+		l = ulmin(l, uio->uio_resid);
 		if (l == 0)
 			break;
-		mutex_spin_exit(&log_lock);
-		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], (int)l, uio);
-		mutex_spin_enter(&log_lock);
-		if (error)
-			break;
+
+		l = ulmin(l, sizeof(buf));
+		memcpy(buf, &mbp->msg_bufc[mbp->msg_bufr], l);
 		mbp->msg_bufr += l;
 		if (mbp->msg_bufr < 0 || mbp->msg_bufr >= mbp->msg_bufs)
 			mbp->msg_bufr = 0;
+		mutex_spin_exit(&log_lock);
+		error = uiomove(buf, l, uio);
+		mutex_spin_enter(&log_lock);
+		if (error)
+			break;
 	}
 	mutex_spin_exit(&log_lock);
 
