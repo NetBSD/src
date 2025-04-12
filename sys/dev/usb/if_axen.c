@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.94 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.94.4.1 2025/04/12 12:11:45 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.94 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.94.4.1 2025/04/12 12:11:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -52,6 +52,7 @@ struct axen_type {
 	uint16_t		axen_flags;
 #define AX178A	0x0001		/* AX88178a */
 #define AX179	0x0002		/* AX88179 */
+#define AX179A	0x0004		/* AX88179A */
 };
 
 /*
@@ -579,7 +580,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	uint16_t axen_flags;
 	int i;
 
 	aprint_naive("\n");
@@ -604,7 +604,12 @@ axen_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	axen_flags = axen_lookup(uaa->uaa_vendor, uaa->uaa_product)->axen_flags;
+	un->un_flags =
+	    axen_lookup(uaa->uaa_vendor, uaa->uaa_product)->axen_flags;
+	if (UGETW(usbd_get_device_descriptor(dev)->bcdDevice) == 0x0200) {
+		un->un_flags &= ~(AX178A | AX179);
+		un->un_flags |= AX179A;
+	}
 
 	err = usbd_device2interface_handle(dev, AXEN_IFACE_IDX, &un->un_iface);
 	if (err) {
@@ -663,11 +668,25 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	axen_ax88179_init(un);
 
+#if 0
+#define   AXEN_FW_MODE				0x08
+#define     AXEN_FW_MODE_178A179		0x0000
+#define     AXEN_FW_MODE_179A			0x0001
+	if (un->un_flags & AX179A) {
+		uint8_t bval = 0;
+		/*	    len		dir	  cmd */
+		int cmd = (1 << 12) | (1 << 8) | (AXEN_FW_MODE & 0x00FF);
+		axen_cmd(un, cmd, 1, AXEN_FW_MODE_178A179, &bval);
+	}
+#endif
+
 	/* An ASIX chip was detected. Inform the world.  */
-	if (axen_flags & AX178A)
+	if (un->un_flags & AX178A)
 		aprint_normal_dev(self, "AX88178a\n");
-	else if (axen_flags & AX179)
+	else if (un->un_flags & AX179)
 		aprint_normal_dev(self, "AX88179\n");
+	else if (un->un_flags & AX179A)
+		aprint_normal_dev(self, "AX88179A\n");
 	else
 		aprint_normal_dev(self, "(unknown)\n");
 
@@ -752,7 +771,7 @@ axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	/*
 	 * buffer map
 	 * [packet #0]...[packet #n][pkt hdr#0]..[pkt hdr#n][recv_hdr]
-	 * each packet has 0xeeee as psuedo header..
+	 * each packet has 0xeeee as pseudo header..
 	 */
 	hdr_p = (uint32_t *)(buf + total_len - sizeof(uint32_t));
 	rx_hdr = le32toh(*hdr_p);
@@ -789,7 +808,7 @@ axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	if (pkt_count)
 		rnd_add_uint32(usbnet_rndsrc(un), pkt_count);
 
-	do {
+	while (pkt_count > 0) {
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)) {
 			aprint_error_dev(un->un_dev,
 			    "invalid buffer(pkt#%d), continue\n", pkt_count);
@@ -803,6 +822,9 @@ axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(un->un_dev), pkt_count, pkt_hdr, pkt_len));
 
+		if (pkt_len < sizeof(struct ether_header) + ETHER_ALIGN)
+			goto nextpkt;
+
 		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {
 			if_statinc(ifp, if_ierrors);
 			/* move to next pkt header */
@@ -813,7 +835,15 @@ axen_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 			goto nextpkt;
 		}
 
-		usbnet_enqueue(un, buf + ETHER_ALIGN, pkt_len - 6,
+		if (un->un_flags & AX179A) {
+			/* each 88179A frame doesn't contain FCS. */
+			usbnet_enqueue(un, buf + ETHER_ALIGN, pkt_len - 2,
+			       axen_csum_flags_rx(ifp, pkt_hdr), 0, 0);
+			/* 88179A next pkt_hdr looks bogus, skip it. */
+			hdr_p++;
+			pkt_count--;
+		} else
+			usbnet_enqueue(un, buf + ETHER_ALIGN, pkt_len - 6,
 			       axen_csum_flags_rx(ifp, pkt_hdr), 0, 0);
 
 nextpkt:
@@ -825,8 +855,10 @@ nextpkt:
 		temp = ((pkt_len + 7) & 0xfff8);
 		buf = buf + temp;
 		hdr_p++;
+		if (pkt_count == 0)
+			break;
 		pkt_count--;
-	} while (pkt_count > 0);
+	}
 }
 
 static unsigned
