@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.183 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.184 2025/04/12 08:12:39 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.183 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.184 2025/04/12 08:12:39 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3142,16 +3142,18 @@ uaudio_round_blocksize(void *addr, int blk,
 		       int mode, const audio_params_t *param)
 {
 	struct uaudio_softc *sc;
+	struct chan *ch;
 	int b;
 
 	sc = addr;
 	DPRINTF("blk=%d mode=%s\n", blk,
 	    mode == AUMODE_PLAY ? "AUMODE_PLAY" : "AUMODE_RECORD");
 
+	ch = mode == AUMODE_PLAY ? &sc->sc_playchan : &sc->sc_recchan;
+
 	/* chan.bytes_per_frame can be 0. */
-	if (mode == AUMODE_PLAY || sc->sc_recchan.bytes_per_frame <= 0) {
-		b = param->sample_rate * sc->sc_recchan.nframes
-		    * sc->sc_recchan.nchanbufs;
+	if (mode == AUMODE_PLAY || ch->bytes_per_frame <= 0) {
+		b = param->sample_rate * ch->nframes * ch->nchanbufs;
 
 		/*
 		 * This does not make accurate value in the case
@@ -3165,8 +3167,7 @@ uaudio_round_blocksize(void *addr, int blk,
 		 * use wMaxPacketSize in bytes_per_frame.
 		 * See uaudio_set_format() and uaudio_chan_init()
 		 */
-		b = sc->sc_recchan.bytes_per_frame
-		    * sc->sc_recchan.nframes * sc->sc_recchan.nchanbufs;
+		b = ch->bytes_per_frame * ch->nframes * ch->nchanbufs;
 	}
 
 	if (b <= 0)
