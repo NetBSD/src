@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.356 2025/03/30 09:51:49 rillig Exp $
+# $NetBSD: Makefile,v 1.357 2025/04/12 05:16:57 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -534,7 +534,7 @@ SED_CMDS.job-output-long-lines= \
 	-e '/^bb*--- job-a ---$$/d'
 
 # meta line numbers can vary based on filemon implementation
-SED_CMDS.meta-ignore= -e 's,\(\.meta:\) [1-9][0-9]*:,\1 <line>:,'
+SED_CMDS.meta-ignore= -e 's,\(\.meta:\)[1-9][0-9]*:,\1<line>:,'
 
 SED_CMDS.opt-chdir=		-e 's,\(nonexistent\).[1-9][0-9]*,\1,'
 SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
