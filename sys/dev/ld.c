@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.114 2025/03/05 00:41:17 jakllsch Exp $	*/
+/*	$NetBSD: ld.c,v 1.115 2025/04/12 07:30:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.114 2025/03/05 00:41:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.115 2025/04/12 07:30:01 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,6 +602,12 @@ ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 
 	if (sc->sc_dump == NULL)
 		return (ENODEV);
+
+	/*
+	 * sc_dump takes only an 'int' as a disk address
+	 */
+	if (blkno < 0 || blkno + nblk - 1 > INT_MAX)
+		return (EIO);
 
 	return (*sc->sc_dump)(sc, va, blkno, nblk);
 }
