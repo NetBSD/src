@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.46 2025/02/16 21:09:00 mlelstv Exp $ */
+/* $NetBSD: video.c,v 1.47 2025/04/12 07:48:16 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.46 2025/02/16 21:09:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.47 2025/04/12 07:48:16 mlelstv Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -816,20 +816,29 @@ video_enum_framesizes(struct video_softc *sc, struct v4l2_frmsizeenum *frmdesc)
 	const struct video_hw_if *hw;
 	struct video_format vfmt;
 	struct v4l2_format fmt;
+	u_int32_t n, index;
 	int err;
 
 	hw = sc->hw_if;
 	if (hw->enum_format == NULL)
 		return ENOTTY;
 
-	err = hw->enum_format(sc->hw_softc, frmdesc->index, &vfmt);
-	if (err != 0)
-		return err;
+	/*
+	 * scan all formats for entries with the correct pixel format
+	 * return entry number frmdesc->index
+	 */
+	index = 0;
+	for (n=0; ;++n) {
+		err = hw->enum_format(sc->hw_softc, n, &vfmt);
+		if (err != 0)
+			return err;
 
-	video_format_to_v4l2_format(&vfmt, &fmt);
-	if (fmt.fmt.pix.pixelformat != frmdesc->pixel_format) {
-		printf("video_enum_framesizes: type mismatch %x %x\n",
-		    fmt.fmt.pix.pixelformat, frmdesc->pixel_format);
+		video_format_to_v4l2_format(&vfmt, &fmt);
+		if (fmt.fmt.pix.pixelformat != frmdesc->pixel_format)
+			continue;
+
+		if (index++ == frmdesc->index)
+			break;
 	}
 
 	frmdesc->type = V4L2_FRMSIZE_TYPE_DISCRETE; /* TODO: only one type for now */
