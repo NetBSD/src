@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.6 2024/09/08 09:36:52 rillig Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.7 2025/04/12 18:02:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@ get_dynamic_section(void)
 	phdr = (void *)getauxval(AT_PHDR);
 	phnum = (Elf_Half)getauxval(AT_PHNUM);
 
-	ATF_CHECK(phdr != NULL);
-	ATF_CHECK(phnum != (Elf_Half)~0);
+	ATF_REQUIRE(phdr != NULL);
+	ATF_REQUIRE(phnum != (Elf_Half)~0);
 
 	phlimit = phdr + phnum;
 	dynphdr = NULL;
@@ -88,7 +88,7 @@ get_rtld_r_debug(void)
 			break;
 		}
 	}
-	ATF_CHECK(debug != NULL);
+	ATF_REQUIRE(debug != NULL);
 
 	return debug;
 }
@@ -103,7 +103,7 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 
 	loader = NULL;
 	debug = get_rtld_r_debug();
-	ATF_CHECK(debug != NULL);
+	ATF_REQUIRE(debug != NULL);
 	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
 	    "debug->r_version=%d R_DEBUG_VERSION=%d",
 	    debug->r_version, R_DEBUG_VERSION);
