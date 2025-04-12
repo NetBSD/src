@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.490 2025/04/11 17:21:31 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.491 2025/04/12 12:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.490 2025/04/11 17:21:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.491 2025/04/12 12:46:58 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1221,10 +1221,7 @@ JobFinish(Job *job, int status)
 
 	if (aborting == ABORT_ERROR && jobTokensRunning == 0) {
 		if (shouldDieQuietly(NULL, -1)) {
-			/*
-			 * TODO: better clean up properly, to avoid killing
-			 *  child processes by SIGPIPE.
-			 */
+			Job_Wait();
 			exit(2);
 		}
 		Fatal("%d error%s", job_errors, job_errors == 1 ? "" : "s");
