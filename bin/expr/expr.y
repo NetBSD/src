@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.53 2025/03/15 15:36:12 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.54 2025/04/12 08:45:59 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.53 2025/03/15 15:36:12 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.54 2025/04/12 08:45:59 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -81,6 +81,9 @@ exp:	expr {
 ;
 
 expr:	item
+|	LPAREN expr RPAREN {
+		$$ = $2;
+	}
 |	expr SPEC_OR {
 		$$ = is_empty_or_zero($1) ? NULL : "1";
 		if ($$)
@@ -99,8 +102,8 @@ expr:	item
 		if (!$3)
 			skip_level--;
 	}
-|	expr SPEC_REG expr {
-		$$ = skip_level == 0 ? eval_match($1, $3) : "";
+|	expr COMPARE expr {
+		$$ = skip_level == 0 && eval_compare($1, $2, $3) ? "1" : "0";
 	}
 |	expr ADD_SUB_OPERATOR expr {
 		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
@@ -108,11 +111,8 @@ expr:	item
 |	expr MUL_DIV_MOD_OPERATOR expr {
 		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
 	}
-|	expr COMPARE expr {
-		$$ = skip_level == 0 && eval_compare($1, $2, $3) ? "1" : "0";
-	}
-|	LPAREN expr RPAREN {
-		$$ = $2;
+|	expr SPEC_REG expr {
+		$$ = skip_level == 0 ? eval_match($1, $3) : "";
 	}
 |	LENGTH expr {
 		char *ln;
@@ -125,11 +125,11 @@ expr:	item
 ;
 
 item:	STRING
-|	ADD_SUB_OPERATOR
-|	MUL_DIV_MOD_OPERATOR
-|	COMPARE
 |	SPEC_OR
 |	SPEC_AND
+|	COMPARE
+|	ADD_SUB_OPERATOR
+|	MUL_DIV_MOD_OPERATOR
 |	SPEC_REG
 |	LENGTH
 ;
