@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.238 2025/04/12 15:57:25 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.239 2025/04/12 19:42:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.238 2025/04/12 15:57:25 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.239 2025/04/12 19:42:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1256,7 +1256,7 @@ lex_comment(void)
 {
 	int c;
 	static const struct {
-		const	char name[18];
+		const	char name[13];
 		bool	arg;
 		lint_comment comment;
 	} keywtab[] = {
