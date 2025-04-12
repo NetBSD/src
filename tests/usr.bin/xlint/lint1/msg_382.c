@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_382.c,v 1.1 2024/07/10 20:33:38 rillig Exp $	*/
+/*	$NetBSD: msg_382.c,v 1.2 2025/04/12 17:22:50 rillig Exp $	*/
 # 3 "msg_382.c"
 
-// Test for message: constant assignment of type '%s' in operand of '!' always evaluates to '%s' [382]
+// Test for message: constant assignment of type '%s' in operand of '%s' always evaluates to '%s' [382]
 
 /*
  * Outside strict bool mode, an assignment can be used as a condition, but
@@ -13,7 +13,6 @@
 /* lint1-extra-flags: -X 351 */
 
 int
-/* expect+1: warning: parameter 'b' unused in function 'conversions' [231] */
 conversions(int a, int b)
 {
 	/* expect+1: warning: constant assignment of type 'int' in operand of '!' always evaluates to 'true' [382] */
@@ -24,5 +23,20 @@ conversions(int a, int b)
 		return 2;
 	if (!(a = a + 1))
 		return 3;
+
+	/* expect+1: warning: constant assignment of type 'int' in operand of '&&' always evaluates to 'true' [382] */
+	if ((a = 13) && (b == 14))
+		return 4;
+	/* expect+1: warning: constant assignment of type 'int' in operand of '&&' always evaluates to 'true' [382] */
+	if ((a == 13) && (b = 14))
+		return 5;
+
+	/* expect+1: warning: constant assignment of type 'int' in operand of '||' always evaluates to 'true' [382] */
+	if ((a = 13) || (b == 14))
+		return 4;
+	/* expect+1: warning: constant assignment of type 'int' in operand of '||' always evaluates to 'true' [382] */
+	if ((a == 13) || (b = 14))
+		return 5;
+
 	return a;
 }

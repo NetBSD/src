@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.681 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.682 2025/04/12 17:22:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.681 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.682 2025/04/12 17:22:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2029,15 +2029,6 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	case ARROW:
 		ntn = build_struct_access(op, sys, ln, rn);
 		break;
-	case NOT:
-		if (ln->tn_op == ASSIGN && ln->u.ops.right->tn_op == CON) {
-			/* constant assignment of type '%s' in operand ... */
-			warning(382, type_name(ln->tn_type),
-			    is_nonzero_val(&ln->u.ops.right->u.value)
-			    ? "true" : "false");
-		}
-		ntn = build_op(op, sys, gettyp(Tflag ? BOOL : INT), ln, NULL);
-		break;
 	case INCAFT:
 	case DECAFT:
 	case INCBEF:
@@ -2090,6 +2081,20 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		break;
 	default:
 		lint_assert(mp->m_binary == (rn != NULL));
+		if ((op == NOT || op == LOGAND || op == LOGOR)
+		    && ln->tn_op == ASSIGN && ln->u.ops.right->tn_op == CON) {
+			/* constant assignment of type '%s' in operand ... */
+			warning(382, type_name(ln->tn_type), op_name(op),
+			    is_nonzero_val(&ln->u.ops.right->u.value)
+			    ? "true" : "false");
+		}
+		if ((op == LOGAND || op == LOGOR)
+		    && rn->tn_op == ASSIGN && rn->u.ops.right->tn_op == CON) {
+			/* constant assignment of type '%s' in operand ... */
+			warning(382, type_name(rn->tn_type), op_name(op),
+			    is_nonzero_val(&rn->u.ops.right->u.value)
+			    ? "true" : "false");
+		}
 		type_t *rettp = mp->m_returns_bool
 		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
 		ntn = build_op(op, sys, rettp, ln, rn);
