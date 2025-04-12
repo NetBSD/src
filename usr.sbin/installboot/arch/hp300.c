@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.17.2.1 2024/06/22 10:57:11 martin Exp $ */
+/* $NetBSD: hp300.c,v 1.17.2.2 2025/04/12 12:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.17.2.1 2024/06/22 10:57:11 martin Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.17.2.2 2025/04/12 12:04:18 martin Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -102,6 +102,9 @@ hp300_setboot(ib_params *params)
 
 	retval = 0;
 	bootstrap = MAP_FAILED;
+
+	/* needs whole LIF volume/directory and actual bootstrap by default */
+	bootstrap_size = params->s1stat.st_size;
 
 	label = malloc(params->sectorsize);
 	if (label == NULL) {
@@ -223,27 +226,12 @@ hp300_setboot(ib_params *params)
 		}
 	}
 
-#ifdef SUPPORT_CD9660
-	if (params->stage2 != NULL) {
-		/* Use bootstrap file in the target filesystem. */
-		bootstrap = mmap(NULL, bootstrap_size,
-		    PROT_READ | PROT_WRITE, MAP_PRIVATE, params->fsfd,
-		    boot_offset);
-		if (bootstrap == MAP_FAILED) {
-			warn("mmapping `%s'", params->filesystem);
-			goto done;
-		}
-	} else
-#endif
-	{
-		/* Use bootstrap specified as stage1. */
-		bootstrap_size = params->s1stat.st_size;
-		bootstrap = mmap(NULL, bootstrap_size,
-		    PROT_READ | PROT_WRITE, MAP_PRIVATE, params->s1fd, 0);
-		if (bootstrap == MAP_FAILED) {
-			warn("mmapping `%s'", params->stage1);
-			goto done;
-		}
+	/* Read LIF volume/directory (and bootstrap) from stage1 */
+	bootstrap = mmap(NULL, bootstrap_size,
+	    PROT_READ | PROT_WRITE, MAP_PRIVATE, params->s1fd, 0);
+	if (bootstrap == MAP_FAILED) {
+		warn("mmapping `%s'", params->stage1);
+		goto done;
 	}
 
 	/* Relocate files, sanity check LIF directory on the way */
