@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.125 2024/09/03 19:47:28 andvar Exp $
+.\"	$NetBSD: pci.4,v 1.126 2025/04/13 00:01:43 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2022
+.Dd April 13, 2025
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -130,6 +130,8 @@ Advansys Ultra Wide SCSI interfaces.
 Buslogic BT-9xx SCSI interfaces.
 .It Xr dpt 4
 DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+.It Xr esiop 4
+Enhanced Symbios Logic/NCR 53c8xx SCSI controllers.
 .It Xr iha 4
 Initio INIC-940/950 SCSI interfaces.
 .It Xr isp 4
@@ -144,6 +146,8 @@ LSI Logic Fusion-MPT Message Passing Interface II SAS controllers.
 LSI Logic Fusion-MPT SCSI/Fibre Channel/SAS controllers.
 .It Xr nca 4
 Domex 536 SCSI interfaces.
+.It Xr njs 4
+Workbit NinjaSCSI-32 PCI/CardBus SCSI controllers.
 .It Xr pcscp 4
 Advanced Micro Devices Am53c974 PCscsi-PCI SCSI interfaces.
 .It Xr siop 4
@@ -155,32 +159,66 @@ Tekram TRM-S1040 ASIC based SCSI interfaces.
 .Bl -tag -width pcdisplay(4) -offset indent
 .It Xr aac 4
 The Adaptec AAC family of RAID controllers.
+.It Xr acardide 4
+Acard IDE disk controllers.
+.It Xr aceride 4
+Acer Labs M5229 IDE controllers.
 .It Xr ahcisata 4
 AHCI 1.0 and 1.1 compliant SATA controllers.
 .It Xr amr 4
 The AMI and LSI Logic MegaRAID family of RAID controllers.
 .It Xr arcmsr 4
 Areca Technology Corporation SATA/SAS RAID controllers.
+.It Xr artsata 4
+Intel i31244 Serial ATA disk controllers.
 .It Xr cac 4
 Compaq array controllers.
 .It Xr ciss 4
 HP/Compaq Smart ARRAY 5/6 RAID controllers.
+.It Xr cmdide 4
+CMD Technology and Silicon Image IDE disk controllers.
+.It Xr cypide 4
+Cypress 82C693 IDE controllers.
+.It Xr hptide 4
+Triones/Highpoint IDE disk controllers.
 .It Xr icp 4
 ICP Vortex GDT and Intel Storage RAID controllers.
+.It Xr iteide 4
+Integrated Technology Express IDE disk controllers.
 .It Xr ixpide 4
-ATI Technologies IXP IDE controllers
+ATI Technologies IXP IDE controllers.
+.It Xr jmide 4
+JMicron Technology JMB36x PCIe to SATA II/PATA controllers.
 .It Xr mlx 4
 Mylex DAC960 and DEC SWXCR RAID controllers.
+.It Xr mvsata 4
+Marvell Hercules-I and Hercules-II SATA controllers.
 .It Xr nside 4
 National Semiconductor PC87415 PCI-IDE controllers.
 .It Xr nvme 4
 Non-Volatile Memory (NVM Express) host controllers.
+.It Xr optiide 4
+OPTi IDE disk controllers.
+.It Xr pdcide 4
+Promise IDE disk controllers.
 .It Xr pdcsata 4
 Promise Serial-ATA disk controllers.
 .It Xr pciide 4
 IDE disk controllers.
 .It Xr rtsx 4
 Realtek SD card readers.
+.It Xr satalink 4
+Silicon Image SATALink disk controllers.
+.It Xr schide 4
+Intel SCH IDE disk controllers.
+.It Xr siisata 4
+Silicon Image SATA-II controllers.
+.It Xr siside 4
+Silicon Integrated System IDE disk controllers.
+.It Xr slide 4
+Symphony Labs and Winbond IDE disk controllers.
+.It Xr stpcide 4
+STMicroelectronics STPC IDE disk controllers
 .It Xr svwsata 4
 Serverworks Serial ATA disk controllers.
 .It Xr twa 4
@@ -192,6 +230,8 @@ AMD, NVIDIA and VIA IDE disk controllers.
 .El
 .Ss Wired network interfaces
 .Bl -tag -width pcdisplay(4) -offset indent
+.It Xr age 4
+Attansic L1 10/100/Gigabit Ethernet interfaces.
 .It Xr alc 4
 Atheros AR813x/AR815x/AR816x/AR817x and Killer E2200/2400/2500
 10/100/1000 Ethernet interfaces.
@@ -200,16 +240,24 @@ Atheros AR8121/AR8113/AR8114 (Attansic L1E) 10/100/1000 Ethernet
 interfaces.
 .It Xr aq 4
 Aquantia AQC multigigabit Ethernet interfaces.
+.It Xr bce 4
+Broadcom BCM4401 10/100 Ethernet interfaces.
 .It Xr bge 4
 Broadcom BCM57xx/BCM590x 10/100/1000 Ethernet interfaces.
 .It Xr bnx 4
 Broadcom NetXtreme II 10/100/1000 Ethernet interfaces.
+.It Xr cas 4
+Sun Cassini/Cassini+ (GigaSwift) Ethernet devices.
+.It Xr dge 4
+Intel i82597EX PRO/10GbE LR Ethernet interfaces.
 .It Xr ena 4
 Elastic Network Adapter interfaces.
 .It Xr ep 4
 3Com 3c590, 3c595, 3c900, and 3c905 Ethernet interfaces.
 .It Xr epic 4
 SMC83C170 (EPIC/100) Ethernet interfaces.
+.It Xr eqos 4
+DesignWare Ethernet Quality-of-Service controllers.
 .It Xr et 4
 Agere/LSI ET1310/ET1301 10/100/1000 Ethernet interfaces.
 .It Xr ex 4
@@ -220,12 +268,16 @@ Intel EtherExpress PRO 10+/100B Ethernet interfaces.
 National Semiconductor DP83820 based Gigabit Ethernet interfaces.
 .It Xr hme 4
 Sun Microelectronics STP2002-STQ Ethernet interfaces.
+.It Xr igc 4
+Intel I225/I226 1Gb/2.5Gb Ethernet devices.
 .It Xr ixg 4
 Intel 82598EB, 82599, X540 and X550 10 Gigabit Ethernet interfaces.
 .It Xr ixl 4
 Intel 700 series Ethernet interfaces.
 .It Xr jme 4
 JMicron Technologies JMC250/JMC260 Ethernet interfaces.
+.It Xr kse 4
+Micrel 8842/8841 PCI Ethernet controllers.
 .It Xr le 4
 PCNet-PCI Ethernet interfaces.
 Note, the
@@ -268,14 +320,20 @@ Alteon Networks Tigon I and Tigon II Gigabit Ethernet driver.
 Texas Instruments ThunderLAN-based Ethernet interfaces.
 .It Xr tlp 4
 DECchip 21x4x and clone Ethernet interfaces.
+.It Xr txp 4
+3Com 3XP Typhoon/Sidewinder (3CR990) Ethernet interfaces.
 .It Xr vge 4
 VIA Networking Technologies VT6122 PCI Gigabit Ethernet adapter driver.
 .It Xr vmx 4
 VMware VMXNET3 virtual Ethernet interfaces.
 .It Xr vr 4
 VIA VT3043 (Rhine) and VT86C100A (Rhine-II) Ethernet interfaces.
+.It Xr vte 4
+Vortex86 RDC R6040 Fast Ethernet driver.
 .It Xr wm 4
 Intel i8254x Gigabit Ethernet driver.
+.It Xr xge 4
+Neterion Xframe-I LR Ethernet adapters.
 .El
 .Ss Wireless network interfaces
 .Bl -tag -width pcdisplay(4) -offset indent
@@ -324,6 +382,8 @@ Intel XMM 7360 LTE modem.
 Cyclades Cyclom-4Y, -8Y, and -16Y multi-port serial interfaces.
 .It Xr cz 4
 Cyclades-Z series multi-port serial interfaces.
+.It Xr pcweasel 4
+PC-Weasel serial console board.
 .El
 .Ss Audio devices
 .Bl -tag -width pcdisplay(4) -offset indent
@@ -331,10 +391,12 @@ Cyclades-Z series multi-port serial interfaces.
 Acer Labs M5455 I/O Controller Hub integrated AC'97 audio device.
 .It Xr auich 4
 Intel I/O Controller Hub integrated AC'97 audio device.
-.It Xr auvia 4
-VIA VT82C686A integrated AC'97 audio device.
+.It Xr auixp 4
+ATI IXP series integrated AC'97 audio device.
 .It Xr autri 4
 Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 AC'97 audio device.
+.It Xr auvia 4
+VIA VT82C686A integrated AC'97 audio device.
 .It Xr clcs 4
 Cirrus Logic CS4280 audio device.
 .It Xr clct 4
@@ -353,6 +415,8 @@ ESS Maestro-1/2/2e PCI AC'97 Audio Accelerator audio device.
 ESS Solo-1 PCI AudioDrive audio device.
 .It Xr fms 4
 Forte Media FM801 audio device.
+.It Xr gcscaudio 4
+AMD Geode CS5536 audio device.
 .It Xr hdaudio 4
 High Definition Audio Specification 1.0 device.
 .It Xr neo 4
@@ -361,6 +425,45 @@ NeoMagic MagicMedia 256 audio device.
 S3 SonicVibes audio device.
 .It Xr yds 4
 Yamaha YMF724/740/744/754-based audio device.
+.El
+.Ss Video framebuffer devices
+.Bl -tag -width pcdisplay(4) -offset indent
+.It Xr chipsfb 4
+Chips & Technologies 6555x based framebuffers
+.It Xr genfb 4
+generic framebuffer console driver
+.It Xr igmafb 4
+Intel Graphics Media Accelerator framebuffers
+.It Xr igsfb 4
+IGA 1682 and CyberPro series graphics cards
+.It Xr pm3fb 4
+3Dlabs Permedia 3 / Oxygen VX1 / Proformance 3 framebuffers
+.It Xr tdvfb 4
+3Dfx Voodoo Graphics / Voodoo 2 framebuffers
+.It Xr voodoofb 4
+3Dfx Voodoo 3 / Voodoo Banshee framebuffers
+.It Xr vga 4
+VGA graphics boards.
+.El
+.Ss Cryptographic accelerators
+.Bl -tag -width pcdisplay(4) -offset indent
+.It Xr hifn 4
+Hifn 7751/7951/7811/7955/7956 crypto accelerators.
+.It Xr qat 4
+Intel QuickAssist crypto accelerator.
+.It Xr ubsec 4
+Broadcom and BlueSteel uBsec 5x0x crypto accelerator.
+.El
+.Ss USB host controllers
+.Bl -tag -width pcdisplay(4) -offset indent
+.It Xr ehci 4
+USB EHCI host controllers.
+.It Xr ohci 4
+USB OHCI host controllers.
+.It Xr uhci 4
+USB UHCI host controllers.
+.It Xr xhci 4
+USB XHCI host controllers.
 .El
 .Ss Bridges
 .Bl -tag -width pcdisplay(4) -offset indent
@@ -377,10 +480,12 @@ Generic PCI bridges, including expansion backplanes.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay(4) -offset indent
+.It Xr coram 4
+Conexant CX23885 based digital video cards.
+.It Xr cxdtv 4
+Conexant CX2388x based digital video cards.
 .It Xr bktr 4
 Brooktree 848 compatible TV cards.
-.It Xr ehci 4
-USB EHCI host controllers.
 .It Xr gtp 4
 Gemtek PCI FM radio devices.
 .It Xr ibmcd 4
@@ -389,8 +494,6 @@ IBM 4810 BSP cash drawer ports.
 I2O I/O processors.
 .It Xr oboe 4
 Toshiba OBOE IrDA SIR/FIR controller.
-.It Xr ohci 4
-USB OHCI host controllers.
 .It Xr pcic 4
 PCMCIA controllers, including the Cirrus Logic GD6729.
 .It Xr puc 4
@@ -401,14 +504,8 @@ communications cards, containing
 and
 .Xr lpt 4
 communications ports.
-.It Xr uhci 4
-USB UHCI host controllers.
 .It Xr virtio 4
 Para-virtualized I/O in a virtual machine.
-.It Xr vga 4
-VGA graphics boards.
-.It Xr xhci 4
-USB XHCI host controllers.
 .El
 .Sh SEE ALSO
 .Xr pci 3 ,
