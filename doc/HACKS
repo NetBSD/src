@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.249 2025/04/13 08:19:13 rin Exp $
+# $NetBSD: HACKS,v 1.250 2025/04/13 08:42:10 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -492,6 +492,22 @@ port	vax
 		file in ELF section.
 	kcah
 
+	hack	Sprinkle -O0 to avoid ICE for GCC10/12
+	cdate	Mon Sep 30 02:55:44 UTC 2024
+	mdate	Sun Apr 13 08:29:42 UTC 2025
+	mdate	2025/04/13 08:31:12
+	who	kalvisd, rin
+	file	external/mit/xorg/lib/gallium/Makefile : 1.57 -
+	file	external/mit/xorg/lib/gallium.old/Makefile : 1.10 -
+	descr
+		We have ICE for -O[21] even for GCC10/12.
+		Affected files varies b/w GCC and gallium versions.
+
+		Note that compiled binary does not work anyway on vax;
+		they manipulate floating-point numbers as binary, assuming
+		IEEE 754 format.
+	kcah
+
 port	arm
 
 	hack	gcc-unsigned-compare
@@ -799,14 +815,6 @@ file	src/external/lgpl3/gmp/lib/libgmp/arch/mips64eb/Makefile.inc: 1.6
 	src/external/lgpl3/gmp/lib/libgmp/arch/mips64el/config.h: 1.5
 descr	workaround for n32 gcc doing unaligned 64bit accesses when optimizing
 pr	48696
-kcah
-
-port	vax
-hack	compile nir.c in gallium with -O1
-cdate	Mon Oct 28 14:39:35 EDT 2019
-who	christos
-file	/cvsroot/src/external/mit/xorg/lib/gallium/Makefile 1.36
-descr	gallium does not compile.
 kcah
 
 port	sh3
