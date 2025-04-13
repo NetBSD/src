@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.78 2023/05/09 12:04:04 riastradh Exp $	*/
+/*	$NetBSD: disk.h,v 1.79 2025/04/13 14:01:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -248,6 +248,10 @@ struct dkwedge_list {
  *		<integer>...</integer>
  *		<key>alternative-cylinders</key>
  *		<integer>...</integer>
+ *		<key>physical-sector-size</key>
+ *		<integer>...</integer>
+ *		<key>aligned-sector</key>
+ *		<integer>...</integer>
  *	</dict>
  * NOTE: Not all geometry information is relevant for every kind of disk.
  */
@@ -274,6 +278,9 @@ struct disk_geom {
 	 * configuration description areas, etc.
 	 */
 	uint32_t	dg_acylinders;
+
+	uint32_t	dg_physsecsize;	/* # of bytes per physical sector */
+	uint32_t	dg_alignedsec;	/* first aligned logical sector # */
 };
 
 /*

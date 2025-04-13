@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.344 2025/04/12 10:25:26 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.345 2025/04/13 14:01:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.344 2025/04/12 10:25:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.345 2025/04/13 14:01:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1018,28 +1018,6 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 		}
 		return (0);
-
-	case DIOCGSECTORALIGN: {
-		struct disk_sectoralign *dsa = addr;
-
-		dsa->dsa_alignment = 1u << sd->params.lbppbe;
-		dsa->dsa_firstaligned = sd->params.lalba;
-		if (part != RAW_PART) {
-			struct disklabel *lp = dksc->sc_dkdev.dk_label;
-			daddr_t offset = lp->d_partitions[part].p_offset;
-			uint32_t r = offset % dsa->dsa_alignment;
-
-			if (r < dsa->dsa_firstaligned)
-				dsa->dsa_firstaligned = dsa->dsa_firstaligned
-				    - r;
-			else
-				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
-				    + dsa->dsa_alignment) - r;
-		}
-		dsa->dsa_firstaligned %= dsa->dsa_alignment;
-
-		return 0;
-	}
 
 	default:
 		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
@@ -2067,6 +2045,8 @@ sd_set_geometry(struct sd_softc *sd)
 	dg->dg_nsectors = sd->params.sectors;
 	dg->dg_ntracks = sd->params.heads;
 	dg->dg_ncylinders = sd->params.cyls;
+	dg->dg_physsecsize = dg->dg_secsize << sd->params.lbppbe;
+	dg->dg_alignedsec = sd->params.lalba;
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sd->typename);
 }

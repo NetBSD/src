@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.137 2023/05/09 12:04:04 riastradh Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.138 2025/04/13 14:00:59 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.137 2023/05/09 12:04:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.138 2025/04/13 14:00:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -658,6 +658,28 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		dkwedge_delidle(dk);
 		return 0;
 
+	case DIOCGSECTORALIGN: {
+		struct disk_sectoralign * const dsa = data;
+		const int part = DISKPART(dev);
+
+		dsa->dsa_alignment = MAX(1u, dk->dk_geom.dg_physsecsize /
+		    dk->dk_geom.dg_secsize);
+		dsa->dsa_firstaligned = dk->dk_geom.dg_alignedsec;
+
+		if (part != RAW_PART) {
+			struct disklabel * const lp = dk->dk_label;
+			daddr_t offset = lp->d_partitions[part].p_offset;
+			uint32_t r = offset % dsa->dsa_alignment;
+
+			if (r <= dsa->dsa_firstaligned)
+				dsa->dsa_firstaligned -= r;
+			else
+				dsa->dsa_firstaligned += dsa->dsa_alignment - r;
+		}
+		dsa->dsa_firstaligned %= dsa->dsa_alignment;
+		return 0;
+	}
+
 	default:
 		return EPASSTHROUGH;
 	}
@@ -728,6 +750,13 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 	if (dg->dg_ncylinders)
 		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
 		    dg->dg_ncylinders);
+
+	if (dg->dg_physsecsize) {
+		prop_dictionary_set_uint32(geom, "physical-sector-size",
+		    dg->dg_physsecsize);
+		prop_dictionary_set_uint32(geom, "aligned-sector",
+		    dg->dg_alignedsec);
+	}
 
 	prop_dictionary_set(disk_info, "geometry", geom);
 

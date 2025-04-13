@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.18 2023/01/02 16:08:13 hannken Exp $	*/
+/*	$NetBSD: partutil.c,v 1.19 2025/04/13 14:00:59 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.18 2023/01/02 16:08:13 hannken Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.19 2025/04/13 14:00:59 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,6 +87,11 @@ dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 	    &geo->dg_ntracks);
 	prop_dictionary_get_uint32(dict, "cylinders-per-unit",
 	    &geo->dg_ncylinders);
+	geo->dg_physsecsize = geo->dg_secsize;
+	prop_dictionary_get_uint32(dict, "physical-sector-size",
+	    &geo->dg_physsecsize);
+	prop_dictionary_get_uint32(dict, "aligned-sector",
+	    &geo->dg_alignedsec);
 }
 
 

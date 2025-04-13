@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.473 2025/02/27 01:34:43 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.474 2025/04/13 14:00:59 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.473 2025/02/27 01:34:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.474 2025/04/13 14:00:59 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -310,6 +310,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	struct dk_softc *dksc = &wd->sc_dksc;
 	struct ata_device *adev= aux;
 	int i, blank;
+	uint32_t firstaligned = 0, alignment = 1;
 	char tbuf[41],pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
 	int dtype = DKTYPE_UNKNOWN;
@@ -452,15 +453,13 @@ wdattach(device_t parent, device_t self, void *aux)
 	} else {
 		wd->sc_blksize = 512;
 	}
-	wd->sc_sectoralign.dsa_firstaligned = 0;
-	wd->sc_sectoralign.dsa_alignment = 1;
 	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
 	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LPS) != 0)) {
-		wd->sc_sectoralign.dsa_alignment = 1 <<
+		alignment = 1 <<
 		    (wd->sc_params.atap_secsz & ATA_SECSZ_LPS_SZMSK);
 		if ((wd->sc_params.atap_logical_align & ATA_LA_VALID_MASK) ==
 		    ATA_LA_VALID) {
-			wd->sc_sectoralign.dsa_firstaligned =
+			firstaligned =
 			    wd->sc_params.atap_logical_align & ATA_LA_MASK;
 		}
 	}
@@ -474,12 +473,12 @@ wdattach(device_t parent, device_t self, void *aux)
 		wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
 	    wd->sc_blksize, (unsigned long long)wd->sc_capacity);
-	if (wd->sc_sectoralign.dsa_alignment != 1) {
+	if (alignment != 1) {
 		aprint_normal(" (%d bytes/physsect",
-		    wd->sc_sectoralign.dsa_alignment * wd->sc_blksize);
-		if (wd->sc_sectoralign.dsa_firstaligned != 0) {
+		    alignment * wd->sc_blksize);
+		if (firstaligned != 0) {
 			aprint_normal("; first aligned sector: %jd",
-			    (intmax_t)wd->sc_sectoralign.dsa_firstaligned);
+			    (intmax_t)firstaligned);
 		}
 		aprint_normal(")");
 	}
@@ -1492,28 +1491,6 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return(error1);
 		}
 
-	case DIOCGSECTORALIGN: {
-		struct disk_sectoralign *dsa = addr;
-		int part = WDPART(dev);
-
-		*dsa = wd->sc_sectoralign;
-		if (part != RAW_PART) {
-			struct disklabel *lp = dksc->sc_dkdev.dk_label;
-			daddr_t offset = lp->d_partitions[part].p_offset;
-			uint32_t r = offset % dsa->dsa_alignment;
-
-			if (r < dsa->dsa_firstaligned)
-				dsa->dsa_firstaligned = dsa->dsa_firstaligned
-				    - r;
-			else
-				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
-				    + dsa->dsa_alignment) - r;
-		}
-		dsa->dsa_firstaligned %= dsa->dsa_alignment;
-
-		return 0;
-	}
-
 	default:
 		return dk_ioctl(dksc, dev, cmd, addr, flag, l);
 	}
@@ -1751,6 +1728,17 @@ wd_set_geometry(struct wd_softc *wd)
 	dg->dg_ntracks = wd->sc_params.atap_heads;
 	if ((wd->sc_flags & WDF_LBA) == 0)
 		dg->dg_ncylinders = wd->sc_params.atap_cylinders;
+	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
+	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LPS) != 0)) {
+		dg->dg_physsecsize = wd->sc_blksize << (wd->sc_params.atap_secsz &
+		    ATA_SECSZ_LPS_SZMSK);
+		if ((wd->sc_params.atap_logical_align & ATA_LA_VALID_MASK) ==
+		    ATA_LA_VALID) {
+			dg->dg_alignedsec = (wd->sc_params.atap_logical_align &
+			    ATA_LA_MASK) & ((1u << (wd->sc_params.atap_secsz &
+			    ATA_SECSZ_LPS_SZMSK)) - 1);
+		}
+	}
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, wd->sc_typename);
 }
