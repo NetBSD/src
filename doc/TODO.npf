@@ -1,6 +1,12 @@
-Another TODO list is available here:
+# $NetBSD: TODO.npf,v 1.9 2025/04/13 23:03:03 gdt Exp $
 
+====== META ======
+
+-- Merge still-to-be-done-items from another TODO list which was last
+   modified in May, 2020:
 	https://www.netbsd.org/~rmind/npf/__tasklist.html
+
+-- Review all items to see if they are still relevant and correct.
 
 ====== DOCUMENTATION ======
 
