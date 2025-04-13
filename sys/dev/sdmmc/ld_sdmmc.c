@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.44 2024/10/18 11:03:52 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.45 2025/04/13 02:34:03 rin Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.44 2024/10/18 11:03:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.45 2025/04/13 02:34:03 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -111,7 +111,7 @@ static int ld_sdmmc_match(device_t, cfdata_t, void *);
 static void ld_sdmmc_attach(device_t, device_t, void *);
 static int ld_sdmmc_detach(device_t, int);
 
-static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
+static int ld_sdmmc_dump(struct ld_softc *, void *, daddr_t, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 static void ld_sdmmc_restart(void *);
 static int ld_sdmmc_discard(struct ld_softc *, struct buf *);
@@ -510,9 +510,12 @@ done_locked:
 }
 
 static int
-ld_sdmmc_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_sdmmc_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+
+	if (blkno + blkcnt - 1 >= sc->sc_sf->csd.capacity)
+		return EIO;
 
 	return sdmmc_mem_write_block(sc->sc_sf, blkno, data,
 	    blkcnt * ld->sc_secsize);

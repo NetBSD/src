@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.115 2025/04/12 07:30:01 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.116 2025/04/13 02:34:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.115 2025/04/12 07:30:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.116 2025/04/13 02:34:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,9 +604,10 @@ ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		return (ENODEV);
 
 	/*
-	 * sc_dump takes only an 'int' as a disk address
+	 * Minimum consistency check; sc_dump() should check
+	 * device-dependent constraints if necessary.
 	 */
-	if (blkno < 0 || blkno + nblk - 1 > INT_MAX)
+	if (blkno < 0)
 		return (EIO);
 
 	return (*sc->sc_dump)(sc, va, blkno, nblk);

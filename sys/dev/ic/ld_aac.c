@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.31 2022/07/30 12:48:17 mlelstv Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.32 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.31 2022/07/30 12:48:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.32 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ static void	ld_aac_attach(device_t, device_t, void *);
 static void	ld_aac_intr(struct aac_ccb *);
 static int	ld_aac_dobio(struct ld_aac_softc *, void *, int, daddr_t, int,
 			     struct buf *);
-static int	ld_aac_dump(struct ld_softc *, void *, int, int);
+static int	ld_aac_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_aac_match(device_t, cfdata_t, void *);
 static int	ld_aac_start(struct ld_softc *, struct buf *);
 
@@ -357,7 +357,7 @@ ld_aac_intr(struct aac_ccb *ac)
 }
 
 static int
-ld_aac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_aac_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 
 	return (ld_aac_dobio((struct ld_aac_softc *)ld, data,

@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.33 2018/06/04 20:06:52 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.34 2025/04/13 02:34:02 rin Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.33 2018/06/04 20:06:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.34 2025/04/13 02:34:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,7 +48,7 @@ static int	ld_thunkbus_match(device_t, cfdata_t, void *);
 static void	ld_thunkbus_attach(device_t, device_t, void *);
 
 static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
-static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
+static int	ld_thunkbus_lddump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_thunkbus_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 //#define LD_USE_AIO
@@ -304,7 +304,7 @@ ld_thunkbus_complete(void *arg)
 
 
 static int
-ld_thunkbus_lddump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_thunkbus_lddump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 	ssize_t len;

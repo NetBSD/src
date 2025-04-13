@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.25 2022/07/30 12:48:17 mlelstv Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.26 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.25 2022/07/30 12:48:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.26 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ CFATTACH_DECL_NEW(ld_nvme, sizeof(struct ld_nvme_softc),
     ld_nvme_match, ld_nvme_attach, ld_nvme_detach, NULL);
 
 static int	ld_nvme_start(struct ld_softc *, struct buf *);
-static int	ld_nvme_dump(struct ld_softc *, void *, int, int);
+static int	ld_nvme_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_nvme_flush(struct ld_softc *, bool);
 static int	ld_nvme_getcache(struct ld_softc *, int *);
 static int	ld_nvme_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
@@ -147,7 +147,7 @@ ld_nvme_start(struct ld_softc *ld, struct buf *bp)
 }
 
 static int
-ld_nvme_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_nvme_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 

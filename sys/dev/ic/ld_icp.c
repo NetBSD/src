@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.32 2020/08/14 09:28:29 chs Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.33 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.32 2020/08/14 09:28:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.33 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ static void	ld_icp_attach(device_t, device_t, void *);
 static int	ld_icp_detach(device_t, int);
 static int	ld_icp_dobio(struct ld_icp_softc *, void *, int, int, int,
 		     struct buf *);
-static int	ld_icp_dump(struct ld_softc *, void *, int, int);
+static int	ld_icp_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_icp_flush(struct ld_softc *, bool);
 static int	ld_icp_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_icp_intr(struct icp_ccb *);
@@ -249,8 +249,12 @@ ld_icp_start(struct ld_softc *ld, struct buf *bp)
 }
 
 static int
-ld_icp_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_icp_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
+
+	/* ld_icp_dobio() takes only an 'int' as a disk address */
+	if (blkno + blkcnt - 1 > INT_MAX)
+		return (EIO);
 
 	return (ld_icp_dobio((struct ld_icp_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));

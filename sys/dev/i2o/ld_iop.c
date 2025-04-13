@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.41 2024/09/08 09:36:50 rillig Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.42 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.41 2024/09/08 09:36:50 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.42 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct ld_iop_softc {
 static void	ld_iop_adjqparam(device_t, int);
 static void	ld_iop_attach(device_t, device_t, void *);
 static int	ld_iop_detach(device_t, int);
-static int	ld_iop_dump(struct ld_softc *, void *, int, int);
+static int	ld_iop_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_iop_flush(struct ld_softc *, bool);
 static int	ld_iop_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_iop_intr(device_t, struct iop_msg *, void *);
@@ -401,7 +401,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 }
 
 static int
-ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_iop_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct iop_msg *im;
 	struct iop_softc *iop;

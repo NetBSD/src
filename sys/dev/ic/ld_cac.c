@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.31 2017/08/09 16:44:40 mlelstv Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.32 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.31 2017/08/09 16:44:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.32 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct ld_cac_softc {
 
 void	ld_cac_attach(device_t, device_t, void *);
 void	ld_cac_done(device_t, void *, int);
-int	ld_cac_dump(struct ld_softc *, void *, int, int);
+int	ld_cac_dump(struct ld_softc *, void *, daddr_t, int);
 int	ld_cac_match(device_t, cfdata_t, void *);
 int	ld_cac_start(struct ld_softc *, struct buf *);
 
@@ -163,9 +163,13 @@ ld_cac_start(struct ld_softc *ld, struct buf *bp)
 }
 
 int
-ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_cac_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_cac_softc *sc;
+
+	/* cac_cmd() takes only an 'int' as a disk address */
+	if (blkno + blkcnt - 1 > INT_MAX)
+		return (EIO);
 
 	sc = (struct ld_cac_softc *)ld;
 

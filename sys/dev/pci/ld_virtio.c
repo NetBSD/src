@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.42 2025/02/27 16:21:30 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.43 2025/04/13 02:34:03 rin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.42 2025/02/27 16:21:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.43 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ ld_virtio_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static int ld_virtio_vq_done(struct virtqueue *);
-static int ld_virtio_dump(struct ld_softc *, void *, int, int);
+static int ld_virtio_dump(struct ld_softc *, void *, daddr_t, int);
 static int ld_virtio_start(struct ld_softc *, struct buf *);
 static int ld_virtio_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static int ld_virtio_info(struct ld_softc *, bool);
@@ -749,7 +749,7 @@ again:
 }
 
 static int
-ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_virtio_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_virtio_softc *sc = device_private(ld->sc_dv);
 	struct virtio_softc *vsc = sc->sc_virtio;
@@ -789,7 +789,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	vr->vr_hdr.type   = virtio_rw32(vsc, VIRTIO_BLK_T_OUT);
 	vr->vr_hdr.ioprio = virtio_rw32(vsc, 0);
 	vr->vr_hdr.sector = virtio_rw64(vsc,
-			(daddr_t) blkno * ld->sc_secsize /
+			blkno * ld->sc_secsize /
 			VIRTIO_BLK_BSIZE);
 
 	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,

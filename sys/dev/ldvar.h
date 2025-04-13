@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.36 2025/02/27 16:20:26 jakllsch Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.37 2025/04/13 02:34:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct ld_softc {
 	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 	char		*sc_typename;	/* inquiry data */
 
-	int		(*sc_dump)(struct ld_softc *, void *, int, int);
+	int		(*sc_dump)(struct ld_softc *, void *, daddr_t, int);
 	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
 	int		(*sc_discard)(struct ld_softc *, struct buf *);

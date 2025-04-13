@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.40 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.41 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.40 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.41 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static void	ld_twe_attach(device_t, device_t, void *);
 static int	ld_twe_detach(device_t, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
-static int	ld_twe_dump(struct ld_softc *, void *, int, int);
+static int	ld_twe_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_twe_flush(struct ld_softc *, bool);
 static int	ld_twe_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_twe_handler(struct twe_ccb *, int);
@@ -259,8 +259,12 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 }
 
 static int
-ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_twe_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
+
+	/* ld_twe_dobio() takes only an 'int' as a disk address */
+	if (blkno + blkcnt - 1 > INT_MAX)
+		return (EIO);
 
 	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));

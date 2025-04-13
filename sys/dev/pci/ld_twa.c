@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.20 2017/02/27 21:32:33 jdolecek Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.21 2025/04/13 02:34:03 rin Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.20 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.21 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void	ld_twa_attach(device_t, device_t, void *);
 static int	ld_twa_detach(device_t, int);
 static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
-static int	ld_twa_dump(struct ld_softc *, void *, int, int);
+static int	ld_twa_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_twa_flush(struct ld_softc *, bool);
 static int	ld_twa_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_twa_handler(struct twa_request *);
@@ -221,7 +221,7 @@ ld_twa_handler(struct twa_request *tr)
 }
 
 static int
-ld_twa_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_twa_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 
 #if 0

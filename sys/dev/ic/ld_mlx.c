@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.23 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.24 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.23 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.24 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static void	ld_mlx_attach(device_t, device_t, void *);
 static int	ld_mlx_detach(device_t, int);
 static int	ld_mlx_dobio(struct ld_mlx_softc *, void *, int, int, int,
 			     struct buf *);
-static int	ld_mlx_dump(struct ld_softc *, void *, int, int);
+static int	ld_mlx_dump(struct ld_softc *, void *, daddr_t, int);
 static void	ld_mlx_handler(struct mlx_ccb *);
 static int	ld_mlx_match(device_t, cfdata_t, void *);
 static int	ld_mlx_start(struct ld_softc *, struct buf *);
@@ -244,8 +244,12 @@ ld_mlx_handler(struct mlx_ccb *mc)
 }
 
 static int
-ld_mlx_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_mlx_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
+
+	/* ld_mlx_dobio() takes only an 'int' as a disk address */
+	if (blkno + blkcnt - 1 > INT_MAX)
+		return (EIO);
 
 	return (ld_mlx_dobio((struct ld_mlx_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.51 2025/03/16 12:27:50 andvar Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.52 2025/04/13 02:34:02 rin Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.51 2025/03/16 12:27:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.52 2025/04/13 02:34:02 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -101,7 +101,7 @@ struct ld_ataraid_softc {
 static int	ld_ataraid_match(device_t, cfdata_t, void *);
 static void	ld_ataraid_attach(device_t, device_t, void *);
 
-static int	ld_ataraid_dump(struct ld_softc *, void *, int, int);
+static int	ld_ataraid_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_ataraid_ioctl(struct ld_softc *, u_long, void *, int32_t,
     bool);
 
@@ -581,8 +581,7 @@ out:
 }
 
 static int
-ld_ataraid_dump(struct ld_softc *sc, void *data,
-    int blkno, int blkcnt)
+ld_ataraid_dump(struct ld_softc *sc, void *data, daddr_t blkno, int blkcnt)
 {
 
 	return (EIO);

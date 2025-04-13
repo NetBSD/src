@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.26 2025/04/13 02:34:03 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.26 2025/04/13 02:34:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct ld_amr_softc {
 
 static int	ld_amr_dobio(struct ld_amr_softc *, void *, int, int, int,
 			     struct buf *);
-static int	ld_amr_dump(struct ld_softc *, void *, int, int);
+static int	ld_amr_dump(struct ld_softc *, void *, daddr_t, int);
 static void	ld_amr_handler(struct amr_ccb *);
 static int	ld_amr_start(struct ld_softc *, struct buf *);
 
@@ -195,9 +195,13 @@ ld_amr_handler(struct amr_ccb *ac)
 }
 
 static int
-ld_amr_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_amr_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_amr_softc *sc;
+
+	/* ld_amr_dobio() takes only an 'int' as a disk address */
+	if (blkno + blkcnt - 1 > INT_MAX)
+		return (EIO);
 
 	sc = (struct ld_amr_softc *)ld;
 
