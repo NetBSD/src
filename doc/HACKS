@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.248 2025/04/03 12:02:24 nat Exp $
+# $NetBSD: HACKS,v 1.249 2025/04/13 08:19:13 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -420,6 +420,40 @@ descr
 	still broken.
 kcah
 
+hack	xorg warnings
+cdate	30 July 2008, 3 June, 2013
+who	mrg
+file	external/mit/xorg/lib/libSM/Makefile : 1.2
+	external/mit/xorg/lib/libX11/Makefile.libx11 : 1.10
+	external/mit/xorg/lib/libXext/Makefile : 1.2
+	external/mit/xorg/lib/libXfont/Makefile : 1.2
+descr
+	Disable several warnings or use -Wno-error across Xorg sources
+	while we get them working
+kcah
+
+hack	32 bit time leftovers
+cdate	11 January 2009
+who	christos
+file	lib/libc/time/localtime.c : 1.41
+	lib/libc/time/zic.c : 1.23
+descr
+	The timezone compiled files still contain 32 bit time_t
+	quantities. I did not want to version the files because
+	the ``parser'' is too ugly for words. What needs to be
+	done, is to rewrite the parser from scratch also to avoid
+	potential core-dumps from parsing invalid files.
+kcah
+
+hack	32 bit time leftovers
+cdate	11 January 2009
+who	christos
+file	various
+descr
+	Many filesystem on-disk formats have 32 bit times.
+kcah
+
+
 port	vax
 
 	hack	gcc10/vax ICE
@@ -428,24 +462,6 @@ port	vax
 	file	external/mit/xorg/lib/fontconfig/src/Makefile : 1.28
 	descr
 		Disable optimization on some files
-	kcah
-
-	hack	gcc4/vax ICE
-	cdate	Sat Dec 22 08:17:57 2007 UTC
-	who	tsutsui
-	file	sys/arch/vax/conf/Makefile.vax : 1.79
-	descr
-		GCC4 on vax gets ICE on compiling sys/ddb/db_command.c.
-		-fno-tree-ter prevents it so add it to COPTS.
-	kcah
-
-	hack	gcc4/vax compiler crash
-	cdate	Fri Jun 30 22:39:12 PDT 2006
-	who	mrg
-	file	bin/csh/Makefile	: 1.27
-	file	lib/i18n_module/UTF7/Makefile	: 1.2
-	descr
-		GCC4 on vax crashes.  -O0 stops it happening so far...
 	kcah
 
 	hack	declare boolean_t in two IPF user-mode programs
@@ -474,138 +490,6 @@ port	vax
 		fail compilation.
 		There is a proposal on the pcc mailing list to stuff config
 		file in ELF section.
-	kcah
-
-	hack	xorg warnings
-	cdat	30 July 2008, 3 June, 2013
-	who	mrg
-	file	external/mit/xorg/lib/libSM/Makefile : 1.2
-		external/mit/xorg/lib/libX11/Makefile.libx11 : 1.10
-		external/mit/xorg/lib/libXext/Makefile : 1.2
-		external/mit/xorg/lib/libXfont/Makefile : 1.2
-	descr
-		Disable several warnings or use -Wno-error across Xorg sources
-		while we get them working
-	kcah
-
-	hack	32 bit time leftovers
-	cdat	11 January 2009
-	who	christos
-	file	lib/libc/time/localtime.c : 1.41
-		lib/libc/time/zic.c : 1.23
-	descr
-		The timezone compiled files still contain 32 bit time_t
-		quantities. I did not want to version the files because
-		the ``parser'' is too ugly for words. What needs to be
-		done, is to rewrite the parser from scratch also to avoid
-		potential core-dumps from parsing invalid files.
-	kcah
-
-	hack	32 bit time leftovers
-	cdat	11 January 2009
-	who	christos
-	file	various
-	descr
-		Many filesystem on-disk formats have 32 bit times.
-	kcah
-
-	hack	gcc 4.5 fsdb miscompile
-	date	Sat Nov  9 11:03:02 EST 2013
-	who	christos
-	file	src/sbin/fsdb/Makefile : 1.36 (and earlier)
-	descr
-		src/sbin/fsdb/fsdb.c: In function 'findblk':
-		src/sbin/fsdb/fsdb.c:610:1: error: unrecognizable insn:
-		(insn 941 940 942 134 src/sbin/fsdb/fsdb.c:589 (set (reg:SI 604)
-		    (subreg:SI (mem/s/j:DI (plus:SI (mult:SI (reg:SI 602)
-                        (const_int 8 [0x8]))
-                    (reg/f:SI 601)) [0 curinode.99_378->dp2.di_ib S8 A32]) 4)) \
-			-1 (nil))
-		src/sbin/fsdb/fsdb.c:610:1: internal compiler error: in \
-		extract_insn, at recog.c:2103
-	kcah
-
-	hack	gcc 4.8 gcc miscompiles
-	date	Sat Nov  9 16:35:18 EST 2013
-	who	christos
-	file	distrib/utils/x_ping/Makefile : 1.8
-	file	distrib/vax/miniroot/Makefile.inc : ?
-	file	distrib/vax/ramdisk/Makefile : ?
-	file	external/gpl3/gdb/lib/libdecnumber/Makefile : 1.3
-	file	sbin/fsdb/Makefile : 1.36
-	file	sbin/newfs_ext2fs/Makefile : 1.6
-	file	sbin/ping/Makefile : 1.17
-	file	usr.sbin/mtrace/Makefile : 1.11
-	descr
-		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		external/gpl3/gcc/dist/gcc/recog.c:770:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		external/gpl3/gcc/dist/libdecnumber/decNumber.c:7214:3:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		sbin/ping/ping.c:679:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		sbin/newfs_ext2fs/mke2fs.c:681:1:
-		internal compiler error: in reload_combine_note_use,
-		at postreload.c:1561
-		external/gpl3/gdb/dist/libdecnumber/decNumber.c:7214:3:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		usr.sbin/mtrace/mtrace.c:1655:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-	kcah
-
-	hack	gcc 5.4 cc1 miscompile
-	date	Tue Feb 14 07:19:57 JST 2017
-	who	rin
-	pr	port-vax/51967
-	file	external/gpl3/gcc/usr.bin/backend/Makefile : 1.35
-	descr
-		cc1 aborts due to SIGILL when compiling the sample code attached
-		to the PR. As a workaround, compile dse.c with -O0.
-	kcah
-
-	hack	libssh miscompile
-	cdate	Tue Feb 14 17:58:06 JST 2017
-	mdate	Tue Feb 14 18:57:39 JST 2017
-	who	rin
-	file	crypto/external/bsd/openssh/lib/Makefile : 1.20
-	descr
-		poly1305.c and umac.c are miscompiled, which results in login
-		failure to/from external hosts via ssh.
-	kcah
-
-	hack	mandoc miscompile
-	date	Tue Feb 14 18:03:05 JST 2017
-	who	rin
-	file	external/bsd/mdocml/lib/libmandoc/Makefile : 1.8
-	descr
-		mandoc(1) receives SIGILL in in_line_argn() from mdoc_macro.c.
-	kcah
-
-	hack	libX11 miscompile
-	date	Thu Feb 16 10:00:22 JST 2017
-	who	rin
-	file	src/external/mit/xorg/lib/libX11/Makefile.libx11 : 1.18
-	descr
-		lcWrap.c is miscompiled, which results in input failure via XIM.
-		Besides, some clients, e.g., pkgsrc/x11/kterm, receive SIGSEGV.
-	kcah
-
-	hack	gomoku compiler crash
-	date	Tue May 31 15:11:39 EDT 2022
-	who	christos
-	file	src/games/gomoku/Makefile : 1.12
-	descr
-		pickmove.c crashes with -O2, warns about ovi.o_intersect being
-		uninitialized with -O1, works with -O0
-	kcah
-
-	hack	gdtoa/misc.c miscompile
-	cdate	Sun Dec  4 22:27:26 UTC 2022
-	who	jakllsch
-	file	src/lib/libc/gdtoa/Makefile.inc : 1.11
-	descr
-		some doubles print as garbage if gdtoa/misc.c isn't compiled at -O0
 	kcah
 
 port	arm
@@ -682,12 +566,16 @@ port	m68k,sh3,vax
 
 	hack	gcc-4.8.1
 	cdate	Wed Nov  6 20:41:35 EST 2013
+	mdate	2014/05/16 09:36:51
 	who	christos
-	file	src/external/gpl3/gcc/libstdc++-v3/Makefile : 1.6
+	file	src/external/gpl3/gcc/lib/libstdc++-v3/Makefile : 1.11
 	descr
-		compile hashtable_c++0x.cc with -O2 instead of -Os to
+		compile the followings with -fimplicit-templates to
 		produce missing instantiation of std::lower_bound expansion
-		for unsigned long.
+		for unsigned long:
+		- concept-inst.cc
+		- hashtable_c++0x.cc
+		- bitmap_allocator.cc
 	kcah
 
 port	sparc
@@ -914,14 +802,6 @@ pr	48696
 kcah
 
 port	vax
-hack	compile boot with -O1
-cdate	Sat May 24 09:40:58 CEST 2014
-who	martin
-file	src/sys/arch/vax/boot/boot/Makefile: 1.41
-descr	/boot does not work when compiled with -O2 and gcc 4.8
-kcah
-
-port	vax
 hack	compile nir.c in gallium with -O1
 cdate	Mon Oct 28 14:39:35 EDT 2019
 who	christos
@@ -976,15 +856,6 @@ desc
 	mailing list, but never got a response
 kcah
 
-port	vax
-hack	compile rtld.c with -O0
-cdate	Wed Apr  3 17:38:38 EDT 2019
-who	christos
-file	src/libexec/ld.elf_so/Makefile: 1.141
-descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
-	second pass loop with elm == 0xffffffff
-kcah
-
 port	powerpc
 hack	compile tc.c, logerr.c, ubsan.c with -O0 for clang
 cdate	Wed Jan 29 17:40:19 EST 2020
@@ -1032,16 +903,6 @@ port	sh3
 		reflect the exact breakage.
 
 		https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
-kcah
-
-port	vax
-hack	compile blake2b.c with -O0 for vax
-cdate	Wed Oct 13 14:28:32 UTC 2021
-mdate	Wed Oct 13 14:28:32 UTC 2021
-who	nia
-file	src/lib/libcrypt/Makefile: 1.200
-descr	GCC 10 fails to build blake2b.c with an internal compiler
-	error unless optimization is disabled.
 kcah
 
 port	arm
