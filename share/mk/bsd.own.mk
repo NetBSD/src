@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1412 2025/02/24 17:49:38 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1413 2025/04/13 08:45:54 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,24 +75,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if \
-    ${MACHINE_CPU} == "aarch64" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "mips" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "riscv" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "alpha"
 HAVE_GCC?=	12
-.endif
-HAVE_GCC?=	10
 
 #
 # Platforms that can't run a modern GCC natively
