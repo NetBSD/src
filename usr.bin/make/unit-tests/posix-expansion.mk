@@ -1,4 +1,4 @@
-# $NetBSD: posix-expansion.mk,v 1.1 2025/04/13 09:29:33 rillig Exp $
+# $NetBSD: posix-expansion.mk,v 1.2 2025/04/13 09:34:43 rillig Exp $
 #
 # https://pubs.opengroup.org/onlinepubs/9799919799/utilities/make.html#tag_20_76_13_05
 #
@@ -11,8 +11,6 @@
 MOD_SUBST=	S s from to
 # The modifier contains a "=" and is thus the POSIX modifier.
 .if ${MOD_SUBST:S=from=to=} != "from=to= s from to"
-# FIXME: POSIX mode must be active here.
-# expect+1: Missing argument for ".error"
 .  error
 .endif
 # The modifier does not contain a "=" and thus falls back to the BSD modifier.
