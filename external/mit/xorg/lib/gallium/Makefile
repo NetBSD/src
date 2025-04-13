@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2024/09/30 02:55:44 kalvisd Exp $
+# $NetBSD: Makefile,v 1.58 2025/04/13 08:29:42 rin Exp $
 
 # Link the gallium mega driver.
 
@@ -1441,8 +1441,10 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 
 COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}
 
-.if ${MACHINE} == "vax"
+.if ${MACHINE} == "vax" && ${HAVE_GCC:U0} >= 12
+# in extract_constrain_insn, at recog.cc:2698
 COPTS.sp_quad_depth_test.c+=	-O0
+# in find_reloads_toplev, at reload.cc:4815
 COPTS.u_format_table.c+=	-O0
 .endif
 
