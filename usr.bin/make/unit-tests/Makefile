@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.357 2025/04/12 05:16:57 sjg Exp $
+# $NetBSD: Makefile,v 1.358 2025/04/13 09:29:32 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -300,6 +300,9 @@ TESTS+=		parse
 TESTS+=		parse-var
 TESTS+=		phony-end
 TESTS+=		posix
+TESTS+=		posix-execution
+TESTS+=		posix-expansion
+TESTS+=		posix-varassign
 TESTS+=		# posix1	# broken by reverting POSIX changes
 TESTS+=		recursive
 TESTS+=		sh

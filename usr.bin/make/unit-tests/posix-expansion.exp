@@ -1,0 +1,4 @@
+make: posix-expansion.mk:16: Missing argument for ".error"
+make: Fatal errors encountered -- cannot continue
+make: stopped making "all" in unit-tests
+exit status 1

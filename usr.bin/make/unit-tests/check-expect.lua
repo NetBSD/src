@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.12 2025/03/30 09:51:49 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.13 2025/04/13 09:29:32 rillig Exp $
 
 --[[
 
@@ -125,7 +125,7 @@ local function check_mk(mk_fname)
 
     for text in mk_line:gmatch("#%s*expect%-not%-matches:%s*(.*)") do
       local i = 1
-      while i <= #exp_lines and not exp_lines[i]:find(text, 1) do
+      while i <= #exp_lines and not exp_lines[i]:find(text) do
         i = i + 1
       end
       if i <= #exp_lines then
