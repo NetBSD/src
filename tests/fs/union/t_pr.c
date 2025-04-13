@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.13 2019/07/16 17:29:17 martin Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.14 2025/04/13 02:10:30 riastradh Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -229,6 +229,45 @@ ATF_TC_BODY(devnull2, tc)
 		atf_tc_fail("write");
 }
 
+ATF_TC(pr1677_lowerunsearchabledot);
+ATF_TC_HEAD(pr1677_lowerunsearchabledot, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Lookup of `.' when searchable in upper, unsearchable in lower");
+}
+
+ATF_TC_BODY(pr1677_lowerunsearchabledot, tc)
+{
+	struct union_args unionargs;
+	struct stat sb;
+
+	rump_init();
+
+	RL(rump_sys_mkdir("/lower", 0777));
+	RL(rump_sys_mkdir("/lower/foo", 0700)); /* restricted */
+
+	RL(rump_sys_mkdir("/upper", 0777));
+	RL(rump_sys_mkdir("/upper/foo", 0777));
+
+	memset(&unionargs, 0, sizeof(unionargs));
+	unionargs.target = __UNCONST("/upper");
+	unionargs.mntflags = UNMNT_ABOVE;
+	RL(rump_sys_mount(MOUNT_UNION, "/lower", 0,
+		&unionargs, sizeof(unionargs)));
+
+	/* pretend we're an unprivileged process */
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	RL(rump_sys_setgid(1));
+	RL(rump_sys_setegid(1));
+	RL(rump_sys_setuid(32767));
+	RL(rump_sys_seteuid(32767));
+	atf_tc_expect_signal(SIGABRT, "PR kern/1677:"
+	    " union FS can return bogus value for lookup of `.',"
+	    " causing later panic");
+	RL(rump_sys_lstat("/lower/foo/.", &sb));
+	rump_pub_lwproc_releaselwp();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, multilayer);
@@ -237,6 +276,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, cyclic2);
 	ATF_TP_ADD_TC(tp, devnull1);
 	ATF_TP_ADD_TC(tp, devnull2);
+	ATF_TP_ADD_TC(tp, pr1677_lowerunsearchabledot);
 
 	return atf_no_error();
 }
