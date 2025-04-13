@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.376 2025/02/06 19:58:50 palle Exp $
+$NetBSD: UPDATING,v 1.377 2025/04/13 17:23:06 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,9 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20250413:
+	A change to bsd.lib.mk requires a clean build of all libraries.
 
 20250131:
 	The switch to the new jemalloc requires cleaning in libc.
