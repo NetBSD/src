@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.107 2020/06/27 07:29:11 maxv Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.108 2025/04/14 16:43:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
  */
 
 /*
- * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint109.PDF
+ * Printer Class spec: https://www.usb.org/sites/default/files/usbprint11a021811.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.107 2020/06/27 07:29:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.108 2025/04/14 16:43:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -360,7 +360,7 @@ ulpt_detach(device_t self, int flags)
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
-		/* There is noone to wake, aborting the pipe is enough */
+		/* There is nothing to wake, aborting the pipe is enough */
 		/* Wait for processes to go away. */
 		usb_detach_waitold(sc->sc_dev);
 	}
@@ -801,7 +801,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 		 * forthcoming.  Terminate this read regardless of
 		 * whether we are in nonblocking mode.  XXX Reconsider
 		 * for blocking mode; maybe we should continue to
-		 * block, but maybe it just doesn't make senes to do
+		 * block, but maybe it just doesn't make sense to do
 		 * blocking reads from devices like this.
 		 */
 		if (err == USBD_SHORT_XFER) {
