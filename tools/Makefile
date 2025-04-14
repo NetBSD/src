@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214.2.1 2024/07/03 18:38:54 martin Exp $
+#	$NetBSD: Makefile,v 1.214.2.2 2025/04/14 09:58:17 martin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -62,7 +62,7 @@ DTRACE_BITS+= .WAIT elftoolchain
 DTRACE_BITS+= .WAIT libctf
 .endif
 .if ${MKCTF} != "no"
-DTRACE_BITS+= .WAIT ctfconvert ctfmerge
+DTRACE_BITS+= .WAIT ctfconvert ctfdump ctfmerge
 .endif
 
 LINT_BITS=
@@ -102,7 +102,8 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort what \
+	.WAIT yacc .WAIT awk .WAIT lex
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= xz-include .WAIT grep xz-lib pax .WAIT libprop
 

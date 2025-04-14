@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2018/05/28 21:05:11 chs Exp $
+#	$NetBSD: Makefile,v 1.9.12.1 2025/04/14 09:58:17 martin Exp $
 
 # $FreeBSD: head/cddl/usr.bin/ctfdump/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -17,7 +17,9 @@ SRCS=		dump.c \
 
 COPTS.utils.c +=	-Wno-format-nonliteral
 
+.if (${HOSTPROG:U} == "")
 LDADD+=-lpthread
 DPADD+=${LIBPTHREAD}
+.endif
 
 .include <bsd.prog.mk>
