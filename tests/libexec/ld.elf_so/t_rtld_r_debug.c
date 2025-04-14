@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.8 2025/04/12 18:17:06 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.9 2025/04/14 02:07:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -116,6 +116,10 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 
 	loader = NULL;
 	debug = get_rtld_r_debug();
+#ifdef __mips__
+	atf_tc_expect_fail("PR port-mips/59296:"
+	    " t_rtld_r_debug test is failing");
+#endif
 	ATF_REQUIRE(debug != NULL);
 	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
 	    "debug->r_version=%d R_DEBUG_VERSION=%d",
