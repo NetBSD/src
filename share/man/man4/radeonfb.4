@@ -1,0 +1,93 @@
+.\"	$NetBSD: radeonfb.4,v 1.1 2025/04/15 07:55:51 nia Exp $
+.\"
+.\" Copyright (c) 2025 The NetBSD Foundation
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd April 14, 2025
+.Dt RADEONFB 4
+.Os
+.Sh NAME
+.Nm radeonfb
+.Nd ATI Radeon framebuffer driver
+.Sh SYNOPSIS
+.Cd "radeonfb* at pci?"
+.Cd "wsdisplay* at radeonfb?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for ATI Radeon GPUs.
+The driver provides backlight control on laptops via
+.Xr wsconsctl 8 ,
+as well as 2D acceleration for
+.Xr rasops 9
+operations.
+.Pp
+This driver is primarily used on architectures without support for
+.Xr drm 4 .
+On newer systems,
+.Xr radeondrm 4
+can be used to take advantage of full hardware acceleration.
+.Sh HARDWARE
+The following chipsets should work:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Radeon VE / Radeon 7000 (RV100)
+.It Radeon 7500, 7500 LE (RV200)
+.It Radeon 8500, 8500 LE (R200)
+.It Radeon 9000, 9000 Pro (RV250)
+.It Radeon 9100 (RS350)
+.It Radeon 9200 / 9200 SE (RV280)
+.It Radeon 9250 (RV280)
+.It Radeon 9500 / 9500 Pro (R300)
+.It Radeon 9600 / 9600 Pro (RV350)
+.It Radeon 9700 / 9700 Pro (R300)
+.It Radeon 9800 / 9800 XL (R350)
+.It Radeon X600 Pro (RV380)
+.It Radeon X300 / Radeon X550 (RV370)
+.It Mobility Radeon 9000 (RV250)
+.It Mobility Radeon 9200 (RV280)
+.It Mobility Radeon 9500 (RV360)
+.It Mobility Radeon 9550 (RV360)
+.It Mobility Radeon 9600 (RV350)
+.It Mobility Radeon X600 (RV380)
+.It Mobility Radeon X300 (RV370)
+.It FireMV 2400 (RV380)
+.El
+.Pp
+Note that this list is likely incomplete.
+.Sh SEE ALSO
+.Xr radeon 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 4.0 .
+.Sh CAVEATS
+ATI Technologies Inc. ("ATI") has not assisted in the creation of, and
+does not endorse, this software.
+ATI will not be responsible or liable for any actual or alleged damage
+or loss caused by or in connection with the use of or reliance on this
+software.

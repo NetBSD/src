@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 2025/04/03 16:33:47 bouyer Exp $
+# $NetBSD: mi,v 1.25 2025/04/15 07:55:51 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1586,6 +1586,7 @@
 ./usr/share/man/html4/qsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/r128drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/radeondrm.html		man-sys-htmlman		html
+./usr/share/man/html4/radeonfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/radio.html		man-sys-htmlman		html
 ./usr/share/man/html4/raid.html			man-sys-htmlman		html
 ./usr/share/man/html4/ral.html			man-sys-htmlman		html

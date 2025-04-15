@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1802 2025/04/03 16:33:47 bouyer Exp $
+# $NetBSD: mi,v 1.1803 2025/04/15 07:55:51 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1768,6 +1768,7 @@
 ./usr/share/man/cat4/qsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/r128drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/radeondrm.0		man-sys-catman		.cat
+./usr/share/man/cat4/radeonfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/radio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/raid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ral.0			man-sys-catman		.cat
@@ -5348,6 +5349,7 @@
 ./usr/share/man/man4/qsphy.4			man-sys-man		.man
 ./usr/share/man/man4/r128drm.4			man-sys-man		.man
 ./usr/share/man/man4/radeondrm.4		man-sys-man		.man
+./usr/share/man/man4/radeonfb.4			man-sys-man		.man
 ./usr/share/man/man4/radio.4			man-sys-man		.man
 ./usr/share/man/man4/raid.4			man-sys-man		.man
 ./usr/share/man/man4/ral.4			man-sys-man		.man
