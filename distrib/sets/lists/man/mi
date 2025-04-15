@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1803 2025/04/15 07:55:51 nia Exp $
+# $NetBSD: mi,v 1.1804 2025/04/15 10:04:07 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1561,6 +1561,7 @@
 ./usr/share/man/cat4/mac68k/sn.0		man-obsolete		obsolete
 ./usr/share/man/cat4/mac68k/zsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mach64drm.0		man-sys-catman		.cat
+./usr/share/man/cat4/machfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/awacs.0		man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/bm.0		man-sys-catman		.cat
@@ -5142,6 +5143,7 @@
 ./usr/share/man/man4/mac68k/sn.4		man-obsolete		obsolete
 ./usr/share/man/man4/mac68k/zsc.4		man-sys-man		.man
 ./usr/share/man/man4/mach64drm.4		man-sys-man		.man
+./usr/share/man/man4/machfb.4			man-sys-man		.man
 ./usr/share/man/man4/macppc/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/macppc/awacs.4		man-sys-man		.man
 ./usr/share/man/man4/macppc/bm.4		man-sys-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2025/04/15 07:55:51 nia Exp $
+# $NetBSD: mi,v 1.26 2025/04/15 10:04:07 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1406,6 +1406,7 @@
 ./usr/share/man/html4/mac68k/obio.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/zsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mach64drm.html		man-sys-htmlman		html
+./usr/share/man/html4/machfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/macppc/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/macppc/awacs.html		man-sys-htmlman		html
 ./usr/share/man/html4/macppc/bm.html		man-sys-htmlman		html
