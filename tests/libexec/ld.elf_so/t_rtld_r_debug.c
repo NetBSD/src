@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.9 2025/04/14 02:07:07 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.10 2025/04/15 22:19:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,6 +26,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.10 2025/04/15 22:19:39 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -101,6 +104,10 @@ get_rtld_r_debug(void)
 			break;
 		}
 	}
+#ifdef __mips__
+	atf_tc_expect_fail("PR port-mips/59296:"
+	    " t_rtld_r_debug test is failing");
+#endif
 	ATF_REQUIRE(debug != NULL);
 
 	return debug;
@@ -116,10 +123,6 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 
 	loader = NULL;
 	debug = get_rtld_r_debug();
-#ifdef __mips__
-	atf_tc_expect_fail("PR port-mips/59296:"
-	    " t_rtld_r_debug test is failing");
-#endif
 	ATF_REQUIRE(debug != NULL);
 	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
 	    "debug->r_version=%d R_DEBUG_VERSION=%d",
