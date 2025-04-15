@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2025/04/10 10:00:12 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2025/04/15 22:40:20 christos Exp $
 
 NOMAN=	yes
 .include <bsd.own.mk>
@@ -102,6 +102,5 @@ COPTS.sshlogin.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.ldapauth.c+=	${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.monitor.c+= -Wno-error=deprecated-declarations
 COPTS.kexgexs.c+= -Wno-error=deprecated-declarations
-COPTS.sshd-auth.c+=${${ACTIVE_CC} == "clang":? -Wno-error=missing-noreturn:}
 
 .include <bsd.prog.mk>

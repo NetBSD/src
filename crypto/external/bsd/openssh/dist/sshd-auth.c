@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-auth.c,v 1.2 2025/04/09 15:49:33 christos Exp $	*/
+/*	$NetBSD: sshd-auth.c,v 1.3 2025/04/15 22:40:20 christos Exp $	*/
 /* $OpenBSD: sshd-auth.c,v 1.3 2025/01/16 06:37:10 dtucker Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-auth.c,v 1.2 2025/04/09 15:49:33 christos Exp $");
+__RCSID("$NetBSD: sshd-auth.c,v 1.3 2025/04/15 22:40:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,6 +369,7 @@ get_hostkey_index(struct sshkey *key, int compare, struct ssh *ssh)
 	return (-1);
 }
 
+__attribute__((__noreturn__))
 static void
 usage(void)
 {
