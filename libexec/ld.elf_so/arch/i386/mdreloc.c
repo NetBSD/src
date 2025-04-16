@@ -1,8 +1,62 @@
-/*	$NetBSD: mdreloc.c,v 1.47 2024/11/30 01:04:05 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.48 2025/04/16 17:37:48 riastradh Exp $	*/
+
+/*
+ * Copyright 1996 John D. Polstra.
+ * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by John Polstra.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * i386 ELF relocations.
+ *
+ * References:
+ *
+ *	[ABI386-4] System V Application Binary Interface: Intel386
+ *	Architecture Processor Supplement, Fourth Edition, 1997-03-19,
+ *	The Santa Cruz Operation, Inc.
+ *	https://www.sco.com/developers/devspecs/abi386-4.pdf
+ *	https://web.archive.org/web/20250329184450/https://www.sco.com/developers/devspecs/abi386-4.pdf
+ *
+ * Note: Intel and SuSE have published an update to the i386 ELF
+ * supplement, but it is not entirely compatible (e.g., it requires
+ * 16-byte alignment for the stack pointer, not just 4-byte alignment),
+ * so it is not reliable as a normative reference:
+ *
+ *	[ABI386-2015] System V Application Binary Interface: Intel386
+ *	Architecture Processor Supplement, Version 1.0, 2015-02-03.
+ *	https://uclibc.org/docs/psABI-i386.pdf
+ *	https://web.archive.org/web/20250118211449/https://uclibc.org/docs/psABI-i386.pdf
+ *	https://gitlab.com/x86-psABIs/i386-ABI
+ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.47 2024/11/30 01:04:05 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.48 2025/04/16 17:37:48 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
