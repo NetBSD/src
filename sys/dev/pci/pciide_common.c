@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.71 2024/03/31 18:59:52 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.72 2025/04/16 17:53:04 andvar Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.71 2024/03/31 18:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.72 2025/04/16 17:53:04 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -83,7 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.71 2024/03/31 18:59:52 thorpej E
 #include <dev/ic/wdcreg.h>
 
 #ifdef ATADEBUG
-int atadebug_pciide_mask = 0;
+#ifndef ATADEBUG_PCIIDE_MASK
+#define ATADEBUG_PCIIDE_MASK 0
+#endif
+int atadebug_pciide_mask = ATADEBUG_PCIIDE_MASK;
 #endif
 
 #if NATA_DMA
