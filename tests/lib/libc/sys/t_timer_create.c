@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.9 2024/12/19 23:41:46 riastradh Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.10 2025/04/16 01:32:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -449,9 +449,15 @@ ATF_TC_BODY(timer_invalidtime, tc)
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, 0, &einval_its[i], NULL) == -1);
 
-		/* Try the same with an absolute time near now. */
+		/*
+		 * Try the same with an absolute time near now (unless
+		 * that makes it a valid time, in case 0).
+		 */
+		if (i == 0)
+			continue;
 		its.it_value = einval_its[i].it_value;
-		its.it_value.tv_sec += now.tv_sec + 60;
+		its.it_value.tv_sec += now.tv_sec;
+		its.it_interval = einval_its[i].it_interval;
 		ATF_CHECK_ERRNO(EINVAL,
 		    timer_settime(t, TIMER_ABSTIME, &its, NULL) == -1);
 	}

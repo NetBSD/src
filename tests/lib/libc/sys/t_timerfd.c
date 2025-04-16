@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.11 2024/12/19 23:50:22 riastradh Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.12 2025/04/16 01:32:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.11 2024/12/19 23:50:22 riastradh Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.12 2025/04/16 01:32:48 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -224,9 +224,15 @@ ATF_TC_BODY(timerfd_invalidtime, tc)
 		ATF_CHECK_ERRNO(EINVAL,
 		    timerfd_settime(fd, 0, &einval_its[i], NULL) == -1);
 
-		/* Try the same with an absolute time near now. */
+		/*
+		 * Try the same with an absolute time near now (unless
+		 * that makes it a valid time, in case 0).
+		 */
+		if (i == 0)
+			continue;
 		its.it_value = einval_its[i].it_value;
-		its.it_value.tv_sec += now.tv_sec + 60;
+		its.it_value.tv_sec += now.tv_sec;
+		its.it_interval = einval_its[i].it_interval;
 		ATF_CHECK_ERRNO(EINVAL,
 		    timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL) == -1);
 	}
