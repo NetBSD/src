@@ -487,7 +487,7 @@ static void *ecx_gen_init(void *provctx, int selection,
         gctx->selection = selection;
     }
     if (!ecx_gen_set_params(gctx, params)) {
-        ecx_gen_cleanup(gctx);
+        OPENSSL_free(gctx);
         gctx = NULL;
     }
     return gctx;

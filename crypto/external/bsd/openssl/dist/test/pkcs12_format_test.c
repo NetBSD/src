@@ -358,8 +358,7 @@ static int test_single_key(PKCS12_ENC *enc)
     char fname[80];
     PKCS12_BUILDER *pb;
 
-    BIO_snprintf(fname, sizeof(fname), "1key_ciph-%s_iter-%d.p12",
-                 OBJ_nid2sn(enc->nid), enc->iter);
+    sprintf(fname, "1key_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
 
     pb = new_pkcs12_builder(fname);
 
@@ -458,8 +457,7 @@ static int test_single_cert_mac(PKCS12_ENC *mac)
     char fname[80];
     PKCS12_BUILDER *pb;
 
-    BIO_snprintf(fname, sizeof(fname), "1cert_mac-%s_iter-%d.p12",
-                 OBJ_nid2sn(mac->nid), mac->iter);
+    sprintf(fname, "1cert_mac-%s_iter-%d.p12", OBJ_nid2sn(mac->nid), mac->iter);
 
     pb = new_pkcs12_builder(fname);
 
@@ -619,8 +617,7 @@ static int test_single_secret(PKCS12_ENC *enc)
     char fname[80];
     PKCS12_BUILDER *pb;
 
-    BIO_snprintf(fname, sizeof(fname), "1secret_ciph-%s_iter-%d.p12",
-                 OBJ_nid2sn(enc->nid), enc->iter);
+    sprintf(fname, "1secret_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
     pb = new_pkcs12_builder(fname);
     custom_nid = get_custom_oid();
 

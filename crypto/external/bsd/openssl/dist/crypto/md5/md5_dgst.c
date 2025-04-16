@@ -21,10 +21,10 @@
  * Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
 
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
+#define INIT_DATA_A (MD5_LONG)0x67452301L
+#define INIT_DATA_B (MD5_LONG)0xefcdab89L
+#define INIT_DATA_C (MD5_LONG)0x98badcfeL
+#define INIT_DATA_D (MD5_LONG)0x10325476L
 
 int MD5_Init(MD5_CTX *c)
 {

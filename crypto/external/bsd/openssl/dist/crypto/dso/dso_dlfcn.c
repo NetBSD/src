@@ -271,12 +271,11 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
     }
     if (transform) {
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-            BIO_snprintf(translated, rsize, "lib%s" DSO_EXTENSION, filename);
+            snprintf(translated, rsize, "lib%s" DSO_EXTENSION, filename);
         else
-            BIO_snprintf(translated, rsize, "%s" DSO_EXTENSION, filename);
-    } else {
-        BIO_snprintf(translated, rsize, "%s", filename);
-    }
+            snprintf(translated, rsize, "%s" DSO_EXTENSION, filename);
+    } else
+        sprintf(translated, "%s", filename);
     return translated;
 }
 

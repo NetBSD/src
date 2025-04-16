@@ -381,7 +381,7 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
     if ((c = EVP_CIPHER_fetch(app_get0_libctx(), name,
                               app_get0_propq())) != NULL
         || (opt_legacy_okay()
-            && (c = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL)) {
+            && (c = (EVP_CIPHER *)(intptr_t)EVP_get_cipherbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         if (cipherp != NULL) {
             EVP_CIPHER_free(*cipherp);
@@ -436,7 +436,7 @@ int opt_md_silent(const char *name, EVP_MD **mdp)
     ERR_set_mark();
     if ((md = EVP_MD_fetch(app_get0_libctx(), name, app_get0_propq())) != NULL
         || (opt_legacy_okay()
-            && (md = (EVP_MD *)EVP_get_digestbyname(name)) != NULL)) {
+            && (md = (EVP_MD *)(intptr_t)EVP_get_digestbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         if (mdp != NULL) {
             EVP_MD_free(*mdp);
@@ -519,8 +519,8 @@ static void opt_number_error(const char *v)
 {
     size_t i = 0;
     struct strstr_pair_st {
-        char *prefix;
-        char *name;
+        const char *prefix;
+        const char *name;
     } b[] = {
         {"0x", "a hexadecimal"},
         {"0X", "a hexadecimal"},

@@ -426,7 +426,7 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx->hindex = 0;
     }
     if (!dsa_gen_set_params(gctx, params)) {
-        dsa_gen_cleanup(gctx);
+        OPENSSL_free(gctx);
         gctx = NULL;
     }
     return gctx;

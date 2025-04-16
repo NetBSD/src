@@ -616,8 +616,14 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
             || !EC_GROUP_copy(ret->group, src->group))
             goto err;
 
-        if (src->meth != NULL)
+        if (src->meth != NULL) {
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+            if (src->engine != NULL && ENGINE_init(src->engine) == 0)
+                goto err;
+            ret->engine = src->engine;
+#endif
             ret->meth = src->meth;
+        }
     }
 
     /*  copy the public key */
