@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2024/07/22 02:34:58 riastradh Exp $
+# $NetBSD: Makefile,v 1.25 2025/04/16 02:16:53 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -32,6 +32,7 @@ TESTS_C+=	t_ifunc_now
 TESTS_C+=	t_ifunc_norelro
 TESTS_C+=	t_ifunc_norelro_now
 TESTS_C+=	t_rtld_r_debug
+TESTS_C+=	t_rtld_r_debug_nopie
 TESTS_C+=	t_tls_extern
 TESTS_C+=	t_hash
 
@@ -43,6 +44,12 @@ LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
 LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now
 LDADD.t_ifunc_norelro+=		${${MKRELRO} != "no":?-Wl,-z,norelro:}
 LDADD.t_ifunc_norelro_now+=	${${MKRELRO} != "no":?-Wl,-z,norelro:} -Wl,-z,now
+
+SRCS.t_rtld_r_debug_nopie=	t_rtld_r_debug.c
+
+# If the port doesn't support PIE anyway, well, no big deal, we have
+# two copies of the same tiny test.
+LDADD.t_rtld_r_debug_nopie+=	-Wl,-no-pie
 
 .PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
 SRCS.t_hash+=	t_hash.c
