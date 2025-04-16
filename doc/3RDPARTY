@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2098 2025/04/10 08:12:45 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2099 2025/04/16 15:27:03 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1129,22 +1129,23 @@ markus is very cooperative about it):
 - LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1t/3.0.15
-Current Vers:	1.0.2u/1.1.1w/3.0.16/3.3.3/3.4.1
+Version:	1.0.2o/1.1.1t/3.0.16
+Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.0
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-02-11
+Date:		2025-04-16
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
 Location:	crypto/external/bsd/openssl/dist
 Vendor tag:	OPENSSL
 Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
-Current tag:	openssl-3-0-15
+Current tag:	openssl-3-0-16
 Notes:
 - Next update to be in crypto/external/apache2/openssl/dist, since
-  OpenSSL 3.0 was relicensed as Apache2
+  OpenSSL 3.0 was relicensed as Apache2. Also revert patches in the patches
+  directory and bump major.
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - import
 - configure and build after importing in the import directory
