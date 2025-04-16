@@ -1,0 +1,5 @@
+# $NetBSD: README,v 1.1 2025/04/16 15:01:21 christos Exp $
+The following patches restore binary compatibility with the versions up to
+3.0.15
+They should be reverted and we should bump the major number of libcrypto
+for the 3.5.x import.
