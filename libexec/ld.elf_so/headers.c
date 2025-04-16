@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.72 2024/08/03 21:59:57 riastradh Exp $	 */
+/*	$NetBSD: headers.c,v 1.73 2025/04/16 01:56:52 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.72 2024/08/03 21:59:57 riastradh Exp $");
+__RCSID("$NetBSD: headers.c,v 1.73 2025/04/16 01:56:52 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -333,8 +333,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #endif
 
 		/*
-		 * Don't process DT_DEBUG on MIPS as the dynamic section
-		 * is mapped read-only. DT_MIPS_RLD_MAP is used instead.
+		 * Don't process DT_DEBUG on MIPS as the dynamic
+		 * section is mapped read-only.  DT_MIPS_RLD_MAP or
+		 * DT_MIPS_RLD_MAP_REL is used instead.
+		 *
 		 * XXX: n32/n64 may use DT_DEBUG, not sure yet.
 		 */
 #ifndef __mips__
@@ -358,10 +360,38 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->gotsym = dynp->d_un.d_val;
 			break;
 
+		/*
+		 * The .dynamic section is read-only, so the loader
+		 * can't write to it; instead, the linker reserves
+		 * space in a read/write .rld_map section for the
+		 * loader write to, and leaves a pointer to that space
+		 * in a DT_MIPS_RLD_MAP entry.
+		 *
+		 * Except pointers like that don't work for
+		 * position-independent executables, which use
+		 * DT_MIPS_RLD_MAP_REL instead.
+		 */
 		case DT_MIPS_RLD_MAP:
 #ifdef RTLD_LOADER
-			*((Elf_Addr *)(dynp->d_un.d_ptr)) = (Elf_Addr)
-			    &_rtld_debug;
+			*((Elf_Addr *)dynp->d_un.d_ptr) =
+			    (Elf_Addr)&_rtld_debug;
+#endif
+			break;
+
+		/*
+		 * The .dynamic section is read-only, so the loader
+		 * can't write to it; instead, the linker reserves
+		 * space in a read/write .rld_map section for the
+		 * loader write to, which might be mapped anywhere in
+		 * virtual address space for position-independent
+		 * executables, so the linker leaves its offset
+		 * relative to the .dynamic entry itself in the dynamic
+		 * entry.
+		 */
+		case DT_MIPS_RLD_MAP_REL:
+#ifdef RTLD_LOADER
+			*(Elf_Addr *)((Elf_Addr)dynp + dynp->d_un.d_val) =
+			    (Elf_Addr)&_rtld_debug;
 #endif
 			break;
 #endif

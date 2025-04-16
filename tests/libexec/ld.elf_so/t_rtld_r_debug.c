@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.10 2025/04/15 22:19:39 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.11 2025/04/16 01:56:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.10 2025/04/15 22:19:39 riastradh Exp $");
+__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.11 2025/04/16 01:56:53 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -90,34 +90,41 @@ get_dynamic_section(void)
 	return (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
 }
 
-static struct r_debug *
+static const struct r_debug *
 get_rtld_r_debug(void)
 {
-	struct r_debug *debug = NULL;
+	const struct r_debug *debug = NULL;
 	Elf_Dyn *dynp;
 
 	for (dynp = get_dynamic_section(); dynp->d_tag != DT_NULL; dynp++) {
 		printf("dynp %p: tag=%ld val=0x%lx\n", dynp,
 		    (long)dynp->d_tag, (long)dynp->d_un.d_val);
+#ifdef __mips__
+		if (dynp->d_tag == DT_MIPS_RLD_MAP) {
+			debug = (const void *)*(Elf_Addr *)dynp->d_un.d_ptr;
+			break;
+		}
+		if (dynp->d_tag == DT_MIPS_RLD_MAP_REL) {
+			debug = (const void *)*(Elf_Addr *)((Elf_Addr)dynp +
+			    dynp->d_un.d_val);
+		}
+#else
 		if (dynp->d_tag == DT_DEBUG) {
 			debug = (void *)dynp->d_un.d_val;
 			break;
 		}
-	}
-#ifdef __mips__
-	atf_tc_expect_fail("PR port-mips/59296:"
-	    " t_rtld_r_debug test is failing");
 #endif
+	}
 	ATF_REQUIRE(debug != NULL);
 
 	return debug;
 }
 
 static void
-check_r_debug_return_link_map(const char *name, struct link_map **rmap)
+check_r_debug_return_link_map(const char *name, const struct link_map **rmap)
 {
-	struct r_debug *debug;
-	struct link_map *map;
+	const struct r_debug *debug;
+	const struct link_map *map;
 	void *loader;
 	bool found;
 
@@ -169,7 +176,7 @@ ATF_TC_HEAD(dlopen, tc)
 ATF_TC_BODY(dlopen, tc)
 {
 	void *handle;
-	struct link_map *map, *r_map;
+	const struct link_map *r_map, *map;
 
 	handle = dlopen("libutil.so", RTLD_LAZY);
 	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.20 2017/11/06 19:17:43 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.21 2025/04/16 01:56:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@
 #define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
 #define	DT_MIPS_PLTGOT		0x70000032
 #define	DT_MIPS_RWPLT		0x70000034
+#define	DT_MIPS_RLD_MAP_REL	0x70000035
 
 /*
  * ELF Flags
