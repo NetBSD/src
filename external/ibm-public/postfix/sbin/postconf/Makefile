@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2025/04/16 23:55:18 tls Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -39,7 +39,12 @@ CLEANFILES+= postconf-hdrs.stamp
 postconf-hdrs.stamp: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
 	${_MKMSG_CREATE} ${GENSRCS}
 	rm -f ${.TARGET}
-	${TOOL_AWK} -f ${DIST}/extract.awk ${DIST}/../*/*.c | ${HOST_SH} -
+        # Don't replace this with anything that puts DIST in the path to the
+        # files processed by awk; the awk script will produce wrong results
+        # if the source tree is in a directory that contains "tls" or "global"
+        # in its path.
+	(cd ${DIST} && ${TOOL_AWK} -f ${DIST}/extract.awk ../*/*.c) |\
+	     ${HOST_SH} -
 	touch ${.TARGET}
 
 .include <bsd.prog.mk>
