@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.6 2022/06/12 15:08:38 skrll Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.7 2025/04/16 01:52:42 riastradh Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -108,6 +108,12 @@ EOF
 }
 
 static_destructor_profile_body() {
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
+
 	cat > test.cpp << EOF
 #include <iostream>
 struct A {
@@ -138,6 +144,12 @@ static_destructor_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
+
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
 
 	cat > test.cpp << EOF
 #include <iostream>
@@ -250,6 +262,12 @@ EOF
 }
 
 static_destructor_pic_profile_body() {
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
+
 	cat > test.cpp << EOF
 #include <cstdlib>
 int callpic(void);
@@ -291,6 +309,12 @@ static_destructor_pic_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
+
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
 
 	cat > test.cpp << EOF
 #include <cstdlib>

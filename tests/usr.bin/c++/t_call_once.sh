@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once.sh,v 1.6 2022/06/12 15:08:38 skrll Exp $
+#	$NetBSD: t_call_once.sh,v 1.7 2025/04/16 01:52:42 riastradh Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,6 +101,12 @@ EOF
 }
 
 call_once_profile_body() {
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
+
 	cat > test.cpp << EOF
 #include <cstdio>
 #include <thread>
@@ -127,6 +133,12 @@ call_once_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
+
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
 
 	cat > test.cpp << EOF
 #include <cstdio>
@@ -207,6 +219,12 @@ EOF
 }
 
 call_once_pic_profile_body() {
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
+
 	cat > test.cpp << EOF
 #include <stdlib.h>
 int callpic(void);
@@ -244,6 +262,12 @@ call_once_pic_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
+
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
 
 	cat > test.cpp << EOF
 #include <stdlib.h>
