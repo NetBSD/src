@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.49 2024/08/03 21:59:59 riastradh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.50 2025/04/16 18:10:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -66,9 +66,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * amd64 ELF relocations.
+ *
+ * References:
+ *
+ *	[AMD64psABI] System V Application Binary Interface: AMD64
+ *	Architecture Processor Supplement, Draft Version 0.99.6,
+ *	2013-10-07.
+ *	https://web.archive.org/web/20160801075146/http://www.x86-64.org/documentation/abi.pdf
+ *	Source code: https://gitlab.com/x86-psABIs/x86-64-ABI
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.49 2024/08/03 21:59:59 riastradh Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.50 2025/04/16 18:10:46 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
