@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.11 2025/04/16 01:56:53 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.12 2025/04/16 12:05:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.11 2025/04/16 01:56:53 riastradh Exp $");
+__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.12 2025/04/16 12:05:52 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -107,6 +107,7 @@ get_rtld_r_debug(void)
 		if (dynp->d_tag == DT_MIPS_RLD_MAP_REL) {
 			debug = (const void *)*(Elf_Addr *)((Elf_Addr)dynp +
 			    dynp->d_un.d_val);
+			break;
 		}
 #else
 		if (dynp->d_tag == DT_DEBUG) {
