@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.196 2024/12/16 05:21:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.197 2025/04/16 05:29:45 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.196 2024/12/16 05:21:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.197 2025/04/16 05:29:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1466,7 +1466,11 @@ bridge_stop(struct ifnet *ifp, int disable)
 	struct bridge_softc *sc = ifp->if_softc;
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) != 0);
+
+	/* Prevent the callout from being scheduled again. */
+	BRIDGE_LOCK(sc);
 	ifp->if_flags &= ~IFF_RUNNING;
+	BRIDGE_UNLOCK(sc);
 
 	callout_halt(&sc->sc_brcallout, NULL);
 	workqueue_wait(sc->sc_rtage_wq, &sc->sc_rtage_wk);
@@ -2428,9 +2432,12 @@ bridge_rtage_work(struct work *wk, void *arg)
 
 	bridge_rtage(sc);
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
+	BRIDGE_LOCK(sc);
+	if (sc->sc_if.if_flags & IFF_RUNNING) {
 		callout_reset(&sc->sc_brcallout,
 		    bridge_rtable_prune_period * hz, bridge_timer, sc);
+	}
+	BRIDGE_UNLOCK(sc);
 }
 
 static bool
