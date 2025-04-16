@@ -18,7 +18,7 @@
 #   else
 #    define __ARMEL__
 #   endif
-#  elif defined(__GNUC__) || defined(__lint__)
+#  elif defined(__GNUC__)
 #   if   defined(__aarch64__)
 #    define __ARM_ARCH__ 8
   /*

@@ -655,7 +655,7 @@ void gcm_gmult_4bit_x86(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                         size_t len);
 #  endif
-# elif (defined(__arm__) || defined(__arm) || defined(__aarch64__)) && defined(GHASH_ASM)
+# elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
 #  include "arm_arch.h"
 #  if __ARM_MAX_ARCH__>=7
 #   define GHASH_ASM_ARM
@@ -675,15 +675,12 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  endif
 # elif defined(__sparc__) || defined(__sparc)
 #  include "crypto/sparc_arch.h"
-#  if defined(__arch64__)
-#   define GHASH_ASM_SPARC
-#   define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_sparcv9cap_P[];
+#  define GHASH_ASM_SPARC
+#  define GCM_FUNCREF_4BIT
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
-#  endif /* __arch64__ */
 # elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 #  include "crypto/ppc_arch.h"
 #  define GHASH_ASM_PPC
