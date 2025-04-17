@@ -1,4 +1,4 @@
-# $NetBSD: TODO.npf,v 1.12 2025/04/17 18:39:35 gdt Exp $
+# $NetBSD: TODO.npf,v 1.13 2025/04/17 19:04:15 gdt Exp $
 
 # Meta
 
@@ -157,7 +157,7 @@ replace in-kernel CARP/VRRP with a userlevel daemon.
 Check "Note: we probably want to eliminate proplib in NPF before doing
 this." and drop if proplib has in fact been eliminated.
 
-##  QoS
+## QoS
 
 QoS: rate limiting, traffic shaping, prioritising. Question: how much
 of this should be a part of the packet filter and how much of the
@@ -169,37 +169,51 @@ filters)?
 Tables currently contain addresses. Add support for address/port
 tuples, and ports.
 
+## Separate mss clamping from normal rules
+
+Currently, mss clamping is a rule procedure and has to be specified on
+a matching rule.  But, if there are both firewall rules and a desire
+to clamp, then one has to add clamping to all rules.  This item is
+about having a way to express rules normally, and also say that
+clamping shouldhappen.
+
+	http://mail-index.netbsd.org/tech-net/2017/01/15/msg006224.html
+
 # Features (not needing architectural changes)
 
-## Add an extension to support source routing / re-routing of packets.
+## Add an extension for "route-to"
 
-See: http://mail-index.netbsd.org/tech-net/2014/05/19/msg004526.html 
+The essence is to change the next hop of a packet if it matches a
+rule.
+
+	http://mail-index.netbsd.org/tech-net/2014/05/19/msg004526.html 
 
 ## support for ALTQ
 
-Integration with ALTQ as an intermediate solution. In the long term,
-we should implement a better QoS mechanism as part of NPF. Meanwhile,
-NPF can integrate with ALTQ quite easily using the mbuf tags.
-
-(Explain this more clearly.  It seems to be "use npf as a classifier
-for ALTQ".)
+ALTQ is a QoS scheme, and it expects a way to classify packets so that
+different flows can be treated differently.  Currently, ALTQ in NetBSD
+uses pf.  (An earlier comment indicated a solution might involve mbuf
+tags.)
 
 ## Support for NAT64 i.e. the protocol translation. 
 
-## Implement ftp-proxy forward proxy support
-
-(for active FTP client behind NAT).
-    
 ## MiniUPnP
 
 Add support for MiniUPnP (see http://miniupnp.free.fr/ web page). 
 
 ## add support for "with short"
 
-## implement "port-unr"
+(Clarify: is this about dropping packets that are shorter than they
+should be?  Why would the user choose?)
 
-(Explain; this seems to be a rule keyword to return specific
-unreachable types, but it's not clear if something more was intended.)
+## Add specific kinds of ICMP unreachable
+
+Currently, rules are documented to allow returning `ICMP UNREACHABLE`
+given the keyword `return-icmp`.  Probably this is ICMP Admin
+Prohibited, but this is not clear.
+
+This item is about different or additional keywords to allow the user
+to specify network, host, or port unreachable instead.
 
 # Security
 
@@ -217,10 +231,6 @@ TCP connection and only allowing packets matching the connection.
 Extend the definition of a packet matching the connection to meet the
 new rules in RFC5961, and perhaps generate the specified response
 packets.
-
-## Consider experimentation to use bloom filters against certain DoS attacks.
-
-(This needs much more clarity.)
 
 # General
 
@@ -245,7 +255,7 @@ IPPROTO_DSTOPTS) by default, and "allow-ip6opts" to enable others.
 document it so that it can be added in third-party software, like:
    https://github.com/squid-cache/squid/blob/5b74111aff8948e869959113241adada0cd488c2/src/ip/Intercept.cc#L263
 
-## patch squid to support transparent-proxy with NPF.
+### patch squid to support transparent-proxy with NPF.
 
 (Likely, simply using the ioctl from the previous item.)
 
@@ -254,17 +264,6 @@ document it so that it can be added in third-party software, like:
 (Explain what is or is not supported now, and what needs to happen
 differently.)
 
-## support large IPv6 options
-
-as explained here:
-       http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
-But it's not a big problem - perhaps we don't care at all.
-
-## improve mss clamping
-
-as explained here:
-       http://mail-index.netbsd.org/tech-net/2017/01/15/msg006224.html
-
 ## IPv6 reassembly
 
 Investigate and fix the IPv6 reassembly (there is a memory leak).
@@ -272,6 +271,36 @@ Investigate and fix the IPv6 reassembly (there is a memory leak).
 ## nbuf_ensure_writable
 
 Use nbuf_ensure_writable() where appropriate.
+
+# Low priority items
+
+These items are left in the list, but there's no reason to think
+anyone will address them any time soon, or that they are high enough
+priority that anyone should.  They can of course be moved (up likely
+clarified if someeone, especially someone intending to work on them,
+doesn't see it that way.  (Perhaps we should drop them, but for now
+they are parked.)
+
+## NAT Application Level Gateways for FTP
+
+Generally, FTP is done in passive mode, so that the data connection is
+created by the client, and no particular support is needed in
+firewalls.  This item is about creating an alg that allows the
+(regular, not passive mode) inbound connection from the server, based
+on watching the control connection.
+
+(It is likely that there are almost no remaining uses of active FTP,
+and thus it is unlikely this would be implemented.)
+
+## Consider experimentation to use bloom filters against certain DoS attacks.
+
+(This needs much more clarity.)
+
+## support large IPv6 options
+
+as explained here:
+       http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
+But it's not a big problem - perhaps we don't care at all.
 
 ## TCP FSM enhancement
 
