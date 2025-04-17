@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.23 2024/03/24 12:53:21 martin Exp $
+.\"	$NetBSD: contents,v 1.24 2025/04/17 19:25:11 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -220,9 +220,6 @@ that are included in the other sets.
 This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
-.
-.It Sy modules
-This set includes kernel modules to add functionality to a running system.
 .
 .It Sy modules
 This set includes kernel modules to add functionality to a running system.
