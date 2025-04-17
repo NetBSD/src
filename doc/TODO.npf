@@ -1,10 +1,11 @@
-# $NetBSD: TODO.npf,v 1.14 2025/04/17 19:24:52 gdt Exp $
+# $NetBSD: TODO.npf,v 1.15 2025/04/17 19:54:24 gdt Exp $
 
 # Meta
 
 This file intends to be the location for all work needing to be done
-for npf within NetBSD, except for bugs that are straightforward enough to live
-in gnats.
+for npf within NetBSD, except for bugs that are straightforward enough
+to live in gnats.  The presence of an item does not imply that there
+is consensus that the item should be implemented.
 
 (The older TODO list, last modified in May, 2020:
   https://www.netbsd.org/~rmind/npf/__tasklist.html
@@ -183,6 +184,15 @@ a rule group. NPF already supports nested rules. Unresolved questions
 are: 1) what kind of complexity of rule chains do we want to support,
 e.g. a directed graph with loop resolution or more strict hierarchy
 which does not allow jumping up the chain? 2) syntax in npf.conf file.
+
+## Support for packets arriving at or departing the socket layer
+
+Similar to how one can do this in nftables, add a way to write a rule
+that will be applied to all packets being delivered to sockets, or
+really processed by the system as a host rather than simply forwarded.
+The point is to be able to express rules like "block connections to
+this machine's ssh daemon, but don't block ssh connections that are
+merely being routed", without having to match on addresses.
 
 ## redundancy and load balancing
 
