@@ -1,12 +1,14 @@
-# $NetBSD: TODO.npf,v 1.10 2025/04/17 16:26:36 gdt Exp $
+# $NetBSD: TODO.npf,v 1.11 2025/04/17 18:11:58 gdt Exp $
 
 # Meta
 
-## merge rmind@'s TODO
+This file intends to be the location for all work needing to be done
+for npf within NetBSD, except for bugs that are straightforward enough to live
+in gnats.
 
-Merge still-to-be-done-items from another TODO list which was last
-modified in May, 2020:
+(The older TODO list, last modified in May, 2020:
   https://www.netbsd.org/~rmind/npf/__tasklist.html
+has been merged into this file.)
 
 ## Review all items to see if they are still relevant and correct.
 
@@ -35,13 +37,148 @@ reported differently?
 
 ## startup/stop script does not load and save session state
 
-## add algo for "with short"
+## add support for "with short"
 
 ## implement "port-unr"
 
 ## implement block return-icmp in log final all with ipopts
 
 ## handle array variables in more places
+
+## support variables and inline sets which contain both IPv4 and IPv6 addresses
+
+for example: $ext_if = { inet4(wm0), inet6(wm0) }
+
+## support inline blocks with different types of data in the rule.
+
+This will require a clean-up of the type system in
+npfctl parser, since it is currently a bit of a mess. Examples:
+
+	pass in from all to { inet4(wm0), $some_var, 10.0.0.1,  }
+	pass in final proto tcp to 172.28.1.2 port { 161, 162 }
+	pass in final proto { tcp, udp } to 172.28.1.2 port 53
+
+[MOSTLY DONE?]
+
+## npf show improvements
+
+Consistent `npfctl show' output with rule syntax.  Difficult/messy
+because rules are compiled into the byte-code.
+
+# Architectural changes
+
+## Layer 2 filtering
+
+1. All rules in NPF are added to a ruleset.  At this moment, it is assumed
+   that there is only one ruleset and all rules are processed at layer 3.
+   One approach is to support another ruleset for layer 2 (or rather, have
+   capability to specify the "starting layer").
+
+2. One way to separate L2 and L3 rules could be by marking groups.  In NPF,
+   a group is just a rule (i.e. rules can be nested).
+
+3. npfctl: update the parser such that the group would have an option for
+   specifying a layer.  See "group_opts" token in npf_parse.y file.  Also,
+   we may want to add support for "hwaddr <mac>" syntax or something.
+
+4. npfctl_build_rule() code will need to distinguish groups/rules which
+   were marked as layer 2, i.e. byte-code generation (npfctl_build_code()
+   and the logic in it) needs to know that we are starting from Ethernet
+   header and not IP header.  Note: it needs to be passed to all nested
+   rules, so basically take the option from the "current group".
+
+5. For a start (i.e. less work to do), you can just add byte-code to parse
+   Ethernet header and compare the MAC addresses.  Just return "not supported"
+   error for any other filter pattern.
+
+6. libnpf: create a new ruleset for L2 and add all groups (and its nested
+   rules) there.  To keep it simpler, we can add npf_rule_setlayer() function
+   and just handle this separation in libnpf rather than npfctl.
+
+7. libnpf-kernel: currently, proplib dictionary has only one "ruleset" dict.
+   This needs to be split into "ruleset-l3" and "ruleset-l2".  Retrieve and
+   construct a new ruleset in npfctl_reload(); it is simple, but disgusting
+   proplib code.  It is just re-using the existing code to handle another
+   ruleset.
+
+8. Kernel: add a new handler in npf_handler.c, e.g. npf_packet_l2handler()
+   or something.  Register it in npf_pfil_register() using Ethernet pfil
+   hook.  In the handler, call npf_ruleset_inspect() passing L2 ruleset.
+
+## Consider single large BPF program
+
+Implement NPF rules as a single large BPF program, instead of
+providing BPF byte-code per each rule. In combination with BPF JIT
+compilation, such approach would significantly improve the performance
+of very large rulesets. Problems: BPF byte-code limitations; we can
+either extend the byte-code or workaround them.
+
+## Multiple rule matching
+
+Multiple rule matching to call the rule-procedures or a suitable
+design alternative to that.
+
+## ipchains-like feature
+
+Implement ipchains-like feature to support nested rules and sharing of
+a rule group. NPF already supports nested rules. Unresolved questions
+are: 1) what kind of complexity of rule chains do we want to support,
+e.g. a directed graph with loop resolution or more strict hierarchy
+which does not allow jumping up the chain? 2) syntax in npf.conf file.
+
+## redundancy and load balancing
+
+Redundancy and load balancing: initially, add state replication and
+replace in-kernel CARP/VRRP with a userlevel daemon. Note: we probably
+want to eliminate proplib in NPF before doing this.
+
+##  QoS
+
+QoS: rate limiting, traffic shaping, prioritising. Question: how much
+of this should be a part of the packet filter and how much of the
+network stack (merely involving some integration with the packet
+filters)?
+
+## tuples in tables
+
+Support for tuples in tables: address and port, as well as just port. 
+
+# Features (not needing architectural changes)
+
+## Add an extension to support source routing / re-routing of packets.
+
+See: http://mail-index.netbsd.org/tech-net/2014/05/19/msg004526.html 
+
+## support for ALTQ
+
+Integration with ALTQ as an intermediate solution. In the long term,
+we should implement a better QoS mechanism as part of NPF. Meanwhile,
+NPF can integrate with ALTQ quite easily using the mbuf tags.
+
+## Support for NAT64 i.e. the protocol translation. 
+
+## Implement ftp-proxy forward proxy support
+
+(for active FTP client behind NAT).
+    
+## Patch Squid proxy to support transparent-proxy with NPF.
+
+Just an ioctl call to perform a state lookup?
+
+## MiniUPnP
+
+Add support for MiniUPnP (see http://miniupnp.free.fr/ web page). 
+
+# Security
+
+## Extra measures to prevent from SYN flood attacks.
+
+E.g. accelerate connection expiration on low memory or after certain
+threshold. The timeout can also be self-balancing.
+
+## Consider blind reset attack using SYN (see RFC 5961).
+
+## Consider experimentation to use bloom filters against certain DoS attacks.
 
 # General
 
@@ -73,3 +210,15 @@ But it's not a big problem - perhaps we don't care at all.
 
 as explained here:
        http://mail-index.netbsd.org/tech-net/2017/01/15/msg006224.html
+
+## IPv6 reassembly
+
+Investigate and fix the IPv6 reassembly (there is a memory leak).
+
+## nbuf_ensure_writable
+
+Use nbuf_ensure_writable() where appropriate.
+
+## TCP FSM enhancement
+
+Minor TCP FSM investigation: should it be not allowed to immediately re-open the connection after RST or FIN?
