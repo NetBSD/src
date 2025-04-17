@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.18 2020/07/14 01:01:05 reed Exp $
+# $NetBSD: sys_info.sh,v 1.19 2025/04/17 06:19:06 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -262,7 +262,7 @@ while getopts "L:P:d:v" a; do
 	L)	LIBRARY_PATH=${OPTARG};;
 	P)	PATH=${OPTARG};;
 	d)	PATH=${OPTARG}/bin:${OPTARG}/sbin:${OPTARG}/usr/bin:${OPTARG}/usr/sbin
-		LIBRARY_PATH=${OPTARG}/usr/lib:${OPTARG}/usr.X11R7/lib
+		LIBRARY_PATH=${OPTARG}/usr/lib:${OPTARG}/usr/X11R7/lib
 		destdir=${OPTARG};;
 	v)	verbose=true;;
 	\?)	printf >&2 '%s\n' \
