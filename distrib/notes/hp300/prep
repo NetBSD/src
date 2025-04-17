@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.24 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: prep,v 1.25 2025/04/17 19:36:10 tsutsui Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -32,9 +32,9 @@ package and then runs the miniroot installation tools or a purely diskless
 installation from a server on the same subnet (you must have root access).
 For more information, refer to the NetBSD Diskless
 HOW-TO at
-.Lk http://www.NetBSD.org/docs/network/netboot/
+.Lk https://www.NetBSD.org/docs/network/netboot/
 and
-.Lk http://www.NetBSD.org/docs/network/netboot/rbootd/
+.Lk https://www.NetBSD.org/docs/network/netboot/rbootd/
 .Pp
 .It
 \*M loads
@@ -402,7 +402,7 @@ when you're done.
 It may prevent you from selecting which device to boot from.
 .enum)
 See the FAQ for additional help.
-.Lk http://www.NetBSD.org/ports/hp300/faq.html#domain
+.Lk https://www.NetBSD.org/ports/hp300/faq.html#domain
 .
 .Ss2 Searching for a bootable system
 .
@@ -443,7 +443,7 @@ RESET To Power-Up, SPACE clears input   Select System, type RETURN       ?
 .Pp
 The FAQ lists additional things you can do with the BootROM and describes
 the order the BootROM looks for bootable devices.
-.Lk http://www.NetBSD.org/ports/hp300/faq.html
+.Lk https://www.NetBSD.org/ports/hp300/faq.html
 .Pp
 A normal power-on sequence (from a 400s) looks something like this:
 .(disp
