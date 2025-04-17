@@ -1,4 +1,4 @@
-# $NetBSD: TODO.npf,v 1.13 2025/04/17 19:04:15 gdt Exp $
+# $NetBSD: TODO.npf,v 1.14 2025/04/17 19:24:52 gdt Exp $
 
 # Meta
 
@@ -12,6 +12,25 @@ has been merged into this file.)
 
 ## Review all items to see if they are still relevant and correct.
 
+# Syncing
+
+## from https://github.com/rmind/npf/
+
+Periodically, check this repo to see if there are changes/improvements
+that are not in NetBDS and which are appopriate, and merge them.
+
+## to https://github.com/rmind/npf/
+
+Periodically, compare code between NetBSD and this repo, and file PRs
+for changes in NetBSD as appropriate, when there are not already PRs.
+
+## Merge https://github.com/rmind/npf doc subdir
+
+rmind's repo has a doc directory.  Some content is in man pages and
+thus available within NetBSD.  Understand if there are things that
+aren't (likely), decide how to have them in NetBSD
+(/usr/share/doc/npf?) and add them.
+
 # Documentation
 
 ## Conversion Guides
@@ -20,6 +39,22 @@ Add instructions for converting configuration for other packet filters
 to npf configuration.
 
 ## More Examples
+
+## Man page nits
+
+### npf.conf: rule group processing
+
+Explain if groups are processed in the same order as npf.conf.
+Explain what happens if a packet matches the group header, but does
+not match a rule in the group.  Currently it is unclear exactly when
+the default group is run, and if multiple matching groups might run.
+
+### npf.conf dynamic ruleset
+
+Dynamic rulesets are mentioned in npfctl, and blocklistd examples, but
+they are not explained in npf.conf.  In addition to the basics, while
+it is not expected that these rules be treated as if they have the
+final flag, the code seems to do that.
 
 # NetBSD integration
 
@@ -231,6 +266,12 @@ TCP connection and only allowing packets matching the connection.
 Extend the definition of a packet matching the connection to meet the
 new rules in RFC5961, and perhaps generate the specified response
 packets.
+
+## Add counters
+
+Add a hit counter to rules, or some other way so that the user can say
+"show me the list of rules and for each rules, how many times it was
+invoked".   This is similar to ipfilter's `ipfstat -inh`.
 
 # General
 
