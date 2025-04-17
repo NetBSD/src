@@ -1,4 +1,4 @@
-# $NetBSD: TODO.npf,v 1.11 2025/04/17 18:11:58 gdt Exp $
+# $NetBSD: TODO.npf,v 1.12 2025/04/17 18:39:35 gdt Exp $
 
 # Meta
 
@@ -14,9 +14,19 @@ has been merged into this file.)
 
 # Documentation
 
-## how to convert other packet filters to npf
+## Conversion Guides
 
-## add more examples
+Add instructions for converting configuration for other packet filters
+to npf configuration.
+
+## More Examples
+
+# NetBSD integration
+
+## save/restore
+
+/etc/rc.d/npf lacks the ability to save and load state (stateful rules
+and NAT).
 
 # npfctl
 
@@ -28,6 +38,9 @@ print the error messages. Or it should be called enable/disable since
 this is what it does. It does not "start" because like an engine with
 no fuel, an npf with no configuration does not do much.
 
+Alternatively: warn if there are no rules, or decide that npfctl
+behaves as documented.
+
 ## better error reporting
 
 although the framework checks the file for consistency, returning
@@ -35,19 +48,17 @@ EINVAL for system failures is probably not good enough. For example if
 a module failed to autoload, it is probably an error and it should be
 reported differently?
 
-## startup/stop script does not load and save session state
-
-## add support for "with short"
-
-## implement "port-unr"
-
-## implement block return-icmp in log final all with ipopts
-
 ## handle array variables in more places
+
+(Decide if this is just about npfctl or also about the kernel, and if
+the latter move it.)
 
 ## support variables and inline sets which contain both IPv4 and IPv6 addresses
 
 for example: $ext_if = { inet4(wm0), inet6(wm0) }
+
+(Decide if this is just about npfctl or also about the kernel, and if
+the latter move it.)
 
 ## support inline blocks with different types of data in the rule.
 
@@ -60,10 +71,20 @@ npfctl parser, since it is currently a bit of a mess. Examples:
 
 [MOSTLY DONE?]
 
+(Decide if this is just about npfctl or also about the kernel, and if
+the latter move it.)
+
 ## npf show improvements
 
 Consistent `npfctl show' output with rule syntax.  Difficult/messy
 because rules are compiled into the byte-code.
+
+Add examples of what is wrong.
+
+## -D option to set variables
+
+Allow `npfctl -D varname=value` to set a variable, as if were defined
+in the config file.  See pfctl(8).
 
 # Architectural changes
 
@@ -118,6 +139,8 @@ either extend the byte-code or workaround them.
 Multiple rule matching to call the rule-procedures or a suitable
 design alternative to that.
 
+(Explain what this means more clearly.)
+
 ## ipchains-like feature
 
 Implement ipchains-like feature to support nested rules and sharing of
@@ -129,8 +152,10 @@ which does not allow jumping up the chain? 2) syntax in npf.conf file.
 ## redundancy and load balancing
 
 Redundancy and load balancing: initially, add state replication and
-replace in-kernel CARP/VRRP with a userlevel daemon. Note: we probably
-want to eliminate proplib in NPF before doing this.
+replace in-kernel CARP/VRRP with a userlevel daemon.
+
+Check "Note: we probably want to eliminate proplib in NPF before doing
+this." and drop if proplib has in fact been eliminated.
 
 ##  QoS
 
@@ -139,9 +164,10 @@ of this should be a part of the packet filter and how much of the
 network stack (merely involving some integration with the packet
 filters)?
 
-## tuples in tables
+## address/port and port in tables
 
-Support for tuples in tables: address and port, as well as just port. 
+Tables currently contain addresses. Add support for address/port
+tuples, and ports.
 
 # Features (not needing architectural changes)
 
@@ -155,56 +181,84 @@ Integration with ALTQ as an intermediate solution. In the long term,
 we should implement a better QoS mechanism as part of NPF. Meanwhile,
 NPF can integrate with ALTQ quite easily using the mbuf tags.
 
+(Explain this more clearly.  It seems to be "use npf as a classifier
+for ALTQ".)
+
 ## Support for NAT64 i.e. the protocol translation. 
 
 ## Implement ftp-proxy forward proxy support
 
 (for active FTP client behind NAT).
     
-## Patch Squid proxy to support transparent-proxy with NPF.
-
-Just an ioctl call to perform a state lookup?
-
 ## MiniUPnP
 
 Add support for MiniUPnP (see http://miniupnp.free.fr/ web page). 
 
+## add support for "with short"
+
+## implement "port-unr"
+
+(Explain; this seems to be a rule keyword to return specific
+unreachable types, but it's not clear if something more was intended.)
+
 # Security
 
-## Extra measures to prevent from SYN flood attacks.
+## Extra measures to protect npf from SYN flood attacks.
 
 E.g. accelerate connection expiration on low memory or after certain
-threshold. The timeout can also be self-balancing.
+threshold. The timeout can also be self-balancing.  This item is about
+protecting npf state in situations where excessive SYNs arrive in
+situations where a legitimate SYN should trigger a state entry.
 
-## Consider blind reset attack using SYN (see RFC 5961).
+## Consider blind reset attacks (see RFC 5961).
+
+This is about the situation when npf is doing stateful processing on a
+TCP connection and only allowing packets matching the connection.
+Extend the definition of a packet matching the connection to meet the
+new rules in RFC5961, and perhaps generate the specified response
+packets.
 
 ## Consider experimentation to use bloom filters against certain DoS attacks.
 
+(This needs much more clarity.)
+
 # General
 
-## disable IPv4 options by default
+## IPv4 options
 
-and add a "allow-ip4opts" feature to enable them
+Implement "block return-icmp in log final all with ipopts".
+(Explain if this is more than "enable writing rules to match packets
+with ip options".)
 
-## disable IPv6 options
+Consider defaulting to blocking options, with "allow-ip4opts" to
+enable them.
 
-(IPPROTO_ROUTING, IPPROTO_HOPOPTS and IPPROTO_DSTOPTS) by default, and
-add a "allow-ip6opts" feature to enable them
+## IPv6 options
+
+(Jointly with IPv4 options.)
+
+Perhaps a limited set (IPPROTO_ROUTING, IPPROTO_HOPOPTS and
+IPPROTO_DSTOPTS) by default, and "allow-ip6opts" to enable others.
 
 ## add an ioctl, similar to PF's DIOCNATLOOK and IPF's SIOCGNATL
 
 document it so that it can be added in third-party software, like:
    https://github.com/squid-cache/squid/blob/5b74111aff8948e869959113241adada0cd488c2/src/ip/Intercept.cc#L263
 
+## patch squid to support transparent-proxy with NPF.
+
+(Likely, simply using the ioctl from the previous item.)
+
 ## support IPv6 jumbograms
+
+(Explain what is or is not supported now, and what needs to happen
+differently.)
 
 ## support large IPv6 options
 
 as explained here:
        http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
 But it's not a big problem - perhaps we don't care at all.
-
-## add command line variables.  See -D option in pf.
 
 ## improve mss clamping
 
@@ -221,4 +275,8 @@ Use nbuf_ensure_writable() where appropriate.
 
 ## TCP FSM enhancement
 
-Minor TCP FSM investigation: should it be not allowed to immediately re-open the connection after RST or FIN?
+Minor TCP FSM investigation: should it be not allowed to immediately
+re-open the connection after RST or FIN?
+
+(Explain what this means, how it relates to standards, and what the
+concerns are.)
