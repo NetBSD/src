@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2100 2025/04/16 22:48:25 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2101 2025/04/17 15:03:20 kim Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1144,7 +1144,7 @@ Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
 Current tag:	openssl-3-0-16
 Notes:
 - Next update to be in crypto/external/apache2/openssl/dist, since
-  OpenSSL 3.0 was relicensed as Apache2. We might consider revering
+  OpenSSL 3.0 was relicensed as Apache2. We might consider reverting
   patches for idea, rc2, rc5 to retain binary compatibility with stock
   openssl and bump major.
 - Run openssl2netbsd to get rid of the RCSID identifiers
