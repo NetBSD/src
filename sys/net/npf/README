@@ -1,2 +1,17 @@
-The NPF project upstream repository: https://github.com/rmind/npf/
-Please submit the pull requests to the upstream when possible.
+$NetBSD: README,v 1.2 2025/04/17 13:08:55 gdt Exp $
+
+This directory contains kernel source for NPF, the NetBSD Packet
+Filter, but the README also applies to:
+
+  src/lib/npf: library for interacting with in-kernel npf
+    implementation
+
+  src/usr.bin/npf: tools for configuring in-kernel npf and for testing
+
+  assorted supporting files (rc.d, modules, tests)
+
+Previously, NetBSD considered https://github.com/rmind/npf/ to be the
+upstream location.  There is no obligation to file PRs when changing
+npf in NetBSD.  Please avoid unecessary divergence in order to ease
+future syncing from this repo, but this caution should not block
+improvements.
