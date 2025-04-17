@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.7 2023/07/06 20:44:55 riastradh Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.8 2025/04/17 14:18:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.7 2023/07/06 20:44:55 riastradh Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.8 2025/04/17 14:18:40 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -171,10 +171,10 @@ handler(int s)
 		}
 	}
 
-	ATF_REQUIRE(found_handler);
-	ATF_REQUIRE(found_sigtramp);
-	ATF_REQUIRE(found_the_loop);
-	ATF_REQUIRE(found_main);
+	ATF_CHECK(found_handler);
+	ATF_CHECK(found_sigtramp);
+	ATF_CHECK(found_the_loop);
+	ATF_CHECK(found_main);
 
 	longjmp(env, 1);
 }
@@ -201,6 +201,11 @@ ATF_TC_BODY(sig_backtrace_deref, tc)
 		.sa_flags = SA_ONSTACK,
 	};
 	ATF_REQUIRE(sigaction(SIGSEGV, &sa, NULL) == 0);
+
+#ifdef __sparc__		/* 32 or 64 */
+	atf_tc_expect_fail("PR port-sparc64/59313:"
+	    " t_sig_backtrace tests are failing");
+#endif
 
 	if (setjmp(env) == 0) {
 		printf("%d\n", the_loop_deref(0));
