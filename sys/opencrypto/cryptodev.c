@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.125 2022/09/10 12:14:17 rillig Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.126 2025/04/17 12:59:58 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.125 2022/09/10 12:14:17 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.126 2025/04/17 12:59:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ static int	cryptodev_getstatus(struct fcrypt *, struct crypt_result *);
 
 /*
  * sysctl-able control variables for /dev/crypto now defined in crypto.c:
- * crypto_usercrypto, crypto_userasmcrypto, crypto_devallowsoft.
+ * crypto_usercrypto, crypto_userasymcrypto, crypto_devallowsoft.
  */
 
 /* ARGSUSED */
