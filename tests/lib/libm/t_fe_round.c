@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fe_round.c,v 1.20 2024/05/15 00:02:57 riastradh Exp $	*/
+/*	$NetBSD: t_fe_round.c,v 1.21 2025/04/17 13:45:22 riastradh Exp $	*/
 
 /*
  * Written by Maya Rashish <maya@NetBSD.org>
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fe_round.c,v 1.20 2024/05/15 00:02:57 riastradh Exp $");
+__RCSID("$NetBSD: t_fe_round.c,v 1.21 2025/04/17 13:45:22 riastradh Exp $");
 
 #include <atf-c.h>
 #include <fenv.h>
@@ -194,6 +194,11 @@ ATF_TC_BODY(fe_nearbyint_rint, tc)
 	double received, ipart, fpart;
 	unsigned i;
 
+#ifdef __sparc64__
+	atf_tc_expect_fail("PR port-sparc64/59310:"
+	    " t_fe_round:fe_nearbyint_rint tests are failing");
+#endif
+
 	for (i = 0; i < __arraycount(values); i++) {
 		for (fn = 0; fn < N_FN; fn++) {
 			bool expect_except =
@@ -346,6 +351,11 @@ ATF_TC_BODY(fe_nearbyintl_rintl, tc)
 	};
 	long double received, ipart, fpart;
 	unsigned i;
+
+#ifdef __sparc64__
+	atf_tc_expect_fail("PR port-sparc64/59310:"
+	    " t_fe_round:fe_nearbyint_rint tests are failing");
+#endif
 
 	for (i = 0; i < __arraycount(valuesl); i++) {
 		for (fn = 0; fn < N_FN; fn++) {
