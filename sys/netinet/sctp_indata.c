@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.17 2024/12/04 21:18:34 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.18 2025/04/17 18:53:23 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.17 2024/12/04 21:18:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.18 2025/04/17 18:53:23 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1243,7 +1243,7 @@ sctp_queue_data_for_reasm(struct sctp_tcb *stcb, struct sctp_association *asoc,
 		if (prev_tsn == prev->rec.data.TSN_seq) {
 			/*
 			 * Ok the one I am dropping onto the end
-			 * is the NEXT. A bit of valdiation here.
+			 * is the NEXT. A bit of validation here.
 			 */
 			if ((prev->rec.data.rcv_flags & SCTP_DATA_FRAG_MASK) ==
 			    SCTP_DATA_FIRST_FRAG ||
@@ -1401,7 +1401,7 @@ sctp_queue_data_for_reasm(struct sctp_tcb *stcb, struct sctp_association *asoc,
 		if (post_tsn == next->rec.data.TSN_seq) {
 			/*
 			 * Ok the one I am inserting ahead of
-			 * is my NEXT one. A bit of valdiation here.
+			 * is my NEXT one. A bit of validation here.
 			 */
 			if (next->rec.data.rcv_flags & SCTP_DATA_FIRST_FRAG) {
 				/* Insert chk MUST be a last fragment */

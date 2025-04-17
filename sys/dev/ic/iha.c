@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.45 2021/08/07 16:19:12 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.46 2025/04/17 18:53:23 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 Izumi Tsutsui
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.45 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.46 2025/04/17 18:53:23 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2223,7 +2223,7 @@ iha_resel(struct iha_softc *sc)
 		tag  = bus_space_read_1(iot, ioh, TUL_SFIFO); /* Read Tag ID */
 		scb = &sc->sc_scb[tag];
 
-		abortmsg = MSG_ABORT_TAG; /* Now that we have valdid tag! */
+		abortmsg = MSG_ABORT_TAG; /* Now that we have valid tag! */
 	}
 
 	if ((scb->target != target)
