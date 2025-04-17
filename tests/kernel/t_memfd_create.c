@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memfd_create.c,v 1.3 2023/11/24 17:31:03 riastradh Exp $	*/
+/*	$NetBSD: t_memfd_create.c,v 1.4 2025/04/17 16:02:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memfd_create.c,v 1.3 2023/11/24 17:31:03 riastradh Exp $");
+__RCSID("$NetBSD: t_memfd_create.c,v 1.4 2025/04/17 16:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -185,7 +185,10 @@ ATF_TC_BODY(mmap, tc)
 
 	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0);
-	ATF_REQUIRE_MSG(addr != MAP_FAILED, "Mmap failed unexpectedly (%s)",
+	ATF_REQUIRE_MSG(addr != MAP_FAILED,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
+	    " %s",
+	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 }
 
@@ -268,7 +271,11 @@ test_all_seals_except(int fd, int except)
 	        addr = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE,
 		    MAP_SHARED, fd, 0);
 		ATF_REQUIRE_MSG(addr != MAP_FAILED,
-		    "Mmap failed unexpectedly (%s)", strerror(errno));
+		    "mmap(NULL, %llu, 0x%x, 0x%x, %d, 0) failed:"
+		    " %s",
+		    (unsigned long long)st.st_size,
+		    PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+		    strerror(errno));
 	}
 
 	if (except & ~F_SEAL_SHRINK) {
@@ -377,7 +384,10 @@ ATF_TC_BODY(seal_write_mmap, tc)
 
 	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0);
-	ATF_REQUIRE_MSG(addr != MAP_FAILED, "Mmap failed unexpectedly (%s)",
+	ATF_REQUIRE_MSG(addr != MAP_FAILED,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
+	    " %s",
+	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 
 	ATF_REQUIRE_EQ_MSG(fcntl(fd, F_ADD_SEALS, F_SEAL_WRITE), -1,
@@ -424,13 +434,18 @@ ATF_TC_BODY(seal_future_write_mmap, tc)
 	RL(ftruncate(fd, sizeof(read_buf)));
 	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0);
-	ATF_REQUIRE_MSG(addr != MAP_FAILED, "Mmap failed unexpectedly (%s)",
+	ATF_REQUIRE_MSG(addr != MAP_FAILED,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
+	    " %s",
+	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE));
 
 	ATF_REQUIRE_EQ_MSG(mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE,
-	    MAP_SHARED, fd, 0), MAP_FAILED, "Mmap succeeded unexpectedly");
+		MAP_SHARED, fd, 0), MAP_FAILED,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) succeeded unexpectedly",
+	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd);
 	ATF_REQUIRE_ERRNO(EPERM, true);
 }
 
