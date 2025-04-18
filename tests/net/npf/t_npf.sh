@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.7 2024/10/30 11:19:38 riastradh Exp $
+# $NetBSD: t_npf.sh,v 1.8 2025/04/18 20:06:39 riastradh Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,18 +33,31 @@ run_test()
 	atf_check -o ignore npftest -c npf.plist -T "${name}"
 }
 
+cleanup()
+{
+
+	if [ -f npftest.core ]; then
+		gdb -batch -ex bt npftest npftest.core
+		# Extract kernel logs including a panic message
+		strings npftest.core |grep -E '^\[.+\] '
+	fi
+}
+
 add_test()
 {
 	local name="${1}"; shift
 	local desc="${*}";
 
-	atf_test_case "npf_${name}"
+	atf_test_case "npf_${name}" cleanup
 	eval "npf_${name}_head() {
 			atf_set descr \"${desc}\"
 			atf_set require.progs npfctl npftest
 		}
 	    npf_${name}_body() {
 			run_test ${name}
+		}
+	    npf_${name}_cleanup() {
+			cleanup
 		}"
 	atf_add_test_case "npf_${name}"
 }
