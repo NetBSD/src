@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2101 2025/04/17 15:03:20 kim Exp $
+#	$NetBSD: 3RDPARTY,v 1.2102 2025/04/18 16:10:34 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -416,7 +416,7 @@ Location:	external/bsd/ekermit
 Notes:
 
 Package:	expat
-Version:	2.7.0
+Version:	2.7.1
 Current Vers:	2.7.1
 Maintainer:	Expat Project
 Archive Site:	https://github.com/libexpat/libexpat/releases

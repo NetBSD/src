@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3155 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3156 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -728,3 +728,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[andvar 20250405]
 	OpenSSH: Import 10.0. [christos 20250409]
 	OpenSSL: Imported 3.0.16. [christos 20250416]
+	expat: Import 2.7.1. [wiz 20250418]
