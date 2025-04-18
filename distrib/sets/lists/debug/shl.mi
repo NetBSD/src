@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.360 2025/04/09 15:51:45 christos Exp $
+# $NetBSD: shl.mi,v 1.361 2025/04/18 16:08:25 wiz Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -110,7 +110,7 @@
 ./usr/libdata/debug/usr/lib/libevent_openssl.so.5.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.5.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libexpat.so.2.4.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libexpat.so.2.5.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.4.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfido2.so.5.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libform.so.8.0.debug		comp-sys-debug	debug,compatfile

@@ -1,5 +1,5 @@
-#	$NetBSD: shlib_version,v 1.5 2025/03/14 21:26:54 wiz Exp $
+#	$NetBSD: shlib_version,v 1.6 2025/04/18 16:08:25 wiz Exp $
 #
 # XXX netbsd xsrc had major=4
 major=2
-minor=4
+minor=5
