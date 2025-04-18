@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memfd_create.c,v 1.4 2025/04/17 16:02:48 riastradh Exp $	*/
+/*	$NetBSD: t_memfd_create.c,v 1.5 2025/04/18 19:22:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memfd_create.c,v 1.4 2025/04/17 16:02:48 riastradh Exp $");
+__RCSID("$NetBSD: t_memfd_create.c,v 1.5 2025/04/18 19:22:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,8 +43,20 @@ __RCSID("$NetBSD: t_memfd_create.c,v 1.4 2025/04/17 16:02:48 riastradh Exp $");
 #include "h_macros.h"
 
 char name_buf[NAME_MAX];
-char write_buf[8192];
-char read_buf[8192];
+char *write_buf;
+char *read_buf;
+size_t rwbuf_size;
+
+static void
+setupbufs(void)
+{
+
+	rwbuf_size = (size_t)sysconf(_SC_PAGESIZE);
+	ATF_REQUIRE_MSG(rwbuf_size < SIZE_MAX/2, "rwbuf_size=%zu", rwbuf_size);
+	rwbuf_size *= 2;
+	REQUIRE_LIBC(write_buf = calloc(1, rwbuf_size), NULL);
+	REQUIRE_LIBC(read_buf = calloc(1, rwbuf_size), NULL);
+}
 
 ATF_TC(create_null_name);
 ATF_TC_HEAD(create_null_name, tc)
@@ -98,26 +110,27 @@ ATF_TC_BODY(read_write, tc)
 	int fd;
 	off_t offset;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", 0));
 
-	tests_makegarbage(write_buf, sizeof(write_buf));
-	memset(read_buf, 0, sizeof(read_buf));
+	tests_makegarbage(write_buf, rwbuf_size);
 
-	RL(write(fd, write_buf, sizeof(write_buf)));
+	RL(write(fd, write_buf, rwbuf_size));
 	offset = lseek(fd, 0, SEEK_CUR);
-	ATF_REQUIRE_EQ_MSG(offset, sizeof(write_buf),
+	ATF_REQUIRE_EQ_MSG(offset, rwbuf_size,
 	    "File offset not set after write (%jd != %zu)", (intmax_t)offset,
-	    sizeof(write_buf));
+	    rwbuf_size);
 
 	RL(lseek(fd, 0, SEEK_SET));
 
-	RL(read(fd, read_buf, sizeof(read_buf)));
+	RL(read(fd, read_buf, rwbuf_size));
 	offset = lseek(fd, 0, SEEK_CUR);
-	ATF_REQUIRE_EQ_MSG(offset, sizeof(read_buf),
+	ATF_REQUIRE_EQ_MSG(offset, rwbuf_size,
 	    "File offset not set after read (%jd != %zu)", (intmax_t)offset,
-	    sizeof(read_buf));
+	    rwbuf_size);
 
-	for (size_t i = 0; i < sizeof(read_buf); i++)
+	for (size_t i = 0; i < rwbuf_size; i++)
 		ATF_REQUIRE_EQ_MSG(read_buf[i], write_buf[i],
 		    "Data read does not match data written");
 }
@@ -134,37 +147,39 @@ ATF_TC_BODY(truncate, tc)
 	int fd;
 	struct stat st;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", 0));
 
-	tests_makegarbage(write_buf, sizeof(write_buf));
-	tests_makegarbage(read_buf, sizeof(read_buf));
+	tests_makegarbage(write_buf, rwbuf_size);
+	tests_makegarbage(read_buf, rwbuf_size);
 
-	RL(write(fd, write_buf, sizeof(write_buf)));
+	RL(write(fd, write_buf, rwbuf_size));
 
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(write_buf),
-	    "Write did not grow size to %zu (is %jd)", sizeof(write_buf),
+	ATF_REQUIRE_EQ_MSG(st.st_size, rwbuf_size,
+	    "Write did not grow size to %zu (is %jd)", rwbuf_size,
 	    (intmax_t)st.st_size);
 
-	RL(ftruncate(fd, sizeof(write_buf)/2));
+	RL(ftruncate(fd, rwbuf_size/2));
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(write_buf)/2,
+	ATF_REQUIRE_EQ_MSG(st.st_size, rwbuf_size/2,
 	    "Truncate did not shrink size to %zu (is %jd)",
-	    sizeof(write_buf)/2, (intmax_t)st.st_size);
+	    rwbuf_size/2, (intmax_t)st.st_size);
 
-	RL(ftruncate(fd, sizeof(read_buf)));
+	RL(ftruncate(fd, rwbuf_size));
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG(st.st_size, sizeof(read_buf),
-	    "Truncate did not grow size to %zu (is %jd)", sizeof(read_buf),
+	ATF_REQUIRE_EQ_MSG(st.st_size, rwbuf_size,
+	    "Truncate did not grow size to %zu (is %jd)", rwbuf_size,
 	    (intmax_t)st.st_size);
 
 	RL(lseek(fd, 0, SEEK_SET));
-	RL(read(fd, read_buf, sizeof(read_buf)));
+	RL(read(fd, read_buf, rwbuf_size));
 
-	for (size_t i = 0; i < sizeof(read_buf)/2; i++)
+	for (size_t i = 0; i < rwbuf_size/2; i++)
 		ATF_REQUIRE_EQ_MSG(read_buf[i], write_buf[i],
 		    "Data read does not match data written");
-	for (size_t i = sizeof(read_buf)/2; i < sizeof(read_buf); i++)
+	for (size_t i = rwbuf_size/2; i < rwbuf_size; i++)
 		ATF_REQUIRE_EQ_MSG(read_buf[i], 0,
 		    "Data read on growed region is not zeroed");
 }
@@ -180,15 +195,15 @@ ATF_TC_BODY(mmap, tc)
 	int fd;
 	void *addr;
 
-	RL(fd = memfd_create("", 0));
-	RL(ftruncate(fd, sizeof(read_buf)));
+	setupbufs();
 
-	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
-	    fd, 0);
+	RL(fd = memfd_create("", 0));
+	RL(ftruncate(fd, rwbuf_size));
+
+	addr = mmap(NULL, rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	ATF_REQUIRE_MSG(addr != MAP_FAILED,
-	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
-	    " %s",
-	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed: %s",
+	    rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 }
 
@@ -243,6 +258,8 @@ test_all_seals_except(int fd, int except)
 	struct stat st;
 	void *addr;
 
+	ATF_REQUIRE(rwbuf_size > 0);
+
 	RL(fstat(fd, &st));
 	ATF_REQUIRE(st.st_size > 0);
 
@@ -259,7 +276,7 @@ test_all_seals_except(int fd, int except)
 
 	if (except & ~(F_SEAL_WRITE|F_SEAL_FUTURE_WRITE)) {
 		RL(lseek(fd, 0, SEEK_SET));
-		rv = write(fd, write_buf, sizeof(write_buf));
+		rv = write(fd, write_buf, rwbuf_size);
 		if (rv == -1) {
 			ATF_REQUIRE_MSG(errno != EPERM,
 			    "Seal %x prevented write", except);
@@ -268,11 +285,10 @@ test_all_seals_except(int fd, int except)
 			    strerror(errno));
 		}
 
-	        addr = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE,
-		    MAP_SHARED, fd, 0);
+	        addr = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_SHARED,
+		    fd, 0);
 		ATF_REQUIRE_MSG(addr != MAP_FAILED,
-		    "mmap(NULL, %llu, 0x%x, 0x%x, %d, 0) failed:"
-		    " %s",
+		    "mmap(NULL, %llu, 0x%x, 0x%x, %d, 0) failed: %s",
 		    (unsigned long long)st.st_size,
 		    PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 		    strerror(errno));
@@ -312,11 +328,13 @@ ATF_TC_BODY(seal_shrink, tc)
 {
 	int fd;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(write_buf)));
+	RL(ftruncate(fd, rwbuf_size));
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_SHRINK));
 
-	ATF_REQUIRE_EQ_MSG(ftruncate(fd, sizeof(write_buf)/2), -1,
+	ATF_REQUIRE_EQ_MSG(ftruncate(fd, rwbuf_size/2), -1,
 	    "Truncate succeeded unexpectedly");
 	ATF_REQUIRE_ERRNO(EPERM, true);
 
@@ -334,11 +352,13 @@ ATF_TC_BODY(seal_grow, tc)
 {
 	int fd;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(write_buf)/2));
+	RL(ftruncate(fd, rwbuf_size/2));
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_GROW));
 
-	ATF_REQUIRE_EQ_MSG(ftruncate(fd, sizeof(write_buf)), -1,
+	ATF_REQUIRE_EQ_MSG(ftruncate(fd, rwbuf_size), -1,
 	    "Truncate succeeded unexpectedly");
 	ATF_REQUIRE_ERRNO(EPERM, true);
 
@@ -356,11 +376,13 @@ ATF_TC_BODY(seal_write, tc)
 {
 	int fd;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(write_buf)/2));
+	RL(ftruncate(fd, rwbuf_size/2));
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_WRITE));
 
-	ATF_REQUIRE_EQ_MSG(write(fd, write_buf, sizeof(write_buf)), -1,
+	ATF_REQUIRE_EQ_MSG(write(fd, write_buf, rwbuf_size), -1,
 	    "Write succeeded unexpectedly");
 	ATF_REQUIRE_ERRNO(EPERM, true);
 
@@ -379,15 +401,15 @@ ATF_TC_BODY(seal_write_mmap, tc)
 	int fd;
 	void *addr;
 
-	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(read_buf)));
+	setupbufs();
 
-	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
-	    fd, 0);
+	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
+	RL(ftruncate(fd, rwbuf_size));
+
+	addr = mmap(NULL, rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	ATF_REQUIRE_MSG(addr != MAP_FAILED,
-	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
-	    " %s",
-	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed: %s",
+	    rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 
 	ATF_REQUIRE_EQ_MSG(fcntl(fd, F_ADD_SEALS, F_SEAL_WRITE), -1,
@@ -406,11 +428,13 @@ ATF_TC_BODY(seal_future_write, tc)
 {
 	int fd;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(write_buf)/2));
+	RL(ftruncate(fd, rwbuf_size/2));
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE));
 
-	ATF_REQUIRE_EQ_MSG(write(fd, write_buf, sizeof(write_buf)), -1,
+	ATF_REQUIRE_EQ_MSG(write(fd, write_buf, rwbuf_size), -1,
 	    "Write succeeded unexpectedly");
 	ATF_REQUIRE_ERRNO(EPERM, true);
 
@@ -430,22 +454,22 @@ ATF_TC_BODY(seal_future_write_mmap, tc)
 	int fd;
 	void *addr;
 
+	setupbufs();
+
 	RL(fd = memfd_create("", MFD_ALLOW_SEALING));
-	RL(ftruncate(fd, sizeof(read_buf)));
-	addr = mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED,
-	    fd, 0);
+	RL(ftruncate(fd, rwbuf_size));
+	addr = mmap(NULL, rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	ATF_REQUIRE_MSG(addr != MAP_FAILED,
-	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed:"
-	    " %s",
-	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) failed: %s",
+	    rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    strerror(errno));
 
 	RL(fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE));
 
-	ATF_REQUIRE_EQ_MSG(mmap(NULL, sizeof(read_buf), PROT_READ|PROT_WRITE,
+	ATF_REQUIRE_EQ_MSG(mmap(NULL, rwbuf_size, PROT_READ|PROT_WRITE,
 		MAP_SHARED, fd, 0), MAP_FAILED,
 	    "mmap(NULL, %zu, 0x%x, 0x%x, %d, 0) succeeded unexpectedly",
-	    sizeof(read_buf), PROT_READ|PROT_WRITE, MAP_SHARED, fd);
+	    rwbuf_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd);
 	ATF_REQUIRE_ERRNO(EPERM, true);
 }
 
