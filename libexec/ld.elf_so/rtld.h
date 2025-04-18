@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.147 2023/07/30 09:20:14 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.148 2025/04/18 17:56:49 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -218,6 +218,9 @@ typedef struct Struct_Obj_Entry {
 					   dlopen'ed */
 			phdr_loaded:1,	/* Phdr is loaded and doesn't need to
 					 * be freed. */
+#ifdef __alpha__
+			secureplt:1,	/* True if PLT is read-only format */
+#endif
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 			tls_static:1,	/* True if static TLS offset
 					 * has been allocated */

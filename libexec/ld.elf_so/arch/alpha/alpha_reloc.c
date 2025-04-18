@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.45 2024/08/03 21:59:58 riastradh Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.46 2025/04/18 17:56:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.45 2024/08/03 21:59:58 riastradh Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.46 2025/04/18 17:56:49 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: alpha_reloc.c,v 1.45 2024/08/03 21:59:58 riastradh Exp $");
 #define	adbg(x)		/* nothing */
 #endif
 
+void _rtld_bind_start_secureplt(void);
 void _rtld_bind_start(void);
 void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
@@ -91,7 +92,19 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	uint32_t word0;
 
 	/*
-	 * The PLTGOT on the Alpha looks like this:
+	 * If we're using Alpha secureplt, the PLTGOT points to the
+	 * .got.plt section.  Just fill in the rtld binding stub and
+	 * we're done -- we're not writing to instruction memory, so no
+	 * imb needed.
+	 */
+	if (obj->secureplt) {
+		obj->pltgot[0] = (Elf_Addr) _rtld_bind_start_secureplt;
+		obj->pltgot[1] = (Elf_Addr) obj;
+		return;
+	}
+
+	/*
+	 * The non-secureplt PLTGOT on the Alpha looks like this:
 	 *
 	 *	PLT HEADER
 	 *	.
@@ -418,7 +431,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *
 		 * Note if the shared object uses the old PLT format, then
 		 * we cannot patch up the PLT safely, and so we skip it
-		 * in that case[*].
+		 * in that case[*].  And if the shared object has a read-only
+		 * secureplt, then we also skip it.
 		 *
 		 * [*] Actually, if we're not doing lazy-binding, then
 		 * we *can* (and do) patch up this PLT entry; the PLTGOT
@@ -426,6 +440,10 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 * so this test will fail as it would for the new PLT
 		 * entry format.
 		 */
+		if (obj->secureplt) {
+			rdbg(("  secureplt format"));
+			goto out;
+		}
 		if (obj->pltgot[2] == (Elf_Addr) &_rtld_bind_start_old) {
 			rdbg(("  old PLT format"));
 			goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.16 2004/02/18 23:04:49 enami Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.17 2025/04/18 17:56:49 riastradh Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -92,7 +92,7 @@ END(_rtld_start)
 	lda	sp, -168(sp)					;	\
 	stq	ra, 0(sp)					;	\
 	stq	v0, 8(sp)					;	\
-	stq	t0, 16(sp)					;	\
+	stq	t0, 16(sp)	/* XXX t0-t7 necessary? */	;	\
 	stq	t1, 24(sp)					;	\
 	stq	t2, 32(sp)					;	\
 	stq	t3, 40(sp)					;	\
@@ -106,7 +106,7 @@ END(_rtld_start)
 	stq	a3, 104(sp)					;	\
 	stq	a4, 112(sp)					;	\
 	stq	a5, 120(sp)					;	\
-	stq	t8, 128(sp)					;	\
+	stq	t8, 128(sp)	/* XXX t8-t11 necessary? */	;	\
 	stq	t9, 136(sp)					;	\
 	stq	t10, 144(sp)					;	\
 	stq	t11, 152(sp)					;	\
@@ -119,7 +119,7 @@ END(_rtld_start)
 	br	t0, 1f						;	\
 1:	LDGP(t0)
 
-#define	RTLD_BIND_START_EPILOGUE					\
+#define	RTLD_BIND_START_EPILOGUE(imb)					\
 	/* Move the destination address into position. */		\
 	mov	v0, pv						;	\
 									\
@@ -157,7 +157,77 @@ END(_rtld_start)
 	jmp	zero, (pv)
 
 /*
- * Lazy binding entry point, called via PLT.
+ * _rtld_bind_start_secureplt(_rtld_bind_start_secureplt@pv, obj@at,
+ *     (sizeof(Elf_Rela)*index)@t11)
+ *
+ *	Lazy binding entry point, called via PLT with read-only
+ *	secureplt, when DT_ALPHA_PLTRO is set.  The PLT itself looks
+ *	something like this:
+ *
+ *	_PROCEDURE_LINKAGE_TABLE_:
+ *		subq	pv, at, t11	// t11 := pv - ent0 = 4*index
+ *		s4subq	t11, t11, t11	// t11 := 12*index
+ *		addq	t11, t11, t11	// t11 := 24*index
+ *					//      = sizeof(Elf_Rela)*index
+ *		ldah	at, ...(at)	// at  := PLTGOT
+ *		lda	at, ...(at)
+ *		ldq	pv, 0(at)	// pv  := PLTGOT[0]
+ *					//      = _rtld_bind_start_secureplt
+ *		ldq	at, 8(at)	// at  := PLTGOT[1]
+ *					//	= obj
+ *		jmp	(pv)
+ *	0:	br	at, _PROCEDURE_LINKAGE_TABLE_	// at := ent0
+ *	ent0:	br	0b		// pv - ent0 = 0 = 4*index
+ *	ent1:	br	0b		// pv - ent0 = 4 = 4*index
+ *	ent2:	br	0b		// pv - ent0 = 8 = 4*index
+ *	...
+ */
+NESTED_NOPROFILE(_rtld_bind_start_secureplt, 0, 168, ra, 0, 0)
+
+	RTLD_BIND_START_PROLOGUE
+
+	/* Set up the arguments for _rtld_bind. */
+	mov	at_reg, a0
+	mov	t11, a1
+
+	CALL(_rtld_bind)
+
+	RTLD_BIND_START_EPILOGUE(/* no text writes, so no imb */)
+
+END(_rtld_bind_start_secureplt)
+
+/*
+ * _rtld_bind_start(_rtld_bind_start@pv, &PLTGOT[2]@pv,
+ *     (ent0 + 4*(3*index + 1))@at)
+ *
+ *	Lazy binding entry point, called via PLT with read/write
+ *	non-secureplt, when DT_ALPHA_PLTRO is not set.  The PLT itself
+ *	looks something like this at program startup, with PLTGOT (an
+ *	array of 64-bit Elf_Addr) pointing at _PROCEDURE_LINKAGE_TABLE_
+ *	and PLTGOT[2] and PLTGOT[3] initialized by _rtld_setup_pltgot:
+ *
+ *	_PROCEDURE_LINKAGE_TABLE_:
+ *		br	pv, .Lref	// pv  := .Lref
+ *	.Lref:	ldq	pv, 12(pv)	// pv  := PLTGOT[2]
+ *					        = _rtld_bind_start
+ *		unop			// no-op for alignment
+ *		jmp	pv, (pv)	// pv  := &PLTGOT[2]
+ *		.qword	(_rtld_bind_start)	// PLTGOT[2]
+ *		.qword	(object pointer)	// PLTGOT[3]
+ *	ent0:	br	at, _PROCEDURE_LINKAGE_TABLE_
+ *		unop			// space for adjusted stub
+ *		unop			// space for adjusted stub
+ *	ent1:	br	at, _PROCEDURE_LINKAGE_TABLE_
+ *		unop
+ *		unop
+ *	ent2:	br	at, _PROCEDURE_LINKAGE_TABLE_
+ *		unop
+ *		unop
+ *	...
+ *
+ *	Note: Distance from &PLTGOT[2] (pv) to ent[0] + 4 (at) is 20
+ *	bytes, and each ent[index] + 4 (at) after that is separated by
+ *	3 instructions, i.e., 12 bytes.
  */
 NESTED_NOPROFILE(_rtld_bind_start, 0, 168, ra, 0, 0)
 
@@ -171,13 +241,37 @@ NESTED_NOPROFILE(_rtld_bind_start, 0, 168, ra, 0, 0)
 
 	CALL(_rtld_bind)
 
-	RTLD_BIND_START_EPILOGUE
+	RTLD_BIND_START_EPILOGUE(imb)
 
 END(_rtld_bind_start)
 
 /*
- * Lazy binding entry point, called via PLT.  This version is for the
- * old PLT entry format.
+ * _rtld_bind_start_old(&PLTGOT[2]@pv, (sizeof(Elf_Rela)*index)@at)
+ *
+ *	Lazy binding entry point, called via PLT.  This version is for
+ *	the old PLT entry format, for which the PLT looks something
+ *	like this at program startup, with PLTGOT (an array of 64-bit
+ *	Elf_Addr) pointing at _PROCEDURE_LINKAGE_TABLE_, and PLTGOT[2]
+ *	and PLTGOT[3] initialized by _rtld_setup_pltgot:
+ *
+ *	_PROCEDURE_LINKAGE_TABLE_:
+ *		br	pv, 1f		// pv  := .Lref
+ *	.Lref:	ldq	pv, 12(pv)	// pv  := PLTGOT[2]
+ *					        = _rtld_bind_start
+ *		unop			// no-op for alignment
+ *		jmp	pv, (pv)	// pv  := &PLTGOT[2]
+ *		.qword	(_rtld_bind_start)	// PLTGOT[2]
+ *		.qword	(object pointer)	// PLTGOT[3]
+ *	ent0:	ldah	at, 0		// at  := 24*0
+ *		lda	at, 0(at)	//      = sizeof(Elf_Rela)*index
+ *		br	_PROCEDURE_LINKAGE_TABLE_
+ *	ent1:	ldah	at, 0		// at  := 24*1
+ *		lda	at, 24(at)	//      = sizeof(Elf_Rela)*index
+ *		br	_PROCEDURE_LINKAGE_TABLE_
+ *	ent3:	ldah	at, 0		// at  := 24*2
+ *		lda	at, 48(at)	//      = sizeof(Elf_Rela)*index
+ *		br	_PROCEDURE_LINKAGE_TABLE_
+ *	...
  */
 NESTED_NOPROFILE(_rtld_bind_start_old, 0, 168, ra, 0, 0)
 
@@ -189,6 +283,6 @@ NESTED_NOPROFILE(_rtld_bind_start_old, 0, 168, ra, 0, 0)
 
 	CALL(_rtld_bind)
 
-	RTLD_BIND_START_EPILOGUE
+	RTLD_BIND_START_EPILOGUE(imb)
 
 END(_rtld_bind_start_old)

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.73 2025/04/16 01:56:52 riastradh Exp $	 */
+/*	$NetBSD: headers.c,v 1.74 2025/04/18 17:56:49 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.73 2025/04/16 01:56:52 riastradh Exp $");
+__RCSID("$NetBSD: headers.c,v 1.74 2025/04/18 17:56:49 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -347,6 +347,11 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 #endif
 
+#ifdef __alpha__
+		case DT_ALPHA_PLTRO:
+			obj->secureplt = (dynp->d_un.d_val != 0);
+			break;
+#endif
 #ifdef __mips__
 		case DT_MIPS_LOCAL_GOTNO:
 			obj->local_gotno = dynp->d_un.d_val;
