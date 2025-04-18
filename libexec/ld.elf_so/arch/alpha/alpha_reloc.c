@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.46 2025/04/18 17:56:49 riastradh Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.47 2025/04/18 19:11:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.46 2025/04/18 17:56:49 riastradh Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.47 2025/04/18 19:11:44 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -220,7 +220,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
 		Elf_Addr         tmp;
-		unsigned long	 symnum;
+		unsigned long	 symnum = ELF_R_SYM(rela->r_info);
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
@@ -230,7 +230,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TPREL64):
 		case R_TYPE(DTPMOD64):
 		case R_TYPE(DTPREL64):
-			symnum = ELF_R_SYM(rela->r_info);
 			if (last_symnum != symnum) {
 				last_symnum = symnum;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
