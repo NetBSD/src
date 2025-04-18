@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.36 2025/04/16 17:40:37 riastradh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2025/04/18 12:56:47 riastradh Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -31,9 +31,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * m68k ELF relocations.
+ *
+ * References:
+ *
+ *	[M68KSYSVABI] System V Application Binary Interface: Motorola
+ *	68000 Processor Family Supplement, 1990, AT&T.
+ *	https://people.debian.org/~glaubitz/m68k-sysv-abi.pdf
+ *	https://web.archive.org/web/20250317195959/https://people.debian.org/~glaubitz/m68k-sysv-abi.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.36 2025/04/16 17:40:37 riastradh Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2025/04/18 12:56:47 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
