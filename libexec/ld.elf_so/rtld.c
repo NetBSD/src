@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.219 2025/04/18 02:16:16 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.220 2025/04/18 20:51:31 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.219 2025/04/18 02:16:16 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.220 2025/04/18 20:51:31 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -824,7 +824,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 * resolutions are read-only too.
 	 */
 	if (_rtld_objmain->z_now && _rtld_relro(_rtld_objmain, true) == -1)
-		return -1;
+		_rtld_die();
 #endif
 
 	/*
