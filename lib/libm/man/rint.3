@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rint.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: rint.3,v 1.15 2015/09/13 10:46:41 wiz Exp $
+.\"	$NetBSD: rint.3,v 1.16 2025/04/18 13:56:05 christos Exp $
 .\"
-.Dd September 13, 2015
+.Dd April 18, 2025
 .Dt RINT 3
 .Os
 .Sh NAME
@@ -64,6 +64,10 @@ and
 functions return the integral value nearest to
 .Fa x
 according to the prevailing rounding mode.
+The prevailing rounding mode can be retrieved using
+.Xr fegetround 3 ,
+and set using
+.Xr fesetround 3 .
 These functions raise an inexact exception when the original argument
 is not an exact integer.
 .Pp
@@ -78,7 +82,9 @@ an inexact exception.
 .Xr abs 3 ,
 .Xr ceil 3 ,
 .Xr fabs 3 ,
+.Xr fegetround 3 ,
 .Xr fenv 3 ,
+.Xr fesetround 3 ,
 .Xr floor 3 ,
 .Xr lrint 3 ,
 .Xr math 3 ,
