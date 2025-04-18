@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.118 2023/07/30 09:20:14 riastradh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.119 2025/04/18 02:16:16 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.118 2023/07/30 09:20:14 riastradh Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.119 2025/04/18 02:16:16 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -154,7 +154,22 @@ _rtld_do_copy_relocations(const Obj_Entry *dstobj)
 		}
 	}
 #ifdef GNU_RELRO
-	if (_rtld_relro(dstobj, true) == -1)
+	/*
+	 * If the main program is lazily bound (default -- whether or
+	 * not LD_BINDNOW is set in the calling environment), we are
+	 * now done writing to anything covered by RELRO and we can
+	 * safely make it read-only.  There may still be ifunc
+	 * resolution to do later; it will happen in a read/write
+	 * segment and will not be made read-only.
+	 *
+	 * But if the main program is eagerly bound (i.e., the object
+	 * has DF_1_NOW set in DT_FLAGS_1, whether or not LD_BIND_NOW
+	 * is set in the calling environment), we delay protecting the
+	 * RELRO region as read-only until we have resolved ifuncs --
+	 * at which point we will make the ifunc resolution read-only
+	 * too.
+	 */
+	if (!dstobj->z_now && _rtld_relro(dstobj, true) == -1)
 		return -1;
 #endif
 #endif /* RTLD_INHIBIT_COPY_RELOCS */

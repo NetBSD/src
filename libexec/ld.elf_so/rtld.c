@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.218 2025/01/31 18:44:59 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.219 2025/04/18 02:16:16 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.218 2025/01/31 18:44:59 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.219 2025/04/18 02:16:16 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -805,6 +805,27 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
 
 	_rtld_exclusive_exit(&mask);
+
+#ifdef GNU_RELRO
+	/*
+	 * If the main program is lazily bound (default -- whether or
+	 * not LD_BINDNOW is set in the calling environment), its RELRO
+	 * region has already been mapped read-only in
+	 * _rtld_do_copy_relocations.  The ifunc resolutions lie
+	 * outside this region, so future lazy ifunc resolution is
+	 * unaffected by the RELRO region's being read-only.
+	 *
+	 * If the main program is eagerly bound (i.e., the object has
+	 * DF_1_NOW set in DT_FLAGS_1, whether or not LD_BIND_NOW is
+	 * set in the calling environment), we deferred that from
+	 * _rtld_do_copy_relocations so that the ifunc resolution, we
+	 * have now resolved all ifuncs in it, so we can commit the
+	 * RELRO region to be read-only -- and that means ifunc
+	 * resolutions are read-only too.
+	 */
+	if (_rtld_objmain->z_now && _rtld_relro(_rtld_objmain, true) == -1)
+		return -1;
+#endif
 
 	/*
 	 * Return with the entry point and the exit procedure in at the top
