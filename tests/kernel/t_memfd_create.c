@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memfd_create.c,v 1.6 2025/04/18 22:49:53 christos Exp $	*/
+/*	$NetBSD: t_memfd_create.c,v 1.7 2025/04/19 01:56:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memfd_create.c,v 1.6 2025/04/18 22:49:53 christos Exp $");
+__RCSID("$NetBSD: t_memfd_create.c,v 1.7 2025/04/19 01:56:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,7 +118,7 @@ ATF_TC_BODY(read_write, tc)
 
 	RL(write(fd, write_buf, rwbuf_size));
 	offset = lseek(fd, 0, SEEK_CUR);
-	ATF_REQUIRE_EQ_MSG((size_t)offset, rwbuf_size,
+	ATF_REQUIRE_EQ_MSG(offset, (off_t)rwbuf_size,
 	    "File offset not set after write (%jd != %zu)", (intmax_t)offset,
 	    rwbuf_size);
 
@@ -126,7 +126,7 @@ ATF_TC_BODY(read_write, tc)
 
 	RL(read(fd, read_buf, rwbuf_size));
 	offset = lseek(fd, 0, SEEK_CUR);
-	ATF_REQUIRE_EQ_MSG((size_t)offset, rwbuf_size,
+	ATF_REQUIRE_EQ_MSG(offset, (off_t)rwbuf_size,
 	    "File offset not set after read (%jd != %zu)", (intmax_t)offset,
 	    rwbuf_size);
 
@@ -157,19 +157,19 @@ ATF_TC_BODY(truncate, tc)
 	RL(write(fd, write_buf, rwbuf_size));
 
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG((size_t)st.st_size, rwbuf_size,
+	ATF_REQUIRE_EQ_MSG(st.st_size, (off_t)rwbuf_size,
 	    "Write did not grow size to %zu (is %jd)", rwbuf_size,
 	    (intmax_t)st.st_size);
 
 	RL(ftruncate(fd, rwbuf_size/2));
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG((size_t)st.st_size, rwbuf_size/2,
+	ATF_REQUIRE_EQ_MSG(st.st_size, (off_t)rwbuf_size/2,
 	    "Truncate did not shrink size to %zu (is %jd)",
 	    rwbuf_size/2, (intmax_t)st.st_size);
 
 	RL(ftruncate(fd, rwbuf_size));
 	RL(fstat(fd, &st));
-	ATF_REQUIRE_EQ_MSG((size_t)st.st_size, rwbuf_size,
+	ATF_REQUIRE_EQ_MSG(st.st_size, (off_t)rwbuf_size,
 	    "Truncate did not grow size to %zu (is %jd)", rwbuf_size,
 	    (intmax_t)st.st_size);
 
