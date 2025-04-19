@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.87 2025/04/11 04:54:02 imil Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.88 2025/04/19 07:20:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.87 2025/04/11 04:54:02 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.88 2025/04/19 07:20:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -867,13 +867,13 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 	/*
 	 * `If a value entered for CPUID.EAX is higher than the maximum
 	 *  input value for basic or extended function for that
-	 *  processor then the dtaa for the highest basic information
+	 *  processor then the data for the highest basic information
 	 *  leaf is returned.'
 	 *
 	 * --Intel 64 and IA-32 Architectures Software Developer's
 	 *   Manual, Vol. 2A, Order Number: 325383-077US, April 2022,
 	 *   Sec. 3.2 `Instructions (A-L)', CPUID--CPU Identification,
-	 *   pp. 3-214.
+	 *   p. 3-214.
 	 *
 	 * We take the same to hold for the hypervisor range,
 	 * 0x40000000-0x4fffffff.
