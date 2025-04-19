@@ -1,4 +1,4 @@
-# $NetBSD: t_umountstress.sh,v 1.5 2013/05/31 14:40:48 gson Exp $
+# $NetBSD: t_umountstress.sh,v 1.6 2025/04/19 02:07:43 rin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,10 @@ fileop_head()
 }
 fileop_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	cat >disktab <<EOF
 floppy288|2.88MB 3.5in Extra High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
@@ -126,6 +130,10 @@ mountlist_head()
 }
 mountlist_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	cat >disktab <<EOF
 floppy288|2.88MB 3.5in Extra High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\

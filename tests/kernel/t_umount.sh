@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.7 2024/02/09 22:08:38 andvar Exp $
+# $NetBSD: t_umount.sh,v 1.8 2025/04/19 02:07:43 rin Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,10 @@ umount_head()
 }
 umount_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	cat >disktab <<EOF
 floppy288|2.88MB 3.5in Extra High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\

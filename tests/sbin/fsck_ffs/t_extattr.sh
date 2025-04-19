@@ -1,4 +1,4 @@
-# $NetBSD: t_extattr.sh,v 1.5 2023/09/26 12:15:44 kre Exp $
+# $NetBSD: t_extattr.sh,v 1.6 2025/04/19 02:07:43 rin Exp $
 #
 #  Copyright (c) 2021 The NetBSD Foundation, Inc.
 #  All rights reserved.
@@ -50,6 +50,10 @@ fsck_extattr_enable_head()
 
 fsck_extattr_enable_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	atf_check mkdir -p "${MNT}"
 
 	atf_check -o ignore newfs -O2 -s 4m -F "${IMG}"
@@ -91,6 +95,10 @@ fsck_extattr_enable_corrupted_head()
 
 fsck_extattr_enable_corrupted_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	atf_check mkdir -p "${MNT}"
 
 	# Create an fs with extattrs enabled and set an extattr on the test file.
@@ -155,6 +163,10 @@ fsck_extattr_disable_head()
 
 fsck_extattr_disable_body()
 {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	atf_check mkdir -p "${MNT}"
 
 	# Create an fs with extattrs enabled and set an extattr on the test file.

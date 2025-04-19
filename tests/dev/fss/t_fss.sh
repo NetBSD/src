@@ -1,4 +1,4 @@
-# $NetBSD: t_fss.sh,v 1.6 2023/05/11 01:56:31 gutteridge Exp $
+# $NetBSD: t_fss.sh,v 1.7 2025/04/19 02:07:43 rin Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,9 @@ basic_head() {
 }
 
 basic_body() {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
 
 # verify fss is available (or loadable as a module)
 

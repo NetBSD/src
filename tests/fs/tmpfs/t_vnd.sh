@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.15 2025/03/21 16:39:30 christos Exp $
+# $NetBSD: t_vnd.sh,v 1.16 2025/04/19 02:07:43 rin Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,10 @@ basic_head() {
 	atf_set "require.user" "root"
 }
 basic_body() {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	test_mount
 
 	atf_check -s exit:0 -o ignore -e ignore \
