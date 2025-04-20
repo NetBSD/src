@@ -1,7 +1,7 @@
-/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
 
-/*
- * Copyright (c) 2024 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
-#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#define	_LOCORE
 
-#define MISALIGN_SP				\
-	__asm__ volatile (			\
-		"sub sp, sp, #8"		\
-	)
+#include <machine/asm.h>
 
-#define FIX_SP					\
-	__asm__ volatile (			\
-		"add sp, sp, #8"		\
-	)
+RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $")
 
-#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */
+/*
+ * signalsphandler(signo@x0)
+ *
+ *	Signal handler.  Store the stack pointer on entry at the global
+ *	variable signalsp and return.
+ */
+ENTRY(signalsphandler)
+	mov	x0, sp
+	adrp	x1, :pg_hi21:_C_LABEL(signalsp)
+	str	x0, [x1, #:lo12:_C_LABEL(signalsp)]
+	ret
+END(signalsphandler)

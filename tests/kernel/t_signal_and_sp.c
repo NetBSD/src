@@ -1,4 +1,4 @@
-/* $NetBSD: t_signal_and_sp.c,v 1.1 2024/04/22 07:24:22 pho Exp $ */
+/*	$NetBSD: t_signal_and_sp.c,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,32 +26,259 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.2 2025/04/20 22:31:00 riastradh Exp $");
+
+#include <sys/wait.h>
+
+#include <machine/param.h>
+
 #include <atf-c.h>
+#include <limits.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#if defined(HAVE_STACK_POINTER_H)
-#  include <signal.h>
-#  include <string.h>
-#  include <sys/stdint.h>
-#  include <sys/time.h>
+#include "h_execsp.h"
+#include "h_macros.h"
+
+#ifdef HAVE_STACK_POINTER_H
 #  include "stack_pointer.h"
-
-static volatile void* stack_pointer = NULL;
-static void on_alarm(int sig __attribute__((__unused__)))
-{
-	/*
-	 * Store the stack pointer into a variable so that we can test if
-	 * it's aligned.
-	 */
-	LOAD_SP(stack_pointer);
-
-	/*
-	 * Now we are going to return from a signal
-	 * handler. __sigtramp_siginfo_2 will call setcontext(2) with a
-	 * ucontext provided by the kernel. When that fails it will call
-	 * _Exit(2) with the errno, and the test will fail.
-	 */
-}
 #endif
+
+#ifdef HAVE_SIGNALSPHANDLER
+void signalsphandler(int);	/* signalsphandler.S assembly routine */
+#endif
+
+void *volatile signalsp;
+
+static void
+test_execsp(const struct atf_tc *tc, const char *prog)
+{
+#ifdef STACK_ALIGNBYTES
+	char h_execsp[PATH_MAX];
+	struct execsp execsp;
+	int fd[2];
+	pid_t pid;
+	struct pollfd pollfd;
+	int nfds;
+	ssize_t nread;
+	int status;
+
+	/*
+	 * Determine the full path to the helper program.
+	 */
+	RL(snprintf(h_execsp, sizeof(h_execsp), "%s/%s",
+		atf_tc_get_config_var(tc, "srcdir"), prog));
+
+	/*
+	 * Create a pipe to read a bundle of stack pointer samples from
+	 * the child, and fork the child.
+	 */
+	RL(pipe(fd));
+	RL(pid = vfork());
+	if (pid == 0) {		/* child */
+		char *const argv[] = {h_execsp, NULL};
+
+		if (dup2(fd[1], STDOUT_FILENO) == -1)
+			_exit(1);
+		if (closefrom(STDERR_FILENO + 1) == -1)
+			_exit(2);
+		if (execve(argv[0], argv, NULL) == -1)
+			_exit(3);
+		_exit(4);
+	}
+
+	/*
+	 * Close the writing end so, if something goes wrong in the
+	 * child, we don't hang indefinitely waiting for output.
+	 */
+	RL(close(fd[1]));
+
+	/*
+	 * Wait up to 5sec for the child to return an answer.  Any more
+	 * than that, and we kill it.  The child is mostly hand-written
+	 * assembly routines where lots can go wrong, so don't bother
+	 * waiting if it gets stuck in a loop.
+	 */
+	pollfd.fd = fd[0];
+	pollfd.events = POLLIN;
+	RL(nfds = poll(&pollfd, 1, 5*1000/*ms*/));
+	if (nfds == 0) {
+		fprintf(stderr, "child hung, killing\n");
+		RL(kill(pid, SIGKILL));
+	}
+
+	/*
+	 * Read a bundle of stack pointer samples from the child.
+	 */
+	RL(nread = read(fd[0], &execsp, sizeof(execsp)));
+	ATF_CHECK_MSG((size_t)nread == sizeof(execsp),
+	    "nread=%zu sizeof(execsp)=%zu",
+	    (size_t)nread, sizeof(execsp));
+
+	/*
+	 * Wait for the child to terminate and report failure if it
+	 * didn't exit cleanly.
+	 */
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+	}
+
+	/*
+	 * Now that we have reaped the child, stop here if the stack
+	 * pointer samples are bogus; otherwise verify they are all
+	 * aligned.
+	 */
+	if ((size_t)nread != sizeof(execsp))
+		return;		/* failed already */
+
+	printf("start sp @ %p\n", execsp.startsp);
+	printf("main sp @ %p\n", execsp.mainsp);
+
+	ATF_CHECK_MSG(((uintptr_t)execsp.startsp & STACK_ALIGNBYTES) == 0,
+	    "elf entry point was called with misaligned sp: %p",
+	    execsp.startsp);
+
+	ATF_CHECK_MSG(((uintptr_t)execsp.mainsp & STACK_ALIGNBYTES) == 0,
+	    "main function was called with misaligned sp: %p",
+	    execsp.mainsp);
+
+	/*
+	 * Leave a reminder on architectures for which we haven't
+	 * implemented execsp_start.S.
+	 */
+	if (execsp.startsp == NULL || execsp.mainsp == NULL)
+		atf_tc_skip("Not fully supported on this architecture");
+#else
+	atf_tc_skip("Unknown STACK_ALIGNBYTES on this architecture");
+#endif
+}
+
+ATF_TC(execsp_dynamic);
+ATF_TC_HEAD(execsp_dynamic, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on dynamic program start");
+}
+ATF_TC_BODY(execsp_dynamic, tc)
+{
+	test_execsp(tc, "h_execsp_dynamic");
+}
+
+ATF_TC(execsp_static);
+ATF_TC_HEAD(execsp_static, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on static program start");
+}
+ATF_TC_BODY(execsp_static, tc)
+{
+	test_execsp(tc, "h_execsp_static");
+}
+
+ATF_TC(signalsp);
+ATF_TC_HEAD(signalsp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on entry to signal handler");
+}
+ATF_TC_BODY(signalsp, tc)
+{
+#if defined STACK_ALIGNBYTES && defined HAVE_SIGNALSPHANDLER
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = &signalsphandler;
+	RL(sigaction(SIGUSR1, &sa, NULL));
+	RL(raise(SIGUSR1));
+
+	ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
+	    "signal handler was called with a misaligned sp: %p",
+	    signalsp);
+#else
+	atf_tc_skip("Not implemented on this platform");
+#endif
+}
+
+ATF_TC(signalsp_sigaltstack);
+ATF_TC_HEAD(signalsp_sigaltstack, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on entry to signal handler"
+	    " with maximally misaligned sigaltstack");
+}
+ATF_TC_BODY(signalsp_sigaltstack, tc)
+{
+#if defined STACK_ALIGNBYTES && HAVE_SIGNALSPHANDLER
+	char *stack;
+	struct sigaction sa;
+	struct sigaltstack ss;
+	unsigned i;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = &signalsphandler;
+	sa.sa_flags = SA_ONSTACK;
+	RL(sigaction(SIGUSR1, &sa, NULL));
+
+	/*
+	 * Allocate a signal stack with enough slop to try all possible
+	 * misalignments of the stack pointer.  Print it to stderr so
+	 * it always appears in atf output before shenanigans happen.
+	 */
+	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
+	fprintf(stderr, "stack @ [%p, %p)",
+	    stack, stack + SIGSTKSZ + STACK_ALIGNBYTES);
+
+	/*
+	 * Try with all alignments of high addresses.
+	 */
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		ss.ss_sp = stack;
+		ss.ss_size = SIGSTKSZ + i;
+		ss.ss_flags = 0;
+		RL(sigaltstack(&ss, NULL));
+
+		signalsp = NULL;
+		RL(raise(SIGUSR1));
+		ATF_CHECK(signalsp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] signal handler was called with a misaligned sp: %p",
+		    i, signalsp);
+	}
+
+	/*
+	 * Try with all alignments of low addresses.
+	 */
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		ss.ss_sp = stack + i;
+		ss.ss_size = SIGSTKSZ;
+		ss.ss_flags = 0;
+		RL(sigaltstack(&ss, NULL));
+
+		signalsp = NULL;
+		RL(raise(SIGUSR1));
+		ATF_CHECK(signalsp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] signal handler was called with a misaligned sp: %p",
+		    i, signalsp);
+	}
+#else
+	atf_tc_skip("Not implemented on this platform");
+#endif
+}
 
 ATF_TC(misaligned_sp_and_signal);
 ATF_TC_HEAD(misaligned_sp_and_signal, tc)
@@ -62,14 +289,14 @@ ATF_TC_HEAD(misaligned_sp_and_signal, tc)
 }
 ATF_TC_BODY(misaligned_sp_and_signal, tc)
 {
-#if defined(HAVE_STACK_POINTER_H)
+#if defined STACK_ALIGNBYTES && defined HAVE_STACK_POINTER_H
 	/*
 	 * Set up a handler for SIGALRM.
 	 */
 	struct sigaction sa;
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = &on_alarm;
-	ATF_REQUIRE(sigaction(SIGALRM, &sa, NULL) == 0);
+	sa.sa_handler = &signalsphandler;
+	RL(sigaction(SIGALRM, &sa, NULL));
 
 	/*
 	 * Set up an interval timer so that we receive SIGALRM after 50 ms.
@@ -77,7 +304,7 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 	struct itimerval itv;
 	memset(&itv, 0, sizeof(itv));
 	itv.it_value.tv_usec = 1000 * 50;
-	ATF_REQUIRE(setitimer(ITIMER_MONOTONIC, &itv, NULL) == 0);
+	RL(setitimer(ITIMER_MONOTONIC, &itv, NULL));
 
 	/*
 	 * Now misalign the SP. Wait for the signal to arrive and see what
@@ -85,12 +312,12 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 	 * access memory.
 	 */
 	MISALIGN_SP;
-	while (stack_pointer == NULL) {
+	while (signalsp == NULL) {
 		/*
 		 * Make sure the compiler does not optimize this busy loop
 		 * away.
 		 */
-		__asm__("" : : : "memory");
+		__asm__("" ::: "memory");
 	}
 	/*
 	 * We could successfully return from a signal handler. Now we
@@ -102,9 +329,9 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 	 * But was the stack pointer aligned when we were on the signal
 	 * handler?
 	 */
-	ATF_CHECK_MSG(is_sp_aligned((uintptr_t)stack_pointer),
+	ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 	    "signal handler was called with a misaligned sp: %p",
-	    stack_pointer);
+	    signalsp);
 #else
 	atf_tc_skip("Not implemented for this platform");
 #endif
@@ -112,6 +339,11 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+
+	ATF_TP_ADD_TC(tp, execsp_dynamic);
+	ATF_TP_ADD_TC(tp, execsp_static);
 	ATF_TP_ADD_TC(tp, misaligned_sp_and_signal);
+	ATF_TP_ADD_TC(tp, signalsp);
+	ATF_TP_ADD_TC(tp, signalsp_sigaltstack);
 	return atf_no_error();
 }

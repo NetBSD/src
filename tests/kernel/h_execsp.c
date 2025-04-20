@@ -1,7 +1,7 @@
-/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: h_execsp.c,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
 
-/*
- * Copyright (c) 2024 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
-#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: h_execsp.c,v 1.1 2025/04/20 22:31:00 riastradh Exp $");
 
-#define MISALIGN_SP				\
-	__asm__ volatile (			\
-		"sub sp, sp, #8"		\
-	)
+#include <err.h>
+#include <string.h>
+#include <unistd.h>
 
-#define FIX_SP					\
-	__asm__ volatile (			\
-		"add sp, sp, #8"		\
-	)
+#include "h_execsp.h"
 
-#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */
+/*
+ * The machine-dependent execsp.S assembly routines will initialize
+ * startsp and mainsp and then call execsp_main on program startup.
+ */
+void *startsp;
+void *mainsp;
+
+int execsp_main(void);
+int
+execsp_main(void)
+{
+	struct execsp execsp;
+	ssize_t nwrit;
+
+	memset(&execsp, 0, sizeof(execsp));
+	execsp.startsp = startsp;
+	execsp.mainsp = mainsp;
+
+	nwrit = write(STDOUT_FILENO, &execsp, sizeof(execsp));
+	if (nwrit == -1)
+		err(1, "write");
+	if ((size_t)nwrit != sizeof(execsp))
+		errx(1, "wrote %zu != %zu", (size_t)nwrit, sizeof(execsp));
+
+	return 0;
+}

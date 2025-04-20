@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.87 2025/04/20 21:03:32 riastradh Exp $
+# $NetBSD: Makefile,v 1.88 2025/04/20 22:31:00 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -53,6 +53,8 @@ TESTS_SH+=	t_umount
 BINDIR=		${TESTSDIR}
 PROGS+=		h_cloexec
 PROGS+=		h_execregs
+PROGS+=		h_execsp_dynamic
+PROGS+=		h_execsp_static
 PROGS+=		h_fexecve
 PROGS+=		h_fpufork
 PROGS+=		h_getprocpath
@@ -93,10 +95,31 @@ LDADD.t_timeleft+=	-lpthread
 CPPFLAGS+=	-D_KERNTYPES
 CPPFLAGS.t_unmount.c+=	-D_KMEMUSER -D__EXPOSE_MOUNT
 
-ARCH_INCS_DIR:=	${.PARSEDIR}/arch/${MACHINE_ARCH}
-.if exists(${ARCH_INCS_DIR}/stack_pointer.h)
-CPPFLAGS+=	-I${ARCH_INCS_DIR} -DHAVE_STACK_POINTER_H
+ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
+.PATH:			${ARCHDIR}
+
+.if exists(${ARCHDIR}/stack_pointer.h)
+CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H
 .endif
+
+SRCS.t_signal_and_sp+=		t_signal_and_sp.c
+.if exists(${ARCHDIR}/signalsphandler.S)
+CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_SIGNALSPHANDLER
+SRCS.t_signal_and_sp+=		signalsphandler.S
+.endif
+
+SRCS.h_execsp_dynamic+=		h_execsp.c
+SRCS.h_execsp_static+=		h_execsp.c
+.if exists(${ARCHDIR}/execsp.S)
+CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_EXECSP
+SRCS.h_execsp_dynamic+=		execsp.S
+SRCS.h_execsp_static+=		execsp.S
+LDFLAGS.h_execsp_dynamic+=	-Wl,-e,execsp_start
+LDFLAGS.h_execsp_static+=	-Wl,-e,execsp_start
+.else
+CPPFLAGS.h_execsp.c+=		-Dexecsp_main=main
+.endif
+LDSTATIC.h_execsp_static=	-static
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
@@ -135,8 +158,6 @@ CLEANFILES+=	t_subr_prf.c
 LDADD.h_segv+=	-lm
 
 .if exists(arch/${MACHINE_ARCH}/execregs.h)
-ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
-.PATH:			${ARCHDIR}
 CPPFLAGS.t_execregs.c+=	-I${ARCHDIR}
 CPPFLAGS.t_execregs.c+=	-I${.CURDIR}/../lib/libc/gen # isqemu.h
 CPPFLAGS.t_execregs.c+=	-DHAVE_EXECREGS_TEST

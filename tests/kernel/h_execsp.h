@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: h_execsp.h,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,17 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
-#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#ifndef	TESTS_KERNEL_H_EXECSP_H
+#define	TESTS_KERNEL_H_EXECSP_H
 
-#define MISALIGN_SP				\
-	__asm__ volatile (			\
-		"sub sp, sp, #8"		\
-	)
+/*
+ * struct execsp
+ *
+ *	Structure passed from the h_execsp_* programs to the
+ *	t_signal_and_sp test, giving the stack pointer as it was at the
+ *	ELF entry point and the main function.
+ */
+struct execsp {
+	void	*startsp;
+	void	*mainsp;
+};
 
-#define FIX_SP					\
-	__asm__ volatile (			\
-		"add sp, sp, #8"		\
-	)
-
-#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */
+#endif	/* TESTS_KERNEL_H_EXECSP_H */

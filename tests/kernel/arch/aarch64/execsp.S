@@ -1,7 +1,7 @@
-/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
 
-/*
- * Copyright (c) 2024 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
-#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#define	_LOCORE
 
-#define MISALIGN_SP				\
-	__asm__ volatile (			\
-		"sub sp, sp, #8"		\
-	)
+#include <machine/asm.h>
 
-#define FIX_SP					\
-	__asm__ volatile (			\
-		"add sp, sp, #8"		\
-	)
+RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $")
 
-#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */
+/*
+ * void execsp_start(void (*cleanup@x0)(void), void *obj_main@x1,
+ *     struct ps_strings *ps_strings@x2)
+ *
+ *	ELF entry point.  Saves the stack pointer in startsp and defers
+ *	to the usual csu __start routine.
+ */
+ENTRY(execsp_start)
+	mov	x16, sp
+	adrp	x17, :pg_hi21:_C_LABEL(startsp)
+	str	x16, [x17, #:lo12:_C_LABEL(startsp)]
+	b	_C_LABEL(__start)
+END(execsp_start)
+
+/*
+ * int main(int argc@x0, char **argv@x1, ...)
+ *
+ *	Main function.  Saves the stack pointer in mainsp and defers to
+ *	the C execsp_main in h_execsp.c.
+ */
+ENTRY(main)
+	mov	x16, sp
+	adrp	x17, :pg_hi21:_C_LABEL(mainsp)
+	str	x16, [x17, #:lo12:_C_LABEL(mainsp)]
+	b	_C_LABEL(execsp_main)
+END(main)

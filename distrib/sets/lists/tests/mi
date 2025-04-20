@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1369 2025/04/16 02:16:53 riastradh Exp $
+# $NetBSD: mi,v 1.1370 2025/04/20 22:31:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2271,6 +2271,8 @@
 ./usr/tests/kernel/arch/x86				tests-obsolete		obsolete
 ./usr/tests/kernel/h_cloexec				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_execregs				tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_execsp_dynamic			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_execsp_static			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_fexecve				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_fpufork				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_getprocpath			tests-kernel-tests	compattestfile,atf

@@ -1,7 +1,7 @@
-/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:01 riastradh Exp $	*/
 
-/*
- * Copyright (c) 2024 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
-#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#define	_LOCORE
 
-#define MISALIGN_SP				\
-	__asm__ volatile (			\
-		"sub sp, sp, #8"		\
-	)
+#include <machine/asm.h>
 
-#define FIX_SP					\
-	__asm__ volatile (			\
-		"add sp, sp, #8"		\
-	)
+RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:01 riastradh Exp $")
 
-#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */
+/*
+ * signalsphandler(signo@rdi)
+ *
+ *	Signal handler.  Store the stack pointer on entry at the global
+ *	variable signalsp and return.
+ */
+ENTRY(signalsphandler)
+	/*
+	 * `The end of the input argument area shall be aligned on a
+	 *  [16-byte] boundary.  In other words, the value of (%rsp + 8)
+	 *  is always a multiple of 16 when control is transferred to
+	 *  the function entry point.'
+	 *
+	 * To make it convenient for t_signal_and_sp.c, we subtract 8
+	 * from %rsp in order to get something congruent to zero modulo
+	 * the stack alignemnt.
+	 */
+	movq	%rsp,_C_LABEL(signalsp)(%rip)
+	addq	$-8,_C_LABEL(signalsp)(%rip)
+	ret
+END(signalsphandler)
