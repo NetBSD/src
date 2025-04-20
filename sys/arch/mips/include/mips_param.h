@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.52 2021/10/04 21:02:40 andvar Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.53 2025/04/20 22:32:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,6 +74,12 @@
 #ifndef _KERNEL
 #undef MACHINE
 #define	MACHINE "mips"
+#endif
+
+#if defined(__mips_n64) || defined(__mips_n32)
+#define	STACK_ALIGNBYTES	(16 - 1)
+#else
+#define	STACK_ALIGNBYTES	(8 - 1)
 #endif
 
 #define	ALIGNBYTES32		(sizeof(double) - 1)

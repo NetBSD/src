@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.88 2025/04/20 22:31:00 riastradh Exp $
+# $NetBSD: Makefile,v 1.89 2025/04/20 22:32:25 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -95,7 +95,11 @@ LDADD.t_timeleft+=	-lpthread
 CPPFLAGS+=	-D_KERNTYPES
 CPPFLAGS.t_unmount.c+=	-D_KMEMUSER -D__EXPOSE_MOUNT
 
+.if exists(${.PARSEDIR}/arch/${MACHINE_ARCH})
 ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
+.else
+ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_CPU}
+.endif
 .PATH:			${ARCHDIR}
 
 .if exists(${ARCHDIR}/stack_pointer.h)
@@ -120,6 +124,11 @@ LDFLAGS.h_execsp_static+=	-Wl,-e,execsp_start
 CPPFLAGS.h_execsp.c+=		-Dexecsp_main=main
 .endif
 LDSTATIC.h_execsp_static=	-static
+
+.if ${MACHINE_CPU} == "mips"
+CPPFLAGS.execsp.S+=		-I${NETBSDSRCDIR}/lib/libc/arch/mips
+CPPFLAGS.signalsphandler.S+=	-I${NETBSDSRCDIR}/lib/libc/arch/mips
+.endif
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
