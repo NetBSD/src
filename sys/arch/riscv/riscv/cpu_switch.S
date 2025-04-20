@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.6 2024/05/02 18:18:17 skrll Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.7 2025/04/20 07:47:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -517,6 +517,6 @@ ENTRY_NP(longjmp)
 	REG_L	s10, FB_S10(a0)
 	REG_L	s11, FB_S11(a0)
 	REG_L	sp, FB_SP(a0)
-	mv	a0, a1
+	li	a0, 1
 	ret
 END(longjmp)
