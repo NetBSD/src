@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $")
 
 /*
  * void execsp_start(void (*cleanup@x0)(void), void *obj_main@x1,
@@ -47,14 +47,53 @@ ENTRY(execsp_start)
 END(execsp_start)
 
 /*
+ * void execsp_ctor(void)
+ *
+ *	ELF constructor.  Saves the stack pointer in ctorsp and
+ *	returns.
+ */
+ENTRY(execsp_ctor)
+	mov	x16, sp
+	adrp	x17, :pg_hi21:_C_LABEL(ctorsp)
+	str	x16, [x17, #:lo12:_C_LABEL(ctorsp)]
+	ret
+END(execsp_ctor)
+
+	/* Make execsp_ctor a constructor. */
+	.section .init_array,"aw",%init_array
+	.p2align 3
+	.xword	_C_LABEL(execsp_ctor)
+
+/*
  * int main(int argc@x0, char **argv@x1, ...)
  *
- *	Main function.  Saves the stack pointer in mainsp and defers to
- *	the C execsp_main in h_execsp.c.
+ *	Main function.  Saves the stack pointer in mainsp and returns
+ *	zero.  We will call execsp_main in execsp_dtor once dtorsp has
+ *	been initialized.
  */
 ENTRY(main)
 	mov	x16, sp
 	adrp	x17, :pg_hi21:_C_LABEL(mainsp)
 	str	x16, [x17, #:lo12:_C_LABEL(mainsp)]
-	b	_C_LABEL(execsp_main)
+	mov	x0, #0
+	ret
 END(main)
+
+/*
+ * void execsp_dtor(void)
+ *
+ *	ELF destructor.  Saves the stack pointer in dtorsp and defers
+ *	to the C execsp_main in h_execsp.c to report the stack pointers
+ *	back to the t_signal_and_sp parent.
+ */
+ENTRY(execsp_dtor)
+	mov	x16, sp
+	adrp	x17, :pg_hi21:_C_LABEL(dtorsp)
+	str	x16, [x17, #:lo12:_C_LABEL(dtorsp)]
+	b	_C_LABEL(execsp_main)
+END(execsp_dtor)
+
+	/* Make execsp_ctor a destructor. */
+	.section .fini_array,"aw",%fini_array
+	.p2align 3
+	.xword	_C_LABEL(execsp_dtor)

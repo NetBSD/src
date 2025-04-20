@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execsp.c,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: h_execsp.c,v 1.2 2025/04/20 22:31:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_execsp.c,v 1.1 2025/04/20 22:31:00 riastradh Exp $");
+__RCSID("$NetBSD: h_execsp.c,v 1.2 2025/04/20 22:31:25 riastradh Exp $");
 
 #include <err.h>
 #include <string.h>
@@ -37,10 +37,13 @@ __RCSID("$NetBSD: h_execsp.c,v 1.1 2025/04/20 22:31:00 riastradh Exp $");
 
 /*
  * The machine-dependent execsp.S assembly routines will initialize
- * startsp and mainsp and then call execsp_main on program startup.
+ * startsp, ctorsp, mainsp, and dtorsp, and then call execsp_main on
+ * program startup.
  */
 void *startsp;
+void *ctorsp;
 void *mainsp;
+void *dtorsp;
 
 int execsp_main(void);
 int
@@ -51,7 +54,9 @@ execsp_main(void)
 
 	memset(&execsp, 0, sizeof(execsp));
 	execsp.startsp = startsp;
+	execsp.ctorsp = ctorsp;
 	execsp.mainsp = mainsp;
+	execsp.dtorsp = dtorsp;
 
 	nwrit = write(STDOUT_FILENO, &execsp, sizeof(execsp));
 	if (nwrit == -1)

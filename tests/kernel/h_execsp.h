@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execsp.h,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: h_execsp.h,v 1.2 2025/04/20 22:31:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,11 +34,14 @@
  *
  *	Structure passed from the h_execsp_* programs to the
  *	t_signal_and_sp test, giving the stack pointer as it was at the
- *	ELF entry point and the main function.
+ *	ELF entry point, an ELF constructor, the main function, and an
+ *	ELF destructor.
  */
 struct execsp {
 	void	*startsp;
+	void	*ctorsp;
 	void	*mainsp;
+	void	*dtorsp;
 };
 
 #endif	/* TESTS_KERNEL_H_EXECSP_H */

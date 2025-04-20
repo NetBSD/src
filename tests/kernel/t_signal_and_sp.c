@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.2 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.3 2025/04/20 22:31:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.2 2025/04/20 22:31:00 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.3 2025/04/20 22:31:25 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -146,21 +146,34 @@ test_execsp(const struct atf_tc *tc, const char *prog)
 		return;		/* failed already */
 
 	printf("start sp @ %p\n", execsp.startsp);
+	printf("ctor sp @ %p\n", execsp.ctorsp);
 	printf("main sp @ %p\n", execsp.mainsp);
+	printf("dtor sp @ %p\n", execsp.dtorsp);
 
 	ATF_CHECK_MSG(((uintptr_t)execsp.startsp & STACK_ALIGNBYTES) == 0,
 	    "elf entry point was called with misaligned sp: %p",
 	    execsp.startsp);
 
+	ATF_CHECK_MSG(((uintptr_t)execsp.ctorsp & STACK_ALIGNBYTES) == 0,
+	    "elf constructor was called with misaligned sp: %p",
+	    execsp.ctorsp);
+
 	ATF_CHECK_MSG(((uintptr_t)execsp.mainsp & STACK_ALIGNBYTES) == 0,
 	    "main function was called with misaligned sp: %p",
 	    execsp.mainsp);
+
+	ATF_CHECK_MSG(((uintptr_t)execsp.dtorsp & STACK_ALIGNBYTES) == 0,
+	    "elf destructor was called with misaligned sp: %p",
+	    execsp.dtorsp);
 
 	/*
 	 * Leave a reminder on architectures for which we haven't
 	 * implemented execsp_start.S.
 	 */
-	if (execsp.startsp == NULL || execsp.mainsp == NULL)
+	if (execsp.startsp == NULL ||
+	    execsp.ctorsp == NULL ||
+	    execsp.mainsp == NULL ||
+	    execsp.dtorsp == NULL)
 		atf_tc_skip("Not fully supported on this architecture");
 #else
 	atf_tc_skip("Unknown STACK_ALIGNBYTES on this architecture");

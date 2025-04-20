@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:01 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:01 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $")
 
 /*
  * void execsp_start(void (*cleanup@rbx)(void), void *obj_main@rcx,
@@ -52,12 +52,12 @@ ENTRY(execsp_start)
 END(execsp_start)
 
 /*
- * int main(int argc@rdi, char **argv@rsi, ...)
+ * void execsp_ctor(void)
  *
- *	Main function.  Saves the stack pointer in mainsp and defers to
- *	the C execsp_main in h_execsp.c.
+ *	ELF constructor.  Saves the stack pointer in ctorsp and
+ *	returns.
  */
-ENTRY(main)
+ENTRY(execsp_ctor)
 	/*
 	 * `The end of the input argument area shall be aligned on a
 	 *  [16-byte] boundary.  In other words, the value of (%rsp + 8)
@@ -68,7 +68,44 @@ ENTRY(main)
 	 * from %rsp in order to get something congruent to zero modulo
 	 * the stack alignemnt.
 	 */
+	movq	%rsp,_C_LABEL(ctorsp)(%rip)
+	addq	$-8,_C_LABEL(ctorsp)(%rip)
+	ret
+END(execsp_ctor)
+
+	/* Make execsp_ctor a constructor. */
+	.section .ctors,"aw",@progbits
+	.p2align 3
+	.quad	_C_LABEL(execsp_ctor)
+
+/*
+ * int main(int argc@rdi, char **argv@rsi, ...)
+ *
+ *	Main function.  Saves the stack pointer in mainsp and returns
+ *	zero.  We will call execsp_main in execsp_dtor once dtorsp has
+ *	been initialized.
+ */
+ENTRY(main)
 	movq	%rsp,_C_LABEL(mainsp)(%rip)
 	addq	$-8,_C_LABEL(mainsp)(%rip)
-	jmp	_C_LABEL(execsp_main)
+	xorl	%eax,%eax
+	ret
 END(main)
+
+/*
+ * void execsp_dtor(void)
+ *
+ *	ELF destructor.  Saves the stack pointer in dtorsp and defers
+ *	to the C execsp_main in h_execsp.c to report the stack pointers
+ *	back to the t_signal_and_sp parent.
+ */
+ENTRY(execsp_dtor)
+	movq	%rsp,_C_LABEL(dtorsp)(%rip)
+	addq	$-8,_C_LABEL(dtorsp)(%rip)
+	jmp	_C_LABEL(execsp_main)
+END(execsp_dtor)
+
+	/* Make execsp_ctor a destructor. */
+	.section .dtors,"aw",@progbits
+	.p2align 3
+	.quad	_C_LABEL(execsp_dtor)
