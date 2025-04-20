@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.97 2025/04/20 09:44:40 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.98 2025/04/20 15:55:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.97 2025/04/20 09:44:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.98 2025/04/20 15:55:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,10 +712,9 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))),
 	    DEBUG_PROBE);
 
-	if (no_ideconf)
+	ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
+	if (ideconf == 0 && no_ideconf)
 		ideconf = APO_IDECONF_ALWAYS_EN;
-	else
-		ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
