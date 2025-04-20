@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.98 2025/04/20 15:55:16 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.99 2025/04/20 17:19:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.98 2025/04/20 15:55:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.99 2025/04/20 17:19:15 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,7 +941,8 @@ pio:		/* setup PIO mode */
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc), datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_UDMA(sc), udmatim_reg);
-	ATADEBUG_PRINT(("via_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	ATADEBUG_PRINT(("%s: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	    __func__,
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc)),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))), DEBUG_PROBE);
 }
