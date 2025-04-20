@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.75 2023/06/02 08:51:46 andvar Exp $ */
+/*	$NetBSD: param.h,v 1.76 2025/04/20 22:33:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@
 
 #define SUN4_PGSHIFT	13	/* for a sun4 machine */
 #define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
+
+#define	STACK_ALIGNBYTES	(8 - 1)
 
 /*
  * The following variables are always defined and initialized (in locore)
