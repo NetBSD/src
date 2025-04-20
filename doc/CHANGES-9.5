@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.53 2025/04/13 15:22:05 bouyer Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.54 2025/04/20 09:07:54 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -778,3 +778,10 @@ doc/3RDPARTY					(apply patch)
 
 	Updated tzdata to 2025b (using 2025btgz)
 	[kre, ticket #1940]
+
+external/ibm-public/postfix/sbin/postconf/Makefile 1.10
+
+	build: PR 59302: fix build on source paths that include
+	"tls" or "global".
+	[tls, ticket #1941]
+
