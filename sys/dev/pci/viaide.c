@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.96 2025/04/05 20:51:49 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.97 2025/04/20 09:44:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.96 2025/04/05 20:51:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.97 2025/04/20 09:44:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,10 +349,24 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  "VIA Technologies VT8237A (5337) SATA Controller",
 	  via_sata_chip_map_7,
 	},
-	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
+	/*
+	 * The 0x3349 PCI ID may be reused in all modes (IDE, RAID, AHCI).
+	 * ahcisata(4) will attach if AHCI mode is selected in the BIOS.
+	 * Newer CE revision southbridges use it only in RAID mode.
+	 */
+	{ PCI_PRODUCT_VIATECH_VT8251_SATA,
 	  0,
-	  "VIA Technologies VT8237R SATA Controller",
-	  via_sata_chip_map_7,
+	  "VIA Technologies VT8251 SATA Controller",
+	  via_chip_map,
+	},
+	/*
+	 * The 0x5287 PCI ID is used only in IDE mode for newer
+	 * VT8251 southbridge (CE) revisions.
+	 */
+	{ PCI_PRODUCT_VIATECH_VT8251_SATA_2,
+	  0,
+	  "VIA Technologies VT8251 (5287) SATA Controller",
+	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
 	  0,
@@ -501,12 +515,18 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			no_ideconf = 1;
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_CX700_IDE:
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
+		case PCI_PRODUCT_VIATECH_VT8251_SATA:
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT8251_SATA_2:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VT8261_SATA:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_IDE:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_RAID:
+			sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
@@ -662,7 +682,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	}
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
-	sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
+	if (sc->sc_wdcdev.sc_atac.atac_set_modes == NULL)
+		sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	if (single_channel)
 		sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
