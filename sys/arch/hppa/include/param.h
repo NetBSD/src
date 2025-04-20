@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2022/03/22 18:32:51 macallan Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2025/04/20 22:32:49 riastradh Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -78,6 +78,8 @@
 #define	MCLSHIFT	11
 #define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
+
+#define	STACK_ALIGNBYTES	(64 - 1)
 
 /*
  * Size of kernel malloc arena in logical pages
