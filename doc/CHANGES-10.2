@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.17 2025/04/14 10:02:12 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.18 2025/04/20 09:06:24 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -502,4 +502,10 @@ usr.bin/what/what.c				1.16 (via patch)
 
 	build: add ctfdump(1) and what(1) to tools.
 	[rin, ticket #1096]
+
+external/ibm-public/postfix/sbin/postconf/Makefile 1.10
+
+	build: PR 59302: fix build on source paths that include
+	"tls" or "global".
+	[tls, ticket #1097]
 
