@@ -1,4 +1,4 @@
-/*	$NetBSD: timespec_get.c,v 1.2 2016/10/04 12:48:15 christos Exp $	*/
+/*	$NetBSD: timespec_get.c,v 1.3 2025/04/21 08:57:32 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: timespec_get.c,v 1.2 2016/10/04 12:48:15 christos Exp $");
+__RCSID("$NetBSD: timespec_get.c,v 1.3 2025/04/21 08:57:32 nia Exp $");
 #endif /* !defined lint */
 
 #include <assert.h>
@@ -48,6 +48,10 @@ timespec_get(struct timespec *ts, int base)
 	switch (base) {
 	case TIME_UTC:
 		if (clock_gettime(CLOCK_REALTIME, ts) == -1)
+			return 0;
+		break;
+	case TIME_MONOTONIC:
+		if (clock_gettime(CLOCK_MONOTONIC, ts) == -1)
 			return 0;
 		break;
 	default:
