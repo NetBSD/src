@@ -1,4 +1,4 @@
-/*	$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: threadspfunc.S,v 1.2 2025/04/21 03:47:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
+RCSID("$NetBSD: threadspfunc.S,v 1.2 2025/04/21 03:47:32 riastradh Exp $")
 
 	.text
+	.set noreorder
 
 /*
  * void *threadspfunc(void *cookie@a0)
@@ -41,5 +42,5 @@ RCSID("$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
  */
 LEAF(threadspfunc)
 	j	ra
-	 move	a0, sp
+	 move	v0, sp
 END(threadspfunc)

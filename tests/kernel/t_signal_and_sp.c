@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.7 2025/04/21 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.8 2025/04/21 03:47:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.7 2025/04/21 02:33:44 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.8 2025/04/21 03:47:32 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -387,11 +387,6 @@ ATF_TC_BODY(threadsp, tc)
 
 	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
 	fprintf(stderr, "stack @ [%p,%p)\n", stack, stack + STACK_ALIGNBYTES);
-
-#ifdef __mips__
-	atf_tc_expect_fail("PR kern/59327:"
-	    " user stack pointer is not aligned properly");
-#endif
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
 		pthread_t t;
