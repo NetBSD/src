@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.18 2024/10/21 11:28:25 rin Exp $
+#	$NetBSD: files.uba,v 1.19 2025/04/21 21:47:22 mrg Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -38,7 +38,7 @@ attach	qt at uba
 file	dev/qbus/if_qt.c			qt
 
 # DEQNA/DELQA Ethernet controller
-device	qe: ifnet, ether, arp
+device	qe: ifnet, ether, arp, ifuba
 attach	qe at uba
 file	dev/qbus/if_qe.c			qe
 
