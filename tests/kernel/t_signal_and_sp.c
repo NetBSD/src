@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.6 2025/04/20 22:33:13 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.7 2025/04/21 02:33:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.6 2025/04/20 22:33:13 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.7 2025/04/21 02:33:44 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -36,11 +36,13 @@ __RCSID("$NetBSD: t_signal_and_sp.c,v 1.6 2025/04/20 22:33:13 riastradh Exp $");
 #include <atf-c.h>
 #include <limits.h>
 #include <poll.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <ucontext.h>
 #include <unistd.h>
 
 #include "h_execsp.h"
@@ -202,6 +204,75 @@ ATF_TC_BODY(execsp_static, tc)
 	test_execsp(tc, "h_execsp_static");
 }
 
+#if defined STACK_ALIGNBYTES && defined HAVE_CONTEXTSPFUNC
+void *volatile contextsp;	/* set by contextspfunc.S */
+static ucontext_t test_context, return_context;
+static volatile bool test_context_done;
+
+void contextspfunc(void);	/* contextspfunc.S assembly routine */
+
+void contextdone(void);		/* called by contextspfunc.S */
+void
+contextdone(void)
+{
+
+	fprintf(stderr, "contextdone\n");
+	ATF_REQUIRE(!test_context_done);
+	test_context_done = true;
+	RL(setcontext(&return_context));
+	atf_tc_fail("setcontext returned");
+}
+#endif
+
+ATF_TC(contextsp);
+ATF_TC_HEAD(contextsp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on makecontext entry");
+}
+ATF_TC_BODY(contextsp, tc)
+{
+#if defined STACK_ALIGNBYTES && defined HAVE_CONTEXTSPFUNC
+	char *stack;
+	unsigned i;
+
+	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
+	fprintf(stderr, "stack @ [%p,%p)\n", stack, stack + STACK_ALIGNBYTES);
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		contextsp = NULL;
+		test_context_done = false;
+		RL(getcontext(&test_context));
+		test_context.uc_stack.ss_sp = stack;
+		test_context.uc_stack.ss_size = SIGSTKSZ + i;
+		makecontext(&test_context, &contextspfunc, 0);
+		fprintf(stderr, "[%u] swapcontext\n", i);
+		RL(swapcontext(&return_context, &test_context));
+		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] makecontext function called with misaligned sp %p",
+		    i, contextsp);
+	}
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		contextsp = NULL;
+		test_context_done = false;
+		RL(getcontext(&test_context));
+		test_context.uc_stack.ss_sp = stack + i;
+		test_context.uc_stack.ss_size = SIGSTKSZ;
+		makecontext(&test_context, &contextspfunc, 0);
+		fprintf(stderr, "[%u] swapcontext\n", i);
+		RL(swapcontext(&return_context, &test_context));
+		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] makecontext function called with misaligned sp %p",
+		    i, contextsp);
+	}
+#else
+	atf_tc_skip("Not implemented on this platform");
+#endif
+}
+
 ATF_TC(signalsp);
 ATF_TC_HEAD(signalsp, tc)
 {
@@ -252,7 +323,7 @@ ATF_TC_BODY(signalsp_sigaltstack, tc)
 	 * it always appears in atf output before shenanigans happen.
 	 */
 	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
-	fprintf(stderr, "stack @ [%p, %p)",
+	fprintf(stderr, "stack @ [%p, %p)\n",
 	    stack, stack + SIGSTKSZ + STACK_ALIGNBYTES);
 
 #if defined __alpha__ || defined __i386__ || defined __mips__
@@ -292,6 +363,72 @@ ATF_TC_BODY(signalsp_sigaltstack, tc)
 		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] signal handler was called with a misaligned sp: %p",
 		    i, signalsp);
+	}
+#else
+	atf_tc_skip("Not implemented on this platform");
+#endif
+}
+
+#if defined STACK_ALIGNBYTES && defined HAVE_THREADSPFUNC
+void *threadspfunc(void *);	/* threadspfunc.S assembly routine */
+#endif
+
+ATF_TC(threadsp);
+ATF_TC_HEAD(threadsp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on thread start");
+}
+ATF_TC_BODY(threadsp, tc)
+{
+#if defined STACK_ALIGNBYTES && defined HAVE_THREADSPFUNC
+	char *stack;
+	unsigned i;
+
+	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
+	fprintf(stderr, "stack @ [%p,%p)\n", stack, stack + STACK_ALIGNBYTES);
+
+#ifdef __mips__
+	atf_tc_expect_fail("PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		pthread_t t;
+		pthread_attr_t attr;
+		void *sp;
+
+		RZ(pthread_attr_init(&attr));
+		RZ(pthread_attr_setstack(&attr, stack, SIGSTKSZ + i));
+		RZ(pthread_create(&t, &attr, &threadspfunc, NULL));
+		RZ(pthread_attr_destroy(&attr));
+
+		alarm(1);
+		RZ(pthread_join(t, &sp));
+		alarm(0);
+
+		ATF_CHECK(sp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] thread called with misaligned sp: %p", i, signalsp);
+	}
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		pthread_t t;
+		pthread_attr_t attr;
+		void *sp;
+
+		RZ(pthread_attr_init(&attr));
+		RZ(pthread_attr_setstack(&attr, stack + i, SIGSTKSZ));
+		RZ(pthread_create(&t, &attr, &threadspfunc, NULL));
+		RZ(pthread_attr_destroy(&attr));
+
+		alarm(1);
+		RZ(pthread_join(t, &sp));
+		alarm(0);
+
+		ATF_CHECK(sp != NULL);
+		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] thread called with misaligned sp: %p", i, signalsp);
 	}
 #else
 	atf_tc_skip("Not implemented on this platform");
@@ -364,10 +501,12 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, contextsp);
 	ATF_TP_ADD_TC(tp, execsp_dynamic);
 	ATF_TP_ADD_TC(tp, execsp_static);
 	ATF_TP_ADD_TC(tp, misaligned_sp_and_signal);
 	ATF_TP_ADD_TC(tp, signalsp);
 	ATF_TP_ADD_TC(tp, signalsp_sigaltstack);
+	ATF_TP_ADD_TC(tp, threadsp);
 	return atf_no_error();
 }
