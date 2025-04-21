@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.89 2025/04/13 22:00:43 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.89 2025/04/13 22:00:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1259,6 +1259,8 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	 *
 	 * We take the same to hold for the hypervisor range,
 	 * 0x40000000-0x4fffffff.
+	 *
+	 * (Sync with nvmm_x86_svm.c.)
 	 */
 	if (eax < 0x40000000) {		/* basic CPUID range */
 		if (__predict_false(eax > vmx_cpuid_max_basic)) {

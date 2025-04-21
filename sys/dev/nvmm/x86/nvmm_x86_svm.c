@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.88 2025/04/19 07:20:47 andvar Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.88 2025/04/19 07:20:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,6 +877,8 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 	 *
 	 * We take the same to hold for the hypervisor range,
 	 * 0x40000000-0x4fffffff.
+	 *
+	 * (Sync with nvmm_x86_vmx.c.)
 	 */
 	if (eax < 0x40000000) {		/* basic CPUID range */
 		if (__predict_false(eax > svm_cpuid_max_basic)) {
