@@ -1,4 +1,4 @@
-/*	$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:45 riastradh Exp $	*/
+/*	$NetBSD: threadspfunc.S,v 1.2 2025/04/21 12:06:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:45 riastradh Exp $")
+RCSID("$NetBSD: threadspfunc.S,v 1.2 2025/04/21 12:06:08 riastradh Exp $")
 
 /*
  * void *threadspfunc(void *cookie@rdi)
@@ -38,6 +38,17 @@ RCSID("$NetBSD: threadspfunc.S,v 1.1 2025/04/21 02:33:45 riastradh Exp $")
  *	pthread_create(3) function.  Return the stack pointer on entry.
  */
 ENTRY(threadspfunc)
-	mov	%rsp,%rax
+	/*
+	 * `The end of the input argument area shall be aligned on a
+	 *  [16-byte] boundary.  In other words, the value of (%rsp + 8)
+	 *  is always a multiple of 16 when control is transferred to
+	 *  the function entry point.'
+	 *
+	 * To make it convenient for t_signal_and_sp.c, we subtract 8
+	 * from %rsp in order to get something congruent to zero modulo
+	 * the stack alignemnt.
+	 */
+	movq	%rsp,%rax
+	addq	$-8,%rax
 	ret
 END(threadspfunc)

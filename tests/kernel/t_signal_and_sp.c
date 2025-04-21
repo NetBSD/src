@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.9 2025/04/21 03:48:07 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.10 2025/04/21 12:06:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.9 2025/04/21 03:48:07 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.10 2025/04/21 12:06:08 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_signal_and_sp.c,v 1.9 2025/04/21 03:48:07 riastradh Exp $");
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <ucontext.h>
@@ -245,15 +246,6 @@ ATF_TC_BODY(contextsp, tc)
 	char *stack;
 	unsigned i;
 
-#ifdef __hppa__
-	/*
-	 * Not sure what the deal is but I probably wrote contextspfunc
-	 * wrong.
-	 */
-	atf_tc_expect_signal(SIGILL, "PR kern/59327:"
-	    " user stack pointer is not aligned properly");
-#endif
-
 	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
 	fprintf(stderr, "stack @ [%p,%p)\n", stack,
 	    stack + SIGSTKSZ + STACK_ALIGNBYTES);
@@ -323,14 +315,6 @@ ATF_TC_BODY(contextsplink, tc)
 	fprintf(stderr, "stack2 @ [%p,%p)\n",
 	    stack2, stack2 + SIGSTKSZ + STACK_ALIGNBYTES);
 
-#ifdef __hppa__
-	/*
-	 * Not sure what the deal is but I probably wrote contextspfunc
-	 * wrong.
-	 */
-	atf_tc_expect_signal(SIGILL, "PR kern/59327:"
-	    " user stack pointer is not aligned properly");
-#endif
 #ifdef __mips_n64
 	atf_tc_expect_fail("PR kern/59327:"
 	    " user stack pointer is not aligned properly");
@@ -517,15 +501,12 @@ ATF_TC_BODY(threadsp, tc)
 	    stack + SIGSTKSZ + STACK_ALIGNBYTES);
 
 #ifdef __hppa__
-	/*
-	 * Not sure what the deal is but I probably wrote threadspfunc
-	 * wrong.
-	 */
 	atf_tc_expect_signal(SIGBUS, "PR kern/59327:"
 	    " user stack pointer is not aligned properly");
 #endif
-#ifdef __riscv__
-	atf_tc_expect_fail("sp inexplicably lies outside stack range");
+#ifdef __mips__
+	atf_tc_expect_fail("PR kern/59327:"
+	    " user stack pointer is not aligned properly");
 #endif
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
@@ -546,8 +527,8 @@ ATF_TC_BODY(threadsp, tc)
 		ATF_CHECK_MSG((uintptr_t)stack <= (uintptr_t)sp &&
 		    (uintptr_t)sp <= (uintptr_t)stack + SIGSTKSZ + i,
 		    "sp=%p", sp);
-		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
-		    "[%u] thread called with misaligned sp: %p", i, signalsp);
+		ATF_CHECK_MSG(((uintptr_t)sp & STACK_ALIGNBYTES) == 0,
+		    "[%u] thread called with misaligned sp: %p", i, sp);
 	}
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
@@ -568,8 +549,8 @@ ATF_TC_BODY(threadsp, tc)
 		ATF_CHECK_MSG((uintptr_t)stack + i <= (uintptr_t)sp &&
 		    (uintptr_t)sp <= (uintptr_t)stack + i + SIGSTKSZ,
 		    "sp=%p", sp);
-		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
-		    "[%u] thread called with misaligned sp: %p", i, signalsp);
+		ATF_CHECK_MSG(((uintptr_t)sp & STACK_ALIGNBYTES) == 0,
+		    "[%u] thread called with misaligned sp: %p", i, sp);
 	}
 #else
 	atf_tc_skip("Not implemented on this platform");

@@ -1,4 +1,4 @@
-/*	$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: contextspfunc.S,v 1.2 2025/04/21 12:06:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
+RCSID("$NetBSD: contextspfunc.S,v 1.2 2025/04/21 12:06:08 riastradh Exp $")
 
 /*
  * contextspfunc()
@@ -39,10 +39,10 @@ RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
  *	the global variable contextsp and call contextdone.
  */
 LEAF_ENTRY(contextspfunc)
-	addil	LT%_C_LABEL(contextdone), %r19	/* r1 := contextdone */
-	ldw	RT%_C_LABEL(contextdone)(%r1), %r1
-	addil	LT%_C_LABEL(contextsp), %r19	/* r20 := &contextsp */
-	ldw	RT%_C_LABEL(contextsp)(%r1), %r20
-	bv	%r0(%r1)			/* jump to contextdone */
-	 stw	%sp, 0(%r20)			/* contextsp := sp */
+	addil	LT%_C_LABEL(contextdone), %r19	/* r20 := contextdone */
+	ldw	RT%_C_LABEL(contextdone)(%r1), %r20
+	addil	LT%_C_LABEL(contextsp), %r19	/* r21 := &contextsp */
+	ldw	RT%_C_LABEL(contextsp)(%r1), %r21
+	bv	%r0(%r20)			/* jump to contextdone */
+	 stw	%sp, 0(%r21)			/* contextsp := sp */
 EXIT(contextspfunc)
