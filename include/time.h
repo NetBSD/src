@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.53 2024/09/16 21:48:14 kre Exp $	*/
+/*	$NetBSD: time.h,v 1.54 2025/04/21 06:38:10 nia Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -199,14 +199,19 @@ size_t strftime_l(char * __restrict, size_t, const char * __restrict,
     __attribute__((__format__(__strftime__, 3, 0)));
 #endif
 
-#if defined(_NETBSD_SOURCE)
+#if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
+time_t timegm(struct tm *) __RENAME(__timegm50);
+#endif
+#endif
 
+#if defined(_NETBSD_SOURCE)
 typedef struct __state *timezone_t;
 
 #ifndef __LIBC12_SOURCE__
 time_t time2posix(time_t) __RENAME(__time2posix50);
 time_t posix2time(time_t) __RENAME(__posix2time50);
-time_t timegm(struct tm *) __RENAME(__timegm50);
 time_t timeoff(struct tm *, long) __RENAME(__timeoff50);
 time_t timelocal(struct tm *) __RENAME(__timelocal50);
 struct tm *offtime(const time_t *, long) __RENAME(__offtime50);
