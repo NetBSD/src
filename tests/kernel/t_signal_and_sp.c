@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.8 2025/04/21 03:47:32 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.9 2025/04/21 03:48:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.8 2025/04/21 03:47:32 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.9 2025/04/21 03:48:07 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -206,10 +206,18 @@ ATF_TC_BODY(execsp_static, tc)
 
 #if defined STACK_ALIGNBYTES && defined HAVE_CONTEXTSPFUNC
 void *volatile contextsp;	/* set by contextspfunc.S */
-static ucontext_t test_context, return_context;
+static ucontext_t return_context;
 static volatile bool test_context_done;
 
 void contextspfunc(void);	/* contextspfunc.S assembly routine */
+
+static void
+contextnoop(void)
+{
+
+	fprintf(stderr, "contextnoop\n");
+	/* control will return to contextspfunc via uc_link */
+}
 
 void contextdone(void);		/* called by contextspfunc.S */
 void
@@ -233,22 +241,39 @@ ATF_TC_HEAD(contextsp, tc)
 ATF_TC_BODY(contextsp, tc)
 {
 #if defined STACK_ALIGNBYTES && defined HAVE_CONTEXTSPFUNC
+	ucontext_t uc;
 	char *stack;
 	unsigned i;
 
+#ifdef __hppa__
+	/*
+	 * Not sure what the deal is but I probably wrote contextspfunc
+	 * wrong.
+	 */
+	atf_tc_expect_signal(SIGILL, "PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
+
 	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
-	fprintf(stderr, "stack @ [%p,%p)\n", stack, stack + STACK_ALIGNBYTES);
+	fprintf(stderr, "stack @ [%p,%p)\n", stack,
+	    stack + SIGSTKSZ + STACK_ALIGNBYTES);
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
 		contextsp = NULL;
 		test_context_done = false;
-		RL(getcontext(&test_context));
-		test_context.uc_stack.ss_sp = stack;
-		test_context.uc_stack.ss_size = SIGSTKSZ + i;
-		makecontext(&test_context, &contextspfunc, 0);
+
+		RL(getcontext(&uc));
+		uc.uc_stack.ss_sp = stack;
+		uc.uc_stack.ss_size = SIGSTKSZ + i;
+		makecontext(&uc, &contextspfunc, 0);
+
 		fprintf(stderr, "[%u] swapcontext\n", i);
-		RL(swapcontext(&return_context, &test_context));
+		RL(swapcontext(&return_context, &uc));
+
 		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack <= (uintptr_t)contextsp &&
+		    (uintptr_t)contextsp <= (uintptr_t)stack + SIGSTKSZ + i,
+		    "contextsp=%p", contextsp);
 		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] makecontext function called with misaligned sp %p",
 		    i, contextsp);
@@ -257,13 +282,109 @@ ATF_TC_BODY(contextsp, tc)
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
 		contextsp = NULL;
 		test_context_done = false;
-		RL(getcontext(&test_context));
-		test_context.uc_stack.ss_sp = stack + i;
-		test_context.uc_stack.ss_size = SIGSTKSZ;
-		makecontext(&test_context, &contextspfunc, 0);
+
+		RL(getcontext(&uc));
+		uc.uc_stack.ss_sp = stack + i;
+		uc.uc_stack.ss_size = SIGSTKSZ;
+		makecontext(&uc, &contextspfunc, 0);
+
 		fprintf(stderr, "[%u] swapcontext\n", i);
-		RL(swapcontext(&return_context, &test_context));
+		RL(swapcontext(&return_context, &uc));
+
 		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack + i <= (uintptr_t)contextsp &&
+		    (uintptr_t)contextsp <= (uintptr_t)stack + i + SIGSTKSZ,
+		    "contextsp=%p", contextsp);
+		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] makecontext function called with misaligned sp %p",
+		    i, contextsp);
+	}
+#else
+	atf_tc_skip("Not implemented on this platform");
+#endif
+}
+
+ATF_TC(contextsplink);
+ATF_TC_HEAD(contextsplink, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify stack pointer is aligned on makecontext link entry");
+}
+ATF_TC_BODY(contextsplink, tc)
+{
+#if defined STACK_ALIGNBYTES && defined HAVE_CONTEXTSPFUNC
+	ucontext_t uc1, uc2;
+	char *stack1, *stack2;
+	unsigned i;
+
+	REQUIRE_LIBC(stack1 = malloc(SIGSTKSZ), NULL);
+	fprintf(stderr, "stack1 @ [%p,%p)\n", stack1, stack1 + SIGSTKSZ);
+	REQUIRE_LIBC(stack2 = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
+	fprintf(stderr, "stack2 @ [%p,%p)\n",
+	    stack2, stack2 + SIGSTKSZ + STACK_ALIGNBYTES);
+
+#ifdef __hppa__
+	/*
+	 * Not sure what the deal is but I probably wrote contextspfunc
+	 * wrong.
+	 */
+	atf_tc_expect_signal(SIGILL, "PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
+#ifdef __mips_n64
+	atf_tc_expect_fail("PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		contextsp = NULL;
+		test_context_done = false;
+
+		RL(getcontext(&uc1));
+		uc1.uc_stack.ss_sp = stack1;
+		uc1.uc_stack.ss_size = SIGSTKSZ;
+		uc1.uc_link = &uc2;
+		makecontext(&uc1, &contextnoop, 0);
+
+		RL(getcontext(&uc2));
+		uc2.uc_stack.ss_sp = stack2;
+		uc2.uc_stack.ss_size = SIGSTKSZ + i;
+		makecontext(&uc2, &contextspfunc, 0);
+
+		fprintf(stderr, "[%u] swapcontext\n", i);
+		RL(swapcontext(&return_context, &uc1));
+
+		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack2 <= (uintptr_t)contextsp &&
+		    (uintptr_t)contextsp <= (uintptr_t)stack2 + SIGSTKSZ + i,
+		    "contextsp=%p", contextsp);
+		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
+		    "[%u] makecontext function called with misaligned sp %p",
+		    i, contextsp);
+	}
+
+	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
+		contextsp = NULL;
+		test_context_done = false;
+
+		RL(getcontext(&uc1));
+		uc1.uc_stack.ss_sp = stack1;
+		uc1.uc_stack.ss_size = SIGSTKSZ;
+		uc1.uc_link = &uc2;
+		makecontext(&uc1, &contextnoop, 0);
+
+		RL(getcontext(&uc2));
+		uc2.uc_stack.ss_sp = stack2 + i;
+		uc2.uc_stack.ss_size = SIGSTKSZ;
+		makecontext(&uc2, &contextspfunc, 0);
+
+		fprintf(stderr, "[%u] swapcontext\n", i);
+		RL(swapcontext(&return_context, &uc1));
+
+		ATF_CHECK(contextsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack2 + i <= (uintptr_t)contextsp &&
+		    (uintptr_t)contextsp <= (uintptr_t)stack2 + SIGSTKSZ + i,
+		    "contextsp=%p", contextsp);
 		ATF_CHECK_MSG(((uintptr_t)contextsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] makecontext function called with misaligned sp %p",
 		    i, contextsp);
@@ -343,6 +464,9 @@ ATF_TC_BODY(signalsp_sigaltstack, tc)
 		signalsp = NULL;
 		RL(raise(SIGUSR1));
 		ATF_CHECK(signalsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack <= (uintptr_t)signalsp &&
+		    (uintptr_t)signalsp <= (uintptr_t)stack + SIGSTKSZ + i,
+		    "signalsp=%p", signalsp);
 		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] signal handler was called with a misaligned sp: %p",
 		    i, signalsp);
@@ -360,6 +484,9 @@ ATF_TC_BODY(signalsp_sigaltstack, tc)
 		signalsp = NULL;
 		RL(raise(SIGUSR1));
 		ATF_CHECK(signalsp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack + i <= (uintptr_t)signalsp &&
+		    (uintptr_t)signalsp <= (uintptr_t)stack + i + SIGSTKSZ,
+		    "signalsp=%p", signalsp);
 		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] signal handler was called with a misaligned sp: %p",
 		    i, signalsp);
@@ -386,7 +513,20 @@ ATF_TC_BODY(threadsp, tc)
 	unsigned i;
 
 	REQUIRE_LIBC(stack = malloc(SIGSTKSZ + STACK_ALIGNBYTES), NULL);
-	fprintf(stderr, "stack @ [%p,%p)\n", stack, stack + STACK_ALIGNBYTES);
+	fprintf(stderr, "stack @ [%p,%p)\n", stack,
+	    stack + SIGSTKSZ + STACK_ALIGNBYTES);
+
+#ifdef __hppa__
+	/*
+	 * Not sure what the deal is but I probably wrote threadspfunc
+	 * wrong.
+	 */
+	atf_tc_expect_signal(SIGBUS, "PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
+#ifdef __riscv__
+	atf_tc_expect_fail("sp inexplicably lies outside stack range");
+#endif
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
 		pthread_t t;
@@ -403,6 +543,9 @@ ATF_TC_BODY(threadsp, tc)
 		alarm(0);
 
 		ATF_CHECK(sp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack <= (uintptr_t)sp &&
+		    (uintptr_t)sp <= (uintptr_t)stack + SIGSTKSZ + i,
+		    "sp=%p", sp);
 		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] thread called with misaligned sp: %p", i, signalsp);
 	}
@@ -422,6 +565,9 @@ ATF_TC_BODY(threadsp, tc)
 		alarm(0);
 
 		ATF_CHECK(sp != NULL);
+		ATF_CHECK_MSG((uintptr_t)stack + i <= (uintptr_t)sp &&
+		    (uintptr_t)sp <= (uintptr_t)stack + i + SIGSTKSZ,
+		    "sp=%p", sp);
 		ATF_CHECK_MSG(((uintptr_t)signalsp & STACK_ALIGNBYTES) == 0,
 		    "[%u] thread called with misaligned sp: %p", i, signalsp);
 	}
@@ -497,6 +643,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, contextsp);
+	ATF_TP_ADD_TC(tp, contextsplink);
 	ATF_TP_ADD_TC(tp, execsp_dynamic);
 	ATF_TP_ADD_TC(tp, execsp_static);
 	ATF_TP_ADD_TC(tp, misaligned_sp_and_signal);
