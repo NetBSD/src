@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_pointer.h,v 1.1 2025/04/20 22:32:25 riastradh Exp $	*/
+/*	$NetBSD: stack_pointer.h,v 1.2 2025/04/21 14:17:38 rin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,12 @@
 #ifndef	TESTS_KERNEL_ARCH_MIPS_STACK_POINTER_H
 #define	TESTS_KERNEL_ARCH_MIPS_STACK_POINTER_H
 
+#ifdef __mips_o32
 #define MISALIGN_SP	__asm __volatile("addiu $sp,$sp,-1" ::: "memory")
 #define FIX_SP		__asm __volatile("addiu $sp,$sp,1" ::: "memory")
+#else
+#define MISALIGN_SP	__asm __volatile("daddiu $sp,$sp,-1" ::: "memory")
+#define FIX_SP		__asm __volatile("daddiu $sp,$sp,1" ::: "memory")
+#endif
 
 #endif	/* TESTS_KERNEL_ARCH_MIPS_STACK_POINTER_H */
