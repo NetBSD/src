@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.55 2025/04/21 08:57:32 nia Exp $	*/
+/*	$NetBSD: time.h,v 1.56 2025/04/21 13:21:33 nia Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -246,12 +246,22 @@ char *strptime_l(const char * __restrict, const char * __restrict,
 #endif /* _NETBSD_SOURCE */
 
 /* ISO/IEC 9899:2011 7.27.2.5 The timespec_get function */
+#if defined(_ISOC11_SOURCE) || (__STDC_VERSION__ - 0) >= 201101L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L || \
+    (_POSIX_C_SOURCE - 0) >= 202405L
+
 #define TIME_UTC	1	/* time elapsed since epoch */
 #if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
     defined(_NETBSD_SOURCE)
 #define TIME_MONOTONIC	2
 #endif
+
 int timespec_get(struct timespec *ts, int base);
+#if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+int timespec_getres(struct timespec *ts, int base);
+#endif
+#endif
 
 __END_DECLS
 

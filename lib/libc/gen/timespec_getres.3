@@ -1,10 +1,10 @@
-.\"	$NetBSD: timespec_get.3,v 1.7 2025/04/21 13:21:33 nia Exp $
+.\"	$NetBSD: timespec_getres.3,v 1.1 2025/04/21 13:21:33 nia Exp $
 .\"
-.\" Copyright (c) 2016 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Kamil Rytarowski.
+.\" by Nia Alarie.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -28,46 +28,32 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 21, 2025
-.Dt TIMESPEC_GET 3
+.Dt TIMESPEC_GETRES 3
 .Os
 .Sh NAME
-.Nm timespec_get
-.Nd get current calendar time
+.Nm timespec_getres
+.Nd get resolution of timers
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In time.h
 .Ft int
-.Fn timespec_get "struct timespec *ts" "int base"
+.Fn timespec_getres "struct timespec *ts" "int base"
 .Sh DESCRIPTION
 The
 .Nm
 function sets the interval pointed to by
 .Fa ts
-to hold the current calendar time based on the specified time base in
+to hold the resolution of a specific clock used by
+.Xr timespec_get 3 .
+The clock is chosen using the function argument
 .Fa base .
+Each successive call to
+.Nm
+will return the same value for a specific clock.
 .Pp
-The base
-.Dv TIME_UTC
-returns the time since the epoch.
-This time is expressed in seconds and nanoseconds since midnight (0 hour), January 1, 1970.
-In
-.Nx ,
-this corresponds to
-.Dv CLOCK_REALTIME .
-.Pp
-The base
-.Dv TIME_MONOTONIC
-returns the seconds and nanoseconds since an implementation-defined reference
-point in such a way that a second call will never return a value less than the
-first.
-In
-.Nx ,
-this corresponds to
-.Dv CLOCK_MONOTONIC .
-.Pp
-The resolution of each timer can be queried using
-.Xr timespec_getres 3 .
+This function is the ISO C equivalent to the POSIX function
+.Xr clock_getres 2 .
 .Sh RETURN VALUES
 The
 .Nm
@@ -77,29 +63,17 @@ if successful, otherwise
 .Dv 0
 on failure.
 .Sh SEE ALSO
-.Xr clock_gettime 2 ,
-.Xr gettimeofday 2 ,
-.Xr time 3 ,
-.Xr timespec_getres 3
+.Xr clock_getres 2 ,
+.Xr timespec_get 3
 .Sh STANDARDS
 The
 .Nm
-function with a
-.Fa base
-of
-.Dv TIME_UTC
-conforms to
-.St -isoC-2011 .
-The
-.Fa base
-of
-.Dv TIME_MONOTONIC
-is specified in
+function conforms to
 .St -isoC-2023 .
 .Sh HISTORY
 The
 .Nm
 function first appeared in
-.Nx 8.0 .
+.Nx 11.0 .
 .Sh AUTHORS
-.An Kamil Rytarowski Aq Mt kamil@NetBSD.org
+.An Nia Alarie Aq Mt nia@NetBSD.org
