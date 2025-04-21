@@ -1,4 +1,4 @@
-.\"	$NetBSD: viaide.4,v 1.11 2025/04/21 20:29:01 andvar Exp $
+.\"	$NetBSD: viaide.4,v 1.12 2025/04/21 20:37:48 andvar Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -66,11 +66,6 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr pciide 4 ,
 .Xr wd 4 ,
 .Xr wdc 4
-.Sh NOTES
-Drives on the VT6421 Serial RAID Controller can only be accessed
-after they have been configured into RAID or JBOD sets via its
-BIOS.
-It is also inaptly named as it has both SATA and PATA interfaces.
 .Sh BUGS
 The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
 modes.
