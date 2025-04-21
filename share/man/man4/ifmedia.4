@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.31 2018/08/13 06:04:35 wiz Exp $
+.\"	$NetBSD: ifmedia.4,v 1.32 2025/04/21 17:17:44 uwe Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001, 2002, 2003, 2004
 .\"	The NetBSD Foundation, Inc.
@@ -49,171 +49,218 @@ set using the
 .Xr ifconfig 8
 command.
 .Pp
+The lists below provide the possible names of each link type, media type,
+or option.
+The first name in the list is the canonical name.
+Additional names are accepted aliases.
+.Pp
 There are currently four link types supported by
 .Nm :
-.Bl -tag -offset indent -width IFM_IEEE80211 -compact
+.Pp
+.Bl -tag -width ".Dv IFM_IEEE80211" -offset indent -compact
+.
 .It Dv IFM_ETHER
-Ethernet
+Ethernet.
+.Bq Cm Ethernet , ether
+.
 .It Dv IFM_TOKEN
-Token Ring
+Token Ring.
+.Bq Cm TokenRing , token
+.
 .It Dv IFM_FDDI
-FDDI
+.Tn FDDI .
+.Bq Cm FDDI
+.
 .It Dv IFM_IEEE80211
-IEEE802.11 Wireless LAN
+.Tn IEEE802.11
+Wireless LAN.
+.Bq Cm IEEE802.11
+.
+.\" XXX: TODO?
+.\" Ic DV IFM_CARP
+.
 .El
 .Pp
 The following sections describe the possible media settings for each
 link type.
 Not all of these are supported by every device; refer to
 your device's manual page for more information.
+.
+.
+.Ss Common Media Types and Options
+.
+The following
+.Em media types
+.Pq Cm media
+are shared by all link types:
 .Pp
-The lists below provide the possible names of each media type or option.
-The first name in the list is the canonical name of the media type or
-option.
-Additional names are acceptable aliases for the media type or
-option.
-.Sh COMMON MEDIA TYPES AND OPTIONS
-The following media types are shared by all link types:
-.Bl -tag -offset indent -width IFM_MANUAL -compact
+.Bl -tag -width Dv -offset indent -compact
+.
 .It Dv IFM_AUTO
 Autoselect the best media.
-[autoselect, auto]
+.Bq Cm autoselect , auto
+.
 .It Dv IFM_MANUAL
 Jumper or switch on device selects media.
-[manual]
+.Bq Cm manual
+.
 .It Dv IFM_NONE
 Deselect all media.
-[none]
+.Bq Cm none
+.
 .El
 .Pp
-The following media options are shared by all link types:
-.Bl -tag -offset indent -width IFM_FLAG0
+The following
+.Em media options
+.Pq Cm mediaopt
+are shared by all link types:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_FDX
 Place the device into full-duplex mode.
 This option only has meaning
 if the device is normally not full-duplex.
-[full-duplex, fdx]
+.Bq Cm full-duplex , fdx
+.
 .It Dv IFM_HDX
 Place the device into half-duplex mode.
 This option only has meaning
 if the device is normally not half-duplex.
-[half-duplex, hdx]
+.Bq Cm half-duplex , hdx
+.
 .It Dv IFM_FLOW
 Hardware flow control support.
-[flowcontrol, flow]
+.Bq Cm flowcontrol , flow
+.
 .It Dv IFM_FLAG0
 Driver-defined flag.
-[flag0]
+.Bq Cm flag0
+.
 .It Dv IFM_FLAG1
 Driver-defined flag.
-[flag1]
+.Bq Cm flag1
+.
 .It Dv IFM_FLAG2
 Driver-defined flag.
-[flag2]
+.Bq Cm flag2
+.
 .It Dv IFM_LOOP
 Place the device into hardware loopback mode.
-[loopback, hw-loopback, loop]
+.Bq Cm loopback , hw-loopback , loop
+.
 .El
-.Sh MEDIA TYPES AND OPTIONS FOR ETHERNET
-The following media types are defined for Ethernet:
-.Bl -tag -offset indent -width IFM_1000_FX
+.
+.
+.Ss Media Types and Options for Ethernet
+.
+The following
+.Em media types
+are defined for Ethernet:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_HPNA_1
-HomePNA 1.0, 1Mb/s.
-[HomePNA1, HPNA1]
+HomePNA 1.0, 1\~Mb/s.
+.Bq Cm HomePNA1 , HPNA1
+.
 .It Dv IFM_10_T
-10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
-[10baseT, UTP, 10UTP]
+10BASE-T, 10\~Mb/s over unshielded twisted pair, RJ45 connector.
+.Bq Cm 10baseT , UTP , 10UTP
 .It Dv IFM_10_2
-10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
-[10base2, BNC, 10BNC]
+10BASE2, 10\~Mb/s over coaxial cable, BNC connector, also called Thinnet.
+.Bq Cm 10base2 , BNC , 10BNC
 .It Dv IFM_10_5
-10BASE5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
-[10base5, AUI, 10AUI]
+10BASE5, 10\~Mb/s over 15-wire cables, DB15 connector, also called AUI.
+.Bq Cm 10base5 , AUI , 10AUI
 .It Dv IFM_10_STP
-10BASE-STP, 10Mb/s over shielded twisted pair, DB9 connector.
-[10baseSTP, STP, 10STP]
+10BASE-STP, 10\~Mb/s over shielded twisted pair, DB9 connector.
+.Bq Cm 10baseSTP , STP , 10STP
 .It Dv IFM_10_FL
-10BASE-FL, 10Mb/s over fiber optic cables.
-[10baseFL, FL, 10FL]
+10BASE-FL, 10\~Mb/s over fiber optic cables.
+.Bq Cm 10baseFL , FL , 10FL
 .It Dv IFM_100_TX
-100BASE-TX, 100Mb/s over unshielded twisted pair, RJ45 connector.
-[100baseTX, 100TX]
+100BASE-TX, 100\~Mb/s over unshielded twisted pair, RJ45 connector.
+.Bq Cm 100baseTX , 100TX
 .It Dv IFM_100_FX
-100BASE-FX, 100Mb/s over fiber optic cables.
-[100baseFX, 100FX]
+100BASE-FX, 100\~Mb/s over fiber optic cables.
+.Bq Cm 100baseFX , 100FX
 .It Dv IFM_100_T4
-100BASE-T4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
+100BASE-T4, 100\~Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
 connector.
-[100baseT4, 100T4]
+.Bq Cm 100baseT4 , 100T4
 .It Dv IFM_100_T2
 100BASE-T2.
-[100baseT2, 100T2]
+.Bq Cm 100baseT2 , 100T2
 .It Dv IFM_100_VG
 100VG-AnyLAN.
-[100baseVG, 100VG]
+.Bq Cm 100baseVG , 100VG
 .It Dv IFM_1000_SX
-1000BASE-SX, 1Gb/s over multi-mode fiber optic cables.
+1000BASE-SX, 1\~Gb/s over multi-mode fiber optic cables.
 (short waves)
-[1000baseSX, 1000SX]
+.Bq Cm 1000baseSX , 1000SX
 .It Dv IFM_1000_LX
-1000BASE-LX, 1Gb/s over single-mode fiber or multi-mode fiber optic cables.
+1000BASE-LX, 1\~Gb/s over single-mode fiber or multi-mode fiber optic cables.
 (long waves)
-[1000baseLX, 1000LX]
+.Bq Cm 1000baseLX , 1000LX
 .It Dv IFM_1000_BX10
-1000BASE-BX10, 1Gb/s over bidirectional fiber optic cables.
+1000BASE-BX10, 1\~Gb/s over bidirectional fiber optic cables.
 (long waves)
-[1000BASE-BX10]
+.Bq Cm 1000BASE-BX10
 .It Dv IFM_1000_CX
-1000BASE-CX, 1Gb/s over shielded twisted pair.
+1000BASE-CX, 1\~Gb/s over shielded twisted pair.
 (twinax)
-[1000baseCX, 1000CX]
+.Bq Cm 1000baseCX , 1000CX
 .It Dv IFM_1000_T
-1000BASE-T, 1Gb/s over category 5 unshielded twisted pair, 802.3ab, RJ45
+1000BASE-T, 1\~Gb/s over category 5 unshielded twisted pair, 802.3ab, RJ45
 connector.
-[1000baseT, 1000T]
+.Bq Cm 1000baseT , 1000T
 .It Dv IFM_1000_KX
-1000BASE-KX, 1Gb/s backplane.
-[1000BASE-KX, 1000baseKX]
+1000BASE-KX, 1\~Gb/s backplane.
+.Bq Cm 1000BASE-KX , 1000baseKX
 .It Dv IFM_2500_SX
-2500BASE-SX, 2.5Gb/s over multi-mode fiber optic cables.
-[2500baseSX, 2500SX]
+2500BASE-SX, 2.5\~Gb/s over multi-mode fiber optic cables.
+.Bq Cm 2500baseSX , 2500SX
 .It Dv IFM_2500_T
-2.5GBASE-T, 2.5Gb/s over category 5e.
-[2.5GBASE-T, 2500baseT]
+2.5GBASE-T, 2.5\~Gb/s over category 5e.
+.Bq Cm 2.5GBASE-T , 2500baseT
 .It Dv IFM_2500_KX
-2500BASE-KX, 2.5Gb/s backplane.
-[2500BASE-KX, 2500baseKX]
+2500BASE-KX, 2.5\~Gb/s backplane.
+.Bq Cm 2500BASE-KX , 2500baseKX
 .It Dv IFM_5000_T
-5GBASE-T, 5Gb/s over category 6.
-[5GBASE-T, 5GbaseT]
+5GBASE-T, 5\~Gb/s over category 6.
+.Bq Cm 5GBASE-T , 5GbaseT
 .It Dv IFM_10G_CX4
-10GBASE-CX4, 10Gb/s over XAUI 4-lane PCS and copper cables.
-[10GbaseCX4, 10GCX4, 10GBASE-CX4]
+10GBASE-CX4, 10\~Gb/s over XAUI 4-lane PCS and copper cables.
+.Bq Cm 10GbaseCX4 , 10GCX4 , 10GBASE-CX4
 .It Dv IFM_10G_LR
-10GBASE-LR, 10Gb/s over single-mode fiber optic cables.
-[10GbaseLR, 10GLR]
+10GBASE-LR, 10\~Gb/s over single-mode fiber optic cables.
+.Bq Cm 10GbaseLR , 10GLR
 .It Dv IFM_10G_LRM
-10GBASE-LR, 10Gb/s over single-mode fiber optic cables.
-[10GbaseLRM]
+10GBASE-LR, 10\~Gb/s over single-mode fiber optic cables.
+.Bq Cm 10GbaseLRM
 .It Dv IFM_10G_SR
-10GBASE-SR, 10Gb/s over multi-mode fiber optic cables.
-[10GbaseSR, 10GSR, 10GBASE-SR]
+10GBASE-SR, 10\~Gb/s over multi-mode fiber optic cables.
+.Bq Cm 10GbaseSR , 10GSR , 10GBASE-SR
 .It Dv IFM_10G_T
-10GBASE-T, 10Gb/s over unshielded twisted pair, RJ45 connector.
-[10Gbase-T]
+10GBASE-T, 10\~Gb/s over unshielded twisted pair, RJ45 connector.
+.Bq Cm 10Gbase-T
 .It Dv IFM_10G_TWINAX
-SFP+ direct attach, 10Gb/s over twinaxial cable.
-[10Gbase-Twinax]
+SFP+ direct attach, 10\~Gb/s over twinaxial cable.
+.Bq Cm 10Gbase-Twinax
 .El
 .Pp
-The following media option is defined for Ethernet:
-.Bl -tag -offset indent -width IFM_ETH_TXPAUSE
+The following
+.Em media options
+are defined for Ethernet:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_ETH_MASTER
 Configure a 1000BASE-T PHY as the clock master for a 1000BASE-T link.
 This option has no effect
 .Pq shows current status only
 if the media is
 .Dv IFM_AUTO .
+.Bq Cm master
+.
 .It Dv IFM_ETH_TXPAUSE
 Configure the device to send PAUSE
 .Pq flow control
@@ -222,6 +269,8 @@ This option has no effect
 .Pq shows current status only
 if the media is
 .Dv IFM_AUTO .
+.Bq Cm txpause
+.
 .It Dv IFM_ETH_RXPAUSE
 Configure the device to receive PAUSE
 .Pq flow control
@@ -230,128 +279,181 @@ This option has no effect
 .Pq shows current status only
 if the media is
 .Dv IFM_AUTO .
+.Bq Cm rxpause
+.
 .El
-.Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
-The following media types are defined for Token Ring:
-.Bl -tag -offset indent -width IFM_TOK_UTP16
+.
+.
+.Ss Media Types and Options for Token Ring
+.
+The following
+.Em media types
+are defined for Token Ring:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_TOK_STP4
-4Mb/s, shielded twisted pair, DB9 connector.
-[DB9/4Mbit, 4STP]
+4\~Mb/s, shielded twisted pair, DB9 connector.
+.Bq Cm DB9/4Mbit , 4STP
+.
 .It Dv IFM_TOK_STP16
-16Mb/s, shielded twisted pair, DB9 connector.
-[DB9/16Mbit, 16STP]
+16\~Mb/s, shielded twisted pair, DB9 connector.
+.Bq Cm DB9/16Mbit , 16STP
+.
 .It Dv IFM_TOK_UTP4
-4Mb/s, unshielded twisted pair, RJ45 connector.
-[UTP/4Mbit, 4UTP]
+4\~Mb/s, unshielded twisted pair, RJ45 connector.
+.Bq Cm UTP/4Mbit , 4UTP
+.
 .It Dv IFM_TOK_UTP16
-16Mb/s, unshielded twisted pair, RJ45 connector.
-[UTP/16Mbit, 16UTP]
+16\~Mb/s, unshielded twisted pair, RJ45 connector.
+.Bq Cm UTP/16Mbit , 16UTP
+.
 .El
 .Pp
-The following media options are defined for Token Ring:
-.Bl -tag -offset indent -width IFM_TOK_SRCRT
+The following
+.Em media options
+are defined for Token Ring:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_TOK_ETR
 Early token release.
-[EarlyTokenRelease, ETR]
+.Bq Cm EarlyTokenRelease , ETR
+.
 .It Dv IFM_TOK_SRCRT
 Enable source routing features.
-[SourceRouting, SRCRT]
+.Bq Cm SourceRouting , SRCRT
+.
 .It Dv IFM_TOK_ALLR
 All routes vs. single route broadcast.
-[AllRoutes, ALLR]
+.Bq Cm AllRoutes , ALLR
+.
 .El
-.Sh MEDIA TYPES AND OPTIONS FOR FDDI
-The following media types are defined for FDDI:
-.Bl -tag -offset indent -width IFM_FDDI_SMF -compact
+.
+.
+.Ss Media Types and Options for FDDI
+.
+The following
+.Em media types
+are defined for FDDI:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_FDDI_SMF
 Single-mode fiber.
-[Single-mode, SMF]
+.Bq Cm Single-mode , SMF
+.
 .It Dv IFM_FDDI_MMF
 Multi-mode fiber.
-[Multi-mode, MMF]
+.Bq Cm Multi-mode , MMF
+.
 .It Dv IFM_FDDI_UTP
 Unshielded twisted pair, RJ45 connector.
-[UTP, CDDI]
+.Bq Cm UTP, CDDI
+.
 .El
 .Pp
-The following media options are defined for FDDI:
-.Bl -tag -offset indent -width IFM_FDDI_DA
+The following
+.Em media options
+are defined for FDDI:
+.Pp
+.Bl -tag -width Dv -offset indent
 .It Dv IFM_FDDI_DA
 Dual-attached station vs. Single-attached station.
-[dual-attach, das]
+.Bq Cm dual-attach , das
 .El
-.Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
-The following media types are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_OFDM12 -compact
+.
+.
+.Ss Media Types and Options for IEEE802.11 Wireless LAN
+.
+The following
+.Em media types
+are defined for IEEE802.11 Wireless LAN:
+.Bl -tag -width Dv -offset indent
 .It Dv IFM_IEEE80211_FH1
-Frequency Hopping 1Mbps.
-[FH1]
+Frequency Hopping 1\~Mbps.
+.Bq Cm FH1
 .It Dv IFM_IEEE80211_FH2
-Frequency Hopping 2Mbps.
-[FH2]
+Frequency Hopping 2\~Mbps.
+.Bq Cm FH2
 .It Dv IFM_IEEE80211_DS1
-Direct Sequence 1Mbps.
-[DS1]
+Direct Sequence 1\~Mbps.
+.Bq Cm DS1
 .It Dv IFM_IEEE80211_DS2
-Direct Sequence 2Mbps.
-[DS2]
+Direct Sequence 2\~Mbps.
+.Bq Cm DS2
 .It Dv IFM_IEEE80211_DS5
-Direct Sequence 5Mbps.
-[DS5]
+Direct Sequence 5\~Mbps.
+.Bq Cm DS5
 .It Dv IFM_IEEE80211_DS11
-Direct Sequence 11Mbps.
-[DS11]
+Direct Sequence 11\~Mbps.
+.Bq Cm DS11
 .It Dv IFM_IEEE80211_DS22
-Direct Sequence 22Mbps.
-[DS22]
+Direct Sequence 22\~Mbps.
+.Bq Cm DS22
 .It Dv IFM_IEEE80211_OFDM6
-Orthogonal Frequency Division Multiplexing 6Mbps.
-[OFDM6]
+Orthogonal Frequency Division Multiplexing 6\~Mbps.
+.Bq Cm OFDM6
 .It Dv IFM_IEEE80211_OFDM9
-Orthogonal Frequency Division Multiplexing 9Mbps.
-[OFDM9]
+Orthogonal Frequency Division Multiplexing 9\~Mbps.
+.Bq Cm OFDM9
 .It Dv IFM_IEEE80211_OFDM12
-Orthogonal Frequency Division Multiplexing 12Mbps.
-[OFDM12]
+Orthogonal Frequency Division Multiplexing 12\~Mbps.
+.Bq Cm OFDM12
 .It Dv IFM_IEEE80211_OFDM18
-Orthogonal Frequency Division Multiplexing 18Mbps.
-[OFDM18]
+Orthogonal Frequency Division Multiplexing 18\~Mbps.
+.Bq Cm OFDM18
 .It Dv IFM_IEEE80211_OFDM24
-Orthogonal Frequency Division Multiplexing 24Mbps.
-[OFDM24]
+Orthogonal Frequency Division Multiplexing 24\~Mbps.
+.Bq Cm OFDM24
 .It Dv IFM_IEEE80211_OFDM36
-Orthogonal Frequency Division Multiplexing 36Mbps.
-[OFDM36]
+Orthogonal Frequency Division Multiplexing 36\~Mbps.
+.Bq Cm OFDM36
 .It Dv IFM_IEEE80211_OFDM48
-Orthogonal Frequency Division Multiplexing 48Mbps.
-[OFDM48]
+Orthogonal Frequency Division Multiplexing 48\~Mbps.
+.Bq Cm OFDM48
 .It Dv IFM_IEEE80211_OFDM54
-Orthogonal Frequency Division Multiplexing 54Mbps.
-[OFDM54]
+Orthogonal Frequency Division Multiplexing 54\~Mbps.
+.Bq Cm OFDM54
 .It Dv IFM_IEEE80211_OFDM72
-Orthogonal Frequency Division Multiplexing 72Mbps.
-[OFDM72]
+Orthogonal Frequency Division Multiplexing 72\~Mbps.
+.Bq Cm OFDM72
 .El
 .Pp
-The following media options are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_MONITOR
+The following
+.Em media options
+are defined for
+.Tn IEEE802.11
+Wireless LAN:
+.Bl -tag -width Dv -offset indent
+.
 .It Dv IFM_IEEE80211_ADHOC
-Ad-hoc (IBSS) mode.
-[adhoc, ibss]
-.Lp
+Ad-hoc
+.Pq Tn IBSS
+mode.
+.Bq Cm adhoc , ibss
+.Pp
 In some drivers, it may be used with the
 .Dv IFM_FLAG0
-[flag0] media option to specify non-standard ad-hoc demo mode.
+.Bq Cm flag0
+media option to specify non-standard ad-hoc demo mode.
+.
 .It Dv IFM_IEEE80211_HOSTAP
-Access Point mode [hostap]
+Access Point mode.
+.Bq Cm hostap
+.
 .It Dv IFM_IEEE80211_MONITOR
-Monitor mode [monitor]
+Monitor mode.
+.Bq Cm monitor
+.
 .It Dv IFM_IEEE80211_TURBO
-Turbo mode [turbo]
+Turbo mode.
+.Bq Cm turbo
+.
 .El
+.
+.
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr ifconfig 8
+.
 .Sh HISTORY
 The
 .Nm
