@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:57 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/21 02:31:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:31:57 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/21 02:31:22 riastradh Exp $")
 
 	.set noat
 	.text
@@ -80,6 +80,7 @@ LEAF(main, 2)
 	LDGP(pv)
 	ldq	at_reg, mainsp(gp)	!literal
 	stq	sp, 0(at_reg)
+	mov	zero, v0
 	RET
 END(main)
 
