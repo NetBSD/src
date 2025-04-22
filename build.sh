@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.389 2025/04/22 10:14:36 martin Exp $
+#	$NetBSD: build.sh,v 1.390 2025/04/22 10:22:29 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2205,7 +2205,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.389 2025/04/22 10:14:36 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.390 2025/04/22 10:22:29 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2728,6 +2728,7 @@ setup_mkrepro()
 	NETBSD_REVISIONID=
 	local d
 	local t
+	local rid
 	local tag
 	local vcs
 	for d in ${dirs}
@@ -2764,9 +2765,9 @@ setup_mkrepro()
 			vcs=cvs
 		elif [ -d "${d}.git" ] || [ -f "${d}.git" ]
 		then
-			local t=$(cd "${d}" && git log -1 --format=%ct) ||
+			t=$(cd "${d}" && git log -1 --format=%ct) ||
 				bomb "git log %ct failed"
-			local rid="${base}:$(
+			rid="${base}:$(
 			   cd "${d}" && git log -1 --format=%H)" ||
 				bomb "git log %H failed"
 			if [ -n "$NETBSD_REVISIONID" ]; then
@@ -2780,7 +2781,7 @@ setup_mkrepro()
 			t=$(hg --repo "$d" \
 			    log -r . --template '{date.unixtime}\n') ||
 				bomb "hg log failed"
-			local rid=$(hg --repo "$d" \
+			rid=$(hg --repo "$d" \
 			    identify --template '{id}\n') ||
 				bomb "hg identify failed"
 			if [ -n "$NETBSD_REVISIONID" ]; then
@@ -2801,7 +2802,7 @@ setup_mkrepro()
 
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt") ||
 				bomb "stat failed on ${d}.hg_archival.txt"
-			local rid=$(
+			rid=$(
 			    awk '/^node:/ { print $2 }' <"${d}.hg_archival.txt"
 			  ) || bomb \
 			      "awk failed to find node: in ${d}.hg_archival.txt"
