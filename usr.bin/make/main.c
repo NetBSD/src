@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.642 2025/04/22 05:57:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.643 2025/04/22 17:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.642 2025/04/22 05:57:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.643 2025/04/22 17:50:34 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1519,7 +1519,7 @@ main_PrepareMaking(void)
 		opts.compatMake = true;
 
 	if (!opts.compatMake)
-		Job_ServerStart(maxJobTokens, jp_0, jp_1);
+		TokenPool_Init(maxJobTokens, jp_0, jp_1);
 	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
 	    jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.358 2025/04/13 09:29:32 rillig Exp $
+# $NetBSD: Makefile,v 1.359 2025/04/22 17:50:34 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -621,7 +621,7 @@ STD_SED_CMDS.dg3=	${STD_SED_CMDS.dg2}
 # Omit details such as process IDs from the output of the -dj option.
 STD_SED_CMDS.dj= \
 	-e '/Process/d;/JobFinish:/d' \
-	-e 's,^\(Job_TokenWithdraw\)([0-9]*),\1(<pid>),' \
+	-e 's,^\(TokenPool_Take\)([0-9]*),\1(<pid>),' \
 	-e 's,^([0-9][0-9]*) \(withdrew token\),(<pid>) \1,' \
 	-e 's, \(pid\) [0-9][0-9]*, \1 <pid>,' \
 	-e 's,^\(	Command:\) .*,\1 <shell>,'

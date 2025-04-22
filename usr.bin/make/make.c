@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.265 2025/04/22 05:57:12 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.266 2025/04/22 17:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.265 2025/04/22 05:57:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.266 2025/04/22 17:50:34 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1027,7 +1027,7 @@ MakeStartJobs(void)
 		 * Get token now to avoid cycling job-list when we only
 		 * have 1 token
 		 */
-		if (!have_token && !Job_TokenWithdraw())
+		if (!have_token && !TokenPool_Take())
 			break;
 		have_token = true;
 
@@ -1096,7 +1096,7 @@ MakeStartJobs(void)
 	}
 
 	if (have_token)
-		Job_TokenReturn();
+		TokenPool_Return();
 
 	return false;
 }

@@ -1,5 +1,5 @@
 job_pipe -1 -1, maxjobs 1, tokens 1, compat 0
-Job_TokenWithdraw(<pid>): aborting 0, running 0
+TokenPool_Take(<pid>): aborting 0, running 0
 (<pid>) withdrew token
 # echo off
 echo silent
@@ -22,6 +22,6 @@ job 0, status 3, flags ---, pid <pid>
 silent
 ignerr
 always
-Job_TokenWithdraw(<pid>): aborting 0, running 0
+TokenPool_Take(<pid>): aborting 0, running 0
 (<pid>) withdrew token
 exit status 0

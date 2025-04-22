@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.82 2025/04/22 05:57:12 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.83 2025/04/22 17:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -90,6 +90,11 @@ extern int jobTokensRunning;	/* tokens currently "out" */
 
 void Shell_Init(void);
 const char *Shell_GetNewline(void) MAKE_ATTR_USE;
+
+void TokenPool_Init(int, int, int);
+bool TokenPool_Take(void) MAKE_ATTR_USE;
+void TokenPool_Return(void);
+
 void Job_Touch(GNode *, bool);
 bool Job_CheckCommands(GNode *, void (*abortProc)(const char *, ...))
     MAKE_ATTR_USE;
@@ -104,9 +109,6 @@ void Job_End(void);
 #endif
 void Job_Wait(void);
 void Job_AbortAll(void);
-void Job_TokenReturn(void);
-bool Job_TokenWithdraw(void) MAKE_ATTR_USE;
-void Job_ServerStart(int, int, int);
 void Job_SetPrefix(void);
 bool Job_RunTarget(const char *, const char *);
 void Job_FlagsToString(const Job *, char *, size_t);

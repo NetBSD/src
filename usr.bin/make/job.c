@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.494 2025/04/22 06:05:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.495 2025/04/22 17:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.494 2025/04/22 06:05:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.495 2025/04/22 17:50:34 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -513,7 +513,7 @@ static void watchfd(Job *);
 static void clearfd(Job *);
 
 static char *targPrefix = NULL;	/* To identify a job change in the output. */
-static Job tokenWaitJob;	/* token wait pseudo-job */
+static Job tokenPoolJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
 #define CHILD_EXIT "."
@@ -1334,7 +1334,7 @@ JobFinish(Job *job, int status)
 	}
 
 	if (return_job_token)
-		Job_TokenReturn();
+		TokenPool_Return();
 
 	if (aborting == ABORT_ERROR && jobTokensRunning == 0) {
 		if (shouldDieQuietly(NULL, -1))
@@ -1570,12 +1570,12 @@ JobExec(Job *job, char **argv)
 
 		if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
 			/* Pass job token pipe to submakes. */
-			if (fcntl(tokenWaitJob.inPipe, F_SETFD, 0) == -1)
+			if (fcntl(tokenPoolJob.inPipe, F_SETFD, 0) == -1)
 				execDie("clear close-on-exec",
-				    "tokenWaitJob.inPipe");
-			if (fcntl(tokenWaitJob.outPipe, F_SETFD, 0) == -1)
+				    "tokenPoolJob.inPipe");
+			if (fcntl(tokenPoolJob.outPipe, F_SETFD, 0) == -1)
 				execDie("clear close-on-exec",
-				    "tokenWaitJob.outPipe");
+				    "tokenPoolJob.outPipe");
 		}
 
 		/*
@@ -1812,7 +1812,7 @@ Job_Make(GNode *gn)
 	/* If we're not supposed to execute a shell, don't. */
 	if (!run) {
 		if (!job->special)
-			Job_TokenReturn();
+			TokenPool_Return();
 		/* Unlink and close the command file if we opened one */
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 			(void)fclose(job->cmdFILE);
@@ -2292,7 +2292,7 @@ Job_Init(void)
 	}
 
 	/* These are permanent entries and take slots 0 and 1 */
-	watchfd(&tokenWaitJob);
+	watchfd(&tokenPoolJob);
 	watchfd(&childExitJob);
 
 	sigemptyset(&caught_signals);
@@ -2728,25 +2728,6 @@ clearfd(Job *job)
 	job->inPollfd = NULL;
 }
 
-/*
- * Put a token (back) into the job pipe.
- * This allows a make process to start a build job.
- */
-static void
-JobTokenAdd(void)
-{
-	char tok = JOB_TOKENS[aborting], tok1;
-
-	/* If we are depositing an error token, flush everything else. */
-	while (tok != '+' && read(tokenWaitJob.inPipe, &tok1, 1) == 1)
-		continue;
-
-	DEBUG3(JOB, "(%d) aborting %d, deposit token %c\n",
-	    getpid(), aborting, JOB_TOKENS[aborting]);
-	while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
-		continue;
-}
-
 int
 Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 {
@@ -2762,25 +2743,45 @@ Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	return fd;
 }
 
+/*
+ * Put a token (back) into the job token pool.
+ * This allows a make process to start a build job.
+ */
+static void
+TokenPool_Add(void)
+{
+	char tok = JOB_TOKENS[aborting], tok1;
+
+	/* If we are depositing an error token, flush everything else. */
+	while (tok != '+' && read(tokenPoolJob.inPipe, &tok1, 1) == 1)
+		continue;
+
+	DEBUG3(JOB, "(%d) aborting %d, deposit token %c\n",
+	    getpid(), aborting, JOB_TOKENS[aborting]);
+	while (write(tokenPoolJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
+		continue;
+}
+
+static void
+TokenPool_InitClient(int jp_0, int jp_1)
+{
+	tokenPoolJob.inPipe = jp_0;
+	tokenPoolJob.outPipe = jp_1;
+	(void)fcntl(jp_0, F_SETFD, FD_CLOEXEC);
+	(void)fcntl(jp_1, F_SETFD, FD_CLOEXEC);
+}
+
 /* Prepare the job token pipe in the root make process. */
-void
-Job_ServerStart(int max_tokens, int jp_0, int jp_1)
+static void
+TokenPool_InitServer(int max_tokens)
 {
 	int i;
 	char jobarg[64];
 
-	if (jp_0 >= 0 && jp_1 >= 0) {
-		tokenWaitJob.inPipe = jp_0;
-		tokenWaitJob.outPipe = jp_1;
-		(void)fcntl(jp_0, F_SETFD, FD_CLOEXEC);
-		(void)fcntl(jp_1, F_SETFD, FD_CLOEXEC);
-		return;
-	}
-
-	JobCreatePipe(&tokenWaitJob, 15);
+	JobCreatePipe(&tokenPoolJob, 15);
 
 	snprintf(jobarg, sizeof jobarg, "%d,%d",
-	    tokenWaitJob.inPipe, tokenWaitJob.outPipe);
+	    tokenPoolJob.inPipe, tokenPoolJob.outPipe);
 
 	Global_Append(MAKEFLAGS, "-J");
 	Global_Append(MAKEFLAGS, jobarg);
@@ -2794,43 +2795,52 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	 * deadlock here.
 	 */
 	for (i = 1; i < max_tokens; i++)
-		JobTokenAdd();
+		TokenPool_Add();
 }
 
-/* Return a withdrawn token to the pool. */
 void
-Job_TokenReturn(void)
+TokenPool_Init(int max_tokens, int jp_0, int jp_1)
+{
+	if (jp_0 >= 0 && jp_1 >= 0)
+		TokenPool_InitClient(jp_0, jp_1);
+	else
+		TokenPool_InitServer(max_tokens);
+}
+
+/* Return a taken token to the pool. */
+void
+TokenPool_Return(void)
 {
 	jobTokensRunning--;
 	if (jobTokensRunning < 0)
 		Punt("token botch");
 	if (jobTokensRunning != 0 || JOB_TOKENS[aborting] != '+')
-		JobTokenAdd();
+		TokenPool_Add();
 }
 
 /*
- * Attempt to withdraw a token from the pool.
+ * Attempt to take a token from the pool.
  *
  * If the pool is empty, set wantToken so that we wake up when a token is
  * released.
  *
- * Returns true if a token was withdrawn, and false if the pool is currently
+ * Returns true if a token was taken, and false if the pool is currently
  * empty.
  */
 bool
-Job_TokenWithdraw(void)
+TokenPool_Take(void)
 {
 	char tok, tok1;
 	ssize_t count;
 
 	wantToken = false;
-	DEBUG3(JOB, "Job_TokenWithdraw(%d): aborting %d, running %d\n",
+	DEBUG3(JOB, "TokenPool_Take(%d): aborting %d, running %d\n",
 	    getpid(), aborting, jobTokensRunning);
 
 	if (aborting != ABORT_NONE || (jobTokensRunning >= opts.maxJobs))
 		return false;
 
-	count = read(tokenWaitJob.inPipe, &tok, 1);
+	count = read(tokenPoolJob.inPipe, &tok, 1);
 	if (count == 0)
 		Fatal("eof on job pipe!");
 	if (count < 0 && jobTokensRunning != 0) {
@@ -2844,10 +2854,10 @@ Job_TokenWithdraw(void)
 	if (count == 1 && tok != '+') {
 		/* make being aborted - remove any other job tokens */
 		DEBUG2(JOB, "(%d) aborted by token %c\n", getpid(), tok);
-		while (read(tokenWaitJob.inPipe, &tok1, 1) == 1)
+		while (read(tokenPoolJob.inPipe, &tok1, 1) == 1)
 			continue;
 		/* And put the stopper back */
-		while (write(tokenWaitJob.outPipe, &tok, 1) == -1 &&
+		while (write(tokenPoolJob.outPipe, &tok, 1) == -1 &&
 		       errno == EAGAIN)
 			continue;
 		if (shouldDieQuietly(NULL, 1)) {
@@ -2860,7 +2870,7 @@ Job_TokenWithdraw(void)
 
 	if (count == 1 && jobTokensRunning == 0)
 		/* We didn't want the token really */
-		while (write(tokenWaitJob.outPipe, &tok, 1) == -1 &&
+		while (write(tokenPoolJob.outPipe, &tok, 1) == -1 &&
 		       errno == EAGAIN)
 			continue;
 
