@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.224 2025/04/21 13:21:33 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.225 2025/04/22 09:41:17 nia Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -86,7 +86,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	setproctitle.3 shquote.3 sighold.3 sigignore.3 siginterrupt.3 \
 	signal.3 signalname.3 signbit.3 sigrelse.3 sigset.3 sigsetops.3 \
 	sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 \
-	time.3 timespec_get.3 timespec_getres.3 times.3 timezone.3 toascii.3 \
+	time.3 timespec_get.3 times.3 timezone.3 toascii.3 \
 	tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3 \
 	wordexp.3
@@ -198,6 +198,7 @@ MLINKS+=syslog.3 closelog_r.3 syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 \
 MLINKS+=syslog.3 syslogp.3 syslog.3 syslogp_r.3 \
 	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3 \
 	syslog.3 syslogp_ss.3 syslog.3 vsyslogp_ss.3
+MLINKS+=timespec_get.3 timespec_getres.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
 MLINKS+=unvis.3 strunvis.3 unvis.3 strunvisx.3
 MLINKS+=unvis.3 strnunvis.3 unvis.3 strnunvisx.3

@@ -1,6 +1,6 @@
-.\"	$NetBSD: timespec_get.3,v 1.7 2025/04/21 13:21:33 nia Exp $
+.\"	$NetBSD: timespec_get.3,v 1.8 2025/04/22 09:41:17 nia Exp $
 .\"
-.\" Copyright (c) 2016 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2016, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,11 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 21, 2025
+.Dd April 22, 2025
 .Dt TIMESPEC_GET 3
 .Os
 .Sh NAME
-.Nm timespec_get
+.Nm timespec_get ,
+.Nm timespec_getres
 .Nd get current calendar time
 .Sh LIBRARY
 .Lb libc
@@ -39,13 +40,16 @@
 .In time.h
 .Ft int
 .Fn timespec_get "struct timespec *ts" "int base"
+.Fn timespec_getres "struct timespec *ts" "int base"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn timespec_get
 function sets the interval pointed to by
 .Fa ts
 to hold the current calendar time based on the specified time base in
 .Fa base .
+It is the ISO C equivalent to the POSIX function
+.Xr clock_gettime 2 .
 .Pp
 The base
 .Dv TIME_UTC
@@ -67,23 +71,22 @@ this corresponds to
 .Dv CLOCK_MONOTONIC .
 .Pp
 The resolution of each timer can be queried using
-.Xr timespec_getres 3 .
+.Fn timespec_getres .
+Each successive call to this function will return the same value for a
+specific clock.
+It is the ISO C equivalent to the POSIX function
+.Xr clock_getres 2 .
 .Sh RETURN VALUES
-The
-.Nm
-function returns the passed value of
+These functions returns the passed value of
 .Fa base
-if successful, otherwise
-.Dv 0
-on failure.
+if successful, otherwise 0 on failure.
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
 .Xr gettimeofday 2 ,
-.Xr time 3 ,
-.Xr timespec_getres 3
+.Xr time 3
 .Sh STANDARDS
 The
-.Nm
+.Fn timespec_get
 function with a
 .Fa base
 of
@@ -96,10 +99,21 @@ of
 .Dv TIME_MONOTONIC
 is specified in
 .St -isoC-2023 .
+.Pp
+The
+.Fn timespec_getres
+function conforms to
+.St -isoC-2023 .
 .Sh HISTORY
 The
-.Nm
+.Fn timespec_get
 function first appeared in
 .Nx 8.0 .
+.Pp
+The
+.Fn timespec_getres
+function first appeared in
+.Nx 11.0 .
 .Sh AUTHORS
 .An Kamil Rytarowski Aq Mt kamil@NetBSD.org
+.An Nia Alarie Aq Mt nia@NetBSD.org
