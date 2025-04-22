@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.641 2025/03/31 14:35:22 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.642 2025/04/22 05:57:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,11 +104,14 @@
 #include "make.h"
 #include "dir.h"
 #include "job.h"
+#ifdef USE_META
+# include "meta.h"
+#endif
 #include "pathnames.h"
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.641 2025/03/31 14:35:22 riastradh Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.642 2025/04/22 05:57:12 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "

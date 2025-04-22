@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.264 2024/06/02 15:31:26 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.265 2025/04/22 05:57:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,9 +102,12 @@
 #include "make.h"
 #include "dir.h"
 #include "job.h"
+#ifdef USE_META
+# include "meta.h"
+#endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.264 2024/06/02 15:31:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.265 2025/04/22 05:57:12 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;

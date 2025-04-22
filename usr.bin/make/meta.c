@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.211 2025/04/11 17:33:47 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.212 2025/04/22 05:57:12 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -45,6 +45,7 @@
 #include "make.h"
 #include "dir.h"
 #include "job.h"
+#include "meta.h"
 
 #ifdef USE_FILEMON
 #include "filemon/filemon.h"
@@ -636,7 +637,7 @@ MAKE_INLINE BuildMon *
 BM(Job *job)
 {
 
-	return ((job != NULL) ? &job->bm : &Mybm);
+	return job != NULL ? Job_BuildMon(job) : &Mybm;
 }
 
 /*
@@ -738,7 +739,7 @@ meta_job_error(Job *job, GNode *gn, bool ignerr, int status)
 
     pbm = BM(job);
     if (job != NULL && gn == NULL)
-	    gn = job->node;
+	    gn = Job_Node(job);
     if (pbm->mfp != NULL) {
 	fprintf(pbm->mfp, "\n*** Error code %d%s\n",
 		status, ignerr ? "(ignored)" : "");
