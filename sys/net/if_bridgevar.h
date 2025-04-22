@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.39 2024/09/03 07:59:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.40 2025/04/22 05:47:51 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -332,6 +332,7 @@ struct bridge_softc {
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	int			sc_csum_flags_tx;
 	int			sc_capenable;
+	bool			sc_stopping;
 };
 
 extern const uint8_t bstp_etheraddr[];
