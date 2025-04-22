@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.138 2024/12/06 10:53:41 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.139 2025/04/22 12:05:19 imil Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -517,6 +517,7 @@ typedef enum vm_guest {
 	VM_GUEST_KVM,
 	VM_GUEST_VIRTUALBOX,
 	VM_GUEST_GENPVH,
+	VM_GUEST_NVMM,
 	VM_LAST
 } vm_guest_t;
 extern vm_guest_t vm_guest;

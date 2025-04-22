@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.156 2024/12/06 10:53:41 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.157 2025/04/22 12:05:19 imil Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.156 2024/12/06 10:53:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.157 2025/04/22 12:05:19 imil Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1342,10 +1342,12 @@ static const char * const vm_guest_name[VM_LAST] = {
 	[VM_GUEST_XENPVH] =	"XenPVH",
 	[VM_GUEST_XENHVM] =	"XenHVM",
 	[VM_GUEST_XENPVHVM] =	"XenPVHVM",
+	[VM_GUEST_GENPVH] =	"GenPVH",
 	[VM_GUEST_HV] =		"Hyper-V",
 	[VM_GUEST_VMWARE] =	"VMware",
 	[VM_GUEST_KVM] =	"KVM",
 	[VM_GUEST_VIRTUALBOX] =	"VirtualBox",
+	[VM_GUEST_NVMM] =	"NVMM",
 };
 
 static int

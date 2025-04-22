@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.133 2025/01/17 10:38:48 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.134 2025/04/22 12:05:19 imil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.133 2025/01/17 10:38:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.134 2025/04/22 12:05:19 imil Exp $");
 
 #include "opt_xen.h"
 
@@ -1094,7 +1094,8 @@ static const struct vm_name_guest vm_system_products[] = {
 	{ "Virtual Machine", VM_GUEST_VM },		/* Microsoft VirtualPC */
 	{ "VirtualBox", VM_GUEST_VIRTUALBOX },		/* Sun xVM VirtualBox */
 	{ "Parallels Virtual Platform", VM_GUEST_VM },	/* Parallels VM */
-	{ "KVM", VM_GUEST_VM },				/* KVM */
+	{ "KVM", VM_GUEST_KVM },			/* KVM */
+	{ "NVMM", VM_GUEST_NVMM },			/* NVMM */
 };
 
 void
@@ -1141,9 +1142,10 @@ identify_hypervisor(void)
 				vm_guest = VM_GUEST_KVM;
 			else if (memcmp(hv_vendor, "XenVMMXenVMM", 12) == 0)
 				vm_guest = VM_GUEST_XENHVM;
+			else if (memcmp(hv_vendor, "___ NVMM ___", 12) == 0)
+				vm_guest = VM_GUEST_NVMM;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
-			/* NetBSD nvmm:   "___ NVMM ___" */
 		}
 		// VirtualBox returns KVM, so keep going.
 		if (vm_guest != VM_GUEST_KVM)
