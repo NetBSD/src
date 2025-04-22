@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.388 2024/12/28 00:39:56 gutteridge Exp $
+#	$NetBSD: build.sh,v 1.389 2025/04/22 10:14:36 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2205,7 +2205,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.388 2024/12/28 00:39:56 gutteridge Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.389 2025/04/22 10:14:36 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2732,6 +2732,7 @@ setup_mkrepro()
 	local vcs
 	for d in ${dirs}
 	do
+		local base=$( basename "$d" )
 		if [ -d "${d}CVS" ]
 		then
 			local cvslatest="$(print_tooldir_program cvslatest)"
@@ -2755,25 +2756,38 @@ setup_mkrepro()
 			else
 				tag=HEAD
 			fi
-			NETBSD_REVISIONID="${tag}-$(
+			if [ -z "$NETBSD_REVISIONID" ]; then
+				NETBSD_REVISIONID="${tag}"
+			fi
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}-${base}:$(
 				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" ] || [ -f "${d}.git" ]
 		then
-			t=$(cd "${d}" && git log -1 --format=%ct) ||
+			local t=$(cd "${d}" && git log -1 --format=%ct) ||
 				bomb "git log %ct failed"
-			NETBSD_REVISIONID=$(
-			   cd "${d}" && git log -1 --format=%H) ||
+			local rid="${base}:$(
+			   cd "${d}" && git log -1 --format=%H)" ||
 				bomb "git log %H failed"
+			if [ -n "$NETBSD_REVISIONID" ]; then
+				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
+			else
+				NETBSD_REVISIONID="$rid"
+			fi
 			vcs=git
 		elif [ -d "${d}.hg" ]
 		then
 			t=$(hg --repo "$d" \
 			    log -r . --template '{date.unixtime}\n') ||
 				bomb "hg log failed"
-			NETBSD_REVISIONID=$(hg --repo "$d" \
+			local rid=$(hg --repo "$d" \
 			    identify --template '{id}\n') ||
 				bomb "hg identify failed"
+			if [ -n "$NETBSD_REVISIONID" ]; then
+				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
+			else
+				NETBSD_REVISIONID="$rid"
+			fi
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]
 		then
@@ -2787,10 +2801,15 @@ setup_mkrepro()
 
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt") ||
 				bomb "stat failed on ${d}.hg_archival.txt"
-			NETBSD_REVISIONID=$(
+			local rid=$(
 			    awk '/^node:/ { print $2 }' <"${d}.hg_archival.txt"
 			  ) || bomb \
 			      "awk failed to find node: in ${d}.hg_archival.txt"
+			if [ -n "$NETBSD_REVISIONID" ]; then
+				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
+			else
+				NETBSD_REVISIONID="$rid"
+			fi
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
