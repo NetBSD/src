@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1159 2025/04/04 18:57:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1160 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1159 2025/04/04 18:57:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1160 2025/04/22 19:28:50 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -451,7 +451,7 @@ CanonicalVarname(Substring name)
 }
 
 static Var *
-GNode_FindVar(GNode *scope, Substring varname, unsigned int hash)
+GNode_FindVar(GNode *scope, Substring varname, unsigned hash)
 {
 	return HashTable_FindValueBySubstringHash(&scope->vars, varname, hash);
 }
@@ -473,7 +473,7 @@ static Var *
 VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 {
 	Var *var;
-	unsigned int nameHash;
+	unsigned nameHash;
 
 	/* Replace '.TARGET' with '@', likewise for other local variables. */
 	name = CanonicalVarname(name);
@@ -1584,7 +1584,7 @@ static void
 RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 		    const regmatch_t *m, size_t nsub)
 {
-	unsigned int n = (unsigned)ref - '0';
+	unsigned n = (unsigned)ref - '0';
 
 	if (n >= nsub)
 		Parse_Error(PARSE_FATAL, "No subexpression \\%u", n);

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.743 2025/04/13 09:34:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.744 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.743 2025/04/13 09:34:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.744 2025/04/22 19:28:50 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -125,7 +125,7 @@ typedef struct IncludedFile {
 	unsigned forBodyReadLines; /* the number of physical lines that have
 				 * been read from the file above the body of
 				 * the .for loop */
-	unsigned int condMinDepth; /* depth of nested 'if' directives, at the
+	unsigned condMinDepth;	/* depth of nested 'if' directives, at the
 				 * beginning of the file */
 	bool depending;		/* state of doing_depend on EOF */
 
@@ -337,7 +337,7 @@ CurFile(void)
 	return GetInclude(includes.len - 1);
 }
 
-unsigned int
+unsigned
 CurFile_CondMinDepth(void)
 {
 	return CurFile()->condMinDepth;
@@ -708,7 +708,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 		cohort->centurion = gn;
 		gn->unmade_cohorts++;
 		snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
-		    (unsigned int)gn->unmade_cohorts % 1000000);
+		    (unsigned)gn->unmade_cohorts % 1000000);
 	} else {
 		gn->type |= op;	/* preserve any previous flags */
 	}

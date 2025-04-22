@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.263 2025/04/22 05:57:12 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.264 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.263 2025/04/22 05:57:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.264 2025/04/22 19:28:50 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -309,8 +309,6 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 		cmd++;
 	}
 
-	while (ch_isspace(*cmd))
-		cmd++;
 	if (cmd[0] == '\0')
 		goto register_command;
 
@@ -337,7 +335,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 
 		if (Cmd_Argv(cmd, cmd_len, shargv, 5,
 			cmd_file, sizeof(cmd_file),
-			(errCheck && shellErrFlag != NULL),
+			errCheck && shellErrFlag != NULL,
 			DEBUG(SHELL)) < 0)
 			Fatal("cannot run \"%s\"", cmd);
 		av = shargv;

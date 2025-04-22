@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.495 2025/04/22 17:50:34 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.496 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -120,7 +120,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -141,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.495 2025/04/22 17:50:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.496 2025/04/22 19:28:50 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1705,7 +1704,7 @@ JobWriteShellCommands(Job *job, GNode *gn, bool *out_run)
 	char tfile[MAXPATHLEN];
 	int tfd;		/* File descriptor to the temp file */
 
-	tfd = Job_TempFile(TMPPAT, tfile, sizeof tfile);
+	tfd = Job_TempFile(NULL, tfile, sizeof tfile);
 
 	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL)
@@ -2122,7 +2121,7 @@ Job_CatchOutput(void)
 {
 	int nready;
 	Job *job;
-	unsigned int i;
+	unsigned i;
 
 	(void)fflush(stdout);
 
@@ -2660,10 +2659,9 @@ JobRestartJobs(void)
 				(void)fflush(stdout);
 			}
 			job->suspended = false;
-			if (KILLPG(job->pid, SIGCONT) != 0 && DEBUG(JOB)) {
-				debug_printf("Failed to send SIGCONT to %d\n",
+			if (KILLPG(job->pid, SIGCONT) != 0)
+				DEBUG1(JOB, "Failed to send SIGCONT to %d\n",
 				    job->pid);
-			}
 		}
 		if (job->status == JOB_ST_FINISHED) {
 			/*

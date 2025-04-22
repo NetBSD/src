@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.83 2025/04/22 17:50:34 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.84 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -77,8 +77,6 @@
 
 #ifndef MAKE_JOB_H
 #define MAKE_JOB_H
-
-#define TMPPAT	"makeXXXXXX"	/* relative to tmpdir */
 
 typedef struct Job Job;
 

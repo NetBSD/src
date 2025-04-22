@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.266 2025/04/22 17:50:34 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.267 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,10 +107,10 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.266 2025/04/22 17:50:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.267 2025/04/22 19:28:50 rillig Exp $");
 
 /* Sequence # to detect recursion. */
-static unsigned int checked_seqno = 1;
+static unsigned checked_seqno = 1;
 
 /*
  * The current fringe of the graph.

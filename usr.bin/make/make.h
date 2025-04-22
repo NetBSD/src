@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.352 2025/03/30 21:24:57 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.353 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -494,7 +494,7 @@ typedef struct GNode {
 	struct GNode *centurion;
 
 	/* Last time (sequence number) we tried to make this node */
-	unsigned int checked_seqno;
+	unsigned checked_seqno;
 
 	/*
 	 * The "local" variables that are specific to this target and this
@@ -817,7 +817,7 @@ void Compat_MakeAll(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
-extern unsigned int cond_depth;
+extern unsigned cond_depth;
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
 Guard *Cond_ExtractGuard(const char *) MAKE_ATTR_USE;
@@ -889,7 +889,7 @@ void Parse_File(const char *, int);
 void Parse_PushInput(const char *, unsigned, unsigned, Buffer,
 		     struct ForLoop *);
 void Parse_MainName(GNodeList *);
-unsigned int CurFile_CondMinDepth(void) MAKE_ATTR_USE;
+unsigned CurFile_CondMinDepth(void) MAKE_ATTR_USE;
 void Parse_GuardElse(void);
 void Parse_GuardEndif(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.643 2025/04/22 17:50:34 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.644 2025/04/22 19:28:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.643 2025/04/22 17:50:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.644 2025/04/22 19:28:50 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -957,7 +957,7 @@ InitRandom(void)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
-	srandom((unsigned int)(tv.tv_sec + tv.tv_usec));
+	srandom((unsigned)(tv.tv_sec + tv.tv_usec));
 }
 
 static const char *
@@ -990,7 +990,7 @@ InitVarMachineArch(void)
 		const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 		size_t len = sizeof machine_arch_buf;
 
-		if (sysctl(mib, (unsigned int)__arraycount(mib),
+		if (sysctl(mib, (unsigned)__arraycount(mib),
 		    machine_arch_buf, &len, NULL, 0) < 0) {
 			(void)fprintf(stderr, "%s: sysctl failed (%s).\n",
 			    progname, strerror(errno));
@@ -2199,7 +2199,7 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	int fd;
 
 	if (pattern == NULL)
-		pattern = TMPPAT;
+		pattern = "makeXXXXXX";
 	if (tmpdir == NULL)
 		tmpdir = getTmpdir();
 	if (tfile == NULL) {
