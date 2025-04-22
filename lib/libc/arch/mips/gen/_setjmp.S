@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.26 2020/10/15 05:27:53 skrll Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.27 2025/04/22 17:01:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.26 2020/10/15 05:27:53 skrll Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.27 2025/04/22 17:01:31 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,7 +127,8 @@ LEAF(_longjmp)
 	REG_LI		t0, 0xACEDBADE
 	bne		v0, t0, botch		# jump if error
 	PTR_ADDU	sp, sp, CALLFRAME_SIZ	# does not matter, sanity
-	REG_S		a1, _SC_REGS_V0(a0)	# save return value
+	beqz		a1, 2f			# make sure val is nonzero
+1:	 REG_S		a1, _SC_REGS_V0(a0)	# save return value
 	REG_L		s0, _SC_REGS_S0(a0)
 	REG_L		s1, _SC_REGS_S1(a0)
 	REG_L		s2, _SC_REGS_S2(a0)
@@ -177,6 +178,9 @@ LEAF(_longjmp)
 	REG_EPILOGUE
 	j	ra
 	 move	v0, a1			# get return value in 1st arg
+
+2:	b	1b			# replace value 0 by value 1
+	 li	a1, 1
 
 botch:
 	/*

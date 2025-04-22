@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.4 2025/04/22 13:12:11 riastradh Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.5 2025/04/22 17:01:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.4 2025/04/22 13:12:11 riastradh Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.5 2025/04/22 17:01:31 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -220,10 +220,6 @@ ATF_TC_HEAD(_longjmp_zero, tc)
 }
 ATF_TC_BODY(_longjmp_zero, tc)
 {
-#ifdef __mips__
-	atf_tc_expect_fail("PR lib/59341:"
-	    " _longjmp(..., 0) makes _setjmp return zero");
-#endif
 	h_check(TEST_U_LONGJMP_ZERO);
 }
 
