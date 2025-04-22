@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.26 2022/07/31 11:28:46 martin Exp $	*/
+/*	$NetBSD: atomic.h,v 1.27 2025/04/22 01:34:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -489,31 +489,36 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 static __inline __always_inline void
 __do_atomic_store(volatile void *p, const void *q, size_t size)
 {
+	volatile uint32_t *p32 = (volatile uint32_t *)((uintptr_t)p & ~3);
+
 	switch (size) {
 	case 1: {
 		uint8_t v;
 		unsigned s = 8 * ((uintptr_t)p & 3);
 		uint32_t o, n, m = ~(0xffU << s);
+
 		memcpy(&v, q, 1);
 		do {
-			o = atomic_load_relaxed((const volatile uint32_t *)p);
+			o = atomic_load_relaxed(p32);
 			n = (o & m) | ((uint32_t)v << s);
-		} while (atomic_cas_32((volatile uint32_t *)p, o, n) != o);
+		} while (atomic_cas_32(p32, o, n) != o);
 		break;
 	}
 	case 2: {
 		uint16_t v;
 		unsigned s = 8 * (((uintptr_t)p & 2) >> 1);
 		uint32_t o, n, m = ~(0xffffU << s);
+
 		memcpy(&v, q, 2);
 		do {
-			o = atomic_load_relaxed((const volatile uint32_t *)p);
+			o = atomic_load_relaxed(p32);
 			n = (o & m) | ((uint32_t)v << s);
-		} while (atomic_cas_32((volatile uint32_t *)p, o, n) != o);
+		} while (atomic_cas_32(p32, o, n) != o);
 		break;
 	}
 	case 4: {
 		uint32_t v;
+
 		memcpy(&v, q, 4);
 		(void)atomic_swap_32(p, v);
 		break;
