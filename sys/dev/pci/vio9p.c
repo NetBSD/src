@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.11 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.12 2025/04/22 05:56:25 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.11 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.12 2025/04/22 05:56:25 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,6 +490,7 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 	struct virtio_softc *vsc = device_private(parent);
 	uint64_t features;
 	int error;
+	const struct sysctlnode *node;
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -552,6 +553,19 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 
 	vio9p_read_config(sc);
 	aprint_normal_dev(self, "tagged as %s\n", sc->sc_tag);
+
+	sysctl_createv(NULL, 0, NULL, &node, 0, CTLTYPE_NODE,
+	    "vio9p", SYSCTL_DESCR("VirtIO 9p toplevel"),
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, &node, &node, 0, CTLTYPE_NODE,
+	    device_xname(self), SYSCTL_DESCR("VirtIO 9p device"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, &node, NULL, 0, CTLTYPE_STRING,
+	    "tag", SYSCTL_DESCR("VirtIO 9p tag value"),
+	    NULL, 0, sc->sc_tag, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	error = virtio_child_attach_finish(vsc, sc->sc_vq,
 	    __arraycount(sc->sc_vq), NULL,
