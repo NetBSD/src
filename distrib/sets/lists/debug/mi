@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.477 2025/04/20 22:31:00 riastradh Exp $
+# $NetBSD: mi,v 1.478 2025/04/22 13:48:24 nia Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2063,6 +2063,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_time.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_timespec_get.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ttyname.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-obsolete		obsolete,compattestfile

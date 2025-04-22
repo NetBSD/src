@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.59 2025/03/30 15:38:38 riastradh Exp $
+# $NetBSD: Makefile,v 1.60 2025/04/22 13:48:24 nia Exp $
 
 NOMAN=		# defined
 
@@ -42,6 +42,7 @@ TESTS_C+=	t_siginfo
 TESTS_C+=	t_sleep
 TESTS_C+=	t_syslog
 TESTS_C+=	t_time
+TESTS_C+=	t_timespec_get
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
