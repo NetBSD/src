@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.493 2025/04/22 05:57:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.494 2025/04/22 06:05:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.493 2025/04/22 05:57:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.494 2025/04/22 06:05:51 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -840,8 +840,6 @@ ParseCommandFlags(char **pp, CommandFlags *out_cmdFlags)
 		p++;
 	}
 
-	pp_skip_whitespace(&p);
-
 	*pp = p;
 }
 
@@ -1339,10 +1337,8 @@ JobFinish(Job *job, int status)
 		Job_TokenReturn();
 
 	if (aborting == ABORT_ERROR && jobTokensRunning == 0) {
-		if (shouldDieQuietly(NULL, -1)) {
-			Job_Wait();
+		if (shouldDieQuietly(NULL, -1))
 			exit(2);
-		}
 		Fatal("%d error%s", job_errors, job_errors == 1 ? "" : "s");
 	}
 }
