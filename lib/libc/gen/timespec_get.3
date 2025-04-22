@@ -1,4 +1,4 @@
-.\"	$NetBSD: timespec_get.3,v 1.8 2025/04/22 09:41:17 nia Exp $
+.\"	$NetBSD: timespec_get.3,v 1.9 2025/04/22 14:25:50 uwe Exp $
 .\"
 .\" Copyright (c) 2016, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,17 +30,25 @@
 .Dd April 22, 2025
 .Dt TIMESPEC_GET 3
 .Os
+.
 .Sh NAME
 .Nm timespec_get ,
 .Nm timespec_getres
 .Nd get current calendar time
+.
 .Sh LIBRARY
 .Lb libc
+.
 .Sh SYNOPSIS
+.
 .In time.h
+.
 .Ft int
 .Fn timespec_get "struct timespec *ts" "int base"
+.
+.Ft int
 .Fn timespec_getres "struct timespec *ts" "int base"
+.
 .Sh DESCRIPTION
 The
 .Fn timespec_get
@@ -48,7 +56,11 @@ function sets the interval pointed to by
 .Fa ts
 to hold the current calendar time based on the specified time base in
 .Fa base .
-It is the ISO C equivalent to the POSIX function
+It is the
+.Tn ISO C
+equivalent to the
+.Tn POSIX
+function
 .Xr clock_gettime 2 .
 .Pp
 The base
@@ -74,10 +86,14 @@ The resolution of each timer can be queried using
 .Fn timespec_getres .
 Each successive call to this function will return the same value for a
 specific clock.
-It is the ISO C equivalent to the POSIX function
+It is the
+.Tn ISO C
+equivalent to the
+.Tn POSIX
+function
 .Xr clock_getres 2 .
 .Sh RETURN VALUES
-These functions returns the passed value of
+These functions return the passed non-zero value of
 .Fa base
 if successful, otherwise 0 on failure.
 .Sh SEE ALSO
