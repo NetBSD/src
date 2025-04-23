@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.267 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.268 2025/04/23 19:36:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.267 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.268 2025/04/23 19:36:59 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned checked_seqno = 1;
@@ -1108,12 +1108,12 @@ MakePrintStatusOrderNode(GNode *ogn, GNode *gn)
 	if (!GNode_IsWaitingFor(ogn))
 		return;
 
-	printf("    `%s%s' has .ORDER dependency against %s%s ",
+	printf("    `%s%s' has .ORDER dependency on %s%s ",
 	    gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
 	GNode_FprintDetails(stdout, "(", ogn, ")\n");
 
 	if (DEBUG(MAKE) && opts.debug_file != stdout) {
-		debug_printf("    `%s%s' has .ORDER dependency against %s%s ",
+		debug_printf("    `%s%s' has .ORDER dependency on %s%s ",
 		    gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
 		GNode_FprintDetails(opts.debug_file, "(", ogn, ")\n");
 	}
