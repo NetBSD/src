@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_object.c,v 1.35 2022/08/07 23:49:46 riastradh Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.36 2025/04/23 02:58:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,69 +99,152 @@ _prop_object_fini(struct _prop_object *po _PROP_ARG_UNUSED)
 }
 
 /*
- * _prop_object_externalize_start_tag --
- *	Append an XML-style start tag to the externalize buffer.
+ * _prop_object_externalize_start_line --
+ *	Append the start-of-line character sequence.
  */
 bool
-_prop_object_externalize_start_tag(
-    struct _prop_object_externalize_context *ctx, const char *tag)
+_prop_object_externalize_start_line(
+    struct _prop_object_externalize_context *ctx)
 {
 	unsigned int i;
 
 	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == false)
-			return (false);
+		if (_prop_object_externalize_append_char(ctx, '\t') == false) {
+			return false;
+		}
 	}
-	if (_prop_object_externalize_append_char(ctx, '<') == false ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
-	    _prop_object_externalize_append_char(ctx, '>') == false)
-		return (false);
+	return true;
+}
 
-	return (true);
+/*
+ * _prop_object_externalize_end_line --
+ *	Append the end-of-line character sequence.
+ */
+bool
+_prop_object_externalize_end_line(
+    struct _prop_object_externalize_context *ctx, const char *trailer)
+{
+	if (trailer != NULL &&
+	    _prop_object_externalize_append_cstring(ctx, trailer) == false) {
+		return false;
+	}
+	return _prop_object_externalize_append_char(ctx, '\n');
+}
+
+/*
+ * _prop_object_externalize_start_tag --
+ *	Append an item's start tag to the externalize buffer.
+ */
+bool
+_prop_object_externalize_start_tag(
+    struct _prop_object_externalize_context *ctx,
+    const struct _prop_object_type_tags *tags,
+    const char *tagattrs)
+{
+	bool rv;
+
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
+
+	switch (ctx->poec_format) {
+	case PROP_FORMAT_JSON:
+		rv = tags->json_open_tag == NULL ||
+		     _prop_object_externalize_append_cstring(ctx,
+							tags->json_open_tag);
+		break;
+
+	default:		/* XML */
+		rv = _prop_object_externalize_append_char(ctx, '<') &&
+		     _prop_object_externalize_append_cstring(ctx,
+							     tags->xml_tag) &&
+		     (tagattrs == NULL ||
+		      (_prop_object_externalize_append_char(ctx, ' ') &&
+		       _prop_object_externalize_append_cstring(ctx,
+							       tagattrs))) &&
+		     _prop_object_externalize_append_char(ctx, '>');
+		break;
+	}
+
+	return rv;
 }
 
 /*
  * _prop_object_externalize_end_tag --
- *	Append an XML-style end tag to the externalize buffer.
+ *	Append an item's end tag to the externalize buffer.
  */
 bool
 _prop_object_externalize_end_tag(
-    struct _prop_object_externalize_context *ctx, const char *tag)
+    struct _prop_object_externalize_context *ctx,
+    const struct _prop_object_type_tags *tags)
 {
+	bool rv;
 
-	if (_prop_object_externalize_append_char(ctx, '<') == false ||
-	    _prop_object_externalize_append_char(ctx, '/') == false ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
-	    _prop_object_externalize_append_char(ctx, '>') == false ||
-	    _prop_object_externalize_append_char(ctx, '\n') == false)
-		return (false);
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
 
-	return (true);
+	switch (ctx->poec_format) {
+	case PROP_FORMAT_JSON:
+		rv = tags->json_close_tag == NULL ||
+		     _prop_object_externalize_append_cstring(ctx,
+							tags->json_close_tag);
+		break;
+	
+	default:		/* XML */
+		rv = _prop_object_externalize_append_char(ctx, '<') &&
+		     _prop_object_externalize_append_char(ctx, '/') &&
+		     _prop_object_externalize_append_cstring(ctx,
+							     tags->xml_tag) &&
+		     _prop_object_externalize_append_char(ctx, '>');
+		break;
+	}
+
+	return rv;
 }
 
 /*
  * _prop_object_externalize_empty_tag --
- *	Append an XML-style empty tag to the externalize buffer.
+ *	Append an item's empty tag to the externalize buffer.
  */
 bool
 _prop_object_externalize_empty_tag(
-    struct _prop_object_externalize_context *ctx, const char *tag)
+    struct _prop_object_externalize_context *ctx,
+    const struct _prop_object_type_tags *tags)
 {
-	unsigned int i;
+	bool rv;
 
-	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == false)
-			return (false);
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
+
+	switch (ctx->poec_format) {
+	case PROP_FORMAT_JSON:
+		if (tags->json_open_tag == NULL ||
+		    _prop_object_externalize_append_cstring(ctx,
+					tags->json_open_tag) == false) {
+			return false;
+		}
+		if (tags->json_empty_sep != NULL &&
+		    _prop_object_externalize_append_cstring(ctx,
+					tags->json_empty_sep) == false) {
+			return false;
+		}
+		if (tags->json_close_tag != NULL) {
+			rv = _prop_object_externalize_append_cstring(ctx,
+							tags->json_close_tag);
+		} else {
+			rv = true;
+		}
+		break;
+
+	default:		/* XML */
+		rv = _prop_object_externalize_append_char(ctx, '<') &&
+		     _prop_object_externalize_append_cstring(ctx,
+							     tags->xml_tag) &&
+		     _prop_object_externalize_append_char(ctx, '/') &&
+		     _prop_object_externalize_append_char(ctx, '>');
+		break;
 	}
 
-	if (_prop_object_externalize_append_char(ctx, '<') == false ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
-	    _prop_object_externalize_append_char(ctx, '/') == false ||
-	    _prop_object_externalize_append_char(ctx, '>') == false ||
-	    _prop_object_externalize_append_char(ctx, '\n') == false)
-	    	return (false);
-
-	return (true);
+	return rv;
 }
 
 /*
@@ -187,8 +270,8 @@ _prop_object_externalize_append_cstring(
  * _prop_object_externalize_append_encoded_cstring --
  *	Append an encoded C string to the externalize buffer.
  */
-bool
-_prop_object_externalize_append_encoded_cstring(
+static bool
+_prop_object_externalize_append_encoded_cstring_xml(
     struct _prop_object_externalize_context *ctx, const char *cp)
 {
 
@@ -221,6 +304,119 @@ _prop_object_externalize_append_encoded_cstring(
 	return (true);
 }
 
+static bool
+_prop_object_externalize_append_escu(
+    struct _prop_object_externalize_context *ctx, uint16_t val)
+{
+	char tmpstr[sizeof("\\uXXXX")];
+
+	snprintf(tmpstr, sizeof(tmpstr), "\\u%04X", val);
+	return _prop_object_externalize_append_cstring(ctx, tmpstr);
+}
+
+static bool
+_prop_object_externalize_append_encoded_cstring_json(
+    struct _prop_object_externalize_context *ctx, const char *cp)
+{
+	bool esc;
+	unsigned char ch;
+
+	while ((ch = *cp) != '\0') {
+		esc = true;
+		switch (ch) {
+		/*
+		 * First, the two explicit exclusions.  They must be
+		 * escaped.
+		 */
+		case '"':	/* U+0022 quotation mark */
+			goto emit;
+
+		case '\\':	/* U+005C reverse solidus */
+			goto emit;
+
+		/*
+		 * And some special cases that are explcit in the grammar.
+		 */
+		case '/':	/* U+002F solidus (XXX this one seems silly) */
+			goto emit;
+
+		case 0x08:	/* U+0008 backspace */
+			ch = 'b';
+			goto emit;
+
+		case 0x0c:	/* U+000C form feed */
+			ch = 'f';
+			goto emit;
+
+		case 0x0a:	/* U+000A line feed */
+			ch = 'n';
+			goto emit;
+
+		case 0x0d:	/* U+000D carraige return */
+			ch = 'r';
+			goto emit;
+
+		case 0x09:	/* U+0009 tab */
+			ch = 't';
+			goto emit;
+
+		default:
+			/*
+			 * \u-escape all other single-byte ASCII control
+			 * characters, per RFC 8259:
+			 *
+			 * <quote>
+			 * All Unicode characters may be placed within the
+			 * quotation marks, except for the characters that
+			 * MUST be escaped: quotation mark, reverse solidus,
+			 * and the control characters (U+0000 through U+001F).
+			 * </quote>
+			 */
+			if (ch < 0x20) {
+				if (_prop_object_externalize_append_escu(ctx,
+							ch) == false) {
+					return false;
+				}
+				break;
+			}
+			/*
+			 * We're going to just treat everything else like
+			 * UTF-8 (we've been handed a C-string, after all)
+			 * and pretend it will all be OK.
+			 */
+			esc = false;
+		emit:
+			if ((esc && _prop_object_externalize_append_char(ctx,
+							'\\') == false) ||
+			    _prop_object_externalize_append_char(ctx,
+							ch) == false) {
+				return false;
+			}
+			break;
+		}
+		cp++;
+	}
+
+	return true;
+}
+
+bool
+_prop_object_externalize_append_encoded_cstring(
+    struct _prop_object_externalize_context *ctx, const char *cp)
+{
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
+
+	switch (ctx->poec_format) {
+	case PROP_FORMAT_JSON:
+		return _prop_object_externalize_append_encoded_cstring_json(ctx,
+									    cp);
+	default:
+		return _prop_object_externalize_append_encoded_cstring_xml(ctx,
+									   cp);
+	}
+}
+
 #define	BUF_EXPAND		256
 
 /*
@@ -251,6 +447,10 @@ _prop_object_externalize_append_char(
 	return (true);
 }
 
+static const struct _prop_object_type_tags _plist_type_tags = {
+	.xml_tag	=	"plist",
+};
+
 /*
  * _prop_object_externalize_header --
  *	Append the standard XML header to the externalize buffer.
@@ -262,10 +462,15 @@ _prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n";
 
+	if (ctx->poec_format != PROP_FORMAT_XML) {
+		return true;
+	}
+
 	if (_prop_object_externalize_append_cstring(ctx,
 						 _plist_xml_header) == false ||
 	    _prop_object_externalize_start_tag(ctx,
-				       "plist version=\"1.0\"") == false ||
+	    				&_plist_type_tags,
+					"version=\"1.0\"") == false ||
 	    _prop_object_externalize_append_char(ctx, '\n') == false)
 		return (false);
 
@@ -280,12 +485,19 @@ _prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
 bool
 _prop_object_externalize_footer(struct _prop_object_externalize_context *ctx)
 {
+	if (_prop_object_externalize_end_line(ctx, NULL) == false) {
+		return false;
+	}
 
-	if (_prop_object_externalize_end_tag(ctx, "plist") == false ||
-	    _prop_object_externalize_append_char(ctx, '\0') == false)
-		return (false);
+	if (ctx->poec_format == PROP_FORMAT_XML) {
+		if (_prop_object_externalize_end_tag(ctx,
+					&_plist_type_tags) == false ||
+		    _prop_object_externalize_end_line(ctx, NULL) == false) {
+			return false;
+		}
+	}
 
-	return (true);
+	return _prop_object_externalize_append_char(ctx, '\0');
 }
 
 /*
@@ -293,7 +505,7 @@ _prop_object_externalize_footer(struct _prop_object_externalize_context *ctx)
  *	Allocate an externalize context.
  */
 struct _prop_object_externalize_context *
-_prop_object_externalize_context_alloc(void)
+_prop_object_externalize_context_alloc(prop_format_t fmt)
 {
 	struct _prop_object_externalize_context *ctx;
 
@@ -307,6 +519,7 @@ _prop_object_externalize_context_alloc(void)
 		ctx->poec_len = 0;
 		ctx->poec_capacity = BUF_EXPAND;
 		ctx->poec_depth = 0;
+		ctx->poec_format = fmt;
 	}
 	return (ctx);
 }
@@ -322,6 +535,44 @@ _prop_object_externalize_context_free(
 
 	/* Buffer is always freed by the caller. */
 	_PROP_FREE(ctx, M_TEMP);
+}
+
+/*
+ * _prop_object_externalize --
+ *	Externalize an object, returning a NUL-terminated buffer
+ *	containing the serialized data in either XML or JSON format.
+ *	The buffer is allocated with the M_TEMP memory type.
+ */
+char *
+_prop_object_externalize(struct _prop_object *obj, prop_format_t fmt)
+{
+	struct _prop_object_externalize_context *ctx;
+	char *cp = NULL;
+
+	if (obj == NULL || obj->po_type->pot_extern == NULL) {
+		return NULL;
+	}
+	if (fmt != PROP_FORMAT_XML && fmt != PROP_FORMAT_JSON) {
+		return NULL;
+	}
+
+	ctx = _prop_object_externalize_context_alloc(fmt);
+	if (ctx == NULL) {
+		return NULL;
+	}
+
+	if (_prop_object_externalize_header(ctx) == false ||
+	    obj->po_type->pot_extern(ctx, obj) == false ||
+	    _prop_object_externalize_footer(ctx) == false) {
+		/* We are responsible for releasing the buffer. */
+		_PROP_FREE(ctx->poec_buf, M_TEMP);
+		goto bad;
+	}
+
+	cp = ctx->poec_buf;
+ bad:
+	_prop_object_externalize_context_free(ctx);
+	return cp;
 }
 
 /*
@@ -372,11 +623,7 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	/*
 	 * Find the start of the tag.
 	 */
-	while (_PROP_ISSPACE(*cp))
-		cp++;
-	if (_PROP_EOF(*cp))
-		return (false);
-
+	cp = _prop_object_internalize_skip_whitespace(cp);
 	if (*cp != '<')
 		return (false);
 
@@ -456,8 +703,7 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	if (_PROP_EOF(*cp))
 		return (false);
 
-	while (_PROP_ISSPACE(*cp))
-		cp++;
+	cp = _prop_object_internalize_skip_whitespace(cp);
 	if (_PROP_EOF(*cp))
 		return (false);
 
@@ -498,8 +744,20 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
  * _prop_object_internalize_decode_string --
  *	Decode an encoded string.
  */
-bool
-_prop_object_internalize_decode_string(
+
+#define	ADDCHAR(x)							\
+	do {								\
+		if (target) {						\
+			if (tarindex >= targsize) {			\
+				return false;				\
+			}						\
+			target[tarindex] = (x);				\
+		}							\
+		tarindex++;						\
+	} while (/*CONSTCOND*/0)
+
+static bool
+_prop_object_internalize_decode_string_xml(
 				struct _prop_object_internalize_context *ctx,
 				char *target, size_t targsize, size_t *sizep,
 				const char **cpp)
@@ -553,12 +811,7 @@ _prop_object_internalize_decode_string(
 				return (false);
 		} else
 			src++;
-		if (target) {
-			if (tarindex >= targsize)
-				return (false);
-			target[tarindex] = c;
-		}
-		tarindex++;
+		ADDCHAR(c);
 	}
 
 	_PROP_ASSERT(*src == '<');
@@ -568,6 +821,256 @@ _prop_object_internalize_decode_string(
 		*cpp = src;
 
 	return (true);
+}
+
+static unsigned int
+_prop_object_decode_string_uesc_getu16(const char *src, unsigned int idx,
+    uint16_t *valp)
+{
+	unsigned int i;
+	uint16_t val;
+	unsigned char c;
+
+	if (src[idx] != '\\' || src[idx + 1] != 'u') {
+		return 0;
+	}
+
+	for (val = 0, i = 2; i < 6; i++) {
+		val <<= 4;
+		c = src[idx + i];
+		if (c >= 'A' && c <= 'F') {
+			val |= 10 + (c - 'A');
+		} else if (c >= 'a' && c <= 'f') {
+			val |= 10 + (c - 'a');
+		} else if (c >= '0' && c <= '9') {
+			val |= c - '0';
+		} else {
+			return 0;
+		}
+	}
+
+	*valp = val;
+	return idx + i;
+}
+
+#define	HS_FIRST	0xd800
+#define	HS_LAST		0xdbff
+#define	HS_SHIFT	10
+#define	LS_FIRST	0xdc00
+#define	LS_LAST		0xdfff
+
+#define	HIGH_SURROGAGE_P(x)	\
+	((x) >= HS_FIRST && (x) <= HS_LAST)
+#define	LOW_SURROGATE_P(x)	\
+	((x) >= LS_FIRST && (x) <= LS_LAST)
+#define	SURROGATE_P(x)		\
+	(HIGH_SURROGAGE_P(x) || LOW_SURROGATE_P(x))
+
+static int
+_prop_object_decode_string_uesc(const char *src, char *c,
+    unsigned int *cszp)
+{
+	unsigned int idx = 0;
+	uint32_t code;
+	uint16_t code16[2] = { 0, 0 };
+
+	idx = _prop_object_decode_string_uesc_getu16(src, idx, &code16[0]);
+	if (idx == 0) {
+		return 0;
+	}
+	if (! SURROGATE_P(code16[0])) {
+		/* Simple case: not a surrogate pair */
+		code = code16[0];
+	} else if (HIGH_SURROGAGE_P(code16[0])) {
+		idx = _prop_object_decode_string_uesc_getu16(src, idx,
+							     &code16[1]);
+		if (idx == 0) {
+			return 0;
+		}
+		/* Next code must be the low surrogate. */
+		if (! LOW_SURROGATE_P(code16[1])) {
+			return 0;
+		}
+		code = (((uint32_t)code16[0] - HS_FIRST) << HS_SHIFT) +
+		        (          code16[1] - LS_FIRST)              +
+		       0x10000;
+	} else {
+		/* Got the low surrogate first; this is an error. */
+		return 0;
+	}
+
+	/*
+	 * Ok, we have the code point.  Now convert it to UTF-8.
+	 * First we'll just split into nybbles.
+	 */
+	uint8_t u = (code >> 20) & 0xf;
+	uint8_t v = (code >> 16) & 0xf;
+	uint8_t w = (code >> 12) & 0xf;
+	uint8_t x = (code >>  8) & 0xf;
+	uint8_t y = (code >>  4) & 0xf;
+	uint8_t z = (code      ) & 0xf;
+
+	/*
+	 * ...and swizzle the nybbles accordingly.
+	 *
+	 * N.B. we expcitly disallow inserting a NUL into the string
+	 * by way of a \uXXXX escape.
+	 */
+	if (code == 0) {
+		/* Not allowed. */
+		return 0;
+	} else if (/*code >= 0x0000 &&*/ code <= 0x007f) {
+		c[0] = (char)code;	/* == (y << 4) | z */
+		*cszp = 1;
+	} else if (/*code >= 0x0080 &&*/ code <= 0x07ff) {
+		c[0] = 0xc0 | (x << 2) | (y >> 2);
+		c[1] = 0x80 | ((y & 3) << 4) | z;
+		*cszp = 2;
+	} else if (/*code >= 0x0800 &&*/ code <= 0xffff) {
+		c[0] = 0xe0 | w;
+		c[1] = 0x80 | (x << 2) | (y >> 2);
+		c[2] = 0x80 | ((y & 3) << 4) | z;
+		*cszp = 3;
+	} else if (/*code >= 0x010000 &&*/ code <= 0x10ffff) {
+		c[0] = 0xf0 | ((u & 1) << 2) | (v >> 2);
+		c[1] = 0x80 | ((v & 3) << 4) | w;
+		c[2] = 0x80 | (x << 2) | (y >> 2);
+		c[3] = 0x80 | ((y & 3) << 4) | z;
+		*cszp = 4;
+	} else {
+		/* Invalid code. */
+		return 0;
+	}
+
+	return idx;	/* advance input by this much */
+}
+
+#undef HS_FIRST
+#undef HS_LAST
+#undef LS_FIRST
+#undef LS_LAST
+#undef HIGH_SURROGAGE_P
+#undef LOW_SURROGATE_P
+#undef SURROGATE_P
+
+static bool
+_prop_object_internalize_decode_string_json(
+				struct _prop_object_internalize_context *ctx,
+				char *target, size_t targsize, size_t *sizep,
+				const char **cpp)
+{
+	const char *src;
+	size_t tarindex;
+	char c[4];
+	unsigned int csz;
+
+	tarindex = 0;
+	src = ctx->poic_cp;
+
+	for (;;) {
+		if (_PROP_EOF(*src)) {
+			return false;
+		}
+		if (*src == '"') {
+			break;
+		}
+
+		csz = 1;
+		if ((c[0] = *src) == '\\') {
+			int advance = 2;
+
+			switch ((c[0] = src[1])) {
+			case '"':		/* quotation mark */
+			case '\\':		/* reverse solidus */
+			case '/':		/* solidus */
+				/* identity mapping */
+				break;
+
+			case 'b':		/* backspace */
+				c[0] = 0x08;
+				break;
+
+			case 'f':		/* form feed */
+				c[0] = 0x0c;
+				break;
+
+			case 'n':		/* line feed */
+				c[0] = 0x0a;
+				break;
+
+			case 'r':		/* carraige return */
+				c[0] = 0x0d;
+				break;
+
+			case 't':		/* tab */
+				c[0] = 0x09;
+				break;
+
+			case 'u':
+				advance = _prop_object_decode_string_uesc(
+				    src, c, &csz);
+				if (advance == 0) {
+					return false;
+				}
+				break;
+
+			default:
+				/* invalid escape */
+				return false;
+			}
+			src += advance;
+		} else {
+			src++;
+		}
+		for (unsigned int i = 0; i < csz; i++) {
+			ADDCHAR(c[i]);
+		}
+	}
+
+	_PROP_ASSERT(*src == '"');
+	if (sizep != NULL) {
+		*sizep = tarindex;
+	}
+	if (cpp != NULL) {
+		*cpp = src;
+	}
+
+	return true;
+}
+
+#undef ADDCHAR
+
+bool
+_prop_object_internalize_decode_string(
+				struct _prop_object_internalize_context *ctx,
+				char *target, size_t targsize, size_t *sizep,
+				const char **cpp)
+{
+	_PROP_ASSERT(ctx->poic_format == PROP_FORMAT_XML ||
+		     ctx->poic_format == PROP_FORMAT_JSON);
+
+	switch (ctx->poic_format) {
+	case PROP_FORMAT_JSON:
+		return _prop_object_internalize_decode_string_json(ctx,
+		    target, targsize, sizep, cpp);
+
+	default:		/* XML */
+		return _prop_object_internalize_decode_string_xml(ctx,
+		    target, targsize, sizep, cpp);
+	}
+}
+
+/*
+ * _prop_object_internalize_skip_whitespace --
+ *	Skip a span of whitespace.
+ */
+const char *
+_prop_object_internalize_skip_whitespace(const char *cp)
+{
+	while (_PROP_ISSPACE(*cp)) {
+		cp++;
+	}
+	return cp;
 }
 
 /*
@@ -613,7 +1116,7 @@ static const struct _prop_object_internalizer {
  *	Determine the object type from the tag in the context and
  *	internalize it.
  */
-prop_object_t
+static prop_object_t
 _prop_object_internalize_by_tag(struct _prop_object_internalize_context *ctx)
 {
 	const struct _prop_object_internalizer *poi;
@@ -624,7 +1127,7 @@ _prop_object_internalize_by_tag(struct _prop_object_internalize_context *ctx)
 
 	_prop_stack_init(&stack);
 
-match_start:
+ match_start:
 	for (poi = _prop_object_internalizer_table;
 	     poi->poi_tag != NULL; poi++) {
 		if (_prop_object_internalize_match(ctx->poic_tagname,
@@ -657,15 +1160,15 @@ match_start:
 	return (parent_obj);
 }
 
-prop_object_t
-_prop_generic_internalize(const char *xml, const char *master_tag)
+/*
+ * _prop_object_internalize_xml --
+ *	Internalize a property list from XML data.
+ */
+static prop_object_t
+_prop_object_internalize_xml(struct _prop_object_internalize_context *ctx,
+    const struct _prop_object_type_tags *initial_tag)
 {
 	prop_object_t obj = NULL;
-	struct _prop_object_internalize_context *ctx;
-
-	ctx = _prop_object_internalize_context_alloc(xml);
-	if (ctx == NULL)
-		return (NULL);
 
 	/* We start with a <plist> tag. */
 	if (_prop_object_internalize_find_tag(ctx, "plist",
@@ -686,8 +1189,10 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 		goto out;
 
 	/* Next we expect to see opening master_tag. */
-	if (_prop_object_internalize_find_tag(ctx, master_tag,
-					      _PROP_TAG_TYPE_START) == false)
+	if (_prop_object_internalize_find_tag(ctx,
+				initial_tag != NULL ? initial_tag->xml_tag
+			      			    : NULL,
+				_PROP_TAG_TYPE_START) == false)
 		goto out;
 
 	obj = _prop_object_internalize_by_tag(ctx);
@@ -695,7 +1200,7 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 		goto out;
 
 	/*
-	 * We've advanced past the closing master_tag.
+	 * We've advanced past the closing main tag.
 	 * Now we want </plist>.
 	 */
 	if (_prop_object_internalize_find_tag(ctx, "plist",
@@ -705,8 +1210,170 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 	}
 
  out:
+	return (obj);
+}
+
+/*
+ * _prop_object_internalize_json --
+ *	Internalize a property list from JSON data.
+ */
+static prop_object_t
+_prop_object_internalize_json(struct _prop_object_internalize_context *ctx,
+    const struct _prop_object_type_tags *initial_tag)
+{
+	prop_object_t obj, parent_obj;
+	void *data, *iter;
+	prop_object_internalizer_continue_t iter_func;
+	struct _prop_stack stack;
+	bool (*intern)(prop_stack_t, prop_object_t *,
+		       struct _prop_object_internalize_context *);
+
+	_prop_stack_init(&stack);
+
+ match_start:
+	intern = NULL;
+	ctx->poic_tagname = ctx->poic_tagattr = ctx->poic_tagattrval = NULL;
+	ctx->poic_tagname_len = ctx->poic_tagattr_len =
+	    ctx->poic_tagattrval_len = 0;
+	ctx->poic_is_empty_element = false;
+	ctx->poic_cp = _prop_object_internalize_skip_whitespace(ctx->poic_cp);
+	switch (ctx->poic_cp[0]) {
+	case '{':
+		ctx->poic_cp++;
+		intern = _prop_dictionary_internalize;
+		break;
+
+	case '[':
+		ctx->poic_cp++;
+		intern = _prop_array_internalize;
+		break;
+
+	case '"':
+		ctx->poic_cp++;
+		/* XXX Slightly gross. */
+		if (*ctx->poic_cp == '"') {
+			ctx->poic_cp++;
+			ctx->poic_is_empty_element = true;
+		}
+		intern = _prop_string_internalize;
+		break;
+
+	case 't':
+		if (ctx->poic_cp[1] == 'r' &&
+		    ctx->poic_cp[2] == 'u' &&
+		    ctx->poic_cp[3] == 'e') {
+			/* XXX Slightly gross. */
+			ctx->poic_tagname = ctx->poic_cp;
+			ctx->poic_tagname_len = 4;
+			ctx->poic_is_empty_element = true;
+			intern = _prop_bool_internalize;
+			ctx->poic_cp += 4;
+		}
+		break;
+
+	case 'f':
+		if (ctx->poic_cp[1] == 'a' &&
+		    ctx->poic_cp[2] == 'l' &&
+		    ctx->poic_cp[3] == 's' &&
+		    ctx->poic_cp[4] == 'e') {
+			/* XXX Slightly gross. */
+			ctx->poic_tagname = ctx->poic_cp;
+			ctx->poic_tagname_len = 5;
+			ctx->poic_is_empty_element = true;
+			intern = _prop_bool_internalize;
+			ctx->poic_cp += 5;
+		}
+		break;
+
+	default:
+		if (ctx->poic_cp[0] == '+' ||
+		    ctx->poic_cp[0] == '-' ||
+		    (ctx->poic_cp[0] >= '0' && ctx->poic_cp[0] <= '9')) {
+			intern = _prop_number_internalize;
+		}
+		break;
+	}
+
+	if (intern == NULL) {
+		while (_prop_stack_pop(&stack, &obj, &iter, &data, NULL)) {
+			iter_func = (prop_object_internalizer_continue_t)iter;
+			(*iter_func)(&stack, &obj, ctx, data, NULL);
+		}
+		return NULL;
+	}
+
+	obj = NULL;
+	if ((*intern)(&stack, &obj, ctx) == false) {
+		goto match_start;
+	}
+
+	parent_obj = obj;
+	while (_prop_stack_pop(&stack, &parent_obj, &iter, &data, NULL)) {
+		iter_func = (prop_object_internalizer_continue_t)iter;
+		if ((*iter_func)(&stack, &parent_obj, ctx, data,
+							obj) == false) {
+			goto match_start;
+		}
+		obj = parent_obj;
+	}
+
+	/* Ensure there's no trailing junk. */
+	if (parent_obj != NULL) {
+		ctx->poic_cp =
+		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
+		if (!_PROP_EOF(*ctx->poic_cp)) {
+			prop_object_release(parent_obj);
+			parent_obj = NULL;
+		}
+	}
+	return parent_obj;
+}
+
+/*
+ * _prop_object_internalize --
+ *	Internalize a property list from a NUL-terminated data blob.
+ */
+prop_object_t
+_prop_object_internalize(const char *data,
+    const struct _prop_object_type_tags *initial_tag)
+{
+	struct _prop_object_internalize_context *ctx;
+	prop_object_t obj;
+	prop_format_t fmt;
+
+	/*
+	 * Skip all whitespace until and look at the first
+	 * non-whitespace character to determine the format:
+	 * An XML plist will always have '<' as the first non-ws
+	 * character.  If we encounter something else, we assume
+	 * it is JSON.
+	 */
+	data = _prop_object_internalize_skip_whitespace(data);
+	if (_PROP_EOF(*data)) {
+		return NULL;
+	}
+
+	fmt = *data == '<' ? PROP_FORMAT_XML : PROP_FORMAT_JSON;
+
+	ctx = _prop_object_internalize_context_alloc(data, fmt);
+	if (ctx == NULL) {
+		return NULL;
+	}
+
+	if (fmt == PROP_FORMAT_XML) {
+		obj = _prop_object_internalize_xml(ctx, initial_tag);
+	} else {
+		obj = _prop_object_internalize_json(ctx, initial_tag);
+	}
+
  	_prop_object_internalize_context_free(ctx);
 	return (obj);
+}
+
+prop_object_t
+prop_object_internalize(const char *data)
+{
+	return _prop_object_internalize(data, NULL);
 }
 
 /*
@@ -714,7 +1381,7 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
  *	Allocate an internalize context.
  */
 struct _prop_object_internalize_context *
-_prop_object_internalize_context_alloc(const char *xml)
+_prop_object_internalize_context_alloc(const char *data, prop_format_t fmt)
 {
 	struct _prop_object_internalize_context *ctx;
 
@@ -722,19 +1389,36 @@ _prop_object_internalize_context_alloc(const char *xml)
 	if (ctx == NULL)
 		return (NULL);
 
-	ctx->poic_xml = ctx->poic_cp = xml;
+	ctx->poic_format = fmt;
+	ctx->poic_data = ctx->poic_cp = data;
+
+	/*
+	 * If we're digesting JSON, check for a byte order mark and
+	 * skip it, if present.  We should never see one, but we're
+	 * allowed to detect and ignore it.  (RFC 8259 section 8.1)
+	 */
+	if (fmt == PROP_FORMAT_JSON) {
+		if (((unsigned char)data[0] == 0xff &&
+		     (unsigned char)data[1] == 0xfe) ||
+		    ((unsigned char)data[0] == 0xfe &&
+		     (unsigned char)data[1] == 0xff)) {
+			ctx->poic_cp = data + 2;
+		}
+
+		/* No additional processing work to do for JSON. */
+		return ctx;
+	}
 
 	/*
 	 * Skip any whitespace and XML preamble stuff that we don't
 	 * know about / care about.
 	 */
 	for (;;) {
-		while (_PROP_ISSPACE(*xml))
-			xml++;
-		if (_PROP_EOF(*xml) || *xml != '<')
+		data = _prop_object_internalize_skip_whitespace(data);
+		if (_PROP_EOF(*data) || *data != '<')
 			goto bad;
 
-#define	MATCH(str)	(strncmp(&xml[1], str, strlen(str)) == 0)
+#define	MATCH(str)	(strncmp(&data[1], str, strlen(str)) == 0)
 
 		/*
 		 * Skip over the XML preamble that Apple XML property
@@ -742,19 +1426,19 @@ _prop_object_internalize_context_alloc(const char *xml)
 		 */
 		if (MATCH("?xml ") ||
 		    MATCH("!DOCTYPE plist")) {
-			while (*xml != '>' && !_PROP_EOF(*xml))
-				xml++;
-			if (_PROP_EOF(*xml))
+			while (*data != '>' && !_PROP_EOF(*data))
+				data++;
+			if (_PROP_EOF(*data))
 				goto bad;
-			xml++;	/* advance past the '>' */
+			data++;	/* advance past the '>' */
 			continue;
 		}
 
 		if (MATCH("<!--")) {
-			ctx->poic_cp = xml + 4;
+			ctx->poic_cp = data + 4;
 			if (_prop_object_internalize_skip_comment(ctx) == false)
 				goto bad;
-			xml = ctx->poic_cp;
+			data = ctx->poic_cp;
 			continue;
 		}
 
@@ -767,7 +1451,7 @@ _prop_object_internalize_context_alloc(const char *xml)
 		break;
 	}
 
-	ctx->poic_cp = xml;
+	ctx->poic_cp = data;
 	return (ctx);
  bad:
 	_PROP_FREE(ctx, M_TEMP);
@@ -839,69 +1523,104 @@ _prop_object_externalize_file_dirname(const char *path, char *result)
  *	The file is written atomically from the caller's perspective,
  *	and the mode set to 0666 modified by the caller's umask.
  */
-bool
-_prop_object_externalize_write_file(const char *fname, const char *xml,
+static bool
+_prop_object_externalize_write_file(const char *fname, const char *data,
     size_t len)
 {
-	char tname[PATH_MAX];
-	int fd;
+	char tname_store[PATH_MAX];
+	char *tname = NULL;
+	int fd = -1;
 	int save_errno;
 	mode_t myumask;
+	bool rv = false;
 
 	if (len > SSIZE_MAX) {
 		errno = EFBIG;
-		return (false);
+		return false;
 	}
 
 	/*
 	 * Get the directory name where the file is to be written
 	 * and create the temporary file.
 	 */
-	_prop_object_externalize_file_dirname(fname, tname);
+	_prop_object_externalize_file_dirname(fname, tname_store);
 #define PLISTTMP "/.plistXXXXXX"
-	if (strlen(tname) + strlen(PLISTTMP) >= sizeof(tname)) {
+	if (strlen(tname_store) + strlen(PLISTTMP) >= sizeof(tname_store)) {
 		errno = ENAMETOOLONG;
-		return (false);
+		return false;
 	}
-	strcat(tname, PLISTTMP);
+	strcat(tname_store, PLISTTMP);
 #undef PLISTTMP
 
-	if ((fd = mkstemp(tname)) == -1)
+	if ((fd = mkstemp(tname_store)) == -1) {
 		return (false);
+	}
+	tname = tname_store;
 
-	if (write(fd, xml, len) != (ssize_t)len)
+	if (write(fd, data, len) != (ssize_t)len) {
 		goto bad;
+	}
 
-	if (fsync(fd) == -1)
+	if (fsync(fd) == -1) {
 		goto bad;
+	}
 
 	myumask = umask(0);
 	(void)umask(myumask);
-	if (fchmod(fd, 0666 & ~myumask) == -1)
+	if (fchmod(fd, 0666 & ~myumask) == -1) {
 		goto bad;
+	}
 
-	(void) close(fd);
-	fd = -1;
-
-	if (rename(tname, fname) == -1)
+	if (rename(tname, fname) == -1) {
 		goto bad;
+	}
+	tname = NULL;
 
-	return (true);
+	rv = true;
 
  bad:
 	save_errno = errno;
-	if (fd != -1)
+	if (fd != -1) {
 		(void) close(fd);
-	(void) unlink(tname);
+	}
+	if (tname != NULL) {
+		(void) unlink(tname);
+	}
 	errno = save_errno;
-	return (false);
+	return rv;
 }
+
+/*
+ * _prop_object_externalize_to_file --
+ *	Externalize an object to the specified file.
+ */
+bool
+_prop_object_externalize_to_file(struct _prop_object *obj, const char *fname,
+    prop_format_t fmt)
+{
+	char *data = _prop_object_externalize(obj, fmt);
+	if (data == NULL) {
+		return false;
+	}
+	bool rv = _prop_object_externalize_write_file(fname, data,
+	    strlen(data));
+	int save_errno = errno;
+	_PROP_FREE(data, M_TEMP);
+	errno = save_errno;
+
+	return rv;
+}
+
+struct _prop_object_internalize_mapped_file {
+	char *	poimf_xml;
+	size_t	poimf_mapsize;
+};
 
 /*
  * _prop_object_internalize_map_file --
  *	Map a file for the purpose of internalizing it.
  */
-struct _prop_object_internalize_mapped_file *
+static struct _prop_object_internalize_mapped_file *
 _prop_object_internalize_map_file(const char *fname)
 {
 	struct stat sb;
@@ -973,7 +1692,7 @@ _prop_object_internalize_map_file(const char *fname)
  * _prop_object_internalize_unmap_file --
  *	Unmap a file previously mapped for internalizing.
  */
-void
+static void
 _prop_object_internalize_unmap_file(
     struct _prop_object_internalize_mapped_file *mf)
 {
@@ -984,6 +1703,81 @@ _prop_object_internalize_unmap_file(
 #endif
 	(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
 	_PROP_FREE(mf, M_TEMP);
+}
+
+/*
+ * _prop_object_internalize_from_file --
+ *	Internalize a property list from a file.
+ */
+prop_object_t
+_prop_object_internalize_from_file(const char *fname,
+    const struct _prop_object_type_tags *initial_tag)
+{
+	struct _prop_object_internalize_mapped_file *mf;
+	prop_object_t obj;
+
+	mf = _prop_object_internalize_map_file(fname);
+	if (mf == NULL) {
+		return NULL;
+	}
+	obj = _prop_object_internalize(mf->poimf_xml, initial_tag);
+	_prop_object_internalize_unmap_file(mf);
+
+	return obj;
+}
+
+prop_object_t
+prop_object_internalize_from_file(const char *fname)
+{
+	return _prop_object_internalize_from_file(fname, NULL);
+}
+#endif /* !_KERNEL && !_STANDALONE */
+
+prop_format_t	_prop_format_default = PROP_FORMAT_XML;
+
+/*
+ * prop_object_externalize --
+ *	Externalize an object in the default format.
+ */
+char *
+prop_object_externalize(prop_object_t po)
+{
+	return _prop_object_externalize((struct _prop_object *)po,
+	    _prop_format_default);
+}
+
+/*
+ * prop_object_externalize_with_format --
+ *	Externalize an object in the specified format.
+ */
+char *
+prop_object_externalize_with_format(prop_object_t po, prop_format_t fmt)
+{
+	return _prop_object_externalize((struct _prop_object *)po, fmt);
+}
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/*
+ * prop_object_externalize_to_file --
+ *	Externalize an object to the specifed file in the default format.
+ */
+bool
+prop_object_externalize_to_file(prop_object_t po, const char *fname)
+{
+	return _prop_object_externalize_to_file((struct _prop_object *)po,
+	    fname, _prop_format_default);
+}
+
+/*
+ * prop_object_externalize_to_file_with_format --
+ *	Externalize an object to the specifed file in the specified format.
+ */
+bool
+prop_object_externalize_to_file_with_format(prop_object_t po,
+    const char *fname, prop_format_t fmt)
+{
+	return _prop_object_externalize_to_file((struct _prop_object *)po,
+	    fname, fmt);
 }
 #endif /* !_KERNEL && !_STANDALONE */
 

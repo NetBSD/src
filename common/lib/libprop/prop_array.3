@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.15 2020/06/06 21:25:59 thorpej Exp $
+.\"	$NetBSD: prop_array.3,v 1.16 2025/04/23 02:58:52 thorpej Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 10, 2009
+.Dd April 20, 2025
 .Dt PROP_ARRAY 3
 .Os
 .Sh NAME
@@ -50,8 +50,6 @@
 .Nm prop_array_internalize ,
 .Nm prop_array_externalize_to_file ,
 .Nm prop_array_internalize_from_file ,
-.Nm prop_array_externalize_to_pref ,
-.Nm prop_array_internalize_from_pref ,
 .Nm prop_array_equals
 .Nd array property collection object
 .Sh LIBRARY
@@ -96,18 +94,12 @@
 .Ft char *
 .Fn prop_array_externalize "prop_array_t array"
 .Ft prop_array_t
-.Fn prop_array_internalize "const char *xml"
+.Fn prop_array_internalize "const char *data"
 .\"
 .Ft bool
 .Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
 .Ft prop_array_t
 .Fn prop_array_internalize_from_file "const char *path"
-.\"
-.Ft bool
-.Fn prop_array_externalize_to_pref "prop_array_t array" "struct plistref *pref"
-.Ft bool
-.Fn prop_array_internalize_from_pref "const struct plistref *pref" \
-    "prop_array_t *arrayp"
 .\"
 .Ft bool
 .Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
@@ -230,60 +222,24 @@ Remove the reference to the object stored at array index
 The object will be released and the array compacted following
 the removal.
 .It Fn prop_array_externalize "prop_array_t array"
-Externalizes an array, returning a NUL-terminated buffer containing
-the XML representation of the array.
-The caller is responsible for freeing the returned buffer.
-If converting to the external representation fails for any reason,
-.Dv NULL
-is returned.
-.Pp
-In user space, the buffer is allocated using
-.Xr malloc 3 .
-In the kernel, the buffer is allocated using
-.Xr malloc 9
-using the malloc type
-.Dv M_TEMP .
-.It Fn prop_array_internalize "const char *xml"
-Parse the XML representation of a property list in the NUL-terminated
-buffer
-.Fa xml
-and return the corresponding array.
-Returns
-.Dv NULL
-if parsing fails for any reason.
+This is an alias of
+.Fn prop_object_externalize
+provided for backwards compatibility.
+.It Fn prop_array_internalize "const char *data"
+This is a wrapper around
+.Fn prop_object_internalize
+provided for backwards compatbility.
+In order to preserve previous behavior,
+.Fn prop_array_internalize
+will fail if the resulting object is not an array.
 .It Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
-Externalizes an array and writes it to the file specified by
-.Fa path .
-The file is saved with the mode
-.Dv 0666
-as modified by the process's file creation mask
-.Pq see Xr umask 2
-and is written atomically.
-Returns
-.Dv false
-if externalizing or writing the array fails for any reason.
+This is an alias of
+.Fn prop_object_externalize_to_file
+provided for backwards compatibility.
 .It Fn prop_array_internalize_from_file "const char *path"
-Reads the XML property list contained in the file specified by
-.Fa path ,
-internalizes it, and returns the corresponding array.
-Returns
-.Dv NULL
-on failure.
-.It Fn prop_array_externalize_to_pref "prop_array_t array" \
-    "struct plistref *pref"
-Externalizes an array and packs it into the plistref specified by
-.Fa pref .
-Returns
-.Dv false
-if externalizing the array fails for any reason.
-.It Fn prop_array_internalize_from_pref "const struct plistref *pref" \
-    "prop_array_t *arrayp"
-Reads the plistref specified by
-.Fa pref ,
-internalizes it, and returns the corresponding array.
-Returns
-.Dv false
-if internalizing or writing the array fails for any reason.
+This is a wrapper around
+.Fn prop_object_internalize_from_file
+provided for backwards compatibility.
 .It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 Returns
 .Dv true

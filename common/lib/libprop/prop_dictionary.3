@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.21 2025/04/02 00:51:15 gutteridge Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.22 2025/04/23 02:58:52 thorpej Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2009
+.Dd April 20, 2025
 .Dt PROP_DICTIONARY 3
 .Os
 .Sh NAME
@@ -52,8 +52,6 @@
 .Nm prop_dictionary_internalize ,
 .Nm prop_dictionary_externalize_to_file ,
 .Nm prop_dictionary_internalize_from_file ,
-.Nm prop_dictionary_externalize_to_pref ,
-.Nm prop_dictionary_internalize_from_pref ,
 .Nm prop_dictionary_equals ,
 .Nm prop_dictionary_keysym_value ,
 .Nm prop_dictionary_keysym_equals
@@ -120,20 +118,13 @@
 .Ft char *
 .Fn prop_dictionary_externalize "prop_dictionary_t dict"
 .Ft prop_dictionary_t
-.Fn prop_dictionary_internalize "const char *xml"
+.Fn prop_dictionary_internalize "const char *data"
 .\"
 .Ft bool
 .Fn prop_dictionary_externalize_to_file "prop_dictionary_t dict" \
     "const char *path"
 .Ft prop_dictionary_t
 .Fn prop_dictionary_internalize_from_file "const char *path"
-.\"
-.Ft bool
-.Fn prop_dictionary_externalize_to_pref "prop_dictionary_t dict" \
-    "struct plistref *pref"
-.Ft bool
-.Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
-    "prop_dictionary_t *dictp"
 .\"
 .Sh DESCRIPTION
 The
@@ -281,61 +272,25 @@ Returns
 .Dv true
 if the two dictionary key symbols are equivalent.
 .It Fn prop_dictionary_externalize "prop_dictionary_t dict"
-Externalizes a dictionary, returning a NUL-terminated buffer containing
-the XML representation of the dictionary.
-The caller is responsible for freeing the returned buffer.
-If converting to the external representation fails for any reason,
-.Dv NULL
-is returned.
-.Pp
-In user space, the buffer is allocated using
-.Xr malloc 3 .
-In the kernel, the buffer is allocated using
-.Xr malloc 9
-using the malloc type
-.Dv M_TEMP .
-.It Fn prop_dictionary_internalize "const char *xml"
-Parse the XML representation of a property list in the NUL-terminated
-buffer
-.Fa xml
-and return the corresponding dictionary.
-Returns
-.Dv NULL
-if parsing fails for any reason.
+This is an alias of
+.Fn prop_object_externalize
+provided for backwards compatibility.
+.It Fn prop_dictionary_internalize "const char *data"
+This is a wrapper around
+.Fn prop_object_internalize
+provided for backwards compatbility.
+In order to preserve previous behavior,
+.Fn prop_dictionary_internalize
+will fail if the resulting object is not a dictionary.
 .It Fn prop_dictionary_externalize_to_file "prop_dictionary_t dict" \
     "const char *path"
-Externalizes a dictionary and writes it to the file specified by
-.Fa path .
-The file is saved with the mode
-.Dv 0666
-as modified by the process's file creation mask
-.Pq see Xr umask 2
-and is written atomically.
-Returns
-.Dv false
-if externalizing or writing the dictionary fails for any reason.
+This is an alias of
+.Fn prop_object_externalize_to_file
+provided for backwards compatibility.
 .It Fn prop_dictionary_internalize_from_file "const char *path"
-Reads the XML property list contained in the file specified by
-.Fa path ,
-internalizes it, and returns the corresponding dictionary.
-Returns
-.Dv NULL
-on failure.
-.It Fn prop_dictionary_externalize_to_pref "prop_dictionary_t dict" \
-    "struct plistref *pref"
-Externalizes a dictionary and packs it into the plistref specified by
-.Fa pref .
-Returns
-.Dv false
-if externalizing the dictionary fails for any reason.
-.It Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
-    "prop_dictionary_t *dictp"
-Reads the plistref specified by
-.Fa pref ,
-internalizes it, and returns the corresponding dictionary.
-Returns
-.Dv false
-if internalizing or writing the dictionary fails for any reason.
+This is a wrapper around
+.Fn prop_object_internalize_from_file
+provided for backwards compatibility.
 .El
 .Sh SEE ALSO
 .Xr prop_array 3 ,

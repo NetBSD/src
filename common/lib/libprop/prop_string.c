@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_string.c,v 1.18 2023/11/17 21:29:33 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.19 2025/04/23 02:58:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,9 +56,15 @@ struct _prop_string {
 #define	PS_F_MUTABLE		0x02
 
 _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
-
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
+
+/* Used by prop_dictionary.c */
+const struct _prop_object_type_tags _prop_string_type_tags = {
+	.xml_tag		=	"string",
+	.json_open_tag		=	"\"",
+	.json_close_tag		=	"\"",
+};
 
 static _prop_object_free_rv_t
 		_prop_string_free(prop_stack_t, prop_object_t *);
@@ -167,22 +173,34 @@ _prop_string_free(prop_stack_t stack, prop_object_t *obj)
 	return (_PROP_OBJECT_FREE_DONE);
 }
 
+bool
+_prop_string_externalize_internal(struct _prop_object_externalize_context *ctx,
+				  const struct _prop_object_type_tags *tags,
+				  const char *str)
+{
+	if (_prop_object_externalize_start_tag(ctx, tags, NULL) == false ||
+	    _prop_object_externalize_append_encoded_cstring(ctx,
+						str) == false ||
+	    _prop_object_externalize_end_tag(ctx, tags) == false) {
+		return false;
+	}
+
+	return true;
+}
+
 static bool
 _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
 {
 	prop_string_t ps = v;
 
-	if (ps->ps_size == 0)
-		return (_prop_object_externalize_empty_tag(ctx, "string"));
+	if (ps->ps_size == 0) {
+		return _prop_object_externalize_empty_tag(ctx,
+		    &_prop_string_type_tags);
+	}
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
-	    _prop_object_externalize_append_encoded_cstring(ctx,
-	    					ps->ps_immutable) == false ||
-	    _prop_object_externalize_end_tag(ctx, "string") == false)
-		return (false);
-
-	return (true);
+	return _prop_string_externalize_internal(ctx, &_prop_string_type_tags,
+	    ps->ps_immutable);
 }
 
 /* ARGSUSED */
@@ -258,7 +276,7 @@ _prop_string_instantiate(int const flags, const char * const str,
 			}
 		}
 	} else if ((flags & PS_F_NOCOPY) == 0) {
-		_PROP_FREE(__UNCONST(str), M_PROP_STRING);
+		_PROP_FREE(_PROP_UNCONST(str), M_PROP_STRING);
 	}
 
 	return (ps);
@@ -649,6 +667,10 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 	char *str;
 	size_t len, alen;
 
+	/*
+	 * N.B. for empty JSON strings, the layer above us has made it
+	 * look like XML.
+	 */
 	if (ctx->poic_is_empty_element) {
 		*obj = prop_string_create();
 		return (true);
@@ -675,10 +697,18 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 	}
 	str[len] = '\0';
 
-	if (_prop_object_internalize_find_tag(ctx, "string",
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		if (*ctx->poic_cp != '"') {
+			_PROP_FREE(str, M_PROP_STRING);
+			return (true);
+		}
+		ctx->poic_cp++;
+	} else {
+		if (_prop_object_internalize_find_tag(ctx, "string",
 					      _PROP_TAG_TYPE_END) == false) {
-		_PROP_FREE(str, M_PROP_STRING);
-		return (true);
+			_PROP_FREE(str, M_PROP_STRING);
+			return (true);
+		}
 	}
 
 	*obj = _prop_string_instantiate(0, str, len);

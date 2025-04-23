@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_object.h,v 1.8 2008/12/05 13:11:41 ad Exp $	*/
+/*	$NetBSD: prop_object.h,v 1.9 2025/04/23 02:58:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,6 +53,11 @@ typedef enum {
 #endif	/* !_PROPLIB_ZFS_CONFLICT */
 } prop_type_t;
 
+typedef enum {
+	PROP_FORMAT_XML		=	0,
+	PROP_FORMAT_JSON	=	1
+} prop_format_t;
+
 __BEGIN_DECLS
 void		prop_object_retain(prop_object_t);
 void		prop_object_release(prop_object_t);
@@ -60,13 +65,53 @@ void		prop_object_release(prop_object_t);
 prop_type_t	prop_object_type(prop_object_t);
 
 bool		prop_object_equals(prop_object_t, prop_object_t);
-bool		prop_object_equals_with_error(prop_object_t, prop_object_t, bool *);
+bool		prop_object_equals_with_error(prop_object_t, prop_object_t,
+		    bool *);
 
 typedef struct _prop_object_iterator *prop_object_iterator_t;
 
 prop_object_t	prop_object_iterator_next(prop_object_iterator_t);
 void		prop_object_iterator_reset(prop_object_iterator_t);
 void		prop_object_iterator_release(prop_object_iterator_t);
+
+char *		prop_object_externalize(prop_object_t);
+char *		prop_object_externalize_with_format(prop_object_t,
+		    prop_format_t);
+bool		prop_object_externalize_to_file(prop_object_t, const char *);
+bool		prop_object_externalize_to_file_with_format(prop_object_t,
+		    const char *, prop_format_t);
+
+prop_object_t	prop_object_internalize(const char *);
+prop_object_t	prop_object_internalize_from_file(const char *);
+
+#if defined(__NetBSD__)
+struct plistref;
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+int		prop_object_send_ioctl(prop_object_t, int,
+		    unsigned long);
+int		prop_object_recv_ioctl(int, unsigned long,
+		    prop_object_t *);
+int		prop_object_sendrecv_ioctl(prop_object_t, int,
+		    unsigned long, prop_object_t *);
+int		prop_object_send_syscall(prop_object_t,
+		    struct plistref *);
+int		prop_object_recv_syscall(const struct plistref *,
+		    prop_object_t *);
+#elif defined(_KERNEL)
+int		prop_object_copyin(const struct plistref *,
+		    prop_object_t *);
+int		prop_object_copyin_size(const struct plistref *,
+		    prop_object_t *, size_t);
+int		prop_object_copyout(struct plistref *, prop_object_t);
+int		prop_object_copyin_ioctl(const struct plistref *,
+		    const u_long, prop_object_t *);
+int		prop_object_copyin_ioctl_size(const struct plistref *,
+		    const u_long, prop_object_t *, size_t);
+int		prop_object_copyout_ioctl(struct plistref *, const u_long,
+		    prop_object_t);
+#endif
+#endif /* __NetBSD__ */
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_OBJECT_H_ */

@@ -1,6 +1,6 @@
-.\"	$NetBSD: prop_object.3,v 1.10 2020/06/06 21:25:59 thorpej Exp $
+.\"	$NetBSD: prop_object.3,v 1.11 2025/04/23 02:58:52 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 21, 2006
+.Dd April 20, 2025
 .Dt PROP_OBJECT 3
 .Os
 .Sh NAME
@@ -38,7 +38,13 @@
 .Nm prop_object_equals ,
 .Nm prop_object_iterator_next ,
 .Nm prop_object_iterator_reset ,
-.Nm prop_object_iterator_release
+.Nm prop_object_iterator_release ,
+.Nm prop_object_externalize ,
+.Nm prop_object_externalize_with_format ,
+.Nm prop_object_externalize_to_file ,
+.Nm prop_object_externalize_to_file_with_format ,
+.Nm prop_object_internalize ,
+.Nm prop_object_internalize_from_file
 .Nd general property container object functions
 .Sh LIBRARY
 .Lb libprop
@@ -61,6 +67,22 @@
 .Fn prop_object_iterator_reset "prop_object_iterator_t iter"
 .Ft void
 .Fn prop_object_iterator_release "prop_object_iterator_t iter"
+.\"
+.Ft char *
+.Fn prop_object_externalize "prop_object_t obj"
+.Ft char *
+.Fn prop_object_externalize_with_format "prop_object_t obj" \
+    "prop_format_t format"
+.Ft bool
+.Fn prop_object_externalize_to_file "prop_object_t obj" "const char *path"
+.Ft bool
+.Fn prop_object_externalize_to_file_with_format "prop_object_t obj" \
+    "const char *path" "prop_format_t format"
+.\"
+.Ft prop_object_t
+.Fn prop_object_internalize "const char *data"
+.Ft prop_object_t
+.Fn prop_object_internalize_from_file "const char *path"
 .Sh DESCRIPTION
 The
 .Nm
@@ -125,6 +147,62 @@ by the iterator
 .It Fn prop_object_iterator_release "prop_object_iterator_t iter"
 Release the iterator
 .Fa iter .
+.It Fn prop_object_externalize "prop_object_t obj"
+Externalizes an object, returning a NUL-terminated buffer containing
+a representation of the object in the default format
+.Pq XML property list .
+The caller is responsible for freeing the returned buffer.
+If converting to the external representation fails for any reason,
+.Dv NULL
+is returned.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.It Fn prop_object_externalize_with_format "prop_object_t obj" \
+    "prop_format_t format"
+Like
+.Fn prop_object_externalize ,
+except the output format is specified explicitly.
+The following formats are supported:
+.Pp
+.Bl -tag -width "PROP_FORMAT_JSON" -compact
+.It Dv PROP_FORMAT_JSON
+RFC 8259 JSON format
+.It Dv PROP_FORMAT_XML
+XML property list format
+.El
+.It Fn prop_object_externalize_to_file "prop_object_t" \
+    "const char *path"
+.It Fn prop_object_externalize_to_file_with_format "prop_object_t" \
+    "const char *path" "prop_format_t format"
+Like
+.Fn prop_object_externalize
+and
+.Fn prop_object_externalize_with_format ,
+except the external representation is written to the file specified by
+.Fa path .
+The file is saved with the mode
+.Dv 0666
+as modified by the process's file creation mask
+.Pq see Xr umask 2
+and is written atomically.
+Returns
+.Dv false
+if externalizing the object or writing the file fails for any reason.
+.It Fn prop_object_internalize "const char *data"
+Parses the external representation of an object in the NUL-terminated
+buffer
+.Fa data
+and returns the corresponding object.
+The format of the external representation is detected automatically.
+Returns
+.Dv NULL
+if parsing fails for any reason.
+.It Fn prop_object_internalize_from_file "const char *path"
 .El
 .Sh SEE ALSO
 .Xr prop_array 3 ,

@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_data.c,v 1.18 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.19 2025/04/23 02:58:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,9 +59,12 @@ struct _prop_data {
 #define	PD_F_MUTABLE		0x02
 
 _PROP_POOL_INIT(_prop_data_pool, sizeof(struct _prop_data), "propdata")
-
 _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
+
+static const struct _prop_object_type_tags _prop_data_type_tags = {
+	.xml_tag		=	"data",
+};
 
 static _prop_object_free_rv_t
 		_prop_data_free(prop_stack_t, prop_object_t *);
@@ -109,10 +112,22 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	uint8_t output[4];
 	uint8_t input[3];
 
-	if (pd->pd_size == 0)
-		return (_prop_object_externalize_empty_tag(ctx, "data"));
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
 
-	if (_prop_object_externalize_start_tag(ctx, "data") == false)
+	/*
+	 * JSON does not have a syntax for serialized binary data.
+	 */
+	if (ctx->poec_format == PROP_FORMAT_JSON) {
+		return false;
+	}
+
+	if (pd->pd_size == 0)
+		return (_prop_object_externalize_empty_tag(ctx,
+		    &_prop_data_type_tags));
+
+	if (_prop_object_externalize_start_tag(ctx,
+				&_prop_data_type_tags, NULL) == false)
 		return (false);
 
 	for (src = pd->pd_immutable, srclen = pd->pd_size;
@@ -169,7 +184,8 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 			return (false);
 	}
 
-	if (_prop_object_externalize_end_tag(ctx, "data") == false)
+	if (_prop_object_externalize_end_tag(ctx,
+					&_prop_data_type_tags) == false)
 		return (false);
 
 	return (true);
@@ -620,6 +636,11 @@ _prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
 	prop_data_t data;
 	uint8_t *buf;
 	size_t len, alen;
+
+	/* No JSON binary data object representation. */
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		return true;
+	}
 
 	/*
 	 * We don't accept empty elements.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2020/06/06 21:25:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2025/04/23 02:58:53 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,8 @@ MLINKS+= prop_copyin_ioctl.9 prop_array_copyin_ioctl.9
 MLINKS+= prop_copyin_ioctl.9 prop_array_copyout_ioctl.9
 MLINKS+= prop_copyin_ioctl.9 prop_dictionary_copyin_ioctl.9
 MLINKS+= prop_copyin_ioctl.9 prop_dictionary_copyout_ioctl.9
+MLINKS+= prop_copyin_ioctl.9 prop_object_copyin_ioctl.9
+MLINKS+= prop_copyin_ioctl.9 prop_object_copyout_ioctl.9
 
 MAN+=	prop_send_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_array_send_ioctl.3
@@ -30,12 +32,17 @@ MLINKS+= prop_send_ioctl.3 prop_array_recv_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_send_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_recv_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_sendrecv_ioctl.3
+MLINKS+= prop_send_ioctl.3 prop_object_send_ioctl.3
+MLINKS+= prop_send_ioctl.3 prop_object_recv_ioctl.3
+MLINKS+= prop_send_ioctl.3 prop_object_sendrecv_ioctl.3
 
 MAN+=	prop_send_syscall.3
 MLINKS+= prop_send_syscall.3 prop_array_send_syscall.3
 MLINKS+= prop_send_syscall.3 prop_array_recv_syscall.3
 MLINKS+= prop_send_syscall.3 prop_dictionary_send_syscall.3
 MLINKS+= prop_send_syscall.3 prop_dictionary_recv_syscall.3
+MLINKS+= prop_send_syscall.3 prop_object_send_syscall.3
+MLINKS+= prop_send_syscall.3 prop_object_recv_syscall.3
 
 MAN+=	prop_dictionary_util.3
 MLINKS+= prop_dictionary_util.3 prop_dictionary_get_bool.3
@@ -93,11 +100,9 @@ MLINKS+= prop_array.3 prop_array_ensure_capacity.3
 MLINKS+= prop_array.3 prop_array_equals.3
 MLINKS+= prop_array.3 prop_array_externalize.3
 MLINKS+= prop_array.3 prop_array_externalize_to_file.3
-MLINKS+= prop_array.3 prop_array_externalize_to_pref.3
 MLINKS+= prop_array.3 prop_array_get.3
 MLINKS+= prop_array.3 prop_array_internalize.3
 MLINKS+= prop_array.3 prop_array_internalize_from_file.3
-MLINKS+= prop_array.3 prop_array_internalize_from_pref.3
 MLINKS+= prop_array.3 prop_array_iterator.3
 MLINKS+= prop_array.3 prop_array_make_immutable.3
 MLINKS+= prop_array.3 prop_array_mutable.3
@@ -208,12 +213,10 @@ MLINKS+= prop_dictionary.3 prop_dictionary_ensure_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize_to_file.3
-MLINKS+= prop_dictionary.3 prop_dictionary_externalize_to_pref.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize_from_file.3
-MLINKS+= prop_dictionary.3 prop_dictionary_internalize_from_pref.3
 MLINKS+= prop_dictionary.3 prop_dictionary_iterator.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_make_immutable.3
@@ -271,6 +274,14 @@ MLINKS+= prop_object.3 prop_object_iterator_reset.3
 MLINKS+= prop_object.3 prop_object_release.3
 MLINKS+= prop_object.3 prop_object_retain.3
 MLINKS+= prop_object.3 prop_object_type.3
+
+MLINKS+= prop_object.3 prop_object_externalize.3
+MLINKS+= prop_object.3 prop_object_externalize_with_format.3
+MLINKS+= prop_object.3 prop_object_externalize_to_file.3
+MLINKS+= prop_object.3 prop_object_externalize_to_file_with_format.3
+
+MLINKS+= prop_object.3 prop_object_internalize.3
+MLINKS+= prop_object.3 prop_object_internalize_from_file.3
 
 MLINKS+= prop_string.3 prop_string_compare.3
 MLINKS+= prop_string.3 prop_string_compare_string.3

@@ -1,6 +1,6 @@
-.\"	$NetBSD: proplib.3,v 1.9 2020/06/06 21:25:59 thorpej Exp $
+.\"	$NetBSD: proplib.3,v 1.10 2025/04/23 02:58:52 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 2, 2020
+.Dd April 20, 2025
 .Dt PROPLIB 3
 .Os
 .Sh NAME
@@ -48,11 +48,16 @@ Structure is provided by the array and dictionary collection types.
 .Pp
 Property lists can be passed across protection boundaries by translating
 them to an external representation.
-This external representation is an XML document whose format is described
-by the following DTD:
+There are two formats availavble for external representation:
+.Bl -bullet
+.It
+An XML document whose format is described by the following DTD:
 .Bd -literal -offset indent
 .Lk http://www.apple.com/DTDs/PropertyList-1.0.dtd
 .Ed
+.It
+A JSON document whose format is described by RFC 8259.
+.El
 .Pp
 Property container objects are reference counted.
 When an object is created, its reference count is set to 1.
@@ -102,6 +107,8 @@ The
 .Nm
 property container object library first appeared in
 .Nx 4.0 .
+Support for the JSON serialization format was added in
+.Nx 11.0 .
 .Sh CAVEATS
 .Nm
 does not have a
@@ -110,6 +117,13 @@ object type, and thus will not parse
 .Sq date
 elements from an Apple XML property list.
 .Pp
+.Nm
+does not have a
+.Sq null
+object type, and thus will not parse
+.Sq null
+elements from a JSON document.
+.Pp
 The
 .Nm
 .Sq number
@@ -117,20 +131,33 @@ object type differs from the Apple XML property list format in the following
 ways:
 .Bl -bullet
 .It
-The external representation is in base 16, not base 10.
+The external representation for unsigned numbers is in base 16, not base 10.
 .Nm
 is able to parse base 8, base 10, and base 16
 .Sq integer
 elements.
+Signed numbers are represented in base 10.
 .It
-Internally, integers are always stored as unsigned numbers
-.Pq uintmax_t .
-Therefore, the external representation will never be negative.
-.It
-Because floating point numbers are not supported,
+.Nm
+does not support floating point numbers, so
 .Sq real
 elements from an Apple XML property list will not be parsed.
 .El
+.Pp
+Similarly,
+.Nm
+does not parse floating point numbers
+.Pq as described in RFC 8259
+in JSON documents.
+For JSON documents, all numbers are represented in base 10.
+.Pp
+JSON does not have an opaque data element that is functionally equivalent
+to the
+.Sq data
+elements in XML property lists.
+As such, a property list containing
+.Sq data
+objects cannot be externalized into a JSON document.
 .Pp
 In order to facilitate use of
 .Nm
