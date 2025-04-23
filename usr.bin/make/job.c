@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.496 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.497 2025/04/23 19:27:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.496 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.497 2025/04/23 19:27:23 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -642,9 +642,20 @@ JobSigUnlock(sigset_t *omaskp)
 }
 
 static void
+SetNonblocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		Punt("SetNonblocking.get: %s", strerror(errno));
+	flags |= O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, flags) == -1)
+		Punt("SetNonblocking.set: %s", strerror(errno));
+}
+
+static void
 JobCreatePipe(Job *job, int minfd)
 {
-	int i, fd, flags;
+	int i;
 	int pipe_fds[2];
 
 	if (pipe(pipe_fds) == -1)
@@ -652,7 +663,7 @@ JobCreatePipe(Job *job, int minfd)
 
 	for (i = 0; i < 2; i++) {
 		/* Avoid using low-numbered fds */
-		fd = fcntl(pipe_fds[i], F_DUPFD, minfd);
+		int fd = fcntl(pipe_fds[i], F_DUPFD, minfd);
 		if (fd != -1) {
 			close(pipe_fds[i]);
 			pipe_fds[i] = fd;
@@ -673,12 +684,7 @@ JobCreatePipe(Job *job, int minfd)
 	 * race for the token when a new one becomes available, so the read
 	 * from the pipe should not block.
 	 */
-	flags = fcntl(job->inPipe, F_GETFL, 0);
-	if (flags == -1)
-		Punt("Cannot get flags: %s", strerror(errno));
-	flags |= O_NONBLOCK;
-	if (fcntl(job->inPipe, F_SETFL, flags) == -1)
-		Punt("Cannot set flags: %s", strerror(errno));
+	SetNonblocking(job->inPipe);
 }
 
 /* Pass the signal to each running job. */
@@ -2741,6 +2747,13 @@ Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	return fd;
 }
 
+static void
+TokenPool_Write(char tok)
+{
+	if (write(tokenPoolJob.outPipe, &tok, 1) != 1)
+		Punt("Cannot write \"%c\" to the token pool", tok);
+}
+
 /*
  * Put a token (back) into the job token pool.
  * This allows a make process to start a build job.
@@ -2755,9 +2768,8 @@ TokenPool_Add(void)
 		continue;
 
 	DEBUG3(JOB, "(%d) aborting %d, deposit token %c\n",
-	    getpid(), aborting, JOB_TOKENS[aborting]);
-	while (write(tokenPoolJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
-		continue;
+	    getpid(), aborting, tok);
+	TokenPool_Write(tok);
 }
 
 static void
@@ -2787,11 +2799,8 @@ TokenPool_InitServer(int max_tokens)
 	/*
 	 * Preload the job pipe with one token per job, save the one
 	 * "extra" token for the primary job.
-	 *
-	 * XXX should clip maxJobs against PIPE_BUF -- if max_tokens is
-	 * larger than the write buffer size of the pipe, we will
-	 * deadlock here.
 	 */
+	SetNonblocking(tokenPoolJob.outPipe);
 	for (i = 1; i < max_tokens; i++)
 		TokenPool_Add();
 }
@@ -2855,9 +2864,7 @@ TokenPool_Take(void)
 		while (read(tokenPoolJob.inPipe, &tok1, 1) == 1)
 			continue;
 		/* And put the stopper back */
-		while (write(tokenPoolJob.outPipe, &tok, 1) == -1 &&
-		       errno == EAGAIN)
-			continue;
+		TokenPool_Write(tok);
 		if (shouldDieQuietly(NULL, 1)) {
 			Job_Wait();
 			exit(6);
@@ -2868,9 +2875,7 @@ TokenPool_Take(void)
 
 	if (count == 1 && jobTokensRunning == 0)
 		/* We didn't want the token really */
-		while (write(tokenPoolJob.outPipe, &tok, 1) == -1 &&
-		       errno == EAGAIN)
-			continue;
+		TokenPool_Write(tok);
 
 	jobTokensRunning++;
 	DEBUG1(JOB, "(%d) withdrew token\n", getpid());
