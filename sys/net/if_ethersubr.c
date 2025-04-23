@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.329 2024/09/28 09:03:13 mlelstv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.329 2024/09/28 09:03:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1044,7 +1044,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	if (lla != NULL && ETHER_IS_MULTICAST(lla))
 		aprint_error("The multicast bit is set in the MAC address. "
 			"It's wrong.\n");
-	
+
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
