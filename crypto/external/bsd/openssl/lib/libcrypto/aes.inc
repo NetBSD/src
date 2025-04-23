@@ -1,4 +1,4 @@
-#	$NetBSD: aes.inc,v 1.5 2023/05/06 17:07:22 christos Exp $
+#	$NetBSD: aes.inc,v 1.6 2025/04/23 20:14:59 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/aes
 
@@ -14,6 +14,5 @@ aes_wrap.c \
 
 SRCS += ${AES_SRCS}
 
-.for cryptosrc in ${AES_SRCS}
-CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/aes ${AESCPPFLAGS}
-.endfor
+# need for all files
+CPPFLAGS+=${AESCPPFLAGS}
