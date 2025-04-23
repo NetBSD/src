@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.390 2025/04/22 10:22:29 martin Exp $
+#	$NetBSD: build.sh,v 1.391 2025/04/23 06:06:55 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2205,7 +2205,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.390 2025/04/22 10:22:29 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.391 2025/04/23 06:06:55 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2770,11 +2770,7 @@ setup_mkrepro()
 			rid="${base}:$(
 			   cd "${d}" && git log -1 --format=%H)" ||
 				bomb "git log %H failed"
-			if [ -n "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
-			else
-				NETBSD_REVISIONID="$rid"
-			fi
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=git
 		elif [ -d "${d}.hg" ]
 		then
@@ -2784,11 +2780,7 @@ setup_mkrepro()
 			rid=$(hg --repo "$d" \
 			    identify --template '{id}\n') ||
 				bomb "hg identify failed"
-			if [ -n "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
-			else
-				NETBSD_REVISIONID="$rid"
-			fi
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]
 		then
@@ -2806,11 +2798,7 @@ setup_mkrepro()
 			    awk '/^node:/ { print $2 }' <"${d}.hg_archival.txt"
 			  ) || bomb \
 			      "awk failed to find node: in ${d}.hg_archival.txt"
-			if [ -n "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${NETBSD_REVISIONID}-${rid}"
-			else
-				NETBSD_REVISIONID="$rid"
-			fi
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
