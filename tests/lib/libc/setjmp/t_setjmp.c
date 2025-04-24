@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.8 2025/04/24 01:42:26 riastradh Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.9 2025/04/24 01:42:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.8 2025/04/24 01:42:26 riastradh Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.9 2025/04/24 01:42:38 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -363,10 +363,6 @@ ATF_TC_HEAD(compat13_sigsetjmp_save, tc)
 }
 ATF_TC_BODY(compat13_sigsetjmp_save, tc)
 {
-#ifdef __mips__
-	atf_tc_expect_signal(-1, "PR port-mips/59342:"
-	    " compat_sigsetjmp.S: missing RESTORE_GP64");
-#endif
 	h_check(TEST_COMPAT13_SIGSETJMP_SAVE);
 }
 
@@ -378,10 +374,6 @@ ATF_TC_HEAD(compat13_sigsetjmp_nosave, tc)
 }
 ATF_TC_BODY(compat13_sigsetjmp_nosave, tc)
 {
-#ifdef __mips__
-	atf_tc_expect_signal(-1, "PR port-mips/59343:"
-	    " compat_sigsetjmp.S: missing RESTORE_GP64");
-#endif
 	h_check(TEST_COMPAT13_SIGSETJMP_NOSAVE);
 }
 
