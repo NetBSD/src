@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.5 2025/04/22 17:01:31 riastradh Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.6 2025/04/24 01:41:01 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -45,7 +45,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -56,14 +56,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.5 2025/04/22 17:01:31 riastradh Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.6 2025/04/24 01:41:01 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -78,14 +78,16 @@ __RCSID("$NetBSD: t_setjmp.c,v 1.5 2025/04/22 17:01:31 riastradh Exp $");
 
 #include <atf-c.h>
 
-#define REQUIRE_ERRNO(x) ATF_REQUIRE_MSG(x, "%s", strerror(errno))
+#include "h_macros.h"
 
-#define TEST_SETJMP 0
-#define TEST_U_SETJMP 1
-#define TEST_SIGSETJMP_SAVE 2
-#define TEST_SIGSETJMP_NOSAVE 3
-#define TEST_LONGJMP_ZERO 4
-#define TEST_U_LONGJMP_ZERO 5
+enum test {
+	TEST_SETJMP,
+	TEST_U_SETJMP,
+	TEST_SIGSETJMP_SAVE,
+	TEST_SIGSETJMP_NOSAVE,
+	TEST_LONGJMP_ZERO,
+	TEST_U_LONGJMP_ZERO,
+};
 
 static int expectsignal;
 
@@ -97,7 +99,7 @@ aborthandler(int signo __unused)
 }
 
 static void
-h_check(int test)
+h_check(enum test test)
 {
 	struct sigaction sa;
 	jmp_buf jb;
@@ -109,35 +111,55 @@ h_check(int test)
 	i = getpid();
 	did_longjmp = false;
 
-	if (test == TEST_SETJMP || test == TEST_SIGSETJMP_SAVE ||
-	    test == TEST_LONGJMP_ZERO)
+	switch (test) {
+	case TEST_SETJMP:
+	case TEST_SIGSETJMP_SAVE:
+	case TEST_LONGJMP_ZERO:
 		expectsignal = 0;
-	else if (test == TEST_U_SETJMP || test == TEST_SIGSETJMP_NOSAVE ||
-	    test == TEST_U_LONGJMP_ZERO)
+		break;
+	case TEST_U_SETJMP:
+	case TEST_SIGSETJMP_NOSAVE:
+	case TEST_U_LONGJMP_ZERO:
 		expectsignal = 1;
-	else
+		break;
+	default:
 		atf_tc_fail("unknown test");
+	}
 
 	sa.sa_handler = aborthandler;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	REQUIRE_ERRNO(sigaction(SIGABRT, &sa, NULL) != -1);
-	REQUIRE_ERRNO(sigemptyset(&ss) != -1);
-	REQUIRE_ERRNO(sigaddset(&ss, SIGABRT) != -1);
-	REQUIRE_ERRNO(sigprocmask(SIG_BLOCK, &ss, NULL) != -1);
+	RL(sigaction(SIGABRT, &sa, NULL));
+	RL(sigemptyset(&ss));
+	RL(sigaddset(&ss, SIGABRT));
+	RL(sigprocmask(SIG_BLOCK, &ss, NULL));
 
-	if (test == TEST_SETJMP || test == TEST_LONGJMP_ZERO)
+	switch (test) {
+	case TEST_SETJMP:
+	case TEST_LONGJMP_ZERO:
 		x = setjmp(jb);
-	else if (test == TEST_U_SETJMP || test == TEST_U_LONGJMP_ZERO)
+		break;
+	case TEST_U_SETJMP:
+	case TEST_U_LONGJMP_ZERO:
 		x = _setjmp(jb);
-	else 
+		break;
+	case TEST_SIGSETJMP_SAVE:
+	case TEST_SIGSETJMP_NOSAVE:
 		x = sigsetjmp(sjb, !expectsignal);
+		break;
+	default:
+		atf_tc_fail("unknown test");
+	}
 
 	if (x != 0) {
-		if (test == TEST_LONGJMP_ZERO || test == TEST_U_LONGJMP_ZERO)
+		switch (test) {
+		case TEST_LONGJMP_ZERO:
+		case TEST_U_LONGJMP_ZERO:
 			ATF_REQUIRE_MSG(x == 1, "setjmp returned wrong value");
-		else
+			break;
+		default:
 			ATF_REQUIRE_MSG(x == i, "setjmp returned wrong value");
+		}
 
 		kill(i, SIGABRT);
 		ATF_REQUIRE_MSG(!expectsignal, "kill(SIGABRT) failed");
@@ -146,19 +168,29 @@ h_check(int test)
 		atf_tc_fail("setjmp returned zero after longjmp");
 	}
 
-	REQUIRE_ERRNO(sigprocmask(SIG_UNBLOCK, &ss, NULL) != -1);
+	RL(sigprocmask(SIG_UNBLOCK, &ss, NULL));
 
 	did_longjmp = true;
-	if (test == TEST_SETJMP)
+	switch (test) {
+	case TEST_SETJMP:
 		longjmp(jb, i);
-	else if (test == TEST_LONGJMP_ZERO)
+		break;
+	case TEST_LONGJMP_ZERO:
 		longjmp(jb, 0);
-	else if (test == TEST_U_SETJMP)
+		break;
+	case TEST_U_SETJMP:
 		_longjmp(jb, i);
-	else if (test == TEST_U_LONGJMP_ZERO)
+		break;
+	case TEST_U_LONGJMP_ZERO:
 		_longjmp(jb, 0);
-	else 
+		break;
+	case TEST_SIGSETJMP_SAVE:
+	case TEST_SIGSETJMP_NOSAVE:
 		siglongjmp(sjb, i);
+		break;
+	default:
+		atf_tc_fail("unknown test");
+	}
 
 	atf_tc_fail("jmp failed");
 }
@@ -186,7 +218,8 @@ ATF_TC_BODY(_setjmp, tc)
 ATF_TC(sigsetjmp_save);
 ATF_TC_HEAD(sigsetjmp_save, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks sigsetjmp(3) with savemask enabled");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks sigsetjmp(3) with savemask enabled");
 }
 ATF_TC_BODY(sigsetjmp_save, tc)
 {
@@ -196,7 +229,8 @@ ATF_TC_BODY(sigsetjmp_save, tc)
 ATF_TC(sigsetjmp_nosave);
 ATF_TC_HEAD(sigsetjmp_nosave, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks sigsetjmp(3) with savemask disabled");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks sigsetjmp(3) with savemask disabled");
 }
 ATF_TC_BODY(sigsetjmp_nosave, tc)
 {
@@ -206,7 +240,8 @@ ATF_TC_BODY(sigsetjmp_nosave, tc)
 ATF_TC(longjmp_zero);
 ATF_TC_HEAD(longjmp_zero, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks longjmp(3) with a zero value");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks longjmp(3) with a zero value");
 }
 ATF_TC_BODY(longjmp_zero, tc)
 {
@@ -216,7 +251,8 @@ ATF_TC_BODY(longjmp_zero, tc)
 ATF_TC(_longjmp_zero);
 ATF_TC_HEAD(_longjmp_zero, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks _longjmp(3) with a zero value");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks _longjmp(3) with a zero value");
 }
 ATF_TC_BODY(_longjmp_zero, tc)
 {
