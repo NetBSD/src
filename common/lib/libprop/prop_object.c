@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.36 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.37 2025/04/24 14:24:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ _prop_object_externalize_append_encoded_cstring_json(
 			ch = 'n';
 			goto emit;
 
-		case 0x0d:	/* U+000D carraige return */
+		case 0x0d:	/* U+000D carriage return */
 			ch = 'r';
 			goto emit;
 
@@ -998,7 +998,7 @@ _prop_object_internalize_decode_string_json(
 				c[0] = 0x0a;
 				break;
 
-			case 'r':		/* carraige return */
+			case 'r':		/* carriage return */
 				c[0] = 0x0d;
 				break;
 
