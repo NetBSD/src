@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.134 2025/04/22 12:05:19 imil Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.135 2025/04/24 01:51:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.134 2025/04/22 12:05:19 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.135 2025/04/24 01:51:21 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -805,21 +805,44 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
-	x86_cpuid2(0xd, 1, descs);
+	x86_cpuid2(0x0d, 1, descs);
 	if (descs[0] & CPUID_PES1_XSAVEOPT)
 		x86_fpu_save = FPU_SAVE_XSAVEOPT;
 
-	/* Get features and maximum size of the save area */
-	x86_cpuid(0xd, descs);
-	if (descs[2] > sizeof(struct fxsave))
-		x86_fpu_save_size = descs[2];
-
+	/*
+	 * Get the hardware-supported features with CPUID.
+	 */
+	x86_cpuid2(0x0d, 0, descs);
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
+
+	/*
+	 * Turn on XSAVE in CR4 so we can write to XCR0, and write to
+	 * XCR0 enable only those features that NetBSD software
+	 * supports.
+	 *
+	 * CR4_OSXSAVE support and and XCR0 access are both allowed
+	 * because we tested ci->ci_feat_val[1] & CPUID2_XSAVE above.
+	 *
+	 * (This is redundant with cpu_init when it runs on the primary
+	 * CPU, but it's harmless.)
+	 */
+	lcr4(rcr4() | CR4_OSXSAVE);
+	wrxcr(0, x86_xsave_features & XCR0_FPU);
+
+	/*
+	 * Get the size of the save area with those features enabled
+	 * with the second CPUID.
+	 *
+	 * (Let's hope the features don't change!)
+	 */
+	x86_cpuid2(0x0d, 0, descs);
+	if (descs[1] > x86_fpu_save_size)
+		x86_fpu_save_size = descs[1];
 
 	/* Get component offsets and sizes for the save area */
 	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
 		if (x86_xsave_features & __BIT(i)) {
-			x86_cpuid2(0xd, i, descs);
+			x86_cpuid2(0x0d, i, descs);
 			x86_xsave_offsets[i] = descs[1];
 			x86_xsave_sizes[i] = descs[0];
 		}
