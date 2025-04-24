@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.342 2025/04/19 01:32:42 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.343 2025/04/24 01:52:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2025/04/19 01:32:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2025/04/24 01:52:38 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -514,7 +514,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		fp = (struct sigframe *)oldsp;
 
-	fp = (struct sigframe *)((int)(fp - 1) & ~7);
+	fp = (struct sigframe *)((int)(fp - 1) & ~STACK_ALIGNBYTES);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

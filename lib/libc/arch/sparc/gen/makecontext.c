@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4 2025/04/24 01:52:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4 2025/04/24 01:52:38 riastradh Exp $");
 #endif
 
 #include <inttypes.h>
@@ -57,7 +57,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	if (argc > 7)
 		sp -= argc - 7;
 	/* Align on double-word boundary. */
-	sp = (unsigned long *)((unsigned long)sp & ~0x7);
+	sp = (unsigned long *)((unsigned long)sp & ~STACK_ALIGNBYTES);
 
 	gr[_REG_O6] = (__greg_t)sp;
 	gr[_REG_PC] = (__greg_t)func;
