@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.60 2025/04/24 01:50:39 riastradh Exp $	*/
+/*	$NetBSD: pcb.h,v 1.61 2025/04/24 09:29:09 kre Exp $	*/
 
 /*
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@ struct pcb {
 
 };
 #ifndef __lint__
+#include <sys/stddef.h>		/* for offsetof() */
+
 /* This doesn't really matter, but there is a lot of implied padding */
 __CTASSERT(offsetof(struct pcb, pcb_savefpu) == 128);
 __CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) == 128);

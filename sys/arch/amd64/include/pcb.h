@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.33 2025/04/24 01:50:39 riastradh Exp $	*/
+/*	$NetBSD: pcb.h,v 1.34 2025/04/24 09:29:09 kre Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ struct pcb {
 	/* **** DO NOT ADD ANYTHING HERE **** */
 };
 #ifndef __lint__
+#include <sys/stddef.h>		/* for offsetof() */
+
 __CTASSERT(offsetof(struct pcb, pcb_savefpusmall) == 128);
 __CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) ==  128);
 #endif
