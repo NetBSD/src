@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.17 2025/04/24 01:43:20 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.18 2025/04/24 01:47:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.17 2025/04/24 01:43:20 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.18 2025/04/24 01:47:55 riastradh Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -134,6 +134,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 *	hppa
 	 *	i386
 	 *	m68k
+	 *	mips
 	 *	or1k
 	 *	powerpc
 	 *	powerpc64
@@ -142,7 +143,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 *	x86_64
 	 */
 #if \
-    defined __ia64__ || defined __mips__ || \
+    defined __ia64__ || \
     defined __sparc__ || defined __sparc64__
 	if (nentries > 0)
 		atf_tc_expect_fail("PR lib/57946");
