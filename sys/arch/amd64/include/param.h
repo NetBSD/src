@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39 2025/04/24 01:49:30 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.40 2025/04/24 09:58:26 kre Exp $	*/
 
 #ifdef __x86_64__
 
@@ -84,6 +84,7 @@
 #define	UPAGES		\
 	(UPAGES_PCB + UPAGES_RED + UPAGES_STACK + UPAGES_SVS + UPAGES_KxSAN)
 
+#ifndef _STANDALONE
 #if defined(KASAN) || defined(KMSAN)
 __CTASSERT(UPAGES == 8);
 #elif defined(SVS)
@@ -91,6 +92,7 @@ __CTASSERT(UPAGES == 6);
 #else
 __CTASSERT(UPAGES == 5);
 #endif
+#endif	/* _STANDALONE */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
