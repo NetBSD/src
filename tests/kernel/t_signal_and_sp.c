@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.10 2025/04/21 12:06:08 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.11 2025/04/24 16:57:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.10 2025/04/21 12:06:08 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.11 2025/04/24 16:57:27 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -388,6 +388,11 @@ ATF_TC_BODY(signalsp, tc)
 {
 #if defined STACK_ALIGNBYTES && defined HAVE_SIGNALSPHANDLER
 	struct sigaction sa;
+
+#if defined __mips_n32 || defined __mips_n64 /* 16-byte, vs 8-byte o32 */
+	atf_tc_expect_fail("PR kern/59327:"
+	    " user stack pointer is not aligned properly");
+#endif
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = &signalsphandler;
