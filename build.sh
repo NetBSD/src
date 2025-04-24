@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365.2.4 2024/12/31 01:23:17 snj Exp $
+#	$NetBSD: build.sh,v 1.365.2.5 2025/04/24 14:40:51 snj Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2023,7 +2023,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365.2.4 2024/12/31 01:23:17 snj Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365.2.5 2025/04/24 14:40:51 snj Exp $
 # with these arguments: ${_args}
 #
 
@@ -2370,9 +2370,11 @@ setup_mkrepro()
 	NETBSD_REVISIONID=
 	local d
 	local t
+	local rid
 	local tag
 	local vcs
 	for d in ${dirs}; do
+		local base=$( basename "$d" )
 		if [ -d "${d}CVS" ]; then
 			local cvslatest=$(print_tooldir_program cvslatest)
 			if [ ! -x "${cvslatest}" ]; then
@@ -2391,15 +2393,21 @@ setup_mkrepro()
 			else
 				tag=HEAD
 			fi
-			NETBSD_REVISIONID="${tag}-"$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')
+			if [ -z "$NETBSD_REVISIONID" ]; then
+				NETBSD_REVISIONID="${tag}"
+			fi
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}-${base}:$(
+ 				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
 			t=$(cd "${d}" && git log -1 --format=%ct)
-			NETBSD_REVISIONID=$(cd "${d}" && git log -1 --format=%H)
+			rid="${base}:$(cd "${d}" && git log -1 --format=%H)"
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
 			t=$(hg --repo "$d" log -r . --template '{date.unixtime}\n')
-			NETBSD_REVISIONID=$(hg --repo "$d" identify --template '{id}\n')
+			rid="${base}:$(hg --repo "$d" identify --template '{id}\n')"
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]; then
 			local stat=$(print_tooldir_program stat)
@@ -2408,7 +2416,8 @@ setup_mkrepro()
 			fi
 
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt")
-			NETBSD_REVISIONID=$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")
+			rid="${base}:$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")"
+			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
