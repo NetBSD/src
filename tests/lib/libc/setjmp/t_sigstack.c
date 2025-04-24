@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.19 2025/04/24 01:48:21 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.20 2025/04/24 16:50:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.19 2025/04/24 01:48:21 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.20 2025/04/24 16:50:02 riastradh Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -124,30 +124,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 * Ensure that if we enter the signal handler, we are entering
 	 * it from the original stack, not from any of the alternate
 	 * signal stacks.
-	 *
-	 * On some architectures, this is broken.  Those that appear to
-	 * get this right are:
-	 *
-	 *	aarch64
-	 *	alpha
-	 *	arm
-	 *	hppa
-	 *	i386
-	 *	m68k
-	 *	mips
-	 *	or1k
-	 *	powerpc
-	 *	powerpc64
-	 *	sparc
-	 *	sparc64
-	 *	riscv
-	 *	vax
-	 *	x86_64
 	 */
-#if defined __ia64__
-	if (nentries > 0)
-		atf_tc_expect_fail("PR lib/57946");
-#endif
 	for (ssp = &ss[0]; ssp < &ss[__arraycount(ss)]; ssp++) {
 		ATF_REQUIRE_MSG((sp < ssp->ss_sp ||
 			sp >= (void *)((char *)ssp->ss_sp + ssp->ss_size)),
@@ -257,6 +234,12 @@ ATF_TC_HEAD(setjmp, tc)
 ATF_TC_BODY(setjmp, tc)
 {
 
+#if defined __ia64__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+
 	/*
 	 * Set up a return point for the signal handler: when the
 	 * signal handler does longjmp(jmp, 1), it comes flying out of
@@ -289,6 +272,12 @@ ATF_TC_BODY(compat13_setjmp, tc)
 
 	compatsetup();
 
+#if defined __arm__ || defined __i386__ || defined __sh3__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+
 	/*
 	 * Set up a return point for the signal handler: when the
 	 * signal handler does (*compat13_longjmp)(jmp, 1), it comes
@@ -318,6 +307,12 @@ ATF_TC_HEAD(sigsetjmp, tc)
 }
 ATF_TC_BODY(sigsetjmp, tc)
 {
+
+#if defined __ia64__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
 
 	/*
 	 * Set up a return point for the signal handler: when the
@@ -350,8 +345,13 @@ ATF_TC_HEAD(compat13_sigsetjmp, tc)
 ATF_TC_BODY(compat13_sigsetjmp, tc)
 {
 
-
 	compatsetup();
+
+#if defined __arm__ || defined __i386__ || defined __sh3__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
 
 	/*
 	 * Set up a return point for the signal handler: when the
