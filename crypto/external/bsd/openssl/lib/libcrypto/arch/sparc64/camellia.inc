@@ -1,3 +1,3 @@
 .PATH.S: ${.PARSEDIR}
-CAMELLIA_SRCS = cmllt4-sparcv9.S
+CAMELLIA_SRCS = camellia.c cmll_misc.c cmll_cbc.c cmllt4-sparcv9.S
 .include "../../camellia.inc"
