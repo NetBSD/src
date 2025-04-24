@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.18 2025/04/20 09:06:24 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.19 2025/04/24 14:42:45 snj Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -508,4 +508,10 @@ external/ibm-public/postfix/sbin/postconf/Makefile 1.10
 	build: PR 59302: fix build on source paths that include
 	"tls" or "global".
 	[tls, ticket #1097]
+
+build.sh					1.389-1.391 via patch
+
+	build.sh: fix "show-revisionid" operation to include both src
+	and xsrc data if the -x argument is present.
+	[martin, ticket #1102]
 
