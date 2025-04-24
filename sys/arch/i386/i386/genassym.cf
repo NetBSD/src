@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.136 2025/02/18 10:16:03 imil Exp $
+#	$NetBSD: genassym.cf,v 1.137 2025/04/24 01:50:39 riastradh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008, 2023 The NetBSD Foundation, Inc.
@@ -192,7 +192,6 @@ define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
 define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
 define	PCB_IOMAP		offsetof(struct pcb, pcb_iomap)
-define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)

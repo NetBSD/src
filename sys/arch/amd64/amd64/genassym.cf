@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.98 2024/12/02 13:31:32 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.99 2025/04/24 01:50:39 riastradh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008, 2023 The NetBSD Foundation, Inc.
@@ -186,7 +186,6 @@ define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_COMPAT32		PCB_COMPAT32
 define	PCB_FS			offsetof(struct pcb, pcb_fs)
 define	PCB_GS			offsetof(struct pcb, pcb_gs)
-define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
 
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_RSI			offsetof(struct trapframe, tf_rsi)

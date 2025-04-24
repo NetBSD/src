@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.89 2024/06/21 17:24:08 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.90 2025/04/24 01:50:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.89 2024/06/21 17:24:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.90 2025/04/24 01:50:39 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -136,11 +136,35 @@ void fpu_switch(struct lwp *, struct lwp *);
 
 uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
+static const union savefpu safe_fpu_storage __aligned(64) = {
+	.sv_xmm = {
+		.fx_mxcsr = __SAFE_MXCSR__,
+	},
+};
+static const union savefpu zero_fpu_storage __aligned(64);
+
+static const void *safe_fpu __read_mostly = &safe_fpu_storage;
+static const void *zero_fpu __read_mostly = &zero_fpu_storage;
+
+/*
+ * x86_fpu_save_separate_p()
+ *
+ *	True if we allocate the FPU save space separately, outside the
+ *	struct pcb itself, because it doesn't fit in a single page.
+ */
+bool
+x86_fpu_save_separate_p(void)
+{
+
+	return x86_fpu_save_size >
+	    PAGE_SIZE - offsetof(struct pcb, pcb_savefpusmall);
+}
+
 static inline union savefpu *
 fpu_lwp_area(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	union savefpu *area = &pcb->pcb_savefpu;
+	union savefpu *area = pcb->pcb_savefpu;
 
 	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	if (l == curlwp) {
@@ -155,7 +179,7 @@ static inline void
 fpu_save_lwp(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	union savefpu *area = &pcb->pcb_savefpu;
+	union savefpu *area = pcb->pcb_savefpu;
 	int s;
 
 	s = splvm();
@@ -189,14 +213,91 @@ fpuinit(struct cpu_info *ci)
 	stts();
 }
 
+/*
+ * fpuinit_mxcsr_mask()
+ *
+ *	Called once by cpu_init on the primary CPU.  Initializes
+ *	x86_fpu_mxcsr_mask based on the initial FPU state, and
+ *	initializes save_fpu and zero_fpu if necessary when the
+ *	hardware's FPU save size is larger than union savefpu.
+ *
+ *	XXX Rename this function!
+ */
 void
 fpuinit_mxcsr_mask(void)
 {
+	/*
+	 * If the CPU's x86 fpu save size is larger than union savefpu,
+	 * we have to allocate larger buffers for the safe and zero FPU
+	 * states used here and by fpu_kern_enter/leave.
+	 *
+	 * Note: This is NOT the same as x86_fpu_save_separate_p(),
+	 * which may have a little more space than union savefpu.
+	 */
+	const bool allocfpusave = x86_fpu_save_size > sizeof(union savefpu);
+	vaddr_t va;
+
+#ifdef __i386__
+	if (x86_fpu_save_separate_p()) {
+		/*
+		 * XXX Need to teach cpu_uarea_alloc/free to allocate a
+		 * separate fpu save space, and make pcb_savefpu a
+		 * pointer indirection -- currently only done on amd64,
+		 * not on i386.
+		 *
+		 * But the primary motivation on amd64 is the 8192-byte
+		 * TILEDATA state for Intel AMX (Advanced Matrix
+		 * Extensions), which doesn't work in 32-bit mode
+		 * anyway, so on such machines we ought to just disable
+		 * it in the first place and keep x86_fpu_save_size
+		 * down:
+		 *
+		 *	While Intel AMX instructions can be executed
+		 *	only in 64-bit mode, instructions of the XSAVE
+		 *	feature set can operate on TILECFG and TILEDATA
+		 *	in any mode.  It is recommended that only
+		 *	64-bit operating systems enable Intel AMX by
+		 *	setting XCR0[18:17].
+		 *
+		 *	--Intel 64 and IA-32 Architectures Software
+		 *	Developer's Manual, Volume 1: Basic
+		 *	Architecture, Order Number: 253665-087US, March
+		 *	2025, Sec. 13.3 `Enabling the XSAVE feature set
+		 *	and XSAVE-enabled features', p. 13-6.
+		 *	https://cdrdv2.intel.com/v1/dl/getContent/671436
+		 *	https://web.archive.org/web/20250404141850/https://cdrdv2-public.intel.com/851056/253665-087-sdm-vol-1.pdf
+		 *	https://web.archive.org/web/20250404141850if_/https://cdrdv2-public.intel.com/851056/253665-087-sdm-vol-1.pdf#page=324
+		 */
+		panic("NetBSD/i386 does not support fpu save size %u",
+		    x86_fpu_save_size);
+	}
+#endif
+
 #ifndef XENPV
-	union savefpu fpusave __aligned(64);
+	union savefpu fpusave_stack __aligned(64);
+	union savefpu *fpusave;
 	u_long psl;
 
-	memset(&fpusave, 0, sizeof(fpusave));
+	/*
+	 * Allocate a temporary save space from the stack if it fits,
+	 * or from the heap otherwise, so we can query its mxcsr mask.
+	 */
+	if (allocfpusave) {
+		/*
+		 * Need 64-byte alignment for XSAVE instructions.
+		 * kmem_* doesn't guarantee that and we don't have a
+		 * handy posix_memalign in the kernel unless we hack it
+		 * ourselves with vmem(9), so just ask for page
+		 * alignment with uvm_km(9).
+		 */
+		__CTASSERT(PAGE_SIZE >= 64);
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
+		fpusave = (void *)va;
+	} else {
+		fpusave = &fpusave_stack;
+		memset(fpusave, 0, sizeof(*fpusave));
+	}
 
 	/* Disable interrupts, and enable FPU */
 	psl = x86_read_psl();
@@ -204,16 +305,25 @@ fpuinit_mxcsr_mask(void)
 	clts();
 
 	/* Fill in the FPU area */
-	fxsave(&fpusave);
+	fxsave(fpusave);
 
 	/* Restore previous state */
 	stts();
 	x86_write_psl(psl);
 
-	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
+	if (fpusave->sv_xmm.fx_mxcsr_mask == 0) {
 		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 	} else {
-		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
+		x86_fpu_mxcsr_mask = fpusave->sv_xmm.fx_mxcsr_mask;
+	}
+
+	/*
+	 * Free the temporary save space.
+	 */
+	if (allocfpusave) {
+		uvm_km_free(kernel_map, va, x86_fpu_save_size, UVM_KMF_WIRED);
+		fpusave = NULL;
+		va = 0;
 	}
 #else
 	/*
@@ -223,6 +333,32 @@ fpuinit_mxcsr_mask(void)
 	 */
 	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 #endif
+
+	/*
+	 * If necessary, allocate FPU save spaces for safe or zero FPU
+	 * state, for fpu_kern_enter/leave.
+	 */
+	if (allocfpusave) {
+		__CTASSERT(PAGE_SIZE >= 64);
+
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
+		memcpy((void *)va, &safe_fpu_storage,
+		    sizeof(safe_fpu_storage));
+		uvm_km_protect(kernel_map, va, x86_fpu_save_size,
+		    VM_PROT_READ);
+		safe_fpu = (void *)va;
+
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
+		/*
+		 * No initialization -- just want zeroes!  In fact we
+		 * could share this with other all-zero pages.
+		 */
+		uvm_km_protect(kernel_map, va, x86_fpu_save_size,
+		    VM_PROT_READ);
+		zero_fpu = (void *)va;
+	}
 }
 
 static inline void
@@ -305,7 +441,7 @@ void
 fpu_handle_deferred(void)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
-	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features,
+	fpu_area_restore(pcb->pcb_savefpu, x86_xsave_features,
 	    !(curlwp->l_proc->p_flag & PK_32));
 }
 
@@ -321,7 +457,7 @@ fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	if (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
 		pcb = lwp_getpcb(oldlwp);
-		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features,
+		fpu_area_save(pcb->pcb_savefpu, x86_xsave_features,
 		    !(oldlwp->l_proc->p_flag & PK_32));
 		oldlwp->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
@@ -338,14 +474,15 @@ fpu_lwp_fork(struct lwp *l1, struct lwp *l2)
 	if (__predict_false(l2->l_flag & LW_SYSTEM)) {
 		return;
 	}
+
 	/* For init(8). */
 	if (__predict_false(l1->l_flag & LW_SYSTEM)) {
-		memset(&pcb2->pcb_savefpu, 0, x86_fpu_save_size);
+		memset(pcb2->pcb_savefpu, 0, x86_fpu_save_size);
 		return;
 	}
 
 	fpu_save = fpu_lwp_area(l1);
-	memcpy(&pcb2->pcb_savefpu, fpu_save, x86_fpu_save_size);
+	memcpy(pcb2->pcb_savefpu, fpu_save, x86_fpu_save_size);
 	l2->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 }
 
@@ -378,11 +515,6 @@ fpu_lwp_abandon(struct lwp *l)
 void
 fpu_kern_enter(void)
 {
-	static const union savefpu safe_fpu __aligned(64) = {
-		.sv_xmm = {
-			.fx_mxcsr = __SAFE_MXCSR__,
-		},
-	};
 	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	int s;
@@ -421,7 +553,7 @@ fpu_kern_enter(void)
 	/*
 	 * Zero the FPU registers and install safe control words.
 	 */
-	fpu_area_restore(&safe_fpu, x86_xsave_features, /*is_64bit*/false);
+	fpu_area_restore(safe_fpu, x86_xsave_features, /*is_64bit*/false);
 }
 
 /*
@@ -432,7 +564,6 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
-	static const union savefpu zero_fpu __aligned(64);
 	struct cpu_info *ci = curcpu();
 	int s;
 
@@ -451,7 +582,7 @@ fpu_kern_leave(void)
 	 * through Spectre-class attacks to userland, even if there are
 	 * no bugs in fpu state management.
 	 */
-	fpu_area_restore(&zero_fpu, x86_xsave_features, /*is_64bit*/false);
+	fpu_area_restore(zero_fpu, x86_xsave_features, /*is_64bit*/false);
 
 	/*
 	 * Set CR0_TS again so that the kernel can't accidentally use

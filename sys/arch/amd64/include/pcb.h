@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.32 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.33 2025/04/24 01:50:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,13 +97,16 @@ struct pcb {
 	struct dbreg *pcb_dbregs;
 	uint16_t pcb_fpu_dflt_cw;
 	int pcb_iopl;
+	union savefpu *pcb_savefpu;
 
-	uint32_t pcb_unused[8];		/* unused */
+	uint32_t pcb_unused[6];		/* unused */
 
-	union savefpu	pcb_savefpu __aligned(64); /* floating point state */
+	/* fpu state, if it fits; otherwise allocated separately */
+	union savefpu	pcb_savefpusmall __aligned(64);
 	/* **** DO NOT ADD ANYTHING HERE **** */
 };
 #ifndef __lint__
+__CTASSERT(offsetof(struct pcb, pcb_savefpusmall) == 128);
 __CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) ==  128);
 #endif
 

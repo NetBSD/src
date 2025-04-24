@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.59 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.60 2025/04/24 01:50:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -99,12 +99,14 @@ struct pcb {
 	int	not_used[15];
 
 	/* floating point state */
-	union savefpu	pcb_savefpu __aligned(64);
+	union savefpu	pcb_savefpu[1] __aligned(64);
+#define	pcb_savefpusmall	pcb_savefpu
 	/* **** DO NOT ADD ANYTHING HERE **** */
 
 };
 #ifndef __lint__
 /* This doesn't really matter, but there is a lot of implied padding */
+__CTASSERT(offsetof(struct pcb, pcb_savefpu) == 128);
 __CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) == 128);
 #endif
 

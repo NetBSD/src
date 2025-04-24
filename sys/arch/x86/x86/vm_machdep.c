@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2023/10/06 11:53:27 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 2025/04/24 01:50:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2023/10/06 11:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2025/04/24 01:50:39 riastradh Exp $");
 
 #include "opt_mtrr.h"
 
@@ -366,9 +366,41 @@ cpu_uarea_alloc(bool system)
 {
 	vaddr_t base, va;
 	paddr_t pa;
+	struct pcb *pcb;
 
 	base = uvm_km_alloc(kernel_map, USPACE + PAGE_SIZE, 0,
 	    UVM_KMF_WIRED|UVM_KMF_WAITVA);
+
+	/*
+	 * Prepare the FPU save area:
+	 *
+	 * 1. If this is a system thread, no save area.
+	 *    XXX Allocate/free one in kthread_fpu_enter/exit_md.
+	 *
+	 * 2. If this is a user thread, and the fpu save size is large
+	 *    enough, allocate an extra block of memory for it.
+	 *
+	 * 3. Otherwise, this is a user thread and the fpu save size
+	 *    fits inside the pcb page, so use that.
+	 *
+	 * XXX Note that this is currently amd64-only -- if you extend
+	 * this FPU save space allocation to i386, you'll need to
+	 * remove the panic in fpuinit_mxcsr_mask on
+	 * x86_fpu_save_separate_p and make pcb_savefpu a pointer
+	 * indirection in struct pcb.
+	 */
+	pcb = (void *)base;
+	if (system) {					/* (1) */
+		pcb->pcb_savefpu = NULL;
+	} else if (x86_fpu_save_separate_p()) {		/* (2) */
+		__CTASSERT(PAGE_SIZE >= 64);
+		/* No need to zero -- caller will initialize. */
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_WAITVA);
+		pcb->pcb_savefpu = (void *)va;
+	} else {					/* (3) */
+		pcb->pcb_savefpu = &pcb->pcb_savefpusmall;
+	}
 
 	/* Page[1] = RedZone */
 	va = base + PAGE_SIZE;
@@ -394,7 +426,19 @@ cpu_uarea_alloc(bool system)
 bool
 cpu_uarea_free(void *addr)
 {
+	const struct pcb *const pcb = addr;
 	vaddr_t base = (vaddr_t)addr;
+
+	/*
+	 * If we allocated a separate FPU save area, free it.
+	 */
+	if (pcb->pcb_savefpu != NULL &&
+	    pcb->pcb_savefpu != &pcb->pcb_savefpusmall) {
+		KASSERTMSG(x86_fpu_save_separate_p(), "pcb=%p pcb_savefpu=%p",
+		    pcb, pcb->pcb_savefpu);
+		uvm_km_free(kernel_map, (vaddr_t)pcb->pcb_savefpu,
+		    x86_fpu_save_size, UVM_KMF_WIRED);
+	}
 
 	KASSERT(!pmap_extract(pmap_kernel(), base + PAGE_SIZE, NULL));
 	KASSERT(!pmap_extract(pmap_kernel(), base + USPACE, NULL));
