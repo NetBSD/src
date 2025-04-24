@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.14 2025/04/24 01:41:48 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.15 2025/04/24 01:42:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.14 2025/04/24 01:41:48 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.15 2025/04/24 01:42:26 riastradh Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -289,13 +289,6 @@ ATF_TC_BODY(compat13_setjmp, tc)
 #if defined __mips_o32		/* no compat13 setjmp on n32 or n64 */
 	atf_tc_expect_fail("PR port-mips/59285:"
 	    " _longjmp(..., 0) makes setjmp return 0, not 1");
-#elif defined __mips__		/* spectacularly broken before compatsigsys */
-	/*
-	 * PR port-mips/59342 (compat_setjmp.S is confused about delay
-	 * slots) kicks in before compatsigsys has a chance to
-	 * atf_tc_skip, so just do it early.
-	 */
-	atf_tc_skip("no compat syscalls to test");
 #endif
 
 	compatsetup();
@@ -363,9 +356,6 @@ ATF_TC_BODY(compat13_sigsetjmp, tc)
 
 #ifdef __mips__
 	atf_tc_expect_signal(-1, "PR port-mips/59342:"
-	    " compat_setjmp.S is confused about delay slots"
-	    "; and "
-	    "PR port-mips/59343:"
 	    " compat_sigsetjmp.S: missing RESTORE_GP64");
 #endif
 
