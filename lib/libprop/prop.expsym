@@ -2,7 +2,6 @@ _prop_array_internalize
 _prop_bool_internalize
 _prop_data_internalize
 _prop_dictionary_internalize
-_prop_format_default
 _prop_number_internalize
 _prop_object_externalize
 _prop_object_externalize_append_char
@@ -33,7 +32,6 @@ _prop_stack_pop
 _prop_stack_push
 _prop_string_externalize_internal
 _prop_string_internalize
-_prop_string_type_tags
 prop_array_add
 prop_array_add_and_rel
 prop_array_add_bool
