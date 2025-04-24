@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.6 2025/04/24 01:41:01 riastradh Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.7 2025/04/24 01:41:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,10 +63,11 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.6 2025/04/24 01:41:01 riastradh Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.7 2025/04/24 01:41:48 riastradh Exp $");
 
 #include <sys/types.h>
 
+#include <dlfcn.h>
 #include <errno.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -87,7 +88,58 @@ enum test {
 	TEST_SIGSETJMP_NOSAVE,
 	TEST_LONGJMP_ZERO,
 	TEST_U_LONGJMP_ZERO,
+
+	TEST_COMPAT13_SETJMP,
+	TEST_COMPAT13_SIGSETJMP_SAVE,
+	TEST_COMPAT13_SIGSETJMP_NOSAVE,
+	TEST_COMPAT13_LONGJMP_ZERO,
 };
+
+/*
+ * Optional compat13 functions from when sigcontext was expanded.
+ * Fortunately the only change visible to the caller is that the size
+ * of jmp_buf increased, so we can always use the old symbols with new
+ * jmp_buf arrays.
+ */
+int (*compat13_sigsetjmp)(sigjmp_buf, int);
+void (*compat13_siglongjmp)(sigjmp_buf, int);
+int (*compat13_setjmp)(jmp_buf);
+void (*compat13_longjmp)(jmp_buf, int);
+
+/*
+ * compatsigsys(signo)
+ *
+ *	Signal handler for SIGSYS in case compat_13_sigreturn13 is not
+ *	implemented by the kernel -- we will just skip the test in that
+ *	case.
+ */
+static void
+compatsigsys(int signo)
+{
+
+	atf_tc_skip("no compat syscalls to test");
+}
+
+static void
+compatsetup(void)
+{
+
+	/*
+	 * Grab the libc library symbols if available.
+	 */
+	if ((compat13_sigsetjmp = dlsym(RTLD_SELF, "sigsetjmp")) == NULL ||
+	    (compat13_siglongjmp = dlsym(RTLD_SELF, "siglongjmp")) == NULL ||
+	    (compat13_setjmp = dlsym(RTLD_SELF, "setjmp")) == NULL ||
+	    (compat13_longjmp = dlsym(RTLD_SELF, "longjmp")) == NULL)
+		atf_tc_skip("no compat functions to test");
+
+	/*
+	 * Arrange for SIGSYS to skip the test -- this happens if the
+	 * libc stub has the function, but the kernel isn't built with
+	 * support for the compat13 sigreturn syscall for longjmp.
+	 */
+	REQUIRE_LIBC(signal(SIGSYS, &compatsigsys), SIG_ERR);
+}
 
 static int expectsignal;
 
@@ -112,14 +164,29 @@ h_check(enum test test)
 	did_longjmp = false;
 
 	switch (test) {
+	case TEST_COMPAT13_SETJMP:
+	case TEST_COMPAT13_SIGSETJMP_SAVE:
+	case TEST_COMPAT13_LONGJMP_ZERO:
+	case TEST_COMPAT13_SIGSETJMP_NOSAVE:
+		compatsetup();
+		break;
+	default:
+		break;
+	}
+
+	switch (test) {
 	case TEST_SETJMP:
 	case TEST_SIGSETJMP_SAVE:
 	case TEST_LONGJMP_ZERO:
+	case TEST_COMPAT13_SETJMP:
+	case TEST_COMPAT13_SIGSETJMP_SAVE:
+	case TEST_COMPAT13_LONGJMP_ZERO:
 		expectsignal = 0;
 		break;
 	case TEST_U_SETJMP:
 	case TEST_SIGSETJMP_NOSAVE:
 	case TEST_U_LONGJMP_ZERO:
+	case TEST_COMPAT13_SIGSETJMP_NOSAVE:
 		expectsignal = 1;
 		break;
 	default:
@@ -139,6 +206,10 @@ h_check(enum test test)
 	case TEST_LONGJMP_ZERO:
 		x = setjmp(jb);
 		break;
+	case TEST_COMPAT13_SETJMP:
+	case TEST_COMPAT13_LONGJMP_ZERO:
+		x = (*compat13_setjmp)(jb);
+		break;
 	case TEST_U_SETJMP:
 	case TEST_U_LONGJMP_ZERO:
 		x = _setjmp(jb);
@@ -146,6 +217,10 @@ h_check(enum test test)
 	case TEST_SIGSETJMP_SAVE:
 	case TEST_SIGSETJMP_NOSAVE:
 		x = sigsetjmp(sjb, !expectsignal);
+		break;
+	case TEST_COMPAT13_SIGSETJMP_SAVE:
+	case TEST_COMPAT13_SIGSETJMP_NOSAVE:
+		x = (*compat13_sigsetjmp)(sjb, !expectsignal);
 		break;
 	default:
 		atf_tc_fail("unknown test");
@@ -155,6 +230,7 @@ h_check(enum test test)
 		switch (test) {
 		case TEST_LONGJMP_ZERO:
 		case TEST_U_LONGJMP_ZERO:
+		case TEST_COMPAT13_LONGJMP_ZERO:
 			ATF_REQUIRE_MSG(x == 1, "setjmp returned wrong value");
 			break;
 		default:
@@ -175,8 +251,14 @@ h_check(enum test test)
 	case TEST_SETJMP:
 		longjmp(jb, i);
 		break;
+	case TEST_COMPAT13_SETJMP:
+		(*compat13_longjmp)(jb, i);
+		break;
 	case TEST_LONGJMP_ZERO:
 		longjmp(jb, 0);
+		break;
+	case TEST_COMPAT13_LONGJMP_ZERO:
+		(*compat13_longjmp)(jb, 0);
 		break;
 	case TEST_U_SETJMP:
 		_longjmp(jb, i);
@@ -187,6 +269,10 @@ h_check(enum test test)
 	case TEST_SIGSETJMP_SAVE:
 	case TEST_SIGSETJMP_NOSAVE:
 		siglongjmp(sjb, i);
+		break;
+	case TEST_COMPAT13_SIGSETJMP_SAVE:
+	case TEST_COMPAT13_SIGSETJMP_NOSAVE:
+		(*compat13_siglongjmp)(sjb, i);
 		break;
 	default:
 		atf_tc_fail("unknown test");
@@ -259,14 +345,89 @@ ATF_TC_BODY(_longjmp_zero, tc)
 	h_check(TEST_U_LONGJMP_ZERO);
 }
 
+ATF_TC(compat13_setjmp);
+ATF_TC_HEAD(compat13_setjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks compat13 setjmp(3)");
+}
+ATF_TC_BODY(compat13_setjmp, tc)
+{
+#ifdef __mips__
+	atf_tc_expect_fail("PR port-mips/59342:"
+	    " compat_setjmp.S is confused about delay slots");
+#endif
+	h_check(TEST_COMPAT13_SETJMP);
+}
+
+ATF_TC(compat13_sigsetjmp_save);
+ATF_TC_HEAD(compat13_sigsetjmp_save, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks compat13 sigsetjmp(3) with savemask enabled");
+}
+ATF_TC_BODY(compat13_sigsetjmp_save, tc)
+{
+#ifdef __mips__
+	atf_tc_expect_signal(-1, "PR port-mips/59342:"
+	    " compat_setjmp.S is confused about delay slots"
+	    "; and "
+	    "PR port-mips/59343:"
+	    " compat_sigsetjmp.S: missing RESTORE_GP64");
+#endif
+	h_check(TEST_COMPAT13_SIGSETJMP_SAVE);
+}
+
+ATF_TC(compat13_sigsetjmp_nosave);
+ATF_TC_HEAD(compat13_sigsetjmp_nosave, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks compat13 sigsetjmp(3) with savemask disabled");
+}
+ATF_TC_BODY(compat13_sigsetjmp_nosave, tc)
+{
+#ifdef __mips__
+	atf_tc_expect_signal(-1, "PR port-mips/59343:"
+	    " compat_sigsetjmp.S: missing RESTORE_GP64");
+#endif
+	h_check(TEST_COMPAT13_SIGSETJMP_NOSAVE);
+}
+
+ATF_TC(compat13_longjmp_zero);
+ATF_TC_HEAD(compat13_longjmp_zero, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks compat13 longjmp(3) with a zero value");
+}
+ATF_TC_BODY(compat13_longjmp_zero, tc)
+{
+#if defined __mips_o32		/* no compat13 setjmp on n32 or n64 */
+	atf_tc_expect_fail("PR port-mips/59285:"
+	    " _longjmp(..., 0) makes setjmp return 0, not 1");
+#elif defined __mips__		/* spectacularly broken before compatsigsys */
+	/*
+	 * PR port-mips/59342 (compat_setjmp.S is confused about delay
+	 * slots) kicks in before compatsigsys has a chance to
+	 * atf_tc_skip, so just do it early.
+	 */
+	atf_tc_skip("no compat syscalls to test");
+#endif
+	h_check(TEST_COMPAT13_LONGJMP_ZERO);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, setjmp);
 	ATF_TP_ADD_TC(tp, _setjmp);
 	ATF_TP_ADD_TC(tp, sigsetjmp_save);
 	ATF_TP_ADD_TC(tp, sigsetjmp_nosave);
 	ATF_TP_ADD_TC(tp, longjmp_zero);
 	ATF_TP_ADD_TC(tp, _longjmp_zero);
+
+	ATF_TP_ADD_TC(tp, compat13_setjmp);
+	ATF_TP_ADD_TC(tp, compat13_sigsetjmp_save);
+	ATF_TP_ADD_TC(tp, compat13_sigsetjmp_nosave);
+	ATF_TP_ADD_TC(tp, compat13_longjmp_zero);
 
 	return atf_no_error();
 }

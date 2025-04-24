@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.13 2025/04/13 23:45:10 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.14 2025/04/24 01:41:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.13 2025/04/13 23:45:10 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.14 2025/04/24 01:41:48 riastradh Exp $");
 
+#include <dlfcn.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stddef.h>
@@ -43,6 +44,52 @@ sigjmp_buf sigjmp;
 unsigned nentries;
 const char *bailname;
 void (*bailfn)(void) __dead;
+
+/*
+ * Optional compat13 functions from when sigcontext was expanded.
+ * Fortunately the only change visible to the caller is that the size
+ * of jmp_buf increased, so we can always use the old symbols with new
+ * jmp_buf arrays.
+ */
+int (*compat13_sigsetjmp)(sigjmp_buf, int);
+void (*compat13_siglongjmp)(sigjmp_buf, int);
+int (*compat13_setjmp)(jmp_buf);
+void (*compat13_longjmp)(jmp_buf, int);
+
+/*
+ * compatsigsys(signo)
+ *
+ *	Signal handler for SIGSYS in case compat_13_sigreturn13 is not
+ *	implemented by the kernel -- we will just skip the test in that
+ *	case.
+ */
+static void
+compatsigsys(int signo)
+{
+
+	atf_tc_skip("no compat syscalls to test");
+}
+
+static void
+compatsetup(void)
+{
+
+	/*
+	 * Grab the libc library symbols if available.
+	 */
+	if ((compat13_sigsetjmp = dlsym(RTLD_SELF, "sigsetjmp")) == NULL ||
+	    (compat13_siglongjmp = dlsym(RTLD_SELF, "siglongjmp")) == NULL ||
+	    (compat13_setjmp = dlsym(RTLD_SELF, "setjmp")) == NULL ||
+	    (compat13_longjmp = dlsym(RTLD_SELF, "longjmp")) == NULL)
+		atf_tc_skip("no compat functions to test");
+
+	/*
+	 * Arrange for SIGSYS to skip the test -- this happens if the
+	 * libc stub has the function, but the kernel isn't built with
+	 * support for the compat13 sigreturn syscall for longjmp.
+	 */
+	REQUIRE_LIBC(signal(SIGSYS, &compatsigsys), SIG_ERR);
+}
 
 static void
 on_sigusr1(int signo, siginfo_t *si, void *ctx)
@@ -224,6 +271,50 @@ ATF_TC_BODY(setjmp, tc)
 }
 
 static void __dead
+bail_compat13_longjmp(void)
+{
+
+	(*compat13_longjmp)(jmp, 1);
+}
+
+ATF_TC(compat13_setjmp);
+ATF_TC_HEAD(compat13_setjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test compat13 longjmp restores stack first, then signal mask");
+}
+ATF_TC_BODY(compat13_setjmp, tc)
+{
+
+#if defined __mips_o32		/* no compat13 setjmp on n32 or n64 */
+	atf_tc_expect_fail("PR port-mips/59285:"
+	    " _longjmp(..., 0) makes setjmp return 0, not 1");
+#elif defined __mips__		/* spectacularly broken before compatsigsys */
+	/*
+	 * PR port-mips/59342 (compat_setjmp.S is confused about delay
+	 * slots) kicks in before compatsigsys has a chance to
+	 * atf_tc_skip, so just do it early.
+	 */
+	atf_tc_skip("no compat syscalls to test");
+#endif
+
+	compatsetup();
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does (*compat13_longjmp)(jmp, 1), it comes
+	 * flying out of here.
+	 */
+	if ((*compat13_setjmp)(jmp) == 1)
+		return;
+
+	/*
+	 * Run the test with compat13_longjmp.
+	 */
+	go("longjmp", &bail_compat13_longjmp);
+}
+
+static void __dead
 bail_siglongjmp(void)
 {
 
@@ -253,9 +344,52 @@ ATF_TC_BODY(sigsetjmp, tc)
 	go("siglongjmp", &bail_siglongjmp);
 }
 
+static void __dead
+bail_compat13_siglongjmp(void)
+{
+
+	(*compat13_siglongjmp)(sigjmp, 1);
+}
+
+ATF_TC(compat13_sigsetjmp);
+ATF_TC_HEAD(compat13_sigsetjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test compat13 siglongjmp restores stack first,"
+	    " then signal mask");
+}
+ATF_TC_BODY(compat13_sigsetjmp, tc)
+{
+
+#ifdef __mips__
+	atf_tc_expect_signal(-1, "PR port-mips/59342:"
+	    " compat_setjmp.S is confused about delay slots"
+	    "; and "
+	    "PR port-mips/59343:"
+	    " compat_sigsetjmp.S: missing RESTORE_GP64");
+#endif
+
+	compatsetup();
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does (*compat13_siglongjmp)(sigjmp, 1), it
+	 * comes flying out of here.
+	 */
+	if ((*compat13_sigsetjmp)(sigjmp, /*savesigmask*/1) == 1)
+		return;
+
+	/*
+	 * Run the test with compat13_siglongjmp.
+	 */
+	go("siglongjmp", &bail_compat13_siglongjmp);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, compat13_setjmp);
+	ATF_TP_ADD_TC(tp, compat13_sigsetjmp);
 	ATF_TP_ADD_TC(tp, setjmp);
 	ATF_TP_ADD_TC(tp, sigsetjmp);
 
