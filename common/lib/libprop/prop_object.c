@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.37 2025/04/24 14:24:45 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.38 2025/04/24 15:50:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -1219,7 +1219,7 @@ _prop_object_internalize_xml(struct _prop_object_internalize_context *ctx,
  */
 static prop_object_t
 _prop_object_internalize_json(struct _prop_object_internalize_context *ctx,
-    const struct _prop_object_type_tags *initial_tag)
+    const struct _prop_object_type_tags *initial_tag __unused)
 {
 	prop_object_t obj, parent_obj;
 	void *data, *iter;
@@ -1733,7 +1733,7 @@ prop_object_internalize_from_file(const char *fname)
 }
 #endif /* !_KERNEL && !_STANDALONE */
 
-prop_format_t	_prop_format_default = PROP_FORMAT_XML;
+static prop_format_t	_prop_format_default = PROP_FORMAT_XML;
 
 /*
  * prop_object_externalize --

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.19 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.20 2025/04/24 15:50:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -59,8 +59,7 @@ _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
-/* Used by prop_dictionary.c */
-const struct _prop_object_type_tags _prop_string_type_tags = {
+static const struct _prop_object_type_tags _prop_string_type_tags = {
 	.xml_tag		=	"string",
 	.json_open_tag		=	"\"",
 	.json_close_tag		=	"\"",
