@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.216 2024/10/19 06:35:09 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.217 2025/04/24 01:51:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -122,7 +122,23 @@
 #define CR4_PKS		0x01000000 /* Enable Protection Keys for kern pages */
 
 /*
- * Extended Control Register XCR0
+ * Extended Control Register XCR0, also known as XFEATURE_ENABLED_MASK,
+ * with access via XGETBV/XSETBV instructions and support indicated by
+ * CPUID[EAX=0x0d, ECX=0].EAX/EDX.
+ *
+ * References:
+ *
+ * - Intel 64 and IA-32 Architectures Software Developer's Manual,
+ *   Volume 3: System Programming Guide, Intel, Order Number:
+ *   325384-087US, March 2025, Sec. 2.6 `Extended Control Registers
+ *   (Including XCR0)', pp. 2-20 -- 2-22.
+ *
+ * - AMD64 Architecture Programmer's Manual, Volume 2: System
+ *   Programming, Advanced Micro Devices, Publication no. 24593,
+ *   Rev. 3.42, March 2024, Sec. 11.5.2 `XFEATURE_ENABLED_MASK',
+ *   p. 355.
+ *
+ * XXX Missing reference for XCR0_PT, XCR0_HDC, XCR0_LBR, XCR0_HWP.
  */
 #define XCR0_X87	__BIT(0)	/* x87 FPU/MMX state */
 #define XCR0_SSE	__BIT(1)	/* SSE state */
@@ -139,13 +155,32 @@
 #define XCR0_HDC	__BIT(13)	/* Hardware Duty Cycle state */
 #define XCR0_LBR	__BIT(15)	/* Last Branch Record */
 #define XCR0_HWP	__BIT(16)	/* Hardware P-states */
+#define XCR0_TILECFG	__BIT(17)	/* Intel AMX TILECFG state in XSAVE */
+#define XCR0_TILEDATA	__BIT(18)	/* Intel AMX TILEDATA state in XSAVE */
+#define XCR0_LWP	__BIT(62)	/* AMD Lightweight Profiling (LWP) */
+#define XCR0_X		__BIT(63)	/* AMD: reserved for XCR0 expansion */
 
-#define XCR0_FLAGS1	"\20"						  \
-	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "BNDREGS"	  \
-	"\5" "BNDCSR"	"\6" "Opmask"	"\7" "ZMM_Hi256" "\10" "Hi16_ZMM" \
-	"\11" "PT"	"\12" "PKRU"			"\14" "CET_U"	  \
-	"\15" "CET_S"	"\16" "HDC"			"\20" "LBR"	  \
-	"\21" "HWP"
+#define XCR0_FLAGS1	"\177\020"					  \
+	"b\000"		"x87\0"						  \
+	"b\001"		"SSE\0"						  \
+	"b\002"		"AVX\0"						  \
+	"b\003"		"BNDREGS\0"					  \
+	"b\004"		"BNDCSR\0"					  \
+	"b\005"		"Opmask\0"					  \
+	"b\006"		"ZMM_Hi256\0"					  \
+	"b\007"		"Hi16_ZMM\0"					  \
+	"b\010"		"PT\0"						  \
+	"b\011"		"PKRU\0"					  \
+	"b\013"		"CET_U\0"					  \
+	"b\014"		"CET_S\0"					  \
+	"b\015"		"HDC\0"						  \
+	"b\017"		"LBR\0"						  \
+	"b\020"		"HWP\0"						  \
+	"b\021"		"TILECFG\0"					  \
+	"b\022"		"TILEDATA\0"					  \
+	"b\076"		"LWP\0"						  \
+	"b\077"		"X\0"						  \
+	"\0"
 
 /*
  * Known FPU bits, only these get enabled. The save area is sized for all the
