@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.7 2012/03/17 21:35:06 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.8 2025/04/24 01:48:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,18 +72,27 @@ __longjmp14(jmp_buf env, int val)
 	if (sc->sc_sp == 0)
 		goto err;
 
-	/*
-	 * Set _UC_CPU. No FPU data saved, so we can't restore
-	 * that. Set _UC_{SET,CLR}STACK according to SS_ONSTACK
-	 */
 	memset(&uc, 0, sizeof(uc));
-	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
 
 	/*
-	 * Set the signal mask - this is a weak symbol, so don't use
-	 * _UC_SIGMASK in the mcontext, libpthread might override sigprocmask.
+	 * Set _UC_CPU (restore CPU registers) and _UC_SIGMASK (restore
+	 * the signal mask) unconditionally.
+	 *
+	 * In the distant past of SA-based libpthread with sigprocmask
+	 * interception, we called sigprocmask here instead of using
+	 * _UC_SIGMASK -- but that restored the signal mask before the
+	 * stack pointer (PR lib/57946: longjmp fails to restore stack
+	 * first before restoring signal mask on most architectures),
+	 * which breaks sigaltstack, and SA-based libpthread is long
+	 * gone.  So we use _UC_SIGMASK.
+	 *
+	 * Set _UC_{SET,CLR}STACK according to SS_ONSTACK.
 	 */
-	sigprocmask(SIG_SETMASK, &sc->sc_mask, NULL);
+	uc.uc_flags = _UC_CPU | _UC_SIGMASK;
+	uc.uc_flags |= (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
+
+	/* Copy signal mask */
+	uc.uc_sigmask = sc->sc_mask;
 
 	/* Fill other registers */
 	uc.uc_mcontext.__gregs[_REG_CCR] = sc->sc_tstate;
@@ -98,6 +107,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_G7] = r->g7;
 	uc.uc_mcontext.__gregs[_REG_O6] = sc->sc_sp;
 
+	/* No FPU data saved, so we can't restore that. */
 
 	/* Make return value non-zero */
 	if (val == 0)
