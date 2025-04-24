@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4 2025/04/24 01:52:38 riastradh Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.5 2025/04/24 08:21:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4 2025/04/24 01:52:38 riastradh Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.5 2025/04/24 08:21:36 martin Exp $");
 #endif
 
+#include <sys/param.h>
 #include <inttypes.h>
 #include <stddef.h>
 #include <ucontext.h>
