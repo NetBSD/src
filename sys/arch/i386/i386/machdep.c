@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.845 2025/03/17 11:39:02 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.846 2025/04/24 23:51:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.845 2025/03/17 11:39:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.846 2025/04/24 23:51:03 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -676,6 +676,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	fp--;
+	fp = (struct sigframe_siginfo *)((uintptr_t)fp & ~STACK_ALIGNBYTES);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;

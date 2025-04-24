@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.373 2025/03/17 11:39:02 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.374 2025/04/24 23:51:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2025/03/17 11:39:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.374 2025/04/24 23:51:03 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -612,7 +612,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
-	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
+	fp = (struct sigframe_siginfo *)(((unsigned long)sp &
+		~STACK_ALIGNBYTES) - 8);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;

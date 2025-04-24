@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.12 2025/04/24 17:00:25 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.13 2025/04/24 23:51:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.12 2025/04/24 17:00:25 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.13 2025/04/24 23:51:03 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -431,7 +431,7 @@ ATF_TC_BODY(signalsp_sigaltstack, tc)
 	fprintf(stderr, "stack @ [%p, %p)\n",
 	    stack, stack + SIGSTKSZ + STACK_ALIGNBYTES);
 
-#if defined __alpha__ || defined __i386__ || defined __mips__
+#if defined __alpha__ || defined __mips__
 	atf_tc_expect_fail("PR kern/59327:"
 	    " user stack pointer is not aligned properly");
 #endif
@@ -575,7 +575,7 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 	sa.sa_handler = &signalsphandler;
 	RL(sigaction(SIGALRM, &sa, NULL));
 
-#if defined __alpha__ || defined __i386__ || defined __mips__
+#if defined __alpha__ || defined __mips__
 	atf_tc_expect_fail("PR kern/58149:"
 	    " Cannot return from a signal handler"
 	    " if SP was misaligned when the signal arrived");

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40 2025/04/24 09:58:26 kre Exp $	*/
+/*	$NetBSD: param.h,v 1.41 2025/04/24 23:51:03 riastradh Exp $	*/
 
 #ifdef __x86_64__
 
@@ -31,6 +31,7 @@
  * (2) rtld in glibc >= 2.23 for Linux/x86_64 requires it.
  */
 #define STACK_ALIGNBYTES	(16 - 1)
+#define	STACK_ALIGNBYTES32	(4 - 1)
 
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)

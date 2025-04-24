@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.141 2022/08/20 23:49:31 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.142 2025/04/24 23:51:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.141 2022/08/20 23:49:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.142 2025/04/24 23:51:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -233,6 +233,8 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		fp = (struct netbsd32_sigframe_siginfo *)tf->tf_rsp;
 
 	fp--;
+	fp = (struct netbsd32_sigframe_siginfo *)((uintptr_t)fp &
+	    ~STACK_ALIGNBYTES32);
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
