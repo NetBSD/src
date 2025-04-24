@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.307 2025/03/16 15:34:59 riastradh Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.308 2025/04/24 23:55:18 riastradh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.307 2025/03/16 15:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.308 2025/04/24 23:55:18 riastradh Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1697,8 +1697,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct proc * const p = l->l_proc;
 
+	KASSERTMSG((stack & STACK_ALIGNBYTES) == 0, "stack=%"PRIxVADDR, stack);
+
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_regs[_R_SP] = (intptr_t)stack;
+	tf->tf_regs[_R_SP] = (intptr_t)stack & ~STACK_ALIGNBYTES;
 	tf->tf_regs[_R_PC] = (intptr_t)pack->ep_entry & ~3;
 	tf->tf_regs[_R_T9] = (intptr_t)pack->ep_entry & ~3; /* abicall requirement */
 	tf->tf_regs[_R_SR] = PSL_USERSET;
