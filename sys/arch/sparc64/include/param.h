@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62 2021/05/31 14:38:56 simonb Exp $ */
+/*	$NetBSD: param.h,v 1.63 2025/04/24 11:01:27 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -280,3 +280,9 @@ extern const int cputyp;
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
 #define PCI_MAGIC_IO_RANGE	0x100000000LL
+
+#ifdef __arch64__
+#define	STACK_ALIGNBYTES	ALIGNBYTES64
+#else
+#define	STACK_ALIGNBYTES	ALIGNBYTES32
+#endif
