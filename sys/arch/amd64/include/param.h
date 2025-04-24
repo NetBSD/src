@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 2020/06/29 09:56:51 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.39 2025/04/24 01:49:30 riastradh Exp $	*/
 
 #ifdef __x86_64__
 
@@ -69,11 +69,27 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #if defined(KASAN) || defined(KMSAN)
-#define	UPAGES		8
-#elif defined(SVS)
-#define	UPAGES		6		/* 1 page used internally by SVS */
+#define UPAGES_KxSAN	2
 #else
-#define	UPAGES		5		/* pages of u-area (1 for redzone) */
+#define	UPAGES_KxSAN	0
+#endif
+#if defined(SVS)
+#define	UPAGES_SVS	1
+#else
+#define	UPAGES_SVS	0
+#endif
+#define	UPAGES_PCB	1	/* one page for the PCB */
+#define	UPAGES_RED	1	/* one page for red zone between pcb/stack */
+#define	UPAGES_STACK	3	/* three pages (12 KiB) of stack space */
+#define	UPAGES		\
+	(UPAGES_PCB + UPAGES_RED + UPAGES_STACK + UPAGES_SVS + UPAGES_KxSAN)
+
+#if defined(KASAN) || defined(KMSAN)
+__CTASSERT(UPAGES == 8);
+#elif defined(SVS)
+__CTASSERT(UPAGES == 6);
+#else
+__CTASSERT(UPAGES == 5);
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
