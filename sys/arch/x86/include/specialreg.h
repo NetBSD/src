@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.217 2025/04/24 01:51:07 riastradh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.218 2025/04/24 01:51:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -186,8 +186,14 @@
  * Known FPU bits, only these get enabled. The save area is sized for all the
  * fields below.
  */
+#ifdef __i386__
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
+#else
+#define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
+			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM | \
+			 XCR0_TILECFG | XCR0_TILEDATA)
+#endif
 
 /*
  * XSAVE component indices, internal to NetBSD.
