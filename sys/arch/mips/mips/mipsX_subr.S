@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.115 2022/05/31 08:43:14 andvar Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.116 2025/04/24 01:40:27 riastradh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.115 2022/05/31 08:43:14 andvar Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.116 2025/04/24 01:40:27 riastradh Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3083,7 +3083,11 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  7
 	PTR_WORD _C_LABEL(MIPSX(systemcall))		#  8
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  9
+#ifdef MIPS64_OCTEON	/* rdhwr emulation is haunted on Octeon, PR 59236 */
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 10
+#else
 	PTR_WORD _C_LABEL(MIPSX(user_reserved_insn))	# 10
+#endif
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 11
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 12
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 13
