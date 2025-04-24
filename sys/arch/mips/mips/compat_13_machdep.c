@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.22 2023/05/28 08:21:24 andvar Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.23 2025/04/24 12:54:43 riastradh Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.22 2023/05/28 08:21:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.23 2025/04/24 12:54:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,11 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	else
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	mutex_exit(p->p_lock);
-
-	/* Restore signal mask-> */
+	/* Restore signal mask. */
 	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
