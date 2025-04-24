@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.6 2025/04/24 01:42:26 riastradh Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.7 2025/04/24 01:43:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: compat_setjmp.S,v 1.6 2025/04/24 01:42:26 riastradh Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.7 2025/04/24 01:43:20 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,6 +153,8 @@ LEAF(longjmp)
 	SAVE_GP(CALLFRAME_S0)
 	SETUP_GP64(s0, longjmp)
 
+	beqz		a1, 2f		/* map val 0 -> 1 */
+1:
 	REG_PROLOGUE
 	/* save return value in sc_regs[_R_V0] */
 	REG_S		a1, _SC_REGS_V0(a0)
@@ -163,4 +165,7 @@ LEAF(longjmp)
 
 	jal		_C_LABEL(longjmperror)
 	jal		_C_LABEL(abort)
+
+2:	li		a1, 1
+	b		1b
 END(longjmp)

@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.9 2025/04/24 01:42:38 riastradh Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.10 2025/04/24 01:43:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.9 2025/04/24 01:42:38 riastradh Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.10 2025/04/24 01:43:20 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -385,10 +385,6 @@ ATF_TC_HEAD(compat13_longjmp_zero, tc)
 }
 ATF_TC_BODY(compat13_longjmp_zero, tc)
 {
-#if defined __mips_o32		/* no compat13 setjmp on n32 or n64 */
-	atf_tc_expect_fail("PR port-mips/59285:"
-	    " _longjmp(..., 0) makes setjmp return 0, not 1");
-#endif
 	h_check(TEST_COMPAT13_LONGJMP_ZERO);
 }
 
