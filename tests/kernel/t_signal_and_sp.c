@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.16 2025/04/25 00:59:27 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.17 2025/04/25 01:18:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.16 2025/04/25 00:59:27 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.17 2025/04/25 01:18:24 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -494,10 +494,6 @@ ATF_TC_BODY(threadsp, tc)
 
 #ifdef __hppa__
 	atf_tc_expect_signal(SIGBUS, "PR kern/59327:"
-	    " user stack pointer is not aligned properly");
-#endif
-#ifdef __mips__
-	atf_tc_expect_fail("PR kern/59327:"
 	    " user stack pointer is not aligned properly");
 #endif
 
