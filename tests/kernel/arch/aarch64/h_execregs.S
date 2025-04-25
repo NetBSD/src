@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execregs.S,v 1.1 2025/02/27 00:55:31 riastradh Exp $	*/
+/*	$NetBSD: h_execregs.S,v 1.2 2025/04/25 12:58:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include "execregs.h"
 
 ENTRY(execregs_start)
-	/* create a stack frame with NEXECREGS*8 bytes */
-	stp	fp, lr, [sp, #-(16 + NEXECREGS*8)]!
+	/* create a stack frame with NEXECREGS*8 bytes, aligned to 16-byte */
+	stp	fp, lr, [sp, #-(16 + ((NEXECREGS*8 + 15)/16)*16)]!
 
 	/* store registers to buffer on stack */
 	stp	x0, x1, [sp, #16]	/* order matches execregs.h */
