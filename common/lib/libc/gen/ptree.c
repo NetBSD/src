@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $	*/
+/*	$NetBSD: ptree.c,v 1.15 2025/04/25 21:12:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.15 2025/04/25 21:12:31 andvar Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $");
 #else
 #define	KASSERT(e)	do { } while (0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.15 2025/04/25 21:12:31 andvar Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -872,7 +872,7 @@ ptree_remove_node(pt_tree_t *pt, void *item)
 		 * We need also need to know who's pointing at our parent.
 		 * After we remove ourselves from our parent, he'll only
 		 * have one child and that's unacceptable.  So we replace
-		 * the pointer to the parent with our abadoned sibling.
+		 * the pointer to the parent with our abandoned sibling.
 		 */
 		removep = &PTN_BRANCH_SLOT(parent, parent_slot);
 
@@ -924,7 +924,7 @@ ptree_remove_node(pt_tree_t *pt, void *item)
 		 * The pointer to the parent actually lives in the target's
 		 * branch identity.  We can't just move the target's branch
 		 * identity since that would result in the parent pointing
-		 * to its own branch identity and that's fobidden.
+		 * to its own branch identity and that's forbidden.
 		 */
 		const pt_slot_t slot = PTN_BRANCH_POSITION(parent);
 		const pt_slot_t other_slot = slot ^ PT_SLOT_OTHER;
