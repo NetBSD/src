@@ -1,4 +1,4 @@
-/*	$NetBSD: t_compat_cancel.c,v 1.2 2025/04/11 02:07:17 riastradh Exp $	*/
+/*	$NetBSD: t_compat_cancel.c,v 1.3 2025/04/25 13:09:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	__LIBC12_SOURCE__	/* expose compat declarations */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_compat_cancel.c,v 1.2 2025/04/11 02:07:17 riastradh Exp $");
+__RCSID("$NetBSD: t_compat_cancel.c,v 1.3 2025/04/25 13:09:44 riastradh Exp $");
 
 #include <sys/event.h>
 #include <sys/mman.h>
@@ -249,10 +249,10 @@ cancelpoint_compat50_sigtimedwait(void)
 TEST_CANCELPOINT(cancelpoint_compat100_kevent, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat12_msync, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat13_sigsuspend,
-    atf_tc_expect_signal(SIGALRM, "PR lib/59240: POSIX.1-2024:"
+    atf_tc_expect_signal(-1, "PR lib/59240: POSIX.1-2024:"
 	" cancellation point audit"))
 TEST_CANCELPOINT(cancelpoint_compat50___sigtimedwait,
-    atf_tc_expect_signal(SIGALRM, "PR lib/59240: POSIX.1-2024:"
+    atf_tc_expect_signal(-1, "PR lib/59240: POSIX.1-2024:"
 	" cancellation point audit"))
 TEST_CANCELPOINT(cancelpoint_compat50_aio_suspend, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat50_kevent, __nothing)
@@ -263,7 +263,7 @@ TEST_CANCELPOINT(cancelpoint_compat50_pollts, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat50_pselect, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat50_select, __nothing)
 TEST_CANCELPOINT(cancelpoint_compat50_sigtimedwait,
-    atf_tc_expect_signal(SIGALRM, "PR lib/59240: POSIX.1-2024:"
+    atf_tc_expect_signal(-1, "PR lib/59240: POSIX.1-2024:"
 	" cancellation point audit"))
 
 ATF_TP_ADD_TCS(tp)
