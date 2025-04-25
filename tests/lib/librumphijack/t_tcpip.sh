@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.25 2025/04/16 01:06:16 riastradh Exp $
+#       $NetBSD: t_tcpip.sh,v 1.26 2025/04/25 22:51:29 riastradh Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,7 +93,7 @@ start_sshd() {
 
 # Start in debugging mode so we don't have parent<->child privsep stuff
         env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/sbin/sshd -d -e -E out -f ./sshd_config &
+	    /usr/sbin/sshd -d -e -E "$(pwd)/out" -f ./sshd_config &
 #	while [ ! -f sshd.pid ]; do
 #		sleep 0.01
 #	done
