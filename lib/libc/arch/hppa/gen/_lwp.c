@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.6 2025/04/25 01:17:11 riastradh Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.7 2025/04/25 01:18:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.6 2025/04/25 01:17:11 riastradh Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.7 2025/04/25 01:18:38 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <machine/frame.h>
@@ -60,6 +61,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
 	sp = stack_base + HPPA_FRAME_SIZE;
+	sp = (caddr_t)(((uintptr_t)sp + STACK_ALIGNBYTES) & ~STACK_ALIGNBYTES);
 
 	fp = (__greg_t)start;
 	if (fp & 2) {
