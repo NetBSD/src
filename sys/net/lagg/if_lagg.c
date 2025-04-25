@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.72 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.73 2025/04/25 21:07:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.72 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.73 2025/04/25 21:07:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2723,7 +2723,7 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFCAP:
 	case SIOCSIFMTU:
 	case SIOCSETHERCAP:
-		/* Do not allow the setting to be cahanged once joined */
+		/* Do not allow the setting to be changed once joined */
 		error = EINVAL;
 		break;
 	case SIOCSIFFLAGS:
