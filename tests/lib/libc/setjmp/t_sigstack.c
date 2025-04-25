@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.20 2025/04/24 16:50:02 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.21 2025/04/25 01:56:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.20 2025/04/24 16:50:02 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.21 2025/04/25 01:56:52 riastradh Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -277,6 +277,9 @@ ATF_TC_BODY(compat13_setjmp, tc)
 	    " longjmp fails to restore stack first before"
 	    " restoring signal mask on most architectures");
 #endif
+#ifdef __arm__
+	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
+#endif
 
 	/*
 	 * Set up a return point for the signal handler: when the
@@ -351,6 +354,9 @@ ATF_TC_BODY(compat13_sigsetjmp, tc)
 	atf_tc_expect_fail("PR lib/57946:"
 	    " longjmp fails to restore stack first before"
 	    " restoring signal mask on most architectures");
+#endif
+#ifdef __arm__
+	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
 #endif
 
 	/*
