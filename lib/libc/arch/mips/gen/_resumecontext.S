@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.13 2020/10/15 05:27:53 skrll Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.14 2025/04/25 00:08:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,16 +30,21 @@
  */
 
 #include <machine/asm.h>
+#include <machine/param.h>
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _resumecontext.S,v 1.13 2020/10/15 05:27:53 skrll Exp $")
+	RCSID("$NetBSD: _resumecontext.S,v 1.14 2025/04/25 00:08:38 riastradh Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
 	.hidden	_C_LABEL(__resumecontext)
+
+#define	UCONTEXT_SIZE_ALIGNED						\
+	(((UCONTEXT_SIZE + STACK_ALIGNBYTES)/(STACK_ALIGNBYTES + 1))	\
+	    * (STACK_ALIGNBYTES + 1))
 
 LEAF_NOPROFILE(__resumecontext)
 	/*
@@ -57,7 +62,7 @@ LEAF_NOPROFILE(__resumecontext)
 	.cpsetup ra, t3, __resumecontext
 #endif
 
-	PTR_SUBU	sp, sp, UCONTEXT_SIZE		# get space for ucontext
+	PTR_SUBU	sp, sp, UCONTEXT_SIZE_ALIGNED	# get space for ucontext
 	move		a0, sp				# arg0 for getcontext
 	PTR_S		zero, _UC_LINK(a0)		# make sure uc_link is 0
 	SYSTRAP(getcontext)				# get context
