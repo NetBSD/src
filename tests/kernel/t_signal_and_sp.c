@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.13 2025/04/24 23:51:03 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.14 2025/04/25 00:03:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.13 2025/04/24 23:51:03 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.14 2025/04/25 00:03:16 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -493,6 +493,8 @@ ATF_TC_HEAD(threadsp, tc)
 ATF_TC_BODY(threadsp, tc)
 {
 #if defined STACK_ALIGNBYTES && defined HAVE_THREADSPFUNC
+	pthread_t t;
+	void *sp;
 	char *stack;
 	unsigned i;
 
@@ -509,10 +511,18 @@ ATF_TC_BODY(threadsp, tc)
 	    " user stack pointer is not aligned properly");
 #endif
 
+	RZ(pthread_create(&t, NULL, &threadspfunc, NULL));
+
+	alarm(1);
+	RZ(pthread_join(t, &sp));
+	alarm(0);
+
+	ATF_CHECK(sp != NULL);
+	ATF_CHECK_MSG(((uintptr_t)sp & STACK_ALIGNBYTES) == 0,
+	    "thread called with misaligned sp: %p", sp);
+
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
-		pthread_t t;
 		pthread_attr_t attr;
-		void *sp;
 
 		RZ(pthread_attr_init(&attr));
 		RZ(pthread_attr_setstack(&attr, stack, SIGSTKSZ + i));
@@ -532,9 +542,7 @@ ATF_TC_BODY(threadsp, tc)
 	}
 
 	for (i = 0; i <= STACK_ALIGNBYTES; i++) {
-		pthread_t t;
 		pthread_attr_t attr;
-		void *sp;
 
 		RZ(pthread_attr_init(&attr));
 		RZ(pthread_attr_setstack(&attr, stack + i, SIGSTKSZ));
