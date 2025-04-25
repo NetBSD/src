@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.7 2025/04/25 01:17:11 riastradh Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.8 2025/04/25 01:18:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.7 2025/04/25 01:17:11 riastradh Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.8 2025/04/25 01:18:51 riastradh Exp $");
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <machine/frame.h>
@@ -62,8 +63,8 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* LINTED uintptr_t is safe */
 	sp += 16;			/* standard frame */
 	sp += (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
-	sp  = (uintptr_t *)
-	      ((uintptr_t)(sp + 16) & ~0x3f);	/* Align on 64-byte boundary. */
+	sp  = (uintptr_t *)		/* Align on 64-byte boundary. */
+	    (((uintptr_t)sp + STACK_ALIGNBYTES) & ~STACK_ALIGNBYTES);
 
 	/* Save away the registers that we'll need. */
 	gr[_REG_SP] = (__greg_t)sp;
