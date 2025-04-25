@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.14 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.15 2025/04/25 21:06:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,7 +99,7 @@ struct zsclksrc {
 			   child. The other bits tell zsloadchannelregs
 			   if it should call an md signal source
 			   changing routine. ZSC_VARIABLE says if
-			   an ioctl should be able to cahnge the
+			   an ioctl should be able to change the
 			   clock rate.*/
 };
 #define ZSC_PCLK        0x01
