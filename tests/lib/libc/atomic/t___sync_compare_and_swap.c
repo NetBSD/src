@@ -1,4 +1,4 @@
-/*	$NetBSD: t___sync_compare_and_swap.c,v 1.2 2025/03/13 14:00:50 riastradh Exp $	*/
+/*	$NetBSD: t___sync_compare_and_swap.c,v 1.3 2025/04/25 12:11:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,11 +26,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.2 2025/03/13 14:00:50 riastradh Exp $");
+__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.3 2025/04/25 12:11:13 riastradh Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
 #include <machine/types.h>	// for __HAVE_ATOMIC64_OPS
+
+#if defined __arm__ && __ARM_ARCH <= 5
+#define	pr56839_xfail							      \
+	atf_tc_expect_fail("PR port-arm/56839:"				      \
+	    "GCC emits wrong codes for compare_and_swap_1 bultins"	      \
+	    " on armv5 (el & eb)")
+#else
+#define	pr56839_xfail	__nothing
+#endif
 
 /*
  * These tests don't examine the atomicity.
@@ -47,7 +56,7 @@ __RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.2 2025/03/13 14:00:50 riastrad
 #define OLDVAL (0x1122334455667788UL)
 #define NEWVAL (0x8090a0b0c0d0e0f0UL)
 
-#define atf_sync_bool(NAME, TYPE, FMT) \
+#define atf_sync_bool(NAME, TYPE, FMT, XFAIL) \
 ATF_TC(NAME); \
 ATF_TC_HEAD(NAME, tc) \
 { \
@@ -61,6 +70,7 @@ ATF_TC_BODY(NAME, tc) \
 	TYPE expval; \
 	bool expres; \
 	bool res; \
+	XFAIL; \
 	/* If successful */ \
 	val = (TYPE)OLDVAL; \
 	oldval = (TYPE)OLDVAL; \
@@ -85,11 +95,11 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects %d but %d", expres, res); \
 }
 
-atf_sync_bool(__sync_bool_compare_and_swap_1, uint8_t,  PRIx8);
-atf_sync_bool(__sync_bool_compare_and_swap_2, uint16_t, PRIx16);
-atf_sync_bool(__sync_bool_compare_and_swap_4, uint32_t, PRIx32);
+atf_sync_bool(__sync_bool_compare_and_swap_1, uint8_t,  PRIx8, pr56839_xfail);
+atf_sync_bool(__sync_bool_compare_and_swap_2, uint16_t, PRIx16, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_4, uint32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
-atf_sync_bool(__sync_bool_compare_and_swap_8, uint64_t, PRIx64);
+atf_sync_bool(__sync_bool_compare_and_swap_8, uint64_t, PRIx64, __nothing);
 #endif
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
@@ -102,7 +112,7 @@ atf_sync_bool(__sync_bool_compare_and_swap_8, uint64_t, PRIx64);
 #  error Unknown byte order!
 #endif
 
-#define atf_sync_bool_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT) \
+#define atf_sync_bool_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
 ATF_TC(NAME##_subword); \
 ATF_TC_HEAD(NAME##_subword, tc) \
 { \
@@ -114,6 +124,7 @@ ATF_TC_BODY(NAME##_subword, tc) \
 		TYPE word; \
 		SUBTYPE subword[2]; \
 	} val; \
+	XFAIL; \
 	/* If successful */ \
 	val.subword[LSB] = -1; \
 	val.subword[MSB] = 123; \
@@ -139,13 +150,13 @@ ATF_TC_BODY(NAME##_subword, tc) \
 }
 
 atf_sync_bool_subword(__sync_bool_compare_and_swap_1, 8, uint8_t, uint16_t,
-    PRIx8, PRIx16);
+    PRIx8, PRIx16, pr56839_xfail);
 atf_sync_bool_subword(__sync_bool_compare_and_swap_2, 16, uint16_t, uint32_t,
-    PRIx16, PRIx32);
+    PRIx16, PRIx32, pr56839_xfail);
 atf_sync_bool_subword(__sync_bool_compare_and_swap_4, 32, uint32_t, uint64_t,
-    PRIx32, PRIx64);
+    PRIx32, PRIx64, __nothing);
 
-#define atf_sync_val(NAME, TYPE, FMT) \
+#define atf_sync_val(NAME, TYPE, FMT, XFAIL) \
 ATF_TC(NAME); \
 ATF_TC_HEAD(NAME, tc) \
 { \
@@ -159,6 +170,7 @@ ATF_TC_BODY(NAME, tc) \
 	TYPE expval; \
 	TYPE expres; \
 	TYPE res; \
+	XFAIL; \
 	/* If successful */ \
 	val = (TYPE)OLDVAL; \
 	oldval = (TYPE)OLDVAL; \
@@ -183,14 +195,14 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects 0x%" FMT " but 0x%" FMT, expres, res); \
 }
 
-atf_sync_val(__sync_val_compare_and_swap_1, uint8_t,  PRIx8);
-atf_sync_val(__sync_val_compare_and_swap_2, uint16_t, PRIx16);
-atf_sync_val(__sync_val_compare_and_swap_4, uint32_t, PRIx32);
+atf_sync_val(__sync_val_compare_and_swap_1, uint8_t,  PRIx8, pr56839_xfail);
+atf_sync_val(__sync_val_compare_and_swap_2, uint16_t, PRIx16, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_4, uint32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
-atf_sync_val(__sync_val_compare_and_swap_8, uint64_t, PRIx64);
+atf_sync_val(__sync_val_compare_and_swap_8, uint64_t, PRIx64, __nothing);
 #endif
 
-#define atf_sync_val_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT) \
+#define atf_sync_val_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
 ATF_TC(NAME##_subword); \
 ATF_TC_HEAD(NAME##_subword, tc) \
 { \
@@ -203,6 +215,7 @@ ATF_TC_BODY(NAME##_subword, tc) \
 		SUBTYPE subword[2]; \
 	} val; \
 	SUBTYPE rval; \
+	XFAIL; \
 	/* If successful */ \
 	val.subword[LSB] = -1; \
 	val.subword[MSB] = 123; \
@@ -234,11 +247,11 @@ ATF_TC_BODY(NAME##_subword, tc) \
 }
 
 atf_sync_val_subword(__sync_val_compare_and_swap_1, 8, uint8_t, uint16_t,
-    PRIx8, PRIx16);
+    PRIx8, PRIx16, pr56839_xfail);
 atf_sync_val_subword(__sync_val_compare_and_swap_2, 16, uint16_t, uint32_t,
-    PRIx16, PRIx32);
+    PRIx16, PRIx32, pr56839_xfail);
 atf_sync_val_subword(__sync_val_compare_and_swap_4, 32, uint32_t, uint64_t,
-    PRIx32, PRIx64);
+    PRIx32, PRIx64, __nothing);
 
 ATF_TP_ADD_TCS(tp)
 {
