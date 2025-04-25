@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $	*/
+/*	$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $");
 #else
 #define	KASSERT(e)	do { } while (0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.14 2025/04/25 21:08:29 andvar Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -946,10 +946,10 @@ ptree_remove_node(pt_tree_t *pt, void *item)
 		if (__predict_true(parent_bitlen > 0)) {
 			/*
 			 * The parent is a two-way branch.  We have to have
-			 * do to this chang in two steps to keep internally
+			 * do to this change in two steps to keep internally
 			 * consistent.  First step is to copy our sibling from
 			 * our parent to where we are pointing to parent's
-			 * branch identiy.  This remove all references to his
+			 * branch identity.  This remove all references to his
 			 * branch identity from the tree.  We then simply make
 			 * the parent assume the target's branching duties.
 			 *
@@ -1030,7 +1030,7 @@ ptree_remove_node(pt_tree_t *pt, void *item)
 		/*
 		 * If target's branch identity contained its leaf identity, we
 		 * have nothing left to do.  We've already moved 'X' so there
-		 * is no longer anything in the target's branch identiy that 
+		 * is no longer anything in the target's branch identity that 
 		 * has to be preserved.
 		 */
 		if (parent == target) {
