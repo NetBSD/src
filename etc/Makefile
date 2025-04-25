@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.474 2025/01/01 03:21:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.475 2025/04/25 19:34:39 pgoyette Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -638,15 +638,12 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 				if [ ${KERNEL_DIR} = "yes" ]; then \
 					newname=$$(echo $${kernel} | \
 					    ${TOOL_SED} -e s/netbsd/kernel/); \
-					ln ../$${kernel} ./netbsd/$${newname}; \
+					ln -f ../$${kernel} ./netbsd/$${newname}; \
 				else \
 					newname=$${kernel}; \
 				fi; \
 				echo "$${d}/$${newname} type=file"; \
 			done ) | eval $${pax_cmd}; \
-			if [ ${KERNEL_DIR} = "yes" ]; then \
-				mv $${kern_tgz} ..; \
-			fi; \
 		} \
 	}
 .endif
