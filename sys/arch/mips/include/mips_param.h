@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.53 2025/04/20 22:32:25 riastradh Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.54 2025/04/25 00:26:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@
 #else
 #define	STACK_ALIGNBYTES	(8 - 1)
 #endif
+
+#define	STACK_ALIGNBYTES_O32	(8 - 1)
 
 #define	ALIGNBYTES32		(sizeof(double) - 1)
 #define	ALIGN32(p)		(((uintptr_t)(p) + ALIGNBYTES32) &~ALIGNBYTES32)

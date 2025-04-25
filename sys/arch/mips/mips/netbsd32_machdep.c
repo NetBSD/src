@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/06 20:42:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.24 2025/04/25 00:26:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/06 20:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.24 2025/04/25 00:26:59 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -94,13 +94,12 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts * const ps = p->p_sigacts;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo32 *sfp = getframe(l, sig, &onstack);
+	struct sigframe_siginfo32 *sfp = getframe(l, sig, &onstack,
+	    sizeof(*sfp), _Alignof(*sfp));
 	struct sigframe_siginfo32 sf;
 	struct trapframe * const tf = l->l_md.md_utf;
 	size_t sfsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	sfp--;
 
 	memset(&sf, 0, sizeof(sf));
 	netbsd32_si_to_si32(&sf.sf_si, (const siginfo_t *)&ksi->ksi_info);

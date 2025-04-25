@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25 2024/04/14 07:56:45 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.26 2025/04/25 00:26:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2024/04/14 07:56:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.26 2025/04/25 00:26:59 riastradh Exp $");
 
 #include "opt_cputype.h"
 
@@ -49,17 +49,29 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2024/04/14 07:56:45 skrll Exp $
 #include <mips/locore.h>
 
 void *
-getframe(struct lwp *l, int sig, int *onstack)
+getframe(struct lwp *l, int sig, int *onstack, size_t size, size_t align)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
+	uintptr_t sp;
+
+	KASSERT((align & (align - 1)) == 0);
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
-	return (void *)(intptr_t)tf->tf_regs[_R_SP];
+		sp = (uintptr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
+	else
+		sp = (uintptr_t)tf->tf_regs[_R_SP];
+	sp -= size;
+#ifndef __mips_o32
+	if (p->p_md.md_abi == _MIPS_BSD_API_O32)
+		sp &= ~(STACK_ALIGNBYTES_O32 | (align - 1));
+	else
+#endif
+		sp &= ~(STACK_ALIGNBYTES | (align - 1));
+	return (void *)sp;
 }
 
 struct sigframe_siginfo {
@@ -79,11 +91,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe * const tf = l->l_md.md_utf;
 	int onstack, error;
 	const int signo = ksi->ksi_signo;
-	struct sigframe_siginfo *sf = getframe(l, signo, &onstack);
+	struct sigframe_siginfo *sf = getframe(l, signo, &onstack,
+	    sizeof(*sf), _Alignof(*sf));
 	struct sigframe_siginfo ksf;
 	const sig_t catcher = SIGACTION(p, signo).sa_handler;
-
-	sf--;
 
 	memset(&ksf, 0, sizeof(ksf));
 	ksf.sf_si._info = ksi->ksi_info;

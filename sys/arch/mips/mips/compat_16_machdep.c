@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:15:00 thorpej Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.24 2025/04/25 00:26:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:15:00 thorpej Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.24 2025/04/25 00:26:59 riastradh Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -96,7 +96,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	struct sigacts * const ps = p->p_sigacts;
 	struct pcb * const pcb = lwp_getpcb(l);
 	int onstack, error;
-	struct sigcontext *scp = getframe(l, sig, &onstack);
+	struct sigcontext *scp = getframe(l, sig, &onstack,
+	    sizeof(*scp), _Alignof(*scp));
 	struct sigcontext ksc;
 	struct trapframe * const tf = l->l_md.md_utf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -105,8 +106,6 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	if (p->p_md.md_abi != _MIPS_BSD_API_O32)
 		sigexit(l, SIGILL);
 #endif
-
-	scp--;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||

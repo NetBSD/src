@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 2021/03/29 01:46:26 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 2025/04/25 00:26:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,8 +40,9 @@
 #endif
 
 #include <sys/signal.h>
+#include <sys/stddef.h>
 
-void *getframe(struct lwp *, int, int *);
+void *getframe(struct lwp *, int, int *, size_t, size_t);
 #define	lwp_trapframe(l)	((l)->l_md.md_utf)
 
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
