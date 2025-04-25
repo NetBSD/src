@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.10 2019/03/25 19:24:30 maxv Exp $ */
+/* $NetBSD: frame.h,v 1.11 2025/04/25 00:59:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -112,12 +112,15 @@ struct sigframe_siginfo {
 };
 
 #ifdef _KERNEL
-void *getframe(const struct lwp *, int, int *);
+
+#include <sys/stddef.h>
+void *getframe(const struct lwp *, int, int *, size_t, size_t);
 void buildcontext(struct lwp *, const void *, const void *, const void *);
 void sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 #if defined(COMPAT_16)
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
+
 #endif
 
 #endif /* _ALPHA_FRAME_H_ */

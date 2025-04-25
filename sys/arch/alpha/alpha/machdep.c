@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.382 2025/03/16 19:27:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2025/03/16 19:27:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,9 +1477,11 @@ regdump(struct trapframe *framep)
 
 
 void *
-getframe(const struct lwp *l, int sig, int *onstack)
+getframe(const struct lwp *l, int sig, int *onstack, size_t size, size_t align)
 {
-	void *frame;
+	uintptr_t frame;
+
+	KASSERT((align & (align - 1)) == 0);
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
@@ -1487,11 +1489,12 @@ getframe(const struct lwp *l, int sig, int *onstack)
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((char *)l->l_sigstk.ss_sp +
-					l->l_sigstk.ss_size);
+		frame = (uintptr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
-		frame = (void *)(alpha_pal_rdusp());
-	return (frame);
+		frame = (uintptr_t)alpha_pal_rdusp();
+	frame -= size;
+	frame &= ~(STACK_ALIGNBYTES | (align - 1));
+	return (void *)frame;
 }
 
 void
@@ -1520,11 +1523,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf;
 	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 
-	fp = (struct sigframe_siginfo *)getframe(l,ksi->ksi_signo,&onstack);
 	tf = l->l_md.md_tf;
 
 	/* Allocate space for the signal handler context. */
-	fp--;
+	fp = getframe(l, ksi->ksi_signo, &onstack, sizeof(*fp), _Alignof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
