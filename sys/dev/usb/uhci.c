@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.319 2024/10/06 14:08:58 jakllsch Exp $	*/
+/*	$NetBSD: uhci.c,v 1.320 2025/04/26 07:06:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.319 2024/10/06 14:08:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.320 2025/04/26 07:06:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -829,7 +829,7 @@ uhci_dump_td(uhci_soft_td_t *p)
 	    !!(le32toh(p->td.td_status) & UHCI_TD_IOS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_LS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_SPD), 0);
-	DPRINTF("errcnt  =%d actlen  =%d pid=%02x",
+	DPRINTF("errcnt  =%jd actlen  =%jd pid=%02jx",
 	    UHCI_TD_GET_ERRCNT(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_ACTLEN(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_PID(le32toh(p->td.td_token)), 0);
