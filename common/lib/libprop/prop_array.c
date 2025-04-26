@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.23 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.24 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ _prop_array_iterator_reset(void *v)
  * prop_array_create --
  *	Create an empty array.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_create(void)
 {
 
@@ -406,7 +406,7 @@ prop_array_create(void)
  * prop_array_create_with_capacity --
  *	Create an array with the capacity to store N objects.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_create_with_capacity(unsigned int capacity)
 {
 
@@ -420,7 +420,7 @@ prop_array_create_with_capacity(unsigned int capacity)
  *	array contains references to the original array's objects, not
  *	copies of those objects (i.e. a shallow copy).
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_copy(prop_array_t opa)
 {
 	prop_array_t pa;
@@ -450,7 +450,7 @@ prop_array_copy(prop_array_t opa)
  * prop_array_copy_mutable --
  *	Like prop_array_copy(), but the resulting array is mutable.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_copy_mutable(prop_array_t opa)
 {
 	prop_array_t pa;
@@ -466,7 +466,7 @@ prop_array_copy_mutable(prop_array_t opa)
  * prop_array_capacity --
  *	Return the capacity of the array.
  */
-unsigned int
+_PROP_EXPORT unsigned int
 prop_array_capacity(prop_array_t pa)
 {
 	unsigned int rv;
@@ -485,7 +485,7 @@ prop_array_capacity(prop_array_t pa)
  * prop_array_count --
  *	Return the number of objects stored in the array.
  */
-unsigned int
+_PROP_EXPORT unsigned int
 prop_array_count(prop_array_t pa)
 {
 	unsigned int rv;
@@ -506,7 +506,7 @@ prop_array_count(prop_array_t pa)
  *	total number of objects (including the objects already stored
  *	in the array).
  */
-bool
+_PROP_EXPORT bool
 prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 {
 	bool rv;
@@ -549,7 +549,7 @@ _prop_array_iterator_locked(prop_array_t pa)
  *	Return an iterator for the array.  The array is retained by
  *	the iterator.
  */
-prop_object_iterator_t
+_PROP_EXPORT prop_object_iterator_t
 prop_array_iterator(prop_array_t pa)
 {
 	struct _prop_array_iterator *pai;
@@ -564,7 +564,7 @@ prop_array_iterator(prop_array_t pa)
  * prop_array_make_immutable --
  *	Make the array immutable.
  */
-void
+_PROP_EXPORT void
 prop_array_make_immutable(prop_array_t pa)
 {
 
@@ -578,7 +578,7 @@ prop_array_make_immutable(prop_array_t pa)
  * prop_array_mutable --
  *	Returns true if the array is mutable.
  */
-bool
+_PROP_EXPORT bool
 prop_array_mutable(prop_array_t pa)
 {
 	bool rv;
@@ -594,7 +594,7 @@ prop_array_mutable(prop_array_t pa)
  * prop_array_get --
  *	Return the object stored at the specified array index.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_array_get(prop_array_t pa, unsigned int idx)
 {
 	prop_object_t po = NULL;
@@ -641,7 +641,7 @@ _prop_array_add(prop_array_t pa, prop_object_t po)
  *	caller must either be setting the object just beyond the existing
  *	count or replacing an already existing object reference.
  */
-bool
+_PROP_EXPORT bool
 prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
 {
 	prop_object_t opo;
@@ -683,7 +683,7 @@ prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
  *	Add a reference to an object to the specified array, appending
  *	to the end and growing the array's capacity, if necessary.
  */
-bool
+_PROP_EXPORT bool
 prop_array_add(prop_array_t pa, prop_object_t po)
 {
 	bool rv;
@@ -703,7 +703,7 @@ prop_array_add(prop_array_t pa, prop_object_t po)
  *	Remove the reference to an object from an array at the specified
  *	index.	The array will be compacted following the removal.
  */
-void
+_PROP_EXPORT void
 prop_array_remove(prop_array_t pa, unsigned int idx)
 {
 	prop_object_t po;
@@ -739,7 +739,7 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
  *	Return true if the two arrays are equivalent.  Note we do a
  *	by-value comparison of the objects in the array.
  */
-bool
+_PROP_EXPORT bool
 prop_array_equals(prop_array_t array1, prop_array_t array2)
 {
 	if (!prop_object_is_array(array1) || !prop_object_is_array(array2))
@@ -752,7 +752,7 @@ prop_array_equals(prop_array_t array1, prop_array_t array2)
  * prop_array_externalize --
  *	Externalize an array in XML format.
  */
-char *
+_PROP_EXPORT char *
 prop_array_externalize(prop_array_t pa)
 {
 	return _prop_object_externalize(&pa->pa_obj, PROP_FORMAT_XML);
@@ -888,7 +888,7 @@ _prop_array_internalize_body(prop_stack_t stack, prop_object_t *obj,
  * prop_array_internalize --
  *	Create an array by parsing the external representation.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_internalize(const char *data)
 {
 	return _prop_object_internalize(data, &_prop_array_type_tags);
@@ -899,7 +899,7 @@ prop_array_internalize(const char *data)
  * prop_array_externalize_to_file --
  *	Externalize an array to the specified file.
  */
-bool
+_PROP_EXPORT bool
 prop_array_externalize_to_file(prop_array_t array, const char *fname)
 {
 	return _prop_object_externalize_to_file(&array->pa_obj, fname,
@@ -910,7 +910,7 @@ prop_array_externalize_to_file(prop_array_t array, const char *fname)
  * prop_array_internalize_from_file --
  *	Internalize an array from a file.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_array_internalize_from_file(const char *fname)
 {
 	return _prop_object_internalize_from_file(fname,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2025/04/23 02:58:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.23 2025/04/26 17:13:23 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@ PROPLIBDIR=${NETBSDSRCDIR}/common/lib/libprop
 
 CPPFLAGS+=-D_LIBPROP
 CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
+
+.for src in ${SRCS}
+COPTS.${src}+=	-fvisibility=hidden
+.endfor
 
 LINTFLAGS+=-w
 LIB=	prop

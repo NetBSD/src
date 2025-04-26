@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary_util.c,v 1.9 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_dictionary_util.c,v 1.10 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "prop_object_impl.h"	/* only to hide kernel vs. not-kernel */
 #include <prop/proplib.h>
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_dict(prop_dictionary_t dict, const char *key,
 			 prop_dictionary_t *dp)
 {
@@ -55,7 +55,7 @@ prop_dictionary_get_dict(prop_dictionary_t dict, const char *key,
 
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_bool(prop_dictionary_t dict, const char *key, bool *valp)
 {
 	prop_bool_t b;
@@ -69,7 +69,7 @@ prop_dictionary_get_bool(prop_dictionary_t dict, const char *key, bool *valp)
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_bool(prop_dictionary_t dict, const char *key, bool val)
 {
 
@@ -77,7 +77,7 @@ prop_dictionary_set_bool(prop_dictionary_t dict, const char *key, bool val)
 }
 
 #define	TEMPLATE(name, typ)						\
-bool									\
+_PROP_EXPORT bool							\
 prop_dictionary_get_ ## name (prop_dictionary_t dict,			\
 			      const char *key,				\
 			      typ *valp)				\
@@ -127,7 +127,7 @@ prop_dictionary_set_unsigned_number(prop_dictionary_t dict, const char *key,
 }
 
 #define	TEMPLATE(name, which, typ)					\
-bool									\
+_PROP_EXPORT bool							\
 prop_dictionary_set_ ## name (prop_dictionary_t dict,			\
 			      const char *key,				\
 			      typ val)					\
@@ -165,7 +165,7 @@ UTEMPLATE(uint64,    uint64_t)
 #undef UTEMPLATE
 #undef TEMPLATE
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_string(prop_dictionary_t dict, const char *key,
 			   const char **cpp)
 {
@@ -184,7 +184,7 @@ prop_dictionary_get_string(prop_dictionary_t dict, const char *key,
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_string(prop_dictionary_t dict, const char *key,
 			   const char *cp)
 {
@@ -192,7 +192,7 @@ prop_dictionary_set_string(prop_dictionary_t dict, const char *key,
 					   prop_string_create_copy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_string_nocopy(prop_dictionary_t dict,
 				  const char *key,
 				  const char *cp)
@@ -201,7 +201,7 @@ prop_dictionary_set_string_nocopy(prop_dictionary_t dict,
 					   prop_string_create_nocopy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_data(prop_dictionary_t dict, const char *key,
 			 const void **vp, size_t *sizep)
 {
@@ -222,7 +222,7 @@ prop_dictionary_get_data(prop_dictionary_t dict, const char *key,
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_data(prop_dictionary_t dict, const char *key,
 			 const void *v, size_t size)
 {
@@ -230,7 +230,7 @@ prop_dictionary_set_data(prop_dictionary_t dict, const char *key,
 					   prop_data_create_copy(v, size));
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_data_nocopy(prop_dictionary_t dict, const char *key,
 			        const void *v, size_t size)
 {
@@ -241,7 +241,7 @@ prop_dictionary_set_data_nocopy(prop_dictionary_t dict, const char *key,
 _PROP_DEPRECATED(prop_dictionary_get_cstring,
     "this program uses prop_dictionary_get_cstring(), "
     "which is deprecated; use prop_dictionary_get_string() and copy instead.")
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_cstring(prop_dictionary_t dict,
 			    const char *key,
 			    char **cpp)
@@ -272,7 +272,7 @@ prop_dictionary_get_cstring(prop_dictionary_t dict,
 _PROP_DEPRECATED(prop_string_get_cstring_nocopy,
     "this program uses prop_string_get_cstring_nocopy(), "
     "which is deprecated; use prop_dictionary_get_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_dictionary_get_cstring_nocopy(prop_dictionary_t dict,
 				   const char *key,
 				   const char **cpp)
@@ -283,7 +283,7 @@ prop_dictionary_get_cstring_nocopy(prop_dictionary_t dict,
 _PROP_DEPRECATED(prop_dictionary_set_cstring,
     "this program uses prop_dictionary_set_cstring(), "
     "which is deprecated; use prop_dictionary_set_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_cstring(prop_dictionary_t dict,
 			    const char *key,
 			    const char *cp)
@@ -294,7 +294,7 @@ prop_dictionary_set_cstring(prop_dictionary_t dict,
 _PROP_DEPRECATED(prop_dictionary_set_cstring_nocopy,
     "this program uses prop_dictionary_set_cstring_nocopy(), "
     "which is deprecated; use prop_dictionary_set_string_nocopy() instead.")
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_cstring_nocopy(prop_dictionary_t dict,
 				   const char *key,
 				   const char *cp)
@@ -302,7 +302,7 @@ prop_dictionary_set_cstring_nocopy(prop_dictionary_t dict,
 	return prop_dictionary_set_string_nocopy(dict, key, cp);
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_and_rel(prop_dictionary_t dict, const char *key,
 			    prop_object_t po)
 {

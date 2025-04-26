@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.20 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.21 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ _prop_bool_alloc(bool val)
  *	Create a prop_bool_t and initialize it with the
  *	provided boolean value.
  */
-prop_bool_t
+_PROP_EXPORT prop_bool_t
 prop_bool_create(bool val)
 {
 
@@ -165,7 +165,7 @@ prop_bool_create(bool val)
  * prop_bool_copy --
  *	Copy a prop_bool_t.
  */
-prop_bool_t
+_PROP_EXPORT prop_bool_t
 prop_bool_copy(prop_bool_t opb)
 {
 
@@ -184,7 +184,7 @@ prop_bool_copy(prop_bool_t opb)
  * prop_bool_value --
  *	Get the value of a prop_bool_t.
  */
-bool
+_PROP_EXPORT bool
 prop_bool_value(prop_bool_t pb)
 {
 
@@ -198,7 +198,7 @@ prop_bool_value(prop_bool_t pb)
  * prop_bool_true --
  *	Historical alias for prop_bool_value().
  */
-bool
+_PROP_EXPORT bool
 prop_bool_true(prop_bool_t pb)
 {
 	return prop_bool_value(pb);
@@ -208,7 +208,7 @@ prop_bool_true(prop_bool_t pb)
  * prop_bool_equals --
  *	Return true if the boolean values are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 {
 	if (!prop_object_is_bool(b1) || !prop_object_is_bool(b2))

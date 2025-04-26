@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.9 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.10 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "prop_object_impl.h" /* hide kernel vs. not-kernel vs. standalone */
 #include <prop/proplib.h>
 
-bool
+_PROP_EXPORT bool
 prop_array_get_bool(prop_array_t array, unsigned int indx, bool *valp)
 {
 	prop_bool_t b;
@@ -55,14 +55,14 @@ prop_array_get_bool(prop_array_t array, unsigned int indx, bool *valp)
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_bool(prop_array_t array, unsigned int indx, bool val)
 {
 
 	return prop_array_set_and_rel(array, indx, prop_bool_create(val));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_bool(prop_array_t array, bool val)
 {
 
@@ -70,7 +70,7 @@ prop_array_add_bool(prop_array_t array, bool val)
 }
 
 #define	TEMPLATE(name, typ)						\
-bool									\
+_PROP_EXPORT bool							\
 prop_array_get_ ## name (prop_array_t array,				\
 			 unsigned int indx,				\
 			 typ *valp)					\
@@ -131,7 +131,7 @@ prop_array_add_unsigned_number(prop_array_t array, uintmax_t val)
 }
 
 #define TEMPLATE(name, which, typ)					\
-bool									\
+_PROP_EXPORT bool							\
 prop_array_set_ ## name (prop_array_t array,				\
 			 unsigned int indx,				\
 			 typ val)					\
@@ -140,7 +140,7 @@ prop_array_set_ ## name (prop_array_t array,				\
 	return prop_array_set_ ## which ## _number(array, indx, val);	\
 }									\
 									\
-bool									\
+_PROP_EXPORT bool							\
 prop_array_add_ ## name (prop_array_t array,				\
 			 typ val)					\
 {									\
@@ -177,7 +177,7 @@ UTEMPLATE(uint64,    uint64_t)
 #undef UTEMPLATE
 #undef TEMPLATE
 
-bool
+_PROP_EXPORT bool
 prop_array_get_string(prop_array_t array, unsigned int indx, const char **cpp)
 {
 	prop_string_t str;
@@ -195,20 +195,20 @@ prop_array_get_string(prop_array_t array, unsigned int indx, const char **cpp)
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_string(prop_array_t array, unsigned int indx, const char *cp)
 {
 	return prop_array_set_and_rel(array, indx,
 				      prop_string_create_copy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_string(prop_array_t array, const char *cp)
 {
 	return prop_array_add_and_rel(array, prop_string_create_copy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_string_nocopy(prop_array_t array, unsigned int indx,
 			     const char *cp)
 {
@@ -216,13 +216,13 @@ prop_array_set_string_nocopy(prop_array_t array, unsigned int indx,
 				      prop_string_create_nocopy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_string_nocopy(prop_array_t array, const char *cp)
 {
 	return prop_array_add_and_rel(array, prop_string_create_nocopy(cp));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_get_data(prop_array_t array, unsigned int indx, const void **vp,
 		    size_t *sizep)
 {
@@ -243,7 +243,7 @@ prop_array_get_data(prop_array_t array, unsigned int indx, const void **vp,
 	return (true);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_data(prop_array_t array, unsigned int indx, const void *v,
 		    size_t size)
 {
@@ -251,7 +251,7 @@ prop_array_set_data(prop_array_t array, unsigned int indx, const void *v,
 				      prop_data_create_copy(v, size));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_data_nocopy(prop_array_t array, unsigned int indx, const void *v,
 			   size_t size)
 {
@@ -259,14 +259,14 @@ prop_array_set_data_nocopy(prop_array_t array, unsigned int indx, const void *v,
 				      prop_data_create_nocopy(v, size));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_data(prop_array_t array, const void *v, size_t size)
 {
 	return prop_array_add_and_rel(array,
 				      prop_data_create_copy(v, size));
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_data_nocopy(prop_array_t array, const void *v, size_t size)
 {
 	return prop_array_add_and_rel(array,
@@ -276,7 +276,7 @@ prop_array_add_data_nocopy(prop_array_t array, const void *v, size_t size)
 _PROP_DEPRECATED(prop_array_get_cstring,
     "this program uses prop_array_get_cstring(), "
     "which is deprecated; use prop_array_get_string() and copy instead.")
-bool
+_PROP_EXPORT bool
 prop_array_get_cstring(prop_array_t array, unsigned int indx, char **cpp)
 {
 	prop_string_t str;
@@ -305,7 +305,7 @@ prop_array_get_cstring(prop_array_t array, unsigned int indx, char **cpp)
 _PROP_DEPRECATED(prop_array_get_cstring_nocopy,
     "this program uses prop_array_get_cstring_nocopy(), "
     "which is deprecated; use prop_array_get_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_array_get_cstring_nocopy(prop_array_t array, unsigned int indx,
 			      const char **cpp)
 {
@@ -315,7 +315,7 @@ prop_array_get_cstring_nocopy(prop_array_t array, unsigned int indx,
 _PROP_DEPRECATED(prop_array_set_cstring,
     "this program uses prop_array_set_cstring(), "
     "which is deprecated; use prop_array_set_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_array_set_cstring(prop_array_t array, unsigned int indx, const char *cp)
 {
 	return prop_array_set_string(array, indx, cp);
@@ -324,7 +324,7 @@ prop_array_set_cstring(prop_array_t array, unsigned int indx, const char *cp)
 _PROP_DEPRECATED(prop_array_add_cstring,
     "this program uses prop_array_add_cstring(), "
     "which is deprecated; use prop_array_add_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_array_add_cstring(prop_array_t array, const char *cp)
 {
 	return prop_array_add_string(array, cp);
@@ -333,7 +333,7 @@ prop_array_add_cstring(prop_array_t array, const char *cp)
 _PROP_DEPRECATED(prop_array_set_cstring_nocopy,
     "this program uses prop_array_set_cstring_nocopy(), "
     "which is deprecated; use prop_array_set_string_nocopy() instead.")
-bool
+_PROP_EXPORT bool
 prop_array_set_cstring_nocopy(prop_array_t array, unsigned int indx,
 			      const char *cp)
 {
@@ -343,13 +343,13 @@ prop_array_set_cstring_nocopy(prop_array_t array, unsigned int indx,
 _PROP_DEPRECATED(prop_array_add_cstring_nocopy,
     "this program uses prop_array_add_cstring_nocopy(), "
     "which is deprecated; use prop_array_add_string_nocopy() instead.")
-bool
+_PROP_EXPORT bool
 prop_array_add_cstring_nocopy(prop_array_t array, const char *cp)
 {
 	return prop_array_add_string_nocopy(array, cp);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_add_and_rel(prop_array_t array, prop_object_t po)
 {
 	bool rv;
@@ -361,7 +361,7 @@ prop_array_add_and_rel(prop_array_t array, prop_object_t po)
 	return rv;
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_set_and_rel(prop_array_t array, unsigned int indx,
 		       prop_object_t po)
 {

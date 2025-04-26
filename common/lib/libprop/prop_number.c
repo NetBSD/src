@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.35 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.36 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
  *	Create a prop_number_t and initialize it with the
  *	provided signed value.
  */
-prop_number_t
+_PROP_EXPORT prop_number_t
 prop_number_create_signed(intmax_t val)
 {
 	struct _prop_number_value pnv;
@@ -355,7 +355,7 @@ prop_number_create_signed(intmax_t val)
 _PROP_DEPRECATED(prop_number_create_integer,
     "this program uses prop_number_create_integer(), "
     "which is deprecated; use prop_number_create_signed() instead.")
-prop_number_t
+_PROP_EXPORT prop_number_t
 prop_number_create_integer(int64_t val)
 {
 	return prop_number_create_signed(val);
@@ -366,7 +366,7 @@ prop_number_create_integer(int64_t val)
  *	Create a prop_number_t and initialize it with the
  *	provided unsigned value.
  */
-prop_number_t
+_PROP_EXPORT prop_number_t
 prop_number_create_unsigned(uintmax_t val)
 {
 	struct _prop_number_value pnv;
@@ -381,7 +381,7 @@ prop_number_create_unsigned(uintmax_t val)
 _PROP_DEPRECATED(prop_number_create_unsigned_integer,
     "this program uses prop_number_create_unsigned_integer(), "
     "which is deprecated; use prop_number_create_unsigned() instead.")
-prop_number_t
+_PROP_EXPORT prop_number_t
 prop_number_create_unsigned_integer(uint64_t val)
 {
 	return prop_number_create_unsigned(val);
@@ -391,7 +391,7 @@ prop_number_create_unsigned_integer(uint64_t val)
  * prop_number_copy --
  *	Copy a prop_number_t.
  */
-prop_number_t
+_PROP_EXPORT prop_number_t
 prop_number_copy(prop_number_t opn)
 {
 
@@ -410,7 +410,7 @@ prop_number_copy(prop_number_t opn)
  * prop_number_unsigned --
  *	Returns true if the prop_number_t has an unsigned value.
  */
-bool
+_PROP_EXPORT bool
 prop_number_unsigned(prop_number_t pn)
 {
 
@@ -422,7 +422,7 @@ prop_number_unsigned(prop_number_t pn)
  *	Return the size, in bits, required to hold the value of
  *	the specified number.
  */
-int
+_PROP_EXPORT int
 prop_number_size(prop_number_t pn)
 {
 	struct _prop_number_value *pnv;
@@ -455,7 +455,7 @@ prop_number_size(prop_number_t pn)
  * prop_number_signed_value --
  *	Get the signed value of a prop_number_t.
  */
-intmax_t
+_PROP_EXPORT intmax_t
 prop_number_signed_value(prop_number_t pn)
 {
 
@@ -472,7 +472,7 @@ prop_number_signed_value(prop_number_t pn)
 _PROP_DEPRECATED(prop_number_integer_value,
     "this program uses prop_number_integer_value(), "
     "which is deprecated; use prop_number_signed_value() instead.")
-int64_t
+_PROP_EXPORT int64_t
 prop_number_integer_value(prop_number_t pn)
 {
 	return prop_number_signed_value(pn);
@@ -482,7 +482,7 @@ prop_number_integer_value(prop_number_t pn)
  * prop_number_unsigned_value --
  *	Get the unsigned value of a prop_number_t.
  */
-uintmax_t
+_PROP_EXPORT uintmax_t
 prop_number_unsigned_value(prop_number_t pn)
 {
 
@@ -499,7 +499,7 @@ prop_number_unsigned_value(prop_number_t pn)
 _PROP_DEPRECATED(prop_number_unsigned_integer_value,
     "this program uses prop_number_unsigned_integer_value(), "
     "which is deprecated; use prop_number_unsigned_value() instead.")
-uint64_t
+_PROP_EXPORT uint64_t
 prop_number_unsigned_integer_value(prop_number_t pn)
 {
 	return prop_number_unsigned_value(pn);
@@ -511,7 +511,7 @@ prop_number_unsigned_integer_value(prop_number_t pn)
  *	Returns true if successful.
  */
 #define	TEMPLATE(name, typ, minv, maxv)					\
-bool									\
+_PROP_EXPORT bool							\
 prop_number_ ## name ## _value(prop_number_t pn, typ * const valp)	\
 {									\
 									\
@@ -560,7 +560,7 @@ TEMPLATE(uint64,    uint64_t,           0, UINT64_MAX)
  * prop_number_equals --
  *	Return true if two numbers are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_number_equals(prop_number_t num1, prop_number_t num2)
 {
 	if (!prop_object_is_number(num1) || !prop_object_is_number(num2))
@@ -574,7 +574,7 @@ prop_number_equals(prop_number_t num1, prop_number_t num2)
  *	Return true if the number is equivalent to the specified signed
  *	value.
  */
-bool
+_PROP_EXPORT bool
 prop_number_equals_signed(prop_number_t pn, intmax_t val)
 {
 
@@ -591,7 +591,7 @@ prop_number_equals_signed(prop_number_t pn, intmax_t val)
 _PROP_DEPRECATED(prop_number_equals_integer,
     "this program uses prop_number_equals_integer(), "
     "which is deprecated; use prop_number_equals_signed() instead.")
-bool
+_PROP_EXPORT bool
 prop_number_equals_integer(prop_number_t pn, int64_t val)
 {
 	return prop_number_equals_signed(pn, val);
@@ -602,7 +602,7 @@ prop_number_equals_integer(prop_number_t pn, int64_t val)
  *	Return true if the number is equivalent to the specified
  *	unsigned value.
  */
-bool
+_PROP_EXPORT bool
 prop_number_equals_unsigned(prop_number_t pn, uintmax_t val)
 {
 
@@ -619,7 +619,7 @@ prop_number_equals_unsigned(prop_number_t pn, uintmax_t val)
 _PROP_DEPRECATED(prop_number_equals_unsigned_integer,
     "this program uses prop_number_equals_unsigned_integer(), "
     "which is deprecated; use prop_number_equals_unsigned() instead.")
-bool
+_PROP_EXPORT bool
 prop_number_equals_unsigned_integer(prop_number_t pn, uint64_t val)
 {
 	return prop_number_equals_unsigned(pn, val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.38 2025/04/24 15:50:51 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.39 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -1370,7 +1370,7 @@ _prop_object_internalize(const char *data,
 	return (obj);
 }
 
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_object_internalize(const char *data)
 {
 	return _prop_object_internalize(data, NULL);
@@ -1726,7 +1726,7 @@ _prop_object_internalize_from_file(const char *fname,
 	return obj;
 }
 
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_object_internalize_from_file(const char *fname)
 {
 	return _prop_object_internalize_from_file(fname, NULL);
@@ -1739,7 +1739,7 @@ static prop_format_t	_prop_format_default = PROP_FORMAT_XML;
  * prop_object_externalize --
  *	Externalize an object in the default format.
  */
-char *
+_PROP_EXPORT char *
 prop_object_externalize(prop_object_t po)
 {
 	return _prop_object_externalize((struct _prop_object *)po,
@@ -1750,7 +1750,7 @@ prop_object_externalize(prop_object_t po)
  * prop_object_externalize_with_format --
  *	Externalize an object in the specified format.
  */
-char *
+_PROP_EXPORT char *
 prop_object_externalize_with_format(prop_object_t po, prop_format_t fmt)
 {
 	return _prop_object_externalize((struct _prop_object *)po, fmt);
@@ -1761,7 +1761,7 @@ prop_object_externalize_with_format(prop_object_t po, prop_format_t fmt)
  * prop_object_externalize_to_file --
  *	Externalize an object to the specifed file in the default format.
  */
-bool
+_PROP_EXPORT bool
 prop_object_externalize_to_file(prop_object_t po, const char *fname)
 {
 	return _prop_object_externalize_to_file((struct _prop_object *)po,
@@ -1772,7 +1772,7 @@ prop_object_externalize_to_file(prop_object_t po, const char *fname)
  * prop_object_externalize_to_file_with_format --
  *	Externalize an object to the specifed file in the specified format.
  */
-bool
+_PROP_EXPORT bool
 prop_object_externalize_to_file_with_format(prop_object_t po,
     const char *fname, prop_format_t fmt)
 {
@@ -1785,7 +1785,7 @@ prop_object_externalize_to_file_with_format(prop_object_t po,
  * prop_object_retain --
  *	Increment the reference count on an object.
  */
-void
+_PROP_EXPORT void
 prop_object_retain(prop_object_t obj)
 {
 	struct _prop_object *po = obj;
@@ -1860,7 +1860,7 @@ prop_object_release_emergency(prop_object_t obj)
  *	Free the object if we are releasing the final
  *	reference.
  */
-void
+_PROP_EXPORT void
 prop_object_release(prop_object_t obj)
 {
 	struct _prop_object *po;
@@ -1912,7 +1912,7 @@ prop_object_release(prop_object_t obj)
  * prop_object_type --
  *	Return the type of an object.
  */
-prop_type_t
+_PROP_EXPORT prop_type_t
 prop_object_type(prop_object_t obj)
 {
 	struct _prop_object *po = obj;
@@ -1927,13 +1927,13 @@ prop_object_type(prop_object_t obj)
  * prop_object_equals --
  *	Returns true if thw two objects are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_object_equals(prop_object_t obj1, prop_object_t obj2)
 {
 	return (prop_object_equals_with_error(obj1, obj2, NULL));
 }
 
-bool
+_PROP_EXPORT bool
 prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
     bool *error_flag)
 {
@@ -1995,7 +1995,7 @@ finish:
  * prop_object_iterator_next --
  *	Return the next item during an iteration.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_object_iterator_next(prop_object_iterator_t pi)
 {
 
@@ -2007,7 +2007,7 @@ prop_object_iterator_next(prop_object_iterator_t pi)
  *	Reset the iterator to the first object so as to restart
  *	iteration.
  */
-void
+_PROP_EXPORT void
 prop_object_iterator_reset(prop_object_iterator_t pi)
 {
 
@@ -2018,7 +2018,7 @@ prop_object_iterator_reset(prop_object_iterator_t pi)
  * prop_object_iterator_release --
  *	Release the object iterator.
  */
-void
+_PROP_EXPORT void
 prop_object_iterator_release(prop_object_iterator_t pi)
 {
 

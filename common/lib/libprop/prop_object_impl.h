@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.37 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.38 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -421,6 +421,8 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = atomic_inc_32_nv(x)
 #define _PROP_ATOMIC_DEC32_NV(x, v)	v = atomic_dec_32_nv(x)
 
+#define	_PROP_EXPORT			__attribute__((visibility("default")))
+
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -501,6 +503,10 @@ do {									\
 
 #endif
 #endif /* _KERNEL */
+
+#ifndef _PROP_EXPORT
+#define	_PROP_EXPORT			/* nothing */
+#endif
 
 /*
  * Language features.

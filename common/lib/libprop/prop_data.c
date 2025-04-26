@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.19 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.20 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ _prop_data_instantiate(int const flags, const void * const data,
 _PROP_DEPRECATED(prop_data_create_data,
     "this program uses prop_data_create_data(); all functions "
     "supporting mutable prop_data objects are deprecated.")
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_data(const void *v, size_t size)
 {
 	prop_data_t pd;
@@ -273,7 +273,7 @@ prop_data_create_data(const void *v, size_t size)
 _PROP_DEPRECATED(prop_data_create_data_nocopy,
     "this program uses prop_data_create_data_nocopy(), "
     "which is deprecated; use prop_data_create_nocopy() instead.")
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_data_nocopy(const void *v, size_t size)
 {
 	return prop_data_create_nocopy(v, size);
@@ -283,7 +283,7 @@ prop_data_create_data_nocopy(const void *v, size_t size)
  * prop_data_create_copy --
  *	Create a data object with a copy of the provided data.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_copy(const void *v, size_t size)
 {
 	prop_data_t pd;
@@ -312,7 +312,7 @@ prop_data_create_copy(const void *v, size_t size)
  * prop_data_create_nocopy --
  *	Create a data object using the provided external data reference.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_nocopy(const void *v, size_t size)
 {
 
@@ -330,7 +330,7 @@ prop_data_create_nocopy(const void *v, size_t size)
  *	Copy a data container.  If the original data is external, then
  *	the copy is also references the same external data.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_copy(prop_data_t opd)
 {
 	prop_data_t pd;
@@ -358,7 +358,7 @@ prop_data_copy(prop_data_t opd)
  * prop_data_size --
  *	Return the size of the data.
  */
-size_t
+_PROP_EXPORT size_t
 prop_data_size(prop_data_t pd)
 {
 
@@ -373,7 +373,7 @@ prop_data_size(prop_data_t pd)
  *	Returns a pointer to the data object's value.  This pointer
  *	remains valid only as long as the data object.
  */
-const void *
+_PROP_EXPORT const void *
 prop_data_value(prop_data_t pd)
 {
 
@@ -387,7 +387,7 @@ prop_data_value(prop_data_t pd)
  * prop_data_copy_value --
  *	Copy the data object's value into the supplied buffer.
  */
-bool
+_PROP_EXPORT bool
 prop_data_copy_value(prop_data_t pd, void *buf, size_t buflen)
 {
 
@@ -409,7 +409,7 @@ prop_data_copy_value(prop_data_t pd, void *buf, size_t buflen)
 _PROP_DEPRECATED(prop_data_data,
     "this program uses prop_data_data(), "
     "which is deprecated; use prop_data_copy_value() instead.")
-void *
+_PROP_EXPORT void *
 prop_data_data(prop_data_t pd)
 {
 	void *v;
@@ -434,7 +434,7 @@ prop_data_data(prop_data_t pd)
 _PROP_DEPRECATED(prop_data_data_nocopy,
     "this program uses prop_data_data_nocopy(), "
     "which is deprecated; use prop_data_value() instead.")
-const void *
+_PROP_EXPORT const void *
 prop_data_data_nocopy(prop_data_t pd)
 {
 	return prop_data_value(pd);
@@ -444,7 +444,7 @@ prop_data_data_nocopy(prop_data_t pd)
  * prop_data_equals --
  *	Return true if two data objects are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 {
 	if (!prop_object_is_data(pd1) || !prop_object_is_data(pd2))
@@ -458,7 +458,7 @@ prop_data_equals(prop_data_t pd1, prop_data_t pd2)
  *	Return true if the contained data is equivalent to the specified
  *	external data.
  */
-bool
+_PROP_EXPORT bool
 prop_data_equals_data(prop_data_t pd, const void *v, size_t size)
 {
 

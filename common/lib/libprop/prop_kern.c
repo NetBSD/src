@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.27 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.28 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009, 2025 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 
 #include <prop/proplib.h>
+#include "prop_object_impl.h"		/* for _PROP_EXPORT */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -81,7 +82,7 @@ prop_object_externalize_to_pref(prop_object_t obj, struct plistref *prefp)
 	return (rv == 0);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_externalize_to_pref(prop_array_t array, struct plistref *prefp)
 {
 	return prop_object_externalize_to_pref(array, prefp);
@@ -89,7 +90,7 @@ prop_array_externalize_to_pref(prop_array_t array, struct plistref *prefp)
 __strong_alias(prop_dictionary_externalize_to_pref,
 	       prop_array_externalize_to_pref)
 
-int
+_PROP_EXPORT int
 prop_object_send_syscall(prop_object_t obj, struct plistref *prefp)
 {
 	if (prop_object_externalize_to_pref(obj, prefp))
@@ -125,7 +126,7 @@ _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 	return (error);
 }
 
-int
+_PROP_EXPORT int
 prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 {
 	int rv;
@@ -193,7 +194,7 @@ _prop_object_internalize_from_pref(const struct plistref *prefp,
 	return (rv == 0);
 }
 
-bool
+_PROP_EXPORT bool
 prop_array_internalize_from_pref(const struct plistref *prefp,
 				 prop_array_t *arrayp)
 {
@@ -201,7 +202,7 @@ prop_array_internalize_from_pref(const struct plistref *prefp,
 	    (prop_object_t *)arrayp, PROP_TYPE_ARRAY);
 }
 
-bool
+_PROP_EXPORT bool
 prop_dictionary_internalize_from_pref(const struct plistref *prefp,
 				      prop_dictionary_t *dictp)
 {
@@ -220,14 +221,14 @@ _prop_object_recv_syscall(const struct plistref *prefp,
 	}
 }
 
-int
+_PROP_EXPORT int
 prop_object_recv_syscall(const struct plistref *prefp,
 			 prop_object_t *objp)
 {
 	return _prop_object_recv_syscall(prefp, objp, PROP_TYPE_UNKNOWN);
 }
 
-int
+_PROP_EXPORT int
 prop_array_recv_syscall(const struct plistref *prefp,
 			prop_array_t *arrayp)
 {
@@ -235,7 +236,7 @@ prop_array_recv_syscall(const struct plistref *prefp,
 	    PROP_TYPE_ARRAY);
 }
 
-int
+_PROP_EXPORT int
 prop_dictionary_recv_syscall(const struct plistref *prefp,
 			     prop_dictionary_t *dictp)
 {
@@ -266,20 +267,20 @@ _prop_object_recv_ioctl(int fd, unsigned long cmd, prop_object_t *objp,
 		return 0;
 }
 
-int
+_PROP_EXPORT int
 prop_object_recv_ioctl(int fd, unsigned long cmd, prop_object_t *objp)
 {
 	return _prop_object_recv_ioctl(fd, cmd, objp, PROP_TYPE_UNKNOWN);
 }
 
-int
+_PROP_EXPORT int
 prop_array_recv_ioctl(int fd, unsigned long cmd, prop_array_t *arrayp)
 {
 	return _prop_object_recv_ioctl(fd, cmd,
 	    (prop_object_t *)arrayp, PROP_TYPE_ARRAY);
 }
 
-int
+_PROP_EXPORT int
 prop_dictionary_recv_ioctl(int fd, unsigned long cmd, prop_dictionary_t *dictp)
 {
 	return _prop_object_recv_ioctl(fd, cmd,
@@ -324,7 +325,7 @@ _prop_object_sendrecv_ioctl(prop_object_t obj, int fd,
 		return 0;
 }
 
-int
+_PROP_EXPORT int
 prop_object_sendrecv_ioctl(prop_object_t obj, int fd,
 			   unsigned long cmd, prop_object_t *objp)
 {
@@ -332,7 +333,7 @@ prop_object_sendrecv_ioctl(prop_object_t obj, int fd,
 	    PROP_TYPE_UNKNOWN);
 }
 
-int
+_PROP_EXPORT int
 prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 			       unsigned long cmd, prop_dictionary_t *dictp)
 {

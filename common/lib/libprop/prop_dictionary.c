@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.47 2025/04/23 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.48 2025/04/26 17:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020, 2025 The NetBSD Foundation, Inc.
@@ -713,7 +713,7 @@ _prop_dictionary_iterator_reset(void *v)
  * prop_dictionary_create --
  *	Create a dictionary.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_create(void)
 {
 
@@ -724,7 +724,7 @@ prop_dictionary_create(void)
  * prop_dictionary_create_with_capacity --
  *	Create a dictionary with the capacity to store N objects.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_create_with_capacity(unsigned int capacity)
 {
 
@@ -738,7 +738,7 @@ prop_dictionary_create_with_capacity(unsigned int capacity)
  *	dictionary contains references to the original dictionary's objects,
  *	not copies of those objects (i.e. a shallow copy).
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_copy(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
@@ -775,7 +775,7 @@ prop_dictionary_copy(prop_dictionary_t opd)
  *	Like prop_dictionary_copy(), but the resulting dictionary is
  *	mutable.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_copy_mutable(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
@@ -794,7 +794,7 @@ prop_dictionary_copy_mutable(prop_dictionary_t opd)
  * prop_dictionary_make_immutable --
  *	Set the immutable flag on that dictionary.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_make_immutable(prop_dictionary_t pd)
 {
 
@@ -808,7 +808,7 @@ prop_dictionary_make_immutable(prop_dictionary_t pd)
  * prop_dictionary_count --
  *	Return the number of objects stored in the dictionary.
  */
-unsigned int
+_PROP_EXPORT unsigned int
 prop_dictionary_count(prop_dictionary_t pd)
 {
 	unsigned int rv;
@@ -829,7 +829,7 @@ prop_dictionary_count(prop_dictionary_t pd)
  *	total number of objects (including the objects already stored in
  *	the dictionary).
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 {
 	bool rv;
@@ -871,7 +871,7 @@ _prop_dictionary_iterator_locked(prop_dictionary_t pd)
  *	Return an iterator for the dictionary.  The dictionary is retained by
  *	the iterator.
  */
-prop_object_iterator_t
+_PROP_EXPORT prop_object_iterator_t
 prop_dictionary_iterator(prop_dictionary_t pd)
 {
 	struct _prop_dictionary_iterator *pdi;
@@ -887,7 +887,7 @@ prop_dictionary_iterator(prop_dictionary_t pd)
  *	Return an array containing a snapshot of all of the keys
  *	in the dictionary.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_dictionary_all_keys(prop_dictionary_t pd)
 {
 	prop_array_t array;
@@ -978,7 +978,7 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
  * prop_dictionary_get --
  *	Return the object stored with specified key.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_dictionary_get(prop_dictionary_t pd, const char *key)
 {
 	prop_object_t po = NULL;
@@ -1008,7 +1008,7 @@ _prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
  * prop_dictionary_get_keysym --
  *	Return the object stored at the location encoded by the keysym.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 {
 
@@ -1020,7 +1020,7 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
  *	Store a reference to an object at with the specified key.
  *	If the key already exist, the original object is released.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 {
 	struct _prop_dict_entry *pde;
@@ -1116,7 +1116,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
  *	Replace the object in the dictionary at the location encoded by
  *	the keysym.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 			   prop_object_t po)
 {
@@ -1160,7 +1160,7 @@ _prop_dictionary_remove(prop_dictionary_t pd, struct _prop_dict_entry *pde,
  *	Remove the reference to an object with the specified key from
  *	the dictionary.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_remove(prop_dictionary_t pd, const char *key)
 {
 	struct _prop_dict_entry *pde;
@@ -1190,7 +1190,7 @@ prop_dictionary_remove(prop_dictionary_t pd, const char *key)
  *	Remove a reference to an object stored in the dictionary at the
  *	location encoded by the keysym.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_remove_keysym(prop_dictionary_t pd,
 			      prop_dictionary_keysym_t pdk)
 {
@@ -1207,7 +1207,7 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
  *	Return true if the two dictionaries are equivalent.  Note we do a
  *	by-value comparison of the objects in the dictionary.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 {
 	if (!prop_object_is_dictionary(dict1) ||
@@ -1221,7 +1221,7 @@ prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
  * prop_dictionary_keysym_value --
  *	Return a reference to the keysym's value.
  */
-const char *
+_PROP_EXPORT const char *
 prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
 {
 
@@ -1234,7 +1234,7 @@ prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
 _PROP_DEPRECATED(prop_dictionary_keysym_cstring_nocopy,
     "this program uses prop_dictionary_keysym_cstring_nocopy(), "
     "which is deprecated; use prop_dictionary_keysym_value() instead.")
-const char *
+_PROP_EXPORT const char *
 prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 {
 
@@ -1249,7 +1249,7 @@ prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
  *	Return true if the two dictionary key symbols are equivalent.
  *	Note: We do not compare the object references.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 			      prop_dictionary_keysym_t pdk2)
 {
@@ -1264,7 +1264,7 @@ prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
  * prop_dictionary_externalize --
  *	Externalize a dictionary in XML format.
  */
-char *
+_PROP_EXPORT char *
 prop_dictionary_externalize(prop_dictionary_t pd)
 {
 	return _prop_object_externalize(&pd->pd_obj, PROP_FORMAT_XML);
@@ -1473,7 +1473,7 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
  * prop_dictionary_internalize --
  *	Create a dictionary by parsing the external representation.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_internalize(const char *data)
 {
 	return _prop_object_internalize(data, &_prop_dictionary_type_tags);
@@ -1484,7 +1484,7 @@ prop_dictionary_internalize(const char *data)
  * prop_dictionary_externalize_to_file --
  *	Externalize a dictionary to the specified file.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
 {
 	return _prop_object_externalize_to_file(&dict->pd_obj, fname,
@@ -1495,7 +1495,7 @@ prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
  * prop_dictionary_internalize_from_file --
  *	Internalize a dictionary from a file.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_internalize_from_file(const char *fname)
 {
 	return _prop_object_internalize_from_file(fname,
