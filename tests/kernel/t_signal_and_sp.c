@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.18 2025/04/25 01:18:38 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.19 2025/04/26 19:05:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.18 2025/04/25 01:18:38 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.19 2025/04/26 19:05:35 riastradh Exp $");
 
+#include <sys/param.h>
 #include <sys/wait.h>
-
-#include <machine/param.h>
 
 #include <atf-c.h>
 #include <limits.h>
