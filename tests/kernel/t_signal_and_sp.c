@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.19 2025/04/26 19:05:35 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.20 2025/04/26 19:23:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.19 2025/04/26 19:05:35 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.20 2025/04/26 19:23:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/wait.h>
