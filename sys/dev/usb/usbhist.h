@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhist.h,v 1.8 2021/12/11 19:24:21 mrg Exp $	*/
+/*	$NetBSD: usbhist.h,v 1.9 2025/04/26 06:55:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 2012 Matthew R. Green
@@ -96,4 +96,4 @@ USBHIST_DECL(usbhist);
 
 #endif
 
-#endif /* _DEV_USBUSB_HIST_H_ */
+#endif /* _DEV_USB_USBHIST_H_ */
