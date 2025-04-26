@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3157 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3158 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -727,7 +727,17 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	viaide(4): Add RAID mode support for VIA VX900/VX11 SATA controllers.
 		[andvar 20250405]
 	OpenSSH: Import 10.0. [christos 20250409]
+	nvmm(4): Implement VMware compatible TSC and LAPIC frequency detection
+		in CPUID. [imil 20250411]
+	videoctl(1): Improve enumeration of frame sizes. [mlelstv 20250412]
+	vax: Switch to GCC 12. [rin 20250413]
 	OpenSSL: Imported 3.0.16. [christos 20250416]
 	expat: Import 2.7.1. [wiz 20250418]
+	alpha: Support secureplt in ld.elf_so(1). [riastradh 20250418]
+	viaide(4): Improve VT8251 integrated SATA controller support in
+		IDE/RAID modes. [andvar 20250420]
+	libc: Add TIME_MONOTONIC support to timespec_get(3) and new
+		timespec_getres(3) function for C23 compliance.
+		[nia 20250421]
 	proplib(3): Added support for JSON serialization format.
 		[thorpej 20250422]
