@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.45 2025/02/02 03:19:37 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.46 2025/04/26 03:01:39 pgoyette Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -271,7 +271,11 @@ IMG_SETS=	${KERN_SET} ${SETS}
 SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 
 FSTAB_IN?=	${DISTRIBDIR}/common/bootimage/fstab.in
+.if ${KERNEL_DIR:Uno} == "yes"
+SPEC_IN?=	${DISTRIBDIR}/common/bootimage/spec-dir.in
+.else
 SPEC_IN?=	${DISTRIBDIR}/common/bootimage/spec.in
+.endif
 
 IMGMAKEFSOPTIONS?=	-o bsize=16384,fsize=2048,density=8192
 IMGFFSVERSION?=		1

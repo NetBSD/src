@@ -1,5 +1,5 @@
-# $NetBSD: spec.in,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
-./netbsd	type=file mode=0755 uname=root gname=wheel
+# $NetBSD: spec.in,v 1.2 2025/04/26 03:01:39 pgoyette Exp $
+./netbsd	type=file mode=0644 uname=root gname=wheel
 ./kern		type=dir mode=0755 uname=root gname=wheel
 ./proc		type=dir mode=0755 uname=root gname=wheel
 ./tmp		type=dir mode=1777 uname=root gname=wheel

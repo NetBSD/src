@@ -1,0 +1,7 @@
+# $NetBSD: spec-dir.in,v 1.1 2025/04/26 03:01:39 pgoyette Exp $
+./netbsd		type=dir mode=0755 uname=root gname=wheel
+./netbsd/kernel		type=file mode=0644 uname=root gname=wheel
+./netbsd/kernel.gdb	type=file mode=0644 uname=root gname=wheel
+./kern			type=dir mode=0755 uname=root gname=wheel
+./proc			type=dir mode=0755 uname=root gname=wheel
+./tmp			type=dir mode=1777 uname=root gname=wheel
