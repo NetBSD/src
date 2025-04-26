@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gscan.c,v 1.2 2025/04/06 03:33:51 riastradh Exp $	*/
+/*	$NetBSD: if_gscan.c,v 1.3 2025/04/26 07:09:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gscan.c,v 1.2 2025/04/06 03:33:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gscan.c,v 1.3 2025/04/26 07:09:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -202,7 +202,7 @@ gscan_rx(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF("rx error: %s\n", usbd_errstr(status), 0, 0, 0);
+		DPRINTF("rx error: %jd", status, 0, 0, 0);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_rx_pipe);
 		if (++sc->sc_rx_nerr > 100) {
@@ -301,7 +301,7 @@ gscan_tx(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			mutex_exit(&sc->sc_txlock);
 			return;
 		}
-		DPRINTF("rx error: %s\n", usbd_errstr(status), 0, 0, 0);
+		DPRINTF("rx error: %jd", status, 0, 0, 0);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_rx_pipe);
 	}
@@ -345,7 +345,7 @@ gscan_ifstart(struct ifnet *ifp)
 	    sizeof(struct gscan_frame), 0, 10000, gscan_tx);
         err = usbd_transfer(sc->sc_tx_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		DPRINTF("start tx error: %s\n", usbd_errstr(err), 0, 0, 0);
+		DPRINTF("start tx error: %jd", err, 0, 0, 0);
 		if_statadd(ifp, if_oerrors, 1);
 	} else {
 		sc->sc_m_transmit = m;

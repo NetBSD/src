@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.177 2024/03/29 19:30:09 thorpej Exp $	*/
+/*	$NetBSD: ugen.c,v 1.178 2025/04/26 07:08:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.177 2024/03/29 19:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.178 2025/04/26 07:08:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -504,7 +504,7 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 		for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++)
 			if (sc->sc_is_open[endptno]) {
 				DPRINTFN(1,
-				     "ugen%jd - endpoint %d is open",
+				     "ugen%jd - endpoint %jd is open",
 				      device_unit(sc->sc_dev), endptno, 0, 0);
 				return USBD_IN_USE;
 			}
@@ -623,7 +623,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sce = &sc->sc_endpoints[endpt][dir];
 		sce->state = 0;
 		sce->timeout = USBD_NO_TIMEOUT;
-		DPRINTFN(5, "sc=%jx, endpt=%jd, dir=%jd, sce=%jp",
+		DPRINTFN(5, "sc=%jx, endpt=%jd, dir=%jd, sce=%#jx",
 			     (uintptr_t)sc, endpt, dir, (uintptr_t)sce);
 		edesc = sce->edesc;
 		switch (edesc->bmAttributes & UE_XFERTYPE) {
@@ -643,7 +643,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				goto out;
 			}
 			sce->ibuf = kmem_alloc(isize, KM_SLEEP);
-			DPRINTFN(5, "intr endpt=%d, isize=%d",
+			DPRINTFN(5, "intr endpt=%jd, isize=%jd",
 				     endpt, isize, 0, 0);
 			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1) {
 				kmem_free(sce->ibuf, isize);
@@ -693,7 +693,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				KM_SLEEP);
 			sce->cur = sce->fill = sce->ibuf;
 			sce->limit = sce->ibuf + isize * UGEN_NISOFRAMES;
-			DPRINTFN(5, "isoc endpt=%d, isize=%d",
+			DPRINTFN(5, "isoc endpt=%jd, isize=%jd",
 				     endpt, isize, 0, 0);
 			err = usbd_open_pipe(sce->iface,
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
@@ -903,7 +903,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		break;
 	case UE_BULK:
 		if (sce->state & UGEN_BULK_RA) {
-			DPRINTFN(5, "BULK_RA req: %zd used: %d",
+			DPRINTFN(5, "BULK_RA req: %jd used: %jd",
 				     uio->uio_resid, sce->ra_wb_used, 0, 0);
 			xfer = sce->ra_wb_xfer;
 
@@ -1097,7 +1097,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 					/* "ugenwb" */
 					error = cv_timedwait_sig(&sce->cv,
 					    &sc->sc_lock, mstohz(sce->timeout));
-					DPRINTFN(5, "woke, error=%d",
+					DPRINTFN(5, "woke, error=%jd",
 						    error, 0, 0, 0);
 					if (sc->sc_dying)
 						error = EIO;
@@ -1356,9 +1356,9 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	ibuf = sce->ibuf;
 
-	DPRINTFN(5, "xfer=%#jx status=%d count=%d",
+	DPRINTFN(5, "xfer=%#jx status=%jd count=%jd",
 		     (uintptr_t)xfer, status, count, 0);
-	DPRINTFN(5, "          data = %02x %02x %02x",
+	DPRINTFN(5, "          data = %02jx %02jx %02jx",
 		     ibuf[0], ibuf[1], ibuf[2], 0);
 
 	mutex_enter(&sc->sc_lock);
@@ -1386,8 +1386,8 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-	DPRINTFN(5, "xfer %ld, count=%d",
-	    (long)(req - sce->isoreqs), count, 0, 0);
+	DPRINTFN(5, "xfer %jd, count=%jd",
+	    (intmax_t)(req - sce->isoreqs), count, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
 
