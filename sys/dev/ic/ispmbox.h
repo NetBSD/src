@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.59 2024/02/02 22:26:58 andvar Exp $ */
+/* $NetBSD: ispmbox.h,v 1.60 2025/04/26 09:31:00 andvar Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2446,7 +2446,7 @@ typedef struct {
 #define	CT7_INVRXID	0x08	/* Invalid RX_ID */
 #define	CT7_DATA_OVER	0x09	/* Data Overrun */
 #define CT7_TIMEOUT	0x0B	/* timed out */
-#define CT7_RESET	0x0E	/* LIP Rset Received */
+#define CT7_RESET	0x0E	/* LIP Reset Received */
 #define	CT7_BUS_ERROR	0x10	/* DMA PCI Error */
 #define	CT7_REASSY_ERR	0x11	/* DMA reassembly error */
 #define	CT7_DATA_UNDER	0x15	/* Data Underrun */
