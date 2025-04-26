@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.92 2025/04/26 03:03:35 riastradh Exp $
+# $NetBSD: Makefile,v 1.93 2025/04/26 12:21:36 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -103,23 +103,19 @@ ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_CPU}
 .PATH:			${ARCHDIR}
 
 .if exists(${ARCHDIR}/stack_pointer.h)
-DPSRCS+=			${ARCHDIR}/stack_pointer.h
 CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H
 .endif
 
 SRCS.t_signal_and_sp+=		t_signal_and_sp.c
 .if exists(${ARCHDIR}/contextspfunc.S)
-DPSRCS+=			${ARCHDIR}/contextspfunc.S
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_CONTEXTSPFUNC
 SRCS.t_signal_and_sp+=		contextspfunc.S
 .endif
 .if exists(${ARCHDIR}/signalsphandler.S)
-DPSRCS+=			${ARCHDIR}/signalsphandler.S
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_SIGNALSPHANDLER
 SRCS.t_signal_and_sp+=		signalsphandler.S
 .endif
 .if exists(${ARCHDIR}/threadspfunc.S)
-DPSRCS+=			${ARCHDIR}/threadspfunc.S
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_THREADSPFUNC
 SRCS.t_signal_and_sp+=		threadspfunc.S
 LDADD.t_signal_and_sp+=		-pthread
@@ -128,7 +124,6 @@ LDADD.t_signal_and_sp+=		-pthread
 SRCS.h_execsp_dynamic+=		h_execsp.c
 SRCS.h_execsp_static+=		h_execsp.c
 .if exists(${ARCHDIR}/execsp.S)
-DPSRCS+=			${ARCHDIR}/execsp.S
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_EXECSP
 SRCS.h_execsp_dynamic+=		execsp.S
 SRCS.h_execsp_static+=		execsp.S
