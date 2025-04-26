@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.h,v 1.8 2021/08/17 22:00:30 andvar Exp $	*/
+/*	$NetBSD: rambo.h,v 1.9 2025/04/26 04:58:48 tsutsui Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef _MACHINE_RAMBO_H
 #define _MACHINE_RAMBO_H 1
 
-/* Register laytout of a single RAMBO DMA channel */
+/* Register layout of a single RAMBO DMA channel */
 struct	rambo_ch {
 	u_long	dma_laddr;	/* DMA load address reg	32b R/W */
 	u_long  __0[63];
@@ -111,5 +111,4 @@ struct	rambo_ch {
 /* Rambo cycle counter is fed by 25MHz clock then divided by 4 */
 #define	RB_FREQUENCY		6250000L
 #define	HZ_TO_TICKS(hz)		(RB_FREQUENCY/(hz))
-#define TICKS_TO_USECS(t)	(((t)*4)/25)
 #endif
