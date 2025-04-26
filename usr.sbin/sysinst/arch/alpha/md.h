@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2020/09/22 02:53:52 snj Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2025/04/26 03:49:32 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,13 +36,6 @@
 /* md.h -- Machine specific definitions for the alpha */
 
 /* Constants and defines */
-
-/*
- * Symbolic names for disk partitions.
- */
-#define	PART_ROOT	PART_A
-#define	PART_RAW	PART_C
-#define	PART_USR	PART_D
 
 /* Megs required for a full X installation. */
 #define XNEEDMB		300

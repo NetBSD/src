@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2024/02/10 18:43:54 andvar Exp $	*/
+/*	$NetBSD: md.c,v 1.15 2025/04/26 03:49:33 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,11 +239,6 @@ rdb_edit_check:
 		pm->bsdlabel[PART_BOOT_PREP].pi_size = bprepsize;
 		pm->bsdlabel[PART_BOOT_PREP].pi_offset = bprepstart;
 	}
-
-#ifdef PART_REST
-	pm->bsdlabel[PART_REST].pi_offset = 0;
-	pm->bsdlabel[PART_REST].pi_size = pm->ptstart;
-#endif
 
 	/*
 	 * Save any partitions that are outside the area we are

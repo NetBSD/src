@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2022/06/16 14:03:39 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2025/04/26 03:49:33 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,12 +46,6 @@
 #include <unistd.h>
 
 #include "mbr.h"
-
-#define	PART_ROOT	PART_A
-#define	PART_SWAP	PART_B
-#define	PART_RAW	PART_C
-#define	PART_USR	PART_D
-#define	PART_FIRST_FREE	PART_D
 
 #define	DEFROOTSIZE	32	/* Default root size */
 #define	DEFSWAPSIZE	64	/* Default swap size */

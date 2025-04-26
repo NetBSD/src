@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2022/06/17 14:08:54 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2025/04/26 03:49:33 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,15 +34,6 @@
  */
 
 /* md.h -- Machine specific definitions for the sparc */
-
-/*
- * Symbolic names for disk partitions.
- */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_USR	PART_G	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_D
 
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFSWAPSIZE	(-1)	/* Default swap size */

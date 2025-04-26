@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2025/04/26 03:49:32 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,12 +37,6 @@
  * Symbolic names for disk partitions
  */
 #include <machine/disklabel.h>
-
-#define	PART_ROOT	PART_A
-#define	PART_SWAP	PART_B
-#define	PART_RAW	RAW_PART
-#define	PART_USR	PART_D
-#define	PART_FIRST_FREE	PART_D
 
 #define	DEFROOTSIZE	200	/* Default root size */
 #define	XNEEDMB		100	/* Extra megs for full X installation */

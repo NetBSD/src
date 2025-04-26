@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2022/12/10 16:03:15 jakllsch Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2025/04/26 03:49:34 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,15 +36,6 @@
 /* md.h -- Machine specific definitions for the vax */
 
 /* Constants and defines */
-
-/*
- * Symbolic names for disk partitions.
- */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_USR	PART_D	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_E
 
 #define DEFROOTSIZE	32	/* Default root size */
 #define DEFSWAPSIZE	16	/* Default swap size */

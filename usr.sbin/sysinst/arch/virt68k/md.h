@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2024/01/06 07:38:13 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2025/04/26 03:49:34 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,15 +44,6 @@
 
 
 /* constants and defines */
-
-/*
- * Symbolic names for disk partitions.
- */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_USR	PART_D	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_E
 
 #define DEFROOTSIZE	40	/* Default root size */
 #define DEFSWAPSIZE	32	/* Default swap size */

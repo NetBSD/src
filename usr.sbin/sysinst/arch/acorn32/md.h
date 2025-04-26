@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2019/10/02 11:16:01 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2025/04/26 03:49:32 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,10 +41,6 @@
 #define XNEEDMB		256	/* Extra megs for full X installation */
 #define DEBNEEDMB	980	/* Extra megs for debug sets */
 
-
-#define	PART_REST	PART_D
-#define	PART_USR	PART_E
-#define	PART_FIRST_FREE	PART_F
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
