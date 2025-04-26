@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 2022/05/29 10:45:05 rin Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 2025/04/26 04:07:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.14 2022/05/29 10:45:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.15 2025/04/26 04:07:05 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -86,8 +86,6 @@ static void	le_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
 
-static int le_attached;
-
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
@@ -127,16 +125,11 @@ int
 le_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
-	int addr;
 
 	if (strcmp(ca->ca_name, "le"))
 		return 0;
 
-	if (le_attached)
-		return 0;
-
-	addr = LANCE_PORT;
-	if (badaddr((void *)addr, 1))
+	if (badaddr((void *)ca->ca_addr, 1))
 		return 0;
 
 	return 1;
@@ -153,7 +146,7 @@ le_attach(device_t parent, device_t self, void *aux)
 
 	bus_dma_tag_t dmat;
 	bus_dma_segment_t seg;
-	int rseg;
+	int nseg;
 	uint8_t *id;
 	int i;
 	void *kvaddr;
@@ -175,12 +168,12 @@ le_attach(device_t parent, device_t self, void *aux)
 	 * Allocate a physically contiguous DMA area for the chip.
 	 */
 	if (bus_dmamem_alloc(dmat, LE_MEMSIZE, 0, 0, &seg, 1,
-			     &rseg, BUS_DMA_NOWAIT)) {
+			     &nseg, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't allocate DMA area\n");
 		goto bad_bsunmap;
 	}
 	/* Map pages into kernel memory */
-	if (bus_dmamem_map(dmat, &seg, rseg, LE_MEMSIZE,
+	if (bus_dmamem_map(dmat, &seg, nseg, LE_MEMSIZE,
 	    &kvaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error(": can't map DMA area\n");
 		goto bad_free;
@@ -197,7 +190,7 @@ le_attach(device_t parent, device_t self, void *aux)
 		goto bad_destroy;
 	}
 
-	sc->sc_memsize = LE_MEMSIZE;	/* 16K Buffer space*/
+	sc->sc_memsize = LE_MEMSIZE;	/* 32K Buffer space*/
 	sc->sc_mem  = (void *)MIPS_PHYS_TO_KSEG1(kvaddr);
 	sc->sc_addr = lesc->sc_dmamap->dm_segs[0].ds_addr;
 
@@ -230,7 +223,7 @@ le_attach(device_t parent, device_t self, void *aux)
  bad_unmap:
 	bus_dmamem_unmap(dmat, kvaddr, LE_MEMSIZE);
  bad_free:
-	bus_dmamem_free(dmat, &seg, rseg);
+	bus_dmamem_free(dmat, &seg, nseg);
  bad_bsunmap:
 	bus_space_unmap(ca->ca_bustag, lesc->sc_reg, 8);
 }
