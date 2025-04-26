@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.331 2025/02/16 18:24:41 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.332 2025/04/26 07:05:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.331 2025/02/16 18:24:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.332 2025/04/26 07:05:56 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1912,10 +1912,10 @@ ehci_dump_sitd(struct ehci_soft_itd *itd)
 {
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	DPRINTF("SITD %#jx next = %p prev = %#jx",
+	DPRINTF("SITD %#jx next = %#jx prev = %#jx",
 	    (uintptr_t)itd, (uintptr_t)itd->frame_list.next,
 	    (uintptr_t)itd->frame_list.prev, 0);
-	DPRINTF("        xfernext=%#jx physaddr=%jX slot=%jd",
+	DPRINTF("        xfernext=%#jx physaddr=%#jx slot=%jd",
 	    (uintptr_t)itd->xfer_next, itd->physaddr, itd->slot, 0);
 }
 
