@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.526 2025/03/15 12:11:09 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.527 2025/04/26 21:17:42 joe Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.526 2025/03/15 12:11:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.527 2025/04/26 21:17:42 joe Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2214,7 +2214,7 @@ static int
 handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 {
 	struct sigaction sigact;
-	int error;
+	int error = 0;
 	struct proc *p = curproc;
 	struct lwp *l = curlwp;
 
@@ -2303,7 +2303,6 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 				sigaction1(l, i, &sigact, NULL, NULL, 0);
 		}
 	}
-	error = 0;
 out:
 	mutex_enter(&proc_lock);
 	p->p_stat = ostat;
