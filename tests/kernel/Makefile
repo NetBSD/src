@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.91 2025/04/26 03:01:13 riastradh Exp $
+# $NetBSD: Makefile,v 1.92 2025/04/26 03:03:35 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -182,6 +182,7 @@ CLEANFILES+=	t_subr_prf.c
 LDADD.h_segv+=	-lm
 
 .if exists(arch/${MACHINE_ARCH}/execregs.h)
+DPSRCS+=		arch/${MACHINE_ARCH}/execregs.h
 CPPFLAGS.t_execregs.c+=	-I${ARCHDIR}
 CPPFLAGS.t_execregs.c+=	-I${.CURDIR}/../lib/libc/gen # isqemu.h
 CPPFLAGS.t_execregs.c+=	-DHAVE_EXECREGS_TEST
