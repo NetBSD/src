@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12 2023/12/20 15:29:05 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13 2025/04/26 04:39:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2023/12/20 15:29:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2025/04/26 04:39:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -54,14 +54,3 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	}
 
 }
-
-const struct ipl_sr_map mipsco_ipl_sr_map = {
-    .sr_bits = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = MIPS_INT_MASK_SPL_SOFT0,
-	[IPL_SOFTNET] = MIPS_INT_MASK_SPL_SOFT1,
-	[IPL_VM] = MIPS_INT_MASK_SPL2,
-	[IPL_SCHED] = MIPS_INT_MASK_SPL2,
-	[IPL_HIGH] = MIPS_INT_MASK,
-    },
-};

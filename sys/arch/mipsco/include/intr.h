@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2011/02/20 07:56:16 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.20 2025/04/26 04:39:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -40,18 +40,6 @@
 #include <sys/evcnt.h>
 #include <mips/cpuregs.h>
 
-/*
- * nesting interrupt masks.
- */
-#define MIPS_INT_MASK_SPL_SOFT0	MIPS_SOFT_INT_MASK_0
-#define MIPS_INT_MASK_SPL_SOFT1	(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_SPL_SOFT0)
-#define MIPS_INT_MASK_SPL0	(MIPS_INT_MASK_0|MIPS_INT_MASK_SPL_SOFT1)
-#define MIPS_INT_MASK_SPL1	(MIPS_INT_MASK_1|MIPS_INT_MASK_SPL0)
-#define MIPS_INT_MASK_SPL2	(MIPS_INT_MASK_2|MIPS_INT_MASK_SPL1)
-#define MIPS_INT_MASK_SPL3	(MIPS_INT_MASK_3|MIPS_INT_MASK_SPL2)
-#define MIPS_INT_MASK_SPL4	(MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
-#define MIPS_INT_MASK_SPL5	(MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
-
 struct mipsco_intrhand {
 	LIST_ENTRY(mipsco_intrhand) ih_q;
 	int	(*ih_fun)(void *);
@@ -66,7 +54,6 @@ struct mipsco_intr {
 	unsigned long intr_siq;
 };
 
-extern const struct ipl_sr_map mipsco_ipl_sr_map;
 extern struct mipsco_intrhand intrtab[];
 #define	CALL_INTR(lev)	((*intrtab[lev].ih_fun)(intrtab[lev].ih_arg))
 
