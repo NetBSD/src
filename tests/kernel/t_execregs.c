@@ -1,4 +1,4 @@
-/*	$NetBSD: t_execregs.c,v 1.5 2025/04/25 12:58:51 riastradh Exp $	*/
+/*	$NetBSD: t_execregs.c,v 1.6 2025/04/26 12:20:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_execregs.c,v 1.5 2025/04/25 12:58:51 riastradh Exp $");
+__RCSID("$NetBSD: t_execregs.c,v 1.6 2025/04/26 12:20:33 riastradh Exp $");
 
 #include <sys/wait.h>
 
@@ -103,17 +103,7 @@ testregs(int child, const int pipefd[static 2],
 	readregs(pipefd[0], regs);
 
 	RL(waitpid(child, &status, 0));
-	if (WIFSIGNALED(status)) {
-		atf_tc_fail_nonfatal("child terminated on signal %d (%s)",
-		    WTERMSIG(status), strsignal(WTERMSIG(status)));
-	} else if (!WIFEXITED(status)) {
-		atf_tc_fail_nonfatal("child terminated mysteriously,"
-		    " status=0x%x",
-		    status);
-	} else {
-		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
-		    "child exited with code %d", WEXITSTATUS(status));
-	}
+	ATF_CHECK_EQ_MSG(status, 0, "status=0x%x", status);
 
 	checkregs(regs);
 }
