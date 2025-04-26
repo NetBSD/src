@@ -1,4 +1,4 @@
-/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/26 22:34:52 uwe Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.2 2025/04/26 23:49:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include "asm.h"
-RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/26 22:34:52 uwe Exp $")
+RCSID("$NetBSD: signalsphandler.S,v 1.2 2025/04/26 23:49:55 uwe Exp $")
 
 
 /*
@@ -38,13 +38,22 @@ RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/26 22:34:52 uwe Exp $")
  */
 ENTRY(signalsphandler)
 	mov	sp, r1
-	PIC_PROLOGUE(.L_GOT)
+#ifdef __PIC__
+	// PR kern/59327: don't touch stack as SP may be misaligned
+	// and as SuperH is a strict alignment architecture, we will
+	// get SIGBUS if we try to save registers on the stack
+	mov	r12, r2
+#endif
+	PIC_PROLOGUE_NOSAVE(.L_GOT)
 
 	MOVL_VAR(.L_signalsp, r0)
 	mov.l	r1, @r0
 
+#ifdef __PIC__
+	mov	r2, r12
+#endif
 	rts
-	 PIC_EPILOGUE_SLOT
+	 nop
 
 	.p2align 2
 .L_GOT:		PIC_GOT_DATUM

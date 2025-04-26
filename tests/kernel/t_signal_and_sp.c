@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.20 2025/04/26 19:23:06 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.21 2025/04/26 23:49:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.20 2025/04/26 19:23:06 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.21 2025/04/26 23:49:55 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: t_signal_and_sp.c,v 1.20 2025/04/26 19:23:06 riastradh Exp $")
 #ifdef HAVE_STACK_POINTER_H
 #  include "stack_pointer.h"
 #endif
+
+#define PR_59327 "PR kern/59327: user stack pointer is not aligned properly"
 
 #ifdef HAVE_SIGNALSPHANDLER
 void signalsphandler(int);	/* signalsphandler.S assembly routine */
@@ -408,6 +410,9 @@ ATF_TC_HEAD(signalsp_sigaltstack, tc)
 ATF_TC_BODY(signalsp_sigaltstack, tc)
 {
 #if defined STACK_ALIGNBYTES && HAVE_SIGNALSPHANDLER
+#if defined(__sh__)
+	atf_tc_expect_fail(PR_59327);
+#endif
 	char *stack;
 	struct sigaction sa;
 	struct sigaltstack ss;
@@ -557,6 +562,10 @@ ATF_TC_HEAD(misaligned_sp_and_signal, tc)
 ATF_TC_BODY(misaligned_sp_and_signal, tc)
 {
 #if defined STACK_ALIGNBYTES && defined HAVE_STACK_POINTER_H
+#if defined(__sh__)
+	atf_tc_expect_fail(PR_59327);
+#endif
+
 	/*
 	 * Set up a handler for SIGALRM.
 	 */
