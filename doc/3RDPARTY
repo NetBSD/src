@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2103 2025/04/18 20:08:29 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2104 2025/04/26 21:42:53 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2421,3 +2421,24 @@ Release tag:	isl-
 Notes:
 Integer Set Library
 Prerequisite for gcc to enable additional optimizations
+
+Package:	ctftools
+Version:	
+Current Vers:	
+Maintainer:	Illumos
+Archive Site:	https://github.com/illumos/illumos-gate/blob/master
+		    /usr/src/cmd/ctfconvert
+		    /usr/src/cmd/ctfdiff
+		    /usr/src/cmd/ctfdump
+		    /usr/src/cmd/ctfmerge
+		    /usr/src/lib/libctf
+Home Page:	
+Date:		2025-04-26
+Mailing List:	
+License:	CDDL
+Responsible:	christos
+Location:	external/cddl/osnet/dist/
+Vendor tag:	FreeBSD
+Release tag:	CDDL-FreeBSD-rNNNN
+Notes:
+Our upstream is currently FreeBSD, part of dtrace/zfs...
