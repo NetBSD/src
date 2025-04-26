@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.79 2022/06/08 21:43:45 wiz Exp $	*/
+/*	$NetBSD: boot2.c,v 1.80 2025/04/26 20:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -100,6 +100,11 @@ int boot_biosdev;
 daddr_t boot_biossector;
 
 static const char * const names[][2] = {
+#ifdef KERNEL_DIR
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
+#endif
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
@@ -283,12 +288,6 @@ bootit(const char *filename, int howto)
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
-#ifdef KERNEL_DIR
-	char path[512];
-	strcpy(path, filename);
-	strcat(path, "/kernel");
-	(void)exec_netbsd(path, 0, howto, boot_biosdev < 0x80, clearit);
-#endif
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
