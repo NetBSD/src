@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.173 2025/04/27 00:11:27 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.174 2025/04/27 00:11:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -794,10 +794,11 @@ typedef struct {
 #define DT_FINI_ARRAYSZ 28	/* Size, in bytes, of DT_FINI_ARRAY array*/
 #define DT_RUNPATH	29	/* overrides DT_RPATH */
 #define DT_FLAGS	30	/* Encodes ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS */
-#define DT_ENCODING	31	/* ??? */
+#define DT_ENCODING	32	/* In [32, DT_LOOS), only evens use d_ptr */
 #define DT_PREINIT_ARRAY 32	/* Address of pre-init function array */
 #define DT_PREINIT_ARRAYSZ 33	/* Size, in bytes, of DT_PREINIT_ARRAY array */
-#define DT_NUM		34
+#define DT_SYMTAB_SHNDX 34	/* Addr. of SHT_SYMTAB_SHNDX § of DT_SYMTAB */
+#define DT_NUM		35
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
