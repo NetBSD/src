@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1372 2025/04/27 04:09:35 riastradh Exp $
+# $NetBSD: mi,v 1.1373 2025/04/27 09:11:01 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2578,10 +2578,10 @@
 ./usr/tests/lib/csu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/Kyuafile				tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/csu/h_hello_dynamic			tests-lib-tests		compattestfile,atf,pic
-./usr/tests/lib/csu/h_hello_dynamicpie			tests-lib-tests		compattestfile,atf,pie
-./usr/tests/lib/csu/h_hello_static			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/csu/h_hello_staticpie			tests-lib-tests		compattestfile,atf,pie
+./usr/tests/lib/csu/h_hello_dyn				tests-lib-tests		compattestfile,atf,pic
+./usr/tests/lib/csu/h_hello_dynpie			tests-lib-tests		compattestfile,atf,pie
+./usr/tests/lib/csu/h_hello_sta				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/h_hello_stapie			tests-lib-tests		compattestfile,atf,pie
 ./usr/tests/lib/csu/h_ifunc_static			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini				tests-obsolete		obsolete
 ./usr/tests/lib/csu/h_initfini1				tests-lib-tests		compattestfile,atf
