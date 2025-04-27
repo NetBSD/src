@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.9 2014/08/10 05:57:31 matt Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.10 2025/04/27 15:23:27 riastradh Exp $	*/
 
 /* This is a derivative work. */
 
@@ -36,6 +36,8 @@ this code that are retained.
 #include <string.h>
 #include <unistd.h>
 
+#include "reentrant.h"
+
 /*
 -------------------------------------------------------------------------------
 Underflow tininess-detection mode, statically initialized to default value.
@@ -64,20 +66,76 @@ should be simply `float_exception_flags |= flags;'.
 fp_except float_exception_mask = 0;
 #endif
 void
-float_raise( fp_except flags )
+float_raise( fp_except newflags )
 {
     siginfo_t info;
-    fp_except mask = float_exception_mask;
+    struct sigaction sa;
+    sigset_t sigmask, osigmask;
+    fp_except flags;
 
+    for (;;) {
 #ifdef set_float_exception_mask
-    flags |= set_float_exception_flags(flags, 0);
+	flags = newflags | set_float_exception_flags(newflags, 0);
 #else
-    float_exception_flags |= flags;
-    flags = float_exception_flags;
+	float_exception_flags |= newflags;
+	flags = float_exception_flags;
 #endif
 
-    flags &= mask;
-    if ( flags ) {
+	/*
+	 * If none of the sticky flags are trapped (i.e., enabled in
+	 * float_exception_mask), we're done.  Trapping is unusual and
+	 * costly anyway, so take the non-trapping path as the fast
+	 * path.
+	 */
+	flags &= float_exception_mask;
+	if (__predict_true(flags == 0))
+	    break;
+
+	/*
+	 * Block all signals while we figure out how to deliver a
+	 * non-maskable (as a signal), non-ignorable SIGFPE, and obtain
+	 * the current signal mask.
+	 */
+	sigfillset(&sigmask);
+	thr_sigsetmask(SIG_BLOCK, &sigmask, &osigmask);
+
+	/*
+	 * Find the current signal disposition of SIGFPE.
+	 */
+	sigaction(SIGFPE, NULL, &sa);
+
+	/*
+	 * If SIGFPE is masked or ignored, unmask it and reset it to
+	 * the default disposition to deliver the signal.
+	 */
+	if (sigismember(&osigmask, SIGFPE) ||
+	    ((sa.sa_flags & SA_SIGINFO) == 0 &&
+		sa.sa_handler == SIG_IGN)) {
+		/*
+		 * Prepare to unmask SIGFPE.  This will take effect
+		 * when we use thr_sigsetmask(SIG_SETMASK, ...) below,
+		 * once the signal has been queued, so that it happens
+		 * atomically with respect to other signal delivery.
+		 */
+		sigdelset(&osigmask, SIGFPE);
+
+		/*
+		 * Reset SIGFPE to the default disposition, which is to
+		 * terminate the process.
+		 */
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_DFL;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sigaction(SIGFPE, &sa, NULL);
+	}
+
+	/*
+	 * Queue the signal for delivery.  It won't trigger the signal
+	 * handler yet, because it's still masked, but as soon as we
+	 * unmask it either the process will terminate or the signal
+	 * handler will be called.
+	 */
 	memset(&info, 0, sizeof info);
 	info.si_signo = SIGFPE;
 	info.si_pid = getpid();
@@ -93,6 +151,24 @@ float_raise( fp_except flags )
 	else if (flags & float_flag_inexact)
 	    info.si_code = FPE_FLTRES;
 	sigqueueinfo(getpid(), &info);
+
+	/*
+	 * Restore the old signal mask, except with SIGFPE unmasked
+	 * even if it was masked before.
+	 *
+	 * At this point, either the process will terminate (if SIGFPE
+	 * had or now has the default disposition) or the signal
+	 * handler will be called (if SIGFPE had a non-default,
+	 * non-ignored disposition).
+	 *
+	 * If the signal handler returns, it can't change the set of
+	 * exceptions raised by this floating-point operation -- but it
+	 * can change the sticky set from previous operations, and it
+	 * can change the set of exceptions that are trapped, so loop
+	 * around; next time we might make progress instead of calling
+	 * the signal handler again.
+	 */
+	thr_sigsetmask(SIG_SETMASK, &osigmask, NULL);
     }
 }
 #undef float_exception_mask
