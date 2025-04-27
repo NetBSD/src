@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 2025/04/24 23:51:03 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.42 2025/04/27 01:32:09 riastradh Exp $	*/
 
 #ifdef __x86_64__
 
@@ -70,7 +70,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #if defined(KASAN) || defined(KMSAN)
-#define UPAGES_KxSAN	2
+#define UPAGES_KxSAN	3
 #else
 #define	UPAGES_KxSAN	0
 #endif
