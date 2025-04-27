@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1415 2025/04/26 22:10:45 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1416 2025/04/27 03:48:34 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1088,6 +1088,7 @@ _NOVARS= \
 	NONLS \
 	NOOBJ \
 	NOPIC \
+	NOPIE \
 	NOPICINSTALL \
 	NOPROFILE \
 	NORELRO \
