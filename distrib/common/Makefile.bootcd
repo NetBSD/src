@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.55 2024/05/16 17:55:48 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.56 2025/04/27 21:35:36 pgoyette Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -175,6 +175,9 @@ BOOT2=boot
 
 prepare:
 	${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom"
+.if ${KERNEL_DIR:Uno} == "yes"
+	${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/netbsd"
+.endif
 .if defined(CDKERNELS)
 .for kernel target in ${CDKERNELS}
 	${INSTALL} ${COPY} -m 0644 ${_INSTKERNELNOBJDIR}/${kernel} cdrom/${target}

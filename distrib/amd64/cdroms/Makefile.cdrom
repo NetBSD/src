@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.30 2025/04/26 03:01:38 pgoyette Exp $
+# $NetBSD: Makefile.cdrom,v 1.31 2025/04/27 21:35:36 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -15,7 +15,12 @@ MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 # understand rockridge.
 CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,bootimage=i386;${EFIBOOTIMG},platformid=efi,no-emul-boot
 CDINSTKERNEL=	../../instkernel
-CDKERNELS=	netbsd-GENERIC.gz       netbsd
+.if ${KERNEL_DIR:Uno} == "yes"
+CDKERNELS=	netbsd-GENERIC.gz		netbsd/kernel
+CDKERNELS+=	netbsd-GENERIC.symbols.gz       netbsd/kernel.gdb
+.else
+CDKERNELS=	netbsd-GENERIC.gz		netbsd
+.endif
 CDRELEASE_NOISOS=	true
 CD_SETS+=	base etc gpufw
 .if ${MKKMOD} != "no"
