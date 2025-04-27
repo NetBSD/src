@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2025/04/27 04:09:35 riastradh Exp $
+# $NetBSD: Makefile,v 1.9 2025/04/27 14:04:19 riastradh Exp $
 
 NOMAN=			# defined
 
@@ -40,7 +40,7 @@ SRCS.h_hello_dyn+=		h_hello.c
 SRCS.h_hello_dynpie+=		h_hello.c
 SRCS.h_hello_sta+=		h_hello.c
 SRCS.h_hello_stapie+=		h_hello.c
-COPTS.h_hello.c+=		${"${MKPIE}" != no:?-fpie:}
+COPTS.h_hello.c+=		${"${MKPIE}" != no:?-fPIE:}
 LDFLAGS.h_hello_dyn=		-no-pie
 LDFLAGS.h_hello_dynpie=		-pie
 LDFLAGS.h_hello_sta=		-no-pie
