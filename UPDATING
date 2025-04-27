@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.378 2025/04/27 22:03:22 pgoyette Exp $
+$NetBSD: UPDATING,v 1.379 2025/04/27 23:30:39 kre Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,14 +21,14 @@ Recent changes:
 
 20250427:
 	The KERNEL_DIR option to build.sh is now functional.  Set it
-	with ``-V KERNEL_DIR=yes'' on yuor build.sh command.
+	with ``-V KERNEL_DIR=yes'' on your build.sh command.
 	With this, you can now colocate kernel and associated modules
 	in /netbsd/{kernel,kernel.dbg,modules} instead of having the
 	kernel in / but modules in /stand.
 
 	Note that you'll need new bootstrap code to use this feature.
 
-	This compleetes work begun many years ago by christos@ :-)
+	This completes work begun many years ago by christos@ :-)
 
 20250413:
 	A change to bsd.lib.mk requires a clean build of all libraries.
