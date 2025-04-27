@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.5 2021/03/19 00:44:09 simonb Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.6 2025/04/27 15:31:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -26,6 +26,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __SOFTFP__
+static void
+softfloat_fudge_sigs(const ki_sigset_t *kbefore, ki_sigset_t *kafter)
+{
+	sigset_t before, after;
+
+	/*
+	 * XXX Would be nice if the layout of ki_sigset_t were publicly
+	 * documented!
+	 */
+	__CTASSERT(sizeof(before) == sizeof(*kbefore));
+	__CTASSERT(sizeof(after) == sizeof(*kafter));
+	memcpy(&before, kbefore, sizeof(before));
+	memcpy(&after, kafter, sizeof(after));
+	if (sigismember(&before, SIGFPE))
+		sigaddset(&after, SIGFPE);
+	else
+		sigdelset(&after, SIGFPE);
+	memcpy(kafter, &after, sizeof(after));
+}
+#endif
 
 static void
 traceme_raise(int sigval)
@@ -588,6 +609,33 @@ traceme_signalmasked_crash(int sig)
 	    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 	    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
+#ifdef __SOFTFP__
+	/*
+	 * Hardfloat floating-point exception traps raise SIGFPE even
+	 * if the process has masked SIGFPE.  As a side effect,
+	 * delivery of the signal on trap unmasks it -- but as a
+	 * special case, if the process is traced, it first stops and
+	 * notifies the tracer _before_ unmasking SIGFPE and removing
+	 * it from p_sigmask.
+	 *
+	 * Softfloat floating-point exception traps try to mimic this
+	 * behaviour by sigprocmask and sigqueueinfo in userland, but
+	 * it is difficult -- and likely not worthwhile -- to emulate
+	 * the special case of a traced process.  So when the tracer is
+	 * notified of the child's signal, the child has _already_
+	 * unmasked SIGFPE so it is no longer in p_sigmask.  (See
+	 * float_raise in lib/libc/softfloat/softfloat-specialize for
+	 * details.)
+	 *
+	 * Since this is probably not worthwhile to address (it only
+	 * affects an obscure detail of how the process state manifests
+	 * to a debugger), we just pretend that SIGFPE didn't change in
+	 * p_sigmask.
+	 */
+	if (sig == SIGFPE)
+		softfloat_fudge_sigs(&kp_sigmask, &kp.p_sigmask);
+#endif
+
 	ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask)));
 
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
@@ -770,6 +818,34 @@ traceme_signalignored_crash(int sig)
 	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
 	    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 	    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
+
+#ifdef __SOFTFP__
+	/*
+	 * Hardfloat floating-point exception traps raise SIGFPE even
+	 * if the process has set the signal disposition of SIGFPE to
+	 * SIG_IGN.  As a side effect, delivery of the signal on trap
+	 * changes the disposition from SIG_IGN to SIG_DFL -- but as a
+	 * special case, if the process is traced, it first stops and
+	 * notifies the tracer _before_ changing the disposition and
+	 * removing SIGFPE from p_sigignore.
+	 *
+	 * Softfloat floating-point exception traps try to mimic this
+	 * behaviour by sigaction and sigqueueinfo in userland, but it
+	 * is difficult -- and likely not worthwhile -- to emulate the
+	 * special case of a traced process.  So when the tracer is
+	 * notified of the child's signal, its disposition has
+	 * _already_ been changed to SIG_DFL and so SIGFPE is no longer
+	 * in p_sigignore.  (See float_raise in
+	 * lib/libc/softfloat/softfloat-specialize for details.)
+	 *
+	 * Since this is probably not worthwhile to address (it only
+	 * affects an obscure detail of how the process state manifests
+	 * to a debugger), we just pretend that nothing changeed in
+	 * whether SIGFPE is ignored or not.
+	 */
+	if (sig == SIGFPE)
+		softfloat_fudge_sigs(&kp_sigignore, &kp.p_sigignore);
+#endif
 
 	ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore, sizeof(kp_sigignore)));
 
@@ -1857,6 +1933,18 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
+#ifdef __SOFTFP__
+			/*
+			 * See above in traceme_signalmasked_crash
+			 * about the softfloat trap SIGFPE delivery
+			 * quirk that requires us to fudge this test.
+			 */
+			if (sig == SIGFPE) {
+				softfloat_fudge_sigs(&kp_sigmask,
+				    &kp.p_sigmask);
+			}
+#endif
+
 			FORKEE_ASSERTX(!memcmp(&kp_sigmask, &kp.p_sigmask,
 			    sizeof(kp_sigmask)));
 		}
@@ -1873,6 +1961,18 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    PRIx32 "\n",
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
+
+#ifdef __SOFTFP__
+			/*
+			 * See above in traceme_signalignored_crash
+			 * about the softfloat trap SIGFPE delivery
+			 * quirk that requires us to fudge this test.
+			 */
+			if (sig == SIGFPE) {
+				softfloat_fudge_sigs(&kp_sigignore,
+				    &kp.p_sigignore);
+			}
+#endif
 
 			FORKEE_ASSERTX(!memcmp(&kp_sigignore, &kp.p_sigignore,
 			    sizeof(kp_sigignore)));
