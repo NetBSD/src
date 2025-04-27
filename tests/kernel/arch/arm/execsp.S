@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/27 15:43:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/27 15:43:43 riastradh Exp $")
 
 /*
  * void execsp_start(struct ps_strings *ps_strings@r0, void *obj_main@r1,
@@ -40,10 +40,10 @@ RCSID("$NetBSD: execsp.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $")
  *	to the usual csu __start routine.
  */
 ENTRY(execsp_start)
-	GOT_INIT(r0, .Lgot.execsp_start, .Lpc.execsp_start)
-	mov	r1, sp
-	GOT_GET(r2, r0, .Lstartsp)
-	str	r1, [r2]
+	GOT_INIT(r3, .Lgot.execsp_start, .Lpc.execsp_start)
+	mov	r4, sp
+	GOT_GET(r5, r3, .Lstartsp)
+	str	r4, [r5]
 	b	PLT_SYM(_C_LABEL(__start))
 
 	GOT_INITSYM(.Lgot.execsp_start, .Lpc.execsp_start)
