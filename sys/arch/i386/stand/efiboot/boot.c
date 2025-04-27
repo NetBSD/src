@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2023/05/14 09:07:54 riastradh Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2025/04/27 10:19:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -52,6 +52,11 @@ extern struct x86_boot_params boot_params;
 extern char twiddle_toggle;
 
 static const char * const names[][2] = {
+#ifdef KERNEL_DIR
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
+#endif
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
