@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.138 2024/07/05 04:31:51 rin Exp $ */
+/*	$NetBSD: gem.c,v 1.139 2025/04/27 16:03:16 gson Exp $ */
 
 /*
  *
@@ -33,11 +33,11 @@
 /*
  * Driver for Apple GMAC, Sun ERI and Sun GEM Ethernet controllers
  * See `GEM Gigabit Ethernet ASIC Specification'
- *   http://www.sun.com/processors/manuals/ge.pdf
+ *   https://web.archive.org/web/20090701010806/http://www.sun.com/processors/manuals/ge.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.138 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.139 2025/04/27 16:03:16 gson Exp $");
 
 #include "opt_inet.h"
 
