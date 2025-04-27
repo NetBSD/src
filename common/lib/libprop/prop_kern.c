@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.28 2025/04/26 17:13:23 thorpej Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.29 2025/04/27 02:54:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009, 2025 The NetBSD Foundation, Inc.
@@ -35,7 +35,12 @@
 #include <sys/ioctl.h>
 
 #include <prop/proplib.h>
+
+#if defined(HAVE_NBTOOL_CONFIG_H) || defined(_STANDALONE)
+#define _PROP_EXPORT
+#else
 #include "prop_object_impl.h"		/* for _PROP_EXPORT */
+#endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
