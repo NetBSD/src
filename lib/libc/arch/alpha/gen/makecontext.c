@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.7 2021/07/06 12:38:40 thorpej Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.8 2025/04/27 16:15:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.7 2021/07/06 12:38:40 thorpej Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.8 2025/04/27 16:15:27 riastradh Exp $");
 #endif
 
-#include <stddef.h>
 #include <inttypes.h>
-#include <ucontext.h>
-#include "extern.h"
-
 #include <stdarg.h>
+#include <stddef.h>
+#include <ucontext.h>
+
+#include "extern.h"
 
 void __resumecontext(void) __dead;
 

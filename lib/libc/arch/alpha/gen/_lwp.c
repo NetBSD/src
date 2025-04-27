@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.8 2021/07/06 12:38:40 thorpej Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.9 2025/04/27 16:15:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,14 +31,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.8 2021/07/06 12:38:40 thorpej Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.9 2025/04/27 16:15:27 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
 #include <sys/types.h>
-#include <ucontext.h>
+
 #include <lwp.h>
 #include <stdlib.h>
+#include <ucontext.h>
 
 void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *),
