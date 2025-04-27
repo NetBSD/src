@@ -1,4 +1,4 @@
-/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.2 2025/04/27 15:38:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $")
+RCSID("$NetBSD: signalsphandler.S,v 1.2 2025/04/27 15:38:50 riastradh Exp $")
 
 /*
  * signalsphandler(signo@r0)
@@ -47,5 +47,5 @@ ENTRY(signalsphandler)
 
 	GOT_INITSYM(.Lgot, .Lpc)
 .Lsignalsp:
-	.word	GOT_SYM(contextsp)
+	.word	GOT_SYM(signalsp)
 END(signalsphandler)
