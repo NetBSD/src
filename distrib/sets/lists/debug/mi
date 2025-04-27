@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478 2025/04/22 13:48:24 nia Exp $
+# $NetBSD: mi,v 1.479 2025/04/27 04:09:35 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1968,6 +1968,10 @@
 ./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_helper.debug	tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_test.debug	tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/kyua-testers/text_test.debug		tests-kyua-tests	debug,atf,kyua,compattestfile
+./usr/libdata/debug/usr/tests/lib/csu/h_hello_dynamic.debug		tests-lib-debug		debug,atf,compattestfile,pic
+./usr/libdata/debug/usr/tests/lib/csu/h_hello_dynamicpie.debug		tests-lib-debug		debug,atf,compattestfile,pie
+./usr/libdata/debug/usr/tests/lib/csu/h_hello_static.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/csu/h_hello_staticpie.debug		tests-lib-debug		debug,atf,compattestfile,pie
 ./usr/libdata/debug/usr/tests/lib/csu/h_ifunc_static.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf,compattestfile

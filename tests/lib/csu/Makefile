@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2018/12/27 19:33:52 christos Exp $
+# $NetBSD: Makefile,v 1.8 2025/04/27 04:09:35 riastradh Exp $
 
 NOMAN=			# defined
 
@@ -28,5 +28,24 @@ PROGS+=			h_ifunc_static h_initfini_array
 SRCS.h_ifunc_static=	h_ifunc_static.c
 SRCS.h_initfini_array=	h_initfini_array.c
 LDSTATIC.h_ifunc_static=-static
+
+TESTS_SH+=		t_hello
+
+PROGS+=		${"${MKPIC}" != no:?h_hello_dyn:}
+PROGS+=		${"${MKPIE}" != no:?h_hello_dynpie:}
+PROGS+=		h_hello_sta
+PROGS+=		${"${MKPIE}" != no:?h_hello_stapie:}
+
+SRCS.h_hello_dyn+=		h_hello.c
+SRCS.h_hello_dynpie+=		h_hello.c
+SRCS.h_hello_sta+=		h_hello.c
+SRCS.h_hello_stapie+=		h_hello.c
+COPTS.h_hello.c+=		${"${MKPIE}" != no:?-fpie:}
+LDFLAGS.h_hello_dyn=		-no-pie
+LDFLAGS.h_hello_dynpie=		-pie
+LDFLAGS.h_hello_sta=		-no-pie
+LDFLAGS.h_hello_stapie=		-pie
+LDSTATIC.h_hello_sta=		-static
+LDSTATIC.h_hello_stapie=	-static
 
 .include <bsd.test.mk>

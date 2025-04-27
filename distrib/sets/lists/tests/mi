@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1371 2025/04/22 13:48:24 nia Exp $
+# $NetBSD: mi,v 1.1372 2025/04/27 04:09:35 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2578,6 +2578,10 @@
 ./usr/tests/lib/csu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/Kyuafile				tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/csu/h_hello_dynamic			tests-lib-tests		compattestfile,atf,pic
+./usr/tests/lib/csu/h_hello_dynamicpie			tests-lib-tests		compattestfile,atf,pie
+./usr/tests/lib/csu/h_hello_static			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/h_hello_staticpie			tests-lib-tests		compattestfile,atf,pie
 ./usr/tests/lib/csu/h_ifunc_static			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini				tests-obsolete		obsolete
 ./usr/tests/lib/csu/h_initfini1				tests-lib-tests		compattestfile,atf
@@ -2585,6 +2589,7 @@
 ./usr/tests/lib/csu/h_initfini3				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini_array			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_crt0				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/t_hello				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_ifunc_static			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/Atffile								tests-lib-tests		compattestfile,atf
