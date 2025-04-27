@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2025/04/16 02:16:53 riastradh Exp $
+# $NetBSD: Makefile,v 1.26 2025/04/27 00:11:57 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -7,11 +7,19 @@ NOMAN=		# defined
 
 .if ${MKPIC} != "no"
 
-SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
-		helper_ifunc_dso \
-		helper_symver_dso0 .WAIT helper_symver_dso1 .WAIT \
-		helper_symver_dso2 .WAIT \
-		data
+SUBDIR+=	helper_dso1
+SUBDIR+=	helper_dso3
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_dso2
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_ifunc_dso
+SUBDIR+=	helper_symver_dso0
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_symver_dso1
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_symver_dso2
+SUBDIR+=	.WAIT
+SUBDIR+=	data
 
 SUBDIR+=	helper_def_dynamic
 SUBDIR+=	helper_def_static
@@ -27,14 +35,18 @@ SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
-TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
-TESTS_C+=	t_ifunc_now
+TESTS_C+=	t_dlerror-cleared
+TESTS_C+=	t_dlerror-false
+TESTS_C+=	t_dlinfo
+TESTS_C+=	t_dlvsym
+TESTS_C+=	t_hash
+TESTS_C+=	t_ifunc
 TESTS_C+=	t_ifunc_norelro
 TESTS_C+=	t_ifunc_norelro_now
+TESTS_C+=	t_ifunc_now
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_rtld_r_debug_nopie
 TESTS_C+=	t_tls_extern
-TESTS_C+=	t_hash
 
 SRCS.t_ifunc_now=		t_ifunc.c
 SRCS.t_ifunc_norelro=		t_ifunc.c
@@ -66,7 +78,9 @@ DPADD.${t}+=		${LIBUTIL}
 .endfor
 LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
-TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
+TESTS_SH+=		t_df_1_noopen
+TESTS_SH+=		t_dl_symver
+TESTS_SH+=		t_thread_local_dtor
 
 BINDIR=			${TESTSDIR}
 PROGS+=			h_df_1_noopen1
