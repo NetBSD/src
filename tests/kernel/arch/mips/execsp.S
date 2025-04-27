@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $")
 
 #include "SYS.h"
 
@@ -44,13 +44,11 @@ RCSID("$NetBSD: execsp.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $")
  *	to the usual csu __start routine.
  */
 LEAF(execsp_start)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(execsp_start)	/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(startsp)	/* load t1 := &startsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store startsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store startsp := stack pointer */
 
 	PIC_TAILCALL(__start)		/* gp restore, uses t3 */
 END(execsp_start)
@@ -62,13 +60,11 @@ END(execsp_start)
  *	returns.
  */
 LEAF(execsp_ctor)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(execsp_ctor)	/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(ctorsp)	/* load t1 := &ctorsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store ctorsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store ctorsp := stack pointer */
 
 	PIC_RETURN()			/* gp restore, uses t3 */
 END(execsp_ctor)
@@ -87,13 +83,11 @@ END(execsp_ctor)
  *	been initialized.
  */
 LEAF(main)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(main)		/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(mainsp)	/* load t1 := &mainsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store mainsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store mainsp := stack pointer */
 
 	move	v0, zero		/* return 0 */
 
@@ -108,13 +102,11 @@ END(main)
  *	back to the t_signal_and_sp parent.
  */
 LEAF(execsp_dtor)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(execsp_dtor)	/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(dtorsp)	/* load t1 := &dtorsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store dtorsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store dtorsp := stack pointer */
 
 	PIC_TAILCALL(execsp_main)	/* gp restore, uses t3 */
 END(execsp_dtor)

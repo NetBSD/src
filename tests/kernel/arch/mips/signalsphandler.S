@@ -1,4 +1,4 @@
-/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $")
+RCSID("$NetBSD: signalsphandler.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $")
 
 #include "SYS.h"
 
@@ -43,13 +43,11 @@ RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:32:25 riastradh Exp $")
  *	variable signalsp and return.
  */
 LEAF(signalsphandler)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(signalsphandler)	/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(signalsp)	/* load t1 := &signalsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store signalsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store signalsp := stack pointer */
 
 	PIC_RETURN()
 END(signalsphandler)

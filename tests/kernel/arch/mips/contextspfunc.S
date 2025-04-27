@@ -1,4 +1,4 @@
-/*	$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: contextspfunc.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
+RCSID("$NetBSD: contextspfunc.S,v 1.2 2025/04/27 16:49:54 riastradh Exp $")
 
 #include "SYS.h"
 
@@ -43,13 +43,11 @@ RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
  *	the global variable contextsp and call contextdone.
  */
 LEAF(contextspfunc)
-	move	t0, sp			/* save stack pointer just in case */
-
 	PIC_PROLOGUE(contextspfunc)	/* gp setup, sets t3 */
 
 	PTR_LA	t1, _C_LABEL(contextsp)	/* load t1 := &contextsp */
 	 NOP_L				/* load hazard */
-	PTR_S	t0, 0(t1)		/* store contextsp := stack pointer */
+	PTR_S	sp, 0(t1)		/* store contextsp := stack pointer */
 
 	PIC_TAILCALL(contextdone)
 END(contextspfunc)
