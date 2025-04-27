@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.16 2024/11/30 01:04:14 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.17 2025/04/27 02:18:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,6 @@
  * Layout of mcontext_t for the sh3 architecture.
  */
 
-#define _NGREG		22
-typedef int		__greg_t;
-typedef __greg_t	__gregset_t[_NGREG];
-
 #define	_REG_GBR	0
 #define	_REG_PC		1
 #define	_REG_SR		2
@@ -65,6 +61,17 @@ typedef __greg_t	__gregset_t[_NGREG];
 /* Convenience synonym */
 #define	_REG_SP		_REG_R15
 
+#define _NGREG		22
+
+
+#ifndef _LOCORE
+
+/*
+ * General register state
+ */
+typedef int		__greg_t;
+typedef __greg_t	__gregset_t[_NGREG];
+
 /*
  * FPU state description.
  * XXX: kernel doesn't support FPU yet, so this is just a placeholder.
@@ -87,6 +94,8 @@ typedef struct {
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#endif	/* !_LOCORE */
 
 /*
  * Machine dependent uc_flags
