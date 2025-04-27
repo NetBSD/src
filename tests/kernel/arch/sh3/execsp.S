@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.1 2025/04/26 22:34:52 uwe Exp $	*/
+/*	$NetBSD: execsp.S,v 1.2 2025/04/27 00:03:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include "asm.h"
 
-RCSID("$NetBSD")
+RCSID("$NetBSD: execsp.S,v 1.2 2025/04/27 00:03:46 riastradh Exp $")
 
 
 /*
