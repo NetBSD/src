@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2011/08/30 12:39:56 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2025/04/27 04:38:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -60,18 +60,18 @@
  * to physical device addresses.
  */
 struct mips_devparams {
-	u_int8_t	dp_skew;	/* spiral addressing skew */
-	u_int8_t	dp_gap1;	/* words of 0 before header */
-	u_int8_t	dp_gap2;	/* words of 0 between hdr and data */
-	u_int8_t	dp_spare0;	/* spare space */
-	u_int16_t	dp_cyls;	/* number of cylinders */
-	u_int16_t	dp_shd0;	/* starting head vol 0 */
-	u_int16_t	dp_trks0;	/* number of tracks vol 0 */
-	u_int16_t	dp_shd1;	/* starting head vol 1 */
-	u_int16_t	dp_trks1;	/* number of tracks vol 1 */
-	u_int16_t	dp_secs;	/* number of sectors/track */
-	u_int16_t	dp_secbytes;	/* length of sector in bytes */
-	u_int16_t	dp_interleave;	/* sector interleave */
+	uint8_t		dp_skew;	/* spiral addressing skew */
+	uint8_t		dp_gap1;	/* words of 0 before header */
+	uint8_t		dp_gap2;	/* words of 0 between hdr and data */
+	uint8_t		dp_spare0;	/* spare space */
+	uint16_t	dp_cyls;	/* number of cylinders */
+	uint16_t	dp_shd0;	/* starting head vol 0 */
+	uint16_t	dp_trks0;	/* number of tracks vol 0 */
+	uint16_t	dp_shd1;	/* starting head vol 1 */
+	uint16_t	dp_trks1;	/* number of tracks vol 1 */
+	uint16_t	dp_secs;	/* number of sectors/track */
+	uint16_t	dp_secbytes;	/* length of sector in bytes */
+	uint16_t	dp_interleave;	/* sector interleave */
 	int32_t		dp_flags;	/* controller characteristics */
 	int32_t		dp_datarate;	/* bytes/sec for kernel stats */
 	int32_t		dp_nretries;	/* max num retries on data error */
@@ -103,7 +103,7 @@ struct mips_partitions {
  * and cylinder of every track on a disk. 
  */
 struct mips_volheader {
-	u_int32_t	vh_magic;
+	uint32_t	vh_magic;
 #define MIPS_VHMAGIC	0xbe5a941
 	int16_t		vh_root;		/* Root partition number */
 	int16_t		vh_swap;		/* Swap partition number */

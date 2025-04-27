@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2025/04/26 07:33:13 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.28 2025/04/27 04:38:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef u_int32_t bus_space_handle_t;
+typedef uint32_t bus_space_handle_t;
 
 #define PRIxBSH		"lx"
 
@@ -122,13 +122,13 @@ struct mipsco_bus_space {
 	paddr_t		bs_pbase;
 	vaddr_t		bs_vbase;
 
-	u_int8_t	bs_stride;	/* log2(stride) */
-	u_int8_t	bs_bswap;	/* byte swap in stream methods */
+	uint8_t		bs_stride;	/* log2(stride) */
+	uint8_t		bs_bswap;	/* byte swap in stream methods */
 
-	u_int8_t	bs_offset_1;
-	u_int8_t	bs_offset_2;
-	u_int8_t	bs_offset_4;
-	u_int8_t	bs_offset_8;
+	uint8_t		bs_offset_1;
+	uint8_t		bs_offset_2;
+	uint8_t		bs_offset_4;
+	uint8_t		bs_offset_8;
 
 	/* compose a bus_space handle from tag/handle/addr/size/flags (MD) */
 	int	(*bs_compose_handle)(bus_space_tag_t, bus_addr_t,
@@ -345,12 +345,12 @@ int	mipsco_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
  * Calculate the target address using the bus_space parameters
  */
 #define __BS_ADDR(t, h, offset, BITS, BYTES)				\
-	((volatile __CONCAT3(u_int,BITS,_t) *)				\
+	((volatile __CONCAT3(uint,BITS,_t) *)				\
 	 ((h) + __BS_OFFSET(t, offset, BYTES) +				\
 	 (t)->__CONCAT(bs_offset_,BYTES)))
 
 /*
- *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	uintN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
@@ -358,7 +358,7 @@ int	mipsco_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
  */
 
 #define __bus_space_read(BYTES,BITS)					\
-static __inline __CONCAT3(u_int,BITS,_t)				\
+static __inline __CONCAT3(uint,BITS,_t)				\
 __CONCAT(bus_space_read_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh, bus_size_t offset)				\
 {									\
@@ -373,7 +373,7 @@ __bus_space_read(8,64)
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -406,7 +406,7 @@ __bus_space_read_multi(8,64)
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -442,7 +442,7 @@ __bus_space_read_region(8,64)
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value);
+ *	    uintN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
@@ -452,7 +452,7 @@ __bus_space_read_region(8,64)
 static __inline void							\
 __CONCAT(bus_space_write_,BYTES)(bus_space_tag_t bst,			\
     bus_space_handle_t bsh,						\
-    bus_size_t offset, __CONCAT3(u_int,BITS,_t) data)			\
+    bus_size_t offset, __CONCAT3(uint,BITS,_t) data)			\
 {									\
 	*__BS_ADDR(bst, bsh, offset, BITS, BYTES) = data;		\
 	wbflush();							\
@@ -466,7 +466,7 @@ __bus_space_write(8,64)
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -499,7 +499,7 @@ __bus_space_write_multi(8,64)
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -533,7 +533,7 @@ __bus_space_write_region(8,64)
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
@@ -566,7 +566,7 @@ __bus_space_set_multi(8,64)
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
@@ -691,7 +691,7 @@ __bus_space_read_stream(8, 64)		/* bus_space_read_stream_8 */
 static __inline void							\
 __CONCAT(bus_space_write_stream_,BYTES)(bus_space_tag_t bst,		\
     bus_space_handle_t bsh,						\
-    bus_size_t offset, __CONCAT3(u_int,BITS,_t) data)			\
+    bus_size_t offset, __CONCAT3(uint,BITS,_t) data)			\
 {									\
 	*__BS_ADDR(bst, bsh, offset, BITS, BYTES) =			\
 		__BS_BSWAP(bst, data, BITS);				\
