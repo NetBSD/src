@@ -1,4 +1,5 @@
-# $NetBSD: spec.in,v 1.2 2025/04/25 22:55:26 pgoyette Exp $
+# $NetBSD: spec.in,v 1.3 2025/04/27 14:23:54 riastradh Exp $
+#
 ./boot 		type=file uname=root gname=wheel mode=644
 ./install.sh 	type=file uname=root gname=wheel mode=755
 ./mnt2 		type=dir  uname=root gname=wheel mode=755
