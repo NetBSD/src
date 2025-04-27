@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.94 2025/04/27 14:30:28 riastradh Exp $
+# $NetBSD: Makefile,v 1.95 2025/04/27 16:22:26 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -43,6 +43,9 @@ TESTS_SH+=	t_nointerpreter
 TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
 TESTS_SH+=	t_ps_strings
+.if ${MKKMOD} != "no"
+TESTS_SH+=	t_setjmp
+.endif
 .if ${MKRUMP} != "no"
 TESTS_SH+=	t_simplehook
 .endif
@@ -186,6 +189,10 @@ LDSTATIC.h_execregs=	-static
 LDFLAGS.h_execregs+=	-Wl,-e,execregs_start
 .else
 SRCS.h_execregs=	h_execregs_unimpl.c
+.endif
+
+.if ${MKKMOD} != "no"
+SUBDIR+=	setjmp_tester
 .endif
 
 .include <bsd.test.mk>
