@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.185 2024/11/13 09:25:52 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.186 2025/04/28 11:39:10 joe Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.185 2024/11/13 09:25:52 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.186 2025/04/28 11:39:10 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -225,15 +225,14 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp->if_carp && ifp->if_type != IFT_CARP) {
 		int s = pserialize_read_enter();
 		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
-		if (ifa != NULL) {    
+		if (ifa != NULL) {
 			ifa_acquire(ifa, &psref_ia);
 			if (ifa->ifa_ifp && ifa->ifa_ifp != ifp) {
 				ifpc = ifa->ifa_ifp;
 				if_acquire(ifpc, &psref_c);
 			}
 		}
-		
-		
+
 		pserialize_read_exit(s);
 	} else
 		ifa = NULL;
