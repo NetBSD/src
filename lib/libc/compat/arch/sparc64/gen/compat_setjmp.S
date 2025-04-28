@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 04:41:34 christos Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.2 2025/04/28 18:15:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 04:41:34 christos Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.2 2025/04/28 18:15:52 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,7 +107,7 @@ ENTRY(longjmp)
 	orcc	%o2, %o3, %g0
 	bz,pn	%xcc, Lbotch
 	 movrz	%i1, 1, %i1		/* if (v == 0) v = 1; */
-	st	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
+	stx	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
 	mov	SYS_compat_13_sigreturn13, %g1
 	mov	%i0, %o0
 	t	ST_SYSCALL		/* sigreturn(scp); */
