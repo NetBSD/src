@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.23 2025/04/28 13:09:25 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.24 2025/04/28 18:29:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.23 2025/04/28 13:09:25 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.24 2025/04/28 18:29:09 martin Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -282,10 +282,6 @@ ATF_TC_BODY(compat13_setjmp, tc)
 #ifdef __arm__
 	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
 #endif
-#ifdef __sparc64__
-	atf_tc_expect_fail("PR port-sparc64/59370:"
-	    " compat 1.3 setjmp is busted");
-#endif
 
 	/*
 	 * Set up a return point for the signal handler: when the
@@ -365,10 +361,6 @@ ATF_TC_BODY(compat13_sigsetjmp, tc)
 #endif
 #ifdef __arm__
 	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
-#endif
-#ifdef __sparc64__
-	atf_tc_expect_fail("PR port-sparc64/59370:"
-	    " compat 1.3 setjmp is busted");
 #endif
 
 	/*
