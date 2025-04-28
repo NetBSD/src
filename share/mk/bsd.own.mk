@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1416 2025/04/27 03:48:34 riastradh Exp $
+#	$NetBSD: bsd.own.mk,v 1.1417 2025/04/28 19:54:49 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -227,8 +227,7 @@ HAVE_LIBGCC_EH?=	yes
 .if defined(COVERITY_TOP_CONFIG) || \
     ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE_CPU} == "mips"
+    ${MACHINE} == "ia64"
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
@@ -1201,7 +1200,7 @@ MKPIE?=		no
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
     ${MACHINE_ARCH:Maarch64*} || \
-    ${MACHINE_ARCH:Mmips64*}
+    ${MACHINE_MIPS64}
 MKRELRO?=	partial
 .else
 MKRELRO?=	no
