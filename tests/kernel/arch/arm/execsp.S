@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.2 2025/04/27 15:43:43 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.3 2025/04/28 15:31:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.2 2025/04/27 15:43:43 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.3 2025/04/28 15:31:13 martin Exp $")
 
 /*
  * void execsp_start(struct ps_strings *ps_strings@r0, void *obj_main@r1,
@@ -86,6 +86,7 @@ ENTRY(main)
 	mov	r1, sp
 	GOT_GET(r2, r0, .Lmainsp)
 	str	r1, [r2]
+	mov	r0, #0
 	RET
 
 	GOT_INITSYM(.Lgot.main, .Lpc.main)
