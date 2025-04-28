@@ -1,4 +1,4 @@
-#	$NetBSD: t_setjmp.sh,v 1.1 2025/04/27 16:22:26 riastradh Exp $
+#	$NetBSD: t_setjmp.sh,v 1.2 2025/04/28 15:41:25 martin Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+module_loaded=no
 atf_test_case setjmp cleanup
 setjmp_head()
 {
@@ -47,13 +48,21 @@ setjmp_body()
 		;;
 	esac
 
+	err=$( modstat -e 2>&1 )
+	if [ $? -gt 0 ]; then
+		atf_skip "${err##modstat:}"
+	fi
+
+	module_loaded="yes"
 	modload "$(atf_get_srcdir)/setjmp_tester/setjmp_tester.kmod"
 	atf_check -s exit:0 -o inline:'1\n' \
 	    sysctl -n -w kern.setjmp_tester.test=1
 }
 setjmp_cleanup()
 {
-	modunload setjmp_tester
+	if [ "${module_loaded}" != "no" ]; then
+		modunload setjmp_tester
+	fi
 }
 
 atf_init_test_cases()
