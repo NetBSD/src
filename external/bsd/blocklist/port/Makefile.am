@@ -1,21 +1,21 @@
 #
 ACLOCAL_AMFLAGS = -I m4
 lib_LTLIBRARIES = libblocklist.la
-include_HEADERS = ../include/blocklist.h
+include_HEADERS = $(srcdir)/../include/blocklist.h
 
-exampledir = $(datarootdir)/examples/blocklistd
-example_DATA = ../etc/blocklistd.conf ../etc/npf.conf ../etc/ipf.conf
+exampledir = $(datarootdir)/examples
+example_DATA = $(srcdir)/../etc/blocklistd.conf $(srcdir)/../etc/npf.conf $(srcdir)/../etc/ipf.conf
 
 sbin_PROGRAMS = blocklistd blocklistctl
 noinst_PROGRAMS = srvtest cltest
-libexec_SCRIPTS = ../libexec/blocklistd-helper
+libexec_SCRIPTS = $(srcdir)/../libexec/blocklistd-helper
 
-man5_MANS = ../bin/blocklistd.conf.5
-man8_MANS = ../bin/blocklistd.8 ../bin/blocklistctl.8
+man5_MANS = $(srcdir)/../bin/blocklistd.conf.5
+man8_MANS = $(srcdir)/../bin/blocklistd.8 $(srcdir)/../bin/blocklistctl.8
 
-VPATH = ../bin:../lib:../test:../include
+VPATH = $(srcdir)/../port:$(srcdir)/../bin:$(srcdir)/../lib:$(srcdir)/../test:$(srcdir)/../include
 
-AM_CPPFLAGS = -I../include  -DDOT="."
+AM_CPPFLAGS = -I$(srcdir)/../include  -DDOT="."
 AM_CPPFLAGS += -D_PATH_BLCONF=\"$(sysconfdir)/blocklistd.conf\"
 AM_CPPFLAGS += -D_PATH_BLCONTROL=\"$(libexecdir)/blocklistd-helper\"
 AM_CPPFLAGS += -D_PATH_BLSOCK=\"$(runstatedir)/blocklistd.sock\"
