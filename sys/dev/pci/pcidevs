@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1522 2025/04/20 09:44:40 andvar Exp $
+$NetBSD: pcidevs,v 1.1523 2025/04/28 11:03:13 andvar Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1286,9 +1286,15 @@ product AMD HUDSON_PCIE_1	0x43a1	Hudson PCIe Root Port 1
 product AMD HUDSON_PCIE_2	0x43a2	Hudson PCIe Root Port 2
 product AMD HUDSON_PCIE_3	0x43a3	Hudson PCIe Root Port 3
 product AMD 300SERIES_PCIE	0x43b4	300 Series PCIe
+product AMD X370SERIES_SATA	0x43b5	X370 Series SATA
+product AMD X399SERIES_SATA	0x43b6	X399 Series SATA
 product AMD 300SERIES_SATA	0x43b7	300 Series SATA
-product AMD FCH_SATA_D		0x43b8	FCH SATA Controller D
+product AMD A320SERIES_SATA	0x43b8	A320 Series SATA
+product AMD X370SERIES_XHCI	0x43b9	X370 Series xHCI
+product AMD X399SERIES_XHCI	0x43ba	X399 Series xHCI
 product AMD 300SERIES_XHCI	0x43bb	300 Series xHCI
+product AMD A320SERIES_XHCI	0x43bc	A320 Series xHCI
+product AMD FHC_AHCI_SATA_RAID	0x43bd	FHC AHCI SATA (RAID mode)
 product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIe
 product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIe
 product AMD 400SERIES_AHCI	0x43c8	400 Series AHCI
@@ -1297,7 +1303,12 @@ product AMD 400SERIES_XHCI_2	0x43d1	400 Series xHCI
 product AMD 500SERIES_PCIE_1	0x43e9	500 Series PCIe
 product AMD 500SERIES_PCIE_2	0x43ea	500 Series PCIe
 product AMD 500SERIES_AHCI	0x43eb	500 Series AHCI
+product AMD A520SERIES_XHCI	0x43ec	A520 Series xHCI
 product AMD 500SERIES_XHCI	0x43ee	500 Series xHCI
+product AMD 600SERIES_PCIE_1	0x43f4	600 Series PCIe Switch Upstream Port
+product AMD 600SERIES_PCIE_2	0x43f5	600 Series PCIe Switch Downstream Port
+product AMD 600SERIES_SATA	0x43f6	600 Series SATA
+product AMD 600SERIES_XHCI	0x43f7	600 Series xHCI
 product AMD 500SERIES_PCIE_3	0x57a3	500 Series PCIe
 product AMD 500SERIES_PCIE_4	0x57a4	500 Series PCIe
 product AMD 500SERIES_PCIE_5	0x57ad	500 Series PCIe
@@ -1576,6 +1587,9 @@ product ATTANSIC E2500		0xe0b1	Killer E2500
 product ATI RADEON_KAVERI_HDMI	0x1308	Kaveri HDMI Audio
 product ATI RADEON_KAVERI_R7_1	0x1313	Kaveri Radeon R7 (Kaveri)
 product ATI RADEON_WRESTLER_HDMI	0x1314	Wrestler HDMI Audio
+product ATI NAVI_PCIE_1		0x1478	Navi PCIe Switch Upstream Port
+product ATI NAVI_PCIE_2		0x1479	Navi PCIe Switch Downstream Port
+product ATI RADEON_RAVEN_RIDGE	0x15dd	Raven Ridge Radeon Vega (Mobile) Series
 product ATI RADEON_BEAVERCREEK_HDMI	0x1714	BeaverCreek HDMI Audio
 product ATI RADEON_RV380_3150	0x3150	Radeon Mobility X600 (M24) 3150
 product ATI RADEON_RV380_3154	0x3154	FireGL M24 GL 3154
@@ -8358,6 +8372,7 @@ product NVIDIA	GEFORCE3	0x0200	GeForce3
 product NVIDIA	GEFORCE3_TI200	0x0201	GeForce3 Ti 200
 product NVIDIA	GEFORCE3_TI500	0x0202	GeForce3 Ti 500
 product NVIDIA	QUADRO_DCC	0x0203	Quadro DCC
+product NVIDIA	GEFORCE_6200A	0x0221	GeForce 6200A
 product NVIDIA	GEFORCE_6150	0x0240	GeForce 6150
 product NVIDIA	GEFORCE_6150LE	0x0241	GeForce 6150 LE
 product NVIDIA	GEFORCE4_TI4600	0x0250	GeForce4 Ti 4600
