@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.90 2025/04/24 01:50:39 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.91 2025/04/28 13:01:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.90 2025/04/24 01:50:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.91 2025/04/28 13:01:27 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -237,7 +237,16 @@ fpuinit_mxcsr_mask(void)
 	const bool allocfpusave = x86_fpu_save_size > sizeof(union savefpu);
 	vaddr_t va;
 
-#ifdef __i386__
+#if defined XENPV
+	if (x86_fpu_save_separate_p()) {
+		/*
+		 * XXX Temporary workaround for PR kern/59371 until we
+		 * work out the implications.
+		 */
+		panic("NetBSD/xen does not support fpu save size %u",
+		    x86_fpu_save_size);
+	}
+#elif defined __i386__
 	if (x86_fpu_save_separate_p()) {
 		/*
 		 * XXX Need to teach cpu_uarea_alloc/free to allocate a

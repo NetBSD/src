@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.34 2025/04/24 09:29:09 kre Exp $	*/
+/*	$NetBSD: pcb.h,v 1.35 2025/04/28 13:01:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,12 +97,18 @@ struct pcb {
 	struct dbreg *pcb_dbregs;
 	uint16_t pcb_fpu_dflt_cw;
 	int pcb_iopl;
+#ifdef XENPV			/* XXX XENPV PR kern/59371 */
+	uint32_t pcb_unused[8];		/* unused */
+	union savefpu	pcb_savefpu[1] __aligned(64);
+#define	pcb_savefpusmall	pcb_savefpu
+#else
 	union savefpu *pcb_savefpu;
 
 	uint32_t pcb_unused[6];		/* unused */
 
 	/* fpu state, if it fits; otherwise allocated separately */
 	union savefpu	pcb_savefpusmall __aligned(64);
+#endif
 	/* **** DO NOT ADD ANYTHING HERE **** */
 };
 #ifndef __lint__
