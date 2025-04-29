@@ -1,4 +1,4 @@
-#	$NetBSD: t_setjmp.sh,v 1.4 2025/04/29 09:55:59 martin Exp $
+#	$NetBSD: t_setjmp.sh,v 1.5 2025/04/29 10:57:17 martin Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,10 +34,6 @@ setjmp_head()
 setjmp_body()
 {
 	case `uname -p` in
-	powerpc*)
-		atf_expect_fail "PR port-powerpc/59306:" \
-		    " kernel longjmp(9) fails to make setjmp(9) return 1"
-		;;
 	vax)
 		atf_expect_fail "PR port-vax/59308:" \
 		    " kernel longjmp(9) fails to make setjmp(9) return 1"
