@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.434 2024/02/17 19:36:07 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.435 2025/04/29 14:53:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7747,7 +7747,6 @@ ENTRY(longjmp)
 	flushw
 	mov	1, %i2
 	ldx	[%i0+0], %fp	! get return stack
-	movrz	%i1, %i1, %i2	! compute v ? v : 1
 	ldx	[%i0+8], %i7	! get rpc
 	ret
 	 restore	%i2, 0, %o0
