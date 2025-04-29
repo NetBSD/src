@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.4 2011/01/17 08:23:56 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.5 2025/04/29 10:56:38 martin Exp $	*/
 /*	from:	OpenBSD: setjmp.S,v 1.2 1996/12/28 06:22:18 rahnds Exp 	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
@@ -100,5 +100,5 @@ longjmp:
 	ldreg %r0, JMP_xer(%r3)
 	mtxer %r0
 	/* f14-f31, fpscr */
-	mr %r3, %r4
+	li %r3, 1
 	blr
