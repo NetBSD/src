@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.285 2024/02/10 08:24:51 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.286 2025/04/29 09:55:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6042,11 +6042,7 @@ Lpanic_ljmp:
 	_ALIGN
 
 ENTRY(longjmp)
-	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
-	be,a	0f
-	 mov	1, %g6
-0:
-	mov	%o0, %g1	! save a in another global register
+	mov	%o0, %g1	! save a in a global register
 	ld	[%g1+8], %g7	/* get caller's frame */
 1:
 	cmp	%fp, %g7	! compare against desired frame
@@ -6070,8 +6066,8 @@ Llongjmpbotch:
 	 mov	%o2, %sp	! it is OK, put it in place
 	b,a	Llongjmpbotch
 3:
-	jmp	%o3 + 8		! success, return %g6
-	 mov	%g6, %o0
+	jmp	%o3 + 8		! success, return 1
+	 mov	1, %o0
 
 	.data
 	.globl	_C_LABEL(kernel_top)
