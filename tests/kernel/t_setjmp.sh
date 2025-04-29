@@ -1,4 +1,4 @@
-#	$NetBSD: t_setjmp.sh,v 1.2 2025/04/28 15:41:25 martin Exp $
+#	$NetBSD: t_setjmp.sh,v 1.3 2025/04/29 04:53:45 martin Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ setjmp_body()
 		atf_expect_fail "PR port-powerpc/59306:" \
 		    " kernel longjmp(9) fails to make setjmp(9) return 1"
 		;;
-	sparc*)
+	sparc)
 		atf_expect_fail "PR port-sparc/59307:" \
 		    " kernel longjmp(9) fails to make setjmp(9) return 1"
 		;;
