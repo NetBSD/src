@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.91 2024/01/20 00:24:58 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.92 2025/04/29 12:20:36 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.91 2024/01/20 00:24:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.92 2025/04/29 12:20:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,8 @@ genfb_init(struct genfb_softc *sc)
 
 	return;
 
-bad:	kmem_free(sc->sc_private, sizeof(*sc->sc_private));
+bad:
+	kmem_free(sc->sc_private, sizeof(*sc->sc_private));
 	sc->sc_private = NULL;
 }
 
@@ -323,8 +324,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    &fb_phys);
 	}
 
-	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n",
+	aprint_verbose_dev(sc->sc_dev,
+	    "framebuffer at %p, size %dx%d, depth %d, stride %d\n",
 	    fb_phys ? (void *)(intptr_t)fb_phys : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
@@ -376,10 +377,10 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 #endif
 
 #ifdef SPLASHSCREEN
-/*
- * If system isn't going to go multiuser, or user has requested to see
- * boot text, don't render splash screen immediately
- */
+	/*
+	 * If system isn't going to go multiuser, or user has requested to see
+	 * boot text, don't render splash screen immediately
+	 */
 	if (DISABLESPLASH)
 #endif
 		vcons_redraw_screen(&scp->sc_console_screen);
@@ -463,7 +464,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 static int
 genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-	struct lwp *l)
+    struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct genfb_softc *sc = vd->cookie;
@@ -474,111 +475,112 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	int new_mode, error, val, ret;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GINFO:
-			if (ms == NULL)
-				return ENODEV;
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
-
-		case WSDISPLAYIO_GETCMAP:
-			return genfb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
-
-		case WSDISPLAYIO_PUTCMAP:
-			return genfb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
-
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
-			return 0;
-
-		case WSDISPLAYIO_SMODE:
-			new_mode = *(int *)data;
-
-			/* notify the bus backend */
-			error = 0;
-			if (scp->sc_ops.genfb_ioctl) {
-				error = scp->sc_ops.genfb_ioctl(sc, vs,
-				    cmd, data, flag, l);
-			}
-			if (error && error != EPASSTHROUGH)
-				return error;
-
-			if (new_mode != scp->sc_mode) {
-				scp->sc_mode = new_mode;
-				if (scp->sc_modecb != NULL) {
-					scp->sc_modecb->gmc_setmode(sc,
-					    scp->sc_mode);
-				}
-				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-					genfb_restore_palette(sc);
-					vcons_redraw_screen(ms);
-				}
-			}
-			return 0;
-
-		case WSDISPLAYIO_SSPLASH:
-#if defined(SPLASHSCREEN)
-			if(*(int *)data == 1) {
-				SCREEN_DISABLE_DRAWING(&scp->sc_console_screen);
-				splash_render(&scp->sc_splash,
-				    SPLASH_F_CENTER|SPLASH_F_FILL);
-			} else {
-				SCREEN_ENABLE_DRAWING(&scp->sc_console_screen);
-				genfb_init_palette(sc);
-			}
-			vcons_redraw_screen(ms);
-			return 0;
-#else
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
 			return ENODEV;
-#endif
-		case WSDISPLAYIO_GETPARAM:
-			param = (struct wsdisplay_param *)data;
-			switch (param->param) {
-			case WSDISPLAYIO_PARAM_BRIGHTNESS:
-				if (scp->sc_brightness == NULL)
-					return EPASSTHROUGH;
-				param->min = 0;
-				param->max = 255;
-				return scp->sc_brightness->gpc_get_parameter(
-				    scp->sc_brightness->gpc_cookie,
-				    &param->curval);
-			case WSDISPLAYIO_PARAM_BACKLIGHT:
-				if (scp->sc_backlight == NULL)
-					return EPASSTHROUGH;
-				param->min = 0;
-				param->max = 1;
-				return scp->sc_backlight->gpc_get_parameter(
-				    scp->sc_backlight->gpc_cookie,
-				    &param->curval);
-			}
-			return EPASSTHROUGH;
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_SETPARAM:
-			param = (struct wsdisplay_param *)data;
-			switch (param->param) {
-			case WSDISPLAYIO_PARAM_BRIGHTNESS:
-				if (scp->sc_brightness == NULL)
-					return EPASSTHROUGH;
-				val = param->curval;
-				if (val < 0) val = 0;
-				if (val > 255) val = 255;
-				return scp->sc_brightness->gpc_set_parameter(
-				    scp->sc_brightness->gpc_cookie, val);
-			case WSDISPLAYIO_PARAM_BACKLIGHT:
-				if (scp->sc_backlight == NULL)
-					return EPASSTHROUGH;
-				val = param->curval;
-				if (val < 0) val = 0;
-				if (val > 1) val = 1;
-				return scp->sc_backlight->gpc_set_parameter(
-				    scp->sc_backlight->gpc_cookie, val);
+	case WSDISPLAYIO_GETCMAP:
+		return genfb_getcmap(sc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_PUTCMAP:
+		return genfb_putcmap(sc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_stride;
+		return 0;
+
+	case WSDISPLAYIO_SMODE:
+		new_mode = *(int *)data;
+
+		/* notify the bus backend */
+		error = 0;
+		if (scp->sc_ops.genfb_ioctl) {
+			error = scp->sc_ops.genfb_ioctl(sc, vs,
+			    cmd, data, flag, l);
+		}
+		if (error && error != EPASSTHROUGH)
+			return error;
+
+		if (new_mode != scp->sc_mode) {
+			scp->sc_mode = new_mode;
+			if (scp->sc_modecb != NULL) {
+				scp->sc_modecb->gmc_setmode(sc, scp->sc_mode);
 			}
-			return EPASSTHROUGH;
+			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				genfb_restore_palette(sc);
+				vcons_redraw_screen(ms);
+			}
+		}
+		return 0;
+
+	case WSDISPLAYIO_SSPLASH:
+#if defined(SPLASHSCREEN)
+		if (*(int *)data == 1) {
+			SCREEN_DISABLE_DRAWING(&scp->sc_console_screen);
+			splash_render(&scp->sc_splash,
+			    SPLASH_F_CENTER|SPLASH_F_FILL);
+		} else {
+			SCREEN_ENABLE_DRAWING(&scp->sc_console_screen);
+			genfb_init_palette(sc);
+		}
+		vcons_redraw_screen(ms);
+		return 0;
+#else
+		return ENODEV;
+#endif
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)data;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			if (scp->sc_brightness == NULL)
+				return EPASSTHROUGH;
+			param->min = 0;
+			param->max = 255;
+			return scp->sc_brightness->gpc_get_parameter(
+			    scp->sc_brightness->gpc_cookie,
+			    &param->curval);
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (scp->sc_backlight == NULL)
+				return EPASSTHROUGH;
+			param->min = 0;
+			param->max = 1;
+			return scp->sc_backlight->gpc_get_parameter(
+			    scp->sc_backlight->gpc_cookie,
+			    &param->curval);
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)data;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			if (scp->sc_brightness == NULL)
+				return EPASSTHROUGH;
+			val = param->curval;
+			if (val < 0)
+				val = 0;
+			if (val > 255)
+				val = 255;
+			return scp->sc_brightness->gpc_set_parameter(
+			    scp->sc_brightness->gpc_cookie, val);
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (scp->sc_backlight == NULL)
+				return EPASSTHROUGH;
+			val = param->curval;
+			if (val < 0)
+				val = 0;
+			if (val > 1)
+				val = 1;
+			return scp->sc_backlight->gpc_set_parameter(
+			    scp->sc_backlight->gpc_cookie, val);
+		}
+		return EPASSTHROUGH;
 	}
 	ret = EPASSTHROUGH;
 	if (scp->sc_ops.genfb_ioctl)
@@ -592,11 +594,13 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	 * them but still provides fallback implementations
 	 */
 	switch (cmd) {
-		case WSDISPLAYIO_GET_EDID: {
+	case WSDISPLAYIO_GET_EDID:
+		{
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
-		case WSDISPLAYIO_GET_FBINFO: {
+	case WSDISPLAYIO_GET_FBINFO:
+		{
 			struct wsdisplayio_fbinfo *fbi = data;
 			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 		}
@@ -923,6 +927,7 @@ genfb_putpalreg(struct genfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 void
 genfb_cnattach(void)
 {
+
 	genfb_cnattach_called = 1;
 }
 
@@ -940,18 +945,21 @@ genfb_cndetach(void)
 void
 genfb_disable(void)
 {
+
 	genfb_enabled = 0;
 }
 
 int
 genfb_is_console(void)
 {
+
 	return genfb_cnattach_called;
 }
 
 int
 genfb_is_enabled(void)
 {
+
 	return genfb_enabled;
 }
 
