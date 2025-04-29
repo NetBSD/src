@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 2025/04/29 15:07:43 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.28 2025/04/29 21:06:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -472,11 +472,12 @@ command_boot(char *arg)
 	if (filename != NULL) {
 #ifdef KERNEL_DIR
 		char path[512];
+
 		if (strchr(filename, '/') == NULL) {
-			snprintf(path, sizeof(path), "%s/kernel", filename);
+			snprintf(path, sizeof(path) - 4, "%s/kernel", filename);
 			bootit2(path, sizeof(path), howto);
 		}
-		snprintf(path, sizeof(path), "%s", filename);
+		snprintf(path, sizeof(path) - 4, "%s", filename);
 		bootit2(path, sizeof(path), howto);
 #else
 		bootit(filename, howto);
