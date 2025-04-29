@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2025/04/29 15:57:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -76,7 +76,7 @@
 /*
  *  Configuration file limitations.
  */
-#define	C_MAXFILE	10		/* max number of boot-able files */
+#define	C_MAXFILE	16		/* max number of boot-able files */
 #define	C_LINELEN	1024		/* max length of line */
 
 /*
