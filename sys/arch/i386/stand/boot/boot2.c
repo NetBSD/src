@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.82 2025/04/29 09:08:37 martin Exp $	*/
+/*	$NetBSD: boot2.c,v 1.83 2025/04/29 15:07:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -126,6 +126,9 @@ static const char *default_part_name;
 
 char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
+#ifdef KERNEL_DIR
+static void bootit2(char *, size_t, int);
+#endif
 void boot2(int, uint64_t);
 
 void	command_help(char *);
@@ -473,6 +476,16 @@ command_quit(char *arg)
 	panic("Could not reboot!");
 }
 
+#ifdef KERNEL_DIR
+static void
+bootit2(char *path, size_t plen, int howto)
+{
+	bootit(path, howto);
+	snprintf(path, plen, "%s.gz", path);
+	bootit(path, howto | AB_VERBOSE);
+}
+#endif
+
 void
 command_boot(char *arg)
 {
@@ -483,7 +496,17 @@ command_boot(char *arg)
 		return;
 
 	if (filename != NULL) {
+#ifdef KERNEL_DIR
+		char path[512];
+		if (strchr(filename, '/') == NULL) {
+			snprintf(path, sizeof(path), "%s/kernel", filename);
+			bootit2(path, sizeof(path), howto);
+		}
+		snprintf(path, sizeof(path), "%s", filename);
+		bootit2(path, sizeof(path), howto);
+#else
 		bootit(filename, howto);
+#endif
 	} else {
 		int i;
 
