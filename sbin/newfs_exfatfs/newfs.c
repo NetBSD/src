@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.1.2.6 2024/09/13 05:18:50 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1.2.7 2025/04/30 03:16:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.1.2.6 2024/09/13 05:18:50 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1.2.7 2025/04/30 03:16:34 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	struct dkwedge_info dkw;
 	struct stat st;
 	struct uvnode *devvp;
-	struct exfatfs *fs;
+	struct exfatfs *fs = NULL;
 	int debug, Fflag, fsi = -1, fso = -1, maxpartitions, nfats = 0;
 	uint secsize = 0, secshift = 0;
 	int byte_sized = 0;
