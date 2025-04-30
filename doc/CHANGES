@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3159 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3160 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -742,3 +742,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	proplib(3): Added support for JSON serialization format.
 		[thorpej 20250422]
 	mips: Enable SSP by default (and RELRO on mips64). [nia 20250428]
+	amd64: Added KERNEL_DIR option to build.sh, and upddated the boot
+		loaders accordingly. [pgoyette 20250428]
