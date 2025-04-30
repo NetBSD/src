@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.84 2025/04/29 21:06:18 pgoyette Exp $	*/
+/*	$NetBSD: boot2.c,v 1.85 2025/04/30 06:24:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -100,11 +100,9 @@ int boot_biosdev;
 daddr_t boot_biossector;
 
 static const char * const names[][2] = {
-#ifdef KERNEL_DIR
 	{ "netbsd/kernel", "netbsd/kernel.gz" },
 	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
 	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
-#endif
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
@@ -126,9 +124,7 @@ static const char *default_part_name;
 
 char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
-#ifdef KERNEL_DIR
 static void bootit2(char *, size_t, int);
-#endif
 void boot2(int, uint64_t);
 
 void	command_help(char *);
@@ -476,7 +472,6 @@ command_quit(char *arg)
 	panic("Could not reboot!");
 }
 
-#ifdef KERNEL_DIR
 static void
 bootit2(char *path, size_t plen, int howto)
 {
@@ -484,30 +479,27 @@ bootit2(char *path, size_t plen, int howto)
 	snprintf(path, plen, "%s.gz", path);
 	bootit(path, howto | AB_VERBOSE);
 }
-#endif
 
 void
 command_boot(char *arg)
 {
 	char *filename;
+	char path[512];
 	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
 	if (filename != NULL) {
-#ifdef KERNEL_DIR
-		char path[512];
+		/* try old locations first to assist atf test beds */
+		snprintf(path, sizeof(path) - 4, "%s", filename);
+		bootit2(path, sizeof(path), howto);
 
+		/* now treat given filename as a directory */
 		if (strchr(filename, '/') == NULL) {
 			snprintf(path, sizeof(path) - 4, "%s/kernel", filename);
 			bootit2(path, sizeof(path), howto);
 		}
-		snprintf(path, sizeof(path) - 4, "%s", filename);
-		bootit2(path, sizeof(path), howto);
-#else
-		bootit(filename, howto);
-#endif
 	} else {
 		int i;
 
