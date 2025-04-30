@@ -1,4 +1,4 @@
-/*	$NetBSD: pass0.c,v 1.1.2.3 2024/08/02 00:18:59 perseant Exp $	*/
+/*	$NetBSD: pass0.c,v 1.1.2.4 2025/04/30 18:46:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * Check the superblock.
  */
 void
-pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
+pass0(struct exfatfs *fs, struct dkwedge_info *dkwp, int check_extended)
 {
 	int base, i;
 	unsigned j;
@@ -82,9 +82,12 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 			if (i > 0 && i < 9) {
 				uint32_t *ebcp = (uint32_t *)((char *)bp->b_data
 					      + BSSIZE(fs) - sizeof(uint32_t));
-				if (*ebcp && *ebcp != htole32(0xAA550000)) {
-					pwarn("Extended boot sector %d magic number wrong\n",
-					      base + i);
+				if (check_extended && *ebcp
+				    && le32toh(*ebcp) != 0xAA550000) {
+					pwarn("Extended boot sector %d"
+					      " magic number 0x%x !="
+					      " 0xAA550000\n",
+					      base + i, le32toh(*ebcp));
 					if (Pflag || reply("CONTINUE") == 0)
 						exit(1);
 					if (reply("zero") == 1) {
@@ -106,11 +109,12 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 		/* Compare boot block against recorded checksum */
 		bread(fs->xf_devvp, base + i, BSSIZE(fs), 0, &bp);
 		for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++) {
-			if (((uint32_t *)bp->b_data)[j] != cksum) {
+			if (le32toh(((uint32_t *)bp->b_data)[j]) != cksum) {
 				pwarn("Boot block %d checksum mismatch:"
 				      " word %d expected 0x%x computed 0x%x\n",
 				      base / 12, j,
-				      ((uint32_t *)bp->b_data)[j], cksum);
+				      le32toh(((uint32_t *)bp->b_data)[j]),
+				      cksum);
 				break;
 			}
 		}
@@ -123,7 +127,7 @@ pass0(struct exfatfs *fs, struct dkwedge_info *dkwp)
 
 	/* BootSignature: spec says to verify this field first. */
 	if (fs->xf_BootSignature != EXFAT_BOOT_SIGNATURE) {
-		pfatal("BootSignature value %hu is not %hu."
+		pfatal("BootSignature value 0x%hx != 0x%hx."
 		       "  FILE SYSTEM MAY NOT BE exFAT!\n",
 		       fs->xf_BootSignature, EXFAT_BOOT_SIGNATURE);
 		if (Pflag || reply("fix") == 0)

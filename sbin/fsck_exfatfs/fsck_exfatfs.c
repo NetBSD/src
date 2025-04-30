@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.5 2025/04/30 04:42:17 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.6 2025/04/30 18:46:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.5 2025/04/30 04:42:17 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.6 2025/04/30 18:46:21 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ int	debug;
 int	Nflag = 0;		/* no to everything: read-only */
 int	Pflag = 0;		/* preen */
 int	Qflag = 0;		/* quiet */
+int	Xflag = 0;		/* check extended bootblocks */
 int	Yflag = 0;		/* yes to everything */
 
 /* Per filesystem, XXX should be encapsulated? */
@@ -193,7 +194,7 @@ main(int argc, char **argv)
 
 	debug = force = 0;
 	sbaddr = 0x0;
-	opstring = "5b:dfhnpqy";
+	opstring = "5b:dfhnpqxy";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case '5':
@@ -216,6 +217,9 @@ main(int argc, char **argv)
 			break;
 		case 'q':
 			Qflag++;
+			break;
+		case 'x':
+			Xflag++;
 			break;
 		case 'y':
 			Yflag++;
@@ -295,8 +299,7 @@ main(int argc, char **argv)
 		}
 		
 		memset(fs, 0, sizeof(*fs));
-		/* XXX endian conversion? */
-		fs->xf_exfatdfs = *(struct exfatdfs *)bp->b_data;
+		letoh_bootblock(fs, (struct exfatfs *)bp->b_data);
 		bp->b_flags |= B_INVAL;
 		brelse(bp, 0);
 		
@@ -312,7 +315,7 @@ main(int argc, char **argv)
 			pwarn("VolumeLength = %lu\n", (unsigned long)fs->xf_VolumeLength);
 		
 		/* Verify boot blocks */
-		pass0(fs, &dkw);
+		pass0(fs, &dkw, Xflag);
 		
 		register_vget((void *)fs, exfatfs_vget, exfatfs_freevnode);
 		g_devfd = devfd;
@@ -474,7 +477,7 @@ main(int argc, char **argv)
 		pass3(fs);
 		
 		/* Mark filesystem clean */
-		if (fsdirty) {
+		if (fsdirty && !Nflag) {
 			daddr_t base;
 			int i;
 			size_t j;

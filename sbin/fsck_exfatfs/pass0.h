@@ -1,4 +1,4 @@
-/*	$NetBSD: pass0.h,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $	*/
+/*	$NetBSD: pass0.h,v 1.1.2.2 2025/04/30 18:46:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,6 +33,6 @@
 
 struct exfatfs;
 
-void pass0(struct exfatfs *, struct dkwedge_info *);
+void pass0(struct exfatfs *, struct dkwedge_info *, int);
 
 #endif /* PASS0_H_ */
