@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.375 2025/04/30 05:15:07 imil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376 2025/04/30 15:30:53 imil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2025/04/30 05:15:07 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376 2025/04/30 15:30:53 imil Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1543,7 +1543,7 @@ init_x86_64_ksyms(void)
 		ksyms_addsyms_elf(symtab->nsym, (void *)tssym, (void *)tesym);
 	} else {
 		uintptr_t endp = (uintptr_t)(void *)&end;
-
+#ifdef XEN
 		/*
 		 * cpu_probe() / identify_hypervisor() overrides VM_GUEST_GENPVH,
 		 * we can't rely on vm_guest == VM_GUEST_GENPVH
@@ -1551,6 +1551,7 @@ init_x86_64_ksyms(void)
 		if (pvh_boot && vm_guest != VM_GUEST_XENPVH)
 			ksyms_addsyms_elf(0, ((long *)endp) + 1, esym);
 		else
+#endif
 			ksyms_addsyms_elf(*(long *)endp, ((long *)endp) + 1, esym);
 	}
 #endif
