@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.1.2.4 2024/08/02 00:19:00 perseant Exp $	*/
+/*	$NetBSD: pass2.c,v 1.1.2.5 2025/04/30 04:42:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -110,9 +110,10 @@ pass2(struct exfatfs *fs, uint8_t *observed_bitmap)
 			}
 		}
 
-		if (modified)
+		if (modified) {
+			fsdirty = 1;
 			bwrite(bp);
-		else
+		} else
 			brelse(bp, 0);
 	}
 }

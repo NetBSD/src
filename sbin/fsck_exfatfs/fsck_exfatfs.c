@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.5 2025/04/30 04:42:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.5 2025/04/30 04:42:17 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $");
 #include <fs/exfatfs/exfatfs_conv.h>
 #include <fs/exfatfs/exfatfs_extern.h>
 #include <fs/exfatfs/exfatfs_inode.h>
+#include <fs/exfatfs/exfatfs_tables.h>
 
 #include "extern.h"
 #include "bufcache.h"
@@ -83,6 +84,7 @@ __RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.4 2024/08/02 00:18:59 perseant Exp $");
 #include "pass0.h"
 #include "pass1.h"
 #include "pass2.h"
+#include "pass3.h"
 
 #define MINBLOCKSIZE 4096
 
@@ -108,7 +110,7 @@ uint64_t fssize;		/* file system size */
 uint32_t sectorsize;		/* bytes/sector */
 uint32_t align = 0;		/* block size */
 uint32_t csize = 0;		/* block size */
-extern unsigned dev_bsize;
+extern long dev_bsize;
 extern int g_devfd;
 uint8_t *bitmap;
 LIST_HEAD(dup, ino_entry) duplist;
@@ -181,6 +183,8 @@ main(int argc, char **argv)
 	struct exfatfs_dirent_allocation_bitmap *dentp0, *dentp, *endp;
 	struct dkwedge_info dkw;
 	struct disk_geom geo;
+	char *uctable;
+	size_t ucsize, ucoff;
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
 		++progname;
@@ -373,6 +377,7 @@ main(int argc, char **argv)
 				xip->xi_direntp[1] = exfatfs_newdirent();
 				SET_DSE_FIRSTCLUSTER(xip, dentp->xd_firstCluster);
 				SET_DSE_DATALENGTH(xip, dentp->xd_dataLength);
+				SET_DSE_VALIDDATALENGTH(xip, dentp->xd_dataLength);
 				if (dentp->xd_entryType == XD_ENTRYTYPE_ALLOC_BITMAP) {
 					fs->xf_bitmapvp = vget3(fs, INUM(xip), xip);
 					vref(fs->xf_bitmapvp);
@@ -415,7 +420,11 @@ main(int argc, char **argv)
 		}
 		++total_files;
 		
-		/* Count upcase file's clusters - XXX merge with above */
+		/* Count upcase file's clusters */
+		ucsize = GET_DSE_DATALENGTH(VTOXI(fs->xf_upcasevp));
+		/* XXX sanity check size */
+		uctable = malloc(roundup(ucsize, EXFATFS_CSIZE(fs)));
+		ucoff = 0;
 		clust = GET_DSE_FIRSTCLUSTER(VTOXI(fs->xf_upcasevp));
 		while (clust != 0xFFFFFFFF) {
 			if (debug)
@@ -424,6 +433,17 @@ main(int argc, char **argv)
 			setbit(bitmap, clust - 2);
 			++clusters_used;
 
+			/* Read the file data into uctable */
+			do {
+				bread(fs->xf_devvp, EXFATFS_LC2D(fs, clust)
+					+ EXFATFS_B2D(fs, ucoff & EXFATFS_CMASK(fs)), EXFATFS_LSIZE(fs), 0, &bp);
+				memcpy(uctable + ucoff, bp->b_data, EXFATFS_LSIZE(fs));
+				brelse(bp, 0);
+				ucoff += EXFATFS_LSIZE(fs);
+			} while (ucoff & EXFATFS_CMASK(fs));
+			if (ucoff > ucsize)
+				break;
+
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
 			      FATBSIZE(fs), 0, &bp);
@@ -431,6 +451,9 @@ main(int argc, char **argv)
 				[EXFATFS_FATOFF(clust)];
 			brelse(bp, 0);
 		}
+		exfatfs_load_uctable(fs, (uint16_t *)uctable,
+				     ucsize / sizeof(uint16_t));
+
 		++total_files;
 		
 		/*
@@ -446,6 +469,9 @@ main(int argc, char **argv)
 		
 		/* Compare observed against stored bitmap */
 		pass2(fs, bitmap);
+
+		/* Test upcase table */
+		pass3(fs);
 		
 		/* Mark filesystem clean */
 		if (fsdirty) {
