@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.374 2025/04/24 23:51:03 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.375 2025/04/30 05:15:07 imil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.374 2025/04/24 23:51:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2025/04/30 05:15:07 imil Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1544,7 +1544,11 @@ init_x86_64_ksyms(void)
 	} else {
 		uintptr_t endp = (uintptr_t)(void *)&end;
 
-		if (vm_guest == VM_GUEST_GENPVH)
+		/*
+		 * cpu_probe() / identify_hypervisor() overrides VM_GUEST_GENPVH,
+		 * we can't rely on vm_guest == VM_GUEST_GENPVH
+		 */
+		if (pvh_boot && vm_guest != VM_GUEST_XENPVH)
 			ksyms_addsyms_elf(0, ((long *)endp) + 1, esym);
 		else
 			ksyms_addsyms_elf(*(long *)endp, ((long *)endp) + 1, esym);
@@ -1731,7 +1735,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH || vm_guest == VM_GUEST_GENPVH)
+	if (pvh_boot)
 		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
 	init_pte();

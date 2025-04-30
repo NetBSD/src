@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.31 2022/08/20 23:12:00 riastradh Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.32 2025/04/30 05:15:08 imil Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -272,6 +272,9 @@ struct bootinfo {
 };
 
 extern struct bootinfo bootinfo;
+#ifdef XEN
+extern bool pvh_boot;
+#endif
 
 void *lookup_bootinfo(int);
 void  aprint_bootinfo(void);

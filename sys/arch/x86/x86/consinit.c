@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.40 2024/12/02 13:31:32 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.41 2025/04/30 05:15:08 imil Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.40 2024/12/02 13:31:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.41 2025/04/30 05:15:08 imil Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -179,7 +179,7 @@ consinit(void)
 			return;
 		/* fallback to native console selection, useful for dom0 PVH */
 	}
-	if (vm_guest == VM_GUEST_GENPVH) {
+	if (pvh_boot) { /* GENPVH */
 		union xen_cmdline_parseinfo xcp;
 		/* get console= parameter from generic PVH VMM */
 		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);

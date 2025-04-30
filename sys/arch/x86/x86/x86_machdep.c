@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.157 2025/04/22 12:05:19 imil Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.158 2025/04/30 05:15:08 imil Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.157 2025/04/22 12:05:19 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.158 2025/04/30 05:15:08 imil Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -911,7 +911,7 @@ init_x86_clusters(void)
 	 * the boot program).
 	 */
 #ifdef XEN
-	if (vm_guest_is_pvh()) {
+	if (pvh_boot) {
 		x86_add_xen_clusters();
 	}
 #endif /* XEN */

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.98 2024/12/06 10:53:42 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.99 2025/04/30 05:15:08 imil Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.98 2024/12/06 10:53:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.99 2025/04/30 05:15:08 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,9 +190,11 @@ union start_info_union start_info_union __aligned(PAGE_SIZE);
 struct hvm_start_info *hvm_start_info;
 
 static int xen_hvm_vec = 0;
+
 #endif
 
 int xen_version;
+bool pvh_boot = false;
 
 /* power management, for save/restore */
 static bool hypervisor_suspend(device_t, const pmf_qual_t *);
@@ -243,6 +245,8 @@ init_xen_early(void)
 	const char *cmd_line;
 	if (!vm_guest_is_pvh())
 		return;
+
+	pvh_boot = true;
 
 	hvm_start_info = (void *)((uintptr_t)hvm_start_paddr + KERNBASE);
 
