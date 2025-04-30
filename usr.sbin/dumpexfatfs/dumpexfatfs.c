@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpexfatfs.c,v 1.1.2.7 2024/08/12 22:37:13 perseant Exp $	*/
+/*	$NetBSD: dumpexfatfs.c,v 1.1.2.8 2025/04/30 18:48:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ void print_fat(struct exfatfs *fs)
 			for (j = 0; j < FATBSIZE(fs) / 4
 				     && i + j < fs->xf_ClusterCount + 2; j++) {
 				printf("\t%8.8x: %8.8x\n", (unsigned int)i + j,
-				       (unsigned int)table[j]);
+				       (unsigned int)le32toh(table[j]));
 			}
 			brelse(bp, 0);
 		}
@@ -357,7 +357,7 @@ uint32_t next_fat(struct exfatfs *fs, uint32_t fat)
 	bread(fs->xf_devvp, EXFATFS_S2D(fs, fs->xf_FatOffset
 					    + (fat >> (fs->xf_BytesPerSectorShift - 2))),
 	      FATBSIZE(fs), 0, &bp);
-	retval = ((uint32_t *)bp->b_data)[fat & (FATBMASK(fs) >> 2)];
+	retval = le32toh(((uint32_t *)bp->b_data)[fat & (FATBMASK(fs) >> 2)]);
 	brelse(bp, 0);
 
 	return retval;
@@ -422,7 +422,7 @@ void print_upcase_table(struct exfatfs *fs, uint32_t clust, uint64_t len)
 				if ((total & 0x7) == 0) {
 					printf("\n\t");
 				}
-				printf(" %4.4x", data[i]);
+				printf(" %4.4hx", le16toh(data[i]));
 				if (++total >= len / 2) {
 					printf("\n");
 					brelse(bp, 0);
@@ -465,6 +465,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 		bread(fs->xf_devvp, blkno, EXFATFS_SSIZE(fs), 0, &bp);
 		dse = malloc(sizeof(*dse));
 		/* The stream entry is always the second entry in a file set */
+		/* XXX endian conversion */
 		memcpy(dse, ((struct exfatfs_dse *)bp->b_data)
 		       + (diroff & (EXFATFS_D2DIRENT(fs, 1) - 1)) + 1,
 		       sizeof(*dse));
@@ -490,7 +491,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 					  FATBSIZE(fs), 0, &bp) != 0) {
 					err(1, "Read FAT entry 0x%lx\n", (unsigned long)clust);
 				}
-				clust = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(clust)];
+				clust = le32toh(((uint32_t *)bp->b_data)[EXFATFS_FATOFF(clust)]);
 				brelse(bp, 0);
 				bp = NULL;
 				if (clust == 0xFFFFFFFF)
@@ -512,6 +513,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 	
 		dp = data + i * 32;
 
+		/* XXX endian conversion */
 		if ((dp[0] & (XD_ENTRYTYPE_TYPECATEGORY_MASK|XD_ENTRYTYPE_INUSE_MASK)) != (XD_ENTRYTYPE_TYPECATEGORY_MASK|XD_ENTRYTYPE_INUSE_MASK)) {
 			nsecfound = 0;
 			streamfound = 0;
