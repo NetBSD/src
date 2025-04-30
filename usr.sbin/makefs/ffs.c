@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.76 2024/06/17 23:53:42 riastradh Exp $	*/
+/*	$NetBSD: ffs.c,v 1.77 2025/04/30 13:27:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.76 2024/06/17 23:53:42 riastradh Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.77 2025/04/30 13:27:13 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -656,9 +656,7 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-#if HAVE_STRUCT_STAT_ST_FLAGS
-	dinp->di_flags = cur->inode->st.st_flags;
-#endif
+	dinp->di_flags = FSINODE_ST_FLAGS(*cur->inode);
 #if HAVE_STRUCT_STAT_ST_GEN
 	dinp->di_gen = cur->inode->st.st_gen;
 #endif
@@ -706,9 +704,7 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-#if HAVE_STRUCT_STAT_ST_FLAGS
-	dinp->di_flags = cur->inode->st.st_flags;
-#endif
+	dinp->di_flags = FSINODE_ST_FLAGS(*cur->inode);
 #if HAVE_STRUCT_STAT_ST_GEN
 	dinp->di_gen = cur->inode->st.st_gen;
 #endif

@@ -94,7 +94,16 @@ typedef struct {
 	enum fi_flags	 flags;		/* flags used by fs specific code */
 	struct stat	 st;		/* stat entry */
 	void		*fsuse;		/* for storing FS dependent info */
+#if !HAVE_STRUCT_STAT_ST_FLAGS
+	uint32_t	 st_flags;	/* stand-in for st.st_flags */
+#endif
 } fsinode;
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
+#define	FSINODE_ST_FLAGS(inode)	(inode).st.st_flags
+#else
+#define	FSINODE_ST_FLAGS(inode)	(inode).st_flags
+#endif
 
 typedef struct _fsnode {
 	struct _fsnode	*parent;	/* parent (NULL if root) */
