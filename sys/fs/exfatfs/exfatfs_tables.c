@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_tables.c,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $	*/
+/*	$NetBSD: exfatfs_tables.c,v 1.1.2.4 2025/04/30 17:02:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.3 2024/07/24 00:38:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_tables.c,v 1.1.2.4 2025/04/30 17:02:02 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -583,7 +583,7 @@ exfatfs_destroy_uctable(struct exfatfs *fs)
  * If one is found, return the match.
  * Otherwise return the original character.
  */
-static uint16_t
+uint16_t
 exfatfs_upcase(struct exfatfs *fs, uint16_t wc)
 {
 	struct exfatfs_upcase_range_offset *europ;
