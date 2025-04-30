@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativeMIPS_common.c,v 1.4 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeMIPS_common.c,v 1.5 2025/04/30 15:40:38 nia Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -1938,6 +1938,7 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_op_flags(struct sljit_compiler *co
 	case SLJIT_GREATER_F64:
 	case SLJIT_LESS_EQUAL_F64:
 		type ^= 0x1; /* Flip type bit for the XORI below. */
+		/* Fall through. */
 	case SLJIT_EQUAL_F64:
 	case SLJIT_NOT_EQUAL_F64:
 	case SLJIT_LESS_F64:
