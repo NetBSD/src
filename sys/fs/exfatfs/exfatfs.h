@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs.h,v 1.1.2.7 2024/08/12 22:32:11 perseant Exp $ */
+/* $NetBSD: exfatfs.h,v 1.1.2.8 2025/04/30 18:49:24 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/param.h>
+#include <sys/mutex.h>
 
 /* #define TRACE_INUM 0x8b54e1b */
 

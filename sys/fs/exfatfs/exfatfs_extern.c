@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.9 2024/08/14 15:37:49 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.10 2025/04/30 18:49:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ exfatfs_locate_valid_superblock(struct vnode *devvp, size_t secshift, struct exf
 #endif /* _KERNEL */
 					);
 				memset(*fsp, 0, sizeof(*fs));
-				memcpy(*fsp, bp->b_data, sizeof((*fsp)->xf_exfatdfs));
+				letoh_bootblock(*fsp, (struct exfatfs *)bp->b_data);
 #ifdef DEBUG_VERBOSE
 				DPRINTF(("fs = %p\n", *fsp));
 #endif
@@ -336,7 +336,7 @@ exfatfs_locate_valid_superblock(struct vnode *devvp, size_t secshift, struct exf
 			last_error = error;
 			continue;
 		}
-		if (sum != *(u_int32_t *)(bp->b_data)) {
+		if (sum != le32toh(*(u_int32_t *)(bp->b_data))) {
 			DPRINTF(("Checksum mismatch at offset %u\n", boot_offset));
 			badsb = 1;
 		}
@@ -1161,8 +1161,7 @@ exfatfs_write_sb(struct exfatfs *fs, int re_checksum)
 		if ((error = bread(fs->xf_devvp, base + 0, BSSIZE(fs),
 		     0, &bp)) != 0)
 			return error;
-		memcpy(bp->b_data, &fs->xf_exfatdfs,
-		       sizeof(fs->xf_exfatdfs));
+		htole_bootblock((struct exfatfs *)bp->b_data, fs);
 		if (re_checksum)
 			cksum = exfatfs_cksum32(0,
 					(uint8_t *)bp->b_data,
@@ -1192,7 +1191,7 @@ exfatfs_write_sb(struct exfatfs *fs, int re_checksum)
 #endif /* _KERNEL */
 			   );
 		for (j = 0; j < BSSIZE(fs) / sizeof(uint32_t); j++)
-			((uint32_t *)bp->b_data)[j] = cksum;
+			((uint32_t *)bp->b_data)[j] = htole32(cksum);
 		bwrite(bp);
 	}
 
