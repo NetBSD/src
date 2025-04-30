@@ -3,6 +3,8 @@
 
 #include <sys/types.h>
 
+struct dkwedge_info;
+
 off_t default_cluster_shift(off_t);
 off_t default_fatalign(off_t);
 off_t default_heapalign(off_t);
