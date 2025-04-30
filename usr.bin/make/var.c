@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1160 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1161 2025/04/30 06:01:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1160 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1161 2025/04/30 06:01:07 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3461,7 +3461,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 
 	VarEvalMode then_emode = VARE_PARSE;
 	VarEvalMode else_emode = VARE_PARSE;
-	int parseErrorsBefore = parseErrors, parseErrorsAfter = parseErrors;
+	int parseErrorsBefore = parseErrors;
 
 	CondResult cond_rc = CR_TRUE;	/* anything other than CR_ERROR */
 	if (Expr_ShouldEval(expr)) {
@@ -3469,9 +3469,10 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 		cond_rc = Cond_EvalCondition(expr->name);
 		if (cond_rc == CR_TRUE)
 			then_emode = expr->emode;
-		if (cond_rc == CR_FALSE)
+		else if (cond_rc == CR_FALSE)
 			else_emode = expr->emode;
-		parseErrorsAfter = parseErrors;
+		else if (parseErrors == parseErrorsBefore)
+			Parse_Error(PARSE_FATAL, "Bad condition");
 	}
 
 	evalStack.elems[evalStack.len - 1].kind = VSK_COND_THEN;
@@ -3490,9 +3491,6 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == CR_ERROR) {
-		evalStack.elems[evalStack.len - 1].kind = VSK_COND;
-		if (parseErrorsAfter == parseErrorsBefore)
-			Parse_Error(PARSE_FATAL, "Bad condition");
 		LazyBuf_Done(&thenBuf);
 		LazyBuf_Done(&elseBuf);
 		return AMR_CLEANUP;
@@ -4652,6 +4650,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		Expr_SetValue(&expr, value);
 	}
 
+	EvalStack_Pop();
+
 	if (v->shortLived) {
 		if (expr.value.str == v->val.data) {
 			/* move ownership */
@@ -4661,7 +4661,6 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		VarFreeShortLived(v);
 	}
 
-	EvalStack_Pop();
 	return expr.value;
 }
 

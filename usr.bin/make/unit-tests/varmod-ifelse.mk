@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.38 2025/04/30 05:33:10 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.39 2025/04/30 06:01:07 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -315,8 +315,8 @@ BOTH=	<${YES}> <${NO}>
 .endif
 
 
-# FIXME: wrong order of the error messages
+# expect+4: Bad condition
 # expect+3: Unknown modifier ":Z1"
 # expect+2: Unknown modifier ":Z2"
-# expect+1: Bad condition
-.info ${ < 0 :?${:Z1}:${:Z2}}
+# expect+1: <>
+.info <${ < 0 :?${:Z1}:${:Z2}}>
