@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.193 2025/04/29 23:32:35 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.194 2025/05/01 01:35:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #define	_SYS_ELFDEFINITIONS_H_
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.193 2025/04/29 23:32:35 riastradh Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.194 2025/05/01 01:35:37 riastradh Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -111,9 +111,14 @@ __CTASSERT(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
 static int debug = 1;
 
 #define DPRINTF(a, ...)	do  \
-	if (debug) \
-	printf("%s() %d.%d %s:%d " a, \
-	__func__, getpid(), _lwp_self(), __FILE__, __LINE__,  ##__VA_ARGS__); \
+	if (debug) { \
+		const char *file = __FILE__, *slash = strrchr(file, '/'); \
+		if (slash) \
+			file = slash + 1; \
+		printf("%s() %d.%d %s:%d " a, \
+       		    __func__, getpid(), _lwp_self(), file, __LINE__, \
+		    ##__VA_ARGS__); \
+	} \
     while (/*CONSTCOND*/0)
 
 /// ----------------------------------------------------------------------------
