@@ -1,7 +1,7 @@
-/*	$NetBSD: pm_direct.c,v 1.39 2025/05/01 08:40:47 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.40 2025/05/01 08:43:02 nat Exp $	*/
 
 /*
- * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * Copyright (c) 2024, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
  *
  * Copyright (C) 1997 Takashi Hamada
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.39 2025/05/01 08:40:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.40 2025/05/01 08:43:02 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.39 2025/05/01 08:40:47 nat Exp $");
 /* #define	PM_GRAB_SI	1 */
 
 #include <sys/types.h>
+#include <sys/kthread.h>
+#include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
@@ -186,6 +188,7 @@ int	pm_receive_pm1(u_char *);
 int	pm_send_pm1(u_char, int);
 int	pm_pmgrop_pm1(PMData *);
 void	pm_intr_pm1(void *);
+void	brightness_slider(void *);	/* brightness slider thread */
 
 /* these functions are for the PB Duo series and the PB 5XX series */
 int	pm_receive_pm2(u_char *);
@@ -274,6 +277,8 @@ pm_setup_adb(void)
 			pbutton.smpsw_type = PSWITCH_TYPE_POWER;
 			if (sysmon_pswitch_register(&pbutton) != 0)
 				printf("Unable to register soft power\n");
+			kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+			    brightness_slider, NULL, NULL, "britethrd");
 			break;
 		case MACH_MACPB150:
 		case MACH_MACPB210:
@@ -621,7 +626,44 @@ pm_intr_pm1(void *arg)
 	splx(s);
 }
 
+void
+brightness_slider(void *arg)
+{
+	int s;
+	int rval;
+	PMData pmdata;
 
+	for (;;) {
+		kpause("brslider", false, 2, NULL);
+
+		s = splhigh();
+
+		pmdata.command = 0x49;
+		pmdata.num_data = 0;
+		pmdata.data[0] = pmdata.data[1] = 0;
+		pmdata.s_buf = &pmdata.data[0];
+		pmdata.r_buf = &pmdata.data[0];
+		rval = pm_pmgrop_pm1(&pmdata);
+		if (rval != 0) {
+#ifdef ADB_DEBUG
+			if (adb_debug) {
+				printf("pm: PM is not ready. "
+				    "error code=%08x\n", rval);
+			}
+#endif
+			splx(s);
+			continue;
+		}
+
+		if (((uint8_t)pmdata.data[0] / 8) != pm_LCD_brightness) {
+			pm_LCD_brightness = (uint8_t)pmdata.data[0] / 8;
+			pm_LCD_brightness =
+			    pm_set_brightness(pm_LCD_brightness);
+		}
+
+		splx(s);
+	}
+}
 
 /*
  * Functions for the PB Duo series and the PB 5XX series
