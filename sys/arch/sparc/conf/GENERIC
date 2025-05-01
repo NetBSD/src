@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.274 2025/02/24 21:32:26 andvar Exp $
+# $NetBSD: GENERIC,v 1.275 2025/05/01 02:04:32 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.274 $"
+#ident 		"GENERIC-$Revision: 1.275 $"
 
 maxusers	32
 
@@ -689,8 +689,9 @@ wsdisplay*	at wsemuldisplaydev?
 tctrl0 at obio0
 
 # Aurora Personality Chip (APC) on SPARCstation-4/5
-# Not enabled by default as it may hang some systems
-#apc*		at sbus? slot ? offset ?
+# May hang on some prototype systems (never seen with NetBSD).
+# Enables qemu to idle properly.
+apc*		at sbus? slot ? offset ?
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
