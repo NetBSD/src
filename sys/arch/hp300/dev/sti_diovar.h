@@ -1,6 +1,6 @@
-/*	$NetBSD: sti_sgcvar.h,v 1.2 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: sti_diovar.h,v 1.1 2025/05/01 06:11:21 tsutsui Exp $	*/
 /*-
- * Copyright (c) 2014 Izumi Tsutsui.  All rights reserved.
+ * Copyright (c) 2025 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,5 +23,5 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	sti_sgc_cnprobe(bus_space_tag_t, int);
-void	sti_sgc_cnattach(bus_space_tag_t, int);
+int	sti_dio_cnprobe(bus_space_tag_t, bus_addr_t, int);
+void	sti_dio_cnattach(bus_space_tag_t, int);

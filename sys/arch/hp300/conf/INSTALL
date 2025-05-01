@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.71 2024/01/29 18:27:12 christos Exp $
+# $NetBSD: INSTALL,v 1.72 2025/05/01 06:11:21 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -229,11 +229,12 @@ tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
 
 # dumb framebuffer support for 362/382
-gendiofb*	at dio? scode ?
-wsdisplay*	at gendiofb?
+#gendiofb*	at dio? scode ?
+#wsdisplay*	at gendiofb?
 
 # STI framebuffers
-sti*		at sgc?	slot ?
+sti*		at dio? scode ?		# 362 and 382
+sti*		at sgc?	slot ?		# 425e and 425t variants
 wsdisplay*	at sti?
 
 com*		at dio0 scode 9		# DCA serial interfaces

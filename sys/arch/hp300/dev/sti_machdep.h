@@ -1,6 +1,6 @@
-/*	$NetBSD: sti_sgcvar.h,v 1.2 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: sti_machdep.h,v 1.1 2025/05/01 06:11:21 tsutsui Exp $	*/
 /*-
- * Copyright (c) 2014 Izumi Tsutsui.  All rights reserved.
+ * Copyright (c) 2025 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,5 +23,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	sti_sgc_cnprobe(bus_space_tag_t, int);
-void	sti_sgc_cnattach(bus_space_tag_t, int);
+/*
+ * hp300 specific DIO/SGC common stuff
+ */
+
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/ic/stireg.h>
+#include <dev/ic/stivar.h>
+
+struct sti_machdep_softc {
+	struct sti_softc sc_sti;
+
+	paddr_t sc_base;
+	paddr_t sc_bitmap;
+};
+
+void sti_machdep_attach(struct sti_machdep_softc *);
+void sti_machdep_attach_console(struct sti_machdep_softc *);
+void sti_machdep_cnattach(bus_space_tag_t, paddr_t);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.97 2024/01/18 14:39:06 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.98 2025/05/01 06:11:21 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -145,6 +145,9 @@ device	gendiofb: wsemuldisplaydev, diofb, rasops8
 attach	gendiofb at dio
 file	arch/hp300/dev/gendiofb.c		gendiofb	needs-flag
 
+attach	sti at dio with sti_dio
+file	arch/hp300/dev/sti_dio.c	sti_dio needs-flag
+
 #
 # Devices on the DIO bus
 #
@@ -212,6 +215,9 @@ file	arch/hp300/dev/spc.c		spc needs-flag
 
 attach	sti at sgc with sti_sgc
 file	arch/hp300/dev/sti_sgc.c	sti_sgc needs-flag
+
+# Common sti stuff betweeen DIO and SGC
+file	arch/hp300/dev/sti_machdep.c	sti
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks
