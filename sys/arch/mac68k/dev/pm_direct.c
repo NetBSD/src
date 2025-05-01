@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.38 2025/04/03 02:04:57 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.39 2025/05/01 08:40:47 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.38 2025/04/03 02:04:57 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.39 2025/05/01 08:40:47 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -1192,7 +1192,7 @@ pm_poweroff(void)
 	int attempt = 3;
 
 	while (pmHardware == PM_HW_PB1XX && attempt > 0) {
-		pmdata.command = 0x7e;
+		pmdata.command = 0xef;
 		pmdata.num_data = 0;
 		pmdata.data[0] = pmdata.data[1] = 0;
 		pmdata.s_buf = &pmdata.data[2];
