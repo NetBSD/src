@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.20 2023/10/08 22:10:49 andvar Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.21 2025/05/01 05:36:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20 2023/10/08 22:10:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2025/05/01 05:36:02 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 
@@ -124,13 +124,13 @@ isabusattach(device_t parent, device_t self, void *aux)
 		PIZAZZ_ISA_MEMSIZE);
 
 	isa_bus_space_init(&isa_ctl_bst, "isa_intr", PIZAZZ_ISA_INTRLATCH,
-	  	sizeof(u_int32_t));
+	  	sizeof(uint32_t));
 
 	_bus_dma_tag_init(&isa_dmatag);
 
 	ic->ic_bst = &isa_ctl_bst;
 
-	if (bus_space_map(ic->ic_bst, 0x00000, sizeof(u_int32_t),
+	if (bus_space_map(ic->ic_bst, 0x00000, sizeof(uint32_t),
 			  BUS_SPACE_MAP_LINEAR, &ic->ic_bsh) != 0) {
 		printf(": can't map intrreg\n");
 		return;

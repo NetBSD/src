@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.19 2025/04/26 04:39:09 tsutsui Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.20 2025/05/01 05:36:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.19 2025/04/26 04:39:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.20 2025/05/01 05:36:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,9 +168,9 @@ pizazz_level0_intr(void *arg)
 void
 pizazz_level5_intr(uint32_t status, vaddr_t pc)
 {
-	u_int32_t ereg;
+	uint32_t ereg;
 
-	ereg = *(u_int32_t *)RAMBO_ERREG;
+	ereg = *(uint32_t *)RAMBO_ERREG;
 
 	printf("interrupt: pc=%p sr=%x\n", (void *)pc, status);
 	printf("parity error: %p mask: 0x%x\n", (void *)ereg, ereg & 0xf);

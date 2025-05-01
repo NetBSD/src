@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.14 2025/04/26 04:58:48 tsutsui Exp $	*/
+/*	$NetBSD: rambo.c,v 1.15 2025/05/01 05:36:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.14 2025/04/26 04:58:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.15 2025/05/01 05:36:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,7 +60,7 @@ struct rambo_softc {
 	struct evcnt		sc_intrcnt;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
-	u_int32_t		sc_hzticks;
+	uint32_t		sc_hzticks;
 };
 
 static struct rambo_softc *rambo;
@@ -108,7 +108,7 @@ rambo_attach(device_t parent, device_t self, void *aux)
 void
 rambo_clkintr(struct clockframe *cf)
 {
-	register u_int32_t tbreak, tcount;
+	register uint32_t tbreak, tcount;
 	register int delta;
 
 	rambo->sc_intrcnt.ev_count++;
