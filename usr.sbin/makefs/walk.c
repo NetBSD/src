@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.42 2025/04/30 13:27:13 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.43 2025/05/01 14:14:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.42 2025/04/30 13:27:13 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.43 2025/05/01 14:14:36 andvar Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ static size_t missing = 0;
 /*
  * fsnode_cmp --
  *	This function is used by `qsort` so sort one directory's
- *	entries.  `.` is always first, sollowed by anything else
+ *	entries.  `.` is always first, followed by anything else
  *	as compared by `strcmp()`.
  */
 static int
