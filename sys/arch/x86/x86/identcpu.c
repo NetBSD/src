@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.136 2025/04/24 01:52:03 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.137 2025/05/01 05:17:31 imil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.136 2025/04/24 01:52:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.137 2025/05/01 05:17:31 imil Exp $");
 
 #include "opt_xen.h"
 
@@ -82,6 +82,7 @@ unsigned int x86_fpu_save_size __read_mostly = sizeof(struct save87);
 uint64_t x86_xsave_features __read_mostly = 0;
 size_t x86_xsave_offsets[XSAVE_MAX_COMPONENT+1] __read_mostly;
 size_t x86_xsave_sizes[XSAVE_MAX_COMPONENT+1] __read_mostly;
+u_int cpu_max_hypervisor_cpuid = 0;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -1152,6 +1153,7 @@ identify_hypervisor(void)
 		vm_guest = VM_GUEST_VM;
 		x86_cpuid(0x40000000, regs);
 		if (regs[0] >= 0x40000000) {
+			cpu_max_hypervisor_cpuid = regs[0];
 			memcpy(&hv_vendor[0], &regs[1], sizeof(*regs));
 			memcpy(&hv_vendor[4], &regs[2], sizeof(*regs));
 			memcpy(&hv_vendor[8], &regs[3], sizeof(*regs));

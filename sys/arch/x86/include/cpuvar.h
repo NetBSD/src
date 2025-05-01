@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.54 2025/04/11 04:54:02 imil Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.55 2025/05/01 05:17:31 imil Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ bool	has_lapic(void);
 
 extern int cpu_vendor;
 extern bool x86_mp_online;
+extern u_int cpu_max_hypervisor_cpuid;
 
 extern uint32_t cpu_feature[7];
 
