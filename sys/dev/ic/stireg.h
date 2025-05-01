@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.16 2024/10/27 10:43:50 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.17 2025/05/01 18:00:27 tsutsui Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -126,8 +126,9 @@ struct	sti_dd {
 #define	STI_DD_CRX		0x26D1482A	/* single-head CRX */
 #define	STI_DD_GRX		0x26D1488C	/* gray-scale GRX */
 #define	STI_DD_CRX24		0x26D148EE	/* CRX+ */
+#define	STI_DD_382C		0x27134C8E	/* 382 on-board mid-res */
 #define	STI_DD_EVRX		0x27134C9F	/* 425e on-board */
-#define	STI_DD_3X2V		0x27134CB4	/* 382 on-board */
+#define	STI_DD_3X2V		0x27134CB4	/* 362/382 on-board VGA-res */
 #define	STI_DD_TIMBER		0x27F12392	/* on-board 710, older 715 */
 #define	STI_DD_DUAL_CRX		0x27FCCB6D	/* dual-head CRX */
 #define	STI_DD_ARTIST		0x2B4DED6D	/* on-board 712/715, also GSC */
