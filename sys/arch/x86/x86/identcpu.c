@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.137 2025/05/01 05:17:31 imil Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.138 2025/05/01 06:01:47 imil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.137 2025/05/01 05:17:31 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.138 2025/05/01 06:01:47 imil Exp $");
 
 #include "opt_xen.h"
 
@@ -1132,10 +1132,15 @@ identify_hypervisor(void)
 	int i;
 
 	switch (vm_guest) {
+	/* guest type already known, no bios info */
 	case VM_GUEST_XENPV:
 	case VM_GUEST_XENPVH:
-	case VM_GUEST_GENPVH:
-		/* guest type already known, no bios info */
+	/* The following are known from first pass */
+	case VM_GUEST_VMWARE:
+	case VM_GUEST_HV:
+	case VM_GUEST_XENHVM:
+	case VM_GUEST_KVM:
+	case VM_GUEST_NVMM:
 		return;
 	default:
 		break;
@@ -1150,7 +1155,12 @@ identify_hypervisor(void)
 	 * http://kb.vmware.com/kb/1009458
 	 */
 	if (ISSET(cpu_feature[1], CPUID2_RAZ)) {
-		vm_guest = VM_GUEST_VM;
+		/*
+		 * don't override if vm_guest is unknown but has booted in PVH
+		 * mode, so it can attach to pv(4) in (amd64|i386)_mainbus.c
+		 */
+		if (vm_guest != VM_GUEST_GENPVH)
+			vm_guest = VM_GUEST_VM;
 		x86_cpuid(0x40000000, regs);
 		if (regs[0] >= 0x40000000) {
 			cpu_max_hypervisor_cpuid = regs[0];
