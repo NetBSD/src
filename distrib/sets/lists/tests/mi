@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1374 2025/05/02 03:26:26 riastradh Exp $
+# $NetBSD: mi,v 1.1375 2025/05/02 19:52:02 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4220,6 +4220,7 @@
 ./usr/tests/lib/libutil/t_pidfile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/t_snprintb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/t_sockaddr_snprintf		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libutil/t_strpct			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/libm				tests-lib-tests		compattestfile,atf

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.481 2025/05/02 03:26:26 riastradh Exp $
+# $NetBSD: mi,v 1.482 2025/05/02 19:52:02 rillig Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2448,6 +2448,7 @@
 ./usr/libdata/debug/usr/tests/lib/libutil/t_pidfile.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libutil/t_strpct.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/lua/libm/h_lualibm.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so.1.debug	tests-libexec-debug	debug,atf,pic,compattestfile

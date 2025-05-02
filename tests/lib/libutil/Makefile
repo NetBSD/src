@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/03/30 17:02:17 jruoho Exp $
+# $NetBSD: Makefile,v 1.5 2025/05/02 19:52:02 rillig Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_parsedate
 TESTS_C+=	t_pidfile
 TESTS_C+=	t_snprintb
 TESTS_C+=	t_sockaddr_snprintf
+TESTS_C+=	t_strpct
 
 .if (${USE_INET6} != "no")
 CFLAGS+=	-DINET6
