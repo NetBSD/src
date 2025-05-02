@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.174 2025/04/27 00:11:40 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.175 2025/05/02 23:02:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -517,7 +517,8 @@ typedef struct {
 #define SHT_PREINIT_ARRAY    16		/* Pre-initialization function ptrs */
 #define SHT_GROUP	     17		/* Section group */
 #define SHT_SYMTAB_SHNDX     18		/* Section indexes (see SHN_XINDEX) */
-#define SHT_NUM		     19
+#define SHT_RELR	     19		/* Relative relocation information */
+#define SHT_NUM		     20
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
 #define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
@@ -681,6 +682,9 @@ typedef struct {
 #define ELF32_R_TYPE(info)	((info) & 0xff)
 #define ELF32_R_INFO(sym, type) (((sym) << 8) + (unsigned char)(type))
 
+/* Relative relocations (DT_RELR, SHT_RELR, .relr.dyn) */
+typedef Elf32_Word	Elf32_Relr;
+
 typedef struct {
 	Elf64_Addr	r_offset;	/* where to do it */
 	Elf64_Xword	r_info;		/* index & type of relocation */
@@ -696,6 +700,9 @@ typedef struct {
 #define ELF64_R_SYM(info)	((info) >> 32)
 #define ELF64_R_TYPE(info)	((info) & 0xffffffff)
 #define ELF64_R_INFO(sym,type)	(((sym) << 32) + (type))
+
+/* Relative relocations (DT_RELR, SHT_RELR, .relr.dyn) */
+typedef Elf64_Xword	Elf64_Relr;
 
 /*
  * Move entries
@@ -798,7 +805,10 @@ typedef struct {
 #define DT_PREINIT_ARRAY 32	/* Address of pre-init function array */
 #define DT_PREINIT_ARRAYSZ 33	/* Size, in bytes, of DT_PREINIT_ARRAY array */
 #define DT_SYMTAB_SHNDX 34	/* Addr. of SHT_SYMTAB_SHNDX § of DT_SYMTAB */
-#define DT_NUM		35
+#define DT_RELRSZ	35	/* Size, in bytes, of DT_RELR table */
+#define DT_RELR		36	/* Address of Relr relocation table */
+#define DT_RELRENT	37	/* Size, in bytes, of one DT_RELR entry */
+#define DT_NUM		38
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
@@ -1206,6 +1216,7 @@ struct netbsd_elfcore_procinfo {
 #define Elf_Sym		Elf32_Sym
 #define Elf_Rel		Elf32_Rel
 #define Elf_Rela	Elf32_Rela
+#define Elf_Relr	Elf32_Relr
 #define Elf_Dyn		Elf32_Dyn
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
@@ -1232,6 +1243,7 @@ struct netbsd_elfcore_procinfo {
 #define Elf_Sym		Elf64_Sym
 #define Elf_Rel		Elf64_Rel
 #define Elf_Rela	Elf64_Rela
+#define Elf_Relr	Elf64_Relr
 #define Elf_Dyn		Elf64_Dyn
 #define Elf_Word	Elf64_Word
 #define Elf_Sword	Elf64_Sword
