@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.6 2025/04/27 15:31:51 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.7 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -1112,7 +1112,7 @@ traceme_sendsignal_ignored(int sigsent)
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		
+
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		memset(&sa, 0, sizeof(sa));

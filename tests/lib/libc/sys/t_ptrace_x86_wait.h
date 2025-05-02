@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.31 2020/10/27 08:32:36 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.32 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ ATF_TC_BODY(dbregs_print, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_stopped(status, sigval);	
+	validate_status_stopped(status, sigval);
 
 	DPRINTF("Call GETDBREGS for the child process\n");
 	SYSCALL_REQUIRE(ptrace(PT_GETDBREGS, child, &r, 0) != -1);
@@ -113,7 +113,6 @@ ATF_TC_BODY(dbregs_print, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-
 
 enum dbreg_preserve_mode {
 	dbreg_preserve_mode_none,
@@ -222,7 +221,6 @@ dbreg_preserve(int reg, enum dbreg_preserve_mode mode)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-
 ATF_TC(dbregs_preserve_dr0);
 ATF_TC_HEAD(dbregs_preserve_dr0, tc)
 {
@@ -310,7 +308,6 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 	dbreg_preserve(0, dbreg_preserve_mode_yield);
 }
 
-
 ATF_TC(dbregs_preserve_dr3_yield);
 ATF_TC_HEAD(dbregs_preserve_dr3_yield, tc)
 {
@@ -375,7 +372,6 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 {
 	dbreg_preserve(3, dbreg_preserve_mode_continued);
 }
-
 
 static void
 dbregs_trap_variable(int reg, int cond, int len, bool write)
@@ -575,7 +571,7 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_writeonly_byte, tc)
 	/* 0b00 -- 1 byte */
 
 	dbregs_trap_variable(3, 1, 0, true);
-} 
+}
 
 ATF_TC(dbregs_dr0_trap_variable_writeonly_2bytes);
 ATF_TC_HEAD(dbregs_dr0_trap_variable_writeonly_2bytes, tc)
@@ -2015,7 +2011,7 @@ x86_cve_2018_8897_trigger(void)
 	 *
 	 * It means that, in the first instruction of the $4 handler, we
 	 * think we are safe with interrupts disabled. But we aren't, and
-	 * just got interrupted.													        
+	 * just got interrupted.
 	 *
 	 * The new interrupt handler doesn't handle this particular context:
 	 * we are entered in kernel mode, the previous context was kernel
@@ -2093,7 +2089,6 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 #endif
 	char *trap_page;
 	struct dbreg db;
-	
 
 	if (!can_we_set_dbregs()) {
 		atf_tc_skip("Either run this test as root or set sysctl(3) "

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_threads_wait.h,v 1.1 2020/05/05 00:50:39 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_threads_wait.h,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #define TRACE_THREADS_NUM 100
 

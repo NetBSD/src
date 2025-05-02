@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.12 2020/01/08 17:23:15 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.13 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ ATF_TC_BODY(x86_64_regs1, tc)
 }
 
 /// ----------------------------------------------------------------------------
-
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64() \
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, x86_64_regs1);

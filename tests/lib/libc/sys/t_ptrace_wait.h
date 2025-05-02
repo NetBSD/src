@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.36 2024/05/14 16:06:20 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.37 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -753,7 +753,6 @@ find_event_count(struct lwp_event_count list[], lwpid_t lwp, size_t max_lwps)
 
 #define FIND_EVENT_COUNT(list, lwp)			\
 	find_event_count(list, lwp, __arraycount(list))
-
 
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)

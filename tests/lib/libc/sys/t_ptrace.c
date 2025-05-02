@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.5 2022/05/24 20:08:38 andvar Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.5 2022/05/24 20:08:38 andvar Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -139,7 +139,7 @@ ATF_TC_HEAD(attach_chroot, tc)
 	    "root");
 
 	atf_tc_set_md_var(tc, "require.user", "root");
-}                    
+}
 
 ATF_TC_BODY(attach_chroot, tc)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_topology_wait.h,v 1.1 2020/05/05 00:33:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_topology_wait.h,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 ATF_TC(traceme_pid1_parent);
 ATF_TC_HEAD(traceme_pid1_parent, tc)

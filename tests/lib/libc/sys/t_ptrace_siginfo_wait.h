@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_siginfo_wait.h,v 1.1 2020/05/05 00:57:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_siginfo_wait.h,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -26,9 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 static void
-ptrace_siginfo(bool faked, void (*sah)(int a, siginfo_t *b, void *c), int *signal_caught)
+ptrace_siginfo(bool faked, void (*sah)(int a, siginfo_t *b, void *c),
+    int *signal_caught)
 {
 	const int exitval = 5;
 	const int sigval = SIGINT;

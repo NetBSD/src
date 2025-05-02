@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_sigchld.c,v 1.5 2025/05/01 01:35:37 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_sigchld.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.5 2025/05/01 01:35:37 riastradh Exp $");
+__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,7 +171,7 @@ traceme_raise(int sigval)
 		break;
 	default:
 		break;
-	}	
+	}
 
 	PARENT_TO_CHILD("raise1 child", parent_child, msg);
 

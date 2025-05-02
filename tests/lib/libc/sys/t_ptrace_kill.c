@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_kill.c,v 1.1 2024/12/17 17:52:23 christos Exp $	*/
+/*	$NetBSD: t_ptrace_kill.c,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_kill.c,v 1.1 2024/12/17 17:52:23 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_kill.c,v 1.2 2025/05/02 02:24:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -68,7 +68,7 @@ child(int *fdto, int *fdfrom)
 //	kill(getpid(), SIGSTOP);
 	for (;;)
 		sleep(1);
-	
+
 }
 
 static void *

@@ -1,4 +1,4 @@
-/*      $NetBSD: t_ptrace_register_wait.h,v 1.4 2021/10/14 13:50:36 gson Exp $   */
+/*      $NetBSD: t_ptrace_register_wait.h,v 1.5 2025/05/02 02:24:32 riastradh Exp $   */
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 #if defined(HAVE_GPREGS) || defined(HAVE_FPREGS)
 static void

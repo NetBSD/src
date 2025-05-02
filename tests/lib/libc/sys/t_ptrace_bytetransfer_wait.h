@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_bytetransfer_wait.h,v 1.1 2020/05/04 22:05:28 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_bytetransfer_wait.h,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 enum bytes_transfer_type {
 	BYTES_TRANSFER_DATA,
@@ -844,7 +843,6 @@ BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_read_i, "PIOD_READ_I")
 BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_read_d, "PIOD_READ_D")
 BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_write_i, "PIOD_WRITE_I")
 BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_write_d, "PIOD_WRITE_D")
-
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_BYTETRANSFER() \
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8); \

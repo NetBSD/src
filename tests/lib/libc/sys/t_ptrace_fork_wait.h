@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.7 2020/06/09 00:28:57 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.8 2025/05/02 02:24:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 static void
 fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
@@ -563,7 +562,7 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 			    "and without signal to be sent\n");
 			SYSCALL_REQUIRE(
 			    ptrace(PT_CONTINUE, tracee2, (void *)1, 0) != -1);
-		
+
 			DPRINTF("Before resuming the tracee process where it left off "
 			    "and without signal to be sent\n");
 			SYSCALL_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -589,7 +588,6 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 			    "and without signal to be sent\n");
 			SYSCALL_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 		}
-
 
 		if ((trackspawn && strcmp(fn, "spawn") == 0) ||
 		    (trackfork && strcmp(fn, "fork") == 0) ||
@@ -845,7 +843,7 @@ fork_detach_forker_body(const char *fn, bool kill_process)
 		op = PTRACE_FORK;
 	else
 		op = PTRACE_VFORK;
-	
+
 	ATF_REQUIRE_EQ(state.pe_report_event & op, op);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
