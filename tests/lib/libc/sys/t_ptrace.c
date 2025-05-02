@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.7 2025/05/02 02:24:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.7 2025/05/02 02:24:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,20 +50,31 @@ __RCSID("$NetBSD: t_ptrace.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $");
  * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
  * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
  */
-#define FORKEE_ASSERTX(x)							\
-do {										\
-	int ret = (x);								\
-	if (!ret)								\
-		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
-		     __FILE__, __LINE__, __func__, #x);				\
+#define FORKEE_ASSERTX(x)						      \
+do {									      \
+	int ret = (x);							      \
+	if (!ret)							      \
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",    \
+		    __FILE__, __LINE__, __func__, #x);			      \
 } while (0)
 
-#define FORKEE_ASSERT(x)							\
-do {										\
-	int ret = (x);								\
-	if (!ret)								\
-		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
-		     __FILE__, __LINE__, __func__, #x);				\
+#define FORKEE_ASSERT(x)						      \
+do {									      \
+	int ret = (x);							      \
+	if (!ret)							      \
+		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",     \
+		    __FILE__, __LINE__, __func__, #x);			      \
+} while (0)
+
+#define FORKEE_ASSERT_EQ(x, y)						      \
+do {									      \
+	uintmax_t vx = (x);						      \
+	uintmax_t vy = (y);						      \
+	int ret = vx == vy;						      \
+	if (!ret)							      \
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	      \
+		    "%s(%ju) == %s(%ju)", __FILE__, __LINE__, __func__,	      \
+		    #x, vx, #y, vy);					      \
 } while (0)
 
 ATF_TC(attach_pid0);
@@ -108,8 +119,7 @@ ATF_TC_BODY(attach_pid1_securelevel, tc)
 	int level;
 	size_t len = sizeof(level);
 
-	ATF_REQUIRE(sysctlbyname("kern.securelevel", &level, &len, NULL, 0)
-	    != -1);
+	RL(sysctlbyname("kern.securelevel", &level, &len, NULL, 0));
 
 	if (level < 0) {
 		atf_tc_skip("Test must be run with securelevel >= 0");
@@ -150,14 +160,14 @@ ATF_TC_BODY(attach_chroot, tc)
 	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
 
 	(void)memset(buf, '\0', sizeof(buf));
-	ATF_REQUIRE(getcwd(buf, sizeof(buf)) != NULL);
+	REQUIRE_LIBC(getcwd(buf, sizeof(buf)), NULL);
 	(void)strlcat(buf, "/dir", sizeof(buf));
 
-	ATF_REQUIRE(mkdir(buf, 0500) == 0);
-	ATF_REQUIRE(chdir(buf) == 0);
+	RL(mkdir(buf, 0500));
+	RL(chdir(buf));
 
-	ATF_REQUIRE(pipe(fds_toparent) == 0);
-	ATF_REQUIRE(pipe(fds_fromparent) == 0);
+	RL(pipe(fds_toparent));
+	RL(pipe(fds_fromparent));
 	child = atf_utils_fork();
 	if (child == 0) {
 		FORKEE_ASSERT(close(fds_toparent[0]) == 0);
@@ -165,33 +175,40 @@ ATF_TC_BODY(attach_chroot, tc)
 
 		FORKEE_ASSERT(chroot(buf) == 0);
 
-		rv = write(fds_toparent[1], &msg, sizeof(msg));
-		FORKEE_ASSERTX(rv == sizeof(msg));
+		FORKEE_ASSERT((rv = write(fds_toparent[1], &msg, sizeof(msg)))
+		    != -1);
+		FORKEE_ASSERT_EQ(rv, sizeof(msg));
 
-		ATF_REQUIRE_ERRNO(EPERM,
-			ptrace(PT_ATTACH, getppid(), NULL, 0) == -1);
+		if (ptrace(PT_ATTACH, getppid(), NULL, 0) == 0) {
+			errx(EXIT_FAILURE, "%s unexpectedly succeeded",
+			    "ptrace(PT_ATTACH, getppid(), NULL, 0)");
+		} else if (errno != EPERM) {
+			err(EXIT_FAILURE, "%s failed but not with EPERM",
+			    "ptrace(PT_ATTACH, getppid(), NULL, 0)");
+		}
 
-		rv = read(fds_fromparent[0], &msg, sizeof(msg));
-		FORKEE_ASSERTX(rv == sizeof(msg));
+		FORKEE_ASSERT((rv = read(fds_fromparent[0], &msg, sizeof(msg)))
+		    != -1);
+		FORKEE_ASSERT_EQ(rv, sizeof(msg));
 
 		_exit(0);
 	}
-	ATF_REQUIRE(close(fds_toparent[1]) == 0);
-	ATF_REQUIRE(close(fds_fromparent[0]) == 0);
+	RL(close(fds_toparent[1]));
+	RL(close(fds_fromparent[0]));
 
 	printf("Waiting for chrooting of the child PID %d", child);
-	rv = read(fds_toparent[0], &msg, sizeof(msg));
-	ATF_REQUIRE(rv == sizeof(msg)); 
+	RL(rv = read(fds_toparent[0], &msg, sizeof(msg)));
+	ATF_REQUIRE(rv == sizeof(msg));
 
 	printf("Child is ready, it will try to PT_ATTACH to parent\n");
-	rv = write(fds_fromparent[1], &msg, sizeof(msg));
+	RL(rv = write(fds_fromparent[1], &msg, sizeof(msg)));
 	ATF_REQUIRE(rv == sizeof(msg));
 
         printf("fds_fromparent is no longer needed - close it\n");
-        ATF_REQUIRE(close(fds_fromparent[1]) == 0);
+        RL(close(fds_fromparent[1]));
 
         printf("fds_toparent is no longer needed - close it\n");
-        ATF_REQUIRE(close(fds_toparent[0]) == 0);
+        RL(close(fds_toparent[0]));
 }
 
 ATF_TC(traceme_twice);
@@ -206,7 +223,7 @@ ATF_TC_BODY(traceme_twice, tc)
 
 	printf("Mark the parent process (PID %d) a debugger of PID %d",
 	       getppid(), getpid());
-	ATF_REQUIRE(ptrace(PT_TRACE_ME, 0, NULL, 0) == 0);
+	RL(ptrace(PT_TRACE_ME, 0, NULL, 0));
 
 	printf("Mark the parent process (PID %d) a debugger of PID %d again",
 	       getppid(), getpid());

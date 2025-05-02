@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_threads_wait.h,v 1.2 2025/05/02 02:24:32 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_threads_wait.h,v 1.3 2025/05/02 02:24:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -291,8 +291,8 @@ threads_and_exec(void)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT(pthread_create(&t, NULL,
-		    thread_and_exec_thread_cb, NULL) == 0);
+		FORKEE_PTHREAD(pthread_create(&t, NULL,
+		    thread_and_exec_thread_cb, NULL));
 
 		for (;;)
 			continue;
@@ -565,7 +565,7 @@ ATF_TC_BODY(resume, tc)
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		DPRINTF("Before creating new thread in child\n");
-		FORKEE_ASSERT(pthread_create(&t, NULL, resume_thread, NULL) == 0);
+		FORKEE_PTHREAD(pthread_create(&t, NULL, resume_thread, NULL));
 
 		pthread_barrier_wait(&barrier1_resume);
 
@@ -698,8 +698,8 @@ thread_concurrent_sig_handler(int sig)
 {
 	void *tls_val = pthread_getspecific(thread_concurrent_key);
 	DPRINTF("Before increment, LWP %d tls_val=%p\n", _lwp_self(), tls_val);
-	FORKEE_ASSERT(pthread_setspecific(thread_concurrent_key,
-	    (void*)((uintptr_t)tls_val + 1)) == 0);
+	FORKEE_PTHREAD(pthread_setspecific(thread_concurrent_key,
+	    (void*)((uintptr_t)tls_val + 1)));
 }
 
 static void *
@@ -808,41 +808,40 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 		}
 
 		DPRINTF("Before starting threads from the child\n");
-		FORKEE_ASSERT(pthread_barrier_init(
+		FORKEE_PTHREAD(pthread_barrier_init(
 		    &thread_concurrent_barrier, NULL,
-		    breakpoint_threads + signal_threads + watchpoint_threads)
-		    == 0);
-		FORKEE_ASSERT(pthread_key_create(&thread_concurrent_key, NULL)
-		    == 0);
+		    breakpoint_threads + signal_threads + watchpoint_threads));
+		FORKEE_PTHREAD(pthread_key_create(&thread_concurrent_key,
+			NULL));
 
 		for (i = 0; i < signal_threads; i++) {
-			FORKEE_ASSERT(pthread_create(&sig_threads[i], NULL,
+			FORKEE_PTHREAD(pthread_create(&sig_threads[i], NULL,
 			    thread_concurrent_signals_thread,
-			    &signal_handle) == 0);
+			    &signal_handle));
 		}
 		for (i = 0; i < breakpoint_threads; i++) {
-			FORKEE_ASSERT(pthread_create(&bp_threads[i], NULL,
-			    thread_concurrent_breakpoint_thread, NULL) == 0);
+			FORKEE_PTHREAD(pthread_create(&bp_threads[i], NULL,
+			    thread_concurrent_breakpoint_thread, NULL));
 		}
 		for (i = 0; i < watchpoint_threads; i++) {
-			FORKEE_ASSERT(pthread_create(&wp_threads[i], NULL,
-			    thread_concurrent_watchpoint_thread, NULL) == 0);
+			FORKEE_PTHREAD(pthread_create(&wp_threads[i], NULL,
+			    thread_concurrent_watchpoint_thread, NULL));
 		}
 
 		DPRINTF("Before joining threads from the child\n");
 		for (i = 0; i < watchpoint_threads; i++) {
-			FORKEE_ASSERT(pthread_join(wp_threads[i], NULL) == 0);
+			FORKEE_PTHREAD(pthread_join(wp_threads[i], NULL));
 		}
 		for (i = 0; i < breakpoint_threads; i++) {
-			FORKEE_ASSERT(pthread_join(bp_threads[i], NULL) == 0);
+			FORKEE_PTHREAD(pthread_join(bp_threads[i], NULL));
 		}
 		for (i = 0; i < signal_threads; i++) {
-			FORKEE_ASSERT(pthread_join(sig_threads[i], NULL) == 0);
+			FORKEE_PTHREAD(pthread_join(sig_threads[i], NULL));
 		}
 
-		FORKEE_ASSERT(pthread_key_delete(thread_concurrent_key) == 0);
-		FORKEE_ASSERT(pthread_barrier_destroy(
-		    &thread_concurrent_barrier) == 0);
+		FORKEE_PTHREAD(pthread_key_delete(thread_concurrent_key));
+		FORKEE_PTHREAD(pthread_barrier_destroy(
+		    &thread_concurrent_barrier));
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);

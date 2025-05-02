@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.37 2025/05/02 02:24:32 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.38 2025/05/02 02:24:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -169,6 +169,38 @@ do {									\
 		    #x, vx, #y, vy);					\
 } while (/*CONSTCOND*/0)
 
+__unused	/* used by FORKEE_ASSERT_MEMEQ, otherwise not used */
+static void
+hexdump(const char *title, const void *buf, size_t len)
+{
+	const unsigned char *p = buf;
+	size_t i;
+
+	fprintf(stderr, "%s (%zu bytes)\n", title, len);
+	for (i = 0; i < len; i++) {
+		if ((i % 8) == 0)
+			fprintf(stderr, " ");
+		fprintf(stderr, "%02hhx", p[i]);
+		if ((i % 16) == 0)
+			fprintf(stderr, "\n");
+	}
+	if (i % 16)
+		fprintf(stderr, "\n");
+}
+
+#define	FORKEE_ASSERT_MEMEQ(x, y, n)					\
+do {									\
+	const void *const vx = (x);					\
+	const void *const vy = (y);					\
+	const size_t vn = (n);						\
+									\
+	if (__predict_true(memcmp(vx, vy, vn) == 0))			\
+		break;							\
+	fprintf(stderr, "%s != %s (%s = %zu bytes)\n", #x, #y, #n, vn);	\
+	hexdump(#x, vx, vn);						\
+	hexdump(#y, vy, vn);						\
+} while (/*CONSTCOND*/0)
+
 #define FORKEE_ASSERTX(x)						\
 do {									\
 	int ret = (x);							\
@@ -183,6 +215,16 @@ do {									\
 	if (!ret)							\
 		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",\
 		     __FILE__, __LINE__, __func__, #x);			\
+} while (/*CONSTCOND*/0)
+
+#define	FORKEE_PTHREAD(x)						\
+do {									\
+	int _forkee_pthread_error = (x);				\
+	if (_forkee_pthread_error) {					\
+		errno = _forkee_pthread_error;				\
+		err(EXIT_FAILURE, "%s:%d %s(): %s", __FILE__, __LINE__,	\
+		    __func__, #x);					\
+	}								\
 } while (/*CONSTCOND*/0)
 
 /*
