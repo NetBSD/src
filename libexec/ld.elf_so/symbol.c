@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.76 2023/07/30 09:20:14 riastradh Exp $	 */
+/*	$NetBSD: symbol.c,v 1.77 2025/05/02 23:04:31 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.76 2023/07/30 09:20:14 riastradh Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.77 2025/05/02 23:04:31 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -483,6 +483,8 @@ _rtld_find_plt_symdef(unsigned long symnum, const Obj_Entry *obj,
  * no definition was found.  Returns a pointer to the Obj_Entry of the
  * defining object via the reference parameter DEFOBJ_OUT.
  */
+_Pragma("GCC diagnostic push")	/* _rtld_donelist_init: -Wno-stack-protector */
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
 const Elf_Sym *
 _rtld_symlook_default(const char *name, Elf_Hash *hash,
     const Obj_Entry *refobj, const Obj_Entry **defobj_out, u_int flags,
@@ -582,3 +584,4 @@ _rtld_symlook_default(const char *name, Elf_Hash *hash,
 		*defobj_out = defobj;
 	return def;
 }
+_Pragma("GCC diagnostic pop")

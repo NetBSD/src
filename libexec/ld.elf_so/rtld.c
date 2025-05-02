@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.220 2025/04/18 20:51:31 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.221 2025/05/02 23:04:31 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.220 2025/04/18 20:51:31 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.221 2025/05/02 23:04:31 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1141,6 +1141,8 @@ dlopen(const char *name, int mode)
 /*
  * Find a symbol in the main program.
  */
+_Pragma("GCC diagnostic push")	/* _rtld_donelist_init: -Wno-stack-protector */
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
 void *
 _rtld_objmain_sym(const char *name)
 {
@@ -1161,6 +1163,7 @@ _rtld_objmain_sym(const char *name)
 		return obj->relocbase + def->st_value;
 	return NULL;
 }
+_Pragma("GCC diagnostic pop")
 
 #if defined(__powerpc__) && !defined(__clang__)
 static __noinline void *
@@ -1185,6 +1188,8 @@ hackish_return_address(void)
 #define	lookup_mutex_exit()	_rtld_shared_exit()
 #endif
 
+_Pragma("GCC diagnostic push")	/* _rtld_donelist_init: -Wno-stack-protector */
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
 static void *
 do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 {
@@ -1319,6 +1324,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 	lookup_mutex_exit();
 	return NULL;
 }
+_Pragma("GCC diagnostic pop")
 
 __strong_alias(__dlsym,dlsym)
 void *

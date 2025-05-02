@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.149 2025/05/02 23:03:16 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.150 2025/05/02 23:04:31 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -69,6 +69,7 @@ extern size_t _rtld_pagesz;
  * Fill in a DoneList with an allocation large enough to hold all of
  * the currently-loaded objects. Keep this in a macro since it calls
  * alloca and we want that to occur within the scope of the caller.
+ * Callers must be built with -Wno-stack-protector.
  */
 #define _rtld_donelist_init(dlp)					\
     ((dlp)->num_alloc = _rtld_objcount,					\
