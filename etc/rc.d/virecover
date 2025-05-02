@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: virecover,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: virecover,v 1.9 2025/05/02 18:49:03 reed Exp $
 #
 
 # PROVIDE: virecover
@@ -14,6 +14,7 @@ $_rc_subr_loaded . /etc/rc.subr
 name="virecover"
 rcvar=$name
 command="/usr/libexec/${name}"
+command_interpreter="/bin/sh"
 stop_cmd=":"
 reload_cmd=":"
 
