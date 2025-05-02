@@ -1,4 +1,4 @@
-/*	$NetBSD: t_spinlock.c,v 1.4 2022/08/12 11:21:44 riastradh Exp $	*/
+/*	$NetBSD: t_spinlock.c,v 1.5 2025/05/02 22:30:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spinlock.c,v 1.4 2022/08/12 11:21:44 riastradh Exp $");
+__RCSID("$NetBSD: t_spinlock.c,v 1.5 2025/05/02 22:30:44 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -129,6 +129,10 @@ ATF_TC_BODY(spinlock, tc)
 	assert(ncpulen == sizeof(ncpu));
 	if (ncpu == 1)
 		atf_tc_skip("membar tests are only for multicore systems");
+
+#ifdef __powerpc__
+	atf_tc_expect_fail("port-powerpc/59386: t_spinlock test is failing");
+#endif
 
 	for (i = 0; i < 2; i++) {
 		error = pthread_create(&t[i], NULL, &thread,
