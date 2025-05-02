@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2025/04/27 00:11:57 riastradh Exp $
+# $NetBSD: Makefile,v 1.27 2025/05/02 03:26:26 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -80,6 +80,7 @@ LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
 TESTS_SH+=		t_df_1_noopen
 TESTS_SH+=		t_dl_symver
+TESTS_SH+=		t_r_rel
 TESTS_SH+=		t_thread_local_dtor
 
 BINDIR=			${TESTSDIR}
@@ -116,6 +117,16 @@ PROGS+=			h_dl_symver_v2
 SRCS.h_dl_symver_v2=	h_dl_symver.c
 V2ODIR!=		cd ${.CURDIR}/helper_symver_dso2 && ${PRINTOBJDIR}
 LDADD.h_dl_symver_v2=	-L${V2ODIR} -lh_helper_symver_dso
+
+PROGS+=			h_r_rel_pack
+PROGS+=			h_r_rel_nopack
+
+SRCS.h_r_rel_pack=	h_r_rel.c
+SRCS.h_r_rel_nopack=	h_r_rel.c
+
+h_r_rel_pack: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+LDFLAGS.h_r_rel_pack=	-Wl,-z,pack-relative-relocs
+LDFLAGS.h_r_rel_nopack=	-Wl,-z,nopack-relative-relocs
 
 .include <bsd.test.mk>
 

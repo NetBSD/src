@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.480 2025/04/27 09:11:01 martin Exp $
+# $NetBSD: mi,v 1.481 2025/05/02 03:26:26 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2459,6 +2459,8 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_dl_symver_v2.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_ifunc.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_locking.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_r_rel_nopack.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_r_rel_pack.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-cleared.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-false.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf,pic,compattestfile
