@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.9 2013/08/19 22:14:37 matt Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.10 2025/05/02 23:04:56 riastradh Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.9 2013/08/19 22:14:37 matt Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.10 2025/05/02 23:04:56 riastradh Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -43,10 +43,11 @@ __RCSID("$NetBSD: stack_protector.c,v 1.9 2013/08/19 22:14:37 matt Exp $");
 #include <syslog.h>
 #include "extern.h"
 #else
-#define __sysctl sysctl
 void xprintf(const char *fmt, ...);
 #include <stdlib.h>
 #endif
+
+#include "../include/__sysctl.h"
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __fail(const char *) __attribute__((__noreturn__));

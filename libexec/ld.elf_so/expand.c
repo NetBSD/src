@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.7 2023/01/04 01:37:00 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.8 2025/05/02 23:04:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.7 2023/01/04 01:37:00 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.8 2025/05/02 23:04:56 riastradh Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -48,6 +48,8 @@ size_t _rtld_expand_path(char *, size_t, const char *, const char *,
 #include <sys/stat.h>
 #include "rtld.h"
 #endif
+
+#include "../../lib/libc/include/__sysctl.h" /* __sysctl syscall stub */
 
 static const struct {
 	const char *name;
@@ -92,7 +94,7 @@ expand(char *buf, const char *execname, size_t what, size_t bl)
 	case 4:	/* OSREL */
 	case 5:	/* PLATFORM */
 		len = sizeof(name);
-		if (sysctl(mib[what - 3], 2, name, &len, NULL, 0) == -1) {
+		if (__sysctl(mib[what - 3], 2, name, &len, NULL, 0) == -1) {
 			xwarn("sysctl");
 			return 0;
 		}
