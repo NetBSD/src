@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.74 2025/04/18 17:56:49 riastradh Exp $	 */
+/*	$NetBSD: headers.c,v 1.75 2025/05/02 23:03:16 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.74 2025/04/18 17:56:49 riastradh Exp $");
+__RCSID("$NetBSD: headers.c,v 1.75 2025/05/02 23:03:16 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -72,7 +72,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	const Elf_Dyn  *dyn_rpath = NULL;
 	bool		use_pltrel = false;
 	bool		use_pltrela = false;
-	Elf_Addr        relsz = 0, relasz = 0;
+	Elf_Addr        relsz = 0, relasz = 0, relrsz = 0;
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
 #ifdef RTLD_LOADER
 	Elf_Addr	init = 0, fini = 0;
@@ -115,6 +115,19 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_RELAENT:
 			assert(dynp->d_un.d_val == sizeof(Elf_Rela));
+			break;
+
+		case DT_RELR:
+			obj->relr = (const Elf_Relr *)(obj->relocbase +
+			    dynp->d_un.d_ptr);
+			break;
+
+		case DT_RELRSZ:
+			relrsz = dynp->d_un.d_val;
+			break;
+
+		case DT_RELRENT:
+			assert(dynp->d_un.d_val == sizeof(Elf_Relr));
 			break;
 
 		case DT_PLTREL:
@@ -426,6 +439,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 	obj->rellim = (const Elf_Rel *)((const uint8_t *)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((const uint8_t *)obj->rela + relasz);
+	obj->relrlim = (const Elf_Relr *)((const uint8_t *)obj->relr + relrsz);
 	if (use_pltrel) {
 		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
 		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);

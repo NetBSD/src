@@ -1,4 +1,4 @@
-#	$NetBSD: t_r_rel.sh,v 1.1 2025/05/02 03:26:26 riastradh Exp $
+#	$NetBSD: t_r_rel.sh,v 1.2 2025/05/02 23:03:16 riastradh Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,8 +91,6 @@ run_relative_pack_body()
 {
 	case `uname -p` in
 	i386|powerpc64*|x86_64)
-		atf_expect_fail "PR bin/59360: ld.elf_so(8):"
-		    " missing RELR support"
 		;;
 	*)	# Missing GNU binutils ld(1) support to generate RELR
 		# sections, so the program should run just fine because

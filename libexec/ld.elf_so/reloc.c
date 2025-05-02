@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.119 2025/04/18 02:16:16 riastradh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.120 2025/05/02 23:03:16 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.119 2025/04/18 02:16:16 riastradh Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.120 2025/05/02 23:03:16 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -178,6 +178,82 @@ _rtld_do_copy_relocations(const Obj_Entry *dstobj)
 }
 
 /*
+ * _rtld_relocate_relr(obj)
+ *
+ *	Relocate the RELR entries of obj.  The RELR table is encoded as
+ *	a sequence of alternating addresses and bitmaps.  Each address
+ *	entry has the low-order bit clear, and each bitmap has the
+ *	low-order bit set:
+ *
+ *		AAAAAAA0
+ *		BBBBBBB1
+ *		BBBBBBB1
+ *		BBBBBBB1
+ *		AAAAAAA0
+ *		BBBBBBB1
+ *		...
+ *
+ *	Each address A is taken relative to obj->relocbase, and has
+ *	obj->relocbase added to the Elf_Addr it points at.  For each
+ *	bit i in the following bitmaps concatenated starting at 1,
+ *	excluding the low-order bit used to distinguish bitmaps from
+ *	addresses, the Elf_Addr at the address
+ *
+ *		A + sizeof(Elf_Addr)*i
+ *
+ *	(again, relative to obj->relocbase) has obj->relocbase added
+ *	too.
+ *
+ *	DT_RELR relocations are processed before any DT_REL or DT_RELA
+ *	relocations.
+ *
+ *	References:
+ *
+ *	Rahul Chaudhry, `Re: Proposal for a new section type SHT_RELR',
+ *	generic-abi mailing list, 2018-02-07.
+ *
+ *	https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/Jnz1lgLJAgAJ
+ *	https://web.archive.org/web/20241213012330/https://groups.google.com/g/generic-abi/c/bX460iggiKg/m/Jnz1lgLJAgAJ
+ */
+static void
+_rtld_relocate_relr(Obj_Entry *obj)
+{
+	const Elf_Relr *relr;
+
+	if (obj->relr == obj->relrlim)
+		return;
+
+	for (relr = obj->relr; relr < obj->relrlim;) {
+		Elf_Addr *where;
+
+		/*
+		 * At an address entry.  Relocate the address.
+		 */
+		assert((*relr & 1) == 0);
+		where = (Elf_Addr *)(obj->relocbase + *relr);
+		*where++ += (Elf_Addr)obj->relocbase;
+
+		/*
+		 * Process every bitmap entry after the address.
+		 */
+		while (++relr < obj->relrlim && *relr & 1) {
+			unsigned i;
+
+			/*
+			 * Process every set bit in the bitmap.  Note
+			 * that the first bit (i=0) is not processed
+			 * here -- it's just metadata to mark a bitmap
+			 * entry.
+			 */
+			for (i = 1; i < CHAR_BIT*sizeof(*relr); i++, where++) {
+				if (*relr & ((Elf_Relr)1 << i))
+					*where += (Elf_Addr)obj->relocbase;
+			}
+		}
+	}
+}
+
+/*
  * Relocate newly-loaded shared objects.  The argument is a pointer to
  * the Obj_Entry for the first such object.  All objects from the first
  * to the end of the list of objects are relocated.  Returns 0 on success,
@@ -220,6 +296,8 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 				return -1;
 			}
 		}
+		dbg(("doing relative relocations"));
+		_rtld_relocate_relr(obj);
 		dbg(("doing non-PLT relocations"));
 		if (_rtld_relocate_nonplt_objects(obj) < 0)
 			ok = 0;

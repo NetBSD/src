@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.148 2025/04/18 17:56:49 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.149 2025/05/02 23:03:16 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -168,6 +168,8 @@ typedef struct Struct_Obj_Entry {
 	const Elf_Rel  *rellim;		/* Limit of Relocation entries */
 	const Elf_Rela *rela;		/* Relocation entries */
 	const Elf_Rela *relalim;	/* Limit of Relocation entries */
+	const Elf_Relr *relr;		/* Relative relocations */
+	const Elf_Relr *relrlim;	/* Limit of relative relocations */
 	const Elf_Rel  *pltrel;		/* PLT relocation entries */
 	const Elf_Rel  *pltrellim;	/* Limit of PLT relocation entries */
 	const Elf_Rela *pltrela;	/* PLT relocation entries */
