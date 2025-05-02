@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.2 2025/05/02 22:30:29 riastradh Exp $
+#	$NetBSD: t_hello.sh,v 1.3 2025/05/02 23:04:06 riastradh Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,9 +93,6 @@ relr_body()
 	checksupport h_hello_relr
 	case `uname -p` in
 	i386|x86_64)
-		# Actually csu missing RELR support for this, not ld.elf_so.
-		atf_expect_fail "PR bin/59360: ld.elf_so(8):" \
-		    " missing RELR support"
 		;;
 	*)	atf_expect_fail "PR lib/59359: static pies are broken"
 		;;
