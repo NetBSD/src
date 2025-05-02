@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.8 2025/01/02 10:34:33 imil Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.8 2025/01/02 10:34:33 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,7 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 	/* FALLTHROUGH */
 	case VM_GUEST_GENPVH:
 	case VM_GUEST_KVM:
+	case VM_GUEST_NVMM:
 		mba.mba_pvba.pvba_busname = "pvbus";
 		config_found(self, &mba.mba_pvba.pvba_busname, NULL,
 			CFARGS(.iattr = "pvbus"));
