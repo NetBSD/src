@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.497 2025/04/23 19:27:23 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.498 2025/05/02 17:56:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.497 2025/04/23 19:27:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.498 2025/05/02 17:56:54 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -349,6 +349,8 @@ static enum {			/* Why is the make aborting? */
 	ABORT_WAIT		/* Waiting for jobs to finish */
 } aborting = ABORT_NONE;
 #define JOB_TOKENS "+EI+"	/* Token to requeue for each abort state */
+
+static const char aborting_name[][6] = { "NONE", "ERROR", "INTR", "WAIT" };
 
 /* Tracks the number of tokens currently "out" to build jobs. */
 int jobTokensRunning = 0;
@@ -2767,8 +2769,8 @@ TokenPool_Add(void)
 	while (tok != '+' && read(tokenPoolJob.inPipe, &tok1, 1) == 1)
 		continue;
 
-	DEBUG3(JOB, "(%d) aborting %d, deposit token %c\n",
-	    getpid(), aborting, tok);
+	DEBUG3(JOB, "(%d) aborting %s, deposit token %c\n",
+	    getpid(), aborting_name[aborting], tok);
 	TokenPool_Write(tok);
 }
 
@@ -2841,8 +2843,8 @@ TokenPool_Take(void)
 	ssize_t count;
 
 	wantToken = false;
-	DEBUG3(JOB, "TokenPool_Take(%d): aborting %d, running %d\n",
-	    getpid(), aborting, jobTokensRunning);
+	DEBUG3(JOB, "TokenPool_Take(%d): aborting %s, running %d\n",
+	    getpid(), aborting_name[aborting], jobTokensRunning);
 
 	if (aborting != ABORT_NONE || (jobTokensRunning >= opts.maxJobs))
 		return false;
