@@ -1,4 +1,4 @@
-/* $NetBSD: strpct.c,v 1.3 2012/01/07 18:40:56 christos Exp $ */
+/* $NetBSD: strpct.c,v 1.4 2025/05/02 20:00:45 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.3 2012/01/07 18:40:56 christos Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.4 2025/05/02 20:00:45 rillig Exp $");
 
 #include <stdint.h>
 #include <locale.h>
@@ -49,11 +49,17 @@ __RCSID("$NetBSD: strpct.c,v 1.3 2012/01/07 18:40:56 christos Exp $");
 #include <errno.h>
 #include <util.h>
 
+static uintmax_t
+imax_abs(intmax_t x)
+{
+
+	return x < 0 ? -(uintmax_t)x : (uintmax_t)x;
+}
+
 char *
 strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
     size_t digits)
 {
-	int sign;
 
 	switch (bufsiz) {
 	case 1:
@@ -65,20 +71,9 @@ strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
 		break;
 	}
 
-	if (denominator < 0) {
-		denominator = -denominator;
-		sign = 1;
-	} else
-		sign = 0;
-
-	if (numerator < 0) {
-		numerator = -numerator;
-		sign++;
-	}
-
-	sign &= 1;
-	(void)strpct(buf + sign, bufsiz - sign, (uintmax_t)numerator,
-	    (uintmax_t)denominator, digits);
+	int sign = (numerator < 0) != (denominator < 0) ? 1 : 0;
+	(void)strpct(buf + sign, bufsiz - sign, imax_abs(numerator),
+	    imax_abs(denominator), digits);
 	if (sign)
 		*buf = '-';
 	return buf;
