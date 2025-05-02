@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.150 2025/05/02 23:04:31 riastradh Exp $
+#	$NetBSD: Makefile,v 1.151 2025/05/02 23:05:11 riastradh Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -97,6 +97,10 @@ SRCS+=		stack_protector.c
 
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
+
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/gen
+SRCS+=		ctype_.c	# ctype(3) tables without useless guard page
+CPPFLAGS.ctype_.c+=	-I${NETBSDSRCDIR}/lib/libc/locale
 
 errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
