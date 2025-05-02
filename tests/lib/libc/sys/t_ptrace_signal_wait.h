@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.7 2025/05/02 02:24:32 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.8 2025/05/02 02:52:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ traceme_raise(int sigval)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -108,13 +108,13 @@ traceme_raise(int sigval)
 			info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 			info.psi_siginfo.si_errno);
 
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+		TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 		DPRINTF("Assert that PT_GET_PROCESS_STATE returns non-error\n");
 		SYSCALL_REQUIRE(
 		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-		ATF_REQUIRE(memcmp(&state, &zero_state, slen) == 0);
+		TEST_CHECK_MEMEQ(&state, &zero_state, slen);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
@@ -172,7 +172,7 @@ traceme_raisesignal_ignored(int sigignored)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -208,8 +208,8 @@ traceme_raisesignal_ignored(int sigignored)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -229,8 +229,8 @@ traceme_raisesignal_ignored(int sigignored)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigignored);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigignored);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -287,7 +287,7 @@ traceme_raisesignal_masked(int sigmasked)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -322,8 +322,8 @@ traceme_raisesignal_masked(int sigmasked)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -385,7 +385,7 @@ traceme_crash(int sig)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -431,23 +431,25 @@ traceme_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -512,7 +514,7 @@ traceme_signalmasked_crash(int sig)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -563,7 +565,7 @@ traceme_signalmasked_crash(int sig)
 	name[4] = sizeof(kp);
 	name[5] = 1;
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	kp_sigmask = kp.p_sigmask;
 
@@ -576,8 +578,8 @@ traceme_signalmasked_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -597,7 +599,7 @@ traceme_signalmasked_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	DPRINTF("kp_sigmask="
 	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
@@ -636,25 +638,27 @@ traceme_signalmasked_crash(int sig)
 		softfloat_fudge_sigs(&kp_sigmask, &kp.p_sigmask);
 #endif
 
-	ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask)));
+	TEST_CHECK_MEMEQ(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask));
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -720,7 +724,7 @@ traceme_signalignored_crash(int sig)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -773,7 +777,7 @@ traceme_signalignored_crash(int sig)
 	name[4] = sizeof(kp);
 	name[5] = 1;
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	kp_sigignore = kp.p_sigignore;
 
@@ -786,8 +790,8 @@ traceme_signalignored_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -807,7 +811,7 @@ traceme_signalignored_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	DPRINTF("kp_sigignore="
 	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
@@ -847,25 +851,27 @@ traceme_signalignored_crash(int sig)
 		softfloat_fudge_sigs(&kp_sigignore, &kp.p_sigignore);
 #endif
 
-	ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore, sizeof(kp_sigignore)));
+	TEST_CHECK_MEMEQ(&kp_sigignore, &kp.p_sigignore, sizeof(kp_sigignore));
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -918,7 +924,7 @@ traceme_sendsignal_handle(int sigsent, void (*sah)(int a), int *traceme_caught)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -953,8 +959,8 @@ traceme_sendsignal_handle(int sigsent, void (*sah)(int a), int *traceme_caught)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1021,7 +1027,7 @@ traceme_sendsignal_masked(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1051,8 +1057,8 @@ traceme_sendsignal_masked(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1109,7 +1115,7 @@ traceme_sendsignal_ignored(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 
@@ -1141,8 +1147,8 @@ traceme_sendsignal_ignored(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1213,7 +1219,7 @@ traceme_sendsignal_simple(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1246,8 +1252,8 @@ traceme_sendsignal_simple(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1270,8 +1276,8 @@ traceme_sendsignal_simple(int sigsent)
 		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 		    info.psi_siginfo.si_errno);
 
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+		TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and with signal %s to be sent\n", strsignal(sigsent));
@@ -1358,7 +1364,7 @@ traceme_vfork_raise(int sigval)
 	if (sigval == SIGSTOP) {
 		parent = getpid();
 
-		watcher = fork();
+		RL(watcher = fork());
 		ATF_REQUIRE(watcher != 1);
 		if (watcher == 0) {
 			/* Double fork(2) trick to reparent to initproc */
@@ -1389,7 +1395,7 @@ traceme_vfork_raise(int sigval)
 	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1498,7 +1504,7 @@ traceme_vfork_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1580,7 +1586,7 @@ traceme_vfork_signalmasked_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1666,7 +1672,7 @@ traceme_vfork_signalignored_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1945,8 +1951,8 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			}
 #endif
 
-			FORKEE_ASSERTX(!memcmp(&kp_sigmask, &kp.p_sigmask,
-			    sizeof(kp_sigmask)));
+			FORKEE_ASSERT_MEMEQ(&kp_sigmask, &kp.p_sigmask,
+			    sizeof(kp_sigmask));
 		}
 
 		if (ignored) {
@@ -1974,8 +1980,8 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			}
 #endif
 
-			FORKEE_ASSERTX(!memcmp(&kp_sigignore, &kp.p_sigignore,
-			    sizeof(kp_sigignore)));
+			FORKEE_ASSERT_MEMEQ(&kp_sigignore, &kp.p_sigignore,
+			    sizeof(kp_sigignore));
 		}
 
 		switch (sig) {
@@ -2142,7 +2148,7 @@ ATF_TC_BODY(signal_mask_unrelated, tc)
 	sigset_t intmask;
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);

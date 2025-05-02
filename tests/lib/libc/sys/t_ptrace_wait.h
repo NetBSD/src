@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.39 2025/05/02 02:30:21 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.40 2025/05/02 02:52:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -135,8 +135,33 @@ do {									\
 	uintmax_t vy = (y);						\
 	int ret = vx == vy;						\
 	if (!ret)							\
-		ATF_REQUIRE_EQ_MSG(vx, vy, "%s(%ju) == %s(%ju)", 	\
-		    #x, vx, #y, vy);					\
+		ATF_REQUIRE_EQ_MSG(vx, vy,				\
+		    "%s(%ju=0x%jx) == %s(%ju=0x%jx)",			\
+		    #x, vx, vx, #y, vy, vy);				\
+} while (/*CONSTCOND*/0)
+
+#define TEST_CHECK_EQ(x, y)						\
+do {									\
+	uintmax_t vx = (x);						\
+	uintmax_t vy = (y);						\
+	int ret = vx == vy;						\
+	if (!ret)							\
+		ATF_CHECK_EQ_MSG(vx, vy,				\
+		    "%s(%ju=0x%jx) == %s(%ju=0x%jx)",			\
+		    #x, vx, vx, #y, vy, vy);				\
+} while (/*CONSTCOND*/0)
+
+#define TEST_CHECK_MEMEQ(x, y, n)					\
+do {									\
+	const void *vx = (x);						\
+	const void *vy = (y);						\
+	const size_t vn = (n);						\
+	if (__predict_true(memcmp(vx, vy, vn) == 0))			\
+		break;							\
+	hexdump(#x, vx, vn);						\
+	hexdump(#y, vy, vn);						\
+	atf_tc_fail_nonfatal("%s != %s (%s = %zu bytes)",		\
+	    #x, #y, #n, vn);						\
 } while (/*CONSTCOND*/0)
 
 /*
