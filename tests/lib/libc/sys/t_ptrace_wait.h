@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.38 2025/05/02 02:24:44 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.39 2025/05/02 02:30:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -154,8 +154,9 @@ do {									\
 	int ret = vx == vy;						\
 	if (!ret)							\
 		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
-		    "%s(%ju) == %s(%ju)", __FILE__, __LINE__, __func__,	\
-		    #x, vx, #y, vy);					\
+		    "%s(%jd=0x%jx) == %s(%jd=0x%jx)",			\
+		    __FILE__, __LINE__, __func__,			\
+		    #x, vx, vx, #y, vy, vy);				\
 } while (/*CONSTCOND*/0)
 
 #define FORKEE_ASSERT_NEQ(x, y)						\
@@ -165,8 +166,9 @@ do {									\
 	int ret = vx != vy;						\
 	if (!ret)							\
 		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
-		    "%s(%ju) != %s(%ju)", __FILE__, __LINE__, __func__,	\
-		    #x, vx, #y, vy);					\
+		    "%s(%ju=0x%jx) != %s(%ju=0x%jx)",			\
+		    __FILE__, __LINE__, __func__,			\
+		    #x, vx, vx, #y, vy, vy);				\
 } while (/*CONSTCOND*/0)
 
 __unused	/* used by FORKEE_ASSERT_MEMEQ, otherwise not used */
