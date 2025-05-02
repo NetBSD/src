@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.1 2025/04/27 04:09:35 riastradh Exp $
+#	$NetBSD: t_hello.sh,v 1.2 2025/05/02 22:30:29 riastradh Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,6 +83,30 @@ dynamicpie_cleanup()
 	cleanup h_hello_dynpie
 }
 
+atf_test_case relr cleanup
+relr_head()
+{
+	atf_set "descr" "Test a static PIE executable with RELR relocations"
+}
+relr_body()
+{
+	checksupport h_hello_relr
+	case `uname -p` in
+	i386|x86_64)
+		# Actually csu missing RELR support for this, not ld.elf_so.
+		atf_expect_fail "PR bin/59360: ld.elf_so(8):" \
+		    " missing RELR support"
+		;;
+	*)	atf_expect_fail "PR lib/59359: static pies are broken"
+		;;
+	esac
+	checkrun h_hello_relr
+}
+relr_cleanup()
+{
+	cleanup h_hello_relr
+}
+
 atf_test_case static cleanup
 static_head()
 {
@@ -123,6 +147,7 @@ atf_init_test_cases()
 {
 	atf_add_test_case dynamic
 	atf_add_test_case dynamicpie
+	atf_add_test_case relr
 	atf_add_test_case static
 	atf_add_test_case staticpie
 }

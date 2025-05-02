@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2025/04/27 14:04:19 riastradh Exp $
+# $NetBSD: Makefile,v 1.10 2025/05/02 22:30:29 riastradh Exp $
 
 NOMAN=			# defined
 
@@ -33,18 +33,24 @@ TESTS_SH+=		t_hello
 
 PROGS+=		${"${MKPIC}" != no:?h_hello_dyn:}
 PROGS+=		${"${MKPIE}" != no:?h_hello_dynpie:}
+PROGS+=		${"${MKPIE}" != no:?h_hello_relr:}
 PROGS+=		h_hello_sta
 PROGS+=		${"${MKPIE}" != no:?h_hello_stapie:}
 
+h_hello_relr: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+
 SRCS.h_hello_dyn+=		h_hello.c
 SRCS.h_hello_dynpie+=		h_hello.c
+SRCS.h_hello_relr+=		h_hello.c
 SRCS.h_hello_sta+=		h_hello.c
 SRCS.h_hello_stapie+=		h_hello.c
 COPTS.h_hello.c+=		${"${MKPIE}" != no:?-fPIE:}
 LDFLAGS.h_hello_dyn=		-no-pie
 LDFLAGS.h_hello_dynpie=		-pie
+LDFLAGS.h_hello_relr=		-pie -Wl,-z,pack-relative-relocs
 LDFLAGS.h_hello_sta=		-no-pie
-LDFLAGS.h_hello_stapie=		-pie
+LDFLAGS.h_hello_stapie=		-pie -Wl,-z,nopack-relative-relocs
+LDSTATIC.h_hello_relr=		-static
 LDSTATIC.h_hello_sta=		-static
 LDSTATIC.h_hello_stapie=	-static
 

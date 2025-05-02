@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.482 2025/05/02 19:52:02 rillig Exp $
+# $NetBSD: mi,v 1.483 2025/05/02 22:30:29 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1970,6 +1970,7 @@
 ./usr/libdata/debug/usr/tests/kyua-testers/text_test.debug		tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_hello_dyn.debug			tests-lib-debug		debug,atf,compattestfile,pic
 ./usr/libdata/debug/usr/tests/lib/csu/h_hello_dynpie.debug		tests-lib-debug		debug,atf,compattestfile,pie
+./usr/libdata/debug/usr/tests/lib/csu/h_hello_relr.debug		tests-lib-debug		debug,atf,compattestfile,pie
 ./usr/libdata/debug/usr/tests/lib/csu/h_hello_sta.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_hello_stapie.debug		tests-lib-debug		debug,atf,compattestfile,pie
 ./usr/libdata/debug/usr/tests/lib/csu/h_ifunc_static.debug		tests-lib-debug		debug,atf,compattestfile

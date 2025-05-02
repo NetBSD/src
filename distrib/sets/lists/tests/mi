@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1375 2025/05/02 19:52:02 rillig Exp $
+# $NetBSD: mi,v 1.1376 2025/05/02 22:30:29 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2580,6 +2580,7 @@
 ./usr/tests/lib/csu/Kyuafile				tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/csu/h_hello_dyn				tests-lib-tests		compattestfile,atf,pic
 ./usr/tests/lib/csu/h_hello_dynpie			tests-lib-tests		compattestfile,atf,pie
+./usr/tests/lib/csu/h_hello_relr			tests-lib-tests		compattestfile,atf,pie
 ./usr/tests/lib/csu/h_hello_sta				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_hello_stapie			tests-lib-tests		compattestfile,atf,pie
 ./usr/tests/lib/csu/h_ifunc_static			tests-lib-tests		compattestfile,atf
