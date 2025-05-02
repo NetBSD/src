@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_sigchld.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_sigchld.c,v 1.7 2025/05/02 02:37:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $");
+__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.7 2025/05/02 02:37:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.6 2025/05/02 02:24:32 riastradh Exp $")
 #define SYSCALL_REQUIRE_ERRNO(res, exp) ATF_REQUIRE_MSG(res == exp, \
     "%d(%s) != %d", res, strerror(res), exp)
 
-static int debug = 1;
+static int debug = 0;
 
 #define DPRINTF(a, ...)	do  \
 	if (debug) { \
