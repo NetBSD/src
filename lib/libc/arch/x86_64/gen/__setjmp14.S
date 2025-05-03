@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.4 2024/04/04 00:46:30 riastradh Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5 2025/05/03 19:56:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.4 2024/04/04 00:46:30 riastradh Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.5 2025/05/03 19:56:21 riastradh Exp $")
 #endif
 
 /*
@@ -80,11 +80,7 @@ ENTRY(__setjmp14)
 	xorl	%edi,%edi		/* how@edi := 0 (ignored) */
 	xorl	%esi,%esi		/* set@rsi := NULL */
 
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-#else
-	call	_C_LABEL(__sigprocmask14)
-#endif
 	xorl	%eax,%eax
 	ret
 END(__setjmp14)
@@ -121,11 +117,7 @@ ENTRY(__longjmp14)
 	movl	$3,%edi		/* how@edi := SIG_SETMASK */
 	xorl	%edx,%edx	/* oset@rdx := NULL */
 
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-#else
-	call	_C_LABEL(__sigprocmask14)
-#endif
 
 	popq	%rax		/* restore val@eax */
 

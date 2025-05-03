@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.6 2014/05/22 15:01:56 uebayasi Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.7 2025/05/03 19:56:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.6 2014/05/22 15:01:56 uebayasi Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.7 2025/05/03 19:56:21 riastradh Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -48,28 +48,16 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	leaq	-(8 + 784)(%rsp),%rdi	/* retaddr + sizeof (ucontext_t) */
 	andq	$~15,%rdi		/* align on _UC_UCONTEXT_ALIGN */
 	movq	%rdi,%rsp
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(_getcontext))
-#else
-	call	_C_LABEL(_getcontext)
-#endif
 	movq	8(%rsp),%rdi	/* uc_link */
 	testq	%rdi,%rdi	/* link end? */
 	jnz	9f
 
 	/* normal exit */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(exit))
-#else
-	call	_C_LABEL(exit)
-#endif
 
 9:
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(setcontext))
-#else
-	call	_C_LABEL(setcontext)
-#endif
 	/* NOTREACHED */
 
 	/* something is wrong, pull the brake */
