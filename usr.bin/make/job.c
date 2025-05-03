@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.498 2025/05/02 17:56:54 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.499 2025/05/03 07:54:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -140,7 +140,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.498 2025/05/02 17:56:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.499 2025/05/03 07:54:08 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -2769,7 +2769,7 @@ TokenPool_Add(void)
 	while (tok != '+' && read(tokenPoolJob.inPipe, &tok1, 1) == 1)
 		continue;
 
-	DEBUG3(JOB, "(%d) aborting %s, deposit token %c\n",
+	DEBUG3(JOB, "TokenPool_Add: pid %d, aborting %s, token %c\n",
 	    getpid(), aborting_name[aborting], tok);
 	TokenPool_Write(tok);
 }
@@ -2843,7 +2843,7 @@ TokenPool_Take(void)
 	ssize_t count;
 
 	wantToken = false;
-	DEBUG3(JOB, "TokenPool_Take(%d): aborting %s, running %d\n",
+	DEBUG3(JOB, "TokenPool_Take: pid %d, aborting %s, running %d\n",
 	    getpid(), aborting_name[aborting], jobTokensRunning);
 
 	if (aborting != ABORT_NONE || (jobTokensRunning >= opts.maxJobs))
@@ -2855,14 +2855,16 @@ TokenPool_Take(void)
 	if (count < 0 && jobTokensRunning != 0) {
 		if (errno != EAGAIN)
 			Fatal("job pipe read: %s", strerror(errno));
-		DEBUG1(JOB, "(%d) blocked for token\n", getpid());
+		DEBUG1(JOB, "TokenPool_Take: pid %d blocked for token\n",
+		    getpid());
 		wantToken = true;
 		return false;
 	}
 
 	if (count == 1 && tok != '+') {
 		/* make being aborted - remove any other job tokens */
-		DEBUG2(JOB, "(%d) aborted by token %c\n", getpid(), tok);
+		DEBUG2(JOB, "TokenPool_Take: pid %d aborted by token %c\n",
+		    getpid(), tok);
 		while (read(tokenPoolJob.inPipe, &tok1, 1) == 1)
 			continue;
 		/* And put the stopper back */
@@ -2880,7 +2882,7 @@ TokenPool_Take(void)
 		TokenPool_Write(tok);
 
 	jobTokensRunning++;
-	DEBUG1(JOB, "(%d) withdrew token\n", getpid());
+	DEBUG1(JOB, "TokenPool_Take: pid %d took a token\n", getpid());
 	return true;
 }
 
