@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.19 2024/05/06 06:57:32 skrll Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.20 2025/05/03 19:57:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -75,12 +75,8 @@ ENTRY(__setjmp14)
 	ldr	r1, .Lsetjmp_magic
 
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
-	ldr	r2, .Lfpu_present
-#ifdef __PIC__
-	add	r2, r2, pc	/* pc = &.LPIC0 */
-#endif
+	PCREL_GET(r2, .Lfpu_present, .LPIC0)
 	ldr	r2, [r2]
-.LPIC0:
 #if defined(__thumb__) && defined(_ARM_ARCH_T2)
 	cbz	r2, 1f		/* don't save if we don't have a FPU */
 #else
@@ -122,7 +118,7 @@ ENTRY(__setjmp14)
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
 	.align	0
 .Lfpu_present:
-	.word	REL_SYM(_libc_arm_fpu_present, .LPIC0)
+	.word	PCREL_SYM(_libc_arm_fpu_present, .LPIC0)
 #endif /* __ARM_EABI__ && (!__thumb__ || _ARM_ARCH_T2) */
 END(__setjmp14)
 

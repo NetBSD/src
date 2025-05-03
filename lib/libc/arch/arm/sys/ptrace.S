@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.12 2013/11/30 20:20:42 joerg Exp $ */
+/*	$NetBSD: ptrace.S,v 1.13 2025/05/03 19:57:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,16 +54,8 @@ ENTRY(ptrace)
 #endif
 #else
 	push	{r0, r1}
-#ifdef __PIC__
-	/* Setup the GOT */
-	ldr	r0, .Lgot
-	adr	r1, .Lgot
-	add	r0, r0, r1
-	ldr	r1, .Lerrno
-	ldr	r1, [r0, r1]
-#else
-	ldr	r1, .Lerrno
-#endif /* __PIC__ */
+	GOT_INIT(r0, .Lgot, .LPIC0)
+	GOT_GET(r0, r1, .Lerrno)
 	movs	r0, #0
 	str	r0, [r1]
 	pop	{r0, r1}
@@ -74,13 +66,9 @@ ENTRY(ptrace)
 	RET
 
 #ifndef _REENTRANT
-#ifdef __PIC__
-	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .Lgot
-#endif /* __PIC__ */
+	GOT_INITSYM(.Lgot, .LPIC0)
 
 .Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
+	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* !_REENTRANT */
 END(ptrace)

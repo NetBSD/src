@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.17 2020/12/05 11:18:21 skrll Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.18 2025/05/03 19:57:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -60,12 +60,8 @@ ENTRY(_setjmp)
 	ldr	r1, .L_setjmp_magic
 
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
-	ldr	r2, .Lfpu_present
-#ifdef __PIC__
-	add	r2, r2, pc	/* pc = &.LPIC0 */
-#endif
+	PCREL_GET(r2, .Lfpu_present, .LPIC0)
 	ldr	r2, [r2]
-.LPIC0:
 #if defined(__thumb__) && defined(_ARM_ARCH_T2)
 	cbz	r2, 1f
 #else
@@ -108,7 +104,7 @@ ENTRY(_setjmp)
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
 	.align	0
 .Lfpu_present:
-	.word	REL_SYM(_libc_arm_fpu_present, .LPIC0)
+	.word	PCREL_SYM(_libc_arm_fpu_present, .LPIC0)
 #endif /* __ARM_EABI__ && (_ARM_ARCH_T2 || !__thumb__) */
 END(_setjmp)
 
