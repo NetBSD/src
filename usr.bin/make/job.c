@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.499 2025/05/03 07:54:08 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.500 2025/05/03 08:18:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -84,19 +84,10 @@
  *	Job_Make	Start the creation of the given target.
  *
  *	Job_CatchChildren
- *			Check for and handle the termination of any
- *			children. This must be called reasonably
- *			frequently to keep the whole make going at
- *			a decent clip, since job table entries aren't
- *			removed until their process is caught this way.
+ *			Check for and handle the termination of any children.
  *
  *	Job_CatchOutput
- *			Print any output our children have produced.
- *			Should also be called fairly frequently to
- *			keep the user informed of what's going on.
- *			If no output is waiting, it will block for
- *			a time given by the SEL_* constants, below,
- *			or until output is ready.
+ *			Print any output the child processes have produced.
  *
  *	Job_ParseShell	Given a special dependency line with target '.SHELL',
  *			define the shell that is used for the creation
@@ -140,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.499 2025/05/03 07:54:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.500 2025/05/03 08:18:33 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -622,23 +613,17 @@ JobDeleteTarget(GNode *gn)
 		Error("*** %s removed", file);
 }
 
-/*
- * JobSigLock/JobSigUnlock
- *
- * Signal lock routines to get exclusive access. Currently used to
- * protect `jobs' and `stoppedJobs' list manipulations.
- */
+/* Lock the jobs table and the jobs therein. */
 static void
-JobSigLock(sigset_t *omaskp)
+JobsTable_Lock(sigset_t *omaskp)
 {
-	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0) {
-		Punt("JobSigLock: sigprocmask: %s", strerror(errno));
-		sigemptyset(omaskp);
-	}
+	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0)
+		Punt("JobsTable_Lock: sigprocmask: %s", strerror(errno));
 }
 
+/* Unlock the jobs table and the jobs therein. */
 static void
-JobSigUnlock(sigset_t *omaskp)
+JobsTable_Unlock(sigset_t *omaskp)
 {
 	(void)sigprocmask(SIG_SETMASK, omaskp, NULL);
 }
@@ -1318,7 +1303,7 @@ JobFinish(Job *job, int status)
 	}
 
 	if (aborting != ABORT_ERROR && aborting != ABORT_INTERRUPT &&
-	    (status == 0)) {
+	    status == 0) {
 		/*
 		 * As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
@@ -1430,7 +1415,7 @@ Job_Touch(GNode *gn, bool echo)
  *	abortProc	Function to abort with message
  *
  * Results:
- *	true if the commands list is/was ok.
+ *	true if the commands are ok.
  */
 bool
 Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
@@ -1532,8 +1517,8 @@ JobExec(Job *job, char **argv)
 	if (job->echo)
 		SwitchOutputTo(job->node);
 
-	/* No interruptions until this job is on the `jobs' list */
-	JobSigLock(&mask);
+	/* No interruptions until this job is in the jobs table. */
+	JobsTable_Lock(&mask);
 
 	/* Pre-emptively mark job running, pid still zero though */
 	job->status = JOB_ST_RUNNING;
@@ -1558,9 +1543,8 @@ JobExec(Job *job, char **argv)
 		 */
 		JobSigReset();
 
-		/* Now unblock signals */
 		sigemptyset(&tmask);
-		JobSigUnlock(&tmask);
+		JobsTable_Unlock(&tmask);
 
 		/*
 		 * Must duplicate the input stream down to the child's input
@@ -1653,7 +1637,7 @@ JobExec(Job *job, char **argv)
 		    job->node->name, job->pid);
 		DumpJobs("job started");
 	}
-	JobSigUnlock(&mask);
+	JobsTable_Unlock(&mask);
 }
 
 /* Create the argv needed to execute the shell for a given job. */
@@ -2555,7 +2539,7 @@ JobInterrupt(bool runINTERRUPT, int signo)
 
 	aborting = ABORT_INTERRUPT;
 
-	JobSigLock(&mask);
+	JobsTable_Lock(&mask);
 
 	for (job = job_table; job < job_table_end; job++) {
 		if (job->status == JOB_ST_RUNNING && job->pid != 0) {
@@ -2574,7 +2558,7 @@ JobInterrupt(bool runINTERRUPT, int signo)
 		}
 	}
 
-	JobSigUnlock(&mask);
+	JobsTable_Unlock(&mask);
 
 	if (runINTERRUPT && !opts.touch) {
 		interrupt = Targ_FindNode(".INTERRUPT");
@@ -2615,9 +2599,8 @@ void
 Job_Wait(void)
 {
 	aborting = ABORT_WAIT;	/* Prevent other jobs from starting. */
-	while (jobTokensRunning != 0) {
+	while (jobTokensRunning != 0)
 		Job_CatchOutput();
-	}
 	aborting = ABORT_NONE;
 }
 
@@ -2740,11 +2723,11 @@ Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	int fd;
 	sigset_t mask;
 
-	JobSigLock(&mask);
+	JobsTable_Lock(&mask);
 	fd = mkTempFile(pattern, tfile, tfile_sz);
 	if (tfile != NULL && !DEBUG(SCRIPT))
 		unlink(tfile);
-	JobSigUnlock(&mask);
+	JobsTable_Unlock(&mask);
 
 	return fd;
 }
@@ -2753,7 +2736,8 @@ static void
 TokenPool_Write(char tok)
 {
 	if (write(tokenPoolJob.outPipe, &tok, 1) != 1)
-		Punt("Cannot write \"%c\" to the token pool", tok);
+		Punt("Cannot write \"%c\" to the token pool: %s",
+		    tok, strerror(errno));
 }
 
 /*
@@ -2846,12 +2830,12 @@ TokenPool_Take(void)
 	DEBUG3(JOB, "TokenPool_Take: pid %d, aborting %s, running %d\n",
 	    getpid(), aborting_name[aborting], jobTokensRunning);
 
-	if (aborting != ABORT_NONE || (jobTokensRunning >= opts.maxJobs))
+	if (aborting != ABORT_NONE || jobTokensRunning >= opts.maxJobs)
 		return false;
 
 	count = read(tokenPoolJob.inPipe, &tok, 1);
 	if (count == 0)
-		Fatal("eof on job pipe!");
+		Fatal("eof on job pipe");
 	if (count < 0 && jobTokensRunning != 0) {
 		if (errno != EAGAIN)
 			Fatal("job pipe read: %s", strerror(errno));

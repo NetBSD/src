@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.264 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.265 2025/05/03 08:18:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,9 +94,9 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.264 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.265 2025/05/03 08:18:33 rillig Exp $");
 
-static GNode *curTarg = NULL;
+static GNode *curTarg;
 static pid_t compatChild;
 static int compatSigno;
 
@@ -107,7 +107,7 @@ static int compatSigno;
 static void
 CompatDeleteTarget(GNode *gn)
 {
-	if (gn != NULL && !GNode_IsPrecious(gn) &&
+	if (!GNode_IsPrecious(gn) &&
 	    (gn->type & OP_PHONY) == 0) {
 		const char *file = GNode_VarTarget(gn);
 		if (!opts.noExecute && unlink_file(file) == 0)
@@ -127,11 +127,9 @@ CompatDeleteTarget(GNode *gn)
 static void
 CompatInterrupt(int signo)
 {
-	CompatDeleteTarget(curTarg);
-
-	if (curTarg != NULL && !GNode_IsPrecious(curTarg)) {
-		/* Run .INTERRUPT only if hit with interrupt signal. */
-		if (signo == SIGINT) {
+	if (curTarg != NULL) {
+		CompatDeleteTarget(curTarg);
+		if (signo == SIGINT && !GNode_IsPrecious(curTarg)) {
 			GNode *gn = Targ_FindNode(".INTERRUPT");
 			if (gn != NULL)
 				Compat_Make(gn, gn);

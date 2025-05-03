@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1161 2025/04/30 06:01:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1162 2025/05/03 08:18:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1161 2025/04/30 06:01:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1162 2025/05/03 08:18:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3556,9 +3556,9 @@ found_op:
 		/* Take a guess at where the modifier ends. */
 		Parse_Error(PARSE_FATAL,
 		    "Invalid attempt to assign \"%.*s\" to variable \"\" "
-		    "via modifier \"::%.*s\"",
+		    "via modifier \":%.*s\"",
 		    (int)strcspn(value, ":)}"), value,
-		    (int)(value - op), op);
+		    (int)(value - mod), mod);
 		return AMR_CLEANUP;
 	}
 
@@ -3671,15 +3671,9 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 
 	if (words.len > 1) {
 		size_t di, si;
-
-		di = 0;
-		for (si = 1; si < words.len; si++) {
-			if (!Substring_Eq(words.words[si], words.words[di])) {
-				di++;
-				if (di != si)
-					words.words[di] = words.words[si];
-			}
-		}
+		for (di = 0, si = 1; si < words.len; si++)
+			if (!Substring_Eq(words.words[di], words.words[si]))
+				words.words[++di] = words.words[si];
 		words.len = di + 1;
 	}
 

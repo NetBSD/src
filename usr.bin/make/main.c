@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.644 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.645 2025/05/03 08:18:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.644 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.645 2025/05/03 08:18:33 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1338,7 +1338,7 @@ main_Init(int argc, char **argv)
 	machine = InitVarMachine(&utsname);
 	machine_arch = InitVarMachineArch();
 
-	myPid = getpid();	/* remember this for vFork() */
+	myPid = getpid();
 
 	/* Just in case MAKEOBJDIR wants us to do something tricky. */
 	Targ_Init();
