@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.111 2024/09/07 19:13:28 rillig Exp $
+.\"	$NetBSD: mk.conf.5,v 1.112 2025/05/03 16:47:10 pgoyette Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 7, 2024
+.Dd May 3, 2025
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -305,7 +305,7 @@ term as parts of the cross-compile framework continue to be cleaned up.
 .It Sy INSTALLBOOT_BOARDS
 A list of
 .Sy evbarm
-boards to create bootable images for.
+boards for which to create bootable images.
 If corresponding U-Boot packages are installed,
 bootable images are created as part of a release.
 See the
@@ -365,7 +365,8 @@ directory hierarchy.
 .Pp
 The
 .Sy KERNEL_DIR
-option is a work-in-progress, and is highly experimental.
+option is currently available only for amd64 and i386 platforms.
+It is a work-in-progress, and is highly experimental.
 It is also subject to change without notice.
 .DFLTn
 .
