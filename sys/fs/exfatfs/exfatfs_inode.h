@@ -1,7 +1,7 @@
-/*	$NetBSD: exfatfs_inode.h,v 1.1.2.5 2024/09/09 05:01:57 perseant Exp $	*/
+/*	$NetBSD: exfatfs_inode.h,v 1.1.2.6 2025/05/03 04:31:56 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2024, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -145,21 +145,21 @@ struct xfinode {
 	/* File Entry, one of the above pointers */
 #define DFE(xip) ((struct exfatfs_dfe*)(xip)->xi_direntp[0])
 
-#define GET_DFE_SET_CHECKSUM(xip) DFE(xip)->xd_setChecksum
+#define GET_DFE_SET_CHECKSUM(xip) le16toh(DFE(xip)->xd_setChecksum)
 #define GET_DFE_SECONDARY_COUNT(xip) DFE(xip)->xd_secondaryCount
-#define GET_DFE_FILE_ATTRIBUTES(xip) DFE(xip)->xd_fileAttributes
-#define GET_DFE_LAST_MODIFIED(xip) DFE(xip)->xd_lastModifiedTimestamp
+#define GET_DFE_FILE_ATTRIBUTES(xip) le16toh(DFE(xip)->xd_fileAttributes)
+#define GET_DFE_LAST_MODIFIED(xip) le32toh(DFE(xip)->xd_lastModifiedTimestamp)
 #define GET_DFE_LAST_MODIFIED10MS(xip) DFE(xip)->xd_lastModified10msIncrement
 #define GET_DFE_LAST_MODIFIED_UTCOFF(xip) DFE(xip)->xd_lastModifiedUtcOffset
-#define GET_DFE_LAST_ACCESSED(xip) DFE(xip)->xd_lastAccessedTimestamp
+#define GET_DFE_LAST_ACCESSED(xip) le32toh(DFE(xip)->xd_lastAccessedTimestamp)
 #define GET_DFE_LAST_ACCESSED_UTCOFF(xip) DFE(xip)->xd_lastAccessedUtcOffset
-#define GET_DFE_CREATE(xip) DFE(xip)->xd_createTimestamp
+#define GET_DFE_CREATE(xip) le32toh(DFE(xip)->xd_createTimestamp)
 #define GET_DFE_CREATE10MS(xip) DFE(xip)->xd_create10msIncrement
 #define GET_DFE_CREATE_UTCOFF(xip) DFE(xip)->xd_createUtcOffset
 
 #define SET_DFE_SET_CHECKSUM(xip, v) 					\
 do {									\
-	DFE(xip)->xd_setChecksum = (v); 				\
+	DFE(xip)->xd_setChecksum = htole16(v); 				\
 } while(0)
 
 #define SET_DFE_SECONDARY_COUNT(xip, v)					\
@@ -169,12 +169,12 @@ do {									\
 
 #define SET_DFE_FILE_ATTRIBUTES(xip, v)					\
 do {									\
-	DFE(xip)->xd_fileAttributes = (v);				\
+	DFE(xip)->xd_fileAttributes = htole16(v);				\
 } while(0)
 
 #define SET_DFE_LAST_MODIFIED(xip, v)					\
 do {									\
-	DFE(xip)->xd_lastModifiedTimestamp = (v);			\
+	DFE(xip)->xd_lastModifiedTimestamp = htole32(v);		\
 } while(0)
 
 #define SET_DFE_LAST_MODIFIED10MS(xip, v)				\
@@ -189,7 +189,7 @@ do {									\
 
 #define SET_DFE_LAST_ACCESSED(xip, v)					\
 do {									\
-	DFE(xip)->xd_lastAccessedTimestamp = (v);			\
+	DFE(xip)->xd_lastAccessedTimestamp = htole32(v);		\
 } while(0)
 
 #define SET_DFE_LAST_ACCESSED_UTCOFF(xip, v)				\
@@ -199,7 +199,7 @@ do {									\
 
 #define SET_DFE_CREATE(xip, v)						\
 do {									\
-	DFE(xip)->xd_createTimestamp = (v);				\
+	DFE(xip)->xd_createTimestamp = htole32(v);			\
 } while(0)
 
 #define SET_DFE_CREATE10MS(xip, v)					\
@@ -212,20 +212,20 @@ do {									\
 	DFE(xip)->xd_createUtcOffset = (v);				\
 } while(0)
 
-#define ISDIRECTORY(xip) (DFE(xip)->xd_fileAttributes & XD_FILEATTR_DIRECTORY)
-#define ISREADONLY(xip)  (DFE(xip)->xd_fileAttributes & XD_FILEATTR_READONLY)
-#define ISARCHIVE(xip)   (DFE(xip)->xd_fileAttributes & XD_FILEATTR_ARCHIVE)
-#define ISSYMLINK(xip)   (DFE(xip)->xd_fileAttributes & XD_FILEATTR_SYMLINK)
+#define ISDIRECTORY(xip) (GET_DFE_FILE_ATTRIBUTES(xip) & XD_FILEATTR_DIRECTORY)
+#define ISREADONLY(xip)  (GET_DFE_FILE_ATTRIBUTES(xip) & XD_FILEATTR_READONLY)
+#define ISARCHIVE(xip)   (GET_DFE_FILE_ATTRIBUTES(xip) & XD_FILEATTR_ARCHIVE)
+#define ISSYMLINK(xip)   (GET_DFE_FILE_ATTRIBUTES(xip) & XD_FILEATTR_SYMLINK)
 
 	/* Stream extension */
 #define DSE(xip) ((struct exfatfs_dse*)(xip)->xi_direntp[1])
 
 #define GET_DSE_NAMELENGTH(xip)      DSE(xip)->xd_nameLength
-#define GET_DSE_NAMEHASH(xip)        DSE(xip)->xd_nameHash
-#define GET_DSE_VALIDDATALENGTH(xip) DSE(xip)->xd_validDataLength
-#define GET_DSE_FIRSTCLUSTER(xip)    DSE(xip)->xd_firstCluster
-#define GET_DSE_DATALENGTH(xip)      DSE(xip)->xd_dataLength
-#define GET_DSE_DATALENGTH_BLK(xip, fs) roundup2(DSE(xip)->xd_dataLength, \
+#define GET_DSE_NAMEHASH(xip)        le16toh(DSE(xip)->xd_nameHash)
+#define GET_DSE_VALIDDATALENGTH(xip) le64toh(DSE(xip)->xd_validDataLength)
+#define GET_DSE_FIRSTCLUSTER(xip)    le32toh(DSE(xip)->xd_firstCluster)
+#define GET_DSE_DATALENGTH(xip)      le64toh(DSE(xip)->xd_dataLength)
+#define GET_DSE_DATALENGTH_BLK(xip, fs) roundup2(GET_DSE_DATALENGTH(xip), \
 						EXFATFS_CSIZE(fs))
 
 #define SET_DSE_NAMELENGTH(xip, v)					\
@@ -235,22 +235,22 @@ do {									\
 
 #define SET_DSE_NAMEHASH(xip, v)					\
 do {									\
-	DSE(xip)->xd_nameHash = (v);					\
+	DSE(xip)->xd_nameHash = htole16(v);				\
 } while(0)
 
 #define SET_DSE_VALIDDATALENGTH(xip, v)					\
 do {									\
-	DSE(xip)->xd_validDataLength = (v);				\
+	DSE(xip)->xd_validDataLength = htole64(v);			\
 } while(0)
 
 #define SET_DSE_FIRSTCLUSTER(xip, v)					\
 do {									\
-	DSE(xip)->xd_firstCluster = (v);				\
+	DSE(xip)->xd_firstCluster = htole32(v);				\
 } while(0)
 
 #define SET_DSE_DATALENGTH(xip, v)					\
 do {									\
-	DSE(xip)->xd_dataLength = (v);					\
+	DSE(xip)->xd_dataLength = htole64(v);				\
 } while(0)
 
 #define IS_DSE_ALLOCPOSSIBLE(xip)					\

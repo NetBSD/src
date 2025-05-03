@@ -1,7 +1,7 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.10 2025/04/30 18:49:24 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.11 2025/05/03 04:31:56 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,10 +173,12 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 	}
 			
 	if (!(pcn >= 2 && pcn < fs->xf_ClusterCount + 2)) {
-		printf("bmap: ino 0x%lx data length %lu, first cluster 0x%lx\n",
+		printf("bmap: ino 0x%lx data length %lu (%lu blk), first cluster 0x%lx > max 0x%lx\n",
 		       (unsigned long)INUM(xip),
+		       (unsigned long)GET_DSE_DATALENGTH(xip),
 		       (unsigned long)GET_DSE_DATALENGTH_BLK(xip, fs),
-		       (unsigned long)pcn);
+		       (unsigned long)pcn,
+		       (unsigned long)fs->xf_ClusterCount + 2);
 	}
 	assert(pcn >= 2 && pcn < fs->xf_ClusterCount + 2);
 
@@ -209,7 +211,7 @@ exfatfs_bmap_shared(struct vnode *vp, daddr_t targetlbn, struct vnode **vpp,
 			       (unsigned)pcn, (unsigned)EXFATFS_FATBLK(fs, pcn));
 			goto errout;
 		}
-		pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
+		pcn = le32toh(((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]);
 		brelse(bp, 0);
 		++lcn;
 		DPRINTF(("BMAP read lclust #%d at pcn %lu\n", lcn, pcn));
@@ -559,6 +561,7 @@ read_rootdir (struct exfatfs *fs)
 	uint32_t clust = fs->xf_FirstClusterOfRootDirectory;
 	daddr_t daddr = EXFATFS_LC2D(fs, clust);
 	
+	DPRINTF(("read_rootdir(.) with clust = %lx\n", (unsigned long)clust));
 	exfatfs_check_fence(fs);
 	/* Print root directory contents */
 	bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
@@ -582,8 +585,8 @@ read_rootdir (struct exfatfs *fs)
 			 */
 			brelse(bp, 0);
 			exfatfs_system_loadvnode(fs, clust, i,
-						 xdab->xd_firstCluster,
-						 xdab->xd_dataLength,
+						 GET_DE_FIRST_CLUSTER(xdab),
+						 GET_DE_DATA_LENGTH(xdab),
 						 &fs->xf_bitmapvp);
 			bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint8_t *)bp->b_data;
@@ -594,8 +597,8 @@ read_rootdir (struct exfatfs *fs)
 			xdut = (struct exfatfs_dirent_upcase_table *)dp;
 			brelse(bp, 0);
 			exfatfs_system_loadvnode(fs, clust, i,
-						 xdut->xd_firstCluster,
-						 xdut->xd_dataLength,
+						 GET_DE_FIRST_CLUSTER(xdut),
+						 GET_DE_DATA_LENGTH(xdut),
 						 &fs->xf_upcasevp);
 			bread(fs->xf_devvp, daddr, EXFATFS_LSIZE(fs), 0, &bp);
 			data = (uint8_t *)bp->b_data;

@@ -1,7 +1,7 @@
-/* $NetBSD: exfatfs_dirent.h,v 1.1.2.3 2024/07/12 23:46:54 perseant Exp $ */
+/* $NetBSD: exfatfs_dirent.h,v 1.1.2.4 2025/05/03 04:31:56 perseant Exp $ */
 
 /*-
- * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2024, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,11 @@ struct exfatfs_dirent {
 #define XD_ENTRYTYPE_VENDOR_ALLOCATION 0xE1
 	uint8_t  xd_customDefined[19];  /* Bytes 1..19 */
 	uint32_t xd_firstCluster;	/* Bytes 20..23 */
+#define GET_DE_FIRST_CLUSTER(x) le32toh((x)->xd_firstCluster)
+#define SET_DE_FIRST_CLUSTER(x, v) do { (x)->xd_firstCluster = htole32(v); } while (0)
 	uint64_t xd_dataLength;		/* Bytes 24..32 */
+#define GET_DE_DATA_LENGTH(x) le64toh((x)->xd_dataLength)
+#define SET_DE_DATA_LENGTH(x, v) do { (x)->xd_dataLength = htole64(v); } while (0)
 };
 
 /* Not in the spec: FILE but not in use */
@@ -78,7 +82,11 @@ struct exfatfs_dirent_primary {
 	uint8_t  xd_secondaryCount;     /* Byte 1 */
 	/* Checksum of all dirents, excluding this field */
 	uint16_t xd_setChecksum;        /* Bytes 2-3 */
+#define GET_DE_SET_CHECKSUM(x) le16toh((x)->xd_setChecksum)
+#define SET_DE_SET_CHECKSUM(x) do { (x)->xd_setChecksum = htole16(v); } while (0)
 	uint16_t xd_generalPrimaryFlags; /* Bytes 4-5 */
+#define GET_DE_GENERAL_PRIMARY_FLAGS(x) le16toh((x)->xd_generalPrimaryFlags)
+#define SET_DE_GENERAL_PRIMARY_FLAGS(x) do { (x)->xd_generalPrimaryFlags = htole16(v); } while (0)
 #define XD_GENERALPRIMARYFLAGS_ALLOCATIONPOSSIBLE_MASK 0x0001
 #define XD_GENERALPRIMARYFLAGS_NOFATCHAIN              0x0002
 	uint8_t  xd_customDefined[14];  /* Bytes 6..19 */
@@ -88,10 +96,10 @@ struct exfatfs_dirent_primary {
 
 struct exfatfs_dirent_secondary {
 	uint8_t  xd_entryType;          /* Byte 0 */
-	uint16_t xd_generalSecondaryFlags; /* Byte 2 */
+	uint8_t xd_generalSecondaryFlags; /* Byte 1 */
 #define XD_GENERALSECONDARYFLAGS_ALLOCATIONPOSSIBLE_MASK 0x0001
 #define XD_GENERALSECONDARYFLAGS_NOFATCHAIN              0x0002
-	uint8_t  xd_customDefined[18];  /* Bytes 3..19 */
+	uint8_t  xd_customDefined[18];  /* Bytes 2..19 */
 	uint32_t xd_firstCluster;	/* Bytes 20..23 */
 	uint64_t xd_dataLength;		/* Bytes 24..32 */
 };
@@ -122,6 +130,8 @@ struct exfatfs_dirent_upcase_table {
         uint8_t  xd_entryType;          /* Byte 0 */
         uint8_t  xd_reserved1[3];       /* Bytes 1..3 */
         uint32_t xd_tableChecksum;      /* Bytes 4..7 */
+#define GET_DUE_TABLE_CHECKSUM(x) le32toh((x)->xd_tableChecksum)
+#define SET_DUE_TABLE_CHECKSUM(x, v) do { (x)->xd_tableChecksum = htole32(x); } while (0)
         uint8_t  xd_reserved2[12];      /* Bytes 8..19 */
         uint32_t xd_firstCluster;       /* Bytes 20..23 */
         uint64_t xd_dataLength;         /* Bytes 24..32 */
@@ -134,11 +144,14 @@ struct exfatfs_dirent_volume_label {
 	uint8_t  xd_reserved[8];        /* Bytes 24..32 */
 };
 
+
 struct exfatfs_dfe {
         uint8_t  xd_entryType;          /* Byte 0 */
         uint8_t  xd_secondaryCount;     /* Byte 2 */
 	uint16_t xd_setChecksum;
 	uint16_t xd_fileAttributes;
+#define GET_DE_FILE_ATTRIBUTES(x) le16toh((x)->xd_fileAttributes)
+#define SET_DE_FILE_ATTRIBUTES(x, v) do { (x)->xd_fileAttributes = htole16(v); } while (0)
 #define XD_FILEATTR_READONLY  0x0001
 #define XD_FILEATTR_HIDDEN    0x0002
 #define XD_FILEATTR_SYSTEM    0x0004
@@ -149,8 +162,14 @@ struct exfatfs_dfe {
 #define XD_FILEATTR_SYMLINK   0x0040
 	uint8_t xd_reserved1[2];
 	uint32_t xd_createTimestamp;
+#define GET_DE_CREATE_TIMESTAMP(x) le32toh((x)->xd_createTimestamp)
+#define SET_DE_CREATE_TIMESTAMP(x, v) do { (x)->xd_createTimestamp = htole32(v); } while (0)
 	uint32_t xd_lastModifiedTimestamp;
+#define GET_DE_LAST_MODIFIED_TIMESTAMP(x) le32toh((x)->xd_lastModifiedTimestamp)
+#define SET_DE_LAST_MODIFIED_TIMESTAMP(x, v) do { (x)->xd_lastModifiedTimestamp = htole32(v); } while (0)
 	uint32_t xd_lastAccessedTimestamp;
+#define GET_DE_LAST_ACCESSED_TIMESTAMP(x) le32toh((x)->xd_lastAccessedTimestamp)
+#define SET_DE_LAST_ACCESSED_TIMESTAMP(x, v) do { (x)->xd_lastAccessedTimestamp = htole32(v); } while (0)
 	uint8_t xd_create10msIncrement;
 	uint8_t xd_lastModified10msIncrement;
 	uint8_t xd_createUtcOffset; /* 15-minute increments, signed int7_t */
@@ -194,8 +213,12 @@ struct exfatfs_dse {
 	uint8_t  xd_reserved1;             /* 2 */
 	uint8_t  xd_nameLength;            /* 3 */
 	uint16_t xd_nameHash;              /* 4..5 */
+#define GET_DE_NAME_HASH(x) le16toh((x)->xd_nameHash)
+#define SET_DE_NAME_HASH(x, v) do { (x)->xd_nameHash = htole16(v); } while (0)
 	uint8_t  xd_reserved2[2];          /* 6..7 */
 	uint64_t xd_validDataLength;       /* 8..15 */
+#define GET_DE_VALID_DATA_LENGTH(x) le64toh((x)->xd_validDataLength)
+#define SET_DE_VALID_DATA_LENGTH(x, v) do { (x)->xd_validDataLength = htole64(v); } while (0)
 	uint8_t  xd_reserved3[4];          /* 16..19 */
 	uint32_t xd_firstCluster;          /* 20..23 */
 	uint64_t xd_dataLength;            /* 24..31 */
@@ -221,6 +244,8 @@ struct exfatfs_dirent_vendor_allocation {
         uint8_t  xd_generalSecondaryFlags;
 	uint8_t  xd_vendorGuid[16];
 	uint16_t xd_vendorDefined;
+#define GET_DVAE_VENDOR_DEFINED(x) le16toh((x)->xd_vendorDefined)
+#define SET_DVAE_VENDOR_DEFINED(x, v) do { (x)->xd_vendorDefined = htole16(x); } while (0)
 	uint32_t xd_firstCluster;
 	uint64_t xd_dataLength;
 };

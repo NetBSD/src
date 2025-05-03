@@ -1,7 +1,7 @@
-/*	$NetBSD: dumpexfatfs.c,v 1.1.2.8 2025/04/30 18:48:02 perseant Exp $	*/
+/*	$NetBSD: dumpexfatfs.c,v 1.1.2.9 2025/05/03 04:31:56 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2022, 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022, 2024, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -471,8 +471,8 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 		       sizeof(*dse));
 		brelse(bp, 0);
 		bp = NULL;
-		clust = dse->xd_firstCluster;
-		maxlen = dse->xd_dataLength;
+		clust = GET_DE_FIRST_CLUSTER(dse);
+		maxlen = GET_DE_DATA_LENGTH(dse);
 	}
 	
 	if (action == ACTION_PRINT) {
@@ -536,9 +536,9 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				printf("\t\tFlags: %hhx\n",
 				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_bitmapFlags);
 				printf("\t\tFirst Cluster: 0x%lx\n", (unsigned long)
-				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_firstCluster);
+				       GET_DE_FIRST_CLUSTER((struct exfatfs_dirent_allocation_bitmap *)dp));
 				printf("\t\tData Length: %llu\n", (unsigned long long)
-				       ((struct exfatfs_dirent_allocation_bitmap *)dp)->xd_dataLength);
+				       GET_DE_DATA_LENGTH((struct exfatfs_dirent_allocation_bitmap *)dp));
 			} else {
 				if (Aflag) {
 					print_bitmap(fs);
@@ -550,16 +550,16 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			if (action == ACTION_PRINT) {
 				printf("\tUpcase Table\n");
 				printf("\t\tChecksum: %lx\n", (unsigned long)
-				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_tableChecksum);
+				       GET_DUE_TABLE_CHECKSUM((struct exfatfs_dirent_upcase_table *)dp));
 				printf("\t\tFirst Cluster: 0x%lx\n", (unsigned long)
-				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_firstCluster);
+				       GET_DE_FIRST_CLUSTER((struct exfatfs_dirent_upcase_table *)dp));
 				printf("\t\tData Length: %llu\n", (unsigned long long)
-				       ((struct exfatfs_dirent_upcase_table *)dp)->xd_dataLength);
+				       GET_DE_DATA_LENGTH((struct exfatfs_dirent_upcase_table *)dp));
 			} else {
 				if (Uflag) {
 					print_upcase_table(fs, 
-							   ((struct exfatfs_dirent_upcase_table *)dp)->xd_firstCluster,
-							   ((struct exfatfs_dirent_upcase_table *)dp)->xd_dataLength);
+							   GET_DE_FIRST_CLUSTER((struct exfatfs_dirent_upcase_table *)dp),
+							   GET_DE_DATA_LENGTH((struct exfatfs_dirent_upcase_table *)dp));
 				}
 			}
 			break;
@@ -589,7 +589,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			nsecfound = 0;
 			streamfound = 0;
 			namefound = 0;
-			cksumreqd = dfp->xd_setChecksum;
+			cksumreqd = GET_DE_SET_CHECKSUM(dfp);
 			inum = CE2INO(fs, clust, off);
 			cksum = exfatfs_cksum16(0, (uint8_t *)dfp, sizeof(*dfp),
 						PRIMARY_IGNORE, PRIMARY_IGNORE_LEN);
@@ -603,46 +603,42 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				printf("\t\tSecondaryCount: %hhu\n",
 				       dfp->xd_secondaryCount);
 				printf("\t\tSetChecksum: 0x%hx\n",
-				       dfp->xd_setChecksum);
+				       GET_DE_SET_CHECKSUM(dfp));
+				uint16_t fa = GET_DE_FILE_ATTRIBUTES(dfp);
 				printf("\t\tFileAttributes: 0x%hx (%c%c%c-%c%c)\n",
-				       dfp->xd_fileAttributes,
-				       (dfp->xd_fileAttributes & 
-					XD_FILEATTR_READONLY
+				       fa,
+				       (fa & XD_FILEATTR_READONLY
 					? 'R' : '-'),
-				       (dfp->xd_fileAttributes & 
-					XD_FILEATTR_HIDDEN
+				       (fa & XD_FILEATTR_HIDDEN
 					? 'H' : '-'),
-				       (dfp->xd_fileAttributes & 
-					XD_FILEATTR_SYSTEM
+				       (fa & XD_FILEATTR_SYSTEM
 					? 'S' : '-'),
-				       (dfp->xd_fileAttributes & 
-					XD_FILEATTR_DIRECTORY
+				       (fa & XD_FILEATTR_DIRECTORY
 					? 'D' : '-'),
-				       (dfp->xd_fileAttributes & 
-					XD_FILEATTR_ARCHIVE
+				       (fa & XD_FILEATTR_ARCHIVE
 					? 'A' : '-'));
-				exfatfs_dos2unixtime(dfp->xd_createTimestamp,
+				exfatfs_dos2unixtime(GET_DE_CREATE_TIMESTAMP(dfp),
 						     dfp->xd_create10msIncrement,
 						     dfp->xd_createUtcOffset,
 						     &ts);
 				printf("\t\tCreateTimestamp: 0x%x, %s",
-				       (unsigned)dfp->xd_createTimestamp,
+				       (unsigned)GET_DE_CREATE_TIMESTAMP(dfp),
 				       asctime(localtime(&ts.tv_sec)));
-				exfatfs_dos2unixtime(dfp->xd_lastModifiedTimestamp,
+				exfatfs_dos2unixtime(GET_DE_LAST_MODIFIED_TIMESTAMP(dfp),
 						     dfp->xd_lastModified10msIncrement,
 						     dfp->xd_lastModifiedUtcOffset,
 						     &ts);
 				printf("\t\tLastModifiedTimestamp: 0x%x, %s",
-				       (unsigned)dfp->xd_lastModifiedTimestamp,
+				       (unsigned)GET_DE_LAST_MODIFIED_TIMESTAMP(dfp),
 				       asctime(localtime(&ts.tv_sec)));
 			
-				exfatfs_dos2unixtime(dfp->xd_lastAccessedTimestamp,
+				exfatfs_dos2unixtime(GET_DE_LAST_ACCESSED_TIMESTAMP(dfp),
 
 						     0,
 						     dfp->xd_lastAccessedUtcOffset,
 						     &ts);
 				printf("\t\tLastAccessedTimestamp: 0x%x, %s",
-				       (unsigned)dfp->xd_lastAccessedTimestamp,
+				       (unsigned)GET_DE_LAST_ACCESSED_TIMESTAMP(dfp),
 				       asctime(localtime(&ts.tv_sec)));
 
 				printf("\t\tCreate10msIncrement: 0x%hhx\n",
@@ -673,7 +669,7 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 			dsp = (struct exfatfs_dse *)dp;
 			cksum = exfatfs_cksum16(cksum, (uint8_t *)dsp, sizeof(*dsp),
 						NULL, 0);
-			first_cluster = dsp->xd_firstCluster;
+			first_cluster = GET_DE_FIRST_CLUSTER(dsp);
 			data_length = dsp->xd_validDataLength;
 			namelen = dsp->xd_nameLength;
 			if (action == ACTION_PRINT) {
@@ -684,13 +680,13 @@ void print_dir(struct exfatfs *fs, uint32_t dirclust, uint32_t diroff, int actio
 				printf("\t\tName Length: %hhu\n",
 				       dsp->xd_nameLength);
 				printf("\t\tName Hash: 0x%hx\n",
-				       dsp->xd_nameHash);
+				       GET_DE_NAME_HASH(dsp));
 				printf("\t\tValid Data Length: %llu\n",
-				       (unsigned long long)dsp->xd_validDataLength);
+				       (unsigned long long)GET_DE_VALID_DATA_LENGTH(dsp));
 				printf("\t\tFirst Cluster: 0x%lx\n",
-				       (unsigned long)dsp->xd_firstCluster);
+				       (unsigned long)GET_DE_FIRST_CLUSTER(dsp));
 				printf("\t\tData Length: %llu\n",
-				       (unsigned long long)dsp->xd_dataLength);
+				       (unsigned long long)GET_DE_DATA_LENGTH(dsp));
 			}
 			break;
 		case XD_ENTRYTYPE_FILE_NAME:
