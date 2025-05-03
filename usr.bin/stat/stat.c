@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.53 2024/03/14 21:17:54 rillig Exp $ */
+/*	$NetBSD: stat.c,v 1.54 2025/05/03 21:34:09 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.53 2024/03/14 21:17:54 rillig Exp $");
+__RCSID("$NetBSD: stat.c,v 1.54 2025/05/03 21:34:09 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -225,10 +225,11 @@ main(int argc, char *argv[])
 	if (strcmp(getprogname(), "readlink") == 0) {
 		am_readlink = 1;
 		options = "fnqsv";
-		synopsis = "[-fnqsv] [file ...]";
+		synopsis = "[-fnqsv] file ...";
 		statfmt = "%Y";
 		fmtchar = 'f';
-		quiet = 1;
+		if (getenv("POSIXLY_CORRECT") == NULL)
+			quiet = 1;
 	} else {
 		options = "f:FlLnqrst:x";
 		synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
@@ -282,6 +283,9 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	fn = 1;
+
+	if (am_readlink && argc == 0)
+		usage(synopsis);
 
 	if (fmtchar == '\0') {
 		if (lsF)
@@ -344,10 +348,19 @@ main(int argc, char *argv[])
 		if (rc == -1) {
 			errs = 1;
 			linkfail = 1;
+			if (!quiet) {
+				if (argc == 0)
+					warn("%s: %s",
+					    "(stdin)", "fstat");
+				else
+					warn("%s: %s",
+					    argv[0], "lstat" + usestat);
+			}
+		} else if (am_readlink && statfmt[1] == 'Y' &&
+		    (st.st_mode & S_IFMT) != S_IFLNK) {
+			linkfail = 1;
 			if (!quiet)
-				warn("%s: %s",
-				    argc == 0 ? "(stdin)" : argv[0],
-				    usestat ? "stat" : "lstat");
+				warnx("%s: Not a symbolic link", argv[0]);
 		} else
 			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
