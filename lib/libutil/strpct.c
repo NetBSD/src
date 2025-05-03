@@ -1,11 +1,11 @@
-/* $NetBSD: strpct.c,v 1.4 2025/05/02 20:00:45 rillig Exp $ */
+/*	$NetBSD: strpct.c,v 1.5 2025/05/03 07:22:52 rillig Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Erik E. Fair
+ * by Erik E. Fair and Roland Illig.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,13 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.4 2025/05/02 20:00:45 rillig Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.5 2025/05/03 07:22:52 rillig Exp $");
 
-#include <stdint.h>
-#include <locale.h>
 #include <limits.h>
+#include <locale.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <errno.h>
 #include <util.h>
 
 static uintmax_t
@@ -61,17 +61,12 @@ strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
     size_t digits)
 {
 
-	switch (bufsiz) {
-	case 1:
-		*buf = '\0';
-		/*FALLTHROUGH*/
-	case 0:
+	if (bufsiz == 1)
+		buf[0] = '\0';
+	if (bufsiz <= 1)
 		return buf;
-	default:
-		break;
-	}
 
-	int sign = (numerator < 0) != (denominator < 0) ? 1 : 0;
+	int sign = (numerator < 0) != (denominator < 0);
 	(void)strpct(buf + sign, bufsiz - sign, imax_abs(numerator),
 	    imax_abs(denominator), digits);
 	if (sign)
@@ -79,44 +74,85 @@ strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
 	return buf;
 }
 
+typedef struct {
+	unsigned hi;
+	uintmax_t lo;
+} bignum;
+
+static bignum
+bignum_plus(bignum x, bignum y)
+{
+	x.hi += y.hi;
+	if (x.lo + y.lo < x.lo)
+		x.hi++;
+	x.lo += y.lo;
+	return x;
+}
+
+static bignum
+bignum_minus_u(bignum x, uintmax_t y)
+{
+	if (x.lo - y > x.lo)
+		x.hi--;
+	x.lo -= y;
+	return x;
+}
+
+static bignum
+bignum_times_10(bignum x)
+{
+	bignum x2 = bignum_plus(x, x);
+	bignum x4 = bignum_plus(x2, x2);
+	bignum x8 = bignum_plus(x4, x4);
+	return bignum_plus(x2, x8);
+}
+
+static bool
+bignum_ge_u(bignum x, uintmax_t y)
+{
+	return x.hi > 0 || x.lo >= y;
+}
+
 char *
 strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
     size_t digits)
 {
-	uintmax_t factor, result;
-	size_t u;
-
-	factor = 100;
-	for (u = 0; u < digits; u++) {
-		/* watch out for overflow! */
-		if (factor < (UINTMAX_MAX / 10))
-			factor *= 10;
-		else
-			break;
-	}
-
-	/* watch out for overflow! */
-	if (numerator < (UINTMAX_MAX / factor))
-		numerator *= factor;
-	else {
-		/* toss some of the bits of lesser significance */
-		denominator /= factor;
-	}
+	char *p = buf;
+	size_t n = bufsiz;
 
 	if (denominator == 0)
 		denominator = 1;
 
-	result = numerator / denominator;
+	if (numerator >= denominator) {
+		size_t nw = snprintf(p, n, "%ju", numerator / denominator);
+		if (nw >= n)
+			return buf;
+		p += nw, n -= nw;
+		numerator %= denominator;
+	}
 
-	if (digits == 0)
-		(void)snprintf(buf, bufsiz, "%ju", result);
-	else {
-		factor /= 100;		/* undo initialization */
+	bignum num = { 0, numerator };
+	for (size_t i = 0; i < 2 + digits; i++) {
+		num = bignum_times_10(num);
 
-		(void)snprintf(buf, bufsiz, "%ju%s%0*ju",
-		    result / factor, localeconv()->decimal_point, (int)u,
-		    result % factor);
-	}       
+		unsigned digit = 0;
+		for (; bignum_ge_u(num, denominator); digit++)
+			num = bignum_minus_u(num, denominator);
 
+		if (i > 0 || p > buf || digit > 0) {
+			size_t nw = snprintf(p, n, "%u", digit);
+			if (nw >= n)
+				break;
+			p += nw, n -= nw;
+		}
+
+		if (i == 1 && digits > 0) {
+			size_t nw = snprintf(p, n, "%s",
+			    localeconv()->decimal_point);
+			if (nw >= n)
+				break;
+			p += nw, n -= nw;
+		}
+	}
 	return buf;
 }

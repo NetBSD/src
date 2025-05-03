@@ -1,4 +1,4 @@
-.\" $NetBSD: strpct.3,v 1.6 2014/03/18 18:20:38 riastradh Exp $
+.\" $NetBSD: strpct.3,v 1.7 2025/05/03 07:22:52 rillig Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2012
+.Dd May 3, 2025
 .Dt STRPCT 3
 .Os
 .Sh NAME
@@ -56,22 +56,17 @@ without using floating point arithmetic.
 and
 .Fn strspct
 always return a pointer to a NUL-terminated (unless
-.Fa buflen
+.Fa bufsiz
 is
 .Dv 0 )
 formatted string which
 is placed in
-.Fa buf
-and is up to
-.Fa buflen
-characters.
-If there was an overflow, the formatted string will reflect that precision
-loss.
+.Fa buf .
 .Sh EXAMPLES
 .Bd -literal -offset indent
-strpct(buf, buflen, 1, 16, 3);
+strpct(buf, sizeof(buf), 1, 16, 3);
 \(rA "6.250"
-strpct(buf, buflen, 1, 2, 0);
+strpct(buf, sizeof(buf), 1, 2, 0);
 \(rA "50"
 .Ed
 .Sh HISTORY
@@ -96,4 +91,5 @@ and
 appeared separately in libutil for
 .Nx 6.0 .
 .Sh AUTHORS
-.An Erik E. Fair Aq Mt fair@netbsd.org
+.An Erik E. Fair Aq Mt fair@NetBSD.org
+.An Roland Illig Aq Mt rillig@NetBSD.org
