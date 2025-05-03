@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.118 2024/12/12 14:23:52 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.119 2025/05/03 14:04:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.118 2024/12/12 14:23:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.119 2025/05/03 14:04:05 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1130,6 +1130,20 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0400, 125000000 },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0800, 125000000 },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0c00, 125000000 },
+	    },
+	},
+	{   "EXAR XR17D358",
+	    {	PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V358, 0,      0       },
+	    {   0xffff, 0xffff, 0,      0       },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0400, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0800, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0c00, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1800, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1c00, 125000000 },
 	    },
 	},
 
