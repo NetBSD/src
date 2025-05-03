@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.18 2024/04/04 00:46:41 riastradh Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.19 2025/05/03 19:55:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.18 2024/04/04 00:46:41 riastradh Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.19 2025/05/03 19:55:32 riastradh Exp $")
 #endif
 
 /*
@@ -78,11 +78,7 @@ ENTRY(__setjmp14)
 	pushl	%edx			/* oset (signal mask saved to) */
 	pushl	$0			/* set := NULL */
 	pushl	$0			/* how := 0 (ignored) */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-#else
-	call	_C_LABEL(__sigprocmask14)
-#endif
 	addl	$12,%esp		/* pop sigprocmask args */
 	PIC_EPILOGUE
 
@@ -120,11 +116,7 @@ ENTRY(__longjmp14)
 	pushl	$0			/* oset := NULL */
 	pushl	%edx			/* set (signal mask restored from) */
 	pushl	$3			/* how := SIG_SETMASK */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
-#else
-	call	_C_LABEL(__sigprocmask14)
-#endif
 	addl	$12,%esp		/* pop sigprocmask args */
 	PIC_EPILOGUE
 

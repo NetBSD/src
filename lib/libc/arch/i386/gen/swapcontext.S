@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.9 2025/05/03 19:55:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,18 +31,14 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.9 2025/05/03 19:55:32 riastradh Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
 	pushl	%ecx			/* push oucp */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(_getcontext))
-#else
-	call	_C_LABEL(_getcontext)
-#endif
 	addl	$4,%esp			/* pop oucp */
 	PIC_EPILOGUE
 	testl	%eax,%eax
@@ -59,13 +55,9 @@ ENTRY(swapcontext)
 	movl	8(%esp),%ecx
 	PIC_PROLOGUE
 	pushl	%ecx			/* push ucp */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(setcontext))
-#else
-	call	_C_LABEL(setcontext)
-#endif
 	addl	$4,%esp			/* pop ucp */
 	PIC_EPILOGUE
 	/* No need to error-check: setcontext() must have failed. */
-2:	ret	
+2:	ret
 END(swapcontext)

@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.9 2025/05/03 19:55:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.9 2025/05/03 19:55:32 riastradh Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -48,11 +48,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	movl	%ecx,%esp
 	PIC_PROLOGUE
 	pushl	%ecx
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(_getcontext))
-#else
-	call	_C_LABEL(_getcontext)
-#endif
 	addl	$4,%esp
 	PIC_EPILOGUE
 	movl	4(%esp),%ecx		/* uc_link */
@@ -62,19 +58,11 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	jnz	9f	/* watch out for local label use in PIC_* */
 
 	/* normal exit */
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(exit))
-#else
-	call	_C_LABEL(exit)
-#endif
 	/* NOTREACHED */
 
 9:
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(setcontext))
-#else
-	call	_C_LABEL(setcontext)
-#endif
 	/* NOTREACHED */
 
 	/* something is wrong, pull the brake */

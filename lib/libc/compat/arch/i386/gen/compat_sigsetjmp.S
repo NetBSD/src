@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2014/05/23 02:34:33 uebayasi Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.4 2025/05/03 19:55:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.3 2014/05/23 02:34:33 uebayasi Exp $")
+	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.4 2025/05/03 19:55:32 riastradh Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -48,11 +48,7 @@ ENTRY(sigsetjmp)
 
 	PIC_PROLOGUE
 	pushl	$0
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigblock))
-#else
-	call	_C_LABEL(sigblock)
-#endif
 	addl	$4,%esp
 	PIC_EPILOGUE
 
@@ -76,11 +72,7 @@ ENTRY(siglongjmp)
 
 	PIC_PROLOGUE
 	pushl	24(%edx)
-#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(sigsetmask))
-#else
-	call	_C_LABEL(sigsetmask)
-#endif
 	addl	$4,%esp
 	PIC_EPILOGUE
 

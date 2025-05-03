@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.6 2014/05/23 02:34:19 uebayasi Exp $	*/
+/*	$NetBSD: __clone.S,v 1.7 2025/05/03 19:55:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,17 +77,11 @@ ENTRY(__clone)
 	jne	2f		/* we're the parent */
 	call	*%ebp		/* this is the clone, call the function */
 
-#ifdef __PIC__
 	PIC_PROLOGUE
 	pushl	%eax		/* clone does _exit(func(arg)); */
 	call	PIC_PLT(_C_LABEL(_exit))
 	addl	$4,%esp
 	PIC_EPILOGUE
-#else
-	pushl	%eax
-	call	_C_LABEL(_exit)
-	addl	$4,%esp
-#endif
 
 2:
 	addl	$12,%esp
