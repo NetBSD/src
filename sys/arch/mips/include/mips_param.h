@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.55 2025/05/03 02:00:46 riastradh Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.56 2025/05/03 02:00:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_MIPS_MIPS_PARAM_H_
+#define	_MIPS_MIPS_PARAM_H_
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -199,3 +202,5 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #endif
+
+#endif	/* _MIPS_MIPS_PARAM_H_ */
