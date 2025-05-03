@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.39 2017/12/29 09:27:01 maya Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.40 2025/05/03 02:00:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2017/12/29 09:27:01 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2025/05/03 02:00:46 riastradh Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -99,6 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2017/12/29 09:27:01 maya Ex
  * process_set_pc(proc)
  *	Set the process's program counter.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

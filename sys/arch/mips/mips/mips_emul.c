@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.31 2021/11/16 06:15:48 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.32 2025/05/03 02:00:46 riastradh Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.31 2021/11/16 06:15:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.32 2025/05/03 02:00:46 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

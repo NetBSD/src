@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.12 2021/05/29 12:35:27 simonb Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.13 2025/05/03 02:00:46 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -25,6 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

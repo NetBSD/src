@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.59 2021/12/05 02:59:50 msaitoh Exp $	*/
+/*	$NetBSD: fp.S,v 1.60 2025/05/03 02:00:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -33,6 +33,10 @@
  *
  *	@(#)fp.s	8.1 (Berkeley) 6/10/93
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/cdefs.h>
 

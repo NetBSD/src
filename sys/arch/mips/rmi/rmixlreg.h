@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.5 2021/07/24 21:31:33 andvar Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.6 2025/05/03 02:00:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 
 #ifndef _MIPS_RMI_RMIXLREGS_H_
 #define _MIPS_RMI_RMIXLREGS_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/endian.h>
 

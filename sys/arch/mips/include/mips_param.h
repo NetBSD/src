@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.54 2025/04/25 00:26:58 riastradh Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.55 2025/05/03 02:00:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,6 +27,7 @@
  */
 
 #ifdef _KERNEL_OPT
+#include "opt_cputype.h"
 #include "opt_param.h"
 #endif
 

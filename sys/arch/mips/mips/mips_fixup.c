@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.23 2022/01/02 16:03:46 christos Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.24 2025/05/03 02:00:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.23 2022/01/02 16:03:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.24 2025/05/03 02:00:46 riastradh Exp $");
 
+#include "opt_cputype.h"
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
+
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
