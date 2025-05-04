@@ -1,27 +1,43 @@
-/*	$NetBSD: msg_383.c,v 1.1 2024/11/23 16:48:35 rillig Exp $	*/
+/*	$NetBSD: msg_383.c,v 1.2 2025/05/04 08:37:09 rillig Exp $	*/
 # 3 "msg_383.c"
 
-// Test for message: passing '%s' to argument %d discards '%s' [383]
+// Test for message: passing '%s' as argument %d to '%s' discards '%s' [383]
 
 /* lint1-extra-flags: -X 351 */
 
 void sink_char(char *, const char *, volatile char *, const volatile char *);
 void sink_int(int *, const int *, volatile int *, const volatile int *);
 
+void (*indirect_char)(char *, const char *, volatile char *, const volatile char *);
+
+struct {
+	void (*member_char)(char *, const char *, volatile char *, const volatile char *);
+} doubly_indirect;
+
 void
 caller(const volatile char *cvcp, const volatile int *cvip, int (*fn)(void))
 {
-	/* expect+3: warning: passing 'pointer to const volatile char' to argument 1 discards 'const volatile' [383] */
-	/* expect+2: warning: passing 'pointer to const volatile char' to argument 2 discards 'volatile' [383] */
-	/* expect+1: warning: passing 'pointer to const volatile char' to argument 3 discards 'const' [383] */
+	/* expect+3: warning: passing 'pointer to const volatile char' as argument 1 to 'sink_char' discards 'const volatile' [383] */
+	/* expect+2: warning: passing 'pointer to const volatile char' as argument 2 to 'sink_char' discards 'volatile' [383] */
+	/* expect+1: warning: passing 'pointer to const volatile char' as argument 3 to 'sink_char' discards 'const' [383] */
 	sink_char(cvcp, cvcp, cvcp, cvcp);
-	/* expect+3: warning: passing 'pointer to const volatile int' to argument 1 discards 'const volatile' [383] */
-	/* expect+2: warning: passing 'pointer to const volatile int' to argument 2 discards 'volatile' [383] */
-	/* expect+1: warning: passing 'pointer to const volatile int' to argument 3 discards 'const' [383] */
+	/* expect+3: warning: passing 'pointer to const volatile int' as argument 1 to 'sink_int' discards 'const volatile' [383] */
+	/* expect+2: warning: passing 'pointer to const volatile int' as argument 2 to 'sink_int' discards 'volatile' [383] */
+	/* expect+1: warning: passing 'pointer to const volatile int' as argument 3 to 'sink_int' discards 'const' [383] */
 	sink_int(cvip, cvip, cvip, cvip);
 	/* expect+4: warning: converting 'pointer to function(void) returning int' to incompatible 'pointer to char' for argument 1 [153] */
 	/* expect+3: warning: converting 'pointer to function(void) returning int' to incompatible 'pointer to const char' for argument 2 [153] */
 	/* expect+2: warning: converting 'pointer to function(void) returning int' to incompatible 'pointer to volatile char' for argument 3 [153] */
 	/* expect+1: warning: converting 'pointer to function(void) returning int' to incompatible 'pointer to const volatile char' for argument 4 [153] */
 	sink_char(fn, fn, fn, fn);
+
+	/* expect+3: warning: passing 'pointer to const volatile char' as argument 1 to 'indirect_char' discards 'const volatile' [383] */
+	/* expect+2: warning: passing 'pointer to const volatile char' as argument 2 to 'indirect_char' discards 'volatile' [383] */
+	/* expect+1: warning: passing 'pointer to const volatile char' as argument 3 to 'indirect_char' discards 'const' [383] */
+	indirect_char(cvcp, cvcp, cvcp, cvcp);
+
+	/* expect+3: warning: passing 'pointer to const volatile char' as argument 1 to 'function(pointer to char, pointer to const char, pointer to volatile char, pointer to const volatile char) returning void' discards 'const volatile' [383] */
+	/* expect+2: warning: passing 'pointer to const volatile char' as argument 2 to 'function(pointer to char, pointer to const char, pointer to volatile char, pointer to const volatile char) returning void' discards 'volatile' [383] */
+	/* expect+1: warning: passing 'pointer to const volatile char' as argument 3 to 'function(pointer to char, pointer to const char, pointer to volatile char, pointer to const volatile char) returning void' discards 'const' [383] */
+	doubly_indirect.member_char(cvcp, cvcp, cvcp, cvcp);
 }

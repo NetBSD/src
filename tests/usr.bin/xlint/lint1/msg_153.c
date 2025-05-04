@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_153.c,v 1.11 2025/02/24 19:56:27 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.12 2025/05/04 08:37:09 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: converting '%s' to incompatible '%s' for argument %d [153]
@@ -35,9 +35,9 @@ qualifiers(char *ptr, const volatile char *cvptr)
 {
 	sink_qualifiers(ptr, ptr, ptr, ptr);
 
-	/* expect+3: warning: passing 'pointer to const volatile char' to argument 1 discards 'const volatile' [383] */
-	/* expect+2: warning: passing 'pointer to const volatile char' to argument 2 discards 'volatile' [383] */
-	/* expect+1: warning: passing 'pointer to const volatile char' to argument 3 discards 'const' [383] */
+	/* expect+3: warning: passing 'pointer to const volatile char' as argument 1 to 'sink_qualifiers' discards 'const volatile' [383] */
+	/* expect+2: warning: passing 'pointer to const volatile char' as argument 2 to 'sink_qualifiers' discards 'volatile' [383] */
+	/* expect+1: warning: passing 'pointer to const volatile char' as argument 3 to 'sink_qualifiers' discards 'const' [383] */
 	sink_qualifiers(cvptr, cvptr, cvptr, cvptr);
 }
 

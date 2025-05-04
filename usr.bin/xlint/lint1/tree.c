@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.682 2025/04/12 17:22:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.683 2025/05/04 08:37:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.682 2025/04/12 17:22:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.683 2025/05/04 08:37:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -591,6 +591,15 @@ expr_derive_type(type_t *tp, tspec_t t)
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
+}
+
+static const char *
+function_call_descr(const function_call *call)
+{
+	if ((call->func->tn_op == ADDR || call->func->tn_op == LOAD)
+	    && call->func->u.ops.left->tn_op == NAME)
+		return call->func->u.ops.left->u.sym->s_name;
+	return type_name(call->func->tn_type->t_subt);
 }
 
 /* Create an expression from a unary or binary operator and its operands. */
@@ -2020,7 +2029,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (mp->m_balance_operands || (!allow_c90 && (op == SHL || op == SHR)))
 		balance(op, &ln, &rn);
 
-	if (!typeok(op, 0, ln, rn))
+	if (!typeok(op, NULL, 0, ln, rn))
 		return NULL;
 
 	tnode_t *ntn;
@@ -2981,7 +2990,7 @@ check_unconst_function(const type_t *lstp, const tnode_t *rn)
 }
 
 static bool
-check_assign_void_pointer_compat(op_t op, int arg,
+check_assign_void_pointer_compat(op_t op, const function_call *call, int arg,
 				 tspec_t lt,
 				 const type_t *lstp, tspec_t lst,
 				 const tnode_t *rn,
@@ -3007,8 +3016,9 @@ check_assign_void_pointer_compat(op_t op, int arg,
 			    qualifiers + 1, type_name(rtp));
 			break;
 		case FARG:
-			/* passing '%s' to argument %d discards '%s' */
-			warning(383, type_name(rtp), arg, qualifiers + 1);
+			/* passing '%s' as argument %d to '%s' discards '%s' */
+			warning(383, type_name(rtp), arg,
+			    function_call_descr(call), qualifiers + 1);
 			break;
 		default:
 			/* operator '%s' discards '%s' from '%s' */
@@ -3103,7 +3113,7 @@ warn_assign(op_t op, int arg,
  * Returns whether the types are (almost) compatible.
  */
 static bool
-check_assign_types_compatible(op_t op, int arg,
+check_assign_types_compatible(op_t op, const function_call *call, int arg,
 			      const tnode_t *ln, const tnode_t *rn)
 {
 	tspec_t lt, rt, lst = NO_TSPEC, rst = NO_TSPEC;
@@ -3132,7 +3142,7 @@ check_assign_types_compatible(op_t op, int arg,
 
 	check_assign_void_pointer(op, arg, lt, lst, rt, rst);
 
-	if (check_assign_void_pointer_compat(op, arg,
+	if (check_assign_void_pointer_compat(op, call, arg,
 	    lt, lstp, lst, rn, rtp, rt, rstp, rst))
 		return true;
 
@@ -3219,7 +3229,7 @@ check_null_effect(const tnode_t *tn)
  * the operator, such as being integer, floating or scalar.
  */
 static bool
-typeok_op(op_t op, int arg,
+typeok_op(op_t op, const function_call *call, int arg,
 	  const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
@@ -3268,7 +3278,7 @@ typeok_op(op_t op, int arg,
 	case INIT:
 	case FARG:
 	case RETURN:
-		if (!check_assign_types_compatible(op, arg, ln, rn))
+		if (!check_assign_types_compatible(op, call, arg, ln, rn))
 			return false;
 		goto assign;
 	case MULASS:
@@ -3415,7 +3425,8 @@ typeok_enum(op_t op, const mod_t *mp, int arg,
 
 /* Perform most type checks. Return whether the types are ok. */
 bool
-typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
+typeok(op_t op, const function_call *call, int arg,
+    const tnode_t *ln, const tnode_t *rn)
 {
 
 	const mod_t *mp = &modtab[op];
@@ -3431,7 +3442,7 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	if (!typeok_scalar(op, mp, ltp, lt, rtp, rt))
 		return false;
 
-	if (!typeok_op(op, arg, ln, ltp, lt, rn, rtp, rt))
+	if (!typeok_op(op, call, arg, ln, ltp, lt, rn, rtp, rt))
 		return false;
 
 	typeok_enum(op, mp, arg, ln, ltp, rn, rtp);
@@ -4498,19 +4509,17 @@ add_function_argument(function_call *call, tnode_t *arg)
  * the type of the parameter.
  */
 static tnode_t *
-check_prototype_argument(
-	int n,		/* pos of arg */
-	type_t *tp,		/* expected type (from prototype) */
-	tnode_t *tn)		/* argument */
+check_prototype_argument(const function_call *call, int arg,
+    type_t *tp, tnode_t *tn)
 {
 	tnode_t *ln = xcalloc(1, sizeof(*ln));
 	ln->tn_type = expr_unqualified_type(tp);
 	ln->tn_lvalue = true;
-	if (typeok(FARG, n, ln, tn)) {
+	if (typeok(FARG, call, arg, ln, tn)) {
 		bool dowarn;
 		if (!types_compatible(tp, tn->tn_type,
 		    true, false, (dowarn = false, &dowarn)) || dowarn)
-			tn = convert(FARG, n, tp, tn);
+			tn = convert(FARG, arg, tp, tn);
 	}
 	free(ln);
 	return tn;
@@ -4565,7 +4574,7 @@ check_function_arguments(const function_call *call)
 		call->args[i] = arg;
 
 		arg = param != NULL
-		    ? check_prototype_argument(i + 1, param->s_type, arg)
+		    ? check_prototype_argument(call, i + 1, param->s_type, arg)
 		    : promote(NOOP, true, arg);
 		call->args[i] = arg;
 

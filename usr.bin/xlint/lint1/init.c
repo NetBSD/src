@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.273 2025/04/12 15:57:25 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.274 2025/05/04 08:37:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.273 2025/04/12 15:57:25 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.274 2025/05/04 08:37:09 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -259,7 +259,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(rn->tn_type));
-	if (!typeok(INIT, 0, ln, rn))
+	if (!typeok(INIT, NULL, 0, ln, rn))
 		return;
 
 	memory_pool saved_mem = expr_save_memory();
