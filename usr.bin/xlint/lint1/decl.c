@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.417 2025/04/12 15:57:25 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.418 2025/05/04 09:40:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.417 2025/04/12 15:57:25 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.418 2025/05/04 09:40:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2361,8 +2361,14 @@ declare_parameter(sym_t *sym, bool has_initializer)
 		sym->s_type = gettyp(VOID);
 
 	tspec_t t = sym->s_type->t_tspec;
-	if (t == ARRAY)
-		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
+	if (t == ARRAY) {
+		type_t *subt = block_dup_type(sym->s_type->t_subt);
+		if (sym->s_type->t_const)
+			subt->t_const = true;
+		if (sym->s_type->t_volatile)
+			subt->t_volatile = true;
+		sym->s_type = block_derive_type(subt, PTR);
+	}
 	if (t == FUNC) {
 		if (!allow_c90)
 			/* parameter '%s' has function type, should be ... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_383.c,v 1.3 2025/05/04 09:13:44 rillig Exp $	*/
+/*	$NetBSD: msg_383.c,v 1.4 2025/05/04 09:40:03 rillig Exp $	*/
 # 3 "msg_383.c"
 
 // Test for message: passing '%s' as argument %d to '%s' discards '%s' [383]
@@ -46,12 +46,11 @@ caller(const volatile char *cvcp, const volatile int *cvip, int (*fn)(void))
 typedef int array[8];
 typedef const int *pointer_to_const_array;
 
+// The 'const' applies to the pointer target, making it 'const int *'.
 int const_array_callee(const array);
 
 static inline int
 const_array_caller(pointer_to_const_array ptr)
 {
-	// FIXME: don't warn, as parameter 1 of const_array_callee includes the "const".
-	/* expect+1: warning: passing 'pointer to const int' as argument 1 to 'const_array_callee' discards 'const' [383] */
 	return const_array_callee(ptr);
 }
