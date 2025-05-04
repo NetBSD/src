@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.52 2023/08/27 16:35:51 christos Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.53 2025/05/04 20:26:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -302,11 +302,11 @@ struct m_ext2fs {
 	"\20" \
 	"\16ROCOMPAT_PROJECT" \
 	"\15ROCOMPAT_READONLY" \
-	"\14" \
+	"\14?" \
 	"\13ROCOMPAT_METADATA_CKSUM" \
 	"\12ROCOMPAT_BIGALLOC" \
 	"\11ROCOMPAT_QUOTA" \
-	"\10" \
+	"\10?" \
 	"\07ROCOMPAT_EXTRA_ISIZE" \
 	"\06ROCOMPAT_DIR_NLINK" \
 	"\05ROCOMPAT_GDT_CSUM" \
@@ -337,7 +337,7 @@ struct m_ext2fs {
 	"\017INCOMPAT_LARGEDIR" \
 	"\016INCOMPAT_CSUM_SEED" \
 	"\015INCOMPAT_DIRDATA" \
-	"\014" \
+	"\014?" \
 	"\013INCOMPAT_EA_INODE" \
 	"\012INCOMPAT_FLEX_BG" \
 	"\011INCOMPAT_MMP" \
