@@ -65,6 +65,15 @@ extern "C" {
 #define	MIN(a, b) 		((a) > (b) ? (b) : (a))
 #endif
 
+/* Sanity check for cross-build bootstrap tools */
+#if !defined(BYTE_ORDER)
+#error "Missing BYTE_ORDER defines"
+#elif !defined(LITTLE_ENDIAN)
+#error "Missing LITTLE_ENDIAN defines"
+#elif !defined(BIG_ENDIAN)
+#error "Missing BIG_ENDIAN defines"
+#endif
+
 #ifndef TRUE
 #define	TRUE	1
 #endif

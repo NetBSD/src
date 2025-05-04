@@ -126,7 +126,7 @@ label_info_cb(const char *lname, const ctf_lblinfo_t *linfo, void *arg)
 		 * Allow caller not to allocate storage to test if label exists
 		 */
 		if (((linfo_cb_arg_t *)arg)->lca_info != NULL)
-			bcopy(linfo, ((linfo_cb_arg_t *)arg)->lca_info,
+			memcpy(((linfo_cb_arg_t *)arg)->lca_info, linfo,
 			    sizeof (ctf_lblinfo_t));
 		return (1); /* Indicate we found a match */
 	}

@@ -47,6 +47,9 @@ ctf_fdopen
 ctf_free
 ctf_func_args
 ctf_func_info
+ctf_get_ctm_info
+ctf_get_ctt_index
+ctf_get_ctt_info
 ctf_get_ctt_size
 ctf_getmodel
 ctf_getspecific
@@ -94,6 +97,7 @@ ctf_type_pointer
 ctf_type_qname
 ctf_type_reference
 ctf_type_resolve
+ctf_type_rname
 ctf_type_size
 ctf_type_visit
 ctf_update
