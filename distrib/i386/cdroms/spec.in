@@ -1,3 +1,5 @@
+# $NetBSD: spec.in,v 1.2 2025/05/04 16:09:47 pgoyette Exp $
+
 ./boot 		type=file uname=root gname=wheel mode=644
 ./install.sh 	type=file uname=root gname=wheel mode=755
 ./mnt2 		type=dir  uname=root gname=wheel mode=755

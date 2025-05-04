@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.44 2024/05/14 17:15:13 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.45 2025/05/04 16:09:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,12 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRI
 # understand rockridge.
 CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
 CDINSTKERNEL=	../../instkernel
-CDKERNELS=	netbsd-GENERIC.gz       netbsd
+.if ${KERNEL_DIR:Uno} == "yes"
+CDKERNELS=	netbsd-GENERIC.gz		netbsd/kernel
+CDKERNELS+=	netbsd-GENERIC.symbols.gz       netbsd/kernel.gdb
+.else
+CDKERNELS=	netbsd-GENERIC.gz		netbsd
+.endif
 CDRELEASE_NOISOS=	true
 CD_SETS+=	base etc gpufw
 
