@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.15 2022/05/28 21:14:57 andvar Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.16 2025/05/04 19:28:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.15 2022/05/28 21:14:57 andvar Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.16 2025/05/04 19:28:58 rillig Exp $");
 #endif
 
 /*
@@ -129,7 +129,7 @@ mopProcess(struct if_info *ii, u_char *pkt)
 {
 	u_char  *dst, *src, *p, mopcode, tmpc, ilen;
 	u_short *ptype, moplen, itype, len;
-	int	idx, i, device, trans;
+	int	idx, i, trans;
 
 	dst	= pkt;
 	src	= pkt+6;
@@ -179,8 +179,6 @@ mopProcess(struct if_info *ii, u_char *pkt)
 	tmpc	= mopGetChar(pkt,&idx);		/* Reserved  */
 	(void)mopGetShort(pkt,&idx);		/* Receipt # */
 
-	device	= 0;					/* Unknown Device */
-	
 	itype	= mopGetShort(pkt,&idx);
 
 	while (idx < (int)(moplen + 2)) {
@@ -215,7 +213,7 @@ mopProcess(struct if_info *ii, u_char *pkt)
 			idx = idx + 10;
 			break;
 	        case MOP_K_INFO_SOFD:
-			device = mopGetChar(pkt,&idx);
+			(void)mopGetChar(pkt, &idx);
 			break;
 		case MOP_K_INFO_SFID:
 			tmpc = mopGetChar(pkt,&idx);
@@ -232,12 +230,7 @@ mopProcess(struct if_info *ii, u_char *pkt)
 			idx = idx + 2;
 			break;
 		default:
-			if (((device = NMA_C_SOFD_LCS) ||   /* DECserver 100 */
-			     (device = NMA_C_SOFD_DS2) ||   /* DECserver 200 */
-			     (device = NMA_C_SOFD_DP2) ||   /* DECserver 250 */
-			     (device = NMA_C_SOFD_DS3)) &&  /* DECserver 300 */
-			    ((itype > 101) && (itype < 107)))
-			{
+			if (itype > 101 && itype < 107) {
 				switch (itype) {
 				case 102:
 					idx = idx + ilen;
@@ -267,6 +260,4 @@ mopProcess(struct if_info *ii, u_char *pkt)
 		}
 		itype = mopGetShort(pkt,&idx); 
 	}
-
 }
-
