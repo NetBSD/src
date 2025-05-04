@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.13 2009/01/12 11:32:44 tsutsui Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.14 2025/05/04 14:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -303,27 +303,23 @@ ie_poll(struct iodesc *desc, void *pkt, int len)
 	/* printf("slot %d: %x\n", slot, status); */
 	if ((status & (IE_FD_COMPLETE | IE_FD_OK)) ==
 	    (IE_FD_COMPLETE | IE_FD_OK)) {
-		if (status & IE_FD_OK) {
-			length = iem->im_rbd[slot].ie_rbd_actual & 0x3fff;
-			if (length > len)
-				length = len;
-			memcpy(pkt, (void *)&iem->im_rxbuf[slot * IE_RBUF_SIZE],
-			    length);
+		length = iem->im_rbd[slot].ie_rbd_actual & 0x3fff;
+		if (length > len)
+			length = len;
+		memcpy(pkt, (void *)&iem->im_rxbuf[slot * IE_RBUF_SIZE],
+		    length);
 
-			iem->im_rfd[slot].ie_fd_status = 0;
-			iem->im_rfd[slot].ie_fd_last |= IE_FD_LAST;
-			iem->im_rfd[(slot+NRXBUF-1)%NRXBUF].ie_fd_last &=
-			    ~IE_FD_LAST;
-			iem->im_rbd[slot].ie_rbd_actual = 0;
-			iem->im_rbd[slot].ie_rbd_length |= IE_RBD_LAST;
-			iem->im_rbd[(slot+NRXBUF-1)%NRXBUF].ie_rbd_length &=
-			    ~IE_RBD_LAST;
+		iem->im_rfd[slot].ie_fd_status = 0;
+		iem->im_rfd[slot].ie_fd_last |= IE_FD_LAST;
+		iem->im_rfd[(slot+NRXBUF-1)%NRXBUF].ie_fd_last &=
+		    ~IE_FD_LAST;
+		iem->im_rbd[slot].ie_rbd_actual = 0;
+		iem->im_rbd[slot].ie_rbd_length |= IE_RBD_LAST;
+		iem->im_rbd[(slot+NRXBUF-1)%NRXBUF].ie_rbd_length &=
+		    ~IE_RBD_LAST;
 #if 0
-			printf("S%d\n", slot);
+		printf("S%d\n", slot);
 #endif
-		} else {
-			printf("shit\n");
-		}
 		slot++;
 		/* should move descriptor onto end of queue... */
 	}
