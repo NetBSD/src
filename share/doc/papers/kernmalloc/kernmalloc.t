@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernmalloc.t,v 1.6 2025/02/17 22:56:46 andvar Exp $
+.\"	$NetBSD: kernmalloc.t,v 1.7 2025/05/04 19:56:15 andvar Exp $
 .\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -465,7 +465,7 @@ that cannot wait for memory to become available.
 Clients indicate their willingness (and ability) to wait with a flag
 to the allocation routine.
 For clients that are willing to wait,
-the allocator guarrentees that their request will succeed.
+the allocator guarantees that their request will succeed.
 Thus, these clients can need not check the return value from the allocator.
 If memory is unavailable and the client cannot wait,
 the allocator returns a null pointer.
