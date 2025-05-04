@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.11 2008/09/12 14:40:46 christos Exp $	*/
+/*	$NetBSD: icfs.c,v 1.12 2025/05/04 20:18:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  * icfs: layer everything in lowercase
  * (unfinished, as is probably fairly easy to tell)
  *
- * Now, this "layered" file system demostrates a nice gotcha with
+ * Now, this "layered" file system demonstrates a nice gotcha with
  * mangling readdir entries.  In case we can't unmangle the name
  * (cf. rot13fs), we need to map the mangled name back to the real
  * name in lookup and store the actual lower layer name instead of
