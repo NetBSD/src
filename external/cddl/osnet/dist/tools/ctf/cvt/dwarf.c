@@ -2137,11 +2137,11 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 			break;
 		default:
 			terminate("file contains DWARF for unsupported "
-			    "language %#lx", lang);
+			    "language %#llx", (unsigned long long)lang);
 		}
 	else
-		warning("die %lu: failed to get language attribute: %s\n",
-		    die_off(&dw, cu), dwarf_errmsg(dw.dw_err));
+		warning("die %llu: failed to get language attribute: %s\n",
+		    (unsigned long long)die_off(&dw, cu), dwarf_errmsg(dw.dw_err));
 
 	if ((dw.dw_cuname = die_name(&dw, cu)) != NULL) {
 		char *base = xstrdup(basename(dw.dw_cuname));
