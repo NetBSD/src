@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2104 2025/04/26 21:42:53 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2105 2025/05/05 10:52:26 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -911,6 +911,8 @@ Mailing List:
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/mdocml/dist
+Vendor tag:	KRISTAPS
+Release tag:	mdocml-X-Y-Z for mandoc-X.Y.Z
 Notes:
 
 Package:	mesa-demos
