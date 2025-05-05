@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.848 2025/04/30 07:22:17 imil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.848 2025/04/30 07:22:17 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1109,10 +1109,12 @@ init386_ksyms(void)
 		return;
 #endif
 
+#ifdef XEN
 	if (pvh_boot && vm_guest != VM_GUEST_XENPVH) {
 		ksyms_addsyms_elf(0, ((int *)&end) + 1, esym);
 		return;
 	}
+#endif
 
 	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
 		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
