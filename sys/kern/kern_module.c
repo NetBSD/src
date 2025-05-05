@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.172 2025/04/02 22:49:24 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.173 2025/05/05 00:31:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.172 2025/04/02 22:49:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.173 2025/05/05 00:31:48 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -412,6 +412,18 @@ module_builtin_remove(modinfo_t *mi, bool fini)
 	return rv;
 }
 
+#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
+#define LEGACY_MODULE_PATH					\
+	snprintf(module_base, sizeof(module_base),		\
+	    "/stand/%s/%s/modules", module_machine, osrelease);
+#else						/* release */
+#define LEGACY_MODULE_PATH					\
+	snprintf(module_base, sizeof(module_base),		\
+	    "/stand/%s/%d.%d/modules", module_machine,		\
+	    __NetBSD_Version__ / 100000000,			\
+	    __NetBSD_Version__ / 1000000 % 100);
+#endif	/* if __NetBSD_Version__ */
+
 /*
  * module_init:
  *
@@ -438,25 +450,28 @@ module_init(void)
 #ifdef KERNEL_DIR
 	const char *booted_kernel = get_booted_kernel();
 	if (booted_kernel) {
+		while (*booted_kernel == '/')	/* ignore leading slashes */
+			booted_kernel++;	/* boot lookup always at root */
 		char *ptr = strrchr(booted_kernel, '/');
-		snprintf(module_base, sizeof(module_base), "/%.*s/modules",
-		    (int)(ptr - booted_kernel), booted_kernel);
+		if (ptr == NULL) {
+			/* no dir name, use legacy module path */
+			if (!module_machine)
+				module_machine = machine;
+			LEGACY_MODULE_PATH;
+		} else {
+			snprintf(module_base, sizeof(module_base),
+			     "/%.*s/modules",
+			    (int)(ptr - booted_kernel), booted_kernel);
+		}
 	} else {
 		strlcpy(module_base, "/netbsd/modules", sizeof(module_base));
 		printf("Cannot find kernel name, loading modules from \"%s\"\n",
 		    module_base);
 	}
-#else
+#else	/* ifdef KERNEL_DIR */
 	if (!module_machine)
 		module_machine = machine;
-#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
-	snprintf(module_base, sizeof(module_base), "/stand/%s/%s/modules",
-	    module_machine, osrelease);
-#else						/* release */
-	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
-	    module_machine, __NetBSD_Version__ / 100000000,
-	    __NetBSD_Version__ / 1000000 % 100);
-#endif
+	LEGACY_MODULE_PATH;
 #endif
 
 	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
