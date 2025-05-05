@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.124 2025/03/02 16:35:41 riastradh Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.125 2025/05/05 14:21:50 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1278,6 +1278,9 @@ __GEN_ENDIAN_DEC(64, le)
 
 #undef roundup
 #define roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+
+#undef roundup2
+#define roundup2(x, m)	((((x) - 1) | ((m) - 1)) + 1)
 
 /* <sys/stat.h> */
 
