@@ -837,6 +837,8 @@ count_types(ctf_header_t *h, caddr_t data)
 		case CTF_K_RESTRICT:
 		case CTF_K_FUNCTION:
 			dptr += idwidth * vlen;
+			if (kind == CTF_K_FUNCTION)
+				dptr = (caddr_t) roundup2((uintptr_t) dptr, 4);
 			break;
 		case CTF_K_ARRAY:
 			if (version == CTF_VERSION_2)
