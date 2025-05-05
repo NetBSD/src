@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.45 2025/05/04 16:09:47 pgoyette Exp $
+# $NetBSD: Makefile.cdrom,v 1.46 2025/05/05 03:48:14 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,11 @@ CDKERNELS=	netbsd-GENERIC.gz		netbsd
 CDRELEASE_NOISOS=	true
 CD_SETS+=	base etc gpufw
 
+.if ${KERNEL_DIR:Uno} == "yes"
+SPEC_EXTRA:=${.PARSEDIR}/spec-dir.in
+.else
 SPEC_EXTRA:=${.PARSEDIR}/spec.in
+.endif
 
 image_md_pre:
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc cdrom/install.sh
