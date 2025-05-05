@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.338 2023/09/08 12:01:56 riastradh Exp $
+#	$NetBSD: Makefile,v 1.339 2025/05/05 17:01:33 gutteridge Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -25,8 +25,7 @@
 #   MKSHARE, if `no', will prevent building and installing
 #	anything in /usr/share.
 #   MKUPDATE, if not `no', will avoid a `make cleandir' at the start of
-#	`make build', as well as having the effects listed in
-#	/usr/share/mk/bsd.README.
+#	`make build', as well as having the effects listed in mk.conf(5).
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
 #	of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
