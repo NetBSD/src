@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.85 2025/04/30 06:24:47 pgoyette Exp $	*/
+/*	$NetBSD: boot2.c,v 1.86 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -134,7 +134,6 @@ void	command_ls(char *);
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_pkboot(char *);
-void	command_dev(char *);
 void	command_consdev(char *);
 void	command_root(char *);
 #ifndef SMALL

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.20 2024/11/27 17:19:37 martin Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.21 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,10 +57,14 @@ extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 static void
 do_bootcfg_command(const char *cmd, char *arg)
 {
-	if (strcmp(cmd, BOOTCFG_CMD_LOAD) == 0)
-		module_add(arg);
-	else if (strcmp(cmd, "fs") == 0)
+	if (strcmp(cmd, BOOTCFG_CMD_DEV) == 0)
+		command_dev(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_FS) == 0)
 		fs_add(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_LOAD) == 0)
+		module_add(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_RNDSEED) == 0)
+		rnd_add(arg);
 	else if (strcmp(cmd, BOOTCFG_CMD_USERCONF) == 0)
 		userconf_add(arg);
 }

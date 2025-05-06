@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.9 2022/01/05 16:01:54 andvar Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.10 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -227,8 +227,6 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 			bootcfg_info.consdev = value;
 		} else if (!strncmp(key, "root", 4)) {
 			bootcfg_info.root = value;
-		} else if (!strncmp(key, BOOTCFG_CMD_LOAD, 4)) {
-			command(BOOTCFG_CMD_LOAD, value);
 		} else if (!strncmp(key, "format", 6)) {
 			printf("value:%c\n", *value);
 			switch (*value) {
@@ -251,8 +249,6 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 			}
 		} else if (!strncmp(key, "clear", 5)) {
 			bootcfg_info.clear = !!atoi(value);
-		} else if (!strncmp(key, BOOTCFG_CMD_USERCONF, 8)) {
-			command(BOOTCFG_CMD_USERCONF, value);
 		} else {
 			command(key, value);
 		}

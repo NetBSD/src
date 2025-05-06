@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.54 2024/09/18 00:44:03 rin Exp $	*/
+/*	$NetBSD: libi386.h,v 1.55 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -149,6 +149,9 @@ void rnd_add(char *);
 void fs_add(char *);
 void userconf_add(char *);
 void module_add_split(const char *, uint8_t);
+
+/* Note: implementations differ in boot2, dosboot & efiboot */
+void command_dev(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2024/11/10 01:54:55 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -178,6 +178,19 @@ main(void)
 	 * If that fails, let the BIOS try the next boot device.
 	 */
 	return (1);
+}
+
+/*
+ * dummy function to satisfy link against call in
+ * sys/arch/i386/stand/lib/bootmenu.c:do_bootcfg_command()
+ */
+
+/* ARGSUSED */
+void
+command_dev(char *arg)
+{
+	(void)arg;
+	return;
 }
 
 /* ARGSUSED */
