@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.98 2023/11/21 23:22:23 gutteridge Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.99 2025/05/06 00:59:18 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.98 2023/11/21 23:22:23 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.99 2025/05/06 00:59:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,7 +483,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	pci_chipset_tag_t pc = pba->pba_pc;
 	pcitag_t tag;
 	pcireg_t id, class;
-	int i;
+	int device, function;
 	bool havehb = false;
 #endif
 
@@ -502,24 +502,28 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
 	 * In order to decide whether the system supports MSI we look
-	 * at the host bridge, which should be device 0 on bus 0.
+	 * at the host bridge, which should be on bus 0. 
 	 * It is better to not enable MSI on systems that
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
 	 * bridge there.  We also deliberately don't enable MSI on
 	 * chipsets from low-end manufacturers like VIA and SiS.
 	 */
-	for (i = 0; i <= 7; i++) {
-		tag = pci_make_tag(pc, 0, 0, i);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	for (device = 0; device < pci_bus_maxdevs(pc, 0); device++) {
+		for (function = 0; function <= 7; function++) {
+			tag = pci_make_tag(pc, 0, device, function);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
-		if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
-		    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
-			havehb = true;
-			break;
+			if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+			    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
+				havehb = true;
+				goto donehb;
+			}
 		}
 	}
+donehb:
+
 	if (havehb == false)
 		return;
 
