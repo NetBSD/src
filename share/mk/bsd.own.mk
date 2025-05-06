@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1417 2025/04/28 19:54:49 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1418 2025/05/06 17:12:33 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1199,6 +1199,7 @@ MKPIE?=		no
 #
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
+    ${MACHINE} == "sparc64" || \
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_MIPS64}
 MKRELRO?=	partial
