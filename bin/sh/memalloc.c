@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.40 2025/05/06 13:09:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.40 2025/05/06 13:09:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,11 +294,7 @@ char *
 growstackstr(void)
 {
 	int len = stackblocksize();
-	if (herefd >= 0 && len >= 1024) {
-		xwrite(herefd, stackblock(), len);
-		sstrnleft = len - 1;
-		return stackblock();
-	}
+
 	growstackblock();
 	sstrnleft = stackblocksize() - len - 1;
 	return stackblock() + len;
