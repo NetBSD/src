@@ -674,3 +674,37 @@ npfctl_npt66_calcadj(npf_netmask_t len, const npf_addr_t *pref_in,
 	}
 	return (uint16_t)adj;
 }
+
+filt_opts_t
+npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
+			npfvar_t *dst_addr, npfvar_t *dst_port, bool fnot)
+{
+	filt_opts_t fopts;
+	fopts.filt.opt3.fo_from.ap_netaddr = src_addr;
+	fopts.filt.opt3.fo_from.ap_portrange = src_port;
+	fopts.fo_finvert = tnot;
+	fopts.filt.opt3.fo_to.ap_netaddr = dst_addr;
+	fopts.filt.opt3.fo_to.ap_portrange = dst_port;
+	fopts.fo_tinvert = fnot;
+	fopts.layer = NPF_RULE_LAYER_3;
+
+	return fopts;
+}
+
+/*
+filt_opts_t
+npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool tnot, npfvar_t *dst_addr,
+			bool fnot, uint8_t eth_type)
+{
+	filt_opts_t fopts;
+	fopts.filt.opt2.from_mac = src_addr;
+	fopts.fo_finvert = tnot;
+	fopts.filt.opt2.to_mac = dst_addr;
+	fopts.fo_tinvert = fnot;
+	fopts.filt.opt2.ether_type = eth_type;
+	fopts.layer = NPF_LAYER_2;
+
+	return fopts;
+}
+
+*/

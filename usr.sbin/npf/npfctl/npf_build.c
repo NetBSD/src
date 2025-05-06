@@ -435,8 +435,8 @@ static bool
 npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
     const filt_opts_t *fopts)
 {
-	const addr_port_t *apfrom = &fopts->fo_from;
-	const addr_port_t *apto = &fopts->fo_to;
+	const addr_port_t *apfrom = &fopts->filt.opt3.fo_from;
+	const addr_port_t *apto = &fopts->filt.opt3.fo_to;
 	bool any_proto, any_addrs, any_ports, stateful;
 	bool any_l4proto, non_tcpudp, tcp_with_nofl;
 	npf_bpf_t *bc;
@@ -498,6 +498,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
 		npfctl_bpf_proto(bc, IPPROTO_UDP);
 		npfctl_bpf_group_exit(bc);
 	}
+
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
 
@@ -927,13 +928,13 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
-		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
+		memcpy(&imfopts.filt.opt3.fo_to, ap2, sizeof(addr_port_t));
 		nt1 = npfctl_build_nat(NPF_NATIN, ifname,
 		    ap1, popts, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
-		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
+		memcpy(&imfopts.filt.opt3.fo_from, ap1, sizeof(addr_port_t));
 		nt2 = npfctl_build_nat(NPF_NATOUT, ifname,
 		    ap2, popts, fopts, flags);
 	}

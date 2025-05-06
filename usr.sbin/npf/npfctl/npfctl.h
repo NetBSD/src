@@ -73,9 +73,23 @@ typedef struct addr_port {
 	npfvar_t *	ap_portrange;
 } addr_port_t;
 
-typedef struct filt_opts {
+typedef struct l3 {
 	addr_port_t	fo_from;
 	addr_port_t	fo_to;
+} opt3;
+
+typedef struct l2 {
+	npfvar_t *	from_mac;
+	npfvar_t *	to_mac;
+	uint8_t		ether_type;
+} opt2;
+
+typedef struct filt_opts {
+	union {
+		opt3 opt3;
+		opt2 opt2;
+	} filt;
+	uint32_t layer;
 	bool		fo_finvert;
 	bool		fo_tinvert;
 } filt_opts_t;
@@ -142,6 +156,8 @@ npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);
+filt_opts_t	npfctl_parse_l3filt_opt(npfvar_t *, npfvar_t *, bool,
+						npfvar_t *, npfvar_t *, bool);
 int		npfctl_nat_ruleset_p(const char *, bool *);
 
 void		usage(void);
