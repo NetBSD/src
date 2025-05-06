@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.40 2025/05/01 08:43:02 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.41 2025/05/06 10:06:01 nat Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.40 2025/05/01 08:43:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.41 2025/05/06 10:06:01 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -634,7 +634,7 @@ brightness_slider(void *arg)
 	PMData pmdata;
 
 	for (;;) {
-		kpause("brslider", false, 2, NULL);
+		kpause("brslider", false, hz / 4, NULL);
 
 		s = splhigh();
 
