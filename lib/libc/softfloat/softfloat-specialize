@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.10 2025/04/27 15:23:27 riastradh Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.11 2025/05/06 23:18:27 riastradh Exp $	*/
 
 /* This is a derivative work. */
 
@@ -97,7 +97,11 @@ float_raise( fp_except newflags )
 	 * the current signal mask.
 	 */
 	sigfillset(&sigmask);
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_BLOCK, &sigmask, &osigmask);
+#else
+	sigprocmask(SIG_BLOCK, &sigmask, &osigmask);
+#endif
 
 	/*
 	 * Find the current signal disposition of SIGFPE.
@@ -168,7 +172,11 @@ float_raise( fp_except newflags )
 	 * around; next time we might make progress instead of calling
 	 * the signal handler again.
 	 */
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_SETMASK, &osigmask, NULL);
+#else
+	sigprocmask(SIG_SETMASK, &osigmask, NULL);
+#endif
     }
 }
 #undef float_exception_mask

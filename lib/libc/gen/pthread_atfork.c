@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.27 2025/04/09 22:10:59 kre Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.28 2025/05/06 23:18:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.27 2025/04/09 22:10:59 kre Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.28 2025/05/06 23:18:27 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -174,7 +174,11 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 	int error;
 
 	sigfillset(&mask);
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_SETMASK, &mask, &omask);
+#else
+	sigprocmask(SIG_SETMASK, &mask, &omask);
+#endif
 
 	mutex_lock(&atfork_lock);
 
@@ -229,7 +233,11 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 
  out:;
 	mutex_unlock(&atfork_lock);
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_SETMASK, &omask, NULL);
+#else
+	sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif
 	return error;
 }
 
