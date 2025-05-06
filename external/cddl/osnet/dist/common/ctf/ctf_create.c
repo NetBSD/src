@@ -796,7 +796,7 @@ ctf_add_reftype(ctf_file_t *fp, uint_t flag, ctf_id_t ref, uint_t kind)
 	ctf_dtdef_t *dtd;
 	ctf_id_t type;
 
-	if (ref == CTF_ERR || ref < 0 || ref > LCTF_MAX_TYPE(fp))
+	if (ref == CTF_ERR || ref > LCTF_MAX_TYPE(fp))
 		return (ctf_set_errno(fp, EINVAL));
 
 	if ((type = ctf_add_generic(fp, flag, NULL, &dtd)) == CTF_ERR)
