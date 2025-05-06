@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.16 2017/04/18 11:35:34 maya Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.17 2025/05/06 23:18:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.16 2017/04/18 11:35:34 maya Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.17 2025/05/06 23:18:37 riastradh Exp $");
 
 
 #include "reentrant.h"
@@ -73,7 +73,9 @@ struct svc_fdset {
 /* The single threaded, one global fd_set version */
 static struct svc_fdset __svc_fdset;
 
+#ifdef _REENTRANT
 static thread_key_t fdsetkey = -2;
+#endif
 
 #ifdef FDSET_DEBUG
 
@@ -152,6 +154,7 @@ svc_fdset_sanitize(struct svc_fdset *fds)
 #endif
 }
 
+#ifdef _REENTRANT
 static void
 svc_fdset_free(void *v)
 {
@@ -162,6 +165,7 @@ svc_fdset_free(void *v)
 	free(fds->fdset);
 	free(fds);
 }
+#endif
 
 static void
 svc_pollfd_init(struct pollfd *pfd, int nfd)
@@ -277,6 +281,7 @@ svc_fdset_resize(int fd, struct svc_fdset *fds)
 static struct svc_fdset *
 svc_fdset_alloc(int fd)
 {
+#ifdef _REENTRANT
 	struct svc_fdset *fds;
 
 	if (!__isthreaded || fdsetkey == -2)
@@ -306,6 +311,9 @@ svc_fdset_alloc(int fd)
 	}
 
 	return svc_fdset_resize(fd, fds);
+#else
+	return svc_fdset_resize(fd, &__svc_fdset);
+#endif
 }
 
 /* allow each thread to have their own copy */
@@ -314,8 +322,10 @@ svc_fdset_init(int flags)
 {
 	DPRINTF("%x", flags);
 	__svc_flags = flags;
+#ifdef _REENTRANT
 	if ((flags & SVC_FDSET_MT) && fdsetkey == -2)
 		fdsetkey = -1;
+#endif
 }
 
 void
