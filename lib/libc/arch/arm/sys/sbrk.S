@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.13 2025/05/03 19:57:13 riastradh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.14 2025/05/06 20:21:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,13 +52,16 @@ _C_LABEL(__curbrk):
  */
 ENTRY(_sbrk)
 	/* get address or offset to __curbrk */
-	PCREL_GET(r2, .Lcurbrk, .LPIC0)
+	ldr	r2, .Lcurbrk
+#ifdef __PIC__
+	add	r2, r2, pc	/* pc = &.LPIC0 */
+#endif
 
 	/* Get the current brk address */
 	ldr	r1, [r2]
 
 	/* Calculate new value */
-	mov	r3, r0
+.LPIC0:	mov	r3, r0
 	adds	r0, r0, r1
 	SYSTRAP(break)
 	_INVOKE_CERROR()
@@ -73,5 +76,5 @@ ENTRY(_sbrk)
 
 	.align	0
 .Lcurbrk:
-	.word	PCREL_SYM(_C_LABEL(__curbrk), .LPIC0)
+	.word	REL_SYM(_C_LABEL(__curbrk), .LPIC0)
 END(_sbrk)

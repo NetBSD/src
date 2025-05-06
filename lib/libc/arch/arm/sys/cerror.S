@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.14 2025/05/03 19:57:13 riastradh Exp $	*/
+/*	$NetBSD: cerror.S,v 1.15 2025/05/06 20:21:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,8 +66,15 @@ ENTRY_NP(CERROR)
 	.fnstart
 	.cfi_startproc
 #endif
-	GOT_INIT(r3, .Lgot, .LPIC0)
-	GOT_GET(r1, .Lgot, .Lerrno)
+#ifdef __PIC__
+	/* Setup the GOT */
+	ldr	r3, .Lgot
+	add	r3, r3, pc	/* pc = &.LPIC0 */
+	ldr	r1, .Lerrno
+.LPIC0:	ldr	r1, [r3, r1]
+#else
+	ldr	r1, .Lerrno
+#endif /* __PIC__ */
 	str	r0, [r1]
 #ifdef __thumb__
 	movs	r0, #0
@@ -82,9 +89,14 @@ ENTRY_NP(CERROR)
 	.fnend
 #endif
 
-	GOT_INITSYM(.Lgot, .LPIC0)
+#ifdef __PIC__
+	.align	0
+.Lgot:
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .LPIC0
+#endif /* __PIC__ */
 	.globl	_C_LABEL(errno)
+
 .Lerrno:
-	.word	GOT_SYM(_C_LABEL(errno))
+	.word	PIC_SYM(_C_LABEL(errno), GOT)
 #endif /* _REENTRANT */
 END(CERROR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.36 2025/05/03 19:57:13 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.37 2025/05/06 20:21:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -189,25 +189,23 @@
 
 #ifdef __PIC__
 #define	REL_SYM(a, b)	((a) - (b))
-#define	PCREL_GET(a, label, pclabel)	\
-	ldr	a, label;		\
-pclabel:				\
-	add	a, a, pc
-#ifdef __thumb__
-#define	PCREL_SYM(a, pclabel)	REL_SYM(a, (pclabel) + 4)
-#else
-#define	PCREL_SYM(a, pclabel)	REL_SYM(a, (pclabel) + 8)
-#endif
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
 	ldr	x, [x, got]
 #define	GOT_INIT(got,gotsym,pclabel) \
-	PCREL_GET(got,gotsym,pclabel)
+	ldr	got, gotsym;	\
+	pclabel: add	got, got, pc
+#ifdef __thumb__
 #define	GOT_INITSYM(gotsym,pclabel) \
 	.align 0;		\
-	gotsym: .word PCREL_SYM(_C_LABEL(_GLOBAL_OFFSET_TABLE_), pclabel)
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+4)
+#else
+#define	GOT_INITSYM(gotsym,pclabel) \
+	.align 0;		\
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+8)
+#endif
 
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
@@ -217,9 +215,6 @@ pclabel:				\
 
 #else
 #define	REL_SYM(a, b)	(a)
-#define	PCREL_GET(a, label, pclabel)	\
-	ldr	a, label
-#define	PCREL_SYM(a, pclabel)	(a)
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	x
 #define	GOT_GET(x,got,sym)	\
