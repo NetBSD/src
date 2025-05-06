@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.o32.mk,v 1.16 2021/04/25 18:44:04 christos Exp $
+#	$NetBSD: bsd.o32.mk,v 1.17 2025/05/06 10:14:36 nia Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 LD+=		-m elf32btsmip
@@ -20,5 +20,8 @@ LDADD+=		-mabi=32 -march=mips3
 LDFLAGS+=	-mabi=32 -march=mips3
 MKDEPFLAGS+=	-mabi=32 -march=mips3
 .endif
+
+# sync with MKRELRO in bsd.own.mk
+NORELRO=	# defined
 
 .include "${.PARSEDIR}/../../Makefile.compat"
