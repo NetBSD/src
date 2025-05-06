@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.199 2025/02/18 10:16:03 imil Exp $	*/
+/*	$NetBSD: locore.S,v 1.200 2025/05/06 04:34:58 imil Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.199 2025/02/18 10:16:03 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.200 2025/05/06 04:34:58 imil Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -241,6 +241,11 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.199 2025/02/18 10:16:03 imil Exp $");
 	addl	$PDE_SIZE,%ebx		; \
 	loop	1b			;
 
+/* record boot start cycle count */
+#define getstarttsc \
+	rdtsc					; \
+	movl	%eax, RELOC(starttsc_lo)	; \
+	movl	%edx, RELOC(starttsc_hi)	;
 
 #ifdef XEN
 #define __ASSEMBLY__
@@ -325,6 +330,12 @@ END(lwp0uarea)
 	.type	_C_LABEL(PDPpaddr), @object
 LABEL(PDPpaddr)		.long	0	/* paddr of PDP, for libkvm */
 END(PDPpaddr)
+	.type	_C_LABEL(starttsc_lo), @object
+LABEL(starttsc_lo)		.long	0	/* low part of rdtsc */
+END(starttsc_lo)
+	.type	_C_LABEL(starttsc_hi), @object
+LABEL(starttsc_hi)		.long	0	/* high part of rdtsc */
+END(starttsc_hi)
 
 	/* Space for the temporary stack */
 	.globl	_C_LABEL(tmpstk)
@@ -344,6 +355,8 @@ END(tmpgdt)
 
 ENTRY(start)
 #ifndef XENPV
+
+	getstarttsc
 
 	/* Warm boot */
 	movw	$0x1234,0x472
@@ -1195,6 +1208,7 @@ END(start)
 #ifndef XENPV
 /* entry point for Xen PVH */
 ENTRY(start_pvh)
+	getstarttsc
 	/* Xen doesn't start us with a valid gdt */
 	movl    $RELOC(gdtdesc_xenpvh), %eax
 	lgdt    (%eax)

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.550 2024/12/29 07:28:38 jmmv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.551 2025/05/06 04:34:59 imil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.550 2024/12/29 07:28:38 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.551 2025/05/06 04:34:59 imil Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -231,6 +231,10 @@ extern void *_binary_splash_image_end;
 #include <prop/proplib.h>
 
 #include <sys/userconf.h>
+
+#ifdef BOOTCYCLETIME
+#include <sys/bootcycletime.h>
+#endif
 
 extern time_t rootfstime;
 
@@ -747,6 +751,9 @@ main(void)
 	cv_broadcast(&lbolt);
 	mutex_exit(&proc_lock);
 
+#ifdef BOOTCYCLETIME
+	printf_nolog("kernel boot time: %"PRIu64"ms\n", bootcycletime());
+#endif
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */

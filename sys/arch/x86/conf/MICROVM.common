@@ -1,4 +1,4 @@
-# $NetBSD: MICROVM.common,v 1.1 2025/03/28 05:54:49 imil Exp $
+# $NetBSD: MICROVM.common,v 1.2 2025/05/06 04:34:58 imil Exp $
 
 include         "conf/std"      # MI standard options
 include         "arch/xen/conf/std.xenversion"
@@ -64,6 +64,9 @@ options 	INET6		# IPV6
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
+
+# Print kernel boot time
+options		BOOTCYCLETIME
 
 #
 # Device configuration

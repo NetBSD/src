@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.71 2021/04/01 04:35:45 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.72 2025/05/06 04:34:58 imil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,6 +101,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_UCAS_FULL
 #define	__HAVE_BUS_SPACE_8
+#define	__HAVE_BOOTCYCLECOUNT
 
 #ifdef _KERNEL_OPT
 #define	__HAVE_RAS

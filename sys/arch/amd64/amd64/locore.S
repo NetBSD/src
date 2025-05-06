@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.228 2025/03/30 19:48:15 khorben Exp $	*/
+/*	$NetBSD: locore.S,v 1.229 2025/05/06 04:34:58 imil Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -275,6 +275,11 @@
 	addq	$PDE_SIZE,%rbx	; \
 	loop	1b		;
 
+/* record boot start cycle count */
+#define getstarttsc \
+	rdtsc					; \
+	movl	%eax, RELOC(starttsc_lo)	; \
+	movl	%edx, RELOC(starttsc_hi)	;
 
 #ifdef XEN
 #define __ASSEMBLY__
@@ -386,6 +391,12 @@ END(biosextmem)
 	.type	_C_LABEL(lwp0uarea), @object
 LABEL(lwp0uarea)	.quad	0
 END(lwp0uarea)
+	.type	_C_LABEL(starttsc_lo), @object
+LABEL(starttsc_lo)		.long	0	/* low part of rdtsc */
+END(starttsc_lo)
+	.type	_C_LABEL(starttsc_hi), @object
+LABEL(starttsc_hi)		.long	0	/* high part of rdtsc */
+END(starttsc_hi)
 
 #ifndef XENPV
 	.globl	gdt64_lo
@@ -457,6 +468,8 @@ tmpstk:
 ENTRY(start)
 #ifndef XENPV
 	.code32
+
+	getstarttsc
 
 #ifdef SELFRELOC
 	call	next
@@ -1037,6 +1050,7 @@ END(start)
 /* entry point for Xen PVH */
 	.code32
 ENTRY(start_pvh)
+	getstarttsc
 	/* Xen doesn't start us with a valid gdt */
 	movl    $RELOC(gdtdesc32), %eax
 	lgdt    (%eax)
