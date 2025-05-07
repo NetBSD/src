@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.50 2020/01/17 19:31:31 ad Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.50.24.1 2025/05/07 17:42:31 martin Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.50 2020/01/17 19:31:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.50.24.1 2025/05/07 17:42:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -226,7 +226,11 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < aai->aai_ndisks; i++) {
 		adi = &aai->aai_disks[i];
-		vp = ata_raid_disk_vnode_find(adi);
+		vp = NULL;
+		if (adi->adi_status &
+		    (ADI_S_ONLINE | ADI_S_ASSIGNED | ADI_S_SPARE))
+			vp = ata_raid_disk_vnode_find(adi);
+
 		if (vp == NULL) {
 			/*
 			 * XXX This is bogus.  We should just mark the
