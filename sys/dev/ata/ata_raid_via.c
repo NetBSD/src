@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_via.c,v 1.10 2022/03/19 13:51:01 hannken Exp $	*/
+/*	$NetBSD: ata_raid_via.c,v 1.10.4.1 2025/05/07 17:37:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.10 2022/03/19 13:51:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.10.4.1 2025/05/07 17:37:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,7 +115,6 @@ ata_raid_read_config_via(struct wd_softc *sc)
 {
 	struct dk_softc *dksc = &sc->sc_dksc;
 	struct via_raid_conf *info;
-	struct atabus_softc *atabus;
 	struct vnode *vp;
 	int bmajor, error;
 	dev_t dev;
@@ -223,7 +222,11 @@ ata_raid_read_config_via(struct wd_softc *sc)
 	}
 
 	aai->aai_type = ATA_RAID_TYPE_VIA;
-	for (count = 0, disk = 0; disk < 8; disk++)
+	/*
+	 * VIA V-RAID supports up to four drives in RAID 0 and JBOD
+	 * configurations and up to two drives in a RAID 1 configuration.
+	 */
+	for (count = 0, disk = 0; disk < 4; disk++)
 		if (info->disks[disk])
 			count++;
 	aai->aai_interleave =
@@ -239,8 +242,12 @@ ata_raid_read_config_via(struct wd_softc *sc)
 	if (aai->aai_interleave == 0)
 		aai->aai_interleave = aai->aai_capacity;
 
-	atabus = device_private(device_parent(dksc->sc_dev));
-	drive = atabus->sc_chan->ch_channel;
+	/*
+	 * VIA V-RAID configuration blocks store the disk index as a value
+	 * incrementing by 0x04 (0x00, 0x04, 0x08, 0x0C).  Therefore, shift
+	 * the value left by 2 to obtain the disk number.
+	 */
+	drive = info->disk_index >> 2;
 	if (drive >= aai->aai_ndisks) {
 		aprint_error_dev(dksc->sc_dev,
 		    "drive number %d doesn't make sense within %d-disk "
