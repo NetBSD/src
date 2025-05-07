@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.16 2025/05/07 03:02:56 uwe Exp $	*/
+/*	$NetBSD: cerror.S,v 1.17 2025/05/07 15:17:34 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,6 +52,8 @@
  */
 ENTRY_NP(CERROR)
 #ifdef _REENTRANT
+	/* __errno() returns the address of a thread local variable */
+	.globl	_C_LABEL(__errno)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
@@ -72,7 +74,10 @@ ENTRY_NP(CERROR)
 	.cfi_endproc
 	.fnend
 #endif
+
 #else /* !_REENTRANT */
+	/* errno is a global variable */
+	.globl	_C_LABEL(errno)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
@@ -99,9 +104,7 @@ ENTRY_NP(CERROR)
 .Lgot:
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .LPIC0
 #endif /* __PIC__ */
-	.globl	_C_LABEL(errno)
-
 .Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
+	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* _REENTRANT */
 END(CERROR)
