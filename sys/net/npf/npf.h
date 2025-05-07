@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <net/if_ether.h>
 #endif
 
 struct npf;

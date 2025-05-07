@@ -116,6 +116,7 @@ yyerror(const char *fmt, ...)
 %token			DEFAULT
 %token			TDYNAMIC
 %token			TSTATIC
+%token			ETHER
 %token			EQ
 %token			EXCL_MARK
 %token			TFILE
@@ -176,6 +177,7 @@ yyerror(const char *fmt, ...)
 %token	<str>		IDENTIFIER
 %token	<str>		IPV4ADDR
 %token	<str>		IPV6ADDR
+%token	<str>		MACADDR
 %token	<num>		NUM
 %token	<fpnum>		FPNUM
 %token	<str>		STRING
@@ -190,19 +192,21 @@ yyerror(const char *fmt, ...)
 %type	<num>		maybe_not opt_stateful icmp_type table_type
 %type	<num>		map_sd map_algo map_flags map_type
 %type	<num>		param_val
+%type	<etype>		ether_type
 %type	<var>		static_ifaddrs filt_addr_element
 %type	<var>		filt_port filt_port_list port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
-%type	<var>		procs proc_call proc_param_list proc_param
+%type	<var>		procs proc_call proc_param_list proc_param mac_addr
 %type	<var>		element list_elems list_trail list value filt_addr_list
 %type	<var>		opt_proto proto proto_elems
 %type	<addrport>	mapseg
-%type	<filtopts>	filt_opts all_or_filt_opts
+%type	<filtopts>	filt_opts all_or_filt_opts l2_filt_opts l2_all_of_filt_opts
 %type	<optproto>	rawproto
 %type	<rulegroup>	group_opts
 
 %union {
 	char *		str;
+	uint8_t		etype;
 	unsigned long	num;
 	double		fpnum;
 	npfvar_t *	var;
@@ -316,6 +320,7 @@ element
 	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
 	| static_ifaddrs	{ $$ = $1; }
 	| addr_and_mask		{ $$ = $1; }
+	| mac_addr		{ $$ = $1; }
 	;
 
 list_trail
@@ -582,6 +587,11 @@ rule
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
 		    AF_UNSPEC, NULL, NULL, $7, $8);
 	}
+	| block_or_pass ETHER rule_dir opt_final on_ifname
+		l2_filt_opts
+	{
+		npfctl_build_rule($1 | $3 | $4, $5, 0, NULL, &$6, NULL, NULL);
+	}
 	;
 
 block_or_pass
@@ -685,6 +695,14 @@ all_or_filt_opts
 	| filt_opts	{ $$ = $1; }
 	;
 
+l2_all_of_filt_opts
+	: ALL
+	{
+		$$ = npfctl_parse_l2filt_opt(NULL, false, NULL, false, 0);
+	}
+	| l2_filt_opts { $$ = $1; }
+	;
+
 opt_stateful
 	: STATEFUL	{ $$ = NPF_RULE_STATEFUL; }
 	| STATEFUL_ALL	{ $$ = NPF_RULE_STATEFUL | NPF_RULE_GSTATEFUL; }
@@ -716,6 +734,27 @@ filt_opts
 	{
 		$$ = npfctl_parse_l3filt_opt(NULL, NULL, false, $3, $4, $2);
 	}
+	;
+
+l2_filt_opts
+	: FROM maybe_not filt_addr TO maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt($3, $2, $6, $5, $7);
+
+	}
+	| FROM maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt($3, $2, NULL, false, $4);
+	}
+	| TO maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt(NULL, false, $3, $2, $4);
+	}
+	;
+
+ether_type
+	: TYPE number { $$ = $2; }
+	|		{ $$ = 0; }
 	;
 
 filt_addr_list
@@ -750,8 +789,16 @@ addr_and_mask
 	}
 	;
 
+mac_addr
+	: MACADDR
+	{
+		$$ = npfctl_parse_mac_addr($1);
+	}
+	;
+
 filt_addr_element
 	: addr_and_mask		{ assert($1 != NULL); $$ = $1; }
+	| mac_addr		{ assert($1 != NULL); $$ = $1; }
 	| static_ifaddrs
 	{
 		if (npfvar_get_count($1) != 1)
@@ -775,6 +822,7 @@ again:
 			type = npfvar_get_type(vp, 0);
 			goto again;
 		case NPFVAR_FAM:
+		case NPFVAR_MAC:
 		case NPFVAR_TABLE:
 			$$ = vp;
 			break;

@@ -158,6 +158,9 @@ uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);
 filt_opts_t	npfctl_parse_l3filt_opt(npfvar_t *, npfvar_t *, bool,
 						npfvar_t *, npfvar_t *, bool);
+filt_opts_t	npfctl_parse_l2filt_opt(npfvar_t *, bool, npfvar_t *,
+						bool, uint8_t);
+npfvar_t *	npfctl_parse_mac_addr(const char *);
 int		npfctl_nat_ruleset_p(const char *, bool *);
 
 void		usage(void);

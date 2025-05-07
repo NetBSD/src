@@ -691,20 +691,70 @@ npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
 	return fopts;
 }
 
-/*
 filt_opts_t
-npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool tnot, npfvar_t *dst_addr,
-			bool fnot, uint8_t eth_type)
+npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
+			bool tnot, uint8_t eth_type)
 {
 	filt_opts_t fopts;
 	fopts.filt.opt2.from_mac = src_addr;
-	fopts.fo_finvert = tnot;
+	fopts.fo_finvert = fnot;
 	fopts.filt.opt2.to_mac = dst_addr;
-	fopts.fo_tinvert = fnot;
+	fopts.fo_tinvert = tnot;
 	fopts.filt.opt2.ether_type = eth_type;
 	fopts.layer = NPF_LAYER_2;
 
 	return fopts;
 }
 
-*/
+static void
+ether_aton_c(uint8_t *dest, const char *str)
+{
+	const char *err = "invalid mac address format";
+	const uint8_t *cp = (const uint8_t *)str;
+	uint8_t *ep;
+
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+
+	ep = dest + ETHER_ADDR_LEN;
+
+	while (*cp) {
+		if (!isxdigit(*cp))
+			yyerror("%s", err);
+
+		*dest = atox(*cp);
+		cp++;
+		if (isxdigit(*cp)) {
+			*dest = (*dest << 4) | atox(*cp);
+			cp++;
+		}
+		dest++;
+
+		if (dest == ep) {
+			if (*cp == '\0')
+				return;
+			else
+				yyerror("%s", err);
+		}
+
+		switch (*cp) {
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
+		}
+	}
+
+}
+
+npfvar_t *
+npfctl_parse_mac_addr(const char *mac_addr)
+{
+	struct ether_addr *ether;
+	uint8_t addr[ETHER_ADDR_LEN];
+
+	ether = (struct ether_addr *)addr;
+	ether_aton_c(addr, mac_addr);
+
+	return npfvar_create_element(NPFVAR_MAC, ether, sizeof(*ether));
+}

@@ -173,6 +173,7 @@ flags			return FLAGS;
 icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
+ether			return ETHER;
 
 "/"			return SLASH;
 "{"			return CURLY_OPEN;
@@ -198,6 +199,11 @@ any			return ANY;
 			return FPNUM;
 		}
 
+{HEXDIG}(":"{HEXDIG}){5} {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
+		}
+
 {HEXDIG}":"[0-9a-fA-F:]* {
 			yylval.str = estrndup(yytext, yyleng);
 			return IPV6ADDR;
@@ -211,6 +217,16 @@ any			return ANY;
 {NUMBER}"."[0-9][0-9.]* {
 			yylval.str = estrndup(yytext, yyleng);
 			return IPV4ADDR;
+		}
+
+{HEXDIG}"."[0-9a-fA-F.]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
+		}
+
+{HEXDIG}"-"[0-9a-fA-F\-]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
 		}
 
 {NUMBER}	{
