@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.14.0"
+OPENRESOLV_VERSION="3.16.2"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -81,22 +81,35 @@ elif [ -d "$SYSCONFDIR/resolvconf" ]; then
 	fi
 fi
 
-IFACEDIR="$VARDIR/interfaces"
+KEYDIR="$VARDIR/keys"
 METRICDIR="$VARDIR/metrics"
 PRIVATEDIR="$VARDIR/private"
+NOSEARCHDIR="$VARDIR/nosearch"
 EXCLUSIVEDIR="$VARDIR/exclusive"
 DEPRECATEDDIR="$VARDIR/deprecated"
 LOCKDIR="$VARDIR/lock"
 _PWD="$PWD"
 
+# Compat
+if [ ! -d "$KEYDIR" ] && [ -d "$VARDIR/interfaces" ]; then
+	KEYDIR="$VARDIR/interfaces"
+fi
+: ${allow_keys:="$allow_interfaces"}
+: ${deny_keys:="$deny_interfaces"}
+: ${key_order:="$interface_order"}
+: ${inclusive_keys:="$inclusive_interfaces"}
+: ${exclusive_keys:="$exclusive_interfaces"}
+: ${private_keys:="$private_interfaces"}
+: ${public_keys:="$public_interfaces"}
+
 warn()
 {
-	echo "$*" >&2
+	echo "$@" >&2
 }
 
 error_exit()
 {
-	echo "$*" >&2
+	echo "$@" >&2
 	exit 1
 }
 
@@ -108,16 +121,16 @@ usage()
 	Inform the system about any DNS updates.
 
 	Commands:
-	  -a \$INTERFACE    Add DNS information to the specified interface
+	  -a \$KEY          Add DNS information to the specified key
 	                   (DNS supplied via stdin in resolv.conf format)
-	  -C \$PATTERN      Deprecate DNS information for matched interfaces
-	  -c \$PATTERN      Configure DNS information for matched interfaces
-	  -d \$INTERFACE    Delete DNS information from the specified interface
+	  -C \$PATTERN      Deprecate DNS information for matched key
+	  -c \$PATTERN      Configure DNS information for matched key
+	  -d \$PATTERN      Delete DNS information from the matched key
 	  -h               Show this help cruft
-	  -i [\$PATTERN]    Show interfaces that have supplied DNS information
-                   optionally from interfaces that match the specified
+	  -i [\$PATTERN]    Show keys that have supplied DNS information
+                   optionally from keys that match the specified
                    pattern
-	  -l [\$PATTERN]    Show DNS information, optionally from interfaces
+	  -l [\$PATTERN]    Show DNS information, optionally from keys
 	                   that match the specified pattern
 	  -L [\$PATTERN]    Same as -l, but adjusted by our config
 
@@ -125,10 +138,10 @@ usage()
 	  --version        Echo the ${RESOLVCONF##*/} version
 
 	Options:
-	  -f               Ignore non existent interfaces
+	  -f               Ignore non existent keys
 	  -m metric        Give the added DNS information a metric
-	  -p               Mark the interface as private
-	  -x               Mark the interface as exclusive
+	  -p               Mark the resolv.conf as private
+	  -x               Mark the resolv.conf as exclusive
 
 	Subscriber and System Init Commands:
 	  -I               Init the state dir
@@ -143,51 +156,80 @@ usage()
 	EOF
 	[ -z "$1" ] && exit 0
 	echo
-	error_exit "$*"
+	error_exit "$@"
 }
 
-# Strip any trailing dot from each name as a FQDN does not belong
-# in resolv.conf(5)
-# If you think otherwise, capture a DNS trace and you'll see libc
-# will strip it regardless.
-# This also solves setting up duplicate zones in our subscribers.
-# Also strip any comments denoted by #.
-resolv_strip()
-{
-	space=
-	for word; do
-		case "$word" in
-		\#*) break;;
-		esac
-		printf "%s%s" "$space${word%.}"
-		space=" "
-	done
-	printf "\n"
-}
+public_key() {
+	key="$1"
 
-private_iface()
-{
 	# Allow expansion
-	cd "$IFACEDIR"
+	cd "$KEYDIR"
 
-	# Public interfaces override private ones.
-	for p in $public_interfaces; do
-		case "$iface" in
-		"$p"|"$p":*) return 1;;
-		esac
-	done
-
-	if [ -e "$PRIVATEDIR/$iface" ]; then
-		return 0
-	fi
-
-	for p in $private_interfaces; do
-		case "$iface" in
+	# Public keys override private ones.
+	for p in $public_keys; do
+		case "$key" in
 		"$p"|"$p":*) return 0;;
 		esac
 	done
 
-	# Not a private interface
+	return 1
+}
+
+private_key()
+{
+	key="$1"
+
+	if public_key "$key"; then
+	       	return 1
+	fi
+
+	if [ -e "$PRIVATEDIR/$key" ]; then
+		return 0
+	fi
+
+	for p in $private_keys; do
+		case "$key" in
+		"$p"|"$p":*) return 0;;
+		esac
+	done
+
+	# Not a private key
+	return 1
+}
+
+nosearch_key()
+{
+	key="$1"
+
+	if public_key "$key"; then
+	       	return 1
+	fi
+
+	if [ -e "$NOSEARCHDIR/$key" ]; then
+		return 0
+	fi
+
+	for p in $nosearch_keys; do
+		case "$key" in
+		"$p"|"$p":*) return 0;;
+		esac
+	done
+
+	# Not a non searchable key
+	return 1
+}
+
+exclusive_key()
+{
+	key="$1"
+
+	for x in "$EXCLUSIVEDIR/"*" $key"; do
+		if [ -f "$x" ]; then
+			return 0
+		fi
+	done
+
+	# Not an exclusive key
 	return 1
 }
 
@@ -200,26 +242,32 @@ parse_resolv()
 	newns=
 	ns=
 	private=false
+	nosearch=false
 	search=
 
 	while read -r line; do
-		stripped_line="$(resolv_strip ${line#* })"
+		value="${line#* }"
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
-				iface="${line#\# resolv.conf from *}"
+				key="${line#\# resolv.conf from *}"
 				new=false
-				if private_iface "$iface"; then
+				if nosearch_key "$key"; then
 					private=true
+					nosearch=true
+				elif private_key "$key"; then
+					private=true
+					nosearch=false
 				else
 					private=false
+					nosearch=false
 				fi
 			fi
 			;;
 		"nameserver "*)
 			islocal=false
 			for l in $local_nameservers; do
-				case "$stripped_line" in
+				case "$value" in
 				$l)
 					islocal=true
 					break
@@ -227,20 +275,22 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS $stripped_line\""
+				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS $value\""
 			else
-				ns="$ns$stripped_line "
+				ns="$ns${ns:+ }$value"
 			fi
 			;;
 		"domain "*)
-			search="$stripped_line"
+			search="$value"
 			if [ -z "$domain" ]; then
 				domain="$search"
-				echo "DOMAIN=\"$domain\""
+				if ! $nosearch; then
+					echo "DOMAIN=\"$domain\""
+				fi
 			fi
 			;;
 		"search "*)
-			search="$stripped_line"
+			search="$value"
 			;;
 		*)
 			[ -n "$line" ] && continue
@@ -255,7 +305,9 @@ parse_resolv()
 				done
 				echo "DOMAINS=\"\$DOMAINS $ds\""
 			fi
-			echo "SEARCH=\"\$SEARCH $search\""
+			if ! $nosearch; then
+				echo "SEARCH=\"\$SEARCH $search\""
+			fi
 			if ! $private; then
 				echo "NAMESERVERS=\"\$NAMESERVERS $ns\""
 			fi
@@ -284,7 +336,7 @@ dirname()
 {
 	OIFS="$IFS"
 	IFS=/
-	set -- $@
+	set -- "$@"
 	IFS="$OIFS"
 	if [ -n "$1" ]; then
 		printf %s .
@@ -424,9 +476,9 @@ echo_resolv()
 {
 	OIFS="$IFS"
 
-	[ -n "$1" ] && [ -f "$IFACEDIR/$1" ] || return 1
+	[ -n "$1" ] && [ -f "$KEYDIR/$1" ] || return 1
 	echo "# resolv.conf from $1"
-	# Our variable maker works of the fact each resolv.conf per interface
+	# Our variable maker works of the fact each resolv.conf per key
 	# is separated by blank lines.
 	# So we remove them when echoing them.
 	while read -r line; do
@@ -436,11 +488,11 @@ echo_resolv()
 			IFS=''
 			printf "%s\n" "$line"
 		fi
-	done < "$IFACEDIR/$1"
+	done < "$KEYDIR/$1"
 	IFS="$OIFS"
 }
 
-deprecated_interface()
+deprecated_key()
 {
 	[ -d "$DEPRECATEDDIR" ] || return 1
 
@@ -504,150 +556,228 @@ match()
 	return $retval
 }
 
-list_resolv()
-{
-	[ -d "$IFACEDIR" ] || return 0
+list_keys() {
+	list_cmd="$1"
+	shift
 
-	OPTIND=
-	list_cmd=
-	while getopts iLl OPT; do
-		case "$OPT" in
-		'?') exit 1;;
-		*) list_cmd="$OPT";;
-		esac
-	done
-	shift $(($OPTIND - 1))
+	[ -d "$KEYDIR" ] || return 0
+	cd "$KEYDIR"
 
-	pattern_specified="$1"
-
-	excl=false
+	[ -n "$1" ] || set -- "*"
 	list=
-	report=false
 	retval=0
-
-	case "$IF_EXCLUSIVE" in
-	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
-		excl=true
-		if [ -d "$EXCLUSIVEDIR" ]; then
-			cd "$EXCLUSIVEDIR"
-			for i in *; do
-				if [ -f "$i" ]; then
-					list="${i#* }"
-					break
+	if [ "$list_cmd" = -i ] || [ "$list_cmd" = -l ]; then
+		for i in $@; do
+			if [ ! -f "$i" ]; then
+				if ! $force; then
+					echo "No resolv.conf for key $i" >&2
 				fi
-			done
-		fi
-		cd "$IFACEDIR"
-		for i in $inclusive_interfaces; do
-			if [ -f "$i" ] && [ "$list" = "$i" ]; then
-				list=
-				excl=false
+				retval=2
+			       	continue
+			fi
+			list="$list $i"
+		done
+		[ -z "$list" ] || uniqify $list
+		return $retval
+	fi
+
+	if [ "$list_cmd" != -I ] && [ "$list_cmd" != -L ]; then
+		echo "list_keys: unknown command $list_cmd" >&2
+		return 1
+	fi
+
+	if [ -d "$EXCLUSIVEDIR" ]; then
+		cd "$EXCLUSIVEDIR"
+		for i in $EXCLUSIVEDIR/*; do
+			if [ -f "$i" ]; then
+				cd "$KEYDIR"
+				for ii in $inclusive_keys; do
+					if [ -f "$ii" ] && [ "${i#* }" == "$ii" ]; then
+						continue 2
+					fi
+				done
+				list="${i#* }"
 				break
 			fi
 		done
-		;;
-	esac
-
-	# If we have an interface ordering list, then use that.
-	# It works by just using pathname expansion in the interface directory.
-	if [ -n "$pattern_specified" ]; then
-		list="$*"
-		$force || report=true
-	elif ! $excl; then
-		cd "$IFACEDIR"
-
-		for i in $interface_order; do
-			[ -f "$i" ] && list="$list $i"
-			for ii in "$i":* "$i".*; do
-				[ -f "$ii" ] && list="$list $ii"
-			done
-		done
-
-		for i in $dynamic_order; do
-			if [ -e "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
-				list="$list $i"
-			fi
-			for ii in "$i":* "$i".*; do
-				if [ -f "$ii" ] && ! [ -e "$METRICDIR/"*" $ii" ]
-				then
-					list="$list $ii"
+		cd "$KEYDIR"
+		if [ -n "$list" ]; then
+			for i in $@; do
+				# list will be one item due to the above
+				if [ -f "$i" ] && [ "$i" = "$list" ]; then
+					echo "$i"
+					return 0
 				fi
 			done
-		done
+			return 0
+		fi
+	fi
 
-		# Interfaces have an implicit metric of 0 if not specified.
+	for i in $key_order; do
+		for ii in "$i" "$i":* "$i".*; do
+			[ -f "$ii" ] && list="$list $ii"
+		done
+	done
+
+	for i in $dynamic_order; do
+		for ii in "$i" "$i":* "$i".*; do
+			if [ -f "$ii" ] && ! [ -e "$METRICDIR/"*" $ii" ]
+			then
+				list="$list $ii"
+			fi
+		done
+	done
+
+	# Interfaces have an implicit metric of 0 if not specified.
+	for i in *; do
+		if [ -f "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
+			list="$list $i"
+		fi
+	done
+
+	if [ -d "$METRICDIR" ]; then
+		cd "$METRICDIR"
 		for i in *; do
-			if [ -f "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
-				list="$list $i"
-			fi
+			[ -f "$i" ] && list="$list ${i#* }"
 		done
-
-		if [ -d "$METRICDIR" ]; then
-			cd "$METRICDIR"
-			for i in *; do
-				[ -f "$i" ] && list="$list ${i#* }"
-			done
-		fi
-
-		# Move deprecated interfaces to the back
-		active=
-		deprecated=
-		for i in $list; do
-			if deprecated_interface "$i"; then
-				deprecated="$deprecated $i"
-			else
-				active="$active $i"
-			fi
-		done
-		list="$active $deprecated"
+		cd "$KEYDIR"
 	fi
 
-	cd "$IFACEDIR"
-	if $excl || [ -n "$pattern_specified" ]; then
-		retval=1
-	else
-		retval=0
-	fi
-	for i in $(uniqify $list); do
-		# Only list interfaces which we really have
-		if ! [ -f "$i" ]; then
-			if $report; then
-				echo "No resolv.conf for interface $i" >&2
-				retval=2
-			fi
-			continue
+	# Move deprecated keys to the back
+	active=
+	deprecated=
+	for i in $list; do
+		if deprecated_key "$i"; then
+			deprecated="$deprecated $i"
+		else
+			active="$active $i"
 		fi
+	done
+	list="$active $deprecated"
 
-		if [ "$list_cmd" = L ]; then
-			if [ -n "$allow_interfaces" ]; then
-				x=false
-				for j in $allow_interfaces; do
-					if [ "$i" = "$j" ]; then
-						x=true
-					fi
-				done
-				$x || continue
-			fi
-			for j in $deny_interfaces; do
-				if [ "$i" = "$j" ]; then
-					continue 2
+	retval=0
+	if [ "$1" != "*" ]; then
+		cd "$KEYDIR"
+		matched=
+		for i in $@; do
+			if ! [ -f "$i" ]; then
+				if ! $force; then
+					echo "No resolv.conf for key $i" >&2
 				fi
-			done
-
-			if [ -n "$exclude" ] && match "$exclude" "$i"; then
+				retval=2
 				continue
 			fi
+			for ii in $list; do
+				if [ "$i" = "$ii" ]; then
+					matched="$matched${matched:+ }$i"
+					break
+				fi
+			done
+		done
+		if [ -z "$matched" ]; then
+			return $retval
 		fi
+		list="$matched"
+	fi
 
-		if [ "$list_cmd" = i ]; then
-			printf %s "$i "
-		else
-			echo_resolv "$i" && echo
+	allowed=
+	for i in $(uniqify $list); do
+		if [ -n "$allow_keys" ]; then
+			x=false
+			for ii in $allow_keys; do
+				if [ "$i" = "$ii" ]; then
+					x=true
+					break
+				fi
+			done
+			$x || continue
 		fi
-		[ $? = 0 ] && [ "$retval" = 1 ] && retval=0
+		for ii in $deny_keys; do
+			if [ "$i" = "$ii" ]; then
+				continue 2
+			fi
+		done
+
+		if [ -n "$exclude" ] && match "$exclude" "$i"; then
+			continue
+		fi
+		allowed="$allowed${allowed:+ }$i"
 	done
-	[ "$list_cmd" = i ] && echo
-	return $retval
+
+	cd "$KEYDIR"
+	for i in $exclusive_keys; do
+		for ii in $allowed; do
+			if [ "$i" = "$ii" ]; then
+				echo "$i"
+				return
+			fi
+		done
+	done
+	[ -z "$allowed" ] || echo "$allowed"
+}
+
+list_resolv()
+{
+	keys="$(list_keys "$@")"
+	retval=$?
+	if [ "$retval" != 0 ]; then
+		return $retval
+	fi
+	for i in $keys; do
+		echo_resolv "$i" && echo
+	done
+}
+
+list_private()
+{
+	KEYS=
+	cd "$KEYDIR"
+	if [ -z "$1" ]; then
+		set -- "*"
+	fi
+	for i in $@; do
+		if private_key "$i"; then
+		KEYS="${KEYS}${KEYS:+ }$i"
+		fi
+	done
+	if [ -n "$KEYS" ]; then
+		echo "$KEYS"
+	fi
+}
+
+list_nosearch()
+{
+
+	KEYS=
+	cd "$KEYDIR"
+	if [ -z "$1" ]; then
+		set -- "*"
+	fi
+	for i in $@; do
+		if nosearch_key "$i"; then
+			KEYS="${KEYS}${KEYS:+ }$i"
+		fi
+	done
+	if [ -n "$KEYS" ]; then
+		echo "$KEYS"
+	fi
+}
+
+list_exclusive()
+{
+	KEYS=
+	cd "$KEYDIR"
+	if [ -z "$1" ]; then
+		set -- "*"
+	fi
+	for i in $@; do
+		if exclusive_key "$i"; then
+			KEYS="${KEYS}${KEYS:+ }$i"
+		fi
+	done
+	if [ -n "$KEYS" ]; then
+		echo "$KEYS"
+	fi
 }
 
 list_remove()
@@ -702,7 +832,81 @@ echo_append()
 	echo
 }
 
-replace()
+tolower() {
+	# There is no good way of doing this portably in shell :(
+	# Luckily we are only doing this for domain names which we
+	# know have to be ASCII.
+	# Non ASCII domains *should* be translated to ASCII *before*
+	# we get to this stage.
+	# We could use echo "$@" | tr '[:upper:]' '[:lower:]' but
+	# tr is in /usr/bin and may not be available when data is fed
+	# to resolvconf.
+	# So it's the cost of a pipe + fork vs this slow loop
+	#
+	for word; do
+		# Check if we have any upper to avoid looping per char
+		case "$word" in
+			*[A-Z]*) ;;
+			*) printf "%s " "$word"; continue;;
+		esac
+
+		while [ -n "$word" ]; do
+			# Remove everything except the first character
+			afterchar="${word#?}"
+			# Remove the afterchar to get the first character
+			char="${word%%$afterchar}"
+			# Assign afterchar back to word for looping
+			word="$afterchar"
+
+			# Now enforce lowercase a-z
+			case "$char" in
+			A) char=a;;
+			B) char=b;;
+			C) char=c;;
+			D) char=d;;
+			E) char=e;;
+			F) char=f;;
+			G) char=g;;
+			H) char=h;;
+			I) char=i;;
+			J) char=j;;
+			K) char=k;;
+			L) char=l;;
+			M) char=m;;
+			N) char=n;;
+			O) char=o;;
+			P) char=p;;
+			Q) char=q;;
+			R) char=r;;
+			S) char=s;;
+			T) char=t;;
+			U) char=u;;
+			V) char=v;;
+			W) char=w;;
+			X) char=x;;
+			Y) char=y;;
+			Z) char=z;;
+			esac
+			printf %s "$char"
+		done
+		printf " "
+	done
+	printf "\n"
+}
+
+# Strip any trailing dot from each name as a FQDN does not belong
+# in resolv.conf(5).
+# While DNS is not case sensitive, our labels for building the zones
+# are, so ensure it's lower case.
+process_domain()
+{
+	for word in $(tolower "$@"); do
+		printf "%s " "${word%.}"
+	done
+	printf "\n"
+}
+
+process_resolv()
 {
 	while read -r keyword value; do
 		for r in $replace; do
@@ -737,6 +941,18 @@ replace()
 			done
 			val="$val${val:+ }$sub"
 		done
+		case "$keyword" in
+		\#)
+			case "$val" in
+			"resolv.conf from "*) ;;
+			*) continue;;
+			esac
+			;;
+		\#*) continue;;
+		esac
+		case "$keyword" in
+		domain|search) val="$(process_domain $val)";;
+		esac
 		printf "%s %s\n" "$keyword" "$val"
 	done
 }
@@ -754,9 +970,7 @@ make_vars()
 		eval "$(echo_prepend | parse_resolv)"
 	fi
 	if [ -z "$VFLAG" ]; then
-		IF_EXCLUSIVE=1
-		list_resolv -i "$@" >/dev/null || IF_EXCLUSIVE=0
-		eval "$(list_resolv -L "$@" | replace | parse_resolv)"
+		eval "$(list_resolv -L "$@" | process_resolv | parse_resolv)"
 	fi
 	if [ -n "${name_servers_append}${search_domains_append}" ]; then
 		eval "$(echo_append | parse_resolv)"
@@ -805,13 +1019,20 @@ make_vars()
 }
 
 force=false
+LFLAG=
 VFLAG=
 while getopts a:C:c:Dd:fhIiLlm:pRruvVx OPT; do
 	case "$OPT" in
 	f) force=true;;
 	h) usage;;
 	m) IF_METRIC="$OPTARG";;
-	p) IF_PRIVATE=1;;
+	p)
+		if [ "$IF_PRIVATE" = 1 ]; then
+			IF_NOSEARCH=1
+		else
+			IF_PRIVATE=1
+		fi
+		;;
 	V)
 		VFLAG=1
 		if [ "$local_nameservers" = \
@@ -822,11 +1043,23 @@ while getopts a:C:c:Dd:fhIiLlm:pRruvVx OPT; do
 		;;
 	x) IF_EXCLUSIVE=1;;
 	'?') exit 1;;
-	*) cmd="$OPT"; iface="$OPTARG";;
+	*)
+		[ "$OPT" != L ] || LFLAG=1
+		cmd="$OPT"; key="$OPTARG";;
 	esac
 done
 shift $(($OPTIND - 1))
-args="$iface${iface:+ }$*"
+if [ -n "$key" ]; then
+	set -- "$key" "$@"
+fi
+
+if [ -z "$cmd" ]; then
+       	if [ "$IF_PRIVATE" = 1 ]; then
+		cmd=p
+	elif [ "$IF_EXCLUSIVE" = 1 ]; then
+		cmd=x
+	fi
+fi
 
 # -I inits the state dir
 if [ "$cmd" = I ]; then
@@ -842,22 +1075,45 @@ if [ "$cmd" = D ]; then
 	exit $?
 fi
 
-# -l lists our resolv files, optionally for a specific interface
-if [ "$cmd" = l ] || [ "$cmd" = i ]; then
-	list_resolv "-$cmd" "$args"
+# -i lists which keys have a resolv file
+if [ "$cmd" = i ]; then
+	# If the -L modifier is given, the list is post-processed
+	if [ "$LFLAG" = 1 ]; then
+		cmd="L"
+	fi
+	list_keys "-$cmd" "$@"
+	exit $?
+fi
+
+# -l lists our resolv files, optionally for a specific key
+if [ "$cmd" = l ]; then
+	list_resolv "-$cmd" "$@"
 	exit $?
 fi
 # -L is the same as -l, but post-processed from our config
 if [ "$cmd" = L ]; then
-	list_resolv "-$cmd" "$args" | replace
-	exit $?2
+	list_resolv "-$cmd" "$@" | process_resolv
+	exit $?
+fi
+
+if [ "$cmd" = p ]; then
+	if [ "$IF_NOSEARCH" = 1 ]; then
+		list_nosearch "$@"
+	else
+		list_private "$@"
+	fi
+	exit $?
+fi
+
+if [ "$cmd" = x ]; then
+	list_exclusive "$@"
+	exit $?
 fi
 
 # Restart a service or echo the command to restart a service
 if [ "$cmd" = r ] || [ "$cmd" = R ]; then
 	detect_init || exit 1
 	if [ "$cmd" = r ]; then
-		set -- $args
 		eval "$RESTARTCMD"
 	else
 		echo "$RESTARTCMD" |
@@ -868,15 +1124,15 @@ fi
 
 # Not normally needed, but subscribers should be able to run independently
 if [ "$cmd" = v ] || [ -n "$VFLAG" ]; then
-	make_vars "$iface"
+	make_vars "$@"
 	exit $?
 fi
 
 # Test that we have valid options
 case "$cmd" in
 a|d|C|c)
-	if [ -z "$iface" ]; then
-		error_exit "Interface not specified"
+	if [ -z "$key" ]; then
+		error_exit "Key not specified"
 	fi
 	;;
 u)	;;
@@ -891,13 +1147,13 @@ esac
 if [ "$cmd" = a ]; then
 	for x in '/' \\ ' ' '*'; do
 		case "$iface" in
-		*[$x]*) error_exit "$x not allowed in interface name";;
+		*[$x]*) error_exit "$x not allowed in key name";;
 		esac
 	done
 	for x in '.' '-' '~'; do
 		case "$iface" in
 		[$x]*) error_exit \
-			"$x not allowed at start of interface name";;
+			"$x not allowed at start of key name";;
 		esac
 	done
 	[ "$cmd" = a ] && [ -t 0 ] && error_exit "No file given via stdin"
@@ -920,15 +1176,15 @@ if [ ! -d "$VARDIR" ]; then
 	fi
 fi
 
-if [ ! -d "$IFACEDIR" ]; then
-	mkdir -m 0755 -p "$IFACEDIR" || \
-		error_exit "Failed to create needed directory $IFACEDIR"
+if [ ! -d "$KEYDIR" ]; then
+	mkdir -m 0755 -p "$KEYDIR" || \
+		error_exit "Failed to create needed directory $KEYDIR"
 	if [ "$cmd" = d ]; then
 		# Provide the same error messages as below
 		if ! ${force}; then
-			cd "$IFACEDIR"
-			for i in $args; do
-				warn "No resolv.conf for interface $i"
+			cd "$KEYDIR"
+			for i in $@; do
+				warn "No resolv.conf for key $i"
 			done
 		fi
 		${force}
@@ -936,7 +1192,7 @@ if [ ! -d "$IFACEDIR" ]; then
 	fi
 fi
 
-# An interface was added, changed, deleted or a general update was called.
+# A key was added, changed, deleted or a general update was called.
 # Due to exclusivity we need to ensure that this is an atomic operation.
 # Our subscribers *may* need this as well if the init system is sub par.
 # As such we spinlock at this point as best we can.
@@ -999,9 +1255,9 @@ a)
 	changed=false
 	changedfile=false
 	# If what we are given matches what we have, then do nothing
-	if [ -e "$IFACEDIR/$iface" ]; then
+	if [ -e "$KEYDIR/$key" ]; then
 		if [ "$(echo "$resolv")" != \
-			"$(cat "$IFACEDIR/$iface")" ]
+			"$(cat "$KEYDIR/$key")" ]
 		then
 			changed=true
 			changedfile=true
@@ -1011,21 +1267,21 @@ a)
 		changedfile=true
 	fi
 
-	# Set metric and private before creating the interface resolv.conf file
+	# Set metric and private before creating the resolv.conf file
 	# to ensure that it will have the correct flags
 	[ ! -d "$METRICDIR" ] && mkdir "$METRICDIR"
-	oldmetric="$METRICDIR/"*" $iface"
+	oldmetric="$METRICDIR/"*" $key"
 	newmetric=
 	if [ -n "$IF_METRIC" ]; then
 		# Pad metric to 6 characters, so 5 is less than 10
 		while [ ${#IF_METRIC} -le 6 ]; do
 			IF_METRIC="0$IF_METRIC"
 		done
-		newmetric="$METRICDIR/$IF_METRIC $iface"
+		newmetric="$METRICDIR/$IF_METRIC $key"
 	fi
-	rm -f "$METRICDIR/"*" $iface"
+	rm -f "$METRICDIR/"*" $key"
 	[ "$oldmetric" != "$newmetric" ] &&
-	    [ "$oldmetric" != "$METRICDIR/* $iface" ] &&
+	    [ "$oldmetric" != "$METRICDIR/* $key" ] &&
 		changed=true
 	[ -n "$newmetric" ] && echo " " >"$newmetric"
 
@@ -1035,19 +1291,37 @@ a)
 			[ -e "$PRIVATEDIR" ] && rm "$PRIVATEDIR"
 			mkdir "$PRIVATEDIR"
 		fi
-		[ -e "$PRIVATEDIR/$iface" ] || changed=true
-		[ -d "$PRIVATEDIR" ] && echo " " >"$PRIVATEDIR/$iface"
+		[ -e "$PRIVATEDIR/$key" ] || changed=true
+		[ -d "$PRIVATEDIR" ] && echo " " >"$PRIVATEDIR/$key"
 		;;
 	*)
-		if [ -e "$PRIVATEDIR/$iface" ]; then
-			rm -f "$PRIVATEDIR/$iface"
+		if [ -e "$PRIVATEDIR/$key" ]; then
+			rm -f "$PRIVATEDIR/$key"
 			changed=true
 		fi
 		;;
 	esac
 
+	case "$IF_NOSEARCH" in
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+		if [ ! -d "$NOSEARCHDIR" ]; then
+			[ -e "$NOSEARCHDIR" ] && rm "$NOSEARCHDIR"
+			mkdir "$NOSEARCHDIR"
+		fi
+		[ -e "$NOSEARCHDIR/$key" ] || changed=true
+		[ -d "$NOSEARCHDIR" ] && echo " " >"$NOSEARCHDIR/$key"
+		;;
+	*)
+		if [ -e "$NOSEARCHDIR/$key" ]; then
+			rm -f "$NOSEARCHDIR/$key"
+			changed=true
+		fi
+		;;
+	esac
+	set +x
+
 	oldexcl=
-	for x in "$EXCLUSIVEDIR/"*" $iface"; do
+	for x in "$EXCLUSIVEDIR/"*" $key"; do
 		if [ -f "$x" ]; then
 			oldexcl="$x"
 			break
@@ -1063,7 +1337,7 @@ a)
 		for x in *; do
 			[ -f "$x" ] && break
 		done
-		if [ "${x#* }" != "$iface" ]; then
+		if [ "${x#* }" != "$key" ]; then
 			if [ "$x" = "${x% *}" ]; then
 				x=10000000
 			else
@@ -1075,7 +1349,7 @@ a)
 				x=$(($x - 1))
 			fi
 			if [ -d "$EXCLUSIVEDIR" ]; then
-				echo " " >"$EXCLUSIVEDIR/$x $iface"
+				echo " " >"$EXCLUSIVEDIR/$x $key"
 			fi
 			changed=true
 		fi
@@ -1089,7 +1363,7 @@ a)
 	esac
 
 	if $changedfile; then
-		printf "%s\n" "$resolv" >"$IFACEDIR/$iface" || exit $?
+		printf "%s\n" "$resolv" >"$KEYDIR/$key" || exit $?
 	elif ! $changed; then
 		exit 0
 	fi
@@ -1097,14 +1371,14 @@ a)
 	;;
 
 d)
-	# Delete any existing information about the interface
-	cd "$IFACEDIR"
+	# Delete any existing information about the key
+	cd "$KEYDIR"
 	changed=false
-	for i in $args; do
+	for i in $@; do
 		if [ -e "$i" ]; then
 			changed=true
 		elif ! ${force}; then
-			warn "No resolv.conf for interface $i"
+			warn "No resolv.conf for key $i"
 		fi
 		rm -f "$i" "$METRICDIR/"*" $i" \
 			"$PRIVATEDIR/$i" \
@@ -1120,11 +1394,11 @@ d)
 	;;
 
 C)
-	# Mark interface as deprecated
+	# Mark key as deprecated
 	[ ! -d "$DEPRECATEDDIR" ] && mkdir "$DEPRECATEDDIR"
 	cd "$DEPRECATEDDIR"
 	changed=false
-	for i in $args; do
+	for i in $@; do
 		if [ ! -e "$i" ]; then
 			changed=true
 			echo " " >"$i" || exit $?
@@ -1135,11 +1409,11 @@ C)
 	;;
 
 c)
-	# Mark interface as active
+	# Mark key as active
 	if [ -d "$DEPRECATEDDIR" ]; then
 		cd "$DEPRECATEDDIR"
 		changed=false
-		for i in $args; do
+		for i in $@; do
 			if [ -e "$i" ]; then
 				changed=true
 				rm "$i" || exit $?
@@ -1170,17 +1444,22 @@ retval=0
 cd "$_PWD"
 for script in "$LIBEXECDIR"/*; do
 	if [ -f "$script" ]; then
-		eval script_enabled="\$${script##*/}"
+		script_var="${script##*/}"
+		while [ "${script_var%%-*}" != "$script_var" ]; do
+			script_var="${script_var%%-*}_${script_var#*-}"
+		done
+		eval script_enabled="\$$script_var"
 		case "${script_enabled:-YES}" in
 		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) ;;
 		*) continue;;
 		esac
 		if [ -x "$script" ]; then
-			"$script" "$cmd" "$iface"
+			"$script" "$cmd" "$key"
 		else
-			(set -- "$cmd" "$iface"; . "$script")
+			(set -- "$cmd" "$key"; . "$script")
 		fi
 		retval=$(($retval + $?))
 	fi
 done
 exit $retval
+
