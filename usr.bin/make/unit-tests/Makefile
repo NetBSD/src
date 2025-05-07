@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.360 2025/05/03 07:54:08 rillig Exp $
+# $NetBSD: Makefile,v 1.361 2025/05/07 19:49:00 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -585,7 +585,7 @@ SED_CMDS.varname-empty=		${.OBJDIR .PARSEDIR .PATH .SHELL .SYSPATH:L:@v@-e '/\\$
 # Some tests need an additional round of postprocessing.
 POSTPROC.depsrc-wait=		sed -e '/^---/d' -e 's,^\(: Making 3[abc]\)[123]$$,\1,'
 POSTPROC.deptgt-suffixes=	awk '/^\#\*\*\* Suffixes/,/^never-stop/'
-POSTPROC.gnode-submake=		awk '/Input graph/, /^$$/'
+POSTPROC.gnode-submake=		awk '/Begin input graph/, /^$$/'
 POSTPROC.varname-dot-make-mode=	sed 's,^\(: Making [abc]\)[123]$$,\1,'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
