@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.17 2025/05/07 15:17:34 uwe Exp $	*/
+/*	$NetBSD: cerror.S,v 1.18 2025/05/07 16:26:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,14 +82,10 @@ ENTRY_NP(CERROR)
 	.fnstart
 	.cfi_startproc
 #endif
+0:	GOT_INIT(r3, .Lgot)
+	ldr	r1, .Lerrno
 #ifdef __PIC__
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, r3, pc	/* pc = &.LPIC0 */
-	ldr	r1, .Lerrno
-.LPIC0:	ldr	r1, [r3, r1]
-#else
-	ldr	r1, .Lerrno
+	ldr	r1, [r3, r1]
 #endif /* __PIC__ */
 	str	r0, [r1]
 	MOV_RETVAL_MINUS_1
@@ -99,11 +95,7 @@ ENTRY_NP(CERROR)
 	.fnend
 #endif
 
-#ifdef __PIC__
-	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .LPIC0
-#endif /* __PIC__ */
+	GOT_INITSYM(.Lgot, 0b)
 .Lerrno:
 	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* _REENTRANT */

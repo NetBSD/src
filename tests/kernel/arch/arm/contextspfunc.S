@@ -1,4 +1,4 @@
-/*	$NetBSD: contextspfunc.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $	*/
+/*	$NetBSD: contextspfunc.S,v 1.2 2025/05/07 16:26:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $")
+RCSID("$NetBSD: contextspfunc.S,v 1.2 2025/05/07 16:26:47 uwe Exp $")
 
 /*
  * contextspfunc()
@@ -39,13 +39,13 @@ RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/25 02:24:01 riastradh Exp $")
  *	the global variable contextsp and call contextdone.
  */
 ENTRY(contextspfunc)
-	GOT_INIT(r0, .Lgot, .Lpc)
+0:	GOT_INIT(r0, .Lgot)
 	mov	r1, sp
 	GOT_GET(r2, r0, .Lcontextsp)
 	str	r1, [r2]
 	b	PLT_SYM(_C_LABEL(contextdone))
 
-	GOT_INITSYM(.Lgot, .Lpc)
+	GOT_INITSYM(.Lgot, 0b)
 .Lcontextsp:
 	.word	GOT_SYM(contextsp)
 END(contextspfunc)

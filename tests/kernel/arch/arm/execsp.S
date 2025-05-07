@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.3 2025/04/28 15:31:13 martin Exp $	*/
+/*	$NetBSD: execsp.S,v 1.4 2025/05/07 16:26:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.3 2025/04/28 15:31:13 martin Exp $")
+RCSID("$NetBSD: execsp.S,v 1.4 2025/05/07 16:26:47 uwe Exp $")
 
 /*
  * void execsp_start(struct ps_strings *ps_strings@r0, void *obj_main@r1,
@@ -40,13 +40,13 @@ RCSID("$NetBSD: execsp.S,v 1.3 2025/04/28 15:31:13 martin Exp $")
  *	to the usual csu __start routine.
  */
 ENTRY(execsp_start)
-	GOT_INIT(r3, .Lgot.execsp_start, .Lpc.execsp_start)
+0:	GOT_INIT(r3, .Lgot.execsp_start)
 	mov	r4, sp
 	GOT_GET(r5, r3, .Lstartsp)
 	str	r4, [r5]
 	b	PLT_SYM(_C_LABEL(__start))
 
-	GOT_INITSYM(.Lgot.execsp_start, .Lpc.execsp_start)
+	GOT_INITSYM(.Lgot.execsp_start, 0b)
 .Lstartsp:
 	.word	GOT_SYM(startsp)
 END(execsp_start)
@@ -58,13 +58,13 @@ END(execsp_start)
  *	returns.
  */
 ENTRY(execsp_ctor)
-	GOT_INIT(r0, .Lgot.execsp_ctor, .Lpc.execsp_ctor)
+0:	GOT_INIT(r0, .Lgot.execsp_ctor)
 	mov	r1, sp
 	GOT_GET(r2, r0, .Lctorsp)
 	str	r1, [r2]
 	RET
 
-	GOT_INITSYM(.Lgot.execsp_ctor, .Lpc.execsp_ctor)
+	GOT_INITSYM(.Lgot.execsp_ctor, 0b)
 .Lctorsp:
 	.word	GOT_SYM(ctorsp)
 END(execsp_ctor)
@@ -82,14 +82,14 @@ END(execsp_ctor)
  *	been initialized.
  */
 ENTRY(main)
-	GOT_INIT(r0, .Lgot.main, .Lpc.main)
+0:	GOT_INIT(r0, .Lgot.main)
 	mov	r1, sp
 	GOT_GET(r2, r0, .Lmainsp)
 	str	r1, [r2]
 	mov	r0, #0
 	RET
 
-	GOT_INITSYM(.Lgot.main, .Lpc.main)
+	GOT_INITSYM(.Lgot.main, 0b)
 .Lmainsp:
 	.word	GOT_SYM(mainsp)
 END(main)
@@ -102,13 +102,13 @@ END(main)
  *	back to the t_signal_and_sp parent.
  */
 ENTRY(execsp_dtor)
-	GOT_INIT(r0, .Lgot.execsp_dtor, .Lpc.execsp_dtor)
+0:	GOT_INIT(r0, .Lgot.execsp_dtor)
 	mov	r1, sp
 	GOT_GET(r2, r0, .Ldtorsp)
 	str	r1, [r2]
 	b	PLT_SYM(_C_LABEL(execsp_main))
 
-	GOT_INITSYM(.Lgot.execsp_dtor, .Lpc.execsp_dtor)
+	GOT_INITSYM(.Lgot.execsp_dtor, 0b)
 .Ldtorsp:
 	.word	GOT_SYM(dtorsp)
 END(execsp_dtor)
