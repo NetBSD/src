@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.40 2025/05/06 13:09:26 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.41 2025/05/07 14:01:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.40 2025/05/06 13:09:26 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.41 2025/05/07 14:01:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,6 @@ struct stackmark *markp;
 char *stacknxt = stackbase.space;
 int stacknleft = MINSIZE;
 int sstrnleft;
-int herefd = -1;
 
 pointer
 stalloc(int nbytes)
