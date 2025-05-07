@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.37 2025/05/06 20:21:33 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.38 2025/05/07 14:53:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@
 #endif
 
 #ifdef __STDC__
-#define	PIC_SYM(x,y)	x ## ( ## y ## )
+#define	PIC_SYM(x,y)	x(y)
 #else
 #define	PIC_SYM(x,y)	x/**/(/**/y/**/)
 #endif
@@ -264,7 +264,7 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.pushsection .gnu.warning. ## sym;				\
+	.pushsection .gnu.warning.sym;					\
 	.ascii msg;							\
 	.popsection
 #else
