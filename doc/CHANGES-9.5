@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.55 2025/04/24 14:18:44 snj Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.56 2025/05/07 17:57:56 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -790,4 +790,10 @@ build.sh					1.389-1.391 via patch
 	build.sh: fix "show-revisionid" operation to include both src
 	and xsrc data if the -x argument is present.
 	[martin, ticket #1945]
+
+sys/dev/ata/ata_raid_via.c			1.11
+
+	ataraid(4): PR 59130: fix setup for VIA V-RAID controllers with
+	two drives per channel.
+	[andvar, ticket #1942]
 
