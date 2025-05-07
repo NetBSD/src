@@ -58,6 +58,7 @@ openresolv ships with helpers for:
   *  [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html)
   *  [ISC BIND](http://www.isc.org/software/bind)
   *  [PowerDNS Recursor](http://wiki.powerdns.com/trac)
+  *  [systemd-resolved](https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html)
 
 See the
 [configuration section](https://roy.marples.name/projects/openresolv/configuration)
