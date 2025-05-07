@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.15 2025/05/06 20:21:33 uwe Exp $	*/
+/*	$NetBSD: cerror.S,v 1.16 2025/05/07 03:02:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,6 +33,23 @@
 
 #include "SYS.h"
 
+/* { r0, r1 } := -1LL */
+#ifdef __thumb__
+#define MOV_RETVAL_MINUS_1	  \
+	movs	r0, #0		; \
+	mvns	r0, r0		; \
+	movs	r1, r0
+
+#else // !__thumb__
+#define MOV_RETVAL_MINUS_1	  \
+	mvn	r0, #0		; \
+	mov	r1, r0
+#endif
+
+
+/*
+ * Set `errno` and return -1.  See SYS.h for syscall stubs that call this.
+ */
 ENTRY_NP(CERROR)
 #ifdef _REENTRANT
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
@@ -46,16 +63,10 @@ ENTRY_NP(CERROR)
 	.cfi_offset 14, -4
 	.cfi_offset 4, -8
 #endif
-	mov	r4, r0
+	movs	r4, r0
 	bl	PLT_SYM(_C_LABEL(__errno))
 	str	r4, [r0]
-#ifdef __thumb__
-	movs	r0, #0
-	mvns	r0, r0
-#else
-	mvn	r0, #0
-#endif
-	mov	r1, r0
+	MOV_RETVAL_MINUS_1
 	pop	{r4, pc}
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
@@ -76,13 +87,7 @@ ENTRY_NP(CERROR)
 	ldr	r1, .Lerrno
 #endif /* __PIC__ */
 	str	r0, [r1]
-#ifdef __thumb__
-	movs	r0, #0
-	mvns	r0, r0
-#else
-	mvn	r0, #0
-#endif /* __thumb__ */
-	mov	r1, r0
+	MOV_RETVAL_MINUS_1
 	RET
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
