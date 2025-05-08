@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.31 2025/01/06 10:46:44 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.32 2025/05/08 02:27:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -240,7 +240,7 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.pushsection .gnu.warning. ## sym;				\
+	.pushsection .gnu.warning.sym;					\
 	.ascii msg;							\
 	.popsection
 #else
