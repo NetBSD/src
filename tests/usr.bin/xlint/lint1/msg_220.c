@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_220.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_220.c,v 1.10 2025/05/08 20:45:21 rillig Exp $	*/
 # 3 "msg_220.c"
 
 // Test for message: fallthrough on case statement [220]
@@ -77,5 +77,37 @@ annotation_comment_variations(int n)
 		/* fallthrough */
 	case 6:
 		println("6");
+	}
+}
+
+
+void do_return(void);
+void noreturn(void)
+    __attribute__((__noreturn__));
+void noreturn_attr_comma(void)
+    __attribute__((__unused__, __noreturn__));
+void noreturn_attr_attr(void)
+    __attribute__((__unused__))
+    __attribute__((__noreturn__));
+
+void
+call_noreturn(void)
+{
+	switch (0) {
+	case 0:
+		do_return();
+		/* expect+1: warning: fallthrough on case statement [220] */
+	case 1:
+		noreturn();
+	case 2:
+		noreturn_attr_comma();
+		// FIXME
+		/* expect+1: warning: fallthrough on case statement [220] */
+	case 3:
+		noreturn_attr_attr();
+		// FIXME
+		/* expect+1: warning: fallthrough on case statement [220] */
+	case 4:
+		return;
 	}
 }
