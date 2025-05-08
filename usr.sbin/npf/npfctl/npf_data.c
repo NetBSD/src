@@ -701,7 +701,7 @@ npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
 	fopts.filt.opt2.to_mac = dst_addr;
 	fopts.fo_tinvert = tnot;
 	fopts.filt.opt2.ether_type = eth_type;
-	fopts.layer = NPF_LAYER_2;
+	fopts.layer = NPF_RULE_LAYER_2;
 
 	return fopts;
 }

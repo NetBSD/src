@@ -174,6 +174,7 @@ icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
 ether			return ETHER;
+layer-2			return L2;
 
 "/"			return SLASH;
 "{"			return CURLY_OPEN;

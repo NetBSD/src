@@ -135,6 +135,7 @@ yyerror(const char *fmt, ...)
 %token			IPHASH
 %token			IPSET
 %token			LPM
+%token			L2
 %token			MAP
 %token			NEWLINE
 %token			NO_PORTS
@@ -190,7 +191,7 @@ yyerror(const char *fmt, ...)
 %type	<num>		port opt_final number afamily opt_family
 %type	<num>		block_or_pass rule_dir group_dir block_opts
 %type	<num>		maybe_not opt_stateful icmp_type table_type
-%type	<num>		map_sd map_algo map_flags map_type
+%type	<num>		map_sd map_algo map_flags map_type layer
 %type	<num>		param_val
 %type	<etype>		ether_type
 %type	<var>		static_ifaddrs filt_addr_element
@@ -540,18 +541,24 @@ group_dir
 	;
 
 group_opts
-	: DEFAULT
+	: DEFAULT layer
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_default = true;
+		$$.rg_attr |= $2;
 	}
-	| STRING group_dir on_ifname
+	| STRING group_dir on_ifname layer
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_name = $1;
-		$$.rg_attr = $2;
+		$$.rg_attr = $2 | $4;
 		$$.rg_ifname = $3;
 	}
+	;
+
+layer
+	: L2 { $$ = NPF_RULE_LAYER_2; }
+	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by defualt */
 	;
 
 ruleset_block
