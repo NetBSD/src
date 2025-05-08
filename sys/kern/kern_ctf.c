@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.8 2021/04/06 07:57:03 simonb Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.9 2025/05/08 08:30:15 hannken Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -145,8 +145,8 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 		goto out;
 	}
 
-	/* Check if version 2. */
-	if (ctfaddr[2] != 2) {
+	/* Check if version 2 or 3. */
+	if (ctfaddr[2] != 2 && ctfaddr[2] != 3) {
 	    	error = EINVAL;
 		goto out;
 	}
