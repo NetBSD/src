@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.523 2025/04/12 15:57:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.524 2025/05/08 20:51:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.523 2025/04/12 15:57:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.524 2025/05/08 20:51:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1065,7 +1065,12 @@ type_attribute_list_opt:
 type_attribute_list:
 	type_attribute
 |	type_attribute_list type_attribute {
-		$$ = (type_attributes){ .used = $1.used || $2.used };
+		$$ = (type_attributes){
+			.used = $1.used || $2.used,
+			.noreturn = $1.noreturn || $2.noreturn,
+			.bit_width = $2.bit_width != 0
+			    ? $2.bit_width : $1.bit_width,
+		};
 	}
 ;
 
@@ -2538,7 +2543,12 @@ gcc_attribute_specifier:
 gcc_attribute_list:
 	gcc_attribute
 |	gcc_attribute_list T_COMMA gcc_attribute {
-		$$ = (type_attributes){ .used = $1.used || $3.used };
+		$$ = (type_attributes){
+			.used = $1.used || $3.used,
+			.noreturn = $1.noreturn || $3.noreturn,
+			.bit_width = $3.bit_width != 0
+			    ? $3.bit_width : $1.bit_width,
+		};
 	}
 ;
 
