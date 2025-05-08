@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.99 2025/05/06 00:59:18 manu Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.100 2025/05/08 13:57:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.99 2025/05/06 00:59:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.100 2025/05/08 13:57:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -502,7 +502,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
 	 * In order to decide whether the system supports MSI we look
-	 * at the host bridge, which should be on bus 0. 
+	 * at the host bridge, which should be on bus 0.
 	 * It is better to not enable MSI on systems that
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
@@ -1151,7 +1151,7 @@ populate_fbinfo(device_t dev, prop_dictionary_t dict)
 #endif
 	}
 #if notyet
-	prop_dictionary_set_bool(dict, "splash", 
+	prop_dictionary_set_bool(dict, "splash",
 	    (fbinfo.flags & BI_FB_SPLASH) != 0);
 #endif
 	if (fbinfo.depth == 8) {
@@ -1267,7 +1267,7 @@ device_pci_register(device_t dev, void *aux)
 			 * framebuffer address?  Tough...but this has
 			 * probably never worked.
 			 */
-#if NGENFB > 0			    
+#if NGENFB > 0
 			prop_dictionary_set_bool(dict, "is_console",
 			    genfb_is_console());
 #else
