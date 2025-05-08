@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.94 2025/05/06 04:34:58 imil Exp $	*/
+/*	$NetBSD: types.h,v 1.95 2025/05/08 05:31:16 imil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,6 +134,6 @@ typedef __register_t	register_t;
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_UCAS_FULL
 #define	__HAVE_RAS
-#define	__HAVE_BOOTCYCLECOUNT
+#define	__HAVE_BOOT_DURATION
 
 #endif	/* _I386_MACHTYPES_H_ */

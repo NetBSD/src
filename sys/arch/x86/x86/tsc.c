@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.62 2025/05/06 04:34:59 imil Exp $	*/
+/*	$NetBSD: tsc.c,v 1.63 2025/05/08 05:31:16 imil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.62 2025/05/06 04:34:59 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.63 2025/05/08 05:31:16 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.62 2025/05/06 04:34:59 imil Exp $");
 #include <sys/cpu.h>
 #include <sys/xcall.h>
 #include <sys/lock.h>
-#ifdef BOOTCYCLETIME
-#include <sys/bootcycletime.h>
+#ifdef BOOT_DURATION
+#include <sys/boot_duration.h>
 #endif
 
 #include <machine/cpu_counter.h>
@@ -60,7 +60,7 @@ static void	tsc_delay(unsigned int);
 
 static uint64_t	tsc_dummy_cacheline __cacheline_aligned;
 uint64_t	tsc_freq __read_mostly;	/* exported for sysctl */
-#ifdef BOOTCYCLETIME
+#ifdef BOOT_DURATION
 extern uint32_t	starttsc_lo;
 extern uint32_t	starttsc_hi;
 #endif
@@ -474,10 +474,10 @@ tsc_tc_reset(void)
 		l->l_md.md_tsc = 0;
 }
 
-#ifdef BOOTCYCLETIME
+#ifdef BOOT_DURATION
 /* Returns the kernel boot time in milliseconds. */
 uint64_t
-bootcycletime(void)
+boot_duration_timer(void)
 {
 	KASSERT(curcpu_stable());
 	KASSERT(CPU_IS_PRIMARY(curcpu()));

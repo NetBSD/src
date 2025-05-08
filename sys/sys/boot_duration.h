@@ -1,4 +1,4 @@
-/* $NetBSD: bootcycletime.h,v 1.1 2025/05/06 04:34:59 imil Exp $ */
+/* $NetBSD: boot_duration.h,v 1.1 2025/05/08 05:31:17 imil Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -26,13 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_BOOTCYCLETIME_H_
-#define _SYS_BOOTCYCLETIME_H_
+#ifndef _SYS_BOOT_DURATION_H_
+#define _SYS_BOOT_DURATION_H_
 
 #include <sys/types.h>
 
-#ifdef __HAVE_BOOTCYCLECOUNT
-uint64_t	bootcycletime(void);
+#ifdef __HAVE_BOOT_DURATION
+uint64_t	boot_duration_timer(void);
 #endif
 
-#endif /* _SYS_BOOTCYCLETIME_H_ */
+#endif /* _SYS_BOOT_DURATION_H_ */
