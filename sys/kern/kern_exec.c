@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.478.2.2 2021/05/03 09:12:50 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.478.2.3 2025/05/09 13:04:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.478.2.2 2021/05/03 09:12:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.478.2.3 2025/05/09 13:04:27 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1149,14 +1149,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	if (is_spawn)
-		uvmspace_spawn(l, epp->ep_vm_minaddr,
-		    epp->ep_vm_maxaddr,
-		    epp->ep_flags & EXEC_TOPDOWN_VM);
-	else
-		uvmspace_exec(l, epp->ep_vm_minaddr,
-		    epp->ep_vm_maxaddr,
-		    epp->ep_flags & EXEC_TOPDOWN_VM);
+	uvmspace_exec(l, epp->ep_vm_minaddr, epp->ep_vm_maxaddr,
+	    epp->ep_flags & EXEC_TOPDOWN_VM);
 
 	struct vmspace		*vm;
 	vm = p->p_vmspace;
@@ -2426,7 +2420,14 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
-	p2->p_vmspace = proc0.p_vmspace;
+
+	/*
+	 * Allocate an empty user vmspace for the new process now.
+	 * The min/max and topdown parameters given here are just placeholders,
+	 * the right values will be assigned in uvmspace_exec().
+	 */
+	p2->p_vmspace = uvmspace_alloc(exec_vm_minaddr(VM_MIN_ADDRESS),
+	    VM_MAXUSER_ADDRESS, true);
 
 	TAILQ_INIT(&p2->p_sigpend.sp_info);
 
