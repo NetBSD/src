@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.101 2024/10/06 22:15:33 mlelstv Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.102 2025/05/09 10:22:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.101 2024/10/06 22:15:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.102 2025/05/09 10:22:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -800,27 +800,29 @@ sys_semget(struct lwp *l, const struct sys_semget_args *uap, register_t *retval)
 
 #define SMALL_SOPS 8
 
-static int
-do_semop(struct lwp *l, int usemid, struct sembuf *usops,
-    size_t nsops, struct timespec *utimeout, register_t *retval)
+void do_semop_init(void)
+{
+	RUN_ONCE(&exithook_control, seminit_exithook);
+}
+
+/* all pointers already in kernel space */
+int do_semop1(struct lwp *l, int usemid, struct sembuf *sops,
+    size_t nsops, struct timespec *timeout, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int semid, seq;
-	struct sembuf small_sops[SMALL_SOPS];
-	struct sembuf *sops;
 	struct semid_ds *semaptr;
 	struct sembuf *sopptr = NULL;
 	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	kauth_cred_t cred = l->l_cred;
-	struct timespec timeout;
 	int timo = 0;
 	int i, error;
 	int do_wakeup, do_undos;
 
 	RUN_ONCE(&exithook_control, seminit_exithook);
 
-	SEM_PRINTF(("call to semop(%d, %p, %zu)\n", usemid, usops, nsops));
+	SEM_PRINTF(("do_semop1(%d, %p, %zu)\n", usemid, usops, nsops));
 
 	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
 		mutex_enter(p->p_lock);
@@ -829,25 +831,6 @@ do_semop(struct lwp *l, int usemid, struct sembuf *usops,
 	}
 
 restart:
-	if (nsops <= SMALL_SOPS) {
-		sops = small_sops;
-	} else if (nsops <= seminfo.semopm) {
-		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
-	} else {
-		SEM_PRINTF(("too many sops (max=%d, nsops=%zu)\n",
-		    seminfo.semopm, nsops));
-		return (E2BIG);
-	}
-
-	error = copyin(usops, sops, nsops * sizeof(sops[0]));
-	if (error) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
-		    usops, &sops, nsops * sizeof(sops[0])));
-		if (sops != small_sops)
-			kmem_free(sops, nsops * sizeof(*sops));
-		return error;
-	}
-
 	mutex_enter(&semlock);
 	/* In case of reallocation, we will wait for completion */
 	while (__predict_false(sem_realloc_state))
@@ -859,14 +842,8 @@ restart:
 		goto out;
 	}
 
-	if (utimeout) {
-		error = copyin(utimeout, &timeout, sizeof(timeout));
-		if (error) {
-			SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n",
-			    error, utimeout, &timeout, sizeof(timeout)));
-			return error;
-		}
-		error = ts2timo(CLOCK_MONOTONIC, TIMER_RELTIME, &timeout,
+	if (timeout) {
+		error = ts2timo(CLOCK_MONOTONIC, TIMER_RELTIME, timeout,
 		    &timo, NULL);
 		if (error)
 			return error;
@@ -1087,8 +1064,56 @@ done:
 
 out:
 	mutex_exit(&semlock);
+	return error;
+}
+
+static int
+do_semop(struct lwp *l, int usemid, struct sembuf *usops,
+    size_t nsops, struct timespec *utimeout, register_t *retval)
+{
+	struct sembuf small_sops[SMALL_SOPS];
+	struct sembuf *sops;
+	struct timespec timeout;
+	int error;
+
+	do_semop_init();
+
+	SEM_PRINTF(("do_semop(%d, %p, %zu)\n", usemid, usops, nsops));
+
+	if (nsops <= SMALL_SOPS) {
+		sops = small_sops;
+	} else if (seminfo.semopm > 0 && nsops <= (size_t)seminfo.semopm) {
+		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
+	} else {
+		SEM_PRINTF(("too many sops (max=%d, nsops=%zu)\n",
+		    seminfo.semopm, nsops));
+		return (E2BIG);
+	}
+
+	error = copyin(usops, sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
+		    usops, &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops)
+			kmem_free(sops, nsops * sizeof(*sops));
+		return error;
+	}
+
+	if (utimeout) {
+		error = copyin(utimeout, &timeout, sizeof(timeout));
+		if (error) {
+			SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n",
+			    error, utimeout, &timeout, sizeof(timeout)));
+			return error;
+		}
+	}
+
+	error = do_semop1(l, usemid, sops, nsops, utimeout ? &timeout : NULL,
+	    retval);
+
 	if (sops != small_sops)
 		kmem_free(sops, nsops * sizeof(*sops));
+
 	return error;
 }
 
