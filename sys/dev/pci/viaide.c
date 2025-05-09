@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.89.2.1 2025/05/09 11:13:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89.2.1 2025/05/09 11:13:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,8 +301,8 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_CX700_IDE,
 	  0,
-	  NULL,
-	  via_sata_chip_map_new,
+	  "VIA Technologies CX700(M2)/VX700/VX800 SATA/IDE RAID Controller",
+	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_CX700M2_IDE,
 	  0,
@@ -311,12 +311,22 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VX900_IDE,
 	  0,
-	  NULL,
+	  "VIA Technologies VX900/VX11 SATA controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VX900_RAID,
+	  0,
+	  "VIA Technologies VX900/VX11 SATA controller (RAID mode)",
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6410_RAID,
 	  0,
-	  NULL,
+	  "VIA Technologies VT6410 IDE controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT6415_IDE,
+	  0,
+	  "VIA Technologies VT6415/VT6330 IDE controller",
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
@@ -339,10 +349,24 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  "VIA Technologies VT8237A (5337) SATA Controller",
 	  via_sata_chip_map_7,
 	},
-	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
+	/*
+	 * The 0x3349 PCI ID may be reused in all modes (IDE, RAID, AHCI).
+	 * ahcisata(4) will attach if AHCI mode is selected in the BIOS.
+	 * Newer CE revision southbridges use it only in RAID mode.
+	 */
+	{ PCI_PRODUCT_VIATECH_VT8251_SATA,
 	  0,
-	  "VIA Technologies VT8237R SATA Controller",
-	  via_sata_chip_map_7,
+	  "VIA Technologies VT8251 SATA Controller",
+	  via_chip_map,
+	},
+	/*
+	 * The 0x5287 PCI ID is used only in IDE mode for newer
+	 * VT8251 southbridge (CE) revisions.
+	 */
+	{ PCI_PRODUCT_VIATECH_VT8251_SATA_2,
+	  0,
+	  "VIA Technologies VT8251 (5287) SATA Controller",
+	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
 	  0,
@@ -352,6 +376,16 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237S_SATA_RAID,
 	  0,
 	  "VIA Technologies VT8237S SATA Controller (RAID mode)",
+	  via_sata_chip_map_7,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8261_SATA,
+	  0,
+	  "VIA Technologies VT8261 SATA Controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8261_RAID,
+	  0,
+	  "VIA Technologies VT8261 SATA Controller (RAID mode)",
 	  via_sata_chip_map_7,
 	},
 	{ 0,
@@ -457,6 +491,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pcireg_t vendor = PCI_VENDOR(pa->pa_id);
 	int channel;
 	u_int32_t ideconf;
+	int no_ideconf = 0;
+	int single_channel = 0;
 	pcireg_t pcib_id, pcib_class;
 	struct pci_attach_args pcib_pa;
 
@@ -466,16 +502,31 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	switch (vendor) {
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT6415_IDE:
+			/* VT6415 is a single channel IDE controller. */
+			single_channel = 1;
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VT6410_RAID:
-			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "VIA Technologies VT6410 IDE controller\n");
+			/*
+			 * The chip enable register of the VT6410/VT6415
+			 * controllers may not be set by the hardware.
+			 * Treat their channels as always enabled.
+			 */
+			no_ideconf = 1;
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_CX700_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
-			    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 			break;
+		case PCI_PRODUCT_VIATECH_VT8251_SATA:
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT8251_SATA_2:
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT8261_SATA:
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_IDE:
-			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "VIA Technologies VX900 ATA133 controller\n");
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VX900_RAID:
+			sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
@@ -543,6 +594,10 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 				aprint_normal("VT8237A ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
+			case PCI_PRODUCT_VIATECH_VT8237S_ISA:
+				aprint_normal("VT8237S ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
 			case PCI_PRODUCT_VIATECH_CX700:
 				aprint_normal("CX700 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
@@ -551,12 +606,16 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 				aprint_normal("VT8251 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
+			case PCI_PRODUCT_VIATECH_VT8261:
+				aprint_normal("VT8261 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
 			case PCI_PRODUCT_VIATECH_VX800:
-				aprint_normal("VT800 ATA133 controller\n");
+				aprint_normal("VX800 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			case PCI_PRODUCT_VIATECH_VX855:
-				aprint_normal("VT855 ATA133 controller\n");
+				aprint_normal("VX855 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			default:
@@ -623,14 +682,25 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	}
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
-	sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
+	if (sc->sc_wdcdev.sc_atac.atac_set_modes == NULL)
+		sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	if (single_channel)
+		sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	else
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
+		if (interface == 0) {
+			ATADEBUG_PRINT(("via_chip_map interface == 0\n"),
+			    DEBUG_PROBE);
+			interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+			    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+		}
+	}
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -643,6 +713,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	    DEBUG_PROBE);
 
 	ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
+	if (ideconf == 0 && no_ideconf)
+		ideconf = APO_IDECONF_ALWAYS_EN;
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -1129,6 +1201,10 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 3;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
