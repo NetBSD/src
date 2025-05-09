@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.503 2025/05/09 20:26:03 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.504 2025/05/09 20:35:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.503 2025/05/09 20:26:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.504 2025/05/09 20:35:43 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -526,7 +526,6 @@ static volatile sig_atomic_t caught_sigchld;
 
 static void CollectOutput(Job *, bool);
 static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
-static void ContinueJobs(void);
 static void JobSigReset(void);
 
 static void
@@ -2108,6 +2107,34 @@ JobReapChild(pid_t pid, int status, bool isJobs)
 	JobFinish(job, status);
 }
 
+static void
+Job_Continue(Job *job)
+{
+	DEBUG1(JOB, "Continuing stopped job pid %d.\n", job->pid);
+	if (job->suspended) {
+		(void)printf("*** [%s] Continued\n", job->node->name);
+		(void)fflush(stdout);
+		job->suspended = false;
+	}
+	if (KILLPG(job->pid, SIGCONT) != 0)
+		DEBUG1(JOB, "Failed to send SIGCONT to %d\n", job->pid);
+}
+
+static void
+ContinueJobs(void)
+{
+	Job *job;
+
+	for (job = job_table; job < job_table_end; job++) {
+		if (job->status == JOB_ST_RUNNING &&
+		    (make_suspended || job->suspended))
+			Job_Continue(job);
+		else if (job->status == JOB_ST_FINISHED)
+			JobFinish(job, job->exit_status);
+	}
+	make_suspended = false;
+}
+
 void
 Job_CatchOutput(void)
 {
@@ -2624,41 +2651,6 @@ Job_AbortAll(void)
 
 	while (waitpid((pid_t)-1, &status, WNOHANG) > 0)
 		continue;
-}
-
-/*
- * Tries to restart stopped jobs if there are slots available.
- * Called in response to a SIGCONT.
- */
-static void
-ContinueJobs(void)
-{
-	Job *job;
-
-	for (job = job_table; job < job_table_end; job++) {
-		if (job->status == JOB_ST_RUNNING &&
-		    (make_suspended || job->suspended)) {
-			DEBUG1(JOB, "Restarting stopped job pid %d.\n",
-			    job->pid);
-			if (job->suspended) {
-				(void)printf("*** [%s] Continued\n",
-				    job->node->name);
-				(void)fflush(stdout);
-			}
-			job->suspended = false;
-			if (KILLPG(job->pid, SIGCONT) != 0)
-				DEBUG1(JOB, "Failed to send SIGCONT to %d\n",
-				    job->pid);
-		}
-		if (job->status == JOB_ST_FINISHED) {
-			/*
-			 * Job exit deferred after calling waitpid() in a
-			 * signal handler
-			 */
-			JobFinish(job, job->exit_status);
-		}
-	}
-	make_suspended = false;
 }
 
 static void
