@@ -1,6 +1,6 @@
-/* Id: compat_progname.c,v 1.2 2020/06/15 01:37:15 schwarze Exp  */
+/* Id: test-attribute.c,v 1.1 2020/06/22 20:00:38 schwarze Exp  */
 /*
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,35 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "config.h"
 
-static const char *progname;
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void	 var_arg(const char *, ...)
+		__attribute__((__format__ (__printf__, 1, 2)));
+void	 no_ret(int)
+		__attribute__((__noreturn__));
 
 void
-setprogname(const char *name)
+var_arg(const char *fmt, ...)
 {
-	progname = name;
+	va_list	 ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
 }
 
-const char *
-getprogname(void)
+void
+no_ret(int i)
 {
-	return progname;
+	exit(i);
+}
+
+int
+main(void)
+{
+	var_arg("Test output: %d\n", 42);
+	no_ret(0);
 }
