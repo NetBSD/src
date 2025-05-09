@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.504 2025/05/09 20:35:43 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.505 2025/05/09 21:38:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.504 2025/05/09 20:35:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.505 2025/05/09 21:38:34 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -587,7 +587,7 @@ DumpJobs(const char *where)
 	const Job *job;
 	char flags[4];
 
-	debug_printf("job table @ %s\n", where);
+	debug_printf("%s, job table:\n", where);
 	for (job = job_table; job < job_table_end; job++) {
 		Job_FlagsToString(job, flags, sizeof flags);
 		debug_printf("job %d, status %s, flags %s, pid %d\n",
@@ -624,7 +624,7 @@ static void
 JobsTable_Lock(sigset_t *omaskp)
 {
 	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0)
-		Punt("JobsTable_Lock: sigprocmask: %s", strerror(errno));
+		Punt("JobsTable_Lock: %s", strerror(errno));
 }
 
 /* Unlock the jobs table and the jobs therein. */
@@ -652,7 +652,7 @@ JobCreatePipe(Job *job, int minfd)
 	int pipe_fds[2];
 
 	if (pipe(pipe_fds) == -1)
-		Punt("Cannot create pipe: %s", strerror(errno));
+		Punt("JobCreatePipe: %s", strerror(errno));
 
 	for (i = 0; i < 2; i++) {
 		/* Avoid using low-numbered fds */
@@ -667,9 +667,9 @@ JobCreatePipe(Job *job, int minfd)
 	job->outPipe = pipe_fds[1];
 
 	if (fcntl(job->inPipe, F_SETFD, FD_CLOEXEC) == -1)
-		Punt("Cannot set close-on-exec: %s", strerror(errno));
+		Punt("SetCloseOnExec: %s", strerror(errno));
 	if (fcntl(job->outPipe, F_SETFD, FD_CLOEXEC) == -1)
-		Punt("Cannot set close-on-exec: %s", strerror(errno));
+		Punt("SetCloseOnExec: %s", strerror(errno));
 
 	/*
 	 * We mark the input side of the pipe non-blocking; we poll(2) the
@@ -686,12 +686,12 @@ JobCondPassSig(int signo)
 {
 	Job *job;
 
-	DEBUG1(JOB, "JobCondPassSig(%d) called.\n", signo);
+	DEBUG1(JOB, "JobCondPassSig: signal %d\n", signo);
 
 	for (job = job_table; job < job_table_end; job++) {
 		if (job->status != JOB_ST_RUNNING)
 			continue;
-		DEBUG2(JOB, "JobCondPassSig passing signal %d to child %d.\n",
+		DEBUG2(JOB, "JobCondPassSig passing signal %d to pid %d\n",
 		    signo, job->pid);
 		KILLPG(job->pid, signo);
 	}
@@ -767,7 +767,7 @@ JobPassSig_suspend(int signo)
 	act.sa_flags = 0;
 	(void)sigaction(signo, &act, NULL);
 
-	DEBUG1(JOB, "JobPassSig_suspend passing signal %d to self.\n", signo);
+	DEBUG1(JOB, "JobPassSig_suspend passing signal %d to self\n", signo);
 
 	(void)kill(getpid(), signo);
 
@@ -1199,14 +1199,15 @@ JobFinishDoneExitedError(Job *job, int *inout_status)
 static void
 JobFinishDoneExited(Job *job, int *inout_status)
 {
-	DEBUG2(JOB, "Process %d [%s] exited.\n", job->pid, job->node->name);
+	DEBUG2(JOB, "Target %s, pid %d exited\n",
+	    job->node->name, job->pid);
 
 	if (WEXITSTATUS(*inout_status) != 0)
 		JobFinishDoneExitedError(job, inout_status);
 	else if (DEBUG(JOB)) {
 		SwitchOutputTo(job->node);
-		(void)printf("*** [%s] Completed successfully\n",
-		    job->node->name);
+		(void)printf("Target %s, pid %d exited successfully\n",
+		    job->node->name, job->pid);
 	}
 }
 
@@ -1249,8 +1250,8 @@ JobFinish(Job *job, int status)
 {
 	bool done, return_job_token;
 
-	DEBUG3(JOB, "JobFinish: %d [%s], status %d\n",
-	    job->pid, job->node->name, status);
+	DEBUG3(JOB, "JobFinish: target %s, pid %d, status %#x\n",
+	    job->node->name, job->pid, status);
 
 	if ((WIFEXITED(status) &&
 	     ((WEXITSTATUS(status) != 0 && !job->ignerr))) ||
@@ -1260,7 +1261,7 @@ JobFinish(Job *job, int status)
 		JobClosePipes(job);
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 			if (fclose(job->cmdFILE) != 0)
-				Punt("Cannot write shell script for '%s': %s",
+				Punt("Cannot write shell script for \"%s\": %s",
 				    job->node->name, strerror(errno));
 			job->cmdFILE = NULL;
 		}
@@ -1500,9 +1501,9 @@ JobExec(Job *job, char **argv)
 		int i;
 
 		debug_printf("Running %s\n", job->node->name);
-		debug_printf("\tCommand: ");
+		debug_printf("\tCommand:");
 		for (i = 0; argv[i] != NULL; i++) {
-			debug_printf("%s ", argv[i]);
+			debug_printf(" %s", argv[i]);
 		}
 		debug_printf("\n");
 	}
@@ -1625,14 +1626,15 @@ JobExec(Job *job, char **argv)
 
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 		if (fclose(job->cmdFILE) != 0)
-			Punt("Cannot write shell script for '%s': %s",
+			Punt("Cannot write shell script for \"%s\": %s",
 			    job->node->name, strerror(errno));
 		job->cmdFILE = NULL;
 	}
 
 	/* Now that the job is actually running, add it to the table. */
 	if (DEBUG(JOB)) {
-		debug_printf("JobExec(%s): pid %d added to jobs table\n",
+		debug_printf(
+		    "JobExec: target %s, pid %d added to jobs table\n",
 		    job->node->name, job->pid);
 		DumpJobs("job started");
 	}
@@ -2050,7 +2052,8 @@ Job_CatchChildren(void)
 	caught_sigchld = 0;
 
 	while ((pid = waitpid((pid_t)-1, &status, WNOHANG | WUNTRACED)) > 0) {
-		DEBUG2(JOB, "Process %d exited/stopped status %x.\n",
+		DEBUG2(JOB,
+		    "Process with pid %d exited/stopped with status %#x.\n",
 		    pid, status);
 		JobReapChild(pid, status, true);
 	}
@@ -2071,14 +2074,14 @@ JobReapChild(pid_t pid, int status, bool isJobs)
 	job = JobFindPid(pid, JOB_ST_RUNNING, isJobs);
 	if (job == NULL) {
 		if (isJobs && !lurking_children)
-			Error("Child (%d) status %x not in table?",
+			Error("Child with pid %d and status %#x not in table?",
 			    pid, status);
 		return;
 	}
 
 	if (WIFSTOPPED(status)) {
-		DEBUG2(JOB, "Process %d (%s) stopped.\n",
-		    job->pid, job->node->name);
+		DEBUG2(JOB, "Process for target %s, pid %d stopped\n",
+		    job->node->name, job->pid);
 		if (!make_suspended) {
 			switch (WSTOPSIG(status)) {
 			case SIGTSTP:
@@ -2110,14 +2113,14 @@ JobReapChild(pid_t pid, int status, bool isJobs)
 static void
 Job_Continue(Job *job)
 {
-	DEBUG1(JOB, "Continuing stopped job pid %d.\n", job->pid);
+	DEBUG1(JOB, "Continuing pid %d\n", job->pid);
 	if (job->suspended) {
 		(void)printf("*** [%s] Continued\n", job->node->name);
 		(void)fflush(stdout);
 		job->suspended = false;
 	}
 	if (KILLPG(job->pid, SIGCONT) != 0)
-		DEBUG1(JOB, "Failed to send SIGCONT to %d\n", job->pid);
+		DEBUG1(JOB, "Failed to send SIGCONT to pid %d\n", job->pid);
 }
 
 static void

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.361 2025/05/07 19:49:00 rillig Exp $
+# $NetBSD: Makefile,v 1.362 2025/05/09 21:38:34 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -544,13 +544,7 @@ SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
 SED_CMDS.opt-debug-graph2=	${STD_SED_CMDS.dg2}
 SED_CMDS.opt-debug-graph3=	${STD_SED_CMDS.dg3}
 SED_CMDS.opt-debug-hash=	-e 's,\(entries\)=[1-9][0-9],\1=<entries>,'
-SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
-SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
-SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
-SED_CMDS.opt-debug-jobs+=	-e 's,JobFinish: [0-9][0-9]*,JobFinish: <pid>,'
-SED_CMDS.opt-debug-jobs+=	-e 's,Command: ${.SHELL:T},Command: <shell>,'
-# The "-q" may be there or not, see jobs.c, variable shells.
-SED_CMDS.opt-debug-jobs+=	-e 's,^\(.Command: <shell>\) -q,\1,'
+SED_CMDS.opt-debug-jobs=	${STD_SED_CMDS.dj}
 SED_CMDS.opt-debug-lint+=	${STD_SED_CMDS.regex}
 SED_CMDS.opt-jobs-no-action=	${STD_SED_CMDS.hide-from-output}
 SED_CMDS.opt-no-action-runflags= ${STD_SED_CMDS.hide-from-output}
@@ -619,10 +613,10 @@ STD_SED_CMDS.dg2+=	-e 's,\(last modified\) ..:..:.. ... ..\, ....,\1 <timestamp>
 STD_SED_CMDS.dg3=	${STD_SED_CMDS.dg2}
 
 # Omit details such as process IDs from the output of the -dj option.
-STD_SED_CMDS.dj= \
-	-e '/Process/d;/JobFinish:/d' \
-	-e 's, \(pid\) [0-9][0-9]*, \1 <pid>,' \
-	-e 's,^\(	Command:\) .*,\1 <shell>,'
+STD_SED_CMDS.dj=	-e 's, pid [0-9][0-9]*, pid <pid>,'
+STD_SED_CMDS.dj+=	-e 's,^\(.Command\): ${.SHELL:T},\1: <shell>,'
+# The "-q" may be there or not, see jobs.c, variable shells.
+STD_SED_CMDS.dj+=	-e 's,^\(.Command: <shell>\) -q,\1,'
 
 # Reduce the noise for tests running with the -n option, since there is no
 # other way to suppress the echoing of the commands.
