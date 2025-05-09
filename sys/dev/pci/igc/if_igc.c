@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.3.2.5 2024/06/21 10:54:50 martin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.3.2.6 2025/05/09 14:29:44 martin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.5 2024/06/21 10:54:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.6 2025/05/09 14:29:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -1037,7 +1037,7 @@ igc_detach_counters(struct igc_softc *sc)
 		evcnt_detach(&sc->sc_global_evcnts[cnt]);
 
 	kmem_free(sc->sc_global_evcnts,
-	    IGC_GLOBAL_COUNTERS * sizeof(sc->sc_global_evcnts));
+	    IGC_GLOBAL_COUNTERS * sizeof(sc->sc_global_evcnts[0]));
 
 	/* Driver counters */
 	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
@@ -1051,7 +1051,7 @@ igc_detach_counters(struct igc_softc *sc)
 		evcnt_detach(&sc->sc_driver_evcnts[cnt]);
 
 	kmem_free(sc->sc_driver_evcnts,
-	    IGC_DRIVER_COUNTERS * sizeof(sc->sc_driver_evcnts));
+	    IGC_DRIVER_COUNTERS * sizeof(sc->sc_driver_evcnts[0]));
 
 	/* Queue counters */
 	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
