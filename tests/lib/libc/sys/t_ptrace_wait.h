@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.40 2025/05/02 02:52:40 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.41 2025/05/09 01:30:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ hexdump(const char *title, const void *buf, size_t len)
 		if ((i % 8) == 0)
 			fprintf(stderr, " ");
 		fprintf(stderr, "%02hhx", p[i]);
-		if ((i % 16) == 0)
+		if ((i % 16) == 15)
 			fprintf(stderr, "\n");
 	}
 	if (i % 16)
@@ -226,6 +226,8 @@ do {									\
 	fprintf(stderr, "%s != %s (%s = %zu bytes)\n", #x, #y, #n, vn);	\
 	hexdump(#x, vx, vn);						\
 	hexdump(#y, vy, vn);						\
+	errx(EXIT_FAILURE, "%s:%d %s(): failed",			\
+	    __FILE__, __LINE__, __func__);				\
 } while (/*CONSTCOND*/0)
 
 #define FORKEE_ASSERTX(x)						\
