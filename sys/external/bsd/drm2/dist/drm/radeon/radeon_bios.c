@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.14 2024/04/16 14:34:02 riastradh Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.15 2025/05/09 20:09:13 tnn Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.14 2024/04/16 14:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.15 2025/05/09 20:09:13 tnn Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -252,15 +252,10 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 	if (rdev->flags & RADEON_IS_IGP)
 		return false;
 
-#ifdef __NetBSD__
-	pdev = rdev->pdev;
-	while (pdev != NULL) {
-		dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle : NULL);
-		pdev = NULL;
-		if (rdev->pdev->class != PCI_CLASS_DISPLAY_VGA)
-			continue;
-#else
 	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
+#ifdef __NetBSD__
+		dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle : NULL);
+#else
 		dhandle = ACPI_HANDLE(&pdev->dev);
 #endif
 		if (!dhandle)
@@ -274,16 +269,11 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 	}
 
 	if (!found) {
+		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
 #ifdef __NetBSD__
-		pdev = rdev->pdev;
-		while (pdev != NULL) {
 			dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle
 			    : NULL);
-			pdev = NULL;
-			if (rdev->pdev->class != PCI_CLASS_DISPLAY_OTHER)
-				continue;
 #else
-		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
 			dhandle = ACPI_HANDLE(&pdev->dev);
 #endif
 			if (!dhandle)
