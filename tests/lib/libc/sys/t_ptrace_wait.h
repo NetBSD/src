@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.41 2025/05/09 01:30:11 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.42 2025/05/09 01:32:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ hexdump(const char *title, const void *buf, size_t len)
 	for (i = 0; i < len; i++) {
 		if ((i % 8) == 0)
 			fprintf(stderr, " ");
-		fprintf(stderr, "%02hhx", p[i]);
+		fprintf(stderr, " %02hhx", p[i]);
 		if ((i % 16) == 15)
 			fprintf(stderr, "\n");
 	}
