@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.20 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.21 2025/05/09 10:25:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.20 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.21 2025/05/09 10:25:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -64,6 +64,7 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32_semget),
 	_PKG_ENTRY(netbsd32_semop),
 	_PKG_ENTRY(netbsd32_semconfig),
+	_PKG_ENTRY(netbsd32_semtimedop),
 #endif /* SYSVSEM */
 
 #if defined(SYSVSHM)
@@ -84,6 +85,12 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc,
     "compat_netbsd32,sysv_ipc");
+
+#ifdef SEM_DEBUG
+#define SEM_PRINTF(a) printf a
+#else
+#define SEM_PRINTF(a)
+#endif
 
 static int
 compat_netbsd32_sysvipc_modcmd(modcmd_t cmd, void *arg)
@@ -195,6 +202,62 @@ netbsd32_semget(struct lwp *l, const struct netbsd32_semget_args *uap, register_
 	return sys_semget(l, &ua, retval);
 }
 
+#define SMALL_SOPS	8
+
+CTASSERT(sizeof(struct netbsd32_sembuf) == sizeof(struct sembuf));
+
+static int
+netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops, size_t nsops, const struct netbsd32_timespec *utimeout, register_t *retval)
+{
+	struct netbsd32_sembuf small_sops[SMALL_SOPS];
+	struct netbsd32_sembuf *sops;
+	struct netbsd32_timespec ts32;
+	struct timespec timeout;
+	int error;
+
+	do_semop_init();
+
+	SEM_PRINTF(("do_semop(%d, %p, %zu)\n", usemid, usops, nsops));
+
+	if (nsops <= SMALL_SOPS) {
+		sops = small_sops;
+	} else if (seminfo.semopm > 0 && nsops <= (size_t)seminfo.semopm) {
+		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
+	} else {
+		SEM_PRINTF(("too many sops (max=%d, nsops=%zu)\n",
+		    seminfo.semopm, nsops));
+		return (E2BIG);
+	}
+
+	/* netbsd32_sembuf == sembuf, see CTASSERT above */
+	error = copyin(NETBSD32PTR64(usops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
+		    usops, &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops)
+			kmem_free(sops, nsops * sizeof(*sops));
+		return error;
+	}
+
+	if (utimeout) {
+		error = copyin(utimeout, &ts32, sizeof(ts32));
+		if (error) {
+			SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n",
+			    error, utimeout, &ts32, sizeof(ts32)));
+			return error;
+		}
+		netbsd32_to_timespec(&ts32, &timeout);
+	}
+
+	error = do_semop1(l, semid, (struct sembuf*)sops, nsops,
+	    utimeout ? &timeout : NULL, retval);
+
+	if (sops != small_sops)
+		kmem_free(sops, nsops * sizeof(*sops));
+
+	return error;
+}
+
 int
 netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap, register_t *retval)
 {
@@ -203,12 +266,23 @@ netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap, register_t 
 		syscallarg(netbsd32_sembufp_t) sops;
 		syscallarg(netbsd32_size_t) nsops;
 	} */
-	struct sys_semop_args ua;
 
-	NETBSD32TO64_UAP(semid);
-	NETBSD32TOP_UAP(sops, struct sembuf);
-	NETBSD32TOX_UAP(nsops, size_t);
-	return sys_semop(l, &ua, retval);
+	return netbsd32_do_semop(l, SCARG(uap, semid), SCARG(uap,sops),
+	    SCARG(uap, nsops), NULL, retval);
+}
+
+int
+netbsd32_semtimedop(struct lwp *l, const struct netbsd32_semtimedop_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) semid;
+		syscallarg(netbsd32_sembufp_t) sops;
+		syscallarg(netbsd32_size_t) nsops;
+		syscallarg(netbsd32_timespecp_t) timeout;
+	} */
+
+	return netbsd32_do_semop(l, SCARG(uap, semid), SCARG(uap,sops),
+	    SCARG(uap, nsops), SCARG_P32(uap,timeout), retval);
 }
 
 int
