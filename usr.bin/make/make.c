@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.268 2025/04/23 19:36:59 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.269 2025/05/09 18:42:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.268 2025/04/23 19:36:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.269 2025/05/09 18:42:56 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned checked_seqno = 1;
@@ -130,7 +130,7 @@ debug_printf(const char *fmt, ...)
 	va_end(ap);
 }
 
-static char *
+char *
 GNodeType_ToString(GNodeType type)
 {
 	Buffer buf;

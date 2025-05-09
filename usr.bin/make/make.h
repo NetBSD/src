@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.353 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.354 2025/05/09 18:42:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1079,6 +1079,7 @@ int mkTempFile(const char *, char *, size_t) MAKE_ATTR_USE;
 void AppendWords(StringList *, char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 bool GNode_ShouldExecute(GNode *gn) MAKE_ATTR_USE;
+char *GNodeType_ToString(GNodeType);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
 MAKE_INLINE bool MAKE_ATTR_USE
