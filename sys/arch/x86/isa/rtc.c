@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.102.1 2023/01/13 19:05:25 martin Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.102.2 2025/05/09 11:50:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1.102.1 2023/01/13 19:05:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1.102.2 2025/05/09 11:50:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,8 @@ clock_expandyear(int clockyear)
 
 	s = splclock();
 #if NACPICA > 0
-	if (acpi_active)
+	if (acpi_active && AcpiGbl_FADT.Century >= MC_NVRAM_START &&
+	    AcpiGbl_FADT.Century < (MC_NVRAM_START + MC_NVRAM_SIZE))
 		cmoscentury = mc146818_read(NULL,
 		    (centb = AcpiGbl_FADT.Century));
 	else
