@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.33.2.2 2024/10/09 10:21:44 martin Exp $	*/
+/*	$NetBSD: auth.c,v 1.33.2.3 2025/05/09 11:54:33 martin Exp $	*/
 /* $OpenBSD: auth.c,v 1.160 2023/03/05 05:34:09 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.33.2.2 2024/10/09 10:21:44 martin Exp $");
+__RCSID("$NetBSD: auth.c,v 1.33.2.3 2025/05/09 11:54:33 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -388,8 +388,11 @@ auth_log(struct ssh *ssh, int authenticated, int partial,
 		authmsg = "Postponed";
 	else if (partial)
 		authmsg = "Partial";
-	else
+	else {
 		authmsg = authenticated ? "Accepted" : "Failed";
+		if (authenticated)
+			pfilter_notify(0);
+	}
 
 	if ((extra = format_method_key(authctxt)) == NULL) {
 		if (authctxt->auth_method_info != NULL)
