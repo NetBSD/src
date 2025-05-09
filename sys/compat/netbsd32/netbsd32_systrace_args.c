@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.54 2024/05/20 01:40:45 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.55 2025/05/09 10:20:08 martin Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3759,6 +3759,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
+		break;
+	}
+	/* netbsd32_semtimedop */
+	case 506: {
+		const struct netbsd32_semtimedop_args *p = params;
+		iarg[0] = SCARG(p, semid); /* int */
+		uarg[1] = (intptr_t) SCARG(p, sops).i32; /* netbsd32_sembufp_t */
+		iarg[2] = SCARG(p, nsops); /* netbsd32_size_t */
+		uarg[3] = (intptr_t) SCARG(p, timeout).i32; /* netbsd32_timespecp_t */
+		*n_args = 4;
 		break;
 	}
 	default:
@@ -10185,6 +10195,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_semtimedop */
+	case 506:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_sembufp_t";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "netbsd32_timespecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -12304,6 +12333,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32___dup3100 */
 	case 505:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_semtimedop */
+	case 506:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
