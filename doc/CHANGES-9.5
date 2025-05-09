@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.56 2025/05/07 17:57:56 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.57 2025/05/09 14:28:13 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -796,4 +796,39 @@ sys/dev/ata/ata_raid_via.c			1.11
 	ataraid(4): PR 59130: fix setup for VIA V-RAID controllers with
 	two drives per channel.
 	[andvar, ticket #1942]
+
+share/man/man4/viaide.4				1.11,1.12
+sys/dev/pci/ahcisata_pci.c			1.72
+sys/dev/pci/pciide_apollo_reg.h			1.21
+sys/dev/pci/pcidevs				1.1518-1.1522
+sys/dev/pci/viaide.c				1.90-1.98
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_date.h			(regen)
+
+	viaide(4): PR 45917, PR 37517, PR 59010:
+	- VT6415/VT6330 single-channel IDE support
+	- VT8251 RAID/IDE mode support
+	- CX700/VX800 IDE/RAID mode improved support
+	Multiple other improvements:
+	- VT8237S IDE controller identification by ISA bus
+	- VT8261 basic support
+	- VT6421 set RAID capability flag when available to enable ataraid(4)
+	  support
+	- VX900/VX11 RAID mode support
+	- documentation improvements
+	- naming improvements
+	[andvar, ticket #1944]
+
+sys/kern/kern_exec.c				1.528 (patch)
+sys/uvm/uvm_extern.h				1.234 (patch)
+sys/uvm/uvm_map.c				1.427 (patch)
+
+	posix_spawn(2): PR 59037, PR 59175: allocate a new (empty)
+	vmspace at process creation time.
+	[riastradh, ticket #1947]
+
+bin/sh/memalloc.c				1.40
+
+	sh(1): PR 59395: remove a broken (minor) optimization.
+	[kre, ticket #1948]
 
