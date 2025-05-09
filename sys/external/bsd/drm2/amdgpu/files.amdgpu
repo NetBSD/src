@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.31 2024/04/16 14:34:01 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.32 2025/05/09 20:18:25 tnn Exp $
 
 version	20180827
 
@@ -7,7 +7,8 @@ device	amdgpu: drmkms, drmkms_pci, drmkms_sched, drmkms_ttm, amdgpufbbus, firmlo
 attach	amdgpu at pci
 makeoptions	amdgpu		"CPPFLAGS.amdgpu"+="${CPPFLAGS.drmkms}"
 
-defflag	opt_amdgpu_cik.h AMDGPU_CIK
+defflag	opt_amdgpu_cik.h	AMDGPU_CIK
+defflag	opt_amdgpu_si.h		AMDGPU_SI
 
 device	amdgpufb: amdgpufbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	amdgpufb at amdgpufbbus
