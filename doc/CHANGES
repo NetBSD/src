@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3165 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3166 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -742,11 +742,11 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	proplib(3): Added support for JSON serialization format.
 		[thorpej 20250422]
 	mips: Enable SSP by default (and RELRO on mips64). [nia 20250428]
-	amd64: Added KERNEL_DIR option to build.sh, and upddated the boot
+	amd64: Added KERNEL_DIR option to build.sh, and updated the boot
 		loaders accordingly. [pgoyette 20250428]
 	hp300: Add sti(4) support for 362 and 382. Mostly pulled from
 		OpenBSD/hp300. [tsutsui 20250501]
 	openresolv: Import version 3.16.2 [roy 20250507]
 	mdocml: Import 1.14.6. [wiz 20250509]
-	openresolv: Patch to versikon 3.16.3 [roy 20250509]
+	openresolv: Patch to version 3.16.3 [roy 20250509]
 	pkg_install: Import pkg_install-20250417. [wiz 20250509]
