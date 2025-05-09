@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.78 2025/02/09 17:10:37 riastradh Exp $
+# $NetBSD: Makefile,v 1.79 2025/05/09 13:18:32 riastradh Exp $
 
 MKMAN=	no
 
@@ -152,7 +152,8 @@ FILESGRP_truncate_test.root_owned=	wheel
 
 CLEANFILES=   truncate_test.root_owned
 truncate_test.root_owned:
-	dd if=/dev/null bs=1 count=1 of=${.TARGET}
+	@${_MKTARGET_CREATE}
+	touch ${.TARGET}
 
 WARNS=			4
 
