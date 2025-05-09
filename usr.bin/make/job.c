@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.501 2025/05/09 17:58:23 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.502 2025/05/09 20:19:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.501 2025/05/09 17:58:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.502 2025/05/09 20:19:11 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -514,8 +514,8 @@ static char *targPrefix = NULL;	/* To identify a job change in the output. */
 static Job tokenPoolJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
-#define CHILD_EXIT "."
-#define DO_JOB_RESUME "R"
+#define CEJ_CHILD_EXITED '.'
+#define CEJ_RESUME_JOBS 'R'
 
 enum {
 	npseudojobs = 2		/* number of pseudo-jobs */
@@ -526,7 +526,7 @@ static volatile sig_atomic_t caught_sigchld;
 
 static void CollectOutput(Job *, bool);
 static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
-static void JobRestartJobs(void);
+static void ContinueJobs(void);
 static void JobSigReset(void);
 
 static void
@@ -698,32 +698,25 @@ JobCondPassSig(int signo)
 	}
 }
 
-/*
- * SIGCHLD handler.
- *
- * Sends a token on the child exit pipe to wake us up from select()/poll().
- */
 static void
-JobChildSig(int signo MAKE_ATTR_UNUSED)
+WriteToPipe(int fd, char ch)
 {
-	caught_sigchld = 1;
-	while (write(childExitJob.outPipe, CHILD_EXIT, 1) == -1 &&
-	       errno == EAGAIN)
+	while (write(fd, &ch, 1) == -1 && errno == EAGAIN)
 		continue;
 }
 
-
-/* Resume all stopped jobs. */
 static void
-JobContinueSig(int signo MAKE_ATTR_UNUSED)
+HandleSIGCHLD(int signo MAKE_ATTR_UNUSED)
 {
-	/*
-	 * Defer sending SIGCONT to our stopped children until we return
-	 * from the signal handler.
-	 */
-	while (write(childExitJob.outPipe, DO_JOB_RESUME, 1) == -1 &&
-	       errno == EAGAIN)
-		continue;
+	caught_sigchld = 1;
+	/* Wake up from poll(). */
+	WriteToPipe(childExitJob.outPipe, CEJ_CHILD_EXITED);
+}
+
+static void
+HandleSIGCONT(int signo MAKE_ATTR_UNUSED)
+{
+	WriteToPipe(childExitJob.outPipe, CEJ_RESUME_JOBS);
 }
 
 /*
@@ -2137,12 +2130,8 @@ Job_CatchOutput(void)
 		char token;
 		ssize_t count = read(childExitJob.inPipe, &token, 1);
 		if (count == 1) {
-			if (token == DO_JOB_RESUME[0])
-				/*
-				 * Complete relay requested from our SIGCONT
-				 * handler.
-				 */
-				JobRestartJobs();
+			if (token == CEJ_RESUME_JOBS)
+				ContinueJobs();
 		} else if (count == 0)
 			Punt("unexpected eof on token pipe");
 		else
@@ -2294,7 +2283,7 @@ Job_Init(void)
 	watchfd(&childExitJob);
 
 	sigemptyset(&caught_signals);
-	(void)bmake_signal(SIGCHLD, JobChildSig);
+	(void)bmake_signal(SIGCHLD, HandleSIGCHLD);
 	sigaddset(&caught_signals, SIGCHLD);
 
 	/* Handle the signals specified by POSIX. */
@@ -2312,7 +2301,7 @@ Job_Init(void)
 	AddSig(SIGTTOU, JobPassSig_suspend);
 	AddSig(SIGTTIN, JobPassSig_suspend);
 	AddSig(SIGWINCH, JobCondPassSig);
-	AddSig(SIGCONT, JobContinueSig);
+	AddSig(SIGCONT, HandleSIGCONT);
 
 	(void)Job_RunTarget(".BEGIN", NULL);
 	/* Create the .END node, see Targ_GetEndNode in Compat_MakeAll. */
@@ -2642,7 +2631,7 @@ Job_AbortAll(void)
  * Called in response to a SIGCONT.
  */
 static void
-JobRestartJobs(void)
+ContinueJobs(void)
 {
 	Job *job;
 
