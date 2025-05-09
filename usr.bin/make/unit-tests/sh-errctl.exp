@@ -18,7 +18,7 @@ Running all
 	Command: <shell>
 JobExec(all): pid <pid> added to jobs table
 job table @ job started
-job 0, status 3, flags ---, pid <pid>
+job 0, status running, flags ---, pid <pid>
 silent
 ignerr
 always

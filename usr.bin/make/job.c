@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.500 2025/05/03 08:18:33 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.501 2025/05/09 17:58:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.500 2025/05/03 08:18:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.501 2025/05/09 17:58:23 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -164,13 +164,19 @@ int emul_poll(struct pollfd *, int, int);
 struct pollfd;
 
 
-typedef enum JobStatus {
-	JOB_ST_FREE	= 0,	/* Job is available */
-	JOB_ST_SET_UP	= 1,	/* Job is allocated but otherwise invalid */
-	/* XXX: What about the 2? */
-	JOB_ST_RUNNING	= 3,	/* Job is running, pid valid */
-	JOB_ST_FINISHED	= 4	/* Job is done (ie after SIGCHLD) */
-} JobStatus;
+enum JobStatus {
+	JOB_ST_FREE,		/* Job is available */
+	JOB_ST_SET_UP,		/* Job is allocated but otherwise invalid */
+	JOB_ST_RUNNING,		/* Job is running, pid valid */
+	JOB_ST_FINISHED		/* Job is done (i.e. after SIGCHLD) */
+};
+
+static const char JobStatus_Name[][9] = {
+	"free",
+	"set-up",
+	"running",
+	"finished",
+};
 
 /*
  * A Job manages the shell commands that are run to create a single target.
@@ -204,7 +210,7 @@ struct Job {
 
 	int exit_status;	/* from wait4() in signal handler */
 
-	JobStatus status;
+	enum JobStatus status;
 
 	bool suspended;
 
@@ -579,14 +585,15 @@ Job_Pid(Job *job)
 static void
 DumpJobs(const char *where)
 {
-	Job *job;
+	const Job *job;
 	char flags[4];
 
 	debug_printf("job table @ %s\n", where);
 	for (job = job_table; job < job_table_end; job++) {
 		Job_FlagsToString(job, flags, sizeof flags);
-		debug_printf("job %d, status %d, flags %s, pid %d\n",
-		    (int)(job - job_table), job->status, flags, job->pid);
+		debug_printf("job %d, status %s, flags %s, pid %d\n",
+		    (int)(job - job_table), JobStatus_Name[job->status],
+		    flags, job->pid);
 	}
 }
 
@@ -797,7 +804,7 @@ JobPassSig_suspend(int signo)
 }
 
 static Job *
-JobFindPid(int pid, JobStatus status, bool isJobs)
+JobFindPid(int pid, enum JobStatus status, bool isJobs)
 {
 	Job *job;
 
