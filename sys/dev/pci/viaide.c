@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.99 2025/04/20 17:19:15 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.99 2025/04/20 17:19:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1198,7 +1198,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	}
 	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
-	
+
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 3;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
