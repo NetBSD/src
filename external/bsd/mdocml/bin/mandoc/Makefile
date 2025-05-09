@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2023/06/03 09:09:04 lukem Exp $
+# $NetBSD: Makefile,v 1.22 2025/05/09 07:36:55 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ term.c \
 term_ascii.c \
 term_ps.c \
 term_tab.c \
+term_tag.c \
 tree.c
 
 .ifndef HOSTPROG
