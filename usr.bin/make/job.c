@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.502 2025/05/09 20:19:11 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.503 2025/05/09 20:26:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.502 2025/05/09 20:19:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.503 2025/05/09 20:26:03 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -699,10 +699,10 @@ JobCondPassSig(int signo)
 }
 
 static void
-WriteToPipe(int fd, char ch)
+WriteOrDie(int fd, char ch)
 {
-	while (write(fd, &ch, 1) == -1 && errno == EAGAIN)
-		continue;
+	if (write(fd, &ch, 1) != 1)
+		execDie("write", "child");
 }
 
 static void
@@ -710,13 +710,13 @@ HandleSIGCHLD(int signo MAKE_ATTR_UNUSED)
 {
 	caught_sigchld = 1;
 	/* Wake up from poll(). */
-	WriteToPipe(childExitJob.outPipe, CEJ_CHILD_EXITED);
+	WriteOrDie(childExitJob.outPipe, CEJ_CHILD_EXITED);
 }
 
 static void
 HandleSIGCONT(int signo MAKE_ATTR_UNUSED)
 {
-	WriteToPipe(childExitJob.outPipe, CEJ_RESUME_JOBS);
+	WriteOrDie(childExitJob.outPipe, CEJ_RESUME_JOBS);
 }
 
 /*
