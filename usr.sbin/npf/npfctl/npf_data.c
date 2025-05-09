@@ -693,7 +693,7 @@ npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
 
 filt_opts_t
 npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
-			bool tnot, uint8_t eth_type)
+			bool tnot, uint16_t eth_type)
 {
 	filt_opts_t fopts;
 	fopts.filt.opt2.from_mac = src_addr;
@@ -706,16 +706,17 @@ npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
 	return fopts;
 }
 
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+/*
+ * general function to parse ether type and mac address
+ */
 static void
-ether_aton_c(uint8_t *dest, const char *str)
+parse_ether_hex(uint8_t *dest, const char *str, int hexlength, const char *err)
 {
-	const char *err = "invalid mac address format";
 	const uint8_t *cp = (const uint8_t *)str;
 	uint8_t *ep;
 
-#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
-
-	ep = dest + ETHER_ADDR_LEN;
+	ep = dest + hexlength; /* check null terminated boundary */
 
 	while (*cp) {
 		if (!isxdigit(*cp))
@@ -737,24 +738,37 @@ ether_aton_c(uint8_t *dest, const char *str)
 		}
 
 		switch (*cp) {
-		case ':':
-		case '-':
-		case '.':
-			cp++;
-			break;
+			case ':':
+			case '-':
+			case '.':
+				cp++;
+				break;
 		}
 	}
+}
 
+uint16_t
+npfctl_parse_ether_type(const char *str)
+{
+#define ETHER_LEN	4
+	const char *err = "invalid ether type format";
+	uint8_t etype[2];
+	parse_ether_hex(etype, str + 2, ETHER_LEN, err);
+
+	uint16_t *e_type = (uint16_t *)etype; /* fetch the whole two byte blocks */
+
+	return *e_type;
 }
 
 npfvar_t *
 npfctl_parse_mac_addr(const char *mac_addr)
 {
+	const char *err = "invalid mac address format";
 	struct ether_addr *ether;
 	uint8_t addr[ETHER_ADDR_LEN];
 
 	ether = (struct ether_addr *)addr;
-	ether_aton_c(addr, mac_addr);
+	parse_ether_hex(addr, mac_addr, ETHER_ADDR_LEN, err);
 
 	return npfvar_create_element(NPFVAR_MAC, ether, sizeof(*ether));
 }

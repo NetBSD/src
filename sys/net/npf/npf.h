@@ -154,6 +154,8 @@ typedef struct {
 	uint32_t		npc_info;
 	nbuf_t *		npc_nbuf;
 
+	uint8_t			ether_type;
+
 	/*
 	 * Pointers to the IP source and destination addresses,
 	 * and the address length (4 for IPv4 or 16 for IPv6).

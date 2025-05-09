@@ -81,7 +81,7 @@ typedef struct l3 {
 typedef struct l2 {
 	npfvar_t *	from_mac;
 	npfvar_t *	to_mac;
-	uint8_t		ether_type;
+	uint16_t	ether_type;
 } opt2;
 
 typedef struct filt_opts {
@@ -159,8 +159,9 @@ uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 filt_opts_t	npfctl_parse_l3filt_opt(npfvar_t *, npfvar_t *, bool,
 						npfvar_t *, npfvar_t *, bool);
 filt_opts_t	npfctl_parse_l2filt_opt(npfvar_t *, bool, npfvar_t *,
-						bool, uint8_t);
+						bool, uint16_t);
 npfvar_t *	npfctl_parse_mac_addr(const char *);
+uint16_t	npfctl_parse_ether_type(const char *str);
 int		npfctl_nat_ruleset_p(const char *, bool *);
 
 void		usage(void);
@@ -197,6 +198,12 @@ enum {
 	BM_COUNT // total number of the marks
 };
 
+enum { /* book marks for L2 */
+	BM_ETHER_TYPE, BM_SRC_ETHER, BM_DST_ETHER,
+
+	//BML2_COUNT // total number of l2 marks
+};
+
 npf_bpf_t *	npfctl_bpf_create(void);
 struct bpf_program *npfctl_bpf_complete(npf_bpf_t *);
 const void *	npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
@@ -206,6 +213,8 @@ void		npfctl_bpf_group_enter(npf_bpf_t *, bool);
 void		npfctl_bpf_group_exit(npf_bpf_t *);
 
 void		npfctl_bpf_ipver(npf_bpf_t *, sa_family_t);
+void		npfctl_bpf_ether(npf_bpf_t *, unsigned, struct ether_addr *);
+void		fetch_ether_type(npf_bpf_t *, uint16_t);
 void		npfctl_bpf_proto(npf_bpf_t *, unsigned);
 void		npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
 		    const npf_addr_t *, const npf_netmask_t);

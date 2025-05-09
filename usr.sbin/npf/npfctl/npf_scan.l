@@ -193,6 +193,11 @@ layer-2			return L2;
 			return HEX;
 		}
 
+"Ex"{HEXDIG}	{
+			yylval.str = estrndup(yytext, yyleng);
+			return ETHERHEX;
+		}
+
 {NUMBER}"."{NUMBER} {
 			char *endp, *buf = estrndup(yytext, yyleng);
 			yylval.fpnum = strtod(buf, &endp);

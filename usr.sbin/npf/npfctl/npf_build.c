@@ -337,6 +337,11 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			npfctl_bpf_table(ctx, opts, tid);
 			break;
 		}
+		case NPFVAR_MAC: {
+			struct ether_addr *eth = data;
+			npfctl_bpf_ether(ctx, opts, eth);
+			break;
+		}
 		default:
 			yyerror("unexpected %s", npfvar_type(type));
 		}
@@ -515,6 +520,33 @@ build_l3_code(npf_bpf_t *bc, nl_rule_t *rl, sa_family_t family, const npfvar_t *
 }
 
 static bool
+build_l2_code(npf_bpf_t *bc, const filt_opts_t *fopts)
+{
+	unsigned opts;
+
+	npfvar_t *ap_from = fopts->filt.opt2.from_mac;
+	npfvar_t *ap_to = fopts->filt.opt2.to_mac;
+	const uint16_t ether_type = fopts->filt.opt2.ether_type;
+	bool addr_or_ether;
+
+	addr_or_ether = ap_from || ap_to || ether_type;
+	if(!addr_or_ether)
+		return false;
+
+	if (ether_type != 0) {
+		fetch_ether_type(bc, ether_type);
+	}
+
+	/* Build ether address blocks. */
+	opts = MATCH_DST | (fopts->fo_tinvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, 0, ap_to, opts);
+	opts = MATCH_SRC | (fopts->fo_finvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, 0, ap_from, opts);
+
+	return true;
+}
+
+static bool
 npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
     const filt_opts_t *fopts)
 {
@@ -522,10 +554,13 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
 	size_t len;
 
 	bc = npfctl_bpf_create();
-
-	if (!build_l3_code(bc, rl, family, popts, fopts))
+	if (fopts->layer == NPF_RULE_LAYER_3) {
+		if (!build_l3_code(bc, rl, family, popts, fopts))
 		return false;
-
+	} else {
+		if (!build_l2_code(bc, fopts))
+			return false;
+	}
 
 	/* Set the byte-code marks, if any. */
 	const void *bmarks = npfctl_bpf_bmarks(bc, &len);
