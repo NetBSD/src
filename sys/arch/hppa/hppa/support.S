@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.7 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: support.S,v 1.7.30.1 2025/05/09 11:41:40 martin Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -301,6 +301,6 @@ LEAF_ENTRY(longjmp)
 	ldwm	4(%arg0),%sp	/* stack pointer, */
 
 	bv	%r0(%rp)
-	copy	%arg1,%ret0	/* Move return value to where it belongs. */
+	ldi	1, %ret0
 EXIT(longjmp)
 
