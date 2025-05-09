@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.292 2024/12/07 23:23:25 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.293 2025/05/09 16:06:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.292 2024/12/07 23:23:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.293 2025/05/09 16:06:49 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1406,17 +1406,7 @@ pool_grow(struct pool *pp, int flags)
 			} while (pp->pr_flags & PR_GROWING);
 			return ERESTART;
 		} else {
-			if (pp->pr_flags & PR_GROWINGNOWAIT) {
-				/*
-				 * This needs an unlock/relock dance so
-				 * that the other caller has a chance to
-				 * run and actually do the thing.  Note
-				 * that this is effectively a busy-wait.
-				 */
-				mutex_exit(&pp->pr_lock);
-				mutex_enter(&pp->pr_lock);
-				return ERESTART;
-			}
+			KASSERT((pp->pr_flags & PR_GROWINGNOWAIT) == 0);
 			return EWOULDBLOCK;
 		}
 	}
