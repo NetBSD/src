@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.143 2024/03/17 22:05:23 wiz Exp $
+.\"	$NetBSD: hier.7,v 1.144 2025/05/09 14:47:38 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd March 17, 2024
+.Dd May 9, 2025
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -451,8 +451,11 @@ used in both single-user and multi-user environments.
 .It Pa /stand/
 Programs used in a standalone environment, that is, things that run on
 bare hardware without a kernel.
-Currently kernel modules are also placed here, although this remains
-somewhat controversial and they may yet get moved.
+Currently kernel modules are also placed here (except when building with
+.Sy KERNEL_DIR ,
+see
+.Xr mk.conf 5 ) ,
+although this remains somewhat controversial and they may yet get moved.
 .It Pa /tmp/
 Temporary files.
 The contents of
