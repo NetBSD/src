@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.12 2021/04/10 19:49:59 nia Exp $ */
+/* $NetBSD: lib.h,v 1.13 2025/05/09 13:26:38 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -443,6 +443,7 @@ char	*xasprintf(const char *, ...);
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
+extern Boolean HideStdout;
 extern const char *cert_chain_file;
 extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;

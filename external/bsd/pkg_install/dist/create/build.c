@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.3 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: build.c,v 1.4 2025/05/09 13:26:37 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: build.c,v 1.3 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: build.c,v 1.4 2025/05/09 13:26:37 wiz Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -229,7 +229,6 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 	struct archive *archive;
 	struct archive_entry *entry, *sparse_entry;
 	struct archive_entry_linkresolver *resolver;
-	char *initial_cwd;
 	
 	archive = archive_write_new();
 	archive_write_set_format_pax_restricted(archive);
@@ -291,8 +290,6 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 	if (Preserve)
 		write_meta_file(preserve_file, archive);
 
-	initial_cwd = getcwd(NULL, 0);
-
 	for (p = plist->head; p; p = p->next) {
 		if (p->type == PLIST_FILE) {
 			write_normal_file(p->name, archive, resolver, owner, group);
@@ -325,8 +322,6 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 
 	if (archive_write_free(archive))
 		errx(2, "cannot finish archive: %s", archive_error_string(archive));
-
-	free(initial_cwd);
 }
 
 static struct memory_file *

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2024/06/11 09:26:57 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2025/05/09 13:26:37 wiz Exp $	*/
 
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 #endif
 #endif
-__RCSID("$NetBSD: main.c,v 1.7 2024/06/11 09:26:57 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2025/05/09 13:26:37 wiz Exp $");
 
 /*-
  * Copyright (c) 1999-2019 The NetBSD Foundation, Inc.
@@ -512,7 +512,7 @@ main(int argc, char *argv[])
 	char		 lsdir[MaxPathSize];
 	char		 sfx[MaxPathSize];
 	char		*lsdirp = NULL;
-	int		 ch;
+	int		 ch, rv;
 
 	setprogname(argv[0]);
 
@@ -621,11 +621,13 @@ main(int argc, char *argv[])
 		argv++;		/* "check" */
 
 		check_pkgdb();
-		check(argv);
+		rv = check(argv);
 
 		if (!quiet) {
 			printf("Done.\n");
 		}
+
+		return rv;
 
 	} else if (strcasecmp(argv[0], "lsall") == 0) {
 		argv++;		/* "lsall" */

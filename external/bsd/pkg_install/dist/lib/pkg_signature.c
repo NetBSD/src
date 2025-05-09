@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.4 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.5 2025/05/09 13:26:38 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.5 2025/05/09 13:26:38 wiz Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -631,17 +631,18 @@ pkg_sign_gpg(const char *name, const char *output)
 
 	entry = archive_entry_new();
 	archive_entry_copy_stat(entry, &sb);
+	size = archive_entry_size(entry);
 
 	pkgname = extract_pkgname(fd);
-	hash_file = xasprintf(hash_template, pkgname,
-	    (long long)archive_entry_size(entry));
+	hash_file = xasprintf(hash_template, pkgname, (long long)size);
 	free(pkgname);
 
-	for (i = 0; i < archive_entry_size(entry); i += block_len) {
-		if (i + (off_t)sizeof(block) < archive_entry_size(entry))
+	for (i = 0; i < size; i += block_len) {
+		if (i + (off_t)sizeof(block) < size)
 			block_len = sizeof(block);
 		else
-			block_len = archive_entry_size(entry) % sizeof(block);
+			block_len = size % sizeof(block) ?
+			    size % sizeof(block) : sizeof(block);
 		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		hash_block(block, block_len, hash);
@@ -682,14 +683,13 @@ pkg_sign_gpg(const char *name, const char *output)
 	archive_write_finish_entry(pkg);
 	archive_entry_free(sign_entry);
 
-	size = archive_entry_size(entry);
 	archive_write_header(pkg, entry);
 
 	for (i = 0; i < size; i += block_len) {
 		if (i + (off_t)sizeof(block) < size)
 			block_len = sizeof(block);
 		else
-			block_len = size % sizeof(block);
+			block_len = size % sizeof(block) ? size % sizeof(block) : sizeof(block);
 		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		archive_write_data(pkg, block, block_len);

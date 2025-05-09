@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.13 2024/08/26 22:41:39 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.14 2025/05/09 13:26:37 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.13 2024/08/26 22:41:39 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.14 2025/05/09 13:26:37 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -604,7 +604,7 @@ write_meta_data(struct pkg_task *pkg)
 		return 0;
 
 	if (mkdir_p(pkg->install_logdir)) {
-		warn("Can't create pkgdb entry: %s", pkg->install_logdir);
+		warn("%s: can't create pkgdb entry: %s", pkg->pkgname, pkg->install_logdir);
 		return -1;
 	}
 
@@ -618,14 +618,14 @@ write_meta_data(struct pkg_task *pkg)
 		(void)unlink(filename);
 		fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, descr->perm);
 		if (fd == -1) {
-			warn("Can't open meta data file: %s", filename);
+			warn("%s: can't open meta data file: %s", pkg->pkgname, filename);
 			return -1;
 		}
 		len = strlen(*target);
 		do {
 			ret = write(fd, *target, len);
 			if (ret == -1) {
-				warn("Can't write meta data file: %s",
+				warn("%s: can't write meta data file: %s", pkg->pkgname,
 				    filename);
 				free(filename);
 				close(fd);
@@ -634,7 +634,7 @@ write_meta_data(struct pkg_task *pkg)
 			len -= ret;
 		} while (ret > 0);
 		if (close(fd) == -1) {
-			warn("Can't close meta data file: %s", filename);
+			warn("%s: can't close meta data file: %s", pkg->pkgname, filename);
 			free(filename);
 			return -1;
 		}
@@ -693,22 +693,35 @@ extract_files(struct pkg_task *pkg)
 	plist_t *p;
 	const char *last_file;
 	char *fullpath;
+	int workdir;
 
 	if (Fake)
 		return 0;
 
 	if (mkdir_p(pkg->install_prefix)) {
-		warn("Can't create prefix: %s", pkg->install_prefix);
+		warn("%s: can't create prefix: %s", pkg->pkgname, pkg->install_prefix);
 		return -1;
 	}
 
 	if (!NoRecord && !pkgdb_open(ReadWrite)) {
-		warn("Can't open pkgdb for writing");
+		warn("%s: can't open pkgdb for writing", pkg->pkgname);
+		return -1;
+	}
+
+#ifndef O_CLOEXEC
+#define O_CLOEXEC	0
+#endif
+#ifndef O_DIRECTORY
+#define	O_DIRECTORY	0
+#endif
+	workdir = open(".", O_RDONLY|O_CLOEXEC|O_DIRECTORY);
+	if (workdir == -1) {
+		warn("%s: can't open current working directory", pkg->pkgname);
 		return -1;
 	}
 
 	if (chdir(pkg->install_prefix) == -1) {
-		warn("Can't change into prefix: %s", pkg->install_prefix);
+		warn("%s: can't change into prefix: %s", pkg->pkgname, pkg->install_prefix);
 		return -1;
 	}
 
@@ -728,12 +741,13 @@ extract_files(struct pkg_task *pkg)
 		case PLIST_FILE:
 			last_file = p->name;
 			if (pkg->entry == NULL) {
-				warnx("PLIST entry not in package (%s)",
-				    archive_entry_pathname(pkg->entry));
+				warnx("%s: PLIST entry not in package (%s)",
+				    pkg->pkgname, archive_entry_pathname(pkg->entry));
 				goto out;
 			}
 			if (strcmp(p->name, archive_entry_pathname(pkg->entry))) {
-				warnx("PLIST entry and package don't match (%s vs %s)",
+				warnx("%s: PLIST entry and package don't match (%s "
+				    "vs %s)", pkg->pkgname,
 				    p->name, archive_entry_pathname(pkg->entry));
 				goto out;
 			}
@@ -756,7 +770,7 @@ extract_files(struct pkg_task *pkg)
 				return -1;
 			printf("Executing '%s'\n", cmd);
 			if (!Fake && system(cmd))
-				warnx("command '%s' failed", cmd); /* XXX bail out? */
+				warnx("%s: command '%s' failed", pkg->pkgname, cmd); /* XXX bail out? */
 			continue;
 
 		case PLIST_CHMOD:
@@ -781,9 +795,9 @@ extract_files(struct pkg_task *pkg)
 
 		r = archive_write_header(writer, pkg->entry);
 		if (r != ARCHIVE_OK) {
-			warnx("Failed to write %s for %s: %s",
-			    archive_entry_pathname(pkg->entry),
+			warnx("%s: failed to write %s: %s",
 			    pkg->pkgname,
+			    archive_entry_pathname(pkg->entry),
 			    archive_error_string(writer));
 			goto out;
 		}
@@ -813,7 +827,7 @@ extract_files(struct pkg_task *pkg)
 			continue;
 		}
 		if (r != ARCHIVE_OK) {
-			warnx("Failed to read from archive for %s: %s",
+			warnx("%s: failed to read from archive: %s",
 			    pkg->pkgname,
 			    archive_error_string(pkg->archive));
 			goto out;
@@ -821,7 +835,8 @@ extract_files(struct pkg_task *pkg)
 	}
 
 	if (pkg->entry != NULL) {
-		warnx("Package contains entries not in PLIST: %s",
+		warnx("%s: package contains entries not in PLIST: %s",
+		    pkg->pkgname,
 		    archive_entry_pathname(pkg->entry));
 		goto out;
 	}
@@ -832,6 +847,9 @@ out:
 	if (!NoRecord)
 		pkgdb_close();
 	archive_write_free(writer);
+
+	fchdir(workdir);
+	close(workdir);
 
 	return r;
 }
@@ -857,13 +875,13 @@ pkg_register_depends(struct pkg_task *pkg)
 
 		fd = open(required_by, O_WRONLY | O_APPEND | O_CREAT, 0644);
 		if (fd == -1) {
-			warn("can't open dependency file '%s',"
-			    "registration is incomplete!", required_by);
+			warn("%s: can't open dependency file '%s',"
+			    "registration is incomplete!", pkg->pkgname, required_by);
 		} else if (write(fd, text, text_len) != (ssize_t)text_len) {
-			warn("can't write to dependency file `%s'", required_by);
+			warn("%s: can't write to dependency file `%s'", pkg->pkgname, required_by);
 			close(fd);
 		} else if (close(fd) == -1)
-			warn("cannot close file %s", required_by);
+			warn("%s: cannot close file %s", pkg->pkgname, required_by);
 
 		free(required_by);
 	}
@@ -903,10 +921,10 @@ check_platform(struct pkg_task *pkg)
 	} else {
 		if (uname(&host_uname) < 0) {
 			if (Force) {
-				warnx("uname() failed, continuing.");
+				warnx("%s: uname() failed, continuing", pkg->pkgname);
 				return 0;
 			} else {
-				warnx("uname() failed, aborting.");
+				warnx("%s: uname() failed, aborting", pkg->pkgname);
 				return -1;
 			}
 		}
@@ -931,8 +949,8 @@ check_platform(struct pkg_task *pkg)
 	if (fatal ||
 	    compatible_platform(effective_opsys, effective_os_version,
 				pkg->buildinfo[BI_OS_VERSION]) != 1) {
-		warnx("Warning: package `%s' was built for a platform:",
-		    pkg->pkgname);
+		warnx("%s: %s: was built for a different platform:", pkg->pkgname,
+		    !Force && fatal ? "error" : "warning");
 		warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
 		    pkg->buildinfo[BI_OPSYS],
 		    pkg->buildinfo[BI_MACHINE_ARCH],
@@ -953,20 +971,21 @@ check_pkgtools_version(struct pkg_task *pkg)
 	int version;
 
 	if (val == NULL) {
-		warnx("Warning: package `%s' lacks pkg_install version data",
+		warnx("%s: warning: lacks pkg_install version data",
 		    pkg->pkgname);
 		return 0;
 	}
 
 	if (strlen(val) != 8 || strspn(val, "0123456789") != 8) {
-		warnx("Warning: package `%s' contains an invalid pkg_install version",
-		    pkg->pkgname);
+		warnx("%s: %s: contains an invalid pkg_install version",
+		    pkg->pkgname, Force ? "warning" : "error");
 		return Force ? 0 : -1;
 	}
 	version = atoi(val);
 	if (version > PKGTOOLS_VERSION) {
-		warnx("%s: package `%s' was built with a newer pkg_install version",
-		    Force ? "Warning" : "Error", pkg->pkgname);
+		warnx("%s: %s:"
+		    " was built with a newer pkg_install version",
+		    pkg->pkgname, Force ? "warning" : "error");
 		return Force ? 0 : -1;
 	}
 	return 0;
@@ -1003,9 +1022,9 @@ run_install_script(struct pkg_task *pkg, const char *argument)
 	if (fcexec(pkg->install_logdir, filename, pkg->pkgname, argument,
 	    (void *)NULL)) {
 		if (errno != 0)
-			warn("exec of install script failed");
+			warn("%s: exec of install script failed", pkg->pkgname);
 		else
-			warnx("install script returned error status");
+			warnx("%s: install script returned error status", pkg->pkgname);
 		ret = -1;
 	}
 	free(filename);
@@ -1027,7 +1046,7 @@ check_explicit_conflict_iter(const char *cur_pkg, void *cookie)
 	if (data->old_pkg && strcmp(data->old_pkg, cur_pkg) == 0)
 		return 0;
 
-	warnx("Package `%s' conflicts with `%s', and `%s' is installed.",
+	warnx("%s: conflicts with `%s', and `%s' is installed.",
 	    data->pkg, data->pattern, cur_pkg);
 
 	return 1;
@@ -1059,8 +1078,8 @@ check_explicit_conflict(struct pkg_task *pkg)
 
 	if (some_installed_package_conflicts_with(pkg->pkgname,
 	    pkg->other_version, &installed, &installed_pattern)) {
-		warnx("Installed package `%s' conflicts with `%s' when trying to install `%s'.",
-			installed, installed_pattern, pkg->pkgname);
+		warnx("%s: Installed package `%s' conflicts with `%s'.",
+		    pkg->pkgname, installed, installed_pattern);
 		free(installed);
 		free(installed_pattern);
 		status |= -1;
@@ -1078,7 +1097,7 @@ check_implicit_conflict(struct pkg_task *pkg)
 
 	if (!pkgdb_open(ReadOnly)) {
 #if notyet /* XXX empty pkgdb without database? */
-		warn("Can't open pkgdb for reading");
+		warn("%s: can't open pkgdb for reading", pkg->pkgname);
 		return -1;
 #else
 		return 0;
@@ -1103,7 +1122,7 @@ check_implicit_conflict(struct pkg_task *pkg)
 		    strcmp(pkg->other_version, existing) == 0)
 			continue;
 
-		warnx("Conflicting PLIST with %s: %s", existing, p->name);
+		warnx("%s: conflicting PLIST with %s: %s", pkg->pkgname, existing, p->name);
 		if (!Force) {
 			status = -1;
 			if (!Verbose)
@@ -1132,21 +1151,40 @@ check_requires(struct pkg_task *pkg)
 			next_line = eol + 1;
 
 		if (strncmp(data, "REQUIRES=", 9) == 0) {
-			char *library_name = dup_value(data, eol);
 			struct stat sb;
-			if (stat(library_name, &sb) != 0 || !S_ISREG(sb.st_mode)) {
-				warnx("Missing required library: %s", library_name);
+			int found = 0;
+			char *libpath = dup_value(data, eol);
+			/*
+			 * Search both the original path as well as inside
+			 * Destdir if enabled, as files may exist in either
+			 * (e.g. system libraries outside, pkgsrc inside).
+			 */
+			if (stat(libpath, &sb) == 0 && S_ISREG(sb.st_mode)) {
+				found = 1;
+			} else if (Destdir != NULL) {
+				char *p = xasprintf("%s/%s", Destdir, libpath);
+				if (stat(p, &sb) == 0 && S_ISREG(sb.st_mode))
+					found = 1;
+				free(p);
+			}
+
+			if (!found) {
+				warnx("%s: missing required library: %s", pkg->pkgname, libpath);
 #ifdef __NetBSD__
-				if (strncmp(library_name, "/usr/X11R7", 10) == 0) {
+				if (strncmp(libpath, "/usr/X11R7", 10) == 0) {
 					warnx("Please make sure to install the X sets");
 				}
 #endif
 				ret = 1;
 			}
-			free(library_name);
+			free(libpath);
 		}
 	}
 
+	if (ret == 1 && Force) {
+		warnx("Required libraries are missing, but installation forced to continue");
+		ret = 0;
+	}
 	return ret;
 }
 
@@ -1225,7 +1263,7 @@ check_dependencies(struct pkg_task *pkg)
 
 		best_installed = find_best_matching_installed_pkg(p->name, 0);
 		if (best_installed == NULL) {
-			warnx("Expected dependency %s still missing", p->name);
+			warnx("%s: expected dependency %s still missing", pkg->pkgname, p->name);
 			return -1;
 		}
 
@@ -1263,8 +1301,8 @@ preserve_meta_data_file(struct pkg_task *pkg, const char *name)
 	new_file = xasprintf("%s/%s", pkg->install_logdir, name);
 	rv = 0;
 	if (rename(old_file, new_file) == -1 && errno != ENOENT) {
-		warn("Can't move %s from %s to %s", name, old_file, new_file);
-		rv = -1;			
+		warn("%s: can't move %s from %s to %s", pkg->pkgname, name, old_file, new_file);
+		rv = -1;
 	}
 	free(old_file);
 	free(new_file);
@@ -1336,7 +1374,7 @@ check_signature(struct pkg_task *pkg, int invalid_sig)
 		return 0;
 	if (strcasecmp(verified_installation, "always") == 0) {
 		if (invalid_sig)
-			warnx("No valid signature found, rejected");
+			warnx("%s: no valid signature found, rejected", pkg->pkgname);
 		return invalid_sig;
 	}
 	if (strcasecmp(verified_installation, "trusted") == 0) {
@@ -1426,22 +1464,22 @@ check_license(struct pkg_task *pkg)
 
 	if ((pkg->buildinfo[BI_LICENSE] == NULL ||
 	     *pkg->buildinfo[BI_LICENSE] == '\0')) {
-	
+
 		if (LicenseCheck == 1)
 			return 0;
-		warnx("No LICENSE set for package `%s'", pkg->pkgname);
+		warnx("%s: no LICENSE set", pkg->pkgname);
 		return 1;
 	}
 
 	switch (acceptable_license(pkg->buildinfo[BI_LICENSE])) {
 	case 0:
-		warnx("License `%s' of package `%s' is not acceptable",
-		    pkg->buildinfo[BI_LICENSE], pkg->pkgname);
+		warnx("%s: license `%s' is not acceptable",
+		    pkg->pkgname, pkg->buildinfo[BI_LICENSE]);
 		return 1;
 	case 1:
 		return 0;
 	default:
-		warnx("Invalid LICENSE for package `%s'", pkg->pkgname);
+		warnx("%s: invalid LICENSE", pkg->pkgname);
 		return 1;
 	}
 #endif
@@ -1501,7 +1539,7 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		goto clean_memory;
 
 	if (pkg->meta_data.meta_mtree != NULL)
-		warnx("mtree specification in pkg `%s' ignored", pkg->pkgname);
+		warnx("%s: mtree specification ignored", pkg->pkgname);
 
 	pkg->logdir = xasprintf("%s/%s", config_pkg_dbdir, pkg->pkgname);
 
@@ -1521,7 +1559,7 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		pkg->install_logdir = xasprintf("%s/pkg_install.XXXXXX", tmpdir);
 		/* XXX pkg_add -u... */
 		if (mkdtemp(pkg->install_logdir) == NULL) {
-			warn("mkdtemp failed");
+			warn("%s: mkdtemp failed", pkg->pkgname);
 			goto clean_memory;
 		}
 	}
@@ -1549,6 +1587,13 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		goto clean_memory;
 
 	if (pkg->other_version != NULL) {
+		/*
+		 * If we're upgrading then close stdout to avoid repeating
+		 * install/deinstall messages which can be confusing (e.g.
+		 * telling users to remove config files that are still in use).
+		 */
+		HideStdout = TRUE;
+
 		/*
 		 * Replacing an existing package.
 		 * Write meta-data, get rid of the old version,
@@ -1607,7 +1652,7 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (Verbose)
 		printf("Package %s registered in %s\n", pkg->pkgname, pkg->install_logdir);
 
-	if (pkg->meta_data.meta_display != NULL)
+	if (pkg->meta_data.meta_display != NULL && !HideStdout)
 		fputs(pkg->meta_data.meta_display, stdout);
 
 	status = 0;
@@ -1616,8 +1661,8 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 nuke_pkg:
 	if (!Fake) {
 		if (pkg->other_version) {
-			warnx("Updating of %s to %s failed.",
-			    pkg->other_version, pkg->pkgname);
+			warnx("%s: updating from %s to %s failed.",
+			    pkg->pkgname, pkg->other_version, pkg->pkgname);
 			warnx("Remember to run pkg_admin rebuild-tree after fixing this.");
 		}
 		delete_package(FALSE, &pkg->plist, FALSE, Destdir);
@@ -1627,7 +1672,7 @@ nuke_pkgdb:
 	if (!Fake) {
 		(void) remove_files(pkg->install_logdir, "+*");
 		if (recursive_remove(pkg->install_logdir, 1))
-			warn("Couldn't remove %s", pkg->install_logdir);
+			warn("%s: couldn't remove %s", pkg->pkgname, pkg->install_logdir);
 		free(pkg->install_logdir_real);
 		free(pkg->install_logdir);
 		free(pkg->logdir);
@@ -1639,7 +1684,7 @@ nuke_pkgdb:
 clean_memory:
 	if (pkg->logdir != NULL && NoRecord && !Fake) {
 		if (recursive_remove(pkg->install_logdir, 1))
-			warn("Couldn't remove %s", pkg->install_logdir);
+			warn("%s: couldn't remove %s", pkg->pkgname, pkg->install_logdir);
 	}
 	free(pkg->install_prefix);
 	free(pkg->install_logdir_real);
@@ -1654,6 +1699,7 @@ clean_memory:
 	free(pkg->pkgname);
 clean_find_archive:
 	free(pkg);
+	HideStdout = FALSE;
 	return status;
 }
 

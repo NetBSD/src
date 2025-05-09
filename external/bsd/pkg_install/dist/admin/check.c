@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: check.c,v 1.6 2025/05/09 13:26:37 wiz Exp $	*/
 
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 #endif
 #endif
-__RCSID("$NetBSD: check.c,v 1.5 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: check.c,v 1.6 2025/05/09 13:26:37 wiz Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -83,12 +83,13 @@ static int checkpattern_fn(const char *, void *);
 /*
  * Assumes CWD is in the database directory ($PREFIX/pkgdb/<pkg>)!
  */
-static void 
+static int
 check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 {
 	FILE   *f;
 	plist_t *p;
 	package_t Plist;
+	int	rv = 0;
 	char   *PkgName, *dirp = NULL, *md5file;
 	char    file[MaxPathSize];
 	char   *content;
@@ -120,8 +121,10 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 					if (strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 						if ((md5file = MD5File(file, NULL)) != NULL) {
 							/* Mismatch? */
-							if (strcmp(md5file, p->next->name + ChecksumHeaderLen) != 0)
-								printf("%s fails MD5 checksum\n", file);
+							if (strcmp(md5file, p->next->name + ChecksumHeaderLen) != 0) {
+								fprintf(stderr, "%s fails MD5 checksum\n", file);
+								rv = 1;
+							}
 
 							free(md5file);
 						}
@@ -133,11 +136,13 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 						if ((cc = readlink(file, &buf[SymlinkHeaderLen],
 							  sizeof(buf) - SymlinkHeaderLen - 1)) < 0) {
 							warnx("can't readlink `%s'", file);
+							rv = 1;
 						} else {
 							buf[SymlinkHeaderLen + cc] = 0x0;
 							if (strcmp(buf, p->next->name) != 0) {
-								printf("symlink (%s) is not same as recorded value, %s: %s\n",
+								fprintf(stderr, "symlink (%s) is not same as recorded value, %s: %s\n",
 								    file, buf, p->next->name);
+								rv = 1;
 							}
 						}
 					}
@@ -146,8 +151,10 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 				(*filecnt)++;
 			} else if (isbrokenlink(file)) {
 				warnx("%s: Symlink `%s' exists and is in %s but target does not exist!", PkgName, file, CONTENTS_FNAME);
+				rv = 1;
 			} else {
 				warnx("%s: File `%s' is in %s but not on filesystem!", PkgName, file, CONTENTS_FNAME);
+				rv = 1;
 			}
 			break;
 		case PLIST_CWD:
@@ -181,11 +188,14 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 	free_plist(&Plist);
 	fclose(f);
 	(*pkgcnt)++;
+
+	return rv;
 }
 
 struct checkpattern_arg {
 	int filecnt;
 	int pkgcnt;
+	int errcnt;
 	int got_match;
 };
 
@@ -194,16 +204,15 @@ checkpattern_fn(const char *pkg, void *vp)
 {
 	struct checkpattern_arg *arg = vp;
 
-	check1pkg(pkg, &arg->filecnt, &arg->pkgcnt);
-	if (!quiet)
-		printf(".");
+	if (check1pkg(pkg, &arg->filecnt, &arg->pkgcnt) != 0)
+		arg->errcnt++;
 
 	arg->got_match = 1;
 
 	return 0;
 }
 
-static void
+static int
 check_pkg(const char *pkg, int *filecnt, int *pkgcnt, int allow_unmatched)
 {
 	struct checkpattern_arg arg;
@@ -211,6 +220,7 @@ check_pkg(const char *pkg, int *filecnt, int *pkgcnt, int allow_unmatched)
 
 	arg.filecnt = *filecnt;
 	arg.pkgcnt = *pkgcnt;
+	arg.errcnt = 0;
 	arg.got_match = 0;
 
 	if (match_installed_pkgs(pkg, checkpattern_fn, &arg) == -1)
@@ -218,12 +228,12 @@ check_pkg(const char *pkg, int *filecnt, int *pkgcnt, int allow_unmatched)
 	if (arg.got_match != 0) {
 		*filecnt = arg.filecnt;
 		*pkgcnt = arg.pkgcnt;
-		return;
+		return (arg.errcnt) ? 1 : 0;
 	}
 
 	if (ispkgpattern(pkg)) {
 		if (allow_unmatched)
-			return;
+			return 0;
 		errx(EXIT_FAILURE, "No matching pkg for %s.", pkg);
 	}
 
@@ -238,26 +248,31 @@ check_pkg(const char *pkg, int *filecnt, int *pkgcnt, int allow_unmatched)
 
 	*filecnt = arg.filecnt;
 	*pkgcnt = arg.pkgcnt;
+
+	return (arg.errcnt) ? 1 : 0;
 }
 
-void
+int
 check(char **argv)
 {
-	int filecnt, pkgcnt;
+	int filecnt, pkgcnt, errcnt = 0;
 
 	filecnt = 0;
 	pkgcnt = 0;
 	setbuf(stdout, NULL);
 
 	if (*argv == NULL) {
-		check_pkg("*", &filecnt, &pkgcnt, 1);
+		errcnt += check_pkg("*", &filecnt, &pkgcnt, 1);
 	} else {
 		for (; *argv != NULL; ++argv)
-			check_pkg(*argv, &filecnt, &pkgcnt, 0);
+			errcnt += check_pkg(*argv, &filecnt, &pkgcnt, 0);
 	}
 
-	printf("\n");
-	printf("Checked %d file%s from %d package%s.\n",
-	    filecnt, (filecnt == 1) ? "" : "s",
-	    pkgcnt, (pkgcnt == 1) ? "" : "s");
+	if (!quiet) {
+		printf("Checked %d file%s from %d package%s.\n",
+		    filecnt, (filecnt == 1) ? "" : "s",
+		    pkgcnt, (pkgcnt == 1) ? "" : "s");
+	}
+
+	return (errcnt) ? 1: 0;
 }
