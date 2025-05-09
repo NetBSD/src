@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.146 2024/05/20 01:30:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.147 2025/05/09 10:19:03 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1232,3 +1232,6 @@
 			    netbsd32_sigsetp_t sigmask); }
 505	STD		{ int|netbsd32|100|dup3(int from, int to, \
 			    int flags); }
+506	STD MODULAR compat_netbsd32_sysvipc { int|netbsd32||semtimedop(int semid, \
+			    netbsd32_sembufp_t sops, netbsd32_size_t nsops, \
+			    netbsd32_timespecp_t timeout); }
