@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3162 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3163 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -747,3 +747,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	hp300: Add sti(4) support for 362 and 382. Mostly pulled from
 		OpenBSD/hp300. [tsutsui 20250501]
 	openresolv: Import version 3.16.2 [roy 20250507]
+	mdocml: Import 1.14.6. [wiz 20250509]

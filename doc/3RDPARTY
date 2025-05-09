@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2106 2025/05/07 18:32:56 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.2107 2025/05/09 08:23:01 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -901,13 +901,13 @@ Release tag:	mdnsresponder-X-Y-Z for mDNSResponder X.Y.Z
 Notes:
 
 Package:	mandoc
-Version:	1.14.5
+Version:	1.14.6
 Current Vers:	1.14.6
-Maintainer:	Kristaps Džonsons/Ingo Schwarze
+Maintainer:	Ingo Schwarze
 Archive Site:	http://mandoc.bsd.lv/snapshots/
 Home Page:	http://mandoc.bsd.lv/
-Date:		2021-03-01
-Mailing List:
+Date:		2025-05-09
+Mailing List:	https://mandoc.bsd.lv/contact.html
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/mdocml/dist
