@@ -508,6 +508,7 @@ sunxilcdc*	at fdt?			# Allwinner DE2 timing controller
 sunximixer*	at fdt?			# Allwinner DE2 mixer
 #tegradrm*	at fdt?			# NVIDIA Tegra Display
 #tegrafb*	at tegrafbbus?
+bochsfb*	at pci? dev ? function ? # Bochs framebuffer (QEMU)
 genfb*		at fdt?			# Simple Framebuffer
 wsdisplay*	at wsemuldisplaydev?
 options 	VCONS_DRAW_INTR

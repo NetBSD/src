@@ -522,6 +522,7 @@ hdmicec* 	at hdmicecbus?
 #tegradrm* 	at fdt?			# NVIDIA Tegra Display
 #tegrafb* 	at tegrafbbus?
 dwhdmi* 	at fdt?			# Designware HDMI TX
+bochsfb*	at pci? dev ? function ? # Bochs framebuffer (QEMU)
 genfb* 		at fdt?			# Simple Framebuffer
 mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
 omapfb* 	at fdt?			# TI OMAP3 Framebuffer
