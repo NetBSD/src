@@ -27,7 +27,7 @@
 extern int quiet;
 extern int verbose;
 
-void 	check(char **);
+int 	check(char **);
 
 void	audit_pkgdb(int, char **);
 void	audit_pkg(int, char **);
