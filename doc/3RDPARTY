@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2107 2025/05/09 08:23:01 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2108 2025/05/09 13:04:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1225,15 +1225,17 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20240307
-Current Vers:	20240307
+Version:	20240826
+Current Vers:	20250417
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
-Date:		2024-06-11
+Date:		2025-05-09
 Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
 Location:	external/bsd/pkg_install/dist
+Vendor tag:	PKGSRC
+Release tag:	pkg_install-YYYYMMDD
 Notes:
 The authoritative version is in pkgsrc/pkgtools/pkg_install.
 
