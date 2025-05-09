@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2021/10/28 11:11:11 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.4.1 2025/05/09 11:38:59 martin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -127,7 +127,6 @@
 #define	MTCPU_U(x,r)	diag ((r) << 21) | ((x) << 16) | (0xc2 << 5)
 
 	.import	$global$, data
-	.import pdc, data
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
@@ -155,6 +154,9 @@ ENTRY_NOPROFILE(start,0)
  *	bootapiver == 3
  *		start(pdc, boothowto, bootdev, esym, bootapiver, bootinfo)
  *
+ *	bootapiver == start
+ *		qemu/seabios-hppa
+ *
  *	pdc - PDC entry point
  *	boothowto - boot flags (see "reboot.h")
  *	bootdev - boot device (index into bdevsw)
@@ -165,19 +167,32 @@ ENTRY_NOPROFILE(start,0)
  *	bootinfo - pointer to a struct bootinfo.
  */
 
+	ldil	L%start, %r1
+	ldo	R%start(%r1), %r1
+	ldw	HPPA_FRAME_ARG(4)(%sp), %t1
+	copy	%r0, %r5
+	comb,=	%r1, %t1, .Lseabios
+	 nop
+
 	/*
-	 * save the pdc, boothowto, bootdev and esym arguments
+	 * save the boothowto, bootdev and esym arguments
+	 * don't save pdc - it's unused before pdc_init which
+	 * gets it from PAGE0
 	 */
-	ldil	L%pdc,%r1
-	stw	%arg0,R%pdc(%r1)
 	ldil	L%boothowto,%r1
 	stw	%arg1,R%boothowto(%r1)
 	ldil	L%bootdev,%r1
 	stw	%arg2,R%bootdev(%r1)
 
+	/* bootinfo struct address for hppa_init, if bootapiver (%t1) is > 2 */
+	ldw	HPPA_FRAME_ARG(5)(%sp), %r5
+	comiclr,< 2, %t1, %r0
+	copy	%r0, %r5
+
 	comb,<>	%r0, %arg3, 1f
 	 nop
 
+.Lseabios:
 	ldil	L%end, %arg3
 	ldo	R%end(%arg3), %arg3
 
@@ -191,12 +206,6 @@ ENTRY_NOPROFILE(start,0)
 	 */
 	ldo	NBPG-1(%arg3), %t3
 	dep	%r0, 31, PGSHIFT, %t3
-
-	/* bootinfo struct address for hppa_init, if bootapiver is > 2 */
-	ldw	HPPA_FRAME_ARG(4)(%sp), %t1
-	ldw	HPPA_FRAME_ARG(5)(%sp), %r5
-	comiclr,< 2, %t1, %r0
-	copy	%r0, %r5
 
 	/* assuming size being page-aligned */
 #define STACK_ALLOC(n,s)		\
