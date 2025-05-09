@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2021/04/23 06:15:16 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.23.16.1 2025/05/09 12:02:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -811,11 +811,6 @@ struct mipsco_bus_dma_segment {
 	 */
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	/*
-	 * PRIVATE MEMBERS for the DMA back-end.: not for use by drivers.
-	 */
-	vaddr_t		_ds_paddr;	/* CPU physical address */
-	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct mipsco_bus_dma_segment	bus_dma_segment_t;
 
@@ -827,8 +822,6 @@ typedef struct mipsco_bus_dma_segment	bus_dma_segment_t;
  */
 
 struct mipsco_bus_dma_tag {
-	bus_addr_t	dma_offset;
-
 	/*
 	 * DMA mapping methods.
 	 */

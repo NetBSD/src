@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.31 2022/07/26 20:08:55 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31.4.1 2025/05/09 12:02:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2022/07/26 20:08:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31.4.1 2025/05/09 12:02:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ static int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t,
 void
 _bus_dma_tag_init(bus_dma_tag_t t)
 {
-	t->dma_offset = 0;
-
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
 	t->_dmamap_load = _bus_dmamap_load;
@@ -183,27 +181,22 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t
 		 * the previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr + t->dma_offset;
+			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
-			map->dm_segs[seg]._ds_paddr = curaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg]._ds_paddr & bmask) ==
+			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
-				map->dm_segs[seg].ds_addr =
-				    curaddr + t->dma_offset;
+				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
-				map->dm_segs[seg]._ds_paddr = curaddr;
 			}
 		}
 
@@ -548,9 +541,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 	 */
 	if (nsegs == 1) {
 		if (flags & BUS_DMA_COHERENT)
-			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0]._ds_paddr);
+			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
-			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0]._ds_paddr);
+			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
 		return (0);
 	}
 
