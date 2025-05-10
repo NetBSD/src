@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.57 2025/05/09 14:28:13 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.58 2025/05/10 18:11:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -831,4 +831,33 @@ bin/sh/memalloc.c				1.40
 
 	sh(1): PR 59395: remove a broken (minor) optimization.
 	[kre, ticket #1948]
+
+lib/libc/compat/arch/sparc64/gen/compat_setjmp.S 1.2
+
+	sparc64: PR 59370: fix compat_13 longjmp(3).
+	[martin, ticket #1946]
+
+distrib/ia64/cdroms/installcd/Makefile		1.5
+
+	ia64: PR 59398: use the correct GENERIC kernel when building the
+	iso image.
+	[martin, ticket #1949]
+
+build.sh					1.392 via patch
+
+	Expert hack: if you know what you are doing, allow to avoid
+	the tool build for some commands that might or might not need
+	it, like:
+
+		build.sh -VUSETOOLS=never -P mkrepro-timestamp show-revisionid
+
+	This will not need any tools when run on a new-enough NetBSD host or
+	if using some other VCS than CVS.
+	[martin, ticket #1950]
+
+build.sh					1.393, 1.394 via patch
+
+	Unify the output of "show-revisionid" between the various VCSes
+	and checkout/archive variants.
+	[martin, ticket #1951]
 
