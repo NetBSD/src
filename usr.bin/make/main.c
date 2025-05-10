@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.645 2025/05/03 08:18:33 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.646 2025/05/10 13:47:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.645 2025/05/03 08:18:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.646 2025/05/10 13:47:53 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -127,7 +127,7 @@ bool deleteOnError;		/* .DELETE_ON_ERROR: set */
 static int maxJobTokens;	/* -j argument */
 static bool enterFlagObj;	/* -w and objdir != srcdir */
 
-static int jp_0 = -1, jp_1 = -1; /* ends of parent job pipe */
+static int tokenPoolReader = -1, tokenPoolWriter = -1;
 bool doing_depend;		/* Set while reading .depend */
 static bool jobsRunning;	/* true if the jobs might be running */
 static const char *tracefile;
@@ -376,16 +376,17 @@ static void
 MainParseArgJobsInternal(const char *argvalue)
 {
 	char end;
-	if (sscanf(argvalue, "%d,%d%c", &jp_0, &jp_1, &end) != 2) {
+	if (sscanf(argvalue, "%d,%d%c",
+	    &tokenPoolReader, &tokenPoolWriter, &end) != 2) {
 		(void)fprintf(stderr,
 		    "%s: internal error -- J option malformed (%s)\n",
 		    progname, argvalue);
 		usage();
 	}
-	if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
-	    (fcntl(jp_1, F_GETFD, 0) < 0)) {
-		jp_0 = -1;
-		jp_1 = -1;
+	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
+	    (fcntl(tokenPoolWriter, F_GETFD, 0) < 0)) {
+		tokenPoolReader = -1;
+		tokenPoolWriter = -1;
 		opts.compatMake = true;
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
@@ -1519,9 +1520,10 @@ main_PrepareMaking(void)
 		opts.compatMake = true;
 
 	if (!opts.compatMake)
-		TokenPool_Init(maxJobTokens, jp_0, jp_1);
+		TokenPool_Init(maxJobTokens, tokenPoolReader, tokenPoolWriter);
 	DEBUG5(JOB, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
-	    jp_0, jp_1, opts.maxJobs, maxJobTokens, opts.compatMake ? 1 : 0);
+	    tokenPoolReader, tokenPoolWriter, opts.maxJobs, maxJobTokens,
+	    opts.compatMake ? 1 : 0);
 
 	if (opts.printVars == PVM_NONE)
 		Main_ExportMAKEFLAGS(true);	/* initial export */

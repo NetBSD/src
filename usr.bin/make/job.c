@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.505 2025/05/09 21:38:34 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.506 2025/05/10 13:47:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.505 2025/05/09 21:38:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.506 2025/05/10 13:47:53 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -2750,17 +2750,17 @@ TokenPool_Add(void)
 }
 
 static void
-TokenPool_InitClient(int jp_0, int jp_1)
+TokenPool_InitClient(int tokenPoolReader, int tokenPoolWriter)
 {
-	tokenPoolJob.inPipe = jp_0;
-	tokenPoolJob.outPipe = jp_1;
-	(void)fcntl(jp_0, F_SETFD, FD_CLOEXEC);
-	(void)fcntl(jp_1, F_SETFD, FD_CLOEXEC);
+	tokenPoolJob.inPipe = tokenPoolReader;
+	tokenPoolJob.outPipe = tokenPoolWriter;
+	(void)fcntl(tokenPoolReader, F_SETFD, FD_CLOEXEC);
+	(void)fcntl(tokenPoolWriter, F_SETFD, FD_CLOEXEC);
 }
 
 /* Prepare the job token pipe in the root make process. */
 static void
-TokenPool_InitServer(int max_tokens)
+TokenPool_InitServer(int maxJobTokens)
 {
 	int i;
 	char jobarg[64];
@@ -2778,17 +2778,17 @@ TokenPool_InitServer(int max_tokens)
 	 * "extra" token for the primary job.
 	 */
 	SetNonblocking(tokenPoolJob.outPipe);
-	for (i = 1; i < max_tokens; i++)
+	for (i = 1; i < maxJobTokens; i++)
 		TokenPool_Add();
 }
 
 void
-TokenPool_Init(int max_tokens, int jp_0, int jp_1)
+TokenPool_Init(int maxJobTokens, int tokenPoolReader, int tokenPoolWriter)
 {
-	if (jp_0 >= 0 && jp_1 >= 0)
-		TokenPool_InitClient(jp_0, jp_1);
+	if (tokenPoolReader >= 0 && tokenPoolWriter >= 0)
+		TokenPool_InitClient(tokenPoolReader, tokenPoolWriter);
 	else
-		TokenPool_InitServer(max_tokens);
+		TokenPool_InitServer(maxJobTokens);
 }
 
 /* Return a taken token to the pool. */
