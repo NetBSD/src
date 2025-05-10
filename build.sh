@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365.2.6 2025/05/10 18:00:47 bouyer Exp $
+#	$NetBSD: build.sh,v 1.365.2.7 2025/05/10 18:04:13 bouyer Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2039,7 +2039,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365.2.6 2025/05/10 18:00:47 bouyer Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365.2.7 2025/05/10 18:04:13 bouyer Exp $
 # with these arguments: ${_args}
 #
 
@@ -2404,26 +2404,15 @@ setup_mkrepro()
 			fi
 
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
-			if [ -f "${d}CVS/Tag" ]; then
-				tag=$( sed 's/^T//' < "${d}CVS/Tag" )
-			else
-				tag=HEAD
-			fi
-			if [ -z "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${tag}"
-			fi
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}-${base}:$(
- 				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
+			rid="$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
 			t=$(cd "${d}" && git log -1 --format=%ct)
-			rid="${base}:$(cd "${d}" && git log -1 --format=%H)"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
+			rid="$(cd "${d}" && git log -1 --format=%H)"
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
 			t=$(hg --repo "$d" log -r . --template '{date.unixtime}\n')
-			rid="${base}:$(hg --repo "$d" identify --template '{id}\n')"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
+			rid="$(hg --repo "$d" identify --template '{id}\n')"
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]; then
 			local stat=$(print_tooldir_program stat)
@@ -2432,12 +2421,12 @@ setup_mkrepro()
 			fi
 
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt")
-			rid="${base}:$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
+			rid="$(awk '/^node:/ { print $2 }' < "${d}.hg_archival.txt")"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
+		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${base}:${rid}"
 
 		if [ -z "$t" ]; then
 			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
