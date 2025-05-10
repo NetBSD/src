@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.21 2025/05/09 10:25:04 martin Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.22 2025/05/10 09:20:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.21 2025/05/09 10:25:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.22 2025/05/10 09:20:35 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -113,11 +113,12 @@ compat_netbsd32_sysvipc_modcmd(modcmd_t cmd, void *arg)
 	return error;
 }
 
-
 #if defined(SYSVSEM)
 
 int
-netbsd32_____semctl50(struct lwp *l, const struct netbsd32_____semctl50_args *uap, register_t *retval)
+netbsd32_____semctl50(struct lwp *l,
+    const struct netbsd32_____semctl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) semid;
@@ -187,7 +188,8 @@ netbsd32_____semctl50(struct lwp *l, const struct netbsd32_____semctl50_args *ua
 }
 
 int
-netbsd32_semget(struct lwp *l, const struct netbsd32_semget_args *uap, register_t *retval)
+netbsd32_semget(struct lwp *l, const struct netbsd32_semget_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_key_t) key;
@@ -207,7 +209,8 @@ netbsd32_semget(struct lwp *l, const struct netbsd32_semget_args *uap, register_
 CTASSERT(sizeof(struct netbsd32_sembuf) == sizeof(struct sembuf));
 
 static int
-netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops, size_t nsops, const struct netbsd32_timespec *utimeout, register_t *retval)
+netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops,
+    size_t nsops, const struct netbsd32_timespec *utimeout, register_t *retval)
 {
 	struct netbsd32_sembuf small_sops[SMALL_SOPS];
 	struct netbsd32_sembuf *sops;
@@ -259,7 +262,8 @@ netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops, size
 }
 
 int
-netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap, register_t *retval)
+netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) semid;
@@ -272,7 +276,8 @@ netbsd32_semop(struct lwp *l, const struct netbsd32_semop_args *uap, register_t 
 }
 
 int
-netbsd32_semtimedop(struct lwp *l, const struct netbsd32_semtimedop_args *uap, register_t *retval)
+netbsd32_semtimedop(struct lwp *l, const struct netbsd32_semtimedop_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) semid;
@@ -286,7 +291,8 @@ netbsd32_semtimedop(struct lwp *l, const struct netbsd32_semtimedop_args *uap, r
 }
 
 int
-netbsd32_semconfig(struct lwp *l, const struct netbsd32_semconfig_args *uap, register_t *retval)
+netbsd32_semconfig(struct lwp *l, const struct netbsd32_semconfig_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) flag;
@@ -333,7 +339,8 @@ netbsd32___msgctl50(struct lwp *l, const struct netbsd32___msgctl50_args *uap,
 }
 
 int
-netbsd32_msgget(struct lwp *l, const struct netbsd32_msgget_args *uap, register_t *retval)
+netbsd32_msgget(struct lwp *l, const struct netbsd32_msgget_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_key_t) key;
@@ -362,7 +369,8 @@ netbsd32_msgsnd_fetch_type(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32_msgsnd(struct lwp *l, const struct netbsd32_msgsnd_args *uap, register_t *retval)
+netbsd32_msgsnd(struct lwp *l, const struct netbsd32_msgsnd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) msqid;
@@ -390,7 +398,8 @@ netbsd32_msgrcv_put_type(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32_msgrcv(struct lwp *l, const struct netbsd32_msgrcv_args *uap, register_t *retval)
+netbsd32_msgrcv(struct lwp *l, const struct netbsd32_msgrcv_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) msqid;
@@ -410,7 +419,8 @@ netbsd32_msgrcv(struct lwp *l, const struct netbsd32_msgrcv_args *uap, register_
 #if defined(SYSVSHM)
 
 int
-netbsd32_shmat(struct lwp *l, const struct netbsd32_shmat_args *uap, register_t *retval)
+netbsd32_shmat(struct lwp *l, const struct netbsd32_shmat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) shmid;
@@ -458,7 +468,8 @@ netbsd32___shmctl50(struct lwp *l, const struct netbsd32___shmctl50_args *uap,
 }
 
 int
-netbsd32_shmdt(struct lwp *l, const struct netbsd32_shmdt_args *uap, register_t *retval)
+netbsd32_shmdt(struct lwp *l, const struct netbsd32_shmdt_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_voidp) shmaddr;
@@ -470,7 +481,8 @@ netbsd32_shmdt(struct lwp *l, const struct netbsd32_shmdt_args *uap, register_t 
 }
 
 int
-netbsd32_shmget(struct lwp *l, const struct netbsd32_shmget_args *uap, register_t *retval)
+netbsd32_shmget(struct lwp *l, const struct netbsd32_shmget_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_key_t) key;
