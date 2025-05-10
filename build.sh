@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.333.2.8 2025/05/10 18:06:49 bouyer Exp $
+#	$NetBSD: build.sh,v 1.333.2.9 2025/05/10 18:09:51 bouyer Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1982,7 +1982,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.333.2.8 2025/05/10 18:06:49 bouyer Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.333.2.9 2025/05/10 18:09:51 bouyer Exp $
 # with these arguments: ${_args}
 #
 
@@ -2336,31 +2336,21 @@ setup_mkrepro()
 			fi
 
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
-			if [ -f "${d}CVS/Tag" ]; then
-				tag=$( sed 's/^T//' < "${d}CVS/Tag" )
-			else
-				tag=HEAD
-			fi
-			if [ -z "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${tag}"
-			fi
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}-${base}:$(
- 				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
+			rid="$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" -o -f "${d}.git" ]; then
 			t=$(cd "${d}" && git log -1 --format=%ct)
-			rid="${base}:$(cd "${d}" && git log -1 --format=%H)"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
+			rid="$(cd "${d}" && git log -1 --format=%H)"
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
 			t=$(cd "${d}" &&
 			    hg log -r . --template '{date(date, "%s")}\n')
-			rid="${base}:$(hg --repo "$d" identify --template '{id}\n')"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
+			rid="$(hg --repo "$d" identify --template '{id}\n')"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
+		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${base}:${rid}"
 
 		if [ -z "$t" ]; then
 			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
