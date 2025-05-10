@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.392 2025/05/10 14:10:57 martin Exp $
+#	$NetBSD: build.sh,v 1.393 2025/05/10 14:26:32 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2222,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.392 2025/05/10 14:10:57 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.393 2025/05/10 14:26:32 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2768,17 +2768,7 @@ setup_mkrepro()
 
 			t=$("${cvslatest}" ${cvslatestflags} "${d}") ||
 				bomb "${cvslatest} failed"
-			if [ -f "${d}CVS/Tag" ]
-			then
-				tag=$( sed 's/^T//' < "${d}CVS/Tag" )
-			else
-				tag=HEAD
-			fi
-			if [ -z "$NETBSD_REVISIONID" ]; then
-				NETBSD_REVISIONID="${tag}"
-			fi
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}-${base}:$(
-				${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
+			rid="$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" ] || [ -f "${d}.git" ]
 		then
@@ -2787,7 +2777,6 @@ setup_mkrepro()
 			rid="${base}:$(
 			   cd "${d}" && git log -1 --format=%H)" ||
 				bomb "git log %H failed"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=git
 		elif [ -d "${d}.hg" ]
 		then
@@ -2797,7 +2786,6 @@ setup_mkrepro()
 			rid=$(hg --repo "$d" \
 			    identify --template '{id}\n') ||
 				bomb "hg identify failed"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]
 		then
@@ -2815,11 +2803,11 @@ setup_mkrepro()
 			    awk '/^node:/ { print $2 }' <"${d}.hg_archival.txt"
 			  ) || bomb \
 			      "awk failed to find node: in ${d}.hg_archival.txt"
-			NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${rid}"
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
+		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${base}:${rid}"
 
 		if [ -z "$t" ]
 		then
