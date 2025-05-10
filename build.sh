@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.393 2025/05/10 14:26:32 martin Exp $
+#	$NetBSD: build.sh,v 1.394 2025/05/10 15:42:39 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2222,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.393 2025/05/10 14:26:32 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.394 2025/05/10 15:42:39 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2774,7 +2774,7 @@ setup_mkrepro()
 		then
 			t=$(cd "${d}" && git log -1 --format=%ct) ||
 				bomb "git log %ct failed"
-			rid="${base}:$(
+			rid="$(
 			   cd "${d}" && git log -1 --format=%H)" ||
 				bomb "git log %H failed"
 			vcs=git
