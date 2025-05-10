@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.391 2025/04/23 06:06:55 martin Exp $
+#	$NetBSD: build.sh,v 1.392 2025/05/10 14:10:57 martin Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1602,7 +1602,11 @@ parseoptions()
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
 	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
-	setmakeenv USETOOLS yes
+	if [ -z "${USETOOLS}" ]; then
+		setmakeenv USETOOLS yes
+	else
+		setmakeenv USETOOLS "${USETOOLS}"
+	fi
 	setmakeenv MAKEWRAPPERMACHINE "${makewrappermachine:-${MACHINE}}"
 	setmakeenv MAKE_OBJDIR_CHECK_WRITABLE no
 }
@@ -1693,6 +1697,14 @@ sanitycheck()
 	fi
 }
 
+# find a command in PATH and print the full filename
+print_path_of()
+{
+	set -- $( type "$1" )
+	printf "${3}\n"
+}
+
+
 # print_tooldir_program --
 # Try to find and show a path to an existing
 # ${TOOLDIR}/bin/${toolprefix}program
@@ -1704,6 +1716,11 @@ print_tooldir_program()
 	local possible_program
 	local tooldir_program
 	local program="${1}"
+
+	if [ "${USETOOLS-yes}" != "yes" ]; then
+		print_path_of "${program}"
+		return
+	fi
 
 	if [ -n "${TOOLDIR}" ]
 	then
@@ -2205,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.391 2025/04/23 06:06:55 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.392 2025/05/10 14:10:57 martin Exp $
 # with these arguments: ${_args}
 #
 
