@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.22 2025/05/09 14:51:20 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.23 2025/05/10 18:12:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -597,4 +597,34 @@ lib/libukfs/ukfs.3				1.19
 
 	ukfs(3): PR 59409: fix typo in documentation.
 	[andvar, ticket #1112]
+
+lib/libc/compat/arch/sparc64/gen/compat_setjmp.S 1.2
+
+	sparc64: PR 59370: fix compat_13 longjmp(3).
+	[martin, ticket #1108]
+
+distrib/ia64/cdroms/installcd/Makefile		1.5
+
+	ia64: PR 59398: use the correct GENERIC kernel when building the
+	iso image.
+	[martin, ticket #1111]
+
+build.sh					1.392 via patch
+
+	Expert hack: if you know what you are doing, allow to avoid
+	the tool build for some commands that might or might not need
+	it, like:
+
+		build.sh -VUSETOOLS=never -P mkrepro-timestamp show-revisionid
+
+	This will not need any tools when run on a new-enough NetBSD host or
+	if using some other VCS than CVS.
+	[martin, ticket #1113]
+
+build.sh					1.393, 1.394 via patch
+build.sh					1.394
+
+	Unify the output of "show-revisionid" between the various VCSes
+	and checkout/archive variants.
+	[martin, ticket #1114]
 
