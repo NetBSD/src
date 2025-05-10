@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.8 2025/05/02 02:52:40 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.9 2025/05/10 00:23:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -40,10 +40,13 @@ softfloat_fudge_sigs(const ki_sigset_t *kbefore, ki_sigset_t *kafter)
 	__CTASSERT(sizeof(after) == sizeof(*kafter));
 	memcpy(&before, kbefore, sizeof(before));
 	memcpy(&after, kafter, sizeof(after));
-	if (sigismember(&before, SIGFPE))
+	if (sigismember(&before, SIGFPE)) {
+		fprintf(stderr, "%s: add SIGFPE\n", __func__);
 		sigaddset(&after, SIGFPE);
-	else
+	} else {
+		fprintf(stderr, "%s: del SIGFPE\n", __func__);
 		sigdelset(&after, SIGFPE);
+	}
 	memcpy(kafter, &after, sizeof(after));
 }
 #endif
@@ -511,6 +514,15 @@ traceme_signalmasked_crash(int sig)
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
 
+#ifdef __SOFTFP__
+	/*
+	 * Let's try to track down the dregs of PR misc/56820: Many FPE
+	 * related tests fail on softfloat machines.
+	 */
+	if (sig == SIGFPE)
+		debug = 1;
+#endif
+
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
@@ -720,6 +732,15 @@ traceme_signalignored_crash(int sig)
 
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
+
+#ifdef __SOFTFP__
+	/*
+	 * Let's try to track down the dregs of PR misc/56820: Many FPE
+	 * related tests fail on softfloat machines.
+	 */
+	if (sig == SIGFPE)
+		debug = 1;
+#endif
 
 	memset(&info, 0, sizeof(info));
 
