@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.29 2025/04/27 02:54:05 kre Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.30 2025/05/10 18:58:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009, 2025 The NetBSD Foundation, Inc.
@@ -29,18 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__)
+/* This file is only for native NetBSD.  No build tools should use it. */
+#if defined(__NetBSD__) && !defined(HAVE_NBTOOL_CONFIG_H)
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
 #include <prop/proplib.h>
-
-#if defined(HAVE_NBTOOL_CONFIG_H) || defined(_STANDALONE)
-#define _PROP_EXPORT
-#else
-#include "prop_object_impl.h"		/* for _PROP_EXPORT */
-#endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -53,6 +48,8 @@
 #include <rump/rump_syscalls.h>
 #define ioctl(a,b,c) rump_sys_ioctl(a,b,c)
 #endif
+
+#include "prop_object_impl.h"		/* for _PROP_EXPORT */
 
 /*
  * prop_object_externalize_to_pref --
@@ -566,4 +563,4 @@ __strong_alias(prop_dictionary_copyout_ioctl, prop_object_copyout_ioctl)
 
 #endif /* _KERNEL */
 
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ && !HAVE_NBTOOL_CONFIG_H */
