@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.31 2025/03/22 12:49:08 pgoyette Exp $
+.\"	$NetBSD: boot.8,v 1.32 2025/05/11 14:40:37 pgoyette Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 15, 2020
+.Dd May 11, 2025
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -255,7 +255,27 @@ open that image, it then tries
 .Pa netbsd.old ,
 and finally
 .Pa netbsd.old.gz .
-Alternate system images can be loaded by just specifying the name of the image.
+.Pp
+In support of the
+.Dv KERNEL_DIR
+build option (see
+.Xr mk.conf 5 ) ,
+the boot loader will then try 
+.Pa netbsd/kernel ,
+.Pa netbsd/kernel.gz ,
+.Pa onetbsd/kernel ,
+.Pa onetbsd/kernel.gz ,
+.Pa netbsd.old/kernel ,
+and finally
+.Pa netbsd.old/kernel.gz .
+Alternate system images can be loaded by just specifying the filename of
+the image.
+If the specified
+.Pa filename
+does not contain an embedded slash character, the boot loader will also try
+.Pa filename/kernel
+and
+.Pa filename/kernel.gz .
 .Pp
 Options are:
 .Bl -tag -width xxx
