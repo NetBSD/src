@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.80 2024/10/08 20:40:10 lloyd Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.81 2025/05/11 22:36:13 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.80 2024/10/08 20:40:10 lloyd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.81 2025/05/11 22:36:13 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -244,9 +244,9 @@ static const struct uftdi_match_quirk_entry uftdi_match_quirks[] = {
 	},
 	/*
 	 * The iCEBreaker board (https://1bitsquared.com/products/icebreaker)
-         * has two interfaces, one of which is meant to act as a
-         * regular USB serial port (interface 1), the other of which
-         * is meant for other protocols.
+	 * has two interfaces, one of which is meant to act as a
+	 * regular USB serial port (interface 1), the other of which
+	 * is meant for other protocols.
 	 */
 	{
 	  .vendor_id	= USB_VENDOR_FTDI,
