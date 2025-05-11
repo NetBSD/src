@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.22 2023/02/24 19:04:54 kre Exp $	*/
+/*	$NetBSD: alias.c,v 1.23 2025/05/11 21:13:29 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.22 2023/02/24 19:04:54 kre Exp $");
+__RCSID("$NetBSD: alias.c,v 1.23 2025/05/11 21:13:29 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,8 +252,9 @@ countaliases(void)
 	return n;
 }
 
+/* ARGSUSED */
 int
-aliascmd(int argc, char **argv)	/* ARGSUSED */
+aliascmd(int argc, char **argv)
 {
 	char *n, *v;
 	int ret = 0;
