@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-internal.mk,v 1.4 2025/05/11 20:10:56 rillig Exp $
+# $NetBSD: opt-jobs-internal.mk,v 1.5 2025/05/11 20:17:08 rillig Exp $
 #
 # Tests for the (intentionally undocumented) internal -J command line option.
 
@@ -21,7 +21,7 @@ direct: .PHONY
 	@mode=parallel
 	@echo ${.TARGET}: mode=$${mode:-compat}
 
-# expect: make: internal error -- J option malformed (garbage)
+# expect: make: error: invalid internal option "-J garbage"
 direct-syntax: .PHONY
 	@${MAKE} -f ${MAKEFILE} -J garbage unexpected-target || :
 

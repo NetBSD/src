@@ -1,9 +1,5 @@
 direct: mode=parallel
-make: internal error -- J option malformed (garbage)
-usage: make [-BeikNnqrSstWwX]
-            [-C directory] [-D variable] [-d flags] [-f makefile]
-            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]
-            [-V variable] [-v variable] [variable=value] [target ...]
+make: error: invalid internal option "-J garbage"
 direct-open: mode=compat
 indirect-open: mode=compat
 indirect-expr: mode=parallel

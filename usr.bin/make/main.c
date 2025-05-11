@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.646 2025/05/10 13:47:53 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.647 2025/05/11 20:17:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.646 2025/05/10 13:47:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.647 2025/05/11 20:17:08 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -379,9 +379,9 @@ MainParseArgJobsInternal(const char *argvalue)
 	if (sscanf(argvalue, "%d,%d%c",
 	    &tokenPoolReader, &tokenPoolWriter, &end) != 2) {
 		(void)fprintf(stderr,
-		    "%s: internal error -- J option malformed (%s)\n",
+		    "%s: error: invalid internal option \"-J %s\"\n",
 		    progname, argvalue);
-		usage();
+		exit(2);
 	}
 	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
 	    (fcntl(tokenPoolWriter, F_GETFD, 0) < 0)) {
