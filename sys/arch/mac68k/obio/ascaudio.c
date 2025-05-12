@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.8 2025/05/12 00:37:24 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.9 2025/05/12 00:39:08 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.8 2025/05/12 00:37:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.9 2025/05/12 00:39:08 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -541,6 +541,8 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 			bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFO_B);
 		}
 #endif
+
+		memset(loc, 0x80, blksize);
 
 		return 0;
 	}
