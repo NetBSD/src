@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.3 2024/09/14 21:02:46 nat Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.4 2025/05/12 00:28:07 nat Exp $	*/
 
 /*
  * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -34,6 +34,11 @@
  */
 /* From: pm_direct.h 1.0 01/02/97 Takashi Hamada */
 
+/* define the types of the Power Manager */
+#define PM_HW_UNKNOWN		0x00	/* don't know */
+#define PM_HW_PB1XX		0x01	/* PowerBook 1XX series */
+#define	PM_HW_PB5XX		0x02	/* PowerBook Duo and 5XX series */
+
 /*
  * Public declarations that other routines may need.
  */
@@ -46,6 +51,8 @@ typedef	struct	{
 	char	*r_buf;			/* pointer to buffer for receiving	*/
 	char	data[32];		/* data buffer (is it too much?)	*/
 }	PMData;
+
+extern int	pmHardware;
 
 int		pmgrop(PMData *);
 void		pm_poweroff(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.41 2025/05/06 10:06:01 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.42 2025/05/12 00:28:07 nat Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.41 2025/05/06 10:06:01 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.42 2025/05/12 00:28:07 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -69,11 +69,6 @@ extern u_short ADBDelay;
 extern u_int32_t HwCfgFlags3;
 extern struct mac68k_machine_S mac68k_machine;
 
-
-/* define the types of the Power Manager */
-#define PM_HW_UNKNOWN		0x00	/* don't know */
-#define PM_HW_PB1XX		0x01	/* PowerBook 1XX series */
-#define	PM_HW_PB5XX		0x02	/* PowerBook Duo and 5XX series */
 
 /* useful macros */
 #define PM_SR()			via_reg(VIA1, vSR)
