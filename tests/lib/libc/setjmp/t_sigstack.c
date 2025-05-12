@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.24 2025/04/28 18:29:09 martin Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.25 2025/05/12 14:46:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.24 2025/04/28 18:29:09 martin Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.25 2025/05/12 14:46:19 christos Exp $");
 
 #include <dlfcn.h>
 #include <setjmp.h>
@@ -52,9 +52,9 @@ void (*bailfn)(void) __dead;
  * jmp_buf arrays.
  */
 int (*compat13_sigsetjmp)(sigjmp_buf, int);
-void (*compat13_siglongjmp)(sigjmp_buf, int);
+void (*compat13_siglongjmp)(sigjmp_buf, int) __dead;
 int (*compat13_setjmp)(jmp_buf);
-void (*compat13_longjmp)(jmp_buf, int);
+void (*compat13_longjmp)(jmp_buf, int) __dead;
 
 /*
  * compatsigsys(signo)
