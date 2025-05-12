@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.5 2025/04/09 13:07:54 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.6 2025/05/12 00:31:28 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.5 2025/04/09 13:07:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.6 2025/05/12 00:31:28 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,6 +270,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_rcallout, ascaudio_done_input, sc);
 
 	sc->sc_vol = 180;
+	sc->sc_recvol = 255;
 
 	sc->sc_audiodev = audio_attach_mi(&ascaudio_hw_if, sc, sc->sc_dev);
 
@@ -540,14 +541,14 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
 		/* DO NOT CHANGE THESE VALUES UNLESS TESTED.
 		   CAN BE VERY LOUD!!!! */
-		tmp = sc->sc_vol >> 5;
+		tmp = sc->sc_recvol >> 5;
 		KASSERT(tmp <= MACOS_HIGH_VOL);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_LEFT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_LEFT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_RIGHT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_RIGHT_VOL, tmp);
 	}
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, sc->sc_vol);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, sc->sc_recvol);
 
 	total = blksize;
 	if (sc->sc_getptr + blksize >= sc->sc_recbuf + BUFSIZE)
@@ -630,10 +631,14 @@ ascaudio_set_port(void *opaque, mixer_ctrl_t *mc)
 
 	switch (mc->dev) {
 	case ASC_OUTPUT_MASTER_VOLUME:
-	case ASC_INPUT_DAC_VOLUME:
 		if (mc->un.value.num_channels != 1)
 			return EINVAL;
 		sc->sc_vol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		return 0;
+	case ASC_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		sc->sc_recvol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		return 0;
 	}
 
@@ -649,10 +654,14 @@ ascaudio_get_port(void *opaque, mixer_ctrl_t *mc)
 
 	switch (mc->dev) {
 	case ASC_OUTPUT_MASTER_VOLUME:
-	case ASC_INPUT_DAC_VOLUME:
 		if (mc->un.value.num_channels != 1)
 			return EINVAL;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_vol;
+		return 0;
+	case ASC_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_recvol;
 		return 0;
 	}
 
