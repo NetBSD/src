@@ -219,7 +219,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	int slock = npf_config_read_enter(npf);
 	npf_ruleset_t *rlset = npf_config_ruleset(npf);
 
-	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_RULE_LAYER_3);
 	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass(npf);
 		npf_config_read_exit(npf, slock);
@@ -331,5 +331,102 @@ out:
 	/* Free the mbuf chain. */
 	m_freem(*mp);
 	*mp = NULL;
+	return error;
+}
+
+__dso_public int
+npfk_layer2_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
+{
+	nbuf_t nbuf;
+	npf_cache_t npc;
+	npf_rule_t *rl;
+	int error, decision, flags;
+	npf_match_info_t mi;
+
+	KASSERT(ifp != NULL);
+
+	/*
+	 * as usual, get packet info
+	 * including the interface the frame is traveling on
+	 */
+	nbuf_init(npf, &nbuf, *mp, ifp);
+	memset(&npc, 0, sizeof(npf_cache_t));
+	npc.npc_ctx = npf;
+	npc.npc_nbuf = &nbuf;
+
+	mi.mi_di = di;
+	mi.mi_rid = 0;
+	mi.mi_retfl = 0;
+
+	*mp = NULL;
+	decision = NPF_DECISION_BLOCK;
+	error = 0;
+
+	/* Cache only ether header. */
+	flags = npf_cache_ether(&npc);
+
+	/* Malformed packet, leave quickly. */
+	if (flags & NPC_FMTERR) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Just pass-through if specially tagged. */
+	if (npf_packet_bypass_tag_p(&nbuf)) {
+		goto pass;
+	}
+
+	/* Acquire the lock, inspect the ruleset using this packet. */
+	int slock = npf_config_read_enter(npf);
+	npf_ruleset_t *rlset = npf_config_ruleset(npf);
+
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_RULE_LAYER_2);
+	if (__predict_false(rl == NULL)) {
+		const bool pass = npf_default_pass(npf);
+		npf_config_read_exit(npf, slock);
+
+		if (pass) {
+			npf_stats_inc(npf, NPF_STAT_PASS_DEFAULT);
+			goto pass;
+		}
+		npf_stats_inc(npf, NPF_STAT_BLOCK_DEFAULT);
+		goto out;
+	}
+
+	/* Conclude with the rule and release the lock. */
+	error = npf_rule_conclude(rl, &mi);
+	npf_config_read_exit(npf, slock);
+
+	if (error) {
+		npf_stats_inc(npf, NPF_ETHER_STAT_BLOCK);
+		goto out;
+	}
+	npf_stats_inc(npf, NPF_ETHER_STAT_PASS);
+
+pass:
+	decision = NPF_DECISION_PASS;
+	KASSERT(error == 0);
+
+out:
+
+	/* Get the new mbuf pointer. */
+	if ((*mp = nbuf_head_mbuf(&nbuf)) == NULL) {
+		return error ? error : ENOMEM;
+	}
+
+	/* Pass the packet if decided and there is no error. */
+	if (decision == NPF_DECISION_PASS && !error) {
+		return 0;
+	}
+
+	if (!error) {
+		error = ENETUNREACH;
+	}
+
+	if (*mp) {
+		/* Free the mbuf chain. */
+		m_freem(*mp);
+		*mp = NULL;
+	}
 	return error;
 }

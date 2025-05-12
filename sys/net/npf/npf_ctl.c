@@ -414,6 +414,7 @@ npf_mk_rules(npf_t *npf, const nvlist_t *req, nvlist_t *resp, npf_config_t *nc)
 		if (error) {
 			break;
 		}
+
 		name = dnvlist_get_string(rule, "name", NULL);
 		if (name && npf_ruleset_lookup(rlset, name)) {
 			NPF_ERR_DEBUG(resp);
