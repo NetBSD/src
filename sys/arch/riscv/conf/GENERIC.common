@@ -185,6 +185,7 @@ virtio* 	at fdt?			# Virtio MMIO device
 
 include "dev/virtio/virtio.config"
 no vio9p* 	at virtio?		# XXX ?
+no viogpu*      at virtio?		# No wsdisplay
 no viomb* 	at virtio?		# XXX ?
 no vioscsi* 	at virtio?		# XXX ?
 

@@ -77,6 +77,7 @@
 #define VIRTIO_DEVICE_ID_RPMSG		 7
 #define VIRTIO_DEVICE_ID_SCSI		 8
 #define VIRTIO_DEVICE_ID_9P		 9
+#define VIRTIO_DEVICE_ID_GPU             16
 
 /* common device/guest features */
 #define  VIRTIO_F_NOTIFY_ON_EMPTY		__BIT(24)

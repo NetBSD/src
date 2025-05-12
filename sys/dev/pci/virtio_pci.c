@@ -209,6 +209,18 @@ virtio_pci_match(device_t parent, cfdata_t match, void *aux)
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_QUMRANET:
+#if NVIOGPU > 0
+		/*
+		 * We need to beat genfb_pci when we are not VGA compatible
+		 * virtio-gpu device, as regular virtio-gpu can't be used as a
+		 * dumb framebuffer.
+		 */
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_QUMRANET_VIRTIO_1050 &&
+		    (PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+		     PCI_SUBCLASS(class) != PCI_SUBCLASS_DISPLAY_VGA))
+			return 10;
+#endif
+
 		/* Transitional devices MUST have a PCI Revision ID of 0. */
 		if (((PCI_PRODUCT_QUMRANET_VIRTIO_1000 <=
 			    PCI_PRODUCT(pa->pa_id)) &&

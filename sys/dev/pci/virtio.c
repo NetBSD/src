@@ -65,6 +65,13 @@ static const char *virtio_device_name[] = {
 	"remote processor messaging",	/*  7 */
 	"SCSI",				/*  8 */
 	"9P transport",			/*  9 */
+	NULL,				/* 10 */
+	NULL,				/* 11 */
+	NULL,				/* 12 */
+	NULL,				/* 13 */
+	NULL,				/* 14 */
+	NULL,				/* 15 */
+	"GPU",				/* 16 */
 };
 #define NDEVNAMES	__arraycount(virtio_device_name)
 
