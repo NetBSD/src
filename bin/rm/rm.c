@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.54 2021/09/10 22:11:03 rillig Exp $ */
+/* $NetBSD: rm.c,v 1.55 2025/05/12 06:34:19 kim Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.54 2021/09/10 22:11:03 rillig Exp $");
+__RCSID("$NetBSD: rm.c,v 1.55 2025/05/12 06:34:19 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	Pflag = rflag = xflag = 0;
+	rflag = 0;
 	while ((ch = getopt(argc, argv, "dfiPRrvWx")) != -1)
 		switch (ch) {
 		case 'd':
