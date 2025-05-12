@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.23 2025/05/11 21:13:29 rillig Exp $	*/
+/*	$NetBSD: alias.c,v 1.24 2025/05/12 02:45:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.23 2025/05/11 21:13:29 rillig Exp $");
+__RCSID("$NetBSD: alias.c,v 1.24 2025/05/12 02:45:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,6 +268,11 @@ aliascmd(int argc, char **argv)
 	}
 
 	while ((n = *argptr++) != NULL) {
+		if (n[0] == '\0') {
+			outfmt(out2, "alias: '' not found\n");
+			ret = 1;
+			continue;
+		}
 		if ((v = strchr(n+1, '=')) == NULL) { /* n+1: funny ksh stuff */
 			if ((ap = lookupalias(n, 0)) == NULL) {
 				outfmt(out2, "alias: %s not found\n", n);
