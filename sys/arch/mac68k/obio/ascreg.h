@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.4 2025/04/09 13:07:54 nat Exp $ */
+/* $NetBSD: ascreg.h,v 1.5 2025/05/12 00:35:35 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -100,5 +100,14 @@
 #define IRQA		0xf09
 #define IRQB		0xf29
 #define DISABLEHALFIRQ	__BIT(0)
+
+/* Digitally Filtered Audio Chip (dfac) VIA2 Bits */
+#define DFAC_CLOCK 	(__BIT(4))
+#define DFAC_DATA	(__BIT(3))
+#define DFAC_LATCH	(__BIT(0))
+
+/* dfac config byte */
+#define DFAC_DISABLE	0
+#define DFAC_GAIN_HIGH	0x0c
 
 #endif /* !_SYS_ARCH_MAC68K_OBIO_ASCREG_H */

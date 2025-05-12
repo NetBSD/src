@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.6 2025/05/12 00:31:28 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.7 2025/05/12 00:35:35 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.6 2025/05/12 00:31:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.7 2025/05/12 00:35:35 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.6 2025/05/12 00:31:28 nat Exp $");
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
+#include <mac68k/dev/pm_direct.h>
 #include <mac68k/obio/ascaudiovar.h>
 #include <mac68k/obio/ascreg.h>
 #include <mac68k/obio/obiovar.h>
@@ -119,6 +120,7 @@ static int 	ascaudio_intr_est(void *);
 static void	ascaudio_intr_enable(void);
 static void	ascaudio_done_output(void *);
 static void	ascaudio_done_input(void *);
+static void	configure_dfac(uint8_t);
 
 static const struct audio_hw_if ascaudio_hw_if = {
 	.query_format	 = ascaudio_query_format,
@@ -417,6 +419,7 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 			/* Disable half interrupts channel b */
 			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
 			    DISABLEHALFIRQ);
+			configure_dfac(DFAC_DISABLE);
 		}
 
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
@@ -500,6 +503,11 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 			/* Disable half interrupts channel b */
 			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
 			    DISABLEHALFIRQ);
+			/*
+			 * Set up dfac for microphone.
+			 * DO NOT SET BITS 5-7 due to loud feedback squeal.
+			 */
+			configure_dfac(DFAC_GAIN_HIGH);
 		}
 
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
@@ -603,6 +611,8 @@ ascaudio_halt(void *opaque)
 
 	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
 		return 0;
+
+	configure_dfac(DFAC_DISABLE);
 
 	/* disable half interrupts channel a */
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, DISABLEHALFIRQ);
@@ -923,6 +933,29 @@ ascaudio_done_input(void *arg)
 	if (sc->sc_rintr)
 		(*sc->sc_rintr)(sc->sc_rintrarg);
 	mutex_exit(&sc->sc_intr_lock);
+}
+static void
+configure_dfac(uint8_t config)
+{
+	int i;
+
+	if (pmHardware == PM_HW_PB5XX)
+		return;		/* These macs use the pm to configure dfac */
+
+	for (i = 0; i < 8; i++) {
+		via_reg(VIA2, vBufB) &= ~DFAC_CLOCK;
+
+		if (config & 0x1)
+			via_reg(VIA2, vBufB) |= DFAC_DATA;
+		else
+			via_reg(VIA2, vBufB) &= ~DFAC_DATA;
+
+		via_reg(VIA2, vBufB) |= DFAC_CLOCK;
+		config >>= 1;
+	}
+	via_reg(VIA2, vBufB) &= ~DFAC_CLOCK;
+	via_reg(VIA2, vBufB) |= DFAC_LATCH;
+	via_reg(VIA2, vBufB) &= ~DFAC_LATCH;
 }
 
 #ifdef _MODULE
