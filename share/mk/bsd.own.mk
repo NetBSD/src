@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1418 2025/05/06 17:12:33 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1419 2025/05/13 21:36:26 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1729,19 +1729,21 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
+# Build glamor extension?
+
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
 . if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "evbarm"
 HAVE_XORG_GLAMOR?=	yes
 . endif
+HAVE_XORG_EGL?=		yes
 .else
 XORG_SERVER_SUBDIR?=xorg-server.old
 .endif
 
 X11SRCDIR.xorg-server?=		${X11SRCDIRMIT}/${XORG_SERVER_SUBDIR}/dist
 HAVE_XORG_GLAMOR?=	no
-
-# Build glamor extension?
+HAVE_XORG_EGL?=		no
 
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \

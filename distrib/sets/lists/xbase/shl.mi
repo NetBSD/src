@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.108 2024/07/04 09:34:13 mrg Exp $
+# $NetBSD: shl.mi,v 1.109 2025/05/13 21:36:26 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -29,9 +29,9 @@
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	obsolete	obsolete
-./usr/X11R7/lib/libEGL.so			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
-./usr/X11R7/lib/libEGL.so.0			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
-./usr/X11R7/lib/libEGL.so.0.0			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.so			xbase-libEGL-lib		xorg,compatx11file,xorg_egl
+./usr/X11R7/lib/libEGL.so.0			xbase-libEGL-lib		xorg,compatx11file,xorg_egl
+./usr/X11R7/lib/libEGL.so.0.0			xbase-libEGL-lib		xorg,compatx11file,xorg_egl
 ./usr/X11R7/lib/libFS.so			xbase-libFS-lib		xorg,compatx11file
 ./usr/X11R7/lib/libFS.so.7			xbase-libFS-lib		xorg,compatx11file
 ./usr/X11R7/lib/libFS.so.7.0			xbase-libFS-lib		xorg,compatx11file
@@ -303,4 +303,4 @@
 ./usr/X11R7/lib/libxshmfence.so			xbase-libxshmfence-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxshmfence.so.1		xbase-libxshmfence-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxshmfence.so.1.0		xbase-libxshmfence-lib		xorg,compatx11file
-./usr/X11R7/lib/pkgconfig/egl.pc		xbase-libEGL-lib		xorg,xorg_glamor
+./usr/X11R7/lib/pkgconfig/egl.pc		xbase-libEGL-lib		xorg,xorg_egl

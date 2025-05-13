@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.210 2025/02/24 18:02:02 martin Exp $
+#	$NetBSD: sets.subr,v 1.211 2025/05/13 21:36:26 nia Exp $
 #
 
 #
@@ -258,7 +258,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.210 2025/02/24 18:02:02 martin Exp $
+# 	# $NetBSD: sets.subr,v 1.211 2025/05/13 21:36:26 nia Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -299,6 +299,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	efi_rt			${HAVE_EFI_RT} != no
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
 #	xorg_glamor		${HAVE_XORG_GLAMOR} != no
+#	xorg_egl		${HAVE_XORG_EGL} != no
 #
 #    2. The USE_<name>:
 #	use_inet6		${USE_INET6} != no

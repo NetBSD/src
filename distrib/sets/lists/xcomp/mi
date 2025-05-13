@@ -1,15 +1,15 @@
-#	 $NetBSD: mi,v 1.246 2024/07/04 07:52:29 mrg Exp $
+#	 $NetBSD: mi,v 1.247 2025/05/13 21:36:26 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.xcomp					xcomp-sys-root
 ./usr/X11R7/bin/freetype-config				xcomp-freetype-lib	xorg
 ./usr/X11R7/bin/xft-config				xcomp-obsolete	obsolete
-./usr/X11R7/include/EGL/egl.h				xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglext.h			xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglextchromium.h		xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglmesaext.h			xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglplatform.h			xcomp-EGL-include	xorg,xorg_glamor
+./usr/X11R7/include/EGL/egl.h				xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglext.h			xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglextchromium.h		xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglmesaext.h			xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglplatform.h			xcomp-EGL-include	xorg,xorg_egl
 ./usr/X11R7/include/GL/GLwDrawA.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			xcomp-xorgproto-include	xorg
@@ -1123,8 +1123,8 @@
 ./usr/X11R7/lib/X11/config/xorg.cf			xcomp-xorg-cf-files-lib	xorg
 ./usr/X11R7/lib/X11/config/xorgsite.def			xcomp-xorg-cf-files-lib	xorg
 ./usr/X11R7/lib/X11/config/xorgversion.def		xcomp-xorg-cf-files-lib	xorg
-./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,compatx11file,xorg_glamor
-./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,compatx11file,xorg_egl
+./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,compatx11file,xorg_egl
 ./usr/X11R7/lib/libFS.a					xcomp-libFS-lib	xorg,compatx11file
 ./usr/X11R7/lib/libFS_p.a				xcomp-libFS-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libGL.a					xcomp-libGL-lib	xorg,compatx11file

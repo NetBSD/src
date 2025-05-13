@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.63 2024/07/11 20:41:09 riastradh Exp $
+# $NetBSD: md.i386,v 1.64 2025/05/13 21:36:26 nia Exp $
 #
 #./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/X11R7/include/intel_bufmgr.h			xcomp-obsolete	obsolete
@@ -35,7 +35,7 @@
 ./usr/X11R7/lib/libvdpau.a				xcomp-libvdpau-lib	xorg
 ./usr/X11R7/lib/libvdpau_p.a				xcomp-libvdpau-lib	profile,xorg
 ./usr/X11R7/lib/libvdpau_pic.a				xcomp-libvdpau-lib	xorg,picinstall
-./usr/X11R7/lib/pkgconfig/egl.pc			xcomp-libegl-lib	xorg,xorg_glamor
+./usr/X11R7/lib/pkgconfig/egl.pc			xcomp-libegl-lib	xorg,xorg_egl
 ./usr/X11R7/lib/pkgconfig/libdrm_amdgpu.pc		xcomp-libdrm_amdgpu-lib	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		xcomp-libdrm_intel-lib	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_nouveau.pc		xcomp-libdrm_nouveau-lib	xorg
