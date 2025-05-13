@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.396 2025/05/13 01:09:55 riastradh Exp $
+#	$NetBSD: build.sh,v 1.397 2025/05/13 11:52:04 riastradh Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2222,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.396 2025/05/13 01:09:55 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.397 2025/05/13 11:52:04 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2814,7 +2814,7 @@ setup_mkrepro()
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
-		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+ }${base}@${vcs}:${rid}"
+		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${base}@${vcs}:${rid}"
 
 		if [ -z "$t" ]
 		then
