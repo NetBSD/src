@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.395 2025/05/13 00:33:29 riastradh Exp $
+#	$NetBSD: build.sh,v 1.396 2025/05/13 01:09:55 riastradh Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2222,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.395 2025/05/13 00:33:29 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.396 2025/05/13 01:09:55 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2767,9 +2767,15 @@ setup_mkrepro()
 				cvslatestflags=-i
 			fi
 
+			if [ -f "${d}CVS/Tag" ]
+			then
+				tag=$(sed -e 's/^T//' <${d}CVS/Tag)
+			else
+				tag=HEAD
+			fi
 			t=$("${cvslatest}" ${cvslatestflags} "${d}") ||
 				bomb "${cvslatest} failed"
-			rid="$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
+			rid="${tag}:$(${nbdate} -u -r ${t} '+%Y%m%d%H%M%S')"
 			vcs=cvs
 		elif [ -d "${d}.git" ] || [ -f "${d}.git" ]
 		then
@@ -2808,7 +2814,7 @@ setup_mkrepro()
 		else
 			bomb "Cannot determine VCS for '$d'"
 		fi
-		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+-}${base}:${rid}"
+		NETBSD_REVISIONID="${NETBSD_REVISIONID}${NETBSD_REVISIONID:+ }${base}@${vcs}:${rid}"
 
 		if [ -z "$t" ]
 		then
