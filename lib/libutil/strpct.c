@@ -1,4 +1,4 @@
-/*	$NetBSD: strpct.c,v 1.5 2025/05/03 07:22:52 rillig Exp $	*/
+/*	$NetBSD: strpct.c,v 1.6 2025/05/13 04:50:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2025 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.5 2025/05/03 07:22:52 rillig Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.6 2025/05/13 04:50:45 rillig Exp $");
 
 #include <limits.h>
 #include <locale.h>
@@ -140,18 +140,22 @@ strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
 			num = bignum_minus_u(num, denominator);
 
 		if (i > 0 || p > buf || digit > 0) {
-			size_t nw = snprintf(p, n, "%u", digit);
-			if (nw >= n)
+			if (n >= 2)
+				*p++ = '0' + digit, n--;
+			if (n >= 1)
+				*p = '\0';
+			if (n <= 1)
 				break;
-			p += nw, n -= nw;
 		}
 
 		if (i == 1 && digits > 0) {
-			size_t nw = snprintf(p, n, "%s",
-			    localeconv()->decimal_point);
-			if (nw >= n)
+			const char *dp = localeconv()->decimal_point;
+			while (*dp != '\0' && n >= 2)
+				*p++ = *dp++, n--;
+			if (n >= 1)
+				*p = '\0';
+			if (n <= 1)
 				break;
-			p += nw, n -= nw;
 		}
 	}
 	return buf;
