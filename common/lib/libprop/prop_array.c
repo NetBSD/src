@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.25 2025/05/13 13:26:12 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.26 2025/05/13 15:00:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -170,13 +170,13 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 
 	if (pa->pa_count == 0) {
 		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
-		return (_prop_extern_append_empty_tag(ctx,
+		return (_prop_object_externalize_empty_tag(ctx,
 		    &_prop_array_type_tags));
 	}
 
-	if (_prop_extern_append_start_tag(ctx,
+	if (_prop_object_externalize_start_tag(ctx,
 				&_prop_array_type_tags, NULL) == false ||
-	    _prop_extern_end_line(ctx, NULL) == false)
+	    _prop_object_externalize_end_line(ctx, NULL) == false)
 		goto out;
 
 	pai = _prop_array_iterator_locked(pa);
@@ -187,9 +187,9 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
 	while ((po = _prop_array_iterator_next_object_locked(pai)) != NULL) {
-		if (_prop_extern_start_line(ctx) == false ||
+		if (_prop_object_externalize_start_line(ctx) == false ||
 		    (*po->po_type->pot_extern)(ctx, po) == false ||
-		    _prop_extern_end_line(ctx,
+		    _prop_object_externalize_end_line(ctx,
 				pai->pai_index < pa->pa_count ?
 							sep : NULL) == false) {
 			prop_object_iterator_release(&pai->pai_base);
@@ -200,8 +200,8 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	prop_object_iterator_release(&pai->pai_base);
 
 	ctx->poec_depth--;
-	if (_prop_extern_start_line(ctx) == false ||
-	    _prop_extern_append_end_tag(ctx,
+	if (_prop_object_externalize_start_line(ctx) == false ||
+	    _prop_object_externalize_end_tag(ctx,
 					&_prop_array_type_tags) == false) {
 		goto out;
 	}
@@ -828,7 +828,8 @@ _prop_array_internalize_continue(prop_stack_t stack,
 	 * (FWIW, RFC 8259 section 9 seems to specifically allow this.)
 	 */
 	if (ctx->poic_format == PROP_FORMAT_JSON) {
-		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
+		ctx->poic_cp =
+		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
 		if (*ctx->poic_cp == ',') {
 			ctx->poic_cp++;
 		}
@@ -850,7 +851,8 @@ _prop_array_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	_PROP_ASSERT(array != NULL);
 
 	if (ctx->poic_format == PROP_FORMAT_JSON) {
-		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
+		ctx->poic_cp =
+		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
 
 		/* Check to see if this is the end of the array. */
 		if (*ctx->poic_cp == ']') {
@@ -860,7 +862,7 @@ _prop_array_internalize_body(prop_stack_t stack, prop_object_t *obj,
 		}
 	} else {
 		/* Fetch the next tag. */
-		if (_prop_xml_intern_find_tag(ctx, NULL,
+		if (_prop_object_internalize_find_tag(ctx, NULL,
 					_PROP_TAG_TYPE_EITHER) == false)
 			goto bad;
 

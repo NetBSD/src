@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.21 2025/05/13 13:26:12 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.22 2025/05/13 15:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -123,10 +123,10 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	}
 
 	if (pd->pd_size == 0)
-		return (_prop_extern_append_empty_tag(ctx,
+		return (_prop_object_externalize_empty_tag(ctx,
 		    &_prop_data_type_tags));
 
-	if (_prop_extern_append_start_tag(ctx,
+	if (_prop_object_externalize_start_tag(ctx,
 				&_prop_data_type_tags, NULL) == false)
 		return (false);
 
@@ -147,13 +147,13 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[2] < 64);
 		_PROP_ASSERT(output[3] < 64);
 
-		if (_prop_extern_append_char(ctx,
+		if (_prop_object_externalize_append_char(ctx,
 				_prop_data_base64[output[0]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		_prop_data_base64[output[1]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		_prop_data_base64[output[2]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		_prop_data_base64[output[3]]) == false)
 			return (false);
 	}
@@ -172,19 +172,19 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[1] < 64);
 		_PROP_ASSERT(output[2] < 64);
 
-		if (_prop_extern_append_char(ctx,
+		if (_prop_object_externalize_append_char(ctx,
 				_prop_data_base64[output[0]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		_prop_data_base64[output[1]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		srclen == 1 ? _prop_data_pad64
 				: _prop_data_base64[output[2]]) == false ||
-		    _prop_extern_append_char(ctx,
+		    _prop_object_externalize_append_char(ctx,
 		    		_prop_data_pad64) == false)
 			return (false);
 	}
 
-	if (_prop_extern_append_end_tag(ctx,
+	if (_prop_object_externalize_end_tag(ctx,
 					&_prop_data_type_tags) == false)
 		return (false);
 
@@ -694,8 +694,8 @@ _prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 	}
 
-	if (_prop_xml_intern_find_tag(ctx, "data",
-				      _PROP_TAG_TYPE_END) == false) {
+	if (_prop_object_internalize_find_tag(ctx, "data",
+					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
 		return (true);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.22 2025/05/13 13:26:12 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.23 2025/05/13 15:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -177,9 +177,10 @@ _prop_string_externalize_internal(struct _prop_object_externalize_context *ctx,
 				  const struct _prop_object_type_tags *tags,
 				  const char *str)
 {
-	if (_prop_extern_append_start_tag(ctx, tags, NULL) == false ||
-	    _prop_extern_append_encoded_cstring(ctx, str) == false ||
-	    _prop_extern_append_end_tag(ctx, tags) == false) {
+	if (_prop_object_externalize_start_tag(ctx, tags, NULL) == false ||
+	    _prop_object_externalize_append_encoded_cstring(ctx,
+						str) == false ||
+	    _prop_object_externalize_end_tag(ctx, tags) == false) {
 		return false;
 	}
 
@@ -193,7 +194,7 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	prop_string_t ps = v;
 
 	if (ps->ps_size == 0) {
-		return _prop_extern_append_empty_tag(ctx,
+		return _prop_object_externalize_empty_tag(ctx,
 		    &_prop_string_type_tags);
 	}
 
@@ -679,15 +680,16 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 
 	/* Compute the length of the result. */
-	if (_prop_intern_decode_string(ctx, NULL, 0, &len, NULL) == false)
+	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
+						   NULL) == false)
 		return (true);
 
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (str == NULL)
 		return (true);
 
-	if (_prop_intern_decode_string(ctx, str, len, &alen,
-				       &ctx->poic_cp) == false ||
+	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
+						   &ctx->poic_cp) == false ||
 	    alen != len) {
 		_PROP_FREE(str, M_PROP_STRING);
 		return (true);
@@ -701,7 +703,7 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 		}
 		ctx->poic_cp++;
 	} else {
-		if (_prop_xml_intern_find_tag(ctx, "string",
+		if (_prop_object_internalize_find_tag(ctx, "string",
 					      _PROP_TAG_TYPE_END) == false) {
 			_PROP_FREE(str, M_PROP_STRING);
 			return (true);
