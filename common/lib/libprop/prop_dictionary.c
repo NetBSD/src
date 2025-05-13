@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.48 2025/04/26 17:13:23 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.49 2025/05/13 13:26:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020, 2025 The NetBSD Foundation, Inc.
@@ -447,15 +447,14 @@ _prop_dictionary_externalize_one(struct _prop_object_externalize_context *ctx,
 
 	switch (ctx->poec_format) {
 	case PROP_FORMAT_JSON:
-		if (_prop_object_externalize_append_cstring(ctx,
-							": ") == false) {
+		if (_prop_extern_append_cstring(ctx, ": ") == false) {
 			return false;
 		}
 		break;
 	
 	default:		/* XML */
-		if (_prop_object_externalize_end_line(ctx, NULL) == false ||
-		    _prop_object_externalize_start_line(ctx) == false) {
+		if (_prop_extern_end_line(ctx, NULL) == false ||
+		    _prop_extern_start_line(ctx) == false) {
 			return false;
 		}
 		break;
@@ -483,13 +482,13 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 
 	if (pd->pd_count == 0) {
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-		return (_prop_object_externalize_empty_tag(ctx,
+		return (_prop_extern_append_empty_tag(ctx,
 					&_prop_dictionary_type_tags));
 	}
 
-	if (_prop_object_externalize_start_tag(ctx,
+	if (_prop_extern_append_start_tag(ctx,
 			&_prop_dictionary_type_tags, NULL) == false ||
-	    _prop_object_externalize_end_line(ctx, NULL) == false)
+	    _prop_extern_end_line(ctx, NULL) == false)
 		goto out;
 
 	pdi = _prop_dictionary_iterator_locked(pd);
@@ -502,9 +501,9 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	while ((pdk = _prop_dictionary_iterator_next_object_locked(pdi))
 	    != NULL) {
 		po = _prop_dictionary_get_keysym(pd, pdk, true);
-		if (_prop_object_externalize_start_line(ctx) == false ||
+		if (_prop_extern_start_line(ctx) == false ||
 		    _prop_dictionary_externalize_one(ctx, pdk, po) == false ||
-		    _prop_object_externalize_end_line(ctx,
+		    _prop_extern_end_line(ctx,
 				pdi->pdi_index < pd->pd_count ?
 						sep : NULL) == false) {
 			prop_object_iterator_release(&pdi->pdi_base);
@@ -515,8 +514,8 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	prop_object_iterator_release(&pdi->pdi_base);
 
 	ctx->poec_depth--;
-	if (_prop_object_externalize_start_line(ctx) == false ||
-	    _prop_object_externalize_end_tag(ctx,
+	if (_prop_extern_start_line(ctx) == false ||
+	    _prop_extern_append_end_tag(ctx,
 				&_prop_dictionary_type_tags) == false) {
 
 		goto out;
@@ -1362,8 +1361,7 @@ _prop_dictionary_internalize_continue(prop_stack_t stack, prop_object_t *obj,
 	 * (FWIW, RFC 8259 section 9 seems to specifically allow this.)
 	 */
 	if (ctx->poic_format == PROP_FORMAT_JSON) {
-		ctx->poic_cp =
-		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
 		if (*ctx->poic_cp == ',') {
 			ctx->poic_cp++;
 		}
@@ -1379,8 +1377,7 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	size_t keylen;
 
 	if (ctx->poic_format == PROP_FORMAT_JSON) {
-		ctx->poic_cp =
-		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
 
 		/* Check to see if this is the end of the dictionary. */
 		if (*ctx->poic_cp == '}') {
@@ -1401,7 +1398,7 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 		}
 	} else {
 		/* Fetch the next tag. */
-		if (_prop_object_internalize_find_tag(ctx, NULL,
+		if (_prop_xml_intern_find_tag(ctx, NULL,
 					_PROP_TAG_TYPE_EITHER) == false)
 			goto bad;
 
@@ -1419,9 +1416,8 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 		    	goto bad;
 	}
 
-	if (_prop_object_internalize_decode_string(ctx,
-					tmpkey, PDK_MAXKEY, &keylen,
-					&ctx->poic_cp) == false)
+	if (_prop_intern_decode_string(ctx, tmpkey, PDK_MAXKEY, &keylen,
+				       &ctx->poic_cp) == false)
 		goto bad;
 
 	_PROP_ASSERT(keylen <= PDK_MAXKEY);
@@ -1437,19 +1433,18 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 		 * Next thing we counter needs to be the key/value
 		 * separator.
 		 */
-		ctx->poic_cp =
-		    _prop_object_internalize_skip_whitespace(ctx->poic_cp);
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
 		if (*ctx->poic_cp != ':') {
 			goto bad;
 		}
 		ctx->poic_cp++;
 	} else {
-		if (_prop_object_internalize_find_tag(ctx, "key",
+		if (_prop_xml_intern_find_tag(ctx, "key",
 					_PROP_TAG_TYPE_END) == false)
 			goto bad;
 
 		/* ..and now the beginning of the value. */
-		if (_prop_object_internalize_find_tag(ctx, NULL,
+		if (_prop_xml_intern_find_tag(ctx, NULL,
 					_PROP_TAG_TYPE_START) == false)
 			goto bad;
 	}

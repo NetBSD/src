@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.36 2025/04/26 17:13:23 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.37 2025/05/13 13:26:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -218,10 +218,10 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 		    pn->pn_value.pnv_signed);
 	}
 
-	if (_prop_object_externalize_start_tag(ctx,
+	if (_prop_extern_append_start_tag(ctx,
 				&_prop_number_type_tags, NULL) == false ||
-	    _prop_object_externalize_append_cstring(ctx, tmpstr) == false ||
-	    _prop_object_externalize_end_tag(ctx,
+	    _prop_extern_append_cstring(ctx, tmpstr) == false ||
+	    _prop_extern_append_end_tag(ctx,
 				&_prop_number_type_tags) == false) {
 		return false;
 	}
@@ -715,7 +715,7 @@ _prop_number_internalize(prop_stack_t stack, prop_object_t *obj,
 
 	/* No end tag to advance over in JSON. */
 	if (ctx->poic_format != PROP_FORMAT_JSON &&
-	    _prop_object_internalize_find_tag(ctx, "integer",
+	    _prop_xml_intern_find_tag(ctx, "integer",
 					      _PROP_TAG_TYPE_END) == false)
 		return (true);
 
