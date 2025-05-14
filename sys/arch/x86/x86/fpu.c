@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.91 2025/04/28 13:01:27 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.92 2025/05/14 23:39:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.91 2025/04/28 13:01:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.92 2025/05/14 23:39:01 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -283,30 +283,10 @@ fpuinit_mxcsr_mask(void)
 #endif
 
 #ifndef XENPV
-	union savefpu fpusave_stack __aligned(64);
-	union savefpu *fpusave;
+	union savefpu fpusave __aligned(64);
 	u_long psl;
 
-	/*
-	 * Allocate a temporary save space from the stack if it fits,
-	 * or from the heap otherwise, so we can query its mxcsr mask.
-	 */
-	if (allocfpusave) {
-		/*
-		 * Need 64-byte alignment for XSAVE instructions.
-		 * kmem_* doesn't guarantee that and we don't have a
-		 * handy posix_memalign in the kernel unless we hack it
-		 * ourselves with vmem(9), so just ask for page
-		 * alignment with uvm_km(9).
-		 */
-		__CTASSERT(PAGE_SIZE >= 64);
-		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
-		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
-		fpusave = (void *)va;
-	} else {
-		fpusave = &fpusave_stack;
-		memset(fpusave, 0, sizeof(*fpusave));
-	}
+	memset(&fpusave, 0, sizeof(fpusave));
 
 	/* Disable interrupts, and enable FPU */
 	psl = x86_read_psl();
@@ -314,25 +294,16 @@ fpuinit_mxcsr_mask(void)
 	clts();
 
 	/* Fill in the FPU area */
-	fxsave(fpusave);
+	fxsave(&fpusave);
 
 	/* Restore previous state */
 	stts();
 	x86_write_psl(psl);
 
-	if (fpusave->sv_xmm.fx_mxcsr_mask == 0) {
+	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
 		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 	} else {
-		x86_fpu_mxcsr_mask = fpusave->sv_xmm.fx_mxcsr_mask;
-	}
-
-	/*
-	 * Free the temporary save space.
-	 */
-	if (allocfpusave) {
-		uvm_km_free(kernel_map, va, x86_fpu_save_size, UVM_KMF_WIRED);
-		fpusave = NULL;
-		va = 0;
+		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
 	}
 #else
 	/*
