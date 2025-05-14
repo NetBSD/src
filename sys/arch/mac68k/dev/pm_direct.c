@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.42 2025/05/12 00:28:07 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.43 2025/05/14 06:31:45 nat Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -35,7 +35,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.42 2025/05/12 00:28:07 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.43 2025/05/14 06:31:45 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.42 2025/05/12 00:28:07 nat Exp $");
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -89,6 +90,7 @@ u_int	pm_LCD_brightness = 0x0;
 u_int	pm_LCD_contrast = 0x0;
 u_int	pm_counter = 0;			/* clock count */
 struct sysmon_pswitch pbutton;
+struct sysctllog	*sc_log;	/* Sysctl log */
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 char pm_send_cmd_type[] = {
@@ -206,6 +208,8 @@ void	pm_adb_get_TALK_result(PMData *);
 void	pm_adb_get_ADB_data(PMData *);
 void	pm_adb_poll_next_device_pm1(PMData *);
 
+static void	brightness_sysctl_setup(void *);
+static int	sysctl_brightness(SYSCTLFN_PROTO);
 
 /*
  * These variables are in adb_direct.c.
@@ -272,6 +276,7 @@ pm_setup_adb(void)
 			pbutton.smpsw_type = PSWITCH_TYPE_POWER;
 			if (sysmon_pswitch_register(&pbutton) != 0)
 				printf("Unable to register soft power\n");
+			brightness_sysctl_setup(NULL);
 			kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 			    brightness_slider, NULL, NULL, "britethrd");
 			break;
@@ -1278,4 +1283,46 @@ pm_set_brightness(u_int brightness)
 	}
 
 	return brightness;
+}
+
+static void
+brightness_sysctl_setup(void *arg)
+{
+	const struct sysctlnode *rnode;
+
+	if ((sysctl_createv(&sc_log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, "screen",
+	    SYSCTL_DESCR("Internal display output device controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
+		goto fail;
+
+	(void)sysctl_createv(&sc_log, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "brightness",
+	    SYSCTL_DESCR("Current brightness level"),
+	    sysctl_brightness, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	return;
+
+ fail:
+	aprint_error("screen: couldn't add sysctl nodes\n");
+}
+
+static int
+sysctl_brightness(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int val, error;
+
+	node = *rnode;
+
+	val = pm_LCD_brightness;
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	val = pm_set_brightness(val);
+
+	return error;
 }
