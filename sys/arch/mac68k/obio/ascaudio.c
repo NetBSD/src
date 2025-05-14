@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.11 2025/05/14 07:15:03 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.12 2025/05/14 11:42:00 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.11 2025/05/14 07:15:03 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.12 2025/05/14 11:42:00 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -533,11 +533,6 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
 		    CLEARFIFO);
 
-#if 0
-		bus_space_write_4(sc->sc_tag, sc->sc_handle, FIFO_A_ALT, 0);
-		bus_space_write_4(sc->sc_tag, sc->sc_handle, FIFO_B_ALT, 0);
-#endif
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
 		    CLEARFIFO | NONCOMP);
 
@@ -545,14 +540,6 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 		if (sc->sc_recfreq == 22050)
 			tmp |= REC22KHZ;
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
-
-#if 0
-		int i;
-		for (i = 0; i < 0x400; i++) {
-			bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFO_A);
-			bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFO_B);
-		}
-#endif
 
 		memset(loc, 0x80, blksize);
 
