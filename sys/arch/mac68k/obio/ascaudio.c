@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.13 2025/05/14 22:46:04 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.14 2025/05/14 22:47:08 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.13 2025/05/14 22:46:04 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.14 2025/05/14 22:47:08 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -933,6 +933,7 @@ ascaudio_done_input(void *arg)
 		(*sc->sc_rintr)(sc->sc_rintrarg);
 	mutex_exit(&sc->sc_intr_lock);
 }
+
 static void
 configure_dfac(uint8_t config)
 {
