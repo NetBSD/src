@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.15 2025/01/28 20:21:59 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.16 2025/05/14 20:42:14 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -114,4 +114,78 @@ msg_341(void)
 	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'unsigned int' [341] */
 	return (((int)((_ctype_tab_ + 1)[(0xffffffffu)])));
 
+}
+
+void
+msg_122(void)
+{
+	typedef unsigned typedef_type_identifier;
+	__attribute__((__mode__(TI))) typedef unsigned attr_typedef_type_identifier;
+	// FIXME: GCC accepts it.
+	/* expect+1: error: invalid type combination [4] */
+	typedef __attribute__((__mode__(TI))) unsigned typedef_attr_type_identifier;
+	typedef unsigned __attribute__((__mode__(TI))) typedef_type_attr_identifier;
+	typedef unsigned typedef_type_identifier_attr __attribute__((__mode__(TI)));
+	__attribute__(()) __attribute__((__mode__(TI))) typedef unsigned attr_attr_typedef_type_identifier;
+	// FIXME: GCC accepts it.
+	/* expect+1: error: invalid type combination [4] */
+	typedef __attribute__(()) __attribute__((__mode__(TI))) unsigned typedef_attr_attr_type_identifier;
+	typedef unsigned __attribute__(()) __attribute__((__mode__(TI))) typedef_type_attr_attr_identifier;
+	typedef unsigned typedef_type_identifier_attr_attr __attribute__(()) __attribute__((__mode__(TI)));
+
+	struct {
+		typedef_type_identifier typedef_type_identifier;
+		attr_typedef_type_identifier attr_typedef_type_identifier;
+		typedef_attr_type_identifier typedef_attr_type_identifier;
+		typedef_type_attr_identifier typedef_type_attr_identifier;
+		typedef_type_identifier_attr typedef_type_identifier_attr;
+		attr_attr_typedef_type_identifier attr_attr_typedef_type_identifier;
+		typedef_attr_attr_type_identifier typedef_attr_attr_type_identifier;
+		typedef_type_attr_attr_identifier typedef_type_attr_attr_identifier;
+		typedef_type_identifier_attr_attr typedef_type_identifier_attr_attr;
+	} s = {0};
+
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = s.typedef_type_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = s.attr_typedef_type_identifier << 80;
+	u128 = s.typedef_attr_type_identifier << 80;
+	u128 = s.typedef_type_attr_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = s.typedef_type_identifier_attr << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = s.attr_attr_typedef_type_identifier << 80;
+	u128 = s.typedef_attr_attr_type_identifier << 80;
+	u128 = s.typedef_type_attr_attr_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = s.typedef_type_identifier_attr_attr << 80;
+
+	unsigned type_identifier = 0;
+	__attribute__((__mode__(TI))) unsigned attr_type_identifier = 0;
+	unsigned __attribute__((__mode__(TI))) type_attr_identifier = 0;
+	unsigned type_identifier_attr __attribute__((__mode__(TI))) = 0;
+	__attribute__(()) __attribute__((__mode__(TI))) unsigned attr_attr_type_identifier = 0;
+	unsigned __attribute__(()) __attribute__((__mode__(TI))) type_attr_attr_identifier = 0;
+	unsigned type_identifier_attr_attr __attribute__(()) __attribute__((__mode__(TI))) = 0;
+
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = type_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = attr_type_identifier << 80;
+	u128 = type_attr_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = type_identifier_attr << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = attr_attr_type_identifier << 80;
+	u128 = type_attr_attr_identifier << 80;
+	// FIXME
+	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
+	u128 = type_identifier_attr_attr << 80;
 }
