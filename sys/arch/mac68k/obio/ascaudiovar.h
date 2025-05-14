@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudiovar.h,v 1.2 2025/05/12 00:31:28 nat Exp $ */
+/* $NetBSD: ascaudiovar.h,v 1.3 2025/05/14 07:15:03 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -67,6 +67,7 @@ typedef struct ascaudio_softc {
 	int		sc_options;	/* options for this instance. */
 	uint8_t		sc_speakers;
 	uint		sc_rate;
+	int		sc_recfreq;
 	bool		sc_slowcpu;
 } ascaudio_softc_t;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.10 2025/05/12 00:40:40 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.11 2025/05/14 07:15:03 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.10 2025/05/12 00:40:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.11 2025/05/14 07:15:03 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,7 +351,7 @@ ascaudioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (error);
 }
 
-#define ASCAUDIO_NFORMATS	2
+#define ASCAUDIO_NFORMATS	3
 static int
 ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 {
@@ -374,7 +374,15 @@ ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 		.channels	= 1,
 		.channel_mask	= AUFMT_MONAURAL,
 		.frequency_type	= 1,
-		.frequency	= { 11025 }, }
+		.frequency	= { 11025 }, },
+	      { .mode		= AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 8,
+		.precision	= 8,
+		.channels	= 1,
+		.channel_mask	= AUFMT_MONAURAL,
+		.frequency_type	= 1,
+		.frequency	= { 22050 }, }
 	};
 
 	return audio_query_format(asc_formats, ASCAUDIO_NFORMATS, ae);
@@ -388,6 +396,8 @@ ascaudio_set_format(void *opaque, int setmode,
 	struct ascaudio_softc *sc = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+
+	sc->sc_recfreq = rec->sample_rate;
 
 	return 0;
 }
@@ -532,6 +542,8 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 		    CLEARFIFO | NONCOMP);
 
 		tmp = RECORDA;
+		if (sc->sc_recfreq == 22050)
+			tmp |= REC22KHZ;
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
 
 #if 0
