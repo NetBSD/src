@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2024/10/31 15:05:48 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.94 2025/05/14 23:37:17 riastradh Exp $
 
 HOSTLIB=	nbcompat
 
@@ -69,6 +69,7 @@ HOST_CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 
 DPSRCS+=	defs.mk
 CLEANFILES+=	config.log config.status configure.lineno *.stamp
+CLEANFILES+=	config.cache.tmp
 CLEANDIRFILES+=	defs.mk config.cache confdefs.h
 
 # Get components of Berkeley DB.
@@ -79,16 +80,18 @@ _CURDIR:=	${.CURDIR}
 
 SRCS:=		${SRCS:M*.c}
 
-CONFIGURE_ARGS=	--cache-file=config.cache
 .if ${MAKEVERBOSE} == 0
 CONFIGURE_ARGS+=--silent
 .endif
 
 config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
-	rm -f ${.TARGET}
+	rm -f ${.TARGET}.tmp ${.TARGET}
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		LDFLAGS=${HOST_LDFLAGS:Q} \
-		${HOST_SH} ${.CURDIR}/configure ${CONFIGURE_ARGS}
+		${HOST_SH} ${.CURDIR}/configure \
+		--cache-file=${.TARGET}.tmp \
+		${CONFIGURE_ARGS}
+	mv -f ${.TARGET}.tmp ${.TARGET}
 
 defs.mk: config.cache
 	@touch ${.TARGET}
