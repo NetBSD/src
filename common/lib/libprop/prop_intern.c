@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_intern.c,v 1.1 2025/05/13 13:26:12 thorpej Exp $	*/
+/*	$NetBSD: prop_intern.c,v 1.2 2025/05/14 03:25:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -29,15 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "prop_object_impl.h"
+#include <prop/prop_object.h>
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #endif /* !_KERNEL && !_STANDALONE */
-
-#include "prop_object_impl.h"
-#include <prop/prop_object.h>
 
 /*
  * _prop_intern_skip_whitespace --

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.23 2025/05/13 15:00:16 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.24 2025/05/14 03:25:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 	    pb->pb_value ? &_prop_bool_true_type_tags
 			 : &_prop_bool_false_type_tags;
 
-	return _prop_object_externalize_empty_tag(ctx, tags);
+	return _prop_extern_append_empty_tag(ctx, tags);
 }
 
 /* ARGSUSED */
