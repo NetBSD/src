@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.418 2025/05/04 09:40:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.419 2025/05/14 21:09:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.418 2025/05/04 09:40:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.419 2025/05/14 21:09:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -232,6 +232,9 @@ merge_signedness(tspec_t t, tspec_t s)
 	    : t == INT ? UINT
 	    : t == LONG ? ULONG
 	    : t == LLONG ? ULLONG
+#ifdef INT128_SIZE
+	    : t == INT128 ? UINT128
+#endif
 	    : t;
 }
 
@@ -379,7 +382,11 @@ dcs_add_type(type_t *tp)
 		if (dcs->d_sign_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
+#ifdef INT128_SIZE
+	} else if (t == SHORT || t == LONG || t == LLONG || t == INT128) {
+#else
 	} else if (t == SHORT || t == LONG || t == LLONG) {
+#endif
 		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;

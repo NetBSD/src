@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.524 2025/05/08 20:51:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.525 2025/05/14 21:09:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.524 2025/05/08 20:51:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.525 2025/05/14 21:09:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1042,9 +1042,7 @@ declmod:
 			dcs->d_noreturn = true;
 		if ($1.bit_width == 128) {
 #ifdef INT128_SIZE
-			dcs->d_abstract_type = dcs->d_sign_mod == UNSIGN
-			    ? UINT128 : INT128;
-			dcs->d_sign_mod = NO_TSPEC;
+			dcs->d_rank_mod = INT128;
 #else
 			/* Get as close as possible. */
 			dcs->d_rank_mod = LLONG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.16 2025/05/14 20:42:14 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.17 2025/05/14 21:09:20 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -121,14 +121,10 @@ msg_122(void)
 {
 	typedef unsigned typedef_type_identifier;
 	__attribute__((__mode__(TI))) typedef unsigned attr_typedef_type_identifier;
-	// FIXME: GCC accepts it.
-	/* expect+1: error: invalid type combination [4] */
 	typedef __attribute__((__mode__(TI))) unsigned typedef_attr_type_identifier;
 	typedef unsigned __attribute__((__mode__(TI))) typedef_type_attr_identifier;
 	typedef unsigned typedef_type_identifier_attr __attribute__((__mode__(TI)));
 	__attribute__(()) __attribute__((__mode__(TI))) typedef unsigned attr_attr_typedef_type_identifier;
-	// FIXME: GCC accepts it.
-	/* expect+1: error: invalid type combination [4] */
 	typedef __attribute__(()) __attribute__((__mode__(TI))) unsigned typedef_attr_attr_type_identifier;
 	typedef unsigned __attribute__(()) __attribute__((__mode__(TI))) typedef_type_attr_attr_identifier;
 	typedef unsigned typedef_type_identifier_attr_attr __attribute__(()) __attribute__((__mode__(TI)));
