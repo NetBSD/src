@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.8 2024/05/12 07:22:13 macallan Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.9 2025/05/14 06:32:16 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,6 @@
 #define CG14_CURSOR_Y		0x1106
 #define CG14_CURSOR_COLOR1	0x1108
 #define CG14_CURSOR_COLOR2	0x110c
-#define CG14_CURSOR_COLOR3	0x1110
 
 /* ranges in framebuffer space */
 #define CG14_FB_VRAM		0x00000000
