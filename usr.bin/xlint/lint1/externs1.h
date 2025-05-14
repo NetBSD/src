@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.240 2025/05/04 08:37:09 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.241 2025/05/14 21:35:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -220,6 +220,7 @@ void dcs_add_function_specifier(function_specifier);
 void dcs_add_storage_class(scl_t);
 void dcs_add_type(type_t *);
 void dcs_add_qualifiers(type_qualifiers);
+void dcs_add_type_attributes(type_attributes);
 void dcs_add_alignas(tnode_t *);
 void dcs_add_packed(void);
 void dcs_set_used(void);

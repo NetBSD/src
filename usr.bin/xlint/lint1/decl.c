@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.419 2025/05/14 21:09:20 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.420 2025/05/14 21:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.419 2025/05/14 21:09:20 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.420 2025/05/14 21:35:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -508,6 +508,25 @@ dcs_add_qualifiers(type_qualifiers qs)
 {
 	add_type_qualifiers(&dcs->d_qual, qs);
 	debug_func_dcs(__func__);
+}
+
+void
+dcs_add_type_attributes(type_attributes attrs)
+{
+	if (attrs.used)
+		dcs_set_used();
+	if (attrs.noreturn)
+		dcs->d_noreturn = true;
+	if (attrs.bit_width == 128) {
+#ifdef INT128_SIZE
+		dcs->d_rank_mod = INT128;
+#else
+		/* Get as close as possible. */
+		dcs->d_rank_mod = LLONG;
+#endif
+	}
+	if (attrs.bit_width == 64)
+		dcs->d_rank_mod = LLONG;
 }
 
 void

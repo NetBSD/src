@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.525 2025/05/14 21:09:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.526 2025/05/14 21:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.525 2025/05/14 21:09:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.526 2025/05/14 21:35:24 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -966,6 +966,7 @@ begin_type_declaration_specifiers:	/* see C99 6.7, C23 6.7.1 */
 			dcs_set_used();
 		if ($1.noreturn)
 			dcs->d_noreturn = true;
+		/* TODO: dcs_add_type_attributes($1); */
 	}
 |	begin_type_declaration_specifiers declmod
 |	begin_type_declaration_specifiers notype_type_specifier {
@@ -1036,20 +1037,7 @@ declmod:
 		dcs_add_function_specifier($1);
 	}
 |	type_attribute_list {
-		if ($1.used)
-			dcs_set_used();
-		if ($1.noreturn)
-			dcs->d_noreturn = true;
-		if ($1.bit_width == 128) {
-#ifdef INT128_SIZE
-			dcs->d_rank_mod = INT128;
-#else
-			/* Get as close as possible. */
-			dcs->d_rank_mod = LLONG;
-#endif
-		}
-		if ($1.bit_width == 64)
-			dcs->d_rank_mod = LLONG;
+		dcs_add_type_attributes($1);
 	}
 ;
 
@@ -1063,18 +1051,13 @@ type_attribute_list_opt:
 type_attribute_list:
 	type_attribute
 |	type_attribute_list type_attribute {
-		$$ = (type_attributes){
-			.used = $1.used || $2.used,
-			.noreturn = $1.noreturn || $2.noreturn,
-			.bit_width = $2.bit_width != 0
-			    ? $2.bit_width : $1.bit_width,
-		};
+		$$ = merge_type_attributes($1, $2);
 	}
 ;
 
 type_attribute_opt:
 	/* empty */ {
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 |	type_attribute
 ;
@@ -1083,15 +1066,15 @@ type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
 |	T_ALIGNAS T_LPAREN type_type_specifier T_RPAREN {		/* C11 6.7.5 */
 		dcs_add_alignas(build_sizeof($3));
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 |	T_ALIGNAS T_LPAREN constant_expression T_RPAREN {	/* C11 6.7.5 */
 		dcs_add_alignas($3);
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 |	T_PACKED {
 		dcs_add_packed();
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 ;
 
@@ -1517,9 +1500,11 @@ notype_direct_declarator:
 
 type_direct_declarator:
 	type_attribute_list_opt identifier {
+		/* TODO: dcs_add_type_attributes($1); */
 		$$ = declarator_name(getsym($2));
 	}
 |	type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
+		/* TODO: dcs_add_type_attributes($1); */
 		$$ = $3;
 	}
 |	type_direct_declarator T_LBRACK array_size_opt T_RBRACK {
@@ -1531,11 +1516,13 @@ type_direct_declarator:
 		block_level--;
 		if ($2.used)
 			$$->s_used = true;
+		/* TODO: handle $2.noreturn */
 	}
 |	type_direct_declarator type_attribute {
 		$$ = $1;
 		if ($2.used)
 			$$->s_used = true;
+		/* TODO: sym_add_type_attributes($$, $2); */
 	}
 ;
 
@@ -1637,6 +1624,7 @@ direct_param_declarator:
 		$$ = declarator_name(getsym($1));
 		if ($2.used)
 			dcs_set_used();
+		/* TODO: dcs_add_type_attributes($2); */
 	}
 |	identifier {
 		$$ = declarator_name(getsym($1));
@@ -1649,6 +1637,7 @@ direct_param_declarator:
 		$$ = add_array($1, $3.has_dim, $3.dim);
 		if ($5.used)
 			dcs_set_used();
+		/* TODO: dcs_add_type_attributes($5); */
 	}
 |	direct_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1656,6 +1645,7 @@ direct_param_declarator:
 		block_level--;
 		if ($2.used)
 			dcs_set_used();
+		/* TODO: handle $2.noreturn */
 	}
 ;
 
@@ -2516,7 +2506,7 @@ arg_declaration:
 /* https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html */
 gcc_attribute_specifier_list_opt:
 	/* empty */ {
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 |	gcc_attribute_specifier_list
 ;
@@ -2525,6 +2515,7 @@ gcc_attribute_specifier_list:
 	gcc_attribute_specifier
 |	gcc_attribute_specifier_list gcc_attribute_specifier {
 		$$ = (type_attributes){ .used = $1.used || $2.used };
+		/* TODO: merge_type_attributes($1, $2); */
 	}
 ;
 
@@ -2541,21 +2532,16 @@ gcc_attribute_specifier:
 gcc_attribute_list:
 	gcc_attribute
 |	gcc_attribute_list T_COMMA gcc_attribute {
-		$$ = (type_attributes){
-			.used = $1.used || $3.used,
-			.noreturn = $1.noreturn || $3.noreturn,
-			.bit_width = $3.bit_width != 0
-			    ? $3.bit_width : $1.bit_width,
-		};
+		$$ = merge_type_attributes($1, $3);
 	}
 ;
 
 gcc_attribute:
 	/* empty */ {
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 |	T_NAME {
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 		const char *name = $1->sb_name;
 		if (is_either(name, "packed", "__packed__"))
 			dcs_add_packed();
@@ -2576,7 +2562,7 @@ gcc_attribute:
 		if (is_either(name, "aligned", "__aligned__")
 		    && $3->args_len == 1)
 			dcs_add_alignas($3->args[0]);
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 		if (is_either(name, "mode", "__mode__")
 		    && $3->args_len == 1
 		    && $3->args[0]->tn_op == NAME) {
@@ -2590,7 +2576,7 @@ gcc_attribute:
 |	type_qualifier {
 		if (!$1.tq_const)
 			yyerror("Bad attribute");
-		$$ = (type_attributes){ .used = false };
+		$$ = no_type_attributes();
 	}
 ;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.235 2025/04/10 20:37:48 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.236 2025/05/14 21:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -749,4 +749,20 @@ set_sym_kind(symbol_kind kind)
 		debug_step("%s: %s -> %s", __func__,
 		    symbol_kind_name(sym_kind), symbol_kind_name(kind));
 	sym_kind = kind;
+}
+
+static inline type_attributes
+merge_type_attributes(type_attributes a, type_attributes b)
+{
+	return (type_attributes){
+		.used = a.used || b.used,
+		.noreturn = a.noreturn || b.noreturn,
+		.bit_width = b.bit_width > 0 ? b.bit_width : a.bit_width,
+	};
+}
+
+static inline type_attributes
+no_type_attributes(void)
+{
+	return (type_attributes){ .used = false };
 }
