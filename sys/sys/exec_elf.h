@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.175 2025/05/02 23:02:55 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.176 2025/05/14 19:44:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ typedef struct {
 #define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
 			/* 184 - Reserved */
 #define EM_AVR32	185	/* Atmel Corporation 32-bit microprocessor family*/
-#define EM_STM8		186	/* STMicroeletronics STM8 8-bit microcontroller */
+#define EM_STM8		186	/* STMicroelectronics STM8 8-bit microcontroller */
 #define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
 #define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
