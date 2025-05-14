@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.9 2025/05/10 00:23:28 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.10 2025/05/14 12:16:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -26,7 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __SOFTFP__
+/* XXX copied from include/fenv.h -- factor me out, please! */
+#if \
+	(defined(__arm__) && defined(__SOFTFP__)) || \
+	(defined(__m68k__) && !defined(__HAVE_68881__)) || \
+	defined(__mips_soft_float) || \
+	(defined(__powerpc__) && defined(_SOFT_FLOAT)) || \
+	(defined(__sh__) && !defined(__SH_FPU_ANY__)) || \
+	0
+#define	SOFTFLOAT
+#endif
+
+#ifdef SOFTFLOAT
 static void
 softfloat_fudge_sigs(const ki_sigset_t *kbefore, ki_sigset_t *kafter)
 {
@@ -514,7 +525,7 @@ traceme_signalmasked_crash(int sig)
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 	/*
 	 * Let's try to track down the dregs of PR misc/56820: Many FPE
 	 * related tests fail on softfloat machines.
@@ -623,7 +634,7 @@ traceme_signalmasked_crash(int sig)
 	    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 	    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 	/*
 	 * Hardfloat floating-point exception traps raise SIGFPE even
 	 * if the process has masked SIGFPE.  As a side effect,
@@ -733,7 +744,7 @@ traceme_signalignored_crash(int sig)
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 	/*
 	 * Let's try to track down the dregs of PR misc/56820: Many FPE
 	 * related tests fail on softfloat machines.
@@ -844,7 +855,7 @@ traceme_signalignored_crash(int sig)
 	    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 	    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 	/*
 	 * Hardfloat floating-point exception traps raise SIGFPE even
 	 * if the process has set the signal disposition of SIGFPE to
@@ -1960,7 +1971,7 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 			/*
 			 * See above in traceme_signalmasked_crash
 			 * about the softfloat trap SIGFPE delivery
@@ -1989,7 +2000,7 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-#ifdef __SOFTFP__
+#ifdef SOFTFLOAT
 			/*
 			 * See above in traceme_signalignored_crash
 			 * about the softfloat trap SIGFPE delivery
