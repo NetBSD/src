@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.27 2017/08/10 22:52:13 ginsbach Exp $ */
+/* $NetBSD: rmdir.c,v 1.27.14.1 2025/05/15 18:04:05 martin Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.27 2017/08/10 22:52:13 ginsbach Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.27.14.1 2025/05/15 18:04:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: rmdir.c,v 1.27 2017/08/10 22:52:13 ginsbach Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+static int vflag;
 
 static int	rm_path(char *);
 __dead static void	usage(void);
@@ -64,10 +66,13 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "p")) != -1)
+	while ((ch = getopt(argc, argv, "pv")) != -1)
 		switch(ch) {
 		case 'p':
 			pflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		case '?':
 		default:
@@ -84,8 +89,12 @@ main(int argc, char *argv[])
 		if (rmdir(*argv) < 0) {
 			warn("%s", *argv);
 			errors = 1;
-		} else if (pflag)
-			errors |= rm_path(*argv);
+		} else {
+			if (vflag)
+				(void)printf("%s\n", *argv);
+			if (pflag)
+				errors |= rm_path(*argv);
+		}
 	}
 
 	exit(errors);
@@ -110,7 +119,8 @@ rm_path(char *path)
 		if (rmdir(path) < 0) {
 			warn("%s", path);
 			return (1);
-		}
+		} else if (vflag)
+			(void)printf("%s\n", path);
 	}
 
 	return (0);
@@ -119,7 +129,7 @@ rm_path(char *path)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-p] directory ...\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-pv] directory ...\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
