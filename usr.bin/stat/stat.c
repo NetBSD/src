@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.54 2025/05/03 21:34:09 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.55 2025/05/15 19:11:44 nia Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.54 2025/05/03 21:34:09 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.55 2025/05/15 19:11:44 nia Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -353,8 +353,8 @@ main(int argc, char *argv[])
 					warn("%s: %s",
 					    "(stdin)", "fstat");
 				else
-					warn("%s: %s",
-					    argv[0], "lstat" + usestat);
+					warn("%s: %s", argv[0],
+					    usestat ? "stat" : "lstat");
 			}
 		} else if (am_readlink && statfmt[1] == 'Y' &&
 		    (st.st_mode & S_IFMT) != S_IFLNK) {
