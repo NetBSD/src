@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.58 2025/05/10 18:11:40 bouyer Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.59 2025/05/15 18:11:18 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -860,4 +860,15 @@ build.sh					1.393, 1.394 via patch
 	Unify the output of "show-revisionid" between the various VCSes
 	and checkout/archive variants.
 	[martin, ticket #1951]
+
+sys/net/if_bridge.c				1.199
+sys/net/if_bridgevar.h				1.40
+
+	bridge(4): PR 59340: resolve a race condition in bridge_stop().
+	[ozaki-r, ticket #1953]
+
+sys/arch/x86/x86/identcpu.c			1.135 (via patch)
+
+	x86: PR 57661: limit extended CPU state save to supported features.
+	[riastradh, ticket #1954]
 
