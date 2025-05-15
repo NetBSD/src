@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.528 2025/05/15 21:35:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.529 2025/05/15 23:16:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.528 2025/05/15 21:35:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.529 2025/05/15 23:16:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1525,9 +1525,9 @@ type_direct_declarator:
 			type_t *tp = block_dup_type($$->s_type);
 			tp->t_tspec =
 #ifdef INT128_SIZE
-			    $2.bit_width == 128 ? (t == INT ? INT128 : UINT128)
+			    $2.bit_width == 128 ? (t == INT ? INT128 : UINT128) :
 #endif
-			    : t == INT ? LLONG : ULLONG;
+			    t == INT ? LLONG : ULLONG;
 			$$->s_type = tp;
 		}
 	}
