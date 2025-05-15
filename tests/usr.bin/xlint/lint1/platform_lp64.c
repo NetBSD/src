@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.17 2025/05/14 21:09:20 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.18 2025/05/15 21:15:31 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -143,16 +143,12 @@ msg_122(void)
 
 	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = s.typedef_type_identifier << 80;
-	// FIXME
-	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = s.attr_typedef_type_identifier << 80;
 	u128 = s.typedef_attr_type_identifier << 80;
 	u128 = s.typedef_type_attr_identifier << 80;
 	// FIXME
 	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = s.typedef_type_identifier_attr << 80;
-	// FIXME
-	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = s.attr_attr_typedef_type_identifier << 80;
 	u128 = s.typedef_attr_attr_type_identifier << 80;
 	u128 = s.typedef_type_attr_attr_identifier << 80;
@@ -170,15 +166,11 @@ msg_122(void)
 
 	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = type_identifier << 80;
-	// FIXME
-	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = attr_type_identifier << 80;
 	u128 = type_attr_identifier << 80;
 	// FIXME
 	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = type_identifier_attr << 80;
-	// FIXME
-	/* expect+1: warning: shift amount 80 is greater than bit-size 32 of 'unsigned int' [122] */
 	u128 = attr_attr_type_identifier << 80;
 	u128 = type_attr_attr_identifier << 80;
 	// FIXME

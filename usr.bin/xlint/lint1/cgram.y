@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.526 2025/05/14 21:35:24 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.527 2025/05/15 21:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.526 2025/05/14 21:35:24 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.527 2025/05/15 21:15:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -962,11 +962,7 @@ begin_type_declaration_specifiers:	/* see C99 6.7, C23 6.7.1 */
 		dcs_add_type($2);
 	}
 |	type_attribute begin_type_declaration_specifiers {
-		if ($1.used)
-			dcs_set_used();
-		if ($1.noreturn)
-			dcs->d_noreturn = true;
-		/* TODO: dcs_add_type_attributes($1); */
+		dcs_add_type_attributes($1);
 	}
 |	begin_type_declaration_specifiers declmod
 |	begin_type_declaration_specifiers notype_type_specifier {
