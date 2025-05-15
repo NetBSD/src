@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.14 2025/05/14 22:47:08 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.15 2025/05/15 10:14:41 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.14 2025/05/14 22:47:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.15 2025/05/15 10:14:41 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.14 2025/05/14 22:47:08 nat Exp $");
 
 #define BUFSIZE 			32768
 #define PLAYBLKSIZE			8192
-#define RECBLKSIZE			8192
+#define RECBLKSIZE			1024
 
 #define ASC_VIA_CLR_INTR()     via_reg(VIA2, vIFR) = V2IF_ASC
 
