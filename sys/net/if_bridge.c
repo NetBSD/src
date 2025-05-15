@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.189.4.2 2024/09/05 09:27:12 martin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.189.4.3 2025/05/15 17:58:18 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.4.2 2024/09/05 09:27:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189.4.3 2025/05/15 17:58:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1450,6 +1450,10 @@ bridge_init(struct ifnet *ifp)
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
+	BRIDGE_LOCK(sc);
+	sc->sc_stopping = false;
+	BRIDGE_UNLOCK(sc);
+
 	callout_reset(&sc->sc_brcallout, bridge_rtable_prune_period * hz,
 	    bridge_timer, sc);
 	bstp_initialization(sc);
@@ -1470,6 +1474,10 @@ bridge_stop(struct ifnet *ifp, int disable)
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) != 0);
 	ifp->if_flags &= ~IFF_RUNNING;
+
+	BRIDGE_LOCK(sc);
+	sc->sc_stopping = true;
+	BRIDGE_UNLOCK(sc);
 
 	callout_halt(&sc->sc_brcallout, NULL);
 	workqueue_wait(sc->sc_rtage_wq, &sc->sc_rtage_wk);
@@ -2445,9 +2453,12 @@ bridge_rtage_work(struct work *wk, void *arg)
 
 	bridge_rtage(sc);
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
+	BRIDGE_LOCK(sc);
+	if (!sc->sc_stopping) {
 		callout_reset(&sc->sc_brcallout,
 		    bridge_rtable_prune_period * hz, bridge_timer, sc);
+	}
+	BRIDGE_UNLOCK(sc);
 }
 
 static bool
