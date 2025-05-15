@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.23 2025/05/10 18:12:19 bouyer Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.24 2025/05/15 18:18:16 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -627,4 +627,32 @@ build.sh					1.394
 	Unify the output of "show-revisionid" between the various VCSes
 	and checkout/archive variants.
 	[martin, ticket #1114]
+
+sys/dev/pci/vio9p.c				1.12
+
+	vio9p(4): PR 59165: export tag via sysctl.
+	[ozaki-r, ticket #1115]
+
+sys/net/if_bridge.c				1.199
+sys/net/if_bridgevar.h				1.40
+
+	bridge(4): PR 59340: resolve a race condition in bridge_stop().
+	[ozaki-r, ticket #1116]
+
+bin/rmdir/rmdir.1				1.18
+bin/rmdir/rmdir.c				1.28
+
+	rmdir(1): add -v option.
+	[kim, ticket #1117]
+
+sys/arch/x86/x86/identcpu.c			1.135
+
+	x86: PR 57661: limit extended CPU state save to supported features.
+	[riastradh, ticket #1118]
+
+sys/arch/x86/x86/fpu.c				1.81,1.90 (partial, via patch)
+
+	x86: PR 57258, PR 58650: fix fpu_kern_enter/leave for machines
+	with big fpu state.
+	[riastradh, ticket #1119]
 
