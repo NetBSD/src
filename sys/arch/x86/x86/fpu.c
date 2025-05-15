@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.79.4.4 2024/09/20 11:08:25 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.79.4.5 2025/05/15 18:17:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.4 2024/09/20 11:08:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.5 2025/05/15 18:17:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -135,6 +135,16 @@ void fpu_handle_deferred(void);
 void fpu_switch(struct lwp *, struct lwp *);
 
 uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
+
+static const union savefpu safe_fpu_storage __aligned(64) = {
+	.sv_xmm = {
+		.fx_mxcsr = __SAFE_MXCSR__,
+	},
+};
+static const union savefpu zero_fpu_storage __aligned(64);
+
+static const void *safe_fpu __read_mostly = &safe_fpu_storage;
+static const void *zero_fpu __read_mostly = &zero_fpu_storage;
 
 static inline union savefpu *
 fpu_lwp_area(struct lwp *l)
@@ -189,9 +199,27 @@ fpuinit(struct cpu_info *ci)
 	stts();
 }
 
+/*
+ * fpuinit_mxcsr_mask()
+ *
+ *	Called once by cpu_init on the primary CPU.  Initializes
+ *	x86_fpu_mxcsr_mask based on the initial FPU state, and
+ *	initializes save_fpu and zero_fpu if necessary when the
+ *	hardware's FPU save size is larger than union savefpu.
+ *
+ *	XXX Rename this function!
+ */
 void
 fpuinit_mxcsr_mask(void)
 {
+	/*
+	 * If the CPU's x86 fpu save size is larger than union savefpu,
+	 * we have to allocate larger buffers for the safe and zero FPU
+	 * states used here and by fpu_kern_enter/leave.
+	 */
+	const bool allocfpusave = x86_fpu_save_size > sizeof(union savefpu);
+	vaddr_t va;
+
 #ifndef XENPV
 	union savefpu fpusave __aligned(64);
 	u_long psl;
@@ -223,6 +251,32 @@ fpuinit_mxcsr_mask(void)
 	 */
 	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 #endif
+
+	/*
+	 * If necessary, allocate FPU save spaces for safe or zero FPU
+	 * state, for fpu_kern_enter/leave.
+	 */
+	if (allocfpusave) {
+		__CTASSERT(PAGE_SIZE >= 64);
+
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
+		memcpy((void *)va, &safe_fpu_storage,
+		    sizeof(safe_fpu_storage));
+		uvm_km_protect(kernel_map, va, x86_fpu_save_size,
+		    VM_PROT_READ);
+		safe_fpu = (void *)va;
+
+		va = uvm_km_alloc(kernel_map, x86_fpu_save_size, PAGE_SIZE,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_WAITVA);
+		/*
+		 * No initialization -- just want zeroes!  In fact we
+		 * could share this with other all-zero pages.
+		 */
+		uvm_km_protect(kernel_map, va, x86_fpu_save_size,
+		    VM_PROT_READ);
+		zero_fpu = (void *)va;
+	}
 }
 
 static inline void
@@ -378,11 +432,6 @@ fpu_lwp_abandon(struct lwp *l)
 void
 fpu_kern_enter(void)
 {
-	static const union savefpu safe_fpu __aligned(64) = {
-		.sv_xmm = {
-			.fx_mxcsr = __SAFE_MXCSR__,
-		},
-	};
 	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	int s;
@@ -421,7 +470,7 @@ fpu_kern_enter(void)
 	/*
 	 * Zero the FPU registers and install safe control words.
 	 */
-	fpu_area_restore(&safe_fpu, x86_xsave_features, false);
+	fpu_area_restore(safe_fpu, x86_xsave_features, /*is_64bit*/false);
 }
 
 /*
@@ -432,7 +481,6 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
-	static const union savefpu zero_fpu __aligned(64);
 	struct cpu_info *ci = curcpu();
 	int s;
 
@@ -451,7 +499,7 @@ fpu_kern_leave(void)
 	 * through Spectre-class attacks to userland, even if there are
 	 * no bugs in fpu state management.
 	 */
-	fpu_area_restore(&zero_fpu, x86_xsave_features, false);
+	fpu_area_restore(zero_fpu, x86_xsave_features, /*is_64bit*/false);
 
 	/*
 	 * Set CR0_TS again so that the kernel can't accidentally use
