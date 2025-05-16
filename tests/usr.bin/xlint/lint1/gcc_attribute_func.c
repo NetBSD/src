@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_func.c,v 1.5 2024/11/13 03:43:00 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_func.c,v 1.6 2025/05/16 16:49:43 rillig Exp $	*/
 # 3 "gcc_attribute_func.c"
 
 /*
@@ -33,3 +33,15 @@ static void
 unused_function(void)
 {
 }
+
+void
+/* expect+1: warning: parameter 'arr' unused in function 'param_attrs' [231] */
+param_attrs(int arr[3] __attribute__(()) __attribute__((__deprecated__)))
+{
+}
+
+void asm_function(void)
+    __asm__("asm_function_name")
+    __attribute__(()) __attribute__((__deprecated__));
+void renamed_function(void)
+    __symbolrename(renamed_function);
