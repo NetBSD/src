@@ -1,4 +1,4 @@
-/* $NetBSD: identcpu_subr.c,v 1.14 2025/05/02 07:08:11 imil Exp $ */
+/* $NetBSD: identcpu_subr.c,v 1.15 2025/05/16 04:35:54 imil Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.14 2025/05/02 07:08:11 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.15 2025/05/16 04:35:54 imil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -166,7 +166,6 @@ tsc_freq_cpuid(struct cpu_info *ci)
 #if defined(_KERNEL) &&  NLAPIC > 0
 		if ((khz != 0) && (lapic_per_second == 0)) {
 			lapic_per_second = khz * 1000;
-			lapic_from_cpuid = true;
 			aprint_debug_dev(ci->ci_dev,
 			    "lapic_per_second set to %" PRIu32 "\n",
 			    lapic_per_second);
