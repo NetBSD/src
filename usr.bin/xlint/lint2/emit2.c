@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.40 2024/08/29 20:35:19 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.41 2025/05/16 20:39:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,19 +34,19 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.40 2024/08/29 20:35:19 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.41 2025/05/16 20:39:48 rillig Exp $");
 #endif
 
 #include "lint2.h"
 
-static void outtype(type_t *);
+static void outtype(const type_t *);
 static void outdef(hte_t *, sym_t *);
 static void dumpname(hte_t *);
 static void outfiles(void);
 
 /* Write type into the output file. */
 static void
-outtype(type_t *tp)
+outtype(const type_t *tp)
 {
 #ifdef INT128_SIZE
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDD?XXXV?TTTPAF";

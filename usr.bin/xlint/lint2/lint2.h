@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.28 2025/02/27 06:48:29 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.29 2025/05/16 20:39:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,21 +34,18 @@
 
 #include "lint.h"
 
-/*
- * Types are described by structures of type type_t.
- */
 struct lint2_type {
 	tspec_t	t_tspec;	/* type specifier */
-	bool	t_const:1;	/* constant */
-	bool	t_volatile:1;	/* volatile */
+	bool	t_const:1;
+	bool	t_volatile:1;
 	bool	t_vararg:1;	/* function has variable number of arguments */
 	bool	t_is_enum:1;
-	bool	t_proto:1;	/* this is a prototype */
+	bool	t_proto:1;	/* function is a prototype */
 	bool	t_istag:1;	/* tag with _t_tag valid */
 	bool	t_istynam:1;	/* tag with _t_tynam valid */
 	bool	t_isuniqpos:1;	/* tag with _t_uniqpos valid */
 	union {
-		int	_t_dim;		/* if the type is an ARRAY than this
+		int	_t_dim;		/* if the type is an ARRAY, this
 					 * is the dimension of the array. */
 		struct hte *_t_tag;	/* hash table entry of tag if
 					 * t_is_enum, STRUCT or UNION */

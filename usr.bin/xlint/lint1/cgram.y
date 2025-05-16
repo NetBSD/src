@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.531 2025/05/16 17:29:30 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.532 2025/05/16 20:39:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.531 2025/05/16 17:29:30 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.532 2025/05/16 20:39:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -320,10 +320,10 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 %token			T_IF
 %token			T_PACKED
 %token			T_RETURN
+%token			T_STATIC_ASSERT
 %token			T_SWITCH
 %token			T_SYMBOLRENAME
 %token			T_WHILE
-%token			T_STATIC_ASSERT
 
 %token			T_ATTRIBUTE
 

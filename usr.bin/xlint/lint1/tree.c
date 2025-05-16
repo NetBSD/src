@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.683 2025/05/04 08:37:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.684 2025/05/16 20:39:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.683 2025/05/04 08:37:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.684 2025/05/16 20:39:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -831,7 +831,7 @@ build_generic_selection(const tnode_t *expr,
 		    types_compatible(sel->ga_arg, expr->tn_type,
 			false, false, NULL))
 			return sel->ga_result;
-		else if (sel->ga_arg == NULL)
+		if (sel->ga_arg == NULL)
 			default_result = sel->ga_result;
 	}
 	return default_result;
@@ -4178,10 +4178,8 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 		convert_constant_check_range_bitand(
 		    nbitsz, obitsz, xmask, nv, ot, v, tp, op);
 	} else if (nt != PTR && is_uinteger(nt) &&
-	    ot != PTR && !is_uinteger(ot) &&
-	    v->u.integer < 0)
-		convert_constant_check_range_signed(op, arg,
-		    tp, v->u.integer);
+	    ot != PTR && !is_uinteger(ot) && v->u.integer < 0)
+		convert_constant_check_range_signed(op, arg, tp, v->u.integer);
 	else if (nv->u.integer != v->u.integer && nbitsz <= obitsz &&
 	    (v->u.integer & xmask) != 0 &&
 	    (is_uinteger(ot) || (v->u.integer & xmsk1) != xmsk1))
@@ -4669,11 +4667,11 @@ integer_constant(tnode_t *tn, bool required)
  * and functions called by build_binary(). These tests must be done here
  * because we need some information about the context in which the operations
  * are performed.
- * After all tests are performed and dofreeblk is true, expr() frees the
- * memory which is used for the expression.
+ * After all tests are performed, if free_expr is true, expr() frees the
+ * memory for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while,
+expr(tnode_t *tn, bool used, bool cond, bool free_expr, bool is_do_while,
     const char *stmt_kind)
 {
 
@@ -4686,7 +4684,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while,
 	if (dcs->d_kind != DLK_EXTERN && !is_do_while)
 		check_statement_reachable(stmt_kind);
 
-	check_expr_misc(tn, vctx, cond, !cond, false, false, false);
+	check_expr_misc(tn, used, cond, !cond, false, false, false);
 	if (tn->tn_op == ASSIGN && !tn->tn_parenthesized) {
 		if (hflag && cond)
 			/* assignment in conditional context */
@@ -4696,12 +4694,12 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while,
 		/*
 		 * for left operands of COMMA this warning is already printed
 		 */
-		if (tn->tn_op != COMMA && !vctx && !cond)
+		if (tn->tn_op != COMMA && !used && !cond)
 			check_null_effect(tn);
 	}
 	debug_node(tn);
 
-	if (dofreeblk)
+	if (free_expr)
 		expr_free_all();
 }
 
@@ -4962,7 +4960,7 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 	case MINUS:
 		if (tn->u.ops.right->tn_op == CVT)
 			return constant_addr(tn->u.ops.right, symp, offsp);
-		else if (tn->u.ops.right->tn_op != CON)
+		if (tn->u.ops.right->tn_op != CON)
 			return false;
 		/* FALLTHROUGH */
 	case PLUS:
@@ -4988,16 +4986,10 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 			*symp = tn->u.ops.left->u.sym;
 			*offsp = 0;
 			return true;
-		} else {
-			/*
-			 * If this were the front end of a compiler, we would
-			 * return a label instead of 0, at least if
-			 * 'tn->u.ops.left->tn_op == STRING'.
-			 */
-			*symp = NULL;
-			*offsp = 0;
-			return true;
 		}
+		*symp = NULL;
+		*offsp = 0;
+		return true;
 	case CVT:
 		t = tn->tn_type->t_tspec;
 		ot = tn->u.ops.left->tn_type->t_tspec;
