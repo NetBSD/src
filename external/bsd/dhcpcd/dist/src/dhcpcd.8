@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 17, 2024
+.Dd May 8, 2025
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -269,8 +269,7 @@ instead of the default
 .Pa /libexec/dhcpcd-run-hooks .
 .It Fl D , Fl Fl duid Op Ar ll | lt | uuid | value
 Use a DHCP Unique Identifier.
-If a system UUID is available, that will be used to create a DUID-UUID,
-otherwise if persistent storage is available then a DUID-LLT
+If persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 The DUID type can be hinted as an optional parameter if the file
@@ -523,18 +522,19 @@ option instead.
 Timeout after
 .Ar seconds ,
 instead of the default 30.
+On timeout,
+.Nm
+will exit if the
+.Fl 1 ,
+.Fl Fl oneshot
+option has been given,
+otherwise it will fork into the background and keep on
+trying.
 A setting of 0
 .Ar seconds
 causes
 .Nm
 to wait forever to get a lease.
-If
-.Nm
-is working on a single interface then
-.Nm
-will exit when a timeout occurs, otherwise
-.Nm
-will fork into the background.
 .It Fl u , Fl Fl userclass Ar class
 Tags the DHCPv4 message with the userclass
 .Ar class .

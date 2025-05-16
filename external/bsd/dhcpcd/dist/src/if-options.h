@@ -63,7 +63,7 @@
 #define DHCPCD_RTBUILD			(1ULL << 2)
 #define DHCPCD_GATEWAY			(1ULL << 3)
 #define DHCPCD_STATIC			(1ULL << 4)
-//#define DHCPCD_DEBUG			(1ULL << 5)
+// unused				(1ULL << 5)
 #define DHCPCD_ARP_PERSISTDEFENCE	(1ULL << 6)
 #define DHCPCD_LASTLEASE		(1ULL << 7)
 #define DHCPCD_INFORM			(1ULL << 8)
@@ -81,7 +81,7 @@
 #define DHCPCD_ANONYMOUS		(1ULL << 21)
 #define DHCPCD_BACKGROUND		(1ULL << 22)
 #define DHCPCD_VENDORRAW		(1ULL << 23)
-#define DHCPCD_NOWAITIP			(1ULL << 24) /* To force daemonise */
+// unused				(1ULL << 24)
 #define DHCPCD_WAITIP			(1ULL << 25)
 #define DHCPCD_SLAACPRIVATE		(1ULL << 26)
 #define DHCPCD_CSR_WARNED		(1ULL << 27)
