@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.529 2025/05/15 23:16:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.530 2025/05/16 17:08:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.529 2025/05/15 23:16:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.530 2025/05/16 17:08:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -194,9 +194,13 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 } <y_val>
 %printer { fprintf(yyo, "'%s'", $$ != NULL ? $$->sb_name : "<null>"); } <y_name>
 %printer {
-	bool indented = debug_push_indented(true);
-	debug_sym("", $$, "");
-	debug_pop_indented(indented);
+	if ($$ == NULL)
+		fprintf(yyo, "<null_symbol>");
+	else {
+		bool indented = debug_push_indented(true);
+		debug_sym("", $$, "");
+		debug_pop_indented(indented);
+	}
 } <y_sym>
 %printer { fprintf(yyo, "%s", $$ ? "++" : "--"); } <y_inc>
 %printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
@@ -2521,8 +2525,7 @@ gcc_attribute_specifier_list_opt:
 gcc_attribute_specifier_list:
 	gcc_attribute_specifier
 |	gcc_attribute_specifier_list gcc_attribute_specifier {
-		$$ = (type_attributes){ .used = $1.used || $2.used };
-		/* TODO: merge_type_attributes($1, $2); */
+		$$ = merge_type_attributes($1, $2);
 	}
 ;
 
