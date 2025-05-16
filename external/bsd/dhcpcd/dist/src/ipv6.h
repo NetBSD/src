@@ -170,6 +170,7 @@ struct ipv6_addr {
 	struct timespec created;
 	struct timespec acquired;
 	struct in6_addr addr;
+	struct in6_addr dstaddr;
 	int addr_flags;
 	unsigned int flags;
 	char saddr[INET6_ADDRSTRLEN];
@@ -261,7 +262,8 @@ void ipv6_deleteaddr(struct ipv6_addr *);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int, unsigned int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
-    const char *, const struct in6_addr *, uint8_t, int, pid_t);
+    const char *, const struct in6_addr *, uint8_t,
+    const struct in6_addr *, int, pid_t);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *, const struct ipv6_addr *,
     pid_t);
 struct ipv6_addr *ipv6_iffindaddr(struct interface *,
@@ -273,6 +275,8 @@ int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, unsigned int);
 struct ipv6_addr *ipv6_findmaskaddr(struct dhcpcd_ctx *,
+    const struct in6_addr *);
+struct ipv6_addr *ipv6_finddstaddr(struct dhcpcd_ctx *,
     const struct in6_addr *);
 #define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL, IN6_IFF_NOTUSEABLE)
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);

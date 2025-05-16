@@ -59,16 +59,14 @@
 #  define HAVE_ROUTE_METRIC 1
 # endif
 #endif
-#ifndef HAVE_ROUTE_LIFETIME
-# if defined(__linux__)
-#  define HAVE_ROUTE_LIFETIME 1 /* For IPv6 routes only */
-# endif
-#endif
 
 #ifdef __linux__
 # include <linux/version.h> /* RTA_PREF is only an enum.... */
 # if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #  define HAVE_ROUTE_PREF
+# endif
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+#  define HAVE_ROUTE_LIFETIME /* For IPv6 routes only */
 # endif
 #endif
 

@@ -279,7 +279,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		if (efprintf(fp, "PATH=%s",
 		    path == NULL ? DEFAULT_PATH : path) == -1)
 			goto eexit;
-		if (efprintf(fp, "pid=%d", getpid()) == -1)
+		if (efprintf(fp, "pid=%d", (int)getpid()) == -1)
 			goto eexit;
 	}
 

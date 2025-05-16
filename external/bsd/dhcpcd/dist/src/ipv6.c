@@ -597,7 +597,7 @@ ipv6_checkaddrflags(void *arg)
 		/* Simulate the kernel announcing the new address. */
 		ipv6_handleifa(ia->iface->ctx, RTM_NEWADDR,
 		    ia->iface->ctx->ifaces, ia->iface->name,
-		    &ia->addr, ia->prefix_len, flags, 0);
+		    &ia->addr, ia->prefix_len, &ia->dstaddr, flags, 0);
 	} else {
 		/* Still tentative? Check again in a bit. */
 		eloop_timeout_add_msec(ia->iface->ctx->eloop,
@@ -1108,7 +1108,8 @@ ipv6_anyglobal(struct interface *sifp)
 void
 ipv6_handleifa(struct dhcpcd_ctx *ctx,
     int cmd, struct if_head *ifs, const char *ifname,
-    const struct in6_addr *addr, uint8_t prefix_len, int addrflags, pid_t pid)
+    const struct in6_addr *addr, uint8_t prefix_len,
+    const struct in6_addr *dstaddr, int addrflags, pid_t pid)
 {
 	struct interface *ifp;
 	struct ipv6_state *state;
@@ -1132,13 +1133,15 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 #endif
 
 #if 0
-	char dbuf[INET6_ADDRSTRLEN];
-	const char *dbp;
+	char abuf[INET6_ADDRSTRLEN], dbuf[INET6_ADDRSTRLEN];
+	const char *abp, *dbp;
 
-	dbp = inet_ntop(AF_INET6, &addr->s6_addr,
-	    dbuf, INET6_ADDRSTRLEN);
-	loginfox("%s: cmd %d addr %s addrflags %d",
-	    ifname, cmd, dbp, addrflags);
+	abp = inet_ntop(AF_INET6, &addr->s6_addr, abuf, sizeof(abuf));
+	dbp = dstaddr ?
+	    inet_ntop(AF_INET6, &dstaddr->s6_addr, dbuf, sizeof(dbuf))
+	    : "::";
+	loginfox("%s: cmd %d addr %s dstaddr %s addrflags %d",
+	    ifname, cmd, abp, dbp, addrflags);
 #endif
 
 	if (ifs == NULL)
@@ -1199,6 +1202,7 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 			ia->addr_flags = addrflags;
 			TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 		}
+		ia->dstaddr = dstaddr ? *dstaddr : in6addr_any;
 		ia->flags &= ~IPV6_AF_STALE;
 #ifdef IPV6_MANAGETEMPADDR
 		if (ia->addr_flags & IN6_IFF_TEMPORARY)
@@ -1332,6 +1336,37 @@ ipv6_findmaskaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr)
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		ap = ipv6_iffindmaskaddr(ifp, addr);
+		if (ap != NULL)
+			return ap;
+	}
+	return NULL;
+}
+
+
+static struct ipv6_addr *
+ipv6_iffinddstaddr(const struct interface *ifp, const struct in6_addr *addr)
+{
+	struct ipv6_state *state;
+	struct ipv6_addr *ap;
+
+	state = IPV6_STATE(ifp);
+	if (state) {
+		TAILQ_FOREACH(ap, &state->addrs, next) {
+			if (IN6_ARE_ADDR_EQUAL(&ap->dstaddr, addr))
+				return ap;
+		}
+	}
+	return NULL;
+}
+
+struct ipv6_addr *
+ipv6_finddstaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr)
+{
+	struct interface *ifp;
+	struct ipv6_addr *ap;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		ap = ipv6_iffinddstaddr(ifp, addr);
 		if (ap != NULL)
 			return ap;
 	}
@@ -1849,7 +1884,7 @@ ipv6_handleifa_addrs(int cmd,
 
 		if (cmd == RTM_DELADDR && ia->flags & IPV6_AF_ADDED)
 			logwarnx("%s: pid %d deleted address %s",
-			    ia->iface->name, pid, ia->saddr);
+			    ia->iface->name, (int)pid, ia->saddr);
 
 		/* Check DAD.
 		 * On Linux we can get IN6_IFF_DUPLICATED via RTM_DELADDR. */
@@ -2145,7 +2180,8 @@ ipv6_deletestaleaddrs(struct interface *ifp)
 		if (ia->flags & IPV6_AF_STALE)
 			ipv6_handleifa(ifp->ctx, RTM_DELADDR,
 			    ifp->ctx->ifaces, ifp->name,
-			    &ia->addr, ia->prefix_len, 0, getpid());
+			    &ia->addr, ia->prefix_len,
+			    &ia->dstaddr, 0, getpid());
 	}
 }
 
