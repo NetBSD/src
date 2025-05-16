@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.93.4.4 2023/10/21 12:59:25 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.93.4.5 2025/05/16 05:16:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.4 2023/10/21 12:59:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93.4.5 2025/05/16 05:16:41 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,7 +228,7 @@ const struct {
 
 /* arch/xen does not support MSI/MSI-X yet. */
 #ifdef __HAVE_PCI_MSI_MSIX
-#define PCI_QUIRK_DISABLE_MSI	1 /* Neigher MSI nor MSI-X work */
+#define PCI_QUIRK_DISABLE_MSI	1 /* Neither MSI nor MSI-X work */
 #define PCI_QUIRK_DISABLE_MSIX	2 /* MSI-X does not work */
 #define PCI_QUIRK_ENABLE_MSI_VM	3 /* Older chipset in VM where MSI and MSI-X works */
 
@@ -483,7 +483,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	pci_chipset_tag_t pc = pba->pba_pc;
 	pcitag_t tag;
 	pcireg_t id, class;
-	int i;
+	int device, function;
 	bool havehb = false;
 #endif
 
@@ -502,24 +502,28 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
 	 * In order to decide whether the system supports MSI we look
-	 * at the host bridge, which should be device 0 on bus 0.
+	 * at the host bridge, which should be on bus 0. 
 	 * It is better to not enable MSI on systems that
 	 * support it than the other way around, so be conservative
 	 * here.  So we don't enable MSI if we don't find a host
 	 * bridge there.  We also deliberately don't enable MSI on
-	 * chipsets from low-end manifacturers like VIA and SiS.
+	 * chipsets from low-end manufacturers like VIA and SiS.
 	 */
-	for (i = 0; i <= 7; i++) {
-		tag = pci_make_tag(pc, 0, 0, i);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	for (device = 0; device < pci_bus_maxdevs(pc, 0); device++) {
+		for (function = 0; function <= 7; function++) {
+			tag = pci_make_tag(pc, 0, device, function);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
-		if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
-		    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
-			havehb = true;
-			break;
+			if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+			    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
+				havehb = true;
+				goto donehb;
+			}
 		}
 	}
+donehb:
+
 	if (havehb == false)
 		return;
 
