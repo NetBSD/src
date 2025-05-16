@@ -182,18 +182,6 @@ if_setflag(struct interface *ifp, short setflag, short unsetflag)
 	return 0;
 }
 
-unsigned int
-if_mtu(struct interface *ifp)
-{
-	struct ifreq ifr = { .ifr_mtu = 0 };
-
-	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	if (if_ioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr)) == -1)
-		return 0;
-
-	return (unsigned int)ifr.ifr_mtu;
-}
-
 bool
 if_is_link_up(const struct interface *ifp)
 {
@@ -281,7 +269,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 	const struct sockaddr_in *addr, *net, *brd;
 #endif
 #ifdef INET6
-	struct sockaddr_in6 *sin6, *net6;
+	struct sockaddr_in6 *addr6, *net6, *dstaddr6;
 #endif
 	int addrflags;
 
@@ -325,24 +313,25 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 #ifdef INET6
 		case AF_INET6:
-			sin6 = (void *)ifa->ifa_addr;
+			addr6 = (void *)ifa->ifa_addr;
+			dstaddr6 = (void *)ifa->ifa_dstaddr;
 			net6 = (void *)ifa->ifa_netmask;
 
 #ifdef __KAME__
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			if (IN6_IS_ADDR_LINKLOCAL(&addr6->sin6_addr))
 				/* Remove the scope from the address */
-				sin6->sin6_addr.s6_addr[2] =
-				    sin6->sin6_addr.s6_addr[3] = '\0';
+				addr6->sin6_addr.s6_addr[2] =
+				    addr6->sin6_addr.s6_addr[3] = '\0';
 #endif
 #ifndef HAVE_IFADDRS_ADDRFLAGS
-			addrflags = if_addrflags6(ifp, &sin6->sin6_addr,
+			addrflags = if_addrflags6(ifp, &addr6->sin6_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
 				if (errno != EEXIST && errno != EADDRNOTAVAIL) {
 					char dbuf[INET6_ADDRSTRLEN];
 					const char *dbp;
 
-					dbp = inet_ntop(AF_INET6, &sin6->sin6_addr,
+					dbp = inet_ntop(AF_INET6, &addr6->sin6_addr,
 					    dbuf, sizeof(dbuf));
 					logerr("%s: if_addrflags6: %s%%%s",
 					    __func__, dbp, ifp->name);
@@ -351,8 +340,10 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			}
 #endif
 			ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
-			    ifa->ifa_name, &sin6->sin6_addr,
-			    ipv6_prefixlen(&net6->sin6_addr), addrflags, 0);
+			    ifa->ifa_name, &addr6->sin6_addr,
+			    ipv6_prefixlen(&net6->sin6_addr),
+			    dstaddr6 ? &dstaddr6->sin6_addr : NULL,
+			    addrflags, 0);
 			break;
 #endif
 		}
@@ -697,7 +688,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			}
 		}
 
-		ifp->mtu = if_mtu(ifp);
+		ifp->mtu = if_getmtu(ifp);
 		ifp->vlanid = if_vlanid(ifp);
 
 #ifdef SIOCGIFPRIORITY

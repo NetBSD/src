@@ -29,7 +29,7 @@
 #define DEFS_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"10.2.2"
+#define VERSION			"10.2.3"
 
 #ifndef PRIVSEP_USER
 # define PRIVSEP_USER		"_" PACKAGE

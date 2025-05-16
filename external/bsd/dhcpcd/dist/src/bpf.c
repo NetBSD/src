@@ -170,6 +170,7 @@ bpf_open(const struct interface *ifp,
 	if (bpf == NULL)
 		return NULL;
 	bpf->bpf_ifp = ifp;
+	bpf->bpf_flags = BPF_EOF;
 
 	/* /dev/bpf is a cloner on modern kernels */
 	bpf->bpf_fd = open("/dev/bpf", BPF_OPEN_FLAGS);
@@ -218,10 +219,12 @@ bpf_open(const struct interface *ifp,
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl(bpf->bpf_fd, BIOCGBLEN, &ibuf_len) == -1)
 		goto eexit;
+
 	bpf->bpf_size = (size_t)ibuf_len;
 	bpf->bpf_buffer = malloc(bpf->bpf_size);
 	if (bpf->bpf_buffer == NULL)
 		goto eexit;
+
 	return bpf;
 
 eexit:

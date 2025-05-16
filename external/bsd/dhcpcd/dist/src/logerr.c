@@ -163,7 +163,7 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 			pid = getpid();
 		else
 			pid = ctx->log_pid;
-		if ((e = fprintf(stream, "[%d]", pid)) == -1)
+		if ((e = fprintf(stream, "[%d]", (int)pid)) == -1)
 			return -1;
 		len += e;
 	}

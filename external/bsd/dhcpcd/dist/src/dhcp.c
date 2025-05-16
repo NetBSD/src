@@ -2236,12 +2236,18 @@ dhcp_arp_defend_failed(struct arp_state *astate)
 {
 	struct interface *ifp = astate->iface;
 	struct dhcp_state *state = D_STATE(ifp);
+	unsigned int delay;
 
 	if (!(ifp->options->options & (DHCPCD_INFORM | DHCPCD_STATIC)))
 		dhcp_decline(ifp);
 	dhcp_drop(ifp, "EXPIRED");
 	dhcp_unlink(ifp->ctx, state->leasefile);
-	dhcp_start1(ifp);
+
+	// Delay restarting to give time for the BPF ARP process to exit
+	// as we may spawn a new one with a different filter fairly quickly
+	delay = MSEC_PER_SEC +
+		(arc4random_uniform(MSEC_PER_SEC * 2) - MSEC_PER_SEC);
+	eloop_timeout_add_msec(ifp->ctx->eloop, delay, dhcp_start1, ifp);
 }
 #endif
 
@@ -2378,8 +2384,8 @@ dhcp_bound(struct interface *ifp, uint8_t old_state)
 	if (ctx->options & DHCPCD_MANAGER ||
 	    ifp->options->options & DHCPCD_STATIC ||
 	    (state->old != NULL &&
-		state->old->yiaddr == state->new->yiaddr) ||
-	    (old_state & STATE_ADDED && !(old_state & STATE_FAKE)))
+	     state->old->yiaddr == state->new->yiaddr &&
+	     old_state & STATE_ADDED && !(old_state & STATE_FAKE)))
 		return;
 
 	dhcp_closeinet(ifp);
@@ -4329,7 +4335,7 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	if (cmd == RTM_DELADDR) {
 		if (state->addr == ia) {
 			loginfox("%s: pid %d deleted IP address %s",
-			    ifp->name, pid, ia->saddr);
+			    ifp->name, (int)pid, ia->saddr);
 			dhcp_close(ifp);
 			state->addr = NULL;
 			/* Don't clear the added state as we need
