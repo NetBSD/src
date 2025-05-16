@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3166 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3167 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -750,3 +750,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	mdocml: Import 1.14.6. [wiz 20250509]
 	openresolv: Patch to version 3.16.3 [roy 20250509]
 	pkg_install: Import pkg_install-20250417. [wiz 20250509]
+	dhcpcd: Import version 10.2.3. [roy 20250516]
