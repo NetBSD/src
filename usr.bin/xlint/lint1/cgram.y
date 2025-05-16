@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.530 2025/05/16 17:08:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.531 2025/05/16 17:29:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.530 2025/05/16 17:08:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.531 2025/05/16 17:29:30 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -380,7 +380,6 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 /* No type for declmod. */
 %type	<y_type_attributes> type_attribute_list_opt
 %type	<y_type_attributes> type_attribute_list
-%type	<y_type_attributes> type_attribute_opt
 %type	<y_type_attributes> type_attribute
 /* No type for begin_type. */
 /* No type for end_type. */
@@ -1055,13 +1054,6 @@ type_attribute_list:
 	}
 ;
 
-type_attribute_opt:
-	/* empty */ {
-		$$ = no_type_attributes();
-	}
-|	type_attribute
-;
-
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
 |	T_ALIGNAS T_LPAREN type_type_specifier T_RPAREN {		/* C11 6.7.5 */
@@ -1266,7 +1258,7 @@ member_declaration:
 		set_sym_kind(SK_VCFT);
 		$$ = $4;
 	}
-|	begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
+|	begin_type_qualifier_list end_type type_attribute_list_opt T_SEMI {
 		/* syntax error '%s' */
 		error(249, "member without type");
 		$$ = NULL;
