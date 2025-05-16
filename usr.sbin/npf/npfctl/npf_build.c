@@ -819,6 +819,9 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 		attr |= npf_rule_layer_compat(cg, fopts->layer);
 	}
 
+	if (attr & NPF_RULE_LAYER_2 && attr & (NPF_RULE_RETRST | NPF_RULE_RETICMP))
+		yyerror("return blocks not yet supported in layer 2");
+
 	rl = npf_rule_create(NULL, attr, ifname);
 	if (pcap_filter) {
 		npfctl_build_pcap(rl, pcap_filter);

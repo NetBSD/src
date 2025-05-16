@@ -503,7 +503,7 @@ fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
 		ctx->eth_type = type;
 
 		if (type) { /* bookmark ether type */
-			uint32_t mwords[] = { BM_ETHER_TYPE, 1, type };
+			uint32_t mwords[] = { BM_ETHER_TYPE, 1, htons(type) };
 			add_bmarks(ctx, mwords, sizeof(mwords));
 		}
 		if (ingroup) {
@@ -516,7 +516,7 @@ fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
 }
 
 static void
-bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
+bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts, uint32_t layer)
 {
 	uint32_t bm = 0;
 
@@ -524,10 +524,10 @@ bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
 		const unsigned seen = ctx->invflags;
 
 		if ((opts & MATCH_SRC) != 0 && (seen & MATCH_SRC) == 0) {
-			bm = BM_SRC_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_SRC_NEG : BM_SRC_ENEG;
 		}
 		if ((opts & MATCH_DST) != 0 && (seen & MATCH_DST) == 0) {
-			bm = BM_DST_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_DST_NEG : BM_DST_ENEG;
 		}
 		ctx->invflags |= opts & (MATCH_SRC | MATCH_DST);
 	}
@@ -682,7 +682,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 		(opts & MATCH_SRC) ? BM_SRC_CIDR: BM_DST_CIDR, 6,
 		af, mask, awords[0], awords[1], awords[2], awords[3],
 	};
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
@@ -720,10 +720,10 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 
 	uint32_t mwords[] = {
 		(opts & MATCH_SRC) ? BM_SRC_ETHER: BM_DST_ETHER, 2,
-		mac_word, mac_hword
+		htonl(mac_word), htons(mac_hword)
 	};
 
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_2);
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
@@ -896,6 +896,6 @@ npfctl_bpf_table(npf_bpf_t *ctx, unsigned opts, unsigned tid)
 	add_insns(ctx, insns_table, __arraycount(insns_table));
 
 	uint32_t mwords[] = { src ? BM_SRC_TABLE: BM_DST_TABLE, 1, tid };
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
 	done_block(ctx, mwords, sizeof(mwords));
 }

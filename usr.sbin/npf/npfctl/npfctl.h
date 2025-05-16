@@ -199,7 +199,7 @@ enum {
 };
 
 enum { /* book marks for L2 */
-	BM_ETHER_TYPE, BM_SRC_ETHER, BM_DST_ETHER,
+	BM_ETHER_TYPE, BM_SRC_ETHER, BM_DST_ETHER, BM_SRC_ENEG, BM_DST_ENEG,
 
 	//BML2_COUNT // total number of l2 marks
 };
