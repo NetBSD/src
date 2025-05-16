@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.24 2025/05/15 18:18:16 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.25 2025/05/16 05:17:34 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -655,4 +655,9 @@ sys/arch/x86/x86/fpu.c				1.81,1.90 (partial, via patch)
 	x86: PR 57258, PR 58650: fix fpu_kern_enter/leave for machines
 	with big fpu state.
 	[riastradh, ticket #1119]
+
+sys/arch/x86/pci/pci_machdep.c			1.99 (patch)
+
+	x86 pci(4): fix MSI/MSI-X configuration on some machines.
+	[manu, ticket #1120]
 
