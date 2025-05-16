@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.59 2025/05/15 18:11:18 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.60 2025/05/16 07:25:36 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -871,4 +871,9 @@ sys/arch/x86/x86/identcpu.c			1.135 (via patch)
 
 	x86: PR 57661: limit extended CPU state save to supported features.
 	[riastradh, ticket #1954]
+
+sys/arch/x86/pci/pci_machdep.c			1.99 (patch)
+
+	x86 pci(4): fix MSI/MSI-X configuration on some machines.
+	[manu, ticket #1955]
 
