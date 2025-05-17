@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.39 2024/05/07 19:24:32 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.40 2025/05/17 17:27:20 tsutsui Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -46,6 +46,7 @@ CPPFLAGS+=		-DDOMAIN_KEYBOARD
 CPPFLAGS+=		-D_STANDALONE -DCOMPAT_NOLABEL -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
 CPPFLAGS+=		-DLIBSA_CREAD_NOCRC
+CPPFLAGS+=		-DBBC_SLOW_GETSECS
 
 # if sun bootparams is desired
 #CPPFLAGS+=     -DSUN_BOOTPARAMS

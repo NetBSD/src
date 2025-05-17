@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2025/05/17 17:27:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,10 @@
 #define BBC_READ_REG    0xc3
 #define NUM_BBC_REGS    12
 
+#ifdef BBC_SLOW_GETSECS
+#define NSKIP_READ_BBC	100
+#endif
+
 #define range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return false
 #define bbc_to_decimal(a,b)	(bbc_registers[a] * 10 + bbc_registers[b])
 
@@ -97,6 +101,9 @@ clock_to_gmt(satime_t *timbuf)
 	int i;
 	satime_t tmp;
 	int year, month, day, hour, min, sec;
+#ifdef BBC_SLOW_GETSECS
+	static satime_t tim_prev = 0;
+#endif
 
 	if (machineid == HP_425 && mmuid == MMUID_425_E) {
 		/* 425e uses mcclock on the frodo utility chip */
@@ -109,6 +116,28 @@ clock_to_gmt(satime_t *timbuf)
 		month = mc_read(MC_MONTH);
 		year  = mc_read(MC_YEAR) + 1900;
 	} else {
+#ifdef BBC_SLOW_GETSECS
+		/*
+		 * XXX:
+		 * The read_bbc() function against HIL seems extremely slow.
+		 * It was being called on every timeout check via getsecs()
+		 * so it significantly slowed down loading a kernel via NFS.
+		 * 
+		 * In most cases (e.g., in common/if_le.c and libsa/net.c),
+		 * timeout checks are performed using getsecs() in busy loops
+		 * without any actual waiting. In such cases, it's not
+		 * necessary to read the precise time from the RTC on
+		 * every call.
+		 */
+		static int nskip = NSKIP_READ_BBC;
+
+		if (tim_prev != 0 && nskip-- > 0) {
+			*timbuf = tim_prev;
+			return true;
+		}
+		nskip = NSKIP_READ_BBC;
+#endif
+
 		/* Use the traditional HIL bbc for all other models */
 		read_bbc();
 
@@ -149,6 +178,9 @@ clock_to_gmt(satime_t *timbuf)
 	tmp += (day - 1);
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 
+#ifdef BBC_SLOW_GETSECS
+	tim_prev = tmp;
+#endif
 	*timbuf = tmp;
 	return true;
 }
