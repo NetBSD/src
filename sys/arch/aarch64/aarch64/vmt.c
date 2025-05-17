@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: vmt.c,v 1.2 2025/05/17 19:00:56 andvar Exp $ */
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.

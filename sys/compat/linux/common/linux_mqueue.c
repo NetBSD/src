@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: linux_mqueue.c,v 1.2 2025/05/17 19:00:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mqueue.c,v 1.1 2024/07/01 01:35:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mqueue.c,v 1.2 2025/05/17 19:00:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>

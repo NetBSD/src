@@ -1,4 +1,4 @@
-/*	$NetBSD: signbitl_ieee754.c,v 1.2 2019/04/26 09:03:47 maya Exp $	*/
+/*	$NetBSD: signbitl_ieee754.c,v 1.3 2025/05/17 19:00:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: signbitl_ieee754.c,v 1.3 2025/05/17 19:00:56 andvar Exp $");
 #endif
 
 #include <machine/ieee.h>
