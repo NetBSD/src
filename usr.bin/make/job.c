@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.506 2025/05/10 13:47:53 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.507 2025/05/17 20:59:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.506 2025/05/10 13:47:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.507 2025/05/17 20:59:27 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -154,12 +154,6 @@ struct emul_pollfd {
 
 int emul_poll(struct pollfd *, int, int);
 #endif
-
-/*
- * The POLL_MSEC constant determines the maximum number of milliseconds spent
- * in poll before coming out to see if a child has finished.
- */
-#define POLL_MSEC	5000
 
 struct pollfd;
 
@@ -2150,7 +2144,7 @@ Job_CatchOutput(void)
 	do {
 		/* Maybe skip the job token pipe. */
 		nfds_t skip = wantToken ? 0 : 1;
-		nready = poll(fds + skip, fdsLen - skip, POLL_MSEC);
+		nready = poll(fds + skip, fdsLen - skip, -1);
 	} while (nready < 0 && errno == EINTR);
 
 	if (nready < 0)
@@ -2159,13 +2153,11 @@ Job_CatchOutput(void)
 	if (nready > 0 && childExitJob.inPollfd->revents & POLLIN) {
 		char token;
 		ssize_t count = read(childExitJob.inPipe, &token, 1);
-		if (count == 1) {
-			if (token == CEJ_RESUME_JOBS)
-				ContinueJobs();
-		} else if (count == 0)
-			Punt("unexpected eof on token pipe");
-		else
-			Punt("token pipe read: %s", strerror(errno));
+		if (count != 1)
+			Punt("childExitJob.read: %s",
+			    count == 0 ? "EOF" : strerror(errno));
+		if (token == CEJ_RESUME_JOBS)
+			ContinueJobs();
 		nready--;
 	}
 
