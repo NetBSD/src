@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.509 2025/05/18 06:24:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.510 2025/05/18 07:02:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.509 2025/05/18 06:24:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.510 2025/05/18 07:02:00 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1519,7 +1519,7 @@ JobExec(Job *job, char **argv)
 		if (dup2(fileno(job->cmdFILE), STDIN_FILENO) == -1)
 			execDie("dup2", "job->cmdFILE");
 		if (fcntl(STDIN_FILENO, F_SETFD, 0) == -1)
-			execDie("fcntl clear close-on-exec", "stdin");
+			execDie("clear close-on-exec", "stdin");
 		if (lseek(STDIN_FILENO, 0, SEEK_SET) == -1)
 			execDie("lseek to 0", "stdin");
 

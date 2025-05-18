@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.271 2025/05/18 06:24:27 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.272 2025/05/18 07:02:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.271 2025/05/18 06:24:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.272 2025/05/18 07:02:00 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned checked_seqno = 1;
@@ -1308,8 +1308,8 @@ AddWaitDependency(GNodeListNode *prevWaitNode, GNode *waitNode)
 
 	for (ln = prevWaitNode; ln->datum != waitNode; ln = ln->next) {
 		GNode *gn = ln->datum;
-		DEBUG3(MAKE, ".WAIT: add dependency %s%s -> %s\n",
-		    gn->name, gn->cohort_num, waitNode->name);
+		DEBUG3(MAKE, ".WAIT: add dependency \"%s: %s%s\"\n",
+		    waitNode->name, gn->name, gn->cohort_num);
 		Lst_Append(&waitNode->children, gn);
 		Lst_Append(&gn->parents, waitNode);
 		waitNode->unmade++;
