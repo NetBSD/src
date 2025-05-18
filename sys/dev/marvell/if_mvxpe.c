@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.41 2024/02/10 18:43:52 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.42 2025/05/18 21:42:08 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.41 2024/02/10 18:43:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.42 2025/05/18 21:42:08 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1837,7 +1837,7 @@ mvxpe_stop(struct ifnet *ifp, int disable)
 		reg = MVXPE_READ(sc, MVXPE_RQC);
 	} while (reg & MVXPE_RQC_EN_MASK);
 
-	/* Wait for all Tx activety to terminate. */
+	/* Wait for all Tx activity to terminate. */
 	reg  = MVXPE_READ(sc, MVXPE_PIE);
 	reg &= ~MVXPE_PIE_TXPKTINTRPTENB_MASK;
 	MVXPE_WRITE(sc, MVXPE_PIE, reg);
