@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-makeflags.mk,v 1.9 2025/05/18 21:46:23 sjg Exp $
+# $NetBSD: varname-dot-makeflags.mk,v 1.10 2025/05/18 22:51:02 rillig Exp $
 #
 # Tests for the special .MAKEFLAGS variable, which collects almost all
 # command line arguments and passes them on to any child processes via
@@ -23,6 +23,12 @@
 .info .MAKEFLAGS=<${.MAKEFLAGS}>
 # expect+1: .MAKEOVERRIDES=< VAR>
 .info .MAKEOVERRIDES=<${.MAKEOVERRIDES}>
+
+# The environment variable 'MAKEFLAGS' is available to child processes
+# while parsing the makefiles, just like the exported make variables.
+.if ${:!echo "\${MAKEFLAGS-undef}"!} != " -r -k -D VARNAME -r VAR=value"
+.  error
+.endif
 
 # After parsing, the environment variable 'MAKEFLAGS' is set based on the
 # special variables '.MAKEFLAGS' and '.MAKEOVERRIDES'.
