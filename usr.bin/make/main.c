@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.647 2025/05/11 20:17:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.648 2025/05/18 05:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.647 2025/05/11 20:17:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.648 2025/05/18 05:44:57 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -894,34 +894,20 @@ doPrintVars(void)
 static bool
 runTargets(void)
 {
-	GNodeList targs = LST_INIT;	/* target nodes to create */
+	GNodeList targs = LST_INIT;
 	bool outOfDate;		/* false if all targets up to date */
 
-	/*
-	 * Have now read the entire graph and need to make a list of
-	 * targets to create. If none was given on the command line,
-	 * we consult the parsing module to find the main target(s)
-	 * to create.
-	 */
 	if (Lst_IsEmpty(&opts.create))
 		Parse_MainName(&targs);
 	else
 		Targ_FindList(&targs, &opts.create);
 
 	if (!opts.compatMake) {
-		/*
-		 * Initialize job module before traversing the graph
-		 * now that any .BEGIN and .END targets have been read.
-		 * This is done only if the -q flag wasn't given
-		 * (to prevent the .BEGIN from being executed should
-		 * it exist).
-		 */
 		if (!opts.query) {
 			Job_Init();
 			jobsRunning = true;
 		}
 
-		/* Traverse the graph, checking on all the targets */
 		outOfDate = Make_Run(&targs);
 	} else {
 		Compat_MakeAll(&targs);
@@ -1547,15 +1533,13 @@ main_PrepareMaking(void)
 }
 
 /*
- * Make the targets.
- * If the -v or -V options are given, print variables instead.
+ * Make the targets, or print variables.
  * Return whether any of the targets is out-of-date.
  */
 static bool
 main_Run(void)
 {
 	if (opts.printVars != PVM_NONE) {
-		/* print the values of any variables requested by the user */
 		doPrintVars();
 		return false;
 	} else {

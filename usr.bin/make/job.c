@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.507 2025/05/17 20:59:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.508 2025/05/18 05:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -73,18 +73,14 @@
  * Create child processes and collect their output.
  *
  * Interface:
- *	Job_Init	Called to initialize this module. In addition,
- *			the .BEGIN target is made, including all of its
- *			dependencies before this function returns.
- *			Hence, the makefiles must have been parsed
- *			before this function is called.
+ *	Job_Init	Initialize this module and make the .BEGIN target.
  *
  *	Job_End		Clean up any memory used.
  *
- *	Job_Make	Start the creation of the given target.
+ *	Job_Make	Start making the given target.
  *
  *	Job_CatchChildren
- *			Check for and handle the termination of any children.
+ *			Handle the termination of any children.
  *
  *	Job_CatchOutput
  *			Print any output the child processes have produced.
@@ -93,16 +89,13 @@
  *			define the shell that is used for the creation
  *			commands in jobs mode.
  *
- *	Job_Finish	Make the .END target. Should only be called when the
+ *	Job_Finish	Make the .END target. Must only be called when the
  *			job table is empty.
  *
- *	Job_AbortAll	Abort all currently running jobs. Do not handle
- *			output or do anything for the jobs, just kill them.
- *			Should only be called in an emergency.
+ *	Job_AbortAll	Kill all currently running jobs, in an emergency.
  *
  *	Job_CheckCommands
- *			Verify that the commands for a target are
- *			ok. Provide them if necessary and possible.
+ *			Add fallback commands to a target, if necessary.
  *
  *	Job_Touch	Update a target without really updating it.
  *
@@ -131,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.507 2025/05/17 20:59:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.508 2025/05/18 05:44:57 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -505,6 +498,7 @@ static void watchfd(Job *);
 static void clearfd(Job *);
 
 static char *targPrefix = NULL;	/* To identify a job change in the output. */
+
 static Job tokenPoolJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
@@ -966,17 +960,13 @@ JobWriteSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
  * given to make, stick a shell-specific echoOff command in the script.
  *
  * If the command starts with '-' and the shell has no error control (none
- * of the predefined shells has that), ignore errors for the entire job.
+ * of the predefined shells has that), ignore errors for the rest of the job.
  *
- * XXX: Why ignore errors for the entire job?  This is even documented in the
- * manual page, but without any rationale since there is no known rationale.
+ * XXX: Why ignore errors for the entire job?  This is documented in the
+ * manual page, but without giving a rationale.
  *
- * XXX: The manual page says the '-' "affects the entire job", but that's not
- * accurate.  The '-' does not affect the commands before the '-'.
- *
- * If the command is just "...", skip all further commands of this job.  These
- * commands are attached to the .END node instead and will be run by
- * Job_Finish after all other targets have been made.
+ * If the command is just "...", attach all further commands of this job to
+ * the .END node instead, see Job_Finish.
  */
 static void
 JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
@@ -1227,17 +1217,8 @@ JobFinishDone(Job *job, int *inout_status)
 }
 
 /*
- * Do final processing for the given job including updating parent nodes and
- * starting new jobs as available/necessary.
- *
- * Deferred commands for the job are placed on the .END node.
- *
- * If there was a serious error (job_errors != 0; not an ignored one), no more
- * jobs will be started.
- *
- * Input:
- *	job		job to finish
- *	status		sub-why job went away
+ * Finish the job, add deferred commands to the .END node, mark the job as
+ * free, update parent nodes and start new jobs as available/necessary.
  */
 static void
 JobFinish(Job *job, int status)
@@ -1298,11 +1279,6 @@ JobFinish(Job *job, int status)
 
 	if (aborting != ABORT_ERROR && aborting != ABORT_INTERRUPT &&
 	    status == 0) {
-		/*
-		 * As long as we aren't aborting and the job didn't return a
-		 * non-zero status that we shouldn't ignore, we call
-		 * Make_Update to update the parents.
-		 */
 		JobSaveCommands(job);
 		job->node->made = MADE;
 		if (!job->special)
@@ -1540,12 +1516,6 @@ JobExec(Job *job, char **argv)
 		sigemptyset(&tmask);
 		JobsTable_Unlock(&tmask);
 
-		/*
-		 * Must duplicate the input stream down to the child's input
-		 * and reset it to the beginning (again). Since the stream
-		 * was marked close-on-exec, we must clear that bit in the
-		 * new input.
-		 */
 		if (dup2(fileno(job->cmdFILE), STDIN_FILENO) == -1)
 			execDie("dup2", "job->cmdFILE");
 		if (fcntl(STDIN_FILENO, F_SETFD, 0) == -1)
@@ -1563,10 +1533,6 @@ JobExec(Job *job, char **argv)
 				    "tokenPoolJob.outPipe");
 		}
 
-		/*
-		 * Set up the child's output to be routed through the pipe
-		 * we've created for it.
-		 */
 		if (dup2(job->outPipe, STDOUT_FILENO) == -1)
 			execDie("dup2", "job->outPipe");
 
@@ -1610,10 +1576,6 @@ JobExec(Job *job, char **argv)
 		meta_job_parent(job, cpid);
 #endif
 
-	/*
-	 * Set the current position in the buffer to the beginning
-	 * and mark another stream to watch in the outputs mask
-	 */
 	job->curPos = 0;
 
 	watchfd(job);
@@ -1625,7 +1587,6 @@ JobExec(Job *job, char **argv)
 		job->cmdFILE = NULL;
 	}
 
-	/* Now that the job is actually running, add it to the table. */
 	if (DEBUG(JOB)) {
 		debug_printf(
 		    "JobExec: target %s, pid %d added to jobs table\n",
@@ -1713,8 +1674,8 @@ JobWriteShellCommands(Job *job, GNode *gn, bool *out_run)
 void
 Job_Make(GNode *gn)
 {
-	Job *job;		/* new job descriptor */
-	char *argv[10];		/* Argument vector to shell */
+	Job *job;
+	char *argv[10];
 	bool cmdsOK;		/* true if the nodes commands were all right */
 	bool run;
 
@@ -1746,31 +1707,16 @@ Job_Make(GNode *gn)
 		job->cmdFILE = stdout;
 		run = false;
 
-		/*
-		 * We're serious here, but if the commands were bogus, we're
-		 * also dead...
-		 */
 		if (!cmdsOK) {
-			PrintOnError(gn, "\n");	/* provide some clue */
+			PrintOnError(gn, "\n");
 			DieHorribly();
 		}
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touch)) {
-		/*
-		 * The above condition looks very similar to
-		 * GNode_ShouldExecute but is subtly different.  It prevents
-		 * that .MAKE targets are touched since these are usually
-		 * virtual targets.
-		 */
-
 		int parseErrorsBefore;
 
-		/*
-		 * We're serious here, but if the commands were bogus, we're
-		 * also dead...
-		 */
 		if (!cmdsOK) {
-			PrintOnError(gn, "\n");	/* provide some clue */
+			PrintOnError(gn, "\n");
 			DieHorribly();
 		}
 
@@ -1780,10 +1726,6 @@ Job_Make(GNode *gn)
 			run = false;
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
-		/*
-		 * Just write all the commands to stdout in one fell swoop.
-		 * This still sets up job->tailCmds correctly.
-		 */
 		SwitchOutputTo(gn);
 		job->cmdFILE = stdout;
 		if (cmdsOK)
@@ -1795,20 +1737,15 @@ Job_Make(GNode *gn)
 		run = false;
 	}
 
-	/* If we're not supposed to execute a shell, don't. */
 	if (!run) {
 		if (!job->special)
 			TokenPool_Return();
-		/* Unlink and close the command file if we opened one */
+
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 			(void)fclose(job->cmdFILE);
 			job->cmdFILE = NULL;
 		}
 
-		/*
-		 * We only want to work our way up the graph if we aren't
-		 * here because the commands for the job were no good.
-		 */
 		if (cmdsOK && aborting == ABORT_NONE) {
 			JobSaveCommands(job);
 			job->node->made = MADE;
@@ -1818,15 +1755,8 @@ Job_Make(GNode *gn)
 		return;
 	}
 
-	/*
-	 * Set up the control arguments to the shell. This is based on the
-	 * flags set earlier for this job.
-	 */
 	JobMakeArgv(job, argv);
-
-	/* Create the pipe by which we'll get the shell's output. */
 	JobCreatePipe(job, 3);
-
 	JobExec(job, argv);
 }
 
@@ -1861,7 +1791,6 @@ PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
 			 * however, since the noPrint output comes after it,
 			 * there must be a newline, so we don't print one.
 			 */
-			/* XXX: What about null bytes in the output? */
 			(void)fprintf(stdout, "%s", p);
 			(void)fflush(stdout);
 		}
@@ -1875,19 +1804,13 @@ PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
 }
 
 /*
- * This function is called whenever there is something to read on the pipe.
- * We collect more output from the given job and store it in the job's
- * outBuf. If this makes up a line, we print it tagged by the job's
- * identifier, as necessary.
+ * Collect output from the job. Print any complete lines.
  *
  * In the output of the shell, the 'noPrint' lines are removed. If the
  * command is not alone on the line (the character after it is not \0 or
  * \n), we do print whatever follows it.
  *
- * Input:
- *	job		the job whose output needs printing
- *	finish		true if this is the last time we'll be called
- *			for this job
+ * If finish is true, collect all remaining output for the job.
  */
 static void
 CollectOutput(Job *job, bool finish)
@@ -1945,25 +1868,11 @@ again:
 	if (!gotNL) {
 		job->curPos += nr;
 		if (job->curPos == JOB_BUFSIZE) {
-			/*
-			 * If we've run out of buffer space, we have no choice
-			 * but to print the stuff. sigh.
-			 */
 			fbuf = true;
 			i = job->curPos;
 		}
 	}
 	if (gotNL || fbuf) {
-		/*
-		 * Need to send the output to the screen. Null terminate it
-		 * first, overwriting the newline character if there was one.
-		 * So long as the line isn't one we should filter (according
-		 * to the shell description), we print the line, preceded
-		 * by a target banner if this target isn't the same as the
-		 * one for which we last printed something.
-		 * The rest of the data in the buffer are then shifted down
-		 * to the start of the buffer and curPos is set accordingly.
-		 */
 		job->outBuf[i] = '\0';
 		if (i >= job->curPos) {
 			char *p;
@@ -1995,11 +1904,6 @@ again:
 				(void)fflush(stdout);
 			}
 		}
-		/*
-		 * max is the last offset still in the buffer. Move any
-		 * remaining characters to the start of the buffer and
-		 * update the end marker curPos.
-		 */
 		if (i < max) {
 			(void)memmove(job->outBuf, &job->outBuf[i + 1],
 			    max - (i + 1));
@@ -2010,14 +1914,6 @@ again:
 		}
 	}
 	if (finish) {
-		/*
-		 * If the finish flag is true, we must loop until we hit
-		 * end-of-file on the pipe. This is guaranteed to happen
-		 * eventually since the other end of the pipe is now closed
-		 * (we closed it explicitly and the child has exited). When
-		 * we do get an EOF, finish will be set false and we'll fall
-		 * through and out.
-		 */
 		goto again;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.269 2025/05/09 18:42:56 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.270 2025/05/18 05:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #endif
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.269 2025/05/09 18:42:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.270 2025/05/18 05:44:57 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned checked_seqno = 1;
@@ -1056,15 +1056,8 @@ MakeStartJobs(void)
 		gn->checked_seqno = checked_seqno;
 
 		if (gn->unmade != 0) {
-			/*
-			 * We can't build this yet, add all unmade children
-			 * to toBeMade, just before the current first element.
-			 */
 			gn->made = DEFERRED;
-
 			MakeChildren(gn);
-
-			/* and drop this node on the floor */
 			DEBUG2(MAKE, "dropped %s%s\n", gn->name,
 			    gn->cohort_num);
 			continue;
@@ -1239,12 +1232,7 @@ ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
 	}
 }
 
-/*
- * Expand .USE nodes and create a new targets list.
- *
- * Input:
- *	targs		the initial list of targets
- */
+/* Expand .USE nodes and create a new targets list. */
 void
 Make_ExpandUse(GNodeList *targs)
 {
@@ -1259,15 +1247,15 @@ Make_ExpandUse(GNodeList *targs)
 	 * children for it if it has none and also has no commands. If the
 	 * node is a leaf, we stick it on the toBeMade queue to be looked
 	 * at in a minute, otherwise we add its children to our queue and
-	 * go on about our business.
+	 * go on.
 	 */
 	while (!Lst_IsEmpty(&examine)) {
 		GNode *gn = Lst_Dequeue(&examine);
 
 		if (gn->flags.remake)
-			/* We've looked at this one already */
 			continue;
 		gn->flags.remake = true;
+
 		DEBUG2(MAKE, "Make_ExpandUse: examine %s%s\n",
 		    gn->name, gn->cohort_num);
 
@@ -1345,7 +1333,7 @@ Make_ProcessWait(GNodeList *targs)
 {
 	GNode *pgn;		/* 'parent' node we are examining */
 	GNodeListNode *owln;	/* Previous .WAIT node */
-	GNodeList examine;	/* List of targets to examine */
+	GNodeList examine;
 
 	/*
 	 * We need all the nodes to have a common parent in order for the
@@ -1409,28 +1397,13 @@ Make_ProcessWait(GNodeList *targs)
  * Initialize the nodes to remake and the list of nodes which are ready to
  * be made by doing a breadth-first traversal of the graph starting from the
  * nodes in the given list. Once this traversal is finished, all the 'leaves'
- * of the graph are in the toBeMade queue.
- *
- * Using this queue and the Job module, work back up the graph, calling on
- * MakeStartJobs to keep the job table as full as possible.
- *
- * Input:
- *	targs		the initial list of targets
- *
- * Results:
- *	True if work was done, false otherwise.
- *
- * Side Effects:
- *	The make field of all nodes involved in the creation of the given
- *	targets is set to 1. The toBeMade list is set to contain all the
- *	'leaves' of these subgraphs.
+ * of the graph are in the toBeMade queue. Return whether work was done.
  */
 bool
 Make_Run(GNodeList *targs)
 {
 	int errors;		/* Number of errors the Job module reports */
 
-	/* Start trying to make the current targets... */
 	Lst_Init(&toBeMade);
 
 	Make_ExpandUse(targs);
@@ -1442,33 +1415,10 @@ Make_Run(GNodeList *targs)
 	}
 
 	if (opts.query) {
-		/*
-		 * We wouldn't do any work unless we could start some jobs
-		 * in the next loop... (we won't actually start any, of
-		 * course, this is just to see if any of the targets was out
-		 * of date)
-		 */
 		return MakeStartJobs();
 	}
-	/*
-	 * Initialization. At the moment, no jobs are running and until some
-	 * get started, nothing will happen since the remaining upward
-	 * traversal of the graph is performed by the routines in job.c upon
-	 * the finishing of a job. So we fill the Job table as much as we can
-	 * before going into our loop.
-	 */
-	(void)MakeStartJobs();
 
-	/*
-	 * Main Loop: The idea here is that the ending of jobs will take
-	 * care of the maintenance of data structures and the waiting for
-	 * output will cause us to be idle most of the time while our
-	 * children run as much as possible. Because the job table is kept
-	 * as full as possible, the only time when it will be empty is when
-	 * all the jobs which need running have been run, so that is the end
-	 * condition of this loop. Note that the Job module will exit if
-	 * there were any errors unless the keepgoing flag was given.
-	 */
+	(void)MakeStartJobs();
 	while (!Lst_IsEmpty(&toBeMade) || jobTokensRunning > 0) {
 		Job_CatchOutput();
 		(void)MakeStartJobs();
@@ -1476,10 +1426,6 @@ Make_Run(GNodeList *targs)
 
 	errors = Job_Finish();
 
-	/*
-	 * Print the final status of each target. E.g. if it wasn't made
-	 * because some inferior reported an error.
-	 */
 	DEBUG1(MAKE, "done: errors %d\n", errors);
 	if (errors == 0) {
 		MakePrintStatusList(targs, &errors);
