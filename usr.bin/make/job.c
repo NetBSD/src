@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.508 2025/05/18 05:44:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.509 2025/05/18 06:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.508 2025/05/18 05:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.509 2025/05/18 06:24:27 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -215,7 +215,7 @@ struct Job {
 #define JOB_BUFSIZE	1024
 	/* Buffer for storing the output of the job, line by line. */
 	char outBuf[JOB_BUFSIZE + 1];
-	size_t curPos;		/* Current position in outBuf. */
+	size_t outBufLen;
 
 #ifdef USE_META
 	struct BuildMon bm;
@@ -1117,7 +1117,7 @@ JobSaveCommands(Job *job)
 }
 
 
-/* Called to close both input and output pipes when a job is finished. */
+/* Close both input and output pipes when a job is finished. */
 static void
 JobClosePipes(Job *job)
 {
@@ -1576,7 +1576,7 @@ JobExec(Job *job, char **argv)
 		meta_job_parent(job, cpid);
 #endif
 
-	job->curPos = 0;
+	job->outBufLen = 0;
 
 	watchfd(job);
 
@@ -1816,19 +1816,18 @@ static void
 CollectOutput(Job *job, bool finish)
 {
 	bool gotNL;		/* true if got a newline */
-	bool fbuf;		/* true if our buffer filled up */
+	bool bufferFull;
 	size_t nr;		/* number of bytes read */
 	size_t i;		/* auxiliary index into outBuf */
 	size_t max;		/* limit for i (end of current data) */
 	ssize_t nRead;		/* (Temporary) number of bytes read */
 
-	/* Read as many bytes as will fit in the buffer. */
 again:
 	gotNL = false;
-	fbuf = false;
+	bufferFull = false;
 
-	nRead = read(job->inPipe, &job->outBuf[job->curPos],
-	    JOB_BUFSIZE - job->curPos);
+	nRead = read(job->inPipe, job->outBuf + job->outBufLen,
+	    JOB_BUFSIZE - job->outBufLen);
 	if (nRead < 0) {
 		if (errno == EAGAIN)
 			return;
@@ -1846,19 +1845,19 @@ again:
 	 * remaining output, so pretend we read a newline if there's any
 	 * output remaining in the buffer.
 	 */
-	if (nr == 0 && job->curPos != 0) {
-		job->outBuf[job->curPos] = '\n';
+	if (nr == 0 && job->outBufLen != 0) {
+		job->outBuf[job->outBufLen] = '\n';
 		nr = 1;
 	}
 
-	max = job->curPos + nr;
-	for (i = job->curPos; i < max; i++)
+	max = job->outBufLen + nr;
+	for (i = job->outBufLen; i < max; i++)
 		if (job->outBuf[i] == '\0')
 			job->outBuf[i] = ' ';
 
 	/* Look for the last newline in the bytes we just got. */
-	for (i = job->curPos + nr - 1;
-	     i >= job->curPos && i != (size_t)-1; i--) {
+	for (i = job->outBufLen + nr - 1;
+	     i >= job->outBufLen && i != (size_t)-1; i--) {
 		if (job->outBuf[i] == '\n') {
 			gotNL = true;
 			break;
@@ -1866,15 +1865,15 @@ again:
 	}
 
 	if (!gotNL) {
-		job->curPos += nr;
-		if (job->curPos == JOB_BUFSIZE) {
-			fbuf = true;
-			i = job->curPos;
+		job->outBufLen += nr;
+		if (job->outBufLen == JOB_BUFSIZE) {
+			bufferFull = true;
+			i = job->outBufLen;
 		}
 	}
-	if (gotNL || fbuf) {
+	if (gotNL || bufferFull) {
 		job->outBuf[i] = '\0';
-		if (i >= job->curPos) {
+		if (i >= job->outBufLen) {
 			char *p;
 
 			/*
@@ -1907,24 +1906,23 @@ again:
 		if (i < max) {
 			(void)memmove(job->outBuf, &job->outBuf[i + 1],
 			    max - (i + 1));
-			job->curPos = max - (i + 1);
+			job->outBufLen = max - (i + 1);
 		} else {
 			assert(i == max);
-			job->curPos = 0;
+			job->outBufLen = 0;
 		}
 	}
-	if (finish) {
+	if (finish)
 		goto again;
-	}
 }
 
 static void
-JobRun(GNode *targ)
+JobRun(GNode *target)
 {
 	/* Don't let these special jobs overlap with other unrelated jobs. */
-	Compat_Make(targ, targ);
-	if (GNode_IsError(targ)) {
-		PrintOnError(targ, "\n\nStop.\n");
+	Compat_Make(target, target);
+	if (GNode_IsError(target)) {
+		PrintOnError(target, "\n\nStop.\n");
 		exit(1);
 	}
 }

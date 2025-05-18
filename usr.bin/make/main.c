@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.648 2025/05/18 05:44:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.649 2025/05/18 06:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.648 2025/05/18 05:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.649 2025/05/18 06:24:27 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -828,7 +828,7 @@ MakeMode(void)
 }
 
 static void
-PrintVar(const char *varname, bool expandVars)
+PrintVariable(const char *varname, bool expandVars)
 {
 	if (strchr(varname, '$') != NULL) {
 		char *evalue = Var_Subst(varname, SCOPE_GLOBAL, VARE_EVAL);
@@ -872,7 +872,7 @@ GetBooleanExpr(const char *expr, bool fallback)
 }
 
 static void
-doPrintVars(void)
+PrintVariables(void)
 {
 	StringListNode *ln;
 	bool expandVars;
@@ -885,22 +885,20 @@ doPrintVars(void)
 		expandVars = GetBooleanExpr("${.MAKE.EXPAND_VARIABLES}",
 		    false);
 
-	for (ln = opts.variables.first; ln != NULL; ln = ln->next) {
-		const char *varname = ln->datum;
-		PrintVar(varname, expandVars);
-	}
+	for (ln = opts.variables.first; ln != NULL; ln = ln->next)
+		PrintVariable(ln->datum, expandVars);
 }
 
 static bool
-runTargets(void)
+MakeTargets(void)
 {
-	GNodeList targs = LST_INIT;
+	GNodeList targets = LST_INIT;
 	bool outOfDate;		/* false if all targets up to date */
 
 	if (Lst_IsEmpty(&opts.create))
-		Parse_MainName(&targs);
+		Parse_MainName(&targets);
 	else
-		Targ_FindList(&targs, &opts.create);
+		Targ_FindList(&targets, &opts.create);
 
 	if (!opts.compatMake) {
 		if (!opts.query) {
@@ -908,12 +906,12 @@ runTargets(void)
 			jobsRunning = true;
 		}
 
-		outOfDate = Make_Run(&targs);
+		outOfDate = Make_MakeParallel(&targets);
 	} else {
-		Compat_MakeAll(&targs);
+		Compat_MakeAll(&targets);
 		outOfDate = false;
 	}
-	Lst_Done(&targs);	/* Don't free the targets themselves. */
+	Lst_Done(&targets);	/* Don't free the targets themselves. */
 	return outOfDate;
 }
 
@@ -1540,11 +1538,10 @@ static bool
 main_Run(void)
 {
 	if (opts.printVars != PVM_NONE) {
-		doPrintVars();
+		PrintVariables();
 		return false;
-	} else {
-		return runTargets();
-	}
+	} else
+		return MakeTargets();
 }
 
 /* Clean up after making the targets. */
@@ -1587,9 +1584,8 @@ main_CleanUp(void)
 #endif
 }
 
-/* Determine the exit code. */
 static int
-main_Exit(bool outOfDate)
+main_ExitCode(bool outOfDate)
 {
 	if ((opts.strict && main_errors > 0) || parseErrors > 0)
 		return 2;	/* Not 1 so -q can distinguish error */
@@ -1606,7 +1602,7 @@ main(int argc, char **argv)
 	main_PrepareMaking();
 	outOfDate = main_Run();
 	main_CleanUp();
-	return main_Exit(outOfDate);
+	return main_ExitCode(outOfDate);
 }
 
 /*

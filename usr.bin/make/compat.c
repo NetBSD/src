@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.265 2025/05/03 08:18:33 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.266 2025/05/18 06:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.265 2025/05/03 08:18:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.266 2025/05/18 06:24:27 rillig Exp $");
 
 static GNode *curTarg;
 static pid_t compatChild;
@@ -726,7 +726,7 @@ InitSignals(void)
 }
 
 void
-Compat_MakeAll(GNodeList *targs)
+Compat_MakeAll(GNodeList *targets)
 {
 	GNode *errorNode = NULL;
 
@@ -749,10 +749,10 @@ Compat_MakeAll(GNodeList *targs)
 	 * Expand .USE nodes right now, because they can modify the structure
 	 * of the tree.
 	 */
-	Make_ExpandUse(targs);
+	Make_ExpandUse(targets);
 
-	while (!Lst_IsEmpty(targs)) {
-		GNode *gn = Lst_Dequeue(targs);
+	while (!Lst_IsEmpty(targets)) {
+		GNode *gn = Lst_Dequeue(targets);
 		Compat_Make(gn, gn);
 
 		if (gn->made == UPTODATE) {
