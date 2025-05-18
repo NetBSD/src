@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.510 2025/05/18 07:02:00 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.511 2025/05/18 08:33:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.510 2025/05/18 07:02:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.511 2025/05/18 08:33:46 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1596,12 +1596,11 @@ JobExec(Job *job, char **argv)
 	JobsTable_Unlock(&mask);
 }
 
-/* Create the argv needed to execute the shell for a given job. */
 static void
-JobMakeArgv(Job *job, char **argv)
+BuildArgv(Job *job, char **argv)
 {
 	int argc;
-	static char args[10];	/* For merged arguments */
+	static char args[10];
 
 	argv[0] = UNCONST(shellName);
 	argc = 1;
@@ -1619,11 +1618,10 @@ JobMakeArgv(Job *job, char **argv)
 		 * practically relevant.
 		 */
 		(void)snprintf(args, sizeof args, "-%s%s",
-		    (job->ignerr ? "" :
-			(shell->errFlag != NULL ? shell->errFlag : "")),
-		    (!job->echo ? "" :
-			(shell->echoFlag != NULL ? shell->echoFlag : "")));
-
+		    !job->ignerr && shell->errFlag != NULL
+			? shell->errFlag : "",
+		    job->echo && shell->echoFlag != NULL
+			? shell->echoFlag : "");
 		if (args[1] != '\0') {
 			argv[argc] = args;
 			argc++;
@@ -1644,21 +1642,16 @@ JobMakeArgv(Job *job, char **argv)
 static void
 JobWriteShellCommands(Job *job, GNode *gn, bool *out_run)
 {
-	/*
-	 * tfile is the name of a file into which all shell commands
-	 * are put. It is removed before the child shell is executed,
-	 * unless DEBUG(SCRIPT) is set.
-	 */
-	char tfile[MAXPATHLEN];
-	int tfd;		/* File descriptor to the temp file */
+	char fname[MAXPATHLEN];
+	int fd;
 
-	tfd = Job_TempFile(NULL, tfile, sizeof tfile);
+	fd = Job_TempFile(NULL, fname, sizeof fname);
 
-	job->cmdFILE = fdopen(tfd, "w+");
+	job->cmdFILE = fdopen(fd, "w+");
 	if (job->cmdFILE == NULL)
-		Punt("Could not fdopen %s", tfile);
+		Punt("Could not fdopen %s", fname);
 
-	(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
+	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 
 #ifdef USE_META
 	if (useMeta) {
@@ -1755,7 +1748,7 @@ Job_Make(GNode *gn)
 		return;
 	}
 
-	JobMakeArgv(job, argv);
+	BuildArgv(job, argv);
 	JobCreatePipe(job, 3);
 	JobExec(job, argv);
 }
