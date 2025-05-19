@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.42 2025/05/18 21:42:08 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.43 2025/05/19 06:16:25 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.42 2025/05/18 21:42:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.43 2025/05/19 06:16:25 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -967,7 +967,7 @@ mvxpe_dma_memalloc(struct mvxpe_softc *sc, bus_dmamap_t *map, size_t size)
 
 	/*
 	 * Allocate the descriptor queues.
-	 * struct mvxpe_ring_data contians array of descriptor per queue.
+	 * struct mvxpe_ring_data contains array of descriptors per queue.
 	 */
 	if (bus_dmamem_alloc(sc->sc_dmat,
 	    size, PAGE_SIZE, 0, &segs, 1, &nsegs, BUS_DMA_NOWAIT)) {
@@ -1300,8 +1300,8 @@ mvxpe_rx_queue_enable(struct ifnet *ifp, int q)
 
 	/* Unmask RXTX_TH Intr. */
 	reg = MVXPE_READ(sc, MVXPE_PRXTXTIM);
-	reg |= MVXPE_PRXTXTI_RBICTAPQ(q); /* Rx Buffer Interrupt Coalese */
-	reg |= MVXPE_PRXTXTI_RDTAQ(q); /* Rx Descriptor Alart */
+	reg |= MVXPE_PRXTXTI_RBICTAPQ(q); /* Rx Buffer Interrupt Coalesce */
+	reg |= MVXPE_PRXTXTI_RDTAQ(q); /* Rx Descriptor Alert */
 	MVXPE_WRITE(sc, MVXPE_PRXTXTIM, reg);
 
 	/* Enable Rx queue */
@@ -2642,7 +2642,7 @@ mvxpe_rx_set_csumflag(struct ifnet *ifp,
 		}
 		else if (r->status & MVXPE_RX_IPV4_FRAGMENT) {
 			/*
-			 * r->l4chk has partial checksum of each framgment.
+			 * r->l4chk has partial checksum of each fragment.
 			 * but there is no way to use it in NetBSD.
 			 */
 			return;

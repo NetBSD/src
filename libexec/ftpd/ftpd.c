@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.209 2025/03/26 00:05:56 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.210 2025/05/19 06:16:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.209 2025/03/26 00:05:56 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.210 2025/05/19 06:16:24 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1943,7 +1943,7 @@ getdatasock(const char *fmode)
 			/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
 			/*
-			 * By default source port for PORT connctions is
+			 * By default source port for PORT connections is
 			 * ctrlport-1 (see RFC959 section 5.2).
 			 * However, if privs have been dropped and that
 			 * would be < IPPORT_RESERVED, use a random port

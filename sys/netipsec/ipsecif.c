@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.23 2025/05/19 06:16:24 andvar Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.23 2025/05/19 06:16:24 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -447,7 +447,7 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	if (error == ENOENT)
 		error = 0;
 	/*
-	 * frangmentation is already done in ipsecif4_fragout(),
+	 * fragmentation is already done in ipsecif4_fragout(),
 	 * so ipsec4_process_packet() must not do fragmentation here.
 	 */
 	KASSERT(sa_mtu == 0);

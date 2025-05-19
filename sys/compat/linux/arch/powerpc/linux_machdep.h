@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.11 2021/12/03 13:27:38 andvar Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.12 2025/05/19 06:16:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct linux_pt_regs {
 
 /*
  * From Linux's include/asm-ppc/sigcontext.h
- * Linux/ppc calls that struct sigcontect_struct
+ * Linux/ppc calls that struct sigcontext_struct
  */
 struct linux_sigcontext {
 	unsigned long _unused[4];

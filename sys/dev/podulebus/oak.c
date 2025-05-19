@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: oak.c,v 1.22 2025/05/19 06:16:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.22 2025/05/19 06:16:24 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -339,7 +339,7 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		 * etc, won't be detected until we have written at
 		 * least one byte more. We pre-write 4 bytes so
 		 * subsequent transfers will be aligned to a 4 byte
-		 * boundary. Assuming disconects will only occur on
+		 * boundary. Assuming disconnects will only occur on
 		 * block boundaries, we then correct for the pre-write
 		 * when and if we get a phase change. If the chip had
 		 * DMA byte counting hardware, the assumption would not

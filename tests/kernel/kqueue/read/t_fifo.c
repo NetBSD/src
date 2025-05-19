@@ -1,4 +1,4 @@
-/* $NetBSD: t_fifo.c,v 1.5 2021/10/02 18:21:05 thorpej Exp $ */
+/* $NetBSD: t_fifo.c,v 1.6 2025/05/19 06:16:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2021\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fifo.c,v 1.5 2021/10/02 18:21:05 thorpej Exp $");
+__RCSID("$NetBSD: t_fifo.c,v 1.6 2025/05/19 06:16:24 andvar Exp $");
 
 #include <sys/event.h>
 #include <sys/stat.h>
@@ -121,7 +121,7 @@ ATF_TC_BODY(fifo, tc)
 	ATF_REQUIRE((event[0].flags & EV_EOF) != 0);
 
 	/*
-	 * Reconect the writer.  We expect EV_EOF to be cleared and
+	 * Reconnect the writer.  We expect EV_EOF to be cleared and
 	 * for the FIFO to no longer be readable once again.
 	 */
 	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY | O_NONBLOCK)) >= 0);
