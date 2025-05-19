@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.29 2024/09/08 09:36:45 rillig Exp $
+$NetBSD: storage,v 1.30 2025/05/19 18:02:53 nia Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -14,30 +14,29 @@ priorities for the project:
  1. Improving iscsi
  2. nfsv4 support
  3. A better journaling file system solution
- 4. Getting zfs working for real
+ 4. Stabilizing and improving zfs support
  5. Seamless full-disk encryption
  6. Finish tls-maxphys
 
 The following elements, projects, and goals are not strategic
 priorities but are still important undertakings worth doing:
 
- 7. nvme support
- 8. lfs64
- 9. Per-process namespaces
- 10. lvm tidyup
- 11. Flash translation layer
- 12. Shingled disk support
- 13. ext3/ext4 support
- 14. Port hammer from Dragonfly
- 15. afs maintenance
- 16. execute-in-place
- 17. extended attributes for acl and capability storage
+ 7. lfs64
+ 8. Per-process namespaces
+ 9. lvm tidyup
+ 10. Flash translation layer
+ 11. Shingled disk support
+ 12. ext3/ext4 support
+ 13. Port hammer from Dragonfly
+ 14. afs maintenance
+ 15. execute-in-place
+ 16. extended attributes for acl and capability storage
 
 The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
 is perhaps less than for other things:
 
- 18. coda maintenance
+ 17. coda maintenance
 
 
 Explanations
@@ -141,20 +140,6 @@ problem.
    regarding the Harvard journaling FFS.
 
 
-4. Getting zfs working for real
--------------------------------
-
-ZFS has been almost working for years now. It is high time we got it
-really working. One of the things this entails is updating the ZFS
-code, as what we have is rather old. The Illumos version is probably
-what we want for this.
-
- - There has been intermittent work on zfs, but as of January 2017
-   nobody is known to be actively working on it
- - There is no clear timeframe or release target.
- - Contact riastradh or ?? for further information.
-
-
 5. Seamless full-disk encryption
 --------------------------------
 
@@ -210,28 +195,7 @@ more drivers.
  - Contact jdolecek or tls for further information.
 
 
-7. nvme support
-----------------
-
-nvme ("NVM Express") is a hardware interface standard for PCI-attached
-SSDs. NetBSD now has a driver for these.
-
-Driver is now MPSAFE and uses bufq fcfs (i.e. no disksort()) already,
-so the most obvious software bottlenecks were treated. It still needs
-more testing on real hardware, and it may be good to investigate some further
-optimizations, such as DragonFly pbuf(9) or something similar.
-
-Semi-relatedly, it is also time for scsipi to become MPSAFE.
-
- - As of May 2016 a port of OpenBSD's driver has been committed. This
-   will be in -8.
- - The nvme driver is a backend to ld(4) and is fully is MPSAFE, but we
-   still need to attend to I/O path bottlenecks like kern/53124.
-   Better instrumentation is needed.
- - Contact msaitoh, agc, or jdolecek for further information.
-
-
-8. lfs64
+7. lfs64
 --------
 
 LFS currently only supports volumes up to 2 TB. As LFS is of interest
@@ -246,7 +210,7 @@ version of LFS for large volumes is in the works.
  - Responsible: dholland
 
 
-9. Per-process namespaces
+8. Per-process namespaces
 -------------------------
 
 Support for per-process variation of the file system namespace enables
@@ -261,7 +225,7 @@ existing code could be tidied up and committed if that seems desirable.
  - Contact: dholland
 
 
-10. lvm tidyup
+9. lvm tidyup
 --------------
 
 [agc says someone should look at our lvm stuff; XXX fill this in]
@@ -271,7 +235,7 @@ existing code could be tidied up and committed if that seems desirable.
  - Contact agc for further information.
 
 
-11. Flash translation layer
+10. Flash translation layer
 ---------------------------
 
 SSDs ship with firmware called a "flash translation layer" that
@@ -292,7 +256,7 @@ implementations that we might be able to import.
  - Contact dholland for further information.
 
 
-12. Shingled disk support
+11. Shingled disk support
 -------------------------
 
 Shingled disks (or more technically, disks with "shingled magnetic
@@ -307,8 +271,11 @@ point we will want to support these things in NetBSD.
  - Contact dholland for further information.
 
 
-13. ext3/ext4 support
+12. ext3/ext4 support
 ---------------------
+
+Currently people are mostly using the kernel implementation of
+ext2 or using filesystems/fuse-ext2 from pkgsrc for later versions.
 
 We would like to be able to read and write Linux ext3fs and ext4fs
 volumes. (We can already read clean ext3fs volumes as they're the same
@@ -335,7 +302,7 @@ people; this is a harder project than it looks.
    journaling) 
 
 
-14. Port hammer from Dragonfly
+13. Port hammer from Dragonfly
 ------------------------------
 
 While the motivation for and role of hammer isn't perhaps super
@@ -351,7 +318,7 @@ either.
    concerns contact dholland or hannken.
 
 
-15. afs maintenance
+14. afs maintenance
 -------------------
 
 AFS needs periodic care and feeding to continue working as NetBSD
@@ -368,7 +335,7 @@ glue layer that it uses, in order to keep it more current.
    dholland or hannken.
 
 
-16. execute-in-place
+15. execute-in-place
 --------------------
 
 It is likely that the future includes non-volatile storage (so-called
@@ -398,7 +365,7 @@ structurally and for performance analysis.
  - Contact dholland for further information.
 
 
-17. use extended attributes for ACL and capability storage
+16. use extended attributes for ACL and capability storage
 ----------------------------------------------------------
 
 Currently there is some support for extended attributes in ffs,
@@ -409,7 +376,7 @@ to copy them if requested. Also tools to manipulate the data will
 need to be written.
 
 
-18. coda maintenance
+17. coda maintenance
 --------------------
 
 Coda only sort of works. [And I think it's behind relative to

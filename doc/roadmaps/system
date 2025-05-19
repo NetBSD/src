@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.13 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: system,v 1.14 2025/05/19 18:02:53 nia Exp $
 
 NetBSD System Roadmap
 =====================
@@ -79,15 +79,12 @@ Responsible: TBD
 8. Processor and cache topology aware scheduler
 -----------------------------------------------
 
-Implement the detection of the topology of the processors and caches. 
-Improve the scheduler to make decisions about thread migration
-according to the topology, to get better thread affinity and less
-cache thrashing, and thus improve overall performance in modern SMP
-systems. Code has been written, but did not show any performance
-improvement. We will continue to monitor this area.
+Work was done by various people to make the Arm64 port support
+big.LITTLE well, ad@ did the final bits to improve the scheduler
+to make it aware of CPU topology and mixtures of slow and fast
+cores.
 
-Responsible: rmind
-
+This made it into NetBSD 10.0.
 
 Alistair Crooks
 Sat Jan 14 11:40:49 PST 2012

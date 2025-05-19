@@ -1,4 +1,4 @@
-$NetBSD: mobile,v 1.1 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: mobile,v 1.2 2025/05/19 18:02:53 nia Exp $
 
 NetBSD Mobile Roadmap
 =====================
@@ -124,7 +124,6 @@ hardware like hpcarm.
 
 7. Support for phone hardware
 
-We don't currently support any phone hardware platforms at all. It
-would be good to. Among other things this requires finishing arm64
-support, but there's also lot of drivers to write.
+As of 2025, much of the underlying work to support various Arm
+SoCs is done, but this point is heavily dependent on item 6 (UI).
 
