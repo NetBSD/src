@@ -207,7 +207,7 @@ run_raw_testcase(unsigned i)
 	npc = get_cached_pkt(m, t->ifname);
 
 	slock = npf_config_read_enter(npf);
-	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_RULE_LAYER_3);
 	if (rl) {
 		npf_match_info_t mi;
 		error = npf_rule_conclude(rl, &mi);

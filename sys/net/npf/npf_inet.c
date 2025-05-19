@@ -592,7 +592,7 @@ npf_cache_ether(npf_cache_t *npc)
 	ether = mtod(m, struct ether_header *);
 	if(__predict_false(ether == NULL))
 		return NPC_FMTERR;
-	npc->ether = *ether;
+	memcpy(&npc->ether, ether, sizeof(npc->ether));
 
 	KASSERT(nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET) == 0);
 	return NPC_LAYER2;

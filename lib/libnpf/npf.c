@@ -982,7 +982,7 @@ npf_nat_create(int type, unsigned flags, const char *ifname)
 	nvlist_t *rule_dict;
 	uint32_t attr;
 
-	attr = NPF_RULE_PASS | NPF_RULE_FINAL |
+	attr = NPF_RULE_PASS | NPF_RULE_FINAL | NPF_RULE_LAYER_3 |
 	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
 
 	/* Create a rule for NAT policy.  Next, will add NAT data. */

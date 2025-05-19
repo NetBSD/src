@@ -1041,12 +1041,14 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
+		imfopts.layer = NPF_RULE_LAYER_3;
 		memcpy(&imfopts.filt.opt3.fo_to, ap2, sizeof(addr_port_t));
 		nt1 = npfctl_build_nat(NPF_NATIN, ifname,
 		    ap1, popts, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
+		imfopts.layer = NPF_RULE_LAYER_3;
 		memcpy(&imfopts.filt.opt3.fo_from, ap1, sizeof(addr_port_t));
 		nt2 = npfctl_build_nat(NPF_NATOUT, ifname,
 		    ap2, popts, fopts, flags);
