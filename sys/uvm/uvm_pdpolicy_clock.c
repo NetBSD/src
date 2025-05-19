@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.40 2022/04/12 20:27:56 andvar Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.41 2025/05/19 15:34:35 bouyer Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.40 2022/04/12 20:27:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.41 2025/05/19 15:34:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -719,6 +719,7 @@ uvmpdpol_pagerealize_locked(struct vm_page *pg)
  * updates flushed to the global queues.  this routine may block, and
  * so can switch cpu.  the idea is to empty to queue on whatever cpu
  * we finally end up on.
+ * Must be called at splsoftbio()
  */
 static struct uvm_cpu *
 uvmpdpol_flush(void)
@@ -770,16 +771,19 @@ void
 uvmpdpol_pagerealize(struct vm_page *pg)
 {
 	struct uvm_cpu *ucpu;
+	int s;
 
 	/*
 	 * drain the per per-CPU queue if full, then enter the page.
 	 */
 	kpreempt_disable();
+	s = splsoftbio();
 	ucpu = curcpu()->ci_data.cpu_uvm;
-	if (__predict_false(ucpu->pdqhead == 0)) {
+	while (__predict_false(ucpu->pdqhead == 0)) {
 		ucpu = uvmpdpol_flush();
 	}
 	ucpu->pdq[--(ucpu->pdqhead)] = pg;
+	splx(s);
 	kpreempt_enable();
 }
 
@@ -792,6 +796,7 @@ uvmpdpol_idle(struct uvm_cpu *ucpu)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	struct vm_page *pg;
+	int s_spl;
 
 	KASSERT(kpreempt_disabled());
 
@@ -817,6 +822,7 @@ uvmpdpol_idle(struct uvm_cpu *ucpu)
 	 * check for a pending resched: in that case exit immediately.
 	 */
 	if (mutex_tryenter(&s->lock)) {
+		s_spl = splsoftbio();
 		while (ucpu->pdqhead != ucpu->pdqtail) {
 			pg = ucpu->pdq[ucpu->pdqhead];
 			if (!mutex_tryenter(&pg->interlock)) {
@@ -833,6 +839,7 @@ uvmpdpol_idle(struct uvm_cpu *ucpu)
 		if (ucpu->pdqhead == ucpu->pdqtail) {
 			ucpu->pdqtime = getticks();
 		}
+		splx(s_spl);
 		mutex_exit(&s->lock);
 	}
 }
