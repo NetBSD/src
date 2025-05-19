@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_machdep.c,v 1.2 2025/05/17 16:14:13 tsutsui Exp $	*/
+/*	$NetBSD: sti_machdep.c,v 1.3 2025/05/19 17:34:03 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.2 2025/05/17 16:14:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.3 2025/05/19 17:34:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.2 2025/05/17 16:14:13 tsutsui Exp 
 
 #include <dev/wscons/wsconsio.h>
 
-#include <hp300/dev/sgcvar.h>
 #include <hp300/dev/sti_machdep.h>
 
 /*
