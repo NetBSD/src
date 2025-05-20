@@ -1,7 +1,7 @@
 /*	$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp $	*/
 
 /*
- * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,6 @@
 
 /*
  * Implementation of service pools to support asynchronous I/O
- * DEFINED ...
  */
 
 #include <sys/cdefs.h>
