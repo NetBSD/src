@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.41 2025/05/19 15:34:35 bouyer Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.42 2025/05/20 10:22:27 bouyer Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.41 2025/05/19 15:34:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.42 2025/05/20 10:22:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -776,7 +776,6 @@ uvmpdpol_pagerealize(struct vm_page *pg)
 	/*
 	 * drain the per per-CPU queue if full, then enter the page.
 	 */
-	kpreempt_disable();
 	s = splsoftbio();
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	while (__predict_false(ucpu->pdqhead == 0)) {
@@ -784,7 +783,6 @@ uvmpdpol_pagerealize(struct vm_page *pg)
 	}
 	ucpu->pdq[--(ucpu->pdqhead)] = pg;
 	splx(s);
-	kpreempt_enable();
 }
 
 /*
