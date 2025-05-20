@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.88 2025/05/20 12:24:15 pgoyette Exp $	*/
+/*	$NetBSD: boot2.c,v 1.89 2025/05/20 12:26:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -489,14 +489,18 @@ command_boot(char *arg)
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	if (filename != NULL) {
+	if (filename != NULL && filename[0] != '\0') {
 		/* try old locations first to assist atf test beds */
 		snprintf(path, sizeof(path) - 4, "%s", filename);
 		bootit2(path, sizeof(path), howto);
 
-		/* now treat given filename as a directory */
-		if (strchr(filename, '/') == NULL) {
-			snprintf(path, sizeof(path) - 4, "%s/kernel", filename);
+		/*
+		 * now treat given filename as a directory unless there
+		 * is already an embedded path-name separator '/' present
+		 */
+		if (strchr(filename + 1, '/') == NULL) {
+			snprintf(path, sizeof(path) - 4, "%s/kernel",
+			    filename);
 			bootit2(path, sizeof(path), howto);
 		}
 	} else {
