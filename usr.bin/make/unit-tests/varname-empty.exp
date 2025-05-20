@@ -14,18 +14,6 @@ Global: ignoring ' = appended' as the variable name is empty
 Global: ignoring ' = ' as the variable name '' expands to empty
 Global: ignoring ' = subst' as the variable name '' expands to empty
 Capturing the output of command "echo 'shell-output'"
-Var_Parse: ${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@} (eval)
-Var_Parse: ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@} (eval)
-Evaluating modifier ${.MAKEOVERRIDES:O} on value ""
-Result of ${.MAKEOVERRIDES:O} is ""
-Evaluating modifier ${.MAKEOVERRIDES:u} on value ""
-Result of ${.MAKEOVERRIDES:u} is ""
-Evaluating modifier ${.MAKEOVERRIDES:@...} on value ""
-Modifier part: "v"
-Modifier part: "$v=${$v:Q}"
-ModifyWords: split "" into 1 word
-Command: ignoring delete 'v' as it is not found
-Result of ${.MAKEOVERRIDES:@v@$v=${$v:Q}@} is ""
 Global: ignoring ' = shell-output' as the variable name '' expands to empty
 Global: ignoring ' = assigned indirectly' as the variable name '${:U}' expands to empty
 Global: ignoring ' += appended indirectly' as the variable name '${:U}' expands to empty
