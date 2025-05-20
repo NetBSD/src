@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.33 2025/05/20 12:05:42 pgoyette Exp $
+.\"	$NetBSD: boot.8,v 1.34 2025/05/20 12:24:15 pgoyette Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 16, 2025
+.Dd May 11, 2025
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -272,12 +272,10 @@ Alternate system images can be loaded by just specifying the filename of
 the image.
 If the specified
 .Pa filename
-does not contain an embedded or trailing slash character, the boot loader
-will also try
+does not contain an embedded slash character, the boot loader will also try
 .Pa filename/kernel
 and
 .Pa filename/kernel.gz .
-(A leading slash character will be ignored.)
 .Pp
 Options are:
 .Bl -tag -width xxx
