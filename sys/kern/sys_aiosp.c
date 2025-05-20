@@ -211,17 +211,17 @@ aiost_entry(void *arg) {
 	struct aiosp *sp = st->aiosp;
 
 	/*
-	 * We want to handle abrupt process terminations effectively. The reason
-	 * why we check st->exit twice, before and after we acquire the mutex is
-	 * to account for the case where
+	 * We want to handle abrupt process terminations effectively. We use
+	 * st->exit to indicate that the thread must exit. When a thread is
+	 * terminated aiost_terminate(st) unblocks those sleeping on
+	 * st->service_cv
 	 */
 	for(;;) {
-		if(st->exit) goto exit;
 		int error = cv_wait_sig(&st->service_cv, &st->mtx);
 		mutex_enter(&st->mtx);
 		if(error) goto next;
 		if(!st->exit) goto process;	
-exit:
+
 		/*
 		 * Remove st from the list of active service threads, do NOT
 		 * append to the freelist, dance around locks, exit kthread
@@ -286,7 +286,9 @@ aiost_process_sync(struct aiost *aiost) {
 }
 
 /*
- * Destroy a servicing thread
+ * Destroy a servicing thread. Set st->exit high such that when we unblock the
+ * thread blocking on st->service_cv it will invoke an exit routine within
+ * aiost_entry.
  */
 static int
 aiost_terminate(struct aiost *st) {
@@ -296,9 +298,9 @@ aiost_terminate(struct aiost *st) {
 	cv_signal(&st->service_cv);
 	kthread_join(st->lwp);
 
+	cv_destroy(&st->service_cv);
 	mutex_exit(&st->mtx);
 	mutex_destroy(&st->mtx);
-
 	kmem_free(st, sizeof(struct aiost));
 
 	return 0;
