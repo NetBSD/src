@@ -99,6 +99,29 @@ struct aio_job {
 	struct lio_req *lio;
 };
 
+struct aiosp;
+struct aiost {
+	TAILQ_ENTRY(aiost) list;
+	struct aiosp *aiosp;		/* Servicing pool of this thread */
+	kmutex_t mtx;			/* Protects this structure */
+	kcondvar_t service_cv;		/* Signal to activate thread */
+	struct aio_job *job;		/* Jobs associated with the thread */
+	struct lwp *lwp;		/* Servicing thread LWP */
+	int exit;			/* Exit code */
+};
+
+TAILQ_HEAD(aiost_list, aiost);
+struct aiosp {
+	struct aiost_list freelist;	/* Available service threads */
+	int nthreads_free;		/* Length of freelist */
+	struct aiost_list active;	/* Active servicing threads */ 
+	int nthreads_active;		/* length of active list */
+	TAILQ_HEAD(, aio_job) jobs;	/* Queue of pending jobs */
+	int jobs_pending;		/* Number of pending jobs */
+	kmutex_t mtx;			/* Protects structure */
+	int nthreads_total;		/* Number of total servicing threads */
+};
+
 /* LIO structure */
 struct lio_req {
 	u_int refcnt;		/* Reference counter */
@@ -114,12 +137,17 @@ struct aioproc {
 	unsigned int jobs_count;	/* Count of the jobs */
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
+	struct aiost_list active_jobs;	/* List of active servicing threads */
+	struct aiosp *sp;		/* Servicing pool of the process */
 };
 
 extern u_int aio_listio_max;
 /* Prototypes */
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
+int	aiosp_distribute_jobs(struct aiosp *);
+int	aiosp_initialize(struct aiosp **);
+int	aiosp_destroy(struct aioproc *);
 
 #endif /* _KERNEL */
 
