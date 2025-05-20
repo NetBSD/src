@@ -99,6 +99,7 @@ struct aio_job {
 	struct lio_req *lio;
 };
 
+/* Structure for AIO servicing thread */
 struct aiosp;
 struct aiost {
 	TAILQ_ENTRY(aiost) list;
@@ -110,6 +111,7 @@ struct aiost {
 	int exit;			/* Exit code */
 };
 
+/* Structure for AIO servicing pool */
 TAILQ_HEAD(aiost_list, aiost);
 struct aiosp {
 	struct aiost_list freelist;	/* Available service threads */
