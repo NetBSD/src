@@ -43,6 +43,11 @@ grep "status: NOERROR" dig.out.ns1.test${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+rndccmd 10.53.0.1 stats || ret=1 # Get the responses, RTT and timeout statistics before the following timeout tests
+grep -F 'responses received' ns1/named.stats >ns1/named.stats.responses-before || true
+grep -F 'queries with RTT' ns1/named.stats >ns1/named.stats.rtt-before || true
+mv ns1/named.stats ns1/named.stats-before
+
 # 'resolver-query-timeout' is set to 5 seconds in ns1, so dig with a lower
 # timeout value should give up earlier than that.
 n=$((n + 1))
@@ -50,6 +55,7 @@ echo_i "checking no response handling with a shorter than resolver-query-timeout
 ret=0
 dig_with_opts +tcp +tries=1 +timeout=3 noresponse.example.net @10.53.0.1 a >dig.out.ns1.test${n} && ret=1
 grep -F "no servers could be reached" dig.out.ns1.test${n} >/dev/null || ret=1
+grep -F "EDE: 22 (No Reachable Authority)" dig.out.ns1.test${n} >/dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -62,6 +68,32 @@ echo_i "checking no response handling with a longer than resolver-query-timeout 
 ret=0
 dig_with_opts +tcp +tries=1 +timeout=7 noresponse.example.net @10.53.0.1 a >dig.out.ns1.test${n} || ret=1
 grep -F "status: SERVFAIL" dig.out.ns1.test${n} >/dev/null || ret=1
+grep -F "EDE: 22 (No Reachable Authority)" dig.out.ns1.test${n} >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that the timeout didn't skew the resolver responses counters ($n)"
+ret=0
+rndccmd 10.53.0.1 stats || ret=1
+grep -F 'responses received' ns1/named.stats >ns1/named.stats.responses-after || true
+grep -F 'queries with RTT' ns1/named.stats >ns1/named.stats.rtt-after || true
+mv ns1/named.stats ns1/named.stats-after
+diff ns1/named.stats.responses-before ns1/named.stats.responses-after >/dev/null || ret=1
+diff ns1/named.stats.rtt-before ns1/named.stats.rtt-after >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# 'resolver-query-timeout' is set to 5 seconds in ns1, so named should
+# interrupt the non-responsive query and send a SERVFAIL answer before dig's
+# own timeout fires, which is set to 7 seconds. This time, exampleudp.net is
+# contacted using UDP transport by the resolver.
+n=$((n + 1))
+echo_i "checking no response handling with a longer than resolver-query-timeout timeout (UDP recursion) ($n)"
+ret=0
+dig_with_opts +tcp +tries=1 +timeout=7 noresponse.exampleudp.net @10.53.0.1 a >dig.out.ns1.test${n} || ret=1
+grep -F "status: SERVFAIL" dig.out.ns1.test${n} >/dev/null || ret=1
+grep -F "EDE: 22 (No Reachable Authority)" dig.out.ns1.test${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -220,6 +252,10 @@ done
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+stop_server ns4
+touch ns4/named.noaa
+start_server --noclean --restart --port ${PORT} ns4 || ret=1
+
 n=$((n + 1))
 echo_i "RT21594 regression test check setup ($n)"
 ret=0
@@ -255,6 +291,10 @@ dig_with_opts +tcp noexistent @10.53.0.5 txt >dig.ns5.out.${n} || ret=1
 grep "status: NXDOMAIN" dig.ns5.out.${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
+
+stop_server ns4
+rm ns4/named.noaa
+start_server --noclean --restart --port ${PORT} ns4 || ret=1
 
 n=$((n + 1))
 echo_i "check that replacement of additional data by a negative cache no data entry clears the additional RRSIGs ($n)"
@@ -835,11 +875,6 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "check that correct namespace is chosen for dual-stack-servers ($n)"
 ret=0
-#
-# The two priming queries are needed until we fix dual-stack-servers fully
-#
-dig_with_opts @fd92:7065:b8e:ffff::9 v4.nameserver A >dig.out.prime1.${n} || ret=1
-dig_with_opts @fd92:7065:b8e:ffff::9 v4.nameserver AAAA >dig.out.prime2.${n} || ret=1
 dig_with_opts @fd92:7065:b8e:ffff::9 foo.v4only.net A >dig.out.ns9.${n} || ret=1
 grep "status: NOERROR" dig.out.ns9.${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -981,6 +1016,29 @@ ret=0
 rndccmd 10.53.0.6 responselog off || ret=1
 dig_with_opts @10.53.0.6 should.not.be.logged >dig.ns6.out.${n} || ret=1
 grep "response: should.not.be.logged" ns6/named.run >/dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "check that attach-cache with arbitrary cache name is preserved across reload ($n)"
+ret=0
+# send a query, wait a second, reload the configuration, and query again.
+# the TTL should indicate that the cache was still populated.
+dig_with_opts +noall +answer @10.53.0.1 www.example.org >/dev/null || ret=1
+sleep 1
+rndc_reload ns1 10.53.0.1
+dig_with_opts +noall +answer @10.53.0.1 www.example.org >dig.ns1.out.${n} || ret=1
+ttl=$(awk '{print $2}' dig.ns1.out.${n})
+[ $ttl -lt 300 ] || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "client requests recursion but it is disabled - expect EDE 20 code with REFUSED($n)"
+ret=0
+dig_with_opts +recurse www.isc.org @10.53.0.11 a >dig.out.ns11.test${n} || ret=1
+grep "status: REFUSED" dig.out.ns11.test${n} >/dev/null || ret=1
+grep -F "EDE: 20 (Not Authoritative)" dig.out.ns11.test${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

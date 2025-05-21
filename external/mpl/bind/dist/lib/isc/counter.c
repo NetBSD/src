@@ -1,4 +1,4 @@
-/*	$NetBSD: counter.c,v 1.1.1.7 2025/01/26 16:12:30 christos Exp $	*/
+/*	$NetBSD: counter.c,v 1.1.1.8 2025/05/21 14:40:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,6 +80,13 @@ isc_counter_setlimit(isc_counter_t *counter, int limit) {
 	REQUIRE(VALID_COUNTER(counter));
 
 	atomic_store(&counter->limit, limit);
+}
+
+unsigned int
+isc_counter_getlimit(isc_counter_t *counter) {
+	REQUIRE(VALID_COUNTER(counter));
+
+	return atomic_load_acquire(&counter->limit);
 }
 
 void

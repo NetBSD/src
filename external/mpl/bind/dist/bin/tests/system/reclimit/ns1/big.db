@@ -9,9 +9,9 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-$TTL 60
+$TTL 120
 
-big.		IN	SOA	ns.big. hostmaster.ns.big. 1 0 0 0 60
+big.		IN	SOA	ns.big. hostmaster.ns.big. 1 0 0 0 120
 big.		IN	NS	ns.big.
 ns.big.		IN	A	10.53.0.1
 

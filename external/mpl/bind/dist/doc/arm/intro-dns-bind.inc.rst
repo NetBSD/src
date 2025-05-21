@@ -102,7 +102,7 @@ that could be packed into a 512-byte UDP message, and not a perverse affinity fo
 cultures treat as unlucky. The 512-byte UDP data limit
 is no longer a limiting factor and all root servers now support both IPv4 and IPv6. In addition, almost all the
 root servers use **anycast**, with well over
-300 instances of the root servers now providing service worldwide (see further information at https://www.root-servers.org).
+300 instances of the root servers now providing service worldwide (see further information at https://root-servers.org).
 The root servers are the starting point for all **name resolution** within the DNS.
 
 Name Resolution

@@ -791,6 +791,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	autosign		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	builtin			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cacheclean		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	camp			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	case			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	catz			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cds			\
@@ -855,6 +856,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	proxy			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	pipelined		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	qmin			\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	query-source		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	reclimit		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	redirect		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	resolver		\
@@ -1438,6 +1440,13 @@ cacheclean.log: cacheclean
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+camp.log: camp
+	@p='camp'; \
+	b='camp'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 case.log: case
 	@p='case'; \
 	b='case'; \
@@ -1882,6 +1891,13 @@ pipelined.log: pipelined
 qmin.log: qmin
 	@p='qmin'; \
 	b='qmin'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+query-source.log: query-source
+	@p='query-source'; \
+	b='query-source'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

@@ -280,11 +280,11 @@ echo_i "checking that priority names under the max-types-per-name limit get cach
 
 # Query for NXDOMAIN for items on our priority list - these should get cached
 for rrtype in AAAA MX NS; do
-  check_manytypes 1 manytypes.big "${rrtype}" NOERROR big SOA 60 || ret=1
+  check_manytypes 1 manytypes.big "${rrtype}" NOERROR big SOA 120 || ret=1
 done
 # Wait at least 1 second
 for rrtype in AAAA MX NS; do
-  check_manytypes 2 manytypes.big "${rrtype}" NOERROR big SOA "" 60 || ret=1
+  check_manytypes 2 manytypes.big "${rrtype}" NOERROR big SOA "" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -299,13 +299,13 @@ echo_i "checking that NXDOMAIN names under the max-types-per-name limit get cach
 
 # Query for 10 NXDOMAIN types
 for ntype in $(seq 65270 65279); do
-  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR big SOA 60 || ret=1
+  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR big SOA 120 || ret=1
 done
 # Wait at least 1 second
 sleep 1
 # Query for 10 NXDOMAIN types again - these should be cached
 for ntype in $(seq 65270 65279); do
-  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR big SOA "" 60 || ret=1
+  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR big SOA "" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -318,13 +318,13 @@ echo_i "checking that existing names under the max-types-per-name limit get cach
 
 # Limited to 10 types - these should be cached and the previous record should be evicted
 for ntype in $(seq 65280 65289); do
-  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 60 || ret=1
+  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1
 done
 # Wait at least one second
 sleep 1
 # Limited to 10 types - these should be cached
 for ntype in $(seq 65280 65289); do
-  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 60 || ret=1
+  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -356,11 +356,11 @@ echo_i "checking that priority NXDOMAIN names over the max-types-per-name limit 
 
 # Query for NXDOMAIN for items on our priority list - these should get cached
 for rrtype in AAAA MX NS; do
-  check_manytypes 1 manytypes.big "${rrtype}" NOERROR big SOA 60 || ret=1
+  check_manytypes 1 manytypes.big "${rrtype}" NOERROR big SOA 120 || ret=1
 done
 # Wait at least 1 second
 for rrtype in AAAA MX NS; do
-  check_manytypes 2 manytypes.big "${rrtype}" NOERROR big SOA "" 60 || ret=1
+  check_manytypes 2 manytypes.big "${rrtype}" NOERROR big SOA "" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -372,11 +372,11 @@ ret=0
 echo_i "checking that priority name over the max-types-per-name get cached ($n)"
 
 # Query for an item on our priority list - it should get cached
-check_manytypes 1 manytypes.big "A" NOERROR manytypes.big A 60 || ret=1
+check_manytypes 1 manytypes.big "A" NOERROR manytypes.big A 120 || ret=1
 # Wait at least 1 second
 sleep 1
 # Query the same name again - it should be in the cache
-check_manytypes 2 manytypes.big "A" NOERROR big manytypes.A "" 60 || ret=1
+check_manytypes 2 manytypes.big "A" NOERROR big manytypes.A "" 120 || ret=1
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -389,7 +389,7 @@ ret=0
 echo_i "checking that priority name over the max-types-per-name don't get evicted ($n)"
 
 # Query for an item on our priority list - it should get cached
-check_manytypes 1 manytypes.big "A" NOERROR manytypes.big A 60 || ret=1
+check_manytypes 1 manytypes.big "A" NOERROR manytypes.big A 120 || ret=1
 # Query for 10 more types - this should not evict A record
 for ntype in $(seq 65280 65289); do
   check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big || ret=1
@@ -397,9 +397,9 @@ done
 # Wait at least 1 second
 sleep 1
 # Query the same name again - it should be in the cache
-check_manytypes 2 manytypes.big "A" NOERROR manytypes.big A "" 60 || ret=1
+check_manytypes 2 manytypes.big "A" NOERROR manytypes.big A "" 120 || ret=1
 # This one was first in the list and should have been evicted
-check_manytypes 2 manytypes.big "TYPE65280" NOERROR manytypes.big TYPE65280 60 || ret=1
+check_manytypes 2 manytypes.big "TYPE65280" NOERROR manytypes.big TYPE65280 120 || ret=1
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -413,21 +413,21 @@ echo_i "checking that non-priority types cause eviction ($n)"
 
 # Everything on top of that will cause the cache eviction
 for ntype in $(seq 65280 65299); do
-  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 60 || ret=1
+  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1
 done
 # Wait at least one second
 sleep 1
-# These should have TTL != 60 now
+# These should have TTL != 120 now
 for ntype in $(seq 65290 65299); do
-  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 60 || ret=1
+  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 120 || ret=1
 done
 # These should have been evicted
 for ntype in $(seq 65280 65289); do
-  check_manytypes 3 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 60 || ret=1
+  check_manytypes 3 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1
 done
 # These should have been evicted by the previous block
 for ntype in $(seq 65290 65299); do
-  check_manytypes 4 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 60 || ret=1
+  check_manytypes 4 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -442,25 +442,25 @@ echo_i "checking that signed names under the max-types-per-name limit get cached
 
 # Go through the 10 items, this should result in 20 items (type + rrsig(type))
 for ntype in $(seq 65280 65289); do
-  check_manytypes 1 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 60 || ret=1
+  check_manytypes 1 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 120 || ret=1
 done
 
 # Wait at least one second
 sleep 1
 
-# These should have TTL != 60 now
+# These should have TTL != 120 now
 for ntype in $(seq 65285 65289); do
-  check_manytypes 2 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" "" 60 || ret=1
+  check_manytypes 2 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" "" 120 || ret=1
 done
 
 # These should have been evicted
 for ntype in $(seq 65280 65284); do
-  check_manytypes 3 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 60 || ret=1
+  check_manytypes 3 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 120 || ret=1
 done
 
 # These should have been evicted by the previous block
 for ntype in $(seq 65285 65289); do
-  check_manytypes 4 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 60 || ret=1
+  check_manytypes 4 manytypes.signed "TYPE${ntype}" NOERROR manytypes.signed "TYPE${ntype}" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -475,12 +475,12 @@ echo_i "checking that lifting the limit will allow everything to get cached ($n)
 ns3_reset ns3/named6.conf.in
 
 for ntype in $(seq 65280 65534); do
-  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 60 || ret=1
+  check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1
 done
 # Wait at least one second
 sleep 1
 for ntype in $(seq 65280 65534); do
-  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 60 || ret=1
+  check_manytypes 2 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" "" 120 || ret=1
 done
 
 if [ $ret -ne 0 ]; then echo_i "failed"; fi

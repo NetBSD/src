@@ -26,6 +26,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/example.db",
         "ns1/example2-toomanykeys.db",
         "ns1/example2.db",
+        "ns1/example3.db",
         "ns3/dnstap.conf",
         "ns3/dnstap.out",
         "ns3/noprimary1.db",

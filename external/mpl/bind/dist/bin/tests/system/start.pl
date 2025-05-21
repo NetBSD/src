@@ -234,7 +234,7 @@ sub construct_ns_command {
 		$command = "taskset $taskset $NAMED ";
 	} elsif ($ENV{'USE_RR'}) {
 		$ENV{'_RR_TRACE_DIR'} = ".";
-		$command = "rr record --chaos $NAMED ";
+		$command = "$ENV{'TOP_BUILDDIR'}/libtool --mode=execute rr record --chaos $NAMED ";
 	} else {
 		$command = "$NAMED ";
 	}
@@ -264,7 +264,8 @@ sub construct_ns_command {
 
 		foreach my $t_option(
 			"dropedns", "ednsformerr", "ednsnotimp", "ednsrefused",
-			"noaa", "noedns", "nosoa", "maxudp512", "maxudp1460",
+			"cookiealwaysvalid", "noaa", "noedns", "nosoa",
+			"maxudp512", "maxudp1460",
 		    ) {
 			if (-e "$testdir/$server/named.$t_option") {
 				$command .= "-T $t_option "
@@ -323,7 +324,7 @@ sub construct_ans_command {
 	}
 
 	if (-e "$testdir/$server/ans.py") {
-		$ENV{'PYTHONPATH'} = $testdir . ":" . $ENV{'srcdir'};
+		$ENV{'PYTHONPATH'} = $testdir . ":" . $builddir;
 		$command = "$PYTHON -u ans.py 10.53.0.$n $queryport";
 	} elsif (-e "$testdir/$server/ans.pl") {
 		$command = "$PERL ans.pl";

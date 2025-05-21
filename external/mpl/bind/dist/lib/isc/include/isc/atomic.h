@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.1.8 2025/05/21 14:40:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,6 +62,8 @@
 	atomic_exchange_explicit((o), (v), memory_order_acquire)
 #define atomic_exchange_acq_rel(o, v) \
 	atomic_exchange_explicit((o), (v), memory_order_acq_rel)
+#define atomic_fetch_add_acq_rel(o, v) \
+	atomic_fetch_add_explicit((o), (v), memory_order_acq_rel)
 #define atomic_fetch_sub_acq_rel(o, v) \
 	atomic_fetch_sub_explicit((o), (v), memory_order_acq_rel)
 #define atomic_compare_exchange_weak_acq_rel(o, e, d) \

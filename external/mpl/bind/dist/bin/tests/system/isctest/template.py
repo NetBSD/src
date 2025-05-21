@@ -14,7 +14,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-import pytest
+import jinja2
 
 from .log import debug
 from .vars import ALL
@@ -32,29 +32,13 @@ class TemplateEngine:
         to the environment variables set by the pytest runner).
         """
         self.directory = Path(directory)
-        self._j2env = None
         self.env_vars = dict(env_vars)
-
-    @property
-    def j2env(self):
-        """
-        Jinja2 engine that is initialized when first requested. In case the
-        jinja2 package in unavailable, the current test will be skipped.
-        """
-        if self._j2env is None:
-            try:
-                import jinja2  # pylint: disable=import-outside-toplevel
-            except ImportError:
-                pytest.skip("jinja2 not found")
-
-            loader = jinja2.FileSystemLoader(str(self.directory))
-            return jinja2.Environment(
-                loader=loader,
-                undefined=jinja2.StrictUndefined,
-                variable_start_string="@",
-                variable_end_string="@",
-            )
-        return self._j2env
+        self.j2env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(str(self.directory)),
+            undefined=jinja2.StrictUndefined,
+            variable_start_string="@",
+            variable_end_string="@",
+        )
 
     def render(
         self,

@@ -24,5 +24,6 @@ copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
 copy_setports ns7/named1.conf.in ns7/named.conf
 copy_setports ns9/named.conf.in ns9/named.conf
+copy_setports ns11/named.conf.in ns11/named.conf
 
 (cd ns6 && $SHELL keygen.sh)

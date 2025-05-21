@@ -200,9 +200,9 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR.in \
 	$(top_srcdir)/bin/tests/system/isctest/vars/.ac_vars/XSLTPROC.in \
 	$(top_srcdir)/doc/doxygen/doxygen-input-filter.in \
-	$(top_srcdir)/util/check-make-install.in AUTHORS COPYING NEWS \
-	README.md ar-lib compile config.guess config.sub install-sh \
-	ltmain.sh missing
+	$(top_srcdir)/util/check-make-install.in AUTHORS COPYING \
+	ChangeLog NEWS README.md ar-lib compile config.guess \
+	config.sub install-sh ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)

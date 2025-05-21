@@ -1,0 +1,147 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key rndc_key {
+    secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	listen-on { 10.53.0.3; };
+	pid-file "named.pid";
+	notify no;
+	dnssec-validation no;
+	allow-query { any; };
+	recursion yes;
+	allow-recursion { any; };
+	empty-zones-enable false;
+	response-policy {
+		zone "rpz-extra.local";
+	};
+};
+
+logging {
+	channel rpz_passthru {
+		file "rpz_passthru.txt" versions 3 size 5m;
+		print-time yes;
+		print-category yes;
+		print-severity yes;
+		severity info;
+	};
+
+	channel rpz_log {
+		file "rpz.txt" versions 3 size 20m;
+		print-time yes;
+		print-category yes;
+		print-severity yes;
+		severity info;
+	};
+
+	category rpz { rpz_log; default_debug; };
+	category rpz-passthru { rpz_passthru; default_debug; };
+};
+
+view "first" {
+	match-clients { 10.53.0.1; };
+	zone "." {
+		type hint;
+		file "root.db";
+	};
+	zone "rpz.local" {
+		type primary;
+		file "first-rpz.local.db";
+		allow-transfer { none; };
+		allow-query { localhost; };
+	};
+	response-policy {
+		zone "rpz.local";
+	};
+};
+
+view "second" {
+	match-clients { 10.53.0.2; };
+	zone "." {
+		type hint;
+		file "root.db";
+	};
+	zone "rpz-external.local" {
+		type secondary;
+		primaries { 10.53.0.2; };
+		file "second-rpz-external.local.db";
+		allow-query { 10.53.0.2; };
+	};
+	response-policy {
+		zone "rpz-external.local";
+	};
+};
+
+view "third" {
+	match-clients { 10.53.0.3; };
+	zone "." {
+		type hint;
+		file "root.db";
+	};
+	zone "rpz-extra.local" {
+		type primary;
+		file "third-rpz-extra.local.db";
+		allow-transfer { none; };
+		allow-query { localhost; };
+	};
+};
+
+view "fourth" {
+	match-clients { 10.53.0.4; };
+	zone "." {
+		type hint;
+		file "root.db";
+	};
+	zone "rpz-extra.local" {
+		type primary;
+		file "fourth-rpz-extra.local.db";
+		allow-transfer { none; };
+		allow-query { localhost; };
+	};
+};
+
+view "external" {
+	match-clients { any; };
+	zone "." {
+		type hint;
+		file "root.db";
+	};
+	zone "rpz.local" {
+		type primary;
+		file "external-rpz.local.db";
+		allow-transfer { none; };
+		allow-query { localhost; };
+	};
+	zone "rpz-external.local" {
+		type secondary;
+		masterfile-format text;
+		primaries { 10.53.0.2; };
+		file "external-rpz-external.local.db";
+		allow-query { 10.53.0.5; };
+	};
+	response-policy {
+		zone "rpz-external.local";
+		zone "rpz.local";
+	};
+};

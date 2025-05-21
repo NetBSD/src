@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.1.1.10 2025/01/26 16:12:19 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.1.1.11 2025/05/21 14:40:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -64,7 +64,7 @@ fromhex(char c) {
 static void
 usage(void) {
 	fprintf(stderr, "wire_test [-b] [-d] [-p] [-r] [-s]\n");
-	fprintf(stderr, "          [-m {usage|trace|record|size|mctx}]\n");
+	fprintf(stderr, "          [-m {usage|trace|record}]\n");
 	fprintf(stderr, "          [filename]\n\n");
 	fprintf(stderr, "\t-b\tBest-effort parsing (ignore some errors)\n");
 	fprintf(stderr, "\t-d\tRead input as raw binary data\n");

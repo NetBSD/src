@@ -24,7 +24,7 @@ import generic
 requests = pytest.importorskip("requests")
 
 pytestmark = [
-    isctest.mark.have_libxml2,
+    isctest.mark.with_libxml2,
     pytest.mark.extra_artifacts(
         [
             "ns2/K*",

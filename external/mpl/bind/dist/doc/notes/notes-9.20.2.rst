@@ -27,7 +27,7 @@ New Features
 
   The implementation is loosely based on
   `draft-icann-dnssec-keymgmt-01.txt
-  <https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-keymgmt-01.txt>`_.
+  <https://web.archive.org/web/20250121040252/https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-keymgmt-01.txt>`_.
   :gl:`#1128`
 
 - Print the full path of the working directory in startup log messages.

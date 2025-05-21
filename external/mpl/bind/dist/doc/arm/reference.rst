@@ -364,8 +364,8 @@ file documentation:
     ``portrange``
         A list of a :term:`port` or a port range. A port range is specified in the form of ``range`` followed by two :term:`port` s, ``port_low`` and ``port_high``, which represents port numbers from ``port_low`` through ``port_high``, inclusive. ``port_low`` must not be larger than ``port_high``. For example, ``range 1024 65535`` represents ports from 1024 through 65535. The asterisk (``*``) character is not allowed as a valid :term:`port` or as a port range boundary.
 
-    ``remote-servers``
-        A named list of one or more :term:`ip_address` es with optional :term:`tls_id`, :term:`server_key`, and/or :term:`port`. A ``remote-servers`` list may include other ``remote-servers`` lists. See :any:`primaries` block.
+    ``server-list``
+        A named list of one or more :term:`ip_address` es with optional :term:`tls_id`, :term:`server_key`, and/or :term:`port`. A ``server-list`` list may include other ``server-list`` lists.
 
     ``server_key``
         A :term:`domain_name` representing the name of a shared key, to be used for
@@ -413,17 +413,11 @@ The following blocks are supported:
     :any:`logging`
         Specifies what information the server logs and where the log messages are sent.
 
-    ``masters``
-        Synonym for :any:`primaries`.
-
     :namedconf:ref:`options`
         Controls global server configuration options and sets defaults for other statements.
 
-    :any:`parental-agents`
-        Defines a named list of servers for inclusion in primary and secondary zones' :any:`parental-agents` lists.
-
-    :any:`primaries`
-        Defines a named list of servers for inclusion in stub and secondary zones' :any:`primaries` or :any:`also-notify` lists. (Note: this is a synonym for the original keyword ``masters``, which can still be used, but is no longer the preferred terminology.)
+    :namedconf:ref:`remote-servers`
+        Defines a named list of servers for inclusion in various zone statements such as :any:`parental-agents`, :any:`primaries` or :any:`also-notify` lists.
 
     :namedconf:ref:`server`
         Sets certain configuration options on a per-server basis.
@@ -1051,34 +1045,20 @@ At ``debug`` level 4 or higher, the detailed context information logged at
 ``debug`` level 2 is logged for errors other than SERVFAIL and for negative
 responses such as NXDOMAIN.
 
-:any:`parental-agents` Block Grammar
+``remote-servers`` Block Grammar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. namedconf:statement:: parental-agents
-   :tags: zone
-   :short: Defines a list of delegation agents to be used by primary and secondary zones.
+.. namedconf:statement:: remote-servers
+   :tags: server
+   :short: Defines a list of servers to be used by primary and secondary zones.
 
-:any:`parental-agents` Block Definition and Usage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This specifies a list that allows for a common set of servers to be easily used
+by multiple zones. The following options may reference to a list of
+remote servers: :any:`parental-agents`, :any:`primaries`, and :any:`also-notify`.
 
-:any:`parental-agents` lists allow for a common set of parental agents to be
-easily used by multiple primary and secondary zones. A "parental agent" is a
-trusted DNS server that is queried to check whether DS records for a given zones
-are up-to-date.
+A "parental agent" is a trusted DNS server that is queried to check whether DS
+records for a given zones are up-to-date.
 
-:any:`primaries` Block Grammar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. namedconf:statement:: primaries
-   :tags: zone
-   :short: Defines one or more primary servers for a zone.
-
-:any:`primaries` Block Definition and Usage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:any:`primaries` lists allow for a common set of primary servers to be easily
-used by multiple stub and secondary zones in their :any:`primaries` or
-:any:`also-notify` lists. (Note: :any:`primaries` is a synonym for the original
-keyword ``masters``, which can still be used, but is no longer the
-preferred terminology.)
+A "primary server" is where a secondary server can request zone transfers from.
 
 To force the zone transfer requests to be sent over TLS, use :any:`tls` keyword,
 e.g. ``primaries { 192.0.2.1 tls tls-configuration-name; };``,
@@ -1204,7 +1184,7 @@ default is used.
    https://github.com/farsightsec/fstrm) to send event payloads which
    are encoded using Protocol Buffers (``libprotobuf-c``, a mechanism
    for serializing structured data developed by Google, Inc.; see
-   https://developers.google.com/protocol-buffers/).
+   https://protobuf.dev).
 
    To enable :any:`dnstap` at compile time, the ``fstrm`` and
    ``protobuf-c`` libraries must be available, and BIND must be
@@ -3316,11 +3296,15 @@ Query Address
 
 .. namedconf:statement:: query-source
    :tags: query
-   :short: Controls the IPv4 address from which queries are issued.
+   :short: Controls the IPv4 address from which queries are issued. If
+           `none`, then no IPv4 address would be used to issue the
+           query and therefore only IPv6 servers are queried.
 
 .. namedconf:statement:: query-source-v6
    :tags: query
-   :short: Controls the IPv6 address from which queries are issued.
+   :short: Controls the IPv6 address from which queries are issued. If
+           `none`, then no IPv6 address would be used to issue the
+           query and therefore only IPv4 servers are quried.
 
    If the server does not know the answer to a question, it queries other
    name servers. :any:`query-source` specifies the address and port used for
@@ -3468,6 +3452,16 @@ options apply to zone transfers.
    global :any:`also-notify` list are not sent NOTIFY messages for that
    zone. The default is the empty list (no global notification list).
 
+.. namedconf:statement:: min-transfer-rate-in
+   :tags: transfer
+   :short: Specifies the minimum traffic rate below which inbound zone transfers are terminated.
+
+   Inbound zone transfers running slower than the given amount of bytes in the
+   given amount of minutes are terminated. This option takes two non-zero integer values.
+   A check is performed periodically every time the configured time interval
+   passes. The default value is ``10240 5``, i.e. 10240 bytes in 5 minutes.
+   The maximum time value is 28 days (40320 minutes).
+
 .. namedconf:statement:: max-transfer-time-in
    :tags: transfer
    :short: Specifies the number of minutes after which inbound zone transfers are terminated.
@@ -3515,6 +3509,19 @@ options apply to zone transfers.
    are subject to a separate rate limit; see below.) The default is 20
    per second. The lowest possible rate is one per second; when set to
    zero, it is silently raised to one.
+
+.. namedconf:statement:: primaries
+   :tags: transfer, zone
+   :short: Defines one or more servers that zone transfer can be requested from.
+
+   This specifies a list of one or more IP addresses of primary servers that
+   the secondary contacts to update its copy of the zone. Primaries list
+   elements can also be names of :any:`remote-servers` blocks.
+
+   By default, transfers are made from port 53 on the servers; this can be
+   changed for all servers by specifying a port number before the list of IP
+   addresses, or on a per-server basis after the IP address. Authentication to
+   the primary can also be done with per-server TSIG keys.
 
 .. namedconf:statement:: startup-notify-rate
    :tags: transfer, zone
@@ -3797,9 +3804,13 @@ system.
    after 20 minutes if it has remained unchanged.
 
    If :any:`max-clients-per-query` is set to zero, there is no upper bound, other
-   than that imposed by :any:`recursive-clients`. If :any:`clients-per-query` is
-   set to zero, :any:`max-clients-per-query` no longer applies and there is no
-   upper bound, other than that imposed by :any:`recursive-clients`.
+   than that imposed by :any:`recursive-clients`. If the option is set to a
+   lower value than :any:`clients-per-query`, the value is adjusted to
+   :any:`clients-per-query`.
+
+   If :any:`clients-per-query` is set to zero, :any:`max-clients-per-query` no
+   longer applies and there is no upper bound, other than that imposed by
+   :any:`recursive-clients`.
 
 .. namedconf:statement:: max-validations-per-fetch
    :tags: server
@@ -4066,6 +4077,26 @@ system.
            10.0.0.0/8;
            2001:db8::100;
        };
+
+.. namedconf:statement:: sig0key-checks-limit
+   :tags: server
+   :short: Specifies the maximum number of SIG(0) keys to consider when trying to verify a message.
+
+   This is the maximum number of keys to consider for a SIG(0)-signed message
+   when trying to verify it. :iscman:`named` will parse the candidate keys and
+   check whether their key tag and algorithm matches with the expected one
+   before trying to verify the signature. If the limit is reached the message
+   verification fails. The value of ``0`` disables the limitation. The default
+   is ``16``.
+
+.. namedconf:statement:: sig0message-checks-limit
+   :tags: server
+   :short: Specifies the maximum number of matching SIG(0) keys to try to verify a message.
+
+   This is the maximum number of keys which (when correctly parsed and matched
+   against the expected key tag and algorithm) :iscman:`named` uses to verify
+   a SIG(0)-signed message. If the limit is reached the message verification
+   fails. The value of ``0`` disables the limitation. The default is ``2``.
 
 .. _intervals:
 
@@ -4392,7 +4423,7 @@ Tuning
    :any:`stale-answer-enable` option or by calling :option:`rndc serve-stale on <rndc serve-stale>`.
 
    When :any:`stale-cache-enable` is set to ``no``, setting the :any:`max-stale-ttl`
-   has no effect; the value of :any:`max-cache-ttl` is ``0`` in such a case.
+   has no effect; the value of :any:`max-stale-ttl` is ``0`` in such a case.
 
 .. namedconf:statement:: sig-validity-interval
    :tags: obsolete
@@ -4600,6 +4631,15 @@ Tuning
    format is more human-readable, and is thus suitable when a zone is to
    be edited by hand. The default is ``relative``.
 
+.. namedconf:statement:: max-query-count
+   :tags: server, query
+   :short: Sets the maximum number of iterative queries while servicing a recursive query.
+
+   This sets the maximum number of iterative queries that may be sent
+   by a resolver while looking up a single name. If more queries than this
+   need to be sent before an answer is reached, then recursion is terminated
+   and a SERVFAIL response is returned to the client. The default is ``200``.
+
 .. namedconf:statement:: max-recursion-depth
    :tags: server
    :short: Sets the maximum number of levels of recursion permitted at any one time while servicing a recursive query.
@@ -4620,7 +4660,7 @@ Tuning
    need to be sent before an answer is reached, then recursion is terminated
    and a SERVFAIL response is returned to the client. (Note: if the answer
    is a CNAME, then the subsequent lookup for the target of the CNAME is
-   counted separately.) The default is 32.
+   counted separately.) The default is 50.
 
 .. namedconf:statement:: max-query-restarts
    :tags: server, query
@@ -6008,7 +6048,7 @@ The following options can be specified in a :any:`tls` statement:
     ``TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256``.
     The string must be formed according to the rules specified in the
     OpenSSL documentation (see
-    https://www.openssl.org/docs/man1.1.1/man1/ciphers.html, section
+    https://docs.openssl.org/1.1.1/man1/ciphers/, section
     "TLS v1.3 cipher suites" for details).
 
 .. namedconf:statement:: ciphers
@@ -6018,7 +6058,7 @@ The following options can be specified in a :any:`tls` statement:
     This option defines allowed ciphers, such as
     ``HIGH:!aNULL:!MD5:!SHA1:!SHA256:!SHA384``. The string must be
     formed according to the rules specified in the OpenSSL documentation
-    (see https://www.openssl.org/docs/man1.1.1/man1/ciphers.html
+    (see https://docs.openssl.org/1.1.1/man1/ciphers/
     for details).
 
 .. namedconf:statement:: prefer-server-ciphers
@@ -6740,6 +6780,18 @@ old DNSSEC key.
       trust relationship with the parental agent. For example, use TSIG to
       authenticate the parental agent, or point to a validating resolver.
 
+.. namedconf:statement:: parental-agents
+   :tags: dnssec
+
+   This specifies a list of one or more IP addresses of parental agents that
+   are used to query the zone's DS records during a KSK rollover. The list of
+   parental agents can also contain the names of :any:`remote-servers` blocks.
+
+   By default, DS queries are sent from port 53 on the servers; this can be
+   changed for all servers by specifying a port number before the list of IP
+   addresses, or on a per-server basis after the IP address. Authentication to
+   the primary can also be done with per-server TSIG keys.
+
 The following options apply to DS queries sent to :any:`parental-agents`:
 
 .. namedconf:statement:: checkds
@@ -6957,33 +7009,57 @@ Zone Types
    :tags: zone
    :short: Contains a duplicate of the data for a zone that has been transferred from a primary server.
 
-    A secondary zone is a replica of a primary zone. Type ``slave`` is a
-    synonym for :any:`secondary <type secondary>`. The :any:`primaries` list specifies one or more IP
-    addresses of primary servers that the secondary contacts to update
-    its copy of the zone. Primaries list elements can
-    also be names of other primaries lists. By default,
-    transfers are made from port 53 on the servers;
-    this can be changed for all servers by specifying
-    a port number before the list of IP addresses,
-    or on a per-server basis after the IP address.
-    Authentication to the primary can also be done with
-    per-server TSIG keys.  If a file is specified, then the
-    replica is written to this file
-    whenever the zone
-    is changed, and reloaded from this file on a server
-    restart. Use of a file is recommended, since it
-    often speeds server startup and eliminates a
-    needless waste of bandwidth. Note that for large
-    numbers (in the tens or hundreds of thousands) of
-    zones per server, it is best to use a two-level
-    naming scheme for zone filenames. For example,
-    a secondary server for the zone
-    ``example.com`` might place
-    the zone contents into a file called
-    ``ex/example.com``, where
-    ``ex/`` is just the first two
-    letters of the zone name. (Most operating systems
-    behave very slowly if there are 100,000 files in a single directory.)
+   A secondary zone is a replica of a primary zone. Type ``slave`` is a
+   synonym for :any:`secondary <type secondary>`. The :any:`primaries` list
+   specifies one or more IP addresses of primary servers that the secondary
+   contacts to update its copy of the zone.
+
+   A zone may refresh on timer or on receipt of a notify. If a valid notify is
+   received where the notify carries a serial number larger than the one in the
+   SOA currently served, then the secondary will schedule a zone refresh.
+
+   A notify is considered valid if the sender is one of the servers in the NS
+   RRset for the zone, has been explicitly allowed using an :any:`allow-notify`
+   clause, or is from an address listed in the primary servers clause.
+
+   If no notifies have been received, the server will try to refresh the zone.
+   The REFRESH field in the SOA record determines how long after the last zone
+   update it should query the primaries for the SOA record. Again, if the
+   SOA record contains a serial number larger than the one in the SOA currently
+   served, a zone refresh is scheduled. If a notify is received while a
+   refresh is in progress, the serial number of the notify is checked and if
+   it is larger, another refresh for the zone is queued. There will at most
+   be one zone refresh queued.
+
+   The primary servers are queried in turn, :any:`named` will move on to the
+   next server in the list if either it is unable to get a valid response from
+   the server it is currently querying, or the primary being queried returns
+   the same or smaller SOA than the secondary is currently serving. On the
+   first SOA received that has a serial bigger than the one currently served,
+   :any:`named` will initiate a zone transfer with that server. Once the zone
+   transfer has been received and the zone has been updated, then this zone
+   refresh is complete, and no other servers are tried.
+
+   When receiving a notify, :any:`named` does not first query the sender of
+   the notify. It will continue with the next server in the list that
+   transferred the zone, skipping over unreachable servers. A primary is
+   considered unreachable if the secondary cannot get a response from the
+   server. This state will be cached for 10 minutes, or until a notify is
+   received from that address.
+
+   Furthermore, a zone is refreshed when the secondary server is restarted,
+   or when a :option:`rndc refresh <rndc refresh>` command is received.
+
+   If a file is specified, then the replica is written to this file whenever the zone
+   is changed, and reloaded from this file on a server restart. Use of a file
+   is recommended, since it often speeds server startup and eliminates a
+   needless waste of bandwidth. Note that for large numbers (in the tens or
+   hundreds of thousands) of zones per server, it is best to use a two-level
+   naming scheme for zone filenames. For example, a secondary server for the
+   zone ``example.com`` might place the zone contents into a file called
+   ``ex/example.com``, where ``ex/`` is just the first two letters of the zone
+   name. (Most operating systems behave very slowly if there are 100,000 files
+   in a single directory.)
 
 .. namedconf:statement:: type mirror
    :tags: zone
@@ -7333,6 +7409,9 @@ Zone Options
 :any:`max-records`
    See the description of :any:`max-records` in :ref:`server_resource_limits`.
 
+:any:`min-transfer-rate-in`
+   See the description of :any:`min-transfer-rate-in` in :ref:`zone_transfers`.
+
 :any:`max-transfer-time-in`
    See the description of :any:`max-transfer-time-in` in :ref:`zone_transfers`.
 
@@ -7353,6 +7432,15 @@ Zone Options
 
 :any:`notify-to-soa`
    See the description of :any:`notify-to-soa` in :ref:`boolean_options`.
+
+:any:`parental-agents`
+   This option is only meaningful if the zone is DNSSEC signed. When performing
+   a key rollover, BIND will query the parental agents to see if the new DS is
+   actually published before withdrawing the old DNSSEC key.
+
+:any:`primaries`
+   For secondary zones, these are the name servers to request zone transfers
+   from.
 
 :any:`zone-statistics`
    See the description of :any:`zone-statistics` in :namedconf:ref:`options`.
@@ -8052,6 +8140,12 @@ Incoming Zone Transfers
    ``Bytes Received`` (``nbytes``)
       64-bit unsigned Integer. This is the number of usable bytes
       of DNS data. It does not include transport overhead.
+
+   ``Transfer Rate (B/s)`` (``rate``)
+      64 bit unsigned Integer. This is the average zone transfer rate in
+      bytes-per-second during the latest full interval that is configured by the
+      :any:`min-transfer-rate-in` configuration option. If no such interval
+      has passed yet, then the overall average rate is reported instead.
 
    .. note::
       Depending on the current state of the transfer, some of the

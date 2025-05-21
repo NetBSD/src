@@ -482,6 +482,18 @@ if [ -x "$DIG" ]; then
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "checking dig +subnet=0 +yaml ($n)"
+    ret=0
+    dig_with_opts +yaml +tcp @10.53.0.2 +subnet=0 A a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message response_message_data OPT_PSEUDOSECTION EDNS CLIENT-SUBNET >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "0.0.0.0/0/0" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
   n=$((n + 1))
   echo_i "checking dig +subnet=::/0 ($n)"
   ret=0
@@ -492,6 +504,28 @@ if [ -x "$DIG" ]; then
   check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "checking dig +subnet=::/0 +yaml ($n)"
+    ret=0
+    dig_with_opts +yaml +tcp @10.53.0.2 +subnet=::/0 A a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message response_message_data OPT_PSEUDOSECTION EDNS CLIENT-SUBNET >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "::/0/0" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+
+    n=$((n + 1))
+    echo_i "checking dig +subnet=dead::/16 +yaml ($n)"
+    ret=0
+    dig_with_opts +yaml +tcp @10.53.0.2 +qr +subnet=dead::/16 A a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS CLIENT-SUBNET >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "dead::/16/0" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
 
   n=$((n + 1))
   echo_i "checking dig +ednsopt=8:00000000 (family=0, source=0, scope=0) ($n)"
@@ -562,24 +596,53 @@ if [ -x "$DIG" ]; then
   status=$((status + ret))
 
   n=$((n + 1))
-  echo_i "checking ednsopt UL prints as expected (single lease) ($n)"
+  echo_i "checking ednsopt UPDATE-LEASE prints as expected (single lease) ($n)"
   ret=0
-  dig_with_opts @10.53.0.3 +ednsopt=UL:00000e10 +qr a.example >dig.out.test$n 2>&1 || ret=1
-  pat='UL: 3600 (1 hour)'
+  dig_with_opts @10.53.0.3 +ednsopt=UPDATE-LEASE:00000e10 +qr a.example >dig.out.test$n 2>&1 || ret=1
+  pat='UPDATE-LEASE: 3600 (1 hour)'
   grep "$pat" dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
   n=$((n + 1))
 
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "checking ednsopt UPDATE-LEASE prints as expected (single lease) +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=UPDATE-LEASE:00000e10 +qr a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS UPDATE-LEASE LEASE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "3600" ] || ret=1
+    grep "LEASE: 3600 # 1 hour" dig.out.test$n >/dev/null || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
   n=$((n + 1))
-  echo_i "checking ednsopt UL prints as expected (split lease) ($n)"
+  echo_i "checking ednsopt UPDATE-LEASE prints as expected (split lease) ($n)"
   ret=0
-  dig_with_opts @10.53.0.3 +ednsopt=UL:00000e1000127500 +qr a.example >dig.out.test$n 2>&1 || ret=1
-  pat='UL: 3600/1209600 (1 hour/2 weeks)'
+  dig_with_opts @10.53.0.3 +ednsopt=UPDATE-LEASE:00000e1000127500 +qr a.example >dig.out.test$n 2>&1 || ret=1
+  pat='UPDATE-LEASE: 3600/1209600 (1 hour/2 weeks)'
   grep "$pat" dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
-  n=$((n + 1))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "checking ednsopt UPDATE-LEASE prints as expected (split lease) +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=UPDATE-LEASE:00000e1000127500 +qr a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS UPDATE-LEASE LEASE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "3600" ] || ret=1
+    grep "LEASE: 3600 # 1 hour" dig.out.test$n >/dev/null || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS UPDATE-LEASE KEY-LEASE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1209600" ] || ret=1
+    grep "KEY-LEASE: 1209600 # 2 weeks" dig.out.test$n >/dev/null || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
 
   echo_i "checking ednsopt LLQ prints as expected ($n)"
   ret=0
@@ -588,6 +651,30 @@ if [ -x "$DIG" ]; then
   grep "$pat" dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "checking ednsopt LLQ prints as expected +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=llq:0001000200001234567812345678fefefefe +qr a.example >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS LLQ LLQ-VERSION >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1" ] || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS LLQ LLQ-OPCODE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "2" ] || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS LLQ LLQ-ERROR >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "0" ] || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS LLQ LLQ-ID >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1311768465173141112" ] || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS LLQ LLQ-LEASE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "4278124286" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
 
   n=$((n + 1))
   echo_i "checking that dig warns about .local queries ($n)"
@@ -616,6 +703,18 @@ if [ -x "$DIG" ]; then
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    ret=0
+    echo_i "check that dig processes +ednsopt=key-tag:<value-list> +yaml ($n)"
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=key-tag:00010002 a.example +qr >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS KEY-TAG >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "[1, 2]" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
   n=$((n + 1))
   echo_i "check that dig processes +ednsopt=key-tag:<malformed-value-list> and FORMERR is returned ($n)"
   ret=0
@@ -633,6 +732,18 @@ if [ -x "$DIG" ]; then
   grep "status: FORMERR" dig.out.test$n >/dev/null && ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that dig processes +ednsopt=client-tag:value +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=client-tag:0001 a.example +qr >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS CLIENT-TAG >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
 
   n=$((n + 1))
   echo_i "check that FORMERR is returned for a too short client-tag ($n)"
@@ -661,6 +772,18 @@ if [ -x "$DIG" ]; then
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that dig processes +ednsopt=server-tag:value +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=server-tag:0001 a.example +qr >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS SERVER-TAG >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
   n=$((n + 1))
   echo_i "check that FORMERR is returned for a too short server-tag ($n)"
   ret=0
@@ -680,6 +803,67 @@ if [ -x "$DIG" ]; then
   status=$((status + ret))
 
   n=$((n + 1))
+  echo_i "check that dig processes +ednsopt=chain:02002200 ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +ednsopt=chain:02002200 'a.\000"' +qr >dig.out.test$n 2>&1 || ret=1
+  grep '; CHAIN: "\\000\\""' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that dig processes +ednsopt=chain:02002200 +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=chain:02002200 'a.\000"' +qr >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS CHAIN >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = '\000\"' ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
+  n=$((n + 1))
+  echo_i "check that dig processes +expire ($n)"
+  ret=0
+  dig_with_opts @10.53.0.1 +expire . soa >dig.out.test$n 2>&1 || ret=1
+  grep '; EXPIRE: 1200 (20 minutes)' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that dig processes +expire +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.1 +yaml +expire . soa >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message response_message_data OPT_PSEUDOSECTION EDNS EXPIRE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "1200" ] || ret=1
+    grep "EXPIRE: 1200 # 20 minutes" dig.out.test$n >/dev/null || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
+  n=$((n + 1))
+  echo_i "check that dig processes +keepalive ($n)"
+  ret=0
+  dig_with_opts @10.53.0.1 +keepalive . soa +tcp >dig.out.test$n 2>&1 || ret=1
+  grep '; TCP-KEEPALIVE: 30.0 secs' dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that dig processes +keepalive +yaml ($n)"
+    ret=0
+    dig_with_opts @10.53.0.1 +yaml +keepalive . soa +tcp >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message response_message_data OPT_PSEUDOSECTION EDNS TCP-KEEPALIVE >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "30.0 secs" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
+
+  n=$((n + 1))
   echo_i "check that Extended DNS Error 0 is printed correctly ($n)"
   ret=0
   # First defined EDE code, additional text "foo".
@@ -688,6 +872,19 @@ if [ -x "$DIG" ]; then
   grep "$pat" dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
+
+  if [ $HAS_PYYAML -ne 0 ]; then
+    n=$((n + 1))
+    echo_i "check that Extended DNS Error 0 is printed correctly +yaml ($n)"
+    ret=0
+    # add specials '"' and '\'
+    dig_with_opts @10.53.0.3 +yaml +ednsopt=ede:0000666f6f225c a.example +qr >dig.out.test$n 2>&1 || ret=1
+    $PYTHON yamlget.py dig.out.test$n 0 message query_message_data OPT_PSEUDOSECTION EDNS EDE EXTRA-TEXT >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = 'foo"\' ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+  fi
 
   n=$((n + 1))
   echo_i "check that Extended DNS Error 24 is printed correctly ($n)"
@@ -938,7 +1135,7 @@ if [ -x "$DIG" ]; then
 
   if [ $HAS_PYYAML -ne 0 ]; then
     n=$((n + 1))
-    echo_i "check dig +yaml output ($n)"
+    echo_i "check dig +yaml ANY output ($n)"
     ret=0
     dig_with_opts +qr +yaml @10.53.0.3 any ns2.example >dig.out.test$n 2>&1 || ret=1
     $PYTHON yamlget.py dig.out.test$n 0 message query_message_data status >yamlget.out.test$n 2>&1 || ret=1
@@ -1133,6 +1330,16 @@ if [ -x "$DIG" ]; then
   dig_with_opts @10.53.0.3 +qr +noedns +ednsflags=0x70 a.example >dig.out.test$n 2>&1 || ret=1
   grep "; EDNS: version: 0, flags:; MBZ: 0x0070, udp: 1232" dig.out.test$n >/dev/null || ret=1
   grep "; EDNS: version: 0, flags:; udp: 1232" dig.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
+  echo_i "check that dig +showbadvers works ($n)"
+  dig_with_opts @10.53.0.3 +edns=1 +qr +showbadvers a.example >dig.out.test$n 2>&1 || ret=1
+  grep "; EDNS: version: 1, flags:; udp: 1232" dig.out.test$n >/dev/null || ret=1
+  grep "; EDNS: version: 0, flags:; udp: 1232" dig.out.test$n >/dev/null || ret=1
+  grep -F "status: BADVERS" dig.out.test$n >/dev/null || ret=1
+  grep -F "status: NOERROR" dig.out.test$n >/dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 else
@@ -1383,7 +1590,7 @@ if [ -x "$DELV" ]; then
   status=$((status + ret))
 
   n=$((n + 1))
-  echo_i "checking delv H is ignored, and treated like IN ($n)"
+  echo_i "checking delv -c CH is ignored, and treated like IN ($n)"
   ret=0
   delv_with_opts @10.53.0.3 -c CH -t a a.example >delv.out.test$n || ret=1
   grep "a.example." <delv.out.test$n >/dev/null || ret=1
@@ -1430,7 +1637,7 @@ if [ -x "$DELV" ]; then
 
   if [ $HAS_PYYAML -ne 0 ]; then
     n=$((n + 1))
-    echo_i "check delv +yaml output ($n)"
+    echo_i "check delv +yaml ANY output ($n)"
     ret=0
     delv_with_opts +yaml @10.53.0.3 any ns2.example >delv.out.test$n || ret=1
     $PYTHON yamlget.py delv.out.test$n status >yamlget.out.test$n 2>&1 || ret=1
@@ -1440,6 +1647,40 @@ if [ -x "$DELV" ]; then
     read -r value <yamlget.out.test$n
     [ "$value" = "ns2.example" ] || ret=1
     $PYTHON yamlget.py delv.out.test$n records 0 answer_not_validated 0 >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    count=$(echo $value | wc -w)
+    [ ${count:-0} -eq 5 ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+
+    n=$((n + 1))
+    echo_i "check delv +yaml NODATA output ($n)"
+    ret=0
+    delv_with_opts +yaml @10.53.0.3 type500 ns2.example >delv.out.test$n || ret=1
+    $PYTHON yamlget.py delv.out.test$n status >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "ncache nxrrset" ] || ret=1
+    $PYTHON yamlget.py delv.out.test$n query_name >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "ns2.example" ] || ret=1
+    $PYTHON yamlget.py delv.out.test$n records 0 negative_response_answer_not_validated 0 >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    count=$(echo $value | wc -w)
+    [ ${count:-0} -eq 5 ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status + ret))
+
+    n=$((n + 1))
+    echo_i "check delv +yaml NXDOMAIN output ($n)"
+    ret=0
+    delv_with_opts +yaml @10.53.0.3 a this-does-not-exist.ns2.example >delv.out.test$n || ret=1
+    $PYTHON yamlget.py delv.out.test$n status >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "ncache nxdomain" ] || ret=1
+    $PYTHON yamlget.py delv.out.test$n query_name >yamlget.out.test$n 2>&1 || ret=1
+    read -r value <yamlget.out.test$n
+    [ "$value" = "this-does-not-exist.ns2.example" ] || ret=1
+    $PYTHON yamlget.py delv.out.test$n records 0 negative_response_answer_not_validated 0 >yamlget.out.test$n 2>&1 || ret=1
     read -r value <yamlget.out.test$n
     count=$(echo $value | wc -w)
     [ ${count:-0} -eq 5 ] || ret=1

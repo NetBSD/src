@@ -91,6 +91,13 @@ zone "too-big.test" {
 	file "too-big.test.db";
 };
 
+zone "many-updates.test" {
+	type primary;
+	allow-update { any; };
+	file "many-updates.test.db";
+};
+
+
 /* Zone for testing CDS and CDNSKEY updates from other provider */
 zone "multisigner.test" {
 	type primary;

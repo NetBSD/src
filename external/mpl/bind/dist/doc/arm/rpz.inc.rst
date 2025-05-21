@@ -727,8 +727,8 @@ particular). This is a concern for some network administrators who do not
 want their users' DNS queries to be rerouted unexpectedly. However,
 Mozilla provides a mechanism to disable the DoH-by-default setting:
 if the Mozilla-owned domain `use-application-dns.net
-<https://use-application-dns.net>`_ returns an NXDOMAIN response code, Firefox
-will not use DoH.
+<https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet>`_
+returns an NXDOMAIN response code, Firefox will not use DoH.
 
 To accomplish this using RPZ:
 

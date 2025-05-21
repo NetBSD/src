@@ -48,7 +48,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "non recursive query for a static-stub zone with server name should be rejected ($n)"
+echo_i "non recursive query for a static-stub zone with server address should be rejected ($n)"
 ret=0
 $DIG $DIGOPTS +tcp +norec data.example. @10.53.0.2 txt >dig.out.ns2.test$n \
   || ret=1

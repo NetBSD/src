@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 20)dnl
-m4_define([bind_VERSION_PATCH], 4)dnl
+m4_define([bind_VERSION_PATCH], 9)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Stable Release)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -1650,7 +1650,6 @@ AC_CONFIG_FILES([tests/Makefile
 		 tests/isc/Makefile
 		 tests/dns/Makefile
 		 tests/ns/Makefile
-		 tests/irs/Makefile
 		 tests/isccfg/Makefile
 		 tests/libtest/Makefile])
 

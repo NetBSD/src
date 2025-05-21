@@ -80,7 +80,7 @@ options {
 	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
 	allow-update { <address_match_element>; ... };
 	allow-update-forwarding { <address_match_element>; ... };
-	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <server-list> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	answer-cookie <boolean>;
 	attach-cache <string>;
 	auth-nxdomain <boolean>;
@@ -89,7 +89,7 @@ options {
 	avoid-v6-udp-ports { <portrange>; ... }; // deprecated
 	bindkeys-file <quoted_string>; // test only
 	blackhole { <address_match_element>; ... };
-	catalog-zones { zone <string> [ default-primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... } ] [ zone-directory <quoted_string> ] [ in-memory <boolean> ] [ min-update-interval <duration> ]; ... };
+	catalog-zones { zone <string> [ default-primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <server-list> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... } ] [ zone-directory <quoted_string> ] [ in-memory <boolean> ] [ min-update-interval <duration> ]; ... };
 	check-dup-records ( fail | warn | ignore );
 	check-integrity <boolean>;
 	check-mx ( fail | warn | ignore );
@@ -183,6 +183,7 @@ options {
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-ncache-ttl <duration>;
+	max-query-count <integer>;
 	max-query-restarts <integer>;
 	max-records <integer>;
 	max-records-per-type <integer>;
@@ -208,6 +209,7 @@ options {
 	min-ncache-ttl <duration>;
 	min-refresh-time <integer>;
 	min-retry-time <integer>;
+	min-transfer-rate-in <integer> <integer>;
 	minimal-any <boolean>;
 	minimal-responses ( no-auth | no-auth-recursive | <boolean> );
 	multi-master <boolean>;
@@ -232,8 +234,8 @@ options {
 	prefetch <integer> [ <integer> ];
 	provide-ixfr <boolean>;
 	qname-minimization ( strict | relaxed | disabled | off );
-	query-source [ address ] ( <ipv4_address> | * );
-	query-source-v6 [ address ] ( <ipv6_address> | * );
+	query-source [ address ] ( <ipv4_address> | * | none );
+	query-source-v6 [ address ] ( <ipv6_address> | * | none );
 	querylog <boolean>;
 	rate-limit {
 		all-per-second <integer>;
@@ -282,6 +284,8 @@ options {
 	sig-validity-interval <integer> [ <integer> ]; // obsolete
 	sig0checks-quota <integer>; // experimental
 	sig0checks-quota-exempt { <address_match_element>; ... }; // experimental
+	sig0key-checks-limit <integer>;
+	sig0message-checks-limit <integer>;
 	sortlist { <address_match_element>; ... }; // deprecated
 	stale-answer-client-timeout ( disabled | off | <integer> );
 	stale-answer-enable <boolean>;
@@ -326,11 +330,9 @@ options {
 	zone-statistics ( full | terse | none | <boolean> );
 };
 
-parental-agents <string> [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... }; // may occur multiple times
-
 plugin ( query ) <string> [ { <unspecified-text> } ]; // may occur multiple times
 
-primaries <string> [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... }; // may occur multiple times
+remote-servers <string> [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <server-list> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... }; // may occur multiple times
 
 server <netprefix> {
 	bogus <boolean>;
@@ -393,10 +395,10 @@ view <string> [ <class> ] {
 	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
 	allow-update { <address_match_element>; ... };
 	allow-update-forwarding { <address_match_element>; ... };
-	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	also-notify [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <server-list> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	attach-cache <string>;
 	auth-nxdomain <boolean>;
-	catalog-zones { zone <string> [ default-primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... } ] [ zone-directory <quoted_string> ] [ in-memory <boolean> ] [ min-update-interval <duration> ]; ... };
+	catalog-zones { zone <string> [ default-primaries [ port <integer> ] [ source ( <ipv4_address> | * ) ] [ source-v6 ( <ipv6_address> | * ) ] { ( <server-list> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... } ] [ zone-directory <quoted_string> ] [ in-memory <boolean> ] [ min-update-interval <duration> ]; ... };
 	check-dup-records ( fail | warn | ignore );
 	check-integrity <boolean>;
 	check-mx ( fail | warn | ignore );
@@ -474,6 +476,7 @@ view <string> [ <class> ] {
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-ncache-ttl <duration>;
+	max-query-count <integer>;
 	max-query-restarts <integer>;
 	max-records <integer>;
 	max-records-per-type <integer>;
@@ -496,6 +499,7 @@ view <string> [ <class> ] {
 	min-ncache-ttl <duration>;
 	min-refresh-time <integer>;
 	min-retry-time <integer>;
+	min-transfer-rate-in <integer> <integer>;
 	minimal-any <boolean>;
 	minimal-responses ( no-auth | no-auth-recursive | <boolean> );
 	multi-master <boolean>;
@@ -518,8 +522,8 @@ view <string> [ <class> ] {
 	prefetch <integer> [ <integer> ];
 	provide-ixfr <boolean>;
 	qname-minimization ( strict | relaxed | disabled | off );
-	query-source [ address ] ( <ipv4_address> | * );
-	query-source-v6 [ address ] ( <ipv6_address> | * );
+	query-source [ address ] ( <ipv4_address> | * | none );
+	query-source-v6 [ address ] ( <ipv6_address> | * | none );
 	rate-limit {
 		all-per-second <integer>;
 		errors-per-second <integer>;
@@ -580,6 +584,8 @@ view <string> [ <class> ] {
 	sig-signing-signatures <integer>;
 	sig-signing-type <integer>;
 	sig-validity-interval <integer> [ <integer> ]; // obsolete
+	sig0key-checks-limit <integer>;
+	sig0message-checks-limit <integer>;
 	sortlist { <address_match_element>; ... }; // deprecated
 	stale-answer-client-timeout ( disabled | off | <integer> );
 	stale-answer-enable <boolean>;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.10 2025/01/26 16:12:32 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.11 2025/05/21 14:40:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -213,9 +213,7 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 
 	REQUIRE(count != NULL);
 
-	if (has_negative != NULL) {
-		*has_negative = false;
-	}
+	SET_IF_NOT_NULL(has_negative, false);
 
 	for (elt = cfg_list_first(caml); elt != NULL; elt = cfg_list_next(elt))
 	{

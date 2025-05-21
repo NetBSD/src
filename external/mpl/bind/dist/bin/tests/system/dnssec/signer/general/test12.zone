@@ -1,0 +1,37 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+;	This is a zone which has two DNSKEY records, both of which have
+; existing private key files available.  They should be loaded automatically
+; and the zone correctly signed.
+;
+$TTL 30	; 30 seconds
+.			IN SOA	a.root.servers.nil. each.isc.org. (
+				2000042101 ; serial
+				600        ; refresh (10 minutes)
+				600        ; retry (10 minutes)
+				1200       ; expire (20 minutes)
+				600        ; minimum (10 minutes)
+				)
+			NS	a.root-servers.nil.
+			DNSKEY	256 3 13 (
+				TFelYtTRBWeA9A307vvuWIcaNwW4txW4RgSELtsi46ZQ
+				s24ncRxmxtFfuJuPyVXePNiE4HNI9CIowGUsn5WuBw==
+				) ; ZSK; alg = ECDSAP256SHA256 ; key id = 23768
+			DNSKEY	257 3 13 (
+				OSmhpULEDCUzHCBeDU5uJXzkCcGuW2qrkQznKRPGhRZN
+				j7ZUIGInGzM5Um5m02ULWt8tKbi55NJUeifKWegQ0g==
+				) ; KSK; alg = ECDSAP256SHA256 ; key id = 22255
+			DNSKEY	385 3 13 (
+				uKwpRtMH+9iuUk/Xj6LciIP5ZckaBtXaUqxUxzJYexXj
+				vxGZGX4470Jvhq2NCI3HBZQNaCCP/h9sluhIzRGPTA==
+				) ; revoked KSK; alg = ECDSAP256SHA256 ; key id = 23768
+a.root-servers.nil.	A	10.53.0.1

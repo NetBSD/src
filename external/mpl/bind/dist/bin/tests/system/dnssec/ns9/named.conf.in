@@ -25,6 +25,7 @@ options {
 	dnssec-validation yes;
 	forward only;
 	forwarders { 10.53.0.4; };
+	servfail-ttl 0;
 };
 
 key rndc_key {

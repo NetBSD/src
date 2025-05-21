@@ -104,22 +104,35 @@ def create_response(msg, tcp, first, ns10):
             r.answer.append(dns.rrset.from_text(qname, 1, IN, A, "10.53.0.10"))
             dopass2 = True
     elif rrtype == NS:
-        r.answer.append(dns.rrset.from_text(qname, 1, IN, NS, "."))
+        length = len(labels)
+        if length == 2:
+            r.answer.append(dns.rrset.from_text(qname, 1, IN, NS, "ns." + qname))
+            if ns10:
+                r.additional.append(
+                    dns.rrset.from_text("ns." + qname, 1, IN, A, "10.53.0.10")
+                )
+            else:
+                r.additional.append(
+                    dns.rrset.from_text("ns." + qname, 1, IN, A, "10.53.0.9")
+                )
+        else:
+            tld = ".".join(labels[length - 2 :])
+            r.authority.append(dns.rrset.from_text(tld, 2, IN, SOA, ". . 0 0 0 0 2"))
     elif rrtype == SOA:
-        r.answer.append(dns.rrset.from_text(qname, 1, IN, SOA, ". . 0 0 0 0 0"))
+        r.answer.append(dns.rrset.from_text(qname, 2, IN, SOA, ". . 0 0 0 0 2"))
     else:
-        r.authority.append(dns.rrset.from_text(qname, 1, IN, SOA, ". . 0 0 0 0 0"))
+        r.authority.append(dns.rrset.from_text(qname, 2, IN, SOA, ". . 0 0 0 0 2"))
     # Add a server cookie to the response
-    if labels[0] != "nocookie":
+    if labels[0] != "nocookie" or rrtype != A:
         for o in m.options:
             if o.otype == 10:  # Use 10 instead of COOKIE
-                if first and labels[0] == "withtsig" and not tcp:
+                if first and labels[0] == "withtsig" and not tcp and rrtype == A:
                     r.use_tsig(
                         keyring=keyring,
                         keyname=dns.name.from_text("fake"),
                         algorithm=HMAC_SHA256,
                     )
-                elif labels[0] != "tcponly" or tcp:
+                elif labels[0] != "tcponly" or tcp or rrtype != A:
                     cookie = o
                     try:
                         if len(o.server) == 0:

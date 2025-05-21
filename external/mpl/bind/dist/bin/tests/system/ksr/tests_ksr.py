@@ -10,19 +10,14 @@
 # information regarding copyright ownership.
 
 from datetime import timedelta
-import difflib
 import os
 import shutil
 import time
-from typing import List, Optional
 
 import pytest
 
 import isctest
-from isctest.kasp import (
-    Key,
-    KeyTimingMetadata,
-)
+from isctest.kasp import KeyTimingMetadata
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -87,31 +82,6 @@ def between(value, start, end):
         return False
 
     return start < value < end
-
-
-def check_file_contents_equal(file1, file2):
-    def normalize_line(line):
-        # remove trailing&leading whitespace and replace multiple whitespaces
-        return " ".join(line.split())
-
-    def read_lines(file_path):
-        with open(file_path, "r", encoding="utf-8") as file:
-            return [normalize_line(line) for line in file.readlines()]
-
-    lines1 = read_lines(file1)
-    lines2 = read_lines(file2)
-
-    differ = difflib.Differ()
-    diff = differ.compare(lines1, lines2)
-
-    for line in diff:
-        assert not line.startswith("+ ") and not line.startswith(
-            "- "
-        ), f'file contents of "{file1}" and "{file2}" differ'
-
-
-def keystr_to_keylist(keystr: str, keydir: Optional[str] = None) -> List[Key]:
-    return [Key(name, keydir) for name in keystr.split()]
 
 
 def ksr(zone, policy, action, options="", raise_on_exception=True):
@@ -242,6 +212,54 @@ def check_keys(
         num += 1
 
 
+def check_key_bundle(bundle_keys, bundle_lines, cdnskey=False):
+    count = 0
+    for key in bundle_keys:
+        found = False
+        for line in bundle_lines:
+            if key.dnskey_equals(line, cdnskey):
+                found = True
+                count += 1
+        assert found
+
+    assert count == len(bundle_keys)
+    assert count == len(bundle_lines)
+
+
+def check_cds_bundle(bundle_keys, bundle_lines, expected_cds):
+    count = 0
+    for key in bundle_keys:
+        found = False
+        # the cds of this ksk must be in the ksr
+        for line in bundle_lines:
+            for alg in expected_cds:
+                if key.cds_equals(line, alg.strip()):
+                    found = True
+                    count += 1
+        assert found
+
+    assert count == len(expected_cds) * len(bundle_keys)
+    assert count == len(bundle_lines)
+
+
+def check_rrsig_bundle(bundle_keys, bundle_lines, zone, rrtype, sigend, sigstart):
+    count = 0
+    for key in bundle_keys:
+        found = False
+        alg = key.get_metadata("Algorithm")
+        expect = f"{zone}. 3600 IN RRSIG {rrtype} {alg} 2 3600 {sigend} {sigstart} {key.tag} {zone}."
+        # there must be a signature of this ksk
+        for line in bundle_lines:
+            rrsig = " ".join(line.split())
+            if expect in rrsig:
+                found = True
+                count += 1
+        assert found
+
+    assert count == len(bundle_keys)
+    assert count == len(bundle_lines)
+
+
 def check_keysigningrequest(out, zsks, start, end):
     lines = out.split("\n")
     line_no = 0
@@ -252,8 +270,10 @@ def check_keysigningrequest(out, zsks, start, end):
         # expect bundle header
         assert f";; KeySigningRequest 1.0 {inception}" in lines[line_no]
         line_no += 1
+        bundle_keys = []
+        bundle_lines = []
         # expect zsks
-        for key in sorted(zsks):
+        for key in zsks:
             published = key.get_timing("Publish")
             if between(published, inception, next_bundle):
                 next_bundle = published
@@ -267,9 +287,13 @@ def check_keysigningrequest(out, zsks, start, end):
             if removed is not None and inception >= removed:
                 continue
 
-            # this zsk must be in the ksr
-            assert key.dnskey_equals(lines[line_no])
+            # collect keys that should be in this bundle
+            # collect lines that should be in this bundle
+            bundle_keys.append(key)
+            bundle_lines.append(lines[line_no])
             line_no += 1
+
+        check_key_bundle(bundle_keys, bundle_lines)
 
         inception = next_bundle
 
@@ -328,7 +352,9 @@ def check_signedkeyresponse(
         line_no += 1
 
         # expect ksks
-        for key in sorted(ksks):
+        bundle_keys = []
+        bundle_lines = []
+        for key in ksks:
             published = key.get_timing("Publish")
             if between(published, inception, next_bundle):
                 next_bundle = published
@@ -343,12 +369,18 @@ def check_signedkeyresponse(
             if between(removed, inception, next_bundle):
                 next_bundle = removed
 
-            # this ksk must be in the ksr
-            assert key.dnskey_equals(lines[line_no])
+            # collect keys that should be in this bundle
+            # collect lines that should be in this bundle
+            bundle_keys.append(key)
+            bundle_lines.append(lines[line_no])
             line_no += 1
+
+        check_key_bundle(bundle_keys, bundle_lines)
 
         # expect zsks
-        for key in sorted(zsks):
+        bundle_keys = []
+        bundle_lines = []
+        for key in zsks:
             published = key.get_timing("Publish")
             if between(published, inception, next_bundle):
                 next_bundle = published
@@ -362,12 +394,18 @@ def check_signedkeyresponse(
             if removed is not None and inception >= removed:
                 continue
 
-            # this zsk must be in the ksr
-            assert key.dnskey_equals(lines[line_no])
+            # collect keys that should be in this bundle
+            # collect lines that should be in this bundle
+            bundle_keys.append(key)
+            bundle_lines.append(lines[line_no])
             line_no += 1
 
+        check_key_bundle(bundle_keys, bundle_lines)
+
         # expect rrsig(dnskey)
-        for key in sorted(ksks):
+        bundle_keys = []
+        bundle_lines = []
+        for key in ksks:
             active = key.get_timing("Activate")
             inactive = key.get_timing("Inactive", must_exist=False)
             if active > inception:
@@ -375,17 +413,20 @@ def check_signedkeyresponse(
             if inactive is not None and inception >= inactive:
                 continue
 
-            # there must be a signature of this ksk
-            alg = key.get_metadata("Algorithm")
-            expect = f"{zone}. 3600 IN RRSIG DNSKEY {alg} 2 3600 {sigend} {sigstart} {key.tag} {zone}."
-            rrsig = " ".join(lines[line_no].split())
-            assert expect in rrsig
+            # collect keys that should be in this bundle
+            # collect lines that should be in this bundle
+            bundle_keys.append(key)
+            bundle_lines.append(lines[line_no])
             line_no += 1
+
+        check_rrsig_bundle(bundle_keys, bundle_lines, zone, "DNSKEY", sigend, sigstart)
 
         # expect cdnskey
         have_cdnskey = False
         if cdnskey:
-            for key in sorted(ksks):
+            bundle_keys = []
+            bundle_lines = []
+            for key in ksks:
                 published = key.get_timing("SyncPublish")
                 if between(published, inception, next_bundle):
                     next_bundle = published
@@ -399,14 +440,20 @@ def check_signedkeyresponse(
                 if removed is not None and inception >= removed:
                     continue
 
-                # the cdnskey of this ksk must be in the ksr
-                assert key.dnskey_equals(lines[line_no], cdnskey=True)
+                # collect keys that should be in this bundle
+                # collect lines that should be in this bundle
+                bundle_keys.append(key)
+                bundle_lines.append(lines[line_no])
                 line_no += 1
                 have_cdnskey = True
 
+            check_key_bundle(bundle_keys, bundle_lines, cdnskey=True)
+
         if have_cdnskey:
             # expect rrsig(cdnskey)
-            for key in sorted(ksks):
+            bundle_keys = []
+            bundle_lines = []
+            for key in ksks:
                 active = key.get_timing("Activate")
                 inactive = key.get_timing("Inactive", must_exist=False)
                 if active > inception:
@@ -414,17 +461,23 @@ def check_signedkeyresponse(
                 if inactive is not None and inception >= inactive:
                     continue
 
-                # there must be a signature of this ksk
-                alg = key.get_metadata("Algorithm")
-                expect = f"{zone}. 3600 IN RRSIG CDNSKEY {alg} 2 3600 {sigend} {sigstart} {key.tag} {zone}."
-                rrsig = " ".join(lines[line_no].split())
-                assert expect in rrsig
+                # collect keys that should be in this bundle
+                # collect lines that should be in this bundle
+                bundle_keys.append(key)
+                bundle_lines.append(lines[line_no])
                 line_no += 1
+
+            check_rrsig_bundle(
+                bundle_keys, bundle_lines, zone, "CDNSKEY", sigend, sigstart
+            )
 
         # expect cds
         have_cds = False
         if cds != "":
-            for key in sorted(ksks):
+            bundle_keys = []
+            bundle_lines = []
+            expected_cds = cds.split(",")
+            for key in ksks:
                 published = key.get_timing("SyncPublish")
                 if between(published, inception, next_bundle):
                     next_bundle = published
@@ -438,16 +491,22 @@ def check_signedkeyresponse(
                 if removed is not None and inception >= removed:
                     continue
 
-                # the cds of this ksk must be in the ksr
-                expected_cds = cds.split(",")
-                for alg in expected_cds:
-                    assert key.cds_equals(lines[line_no], alg.strip())
+                # collect keys that should be in this bundle
+                # collect lines that should be in this bundle
+                bundle_keys.append(key)
+                # pylint: disable=unused-variable
+                for _arg in expected_cds:
+                    bundle_lines.append(lines[line_no])
                     line_no += 1
                     have_cds = True
 
+            check_cds_bundle(bundle_keys, bundle_lines, expected_cds)
+
         if have_cds:
             # expect rrsig(cds)
-            for key in sorted(ksks):
+            bundle_keys = []
+            bundle_lines = []
+            for key in ksks:
                 active = key.get_timing("Activate")
                 inactive = key.get_timing("Inactive", must_exist=False)
                 if active > inception:
@@ -455,12 +514,13 @@ def check_signedkeyresponse(
                 if inactive is not None and inception >= inactive:
                     continue
 
-                # there must be a signature of this ksk
-                alg = key.get_metadata("Algorithm")
-                expect = f"{zone}. 3600 IN RRSIG CDS {alg} 2 3600 {sigend} {sigstart} {key.tag} {zone}."
-                rrsig = " ".join(lines[line_no].split())
-                assert expect in rrsig
+                # collect keys that should be in this bundle
+                # collect lines that should be in this bundle
+                bundle_keys.append(key)
+                bundle_lines.append(lines[line_no])
                 line_no += 1
+
+            check_rrsig_bundle(bundle_keys, bundle_lines, zone, "CDS", sigend, sigstart)
 
         inception = next_bundle
 
@@ -515,14 +575,14 @@ def test_ksr_common(servers):
     # create ksk
     kskdir = "ns1/offline"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None)
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     out, _ = ksr(zone, policy, "keygen", options="-i now -e +1y")
-    zsks = keystr_to_keylist(out)
+    zsks = isctest.kasp.keystr_to_keylist(out)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -532,7 +592,7 @@ def test_ksr_common(servers):
     # in the given key directory
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -575,18 +635,22 @@ def test_ksr_common(servers):
     # check that 'dnssec-ksr keygen' selects pregenerated keys for
     # the same time bundle
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +1y")
-    selected_zsks = keystr_to_keylist(out, zskdir)
+    selected_zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(selected_zsks) == 2
     for index, key in enumerate(selected_zsks):
         assert zsks[index] == key
-        check_file_contents_equal(f"{key.path}.private", f"{key.path}.private.backup")
-        check_file_contents_equal(f"{key.path}.key", f"{key.path}.key.backup")
-        check_file_contents_equal(f"{key.path}.state", f"{key.path}.state.backup")
+        isctest.check.file_contents_equal(
+            f"{key.path}.private", f"{key.path}.private.backup"
+        )
+        isctest.check.file_contents_equal(f"{key.path}.key", f"{key.path}.key.backup")
+        isctest.check.file_contents_equal(
+            f"{key.path}.state", f"{key.path}.state.backup"
+        )
 
     # check that 'dnssec-ksr keygen' generates only necessary keys for
     # overlapping time bundle
     out, err = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y -v 1")
-    overlapping_zsks = keystr_to_keylist(out, zskdir)
+    overlapping_zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(overlapping_zsks) == 4
 
     verbose = err.split()
@@ -597,20 +661,28 @@ def test_ksr_common(servers):
             selected += 1
         if "Generating" in output:
             generated += 1
+        # Subtract if there was a key collision.
+        if "collide" in output:
+            generated -= 1
+
     assert selected == 2
     assert generated == 2
     for index, key in enumerate(overlapping_zsks):
         if index < 2:
             assert zsks[index] == key
-            check_file_contents_equal(
+            isctest.check.file_contents_equal(
                 f"{key.path}.private", f"{key.path}.private.backup"
             )
-            check_file_contents_equal(f"{key.path}.key", f"{key.path}.key.backup")
-            check_file_contents_equal(f"{key.path}.state", f"{key.path}.state.backup")
+            isctest.check.file_contents_equal(
+                f"{key.path}.key", f"{key.path}.key.backup"
+            )
+            isctest.check.file_contents_equal(
+                f"{key.path}.state", f"{key.path}.state.backup"
+            )
 
     # run 'dnssec-ksr keygen' again with verbosity 0
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y")
-    overlapping_zsks2 = keystr_to_keylist(out, zskdir)
+    overlapping_zsks2 = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(overlapping_zsks2) == 4
     check_keys(overlapping_zsks2, lifetime)
     for index, key in enumerate(overlapping_zsks2):
@@ -691,9 +763,9 @@ def test_ksr_common(servers):
     # - check keys
     check_keys(overlapping_zsks, lifetime, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, overlapping_zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, overlapping_zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, overlapping_zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, overlapping_zsks, offline_ksk=True)
 
 
 def test_ksr_lastbundle(servers):
@@ -705,7 +777,7 @@ def test_ksr_lastbundle(servers):
     kskdir = "ns1/offline"
     offset = -timedelta(days=365)
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1d -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None, offset=offset)
@@ -713,7 +785,7 @@ def test_ksr_lastbundle(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1d")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -766,9 +838,9 @@ def test_ksr_lastbundle(servers):
     # - check keys
     check_keys(zsks, lifetime, offset=offset, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
     # check that last bundle warning is logged
     warning = "last bundle in skr, please import new skr file"
@@ -784,7 +856,7 @@ def test_ksr_inthemiddle(servers):
     kskdir = "ns1/offline"
     offset = -timedelta(days=365)
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1y -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None, offset=offset)
@@ -792,7 +864,7 @@ def test_ksr_inthemiddle(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1y")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 4
 
     lifetime = timedelta(days=31 * 6)
@@ -846,9 +918,9 @@ def test_ksr_inthemiddle(servers):
     # - check keys
     check_keys(zsks, lifetime, offset=offset, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
     # check that no last bundle warning is logged
     warning = "last bundle in skr, please import new skr file"
@@ -864,13 +936,13 @@ def check_ksr_rekey_logs_error(server, zone, policy, offset, end):
     then = now + offset
     until = now + end
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i {then} -e {until} -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 1
 
     # key generation
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {then} -e {until}")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 2
 
     # create request
@@ -937,7 +1009,7 @@ def test_ksr_unlimited(servers):
     # create ksk
     kskdir = "ns1/offline"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +2y -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None)
@@ -945,7 +1017,7 @@ def test_ksr_unlimited(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +2y")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 1
 
     lifetime = None
@@ -1041,9 +1113,9 @@ def test_ksr_unlimited(servers):
     # - check keys
     check_keys(zsks, lifetime, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
 
 def test_ksr_twotone(servers):
@@ -1054,7 +1126,7 @@ def test_ksr_twotone(servers):
     # create ksk
     kskdir = "ns1/offline"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 2
 
     ksks_defalg = []
@@ -1078,7 +1150,7 @@ def test_ksr_twotone(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     # First algorithm keys have a lifetime of 3 months, so there should
     # be 4 created keys. Second algorithm keys have a lifetime of 5
     # months, so there should be 3 created keys.  While only two time
@@ -1159,9 +1231,9 @@ def test_ksr_twotone(servers):
     lifetime = timedelta(days=31 * 5)
     check_keys(zsks_altalg, lifetime, alg, size, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
 
 def test_ksr_kskroll(servers):
@@ -1172,7 +1244,7 @@ def test_ksr_kskroll(servers):
     # create ksk
     kskdir = "ns1/offline"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = keystr_to_keylist(out, kskdir)
+    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
     assert len(ksks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -1181,7 +1253,7 @@ def test_ksr_kskroll(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
     out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = keystr_to_keylist(out, zskdir)
+    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
     assert len(zsks) == 1
 
     check_keys(zsks, None)
@@ -1233,6 +1305,6 @@ def test_ksr_kskroll(servers):
     # - check keys
     check_keys(zsks, None, with_state=True)
     # - check apex
-    isctest.kasp.check_apex(ns1, zone, ksks, zsks)
+    isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
-    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks)
+    isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)

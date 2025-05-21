@@ -196,6 +196,11 @@ To roll a key sooner than scheduled, or to roll a key that
 has an unlimited lifetime, use:
 :option:`rndc dnssec -rollover -key 12345 dnssec.example. <rndc dnssec>`.
 
+You can pregenerate keys and save them in the key directory. As long as the
+key has no timing metadata set, it may be selected as a successor in the
+upcoming key rollover. To pregenerate keys without setting key timing metadata,
+use the `-G` option: ``dnssec-keygen -G dnssec.example.``.
+
 To revert a signed zone back to an insecure zone, change
 the zone configuration to use the built-in "insecure" policy. Detailed
 instructions are described in :ref:`revert_to_unsigned`.

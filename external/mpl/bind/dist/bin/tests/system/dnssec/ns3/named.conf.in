@@ -195,6 +195,18 @@ zone "dnskey-unknown.example" {
 	file "dnskey-unknown.example.db.signed";
 };
 
+zone "digest-alg-unsupported.example" {
+	type primary;
+	file "digest-alg-unsupported.example.db.signed";
+	allow-update { any; };
+};
+
+zone "ds-unsupported.example" {
+	type primary;
+	file "ds-unsupported.example.db.signed";
+	allow-update { any; };
+};
+
 zone "dnskey-unsupported.example" {
 	type primary;
 	file "dnskey-unsupported.example.db.signed";
