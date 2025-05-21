@@ -313,6 +313,19 @@ Currently supported commands are:
       keys in the event of a trust anchor rollover, or as a brute-force
       repair for key maintenance problems.
 
+.. option:: memprof [(on | off | dump)]
+
+   This command controls memory profiling. To have any effect, :iscman:`named` must be
+   built with jemalloc, the library have profiling support enabled and run with the
+   ``prof:true`` allocator configuration. (either via ``MALLOC_CONF`` or ``/etc/malloc.conf``)
+
+   The ``prof_active:false`` option is recommended to ensure the profiling overhead does
+   not affect :iscman:`named` when not needed.
+
+   The ``on`` and ``off`` options will start and stop the jemalloc memory profiling respectively.
+   When run with the `dump` option, :iscman:`named` will dump the profile to the working
+   directory. The name will be chosen automatically by jemalloc.
+
 .. option:: modzone zone [class [view]] configuration
 
    This command modifies the configuration of a zone while the server is running. This
@@ -448,6 +461,13 @@ Currently supported commands are:
    If no zone is specified, the reloading happens asynchronously.
 
 .. program:: rndc
+
+.. option:: reset-stats <counter-name ...>
+
+   This command resets the requested statistics counters.
+
+   At least one counter name must be provided. Currently the following counters
+   are supported: ``recursive-high-water``, ``tcp-high-water``.
 
 .. option:: responselog [on | off]
 

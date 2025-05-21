@@ -44,6 +44,10 @@ for db in zones/bad*.db; do
     zones/bad-dns-sd-reverse.db | zones/bad-svcb-servername.db)
       $CHECKZONE -k fail -i local 0.0.0.0.in-addr.arpa $db >test.out.$n 2>&1 || v=$?
       ;;
+    bad-cname-and*.db)
+      $CHECKZONE -i local example $db >test.out.$n 2>&1 || v=$?
+      grep "CNAME and other data" test.out.$n >/dev/null || ret=1
+      ;;
     *)
       $CHECKZONE -i local example $db >test.out.$n 2>&1 || v=$?
       ;;

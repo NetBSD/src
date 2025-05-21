@@ -931,6 +931,7 @@
                   <th>Messages Received</th>
                   <th>Records Received</th>
                   <th>Bytes Received</th>
+                  <th>Transfer Rate (B/s)</th>
                 </tr>
               </thead>
               <tbody>
@@ -959,6 +960,7 @@
                     <td><xsl:value-of select="nmsg"/></td>
                     <td><xsl:value-of select="nrecs"/></td>
                     <td><xsl:value-of select="nbytes"/></td>
+                    <td><xsl:value-of select="rate"/></td>
                   </tr>
                 </xsl:for-each>
               </tbody>

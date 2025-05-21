@@ -94,7 +94,7 @@ zone "other.nil" {
 	allow-transfer { any; };
 };
 
-primaries others {
+remote-servers others {
 	10.53.0.2 port @PORT@;
 	10.53.0.2 port @PORT@ key altkey;
 };

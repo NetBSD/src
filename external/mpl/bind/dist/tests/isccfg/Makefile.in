@@ -97,7 +97,8 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@am__append_1 = \
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
-check_PROGRAMS = duration_test$(EXEEXT) parser_test$(EXEEXT)
+check_PROGRAMS = duration_test$(EXEEXT) parser_test$(EXEEXT) \
+	grammar_test$(EXEEXT)
 @HAVE_JEMALLOC_TRUE@am__append_2 = $(JEMALLOC_CFLAGS)
 @HAVE_JEMALLOC_TRUE@am__append_3 = $(JEMALLOC_LIBS)
 subdir = tests/isccfg
@@ -140,6 +141,13 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+grammar_test_SOURCES = grammar_test.c
+grammar_test_OBJECTS = grammar_test.$(OBJEXT)
+grammar_test_LDADD = $(LDADD)
+grammar_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS) \
+	$(LIBISCCFG_LIBS) $(am__DEPENDENCIES_1) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 parser_test_SOURCES = parser_test.c
 parser_test_OBJECTS = parser_test.$(OBJEXT)
 parser_test_LDADD = $(LDADD)
@@ -163,7 +171,7 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/duration_test.Po \
-	./$(DEPDIR)/parser_test.Po
+	./$(DEPDIR)/grammar_test.Po ./$(DEPDIR)/parser_test.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -183,8 +191,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = duration_test.c parser_test.c
-DIST_SOURCES = duration_test.c parser_test.c
+SOURCES = duration_test.c grammar_test.c parser_test.c
+DIST_SOURCES = duration_test.c grammar_test.c parser_test.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -733,6 +741,10 @@ duration_test$(EXEEXT): $(duration_test_OBJECTS) $(duration_test_DEPENDENCIES) $
 	@rm -f duration_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(duration_test_OBJECTS) $(duration_test_LDADD) $(LIBS)
 
+grammar_test$(EXEEXT): $(grammar_test_OBJECTS) $(grammar_test_DEPENDENCIES) $(EXTRA_grammar_test_DEPENDENCIES) 
+	@rm -f grammar_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(grammar_test_OBJECTS) $(grammar_test_LDADD) $(LIBS)
+
 parser_test$(EXEEXT): $(parser_test_OBJECTS) $(parser_test_DEPENDENCIES) $(EXTRA_parser_test_DEPENDENCIES) 
 	@rm -f parser_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(parser_test_OBJECTS) $(parser_test_LDADD) $(LIBS)
@@ -744,6 +756,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/duration_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grammar_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser_test.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -992,6 +1005,13 @@ parser_test.log: parser_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+grammar_test.log: grammar_test$(EXEEXT)
+	@p='grammar_test$(EXEEXT)'; \
+	b='grammar_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -1090,6 +1110,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/duration_test.Po
+	-rm -f ./$(DEPDIR)/grammar_test.Po
 	-rm -f ./$(DEPDIR)/parser_test.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1141,6 +1162,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/duration_test.Po
+	-rm -f ./$(DEPDIR)/grammar_test.Po
 	-rm -f ./$(DEPDIR)/parser_test.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

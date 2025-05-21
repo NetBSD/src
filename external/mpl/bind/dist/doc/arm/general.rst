@@ -39,7 +39,7 @@ The list is non-exhaustive.
 
 .. _Internet Engineering Steering Group: https://www.ietf.org/about/groups/iesg/
 .. _Internet Engineering Task Force: https://www.ietf.org/about/
-.. _Request for Comments: https://www.ietf.org/standards/rfcs/
+.. _Request for Comments: https://www.ietf.org/process/rfcs/
 
 Some of these RFCs, though DNS-related, are not concerned with implementing
 software.

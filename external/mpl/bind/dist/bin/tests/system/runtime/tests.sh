@@ -62,7 +62,7 @@ run_named() (
 )
 
 check_pid() (
-  return $(! kill -0 "${1}" >/dev/null 2>&1)
+  ! kill -0 "${1}" >/dev/null 2>&1
 )
 
 status=0

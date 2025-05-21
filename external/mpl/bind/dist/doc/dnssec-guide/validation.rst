@@ -110,7 +110,7 @@ Configure your client computer to use the newly reconfigured recursive
 server for DNS resolution; then use one of these web-based tests to
 confirm that it is in fact validating DNS responses.
 
--  `Internet.nl <https://en.conn.internet.nl/connection/>`__
+-  `Internet.nl <http://conn.internet.nl/connection/>`__
 
 -  `DNSSEC or Not (VeriSign) <https://www.dnssec-or-not.com/>`__
 

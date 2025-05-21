@@ -145,3 +145,13 @@ zone "nsec3-inline-to-dynamic.kasp" {
        dnssec-policy "nsec3";
        allow-update { any; };
 };
+
+/*
+ * This zone will have an empty nonterminal node added and a node deleted.
+ */
+zone "nsec3-ent.kasp" {
+	type primary;
+	file "nsec3-ent.kasp.db";
+	dnssec-policy "nsec3";
+	inline-signing yes;
+};

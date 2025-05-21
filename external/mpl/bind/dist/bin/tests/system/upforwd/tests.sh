@@ -460,7 +460,7 @@ EOF
   ret=0
   good=0
   bad=0
-  for i in 1 2 3; do
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17; do
     keyname=$(cat keyname$i)
     $NSUPDATE -d -D -k $keyname.private -- - <<EOF >nsupdate.out.test$n.$i 2>&1 && good=$((good + 1)) || bad=$((bad + 1))
 	local 10.53.0.1
@@ -470,9 +470,9 @@ EOF
 	send
 EOF
   done
-  # There are three keys in the zone but named checks the signature using
-  # maximum two keys, so one of these updates should have been failed.
-  [ $good = 2 ] && [ $bad = 1 ] || ret=1
+  # There are 17 keys in the zone but by default named checks maximum 16 keys
+  # to find a matching key, so one of these updates should have been failed.
+  [ $good = 16 ] && [ $bad = 1 ] || ret=1
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
   n=$((n + 1))

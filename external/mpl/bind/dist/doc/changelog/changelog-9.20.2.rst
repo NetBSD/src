@@ -25,8 +25,8 @@ New Features
   are loaded from the currently active bundle from the imported SKR.
 
   The implementation is loosely based on:
-  https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-
-  keymgmt-01.txt :gl:`#1128` :gl:`!9389`
+  https://web.archive.org/web/20250121040252/https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-keymgmt-01.txt
+  :gl:`#1128` :gl:`!9119`
 
 - Print the full path of the working directory in startup log messages.
   ``1c8eeafffb0``

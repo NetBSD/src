@@ -41,6 +41,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns4/root.db",
         "ns6/axfr-max-idle-time.bk",
         "ns6/axfr-max-transfer-time.bk",
+        "ns6/axfr-min-transfer-rate.bk",
         "ns6/axfr-rndc-retransfer-force.bk",
         "ns6/edns-expire.bk",
         "ns6/ixfr-too-big.bk",

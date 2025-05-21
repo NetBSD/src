@@ -51,7 +51,7 @@ To run system tests, make sure you have the following dependencies installed:
 - perl
 - dnspython
 - pytest-xdist (for parallel execution)
-- python-jinja2 (for tests which use jinja templates)
+- python-jinja2
 
 Individual system tests might also require additional dependencies. If those
 are missing, the affected tests will be skipped and should produce a message

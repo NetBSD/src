@@ -27,7 +27,7 @@ if [ $RSASHA1_SUPPORTED = 0 ]; then
 else
   copy_setports ns3/named-fips.conf.in ns3/named-fips.conf
   # includes named-fips.conf
-  cp ns3/named.conf.in ns3/named.conf
+  cp ns3/named1.conf.in ns3/named.conf
 fi
 (
   cd ns3

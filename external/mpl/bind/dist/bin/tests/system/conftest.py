@@ -9,7 +9,6 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from functools import partial
 import filecmp
 import os
 from pathlib import Path
@@ -18,7 +17,7 @@ import shutil
 import subprocess
 import tempfile
 import time
-from typing import Any, List, Optional
+from typing import Any
 
 import pytest
 
@@ -309,13 +308,21 @@ def logger(request, system_test_name):
 @pytest.fixture(scope="module")
 def expected_artifacts(request):
     common_artifacts = [
+        "*/.hypothesis",  # drop after Ubuntu 20.04 Focal Fossa gets removed from CI
         ".libs/*",  # possible build artifacts, see GL #5055
-        "ns*/named.run",
-        "ns*/named.run.prev",
         "ns*/named.conf",
         "ns*/named.memstats",
+        "ns*/named.run",
+        "ns*/named.run.prev",
         "pytest.log.txt",
     ]
+
+    if "USE_RR" in os.environ:
+        common_artifacts += [
+            "ns*/cpu_lock",
+            "ns*/latest-trace",
+            "ns*/named-[0-9]*",
+        ]
 
     try:
         test_specific_artifacts = request.node.get_closest_marker("extra_artifacts")
@@ -483,46 +490,6 @@ def templates(system_test_dir: Path):
     return isctest.template.TemplateEngine(system_test_dir)
 
 
-def _run_script(
-    system_test_dir: Path,
-    interpreter: str,
-    script: str,
-    args: Optional[List[str]] = None,
-):
-    """Helper function for the shell / perl script invocations (through fixtures below)."""
-    if args is None:
-        args = []
-    path = Path(script)
-    if not path.is_absolute():
-        # make sure relative paths are always relative to system_dir
-        path = system_test_dir.parent / path
-    script = str(path)
-    cwd = os.getcwd()
-    if not path.exists():
-        raise FileNotFoundError(f"script {script} not found in {cwd}")
-    isctest.log.debug("running script: %s %s %s", interpreter, script, " ".join(args))
-    isctest.log.debug("  workdir: %s", cwd)
-    returncode = 1
-
-    cmd = [interpreter, script] + args
-    with subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        bufsize=1,
-        universal_newlines=True,
-        errors="backslashreplace",
-    ) as proc:
-        if proc.stdout:
-            for line in proc.stdout:
-                isctest.log.info("    %s", line.rstrip("\n"))
-        proc.communicate()
-        returncode = proc.returncode
-        if returncode:
-            raise subprocess.CalledProcessError(returncode, cmd)
-        isctest.log.debug("  exited with %d", returncode)
-
-
 def _get_node_path(node) -> Path:
     if isinstance(node.parent, pytest.Session):
         if _pytest_major_ver >= 8:
@@ -533,23 +500,11 @@ def _get_node_path(node) -> Path:
 
 
 @pytest.fixture(scope="module")
-def shell(system_test_dir):
-    """Function to call a shell script with arguments."""
-    return partial(_run_script, system_test_dir, os.environ["SHELL"])
-
-
-@pytest.fixture(scope="module")
-def perl(system_test_dir):
-    """Function to call a perl script with arguments."""
-    return partial(_run_script, system_test_dir, os.environ["PERL"])
-
-
-@pytest.fixture(scope="module")
-def run_tests_sh(system_test_dir, shell):
+def run_tests_sh(system_test_dir):
     """Utility function to execute tests.sh as a python test."""
 
     def run_tests():
-        shell(f"{system_test_dir}/tests.sh")
+        isctest.run.shell(f"{system_test_dir}/tests.sh")
 
     return run_tests
 
@@ -559,8 +514,6 @@ def system_test(
     request,
     system_test_dir,
     templates,
-    shell,
-    perl,
 ):
     """
     Driver of the test setup/teardown process. Used automatically for every test module.
@@ -586,14 +539,16 @@ def system_test(
 
     def check_net_interfaces():
         try:
-            perl("testsock.pl", ["-p", os.environ["PORT"]])
+            isctest.run.perl(
+                f"{os.environ['srcdir']}/testsock.pl", ["-p", os.environ["PORT"]]
+            )
         except subprocess.CalledProcessError as exc:
             isctest.log.error("testsock.pl: exited with code %d", exc.returncode)
             pytest.skip("Network interface aliases not set up.")
 
     def check_prerequisites():
         try:
-            shell(f"{system_test_dir}/prereq.sh")
+            isctest.run.shell(f"{system_test_dir}/prereq.sh")
         except FileNotFoundError:
             pass  # prereq.sh is optional
         except subprocess.CalledProcessError:
@@ -602,7 +557,7 @@ def system_test(
     def setup_test():
         templates.render_auto()
         try:
-            shell(f"{system_test_dir}/setup.sh")
+            isctest.run.shell(f"{system_test_dir}/setup.sh")
         except FileNotFoundError:
             pass  # setup.sh is optional
         except subprocess.CalledProcessError as exc:
@@ -611,14 +566,17 @@ def system_test(
 
     def start_servers():
         try:
-            perl("start.pl", ["--port", os.environ["PORT"], system_test_dir.name])
+            isctest.run.perl(
+                f"{os.environ['srcdir']}/start.pl",
+                ["--port", os.environ["PORT"], system_test_dir.name],
+            )
         except subprocess.CalledProcessError as exc:
             isctest.log.error("Failed to start servers")
             pytest.fail(f"start.pl exited with {exc.returncode}")
 
     def stop_servers():
         try:
-            perl("stop.pl", [system_test_dir.name])
+            isctest.run.perl(f"{os.environ['srcdir']}/stop.pl", [system_test_dir.name])
         except subprocess.CalledProcessError as exc:
             isctest.log.error("Failed to stop servers")
             get_core_dumps()
@@ -626,7 +584,9 @@ def system_test(
 
     def get_core_dumps():
         try:
-            shell("get_core_dumps.sh", [system_test_dir.name])
+            isctest.run.shell(
+                f"{os.environ['srcdir']}/get_core_dumps.sh", [system_test_dir.name]
+            )
         except subprocess.CalledProcessError as exc:
             isctest.log.error("Found core dumps or sanitizer reports")
             pytest.fail(f"get_core_dumps.sh exited with {exc.returncode}")
@@ -662,7 +622,7 @@ def system_test(
         request.node.stash[FIXTURE_OK] = True
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def servers(system_test_dir):
     instances = {}
     for entry in system_test_dir.rglob("*"):

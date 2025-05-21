@@ -28,6 +28,7 @@ check_PROGRAMS =		\
 	dispatch_test		\
 	dns64_test		\
 	dst_test		\
+	ede_test		\
 	keytable_test		\
 	name_test		\
 	nametree_test		\
@@ -42,6 +43,7 @@ check_PROGRAMS =		\
 	rdata_test		\
 	rdataset_test		\
 	rdatasetstats_test	\
+	resconf_test		\
 	resolver_test		\
 	rsa_test		\
 	sigs_test		\

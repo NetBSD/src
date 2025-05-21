@@ -122,7 +122,7 @@ Options
    CNAME, NS, SOA, TXT, DNSKEY, AXFR, etc.
 
    When no query type is specified, :program:`host` automatically selects an
-   appropriate query type. By default, it looks for A, AAAA, and MX
+   appropriate query type. By default, it looks for A, AAAA, MX, and HTTPS
    records. If the :option:`-C` option is given, queries are made for SOA
    records. If ``name`` is a dotted-decimal IPv4 address or
    colon-delimited IPv6 address, :program:`host` queries for PTR records.

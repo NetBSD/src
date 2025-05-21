@@ -28,7 +28,9 @@ def test_database(servers, templates):
     )
 
     templates.render("ns1/named.conf", {"rname": "marka.isc.org."})
-    servers["ns1"].rndc("reload")
+    with servers["ns1"].watch_log_from_here() as watcher:
+        servers["ns1"].rndc("reload")
+        watcher.wait_for_line("all zones loaded")
 
     # checking post reload zone
     res = isctest.query.tcp(msg, "10.53.0.1")

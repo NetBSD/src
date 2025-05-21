@@ -44,11 +44,14 @@ my $udpsock = IO::Socket::INET->new(LocalAddr => "$localaddr",
    LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
 
 #
-# Delegation
+# Delegations
 #
 my $SOA = "example 300 IN SOA . . 0 0 0 0 300";
 my $NS = "example 300 IN NS ns.example";
 my $A = "ns.example 300 IN A $localaddr";
+my $ssSOA = "delegated.serve.stale 300 IN SOA . . 0 0 0 0 300";
+my $ssNS = "delegated.serve.stale 300 IN NS ns.delegated.serve.stale";
+my $ssA = "ns.delegated.serve.stale 300 IN A $localaddr";
 
 #
 # Slow delegation
@@ -66,6 +69,7 @@ my $TXT = "data.example 2 IN TXT \"A text record with a 2 second ttl\"";
 my $LONGTXT = "longttl.example 600 IN TXT \"A text record with a 600 second ttl\"";
 my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
 my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
+my $ssnegSOA = "delegated.serve.stale 2 IN SOA . . 0 0 0 0 300";
 my $CNAME = "cname.example 7 IN CNAME target.example";
 my $TARGET = "target.example 9 IN A $localaddr";
 my $SHORTCNAME = "shortttl.cname.example 1 IN CNAME longttl.target.example";
@@ -185,13 +189,8 @@ sub reply_handler {
 	}
 	$rcode = "NOERROR";
     } elsif ($qname eq "shortttl.cname.example") {
-	if ($qtype eq "A") {
-	    my $rr = new Net::DNS::RR($SHORTCNAME);
-	    push @ans, $rr;
-	} else {
-	    my $rr = new Net::DNS::RR($negSOA);
-	    push @auth, $rr;
-	}
+	my $rr = new Net::DNS::RR($SHORTCNAME);
+	push @ans, $rr;
 	$rcode = "NOERROR";
     } elsif ($qname eq "longttl.target.example") {
 	if ($slow_response) {
@@ -225,6 +224,38 @@ sub reply_handler {
 	    push @ans, $rr;
 	} else {
 	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "ns.delegated.serve.stale" ) {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($ssA);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($ssSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "delegated.serve.stale") {
+	if ($qtype eq "NS") {
+	    my $rr = new Net::DNS::RR($ssNS);
+	    push @auth, $rr;
+	    $rr = new Net::DNS::RR($ssA);
+	    push @add, $rr;
+	} elsif ($qtype eq "SOA") {
+	    my $rr = new Net::DNS::RR($ssSOA);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($ssSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "www.delegated.serve.stale") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR("www.delegated.serve.stale 2 IN A 10.53.0.99");
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($ssnegSOA);
 	    push @auth, $rr;
 	}
 	$rcode = "NOERROR";

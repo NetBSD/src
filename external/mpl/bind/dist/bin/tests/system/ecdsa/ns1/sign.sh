@@ -41,16 +41,10 @@ fi
 if [ $ECDSAP256SHA256_SUPPORTED = 1 ]; then
   keyfile_to_static_ds $ksk256 >trusted.conf
   cp trusted.conf ../ns2/trusted.conf
-else
-  keyfile_to_static_ds $ksk384 >trusted.conf
-  cp trusted.conf ../ns2/trusted.conf
 fi
 
 if [ $ECDSAP384SHA384_SUPPORTED = 1 ]; then
   keyfile_to_static_ds $ksk384 >trusted.conf
-  cp trusted.conf ../ns3/trusted.conf
-else
-  keyfile_to_static_ds $ksk256 >trusted.conf
   cp trusted.conf ../ns3/trusted.conf
 fi
 

@@ -44,7 +44,7 @@ Building SoftHSMv2
 ^^^^^^^^^^^^^^^^^^
 
 SoftHSMv2, the latest development version of SoftHSM, is available from
-https://github.com/opendnssec/SoftHSMv2. It is a software library
+https://github.com/softhsm/SoftHSMv2. It is a software library
 developed by the OpenDNSSEC project (https://www.opendnssec.org) which
 provides a PKCS#11 interface to a virtual HSM, implemented in the form
 of an SQLite3 database on the local filesystem. It provides less security

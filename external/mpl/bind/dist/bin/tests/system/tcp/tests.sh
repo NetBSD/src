@@ -77,6 +77,7 @@ refresh_tcp_stats() {
   TCP_CUR="$(sed -n "s/^tcp clients: \([0-9][0-9]*\).*/\1/p" rndc.out.$n)"
   TCP_LIMIT="$(sed -n "s/^tcp clients: .*\/\([0-9][0-9]*\)/\1/p" rndc.out.$n)"
   TCP_HIGH="$(sed -n "s/^TCP high-water: \([0-9][0-9]*\)/\1/p" rndc.out.$n)"
+  REC_HIGH="$(sed -n "s/^recursive high-water: \([0-9][0-9]*\)/\1/p" rndc.out.$n)"
 }
 
 # Send a command to the tool script listening on 10.53.0.6.
@@ -112,7 +113,7 @@ status=$((status + ret))
 # Check TCP statistics after server startup before using them as a baseline for
 # subsequent checks.
 n=$((n + 1))
-echo_i "TCP high-water: check initial statistics ($n)"
+echo_i "TCP and recursive high-water: check initial statistics ($n)"
 ret=0
 refresh_tcp_stats
 assert_int_equal "${TCP_CUR}" 0 "current TCP clients count" || ret=1
@@ -120,21 +121,45 @@ assert_int_equal "${TCP_CUR}" 0 "current TCP clients count" || ret=1
 # system test startup, the script start.pl executes dig to check if target
 # named is running, and that increments tcp-quota by one.
 assert_int_equal "${TCP_HIGH}" 1 "tcp-highwater count" || ret=1
+assert_int_equal "${REC_HIGH}" 1 "recursive-highwater count" || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# Reset TCP high-water statistics
+n=$((n + 1))
+echo_i "TCP and recursive high-water: reset ($n)"
+ret=0
+rndccmd 10.53.0.5 reset-stats tcp-high-water recursive-high-water || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# Check TCP statistics after reset
+n=$((n + 1))
+echo_i "TCP and recursive high-water: check statistics after reset ($n)"
+ret=0
+refresh_tcp_stats
+assert_int_equal "${TCP_CUR}" 0 "current TCP clients count" || ret=1
+assert_int_equal "${TCP_HIGH}" 0 "tcp-highwater count" || ret=1
+assert_int_equal "${REC_HIGH}" 0 "recursive-highwater count" || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 # Ensure the TCP high-water statistic gets updated after some TCP connections
-# are established.
+# are established, and recursive high-water is unchanged.
 n=$((n + 1))
-echo_i "TCP high-water: check value after some TCP connections are established ($n)"
+echo_i "TCP and recursive high-water: check values after some TCP and UDP connections are established ($n)"
 ret=0
 OLD_TCP_CUR="${TCP_CUR}"
+OLD_REC_HIGH="${REC_HIGH}"
 TCP_ADDED=9
+REC_ADDED=1
+dig_with_opts +udp @10.53.0.5 recurse.example >dig.out.test$n
 open_connections "${TCP_ADDED}" || ret=1
 check_stats_added() {
   refresh_tcp_stats
   assert_int_equal "${TCP_CUR}" $((OLD_TCP_CUR + TCP_ADDED)) "current TCP clients count" || return 1
   assert_int_equal "${TCP_HIGH}" $((OLD_TCP_CUR + TCP_ADDED)) "TCP high-water value" || return 1
+  assert_int_equal "${REC_HIGH}" $((OLD_REC_HIGH + REC_ADDED)) "recursive high-water value" || return 1
 }
 retry 2 check_stats_added || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

@@ -38,6 +38,7 @@ def logquery(type, qname):
 # NS gets a unsigned response.
 # DNSKEY get a unsigned NODATA response.
 # A gets a signed response.
+# TXT gets a signed NODATA response without RRSIG.
 # All other types get a unsigned NODATA response.
 ############################################################################
 def create_response(msg):
@@ -72,6 +73,11 @@ def create_response(msg):
         r.answer.append(dns.rrset.from_text(qname, 1, IN, NS, "."))
     elif rrtype == SOA:
         r.answer.append(dns.rrset.from_text(qname, 1, IN, SOA, ". . 0 0 0 0 0"))
+    elif rrtype == TXT:
+        r.authority.append(dns.rrset.from_text(qname, 1, IN, SOA, ". . 0 0 0 0 0"))
+        r.authority.append(
+            dns.rrset.from_text(qname, 1, IN, NSEC, qname + " A NS SOA RRSIG NSEC")
+        )
     else:
         r.authority.append(dns.rrset.from_text(qname, 1, IN, SOA, ". . 0 0 0 0 0"))
     r.flags |= dns.flags.AA

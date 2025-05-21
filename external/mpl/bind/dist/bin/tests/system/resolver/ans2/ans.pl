@@ -110,9 +110,14 @@ for (;;) {
 	} elsif ($qname eq "net" && $qtype eq "NS") {
 		$packet->header->aa(1);
 		$packet->push("answer", new Net::DNS::RR("net 300 NS a.root-servers.nil."));
+	} elsif ($qname eq "noresponse.exampleudp.net") {
+		next;
 	} elsif ($qname =~ /example\.net/) {
 		$packet->push("authority", new Net::DNS::RR("example.net 300 NS ns.example.net"));
 		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname =~ /exampleudp\.net/) {
+		$packet->push("authority", new Net::DNS::RR("exampleudp.net 300 NS ns.exampleudp.net"));
+		$packet->push("additional", new Net::DNS::RR("ns.exampleudp.net 300 A 10.53.0.2"));
 	} elsif ($qname =~ /lame\.example\.org/) {
 		$packet->header->ad(0);
 		$packet->header->aa(0);

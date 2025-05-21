@@ -1,320 +1,97 @@
-# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-#
-# SPDX-License-Identifier: MPL-2.0
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
-# file, you can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# See the COPYRIGHT file distributed with this work for additional
-# information regarding copyright ownership.
+"""
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 
-from __future__ import print_function
-import os
-import sys
-import signal
-import socket
-import select
-from datetime import datetime, timedelta
-import time
-import functools
+SPDX-License-Identifier: MPL-2.0
 
-import dns, dns.message, dns.query, dns.flags
-from dns.rdatatype import *
-from dns.rdataclass import *
-from dns.rcode import *
-from dns.name import *
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0.  If a copy of the MPL was not distributed with this
+file, you can obtain one at https://mozilla.org/MPL/2.0/.
 
+See the COPYRIGHT file distributed with this work for additional
+information regarding copyright ownership.
+"""
 
-# Log query to file
-def logquery(type, qname):
-    with open("qlog", "a") as f:
-        f.write("%s %s\n", type, qname)
+from typing import AsyncGenerator
+
+import dns.rcode
+
+from isctest.asyncserver import (
+    AsyncDnsServer,
+    DnsResponseSend,
+    DomainHandler,
+    QueryContext,
+    ResponseAction,
+)
+
+from qmin_ans import DelayedResponseHandler, EntRcodeChanger, QueryLogHandler, log_query
 
 
-def endswith(domain, labels):
-    return domain.endswith("." + labels) or domain == labels
+class QueryLogger(QueryLogHandler):
+    domains = [
+        "1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.",
+        "icky.ptang.zoop.boing.good.",
+    ]
 
 
-############################################################################
-# Respond to a DNS query.
-# For good. it serves:
-# icky.ptang.zoop.boing.good. NS a.bit.longer.ns.name.
-# icky.icky.icky.ptang.zoop.boing.good. A 192.0.2.1
-# more.icky.icky.icky.ptang.zoop.boing.good. A 192.0.2.2
-# it responds properly (with NODATA empty response) to non-empty terminals
-#
-# For slow. it works the same as for good., but each response is delayed by 400 milliseconds
-#
-# For bad. it works the same as for good., but returns NXDOMAIN to non-empty terminals
-#
-# For ugly. it works the same as for good., but returns garbage to non-empty terminals
-#
-# For stale. it serves:
-# a.b.stale. IN TXT hooray (resolver did do qname minimization)
-############################################################################
-def create_response(msg):
-    m = dns.message.from_wire(msg)
-    qname = m.question[0].name.to_text()
-    lqname = qname.lower()
-    labels = lqname.split(".")
-    suffix = ""
+class StaleHandler(DomainHandler):
+    """
+    The test code relies on this server returning non-minimal (i.e. including
+    address records in the ADDITIONAL section) responses to NS queries for
+    `b.stale` and `a.b.stale`.  While this logic (returning non-minimal
+    responses to NS queries) could be implemented in AsyncDnsServer itself,
+    doing so breaks a lot of other checks in this system test.  Therefore, only
+    these two zones behave in this particular way, thanks to a custom response
+    handler implemented below.
+    """
 
-    # get qtype
-    rrtype = m.question[0].rdtype
-    typename = dns.rdatatype.to_text(rrtype)
-    if typename == "A" or typename == "AAAA":
-        typename = "ADDR"
-    bad = False
-    slow = False
-    ugly = False
+    domains = ["b.stale", "a.b.stale"]
 
-    # log this query
-    with open("query.log", "a") as f:
-        f.write("%s %s\n" % (typename, lqname))
-        print("%s %s" % (typename, lqname), end=" ")
+    async def get_responses(
+        self, qctx: QueryContext
+    ) -> AsyncGenerator[ResponseAction, None]:
+        log_query(qctx)
 
-    r = dns.message.make_response(m)
-    r.set_rcode(NOERROR)
+        if qctx.qtype == dns.rdatatype.NS:
+            assert qctx.zone
+            assert qctx.response.answer[0]
 
-    ip6req = False
+            for nameserver in qctx.response.answer[0]:
+                if not nameserver.target.is_subdomain(qctx.response.answer[0].name):
+                    continue
+                glue_a = qctx.zone.get_rrset(nameserver.target, dns.rdatatype.A)
+                if glue_a:
+                    qctx.response.additional.append(glue_a)
+                glue_aaaa = qctx.zone.get_rrset(nameserver.target, dns.rdatatype.AAAA)
+                if glue_aaaa:
+                    qctx.response.additional.append(glue_aaaa)
 
-    if endswith(lqname, "bad."):
-        bad = True
-        suffix = "bad."
-        lqname = lqname[:-4]
-    elif endswith(lqname, "ugly."):
-        ugly = True
-        suffix = "ugly."
-        lqname = lqname[:-5]
-    elif endswith(lqname, "good."):
-        suffix = "good."
-        lqname = lqname[:-5]
-    elif endswith(lqname, "slow."):
-        slow = True
-        suffix = "slow."
-        lqname = lqname[:-5]
-    elif endswith(lqname, "1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa."):
-        ip6req = True
-    elif endswith(lqname, "b.stale."):
-        if lqname == "a.b.stale.":
-            if rrtype == TXT:
-                # Direct query.
-                r.answer.append(dns.rrset.from_text(lqname, 1, IN, TXT, "hooray"))
-                r.flags |= dns.flags.AA
-            elif rrtype == NS:
-                # NS a.b.
-                r.answer.append(dns.rrset.from_text(lqname, 1, IN, NS, "ns.a.b.stale."))
-                r.additional.append(
-                    dns.rrset.from_text("ns.a.b.stale.", 1, IN, A, "10.53.0.3")
-                )
-                r.flags |= dns.flags.AA
-            elif rrtype == SOA:
-                # SOA a.b.
-                r.answer.append(
-                    dns.rrset.from_text(
-                        lqname, 1, IN, SOA, "a.b.stale. hostmaster.a.b.stale. 1 2 3 4 5"
-                    )
-                )
-                r.flags |= dns.flags.AA
-            else:
-                # NODATA.
-                r.authority.append(
-                    dns.rrset.from_text(
-                        lqname, 1, IN, SOA, "a.b.stale. hostmaster.a.b.stale. 1 2 3 4 5"
-                    )
-                )
-        elif lqname == "b.stale.":
-            if rrtype == NS:
-                # NS b.
-                r.answer.append(dns.rrset.from_text(lqname, 1, IN, NS, "ns.b.stale."))
-                r.additional.append(
-                    dns.rrset.from_text("ns.b.stale.", 1, IN, A, "10.53.0.4")
-                )
-                r.flags |= dns.flags.AA
-            elif rrtype == SOA:
-                # SOA b.
-                r.answer.append(
-                    dns.rrset.from_text(
-                        lqname, 1, IN, SOA, "b.stale. hostmaster.b.stale. 1 2 3 4 5"
-                    )
-                )
-                r.flags |= dns.flags.AA
-            else:
-                # NODATA.
-                r.authority.append(
-                    dns.rrset.from_text(
-                        lqname, 1, IN, SOA, "b.stale. hostmaster.b.stale. 1 2 3 4 5"
-                    )
-                )
-        else:
-            r.authority.append(
-                dns.rrset.from_text(
-                    lqname, 1, IN, SOA, "b.stale. hostmaster.b.stale. 1 2 3 4 5"
-                )
-            )
-            r.set_rcode(NXDOMAIN)
-            # NXDOMAIN.
-        return r
-    else:
-        r.set_rcode(REFUSED)
-        return r
-
-    # Good/bad differs only in how we treat non-empty terminals
-    if lqname == "icky.icky.icky.ptang.zoop.boing." and rrtype == A:
-        r.answer.append(dns.rrset.from_text(lqname + suffix, 1, IN, A, "192.0.2.1"))
-        r.flags |= dns.flags.AA
-    elif lqname == "more.icky.icky.icky.ptang.zoop.boing." and rrtype == A:
-        r.answer.append(dns.rrset.from_text(lqname + suffix, 1, IN, A, "192.0.2.2"))
-        r.flags |= dns.flags.AA
-    elif lqname == "icky.ptang.zoop.boing." and rrtype == NS:
-        r.answer.append(
-            dns.rrset.from_text(
-                lqname + suffix, 1, IN, NS, "a.bit.longer.ns.name." + suffix
-            )
-        )
-        r.flags |= dns.flags.AA
-    elif endswith(lqname, "icky.ptang.zoop.boing."):
-        r.authority.append(
-            dns.rrset.from_text(
-                "icky.ptang.zoop.boing." + suffix,
-                1,
-                IN,
-                SOA,
-                "ns2." + suffix + " hostmaster.arpa. 2018050100 1 1 1 1",
-            )
-        )
-        if bad or not endswith("more.icky.icky.icky.ptang.zoop.boing.", lqname):
-            r.set_rcode(NXDOMAIN)
-        if ugly:
-            r.set_rcode(FORMERR)
-    elif ip6req:
-        r.flags |= dns.flags.AA
-        if (
-            lqname
-            == "test1.test2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa."
-            and rrtype == TXT
-        ):
-            r.answer.append(
-                dns.rrset.from_text(
-                    "test1.test2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.",
-                    1,
-                    IN,
-                    TXT,
-                    "long_ip6_name",
-                )
-            )
-        elif endswith(
-            "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.0.9.4.1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.",
-            lqname,
-        ):
-            # NODATA answer
-            r.authority.append(
-                dns.rrset.from_text(
-                    "1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.",
-                    60,
-                    IN,
-                    SOA,
-                    "ns4.good. hostmaster.arpa. 2018050100 120 30 320 16",
-                )
-            )
-        else:
-            # NXDOMAIN
-            r.authority.append(
-                dns.rrset.from_text(
-                    "1.1.1.1.8.2.6.0.1.0.0.2.ip6.arpa.",
-                    60,
-                    IN,
-                    SOA,
-                    "ns4.good. hostmaster.arpa. 2018050100 120 30 320 16",
-                )
-            )
-            r.set_rcode(NXDOMAIN)
-    else:
-        r.set_rcode(REFUSED)
-
-    if slow:
-        time.sleep(0.4)
-    return r
+        yield DnsResponseSend(qctx.response)
 
 
-def sigterm(signum, frame):
-    print("Shutting down now...")
-    os.remove("ans.pid")
-    running = False
-    sys.exit(0)
+class IckyPtangZoopBoingBadHandler(EntRcodeChanger):
+    domains = ["icky.ptang.zoop.boing.bad."]
+    rcode = dns.rcode.NXDOMAIN
 
 
-############################################################################
-# Main
-#
-# Set up responder and control channel, open the pid file, and start
-# the main loop, listening for queries on the query channel or commands
-# on the control channel and acting on them.
-############################################################################
-ip4 = "10.53.0.4"
-ip6 = "fd92:7065:b8e:ffff::4"
+class IckyPtangZoopBoingUglyHandler(EntRcodeChanger):
+    domains = ["icky.ptang.zoop.boing.ugly."]
+    rcode = dns.rcode.FORMERR
 
-try:
-    port = int(os.environ["PORT"])
-except:
-    port = 5300
 
-query4_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-query4_socket.bind((ip4, port))
+class IckyPtangZoopBoingSlowHandler(DelayedResponseHandler):
+    domains = ["icky.ptang.zoop.boing.slow."]
+    delay = 0.4
 
-havev6 = True
-try:
-    query6_socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-    try:
-        query6_socket.bind((ip6, port))
-    except:
-        query6_socket.close()
-        havev6 = False
-except:
-    havev6 = False
 
-signal.signal(signal.SIGTERM, sigterm)
+def main() -> None:
+    server = AsyncDnsServer()
+    server.install_response_handler(QueryLogger())
+    server.install_response_handler(StaleHandler())
+    server.install_response_handler(IckyPtangZoopBoingBadHandler())
+    server.install_response_handler(IckyPtangZoopBoingUglyHandler())
+    server.install_response_handler(IckyPtangZoopBoingSlowHandler())
+    server.run()
 
-f = open("ans.pid", "w")
-pid = os.getpid()
-print(pid, file=f)
-f.close()
 
-running = True
-
-print("Listening on %s port %d" % (ip4, port))
-if havev6:
-    print("Listening on %s port %d" % (ip6, port))
-print("Ctrl-c to quit")
-
-if havev6:
-    input = [query4_socket, query6_socket]
-else:
-    input = [query4_socket]
-
-while running:
-    try:
-        inputready, outputready, exceptready = select.select(input, [], [])
-    except select.error as e:
-        break
-    except socket.error as e:
-        break
-    except KeyboardInterrupt:
-        break
-
-    for s in inputready:
-        if s == query4_socket or s == query6_socket:
-            print(
-                "Query received on %s" % (ip4 if s == query4_socket else ip6), end=" "
-            )
-            # Handle incoming queries
-            msg = s.recvfrom(65535)
-            rsp = create_response(msg[0])
-            if rsp:
-                print(dns.rcode.to_text(rsp.rcode()))
-                s.sendto(rsp.to_wire(), msg[1])
-            else:
-                print("NO RESPONSE")
-    if not running:
-        break
+if __name__ == "__main__":
+    main()

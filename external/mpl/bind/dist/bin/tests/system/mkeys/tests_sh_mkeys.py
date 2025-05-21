@@ -39,6 +39,7 @@ pytestmark = [
             "ns1/root.db.tmp",
             "ns1/zone.key",
             "ns2/managed-keys.bind",
+            "ns2/managed1.conf",
             "ns3/broken.conf",
             "ns3/managed-keys.bind",
             "ns4/nope",

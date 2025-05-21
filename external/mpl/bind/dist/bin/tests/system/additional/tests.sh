@@ -279,7 +279,7 @@ n=$((n + 1))
 echo_i "testing with 'minimal-any no;' ($n)"
 ret=0
 $DIG $DIGOPTS -t ANY www.rt.example @10.53.0.1 >dig.out.$n || ret=1
-grep "ANSWER: 3, AUTHORITY: 2, ADDITIONAL: 2" dig.out.$n >/dev/null || ret=1
+grep "ANSWER: 3, AUTHORITY: 2, ADDITIONAL: 1" dig.out.$n >/dev/null || ret=1
 if [ $ret -eq 1 ]; then
   echo_i "failed"
   status=$((status + 1))

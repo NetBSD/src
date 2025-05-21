@@ -94,7 +94,7 @@ target_triplet = @target@
 @HOST_MACOS_TRUE@am__append_1 = \
 @HOST_MACOS_TRUE@	-Wl,-flat_namespace
 
-@HAVE_CMOCKA_TRUE@am__append_2 = isc dns ns isccfg irs bench
+@HAVE_CMOCKA_TRUE@am__append_2 = isc dns ns isccfg bench
 check_PROGRAMS =
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -173,7 +173,7 @@ am__define_uniq_tagged_files = \
   unique=`for i in $$list; do \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
-DIST_SUBDIRS = libtest isc dns ns isccfg irs bench
+DIST_SUBDIRS = libtest isc dns ns isccfg bench
 am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(srcdir)/unit-test-driver.sh.in $(top_srcdir)/Makefile.top
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)

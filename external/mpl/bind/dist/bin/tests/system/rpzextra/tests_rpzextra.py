@@ -102,6 +102,23 @@ def test_rpz_passthru_logging():
         dns.rrset.from_text("allowed.", 300, "IN", "A", "10.53.0.2")
     ]
 
+    # Should also generate a log entry into rpz_passthru.txt
+    msg_allowed_any = dns.message.make_query("allowed.", "ANY")
+    res_allowed_any = isctest.query.udp(
+        msg_allowed_any,
+        resolver_ip,
+        source="10.53.0.1",
+        expected_rcode=dns.rcode.NOERROR,
+    )
+    assert res_allowed_any.answer == [
+        dns.rrset.from_text("allowed.", 300, "IN", "NS", "ns1.allowed."),
+        dns.rrset.from_text("allowed.", 300, "IN", "A", "10.53.0.2"),
+    ]
+    # The comparison above doesn't compare the TTL values, and we want to
+    # make sure that the "passthru" rpz doesn't cap the TTL with max-policy-ttl.
+    assert res_allowed_any.answer[0].ttl > 200
+    assert res_allowed_any.answer[1].ttl > 200
+
     # baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
     # Should generate a log entry into rpz.txt
     msg_not_allowed = dns.message.make_query("baddomain.", "A")

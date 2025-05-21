@@ -45,6 +45,11 @@ The list of known issues affecting the latest version in the 9.20 branch can be
 found at
 https://gitlab.isc.org/isc-projects/bind9/-/wikis/Known-Issues-in-BIND-9.20
 
+.. include:: ../notes/notes-9.20.9.rst
+.. include:: ../notes/notes-9.20.8.rst
+.. include:: ../notes/notes-9.20.7.rst
+.. include:: ../notes/notes-9.20.6.rst
+.. include:: ../notes/notes-9.20.5.rst
 .. include:: ../notes/notes-9.20.4.rst
 .. include:: ../notes/notes-9.20.3.rst
 .. include:: ../notes/notes-9.20.2.rst

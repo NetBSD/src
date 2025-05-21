@@ -19,6 +19,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ans*/ans.run",
         "ans*/query.log",
         "ns1/named_dump.db*",
+        "ns4/named.cookiealwaysvalid",
     ]
 )
 

@@ -23,7 +23,7 @@ import generic
 requests = pytest.importorskip("requests")
 
 pytestmark = [
-    isctest.mark.have_json_c,
+    isctest.mark.with_json_c,
     pytest.mark.extra_artifacts(
         [
             "ns2/*.jnl",

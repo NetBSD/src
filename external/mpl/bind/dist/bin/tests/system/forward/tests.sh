@@ -21,7 +21,7 @@ dig_with_opts() (
 )
 
 sendcmd() (
-  send "$1" "$EXTRAPORT1"
+  dig_with_opts "@${1}" "${2}._control." TXT +time=5 +tries=1 +tcp >/dev/null 2>&1
 )
 
 rndccmd() {
@@ -259,7 +259,7 @@ n=$((n + 1))
 echo_i "checking that a forwarder timeout prevents it from being reused in the same fetch context ($n)"
 ret=0
 # Make ans6 receive queries without responding to them.
-echo "//" | sendcmd 10.53.0.6
+sendcmd 10.53.0.6 "disable.send-responses"
 # Query for a record in a zone which is forwarded to a non-responding forwarder
 # and is delegated from the root to check whether the forwarder will be retried
 # when a delegation is encountered after falling back to full recursive
@@ -270,6 +270,7 @@ dig_with_opts txt.example7. txt @$f1 >dig.out.$n.f1 || ret=1
 start_pattern="sending packet to 10\.53\.0\.6"
 retry_quiet 5 wait_for_log ns3/named.run "$start_pattern"
 check_sent 1 ns3/named.run "$start_pattern" ";txt\.example7\.[[:space:]]*IN[[:space:]]*TXT$" || ret=1
+sendcmd 10.53.0.6 "enable.send-responses"
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -309,15 +310,6 @@ grep "status: SERVFAIL" dig.out.$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-# Prepare ans6 for the chasing DS tests.
-sendcmd 10.53.0.6 <<EOF
-/ns1.sld.tld/A/
-300 A 10.53.0.2
-/sld.tld/NS/
-300 NS ns1.sld.tld.
-/sld.tld/
-EOF
-
 n=$((n + 1))
 echo_i "checking switch from forwarding to normal resolution while chasing DS ($n)"
 ret=0
@@ -332,7 +324,7 @@ status=$((status + ret))
 
 # See [GL #3129].
 # Enable silent mode for ans11.
-echo "1" | sendcmd 10.53.0.11
+sendcmd 10.53.0.11 "disable.send-responses"
 n=$((n + 1))
 echo_i "checking the handling of hung DS fetch while chasing DS ($n)"
 ret=0
@@ -346,7 +338,7 @@ nextpart ns3/named.run >/dev/null
 dig_with_opts @$f1 xxx.yyy.sld.tld ds >dig.out.$n.f1 || ret=1
 grep "status: SERVFAIL" dig.out.$n.f1 >/dev/null || ret=1
 # Disable silent mode for ans11.
-echo "0" | sendcmd 10.53.0.11
+sendcmd 10.53.0.11 "enable.send-responses"
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

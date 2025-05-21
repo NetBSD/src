@@ -589,6 +589,26 @@ EOF
 
 n=$((n + 1))
 ret=0
+i=0
+echo_i "check that nsupdate does not hang when processing a large number of updates interactively ($n)"
+{
+  echo "server 10.53.0.3 ${PORT}"
+  echo "zone many-updates.test."
+  while [ $i -le 2000 ]; do
+    echo "update add host$i.many-updates.test. 3600 IN TXT \"host $i\""
+    i=$((i + 1))
+  done
+  echo "send"
+} | $NSUPDATE
+echo_i "query for host2000.many-updates.test ($n)"
+retry_quiet 5 has_positive_response host2000.many-updates.test TXT 10.53.0.3 || ret=1
+[ $ret = 0 ] || {
+  echo_i "failed"
+  status=1
+}
+
+n=$((n + 1))
+ret=0
 echo_i "start NSEC3PARAM changes via UPDATE on a unsigned zone test ($n)"
 $NSUPDATE <<EOF
 server 10.53.0.3 ${PORT}
