@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.h,v 1.2 2025/01/26 16:25:28 christos Exp $	*/
+/*	$NetBSD: qp.h,v 1.3 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -734,23 +734,6 @@ dns_qpmulti_query(dns_qpmulti_t *multi, dns_qpread_t *qpr);
  *
  * The `dns_qpmulti_query()` function must be called from an isc_loop
  * thread and its 'qpr' argument must be allocated on the stack.
- *
- * Requires:
- * \li  `multi` is a pointer to a valid multi-threaded qp-trie
- * \li  `qpr != NULL`
- *
- * Returns:
- * \li  `qpr` is a valid read-only qp-trie handle
- */
-
-void
-dns_qpmulti_lockedread(dns_qpmulti_t *multi, dns_qpread_t *qpr);
-/*%<
- * Start a read-only transaction that takes the `dns_qpmulti_t` mutex.
- *
- * The `dns_qpmulti_lockedread()` function must NOT be called from an
- * isc_loop thread. We keep query and read transactions separate to
- * avoid accidentally taking or failing to take the mutex.
  *
  * Requires:
  * \li  `multi` is a pointer to a valid multi-threaded qp-trie

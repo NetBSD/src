@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.15 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.16 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -109,9 +109,7 @@ dns_name_isvalid(const dns_name_t *name) {
 		return false;
 	}
 
-	if (name->length > DNS_NAME_MAXWIRE ||
-	    name->labels > DNS_NAME_MAXLABELS)
-	{
+	if (name->labels > DNS_NAME_MAXLABELS) {
 		return false;
 	}
 
@@ -618,7 +616,7 @@ dns_name_getlabel(const dns_name_t *name, unsigned int n, dns_label_t *label) {
 	SETUP_OFFSETS(name, offsets, odata);
 
 	label->base = &name->ndata[offsets[n]];
-	if (n == name->labels - 1) {
+	if (n == (unsigned int)name->labels - 1) {
 		label->length = name->length - offsets[n];
 	} else {
 		label->length = offsets[n + 1] - offsets[n];

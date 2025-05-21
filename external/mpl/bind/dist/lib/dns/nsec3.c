@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.14 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.15 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -781,7 +781,7 @@ addnsec3:
 		/*
 		 * Create the node if it doesn't exist and hold
 		 * a reference to it until we have added the NSEC3
-		 * or we discover we don't need to add make a change.
+		 * or we discover we don't need to make a change.
 		 */
 		CHECK(dns_db_findnsec3node(db, hashname, true, &newnode));
 		result = dns_db_findrdataset(db, newnode, version,
@@ -797,6 +797,17 @@ addnsec3:
 			if (result != ISC_R_NOMORE) {
 				goto failure;
 			}
+		} else if (result == ISC_R_NOTFOUND) {
+			/*
+			 * If we didn't find an NSEC3 in the node,
+			 * then the node must have been newly created
+			 * by dns_db_findnsec3node(). The iterator
+			 * needs to be updated so we can seek for
+			 * the node's predecessor.
+			 */
+			dns_dbiterator_destroy(&dbit);
+			CHECK(dns_db_createiterator(db, DNS_DB_NSEC3ONLY,
+						    &dbit));
 		}
 
 		/*
@@ -1001,7 +1012,7 @@ void
 dns_nsec3param_toprivate(dns_rdata_t *src, dns_rdata_t *target,
 			 dns_rdatatype_t privatetype, unsigned char *buf,
 			 size_t buflen) {
-	REQUIRE(buflen >= src->length + 1);
+	REQUIRE(buflen >= (unsigned int)src->length + 1);
 
 	REQUIRE(DNS_RDATA_INITIALIZED(target));
 

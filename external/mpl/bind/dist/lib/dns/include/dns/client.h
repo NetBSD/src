@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.10 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.11 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -187,6 +187,19 @@ dns_client_setmaxrestarts(dns_client_t *client, uint8_t max_restarts);
  *\li	'client' is a valid client.
 
  *\li	'max_restarts' is greater than 0.
+ */
+
+void
+dns_client_setmaxqueries(dns_client_t *client, uint8_t max_queries);
+/*%<
+ * Set the number of permissible outgoing queries before we give up,
+ * This defaults to 200.
+ *
+ * Requires:
+ *
+ *\li	'client' is a valid client.
+
+ *\li	'max_queries' is greater than 0.
  */
 
 typedef void (*dns_client_resolve_cb)(dns_client_t     *client,

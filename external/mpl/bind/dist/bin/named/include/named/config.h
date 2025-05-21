@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 2025/01/26 16:24:34 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.10 2025/05/21 14:47:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,9 +59,8 @@ named_config_getremotesdef(const cfg_obj_t *cctx, const char *list,
 			   const char *name, const cfg_obj_t **ret);
 
 isc_result_t
-named_config_getipandkeylist(const cfg_obj_t *config, const char *listtype,
-			     const cfg_obj_t *list, isc_mem_t *mctx,
-			     dns_ipkeylist_t *ipkl);
+named_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
+			     isc_mem_t *mctx, dns_ipkeylist_t *ipkl);
 
 isc_result_t
 named_config_getport(const cfg_obj_t *config, const char *type,

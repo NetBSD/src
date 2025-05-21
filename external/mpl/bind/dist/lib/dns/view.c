@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.18 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1626,9 +1626,7 @@ dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
 		return result;
 	}
 
-	if (ntap != NULL) {
-		*ntap = false;
-	}
+	SET_IF_NOT_NULL(ntap, false);
 	if (checknta && secure && view->ntatable_priv != NULL &&
 	    dns_ntatable_covered(view->ntatable_priv, now, name, anchor))
 	{
@@ -2472,4 +2470,12 @@ dns_view_setmaxrestarts(dns_view_t *view, uint8_t max_restarts) {
 	REQUIRE(max_restarts > 0);
 
 	view->max_restarts = max_restarts;
+}
+
+void
+dns_view_setmaxqueries(dns_view_t *view, uint16_t max_queries) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(max_queries > 0);
+
+	view->max_queries = max_queries;
 }

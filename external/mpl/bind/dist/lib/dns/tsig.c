@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.14 2025/01/26 16:25:25 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.15 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -207,28 +207,6 @@ adjust_lru(dns_tsigkey_t *tkey) {
 	}
 }
 
-static const dns_name_t *
-namefromalg(dst_algorithm_t alg) {
-	switch (alg) {
-	case DST_ALG_HMACMD5:
-		return dns_tsig_hmacmd5_name;
-	case DST_ALG_HMACSHA1:
-		return dns_tsig_hmacsha1_name;
-	case DST_ALG_HMACSHA224:
-		return dns_tsig_hmacsha224_name;
-	case DST_ALG_HMACSHA256:
-		return dns_tsig_hmacsha256_name;
-	case DST_ALG_HMACSHA384:
-		return dns_tsig_hmacsha384_name;
-	case DST_ALG_HMACSHA512:
-		return dns_tsig_hmacsha512_name;
-	case DST_ALG_GSSAPI:
-		return dns_tsig_gssapi_name;
-	default:
-		return NULL;
-	}
-}
-
 isc_result_t
 dns_tsigkey_createfromkey(const dns_name_t *name, dst_algorithm_t algorithm,
 			  dst_key_t *dstkey, bool generated, bool restored,
@@ -248,6 +226,8 @@ dns_tsigkey_createfromkey(const dns_name_t *name, dst_algorithm_t algorithm,
 		.restored = restored,
 		.inception = inception,
 		.expire = expire,
+		.alg = algorithm,
+		.algname = DNS_NAME_INITEMPTY,
 		.link = ISC_LINK_INITIALIZER,
 	};
 
@@ -264,8 +244,6 @@ dns_tsigkey_createfromkey(const dns_name_t *name, dst_algorithm_t algorithm,
 		result = DNS_R_BADALG;
 		goto cleanup_name;
 	}
-
-	tkey->algorithm = namefromalg(algorithm);
 
 	if (creator != NULL) {
 		tkey->creator = isc_mem_get(mctx, sizeof(dns_name_t));
@@ -450,7 +428,8 @@ dump_key(dns_tsigkey_t *tkey, FILE *fp) {
 
 	dns_name_format(tkey->name, namestr, sizeof(namestr));
 	dns_name_format(tkey->creator, creatorstr, sizeof(creatorstr));
-	dns_name_format(tkey->algorithm, algorithmstr, sizeof(algorithmstr));
+	dns_name_format(dns_tsigkey_algorithm(tkey), algorithmstr,
+			sizeof(algorithmstr));
 	result = dst_key_dump(tkey->key, tkey->mctx, &buffer, &length);
 	if (result == ISC_R_SUCCESS) {
 		fprintf(fp, "%s %s %u %u %s %.*s\n", namestr, creatorstr,
@@ -623,7 +602,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	};
 
 	dns_name_init(&tsig.algorithm, NULL);
-	dns_name_clone(key->algorithm, &tsig.algorithm);
+	dns_name_clone(dns_tsigkey_algorithm(key), &tsig.algorithm);
 
 	isc_buffer_init(&databuf, data, sizeof(data));
 
@@ -980,12 +959,17 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		}
 		if (result != ISC_R_SUCCESS) {
 			msg->tsigstatus = dns_tsigerror_badkey;
-			result = dns_tsigkey_create(
-				keyname, dns__tsig_algfromname(&tsig.algorithm),
-				NULL, 0, mctx, &msg->tsigkey);
+			alg = dns__tsig_algfromname(&tsig.algorithm);
+			result = dns_tsigkey_create(keyname, alg, NULL, 0, mctx,
+						    &msg->tsigkey);
 			if (result != ISC_R_SUCCESS) {
 				return result;
 			}
+			if (alg == DST_ALG_UNKNOWN) {
+				dns_name_clone(&tsig.algorithm,
+					       &msg->tsigkey->algname);
+			}
+
 			tsig_log(msg->tsigkey, 2, "unknown key");
 			return DNS_R_TSIGVERIFYFAILURE;
 		}
@@ -1109,7 +1093,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		/*
 		 * Digest the key algorithm.
 		 */
-		dns_name_toregion(tsigkey->algorithm, &r);
+		dns_name_toregion(dns_tsigkey_algorithm(tsigkey), &r);
 		result = dst_context_adddata(ctx, &r);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup_context;
@@ -1557,7 +1541,8 @@ again:
 		RWUNLOCK(&ring->lock, locktype);
 		return result;
 	}
-	if (algorithm != NULL && !dns_name_equal(key->algorithm, algorithm)) {
+
+	if (algorithm != NULL && key->alg != dns__tsig_algfromname(algorithm)) {
 		RWUNLOCK(&ring->lock, locktype);
 		return ISC_R_NOTFOUND;
 	}
@@ -1581,6 +1566,39 @@ again:
 	adjust_lru(key);
 	*tsigkey = key;
 	return ISC_R_SUCCESS;
+}
+
+const dns_name_t *
+dns_tsigkey_algorithm(dns_tsigkey_t *tkey) {
+	REQUIRE(VALID_TSIGKEY(tkey));
+
+	switch (tkey->alg) {
+	case DST_ALG_HMACMD5:
+		return dns_tsig_hmacmd5_name;
+	case DST_ALG_HMACSHA1:
+		return dns_tsig_hmacsha1_name;
+	case DST_ALG_HMACSHA224:
+		return dns_tsig_hmacsha224_name;
+	case DST_ALG_HMACSHA256:
+		return dns_tsig_hmacsha256_name;
+	case DST_ALG_HMACSHA384:
+		return dns_tsig_hmacsha384_name;
+	case DST_ALG_HMACSHA512:
+		return dns_tsig_hmacsha512_name;
+	case DST_ALG_GSSAPI:
+		return dns_tsig_gssapi_name;
+
+	case DST_ALG_UNKNOWN:
+		/*
+		 * If the tsigkey object was created with an
+		 * unknown algorithm, then we cloned
+		 * the algorithm name here.
+		 */
+		return &tkey->algname;
+
+	default:
+		UNREACHABLE();
+	}
 }
 
 void

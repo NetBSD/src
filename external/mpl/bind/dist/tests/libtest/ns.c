@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.3 2025/01/26 16:25:51 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.4 2025/05/21 14:48:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -359,15 +359,9 @@ extract_qctx(void *arg, void *data, isc_result_t *resultp) {
 	 * gets unwound.
 	 */
 	qctx = isc_mem_get(mctx, sizeof(*qctx));
-	if (qctx != NULL) {
-		memmove(qctx, (query_ctx_t *)arg, sizeof(*qctx));
-	}
+	memmove(qctx, (query_ctx_t *)arg, sizeof(*qctx));
 
 	qctxp = (query_ctx_t **)data;
-	/*
-	 * If memory allocation failed, the supplied pointer will simply be set
-	 * to NULL.  We rely on the user of this hook to react properly.
-	 */
 	*qctxp = qctx;
 	*resultp = ISC_R_UNSET;
 

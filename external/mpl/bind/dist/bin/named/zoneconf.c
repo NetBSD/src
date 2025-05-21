@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.17 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.18 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,13 +62,6 @@ typedef enum {
 	allow_update,
 	allow_update_forwarding
 } acl_type_t;
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
 
 #define CHECK(x)                             \
 	do {                                 \
@@ -560,9 +553,12 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 	isc_region_t region;
 
 	/* Create the DB beforehand */
-	RETERR(dns_db_create(mctx, dbtype, dns_zone_getorigin(zone),
-			     dns_dbtype_stub, dns_zone_getclass(zone), 0, NULL,
-			     &db));
+	result = dns_db_create(mctx, dbtype, dns_zone_getorigin(zone),
+			       dns_dbtype_stub, dns_zone_getclass(zone), 0,
+			       NULL, &db);
+	if (result != ISC_R_SUCCESS) {
+		return result;
+	}
 
 	dns_rdataset_init(&rdataset);
 
@@ -1288,8 +1284,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_ipkeylist_t ipkl;
 			dns_ipkeylist_init(&ipkl);
 
-			CHECK(named_config_getipandkeylist(config, "primaries",
-							   obj, mctx, &ipkl));
+			CHECK(named_config_getipandkeylist(config, obj, mctx,
+							   &ipkl));
 			dns_zone_setalsonotify(zone, ipkl.addrs, ipkl.sources,
 					       ipkl.keys, ipkl.tlss,
 					       ipkl.count);
@@ -1301,22 +1297,22 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = named_config_get(maps, "parental-source", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setparentalsrc4(zone, cfg_obj_assockaddr(obj)));
+		dns_zone_setparentalsrc4(zone, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "parental-source-v6", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setparentalsrc6(zone, cfg_obj_assockaddr(obj)));
+		dns_zone_setparentalsrc6(zone, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "notify-source", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setnotifysrc4(zone, cfg_obj_assockaddr(obj)));
+		dns_zone_setnotifysrc4(zone, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "notify-source-v6", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setnotifysrc6(zone, cfg_obj_assockaddr(obj)));
+		dns_zone_setnotifysrc6(zone, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "notify-to-soa", &obj);
@@ -1644,9 +1640,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		if (parentals != NULL) {
 			dns_ipkeylist_t ipkl;
 			dns_ipkeylist_init(&ipkl);
-			CHECK(named_config_getipandkeylist(
-				config, "parental-agents", parentals, mctx,
-				&ipkl));
+			CHECK(named_config_getipandkeylist(config, parentals,
+							   mctx, &ipkl));
 			dns_zone_setparentals(zone, ipkl.addrs, ipkl.sources,
 					      ipkl.keys, ipkl.tlss, ipkl.count);
 			dns_ipkeylist_clear(mctx, &ipkl);
@@ -1818,7 +1813,7 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		    dns_name_equal(dns_zone_getorigin(zone), dns_rootname))
 		{
 			result = named_config_getremotesdef(
-				named_g_config, "primaries",
+				named_g_config, "remote-servers",
 				DEFAULT_IANA_ROOT_ZONE_PRIMARIES, &obj);
 			CHECK(result);
 		}
@@ -1826,8 +1821,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_ipkeylist_t ipkl;
 			dns_ipkeylist_init(&ipkl);
 
-			CHECK(named_config_getipandkeylist(config, "primaries",
-							   obj, mctx, &ipkl));
+			CHECK(named_config_getipandkeylist(config, obj, mctx,
+							   &ipkl));
 			dns_zone_setprimaries(mayberaw, ipkl.addrs,
 					      ipkl.sources, ipkl.keys,
 					      ipkl.tlss, ipkl.count);
@@ -1846,6 +1841,33 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			multi = cfg_obj_asboolean(obj);
 		}
 		dns_zone_setoption(mayberaw, DNS_ZONEOPT_MULTIMASTER, multi);
+
+		obj = NULL;
+		result = named_config_get(maps, "min-transfer-rate-in", &obj);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+		uint32_t traffic_bytes =
+			cfg_obj_asuint32(cfg_tuple_get(obj, "traffic_bytes"));
+		uint32_t time_minutes =
+			cfg_obj_asuint32(cfg_tuple_get(obj, "time_minutes"));
+		if (traffic_bytes == 0) {
+			cfg_obj_log(obj, named_g_lctx, ISC_LOG_ERROR,
+				    "zone '%s': 'min-transfer-rate-in' bytes"
+				    "value can not be '0'",
+				    zname);
+			CHECK(ISC_R_FAILURE);
+		}
+		/* Max. 28 days (in minutes). */
+		const unsigned int time_minutes_max = 28 * 24 * 60;
+		if (time_minutes < 1 || time_minutes > time_minutes_max) {
+			cfg_obj_log(obj, named_g_lctx, ISC_LOG_ERROR,
+				    "zone '%s': 'min-transfer-rate-in' minutes"
+				    "value is out of range (1..%u)",
+				    zname, time_minutes_max);
+			CHECK(ISC_R_FAILURE);
+		}
+		dns_zone_setminxfrratein(mayberaw, traffic_bytes,
+					 transferinsecs ? time_minutes
+							: time_minutes * 60);
 
 		obj = NULL;
 		result = named_config_get(maps, "max-transfer-time-in", &obj);
@@ -1884,14 +1906,12 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = named_config_get(maps, "transfer-source", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setxfrsource4(mayberaw,
-					     cfg_obj_assockaddr(obj)));
+		dns_zone_setxfrsource4(mayberaw, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "transfer-source-v6", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
-		CHECK(dns_zone_setxfrsource6(mayberaw,
-					     cfg_obj_assockaddr(obj)));
+		dns_zone_setxfrsource6(mayberaw, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		(void)named_config_get(maps, "try-tcp-refresh", &obj);

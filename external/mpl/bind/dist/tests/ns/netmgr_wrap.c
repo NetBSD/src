@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr_wrap.c,v 1.2 2025/01/26 16:25:51 christos Exp $	*/
+/*	$NetBSD: netmgr_wrap.c,v 1.3 2025/05/21 14:48:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -97,5 +97,11 @@ isc_nmhandle_detach(isc_nmhandle_t **handlep) {
 		client_refs[i]);
 #endif
 
+	return;
+}
+
+void
+ns_client_error(ns_client_t *client ISC_ATTR_UNUSED,
+		isc_result_t result ISC_ATTR_UNUSED) {
 	return;
 }

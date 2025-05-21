@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.13 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.14 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,6 +82,7 @@ struct rtype rtypes[] = { { 1, "has address" },
 			  { 25, "has key" },
 			  { 28, "has IPv6 address" },
 			  { 29, "location" },
+			  { dns_rdatatype_https, "has HTTP service bindings" },
 			  { 0, NULL } };
 
 static char *
@@ -454,6 +455,16 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 			strlcpy(lookup->textname, namestr,
 				sizeof(lookup->textname));
 			lookup->rdtype = dns_rdatatype_mx;
+			lookup->rdtypeset = true;
+			lookup->origin = NULL;
+			lookup->retries = tries;
+			ISC_LIST_APPEND(lookup_list, lookup, link);
+		}
+		lookup = clone_lookup(query->lookup, false);
+		if (lookup != NULL) {
+			strlcpy(lookup->textname, namestr,
+				sizeof(lookup->textname));
+			lookup->rdtype = dns_rdatatype_https;
 			lookup->rdtypeset = true;
 			lookup->origin = NULL;
 			lookup->retries = tries;

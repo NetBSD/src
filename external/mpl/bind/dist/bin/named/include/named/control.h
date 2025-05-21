@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.9 2025/01/26 16:24:34 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.10 2025/05/21 14:47:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,7 @@
 #define NAMED_COMMAND_FREEZE	   "freeze"
 #define NAMED_COMMAND_HALT	   "halt"
 #define NAMED_COMMAND_LOADKEYS	   "loadkeys"
+#define NAMED_COMMAND_MEMPROF	   "memprof"
 #define NAMED_COMMAND_MKEYS	   "managed-keys"
 #define NAMED_COMMAND_MODZONE	   "modzone"
 #define NAMED_COMMAND_NOTIFY	   "notify"
@@ -55,6 +56,7 @@
 #define NAMED_COMMAND_RECURSING	   "recursing"
 #define NAMED_COMMAND_REFRESH	   "refresh"
 #define NAMED_COMMAND_RELOAD	   "reload"
+#define NAMED_COMMAND_RESETSTATS   "reset-stats"
 #define NAMED_COMMAND_RESPONSELOG  "responselog"
 #define NAMED_COMMAND_RETRANSFER   "retransfer"
 #define NAMED_COMMAND_SCAN	   "scan"

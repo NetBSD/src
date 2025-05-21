@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.2 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.3 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1340,25 +1340,49 @@ check_options(const cfg_obj_t *options, const cfg_obj_t *config,
 		 * Warn if query-source or query-source-v6 options specify
 		 * a port, and fail if they specify the DNS port.
 		 */
+		unsigned int none_found = false;
+
 		for (i = 0; i < ARRAY_SIZE(sources); i++) {
 			obj = NULL;
 			(void)cfg_map_get(options, sources[i], &obj);
 			if (obj != NULL) {
-				const isc_sockaddr_t *sa =
-					cfg_obj_assockaddr(obj);
-				in_port_t port = isc_sockaddr_getport(sa);
-				if (port == dnsport) {
-					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-						    "'%s' cannot specify the "
-						    "DNS listener port (%d)",
-						    sources[i], port);
-					result = ISC_R_FAILURE;
-				} else if (port != 0) {
-					cfg_obj_log(obj, logctx,
-						    ISC_LOG_WARNING,
-						    "'%s': specifying a port "
-						    "is not recommended",
-						    sources[i]);
+				if (cfg_obj_issockaddr(obj)) {
+					const isc_sockaddr_t *sa =
+						cfg_obj_assockaddr(obj);
+					in_port_t port =
+						isc_sockaddr_getport(sa);
+					if (port == dnsport) {
+						cfg_obj_log(obj, logctx,
+							    ISC_LOG_ERROR,
+							    "'%s' cannot "
+							    "specify the "
+							    "DNS listener port "
+							    "(%d)",
+							    sources[i], port);
+						result = ISC_R_FAILURE;
+					} else if (port != 0) {
+						cfg_obj_log(
+							obj, logctx,
+							ISC_LOG_WARNING,
+							"'%s': specifying a "
+							"port "
+							"is not recommended",
+							sources[i]);
+					}
+				} else if (cfg_obj_isvoid(obj)) {
+					none_found++;
+
+					if (none_found > 1) {
+						cfg_obj_log(obj, logctx,
+							    ISC_LOG_ERROR,
+							    "query-source and "
+							    "query-source-v6 "
+							    "can't be "
+							    "none at the same "
+							    "time.");
+						result = ISC_R_FAILURE;
+						break;
+					}
 				}
 			}
 		}
@@ -2188,16 +2212,28 @@ check_remoteserverlist(const cfg_obj_t *cctx, const char *list,
 }
 
 /*
- * Check primaries lists for duplicates.
+ * Check remote-server lists for duplicates.
  */
 static isc_result_t
-check_primarylists(const cfg_obj_t *cctx, isc_log_t *logctx, isc_mem_t *mctx) {
+check_remoteserverlists(const cfg_obj_t *cctx, isc_log_t *logctx,
+			isc_mem_t *mctx) {
 	isc_result_t result, tresult;
 	isc_symtab_t *symtab = NULL;
 
 	result = isc_symtab_create(mctx, 100, freekey, mctx, false, &symtab);
 	if (result != ISC_R_SUCCESS) {
 		return result;
+	}
+	tresult = check_remoteserverlist(cctx, "remote-servers", logctx, symtab,
+					 mctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+	}
+	/* parental-agents, primaries, masters are treated as synonyms */
+	tresult = check_remoteserverlist(cctx, "parental-agents", logctx,
+					 symtab, mctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
 	}
 	tresult = check_remoteserverlist(cctx, "primaries", logctx, symtab,
 					 mctx);
@@ -2205,28 +2241,6 @@ check_primarylists(const cfg_obj_t *cctx, isc_log_t *logctx, isc_mem_t *mctx) {
 		result = tresult;
 	}
 	tresult = check_remoteserverlist(cctx, "masters", logctx, symtab, mctx);
-	if (tresult != ISC_R_SUCCESS) {
-		result = tresult;
-	}
-	isc_symtab_destroy(&symtab);
-	return result;
-}
-
-/*
- * Check parental-agents lists for duplicates.
- */
-static isc_result_t
-check_parentalagentlists(const cfg_obj_t *cctx, isc_log_t *logctx,
-			 isc_mem_t *mctx) {
-	isc_result_t result, tresult;
-	isc_symtab_t *symtab = NULL;
-
-	result = isc_symtab_create(mctx, 100, freekey, mctx, false, &symtab);
-	if (result != ISC_R_SUCCESS) {
-		return result;
-	}
-	tresult = check_remoteserverlist(cctx, "parental-agents", logctx,
-					 symtab, mctx);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
 	}
@@ -2533,25 +2547,28 @@ get_remotes(const cfg_obj_t *cctx, const char *list, const char *name,
 }
 
 static isc_result_t
-get_remoteservers_def(const char *list, const char *name, const cfg_obj_t *cctx,
+get_remoteservers_def(const char *name, const cfg_obj_t *cctx,
 		      const cfg_obj_t **ret) {
-	isc_result_t result = ISC_R_NOTFOUND;
+	isc_result_t result;
 
-	if (strcmp(list, "primaries") == 0) {
-		result = get_remotes(cctx, "primaries", name, ret);
-		if (result != ISC_R_SUCCESS) {
-			result = get_remotes(cctx, "masters", name, ret);
-		}
-	} else if (strcmp(list, "parental-agents") == 0) {
-		result = get_remotes(cctx, "parental-agents", name, ret);
+	result = get_remotes(cctx, "remote-servers", name, ret);
+	if (result == ISC_R_SUCCESS) {
+		return result;
 	}
-	return result;
+	result = get_remotes(cctx, "primaries", name, ret);
+	if (result == ISC_R_SUCCESS) {
+		return result;
+	}
+	result = get_remotes(cctx, "parental-agents", name, ret);
+	if (result == ISC_R_SUCCESS) {
+		return result;
+	}
+	return get_remotes(cctx, "masters", name, ret);
 }
 
 static isc_result_t
-validate_remotes(const char *list, const cfg_obj_t *obj,
-		 const cfg_obj_t *config, uint32_t *countp, isc_log_t *logctx,
-		 isc_mem_t *mctx) {
+validate_remotes(const cfg_obj_t *obj, const cfg_obj_t *config,
+		 uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 	uint32_t count = 0;
@@ -2657,13 +2674,13 @@ resume:
 		if (tresult == ISC_R_EXISTS) {
 			continue;
 		}
-		tresult = get_remoteservers_def(list, listname, config, &obj);
+		tresult = get_remoteservers_def(listname, config, &obj);
 		if (tresult != ISC_R_SUCCESS) {
 			if (result == ISC_R_SUCCESS) {
 				result = tresult;
 			}
 			cfg_obj_log(addr, logctx, ISC_LOG_ERROR,
-				    "unable to find %s list '%s'", list,
+				    "unable to find remote-servers list '%s'",
 				    listname);
 			continue;
 		}
@@ -3560,8 +3577,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		}
 		if (tresult == ISC_R_SUCCESS && donotify) {
 			uint32_t count;
-			tresult = validate_remotes("primaries", obj, config,
-						   &count, logctx, mctx);
+			tresult = validate_remotes(obj, config, &count, logctx,
+						   mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -3603,8 +3620,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			result = ISC_R_FAILURE;
 		} else {
 			uint32_t count;
-			tresult = validate_remotes("primaries", obj, config,
-						   &count, logctx, mctx);
+			tresult = validate_remotes(obj, config, &count, logctx,
+						   mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -3656,8 +3673,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		(void)cfg_map_get(zoptions, "parental-agents", &obj);
 		if (obj != NULL) {
 			uint32_t count;
-			tresult = validate_remotes("parental-agents", obj,
-						   config, &count, logctx,
+			tresult = validate_remotes(obj, config, &count, logctx,
 						   mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
@@ -4481,14 +4497,27 @@ check_servers(const cfg_obj_t *config, const cfg_obj_t *voptions,
 			}
 			(void)cfg_map_get(v1, xfr, &obj);
 			if (obj != NULL) {
-				const isc_sockaddr_t *sa =
-					cfg_obj_assockaddr(obj);
-				in_port_t port = isc_sockaddr_getport(sa);
-				if (port == dnsport) {
+				if (cfg_obj_issockaddr(obj)) {
+					const isc_sockaddr_t *sa =
+						cfg_obj_assockaddr(obj);
+					in_port_t port =
+						isc_sockaddr_getport(sa);
+					if (port == dnsport) {
+						cfg_obj_log(obj, logctx,
+							    ISC_LOG_ERROR,
+							    "'%s' cannot "
+							    "specify the "
+							    "DNS listener port "
+							    "(%d)",
+							    xfr, port);
+						result = ISC_R_FAILURE;
+					}
+				} else {
 					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-						    "'%s' cannot specify the "
-						    "DNS listener port (%d)",
-						    xfr, port);
+						    "'none' is not a legal "
+						    "'%s' parameter in a "
+						    "server block",
+						    xfr);
 					result = ISC_R_FAILURE;
 				}
 			}
@@ -6146,11 +6175,7 @@ isccfg_check_namedconf(const cfg_obj_t *config, unsigned int flags,
 		result = ISC_R_FAILURE;
 	}
 
-	if (check_primarylists(config, logctx, mctx) != ISC_R_SUCCESS) {
-		result = ISC_R_FAILURE;
-	}
-
-	if (check_parentalagentlists(config, logctx, mctx) != ISC_R_SUCCESS) {
+	if (check_remoteserverlists(config, logctx, mctx) != ISC_R_SUCCESS) {
 		result = ISC_R_FAILURE;
 	}
 

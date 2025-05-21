@@ -1,4 +1,4 @@
-/*	$NetBSD: work.c,v 1.2 2025/01/26 16:25:39 christos Exp $	*/
+/*	$NetBSD: work.c,v 1.3 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 
+#include <isc/iterated_hash.h>
 #include <isc/job.h>
 #include <isc/loop.h>
 #include <isc/urcu.h>
@@ -27,11 +28,15 @@ static void
 isc__work_cb(uv_work_t *req) {
 	isc_work_t *work = uv_req_get_data((uv_req_t *)req);
 
+	isc__iterated_hash_initialize();
+
 	rcu_register_thread();
 
 	work->work_cb(work->cbarg);
 
 	rcu_unregister_thread();
+
+	isc__iterated_hash_shutdown();
 }
 
 static void

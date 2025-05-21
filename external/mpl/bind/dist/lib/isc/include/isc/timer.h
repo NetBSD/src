@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.11 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.12 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,6 +156,16 @@ isc_timer_destroy(isc_timer_t **timerp);
  * Ensures:
  *
  *\li	*timerp is NULL.
+ */
+
+bool
+isc_timer_running(isc_timer_t *timer);
+/*%<
+ * Return true if the timer has been started.
+ *
+ * Requires:
+ *
+ *\li	'timer' is a valid timer*
  */
 
 ISC_LANG_ENDDECLS

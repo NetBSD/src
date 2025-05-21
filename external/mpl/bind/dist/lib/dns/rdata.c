@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.16 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.17 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -608,32 +608,28 @@ check_private(isc_buffer_t *source, dns_secalg_t alg) {
 
 		RETERR(dns_name_fromwire(dns_fixedname_initname(&fixed), source,
 					 DNS_DECOMPRESS_DEFAULT, NULL));
-		/*
-		 * There should be a public key or signature after the key name.
-		 */
-		isc_buffer_activeregion(source, &sr);
-		if (sr.length == 0) {
-			return ISC_R_UNEXPECTEDEND;
-		}
 	} else if (alg == DNS_KEYALG_PRIVATEOID) {
 		/*
 		 * Check that we can extract the OID from the start of the
-		 * key data.
+		 * key data. We have a length byte followed by the OID BER
+		 * encoded.
 		 */
 		const unsigned char *in = NULL;
 		ASN1_OBJECT *obj = NULL;
 
 		isc_buffer_activeregion(source, &sr);
-		in = sr.base;
-		obj = d2i_ASN1_OBJECT(NULL, &in, sr.length);
+		if (sr.length < 1 || (unsigned int)*sr.base + 1 > sr.length) {
+			RETERR(DNS_R_FORMERR);
+		}
+		in = sr.base + 1;
+		obj = d2i_ASN1_OBJECT(NULL, &in, *sr.base);
 		if (obj == NULL) {
 			ERR_clear_error();
 			RETERR(DNS_R_FORMERR);
 		}
 		ASN1_OBJECT_free(obj);
-		/* There should be a public key or signature after the OID. */
-		if (in >= sr.base + sr.length) {
-			return ISC_R_UNEXPECTEDEND;
+		if ((in - sr.base) != (*sr.base + 1)) {
+			RETERR(DNS_R_FORMERR);
 		}
 	}
 	return ISC_R_SUCCESS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.h,v 1.9 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,12 +81,14 @@ struct dns_tsigkeyring {
 
 struct dns_tsigkey {
 	/* Unlocked */
-	unsigned int	   magic; /*%< Magic number. */
-	isc_mem_t	  *mctx;
-	dst_key_t	  *key; /*%< Key */
-	dns_fixedname_t	   fn;
-	dns_name_t	  *name;	  /*%< Key name */
-	const dns_name_t  *algorithm;	  /*%< Algorithm name */
+	unsigned int	magic; /*%< Magic number. */
+	isc_mem_t      *mctx;
+	dst_key_t      *key; /*%< Key */
+	dns_fixedname_t fn;
+	dns_name_t     *name;		  /*%< Key name */
+	dst_algorithm_t alg;		  /*< Algorithm */
+	dns_name_t	algname;	  /*< Algorithm name, only used if
+					    algorithm is DST_ALG_UNKNOWN */
 	dns_name_t	  *creator;	  /*%< name that created secret */
 	bool		   generated : 1; /*%< key was auto-generated */
 	bool		   restored  : 1; /*%< key was restored at startup */
@@ -240,6 +242,16 @@ dns_tsigkey_find(dns_tsigkey_t **tsigkeyp, const dns_name_t *name,
  *	Returns:
  *\li		#ISC_R_SUCCESS
  *\li		#ISC_R_NOTFOUND
+ */
+
+const dns_name_t *
+dns_tsigkey_algorithm(dns_tsigkey_t *tkey);
+/*%<
+ * 	Returns the key algorithm associated with a tsigkey object.
+ *
+ * 	Note that when a tsigkey object is created with algorithm
+ * 	DST_ALG_UNKNOWN, the unknown algorithm's name must be cloned
+ * 	into tsigkey->algname.
  */
 
 void

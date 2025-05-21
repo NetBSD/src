@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.11 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.12 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -491,9 +491,7 @@ key_collision(dst_key_t *dstkey, dns_name_t *name, const char *dir,
 	dns_secalg_t alg;
 	isc_stdtime_t now = isc_stdtime_now();
 
-	if (exact != NULL) {
-		*exact = false;
-	}
+	SET_IF_NOT_NULL(exact, false);
 
 	id = dst_key_id(dstkey);
 	rid = dst_key_rid(dstkey);

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.10 2025/01/26 16:24:34 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.11 2025/05/21 14:47:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,6 +156,13 @@ named_server_reloadcommand(named_server_t *server, isc_lex_t *lex,
 			   isc_buffer_t **text);
 /*%<
  * Act on a "reload" command from the command channel.
+ */
+
+isc_result_t
+named_server_resetstatscommand(named_server_t *server, isc_lex_t *lex,
+			       isc_buffer_t **text);
+/*%<
+ * Act on a "reset-stats" command from the command channel.
  */
 
 isc_result_t
@@ -393,3 +400,15 @@ named_server_fetchlimit(named_server_t *server, isc_lex_t *lex,
  */
 isc_result_t
 named_server_skr(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text);
+
+/*%
+ * Toggle memory profiling if supported.
+ */
+isc_result_t
+named_server_togglememprof(isc_lex_t *lex);
+
+/*%
+ * Get status of memory profiling.
+ */
+const char *
+named_server_getmemprof(void);

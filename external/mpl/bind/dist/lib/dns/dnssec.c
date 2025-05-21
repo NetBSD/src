@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.16 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.17 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -195,7 +195,6 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	isc_result_t ret;
 	isc_buffer_t *databuf = NULL;
 	char data[256 + 8];
-	uint32_t flags;
 	unsigned int sigsize;
 	dns_fixedname_t fnewname;
 	dns_fixedname_t fsigner;
@@ -211,17 +210,6 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 
 	if (*inception >= *expire) {
 		return DNS_R_INVALIDTIME;
-	}
-
-	/*
-	 * Is the key allowed to sign data?
-	 */
-	flags = dst_key_flags(key);
-	if ((flags & DNS_KEYTYPE_NOAUTH) != 0) {
-		return DNS_R_KEYUNAUTHORIZED;
-	}
-	if ((flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE) {
-		return DNS_R_KEYUNAUTHORIZED;
 	}
 
 	sig.mctx = mctx;
@@ -329,7 +317,6 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		 * Digest the length of the rdata.
 		 */
 		isc_buffer_init(&lenbuf, &len, sizeof(len));
-		INSIST(rdatas[i].length < 65536);
 		isc_buffer_putuint16(&lenbuf, (uint16_t)rdatas[i].length);
 		isc_buffer_usedregion(&lenbuf, &lenr);
 		ret = dst_context_adddata(ctx, &lenr);
@@ -386,7 +373,6 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	unsigned char data[300];
 	dst_context_t *ctx = NULL;
 	int labels = 0;
-	uint32_t flags;
 	bool downcase = false;
 
 	REQUIRE(name != NULL);
@@ -449,19 +435,6 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 			return DNS_R_SIGINVALID;
 		}
 		break;
-	}
-
-	/*
-	 * Is the key allowed to sign data?
-	 */
-	flags = dst_key_flags(key);
-	if ((flags & DNS_KEYTYPE_NOAUTH) != 0) {
-		inc_stat(dns_dnssecstats_fail);
-		return DNS_R_KEYUNAUTHORIZED;
-	}
-	if ((flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE) {
-		inc_stat(dns_dnssecstats_fail);
-		return DNS_R_KEYUNAUTHORIZED;
 	}
 
 again:
@@ -541,7 +514,6 @@ again:
 		 * Digest the rdata length.
 		 */
 		isc_buffer_init(&lenbuf, &len, sizeof(len));
-		INSIST(rdatas[i].length < 65536);
 		isc_buffer_putuint16(&lenbuf, (uint16_t)rdatas[i].length);
 		isc_buffer_usedregion(&lenbuf, &lenr);
 
@@ -1127,6 +1099,7 @@ dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 	dk->hint_remove = false;
 	dk->first_sign = false;
 	dk->is_active = false;
+	dk->pubkey = false;
 	dk->purge = false;
 	dk->prepublish = 0;
 	dk->source = dns_keysource_unknown;
@@ -1415,7 +1388,7 @@ failure:
  */
 static void
 addkey(dns_dnsseckeylist_t *keylist, dst_key_t **newkey, bool savekeys,
-       isc_mem_t *mctx) {
+       bool pubkey_only, isc_mem_t *mctx) {
 	dns_dnsseckey_t *key = NULL;
 
 	/* Skip duplicates */
@@ -1433,28 +1406,35 @@ addkey(dns_dnsseckeylist_t *keylist, dst_key_t **newkey, bool savekeys,
 
 	if (key != NULL) {
 		/*
-		 * Found a match.  If the old key was only public and the
-		 * new key is private, replace the old one; otherwise
-		 * leave it.  But either way, mark the key as having
-		 * been found in the zone.
+		 * Found a match. If we already had a private key, then
+		 * the new key can't be an improvement. If the existing
+		 * key was public-only but the new key is too, then it's
+		 * still not an improvement. Mark the old key as having
+		 * been found in the zone and stop.
 		 */
-		if (dst_key_isprivate(key->key)) {
-			dst_key_free(newkey);
-		} else if (dst_key_isprivate(*newkey)) {
-			dst_key_free(&key->key);
-			key->key = *newkey;
+		if (dst_key_isprivate(key->key) || !dst_key_isprivate(*newkey))
+		{
+			key->source = dns_keysource_zoneapex;
+			return;
 		}
 
-		key->source = dns_keysource_zoneapex;
-		return;
+		/*
+		 * However, if the old key was public-only, and the new key
+		 * is private, then we're throwing away the old key.
+		 */
+		dst_key_free(&key->key);
+		ISC_LIST_UNLINK(*keylist, key, link);
+		dns_dnsseckey_destroy(mctx, &key);
 	}
 
+	/* Store the new key. */
 	dns_dnsseckey_create(mctx, newkey, &key);
+	key->source = dns_keysource_zoneapex;
+	key->pubkey = pubkey_only;
 	if (key->legacy || savekeys) {
 		key->force_publish = true;
 		key->force_sign = dst_key_isprivate(key->key);
 	}
-	key->source = dns_keysource_zoneapex;
 	ISC_LIST_APPEND(*keylist, key, link);
 	*newkey = NULL;
 }
@@ -1578,9 +1558,7 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, mctx, &dnskey));
 		dst_key_setttl(dnskey, keys.ttl);
 
-		if (!is_zone_key(dnskey) ||
-		    (dst_key_flags(dnskey) & DNS_KEYTYPE_NOAUTH) != 0)
-		{
+		if (!is_zone_key(dnskey)) {
 			goto skip;
 		}
 
@@ -1590,7 +1568,7 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 		}
 
 		if (publickey) {
-			addkey(keylist, &dnskey, savekeys, mctx);
+			addkey(keylist, &dnskey, savekeys, true, mctx);
 			goto skip;
 		}
 
@@ -1678,18 +1656,13 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 	addkey:
 		if (result == ISC_R_FILENOTFOUND || result == ISC_R_NOPERM) {
 			if (pubkey != NULL) {
-				addkey(keylist, &pubkey, savekeys, mctx);
+				addkey(keylist, &pubkey, savekeys, true, mctx);
 			} else {
-				addkey(keylist, &dnskey, savekeys, mctx);
+				addkey(keylist, &dnskey, savekeys, false, mctx);
 			}
 			goto skip;
 		}
 		RETERR(result);
-
-		/* This should never happen. */
-		if ((dst_key_flags(privkey) & DNS_KEYTYPE_NOAUTH) != 0) {
-			goto skip;
-		}
 
 		/*
 		 * Whatever the key's default TTL may have
@@ -1697,7 +1670,7 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 		 */
 		dst_key_setttl(privkey, dst_key_getttl(dnskey));
 
-		addkey(keylist, &privkey, savekeys, mctx);
+		addkey(keylist, &privkey, savekeys, false, mctx);
 	skip:
 		if (dnskey != NULL) {
 			dst_key_free(&dnskey);

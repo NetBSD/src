@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -86,11 +86,12 @@ volatile void *isc__mem_malloc = mallocx;
 #if ISC_MEM_TRACKLINES
 typedef struct debuglink debuglink_t;
 struct debuglink {
+	size_t dlsize;
 	ISC_LINK(debuglink_t) link;
 	const void *ptr;
 	size_t size;
-	const char *file;
 	unsigned int line;
+	const char file[];
 };
 
 typedef ISC_LIST(debuglink_t) debuglist_t;
@@ -202,6 +203,15 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 	uint32_t hash;
 	uint32_t idx;
 
+	/*
+	 * "file" needs to be copied because it can be part of a dynamically
+	 * loaded plugin which would be unloaded at the time the trace is
+	 * dumped. Storing "file" pointer then leads to a dangling pointer
+	 * dereference and a crash.
+	 */
+	size_t filelen = strlen(file) + 1;
+	size_t dlsize = STRUCT_FLEX_SIZE(dl, file, filelen);
+
 	MCTXLOCK(mctx);
 
 	if ((mctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
@@ -224,14 +234,15 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 #endif
 	idx = hash % DEBUG_TABLE_COUNT;
 
-	dl = mallocx(sizeof(debuglink_t), mctx->jemalloc_flags);
+	dl = mallocx(dlsize, mctx->jemalloc_flags);
 	INSIST(dl != NULL);
 
 	ISC_LINK_INIT(dl, link);
 	dl->ptr = ptr;
 	dl->size = size;
-	dl->file = file;
 	dl->line = line;
+	dl->dlsize = dlsize;
+	strlcpy((char *)dl->file, file, filelen);
 
 	ISC_LIST_PREPEND(mctx->debuglist[idx], dl, link);
 	mctx->debuglistcnt++;
@@ -272,7 +283,7 @@ delete_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size,
 	while (dl != NULL) {
 		if (dl->ptr == ptr) {
 			ISC_LIST_UNLINK(mctx->debuglist[idx], dl, link);
-			sdallocx(dl, sizeof(*dl), mctx->jemalloc_flags);
+			sdallocx(dl, dl->dlsize, mctx->jemalloc_flags);
 			goto unlock;
 		}
 		dl = ISC_LIST_NEXT(dl, link);

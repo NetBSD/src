@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr_common.c,v 1.2 2025/01/26 16:25:50 christos Exp $	*/
+/*	$NetBSD: netmgr_common.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -597,7 +597,7 @@ tcp_connect(isc_nm_t *nm) {
 static void
 tls_connect(isc_nm_t *nm) {
 	isc_nm_tlsconnect(nm, &tcp_connect_addr, &tcp_listen_addr,
-			  connect_connect_cb, NULL, tcp_connect_tlsctx,
+			  connect_connect_cb, NULL, tcp_connect_tlsctx, NULL,
 			  tcp_tlsctx_client_sess_cache, T_CONNECT,
 			  stream_use_PROXY, NULL);
 }
@@ -633,7 +633,7 @@ proxystream_connect(isc_nm_t *nm) {
 
 	isc_nm_proxystreamconnect(nm, &tcp_connect_addr, &tcp_listen_addr,
 				  connect_connect_cb, NULL, T_CONNECT, tlsctx,
-				  sess_cache, get_proxyheader_info());
+				  NULL, sess_cache, get_proxyheader_info());
 }
 
 stream_connect_function
@@ -682,10 +682,11 @@ stream_connect(isc_nm_cb_t cb, void *cbarg, unsigned int timeout) {
 	isc_refcount_increment0(&active_cconnects);
 
 	if (stream_use_TLS && !stream_PROXY_over_TLS) {
-		isc_nm_tlsconnect(
-			connect_nm, &tcp_connect_addr, &tcp_listen_addr, cb,
-			cbarg, tcp_connect_tlsctx, tcp_tlsctx_client_sess_cache,
-			timeout, stream_use_PROXY, NULL);
+		isc_nm_tlsconnect(connect_nm, &tcp_connect_addr,
+				  &tcp_listen_addr, cb, cbarg,
+				  tcp_connect_tlsctx, NULL,
+				  tcp_tlsctx_client_sess_cache, timeout,
+				  stream_use_PROXY, NULL);
 		return;
 	} else if (stream_use_PROXY) {
 		isc_tlsctx_t *tlsctx = stream_PROXY_over_TLS
@@ -696,7 +697,7 @@ stream_connect(isc_nm_cb_t cb, void *cbarg, unsigned int timeout) {
 					      : NULL;
 		isc_nm_proxystreamconnect(connect_nm, &tcp_connect_addr,
 					  &tcp_listen_addr, cb, cbarg, timeout,
-					  tlsctx, sess_cache,
+					  tlsctx, NULL, sess_cache,
 					  get_proxyheader_info());
 		return;
 	} else {

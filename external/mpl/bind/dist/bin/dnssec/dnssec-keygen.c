@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.13 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.14 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -196,7 +196,7 @@ usage(void) {
 			"(default: AUTHCONF)\n");
 	fprintf(stderr, "    -h: print usage and exit\n");
 	fprintf(stderr, "    -m <memory debugging mode>:\n");
-	fprintf(stderr, "       usage | trace | record | size | mctx\n");
+	fprintf(stderr, "       usage | trace | record\n");
 	fprintf(stderr, "    -v <level>: set verbosity level (0 - 10)\n");
 	fprintf(stderr, "    -V: print version information\n");
 	fprintf(stderr, "Timing options:\n");
@@ -545,7 +545,7 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 		{
 			flags |= DNS_KEYOWNER_ENTITY;
 		} else if (strcasecmp(ctx->nametype, "user") == 0) {
-			flags |= DNS_KEYOWNER_USER;
+			/* no owner flags */
 		} else {
 			fatal("invalid KEY nametype %s", ctx->nametype);
 		}
@@ -580,9 +580,6 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 		if (ctx->size > 0) {
 			fatal("specified null key with non-zero size");
 		}
-		if ((flags & DNS_KEYFLAG_SIGNATORYMASK) != 0) {
-			fatal("specified null key with signing authority");
-		}
 	}
 
 	switch (ctx->alg) {
@@ -601,7 +598,9 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 		break;
 	}
 
-	if ((flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY) {
+	if ((flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY &&
+	    (ctx->options & DST_TYPE_KEY) != 0)
+	{
 		null_key = true;
 	}
 

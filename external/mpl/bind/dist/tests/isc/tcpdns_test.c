@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdns_test.c,v 1.2 2025/01/26 16:25:50 christos Exp $	*/
+/*	$NetBSD: tcpdns_test.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,7 +65,7 @@ static void
 tcpdns_connect(isc_nm_t *nm) {
 	isc_nm_streamdnsconnect(nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_connect_cb, tcpdns_connect, T_CONNECT,
-				NULL, NULL, get_proxy_type(), NULL);
+				NULL, NULL, NULL, get_proxy_type(), NULL);
 }
 
 ISC_LOOP_TEST_IMPL(tcpdns_noop) {
@@ -75,7 +75,7 @@ ISC_LOOP_TEST_IMPL(tcpdns_noop) {
 	isc_refcount_increment0(&active_cconnects);
 	isc_nm_streamdnsconnect(connect_nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_success_cb, tcpdns_connect, T_CONNECT,
-				NULL, NULL, get_proxy_type(), NULL);
+				NULL, NULL, NULL, get_proxy_type(), NULL);
 }
 
 ISC_LOOP_TEST_IMPL(tcpdns_noresponse) {
@@ -84,7 +84,7 @@ ISC_LOOP_TEST_IMPL(tcpdns_noresponse) {
 	isc_refcount_increment0(&active_cconnects);
 	isc_nm_streamdnsconnect(connect_nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_connect_cb, tcpdns_connect, T_CONNECT,
-				NULL, NULL, get_proxy_type(), NULL);
+				NULL, NULL, NULL, get_proxy_type(), NULL);
 }
 
 ISC_LOOP_TEST_IMPL(tcpdns_timeout_recovery) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.23 2025/01/27 02:16:05 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.24 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -230,57 +230,6 @@ ns_client_settimeout(ns_client_t *client, unsigned int seconds) {
 }
 
 static void
-client_extendederror_reset(ns_client_t *client) {
-	if (client->ede == NULL) {
-		return;
-	}
-	isc_mem_put(client->manager->mctx, client->ede->value,
-		    client->ede->length);
-	isc_mem_put(client->manager->mctx, client->ede, sizeof(dns_ednsopt_t));
-	client->ede = NULL;
-}
-
-void
-ns_client_extendederror(ns_client_t *client, uint16_t code, const char *text) {
-	unsigned char ede[DNS_EDE_EXTRATEXT_LEN + 2];
-	isc_buffer_t buf;
-	uint16_t len = sizeof(uint16_t);
-
-	REQUIRE(NS_CLIENT_VALID(client));
-
-	if (client->ede != NULL) {
-		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
-			      "already have ede, ignoring %u %s", code,
-			      text == NULL ? "(null)" : text);
-		return;
-	}
-
-	ns_client_log(client, NS_LOGCATEGORY_CLIENT, NS_LOGMODULE_CLIENT,
-		      ISC_LOG_DEBUG(1), "set ede: info-code %u extra-text %s",
-		      code, text == NULL ? "(null)" : text);
-
-	isc_buffer_init(&buf, ede, sizeof(ede));
-	isc_buffer_putuint16(&buf, code);
-	if (text != NULL && strlen(text) > 0) {
-		if (strlen(text) < DNS_EDE_EXTRATEXT_LEN) {
-			isc_buffer_putstr(&buf, text);
-			len += (uint16_t)(strlen(text));
-		} else {
-			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-				      NS_LOGMODULE_CLIENT, ISC_LOG_WARNING,
-				      "ede extra-text too long, ignoring");
-		}
-	}
-
-	client->ede = isc_mem_get(client->manager->mctx, sizeof(dns_ednsopt_t));
-	client->ede->code = DNS_OPT_EDE;
-	client->ede->length = len;
-	client->ede->value = isc_mem_get(client->manager->mctx, len);
-	memmove(client->ede->value, ede, len);
-}
-
-static void
 ns_client_endrequest(ns_client_t *client) {
 	INSIST(client->state == NS_CLIENTSTATE_WORKING ||
 	       client->state == NS_CLIENTSTATE_RECURSING);
@@ -320,7 +269,6 @@ ns_client_endrequest(ns_client_t *client) {
 		dns_message_puttemprdataset(client->message, &client->opt);
 	}
 
-	client_extendederror_reset(client);
 	client->signer = NULL;
 	client->udpsize = 512;
 	client->extflags = 0;
@@ -1239,11 +1187,17 @@ no_nsid:
 		count++;
 	}
 
-	if (client->ede != NULL) {
+	for (size_t i = 0; i < DNS_EDE_MAX_ERRORS; i++) {
+		dns_ednsopt_t *ede = client->edectx.ede[i];
+
+		if (ede == NULL) {
+			break;
+		}
+
 		INSIST(count < DNS_EDNSOPTIONS);
 		ednsopts[count].code = DNS_OPT_EDE;
-		ednsopts[count].length = client->ede->length;
-		ednsopts[count].value = client->ede->value;
+		ednsopts[count].length = ede->length;
+		ednsopts[count].value = ede->value;
 		count++;
 	}
 
@@ -1330,6 +1284,7 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_stdtime_t now;
 	uint32_t when;
 	isc_buffer_t db;
+	bool alwaysvalid;
 
 	/*
 	 * If we have already seen a cookie option skip this cookie option.
@@ -1376,10 +1331,21 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_buffer_forward(buf, 8);
 
 	/*
+	 * For '-T cookiealwaysvalid' still process everything to not skew any
+	 * performance tests involving cookies, but make sure that the cookie
+	 * check passes in the end, given the cookie was structurally correct.
+	 */
+	alwaysvalid = ns_server_getoption(client->manager->sctx,
+					  NS_SERVER_COOKIEALWAYSVALID);
+
+	/*
 	 * Allow for a 5 minute clock skew between servers sharing a secret.
 	 * Only accept COOKIE if we have talked to the client in the last hour.
 	 */
 	now = isc_stdtime_now();
+	if (alwaysvalid) {
+		now = when;
+	}
 	if (isc_serial_gt(when, (now + 300)) /* In the future. */ ||
 	    isc_serial_lt(when, (now - 3600)) /* In the past. */)
 	{
@@ -1392,7 +1358,7 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_buffer_init(&db, dbuf, sizeof(dbuf));
 	compute_cookie(client, when, client->manager->sctx->secret, &db);
 
-	if (isc_safe_memequal(old, dbuf, COOKIE_SIZE)) {
+	if (isc_safe_memequal(old, dbuf, COOKIE_SIZE) || alwaysvalid) {
 		ns_stats_increment(client->manager->sctx->nsstats,
 				   ns_statscounter_cookiematch);
 		client->attributes |= NS_CLIENTATTR_HAVECOOKIE;
@@ -1590,17 +1556,6 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 	 * XXXRTH need library support for this!
 	 */
 	client->ednsversion = (opt->ttl & 0x00FF0000) >> 16;
-	if (client->ednsversion > DNS_EDNS_VERSION) {
-		ns_stats_increment(client->manager->sctx->nsstats,
-				   ns_statscounter_badednsver);
-		result = ns_client_addopt(client, client->message,
-					  &client->opt);
-		if (result == ISC_R_SUCCESS) {
-			result = DNS_R_BADVERS;
-		}
-		ns_client_error(client, result);
-		return result;
-	}
 
 	/* Check for NSID request */
 	result = dns_rdataset_first(opt);
@@ -1612,6 +1567,17 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 		while (isc_buffer_remaininglength(&optbuf) >= 4) {
 			optcode = isc_buffer_getuint16(&optbuf);
 			optlen = isc_buffer_getuint16(&optbuf);
+			/*
+			 * When returning BADVERSION, only process
+			 * DNS_OPT_NSID or DNS_OPT_COOKIE options.
+			 */
+			if (client->ednsversion > DNS_EDNS_VERSION &&
+			    optcode != DNS_OPT_NSID &&
+			    optcode != DNS_OPT_COOKIE)
+			{
+				isc_buffer_forward(&optbuf, optlen);
+				continue;
+			}
 			switch (optcode) {
 			case DNS_OPT_NSID:
 				if (!WANTNSID(client)) {
@@ -1683,6 +1649,18 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 		}
 	}
 
+	if (client->ednsversion > DNS_EDNS_VERSION) {
+		ns_stats_increment(client->manager->sctx->nsstats,
+				   ns_statscounter_badednsver);
+		result = ns_client_addopt(client, client->message,
+					  &client->opt);
+		if (result == ISC_R_SUCCESS) {
+			result = DNS_R_BADVERS;
+		}
+		ns_client_error(client, result);
+		return result;
+	}
+
 	ns_stats_increment(client->manager->sctx->nsstats,
 			   ns_statscounter_edns0in);
 	client->attributes |= NS_CLIENTATTR_WANTOPT;
@@ -1751,7 +1729,7 @@ ns__client_put_cb(void *client0) {
 	 * Call this first because it requires a valid client.
 	 */
 	ns_query_free(client);
-	client_extendederror_reset(client);
+	dns_ede_invalidate(&client->edectx);
 
 	client->magic = 0;
 
@@ -2028,7 +2006,6 @@ ns_client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 	}
 
 	client->message->rcode = dns_rcode_noerror;
-	client->ede = NULL;
 
 	/*
 	 * Deal with EDNS.
@@ -2217,7 +2194,7 @@ ns_client_request_continue(void *arg) {
 					      "no matching view in class");
 		}
 
-		ns_client_extendederror(client, DNS_EDE_PROHIBITED, NULL);
+		dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
 		ns_client_error(client, DNS_R_REFUSED);
 
 		goto cleanup;
@@ -2548,6 +2525,8 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 		 */
 		client->magic = NS_CLIENT_MAGIC;
 		ns_query_init(client);
+
+		dns_ede_init(client->manager->mctx, &client->edectx);
 	} else {
 		REQUIRE(NS_CLIENT_VALID(client));
 		REQUIRE(client->manager->tid == isc_tid());
@@ -2560,8 +2539,11 @@ ns__client_setup(ns_client_t *client, ns_clientmgr_t *mgr, bool new) {
 			.magic = 0,
 			.manager = client->manager,
 			.message = client->message,
+			.edectx = client->edectx,
 			.query = client->query,
 		};
+
+		dns_ede_reset(&client->edectx);
 	}
 
 	client->query.attributes &= ~NS_QUERYATTR_ANSWERED;
@@ -2736,7 +2718,7 @@ ns_client_checkacl(ns_client_t *client, isc_sockaddr_t *sockaddr,
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
 			      "%s approved", opname);
 	} else {
-		ns_client_extendederror(client, DNS_EDE_PROHIBITED, NULL);
+		dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
 			      NS_LOGMODULE_CLIENT, log_level, "%s denied",
 			      opname);

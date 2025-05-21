@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.15 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.16 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,7 +90,8 @@
 
 #define MAXNAME (DNS_NAME_MAXTEXT + 1)
 
-#define MAX_QUERIES  32
+#define MAX_QUERIES  50
+#define MAX_TOTAL    200
 #define MAX_RESTARTS 11
 
 /* Variables used internally by delv. */
@@ -136,6 +137,7 @@ static bool showcomments = true, showdnssec = true, showtrust = true,
 	    yaml = false, fulltrace = false;
 
 static uint32_t maxqueries = MAX_QUERIES;
+static uint32_t maxtotal = MAX_TOTAL;
 static uint32_t restarts = MAX_RESTARTS;
 
 static bool resolve_trace = false, validator_trace = false,
@@ -1199,21 +1201,45 @@ plus_option(char *option) {
 		break;
 	case 'm':
 		switch (cmd[1]) {
-		case 'a': /* maxqueries */
-			FULLCHECK("maxqueries");
-			if (value == NULL) {
-				goto need_value;
-			}
-			if (!state) {
+		case 'a':
+			switch (cmd[3]) {
+			case 'q': /* maxqueries */
+				FULLCHECK("maxqueries");
+				if (value == NULL) {
+					goto need_value;
+				}
+				if (!state) {
+					goto invalid_option;
+				}
+				result = parse_uint(&maxqueries, value,
+						    UINT_MAX, "maxqueries");
+				if (result != ISC_R_SUCCESS) {
+					fatal("Couldn't parse maxqueries");
+				}
+				if (maxqueries == 0) {
+					fatal("maxqueries must be nonzero");
+				}
+				break;
+			case 't': /* maxtotalqueries */
+				FULLCHECK("maxtotalqueries");
+				if (value == NULL) {
+					goto need_value;
+				}
+				if (!state) {
+					goto invalid_option;
+				}
+				result = parse_uint(&maxtotal, value, UINT_MAX,
+						    "maxtotalqueries");
+				if (result != ISC_R_SUCCESS) {
+					fatal("Couldn't parse maxtotalqueries");
+				}
+				if (maxtotal == 0) {
+					fatal("maxtotalqueries must be "
+					      "nonzero");
+				}
+				break;
+			default:
 				goto invalid_option;
-			}
-			result = parse_uint(&maxqueries, value, UINT_MAX,
-					    "maxqueries");
-			if (result != ISC_R_SUCCESS) {
-				fatal("Couldn't parse maxqueries");
-			}
-			if (maxqueries == 0) {
-				fatal("maxqueries must be nonzero");
 			}
 			break;
 		case 't': /* mtrace */
@@ -1937,6 +1963,7 @@ run_resolve(void *arg) {
 	CHECK(dns_client_create(mctx, loopmgr, netmgr, 0, tlsctx_client_cache,
 				&client, srcaddr4, srcaddr6));
 	dns_client_setmaxrestarts(client, restarts);
+	dns_client_setmaxqueries(client, maxtotal);
 
 	/* Set the nameserver */
 	if (server != NULL) {
@@ -2202,6 +2229,7 @@ run_server(void *arg) {
 	dns_cache_detach(&cache);
 	dns_view_setdstport(view, destport);
 	dns_view_setmaxrestarts(view, restarts);
+	dns_view_setmaxqueries(view, maxtotal);
 
 	CHECK(dns_rootns_create(mctx, dns_rdataclass_in, hintfile, &roothints));
 	dns_view_sethints(view, roothints);

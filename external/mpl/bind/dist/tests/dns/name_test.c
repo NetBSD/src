@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.4 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.5 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -211,11 +211,13 @@ ISC_RUN_TEST_IMPL(compression) {
 				"\003bar\003yyy\003foo\0"
 				"\003xxx\003bar\003foo";
 
-	unsigned char compressed[29] = "\x0E\xAD"
-				       "\003yyy\003foo\0"
-				       "\003bar\xc0\x02"
-				       "\xc0\x0B"
-				       "\003xxx\003bar\xc0\x06";
+	unsigned char compressed[] = "\x0E\xAD"
+				     "\003yyy\003foo\0"
+				     "\003bar\xc0\x02"
+				     "\xc0\x0B"
+				     "\003xxx\003bar\xc0\x06";
+	const size_t compressed_len = sizeof(compressed) - 1;
+
 	/*
 	 * Only the second owner name is compressed.
 	 */
@@ -270,8 +272,8 @@ ISC_RUN_TEST_IMPL(compression) {
 	dns_compress_setpermitted(&cctx, permitted);
 	dctx = dns_decompress_setpermitted(DNS_DECOMPRESS_DEFAULT, permitted);
 
-	compress_test(&name1, &name2, &name3, compressed, sizeof(compressed),
-		      plain, sizeof(plain), &cctx, dctx, true);
+	compress_test(&name1, &name2, &name3, compressed, compressed_len, plain,
+		      sizeof(plain), &cctx, dctx, true);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
@@ -331,8 +333,8 @@ ISC_RUN_TEST_IMPL(compression) {
 	dns_compress_setpermitted(&cctx, permitted);
 	dctx = dns_decompress_setpermitted(DNS_DECOMPRESS_DEFAULT, permitted);
 
-	compress_test(&name1, &name2, &name3, compressed, sizeof(compressed),
-		      plain, sizeof(plain), &cctx, dctx, false);
+	compress_test(&name1, &name2, &name3, compressed, compressed_len, plain,
+		      sizeof(plain), &cctx, dctx, false);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);

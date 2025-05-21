@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.19 2025/01/27 02:16:05 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.20 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -182,7 +182,7 @@ struct ns_client {
 	size_t		tcpbuf_size;
 	dns_message_t  *message;
 	dns_rdataset_t *opt;
-	dns_ednsopt_t  *ede;
+	dns_edectx_t	edectx;
 	uint16_t	udpsize;
 	uint16_t	extflags;
 	int16_t		ednsversion; /* -1 noedns */
@@ -306,12 +306,6 @@ ns_client_error(ns_client_t *client, isc_result_t result);
  * Finish processing the current client request and return
  * an error response to the client.  The error response
  * will have an RCODE determined by 'result'.
- */
-
-void
-ns_client_extendederror(ns_client_t *client, uint16_t code, const char *text);
-/*%<
- * Set extended error with INFO-CODE <code> and EXTRA-TEXT <text>.
  */
 
 void

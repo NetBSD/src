@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.15 2025/01/26 16:25:39 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.16 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
 #include <stdbool.h>
 
 #include <isc/async.h>
+#include <isc/atomic.h>
 #include <isc/condition.h>
 #include <isc/heap.h>
 #include <isc/job.h>
@@ -197,4 +198,11 @@ isc_timer_async_destroy(isc_timer_t **timerp) {
 
 	isc_timer_stop(timer);
 	isc_async_run(timer->loop, timer_destroy, timer);
+}
+
+bool
+isc_timer_running(isc_timer_t *timer) {
+	REQUIRE(VALID_TIMER(timer));
+
+	return atomic_load_acquire(&timer->running);
 }

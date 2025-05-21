@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.13 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.14 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1254,7 +1254,6 @@ dns_journal_writediff(dns_journal_t *j, dns_diff_t *diff) {
 		isc_buffer_putuint16(&buffer, t->rdata.type);
 		isc_buffer_putuint16(&buffer, t->rdata.rdclass);
 		isc_buffer_putuint32(&buffer, t->ttl);
-		INSIST(t->rdata.length < 65536);
 		isc_buffer_putuint16(&buffer, (uint16_t)t->rdata.length);
 		INSIST(isc_buffer_availablelength(&buffer) >= t->rdata.length);
 		isc_buffer_putmem(&buffer, t->rdata.data, t->rdata.length);

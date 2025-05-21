@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.2 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -587,9 +587,11 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp) {
 			} else {
 				/* unrecognised word. Ignore entire line */
 				rval = ISC_R_SUCCESS;
-				stopchar = eatline(fp);
-				if (stopchar == EOF) {
-					break;
+				if (stopchar != '\n') {
+					stopchar = eatline(fp);
+					if (stopchar == EOF) {
+						break;
+					}
 				}
 			}
 			if (ret == ISC_R_SUCCESS && rval != ISC_R_SUCCESS) {

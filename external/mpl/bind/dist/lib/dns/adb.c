@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.13 2025/01/26 16:25:21 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.14 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -337,7 +337,7 @@ static isc_result_t
 dbfind_name(dns_adbname_t *, isc_stdtime_t, dns_rdatatype_t);
 static isc_result_t
 fetch_name(dns_adbname_t *, bool, unsigned int, isc_counter_t *qc,
-	   dns_rdatatype_t);
+	   isc_counter_t *gqc, dns_rdatatype_t);
 static void
 destroy(dns_adb_t *);
 static void
@@ -1116,7 +1116,7 @@ static dns_adbfind_t *
 new_adbfind(dns_adb_t *adb, in_port_t port) {
 	dns_adbfind_t *find = NULL;
 
-	find = isc_mem_get(adb->mctx, sizeof(*find));
+	find = isc_mem_get(adb->hmctx, sizeof(*find));
 	*find = (dns_adbfind_t){
 		.port = port,
 		.result_v4 = ISC_R_UNEXPECTED,
@@ -1155,7 +1155,7 @@ free_adbfind(dns_adbfind_t **findp) {
 
 	isc_mutex_destroy(&find->lock);
 
-	isc_mem_put(adb->mctx, find, sizeof(*find));
+	isc_mem_put(adb->hmctx, find, sizeof(*find));
 	dns_adb_detach(&adb);
 }
 
@@ -1163,7 +1163,7 @@ static dns_adbfetch_t *
 new_adbfetch(dns_adb_t *adb) {
 	dns_adbfetch_t *fetch = NULL;
 
-	fetch = isc_mem_get(adb->mctx, sizeof(*fetch));
+	fetch = isc_mem_get(adb->hmctx, sizeof(*fetch));
 	*fetch = (dns_adbfetch_t){ 0 };
 	dns_rdataset_init(&fetch->rdataset);
 
@@ -1187,7 +1187,7 @@ free_adbfetch(dns_adb_t *adb, dns_adbfetch_t **fetchp) {
 		dns_rdataset_disassociate(&fetch->rdataset);
 	}
 
-	isc_mem_put(adb->mctx, fetch, sizeof(*fetch));
+	isc_mem_put(adb->hmctx, fetch, sizeof(*fetch));
 }
 
 /*
@@ -1198,7 +1198,7 @@ static dns_adbaddrinfo_t *
 new_adbaddrinfo(dns_adb_t *adb, dns_adbentry_t *entry, in_port_t port) {
 	dns_adbaddrinfo_t *ai = NULL;
 
-	ai = isc_mem_get(adb->mctx, sizeof(*ai));
+	ai = isc_mem_get(adb->hmctx, sizeof(*ai));
 	*ai = (dns_adbaddrinfo_t){
 		.srtt = atomic_load(&entry->srtt),
 		.flags = atomic_load(&entry->flags),
@@ -1231,7 +1231,7 @@ free_adbaddrinfo(dns_adb_t *adb, dns_adbaddrinfo_t **ainfo) {
 	}
 	dns_adbentry_detach(&ai->entry);
 
-	isc_mem_put(adb->mctx, ai, sizeof(*ai));
+	isc_mem_put(adb->hmctx, ai, sizeof(*ai));
 }
 
 static bool
@@ -1868,7 +1868,7 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, dns_adb_t **newadb) {
 	isc_mem_attach(mem, &adb->mctx);
 
 	isc_mem_create(&adb->hmctx);
-	isc_mem_setname(adb->hmctx, "ADB_hashmaps");
+	isc_mem_setname(adb->hmctx, "ADB_dynamic");
 
 	isc_hashmap_create(adb->hmctx, ADB_HASH_BITS, &adb->names);
 	isc_rwlock_init(&adb->names_lock);
@@ -1928,7 +1928,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_loop_t *loop, isc_job_cb cb, void *cbarg,
 		   const dns_name_t *name, const dns_name_t *qname,
 		   dns_rdatatype_t qtype ISC_ATTR_UNUSED, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target, in_port_t port,
-		   unsigned int depth, isc_counter_t *qc,
+		   unsigned int depth, isc_counter_t *qc, isc_counter_t *gqc,
 		   dns_adbfind_t **findp) {
 	isc_result_t result = ISC_R_UNEXPECTED;
 	dns_adbfind_t *find = NULL;
@@ -2138,7 +2138,7 @@ fetch:
 		 * Start V4.
 		 */
 		if (WANT_INET(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone, depth, qc,
+		    fetch_name(adbname, start_at_zone, depth, qc, gqc,
 			       dns_rdatatype_a) == ISC_R_SUCCESS)
 		{
 			DP(DEF_LEVEL,
@@ -2151,7 +2151,7 @@ fetch:
 		 * Start V6.
 		 */
 		if (WANT_INET6(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone, depth, qc,
+		    fetch_name(adbname, start_at_zone, depth, qc, gqc,
 			       dns_rdatatype_aaaa) == ISC_R_SUCCESS)
 		{
 			DP(DEF_LEVEL,
@@ -2946,7 +2946,7 @@ check_result:
 out:
 	dns_resolver_destroyfetch(&fetch->fetch);
 	free_adbfetch(adb, &fetch);
-	isc_mem_putanddetach(&resp->mctx, resp, sizeof(*resp));
+	dns_resolver_freefresp(&resp);
 	if (astat != DNS_ADB_CANCELED) {
 		clean_finds_at_name(name, astat, address_type);
 	}
@@ -2957,7 +2957,7 @@ out:
 
 static isc_result_t
 fetch_name(dns_adbname_t *adbname, bool start_at_zone, unsigned int depth,
-	   isc_counter_t *qc, dns_rdatatype_t type) {
+	   isc_counter_t *qc, isc_counter_t *gqc, dns_rdatatype_t type) {
 	isc_result_t result;
 	dns_adbfetch_t *fetch = NULL;
 	dns_adb_t *adb = NULL;
@@ -3011,17 +3011,17 @@ fetch_name(dns_adbname_t *adbname, bool start_at_zone, unsigned int depth,
 	 * createfetch to find deepest cached name when we're providing
 	 * domain and nameservers.
 	 */
+	dns_adbname_ref(adbname);
 	result = dns_resolver_createfetch(
 		adb->res, adbname->name, type, name, nameservers, NULL, NULL, 0,
-		options, depth, qc, isc_loop(), fetch_callback, adbname,
-		&fetch->rdataset, NULL, &fetch->fetch);
+		options, depth, qc, gqc, isc_loop(), fetch_callback, adbname,
+		NULL, &fetch->rdataset, NULL, &fetch->fetch);
 	if (result != ISC_R_SUCCESS) {
 		DP(ENTER_LEVEL, "fetch_name: createfetch failed with %s",
 		   isc_result_totext(result));
+		dns_adbname_unref(adbname);
 		goto cleanup;
 	}
-
-	dns_adbname_ref(adbname);
 
 	if (type == dns_rdatatype_a) {
 		adbname->fetch_a = fetch;

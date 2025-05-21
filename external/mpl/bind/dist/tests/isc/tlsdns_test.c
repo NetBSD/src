@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsdns_test.c,v 1.2 2025/01/26 16:25:50 christos Exp $	*/
+/*	$NetBSD: tlsdns_test.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,7 +65,7 @@ static void
 tlsdns_connect(isc_nm_t *nm) {
 	isc_nm_streamdnsconnect(
 		nm, &tcp_connect_addr, &tcp_listen_addr, connect_connect_cb,
-		tlsdns_connect, T_CONNECT, tcp_connect_tlsctx,
+		tlsdns_connect, T_CONNECT, tcp_connect_tlsctx, NULL,
 		tcp_tlsctx_client_sess_cache, get_proxy_type(), NULL);
 }
 
@@ -76,7 +76,7 @@ ISC_LOOP_TEST_IMPL(tlsdns_noop) {
 	isc_refcount_increment0(&active_cconnects);
 	isc_nm_streamdnsconnect(connect_nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_success_cb, tlsdns_connect, T_CONNECT,
-				tcp_connect_tlsctx,
+				tcp_connect_tlsctx, NULL,
 				tcp_tlsctx_client_sess_cache, get_proxy_type(),
 				NULL);
 }
@@ -87,7 +87,7 @@ ISC_LOOP_TEST_IMPL(tlsdns_noresponse) {
 	isc_refcount_increment0(&active_cconnects);
 	isc_nm_streamdnsconnect(connect_nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_connect_cb, tlsdns_connect, T_CONNECT,
-				tcp_connect_tlsctx,
+				tcp_connect_tlsctx, NULL,
 				tcp_tlsctx_client_sess_cache, get_proxy_type(),
 				NULL);
 }
@@ -111,7 +111,7 @@ ISC_LOOP_TEST_IMPL(tlsdns_timeout_recovery) {
 	isc_nm_streamdnsconnect(
 		connect_nm, &tcp_connect_addr, &tcp_listen_addr,
 		connect_connect_cb, tlsdns_connect, T_SOFT, tcp_connect_tlsctx,
-		tcp_tlsctx_client_sess_cache, get_proxy_type(), NULL);
+		NULL, tcp_tlsctx_client_sess_cache, get_proxy_type(), NULL);
 }
 
 ISC_LOOP_TEST_IMPL(tlsdns_recv_one) {

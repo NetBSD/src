@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.9 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.10 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -136,9 +136,6 @@ bool
 dst_key_iszonekey(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 
-	if ((key->key_flags & DNS_KEYTYPE_NOAUTH) != 0) {
-		return false;
-	}
 	if ((key->key_flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE) {
 		return false;
 	}

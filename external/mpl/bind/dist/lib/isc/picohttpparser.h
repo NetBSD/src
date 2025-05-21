@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.h,v 1.3 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: picohttpparser.h,v 1.4 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -31,6 +31,7 @@
 #ifndef picohttpparser_h
 #define picohttpparser_h
 
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef _MSC_VER
@@ -76,6 +77,8 @@ struct phr_chunked_decoder {
 	char consume_trailer;	    /* if trailing headers should be consumed */
 	char _hex_count;
 	char _state;
+	uint64_t _total_read;
+	uint64_t _total_overhead;
 };
 
 /* the function rewrites the buffer given as (buf, bufsz) removing the chunked-

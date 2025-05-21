@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.12 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.13 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,8 +179,8 @@ typedef struct dns_dbmethods {
 	void (*locknode)(dns_db_t *db, dns_dbnode_t *node, isc_rwlocktype_t t);
 	void (*unlocknode)(dns_db_t *db, dns_dbnode_t *node,
 			   isc_rwlocktype_t t);
-	void (*addglue)(dns_db_t *db, dns_dbversion_t *version,
-			dns_rdataset_t *rdataset, dns_message_t *msg);
+	isc_result_t (*addglue)(dns_db_t *db, dns_dbversion_t *version,
+				dns_rdataset_t *rdataset, dns_message_t *msg);
 	void (*expiredata)(dns_db_t *db, dns_dbnode_t *node, void *data);
 	void (*deletedata)(dns_db_t *db, dns_dbnode_t *node, void *data);
 	isc_result_t (*nodefullname)(dns_db_t *db, dns_dbnode_t *node,
