@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 static int aiost_create(struct aiosp *, struct aiost **);
 static int aiost_terminate(struct aiost *);
-static int aiost_configure(struct aiost *, struct aio_job *);
+static int aiost_configure(struct aiost *, struct aio_job *, vaddr_t *);
 static int aiost_process_rw(struct aiost *);
 static int aiost_process_sync(struct aiost *);
 static void aiost_entry(void *);
@@ -104,7 +104,7 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 		TAILQ_INSERT_TAIL(&sp->active, aiost, list);
 		sp->nthreads_active++;
 
-		int error = aiost_configure(aiost, a_job);
+		int error = aiost_configure(aiost, a_job, &sp->kbuf);
 		if(error) {
 			mutex_exit(&sp->mtx);
 			return error;
@@ -311,6 +311,59 @@ aiost_terminate(struct aiost *st) {
  * and establish the 'shared' memory region.
  */
 static int
-aiost_configure(struct aiost *aiost, struct aio_job *job) {
+aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf) {
+	struct vmspace *vm = job->p->p_vmspace;
+	struct aiocb *aiocb = &job->aiocbp;
+
+	// TODO handle sync and dsync	
+	vm_prot_t protections = VM_PROT_NONE;
+	if(job->aio_op == AIO_READ) {
+		protections = VM_PROT_READ;
+	} else if(job->aio_op == AIO_WRITE) {
+		protections = VM_PROT_READ | VM_PROT_WRITE;
+	} else {
+		return 0;
+	}
+
+	/*
+	 * To account for the case where the memory is anonymously mapped and
+	 * has not yet been fulfilled.
+	 */
+	int error = uvm_vslock(vm, job->aiocb_uptr, aiocb->aio_nbytes,
+		protections);
+	if(error) {
+		return error;
+	}
+
+	vaddr_t kva = uvm_km_alloc(kernel_map, aiocb->aio_nbytes, 0,
+		 UVM_KMF_VAONLY);
+	if(!kva) {
+		uvm_vsunlock(vm, job->aiocb_uptr, aiocb->aio_nbytes);
+		return ENOMEM;
+	}
+
+	/*
+	 * Extract physical memory and map to the kernel
+	 */
+	for(vaddr_t uva = trunc_page((vaddr_t)aiocb->aio_buf);
+		uva < round_page((vaddr_t)aiocb->aio_buf + aiocb->aio_nbytes);
+		uva += PAGE_SIZE) {
+		paddr_t upa;
+		int ret = pmap_extract(vm_map_pmap(&vm->vm_map), uva, &upa);
+		if(!ret) {
+			uvm_km_free(kernel_map, kva, aiocb->aio_nbytes,
+				UVM_KMF_VAONLY);
+			uvm_vsunlock(vm, job->aiocb_uptr,
+				aiocb->aio_nbytes);
+			return EFAULT;
+		}
+
+		pmap_kenter_pa(kva + (uva - trunc_page((vaddr_t)aiocb->aio_buf)),
+			upa, protections, 0);
+	}
+
+	pmap_update(pmap_kernel());
+	*kbuf = kva;
+
 	return 0;
 }

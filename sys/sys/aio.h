@@ -95,6 +95,7 @@ struct aio_job {
 	int aio_op;		/* Operation code */
 	struct aiocb aiocbp;	/* AIO data structure */
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
+	struct proc *p;		/* Process that instantiated the job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
@@ -108,7 +109,7 @@ struct aiost {
 	kcondvar_t service_cv;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
-	int exit;			/* Exit code */
+	int exit;			/* Signifies an exit routine */
 };
 
 /* Structure for AIO servicing pool */
@@ -122,6 +123,7 @@ struct aiosp {
 	int jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
 	int nthreads_total;		/* Number of total servicing threads */
+	vaddr_t kbuf;			/* Shared memory buffer */
 };
 
 /* LIO structure */
