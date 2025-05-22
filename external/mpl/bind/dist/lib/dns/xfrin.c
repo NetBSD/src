@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.18 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.19 2025/05/22 13:51:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1008,7 +1008,7 @@ xfrin_minratecheck(void *arg) {
 
 	REQUIRE(VALID_XFRIN(xfr));
 
-	const uint64_t nbytes = atomic_load_relaxed(&xfr->nbytes);
+	const uint64_t nbytes = ISC_XFRIN_LOAD(&xfr->nbytes, uint64_t);
 	const uint64_t min = dns_zone_getminxfrratebytesin(xfr->zone);
 	uint64_t rate = nbytes - xfr->nbytes_saved;
 
@@ -1024,7 +1024,7 @@ xfrin_minratecheck(void *arg) {
 		 * rate in bytes-per-second for the latest interval.
 		 */
 		rate /= dns_zone_getminxfrratesecondsin(xfr->zone);
-		atomic_store_relaxed(&xfr->rate_bytes_per_second, rate);
+		ISC_XFRIN_STORE(&xfr->rate_bytes_per_second, rate);
 	}
 }
 
@@ -1093,7 +1093,7 @@ dns_xfrin_getstats(dns_xfrin_t *xfr, unsigned int *nmsgp, unsigned int *nrecsp,
 	REQUIRE(VALID_XFRIN(xfr));
 	REQUIRE(nmsgp != NULL && nrecsp != NULL && nbytesp != NULL);
 
-	uint64_t rate = atomic_load_relaxed(&xfr->rate_bytes_per_second);
+	uint64_t rate = ISC_XFRIN_LOAD(&xfr->rate_bytes_per_second, uint64_t);
 	if (rate == 0) {
 		/*
 		 * Likely the first 'min-transfer-rate-in <bytes> <minutes>'
@@ -1101,10 +1101,10 @@ dns_xfrin_getstats(dns_xfrin_t *xfr, unsigned int *nmsgp, unsigned int *nrecsp,
 		 * average transfer rate instead.
 		 */
 		isc_time_t now = isc_time_now();
-		isc_time_t start = atomic_load_relaxed(&xfr->start);
+		isc_time_t start = ISC_XFRIN_LOAD(&xfr->start, isc_time_t);
 		uint64_t sec = isc_time_microdiff(&now, &start) / US_PER_SEC;
 		if (sec > 0) {
-			rate = atomic_load_relaxed(&xfr->nbytes) / sec;
+			rate = ISC_XFRIN_LOAD(&xfr->nbytes, uint64_t) / sec;
 		}
 	}
 
