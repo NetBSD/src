@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann.
+ * by Martin Husemann and Emmanuel Nyarko
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,6 +96,7 @@ DID	[a-zA-Z_][a-zA-Z_0-9-]*
 SPID	[a-zA-Z][a-zA-Z_0-9.]*
 NUMBER	[0-9]+
 HEXDIG	[0-9a-fA-F]+
+BW_UNIT [A-Za-z%]+
 
 %%
 %{
@@ -174,6 +175,19 @@ icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
 
+altq			return ALTQ;
+cbq			return CBQ;
+priq			return PRIQ;
+hfsc			return HFSC;
+bandwidth		return BANDWIDTH;
+tbrsize			return TBRSIZE;
+linkshare 		return LINKSHARE;
+realtime		return REALTIME;
+uppertime		return UPPERLIMIT;
+queue			return QUEUE;
+priority		return PRIORITY;
+qlimit			return QLIMIT;
+
 "/"			return SLASH;
 "{"			return CURLY_OPEN;
 "}"			return CURLY_CLOSE;
@@ -182,6 +196,11 @@ any			return ANY;
 ","			return COMMA;
 "="			return EQ;
 "!"			return EXCL_MARK;
+
+{NUMBER}[\.]*[0-9]*{BW_UNIT} {
+			yylval.str = estrndup(yytext, yyleng);
+			return BW_SPEC;
+}
 
 "0x"{HEXDIG} {
 			char *endp, *buf = ecalloc(1, yyleng + 1);

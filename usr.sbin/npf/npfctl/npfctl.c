@@ -339,7 +339,7 @@ npfctl_load(int fd)
 	return errno;
 }
 
-static int
+int
 npfctl_open_dev(const char *path)
 {
 	struct stat st;

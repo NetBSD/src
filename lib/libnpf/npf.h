@@ -108,6 +108,7 @@ int		npf_rule_setprio(nl_rule_t *, int);
 int		npf_rule_setproc(nl_rule_t *, const char *);
 int		npf_rule_setkey(nl_rule_t *, const void *, size_t);
 int		npf_rule_setinfo(nl_rule_t *, const void *, size_t);
+int		npf_rule_setqueue(nl_rule_t *, const char *);
 const char *	npf_rule_getname(nl_rule_t *);
 uint32_t	npf_rule_getattr(nl_rule_t *);
 const char *	npf_rule_getinterface(nl_rule_t *);
