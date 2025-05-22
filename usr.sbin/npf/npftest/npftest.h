@@ -23,6 +23,7 @@
 #define	rumpns_npf_table_test		npf_table_test
 #define	rumpns_npf_state_test		npf_state_test
 #define	rumpns_npf_rule_test		npf_rule_test
+#define	rumpns_npf_layer2_rule_test	npf_layer2_rule_test
 #define	rumpns_npf_nat_test		npf_nat_test
 #define	rumpns_npf_gc_test		npf_gc_test
 #define	rumpns_npf_test_conc		npf_test_conc
@@ -49,6 +50,7 @@ bool		rumpns_npf_table_test(bool, void *, size_t);
 bool		rumpns_npf_state_test(bool);
 
 bool		rumpns_npf_rule_test(bool);
+bool		rumpns_npf_layer2_rule_test(bool);
 bool		rumpns_npf_nat_test(bool);
 bool		rumpns_npf_gc_test(bool);
 
