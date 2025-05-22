@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.203 2024/04/02 22:56:50 charlotte Exp $
+# $NetBSD: XEN3_DOM0,v 1.204 2025/05/22 09:37:40 bad Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.203 $"
+#ident		"XEN3_DOM0-$Revision: 1.204 $"
 
 maxusers	32		# estimated number of users
 
@@ -1230,4 +1230,5 @@ pseudo-device  xvif
 pseudo-device  xbdback
 
 # Pull in optional local configuration - always at end
-cinclude	"arch/amd64/conf/GENERIC.local"
+cinclude	"arch/amd64/conf/XEN3.local"
+cinclude	"arch/i386/conf/XEN3_DOM0.local"
