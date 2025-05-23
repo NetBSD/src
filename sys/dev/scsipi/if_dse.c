@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.8 2024/09/08 04:42:49 nat Exp $ */
+/*	$NetBSD: if_dse.c,v 1.9 2025/05/23 09:12:51 nat Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -619,6 +619,8 @@ dsedone(struct scsipi_xfer *xs, int error)
 				ntimeo = dse_poll;
 			else if (n >= RDATA_MAX)
 				ntimeo = dse_poll0;
+			else if (n >= dse_max_received)
+				ntimeo = 0;
 			else {
 				ntimeo = sc->sc_last_timeout;
 				ntimeo = (ntimeo * RDATA_GOAL)/n;
