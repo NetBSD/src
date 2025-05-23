@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.651 2025/05/20 17:56:40 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.652 2025/05/23 21:05:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.651 2025/05/20 17:56:40 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.652 2025/05/23 21:05:56 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -379,8 +379,9 @@ MainParseArgJobsInternal(const char *argvalue)
 	if (sscanf(argvalue, "%d,%d%c",
 	    &tokenPoolReader, &tokenPoolWriter, &end) != 2) {
 		(void)fprintf(stderr,
-		    "%s: error: invalid internal option \"-J %s\"\n",
-		    progname, argvalue);
+		    "%s: error: invalid internal option "
+		    "\"-J %s\" in \"%s\"\n",
+		    progname, argvalue, curdir);
 		exit(2);
 	}
 	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
@@ -388,6 +389,22 @@ MainParseArgJobsInternal(const char *argvalue)
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
 		opts.compatMake = true;
+		(void)fprintf(stderr,
+		    "%s: warning: internal option \"-J %s\" in \"%s\" "
+		    "refers to an unopened file descriptor; "
+		    "falling back to compat mode.\n"
+		    "\t"
+		    "To run the target even in -n mode, "
+		    "add the .MAKE pseudo-source to the target.\n"
+		    "\t"
+		    "To run the target in default mode only, "
+		    "add a ${:D make} marker to a target's command. "
+		    "(This marker expression expands to an empty string.)\n"
+		    "\t"
+		    "To make the sub-make independent from the parent make, "
+		    "unset the MAKEFLAGS environment variable in the "
+		    "target's commands.\n",
+		    progname, argvalue, curdir);
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
 		Global_Append(MAKEFLAGS, argvalue);
