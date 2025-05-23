@@ -84,7 +84,6 @@ typedef struct npf_rprocset	npf_rprocset_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_conn		npf_conn_t;
-typedef struct r_id		rid_t;
 
 struct npf_conndb;
 struct npf_table;

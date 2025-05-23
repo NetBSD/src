@@ -853,6 +853,22 @@ npf_rule_getproc(nl_rule_t *rl)
 	return dnvlist_get_string(rl->rule_dict, "rproc", NULL);
 }
 
+int
+npf_rule_getrid(struct r_id *r_id, nl_rule_t *rl, const char *key)
+{
+	if (nvlist_exists_number_array(rl->rule_dict, key)) {
+		size_t nitems;
+		const uint64_t *rid = nvlist_get_number_array(rl->rule_dict, key, &nitems);
+		assert(nitems == 3);
+
+		r_id->id[0] = (uint32_t)rid[0];
+		r_id->id[1] = (uint32_t)rid[1];
+		r_id->op = (uint8_t)rid[2];
+		return 0;
+	}
+	return -1;
+}
+
 uint64_t
 npf_rule_getid(nl_rule_t *rl)
 {

@@ -195,7 +195,7 @@ npfvar_expand_number(const npfvar_t *vp)
 }
 
 void
-npf_var_rid(char *var_id, rid_parser parser, uint32_t *rid, const char *id_t)
+npf_var_rid(char *var_id, rid_parser parser, uint32_t *rid, const char *ridt)
 {
 	npfvar_t *vp = npfvar_lookup(var_id);
 	int type = npfvar_get_type(vp, 0);
@@ -206,7 +206,7 @@ npf_var_rid(char *var_id, rid_parser parser, uint32_t *rid, const char *id_t)
 	case NPFVAR_STRING:
 		rid_type = npfvar_expand_string(vp);
 		if (parser(rid_type, rid) == -1) {
-			yyerror("unknown %s %s", var_id, id_t);
+			yyerror("unknown %s %s", var_id, ridt);
 		}
 		break;
 	case NPFVAR_NUM:
@@ -217,7 +217,7 @@ npf_var_rid(char *var_id, rid_parser parser, uint32_t *rid, const char *id_t)
 		break;
 	default:
 		yyerror("wrong variable '%s' type '%s' for %s id",
-			var_id, npfvar_type(type), id_t);
+			var_id, npfvar_type(type), ridt);
 		break;
 	}
 }

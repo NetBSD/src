@@ -68,6 +68,7 @@ npf_rule_getinfo
 npf_rule_getinterface
 npf_rule_getname
 npf_rule_getproc
+npf_rule_getrid
 npf_rule_insert
 npf_rule_iterate
 npf_rule_setcode

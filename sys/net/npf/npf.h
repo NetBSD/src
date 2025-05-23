@@ -68,6 +68,7 @@ struct r_id {
 	uint8_t		 op;
 };
 
+typedef struct r_id		rid_t;
 typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)

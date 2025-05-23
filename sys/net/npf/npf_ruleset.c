@@ -665,6 +665,13 @@ npf_rule_alloc(npf_t *npf, const nvlist_t *rule)
 	return rl;
 }
 
+static void
+npf_rid_export(nvlist_t *rl, struct r_id rid, const char *name)
+{
+	uint64_t uid_element[3] = { rid.id[0], rid.id[1], rid.op };
+	nvlist_add_number_array(rl, name, uid_element, 3);
+}
+
 static nvlist_t *
 npf_rule_export(npf_t *npf, const npf_rule_t *rl)
 {
@@ -697,6 +704,12 @@ npf_rule_export(npf_t *npf, const npf_rule_t *rl)
 	}
 	if (rl->r_info) {
 		nvlist_add_binary(rule, "info", rl->r_info, rl->r_info_len);
+	}
+	if (rl->uid.op != NPF_OP_NONE) {
+		npf_rid_export(rule, rl->uid, "r_user");
+	}
+	if (rl->gid.op != NPF_OP_NONE) {
+		npf_rid_export(rule, rl->gid, "r_group");
 	}
 	if ((rp = npf_rule_getrproc(rl)) != NULL) {
 		const char *rname = npf_rproc_getname(rp);
