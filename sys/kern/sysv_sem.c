@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.103 2025/05/10 09:16:48 riastradh Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.104 2025/05/23 09:47:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.103 2025/05/10 09:16:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.104 2025/05/23 09:47:34 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -827,7 +827,7 @@ do_semop1(struct lwp *l, int usemid, struct sembuf *sops,
 
 	RUN_ONCE(&exithook_control, seminit_exithook);
 
-	SEM_PRINTF(("do_semop1(%d, %p, %zu)\n", usemid, usops, nsops));
+	SEM_PRINTF(("do_semop1(%d, %p, %zu)\n", usemid, sops, nsops));
 
 	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
 		mutex_enter(p->p_lock);
