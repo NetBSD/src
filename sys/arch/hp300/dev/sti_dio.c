@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_dio.c,v 1.1 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: sti_dio.c,v 1.2 2025/05/23 16:46:55 tsutsui Exp $	*/
 /*	$OpenBSD: sti_dio.c,v 1.1 2011/08/18 20:02:57 miod Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.1 2025/05/01 06:11:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.2 2025/05/23 16:46:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,7 @@ sti_dio_probe(bus_space_tag_t bst, int scode)
 	if (!DIO_ISDIOII(scode))
 		return 0;
 
-	addr = (bus_addr_t)(bus_addr_t)dio_scodetopa(scode);
+	addr = (bus_addr_t)dio_scodetopa(scode);
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
 		return 0;
 	span = bus_space_read_1(bst, bsh, DIOII_SIZEOFF);
