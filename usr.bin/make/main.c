@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.652 2025/05/23 21:05:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.652 2025/05/23 21:05:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1422,16 +1422,16 @@ main_Init(int argc, char **argv)
 #endif
 	Dir_Init();
 
-	{
-		char *makeflags = explode(getenv("MAKEFLAGS"));
-		Main_ParseArgLine(makeflags);
-		free(makeflags);
-	}
-
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: getcwd: %s.\n",
 		    progname, strerror(errno));
 		exit(2);
+	}
+
+	{
+		char *makeflags = explode(getenv("MAKEFLAGS"));
+		Main_ParseArgLine(makeflags);
+		free(makeflags);
 	}
 
 	MainParseArgs(argc, argv);
