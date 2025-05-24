@@ -1,4 +1,4 @@
-# $NetBSD: msg_005.ln,v 1.4 2025/02/20 19:04:00 rillig Exp $
+# $NetBSD: msg_005.ln,v 1.5 2025/05/24 06:53:16 rillig Exp $
 #
 # Test data for message 5 of lint2:
 #	%s returns '%s' at %s, versus '%s' at %s
@@ -15,3 +15,12 @@ S msg_005_call.c
 2 d 0.2 e 3add F2 I I I
 4 c 0.4 p1 p2 u 3add f2 I I I
 4 d 0.4 d r 4main F0 I
+
+# pointer-to-char.c:1: const char *pointer = "";
+0 s pointer-to-char.c
+S pointer-to-char.c
+1 d 0.1 d 7pointer PcC
+# pointer-to-const-char.c:1: extern char *pointer;
+0 s pointer-to-const-char.c
+S pointer-to-const-char.c
+1 d 0.1 e 7pointer PC
