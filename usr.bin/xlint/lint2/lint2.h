@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.29 2025/05/16 20:39:48 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.30 2025/05/24 07:38:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -58,7 +58,7 @@ struct lint2_type {
 		} _t_uniqpos;		/* unique position, for untagged
 					 * untyped STRUCTs, UNIONS, and ENUMs,
 					 * if t_isuniqpos */
-		struct lint2_type **_t_args; /* list of argument types if
+		const struct lint2_type **_t_args; /* list of argument types if
 					 * this is a prototype */
 	} t_u;
 	struct lint2_type *t_subt;	/*- element type (if ARRAY),

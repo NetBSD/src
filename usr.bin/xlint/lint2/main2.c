@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.35 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.36 2025/05/24 07:38:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.35 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.36 2025/05/24 07:38:59 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -65,12 +65,6 @@ const char *libname;
 static const char **libs;
 
 static void usage(void) __attribute__((noreturn));
-
-static void
-check_name_non_const(hte_t *hte)
-{
-	check_name(hte);
-}
 
 int
 main(int argc, char *argv[])
@@ -151,7 +145,7 @@ main(int argc, char *argv[])
 	mark_main_as_used();
 
 	/* perform all tests */
-	symtab_forall_sorted(check_name_non_const);
+	symtab_forall_sorted(check_name);
 
 	return 0;
 }

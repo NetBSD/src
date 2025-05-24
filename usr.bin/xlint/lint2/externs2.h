@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.23 2024/08/31 06:57:31 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.24 2025/05/24 07:38:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -52,7 +52,7 @@ hte_t **htab_new(void);
 hte_t *hash_search(hte_t **, const char *, bool);
 void symtab_init(void);
 void symtab_forall(void (*)(hte_t *));
-void symtab_forall_sorted(void (*)(hte_t *));
+void symtab_forall_sorted(void (*)(const hte_t *));
 void hash_free(hte_t **);
 
 #define	htab_search(a, b)	hash_search(NULL, (a), (b))
