@@ -135,6 +135,20 @@ aiosp_initialize(struct aiosp **ret) {
 }
 
 /*
+ * Enqueue a job for processing by a servicing queue
+ */
+int aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job) {
+	mutex_enter(&sp->mtx);
+	
+	TAILQ_INSERT_TAIL(&sp->jobs, job, list);
+	sp->jobs_pending++;
+
+	mutex_exit(&sp->mtx);
+
+	return 0;
+}
+
+/*
  * Each process keeps track of all the service threads instantiated to service
  * an asynchronous operation by the process. When a process is terminated we
  * must also terminate all of its active and pending asynchronous operation.
