@@ -121,7 +121,8 @@ aiosp_distribute_jobs(struct aiosp *sp) {
  * Initializes a servicing pool.
  */
 int
-aiosp_initialize(struct aiosp **ret) {
+aiosp_initialize(struct aiosp **ret)
+{
 	struct aiosp *sp;
 
 	sp = kmem_zalloc(sizeof(struct aiosp), KM_SLEEP);
@@ -137,9 +138,11 @@ aiosp_initialize(struct aiosp **ret) {
 /*
  * Enqueue a job for processing by a servicing queue
  */
-int aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job) {
+int
+aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job)
+{
 	mutex_enter(&sp->mtx);
-	
+
 	TAILQ_INSERT_TAIL(&sp->jobs, job, list);
 	sp->jobs_pending++;
 
@@ -154,7 +157,8 @@ int aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job) {
  * must also terminate all of its active and pending asynchronous operation.
  */
 int
-aiosp_destroy(struct aioproc *proc) {
+aiosp_destroy(struct aioproc *proc)
+{
 	struct aiosp *sp = proc->sp;
 
 	mutex_enter(&sp->mtx);
@@ -189,7 +193,8 @@ aiosp_destroy(struct aioproc *proc) {
  * Create and initialise a new servicing thread and append it to the freelist.
  */
 static int
-aiost_create(struct aiosp *sp, struct aiost **ret) {
+aiost_create(struct aiosp *sp, struct aiost **ret)
+{
 	struct proc *p = curlwp->l_proc;
 	struct aiost *st;
 
@@ -221,7 +226,8 @@ aiost_create(struct aiosp *sp, struct aiost **ret) {
  * then mark the current servicing thread as free.
  */
 static void
-aiost_entry(void *arg) {
+aiost_entry(void *arg)
+{
 	struct aiost *st = arg;
 	struct aiosp *sp = st->aiosp;
 
@@ -288,7 +294,8 @@ next:
  * processes a read/write asynchronous operations
  */
 static int
-aiost_process_rw(struct aiost *aiost) {
+aiost_process_rw(struct aiost *aiost)
+{
 	struct aio_job *job = aiost->job;
 	struct aiocb *aiocbp = &job->aiocbp;
 	struct file *fp;
