@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.10 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.11 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,21 +62,36 @@ isc_quota_getsoft(isc_quota_t *quota) {
 unsigned int
 isc_quota_getused(isc_quota_t *quota) {
 	REQUIRE(VALID_QUOTA(quota));
-	return atomic_load_relaxed(&quota->used);
+	return atomic_load_acquire(&quota->used);
 }
 
 void
 isc_quota_release(isc_quota_t *quota) {
+	struct cds_wfcq_node *node;
 	/*
 	 * We are using the cds_wfcq_dequeue_blocking() variant here that
 	 * has an internal mutex because we need synchronization on
 	 * multiple dequeues running from different threads.
 	 */
-	struct cds_wfcq_node *node =
-		cds_wfcq_dequeue_blocking(&quota->jobs.head, &quota->jobs.tail);
+again:
+	node = cds_wfcq_dequeue_blocking(&quota->jobs.head, &quota->jobs.tail);
 	if (node == NULL) {
-		uint_fast32_t used = atomic_fetch_sub_relaxed(&quota->used, 1);
+		uint_fast32_t used = atomic_fetch_sub_acq_rel(&quota->used, 1);
 		INSIST(used > 0);
+
+		/*
+		 * If this was the last quota released and in the meantime a
+		 * new job has appeared in the queue, then give it a chance
+		 * to run, otherwise it could get stuck there until a new quota
+		 * is acquired and released again.
+		 */
+		if (used == 1 &&
+		    !cds_wfcq_empty(&quota->jobs.head, &quota->jobs.tail))
+		{
+			atomic_fetch_add_acq_rel(&quota->used, 1);
+			goto again;
+		}
+
 		return;
 	}
 
@@ -90,10 +105,10 @@ isc_quota_acquire_cb(isc_quota_t *quota, isc_job_t *job, isc_job_cb cb,
 	REQUIRE(VALID_QUOTA(quota));
 	REQUIRE(job == NULL || cb != NULL);
 
-	uint_fast32_t used = atomic_fetch_add_relaxed(&quota->used, 1);
+	uint_fast32_t used = atomic_fetch_add_acq_rel(&quota->used, 1);
 	uint_fast32_t max = atomic_load_relaxed(&quota->max);
 	if (max != 0 && used >= max) {
-		(void)atomic_fetch_sub_relaxed(&quota->used, 1);
+		(void)atomic_fetch_sub_acq_rel(&quota->used, 1);
 		if (job != NULL) {
 			job->cb = cb;
 			job->cbarg = cbarg;
@@ -105,6 +120,23 @@ isc_quota_acquire_cb(isc_quota_t *quota, isc_job_t *job, isc_job_cb cb,
 			 */
 			cds_wfcq_enqueue(&quota->jobs.head, &quota->jobs.tail,
 					 &job->wfcq_node);
+
+			/*
+			 * While we were initializing and enqueuing a new node,
+			 * quotas might have been released, and if no quota is
+			 * used any more, then our newly enqueued job won't
+			 * have a chance to get running until a new quota is
+			 * acquired and released. To avoid a hangup, check
+			 * quota->used again, if it's 0 then simulate a quota
+			 * acquire/release for the current job to run as soon as
+			 * possible, although we will still return ISC_R_QUOTA
+			 * to the caller.
+			 */
+			if (atomic_compare_exchange_strong_acq_rel(
+				    &quota->used, &(uint_fast32_t){ 0 }, 1))
+			{
+				isc_quota_release(quota);
+			}
 		}
 		return ISC_R_QUOTA;
 	}
@@ -122,7 +154,7 @@ isc_quota_destroy(isc_quota_t *quota) {
 	REQUIRE(VALID_QUOTA(quota));
 	quota->magic = 0;
 
-	INSIST(atomic_load(&quota->used) == 0);
+	INSIST(atomic_load_acquire(&quota->used) == 0);
 	INSIST(cds_wfcq_empty(&quota->jobs.head, &quota->jobs.tail));
 
 	cds_wfcq_destroy(&quota->jobs.head, &quota->jobs.tail);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.11 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.12 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,13 +31,6 @@
 #include <dns/rdatastruct.h>
 
 #include <dst/dst.h>
-
-#define RETERR(x)                            \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 void
 dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit) {
@@ -191,7 +184,10 @@ dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 	dns_rdataset_init(&rdataset);
 	dns_rdata_init(&rdata);
 
-	RETERR(dns_nsec_buildrdata(db, version, node, target, data, &rdata));
+	result = dns_nsec_buildrdata(db, version, node, target, data, &rdata);
+	if (result != ISC_R_SUCCESS) {
+		goto failure;
+	}
 
 	dns_rdatalist_init(&rdatalist);
 	rdatalist.rdclass = dns_db_class(db);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.h,v 1.8 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: xfrin.h,v 1.9 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -145,10 +145,13 @@ dns_xfrin_getendserial(dns_xfrin_t *xfr);
 
 void
 dns_xfrin_getstats(dns_xfrin_t *xfr, unsigned int *nmsgp, unsigned int *nrecsp,
-		   uint64_t *nbytesp);
+		   uint64_t *nbytesp, uint64_t *ratep);
 /*%<
  * Get various statistics values of the xfrin object: number of the received
- * messages, number of the received records, number of the received bytes.
+ * messages, number of the received records, number of the received bytes,
+ * and the average transfer rate (in bytes-per-second) during the last full
+ * 'min-transfer-rate-in <bytes> <minutes>' minutes interval. If no such
+ * interval has passed yet, then the overall average rate is reported instead.
  *
  * Requires:
  *\li	'xfr' is a valid dns_xfrin_t.

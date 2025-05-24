@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.11 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.12 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,6 +58,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h> /* for dns_rdata_rrsig_t */
+#include <dns/resolver.h>
 #include <dns/types.h>
 
 #include <dst/dst.h>
@@ -150,12 +151,18 @@ struct dns_validator {
 	isc_stdtime_t start;
 
 	bool	       digest_sha1;
-	bool	       supported_algorithm;
+	uint8_t	       unsupported_algorithm;
+	uint8_t	       unsupported_digest;
 	dns_rdata_t    rdata;
 	bool	       resume;
-	uint32_t      *nvalidations;
-	uint32_t      *nfails;
+	isc_counter_t *nvalidations;
+	isc_counter_t *nfails;
 	isc_counter_t *qc;
+	isc_counter_t *gqc;
+
+	dns_edectx_t edectx;
+
+	dns_edectx_t *cb_edectx;
 };
 
 /*%
@@ -173,8 +180,9 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		     dns_message_t *message, unsigned int options,
 		     isc_loop_t *loop, isc_job_cb cb, void *arg,
-		     uint32_t *nvalidations, uint32_t *nfails,
-		     isc_counter_t *qc, dns_validator_t **validatorp);
+		     isc_counter_t *nvalidations, isc_counter_t *nfails,
+		     isc_counter_t *qc, isc_counter_t *gqc,
+		     dns_edectx_t *edectx, dns_validator_t **validatorp);
 /*%<
  * Start a DNSSEC validation.
  *

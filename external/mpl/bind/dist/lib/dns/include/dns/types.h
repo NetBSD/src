@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -96,6 +96,7 @@ typedef struct dns_forwarder	   dns_forwarder_t;
 typedef struct dns_fwdtable	   dns_fwdtable_t;
 typedef struct dns_geoip_databases dns_geoip_databases_t;
 typedef struct dns_glue		   dns_glue_t;
+typedef struct dns_gluelist	   dns_gluelist_t;
 typedef struct dns_iptable	   dns_iptable_t;
 typedef uint32_t		   dns_iterations_t;
 typedef struct dns_kasp		   dns_kasp_t;

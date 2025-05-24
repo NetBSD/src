@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.4 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.5 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -56,16 +56,16 @@
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c) - 040u < 0137u)
 
-#define CHECK_EOF()            \
-	if (buf == buf_end) {  \
-		*ret = -2;     \
-		return (NULL); \
+#define CHECK_EOF()           \
+	if (buf == buf_end) { \
+		*ret = -2;    \
+		return NULL;  \
 	}
 
 #define EXPECT_CHAR_NO_CHECK(ch) \
 	if (*buf++ != ch) {      \
 		*ret = -1;       \
-		return (NULL);   \
+		return NULL;     \
 	}
 
 #define EXPECT_CHAR(ch) \
@@ -90,7 +90,7 @@
 				    *buf == '\177')                       \
 				{                                         \
 					*ret = -1;                        \
-					return (NULL);                    \
+					return NULL;                      \
 				}                                         \
 			}                                                 \
 			++buf;                                            \
@@ -156,17 +156,19 @@ get_token_to_eol(const char *buf, const char *buf_end, const char **token,
 			      "\177\177"; /* allow chars w. MSB set */
 	int found;
 	buf = findchar_fast(buf, buf_end, ranges1, 6, &found);
-	if (found)
+	if (found) {
 		goto FOUND_CTL;
+	}
 #else
 	/* find non-printable char within the next 8 bytes, this is the hottest
 	 * code; manually inlined */
 	while (likely(buf_end - buf >= 8)) {
-#define DOIT()                                           \
-	do {                                             \
-		if (unlikely(!IS_PRINTABLE_ASCII(*buf))) \
-			goto NonPrintable;               \
-		++buf;                                   \
+#define DOIT()                                             \
+	do {                                               \
+		if (unlikely(!IS_PRINTABLE_ASCII(*buf))) { \
+			goto NonPrintable;                 \
+		}                                          \
+		++buf;                                     \
 	} while (0)
 		DOIT();
 		DOIT();
@@ -248,7 +250,7 @@ is_complete(const char *buf, const char *buf_end, size_t last_len, int *ret) {
 	if (*buf < '0' || '9' < *buf) { \
 		buf++;                  \
 		*ret = -1;              \
-		return (NULL);          \
+		return NULL;            \
 	}                               \
 	*(valp_) = (mul_) * (*buf++ - '0');
 
@@ -605,6 +607,8 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 	size_t dst = 0, src = 0, bufsz = *_bufsz;
 	ssize_t ret = -2; /* incomplete */
 
+	decoder->_total_read += bufsz;
+
 	while (1) {
 		switch (decoder->_state) {
 		case CHUNKED_IN_CHUNK_SIZE:
@@ -615,6 +619,20 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				}
 				if ((v = decode_hex(buf[src])) == -1) {
 					if (decoder->_hex_count == 0) {
+						ret = -1;
+						goto Exit;
+					}
+					/* the only characters that may appear
+					 * after the chunk size are BWS,
+					 * semicolon, or CRLF */
+					switch (buf[src]) {
+					case ' ':
+					case '\011':
+					case ';':
+					case '\012':
+					case '\015':
+						break;
+					default:
 						ret = -1;
 						goto Exit;
 					}
@@ -729,6 +747,15 @@ Exit:
 		memmove(buf + dst, buf + src, bufsz - src);
 	}
 	*_bufsz = dst;
+	/* if incomplete but the overhead of the chunked encoding is >=100KB and
+	 * >80%, signal an error */
+	if (ret == -2) {
+		decoder->_total_overhead += bufsz - dst;
+		if (decoder->_total_overhead >= 100 * 1024 &&
+		    decoder->_total_read - decoder->_total_overhead <
+			    decoder->_total_read / 4)
+			ret = -1;
+	}
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: loop.c,v 1.2 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: loop.c,v 1.3 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -142,8 +142,6 @@ static void
 shutdown_trigger_close_cb(uv_handle_t *handle) {
 	isc_loop_t *loop = uv_handle_get_data(handle);
 
-	loop->shuttingdown = true;
-
 	isc_loop_detach(&loop);
 }
 
@@ -168,6 +166,9 @@ shutdown_cb(uv_async_t *handle) {
 
 	/* Make sure, we can't be called again */
 	uv_close(&loop->shutdown_trigger, shutdown_trigger_close_cb);
+
+	/* Mark this loop as shutting down */
+	loop->shuttingdown = true;
 
 	if (DEFAULT_LOOP(loopmgr) == CURRENT_LOOP(loopmgr)) {
 		/* Stop the signal handlers */

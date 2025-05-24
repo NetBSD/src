@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.10 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.11 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -392,6 +392,9 @@ static int
 compare_rrsig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
+	dns_name_t name1;
+	dns_name_t name2;
+	int order;
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
@@ -401,6 +404,32 @@ compare_rrsig(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
+
+	INSIST(r1.length > 18);
+	INSIST(r2.length > 18);
+	r1.length = 18;
+	r2.length = 18;
+	order = isc_region_compare(&r1, &r2);
+	if (order != 0) {
+		return order;
+	}
+
+	dns_name_init(&name1, NULL);
+	dns_name_init(&name2, NULL);
+	dns_rdata_toregion(rdata1, &r1);
+	dns_rdata_toregion(rdata2, &r2);
+	isc_region_consume(&r1, 18);
+	isc_region_consume(&r2, 18);
+	dns_name_fromregion(&name1, &r1);
+	dns_name_fromregion(&name2, &r2);
+	order = dns_name_rdatacompare(&name1, &name2);
+	if (order != 0) {
+		return order;
+	}
+
+	isc_region_consume(&r1, name_length(&name1));
+	isc_region_consume(&r2, name_length(&name2));
+
 	return isc_region_compare(&r1, &r2);
 }
 
@@ -568,13 +597,32 @@ additionaldata_rrsig(ARGS_ADDLDATA) {
 
 static isc_result_t
 digest_rrsig(ARGS_DIGEST) {
+	isc_region_t r1, r2;
+	dns_name_t name;
+
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
+	dns_rdata_toregion(rdata, &r1);
+	r2 = r1;
 
-	return ISC_R_NOTIMPLEMENTED;
+	/*
+	 * Type covered (2) + Algorithm (1) +
+	 * Labels (1) + Original TTL (4) +
+	 * Expire time (4) +  Time signed (4) +
+	 * Key ID (2).
+	 */
+	isc_region_consume(&r2, 18);
+	r1.length = 18;
+	RETERR((digest)(arg, &r1));
+
+	/* Signer */
+	dns_name_init(&name, NULL);
+	dns_name_fromregion(&name, &r2);
+	RETERR(dns_name_digest(&name, digest, arg));
+	isc_region_consume(&r2, name_length(&name));
+
+	/* Signature */
+	return (digest)(arg, &r2);
 }
 
 static dns_rdatatype_t
@@ -615,47 +663,7 @@ checknames_rrsig(ARGS_CHECKNAMES) {
 
 static int
 casecompare_rrsig(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-	dns_name_t name1;
-	dns_name_t name2;
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_rrsig);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-
-	INSIST(r1.length > 18);
-	INSIST(r2.length > 18);
-	r1.length = 18;
-	r2.length = 18;
-	order = isc_region_compare(&r1, &r2);
-	if (order != 0) {
-		return order;
-	}
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	isc_region_consume(&r1, 18);
-	isc_region_consume(&r2, 18);
-	dns_name_fromregion(&name1, &r1);
-	dns_name_fromregion(&name2, &r2);
-	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0) {
-		return order;
-	}
-
-	isc_region_consume(&r1, name_length(&name1));
-	isc_region_consume(&r2, name_length(&name2));
-
-	return isc_region_compare(&r1, &r2);
+	return compare_rrsig(rdata1, rdata2);
 }
 
 #endif /* RDATA_GENERIC_RRSIG_46_C */

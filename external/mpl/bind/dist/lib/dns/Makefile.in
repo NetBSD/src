@@ -224,26 +224,26 @@ am__libdns_la_SOURCES_DIST = include/dns/acl.h include/dns/adb.h \
 	include/dns/dlz_dlopen.h include/dns/dns64.h \
 	include/dns/dnsrps.h include/dns/dnssec.h include/dns/ds.h \
 	include/dns/dsdigest.h include/dns/dnstap.h \
-	include/dns/dyndb.h include/dns/ecs.h include/dns/edns.h \
-	include/dns/fixedname.h include/dns/forward.h \
-	include/dns/geoip.h include/dns/ipkeylist.h \
-	include/dns/iptable.h include/dns/journal.h include/dns/kasp.h \
-	include/dns/keydata.h include/dns/keyflags.h \
-	include/dns/keymgr.h include/dns/keystore.h \
-	include/dns/keytable.h include/dns/keyvalues.h \
-	include/dns/librpz.h include/dns/log.h include/dns/master.h \
-	include/dns/masterdump.h include/dns/message.h \
-	include/dns/name.h include/dns/nametree.h include/dns/ncache.h \
-	include/dns/nsec.h include/dns/nsec3.h include/dns/nta.h \
-	include/dns/opcode.h include/dns/order.h include/dns/peer.h \
-	include/dns/private.h include/dns/qp.h include/dns/rbt.h \
-	include/dns/rcode.h include/dns/rdata.h \
-	include/dns/rdataclass.h include/dns/rdatalist.h \
-	include/dns/rdataset.h include/dns/rdatasetiter.h \
-	include/dns/rdataslab.h include/dns/rdatatype.h \
-	include/dns/remote.h include/dns/request.h \
-	include/dns/resolver.h include/dns/result.h \
-	include/dns/rootns.h include/dns/rpz.h \
+	include/dns/dyndb.h include/dns/ecs.h include/dns/ede.h \
+	include/dns/edns.h include/dns/fixedname.h \
+	include/dns/forward.h include/dns/geoip.h \
+	include/dns/ipkeylist.h include/dns/iptable.h \
+	include/dns/journal.h include/dns/kasp.h include/dns/keydata.h \
+	include/dns/keyflags.h include/dns/keymgr.h \
+	include/dns/keystore.h include/dns/keytable.h \
+	include/dns/keyvalues.h include/dns/librpz.h include/dns/log.h \
+	include/dns/master.h include/dns/masterdump.h \
+	include/dns/message.h include/dns/name.h \
+	include/dns/nametree.h include/dns/ncache.h include/dns/nsec.h \
+	include/dns/nsec3.h include/dns/nta.h include/dns/opcode.h \
+	include/dns/order.h include/dns/peer.h include/dns/private.h \
+	include/dns/qp.h include/dns/rbt.h include/dns/rcode.h \
+	include/dns/rdata.h include/dns/rdataclass.h \
+	include/dns/rdatalist.h include/dns/rdataset.h \
+	include/dns/rdatasetiter.h include/dns/rdataslab.h \
+	include/dns/rdatatype.h include/dns/remote.h \
+	include/dns/request.h include/dns/resolver.h \
+	include/dns/result.h include/dns/rootns.h include/dns/rpz.h \
 	include/dns/rriterator.h include/dns/rrl.h include/dns/sdlz.h \
 	include/dns/secalg.h include/dns/secproto.h include/dns/skr.h \
 	include/dns/soa.h include/dns/ssu.h include/dns/stats.h \
@@ -258,7 +258,7 @@ am__libdns_la_SOURCES_DIST = include/dns/acl.h include/dns/adb.h \
 	clientinfo.c compress.c db.c db_p.h dbiterator.c diff.c \
 	dispatch.c dlz.c dns64.c dnsrps.c dnssec.c ds.c dst_api.c \
 	dst_internal.h dst_openssl.h dst_parse.c dst_parse.h dyndb.c \
-	ecs.c fixedname.c forward.c gssapictx.c hmac_link.c \
+	ecs.c ede.c fixedname.c forward.c gssapictx.c hmac_link.c \
 	ipkeylist.c iptable.c journal.c kasp.c key.c keydata.c \
 	keymgr.c keystore.c keytable.c log.c master.c masterdump.c \
 	message.c name.c nametree.c ncache.c nsec.c nsec3.c nta.c \
@@ -286,15 +286,16 @@ am_libdns_la_OBJECTS = $(am__objects_1) $(am__objects_1) \
 	libdns_la-dispatch.lo libdns_la-dlz.lo libdns_la-dns64.lo \
 	libdns_la-dnsrps.lo libdns_la-dnssec.lo libdns_la-ds.lo \
 	libdns_la-dst_api.lo libdns_la-dst_parse.lo libdns_la-dyndb.lo \
-	libdns_la-ecs.lo libdns_la-fixedname.lo libdns_la-forward.lo \
-	libdns_la-gssapictx.lo libdns_la-hmac_link.lo \
-	libdns_la-ipkeylist.lo libdns_la-iptable.lo \
-	libdns_la-journal.lo libdns_la-kasp.lo libdns_la-key.lo \
-	libdns_la-keydata.lo libdns_la-keymgr.lo libdns_la-keystore.lo \
-	libdns_la-keytable.lo libdns_la-log.lo libdns_la-master.lo \
-	libdns_la-masterdump.lo libdns_la-message.lo libdns_la-name.lo \
-	libdns_la-nametree.lo libdns_la-ncache.lo libdns_la-nsec.lo \
-	libdns_la-nsec3.lo libdns_la-nta.lo libdns_la-openssl_link.lo \
+	libdns_la-ecs.lo libdns_la-ede.lo libdns_la-fixedname.lo \
+	libdns_la-forward.lo libdns_la-gssapictx.lo \
+	libdns_la-hmac_link.lo libdns_la-ipkeylist.lo \
+	libdns_la-iptable.lo libdns_la-journal.lo libdns_la-kasp.lo \
+	libdns_la-key.lo libdns_la-keydata.lo libdns_la-keymgr.lo \
+	libdns_la-keystore.lo libdns_la-keytable.lo libdns_la-log.lo \
+	libdns_la-master.lo libdns_la-masterdump.lo \
+	libdns_la-message.lo libdns_la-name.lo libdns_la-nametree.lo \
+	libdns_la-ncache.lo libdns_la-nsec.lo libdns_la-nsec3.lo \
+	libdns_la-nta.lo libdns_la-openssl_link.lo \
 	libdns_la-openssl_shim.lo libdns_la-opensslecdsa_link.lo \
 	libdns_la-openssleddsa_link.lo libdns_la-opensslrsa_link.lo \
 	libdns_la-order.lo libdns_la-peer.lo libdns_la-private.lo \
@@ -363,6 +364,7 @@ am__depfiles_remade = ./$(DEPDIR)/libdns_la-acl.Plo \
 	./$(DEPDIR)/libdns_la-ds.Plo ./$(DEPDIR)/libdns_la-dst_api.Plo \
 	./$(DEPDIR)/libdns_la-dst_parse.Plo \
 	./$(DEPDIR)/libdns_la-dyndb.Plo ./$(DEPDIR)/libdns_la-ecs.Plo \
+	./$(DEPDIR)/libdns_la-ede.Plo \
 	./$(DEPDIR)/libdns_la-fixedname.Plo \
 	./$(DEPDIR)/libdns_la-forward.Plo \
 	./$(DEPDIR)/libdns_la-geoip2.Plo \
@@ -781,6 +783,7 @@ libdns_la_HEADERS = \
 	include/dns/dnstap.h		\
 	include/dns/dyndb.h		\
 	include/dns/ecs.h		\
+	include/dns/ede.h		\
 	include/dns/edns.h		\
 	include/dns/fixedname.h		\
 	include/dns/forward.h		\
@@ -865,11 +868,11 @@ libdns_la_SOURCES = $(libdns_la_HEADERS) $(dst_HEADERS) $(irs_HEADERS) \
 	client.c clientinfo.c compress.c db.c db_p.h dbiterator.c \
 	diff.c dispatch.c dlz.c dns64.c dnsrps.c dnssec.c ds.c \
 	dst_api.c dst_internal.h dst_openssl.h dst_parse.c dst_parse.h \
-	dyndb.c ecs.c fixedname.c forward.c gssapictx.c hmac_link.c \
-	ipkeylist.c iptable.c journal.c kasp.c key.c keydata.c \
-	keymgr.c keystore.c keytable.c log.c master.c masterdump.c \
-	message.c name.c nametree.c ncache.c nsec.c nsec3.c nta.c \
-	openssl_link.c openssl_shim.c openssl_shim.h \
+	dyndb.c ecs.c ede.c fixedname.c forward.c gssapictx.c \
+	hmac_link.c ipkeylist.c iptable.c journal.c kasp.c key.c \
+	keydata.c keymgr.c keystore.c keytable.c log.c master.c \
+	masterdump.c message.c name.c nametree.c ncache.c nsec.c \
+	nsec3.c nta.c openssl_link.c openssl_shim.c openssl_shim.h \
 	opensslecdsa_link.c openssleddsa_link.c opensslrsa_link.c \
 	order.c peer.c private.c probes.d qp.c qp_p.h qpzone_p.h \
 	qpzone.c rbt.c rbt-cachedb.c rbt-zonedb.c rbtdb.c rbtdb_p.h \
@@ -1003,6 +1006,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-dst_parse.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-dyndb.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-ecs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-ede.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-fixedname.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-forward.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libdns_la-geoip2.Plo@am__quote@ # am--include-marker
@@ -1268,6 +1272,13 @@ libdns_la-ecs.lo: ecs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ecs.c' object='libdns_la-ecs.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdns_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libdns_la-ecs.lo `test -f 'ecs.c' || echo '$(srcdir)/'`ecs.c
+
+libdns_la-ede.lo: ede.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdns_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libdns_la-ede.lo -MD -MP -MF $(DEPDIR)/libdns_la-ede.Tpo -c -o libdns_la-ede.lo `test -f 'ede.c' || echo '$(srcdir)/'`ede.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libdns_la-ede.Tpo $(DEPDIR)/libdns_la-ede.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ede.c' object='libdns_la-ede.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdns_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libdns_la-ede.lo `test -f 'ede.c' || echo '$(srcdir)/'`ede.c
 
 libdns_la-fixedname.lo: fixedname.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdns_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libdns_la-fixedname.lo -MD -MP -MF $(DEPDIR)/libdns_la-fixedname.Tpo -c -o libdns_la-fixedname.lo `test -f 'fixedname.c' || echo '$(srcdir)/'`fixedname.c
@@ -2051,6 +2062,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libdns_la-dst_parse.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-dyndb.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-ecs.Plo
+	-rm -f ./$(DEPDIR)/libdns_la-ede.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-fixedname.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-forward.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-geoip2.Plo
@@ -2200,6 +2212,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libdns_la-dst_parse.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-dyndb.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-ecs.Plo
+	-rm -f ./$(DEPDIR)/libdns_la-ede.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-fixedname.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-forward.Plo
 	-rm -f ./$(DEPDIR)/libdns_la-geoip2.Plo

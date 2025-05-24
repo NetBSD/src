@@ -1,4 +1,4 @@
-/*	$NetBSD: skr.h,v 1.2 2025/01/26 16:25:28 christos Exp $	*/
+/*	$NetBSD: skr.h,v 1.3 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
  * A skr is a convenience type representing a Signed Key Response (SKR),
  * determining which DNSKEY, CDS, CDNSKEY and corresponding signatures
  * should be published at a given time. It is based on terminology used in
- * https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-keymgmt-01.txt
+ * https://web.archive.org/web/20250121040252/https://www.iana.org/dnssec/archive/files/draft-icann-dnssec-keymgmt-01.txt
  */
 
 #include <isc/stdtime.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.10 2025/01/26 16:25:46 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.11 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,24 +34,25 @@
 
 #include <ns/types.h>
 
-#define NS_SERVER_LOGQUERIES	 0x00000001U /*%< log queries */
-#define NS_SERVER_NOAA		 0x00000002U /*%< -T noaa */
-#define NS_SERVER_NOSOA		 0x00000004U /*%< -T nosoa */
-#define NS_SERVER_NONEAREST	 0x00000008U /*%< -T nonearest */
-#define NS_SERVER_NOEDNS	 0x00000020U /*%< -T noedns */
-#define NS_SERVER_DROPEDNS	 0x00000040U /*%< -T dropedns */
-#define NS_SERVER_NOTCP		 0x00000080U /*%< -T notcp */
-#define NS_SERVER_DISABLE4	 0x00000100U /*%< -6 */
-#define NS_SERVER_DISABLE6	 0x00000200U /*%< -4 */
-#define NS_SERVER_FIXEDLOCAL	 0x00000400U /*%< -T fixedlocal */
-#define NS_SERVER_SIGVALINSECS	 0x00000800U /*%< -T sigvalinsecs */
-#define NS_SERVER_EDNSFORMERR	 0x00001000U /*%< -T ednsformerr (STD13) */
-#define NS_SERVER_EDNSNOTIMP	 0x00002000U /*%< -T ednsnotimp */
-#define NS_SERVER_EDNSREFUSED	 0x00004000U /*%< -T ednsrefused */
-#define NS_SERVER_TRANSFERINSECS 0x00008000U /*%< -T transferinsecs */
-#define NS_SERVER_TRANSFERSLOWLY 0x00010000U /*%< -T transferslowly */
-#define NS_SERVER_TRANSFERSTUCK	 0x00020000U /*%< -T transferstuck */
-#define NS_SERVER_LOGRESPONSES	 0x00040000U /*%< log responses */
+#define NS_SERVER_LOGQUERIES	    0x00000001U /*%< log queries */
+#define NS_SERVER_NOAA		    0x00000002U /*%< -T noaa */
+#define NS_SERVER_NOSOA		    0x00000004U /*%< -T nosoa */
+#define NS_SERVER_NONEAREST	    0x00000008U /*%< -T nonearest */
+#define NS_SERVER_NOEDNS	    0x00000020U /*%< -T noedns */
+#define NS_SERVER_DROPEDNS	    0x00000040U /*%< -T dropedns */
+#define NS_SERVER_NOTCP		    0x00000080U /*%< -T notcp */
+#define NS_SERVER_DISABLE4	    0x00000100U /*%< -6 */
+#define NS_SERVER_DISABLE6	    0x00000200U /*%< -4 */
+#define NS_SERVER_FIXEDLOCAL	    0x00000400U /*%< -T fixedlocal */
+#define NS_SERVER_SIGVALINSECS	    0x00000800U /*%< -T sigvalinsecs */
+#define NS_SERVER_EDNSFORMERR	    0x00001000U /*%< -T ednsformerr (STD13) */
+#define NS_SERVER_EDNSNOTIMP	    0x00002000U /*%< -T ednsnotimp */
+#define NS_SERVER_EDNSREFUSED	    0x00004000U /*%< -T ednsrefused */
+#define NS_SERVER_TRANSFERINSECS    0x00008000U /*%< -T transferinsecs */
+#define NS_SERVER_TRANSFERSLOWLY    0x00010000U /*%< -T transferslowly */
+#define NS_SERVER_TRANSFERSTUCK	    0x00020000U /*%< -T transferstuck */
+#define NS_SERVER_LOGRESPONSES	    0x00040000U /*%< log responses */
+#define NS_SERVER_COOKIEALWAYSVALID 0x00080000U /*%< -T cookiealwaysvalid */
 
 /*%
  * Type for callback function to get hostname.

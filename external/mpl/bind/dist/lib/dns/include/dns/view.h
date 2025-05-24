@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.12 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.13 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -185,8 +185,11 @@ struct dns_view {
 	uint32_t	      fail_ttl;
 	dns_badcache_t	     *failcache;
 	unsigned int	      udpsize;
+	uint32_t	      sig0key_checks_limit;
+	uint32_t	      sig0message_checks_limit;
 	uint32_t	      maxrrperset;
 	uint32_t	      maxtypepername;
+	uint16_t	      max_queries;
 	uint8_t		      max_restarts;
 
 	/*
@@ -1341,6 +1344,18 @@ dns_view_setmaxrestarts(dns_view_t *view, uint8_t max_restarts);
  *
  *\li	'view' is valid;
  *\li	'max_restarts' is greater than 0.
+ */
+
+void
+dns_view_setmaxqueries(dns_view_t *view, uint16_t max_queries);
+/*%
+ * Set the number of permissible outgoing queries before we give up.
+ * This defaults to 200.
+ *
+ * Requires:
+ *
+ *\li	'view' is valid;
+ *\li	'max_queries' is greater than 0.
  */
 
 ISC_LANG_ENDDECLS

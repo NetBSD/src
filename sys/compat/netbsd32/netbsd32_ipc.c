@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.22 2025/05/10 09:20:35 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.23 2025/05/23 09:47:34 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.22 2025/05/10 09:20:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.23 2025/05/23 09:47:34 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -220,7 +220,8 @@ netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops,
 
 	do_semop_init();
 
-	SEM_PRINTF(("do_semop(%d, %p, %zu)\n", usemid, usops, nsops));
+	SEM_PRINTF(("do_semop(%d, %p, %zu)\n", semid, NETBSD32PTR64(usops),
+	    nsops));
 
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
@@ -236,7 +237,7 @@ netbsd32_do_semop(struct lwp *l, int semid, const netbsd32_sembufp_t usops,
 	error = copyin(NETBSD32PTR64(usops), sops, nsops * sizeof(sops[0]));
 	if (error) {
 		SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n", error,
-		    usops, &sops, nsops * sizeof(sops[0])));
+		    NETBSD32PTR64(usops), &sops, nsops * sizeof(sops[0])));
 		if (sops != small_sops)
 			kmem_free(sops, nsops * sizeof(*sops));
 		return error;

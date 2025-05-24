@@ -333,7 +333,7 @@ $DIG $DIGOPTS -x 2001:4f8::1 @10.53.0.6 >dig.out.test$n || ret=1
 grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
 grep "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.f.4.0.1.0.0.2.ip6.arpa. 1 IN PTR nee.com." dig.out.test$n >/dev/null || ret=1
 sleep 1
-grep -v ADDR ans2/query.log >ans2/query.log.trimmed
+grep -F "ip6.arpa." ans2/query.log >ans2/query.log.trimmed
 cat <<__EOF | diff ans2/query.log.trimmed - >/dev/null || ret=1
 NS 1.0.0.2.ip6.arpa.
 NS 8.f.4.0.1.0.0.2.ip6.arpa.
@@ -512,18 +512,22 @@ n=$((n + 1))
 echo_i "query for .stale is properly minimized when qname-minimization is in strict mode (stale cache) ($n)"
 ret=0
 $CLEANQL
+$RNDCCMD 10.53.0.6 flush
 $DIG $DIGOPTS @10.53.0.6 txt a.b.stale. >dig.out.test$n || ret=1
 grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
 grep "a\.b\.stale\..*1.*IN.*TXT.*hooray" dig.out.test$n >/dev/null || ret=1
 sleep 1
 sort ans2/query.log >ans2/query.log.sorted
 cat <<__EOF | diff ans2/query.log.sorted - >/dev/null || ret=1
+ADDR ns.b.stale.
+ADDR ns2.stale.
 NS b.stale.
 NS stale.
 __EOF
 test -f ans3/query.log && ret=1
 sort ans4/query.log >ans4/query.log.sorted
 cat <<__EOF | diff ans4/query.log.sorted - >/dev/null || ret=1
+ADDR ns.b.stale.
 NS b.stale.
 TXT a.b.stale.
 __EOF
@@ -535,17 +539,21 @@ n=$((n + 1))
 echo_i "query for .stale is properly minimized when qname-minimization is in relaxed mode (stale cache) ($n)"
 ret=0
 $CLEANQL
+$RNDCCMD 10.53.0.7 flush
 $DIG $DIGOPTS @10.53.0.7 txt a.b.stale. >dig.out.test$n || ret=1
 grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
 grep "a\.b\.stale\..*1.*IN.*TXT.*hooray" dig.out.test$n >/dev/null || ret=1
 sleep 1
 sort ans2/query.log >ans2/query.log.sorted
 cat <<__EOF | diff ans2/query.log.sorted - >/dev/null || ret=1
+ADDR ns.b.stale.
+ADDR ns2.stale.
 NS b.stale.
 __EOF
 test -f ans3/query.log && ret=1
 sort ans4/query.log >ans4/query.log.sorted
 cat <<__EOF | diff ans4/query.log.sorted - >/dev/null || ret=1
+ADDR ns.b.stale.
 TXT a.b.stale.
 __EOF
 for ans in ans2 ans3 ans4; do mv -f $ans/query.log query-$ans-$n.log 2>/dev/null || true; done

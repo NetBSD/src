@@ -1,4 +1,4 @@
-/*	$NetBSD: doh_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: doh_test.c,v 1.4 2025/05/21 14:48:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -215,7 +215,7 @@ connect_send_request(isc_nm_t *mgr, const char *uri, bool post,
 	}
 
 	isc_nm_httpconnect(mgr, NULL, &tcp_listen_addr, uri, post,
-			   connect_send_cb, data, ctx, client_sess_cache,
+			   connect_send_cb, data, ctx, NULL, client_sess_cache,
 			   timeout, get_proxy_type(), NULL);
 }
 
@@ -700,7 +700,7 @@ doh_timeout_recovery(void *arg ISC_ATTR_UNUSED) {
 			ISC_NM_HTTP_DEFAULT_PATH);
 	isc_nm_httpconnect(connect_nm, NULL, &tcp_listen_addr, req_url,
 			   atomic_load(&POST), timeout_request_cb, NULL, ctx,
-			   client_sess_cache, T_CONNECT, get_proxy_type(),
+			   NULL, client_sess_cache, T_CONNECT, get_proxy_type(),
 			   NULL);
 }
 
@@ -949,8 +949,8 @@ doh_recv_two(void *arg ISC_ATTR_UNUSED) {
 
 	isc_nm_httpconnect(connect_nm, NULL, &tcp_listen_addr, req_url,
 			   atomic_load(&POST), doh_connect_send_two_requests_cb,
-			   NULL, ctx, client_sess_cache, 5000, get_proxy_type(),
-			   NULL);
+			   NULL, ctx, NULL, client_sess_cache, 5000,
+			   get_proxy_type(), NULL);
 
 	isc_loop_teardown(mainloop, listen_sock_close, listen_sock);
 }

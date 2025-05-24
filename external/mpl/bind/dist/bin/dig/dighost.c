@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.18 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.19 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,6 +62,7 @@
 #include <isc/xml.h>
 
 #include <dns/byaddr.h>
+#include <dns/ede.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/message.h>
@@ -609,6 +610,7 @@ make_empty_lookup(void) {
 		.idnout = idnout,
 		.udpsize = -1,
 		.edns = -1,
+		.original_edns = -1,
 		.recurse = true,
 		.retries = tries,
 		.comments = true,
@@ -742,6 +744,7 @@ clone_lookup(dig_lookup_t *lookold, bool servers) {
 	}
 
 	looknew->showbadcookie = lookold->showbadcookie;
+	looknew->showbadvers = lookold->showbadvers;
 	looknew->sendcookie = lookold->sendcookie;
 	looknew->seenbadcookie = lookold->seenbadcookie;
 	looknew->badcookie = lookold->badcookie;
@@ -767,6 +770,7 @@ clone_lookup(dig_lookup_t *lookold, bool servers) {
 	looknew->idnout = lookold->idnout;
 	looknew->udpsize = lookold->udpsize;
 	looknew->edns = lookold->edns;
+	looknew->original_edns = lookold->original_edns;
 	looknew->recurse = lookold->recurse;
 	looknew->aaonly = lookold->aaonly;
 	looknew->adflag = lookold->adflag;
@@ -1388,24 +1392,28 @@ typedef struct dig_ednsoptname {
 } dig_ednsoptname_t;
 
 dig_ednsoptname_t optnames[] = {
-	{ 1, "LLQ" },	       /* draft-sekar-dns-llq */
-	{ 2, "UL" },	       /* draft-ietf-dnssd-update-lease */
-	{ 3, "NSID" },	       /* RFC 5001 */
-	{ 5, "DAU" },	       /* RFC 6975 */
-	{ 6, "DHU" },	       /* RFC 6975 */
-	{ 7, "N3U" },	       /* RFC 6975 */
-	{ 8, "ECS" },	       /* RFC 7871 */
-	{ 9, "EXPIRE" },       /* RFC 7314 */
-	{ 10, "COOKIE" },      /* RFC 7873 */
-	{ 11, "KEEPALIVE" },   /* RFC 7828 */
-	{ 12, "PADDING" },     /* RFC 7830 */
-	{ 12, "PAD" },	       /* shorthand */
-	{ 13, "CHAIN" },       /* RFC 7901 */
-	{ 14, "KEY-TAG" },     /* RFC 8145 */
-	{ 15, "EDE" },	       /* ietf-dnsop-extended-error-16 */
-	{ 16, "CLIENT-TAG" },  /* draft-bellis-dnsop-edns-tags */
-	{ 17, "SERVER-TAG" },  /* draft-bellis-dnsop-edns-tags */
-	{ 26946, "DEVICEID" }, /* Brian Hartvigsen */
+	{ 1, "LLQ" },		  /* draft-sekar-dns-llq */
+	{ 2, "UPDATE-LEASE" },	  /* draft-ietf-dnssd-update-lease */
+	{ 2, "UL" },		  /* draft-ietf-dnssd-update-lease */
+	{ 3, "NSID" },		  /* RFC 5001 */
+	{ 5, "DAU" },		  /* RFC 6975 */
+	{ 6, "DHU" },		  /* RFC 6975 */
+	{ 7, "N3U" },		  /* RFC 6975 */
+	{ 8, "ECS" },		  /* RFC 7871 */
+	{ 9, "EXPIRE" },	  /* RFC 7314 */
+	{ 10, "COOKIE" },	  /* RFC 7873 */
+	{ 11, "KEEPALIVE" },	  /* RFC 7828 */
+	{ 12, "PADDING" },	  /* RFC 7830 */
+	{ 12, "PAD" },		  /* shorthand */
+	{ 13, "CHAIN" },	  /* RFC 7901 */
+	{ 14, "KEY-TAG" },	  /* RFC 8145 */
+	{ 15, "EDE" },		  /* ietf-dnsop-extended-error-16 */
+	{ 16, "CLIENT-TAG" },	  /* draft-bellis-dnsop-edns-tags */
+	{ 17, "SERVER-TAG" },	  /* draft-bellis-dnsop-edns-tags */
+	{ 18, "REPORT-CHANNEL" }, /* RFC 9567 */
+	{ 18, "RC" },		  /* shorthand */
+	{ 19, "ZONEVERSION" },	  /* RFC 9660 */
+	{ 26946, "DEVICEID" },	  /* Brian Hartvigsen */
 };
 
 #define N_EDNS_OPTNAMES (sizeof(optnames) / sizeof(optnames[0]))
@@ -1946,6 +1954,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section) {
 				}
 				domain = dns_fixedname_name(&lookup->fdomain);
 				dns_name_copy(name, domain);
+				lookup->edns = lookup->original_edns;
 			}
 			debug("adding server %s", namestr);
 			num = getaddresses(lookup, namestr, &lresult);
@@ -2471,7 +2480,8 @@ setup_lookup(dig_lookup_t *lookup) {
 			lookup->udpsize = DEFAULT_EDNS_BUFSIZE;
 		}
 		if (lookup->edns < 0) {
-			lookup->edns = DEFAULT_EDNS_VERSION;
+			lookup->original_edns = lookup->edns =
+				DEFAULT_EDNS_VERSION;
 		}
 
 		if (lookup->nsid) {
@@ -2787,6 +2797,23 @@ _cancel_lookup(dig_lookup_t *lookup, const char *file, unsigned int line) {
 	check_if_done();
 }
 
+static inline const char *
+get_tls_sni_hostname(dig_query_t *query) {
+	const char *hostname = query->lookup->tls_hostname_set
+				       ? query->lookup->tls_hostname
+				       : query->userarg;
+
+	if (query->lookup->tls_hostname_set) {
+		return query->lookup->tls_hostname;
+	}
+
+	if (isc_tls_valid_sni_hostname(hostname)) {
+		return hostname;
+	}
+
+	return NULL;
+}
+
 static isc_tlsctx_t *
 get_create_tls_context(dig_query_t *query, const bool is_https,
 		       isc_tlsctx_client_session_cache_t **psess_cache) {
@@ -2833,10 +2860,7 @@ get_create_tls_context(dig_query_t *query, const bool is_https,
 		}
 
 		if (store != NULL) {
-			const char *hostname =
-				query->lookup->tls_hostname_set
-					? query->lookup->tls_hostname
-					: query->userarg;
+			const char *hostname = get_tls_sni_hostname(query);
 			/*
 			 * According to RFC 8310, Subject field MUST NOT be
 			 * inspected when verifying hostname for DoT. Only
@@ -3050,7 +3074,8 @@ start_tcp(dig_query_t *query) {
 		}
 		isc_nm_streamdnsconnect(netmgr, &localaddr, &query->sockaddr,
 					tcp_connected, connectquery,
-					local_timeout, tlsctx, sess_cache,
+					local_timeout, tlsctx,
+					get_tls_sni_hostname(query), sess_cache,
 					proxy_type, ppi);
 #if HAVE_LIBNGHTTP2
 	} else if (query->lookup->https_mode) {
@@ -3070,14 +3095,15 @@ start_tcp(dig_query_t *query) {
 
 		isc_nm_httpconnect(netmgr, &localaddr, &query->sockaddr, uri,
 				   !query->lookup->https_get, tcp_connected,
-				   connectquery, tlsctx, sess_cache,
+				   connectquery, tlsctx,
+				   get_tls_sni_hostname(query), sess_cache,
 				   local_timeout, proxy_type, ppi);
 #endif
 	} else {
 		isc_nm_streamdnsconnect(netmgr, &localaddr, &query->sockaddr,
 					tcp_connected, connectquery,
-					local_timeout, NULL, NULL, proxy_type,
-					ppi);
+					local_timeout, NULL, NULL, NULL,
+					proxy_type, ppi);
 	}
 
 	return;
@@ -4310,12 +4336,23 @@ recv_done(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 	if (msg->rcode == dns_rcode_badvers && msg->opt != NULL &&
 	    (newedns = ednsvers(msg->opt)) < l->edns && l->ednsneg)
 	{
+		if (l->showbadvers) {
+			dighost_printmessage(query, &b, msg, true);
+			dighost_received(isc_buffer_usedlength(&b), &peer,
+					 query);
+		}
 		/*
 		 * Add minimum EDNS version required checks here if needed.
 		 */
 		dighost_comments(l, "BADVERS, retrying with EDNS version %u.",
 				 (unsigned int)newedns);
 		l->edns = newedns;
+		/*
+		 * Extract the server cookie so it can be sent in the retry.
+		 */
+		if (l->cookie == NULL && l->sendcookie) {
+			process_opt(l, msg);
+		}
 		n = requeue_lookup(l, true);
 		if (l->trace && l->trace_root) {
 			n->rdtype = l->qrdtype;

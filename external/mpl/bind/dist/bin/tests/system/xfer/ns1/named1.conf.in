@@ -47,6 +47,10 @@ zone "edns-expire" {
 	file "edns-expire.db";
 };
 
+zone "axfr-min-transfer-rate" {
+	type primary;
+	file "axfr-min-transfer-rate.db";
+};
 
 zone "axfr-max-transfer-time" {
 	type primary;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr_test.c,v 1.3 2025/01/26 16:25:50 christos Exp $	*/
+/*	$NetBSD: netaddr_test.c,v 1.4 2025/05/21 14:48:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,43 +59,52 @@ ISC_RUN_TEST_IMPL(netaddr_isnetzero) {
 
 /* test isc_netaddr_masktoprefixlen() calculates correct prefix lengths */
 ISC_RUN_TEST_IMPL(netaddr_masktoprefixlen) {
-	struct in_addr na_a;
-	struct in_addr na_b;
-	struct in_addr na_c;
-	struct in_addr na_d;
-	isc_netaddr_t ina_a;
-	isc_netaddr_t ina_b;
-	isc_netaddr_t ina_c;
-	isc_netaddr_t ina_d;
-	unsigned int plen;
+	struct {
+		int family;
+		const char *addr;
+		unsigned int len;
+	} tests[] = { { AF_INET, "0.0.0.0", 0 },
+		      { AF_INET, "255.255.255.254", 31 },
+		      { AF_INET, "255.255.255.255", 32 },
+		      { AF_INET, "255.255.255.0", 24 },
+		      { AF_INET, "255.128.0.0", 9 },
+		      { AF_INET, "255.192.0.0", 10 },
+		      { AF_INET6, "ffff::", 16 },
+		      { AF_INET6, "ffff:ffff::", 32 },
+		      { AF_INET6, "ffff:ffff:ffff::", 48 },
+		      { AF_INET6, "ffff:ffff:ffff:ffff::", 64 },
+		      { AF_INET6, "ffff:ffff:ffff:ffff:ffff::", 80 } };
 
-	UNUSED(state);
+	for (size_t i = 0; i < ARRAY_SIZE(tests); i++) {
+		isc_netaddr_t ina;
+		unsigned int plen;
+		isc_result_t result;
 
-	assert_true(inet_pton(AF_INET, "0.0.0.0", &na_a) >= 0);
-	assert_true(inet_pton(AF_INET, "255.255.255.254", &na_b) >= 0);
-	assert_true(inet_pton(AF_INET, "255.255.255.255", &na_c) >= 0);
-	assert_true(inet_pton(AF_INET, "255.255.255.0", &na_d) >= 0);
+		switch (tests[i].family) {
+		case AF_INET: {
+			struct in_addr na;
 
-	isc_netaddr_fromin(&ina_a, &na_a);
-	isc_netaddr_fromin(&ina_b, &na_b);
-	isc_netaddr_fromin(&ina_c, &na_c);
-	isc_netaddr_fromin(&ina_d, &na_d);
+			assert_true(inet_pton(AF_INET, tests[i].addr, &na) >=
+				    0);
+			isc_netaddr_fromin(&ina, &na);
+			break;
+		}
+		case AF_INET6: {
+			struct in6_addr na6;
 
-	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_a, &plen),
-			 ISC_R_SUCCESS);
-	assert_int_equal(plen, 0);
+			assert_true(inet_pton(AF_INET6, tests[i].addr, &na6) >=
+				    0);
+			isc_netaddr_fromin6(&ina, &na6);
+			break;
+		}
+		default:
+			assert_true(false);
+		}
 
-	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_b, &plen),
-			 ISC_R_SUCCESS);
-	assert_int_equal(plen, 31);
-
-	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_c, &plen),
-			 ISC_R_SUCCESS);
-	assert_int_equal(plen, 32);
-
-	assert_int_equal(isc_netaddr_masktoprefixlen(&ina_d, &plen),
-			 ISC_R_SUCCESS);
-	assert_int_equal(plen, 24);
+		result = isc_netaddr_masktoprefixlen(&ina, &plen);
+		assert_int_equal(result, ISC_R_SUCCESS);
+		assert_int_equal(plen, tests[i].len);
+	}
 }
 
 /* check multicast addresses are detected properly */

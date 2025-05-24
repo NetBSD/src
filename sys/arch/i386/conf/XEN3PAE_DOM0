@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.43 2024/04/02 22:56:50 charlotte Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.44 2025/05/22 09:37:40 bad Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -888,5 +888,5 @@ aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
 
 # Pull in optional local configuration - always at end
-cinclude	"arch/i386/conf/GENERIC.local"
+cinclude	"arch/i386/conf/XEN3.local"
 cinclude	"arch/i386/conf/XEN3_DOM0.local"

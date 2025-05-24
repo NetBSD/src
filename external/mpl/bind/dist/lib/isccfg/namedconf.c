@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.17 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.18 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,6 +134,8 @@ static cfg_type_t cfg_type_printtime;
 static cfg_type_t cfg_type_qminmethod;
 static cfg_type_t cfg_type_querysource4;
 static cfg_type_t cfg_type_querysource6;
+static cfg_type_t cfg_type_server_querysource4;
+static cfg_type_t cfg_type_server_querysource6;
 static cfg_type_t cfg_type_querysource;
 static cfg_type_t cfg_type_server;
 static cfg_type_t cfg_type_server_key_kludge;
@@ -235,9 +237,9 @@ static cfg_tuplefielddef_t remotes_fields[] = {
 	{ NULL, NULL, 0 }
 };
 
-static cfg_type_t cfg_type_remoteservers = { "remote-servers", cfg_parse_tuple,
-					     cfg_print_tuple,  cfg_doc_tuple,
-					     &cfg_rep_tuple,   remotes_fields };
+static cfg_type_t cfg_type_serverlist = { "server-list",   cfg_parse_tuple,
+					  cfg_print_tuple, cfg_doc_tuple,
+					  &cfg_rep_tuple,  remotes_fields };
 
 /*%
  * "sockaddrkeylist", a list of socket addresses with optional keys
@@ -1257,11 +1259,14 @@ static cfg_clausedef_t namedconf_clauses[] = {
 	{ "key-store", &cfg_type_keystore, CFG_CLAUSEFLAG_MULTI },
 	{ "logging", &cfg_type_logging, 0 },
 	{ "lwres", NULL, CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_ANCIENT },
-	{ "masters", &cfg_type_remoteservers,
+	{ "masters", &cfg_type_serverlist,
 	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_NODOC },
 	{ "options", &cfg_type_options, 0 },
-	{ "parental-agents", &cfg_type_remoteservers, CFG_CLAUSEFLAG_MULTI },
-	{ "primaries", &cfg_type_remoteservers, CFG_CLAUSEFLAG_MULTI },
+	{ "parental-agents", &cfg_type_serverlist,
+	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_NODOC },
+	{ "primaries", &cfg_type_serverlist,
+	  CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_NODOC },
+	{ "remote-servers", &cfg_type_serverlist, CFG_CLAUSEFLAG_MULTI },
 #if defined(HAVE_LIBXML2) || defined(HAVE_JSON_C)
 	{ "statistics-channels", &cfg_type_statschannels,
 	  CFG_CLAUSEFLAG_MULTI },
@@ -2222,6 +2227,7 @@ static cfg_clausedef_t view_clauses[] = {
 	{ "max-ncache-ttl", &cfg_type_duration, 0 },
 	{ "max-recursion-depth", &cfg_type_uint32, 0 },
 	{ "max-recursion-queries", &cfg_type_uint32, 0 },
+	{ "max-query-count", &cfg_type_uint32, 0 },
 	{ "max-query-restarts", &cfg_type_uint32, 0 },
 	{ "max-stale-ttl", &cfg_type_duration, 0 },
 	{ "max-udp-size", &cfg_type_uint32, 0 },
@@ -2272,6 +2278,8 @@ static cfg_clausedef_t view_clauses[] = {
 	{ "rrset-order", &cfg_type_rrsetorder, 0 },
 	{ "send-cookie", &cfg_type_boolean, 0 },
 	{ "servfail-ttl", &cfg_type_duration, 0 },
+	{ "sig0key-checks-limit", &cfg_type_uint32, 0 },
+	{ "sig0message-checks-limit", &cfg_type_uint32, 0 },
 	{ "sortlist", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "stale-answer-enable", &cfg_type_boolean, 0 },
 	{ "stale-answer-client-timeout", &cfg_type_staleanswerclienttimeout,
@@ -2361,6 +2369,20 @@ static cfg_clausedef_t dnssecpolicy_clauses[] = {
 	{ "signatures-validity-dnskey", &cfg_type_duration, 0 },
 	{ "zone-propagation-delay", &cfg_type_duration, 0 },
 	{ NULL, NULL, 0 }
+};
+
+/*
+ * For min-transfer-rate-in.
+ */
+static cfg_tuplefielddef_t min_transfer_rate_fields[] = {
+	{ "traffic_bytes", &cfg_type_uint32, 0 },
+	{ "time_minutes", &cfg_type_uint32, 0 },
+	{ NULL, NULL, 0 }
+};
+
+static cfg_type_t cfg_type_min_transfer_rate_in = {
+	"min-transfer-rate-in", cfg_parse_tuple, cfg_print_tuple,
+	cfg_doc_tuple,		&cfg_rep_tuple,	 min_transfer_rate_fields
 };
 
 /*%
@@ -2455,6 +2477,8 @@ static cfg_clausedef_t zone_clauses[] = {
 	{ "max-refresh-time", &cfg_type_uint32,
 	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-retry-time", &cfg_type_uint32,
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	{ "min-transfer-rate-in", &cfg_type_min_transfer_rate_in,
 	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-transfer-idle-in", &cfg_type_uint32,
 	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
@@ -2725,8 +2749,8 @@ static cfg_clausedef_t server_clauses[] = {
 	{ "notify-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "padding", &cfg_type_uint32, 0 },
 	{ "provide-ixfr", &cfg_type_boolean, 0 },
-	{ "query-source", &cfg_type_querysource4, 0 },
-	{ "query-source-v6", &cfg_type_querysource6, 0 },
+	{ "query-source", &cfg_type_server_querysource4, 0 },
+	{ "query-source-v6", &cfg_type_server_querysource6, 0 },
 	{ "request-expire", &cfg_type_boolean, 0 },
 	{ "request-ixfr", &cfg_type_boolean, 0 },
 	{ "request-nsid", &cfg_type_boolean, 0 },
@@ -3359,6 +3383,7 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	unsigned int have_address = 0;
 	unsigned int have_port = 0;
 	unsigned int have_tls = 0;
+	bool has_none = false;
 	const unsigned int *flagp = type->of;
 
 	if ((*flagp & CFG_ADDR_V4OK) != 0) {
@@ -3372,12 +3397,25 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	for (;;) {
 		CHECK(cfg_peektoken(pctx, 0));
 		if (pctx->token.type == isc_tokentype_string) {
-			if (strcasecmp(TOKEN_STRING(pctx), "address") == 0) {
+			if (strcasecmp(TOKEN_STRING(pctx), "none") == 0) {
+				CHECK(cfg_gettoken(pctx, 0));
+				has_none = true;
+			} else if (strcasecmp(TOKEN_STRING(pctx), "address") ==
+				   0)
+			{
 				/* read "address" */
 				CHECK(cfg_gettoken(pctx, 0));
-				CHECK(cfg_parse_rawaddr(pctx, *flagp,
-							&netaddr));
-				have_address++;
+
+				CHECK(cfg_peektoken(pctx, 0));
+				if (strcasecmp(TOKEN_STRING(pctx), "none") == 0)
+				{
+					CHECK(cfg_gettoken(pctx, 0));
+					has_none = true;
+				} else {
+					CHECK(cfg_parse_rawaddr(pctx, *flagp,
+								&netaddr));
+					have_address++;
+				}
 			} else if (strcasecmp(TOKEN_STRING(pctx), "port") == 0)
 			{
 				/* read "port" */
@@ -3397,7 +3435,9 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 			} else if (have_port == 0 && have_tls == 0 &&
 				   have_address == 0)
 			{
-				return cfg_parse_sockaddr(pctx, type, ret);
+				CHECK(cfg_parse_rawaddr(pctx, *flagp,
+							&netaddr));
+				have_address++;
 			} else {
 				cfg_parser_error(pctx, CFG_LOG_NEAR,
 						 "expected 'address' "
@@ -3409,25 +3449,31 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 		}
 	}
 
-	if (have_address > 1 || have_port > 1 || have_address + have_port == 0)
-	{
-		cfg_parser_error(pctx, 0, "expected one address and/or port");
-		return ISC_R_UNEXPECTEDTOKEN;
-	}
+	if (!has_none) {
+		if (have_address > 1 || have_port > 1 ||
+		    have_address + have_port == 0)
+		{
+			cfg_parser_error(pctx, 0,
+					 "expected one address and/or port");
+			return ISC_R_UNEXPECTEDTOKEN;
+		}
+		if (have_tls > 0) {
+			cfg_parser_error(pctx, 0, "unexpected tls");
+			return ISC_R_UNEXPECTEDTOKEN;
+		}
+		CHECK(cfg_create_obj(pctx, &cfg_type_querysource, &obj));
+		isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, port);
 
-	if (have_tls > 0) {
-		cfg_parser_error(pctx, 0, "unexpected tls");
-		return ISC_R_UNEXPECTEDTOKEN;
+	} else {
+		CHECK(cfg_create_obj(pctx, &cfg_type_none, &obj));
 	}
-
-	CHECK(cfg_create_obj(pctx, &cfg_type_querysource, &obj));
-	isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, port);
 	*ret = obj;
 	return ISC_R_SUCCESS;
 
 cleanup:
 	cfg_parser_error(pctx, CFG_LOG_NEAR, "invalid query source");
 	CLEANUP_OBJ(obj);
+
 	return result;
 }
 
@@ -3435,17 +3481,17 @@ static void
 print_querysource(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	isc_netaddr_t na;
 	isc_netaddr_fromsockaddr(&na, &obj->value.sockaddr);
-	cfg_print_cstr(pctx, "address ");
 	cfg_print_rawaddr(pctx, &na);
 	cfg_print_cstr(pctx, " port ");
 	cfg_print_rawuint(pctx, isc_sockaddr_getport(&obj->value.sockaddr));
 }
 
 static void
-doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
+doc__querysource(cfg_printer_t *pctx, const cfg_type_t *type, bool has_none) {
 	const unsigned int *flagp = type->of;
 
 	cfg_print_cstr(pctx, "[ address ] ( ");
+
 	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv4_address>");
 	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
@@ -3453,7 +3499,22 @@ doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
 	} else {
 		UNREACHABLE();
 	}
-	cfg_print_cstr(pctx, " | * )");
+
+	cfg_print_cstr(pctx, " | *");
+	if (has_none) {
+		cfg_print_cstr(pctx, " | none");
+	}
+	cfg_print_cstr(pctx, " )");
+}
+
+static void
+doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc__querysource(pctx, type, true);
+}
+
+static void
+doc_serverquerysource(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc__querysource(pctx, type, false);
 }
 
 static unsigned int sockaddr4wild_flags = CFG_ADDR_WILDOK | CFG_ADDR_V4OK;
@@ -3467,6 +3528,19 @@ static cfg_type_t cfg_type_querysource4 = {
 static cfg_type_t cfg_type_querysource6 = {
 	"querysource6", parse_querysource,   NULL, doc_querysource,
 	NULL,		&sockaddr6wild_flags
+};
+
+static unsigned int querysource4wild_flags = CFG_ADDR_WILDOK | CFG_ADDR_V4OK;
+static unsigned int querysource6wild_flags = CFG_ADDR_WILDOK | CFG_ADDR_V6OK;
+
+static cfg_type_t cfg_type_server_querysource4 = {
+	"querysource4", parse_querysource,	NULL, doc_serverquerysource,
+	NULL,		&querysource4wild_flags
+};
+
+static cfg_type_t cfg_type_server_querysource6 = {
+	"querysource6", parse_querysource,	NULL, doc_serverquerysource,
+	NULL,		&querysource6wild_flags
 };
 
 static cfg_type_t cfg_type_querysource = { "querysource",     NULL,
@@ -3922,7 +3996,7 @@ static void
 doc_remoteselement(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
 	cfg_print_cstr(pctx, "( ");
-	cfg_print_cstr(pctx, "<remote-servers>");
+	cfg_print_cstr(pctx, "<server-list>");
 	cfg_print_cstr(pctx, " | ");
 	cfg_print_cstr(pctx, "<ipv4_address>");
 	cfg_print_cstr(pctx, " ");

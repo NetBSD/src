@@ -1,4 +1,4 @@
-/*	$NetBSD: proxystream.c,v 1.2 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: proxystream.c,v 1.3 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,6 +123,7 @@ proxystream_on_header_data_cb(const isc_result_t result,
 		 * the case of TCP it is disabled by default
 		 */
 		proxystream_read_stop(sock);
+		isc__nmsocket_timer_stop(sock);
 		isc__nmhandle_set_manual_timer(sock->outerhandle, false);
 
 		sock->proxy.header_processed = true;
@@ -461,6 +462,7 @@ void
 isc_nm_proxystreamconnect(isc_nm_t *mgr, isc_sockaddr_t *local,
 			  isc_sockaddr_t *peer, isc_nm_cb_t cb, void *cbarg,
 			  unsigned int timeout, isc_tlsctx_t *tlsctx,
+			  const char *sni_hostname,
 			  isc_tlsctx_client_session_cache_t *client_sess_cache,
 			  isc_nm_proxyheader_info_t *proxy_info) {
 	isc_result_t result = ISC_R_FAILURE;
@@ -503,8 +505,9 @@ isc_nm_proxystreamconnect(isc_nm_t *mgr, isc_sockaddr_t *local,
 				  nsock, nsock->connect_timeout);
 	} else {
 		isc_nm_tlsconnect(mgr, local, peer, proxystream_connect_cb,
-				  nsock, tlsctx, client_sess_cache,
-				  nsock->connect_timeout, false, NULL);
+				  nsock, tlsctx, sni_hostname,
+				  client_sess_cache, nsock->connect_timeout,
+				  false, NULL);
 	}
 }
 
@@ -775,6 +778,7 @@ isc__nm_proxystream_close(isc_nmsocket_t *sock) {
 	 * external references, we can close everything.
 	 */
 	proxystream_read_stop(sock);
+	isc__nmsocket_timer_stop(sock);
 	if (sock->outerhandle != NULL) {
 		sock->reading = false;
 		isc_nm_read_stop(sock->outerhandle);

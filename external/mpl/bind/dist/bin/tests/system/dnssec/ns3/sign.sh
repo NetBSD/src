@@ -299,6 +299,48 @@ DSFILE="dsset-${zone}."
 $DSFROMKEY -A -f ${zonefile}.signed "$zone" >"$DSFILE"
 
 #
+# A zone which uses an unsupported algorithm for a DNSKEY and an unsupported
+# digest for another DNSKEY
+#
+zone=digest-alg-unsupported.example.
+infile=digest-alg-unsupported.example.db.in
+zonefile=digest-alg-unsupported.example.db
+
+cnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n host "cnameandkey.$zone")
+dnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n host "dnameandkey.$zone")
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+keyname2=$("$KEYGEN" -q -a ECDSAP384SHA384 -b "$DEFAULT_BITS" -n zone "$zone")
+
+cat "$infile" "$cnameandkey.key" "$dnameandkey.key" "$keyname.key" "$keyname2.key" >"$zonefile"
+
+"$SIGNER" -z -D -o "$zone" "$zonefile" >/dev/null
+cat "$zonefile" "$zonefile".signed >"$zonefile".tmp
+mv "$zonefile".tmp "$zonefile".signed
+
+# override generated DS record file so we can set different digest to each keys
+DSFILE="dsset-${zone}"
+$DSFROMKEY -a SHA-384 -A -f ${zonefile}.signed "$zone" | head -n 1 >"$DSFILE"
+$DSFROMKEY -2 -A -f ${zonefile}.signed "$zone" | tail -1 >>"$DSFILE"
+
+#
+# A zone which is fine by itself (supported algorithm) but that is used
+# to mimic unsupported DS digest (see ns8).
+#
+zone=ds-unsupported.example.
+infile=ds-unsupported.example.db.in
+zonefile=ds-unsupported.example.db
+
+cnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n host "cnameandkey.$zone")
+dnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n host "dnameandkey.$zone")
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+
+cat "$infile" "$cnameandkey.key" "$dnameandkey.key" "$keyname.key" >"$zonefile"
+
+"$SIGNER" -z -D -o "$zone" "$zonefile" >/dev/null
+cat "$zonefile" "$zonefile".signed >"$zonefile".tmp
+mv "$zonefile".tmp "$zonefile".signed
+
+#
 # A zone with a published unsupported DNSKEY algorithm (Reserved).
 # Different from above because this key is not intended for signing.
 #

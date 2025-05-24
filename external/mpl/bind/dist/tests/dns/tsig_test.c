@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.4 2025/01/26 16:25:48 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.5 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,7 +120,7 @@ add_tsig(dst_context_t *tsigctx, dns_tsigkey_t *key, isc_buffer_t *target,
 	tsig.common.rdtype = dns_rdatatype_tsig;
 	ISC_LINK_INIT(&tsig.common, link);
 	dns_name_init(&tsig.algorithm, NULL);
-	dns_name_clone(key->algorithm, &tsig.algorithm);
+	dns_name_clone(dns_tsigkey_algorithm(key), &tsig.algorithm);
 
 	tsig.timesigned = now;
 	tsig.fudge = DNS_TSIG_FUDGE;

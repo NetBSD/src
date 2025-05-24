@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsstream.c,v 1.4 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: tlsstream.c,v 1.5 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -467,6 +467,7 @@ tls_try_handshake(isc_nmsocket_t *sock, isc_result_t *presult) {
 
 		isc__nmsocket_log_tls_session_reuse(sock, sock->tlsstream.tls);
 		tlshandle = isc__nmhandle_get(sock, &sock->peer, &sock->iface);
+		isc__nmsocket_timer_stop(sock);
 		tls_read_stop(sock);
 
 		if (isc__nm_closing(sock->worker)) {
@@ -870,6 +871,14 @@ initialize_tls(isc_nmsocket_t *sock, bool server) {
 	sock->tlsstream.server = server;
 	sock->tlsstream.nsending = 0;
 	sock->tlsstream.state = TLS_INIT;
+	if (sock->tlsstream.sni_hostname != NULL) {
+		INSIST(sock->client);
+		const int ret = SSL_set_tlsext_host_name(
+			sock->tlsstream.tls, sock->tlsstream.sni_hostname);
+		if (ret != 1) {
+			goto error;
+		}
+	}
 	return ISC_R_SUCCESS;
 error:
 	isc_tls_free(&sock->tlsstream.tls);
@@ -1148,6 +1157,10 @@ isc__nm_tls_read_stop(isc_nmhandle_t *handle) {
 
 	handle->sock->reading = false;
 
+	if (!handle->sock->manual_read_timer) {
+		isc__nmsocket_timer_stop(handle->sock);
+	}
+
 	tls_read_stop(handle->sock);
 }
 
@@ -1168,6 +1181,7 @@ isc__nm_tls_close(isc_nmsocket_t *sock) {
 	 */
 	tls_read_stop(sock);
 	if (sock->outerhandle != NULL) {
+		isc__nmsocket_timer_stop(sock);
 		isc_nm_read_stop(sock->outerhandle);
 		isc_nmhandle_close(sock->outerhandle);
 		isc_nmhandle_detach(&sock->outerhandle);
@@ -1203,7 +1217,7 @@ tcp_connected(isc_nmhandle_t *handle, isc_result_t result, void *cbarg);
 void
 isc_nm_tlsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		  isc_nm_cb_t connect_cb, void *connect_cbarg,
-		  isc_tlsctx_t *ctx,
+		  isc_tlsctx_t *ctx, const char *sni_hostname,
 		  isc_tlsctx_client_session_cache_t *client_sess_cache,
 		  unsigned int timeout, bool proxy,
 		  isc_nm_proxyheader_info_t *proxy_info) {
@@ -1225,6 +1239,10 @@ isc_nm_tlsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 	sock->connect_cbarg = connect_cbarg;
 	sock->connect_timeout = timeout;
 	isc_tlsctx_attach(ctx, &sock->tlsstream.ctx);
+	if (sni_hostname != NULL) {
+		sock->tlsstream.sni_hostname =
+			isc_mem_strdup(sock->worker->mctx, sni_hostname);
+	}
 	sock->client = true;
 	if (client_sess_cache != NULL) {
 		INSIST(isc_tlsctx_client_session_cache_getctx(
@@ -1236,7 +1254,7 @@ isc_nm_tlsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 	if (proxy) {
 		isc_nm_proxystreamconnect(mgr, local, peer, tcp_connected, sock,
 					  sock->connect_timeout, NULL, NULL,
-					  proxy_info);
+					  NULL, proxy_info);
 	} else {
 		isc_nm_tcpconnect(mgr, local, peer, tcp_connected, sock,
 				  sock->connect_timeout);
@@ -1335,6 +1353,10 @@ isc__nm_tls_cleanup_data(isc_nmsocket_t *sock) {
 		}
 		if (sock->tlsstream.ctx != NULL) {
 			isc_tlsctx_free(&sock->tlsstream.ctx);
+		}
+		if (sock->tlsstream.sni_hostname != NULL) {
+			isc_mem_free(sock->worker->mctx,
+				     sock->tlsstream.sni_hostname);
 		}
 		if (sock->tlsstream.client_sess_cache != NULL) {
 			INSIST(sock->client);

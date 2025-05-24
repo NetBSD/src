@@ -9,6 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import difflib
 import shutil
 from typing import Optional
 
@@ -102,6 +103,16 @@ def is_executable(cmd: str, errmsg: str) -> None:
     assert executable is not None, errmsg
 
 
+def named_alive(named_proc, resolver_ip):
+    assert named_proc.poll() is None, "named isn't running"
+    msg = dns.message.make_query("version.bind", "TXT", "CH")
+    isctest.query.tcp(msg, resolver_ip, expected_rcode=dns_rcode.NOERROR)
+
+
+def notauth(message: dns.message.Message) -> None:
+    rcode(message, dns.rcode.NOTAUTH)
+
+
 def nxdomain(message: dns.message.Message) -> None:
     rcode(message, dns.rcode.NXDOMAIN)
 
@@ -118,3 +129,24 @@ def is_response_to(response: dns.message.Message, query: dns.message.Message) ->
     single_question(response)
     single_question(query)
     assert query.is_response(response), str(response)
+
+
+def file_contents_equal(file1, file2):
+    def normalize_line(line):
+        # remove trailing&leading whitespace and replace multiple whitespaces
+        return " ".join(line.split())
+
+    def read_lines(file_path):
+        with open(file_path, "r", encoding="utf-8") as file:
+            return [normalize_line(line) for line in file.readlines()]
+
+    lines1 = read_lines(file1)
+    lines2 = read_lines(file2)
+
+    differ = difflib.Differ()
+    diff = differ.compare(lines1, lines2)
+
+    for line in diff:
+        assert not line.startswith("+ ") and not line.startswith(
+            "- "
+        ), f'file contents of "{file1}" and "{file2}" differ'

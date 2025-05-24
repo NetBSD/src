@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs.mk,v 1.6 2025/05/18 22:51:02 rillig Exp $
+# $NetBSD: opt-jobs.mk,v 1.7 2025/05/20 17:56:40 sjg Exp $
 #
 # Tests for the -j command line option, which creates the targets in parallel.
 
@@ -52,19 +52,3 @@ OUTPUT=		<integer>
 .endif
 
 all: .PHONY
-	@${MAKE} -f ${MAKEFILE} parallel-varassign -j1
-
-
-# When capturing the output of a command using the "!=" assignment operator,
-# the MAKEFLAGS environment variable gets set, so when the command calls a
-# sub-make, it inherits the job mode (-j 1) but does not coordinate the
-# number of active jobs with the sub-makes running on the same token pool
-# (no -J 15,16).
-.if make(parallel-varassign)
-OUTPUT!=	echo "$$MAKEFLAGS"
-.  if ${OUTPUT} != " -r -k -j 1 "
-.    warning ${OUTPUT}
-.  endif
-.endif
-
-parallel-varassign: .PHONY

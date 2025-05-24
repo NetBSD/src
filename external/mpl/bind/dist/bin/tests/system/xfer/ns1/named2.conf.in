@@ -36,6 +36,11 @@ zone "." {
 	file "root.db";
 };
 
+zone "axfr-min-transfer-rate" {
+	type primary;
+	file "axfr-min-transfer-rate.db";
+};
+
 zone "axfr-max-transfer-time" {
 	type primary;
 	file "axfr-max-transfer-time.db";

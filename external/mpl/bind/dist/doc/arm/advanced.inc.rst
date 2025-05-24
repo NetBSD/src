@@ -99,7 +99,7 @@ from a primary server, the secondary checks to see that its version of
 the zone is the current version and, if not, initiates a zone transfer.
 
 For more information about DNS NOTIFY, see the description of the
-:namedconf:ref:`notify` and :namedconf:ref`also-notify` statements.
+:namedconf:ref:`notify` and :namedconf:ref:`also-notify` statements.
 The NOTIFY protocol is specified in :rfc:`1996`.
 
 .. note::

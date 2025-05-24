@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.11 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.12 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -576,7 +576,7 @@ main(int argc, char **argv) {
 		{
 			flags |= DNS_KEYOWNER_ENTITY;
 		} else if (strcasecmp(nametype, "user") == 0) {
-			flags |= DNS_KEYOWNER_USER;
+			/* no owner flags */
 		} else {
 			fatal("invalid KEY nametype %s", nametype);
 		}
@@ -603,12 +603,6 @@ main(int argc, char **argv) {
 		   protocol != DNS_KEYPROTO_DNSSEC)
 	{
 		fatal("invalid DNSKEY protocol: %d", protocol);
-	}
-
-	if ((flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY) {
-		if ((flags & DNS_KEYFLAG_SIGNATORYMASK) != 0) {
-			fatal("specified null key with signing authority");
-		}
 	}
 
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);

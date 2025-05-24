@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.13 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.14 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -422,10 +422,9 @@ keythatsigned(dns_rdata_rrsig_t *rrsig) {
 		dns_dnsseckey_create(mctx, &privkey, &key);
 	} else {
 		dns_dnsseckey_create(mctx, &pubkey, &key);
+		key->pubkey = true;
 	}
 
-	key->force_publish = false;
-	key->force_sign = false;
 	key->index = keycount++;
 	ISC_LIST_APPEND(keylist, key, link);
 
@@ -543,7 +542,7 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 	}
 
 	while (result == ISC_R_SUCCESS) {
-		bool expired, future;
+		bool expired, refresh, future, offline;
 		bool keep = false, resign = false;
 
 		dns_rdataset_current(&sigset, &sigrdata);
@@ -554,8 +553,10 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		future = isc_serial_lt(now, rrsig.timesigned);
 
 		key = keythatsigned(&rrsig);
+		offline = (key != NULL) ? key->pubkey : false;
 		sig_format(&rrsig, sigstr, sizeof(sigstr));
-		expired = isc_serial_gt(now + cycle, rrsig.timeexpire);
+		expired = isc_serial_gt(now, rrsig.timeexpire);
+		refresh = isc_serial_gt(now + cycle, rrsig.timeexpire);
 
 		if (isc_serial_gt(rrsig.timesigned, rrsig.timeexpire)) {
 			/* rrsig is dropped and not replaced */
@@ -584,15 +585,21 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		} else if (issigningkey(key)) {
 			wassignedby[key->index] = true;
 
-			if (!expired && rrsig.originalttl == set->ttl &&
+			if (!refresh && rrsig.originalttl == set->ttl &&
 			    setverifies(name, set, key->key, &sigrdata))
 			{
 				vbprintf(2, "\trrsig by %s retained\n", sigstr);
 				keep = true;
+			} else if (offline) {
+				vbprintf(2,
+					 "\trrsig by %s retained - private key "
+					 "missing\n",
+					 sigstr);
+				keep = true;
 			} else {
 				vbprintf(2, "\trrsig by %s dropped - %s\n",
 					 sigstr,
-					 expired ? "expired"
+					 refresh ? "refresh"
 					 : rrsig.originalttl != set->ttl
 						 ? "ttl change"
 						 : "failed to "
@@ -605,25 +612,32 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		} else if (iszonekey(key)) {
 			wassignedby[key->index] = true;
 
-			if (!expired && rrsig.originalttl == set->ttl &&
+			if (!refresh && rrsig.originalttl == set->ttl &&
 			    setverifies(name, set, key->key, &sigrdata))
 			{
 				vbprintf(2, "\trrsig by %s retained\n", sigstr);
 				keep = true;
+			} else if (offline) {
+				vbprintf(2,
+					 "\trrsig by %s retained - private key "
+					 "missing\n",
+					 sigstr);
+				keep = true;
 			} else {
 				vbprintf(2, "\trrsig by %s dropped - %s\n",
 					 sigstr,
-					 expired ? "expired"
+					 refresh ? "refresh"
 					 : rrsig.originalttl != set->ttl
 						 ? "ttl change"
 						 : "failed to "
 						   "verify");
 			}
-		} else if (!expired) {
+		} else if (!refresh) {
 			vbprintf(2, "\trrsig by %s retained\n", sigstr);
 			keep = true;
 		} else {
-			vbprintf(2, "\trrsig by %s expired\n", sigstr);
+			vbprintf(2, "\trrsig by %s %s\n", sigstr,
+				 expired ? "expired" : "needs refresh");
 		}
 
 		if (keep) {
@@ -680,6 +694,10 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 	for (key = ISC_LIST_HEAD(keylist); key != NULL;
 	     key = ISC_LIST_NEXT(key, link))
 	{
+		if (REVOKE(key->key) && set->type != dns_rdatatype_dnskey) {
+			continue;
+		}
+
 		if (nowsignedby[key->index]) {
 			continue;
 		}

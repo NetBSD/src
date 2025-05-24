@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.16 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.17 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1480,6 +1480,7 @@ xfrin_xmlrender(dns_zone_t *zone, void *arg) {
 	unsigned int nmsg = 0;
 	unsigned int nrecs = 0;
 	uint64_t nbytes = 0;
+	uint64_t rate = 0;
 
 	statlevel = dns_zone_getstatlevel(zone);
 	if (statlevel == dns_zonestat_none) {
@@ -1594,7 +1595,7 @@ xfrin_xmlrender(dns_zone_t *zone, void *arg) {
 		isc_sockaddr_format(addrp, addr_buf, sizeof(addr_buf));
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR addr_buf));
 	} else if (is_presoa) {
-		addr = dns_zone_getsourceaddr(zone);
+		dns_zone_getsourceaddr(zone, &addr);
 		isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR addr_buf));
 	} else {
@@ -1608,9 +1609,13 @@ xfrin_xmlrender(dns_zone_t *zone, void *arg) {
 		isc_sockaddr_format(addrp, addr_buf, sizeof(addr_buf));
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR addr_buf));
 	} else if (is_presoa) {
-		addr = dns_zone_getprimaryaddr(zone);
-		isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
-		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR addr_buf));
+		if (dns_zone_getprimaryaddr(zone, &addr) == ISC_R_SUCCESS) {
+			isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
+			TRY0(xmlTextWriterWriteString(writer,
+						      ISC_XMLCHAR addr_buf));
+		} else {
+			TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR "-"));
+		}
 	} else {
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR "-"));
 	}
@@ -1693,7 +1698,7 @@ xfrin_xmlrender(dns_zone_t *zone, void *arg) {
 	TRY0(xmlTextWriterEndElement(writer));
 
 	if (is_running) {
-		dns_xfrin_getstats(xfr, &nmsg, &nrecs, &nbytes);
+		dns_xfrin_getstats(xfr, &nmsg, &nrecs, &nbytes, &rate);
 	}
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "nmsg"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%u", nmsg));
@@ -1703,6 +1708,9 @@ xfrin_xmlrender(dns_zone_t *zone, void *arg) {
 	TRY0(xmlTextWriterEndElement(writer));
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "nbytes"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64, nbytes));
+	TRY0(xmlTextWriterEndElement(writer));
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "rate"));
+	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64, rate));
 	TRY0(xmlTextWriterEndElement(writer));
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "ixfr"));
@@ -2554,6 +2562,7 @@ xfrin_jsonrender(dns_zone_t *zone, void *arg) {
 	unsigned int nmsg = 0;
 	unsigned int nrecs = 0;
 	uint64_t nbytes = 0;
+	uint64_t rate = 0;
 
 	statlevel = dns_zone_getstatlevel(zone);
 	if (statlevel == dns_zonestat_none) {
@@ -2646,7 +2655,7 @@ xfrin_jsonrender(dns_zone_t *zone, void *arg) {
 		json_object_object_add(xfrinobj, "localaddr",
 				       json_object_new_string(addr_buf));
 	} else if (is_presoa) {
-		addr = dns_zone_getsourceaddr(zone);
+		dns_zone_getsourceaddr(zone, &addr);
 		isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
 		json_object_object_add(xfrinobj, "localaddr",
 				       json_object_new_string(addr_buf));
@@ -2661,10 +2670,15 @@ xfrin_jsonrender(dns_zone_t *zone, void *arg) {
 		json_object_object_add(xfrinobj, "remoteaddr",
 				       json_object_new_string(addr_buf));
 	} else if (is_presoa) {
-		addr = dns_zone_getprimaryaddr(zone);
-		isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
-		json_object_object_add(xfrinobj, "remoteaddr",
-				       json_object_new_string(addr_buf));
+		if (dns_zone_getprimaryaddr(zone, &addr) == ISC_R_SUCCESS) {
+			isc_sockaddr_format(&addr, addr_buf, sizeof(addr_buf));
+			json_object_object_add(
+				xfrinobj, "remoteaddr",
+				json_object_new_string(addr_buf));
+		} else {
+			json_object_object_add(xfrinobj, "remoteaddr",
+					       json_object_new_string("-"));
+		}
 	} else {
 		json_object_object_add(xfrinobj, "remoteaddr",
 				       json_object_new_string("-"));
@@ -2751,7 +2765,7 @@ xfrin_jsonrender(dns_zone_t *zone, void *arg) {
 	}
 
 	if (is_running) {
-		dns_xfrin_getstats(xfr, &nmsg, &nrecs, &nbytes);
+		dns_xfrin_getstats(xfr, &nmsg, &nrecs, &nbytes, &rate);
 	}
 	json_object_object_add(xfrinobj, "nmsg",
 			       json_object_new_int64((int64_t)nmsg));
@@ -2761,6 +2775,10 @@ xfrin_jsonrender(dns_zone_t *zone, void *arg) {
 		xfrinobj, "nbytes",
 		json_object_new_int64(nbytes > INT64_MAX ? INT64_MAX
 							 : (int64_t)nbytes));
+	json_object_object_add(xfrinobj, "rate",
+			       json_object_new_int64(rate > INT64_MAX
+							     ? INT64_MAX
+							     : (int64_t)rate));
 
 	if (is_running && is_first_data_received) {
 		json_object_object_add(

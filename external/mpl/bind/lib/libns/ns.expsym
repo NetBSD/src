@@ -13,7 +13,6 @@ ns_client_checkaclsilent
 ns_client_drop
 ns_client_dumprecursing
 ns_client_error
-ns_client_extendederror
 ns_client_findversion
 ns_client_getdestaddr
 ns_client_getnamebuf

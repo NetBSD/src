@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.16 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.17 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -771,10 +771,17 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		INDENT_TO(rdata_column);
 		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 			if (NXDOMAIN(rdataset)) {
-				RETERR(str_totext(";-$NXDOMAIN\n", target));
+				RETERR(str_totext(";-$NXDOMAIN", target));
 			} else {
-				RETERR(str_totext(";-$NXRRSET\n", target));
+				RETERR(str_totext(";-$NXRRSET", target));
 			}
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				RETERR(str_totext("'\n", target));
+			} else {
+				RETERR(str_totext("\n", target));
+			}
+
 			/*
 			 * Print a summary of the cached records which make
 			 * up the negative response.
@@ -1157,17 +1164,14 @@ again:
 		} else {
 			isc_result_t result;
 			if (STALE(rds)) {
-				fprintf(f, "; stale\n");
-			} else if (ANCIENT(rds)) {
 				isc_buffer_t b;
 				char buf[sizeof("YYYYMMDDHHMMSS")];
 				memset(buf, 0, sizeof(buf));
 				isc_buffer_init(&b, buf, sizeof(buf) - 1);
-				dns_time64_totext((uint64_t)rds->ttl, &b);
-				fprintf(f,
-					"; expired since %s "
-					"(awaiting cleanup)\n",
-					buf);
+				dns_time64_totext((uint64_t)rds->expire, &b);
+				fprintf(f, "; stale since %s\n", buf);
+			} else if (ANCIENT(rds)) {
+				fprintf(f, "; expired (awaiting cleanup)\n");
 			}
 			result = dump_rdataset(mctx, name, rds, ctx, buffer, f);
 			if (result != ISC_R_SUCCESS) {

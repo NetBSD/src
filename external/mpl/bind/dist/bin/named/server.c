@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.23 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.24 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -143,6 +143,15 @@
 
 #include <named/smf_globals.h>
 #endif /* ifdef HAVE_LIBSCF */
+
+/* On DragonFly BSD the header does not provide jemalloc API */
+#if defined(HAVE_MALLOC_NP_H) && !defined(__DragonFly__)
+#include <malloc_np.h>
+#define JEMALLOC_API_SUPPORTED 1
+#elif defined(HAVE_JEMALLOC)
+#include <jemalloc/jemalloc.h>
+#define JEMALLOC_API_SUPPORTED 1
+#endif
 
 #ifdef HAVE_LMDB
 #include <lmdb.h>
@@ -361,6 +370,22 @@ typedef struct {
 	isc_buffer_t **text;
 	isc_result_t result;
 } ns_dzarg_t;
+
+typedef enum {
+	MEMPROF_UNSUPPORTED = 0x00,
+	MEMPROF_INACTIVE = 0x01,
+	MEMPROF_FAILING = 0x02,
+	MEMPROF_OFF = 0x03,
+	MEMPROF_ON = 0x04,
+} memprof_status;
+
+static const char *memprof_status_text[] = {
+	[MEMPROF_UNSUPPORTED] = "UNSUPPORTED",
+	[MEMPROF_INACTIVE] = "INACTIVE",
+	[MEMPROF_FAILING] = "FAILING",
+	[MEMPROF_OFF] = "OFF",
+	[MEMPROF_ON] = "ON",
+};
 
 /*
  * These zones should not leak onto the Internet.
@@ -1292,8 +1317,21 @@ get_view_querysource_dispatch(const cfg_obj_t **maps, int af,
 		UNREACHABLE();
 	}
 
-	sa = *(cfg_obj_assockaddr(obj));
-	INSIST(isc_sockaddr_pf(&sa) == af);
+	if (cfg_obj_isvoid(obj)) {
+		/*
+		 * We don't want to use this address family, let's
+		 * bail now. The dispatch object for this family will
+		 * be null then not used to run queries.
+		 */
+		return ISC_R_SUCCESS;
+	} else {
+		/*
+		 * obj _has_ to be sockaddr here, cfg_obj_assockaddr()
+		 * asserts this internally.
+		 */
+		sa = *(cfg_obj_assockaddr(obj));
+		INSIST(isc_sockaddr_pf(&sa) == af);
+	}
 
 	/*
 	 * If we don't support this address family, we're done!
@@ -1620,6 +1658,7 @@ configure_peer(const cfg_obj_t *cpeer, isc_mem_t *mctx, dns_peer_t **peerp) {
 		(void)cfg_map_get(cpeer, "query-source-v6", &obj);
 	}
 	if (obj != NULL) {
+		INSIST(cfg_obj_issockaddr(obj));
 		result = dns_peer_setquerysource(peer, cfg_obj_assockaddr(obj));
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
@@ -1820,9 +1859,7 @@ setquerystats(dns_zone_t *zone, isc_mem_t *mctx, dns_zonestat_level_t level) {
 static named_cache_t *
 cachelist_find(named_cachelist_t *cachelist, const char *cachename,
 	       dns_rdataclass_t rdclass) {
-	named_cache_t *nsc;
-
-	for (nsc = ISC_LIST_HEAD(*cachelist); nsc != NULL;
+	for (named_cache_t *nsc = ISC_LIST_HEAD(*cachelist); nsc != NULL;
 	     nsc = ISC_LIST_NEXT(nsc, link))
 	{
 		if (nsc->rdclass == rdclass &&
@@ -1840,12 +1877,13 @@ cache_reusable(dns_view_t *originview, dns_view_t *view,
 	       bool new_zero_no_soattl) {
 	if (originview->rdclass != view->rdclass ||
 	    originview->checknames != view->checknames ||
-	    dns_resolver_getzeronosoattl(originview->resolver) !=
-		    new_zero_no_soattl ||
 	    originview->acceptexpired != view->acceptexpired ||
 	    originview->enablevalidation != view->enablevalidation ||
 	    originview->maxcachettl != view->maxcachettl ||
-	    originview->maxncachettl != view->maxncachettl)
+	    originview->maxncachettl != view->maxncachettl ||
+	    originview->resolver == NULL ||
+	    dns_resolver_getzeronosoattl(originview->resolver) !=
+		    new_zero_no_soattl)
 	{
 		return false;
 	}
@@ -3175,8 +3213,8 @@ configure_catz_zone(dns_view_t *view, dns_view_t *pview,
 		obj = cfg_tuple_get(catz_obj, "default-primaries");
 	}
 	if (obj != NULL && cfg_obj_istuple(obj)) {
-		result = named_config_getipandkeylist(
-			config, "primaries", obj, view->mctx, &opts->masters);
+		result = named_config_getipandkeylist(config, obj, view->mctx,
+						      &opts->masters);
 	}
 
 	obj = cfg_tuple_get(catz_obj, "in-memory");
@@ -4107,9 +4145,9 @@ static const char *const response_synonyms[] = { "response", NULL };
 static isc_result_t
 configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	       cfg_obj_t *vconfig, named_cachelist_t *cachelist,
-	       dns_kasplist_t *kasplist, dns_keystorelist_t *keystores,
-	       const cfg_obj_t *bindkeys, isc_mem_t *mctx,
-	       cfg_aclconfctx_t *actx, bool need_hints) {
+	       named_cachelist_t *oldcachelist, dns_kasplist_t *kasplist,
+	       dns_keystorelist_t *keystores, const cfg_obj_t *bindkeys,
+	       isc_mem_t *mctx, cfg_aclconfctx_t *actx, bool need_hints) {
 	const cfg_obj_t *maps[4];
 	const cfg_obj_t *cfgmaps[3];
 	const cfg_obj_t *optionmaps[3];
@@ -4155,13 +4193,13 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	uint32_t maxbits;
 	unsigned int resopts = 0;
 	dns_zone_t *zone = NULL;
-	uint32_t max_clients_per_query;
+	uint32_t clients_per_query, max_clients_per_query;
 	bool empty_zones_enable;
 	const cfg_obj_t *disablelist = NULL;
 	isc_stats_t *resstats = NULL;
 	dns_stats_t *resquerystats = NULL;
 	bool auto_root = false;
-	named_cache_t *nsc;
+	named_cache_t *nsc = NULL;
 	bool zero_no_soattl;
 	dns_acl_t *clients = NULL, *mapped = NULL, *excluded = NULL;
 	unsigned int query_timeout;
@@ -4170,6 +4208,7 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	dns_ntatable_t *ntatable = NULL;
 	const char *qminmode = NULL;
 	dns_adb_t *adb = NULL;
+	bool oldcache = false;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -4723,83 +4762,96 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	} else {
 		cachename = view->name;
 	}
-	cache = NULL;
+
 	nsc = cachelist_find(cachelist, cachename, view->rdclass);
+	if (result == ISC_R_SUCCESS && nsc == NULL) {
+		/*
+		 * If we're using 'attach-cache' but didn't find the
+		 * specified cache in the cache list already, check
+		 * the old list.
+		 */
+		nsc = cachelist_find(oldcachelist, cachename, view->rdclass);
+		oldcache = true;
+	}
 	if (nsc != NULL) {
 		if (!cache_sharable(nsc->primaryview, view, zero_no_soattl,
 				    max_cache_size, max_stale_ttl,
 				    stale_refresh_time))
 		{
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "views %s and %s can't share the cache "
-				      "due to configuration parameter mismatch",
-				      nsc->primaryview->name, view->name);
-			result = ISC_R_FAILURE;
+				      NAMED_LOGMODULE_SERVER, ISC_LOG_WARNING,
+				      "view %s can't use existing cache %s due "
+				      "to configuration parameter mismatch",
+				      view->name,
+				      dns_cache_getname(nsc->cache));
+			nsc = NULL;
+		} else {
+			if (oldcache) {
+				ISC_LIST_UNLINK(*oldcachelist, nsc, link);
+				ISC_LIST_APPEND(*cachelist, nsc, link);
+				nsc->primaryview = view;
+			}
+			dns_cache_attach(nsc->cache, &cache);
+			shared_cache = true;
+		}
+	} else if (strcmp(cachename, view->name) == 0) {
+		result = dns_viewlist_find(&named_g_server->viewlist, cachename,
+					   view->rdclass, &pview);
+		if (result != ISC_R_NOTFOUND && result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-		dns_cache_attach(nsc->cache, &cache);
-		shared_cache = true;
-	} else {
-		if (strcmp(cachename, view->name) == 0) {
-			result = dns_viewlist_find(&named_g_server->viewlist,
-						   cachename, view->rdclass,
-						   &pview);
-			if (result != ISC_R_NOTFOUND && result != ISC_R_SUCCESS)
-			{
-				goto cleanup;
+		if (pview != NULL) {
+			if (!cache_reusable(pview, view, zero_no_soattl)) {
+				isc_log_write(named_g_lctx,
+					      NAMED_LOGCATEGORY_GENERAL,
+					      NAMED_LOGMODULE_SERVER,
+					      ISC_LOG_DEBUG(1),
+					      "cache cannot be reused "
+					      "for view %s due to "
+					      "configuration parameter "
+					      "mismatch",
+					      view->name);
+			} else {
+				INSIST(pview->cache != NULL);
+				isc_log_write(named_g_lctx,
+					      NAMED_LOGCATEGORY_GENERAL,
+					      NAMED_LOGMODULE_SERVER,
+					      ISC_LOG_DEBUG(3),
+					      "reusing existing cache");
+				dns_cache_attach(pview->cache, &cache);
 			}
-			if (pview != NULL) {
-				if (!cache_reusable(pview, view,
-						    zero_no_soattl))
-				{
-					isc_log_write(named_g_lctx,
-						      NAMED_LOGCATEGORY_GENERAL,
-						      NAMED_LOGMODULE_SERVER,
-						      ISC_LOG_DEBUG(1),
-						      "cache cannot be reused "
-						      "for view %s due to "
-						      "configuration parameter "
-						      "mismatch",
-						      view->name);
-				} else {
-					INSIST(pview->cache != NULL);
-					isc_log_write(named_g_lctx,
-						      NAMED_LOGCATEGORY_GENERAL,
-						      NAMED_LOGMODULE_SERVER,
-						      ISC_LOG_DEBUG(3),
-						      "reusing existing cache");
-					dns_cache_attach(pview->cache, &cache);
-				}
-				dns_resolver_getstats(pview->resolver,
-						      &resstats);
-				dns_resolver_getquerystats(pview->resolver,
-							   &resquerystats);
-				dns_view_detach(&pview);
-			}
+			dns_resolver_getstats(pview->resolver, &resstats);
+			dns_resolver_getquerystats(pview->resolver,
+						   &resquerystats);
+			dns_view_detach(&pview);
 		}
+	}
+
+	if (nsc == NULL) {
+		/*
+		 * Create a cache with the desired name.  This normally
+		 * equals the view name, but may also be a forward
+		 * reference to a view that share the cache with this
+		 * view but is not yet configured.  If it is not the
+		 * view name but not a forward reference either, then it
+		 * is simply a named cache that is not shared.
+		 */
 		if (cache == NULL) {
-			/*
-			 * Create a cache with the desired name.  This normally
-			 * equals the view name, but may also be a forward
-			 * reference to a view that share the cache with this
-			 * view but is not yet configured.  If it is not the
-			 * view name but not a forward reference either, then it
-			 * is simply a named cache that is not shared.
-			 */
 			CHECK(dns_cache_create(named_g_loopmgr, view->rdclass,
 					       cachename, mctx, &cache));
 		}
+
 		nsc = isc_mem_get(mctx, sizeof(*nsc));
-		nsc->cache = NULL;
+		*nsc = (named_cache_t){
+			.primaryview = view,
+			.rdclass = view->rdclass,
+			.link = ISC_LINK_INITIALIZER,
+		};
+
 		dns_cache_attach(cache, &nsc->cache);
-		nsc->primaryview = view;
-		nsc->needflush = false;
-		nsc->adbsizeadjusted = false;
-		nsc->rdclass = view->rdclass;
-		ISC_LINK_INIT(nsc, link);
 		ISC_LIST_APPEND(*cachelist, nsc, link);
 	}
+
 	dns_view_setcache(view, cache, shared_cache);
 
 	dns_cache_setcachesize(cache, max_cache_size);
@@ -5098,6 +5150,19 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 					  &transports));
 	dns_view_settransports(view, transports);
 	dns_transport_list_detach(&transports);
+
+	/*
+	 * Configure SIG(0) check limits when matching a DNS message to a view.
+	 */
+	obj = NULL;
+	result = named_config_get(maps, "sig0key-checks-limit", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	view->sig0key_checks_limit = cfg_obj_asuint32(obj);
+
+	obj = NULL;
+	result = named_config_get(maps, "sig0message-checks-limit", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	view->sig0message_checks_limit = cfg_obj_asuint32(obj);
 
 	/*
 	 * Configure the view's TSIG keys.
@@ -5559,14 +5624,25 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	view->v6bias = cfg_obj_asuint32(obj) * 1000;
 
 	obj = NULL;
+	result = named_config_get(maps, "clients-per-query", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	clients_per_query = cfg_obj_asuint32(obj);
+
+	obj = NULL;
 	result = named_config_get(maps, "max-clients-per-query", &obj);
 	INSIST(result == ISC_R_SUCCESS);
 	max_clients_per_query = cfg_obj_asuint32(obj);
 
-	obj = NULL;
-	result = named_config_get(maps, "clients-per-query", &obj);
-	INSIST(result == ISC_R_SUCCESS);
-	dns_resolver_setclientsperquery(view->resolver, cfg_obj_asuint32(obj),
+	if (max_clients_per_query < clients_per_query) {
+		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
+			    "configured clients-per-query (%u) exceeds "
+			    "max-clients-per-query (%u); automatically "
+			    "adjusting max-clients-per-query to (%u)",
+			    clients_per_query, max_clients_per_query,
+			    clients_per_query);
+		max_clients_per_query = clients_per_query;
+	}
+	dns_resolver_setclientsperquery(view->resolver, clients_per_query,
 					max_clients_per_query);
 
 	/*
@@ -5601,6 +5677,11 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	result = named_config_get(maps, "max-query-restarts", &obj);
 	INSIST(result == ISC_R_SUCCESS);
 	dns_view_setmaxrestarts(view, cfg_obj_asuint32(obj));
+
+	obj = NULL;
+	result = named_config_get(maps, "max-query-count", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_view_setmaxqueries(view, cfg_obj_asuint32(obj));
 
 	obj = NULL;
 	result = named_config_get(maps, "max-validations-per-fetch", &obj);
@@ -7224,7 +7305,8 @@ tat_done(void *arg) {
 	if (resp->db != NULL) {
 		dns_db_detach(&resp->db);
 	}
-	isc_mem_putanddetach(&resp->mctx, resp, sizeof(*resp));
+
+	dns_resolver_freefresp(&resp);
 	dns_resolver_destroyfetch(&tat->fetch);
 	if (dns_rdataset_isassociated(&tat->rdataset)) {
 		dns_rdataset_disassociate(&tat->rdataset);
@@ -7362,8 +7444,8 @@ tat_send(void *arg) {
 	if (result == ISC_R_SUCCESS) {
 		result = dns_resolver_createfetch(
 			tat->view->resolver, tatname, dns_rdatatype_null,
-			domain, &nameservers, NULL, NULL, 0, 0, 0, NULL,
-			tat->loop, tat_done, tat, &tat->rdataset,
+			domain, &nameservers, NULL, NULL, 0, 0, 0, NULL, NULL,
+			tat->loop, tat_done, tat, NULL, &tat->rdataset,
 			&tat->sigrdataset, &tat->fetch);
 	}
 
@@ -8309,8 +8391,7 @@ load_configuration(const char *filename, named_server_t *server,
 	dns_keystore_t *keystore = NULL;
 	dns_keystore_t *keystore_next = NULL;
 	dns_keystorelist_t tmpkeystorelist, keystorelist;
-	const cfg_obj_t *views;
-
+	const cfg_obj_t *views = NULL;
 	dns_view_t *view_next = NULL;
 	dns_viewlist_t tmpviewlist;
 	dns_viewlist_t viewlist, builtin_viewlist;
@@ -8329,7 +8410,7 @@ load_configuration(const char *filename, named_server_t *server,
 	uint32_t send_tcp_buffer_size;
 	uint32_t recv_udp_buffer_size;
 	uint32_t send_udp_buffer_size;
-	named_cache_t *nsc;
+	named_cache_t *nsc = NULL;
 	named_cachelist_t cachelist, tmpcachelist;
 	ns_altsecret_t *altsecret;
 	ns_altsecretlist_t altsecrets, tmpaltsecrets;
@@ -9291,7 +9372,8 @@ load_configuration(const char *filename, named_server_t *server,
 		}
 
 		result = configure_view(view, &viewlist, config, vconfig,
-					&cachelist, &server->kasplist,
+					&cachelist, &server->cachelist,
+					&server->kasplist,
 					&server->keystorelist, bindkeys,
 					named_g_mctx, named_g_aclconfctx, true);
 		if (result != ISC_R_SUCCESS) {
@@ -9313,7 +9395,8 @@ load_configuration(const char *filename, named_server_t *server,
 			goto cleanup_cachelist;
 		}
 		result = configure_view(view, &viewlist, config, NULL,
-					&cachelist, &server->kasplist,
+					&cachelist, &server->cachelist,
+					&server->kasplist,
 					&server->keystorelist, bindkeys,
 					named_g_mctx, named_g_aclconfctx, true);
 		if (result != ISC_R_SUCCESS) {
@@ -9343,8 +9426,9 @@ load_configuration(const char *filename, named_server_t *server,
 
 		result = configure_view(
 			view, &viewlist, config, vconfig, &cachelist,
-			&server->kasplist, &server->keystorelist, bindkeys,
-			named_g_mctx, named_g_aclconfctx, false);
+			&server->cachelist, &server->kasplist,
+			&server->keystorelist, bindkeys, named_g_mctx,
+			named_g_aclconfctx, false);
 		if (result != ISC_R_SUCCESS) {
 			dns_view_detach(&view);
 			goto cleanup_cachelist;
@@ -10682,6 +10766,39 @@ named_server_reloadwanted(void *arg, int signum) {
 	isc_async_run(named_g_mainloop, named_server_reload, server);
 }
 
+#ifdef JEMALLOC_API_SUPPORTED
+static isc_result_t
+memprof_toggle(bool active) {
+	if (mallctl("prof.active", NULL, NULL, &active, sizeof(active)) != 0) {
+		return ISC_R_FAILURE;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+memprof_dump(void) {
+	if (mallctl("prof.dump", NULL, NULL, NULL, 0) != 0) {
+		return ISC_R_FAILURE;
+	}
+
+	return ISC_R_SUCCESS;
+}
+#else
+static isc_result_t
+memprof_toggle(bool active) {
+	UNUSED(active);
+
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+static isc_result_t
+memprof_dump(void) {
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+#endif /* JEMALLOC_API_SUPPORTED */
+
 void
 named_server_scan_interfaces(named_server_t *server) {
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
@@ -11017,6 +11134,54 @@ named_server_reloadcommand(named_server_t *server, isc_lex_t *lex,
 		(void)putnull(text);
 	}
 	return result;
+}
+
+/*
+ * Act on a "reset-stats" command from the command channel.
+ */
+isc_result_t
+named_server_resetstatscommand(named_server_t *server, isc_lex_t *lex,
+			       isc_buffer_t **text) {
+	const char *arg = NULL;
+	bool recursive_high_water = false;
+	bool tcp_high_water = false;
+
+	REQUIRE(text != NULL);
+
+	/* Skip the command name. */
+	(void)next_token(lex, text);
+
+	arg = next_token(lex, text);
+	if (arg == NULL) {
+		(void)putstr(text, "reset-stats: argument expected");
+		(void)putnull(text);
+		return ISC_R_UNEXPECTEDEND;
+	}
+	while (arg != NULL) {
+		if (strcmp(arg, "recursive-high-water") == 0) {
+			recursive_high_water = true;
+		} else if (strcmp(arg, "tcp-high-water") == 0) {
+			tcp_high_water = true;
+		} else {
+			(void)putstr(text, "reset-stats: "
+					   "unrecognized argument: ");
+			(void)putstr(text, arg);
+			(void)putnull(text);
+			return ISC_R_FAILURE;
+		}
+		arg = next_token(lex, text);
+	}
+
+	if (recursive_high_water) {
+		isc_stats_set(ns_stats_get(server->sctx->nsstats), 0,
+			      ns_statscounter_recurshighwater);
+	}
+	if (tcp_high_water) {
+		isc_stats_set(ns_stats_get(server->sctx->nsstats), 0,
+			      ns_statscounter_tcphighwater);
+	}
+
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -12563,6 +12728,10 @@ named_server_status(named_server_t *server, isc_buffer_t **text) {
 		 ns_server_getoption(server->sctx, NS_SERVER_LOGRESPONSES)
 			 ? "ON"
 			 : "OFF");
+	CHECK(putstr(text, line));
+
+	snprintf(line, sizeof(line), "memory profiling is %s\n",
+		 named_server_getmemprof());
 	CHECK(putstr(text, line));
 
 	snprintf(line, sizeof(line), "recursive clients: %u/%u/%u\n",
@@ -15195,10 +15364,16 @@ named_server_dnssec(named_server_t *server, isc_lex_t *lex,
 		/*
 		 * Output the DNSSEC status of the key and signing policy.
 		 */
+		isc_result_t r;
 		LOCK(&kasp->lock);
-		dns_keymgr_status(kasp, &keys, now, &output[0], sizeof(output));
+		r = dns_keymgr_status(kasp, &keys, now, &output[0],
+				      sizeof(output));
 		UNLOCK(&kasp->lock);
 		CHECK(putstr(text, output));
+		if (r != ISC_R_SUCCESS) {
+			CHECK(putstr(text,
+				     "\n\nStatus output is truncated..."));
+		}
 	} else if (checkds) {
 		/*
 		 * Mark DS record has been seen, so it may move to the
@@ -16782,3 +16957,114 @@ cleanup:
 
 	return result;
 }
+
+isc_result_t
+named_server_togglememprof(isc_lex_t *lex) {
+	isc_result_t result = ISC_R_FAILURE;
+	bool active;
+	char *ptr;
+
+	/* Skip the command name. */
+	ptr = next_token(lex, NULL);
+	if (ptr == NULL) {
+		return ISC_R_UNEXPECTEDEND;
+	}
+
+	ptr = next_token(lex, NULL);
+	if (ptr == NULL) {
+		return ISC_R_UNEXPECTEDEND;
+	} else if (!strcasecmp(ptr, "dump")) {
+		result = memprof_dump();
+		if (result != ISC_R_SUCCESS) {
+			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+				      "failed to dump memory profile");
+
+		} else {
+			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
+				      "memory profile dumped");
+		}
+
+		goto done;
+	} else if (!strcasecmp(ptr, "on") || !strcasecmp(ptr, "yes") ||
+		   !strcasecmp(ptr, "enable") || !strcasecmp(ptr, "true"))
+	{
+		active = true;
+	} else if (!strcasecmp(ptr, "off") || !strcasecmp(ptr, "no") ||
+		   !strcasecmp(ptr, "disable") || !strcasecmp(ptr, "false"))
+	{
+		active = false;
+	} else {
+		return DNS_R_SYNTAX;
+	}
+
+	result = memprof_toggle(active);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "failed to toggle memory profiling");
+	} else {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
+			      "memory profiling %s",
+			      active ? "enabled" : "disabled");
+	}
+
+done:
+	return result;
+}
+
+#ifdef JEMALLOC_API_SUPPORTED
+const char *
+named_server_getmemprof(void) {
+	memprof_status status = MEMPROF_ON;
+	bool is_enabled;
+	size_t len = sizeof(is_enabled);
+
+	if (mallctl("config.prof", &is_enabled, &len, NULL, 0) != 0) {
+		status = MEMPROF_FAILING;
+		goto done;
+	}
+
+	INSIST(len == sizeof(is_enabled));
+
+	if (!is_enabled) {
+		status = MEMPROF_UNSUPPORTED;
+		goto done;
+	}
+
+	if (mallctl("opt.prof", &is_enabled, &len, NULL, 0) != 0) {
+		status = MEMPROF_FAILING;
+		goto done;
+	}
+
+	INSIST(len == sizeof(is_enabled));
+
+	if (!is_enabled) {
+		status = MEMPROF_INACTIVE;
+		goto done;
+	}
+
+	len = sizeof(is_enabled);
+	if (mallctl("prof.active", &is_enabled, &len, NULL, 0) != 0) {
+		status = MEMPROF_FAILING;
+		goto done;
+	}
+
+	INSIST(len == sizeof(is_enabled));
+
+	if (!is_enabled) {
+		status = MEMPROF_OFF;
+	}
+
+done:
+	return memprof_status_text[status];
+}
+
+#else  /* JEMALLOC_API_SUPPORTED */
+const char *
+named_server_getmemprof(void) {
+	return memprof_status_text[MEMPROF_UNSUPPORTED];
+}
+#endif /* JEMALLOC_API_SUPPORTED */

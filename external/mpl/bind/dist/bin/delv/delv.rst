@@ -347,7 +347,12 @@ assign values to options like the timeout interval. They have the form
 .. option:: +maxqueries
 
    This option specifies the maximum number of queries to send to resolve
-   a name before giving up. The default is 32.
+   a name before giving up. The default is 50.
+
+.. option:: +maxtotalqueries
+
+   This option specifies the maximum number of queries to send to resolve
+   a client request before giving up. The default is 200.
 
 .. option:: +trust, +notrust
 

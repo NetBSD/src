@@ -15,7 +15,7 @@ LDADD +=			\
 SUBDIRS = libtest
 
 if HAVE_CMOCKA
-SUBDIRS += isc dns ns isccfg irs bench
+SUBDIRS += isc dns ns isccfg bench
 endif HAVE_CMOCKA
 
 check_PROGRAMS =

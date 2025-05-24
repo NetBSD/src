@@ -106,8 +106,9 @@ unavailable, ``--disable-doh`` can be used to disable DoH support.
 
 To support the HTTP statistics channel, the server must be linked with
 at least one of the following libraries: ``libxml2``
-(http://xmlsoft.org) or ``json-c`` (https://github.com/json-c/json-c).
-If these are installed at a nonstandard location, then:
+(https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home) or ``json-c``
+(https://github.com/json-c/json-c).  If these are installed at a
+nonstandard location, then:
 
 - for ``libxml2``, specify the prefix using ``--with-libxml2=/prefix``,
 - for ``json-c``, adjust ``PKG_CONFIG_PATH``.
@@ -131,7 +132,7 @@ installed in a nonstandard location, specify the prefix using
 
 For DNSTAP packet logging, ``libfstrm``
 (https://github.com/farsightsec/fstrm) and ``libprotobuf-c``
-(https://developers.google.com/protocol-buffers) must be installed, and
+(https://protobuf.dev) must be installed, and
 BIND must be configured with ``--enable-dnstap``.
 
 To support internationalized domain names in :iscman:`dig`, ``libidn2``
@@ -177,6 +178,6 @@ macOS
 
 Building on macOS assumes that the “Command Tools for Xcode” are
 installed. These can be downloaded from
-https://developer.apple.com/download/more/ or, if Xcode is already
+https://developer.apple.com/xcode/resources/ or, if Xcode is already
 installed, simply run ``xcode-select --install``. (Note that an Apple ID
 may be required to access the download page.)

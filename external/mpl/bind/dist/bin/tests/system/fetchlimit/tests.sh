@@ -165,7 +165,7 @@ fail=0
 success=0
 touch ans4/norespond
 for try in 1 2 3 4 5; do
-  burst 10.53.0.3 b $try 300
+  burst 10.53.0.3 d $try 300
   $DIGCMD a ${try}.example >dig.out.ns3.$n.$try
   grep "status: NOERROR" dig.out.ns3.$n.$try >/dev/null 2>&1 \
     && success=$((success + 1))
@@ -325,6 +325,15 @@ zspill=$(grep 'spilled due to clients per query' ns5/named.stats | sed 's/ *\([0
 expected=55
 [ "$zspill" -eq "$expected" ] || ret=1
 echo_i "$zspill clients spilled (expected $expected)"
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking a warning is logged if max-clients-per-query < clients-per-query ($n)"
+ret=0
+copy_setports ns5/named3.conf.in ns5/named.conf
+rndc_reconfig ns5 10.53.0.5
+wait_for_message ns5/named.run "configured clients-per-query (10) exceeds max-clients-per-query (5); automatically adjusting max-clients-per-query to (10)" || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

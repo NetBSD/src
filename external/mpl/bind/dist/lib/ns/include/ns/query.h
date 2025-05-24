@@ -1,4 +1,4 @@
-/*	$NetBSD: query.h,v 1.9 2025/01/26 16:25:46 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.10 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,6 +107,7 @@ typedef struct ns_query_recparam {
 struct ns_query {
 	unsigned int	 attributes;
 	unsigned int	 restarts;
+	isc_counter_t	*qc;
 	bool		 timerset;
 	dns_name_t	*qname;
 	dns_name_t	*origqname;
@@ -213,6 +214,7 @@ struct query_ctx {
 
 	ns_client_t *client;	    /* client object */
 	bool	     detach_client; /* client needs detaching */
+	bool	     async;	    /* asynchronous hook running */
 
 	dns_fetchresponse_t *fresp; /* recursion response */
 

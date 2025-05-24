@@ -1,4 +1,4 @@
-/*	$NetBSD: db_p.h,v 1.2 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: db_p.h,v 1.3 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,9 +22,6 @@
 #include <dns/nsec3.h>
 #include <dns/rbt.h>
 #include <dns/types.h>
-
-#define GLUETABLE_INIT_SIZE 1 << 2
-#define GLUETABLE_MIN_SIZE  1 << 8
 
 #define RDATATYPE_NCACHEANY DNS_TYPEPAIR_VALUE(0, dns_rdatatype_any)
 
@@ -125,18 +122,31 @@ ISC_LANG_BEGINDECLS
 
 struct dns_glue {
 	struct dns_glue *next;
-	dns_fixedname_t fixedname;
+	dns_name_t name;
 	dns_rdataset_t rdataset_a;
 	dns_rdataset_t sigrdataset_a;
 	dns_rdataset_t rdataset_aaaa;
 	dns_rdataset_t sigrdataset_aaaa;
 };
 
-typedef struct {
-	dns_glue_t *glue_list;
+struct dns_gluelist {
+	isc_mem_t *mctx;
+
+	const dns_dbversion_t *version;
+	dns_slabheader_t *header;
+
+	struct dns_glue *glue;
+
+	struct rcu_head rcu_head;
+	struct cds_wfs_node wfs_node;
+};
+
+typedef struct dns_glue_additionaldata_ctx {
 	dns_db_t *db;
 	dns_dbversion_t *version;
-	dns_name_t *nodename;
+	dns_dbnode_t *node;
+
+	dns_glue_t *glue;
 } dns_glue_additionaldata_ctx_t;
 
 typedef struct {
@@ -197,5 +207,21 @@ dns__db_logtoomanyrecords(dns_db_t *db, const dns_name_t *name,
  * 'maxrrperset' limit. 'op' is 'adding' or 'updating' depending on whether
  * the addition is to create a new rdataset or to merge to an existing one.
  */
+
+void
+dns__db_free_glue(isc_mem_t *mctx, dns_glue_t *glue);
+void
+dns__db_destroy_gluelist(dns_gluelist_t **gluelistp);
+void
+dns__db_free_gluelist_rcu(struct rcu_head *rcu_head);
+void
+dns__db_cleanup_gluelists(struct cds_wfs_stack *glue_stack);
+isc_result_t
+dns__db_addglue(dns_db_t *db, dns_dbversion_t *dbversion,
+		dns_rdataset_t *rdataset, dns_message_t *msg,
+		dns_additionaldatafunc_t add, struct cds_wfs_stack *glue_stack);
+
+dns_glue_t *
+dns__db_new_glue(isc_mem_t *mctx, const dns_name_t *name);
 
 ISC_LANG_ENDDECLS

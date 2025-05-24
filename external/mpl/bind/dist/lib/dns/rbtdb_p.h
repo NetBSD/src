@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb_p.h,v 1.2 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: rbtdb_p.h,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,6 @@
 
 #include <isc/heap.h>
 #include <isc/lang.h>
-#include <isc/rwlock.h>
 #include <isc/urcu.h>
 
 #include <dns/nsec3.h>
@@ -93,7 +92,7 @@ struct dns_rbtdb_version {
 	uint64_t records;
 	uint64_t xfrsize;
 
-	struct cds_lfht *glue_table;
+	struct cds_wfs_stack glue_stack;
 };
 
 typedef ISC_LIST(dns_rbtdb_version_t) rbtdb_versionlist_t;
@@ -215,18 +214,6 @@ typedef struct {
 
 extern dns_dbmethods_t dns__rbtdb_zonemethods;
 extern dns_dbmethods_t dns__rbtdb_cachemethods;
-
-typedef struct dns_gluenode_t {
-	isc_mem_t *mctx;
-
-	struct dns_glue *glue;
-
-	dns_db_t *db;
-	dns_rbtnode_t *node;
-
-	struct cds_lfht_node ht_node;
-	struct rcu_head rcu_head;
-} dns_gluenode_t;
 
 /*
  * Common DB implementation methods shared by both cache and zone RBT
@@ -385,13 +372,11 @@ isc_result_t
 dns__rbtdb_nodefullname(dns_db_t *db, dns_dbnode_t *node, dns_name_t *name);
 
 void
-dns__rbtdb_free_gluenode_rcu(struct rcu_head *rcu_head);
-void
-dns__rbtdb_free_gluenode(dns_gluenode_t *gluenode);
+dns__rbtdb_freeglue(dns_glue_t *glue_list);
 
 void
-dns__rbtdb_newref(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
-		  isc_rwlocktype_t locktype DNS__DB_FLARG);
+dns__rbtnode_acquire(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
+		     isc_rwlocktype_t locktype DNS__DB_FLARG);
 /*%<
  * Increment the reference counter to a node in an RBT database.
  * If the caller holds a node lock then its lock type is specified
@@ -401,10 +386,10 @@ dns__rbtdb_newref(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
  */
 
 bool
-dns__rbtdb_decref(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
-		  uint32_t least_serial, isc_rwlocktype_t *nlocktypep,
-		  isc_rwlocktype_t *tlocktypep, bool tryupgrade,
-		  bool pruning DNS__DB_FLARG);
+dns__rbtnode_release(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
+		     uint32_t least_serial, isc_rwlocktype_t *nlocktypep,
+		     isc_rwlocktype_t *tlocktypep, bool tryupgrade,
+		     bool pruning DNS__DB_FLARG);
 /*%<
  * Decrement the reference counter to a node in an RBT database.
  * 'nlocktypep' and 'tlocktypep' are pointers to the current status
@@ -502,6 +487,8 @@ dns__zonerbt_addwildcards(dns_rbtdb_t *rbtdb, const dns_name_t *name,
 /*
  * Cache-specific functions that are called from rbtdb.c
  */
+void
+dns__rbtdb_mark_ancient(dns_slabheader_t *header);
 void
 dns__cacherbt_expireheader(dns_slabheader_t *header,
 			   isc_rwlocktype_t *tlocktypep,

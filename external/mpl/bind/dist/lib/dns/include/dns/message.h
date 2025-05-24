@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.14 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.15 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
 #include <isc/refcount.h>
 
 #include <dns/compress.h>
+#include <dns/ede.h>
 #include <dns/masterdump.h>
 #include <dns/types.h>
 
@@ -104,64 +105,34 @@
 #define DNS_MESSAGEEXTFLAG_DO 0x8000U
 
 /*%< EDNS0 extended OPT codes */
-#define DNS_OPT_LLQ	      1	 /*%< LLQ opt code */
-#define DNS_OPT_UL	      2	 /*%< UL opt code */
-#define DNS_OPT_NSID	      3	 /*%< NSID opt code */
-#define DNS_OPT_CLIENT_SUBNET 8	 /*%< client subnet opt code */
-#define DNS_OPT_EXPIRE	      9	 /*%< EXPIRE opt code */
-#define DNS_OPT_COOKIE	      10 /*%< COOKIE opt code */
-#define DNS_OPT_TCP_KEEPALIVE 11 /*%< TCP keepalive opt code */
-#define DNS_OPT_PAD	      12 /*%< PAD opt code */
-#define DNS_OPT_KEY_TAG	      14 /*%< Key tag opt code */
-#define DNS_OPT_EDE	      15 /*%< Extended DNS Error opt code */
-#define DNS_OPT_CLIENT_TAG    16 /*%< Client tag opt code */
-#define DNS_OPT_SERVER_TAG    17 /*%< Server tag opt code */
+
+#define DNS_OPT_LLQ	       1  /*%< LLQ opt code */
+#define DNS_OPT_UL	       2  /*%< UL opt code */
+#define DNS_OPT_NSID	       3  /*%< NSID opt code */
+#define DNS_OPT_DAU	       5  /*%< DNSSEC algorithm understood */
+#define DNS_OPT_DHU	       6  /*%< DNSSEC hash understood */
+#define DNS_OPT_N3U	       7  /*%< NSEC3 hash understood */
+#define DNS_OPT_CLIENT_SUBNET  8  /*%< client subnet opt code */
+#define DNS_OPT_EXPIRE	       9  /*%< EXPIRE opt code */
+#define DNS_OPT_COOKIE	       10 /*%< COOKIE opt code */
+#define DNS_OPT_TCP_KEEPALIVE  11 /*%< TCP keepalive opt code */
+#define DNS_OPT_PAD	       12 /*%< PAD opt code */
+#define DNS_OPT_CHAIN	       13 /*%< CHAIN opt code */
+#define DNS_OPT_KEY_TAG	       14 /*%< Key tag opt code */
+#define DNS_OPT_EDE	       15 /*%< Extended DNS Error opt code */
+#define DNS_OPT_CLIENT_TAG     16 /*%< Client tag opt code */
+#define DNS_OPT_SERVER_TAG     17 /*%< Server tag opt code */
+#define DNS_OPT_REPORT_CHANNEL 18 /*%< DNS Reporting Channel */
+#define DNS_OPT_ZONEVERSION    19 /*%< Zoneversion opt code */
 
 /*%< Experimental options [65001...65534] as per RFC6891 */
 
 /*%<
  * The maximum number of EDNS options we allow to set. Reserve space for the
- * options we know about. Extended DNS Errors may occur multiple times, but we
- * will set only one per message (for now).
+ * options we know about. Extended DNS Errors may occur multiple times, see
+ * DNS_EDE_MAX_ERRORS.
  */
-#define DNS_EDNSOPTIONS 8
-
-/*%< EDNS0 extended DNS errors */
-#define DNS_EDE_OTHER		     0	/*%< Other Error */
-#define DNS_EDE_DNSKEYALG	     1	/*%< Unsupported DNSKEY Algorithm */
-#define DNS_EDE_DSDIGESTTYPE	     2	/*%< Unsupported DS Digest Type */
-#define DNS_EDE_STALEANSWER	     3	/*%< Stale Answer */
-#define DNS_EDE_FORGEDANSWER	     4	/*%< Forged Answer */
-#define DNS_EDE_DNSSECINDETERMINATE  5	/*%< DNSSEC Indeterminate */
-#define DNS_EDE_DNSSECBOGUS	     6	/*%< DNSSEC Bogus */
-#define DNS_EDE_SIGNATUREEXPIRED     7	/*%< Signature Expired */
-#define DNS_EDE_SIGNATURENOTYETVALID 8	/*%< Signature Not Yet Valid */
-#define DNS_EDE_DNSKEYMISSING	     9	/*%< DNSKEY Missing */
-#define DNS_EDE_RRSIGSMISSING	     10 /*%< RRSIGs Missing */
-#define DNS_EDE_NOZONEKEYBITSET	     11 /*%< No Zone Key Bit Set */
-#define DNS_EDE_NSECMISSING	     12 /*%< NSEC Missing */
-#define DNS_EDE_CACHEDERROR	     13 /*%< Cached Error */
-#define DNS_EDE_NOTREADY	     14 /*%< Not Ready */
-#define DNS_EDE_BLOCKED		     15 /*%< Blocked */
-#define DNS_EDE_CENSORED	     16 /*%< Censored */
-#define DNS_EDE_FILTERED	     17 /*%< Filtered */
-#define DNS_EDE_PROHIBITED	     18 /*%< Prohibited */
-#define DNS_EDE_STALENXANSWER	     19 /*%< Stale NXDomain Answer */
-#define DNS_EDE_NOTAUTH		     20 /*%< Not Authoritative */
-#define DNS_EDE_NOTSUPPORTED	     21 /*%< Not Supported */
-#define DNS_EDE_NOREACHABLEAUTH	     22 /*%< No Reachable Authority */
-#define DNS_EDE_NETWORKERROR	     23 /*%< Network Error */
-#define DNS_EDE_INVALIDDATA	     24 /*%< Invalid Data */
-
-/*
- * From RFC 8914:
- * Because long EXTRA-TEXT fields may trigger truncation (which is undesirable
- * given the supplemental nature of EDE), implementers and operators creating
- * EDE options SHOULD avoid lengthy EXTRA-TEXT contents.
- *
- * Following this advice we limit the EXTRA-TEXT length to 64 characters.
- */
-#define DNS_EDE_EXTRATEXT_LEN 64
+#define DNS_EDNSOPTIONS 7 + DNS_EDE_MAX_ERRORS
 
 #define DNS_MESSAGE_REPLYPRESERVE	 (DNS_MESSAGEFLAG_RD | DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
@@ -318,18 +289,16 @@ struct dns_message {
 	ISC_LIST(dns_rdata_t) freerdata;
 	ISC_LIST(dns_rdatalist_t) freerdatalist;
 
-	dns_rcode_t tsigstatus;
-	dns_rcode_t querytsigstatus;
-	dns_name_t *tsigname; /* Owner name of TSIG, if any
-			       * */
+	dns_rcode_t	tsigstatus;
+	dns_rcode_t	querytsigstatus;
+	dns_name_t     *tsigname; /* Owner name of TSIG, if any */
 	dns_rdataset_t *querytsig;
 	dns_tsigkey_t  *tsigkey;
 	dst_context_t  *tsigctx;
 	int		sigstart;
 	int		timeadjust;
 
-	dns_name_t *sig0name; /* Owner name of SIG0, if any
-			       * */
+	dns_name_t  *sig0name; /* Owner name of SIG0, if any */
 	dst_key_t   *sig0key;
 	dns_rcode_t  sig0status;
 	isc_region_t query;
@@ -349,9 +318,9 @@ struct dns_message {
 };
 
 struct dns_ednsopt {
-	uint16_t       code;
-	uint16_t       length;
-	unsigned char *value;
+	uint16_t code;
+	uint16_t length;
+	uint8_t *value;
 };
 
 typedef void (*dns_message_cb_t)(void *arg, isc_result_t result);

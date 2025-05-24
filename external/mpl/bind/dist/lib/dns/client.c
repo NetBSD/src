@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.15 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.16 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
 
 #include <isc/async.h>
 #include <isc/buffer.h>
+#include <isc/counter.h>
 #include <isc/loop.h>
 #include <isc/md.h>
 #include <isc/mem.h>
@@ -83,6 +84,7 @@ struct dns_client {
 	unsigned int find_timeout;
 	unsigned int find_udpretries;
 	uint8_t max_restarts;
+	uint8_t max_queries;
 
 	isc_refcount_t references;
 
@@ -93,6 +95,7 @@ struct dns_client {
 #define DEF_FIND_TIMEOUT    5
 #define DEF_FIND_UDPRETRIES 3
 #define DEF_MAX_RESTARTS    11
+#define DEF_MAX_QUERIES	    200
 
 /*%
  * Internal state for a single name resolution procedure
@@ -113,6 +116,7 @@ typedef struct resctx {
 	dns_fetch_t *fetch;
 	dns_namelist_t namelist;
 	isc_result_t result;
+	isc_counter_t *qc;
 	dns_clientresume_t *rev;
 	dns_rdataset_t *rdataset;
 	dns_rdataset_t *sigrdataset;
@@ -254,6 +258,7 @@ dns_client_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t *nm,
 		.loop = isc_loop_get(loopmgr, 0),
 		.nm = nm,
 		.max_restarts = DEF_MAX_RESTARTS,
+		.max_queries = DEF_MAX_QUERIES,
 	};
 
 	result = dns_dispatchmgr_create(mctx, loopmgr, nm,
@@ -397,6 +402,14 @@ dns_client_setmaxrestarts(dns_client_t *client, uint8_t max_restarts) {
 	client->max_restarts = max_restarts;
 }
 
+void
+dns_client_setmaxqueries(dns_client_t *client, uint8_t max_queries) {
+	REQUIRE(DNS_CLIENT_VALID(client));
+	REQUIRE(max_queries > 0);
+
+	client->max_queries = max_queries;
+}
+
 static isc_result_t
 getrdataset(isc_mem_t *mctx, dns_rdataset_t **rdatasetp) {
 	dns_rdataset_t *rdataset;
@@ -458,8 +471,8 @@ start_fetch(resctx_t *rctx) {
 
 	result = dns_resolver_createfetch(
 		rctx->view->resolver, dns_fixedname_name(&rctx->name),
-		rctx->type, NULL, NULL, NULL, NULL, 0, fopts, 0, NULL,
-		rctx->client->loop, fetch_done, rctx, rctx->rdataset,
+		rctx->type, NULL, NULL, NULL, NULL, 0, fopts, 0, NULL, rctx->qc,
+		rctx->client->loop, fetch_done, rctx, NULL, rctx->rdataset,
 		rctx->sigrdataset, &rctx->fetch);
 
 	return result;
@@ -557,7 +570,7 @@ client_resfind(resctx_t *rctx, dns_fetchresponse_t *resp) {
 			fname = resp->foundname;
 			INSIST(resp->rdataset == rctx->rdataset);
 			INSIST(resp->sigrdataset == rctx->sigrdataset);
-			isc_mem_putanddetach(&resp->mctx, resp, sizeof(*resp));
+			dns_resolver_freefresp(&resp);
 		}
 
 		/*
@@ -937,6 +950,11 @@ startresolve(dns_client_t *client, const dns_name_t *name,
 	rctx->magic = RCTX_MAGIC;
 	isc_refcount_increment(&client->references);
 
+	result = isc_counter_create(mctx, client->max_queries, &rctx->qc);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
 	ISC_LIST_APPEND(client->resctxs, rctx, link);
 
 	*transp = (dns_clientrestrans_t *)rctx;
@@ -950,6 +968,9 @@ cleanup:
 	}
 	if (sigrdataset != NULL) {
 		putrdataset(client->mctx, &sigrdataset);
+	}
+	if (rctx->qc != NULL) {
+		isc_counter_detach(&rctx->qc);
 	}
 	isc_mem_put(mctx, rctx, sizeof(*rctx));
 	isc_mem_put(mctx, rev, sizeof(*rev));
@@ -1044,6 +1065,9 @@ destroyrestrans(dns_clientrestrans_t **transp) {
 
 	rctx->magic = 0;
 
+	if (rctx->qc != NULL) {
+		isc_counter_detach(&rctx->qc);
+	}
 	isc_mem_put(mctx, rctx, sizeof(*rctx));
 }
 

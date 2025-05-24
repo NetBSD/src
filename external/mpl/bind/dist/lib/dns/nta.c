@@ -1,4 +1,4 @@
-/*	$NetBSD: nta.c,v 1.11 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: nta.c,v 1.12 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -181,7 +181,7 @@ fetch_done(void *arg) {
 		dns_db_detach(&resp->db);
 	}
 
-	isc_mem_putanddetach(&resp->mctx, resp, sizeof(*resp));
+	dns_resolver_freefresp(&resp);
 
 	switch (eresult) {
 	case ISC_R_SUCCESS:
@@ -243,8 +243,9 @@ checkbogus(void *arg) {
 	dns__nta_ref(nta); /* for dns_resolver_createfetch */
 	result = dns_resolver_createfetch(
 		resolver, &nta->name, dns_rdatatype_nsec, NULL, NULL, NULL,
-		NULL, 0, DNS_FETCHOPT_NONTA, 0, NULL, nta->loop, fetch_done,
-		nta, &nta->rdataset, &nta->sigrdataset, &nta->fetch);
+		NULL, 0, DNS_FETCHOPT_NONTA, 0, NULL, NULL, nta->loop,
+		fetch_done, nta, NULL, &nta->rdataset, &nta->sigrdataset,
+		&nta->fetch);
 	if (result != ISC_R_SUCCESS) {
 		dns__nta_detach(&nta); /* for dns_resolver_createfetch() */
 	}

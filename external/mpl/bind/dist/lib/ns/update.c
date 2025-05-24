@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.16 2025/01/26 16:25:46 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.17 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -231,8 +231,8 @@ struct update {
 	ns_client_t *client;
 	isc_result_t result;
 	dns_message_t *answer;
-	const dns_ssurule_t **rules;
-	size_t ruleslen;
+	unsigned int *maxbytype;
+	size_t maxbytypelen;
 };
 
 /*%
@@ -1653,8 +1653,8 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 	dns_rdataclass_t zoneclass;
 	dns_rdatatype_t covers;
 	dns_name_t *zonename = NULL;
-	const dns_ssurule_t **rules = NULL;
-	size_t rule = 0, ruleslen = 0;
+	unsigned int *maxbytype = NULL;
+	size_t update = 0, maxbytypelen = 0;
 	dns_zoneopt_t options;
 	dns_db_t *db = NULL;
 	dns_dbversion_t *ver = NULL;
@@ -1699,21 +1699,22 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 	 * are illegal or violate policy.
 	 */
 	if (ssutable != NULL) {
-		ruleslen = request->counts[DNS_SECTION_UPDATE];
-		rules = isc_mem_cget(mctx, ruleslen, sizeof(*rules));
+		maxbytypelen = request->counts[DNS_SECTION_UPDATE];
+		maxbytype = isc_mem_cget(mctx, maxbytypelen,
+					 sizeof(*maxbytype));
 	}
 
-	for (rule = 0,
+	for (update = 0,
 	    result = dns_message_firstname(request, DNS_SECTION_UPDATE);
-	     result == ISC_R_SUCCESS;
-	     rule++, result = dns_message_nextname(request, DNS_SECTION_UPDATE))
+	     result == ISC_R_SUCCESS; update++,
+	    result = dns_message_nextname(request, DNS_SECTION_UPDATE))
 	{
 		dns_name_t *name = NULL;
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_ttl_t ttl;
 		dns_rdataclass_t update_class;
 
-		INSIST(ssutable == NULL || rule < ruleslen);
+		INSIST(ssutable == NULL || update < maxbytypelen);
 
 		get_current_rr(request, DNS_SECTION_UPDATE, zoneclass, &name,
 			       &rdata, &covers, &ttl, &update_class);
@@ -1789,6 +1790,8 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 			dns_rdata_ptr_t ptr;
 			dns_rdata_in_srv_t srv;
 
+			maxbytype[update] = 0;
+
 			isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
 
 			if (client->message->tsigkey != NULL) {
@@ -1844,22 +1847,24 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 				    !dns_ssutable_checkrules(
 					    ssutable, client->signer, name,
 					    &netaddr, TCPCLIENT(client), env,
-					    rdata.type, target, tsigkey,
-					    &rules[rule]))
+					    rdata.type, target, tsigkey, NULL))
 				{
 					FAILC(DNS_R_REFUSED,
 					      "rejected by secure update");
 				}
 			} else if (rdata.type != dns_rdatatype_any) {
+				const dns_ssurule_t *ssurule = NULL;
 				if (!dns_ssutable_checkrules(
 					    ssutable, client->signer, name,
 					    &netaddr, TCPCLIENT(client), env,
 					    rdata.type, target, tsigkey,
-					    &rules[rule]))
+					    &ssurule))
 				{
 					FAILC(DNS_R_REFUSED,
 					      "rejected by secure update");
 				}
+				maxbytype[update] = dns_ssurule_max(ssurule,
+								    rdata.type);
 			} else {
 				if (!ssu_checkall(db, ver, name, ssutable,
 						  client->signer, &netaddr, env,
@@ -1891,14 +1896,14 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 	*uev = (update_t){
 		.zone = zone,
 		.client = client,
-		.rules = rules,
-		.ruleslen = ruleslen,
+		.maxbytype = maxbytype,
+		.maxbytypelen = maxbytypelen,
 		.result = ISC_R_SUCCESS,
 	};
 
 	isc_nmhandle_attach(client->handle, &client->updatehandle);
 	isc_async_run(dns_zone_getloop(zone), update_action, uev);
-	rules = NULL;
+	maxbytype = NULL;
 
 failure:
 	if (db != NULL) {
@@ -1906,8 +1911,8 @@ failure:
 		dns_db_detach(&db);
 	}
 
-	if (rules != NULL) {
-		isc_mem_cput(mctx, rules, ruleslen, sizeof(*rules));
+	if (maxbytype != NULL) {
+		isc_mem_cput(mctx, maxbytype, maxbytypelen, sizeof(*maxbytype));
 	}
 
 	if (ssutable != NULL) {
@@ -2739,8 +2744,8 @@ update_action(void *arg) {
 	update_t *uev = (update_t *)arg;
 	dns_zone_t *zone = uev->zone;
 	ns_client_t *client = uev->client;
-	const dns_ssurule_t **rules = uev->rules;
-	size_t rule = 0, ruleslen = uev->ruleslen;
+	unsigned int *maxbytype = uev->maxbytype;
+	size_t update = 0, maxbytypelen = uev->maxbytypelen;
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbversion_t *oldver = NULL;
@@ -2909,11 +2914,11 @@ update_action(void *arg) {
 	/*
 	 * Process the Update Section.
 	 */
-	INSIST(ssutable == NULL || rules != NULL);
-	for (rule = 0,
+	INSIST(ssutable == NULL || maxbytype != NULL);
+	for (update = 0,
 	    result = dns_message_firstname(request, DNS_SECTION_UPDATE);
-	     result == ISC_R_SUCCESS;
-	     rule++, result = dns_message_nextname(request, DNS_SECTION_UPDATE))
+	     result == ISC_R_SUCCESS; update++,
+	    result = dns_message_nextname(request, DNS_SECTION_UPDATE))
 	{
 		dns_name_t *name = NULL;
 		dns_rdata_t rdata = DNS_RDATA_INIT;
@@ -2921,14 +2926,12 @@ update_action(void *arg) {
 		dns_rdataclass_t update_class;
 		bool flag;
 
-		INSIST(ssutable == NULL || rule < ruleslen);
+		INSIST(ssutable == NULL || update < maxbytypelen);
 
 		get_current_rr(request, DNS_SECTION_UPDATE, zoneclass, &name,
 			       &rdata, &covers, &ttl, &update_class);
 
 		if (update_class == zoneclass) {
-			unsigned int max = 0;
-
 			/*
 			 * RFC1123 doesn't allow MF and MD in master files.
 			 */
@@ -3067,20 +3070,17 @@ update_action(void *arg) {
 				}
 			}
 
-			if (rules != NULL && rules[rule] != NULL) {
-				max = dns_ssurule_max(rules[rule], rdata.type);
-			}
-			if (max != 0) {
+			if (maxbytype != NULL && maxbytype[update] != 0) {
 				unsigned int count = 0;
 				CHECK(foreach_rr(db, ver, name, rdata.type,
 						 covers, count_action, &count));
-				if (count >= max) {
+				if (count >= maxbytype[update]) {
 					update_log(client, zone,
 						   LOGLEVEL_PROTOCOL,
 						   "attempt to add more "
 						   "records than permitted by "
 						   "policy max=%u",
-						   max);
+						   maxbytype[update]);
 					continue;
 				}
 			}
@@ -3462,8 +3462,8 @@ common:
 		dns_db_detach(&db);
 	}
 
-	if (rules != NULL) {
-		isc_mem_cput(mctx, rules, ruleslen, sizeof(*rules));
+	if (maxbytype != NULL) {
+		isc_mem_cput(mctx, maxbytype, maxbytypelen, sizeof(*maxbytype));
 	}
 
 	if (ssutable != NULL) {

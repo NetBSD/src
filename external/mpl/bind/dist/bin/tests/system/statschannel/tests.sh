@@ -635,7 +635,8 @@ i=0
 if [ -x "${CURL_NEXT}" ]; then
   # build input stream.
   printf 'X-Bloat: ' >header.in$n
-  while test $i -lt 5000; do
+  # curl 8.13 and newer rejects to read line larger than 100KB
+  while test $i -lt 1023; do
     printf '%s' "VGhlIG1vc3QgY29tbW9uIHJlYXNvbiBmb3IgYmxvYXRpbmcgaXMgaGF2aW5nIGEgbG90IG9mIGdhcyBpbiB5b3VyIGd1dC4gCg==" >>header.in$n
     i=$((i + 1))
   done

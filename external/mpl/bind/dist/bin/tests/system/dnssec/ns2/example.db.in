@@ -106,6 +106,12 @@ ns.dnskey-unknown	A	10.53.0.3
 dnskey-unsupported	NS	ns.dnskey-unsupported
 ns.dnskey-unsupported	A	10.53.0.3
 
+ds-unsupported	NS	ns.ds-unsupported
+ns.ds-unsupported	A	10.53.0.3
+
+digest-alg-unsupported    NS 	ns.digest-alg-unsupported
+ns.digest-alg-unsupported A	10.53.0.3
+
 dnskey-nsec3-unknown	NS	ns.dnskey-nsec3-unknown
 ns.dnskey-nsec3-unknown	A	10.53.0.3
 

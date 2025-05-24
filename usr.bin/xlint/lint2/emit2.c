@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.41 2025/05/16 20:39:48 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.42 2025/05/24 07:38:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,14 +34,11 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.41 2025/05/16 20:39:48 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.42 2025/05/24 07:38:59 rillig Exp $");
 #endif
 
 #include "lint2.h"
 
-static void outtype(const type_t *);
-static void outdef(hte_t *, sym_t *);
-static void dumpname(hte_t *);
 static void outfiles(void);
 
 /* Write type into the output file. */
@@ -93,12 +90,12 @@ outtype(const type_t *tp)
 				errx(1, "internal error: outtype");
 		} else if (ts == FUNC && tp->t_args != NULL) {
 			int na = 0;
-			for (type_t **ap = tp->t_args; *ap != NULL; ap++)
+			for (const type_t **ap = tp->t_args; *ap != NULL; ap++)
 				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
-			for (type_t **ap = tp->t_args; *ap != NULL; ap++)
+			for (const type_t **ap = tp->t_args; *ap != NULL; ap++)
 				outtype(*ap);
 			if (tp->t_vararg)
 				outchar('E');
@@ -109,7 +106,7 @@ outtype(const type_t *tp)
 
 /* Write a definition. */
 static void
-outdef(hte_t *hte, sym_t *sym)
+outdef(const hte_t *hte, const sym_t *sym)
 {
 
 	outint(0);		/* line number in C source file */
@@ -147,7 +144,7 @@ outdef(hte_t *hte, sym_t *sym)
 
 /* Write the first definition of a name into the lint library. */
 static void
-dumpname(hte_t *hte)
+dumpname(const hte_t *hte)
 {
 	sym_t *sym, *def;
 

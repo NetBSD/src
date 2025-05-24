@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.11 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.12 2025/05/21 14:48:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1962,6 +1962,25 @@ udp_dispatch_connect(dns_dispatch_t *disp, dns_dispentry_t *resp) {
 			  udp_connected, resp, resp->timeout);
 }
 
+static inline const char *
+get_tls_sni_hostname(dns_dispentry_t *resp) {
+	char *hostname = NULL;
+
+	if (resp->transport != NULL) {
+		hostname = dns_transport_get_remote_hostname(resp->transport);
+	}
+
+	if (hostname == NULL) {
+		return NULL;
+	}
+
+	if (isc_tls_valid_sni_hostname(hostname)) {
+		return hostname;
+	}
+
+	return NULL;
+}
+
 static isc_result_t
 tcp_dispatch_connect(dns_dispatch_t *disp, dns_dispentry_t *resp) {
 	dns_transport_type_t transport_type = DNS_TRANSPORT_TCP;
@@ -2009,10 +2028,12 @@ tcp_dispatch_connect(dns_dispatch_t *disp, dns_dispentry_t *resp) {
 			      "connecting from %s to %s, timeout %u", localbuf,
 			      peerbuf, resp->timeout);
 
+		const char *hostname = get_tls_sni_hostname(resp);
+
 		isc_nm_streamdnsconnect(disp->mgr->nm, &disp->local,
 					&disp->peer, tcp_connected, disp,
-					resp->timeout, tlsctx, sess_cache,
-					ISC_NM_PROXY_NONE, NULL);
+					resp->timeout, tlsctx, hostname,
+					sess_cache, ISC_NM_PROXY_NONE, NULL);
 		break;
 
 	case DNS_DISPATCHSTATE_CONNECTING:

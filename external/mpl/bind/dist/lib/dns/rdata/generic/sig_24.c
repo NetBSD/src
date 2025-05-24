@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.c,v 1.10 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.11 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -561,13 +561,32 @@ additionaldata_sig(ARGS_ADDLDATA) {
 
 static isc_result_t
 digest_sig(ARGS_DIGEST) {
+	isc_region_t r1, r2;
+	dns_name_t name;
+
 	REQUIRE(rdata->type == dns_rdatatype_sig);
 
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
+	dns_rdata_toregion(rdata, &r1);
+	r2 = r1;
 
-	return ISC_R_NOTIMPLEMENTED;
+	/*
+	 * Type covered (2) + Algorithm (1) +
+	 * Labels (1) + Original TTL (4) +
+	 * Expire time (4) +  Time signed (4) +
+	 * Key ID (2).
+	 */
+	isc_region_consume(&r2, 18);
+	r1.length = 18;
+	RETERR((digest)(arg, &r1));
+
+	/* Signer */
+	dns_name_init(&name, NULL);
+	dns_name_fromregion(&name, &r2);
+	RETERR(dns_name_digest(&name, digest, arg));
+	isc_region_consume(&r2, name_length(&name));
+
+	/* Signature */
+	return (digest)(arg, &r2);
 }
 
 static dns_rdatatype_t

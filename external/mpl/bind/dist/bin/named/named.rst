@@ -117,7 +117,7 @@ Options
 .. option:: -m flag
 
    This option turns on memory usage debugging flags. Possible flags are ``usage``,
-   ``trace``, ``record``, ``size``, and ``mctx``. These correspond to the
+   ``trace`` and ``record``. These correspond to the
    ``ISC_MEM_DEBUGXXXX`` flags described in ``<isc/mem.h>``.
 
 .. option:: -n #cpus

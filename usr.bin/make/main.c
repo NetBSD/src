@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.650 2025/05/18 21:46:23 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.650 2025/05/18 21:46:23 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -379,8 +379,9 @@ MainParseArgJobsInternal(const char *argvalue)
 	if (sscanf(argvalue, "%d,%d%c",
 	    &tokenPoolReader, &tokenPoolWriter, &end) != 2) {
 		(void)fprintf(stderr,
-		    "%s: error: invalid internal option \"-J %s\"\n",
-		    progname, argvalue);
+		    "%s: error: invalid internal option "
+		    "\"-J %s\" in \"%s\"\n",
+		    progname, argvalue, curdir);
 		exit(2);
 	}
 	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
@@ -388,6 +389,22 @@ MainParseArgJobsInternal(const char *argvalue)
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
 		opts.compatMake = true;
+		(void)fprintf(stderr,
+		    "%s: warning: internal option \"-J %s\" in \"%s\" "
+		    "refers to an unopened file descriptor; "
+		    "falling back to compat mode.\n"
+		    "\t"
+		    "To run the target even in -n mode, "
+		    "add the .MAKE pseudo-source to the target.\n"
+		    "\t"
+		    "To run the target in default mode only, "
+		    "add a ${:D make} marker to a target's command. "
+		    "(This marker expression expands to an empty string.)\n"
+		    "\t"
+		    "To make the sub-make independent from the parent make, "
+		    "unset the MAKEFLAGS environment variable in the "
+		    "target's commands.\n",
+		    progname, argvalue, curdir);
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -1405,16 +1422,16 @@ main_Init(int argc, char **argv)
 #endif
 	Dir_Init();
 
-	{
-		char *makeflags = explode(getenv("MAKEFLAGS"));
-		Main_ParseArgLine(makeflags);
-		free(makeflags);
-	}
-
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: getcwd: %s.\n",
 		    progname, strerror(errno));
 		exit(2);
+	}
+
+	{
+		char *makeflags = explode(getenv("MAKEFLAGS"));
+		Main_ParseArgLine(makeflags);
+		free(makeflags);
 	}
 
 	MainParseArgs(argc, argv);
@@ -1760,7 +1777,6 @@ Cmd_Exec(const char *cmd, char **error)
 		return bmake_strdup("");
 	}
 
-	Main_ExportMAKEFLAGS(true);
 	Var_ReexportVars(SCOPE_GLOBAL);
 
 	switch (cpid = FORK_FUNCTION()) {

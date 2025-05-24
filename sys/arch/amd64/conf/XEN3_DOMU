@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.105 2024/04/02 22:56:50 charlotte Exp $
+# $NetBSD: XEN3_DOMU,v 1.106 2025/05/22 09:37:40 bad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.105 $"
+#ident		"XEN3_DOMU-$Revision: 1.106 $"
 
 maxusers	32		# estimated number of users
 
@@ -218,5 +218,5 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl
 
 # Pull in optional local configuration - always at end
-cinclude	"arch/amd64/conf/GENERIC.local"
+cinclude	"arch/amd64/conf/XEN3.local"
 cinclude	"arch/amd64/conf/XEN3_DOMU.local"

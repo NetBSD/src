@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.10 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.11 2025/05/21 14:47:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -231,6 +231,8 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 		   command_compare(command, NAMED_COMMAND_SIGN))
 	{
 		result = named_server_rekey(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_MEMPROF)) {
+		result = named_server_togglememprof(lex);
 	} else if (command_compare(command, NAMED_COMMAND_MKEYS)) {
 		result = named_server_mkeys(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_NOTIFY)) {
@@ -255,6 +257,9 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 		result = named_server_refreshcommand(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_RELOAD)) {
 		result = named_server_reloadcommand(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_RESETSTATS)) {
+		result = named_server_resetstatscommand(named_g_server, lex,
+							text);
 	} else if (command_compare(command, NAMED_COMMAND_RESPONSELOG)) {
 		result = named_server_setortoggle(named_g_server,
 						  "response logging",

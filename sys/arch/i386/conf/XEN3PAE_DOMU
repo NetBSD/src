@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.24 2024/04/02 22:56:50 charlotte Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.25 2025/05/22 09:37:40 bad Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -235,5 +235,5 @@ options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 # you then need to add your PCI devices drivers below.
 
 # Pull in optional local configuration - always at end
-cinclude	"arch/i386/conf/GENERIC.local"
+cinclude	"arch/i386/conf/XEN3.local"
 cinclude	"arch/i386/conf/XEN3_DOMU.local"

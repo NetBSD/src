@@ -1,4 +1,4 @@
-/*	$NetBSD: test_client.c,v 1.4 2025/01/26 16:24:35 christos Exp $	*/
+/*	$NetBSD: test_client.c,v 1.5 2025/05/21 14:47:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -380,16 +380,18 @@ run(void) {
 				  connect_cb, NULL, timeout);
 		break;
 	case TCP:
-		isc_nm_streamdnsconnect(
-			netmgr, &sockaddr_local, &sockaddr_remote, connect_cb,
-			NULL, timeout, NULL, NULL, ISC_NM_PROXY_NONE, NULL);
+		isc_nm_streamdnsconnect(netmgr, &sockaddr_local,
+					&sockaddr_remote, connect_cb, NULL,
+					timeout, NULL, NULL, NULL,
+					ISC_NM_PROXY_NONE, NULL);
 		break;
 	case DOT: {
 		isc_tlsctx_createclient(&tls_ctx);
 
-		isc_nm_streamdnsconnect(
-			netmgr, &sockaddr_local, &sockaddr_remote, connect_cb,
-			NULL, timeout, tls_ctx, NULL, ISC_NM_PROXY_NONE, NULL);
+		isc_nm_streamdnsconnect(netmgr, &sockaddr_local,
+					&sockaddr_remote, connect_cb, NULL,
+					timeout, tls_ctx, NULL, NULL,
+					ISC_NM_PROXY_NONE, NULL);
 		break;
 	}
 #if HAVE_LIBNGHTTP2
@@ -410,7 +412,8 @@ run(void) {
 		}
 		isc_nm_httpconnect(netmgr, &sockaddr_local, &sockaddr_remote,
 				   req_url, is_post, connect_cb, NULL, tls_ctx,
-				   NULL, timeout, ISC_NM_PROXY_NONE, NULL);
+				   NULL, NULL, timeout, ISC_NM_PROXY_NONE,
+				   NULL);
 	} break;
 #endif
 	default:

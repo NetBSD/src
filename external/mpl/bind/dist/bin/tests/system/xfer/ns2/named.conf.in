@@ -61,7 +61,7 @@ zone "tsigzone" {
 	allow-transfer { tzkey; };
 };
 
-primaries "ns1" port @PORT@ source 10.53.0.2 {
+remote-servers "ns1" port @PORT@ source 10.53.0.2 {
 	10.53.0.1;
 };
 

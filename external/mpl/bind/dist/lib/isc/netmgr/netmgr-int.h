@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.13 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.14 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -476,6 +476,7 @@ typedef struct isc_nmsocket_h2 {
 
 	isc_nm_http_endpoints_t *peer_endpoints;
 
+	bool request_received;
 	bool response_submitted;
 	struct {
 		char *uri;
@@ -518,6 +519,7 @@ struct isc_nmsocket {
 		isc_tlsctx_t **listener_tls_ctx; /*%< A context reference per
 						    worker */
 		size_t n_listener_tls_ctx;
+		char *sni_hostname;
 		isc_tlsctx_client_session_cache_t *client_sess_cache;
 		bool client_session_saved;
 		isc_nmsocket_t *tlslistener;

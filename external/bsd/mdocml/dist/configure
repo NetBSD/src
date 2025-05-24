@@ -43,7 +43,7 @@ MAKEFLAGS=
 UTF8_LOCALE=
 
 AR=ar
-CC=cc
+: "${CC:=cc}"
 CFLAGS=
 FATAL=0
 LDADD=

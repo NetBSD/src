@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 -->
 ## BIND 9 Source Access and Contributor Guidelines
-*May 28, 2020*
+*Nov 26, 2024*
 
 ### Contents
 
@@ -72,13 +72,13 @@ To clone the repository, use:
 >       $ git clone https://gitlab.isc.org/isc-projects/bind9.git
 
 Release branch names are of the form `bind-9.X`, where X represents the second
-number in the BIND 9 version number.  So, to check out the BIND 9.18
+number in the BIND 9 version number.  So, to check out the BIND 9.20
 branch, use:
 
->       $ git checkout bind-9.18
+>       $ git checkout bind-9.20
 
 Whenever a branch is ready for publication, a tag is placed of the
-form `v9.X.Y`.  The 9.18.0 release, for instance, is tagged as `v9.18.0`.
+form `v9.X.Y`.  The 9.20.0 release, for instance, is tagged as `v9.20.0`.
 
 The branch in which the next major release is being developed is called
 `main`.
@@ -121,8 +121,9 @@ patch will be applied.
 #### <a name="bind"></a>BIND code
 
 Patches for BIND may be submitted directly via merge requests in
-[ISC's GitLab](https://gitlab.isc.org/isc-projects/bind9/) source
-repository for BIND.
+[ISC's GitLab](https://gitlab.isc.org/isc-projects/bind9/) source repository for
+BIND. Please contact ISC and provide your GitLab username in order to be allowed
+to fork the project and submit merge requests.
 
 Patches can also be submitted as diffs against a specific version of
 BIND -- preferably the current top of the `main` branch.  Diffs may
@@ -144,8 +145,8 @@ we're busy with other work, it may take us a long time to get to it.
 To ensure your patch is acted on as promptly as possible, please:
 
 * Try to adhere to the [BIND 9 coding style](doc/dev/style.md).
-* Run `make check` to ensure your change hasn't caused any
-  functional regressions.
+* Run unit and system tests to ensure your change hasn't caused any
+  functional regressions (these can be checked in the CI pipeline).
 * Document your work, both in the patch itself and in the
   accompanying email.
 * In patches that make non-trivial functional changes, include system
@@ -156,12 +157,12 @@ To ensure your patch is acted on as promptly as possible, please:
 ##### Changes to `configure`
 
 If you need to make changes to `configure`, you should not edit it
-directly; instead, edit `configure.in`, then run `autoconf`.  Similarly,
-instead of editing `config.h.in` directly, edit `configure.in` and run
+directly; instead, edit `configure.ac`, then run `autoconf`.  Similarly,
+instead of editing `config.h.in` directly, edit `configure.ac` and run
 `autoheader`.
 
 When submitting a patch as a diff, it's fine to omit the `configure`
-diffs to save space.  Just send the `configure.in` diffs and we'll
+diffs to save space.  Just send the `configure.ac` diffs and we'll
 generate the new `configure` during the review process.
 
 ##### Documentation

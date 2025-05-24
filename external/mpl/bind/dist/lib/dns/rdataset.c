@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.9 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.10 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -509,7 +509,8 @@ dns_rdataset_towire(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 isc_result_t
 dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
 			    const dns_name_t *owner_name,
-			    dns_additionaldatafunc_t add, void *arg) {
+			    dns_additionaldatafunc_t add, void *arg,
+			    size_t limit) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_result_t result;
 
@@ -520,6 +521,10 @@ dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_QUESTION) == 0);
+
+	if (limit != 0 && dns_rdataset_count(rdataset) > limit) {
+		return DNS_R_TOOMANYRECORDS;
+	}
 
 	result = dns_rdataset_first(rdataset);
 	if (result != ISC_R_SUCCESS) {
@@ -672,4 +677,19 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		      ISC_MIN(rrsig->originalttl, ttl));
 	rdataset->ttl = ttl;
 	sigrdataset->ttl = ttl;
+}
+
+bool
+dns_rdataset_equals(const dns_rdataset_t *rdataset1,
+		    const dns_rdataset_t *rdataset2) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset1));
+	REQUIRE(DNS_RDATASET_VALID(rdataset2));
+
+	if (rdataset1->methods->equals != NULL &&
+	    rdataset1->methods->equals == rdataset2->methods->equals)
+	{
+		return (rdataset1->methods->equals)(rdataset1, rdataset2);
+	}
+
+	return false;
 }

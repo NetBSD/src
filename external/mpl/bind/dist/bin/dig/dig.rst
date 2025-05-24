@@ -610,6 +610,12 @@ abbreviation is unambiguous; for example, :option:`+cd` is equivalent to
    BADCOOKIE rcode before retrying the request or not. The default
    is to not show the messages.
 
+.. option:: +showbadvers, +noshowbadvers
+
+   This option toggles whether to show the message containing the
+   BADVERS rcode before retrying the request or not. The default
+   is to not show the messages.
+
 .. option:: +showsearch, +noshowsearch
 
    This option performs [or does not perform] a search showing intermediate results.

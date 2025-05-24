@@ -32,6 +32,7 @@ options {
 	ixfr-from-differences primary;
 	check-integrity no;
 	tcp-idle-timeout 600;
+	min-transfer-rate-in 10240 300;  # this is tested as seconds, when used with '-T transferinsecs' (i.e. convert the default '10240 5' back so that it doesn't interfere with other tests)
 };
 
 zone "." {
@@ -55,6 +56,13 @@ zone "edns-expire" {
 	type secondary;
 	primaries { 10.53.0.1; };
 	file "edns-expire.bk";
+};
+
+zone "axfr-min-transfer-rate" {
+	type secondary;
+	min-transfer-rate-in 100000 5; # this is tested as seconds, when used with '-T transferinsecs' (i.e. 100000 bytes in 5 seconds)
+	primaries { 10.53.0.1; };
+	file "axfr-min-transfer-rate.bk";
 };
 
 zone "axfr-max-transfer-time" {

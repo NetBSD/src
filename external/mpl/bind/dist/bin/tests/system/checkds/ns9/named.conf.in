@@ -37,7 +37,7 @@ controls {
 	inet 10.53.0.9 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-parental-agents "ns8" port @PORT@ {
+remote-servers "ns8" port @PORT@ {
 	10.53.0.8;
 };
 

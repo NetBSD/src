@@ -101,16 +101,17 @@ check_PROGRAMS = acl_test$(EXEEXT) badcache_test$(EXEEXT) \
 	db_test$(EXEEXT) dbdiff_test$(EXEEXT) dbiterator_test$(EXEEXT) \
 	dbversion_test$(EXEEXT) diff_test$(EXEEXT) \
 	dispatch_test$(EXEEXT) dns64_test$(EXEEXT) dst_test$(EXEEXT) \
-	keytable_test$(EXEEXT) name_test$(EXEEXT) \
+	ede_test$(EXEEXT) keytable_test$(EXEEXT) name_test$(EXEEXT) \
 	nametree_test$(EXEEXT) nsec3_test$(EXEEXT) \
 	nsec3param_test$(EXEEXT) private_test$(EXEEXT) \
 	qp_test$(EXEEXT) qpmulti_test$(EXEEXT) qpdb_test$(EXEEXT) \
 	qpzone_test$(EXEEXT) rbt_test$(EXEEXT) rdata_test$(EXEEXT) \
 	rdataset_test$(EXEEXT) rdatasetstats_test$(EXEEXT) \
-	resolver_test$(EXEEXT) rsa_test$(EXEEXT) sigs_test$(EXEEXT) \
-	skr_test$(EXEEXT) time_test$(EXEEXT) tsig_test$(EXEEXT) \
-	update_test$(EXEEXT) zonemgr_test$(EXEEXT) zt_test$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
+	resconf_test$(EXEEXT) resolver_test$(EXEEXT) rsa_test$(EXEEXT) \
+	sigs_test$(EXEEXT) skr_test$(EXEEXT) time_test$(EXEEXT) \
+	tsig_test$(EXEEXT) update_test$(EXEEXT) zonemgr_test$(EXEEXT) \
+	zt_test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3)
 @HAVE_PERL_TRUE@am__append_2 = \
 @HAVE_PERL_TRUE@	master_test
 
@@ -237,6 +238,13 @@ dst_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
+ede_test_SOURCES = ede_test.c
+ede_test_OBJECTS = ede_test.$(OBJEXT)
+ede_test_LDADD = $(LDADD)
+ede_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 geoip_test_SOURCES = geoip_test.c
 geoip_test_OBJECTS = geoip_test-geoip_test.$(OBJEXT)
 @HAVE_GEOIP2_TRUE@geoip_test_DEPENDENCIES = $(am__DEPENDENCIES_4) \
@@ -342,6 +350,13 @@ rdatasetstats_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
+resconf_test_SOURCES = resconf_test.c
+resconf_test_OBJECTS = resconf_test.$(OBJEXT)
+resconf_test_LDADD = $(LDADD)
+resconf_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 resolver_test_SOURCES = resolver_test.c
 resolver_test_OBJECTS = resolver_test.$(OBJEXT)
 resolver_test_LDADD = $(LDADD)
@@ -426,7 +441,7 @@ am__depfiles_remade = ./$(DEPDIR)/acl_test.Po \
 	./$(DEPDIR)/dbversion_test.Po ./$(DEPDIR)/diff_test.Po \
 	./$(DEPDIR)/dispatch_test.Po ./$(DEPDIR)/dns64_test.Po \
 	./$(DEPDIR)/dnstap_test-dnstap_test.Po \
-	./$(DEPDIR)/dst_test-dst_test.Po \
+	./$(DEPDIR)/dst_test-dst_test.Po ./$(DEPDIR)/ede_test.Po \
 	./$(DEPDIR)/geoip_test-geoip_test.Po \
 	./$(DEPDIR)/keytable_test.Po ./$(DEPDIR)/master_test.Po \
 	./$(DEPDIR)/name_test.Po ./$(DEPDIR)/nametree_test.Po \
@@ -436,11 +451,11 @@ am__depfiles_remade = ./$(DEPDIR)/acl_test.Po \
 	./$(DEPDIR)/qpzone_test.Po ./$(DEPDIR)/rbt_test.Po \
 	./$(DEPDIR)/rdata_test-rdata_test.Po \
 	./$(DEPDIR)/rdataset_test.Po ./$(DEPDIR)/rdatasetstats_test.Po \
-	./$(DEPDIR)/resolver_test.Po ./$(DEPDIR)/rsa_test-rsa_test.Po \
-	./$(DEPDIR)/sigs_test.Po ./$(DEPDIR)/skr_test.Po \
-	./$(DEPDIR)/time_test.Po ./$(DEPDIR)/tsig_test.Po \
-	./$(DEPDIR)/update_test.Po ./$(DEPDIR)/zonemgr_test.Po \
-	./$(DEPDIR)/zt_test.Po
+	./$(DEPDIR)/resconf_test.Po ./$(DEPDIR)/resolver_test.Po \
+	./$(DEPDIR)/rsa_test-rsa_test.Po ./$(DEPDIR)/sigs_test.Po \
+	./$(DEPDIR)/skr_test.Po ./$(DEPDIR)/time_test.Po \
+	./$(DEPDIR)/tsig_test.Po ./$(DEPDIR)/update_test.Po \
+	./$(DEPDIR)/zonemgr_test.Po ./$(DEPDIR)/zt_test.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -462,22 +477,24 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	dbiterator_test.c dbversion_test.c diff_test.c dispatch_test.c \
-	dns64_test.c dnstap_test.c dst_test.c geoip_test.c \
+	dns64_test.c dnstap_test.c dst_test.c ede_test.c geoip_test.c \
 	keytable_test.c master_test.c name_test.c nametree_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
 	rdata_test.c rdataset_test.c rdatasetstats_test.c \
-	resolver_test.c rsa_test.c sigs_test.c skr_test.c time_test.c \
-	tsig_test.c update_test.c zonemgr_test.c zt_test.c
+	resconf_test.c resolver_test.c rsa_test.c sigs_test.c \
+	skr_test.c time_test.c tsig_test.c update_test.c \
+	zonemgr_test.c zt_test.c
 DIST_SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	dbiterator_test.c dbversion_test.c diff_test.c dispatch_test.c \
-	dns64_test.c dnstap_test.c dst_test.c geoip_test.c \
+	dns64_test.c dnstap_test.c dst_test.c ede_test.c geoip_test.c \
 	keytable_test.c master_test.c name_test.c nametree_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
 	rdata_test.c rdataset_test.c rdatasetstats_test.c \
-	resolver_test.c rsa_test.c sigs_test.c skr_test.c time_test.c \
-	tsig_test.c update_test.c zonemgr_test.c zt_test.c
+	resconf_test.c resolver_test.c rsa_test.c sigs_test.c \
+	skr_test.c time_test.c tsig_test.c update_test.c \
+	zonemgr_test.c zt_test.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -1115,6 +1132,10 @@ dst_test$(EXEEXT): $(dst_test_OBJECTS) $(dst_test_DEPENDENCIES) $(EXTRA_dst_test
 	@rm -f dst_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dst_test_OBJECTS) $(dst_test_LDADD) $(LIBS)
 
+ede_test$(EXEEXT): $(ede_test_OBJECTS) $(ede_test_DEPENDENCIES) $(EXTRA_ede_test_DEPENDENCIES) 
+	@rm -f ede_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ede_test_OBJECTS) $(ede_test_LDADD) $(LIBS)
+
 geoip_test$(EXEEXT): $(geoip_test_OBJECTS) $(geoip_test_DEPENDENCIES) $(EXTRA_geoip_test_DEPENDENCIES) 
 	@rm -f geoip_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(geoip_test_OBJECTS) $(geoip_test_LDADD) $(LIBS)
@@ -1179,6 +1200,10 @@ rdatasetstats_test$(EXEEXT): $(rdatasetstats_test_OBJECTS) $(rdatasetstats_test_
 	@rm -f rdatasetstats_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rdatasetstats_test_OBJECTS) $(rdatasetstats_test_LDADD) $(LIBS)
 
+resconf_test$(EXEEXT): $(resconf_test_OBJECTS) $(resconf_test_DEPENDENCIES) $(EXTRA_resconf_test_DEPENDENCIES) 
+	@rm -f resconf_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(resconf_test_OBJECTS) $(resconf_test_LDADD) $(LIBS)
+
 resolver_test$(EXEEXT): $(resolver_test_OBJECTS) $(resolver_test_DEPENDENCIES) $(EXTRA_resolver_test_DEPENDENCIES) 
 	@rm -f resolver_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(resolver_test_OBJECTS) $(resolver_test_LDADD) $(LIBS)
@@ -1232,6 +1257,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns64_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnstap_test-dnstap_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dst_test-dst_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ede_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/geoip_test-geoip_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/keytable_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/master_test.Po@am__quote@ # am--include-marker
@@ -1248,6 +1274,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdata_test-rdata_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdataset_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdatasetstats_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resconf_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resolver_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rsa_test-rsa_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sigs_test.Po@am__quote@ # am--include-marker
@@ -1630,6 +1657,13 @@ dst_test.log: dst_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+ede_test.log: ede_test$(EXEEXT)
+	@p='ede_test$(EXEEXT)'; \
+	b='ede_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 keytable_test.log: keytable_test$(EXEEXT)
 	@p='keytable_test$(EXEEXT)'; \
 	b='keytable_test'; \
@@ -1724,6 +1758,13 @@ rdataset_test.log: rdataset_test$(EXEEXT)
 rdatasetstats_test.log: rdatasetstats_test$(EXEEXT)
 	@p='rdatasetstats_test$(EXEEXT)'; \
 	b='rdatasetstats_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+resconf_test.log: resconf_test$(EXEEXT)
+	@p='resconf_test$(EXEEXT)'; \
+	b='resconf_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1920,6 +1961,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/dns64_test.Po
 	-rm -f ./$(DEPDIR)/dnstap_test-dnstap_test.Po
 	-rm -f ./$(DEPDIR)/dst_test-dst_test.Po
+	-rm -f ./$(DEPDIR)/ede_test.Po
 	-rm -f ./$(DEPDIR)/geoip_test-geoip_test.Po
 	-rm -f ./$(DEPDIR)/keytable_test.Po
 	-rm -f ./$(DEPDIR)/master_test.Po
@@ -1936,6 +1978,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/rdata_test-rdata_test.Po
 	-rm -f ./$(DEPDIR)/rdataset_test.Po
 	-rm -f ./$(DEPDIR)/rdatasetstats_test.Po
+	-rm -f ./$(DEPDIR)/resconf_test.Po
 	-rm -f ./$(DEPDIR)/resolver_test.Po
 	-rm -f ./$(DEPDIR)/rsa_test-rsa_test.Po
 	-rm -f ./$(DEPDIR)/sigs_test.Po
@@ -2005,6 +2048,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/dns64_test.Po
 	-rm -f ./$(DEPDIR)/dnstap_test-dnstap_test.Po
 	-rm -f ./$(DEPDIR)/dst_test-dst_test.Po
+	-rm -f ./$(DEPDIR)/ede_test.Po
 	-rm -f ./$(DEPDIR)/geoip_test-geoip_test.Po
 	-rm -f ./$(DEPDIR)/keytable_test.Po
 	-rm -f ./$(DEPDIR)/master_test.Po
@@ -2021,6 +2065,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/rdata_test-rdata_test.Po
 	-rm -f ./$(DEPDIR)/rdataset_test.Po
 	-rm -f ./$(DEPDIR)/rdatasetstats_test.Po
+	-rm -f ./$(DEPDIR)/resconf_test.Po
 	-rm -f ./$(DEPDIR)/resolver_test.Po
 	-rm -f ./$(DEPDIR)/rsa_test-rsa_test.Po
 	-rm -f ./$(DEPDIR)/sigs_test.Po

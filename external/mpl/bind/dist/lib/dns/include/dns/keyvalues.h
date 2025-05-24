@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.9 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,89 +18,84 @@
 /*! \file dns/keyvalues.h */
 
 /*
- * Flags field of the KEY RR rdata
+ * Flags field of the KEY rdata. Also used by DNSKEY, CDNSKEY, RKEY,
+ * KEYDATA. Some values are only defined for KEY and not the others,
+ * and vice versa.
  */
-#define DNS_KEYFLAG_TYPEMASK 0xC000 /*%< Mask for "type" bits */
-#define DNS_KEYTYPE_AUTHCONF 0x0000 /*%< Key usable for both */
-#define DNS_KEYTYPE_CONFONLY 0x8000 /*%< Key usable for confidentiality */
-#define DNS_KEYTYPE_AUTHONLY 0x4000 /*%< Key usable for authentication */
-#define DNS_KEYTYPE_NOKEY    0xC000 /*%< No key usable for either; no key */
-#define DNS_KEYTYPE_NOAUTH   DNS_KEYTYPE_CONFONLY
-#define DNS_KEYTYPE_NOCONF   DNS_KEYTYPE_AUTHONLY
+enum {
+	/* valid for KEY only. if both are set, there is no key data. */
+	DNS_KEYTYPE_NOAUTH = 1 << 15, /* cannot be used for authentication. */
+	DNS_KEYTYPE_NOCONF = 1 << 14, /* cannot be used for confidentiality. */
 
-#define DNS_KEYFLAG_RESERVED2  0x2000 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_EXTENDED   0x1000 /*%< key has extended flags */
-#define DNS_KEYFLAG_RESERVED4  0x0800 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_RESERVED5  0x0400 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_OWNERMASK  0x0300 /*%< these bits determine the type */
-#define DNS_KEYOWNER_USER      0x0000 /*%< key is assoc. with user */
-#define DNS_KEYOWNER_ENTITY    0x0200 /*%< key is assoc. with entity eg host */
-#define DNS_KEYOWNER_ZONE      0x0100 /*%< key is zone key */
-#define DNS_KEYOWNER_RESERVED  0x0300 /*%< reserved meaning */
-#define DNS_KEYFLAG_REVOKE     0x0080 /*%< key revoked (per rfc5011) */
-#define DNS_KEYFLAG_RESERVED9  0x0040 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_RESERVED10 0x0020 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_RESERVED11 0x0010 /*%< reserved - must be zero */
-#define DNS_KEYFLAG_SIGNATORYMASK                  \
-	0x000F /*%< key can sign RR's of same name \
-		*/
+	DNS_KEYFLAG_RESERVED2 = 1 << 13, /* reserved: must be zero. */
 
-#define DNS_KEYFLAG_RESERVEDMASK                         \
-	(DNS_KEYFLAG_RESERVED2 | DNS_KEYFLAG_RESERVED4 | \
-	 DNS_KEYFLAG_RESERVED5 | DNS_KEYFLAG_RESERVED9 | \
-	 DNS_KEYFLAG_RESERVED10 | DNS_KEYFLAG_RESERVED11)
-#define DNS_KEYFLAG_KSK 0x0001 /*%< key signing key */
+	DNS_KEYFLAG_EXTENDED = 1 << 12, /* key has extended flags: if this is
+					 * set, the first two octets of the
+					 * key data are an additional flags
+					 * field, at least one bit of which
+					 * must be nonzero. (valid for KEY
+					 * only.) */
 
-#define DNS_KEYFLAG_RESERVEDMASK2 0xFFFF /*%< no bits defined here */
+	DNS_KEYFLAG_RESERVED4 = 1 << 11, /* reserved: must be zero. */
+	DNS_KEYFLAG_RESERVED5 = 1 << 10, /* reserved: must be zero. */
+
+	/* if nether of these is set, this is a user key (valid for KEY only) */
+	DNS_KEYOWNER_ENTITY = 1 << 9, /* host key (valid for KEY only). */
+	DNS_KEYOWNER_ZONE = 1 << 8,   /* zone key (mandatory for DNSKEY). */
+
+	DNS_KEYFLAG_REVOKE = 1 << 7,	 /* key revoked (per rfc5011) */
+	DNS_KEYFLAG_RESERVED9 = 1 << 6,	 /* reserved: must be zero. */
+	DNS_KEYFLAG_RESERVED10 = 1 << 5, /* reserved: must be zero. */
+	DNS_KEYFLAG_RESERVED11 = 1 << 4, /* reserved: must be zero. */
+
+	DNS_KEYFLAG_RESERVED12 = 1 << 3, /* reserved: must be zero. */
+	DNS_KEYFLAG_RESERVED13 = 1 << 4, /* reserved: must be zero. */
+	DNS_KEYFLAG_RESERVED14 = 1 << 2, /* reserved: must be zero. */
+
+	DNS_KEYFLAG_KSK = 1 << 0, /* key signing key */
+};
+
+#define DNS_KEYFLAG_OWNERMASK (DNS_KEYOWNER_ENTITY | DNS_KEYOWNER_ZONE)
+#define DNS_KEYFLAG_TYPEMASK  (DNS_KEYTYPE_NOAUTH | DNS_KEYTYPE_NOCONF)
+#define DNS_KEYTYPE_NOKEY     DNS_KEYFLAG_TYPEMASK
 
 /* The Algorithm field of the KEY and SIG RR's is an integer, {1..254} */
-#define DNS_KEYALG_RSAMD5	 1 /*%< RSA with MD5 */
-#define DNS_KEYALG_RSA		 1 /*%< Used just for tagging */
-#define DNS_KEYALG_DH_DEPRECATED 2 /*%< deprecated */
-#define DNS_KEYALG_DSA		 3 /*%< DSA KEY */
-#define DNS_KEYALG_NSEC3DSA	 6
-#define DNS_KEYALG_DSS		 DNS_ALG_DSA
-#define DNS_KEYALG_ECC		 4
-#define DNS_KEYALG_RSASHA1	 5
-#define DNS_KEYALG_NSEC3RSASHA1	 7
-#define DNS_KEYALG_RSASHA256	 8
-#define DNS_KEYALG_RSASHA512	 10
-#define DNS_KEYALG_ECCGOST	 12
-#define DNS_KEYALG_ECDSA256	 13
-#define DNS_KEYALG_ECDSA384	 14
-#define DNS_KEYALG_ED25519	 15
-#define DNS_KEYALG_ED448	 16
-#define DNS_KEYALG_INDIRECT	 252
-#define DNS_KEYALG_PRIVATEDNS	 253
-#define DNS_KEYALG_PRIVATEOID	 254 /*%< Key begins with OID giving alg */
-#define DNS_KEYALG_MAX		 255
+enum {
+	DNS_KEYALG_RSAMD5 = 1,	      /*%< RSA with MD5 */
+	DNS_KEYALG_DH_DEPRECATED = 2, /*%< deprecated */
+	DNS_KEYALG_DSA = 3,	      /*%< DSA KEY */
+	DNS_KEYALG_RSASHA1 = 5,
+	DNS_KEYALG_NSEC3DSA = 6,
+	DNS_KEYALG_NSEC3RSASHA1 = 7,
+	DNS_KEYALG_RSASHA256 = 8,
+	DNS_KEYALG_RSASHA512 = 10,
+	DNS_KEYALG_ECCGOST = 12,
+	DNS_KEYALG_ECDSA256 = 13,
+	DNS_KEYALG_ECDSA384 = 14,
+	DNS_KEYALG_ED25519 = 15,
+	DNS_KEYALG_ED448 = 16,
+	DNS_KEYALG_INDIRECT = 252,
+	DNS_KEYALG_PRIVATEDNS = 253,
+	DNS_KEYALG_PRIVATEOID = 254, /*%< Key begins with OID giving alg */
+	DNS_KEYALG_MAX = 255,
+};
 
 /* Protocol values  */
-#define DNS_KEYPROTO_RESERVED 0
-#define DNS_KEYPROTO_TLS      1
-#define DNS_KEYPROTO_EMAIL    2
-#define DNS_KEYPROTO_DNSSEC   3
-#define DNS_KEYPROTO_IPSEC    4
-#define DNS_KEYPROTO_ANY      255
+enum {
+	DNS_KEYPROTO_RESERVED = 0,
+	DNS_KEYPROTO_DNSSEC = 3,
+	DNS_KEYPROTO_ANY = 255,
+};
 
-/* Signatures */
-#define DNS_SIG_RSAMINBITS 512 /*%< Size of a mod or exp in bits */
-#define DNS_SIG_RSAMAXBITS 2552
-/* Total of binary mod and exp */
-#define DNS_SIG_RSAMAXBYTES ((DNS_SIG_RSAMAXBITS + 7 / 8) * 2 + 3)
-/*%< Max length of text sig block */
-#define DNS_SIG_RSAMAXBASE64 (((DNS_SIG_RSAMAXBYTES + 2) / 3) * 4)
-#define DNS_SIG_RSAMINSIZE   ((DNS_SIG_RSAMINBITS + 7) / 8)
-#define DNS_SIG_RSAMAXSIZE   ((DNS_SIG_RSAMAXBITS + 7) / 8)
-
+/* Key and signature sizes */
+#define DNS_KEY_ECDSA256SIZE 64
 #define DNS_SIG_ECDSA256SIZE 64
+
+#define DNS_KEY_ECDSA384SIZE 96
 #define DNS_SIG_ECDSA384SIZE 96
 
-#define DNS_KEY_ECDSA256SIZE 64
-#define DNS_KEY_ECDSA384SIZE 96
-
-#define DNS_SIG_ED25519SIZE 64
-#define DNS_SIG_ED448SIZE   114
-
 #define DNS_KEY_ED25519SIZE 32
-#define DNS_KEY_ED448SIZE   57
+#define DNS_SIG_ED25519SIZE 64
+
+#define DNS_KEY_ED448SIZE 57
+#define DNS_SIG_ED448SIZE 114

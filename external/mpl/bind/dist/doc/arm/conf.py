@@ -214,6 +214,27 @@ latex_documents = [
 
 latex_logo = "isc-logo.pdf"
 
+# -- Options for linkcheck ----------------------------------------------
+linkcheck_timeout = 10
+linkcheck_ignore = [
+    "http://127.0.0.1",
+    "https://dl.acm.org",
+    "https://gitlab.isc.org",
+    "https://kb.isc.org",
+    "https://simpleicon.com/",
+    "https://www.dnssec-or-not.com/",
+    "https://www.flaticon.com/",
+    "https://www.freepik.com/",
+    "https://www.gnu.org",
+    "https://www.godaddy.com",
+    "https://www.icann.org",
+]
+# Anchors checking does not work for GitHub, see
+# https://github.com/pypa/packaging.python.org/issues/1272.
+linkcheck_anchors_ignore_for_url = [
+    "https://.*github.*",
+]
+
 #
 # The rst_epilog will be completely overwritten from the Makefile,
 # the definition here is provided purely for situations when

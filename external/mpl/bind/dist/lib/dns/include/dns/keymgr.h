@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.9 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -144,7 +144,7 @@ dns_keymgr_rollover(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
  *
  */
 
-void
+isc_result_t
 dns_keymgr_status(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
 		  isc_stdtime_t now, char *out, size_t out_len);
 /*%<
@@ -157,6 +157,9 @@ dns_keymgr_status(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
  *\li		'out' is not NULL.
  *
  *	Returns:
+ *\li		ISC_R_SUCCESS on success.
+ *\li		ISC_R_NOSPACE if the 'out' buffer is too small.
+ *\li		ISC_R_FAILURE if other error occurred.
  *\li		Printable status in 'out'.
  *
  */

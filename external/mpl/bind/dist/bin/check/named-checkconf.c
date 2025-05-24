@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.12 2025/01/26 16:24:31 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.13 2025/05/21 14:47:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -762,6 +762,11 @@ cleanup:
 	if (cleanup_dst) {
 		dst_lib_destroy();
 	}
+
+	/*
+	 * Wait for memory reclamation in dns_qp to finish.
+	 */
+	rcu_barrier();
 
 	if (logc != NULL) {
 		isc_log_destroy(&logc);

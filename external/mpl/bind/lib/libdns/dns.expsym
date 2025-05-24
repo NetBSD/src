@@ -1,10 +1,13 @@
 dns__cacherbt_expireheader
 dns__cacherbt_overmem
+dns__db_addglue
 dns__db_addrdataset
 dns__db_allrdatasets
 dns__db_attachnode
+dns__db_cleanup_gluelists
 dns__db_closeversion
 dns__db_deleterdataset
+dns__db_destroy_gluelist
 dns__db_detachnode
 dns__db_find
 dns__db_findext
@@ -13,8 +16,11 @@ dns__db_findnodeext
 dns__db_findnsec3node
 dns__db_findrdataset
 dns__db_findzonecut
+dns__db_free_glue
+dns__db_free_gluelist_rcu
 dns__db_getoriginnode
 dns__db_logtoomanyrecords
+dns__db_new_glue
 dns__db_subtractrdataset
 dns__dbiterator_current
 dns__dbiterator_destroy
@@ -43,19 +49,16 @@ dns__rbtdb_closeversion
 dns__rbtdb_create
 dns__rbtdb_createiterator
 dns__rbtdb_currentversion
-dns__rbtdb_decref
 dns__rbtdb_deletedata
 dns__rbtdb_deleterdataset
 dns__rbtdb_destroy
 dns__rbtdb_detachnode
 dns__rbtdb_findnode
 dns__rbtdb_findnodeintree
-dns__rbtdb_free_gluenode
-dns__rbtdb_free_gluenode_rcu
 dns__rbtdb_getoriginnode
 dns__rbtdb_locknode
 dns__rbtdb_mark
-dns__rbtdb_newref
+dns__rbtdb_mark_ancient
 dns__rbtdb_newversion
 dns__rbtdb_nodecount
 dns__rbtdb_nodefullname
@@ -67,9 +70,11 @@ dns__rbtdb_setttl
 dns__rbtdb_subtractrdataset
 dns__rbtdb_unlocknode
 dns__rbtdb_zonemethods
+dns__rbtnode_acquire
 dns__rbtnode_getdistance
 dns__rbtnode_getsize
 dns__rbtnode_namelen
+dns__rbtnode_release
 dns__rdataset_clone
 dns__rdataset_disassociate
 dns__rdataset_expire
@@ -229,6 +234,7 @@ dns_client_create
 dns_client_detach
 dns_client_freeresanswer
 dns_client_resolve
+dns_client_setmaxqueries
 dns_client_setmaxrestarts
 dns_client_setservers
 dns_clientinfo_init
@@ -396,6 +402,11 @@ dns_dyndb_load
 dns_ecs_equals
 dns_ecs_format
 dns_ecs_init
+dns_ede_add
+dns_ede_copy
+dns_ede_init
+dns_ede_invalidate
+dns_ede_reset
 dns_fixedname_init
 dns_fixedname_initname
 dns_fixedname_invalidate
@@ -950,6 +961,7 @@ dns_rdataset_addnoqname
 dns_rdataset_clearprefetch
 dns_rdataset_count
 dns_rdataset_current
+dns_rdataset_equals
 dns_rdataset_first
 dns_rdataset_getownercase
 dns_rdataset_init
@@ -1047,6 +1059,7 @@ dns_resolver_dispatchv6
 dns_resolver_ds_digest_supported
 dns_resolver_dumpfetches
 dns_resolver_dumpquota
+dns_resolver_freefresp
 dns_resolver_freeze
 dns_resolver_getclientsperquery
 dns_resolver_getfetchesperzone
@@ -1217,6 +1230,7 @@ dns_tsig_hmacsha384_name
 dns_tsig_hmacsha512_name
 dns_tsig_sign
 dns_tsig_verify
+dns_tsigkey_algorithm
 dns_tsigkey_attach
 dns_tsigkey_create
 dns_tsigkey_createfromkey
@@ -1298,6 +1312,7 @@ dns_view_setdynamickeyring
 dns_view_setfailttl
 dns_view_sethints
 dns_view_setkeyring
+dns_view_setmaxqueries
 dns_view_setmaxrestarts
 dns_view_setmaxrrperset
 dns_view_setmaxtypepername
@@ -1398,6 +1413,8 @@ dns_zone_getmaxxfrout
 dns_zone_getmctx
 dns_zone_getmem
 dns_zone_getmgr
+dns_zone_getminxfrratebytesin
+dns_zone_getminxfrratesecondsin
 dns_zone_getnotifyacl
 dns_zone_getnotifydelay
 dns_zone_getnotifysrc4
@@ -1511,6 +1528,7 @@ dns_zone_setmaxxfrin
 dns_zone_setmaxxfrout
 dns_zone_setminrefreshtime
 dns_zone_setminretrytime
+dns_zone_setminxfrratein
 dns_zone_setnodes
 dns_zone_setnotifyacl
 dns_zone_setnotifydelay

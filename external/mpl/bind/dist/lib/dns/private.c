@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.10 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.11 2025/05/21 14:48:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -140,12 +140,8 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	if (dns_rdataset_isassociated(&nsecset) &&
 	    dns_rdataset_isassociated(&nsec3paramset))
 	{
-		if (build_nsec != NULL) {
-			*build_nsec = true;
-		}
-		if (build_nsec3 != NULL) {
-			*build_nsec3 = true;
-		}
+		SET_IF_NOT_NULL(build_nsec, true);
+		SET_IF_NOT_NULL(build_nsec3, true);
 		goto success;
 	}
 
@@ -162,12 +158,8 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	 * Look to see if we also need to be creating a NSEC3 chain.
 	 */
 	if (dns_rdataset_isassociated(&nsecset)) {
-		if (build_nsec != NULL) {
-			*build_nsec = true;
-		}
-		if (build_nsec3 != NULL) {
-			*build_nsec3 = false;
-		}
+		SET_IF_NOT_NULL(build_nsec, true);
+		SET_IF_NOT_NULL(build_nsec3, false);
 		if (!dns_rdataset_isassociated(&privateset)) {
 			goto success;
 		}
@@ -196,12 +188,8 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	}
 
 	if (dns_rdataset_isassociated(&nsec3paramset)) {
-		if (build_nsec3 != NULL) {
-			*build_nsec3 = true;
-		}
-		if (build_nsec != NULL) {
-			*build_nsec = false;
-		}
+		SET_IF_NOT_NULL(build_nsec3, true);
+		SET_IF_NOT_NULL(build_nsec, false);
 		if (!dns_rdataset_isassociated(&privateset)) {
 			goto success;
 		}
@@ -266,12 +254,8 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		goto success;
 	}
 
-	if (build_nsec != NULL) {
-		*build_nsec = false;
-	}
-	if (build_nsec3 != NULL) {
-		*build_nsec3 = false;
-	}
+	SET_IF_NOT_NULL(build_nsec, false);
+	SET_IF_NOT_NULL(build_nsec3, false);
 	if (!dns_rdataset_isassociated(&privateset)) {
 		goto success;
 	}

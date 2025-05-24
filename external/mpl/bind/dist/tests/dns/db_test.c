@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.4 2025/05/21 14:48:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -350,8 +350,40 @@ ISC_LOOP_TEST_IMPL(version) {
 	result = dns_db_find(db, name, ver, dns_rdatatype_a, 0, 0, &node,
 			     foundname, &rdataset, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
-	dns_rdataset_disassociate(&rdataset);
 	dns_db_detachnode(db, &node);
+
+	/* Now we create a node with an empty parent */
+	result = dns_db_newversion(db, &new);
+	dns_test_namefromstring("long.ent.name.test.test.", &fname);
+	result = dns_db_findnode(db, name, true, &node);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dns_db_addrdataset(db, node, new, 0, &rdataset, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_rdataset_disassociate(&rdataset);
+	dns_rdataset_init(&rdataset);
+
+	/* look up the ENT; it should be empty */
+	dns_test_namefromstring("ent.name.test.test.", &fname);
+	dns_db_detachnode(db, &node);
+	result = dns_db_find(db, name, new, dns_rdatatype_a, 0, 0, &node,
+			     foundname, &rdataset, NULL);
+	assert_int_equal(result, DNS_R_EMPTYNAME);
+
+	/* ... but then we roll it back... */
+	dns_db_closeversion(db, &new, false);
+
+	/* ... and the ENT should be NXDOMAIN now */
+	dns_test_namefromstring("ent.name.test.test.", &fname);
+	result = dns_db_find(db, name, ver, dns_rdatatype_a, 0, 0, &node,
+			     foundname, &rdataset, NULL);
+	assert_int_equal(result, DNS_R_NXDOMAIN);
+
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
+	if (node != NULL) {
+		dns_db_detachnode(db, &node);
+	}
 	dns_db_closeversion(db, &ver, false);
 
 	dns_db_detach(&db);

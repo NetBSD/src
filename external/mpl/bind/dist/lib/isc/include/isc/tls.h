@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.4 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.5 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -607,6 +607,14 @@ isc_tlsctx_set_random_session_id_context(isc_tlsctx_t *ctx);
  *
  * Requires:
  *\li   'ctx' - a valid non-NULL pointer;
+ */
+
+bool
+isc_tls_valid_sni_hostname(const char *hostname);
+/*%<
+ * Checks if a 'hostname' is not a valid IPv4 or IPv6 address
+ * string. Returns 'true' if the hostname is likely a domain name, and
+ * 'false' if it represents an IP address.
  */
 
 void

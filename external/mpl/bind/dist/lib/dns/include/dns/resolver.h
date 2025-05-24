@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.10 2025/01/26 16:25:28 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.11 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,7 +58,9 @@
 #include <isc/tls.h>
 #include <isc/types.h>
 
+#include <dns/ede.h>
 #include <dns/fixedname.h>
+#include <dns/message.h>
 #include <dns/types.h>
 
 /* Add -DDNS_RESOLVER_TRACE=1 to CFLAGS for detailed reference tracing */
@@ -83,6 +85,7 @@ struct dns_fetchresponse {
 	isc_mem_t	     *mctx;
 	isc_result_t	      result;
 	isc_result_t	      vresult;
+	dns_edectx_t	     *edectx;
 	dns_rdatatype_t	      qtype;
 	dns_db_t	     *db;
 	dns_dbnode_t	     *node;
@@ -265,6 +268,8 @@ ISC_REFCOUNT_TRACE_DECL(dns_resolver);
 ISC_REFCOUNT_DECL(dns_resolver);
 #endif
 
+typedef struct fetchctx fetchctx_t;
+
 isc_result_t
 dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 			 dns_rdatatype_t type, const dns_name_t *domain,
@@ -272,8 +277,9 @@ dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 			 dns_forwarders_t     *forwarders,
 			 const isc_sockaddr_t *client, dns_messageid_t id,
 			 unsigned int options, unsigned int depth,
-			 isc_counter_t *qc, isc_loop_t *loop, isc_job_cb cb,
-			 void *arg, dns_rdataset_t *rdataset,
+			 isc_counter_t *qc, isc_counter_t *gqc,
+			 isc_loop_t *loop, isc_job_cb cb, void *arg,
+			 dns_edectx_t *edectx, dns_rdataset_t *rdataset,
 			 dns_rdataset_t *sigrdataset, dns_fetch_t **fetchp);
 /*%<
  * Recurse to answer a question.
@@ -634,4 +640,15 @@ dns_resolver_getquerystats(dns_resolver_t *res, dns_stats_t **statsp);
  *
  *\li	'statsp' != NULL && '*statsp' != NULL
  */
+
+void
+dns_resolver_freefresp(dns_fetchresponse_t **frespp);
+/*%<
+ * Free a dns_fetchresponse_t object and internal owned object as
+ * well.
+ *
+ * Requires:
+ * \li	'frespp' is valid. No-op if *frespp == NULL
+ */
+
 ISC_LANG_ENDDECLS

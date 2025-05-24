@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.11 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.12 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,6 +73,7 @@ struct dns_dnsseckey {
 				      *  an older version of BIND9) and
 				      *  should be ignored when searching
 				      *  for keys to import into the zone */
+	bool	     pubkey;	     /*% public key only */
 	unsigned int index;	     /*% position in list */
 	ISC_LINK(dns_dnsseckey_t) link;
 };

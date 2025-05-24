@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.13 2025/01/26 16:24:35 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.14 2025/05/21 14:47:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -122,6 +122,8 @@ command is one of the following:\n\
 		Close, rename and re-open the DNSTAP output file(s).\n\
   dumpdb [-all|-cache|-zones|-adb|-bad|-expired|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
+  fetchlimit [view]\n\
+		Show servers and domains currently rate-limited to fetch limits.\n\
   flush         Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
   flushname name [view]\n\
@@ -145,6 +147,10 @@ command is one of the following:\n\
 		Display RFC 5011 managed keys information\n\
   managed-keys sync [class [view]]\n\
 		Write RFC 5011 managed keys to disk\n\
+  memprof [ on | off | dump ]\n\
+		Enable / disable memory profiling or dump the profile.\n\
+		Requires named to built with jemalloc and run with the relevant\n\
+		MALLOC_CONF environment variables.\n\
   modzone zone [class [view]] { zone-options }\n\
 		Modify a zone's configuration.\n\
 		Requires allow-new-zones option.\n\
@@ -172,6 +178,10 @@ command is one of the following:\n\
   reload	Reload configuration file and zones.\n\
   reload zone [class [view]]\n\
 		Reload a single zone.\n\
+  reset-stats <counter-name ...>\n\
+		Reset the requested statistics counter(s).\n\
+  responselog [ on | off ]\n\
+		Enable / disable response logging.\n\
   retransfer zone [class [view]]\n\
 		Retransfer a single zone without checking serial number.\n\
   scan		Scan available network interfaces for changes.\n\

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.9 2025/05/21 14:48:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -181,7 +181,7 @@ dns_master_loadfileasync(const char *master_file, dns_name_t *top,
  *
  * Returns:
  *\li	ISC_R_SUCCESS upon successfully loading the master file.
- *\li	ISC_R_SEENINCLUDE upon successfully loading the master file with
+ *\li	DNS_R_SEENINCLUDE upon successfully loading the master file with
  *		a $INCLUDE statement.
  *\li	ISC_R_NOMEMORY out of memory.
  *\li	ISC_R_UNEXPECTEDEND expected to be able to read a input token and

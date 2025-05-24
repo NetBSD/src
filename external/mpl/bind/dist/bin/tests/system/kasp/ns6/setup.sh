@@ -127,9 +127,9 @@ setup step2.algorithm-roll.kasp
 # The time passed since the new algorithm keys have been introduced is 3 hours.
 TactN="now-3h"
 TpubN1="now-3h"
-# Tsbm(N+1) = TpubN1 + Ipub = now + TTLsig + Dprp + publish-safety =
-# now - 3h + 6h + 1h + 1h = now + 5h
-TsbmN1="now+5h"
+# Tsbm(N+1) = TpubN1 + Ipub = now + TTLsig + Dprp =
+# now - 3h + 6h + 1h = now + 4h
+TsbmN1="now+4h"
 ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I now"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I now"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
@@ -156,11 +156,11 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infil
 # Step 3:
 # The zone signatures are also OMNIPRESENT.
 setup step3.algorithm-roll.kasp
-# The time passed since the new algorithm keys have been introduced is 9 hours.
-TactN="now-9h"
-TretN="now-6h"
-TpubN1="now-9h"
-TsbmN1="now-1h"
+# The time passed since the new algorithm keys have been introduced is 7 hours.
+TactN="now-7h"
+TretN="now-3h"
+TpubN1="now-7h"
+TsbmN1="now"
 ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
@@ -188,11 +188,11 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infil
 # The DS is swapped and can become OMNIPRESENT.
 setup step4.algorithm-roll.kasp
 # The time passed since the DS has been swapped is 29 hours.
-TactN="now-38h"
-TretN="now-35h"
-TpubN1="now-38h"
-TsbmN1="now-30h"
-TactN1="now-29h"
+TactN="now-36h"
+TretN="now-33h"
+TpubN1="now-36h"
+TsbmN1="now-29h"
+TactN1="now-27h"
 ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
@@ -220,12 +220,12 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infil
 # The DNSKEY is removed long enough to be HIDDEN.
 setup step5.algorithm-roll.kasp
 # The time passed since the DNSKEY has been removed is 2 hours.
-TactN="now-40h"
-TretN="now-37h"
+TactN="now-38h"
+TretN="now-35h"
 TremN="now-2h"
-TpubN1="now-40h"
-TsbmN1="now-32h"
-TactN1="now-31h"
+TpubN1="now-38h"
+TsbmN1="now-31h"
+TactN1="now-29h"
 ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
@@ -253,13 +253,13 @@ $SIGNER -S -x -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $infil
 # The RRSIGs have been removed long enough to be HIDDEN.
 setup step6.algorithm-roll.kasp
 # Additional time passed: 7h.
-TactN="now-47h"
-TretN="now-44h"
+TactN="now-45h"
+TretN="now-42h"
 TremN="now-7h"
-TpubN1="now-47h"
-TsbmN1="now-39h"
-TactN1="now-38h"
-TdeaN="now-9h"
+TpubN1="now-45h"
+TsbmN1="now-38h"
+TactN1="now-36h"
+TdeaN="now-7h"
 ksk1times="-P ${TactN}  -A ${TactN}  -P sync ${TactN}  -I ${TretN}"
 zsk1times="-P ${TactN}  -A ${TactN}                    -I ${TretN}"
 ksk2times="-P ${TpubN1} -A ${TpubN1} -P sync ${TsbmN1}"
@@ -324,11 +324,11 @@ $SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $in
 # Step 3:
 # The zone signatures are also OMNIPRESENT.
 setup step3.csk-algorithm-roll.kasp
-# The time passed since the new algorithm keys have been introduced is 9 hours.
-TactN="now-9h"
-TretN="now-6h"
-TpubN1="now-9h"
-TactN1="now-6h"
+# The time passed since the new algorithm keys have been introduced is 7 hours.
+TactN="now-7h"
+TretN="now-3h"
+TpubN1="now-7h"
+TactN1="now-3h"
 csktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN} -I ${TretN}"
 newtimes="-P ${TpubN1} -A ${TpubN1}"
 CSK1=$($KEYGEN -k csk-algoroll -l policies/csk1.conf $csktimes $zone 2>keygen.out.$zone.1)
@@ -347,10 +347,10 @@ $SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $in
 # The DS is swapped and can become OMNIPRESENT.
 setup step4.csk-algorithm-roll.kasp
 # The time passed since the DS has been swapped is 29 hours.
-TactN="now-38h"
-TretN="now-35h"
-TpubN1="now-38h"
-TactN1="now-35h"
+TactN="now-36h"
+TretN="now-33h"
+TpubN1="now-36h"
+TactN1="now-33h"
 TsubN1="now-29h"
 csktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN} -I ${TretN}"
 newtimes="-P ${TpubN1} -A ${TpubN1}"
@@ -370,11 +370,11 @@ $SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $in
 # The DNSKEY is removed long enough to be HIDDEN.
 setup step5.csk-algorithm-roll.kasp
 # The time passed since the DNSKEY has been removed is 2 hours.
-TactN="now-40h"
-TretN="now-37h"
+TactN="now-38h"
+TretN="now-35h"
 TremN="now-2h"
-TpubN1="now-40h"
-TactN1="now-37h"
+TpubN1="now-38h"
+TactN1="now-35h"
 TsubN1="now-31h"
 csktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN} -I ${TretN}"
 newtimes="-P ${TpubN1} -A ${TpubN1}"
@@ -394,12 +394,12 @@ $SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O raw -f "${zonefile}.signed" $in
 # The RRSIGs have been removed long enough to be HIDDEN.
 setup step6.csk-algorithm-roll.kasp
 # Additional time passed: 7h.
-TactN="now-47h"
-TretN="now-44h"
+TactN="now-45h"
+TretN="now-42h"
 TdeaN="now-9h"
 TremN="now-7h"
-TpubN1="now-47h"
-TactN1="now-44h"
+TpubN1="now-45h"
+TactN1="now-42h"
 TsubN1="now-38h"
 csktimes="-P ${TactN}  -A ${TactN} -P sync ${TactN} -I ${TretN}"
 newtimes="-P ${TpubN1} -A ${TpubN1}"

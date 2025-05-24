@@ -376,7 +376,7 @@ want to consider deploying DNSSEC:
    requesting all ``.gov`` subdomains to be DNSSEC-signed by December
    2009. This explains why ``.gov`` is the most-deployed DNSSEC domain
    currently, with `around 90% of subdomains
-   signed. <https://fedv6-deployment.antd.nist.gov/cgi-bin/generate-gov>`__
+   signed. <https://usgv6-deploymon.nist.gov/cgi-bin/generate-gov>`__
 
 .. _how_does_dnssec_change_my_job:
 

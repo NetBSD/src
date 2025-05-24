@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.12 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.13 2025/05/21 14:48:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -724,7 +724,9 @@ isc__nm_tcp_read_stop(isc_nmhandle_t *handle) {
 
 	isc_nmsocket_t *sock = handle->sock;
 
-	isc__nmsocket_timer_stop(sock);
+	if (!sock->manual_read_timer) {
+		isc__nmsocket_timer_stop(sock);
+	}
 	isc__nm_stop_reading(sock);
 	sock->reading = false;
 
@@ -1169,12 +1171,16 @@ tcp_send_direct(isc_nmsocket_t *sock, isc__nm_uvreq_t *req) {
 		}
 	}
 
-	isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL, ISC_LOGMODULE_NETMGR,
-		      ISC_LOG_DEBUG(3),
-		      "throttling TCP connection, the other side is not "
-		      "reading the data, switching to uv_write()");
-	sock->reading_throttled = true;
-	isc__nm_stop_reading(sock);
+	if (!sock->client && sock->reading) {
+		sock->reading_throttled = true;
+		isc__nm_stop_reading(sock);
+	}
+	isc__nmsocket_log(sock, ISC_LOG_DEBUG(3),
+			  "%sthe other side is not "
+			  "reading the data, switching to uv_write()",
+			  !sock->client && sock->reading
+				  ? "throttling TCP connection, "
+				  : "");
 
 	r = uv_write(&req->uv_req.write, &sock->uv_handle.stream, bufs, nbufs,
 		     tcp_send_cb);

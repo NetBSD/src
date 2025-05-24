@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.68 2024/07/16 22:44:38 riastradh Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.69 2025/05/23 02:48:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -82,6 +82,22 @@ ENTRY(xen_mb)
 	ret
 END(xen_mb)
 #endif	/* XEN */
+
+#ifdef KDTRACE_HOOKS
+ENTRY(dtrace_smap_enable)
+#  ifndef XENPV
+	SMAP_ENABLE
+#  endif
+	ret
+END(dtrace_smap_enable)
+
+ENTRY(dtrace_smap_disable)
+#  ifndef XENPV
+	SMAP_DISABLE
+#  endif
+	ret
+END(dtrace_smap_disable)
+#endif
 
 #ifndef XENPV
 ENTRY(invlpg)
@@ -199,18 +215,6 @@ ENTRY(smap_disable)
 	SMAP_DISABLE
 	ret
 END(smap_disable)
-
-#ifdef KDTRACE_HOOKS
-ENTRY(dtrace_smap_enable)
-	SMAP_ENABLE
-	ret
-END(dtrace_smap_enable)
-
-ENTRY(dtrace_smap_disable)
-	SMAP_DISABLE
-	ret
-END(dtrace_smap_disable)
-#endif
 
 /*
  * %rdi = name

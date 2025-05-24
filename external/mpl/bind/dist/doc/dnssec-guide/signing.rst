@@ -898,7 +898,7 @@ presence. Let's look at the following configuration excerpt:
 
 ::
 
-   parental-agents "net" {
+   remote-servers "net" {
        10.53.0.11; 10.53.0.12;
    };
 
@@ -1391,7 +1391,7 @@ same DNSSEC policy and interval.
 
 .. code-block:: none
 
-    # dnssec-ksr -i now -e +2y -k offline-ksk -l named.conf keygen example.net
+    # dnssec-ksr -i now -e +2y -k offline-ksk -l named.conf request example.net
     ;; KeySigningRequest 1.0 20240813133035 (Tue Aug 13 15:30:35 2024)
     example.net. 3600 IN DNSKEY	256 3 13 Z8WRuXJr9v7cSUZpJuQKN/1pZuLPEgoWx4eQOhVI8Edz49F7xpbxnGar aLelIIIlWuRyjdvUtsnitAfWvyGjqQ==
     ;; KeySigningRequest 1.0 20250215111826 (Sat Feb 15 12:18:26 2025)
