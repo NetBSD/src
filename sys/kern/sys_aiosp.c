@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/sdt.h>
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
@@ -94,8 +95,8 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 	 * respect to the job (and importantly the buffer associated with that
 	 * job)
 	 */
-	struct aio_job *a_job;
-	TAILQ_FOREACH(a_job, &sp->jobs, list) {
+	struct aio_job *job;
+	TAILQ_FOREACH(job, &sp->jobs, list) {
 		struct aiost *aiost = TAILQ_LAST(&sp->freelist, aiost_list);
 
 		TAILQ_REMOVE(&sp->freelist, aiost, list);
@@ -104,7 +105,7 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 		TAILQ_INSERT_TAIL(&sp->active, aiost, list);
 		sp->nthreads_active++;
 
-		int error = aiost_configure(aiost, a_job, &sp->kbuf);
+		int error = aiost_configure(aiost, job, &aiost->kbuf);
 		if(error) {
 			mutex_exit(&sp->mtx);
 			return error;
@@ -274,6 +275,74 @@ next:
  */
 static int
 aiost_process_rw(struct aiost *aiost) {
+	struct aio_job *job = aiost->job;
+	struct aiocb *aiocbp = &job->aiocbp;
+	struct file *fp;
+	int fd = aiocbp->aio_fildes;
+	int error = 0;
+
+	struct iovec aiov;
+	struct uio auio;
+                                                                        
+	if (aiocbp->aio_nbytes > SSIZE_MAX) {
+		error = SET_ERROR(EINVAL);
+		goto done;
+	}
+                                                                        
+	fp = fd_getfile(fd);
+	if (fp == NULL) {
+		error = SET_ERROR(EBADF);
+		goto done;
+	}
+                                                                        
+	aiov.iov_base = (void *)(uintptr_t)aiost->kbuf;
+	aiov.iov_len = aiocbp->aio_nbytes;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = aiocbp->aio_nbytes;
+	auio.uio_vmspace = NULL;
+
+	if (job->aio_op & AIO_READ) {
+		/*
+		 * Perform a Read operation
+		 */
+		KASSERT((job->aio_op & AIO_WRITE) == 0);
+                                                                        
+		if ((fp->f_flag & FREAD) == 0) {
+			fd_putfile(fd);
+			error = SET_ERROR(EBADF);
+			goto done;
+		}
+		auio.uio_rw = UIO_READ;
+		error = (*fp->f_ops->fo_read)(fp, &aiocbp->aio_offset,
+		    &auio, fp->f_cred, FOF_UPDATE_OFFSET);
+	} else {
+		/*
+		 * Perform a Write operation
+		 */
+		KASSERT(job->aio_op & AIO_WRITE);
+                                                                        
+		if ((fp->f_flag & FWRITE) == 0) {
+			fd_putfile(fd);
+			error = SET_ERROR(EBADF);
+			goto done;
+		}
+		auio.uio_rw = UIO_WRITE;
+		error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
+		    &auio, fp->f_cred, FOF_UPDATE_OFFSET);
+	}
+	fd_putfile(fd);
+                                                                        
+	/*
+	 * Store the result value
+	 */
+	job->aiocbp.aio_nbytes -= auio.uio_resid;
+	job->aiocbp._retval = (error == 0) ?
+	job->aiocbp.aio_nbytes : -1;
+done:
+	job->aiocbp._errno = error;
+	job->aiocbp._state = JOB_DONE;
+
 	return 0;
 }
 
@@ -282,6 +351,47 @@ aiost_process_rw(struct aiost *aiost) {
  */
 static int
 aiost_process_sync(struct aiost *aiost) {
+	struct aio_job *job = aiost->job;
+	struct aiocb *aiocbp = &job->aiocbp;
+	struct file *fp;
+	int fd = aiocbp->aio_fildes;
+	int error = 0;
+
+	/*
+	 * Perform a file sync operation
+	 */
+	struct vnode *vp;
+                                                        
+	if ((error = fd_getvnode(fd, &fp)) != 0) {
+		goto done;
+	}
+                                                        
+	if ((fp->f_flag & FWRITE) == 0) {
+		fd_putfile(fd);
+		error = SET_ERROR(EBADF);
+		goto done;
+	}
+                                                        
+	vp = fp->f_vnode;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (job->aio_op & AIO_DSYNC) {
+		error = VOP_FSYNC(vp, fp->f_cred,
+		    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0);
+	} else if (job->aio_op & AIO_SYNC) {
+		error = VOP_FSYNC(vp, fp->f_cred,
+		    FSYNC_WAIT, 0, 0);
+	}
+	VOP_UNLOCK(vp);
+	fd_putfile(fd);
+                                                        
+	/*
+	 * Store the result value
+	 */
+	job->aiocbp._retval = (error == 0) ? 0 : -1;
+done:
+	job->aiocbp._errno = error;
+	job->aiocbp._state = JOB_DONE;
+
 	return 0;
 }
 
@@ -315,7 +425,6 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf) {
 	struct vmspace *vm = job->p->p_vmspace;
 	struct aiocb *aiocb = &job->aiocbp;
 
-	// TODO handle sync and dsync	
 	vm_prot_t protections = VM_PROT_NONE;
 	if(job->aio_op == AIO_READ) {
 		protections = VM_PROT_READ;

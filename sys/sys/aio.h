@@ -109,6 +109,7 @@ struct aiost {
 	kcondvar_t service_cv;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
+	vaddr_t kbuf;			/* Shared memory buffer */
 	int exit;			/* Signifies an exit routine */
 };
 
@@ -123,7 +124,6 @@ struct aiosp {
 	int jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
 	int nthreads_total;		/* Number of total servicing threads */
-	vaddr_t kbuf;			/* Shared memory buffer */
 };
 
 /* LIO structure */
