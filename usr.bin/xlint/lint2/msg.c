@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.26 2024/11/30 18:17:12 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.27 2025/05/24 07:00:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.26 2024/11/30 18:17:12 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.27 2025/05/24 07:00:32 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -52,7 +52,7 @@ static const char *msgs[] = {
 	"%s is declared in %s but never used or defined",		// 2
 	"%s has multiple definitions in %s and %s",			// 3
 	"%s has its return value used inconsistently by %s and %s",	// 4
-	"%s returns '%s' at %s, versus '%s' at %s",			// 5
+	"%s %s '%s' at %s, versus '%s' at %s",				// 5
 	"%s has argument %d with type '%s' at %s, versus '%s' at %s",	// 6
 	"%s has %d parameters in %s, versus %d arguments in %s",	// 7
 	"%s returns a value that is always ignored",			// 8

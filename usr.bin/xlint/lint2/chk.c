@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.70 2025/04/10 20:37:48 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.71 2025/05/24 07:00:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.70 2025/04/10 20:37:48 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.71 2025/05/24 07:00:32 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -291,32 +291,27 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 static void
 chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 {
-	sym_t *sym;
-	type_t *tp1, *tp2;
-	bool eq, dowarn;
-
 	if (def == NULL)
 		def = decl;
 	if (def == NULL)
 		return;
 
-	tp1 = TP(def->s_type);
-	for (sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
-		type_t *xt1, *xt2;
+	type_t *tp1 = TP(def->s_type);
+	for (sym_t *sym = hte->h_syms; sym != NULL; sym = sym->s_next) {
 		if (sym == def)
 			continue;
-		tp2 = TP(sym->s_type);
-		dowarn = false;
-		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
-			eq = types_compatible(xt1 = tp1->t_subt,
-			    xt2 = tp2->t_subt, true, false, false, &dowarn);
-		} else {
-			eq = types_compatible(xt1 = tp1, xt2 = tp2,
-			    false, false, false, &dowarn);
-		}
+		type_t *tp2 = TP(sym->s_type);
+		bool dowarn = false;
+		bool is_func = tp1->t_tspec == FUNC && tp2->t_tspec == FUNC;
+		type_t *xt1 = is_func ? tp1->t_subt : tp1;
+		type_t *xt2 = is_func ? tp2->t_subt : tp2;
+		bool eq = types_compatible(xt1, xt2,
+		    is_func, false, false, &dowarn);
 		if (!eq || (sflag && dowarn)) {
-			/* %s returns '%s' at %s, versus '%s' at %s */
-			msg(5, hte->h_name, type_name(xt1), mkpos(&def->s_pos),
+			/* %s %s '%s' at %s, versus '%s' at %s */
+			msg(5, hte->h_name,
+			    is_func ? "returns" : "has type",
+			    type_name(xt1), mkpos(&def->s_pos),
 			    type_name(xt2), mkpos(&sym->s_pos));
 		}
 	}

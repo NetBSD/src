@@ -5,4 +5,4 @@ add has argument 2 with type 'double' at msg_005_define.c(2), versus 'int' at ms
 add has parameter 1 declared as 'double' in msg_005_define.c(2), versus 'int' in msg_005_call.c(2) [lint2:011]
 add has parameter 2 declared as 'double' in msg_005_define.c(2), versus 'int' in msg_005_call.c(2) [lint2:011]
 pointer is defined in pointer-to-char.c(1) but never used [lint2:001]
-pointer returns 'pointer to const char' at pointer-to-char.c(1), versus 'pointer to char' at pointer-to-const-char.c(1) [lint2:005]
+pointer has type 'pointer to const char' at pointer-to-char.c(1), versus 'pointer to char' at pointer-to-const-char.c(1) [lint2:005]
