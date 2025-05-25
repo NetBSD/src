@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.10 2024/08/14 12:11:48 macallan Exp $ */
+/* $NetBSD: pm3fb.c,v 1.11 2025/05/25 06:17:37 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.10 2024/08/14 12:11:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.11 2025/05/25 06:17:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,6 +1026,9 @@ pm3_setup_i2c(struct pm3fb_softc *sc)
 		/*
 		 * Now pick a mode.
 		 */
+#ifdef PM3FB_DEBUG
+		edid_print(&sc->sc_ei);
+#endif
 		if ((sc->sc_ei.edid_preferred_mode != NULL)) {
 			struct videomode *m = sc->sc_ei.edid_preferred_mode;
 			if (MODE_IS_VALID(m)) {
@@ -1227,7 +1230,7 @@ pm3fb_set_mode(struct pm3fb_softc *sc, const struct videomode *mode)
         stride = (mode->hdisplay + 31) & ~31;
 
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_HORIZ_TOTAL,
-	    ((mode->htotal - 1) >> 4));
+	    (mode->htotal >> 4) - 1);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_HORIZ_SYNC_END,
 	    (t1 + t3) >> 4);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_HORIZ_SYNC_START,
