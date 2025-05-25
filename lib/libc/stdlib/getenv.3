@@ -1,4 +1,4 @@
-.\"	$NetBSD: getenv.3,v 1.25 2010/10/26 22:34:33 wiz Exp $
+.\"	$NetBSD: getenv.3,v 1.26 2025/05/25 05:44:10 rillig Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)getenv.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 25, 2010
+.Dd May 25, 2025
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -206,13 +206,17 @@ The
 .Fn getenv
 function conforms to
 .St -ansiC .
+.Pp
 The
 .Fn putenv
 function conforms to
 .St -xpg4 .
+.Pp
 The
+.Fn setenv
+and
 .Fn unsetenv
-function conforms to
+functions conform to
 .St -p1003.1-2001 .
 .Sh HISTORY
 The functions
