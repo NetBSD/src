@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.buildinstall.mk,v 1.1 2012/11/15 23:51:53 joerg Exp $
+#	$NetBSD: bsd.buildinstall.mk,v 1.2 2025/05/25 19:33:02 rillig Exp $
 
 #
 # build_install logic for src/Makefile
@@ -20,7 +20,7 @@ SUBDIR_GROUP.${CUR_GROUP}+=	${dir}
 
 .endfor
 
-build_install:
+build_install: .MAKE
 .for group in ${SUBDIR_GROUPS}
 .  if !empty(SUBDIR_GROUP.${group})
 	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/dependall-/}
