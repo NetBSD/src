@@ -190,7 +190,6 @@ static const struct test_case {
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
-
 };
 
 static int

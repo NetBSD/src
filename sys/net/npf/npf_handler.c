@@ -251,7 +251,8 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 		error = npf_rule_reverse(&npc, &mi, error);
 	}
 
-	if (error) {
+	/* reject packets whose addr-port pair matches no sockets  */
+	if (id_match == ENOTCONN || error) {
 		npf_stats_inc(npf, NPF_STAT_BLOCK_RULESET);
 		goto block;
 	}

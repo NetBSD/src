@@ -1013,7 +1013,7 @@ int
 npf_rule_match_rid(npf_rule_t *rl, npf_cache_t *npc, int dir)
 {
 	uint32_t sock_gid, sock_uid;
-	int matched = 0;
+	bool uid_matched = false, gid_matched = false;
 
 	if (rl->gid.op == NPF_OP_NONE && rl->uid.op == NPF_OP_NONE)
 		return -1; /* quickly return if packet has nothing to do with rids */
@@ -1025,16 +1025,20 @@ npf_rule_match_rid(npf_rule_t *rl, npf_cache_t *npc, int dir)
 		if (npf_socket_lookup_rid(npc, kauth_cred_getegid, &sock_gid, dir) == -1)
 			return ENOTCONN;
 
-		matched |= npf_match_rid(&rl->gid, sock_gid);
+		gid_matched = npf_match_rid(&rl->gid, sock_gid);
 	}
 	if (rl->uid.op != NPF_OP_NONE) {
 		if (npf_socket_lookup_rid(npc, kauth_cred_geteuid, &sock_uid, dir) == -1)
 			return ENOTCONN;
 
-		matched |= npf_match_rid(&rl->uid, sock_uid);
+		uid_matched = npf_match_rid(&rl->uid, sock_uid);
 	}
 
-	return matched;
+	/* if both uid and gid are set on rule, both must be matching to agree */
+	if (rl->gid.op && rl->uid.op)
+		return gid_matched && uid_matched;
+	else
+		return gid_matched || uid_matched;
 }
 
 /*

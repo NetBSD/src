@@ -18,6 +18,7 @@ SRCS+=		npf_gc_test.c
 SRCS+=		npf_state_test.c
 SRCS+=		npf_rule_test.c
 SRCS+=		npf_nat_test.c
+SRCS+=		npf_rid_test.c
 
 SRCS+=		npf_perf_test.c
 
