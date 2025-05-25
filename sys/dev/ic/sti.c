@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.43 2024/12/10 09:13:00 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.43 2024/12/10 09:13:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -708,10 +708,18 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 		scr->scr_bpp = 8;	/* for now */
 		break;
 
+	case STI_DD_EVRX:
+	case STI_DD_382C:
+	case STI_DD_3X2V:
+		/*
+		 * EVRX, 382C, and 3X2V are available only on hp300 models
+		 * and board specific routines are handled by MD
+		 * sti_machdep_attach() in arch/hp300/dev/sti_machdep.c.
+		 */
+		break;
+
 	case STI_DD_GRX:
 	case STI_DD_CRX24:
-	case STI_DD_EVRX:
-	case STI_DD_3X2V:
 	case STI_DD_DUAL_CRX:
 	case STI_DD_PINNACLE:
 	default:
