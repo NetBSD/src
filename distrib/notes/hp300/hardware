@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.30 2024/12/04 15:45:01 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.31 2025/05/25 02:10:33 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -193,9 +193,7 @@ A1659A CRX (1280x1024 @ 72 hz, 8 bits, SGC)
 .br
 .Em "Untested"
 .It
-internal video on models 362/382 (A1474-69511 and A147x-69510)
-.br
-.Em "No X server support"
+362 and 382 built-in EVRX framebuffer
 .It
 425e built-in EVRX framebuffer
 .bullet)
