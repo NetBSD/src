@@ -13,7 +13,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filesubr.c,v 1.6 2017/09/15 21:03:26 christos Exp $");
+__RCSID("$NetBSD: filesubr.c,v 1.7 2025/05/25 15:20:17 christos Exp $");
 
 /* These functions were moved out of subr.c because they need different
    definitions under operating systems (like, say, Windows NT) with different
@@ -674,12 +674,16 @@ xcmp (const char *file1, const char *file2)
 	do 
 	{
 	    read1 = block_read (fd1, buf1, buf_size);
-	    if (read1 == (size_t)-1)
+	    if (read1 == (size_t)-1) {
 		error (1, errno, "cannot read file %s for comparing", file1);
+		return 1;
+	    }
 
 	    read2 = block_read (fd2, buf2, buf_size);
-	    if (read2 == (size_t)-1)
+	    if (read2 == (size_t)-1) {
 		error (1, errno, "cannot read file %s for comparing", file2);
+		return 1;
+	    }
 
 	    /* assert (read1 == read2); */
 
