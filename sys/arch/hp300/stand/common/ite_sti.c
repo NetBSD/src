@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.2 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -35,9 +35,8 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-#if 0
+#include <hp300/dev/sti_diovar.h>
 #include <hp300/dev/dioreg.h>
-#endif
 #include <hp300/dev/sgcreg.h>
 #include <dev/ic/stireg.h>
 
@@ -66,7 +65,6 @@ void	sti_init(int);
 void	sti_inqcfg(struct sti_inqconfout *);
 void	sti_iteinit_common(struct ite_data *);
 
-#if 0 /* not yet */
 /* kinda similar to sti_dio_probe() */
 int
 sti_dio_probe(struct ite_data *ip)
@@ -89,10 +87,9 @@ void
 sti_iteinit_dio(struct ite_data *ip)
 {
 
-	ip->fbbase = (caddr_t)sctoaddr(ip->scode + STI_DIO_SCODE_OFFSET);
+	ip->fbbase = (uint8_t *)sctoaddr(ip->scode + STI_DIO_SCODE_OFFSET);
 	sti_iteinit_common(ip);
 }
-#endif
 
 void
 sti_iteinit_sgc(struct ite_data *ip)

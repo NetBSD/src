@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.20 2023/04/21 22:44:27 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.21 2025/05/26 12:25:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/intioreg.h>
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/sgcreg.h>
 #include <dev/ic/stireg.h>
 
@@ -65,60 +66,130 @@ static void itecheckwrap(struct ite_data *, struct itesw *);
 #define GID_STI		0x100	/* any value which is not a DIO fb, really */
 
 struct itesw itesw[] = {
-	{ GID_TOPCAT,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_TOPCAT,
+		.ite_probe  = NULL,
+		.ite_init   = topcat_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_GATORBOX,
-	gbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	gbox_scroll },
+	{
+		.ite_hwid   = GID_GATORBOX,
+		.ite_probe  = NULL,
+		.ite_init   = gbox_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = gbox_scroll
+	},
 
-	{ GID_RENAISSANCE,
-	rbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_RENAISSANCE,
+		.ite_probe  = NULL,
+		.ite_init   = rbox_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_LRCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_LRCATSEYE,
+		.ite_probe  = NULL,
+		.ite_init   = topcat_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_HRCCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_HRCCATSEYE,
+		.ite_probe  = NULL,
+		.ite_init   = topcat_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_HRMCATSEYE,
-	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_HRMCATSEYE,
+		.ite_probe  = NULL,
+		.ite_init   = topcat_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_DAVINCI,
-      	dvbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_DAVINCI,
+		.ite_probe  = NULL,
+		.ite_init   = dvbox_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc8bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_HYPERION,
-	hyper_init,	ite_dio_clear,	ite_dio_putc1bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_HYPERION,
+		.ite_probe  = NULL,
+		.ite_init   = hyper_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc1bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_TIGER,
-	tvrx_init,	ite_dio_clear,	ite_dio_putc1bpp,
-	ite_dio_cursor,	ite_dio_scroll },
+	{
+		.ite_hwid   = GID_TIGER,
+		.ite_probe  = NULL,
+		.ite_init   = tvrx_init,
+		.ite_clear  = ite_dio_clear,
+		.ite_putc   = ite_dio_putc1bpp,
+		.ite_cursor = ite_dio_cursor,
+		.ite_scroll = ite_dio_scroll
+	},
 
-	{ GID_A1474MID,
-	dumb_init,	dumb_clear,	dumb_putc,
-	dumb_cursor,	dumb_scroll },
+	{
+		.ite_hwid   = GID_A1474MID,
+		.ite_probe  = sti_dio_probe,
+		.ite_init   = sti_iteinit_dio,
+		.ite_clear  = sti_clear,
+		.ite_putc   = sti_putc,
+		.ite_cursor = sti_cursor,
+		.ite_scroll = sti_scroll
+	},
 
-	{ GID_A147xVGA,
-	dumb_init,	dumb_clear,	dumb_putc,
-	dumb_cursor,	dumb_scroll },
+	{
+		.ite_hwid   = GID_A147xVGA,
+		.ite_probe  = sti_dio_probe,
+		.ite_init   = sti_iteinit_dio,
+		.ite_clear  = sti_clear,
+		.ite_putc   = sti_putc,
+		.ite_cursor = sti_cursor,
+		.ite_scroll = sti_scroll
+	},
 
-	{ GID_STI,
-	sti_iteinit_sgc, sti_clear,	sti_putc,
-	sti_cursor,	sti_scroll },
+	{
+		.ite_hwid   = GID_STI,
+		.ite_probe  = NULL,
+		.ite_init   = sti_iteinit_sgc,
+		.ite_clear  = sti_clear,
+		.ite_putc   = sti_putc,
+		.ite_cursor = sti_cursor,
+		.ite_scroll = sti_scroll
+	},
 };
-int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
 struct  ite_data ite_data[NITE] = { { 0 } };
-int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
@@ -140,22 +211,22 @@ iteconfig(void)
 		/* XXX: redundent but safe */
 		if (badaddr((void *)fb) || fb->id != GRFHWID)
 			continue;
-		for (dtype = 0; dtype < nitesw; dtype++)
+		for (dtype = 0; dtype < __arraycount(itesw); dtype++)
 			if (itesw[dtype].ite_hwid == fb->fbid)
 				break;
-		if (dtype == nitesw)
+		if (dtype == __arraycount(itesw))
 			continue;
 		if (i >= NITE)
 			break;
-		ite_scode[i] = hw->hw_sc;
 		ip = &ite_data[i];
+		ip->scode = hw->hw_sc;
 		ip->isw = &itesw[dtype];
 		ip->regbase = (void *)fb;
 		fboff = (fb->fbomsb << 8) | fb->fbolsb;
 		ip->fbbase = (void *)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
-		if (ip->regbase >= (void *)DIOIIBASE)
-			ip->fbbase = (char*)ip->fbbase + (int)ip->regbase;
+		if (DIO_ISDIOII(ip->scode))
+			ip->fbbase = (uint8_t *)ip->fbbase + (int)ip->regbase;
 		ip->fbwidth  = fb->fbwmsb << 8 | fb->fbwlsb;
 		ip->fbheight = fb->fbhmsb << 8 | fb->fbhlsb;
 		ip->dwidth   = fb->dwmsb  << 8 | fb->dwlsb;
@@ -171,6 +242,10 @@ iteconfig(void)
 			ip->dwidth = ip->fbwidth;
 		if (ip->dheight > ip->fbheight)
 			ip->dheight = ip->fbheight;
+		/* confirm hardware is what we think it is */
+		if (itesw[dtype].ite_probe != NULL &&
+		    (*itesw[dtype].ite_probe)(ip) != 0)
+			continue;
 		ip->alive = 1;
 		i++;
 	}
@@ -188,10 +263,9 @@ iteconfig(void)
 	}
 
 	/* SGC frame buffers can only be STI... */
-	for (dtype = 0; dtype < __arraycount(itesw); dtype++) {
+	for (dtype = 0; dtype < __arraycount(itesw); dtype++)
 		if (itesw[dtype].ite_hwid == GID_STI)
 			break;
-	}
 	if (dtype == __arraycount(itesw))
 		return;
 
@@ -261,7 +335,8 @@ iteprobe(struct consdev *cp)
 			unit = ite;
 		}
 	}
-	curcons_scode = ite_scode[unit];
+	ip = &ite_data[unit];
+	curcons_scode = ip->scode;
 	cp->cn_dev = unit;
 	cp->cn_pri = pri;
 }

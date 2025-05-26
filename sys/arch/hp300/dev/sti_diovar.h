@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_diovar.h,v 1.1 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: sti_diovar.h,v 1.2 2025/05/26 12:25:12 tsutsui Exp $	*/
 /*-
  * Copyright (c) 2025 Izumi Tsutsui.  All rights reserved.
  *
@@ -23,5 +23,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(_STANDALONE)
 int	sti_dio_cnprobe(bus_space_tag_t, bus_addr_t, int);
 void	sti_dio_cnattach(bus_space_tag_t, int);
+#endif
+
+/* DIO attachment defines */
+#define STI_DIO_SCODE_OFFSET	0x02	/* offset to SGC rom, in select codes */
+#define STI_DIO_SIZE		0x10	/* expected total device size
+					   in DIO-II size units */
