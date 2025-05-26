@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.397 2024/11/10 11:44:08 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.398 2025/05/26 08:27:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.397 2024/11/10 11:44:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.398 2025/05/26 08:27:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3643,6 +3643,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("pci_intr_string\n"));
 	intrstr = pci_intr_string(pc, sc->bge_pihp[0], intrbuf,
 	    sizeof(intrbuf));
+	pci_intr_setattr(pc, &sc->bge_pihp[0], PCI_INTR_MPSAFE, true);
 	DPRINTFN(5, ("pci_intr_establish\n"));
 	sc->bge_intrhand = pci_intr_establish_xname(pc, sc->bge_pihp[0],
 	    IPL_NET, bge_intr, sc, device_xname(sc->bge_dev));
