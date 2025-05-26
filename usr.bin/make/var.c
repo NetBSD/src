@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1163 2025/05/26 19:56:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1164 2025/05/26 20:12:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1163 2025/05/26 19:56:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1164 2025/05/26 20:12:48 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -378,7 +378,7 @@ EvalStack_Pop(void)
 }
 
 bool
-EvalStack_PrintDetails(void)
+EvalStack_Details(Buffer *buf)
 {
 	size_t i;
 
@@ -401,9 +401,15 @@ EvalStack_PrintDetails(void)
 		    && (kind == VSK_VARNAME || kind == VSK_EXPR)
 		    ? elem->value->str : NULL;
 
-		debug_printf("\t%s \"%s%s%s\"\n", descr[kind], elem->str,
-		    value != NULL ? "\" with value \"" : "",
-		    value != NULL ? value : "");
+		Buf_AddStr(buf, "\t");
+		Buf_AddStr(buf, descr[kind]);
+		Buf_AddStr(buf, " \"");
+		Buf_AddStr(buf, elem->str);
+		if (value != NULL) {
+			Buf_AddStr(buf, "\" with value \"");
+			Buf_AddStr(buf, value);
+		}
+		Buf_AddStr(buf, "\"\n");
 	}
 	return evalStack.len > 0;
 }

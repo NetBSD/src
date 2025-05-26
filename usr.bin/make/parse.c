@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.744 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.745 2025/05/26 20:12:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.744 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.745 2025/05/26 20:12:48 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -389,17 +389,20 @@ LoadFile(const char *path, int fd)
  * would be redundant, but in other cases like Error or Fatal it needs to be
  * included.
  */
-void
-PrintStackTrace(bool includingInnermost)
+char *
+GetStackTrace(bool includingInnermost)
 {
+	Buffer buffer, *buf = &buffer;
 	const IncludedFile *entries;
 	size_t i, n;
 
-	bool hasDetails = EvalStack_PrintDetails();
+	bool hasDetails;
 
+	Buf_Init(buf);
+	hasDetails = EvalStack_Details(buf);
 	n = includes.len;
 	if (n == 0)
-		return;
+		goto end;
 
 	entries = GetInclude(0);
 	if (!includingInnermost && !(hasDetails && n > 1)
@@ -419,16 +422,41 @@ PrintStackTrace(bool includingInnermost)
 
 		if (entry->forLoop != NULL) {
 			char *details = ForLoop_Details(entry->forLoop);
-			debug_printf("\tin .for loop from %s:%u with %s\n",
-			    fname, entry->forHeadLineno, details);
+			Buf_AddStr(buf, "\tin .for loop from ");
+			Buf_AddStr(buf, fname);
+			Buf_AddStr(buf, ":");
+			Buf_AddInt(buf, (int)entry->forHeadLineno);
+			Buf_AddStr(buf, " with ");
+			Buf_AddStr(buf, details);
+			Buf_AddStr(buf, "\n");
 			free(details);
 		} else if (i + 1 < n && entries[i + 1].forLoop != NULL) {
 			/* entry->lineno is not a useful line number */
-		} else
-			debug_printf("\tin %s:%u\n", fname, entry->lineno);
+		} else {
+			Buf_AddStr(buf, "\tin ");
+			Buf_AddStr(buf, fname);
+			Buf_AddStr(buf, ":");
+			Buf_AddInt(buf, (int)entry->lineno);
+			Buf_AddStr(buf, "\n");
+		}
 	}
-	if (makelevel > 0)
-		debug_printf("\tin directory %s\n", curdir);
+
+	if (makelevel > 0) {
+		Buf_AddStr(buf, "\tin directory ");
+		Buf_AddStr(buf, curdir);
+		Buf_AddStr(buf, "\n");
+	}
+
+end:
+	return Buf_DoneData(buf);
+}
+
+void
+PrintStackTrace(bool includingInnermost)
+{
+	char *stackTrace = GetStackTrace(includingInnermost);
+	fprintf(stderr, "%s", stackTrace);
+	free(stackTrace);
 }
 
 /* Check if the current character is escaped on the current line. */
