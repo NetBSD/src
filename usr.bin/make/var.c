@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1162 2025/05/03 08:18:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1163 2025/05/26 19:56:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1162 2025/05/03 08:18:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1163 2025/05/26 19:56:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -256,6 +256,7 @@ typedef struct SepBuf {
 } SepBuf;
 
 typedef enum {
+	VSK_MAKEFLAGS,
 	VSK_TARGET,
 	VSK_COMMAND,
 	VSK_VARNAME,
@@ -363,7 +364,13 @@ EvalStack_Push(EvalStackElementKind kind, const char *str, const FStr *value)
 	evalStack.len++;
 }
 
-static void
+void
+EvalStack_PushMakeflags(const char *makeflags)
+{
+	EvalStack_Push(VSK_MAKEFLAGS, makeflags, NULL);
+}
+
+void
 EvalStack_Pop(void)
 {
 	assert(evalStack.len > 0);
@@ -377,6 +384,7 @@ EvalStack_PrintDetails(void)
 
 	for (i = evalStack.len; i > 0; i--) {
 		static const char descr[][42] = {
+			"while evaluating MAKEFLAGS",
 			"in target",
 			"in command",
 			"while evaluating variable",
