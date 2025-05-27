@@ -1,4 +1,4 @@
-/* $NetBSD: pm3reg.h,v 1.3 2021/08/25 21:50:29 andvar Exp $ */
+/* $NetBSD: pm3reg.h,v 1.4 2025/05/27 05:57:40 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -231,6 +231,7 @@
 #define PM3_STENCIL_MODE                       0x00008988
 #define PM3_STENCIL_DATA                       0x00008990
 #define PM3_DEPTH_MODE                         0x000089a0
+#define PM3_SOURCE_DATA			       0x00008aa8
 #define PM3_FBWRITE_MODE                       0x00008ab8
 #define              PM3_FBWRITEMODE_WRITEENABLE                   0x00000001
 #define              PM3_FBWRITEMODE_OPAQUESPAN                    0x00000020
