@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: hyper.c,v 1.4 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: hyper.c,v 1.15 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -141,12 +141,12 @@ static int	hyper_reset(struct diofb *, int, struct diofbreg *);
 static int	hyper_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
 static struct wsdisplay_accessops hyper_accessops = {
-	hyper_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,	/* load_font */
+	.ioctl        = hyper_ioctl,
+	.mmap         = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen  = diofb_free_screen,
+	.show_screen  = diofb_show_screen,
+	.load_font    = NULL,
 };
 
 /*

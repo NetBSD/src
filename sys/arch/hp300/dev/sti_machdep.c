@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_machdep.c,v 1.4 2025/05/25 02:08:03 tsutsui Exp $	*/
+/*	$NetBSD: sti_machdep.c,v 1.5 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.4 2025/05/25 02:08:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.5 2025/05/27 18:44:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,12 +116,12 @@ static struct sti_screen sticn_scr;
 static bus_addr_t sticn_bases[STI_REGION_MAX];
 
 static const struct wsdisplay_accessops sti_m68k_accessops = {
-	sti_ioctl,
-	sti_m68k_mmap,
-	sti_alloc_screen,
-	sti_free_screen,
-	sti_show_screen,
-	sti_load_font
+	.ioctl        = sti_ioctl,
+	.mmap         = sti_m68k_mmap,
+	.alloc_screen = sti_alloc_screen,
+	.free_screen  = sti_free_screen,
+	.show_screen  = sti_show_screen,
+	.load_font    = sti_load_font
 };
 
 void
