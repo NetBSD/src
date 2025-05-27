@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.4 2025/05/27 17:59:37 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.5 2025/05/27 18:02:58 tsutsui Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -59,11 +59,11 @@ static struct {
 	(((addr)[(ofs) +  3] << 24) | ((addr)[(ofs) +  7] << 16) | \
 	 ((addr)[(ofs) + 11] <<  8) | ((addr)[(ofs) + 15]))
 
-void	sti_do_cursor(struct ite_data *);
-void	sti_fontinfo(struct ite_data *);
-void	sti_init(int);
-void	sti_inqcfg(struct sti_inqconfout *);
-void	sti_iteinit_common(struct ite_data *);
+static void	sti_do_cursor(struct ite_data *);
+static void	sti_fontinfo(struct ite_data *);
+static void	sti_init(int);
+static void	sti_inqcfg(struct sti_inqconfout *);
+static void	sti_iteinit_common(struct ite_data *);
 
 /* kinda similar to sti_dio_probe() */
 int
@@ -106,7 +106,7 @@ sti_iteinit_sgc(struct ite_data *ip)
  * - since romputchar() does not work with sti devices, there is no way we
  *   can report errors (although we could switch to serial...)
  */
-void
+static void
 sti_iteinit_common(struct ite_data *ip)
 {
 	int i;
@@ -240,7 +240,7 @@ sti_cursor(struct ite_data *ip, int flag)
 	}
 }
 
-void
+static void
 sti_do_cursor(struct ite_data *ip)
 {
 	sti_blkmv_t blkmv;
@@ -311,7 +311,7 @@ sti_scroll(struct ite_data *ip)
 	(*blkmv)(&a.flags, &a.in, &a.out, &sti.cfg);
 }
 
-void
+static void
 sti_fontinfo(struct ite_data *ip)
 {
 	uint32_t fontbase;
@@ -324,7 +324,7 @@ sti_fontinfo(struct ite_data *ip)
 	ip->cols = ip->dwidth / ip->ftwidth;
 }
 
-void
+static void
 sti_init(int full)
 {
 	sti_init_t init;
@@ -345,7 +345,7 @@ sti_init(int full)
 	(*init)(&a.flags, &a.in, &a.out, &sti.cfg);
 }
 
-void
+static void
 sti_inqcfg(struct sti_inqconfout *ico)
 {
 	sti_inqconf_t inqconf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.11 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.12 2025/05/27 18:02:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,8 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-void rbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
+static void rbox_windowmove(struct ite_data *, int, int, int, int,
+    int, int, int);
 
 void
 rbox_init(struct ite_data *ip)
@@ -123,7 +124,7 @@ rbox_init(struct ite_data *ip)
 			    ip->ftwidth, RR_COPYINVERTED);
 }
 
-void
+static void
 rbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
     int w, int func)
 {

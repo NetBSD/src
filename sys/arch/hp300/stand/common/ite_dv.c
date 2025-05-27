@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dv.c,v 1.10 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.11 2025/05/27 18:02:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,7 @@ dvbox_init(struct ite_data *ip)
 	db_waitbusy(regbase);
 }
 
-void
+static void
 dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
     int w, int func)
 {
