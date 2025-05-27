@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.231 2025/05/24 20:17:16 rillig Exp $
+#	$NetBSD: Makefile,v 1.232 2025/05/27 14:05:19 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -215,7 +215,7 @@ SUBDIR+=	hp300-mkboot
 .endif
 
 .if ${MACHINE} == "vax"
-SUBDIR+=	libmopcopy vax-mopcopy
+SUBDIR+=	libmopcopy .WAIT vax-mopcopy
 .endif
 
 .if ${MACHINE} == "evbarm" \
