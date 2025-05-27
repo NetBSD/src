@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.448 2023/10/20 10:09:43 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.449 2025/05/27 06:24:42 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1073,7 +1073,7 @@ file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
 
 # Permedia 3 / Oxygen VX1 / Proformance 3
-device  pm3fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cexec, i2c_bitbang, ddc_read_edid, edid
+device  pm3fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cexec, i2c_bitbang, ddc_read_edid, edid, glyphcache
 attach  pm3fb at pci
 file	dev/pci/pm3fb.c		pm3fb
 
