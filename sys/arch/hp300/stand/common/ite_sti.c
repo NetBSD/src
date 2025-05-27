@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.4 2025/05/27 17:59:37 tsutsui Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -294,6 +294,8 @@ sti_scroll(struct ite_data *ip)
 		struct sti_blkmvin in;
 		struct sti_blkmvout out;
 	} a;
+
+	sti_do_cursor(ip);
 
 	memset(&a, 0, sizeof a);
 	a.flags.flags = STI_BLKMVF_WAIT;
