@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.62.4.2 2023/09/09 15:01:24 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.62.4.3 2025/05/28 15:30:47 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -508,6 +508,7 @@ SPL(spl0, 0)
 SPLHOLD(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
+#define	splsoftbio	splsoftint
 
 SPLHOLD(splsoftserial, 4)
 
