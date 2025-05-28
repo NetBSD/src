@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.10 2021/11/02 11:26:05 ryo Exp $	*/
+/*	$NetBSD: spl.h,v 1.10.4.1 2025/05/28 15:30:47 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -43,6 +43,9 @@
 	spl##x(void) \
 	{ return splraiseipl(makeiplcookie(IPL_##X)); }
 
+#if defined(IPL_SOFTBIO)
+_SPL_DECL(softbio, SOFTBIO)
+#endif /* defined(IPL_SOFTBIO) */
 #if defined(IPL_SOFTCLOCK)
 _SPL_DECL(softclock, SOFTCLOCK)
 #endif /* defined(IPL_SOFTCLOCK) */

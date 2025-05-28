@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2018/11/16 19:46:52 jmcneill Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.30.1 2025/05/28 15:30:47 martin Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -24,6 +24,7 @@ static __inline void spllower(int dummy) { }
  * Software interrupt masks
  */
 
+#define	splsoftbio() splraise(IPL_SOFTBIO)
 #define	splsoftclock() splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splsoftserial()	splraise(IPL_SOFTSERIAL)
