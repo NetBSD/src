@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2022/04/07 19:33:38 andvar Exp $ */
+/*	$NetBSD: md.c,v 1.13 2025/05/28 06:06:53 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,7 +162,7 @@ md_get_info(struct install_partition_desc *install)
 	}
 	/*
 	 * Get the disk parameters from the disk driver.  It should have
-	 *  obained them by querying the disk itself.
+	 *  obtained them by querying the disk itself.
 	 */
 	blk_size = disklabel.d_secsize;
 	pm->dlcyl = disklabel.d_ncylinders;
