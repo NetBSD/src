@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.25 2025/05/16 05:17:34 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.26 2025/05/28 15:31:55 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -660,4 +660,13 @@ sys/arch/x86/pci/pci_machdep.c			1.99 (patch)
 
 	x86 pci(4): fix MSI/MSI-X configuration on some machines.
 	[manu, ticket #1120]
+
+sys/arch/ia64/include/intr.h			1.9
+sys/arch/sparc64/include/psl.h			1.66
+sys/sys/spl.h					1.11
+sys/uvm/uvm_pdpolicy_clock.c			1.41,1.42
+
+	PR 59412: introduce splsoftbio() and use it to protect
+	ucpu->pdqhead from concurent access in uvm_pdpolicy_clock.c.
+	[bouyer, ticket #1121]
 
