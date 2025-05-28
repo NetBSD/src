@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_machdep.c,v 1.5 2025/05/27 18:44:31 tsutsui Exp $	*/
+/*	$NetBSD: sti_machdep.c,v 1.6 2025/05/28 17:33:38 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.5 2025/05/27 18:44:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.6 2025/05/28 17:33:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -363,5 +363,5 @@ sti_machdep_cnattach(bus_space_tag_t bst, paddr_t base)
 		sticn_bases[i] = (bus_addr_t)base;
 
 	sti_cnattach(&sticn_rom, &sticn_scr, &sticn_tag, sticn_bases,
-	    STI_CODEBASE_ALT);
+	    STI_CODEBASE_M68K);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.9 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.10 2025/05/28 17:33:38 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.9 2025/05/01 06:11:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.10 2025/05/28 17:33:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 			ssc->bases[i] = base;
 
 		if (sti_attach_common(ssc, bst, bst, romh,
-		    STI_CODEBASE_ALT) != 0)
+		    STI_CODEBASE_M68K) != 0)
 			return;
 	}
 
