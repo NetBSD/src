@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.5 2025/05/27 18:02:58 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.6 2025/05/29 14:50:45 tsutsui Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -234,6 +234,7 @@ sti_cursor(struct ite_data *ip, int flag)
 		ip->cursorx = ip->curx;
 		ip->cursory = ip->cury;
 		/* FALLTHROUGH */
+	case ERASE_CURSOR:
 	default:
 		sti_do_cursor(ip);
 		break;
@@ -294,8 +295,6 @@ sti_scroll(struct ite_data *ip)
 		struct sti_blkmvin in;
 		struct sti_blkmvout out;
 	} a;
-
-	sti_do_cursor(ip);
 
 	memset(&a, 0, sizeof a);
 	a.flags.flags = STI_BLKMVF_WAIT;

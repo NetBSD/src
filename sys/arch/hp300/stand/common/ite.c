@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21 2025/05/26 12:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.22 2025/05/29 14:50:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
 #include <hp300/stand/common/samachdep.h>
 
 static void iteconfig(void);
-static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
+static void ite_scroll(struct ite_data *);
 static void itecheckwrap(struct ite_data *, struct itesw *);
 
 #define GID_STI		0x100	/* any value which is not a DIO fb, really */
@@ -376,8 +376,7 @@ iteputchar(dev_t dev, int c)
 	case '\n':
 		if (++ip->cury == ip->rows) {
 			ip->cury--;
-			(*sp->ite_scroll)(ip);
-			ite_clrtoeol(ip, sp, ip->cury, 0);
+			ite_scroll(ip);
 		}
 		else
 			(*sp->ite_cursor)(ip, MOVE_CURSOR);
@@ -412,8 +411,7 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 		ip->curx = 0;
 		if (++ip->cury == ip->rows) {
 			--ip->cury;
-			(*sp->ite_scroll)(ip);
-			ite_clrtoeol(ip, sp, ip->cury, 0);
+			ite_scroll(ip);
 			return;
 		}
 	}
@@ -421,10 +419,17 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 }
 
 static void
-ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
+ite_scroll(struct ite_data *ip)
 {
+	struct itesw *sp = ip->isw;
 
-	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
+	/* Erase the cursor before scrolling */
+	(*sp->ite_cursor)(ip, ERASE_CURSOR);
+	/* Scroll the screen up by one line */
+	(*sp->ite_scroll)(ip);
+	/* Clear the entire bottom line after scrolling */
+	(*sp->ite_clear)(ip, ip->rows - 1, 0, 1, ip->cols);
+	/* Redraw the cursor */
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 

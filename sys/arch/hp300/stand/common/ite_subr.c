@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.11 2011/02/12 05:08:41 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.12 2025/05/29 14:50:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -174,6 +174,7 @@ ite_dio_cursor(struct ite_data *ip, int flag)
 		ip->cursorx = ip->curx;
 		ip->cursory = ip->cury;
 		/* FALLTHROUGH */
+	case ERASE_CURSOR:
 	default:
 		flip_cursor(ip);
 		break;
@@ -210,8 +211,6 @@ ite_dio_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 void
 ite_dio_scroll(struct ite_data *ip)
 {
-
-	flip_cursor(ip);
 
 	(*ip->bmv)(ip, ip->ftheight, 0, 0, 0, (ip->rows - 1) * ip->ftheight,
 	    ip->cols * ip->ftwidth, RR_COPY);
