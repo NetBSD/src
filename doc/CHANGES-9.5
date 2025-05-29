@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.60 2025/05/16 07:25:36 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.61 2025/05/29 09:49:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -876,4 +876,10 @@ sys/arch/x86/pci/pci_machdep.c			1.99 (patch)
 
 	x86 pci(4): fix MSI/MSI-X configuration on some machines.
 	[manu, ticket #1955]
+
+sys/kern/subr_pool.c				1.295
+
+	PR 59411: do not call pool drain hooks from pool_allocator_alloc(),
+	to avoid a deadlock between the pool's lock and kernel_lock.
+	[bouyer, ticket #1956]
 
