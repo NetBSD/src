@@ -558,7 +558,7 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 	struct dhcpcd_ctx *ctx;
 	struct rt *krt;
 	int loglevel = LOG_INFO;
-	bool change, result;
+	bool change, result = false;
 
 	assert(nrt != NULL);
 	ctx = nrt->rt_ifp->ctx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_dio.c,v 1.2 2025/05/23 16:46:55 tsutsui Exp $	*/
+/*	$NetBSD: sti_dio.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $	*/
 /*	$OpenBSD: sti_dio.c,v 1.1 2011/08/18 20:02:57 miod Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.2 2025/05/23 16:46:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,11 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.2 2025/05/23 16:46:55 tsutsui Exp $");
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/sti_diovar.h>
 #include <hp300/dev/sti_machdep.h>
-
-/* DIO attachment defines */
-#define STI_DIO_SCODE_OFFSET	0x02	/* offset to SGC rom, in select codes */
-#define STI_DIO_SIZE		0x10	/* expected total device size
-					   in DIO-II size units */
 
 static int  sti_dio_match(device_t, cfdata_t, void *);
 static void sti_dio_attach(device_t, device_t, void *);

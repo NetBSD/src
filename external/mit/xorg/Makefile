@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/12 17:05:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2025/05/25 19:31:27 rillig Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
@@ -26,24 +26,24 @@ START_TIME!=	date
 build: check_X11SRCDIR
 	@echo "X11 build started at: ${START_TIME}"
 .for tgt in ${BUILDTARGETS}
-	${MAKEDIRTARGET} . ${tgt}
+	${:D make}${MAKEDIRTARGET} . ${tgt}
 .endfor
 	@echo   "X11 build started at:  ${START_TIME}"
 	@printf "X11 build finished at: " && date
 
-do-build:
+do-build: .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} . ${targ}
 .endfor
 
 .for dir in	tools lib
-do-${dir:S/\//-/g}:
+do-${dir:S/\//-/g}: .MAKE
 .  for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
 .  endfor
 .endfor
 
-afterinstall: .PHONY
+afterinstall: .PHONY .MAKE
 .if ${MKMAN} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/share/man makedb \
 	    WHATISDBDIR=${X11MANDIR}
@@ -62,7 +62,7 @@ DISTRIBTARGETS=	\
 	lib/fontconfig/etc/conf.avail \
 	lib/fontconfig/etc/conf.d
 
-distribution: check_X11SRCDIR
+distribution: check_X11SRCDIR .MAKE
 .for tgt in ${DISTRIBTARGETS}
 	${MAKEDIRTARGET} ${tgt} configinstall
 .endfor

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.69 2025/03/10 11:32:24 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.70 2025/05/24 10:10:10 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.69 2025/03/10 11:32:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.70 2025/05/24 10:10:10 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -357,19 +357,23 @@ sbc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 
 #define W1	*byte_data = *(u_int8_t *)data, data += 1
 #define W4	*long_data = *(u_int32_t *)data, data += 4
-	for (resid = datalen; resid >= 64; resid -= 64) {
+	for (resid = datalen; resid >= 64; resid -= 60) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
+		resid--;
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
+		resid--;
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
+		resid--;
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
+		resid--;
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W4; W4; W4; W4;

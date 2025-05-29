@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.654 2025/05/26 19:56:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.653 2025/05/23 21:16:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.654 2025/05/26 19:56:49 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -389,8 +389,8 @@ MainParseArgJobsInternal(const char *argvalue)
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
 		opts.compatMake = true;
-		(void)fprintf(stderr,
-		    "%s: warning: internal option \"-J %s\" in \"%s\" "
+		Parse_Error(PARSE_WARNING,
+		    "internal option \"-J %s\" in \"%s\" "
 		    "refers to an unopened file descriptor; "
 		    "falling back to compat mode.\n"
 		    "\t"
@@ -403,8 +403,9 @@ MainParseArgJobsInternal(const char *argvalue)
 		    "\t"
 		    "To make the sub-make independent from the parent make, "
 		    "unset the MAKEFLAGS environment variable in the "
-		    "target's commands.\n",
-		    progname, argvalue, curdir);
+		    "target's commands.",
+		    argvalue, curdir);
+		PrintStackTrace(true);
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -725,7 +726,9 @@ Main_ParseArgLine(const char *line)
 		return;
 	}
 	free(buf);
+	EvalStack_PushMakeflags(line);
 	MainParseArgs((int)words.len, words.words);
+	EvalStack_Pop();
 
 	Words_Free(words);
 }

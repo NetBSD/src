@@ -1,7 +1,7 @@
-# $NetBSD: md.amd64,v 1.20 2024/07/11 08:13:50 riastradh Exp $
+# $NetBSD: md.amd64,v 1.21 2025/05/25 16:59:07 martin Exp $
 #
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib	debuglib,compat
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
-./usr/libdata/debug/usr/lib/i386/libi386.so.2.0.debug
+./usr/libdata/debug/usr/lib/i386/libi386.so.2.0.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/tests/lib/libi386/t_user_ldt.debug	tests-atf-debug		debug,compat,atf

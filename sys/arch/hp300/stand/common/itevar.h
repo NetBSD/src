@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.16 2014/04/13 15:45:27 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17 2025/05/26 12:25:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@ struct ite_data {
 
 struct itesw {
 	int	ite_hwid;
+	int	(*ite_probe)(struct ite_data *);
 	void	(*ite_init)(struct ite_data *);
 	void	(*ite_clear)(struct ite_data *, int, int, int, int);
 	void	(*ite_putc)(struct ite_data *, int, int, int);
@@ -114,7 +115,6 @@ struct itesw {
 
 extern	struct ite_data ite_data[];
 extern	struct itesw itesw[];
-extern	int nitesw;
 
 /*
  * Prototypes.
@@ -141,14 +141,10 @@ void dvbox_init(struct ite_data *);
 void hyper_init(struct ite_data *);
 void tvrx_init(struct ite_data *);
 
+int  sti_dio_probe(struct ite_data *);
+void sti_iteinit_dio(struct ite_data *);
 void sti_iteinit_sgc(struct ite_data *);
 void sti_cursor(struct ite_data *, int);
 void sti_putc(struct ite_data *, int, int, int);
 void sti_clear(struct ite_data *, int, int, int, int);
 void sti_scroll(struct ite_data *);
-
-void dumb_init(struct ite_data *);
-void dumb_cursor(struct ite_data *, int);
-void dumb_putc(struct ite_data *, int, int, int);
-void dumb_clear(struct ite_data *, int, int, int, int);
-void dumb_scroll(struct ite_data *);

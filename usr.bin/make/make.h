@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.355 2025/05/18 06:24:27 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.357 2025/05/26 20:12:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -882,6 +882,7 @@ void Parse_End(void);
 #endif
 
 void PrintLocation(FILE *, bool, const GNode *);
+char *GetStackTrace(bool);
 void PrintStackTrace(bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
@@ -1056,7 +1057,9 @@ void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
 void Global_Set_ReadOnly(const char *, const char *);
 
-bool EvalStack_PrintDetails(void) MAKE_ATTR_USE;
+void EvalStack_PushMakeflags(const char *);
+void EvalStack_Pop(void);
+bool EvalStack_Details(Buffer *buf) MAKE_ATTR_USE;
 
 /* util.c */
 typedef void (*SignalProc)(int);

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.483 2025/05/02 22:30:29 riastradh Exp $
+# $NetBSD: mi,v 1.484 2025/05/25 16:59:07 martin Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -667,7 +667,7 @@
 ./usr/libdata/debug/usr/bin/lpq.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lpr.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lprm.debug		comp-lpr-debug		debug
-./usr/libdata/debug/usr/bin/lto-dump.debug	comp-c-debug		gcccmds
+./usr/libdata/debug/usr/bin/lto-dump.debug	comp-c-debug		debug,gcccmds
 ./usr/libdata/debug/usr/bin/lua.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/luac.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lzf.debug		comp-util-debug		debug
@@ -2438,7 +2438,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libsljit/h_sljit.debug		tests-lib-debug		debug,atf,sljit,compattestfile
-./usr/libdata/debug/usr/tests/lib/libstdc++/h_cin_nosync.debug			tests-lib-tests		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libstdc++/h_cin_nosync.debug			tests-lib-tests		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libtre/h_regex_att.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libtre/t_exhaust.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libtre/t_regex_att.debug		tests-lib-debug		debug,atf,compattestfile
