@@ -1,4 +1,4 @@
-.\"	$NetBSD: umount.8,v 1.21 2025/03/25 21:18:27 gutteridge Exp $
+.\"	$NetBSD: umount.8,v 1.22 2025/05/29 23:58:33 gutteridge Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)umount.8	8.2 (Berkeley) 5/8/95
 .\"
-.Dd March 25, 2025
+.Dd May 29, 2025
 .Dt UMOUNT 8
 .Os
 .Sh NAME
@@ -177,3 +177,11 @@ A
 .Nm
 command appeared in
 .At v1 .
+.Sh BUGS
+The
+.Fl d
+option cannot unconfigure
+.Xr vnd 4
+devices that are mounted via an intermediary layer (e.g., a
+.Xr dk 4
+wedge).
