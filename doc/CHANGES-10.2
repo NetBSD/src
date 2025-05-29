@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.26 2025/05/28 15:31:55 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.27 2025/05/29 09:48:18 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -669,4 +669,10 @@ sys/uvm/uvm_pdpolicy_clock.c			1.41,1.42
 	PR 59412: introduce splsoftbio() and use it to protect
 	ucpu->pdqhead from concurent access in uvm_pdpolicy_clock.c.
 	[bouyer, ticket #1121]
+
+sys/kern/subr_pool.c				1.295
+
+	PR 59411: do not call pool drain hooks from pool_allocator_alloc(),
+	to avoid a deadlock between the pool's lock and kernel_lock.
+	[bouyer, ticket #1122]
 
