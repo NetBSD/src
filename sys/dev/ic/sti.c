@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.45 2025/05/29 17:57:49 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.45 2025/05/29 17:57:49 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -873,6 +873,7 @@ rescan:
 #ifdef STIDEBUG
 		STI_DISABLE_ROM(rom->rom_softc);
 		DPRINTF(("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
+		    scr->scr_rom->rom_softc == NULL ? __func__ :
 		    device_xname(scr->scr_rom->rom_softc->sc_dev), fp->width,
 		    fp->height, fp->type, fp->bpc, fp->first, fp->last));
 		STI_ENABLE_ROM(rom->rom_softc);
@@ -989,6 +990,7 @@ sti_init(struct sti_screen *scr, int mode)
 	a.in.ext_in = &a.ein;
 
 	DPRINTF(("%s: init,%p(%x, %p, %p, %p)\n",
+	    rom->rom_softc == NULL ? __func__ :
 	    device_xname(rom->rom_softc->sc_dev), rom->init, a.flags.flags,
 	    &a.in, &a.out, &scr->scr_cfg));
 
@@ -1057,6 +1059,7 @@ sti_bmove(struct sti_screen *scr, int x1, int y1, int x2, int y2, int h, int w,
 #ifdef STIDEBUG
 	if (a.out.errno)
 		printf("%s: blkmv returned %d\n",
+		    rom->rom_softc == NULL ? __func__ :
 		    device_xname(rom->rom_softc->sc_dev), a.out.errno);
 #endif
 }
