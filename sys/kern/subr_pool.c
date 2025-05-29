@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.252.2.4 2022/07/17 10:34:10 martin Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.252.2.5 2025/05/29 09:49:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252.2.4 2022/07/17 10:34:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252.2.5 2025/05/29 09:49:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2831,17 +2831,6 @@ pool_allocator_alloc(struct pool *pp, int flags)
 	void *res;
 
 	res = (*pa->pa_alloc)(pp, flags);
-	if (res == NULL && (flags & PR_WAITOK) == 0) {
-		/*
-		 * We only run the drain hook here if PR_NOWAIT.
-		 * In other cases, the hook will be run in
-		 * pool_reclaim().
-		 */
-		if (pp->pr_drain_hook != NULL) {
-			(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, flags);
-			res = (*pa->pa_alloc)(pp, flags);
-		}
-	}
 	return res;
 }
 
