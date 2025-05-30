@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.46 2025/05/30 13:42:33 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.47 2025/05/30 19:42:28 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.46 2025/05/30 13:42:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.47 2025/05/30 19:42:28 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -490,7 +490,7 @@ sti_region_setup(struct sti_screen *scr)
 	 */
 	for (regno = 0; regno < STI_REGION_MAX; regno++)
 		if (cc->regions[regno] == 0)
-		    cc->regions[regno] = 0x81234567;
+			cc->regions[regno] = 0x81234567;
 #endif
 }
 
