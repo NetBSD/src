@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.45 2025/05/29 17:57:49 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.46 2025/05/30 13:42:33 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.45 2025/05/29 17:57:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.46 2025/05/30 13:42:33 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -447,9 +447,10 @@ sti_region_setup(struct sti_screen *scr)
 		/*
 		 * Assume an existing mapping exists.
 		 */
-		addr = bases[regno] + (r->offset << PGSHIFT);
+		addr = bases[regno] + (r->offset << STI_PGSHIFT);
 		DPRINTF(("%08x @ 0x%08x%s%s%s%s",
-		    r->length << PGSHIFT, (int)addr, r->sys_only ? " sys" : "",
+		    r->length << STI_PGSHIFT, (int)addr,
+		    r->sys_only ? " sys" : "",
 		    r->cache ? " cache" : "", r->btlb ? " btlb" : "",
 		    r->last ? " last" : ""));
 
@@ -464,7 +465,7 @@ sti_region_setup(struct sti_screen *scr)
 			continue;
 		}
 
-		if (bus_space_map(memt, addr, r->length << PGSHIFT,
+		if (bus_space_map(memt, addr, r->length << STI_PGSHIFT,
 		    BUS_SPACE_MAP_LINEAR | (r->cache ?
 		    BUS_SPACE_MAP_CACHEABLE : 0), &rom->regh[regno]) != 0) {
 			rom->regh[regno] = romh;	/* XXX */
@@ -475,7 +476,7 @@ sti_region_setup(struct sti_screen *scr)
 			if (regno == 1) {
 				DPRINTF((" - fb"));
 				scr->fbaddr = addr;
-				scr->fblen = r->length << PGSHIFT;
+				scr->fblen = r->length << STI_PGSHIFT;
 			}
 			DPRINTF(("\n"));
 		}
