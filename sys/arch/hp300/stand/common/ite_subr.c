@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.12 2025/05/29 14:50:45 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.13 2025/05/31 18:11:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,12 +47,12 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-static void ite_writeglyph(struct ite_data *, u_char *, u_char *);
+static void ite_writeglyph(struct ite_data *, uint8_t *, uint8_t *);
 
 void
 ite_fontinfo(struct ite_data *ip)
 {
-	u_long fontaddr = getword(ip, getword(ip, FONTROM) + FONTADDR);
+	uint32_t fontaddr = getword(ip, getword(ip, FONTROM) + FONTADDR);
 
 	ip->ftheight = getbyte(ip, fontaddr + FONTHEIGHT);
 	ip->ftwidth  = getbyte(ip, fontaddr + FONTWIDTH);
@@ -83,17 +83,17 @@ ite_fontinfo(struct ite_data *ip)
 void
 ite_fontinit1bpp(struct ite_data *ip)
 {
-	u_char *fbmem, *dp;
+	uint8_t *fbmem, *dp;
 	int c, l, b;
 	int stride, width;
 
-	dp = (u_char *)(getword(ip, getword(ip, FONTROM) + FONTADDR) +
-	    (char *)ip->regbase) + FONTDATA;
+	dp = (uint8_t *)(getword(ip, getword(ip, FONTROM) + FONTADDR) +
+	    (uint8_t *)ip->regbase) + FONTDATA;
 	stride = ip->fbwidth >> 3;
 	width = (ip->ftwidth + 7) / 8;
 
 	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *)FBBASE +
+		fbmem = (uint8_t *)FBBASE +
 		    (ip->fonty + (c / ip->cpl) * ip->ftheight) * stride;
 		fbmem += (ip->fontx >> 3) + (c % ip->cpl) * width;
 		for (l = 0; l < ip->ftheight; l++) {
@@ -112,13 +112,13 @@ ite_fontinit8bpp(struct ite_data *ip)
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
-	u_char fontbuf[500];
-	u_char *dp, *fbmem;
+	uint8_t fontbuf[500];
+	uint8_t *dp, *fbmem;
 	int c, i, romp;
 
 	romp = getword(ip, getword(ip, FONTROM) + FONTADDR) + FONTDATA;
 	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *)(FBBASE +
+		fbmem = (uint8_t *)(FBBASE +
 		     (ip->fonty + (c / ip->cpl) * ip->ftheight) * ip->fbwidth +
 		     (ip->fontx + (c % ip->cpl) * ip->ftwidth));
 		dp = fontbuf;
@@ -131,7 +131,7 @@ ite_fontinit8bpp(struct ite_data *ip)
 }
 
 static void
-ite_writeglyph(struct ite_data *ip, u_char *fbmem, u_char *glyphp)
+ite_writeglyph(struct ite_data *ip, uint8_t *fbmem, uint8_t *glyphp)
 {
 	int bn;
 	int l, b;
@@ -224,7 +224,7 @@ ite_dio_scroll(struct ite_data *ip)
  * than having to do the multiple reads and masks that we'd
  * have to do if we thought it was partial.
  */
-int starttab[32] = {
+static const uint32_t starttab[32] = {
 	0x00000000,
 	0x7FFFFFFF,
 	0x3FFFFFFF,
@@ -259,7 +259,7 @@ int starttab[32] = {
 	0x00000001
 };
 
-int endtab[32] = {
+static const uint32_t endtab[32] = {
 	0x00000000,
 	0x80000000,
 	0xC0000000,
@@ -300,16 +300,16 @@ ite_dio_windowmove1bpp(struct ite_data *ip, int sy, int sx, int dy, int dx,
 {
 	int width;		/* add to get to same position in next line */
 
-	unsigned int *psrcLine, *pdstLine;
+	uint32_t *psrcLine, *pdstLine;
 				/* pointers to line with current src and dst */
-	unsigned int *psrc;	/* pointer to current src longword */
-	unsigned int *pdst;	/* pointer to current dst longword */
+	uint32_t *psrc;		/* pointer to current src longword */
+	uint32_t *pdst;		/* pointer to current dst longword */
 
 				/* following used for looping through a line */
-	unsigned int startmask, endmask;  /* masks for writing ends of dst */
+	uint32_t startmask, endmask;  /* masks for writing ends of dst */
 	int nlMiddle;		/* whole longwords in dst */
 	int nl;			/* temp copy of nlMiddle */
-	unsigned int tmpSrc;	/* place to store full source word */
+	uint32_t tmpSrc;	/* place to store full source word */
 	int xoffSrc;		/* offset (>= 0, < 32) from which to
 				   fetch whole longwords fetched
 				   in src */
@@ -322,8 +322,8 @@ ite_dio_windowmove1bpp(struct ite_data *ip, int sy, int sx, int dy, int dx,
 		return;
 
 	width = ip->fbwidth >> 5;
-	psrcLine = ((unsigned int *) ip->fbbase) + (sy * width);
-	pdstLine = ((unsigned int *) ip->fbbase) + (dy * width);
+	psrcLine = ((uint32_t *)ip->fbbase) + (sy * width);
+	pdstLine = ((uint32_t *)ip->fbbase) + (dy * width);
 
 	/* x direction doesn't matter for < 1 longword */
 	if (w <= 32) {
@@ -337,18 +337,18 @@ ite_dio_windowmove1bpp(struct ite_data *ip, int sy, int sx, int dy, int dx,
 		srcBit = sx & 0x1f;
 		dstBit = dx & 0x1f;
 
-		while (h--) {
+		while (h-- > 0) {
 			getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 			pdst += width;
 			psrc += width;
 		}
 	} else {
 		maskbits(dx, w, startmask, endmask, nlMiddle);
-		if (startmask)
+		if (startmask != 0)
 			nstart = 32 - (dx & 0x1f);
 		else
 			nstart = 0;
-		if (endmask)
+		if (endmask != 0)
 			nend = (dx + w) & 0x1f;
 		else
 			nend = 0;
@@ -359,28 +359,28 @@ ite_dio_windowmove1bpp(struct ite_data *ip, int sy, int sx, int dy, int dx,
 		pdstLine += (dx >> 5);
 		psrcLine += (sx >> 5);
 
-		while (h--) {
+		while (h-- > 0) {
 			psrc = psrcLine;
 			pdst = pdstLine;
 
-			if (startmask) {
+			if (startmask != 0) {
 				getandputrop(psrc, (sx & 0x1f), (dx & 0x1f),
 				    nstart, pdst, func);
 				pdst++;
-				if (srcStartOver)
+				if (srcStartOver != 0)
 					psrc++;
 			}
 
 			/* special case for aligned operations */
 			if (xoffSrc == 0) {
 				nl = nlMiddle;
-				while (nl--) {
+				while (nl-- > 0) {
 					DoRop(*pdst, func, *psrc++, *pdst);
 					pdst++;
 				}
 			} else {
 				nl = nlMiddle + 1;
-				while (--nl) {
+				while (--nl > 0) {
 					getunalignedword(psrc, xoffSrc, tmpSrc);
 					DoRop(*pdst, func, tmpSrc, *pdst);
 					pdst++;
@@ -388,7 +388,7 @@ ite_dio_windowmove1bpp(struct ite_data *ip, int sy, int sx, int dy, int dx,
 				}
 			}
 
-			if (endmask) {
+			if (endmask != 0) {
 				getandputrop0(psrc, xoffSrc, nend, pdst, func);
 			}
 
