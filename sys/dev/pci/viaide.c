@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.101 2025/05/31 21:42:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.101 2025/05/31 21:42:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8261_RAID,
 	  0,
 	  "VIA Technologies VT8261 SATA Controller (RAID mode)",
-	  via_sata_chip_map_7,
+	  via_chip_map,
 	},
 	{ 0,
 	  0,
@@ -522,6 +522,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		case PCI_PRODUCT_VIATECH_VT8251_SATA_2:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VT8261_SATA:
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT8261_RAID:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_IDE:
 			/* FALLTHROUGH */
