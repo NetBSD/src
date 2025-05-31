@@ -195,6 +195,7 @@
 /* Define to 1 if you have the <glob.h> header file. */
 #define HAVE_GLOB_H 1
 
+#ifdef WITH_KERBEROS
 /* Define to 1 if you have the Kerberos Framework available */
 #define HAVE_GSSAPI 1
 
@@ -203,6 +204,7 @@
 
 /* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_KRB5_H 1
+#endif
 
 /* Define to 1 if you have the <gssapi.h> header file. */
 /* #undef HAVE_GSSAPI_H */

@@ -1622,7 +1622,6 @@ dns_zt_setviewrevert
 dns_zt_unmount
 dst___openssl_toresult2
 dst___openssl_toresult3
-dst__gssapi_init
 dst__hmacmd5_init
 dst__hmacsha1_init
 dst__hmacsha224_init

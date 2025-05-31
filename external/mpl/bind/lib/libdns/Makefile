@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2025/05/21 14:48:09 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2025/05/31 18:21:48 christos Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -62,5 +62,18 @@ COPTS.openssl_link.c+= -Wno-error=deprecated-declarations
 COPTS.opensslecdsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.openssleddsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.opensslrsa_link.c+= -Wno-error=deprecated-declarations
+
+
+EXPSYM_SRCS+=	dns.lcommon.expsym
+.if ${MKKERBEROS:Uno} != "no"
+EXPSYM_SRCS+=	dns.kerberos.expsym
+.endif
+
+LIB_EXPSYM=	dns.expsym
+dns.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} >${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	dns.expsym dns.expsym.tmp
 
 .include <bsd.lib.mk>
