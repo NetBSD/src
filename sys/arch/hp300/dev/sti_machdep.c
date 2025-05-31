@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_machdep.c,v 1.6 2025/05/28 17:33:38 tsutsui Exp $	*/
+/*	$NetBSD: sti_machdep.c,v 1.7 2025/05/31 03:05:25 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.6 2025/05/28 17:33:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_machdep.c,v 1.7 2025/05/31 03:05:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,25 +163,13 @@ sti_machdep_attach(struct sti_machdep_softc *sc)
 		 */
 		sc->sc_bitmap = base + STI_EVRX_FBOFFSET;
 
-		aprint_normal_dev(ssc->sc_dev, "Enable mmap support\n");
-
 		/*
 		 * initialize Bt458/474 RAMDAC and preserve initial color map
 		 */
 		sti_evrx_resetramdac(scr);
 		sti_evrx_resetcmap(scr);
-
 		scr->setupfb = sti_evrx_setupfb;
 		scr->putcmap = sti_evrx_putcmap;
-
-		scr->scr_wsmode = WSDISPLAYIO_MODE_EMUL;
-		waa.console = ssc->sc_flags & STI_CONSOLE ? 1 : 0;
-		waa.scrdata = &scr->scr_screenlist;
-		waa.accessops = &sti_m68k_accessops;
-		waa.accesscookie = scr;
-
-		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint,
-		    CFARGS_NONE);
 		break;
 
 	case STI_DD_CRX:
@@ -189,26 +177,27 @@ sti_machdep_attach(struct sti_machdep_softc *sc)
 		 * HP A1659A CRX on some 425t variants.
 		 */
 		sc->sc_bitmap = base + STI_CRX_FBOFFSET;
-
-		aprint_normal_dev(ssc->sc_dev, "Enable mmap support\n");
-
-		scr->scr_wsmode = WSDISPLAYIO_MODE_EMUL;
-		waa.console = ssc->sc_flags & STI_CONSOLE ? 1 : 0;
-		waa.scrdata = &scr->scr_screenlist;
-		waa.accessops = &sti_m68k_accessops;
-		waa.accesscookie = scr;
-
-		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint,
-		    CFARGS_NONE);
 		break;
+
 	default:
 		/*
 		 * Unsupported variants.
 		 * Use default common sti(4) attachment (no bitmap support).
 		 */
 		sti_end_attach(ssc);
-		break;
+		return;
 	}
+
+	aprint_normal_dev(ssc->sc_dev, "Enable mmap support\n");
+
+	scr->scr_wsmode = WSDISPLAYIO_MODE_EMUL;
+	waa.console = ssc->sc_flags & STI_CONSOLE ? 1 : 0;
+	waa.scrdata = &scr->scr_screenlist;
+	waa.accessops = &sti_m68k_accessops;
+	waa.accesscookie = scr;
+
+	config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint,
+	    CFARGS_NONE);
 }
 
 static int
