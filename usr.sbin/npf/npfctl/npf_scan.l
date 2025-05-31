@@ -173,6 +173,7 @@ flags			return FLAGS;
 icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
+user			return USER;
 
 "/"			return SLASH;
 "{"			return CURLY_OPEN;
@@ -182,6 +183,10 @@ any			return ANY;
 ","			return COMMA;
 "="			return EQ;
 "!"			return EXCL_MARK;
+"<"			return LT;
+">"			return GT;
+"<>"			return XRG;
+"><"			return IRG;
 
 "0x"{HEXDIG} {
 			char *endp, *buf = ecalloc(1, yyleng + 1);

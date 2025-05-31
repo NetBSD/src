@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.56 2023/08/18 14:26:50 tnn Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.57 2025/05/31 23:32:03 joe Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -713,6 +713,14 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 		npfctl_build_pcap(rl, pcap_filter);
 	} else {
 		npfctl_build_code(rl, family, popts, fopts);
+	}
+
+	if (fopts->uid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->uid, "r_user");
+	}
+
+	if (fopts->gid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->gid, "r_group");
 	}
 
 	if (rproc) {

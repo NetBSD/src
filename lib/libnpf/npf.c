@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.52 2023/08/08 10:36:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.53 2025/05/31 23:32:03 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -732,6 +732,15 @@ int
 npf_rule_setproc(nl_rule_t *rl, const char *name)
 {
 	nvlist_add_string(rl->rule_dict, "rproc", name);
+	return nvlist_error(rl->rule_dict);
+}
+
+/* both user and group */
+int
+npf_rule_setrid(nl_rule_t *rl, struct r_id rid, const char *name)
+{
+	uint64_t uid_element[3] = { rid.id[0], rid.id[1], rid.op };
+	nvlist_add_number_array(rl->rule_dict, name, uid_element, 3);
 	return nvlist_error(rl->rule_dict);
 }
 

@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.13 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.14 2025/05/31 23:32:03 joe Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -181,6 +181,45 @@ npfvar_expand_string(const npfvar_t *vp)
 		return NULL;
 	}
 	return npfvar_get_data(vp, NPFVAR_STRING, 0);
+}
+
+uint32_t
+npfvar_expand_number(const npfvar_t *vp)
+{
+	uint32_t *number;
+	if (npfvar_get_count(vp) != 1) {
+		yyerror("variable '%s' has multiple elements", vp->v_key);
+	}
+	number =  (uint32_t *)npfvar_get_data(vp, NPFVAR_NUM, 0);
+	return *number;
+}
+
+void
+npf_var_rid(char *var_id, rid_parser parser, uint32_t *rid, const char *ridt)
+{
+	npfvar_t *vp = npfvar_lookup(var_id);
+	int type = npfvar_get_type(vp, 0);
+	char *rid_type;
+
+	switch (type) {
+	case NPFVAR_IDENTIFIER:
+	case NPFVAR_STRING:
+		rid_type = npfvar_expand_string(vp);
+		if (parser(rid_type, rid) == -1) {
+			yyerror("unknown %s %s", var_id, ridt);
+		}
+		break;
+	case NPFVAR_NUM:
+		*rid = npfvar_expand_number(vp);
+		break;
+	case -1:
+		yyerror("undefined variable '%s'", var_id);
+		break;
+	default:
+		yyerror("wrong variable '%s' type '%s' for %s id",
+			var_id, npfvar_type(type), ridt);
+		break;
+	}
 }
 
 size_t

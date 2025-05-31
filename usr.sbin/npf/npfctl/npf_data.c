@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.30 2019/01/19 21:19:32 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.31 2025/05/31 23:32:03 joe Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: npf_data.c,v 1.30 2019/01/19 21:19:32 rmind Exp $");
 #include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "npfctl.h"
 
@@ -265,6 +267,50 @@ npfctl_parse_table_id(const char *name)
 		return NULL;
 	}
 	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
+}
+
+int
+npfctl_parse_user(const char *user, uint32_t *uid)
+{
+	if (!strcmp(user, "unknown"))
+		*uid = UID_MAX;
+	else {
+		struct passwd	*pw;
+
+		if ((pw = getpwnam(user)) == NULL) {
+			return -1;
+		}
+		*uid = pw->pw_uid;
+	}
+	return 0;
+}
+
+int
+npfctl_parse_group(const char *group, uint32_t *gid)
+{
+	if (!strcmp(group, "unknown"))
+		*gid = GID_MAX;
+	else {
+		struct group	*grp;
+
+		if ((grp = getgrnam(group)) == NULL) {
+			return -1;
+		}
+		*gid = grp->gr_gid;
+	}
+	return 0;
+}
+
+/*
+ * this function is called for both gid and uid init in parser
+ * both uid and gid are both uint32_t
+ */
+void
+npfctl_init_rid(rid_t *rid, uint32_t id1, uint32_t id2, uint8_t op)
+{
+	rid->id[0] = id1;
+	rid->id[1] = id2;
+	rid->op = op;
 }
 
 /*

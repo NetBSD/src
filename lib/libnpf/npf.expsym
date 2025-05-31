@@ -75,6 +75,7 @@ npf_rule_setinfo
 npf_rule_setkey
 npf_rule_setprio
 npf_rule_setproc
+npf_rule_setrid
 npf_ruleset_add
 npf_ruleset_flush
 npf_ruleset_remkey

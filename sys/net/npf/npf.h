@@ -59,6 +59,15 @@ typedef union {
 	uint32_t		word32[4];
 } npf_addr_t;
 
+/*
+ * use a single type for both user id and group id
+ */
+struct r_id {
+	uint32_t		id[2];
+	uint8_t		 op;
+};
+
+typedef struct r_id		rid_t;
 typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)
@@ -373,5 +382,18 @@ typedef enum {
 } npf_stats_t;
 
 #define	NPF_STATS_SIZE		(sizeof(uint64_t) * NPF_STATS_COUNT)
+
+/* unary and binary operators */
+enum {
+	NPF_OP_NONE,
+	NPF_OP_EQ,
+	NPF_OP_NE,
+	NPF_OP_LE,
+	NPF_OP_LT,
+	NPF_OP_GE,
+	NPF_OP_GT,
+	NPF_OP_XRG,
+	NPF_OP_IRG
+};
 
 #endif	/* _NPF_NET_H_ */
