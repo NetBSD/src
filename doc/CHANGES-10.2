@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.27 2025/05/29 09:48:18 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.28 2025/06/01 12:34:58 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -675,4 +675,22 @@ sys/kern/subr_pool.c				1.295
 	PR 59411: do not call pool drain hooks from pool_allocator_alloc(),
 	to avoid a deadlock between the pool's lock and kernel_lock.
 	[bouyer, ticket #1122]
+
+sys/arch/hp300/dev/tvrx.c			1.5
+
+	hp300: fix logic error in tvrx(4) console attach code.
+	[tsutsui, ticket #1123]
+
+share/man/man4/rge.4				1.5
+sys/dev/pci/if_rge.c				1.34
+sys/dev/pci/if_rgereg.h				1.9
+
+	rge(4): PR 59044: add support for RTL8126.
+	[jmcneill, ticket #1124]
+
+share/man/man4/igc.4				1.3
+sys/dev/pci/igc/if_igc.c			1.19,1.20
+
+	igc(4): add support for TSO.
+	[rin, ticket #1125]
 
