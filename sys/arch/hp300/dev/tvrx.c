@@ -1,4 +1,4 @@
-/*	$NetBSD: tvrx.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: tvrx.c,v 1.3.90.1 2025/06/01 12:17:20 martin Exp $	*/
 /*	$OpenBSD: tvrx.c,v 1.1 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ tvrxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	fbr = va;
 
 	if (badaddr(va) ||
-	    fbr->id != GRFHWID || fbr->fbid == GID_TIGER) {
+	    fbr->id != GRFHWID || fbr->fbid != GID_TIGER) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return 1;
 	}
