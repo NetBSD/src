@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2025/05/31 18:21:48 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2025/06/01 00:44:45 kre Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -64,7 +64,7 @@ COPTS.openssleddsa_link.c+= -Wno-error=deprecated-declarations
 COPTS.opensslrsa_link.c+= -Wno-error=deprecated-declarations
 
 
-EXPSYM_SRCS+=	dns.lcommon.expsym
+EXPSYM_SRCS+=	dns.common.expsym
 .if ${MKKERBEROS:Uno} != "no"
 EXPSYM_SRCS+=	dns.kerberos.expsym
 .endif
