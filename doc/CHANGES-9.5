@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.61 2025/05/29 09:49:58 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.62 2025/06/01 12:24:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -882,4 +882,9 @@ sys/kern/subr_pool.c				1.295
 	PR 59411: do not call pool drain hooks from pool_allocator_alloc(),
 	to avoid a deadlock between the pool's lock and kernel_lock.
 	[bouyer, ticket #1956]
+
+sys/arch/hp300/dev/tvrx.c			1.5
+
+	hp300: fix logic error in tvrx(4) console attach code.
+	[tsutsui, ticket #1957]
 
