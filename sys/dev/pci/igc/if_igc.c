@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.18 2025/05/07 06:11:02 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.19 2025/06/01 05:27:16 rin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.18 2025/05/07 06:11:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.19 2025/06/01 05:27:16 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -1447,9 +1447,7 @@ igc_setup_interface(struct igc_softc *sc)
 	ifp->if_init = igc_init;
 	ifp->if_stop = igc_stop;
 
-#if 0 /* notyet */
 	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6;
-#endif
 
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx  |
@@ -1717,9 +1715,6 @@ igc_tx_common_locked(struct ifnet *ifp, struct tx_ring *txr, int caller)
 			continue;
 		}
 
-		bus_dmamap_sync(txr->txdma.dma_tag, map, 0,
-		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-
 		uint32_t ctx_cmd_type_len = 0, olinfo_status = 0;
 		if (igc_tx_ctx_setup(txr, m, prod, &ctx_cmd_type_len,
 		    &olinfo_status)) {
@@ -1728,6 +1723,10 @@ igc_tx_common_locked(struct ifnet *ifp, struct tx_ring *txr, int caller)
 			prod = igc_txdesc_incr(sc, prod);
 			free--;
 		}
+
+		bus_dmamap_sync(txr->txdma.dma_tag, map, 0,
+		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
 		for (int i = 0; i < map->dm_nsegs; i++) {
 			union igc_adv_tx_desc *txdesc = &txr->tx_base[prod];
 
@@ -3343,9 +3342,6 @@ static int
 igc_tso_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
     uint32_t *cmd_type_len, uint32_t *olinfo_status)
 {
-#if 1 /* notyet */
-	return 0;
-#else
 	struct ether_vlan_header *evl;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
@@ -3450,7 +3446,6 @@ igc_tso_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	*olinfo_status |= paylen << IGC_ADVTXD_PAYLEN_SHIFT;
 
 	return 1;
-#endif /* notyet */
 }
 
 /*********************************************************************
