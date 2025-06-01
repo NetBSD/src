@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.11 2023/05/06 02:12:11 gutteridge Exp $
+# $NetBSD: t_sed.sh,v 1.12 2025/06/01 21:01:23 bad Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,24 @@ c2048_body() {
 
 	atf_check -s exit:0 -o inline:'foo\n' -e empty \
 		-x "echo foo | sed -f $(atf_get_srcdir)/d_c2048.in"
+}
+
+atf_test_case subst_escapes
+subst_escapes_head() {
+	atf_set "descr" "Test \[dox]number escapes in subst part of 's' command"
+}
+
+subst_escapes_body() {
+	atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
+
+	atf_check -o inline:"#8ball\n" \
+		  -x "echo | sed -e 's/^/\d358ball'"
+
+	atf_check -o inline:"#3duh\n" \
+		  -x "echo | sed -e 's/^/\o0433duh'"
+
+	atf_check -o inline:"#duh\n" \
+		  -x "echo | sed -e 's/^/\x23duh'"
 }
 
 atf_test_case emptybackref
