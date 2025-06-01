@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.35 2025/06/01 00:33:51 joe Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.36 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD

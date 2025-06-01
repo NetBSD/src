@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 2020 Mindaugas Rasiukevicius <rmind at noxt eu>
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.51 2025/06/01 00:24:19 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.52 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.14 2025/05/31 23:32:03 joe Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.15 2025/06/01 00:54:36 joe Exp $");
 
 #include <stdlib.h>
 #include <string.h>

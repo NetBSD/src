@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.54 2025/06/01 00:33:51 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.55 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>

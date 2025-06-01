@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.31 2025/05/31 23:32:03 joe Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.32 2025/06/01 00:54:36 joe Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
