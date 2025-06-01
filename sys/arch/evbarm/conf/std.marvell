@@ -1,4 +1,4 @@
-#	$NetBSD: std.marvell,v 1.6 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.marvell,v 1.7 2025/06/01 05:41:25 rin Exp $
 #
 # standard NetBSD/evbarm for MARVELL options
 
@@ -19,4 +19,4 @@ options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions 	LOADADDRESS="0xc0008000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.marvell"
 options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
-
+options 	DRAM_BLOCKS=4
