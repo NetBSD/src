@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.52 2023/08/08 16:10:41 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.53 2025/06/01 00:24:19 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.52 2023/08/08 16:10:41 kardel Exp 
 #include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/types.h>
+#include <sys/kauth.h>
 
 #include <net/bpf.h>
 #include <net/bpfjit.h>
@@ -118,6 +119,9 @@ struct npf_rule {
 	LIST_ENTRY(npf_rule)	r_aentry;
 	nvlist_t *		r_info;
 	size_t			r_info_len;
+
+	rid_t uid;
+	rid_t gid;
 };
 
 #define	SKIPTO_ADJ_FLAG		(1U << 31)
@@ -655,6 +659,9 @@ npf_rule_alloc(npf_t *npf, const nvlist_t *rule)
 		}
 		memcpy(rl->r_key, key, len);
 	}
+
+	/* no gid/uid set yet */
+	rl->gid.op = rl->uid.op = NPF_OP_NONE;
 	return rl;
 }
 
@@ -714,6 +721,24 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 	rl->r_code = code;
 	rl->r_clen = size;
 	rl->r_jcode = npf_bpf_compile(code, size);
+}
+
+void
+npf_rule_setrid(const nvlist_t *req, npf_rule_t *rl, const char *name)
+{
+	size_t nitems;
+	rid_t id;
+	const uint64_t *rid = nvlist_get_number_array(req, name, &nitems);
+	KASSERT(nitems == 3);
+
+	id.id[0] = (uint32_t)rid[0];
+	id.id[1] = (uint32_t)rid[1];
+	id.op = (uint8_t)rid[2];
+
+	if (!strcmp(name, "r_user"))
+		rl->uid = id;
+	else if (!strcmp(name, "r_group"))
+		rl->gid = id;
 }
 
 /*
@@ -927,6 +952,80 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 	return final_rl;
+}
+
+/*
+ * just exchange the flag attributes for pass/block for the diff protocols.
+ * for passing, we set the STATEFULNESS for TCP connection establishment
+ * if ret == 0, it is for a pass to be changed to block
+ * non-zero ret indicates a block to pass
+ * when we change to block, we assume the default RST rerturn for TCP
+ * when we change to pass, we ensure no bit field for RST for tcp and ICMP for udp
+ * finally change the ret condition too
+ */
+int
+npf_rule_reverse(npf_cache_t *npc, npf_match_info_t *mi, int ret)
+{
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
+	switch(npc->npc_proto) {
+		case IPPROTO_TCP:
+			if (ret == 0) /* switch pass to block */ {
+				mi->mi_retfl &= !(NPF_RULE_PASS | NPF_RULE_STATEFUL |
+					NPF_RULE_GSTATEFUL);
+				mi->mi_retfl |= NPF_RULE_RETRST;
+			}
+			else /* block to pass */ {
+				mi->mi_retfl &= !(NPF_RULE_RETRST);
+				mi->mi_retfl |= (NPF_RULE_PASS | NPF_RULE_STATEFUL |
+					NPF_RULE_GSTATEFUL);
+			}
+			break;
+		case IPPROTO_UDP:
+			if (ret == 0) /* pass to block */ {
+				mi->mi_retfl &= !(NPF_RULE_PASS);
+				mi->mi_retfl |= NPF_RULE_RETICMP;
+			}
+			else /* block to pass */ {
+				mi->mi_retfl &= !(NPF_RULE_RETICMP);
+				mi->mi_retfl |= NPF_RULE_PASS;
+			}
+			break;
+	}
+
+	return (ret == 0) ? ENETUNREACH : 0;
+}
+
+/* only perform uid/gid checks when set */
+int
+npf_rule_match_rid(npf_rule_t *rl, npf_cache_t *npc, int dir)
+{
+	uint32_t sock_gid, sock_uid;
+	bool uid_matched = false, gid_matched = false;
+
+	if (rl->gid.op == NPF_OP_NONE && rl->uid.op == NPF_OP_NONE)
+		return -1; /* quickly return if packet has nothing to do with rids */
+
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
+
+	if (rl->gid.op != NPF_OP_NONE) {
+		if (npf_socket_lookup_rid(npc, kauth_cred_getegid, &sock_gid, dir) == -1)
+			return ENOTCONN;
+
+		gid_matched |= npf_match_rid(&rl->gid, sock_gid);
+	}
+	if (rl->uid.op != NPF_OP_NONE) {
+		if (npf_socket_lookup_rid(npc, kauth_cred_geteuid, &sock_uid, dir) == -1)
+			return ENOTCONN;
+
+		uid_matched |= npf_match_rid(&rl->uid, sock_uid);
+	}
+
+	/* if both uid and gid are set on rule, both must be matching to agree */
+	if (rl->gid.op && rl->uid.op)
+		return gid_matched && uid_matched;
+	else
+		return gid_matched || uid_matched;
 }
 
 /*

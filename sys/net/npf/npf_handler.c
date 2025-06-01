@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.50 2024/07/05 04:34:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.51 2025/06/01 00:24:19 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_conn_t *con;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
-	int error, decision, flags;
+	int error, decision, flags, id_match;
 	npf_match_info_t mi;
 	bool mff;
 
@@ -239,11 +239,20 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
+	/* check for matching process uid/gid before concluding */
+	id_match = npf_rule_match_rid(rl, &npc, di);
+
 	/* Conclude with the rule and release the lock. */
 	error = npf_rule_conclude(rl, &mi);
 	npf_config_read_exit(npf, slock);
 
-	if (error) {
+	/* reverse between pass and block conditions */
+	if (id_match != -1 && !id_match) {
+		error = npf_rule_reverse(&npc, &mi, error);
+	}
+
+	/* reject packets whose addr-port pair matches no sockets  */
+	if (id_match == ENOTCONN || error) {
 		npf_stats_inc(npf, NPF_STAT_BLOCK_RULESET);
 		goto block;
 	}
