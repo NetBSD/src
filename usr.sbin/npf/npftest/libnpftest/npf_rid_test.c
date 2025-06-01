@@ -7,7 +7,7 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_rid_test.c,v 1.1 2025/06/01 01:07:26 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_rid_test.c,v 1.2 2025/06/01 07:04:38 skrll Exp $");
 #endif
 
 #include "npf_impl.h"
@@ -170,7 +170,7 @@ test_socket(int dir, uid_t uid, gid_t gid)
 	struct lwp *cur = curlwp;
 	void *p, *rp;
 
-	memset(&Server, 0, sizeof(server));
+	memset(&server, 0, sizeof(server));
 
 	server.sin_len = sizeof(server);
 	server.sin_family = AF_INET;
@@ -205,7 +205,7 @@ test_socket(int dir, uid_t uid, gid_t gid)
 	if (dir == PFIL_OUT) {
 		/* connect to an additional remote address to set the 4 tuple addr-port state */
 		struct sockaddr_in remote;
-		memset(&Remote, 0, sizeof(remote));
+		memset(&remote, 0, sizeof(remote));
 
 		remote.sin_len = sizeof(remote);
 		remote.sin_family = AF_INET;
@@ -247,7 +247,7 @@ test_static(bool verbose)
 		serror = run_handler_testcase(i);
 
 		if (verbose) {
-			printf("rule test %d:\texpected %d (stateful) and %d\n"
+			printf("rule test %zu:\texpected %d (stateful) and %d\n"
 			    "\t\t-> returned %d and %d\n",
 			    i + 1, t->stateful_ret, t->ret, serror, error);
 		}
