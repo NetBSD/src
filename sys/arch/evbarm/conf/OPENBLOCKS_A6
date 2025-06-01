@@ -1,6 +1,6 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.46 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.47 2025/06/01 05:43:55 rin Exp $
 #
-#	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
+#	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6/A7 kernel
 #
 
 include 	"arch/evbarm/conf/std.marvell"
