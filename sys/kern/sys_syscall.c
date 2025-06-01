@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.15 2022/06/29 16:33:09 hannken Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.16 2025/06/01 23:30:36 bad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.15 2022/06/29 16:33:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.16 2025/06/01 23:30:36 bad Exp $");
 
 #include <sys/syscall_stats.h>
 #include <sys/syscallvar.h>
 
 /*
  * MI indirect system call support.
- * Included from sys_indirect.c and compat/netbsd32/netbsd32_indirect.c
+ * Included from sys_scdebug.c and compat/netbsd32/netbsd32_indirect.c
  *
  * SYS_SYSCALL is set to the required function name.
  */
