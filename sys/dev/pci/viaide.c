@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.102 2025/06/01 15:47:18 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.102 2025/06/01 15:47:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,10 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			break;
 		default:
 			/*
-			 * get a PCI tag for the ISA bridge.
+			 * VIA integrated IDE controllers share the same PCI ID
+			 * between different southbridges and chipsets.
+			 * To determine their DMA capabilities, get a PCI tag
+			 * for the ISA bridge.
 			 */
 			if (pci_find_device(&pcib_pa, via_pcib_match) == 0)
 				goto unknown;
