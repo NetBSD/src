@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.34 2025/01/27 07:54:30 mlelstv Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.35 2025/06/01 00:33:51 joe Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -510,12 +510,39 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 	return seenf;
 }
 
+static char *
+print_guid(char *buf, struct r_id id, int size)
+{
+	if (id.op == NPF_OP_XRG) {
+		snprintf(buf, size, "%u <> %u", id.id[0], id.id[1]);
+	} else if (id.op == NPF_OP_IRG) {
+		snprintf(buf, size, "%u >< %u", id.id[0], id.id[1]);
+	} else if (id.op == NPF_OP_EQ ) {
+		snprintf(buf, size, "%u", id.id[0]);
+	} else if (id.op == NPF_OP_NE) {
+		snprintf(buf, size, "!= %u", id.id[0]);
+	} else if (id.op == NPF_OP_LE) {
+		snprintf(buf, size, "<= %u", id.id[0]);
+	} else if (id.op == NPF_OP_LT) {
+		snprintf(buf, size, "< %u", id.id[0]);
+	} else if (id.op == NPF_OP_GE) {
+		snprintf(buf, size, ">= %u", id.id[0]);
+	} else if (id.op == NPF_OP_GT) {
+		snprintf(buf, size, "> %u", id.id[0]);
+	} else {
+		return NULL;
+	}
+	return buf;
+}
+#define BUF_SIZE	40
 static void
 npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 {
 	const uint32_t attr = npf_rule_getattr(rl);
 	const char *rproc, *ifname, *name;
 	bool dyn_ruleset;
+	struct r_id rid;
+	char buf[BUF_SIZE];
 
 	/* Rule attributes/flags. */
 	for (unsigned i = 0; i < __arraycount(attr_keyword_map); i++) {
@@ -546,6 +573,14 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 	dyn_ruleset = (attr & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP;
 	if (!npfctl_print_filter(ctx, rl) && !dyn_ruleset) {
 		ctx->fpos += fprintf(ctx->fp, "all ");
+	}
+
+	if (!npf_rule_getrid(&rid, rl, "r_user")) {
+		ctx->fpos += fprintf(ctx->fp, "user %s ", print_guid(buf, rid, BUF_SIZE));
+	}
+
+	if (!npf_rule_getrid(&rid, rl, "r_group")) {
+		ctx->fpos += fprintf(ctx->fp, "group %s ", print_guid(buf, rid, BUF_SIZE));
 	}
 
 	/* Rule procedure. */
