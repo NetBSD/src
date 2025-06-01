@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.92 2025/03/20 17:52:23 christos Exp $
+.\"    $NetBSD: npf.conf.5,v 1.93 2025/06/01 17:37:26 joe Exp $
 .\"
 .\" Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,6 +311,45 @@ syntax, for example:
 .Pp
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
+.Ss User/group ID filtering
+.Pp
+NPF allows filtering by user or group identity. Packet filtering by user or group
+controls data packet flows based on the user or group identity of the process
+that generated the traffic, or is waiting to receive traffic,
+rather than just traditional parameters like IP address, port number, and protocol.
+.Pp
+There are many situations where this is useful:
+.Bl -bullet -hang
+.It Finer-grained access control
+One can allow specific destinations to be accessed only by certain users
+or groups.
+.It Application level security
+Two processes are using a specific port, but only one should be allowed to
+access packets originating from a particular host.
+.It Improves isolation in multi-tenant systems
+Prevent an untrusted user from making any network connections
+.It Security hardening and containment
+A user application that has been exploited can be prevented from making
+network connections to a command-and-control server.
+.It Compliance and policy enforcement
+Can restrict access to particular networks to network administrators only.
+.El
+This filtering process can be achieved by passing the user or group ID on the rule.
+.Pp
+.Dl pass out from all user jack group < 1000
+.Pp
+The above rule only allows sockets of processes owned by user jack
+and belonging to a group with an id value of less than 1000.
+.Pp
+.Dl block in from all user > 100 group wheel
+.Pp
+The above rule prevents all listening sockets bound by processes owned by any user
+with the id value greater than 100 and belonging to the wheel group.
+.Pp
+A rule can have either a user ID or group ID set. If both are set, both must
+agree to be a match to the socket involved in communication.
+Numbers or names can be used for the identification of the user or group as they
+still resolve to a numeric ID of the user or group.
 .Ss Stateful
 NPF supports stateful packet inspection which can be used to bypass
 unnecessary rule processing as well as to complement NAT.
@@ -620,11 +659,19 @@ proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 proto		= "proto" protocol [ proto-opts ]
 
-filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
+filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ] user_id group_id
 filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
 
 port-opts	= "port" ( port-num | port-from "-" port-to | var-name )
 addr-mask	= addr [ "/" mask ]
+
+user_id		= "user" id_items
+group_id	= "group" id_items
+
+id_items	= [id] | [op_unary id] | [id op_binary id]
+
+op_unary	= ["="] | ["!="] | ["<="] | [">="] | [">"] | ["<"]
+op_binary	= ["<>"] | ["><"]
 .Ed
 .\" -----
 .Sh FILES
