@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.6 2021/04/12 01:18:13 mrg Exp $
+# $NetBSD: t_cpuctl.sh,v 1.7 2025/06/02 19:04:25 martin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-tmp="/tmp/cpuctl.txt"
+tmp="./cpuctl.txt"
 
 setcpu() {
 
@@ -60,6 +60,8 @@ setcpu() {
 }
 
 clean() {
+
+	[ -r $tmp ] || return 0
 
 	i=0
 
