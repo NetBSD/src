@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.13 2025/06/02 01:32:47 gutteridge Exp $
+# $NetBSD: t_sed.sh,v 1.14 2025/06/02 12:14:29 bad Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -154,13 +154,13 @@ subst_escapes_body() {
 	atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
 
 	atf_check -o inline:"#8ball\n" \
-		  -x "echo | sed -e 's/^/\d358ball'"
+		  -x "echo | sed -e 's/^/\d358ball/'"
 
 	atf_check -o inline:"#3duh\n" \
-		  -x "echo | sed -e 's/^/\o0433duh'"
+		  -x "echo | sed -e 's/^/\o0433duh/'"
 
 	atf_check -o inline:"#duh\n" \
-		  -x "echo | sed -e 's/^/\x23duh'"
+		  -x "echo | sed -e 's/^/\x23duh/'"
 }
 
 atf_test_case escapes_in_re
