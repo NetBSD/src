@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.364 2025/05/21 14:49:06 christos Exp $
+# $NetBSD: shl.mi,v 1.365 2025/06/02 14:02:54 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -113,7 +113,7 @@
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexpat.so.2.5.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.4.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libfido2.so.5.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libfido2.so.5.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libform.so.8.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgnuctf.so.0.0.debug		comp-sys-debug	debug,compatfile,binutils=234

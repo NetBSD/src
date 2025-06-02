@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3171 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3172 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -757,3 +757,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	hp300: Add mmap(4) support to sti(4) for 362 and 382 framebuffers.
 		X.org server and other framebuffer applications work on
 		these machines.  [tsutsui 20250525]
+	libfido2: Import 1.16.0 [christos 20250602]
