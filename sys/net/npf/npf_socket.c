@@ -23,18 +23,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.2 2025/06/02 11:57:05 joe Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
+
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/in_pcb.h>
 #include <sys/socketvar.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#ifdef __NetBSD__
 #include <netinet6/in6_pcb.h>
-#endif /* __NetBSD__ */
-#endif /* INET6 */
+#endif
 
 #include "npf_impl.h"
 
