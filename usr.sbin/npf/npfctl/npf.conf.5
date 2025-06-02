@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.95 2025/06/02 01:16:56 gutteridge Exp $
+.\"    $NetBSD: npf.conf.5,v 1.96 2025/06/02 04:01:32 kre Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -313,7 +313,8 @@ Fragments are not selectable since NPF always reassembles packets
 before further processing.
 .Ss User/group ID filtering
 .Pp
-NPF allows filtering by user or group identity. Packet filtering by user or group
+NPF allows filtering by user or group identity.
+Packet filtering by user or group
 controls data packet flows based on the user or group identity of the process
 that generated the traffic, or is waiting to receive traffic,
 rather than just traditional parameters like IP address, port number, and protocol.
@@ -346,7 +347,8 @@ and belonging to a group with an ID value of less than 1000.
 The above rule prevents all listening sockets bound by processes owned by any user
 with the ID value greater than 100 and belonging to the wheel group.
 .Pp
-A rule can have either a user ID or group ID set. If both are set, both must
+A rule can have either a user ID or group ID set.
+If both are set, both must
 agree to be a match to the socket involved in communication.
 Numbers or names can be used for the identification of the user or group as they
 still resolve to a numeric ID of the user or group.
