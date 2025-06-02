@@ -64,6 +64,42 @@ static int aiost_process_sync(struct aiost *);
 static void aiost_entry(void *);
 
 /*
+ * Tear down all service pools
+ */
+static int
+aiosp_fini(void)
+{
+	int error = 0;
+	return error;
+}
+
+/*
+ * Initialize global service pool state
+ */
+static int
+aiosp_init(void)
+{
+	int error = 0;
+	return error;
+}
+
+/*
+ * Module interface
+ */
+static int
+aiosp_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return aiosp_init();
+	case MODULE_CMD_FINI:
+		return aiosp_fini();
+	default:
+		return SET_ERROR(ENOTTY);
+	}
+}
+
+/*
  * Distributes pending jobs to servicing threads. Allocates the requisite number
  * of servicing threads, creates new threads if necessary, then assigns a single
  * job to be completed by a servicing thread.
@@ -77,14 +113,14 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 	 * service threads. If it does then that means we need to create new
 	 * threads.
 	 */
-	if(sp->jobs_pending > sp->nthreads_free) {
+	if (sp->jobs_pending > sp->nthreads_free) {
 		int nthreads_new = sp->jobs_pending - sp->nthreads_free;
 
 		for (int i = 0; i < nthreads_new; i++) {
 			struct aiost *aiost;
 
 			int error = aiost_create(sp, &aiost);
-			if(error) {
+			if (error) {
 				mutex_exit(&sp->mtx);
 				return error;
 			}
@@ -108,7 +144,7 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 		sp->nthreads_active++;
 
 		int error = aiost_configure(aiost, job, &aiost->kbuf);
-		if(error) {
+		if (error) {
 			mutex_exit(&sp->mtx);
 			return error;
 		}
@@ -232,6 +268,7 @@ aiost_entry(void *arg)
 {
 	struct aiost *st = arg;
 	struct aiosp *sp = st->aiosp;
+	struct aio_job *job;
 
 	/*
 	 * We want to handle abrupt process terminations effectively. We use
@@ -256,15 +293,14 @@ aiost_entry(void *arg)
 		mutex_exit(&st->mtx);
 		kthread_exit(0);
 process:
-		// TODO figure a way communicate error codes to userspace
-		// effectively.
-		if (st->job->aio_op & (AIO_READ | AIO_WRITE)) {
+		job = st->job;
+		if (job->aio_op & (AIO_READ | AIO_WRITE)) {
 			error = aiost_process_rw(st);
 			if (error) {
 				mutex_exit(&st->mtx);
 				goto next;
 			}
-		} else if (st->job->aio_op & AIO_SYNC) {
+		} else if (job->aio_op & AIO_SYNC) {
 			error = aiost_process_sync(st);
 			if (error) {
 				mutex_exit(&st->mtx);
@@ -273,6 +309,10 @@ process:
 		} else {
 			panic("aio_process: invalid operation code\n");
 		}
+
+		// touch the job directly
+
+		// TOUCH AIOCPUPR??? OR TOUCH JOB->AIOCBP???
 next:
 		/*
 		 * Remove st from list of active service threads, append to

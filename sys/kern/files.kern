@@ -161,7 +161,7 @@ file	kern/subr_vmem.c		kern
 file	kern/subr_workqueue.c		kern
 file	kern/subr_xcall.c		kern
 file	kern/sys_aio.c			aio
-file	kern/sys_aiosp.c			aio
+file	kern/sys_aiosp.c		aiosp
 file	kern/sys_descrip.c		kern
 file	kern/sys_epoll.c		kern
 file	kern/sys_eventfd.c		kern

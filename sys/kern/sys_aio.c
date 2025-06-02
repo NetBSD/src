@@ -35,6 +35,7 @@
 __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.50 2024/12/07 02:38:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_aiosp.h"
 #include "opt_ddb.h"
 #endif
 
@@ -83,6 +84,7 @@ static void *		aio_ehook;
 static void		aio_worker(void *);
 static void		aio_process(struct aio_job *);
 static void		aio_sendsig(struct proc *, struct sigevent *);
+static int		aio_validate_conflicts(struct aioproc *, void *); 
 static int		aio_enqueue_job(int, void *, struct lio_req *);
 static void		aio_exit(proc_t *, void *);
 
@@ -474,6 +476,37 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 }
 
 /*
+ * Ensure 
+ */
+static int
+aio_validate_conflicts(struct aioproc *aio, void *aiocb_uptr)
+{
+	mutex_enter(&aio->aio_mtx);
+
+#ifdef AIOSP
+	struct aiost *st;
+	TAILQ_FOREACH(st, &aio->active_jobs, list) {
+		if (st->job->aiocb_uptr != aiocb_uptr)
+			continue;
+		mutex_exit(&aio->aio_mtx);
+		return EINVAL;
+	}
+#else
+	struct aio_job *a_job;
+	TAILQ_FOREACH(a_job, &aio->jobs_queue, list) {
+		if (a_job->aiocb_uptr != aiocb_uptr)
+			continue;
+		mutex_exit(&aio->aio_mtx);
+		return EINVAL;
+	}
+#endif
+
+	mutex_exit(&aio->aio_mtx);
+
+	return 0;
+}
+
+/*
  * Enqueue the job.
  */
 static int
@@ -484,8 +517,6 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	struct aio_job *a_job;
 	struct aiocb aiocbp;
 	struct sigevent *sig;
-	struct aiosp *sp;
-	struct aiost *aiost;
 	int error;
 
 	/* Non-accurate check for the limit */
@@ -522,20 +553,16 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		KASSERT(lio == NULL);
 	}
 
-	aio = p->p_aio;
 	/*
 	 * Look for already existing job.  If found - the job is in-progress.
 	 * According to POSIX this is invalid, so return the error.
 	 */
+	aio = p->p_aio;
 	if (aio) {
-		mutex_enter(&aio->aio_mtx);
-		TAILQ_FOREACH(aiost, &aio->active_jobs, list) {
-			if (aiost->job->aiocb_uptr != aiocb_uptr)
-				continue;
-			mutex_exit(&aio->aio_mtx);
-			return SET_ERROR(EINVAL);
+		error = aio_validate_conflicts(aio, aiocb_uptr);
+		if (error) {
+			return SET_ERROR(error);
 		}
-		mutex_exit(&aio->aio_mtx);
 	}
 
 	/*
@@ -587,20 +614,28 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		return SET_ERROR(EAGAIN);
 	}
 
-	sp = aio->sp;
-	mutex_exit(&aio->aio_mtx);
-	
+#ifdef AIOSP
+	struct aiosp *sp = aio->sp;
+
 	error = aiosp_enqueue_job(sp, a_job);
 	if (error) {
 		mutex_exit(&aio->aio_mtx);
-		return error;
+		return SET_ERROR(error);
 	}
 
 	error = aiosp_distribute_jobs(sp);
 	if (error) {
 		mutex_exit(&aio->aio_mtx);
-		return error;
+		return SET_ERROR(error);
 	}
+#else
+	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
+	aio->jobs_count++;
+	if (lio)
+		lio->refcnt++;
+	cv_signal(&aio->aio_worker_cv);
+#endif
+	mutex_exit(&aio->aio_mtx);
 
 	/*
 	 * One would handle the errors only with aio_error() function.
