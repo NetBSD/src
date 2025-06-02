@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2024 Yubico AB. All rights reserved.
  * SPDX-License-Identifier: BSD-2-Clause
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -140,12 +140,12 @@ typedef struct fido_attcred {
 } fido_attcred_t;
 
 typedef struct fido_attstmt {
-	fido_blob_t certinfo; /* tpm attestation TPMS_ATTEST structure */
-	fido_blob_t pubarea;  /* tpm attestation TPMT_PUBLIC structure */
-	fido_blob_t cbor;     /* cbor-encoded attestation statement */
-	fido_blob_t x5c;      /* attestation certificate */
-	fido_blob_t sig;      /* attestation signature */
-	int         alg;      /* attestation algorithm (cose) */
+	fido_blob_t certinfo;  /* tpm attestation TPMS_ATTEST structure */
+	fido_blob_t pubarea;   /* tpm attestation TPMT_PUBLIC structure */
+	fido_blob_t cbor;      /* cbor-encoded attestation statement */
+	fido_blob_array_t x5c; /* attestation certificate chain */
+	fido_blob_t sig;       /* attestation signature */
+	int         alg;       /* attestation algorithm (cose) */
 } fido_attstmt_t;
 
 typedef struct fido_rp {
@@ -166,6 +166,11 @@ typedef struct fido_cred_ext {
 	size_t minpinlen; /* minimum pin length */
 } fido_cred_ext_t;
 
+typedef struct fido_cred_ea {
+	int mode;
+	bool att;
+} fido_cred_ea_t;
+
 typedef struct fido_cred {
 	fido_blob_t       cd;            /* client data */
 	fido_blob_t       cdh;           /* client data hash */
@@ -185,6 +190,7 @@ typedef struct fido_cred {
 	fido_attstmt_t    attstmt;       /* attestation statement (x509 + sig) */
 	fido_blob_t       largeblob_key; /* decoded large blob key */
 	fido_blob_t       blob;          /* CTAP 2.1 credBlob */
+	fido_cred_ea_t    ea;            /* enterprise attestation */
 } fido_cred_t;
 
 typedef struct fido_assert_extattr {
@@ -199,6 +205,7 @@ typedef struct _fido_assert_stmt {
 	fido_blob_t           hmac_secret;   /* hmac secret */
 	fido_assert_extattr_t authdata_ext;  /* decoded extensions */
 	fido_blob_t           authdata_cbor; /* raw cbor payload */
+	fido_blob_t           authdata_raw;  /* raw authdata */
 	fido_authdata_t       authdata;      /* decoded authdata payload */
 	fido_blob_t           sig;           /* signature of cdh + authdata */
 	fido_blob_t           largeblob_key; /* decoded large blob key */
@@ -211,6 +218,7 @@ typedef struct fido_assert_ext {
 
 typedef struct fido_assert {
 	char              *rp_id;        /* relying party id */
+	char              *appid;        /* winhello u2f appid */
 	fido_blob_t        cd;           /* client data */
 	fido_blob_t        cdh;          /* client data hash */
 	fido_blob_array_t  allow_list;   /* list of allowed credentials */
