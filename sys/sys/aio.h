@@ -150,6 +150,7 @@ extern u_int aio_listio_max;
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 int	aiosp_distribute_jobs(struct aiosp *);
+int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
 int	aiosp_initialize(struct aiosp **);
 int	aiosp_destroy(struct aioproc *);
 

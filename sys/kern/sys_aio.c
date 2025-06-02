@@ -484,6 +484,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	struct aio_job *a_job;
 	struct aiocb aiocbp;
 	struct sigevent *sig;
+	struct aiosp *sp;
+	struct aiost *aiost;
 	int error;
 
 	/* Non-accurate check for the limit */
@@ -520,15 +522,15 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		KASSERT(lio == NULL);
 	}
 
+	aio = p->p_aio;
 	/*
 	 * Look for already existing job.  If found - the job is in-progress.
 	 * According to POSIX this is invalid, so return the error.
 	 */
-	aio = p->p_aio;
 	if (aio) {
 		mutex_enter(&aio->aio_mtx);
-		TAILQ_FOREACH(a_job, &aio->jobs_queue, list) {
-			if (a_job->aiocb_uptr != aiocb_uptr)
+		TAILQ_FOREACH(aiost, &aio->active_jobs, list) {
+			if (aiost->job->aiocb_uptr != aiocb_uptr)
 				continue;
 			mutex_exit(&aio->aio_mtx);
 			return SET_ERROR(EINVAL);
@@ -585,13 +587,20 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		return SET_ERROR(EAGAIN);
 	}
 
-	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
-	aio->jobs_count++;
-	if (lio)
-		lio->refcnt++;
-	cv_signal(&aio->aio_worker_cv);
-
+	sp = aio->sp;
 	mutex_exit(&aio->aio_mtx);
+	
+	error = aiosp_enqueue_job(sp, a_job);
+	if (error) {
+		mutex_exit(&aio->aio_mtx);
+		return error;
+	}
+
+	error = aiosp_distribute_jobs(sp);
+	if (error) {
+		mutex_exit(&aio->aio_mtx);
+		return error;
+	}
 
 	/*
 	 * One would handle the errors only with aio_error() function.
