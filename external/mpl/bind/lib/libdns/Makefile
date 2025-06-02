@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2025/06/01 00:44:45 kre Exp $
+#	$NetBSD: Makefile,v 1.15 2025/06/02 18:08:15 christos Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -22,12 +22,12 @@ CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 .endfor
 
-DNSSEC_SRCS=    dst_api.c dst_parse.c gssapictx.c hmac_link.c key.c \
+DNSSEC_SRCS=    dst_api.c dst_parse.c hmac_link.c key.c \
 		openssl_link.c opensslrsa_link.c opensslecdsa_link.c \
 		openssleddsa_link.c
 
 .if ${MKKERBEROS} != "no"
-DNSSEC_SRCS+=   gssapi_link.c
+DNSSEC_SRCS+=   gssapi_link.c gssapictx.c
 
 CWARNFLAGS.clang+=	-Wno-error=tautological-constant-compare
 .endif

@@ -1,1 +1,10 @@
 dst__gssapi_init
+dst_gssapi_acceptctx
+dst_gssapi_acquirecred
+dst_gssapi_deletectx
+dst_gssapi_identitymatchesrealmkrb5
+dst_gssapi_identitymatchesrealmms
+dst_gssapi_initctx
+dst_gssapi_releasecred
+gss_error_tostring
+gss_log
