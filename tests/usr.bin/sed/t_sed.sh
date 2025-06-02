@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.12 2025/06/01 21:01:23 bad Exp $
+# $NetBSD: t_sed.sh,v 1.13 2025/06/02 01:32:47 gutteridge Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,24 +38,6 @@ c2048_body() {
 
 	atf_check -s exit:0 -o inline:'foo\n' -e empty \
 		-x "echo foo | sed -f $(atf_get_srcdir)/d_c2048.in"
-}
-
-atf_test_case subst_escapes
-subst_escapes_head() {
-	atf_set "descr" "Test \[dox]number escapes in subst part of 's' command"
-}
-
-subst_escapes_body() {
-	atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
-
-	atf_check -o inline:"#8ball\n" \
-		  -x "echo | sed -e 's/^/\d358ball'"
-
-	atf_check -o inline:"#3duh\n" \
-		  -x "echo | sed -e 's/^/\o0433duh'"
-
-	atf_check -o inline:"#duh\n" \
-		  -x "echo | sed -e 's/^/\x23duh'"
 }
 
 atf_test_case emptybackref
@@ -163,6 +145,24 @@ escapes_in_subst_body() {
 		-x 'echo "foo bar" | sed -e "s/ /\d88/"'
 }
 
+atf_test_case subst_escapes
+subst_escapes_head() {
+	atf_set "descr" "Test \[dox]number escapes in subst part of 's' command"
+}
+
+subst_escapes_body() {
+	atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
+
+	atf_check -o inline:"#8ball\n" \
+		  -x "echo | sed -e 's/^/\d358ball'"
+
+	atf_check -o inline:"#3duh\n" \
+		  -x "echo | sed -e 's/^/\o0433duh'"
+
+	atf_check -o inline:"#duh\n" \
+		  -x "echo | sed -e 's/^/\x23duh'"
+}
+
 atf_test_case escapes_in_re
 escapes_in_re_head() {
 	atf_set "descr" "Test that sed(1) expands \x \d \o escapes " \
@@ -210,6 +210,7 @@ atf_init_test_cases() {
 	atf_add_test_case rangeselection
 	atf_add_test_case preserve_leading_ws_ia
 	atf_add_test_case escapes_in_subst
+	atf_add_test_case subst_escapes
 	atf_add_test_case escapes_in_re
 	atf_add_test_case escapes_in_re_bracket
 	atf_add_test_case relative_addressing
