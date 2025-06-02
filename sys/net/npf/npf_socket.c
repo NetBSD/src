@@ -25,7 +25,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.2 2025/06/02 11:57:05 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.3 2025/06/02 13:19:27 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,7 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.2 2025/06/02 11:57:05 joe Exp $");
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 extern	struct inpcbtable udbtable;
 
+#if defined(INET6)
 static struct socket *	npf_ip6_socket(npf_cache_t *, int);
+#endif
 static struct socket *	npf_ip_socket(npf_cache_t *, int);
 static int		npf_match(uint8_t, uint32_t, uint32_t, uint32_t);
 
@@ -92,8 +94,10 @@ npf_socket_lookup_rid(npf_cache_t *npc, get_rid_t get_rid, uint32_t *rid, int di
 
     if (npf_iscached(npc, NPC_IP4)) {
         so = npf_ip_socket(npc, dir);
+#if defined(INET6)
     } else if (npf_iscached(npc, NPC_IP6)) {
         so = npf_ip6_socket(npc, dir);
+#endif
     }
 
     if (so == NULL || so->so_cred == NULL)
@@ -164,6 +168,7 @@ npf_ip_socket(npf_cache_t *npc, int dir)
     return so;
 }
 
+#if defined(INET6)
 static struct socket *
 npf_ip6_socket(npf_cache_t *npc, int dir)
 {
@@ -223,3 +228,4 @@ npf_ip6_socket(npf_cache_t *npc, int dir)
     so = in6p->inp_socket;
     return so;
 }
+#endif
