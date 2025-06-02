@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.61 2022/09/25 18:03:04 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.62 2025/06/02 14:27:09 jdc Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.61 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.62 2025/06/02 14:27:09 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	bus_space_write_4(sa->sa_bustag, sc->sc_thc, THC_MISC, confreg);
 
 	if (isconsole) {
-		aprint_error_dev(self, "(console)\n");
+		aprint_normal_dev(self, "(console)\n");
 	}
 
 	fb_attach(&sc->sc_fb, isconsole);
