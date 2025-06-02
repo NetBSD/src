@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.51 2023/01/20 01:26:02 msaitoh Exp $	*/
+/*	$NetBSD: compile.c,v 1.52 2025/06/02 13:34:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.51 2023/01/20 01:26:02 msaitoh Exp $");
+__RCSID("$NetBSD: compile.c,v 1.52 2025/06/02 13:34:40 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -500,10 +500,11 @@ ston(char **pp, char *sp, int base)
 	if (r == '?')
 		return 0;
 
-	p++;
-	while ((n = cton(p[1], base)) != '?' && r < 255) {
-		r = r * base + n;
-		p++;
+	for (p++; (n = cton(p[1], base)) != '?' && r < 255; p++) {
+		int nr = r * base + n;
+		if (nr > 255)
+			break;
+		r = nr;
 	}
 	*sp = (char)r;
 	*pp = p;
