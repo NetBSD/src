@@ -476,7 +476,7 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 }
 
 /*
- * Ensure 
+ * The same job can be enqueued twice. So ensure that it does not exist
  */
 static int
 aio_validate_conflicts(struct aioproc *aio, void *aiocb_uptr)

@@ -61,6 +61,7 @@ static struct aiosp	**aiosp_bank;
 
 static int		aiosp_initialize(struct aiosp **);
 static int		aiosp_destroy(struct aiosp *);
+static int		aiosp_pri_idx(int);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
@@ -69,13 +70,11 @@ static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
 
-#define pri_aio_idx(pri)	(pri)
-
 /*
  * Tear down all service pools
  */
 static int
-aiosp_fini(void)
+aio_fini(void)
 {
 	struct aiosp *aiosp;
 	int error;
@@ -103,13 +102,13 @@ aiosp_fini(void)
  * Initialize global service pool state
  */
 static int
-aiosp_init(void)
+aio_init(void)
 {
 	struct aiosp **aiosp;
 	int error;
 
 	aiosp_bank = kmem_zalloc(sizeof(*aiosp_bank) * aiosp_bank_max, KM_SLEEP);
-	aiosp = &aiosp_bank[pri_aio_idx(PRI_KTHREAD)];
+	aiosp = &aiosp_bank[aiosp_pri_idx(PRI_KTHREAD)];
 
 	error = aiosp_initialize(aiosp);
 	if (error) {
@@ -127,9 +126,9 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return aiosp_init();
+		return aio_init();
 	case MODULE_CMD_FINI:
-		return aiosp_fini();
+		return aio_fini();
 	default:
 		return SET_ERROR(ENOTTY);
 	}
@@ -201,12 +200,24 @@ aiosp_initialize(struct aiosp **ret)
 
 	sp = kmem_zalloc(sizeof(*sp), KM_SLEEP);
 
+	sp->priority = PRI_KERNEL;
 	mutex_init(&sp->mtx, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&sp->freelist);
 	TAILQ_INIT(&sp->active);
 	TAILQ_INIT(&sp->jobs);
 
 	return 0;
+}
+
+/*
+ * Convert a priority into an index into its associative service pool.
+ */
+static int aiosp_pri_idx(int pri) {
+	if(pri < PRI_KTHREAD) {
+		panic("aio_process: invalid priority for AIO");
+	}
+
+	return pri - PRI_KTHREAD;
 }
 
 /*
@@ -333,6 +344,7 @@ aiost_entry(void *arg)
 		/*
 		 * Remove st from the list of active service threads, do NOT
 		 * append to the freelist, dance around locks, exit kthread
+		 * TODO SIMPLIFY AND REMOVE LABELS
 		 */
 		mutex_enter(&sp->mtx);
 		TAILQ_REMOVE(&sp->freelist, st, list);
@@ -357,10 +369,6 @@ process:
 		} else {
 			panic("aio_process: invalid operation code\n");
 		}
-
-		// touch the job directly
-
-		// TOUCH AIOCPUPR??? OR TOUCH JOB->AIOCBP???
 next:
 		/*
 		 * Remove st from list of active service threads, append to

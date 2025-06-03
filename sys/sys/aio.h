@@ -124,6 +124,7 @@ struct aiosp {
 	int jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
 	int nthreads_total;		/* Number of total servicing threads */
+	int priority;			/* Thread priority of the pool */
 };
 
 /* LIO structure */
