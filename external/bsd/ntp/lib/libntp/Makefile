@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25.6.3 2024/04/20 13:26:35 martin Exp $
+#	$NetBSD: Makefile,v 1.25.6.4 2025/06/03 16:09:49 martin Exp $
 
 LIBISPRIVATE=yes
 
@@ -87,7 +87,7 @@ CPPFLAGS+= -I${IDIST}/sntp/libopts
 
 # For MKREPRO, avoid using __DATE__ and __TIME__.
 # Instead, use the date and time from ${MKREPRO_TIMESTAMP}
-.if ${MKREPRO:Uno} == "yes"
+.if ${MKREPRO:Uno} == "yes" && !(make(clean) || make(cleandir))
 .if ${MKREPRO_TIMESTAMP:Uundefined} == "undefined"
 .error MKREPRO_TIMESTAMP is undefined with MKREPRO active
 .endif
