@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.224 2025/03/27 12:23:19 riastradh Exp $
+#	$NetBSD: GENERIC64,v 1.225 2025/06/03 19:31:46 rjs Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -385,6 +385,7 @@ cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
 dsrtc*		at iic?			# Dallas Semiconductor RTCs
 es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
+#fusbtc* 	at iic?			# USB-C power controller
 max77620pmic*	at iic?
 pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc*	at iic?			# PCF8563 RTC
@@ -555,6 +556,8 @@ mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
 mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY
 rkusb*		at fdt? pass 9		# Rockchip USB PHY
 rkusbphy*	at rkusb?
+#rktypec* 	at fdt?			# Rockchip USB-C PHY
+#rktcphy* 	at rktypec?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
