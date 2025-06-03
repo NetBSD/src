@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.14 2025/06/02 12:14:29 bad Exp $
+# $NetBSD: t_sed.sh,v 1.15 2025/06/03 19:03:23 martin Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -137,22 +137,16 @@ escapes_in_subst_head() {
 }
 
 escapes_in_subst_body() {
+	# basic tests
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\x58/"'
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\o130/"'
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\d88/"'
-}
 
-atf_test_case subst_escapes
-subst_escapes_head() {
-	atf_set "descr" "Test \[dox]number escapes in subst part of 's' command"
-}
-
-subst_escapes_body() {
-	atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
-
+	# overflowing the escaped char value
+	# atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
 	atf_check -o inline:"#8ball\n" \
 		  -x "echo | sed -e 's/^/\d358ball/'"
 
@@ -161,6 +155,16 @@ subst_escapes_body() {
 
 	atf_check -o inline:"#duh\n" \
 		  -x "echo | sed -e 's/^/\x23duh/'"
+
+	# check that escapes end after 2 or 3 chars
+	atf_check -o inline:"00000000  09 38 62 61 6c 6c 0a                              |.8ball.|\n" \
+		  -x "echo | sed -e 's/^/\d0098ball/' | hexdump -C | head -1"
+
+	atf_check -o inline:"00000000  07 37 62 61 6c 6c 0a                              |.7ball.|\n" \
+		  -x "echo | sed -e 's/^/\o0077ball/' | hexdump -C | head -1"
+
+	atf_check -o inline:"00000000  01 38 62 61 6c 6c 0a                              |.8ball.|\n" \
+		  -x "echo | sed -e 's/^/\x018ball/' | hexdump -C | head -1"
 }
 
 atf_test_case escapes_in_re
@@ -210,7 +214,6 @@ atf_init_test_cases() {
 	atf_add_test_case rangeselection
 	atf_add_test_case preserve_leading_ws_ia
 	atf_add_test_case escapes_in_subst
-	atf_add_test_case subst_escapes
 	atf_add_test_case escapes_in_re
 	atf_add_test_case escapes_in_re_bracket
 	atf_add_test_case relative_addressing
