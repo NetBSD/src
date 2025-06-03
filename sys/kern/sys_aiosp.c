@@ -56,12 +56,20 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 MODULE(MODULE_CLASS_MISC, aiosp, NULL);
 
-static int aiost_create(struct aiosp *, struct aiost **);
-static int aiost_terminate(struct aiost *);
-static int aiost_configure(struct aiost *, struct aio_job *, vaddr_t *);
-static int aiost_process_rw(struct aiost *);
-static int aiost_process_sync(struct aiost *);
-static void aiost_entry(void *);
+static u_int		aiosp_bank_max = NPRI_KTHREAD;
+static struct aiosp	**aiosp_bank;
+
+static int		aiosp_initialize(struct aiosp **);
+static int		aiosp_destroy(struct aiosp *);
+
+static int		aiost_create(struct aiosp *, struct aiost **);
+static int		aiost_terminate(struct aiost *);
+static int		aiost_configure(struct aiost *, struct aio_job *, vaddr_t *);
+static int		aiost_process_rw(struct aiost *);
+static int		aiost_process_sync(struct aiost *);
+static void		aiost_entry(void *);
+
+#define pri_aio_idx(pri)	(pri)
 
 /*
  * Tear down all service pools
@@ -69,8 +77,26 @@ static void aiost_entry(void *);
 static int
 aiosp_fini(void)
 {
-	int error = 0;
-	return error;
+	struct aiosp *aiosp;
+	int error;
+
+	for (int i = 0; i < aiosp_bank_max; i++) {
+		aiosp = aiosp_bank[i];
+		if (aiosp == NULL) {
+			continue;
+		}
+
+		error = aiosp_destroy(aiosp);
+		if (error) {
+			return error;
+		}
+
+		kmem_free(aiosp, sizeof(*aiosp));
+	}
+
+	kmem_free(aiosp_bank, sizeof(*aiosp_bank) * aiosp_bank_max);
+
+	return 0;
 }
 
 /*
@@ -79,8 +105,18 @@ aiosp_fini(void)
 static int
 aiosp_init(void)
 {
-	int error = 0;
-	return error;
+	struct aiosp **aiosp;
+	int error;
+
+	aiosp_bank = kmem_zalloc(sizeof(*aiosp_bank) * aiosp_bank_max, KM_SLEEP);
+	aiosp = &aiosp_bank[pri_aio_idx(PRI_KTHREAD)];
+
+	error = aiosp_initialize(aiosp);
+	if (error) {
+		return error;	
+	}
+
+	return 0;
 }
 
 /*
@@ -158,7 +194,7 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 /*
  * Initializes a servicing pool.
  */
-int
+static int
 aiosp_initialize(struct aiosp **ret)
 {
 	struct aiosp *sp;
@@ -174,6 +210,56 @@ aiosp_initialize(struct aiosp **ret)
 }
 
 /*
+ * Each process keeps track of all the service threads instantiated to service
+ * an asynchronous operation by the process. When a process is terminated we
+ * must also terminate all of its active and pending asynchronous operation.
+ * EXCEPTIONAL TROLLING FIX LATER
+ */
+static int
+aiosp_destroy(struct aiosp *sp)
+{
+	struct aiost *st;
+	int freelist = 1;
+	int error;
+
+	mutex_enter(&sp->mtx);
+
+	goto begin;
+process:
+	error = aiost_terminate(st);
+	if (error) {
+		mutex_exit(&sp->mtx);
+		return error;
+	}
+
+	kmem_free(st, sizeof(*st));
+
+	if (freelist) {
+		goto freelist_next;
+	} else {
+		goto active_next;
+	}
+
+begin:
+	TAILQ_FOREACH(st, &sp->freelist, list) {
+		goto process;
+freelist_next:
+	}
+
+	freelist = 0;
+	TAILQ_FOREACH(st, &sp->active, list) {
+		goto process;
+active_next:
+	}
+
+	kmem_free(sp, sizeof(*sp));
+
+	mutex_exit(&sp->mtx);
+
+	return 0;
+}
+
+/*
  * Enqueue a job for processing by a servicing queue
  */
 int
@@ -184,44 +270,6 @@ aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job)
 	TAILQ_INSERT_TAIL(&sp->jobs, job, list);
 	sp->jobs_pending++;
 
-	mutex_exit(&sp->mtx);
-
-	return 0;
-}
-
-/*
- * Each process keeps track of all the service threads instantiated to service
- * an asynchronous operation by the process. When a process is terminated we
- * must also terminate all of its active and pending asynchronous operation.
- */
-int
-aiosp_destroy(struct aioproc *proc)
-{
-	struct aiosp *sp = proc->sp;
-
-	mutex_enter(&sp->mtx);
-	mutex_enter(&proc->aio_mtx);
-
-	/*
-	 * Dance around locks. Iterate over every service thread associated with the
-	 * process and terminate.
-	 */
-	struct aiost *st;
-	TAILQ_FOREACH(st, &proc->active_jobs, list) {
-		int error = aiost_terminate(st);
-		if (error) {
-			mutex_exit(&proc->aio_mtx);
-			mutex_exit(&sp->mtx);
-
-			return error;
-		}
-
-		kmem_free(st, sizeof(*st));
-	}
-
-	kmem_free(sp, sizeof(*sp));
-
-	mutex_exit(&proc->aio_mtx);
 	mutex_exit(&sp->mtx);
 
 	return 0;
