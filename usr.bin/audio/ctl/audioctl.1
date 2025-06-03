@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.25 2022/08/07 11:06:19 andvar Exp $
+.\" $NetBSD: audioctl.1,v 1.26 2025/06/03 19:31:25 kre Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 21, 2021
+.Dd June 3, 2025
 .Dt AUDIOCTL 1
 .Os
 .Sh NAME
@@ -83,7 +83,13 @@ attempts to set the specified variables to the given values.
 .Pp
 The
 .Fl d
-flag can be used to give an alternative audio control device, the default is
+flag can be used to give an alternative audio control device.
+The default can be set using the
+.Ev AUDIOCTLDEVICE
+variable in the environment,
+or set for the system using
+.Xr audiocfg 1 ,
+or if neither of those applies is
 .Pa /dev/audioctl0 .
 .Pp
 The
@@ -91,16 +97,42 @@ The
 flag suppresses printing of the variable name.
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
-.It Pa AUDIOCTLDEVICE
-the audio control device to use.
+.It Ev AUDIOCTLDEVICE
+the audio control device to use,
+unless overridden by
+.Fl d .
 .El
 .Sh FILES
 .Bl -tag -width /dev/audioctl0 -compact
+.It Pa /dev/audio
+a symlink indicating the default audio device
+.It Pa /dev/audio0
+state resetting audio I/O device
+(others: audio1, audio2, ...)
+.It Pa /dev/sound
+a symlink indicating the default sound device
 .It Pa /dev/sound0
-audio I/O device
+state retaining audio I/O device
+(also sound1, sound2, ...)
+.It Pa /dev/audioctl
+a symlink indicating the default audio control device
 .It Pa /dev/audioctl0
 audio control device
+(and audioctl1, audioctl2, ...)
 .El
+.Pp
+The
+.Pa /dev/audioN ,
+.Pa /dev/soundN ,
+and
+.Pa /dev/audioctlN ,
+devices with the same value of
+.Pa N
+refer to the same audio stream.
+Different values for
+.Pa N
+refer to different audio streams,
+which may use different parameters.
 .Sh EXAMPLES
 To set the playing sampling rate to 11025, you can use
 .Dl audioctl -w play.sample_rate=11025
