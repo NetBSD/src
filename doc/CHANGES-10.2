@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.29 2025/06/02 06:03:19 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.30 2025/06/03 16:12:04 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -693,4 +693,9 @@ sys/dev/pci/igc/if_igc.c			1.19,1.20
 
 	igc(4): add support for TSO.
 	[rin, ticket #1125]
+
+external/bsd/ntp/lib/libntp/Makefile		(apply patch)
+
+	build: PR 59456: fix build fallout from ticket #663.
+	[gson, ticket #1126]
 
