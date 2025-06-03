@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.26 2025/06/03 19:10:26 rjs Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.27 2025/06/03 19:34:47 rjs Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.26 2025/06/03 19:10:26 rjs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.27 2025/06/03 19:34:47 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -390,6 +390,7 @@ static const char * mux_aclk_emmc_parents[] = { "cpll_aclk_emmc_src", "gpll_aclk
 static const char * mux_pll_src_24m_pciephy_parents[] = { "xin24m", "clk_pciephy_ref100m" };
 static const char * mux_pciecore_cru_phy_parents[] = { "clk_pcie_core_cru", "clk_pcie_core_phy" };
 static const char * mux_tcpd_parents[] = { "xin24m", "xin32k", "cpll", "gpll" };
+static const char * mux_aclk_gpu_parents[] = { "ppll", "cpll", "gpll", "npll", "upll" };
 
 static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK3399_PLL(RK3399_PLL_APLLL, "lpll", pll_parents,
@@ -1087,6 +1088,19 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BIT(8),		/* gate_mask */
 		     0),
 	RK_GATE(RK3399_PCLK_DP_CTRL, "pclk_dp_ctrl", "pclk_hdcp", CLKGATE_CON(29), 7),
+	/* GPU */
+	RK_COMPOSITE(0, "aclk_gpu_pre", mux_aclk_gpu_parents,
+		     CLKSEL_CON(13),	/* muxdiv_reg */
+		     __BITS(7,5),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(0),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_ACLK_GPU, "aclk_gpu", "aclk_gpu_pre", CLKGATE_CON(30), 8),
+	RK_GATE(RK3399_ACLK_PERF_GPU, "aclk_perf_gpu", "aclk_gpu_pre", CLKGATE_CON(30), 10),
+	RK_GATE(RK3399_ACLK_GPU_GRF, "aclk_gpu_grf", "aclk_gpu_pre", CLKGATE_CON(30), 11),
+	RK_GATE(RK3399_SCLK_PVTM_GPU, "clk_pvtm_gpu", "xin24m", CLKGATE_CON(13), 1),
+	RK_GATE(0, "aclk_gpu_pll_src", "xin24m", CLKGATE_CON(13), 0),
 
 };
 
