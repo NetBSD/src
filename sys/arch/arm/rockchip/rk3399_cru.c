@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.25 2022/08/23 05:33:39 ryo Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.26 2025/06/03 19:10:26 rjs Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.25 2022/08/23 05:33:39 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.26 2025/06/03 19:10:26 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -389,6 +389,7 @@ static const char * mux_aclk_gmac_parents[] = { "cpll_aclk_gmac_src", "gpll_aclk
 static const char * mux_aclk_emmc_parents[] = { "cpll_aclk_emmc_src", "gpll_aclk_emmc_src" };
 static const char * mux_pll_src_24m_pciephy_parents[] = { "xin24m", "clk_pciephy_ref100m" };
 static const char * mux_pciecore_cru_phy_parents[] = { "clk_pcie_core_cru", "clk_pcie_core_phy" };
+static const char * mux_tcpd_parents[] = { "xin24m", "xin32k", "cpll", "gpll" };
 
 static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK3399_PLL(RK3399_PLL_APLLL, "lpll", pll_parents,
@@ -735,6 +736,36 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_ACLK_USB3_RKSOC_AXI_PERF, "aclk_usb3_rksoc_axi_perf", "aclk_usb3", CLKGATE_CON(30), 3),
 	RK_GATE(RK3399_ACLK_USB3_GRF, "aclk_usb3_grf", "aclk_usb3", CLKGATE_CON(30), 4),
 
+	/* TYPE-C PHY */
+	RK_COMPOSITE(RK3399_SCLK_UPHY0_TCPDPHY_REF, "clk_uphy0_tcpdphy_ref", pll_parents,
+		     CLKSEL_CON(64),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(12,8),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(4),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_UPHY0_TCPDCORE, "clk_uphy0_tcpdcore", mux_tcpd_parents,
+		     CLKSEL_CON(64),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(5),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_UPHY1_TCPDPHY_REF, "clk_uphy1_tcpdphy_ref", pll_parents,
+		     CLKSEL_CON(65),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(12,8),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(6),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_UPHY1_TCPDCORE, "clk_uphy1_tcpdcore", mux_tcpd_parents,
+		     CLKSEL_CON(65),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     0),
+	
 	/*
 	 * I2C
 	 */
