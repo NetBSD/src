@@ -30,7 +30,6 @@ saslc__mech_digestmd5
 saslc__mech_external
 saslc__mech_generic_create
 saslc__mech_generic_destroy
-saslc__mech_gssapi
 saslc__mech_list_create
 saslc__mech_list_destroy
 saslc__mech_list_get

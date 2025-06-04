@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2023/11/24 18:45:46 christos Exp $
+# $NetBSD: Makefile,v 1.12 2025/06/04 17:27:09 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -62,5 +62,17 @@ LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 .endif
 
 COPTS.crypto.c+=-Wno-error=deprecated-declarations
+
+EXPSYM_SRCS+=	saslc.common.expsym
+.if ${MKKERBEROS:Uno} != "no"
+EXPSYM_SRCS+=	saslc.kerberos.expsym
+.endif
+
+LIB_EXPSYM=	saslc.expsym
+saslc.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} >${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	saslc.expsym saslc.expsym.tmp
 
 .include <bsd.lib.mk>
