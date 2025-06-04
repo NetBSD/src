@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2023/11/07 14:34:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24 2025/06/04 18:23:11 tsutsui Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
@@ -17,6 +17,8 @@ CPPFLAGS+=	-DPCVT_SUPPORT
     ${MACHINE} == "amiga" || \
     ${MACHINE} == "evbarm" || \
     ${MACHINE} == "ews4800mips" || \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "luna68k"	|| \
     ${MACHINE} == "mac68k" || \
     ${MACHINE} == "newsmips" || \
     ${MACHINE} == "pmax" || \
@@ -34,6 +36,8 @@ CPPFLAGS.kbd.c=	-D__XKBDEFRULES__=${__XKBDEFRULES__}
 
 .if \
     ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "luna68k"	|| \
     ${MACHINE} == "newsmips"	|| \
     0
 CPPFLAGS+=	-DUSE_WSKBD_GETMAP
