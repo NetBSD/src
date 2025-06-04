@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.35 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.36 2025/06/04 07:43:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.35 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.36 2025/06/04 07:43:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1176,7 +1176,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
 	/*
 	 * XXX
-	 * we *chould* be able to get away without reading the framebuffer
+	 * we *should* be able to get away without reading the framebuffer
 	 * since our background colour is always constant, but for some reason
 	 * that produces random, mostly black background
 	 */
@@ -1214,7 +1214,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
 			    PM2RE_INC_X | PM2RE_INC_Y);
 
-	pm2fb_wait(sc, uimin(200, ri->ri_fontscale));
+	pm2fb_wait(sc, 50);
 
 	/*
 	 * and now we just hammer the foreground colour and alpha values into
@@ -1223,27 +1223,22 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data8;
 		pixel = fg32 | (aval << 24);
+		cnt++;
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_COLOUR, pixel);
 
-		if (cnt > 190) {
-			pm2fb_wait(sc, 200);
+		if (cnt > 48) {
+			pm2fb_wait(sc, 50);
 			cnt = 0;
 		}		
 		data8++;
 	}
-	/* 
-	 * XXX
-	 * occasionally characters end up in the cache only partially drawn
-	 * apparently the blitter might end up grabbing them before they're
-	 * completely flushed out into video memory
-	 * so we let the pipeline drain a little bit before continuing
-	 */
-	pm2fb_wait(sc, 20);
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	} else if (attr & 1)
+	}
+
+	if (attr & 1)
 		pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
@@ -1332,7 +1327,7 @@ pm2fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 static void
 pm2_setup_i2c(struct pm2fb_softc *sc)
 {
-	int i;
+	int i, ok;
 #ifdef PM2FB_DEBUG
 	int j;
 #endif
@@ -1356,8 +1351,10 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 
 	/* Some monitors don't respond first time */
 	i = 0;
-	while (sc->sc_edid_data[1] == 0 && i < 10) {
+	ok = 0;
+	while (!ok && i < 10) {
 		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
+		ok = (edid_parse(&sc->sc_edid_data[0], &sc->sc_ei) != -1);
 		i++;
 	}
 #ifdef PM2FB_DEBUG
@@ -1370,7 +1367,7 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 	}
 #endif
 
-	if (edid_parse(&sc->sc_edid_data[0], &sc->sc_ei) != -1) {
+	if (ok) {
 #ifdef PM2FB_DEBUG
 		edid_print(&sc->sc_ei);
 #endif
