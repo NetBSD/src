@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.36 2025/06/04 07:43:39 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.37 2025/06/04 08:06:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.36 2025/06/04 07:43:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.37 2025/06/04 08:06:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,6 +394,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &pm2fb_accessops);
 	sc->vd.init_screen = pm2fb_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	/* init engine here */
 	pm2fb_init(sc);
@@ -630,8 +632,10 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
