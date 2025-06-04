@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.15 2025/05/15 10:14:41 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.16 2025/06/04 09:27:09 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.15 2025/05/15 10:14:41 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.16 2025/06/04 09:27:09 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,7 +106,8 @@ static int	ascaudio_start_output(void *, void *, int,
 				    void (*)(void *), void *);
 static int	ascaudio_start_input(void *, void *, int,
 				   void (*)(void *), void *);
-static int	ascaudio_halt(void *);
+static int	ascaudio_halt_input(void *);
+static int	ascaudio_halt_output(void *);
 static int	ascaudio_set_port(void *, mixer_ctrl_t *);
 static int	ascaudio_get_port(void *, mixer_ctrl_t *);
 static int	ascaudio_getdev(void *, struct audio_device *);
@@ -127,8 +128,8 @@ static const struct audio_hw_if ascaudio_hw_if = {
 	.set_format	 = ascaudio_set_format,
 	.start_output	 = ascaudio_start_output,
 	.start_input	 = ascaudio_start_input,
-	.halt_output	 = ascaudio_halt,
-	.halt_input	 = ascaudio_halt,
+	.halt_output	 = ascaudio_halt_output,
+	.halt_input	 = ascaudio_halt_input,
 	.set_port	 = ascaudio_set_port,
 	.get_port	 = ascaudio_get_port,
 	.getdev		 = ascaudio_getdev,
@@ -421,27 +422,10 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
  	if (bus_space_read_1(sc->sc_tag, sc->sc_handle, ASCMODE) !=
 								 MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
-			/* disable half interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA,
-			    DISABLEHALFIRQ);
-			/* Disable half interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
-			    DISABLEHALFIRQ);
-			configure_dfac(DFAC_DISABLE);
-		}
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
-		    CLEARFIFO);
-		tmp = 0;
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
+		    NONCOMP);
 
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
-			/* enable interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
-		}
 	}
 
 	/* set the volume. */
@@ -479,7 +463,14 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 		sc->sc_avail = BUFSIZE;
 
 	/* start fifo playback */
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
+	if ((sc->sc_rintr == NULL) && bus_space_read_1(sc->sc_tag,
+	    sc->sc_handle, ASCMODE) != MODEFIFO)
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
+
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* enable interrupts channel b */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
+	}
 
 	return 0;
 }
@@ -505,39 +496,33 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
  	if (bus_space_read_1(sc->sc_tag, sc->sc_handle, ASCMODE) !=
 								 MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
-			/* disable half interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA,
-			    DISABLEHALFIRQ);
-			/* Disable half interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
-			    DISABLEHALFIRQ);
-			/*
-			 * Set up dfac for microphone.
-			 * DO NOT SET BITS 5-7 due to loud feedback squeal.
-			 */
-			configure_dfac(DFAC_GAIN_HIGH);
-		}
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
-
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
-			/* enable interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
-		}
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
-		    CLEARFIFO | NONCOMP);
-
-		tmp = RECORDA;
-		if (sc->sc_recfreq == 22050)
-			tmp |= REC22KHZ;
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
-
+		    NONCOMP);
 		memset(loc, 0x80, blksize);
+	}
 
-		/* start fifo playback */
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/*
+		 * Set up dfac for microphone.
+		 * DO NOT SET BITS 5-7 due to loud feedback squeal.
+		 */
+		configure_dfac(DFAC_GAIN_HIGH);
+	}
+
+	tmp = RECORDA;
+	if (sc->sc_recfreq == 22050)
+		tmp |= REC22KHZ;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
+
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* enable interrupts channel a */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
+	}
+
+	/* start fifo playback */
+	if ((sc->sc_pintr == NULL) && bus_space_read_1(sc->sc_tag,
+	    sc->sc_handle, ASCMODE) != MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
 
 		return 0;
@@ -579,7 +564,7 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 }
 
 static int
-ascaudio_halt(void *opaque)
+ascaudio_halt_input(void *opaque)
 {
 	ascaudio_softc_t *sc;
 
@@ -587,25 +572,22 @@ ascaudio_halt(void *opaque)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	callout_halt(&sc->sc_pcallout, &sc->sc_intr_lock);
 	callout_halt(&sc->sc_rcallout, &sc->sc_intr_lock);
 
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-	sc->sc_pintr = NULL;
-	sc->sc_pintrarg = NULL;
 	sc->sc_rintr = NULL;
 	sc->sc_rintrarg = NULL;
-
-	sc->sc_avail = 0;
 	sc->sc_recavail = 0;
 
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM, CLEARFIFO);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, 0);
+
+	if (sc->sc_pintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
+		    CLEARFIFO);
+	}
 
 	sc->sc_rptr = sc->sc_recbuf;
 	sc->sc_getptr = sc->sc_recbuf;
-	sc->sc_wptr = sc->sc_playbuf;
-	sc->sc_putptr = sc->sc_playbuf;
 
 	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
 		return 0;
@@ -614,6 +596,37 @@ ascaudio_halt(void *opaque)
 
 	/* disable half interrupts channel a */
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, DISABLEHALFIRQ);
+
+	return 0;
+}
+
+static int
+ascaudio_halt_output(void *opaque)
+{
+	ascaudio_softc_t *sc;
+
+	sc = (ascaudio_softc_t *)opaque;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	callout_halt(&sc->sc_pcallout, &sc->sc_intr_lock);
+
+	sc->sc_pintr = NULL;
+	sc->sc_pintrarg = NULL;
+	sc->sc_avail = 0;
+
+	if (sc->sc_rintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
+		    CLEARFIFO);
+	}
+
+	sc->sc_wptr = sc->sc_playbuf;
+	sc->sc_putptr = sc->sc_playbuf;
+
+	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
+		return 0;
+
 	/* disable half interrupts channel b */
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, DISABLEHALFIRQ);
 
@@ -724,7 +737,7 @@ ascaudio_get_props(void *opaque)
 {
 
 	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
-	    AUDIO_PROP_INDEPENDENT;
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int
@@ -765,6 +778,7 @@ static void
 ascaudio_intr(void *arg)
 {
 	struct ascaudio_softc *sc = arg;
+	uint8_t status;
 	int8_t val;
 	int loc_a, loc_b, total, count, i;
 
@@ -776,12 +790,25 @@ ascaudio_intr(void *arg)
 
 	mutex_enter(&sc->sc_intr_lock);
 
-	count = 0x200;
-	if (sc->sc_rintr) {
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2)
+	status = bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFOSTATUS);
+	
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		if (sc->sc_rintr) {
 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
 			    IRQA, DISABLEHALFIRQ);
+		}
+		if (sc->sc_pintr) {
+			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    IRQB, DISABLEHALFIRQ);
+		}
+	}
 
+	if (!(status & A_HALF))
+		count = 0x200;
+	else
+		count = 0;
+
+	if (count && sc->sc_rintr) {
 		total = count;
 		if (sc->sc_rptr + count >= sc->sc_recbuf + BUFSIZE)
 			count = sc->sc_recbuf + BUFSIZE - sc->sc_rptr;
@@ -799,7 +826,7 @@ ascaudio_intr(void *arg)
 				val ^= 0x80;
 				val = val * sc->sc_recvol / 64;
 				*sc->sc_rptr++ = val;
-				if (loc_b) {
+				if (sc->sc_pintr == NULL && loc_b) {
 					(void)bus_space_read_1
 					    (sc->sc_tag, sc->sc_handle, loc_b);
 				}
@@ -813,26 +840,30 @@ ascaudio_intr(void *arg)
 
 		if (sc->sc_recavail > BUFSIZE)
 			sc->sc_recavail = BUFSIZE;
-
-		if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2)
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
-
-		goto more;
 	}
+	
+	if (sc->sc_pintr == NULL)
+		goto more;
 
-	count = 0x200;
+	if (status & B_HALF)
+		count = 0x200;
+	else
+		count = 0;
+
 	if (sc->sc_slowcpu)
 		count /= 2;
 
-	if (sc->sc_avail < count) {
+	if (count && sc->sc_avail < count) {
 		if (sc->sc_avail) {
 			count = sc->sc_avail;
 			goto fill_fifo;
 		}
 		if (sc->sc_pintr) {
 			for (i = 0; i < 0x200; i++) {
-				bus_space_write_1(sc->sc_tag,
-				    sc->sc_handle, FIFO_A, 0x80);
+				if (sc->sc_rintr == NULL) {
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, 0x80);
+				}
 				bus_space_write_1(sc->sc_tag,
 				    sc->sc_handle, FIFO_B, 0x80);
 			}
@@ -848,10 +879,6 @@ ascaudio_intr(void *arg)
 	}
 
 fill_fifo:
-	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2)
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
-		    DISABLEHALFIRQ);
-
 	total = count;
 	if (sc->sc_wptr + count >= sc->sc_playbuf + BUFSIZE)
 		count = sc->sc_playbuf + BUFSIZE - sc->sc_wptr;
@@ -861,12 +888,14 @@ fill_fifo:
 			for (i = 0; i < count; i++) {
 				val = *sc->sc_wptr++;
 				val ^= 0x80;
-				bus_space_write_1(sc->sc_tag,
-				    sc->sc_handle, FIFO_A, val);
+				if (sc->sc_rintr == NULL) {
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, val);
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, val);
+				}
 				bus_space_write_1(sc->sc_tag,
 				    sc->sc_handle, FIFO_B, val);
-				bus_space_write_1(sc->sc_tag,
-				    sc->sc_handle, FIFO_A, val);
 				bus_space_write_1(sc->sc_tag,
 				    sc->sc_handle, FIFO_B, val);
 			}
@@ -874,8 +903,10 @@ fill_fifo:
 			for (i = 0; i < count; i++) {
 				val = *sc->sc_wptr++;
 				val ^= 0x80;
-				bus_space_write_1(sc->sc_tag,
-				    sc->sc_handle, FIFO_A, val);
+				if (sc->sc_rintr == NULL) {
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, val);
+				}
 				bus_space_write_1(sc->sc_tag,
 				    sc->sc_handle, FIFO_B, val);
 			}
@@ -886,10 +917,15 @@ fill_fifo:
 		sc->sc_avail -= count;
 		count = total;
 	}
-	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2)
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
 
 more:
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		if (sc->sc_rintr)
+			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
+		if (sc->sc_pintr)
+			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
+	}
+
 	if (sc->sc_pintr && (sc->sc_avail <= PLAYBLKSIZE))
 		callout_schedule(&sc->sc_pcallout, 0);
 
