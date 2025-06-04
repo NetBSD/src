@@ -1,4 +1,4 @@
-/*	$NetBSD: arm.c,v 1.7 2025/06/03 09:26:27 martin Exp $	*/
+/*	$NetBSD: arm.c,v 1.8 2025/06/04 05:52:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arm.c,v 1.7 2025/06/03 09:26:27 martin Exp $");
+__RCSID("$NetBSD: arm.c,v 1.8 2025/06/04 05:52:48 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ static const uint8_t id_mvfr_present[] = {
 	0x80, 0x03,
 };
 
-static size_t
+static bool
 print_features(const char *cpuname, const char *setname,
     const int *id_data, size_t id_len, const char * const id_fieldnames[][8],
     size_t id_nfieldnames, const uint8_t *id_boolean, const uint8_t *id_present)
@@ -208,7 +208,7 @@ print_features(const char *cpuname, const char *setname,
 	if (len > 0) {
 		printf("%s\n", buf);
 	}
-	return len;
+	return len > 0;
 }
 
 bool
@@ -226,7 +226,7 @@ identifycpu(int fd, const char *cpuname)
 	size_t id_mmfr_len = 0;
 	size_t id_pfr_len = 0;
 	size_t id_mvfr_len = 0;
-	size_t found = 0;
+	bool found = false;
 
 	if (sysctlbyname("machdep.id_isar", NULL, &id_isar_len, NULL, 0) < 0
 	    || sysctlbyname("machdep.id_mmfr", NULL, &id_mmfr_len, NULL, 0) < 0
@@ -247,7 +247,7 @@ identifycpu(int fd, const char *cpuname)
 	id_data = malloc(id_mmfr_len);
 
 	sysctlbyname("machdep.id_mmfr", id_data, &id_mmfr_len, NULL, 0);
-	found += print_features(cpuname, "memory model", id_data, id_mmfr_len,
+	found |= print_features(cpuname, "memory model", id_data, id_mmfr_len,
 	    id_mmfr_fieldnames, __arraycount(id_mmfr_fieldnames),
 	    NULL /*id_mmfr_boolean*/, id_mmfr_present);
 
@@ -255,7 +255,7 @@ identifycpu(int fd, const char *cpuname)
 	id_data = malloc(id_pfr_len);
 
 	sysctlbyname("machdep.id_pfr", id_data, &id_pfr_len, NULL, 0);
-	found += print_features(cpuname, "processor features", id_data,
+	found |= print_features(cpuname, "processor features", id_data,
 	    id_pfr_len, id_pfr_fieldnames, __arraycount(id_pfr_fieldnames),
 	    NULL /*id_pfr_boolean*/, NULL /*id_pfr_present*/);
 
@@ -263,7 +263,7 @@ identifycpu(int fd, const char *cpuname)
 	id_data = malloc(id_mvfr_len);
 
 	sysctlbyname("machdep.id_mvfr", id_data, &id_mvfr_len, NULL, 0);
-	found += print_features(cpuname, "media and VFP features", id_data,
+	found |= print_features(cpuname, "media and VFP features", id_data,
 	    id_mvfr_len, id_mvfr_fieldnames, __arraycount(id_mvfr_fieldnames),
 	    NULL /*id_mvfr_boolean*/, id_mvfr_present);
 
