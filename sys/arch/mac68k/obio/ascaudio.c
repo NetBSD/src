@@ -1,7 +1,7 @@
-/* $NetBSD: ascaudio.c,v 1.16 2025/06/04 09:27:09 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.17 2025/06/04 15:09:47 nat Exp $ */
 
 /*-
- * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.16 2025/06/04 09:27:09 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.17 2025/06/04 15:09:47 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -434,10 +434,14 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 		   CAN BE VERY LOUD!!!! */
 		tmp = sc->sc_vol >> 5;
 		KASSERT(tmp <= MACOS_HIGH_VOL);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_LEFT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_LEFT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_RIGHT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_RIGHT_VOL, tmp);
+		if (sc->sc_rintr == NULL) {
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    A_LEFT_VOL, tmp);
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    A_RIGHT_VOL, tmp);
+		}
 	}
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, sc->sc_vol);
 
@@ -535,11 +539,18 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 		tmp = sc->sc_recvol >> 5;
 		KASSERT(tmp <= MACOS_HIGH_VOL);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_LEFT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_LEFT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_RIGHT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_RIGHT_VOL, tmp);
+		if (sc->sc_pintr == NULL) {
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    B_LEFT_VOL, tmp);
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    B_RIGHT_VOL, tmp);
+		}
 	}
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, sc->sc_recvol);
+	if (sc->sc_pintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL,
+		    sc->sc_recvol);
+	}
 
 	total = blksize;
 	if (sc->sc_getptr + blksize >= sc->sc_recbuf + BUFSIZE)
