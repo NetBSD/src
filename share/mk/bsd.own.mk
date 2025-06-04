@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1420 2025/05/25 21:53:52 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1421 2025/06/04 06:01:59 rillig Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -256,9 +256,9 @@ EXTERNAL_JEMALLOC_SUBDIR = /does/not/exist
 
 .if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
-PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
+PRINTOBJDIR=	${MAKE} -B -r -V .OBJDIR -f /dev/null xxx
 .else
-PRINTOBJDIR=	${MAKE} -V .OBJDIR
+PRINTOBJDIR=	${MAKE} -B -V .OBJDIR
 .endif
 .else
 PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
