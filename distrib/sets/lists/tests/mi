@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1376 2025/05/02 22:30:29 riastradh Exp $
+# $NetBSD: mi,v 1.1377 2025/06/05 21:35:33 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3049,7 +3049,6 @@
 ./usr/tests/lib/libc/gen/t_syslog_pthread		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_time				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_timespec_get			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/gen/t_rbstress			tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_ttyname			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_vis				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
