@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.17 2025/06/04 15:09:47 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.18 2025/06/05 02:44:56 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.17 2025/06/04 15:09:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.18 2025/06/05 02:44:56 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -804,17 +804,19 @@ ascaudio_intr(void *arg)
 	status = bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFOSTATUS);
 	
 	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
-		if (sc->sc_rintr) {
-			bus_space_write_1(sc->sc_tag, sc->sc_handle,
-			    IRQA, DISABLEHALFIRQ);
-		}
 		if (sc->sc_pintr) {
 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
 			    IRQB, DISABLEHALFIRQ);
 		}
+		if (sc->sc_rintr) {
+			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    IRQA, DISABLEHALFIRQ);
+		}
 	}
 
-	if (!(status & A_HALF))
+	if (sc->sc_ver == EASC_VER2 && (status & A_HALF))
+		count = 0x200;
+	else if (sc->sc_ver != EASC_VER2 && !(status & A_HALF))
 		count = 0x200;
 	else
 		count = 0;
@@ -837,7 +839,7 @@ ascaudio_intr(void *arg)
 				val ^= 0x80;
 				val = val * sc->sc_recvol / 64;
 				*sc->sc_rptr++ = val;
-				if (sc->sc_pintr == NULL && loc_b) {
+				if (loc_b) {
 					(void)bus_space_read_1
 					    (sc->sc_tag, sc->sc_handle, loc_b);
 				}
@@ -871,7 +873,8 @@ ascaudio_intr(void *arg)
 		}
 		if (sc->sc_pintr) {
 			for (i = 0; i < 0x200; i++) {
-				if (sc->sc_rintr == NULL) {
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
 					bus_space_write_1(sc->sc_tag,
 					    sc->sc_handle, FIFO_A, 0x80);
 				}
@@ -899,7 +902,8 @@ fill_fifo:
 			for (i = 0; i < count; i++) {
 				val = *sc->sc_wptr++;
 				val ^= 0x80;
-				if (sc->sc_rintr == NULL) {
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
 					bus_space_write_1(sc->sc_tag,
 					    sc->sc_handle, FIFO_A, val);
 					bus_space_write_1(sc->sc_tag,
@@ -914,7 +918,8 @@ fill_fifo:
 			for (i = 0; i < count; i++) {
 				val = *sc->sc_wptr++;
 				val ^= 0x80;
-				if (sc->sc_rintr == NULL) {
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
 					bus_space_write_1(sc->sc_tag,
 					    sc->sc_handle, FIFO_A, val);
 				}
