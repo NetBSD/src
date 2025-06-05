@@ -1649,6 +1649,13 @@ dst_context_sign
 dst_context_verify
 dst_context_verify2
 dst_ds_digest_supported
+dst_gssapi_acceptctx
+dst_gssapi_acquirecred
+dst_gssapi_deletectx
+dst_gssapi_identitymatchesrealmkrb5
+dst_gssapi_identitymatchesrealmms
+dst_gssapi_initctx
+dst_gssapi_releasecred
 dst_hmac_algorithm_totext
 dst_key_alg
 dst_key_attach
@@ -1739,6 +1746,8 @@ fetchctx_attach
 fetchctx_detach
 fetchctx_ref
 fetchctx_unref
+gss_error_tostring
+gss_log
 irs_resconf_destroy
 irs_resconf_getattempts
 irs_resconf_getnameservers
@@ -1754,12 +1763,3 @@ resquery_attach
 resquery_detach
 resquery_ref
 resquery_unref
-dst_gssapi_acceptctx
-dst_gssapi_acquirecred
-dst_gssapi_deletectx
-dst_gssapi_identitymatchesrealmkrb5
-dst_gssapi_identitymatchesrealmms
-dst_gssapi_initctx
-dst_gssapi_releasecred
-gss_error_tostring
-gss_log
