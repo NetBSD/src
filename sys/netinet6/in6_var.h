@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.106 2025/06/05 06:30:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.107 2025/06/05 06:31:52 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -492,34 +492,6 @@ do {								\
 extern const struct in6_addr zeroin6_addr;
 extern const u_char inet6ctlerrmap[];
 extern bool in6_present;
-
-/*
- * Macro for finding the internet address structure (in6_ifaddr) corresponding
- * to a given interface (ifnet structure).
- */
-static __inline struct in6_ifaddr *
-in6_get_ia_from_ifp(struct ifnet *ifp)
-{
-	struct ifaddr *ifa;
-
-	ifa = if_first_addr(ifp, AF_INET6);
-	return ifatoia6(ifa);
-}
-
-static __inline struct in6_ifaddr *
-in6_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
-{
-	struct in6_ifaddr *ia;
-	int s;
-
-	s = pserialize_read_enter();
-	ia = in6_get_ia_from_ifp(ifp);
-	if (ia != NULL)
-		ia6_acquire(ia, psref);
-	pserialize_read_exit(s);
-
-	return ia;
-}
 #endif /* _KERNEL */
 
 /*
