@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.307 2025/06/05 06:28:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.308 2025/06/05 06:32:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1224,7 +1224,6 @@ void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithaddr_psref(const struct sockaddr *, struct psref *);
-struct	ifaddr *ifa_ifwithaf(int);
 struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithdstaddr_psref(const struct sockaddr *,
 	    struct psref *);
