@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.105 2025/06/05 06:29:27 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.106 2025/06/05 06:30:10 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -620,6 +620,11 @@ struct in6_ifaddr *
 	in6ifa_ifpwithaddr_psref(const struct ifnet *, const struct in6_addr *,
 	    struct psref *);
 struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
+struct ifaddr *
+	in6ifa_first_lladdr(const struct ifnet *);
+struct ifaddr *
+	in6ifa_first_lladdr_psref(const struct ifnet *, struct psref *);
+
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purge_mcast_references(struct in6_multi *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.292 2024/03/01 23:50:27 riastradh Exp $	*/
+/*	$NetBSD: in6.c,v 1.293 2025/06/05 06:30:10 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.292 2024/03/01 23:50:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.293 2025/06/05 06:30:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1984,6 +1984,37 @@ bestia(struct in6_ifaddr *best_ia, struct in6_ifaddr *ia)
 	    best_ia->ia_ifa.ifa_preference < ia->ia_ifa.ifa_preference)
 		return ia;
 	return best_ia;
+}
+
+struct ifaddr *
+in6ifa_first_lladdr(const struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sin6 = satosin6(ifa->ifa_addr);
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				break;
+		}
+	}
+
+	return ifa;
+}
+
+struct ifaddr *
+in6ifa_first_lladdr_psref(const struct ifnet *ifp, struct psref *psref)
+{
+	struct ifaddr *ifa;
+	int s;
+
+	s = pserialize_read_enter();
+	ifa = in6ifa_first_lladdr(ifp);
+	if (ifa != NULL)
+		ifa_acquire(ifa, psref);
+	pserialize_read_exit(s);
+
+	return ifa;
 }
 
 /*
