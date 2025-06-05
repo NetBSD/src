@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.95 2023/06/24 05:25:04 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.96 2025/06/05 22:29:36 nia Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -991,7 +991,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			w_menu_no = -1;
 			menu_no = new_menu(MSG_Available_disks,
 				dsk_menu, dno, -1,
-				 4, 0, 0, MC_SCROLL,
+				 7, 0, 0, MC_SCROLL,
 				NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
 			if (menu_no == -1)
 				return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.50 2024/06/20 19:00:35 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.51 2025/06/05 22:29:36 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -243,7 +243,7 @@ message ptnheaders_size		{Größe}
 message ptnheaders_filesystem	{Dateisystem}
 
 message askfsmount
-{Mount-Verzeichnis?}
+{Mount-Verzeichnis (leer lassen, um abzubrechen)?}
 
 message askfssize
 {Größe für %s in %s?}
@@ -1255,13 +1255,13 @@ message empty {***LEER***}
 message timezone {Zeitzone}
 message change_rootpw {root-Passwort setzen}
 message enable_binpkg {Installation von Binärpaketen vorbereiten}
-message enable_sshd {sshd aktivieren}
+message enable_sshd {sshd (Secure Shell daemon) aktivieren}
 message enable_ntpd {ntpd aktivieren}
 message run_ntpdate {ntpdate beim Starten ausführen}
-message enable_mdnsd {mdnsd aktivieren}
-message enable_xdm {xdm aktivieren}
-message enable_cgd {cgd aktivieren}
-message enable_lvm {lvm aktivieren}
+message enable_mdnsd {Multicast DNS aktivieren}
+message enable_xdm {xdm (X Display Manager) aktivieren}
+message enable_cgd {cgd aktivieren (kryptografische Laufwerkskonfiguration)}
+message enable_lvm {lvm (Logical Volume Manager) aktivieren}
 message enable_raid {raidframe aktivieren}
 message add_a_user {Benutzer hinzufügen}
 message configmenu {Zusätzliche Einstellungen konfigurieren.}
@@ -1292,7 +1292,7 @@ message pkgin_failed
 vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
 message failed {Fehlgeschlagen}
 message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
-message partman {Erweiterte Partitionierung}
+message partman {Erweiterte Partitionierung (Software-RAID, ...)}
 message editpart {Partitionen bearbeiten}
 message selectwedge {Bereits existierende "wedges" dk(4)}
 
@@ -1307,7 +1307,8 @@ message cantsave {Änderungen können nicht gespeichert werden.}
 message noroot {Fortsetzen unmöglich, da keine Root-Partition definiert ist\n}
 
 message addusername {Benutzername (maximal 8 Zeichen)}
-message addusertowheel {Diesen Benutzer der Gruppe 'wheel' hinzufügen?}
+message addusertowheel {Diesen Benutzer der Gruppe 'wheel' hinzufügen?
+So können Sie 'su' verwenden, um Superuser zu werden.}
 
 message Delete_partition
 {Partition löschen}
