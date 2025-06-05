@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.23 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: showmount.c,v 1.24 2025/06/05 07:54:04 bad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.23 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.24 2025/06/05 07:54:04 bad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -201,9 +201,7 @@ main(int argc, char **argv)
 		printf("Exports list on %s:\n", host);
 		exp = exports;
 		while (exp) {
-			len = printf("%-35s", exp->ex_dirp);
-			if (len > 35)
-				printf("\t");
+			len = printf("%-34s ", exp->ex_dirp);
 			grp = exp->ex_groups;
 			if (grp == NULL) {
 				printf("Everyone\n");
