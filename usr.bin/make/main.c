@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.655 2025/05/28 20:18:45 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.656 2025/06/05 21:56:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.655 2025/05/28 20:18:45 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.656 2025/06/05 21:56:54 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1217,7 +1217,7 @@ InitMaxJobs(void)
 		    "its invocation."
 		    "To make the sub-make independent from the parent make, "
 		    "unset the MAKEFLAGS environment variable in the "
-		    "target's commands.\n",
+		    "target's commands.",
 		    curdir);
 		PrintStackTrace(true);
 		return;

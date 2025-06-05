@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.362 2025/05/09 21:38:34 rillig Exp $
+# $NetBSD: Makefile,v 1.363 2025/06/05 21:56:54 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -223,6 +223,7 @@ TESTS+=		hanoi-include
 TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		job-flags
+TESTS+=		job-output
 TESTS+=		job-output-long-lines
 TESTS+=		job-output-null
 TESTS+=		jobs-empty-commands
