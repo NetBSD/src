@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.62 2025/06/01 12:24:17 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.63 2025/06/05 08:53:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -887,4 +887,10 @@ sys/arch/hp300/dev/tvrx.c			1.5
 
 	hp300: fix logic error in tvrx(4) console attach code.
 	[tsutsui, ticket #1957]
+
+usr.bin/showmount/showmount.c			1.24,1.25
+
+	showmount(8): PR 59459: alway print a space after the exported
+	directory.
+	[bad, ticket #1958]
 
