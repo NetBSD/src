@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/25 18:21:50 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2025/06/05 04:40:06 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIR=	lib .WAIT libexec man sbin share
 # set. You don't want to run it normally as it would blow away your
 # /etc/postfix directory.
 
-configinstall:
+configinstall: .MAKE
 	${MAKEDIRTARGET} etc configinstall
 
 .include "Makefile.inc"
