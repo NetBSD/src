@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.104 2020/06/16 17:12:18 maxv Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.105 2025/06/05 06:29:27 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -502,11 +502,8 @@ in6_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr->sa_family == AF_INET6)
-			break;
-	}
-	return (struct in6_ifaddr *)ifa;
+	ifa = if_first_addr(ifp, AF_INET6);
+	return ifatoia6(ifa);
 }
 
 static __inline struct in6_ifaddr *

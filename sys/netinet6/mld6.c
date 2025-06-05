@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.101 2019/09/25 09:53:38 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.102 2025/06/05 06:29:27 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.101 2019/09/25 09:53:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.102 2025/06/05 06:29:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1034,14 +1034,8 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 
 	error = 0;
 	written = 0;
-	s = pserialize_read_enter();
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-
-		ifa_acquire(ifa, &psref_ia);
-		pserialize_read_exit(s);
-
+	ifa = if_first_addr_psref(ifp, AF_INET6, &psref_ia);
+	if (ifa != NULL) {
 		ia6 = ifatoia6(ifa);
 		LIST_FOREACH(in6m, &ifp->if_multiaddrs, in6m_entry) {
 			if (written + 2 * sizeof(struct in6_addr) +
@@ -1072,14 +1066,9 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 			oldp = (char *)oldp + sizeof(tmp);
 			written += sizeof(tmp);
 		}
-
-		s = pserialize_read_enter();
-
-		break;
+		ifa_release(ifa, &psref_ia);
 	}
-	pserialize_read_exit(s);
 done:
-	ifa_release(ifa, &psref_ia);
 	if_put(ifp, &psref);
 	curlwp_bindx(bound);
 	rw_exit(&in6_multilock);

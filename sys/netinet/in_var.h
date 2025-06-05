@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.103 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.104 2025/06/05 06:29:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -327,11 +327,7 @@ in_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			break;
-	}
-
+	ifa = if_first_addr(ifp, AF_INET);
 	return ifatoia(ifa);
 }
 

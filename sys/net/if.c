@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.532 2025/06/05 06:28:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.533 2025/06/05 06:29:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.532 2025/06/05 06:28:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.533 2025/06/05 06:29:27 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2137,12 +2137,10 @@ ifa_ifwithaf(int af)
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_READER_FOREACH(ifa, ifp) {
-			if (ifa->ifa_addr->sa_family == af)
-				goto out;
-		}
+		ifa = if_first_addr(ifp, af);
+		if (ifa != NULL)
+			break;
 	}
-out:
 	pserialize_read_exit(s);
 	return ifa;
 }
