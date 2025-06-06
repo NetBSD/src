@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.51 2025/06/05 22:29:36 nia Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.52 2025/06/06 07:57:20 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,7 +138,11 @@ NetBSD daher darauf %s.
 }
 
 message ask_disk
-{Auf welcher Festplatte möchten Sie NetBSD %s? }
+{Auf welcher Festplatte möchten Sie NetBSD %s? 
+	- wd: SATA, ATA oder IDE 
+	- sd: SCSI oder USB-Speicher 
+	- ld: NVMe (z.B. M.2-Karte), SD/MMC-Karte oder virtueller Speicher 
+}
 
 message Available_disks
 {Verfügbare Festplatten}
