@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.60 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.62 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -376,6 +376,15 @@ npf_mk_singlerule(npf_t *npf, const nvlist_t *req, nvlist_t *resp,
 		bc = kmem_alloc(clen, KM_SLEEP);
 		memcpy(bc, code, clen); // XXX: use nvlist_take
 		npf_rule_setcode(rl, type, bc, clen);
+	}
+
+	/* user and group ids filt option if set */
+	if (nvlist_exists_number_array(req, "r_user")) {
+		npf_rule_setrid(req, rl, "r_user");
+	}
+
+	if (nvlist_exists_number_array(req, "r_group")) {
+		npf_rule_setrid(req, rl, "r_group");
 	}
 
 	*rlret = rl;

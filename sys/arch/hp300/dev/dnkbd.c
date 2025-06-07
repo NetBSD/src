@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.15 2024/01/16 05:48:28 thorpej Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.16 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -208,9 +208,9 @@ static void	dnkbd_set_leds(void *, int);
 static int	dnkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 static const struct wskbd_accessops dnkbd_accessops = {
-	dnkbd_enable,
-	dnkbd_set_leds,
-	dnkbd_ioctl
+	.enable   = dnkbd_enable,
+	.set_leds = dnkbd_set_leds,
+	.ioctl    = dnkbd_ioctl
 };
 
 #if NWSMOUSE > 0
@@ -230,17 +230,18 @@ static void	dnkbd_cngetc(void *, u_int *, int *);
 static void	dnkbd_cnpollc(void *, int);
 
 static const struct wskbd_consops dnkbd_consops = {
-	dnkbd_cngetc,
-	dnkbd_cnpollc,
-	dnkbd_bell
+	.getc  = dnkbd_cngetc,
+	.pollc = dnkbd_cnpollc,
+	.bell  = dnkbd_bell
 };
 
 static struct wskbd_mapdata dnkbd_keymapdata = {
-	dnkbd_keydesctab,
+	.keydesc = dnkbd_keydesctab,
+	.layout =
 #ifdef DNKBD_LAYOUT
-	DNKBD_LAYOUT
+	    DNKBD_LAYOUT
 #else
-	KB_US
+	    KB_US
 #endif
 };
 

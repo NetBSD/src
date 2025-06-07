@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.17 2025/05/01 18:00:27 tsutsui Exp $	*/
+/*	$NetBSD: stireg.h,v 1.18 2025/05/30 13:42:33 tsutsui Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -187,6 +187,8 @@ struct sti_region {
 	u_int	last    : 1;	/* last region in the list */
 	u_int	length  :14;	/* size in pages */
 }  __packed;
+
+#define	STI_PGSHIFT	12	/* sti(4) assumes 4KB/page for offset/length */
 
 struct sti_font {
 	uint16_t	first;

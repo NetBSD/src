@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.29 2022/11/19 09:17:57 yamt Exp $
+#	$NetBSD: files.rockchip,v 1.30 2025/06/03 19:10:26 rjs Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -159,6 +159,13 @@ file    arch/arm/rockchip/rk_i2s.c		rk_i2s
 device	rkv1crypto
 attach	rkv1crypto at fdt with rk_v1crypto
 file	arch/arm/rockchip/rk_v1crypto.c		rk_v1crypto
+
+# USB-C PHY
+device	rktypec { }
+attach	rktypec at fdt with rk_typec
+device	rktcphy
+attach	rktcphy at rktypec with rk_tcphy
+file 	arch/arm/rockchip/rk_tcphy.c		rk_typec | rk_tcphy
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP

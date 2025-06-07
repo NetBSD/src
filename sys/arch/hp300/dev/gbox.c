@@ -1,4 +1,4 @@
-/*	$NetBSD: gbox.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: gbox.c,v 1.4 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: gbox.c,v 1.15 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
@@ -152,12 +152,12 @@ static int	gbox_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
 static int	gbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
 static struct wsdisplay_accessops gbox_accessops = {
-	gbox_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,   /* load_font */
+	.ioctl        = gbox_ioctl,
+	.mmap         = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen  = diofb_free_screen,
+	.show_screen  = diofb_show_screen,
+	.load_font    = NULL,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.17 2025/05/26 12:25:12 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.18 2025/05/30 19:19:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@ typedef	void (*ite_windowmover)(struct ite_data *, int, int, int, int, int,
 struct ite_data {
 	int	alive;
 	int	scode;			/* DIO selectcode or SGC slot # */
-	struct  itesw *isw;
+	const struct itesw *isw;
 	void 	*regbase, *fbbase;
 	short	curx, cury;
 	short   cursorx, cursory;
@@ -112,9 +112,6 @@ struct itesw {
 #define KBD_CTRL	0x9		/* key + CTRL */
 #define KBD_SHIFT	0xA		/* key + SHIFT */
 #define KBD_KEY		0xB		/* key only */
-
-extern	struct ite_data ite_data[];
-extern	struct itesw itesw[];
 
 /*
  * Prototypes.

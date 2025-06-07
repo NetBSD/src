@@ -11,7 +11,8 @@ nullmnt_common()
 {    
 	mkdir ${curdir}/lower_dir
 	mkdir ${curdir}/upper_dir
-	mount -t null ${curdir}/lower_dir ${curdir}/upper_dir
+	mount -t null ${curdir}/lower_dir ${curdir}/upper_dir || \
+		atf_skip "nullfs not supported"
 	rm -f ${curdir}/lower_dir/afile
 	touch ${curdir}/lower_dir/afile
 

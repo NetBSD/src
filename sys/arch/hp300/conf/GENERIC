@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214 2025/05/01 06:11:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.216 2025/06/04 18:23:10 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -161,7 +161,7 @@ options 	DIOVERBOSE	# recognize "unknown" DIO devices
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
 #options 	WSDISPLAY_DEFAULTSCREENS=1
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD
+#options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 
@@ -235,8 +235,8 @@ tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
 
 # dumb framebuffer support for 362/382
-gendiofb*	at dio? scode ?
-wsdisplay*	at gendiofb?
+#gendiofb*	at dio? scode ?
+#wsdisplay*	at gendiofb?
 
 # STI framebuffers
 sti*		at dio? scode ?		# 362 and 382

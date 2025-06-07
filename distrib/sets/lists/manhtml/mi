@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.27 2025/04/15 22:33:39 nia Exp $
+# $NetBSD: mi,v 1.28 2025/05/31 15:19:12 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1694,6 +1694,7 @@
 ./usr/share/man/html4/sn.html			man-sys-htmlman		html
 ./usr/share/man/html4/sony.html			man-sys-htmlman		html
 ./usr/share/man/html4/sound.html		man-sys-htmlman		html
+./usr/share/man/html4/sparc/apc.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc/audioamd.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc/auxreg.html		man-sys-htmlman		html

@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_dio.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $	*/
+/*	$NetBSD: sti_dio.c,v 1.4 2025/05/28 17:33:38 tsutsui Exp $	*/
 /*	$OpenBSD: sti_dio.c,v 1.1 2011/08/18 20:02:57 miod Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.3 2025/05/26 12:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_dio.c,v 1.4 2025/05/28 17:33:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,7 +117,7 @@ sti_dio_attach(device_t parent, device_t self, void *aux)
 			ssc->bases[i] = base;
 
 		if (sti_attach_common(ssc, bst, bst, romh,
-		    STI_CODEBASE_ALT) != 0)
+		    STI_CODEBASE_M68K) != 0)
 			return;
 	}
 

@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.11 2023/05/06 02:12:11 gutteridge Exp $
+# $NetBSD: t_sed.sh,v 1.15 2025/06/03 19:03:23 martin Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -137,12 +137,34 @@ escapes_in_subst_head() {
 }
 
 escapes_in_subst_body() {
+	# basic tests
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\x58/"'
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\o130/"'
 	atf_check -o inline:"fooXbar\n" \
 		-x 'echo "foo bar" | sed -e "s/ /\d88/"'
+
+	# overflowing the escaped char value
+	# atf_expect_fail "PR bin/59453: sed misparses \[dox]number escapes"
+	atf_check -o inline:"#8ball\n" \
+		  -x "echo | sed -e 's/^/\d358ball/'"
+
+	atf_check -o inline:"#3duh\n" \
+		  -x "echo | sed -e 's/^/\o0433duh/'"
+
+	atf_check -o inline:"#duh\n" \
+		  -x "echo | sed -e 's/^/\x23duh/'"
+
+	# check that escapes end after 2 or 3 chars
+	atf_check -o inline:"00000000  09 38 62 61 6c 6c 0a                              |.8ball.|\n" \
+		  -x "echo | sed -e 's/^/\d0098ball/' | hexdump -C | head -1"
+
+	atf_check -o inline:"00000000  07 37 62 61 6c 6c 0a                              |.7ball.|\n" \
+		  -x "echo | sed -e 's/^/\o0077ball/' | hexdump -C | head -1"
+
+	atf_check -o inline:"00000000  01 38 62 61 6c 6c 0a                              |.8ball.|\n" \
+		  -x "echo | sed -e 's/^/\x018ball/' | hexdump -C | head -1"
 }
 
 atf_test_case escapes_in_re

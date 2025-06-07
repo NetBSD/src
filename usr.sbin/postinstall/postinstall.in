@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.71 2024/10/27 19:58:26 spz Exp $
+# $NetBSD: postinstall.in,v 1.72 2025/06/04 06:01:59 rillig Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -799,7 +799,7 @@ get_makevar()
 
 	for var in "$@"; do
 		value="$(echo '.include <bsd.own.mk>' | \
-		    ${MAKE} -f - -V "\${${var}}")"
+		    ${MAKE} -f - -B -V "\${${var}}")"
 
 		eval ${var}=\"\${value}\"
 	done

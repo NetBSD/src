@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.10 2024/05/09 12:09:59 pho Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.11 2025/06/05 06:29:27 ozaki-r Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -712,17 +712,12 @@ vmt_tclo_broadcastip(struct vmt_softc *sc)
 			continue;
 		}
 
-		IFADDR_READER_FOREACH(iface_addr, iface) {
-			if (iface_addr->ifa_addr->sa_family != AF_INET) {
-				continue;
-			}
-
+		iface_addr = if_first_addr_psref(iface, AF_INET, &psref);
+		if (iface_addr != NULL) {
 			guest_ip = satosin(iface_addr->ifa_addr);
-			ifa_acquire(iface_addr, &psref);
-			goto got;
+			break;
 		}
 	}
-got:
 	pserialize_read_exit(s);
 
 	if (guest_ip != NULL) {

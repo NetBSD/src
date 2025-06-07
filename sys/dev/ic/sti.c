@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.47 2025/05/30 19:42:28 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.44 2025/05/25 16:41:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.47 2025/05/30 19:42:28 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -447,9 +447,10 @@ sti_region_setup(struct sti_screen *scr)
 		/*
 		 * Assume an existing mapping exists.
 		 */
-		addr = bases[regno] + (r->offset << PGSHIFT);
+		addr = bases[regno] + (r->offset << STI_PGSHIFT);
 		DPRINTF(("%08x @ 0x%08x%s%s%s%s",
-		    r->length << PGSHIFT, (int)addr, r->sys_only ? " sys" : "",
+		    r->length << STI_PGSHIFT, (int)addr,
+		    r->sys_only ? " sys" : "",
 		    r->cache ? " cache" : "", r->btlb ? " btlb" : "",
 		    r->last ? " last" : ""));
 
@@ -464,7 +465,7 @@ sti_region_setup(struct sti_screen *scr)
 			continue;
 		}
 
-		if (bus_space_map(memt, addr, r->length << PGSHIFT,
+		if (bus_space_map(memt, addr, r->length << STI_PGSHIFT,
 		    BUS_SPACE_MAP_LINEAR | (r->cache ?
 		    BUS_SPACE_MAP_CACHEABLE : 0), &rom->regh[regno]) != 0) {
 			rom->regh[regno] = romh;	/* XXX */
@@ -475,7 +476,7 @@ sti_region_setup(struct sti_screen *scr)
 			if (regno == 1) {
 				DPRINTF((" - fb"));
 				scr->fbaddr = addr;
-				scr->fblen = r->length << PGSHIFT;
+				scr->fblen = r->length << STI_PGSHIFT;
 			}
 			DPRINTF(("\n"));
 		}
@@ -489,7 +490,7 @@ sti_region_setup(struct sti_screen *scr)
 	 */
 	for (regno = 0; regno < STI_REGION_MAX; regno++)
 		if (cc->regions[regno] == 0)
-		    cc->regions[regno] = 0x81234567;
+			cc->regions[regno] = 0x81234567;
 #endif
 }
 
@@ -873,6 +874,7 @@ rescan:
 #ifdef STIDEBUG
 		STI_DISABLE_ROM(rom->rom_softc);
 		DPRINTF(("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
+		    scr->scr_rom->rom_softc == NULL ? __func__ :
 		    device_xname(scr->scr_rom->rom_softc->sc_dev), fp->width,
 		    fp->height, fp->type, fp->bpc, fp->first, fp->last));
 		STI_ENABLE_ROM(rom->rom_softc);
@@ -989,6 +991,7 @@ sti_init(struct sti_screen *scr, int mode)
 	a.in.ext_in = &a.ein;
 
 	DPRINTF(("%s: init,%p(%x, %p, %p, %p)\n",
+	    rom->rom_softc == NULL ? __func__ :
 	    device_xname(rom->rom_softc->sc_dev), rom->init, a.flags.flags,
 	    &a.in, &a.out, &scr->scr_cfg));
 
@@ -1057,6 +1060,7 @@ sti_bmove(struct sti_screen *scr, int x1, int y1, int x2, int y2, int h, int w,
 #ifdef STIDEBUG
 	if (a.out.errno)
 		printf("%s: blkmv returned %d\n",
+		    rom->rom_softc == NULL ? __func__ :
 		    device_xname(rom->rom_softc->sc_dev), a.out.errno);
 #endif
 }

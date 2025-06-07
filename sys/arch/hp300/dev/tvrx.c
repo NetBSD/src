@@ -1,4 +1,4 @@
-/*	$NetBSD: tvrx.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: tvrx.c,v 1.5 2025/05/30 13:00:12 tsutsui Exp $	*/
 /*	$OpenBSD: tvrx.c,v 1.1 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -74,12 +74,12 @@ static int	tvrx_reset(struct diofb *, int, struct diofbreg *);
 static int	tvrx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
 static struct wsdisplay_accessops tvrx_accessops = {
-	tvrx_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,	/* load_font */
+	.ioctl        = tvrx_ioctl,
+	.mmap         = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen  = diofb_free_screen,
+	.show_screen  = diofb_show_screen,
+	.load_font    = NULL,
 };
 
 /*
@@ -211,7 +211,7 @@ tvrxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	fbr = va;
 
 	if (badaddr(va) ||
-	    fbr->id != GRFHWID || fbr->fbid == GID_TIGER) {
+	    fbr->id != GRFHWID || fbr->fbid != GID_TIGER) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return 1;
 	}

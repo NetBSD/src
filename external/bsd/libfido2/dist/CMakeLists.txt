@@ -2,12 +2,12 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 # SPDX-License-Identifier: BSD-2-Clause
+cmake_minimum_required(VERSION 3.7)
 
 # detect AppleClang; needs to come before project()
 cmake_policy(SET CMP0025 NEW)
 
 project(libfido2 C)
-cmake_minimum_required(VERSION 3.0)
 # Set PIE flags for POSITION_INDEPENDENT_CODE targets, added in CMake 3.14.
 if(POLICY CMP0083)
 	cmake_policy(SET CMP0083 NEW)
@@ -28,8 +28,10 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_COLOR_MAKEFILE OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(FIDO_MAJOR "1")
-set(FIDO_MINOR "13")
+set(FIDO_MINOR "16")
 set(FIDO_PATCH "0")
 set(FIDO_VERSION ${FIDO_MAJOR}.${FIDO_MINOR}.${FIDO_PATCH})
 
@@ -189,6 +191,9 @@ if(MSVC)
 	endif()
 	if(NOT CRYPTO_LIBRARIES)
 		set(CRYPTO_LIBRARIES crypto)
+	endif()
+	if(NOT CRYPTO_DLL)
+		set(CRYPTO_DLL crypto)
 	endif()
 
 	set(MSVC_DISABLED_WARNINGS_LIST
@@ -435,6 +440,9 @@ message(STATUS "CRYPTO_LIBRARY_DIRS: ${CRYPTO_LIBRARY_DIRS}")
 if(BUILD_TESTS)
 	message(STATUS "CRYPTO_BIN_DIRS: ${CRYPTO_BIN_DIRS}")
 endif()
+if(MSVC)
+	message(STATUS "CRYPTO_DLL: ${CRYPTO_DLL}")
+endif()
 message(STATUS "CRYPTO_VERSION: ${CRYPTO_VERSION}")
 message(STATUS "FIDO_VERSION: ${FIDO_VERSION}")
 message(STATUS "FUZZ: ${FUZZ}")
@@ -484,7 +492,7 @@ endif()
 if(BUILD_TOOLS)
 	add_subdirectory(tools)
 endif()
-if(BUILD_MANPAGES)
+if(BUILD_MANPAGES AND NOT MSVC)
 	add_subdirectory(man)
 endif()
 

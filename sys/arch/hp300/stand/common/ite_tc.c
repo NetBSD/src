@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.11 2021/07/05 13:41:08 tsutsui Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.12 2025/05/27 18:02:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,8 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-void topcat_windowmove(struct ite_data *, int, int, int, int, int, int, int);
+static void topcat_windowmove(struct ite_data *, int, int, int, int,
+    int, int, int);
 
 void
 topcat_init(struct ite_data *ip)
@@ -109,7 +110,7 @@ topcat_init(struct ite_data *ip)
 			  ip->ftwidth, RR_COPYINVERTED);
 }
 
-void
+static void
 topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
     int w, int func)
 {

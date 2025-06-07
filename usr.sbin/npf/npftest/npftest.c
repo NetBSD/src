@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.27 2023/08/08 10:35:48 riastradh Exp $	*/
+/*	$NetBSD: npftest.c,v 1.28 2025/06/01 00:48:41 joe Exp $	*/
 
 /*
  * NPF testing framework.
@@ -66,7 +66,8 @@ describe_tests(void)
 		"state\tstate handling and processing\n"
 		"gc\tconnection G/C\n"
 		"rule\trule processing\n"
-		"nat\tNAT rule processing\n");
+		"nat\tNAT rule processing\n"
+		"guid\tUser/group filtering\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -320,6 +321,12 @@ main(int argc, char **argv)
 		if (!testname || strcmp("rule", testname) == 0) {
 			ok = rumpns_npf_rule_test(verbose);
 			fail |= result("rule", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("guid", testname) == 0) {
+			ok = rumpns_npf_guid_test(verbose);
+			fail |= result("guid", ok);
 			tname_matched = true;
 		}
 

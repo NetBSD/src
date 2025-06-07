@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.52 2023/08/08 10:36:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.55 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -735,6 +735,15 @@ npf_rule_setproc(nl_rule_t *rl, const char *name)
 	return nvlist_error(rl->rule_dict);
 }
 
+/* both user and group */
+int
+npf_rule_setrid(nl_rule_t *rl, struct r_id rid, const char *name)
+{
+	uint64_t uid_element[3] = { rid.id[0], rid.id[1], rid.op };
+	nvlist_add_number_array(rl->rule_dict, name, uid_element, 3);
+	return nvlist_error(rl->rule_dict);
+}
+
 void *
 npf_rule_export(nl_rule_t *rl, size_t *length)
 {
@@ -841,6 +850,22 @@ const char *
 npf_rule_getproc(nl_rule_t *rl)
 {
 	return dnvlist_get_string(rl->rule_dict, "rproc", NULL);
+}
+
+int
+npf_rule_getrid(struct r_id *r_id, nl_rule_t *rl, const char *key)
+{
+	if (nvlist_exists_number_array(rl->rule_dict, key)) {
+		size_t nitems;
+		const uint64_t *rid = nvlist_get_number_array(rl->rule_dict, key, &nitems);
+		assert(nitems == 3);
+
+		r_id->id[0] = (uint32_t)rid[0];
+		r_id->id[1] = (uint32_t)rid[1];
+		r_id->op = (uint8_t)rid[2];
+		return 0;
+	}
+	return -1;
 }
 
 uint64_t

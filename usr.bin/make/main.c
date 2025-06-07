@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.654 2025/05/26 19:56:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.655 2025/05/28 20:18:45 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.654 2025/05/26 19:56:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.655 2025/05/28 20:18:45 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -126,6 +126,7 @@ bool deleteOnError;		/* .DELETE_ON_ERROR: set */
 
 static int maxJobTokens;	/* -j argument */
 static bool enterFlagObj;	/* -w and objdir != srcdir */
+static bool bogusJflag;		/* -J invalid */
 
 static int tokenPoolReader = -1, tokenPoolWriter = -1;
 bool doing_depend;		/* Set while reading .depend */
@@ -388,24 +389,7 @@ MainParseArgJobsInternal(const char *argvalue)
 	    (fcntl(tokenPoolWriter, F_GETFD, 0) < 0)) {
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
-		opts.compatMake = true;
-		Parse_Error(PARSE_WARNING,
-		    "internal option \"-J %s\" in \"%s\" "
-		    "refers to an unopened file descriptor; "
-		    "falling back to compat mode.\n"
-		    "\t"
-		    "To run the target even in -n mode, "
-		    "add the .MAKE pseudo-source to the target.\n"
-		    "\t"
-		    "To run the target in default mode only, "
-		    "add a ${:D make} marker to a target's command. "
-		    "(This marker expression expands to an empty string.)\n"
-		    "\t"
-		    "To make the sub-make independent from the parent make, "
-		    "unset the MAKEFLAGS environment variable in the "
-		    "target's commands.",
-		    argvalue, curdir);
-		PrintStackTrace(true);
+		bogusJflag = true;
 	} else {
 		Global_Append(MAKEFLAGS, "-J");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -1215,6 +1199,29 @@ InitMaxJobs(void)
 	char *value;
 	int n;
 
+	if (bogusJflag && !opts.compatMake) {
+		opts.compatMake = true;
+		Parse_Error(PARSE_WARNING,
+		    "internal option \"-J\" in \"%s\" "
+		    "refers to unopened file descriptors; "
+		    "falling back to compat mode.\n"
+		    "\t"
+		    "To run the target even in -n mode, "
+		    "add the .MAKE pseudo-source to the target.\n"
+		    "\t"
+		    "To run the target in default mode only, "
+		    "add a ${:D make} marker to a target's command. "
+		    "(This marker expression expands to an empty string.)\n"
+		    "\t"
+		    "To make the sub-make run in compat mode, add -B to "
+		    "its invocation."
+		    "To make the sub-make independent from the parent make, "
+		    "unset the MAKEFLAGS environment variable in the "
+		    "target's commands.\n",
+		    curdir);
+		PrintStackTrace(true);
+		return;
+	}
 	if (forceJobs || opts.compatMake ||
 	    !Var_Exists(SCOPE_GLOBAL, ".MAKE.JOBS"))
 		return;

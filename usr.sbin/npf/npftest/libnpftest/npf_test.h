@@ -122,6 +122,7 @@ bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
 bool		npf_nat_test(bool);
+bool 		npf_guid_test(bool);
 bool		npf_gc_test(bool);
 
 int		npf_inet_pton(int, const char *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvbox.c,v 1.4 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: dvbox.c,v 1.5 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: dvbox.c,v 1.13 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -146,12 +146,12 @@ static int	dvbox_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
 static int	dvbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
 static struct wsdisplay_accessops dvbox_accessops = {
-	dvbox_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,   /* load_font */
+	.ioctl        = dvbox_ioctl,
+	.mmap         = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen  = diofb_free_screen,
+	.show_screen  = diofb_show_screen,
+	.load_font    = NULL,
 };
 
 /*

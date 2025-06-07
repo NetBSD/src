@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.100 2025/05/09 06:17:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8261_RAID,
 	  0,
 	  "VIA Technologies VT8261 SATA Controller (RAID mode)",
-	  via_sata_chip_map_7,
+	  via_chip_map,
 	},
 	{ 0,
 	  0,
@@ -508,9 +508,12 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VT6410_RAID:
 			/*
-			 * The chip enable register of the VT6410/VT6415
-			 * controllers may not be set by the hardware.
-			 * Treat their channels as always enabled.
+			 * VT6415 uses an unknown offset of the enable chip
+			 * register, enable bits needs to be simulated.
+			 *
+			 * Some add-in VT6410 controllers have both channels
+			 * disabled by default. These require explicit enabling
+			 * during initialization.
 			 */
 			no_ideconf = 1;
 			/* FALLTHROUGH */
@@ -523,6 +526,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VT8261_SATA:
 			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT8261_RAID:
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_IDE:
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_VX900_RAID:
@@ -531,7 +536,10 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			break;
 		default:
 			/*
-			 * get a PCI tag for the ISA bridge.
+			 * VIA integrated IDE controllers share the same PCI ID
+			 * between different southbridges and chipsets.
+			 * To determine their DMA capabilities, get a PCI tag
+			 * for the ISA bridge.
 			 */
 			if (pci_find_device(&pcib_pa, via_pcib_match) == 0)
 				goto unknown;
@@ -713,8 +721,25 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	    DEBUG_PROBE);
 
 	ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
-	if (ideconf == 0 && no_ideconf)
-		ideconf = APO_IDECONF_ALWAYS_EN;
+	if ((ideconf & APO_IDECONF_ALWAYS_EN) == 0 && no_ideconf) {
+		ideconf |= APO_IDECONF_ALWAYS_EN;
+		/*
+		 * VT6410 requires writing chip enable register bits to enable
+		 * the channels.  It can be distinguished from VT6415 because
+		 * its ideconf register returns a non-zero value (contains
+		 * other IDE configuration bits).
+		 *
+		 * VT6415 returns zero at this offset and likely uses it for
+		 * a different purpose or leaves it unused. Bits are simulated
+		 * without writing, until the actual offset will be known.
+		 */
+		if (ideconf != APO_IDECONF_ALWAYS_EN) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc),
+			    ideconf);
+			ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    APO_IDECONF(sc));
+		}
+	}
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];

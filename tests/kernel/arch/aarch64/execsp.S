@@ -1,4 +1,4 @@
-/*	$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $	*/
+/*	$NetBSD: execsp.S,v 1.3 2025/06/04 19:25:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $")
+RCSID("$NetBSD: execsp.S,v 1.3 2025/06/04 19:25:45 christos Exp $")
 
 /*
  * void execsp_start(void (*cleanup@x0)(void), void *obj_main@x1,
@@ -41,8 +41,8 @@ RCSID("$NetBSD: execsp.S,v 1.2 2025/04/20 22:31:25 riastradh Exp $")
  */
 ENTRY(execsp_start)
 	mov	x16, sp
-	adrp	x17, :pg_hi21:_C_LABEL(startsp)
-	str	x16, [x17, #:lo12:_C_LABEL(startsp)]
+	adrp	x17, _C_LABEL(startsp)
+	str	x16, [x17, :lo12:_C_LABEL(startsp)]
 	b	_C_LABEL(__start)
 END(execsp_start)
 
@@ -54,8 +54,8 @@ END(execsp_start)
  */
 ENTRY(execsp_ctor)
 	mov	x16, sp
-	adrp	x17, :pg_hi21:_C_LABEL(ctorsp)
-	str	x16, [x17, #:lo12:_C_LABEL(ctorsp)]
+	adrp	x17, _C_LABEL(ctorsp)
+	str	x16, [x17, :lo12:_C_LABEL(ctorsp)]
 	ret
 END(execsp_ctor)
 
@@ -73,8 +73,8 @@ END(execsp_ctor)
  */
 ENTRY(main)
 	mov	x16, sp
-	adrp	x17, :pg_hi21:_C_LABEL(mainsp)
-	str	x16, [x17, #:lo12:_C_LABEL(mainsp)]
+	adrp	x17, _C_LABEL(mainsp)
+	str	x16, [x17, :lo12:_C_LABEL(mainsp)]
 	mov	x0, #0
 	ret
 END(main)
@@ -88,8 +88,8 @@ END(main)
  */
 ENTRY(execsp_dtor)
 	mov	x16, sp
-	adrp	x17, :pg_hi21:_C_LABEL(dtorsp)
-	str	x16, [x17, #:lo12:_C_LABEL(dtorsp)]
+	adrp	x17, _C_LABEL(dtorsp)
+	str	x16, [x17, :lo12:_C_LABEL(dtorsp)]
 	b	_C_LABEL(execsp_main)
 END(execsp_dtor)
 

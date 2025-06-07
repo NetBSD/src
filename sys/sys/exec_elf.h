@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.176 2025/05/14 19:44:03 andvar Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.177 2025/05/27 14:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -578,7 +578,7 @@ typedef struct {
  */
 typedef struct {
 	Elf32_Word	st_name;	/* Symbol name (.strtab index) */
-	Elf32_Word	st_value;	/* value of symbol */
+	Elf32_Addr	st_value;	/* value of symbol */
 	Elf32_Word	st_size;	/* size of symbol */
 	Elf_Byte	st_info;	/* type / binding attrs */
 	Elf_Byte	st_other;	/* unused */

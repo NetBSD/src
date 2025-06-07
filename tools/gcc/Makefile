@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2025/05/16 19:01:50 palle Exp $
+#	$NetBSD: Makefile,v 1.116 2025/05/27 18:40:32 palle Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -95,7 +95,7 @@ GCC_CPPFLAGS+=	-DNB_FIX_VAX_BACKEND
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
 		EXTRA_PARTS= CPPFLAGS=${GCC_CPPFLAGS:Q} \
-		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q} NM=${NM:Q}
+		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q} NM=${HOST_NM:Q}
 
 CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes \
 		gcc_cv_as_sparc_gotdata_op=no

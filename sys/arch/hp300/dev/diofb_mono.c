@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb_mono.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: diofb_mono.c,v 1.3 2025/05/31 18:50:33 tsutsui Exp $	*/
 /*	$OpenBSD: diofb_mono.c,v 1.3 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -121,13 +121,13 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 {
 	int width;		/* add to get to same position in next line */
 
-	unsigned int *psrcLine, *pdstLine;
+	uint32_t *psrcLine, *pdstLine;
 				/* pointers to line with current src and dst */
-	unsigned int *psrc;	/* pointer to current src longword */
-	unsigned int *pdst;	/* pointer to current dst longword */
+	uint32_t *psrc;		/* pointer to current src longword */
+	uint32_t *pdst;		/* pointer to current dst longword */
 
 				/* following used for looping through a line */
-	unsigned int startmask, endmask;  /* masks for writing ends of dst */
+	uint32_t startmask, endmask;  /* masks for writing ends of dst */
 	int nlMiddle;		/* whole longwords in dst */
 	int nl;			/* temp copy of nlMiddle */
 	int xoffSrc;		/* offset (>= 0, < 32) from which to
@@ -140,12 +140,12 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 	width = fb->fbwidth >> 5;
 
 	if (sy < dy) {	/* start at last scanline of rectangle */
-		psrcLine = ((u_int *)fb->fbkva) + ((sy + cy - 1) * width);
-		pdstLine = ((u_int *)fb->fbkva) + ((dy + cy - 1) * width);
+		psrcLine = ((uint32_t *)fb->fbkva) + ((sy + cy - 1) * width);
+		pdstLine = ((uint32_t *)fb->fbkva) + ((dy + cy - 1) * width);
 		width = -width;
 	} else {	/* start at first scanline */
-		psrcLine = ((u_int *)fb->fbkva) + (sy * width);
-		pdstLine = ((u_int *)fb->fbkva) + (dy * width);
+		psrcLine = ((uint32_t *)fb->fbkva) + (sy * width);
+		pdstLine = ((uint32_t *)fb->fbkva) + (dy * width);
 	}
 
 	/* x direction doesn't matter for < 1 longword */
@@ -160,18 +160,18 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 		srcBit = sx & 0x1f;
 		dstBit = dx & 0x1f;
 
-		while (cy--) {
+		while (cy-- > 0) {
 			getandputrop(psrc, srcBit, dstBit, cx, pdst, rop);
 			pdst += width;
 			psrc += width;
 		}
 	} else {
 		maskbits(dx, cx, startmask, endmask, nlMiddle);
-		if (startmask)
+		if (startmask != 0)
 			nstart = 32 - (dx & 0x1f);
 		else
 			nstart = 0;
-		if (endmask)
+		if (endmask != 0)
 			nend = (dx + cx) & 0x1f;
 		else
 			nend = 0;
@@ -183,22 +183,22 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 			pdstLine += (dx >> 5);
 			psrcLine += (sx >> 5);
 
-			while (cy--) {
+			while (cy-- > 0) {
 				psrc = psrcLine;
 				pdst = pdstLine;
 
-				if (startmask) {
+				if (startmask != 0) {
 					getandputrop(psrc, (sx & 0x1f),
 					    (dx & 0x1f), nstart, pdst, rop);
 					pdst++;
-					if (srcStartOver)
+					if (srcStartOver != 0)
 						psrc++;
 				}
 
 				/* special case for aligned operations */
 				if (xoffSrc == 0) {
 					nl = nlMiddle;
-					while (nl--) {
+					while (nl-- > 0) {
 						if (rop == RR_CLEAR)
 							*pdst = 0;
 						else
@@ -208,7 +208,7 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 					}
 				} else {
 					nl = nlMiddle + 1;
-					while (--nl) {
+					while (--nl > 0) {
 						if (rop == RR_CLEAR)
 							*pdst = 0;
 						else
@@ -219,7 +219,7 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 					}
 				}
 
-				if (endmask) {
+				if (endmask != 0) {
 					getandputrop(psrc, xoffSrc, 0, nend,
 					    pdst, rop);
 				}
@@ -237,17 +237,17 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 			if (xoffSrc + nend >= 32)
 				--psrcLine;
 
-			while (cy--) {
+			while (cy-- > 0) {
 				psrc = psrcLine;
 				pdst = pdstLine;
 
-				if (endmask) {
+				if (endmask != 0) {
 					getandputrop(psrc, xoffSrc, 0, nend,
 					    pdst, rop);
 				}
 
 				nl = nlMiddle + 1;
-				while (--nl) {
+				while (--nl > 0) {
 					--psrc;
 					--pdst;
 					if (rop == RR_CLEAR)
@@ -257,8 +257,8 @@ diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 						    *pdst);
 				}
 
-				if (startmask) {
-					if (srcStartOver)
+				if (startmask != 0) {
+					if (srcStartOver != 0)
 						--psrc;
 					--pdst;
 					getandputrop(psrc, (sx & 0x1f),

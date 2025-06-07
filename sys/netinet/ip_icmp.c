@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.179 2025/02/22 09:10:27 mlelstv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.180 2025/06/05 06:29:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.179 2025/02/22 09:10:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.180 2025/06/05 06:29:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -805,16 +805,12 @@ icmp_reflect(struct mbuf *m)
 	 */
 	if (sin == NULL && rcvif) {
 		KASSERT(ia == NULL);
-		s = pserialize_read_enter();
-		IFADDR_READER_FOREACH(ifa, rcvif) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-			sin = &(ifatoia(ifa)->ia_addr);
+
+		ifa = if_first_addr_psref(rcvif, AF_INET, &psref_ia);
+		if (ifa != NULL) {
 			ia = ifatoia(ifa);
-			ia4_acquire(ia, &psref_ia);
-			break;
+			sin = &(ia->ia_addr);
 		}
-		pserialize_read_exit(s);
 	}
 
 	m_put_rcvif_psref(rcvif, &psref);

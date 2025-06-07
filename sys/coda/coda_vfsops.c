@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.91 2024/05/17 23:57:46 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.92 2025/05/28 06:06:54 andvar Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.91 2024/05/17 23:57:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.92 2025/05/28 06:06:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 
     /*
      * XXX: coda passes the mount device as the entire mount args,
-     * All other fs pass a structure contining a pointer.
+     * All other fs pass a structure containing a pointer.
      * In order to get sys_mount() to do the copyin() we've set a
      * fixed default size for the filename buffer.
      */

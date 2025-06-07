@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.21 2008/10/17 10:53:26 apb Exp $	*/
+/*	$NetBSD: whereis.c,v 1.22 2025/06/01 15:45:31 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.21 2008/10/17 10:53:26 apb Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.22 2025/06/01 15:45:31 jschauma Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,9 +69,9 @@ main(int argc, char *argv[])
 	uid_t euid = geteuid();
 
 	/* To make access(2) do what we want */
-	if (setgid(egid) == -1)
+	if (setregid(egid, egid) == -1)
 		err(1, "Can't set gid to %lu", (unsigned long)egid);
-	if (setuid(euid) == -1)
+	if (setreuid(euid, euid) == -1)
 		err(1, "Can't set uid to %lu", (unsigned long)euid);
 
 	while ((ch = getopt(argc, argv, "ap")) != -1)

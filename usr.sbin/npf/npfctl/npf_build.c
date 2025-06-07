@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.56 2023/08/18 14:26:50 tnn Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.58 2025/06/01 00:54:36 joe Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -713,6 +713,14 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 		npfctl_build_pcap(rl, pcap_filter);
 	} else {
 		npfctl_build_code(rl, family, popts, fopts);
+	}
+
+	if (fopts->uid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->uid, "r_user");
+	}
+
+	if (fopts->gid.op != NPF_OP_NONE) {
+		npf_rule_setrid(rl, fopts->gid, "r_group");
 	}
 
 	if (rproc) {

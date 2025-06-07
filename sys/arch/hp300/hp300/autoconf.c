@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.116 2025/05/01 06:11:21 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.117 2025/05/27 18:56:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.116 2025/05/01 06:11:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117 2025/05/27 18:56:27 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -929,7 +929,7 @@ find_kbd:
 	/* not yet */
 	hilkbdcnattach(bst, HIL_BASE);
 #endif
-;
+	return;
 }
 
 static int

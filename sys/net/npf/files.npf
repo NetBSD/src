@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.23 2020/05/30 14:16:56 rmind Exp $
+# $NetBSD: files.npf,v 1.24 2025/06/01 00:24:19 joe Exp $
 #
 # Public Domain.
 #
@@ -32,6 +32,7 @@ file	net/npf/npf_portmap.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
 file	net/npf/npf_worker.c			npf
+file    net/npf/npf_socket.c			npf
 
 file	net/npf/npf_os.c			npf
 file	net/npf/npf_ifaddr.c			npf

@@ -1,4 +1,4 @@
-/*	$NetBSD: maskbits.h,v 1.9 2011/02/06 18:26:52 tsutsui Exp $	*/
+/*	$NetBSD: maskbits.h,v 1.10 2025/05/31 18:50:33 tsutsui Exp $	*/
 /*	$OpenBSD: maskbits.h,v 1.6 2006/08/05 09:58:56 miod Exp $	*/
 /*	NetBSD: maskbits.h,v 1.3 1997/03/31 07:37:28 scottr Exp 	*/
 
@@ -38,21 +38,21 @@
  */
 
 /* the following notes use the following conventions:
-SCREEN LEFT				SCREEN RIGHT
-in this file and maskbits.c, left and right refer to screen coordinates,
-NOT bit numbering in registers.
-
-rasops_lmask[n]
-	bits[0,n-1] = 0	bits[n,31] = 1
-rasops_rmask[n] =
-	bits[0,n-1] = 1	bits[n,31] = 0
-
-maskbits(x, w, startmask, endmask, nlw)
-	for a span of width w starting at position x, returns
-a mask for ragged bits at start, mask for ragged bits at end,
-and the number of whole longwords between the ends.
-
-*/
+ * SCREEN LEFT				SCREEN RIGHT
+ * in this file and maskbits.c, left and right refer to screen coordinates,
+ * NOT bit numbering in registers.
+ *
+ * rasops_lmask[n]
+ * 	bits[0,n-1] = 0	bits[n,31] = 1
+ * rasops_rmask[n] =
+ * 	bits[0,n-1] = 1	bits[n,31] = 0
+ *
+ * maskbits(x, w, startmask, endmask, nlw)
+ * 	for a span of width w starting at position x, returns
+ * a mask for ragged bits at start, mask for ragged bits at end,
+ * and the number of whole longwords between the ends.
+ *
+ */
 
 #define maskbits(x, w, startmask, endmask, nlw)				\
 do {									\
@@ -66,16 +66,16 @@ do {									\
 
 #define FASTGETBITS(psrc, x, w, dst)					\
     asm ("bfextu %3{%1:%2},%0"						\
-    : "=d" (dst) : "di" (x), "di" (w), "o" (*(char *)(psrc)))
+    : "=d" (dst) : "di" (x), "di" (w), "o" (*(uint8_t *)(psrc)))
 
 #define FASTPUTBITS(src, x, w, pdst)					\
     asm ("bfins %3,%0{%1:%2}"						\
-	 : "=o" (*(char *)(pdst))					\
+	 : "=o" (*(uint8_t *)(pdst))					\
 	 : "di" (x), "di" (w), "d" (src))
 
 #define getandputrop(psrc, srcbit, dstbit, width, pdst, rop)		\
 do {									\
-	unsigned int _tmpdst;						\
+	uint32_t _tmpdst;						\
 	if (rop == RR_CLEAR)						\
 		_tmpdst = 0;						\
 	else								\
@@ -85,7 +85,7 @@ do {									\
 
 #define getunalignedword(psrc, x, dst)					\
 do {									\
-        int _tmp;							\
+        uint32_t _tmp;							\
         FASTGETBITS(psrc, x, 32, _tmp);					\
         dst = _tmp;							\
 } while (/* CONSTCOND */ 0)

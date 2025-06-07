@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.147 2024/10/19 16:43:46 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.148 2025/05/28 20:02:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.147 2024/10/19 16:43:46 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.148 2025/05/28 20:02:53 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2140,7 +2140,7 @@ identifycpu(int fd, const char *cpuname)
 	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_FLAGS4
 		: CPUID_AMD_FLAGS4, ci->ci_feat_val[3]);
 
-	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
+	print_bits(cpuname, "padlock features", CPUID_FLAGS_PADLOCK,
 	    ci->ci_feat_val[4]);
 	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,

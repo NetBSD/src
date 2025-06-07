@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -106,6 +106,7 @@ nl_rule_t *	npf_rule_create(const char *, uint32_t, const char *);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
 int		npf_rule_setprio(nl_rule_t *, int);
 int		npf_rule_setproc(nl_rule_t *, const char *);
+int		npf_rule_setrid(nl_rule_t *, struct r_id, const char *);
 int		npf_rule_setkey(nl_rule_t *, const void *, size_t);
 int		npf_rule_setinfo(nl_rule_t *, const void *, size_t);
 const char *	npf_rule_getname(nl_rule_t *);
@@ -113,6 +114,7 @@ uint32_t	npf_rule_getattr(nl_rule_t *);
 const char *	npf_rule_getinterface(nl_rule_t *);
 const void *	npf_rule_getinfo(nl_rule_t *, size_t *);
 const char *	npf_rule_getproc(nl_rule_t *);
+int		npf_rule_getrid(struct r_id *, nl_rule_t *, const char *);
 uint64_t	npf_rule_getid(nl_rule_t *);
 const void *	npf_rule_getcode(nl_rule_t *, int *, size_t *);
 bool		npf_rule_exists_p(nl_config_t *, const char *);

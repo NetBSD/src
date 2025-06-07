@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.132 2025/03/11 13:56:47 brad Exp $
+#	$NetBSD: files.i2c,v 1.133 2025/06/03 19:22:22 rjs Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -449,6 +449,11 @@ file dev/i2c/bmx280thpi2c.c			bmx280thpi2c
 device ds2482ow: onewirebus
 attach ds2482ow at iic
 file dev/i2c/ds2482ow.c				ds2482ow
+
+# Onsemi FUSB302B USB-C power controller
+device fusbtc
+attach fusbtc at iic
+file dev/i2c/fusbtc.c				fusbtc
 
 # EMC-210x and EMC-230x fan controllers
 device emcfan: gpiobus, sysmon_envsys

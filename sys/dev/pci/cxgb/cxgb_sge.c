@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.7 2018/12/22 14:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.8 2025/05/28 06:06:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1456,7 +1456,7 @@ again:  reclaim_completed_tx_imm(q);
 
 /**
  *  restart_ctrlq - restart a suspended control queue
- *  @qs: the queue set cotaining the control queue
+ *  @qs: the queue set containing the control queue
  *
  *  Resumes transmission on a suspended Tx control queue.
  */
@@ -1836,7 +1836,7 @@ again:  cleaned = reclaim_completed_tx(q, TX_CLEAN_MAX_DESC, m_vec);
 
 /**
  *  restart_offloadq - restart a suspended offload queue
- *  @qs: the queue set cotaining the offload queue
+ *  @qs: the queue set containing the offload queue
  *
  *  Resumes transmission on a suspended Tx offload queue.
  */

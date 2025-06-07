@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.279 2025/03/17 19:02:49 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.280 2025/06/02 16:27:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.279 2025/03/17 19:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.280 2025/06/02 16:27:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -966,7 +966,7 @@ expand_pid_table(void)
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
 	new_pt_mask = pt_size * 2 - 1;
 
-	/* XXX For now.  The pratical limit is much lower anyway. */
+	/* XXX For now.  The practical limit is much lower anyway. */
 	KASSERT(new_pt_mask <= FUTEX_TID_MASK);
 
 	mutex_enter(&proc_lock);
@@ -1126,7 +1126,7 @@ proc_alloc_pid_slot(struct proc *p, uintptr_t slot)
 		pid &= pid_tbl_mask;
 	next_free_pt = nxt & pid_tbl_mask;
 
-	/* XXX For now.  The pratical limit is much lower anyway. */
+	/* XXX For now.  The practical limit is much lower anyway. */
 	KASSERT(pid <= FUTEX_TID_MASK);
 
 	/* Grab table slot */

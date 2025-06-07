@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.531 2024/12/16 05:18:37 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.534 2025/06/05 06:32:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.531 2024/12/16 05:18:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.534 2025/06/05 06:32:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2096,27 +2096,30 @@ ifa_ifwithladdr_psref(const struct sockaddr *addr, struct psref *psref)
 	return ifa;
 }
 
-/*
- * Find an interface using a specific address family
- */
 struct ifaddr *
-ifa_ifwithaf(int af)
+if_first_addr(const struct ifnet *ifp, const int af)
 {
-	struct ifnet *ifp;
 	struct ifaddr *ifa = NULL;
+
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family == af)
+			break;
+	}
+	return ifa;
+}
+
+struct ifaddr *
+if_first_addr_psref(const struct ifnet *ifp, const int af, struct psref *psref)
+{
+	struct ifaddr *ifa;
 	int s;
 
 	s = pserialize_read_enter();
-	IFNET_READER_FOREACH(ifp) {
-		if (if_is_deactivated(ifp))
-			continue;
-		IFADDR_READER_FOREACH(ifa, ifp) {
-			if (ifa->ifa_addr->sa_family == af)
-				goto out;
-		}
-	}
-out:
+	ifa = if_first_addr(ifp, af);
+	if (ifa != NULL)
+		ifa_acquire(ifa, psref);
 	pserialize_read_exit(s);
+
 	return ifa;
 }
 

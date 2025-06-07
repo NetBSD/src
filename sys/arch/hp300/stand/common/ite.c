@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21 2025/05/26 12:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.23 2025/05/30 19:19:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,12 +60,12 @@
 #include <hp300/stand/common/samachdep.h>
 
 static void iteconfig(void);
-static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
-static void itecheckwrap(struct ite_data *, struct itesw *);
+static void ite_scroll(struct ite_data *);
+static void itecheckwrap(struct ite_data *);
 
 #define GID_STI		0x100	/* any value which is not a DIO fb, really */
 
-struct itesw itesw[] = {
+static const struct itesw itesw[] = {
 	{
 		.ite_hwid   = GID_TOPCAT,
 		.ite_probe  = NULL,
@@ -188,8 +188,8 @@ struct itesw itesw[] = {
 };
 
 /* these guys need to be in initialized data */
-int itecons = -1;
-struct  ite_data ite_data[NITE] = { { 0 } };
+static int itecons = -1;
+static struct  ite_data ite_data[NITE] = { { 0 } };
 
 /*
  * Locate all bitmapped displays
@@ -223,7 +223,7 @@ iteconfig(void)
 		ip->isw = &itesw[dtype];
 		ip->regbase = (void *)fb;
 		fboff = (fb->fbomsb << 8) | fb->fbolsb;
-		ip->fbbase = (void *)(*((u_char *)ip->regbase + fboff) << 16);
+		ip->fbbase = (void *)(*((uint8_t *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (DIO_ISDIOII(ip->scode))
 			ip->fbbase = (uint8_t *)ip->fbbase + (int)ip->regbase;
@@ -310,7 +310,7 @@ iteprobe(struct consdev *cp)
 	int unit, pri;
 
 #ifdef CONSDEBUG
-	whichconsole = (whichconsole + 1) % (NITE+1);
+	whichconsole = (whichconsole + 1) % (NITE + 1);
 #endif
 
 	if (itecons != -1)
@@ -346,19 +346,21 @@ iteinit(struct consdev *cp)
 {
 	int ite = cp->cn_dev;
 	struct ite_data *ip;
+	const struct itesw *sp;
 
 	if (itecons != -1)
 		return;
 
 	ip = &ite_data[ite];
+	sp = ip->isw;
 
 	ip->curx = 0;
 	ip->cury = 0;
 	ip->cursorx = 0;
 	ip->cursory = 0;
 
-	(*ip->isw->ite_init)(ip);
-	(*ip->isw->ite_cursor)(ip, DRAW_CURSOR);
+	(*sp->ite_init)(ip);
+	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 
 	itecons = ite;
 	kbdinit();
@@ -368,7 +370,7 @@ void
 iteputchar(dev_t dev, int c)
 {
 	struct ite_data *ip = &ite_data[itecons];
-	struct itesw *sp = ip->isw;
+	const struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
 	switch (c) {
@@ -376,10 +378,8 @@ iteputchar(dev_t dev, int c)
 	case '\n':
 		if (++ip->cury == ip->rows) {
 			ip->cury--;
-			(*sp->ite_scroll)(ip);
-			ite_clrtoeol(ip, sp, ip->cury, 0);
-		}
-		else
+			ite_scroll(ip);
+		} else
 			(*sp->ite_cursor)(ip, MOVE_CURSOR);
 		break;
 
@@ -400,20 +400,21 @@ iteputchar(dev_t dev, int c)
 			break;
 		(*sp->ite_putc)(ip, c, ip->cury, ip->curx);
 		(*sp->ite_cursor)(ip, DRAW_CURSOR);
-		itecheckwrap(ip, sp);
+		itecheckwrap(ip);
 		break;
 	}
 }
 
 static void
-itecheckwrap(struct ite_data *ip, struct itesw *sp)
+itecheckwrap(struct ite_data *ip)
 {
+	const struct itesw *sp = ip->isw;
+
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
 		if (++ip->cury == ip->rows) {
 			--ip->cury;
-			(*sp->ite_scroll)(ip);
-			ite_clrtoeol(ip, sp, ip->cury, 0);
+			ite_scroll(ip);
 			return;
 		}
 	}
@@ -421,10 +422,17 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 }
 
 static void
-ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
+ite_scroll(struct ite_data *ip)
 {
+	const struct itesw *sp = ip->isw;
 
-	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
+	/* Erase the cursor before scrolling */
+	(*sp->ite_cursor)(ip, ERASE_CURSOR);
+	/* Scroll the screen up by one line */
+	(*sp->ite_scroll)(ip);
+	/* Clear the entire bottom line after scrolling */
+	(*sp->ite_clear)(ip, ip->rows - 1, 0, 1, ip->cols);
+	/* Redraw the cursor */
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 

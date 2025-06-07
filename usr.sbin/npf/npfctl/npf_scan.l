@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -173,6 +173,7 @@ flags			return FLAGS;
 icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
+user			return USER;
 
 "/"			return SLASH;
 "{"			return CURLY_OPEN;
@@ -182,6 +183,10 @@ any			return ANY;
 ","			return COMMA;
 "="			return EQ;
 "!"			return EXCL_MARK;
+"<"			return LT;
+">"			return GT;
+"<>"			return XRG;
+"><"			return IRG;
 
 "0x"{HEXDIG} {
 			char *endp, *buf = ecalloc(1, yyleng + 1);

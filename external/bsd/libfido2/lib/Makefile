@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/11/01 23:44:21 riastradh Exp $
+# $NetBSD: Makefile,v 1.13 2025/06/02 14:01:49 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -105,7 +105,7 @@ fido_strerr.3 \
 rs256_pk_new.3
 
 SHLIB_MAJOR=5
-SHLIB_MINOR=0
+SHLIB_MINOR=1
 
 .SUFFIXES: .in
 .in:

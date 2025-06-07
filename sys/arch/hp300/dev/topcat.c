@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.14 2025/02/26 04:49:46 andvar Exp $	*/
+/*	$NetBSD: topcat.c,v 1.15 2025/05/27 18:44:31 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -153,12 +153,12 @@ static void	topcat_putchar8(void *, int, int, u_int, long);
 static void	topcat_putchar1_4(void *, int, int, u_int, long);
 
 static struct wsdisplay_accessops topcat_accessops = {
-	topcat_ioctl,
-	diofb_mmap,
-	diofb_alloc_screen,
-	diofb_free_screen,
-	diofb_show_screen,
-	NULL,	/* load_font */
+	.ioctl        = topcat_ioctl,
+	.mmap         = diofb_mmap,
+	.alloc_screen = diofb_alloc_screen,
+	.free_screen  = diofb_free_screen,
+	.show_screen  = diofb_show_screen,
+	.load_font    = NULL,
 };
 
 /*

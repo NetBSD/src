@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.11 2025/05/25 06:17:37 macallan Exp $ */
+/* $NetBSD: pm3fb.c,v 1.12 2025/05/27 06:21:12 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.11 2025/05/25 06:17:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.12 2025/05/27 06:21:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.11 2025/05/25 06:17:37 macallan Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 #include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -93,6 +94,7 @@ struct pm3fb_softc {
 	uint8_t sc_edid_data[128];
 	struct edid_info sc_ei;
 	const struct videomode *sc_videomode;
+	glyphcache sc_gc;
 };
 
 static int	pm3fb_match(device_t, cfdata_t, void *);
@@ -116,10 +118,12 @@ static void	pm3fb_init(struct pm3fb_softc *);
 static inline void pm3fb_wait(struct pm3fb_softc *, int);
 static void	pm3fb_flush_engine(struct pm3fb_softc *);
 static void	pm3fb_rectfill(struct pm3fb_softc *, int, int, int, int, uint32_t);
+static void	pm3fb_rectfill_a(void *, int, int, int, int, long);
 static void	pm3fb_bitblt(void *, int, int, int, int, int, int, int);
 
 static void	pm3fb_cursor(void *, int, int, int);
 static void	pm3fb_putchar(void *, int, int, u_int, long);
+static void	pm3fb_putchar_aa(void *, int, int, u_int, long);
 static void	pm3fb_copycols(void *, int, int, int, int);
 static void	pm3fb_erasecols(void *, int, int, int, long);
 static void	pm3fb_copyrows(void *, int, int, int);
@@ -296,13 +300,24 @@ pm3fb_attach(device_t parent, device_t self, void *aux)
 
 	pm3_setup_i2c(sc);
 
+#ifdef PM3FB_DEBUG
+	sc->sc_height -= 200;
+#endif
+
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &pm3fb_accessops);
 
 	sc->vd.init_screen = pm3fb_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	/* init engine here */
 	pm3fb_init(sc);
+
+	sc->sc_gc.gc_bitblt = pm3fb_bitblt;
+	sc->sc_gc.gc_rectfill = pm3fb_rectfill_a;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = 3;
 
 	ri = &sc->sc_console_screen.scr_ri;
 
@@ -317,6 +332,14 @@ pm3fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+
+	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+		uimin(2047, (sc->sc_fbsize / sc->sc_stride))
+		 - sc->sc_height - 5,
+		sc->sc_width,
+		ri->ri_font->fontwidth,
+		ri->ri_font->fontheight,
+		defattr);
 
 	if (is_console) {
 
@@ -476,12 +499,14 @@ pm3fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA;
 	if (sc->sc_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB;
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
@@ -492,7 +517,10 @@ pm3fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = pm3fb_cursor;
 	ri->ri_ops.eraserows = pm3fb_eraserows;
 	ri->ri_ops.erasecols = pm3fb_erasecols;
-	ri->ri_ops.putchar = pm3fb_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = pm3fb_putchar_aa;
+	} else
+		ri->ri_ops.putchar = pm3fb_putchar;
 }
 
 static int
@@ -714,6 +742,15 @@ pm3fb_rectfill(struct pm3fb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+pm3fb_rectfill_a(void *cookie, int x, int y, int wi, int he, long attr)
+{
+	struct pm3fb_softc *sc = cookie;
+
+	pm3fb_rectfill(sc, x, y, wi, he,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 pm3fb_bitblt(void *cookie, int srcx, int srcy, int dstx, int dsty,
     int width, int height, int rop)
 {
@@ -852,7 +889,7 @@ pm3fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				break;
 			}
 #endif
-			pm3fb_wait(sc, 8);
+			pm3fb_wait(sc, 6);
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM3_FOREGROUNDCOLOR, fg);
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
@@ -862,18 +899,11 @@ pm3fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM3_CONFIG2D, 
-			    PM3_CONFIG2D_USERSCISSOR_ENABLE | 
 			    PM3_CONFIG2D_USECONSTANTSOURCE | 
 			    PM3_CONFIG2D_FOREGROUNDROP_ENABLE | 
 			    PM3_CONFIG2D_FOREGROUNDROP(0x03) | 
 			    PM3_CONFIG2D_OPAQUESPAN | 
 			    PM3_CONFIG2D_FBWRITE_ENABLE);
-
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    PM3_SCISSORMINXY, ((y & 0x0fff) << 16) | (x & 0x0fff));
-
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    PM3_SCISSORMAXXY, (((y + he) & 0x0fff) << 16) | ((x + wi) & 0x0fff));
 
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM3_RECTANGLEPOSITION, (((y) & 0xffff)<<16) | ((x) & 0xffff));
@@ -916,6 +946,125 @@ pm3fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			}
 		}
 	}
+}
+
+static void
+pm3fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct pm3fb_softc *sc = scr->scr_cookie;
+	uint32_t bg, fg, pixel, latch, aval;
+	int i, j, x, y, wi, he, r, g, b;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo, shift;
+	uint8_t *data8;
+	int rv = GC_NOPE, cnt = 0;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xff;
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf] & 0xff;
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	/* if we draw a whitespace we're done here */
+	if (c == 0x20) {
+		pm3fb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & 1)
+			pm3fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+		return;
+	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	pm3fb_wait(sc, 3);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_CONFIG2D,
+		    PM3_CONFIG2D_OPAQUESPAN |
+		    PM3_CONFIG2D_EXTERNALSOURCEDATA |
+		    PM3_CONFIG2D_FBWRITE_ENABLE);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_RECTANGLEPOSITION,
+	    (((y) & 0xffff) << 16) | ((x) & 0xffff) );
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_RENDER2D,
+	    PM3_RENDER2D_XPOSITIVE | PM3_RENDER2D_YPOSITIVE | 
+	    PM3_RENDER2D_OPERATION_SYNCONHOSTDATA | PM3_RENDER2D_SPANOPERATION |
+	    (((he) & 0x0fff) << 16) | ((wi) & 0x0fff));
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	g0 = rasops_cmap[bgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	r1 = rasops_cmap[fgo];
+	g1 = rasops_cmap[fgo + 1];
+	b1 = rasops_cmap[fgo + 2];
+
+	pm3fb_wait(sc, 20);
+
+	/*
+	 * we need two loops here because lines have to be padded to full 32bit
+	 */
+	for (i = 0; i < he; i++) {
+		shift = 24;
+		latch = 0;
+		for (j = 0; j < wi; j++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg;
+			} else if (aval == 255) {
+				pixel = fg;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch |= pixel << shift;
+			shift -= 8;
+			if (shift < 0) {
+				bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
+				    PM3_SOURCE_DATA, latch);
+				cnt++;
+				if (cnt > 18) {
+					pm3fb_wait(sc, 20);
+					cnt = 0;
+				}
+				latch = 0;
+				shift = 24;
+			}
+			data8++;
+		}
+		if (shift != 24)
+			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
+			    PM3_SOURCE_DATA, latch);
+	}
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
+
+	if (attr & 1)
+		pm3fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
 static void
@@ -1280,7 +1429,7 @@ pm3fb_set_mode(struct pm3fb_softc *sc, const struct videomode *mode)
 
 	pm3fb_write_dac(sc, PM3_RAMDAC_CMD_PIXEL_SIZE, PM3_DACPS_8BIT);
 	pm3fb_write_dac(sc, PM3_RAMDAC_CMD_COLOR_FORMAT,
-	    (PM3_CF_ORDER_BGR | PM3_CF_VISUAL_256_COLOR));
+	    (PM3_CF_ORDER_RGB | PM3_CF_VISUAL_256_COLOR));
 	pm3fb_write_dac(sc, PM3_RAMDAC_CMD_MISC_CONTROL, PM3_MC_DAC_SIZE_8BIT);
 
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_FIFOCONTROL, 0x00000905);
