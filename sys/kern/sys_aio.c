@@ -615,15 +615,16 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	}
 
 #ifdef AIOSP
-	struct aiosp *sp = aio->sp;
+	a_job->pri = PRI_KTHREAD;
+	a_job->p = curlwp->l_proc;
 
-	error = aiosp_enqueue_job(sp, a_job);
+	error = aiosp_enqueue_job(a_job);
 	if (error) {
 		mutex_exit(&aio->aio_mtx);
 		return SET_ERROR(error);
 	}
 
-	error = aiosp_distribute_jobs(sp);
+	error = aiosp_dispense_bank();
 	if (error) {
 		mutex_exit(&aio->aio_mtx);
 		return SET_ERROR(error);

@@ -56,16 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 MODULE(MODULE_CLASS_MISC, aiosp, NULL);
 
-static u_int		aiosp_bank_max = NPRI_KTHREAD;
-static struct aiosp	**aiosp_bank;
+static kmutex_t		aiospb_mtx;
+static u_int		aiospb_max = PRI_KTHREAD + NPRI_KTHREAD;
+static struct aiosp	**aiospb;
 
-static int		aiosp_initialize(struct aiosp **);
+static int		aiosp_initialize(struct aiosp *, pri_t);
 static int		aiosp_destroy(struct aiosp *);
-static int		aiosp_pri_idx(int);
+static int		aiosp_retrieve_bank(pri_t, struct aiosp **);
+static int		aiosp_pri_idx(pri_t);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
-static int		aiost_configure(struct aiost *, struct aio_job *, vaddr_t *);
+static int		aiost_configure(struct aiost *, struct aio_job *,
+				vaddr_t *);
 static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
@@ -79,8 +82,8 @@ aio_fini(void)
 	struct aiosp *aiosp;
 	int error;
 
-	for (int i = 0; i < aiosp_bank_max; i++) {
-		aiosp = aiosp_bank[i];
+	for (int i = 0; i < aiospb_max; i++) {
+		aiosp = aiospb[i];
 		if (aiosp == NULL) {
 			continue;
 		}
@@ -93,7 +96,7 @@ aio_fini(void)
 		kmem_free(aiosp, sizeof(*aiosp));
 	}
 
-	kmem_free(aiosp_bank, sizeof(*aiosp_bank) * aiosp_bank_max);
+	kmem_free(aiospb, sizeof(*aiospb) * aiospb_max);
 
 	return 0;
 }
@@ -104,15 +107,18 @@ aio_fini(void)
 static int
 aio_init(void)
 {
-	struct aiosp **aiosp;
+	struct aiosp *aiosp;
 	int error;
 
-	aiosp_bank = kmem_zalloc(sizeof(*aiosp_bank) * aiosp_bank_max, KM_SLEEP);
-	aiosp = &aiosp_bank[aiosp_pri_idx(PRI_KTHREAD)];
+	mutex_init(&aiospb_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	error = aiosp_initialize(aiosp);
+	aiospb = kmem_zalloc(sizeof(*aiospb) * aiospb_max, KM_SLEEP);
+	aiosp = kmem_zalloc(sizeof(*aiosp), KM_SLEEP);
+	aiospb[aiosp_pri_idx(PRI_KTHREAD)] = aiosp;
+
+	error = aiosp_initialize(aiosp, PRI_KTHREAD);
 	if (error) {
-		return error;	
+		return error;
 	}
 
 	return 0;
@@ -140,9 +146,8 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
  * job to be completed by a servicing thread.
  */
 int
-aiosp_distribute_jobs(struct aiosp *sp) {
-	mutex_enter(&sp->mtx);
-
+aiosp_distribute_jobs(struct aiosp *sp)
+{
 	/*
 	 * Check to see if the number of pending jobs exceeds the number of free
 	 * service threads. If it does then that means we need to create new
@@ -172,6 +177,9 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 	TAILQ_FOREACH(job, &sp->jobs, list) {
 		struct aiost *aiost = TAILQ_LAST(&sp->freelist, aiost_list);
 
+		mutex_enter(&aiost->mtx);
+
+		mutex_enter(&sp->mtx);
 		TAILQ_REMOVE(&sp->freelist, aiost, list);
 		sp->nthreads_free--;
 
@@ -180,12 +188,44 @@ aiosp_distribute_jobs(struct aiosp *sp) {
 
 		int error = aiost_configure(aiost, job, &aiost->kbuf);
 		if (error) {
-			mutex_exit(&sp->mtx);
+			mutex_exit(&aiost->mtx);
+			return error;
+		}
+
+		aiost->job = job;
+		aiost->state = AIOST_STATE_OPERATION;
+
+		mutex_exit(&sp->mtx);
+		mutex_exit(&aiost->mtx);
+
+		cv_signal(&aiost->service_cv);
+	}
+
+	return 0;
+}
+
+int
+aiosp_dispense_bank(void)
+{
+	int error;
+	struct aiosp *sp;
+
+	mutex_enter(&aiospb_mtx);
+
+	for (int i = 0; i < aiosp_pri_idx(aiospb_max); i++) {
+		sp = aiospb[i];
+		if (sp == NULL) {
+			continue;
+		}
+
+		error = aiosp_distribute_jobs(sp);
+		if (error) {
+			mutex_exit(&aiospb_mtx);
 			return error;
 		}
 	}
 
-	mutex_exit(&sp->mtx);
+	mutex_exit(&aiospb_mtx);
 
 	return 0;
 }
@@ -194,13 +234,9 @@ aiosp_distribute_jobs(struct aiosp *sp) {
  * Initializes a servicing pool.
  */
 static int
-aiosp_initialize(struct aiosp **ret)
+aiosp_initialize(struct aiosp *sp, pri_t pri)
 {
-	struct aiosp *sp;
-
-	sp = kmem_zalloc(sizeof(*sp), KM_SLEEP);
-
-	sp->priority = PRI_KERNEL;
+	sp->priority = pri;
 	mutex_init(&sp->mtx, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&sp->freelist);
 	TAILQ_INIT(&sp->active);
@@ -210,14 +246,53 @@ aiosp_initialize(struct aiosp **ret)
 }
 
 /*
- * Convert a priority into an index into its associative service pool.
+ * Convert a priority into an index into the service pool bank.
  */
-static int aiosp_pri_idx(int pri) {
-	if(pri < PRI_KTHREAD) {
-		panic("aio_process: invalid priority for AIO");
+static int
+aiosp_pri_idx(pri_t pri)
+{
+	if (pri < PRI_KTHREAD) {
+		panic("aio_process: invalid priority for AIO (<PRI_KTHREAD)");
 	}
 
-	return pri - PRI_KTHREAD;
+	int idx = pri - PRI_KTHREAD;
+	if (idx > aiospb_max) {
+		panic("aio_process: invalid priority for AIO (>NPRI_KTHREAD");
+	}
+
+	return idx;
+}
+
+/*
+ * Convert a priority into associative service pool. Initialize the pool if it
+ * does not yet exist.
+ */
+static int
+aiosp_retrieve_bank(pri_t pri, struct aiosp **aiosp)
+{
+	int error;
+	int bank_pri_idx;
+
+	mutex_enter(&aiospb_mtx);
+
+	bank_pri_idx = aiosp_pri_idx(pri);
+
+	*aiosp = aiospb[bank_pri_idx];
+	if (*aiosp == NULL) {
+		aiospb[bank_pri_idx] = kmem_zalloc(sizeof(**aiospb),
+			KM_SLEEP);
+		*aiosp = aiospb[bank_pri_idx];
+
+		error = aiosp_initialize(*aiosp, pri);
+		if (error) {
+			mutex_exit(&aiospb_mtx);
+			return error;
+		}
+	}
+
+	mutex_exit(&aiospb_mtx);
+
+	return 0;
 }
 
 /*
@@ -274,8 +349,16 @@ active_next:
  * Enqueue a job for processing by a servicing queue
  */
 int
-aiosp_enqueue_job(struct aiosp *sp, struct aio_job *job)
+aiosp_enqueue_job(struct aio_job *job)
 {
+	int error;
+	struct aiosp *sp;
+
+	error = aiosp_retrieve_bank(job->pri, &sp);
+	if (error) {
+		return error;
+	}
+
 	mutex_enter(&sp->mtx);
 
 	TAILQ_INSERT_TAIL(&sp->jobs, job, list);
@@ -298,17 +381,26 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
 
 	mutex_init(&st->mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&st->service_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&st->service_cv, "aioservice");
+
+	mutex_enter(&sp->mtx);
 
 	int error = kthread_create(PRI_KERNEL, 0, NULL, aiost_entry,
 		st, &st->lwp, "aio_%d_%d", p->p_pid, sp->nthreads_total);
 	if (error) {
+		mutex_exit(&sp->mtx);
 		return error;
 	}
+
+	st->job = NULL; 
+	st->state = AIOST_STATE_NONE;
 
 	TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 	sp->nthreads_free++;
 	sp->nthreads_total++;
+
+	mutex_exit(&sp->mtx);
 
 	if (ret) {
 		*ret = st;
@@ -328,6 +420,7 @@ aiost_entry(void *arg)
 	struct aiost *st = arg;
 	struct aiosp *sp = st->aiosp;
 	struct aio_job *job;
+	int error;
 
 	/*
 	 * We want to handle abrupt process terminations effectively. We use
@@ -336,11 +429,28 @@ aiost_entry(void *arg)
 	 * st->service_cv
 	 */
 	for (;;) {
-		int error = cv_wait_sig(&st->service_cv, &st->mtx);
-		mutex_enter(&st->mtx);
-		if(error) goto next;
-		if(!st->exit) goto process;	
+		for (;;) {
+			mutex_enter(&st->mtx);
 
+			if (st->state & AIOST_STATE_OPERATION) {
+				goto process_operation;		
+			} else if (st->state & AIOST_STATE_TERMINATE) {
+				goto process_termination;
+			} else if (st->state & AIOST_STATE_NONE) {
+				/*
+				 * It does not matter whether or not the
+				 * condition was awoken by a signal as we only
+				 * continue to an operation if the st->state is
+				 * set accordingly
+				 */
+				mutex_exit(&st->mtx);
+				mutex_enter(&st->service_mtx);
+				cv_wait(&st->service_cv, &st->service_mtx);
+			} else {
+				panic("aio_process: invalid aiost state\n");
+			}
+		}
+process_termination:
 		/*
 		 * Remove st from the list of active service threads, do NOT
 		 * append to the freelist, dance around locks, exit kthread
@@ -352,7 +462,7 @@ aiost_entry(void *arg)
 		mutex_exit(&sp->mtx);
 		mutex_exit(&st->mtx);
 		kthread_exit(0);
-process:
+process_operation:
 		job = st->job;
 		if (job->aio_op & (AIO_READ | AIO_WRITE)) {
 			error = aiost_process_rw(st);
@@ -383,6 +493,8 @@ next:
 
 		TAILQ_INSERT_TAIL(&sp->active, st, list);
 		sp->nthreads_active++;
+
+		st->state = AIOST_STATE_NONE;
 
 		mutex_exit(&sp->mtx);
 	}
@@ -468,7 +580,8 @@ done:
  * processes a sync/dsync asynchronous operations
  */
 static int
-aiost_process_sync(struct aiost *aiost) {
+aiost_process_sync(struct aiost *aiost)
+{
 	struct aio_job *job = aiost->job;
 	struct aiocb *aiocbp = &job->aiocbp;
 	struct file *fp;
@@ -519,15 +632,16 @@ done:
  * aiost_entry.
  */
 static int
-aiost_terminate(struct aiost *st) {
+aiost_terminate(struct aiost *st)
+{
 	mutex_enter(&st->mtx);
+	st->state = AIOST_STATE_TERMINATE;
+	mutex_exit(&st->mtx);
 
-	st->exit = 1;
 	cv_signal(&st->service_cv);
 	kthread_join(st->lwp);
 
 	cv_destroy(&st->service_cv);
-	mutex_exit(&st->mtx);
 	mutex_destroy(&st->mtx);
 	kmem_free(st, sizeof(*st));
 
@@ -539,9 +653,13 @@ aiost_terminate(struct aiost *st) {
  * and establish the 'shared' memory region.
  */
 static int
-aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf) {
+aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
+{
 	struct vmspace *vm = job->p->p_vmspace;
 	struct aiocb *aiocb = &job->aiocbp;
+	vaddr_t uva, kva;
+	paddr_t upa;
+	int error;
 
 	vm_prot_t protections = VM_PROT_NONE;
 	if (job->aio_op == AIO_READ) {
@@ -556,13 +674,13 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf) {
 	 * To account for the case where the memory is anonymously mapped and
 	 * has not yet been fulfilled.
 	 */
-	int error = uvm_vslock(vm, job->aiocb_uptr, aiocb->aio_nbytes,
+	error = uvm_vslock(vm, job->aiocb_uptr, aiocb->aio_nbytes,
 		protections);
 	if (error) {
 		return error;
 	}
 
-	vaddr_t kva = uvm_km_alloc(kernel_map, aiocb->aio_nbytes, 0,
+	kva = uvm_km_alloc(kernel_map, aiocb->aio_nbytes, 0,
 		 UVM_KMF_VAONLY);
 	if (!kva) {
 		uvm_vsunlock(vm, job->aiocb_uptr, aiocb->aio_nbytes);
@@ -572,12 +690,13 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf) {
 	/*
 	 * Extract physical memory and map to the kernel
 	 */
-	for (vaddr_t uva = trunc_page((vaddr_t)aiocb->aio_buf);
+
+	for (uva = trunc_page((vaddr_t)aiocb->aio_buf);
 		uva < round_page((vaddr_t)aiocb->aio_buf + aiocb->aio_nbytes);
 		uva += PAGE_SIZE) {
-		paddr_t upa;
-		int ret = pmap_extract(vm_map_pmap(&vm->vm_map), uva, &upa);
-		if (!ret) {
+
+		error = pmap_extract(vm_map_pmap(&vm->vm_map), uva, &upa);
+		if (error) {
 			uvm_km_free(kernel_map, kva, aiocb->aio_nbytes,
 				UVM_KMF_VAONLY);
 			uvm_vsunlock(vm, job->aiocb_uptr,

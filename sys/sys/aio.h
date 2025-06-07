@@ -94,11 +94,16 @@ struct aiocb {
 struct aio_job {
 	int aio_op;		/* Operation code */
 	struct aiocb aiocbp;	/* AIO data structure */
+	pri_t pri;		/* Job priority */
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
 	struct proc *p;		/* Process that instantiated the job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
+
+#define AIOST_STATE_NONE	0x0
+#define AIOST_STATE_OPERATION	0x1
+#define AIOST_STATE_TERMINATE	0x2
 
 /* Structure for AIO servicing thread */
 struct aiosp;
@@ -107,10 +112,11 @@ struct aiost {
 	struct aiosp *aiosp;		/* Servicing pool of this thread */
 	kmutex_t mtx;			/* Protects this structure */
 	kcondvar_t service_cv;		/* Signal to activate thread */
+	kmutex_t service_mtx;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
 	vaddr_t kbuf;			/* Shared memory buffer */
-	int exit;			/* Signifies an exit routine */
+	int state;			/* The state of the thread */
 };
 
 /* Structure for AIO servicing pool */
@@ -142,8 +148,8 @@ struct aioproc {
 	unsigned int jobs_count;	/* Count of the jobs */
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
+
 	struct aiost_list active_jobs;	/* List of active servicing threads */
-	struct aiosp *sp;		/* Servicing pool of the process */
 };
 
 extern u_int aio_listio_max;
@@ -151,7 +157,8 @@ extern u_int aio_listio_max;
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 int	aiosp_distribute_jobs(struct aiosp *);
-int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
+int	aiosp_dispense_bank(void);
+int	aiosp_enqueue_job(struct aio_job *);
 
 #endif /* _KERNEL */
 
