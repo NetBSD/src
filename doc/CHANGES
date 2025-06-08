@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3172 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3173 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -752,9 +752,15 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	pkg_install: Import pkg_install-20250417. [wiz 20250509]
 	dhcpcd: Import version 10.2.3. [roy 20250516]
 	bind: Import version 9.20.9. [christos 20250521]
-	xen: kenrnel configs now include XEN3.local instead of
-	     GENERIC.local [bad 20250522]
+	xen: kernel configs now include XEN3.local instead of
+	     GENERIC.local. [bad 20250522]
 	hp300: Add mmap(4) support to sti(4) for 362 and 382 framebuffers.
 		X.org server and other framebuffer applications work on
 		these machines.  [tsutsui 20250525]
+	npf(7): Add support for user/group-based filtering. [joe 20250531]
+	igc(4): Support for hardware TSO. [rin 20250601]
 	libfido2: Import 1.16.0 [christos 20250602]
+	evbarm: Add driver for Rockchip USB-C PHY, mostly from OpenBSD.
+		[rjs 20250603]
+	iic(4): Add driver for Onsemi FUSB302B USB-C power controller,
+		mostly from OpenBSD. [rjs 20250603]
