@@ -49,7 +49,7 @@ extern void		yyrestart(FILE *);
 void
 npfctl_parse_file(const char *name)
 {
-	const bool use_stdin = strcmp(name, "-") == 0;
+	const bool use_stdin = fstrcmp(name, "-") == 0;
 	FILE *fp;
 
 	fp = use_stdin ? fdopen(STDIN_FILENO, "r") : fopen(name, "r");
@@ -156,6 +156,7 @@ off			return OFF;
 inet6			return INET6;
 inet4			return INET4;
 ifaddrs			return IFADDRS;
+nat64			return NAT64;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
