@@ -213,6 +213,8 @@ aiosp_distribute_jobs(struct aiosp *sp)
 
 		TAILQ_REMOVE(&sp->jobs, job, list);
 
+		aiost->job = job;
+
 		aiost_list[total_dispensed++] = aiost;
 		sp->jobs_pending--;
 
@@ -223,7 +225,6 @@ finish:
 
 	for (int i = 0; i < total_dispensed; i++) {
 		struct aiost *aiost = aiost_list[i];
-		aiost->job = job;
 		aiost->state = AIOST_STATE_OPERATION;
 		cv_signal(&aiost->service_cv);
 	}
@@ -520,12 +521,14 @@ process_operation:
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 next:
+		st->state = AIOST_STATE_NONE;
+		mutex_exit(&st->mtx);
+
 		/*
 		 * Remove st from list of active service threads, append to
 		 * freelist, dance around locks, then iterate loop and block on
 		 * st->service_cv
 		 */
-		mutex_exit(&st->mtx);
 		mutex_enter(&sp->mtx);
 
 		TAILQ_REMOVE(&sp->active, st, list);
@@ -533,8 +536,6 @@ next:
 
 		TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 		sp->nthreads_free++;
-
-		st->state = AIOST_STATE_NONE;
 
 		mutex_exit(&sp->mtx);
 	}
