@@ -149,6 +149,11 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
 int
 aiosp_distribute_jobs(struct aiosp *sp)
 {
+	struct aiost **aiost_list;
+	struct aio_job *job;
+	int total_dispensed;
+	int error = 0;
+
 	/*
 	 * Check to see if the number of pending jobs exceeds the number of free
 	 * service threads. If it does then that means we need to create new
@@ -160,7 +165,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		for (int i = 0; i < nthreads_new; i++) {
 			struct aiost *aiost;
 
-			int error = aiost_create(sp, &aiost);
+			error = aiost_create(sp, &aiost);
 			if (error) {
 				mutex_exit(&sp->mtx);
 				return error;
@@ -168,43 +173,70 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		}
 	}
 
+	if (!sp->jobs_pending) {
+		return 0;
+	}
+
+	total_dispensed = 0;
+	aiost_list = kmem_zalloc(sizeof(*aiost_list) *
+		sp->jobs_pending, KM_SLEEP);
+
 	/*
 	 * Loop over all pending jobs and assign a thread from the freelist.
 	 * Move from freelist to active. Configure service thread to work with
-	 * respect to the job (and importantly the buffer associated with that
-	 * job)
+	 * respect to the job. Also signal the CV outside of sp->mtx to avoid
+	 * any shenanigans.
 	 */
-	struct aio_job *job;
-	TAILQ_FOREACH(job, &sp->jobs, list) {
+	mutex_enter(&sp->mtx);
+	struct aio_job *tmp;
+	TAILQ_FOREACH_SAFE(job, &sp->jobs, list, tmp) {
 		struct aiost *aiost = TAILQ_LAST(&sp->freelist, aiost_list);
+		if (aiost == NULL) {
+			panic("aiosp_distribute_jobs: aiost is null"); 
+		}
 
 		mutex_enter(&aiost->mtx);
 
-		mutex_enter(&sp->mtx);
 		TAILQ_REMOVE(&sp->freelist, aiost, list);
 		sp->nthreads_free--;
 
 		TAILQ_INSERT_TAIL(&sp->active, aiost, list);
 		sp->nthreads_active++;
 
-		int error = aiost_configure(aiost, job, &aiost->kbuf);
+		error = aiost_configure(aiost, job, &aiost->kbuf);
 		if (error) {
+			kmem_free(aiost_list + total_dispensed,
+				sizeof(*aiost_list) * sp->jobs_pending);
 			mutex_exit(&aiost->mtx);
-			return error;
+			goto finish;
 		}
 
+		TAILQ_REMOVE(&sp->jobs, job, list);
+
+		aiost_list[total_dispensed++] = aiost;
+		sp->jobs_pending--;
+
+		mutex_exit(&aiost->mtx);
+	}
+finish:
+	mutex_exit(&sp->mtx);
+
+	for (int i = 0; i < total_dispensed; i++) {
+		struct aiost *aiost = aiost_list[i];
 		aiost->job = job;
 		aiost->state = AIOST_STATE_OPERATION;
-
-		mutex_exit(&sp->mtx);
-		mutex_exit(&aiost->mtx);
-
 		cv_signal(&aiost->service_cv);
 	}
 
-	return 0;
+	kmem_free(aiost_list, sizeof(*aiost_list) * total_dispensed);
+
+	return error;
 }
 
+/*
+ * Distribute all pending operations on all service queues attached to the
+ * primary bank
+ */
 int
 aiosp_dispense_bank(void)
 {
@@ -439,17 +471,22 @@ aiost_entry(void *arg)
 			} else if (st->state & AIOST_STATE_TERMINATE) {
 				goto process_termination;
 			} else if (st->state & AIOST_STATE_NONE) {
-				/*
-				 * It does not matter whether or not the
-				 * condition was awoken by a signal as we only
-				 * continue to an operation/termination if
-				 * st->state is set accordingly
-				 */
 				mutex_exit(&st->mtx);
 				mutex_enter(&st->service_mtx);
-				cv_wait(&st->service_cv, &st->service_mtx);
+				error = cv_wait_sig(&st->service_cv,
+					&st->service_mtx);
+				mutex_exit(&st->service_mtx);
+				if (error) {
+					/*
+					 * Thread was interrupt. Check for
+					 * pending exit or suspension
+					 */
+					mutex_exit(&st->service_mtx);
+					lwp_userret(curlwp);
+				}
 			} else {
-				panic("aio_process: invalid aiost state {%x}\n", st->state);
+				panic("aio_process: invalid aiost state {%x}\n",
+					st->state);
 			}
 		}
 process_termination:
@@ -714,7 +751,6 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
 	/*
 	 * Extract physical memory and map to the kernel
 	 */
-
 	for (uva = trunc_page((vaddr_t)aiocb->aio_buf);
 		uva < round_page((vaddr_t)aiocb->aio_buf + aiocb->aio_nbytes);
 		uva += PAGE_SIZE) {
