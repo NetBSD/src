@@ -72,6 +72,7 @@ static int		aiost_configure(struct aiost *, struct aio_job *,
 static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
+static void		aiost_sigsend(struct proc *, struct sigevent *);
 
 /*
  * Tear down all service pools
@@ -395,6 +396,7 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 
 	st->job = NULL; 
 	st->state = AIOST_STATE_NONE;
+	st->aiosp = sp;
 
 	TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 	sp->nthreads_free++;
@@ -440,21 +442,20 @@ aiost_entry(void *arg)
 				/*
 				 * It does not matter whether or not the
 				 * condition was awoken by a signal as we only
-				 * continue to an operation if the st->state is
-				 * set accordingly
+				 * continue to an operation/termination if
+				 * st->state is set accordingly
 				 */
 				mutex_exit(&st->mtx);
 				mutex_enter(&st->service_mtx);
 				cv_wait(&st->service_cv, &st->service_mtx);
 			} else {
-				panic("aio_process: invalid aiost state\n");
+				panic("aio_process: invalid aiost state {%x}\n", st->state);
 			}
 		}
 process_termination:
 		/*
 		 * Remove st from the list of active service threads, do NOT
 		 * append to the freelist, dance around locks, exit kthread
-		 * TODO SIMPLIFY AND REMOVE LABELS
 		 */
 		mutex_enter(&sp->mtx);
 		TAILQ_REMOVE(&sp->freelist, st, list);
@@ -479,6 +480,8 @@ process_operation:
 		} else {
 			panic("aio_process: invalid operation code\n");
 		}
+
+		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 next:
 		/*
 		 * Remove st from list of active service threads, append to
@@ -488,16 +491,37 @@ next:
 		mutex_exit(&st->mtx);
 		mutex_enter(&sp->mtx);
 
-		TAILQ_REMOVE(&sp->freelist, st, list);
-		sp->nthreads_free--;
+		TAILQ_REMOVE(&sp->active, st, list);
+		sp->nthreads_active--;
 
-		TAILQ_INSERT_TAIL(&sp->active, st, list);
-		sp->nthreads_active++;
+		TAILQ_INSERT_TAIL(&sp->freelist, st, list);
+		sp->nthreads_free++;
 
 		st->state = AIOST_STATE_NONE;
 
 		mutex_exit(&sp->mtx);
 	}
+}
+
+/*
+ * send AIO signal.
+ */
+static void
+aiost_sigsend(struct proc *p, struct sigevent *sig)
+{
+	ksiginfo_t ksi;
+
+	if (sig->sigev_signo == 0 || sig->sigev_notify == SIGEV_NONE)
+		return;
+
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = sig->sigev_signo;
+	ksi.ksi_code = SI_ASYNCIO;
+	ksi.ksi_value = sig->sigev_value;
+
+	mutex_enter(&proc_lock);
+	kpsignal(p, &ksi, NULL);
+	mutex_exit(&proc_lock);
 }
 
 /*

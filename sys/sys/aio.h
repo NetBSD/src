@@ -101,9 +101,9 @@ struct aio_job {
 	struct lio_req *lio;
 };
 
-#define AIOST_STATE_NONE	0x0
-#define AIOST_STATE_OPERATION	0x1
-#define AIOST_STATE_TERMINATE	0x2
+#define AIOST_STATE_NONE	0x1
+#define AIOST_STATE_OPERATION	0x2
+#define AIOST_STATE_TERMINATE	0x4
 
 /* Structure for AIO servicing thread */
 struct aiosp;
