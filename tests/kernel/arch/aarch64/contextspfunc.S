@@ -1,4 +1,4 @@
-/*	$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $	*/
+/*	$NetBSD: contextspfunc.S,v 1.2 2025/06/08 18:55:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
+RCSID("$NetBSD: contextspfunc.S,v 1.2 2025/06/08 18:55:35 christos Exp $")
 
 /*
  * contextspfunc()
@@ -40,7 +40,7 @@ RCSID("$NetBSD: contextspfunc.S,v 1.1 2025/04/21 02:33:44 riastradh Exp $")
  */
 ENTRY(contextspfunc)
 	mov	x0, sp
-	adrp	x1, :pg_hi21:_C_LABEL(contextsp)
-	str	x0, [x1, #:lo12:_C_LABEL(contextsp)]
+	adrp	x1, _C_LABEL(contextsp)
+	str	x0, [x1, :lo12:_C_LABEL(contextsp)]
 	b	_C_LABEL(contextdone)
 END(contextspfunc)

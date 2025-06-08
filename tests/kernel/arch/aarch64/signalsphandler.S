@@ -1,4 +1,4 @@
-/*	$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $	*/
+/*	$NetBSD: signalsphandler.S,v 1.2 2025/06/08 18:55:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $")
+RCSID("$NetBSD: signalsphandler.S,v 1.2 2025/06/08 18:55:35 christos Exp $")
 
 /*
  * signalsphandler(signo@x0)
@@ -40,7 +40,7 @@ RCSID("$NetBSD: signalsphandler.S,v 1.1 2025/04/20 22:31:00 riastradh Exp $")
  */
 ENTRY(signalsphandler)
 	mov	x0, sp
-	adrp	x1, :pg_hi21:_C_LABEL(signalsp)
-	str	x0, [x1, #:lo12:_C_LABEL(signalsp)]
+	adrp	x1, _C_LABEL(signalsp)
+	str	x0, [x1, :lo12:_C_LABEL(signalsp)]
 	ret
 END(signalsphandler)
