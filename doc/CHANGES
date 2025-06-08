@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3173 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3174 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -753,7 +753,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	dhcpcd: Import version 10.2.3. [roy 20250516]
 	bind: Import version 9.20.9. [christos 20250521]
 	xen: kernel configs now include XEN3.local instead of
-	     GENERIC.local. [bad 20250522]
+		GENERIC.local. [bad 20250522]
 	hp300: Add mmap(4) support to sti(4) for 362 and 382 framebuffers.
 		X.org server and other framebuffer applications work on
 		these machines.  [tsutsui 20250525]
