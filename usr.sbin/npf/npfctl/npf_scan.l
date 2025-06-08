@@ -49,7 +49,7 @@ extern void		yyrestart(FILE *);
 void
 npfctl_parse_file(const char *name)
 {
-	const bool use_stdin = fstrcmp(name, "-") == 0;
+	const bool use_stdin = strcmp(name, "-") == 0;
 	FILE *fp;
 
 	fp = use_stdin ? fdopen(STDIN_FILENO, "r") : fopen(name, "r");
