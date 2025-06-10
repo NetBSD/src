@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1421 2025/06/04 06:01:59 rillig Exp $
+#	$NetBSD: bsd.own.mk,v 1.1422 2025/06/10 14:30:44 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -742,6 +742,14 @@ CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-stringop-overread :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+
+# relative relocs are only supported in gnu ld for ppc64 and x86
+.if ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "i386"  || \
+    ${MACHINE_ARCH} == "powerpc64"
+LD_PACK_RELATIVE_RELOCS=	-Wl,-z,pack-relative-relocs
+LD_NOPACK_RELATIVE_RELOCS=	-Wl,-z,nopack-relative-relocs
+.endif
 
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm
