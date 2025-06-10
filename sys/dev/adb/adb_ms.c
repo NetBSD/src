@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.23 2025/06/10 10:02:56 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.24 2025/06/10 11:03:41 martin Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.23 2025/06/10 10:02:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.24 2025/06/10 11:03:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,6 +94,12 @@ struct adbms_softc {
 	int		sc_event;
 	uint8_t		sc_buffer[16];
 };
+
+/* EMP device classes */
+#define MSCLASS_TABLET		0
+#define MSCLASS_MOUSE		1
+#define MSCLASS_TRACKBALL	2
+#define MSCLASS_TRACKPAD	3
 
 /*
  * Function declarations.
