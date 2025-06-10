@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.407 2025/05/06 14:24:27 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.408 2025/06/10 20:22:05 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -568,6 +568,7 @@ EMACS	Editor MACroS
 EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
+EMS	extended master secret (RFC7627)
 ENIAC	electronic numerical integrator and computer
 EOF	end of file
 EOI	end of interrupt
