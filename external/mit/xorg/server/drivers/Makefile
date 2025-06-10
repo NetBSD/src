@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2024/11/04 02:26:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.116 2025/06/10 13:20:47 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -248,6 +248,7 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
+	xf86-video-glint \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -323,6 +324,7 @@ SUBDIR+= \
     ${MACHINE} == "sparc64"
 SUBDIR+= \
 	xf86-video-ati \
+	xf86-video-glint \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-r128 \
