@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.328 2025/06/11 02:45:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.329 2025/06/11 02:45:41 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.328 2025/06/11 02:45:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.329 2025/06/11 02:45:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -237,7 +237,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct route iproute;
 	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia = NULL;
-	struct ifaddr *ifa;
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
@@ -323,7 +322,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * If routing to interface only, short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
+		struct ifaddr *ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
 		if (ifa == NULL) {
 			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
@@ -451,7 +450,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		 */
 		if (in_nullhost(ip->ip_src)) {
 			struct in_ifaddr *xia;
-			struct ifaddr *xifa;
+			struct ifaddr *ifa;
 			struct psref _psref;
 
 			xia = in_get_ia_from_ifp_psref(ifp, &_psref);
@@ -460,11 +459,11 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
-			xifa = &xia->ia_ifa;
-			if (xifa->ifa_getifa != NULL) {
+			ifa = &xia->ia_ifa;
+			if (ifa->ifa_getifa != NULL) {
 				ia4_release(xia, &_psref);
 				/* FIXME ifa_getifa is NOMPSAFE */
-				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
+				xia = ifatoia((*ifa->ifa_getifa)(ifa, rdst));
 				if (xia == NULL) {
 					IP_STATINC(IP_STAT_IFNOADDR);
 					error = EADDRNOTAVAIL;
@@ -530,13 +529,13 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * of outgoing interface.
 	 */
 	if (in_nullhost(ip->ip_src)) {
-		struct ifaddr *xifa;
+		struct ifaddr *ifa;
 
-		xifa = &ia->ia_ifa;
-		if (xifa->ifa_getifa != NULL) {
+		ifa = &ia->ia_ifa;
+		if (ifa->ifa_getifa != NULL) {
 			ia4_release(ia, &psref_ia);
 			/* FIXME ifa_getifa is NOMPSAFE */
-			ia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
+			ia = ifatoia((*ifa->ifa_getifa)(ifa, rdst));
 			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
 				goto bad;
@@ -657,9 +656,7 @@ sendit:
 	 */
 	KASSERT(ia == NULL);
 	sockaddr_in_init(&usrc.sin, &ip->ip_src, 0);
-	ifa = ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia);
-	if (ifa != NULL)
-		ia = ifatoia(ifa);
+	ia = ifatoia(ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia));
 
 	/*
 	 * Ensure we only send from a valid address.
