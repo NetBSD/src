@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.24 2025/06/10 11:03:41 martin Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.25 2025/06/11 13:45:02 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.24 2025/06/10 11:03:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.25 2025/06/11 13:45:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.24 2025/06/10 11:03:41 martin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <machine/adbsys.h>
 #include <dev/adb/adbvar.h>
 
 #include "adbdebug.h"
@@ -94,12 +93,6 @@ struct adbms_softc {
 	int		sc_event;
 	uint8_t		sc_buffer[16];
 };
-
-/* EMP device classes */
-#define MSCLASS_TABLET		0
-#define MSCLASS_MOUSE		1
-#define MSCLASS_TRACKBALL	2
-#define MSCLASS_TRACKPAD	3
 
 /*
  * Function declarations.
