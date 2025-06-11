@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.327 2025/06/11 02:44:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.328 2025/06/11 02:45:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.327 2025/06/11 02:44:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.328 2025/06/11 02:45:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -332,7 +332,13 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		/* ia is already referenced by psref_ia */
 		ia = ifatoia(ifa);
 
-		ifp = ia->ia_ifp;
+		/* Need a reference to keep ifp after ia4_release(ia). */
+		ifp = mifp = if_get_byindex(ia->ia_ifp->if_index, &psref);
+		if (__predict_false(ifp == NULL)) {
+			IP_STATINC(IP_STAT_NOROUTE);
+			error = ENETUNREACH;
+			goto bad;
+		}
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
 		isbroadcast = in_broadcast(dst->sin_addr, ifp);
