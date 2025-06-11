@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.326 2023/04/19 22:00:18 mlelstv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.327 2025/06/11 02:44:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.326 2023/04/19 22:00:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.327 2025/06/11 02:44:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -580,7 +580,7 @@ sendit:
 		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
 			ip->ip_id = 0;
 		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
-			ip->ip_id = ip_newid(ia);
+			ip->ip_id = ip_newid();
 		} else {
 			/*
 			 * TSO capable interfaces (typically?) increment
@@ -596,7 +596,7 @@ sendit:
 			unsigned int datasz = ntohs(ip->ip_len) - hlen;
 			unsigned int num = howmany(datasz, segsz);
 
-			ip->ip_id = ip_newid_range(ia, num);
+			ip->ip_id = ip_newid_range(num);
 		}
 	}
 	if (ia != NULL) {
