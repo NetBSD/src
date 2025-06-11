@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.32 2025/06/01 00:54:36 joe Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.33 2025/06/11 10:43:38 martin Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -352,7 +352,7 @@ npfctl_parse_port_range_variable(const char *v, npfvar_t *vp)
 			    sizeof(*pr));
 			break;
 		case NPFVAR_NUM:
-			p = *(unsigned long *)data;
+			p = *(uint32_t *)data;
 			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
 			break;
 		default:
