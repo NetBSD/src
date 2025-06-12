@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.408 2025/06/10 20:22:05 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.409 2025/06/12 15:45:49 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -562,6 +562,7 @@ EH	extension header
 EIDE	enhanced IDE
 EINJ	error injection table
 EISA	extended industry standard architecture
+EKU	extended key usage (x509)
 ELF	executable and linking format
 ELS	entry level system
 EMACS	Editor MACroS
