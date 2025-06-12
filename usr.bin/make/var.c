@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1165 2025/06/11 18:49:58 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1166 2025/06/12 18:51:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1165 2025/06/11 18:49:58 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1166 2025/06/12 18:51:05 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2866,7 +2866,7 @@ ModifyWord_Mtime(Substring word, SepBuf *buf, void *data)
 	if (stat(word.start, &st) < 0) {
 		if (args->error) {
 			Parse_Error(PARSE_FATAL,
-			    "Cannot determine mtime for '%s': %s",
+			    "Cannot determine mtime for \"%s\": %s",
 			    word.start, strerror(errno));
 			args->rc = AMR_CLEANUP;
 			return;

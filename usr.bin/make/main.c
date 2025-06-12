@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.656 2025/06/05 21:56:54 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.657 2025/06/12 18:51:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.656 2025/06/05 21:56:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.657 2025/06/12 18:51:05 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -361,7 +361,8 @@ MainParseArgChdir(const char *argvalue)
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
-		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+		(void)fprintf(stderr, "%s: getcwd: %s\n",
+		    progname, strerror(errno));
 		exit(2);
 	}
 	if (!IsRelativePath(argvalue) &&
@@ -742,7 +743,7 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 		return false;
 
 	if ((writable && access(path, W_OK) != 0) || chdir(path) != 0) {
-		(void)fprintf(stderr, "%s: warning: %s: %s.\n",
+		(void)fprintf(stderr, "%s: warning: %s: %s\n",
 		    progname, path, strerror(errno));
 		/* Allow debugging how we got here - not always obvious */
 		if (GetBooleanExpr("${MAKE_DEBUG_OBJDIR_CHECK_WRITABLE}",
@@ -981,7 +982,7 @@ InitVarMachineArch(void)
 
 		if (sysctl(mib, (unsigned)__arraycount(mib),
 		    machine_arch_buf, &len, NULL, 0) < 0) {
-			(void)fprintf(stderr, "%s: sysctl failed (%s).\n",
+			(void)fprintf(stderr, "%s: sysctl: %s\n",
 			    progname, strerror(errno));
 			exit(2);
 		}
@@ -1342,7 +1343,7 @@ main_Init(int argc, char **argv)
 	UnlimitFiles();
 
 	if (uname(&utsname) == -1) {
-		(void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
+		(void)fprintf(stderr, "%s: uname: %s\n", progname,
 		    strerror(errno));
 		exit(2);
 	}
@@ -1433,7 +1434,7 @@ main_Init(int argc, char **argv)
 	Dir_Init();
 
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
-		(void)fprintf(stderr, "%s: getcwd: %s.\n",
+		(void)fprintf(stderr, "%s: getcwd: %s\n",
 		    progname, strerror(errno));
 		exit(2);
 	}
@@ -1450,7 +1451,7 @@ main_Init(int argc, char **argv)
 		printf("%s: Entering directory `%s'\n", progname, curdir);
 
 	if (stat(curdir, &sa) == -1) {
-		(void)fprintf(stderr, "%s: %s: %s.\n",
+		(void)fprintf(stderr, "%s: stat %s: %s\n",
 		    progname, curdir, strerror(errno));
 		exit(2);
 	}
@@ -1992,7 +1993,7 @@ execDie(const char *func, const char *arg)
 	char msg[1024];
 	int len;
 
-	len = snprintf(msg, sizeof(msg), "%s: %s(%s) failed (%s)\n",
+	len = snprintf(msg, sizeof(msg), "%s: %s(%s): %s\n",
 	    progname, func, arg, strerror(errno));
 	write_all(STDERR_FILENO, msg, (size_t)len);
 	_exit(1);
@@ -2222,8 +2223,7 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 		snprintf(tfile, tfile_sz, "%s%s", tmpdir, pattern);
 
 	if ((fd = mkstemp(tfile)) < 0)
-		Punt("Could not create temporary file %s: %s", tfile,
-		    strerror(errno));
+		Punt("mkstemp %s: %s", tfile, strerror(errno));
 	if (tfile == tbuf)
 		unlink(tfile);	/* we just want the descriptor */
 

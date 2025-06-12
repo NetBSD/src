@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.212 2025/04/22 05:57:12 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.213 2025/06/12 18:51:05 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -747,7 +747,7 @@ meta_job_error(Job *job, GNode *gn, bool ignerr, int status)
     if (gn != NULL)
 	Global_Set(".ERROR_TARGET", GNode_Path(gn));
     if (getcwd(cwd, sizeof cwd) == NULL)
-	Punt("Cannot get cwd: %s", strerror(errno));
+	Punt("getcwd: %s", strerror(errno));
 
     Global_Set(".ERROR_CWD", cwd);
     if (pbm->meta_fname[0] != '\0') {
@@ -1634,7 +1634,7 @@ meta_compat_start(void)
     }
 #endif
     if (pipe(childPipe) < 0)
-	Punt("Cannot create pipe: %s", strerror(errno));
+	Punt("pipe: %s", strerror(errno));
     /* Set close-on-exec flag for both */
     (void)fcntl(childPipe[0], F_SETFD, FD_CLOEXEC);
     (void)fcntl(childPipe[1], F_SETFD, FD_CLOEXEC);

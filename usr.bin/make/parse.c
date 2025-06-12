@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.746 2025/05/29 03:41:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.747 2025/06/12 18:51:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.746 2025/05/29 03:41:21 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.747 2025/06/12 18:51:05 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -367,7 +367,7 @@ LoadFile(const char *path, int fd)
 		assert(buf.len < buf.cap);
 		n = read(fd, buf.data + buf.len, buf.cap - buf.len);
 		if (n < 0) {
-			Error("%s: read error: %s", path, strerror(errno));
+			Error("%s: %s", path, strerror(errno));
 			exit(2);	/* Not 1 so -q can distinguish error */
 		}
 		if (n == 0)
