@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.238 2025/06/12 08:26:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.239 2025/06/12 08:27:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.238 2025/06/12 08:26:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.239 2025/06/12 08:27:40 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -479,7 +479,7 @@ rt_init(void)
 	rt_psref_class = psref_class_create("rtentry", IPL_SOFTNET);
 
 	error = workqueue_create(&rt_free_global.wq, "rt_free",
-	    rt_free_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
+	    rt_free_work, NULL, PRI_USER, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
@@ -1824,7 +1824,7 @@ rt_timer_init(void)
 	LIST_INIT(&rttimer_queue_head);
 	callout_init(&rt_timer_ch, CALLOUT_MPSAFE);
 	error = workqueue_create(&rt_timer_wq, "rt_timer",
-	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
+	    rt_timer_work, NULL, PRI_USER, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
