@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.38 2025/04/14 16:43:01 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.39 2025/06/12 06:08:10 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.38 2025/04/14 16:43:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.39 2025/06/12 06:08:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2131,7 +2131,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		} else
 			ip->ip_off = 0;
 
-		ip->ip_id = htons(ip_newid(NULL));
+		ip->ip_id = htons(ip_newid());
 		ip->ip_ttl = inp->inp_ip_ttl;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		if (stcb) {
