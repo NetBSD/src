@@ -123,14 +123,14 @@ struct aiost {
 TAILQ_HEAD(aiost_list, aiost);
 struct aiosp {
 	struct aiost_list freelist;	/* Available service threads */
-	int nthreads_free;		/* Length of freelist */
+	size_t nthreads_free;		/* Length of freelist */
 	struct aiost_list active;	/* Active servicing threads */ 
-	int nthreads_active;		/* length of active list */
+	size_t nthreads_active;		/* length of active list */
 	TAILQ_HEAD(, aio_job) jobs;	/* Queue of pending jobs */
-	int jobs_pending;		/* Number of pending jobs */
+	size_t jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
-	int nthreads_total;		/* Number of total servicing threads */
-	int priority;			/* Thread priority of the pool */
+	size_t nthreads_total;		/* Number of total servicing threads */
+	pri_t priority;			/* Thread priority of the pool */
 };
 
 /* LIO structure */

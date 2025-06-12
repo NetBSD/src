@@ -69,6 +69,7 @@ static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
 static int		aiost_configure(struct aiost *, struct aio_job *,
 				vaddr_t *);
+static int		aiost_teardown(struct aiost *);
 static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
@@ -333,50 +334,41 @@ aiosp_retrieve_bank(pri_t pri, struct aiosp **aiosp)
  * Each process keeps track of all the service threads instantiated to service
  * an asynchronous operation by the process. When a process is terminated we
  * must also terminate all of its active and pending asynchronous operation.
- * EXCEPTIONAL TROLLING FIX LATER
  */
 static int
 aiosp_destroy(struct aiosp *sp)
 {
 	struct aiost *st;
-	int freelist = 1;
-	int error;
+	struct aiost *tmp;
+	int error = 0;
 
 	mutex_enter(&sp->mtx);
 
-	goto begin;
-process:
-	error = aiost_terminate(st);
-	if (error) {
-		mutex_exit(&sp->mtx);
-		return error;
+	/*
+	 * Terminate and destroy every service thread both free and active.
+	 */
+	TAILQ_FOREACH_SAFE(st, &sp->freelist, list, tmp) {
+		error = aiost_terminate(st);
+		if (error) {
+			goto finish;
+		}
+
+		kmem_free(st, sizeof(*st));
 	}
 
-	kmem_free(st, sizeof(*st));
+	TAILQ_FOREACH_SAFE(st, &sp->active, list, tmp) {
+		error = aiost_terminate(st);
+		if (error) {
+			goto finish;
+		}
 
-	if (freelist) {
-		goto freelist_next;
-	} else {
-		goto active_next;
+		kmem_free(st, sizeof(*st));
 	}
-
-begin:
-	TAILQ_FOREACH(st, &sp->freelist, list) {
-		goto process;
-freelist_next:
-	}
-
-	freelist = 0;
-	TAILQ_FOREACH(st, &sp->active, list) {
-		goto process;
-active_next:
-	}
-
+finish:
 	kmem_free(sp, sizeof(*sp));
-
 	mutex_exit(&sp->mtx);
 
-	return 0;
+	return error;
 }
 
 /*
@@ -421,7 +413,7 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	mutex_enter(&sp->mtx);
 
 	int error = kthread_create(PRI_KERNEL, 0, NULL, aiost_entry,
-		st, &st->lwp, "aio_%d_%d", p->p_pid, sp->nthreads_total);
+		st, &st->lwp, "aio_%d_%ld", p->p_pid, sp->nthreads_total);
 	if (error) {
 		mutex_exit(&sp->mtx);
 		return error;
@@ -696,7 +688,13 @@ done:
 static int
 aiost_terminate(struct aiost *st)
 {
+	int error = 0;
+
 	mutex_enter(&st->mtx);
+	error = aiost_teardown(st);
+	if (error) {
+		return error;
+	}
 	st->state = AIOST_STATE_TERMINATE;
 	mutex_exit(&st->mtx);
 
@@ -707,7 +705,7 @@ aiost_terminate(struct aiost *st)
 	mutex_destroy(&st->mtx);
 	kmem_free(st, sizeof(*st));
 
-	return 0;
+	return error;
 }
 
 /*
@@ -771,6 +769,41 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
 
 	pmap_update(pmap_kernel());
 	*kbuf = kva;
+
+	return 0;
+}
+
+/*
+ * Free all memory and meta associated with aiost->kbuf
+ */
+static int
+aiost_teardown(struct aiost *aiost)
+{
+	struct aio_job *job;
+	struct vmspace *vm;
+	struct aiocb *aiocb;
+	vaddr_t kva;
+
+	job = aiost->job;
+	if (job == NULL) {
+		return 0;
+	}
+
+	vm = job->p->p_vmspace;
+	aiocb = &job->aiocbp;
+
+	kva = (vaddr_t)aiost->kbuf;
+	if (!kva) {
+		return 0;
+	}
+
+	for (vaddr_t va = kva; va < kva + round_page(aiocb->aio_nbytes);
+		va += PAGE_SIZE) {
+		pmap_kremove(va, PAGE_SIZE);
+	}
+
+	uvm_km_free(kernel_map, kva, aiocb->aio_nbytes, UVM_KMF_VAONLY);
+	uvm_vsunlock(vm, job->aiocb_uptr, aiocb->aio_nbytes);
 
 	return 0;
 }
