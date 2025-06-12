@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.747 2025/06/12 18:51:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.748 2025/06/12 19:02:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.747 2025/06/12 18:51:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.748 2025/06/12 19:02:31 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -442,9 +442,9 @@ GetStackTrace(bool includingInnermost)
 	}
 
 	if (makelevel > 0) {
-		Buf_AddStr(buf, "\tin directory ");
+		Buf_AddStr(buf, "\tin directory \"");
 		Buf_AddStr(buf, curdir);
-		Buf_AddStr(buf, "\n");
+		Buf_AddStr(buf, "\"\n");
 	}
 
 end:
