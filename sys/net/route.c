@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.237 2023/06/05 03:51:45 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.238 2025/06/12 08:26:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.237 2023/06/05 03:51:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.238 2025/06/12 08:26:29 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1264,6 +1264,8 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		pserialize_read_exit(ss);
 		cv_init(&rt->rt_cv, "rtentry");
 		psref_target_init(&rt->rt_psref, rt_psref_class);
+		if (ifa->ifa_rtrequest)
+			ifa->ifa_rtrequest(req, rt, info);
 
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rc = rt_addaddr(rtbl, rt, netmask);
@@ -1276,8 +1278,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(rc);
 		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(req, rt, info);
 		if (need_to_release_ifa)
 			ifa_release(ifa, &psref_ifa);
 		ifa = NULL;
