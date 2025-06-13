@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.514 2025/06/13 04:27:21 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.515 2025/06/13 05:04:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.514 2025/06/13 04:27:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.515 2025/06/13 05:04:52 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1763,15 +1763,18 @@ Job_Make(GNode *gn)
  * itself.
  */
 static const char *
-PrintFilteredOutput(const char *p, const char *endp)
+PrintFilteredOutput(Job *job, size_t len)
 {
-	const char *ep;
+	const char *p = job->outBuf, *ep, *endp;
 
 	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
 		return p;
 
+	endp = p + len;
 	while ((ep = strstr(p, shell->noPrint)) != NULL) {
-		if (ep != p) {
+		if (ep > p) {
+			if (!opts.silent)
+				SwitchOutputTo(job->node);
 			(void)fwrite(p, 1, (size_t)(ep - p), stdout);
 			(void)fflush(stdout);
 		}
@@ -1855,21 +1858,7 @@ again:
 	if (gotNL || bufferFull) {
 		job->outBuf[i] = '\0';
 		if (i >= job->outBufLen) {
-			const char *p;
-
-			/*
-			 * FIXME: SwitchOutputTo should be here, according to
-			 * the comment above.  But since PrintOutput does not
-			 * do anything in the default shell, this bug has gone
-			 * unnoticed until now.
-			 */
-			p = PrintFilteredOutput(job->outBuf, &job->outBuf[i]);
-
-			/*
-			 * There's still more in the output buffer. This time,
-			 * though, we know there's no newline at the end, so
-			 * we add one of our own free will.
-			 */
+			const char *p = PrintFilteredOutput(job, i);
 			if (*p != '\0') {
 				if (!opts.silent)
 					SwitchOutputTo(job->node);
@@ -1879,19 +1868,18 @@ again:
 					    gotNL ? "\n" : "");
 				}
 #endif
-				(void)fprintf(stdout, "%s%s", p,
-				    gotNL ? "\n" : "");
+				(void)fwrite(p, 1,
+				    (size_t)(job->outBuf + i - p), stdout);
+				if (gotNL)
+					(void)fputs("\n", stdout);
 				(void)fflush(stdout);
 			}
 		}
 		if (i < max) {
-			(void)memmove(job->outBuf, &job->outBuf[i + 1],
-			    max - (i + 1));
-			job->outBufLen = max - (i + 1);
-		} else {
-			assert(i == max);
-			job->outBufLen = 0;
+			i++;
+			memmove(job->outBuf, job->outBuf + i, max - i);
 		}
+		job->outBufLen = max - i;
 	}
 	if (finish)
 		goto again;
