@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.366 2025/06/13 03:51:18 rillig Exp $
+# $NetBSD: Makefile,v 1.367 2025/06/13 20:23:16 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -556,7 +556,10 @@ SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == true.
 SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)): .*$$,<not found: \1>,'
 SED_CMDS.sh-dots+=		-e 's,^\(\*\*\* Error code \)[1-9][0-9]*,\1<nonzero>,'
+# Race condition between the child's stdout and make's status.
 SED_CMDS.sh-errctl=		${STD_SED_CMDS.dj}
+SED_CMDS.sh-errctl+=		-e '/^Process with pid/d'
+SED_CMDS.sh-errctl+=		-e '/^JobFinish:/d'
 SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
 SED_CMDS.sh-leading-hyphen=	${STD_SED_CMDS.shell}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
