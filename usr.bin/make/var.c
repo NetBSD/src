@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1166 2025/06/12 18:51:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1167 2025/06/13 03:51:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1166 2025/06/12 18:51:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1167 2025/06/13 03:51:18 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4790,6 +4790,29 @@ Var_SubstInTarget(const char *str, GNode *scope)
 	EvalStack_Pop();
 	EvalStack_Pop();
 	return res;
+}
+
+void
+Var_ExportStackTrace(const char *target, const char *cmd)
+{
+	char *stackTrace;
+
+	if (getenv("MAKE_STACK_TRACE") == NULL)
+		return;
+
+	if (target != NULL)
+		EvalStack_Push(VSK_TARGET, target, NULL);
+	if (cmd != NULL)
+		EvalStack_Push(VSK_COMMAND, cmd, NULL);
+
+	stackTrace = GetStackTrace(true);
+	(void)setenv("MAKE_STACK_TRACE", stackTrace, 1);
+	free(stackTrace);
+
+	if (cmd != NULL)
+		EvalStack_Pop();
+	if (target != NULL)
+		EvalStack_Pop();
 }
 
 void

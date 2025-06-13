@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.512 2025/06/12 18:51:05 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.513 2025/06/13 03:51:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.512 2025/06/12 18:51:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.513 2025/06/13 03:51:18 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1494,6 +1494,7 @@ JobExec(Job *job, char **argv)
 	job->status = JOB_ST_RUNNING;
 
 	Var_ReexportVars(job->node);
+	Var_ExportStackTrace(job->node->name, NULL);
 
 	cpid = FORK_FUNCTION();
 	if (cpid == -1)

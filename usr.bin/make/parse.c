@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.749 2025/06/12 20:07:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.750 2025/06/13 03:51:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.749 2025/06/12 20:07:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.750 2025/06/13 03:51:18 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -392,17 +392,28 @@ LoadFile(const char *path, int fd)
 char *
 GetStackTrace(bool includingInnermost)
 {
+	static bool parentStackTraceInitialized;
+	static const char *parentStackTrace;
+
 	Buffer buffer, *buf = &buffer;
 	const IncludedFile *entries;
 	size_t i, n;
-
 	bool hasDetails;
+
+	if (!parentStackTraceInitialized) {
+		const char *env = getenv("MAKE_STACK_TRACE");
+		parentStackTrace = env == NULL ? NULL
+		    : env[0] == '\t' ? bmake_strdup(env)
+		    : strcmp(env, "yes") == 0 ? bmake_strdup("")
+		    : NULL;
+		parentStackTraceInitialized = true;
+	}
 
 	Buf_Init(buf);
 	hasDetails = EvalStack_Details(buf);
 	n = includes.len;
 	if (n == 0)
-		goto end;
+		goto add_parent_stack_trace;
 
 	entries = GetInclude(0);
 	if (!includingInnermost && !(hasDetails && n > 1)
@@ -441,7 +452,9 @@ GetStackTrace(bool includingInnermost)
 		}
 	}
 
-	if (makelevel > 0) {
+add_parent_stack_trace:
+	if ((makelevel > 0 && (n > 0 || !includingInnermost))
+	    || parentStackTrace != NULL) {
 		Buf_AddStr(buf, "\tin ");
 		Buf_AddStr(buf, progname);
 		Buf_AddStr(buf, " in directory \"");
@@ -449,7 +462,9 @@ GetStackTrace(bool includingInnermost)
 		Buf_AddStr(buf, "\"\n");
 	}
 
-end:
+	if (parentStackTrace != NULL)
+		Buf_AddStr(buf, parentStackTrace);
+
 	return Buf_DoneData(buf);
 }
 

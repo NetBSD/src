@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.365 2025/06/13 03:12:34 sjg Exp $
+# $NetBSD: Makefile,v 1.366 2025/06/13 03:51:18 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -455,6 +455,7 @@ TESTS+=		varname-dot-suffixes
 TESTS+=		varname-dot-targets
 TESTS+=		varname-empty
 TESTS+=		varname-make
+TESTS+=		varname-make_stack_trace
 TESTS+=		varname-make_print_var_on_error
 TESTS+=		varname-make_print_var_on_error-jobs
 TESTS+=		varname-makefile
