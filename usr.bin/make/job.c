@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.515 2025/06/13 05:04:52 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.516 2025/06/13 06:13:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.515 2025/06/13 05:04:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.516 2025/06/13 06:13:19 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1771,7 +1771,7 @@ PrintFilteredOutput(Job *job, size_t len)
 		return p;
 
 	endp = p + len;
-	while ((ep = strstr(p, shell->noPrint)) != NULL) {
+	while ((ep = strstr(p, shell->noPrint)) != NULL && ep < endp) {
 		if (ep > p) {
 			if (!opts.silent)
 				SwitchOutputTo(job->node);
@@ -1799,88 +1799,63 @@ PrintFilteredOutput(Job *job, size_t len)
 static void
 CollectOutput(Job *job, bool finish)
 {
-	bool gotNL;		/* true if got a newline */
-	bool bufferFull;
+	const char *p;
 	size_t nr;		/* number of bytes read */
 	size_t i;		/* auxiliary index into outBuf */
 	size_t max;		/* limit for i (end of current data) */
-	ssize_t nRead;		/* (Temporary) number of bytes read */
 
 again:
-	gotNL = false;
-	bufferFull = false;
-
-	nRead = read(job->inPipe, job->outBuf + job->outBufLen,
+	nr = (size_t)read(job->inPipe, job->outBuf + job->outBufLen,
 	    JOB_BUFSIZE - job->outBufLen);
-	if (nRead < 0) {
+	if (nr == (size_t)-1) {
 		if (errno == EAGAIN)
 			return;
 		if (DEBUG(JOB))
 			perror("CollectOutput(piperead)");
 		nr = 0;
-	} else
-		nr = (size_t)nRead;
+	}
 
 	if (nr == 0)
 		finish = false;	/* stop looping */
 
-	/*
-	 * If we hit the end-of-file (the job is dead), we must flush its
-	 * remaining output, so pretend we read a newline if there's any
-	 * output remaining in the buffer.
-	 */
-	if (nr == 0 && job->outBufLen != 0) {
+	if (nr == 0 && job->outBufLen > 0) {
 		job->outBuf[job->outBufLen] = '\n';
 		nr = 1;
 	}
 
 	max = job->outBufLen + nr;
+	job->outBuf[max] = '\0';
+
 	for (i = job->outBufLen; i < max; i++)
 		if (job->outBuf[i] == '\0')
 			job->outBuf[i] = ' ';
 
-	/* Look for the last newline in the bytes we just got. */
-	for (i = job->outBufLen + nr - 1;
-	     i >= job->outBufLen && i != (size_t)-1; i--) {
-		if (job->outBuf[i] == '\n') {
-			gotNL = true;
+	for (i = max; i > job->outBufLen; i--)
+		if (job->outBuf[i - 1] == '\n')
 			break;
-		}
+
+	if (i == job->outBufLen) {
+		job->outBufLen = max;
+		if (max < JOB_BUFSIZE)
+			goto unfinished_line;
+		i = max;
 	}
 
-	if (!gotNL) {
-		job->outBufLen += nr;
-		if (job->outBufLen == JOB_BUFSIZE) {
-			bufferFull = true;
-			i = job->outBufLen;
-		}
-	}
-	if (gotNL || bufferFull) {
-		job->outBuf[i] = '\0';
-		if (i >= job->outBufLen) {
-			const char *p = PrintFilteredOutput(job, i);
-			if (*p != '\0') {
-				if (!opts.silent)
-					SwitchOutputTo(job->node);
+	p = PrintFilteredOutput(job, i);
+	if (*p != '\0') {
+		if (!opts.silent)
+			SwitchOutputTo(job->node);
 #ifdef USE_META
-				if (useMeta) {
-					meta_job_output(job, p,
-					    gotNL ? "\n" : "");
-				}
+		if (useMeta)
+			meta_job_output(job, p);
 #endif
-				(void)fwrite(p, 1,
-				    (size_t)(job->outBuf + i - p), stdout);
-				if (gotNL)
-					(void)fputs("\n", stdout);
-				(void)fflush(stdout);
-			}
-		}
-		if (i < max) {
-			i++;
-			memmove(job->outBuf, job->outBuf + i, max - i);
-		}
-		job->outBufLen = max - i;
+		(void)fwrite(p, 1, (size_t)(job->outBuf + i - p), stdout);
+		(void)fflush(stdout);
 	}
+	memmove(job->outBuf, job->outBuf + i, max - i);
+	job->outBufLen = max - i;
+
+unfinished_line:
 	if (finish)
 		goto again;
 }

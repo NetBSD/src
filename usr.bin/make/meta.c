@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.214 2025/06/13 04:27:21 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.215 2025/06/13 06:13:19 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -757,7 +757,7 @@ meta_job_error(Job *job, GNode *gn, bool ignerr, int status)
 }
 
 void
-meta_job_output(Job *job, const char *cp, const char *nl)
+meta_job_output(Job *job, const char *cp)
 {
     BuildMon *pbm;
 
@@ -768,15 +768,10 @@ meta_job_output(Job *job, const char *cp, const char *nl)
 	    static size_t meta_prefix_len;
 
 	    if (meta_prefix == NULL) {
-		char *cp2;
-
 		meta_prefix = Var_Subst("${" MAKE_META_PREFIX "}",
 					SCOPE_GLOBAL, VARE_EVAL);
 		/* TODO: handle errors */
-		if ((cp2 = strchr(meta_prefix, '$')) != NULL)
-		    meta_prefix_len = (size_t)(cp2 - meta_prefix);
-		else
-		    meta_prefix_len = strlen(meta_prefix);
+		meta_prefix_len = strcspn(meta_prefix, "$");
 	    }
 	    if (strncmp(cp, meta_prefix, meta_prefix_len) == 0) {
 		cp = strchr(cp + 1, '\n');
@@ -785,7 +780,7 @@ meta_job_output(Job *job, const char *cp, const char *nl)
 		cp++;
 	    }
 	}
-	fprintf(pbm->mfp, "%s%s", cp, nl);
+	fprintf(pbm->mfp, "%s", cp);
     }
 }
 
@@ -1698,7 +1693,7 @@ meta_compat_parent(pid_t child)
 	    fwrite(buf, 1, (size_t)nread, stdout);
 	    fflush(stdout);
 	    buf[nread] = '\0';
-	    meta_job_output(NULL, buf, "");
+	    meta_job_output(NULL, buf);
 	} while (false);
 	if (metafd != -1 && FD_ISSET(metafd, &readfds) != 0) {
 	    if (meta_job_event(NULL) <= 0)

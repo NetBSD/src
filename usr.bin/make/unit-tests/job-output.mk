@@ -1,4 +1,4 @@
-# $NetBSD: job-output.mk,v 1.1 2025/06/05 21:56:54 rillig Exp $
+# $NetBSD: job-output.mk,v 1.2 2025/06/13 06:13:20 rillig Exp $
 #
 # Tests for handling the output in parallel mode.
 
@@ -8,10 +8,8 @@ all: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 echo-on-stdout-and-stderr
 
 # By sleeping for a second, the output of the child process is written byte
-# by byte, to be consumed in small pieces by make.
-#
-# FIXME: When reading an isolated newline character in CollectOutput, it is
-# not passed on to the main output.
+# by byte, to be consumed in small pieces by make.  No matter what the chunk
+# size is, the empty lines must not be discarded.
 empty-lines: .PHONY
 	@echo begin $@
 	@sleep 1
