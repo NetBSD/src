@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.658 2025/06/13 03:51:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.658 2025/06/13 03:51:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1215,7 +1215,8 @@ InitMaxJobs(void)
 		    "(This marker expression expands to an empty string.)\n"
 		    "\t"
 		    "To make the sub-make run in compat mode, add -B to "
-		    "its invocation."
+		    "its invocation.\n"
+		    "\t"
 		    "To make the sub-make independent from the parent make, "
 		    "unset the MAKEFLAGS environment variable in the "
 		    "target's commands.",
