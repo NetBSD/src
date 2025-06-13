@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.513 2025/06/13 03:51:18 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.514 2025/06/13 04:27:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.513 2025/06/13 03:51:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.514 2025/06/13 04:27:21 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1762,37 +1762,24 @@ Job_Make(GNode *gn)
  * Return the part of the output that the calling function needs to output by
  * itself.
  */
-static char *
-PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
+static const char *
+PrintFilteredOutput(const char *p, const char *endp)
 {
-	char *ep;		/* XXX: should be const */
+	const char *ep;
 
 	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
 		return p;
 
-	/*
-	 * XXX: What happens if shell->noPrint occurs on the boundary of
-	 * the buffer?  To work correctly in all cases, this should rather
-	 * be a proper stream filter instead of doing string matching on
-	 * selected chunks of the output.
-	 */
 	while ((ep = strstr(p, shell->noPrint)) != NULL) {
 		if (ep != p) {
-			*ep = '\0';	/* XXX: avoid writing to the buffer */
-			/*
-			 * The only way there wouldn't be a newline after
-			 * this line is if it were the last in the buffer.
-			 * however, since the noPrint output comes after it,
-			 * there must be a newline, so we don't print one.
-			 */
-			(void)fprintf(stdout, "%s", p);
+			(void)fwrite(p, 1, (size_t)(ep - p), stdout);
 			(void)fflush(stdout);
 		}
 		p = ep + shell->noPrintLen;
 		if (p == endp)
 			break;
 		p++;		/* skip over the (XXX: assumed) newline */
-		pp_skip_whitespace(&p);
+		cpp_skip_whitespace(&p);
 	}
 	return p;
 }
@@ -1868,7 +1855,7 @@ again:
 	if (gotNL || bufferFull) {
 		job->outBuf[i] = '\0';
 		if (i >= job->outBufLen) {
-			char *p;
+			const char *p;
 
 			/*
 			 * FIXME: SwitchOutputTo should be here, according to
