@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1167 2025/06/13 03:51:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1167 2025/06/13 03:51:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4797,7 +4797,7 @@ Var_ExportStackTrace(const char *target, const char *cmd)
 {
 	char *stackTrace;
 
-	if (getenv("MAKE_STACK_TRACE") == NULL)
+	if (GetParentStackTrace() == NULL)
 		return;
 
 	if (target != NULL)

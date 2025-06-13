@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.750 2025/06/13 03:51:18 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.751 2025/06/13 18:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.750 2025/06/13 03:51:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.751 2025/06/13 18:31:08 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -383,6 +383,23 @@ LoadFile(const char *path, int fd)
 	return buf;		/* may not be null-terminated */
 }
 
+const char *
+GetParentStackTrace(void)
+{
+	static bool initialized;
+	static const char *parentStackTrace;
+
+	if (!initialized) {
+		const char *env = getenv("MAKE_STACK_TRACE");
+		parentStackTrace = env == NULL ? NULL
+		    : env[0] == '\t' ? bmake_strdup(env)
+		    : strcmp(env, "yes") == 0 ? bmake_strdup("")
+		    : NULL;
+		initialized = true;
+	}
+	return parentStackTrace;
+}
+
 /*
  * Print the current chain of .include and .for directives.  In Parse_Fatal
  * or other functions that already print the location, includingInnermost
@@ -392,22 +409,11 @@ LoadFile(const char *path, int fd)
 char *
 GetStackTrace(bool includingInnermost)
 {
-	static bool parentStackTraceInitialized;
-	static const char *parentStackTrace;
-
+	const char *parentStackTrace;
 	Buffer buffer, *buf = &buffer;
 	const IncludedFile *entries;
 	size_t i, n;
 	bool hasDetails;
-
-	if (!parentStackTraceInitialized) {
-		const char *env = getenv("MAKE_STACK_TRACE");
-		parentStackTrace = env == NULL ? NULL
-		    : env[0] == '\t' ? bmake_strdup(env)
-		    : strcmp(env, "yes") == 0 ? bmake_strdup("")
-		    : NULL;
-		parentStackTraceInitialized = true;
-	}
 
 	Buf_Init(buf);
 	hasDetails = EvalStack_Details(buf);
@@ -453,6 +459,7 @@ GetStackTrace(bool includingInnermost)
 	}
 
 add_parent_stack_trace:
+	parentStackTrace = GetParentStackTrace();
 	if ((makelevel > 0 && (n > 0 || !includingInnermost))
 	    || parentStackTrace != NULL) {
 		Buf_AddStr(buf, "\tin ");
