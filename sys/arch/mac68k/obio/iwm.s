@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm.s,v 1.7 2015/01/02 15:50:28 christos Exp $	*/
+/*	$NetBSD: iwm.s,v 1.8 2025/06/14 13:54:52 nat Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -1437,12 +1437,12 @@ shLeadIn:
 	moveq	#0x03,%d4		| is 3 bytes long
 shLI1:	
 	moveb	%a0@,%d2		| Get next byte
-	bpl	shLI1			| No char at IWM, repeat read
 	dbra	%d3,shLI2
 	moveq	#noAdrMkErr,%d0		| Can't find an address mark
 	bra	shDone
 
 shLI2:
+	bpl	shLI1			| No char at IWM, repeat read
 	cmpb	%a3@+,%d2
 	bne	shLeadIn		| If ne restart scan
 	subqw	#1,%d4
