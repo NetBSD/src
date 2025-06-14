@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.397 2025/05/13 11:52:04 riastradh Exp $
+#	$NetBSD: build.sh,v 1.398 2025/06/14 15:29:24 rillig Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2222,7 +2222,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.397 2025/05/13 11:52:04 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.398 2025/06/14 15:29:24 rillig Exp $
 # with these arguments: ${_args}
 #
 
@@ -2873,7 +2873,7 @@ main()
 	fi
 
 	rebuildmake
-	validatemakeparams
+	validatemakeparams "$@"
 	createmakewrapper
 	setup_mkrepro
 
