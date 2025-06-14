@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_perm.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_perm.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_perm.c,v 1.2 2025/06/05 11:30:23 andvar Exp $");
 #endif
 
 #include "namespace.h"
@@ -76,7 +76,7 @@ acl_add_perm(acl_permset_t permset_d, acl_perm_t perm)
 }
 
 /*
- * acl_clear_perms() (23.4.3): clear all permisions from the permission
+ * acl_clear_perms() (23.4.3): clear all permissions from the permission
  * set permset_d
  */
 int

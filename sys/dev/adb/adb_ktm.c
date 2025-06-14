@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.7 2024/02/11 10:36:40 andvar Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.8 2025/06/11 13:45:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.7 2024/02/11 10:36:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.8 2025/06/11 13:45:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.7 2024/02/11 10:36:40 andvar Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <machine/adbsys.h>
 #include <dev/adb/adbvar.h>
 
 #include "adbdebug.h"

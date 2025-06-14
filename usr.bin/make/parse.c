@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.746 2025/05/29 03:41:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.751 2025/06/13 18:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.746 2025/05/29 03:41:21 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.751 2025/06/13 18:31:08 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -367,7 +367,7 @@ LoadFile(const char *path, int fd)
 		assert(buf.len < buf.cap);
 		n = read(fd, buf.data + buf.len, buf.cap - buf.len);
 		if (n < 0) {
-			Error("%s: read error: %s", path, strerror(errno));
+			Error("%s: %s", path, strerror(errno));
 			exit(2);	/* Not 1 so -q can distinguish error */
 		}
 		if (n == 0)
@@ -383,6 +383,23 @@ LoadFile(const char *path, int fd)
 	return buf;		/* may not be null-terminated */
 }
 
+const char *
+GetParentStackTrace(void)
+{
+	static bool initialized;
+	static const char *parentStackTrace;
+
+	if (!initialized) {
+		const char *env = getenv("MAKE_STACK_TRACE");
+		parentStackTrace = env == NULL ? NULL
+		    : env[0] == '\t' ? bmake_strdup(env)
+		    : strcmp(env, "yes") == 0 ? bmake_strdup("")
+		    : NULL;
+		initialized = true;
+	}
+	return parentStackTrace;
+}
+
 /*
  * Print the current chain of .include and .for directives.  In Parse_Fatal
  * or other functions that already print the location, includingInnermost
@@ -392,17 +409,17 @@ LoadFile(const char *path, int fd)
 char *
 GetStackTrace(bool includingInnermost)
 {
+	const char *parentStackTrace;
 	Buffer buffer, *buf = &buffer;
 	const IncludedFile *entries;
 	size_t i, n;
-
 	bool hasDetails;
 
 	Buf_Init(buf);
 	hasDetails = EvalStack_Details(buf);
 	n = includes.len;
 	if (n == 0)
-		goto end;
+		goto add_parent_stack_trace;
 
 	entries = GetInclude(0);
 	if (!includingInnermost && !(hasDetails && n > 1)
@@ -441,13 +458,20 @@ GetStackTrace(bool includingInnermost)
 		}
 	}
 
-	if (makelevel > 0) {
-		Buf_AddStr(buf, "\tin directory ");
+add_parent_stack_trace:
+	parentStackTrace = GetParentStackTrace();
+	if ((makelevel > 0 && (n > 0 || !includingInnermost))
+	    || parentStackTrace != NULL) {
+		Buf_AddStr(buf, "\tin ");
+		Buf_AddStr(buf, progname);
+		Buf_AddStr(buf, " in directory \"");
 		Buf_AddStr(buf, curdir);
-		Buf_AddStr(buf, "\n");
+		Buf_AddStr(buf, "\"\n");
 	}
 
-end:
+	if (parentStackTrace != NULL)
+		Buf_AddStr(buf, parentStackTrace);
+
 	return Buf_DoneData(buf);
 }
 

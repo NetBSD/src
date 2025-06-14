@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.511 2025/05/18 08:33:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.516 2025/06/13 06:13:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.511 2025/05/18 08:33:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.516 2025/06/13 06:13:19 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1494,10 +1494,11 @@ JobExec(Job *job, char **argv)
 	job->status = JOB_ST_RUNNING;
 
 	Var_ReexportVars(job->node);
+	Var_ExportStackTrace(job->node->name, NULL);
 
 	cpid = FORK_FUNCTION();
 	if (cpid == -1)
-		Punt("Cannot fork: %s", strerror(errno));
+		Punt("fork: %s", strerror(errno));
 
 	if (cpid == 0) {
 		/* Child */
@@ -1761,37 +1762,27 @@ Job_Make(GNode *gn)
  * Return the part of the output that the calling function needs to output by
  * itself.
  */
-static char *
-PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
+static const char *
+PrintFilteredOutput(Job *job, size_t len)
 {
-	char *ep;		/* XXX: should be const */
+	const char *p = job->outBuf, *ep, *endp;
 
 	if (shell->noPrint == NULL || shell->noPrint[0] == '\0')
 		return p;
 
-	/*
-	 * XXX: What happens if shell->noPrint occurs on the boundary of
-	 * the buffer?  To work correctly in all cases, this should rather
-	 * be a proper stream filter instead of doing string matching on
-	 * selected chunks of the output.
-	 */
-	while ((ep = strstr(p, shell->noPrint)) != NULL) {
-		if (ep != p) {
-			*ep = '\0';	/* XXX: avoid writing to the buffer */
-			/*
-			 * The only way there wouldn't be a newline after
-			 * this line is if it were the last in the buffer.
-			 * however, since the noPrint output comes after it,
-			 * there must be a newline, so we don't print one.
-			 */
-			(void)fprintf(stdout, "%s", p);
+	endp = p + len;
+	while ((ep = strstr(p, shell->noPrint)) != NULL && ep < endp) {
+		if (ep > p) {
+			if (!opts.silent)
+				SwitchOutputTo(job->node);
+			(void)fwrite(p, 1, (size_t)(ep - p), stdout);
 			(void)fflush(stdout);
 		}
 		p = ep + shell->noPrintLen;
 		if (p == endp)
 			break;
 		p++;		/* skip over the (XXX: assumed) newline */
-		pp_skip_whitespace(&p);
+		cpp_skip_whitespace(&p);
 	}
 	return p;
 }
@@ -1808,103 +1799,63 @@ PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
 static void
 CollectOutput(Job *job, bool finish)
 {
-	bool gotNL;		/* true if got a newline */
-	bool bufferFull;
+	const char *p;
 	size_t nr;		/* number of bytes read */
 	size_t i;		/* auxiliary index into outBuf */
 	size_t max;		/* limit for i (end of current data) */
-	ssize_t nRead;		/* (Temporary) number of bytes read */
 
 again:
-	gotNL = false;
-	bufferFull = false;
-
-	nRead = read(job->inPipe, job->outBuf + job->outBufLen,
+	nr = (size_t)read(job->inPipe, job->outBuf + job->outBufLen,
 	    JOB_BUFSIZE - job->outBufLen);
-	if (nRead < 0) {
+	if (nr == (size_t)-1) {
 		if (errno == EAGAIN)
 			return;
 		if (DEBUG(JOB))
 			perror("CollectOutput(piperead)");
 		nr = 0;
-	} else
-		nr = (size_t)nRead;
+	}
 
 	if (nr == 0)
 		finish = false;	/* stop looping */
 
-	/*
-	 * If we hit the end-of-file (the job is dead), we must flush its
-	 * remaining output, so pretend we read a newline if there's any
-	 * output remaining in the buffer.
-	 */
-	if (nr == 0 && job->outBufLen != 0) {
+	if (nr == 0 && job->outBufLen > 0) {
 		job->outBuf[job->outBufLen] = '\n';
 		nr = 1;
 	}
 
 	max = job->outBufLen + nr;
+	job->outBuf[max] = '\0';
+
 	for (i = job->outBufLen; i < max; i++)
 		if (job->outBuf[i] == '\0')
 			job->outBuf[i] = ' ';
 
-	/* Look for the last newline in the bytes we just got. */
-	for (i = job->outBufLen + nr - 1;
-	     i >= job->outBufLen && i != (size_t)-1; i--) {
-		if (job->outBuf[i] == '\n') {
-			gotNL = true;
+	for (i = max; i > job->outBufLen; i--)
+		if (job->outBuf[i - 1] == '\n')
 			break;
-		}
+
+	if (i == job->outBufLen) {
+		job->outBufLen = max;
+		if (max < JOB_BUFSIZE)
+			goto unfinished_line;
+		i = max;
 	}
 
-	if (!gotNL) {
-		job->outBufLen += nr;
-		if (job->outBufLen == JOB_BUFSIZE) {
-			bufferFull = true;
-			i = job->outBufLen;
-		}
-	}
-	if (gotNL || bufferFull) {
-		job->outBuf[i] = '\0';
-		if (i >= job->outBufLen) {
-			char *p;
-
-			/*
-			 * FIXME: SwitchOutputTo should be here, according to
-			 * the comment above.  But since PrintOutput does not
-			 * do anything in the default shell, this bug has gone
-			 * unnoticed until now.
-			 */
-			p = PrintFilteredOutput(job->outBuf, &job->outBuf[i]);
-
-			/*
-			 * There's still more in the output buffer. This time,
-			 * though, we know there's no newline at the end, so
-			 * we add one of our own free will.
-			 */
-			if (*p != '\0') {
-				if (!opts.silent)
-					SwitchOutputTo(job->node);
+	p = PrintFilteredOutput(job, i);
+	if (*p != '\0') {
+		if (!opts.silent)
+			SwitchOutputTo(job->node);
 #ifdef USE_META
-				if (useMeta) {
-					meta_job_output(job, p,
-					    gotNL ? "\n" : "");
-				}
+		if (useMeta)
+			meta_job_output(job, p);
 #endif
-				(void)fprintf(stdout, "%s%s", p,
-				    gotNL ? "\n" : "");
-				(void)fflush(stdout);
-			}
-		}
-		if (i < max) {
-			(void)memmove(job->outBuf, &job->outBuf[i + 1],
-			    max - (i + 1));
-			job->outBufLen = max - (i + 1);
-		} else {
-			assert(i == max);
-			job->outBufLen = 0;
-		}
+		(void)fwrite(p, 1, (size_t)(job->outBuf + i - p), stdout);
+		(void)fflush(stdout);
 	}
+	memmove(job->outBuf, job->outBuf + i, max - i);
+	job->outBufLen = max - i;
+
+unfinished_line:
 	if (finish)
 		goto again;
 }

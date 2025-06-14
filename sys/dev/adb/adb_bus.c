@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.12 2021/08/07 16:19:09 thorpej Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.13 2025/06/11 13:45:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.12 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.13 2025/06/11 13:45:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,10 +197,10 @@ nadb_devprint(void *aux, const char *what)
 		return 0;
 
 	switch(aaa->dev->original_addr) {
-		case 2:
+		case ADBADDR_KBD:
 			aprint_normal("%s: ADB Keyboard", what);
 			break;
-		case 3:
+		case ADBADDR_MS:
 			aprint_normal("%s: ADB relative pointing device", what);
 			break;
 		default:

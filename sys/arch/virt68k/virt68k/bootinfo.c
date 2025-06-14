@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.8 2024/11/11 13:55:22 riastradh Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.9 2025/06/09 21:19:49 andvar Exp $        */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.8 2024/11/11 13:55:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.9 2025/06/09 21:19:49 andvar Exp $");
 
 #include "opt_md.h"
 
@@ -411,7 +411,7 @@ bootinfo_setup_initrd(void)
 /*
  * bootinfo_setup_rndseed --
  *	Check for a BI_RNG_SEED record and, if found, use it to
- *	seed the kenrnel entropy pool.
+ *	seed the kernel entropy pool.
  */
 void
 bootinfo_setup_rndseed(void)

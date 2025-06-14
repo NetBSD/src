@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.79 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.80 2025/06/11 02:44:13 ozaki-r Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.79 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.80 2025/06/11 02:44:13 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 		ipo->ip_sum = 0;
 		ipo->ip_src = saidx->src.sin.sin_addr;
 		ipo->ip_dst = saidx->dst.sin.sin_addr;
-		ipo->ip_id = ip_newid(NULL);
+		ipo->ip_id = ip_newid();
 
 		/* If the inner protocol is IP... */
 		if (tp == IPVERSION) {

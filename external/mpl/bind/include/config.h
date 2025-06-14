@@ -204,7 +204,6 @@
 
 /* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_KRB5_H 1
-#endif
 
 /* Define to 1 if you have the <gssapi.h> header file. */
 /* #undef HAVE_GSSAPI_H */
@@ -214,6 +213,7 @@
 
 /* Define to 1 if you have the `gss_acquire_cred' function. */
 #define HAVE_GSS_ACQUIRE_CRED 1
+#endif
 
 /* Define to 1 if you have the <idn2.h> header file. */
 /* #undef HAVE_IDN2_H */
@@ -233,6 +233,7 @@
 /* Use json-c library */
 /* #undef HAVE_JSON_C */
 
+#ifdef WITH_KERBEROS
 /* Define to 1 if you have the <krb5.h> header file. */
 /* #undef HAVE_KRB5_H */
 
@@ -241,6 +242,7 @@
 
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #define HAVE_KRB5_KRB5_H 1
+#endif
 
 /* Define to 1 if libcap was found */
 /* #undef HAVE_LIBCAP */

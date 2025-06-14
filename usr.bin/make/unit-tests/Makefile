@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.362 2025/05/09 21:38:34 rillig Exp $
+# $NetBSD: Makefile,v 1.367 2025/06/13 20:23:16 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -223,6 +223,7 @@ TESTS+=		hanoi-include
 TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		job-flags
+TESTS+=		job-output
 TESTS+=		job-output-long-lines
 TESTS+=		job-output-null
 TESTS+=		jobs-empty-commands
@@ -454,6 +455,7 @@ TESTS+=		varname-dot-suffixes
 TESTS+=		varname-dot-targets
 TESTS+=		varname-empty
 TESTS+=		varname-make
+TESTS+=		varname-make_stack_trace
 TESTS+=		varname-make_print_var_on_error
 TESTS+=		varname-make_print_var_on_error-jobs
 TESTS+=		varname-makefile
@@ -552,9 +554,12 @@ SED_CMDS.opt-where-am-i=	-e '/usr.obj/d'
 # For Compat_RunCommand, useShell == false.
 SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == true.
-SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)) failed (.*)$$,<not found: \1>,'
+SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)): .*$$,<not found: \1>,'
 SED_CMDS.sh-dots+=		-e 's,^\(\*\*\* Error code \)[1-9][0-9]*,\1<nonzero>,'
+# Race condition between the child's stdout and make's status.
 SED_CMDS.sh-errctl=		${STD_SED_CMDS.dj}
+SED_CMDS.sh-errctl+=		-e '/^Process with pid/d'
+SED_CMDS.sh-errctl+=		-e '/^JobFinish:/d'
 SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
 SED_CMDS.sh-leading-hyphen=	${STD_SED_CMDS.shell}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
@@ -563,7 +568,7 @@ SED_CMDS.suff-transform-debug+=	${STD_SED_CMDS.dg1}
 SED_CMDS.var-op-shell+=		${STD_SED_CMDS.shell}
 SED_CMDS.var-op-shell+=		-e '/command/s,No such.*,not found,'
 SED_CMDS.vardebug+=		-e 's,${.SHELL},</path/to/shell>,'
-SED_CMDS.varmod-mtime+=		-e "s,\(.*\)': .*,\1': <ENOENT>,"
+SED_CMDS.varmod-mtime+=		-e "s,\(mtime for .*\): .*,\1: <ENOENT>,"
 SED_CMDS.varmod-subst-regex+=	${STD_SED_CMDS.regex}
 SED_CMDS.varparse-errors+=	${STD_SED_CMDS.timestamp}
 SED_CMDS.varname-dot-make-meta-ignore_filter+= ${SED_CMDS.meta-ignore}
@@ -750,7 +755,7 @@ _SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g' -e 's,${.OBJDIR:tA},<curdir>,g'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
 _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
-_SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}\(\[[1-9][0-9]*\]:\),make\1,'
+_SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}\(\[[1-9][0-9]*\][: ]\),make\1,'
 _SED_CMDS+=	-e 's,<curdir>/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e '/MAKE_VERSION/d'

@@ -313,7 +313,8 @@ element
 	}
 	| number
 	{
-		$$ = npfvar_create_element(NPFVAR_NUM, &$1, sizeof($1));
+		uint32_t val = $1;
+		$$ = npfvar_create_element(NPFVAR_NUM, &val, sizeof(val));
 	}
 	| VAR_ID
 	{

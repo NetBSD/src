@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1376 2025/05/02 22:30:29 riastradh Exp $
+# $NetBSD: mi,v 1.1380 2025/06/13 03:51:17 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3049,7 +3049,6 @@
 ./usr/tests/lib/libc/gen/t_syslog_pthread		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_time				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_timespec_get			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/gen/t_rbstress			tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_ttyname			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/t_vis				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
@@ -5987,6 +5986,8 @@
 ./usr/tests/usr.bin/make/unit-tests/job-output-long-lines.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-output-null.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-output-null.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/job-output.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/job-output.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-empty-commands-error.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-empty-commands-error.mk		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-empty-commands.exp			tests-usr.bin-tests	compattestfile,atf
@@ -6466,6 +6467,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error-jobs.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error.mk		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-make_stack_trace.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-make_stack_trace.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-makefile.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-makefile.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-makeflags.exp			tests-usr.bin-tests	compattestfile,atf

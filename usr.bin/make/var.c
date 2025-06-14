@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1164 2025/05/26 20:12:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1164 2025/05/26 20:12:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2866,7 +2866,7 @@ ModifyWord_Mtime(Substring word, SepBuf *buf, void *data)
 	if (stat(word.start, &st) < 0) {
 		if (args->error) {
 			Parse_Error(PARSE_FATAL,
-			    "Cannot determine mtime for '%s': %s",
+			    "Cannot determine mtime for \"%s\": %s",
 			    word.start, strerror(errno));
 			args->rc = AMR_CLEANUP;
 			return;
@@ -4342,6 +4342,25 @@ EvalUndefined(bool dynamic, const char *start, const char *p,
 		? var_Error : varUndefined);
 }
 
+static void
+CheckVarname(Substring name)
+{
+	const char *p;
+
+	for (p = name.start; p < name.end; p++) {
+		if (ch_isspace(*p))
+			break;
+	}
+	if (p < name.end) {
+		Parse_Error(PARSE_WARNING,
+		    ch_isprint(*p)
+		    ? "Invalid character \"%c\" in variable name \"%.*s\""
+		    : "Invalid character \"\\x%02x\" in variable name \"%.*s\"",
+		    (int)(*p),
+		    (int)Substring_Length(name), name.start);
+	}
+}
+
 /*
  * Parse a long variable name enclosed in braces or parentheses such as $(VAR)
  * or ${VAR}, up to the closing brace or parenthesis, or in the case of
@@ -4419,6 +4438,7 @@ ParseVarnameLong(
 			  (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL);
 
 		if (!haveModifier) {
+			CheckVarname(name);
 			p++;	/* skip endc */
 			*out_false_pp = p;
 			*out_false_val = EvalUndefined(dynamic, start, p,
@@ -4770,6 +4790,29 @@ Var_SubstInTarget(const char *str, GNode *scope)
 	EvalStack_Pop();
 	EvalStack_Pop();
 	return res;
+}
+
+void
+Var_ExportStackTrace(const char *target, const char *cmd)
+{
+	char *stackTrace;
+
+	if (GetParentStackTrace() == NULL)
+		return;
+
+	if (target != NULL)
+		EvalStack_Push(VSK_TARGET, target, NULL);
+	if (cmd != NULL)
+		EvalStack_Push(VSK_COMMAND, cmd, NULL);
+
+	stackTrace = GetStackTrace(true);
+	(void)setenv("MAKE_STACK_TRACE", stackTrace, 1);
+	free(stackTrace);
+
+	if (cmd != NULL)
+		EvalStack_Pop();
+	if (target != NULL)
+		EvalStack_Pop();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.72 2024/03/05 20:58:05 andvar Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.73 2025/06/14 13:57:45 nat Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.72 2024/03/05 20:58:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.73 2025/06/14 13:57:45 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -2157,11 +2157,11 @@ adb_reinit(void)
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
-	delay(1000);
+	delay(100000);
 
 	/* send an ADB reset first */
 	(void)adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
-	delay(3000);
+	delay(300000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine

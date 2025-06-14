@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.52 2024/06/20 05:46:22 nia Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.53 2025/06/05 22:29:36 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -129,7 +129,12 @@ Therefore I assume you want to %s NetBSD on it.
 }
 
 message ask_disk
-{On which disk do you want to %s NetBSD? }
+{On which disk do you want to %s NetBSD? 
+The most common disk types are: 
+	- wd: SATA, ATA, or IDE 
+	- sd: SCSI or removable USB disk 
+	- ld: NVMe (e.g. M.2 card), SD/MMC card, or virtual disk 
+}
 
 message Available_disks
 {Available disks}
@@ -232,7 +237,7 @@ message ptnheaders_size 	{Size}
 message ptnheaders_filesystem	{Filesystem}
 
 message askfsmount
-{Mount point?}
+{Mount point (empty to cancel)?}
 
 message askfssize
 {Size for %s in %s?}
@@ -1181,13 +1186,13 @@ message empty {***EMPTY***}
 message timezone {Timezone}
 message change_rootpw {Change root password}
 message enable_binpkg {Enable installation of binary packages}
-message enable_sshd {Enable sshd}
-message enable_ntpd {Enable ntpd}
-message run_ntpdate {Run ntpdate at boot}
+message enable_sshd {Enable sshd (Secure Shell daemon)}
+message enable_ntpd {Enable ntpd to sync time over network}
+message run_ntpdate {Run ntpdate to set time over network at boot}
 message enable_mdnsd {Enable multicast DNS support}
-message enable_xdm {Enable xdm}
-message enable_cgd {Enable cgd}
-message enable_lvm {Enable lvm}
+message enable_xdm {Enable xdm (X Display Manager)}
+message enable_cgd {Enable cgd (cryptographic disk configuration)}
+message enable_lvm {Enable lvm (Logical Volume Manager)}
 message enable_raid {Enable raidframe}
 message add_a_user {Add a user}
 message configmenu {Configure the additional items as needed.}
@@ -1218,7 +1223,7 @@ exist.  Please check the package path and try again.}
 message failed {Failed}
 
 message askfsmountadv {Mountpoint (or 'raid', 'cgd', 'lvm')?}
-message partman {Extended partitioning}
+message partman {Extended partitioning (software RAID, etc...)}
 message editpart {Edit partitions}
 message selectwedge {Preconfigured "wedges" dk(4)}
 
@@ -1233,7 +1238,8 @@ message cantsave {Changes cannot be saved.}
 message noroot {No root partition defined.  Cannot continue\n}
 
 message addusername {Username to add (maximum 8 characters)}
-message addusertowheel {Do you wish to add this user to group wheel?}
+message addusertowheel {Do you wish to add this user to group wheel? 
+This will allow them to use 'su' to become the superuser.}
 
 message Delete_partition
 {Delete partition}

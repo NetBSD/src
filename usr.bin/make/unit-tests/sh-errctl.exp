@@ -22,8 +22,6 @@ job 0, status running, flags ---, pid <pid>
 silent
 ignerr
 always
-Process with pid <pid> exited/stopped with status 0.
-JobFinish: target all, pid <pid>, status 0
 TokenPool_Take: pid <pid>, aborting NONE, running 0
 TokenPool_Take: pid <pid> took a token
 exit status 0

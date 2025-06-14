@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2025/05/02 22:30:29 riastradh Exp $
+# $NetBSD: Makefile,v 1.12 2025/06/10 14:30:44 christos Exp $
 
 NOMAN=			# defined
 
@@ -47,9 +47,9 @@ SRCS.h_hello_stapie+=		h_hello.c
 COPTS.h_hello.c+=		${"${MKPIE}" != no:?-fPIE:}
 LDFLAGS.h_hello_dyn=		-no-pie
 LDFLAGS.h_hello_dynpie=		-pie
-LDFLAGS.h_hello_relr=		-pie -Wl,-z,pack-relative-relocs
+LDFLAGS.h_hello_relr=		-pie ${LD_PACK_RELATIVE_RELOCS}
 LDFLAGS.h_hello_sta=		-no-pie
-LDFLAGS.h_hello_stapie=		-pie -Wl,-z,nopack-relative-relocs
+LDFLAGS.h_hello_stapie=		-pie ${LD_NOPACK_RELATIVE_RELOCS}
 LDSTATIC.h_hello_relr=		-static
 LDSTATIC.h_hello_sta=		-static
 LDSTATIC.h_hello_stapie=	-static

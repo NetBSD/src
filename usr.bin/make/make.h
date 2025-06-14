@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.357 2025/05/26 20:12:48 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.360 2025/06/13 18:31:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -863,6 +863,7 @@ void JobReapChild(pid_t, int, bool);
 void Main_ParseArgLine(const char *);
 int Cmd_Argv(const char *, size_t, const char **, size_t, char *, size_t, bool, bool);
 char *Cmd_Exec(const char *, char **) MAKE_ATTR_USE;
+void Var_ExportStackTrace(const char *, const char *);
 void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void Punt(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
@@ -882,6 +883,7 @@ void Parse_End(void);
 #endif
 
 void PrintLocation(FILE *, bool, const GNode *);
+const char *GetParentStackTrace(void);
 char *GetStackTrace(bool);
 void PrintStackTrace(bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
@@ -1182,6 +1184,8 @@ MAKE_INLINE bool MAKE_ATTR_USE
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_islower(char ch) { return islower((unsigned char)ch) != 0; }
+MAKE_INLINE bool MAKE_ATTR_USE
+ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
