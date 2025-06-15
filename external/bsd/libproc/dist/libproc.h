@@ -106,8 +106,6 @@ typedef enum {
 	REG_RVAL2
 } proc_reg_t;
 
-#define SIG2STR_MAX	8
-
 typedef struct lwpstatus {
 	int pr_why;
 #define PR_REQUESTED	1
