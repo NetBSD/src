@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2022/04/29 22:17:49 pgoyette Exp $
+# $NetBSD$
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -20,6 +20,7 @@ TESTS_SUBDIRS+=	nls
 TESTS_SUBDIRS+=	regex
 TESTS_SUBDIRS+=	rpc
 TESTS_SUBDIRS+=	setjmp
+TESTS_SUBDIRS+=	signal
 TESTS_SUBDIRS+=	stdio
 TESTS_SUBDIRS+=	stdlib
 TESTS_SUBDIRS+=	string

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.210 2025/01/18 22:31:22 rillig Exp $
+#	$NetBSD$
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -310,6 +310,7 @@
 ./usr/tests/lib/libc/regex/data
 ./usr/tests/lib/libc/rpc
 ./usr/tests/lib/libc/setjmp
+./usr/tests/lib/libc/signal
 ./usr/tests/lib/libc/ssp
 ./usr/tests/lib/libc/stdio
 ./usr/tests/lib/libc/stdlib
