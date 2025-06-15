@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.60 2024/09/09 21:19:54 rillig Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -203,6 +203,11 @@ int	__sigtimedwait(const sigset_t * __restrict,
 #endif
 #endif /* _POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE_EXTENDED || ... */
 
+#if (_POSIX_C_SOURCE - 0) >= 202405L || defined(_NETBSD_SOURCE)
+#define SIG2STR_MAX	32	/* size of buffer required for sig2str() */
+int sig2str(int, char *);
+int str2sig(const char * __restrict, int * __restrict);
+#endif
 
 #if defined(_NETBSD_SOURCE)
 #ifndef __PSIGNAL_DECLARED

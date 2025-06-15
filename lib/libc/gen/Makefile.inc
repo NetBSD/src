@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.225 2025/04/22 09:41:17 nia Exp $
+#	$NetBSD$
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -28,7 +28,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
-	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
+	shquote.c shquotev.c sig2str.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signalname.c signalnext.c signalnumber.c \
 	signame.c sigrelse.c sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
@@ -171,7 +171,8 @@ MLINKS+=posix_spawn.3 posix_spawnp.3 \
 	posix_spawnattr_getsigdefault.3 posix_spawnattr_setsigdefault.3 \
 	posix_spawnattr_getsigmask.3 posix_spawnattr_setsigmask.3 \
 	posix_spawnattr_init.3 posix_spawnattr_destroy.3
-MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3 psignal.3 psiginfo.3
+MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3 psignal.3 psiginfo.3 \
+	psignal.3 sig2str.3 psignal.3 str2sig.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
 MLINKS+=pwcache.3 uid_from_user.3 pwcache.3 gid_from_group.3
 MLINKS+=pwcache.3 pwcache_userdb.3 pwcache.3 pwcache_groupdb.3
