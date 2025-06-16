@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.34 2025/06/11 13:45:02 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.35 2025/06/16 07:51:16 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.34 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.35 2025/06/16 07:51:16 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -40,13 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.34 2025/06/11 13:45:02 macallan Exp $"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/condvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -83,7 +78,8 @@ struct adbkbd_softc {
 	int sc_have_led_control;
 	int sc_power_button_delay;
 	int sc_msg_len;
-	int sc_event;
+	kcondvar_t sc_event;
+	kmutex_t sc_interlock;
 	int sc_poll;
 	int sc_polled_chars;
 	int sc_trans[3];
@@ -201,6 +197,8 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbkbd_handler;
+	mutex_init(&sc->sc_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_event, "adbkbd");
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
 
 	sc->sc_leds = 0;	/* initially off */
@@ -477,7 +475,7 @@ adbkbd_handler(void *cookie, int len, uint8_t *data)
 			memcpy(sc->sc_buffer, data, len);
 		}
 		sc->sc_msg_len = len;
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	} else {
 		DPRINTF("bogus message\n");
 	}
@@ -493,10 +491,12 @@ adbkbd_wait(struct adbkbd_softc *sc, int timeout)
 			sc->sc_ops->poll(sc->sc_ops->cookie);
 		}
 	} else {
+		mutex_enter(&sc->sc_interlock);
 		while ((sc->sc_msg_len == 0) && (cnt < timeout)) {
-			tsleep(&sc->sc_event, 0, "adbkbdio", hz);
+			cv_timedwait(&sc->sc_event, &sc->sc_interlock, hz);
 			cnt++;
 		}
+		mutex_exit(&sc->sc_interlock);
 	}
 	return (sc->sc_msg_len > 0);
 }

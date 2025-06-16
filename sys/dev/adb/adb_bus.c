@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.13 2025/06/11 13:45:02 macallan Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.14 2025/06/16 07:51:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,15 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.13 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.14 2025/06/16 07:51:16 macallan Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/condvar.h>
 
-#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <dev/adb/adbvar.h>
 
@@ -54,7 +51,8 @@ struct nadb_softc {
 	device_t sc_dev;
 	struct adb_bus_accessops *sc_ops;
 	uint32_t sc_msg;
-	uint32_t sc_event;
+	kcondvar_t sc_event;
+	kmutex_t sc_interlock;
 	struct adb_device sc_devtable[16];
 	int sc_free;	/* highest free address */
 	int sc_len;	/* length of received message */
@@ -87,6 +85,9 @@ nadb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_ops = ops;
 	sc->sc_ops->set_handler(sc->sc_ops->cookie, nadb_handler, sc);
+
+	mutex_init(&sc->sc_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_event, "adbbus");
 
 	config_interrupts(self, nadb_init);
 }
@@ -238,7 +239,7 @@ nadb_handler(void *cookie, int len, uint8_t *data)
 		sc->sc_msg = 1;
 		sc->sc_len = len;
 		memcpy(sc->sc_data, data, len);
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	}
 }
 
@@ -248,10 +249,12 @@ nadb_send_sync(void *cookie, int command, int len, uint8_t *data)
 	struct nadb_softc *sc = cookie;
 
 	sc->sc_msg = 0;
+	mutex_enter(&sc->sc_interlock);
 	sc->sc_ops->send(sc->sc_ops->cookie, 0, command, len, data);
 	while (sc->sc_msg == 0) {
-		tsleep(&sc->sc_event, 0, "adb_send", 100);
+		cv_timedwait(&sc->sc_event, &sc->sc_interlock, hz);
 	}
+	mutex_exit(&sc->sc_interlock);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.8 2025/06/11 13:45:02 macallan Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.9 2025/06/16 07:51:16 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,14 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.8 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.9 2025/06/16 07:51:16 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/condvar.h>
 
 #include <machine/autoconf.h>
 
@@ -67,7 +65,8 @@ struct ktm_softc {
 	int		sc_right;
 	int		sc_poll;
 	int		sc_msg_len;
-	int		sc_event;
+	kcondvar_t 	sc_event;
+	kmutex_t 	sc_interlock;
 	uint8_t		sc_buffer[16];
 };
 
@@ -124,6 +123,8 @@ ktm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = ktm_handler;
+	mutex_init(&sc->sc_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_event, "ktm");
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
 	printf(" addr %d: Kensington Turbo Mouse\n",
 	    sc->sc_adbdev->current_addr);
@@ -282,7 +283,7 @@ ktm_handler(void *cookie, int len, uint8_t *data)
 			ktm_process_event(sc, sc->sc_msg_len, sc->sc_buffer);
 			return;
 		}
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	} else {
 		DPRINTF("bogus message\n");
 	}
@@ -382,10 +383,12 @@ ktm_wait(struct ktm_softc *sc, int timeout)
 			sc->sc_ops->poll(sc->sc_ops->cookie);
 		}
 	} else {
+		mutex_enter(&sc->sc_interlock);
 		while ((sc->sc_msg_len == -1) && (cnt < timeout)) {
-			tsleep(&sc->sc_event, 0, "ktmio", hz);
+			cv_timedwait(&sc->sc_event, &sc->sc_interlock, hz);
 			cnt++;
 		}
+		mutex_exit(&sc->sc_interlock);
 	}
 	return (sc->sc_msg_len > 0);
 }
