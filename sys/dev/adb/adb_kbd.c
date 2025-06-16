@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.35 2025/06/16 07:51:16 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.36 2025/06/16 08:00:50 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.35 2025/06/16 07:51:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.36 2025/06/16 08:00:50 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.35 2025/06/16 07:51:16 macallan Exp $"
 #include <dev/sysmon/sysmon_taskq.h>
 
 #include <machine/autoconf.h>
-#include <machine/keyboard.h>
 
 #include <dev/adb/adbvar.h>
 #include <dev/adb/adb_keymap.h>

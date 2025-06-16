@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.9 2025/06/16 07:38:33 macallan Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.10 2025/06/16 08:00:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,16 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.9 2025/06/16 07:38:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.10 2025/06/16 08:00:50 macallan Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/keyboard.h>
 
 #include <dev/adb/adbvar.h>
 

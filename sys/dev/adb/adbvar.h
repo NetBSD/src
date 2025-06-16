@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.5 2025/06/11 13:45:02 macallan Exp $ */
+/*	$NetBSD: adbvar.h,v 1.6 2025/06/16 08:00:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.5 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.6 2025/06/16 08:00:50 macallan Exp $");
 
 #ifndef ADBVAR_H
 #define ADBVAR_H
@@ -94,6 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.5 2025/06/11 13:45:02 macallan Exp $");
 	/* Interesting miscellaneous handler ID */
 #define ADB_POWERKEY	34	/* Sophisticated Circuits PowerKey */
 				/* (intelligent power tap) */
+
+#define ADBK_KEYVAL(key)	((key) & 0x7f)
+#define ADBK_PRESS(key)		(((key) & 0x80) == 0)
+#define ADBK_KEYDOWN(key)	(key)
+#define ADBK_KEYUP(key)		((key) | 0x80)
 
 /* EMP device classes */
 #define MSCLASS_TABLET		0
