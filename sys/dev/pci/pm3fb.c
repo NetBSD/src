@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.12 2025/05/27 06:21:12 macallan Exp $ */
+/* $NetBSD: pm3fb.c,v 1.13 2025/06/16 08:23:19 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.12 2025/05/27 06:21:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.13 2025/06/16 08:23:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.12 2025/05/27 06:21:12 macallan Exp $");
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #include <dev/videomode/edidreg.h>
+
+#include "opt_pm3fb.h"
 
 struct pm3fb_softc {
 	device_t sc_dev;
@@ -415,6 +417,8 @@ pm3fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				/* then initialize the drawing engine */
 				pm3fb_init(sc);
 				pm3fb_init_palette(sc);
+				/* clean out the glyph cache */
+				glyphcache_wipe(&sc->sc_gc);
 				vcons_redraw_screen(ms);
 			} else
 				pm3fb_flush_engine(sc);
