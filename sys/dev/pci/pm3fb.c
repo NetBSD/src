@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.13 2025/06/16 08:23:19 macallan Exp $ */
+/* $NetBSD: pm3fb.c,v 1.14 2025/06/16 08:39:01 macallan Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.13 2025/06/16 08:23:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.14 2025/06/16 08:39:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ pm3fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_FULLCLEAR;
 	if (sc->sc_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB;
 
@@ -1135,10 +1135,17 @@ pm3fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		pm3fb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
