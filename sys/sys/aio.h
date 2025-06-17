@@ -148,8 +148,7 @@ struct aioproc {
 	unsigned int jobs_count;	/* Count of the jobs */
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
-
-	struct aiost_list active_jobs;	/* List of active servicing threads */
+	struct aiost_list aiost_total;	/* Total list of servicing threads */
 };
 
 extern u_int aio_listio_max;
@@ -159,6 +158,8 @@ int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_dispense_bank(void);
 int	aiosp_enqueue_job(struct aio_job *);
+int	aiosp_flush(struct aioproc *);
+int	aiosp_validate_conflicts(struct aioproc *, void *);
 
 #endif /* _KERNEL */
 

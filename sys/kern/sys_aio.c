@@ -84,7 +84,6 @@ static void *		aio_ehook;
 static void		aio_worker(void *);
 static void		aio_process(struct aio_job *);
 static void		aio_sendsig(struct proc *, struct sigevent *);
-static int		aio_validate_conflicts(struct aioproc *, void *); 
 static int		aio_enqueue_job(int, void *, struct lio_req *);
 static void		aio_exit(proc_t *, void *);
 
@@ -164,7 +163,6 @@ aio_init(void)
 static int
 aio_modcmd(modcmd_t cmd, void *arg)
 {
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return aio_init();
@@ -194,6 +192,7 @@ aio_procinit(struct proc *p)
 	cv_init(&aio->aio_worker_cv, "aiowork");
 	cv_init(&aio->done_cv, "aiodone");
 	TAILQ_INIT(&aio->jobs_queue);
+	TAILQ_INIT(&aio->aiost_total);
 
 	/*
 	 * Create an AIO worker thread.
@@ -478,33 +477,26 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 /*
  * The same job can be enqueued twice. So ensure that it does not exist
  */
+#ifndef AIOSP
 static int
-aio_validate_conflicts(struct aioproc *aio, void *aiocb_uptr)
+aio_validate_conflicts(struct aioproc *aio, void *uptr)
 {
 	mutex_enter(&aio->aio_mtx);
 
-#ifdef AIOSP
-	struct aiost *st;
-	TAILQ_FOREACH(st, &aio->active_jobs, list) {
-		if (st->job->aiocb_uptr != aiocb_uptr)
-			continue;
-		mutex_exit(&aio->aio_mtx);
-		return EINVAL;
-	}
-#else
 	struct aio_job *a_job;
 	TAILQ_FOREACH(a_job, &aio->jobs_queue, list) {
-		if (a_job->aiocb_uptr != aiocb_uptr)
+		if (a_job->aiocb_uptr != uptr) {
 			continue;
+		}
 		mutex_exit(&aio->aio_mtx);
 		return EINVAL;
 	}
-#endif
 
 	mutex_exit(&aio->aio_mtx);
 
 	return 0;
 }
+#endif
 
 /*
  * Enqueue the job.
@@ -559,7 +551,11 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 */
 	aio = p->p_aio;
 	if (aio) {
+#ifdef AIOSP
+		error = aiosp_validate_conflicts(aio, aiocb_uptr);
+#else
 		error = aio_validate_conflicts(aio, aiocb_uptr);
+#endif
 		if (error) {
 			return SET_ERROR(error);
 		}

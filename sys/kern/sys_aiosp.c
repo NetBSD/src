@@ -150,6 +150,7 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
 int
 aiosp_distribute_jobs(struct aiosp *sp)
 {
+	//struct proc *p = curlwp->l_proc;
 	struct aiost **aiost_list;
 	struct aio_job *job;
 	int total_dispensed;
@@ -264,6 +265,8 @@ aiosp_dispense_bank(void)
 
 	return 0;
 }
+
+// WHEN A PROCESS DIES DESTROY ALL SERVICE THREADS
 
 /*
  * Initializes a servicing pool.
@@ -804,6 +807,60 @@ aiost_teardown(struct aiost *aiost)
 
 	uvm_km_free(kernel_map, kva, aiocb->aio_nbytes, UVM_KMF_VAONLY);
 	uvm_vsunlock(vm, job->aiocb_uptr, aiocb->aio_nbytes);
+
+	return 0;
+}
+
+/*
+ * For major workloads that actually merit the use of asynchronous IO you can
+ * expect an arbitrarily high number of servicing threads to spawn. Throughout
+ * their lifecycle these servicing threads will remain cached within the bank to
+ * be pulled from when needed. It makes sense to flush this cache routinely when
+ * a process terminates. All servicing threads spawned by a given process will
+ * be flushed when that process terminates.
+ */
+int
+aiosp_flush(struct aioproc *proc)
+{
+	struct aiost *st;
+	struct aiost *tmp;
+	int error;
+
+	mutex_enter(&proc->aio_mtx);
+
+	TAILQ_FOREACH_SAFE(st, &proc->aiost_total, list, tmp) {
+		error = aiost_terminate(st);
+		if (error) {
+			mutex_exit(&proc->aio_mtx);
+			return error;
+		}
+
+		kmem_free(st, sizeof(*st));
+	}
+
+	mutex_exit(&proc->aio_mtx);
+
+	return error;
+}
+
+/*
+ * The same job can not be enqueued twice. 
+ */
+int
+aiosp_validate_conflicts(struct aioproc *proc, void *uptr)
+{
+	mutex_enter(&proc->aio_mtx);
+
+	struct aiost *st;
+	TAILQ_FOREACH(st, &proc->aiost_total, list) {
+		if (st->job->aiocb_uptr != uptr) {
+			continue;
+		}
+		mutex_exit(&proc->aio_mtx);
+		return EINVAL;
+	}
+
+	mutex_exit(&proc->aio_mtx);
 
 	return 0;
 }
