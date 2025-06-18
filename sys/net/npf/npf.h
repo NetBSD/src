@@ -248,8 +248,9 @@ bool		npf_autounload_p(void);
 #define	NPF_ALGO_NONE			0
 #define	NPF_ALGO_NETMAP			1
 #define	NPF_ALGO_IPHASH			2
-#define	NPF_ALGO_RR			3
+#define	NPF_ALGO_RR				3
 #define	NPF_ALGO_NPT66			4
+#define NPF_ALGO_SIIT			5
 
 /* Table types. */
 #define	NPF_TABLE_IPSET			1

@@ -900,6 +900,9 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 				    "must have an algorithm specified");
 			}
 			break;
+		case NPF_ALGO_SIIT:
+		// RFC 6052 and 6145 goes here
+		break;
 		default:
 			yyerror("invalid algorithm specified for static NAT");
 		}

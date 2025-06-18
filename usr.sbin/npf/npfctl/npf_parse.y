@@ -139,9 +139,9 @@ yyerror(const char *fmt, ...)
 %token			NO_PORTS
 %token			MINUS
 %token			NAME
-%token			NAT64
 %token			NETMAP
 %token			NPT66
+%token			SIIT
 %token			ON
 %token			OFF
 %token			OUT
@@ -400,6 +400,7 @@ map_algo
 	| ALGO IPHASH		{ $$ = NPF_ALGO_IPHASH; }
 	| ALGO ROUNDROBIN	{ $$ = NPF_ALGO_RR; }
 	| ALGO NPT66		{ $$ = NPF_ALGO_NPT66; }
+	| ALGO SIIT			{ $$ = NPF_ALGO_SIIT; }
 	|			{ $$ = 0; }
 	;
 
