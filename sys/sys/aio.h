@@ -105,6 +105,14 @@ struct aio_job {
 #define AIOST_STATE_OPERATION	0x2
 #define AIOST_STATE_TERMINATE	0x4
 
+/* Structure for tracking the status of a collection of OPS */
+struct aiosp_ops {
+	kmutex_t mtx;		/* Protects this structure */
+	kcondvar_t done_cv;	/* Signals when a job is complete */ 
+	int completed;		/* Keeps track of the number of completed jobs */
+	int total;		/* Keeps track of the number of total jobs */
+};
+
 /* Structure for AIO servicing thread */
 struct aiosp;
 struct aiost {
@@ -115,6 +123,8 @@ struct aiost {
 	kmutex_t service_mtx;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
+	int ops_total;			/* Total number of connected ops */
+	struct aiosp_ops **ops;		/* Array of ops */
 	vaddr_t kbuf;			/* Shared memory buffer */
 	int state;			/* The state of the thread */
 };
@@ -158,6 +168,7 @@ int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_dispense_bank(void);
 int	aiosp_enqueue_job(struct aio_job *);
+int	aiosp_suspend(struct aioproc *, struct aiocb **, int, struct timespec *);
 int	aiosp_flush(struct aioproc *);
 int	aiosp_validate_conflicts(struct aioproc *, void *);
 

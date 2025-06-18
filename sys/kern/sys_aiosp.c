@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/bitops.h>
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -233,6 +234,91 @@ finish:
 
 	kmem_free(aiost_list, sizeof(*aiost_list) * total_dispensed);
 
+	return error;
+}
+
+/*
+ * aiosp_ops represent a collection of operations whose status should be
+ * tracked. When the user invokes a suspend, we create a new collection, and
+ * then for each aiost referenced within aiocbp_list, when those operations
+ * are finished, every aiosp_ops appended to that thread (aiost->ops) gets
+ * awoken and the completion count incremented. The completion counter can be
+ * incremeneted posthumously as well.
+ */
+int
+aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
+	struct timespec *ts)
+{
+	int error;
+	int timo;
+
+	if (ts) {
+		timo = mstohz((ts->tv_sec * 1000) + (ts->tv_nsec / 1000000));
+		if (timo == 0 && ts->tv_sec == 0 && ts->tv_nsec > 0) {
+			timo = 1;
+		}
+
+		if (timo <= 0) {
+			return SET_ERROR(EAGAIN);
+		}
+	} else {
+		timo = 0;
+	}
+
+	struct aiosp_ops ops = { 0 };
+	cv_init(&ops.done_cv, "aiodone");
+	mutex_init(&ops.mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	for (int i = 0; i < nent; i++) {
+		struct aiost *aiost;
+		TAILQ_FOREACH(aiost, &aioproc->aiost_total, list) {
+			if (aiost->state == AIOST_STATE_NONE ||
+				aiost->state == AIOST_STATE_TERMINATE) {
+				continue;
+			}
+
+			if (aiost->job->aiocb_uptr == aiocbp_list[i]) {
+				goto process;
+			}
+		}
+
+		// HANDLE THIS PROPERLY
+		error = SET_ERROR(EINVAL);
+		return error;
+process:
+		mutex_enter(&aiost->mtx);
+
+		if (powerof2(aiost->ops_total)) {
+			size_t total = aiost->ops_total - 1;
+			for (int j = 0; j < ilog2(sizeof(total) * 8);
+			     j++) {
+				total |= total >> (1 << j);
+			}
+			total += 1;
+
+			aiost->ops = kmem_alloc(total *
+				sizeof(struct aiost), KM_SLEEP);
+		}
+
+		aiost->ops[aiost->ops_total++] = &ops;
+
+		mutex_exit(&aiost->mtx);
+	}
+
+	mutex_enter(&ops.mtx);
+	for (; ops.completed != ops.total;) {
+		error = cv_timedwait_sig(&ops.done_cv, &ops.mtx, timo);
+		if (error) {
+			if (error == EWOULDBLOCK) {
+				error = SET_ERROR(EAGAIN);
+			}
+
+			mutex_exit(&ops.mtx);
+			return error;
+		}
+	}
+
+	mutex_exit(&ops.mtx);
 	return error;
 }
 
@@ -694,11 +780,22 @@ aiost_terminate(struct aiost *st)
 	int error = 0;
 
 	mutex_enter(&st->mtx);
+
+	size_t total = st->ops_total - 1;
+	for (int j = 0; j < ilog2(sizeof(total) * 8); j++) {
+		total |= total >> (1 << j);
+	}
+	total += 1;
+
+	kmem_free(st->ops, total * sizeof(struct aiost));
+	st->ops = NULL;
+
 	error = aiost_teardown(st);
 	if (error) {
 		return error;
 	}
 	st->state = AIOST_STATE_TERMINATE;
+
 	mutex_exit(&st->mtx);
 
 	cv_signal(&st->service_cv);
@@ -820,25 +917,25 @@ aiost_teardown(struct aiost *aiost)
  * be flushed when that process terminates.
  */
 int
-aiosp_flush(struct aioproc *proc)
+aiosp_flush(struct aioproc *aioproc)
 {
 	struct aiost *st;
 	struct aiost *tmp;
 	int error;
 
-	mutex_enter(&proc->aio_mtx);
+	mutex_enter(&aioproc->aio_mtx);
 
-	TAILQ_FOREACH_SAFE(st, &proc->aiost_total, list, tmp) {
+	TAILQ_FOREACH_SAFE(st, &aioproc->aiost_total, list, tmp) {
 		error = aiost_terminate(st);
 		if (error) {
-			mutex_exit(&proc->aio_mtx);
+			mutex_exit(&aioproc->aio_mtx);
 			return error;
 		}
 
 		kmem_free(st, sizeof(*st));
 	}
 
-	mutex_exit(&proc->aio_mtx);
+	mutex_exit(&aioproc->aio_mtx);
 
 	return error;
 }
@@ -847,20 +944,20 @@ aiosp_flush(struct aioproc *proc)
  * The same job can not be enqueued twice. 
  */
 int
-aiosp_validate_conflicts(struct aioproc *proc, void *uptr)
+aiosp_validate_conflicts(struct aioproc *aioproc, void *uptr)
 {
-	mutex_enter(&proc->aio_mtx);
+	mutex_enter(&aioproc->aio_mtx);
 
 	struct aiost *st;
-	TAILQ_FOREACH(st, &proc->aiost_total, list) {
+	TAILQ_FOREACH(st, &aioproc->aiost_total, list) {
 		if (st->job->aiocb_uptr != uptr) {
 			continue;
 		}
-		mutex_exit(&proc->aio_mtx);
+		mutex_exit(&aioproc->aio_mtx);
 		return EINVAL;
 	}
 
-	mutex_exit(&proc->aio_mtx);
+	mutex_exit(&aioproc->aio_mtx);
 
 	return 0;
 }
