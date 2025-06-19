@@ -893,6 +893,13 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 				    "NETMAP algorithm must be 1:1");
 			}
 			break;
+		case NPF_ALGO_SIIT:
+		//Make sure no two addresses are the same
+		//Must be IPv6, the other IPv4 and vice versa.
+			if (am1->fam_family == am2->fam_family) {
+		yyerror("one address must be IPv6 and the other IPv4 and vice versa");
+			}
+			break;
 		case NPF_ALGO_NONE:
 			if ((am1 && am1->fam_mask != NPF_NO_NETMASK) ||
 			    (am2 && am2->fam_mask != NPF_NO_NETMASK)) {
@@ -900,9 +907,6 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 				    "must have an algorithm specified");
 			}
 			break;
-		case NPF_ALGO_SIIT:
-		// RFC 6052 and 6145 goes here
-		break;
 		default:
 			yyerror("invalid algorithm specified for static NAT");
 		}
