@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.14 2023/09/14 03:05:15 rin Exp $	*/
+/*	$NetBSD: eficons.c,v 1.15 2025/06/19 15:00:17 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -365,8 +365,26 @@ awaitkey(int timeout, int tell)
 				printf("%s", numbuf);
 			break;
 		}
-		if (timeout--)
-			internal_waitforinputevent(10000000);
+		if (timeout--) {
+			/* 
+			 * UEFI spec 2.10 section 7.1.7
+			 * EFI_BOOT_SERVICES.SetTimer() timeout in 100ns units
+			 * but the implementation may be broken and faster:
+			 * check date to make sure we are slow enough.
+			 */
+			EFI_TIME t1, t2;
+
+			uefi_call_wrapper(RT->GetTime, 2, &t1, NULL);
+			do {
+				internal_waitforinputevent(10000000); /* 1s */
+				uefi_call_wrapper(RT->GetTime, 2, &t2, NULL);
+			} while (t1.Year == t2.Year &&
+				 t1.Month == t2.Month &&
+				 t1.Day == t2.Day &&
+				 t1.Hour == t2.Hour &&
+				 t1.Minute == t2.Minute &&
+				 t1.Second == t2.Second);
+		}
 		else
 			break;
 		if (tell)
