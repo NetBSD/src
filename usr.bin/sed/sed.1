@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.43 2021/03/11 17:14:35 wiz Exp $
+.\"	$NetBSD: sed.1,v 1.44 2025/06/19 12:24:06 bad Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"	@(#)sed.1	8.2 (Berkeley) 12/30/93
 .\" $FreeBSD: head/usr.bin/sed/sed.1 259132 2013-12-09 18:57:20Z eadler $
 .\"
-.Dd March 11, 2021
+.Dd June 19, 2025
 .Dt SED 1
 .Os
 .Sh NAME
@@ -278,11 +278,54 @@ and the second
 stands for itself, so that the regular expression is
 .Dq abcxdef .
 .Pp
-.It
-The escape sequence \en matches a newline character embedded in the
+Escape sequences for non-printing characters compatible with GNU sed.
+These escape sequences are interpreted in regular expressions and in the
+replacement part of a substitute command.
+.Pp
+.Bl -tag -width \edxxx -compact
+.It \ea
+Translates to  a BEL character.
+.It \ef
+Translates to a form feed character.
+.It \en
+Translates to a newline character embedded in the
 pattern space.
 You cannot, however, use a literal newline character in an address or
 in the substitute command.
+.It \er
+Translates to a carriage return character.
+.It \et
+Translates to a horizontal tab character.
+.It \ev
+Translates to a vertical tab character.
+.Sm off
+.It Li \ed Ar xxx
+.Sm
+Translates to a character whose decimal value is
+.Li xxx .
+If consuming the third digit would produce a value greater than 255 only the
+first two digits are used to calculate the value.
+For example,
+.Li \ed256
+will be interpreted as the character with decimal value 25 (ASCII EM) followed by the character
+.Li 6 .
+.Sm off
+.It Li \eo Ar xxx
+.Sm
+Translates to a character whose octal value is
+.Li xxx .
+If consuming the third digit would produce a value greater than 255 only the
+first two digits are used to calculate the value.
+For example,
+.Li \eo400
+will be interpreted as the space character (ASCII SP) followed by the character
+.Li 0 .
+.Sm off
+.It Li \ex Ar xx
+.Sm
+Translates to a character whose hexadecimal value is
+.Li xx .
+.El
 .El
 .Pp
 One special feature of
