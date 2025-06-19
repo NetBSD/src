@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacreg.h,v 1.5 2016/04/03 10:03:34 martin Exp $	*/
+/*	$NetBSD: dmacreg.h,v 1.6 2025/06/19 12:38:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -444,7 +444,7 @@ typedef u_int64_t dmatag_t;
 /* 
  * DMA address 
  *  At least, 16byte align.
- *  but 64byte align is recommended. because EE D-cash line size is 64byte.
+ *  but 64byte align is recommended. because EE D-cache line size is 64byte.
  *  To gain maximum DMA speed, use 128 byte align.
  */
 #define DMATAG_ADDR_MASK		0xffffffff
