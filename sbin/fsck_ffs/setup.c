@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.109 2023/07/05 10:59:08 riastradh Exp $	*/
+/*	$NetBSD: setup.c,v 1.110 2025/06/19 06:59:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.109 2023/07/05 10:59:08 riastradh Exp $");
+__RCSID("$NetBSD: setup.c,v 1.110 2025/06/19 06:59:48 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ setup(const char *dev, const char *origdev)
 {
 	uint32_t cg;
 	long size, asked, i, j;
-	long bmapsize;
+	size_t bmapsize;
 	struct disk_geom geo;
 	struct dkwedge_info dkw;
 	off_t sizepb;
@@ -495,10 +495,10 @@ setup(const char *dev, const char *origdev)
 	 * allocate and initialize the necessary maps
 	 */
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = aligned_alloc(DEV_BSIZE, (unsigned)bmapsize);
+	blockmap = aligned_alloc(DEV_BSIZE, bmapsize);
 	if (blockmap == NULL) {
-		pwarn("cannot alloc %u bytes for blockmap\n",
-		    (unsigned)bmapsize);
+		pwarn("cannot alloc %zu bytes for blockmap\n",
+		    bmapsize);
 		goto badsblabel;
 	}
 	memset(blockmap, 0, bmapsize);
