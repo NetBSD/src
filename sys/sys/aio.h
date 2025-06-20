@@ -91,12 +91,14 @@ struct aiocb {
 #define JOB_DONE		0x2
 
 /* Structure of AIO job */
+struct aiost;
 struct aio_job {
 	int aio_op;		/* Operation code */
 	struct aiocb aiocbp;	/* AIO data structure */
 	pri_t pri;		/* Job priority */
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
 	struct proc *p;		/* Process that instantiated the job */
+	struct aiost *aiost;	/* Service thread associated with this job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
@@ -143,6 +145,12 @@ struct aiosp {
 	pri_t priority;			/* Thread priority of the pool */
 };
 
+struct aiocbp {
+	LIST_ENTRY(aiocbp) list;
+	void *uptr;
+	struct aio_job *job;
+};
+
 /* LIO structure */
 struct lio_req {
 	u_int refcnt;		/* Reference counter */
@@ -150,6 +158,7 @@ struct lio_req {
 };
 
 /* Structure of AIO data for process */
+LIST_HEAD(aiocbp_list, aiocbp);
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
 	kcondvar_t aio_worker_cv;	/* Signals on a new job */
@@ -159,18 +168,33 @@ struct aioproc {
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
 	struct aiost_list aiost_total;	/* Total list of servicing threads */
+	struct aiocbp_list *aio_hash;
+	size_t aio_hash_size;
+	u_int aio_hash_mask;
 };
 
 extern u_int aio_listio_max;
-/* Prototypes */
+
+/*
+ * Prototypes
+ */
+
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
+
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_dispense_bank(void);
 int	aiosp_enqueue_job(struct aio_job *);
 int	aiosp_suspend(struct aioproc *, struct aiocb **, int, struct timespec *);
 int	aiosp_flush(struct aioproc *);
 int	aiosp_validate_conflicts(struct aioproc *, void *);
+
+void	aiocbp_destroy(struct aioproc *);
+int	aiocbp_init(struct aioproc *, u_int);
+int 	aiocbp_lookup(struct aioproc *, struct aiocbp **, void *);
+int 	aiocbp_remove(struct aioproc *, struct aiocbp *, void *);
+int 	aiocbp_insert(struct aioproc *, struct aiocbp *, void *);
+
 
 #endif /* _KERNEL */
 
