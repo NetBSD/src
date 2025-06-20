@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.309 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.310 2025/06/20 17:02:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.309 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.310 2025/06/20 17:02:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -631,6 +631,10 @@ faultcommon:
 			goto we_re_toast;
 		}
 #endif
+#ifdef XENPV
+		/* Check to see if interrupts are enabled (ie; no events are masked) */
+		KASSERT(x86_read_psl() == 0);
+#endif
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
@@ -669,17 +673,13 @@ faultcommon:
 				 * the copy functions, and so visible
 				 * to cpu_kpreempt_exit().
 				 */
-#ifndef XENPV
 				x86_disable_intr();
-#endif
 				l->l_nopreempt--;
 				if (l->l_nopreempt > 0 || !l->l_dopreempt ||
 				    pfail) {
 					return;
 				}
-#ifndef XENPV
 				x86_enable_intr();
-#endif
 				/*
 				 * If preemption fails for some reason,
 				 * don't retry it.  The conditions won't
