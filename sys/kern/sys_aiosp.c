@@ -296,7 +296,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		if (powerof2(aiost->ops_total)) {
 			size_t total = aiosp_ops_expected(aiost->ops_total);
 			aiost->ops = kmem_alloc(total *
-				sizeof(struct aiost), KM_SLEEP);
+				sizeof(*aiost->ops), KM_SLEEP);
 		}
 
 		aiost->ops[aiost->ops_total++] = &ops;
@@ -796,7 +796,7 @@ aiost_terminate(struct aiost *st)
 	mutex_enter(&st->mtx);
 
 	size_t total = aiosp_ops_expected(st->ops_total);
-	kmem_free(st->ops, total * sizeof(struct aiost));
+	kmem_free(st->ops, total * sizeof(*st->ops));
 	st->ops = NULL;
 
 	error = aiost_teardown(st);
@@ -991,7 +991,7 @@ aiocbp_lookup(struct aioproc *aioproc, struct aiocbp **aiocbpp, void *uptr)
 
 	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
 	
-	LIST_FOREACH(aiocbp, &aioproc->aio_hash[hash], list) {
+	TAILQ_FOREACH(aiocbp, &aioproc->aio_hash[hash], list) {
 		if (aiocbp->uptr == uptr) {
 			*aiocbpp = aiocbp;
 			return 0;
@@ -1005,20 +1005,17 @@ aiocbp_lookup(struct aioproc *aioproc, struct aiocbp **aiocbpp, void *uptr)
  * aiocbp hash removal
  */
 int
-aiocbp_remove(struct aioproc *aioproc, struct aiocbp *aiocbp, void *uptr)
+aiocbp_remove(struct aioproc *aioproc, void *uptr)
 {
-	struct aiocbp *found;
+	struct aiocbp *aiocbp;
 	u_int hash;
 
 	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
 	
-	LIST_FOREACH(found, &aioproc->aio_hash[hash], list) {
-		if (found->uptr == uptr) {
-			if (found != aiocbp) {
-				return EINVAL;
-			}
-
-			LIST_REMOVE(aiocbp, list);
+	struct aiocbp *tmp;
+	TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[hash], list, tmp) {
+		if (aiocbp->uptr == uptr) {
+			TAILQ_REMOVE(&aioproc->aio_hash[hash], aiocbp, list);
 			return 0;
 		}
 	}
@@ -1030,22 +1027,23 @@ aiocbp_remove(struct aioproc *aioproc, struct aiocbp *aiocbp, void *uptr)
  * aiocbp hash insertion
  */
 int
-aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp, void *uptr)
+aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp)
 {
 	struct aiocbp *found;
+	void *uptr;
 	u_int hash;
 
+	uptr = aiocbp->uptr;
 	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
 	
-	LIST_FOREACH(found, &aioproc->aio_hash[hash], list) {
+	TAILQ_FOREACH(found, &aioproc->aio_hash[hash], list) {
 		if (found->uptr == uptr) {
 			found->job = aiocbp->job;
 			return EEXIST;
 		}
 	}
 	
-	aiocbp->uptr = uptr;
-	LIST_INSERT_HEAD(&aioproc->aio_hash[hash], aiocbp, list);
+	TAILQ_INSERT_HEAD(&aioproc->aio_hash[hash], aiocbp, list);
 	
 	return 0;
 }
@@ -1060,14 +1058,14 @@ aiocbp_init(struct aioproc *aioproc, u_int hashsize)
 		return EINVAL;
 	}
 
-	aioproc->aio_hash = kmem_zalloc(hashsize * sizeof(struct aiocbp_list),
+	aioproc->aio_hash = kmem_zalloc(hashsize * sizeof(aioproc->aio_hash),
 		KM_SLEEP);
 
 	aioproc->aio_hash_mask = hashsize - 1;
 	aioproc->aio_hash_size = hashsize;
 
 	for (size_t i = 0; i < hashsize; i++) {
-		LIST_INIT(&aioproc->aio_hash[i]);
+		TAILQ_INIT(&aioproc->aio_hash[i]);
 	}
 
 	return 0;
@@ -1079,11 +1077,24 @@ aiocbp_init(struct aioproc *aioproc, u_int hashsize)
 void
 aiocbp_destroy(struct aioproc *aioproc)
 {
-	if (aioproc->aio_hash != NULL) {
-		kmem_free(aioproc->aio_hash,
-			aioproc->aio_hash_size * sizeof(struct aiocbp_list));
-		aioproc->aio_hash = NULL;
-		aioproc->aio_hash_mask = 0;
-		aioproc->aio_hash_size = 0;
+	if (aioproc->aio_hash == NULL) {
+		return;
 	}
+
+	struct aiocbp *aiocbp;
+
+	for (size_t i = 0; i < aioproc->aio_hash_size; i++) {
+		struct aiocbp *tmp;
+		TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[i], list, tmp) {
+			TAILQ_REMOVE(&aioproc->aio_hash[i], aiocbp, list);
+			kmem_free(aiocbp, sizeof(*aiocbp));
+		}
+	}
+
+
+	kmem_free(aioproc->aio_hash,
+		aioproc->aio_hash_size * sizeof(aioproc->aio_hash));
+	aioproc->aio_hash = NULL;
+	aioproc->aio_hash_mask = 0;
+	aioproc->aio_hash_size = 0;
 }

@@ -187,6 +187,12 @@ aio_procinit(struct proc *p)
 	/* Allocate and initialize AIO structure */
 	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
 
+	/* Initialize the aiocbp hash map */
+	error = aiocbp_init(aio, 256);
+	if (error) {
+		return error;
+	}
+
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&aio->aio_worker_cv, "aiowork");
@@ -255,6 +261,7 @@ aio_exit(struct proc *p, void *cookie)
 	}
 
 	/* Destroy and free the entire AIO data structure */
+	aiocbp_destroy(aio);
 	cv_destroy(&aio->aio_worker_cv);
 	cv_destroy(&aio->done_cv);
 	mutex_destroy(&aio->aio_mtx);
@@ -507,7 +514,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	struct proc *p = curlwp->l_proc;
 	struct aioproc *aio;
 	struct aio_job *a_job;
-	struct aiocb aiocbp;
+	struct aiocb aiocb;
 	struct sigevent *sig;
 	int error;
 
@@ -516,30 +523,30 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		return SET_ERROR(EAGAIN);
 
 	/* Get the data structure from user-space */
-	error = copyin(aiocb_uptr, &aiocbp, sizeof(struct aiocb));
+	error = copyin(aiocb_uptr, &aiocb, sizeof(struct aiocb));
 	if (error)
 		return error;
 
 	/* Check if signal is set, and validate it */
-	sig = &aiocbp.aio_sigevent;
+	sig = &aiocb.aio_sigevent;
 	if (sig->sigev_signo < 0 || sig->sigev_signo >= NSIG ||
 	    sig->sigev_notify < SIGEV_NONE || sig->sigev_notify > SIGEV_SA)
 		return SET_ERROR(EINVAL);
 
 	/* Buffer and byte count */
 	if (((AIO_SYNC | AIO_DSYNC) & op) == 0)
-		if (aiocbp.aio_buf == NULL || aiocbp.aio_nbytes > SSIZE_MAX)
+		if (aiocb.aio_buf == NULL || aiocb.aio_nbytes > SSIZE_MAX)
 			return SET_ERROR(EINVAL);
 
 	/* Check the opcode, if LIO_NOP - simply ignore */
 	if (op == AIO_LIO) {
 		KASSERT(lio != NULL);
-		if (aiocbp.aio_lio_opcode == LIO_WRITE)
+		if (aiocb.aio_lio_opcode == LIO_WRITE)
 			op = AIO_WRITE;
-		else if (aiocbp.aio_lio_opcode == LIO_READ)
+		else if (aiocb.aio_lio_opcode == LIO_READ)
 			op = AIO_READ;
 		else
-			return (aiocbp.aio_lio_opcode == LIO_NOP) ? 0 :
+			return (aiocb.aio_lio_opcode == LIO_NOP) ? 0 :
 			    SET_ERROR(EINVAL);
 	} else {
 		KASSERT(lio == NULL);
@@ -575,10 +582,10 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 * Set the state with errno, and copy data
 	 * structure back to the user-space.
 	 */
-	aiocbp._state = JOB_WIP;
-	aiocbp._errno = SET_ERROR(EINPROGRESS);
-	aiocbp._retval = -1;
-	error = copyout(&aiocbp, aiocb_uptr, sizeof(struct aiocb));
+	aiocb._state = JOB_WIP;
+	aiocb._errno = SET_ERROR(EINPROGRESS);
+	aiocb._retval = -1;
+	error = copyout(&aiocb, aiocb_uptr, sizeof(struct aiocb));
 	if (error)
 		return error;
 
@@ -590,7 +597,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 * Store the user-space pointer for searching.  Since we
 	 * are storing only per proc pointers - it is safe.
 	 */
-	memcpy(&a_job->aiocbp, &aiocbp, sizeof(struct aiocb));
+	memcpy(&a_job->aiocbp, &aiocb, sizeof(struct aiocb));
 	a_job->aiocb_uptr = aiocb_uptr;
 	a_job->aio_op |= op;
 	a_job->lio = lio;
@@ -613,6 +620,16 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 #ifdef AIOSP
 	a_job->pri = PRI_KTHREAD;
 	a_job->p = curlwp->l_proc;
+
+	struct aiocbp *aiocbp = kmem_zalloc(sizeof(struct aiocbp), KM_SLEEP);
+	aiocbp->job = a_job;
+	aiocbp->uptr = aiocb_uptr;
+
+	error = aiocbp_insert(aio, aiocbp);
+	if (error) {
+		mutex_exit(&aio->aio_mtx);
+		return SET_ERROR(error);
+	}
 
 	error = aiosp_enqueue_job(a_job);
 	if (error) {

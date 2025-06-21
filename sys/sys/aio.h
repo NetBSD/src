@@ -146,7 +146,7 @@ struct aiosp {
 };
 
 struct aiocbp {
-	LIST_ENTRY(aiocbp) list;
+	TAILQ_ENTRY(aiocbp) list;
 	void *uptr;
 	struct aio_job *job;
 };
@@ -158,7 +158,7 @@ struct lio_req {
 };
 
 /* Structure of AIO data for process */
-LIST_HEAD(aiocbp_list, aiocbp);
+TAILQ_HEAD(aiocbp_list, aiocbp);
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
 	kcondvar_t aio_worker_cv;	/* Signals on a new job */
@@ -192,8 +192,8 @@ int	aiosp_validate_conflicts(struct aioproc *, void *);
 void	aiocbp_destroy(struct aioproc *);
 int	aiocbp_init(struct aioproc *, u_int);
 int 	aiocbp_lookup(struct aioproc *, struct aiocbp **, void *);
-int 	aiocbp_remove(struct aioproc *, struct aiocbp *, void *);
-int 	aiocbp_insert(struct aioproc *, struct aiocbp *, void *);
+int 	aiocbp_remove(struct aioproc *, void *);
+int 	aiocbp_insert(struct aioproc *, struct aiocbp *);
 
 
 #endif /* _KERNEL */
