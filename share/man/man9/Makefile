@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.473 2024/08/05 13:02:46 christos Exp $
+#       $NetBSD: Makefile,v 1.474 2025/06/21 17:52:52 gutteridge Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -24,7 +24,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	fork1.9 fsetown.9 fstrans.9 \
 	genfs.9 genfs_can_access.9 genfs_can_access_acl_nfs4.9 \
 	genfs_can_access_acl_posix1e.9 genfs_rename.9 \
-	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
+	hardclock.9 hash.9 hashinit.9 heartbeat.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \

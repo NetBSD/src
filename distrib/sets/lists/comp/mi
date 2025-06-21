@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2493 2025/04/23 02:58:52 thorpej Exp $
+#	$NetBSD: mi,v 1.2494 2025/06/21 17:52:52 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12177,6 +12177,7 @@
 ./usr/share/man/cat9/hash32_strn.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hashdone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hashinit.0			comp-sys-catman		.cat
+./usr/share/man/cat9/heartbeat.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/holdrele.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/howmany.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/htobe16.0			comp-sys-catman		.cat
@@ -20647,6 +20648,7 @@
 ./usr/share/man/html9/hash32_strn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hashdone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hashinit.html		comp-sys-htmlman	html
+./usr/share/man/html9/heartbeat.html		comp-sys-htmlman	html
 ./usr/share/man/html9/holdrele.html		comp-sys-htmlman	html
 ./usr/share/man/html9/howmany.html		comp-sys-htmlman	html
 ./usr/share/man/html9/htobe16.html		comp-sys-htmlman	html
@@ -29262,6 +29264,7 @@
 ./usr/share/man/man9/hash32_strn.9		comp-sys-man		.man
 ./usr/share/man/man9/hashdone.9			comp-sys-man		.man
 ./usr/share/man/man9/hashinit.9			comp-sys-man		.man
+./usr/share/man/man9/heartbeat.9		comp-sys-man		.man
 ./usr/share/man/man9/holdrele.9			comp-sys-man		.man
 ./usr/share/man/man9/howmany.9			comp-sys-man		.man
 ./usr/share/man/man9/htobe16.9			comp-sys-man		.man
