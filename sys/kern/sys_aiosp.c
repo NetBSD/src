@@ -315,9 +315,13 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			mutex_exit(&ops.mtx);
 			return error;
 		}
-	}
 
+		if (ops.completed) {
+			break;
+		}
+	}
 	mutex_exit(&ops.mtx);
+
 	return error;
 }
 

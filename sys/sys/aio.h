@@ -111,8 +111,8 @@ struct aio_job {
 struct aiosp_ops {
 	kmutex_t mtx;		/* Protects this structure */
 	kcondvar_t done_cv;	/* Signals when a job is complete */ 
-	int completed;		/* Keeps track of the number of completed jobs */
-	int total;		/* Keeps track of the number of total jobs */
+	size_t completed;	/* Keeps track of the number of completed jobs */
+	size_t total;		/* Keeps track of the number of total jobs */
 };
 
 /* Structure for AIO servicing thread */
@@ -125,7 +125,7 @@ struct aiost {
 	kmutex_t service_mtx;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
-	int ops_total;			/* Total number of connected ops */
+	size_t ops_total;		/* Total number of connected ops */
 	struct aiosp_ops **ops;		/* Array of ops */
 	vaddr_t kbuf;			/* Shared memory buffer */
 	int state;			/* The state of the thread */
@@ -168,9 +168,9 @@ struct aioproc {
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
 	struct aiost_list aiost_total;	/* Total list of servicing threads */
-	struct aiocbp_list *aio_hash;
-	size_t aio_hash_size;
-	u_int aio_hash_mask;
+	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
+	size_t aio_hash_size;		/* Total number of buckets */
+	u_int aio_hash_mask;		/* Hash mask */
 };
 
 extern u_int aio_listio_max;
