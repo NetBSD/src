@@ -458,7 +458,7 @@ register_etherpfil_hook(npf_t *npf, ifnet_t *ifp, int i)
 
 	if (npf_ph_ether) {
 		error = pfil_add_hook(npfos_layer2_handler, npf,
-			PFIL_ALL, npf_ph_ether);
+		    PFIL_ALL, npf_ph_ether);
 		KASSERT(error == 0);
 	}
 	npf_ph_etherlist[i] = npf_ph_ether;
@@ -489,9 +489,8 @@ static void
 destroy_pfilether_hook(npf_t *npf)
 {
 	int i = 0;
-	while(npf_ph_etherlist[i]) {
-		pfil_head_t *npf_ph_ether;
-		npf_ph_ether = npf_ph_etherlist[i];
+	while (npf_ph_etherlist[i]) {
+		pfil_head_t *npf_ph_ether = npf_ph_etherlist[i];
 
 		if (npf_ph_ether) {
 			(void)pfil_remove_hook(npfos_layer2_handler, npf,

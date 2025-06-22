@@ -315,7 +315,7 @@ print_ether_type(npf_conf_info_t *ctx __unused, const uint32_t *words)
 
 	_DIAGASSERT(type != NULL);
 
-	easprintf(&a, "%c%c%02x%02x", 'E', 'x', type[0], type[1]);
+	easprintf(&a, "Ex%02x%02x", type[0], type[1]);
 
 	return a;
 }
@@ -458,6 +458,7 @@ npfctl_print_id(npf_conf_info_t *ctx, nl_rule_t *rl)
 static void
 npfctl_print_filter_generic(npf_conf_info_t *ctx, uint32_t plist)
 {
+	assert(plist < LIST_COUNT);
 	elem_list_t *list = &ctx->list[plist];
 
 	if (list->count) {
@@ -586,7 +587,7 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl, uint32_t attr)
 		seenf |= npfctl_print_l2filter_seg(ctx, NPF_SRC);
 		seenf |= npfctl_print_l2filter_seg(ctx, NPF_DST);
 		npfctl_print_filter_generic(ctx, LIST_ETYPE);
-	} else {
+	} else if (attr & NPF_RULE_LAYER_3) {
 		for (unsigned i = 0; i < __arraycount(mark_keyword_map); i++) {
 			const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
 			scan_marks(ctx, mk, marks, mlen);
@@ -594,6 +595,8 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl, uint32_t attr)
 		npfctl_print_filter_generic(ctx, LIST_PROTO);
 		seenf |= npfctl_print_filter_seg(ctx, NPF_SRC);
 		seenf |= npfctl_print_filter_seg(ctx, NPF_DST);
+	} else {
+		yyerror("%s: layer not supported", __func__);
 	}
 	return seenf;
 }

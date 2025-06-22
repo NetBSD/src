@@ -350,7 +350,7 @@ npfk_layer2_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * including the interface the frame is traveling on
 	 */
 	nbuf_init(npf, &nbuf, *mp, ifp);
-	memset(&npc, 0, sizeof(npf_cache_t));
+	memset(&npc, 0, sizeof(npc));
 	npc.npc_ctx = npf;
 	npc.npc_nbuf = &nbuf;
 

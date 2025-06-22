@@ -511,7 +511,7 @@ fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
 		}
 
 	} else if (type && type != ctx->eth_type) {
-		errx(EXIT_FAILURE, "ether type mismatch");
+		errx(EXIT_FAILURE, "ether type mismatch : %u", type);
 	}
 }
 
@@ -698,7 +698,7 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 	const uint32_t *awords = (const uint32_t *)ether_addr;
 
 	off = (opts & MATCH_SRC) ? offsetof(struct ether_header, ether_shost) :
-					offsetof(struct ether_header, ether_dhost);
+	    offsetof(struct ether_header, ether_dhost);
 	const uint32_t word_offset = sizeof(uint32_t);
 
 	uint32_t mac_word = ntohl(*awords);

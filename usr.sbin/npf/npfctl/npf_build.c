@@ -552,14 +552,17 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
 {
 	npf_bpf_t *bc;
 	size_t len;
+	uint32_t layer = fopts->layer;
 
 	bc = npfctl_bpf_create();
-	if (fopts->layer == NPF_RULE_LAYER_3) {
+	if (layer == NPF_RULE_LAYER_3) {
 		if (!build_l3_code(bc, rl, family, popts, fopts))
-		return false;
-	} else {
+			return false;
+	} else if (layer == NPF_RULE_LAYER_2) {
 		if (!build_l2_code(bc, fopts))
 			return false;
+	} else {
+		yyerror("%s: layer not supported", __func__);
 	}
 
 	/* Set the byte-code marks, if any. */
@@ -737,8 +740,11 @@ npfctl_build_group(const char *name, int attr, const char *ifname, bool def)
 		if (attr & NPF_RULE_LAYER_3) {
 			defgroup = set_defgroup(rl, defgroup, attr);
 		}
-		else {
+		else if (attr & NPF_RULE_LAYER_2) {
 			defgroup_l2 = set_defgroup(rl, defgroup_l2, attr);
+		}
+		else {
+			yyerror("%s: layer not supported", __func__);
 		}
 	} else {
 		if (attr & NPF_RULE_LAYER_2)
@@ -784,14 +790,20 @@ npfctl_build_group_end(void)
 static uint32_t
 npf_rule_layer_compat(nl_rule_t *cg, uint32_t layer)
 {
-	const char *str = (layer & NPF_RULE_LAYER_2) ? "layer 2" : "layer 3";
-	uint32_t attr;
-
-	attr = npf_rule_getattr(cg);
+	uint32_t attr = attr = npf_rule_getattr(cg);
 
 	if ((attr & layer) == 0) {
+		/* only set the layer strings when you need them */
+		const char *str;
+		if (layer & NPF_RULE_LAYER_2)
+			str = "layer 2";
+		else if (layer & NPF_RULE_LAYER_3)
+			str = "layer 3";
+		else
+			yyerror("%s: layer not yet supported", __func__);
+
 		yyerror("cannot insert %s rules in this group"
-		" make sure to insert same layer rules in same group ", str);
+		    " make sure to insert same layer rules in same group ", str);
 	}
 	return layer;
 }

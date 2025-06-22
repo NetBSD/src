@@ -720,7 +720,7 @@ parse_ether_hex(uint8_t *dest, const char *str, int hexlength, const char *err)
 
 	while (*cp) {
 		if (!isxdigit(*cp))
-			yyerror("%s", err);
+			yyerror("%s: %s", err, str);
 
 		*dest = atox(*cp);
 		cp++;
@@ -734,15 +734,15 @@ parse_ether_hex(uint8_t *dest, const char *str, int hexlength, const char *err)
 			if (*cp == '\0')
 				return;
 			else
-				yyerror("%s", err);
+				yyerror("%s: %s", err, str);
 		}
 
 		switch (*cp) {
-			case ':':
-			case '-':
-			case '.':
-				cp++;
-				break;
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
 		}
 	}
 }
