@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.110 2025/06/19 06:59:48 mlelstv Exp $	*/
+/*	$NetBSD: setup.c,v 1.111 2025/06/23 15:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.110 2025/06/19 06:59:48 mlelstv Exp $");
+__RCSID("$NetBSD: setup.c,v 1.111 2025/06/23 15:07:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,8 +497,7 @@ setup(const char *dev, const char *origdev)
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
 	blockmap = aligned_alloc(DEV_BSIZE, bmapsize);
 	if (blockmap == NULL) {
-		pwarn("cannot alloc %zu bytes for blockmap\n",
-		    bmapsize);
+		pwarn("cannot alloc %zu bytes for blockmap\n", bmapsize);
 		goto badsblabel;
 	}
 	memset(blockmap, 0, bmapsize);
