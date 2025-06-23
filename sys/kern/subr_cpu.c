@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.22 2024/03/05 20:59:41 thorpej Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.23 2025/06/23 22:50:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.22 2024/03/05 20:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.23 2025/06/23 22:50:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -480,10 +480,10 @@ cpu_count(enum cpu_count idx, int64_t delta)
  * no more than 1/hz seconds old).  Where this is called very often that
  * should be the case.
  *
- * This should be reasonably quick so that any value collected get isn't
- * totally out of whack, and it can also be called from interrupt context,
- * so go to splvm() while summing the counters.  It's tempting to use a spin
- * mutex here but this routine is called from DDB.
+ * This should be reasonably quick so that any value collected isn't totally
+ * out of whack.  It can also be called from interrupt context, so go to
+ * splvm() while summing the counters.  It's tempting to use a spin mutex
+ * here but this routine is called from DDB.
  */
 void
 cpu_count_sync(bool poll)
