@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.43 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.44 2025/06/24 03:02:00 gutteridge Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.43 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.44 2025/06/24 03:02:00 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -957,7 +957,7 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		device_printf(sc->sc_dev,
-			"sdmmc_set_relative_addr: SMC_CAPS_SPI_MODE set");
+			"sdmmc_set_relative_addr: SMC_CAPS_SPI_MODE set\n");
 		return EIO;
 	}
 
@@ -990,7 +990,7 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		device_printf(sc->sc_dev,
-			"sdmmc_select_card: SMC_CAPS_SPI_MODE set");
+			"sdmmc_select_card: SMC_CAPS_SPI_MODE set\n");
 		return EIO;
 	}
 
@@ -1010,7 +1010,7 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (error) {
 		device_printf(sc->sc_dev,
-			"sdmmc_select_card: error %d", error);
+			"sdmmc_select_card: error %d\n", error);
 	}
 
 	return error;
