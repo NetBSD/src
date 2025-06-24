@@ -66,7 +66,10 @@ static int		aiosp_initialize(struct aiosp *, pri_t);
 static int		aiosp_destroy(struct aiosp *);
 static int		aiosp_retrieve_bank(pri_t, struct aiosp **);
 static int		aiosp_pri_idx(pri_t);
+
 static size_t		aiosp_ops_expected(size_t);
+static void		aiosp_ops_init(struct aiosp_ops *);
+static void		aiosp_ops_fini(struct aiosp_ops *);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
@@ -213,7 +216,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 			kmem_free(aiost_list + total_dispensed,
 				sizeof(*aiost_list) * sp->jobs_pending);
 			mutex_exit(&aiost->mtx);
-			goto finish;
+			break;
 		}
 
 		TAILQ_REMOVE(&sp->jobs, job, list);
@@ -225,7 +228,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 
 		mutex_exit(&aiost->mtx);
 	}
-finish:
+
 	mutex_exit(&sp->mtx);
 
 	for (int i = 0; i < total_dispensed; i++) {
@@ -267,9 +270,8 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		timo = 0;
 	}
 
-	struct aiosp_ops ops = { 0 };
-	cv_init(&ops.done_cv, "aiodone");
-	mutex_init(&ops.mtx, MUTEX_DEFAULT, IPL_NONE);
+	struct aiosp_ops ops;
+	aiosp_ops_init(&ops);
 
 	for (int i = 0; i < nent; i++) {
 		if (aiocbp_list[i] == NULL) {
@@ -313,6 +315,8 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			}
 
 			mutex_exit(&ops.mtx);
+			aiosp_ops_fini(&ops);
+
 			return error;
 		}
 
@@ -321,6 +325,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 	}
 	mutex_exit(&ops.mtx);
+	aiosp_ops_fini(&ops);
 
 	return error;
 }
@@ -457,7 +462,9 @@ aiosp_destroy(struct aiosp *sp)
 	TAILQ_FOREACH_SAFE(st, &sp->freelist, list, tmp) {
 		error = aiost_terminate(st);
 		if (error) {
-			goto finish;
+			kmem_free(sp, sizeof(*sp));
+			mutex_exit(&sp->mtx);
+			return error;
 		}
 
 		kmem_free(st, sizeof(*st));
@@ -466,16 +473,18 @@ aiosp_destroy(struct aiosp *sp)
 	TAILQ_FOREACH_SAFE(st, &sp->active, list, tmp) {
 		error = aiost_terminate(st);
 		if (error) {
-			goto finish;
+			kmem_free(sp, sizeof(*sp));
+			mutex_exit(&sp->mtx);
+			return error;
 		}
 
 		kmem_free(st, sizeof(*st));
 	}
-finish:
+
 	kmem_free(sp, sizeof(*sp));
 	mutex_exit(&sp->mtx);
 
-	return error;
+	return 0;
 }
 
 /*
@@ -567,9 +576,19 @@ aiost_entry(void *arg)
 			mutex_enter(&st->mtx);
 
 			if (st->state & AIOST_STATE_OPERATION) {
-				goto process_operation;		
+				break;
 			} else if (st->state & AIOST_STATE_TERMINATE) {
-				goto process_termination;
+				/*
+				 * Remove st from the list of active service
+				 * threads, do NOT append to the freelist, dance
+				 * around locks, exit kthread
+				 */
+				mutex_enter(&sp->mtx);
+				TAILQ_REMOVE(&sp->freelist, st, list);
+				sp->nthreads_free--;
+				mutex_exit(&sp->mtx);
+				mutex_exit(&st->mtx);
+				kthread_exit(0);
 			} else if (st->state & AIOST_STATE_NONE) {
 				mutex_exit(&st->mtx);
 				mutex_enter(&st->service_mtx);
@@ -589,37 +608,20 @@ aiost_entry(void *arg)
 					st->state);
 			}
 		}
-process_termination:
-		/*
-		 * Remove st from the list of active service threads, do NOT
-		 * append to the freelist, dance around locks, exit kthread
-		 */
-		mutex_enter(&sp->mtx);
-		TAILQ_REMOVE(&sp->freelist, st, list);
-		sp->nthreads_free--;
-		mutex_exit(&sp->mtx);
-		mutex_exit(&st->mtx);
-		kthread_exit(0);
-process_operation:
+
 		job = st->job;
 		if (job->aio_op & (AIO_READ | AIO_WRITE)) {
 			error = aiost_process_rw(st);
-			if (error) {
-				mutex_exit(&st->mtx);
-				goto next;
-			}
 		} else if (job->aio_op & AIO_SYNC) {
 			error = aiost_process_sync(st);
-			if (error) {
-				mutex_exit(&st->mtx);
-				goto next;
-			}
 		} else {
 			panic("aio_process: invalid operation code\n");
 		}
 
-		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
-next:
+		if (!error) {
+			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+		}
+
 		st->state = AIOST_STATE_NONE;
 		mutex_exit(&st->mtx);
 
@@ -951,6 +953,28 @@ aiosp_flush(struct aioproc *aioproc)
 	mutex_exit(&aioproc->aio_mtx);
 
 	return error;
+}
+
+/*
+ * initialises aiosp_ops
+ */
+static void
+aiosp_ops_init(struct aiosp_ops *ops)
+{
+	ops->completed = 0;
+	ops->total = 0;
+	cv_init(&ops->done_cv, "aiodone");
+	mutex_init(&ops->mtx, MUTEX_DEFAULT, IPL_NONE);
+}
+
+/*
+ * cleans up aiosp_ops
+ */
+static void
+aiosp_ops_fini(struct aiosp_ops *ops)
+{
+	cv_destroy(&ops->done_cv);
+	mutex_destroy(&ops->mtx);
 }
 
 /*
