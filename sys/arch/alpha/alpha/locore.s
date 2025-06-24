@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.143 2022/08/07 10:12:19 andvar Exp $ */
+/* $NetBSD: locore.s,v 1.144 2025/06/24 11:18:16 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.143 2022/08/07 10:12:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.144 2025/06/24 11:18:16 andvar Exp $");
 
 #include "assym.h"
 
@@ -678,7 +678,7 @@ LEAF(savectx, 1)
  * void alpha_softint_switchto(struct lwp *current, int ipl, struct lwp *next)
  * Switch away from the current LWP to the specified softint LWP, and
  * dispatch to softint processing.
- * Aguments:
+ * Arguments:
  *	a0	'struct lwp *' of the LWP to switch from
  *	a1	IPL that the softint will run at
  *	a2	'struct lwp *' of the LWP to switch to
