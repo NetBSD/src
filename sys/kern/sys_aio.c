@@ -890,7 +890,14 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
 	if (error)
 		goto out;
+#ifdef AIOSP
+	struct proc *p = l->l_proc;
+	struct aioproc *aio = p->p_aio;
+	error = aiosp_suspend(aio, list, nent, SCARG(uap, timeout) ?
+		&ts : NULL, AIOSP_SUSPEND_ANY);
+#else
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
+#endif
 out:
 	kmem_free(list, nent * sizeof(*list));
 	return error;

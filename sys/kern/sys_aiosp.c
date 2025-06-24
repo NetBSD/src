@@ -252,10 +252,11 @@ aiosp_distribute_jobs(struct aiosp *sp)
  */
 int
 aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
-	struct timespec *ts)
+	struct timespec *ts, uint32_t flags)
 {
 	int error;
 	int timo;
+	int target = 0;
 
 	if (ts) {
 		timo = mstohz((ts->tv_sec * 1000) + (ts->tv_nsec / 1000000));
@@ -268,6 +269,14 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 	} else {
 		timo = 0;
+	}
+
+	if (flags & AIOSP_SUSPEND_ANY) {
+		target = 1;
+	} else if (flags & AIOSP_SUSPEND_ALL) {
+		target = nent;
+	} else if (flags & AIOSP_SUSPEND_N) {
+		target = AIOSP_SUSPEND_NEXTRACT(flags);
 	}
 
 	struct aiosp_ops ops;
@@ -307,7 +316,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 	}
 
 	mutex_enter(&ops.mtx);
-	for (; ops.completed != ops.total;) {
+	for (; ops.completed < target;) {
 		error = cv_timedwait_sig(&ops.done_cv, &ops.mtx, timo);
 		if (error) {
 			if (error == EWOULDBLOCK) {
@@ -318,10 +327,6 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			aiosp_ops_fini(&ops);
 
 			return error;
-		}
-
-		if (ops.completed) {
-			break;
 		}
 	}
 	mutex_exit(&ops.mtx);
@@ -401,6 +406,10 @@ aiosp_pri_idx(pri_t pri)
 static size_t
 aiosp_ops_expected(size_t total)
 {
+	if (total <= 1) {
+		return 1;
+	}
+
 	total -= 1;
 	for (int j = 0; j < ilog2(sizeof(total) * 8); j++) {
 		total |= total >> (1 << j);
@@ -881,6 +890,8 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
 		pmap_kenter_pa(kva + (uva - trunc_page((vaddr_t)aiocb->aio_buf)),
 			upa, protections, 0);
 	}
+
+	job->aiost = aiost;
 
 	pmap_update(pmap_kernel());
 	*kbuf = kva;

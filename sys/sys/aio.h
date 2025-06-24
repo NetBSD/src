@@ -107,6 +107,13 @@ struct aio_job {
 #define AIOST_STATE_OPERATION	0x2
 #define AIOST_STATE_TERMINATE	0x4
 
+#define AIOSP_SUSPEND_ANY	0x1
+#define AIOSP_SUSPEND_ALL	0x2
+#define AIOSP_SUSPEND_N		0x4
+
+#define AIOSP_SUSPEND_NMASK(N)		((N) & 0xffff) << 16)
+#define AIOSP_SUSPEND_NEXTRACT(FLAGS)	(((FLAGS) >> 16) & 0xffff)
+
 /* Structure for tracking the status of a collection of OPS */
 struct aiosp_ops {
 	kmutex_t mtx;		/* Protects this structure */
@@ -185,7 +192,8 @@ int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_dispense_bank(void);
 int	aiosp_enqueue_job(struct aio_job *);
-int	aiosp_suspend(struct aioproc *, struct aiocb **, int, struct timespec *);
+int	aiosp_suspend(struct aioproc *, struct aiocb **, int, struct timespec *,
+		uint32_t);
 int	aiosp_flush(struct aioproc *);
 int	aiosp_validate_conflicts(struct aioproc *, void *);
 
