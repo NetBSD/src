@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.38 2024/12/01 20:24:23 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.39 2025/06/25 08:18:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -366,7 +366,7 @@ dme_reset(struct dme_softc *sc)
 		dme_write(sc, DM9000_NCR, 0x0);
 	}
 
-	/* Select internal PHY, no wakeup event, no collosion mode,
+	/* Select internal PHY, no wakeup event, no collision mode,
 	 * normal loopback mode.
 	 */
 	dme_write(sc, DM9000_NCR, DM9000_NCR_LBK_NORMAL);
