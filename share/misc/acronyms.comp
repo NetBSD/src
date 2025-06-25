@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.409 2025/06/12 15:45:49 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.410 2025/06/25 01:26:39 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1259,6 +1259,7 @@ PCM	phase change memory
 PCM	pulse code modulation
 PCMCIA	Personal Computer Memory Card International Association
 PCP	Port Control Protocol
+PCR	Platform Configuration Register
 PD	public domain
 PDA	personal digital assistant
 PDA	pushdown automaton
