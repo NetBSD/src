@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.22 2025/06/25 06:21:28 andvar Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.22 2025/06/25 06:21:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ ixp12x0_attach(struct ixp12x0_softc *sc)
 	sc->sc_iot = &ixp12x0_bs_tag;
 
 	/*
-	 * Mapping for PCI Configuration Spase Registers
+	 * Mapping for PCI Configuration Space Registers
 	 */
 	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_HWBASE, IXP12X0_PCI_SIZE,
 			  0, &sc->sc_pci_ioh))
