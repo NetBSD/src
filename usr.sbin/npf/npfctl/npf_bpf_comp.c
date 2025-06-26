@@ -142,7 +142,6 @@ struct npf_bpf {
 	unsigned		nblocks;
 	sa_family_t		af;
 	uint32_t		flags;
-
 	uint8_t			eth_type;
 
 	/*
@@ -509,9 +508,6 @@ fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
 		if (ingroup) {
 			npfctl_bpf_group_enter(ctx, invert);
 		}
-
-	} else if (type && type != ctx->eth_type) {
-		errx(EXIT_FAILURE, "ether type mismatch : %u", type);
 	}
 }
 
@@ -693,17 +689,21 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 void
 npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 {
+	uint32_t mac_word;
+	uint16_t mac_hword;
 	unsigned off;
 	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
-	const uint32_t *awords = (const uint32_t *)ether_addr;
 
 	off = (opts & MATCH_SRC) ? offsetof(struct ether_header, ether_shost) :
 	    offsetof(struct ether_header, ether_dhost);
 	const uint32_t word_offset = sizeof(uint32_t);
 
-	uint32_t mac_word = ntohl(*awords);
-	const uint16_t *hword = (const uint16_t *)(awords + 1);
-	uint16_t mac_hword = ntohs(*hword);
+	memcpy(&mac_word, ether_addr, sizeof(mac_word));
+	mac_word = ntohl(mac_word);
+
+	/* copy the last two bytes of the 6 byte ether address */
+	memcpy(&mac_hword, ether_addr + sizeof(mac_word), sizeof(mac_hword));
+	mac_hword = ntohs(mac_hword);
 
 	/* load and compare first word then do same to last halfword */
 	struct bpf_insn insns_ether_w[] = {

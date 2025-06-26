@@ -449,7 +449,7 @@ static int
 register_etherpfil_hook(npf_t *npf, ifnet_t *ifp, int i)
 {
 	int error = 0;
-	static pfil_head_t *	npf_ph_ether;
+	static pfil_head_t *npf_ph_ether;
 	/* Capture points of activity at link layer */
 	if ((npf_ph_ether = pfil_head_get(PFIL_TYPE_IFNET, ifp)) == NULL) {
 		error = ENOENT;

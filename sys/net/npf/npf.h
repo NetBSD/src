@@ -266,10 +266,6 @@ bool		npf_autounload_p(void);
 
 #define	NPF_TABLE_MAXNAMELEN		32
 
-/* Layers. */
-#define	NPF_LAYER_2			2
-#define	NPF_LAYER_3			3
-
 /*
  * Flags passed via nbuf tags.
  */
