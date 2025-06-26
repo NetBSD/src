@@ -52,7 +52,7 @@
  */
 struct aiocb {
 	off_t aio_offset;		/* File offset */
-	volatile void *aio_buf;		/* I/O buffer in process space */
+	void *aio_buf;			/* I/O buffer in process space */
 	size_t aio_nbytes;		/* Length of transfer */
 	int aio_fildes;			/* File descriptor */
 	int aio_lio_opcode;		/* LIO opcode */
@@ -99,6 +99,7 @@ struct aio_job {
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
 	struct proc *p;		/* Process that instantiated the job */
 	struct aiost *aiost;	/* Service thread associated with this job */
+	bool completed;		/* Marks the completion status of this job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
@@ -117,6 +118,7 @@ struct aio_job {
 /* Structure for tracking the status of a collection of OPS */
 struct aiosp_ops {
 	kmutex_t mtx;		/* Protects this structure */
+	kmutex_t done_mtx;	/* Signals when a job is complete */
 	kcondvar_t done_cv;	/* Signals when a job is complete */ 
 	size_t completed;	/* Keeps track of the number of completed jobs */
 	size_t total;		/* Keeps track of the number of total jobs */
@@ -132,6 +134,7 @@ struct aiost {
 	kmutex_t service_mtx;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
+	kmutex_t ops_mtx;		/* Protects **ops */
 	size_t ops_total;		/* Total number of connected ops */
 	struct aiosp_ops **ops;		/* Array of ops */
 	vaddr_t kbuf;			/* Shared memory buffer */

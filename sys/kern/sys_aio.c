@@ -601,6 +601,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	a_job->aiocb_uptr = aiocb_uptr;
 	a_job->aio_op |= op;
 	a_job->lio = lio;
+	a_job->aiost = NULL;
 
 	/*
 	 * Add the job to the queue, update the counters, and
@@ -625,21 +626,20 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aiocbp->job = a_job;
 	aiocbp->uptr = aiocb_uptr;
 
+	mutex_exit(&aio->aio_mtx);
+
 	error = aiocbp_insert(aio, aiocbp);
 	if (error) {
-		mutex_exit(&aio->aio_mtx);
 		return SET_ERROR(error);
 	}
 
 	error = aiosp_enqueue_job(a_job);
 	if (error) {
-		mutex_exit(&aio->aio_mtx);
 		return SET_ERROR(error);
 	}
 
 	error = aiosp_dispense_bank();
 	if (error) {
-		mutex_exit(&aio->aio_mtx);
 		return SET_ERROR(error);
 	}
 #else
@@ -648,9 +648,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	if (lio)
 		lio->refcnt++;
 	cv_signal(&aio->aio_worker_cv);
-#endif
 	mutex_exit(&aio->aio_mtx);
-
+#endif
 	/*
 	 * One would handle the errors only with aio_error() function.
 	 * This way is appropriate according to POSIX.
@@ -894,7 +893,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
 	error = aiosp_suspend(aio, list, nent, SCARG(uap, timeout) ?
-		&ts : NULL, AIOSP_SUSPEND_ANY);
+		&ts : NULL, AIOSP_SUSPEND_ALL);
 #else
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 #endif
