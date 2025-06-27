@@ -84,18 +84,24 @@ NetBSD_DISABLED_config_arm_arm-tables.opt:
 
 $(srcdir)/config/arm/arm-cpu.h: $(srcdir)/config/arm/parsecpu.awk \
   $(srcdir)/config/arm/arm-cpus.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-cpu.h:
 	$(AWK) -f $(srcdir)/config/arm/parsecpu.awk -v cmd=headers \
 		$(srcdir)/config/arm/arm-cpus.in > arm-cpu.new
 	mv arm-cpu.new $(srcdir)/config/arm/arm-cpu.h
 
 $(srcdir)/config/arm/arm-cpu-data.h: $(srcdir)/config/arm/parsecpu.awk \
   $(srcdir)/config/arm/arm-cpus.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-data.h:
 	$(AWK) -f $(srcdir)/config/arm/parsecpu.awk -v cmd=data \
 		$(srcdir)/config/arm/arm-cpus.in > arm-cpu-data.new
 	mv arm-cpu-data.new $(srcdir)/config/arm/arm-cpu-data.h
 
 $(srcdir)/config/arm/arm-cpu-cdata.h: $(srcdir)/config/arm/parsecpu.awk \
   $(srcdir)/config/arm/arm-cpus.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-cpu-cdata.h:
 	$(AWK) -f $(srcdir)/config/arm/parsecpu.awk -v cmd=common-data \
 		$(srcdir)/config/arm/arm-cpus.in > arm-cpu-cdata.new
 	mv arm-cpu-cdata.new $(srcdir)/config/arm/arm-cpu-cdata.h
