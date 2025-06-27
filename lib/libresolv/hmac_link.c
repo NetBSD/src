@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.3 2016/03/07 14:35:39 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.4 2025/06/27 21:36:22 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/hmac_link.c,v 1.8 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: hmac_link.c,v 1.3 2016/03/07 14:35:39 christos Exp $");
+__RCSID("$NetBSD: hmac_link.c,v 1.4 2025/06/27 21:36:22 andvar Exp $");
 #endif
 
 /*%
@@ -373,7 +373,7 @@ dst_hmac_md5_key_from_file_format(DST_KEY *dkey, const char *buff,
  * intput: 
  *      in_key:  HMAC-MD5 key 
  * output: 
- *	out_str: buffer to write ot
+ *	out_str: buffer to write to
  *      out_len: size of output buffer 
  * returns:
  *      number of bytes written to output buffer 

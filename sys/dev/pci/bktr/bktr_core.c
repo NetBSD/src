@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.59 2021/12/19 22:03:41 andvar Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.60 2025/06/27 21:36:25 andvar Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.59 2021/12/19 22:03:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.60 2025/06/27 21:36:25 andvar Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -533,7 +533,7 @@ common_bktr_attach(bktr_ptr_t bktr, int unit, u_int pci_id, u_int rev)
 		bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
 		bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
 
-		/* allocte space for the VBI buffer */
+		/* allocate space for the VBI buffer */
 		bktr->vbidata  = get_bktr_mem(unit, VBI_DATA_SIZE);
 		bktr->vbibuffer = get_bktr_mem(unit, VBI_BUFFER_SIZE);
 

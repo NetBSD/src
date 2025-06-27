@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.22 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: frame.h,v 1.23 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct intrframe {
 
 #ifdef XEN
 /*
- * Need arch independany way to access IP and CS from intrframe
+ * Need arch independent way to access IP and CS from intrframe
  */
 #define	_INTRFRAME_CS	if_tf.tf_cs
 #define	_INTRFRAME_IP	if_tf.tf_rip

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpl115a.c,v 1.3 2019/12/23 14:50:43 thorpej Exp $ */
+/*	$NetBSD: mpl115a.c,v 1.4 2025/06/27 21:36:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,12 +32,12 @@
 /*
  * Freescale MPL115A2 miniature digital barometer driver.
  *
- * This driver could be split into bus-indepented driver and I2C-specific
+ * This driver could be split into bus-independent driver and I2C-specific
  * attachment, as SPI variant of this chip also exist.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.3 2019/12/23 14:50:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.4 2025/06/27 21:36:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

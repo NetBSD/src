@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.26 2025/06/16 07:51:16 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.27 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.26 2025/06/16 07:51:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.27 2025/06/27 21:36:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ struct adbms_softc {
 	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
 	u_int8_t	sc_buttons;	/* number of buttons */
 	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
+	char		sc_devid[5];	/* device identifier */
 	uint8_t		sc_us;		/* cmd to watch for */
 	int		sc_mb;		/* current button state */
 	device_t	sc_wsmousedev;

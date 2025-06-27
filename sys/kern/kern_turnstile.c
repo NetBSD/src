@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.55 2023/10/15 10:30:20 riastradh Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.56 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -57,11 +57,11 @@
  * grabs a free turnstile off the free list.  Otherwise, it can take back
  * the active turnstile from the lock (thus deactivating the turnstile).
  *
- * Turnstiles are where we do priority inheritence.
+ * Turnstiles are where we do priority inheritance.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.55 2023/10/15 10:30:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.56 2025/06/27 21:36:24 andvar Exp $");
 
 #include <sys/param.h>
 

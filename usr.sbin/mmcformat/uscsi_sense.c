@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_sense.c,v 1.3 2023/12/28 19:58:11 andvar Exp $	*/
+/* $NetBSD: uscsi_sense.c,v 1.4 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ static const struct {
 { 0x20, 0x06, "Illegal Command While In Explicit Address Mode" },
 { 0x20, 0x07, "Illegal Command While In Implicit Address Mode" },
 { 0x20, 0x08, "Access Denied - Enrollment Conflict" },
-{ 0x20, 0x09, "Access Denied - Invalid LU Identifer" },
+{ 0x20, 0x09, "Access Denied - Invalid LU Identifier" },
 { 0x20, 0x0A, "Access Denied - Invalid Proxy Token" },
 { 0x20, 0x0B, "Access Denied - ACL LUN Conflict" },
 { 0x21, 0x00, "Logical Block Address Out of Range" },
@@ -399,7 +399,7 @@ static const struct {
 { 0x4B, 0x01, "Illegal Target Port Transfer Tag Received" },
 { 0x4B, 0x02, "Too Much Write Data" },
 { 0x4B, 0x03, "ACK/NAK Timeout" },
-{ 0x4B, 0x04, "NAK Reveived" },
+{ 0x4B, 0x04, "NAK Received" },
 { 0x4B, 0x05, "Data Offset Error" },
 { 0x4B, 0x06, "Initiator Response Timeout" },
 { 0x4C, 0x00, "Logical Unit Failed Self-Configuration" },

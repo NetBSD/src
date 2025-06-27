@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.148 2024/10/04 08:45:46 rillig Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.149 2025/06/27 21:36:22 andvar Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1195,8 +1195,8 @@ esccmp(const char *s_plain, const char *s_esc, size_t len)
 /*
  * Check if the request refers to a uri that is mapped via a .bzremap.
  * We have  /requested/path:/re/mapped/to/this.html lines in there,
- * and the : separator may be use in the left hand side escaped with
- * \ to encode a path containig a : character.
+ * and the : separator may be used in the left hand side escaped with
+ * \ to encode a path containing a : character.
  */
 static void
 check_remap(bozo_httpreq_t *request)
