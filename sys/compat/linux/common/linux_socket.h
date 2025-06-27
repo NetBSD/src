@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.25 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.26 2025/06/27 15:03:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 #define	LINUX_IP_MULTICAST_LOOP	34
 #define	LINUX_IP_ADD_MEMBERSHIP	35
 #define	LINUX_IP_DROP_MEMBERSHIP 36
+#define	LINUX_IP_MULTICAST_ALL 49
 
 /*
  * Options for [gs]etsockopt(2), IPV6 level.

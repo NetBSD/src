@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.156 2024/10/01 16:41:29 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.157 2025/06/27 15:03:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.156 2024/10/01 16:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.157 2025/06/27 15:03:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1006,6 +1006,8 @@ linux_to_bsd_udp_sockopt(int lopt)
 {
 
 	switch (lopt) {
+	case LINUX_IP_MULTICAST_ALL:
+		return -2;
 	default:
 		return -1;
 	}
