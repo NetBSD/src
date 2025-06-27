@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.21 2023/11/27 19:46:14 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.22 2025/06/27 19:52:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.21 2023/11/27 19:46:14 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.22 2025/06/27 19:52:03 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -232,7 +232,7 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 
 		/* Conversion Characters */
 		switch (*fmt++) {
-			case 'i':	/* use internaltion currency format */
+			case 'i':	/* use international currency format */
 				flags |= USE_INTL_CURRENCY;
 				break;
 			case 'n':	/* use national currency format */

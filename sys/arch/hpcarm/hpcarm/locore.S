@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 2020/08/28 12:41:17 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 2025/06/27 19:52:03 andvar Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -53,7 +53,7 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
-	/* Put the processer in SVC mode */
+	/* Put the processor in SVC mode */
 	mov	r5, sp
 	mrs	r4, cpsr
 	bic	r4, r4, #(PSR_MODE)

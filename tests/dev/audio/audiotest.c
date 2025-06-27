@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.32 2023/12/11 09:26:08 mlelstv Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.33 2025/06/27 19:52:03 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.32 2023/12/11 09:26:08 mlelstv Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.33 2025/06/27 19:52:03 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -7001,7 +7001,7 @@ test_audioctl_open_multiuser(bool multiuser,
 		return;
 	}
 	if (geteuid() != 0) {
-		XP_SKIP("This test must be priviledged user");
+		XP_SKIP("This test must be privileged user");
 		return;
 	}
 

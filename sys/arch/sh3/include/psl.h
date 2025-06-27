@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 2020/08/03 16:43:44 uwe Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 2025/06/27 19:52:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #define	_SH3_PSL_H_
 
 /*
- * SuperH Processer Status Register.
+ * SuperH Processor Status Register.
  */
 #define	PSL_TBIT	0x00000001	/* T bit */
 #define	PSL_SBIT	0x00000002	/* S bit */

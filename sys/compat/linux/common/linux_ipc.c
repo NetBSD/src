@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.57 2019/08/23 10:22:15 maxv Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57 2019/08/23 10:22:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57 2019/08/23 10:22:15 maxv Exp $");
 #include <compat/linux/common/linux_machdep.h>
 
 /*
- * Note: Not all linux architechtures have explicit versions
+ * Note: Not all linux architectures have explicit versions
  *	of the SYSV* syscalls.  On the ones that don't
  *	we pretend that they are defined anyway.  *_args and
  *	prototypes are defined in individual headers;
