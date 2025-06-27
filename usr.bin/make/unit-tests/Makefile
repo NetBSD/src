@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.367 2025/06/13 20:23:16 rillig Exp $
+# $NetBSD: Makefile,v 1.368 2025/06/27 20:20:56 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -412,6 +412,7 @@ TESTS+=		varmod-to-upper
 TESTS+=		varmod-undefined
 TESTS+=		varmod-unique
 TESTS+=		varname
+TESTS+=		varname-circumflex
 TESTS+=		varname-dollar
 TESTS+=		varname-dot-alltargets
 TESTS+=		varname-dot-curdir

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1380 2025/06/13 03:51:17 rillig Exp $
+# $NetBSD: mi,v 1.1381 2025/06/27 20:20:56 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6385,6 +6385,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmod-unique.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-circumflex.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-circumflex.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-dollar.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-dollar.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-dot-alltargets.exp			tests-usr.bin-tests	compattestfile,atf
