@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.26 2025/06/27 15:03:33 christos Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.27 2025/06/28 18:47:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
 #define LINUX_AF_PACKET		17
 #define LINUX_AF_ASH		18
 #define LINUX_AF_ECONET		19
-#define	LINUX_AF_ATMSVC		20
-#define	LINUX_AF_SNA		22
+#define LINUX_AF_ATMSVC		20
+#define LINUX_AF_SNA		22
 #define LINUX_AF_MAX		32
 
 /*
@@ -104,26 +104,32 @@
 #define LINUX_IP_TOS		1
 #define LINUX_IP_TTL		2
 #define LINUX_IP_HDRINCL	3
+#define LINUX_IP_RECVOPTS	6
+#define LINUX_IP_RETOPTS	7
+#define LINUX_IP_PKTINFO	8
 #define LINUX_IP_RECVERR	11
-#define	LINUX_IP_MULTICAST_IF	32
-#define	LINUX_IP_MULTICAST_TTL	33
-#define	LINUX_IP_MULTICAST_LOOP	34
-#define	LINUX_IP_ADD_MEMBERSHIP	35
-#define	LINUX_IP_DROP_MEMBERSHIP 36
-#define	LINUX_IP_MULTICAST_ALL 49
+#define LINUX_IP_FREEBIND	15
+#define LINUX_IP_MULTICAST_IF	32
+#define LINUX_IP_MULTICAST_TTL	33
+#define LINUX_IP_MULTICAST_LOOP	34
+#define LINUX_IP_ADD_MEMBERSHIP	35
+#define LINUX_IP_DROP_MEMBERSHIP 36
+#define LINUX_IP_MULTICAST_ALL	49
 
 /*
  * Options for [gs]etsockopt(2), IPV6 level.
  */
 
 #define LINUX_IPV6_V6ONLY		26
+#define LINUX_IPV6_MULTICAST_HOPS	18
+#define LINUX_IPV6_MULTICAST_ALL	29
 
 /*
  * Options for [gs]etsockopt(2), TCP level.
  */
 
-#define	LINUX_TCP_NODELAY	1
-#define	LINUX_TCP_MAXSEG	2
+#define LINUX_TCP_NODELAY	1
+#define LINUX_TCP_MAXSEG	2
 
 /* "Socket"-level control message types: */
 #define LINUX_SCM_RIGHTS	1	/* same as SCM_RIGHTS */

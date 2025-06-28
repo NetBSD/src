@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.157 2025/06/27 15:03:33 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.158 2025/06/28 18:47:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.157 2025/06/27 15:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.158 2025/06/28 18:47:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -945,6 +945,12 @@ linux_to_bsd_ip_sockopt(int lopt)
 		return IP_TOS;
 	case LINUX_IP_TTL:
 		return IP_TTL;
+	case LINUX_IP_RETOPTS:
+		return IP_RETOPTS;
+	case LINUX_IP_PKTINFO:
+		return IP_PKTINFO;
+	case LINUX_IP_RECVOPTS:
+		return IP_RECVOPTS;
 	case LINUX_IP_HDRINCL:
 		return IP_HDRINCL;
 	case LINUX_IP_MULTICAST_TTL:
@@ -958,7 +964,10 @@ linux_to_bsd_ip_sockopt(int lopt)
 	case LINUX_IP_DROP_MEMBERSHIP:
 		return IP_DROP_MEMBERSHIP;
 	case LINUX_IP_RECVERR:
+	case LINUX_IP_FREEBIND:
 		return -2;	/* ignored */
+	case LINUX_IP_MULTICAST_ALL:
+		return -3;	/* noprotoopt */
 	default:
 		return -1;
 	}
@@ -975,6 +984,10 @@ linux_to_bsd_ipv6_sockopt(int lopt)
 	switch (lopt) {
 	case LINUX_IPV6_V6ONLY:
 		return IPV6_V6ONLY;
+	case LINUX_IPV6_MULTICAST_HOPS:
+		return IPV6_MULTICAST_HOPS;
+	case LINUX_IPV6_MULTICAST_ALL:
+		return -3;	/* noprotoopt */
 	default:
 		return -1;
 	}
@@ -1006,8 +1019,6 @@ linux_to_bsd_udp_sockopt(int lopt)
 {
 
 	switch (lopt) {
-	case LINUX_IP_MULTICAST_ALL:
-		return -2;
 	default:
 		return -1;
 	}
@@ -1077,10 +1088,14 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 		return EINVAL;
 	}
 
-	if (name == -1)
+	switch (name) {
+	case -1:
 		return EINVAL;
-	if (name == -2)
+	case -2:
 		return 0;
+	case -3:
+		return ENOPROTOOPT;
+	}
 	SCARG(&bsa, name) = name;
 
 	return sys_setsockopt(l, &bsa, retval);
@@ -1129,8 +1144,13 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 		return EINVAL;
 	}
 
-	if (name == -1)
+	switch (name) {
+	case -1:
+	case -2: /* we can't ignore, since we don't know what to return */
 		return EINVAL;
+	case -3:
+		return ENOPROTOOPT;
+	}
 	SCARG(&bga, name) = name;
 
 	return sys_getsockopt(l, &bga, retval);
