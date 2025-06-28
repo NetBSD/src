@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh4.h,v 1.4 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: sh4.h,v 1.5 2025/06/28 07:04:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -139,8 +139,8 @@
 #define	  SH4_MMUCR_LRUT_MASK		  0xfc000000	/* [26:31] */
 /*
  * memory-mapped TLB
- *	must be access from P2-area program.
- *	branch to the other area must be maed at least 8 instruction
+ *	must be accessed from P2-area program.
+ *	branch to the other area must be made at least 8 instructions
  *	after access.
  */
 /* ITLB */
