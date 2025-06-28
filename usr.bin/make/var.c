@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1169 2025/06/28 19:42:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1170 2025/06/28 22:39:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1169 2025/06/28 19:42:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1170 2025/06/28 22:39:27 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2687,7 +2687,7 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 		const char *p = mod + 6;
 		if (!TryParseSize(&p, &n)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid number \"%s\" for ':range' modifier",
+			    "Invalid number \"%s\" for modifier \":range\"",
 			    mod + 6);
 			return AMR_CLEANUP;
 		}
@@ -2818,7 +2818,7 @@ ModifyWord_Match(Substring word, SepBuf *buf, void *data)
 	if (res.error != NULL && !args->error_reported) {
 		args->error_reported = true;
 		Parse_Error(PARSE_FATAL,
-		    "%s in pattern '%s' of modifier '%s'",
+		    "%s in pattern \"%s\" of modifier \"%s\"",
 		    res.error, args->pattern, args->neg ? ":N" : ":M");
 	}
 	if (res.matched != args->neg)
@@ -2911,7 +2911,7 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 
 invalid_argument:
 	Parse_Error(PARSE_FATAL,
-	    "Invalid argument '%.*s' for modifier ':mtime'",
+	    "Invalid argument \"%.*s\" for modifier \":mtime\"",
 	    (int)strcspn(*pp + 1, ":{}()"), *pp + 1);
 	return AMR_CLEANUP;
 }
@@ -2949,7 +2949,7 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 	char delim = (*pp)[1];
 	if (delim == '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "Missing delimiter for modifier ':S'");
+		    "Missing delimiter for modifier \":S\"");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
@@ -2999,7 +2999,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	char delim = (*pp)[1];
 	if (delim == '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "Missing delimiter for modifier ':C'");
+		    "Missing delimiter for modifier \":C\"");
 		(*pp)++;
 		return AMR_CLEANUP;
 	}
@@ -3973,7 +3973,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	else if (*p == '\0' && ch->endc != '\0') {
 		Parse_Error(PARSE_FATAL,
 		    "Unclosed expression after indirect modifier, "
-		    "expecting '%c'",
+		    "expecting \"%c\"",
 		    ch->endc);
 		*pp = p;
 		return AMIR_OUT;
@@ -4029,14 +4029,14 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 
 	if (*p == '\0' && ch->endc != '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "Unclosed expression, expecting '%c' for "
+		    "Unclosed expression, expecting \"%c\" for "
 		    "modifier \"%.*s\"",
 		    ch->endc, (int)(p - mod), mod);
 	} else if (*p == ':') {
 		p++;
 	} else if (opts.strict && *p != '\0' && *p != ch->endc) {
 		Parse_Error(PARSE_FATAL,
-		    "Missing delimiter ':' after modifier \"%.*s\"",
+		    "Missing delimiter \":\" after modifier \"%.*s\"",
 		    (int)(p - mod), mod);
 		/*
 		 * TODO: propagate parse error to the enclosing
@@ -4084,7 +4084,7 @@ ApplyModifiers(
 
 	if (*p == '\0' && endc != '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "Unclosed expression, expecting '%c'", ch.endc);
+		    "Unclosed expression, expecting \"%c\"", ch.endc);
 		goto cleanup;
 	}
 
@@ -4241,7 +4241,7 @@ IsShortVarnameValid(char varname, const char *start)
 		Parse_Error(PARSE_FATAL, "Dollar followed by nothing");
 	else if (save_dollars)
 		Parse_Error(PARSE_FATAL,
-		    "Invalid variable name '%c', at \"%s\"", varname, start);
+		    "Invalid variable name \"%c\", at \"%s\"", varname, start);
 
 	return false;
 }

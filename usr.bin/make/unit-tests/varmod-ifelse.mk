@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.39 2025/04/30 06:01:07 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.40 2025/06/28 22:39:29 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -158,7 +158,7 @@ STRING=		string
 NUMBER=		no		# not really a number
 # expect+1: no.
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
-# expect+2: Comparison with '>=' requires both operands 'no' and '10' to be numeric
+# expect+2: Comparison with ">=" requires both operands "no" and "10" to be numeric
 # expect+1: .
 .info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
 

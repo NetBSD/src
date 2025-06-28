@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.26 2025/03/30 01:27:13 rillig Exp $
+# $NetBSD: varmod.mk,v 1.27 2025/06/28 22:39:29 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -107,7 +107,7 @@ DOLLAR2=	${:U\$}
 # Should it?
 .MAKEFLAGS: -dL
 # expect+2: To escape a dollar, use \$, not $$, at "$$:L} != """
-# expect+1: Invalid variable name ':', at "$:L} != """
+# expect+1: Invalid variable name ":", at "$:L} != """
 .if ${$$:L} != ""
 .  error
 .endif
@@ -123,7 +123,7 @@ DOLLAR2=	${:U\$}
 # XXX: The .error should not be reached since the expression is
 # malformed, and this error should be propagated up to Cond_EvalLine.
 VAR=	STOP
-# expect+1: Missing delimiter ':' after modifier "P"
+# expect+1: Missing delimiter ":" after modifier "P"
 .if ${VAR:P=RE} != "STORE"
 # expect+1: Missing argument for ".error"
 .  error
@@ -140,7 +140,7 @@ VAR=	STOP
 
 # Test the range generation modifier ':range=n' with a very large number that
 # is larger than SIZE_MAX for any supported platform.
-# expect+1: Invalid number "99333000222000111000}" for ':range' modifier
+# expect+1: Invalid number "99333000222000111000}" for modifier ":range"
 .if ${word:L:range=99333000222000111000}
 .endif
 
@@ -199,11 +199,11 @@ VAR_DOLLAR=	VAR$$
 .  error
 .endif
 # expect+2: Dollar followed by nothing
-# expect+1: Invalid variable name '}', at "$} != "set""
+# expect+1: Invalid variable name "}", at "$} != "set""
 .if ${VAR:Dset$} != "set"
 .  error
 .endif
-# expect+1: Invalid variable name '}', at "$} != "fallback""
+# expect+1: Invalid variable name "}", at "$} != "fallback""
 .if ${:Ufallback$} != "fallback"
 .  error
 .endif
@@ -227,7 +227,7 @@ VAR_DOLLAR=	VAR$$
 .if ${word:L:NX*$} != "word"
 .  error
 .endif
-# expect+1: Invalid argument 'fallback$' for modifier ':mtime'
+# expect+1: Invalid argument "fallback$" for modifier ":mtime"
 .if ${.:L:mtime=fallback$}
 .  error
 .else
@@ -241,7 +241,7 @@ VAR_DOLLAR=	VAR$$
 .endif
 
 .undef VAR
-# expect+1: Missing delimiter ':' after modifier "L"
+# expect+1: Missing delimiter ":" after modifier "L"
 .if ${VAR:LAR=ALUE} != "VALUE"
 .  error
 .endif

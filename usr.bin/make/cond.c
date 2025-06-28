@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.373 2025/04/22 19:28:50 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.374 2025/06/28 22:39:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.373 2025/04/22 19:28:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.374 2025/06/28 22:39:27 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -255,7 +255,7 @@ ParseFuncArg(const char **pp, bool doEval, const char *func)
 			len++;
 
 		Parse_Error(PARSE_FATAL,
-		    "Missing ')' after argument '%.*s' for '%.*s'",
+		    "Missing \")\" after argument \"%.*s\" for \"%.*s\"",
 		    (int)(argEnd - argStart), argStart, len, func);
 		free(res);
 		return NULL;
@@ -284,7 +284,8 @@ FuncMake(const char *targetPattern)
 		if (res.error != NULL && !warned) {
 			warned = true;
 			Parse_Error(PARSE_WARNING,
-			    "%s in pattern argument '%s' to function 'make'",
+			    "%s in pattern argument \"%s\" "
+			    "to function \"make\"",
 			    res.error, targetPattern);
 		}
 		if (res.matched)
@@ -528,8 +529,8 @@ EvalCompareStr(const char *lhs, ComparisonOp op, const char *rhs)
 {
 	if (op != EQ && op != NE) {
 		Parse_Error(PARSE_FATAL,
-		    "Comparison with '%s' requires both operands "
-		    "'%s' and '%s' to be numeric",
+		    "Comparison with \"%s\" requires both operands "
+		    "\"%s\" and \"%s\" to be numeric",
 		    opname[op], lhs, rhs);
 		return TOK_ERROR;
 	}
@@ -603,7 +604,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 
 	if (par->p[0] == '\0') {
 		Parse_Error(PARSE_FATAL,
-		    "Missing right-hand side of operator '%s'", opname[op]);
+		    "Missing right-hand side of operator \"%s\"", opname[op]);
 		goto done_lhs;
 	}
 
@@ -768,7 +769,7 @@ CondParser_Token(CondParser *par, bool doEval)
 		if (par->p[0] == '|')
 			par->p++;
 		else {
-			Parse_Error(PARSE_FATAL, "Unknown operator '|'");
+			Parse_Error(PARSE_FATAL, "Unknown operator \"|\"");
 			return TOK_ERROR;
 		}
 		return TOK_OR;
@@ -778,7 +779,7 @@ CondParser_Token(CondParser *par, bool doEval)
 		if (par->p[0] == '&')
 			par->p++;
 		else {
-			Parse_Error(PARSE_FATAL, "Unknown operator '&'");
+			Parse_Error(PARSE_FATAL, "Unknown operator \"&\"");
 			return TOK_ERROR;
 		}
 		return TOK_AND;
@@ -924,7 +925,7 @@ CondEvalExpression(const char *cond, bool plain,
 		rval = CR_ERROR;
 
 	if (rval == CR_ERROR && eprint && parseErrors == parseErrorsBefore)
-		Parse_Error(PARSE_FATAL, "Malformed conditional '%s'", cond);
+		Parse_Error(PARSE_FATAL, "Malformed conditional \"%s\"", cond);
 
 	return rval;
 }

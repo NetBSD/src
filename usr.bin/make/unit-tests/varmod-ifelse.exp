@@ -18,7 +18,7 @@ CondParser_Eval: ${VAR} == value
 Comparing "value" == "value"
 Comparing "ok" != "ok"
 make: varmod-ifelse.mk:160: no.
-make: varmod-ifelse.mk:163: Comparison with '>=' requires both operands 'no' and '10' to be numeric
+make: varmod-ifelse.mk:163: Comparison with ">=" requires both operands "no" and "10" to be numeric
 	while evaluating condition "string == "literal" || no >= 10"
 make: varmod-ifelse.mk:163: .
 make: varmod-ifelse.mk:170: Bad condition
