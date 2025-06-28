@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.7 2025/06/23 20:30:39 joe Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.8 2025/06/28 18:52:04 joe Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1554,7 +1554,7 @@ probe_multiboot2(const char *path)
 			break;
 		case MULTIBOOT_HEADER_TAG_CONSOLE_FLAGS:
 			mbp->mbp_priv->mpp_console = (void *)mbt;
-
+			break;
 		case MULTIBOOT_HEADER_TAG_FRAMEBUFFER:
 			mbp->mbp_priv->mpp_framebuffer = (void *)mbt;
 			break;
