@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.45 2024/07/05 19:28:36 andvar Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.46 2025/06/28 06:45:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.45 2024/07/05 19:28:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.46 2025/06/28 06:45:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.45 2024/07/05 19:28:36 andvar Exp $");
 #include <hpcmips/vr/vrpiureg.h>
 
 /*
- * contant and macro definitions
+ * constant and macro definitions
  */
 #define VRPIUDEBUG
 #ifdef VRPIUDEBUG
