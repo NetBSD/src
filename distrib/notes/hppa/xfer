@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.1 2014/02/24 07:23:39 skrll Exp $
+.\"	$NetBSD: xfer,v 1.2 2025/06/28 08:45:04 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,6 @@ volume available in the
 directory of the
 .Nx
 distribution.
-.Pp
-Booting from CD is currently not supported.
 .Pp
 ..
 .\" --------- MI instructions for getting distribution off installation medium
