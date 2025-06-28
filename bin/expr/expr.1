@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.40 2025/03/15 22:01:16 rillig Exp $
+.\"	$NetBSD: expr.1,v 1.41 2025/06/28 23:03:51 rillig Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 15, 2025
+.Dd June 28, 2025
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -151,12 +151,6 @@ an error occurred (such as memory allocation failure).
 The following example adds one to variable
 .Dq a :
 .Dl a=`expr $a + 1`
-.It
-The following example returns zero, due to subtraction having higher precedence
-than the
-.Dq &
-operator:
-.Dl expr 1 '&' 1 - 1
 .It
 The following example returns the filename portion of a pathname stored
 in variable
