@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.385 2025/06/13 03:51:18 rillig Exp $
+.\"	$NetBSD: make.1,v 1.386 2025/06/28 19:42:31 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd June 12, 2025
+.Dd June 28, 2025
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -785,11 +785,13 @@ Is redundant with respect to global variables,
 which have already been expanded.
 .El
 .Pp
-The seven built-in local variables are:
+The built-in local variables are:
 .Bl -tag -width ".Va .ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
-.Sq Va \&> .
+.Sq Va \&>
+or
+.Sq Va \&^ .
 .It Va .ARCHIVE
 The name of the archive file; also known as
 .Sq Va \&! .
@@ -823,6 +825,7 @@ in archive member rules.
 The shorter forms
 .Po
 .Sq Va \&> ,
+.Sq Va \&^ ,
 .Sq Va \&! ,
 .Sq Va \&< ,
 .Sq Va \&% ,

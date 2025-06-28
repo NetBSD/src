@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1169 2025/06/28 19:42:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1168 2025/06/13 18:31:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1169 2025/06/28 19:42:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -437,6 +437,8 @@ VarNew(FStr name, const char *value,
 static Substring
 CanonicalVarname(Substring name)
 {
+	if (Substring_Equals(name, "^"))
+		return Substring_InitStr(ALLSRC);
 
 	if (!(Substring_Length(name) > 0 && name.start[0] == '.'))
 		return name;
@@ -455,8 +457,6 @@ CanonicalVarname(Substring name)
 		return Substring_InitStr(PREFIX);
 	if (Substring_Equals(name, ".TARGET"))
 		return Substring_InitStr(TARGET);
-
-	/* GNU make has an additional alias $^ == ${.ALLSRC}. */
 
 	if (Substring_Equals(name, ".SHELL") && shellPath == NULL)
 		Shell_Init();
@@ -4308,7 +4308,7 @@ FindLocalLegacyVar(Substring varname, GNode *scope,
 		return NULL;
 	if (varname.start[1] != 'F' && varname.start[1] != 'D')
 		return NULL;
-	if (strchr("@%?*!<>", varname.start[0]) == NULL)
+	if (strchr("@%?*!<>^", varname.start[0]) == NULL)
 		return NULL;
 
 	v = VarFindSubstring(Substring_Init(varname.start, varname.start + 1),
