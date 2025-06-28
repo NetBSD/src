@@ -523,7 +523,6 @@ static bool
 build_l2_code(npf_bpf_t *bc, const filt_opts_t *fopts)
 {
 	unsigned opts;
-
 	npfvar_t *ap_from = fopts->filt.opt2.from_mac;
 	npfvar_t *ap_to = fopts->filt.opt2.to_mac;
 	const uint16_t ether_type = fopts->filt.opt2.ether_type;
@@ -704,12 +703,23 @@ npfctl_build_maprset(const char *name, int attr, const char *ifname)
 	npf_nat_insert(npf_conf, rl);
 }
 
+static void
+npf_check_layer(const char **lstr, uint32_t lattr, const char *func)
+{
+	if (lattr & NPF_RULE_LAYER_2)
+		*lstr = "layer 2";
+	else if (lattr & NPF_RULE_LAYER_3)
+		*lstr = "layer 3";
+	else
+		yyerror("%s: layer not yet supported", func);
+}
+
 static nl_rule_t *
 set_defgroup(nl_rule_t *rl, nl_rule_t *def_group, int attr)
 {
-	const char *str = (attr & NPF_RULE_LAYER_3) ? "layer 3" : "layer 2";
-
 	if (def_group) {
+		const char *str;
+		npf_check_layer(&str, attr, __func__);
 		yyerror("multiple %s default groups are not valid", str);
 	}
 	if (rule_nesting_level) {
@@ -795,15 +805,10 @@ npf_rule_layer_compat(nl_rule_t *cg, uint32_t layer)
 	if ((attr & layer) == 0) {
 		/* only set the layer strings when you need them */
 		const char *str;
-		if (layer & NPF_RULE_LAYER_2)
-			str = "layer 2";
-		else if (layer & NPF_RULE_LAYER_3)
-			str = "layer 3";
-		else
-			yyerror("%s: layer not yet supported", __func__);
+		npf_check_layer(&str, layer, __func__);
 
 		yyerror("cannot insert %s rules in this group"
-		    " make sure to insert same layer rules in same group ", str);
+		    " make sure to insert same layer rules in the same group ", str);
 	}
 	return layer;
 }

@@ -677,7 +677,7 @@ npfctl_npt66_calcadj(npf_netmask_t len, const npf_addr_t *pref_in,
 
 filt_opts_t
 npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
-			npfvar_t *dst_addr, npfvar_t *dst_port, bool fnot)
+    npfvar_t *dst_addr, npfvar_t *dst_port, bool fnot)
 {
 	filt_opts_t fopts;
 	fopts.filt.opt3.fo_from.ap_netaddr = src_addr;
@@ -693,7 +693,7 @@ npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
 
 filt_opts_t
 npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
-			bool tnot, uint16_t eth_type)
+    bool tnot, uint16_t eth_type)
 {
 	filt_opts_t fopts;
 	fopts.filt.opt2.from_mac = src_addr;
