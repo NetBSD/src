@@ -695,7 +695,6 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 
 	off = (opts & MATCH_SRC) ? offsetof(struct ether_header, ether_shost) :
 	    offsetof(struct ether_header, ether_dhost);
-	const uint32_t word_offset = sizeof(uint32_t);
 
 	memcpy(&mac_word, ether_addr, sizeof(mac_word));
 	mac_word = ntohl(mac_word);
@@ -712,7 +711,7 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 	add_insns(ctx, insns_ether_w, __arraycount(insns_ether_w));
 
 	struct bpf_insn insns_ether_h[] = {
-		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off + word_offset),
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off + sizeof(mac_word)),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_hword, 0, JUMP_MAGIC),
 	};
 	add_insns(ctx, insns_ether_h, __arraycount(insns_ether_h));

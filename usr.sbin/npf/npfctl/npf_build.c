@@ -58,8 +58,8 @@ static bool			npf_debug = false;
 static nl_rule_t *		the_rule = NULL;
 static bool			npf_conf_built = false;
 
-static bool			l2_group = false;;
-static nl_rule_t *		defgroup = NULL;
+static bool			l2_group = false;
+static nl_rule_t *		defgroup_l3 = NULL;
 static nl_rule_t *		defgroup_l2 = NULL;
 
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
@@ -106,7 +106,7 @@ npfctl_config_build(void)
 	 * if you set a layer 2 rule, layer 2 default also becomes mandatory.
 	 * if you didn't set layer 2 rules, only layer 3 default is mandatory
 	 */
-	if (!defgroup) {
+	if (!defgroup_l3) {
 		errx(EXIT_FAILURE, "layer 3 default group was not defined");
 	}
 
@@ -114,7 +114,7 @@ npfctl_config_build(void)
 		errx(EXIT_FAILURE, "layer 2 default group not defined");
 	}
 	assert(rule_nesting_level == 0);
-	npf_rule_insert(npf_conf, NULL, defgroup);
+	npf_rule_insert(npf_conf, NULL, defgroup_l3);
 
 	if (defgroup_l2)
 		npf_rule_insert(npf_conf, NULL, defgroup_l2);
@@ -729,7 +729,6 @@ set_defgroup(nl_rule_t *rl, nl_rule_t *def_group, int attr)
 	return rl;
 }
 
-
 /*
  * npfctl_build_group: create a group, update the current group pointer
  * and increase the nesting level.
@@ -748,7 +747,7 @@ npfctl_build_group(const char *name, int attr, const char *ifname, bool def)
 	npf_rule_setprio(rl, NPF_PRI_LAST);
 	if (def) {
 		if (attr & NPF_RULE_LAYER_3) {
-			defgroup = set_defgroup(rl, defgroup, attr);
+			defgroup_l3 = set_defgroup(rl, defgroup_l3, attr);
 		}
 		else if (attr & NPF_RULE_LAYER_2) {
 			defgroup_l2 = set_defgroup(rl, defgroup_l2, attr);
@@ -783,7 +782,7 @@ npfctl_build_group_end(void)
 	 * - If the parent is NULL, then it is a global rule.
 	 * - The default rule must be the last, so it is inserted later.
 	 */
-	if (group == defgroup || group == defgroup_l2) {
+	if (group == defgroup_l3 || group == defgroup_l2) {
 		assert(parent == NULL);
 		return;
 	}
