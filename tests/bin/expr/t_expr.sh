@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.16 2025/06/28 23:23:50 rillig Exp $
+# $NetBSD: t_expr.sh,v 1.17 2025/06/29 00:24:23 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -260,8 +260,8 @@ regex_head() {
 regex_body() {
 	test_expr 1/2 : '.*/\(.*\)' '2'
 
-	# FIXME: POSIX requires 6 characters, not 9 bytes.
-	LC_ALL=en_US.UTF-8 test_expr aaaäää : '.*'	'9'
+	LC_ALL=en_US.UTF-8	test_expr aaaäää : '.*'	'6'
+	LC_ALL=C		test_expr aaaäää : '.*'	'9'
 
 	test_finish
 }
@@ -294,8 +294,8 @@ string_length_body() {
 	test_expr length ++ '2'
 	test_expr length length '6'
 
-	# FIXME: Length should be 6 characters, not 9 bytes.
-	LC_ALL=en_US.UTF-8 test_expr length aaaäää '9'
+	LC_ALL=en_US.UTF-8	test_expr length aaaäää	'6'
+	LC_ALL=C		test_expr length aaaäää	'9'
 
 	test_finish
 }

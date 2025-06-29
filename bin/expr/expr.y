@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.54 2025/04/12 08:45:59 rillig Exp $ */
+/* $NetBSD: expr.y,v 1.55 2025/06/29 00:24:23 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.y,v 1.54 2025/04/12 08:45:59 rillig Exp $");
+__RCSID("$NetBSD: expr.y,v 1.55 2025/06/29 00:24:23 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: expr.y,v 1.54 2025/04/12 08:45:59 rillig Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 static const char * const *av;
 static unsigned skip_level;
@@ -56,6 +57,7 @@ static int is_integer(const char *);
 static const char *eval_arith(const char *, const char *, const char *);
 static int eval_compare(const char *, const char *, const char *);
 static const char *eval_match(const char *, const char *);
+static size_t mbs_len(const char *, const char *);
 
 #define YYSTYPE	const char *
 
@@ -117,7 +119,7 @@ expr:	item
 |	LENGTH expr {
 		char *ln;
 
-		asprintf(&ln, "%ld", (long)strlen($2));
+		asprintf(&ln, "%zu", mbs_len($2, $2 + strlen($2)));
 		if (ln == NULL)
 			err(1, NULL);
 		$$ = ln;
@@ -275,6 +277,24 @@ eval_compare(const char *left, const char *op, const char *right)
 	}
 }
 
+static size_t
+mbs_len(const char *s, const char *e)
+{
+	int len = 0;
+	size_t m = MB_CUR_MAX;
+	mbstate_t st;
+
+	memset(&st, 0, sizeof(st));
+	for (const char *p = s; p < e;) {
+		size_t n = mbrlen(p, (size_t)(e - p), &st);
+		if (n > m)
+			return strlen(s);
+		len++;
+		p += n;
+	}
+	return len;
+}
+
 static const char *
 eval_match(const char *str, const char *re)
 {
@@ -295,8 +315,8 @@ eval_match(const char *str, const char *re)
 				(int)(rm[1].rm_eo - rm[1].rm_so),
 				str + rm[1].rm_so);
 		} else {
-			(void)asprintf(&val, "%d",
-				(int)(rm[0].rm_eo - rm[0].rm_so));
+			(void)asprintf(&val, "%zu",
+			    mbs_len(str + rm[0].rm_so, str + rm[0].rm_eo));
 		}
 		if (val == NULL)
 			err(1, NULL);
