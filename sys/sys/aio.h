@@ -118,7 +118,6 @@ struct aio_job {
 /* Structure for tracking the status of a collection of OPS */
 struct aiosp_ops {
 	kmutex_t mtx;		/* Protects this structure */
-	kmutex_t done_mtx;	/* Signals when a job is complete */
 	kcondvar_t done_cv;	/* Signals when a job is complete */ 
 	size_t completed;	/* Keeps track of the number of completed jobs */
 	size_t total;		/* Keeps track of the number of total jobs */
@@ -131,10 +130,8 @@ struct aiost {
 	struct aiosp *aiosp;		/* Servicing pool of this thread */
 	kmutex_t mtx;			/* Protects this structure */
 	kcondvar_t service_cv;		/* Signal to activate thread */
-	kmutex_t service_mtx;		/* Signal to activate thread */
 	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
-	kmutex_t ops_mtx;		/* Protects **ops */
 	size_t ops_total;		/* Total number of connected ops */
 	struct aiosp_ops **ops;		/* Array of ops */
 	vaddr_t kbuf;			/* Shared memory buffer */

@@ -231,8 +231,6 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		mutex_exit(&aiost->mtx);
 	}
 
-	mutex_exit(&sp->mtx);
-
 	for (int i = 0; i < total_dispensed; i++) {
 		struct aiost *aiost = aiost_list[i];
 		mutex_enter(&aiost->mtx);
@@ -240,6 +238,8 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		cv_signal(&aiost->service_cv);
 		mutex_exit(&aiost->mtx);
 	}
+
+	mutex_exit(&sp->mtx);
 
 	if (total_dispensed) {
 		kmem_free(aiost_list, sizeof(*aiost_list) * total_dispensed);
@@ -316,7 +316,6 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 
 		job = aiocbp->job;
-
 		struct aiost *aiost = aiocbp->job->aiost;
 		if (aiost == NULL) {
 			if (job->completed) {
@@ -325,18 +324,18 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			continue;
 		}
 
-		mutex_enter(&aiost->ops_mtx);
-
+		mutex_enter(&aiost->mtx);
 		if (job->completed) {
-			mutex_exit(&aiost->ops_mtx);
 			ops->completed++;
+			mutex_exit(&aiost->mtx);
 			continue;
 		}
 
 		if (powerof2(aiost->ops_total + 1)) {
 			size_t old_size = aiost->ops_total ? 
 				aiosp_ops_expected(aiost->ops_total) : 0;
-			size_t new_size = aiosp_ops_expected(aiost->ops_total + 1);
+			size_t new_size = aiosp_ops_expected(aiost->ops_total +
+				1);
 
 			struct aiosp_ops **new_ops = kmem_zalloc(new_size * 
 				sizeof(*new_ops), KM_SLEEP);
@@ -344,7 +343,8 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			if (aiost->ops && old_size > 0) {
 				memcpy(new_ops, aiost->ops, 
 					aiost->ops_total * sizeof(*aiost->ops));
-				kmem_free(aiost->ops, old_size * sizeof(*aiost->ops));
+				kmem_free(aiost->ops, old_size *
+					sizeof(*aiost->ops));
 			}
 
 			aiost->ops = new_ops;
@@ -352,27 +352,24 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 
 		aiost->ops[aiost->ops_total] = ops;
 		aiost->ops_total += 1;
+		mutex_exit(&aiost->mtx);
 		ops->total++;
-
-		mutex_exit(&aiost->ops_mtx);
 	}
 
 	for (; ops->completed < target;) {
-		mutex_exit(&ops->mtx);
-		mutex_enter(&ops->done_mtx);
 		//printf("waiting on ops %ld %ld\n", ops->completed, target);
-		error = cv_timedwait_sig(&ops->done_cv, &ops->done_mtx, timo);
-		mutex_exit(&ops->done_mtx);
+		error = cv_timedwait_sig(&ops->done_cv, &ops->mtx, timo);
 		if (error) {
 			if (error == EWOULDBLOCK) {
 				error = SET_ERROR(EAGAIN);
 			}
 
+			mutex_exit(&ops->mtx);
 			aiosp_ops_fini(ops);
 			kmem_free(ops, sizeof(*ops));
+
 			return error;
 		}
-		mutex_enter(&ops->mtx);
 	}
 
 	mutex_exit(&ops->mtx);
@@ -518,8 +515,8 @@ aiosp_destroy(struct aiosp *sp)
 	TAILQ_FOREACH_SAFE(st, &sp->freelist, list, tmp) {
 		error = aiost_terminate(st);
 		if (error) {
-			kmem_free(sp, sizeof(*sp));
 			mutex_exit(&sp->mtx);
+			kmem_free(sp, sizeof(*sp));
 			return error;
 		}
 
@@ -529,16 +526,16 @@ aiosp_destroy(struct aiosp *sp)
 	TAILQ_FOREACH_SAFE(st, &sp->active, list, tmp) {
 		error = aiost_terminate(st);
 		if (error) {
-			kmem_free(sp, sizeof(*sp));
 			mutex_exit(&sp->mtx);
+			kmem_free(sp, sizeof(*sp));
 			return error;
 		}
 
 		kmem_free(st, sizeof(*st));
 	}
 
-	kmem_free(sp, sizeof(*sp));
 	mutex_exit(&sp->mtx);
+	kmem_free(sp, sizeof(*sp));
 
 	return 0;
 }
@@ -579,8 +576,6 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
 
 	mutex_init(&st->mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&st->service_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&st->ops_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&st->service_cv, "aioservice");
 
 	mutex_enter(&sp->mtx);
@@ -628,41 +623,31 @@ aiost_entry(void *arg)
 	 * terminated aiost_terminate(st) unblocks those sleeping on
 	 * st->service_cv
 	 */
-	for (;;) {
-		for (;;) {
-			mutex_enter(&st->mtx);
-
-			if (st->state & AIOST_STATE_OPERATION) {
-				break;
-			} else if (st->state & AIOST_STATE_TERMINATE) {
+	mutex_enter(&st->mtx);
+	for(;;) {
+		for (; st->state & AIOST_STATE_NONE;) {
+			error = cv_wait_sig(&st->service_cv, &st->mtx);
+			if (error) {
 				/*
-				 * Remove st from the list of active service
-				 * threads, do NOT append to the freelist, dance
-				 * around locks, exit kthread
+				 * Thread was interrupt. Check for pending exit 
+				 * or suspension
 				 */
-				mutex_enter(&sp->mtx);
-				TAILQ_REMOVE(&sp->freelist, st, list);
-				sp->nthreads_free--;
-				mutex_exit(&sp->mtx);
 				mutex_exit(&st->mtx);
-				kthread_exit(0);
-			} else if (st->state & AIOST_STATE_NONE) {
-				mutex_exit(&st->mtx);
-				mutex_enter(&st->service_mtx);
-				error = cv_wait_sig(&st->service_cv,
-					&st->service_mtx);
-				mutex_exit(&st->service_mtx);
-				if (error) {
-					/*
-					 * Thread was interrupt. Check for
-					 * pending exit or suspension
-					 */
-					lwp_userret(curlwp);
-				}
-			} else {
-				panic("aio_process: invalid aiost state {%x}\n",
-					st->state);
+				lwp_userret(curlwp);
+				mutex_enter(&st->mtx);
 			}
+		}
+
+		if (st->state & AIOST_STATE_TERMINATE) {
+			mutex_enter(&sp->mtx);
+			TAILQ_REMOVE(&sp->freelist, st, list);
+			sp->nthreads_free--;
+			mutex_exit(&sp->mtx);
+			mutex_exit(&st->mtx);
+			kthread_exit(0);
+		} else if ((st->state & AIOST_STATE_OPERATION) == 0) {
+			panic("aio_process: invalid aiost state {%x}\n",
+				st->state);
 		}
 
 		job = st->job;
@@ -674,14 +659,13 @@ aiost_entry(void *arg)
 			panic("aio_process: invalid operation code\n");
 		}
 
-		if (!error) {
-			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
-		}
-
 		job->completed = true;
+		job->aiost = NULL;
+		st->state = AIOST_STATE_NONE;
+		st->job = NULL;
 
-		mutex_enter(&st->ops_mtx);
-		//printf("I am completing an op with %ld on aiost {%lx}\n", st->ops_total, (uintptr_t)st);
+		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+
 		for (int i = 0; i < st->ops_total; i++) {
 			struct aiosp_ops *ops = st->ops[i];
 			if (ops == NULL) {
@@ -701,16 +685,6 @@ aiost_entry(void *arg)
 			st->ops_total = 0;
 			st->ops = NULL;
 		}
-		mutex_exit(&st->ops_mtx);
-
-		error = aiost_teardown(st);
-		if (error) {
-			panic("aiost_entry: aiost_teardown failure");
-		}
-
-		st->state = AIOST_STATE_NONE;
-		st->job = NULL;
-		mutex_exit(&st->mtx);
 
 		/*
 		 * Remove st from list of active service threads, append to
@@ -799,7 +773,7 @@ aiost_process_rw(struct aiost *aiost)
 		}
 		auio.uio_rw = UIO_READ;
 		error = (*fp->f_ops->fo_read)(fp, &aiocbp->aio_offset,
-		    &auio, fp->f_cred, FOF_UPDATE_OFFSET);
+			&auio, fp->f_cred, FOF_UPDATE_OFFSET);
 	} else {
 		/*
 		 * Perform a Write operation
@@ -813,7 +787,7 @@ aiost_process_rw(struct aiost *aiost)
 		}
 		auio.uio_rw = UIO_WRITE;
 		error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
-		    &auio, fp->f_cred, FOF_UPDATE_OFFSET);
+			&auio, fp->f_cred, FOF_UPDATE_OFFSET);
 	}
 	fd_putfile(fd);
 	
@@ -860,10 +834,10 @@ aiost_process_sync(struct aiost *aiost)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (job->aio_op & AIO_DSYNC) {
 		error = VOP_FSYNC(vp, fp->f_cred,
-		    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0);
+			FSYNC_WAIT | FSYNC_DATAONLY, 0, 0);
 	} else if (job->aio_op & AIO_SYNC) {
 		error = VOP_FSYNC(vp, fp->f_cred,
-		    FSYNC_WAIT, 0, 0);
+			FSYNC_WAIT, 0, 0);
 	}
 	VOP_UNLOCK(vp);
 	fd_putfile(fd);
@@ -907,8 +881,6 @@ aiost_terminate(struct aiost *st)
 
 	cv_destroy(&st->service_cv);
 	mutex_destroy(&st->mtx);
-	mutex_destroy(&st->ops_mtx);
-	mutex_destroy(&st->service_mtx);
 	kmem_free(st, sizeof(*st));
 
 	return error;
@@ -1059,7 +1031,6 @@ aiosp_ops_init(struct aiosp_ops *ops)
 	ops->total = 0;
 	cv_init(&ops->done_cv, "aiodone");
 	mutex_init(&ops->mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ops->done_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -1070,7 +1041,6 @@ aiosp_ops_fini(struct aiosp_ops *ops)
 {
 	cv_destroy(&ops->done_cv);
 	mutex_destroy(&ops->mtx);
-	mutex_destroy(&ops->done_mtx);
 }
 
 /*
