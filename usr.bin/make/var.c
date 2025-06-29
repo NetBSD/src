@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1170 2025/06/28 22:39:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1171 2025/06/29 11:02:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1170 2025/06/28 22:39:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1171 2025/06/29 11:02:17 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2118,16 +2118,16 @@ typedef enum ApplyModifierResult {
 } ApplyModifierResult;
 
 /*
- * Allow backslashes to escape the delimiter, $, and \, but don't touch other
+ * Allow backslashes to escape the delimiters, $, and \, but don't touch other
  * backslashes.
  */
 static bool
-IsEscapedModifierPart(const char *p, char delim,
+IsEscapedModifierPart(const char *p, char end1, char end2,
 		      struct ModifyWord_SubstArgs *subst)
 {
 	if (p[0] != '\\' || p[1] == '\0')
 		return false;
-	if (p[1] == delim || p[1] == '\\' || p[1] == '$')
+	if (p[1] == end1 || p[1] == end2 || p[1] == '\\' || p[1] == '$')
 		return true;
 	return p[1] == '&' && subst != NULL;
 }
@@ -2220,7 +2220,7 @@ ParseModifierPart(
 
 	LazyBuf_Init(part, p);
 	while (*p != '\0' && *p != end1 && *p != end2) {
-		if (IsEscapedModifierPart(p, end2, subst)) {
+		if (IsEscapedModifierPart(p, end1, end2, subst)) {
 			LazyBuf_Add(part, p[1]);
 			p += 2;
 		} else if (*p != '$') {	/* Unescaped, simple text */

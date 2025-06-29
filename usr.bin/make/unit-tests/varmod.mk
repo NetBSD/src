@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.28 2025/06/29 10:45:46 rillig Exp $
+# $NetBSD: varmod.mk,v 1.29 2025/06/29 11:02:18 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -250,8 +250,27 @@ VAR_DOLLAR=	VAR$$
 .endif
 
 
-# FIXME: The intended "invalid time value" is ":}:}", not "\".
-# expect+1: Invalid time value "\"
-.if ${%Y:L:localtime=\:\}\:\}:M*} != ":}:}"
+# When an expression has the usual form ${...} with braces,
+# in the part of a modifier, ":}\$" can be escaped using a backslash.
+# All other characters are passed through unmodified.
+# expect+1: Invalid time value " : } \ $ ) \) ( "
+.if ${%Y:L:localtime= \: \} \\ \$ ) \) ( :M*} != ": } \\ \$ ) \\) ("
+.  error
+.endif
+# When an expression has the unusual form $(...) with parentheses,
+# in the part of a modifier, ":)\$" can be escaped using a backslash.
+# All other characters are passed through unmodified.
+# expect+1: Invalid time value " : \) \ $ "
+.if ${%Y:L:localtime= \: \) \\ \$ } \} { :M*} != ": ) \\ \$ } \\} {"
+.  error
+.endif
+# Same when the modifier is the last modifier in an expression.
+# expect+1: Invalid time value " : } \ $ ) \) ( "
+.if ${%Y:L:localtime= \: \} \\ \$ ) \) ( } != " : } \\ \$ ) \\) ( "
+.  error
+.endif
+# Same when the modifier is the last modifier in an expression.
+# expect+1: Invalid time value " : \) \ $ "
+.if ${%Y:L:localtime= \: \) \\ \$ } \} { } != " : ) \\ \$ } \\} { "
 .  error
 .endif
