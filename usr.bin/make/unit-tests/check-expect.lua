@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.13 2025/04/13 09:29:32 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.14 2025/06/29 17:10:04 rillig Exp $
 
 --[[
 
@@ -76,28 +76,39 @@ end
 
 
 local function missing(by_location)
-  ---@type {filename: string, lineno: number, location: string, message: string}[]
-  local missing_expectations = {}
+  ---@type {filename: string, lineno: number, location: string}[]
+  local locations = {}
 
-  for location, messages in pairs(by_location) do
-    for _, message in ipairs(messages) do
-      if message ~= "" and location:find(".mk:") then
-        local filename, lineno = location:match("^(%S+):(%d+)$")
-        table.insert(missing_expectations, {
-          filename = filename,
-          lineno = tonumber(lineno),
-          location = location,
-          message = message
-        })
-      end
+  for location in pairs(by_location) do
+    local filename, lineno = location:match("^(%S+%.mk):(%d+)$")
+    if filename then
+      table.insert(locations, {
+        filename = filename,
+        lineno = tonumber(lineno),
+        location = location
+      })
     end
   end
-  table.sort(missing_expectations, function(a, b)
+  table.sort(locations, function(a, b)
     if a.filename ~= b.filename then
       return a.filename < b.filename
     end
     return a.lineno < b.lineno
   end)
+
+  ---@type {location: string, message: string}[]
+  local missing_expectations = {}
+  for _, location in ipairs(locations) do
+    for _, message in ipairs(by_location[location.location]) do
+      if message ~= "" then
+        table.insert(missing_expectations, {
+          location = location.location,
+          message = message
+        })
+      end
+    end
+  end
+
   return missing_expectations
 end
 
