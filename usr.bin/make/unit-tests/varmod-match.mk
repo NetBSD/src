@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.31 2025/06/28 22:39:29 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.32 2025/06/29 09:40:13 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -13,8 +13,12 @@
 # 6. Error handling
 # 7. Historical bugs
 #
-# See ApplyModifier_Match, ParseModifier_Match, ModifyWord_Match and
-# Str_Match.
+# See also:
+#	char-005c-reverse-solidus.mk
+#	ApplyModifier_Match
+#	ParseModifier_Match
+#	ModifyWord_Match
+#	Str_Match
 
 
 # 1. Pattern characters '*', '?' and '\'

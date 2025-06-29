@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.368 2025/06/27 20:20:56 rillig Exp $
+# $NetBSD: Makefile,v 1.369 2025/06/29 09:40:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -59,6 +59,7 @@ rm-tmpdir:	.NOMETA
 # src/tests/usr.bin/make/t_make.sh as well.
 TESTS+=		archive
 TESTS+=		archive-suffix
+TESTS+=		char-005c-reverse-solidus
 TESTS+=		cmd-errors
 TESTS+=		cmd-errors-jobs
 TESTS+=		cmd-errors-lint
@@ -476,7 +477,6 @@ TESTS:= ${TESTS:${BROKEN_TESTS:S,^,N,:ts:}}
 
 # Ideas for more tests:
 #	char-0020-space.mk
-#	char-005C-backslash.mk
 #	escape-cond-str.mk
 #	escape-cond-func-arg.mk
 #	escape-varmod.mk
