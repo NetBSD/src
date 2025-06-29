@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.29 2025/06/29 11:02:18 rillig Exp $
+# $NetBSD: varmod.mk,v 1.30 2025/06/29 11:27:21 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -118,14 +118,13 @@ DOLLAR2=	${:U\$}
 .  error
 .endif
 
-# The variable modifier :P does not fall back to the SysV modifier.
+# The modifier :P does not fall back to the SysV modifier.
 # Therefore the modifier :P=RE generates a parse error.
-# XXX: The .error should not be reached since the expression is
-# malformed, and this error should be propagated up to Cond_EvalLine.
 VAR=	STOP
 # expect+1: Missing delimiter ":" after modifier "P"
 .if ${VAR:P=RE} != "STORE"
-# expect+1: Missing argument for ".error"
+.  error
+.else
 .  error
 .endif
 

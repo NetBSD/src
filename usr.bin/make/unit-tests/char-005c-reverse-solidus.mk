@@ -1,4 +1,4 @@
-# $NetBSD: char-005c-reverse-solidus.mk,v 1.1 2025/06/29 09:40:13 rillig Exp $
+# $NetBSD: char-005c-reverse-solidus.mk,v 1.2 2025/06/29 11:27:21 rillig Exp $
 #
 # Tests for the character U+005C "REVERSE SOLIDUS".
 #
@@ -57,8 +57,6 @@ BACKSLASH_C=	${:U1:C,.,\\,}
 .if ${BACKSLASH:Mx\}
 .  error
 .else
-# FIXME: After an error in the condition, both branches must be skipped.
-# expect+1: Missing argument for ".error"
 .  error
 .endif
 
@@ -66,8 +64,6 @@ BACKSLASH_C=	${:U1:C,.,\\,}
 .if ${BACKSLASH:Mx\\}
 .  error
 .else
-# FIXME: After an error in the condition, both branches must be skipped.
-# expect+1: Missing argument for ".error"
 .  error
 .endif
 
@@ -75,8 +71,6 @@ BACKSLASH_C=	${:U1:C,.,\\,}
 .if ${BACKSLASH:Mx\\\\\\\\}
 .  error
 .else
-# FIXME: After an error in the condition, both branches must be skipped.
-# expect+1: Missing argument for ".error"
 .  error
 .endif
 
@@ -104,8 +98,6 @@ BACKSLASH_C=	${:U1:C,.,\\,}
 # an expression.  There, the usual escaping rules for modifiers apply.
 # expect+1: Unfinished backslash at the end in pattern "\" of modifier ":M"
 .if ${BACKSLASH:M${BACKSLASH}} != "\\"
-# FIXME: After an error in the condition, both branches must be skipped.
-# expect+1: Missing argument for ".error"
 .  error
 .else
 .  error
@@ -119,7 +111,6 @@ BACKSLASH_C=	${:U1:C,.,\\,}
 .if ${BACKSLASH:M${:U\\\\}} != "\\"
 .  error
 .else
-# expect+1: Missing argument for ".error"
 .  error
 .endif
 

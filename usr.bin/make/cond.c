@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.374 2025/06/28 22:39:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.375 2025/06/29 11:27:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.374 2025/06/28 22:39:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.375 2025/06/29 11:27:21 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -924,7 +924,9 @@ CondEvalExpression(const char *cond, bool plain,
 	if (par.curr != TOK_EOF)
 		rval = CR_ERROR;
 
-	if (rval == CR_ERROR && eprint && parseErrors == parseErrorsBefore)
+	if (parseErrors != parseErrorsBefore)
+		rval = CR_ERROR;
+	else if (rval == CR_ERROR && eprint)
 		Parse_Error(PARSE_FATAL, "Malformed conditional \"%s\"", cond);
 
 	return rval;
