@@ -42,6 +42,8 @@ make: varmod.mk:231: Invalid argument "fallback$" for modifier ":mtime"
 	while evaluating variable "." with value "."
 make: varmod.mk:245: Missing delimiter ":" after modifier "L"
 	while evaluating variable "VAR" with value "VAR"
+make: varmod.mk:255: Invalid time value "\"
+	while evaluating variable "%Y" with value "%Y"
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

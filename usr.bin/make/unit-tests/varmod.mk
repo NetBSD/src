@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.27 2025/06/28 22:39:29 rillig Exp $
+# $NetBSD: varmod.mk,v 1.28 2025/06/29 10:45:46 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -246,5 +246,12 @@ VAR_DOLLAR=	VAR$$
 .  error
 .endif
 .if ${VAR:L:AR=ALUE} != "VALUE"
+.  error
+.endif
+
+
+# FIXME: The intended "invalid time value" is ":}:}", not "\".
+# expect+1: Invalid time value "\"
+.if ${%Y:L:localtime=\:\}\:\}:M*} != ":}:}"
 .  error
 .endif
