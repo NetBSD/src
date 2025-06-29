@@ -14,5 +14,5 @@ make: char-005c-reverse-solidus.mk:119: Unclosed expression, expecting "}" for m
 	while evaluating variable "BACKSLASH" with value ""
 make: char-005c-reverse-solidus.mk:123: Missing argument for ".error"
 make: Fatal errors encountered -- cannot continue
-make: stopped making "all" in unit-tests
+make: stopped in unit-tests
 exit status 1
