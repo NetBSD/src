@@ -418,7 +418,7 @@ npf_nat_inspect(npf_cache_t *npc, const unsigned di)
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	rl = npf_ruleset_inspect(npc, rlset, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, rlset, di, NPF_RULE_LAYER_3);
 	if (rl == NULL) {
 		npf_config_read_exit(npf, slock);
 		return NULL;

@@ -116,10 +116,10 @@ run_raw_testcase(unsigned i, bool verbose)
 	int slock, error;
 
 	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, t->sport, t->dport);
-	npc = get_cached_pkt(m, t->ifname);
+	npc = get_cached_pkt(m, t->ifname, NPF_RULE_LAYER_3);
 
 	slock = npf_config_read_enter(npf);
-	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_RULE_LAYER_3);
 	if (rl) {
 		npf_match_info_t mi;
 		int id_match;

@@ -143,7 +143,7 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 		return true;
 	}
 
-	npc = get_cached_pkt(construct_packet(p), NULL);
+	npc = get_cached_pkt(construct_packet(p), NULL, NPF_RULE_LAYER_3);
 	if (*snew) {
 		ret = npf_state_init(npc, nst);
 		KASSERT(ret == true);

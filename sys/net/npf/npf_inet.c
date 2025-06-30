@@ -578,6 +578,26 @@ npf_cache_tcp(npf_cache_t *npc, nbuf_t *nbuf, unsigned hlen)
 	return NPC_LAYER4 | NPC_TCP;
 }
 
+int
+npf_cache_ether(npf_cache_t *npc)
+{
+	struct mbuf *m = npc->npc_nbuf->nb_mbuf0;
+	struct ether_header *ether;
+
+	nbuf_unset_flag(npc->npc_nbuf, NBUF_DATAREF_RESET);
+	/*
+	 * we are so sure ether header will be in the first mbuf
+	 * and we are also sure 14 bytes ether_header will be fully accessible
+	 */
+	ether = mtod(m, struct ether_header *);
+	if (__predict_false(ether == NULL))
+		return NPC_FMTERR;
+	memcpy(&npc->ether, ether, sizeof(npc->ether));
+
+	KASSERT(nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET) == 0);
+	return NPC_LAYER2;
+}
+
 /*
  * npf_cache_all: general routine to cache all relevant IP (v4 or v6)
  * and TCP, UDP or ICMP headers.
