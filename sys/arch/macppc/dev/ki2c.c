@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.33 2022/06/29 17:59:40 mlelstv Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.34 2025/06/30 10:17:16 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -184,16 +184,37 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			prop_dictionary_set_uint64(dev, "cookie", devs);
 			/* look for location info for sensors */
 			devc = OF_child(devs);
-			while (devc != 0) {
-				if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-				if (OF_getprop(devc, "location", descr, 32) <= 0)
-					goto nope;
-				DPRINTF("found '%s' at %02x\n", descr, reg);
-				snprintf(num, 7, "s%02x", reg);
-				prop_dictionary_set_string(dev, num, descr);
-			nope:
-				devc = OF_peer(devc);
+			if (devc == 0) {
+				/* old style name info */
+				uint32_t ids[4];
+				int len = OF_getprop(devs, "hwsensor-id", ids, 16);
+				int i = 0, idx = 0;
+				char buffer[256];
+				memset(buffer, 0, 256);
+				OF_getprop(devs, "hwsensor-location", buffer, 256);
+				while (len > 0) {
+					reg = ids[i];
+					strcpy(descr, &buffer[idx]);
+					idx += strlen(descr) + 1;
+					DPRINTF("found '%s' at %02x\n", descr, reg);
+					snprintf(num, 7, "s%02x", i);
+					prop_dictionary_set_string(dev, num, descr);
+					i++;
+					len -= 4;
+				}
+			} else {
+				while (devc != 0) {
+					if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
+					if (OF_getprop(devc, "location", descr, 32) <= 0)
+						goto nope;
+					}
+					DPRINTF("found '%s' at %02x\n", descr, reg);
+					snprintf(num, 7, "s%02x", reg);
+					prop_dictionary_set_string(dev, num, descr);
+				nope:
+					devc = OF_peer(devc);
 			}
+						
 			prop_array_add(cfg, dev);
 			prop_object_release(dev);
 		skip:
