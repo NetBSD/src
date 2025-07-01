@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.114 2023/10/04 22:17:10 ad Exp $
+.\" $NetBSD: kauth.9,v 1.115 2025/07/01 11:46:42 bad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2023
+.Dd Jul 1, 2025
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -1497,19 +1497,17 @@ Notifications are made using the following function, which is internal to
 With the following actions:
 .Bl -tag -width compact
 .It Dv KAUTH_CRED_COPY
-The credentials are being copied.
 .Ar cred
-are the credentials of the lwp context doing the copy, and
+are the credentials that are being copied.
 .Ar arg0
-and
-.Ar arg1
-are both
+is a
 .Ft kauth_cred_t
-representing the
-.Dq from
-and
-.Dq to
-credentials, respectively.
+representing the destination
+credentials.
+That is the credentials are copied from
+.Ar cred
+to
+.Ar arg0 .
 .It Dv KAUTH_CRED_FORK
 The credentials are being inherited from a parent to a child process during a
 fork.
