@@ -700,7 +700,7 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 	mac_word = ntohl(mac_word);
 
 	/* copy the last two bytes of the 6 byte ether address */
-	memcpy(&mac_hword, ether_addr + sizeof(mac_word), sizeof(mac_hword));
+	memcpy(&mac_hword, (uint8_t *)ether_addr + sizeof(mac_word), sizeof(mac_hword));
 	mac_hword = ntohs(mac_hword);
 
 	/* load and compare first word then do same to last halfword */
