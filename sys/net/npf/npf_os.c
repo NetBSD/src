@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.22 2025/03/20 09:49:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.23 2025/07/01 18:42:37 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -122,6 +122,7 @@ static bool		pfil_registered = false;
 static pfil_head_t *	npf_ph_if = NULL;
 static pfil_head_t *	npf_ph_inet = NULL;
 static pfil_head_t *	npf_ph_inet6 = NULL;
+static pfil_head_t *	npf_ph_etherlist[NPF_MAX_IFMAP];
 
 static const npf_ifops_t kern_ifops = {
 	.getname	= npf_ifop_getname,
@@ -393,6 +394,13 @@ npfos_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	return npfk_packet_handler(npf, mp, ifp, di);
 }
 
+static int
+npfos_layer2_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
+{
+	npf_t *npf = npf_getkernctx();
+	return npfk_layer2_handler(npf, mp, ifp, di);
+}
+
 /*
  * npf_ifhook: hook handling interface changes.
  */
@@ -435,6 +443,61 @@ npf_ifaddrhook(void *arg, u_long cmd, void *arg2)
 		return;
 	}
 	npf_ifaddr_sync(npf, ifa->ifa_ifp);
+}
+
+static int
+register_etherpfil_hook(npf_t *npf, ifnet_t *ifp, int i)
+{
+	int error = 0;
+	static pfil_head_t *npf_ph_ether;
+	/* Capture points of activity at link layer */
+	if ((npf_ph_ether = pfil_head_get(PFIL_TYPE_IFNET, ifp)) == NULL) {
+		error = ENOENT;
+		return error;
+	}
+
+	if (npf_ph_ether) {
+		error = pfil_add_hook(npfos_layer2_handler, npf,
+		    PFIL_ALL, npf_ph_ether);
+		KASSERT(error == 0);
+	}
+	npf_ph_etherlist[i] = npf_ph_ether;
+
+	return error;
+}
+
+static int
+get_etherpfil_head(npf_t *npf)
+{
+	int error = 0, i = 0;
+	ifnet_t *ifp;
+
+	KERNEL_LOCK(1, NULL);
+	IFNET_GLOBAL_LOCK();
+	IFNET_WRITER_FOREACH(ifp) {
+		error = register_etherpfil_hook(npf, ifp, i);
+		if (!error)
+			break;
+		i++;
+	}
+	IFNET_GLOBAL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
+}
+
+static void
+destroy_pfilether_hook(npf_t *npf)
+{
+	int i = 0;
+	while (npf_ph_etherlist[i]) {
+		pfil_head_t *npf_ph_ether = npf_ph_etherlist[i];
+
+		if (npf_ph_ether) {
+			(void)pfil_remove_hook(npfos_layer2_handler, npf,
+				PFIL_ALL, npf_ph_ether);
+		}
+		i++;
+	}
 }
 
 /*
@@ -494,6 +557,8 @@ npf_pfil_register(bool init)
 		KASSERT(error == 0);
 	}
 
+	get_etherpfil_head(npf);
+
 	/*
 	 * It is necessary to re-sync all/any interface address tables,
 	 * since we did not listen for any changes.
@@ -530,6 +595,7 @@ npf_pfil_unregister(bool fini)
 		(void)pfil_remove_hook(npfos_packet_handler, npf,
 		    PFIL_ALL, npf_ph_inet6);
 	}
+	destroy_pfilether_hook(npf);
 	pfil_registered = false;
 
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();

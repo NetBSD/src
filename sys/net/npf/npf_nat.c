@@ -67,7 +67,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.53 2023/02/24 11:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.54 2025/07/01 18:42:37 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -418,7 +418,7 @@ npf_nat_inspect(npf_cache_t *npc, const unsigned di)
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	rl = npf_ruleset_inspect(npc, rlset, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, rlset, di, NPF_RULE_LAYER_3);
 	if (rl == NULL) {
 		npf_config_read_exit(npf, slock);
 		return NULL;
