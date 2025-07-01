@@ -55,7 +55,7 @@ test_bpf_code(void *code, size_t size)
 	/* Layer 3 (IP + TCP). */
 	m = mbuf_get_pkt(AF_INET, IPPROTO_TCP,
 	    "192.168.2.100", "10.0.0.1", 15000, 80);
-	npc = get_cached_pkt(m, NULL);
+	npc = get_cached_pkt(m, NULL, NPF_RULE_LAYER_3);
 #ifdef _NPF_STANDALONE
 	bc_args.pkt = (const uint8_t *)nbuf_dataptr(npc->npc_nbuf);
 #else

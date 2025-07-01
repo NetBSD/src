@@ -7,6 +7,7 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/kmem.h>
+#include <net/if_ether.h>
 #endif
 
 #include "npf_impl.h"
@@ -303,8 +304,32 @@ mbuf_get_pkt(int af, int proto, const char *src, const char *dst,
 	return m;
 }
 
+struct mbuf *
+mbuf_get_frame(const char *src, const char *dst, uint16_t type)
+{
+	struct mbuf *m0;
+	struct ether_header *ethdr;
+
+	uint8_t saddr[ETHER_ADDR_LEN];
+	uint8_t daddr[ETHER_ADDR_LEN];
+
+	(void)ether_aton_r(saddr, ETHER_ADDR_LEN, src);
+	(void)ether_aton_r(daddr, ETHER_ADDR_LEN, dst);
+
+	m0 = m_gethdr(M_WAITOK, MT_HEADER);
+	ethdr = mtod(m0, struct ether_header *);
+	ethdr->ether_type = type;
+	memcpy(ethdr->ether_dhost, daddr, sizeof(ethdr->ether_dhost));
+	memcpy(ethdr->ether_shost, saddr, sizeof(ethdr->ether_shost));
+	m0->m_pkthdr.len = sizeof(struct ether_header);
+	m0->m_len = sizeof(struct ether_header);
+	m0->m_next = NULL;
+
+	return m0;
+}
+
 npf_cache_t *
-get_cached_pkt(struct mbuf *m, const char *ifname)
+get_cached_pkt(struct mbuf *m, const char *ifname,  uint32_t layer)
 {
 	ifnet_t *ifp = npf_test_getif(ifname ? ifname : IFNAME_DUMMY);
 	npf_cache_t *npc = kmem_zalloc(sizeof(npf_cache_t), KM_SLEEP);
@@ -316,7 +341,11 @@ get_cached_pkt(struct mbuf *m, const char *ifname)
 
 	nbuf_init(npc->npc_ctx, nbuf, m, ifp);
 	npc->npc_nbuf = nbuf;
-	ret = npf_cache_all(npc);
+
+	if (layer & NPF_RULE_LAYER_3)
+		ret = npf_cache_all(npc);
+	else
+		ret = npf_cache_ether(npc);
 	assert(ret); (void)ret;
 
 	return npc;

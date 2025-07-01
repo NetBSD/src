@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2025/06/01 00:48:41 joe Exp $
+# $NetBSD: Makefile,v 1.13 2025/07/01 20:19:30 joe Exp $
 #
 # Public Domain
 #
@@ -19,6 +19,7 @@ SRCS+=		npf_state_test.c
 SRCS+=		npf_rule_test.c
 SRCS+=		npf_nat_test.c
 SRCS+=		npf_rid_test.c
+SRCS+=		npf_l2rule_test.c
 
 SRCS+=		npf_perf_test.c
 

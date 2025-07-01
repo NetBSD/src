@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.h,v 1.18 2025/06/01 00:48:41 joe Exp $	*/
+/*	$NetBSD: npftest.h,v 1.19 2025/07/01 20:19:30 joe Exp $	*/
 
 /*
  * Public Domain.
@@ -23,6 +23,7 @@
 #define	rumpns_npf_table_test		npf_table_test
 #define	rumpns_npf_state_test		npf_state_test
 #define	rumpns_npf_rule_test		npf_rule_test
+#define	rumpns_npf_layer2_rule_test	npf_layer2_rule_test
 #define	rumpns_npf_nat_test		npf_nat_test
 #define	rumpns_npf_gc_test		npf_gc_test
 #define	rumpns_npf_test_conc		npf_test_conc
@@ -50,6 +51,7 @@ bool		rumpns_npf_table_test(bool, void *, size_t);
 bool		rumpns_npf_state_test(bool);
 
 bool		rumpns_npf_rule_test(bool);
+bool		rumpns_npf_layer2_rule_test(bool);
 bool		rumpns_npf_nat_test(bool);
 bool		rumpns_npf_guid_test(bool);
 bool		rumpns_npf_gc_test(bool);

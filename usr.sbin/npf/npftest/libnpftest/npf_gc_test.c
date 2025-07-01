@@ -49,7 +49,7 @@ static bool
 enqueue_connection(unsigned i, bool expire)
 {
 	struct mbuf *m = get_packet(i);
-	npf_cache_t *npc = get_cached_pkt(m, NULL);
+	npf_cache_t *npc = get_cached_pkt(m, NULL, NPF_RULE_LAYER_3);
 	npf_conn_t *con;
 
 	con = npf_conn_establish(npc, PFIL_IN, true);

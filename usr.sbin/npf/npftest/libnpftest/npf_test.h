@@ -112,7 +112,8 @@ void *		mbuf_return_hdrs6(struct mbuf *, struct ip6_hdr **);
 void		mbuf_icmp_append(struct mbuf *, struct mbuf *);
 
 struct mbuf *	mbuf_get_pkt(int, int, const char *, const char *, int, int);
-npf_cache_t *	get_cached_pkt(struct mbuf *, const char *);
+struct mbuf *	mbuf_get_frame(const char *, const char *, uint16_t);
+npf_cache_t *	get_cached_pkt(struct mbuf *, const char *, uint32_t);
 void		put_cached_pkt(npf_cache_t *);
 
 bool		npf_nbuf_test(bool);
@@ -121,6 +122,7 @@ bool		npf_table_test(bool, void *, size_t);
 bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
+bool		npf_layer2_rule_test(bool);
 bool		npf_nat_test(bool);
 bool 		npf_guid_test(bool);
 bool		npf_gc_test(bool);
