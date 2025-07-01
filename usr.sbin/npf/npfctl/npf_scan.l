@@ -174,6 +174,8 @@ icmp-type		return ICMPTYPE;
 code			return CODE;
 any			return ANY;
 user			return USER;
+ether			return ETHER;
+layer-2			return L2;
 
 "/"			return SLASH;
 "{"			return CURLY_OPEN;
@@ -196,11 +198,21 @@ user			return USER;
 			return HEX;
 		}
 
+"Ex"{HEXDIG} {
+			yylval.str = estrndup(yytext, yyleng);
+			return ETHERHEX;
+		}
+
 {NUMBER}"."{NUMBER} {
 			char *endp, *buf = estrndup(yytext, yyleng);
 			yylval.fpnum = strtod(buf, &endp);
 			free(buf);
 			return FPNUM;
+		}
+
+{HEXDIG}(":"{HEXDIG}){5} {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
 		}
 
 {HEXDIG}":"[0-9a-fA-F:]* {
@@ -216,6 +228,16 @@ user			return USER;
 {NUMBER}"."[0-9][0-9.]* {
 			yylval.str = estrndup(yytext, yyleng);
 			return IPV4ADDR;
+		}
+
+{HEXDIG}"."[0-9a-fA-F.]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
+		}
+
+{HEXDIG}"-"[0-9a-fA-F\-]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return MACADDR;
 		}
 
 {NUMBER}	{

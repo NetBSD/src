@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.17 2024/10/30 11:19:38 riastradh Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.18 2025/07/01 19:55:15 joe Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -130,6 +130,7 @@ __RCSID("$NetBSD: npf_bpf_comp.c,v 1.17 2024/10/30 11:19:38 riastradh Exp $");
 #define	FETCHED_L3		0x01
 #define	CHECKED_L4_PROTO	0x02
 #define	X_EQ_L4OFF		0x04
+#define	FETCHED_L2		0x08
 
 struct npf_bpf {
 	/*
@@ -141,6 +142,7 @@ struct npf_bpf {
 	unsigned		nblocks;
 	sa_family_t		af;
 	uint32_t		flags;
+	uint8_t			eth_type;
 
 	/*
 	 * Indicators whether we are inside the group and whether this
@@ -468,8 +470,48 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, unsigned flags)
 	}
 }
 
+void
+fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
+{
+	if ((ctx->flags & FETCHED_L2) != 0 || (type && ctx->eth_type != 0))
+		return;
+
+	const uint8_t jt = type ? 0 : JUMP_MAGIC;
+	const uint8_t jf = type ? JUMP_MAGIC : 0;
+	const bool ingroup = ctx->ingroup != 0;
+	const bool invert = ctx->invert;
+	unsigned off = offsetof(struct ether_header, ether_type);
+
+	/*
+	 * L2 block cannot be inserted in the middle of a group.
+	 * Check and start the group after.
+	 */
+	if (ingroup) {
+		assert(ctx->nblocks == ctx->gblock);
+		npfctl_bpf_group_exit(ctx);
+	}
+
+	type = ntohs(type);
+
+	struct bpf_insn insns_et[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, type, jt, jf),
+	};
+	add_insns(ctx, insns_et, __arraycount(insns_et));
+	ctx->flags |= FETCHED_L2;
+	ctx->eth_type = type;
+
+ 	if (type) { /* bookmark ether type */
+		uint32_t mwords[] = { BM_ETHER_TYPE, 1, htons(type) };
+		add_bmarks(ctx, mwords, sizeof(mwords));
+	}
+	if (ingroup) {
+		npfctl_bpf_group_enter(ctx, invert);
+	}
+}
+
 static void
-bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
+bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts, uint32_t layer)
 {
 	uint32_t bm = 0;
 
@@ -477,10 +519,10 @@ bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
 		const unsigned seen = ctx->invflags;
 
 		if ((opts & MATCH_SRC) != 0 && (seen & MATCH_SRC) == 0) {
-			bm = BM_SRC_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_SRC_NEG : BM_SRC_ENEG;
 		}
 		if ((opts & MATCH_DST) != 0 && (seen & MATCH_DST) == 0) {
-			bm = BM_DST_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_DST_NEG : BM_DST_ENEG;
 		}
 		ctx->invflags |= opts & (MATCH_SRC | MATCH_DST);
 	}
@@ -635,7 +677,51 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 		(opts & MATCH_SRC) ? BM_SRC_CIDR: BM_DST_CIDR, 6,
 		af, mask, awords[0], awords[1], awords[2], awords[3],
 	};
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
+	done_block(ctx, mwords, sizeof(mwords));
+}
+
+/*
+ * for ether address, 6 octets(a word and halfword)
+ * just fetch directly using a word and halfword fetch
+ */
+void
+npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
+{
+	uint32_t mac_word;
+	uint16_t mac_hword;
+	unsigned off;
+	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
+
+	off = (opts & MATCH_SRC) ? offsetof(struct ether_header, ether_shost) :
+	    offsetof(struct ether_header, ether_dhost);
+
+	memcpy(&mac_word, ether_addr, sizeof(mac_word));
+	mac_word = ntohl(mac_word);
+
+	/* copy the last two bytes of the 6 byte ether address */
+	memcpy(&mac_hword, (uint8_t *)ether_addr + sizeof(mac_word), sizeof(mac_hword));
+	mac_hword = ntohs(mac_hword);
+
+	/* load and compare first word then do same to last halfword */
+	struct bpf_insn insns_ether_w[] = {
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, off),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_word, 0, JUMP_MAGIC),
+	};
+	add_insns(ctx, insns_ether_w, __arraycount(insns_ether_w));
+
+	struct bpf_insn insns_ether_h[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off + sizeof(mac_word)),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_hword, 0, JUMP_MAGIC),
+	};
+	add_insns(ctx, insns_ether_h, __arraycount(insns_ether_h));
+
+	uint32_t mwords[] = {
+		(opts & MATCH_SRC) ? BM_SRC_ETHER: BM_DST_ETHER, 2,
+		htonl(mac_word), htons(mac_hword)
+	};
+
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_2);
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
@@ -808,6 +894,6 @@ npfctl_bpf_table(npf_bpf_t *ctx, unsigned opts, unsigned tid)
 	add_insns(ctx, insns_table, __arraycount(insns_table));
 
 	uint32_t mwords[] = { src ? BM_SRC_TABLE: BM_DST_TABLE, 1, tid };
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
 	done_block(ctx, mwords, sizeof(mwords));
 }

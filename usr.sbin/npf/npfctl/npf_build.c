@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.58 2025/06/01 00:54:36 joe Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.59 2025/07/01 19:55:15 joe Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -58,7 +58,9 @@ static bool			npf_debug = false;
 static nl_rule_t *		the_rule = NULL;
 static bool			npf_conf_built = false;
 
-static nl_rule_t *		defgroup = NULL;
+static bool			l2_group = false;
+static nl_rule_t *		defgroup_l3 = NULL;
+static nl_rule_t *		defgroup_l2 = NULL;
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
 static unsigned			rule_nesting_level = 0;
 static unsigned			npfctl_tid_counter = 0;
@@ -98,14 +100,23 @@ npfctl_config_build(void)
 	}
 
 	/*
-	 * The default group is mandatory.  Note: npfctl_build_group_end()
+	 * The layer 3 default group is mandatory.  Note: npfctl_build_group_end()
 	 * skipped the default rule, since it must be the last one.
+	 * if you set a layer 2 rule, layer 2 default also becomes mandatory.
+	 * if you don't set layer 2 rules, only layer 3 default is mandatory
 	 */
-	if (!defgroup) {
-		errx(EXIT_FAILURE, "default group was not defined");
+	if (!defgroup_l3) {
+		errx(EXIT_FAILURE, "layer 3 default group was not defined");
+	}
+
+	if (l2_group & !defgroup_l2) {
+		errx(EXIT_FAILURE, "layer 2 default group not defined");
 	}
 	assert(rule_nesting_level == 0);
-	npf_rule_insert(npf_conf, NULL, defgroup);
+	npf_rule_insert(npf_conf, NULL, defgroup_l3);
+
+	if (defgroup_l2)
+		npf_rule_insert(npf_conf, NULL, defgroup_l2);
 
 	npf_config_build(npf_conf);
 	npf_conf_built = true;
@@ -325,6 +336,11 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			npfctl_bpf_table(ctx, opts, tid);
 			break;
 		}
+		case NPFVAR_MAC: {
+			struct ether_addr *eth = data;
+			npfctl_bpf_ether(ctx, opts, eth);
+			break;
+		}
 		default:
 			yyerror("unexpected %s", npfvar_type(type));
 		}
@@ -432,16 +448,14 @@ npfctl_check_proto(const npfvar_t *vars, bool *non_tcpudp, bool *tcp_with_nofl)
 }
 
 static bool
-npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
+build_l3_code(npf_bpf_t *bc, nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
     const filt_opts_t *fopts)
 {
-	const addr_port_t *apfrom = &fopts->fo_from;
-	const addr_port_t *apto = &fopts->fo_to;
+	unsigned opts;
+	const addr_port_t *apfrom = &fopts->filt.opt3.fo_from;
+	const addr_port_t *apto = &fopts->filt.opt3.fo_to;
 	bool any_proto, any_addrs, any_ports, stateful;
 	bool any_l4proto, non_tcpudp, tcp_with_nofl;
-	npf_bpf_t *bc;
-	unsigned opts;
-	size_t len;
 
 	/*
 	 * Gather some information about the protocol options, if any.
@@ -463,8 +477,6 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
 	if (any_ports && non_tcpudp) {
 		yyerror("invalid filter options for given the protocol(s)");
 	}
-
-	bc = npfctl_bpf_create();
 
 	/* Build layer 3 and 4 protocol blocks. */
 	if (family != AF_UNSPEC) {
@@ -498,8 +510,57 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
 		npfctl_bpf_proto(bc, IPPROTO_UDP);
 		npfctl_bpf_group_exit(bc);
 	}
+
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
+
+	return true;
+}
+
+static bool
+build_l2_code(npf_bpf_t *bc, const filt_opts_t *fopts)
+{
+	unsigned opts;
+	npfvar_t *ap_from = fopts->filt.opt2.from_mac;
+	npfvar_t *ap_to = fopts->filt.opt2.to_mac;
+	const uint16_t ether_type = fopts->filt.opt2.ether_type;
+	bool addr_or_ether;
+
+	addr_or_ether = ap_from || ap_to || ether_type;
+	if(!addr_or_ether)
+		return false;
+
+	if (ether_type != 0) {
+		fetch_ether_type(bc, ether_type);
+	}
+
+	/* Build ether address blocks. */
+	opts = MATCH_DST | (fopts->fo_tinvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, 0, ap_to, opts);
+	opts = MATCH_SRC | (fopts->fo_finvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, 0, ap_from, opts);
+
+	return true;
+}
+
+static bool
+npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
+    const filt_opts_t *fopts)
+{
+	npf_bpf_t *bc;
+	size_t len;
+	uint32_t layer = fopts->layer;
+
+	bc = npfctl_bpf_create();
+	if (layer == NPF_RULE_LAYER_3) {
+		if (!build_l3_code(bc, rl, family, popts, fopts))
+			return false;
+	} else if (layer == NPF_RULE_LAYER_2) {
+		if (!build_l2_code(bc, fopts))
+			return false;
+	} else {
+		yyerror("%s: layer not supported", __func__);
+	}
 
 	/* Set the byte-code marks, if any. */
 	const void *bmarks = npfctl_bpf_bmarks(bc, &len);
@@ -640,6 +701,32 @@ npfctl_build_maprset(const char *name, int attr, const char *ifname)
 	npf_nat_insert(npf_conf, rl);
 }
 
+static void
+npf_check_layer(const char **lstr, uint32_t lattr, const char *func)
+{
+	if (lattr & NPF_RULE_LAYER_2)
+		*lstr = "layer 2";
+	else if (lattr & NPF_RULE_LAYER_3)
+		*lstr = "layer 3";
+	else
+		yyerror("%s: layer not yet supported", func);
+}
+
+static nl_rule_t *
+set_defgroup(nl_rule_t *rl, nl_rule_t *def_group, int attr)
+{
+	if (def_group) {
+		const char *str;
+		npf_check_layer(&str, attr, __func__);
+		yyerror("multiple %s default groups are not valid", str);
+	}
+	if (rule_nesting_level) {
+		yyerror("default group can only be at the top level");
+	}
+
+	return rl;
+}
+
 /*
  * npfctl_build_group: create a group, update the current group pointer
  * and increase the nesting level.
@@ -657,13 +744,18 @@ npfctl_build_group(const char *name, int attr, const char *ifname, bool def)
 	rl = npf_rule_create(name, attr | NPF_RULE_GROUP, ifname);
 	npf_rule_setprio(rl, NPF_PRI_LAST);
 	if (def) {
-		if (defgroup) {
-			yyerror("multiple default groups are not valid");
+		if (attr & NPF_RULE_LAYER_3) {
+			defgroup_l3 = set_defgroup(rl, defgroup_l3, attr);
 		}
-		if (rule_nesting_level) {
-			yyerror("default group can only be at the top level");
+		else if (attr & NPF_RULE_LAYER_2) {
+			defgroup_l2 = set_defgroup(rl, defgroup_l2, attr);
 		}
-		defgroup = rl;
+		else {
+			yyerror("%s: layer not supported", __func__);
+		}
+	} else {
+		if (attr & NPF_RULE_LAYER_2)
+			l2_group = true;
 	}
 
 	/* Set the current group and increase the nesting level. */
@@ -688,11 +780,33 @@ npfctl_build_group_end(void)
 	 * - If the parent is NULL, then it is a global rule.
 	 * - The default rule must be the last, so it is inserted later.
 	 */
-	if (group == defgroup) {
+	if (group == defgroup_l3 || group == defgroup_l2) {
 		assert(parent == NULL);
 		return;
 	}
 	npf_rule_insert(npf_conf, parent, group);
+}
+
+/*
+ * this function is here to ensure that layer 2 rules are
+ * rightfully embedded in layer2 groups
+ * and vice versa. layer3 group => layer 3 rules
+ * does not allow setting layer 2 rules in layer 3 groups
+ */
+static uint32_t
+npf_rule_layer_compat(nl_rule_t *cg, uint32_t layer)
+{
+	uint32_t attr = attr = npf_rule_getattr(cg);
+
+	if ((attr & layer) == 0) {
+		/* only set the layer strings when you need them */
+		const char *str;
+		npf_check_layer(&str, layer, __func__);
+
+		yyerror("cannot insert %s rules in this group"
+			" make sure to insert same layer rules in the same group ", str);
+	}
+	return layer;
 }
 
 /*
@@ -704,9 +818,22 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
     const npfvar_t *popts, const filt_opts_t *fopts,
     const char *pcap_filter, const char *rproc)
 {
-	nl_rule_t *rl;
+	nl_rule_t *rl, *cg;
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
+
+	/*
+	 * quickly check for group-rule layer compat
+	 * if the filter layer matches group layer,
+	 * set the layer bit in rule attribute for kernel
+	 */
+	if (npf_conf) {
+		cg = current_group[rule_nesting_level];
+		attr |= npf_rule_layer_compat(cg, fopts->layer);
+	}
+
+	if (attr & NPF_RULE_LAYER_2 && attr & (NPF_RULE_RETRST | NPF_RULE_RETICMP))
+		yyerror("return blocks not yet supported in layer 2");
 
 	rl = npf_rule_create(NULL, attr, ifname);
 	if (pcap_filter) {
@@ -728,7 +855,7 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 	}
 
 	if (npf_conf) {
-		nl_rule_t *cg = current_group[rule_nesting_level];
+		cg = current_group[rule_nesting_level];
 
 		if (rproc && !npf_rproc_exists_p(npf_conf, rproc)) {
 			yyerror("rule procedure '%s' is not defined", rproc);
@@ -934,14 +1061,16 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 	}
 
 	if (type & NPF_NATIN) {
-		memset(&imfopts, 0, sizeof(filt_opts_t));
-		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
+		memset(&imfopts, 0, sizeof(imfopts));
+		imfopts.layer = NPF_RULE_LAYER_3;
+		memcpy(&imfopts.filt.opt3.fo_to, ap2, sizeof(imfopts.filt.opt3.fo_to));
 		nt1 = npfctl_build_nat(NPF_NATIN, ifname,
 		    ap1, popts, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
-		memset(&imfopts, 0, sizeof(filt_opts_t));
-		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
+		memset(&imfopts, 0, sizeof(imfopts));
+		imfopts.layer = NPF_RULE_LAYER_3;
+		memcpy(&imfopts.filt.opt3.fo_from, ap1, sizeof(imfopts.filt.opt3.fo_from));
 		nt2 = npfctl_build_nat(NPF_NATOUT, ifname,
 		    ap2, popts, fopts, flags);
 	}
