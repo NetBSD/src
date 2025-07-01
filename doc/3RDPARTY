@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2116 2025/06/21 02:45:57 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.2117 2025/07/01 16:21:02 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -722,11 +722,11 @@ Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	3.7.7
-Current Vers:	3.8.0
+Current Vers:	3.8.1
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2024-10-17
+Date:		2025-07-01
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
