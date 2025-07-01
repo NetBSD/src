@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.16 2025/07/01 04:24:20 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.17 2025/07/01 05:03:18 rillig Exp $
 
 --[[
 
@@ -108,7 +108,14 @@ local function check_mk(mk_fname)
 
   for mk_lineno, mk_line in ipairs(mk_lines) do
 
-    mk_line:gsub("^#%s+expect%-not:%s*(.*)", function(text)
+    local function match(pattern, action)
+      local _, n = mk_line:gsub(pattern, action)
+      if n > 0 then
+        match = function() end
+      end
+    end
+
+    match("^#%s+expect%-not:%s*(.*)", function(text)
       for exp_lineno, exp_line in ipairs(exp_lines) do
         if exp_line.text:find(text, 1, true) then
           print_error("error: %s:%d: %s:%d must not contain '%s'",
@@ -117,7 +124,7 @@ local function check_mk(mk_fname)
       end
     end)
 
-    mk_line:gsub("^#%s+expect%-not%-matches:%s*(.*)", function(pattern)
+    match("^#%s+expect%-not%-matches:%s*(.*)", function(pattern)
       for exp_lineno, exp_line in ipairs(exp_lines) do
         if exp_line.text:find(pattern) then
           print_error("error: %s:%d: %s:%d must not match '%s'",
@@ -126,7 +133,7 @@ local function check_mk(mk_fname)
       end
     end)
 
-    mk_line:gsub("^#%s+expect:%s*(.*)", function(text)
+    match("^#%s+expect:%s*(.*)", function(text)
       local i = exp_it
       while i <= #exp_lines and text ~= exp_lines[i].text do
         i = i + 1
@@ -141,11 +148,11 @@ local function check_mk(mk_fname)
       end
     end)
 
-    if mk_line:match("^#%s*expect%-reset$") then
+    match("^#%s+expect%-reset$", function()
       exp_it = 1
-    end
+    end)
 
-    mk_line:gsub("^#%s+expect([+%-]%d+):%s*(.*)", function(offset, text)
+    match("^#%s+expect([+%-]%d+):%s*(.*)", function(offset, text)
       local msg_lineno = mk_lineno + tonumber(offset)
 
       local i = exp_it
@@ -166,6 +173,12 @@ local function check_mk(mk_fname)
           mk_fname, mk_lineno, exp_fname, exp_it, text)
       end
     end)
+
+    match("^#%s+expect[+%-:]", function()
+      print_error("error: %s:%d: invalid \"expect\" line: %s",
+        mk_fname, mk_lineno, mk_line)
+    end)
+
   end
   detect_missing_expect_lines(exp_fname, exp_lines, exp_it, #exp_lines)
 end
