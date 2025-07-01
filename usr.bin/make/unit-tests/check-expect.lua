@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.15 2025/06/30 21:44:39 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.16 2025/07/01 04:24:20 rillig Exp $
 
 --[[
 
@@ -108,25 +108,25 @@ local function check_mk(mk_fname)
 
   for mk_lineno, mk_line in ipairs(mk_lines) do
 
-    for text in mk_line:gmatch("#%s*expect%-not:%s*(.*)") do
+    mk_line:gsub("^#%s+expect%-not:%s*(.*)", function(text)
       for exp_lineno, exp_line in ipairs(exp_lines) do
         if exp_line.text:find(text, 1, true) then
           print_error("error: %s:%d: %s:%d must not contain '%s'",
             mk_fname, mk_lineno, exp_fname, exp_lineno, text)
         end
       end
-    end
+    end)
 
-    for pattern in mk_line:gmatch("#%s*expect%-not%-matches:%s*(.*)") do
+    mk_line:gsub("^#%s+expect%-not%-matches:%s*(.*)", function(pattern)
       for exp_lineno, exp_line in ipairs(exp_lines) do
         if exp_line.text:find(pattern) then
           print_error("error: %s:%d: %s:%d must not match '%s'",
             mk_fname, mk_lineno, exp_fname, exp_lineno, pattern)
         end
       end
-    end
+    end)
 
-    for text in mk_line:gmatch("#%s*expect:%s*(.*)") do
+    mk_line:gsub("^#%s+expect:%s*(.*)", function(text)
       local i = exp_it
       while i <= #exp_lines and text ~= exp_lines[i].text do
         i = i + 1
@@ -139,13 +139,13 @@ local function check_mk(mk_fname)
         print_error("error: %s:%d: '%s:%d+' must contain '%s'",
           mk_fname, mk_lineno, exp_fname, exp_it, text)
       end
-    end
+    end)
 
     if mk_line:match("^#%s*expect%-reset$") then
       exp_it = 1
     end
 
-    for offset, text in mk_line:gmatch("#%s*expect([+%-]%d+):%s*(.*)") do
+    mk_line:gsub("^#%s+expect([+%-]%d+):%s*(.*)", function(offset, text)
       local msg_lineno = mk_lineno + tonumber(offset)
 
       local i = exp_it
@@ -165,7 +165,7 @@ local function check_mk(mk_fname)
         print_error("error: %s:%d: %s:%d+ must contain '%s'",
           mk_fname, mk_lineno, exp_fname, exp_it, text)
       end
-    end
+    end)
   end
   detect_missing_expect_lines(exp_fname, exp_lines, exp_it, #exp_lines)
 end

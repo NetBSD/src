@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.31 2025/06/28 22:39:28 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.32 2025/07/01 04:24:20 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -231,7 +231,8 @@ INDIRECT=	${DIRECT}
 # is processed.
 .for var in value
 .  if 0
-.endfor				# expect+0: 1 open conditional
+.endfor
+# expect-1: 1 open conditional
 
 # If there are no iteration values, the loop body is not processed, and the
 # check for mismatched conditionals is not performed.
@@ -247,8 +248,10 @@ INDIRECT=	${DIRECT}
 .if 0
 .  for var in value		# does not need a corresponding .endfor
 .endif
-.endfor				# expect+0: for-less endfor
-.endif				# expect+0: if-less endif
+# expect+1: for-less endfor
+.endfor
+# expect+1: if-less endif
+.endif
 
 
 # When a .for without the corresponding .endfor occurs in an active branch of
@@ -256,7 +259,8 @@ INDIRECT=	${DIRECT}
 # without looking at any other directives.
 .if 1
 .  for var in value
-.    endif			# expect+0: if-less endif
+# expect+1: if-less endif
+.    endif
 .  endfor			# no 'for-less endfor'
 .endif				# no 'if-less endif'
 
