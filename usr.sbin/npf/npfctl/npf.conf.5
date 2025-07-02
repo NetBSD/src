@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.97 2025/07/02 13:35:43 joe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.98 2025/07/02 18:52:35 gutteridge Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -315,8 +315,11 @@ before further processing.
 .Pp
 NPF allows the filtering of frames at the data link layer.
 NPF also requires that the inspection rules are defined within groups.
-Groups containing rules to filter frames should be marked with a "layer-2" label.
-if layer 2 groups are defined in your NPF configuration, then layer 2
+Groups containing rules to filter frames should be marked with a
+.Cm layer-2
+label.
+If layer 2 groups are defined in your NPF configuration, then a
+.Cm layer-2
 .Dv default
 group becomes mandatory.
 .Pp
@@ -330,13 +333,16 @@ group default layer-2 {
 }
 .Ed
 .Pp
-rules for filtering at data link layer is configured based on
-the interface name, direction, source and destination MAC addresses and EtherType.
-rules that are defined for link layer should pass "ether" keyword after
-the pass or block instruction.
-ethertype is passed on the rule by preceeding the four hexadecimal constant ether type with "Ex".
-when a frame matches a rule with the final keyword, the rule is considered
-the last matching rule.
+Rules for filtering at the data link layer are configured based on
+the interface name, direction, source and destination MAC addresses, and EtherType.
+Rules that are defined for the link layer should pass the
+.Cm ether
+keyword after the pass or block instruction.
+EtherType is passed on the rule by preceeding the four digit hexadecimal constant
+EtherType with "Ex".
+When a frame matches a rule with the
+.Cm final
+keyword, the rule is considered the last matching rule.
 .Pp
 A
 .Dq fully-featured
@@ -356,9 +362,9 @@ Alternatively, layer 2 rules also support variables.
 .Pp
 .Dl block ether in final from $source_mac to $dest_mac type $ether_type
 .Pp
-filtering at this layer is stateless and has no access to upper layer protocols.
-block returns are not supported.
-Mac address tables are also not supported yet.
+Filtering at this layer is stateless and has no access to upper layer protocols.
+Block returns are not supported.
+MAC address tables are also not supported yet.
 .Ss User/group ID filtering
 .Pp
 NPF allows filtering by user or group identity.
