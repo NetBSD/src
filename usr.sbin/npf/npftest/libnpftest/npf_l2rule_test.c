@@ -15,36 +15,36 @@
 #define	RESULT_BLOCK	ENETUNREACH
 
 static const struct test_case {
-	const char *	src;
-	const char *	dst;
-	uint16_t		etype;
-	const char *	ifname;
-	int		di;
-	int		ret;
+	const char *src;
+	const char *dst;
+	uint16_t    etype;
+	const char *ifname;
+	int	    di;
+	int	    ret;
 } test_cases[] = {
 	{
 		/* pass ether in final from $mac1 to $mac2 type $E_IPv6 */
 		.src = "00:00:5E:00:53:00",	.dst = "00:00:5E:00:53:01",
-		.ifname = IFNAME_INT,		.etype = htons(ETHERTYPE_IPV6),
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IPV6,
 		.di = PFIL_IN,			.ret = RESULT_PASS
 	},
 	{
 		/* block ether in final from $mac2 */
 		.src = "00:00:5E:00:53:01",	.dst = "00:00:5E:00:53:02",
-		.ifname = IFNAME_INT,		.etype = htons(ETHERTYPE_IP),
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
 		.di = PFIL_IN,			.ret = RESULT_BLOCK
 	},
 
 		/* pass ether out final to $mac3 $Apple talk */
 	{
 		.src = "00:00:5E:00:53:00",	.dst = "00:00:5E:00:53:02",
-		.ifname = IFNAME_INT,		.etype = htons(ETHERTYPE_ATALK),
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_ATALK,
 		.di = PFIL_OUT,			.ret = RESULT_PASS
 	},
 	{
 		/* goto default: block all (since direction is not matching ) */
 		.src = "00:00:5E:00:53:00",	.dst = "00:00:5E:00:53:02",
-		.ifname = IFNAME_INT,		.etype = htons(ETHERTYPE_IP),
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
 		.di = PFIL_IN,			.ret = RESULT_BLOCK
 	},
 };
@@ -59,7 +59,7 @@ run_raw_testcase(unsigned i)
 	npf_rule_t *rl;
 	int slock, error;
 
-	m = mbuf_get_frame(t->src, t->dst, t->etype);
+	m = mbuf_get_frame(t->src, t->dst, htons(t->etype));
 	npc = get_cached_pkt(m, t->ifname, NPF_RULE_LAYER_2);
 
 	slock = npf_config_read_enter(npf);
@@ -86,7 +86,7 @@ run_handler_testcase(unsigned i)
 	struct mbuf *m;
 	int error;
 
-	m = mbuf_get_frame(t->src, t->dst, t->etype);
+	m = mbuf_get_frame(t->src, t->dst, htons(t->etype));
 	error = npfk_layer2_handler(npf, &m, ifp, t->di);
 	if (m) {
 		m_freem(m);
