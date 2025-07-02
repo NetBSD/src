@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.660 2025/07/02 17:11:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.660 2025/07/02 17:11:56 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1203,23 +1203,8 @@ InitMaxJobs(void)
 	if (bogusJflag && !opts.compatMake) {
 		opts.compatMake = true;
 		Parse_Error(PARSE_WARNING,
-		    "internal option \"-J\" in \"%s\" "
-		    "refers to unopened file descriptors; "
-		    "falling back to compat mode.\n"
-		    "\t"
-		    "To run the target even in -n mode, "
-		    "add the .MAKE pseudo-source to the target.\n"
-		    "\t"
-		    "To run the target in default mode only, "
-		    "add a ${:D make} marker to a target's command. "
-		    "(This marker expression expands to an empty string.)\n"
-		    "\t"
-		    "To make the sub-make run in compat mode, add -B to "
-		    "its invocation.\n"
-		    "\t"
-		    "To make the sub-make independent from the parent make, "
-		    "unset the MAKEFLAGS environment variable in the "
-		    "target's commands.",
+		    "Invalid internal option \"-J\" in \"%s\"; "
+		    "see the manual page",
 		    curdir);
 		PrintStackTrace(true);
 		return;
