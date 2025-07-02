@@ -175,6 +175,7 @@ struct aioproc {
 	unsigned int jobs_count;	/* Count of the jobs */
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
+	kmutex_t aio_hash_mtx;		/* Protects the hash table */
 	struct aiost_list aiost_total;	/* Total list of servicing threads */
 	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
 	size_t aio_hash_size;		/* Total number of buckets */

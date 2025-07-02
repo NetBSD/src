@@ -1075,17 +1075,17 @@ aiocbp_lookup(struct aioproc *aioproc, struct aiocbp **aiocbpp, void *uptr)
 
 	//printf("searching element with key {%lx} and hash {%x}\n", (uintptr_t)uptr, hash);
 
-	mutex_enter(&aioproc->aio_mtx);
+	mutex_enter(&aioproc->aio_hash_mtx);
 	TAILQ_FOREACH(aiocbp, &aioproc->aio_hash[hash], list) {
 		if (aiocbp->uptr == uptr) {
 			//printf("element found {%lx} and the job {%lx} {%lx}\n", (uintptr_t)aiocbp, (uintptr_t)aiocbp->job, (uintptr_t)aiocbp->job->aiost);
 
 			*aiocbpp = aiocbp;
-			mutex_exit(&aioproc->aio_mtx);
+			mutex_exit(&aioproc->aio_hash_mtx);
 			return 0;
 		}
 	}
-	mutex_exit(&aioproc->aio_mtx);
+	mutex_exit(&aioproc->aio_hash_mtx);
 	
 	return ENOENT;
 }
@@ -1102,15 +1102,15 @@ aiocbp_remove(struct aioproc *aioproc, void *uptr)
 	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
 
 	struct aiocbp *tmp;
-	mutex_enter(&aioproc->aio_mtx);
+	mutex_enter(&aioproc->aio_hash_mtx);
 	TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[hash], list, tmp) {
 		if (aiocbp->uptr == uptr) {
 			TAILQ_REMOVE(&aioproc->aio_hash[hash], aiocbp, list);
-			mutex_exit(&aioproc->aio_mtx);
+			mutex_exit(&aioproc->aio_hash_mtx);
 			return 0;
 		}
 	}
-	mutex_exit(&aioproc->aio_mtx);
+	mutex_exit(&aioproc->aio_hash_mtx);
 	
 	return ENOENT;
 }
@@ -1128,11 +1128,11 @@ aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp)
 	uptr = aiocbp->uptr;
 	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
 	
-	mutex_enter(&aioproc->aio_mtx);
+	mutex_enter(&aioproc->aio_hash_mtx);
 	TAILQ_FOREACH(found, &aioproc->aio_hash[hash], list) {
 		if (found->uptr == uptr) {
 			found->job = aiocbp->job;
-			mutex_exit(&aioproc->aio_mtx);
+			mutex_exit(&aioproc->aio_hash_mtx);
 			return EEXIST;
 		}
 	}
@@ -1140,7 +1140,7 @@ aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp)
 	//printf("appending element with key {%x} onto hash {%lx} aiocbp {%lx}\n", hash, (uintptr_t)uptr, (uintptr_t)aiocbp);
 
 	TAILQ_INSERT_HEAD(&aioproc->aio_hash[hash], aiocbp, list);
-	mutex_exit(&aioproc->aio_mtx);
+	mutex_exit(&aioproc->aio_hash_mtx);
 	
 	return 0;
 }
@@ -1161,6 +1161,8 @@ aiocbp_init(struct aioproc *aioproc, u_int hashsize)
 	aioproc->aio_hash_mask = hashsize - 1;
 	aioproc->aio_hash_size = hashsize;
 
+	mutex_init(&aioproc->aio_hash_mtx, MUTEX_DEFAULT, IPL_NONE);
+
 	for (size_t i = 0; i < hashsize; i++) {
 		TAILQ_INIT(&aioproc->aio_hash[i]);
 	}
@@ -1180,7 +1182,7 @@ aiocbp_destroy(struct aioproc *aioproc)
 
 	struct aiocbp *aiocbp;
 
-	mutex_enter(&aioproc->aio_mtx);
+	mutex_enter(&aioproc->aio_hash_mtx);
 	for (size_t i = 0; i < aioproc->aio_hash_size; i++) {
 		struct aiocbp *tmp;
 		TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[i], list, tmp) {
@@ -1194,5 +1196,5 @@ aiocbp_destroy(struct aioproc *aioproc)
 	aioproc->aio_hash = NULL;
 	aioproc->aio_hash_mask = 0;
 	aioproc->aio_hash_size = 0;
-	mutex_exit(&aioproc->aio_mtx);
+	mutex_exit(&aioproc->aio_hash_mtx);
 }
