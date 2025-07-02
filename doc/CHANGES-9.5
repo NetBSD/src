@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.67 2025/06/27 12:30:56 jdc Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.68 2025/07/02 08:21:13 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -914,3 +914,8 @@ external/gpl3/gcc/dist/gcc/config/arm/t-arm	(apply patch)
 	with source code timestamps).
 	[mrg, #1961]
 
+external/gpl3/gdb/dist/sim/ppc/ld-insn.c (apply patch)
+external/gpl3/gdb/dist/sim/ppc/ld-insn.h (apply patch)
+
+	build: fix -fno-common build breakage for powerpc gdb.
+	[mrg, ticket #1962]
