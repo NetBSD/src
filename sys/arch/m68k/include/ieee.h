@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.17 2024/01/22 14:37:25 kre Exp $	*/
+/*	$NetBSD: ieee.h,v 1.18 2025/07/02 14:41:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,14 +63,14 @@
 } while(/*CONSTCOND*/0)
 
 struct ieee_ext {
-	u_int	ext_sign:1;
-	u_int	ext_exp:EXT_EXPBITS;
-	u_int	ext_zero:16;
+	uint32_t	ext_sign:1;
+	uint32_t	ext_exp:EXT_EXPBITS;
+	uint32_t	ext_zero:16;
 #if 0
-	u_int	ext_int:1;
+	uint32_t	ext_int:1;
 #endif
-	u_int	ext_frach;
-	u_int	ext_fracl;
+	uint32_t	ext_frach;
+	uint32_t	ext_fracl;
 };
 
 /*
