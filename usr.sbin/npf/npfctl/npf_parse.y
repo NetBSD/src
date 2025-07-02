@@ -123,6 +123,7 @@ yyerror(const char *fmt, ...)
 %token			FLAGS
 %token			FROM
 %token			GROUP
+%token			GT
 %token			HASH
 %token			ICMPTYPE
 %token			ID
@@ -134,8 +135,10 @@ yyerror(const char *fmt, ...)
 %token			INVALID
 %token			IPHASH
 %token			IPSET
+%token			IRG
 %token			LPM
 %token			L2
+%token			LT
 %token			MAP
 %token			NEWLINE
 %token			NO_PORTS
@@ -172,6 +175,7 @@ yyerror(const char *fmt, ...)
 %token			TREE
 %token			TYPE
 %token			USER
+%token			XRG
 %token	<num>		ICMP
 %token	<num>		ICMP6
 
@@ -204,8 +208,8 @@ yyerror(const char *fmt, ...)
 %type	<var>		element list_elems list_trail list value filt_addr_list
 %type	<var>		opt_proto proto proto_elems
 %type	<addrport>	mapseg
-%type	<uid>		uids uid_item uid_list user_id
-%type	<gid>		gids gid_item gid_list group_id
+%type	<uid>		uids uid_item user_id
+%type	<gid>		gids gid_item group_id
 %type	<filtopts>	filt_opts all_or_filt_opts l2_filt_opts l2_all_of_filt_opts
 %type	<optproto>	rawproto
 %type	<rulegroup>	group_opts
