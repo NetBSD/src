@@ -136,6 +136,7 @@ struct aiost {
 	struct aiosp_ops **ops;		/* Array of ops */
 	vaddr_t kbuf;			/* Shared memory buffer */
 	int state;			/* The state of the thread */
+	bool freelist;			/* Whether or not aiost is on freelist */
 };
 
 /* Structure for AIO servicing pool */

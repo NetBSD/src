@@ -156,10 +156,7 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
 int
 aiosp_distribute_jobs(struct aiosp *sp)
 {
-	//struct proc *p = curlwp->l_proc;
-	struct aiost **aiost_list;
 	struct aio_job *job;
-	int total_dispensed;
 	int error = 0;
 
 	/*
@@ -167,6 +164,12 @@ aiosp_distribute_jobs(struct aiosp *sp)
 	 * service threads. If it does then that means we need to create new
 	 * threads.
 	 */
+	mutex_enter(&sp->mtx);
+	if (!sp->jobs_pending) {
+		mutex_exit(&sp->mtx);
+		return 0;
+	}
+
 	if (sp->jobs_pending > sp->nthreads_free) {
 		int nthreads_new = sp->jobs_pending - sp->nthreads_free;
 
@@ -181,21 +184,12 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		}
 	}
 
-	if (!sp->jobs_pending) {
-		return 0;
-	}
-
-	total_dispensed = 0;
-	aiost_list = kmem_zalloc(sizeof(*aiost_list) *
-		sp->jobs_pending, KM_SLEEP);
-
 	/*
 	 * Loop over all pending jobs and assign a thread from the freelist.
 	 * Move from freelist to active. Configure service thread to work with
 	 * respect to the job. Also signal the CV outside of sp->mtx to avoid
 	 * any shenanigans.
 	 */
-	mutex_enter(&sp->mtx);
 	struct aio_job *tmp;
 	TAILQ_FOREACH_SAFE(job, &sp->jobs, list, tmp) {
 		struct aiost *aiost = TAILQ_LAST(&sp->freelist, aiost_list);
@@ -207,8 +201,6 @@ aiosp_distribute_jobs(struct aiosp *sp)
 
 		error = aiost_configure(aiost, job, &aiost->kbuf);
 		if (error) {
-			kmem_free(aiost_list + total_dispensed,
-				sizeof(*aiost_list) * sp->jobs_pending);
 			mutex_exit(&aiost->mtx);
 			break;
 		}
@@ -221,29 +213,18 @@ aiosp_distribute_jobs(struct aiosp *sp)
 
 		TAILQ_REMOVE(&sp->jobs, job, list);
 
-		aiost->job = job;
-		//printf("assigning job {%lx} to aiost {%lx}\n", (uintptr_t)job, (uintptr_t)aiost);
 		job->aiost = aiost;
+		aiost->job = job;
+		aiost->freelist = false;
+		aiost->state = AIOST_STATE_OPERATION;
 
-		aiost_list[total_dispensed++] = aiost;
 		sp->jobs_pending--;
 
 		mutex_exit(&aiost->mtx);
-	}
-
-	for (int i = 0; i < total_dispensed; i++) {
-		struct aiost *aiost = aiost_list[i];
-		mutex_enter(&aiost->mtx);
-		aiost->state = AIOST_STATE_OPERATION;
 		cv_signal(&aiost->service_cv);
-		mutex_exit(&aiost->mtx);
 	}
 
 	mutex_exit(&sp->mtx);
-
-	if (total_dispensed) {
-		kmem_free(aiost_list, sizeof(*aiost_list) * total_dispensed);
-	}
 
 	return error;
 }
@@ -317,18 +298,11 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 
 		job = aiocbp->job;
 		struct aiost *aiost = aiocbp->job->aiost;
-		if (aiost == NULL) {
-			if (job->completed) {
-				ops->completed++;
-			}
-			continue;
-		}
+		KASSERT(aiost);
 
 		mutex_enter(&aiost->mtx);
 		if (job->completed) {
 			ops->completed++;
-			mutex_exit(&aiost->mtx);
-			continue;
 		}
 
 		if (powerof2(aiost->ops_total + 1)) {
@@ -340,7 +314,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			struct aiosp_ops **new_ops = kmem_zalloc(new_size * 
 				sizeof(*new_ops), KM_SLEEP);
 
-			if (aiost->ops && old_size > 0) {
+			if (aiost->ops && old_size) {
 				memcpy(new_ops, aiost->ops, 
 					aiost->ops_total * sizeof(*aiost->ops));
 				kmem_free(aiost->ops, old_size *
@@ -351,7 +325,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 
 		aiost->ops[aiost->ops_total] = ops;
-		aiost->ops_total += 1;
+		aiost->ops_total++;
 		mutex_exit(&aiost->mtx);
 		ops->total++;
 	}
@@ -578,24 +552,20 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	mutex_init(&st->mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&st->service_cv, "aioservice");
 
-	mutex_enter(&sp->mtx);
-
 	int error = kthread_create(PRI_KERNEL, 0, NULL, aiost_entry,
 		st, &st->lwp, "aio_%d_%ld", p->p_pid, sp->nthreads_total);
 	if (error) {
-		mutex_exit(&sp->mtx);
 		return error;
 	}
 
 	st->job = NULL; 
 	st->state = AIOST_STATE_NONE;
 	st->aiosp = sp;
+	st->freelist = true;
 
 	TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 	sp->nthreads_free++;
 	sp->nthreads_total++;
-
-	mutex_exit(&sp->mtx);
 
 	if (ret) {
 		*ret = st;
@@ -640,17 +610,29 @@ aiost_entry(void *arg)
 
 		if (st->state & AIOST_STATE_TERMINATE) {
 			mutex_enter(&sp->mtx);
-			TAILQ_REMOVE(&sp->freelist, st, list);
-			sp->nthreads_free--;
+
+			if (st->freelist) {
+				TAILQ_REMOVE(&sp->freelist, st, list);
+				sp->nthreads_free--;
+			} else {
+				TAILQ_REMOVE(&sp->active, st, list);
+				sp->nthreads_active--;
+			}
+
+			sp->nthreads_total--;
+
 			mutex_exit(&sp->mtx);
 			mutex_exit(&st->mtx);
 			kthread_exit(0);
-		} else if ((st->state & AIOST_STATE_OPERATION) == 0) {
+		}
+
+		if ((st->state & AIOST_STATE_OPERATION) == 0) {
 			panic("aio_process: invalid aiost state {%x}\n",
 				st->state);
 		}
 
 		job = st->job;
+		KASSERT(job != NULL);
 		if (job->aio_op & (AIO_READ | AIO_WRITE)) {
 			error = aiost_process_rw(st);
 		} else if (job->aio_op & AIO_SYNC) {
@@ -660,14 +642,12 @@ aiost_entry(void *arg)
 		}
 
 		job->completed = true;
-		job->aiost = NULL;
 		st->state = AIOST_STATE_NONE;
 		st->job = NULL;
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 
-		for (int i = 0; i < st->ops_total; i++) {
-			struct aiosp_ops *ops = st->ops[i];
+		for (int i = 0; i < st->ops_total; i++) { struct aiosp_ops *ops = st->ops[i];
 			if (ops == NULL) {
 				continue;
 			}
@@ -693,11 +673,10 @@ aiost_entry(void *arg)
 		 */
 		mutex_enter(&sp->mtx);
 
+		st->freelist = true;
+
 		TAILQ_REMOVE(&sp->active, st, list);
 		sp->nthreads_active--;
-
-		//printf("are we appending? {%lx}!\n", (uintptr_t)st);
-		// CLEAR ITSELF OUT AND/OR NULLIFY JOB->AIOST
 
 		TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 		sp->nthreads_free++;
@@ -744,12 +723,14 @@ aiost_process_rw(struct aiost *aiost)
 
 	if (aiocbp->aio_nbytes > SSIZE_MAX) {
 		error = SET_ERROR(EINVAL);
+		printf("WHAT? %ld\n", aiocbp->aio_nbytes);
 		goto done;
 	}
 	
 	fp = fd_getfile(fd);
 	if (fp == NULL) {
 		error = SET_ERROR(EBADF);
+		//printf("is this legit? %d %d %ld\n", fd, error, aiocbp->aio_nbytes);
 		goto done;
 	}
 
@@ -799,6 +780,8 @@ aiost_process_rw(struct aiost *aiost)
 done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
+
+	printf("%d ", error);
 
 	return 0;
 }
@@ -862,17 +845,25 @@ static int
 aiost_terminate(struct aiost *st)
 {
 	int error = 0;
+	size_t ops_total;
+	struct aiosp_ops **ops;
+	size_t total;
 
 	mutex_enter(&st->mtx);
 
-	size_t total = aiosp_ops_expected(st->ops_total);
-	kmem_free(st->ops, total * sizeof(*st->ops));
+	ops_total = st->ops_total;
+	ops = st->ops;
 
 	error = aiost_teardown(st);
 	if (error) {
 		return error;
 	}
 	st->state = AIOST_STATE_TERMINATE;
+
+	if (ops && ops_total) {
+		total = aiosp_ops_expected(st->ops_total);
+		kmem_free(ops, total * sizeof(*ops));
+	}
 
 	mutex_exit(&st->mtx);
 
@@ -946,10 +937,8 @@ aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
 			upa, protections, 0);
 	}
 
-	job->aiost = aiost;
-
 	pmap_update(pmap_kernel());
-	*kbuf = kva;
+	*kbuf = kva + ((uintptr_t)aiocb->aio_buf & PAGE_MASK);
 
 	return 0;
 }
