@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_pci.c,v 1.5 2018/11/16 15:06:23 jmcneill Exp $	*/
+/*	$NetBSD: hdlg_pci.c,v 1.6 2025/07/03 19:09:48 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_pci.c,v 1.5 2018/11/16 15:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_pci.c,v 1.6 2025/07/03 19:09:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ hdlg_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 *
 	 *	XINT1	ACARD ATP875-A
 	 *
-	 *	XINT2	NEC echi/ochi
+	 *	XINT2	NEC ehci/ohci
 	 *
 	 *	XINT3	UART
 	 */
@@ -118,7 +118,7 @@ hdlg_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		}
 		goto no_mapping;
 
-	case 3:			/* echi/ochi */
+	case 3:			/* ehci/ohci */
 		switch (pa->pa_intrpin) {
 		case 1:	/* ohci */
 		case 2:	/* ohci */

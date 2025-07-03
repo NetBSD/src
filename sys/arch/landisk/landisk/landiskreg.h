@@ -1,4 +1,4 @@
-/*	$NetBSD: landiskreg.h,v 1.2 2012/01/21 19:44:30 nonaka Exp $	*/
+/*	$NetBSD: landiskreg.h,v 1.3 2025/07/03 19:09:49 andvar Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -49,8 +49,8 @@
 #define	INTEN_ALL_MASK		0x00
 #define	INTEN_PCI0		0x01	/* rtk/ehci */
 #define	INTEN_PCI1		0x02	/* acardide */
-#define	INTEN_PCI2		0x04	/* ochi0 */
-#define	INTEN_PCI3		0x08	/* ochi1 */
+#define	INTEN_PCI2		0x04	/* ohci0 */
+#define	INTEN_PCI3		0x08	/* ohci1 */
 #define	INTEN_ICONNECT		0x10	/* wdc1 at obio */
 #define	INTEN_CFIDE		0x20	/* wdc0 at obio */
 #define	INTEN_PWRSW		0x40	/* pwrsw at obio */
@@ -59,7 +59,7 @@
 #define	LANDISK_INTR_PCI0	5	/* rtk/ehci */
 #define	LANDISK_INTR_PCI1	6	/* acardide (LANDISK) */
 #define	LANDISK_INTR_PCI2	7	/* ohci0 */
-#define	LANDISK_INTR_PCI3	8	/* ochi1 */
+#define	LANDISK_INTR_PCI3	8	/* ohci1 */
 #define	LANDISK_INTR_ICONNECT	9	/* wdc1 (LAN-iCN2 iConnect) */
 #define	LANDISK_INTR_CFIDE	10	/* wdc0 (LAN-iCN2/USL-5P CF) */
 #define	LANDISK_INTR_PWRSW	11	/* pwrsw */
