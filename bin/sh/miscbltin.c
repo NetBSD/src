@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.56 2024/10/12 23:34:56 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.57 2025/07/03 03:54:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.56 2024/10/12 23:34:56 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.57 2025/07/03 03:54:40 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.56 2024/10/12 23:34:56 kre Exp $");
 #include <unistd.h>
 
 #include "shell.h"
+#include "syntax.h"
 #include "options.h"
 #include "var.h"
 #include "input.h"		/* for whichprompt */
@@ -262,6 +263,13 @@ readcmd(int argc, char **argv)
 		      "Usage: read [-r] [-d C] [-p prompt] var...");
 #else
 		      "Usage: read [-br] [-d C] [-n len] [-p prompt] var...");
+
+	while (*ap != NULL) {
+		if (!validname(*ap, '\0', NULL))
+			error("'%s': invalid variable name", *ap);
+		ap++;
+	}
+	ap = argptr;
 
 	(void)next_read_char(0, 0);	/* make sure the buffer is empty */
 #endif
@@ -478,7 +486,7 @@ umaskcmd(int argc, char **argv)
 			out1fmt("%.4o\n", mask);
 		}
 	} else {
-		if (isdigit((unsigned char)*ap)) {
+		if (is_digit(*ap)) {
 			int range = 0;
 
 			mask = 0;
