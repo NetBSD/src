@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.13 2024/06/15 05:02:24 kre Exp $	*/
+/*	$NetBSD: syntax.h,v 1.14 2025/07/03 11:28:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,8 @@
 #include <sys/cdefs.h>
 #include <ctype.h>
 #include <limits.h>
+
+#undef	CEOF			/* remove system defined version */
 
 /* Syntax classes */
 #define CWORD 0			/* character is nothing special */
