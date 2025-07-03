@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2117 2025/07/01 16:21:02 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2118 2025/07/03 06:18:52 simonb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -705,7 +705,7 @@ directory.
 
 Package:	less
 Version:	less-643
-Current Vers:	less-668
+Current Vers:	less-679
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
