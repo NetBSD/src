@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.225 2025/06/03 19:31:46 rjs Exp $
+#	$NetBSD: GENERIC64,v 1.226 2025/07/04 06:42:01 andvar Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -404,7 +404,7 @@ wskbd*		at ikbd? mux 1
 applepmgr* 	at fdt? pass 0
 
 # Random number generators and security devices
-amdccp* 	at fdt?			# AMD Cryptograhic Coprocessor RNG
+amdccp* 	at fdt?			# AMD Cryptographic Coprocessor RNG
 amdccp* 	at acpi?
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
