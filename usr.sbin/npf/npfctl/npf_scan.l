@@ -230,16 +230,6 @@ layer-2			return L2;
 			return IPV4ADDR;
 		}
 
-{HEXDIG}"."[0-9a-fA-F.]* {
-			yylval.str = estrndup(yytext, yyleng);
-			return MACADDR;
-		}
-
-{HEXDIG}"-"[0-9a-fA-F\-]* {
-			yylval.str = estrndup(yytext, yyleng);
-			return MACADDR;
-		}
-
 {NUMBER}	{
 			char *endp, *buf = estrndup(yytext, yyleng);
 			yylval.num = strtoul(buf, &endp, 10);
