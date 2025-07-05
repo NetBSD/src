@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.36 2025/07/05 13:10:55 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.37 2025/07/05 15:16:08 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <machine/autoconf.h>
+#include <powerpc/pic/picvar.h>
 
 #include "opt_ki2c.h"
 #include <macppc/dev/ki2cvar.h>
@@ -91,7 +92,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
-	int devs, devc;
+	int devs, devc, intrparent;;
 	char compat[256], num[8], descr[32];
 	prop_dictionary_t dev;
 	prop_data_t data;
@@ -124,7 +125,32 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal(" irq %d", intr[0]);
+	/*
+	 * on some G5 we have two openpics, one in mac-io, one in /u3
+	 * in order to get interrupts we need to know which one we're
+	 * connected to
+	 */
+	sc->sc_poll = 0;
+
+	if(OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
+		uint32_t preg[2];
+		struct pic_ops *pic;
+		
+		sc->sc_poll = 1;
+		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
+			/* now look for a pic with that base... */
+			printf("PIC base %08x\n", preg[0]);
+			pic = find_pic_by_cookie((void *)preg[0]);
+			if (pic != NULL) {
+				sc->sc_poll = 0;
+				intr[0] += pic->pic_intrbase;
+			}
+		}
+	}
+
+	if (sc->sc_poll) {
+		aprint_normal(" polling");
+	} else aprint_normal(" irq %d", intr[0]);
 
 	printf("\n");
 
@@ -232,11 +258,13 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_todev, device_xname(self));
 	mutex_init(&sc->sc_todevmtx, MUTEX_DEFAULT, IPL_NONE);
 
-	snprintf(intr_xname, sizeof(intr_xname), "%s intr", device_xname(self));
-	intr_establish_xname(intr[0], (intr[1] & 1) ? IST_LEVEL : IST_EDGE,
-	    IPL_BIO, ki2c_intr, sc, intr_xname);
+	if(sc->sc_poll == 0) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s intr", device_xname(self));
+		intr_establish_xname(intr[0], (intr[1] & 1) ? IST_LEVEL : IST_EDGE,
+		    IPL_BIO, ki2c_intr, sc, intr_xname);
 
-	ki2c_writereg(sc, IER, I2C_INT_DATA | I2C_INT_ADDR| I2C_INT_STOP);
+		ki2c_writereg(sc, IER, I2C_INT_DATA | I2C_INT_ADDR| I2C_INT_STOP);
+	}
 
 	/* fill in the i2c tag */
 	iic_tag_init(&sc->sc_i2c);
@@ -299,7 +327,6 @@ ki2c_intr(void *cookie)
 {
 	struct ki2c_softc *sc = cookie;
 	u_int isr, x;
-
 	isr = ki2c_readreg(sc, ISR);
 	if (isr & I2C_INT_ADDR) {
 #if 0
@@ -365,8 +392,9 @@ out:
 int
 ki2c_poll(struct ki2c_softc *sc, int timo)
 {
+	int bail = 0;
 	while (sc->sc_flags & I2C_BUSY) {
-		if (cold) {
+		if ((cold) || (bail > 10) || (sc->sc_poll)) {
 			if (ki2c_readreg(sc, ISR))
 				ki2c_intr(sc);
 			timo -= 10;
@@ -377,8 +405,9 @@ ki2c_poll(struct ki2c_softc *sc, int timo)
 			delay(10);
 		} else {
 			mutex_enter(&sc->sc_todevmtx);
-			cv_timedwait_sig(&sc->sc_todev, &sc->sc_todevmtx, hz);
+			cv_timedwait_sig(&sc->sc_todev, &sc->sc_todevmtx, hz/10);
 			mutex_exit(&sc->sc_todevmtx);
+			bail++;
 		}
 	}
 	return 0;

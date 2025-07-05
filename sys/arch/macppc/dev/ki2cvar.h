@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.6 2025/07/05 12:58:05 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.7 2025/07/05 15:16:08 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -97,6 +97,7 @@ struct ki2c_softc {
 	int sc_flags;
 	u_char *sc_data;
 	int sc_resid;
+	int sc_poll;
 };
 
 struct ki2c_confargs {
