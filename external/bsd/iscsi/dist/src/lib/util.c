@@ -892,7 +892,8 @@ iscsi_sock_connect(int sock, char *hostname, int port)
  */
 
 int 
-iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc)
+iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc,
+               int hdigest)
 {
 	struct iovec    singleton;
 	struct iovec   *iov;
@@ -1025,64 +1026,80 @@ iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc)
 	return n - padding_len;
 }
 
-/*
- * Temporary Hack:
- *
- * TCP's Nagle algorithm and delayed-ack lead to poor performance when we send
- * two small messages back to back (i.e., header+data). The TCP_NODELAY option
- * is supposed to turn off Nagle, but it doesn't seem to work on Linux 2.4.
- * Because of this, if our data payload is small, we'll combine the header and
- * data, else send as two separate messages.
- */
-
 int 
 iscsi_sock_send_header_and_data(int sock,
 				void *header, unsigned header_len,
-				const void *data, unsigned data_len, int iovc)
+				const void *data, unsigned data_len, int iovc,
+				int hdigest, int ddigest)
 {
-	struct iovec	iov[ISCSI_MAX_IOVECS];
+	struct iovec	iov[ISCSI_MAX_IOVECS+2];
+	const struct iovec *diov;
+	uint32_t	digest;
+	int		i;
+	size_t		total_len;
 
-	if (data_len && data_len <= ISCSI_SOCK_HACK_CROSSOVER) {
-		/* combine header and data into one iovec */
-		if (iovc >= ISCSI_MAX_IOVECS) {
-			iscsi_err(__FILE__, __LINE__,
-				"iscsi_sock_msg() failed\n");
-			return -1;
-		}
-		if (iovc == 0) {
-			iov[0].iov_base = header;
-			iov[0].iov_len = header_len;
+	/* combine header and data into one iovec */
+	if (iovc + 1 + (ddigest != 0) > ISCSI_MAX_IOVECS) {
+		iscsi_err(__FILE__, __LINE__,
+			"iscsi_sock_msg() failed, iovc %d >= %d\n",
+			iovc, ISCSI_MAX_IOVECS);
+		return -1;
+	}
+	if (iovc == 0) {
+		iscsi_trace(TRACE_NET_IOV,
+			"combining header %u and data %u into iovec\n",
+			header_len, data_len);
+		iov[0].iov_base = header;
+		iov[0].iov_len = header_len;
+		iovc = 1;
+		if (data_len > 0) {
 			iov[1].iov_base = __UNCONST((const char *)data);
 			iov[1].iov_len = data_len;
-			iovc = 2;
-		} else {
-			iov[0].iov_base = header;
-			iov[0].iov_len = header_len;
-			(void) memcpy(&iov[1], data, sizeof(struct iovec) *
-					iovc);
 			iovc += 1;
 		}
-		if ((unsigned)iscsi_sock_msg(sock, Transmit,
-			header_len + data_len, iov, iovc) !=
-				header_len + data_len) {
-			iscsi_err(__FILE__, __LINE__,
-					"iscsi_sock_msg() failed\n");
-			return -1;
-		}
 	} else {
-		if ((unsigned)iscsi_sock_msg(sock, Transmit, header_len,
-					header, 0) != header_len) {
-			iscsi_err(__FILE__, __LINE__,
+		iscsi_trace(TRACE_NET_IOV,
+			"prepending header %u to iovec %u\n",
+			header_len, iovc);
+		iov[0].iov_base = header;
+		iov[0].iov_len = header_len;
+
+		diov = (const struct iovec *)data;
+		total_len = 0;
+		for (i=0; i<iovc; ++i) {
+			iov[1+i] = diov[i];
+			total_len += diov[i].iov_len;
+			if (total_len > data_len) {
+				total_len -= diov[i].iov_len;
+				iov[1+i].iov_len = data_len - total_len;
+				iovc = 1+i;
+				break;
+			}
+		}
+		iovc += 1;
+	}
+	if (ddigest) {
+		iscsi_trace(TRACE_NET_IOV,
+			"appending data digest to iovec %u\n",
+			iovc);
+
+		digest = 0;
+		for (i=1; i<iovc; ++i) {
+			digest = gen_digest(iov[i].iov_base,
+				iov[i].iov_len, digest);
+		}
+		data_len += sizeof(digest);
+		iov[iovc].iov_base = &digest;
+		iov[iovc].iov_len = sizeof(digest);
+		iovc += 1;
+	}
+
+	if ((unsigned)iscsi_sock_msg(sock, Transmit,
+		header_len + data_len, iov, iovc, hdigest) !=
+			header_len + data_len) {
+		iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_msg() failed\n");
-			return -1;
-		}
-		if (data_len != 0 &&
-		    (unsigned)iscsi_sock_msg(sock, Transmit, data_len,
-		    	__UNCONST((const char *) data), iovc) != data_len) {
-			iscsi_err(__FILE__, __LINE__,
-					"iscsi_sock_msg() failed\n");
-			return -1;
-		}
+		return -1;
 	}
 	return header_len + data_len;
 }

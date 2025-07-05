@@ -18,6 +18,7 @@ device_shutdown
 driver_atoi
 find_target_iqn
 find_target_tsih
+gen_digest
 get_target_info
 hash_destroy
 hash_init
