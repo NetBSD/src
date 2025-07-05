@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.12 2021/02/01 01:52:04 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.13 2025/07/05 19:28:10 rjs Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -154,6 +154,10 @@ file	arch/arm/amlogic/meson_pwm.c		meson_pwm
 device	mesonthermal
 attach	mesonthermal at fdt with meson_thermal
 file	arch/arm/amlogic/meson_thermal.c	meson_thermal
+
+device	mesoniic: i2cbus, i2cexec
+attach	mesoniic at fdt with meson_i2c
+file	arch/arm/amlogic/meson_i2c.c		meson_i2c
 
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
