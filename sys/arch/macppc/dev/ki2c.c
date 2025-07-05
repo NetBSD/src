@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.35 2025/07/05 12:58:05 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.36 2025/07/05 13:10:55 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -236,7 +236,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	intr_establish_xname(intr[0], (intr[1] & 1) ? IST_LEVEL : IST_EDGE,
 	    IPL_BIO, ki2c_intr, sc, intr_xname);
 
-	ki2c_writereg(sc, IER, I2C_INT_ALL);
+	ki2c_writereg(sc, IER, I2C_INT_DATA | I2C_INT_ADDR| I2C_INT_STOP);
 
 	/* fill in the i2c tag */
 	iic_tag_init(&sc->sc_i2c);
@@ -329,7 +329,6 @@ ki2c_intr(void *cookie)
 
 			if (sc->sc_resid == 0) {	/* Completed */
 				ki2c_writereg(sc, CONTROL, 0);
-				cv_signal(&sc->sc_todev);
 				goto out;
 			}
 		} else {
@@ -344,7 +343,6 @@ ki2c_intr(void *cookie)
 			if (sc->sc_resid == 0) {
 				x = ki2c_readreg(sc, CONTROL) | I2C_CT_STOP;
 				ki2c_writereg(sc, CONTROL, x);
-				cv_signal(&sc->sc_todev);
 			} else {
 				ki2c_writereg(sc, DATA, *sc->sc_data++);
 				sc->sc_resid--;
