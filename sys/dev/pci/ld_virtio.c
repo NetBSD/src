@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.43 2025/04/13 02:34:03 rin Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.43 2025/04/13 02:34:03 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,8 +580,12 @@ done:
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 	}
 
-	if (r == 0)
-		sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+	if (r == 0) {
+		if (id_data[0] == '\0')
+			r = ENOENT;
+		else
+			sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+	}
 
 	kmem_free(id_data, id_len);
 
