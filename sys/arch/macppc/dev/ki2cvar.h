@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.5 2017/09/15 21:34:42 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.6 2025/07/05 12:58:05 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -77,6 +77,7 @@
 #define I2C_INT_ADDR	0x02	/* Address sent */
 #define I2C_INT_STOP	0x04	/* STOP condition sent */
 #define I2C_INT_START	0x08	/* START condition sent */
+#define I2C_INT_ALL	0x0f
 
 /* I2C flags */
 #define I2C_BUSY	0x01
@@ -90,8 +91,9 @@ struct ki2c_softc {
 	int sc_regstep;
 	
 	struct i2c_controller sc_i2c;
-	kmutex_t sc_buslock;
 
+	kcondvar_t sc_todev;
+	kmutex_t sc_todevmtx;
 	int sc_flags;
 	u_char *sc_data;
 	int sc_resid;
