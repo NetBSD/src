@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.43 2025/03/20 15:02:00 buhrow Exp $ */
+/* $NetBSD: proc.c,v 1.44 2025/07/05 06:41:09 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.43 2025/03/20 15:02:00 buhrow Exp $");
+__RCSID("$NetBSD: proc.c,v 1.44 2025/07/05 06:41:09 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -842,18 +842,18 @@ dojobs(Char **v, struct command *t)
     if (chkstop)
 	chkstop = 2;
     if (*++v) {
-	    if (eq(*v, STRml) && !v[1]) {
-		flag |= FANCY | JOBDIR;
-	    } else if (eq(*v, STRmZ)) {
-		if (v[1] && v[1][0]) {
-		    setproctitle("%s", short2str(v[1]));
-		} else {
-		    setproctitle(NULL);
-		}
-		return;
+	if (eq(*v, STRml) && !v[1]) {
+	    flag |= FANCY | JOBDIR;
+	} else if (eq(*v, STRmZ)) {
+	    if (v[1] && v[1][0]) {
+		setproctitle("%s", short2str(v[1]));
 	    } else {
-		stderror(ERR_JOBS);
+		setproctitle(NULL);
 	    }
+	    return;
+	} else {
+	    stderror(ERR_JOBS);
+	}
     }
     for (i = 1; i <= pmaxindex; i++)
 	for (pp = proclist.p_next; pp; pp = pp->p_next)
