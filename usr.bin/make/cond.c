@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.375 2025/06/29 11:27:21 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.376 2025/07/06 07:11:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -77,9 +77,8 @@
  *			'.if <cond>', '.elifnmake <cond>', '.else', '.endif'.
  *
  *	Cond_EvalCondition
- *			Evaluate the conditional, which is either the argument
- *			of one of the .if directives or the condition in a
- *			':?then:else' variable modifier.
+ *			Evaluate a condition, either from one of the .if
+ *			directives, or from a ':?then:else' modifier.
  *
  *	Cond_EndFile	At the end of reading a makefile, ensure that the
  *			conditional directives are well-balanced.
@@ -91,14 +90,14 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.375 2025/06/29 11:27:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.376 2025/07/06 07:11:31 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
  *	Or -> And ('||' And)*
  *	And -> Term ('&&' Term)*
  *	Term -> Function '(' Argument ')'
- *	Term -> Leaf Operator Leaf
+ *	Term -> Leaf ComparisonOp Leaf
  *	Term -> Leaf
  *	Term -> '(' Or ')'
  *	Term -> '!' Term
@@ -106,7 +105,7 @@ MAKE_RCSID("$NetBSD: cond.c,v 1.375 2025/06/29 11:27:21 rillig Exp $");
  *	Leaf -> Number
  *	Leaf -> VariableExpression
  *	Leaf -> BareWord
- *	Operator -> '==' | '!=' | '>' | '<' | '>=' | '<='
+ *	ComparisonOp -> '==' | '!=' | '>' | '<' | '>=' | '<='
  *
  * BareWord is an unquoted string literal, its evaluation depends on the kind
  * of '.if' directive.
@@ -156,12 +155,12 @@ typedef struct CondParser {
 	 * been an expression or a plain word.
 	 *
 	 * In conditional directives like '.if', the left-hand side must
-	 * either be an expression, a quoted string or a number.
+	 * either be a defined expression, a quoted string or a number.
 	 */
 	bool leftUnquotedOK;
 
 	const char *p;		/* The remaining condition to parse */
-	Token curr;		/* Single push-back token used in parsing */
+	Token curr;		/* The push-back token, or TOK_NONE */
 } CondParser;
 
 static CondResult CondParser_Or(CondParser *, bool);
@@ -309,7 +308,7 @@ FuncExists(const char *file)
 	return result;
 }
 
-/* See if the given node exists and is an actual target. */
+/* See if the given node is an actual target. */
 static bool
 FuncTarget(const char *node)
 {
@@ -317,10 +316,7 @@ FuncTarget(const char *node)
 	return gn != NULL && GNode_IsTarget(gn);
 }
 
-/*
- * See if the given node exists and is an actual target with commands
- * associated with it.
- */
+/* See if the given node is an actual target with commands. */
 static bool
 FuncCommands(const char *node)
 {
@@ -375,38 +371,37 @@ is_separator(char ch)
  *
  * Return whether to continue parsing the leaf.
  *
- * Example: .if x${CENTER}y == "${PREFIX}${SUFFIX}" || 0x${HEX}
+ * Examples: .if x${CENTER}y == "${PREFIX}${SUFFIX}" || 0x${HEX}
  */
 static bool
 CondParser_StringExpr(CondParser *par, const char *start,
 		      bool doEval, bool quoted,
-		      Buffer *buf, FStr *inout_str)
+		      Buffer *buf, FStr *out_str)
 {
 	VarEvalMode emode;
 	const char *p;
-	bool atStart;		/* true means an expression outside quotes */
+	bool outsideQuotes;
 
 	emode = doEval && quoted ? VARE_EVAL
 	    : doEval ? VARE_EVAL_DEFINED_LOUD
 	    : VARE_PARSE;
 
 	p = par->p;
-	atStart = p == start;
-	*inout_str = Var_Parse(&p, SCOPE_CMDLINE, emode);
-	/* TODO: handle errors */
-	if (inout_str->str == var_Error) {
-		FStr_Done(inout_str);
-		*inout_str = FStr_InitRefer(NULL);
+	outsideQuotes = p == start;
+	*out_str = Var_Parse(&p, SCOPE_CMDLINE, emode);
+	if (out_str->str == var_Error) {
+		FStr_Done(out_str);
+		*out_str = FStr_InitRefer(NULL);
 		return false;
 	}
 	par->p = p;
 
-	if (atStart && is_separator(par->p[0]))
+	if (outsideQuotes && is_separator(par->p[0]))
 		return false;
 
-	Buf_AddStr(buf, inout_str->str);
-	FStr_Done(inout_str);
-	*inout_str = FStr_InitRefer(NULL);	/* not finished yet */
+	Buf_AddStr(buf, out_str->str);
+	FStr_Done(out_str);
+	*out_str = FStr_InitRefer(NULL);	/* not finished yet */
 	return true;
 }
 
@@ -415,7 +410,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
  * on the left-hand and right-hand sides of comparisons.
  *
  * Return the string without any enclosing quotes, or NULL on error.
- * Sets out_quoted if the leaf was a quoted string literal.
+ * Set out_quoted if the leaf was a quoted string literal.
  */
 static FStr
 CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
@@ -826,7 +821,7 @@ CondParser_Skip(CondParser *par, Token t)
 /*
  * Term -> '(' Or ')'
  * Term -> '!' Term
- * Term -> Leaf Operator Leaf
+ * Term -> Leaf ComparisonOp Leaf
  * Term -> Leaf
  */
 static CondResult
