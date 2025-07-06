@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/11/16 09:25:51 nia Exp $
+#	$NetBSD: Makefile,v 1.14 2025/07/06 06:47:59 nat Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -69,6 +69,10 @@ PKGDIST=	${LIB}
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-string-plus-int
 COPTS.ftfuncs.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=overflow :}
+
+.if ${HAVE_GCC:U0} >= 12 && ${MACHINE_ARCH} == "m68k"
+COPTS.fontxlfd.c+=	-fno-stack-protector
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
