@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.377 2025/07/06 07:27:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.378 2025/07/06 07:56:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.377 2025/07/06 07:27:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.378 2025/07/06 07:56:16 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -437,12 +437,14 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 			if (par->p[0] != '\0') {
 				Buf_AddByte(&buf, par->p[0]);
 				par->p++;
-			}
+			} else
+				Parse_Error(PARSE_FATAL,
+				    "Unfinished backslash escape sequence");
 			continue;
 		case '"':
 			par->p++;
 			if (quoted)
-				goto return_buf;	/* skip the closing quote */
+				goto return_buf;
 			Buf_AddByte(&buf, '"');
 			continue;
 		case ')':	/* see is_separator */
@@ -473,6 +475,9 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 			continue;
 		}
 	}
+	if (quoted)
+		Parse_Error(PARSE_FATAL,
+		    "Unfinished string literal \"%s\"", start);
 return_buf:
 	str = FStr_InitOwn(buf.data);
 	buf.data = NULL;

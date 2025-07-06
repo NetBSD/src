@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.22 2025/07/06 07:35:38 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.23 2025/07/06 07:56:16 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.  These are also called bare words.
@@ -14,8 +14,8 @@
 # condition since comment parsing is done in an early phase and removes the
 # '#' and everything after it long before the condition parser gets to see it.
 #
-# XXX: The error message is missing for this malformed condition.
-# The right-hand side of the comparison is just a '"', before unescaping.
+#
+# expect+1: Unfinished string literal """
 .if ${:U} != "#hash"
 .  error
 .endif
@@ -38,8 +38,8 @@
 # comments are stripped in an earlier phase.  See "case '#'" in
 # CondParser_Token.
 #
-# XXX: Missing error message for the malformed condition. The right-hand
-# side before unescaping is double-quotes, backslash, backslash.
+#
+# expect+1: Unfinished string literal ""\\"
 .if ${:U\\} != "\\#hash"
 .  error
 .endif
@@ -268,9 +268,8 @@ COND=	VAR.$${MOD_COUNT::+=1}
 
 
 # A trailing backslash in a bare word does not escape anything.
+# expect+1: Unfinished backslash escape sequence
 .if ${${:U str == str\\}:?yes:no}
-# FIXME: Make a trailing backslash an error.
-# expect+1: Missing argument for ".error"
 .  error
 .else
 .  error
@@ -278,9 +277,16 @@ COND=	VAR.$${MOD_COUNT::+=1}
 
 # A trailing backslash in an unfinished string literal word does not escape
 # anything.
+# expect+2: Unfinished backslash escape sequence
+# expect+1: Unfinished string literal ""str\"
 .if ${${:U str == "str\\}:?yes:no}
-# FIXME: Make a trailing backslash an error.
-# expect+1: Missing argument for ".error"
+.  error
+.else
+.  error
+.endif
+
+# expect+1: Unfinished string literal ""str"
+.if ${${:U str == "str}:?yes:no}
 .  error
 .else
 .  error
