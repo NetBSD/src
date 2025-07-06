@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.21 2025/06/28 22:39:28 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.22 2025/07/06 07:35:38 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.  These are also called bare words.
@@ -265,3 +265,23 @@ COND=	VAR.$${MOD_COUNT::+=1}
 .  error
 .endif
 #.MAKEFLAGS: -d0
+
+
+# A trailing backslash in a bare word does not escape anything.
+.if ${${:U str == str\\}:?yes:no}
+# FIXME: Make a trailing backslash an error.
+# expect+1: Missing argument for ".error"
+.  error
+.else
+.  error
+.endif
+
+# A trailing backslash in an unfinished string literal word does not escape
+# anything.
+.if ${${:U str == "str\\}:?yes:no}
+# FIXME: Make a trailing backslash an error.
+# expect+1: Missing argument for ".error"
+.  error
+.else
+.  error
+.endif
