@@ -134,7 +134,7 @@ struct aiost {
 	struct lwp *lwp;		/* Servicing thread LWP */
 	size_t ops_total;		/* Total number of connected ops */
 	struct aiosp_ops **ops;		/* Array of ops */
-	vaddr_t kbuf;			/* Shared memory buffer */
+	size_t ops_size;		/* Size of ops array */
 	int state;			/* The state of the thread */
 	bool freelist;			/* Whether or not aiost is on freelist */
 };

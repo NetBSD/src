@@ -34,6 +34,7 @@
 __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp $");
 
 #include <sys/param.h>
+#include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/bitops.h>
 #include <sys/hash.h>
@@ -73,16 +74,13 @@ static void		aiosp_ops_fini(struct aiosp_ops *);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
-static int		aiost_configure(struct aiost *, struct aio_job *,
-				vaddr_t *);
-static int		aiost_teardown(struct aiost *);
 static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
 static void		aiost_sigsend(struct proc *, struct sigevent *);
 
 /*
- * Tear down all service pools
+ * Teardown all service pools
  */
 static int
 aio_fini(void)
@@ -199,12 +197,6 @@ aiosp_distribute_jobs(struct aiosp *sp)
 
 		mutex_enter(&aiost->mtx);
 
-		error = aiost_configure(aiost, job, &aiost->kbuf);
-		if (error) {
-			mutex_exit(&aiost->mtx);
-			break;
-		}
-
 		TAILQ_REMOVE(&sp->freelist, aiost, list);
 		sp->nthreads_free--;
 
@@ -305,13 +297,13 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 			ops->completed++;
 		}
 
-		if (powerof2(aiost->ops_total + 1)) {
-			size_t old_size = aiost->ops_total ? 
-				aiosp_ops_expected(aiost->ops_total) : 0;
-			size_t new_size = aiosp_ops_expected(aiost->ops_total +
-				1);
+		if (aiost->ops_total == aiost->ops_size) {
+			size_t old_size = aiost->ops_size;
+			size_t new_size = aiost->ops_size == 0 ? 1 :
+				(aiost->ops_size == 1 ? 2 :
+				(aiost->ops_size * aiost->ops_size));
 
-			struct aiosp_ops **new_ops = kmem_zalloc(new_size * 
+			struct aiosp_ops **new_ops = kmem_zalloc(new_size *
 				sizeof(*new_ops), KM_SLEEP);
 
 			if (aiost->ops && old_size) {
@@ -321,11 +313,13 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 					sizeof(*aiost->ops));
 			}
 
+			aiost->ops_size = new_size;
 			aiost->ops = new_ops;
 		}
 
 		aiost->ops[aiost->ops_total] = ops;
 		aiost->ops_total++;
+
 		mutex_exit(&aiost->mtx);
 		ops->total++;
 	}
@@ -552,12 +546,6 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	mutex_init(&st->mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&st->service_cv, "aioservice");
 
-	int error = kthread_create(PRI_KERNEL, 0, NULL, aiost_entry,
-		st, &st->lwp, "aio_%d_%ld", p->p_pid, sp->nthreads_total);
-	if (error) {
-		return error;
-	}
-
 	st->job = NULL; 
 	st->state = AIOST_STATE_NONE;
 	st->aiosp = sp;
@@ -566,6 +554,12 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	TAILQ_INSERT_TAIL(&sp->freelist, st, list);
 	sp->nthreads_free++;
 	sp->nthreads_total++;
+
+	int error = kthread_create(PRI_USER, 0, NULL, aiost_entry,
+		st, &st->lwp, "aio_%d_%ld", p->p_pid, sp->nthreads_total);
+	if (error) {
+		return error;
+	}
 
 	if (ret) {
 		*ret = st;
@@ -595,7 +589,7 @@ aiost_entry(void *arg)
 	 */
 	mutex_enter(&st->mtx);
 	for(;;) {
-		for (; st->state & AIOST_STATE_NONE;) {
+		for (; st->state == AIOST_STATE_NONE;) {
 			error = cv_wait_sig(&st->service_cv, &st->mtx);
 			if (error) {
 				/*
@@ -608,7 +602,7 @@ aiost_entry(void *arg)
 			}
 		}
 
-		if (st->state & AIOST_STATE_TERMINATE) {
+		if (st->state == AIOST_STATE_TERMINATE) {
 			mutex_enter(&sp->mtx);
 
 			if (st->freelist) {
@@ -626,7 +620,7 @@ aiost_entry(void *arg)
 			kthread_exit(0);
 		}
 
-		if ((st->state & AIOST_STATE_OPERATION) == 0) {
+		if (st->state != AIOST_STATE_OPERATION) {
 			panic("aio_process: invalid aiost state {%x}\n",
 				st->state);
 		}
@@ -647,7 +641,8 @@ aiost_entry(void *arg)
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 
-		for (int i = 0; i < st->ops_total; i++) { struct aiosp_ops *ops = st->ops[i];
+		for (int i = 0; i < st->ops_total; i++) {
+			struct aiosp_ops *ops = st->ops[i];
 			if (ops == NULL) {
 				continue;
 			}
@@ -723,23 +718,22 @@ aiost_process_rw(struct aiost *aiost)
 
 	if (aiocbp->aio_nbytes > SSIZE_MAX) {
 		error = SET_ERROR(EINVAL);
-		printf("WHAT? %ld\n", aiocbp->aio_nbytes);
 		goto done;
 	}
 	
-	fp = fd_getfile(fd);
+	fp = fd_getfile2(job->p, fd);
 	if (fp == NULL) {
 		error = SET_ERROR(EBADF);
-		//printf("is this legit? %d %d %ld\n", fd, error, aiocbp->aio_nbytes);
 		goto done;
 	}
 
-	aiov.iov_base = (void *)(uintptr_t)aiost->kbuf;
+	aiov.iov_base = aiocbp->aio_buf;
 	aiov.iov_len = aiocbp->aio_nbytes;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = aiocbp->aio_nbytes;
-	auio.uio_vmspace = NULL;
+	auio.uio_offset = aiocbp->aio_offset;
+	auio.uio_vmspace = job->p->p_vmspace;
 
 	if (job->aio_op & AIO_READ) {
 		/*
@@ -748,7 +742,7 @@ aiost_process_rw(struct aiost *aiost)
 		KASSERT((job->aio_op & AIO_WRITE) == 0);
 
 		if ((fp->f_flag & FREAD) == 0) {
-			fd_putfile(fd);
+			closef(fp);
 			error = SET_ERROR(EBADF);
 			goto done;
 		}
@@ -762,7 +756,7 @@ aiost_process_rw(struct aiost *aiost)
 		KASSERT(job->aio_op & AIO_WRITE);
 	
 		if ((fp->f_flag & FWRITE) == 0) {
-			fd_putfile(fd);
+			closef(fp);
 			error = SET_ERROR(EBADF);
 			goto done;
 		}
@@ -770,7 +764,7 @@ aiost_process_rw(struct aiost *aiost)
 		error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
 			&auio, fp->f_cred, FOF_UPDATE_OFFSET);
 	}
-	fd_putfile(fd);
+	closef(fp);
 	
 	/*
 	 * Store the result value
@@ -780,8 +774,6 @@ aiost_process_rw(struct aiost *aiost)
 done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
-
-	printf("%d ", error);
 
 	return 0;
 }
@@ -854,16 +846,12 @@ aiost_terminate(struct aiost *st)
 	ops_total = st->ops_total;
 	ops = st->ops;
 
-	error = aiost_teardown(st);
-	if (error) {
-		return error;
-	}
-	st->state = AIOST_STATE_TERMINATE;
-
 	if (ops && ops_total) {
 		total = aiosp_ops_expected(st->ops_total);
 		kmem_free(ops, total * sizeof(*ops));
 	}
+
+	st->state = AIOST_STATE_TERMINATE;
 
 	mutex_exit(&st->mtx);
 
@@ -875,107 +863,6 @@ aiost_terminate(struct aiost *st)
 	kmem_free(st, sizeof(*st));
 
 	return error;
-}
-
-/*
- * Configure a servicing thread to handle a specific job. Initialise operation
- * and establish the 'shared' memory region.
- */
-static int
-aiost_configure(struct aiost *aiost, struct aio_job *job, vaddr_t *kbuf)
-{
-	struct vmspace *vm = job->p->p_vmspace;
-	struct aiocb *aiocb = &job->aiocbp;
-	vaddr_t uva, kva;
-	paddr_t upa;
-	int error;
-	bool success;
-
-	vm_prot_t protections = VM_PROT_NONE;
-	if (job->aio_op == AIO_READ) {
-		protections = VM_PROT_READ;
-	} else if(job->aio_op == AIO_WRITE) {
-		protections = VM_PROT_READ | VM_PROT_WRITE;
-	} else {
-		return 0;
-	}
-
-	/*
-	 * To account for the case where the memory is anonymously mapped and
-	 * has not yet been fulfilled.
-	 */
-	error = uvm_vslock(vm, aiocb->aio_buf, aiocb->aio_nbytes,
-		protections);
-	if (error) {
-		return error;
-	}
-
-	kva = uvm_km_alloc(kernel_map, aiocb->aio_nbytes, 0,
-		 UVM_KMF_VAONLY);
-	if (!kva) {
-		uvm_vsunlock(vm, aiocb->aio_buf, aiocb->aio_nbytes);
-		return ENOMEM;
-	}
-
-	/*
-	 * Extract physical memory and map to the kernel
-	 */
-	for (uva = trunc_page((vaddr_t)aiocb->aio_buf);
-		uva < round_page((vaddr_t)aiocb->aio_buf + aiocb->aio_nbytes);
-		uva += PAGE_SIZE) {
-
-		success = pmap_extract(vm_map_pmap(&vm->vm_map), uva, &upa);
-		if (!success) {
-			uvm_km_free(kernel_map, kva, aiocb->aio_nbytes,
-				UVM_KMF_VAONLY);
-			uvm_vsunlock(vm, aiocb->aio_buf,
-				aiocb->aio_nbytes);
-			return EFAULT;
-		}
-
-		pmap_kenter_pa(kva + (uva - trunc_page((vaddr_t)aiocb->aio_buf)),
-			upa, protections, 0);
-	}
-
-	pmap_update(pmap_kernel());
-	*kbuf = kva + ((uintptr_t)aiocb->aio_buf & PAGE_MASK);
-
-	return 0;
-}
-
-/*
- * Free all memory and meta associated with aiost->kbuf
- */
-static int
-aiost_teardown(struct aiost *aiost)
-{
-	struct aio_job *job;
-	struct vmspace *vm;
-	struct aiocb *aiocb;
-	vaddr_t kva;
-
-	job = aiost->job;
-	if (job == NULL) {
-		return 0;
-	}
-
-	vm = job->p->p_vmspace;
-	aiocb = &job->aiocbp;
-
-	kva = (vaddr_t)aiost->kbuf;
-	if (!kva) {
-		return 0;
-	}
-
-	for (vaddr_t va = kva; va < kva + round_page(aiocb->aio_nbytes);
-		va += PAGE_SIZE) {
-		pmap_kremove(va, PAGE_SIZE);
-	}
-
-	uvm_km_free(kernel_map, kva, aiocb->aio_nbytes, UVM_KMF_VAONLY);
-	uvm_vsunlock(vm, aiocb->aio_buf, aiocb->aio_nbytes);
-
-	return 0;
 }
 
 /*

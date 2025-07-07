@@ -188,10 +188,12 @@ aio_procinit(struct proc *p)
 	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
 
 	/* Initialize the aiocbp hash map */
+#ifdef AIOSP
 	error = aiocbp_init(aio, 256);
 	if (error) {
 		return error;
 	}
+#endif
 
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -261,7 +263,9 @@ aio_exit(struct proc *p, void *cookie)
 	}
 
 	/* Destroy and free the entire AIO data structure */
+#ifdef AIOSP 
 	aiocbp_destroy(aio);
+#endif
 	cv_destroy(&aio->aio_worker_cv);
 	cv_destroy(&aio->done_cv);
 	mutex_destroy(&aio->aio_mtx);
@@ -637,11 +641,6 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	if (error) {
 		return SET_ERROR(error);
 	}
-
-	error = aiosp_dispense_bank();
-	if (error) {
-		return SET_ERROR(error);
-	}
 #else
 	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
 	aio->jobs_count++;
@@ -820,11 +819,12 @@ int
 sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap,
     register_t *retval)
 {
-	/* {
-		syscallarg(struct aiocb *) aiocbp;
-	} */
-
-	return aio_enqueue_job(AIO_READ, SCARG(uap, aiocbp), NULL);
+	int error;
+	error = aio_enqueue_job(AIO_READ, SCARG(uap, aiocbp), NULL);
+#ifdef AIOSP
+	error = aiosp_dispense_bank();
+#endif
+	return error;
 }
 
 int
@@ -976,11 +976,12 @@ int
 sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap,
     register_t *retval)
 {
-	/* {
-		syscallarg(struct aiocb *) aiocbp;
-	} */
-
-	return aio_enqueue_job(AIO_WRITE, SCARG(uap, aiocbp), NULL);
+	int error;
+	error = aio_enqueue_job(AIO_WRITE, SCARG(uap, aiocbp), NULL);
+#ifdef AIOSP
+	error = aiosp_dispense_bank();
+#endif
+	return error;
 }
 
 int
@@ -1069,6 +1070,13 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 		if (error)
 			errcnt++;
 	}
+
+#ifdef AIOSP
+	error = aiosp_dispense_bank();
+	if (error) {
+		return error;
+	}
+#endif
 
 	mutex_enter(&aio->aio_mtx);
 
