@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.37 2025/07/05 15:16:08 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.38 2025/07/07 01:14:51 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -97,6 +97,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dev;
 	prop_data_t data;
 	char name[32], intr_xname[32];
+	uint32_t picbase;
 
 	sc->sc_dev = self;
 	sc->sc_tag = ca->ca_tag;
@@ -133,14 +134,22 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_poll = 0;
 
 	if(OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
-		uint32_t preg[2];
+		uint32_t preg[8];
 		struct pic_ops *pic;
 		
 		sc->sc_poll = 1;
 		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
 			/* now look for a pic with that base... */
-			printf("PIC base %08x\n", preg[0]);
-			pic = find_pic_by_cookie((void *)preg[0]);
+			picbase = preg[0];
+			if ((picbase & 0x80000000) == 0) {
+				/* some OF versions have the openpic's reg as
+				 * an offset into mac-io just to be annoying */
+				int mio = OF_parent(intrparent);
+				if (OF_getprop(mio, "ranges", preg, 20) == 20)
+					picbase += preg[3];
+			}
+			DPRINTF("PIC base %08x\n", picbase);
+			pic = find_pic_by_cookie((void *)picbase);
 			if (pic != NULL) {
 				sc->sc_poll = 0;
 				intr[0] += pic->pic_intrbase;
