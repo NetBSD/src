@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.272 2025/05/04 08:37:09 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.273 2025/07/07 20:10:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.272 2025/05/04 08:37:09 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.273 2025/07/07 20:10:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -262,7 +262,7 @@ static const char *const msgs[] = {
 	"controlling expressions must have scalar type",		// 204
 	"switch expression must have integral type",			// 205
 	"enumeration value(s) not handled in switch",			// 206
-	"loop not entered at top",					// 207
+	"",			/* no longer used */			// 207
 	"break outside loop or switch",					// 208
 	"continue outside loop",					// 209
 	"enum type mismatch between '%s' and '%s' in initialization",	// 210
