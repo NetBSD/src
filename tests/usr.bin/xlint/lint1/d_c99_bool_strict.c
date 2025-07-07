@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.55 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.56 2025/07/07 19:57:17 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -450,7 +450,6 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 	} while (__lint_true);
 
 	// A do-once "loop", often used in statement macros.
-	/* expect+1: warning: loop not entered at top [207] */
 	do {
 	} while (__lint_false);
 
@@ -464,7 +463,6 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 	// Clang preprocessor does not mark each token as coming from a system
 	// header or from user code, this idiom can only be allowed everywhere
 	// or nowhere.
-	/* expect+1: warning: loop not entered at top [207] */
 	do {
 	} while (0);
 }
