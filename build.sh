@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365.2.7 2025/05/10 18:04:13 bouyer Exp $
+#	$NetBSD: build.sh,v 1.365.2.8 2025/07/08 15:25:03 martin Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1299,6 +1299,7 @@ parseoptions()
 
 		-P)
 			MKREPRO=yes
+			export MKREPRO
 			;;
 
 		-R)
@@ -2039,7 +2040,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365.2.7 2025/05/10 18:04:13 bouyer Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365.2.8 2025/07/08 15:25:03 martin Exp $
 # with these arguments: ${_args}
 #
 
