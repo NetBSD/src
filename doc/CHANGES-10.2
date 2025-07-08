@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.35 2025/06/28 09:58:23 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.36 2025/07/08 15:25:50 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -877,4 +877,11 @@ distrib/notes/hppa/xfer				1.2
 
 	hppa: fix install notes, booting from CD is supported.
 	[skrll, ticket #1131]
+
+build.sh					1.399
+
+	build: PR 59512: make reproducable builds work when -P is
+	passed on the build.sh command line and MKREPRO_TIMESTAMP
+	is set manually via -V.
+	[hgutch, ticket #1132]
 
