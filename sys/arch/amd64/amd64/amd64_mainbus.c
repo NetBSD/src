@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.10 2025/07/08 11:06:13 imil Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.10 2025/07/08 11:06:13 imil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $
 #include "isadma.h"
 #include "acpica.h"
 #include "ipmi.h"
-#include "pvbus.h"
+#include "pv.h"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.9 2025/05/02 07:24:15 imil Exp $
 #include <arch/x86/pci/msipic.h>
 #endif /* __HAVE_PCI_MSI_MSIX */
 #endif
-#if NPVBUS > 0
+#if NPV > 0
 #include <arch/x86/pv/pvvar.h>
 #endif
 
@@ -104,7 +104,7 @@ union amd64_mainbus_attach_args {
 #if NIPMI > 0
 	struct ipmi_attach_args mba_ipmi;
 #endif
-#if NPVBUS > 0
+#if NPV > 0
 	struct pvbus_attach_args mba_pvba;
 #endif
 };
@@ -162,7 +162,7 @@ amd64_mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NISA > 0 || NPCI > 0 || NACPICA > 0 || NIPMI > 0 || NPVBUS > 0
+#if NISA > 0 || NPCI > 0 || NACPICA > 0 || NIPMI > 0 || NPV > 0
 	union amd64_mainbus_attach_args mba;
 #endif
 
@@ -244,7 +244,7 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-#if NPVBUS > 0
+#if NPV > 0
 	/* add here more VM guests types that would benefit from a pv bus */
 	switch(vm_guest) {
 	/* FALLTHROUGH */
