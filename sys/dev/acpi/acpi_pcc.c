@@ -265,7 +265,6 @@ pcc_send_command(struct pcc_subspace *ss, ACPI_GENERIC_ADDRESS *reg,
 {
 	volatile ACPI_PCCT_SHARED_MEMORY *shmem = ss->ss_data;
 	uint8_t *data = __UNVOLATILE(shmem + 1);
-	UINT64 tmp, mask;
 
 	KASSERT(ss->ss_type == ACPI_PCCT_TYPE_GENERIC_SUBSPACE ||
 	        ss->ss_type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE ||
@@ -274,12 +273,27 @@ pcc_send_command(struct pcc_subspace *ss, ACPI_GENERIC_ADDRESS *reg,
 	shmem->Signature = PCC_SIGNATURE(ss->ss_id);
 	shmem->Command = command & 0xff;
 	if ((flags & PCC_WRITE) != 0) {
-		mask = __BITS(reg->BitOffset + reg->BitWidth - 1,
-			      reg->BitOffset);
-		ACPI_MOVE_64_TO_64(&tmp, data + reg->Address);
-		tmp &= mask;
-		tmp |= __SHIFTIN(val, mask);
-		ACPI_MOVE_64_TO_64(data + reg->Address, &tmp);
+		if (reg->BitWidth == 32U) {
+			UINT32 tmp32, mask32, val32;
+			val32 = (UINT32)val;
+			mask32 = __BITS(reg->BitOffset + reg->BitWidth - 1,
+					reg->BitOffset);
+			ACPI_MOVE_32_TO_32(&tmp32, data + reg->Address);
+			tmp32 &= ~mask32;
+			tmp32 |= __SHIFTIN(val32, mask32);
+			aprint_normal("%s PCC32 write %d %ld mask 0x%x\n", __func__, tmp32, val, mask32);
+			ACPI_MOVE_32_TO_32(data + reg->Address, &tmp32);
+		} else if (reg->BitWidth == 64U) {
+			UINT64 tmp, mask;
+			mask = __BITS(reg->BitOffset + reg->BitWidth - 1,
+					reg->BitOffset);
+			ACPI_MOVE_64_TO_64(&tmp, data + reg->Address);
+			tmp &= ~mask;
+			tmp |= __SHIFTIN(val, mask);
+			ACPI_MOVE_64_TO_64(data + reg->Address, &tmp);
+		} else {
+			panic("PCC %d bit not support\n", reg->BitWidth);
+		}
 	}
 	PCC_MEMORY_BARRIER();
 	shmem->Status &= ~(PCC_STATUS_COMMAND_COMPLETE |
@@ -300,7 +314,6 @@ pcc_receive_response(struct pcc_subspace *ss, ACPI_GENERIC_ADDRESS *reg,
 {
 	volatile ACPI_PCCT_SHARED_MEMORY *shmem = ss->ss_data;
 	const uint8_t *data = __UNVOLATILE(shmem + 1);
-	UINT64 tmp, mask;
 
 	KASSERT(ss->ss_type == ACPI_PCCT_TYPE_GENERIC_SUBSPACE ||
 	        ss->ss_type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE ||
@@ -313,10 +326,23 @@ pcc_receive_response(struct pcc_subspace *ss, ACPI_GENERIC_ADDRESS *reg,
 	}
 
 	if ((flags & PCC_READ) != 0) {
-		mask = __BITS(reg->BitOffset + reg->BitWidth - 1,
-			      reg->BitOffset);
-		ACPI_MOVE_64_TO_64(&tmp, data + reg->Address);
-		*val = __SHIFTOUT(tmp, mask);
+		if (reg->BitWidth == 32U) {
+			UINT32 tmp32, mask32, val32;
+			mask32 = __BITS(reg->BitOffset + reg->BitWidth - 1,
+					reg->BitOffset);
+			ACPI_MOVE_32_TO_32(&tmp32, data + reg->Address);
+			val32 = __SHIFTOUT(tmp32, mask32);
+			*val = (UINT64)val32;
+			aprint_normal("%s PCC32 read %d %ld mask 0x%x\n", __func__, tmp32, *val, mask32);
+		} else if (reg->BitWidth == 64U) {
+			UINT64 tmp, mask;
+			mask = __BITS(reg->BitOffset + reg->BitWidth - 1,
+					reg->BitOffset);
+			ACPI_MOVE_64_TO_64(&tmp, data + reg->Address);
+			*val = __SHIFTOUT(tmp, mask);
+		} else {
+			panic("PCC %d bit not support\n", reg->BitWidth);
+		}
 	}
 
 	return AE_OK;
