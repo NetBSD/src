@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.3 2022/01/19 05:21:44 thorpej Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.4 2025/07/08 18:07:08 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.3 2022/01/19 05:21:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.4 2025/07/08 18:07:08 gutteridge Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -64,9 +64,9 @@ CFATTACH_DECL_NEW(scmdspi, sizeof(struct scmd_sc),
     scmdspi_match, scmdspi_attach, scmdspi_detach, scmdspi_activate);
 
 /* For the SPI interface on this device, the reads are done in an odd
- * manor.  The first part is normal enough, you send the register binary
+ * manner.  The first part is normal enough, you send the register binary
  * or'ed with 0x80 and then the receive the data.  However, you MUST also
- * then receive a dummy value otherwise, everything gets out of sync and
+ * then receive a dummy value, otherwise everything gets out of sync and
  * no further reads appear to work unless you do a SPI receive all by itself.
  * This is documented in the data sheet for this device.
  *
