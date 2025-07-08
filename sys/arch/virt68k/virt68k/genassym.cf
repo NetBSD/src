@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2024/01/02 07:41:02 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.2 2025/07/08 11:46:11 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -86,8 +86,9 @@ export	MMU51_CRP_BITS
 export	MMU51_TCR_BITS
 export	MMU40_TCR_BITS
 
-export	VIRT68K_TT30_IO
-export	VIRT68K_TT40_IO
+# For mmu_subr.s
+define	MACHINE_TT0		VIRT68K_TT30_IO
+define	MACHINE_DTT0		VIRT68K_TT40_IO
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)
