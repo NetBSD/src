@@ -1014,7 +1014,7 @@
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
 
 #define NT_NETBSD_IDENT		1
-#define NT_NETBSD_MARCH		5
+#define NT_NETBSD_EMUL		2	/* obsolete */
 
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "PaX".  */
 #define NT_NETBSD_PAX		3
@@ -1024,6 +1024,9 @@
 #define NT_NETBSD_PAX_NOGUARD		0x08	/* Force disable Segvguard.  */
 #define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR.  */
 #define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR.  */
+
+#define NT_NETBSD_MARCH		5
+#define NT_NETBSD_MCMODEL	6
 
 /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
 

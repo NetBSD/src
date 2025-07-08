@@ -21163,6 +21163,20 @@ process_netbsd_elf_note (Elf_Internal_Note * pnote)
 	      ((version & NT_NETBSD_PAX_ASLR) ? "+ASLR" : ""),
 	      ((version & NT_NETBSD_PAX_NOASLR) ? "-ASLR" : ""));
       return true;
+
+    case NT_NETBSD_MCMODEL:
+      if (pnote->descsz < 1)
+	break;
+      printf ("  NetBSD\t\t0x%08lx\tMCModel ", pnote->descsz);
+      for (size_t i = 0; i < pnote->descsz; i++)
+	{
+	  unsigned char c = pnote->descdata[i] & 0xff;
+	  if (c == '\0')
+	    break;
+	  putchar (ISPRINT (c) ? c : '?');
+	}
+      putchar ('\n');
+      return true;
     }
 
   printf ("  NetBSD\t0x%08lx\tUnknown note type: (0x%08lx)\n",
