@@ -1,4 +1,4 @@
-/*	$NetBSD: emcfan.c,v 1.1 2025/03/11 13:56:46 brad Exp $	*/
+/*	$NetBSD: emcfan.c,v 1.2 2025/07/08 18:15:03 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emcfan.c,v 1.1 2025/03/11 13:56:46 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emcfan.c,v 1.2 2025/07/08 18:15:03 gutteridge Exp $");
 
 /*
  * Driver for the EMC-210x and EMC-230x fan controllers on a
@@ -1573,7 +1573,7 @@ emcfan_refresh_temp(int product_family, uint8_t product_id,
 					inverted = temp_config_3 & 0x01;
 
 
-					/* there is a strange situation if sensor 3 is being used as a VIN
+					/* There is a strange situation if sensor 3 is being used as a VIN
 					 * sensor, then sensor 4 is not available at all.  Note that this
 					 * sensor 4 is *NOT* the sensor that might be attached to the VIN4
 					 * pin.
@@ -1726,9 +1726,8 @@ emcfan_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	edata->state = ENVSYS_SINVALID;
 
-	/* Unlike manor of the refresh functions in other drivers, this
+	/* Unlike the manner of the refresh functions in other drivers, this
 	 * one will select the sensor based upon the type and instance.
-	 *
 	 * Due to the fact that the order will vary depending on which
 	 * chip you are using.
 	 */
