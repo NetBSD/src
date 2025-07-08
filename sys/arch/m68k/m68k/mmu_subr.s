@@ -1,7 +1,7 @@
-/*	$NetBSD: mmu_subr.s,v 1.2 2024/01/09 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.3 2025/07/08 11:45:26 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,6 +74,11 @@
  *
  *	We keep the HP MMU versions of these routines here, as well,
  *	even though they'll only ever be used on the hp300.
+ *
+ * void mmu_load_tt(uint32_t *ttregs);
+ *
+ *	Load the transparent translation registers from the
+ *	specified array of register values.
  */
 
 #include "opt_m68k_arch.h"
@@ -95,6 +100,19 @@
 GLOBAL(protorp)
 	.long	MMU51_SRP_BITS,0	| prototype CPU root pointer
 
+#ifdef M68030
+#ifndef MACHINE_TT0
+#define	MACHINE_TT0	0
+#endif
+#ifndef MACHINE_TT1
+#define	MACHINE_TT1	0
+#endif
+
+GLOBAL(mmu_tt30)
+	.long	MACHINE_TT0
+	.long	MACHINE_TT1
+#endif /* M68030 */
+
 	.text
 ENTRY_NOPROFILE(mmu_load_urp51)
 	movl	%sp@(4),%d0		| get root table PA argument
@@ -105,6 +123,14 @@ ENTRY_NOPROFILE(mmu_load_urp51)
 	movl	#CACHE_CLR,%d0
 	movc	%d0,%cacr		| invalidate caches
 	rts
+
+#ifdef M68030
+ENTRY_NOPROFILE(mmu_load_tt30)
+	movl	%sp@(4),%a0		| get pointer to TT value array
+	.long 0xf0180800		| pmove %a0@+,%tt0
+	.long 0xf0180c00		| pmove %a0@+,%tt1
+	rts
+#endif /* M68030 */
 #endif /* M68020 || M68030 */
 
 #if defined(M68040) || defined(M68060)
@@ -119,6 +145,39 @@ ENTRY_NOPROFILE(mmu_load_urp40)
 	movl	%sp@(4),%d0		| get root table PA argument
 	.word 0xf518	 |pflusha	| flush ATC
 	.long 0x4e7b0806 |movc %d0,%urp	| load the URP register
+	rts
+
+#ifndef MACHINE_ITT0
+#define	MACHINE_ITT0	0
+#endif
+#ifndef MACHINE_ITT1
+#define	MACHINE_ITT1	0
+#endif
+#ifndef MACHINE_DTT0
+#define	MACHINE_DTT0	0
+#endif
+#ifndef MACHINE_DTT1
+#define	MACHINE_DTT1	0
+#endif
+
+	.data
+GLOBAL(mmu_tt40)
+	.long	MACHINE_ITT0
+	.long	MACHINE_ITT1
+	.long	MACHINE_DTT0
+	.long	MACHINE_DTT1
+
+	.text
+ENTRY_NOPROFILE(mmu_load_tt40)
+	movl	%sp@(4),%a0		| get pointer to TT value array
+	movl	%a0@+,%d0		| load ITT0
+	.long 0x4e7b0004		| movec %d0,%itt0
+	movl	%a0@+,%d0		| load ITT1
+	.long 0x4e7b0005		| movec %d0,%itt1
+	movl	%a0@+,%d0		| load DTT0
+	.long 0x4e7b0006		| movec %d0,%dtt0
+	movl	%a0@+,%d0		| load DTT1
+	.long 0x4e7b0007		| movec %d0,%dtt1
 	rts
 #endif /* M68040 || M68060 */
 #endif /* M68K_MMU_MOTOROLA */

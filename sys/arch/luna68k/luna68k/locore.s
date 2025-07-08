@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.83 2024/01/19 18:18:54 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.84 2025/07/08 11:45:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -231,14 +231,13 @@ Lstart3:
 	jne	Lmotommu1		| no, skip
 Lmotommu0:
 	.long	0x4e7b1807		| movc %d1,%srp
-	RELOC(proto040tt0,%a0)
-	movl	%a0@,%d0		| tt0 range 4000.0000-7fff.ffff
-	.long	0x4e7b0004		| movc %d0,%itt0
-	.long	0x4e7b0006		| movc %d0,%dtt0
-	RELOC(proto040tt1,%a0)
-	movl	%a0@,%d0		| tt1 range 8000.0000-ffff.ffff
-	.long	0x4e7b0005		| movc %d0,%itt1
-	.long	0x4e7b0007		| movc %d0,%dtt1
+
+	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt40,%a0)	| pass it to mmu_load_tt40()
+	jbsr	%a0@
+	addql	#4,%sp
+
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	RELOC(proto040tc,%a0)
@@ -252,10 +251,15 @@ Lmotommu1:
 	RELOC(protorp,%a0)
 	movl	%d1,%a0@(4)		| segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
-	RELOC(protott0,%a0)		| tt0 range 4000.0000-7fff.ffff
-	.long	0xf0100800		| pmove %a0@,mmutt0
-	RELOC(protott1,%a0)		| tt1 range 8000.0000-ffff.ffff
-	.long	0xf0100c00		| pmove %a0@,mmutt1
+
+#ifdef M68030
+	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
+	jbsr	%a0@
+	addql	#4,%sp
+#endif
+
 	pflusha
 	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB or 8KB page
 	pmove	%a0@,%tc
@@ -776,16 +780,8 @@ GLOBAL(fputype)
 
 GLOBAL(prototc)
 	.long	MMU51_TCR_BITS	| %tc -- see pmap.h
-GLOBAL(protott0)
-	.long	LUNA68K_TT30_IO0 | prototype transparent translation register 0
-GLOBAL(protott1)
-	.long	LUNA68K_TT30_IO1 | prototype transparent translation register 1
 GLOBAL(proto040tc)
 	.long	MMU40_TCR_BITS	| %tc -- see pmap.h
-GLOBAL(proto040tt0)
-	.long	LUNA68K_TT40_IO0 | prototype transparent translation register 0
-GLOBAL(proto040tt1)
-	.long	LUNA68K_TT40_IO1 | prototype transparent translation register 1
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
