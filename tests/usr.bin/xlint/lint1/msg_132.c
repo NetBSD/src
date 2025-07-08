@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.53 2025/01/03 01:27:35 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.54 2025/07/08 17:43:54 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -408,7 +408,7 @@ test_ic_minus(void)
 	// Sign-extend the lowest bits.
 	s8 = ((s64 & 0xff) ^ 0x80) - 0x80;
 	s16 = ((s64 & 0xffff) ^ 0x8000) - 0x8000;
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'long long', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned int' with its most significant bit being set to 'long long' [309] */
 	s32 = ((s64 & 0xffffffff) ^ 0x80000000) - 0x80000000;
 
 	// Trying to sign-extend, but with off-by-one errors.

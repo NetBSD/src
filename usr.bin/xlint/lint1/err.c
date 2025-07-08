@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.273 2025/07/07 20:10:05 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.274 2025/07/08 17:43:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.273 2025/07/07 20:10:05 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.274 2025/07/08 17:43:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -364,7 +364,7 @@ static const char *const msgs[] = {
 	"constant %s truncated by conversion, op '%s'",			// 306
 	"static variable '%s' set but not used",			// 307
 	"invalid type for _Complex",					// 308
-	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'",	// 309
+	"'%s' converts '%s' with its most significant bit being set to '%s'", // 309
 	"symbol renaming can't be used on function parameters",		// 310
 	"symbol renaming can't be used on automatic variables",		// 311
 	"%s does not support '//' comments",				// 312

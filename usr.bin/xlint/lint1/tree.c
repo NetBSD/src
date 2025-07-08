@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.684 2025/05/16 20:39:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.685 2025/07/08 17:43:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.684 2025/05/16 20:39:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.685 2025/07/08 17:43:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4071,9 +4071,9 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 	if (nsz > osz &&
 	    (nv->u.integer & bit((unsigned int)(osz - 1))) != 0 &&
 	    (nv->u.integer & xmask) != xmask) {
-		/* extra bits set to 0 in conversion of '%s' to '%s', ... */
-		warning(309, type_name(gettyp(ot)),
-		    type_name(tp), op_name(op));
+		/* '%s' converts '%s' with its most significant bit being set to '%s' */
+		warning(309,
+		    op_name(op), type_name(gettyp(ot)), type_name(tp));
 	} else if (nsz < osz &&
 	    (v->u.integer & xmask) != xmask &&
 	    (v->u.integer & xmask) != 0)
