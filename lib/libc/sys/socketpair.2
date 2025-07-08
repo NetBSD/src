@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 29, 2022
+.Dd July 8, 2025
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -80,6 +80,8 @@ argument:
 .Bl -tag -width Dv -offset indent -compact
 .It Dv SOCK_CLOEXEC
 Set close-on-exec flag on both the new descriptors.
+.It Dv SOCK_CLOFORK
+Set close-on-fork flag on both the new descriptors.
 .It Dv SOCK_NONBLOCK
 Set non-blocking I/O mode on both the new sockets.
 .El
@@ -121,6 +123,14 @@ and
 .Dv SOCK_NONBLOCK
 flags appeared in
 .Nx 6.0 .
+.Pp
+Support for the
+.Dv SOCK_CLOFORK
+flag appeared in
+.Fx 15.0 ,
+.Dx 6.5
+and
+.Nx 11.0 .
 .Sh BUGS
 This call is currently implemented only for the
 .Dv PF_LOCAL

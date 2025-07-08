@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 27, 2019
+.Dd July 8, 2025
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -160,6 +160,7 @@ instead, it accepts the following flags:
 on the returned file descriptor:
 .Bl -column -offset indent ".Dv SOCK_NOSIGPIPE"
 .It Dv SOCK_CLOEXEC   Ta Set the close-on-exec property.
+.It Dv SOCK_CLOFORK   Ta Set the close-on-fork property.
 .It Dv SOCK_NONBLOCK  Ta Sets non-blocking I/O.
 .It Dv SOCK_NOSIGPIPE Ta Xo
 Return

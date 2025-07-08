@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd March 5, 2023
+.Dd July 8, 2025
 .Dt OPEN 2
 .Os
 .Sh NAME
@@ -149,6 +149,12 @@ Set the
 .Xr close 2
 on
 .Xr exec 3
+flag.
+.It Dv O_CLOFORK
+Set the
+.Xr close 2
+on
+.Xr fork 2
 flag.
 .It Dv O_NOSIGPIPE
 Return
@@ -514,6 +520,16 @@ and
 .Dv O_EXLOCK
 flags are non-standard extensions and should not be used if portability
 is of concern.
+.Pp
+The
+.Dv O_CLOFORK
+flag conforms to
+.St -p1003.1-2024
+and appeared on
+.Fx 15.0 ,
+.Dx 6.5
+and
+.Nx 11.0 .
 .Sh HISTORY
 An
 .Fn open

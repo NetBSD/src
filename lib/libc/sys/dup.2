@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 1, 2024
+.Dd July 8, 2025
 .Dt DUP 2
 .Os
 .Sh NAME
@@ -63,11 +63,11 @@ and
 .Xr lseek 2
 calls all move a single shared seek position.
 Similarly, all object modes, settings, properties, and behavior other
-than the close-on-exec flag are shared between references.
+than the close-on-exec & close-on-fork flags are shared between references.
 This includes the setting of append mode, non-blocking I/O actions,
 asynchronous I/O operations in progress, socket options, and so forth.
-The close-on-exec flag, however, is a property of the descriptor
-rather than the object and can be set independently for each
+The close-on-exec & close-on-fork flags, however, are a property of the
+descriptor rather than the object and can be set independently for each
 reference.
 .Pp
 To get an independent handle with its own seek position and settings,
@@ -133,6 +133,9 @@ flags:
 .It Dv O_CLOEXEC
 Set the close-on-exec flag on
 .Fa newfd .
+.It Dv O_CLOFORK
+Set the close-on-fork flag on
+.Fa newfd .
 .It Dv O_NONBLOCK
 Sets non-blocking I/O.
 .It Dv O_NOSIGPIPE
@@ -142,7 +145,7 @@ when a write is made to a broken pipe.
 Instead, the write will fail with
 .Er EPIPE .
 .El
-As described above, only the close-on-exec flag is
+As described above, only the close-on-exec & close-on-fork flags are
 per-file-descriptor, so passing any of the other
 .Fa flags
 will affect
@@ -159,7 +162,7 @@ In the case of
 .Fn dup
 and
 .Fn dup2
-the close-on-exec flag on the new file descriptor is always left
+the close-on-exec & close-on-fork flags on the new file descriptor is always left
 unset and all the modes and settings of the underlying object are left
 unchanged.
 .Pp

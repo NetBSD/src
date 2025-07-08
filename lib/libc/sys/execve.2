@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)execve.2	8.5 (Berkeley) 6/1/94
 .\"
-.Dd September 16, 2019
+.Dd July 8, 2025
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -134,7 +134,10 @@ flag is set (see
 and
 .Xr fcntl 2 ) .
 Descriptors that remain open are unaffected by
-.Fn execve .
+.Fn execve ,
+except those with the close-on-fork flag
+.Dv FD_CLOFORK
+which is cleared from all file descriptors.
 .Pp
 In the case of a new setuid or setgid executable being executed, if
 file descriptors 0, 1, or 2

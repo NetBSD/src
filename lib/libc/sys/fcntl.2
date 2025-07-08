@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd July 5, 2023
+.Dd July 8, 2025
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -79,16 +79,30 @@ The close-on-exec flag associated with the new file descriptor
 is cleared to remain open across
 .Xr execve 2
 system calls.
+.It
+The fork-on-exec flag
+.Dv FD_CLOFORK
+associated with the new file descriptor is cleared, so the file descriptor is
+to remain open across
+.Xr fork 2
+system calls.
 .El
 .It Dv F_DUPFD_CLOEXEC
 Same as
 .Dv F_DUPFD ,
 but sets the close-on-exec property on the file descriptor created.
+.It Dv F_DUPFD_CLOFORK
+Same as
+.Dv F_DUPFD ,
+but sets the close-on-fork property on the file descriptor created.
+.It Dv F_DUPFD_CLOBOTH
+Same as
+.Dv F_DUPFD ,
+but sets both the close-on-exec and close-on-fork properties on the file
+descriptor created.
 .It Dv F_GETFD
-Get the close-on-exec flag associated with the file descriptor
-.Fa fd
-as
-.Dv FD_CLOEXEC .
+Get the flags associated with the file descriptor
+.Fa fd .
 If the returned value ANDed with
 .Dv FD_CLOEXEC
 is 0,
@@ -98,16 +112,17 @@ otherwise the file will be closed upon execution of
 .Fn exec
 .Fa ( arg
 is ignored).
+.It Dv FD_CLOFORK
+The file will be closed upon execution of the
+.Fn fork
+family of system calls.
 .It Dv F_SETFD
-Set the close-on-exec flag associated with
-.Fa fd
-to
-.Fa arg ,
-where
-.Fa arg
-is either 0 or
-.Dv FD_CLOEXEC ,
-as described above.
+Set flags associated with
+.Fa fd .
+The available flags are
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
