@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.244 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.245 2025/07/08 04:37:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.244 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.245 2025/07/08 04:37:21 mlelstv Exp $");
 
 #include "veriexec.h"
 
@@ -1556,8 +1556,9 @@ vn_bdev_openpath(struct pathbuf *pb, struct vnode **vpp, struct lwp *l)
 	if (error != 0)
 		return error;
 
-	dev = vp->v_rdev;
 	vt = vp->v_type;
+	if (vt == VBLK)
+		dev = vp->v_rdev;
 
 	VOP_UNLOCK(vp);
 	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);
