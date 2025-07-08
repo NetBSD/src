@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.19 2025/02/23 20:48:43 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.20 2025/07/08 19:23:50 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -1101,12 +1101,12 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			
 		case SCSI_MODE_SENSE_6:
 			DPRINTF(("SCSI_MODE_SENSE_6 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 
 		case SCSI_MODE_SELECT_6:
 				DPRINTF(("MODE_SELECT_6 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 
 		case SCSI_MAINTENANCE_IN:
@@ -1116,12 +1116,12 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 
 		case SCSI_MODE_SENSE_10:
 			DPRINTF(("SCSI_MODE_SENSE_10 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 			
 		case READ_TOC:
 			DPRINTF(("READ_TOC (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 
 		default:
