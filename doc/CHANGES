@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3175 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3176 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -764,3 +764,15 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[rjs 20250603]
 	iic(4): Add driver for Onsemi FUSB302B USB-C power controller,
 		mostly from OpenBSD. [rjs 20250603]
+	make(1): Add POSIX $^ internal macro support, as an alias for
+		$> (.ALLSRC) [rillig 20250628]
+	expr(1): Use multibyte code points instead of bytes for ":" and
+		"length", required by POSIX. [rillig 20250629]
+	macppc: Fan control for PowerMac7,2. [macallan 20250701]
+	mount(8): Reduced information printed with "mount -v spec fs",
+		use -vv for previous output. [kre 20250701]
+	npf(7): Add layer 2 filtering support. [joe 20250701]
+	libc: Update UTF-8 tables to Unicode 16.0. [wiz 20250705]
+	macppc: Improve support for G5/G4 i2c/openpic. [macallan 20250705]
+	evbarm: Add driver for Amlogic Meson I2C controller - contributed
+		by Vincent Defert. [rjs 20250705]
