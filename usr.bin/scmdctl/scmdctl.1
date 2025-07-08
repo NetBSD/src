@@ -1,4 +1,4 @@
-.\" $NetBSD: scmdctl.1,v 1.1 2021/12/07 17:39:55 brad Exp $
+.\" $NetBSD: scmdctl.1,v 1.2 2025/07/08 17:56:45 gutteridge Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -108,7 +108,7 @@
 The
 .Nm
 utility interacts with a Sparkfun Serial Controlled Motor Driver (SCMD) and provides
-a set of convient commands for most of the functions that the SCMD has.
+a set of convenient commands for most of the functions that the SCMD has.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -260,7 +260,7 @@ utility was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
 When accessing the SCMD devices using tty uart access, it is not really
-possible to deal with line noise and there is no safety checks built into
+possible to deal with line noise and there are no safety checks built into
 the device to help with this.  It is entirely possible that the
 .Xr scmdctl 1
 command can hang in this mode.  It is also possible and likely that the
@@ -282,4 +282,5 @@ are done to the motors.
 .Pp
 No attempt has been made with
 .Xr scmdctl 1
-to make the failsafe functions of the SCMD device available in any convient manor.
+to make the failsafe functions of the SCMD device available in any convenient
+manner.
