@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.103 2024/12/30 20:45:47 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.104 2025/07/09 21:25:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.103 2024/12/30 20:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.104 2025/07/09 21:25:35 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -980,7 +980,7 @@ awi_mode_init(struct awi_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
-	/* Reinitialize muticast filter */
+	/* Reinitialize multicast filter */
 	n = 0;
 	sc->sc_mib_local.Accept_All_Multicast_Dis = 0;
 	if (sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP &&

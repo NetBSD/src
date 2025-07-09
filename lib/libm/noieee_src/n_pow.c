@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.11 2014/10/11 07:19:27 martin Exp $ */
+/*      $NetBSD: n_pow.c,v 1.12 2025/07/09 21:25:35 andvar Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
  *	1. Compute and return log(x) in three pieces:
  *		log(x) = n*ln2 + hi + lo,
  *	   where n is an integer.
- *	2. Perform y*log(x) by simulating muti-precision arithmetic and
+ *	2. Perform y*log(x) by simulating multi-precision arithmetic and
  *	   return the answer in three pieces:
  *		y*log(x) = m*ln2 + hi + lo,
  *	   where m is an integer.

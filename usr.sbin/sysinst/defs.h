@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.92 2024/04/22 14:41:26 nia Exp $	*/
+/*	$NetBSD: defs.h,v 1.93 2025/07/09 21:25:35 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -988,7 +988,7 @@ bool pm_force_parts(struct pm_devs *);
  * sector count and multiplicator.
  * If "extend" is supported, things like 120+ will be parsed as
  * 120 plus "extend this" flag.
- * Caller needs to init muliplicator upfront to the default value.
+ * Caller needs to init multiplicator upfront to the default value.
  */
 daddr_t parse_disk_pos(
 	const char *,	/* in: input string */

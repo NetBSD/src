@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.8 2019/10/18 04:13:56 msaitoh Exp $	*/
+/*	$NetBSD: pxe.h,v 1.9 2025/07/09 21:25:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>
@@ -281,7 +281,7 @@ typedef struct {
 #define	PXENV_UNDI_GET_MCAST_ADDRESS	0x0011
 typedef struct {
 	PXENV_STATUS_t	Status;
-	IP4_t		InetAddr;		/* IP mulicast address */
+	IP4_t		InetAddr;		/* IP multicast address */
 	MAC_ADDR	MediaAddr;		/* MAC multicast address */
 } __packed t_PXENV_UNDI_GET_MCAST_ADDR;
 

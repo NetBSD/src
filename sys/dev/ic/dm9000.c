@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.39 2025/06/25 08:18:00 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.40 2025/07/09 21:25:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -444,7 +444,7 @@ dme_set_rcvfilt(struct dme_softc *sc)
 			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
 			memset(mchash, 0xff, sizeof(mchash)); /* necessary? */
-			/* accept all mulicast frame */
+			/* accept all multicast frame */
 			rcr |= DM9000_RCR_ALL;
 			goto update;
 		}
