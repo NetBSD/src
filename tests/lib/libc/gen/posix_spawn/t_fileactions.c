@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.8 2025/03/16 15:35:36 riastradh Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.9 2025/07/09 11:40:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fileactions.c,v 1.8 2025/03/16 15:35:36 riastradh Exp $");
+__RCSID("$NetBSD: t_fileactions.c,v 1.9 2025/07/09 11:40:43 martin Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -308,6 +308,95 @@ ATF_TC_BODY(t_spawn_fileactions, tc)
 	    "status=0x%x", status);
 }
 
+ATF_TC(t_spawn_close_already_closed);
+ATF_TC_HEAD(t_spawn_close_already_closed, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "file actions closing closed descriptors are allowed (PR 59523");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/ls");
+}
+
+ATF_TC_BODY(t_spawn_close_already_closed, tc)
+{
+	int status, fd;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("ls"), NULL };
+	posix_spawn_file_actions_t fa;
+
+	/* get a free file descriptor number */
+	fd = open("/dev/null", O_RDONLY);
+	ATF_REQUIRE(fd >= 0);
+	close(fd);
+
+	RZ(posix_spawn_file_actions_init(&fa));
+	// redirect output to /dev/null to not garble atf test results
+	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
+	    O_WRONLY, 0));
+	// known closed fd
+	RZ(posix_spawn_file_actions_addclose(&fa, fd));
+	// a random fd we know nothing about (cross fingers!
+	RZ(posix_spawn_file_actions_addclose(&fa, fd+1));
+	// high fd probably not ever been allocated, likely to trigger
+	// a fd_getfile() failure in the kernel, which is another
+	// path that originaly caused the fallout in PR 59523
+	RZ(posix_spawn_file_actions_addclose(&fa, 560));
+	RZ(posix_spawn(&pid, "/bin/ls", &fa, NULL, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
+
+	/* ok, wait for the child to finish */
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
+}
+
+ATF_TC(t_spawn_close_already_closed_wait);
+ATF_TC_HEAD(t_spawn_close_already_closed_wait, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "file actions closing closed descriptors are allowed, "
+	    "with parent process waiting (PR 59523");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/ls");
+}
+
+ATF_TC_BODY(t_spawn_close_already_closed_wait, tc)
+{
+	int status, fd;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("ls"), NULL };
+	posix_spawn_file_actions_t fa;
+	posix_spawnattr_t attr;
+
+	/* get a free file descriptor number */
+	fd = open("/dev/null", O_RDONLY);
+	ATF_REQUIRE(fd >= 0);
+	close(fd);
+	RZ(posix_spawn_file_actions_init(&fa));
+	// redirect output to /dev/null to not garble atf test results
+	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
+	    O_WRONLY, 0));
+	// known closed fd
+	RZ(posix_spawn_file_actions_addclose(&fa, fd));
+	// a random fd we know nothing about (cross fingers!
+	RZ(posix_spawn_file_actions_addclose(&fa, fd+1));
+	// high fd probably not ever been allocated, likely to trigger
+	// a fd_getfile() failure in the kernel, which is another
+	// path that originaly caused the fallout in PR 59523
+	RZ(posix_spawn_file_actions_addclose(&fa, 560));
+
+	RZ(posix_spawnattr_init(&attr));
+	RZ(posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETPGROUP));
+
+	RZ(posix_spawn(&pid, "/bin/ls", &fa, &attr, args, NULL));
+	RZ(posix_spawn_file_actions_destroy(&fa));
+
+	/* ok, wait for the child to finish */
+	RL(waitpid(pid, &status, 0));
+	ATF_REQUIRE_MSG((WIFEXITED(status) &&
+		WEXITSTATUS(status) == EXIT_SUCCESS),
+	    "status=0x%x", status);
+}
+
 ATF_TC(t_spawn_empty_fileactions);
 ATF_TC_HEAD(t_spawn_empty_fileactions, tc)
 {
@@ -360,6 +449,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, t_spawn_reopen);
 	ATF_TP_ADD_TC(tp, t_spawn_openmode);
 	ATF_TP_ADD_TC(tp, t_spawn_empty_fileactions);
+	ATF_TP_ADD_TC(tp, t_spawn_close_already_closed);
+	ATF_TP_ADD_TC(tp, t_spawn_close_already_closed_wait);
 
 	return atf_no_error();
 }
