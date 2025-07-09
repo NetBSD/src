@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.39 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.40 2025/07/09 16:59:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.39 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.40 2025/07/09 16:59:54 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -640,7 +640,6 @@ mail2(FILE *mtf, const char **namelist)
 		(void)execv(cp, (char *const *)__UNCONST(namelist));
 		warn("%s", cp);
 		_exit(1);
-		break;		/* Appease GCC */
 	}
 	default:
 		if (value(ENAME_VERBOSE) != NULL)

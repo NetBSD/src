@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.12 2019/10/24 18:18:00 kamil Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.13 2025/07/09 16:59:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.12 2019/10/24 18:18:00 kamil Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.13 2025/07/09 16:59:54 rillig Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -514,9 +514,6 @@ mustquote(unsigned char *p, unsigned char *end, size_t l)
 	errx(EXIT_FAILURE,
 	    "mustquote: invalid logic: *p=0x%x (%d) flag=%d, l=%zu\n",
 	    *p, *p, flag, l);
-	/* NOT REACHED */
-	return 0;	/* appease GCC */
-
 #undef N
 #undef Q
 #undef SP
