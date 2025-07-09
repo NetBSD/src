@@ -64,7 +64,7 @@ GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 	/* doopen may be NULL */
 	if ((doopen != NULL && domkdir) || slen < 0 ||
 	    (oflags & ~(O_APPEND | O_DIRECT | O_SHLOCK | O_EXLOCK | O_SYNC |
-	    O_CLOEXEC)) != 0) {
+	    O_CLOEXEC | O_CLOFORK)) != 0) {
 		errno = EINVAL;
 		return 0;
 	}
