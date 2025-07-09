@@ -8,6 +8,7 @@ TESTSDIR=	${TESTSBASE}/kernel
 
 TESTS_SUBDIRS+=	kqueue
 TESTS_C+=	t_cloexec
+TESTS_C+=	t_clofork
 #TESTS_C+=	t_epoll
 TESTS_C+=	t_execregs
 TESTS_C+=	t_fcntl

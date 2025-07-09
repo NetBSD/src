@@ -1809,6 +1809,7 @@
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawn.debug		tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_cloexec.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_clofork.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_epoll.debug			tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_execregs.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf,rump

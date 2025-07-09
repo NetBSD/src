@@ -81,6 +81,14 @@ run(int flags)
 		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) == 0);
 	}
 
+	if (flags & SOCK_CLOFORK) {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) != 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) != 0);
+	} else {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) == 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) == 0);
+	}
+
 	if (flags & SOCK_NONBLOCK) {
 		ATF_REQUIRE((fcntl(fd[0], F_GETFL) & O_NONBLOCK) != 0);
 		ATF_REQUIRE((fcntl(fd[1], F_GETFL) & O_NONBLOCK) != 0);
@@ -126,12 +134,24 @@ ATF_TC_BODY(socketpair_cloexec, tc)
 	run(SOCK_CLOEXEC);
 }
 
+ATF_TC(socketpair_clofork);
+ATF_TC_HEAD(socketpair_clofork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A close-on-fork of socketpair(2)");
+}
+
+ATF_TC_BODY(socketpair_clofork, tc)
+{
+	run(SOCK_CLOFORK);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, socketpair_basic);
 	ATF_TP_ADD_TC(tp, socketpair_nonblock);
 	ATF_TP_ADD_TC(tp, socketpair_cloexec);
+	ATF_TP_ADD_TC(tp, socketpair_clofork);
 
 	return atf_no_error();
 }
