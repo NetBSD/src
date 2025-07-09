@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.12 2022/02/12 03:24:35 riastradh Exp $ */
+/* $NetBSD: pcagpio.c,v 1.13 2025/07/09 08:32:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,14 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.12 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.13 2025/07/09 08:32:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#ifdef PCAGPIO_DEBUG
-#include <sys/kernel.h>
-#endif
 #include <sys/conf.h>
 #include <sys/bus.h>
 
@@ -60,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.12 2022/02/12 03:24:35 riastradh Exp $
 static int	pcagpio_match(device_t, cfdata_t, void *);
 static void	pcagpio_attach(device_t, device_t, void *);
 static int	pcagpio_detach(device_t, int);
-#ifdef PCAGPIO_DEBUG
-static void	pcagpio_timeout(void *);
-#endif
 
 /* we can only pass one cookie to led_attach() but we need several values... */
 struct pcagpio_led {
@@ -83,7 +77,6 @@ struct pcagpio_softc {
 
 #ifdef PCAGPIO_DEBUG
 	uint32_t	sc_dir, sc_in;
-	callout_t	sc_timer;
 #endif
 };
 
@@ -120,7 +113,7 @@ pcagpio_match(device_t parent, cfdata_t match, void *aux)
 
 #ifdef PCAGPIO_DEBUG
 static void
-printdir(char* name, uint32_t val, uint32_t mask, char letter)
+printdir(const char* name, uint32_t val, uint32_t mask, char letter)
 {
 	char flags[17], bits[17];
 	uint32_t bit = 0x8000;
@@ -176,9 +169,6 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 	printdir(device_xname(sc->sc_dev), in, sc->sc_dir, 'I');
 	printdir(device_xname(sc->sc_dev), out, ~sc->sc_dir, 'O');
 
-	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
-	callout_reset(&sc->sc_timer, hz*20, pcagpio_timeout, sc);
-
 #endif
 
 	pins = prop_dictionary_get(dict, "pins");
@@ -222,43 +212,8 @@ pcagpio_detach(device_t self, int flags)
 	for (i = 0; i < sc->sc_nleds; i++)
 		led_detach(sc->sc_leds[i].led);
 
-#ifdef PCAGPIO_DEBUG
-	callout_halt(&sc->sc_timer, NULL);
-	callout_destroy(&sc->sc_timer);
-#endif
-
 	return 0;
 }
-
-#ifdef PCAGPIO_DEBUG
-static void
-pcagpio_timeout(void *v)
-{
-	struct pcagpio_softc *sc = v;
-	uint32_t out, dir, in, o_out, o_in;
-
-	out = pcagpio_readreg(sc, PCAGPIO_OUTPUT);
-	dir = pcagpio_readreg(sc, PCAGPIO_CONFIG);
-	in = pcagpio_readreg(sc, PCAGPIO_INPUT);
-	if (out != sc->sc_state || dir != sc->sc_dir || in != sc->sc_in) {
-		aprint_normal_dev(sc->sc_dev, "status change\n");
-		o_out = sc->sc_state;
-		o_in = sc->sc_in;
-		o_out &= ~sc->sc_dir;
-		o_in &= sc->sc_dir;
-		printdir(device_xname(sc->sc_dev), o_in, sc->sc_dir, 'I');
-		printdir(device_xname(sc->sc_dev), o_out, ~sc->sc_dir, 'O');
-		sc->sc_state = out;
-		sc->sc_dir = dir;
-		sc->sc_in = in;
-		out &= ~sc->sc_dir;
-		in &= sc->sc_dir;
-		printdir(device_xname(sc->sc_dev), in, sc->sc_dir, 'I');
-		printdir(device_xname(sc->sc_dev), out, ~sc->sc_dir, 'O');
-	}
-	callout_reset(&sc->sc_timer, hz*60, pcagpio_timeout, sc);
-}
-#endif
 
 static void
 pcagpio_writereg(struct pcagpio_softc *sc, int reg, uint32_t val)
