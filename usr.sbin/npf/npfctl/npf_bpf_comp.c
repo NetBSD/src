@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.18 2025/07/01 19:55:15 joe Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.19 2025/07/10 11:44:12 joe Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -706,7 +706,7 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 	/* load and compare first word then do same to last halfword */
 	struct bpf_insn insns_ether_w[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, off),
-		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_word, 0, JUMP_MAGIC),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_word, 0, 2),
 	};
 	add_insns(ctx, insns_ether_w, __arraycount(insns_ether_w));
 
@@ -715,6 +715,8 @@ npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_hword, 0, JUMP_MAGIC),
 	};
 	add_insns(ctx, insns_ether_h, __arraycount(insns_ether_h));
+
+	ctx->multiword = true;
 
 	uint32_t mwords[] = {
 		(opts & MATCH_SRC) ? BM_SRC_ETHER: BM_DST_ETHER, 2,

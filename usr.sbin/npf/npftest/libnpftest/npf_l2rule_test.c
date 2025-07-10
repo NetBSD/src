@@ -47,6 +47,24 @@ static const struct test_case {
 		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
 		.di = PFIL_IN,			.ret = RESULT_BLOCK
 	},
+	{
+		/* pass from nested options : 03 */
+		.src = "00:00:5E:00:53:03",	.dst = "00:00:5E:00:53:5A",
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
+		.di = PFIL_IN,			.ret = RESULT_PASS
+	},
+	{
+		/* pass from nested options : 04 */
+		.src = "00:00:5E:00:53:04",	.dst = "00:00:5E:00:53:5A",
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
+		.di = PFIL_IN,			.ret = RESULT_PASS
+	},
+	{
+		/* pass from nested options : 04 */
+		.src = "00:00:5E:00:53:05",	.dst = "00:00:5E:00:53:5A",
+		.ifname = IFNAME_INT,		.etype = ETHERTYPE_IP,
+		.di = PFIL_IN,			.ret = RESULT_PASS
+	},
 };
 
 static int
