@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.9 2025/07/09 11:40:43 martin Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.10 2025/07/10 05:37:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fileactions.c,v 1.9 2025/07/09 11:40:43 martin Exp $");
+__RCSID("$NetBSD: t_fileactions.c,v 1.10 2025/07/10 05:37:45 martin Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -329,9 +329,6 @@ ATF_TC_BODY(t_spawn_close_already_closed, tc)
 	close(fd);
 
 	RZ(posix_spawn_file_actions_init(&fa));
-	// redirect output to /dev/null to not garble atf test results
-	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
-	    O_WRONLY, 0));
 	// known closed fd
 	RZ(posix_spawn_file_actions_addclose(&fa, fd));
 	// a random fd we know nothing about (cross fingers!
@@ -340,6 +337,9 @@ ATF_TC_BODY(t_spawn_close_already_closed, tc)
 	// a fd_getfile() failure in the kernel, which is another
 	// path that originaly caused the fallout in PR 59523
 	RZ(posix_spawn_file_actions_addclose(&fa, 560));
+	// redirect output to /dev/null to not garble atf test results
+	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
+	    O_WRONLY, 0));
 	RZ(posix_spawn(&pid, "/bin/ls", &fa, NULL, args, NULL));
 	RZ(posix_spawn_file_actions_destroy(&fa));
 
@@ -372,9 +372,6 @@ ATF_TC_BODY(t_spawn_close_already_closed_wait, tc)
 	ATF_REQUIRE(fd >= 0);
 	close(fd);
 	RZ(posix_spawn_file_actions_init(&fa));
-	// redirect output to /dev/null to not garble atf test results
-	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
-	    O_WRONLY, 0));
 	// known closed fd
 	RZ(posix_spawn_file_actions_addclose(&fa, fd));
 	// a random fd we know nothing about (cross fingers!
@@ -383,6 +380,9 @@ ATF_TC_BODY(t_spawn_close_already_closed_wait, tc)
 	// a fd_getfile() failure in the kernel, which is another
 	// path that originaly caused the fallout in PR 59523
 	RZ(posix_spawn_file_actions_addclose(&fa, 560));
+	// redirect output to /dev/null to not garble atf test results
+	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
+	    O_WRONLY, 0));
 
 	RZ(posix_spawnattr_init(&attr));
 	RZ(posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETPGROUP));
