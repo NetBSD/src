@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.13 2025/07/05 19:28:10 rjs Exp $
+#	$NetBSD: files.meson,v 1.14 2025/07/10 08:13:12 skrll Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -79,7 +79,7 @@ file	arch/arm/amlogic/meson_sdio.c		meson_sdio
 # Meson GX MMC
 device	mesongxmmc: sdmmcbus
 attach	mesongxmmc at fdt with mesongx_mmc
-file	arch/arm/amlogic/mesongx_mmc.c		mesongx_mmc 
+file	arch/arm/amlogic/mesongx_mmc.c		mesongx_mmc
 
 # USB PHY
 device	mesonusbphy

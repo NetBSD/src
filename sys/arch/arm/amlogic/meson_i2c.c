@@ -1,4 +1,4 @@
-/* $NetBSD: meson_i2c.c,v 1.1 2025/07/05 19:28:10 rjs Exp $ */
+/* $NetBSD: meson_i2c.c,v 1.2 2025/07/10 08:13:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.1 2025/07/05 19:28:10 rjs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.2 2025/07/10 08:13:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,7 +290,7 @@ mesoni2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	sc->sc_error = 0;
 
 	mesoni2c_set_mask(sc, MESONI2C_SLAVE_ADDR_REG, MESONI2C_SLAVE_ADDR_MASK, addr << 1);
-	
+
 	if (cmdlen) {
 		sc->sc_curlen = cmdlen;
 		sc->sc_curop = datalen ? I2C_OP_WRITE : op;
@@ -335,7 +335,7 @@ mesoni2c_intr(void *arg)
 			/* Read data bytes */
 			u_int count = (RD4(sc, MESONI2C_CTRL_REG) & MESONI2C_CTRL_READ_DATA_MASK)
 				>> MESONI2C_CTRL_READ_DATA_SHIFT;
-			
+
 			while (count--) {
 				*(sc->sc_databuf++) = mesoni2c_get_byte(sc);
 			}
@@ -454,7 +454,7 @@ mesoni2c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
-	
+
 	if (sc->sc_clk == NULL || clk_enable(sc->sc_clk) != 0) {
 		aprint_error_dev(self, "couldn't enable clock\n");
 		return;
@@ -484,7 +484,7 @@ mesoni2c_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Meson I2C (%u Hz)\n", sc->sc_clkfreq);
 
 	enum mesoni2c_type type = of_compatible_lookup(phandle, compat_data)->value;
-	
+
 	switch (type) {
 	case TYPE_MESON6:
 		mesoni2c_set_clock_div_meson6(sc);
