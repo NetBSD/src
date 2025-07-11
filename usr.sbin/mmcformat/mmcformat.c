@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.9 2023/04/04 20:28:01 rillig Exp $ */
+/* $NetBSD: mmcformat.c,v 1.10 2025/07/11 20:45:27 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mmcformat.c,v 1.9 2023/04/04 20:28:01 rillig Exp $");
+__RCSID("$NetBSD: mmcformat.c,v 1.10 2025/07/11 20:45:27 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -249,7 +249,7 @@ uscsi_set_packet_parameters(struct uscsi_dev *mydev, int blockingnr)
 	error = uscsi_command(SCSI_WRITECMD, mydev,
 			cmd, 10, res, val_len, 30000, NULL);
 	if (error) {
-		perror("While WRTITING parameter page 5");
+		perror("While WRITING parameter page 5");
 		return error;
 	}
 
