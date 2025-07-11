@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.274 2025/05/04 08:37:09 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.275 2025/07/11 19:03:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.274 2025/05/04 08:37:09 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.275 2025/07/11 19:03:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -868,8 +868,10 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 	if (bl != NULL)
 		brace_level_advance(bl, &in->in_max_subscript);
 
-	if (tp->t_incomplete_array)
+	if (tp->t_incomplete_array) {
 		update_type_of_array_of_unknown_size(in->in_sym, len + 1);
+		in->in_sym->u.s_array_nonnull_dimension = len;
+	}
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.83 2025/02/20 20:33:10 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.84 2025/07/11 19:03:01 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.83 2025/02/20 20:33:10 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.84 2025/07/11 19:03:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -460,6 +460,11 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 			debug_printf(" %s", function_specifier_name(
 			    sym->u.s_keyword.u.function_specifier));
 	}
+
+	if (sym->s_type->t_tspec == ARRAY
+	    && sym->u.s_array_nonnull_dimension > 0)
+		debug_printf(" nonnull-dimension %zu",
+		    sym->u.s_array_nonnull_dimension);
 
 	debug_word(sym->s_osdef && sym->u.s_old_style_params != NULL,
 	    "old-style-params");

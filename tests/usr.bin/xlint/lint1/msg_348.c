@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.13 2025/07/11 05:40:35 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.14 2025/07/11 19:03:01 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message: maximum value %d for '%s' of type '%s' does not match maximum array index %d [348]
@@ -118,17 +118,14 @@ color_initial_letter(enum color color)
 	static const char len_3_of_3[3] = "RGB";
 	static const char len_4_of_4[4] = "RGB_";
 
-	/* TODO: array is too short */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 1 [348] */
 	if (len_2_null[color] != '\0')
 		return;
 
-	/* FIXME: lint should not warn since the maximum usable array index is 2 */
-	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 3 [348] */
 	if (len_3_null[color] != '\0')
 		return;
 
-	/* FIXME: lint should not warn since the maximum usable array index is 3, not 4 */
-	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 4 [348] */
+	/* expect+1: warning: maximum value 2 for 'blue' of type 'enum color' does not match maximum array index 3 [348] */
 	if (len_4_null[color] != '\0')
 		return;
 
@@ -263,6 +260,8 @@ uppercase_n_name(enum uppercase_n x)
 
 
 enum unit_prefix {
+	/* expect+4: previous declaration of 'MEGA' [260] */
+	/* expect+3: previous declaration of 'MEGA' [260] */
 	/* expect+2: previous declaration of 'MEGA' [260] */
 	/* expect+1: previous declaration of 'MEGA' [260] */
 	NONE = 0, KILO = 1, MEGA = 2
@@ -274,7 +273,9 @@ unit_name(enum unit_prefix prefix)
 	char name;
 
 	static const char name_short[] = "-K";
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 1 [348] */
 	name = name_short[prefix];
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 1 [348] */
 	name = "-K"[prefix];
 
 	static const char name_no_nul[] = { '-', 'K', 'M' };
@@ -282,13 +283,13 @@ unit_name(enum unit_prefix prefix)
 	name = (char[]){'-', 'K', 'M'}[prefix];
 
 	static const char name_nul[] = "-KM";
-	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 3 [348] */
 	name = name_nul[prefix];
 	name = "-KM"[prefix];
 
 	static const char name_long[] = "-KMG";
-	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 4 [348] */
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 3 [348] */
 	name = name_long[prefix];
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 3 [348] */
 	name = "-KMG"[prefix];
 
 	return name;

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.236 2025/05/14 21:35:24 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.237 2025/07/11 19:03:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -252,6 +252,11 @@ struct sym {
 		} s_keyword;
 		sym_t	*s_old_style_params;	/* parameters in an old-style
 						 * function definition */
+		/*
+		 * Only for string initializers with automatic size.
+		 * Does not take '\0' characters in the middle into account.
+		 */
+		size_t s_array_nonnull_dimension;
 	} u;
 	sym_t	*s_symtab_next;	/* next symbol in the same symtab bucket */
 	sym_t	**s_symtab_ref;	/* pointer to s_symtab_next of the previous
