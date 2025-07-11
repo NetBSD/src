@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.71 2024/11/10 16:14:52 riastradh Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.72 2025/07/11 01:11:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@
  * NOTE: ff_exclose should generally be set with fd_set_exclose(), not
  * written to directly, when implementing flags like O_CLOEXEC or
  * SOCK_CLOEXEC, so that struct filedesc::fd_exclose is updated as
- * needed.  See PR kern/58855: close-on-exec is broken for dup3 and
- * opening cloning devices.
+ * needed.  See PR kern/58822: close-on-exec is broken for dup3 and
+ * opening cloning devices (fixed).
  */
 typedef struct fdfile {
 	bool		ff_exclose;	/* :: close on exec (fd_set_exclose) */
