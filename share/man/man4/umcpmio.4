@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.5 2025/01/23 19:15:49 brad Exp $
+.\" $NetBSD: umcpmio.4,v 1.6 2025/07/11 22:03:36 andvar Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -113,7 +113,7 @@ In particular, it is known that the
 .Xr ds2482ow 4
 device will not work as expected.
 .Pp
-The MCP2221 / MCP2221A chip will automatically detact and deal with a
+The MCP2221 / MCP2221A chip will automatically detect and deal with a
 device that uses I2C clock stretching.
 .Ss UART
 The UART utilizes the
@@ -144,7 +144,7 @@ from the chip.
 This variable is in microseconds and defaults to 2500.
 The driver will only allow
 .Li response_errcnt
-number of errors when waiting for a reponse from a HID report.
+number of errors when waiting for a response from a HID report.
 This includes timeouts due to exceeding
 .Li response_wait .
 .
