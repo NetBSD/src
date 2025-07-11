@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.529 2025/07/09 11:43:48 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.530 2025/07/11 18:18:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.529 2025/07/09 11:43:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.530 2025/07/11 18:18:29 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2154,7 +2154,7 @@ handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
 {
 	struct lwp *l = curlwp;
 	register_t retval;
-	int error, newfd;
+	int error = 0, newfd;
 
 	if (actions == NULL)
 		return 0;
