@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.107 2022/04/08 10:17:53 andvar Exp $	*/
+/*	$NetBSD: ping6.c,v 1.108 2025/07/11 22:19:53 andvar Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.107 2022/04/08 10:17:53 andvar Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.108 2025/07/11 22:19:53 andvar Exp $");
 #endif
 #endif
 
@@ -1823,7 +1823,7 @@ pr_nodeaddr(struct icmp6_nodeinfo *ni, /* ni->qtype must be NODEADDR */
 
 	/*
 	 * In icmp-name-lookups 05 and later, TTL of each returned address
-	 * is contained in the resposne. We try to detect the version
+	 * is contained in the response. We try to detect the version
 	 * by the length of the data, but note that the detection algorithm
 	 * is incomplete. We assume the latest draft by default.
 	 */

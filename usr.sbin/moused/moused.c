@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.32 2024/07/05 20:19:43 andvar Exp $ */
+/* $NetBSD: moused.c,v 1.33 2025/07/11 22:19:54 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.32 2024/07/05 20:19:43 andvar Exp $");
+__RCSID("$NetBSD: moused.c,v 1.33 2025/07/11 22:19:54 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2396,7 +2396,7 @@ pnpwakeup1(void)
     ioctl(rodent.mfd, TIOCMBIC, &i);
     usleep(240000);
 
-    /* wait for respose, 2nd phase (2.1.6) */
+    /* wait for response, 2nd phase (2.1.6) */
     i = FREAD;
     ioctl(rodent.mfd, TIOCFLUSH, &i);
     i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 1, RTS = 1 */
@@ -2430,7 +2430,7 @@ pnpwakeup2(void)
 
     setmousespeed(1200, 1200, (CS7 | CREAD | CLOCAL | HUPCL));
 
-    /* wait for respose */
+    /* wait for response */
     i = FREAD;
     ioctl(rodent.mfd, TIOCFLUSH, &i);
     i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 1, RTS = 1 */

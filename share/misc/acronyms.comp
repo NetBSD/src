@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.410 2025/06/25 01:26:39 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.411 2025/07/11 22:19:53 andvar Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1597,7 +1597,7 @@ SIR	signal-to-interference ratio
 SIR	slow infrared
 SIRT	security incident response team
 SISD	single instruction, single data
-SIV	synthetic intialization vector
+SIV	synthetic initialization vector
 SLAAC	stateless address auto-configuration
 SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.42 2022/04/12 21:05:37 andvar Exp $	*/
+/*	$NetBSD: sbp.c,v 1.43 2025/07/11 22:19:53 andvar Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.42 2022/04/12 21:05:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.43 2025/07/11 22:19:53 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1829,7 +1829,7 @@ END_DEBUG
 			printf("Vendor dependent\n");
 			break;
 		default:
-			printf("unknown respose code %d\n", sbp_status->resp);
+			printf("unknown response code %d\n", sbp_status->resp);
 		}
 	}
 
@@ -1969,7 +1969,7 @@ done0:
 	xfer->recv.pay_len = SBP_RECV_LEN;
 /* The received packet is usually small enough to be stored within
  * the buffer. In that case, the controller return ack_complete and
- * no respose is necessary.
+ * no response is necessary.
  *
  * XXX fwohci.c and firewire.c should inform event_code such as
  * ack_complete or ack_pending to upper driver.
