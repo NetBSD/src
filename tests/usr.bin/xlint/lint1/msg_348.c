@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.12 2024/10/31 10:32:08 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.13 2025/07/11 05:40:35 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message: maximum value %d for '%s' of type '%s' does not match maximum array index %d [348]
@@ -259,4 +259,37 @@ uppercase_n_name(enum uppercase_n x)
 {
 	static const char *const name[] = { "first", "last" };
 	return name[x];
+}
+
+
+enum unit_prefix {
+	/* expect+2: previous declaration of 'MEGA' [260] */
+	/* expect+1: previous declaration of 'MEGA' [260] */
+	NONE = 0, KILO = 1, MEGA = 2
+};
+
+char
+unit_name(enum unit_prefix prefix)
+{
+	char name;
+
+	static const char name_short[] = "-K";
+	name = name_short[prefix];
+	name = "-K"[prefix];
+
+	static const char name_no_nul[] = { '-', 'K', 'M' };
+	name = name_no_nul[prefix];
+	name = (char[]){'-', 'K', 'M'}[prefix];
+
+	static const char name_nul[] = "-KM";
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 3 [348] */
+	name = name_nul[prefix];
+	name = "-KM"[prefix];
+
+	static const char name_long[] = "-KMG";
+	/* expect+1: warning: maximum value 2 for 'MEGA' of type 'enum unit_prefix' does not match maximum array index 4 [348] */
+	name = name_long[prefix];
+	name = "-KMG"[prefix];
+
+	return name;
 }
