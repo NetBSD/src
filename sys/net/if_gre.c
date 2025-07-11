@@ -1016,7 +1016,7 @@ gre_fp_recv(struct gre_softc *sc)
 		return false;
 	case GRE_M_SETFP:
 		mutex_exit(&sc->sc_mtx);
-		rc = fd_dup(fp, 0, &fd, 0);
+		rc = fd_dup(fp, 0, &fd, false, false);
 		mutex_enter(&sc->sc_mtx);
 		if (rc != 0) {
 			sc->sc_msg = GRE_M_ERR;

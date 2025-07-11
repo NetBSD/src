@@ -603,6 +603,7 @@ fsocreate(int domain, struct socket **sop, int type, int proto, int *fdout,
 		return error;
 	}
 	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
+	fd_set_foclose(l, fd, (flags & SOCK_CLOFORK) != 0);
 	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp->f_type = DTYPE_SOCKET;
@@ -1405,8 +1406,10 @@ dontblock:
 					sounlock(so);
 					splx(s);
 					error = (*dom->dom_externalize)(cm, l,
-					    (flags & MSG_CMSG_CLOEXEC) ?
-					    O_CLOEXEC : 0);
+					    ((flags & MSG_CMSG_CLOEXEC) ?
+					    O_CLOEXEC : 0) |
+					    ((flags & MSG_CMSG_CLOFORK) ?
+					    O_CLOFORK : 0));
 					s = splsoftnet();
 					solock(so);
 				}

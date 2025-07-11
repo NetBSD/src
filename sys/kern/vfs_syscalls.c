@@ -330,6 +330,8 @@ open_setfp(struct lwp *l, file_t *fp, struct vnode *vp, int indx, int flags)
 	}
 	if (flags & O_CLOEXEC)
 		fd_set_exclose(l, indx, true);
+	if (flags & O_CLOFORK)
+		fd_set_foclose(l, indx, true);
 	return 0;
 }
 

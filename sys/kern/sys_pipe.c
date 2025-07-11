@@ -212,7 +212,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	int fd, error;
 	proc_t *p;
 
-	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
+	if (flags & ~(O_CLOEXEC|O_CLOFORK|O_NONBLOCK|O_NOSIGPIPE))
 		return EINVAL;
 	p = curproc;
 	rpipe = wpipe = NULL;
@@ -240,12 +240,14 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	rf->f_pipe = rpipe;
 	rf->f_ops = &pipeops;
 	fd_set_exclose(l, fildes[0], (flags & O_CLOEXEC) != 0);
+	fd_set_foclose(l, fildes[0], (flags & O_CLOFORK) != 0);
 
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_PIPE;
 	wf->f_pipe = wpipe;
 	wf->f_ops = &pipeops;
 	fd_set_exclose(l, fildes[1], (flags & O_CLOEXEC) != 0);
+	fd_set_foclose(l, fildes[1], (flags & O_CLOFORK) != 0);
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;

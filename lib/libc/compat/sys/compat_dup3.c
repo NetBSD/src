@@ -44,6 +44,8 @@ __warn_references(dup3,
 int
 dup3(int oldfd, int newfd, int flags)
 {
+	int fdflags;
+
 	if (oldfd != newfd) {
 		return __dup3100(oldfd, newfd, flags);
 	}
@@ -56,7 +58,9 @@ dup3(int oldfd, int newfd, int flags)
 		if (e == -1)
 			return -1;
 	}
-	if (flags & O_CLOEXEC)
-		return fcntl(newfd, F_SETFD, FD_CLOEXEC);
+	fdflags = ((flags & O_CLOEXEC) ? FD_CLOEXEC : 0) |
+	    ((flags & O_CLOFORK) ? FD_CLOFORK : 0);
+	if (fdflags != 0)
+		return fcntl(newfd, F_SETFD, fdflags);
 	return 0;
 }

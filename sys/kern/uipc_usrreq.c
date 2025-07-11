@@ -1483,6 +1483,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		const int fd = fdp[i];
 		atomic_dec_uint(&unp_rights);
 		fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
+		fd_set_foclose(l, fd, (flags & O_CLOFORK) != 0);
 		fd_affix(p, fp, fd);
 		/*
 		 * Done with this file pointer, replace it with a fd;

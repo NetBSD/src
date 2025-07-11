@@ -113,7 +113,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	if ((fp = fd_getfile(oldfd)) == NULL) {
 		return EBADF;
 	}
-	error = fd_dup(fp, 0, &newfd, false);
+	error = fd_dup(fp, 0, &newfd, false, false);
 	fd_putfile(oldfd);
 	*retval = newfd;
 	return error;
@@ -335,6 +335,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	char *kpath;
 	struct flock fl;
 	bool cloexec = false;
+	bool clofork = false;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -383,9 +384,19 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		return error;
 	}
 
+	if (cmd == F_DUPFD_CLOEXEC)
+		cloexec = true;
+	else if (cmd == F_DUPFD_CLOFORK)
+		clofork = true;
+	else if (cmd == F_DUPFD_CLOBOTH) {
+		cloexec = true;
+		clofork = true;
+	}
+
 	switch (cmd) {
 	case F_DUPFD_CLOEXEC:
-		cloexec = true;
+	case F_DUPFD_CLOFORK:
+	case F_DUPFD_CLOBOTH:
 		/*FALLTHROUGH*/
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
@@ -395,18 +406,21 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 			fd_putfile(fd);
 			return EINVAL;
 		}
-		error = fd_dup(fp, newmin, &i, cloexec);
+		error = fd_dup(fp, newmin, &i, cloexec, clofork);
 		*retval = i;
 		break;
 
 	case F_GETFD:
 		dt = atomic_load_consume(&fdp->fd_dt);
-		*retval = dt->dt_ff[fd]->ff_exclose;
+		*retval = (dt->dt_ff[fd]->ff_exclose ? FD_CLOEXEC : 0) |
+		    (dt->dt_ff[fd]->ff_foclose ? FD_CLOFORK: 0);
 		break;
 
 	case F_SETFD:
 		fd_set_exclose(l, fd,
 		    ((long)SCARG(uap, arg) & FD_CLOEXEC) != 0);
+		fd_set_foclose(l, fd,
+		    ((long)SCARG(uap, arg) & FD_CLOFORK) != 0);
 		break;
 
 	case F_GETNOSIGPIPE:
