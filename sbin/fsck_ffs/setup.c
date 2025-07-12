@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.102 2018/10/05 09:49:23 hannken Exp $	*/
+/*	$NetBSD: setup.c,v 1.102.2.1 2025/07/12 11:05:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.102 2018/10/05 09:49:23 hannken Exp $");
+__RCSID("$NetBSD: setup.c,v 1.102.2.1 2025/07/12 11:05:12 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ int
 setup(const char *dev, const char *origdev)
 {
 	long cg, size, asked, i, j;
-	long bmapsize;
+	size_t bmapsize;
 	struct disk_geom geo;
 	struct dkwedge_info dkw;
 	off_t sizepb;
@@ -492,10 +492,10 @@ setup(const char *dev, const char *origdev)
 	 * allocate and initialize the necessary maps
 	 */
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = calloc((unsigned)bmapsize, sizeof (char));
+	blockmap = calloc(bmapsize, sizeof (char));
 	if (blockmap == NULL) {
-		pwarn("cannot alloc %u bytes for blockmap\n",
-		    (unsigned)bmapsize);
+		pwarn("cannot alloc %zu bytes for blockmap\n",
+		    bmapsize);
 		goto badsblabel;
 	}
 	inostathead = calloc((unsigned)(sblock->fs_ncg),
