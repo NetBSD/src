@@ -59,18 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 MODULE(MODULE_CLASS_MISC, aiosp, NULL);
 
-static kmutex_t		aiospb_mtx;
-static u_int		aiospb_max = PRI_KTHREAD + NPRI_KTHREAD;
-static struct aiosp	**aiospb;
-
-static int		aiosp_initialize(struct aiosp *, pri_t);
-static int		aiosp_destroy(struct aiosp *);
-static int		aiosp_retrieve_bank(pri_t, struct aiosp **);
-static int		aiosp_pri_idx(pri_t);
-
 static size_t		aiosp_ops_expected(size_t);
 static void		aiosp_ops_init(struct aiosp_ops *);
 static void		aiosp_ops_fini(struct aiosp_ops *);
+static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
@@ -78,57 +70,7 @@ static int		aiost_process_rw(struct aiost *);
 static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
 static void		aiost_sigsend(struct proc *, struct sigevent *);
-
-/*
- * Teardown all service pools
- */
-static int
-aio_fini(void)
-{
-	struct aiosp *aiosp;
-	int error;
-
-	for (int i = 0; i < aiospb_max; i++) {
-		aiosp = aiospb[i];
-		if (aiosp == NULL) {
-			continue;
-		}
-
-		error = aiosp_destroy(aiosp);
-		if (error) {
-			return error;
-		}
-
-		kmem_free(aiosp, sizeof(*aiosp));
-	}
-
-	kmem_free(aiospb, sizeof(*aiospb) * aiospb_max);
-
-	return 0;
-}
-
-/*
- * Initialize global service pool state
- */
-static int
-aio_init(void)
-{
-	struct aiosp *aiosp;
-	int error;
-
-	mutex_init(&aiospb_mtx, MUTEX_DEFAULT, IPL_NONE);
-
-	aiospb = kmem_zalloc(sizeof(*aiospb) * aiospb_max, KM_SLEEP);
-	aiosp = kmem_zalloc(sizeof(*aiosp), KM_SLEEP);
-	aiospb[aiosp_pri_idx(PRI_KTHREAD)] = aiosp;
-
-	error = aiosp_initialize(aiosp, PRI_KTHREAD);
-	if (error) {
-		return error;
-	}
-
-	return 0;
-}
+static void		aiost_notify_ops (struct aio_job *);
 
 /*
  * Module interface
@@ -138,81 +80,121 @@ aiosp_modcmd(modcmd_t cmd, void *arg)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return aio_init();
+		return 0;
 	case MODULE_CMD_FINI:
-		return aio_fini();
+		return 0;
 	default:
 		return SET_ERROR(ENOTTY);
 	}
 }
 
 /*
- * Distributes pending jobs to servicing threads. Allocates the requisite number
- * of servicing threads, creates new threads if necessary, then assigns a single
- * job to be completed by a servicing thread.
+ * Order RB with respect to fp
+ */
+static int
+aiost_file_group_cmp(struct aiost_file_group *a, struct aiost_file_group *b)
+{
+	if (a == NULL || b == NULL) {
+		return (a == b) ? 0 : (a ? 1 : -1);
+	}
+
+	uintptr_t ap = (uintptr_t)a->fp;
+	uintptr_t bp = (uintptr_t)b->fp;
+
+	return (ap < bp) ? -1 : (ap > bp) ? 1 : 0;
+}
+
+RB_HEAD(aiost_file_tree, aiost_file_group);
+RB_PROTOTYPE(aiost_file_tree, aiost_file_group, tree, aiost_file_group_cmp);
+RB_GENERATE(aiost_file_tree, aiost_file_group, tree, aiost_file_group_cmp);
+
+/*
+ * Group jobs by file handle for coalescing and distribute them among service
+ * threads
  */
 int
 aiosp_distribute_jobs(struct aiosp *sp)
 {
 	struct aio_job *job;
+	struct file *fp;
 	int error = 0;
 
-	/*
-	 * Check to see if the number of pending jobs exceeds the number of free
-	 * service threads. If it does then that means we need to create new
-	 * threads.
-	 */
 	mutex_enter(&sp->mtx);
 	if (!sp->jobs_pending) {
 		mutex_exit(&sp->mtx);
 		return 0;
 	}
 
-	if (sp->jobs_pending > sp->nthreads_free) {
-		int nthreads_new = sp->jobs_pending - sp->nthreads_free;
+	struct aio_job *tmp;
+	TAILQ_FOREACH_SAFE(job, &sp->jobs, list, tmp) {
+		fp = fd_getfile2(job->p, job->aiocbp.aio_fildes);
+		if (fp == NULL) {
+			error = SET_ERROR(EBADF);
+			return error;
+		}
 
-		for (int i = 0; i < nthreads_new; i++) {
-			struct aiost *aiost;
+		struct aiost_file_group *fg = NULL;
+		struct aiost *aiost = NULL;
 
-			error = aiost_create(sp, &aiost);
+		if (fp->f_vnode && fp->f_vnode->v_type == VREG) {
+			struct aiost_file_group find = { 0 };
+			find.fp = fp;
+			fg = RB_FIND(aiost_file_tree, sp->fg_root, &find);
+
+			if (fg == NULL) {
+				fg = kmem_zalloc(sizeof(*fg), KM_SLEEP);
+				fg->fp = fp;
+				fg->vp = fp->f_vnode;
+				fg->queue_size = 0;
+				fg->refcnt = 1;
+				TAILQ_INIT(&fg->queue);
+
+				error = aiosp_worker_extract(sp, &aiost);
+				if (error) {
+					kmem_free(fg, sizeof(*fg));
+					closef(fp);
+					mutex_exit(&sp->mtx);
+					return error;
+				}
+
+				RB_INSERT(aiost_file_tree, sp->fg_root, fg);
+				fg->aiost = aiost;
+	
+				aiost->fg = fg;
+				aiost->job = NULL;
+			} else {
+				/*
+				 * release fp as it already exists within fg
+				 */
+				closef(fp);
+				aiost = fg->aiost;
+			}
+		} else {
+			error = aiosp_worker_extract(sp, &aiost);
 			if (error) {
+				closef(fp);
 				mutex_exit(&sp->mtx);
 				return error;
 			}
-		}
-	}
 
-	/*
-	 * Loop over all pending jobs and assign a thread from the freelist.
-	 * Move from freelist to active. Configure service thread to work with
-	 * respect to the job. Also signal the CV outside of sp->mtx to avoid
-	 * any shenanigans.
-	 */
-	struct aio_job *tmp;
-	TAILQ_FOREACH_SAFE(job, &sp->jobs, list, tmp) {
-		struct aiost *aiost = TAILQ_LAST(&sp->freelist, aiost_list);
-		if (aiost == NULL) {
-			panic("aiosp_distribute_jobs: aiost is null"); 
+			aiost->fg = NULL;
+			aiost->job = job;
 		}
 
-		mutex_enter(&aiost->mtx);
-
-		TAILQ_REMOVE(&sp->freelist, aiost, list);
-		sp->nthreads_free--;
-
-		TAILQ_INSERT_TAIL(&sp->active, aiost, list);
-		sp->nthreads_active++;
-
+		/*
+		 * Move from sp->jobs to fg->jobs
+		 */
 		TAILQ_REMOVE(&sp->jobs, job, list);
+		sp->jobs_pending--;
 
-		job->aiost = aiost;
-		aiost->job = job;
+		if (fg) {
+			TAILQ_INSERT_TAIL(&fg->queue, job, list);
+			fg->queue_size++;
+		}
+
 		aiost->freelist = false;
 		aiost->state = AIOST_STATE_OPERATION;
 
-		sp->jobs_pending--;
-
-		mutex_exit(&aiost->mtx);
 		cv_signal(&aiost->service_cv);
 	}
 
@@ -230,7 +212,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
  * incremeneted posthumously as well.
  */
 int
-aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
+aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	struct timespec *ts, uint32_t flags)
 {
 	struct aio_job *job;
@@ -277,7 +259,7 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 
 		struct aiocbp *aiocbp = NULL;
-		error = aiocbp_lookup(aioproc, &aiocbp, aiocbp_list[i]);
+		error = aiocbp_lookup(aiosp, &aiocbp, aiocbp_list[i]);
 		if (error) {
 			mutex_exit(&ops->mtx);
 			aiosp_ops_fini(ops);
@@ -289,38 +271,36 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 		}
 
 		job = aiocbp->job;
-		struct aiost *aiost = aiocbp->job->aiost;
-		KASSERT(aiost);
 
-		mutex_enter(&aiost->mtx);
+		mutex_enter(&job->mtx);
 		if (job->completed) {
 			ops->completed++;
 		}
 
-		if (aiost->ops_total == aiost->ops_size) {
-			size_t old_size = aiost->ops_size;
-			size_t new_size = aiost->ops_size == 0 ? 1 :
-				(aiost->ops_size == 1 ? 2 :
-				(aiost->ops_size * aiost->ops_size));
+		if (job->ops_total <= job->ops_size) {
+			size_t old_size = job->ops_size;
+			size_t new_size = job->ops_size == 0 ? 1 :
+				(job->ops_size == 1 ? 2 :
+				(job->ops_size * job->ops_size));
 
 			struct aiosp_ops **new_ops = kmem_zalloc(new_size *
 				sizeof(*new_ops), KM_SLEEP);
 
-			if (aiost->ops && old_size) {
-				memcpy(new_ops, aiost->ops, 
-					aiost->ops_total * sizeof(*aiost->ops));
-				kmem_free(aiost->ops, old_size *
-					sizeof(*aiost->ops));
+			if (job->ops && old_size) {
+				memcpy(new_ops, job->ops, 
+					job->ops_total * sizeof(*job->ops));
+				kmem_free(job->ops, old_size *
+					sizeof(*job->ops));
 			}
 
-			aiost->ops_size = new_size;
-			aiost->ops = new_ops;
+			job->ops_size = new_size;
+			job->ops = new_ops;
 		}
 
-		aiost->ops[aiost->ops_total] = ops;
-		aiost->ops_total++;
+		job->ops[job->ops_total] = ops;
+		job->ops_total++;
 
-		mutex_exit(&aiost->mtx);
+		mutex_exit(&job->mtx);
 		ops->total++;
 	}
 
@@ -348,66 +328,19 @@ aiosp_suspend(struct aioproc *aioproc, struct aiocb **aiocbp_list, int nent,
 }
 
 /*
- * Distribute all pending operations on all service queues attached to the
- * primary bank
- */
-int
-aiosp_dispense_bank(void)
-{
-	int error;
-	struct aiosp *sp;
-
-	mutex_enter(&aiospb_mtx);
-
-	for (int i = 0; i < aiosp_pri_idx(aiospb_max); i++) {
-		sp = aiospb[i];
-		if (sp == NULL) {
-			continue;
-		}
-
-		error = aiosp_distribute_jobs(sp);
-		if (error) {
-			mutex_exit(&aiospb_mtx);
-			return error;
-		}
-	}
-
-	mutex_exit(&aiospb_mtx);
-
-	return 0;
-}
-
-/*
  * Initializes a servicing pool.
  */
-static int
-aiosp_initialize(struct aiosp *sp, pri_t pri)
+int
+aiosp_initialize(struct aiosp *sp)
 {
-	sp->priority = pri;
 	mutex_init(&sp->mtx, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&sp->freelist);
 	TAILQ_INIT(&sp->active);
 	TAILQ_INIT(&sp->jobs);
+	sp->fg_root = kmem_zalloc(sizeof(*sp->fg_root), KM_SLEEP);
+	RB_INIT(sp->fg_root);
 
 	return 0;
-}
-
-/*
- * Convert a priority into an index into the service pool bank.
- */
-static int
-aiosp_pri_idx(pri_t pri)
-{
-	if (pri < PRI_KTHREAD) {
-		panic("aio_process: invalid priority for AIO (<PRI_KTHREAD)");
-	}
-
-	int idx = pri - PRI_KTHREAD;
-	if (idx > aiospb_max) {
-		panic("aio_process: invalid priority for AIO (>NPRI_KTHREAD");
-	}
-
-	return idx;
 }
 
 /*
@@ -432,43 +365,37 @@ aiosp_ops_expected(size_t total)
 }
 
 /*
- * Convert a priority into associative service pool. Initialize the pool if it
- * does not yet exist.
+ *
  */
 static int
-aiosp_retrieve_bank(pri_t pri, struct aiosp **aiosp)
+aiosp_worker_extract(struct aiosp *sp, struct aiost **aiost)
 {
 	int error;
-	int bank_pri_idx;
 
-	mutex_enter(&aiospb_mtx);
-
-	bank_pri_idx = aiosp_pri_idx(pri);
-
-	*aiosp = aiospb[bank_pri_idx];
-	if (*aiosp == NULL) {
-		aiospb[bank_pri_idx] = kmem_zalloc(sizeof(**aiospb),
-			KM_SLEEP);
-		*aiosp = aiospb[bank_pri_idx];
-
-		error = aiosp_initialize(*aiosp, pri);
+	if (sp->nthreads_free == 0) {
+		error = aiost_create(sp, aiost);
 		if (error) {
-			mutex_exit(&aiospb_mtx);
 			return error;
 		}
+	} else {
+		*aiost = TAILQ_LAST(&sp->freelist, aiost_list);
 	}
 
-	mutex_exit(&aiospb_mtx);
+	TAILQ_REMOVE(&sp->freelist, *aiost, list);
+	sp->nthreads_free--;
+	TAILQ_INSERT_TAIL(&sp->active, *aiost, list);
+	sp->nthreads_active++;
 
 	return 0;
 }
+
 
 /*
  * Each process keeps track of all the service threads instantiated to service
  * an asynchronous operation by the process. When a process is terminated we
  * must also terminate all of its active and pending asynchronous operation.
  */
-static int
+int
 aiosp_destroy(struct aiosp *sp)
 {
 	struct aiost *st;
@@ -484,7 +411,6 @@ aiosp_destroy(struct aiosp *sp)
 		error = aiost_terminate(st);
 		if (error) {
 			mutex_exit(&sp->mtx);
-			kmem_free(sp, sizeof(*sp));
 			return error;
 		}
 
@@ -495,7 +421,6 @@ aiosp_destroy(struct aiosp *sp)
 		error = aiost_terminate(st);
 		if (error) {
 			mutex_exit(&sp->mtx);
-			kmem_free(sp, sizeof(*sp));
 			return error;
 		}
 
@@ -503,31 +428,24 @@ aiosp_destroy(struct aiosp *sp)
 	}
 
 	mutex_exit(&sp->mtx);
-	kmem_free(sp, sizeof(*sp));
+	mutex_destroy(&sp->mtx);
 
 	return 0;
 }
 
+
 /*
- * Enqueue a job for processing by a servicing queue
+ * Enqueue a job for processing by the process's servicing pool
  */
 int
-aiosp_enqueue_job(struct aio_job *job)
+aiosp_enqueue_job(struct aiosp *aiosp, struct aio_job *job)
 {
-	int error;
-	struct aiosp *sp;
+	mutex_enter(&aiosp->mtx);
 
-	error = aiosp_retrieve_bank(job->pri, &sp);
-	if (error) {
-		return error;
-	}
+	TAILQ_INSERT_TAIL(&aiosp->jobs, job, list);
+	aiosp->jobs_pending++;
 
-	mutex_enter(&sp->mtx);
-
-	TAILQ_INSERT_TAIL(&sp->jobs, job, list);
-	sp->jobs_pending++;
-
-	mutex_exit(&sp->mtx);
+	mutex_exit(&aiosp->mtx);
 
 	return 0;
 }
@@ -569,6 +487,33 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 }
 
 /*
+ * wake up anyone waiting on the completion of this job
+ */
+static void
+aiost_notify_ops (struct aio_job *job)
+{
+	for (int i = 0; i < job->ops_total; i++) {
+		struct aiosp_ops *ops = job->ops[i];
+		if (ops == NULL) {
+			continue;
+		}
+
+		mutex_enter(&ops->mtx);
+		KASSERT(ops->total > ops->completed);
+		ops->completed++;
+		mutex_exit(&ops->mtx);
+		cv_signal(&ops->done_cv);
+	}
+
+	if (job->ops && job->ops_total) {
+		size_t total = aiosp_ops_expected(job->ops_total);
+		kmem_free(job->ops, total * sizeof(*job->ops));
+		job->ops_total = 0;
+		job->ops = NULL;
+	}
+}
+
+/*
  * Servicing thread entry point. Process the operation. Notify all those
  * blocking on the completion of the operation. Send a signal if necessary. And
  * then mark the current servicing thread as free.
@@ -603,21 +548,7 @@ aiost_entry(void *arg)
 		}
 
 		if (st->state == AIOST_STATE_TERMINATE) {
-			mutex_enter(&sp->mtx);
-
-			if (st->freelist) {
-				TAILQ_REMOVE(&sp->freelist, st, list);
-				sp->nthreads_free--;
-			} else {
-				TAILQ_REMOVE(&sp->active, st, list);
-				sp->nthreads_active--;
-			}
-
-			sp->nthreads_total--;
-
-			mutex_exit(&sp->mtx);
-			mutex_exit(&st->mtx);
-			kthread_exit(0);
+			break;
 		}
 
 		if (st->state != AIOST_STATE_OPERATION) {
@@ -625,41 +556,51 @@ aiost_entry(void *arg)
 				st->state);
 		}
 
-		job = st->job;
-		KASSERT(job != NULL);
-		if (job->aio_op & (AIO_READ | AIO_WRITE)) {
-			error = aiost_process_rw(st);
-		} else if (job->aio_op & AIO_SYNC) {
-			error = aiost_process_sync(st);
-		} else {
-			panic("aio_process: invalid operation code\n");
-		}
+		if (st->fg) {
+			struct aiost_file_group *fg = st->fg;
 
-		job->completed = true;
-		st->state = AIOST_STATE_NONE;
-		st->job = NULL;
+			struct aio_job *tmp;
+			TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
+				if (job->aio_op & (AIO_READ | AIO_WRITE)) {
+				} else if (job->aio_op & AIO_SYNC) {
+				}
 
-		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+				mutex_enter(&job->mtx);
+				job->completed = true;
+				mutex_exit(&job->mtx);
 
-		for (int i = 0; i < st->ops_total; i++) {
-			struct aiosp_ops *ops = st->ops[i];
-			if (ops == NULL) {
-				continue;
+				aiost_notify_ops(job);
+				aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+
+				TAILQ_REMOVE(&fg->queue, job, list);
+				fg->queue_size--;
 			}
 
-			mutex_enter(&ops->mtx);
-			KASSERT(ops->total > ops->completed);
-			ops->completed++;
-			mutex_exit(&ops->mtx);
-			cv_signal(&ops->done_cv);
+			mutex_enter(&sp->mtx);
+			RB_REMOVE(aiost_file_tree, sp->fg_root, fg);
+			closef(fg->fp);
+			kmem_free(fg, sizeof(*fg));
+			mutex_exit(&sp->mtx);
+		} else {
+			job = st->job;
+			KASSERT(job != NULL);
+			if (job->aio_op & (AIO_READ | AIO_WRITE)) {
+				error = aiost_process_rw(st);
+			} else if (job->aio_op & AIO_SYNC) {
+				error = aiost_process_sync(st);
+			} else {
+				panic("aio_process: invalid operation code\n");
+			}
+
+			job->completed = true;
+
+			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+			aiost_notify_ops(job);
 		}
 
-		if (st->ops && st->ops_total) {
-			size_t total = aiosp_ops_expected(st->ops_total);
-			kmem_free(st->ops, total * sizeof(*st->ops));
-			st->ops_total = 0;
-			st->ops = NULL;
-		}
+		st->state = AIOST_STATE_NONE;
+		st->job = NULL;
+		st->fg = NULL;
 
 		/*
 		 * Remove st from list of active service threads, append to
@@ -678,6 +619,22 @@ aiost_entry(void *arg)
 
 		mutex_exit(&sp->mtx);
 	}
+
+	mutex_enter(&sp->mtx);
+
+	if (st->freelist) {
+		TAILQ_REMOVE(&sp->freelist, st, list);
+		sp->nthreads_free--;
+	} else {
+		TAILQ_REMOVE(&sp->active, st, list);
+		sp->nthreads_active--;
+	}
+
+	sp->nthreads_total--;
+
+	mutex_exit(&sp->mtx);
+	mutex_exit(&st->mtx);
+	kthread_exit(0);
 }
 
 /*
@@ -837,19 +794,8 @@ static int
 aiost_terminate(struct aiost *st)
 {
 	int error = 0;
-	size_t ops_total;
-	struct aiosp_ops **ops;
-	size_t total;
 
 	mutex_enter(&st->mtx);
-
-	ops_total = st->ops_total;
-	ops = st->ops;
-
-	if (ops && ops_total) {
-		total = aiosp_ops_expected(st->ops_total);
-		kmem_free(ops, total * sizeof(*ops));
-	}
 
 	st->state = AIOST_STATE_TERMINATE;
 
@@ -866,39 +812,7 @@ aiost_terminate(struct aiost *st)
 }
 
 /*
- * For major workloads that actually merit the use of asynchronous IO you can
- * expect an arbitrarily high number of servicing threads to spawn. Throughout
- * their lifecycle these servicing threads will remain cached within the bank to
- * be pulled from when needed. It makes sense to flush this cache routinely when
- * a process terminates. All servicing threads spawned by a given process will
- * be flushed when that process terminates.
- */
-int
-aiosp_flush(struct aioproc *aioproc)
-{
-	struct aiost *st;
-	struct aiost *tmp;
-	int error;
-
-	mutex_enter(&aioproc->aio_mtx);
-
-	TAILQ_FOREACH_SAFE(st, &aioproc->aiost_total, list, tmp) {
-		error = aiost_terminate(st);
-		if (error) {
-			mutex_exit(&aioproc->aio_mtx);
-			return error;
-		}
-
-		kmem_free(st, sizeof(*st));
-	}
-
-	mutex_exit(&aioproc->aio_mtx);
-
-	return error;
-}
-
-/*
- * initialises aiosp_ops
+ * Initialises aiosp_ops
  */
 static void
 aiosp_ops_init(struct aiosp_ops *ops)
@@ -910,7 +824,7 @@ aiosp_ops_init(struct aiosp_ops *ops)
 }
 
 /*
- * cleans up aiosp_ops
+ * Cleans up aiosp_ops
  */
 static void
 aiosp_ops_fini(struct aiosp_ops *ops)
@@ -923,20 +837,24 @@ aiosp_ops_fini(struct aiosp_ops *ops)
  * Ensure that the same job can not be enqueued twice. 
  */
 int
-aiosp_validate_conflicts(struct aioproc *aioproc, void *uptr)
+aiosp_validate_conflicts(struct aiosp *aiosp, void *uptr)
 {
 	struct aiost *st;
 
-	mutex_enter(&aioproc->aio_mtx);
-	TAILQ_FOREACH(st, &aioproc->aiost_total, list) {
-		if (st->job->aiocb_uptr != uptr) {
-			continue;
-		}
-		mutex_exit(&aioproc->aio_mtx);
-		return EINVAL;
-	}
-	mutex_exit(&aioproc->aio_mtx);
+	mutex_enter(&aiosp->mtx);
 
+	/* check active threads */
+	TAILQ_FOREACH(st, &aiosp->active, list) {
+		KASSERT(st->job);
+		if (st->job->aiocb_uptr == uptr) {
+			mutex_exit(&aiosp->mtx);
+			return EINVAL;
+		}
+	}
+
+	/* no need to check freelist threads as they have no jobs */
+
+	mutex_exit(&aiosp->mtx);
 	return 0;
 }
 
@@ -953,26 +871,26 @@ aiocbp_hash(void *uptr)
  * aiocbp hash lookup
  */
 int
-aiocbp_lookup(struct aioproc *aioproc, struct aiocbp **aiocbpp, void *uptr)
+aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, void *uptr)
 {
 	struct aiocbp *aiocbp;
 	u_int hash;
 
-	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
+	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
 
 	//printf("searching element with key {%lx} and hash {%x}\n", (uintptr_t)uptr, hash);
 
-	mutex_enter(&aioproc->aio_hash_mtx);
-	TAILQ_FOREACH(aiocbp, &aioproc->aio_hash[hash], list) {
+	mutex_enter(&aiosp->aio_hash_mtx);
+	TAILQ_FOREACH(aiocbp, &aiosp->aio_hash[hash], list) {
 		if (aiocbp->uptr == uptr) {
 			//printf("element found {%lx} and the job {%lx} {%lx}\n", (uintptr_t)aiocbp, (uintptr_t)aiocbp->job, (uintptr_t)aiocbp->job->aiost);
 
 			*aiocbpp = aiocbp;
-			mutex_exit(&aioproc->aio_hash_mtx);
+			mutex_exit(&aiosp->aio_hash_mtx);
 			return 0;
 		}
 	}
-	mutex_exit(&aioproc->aio_hash_mtx);
+	mutex_exit(&aiosp->aio_hash_mtx);
 	
 	return ENOENT;
 }
@@ -981,23 +899,23 @@ aiocbp_lookup(struct aioproc *aioproc, struct aiocbp **aiocbpp, void *uptr)
  * aiocbp hash removal
  */
 int
-aiocbp_remove(struct aioproc *aioproc, void *uptr)
+aiocbp_remove(struct aiosp *aiosp, void *uptr)
 {
 	struct aiocbp *aiocbp;
 	u_int hash;
 
-	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
+	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
 
 	struct aiocbp *tmp;
-	mutex_enter(&aioproc->aio_hash_mtx);
-	TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[hash], list, tmp) {
+	mutex_enter(&aiosp->aio_hash_mtx);
+	TAILQ_FOREACH_SAFE(aiocbp, &aiosp->aio_hash[hash], list, tmp) {
 		if (aiocbp->uptr == uptr) {
-			TAILQ_REMOVE(&aioproc->aio_hash[hash], aiocbp, list);
-			mutex_exit(&aioproc->aio_hash_mtx);
+			TAILQ_REMOVE(&aiosp->aio_hash[hash], aiocbp, list);
+			mutex_exit(&aiosp->aio_hash_mtx);
 			return 0;
 		}
 	}
-	mutex_exit(&aioproc->aio_hash_mtx);
+	mutex_exit(&aiosp->aio_hash_mtx);
 	
 	return ENOENT;
 }
@@ -1006,28 +924,28 @@ aiocbp_remove(struct aioproc *aioproc, void *uptr)
  * aiocbp hash insertion
  */
 int
-aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp)
+aiocbp_insert(struct aiosp *aiosp, struct aiocbp *aiocbp)
 {
 	struct aiocbp *found;
 	void *uptr;
 	u_int hash;
 
 	uptr = aiocbp->uptr;
-	hash = aiocbp_hash(uptr) & aioproc->aio_hash_mask;
+	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
 	
-	mutex_enter(&aioproc->aio_hash_mtx);
-	TAILQ_FOREACH(found, &aioproc->aio_hash[hash], list) {
+	mutex_enter(&aiosp->aio_hash_mtx);
+	TAILQ_FOREACH(found, &aiosp->aio_hash[hash], list) {
 		if (found->uptr == uptr) {
 			found->job = aiocbp->job;
-			mutex_exit(&aioproc->aio_hash_mtx);
+			mutex_exit(&aiosp->aio_hash_mtx);
 			return EEXIST;
 		}
 	}
 
 	//printf("appending element with key {%x} onto hash {%lx} aiocbp {%lx}\n", hash, (uintptr_t)uptr, (uintptr_t)aiocbp);
 
-	TAILQ_INSERT_HEAD(&aioproc->aio_hash[hash], aiocbp, list);
-	mutex_exit(&aioproc->aio_hash_mtx);
+	TAILQ_INSERT_HEAD(&aiosp->aio_hash[hash], aiocbp, list);
+	mutex_exit(&aiosp->aio_hash_mtx);
 	
 	return 0;
 }
@@ -1036,22 +954,22 @@ aiocbp_insert(struct aioproc *aioproc, struct aiocbp *aiocbp)
  * aiocbp initialise
  */
 int
-aiocbp_init(struct aioproc *aioproc, u_int hashsize)
+aiocbp_init(struct aiosp *aiosp, u_int hashsize)
 {
 	if (!powerof2(hashsize)) {
 		return EINVAL;
 	}
 
-	aioproc->aio_hash = kmem_zalloc(hashsize * sizeof(*aioproc->aio_hash),
+	aiosp->aio_hash = kmem_zalloc(hashsize * sizeof(*aiosp->aio_hash),
 		KM_SLEEP);
 
-	aioproc->aio_hash_mask = hashsize - 1;
-	aioproc->aio_hash_size = hashsize;
+	aiosp->aio_hash_mask = hashsize - 1;
+	aiosp->aio_hash_size = hashsize;
 
-	mutex_init(&aioproc->aio_hash_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&aiosp->aio_hash_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	for (size_t i = 0; i < hashsize; i++) {
-		TAILQ_INIT(&aioproc->aio_hash[i]);
+		TAILQ_INIT(&aiosp->aio_hash[i]);
 	}
 
 	return 0;
@@ -1061,27 +979,27 @@ aiocbp_init(struct aioproc *aioproc, u_int hashsize)
  * aiocbp destroy
  */
 void
-aiocbp_destroy(struct aioproc *aioproc)
+aiocbp_destroy(struct aiosp *aiosp)
 {
-	if (aioproc->aio_hash == NULL) {
+	if (aiosp->aio_hash == NULL) {
 		return;
 	}
 
 	struct aiocbp *aiocbp;
 
-	mutex_enter(&aioproc->aio_hash_mtx);
-	for (size_t i = 0; i < aioproc->aio_hash_size; i++) {
+	mutex_enter(&aiosp->aio_hash_mtx);
+	for (size_t i = 0; i < aiosp->aio_hash_size; i++) {
 		struct aiocbp *tmp;
-		TAILQ_FOREACH_SAFE(aiocbp, &aioproc->aio_hash[i], list, tmp) {
-			TAILQ_REMOVE(&aioproc->aio_hash[i], aiocbp, list);
+		TAILQ_FOREACH_SAFE(aiocbp, &aiosp->aio_hash[i], list, tmp) {
+			TAILQ_REMOVE(&aiosp->aio_hash[i], aiocbp, list);
 			kmem_free(aiocbp, sizeof(*aiocbp));
 		}
 	}
 
-	kmem_free(aioproc->aio_hash,
-		aioproc->aio_hash_size * sizeof(*aioproc->aio_hash));
-	aioproc->aio_hash = NULL;
-	aioproc->aio_hash_mask = 0;
-	aioproc->aio_hash_size = 0;
-	mutex_exit(&aioproc->aio_hash_mtx);
+	kmem_free(aiosp->aio_hash,
+		aiosp->aio_hash_size * sizeof(*aiosp->aio_hash));
+	aiosp->aio_hash = NULL;
+	aiosp->aio_hash_mask = 0;
+	aiosp->aio_hash_size = 0;
+	mutex_exit(&aiosp->aio_hash_mtx);
 }

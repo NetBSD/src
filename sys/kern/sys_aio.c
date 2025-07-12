@@ -189,7 +189,12 @@ aio_procinit(struct proc *p)
 
 	/* Initialize the aiocbp hash map */
 #ifdef AIOSP
-	error = aiocbp_init(aio, 256);
+	error = aiosp_initialize(&aio->aiosp);
+	if (error) {
+		return error;
+	}
+
+	error = aiocbp_init(&aio->aiosp, 256);
 	if (error) {
 		return error;
 	}
@@ -200,7 +205,6 @@ aio_procinit(struct proc *p)
 	cv_init(&aio->aio_worker_cv, "aiowork");
 	cv_init(&aio->done_cv, "aiodone");
 	TAILQ_INIT(&aio->jobs_queue);
-	TAILQ_INIT(&aio->aiost_total);
 
 	/*
 	 * Create an AIO worker thread.
@@ -264,7 +268,8 @@ aio_exit(struct proc *p, void *cookie)
 
 	/* Destroy and free the entire AIO data structure */
 #ifdef AIOSP 
-	aiocbp_destroy(aio);
+	aiocbp_destroy(&aio->aiosp);
+	aiosp_destroy(&aio->aiosp);
 #endif
 	cv_destroy(&aio->aio_worker_cv);
 	cv_destroy(&aio->done_cv);
@@ -563,7 +568,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aio = p->p_aio;
 	if (aio) {
 #ifdef AIOSP
-		error = aiosp_validate_conflicts(aio, aiocb_uptr);
+		error = aiosp_validate_conflicts(&aio->aiosp, aiocb_uptr);
 #else
 		error = aio_validate_conflicts(aio, aiocb_uptr);
 #endif
@@ -605,7 +610,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	a_job->aiocb_uptr = aiocb_uptr;
 	a_job->aio_op |= op;
 	a_job->lio = lio;
-	a_job->aiost = NULL;
+	mutex_init(&a_job->mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * Add the job to the queue, update the counters, and
@@ -632,12 +637,12 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 
 	mutex_exit(&aio->aio_mtx);
 
-	error = aiocbp_insert(aio, aiocbp);
+	error = aiocbp_insert(&aio->aiosp, aiocbp);
 	if (error) {
 		return SET_ERROR(error);
 	}
 
-	error = aiosp_enqueue_job(a_job);
+	error = aiosp_enqueue_job(&aio->aiosp, a_job);
 	if (error) {
 		return SET_ERROR(error);
 	}
@@ -822,7 +827,9 @@ sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap,
 	int error;
 	error = aio_enqueue_job(AIO_READ, SCARG(uap, aiocbp), NULL);
 #ifdef AIOSP
-	error = aiosp_dispense_bank();
+	struct proc *p = curlwp->l_proc;
+	struct aioproc *aio = p->p_aio;
+	error = aiosp_distribute_jobs(&aio->aiosp);
 #endif
 	return error;
 }
@@ -892,7 +899,8 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 #ifdef AIOSP
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
-	error = aiosp_suspend(aio, list, nent, SCARG(uap, timeout) ?
+	KASSERT(aio);
+	error = aiosp_suspend(&aio->aiosp, list, nent, SCARG(uap, timeout) ?
 		&ts : NULL, AIOSP_SUSPEND_ALL);
 #else
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
@@ -979,7 +987,10 @@ sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap,
 	int error;
 	error = aio_enqueue_job(AIO_WRITE, SCARG(uap, aiocbp), NULL);
 #ifdef AIOSP
-	error = aiosp_dispense_bank();
+	struct proc *p = curlwp->l_proc;
+	struct aioproc *aio = p->p_aio;
+	KASSERT(aio);
+	error = aiosp_distribute_jobs(&aio->aiosp);
 #endif
 	return error;
 }
@@ -1072,7 +1083,7 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 	}
 
 #ifdef AIOSP
-	error = aiosp_dispense_bank();
+	error = aiosp_distribute_jobs(&aio->aiosp);
 	if (error) {
 		return error;
 	}

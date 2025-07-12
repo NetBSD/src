@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/tree.h>
 
 /* Returned by aio_cancel() */
 #define AIO_CANCELED		0x1
@@ -93,13 +94,16 @@ struct aiocb {
 /* Structure of AIO job */
 struct aiost;
 struct aio_job {
+	kmutex_t mtx;		/* Protects this structure */
 	int aio_op;		/* Operation code */
 	struct aiocb aiocbp;	/* AIO data structure */
 	pri_t pri;		/* Job priority */
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
 	struct proc *p;		/* Process that instantiated the job */
-	struct aiost *aiost;	/* Service thread associated with this job */
 	bool completed;		/* Marks the completion status of this job */
+	struct aiosp_ops **ops;	/* Array of ops */
+	size_t ops_size;	/* Size of ops array */
+	size_t ops_total;	/* Total number of connected ops */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
@@ -123,6 +127,17 @@ struct aiosp_ops {
 	size_t total;		/* Keeps track of the number of total jobs */
 };
 
+struct aiost;
+struct aiost_file_group {
+	RB_ENTRY(aiost_file_group) tree;
+	struct file *fp;
+	struct vnode *vp;
+	struct aiost *aiost;
+	TAILQ_HEAD(, aio_job) queue;
+	size_t queue_size;
+	int refcnt;
+};
+
 /* Structure for AIO servicing thread */
 struct aiosp;
 struct aiost {
@@ -130,17 +145,23 @@ struct aiost {
 	struct aiosp *aiosp;		/* Servicing pool of this thread */
 	kmutex_t mtx;			/* Protects this structure */
 	kcondvar_t service_cv;		/* Signal to activate thread */
-	struct aio_job *job;		/* Jobs associated with the thread */
 	struct lwp *lwp;		/* Servicing thread LWP */
-	size_t ops_total;		/* Total number of connected ops */
-	struct aiosp_ops **ops;		/* Array of ops */
-	size_t ops_size;		/* Size of ops array */
 	int state;			/* The state of the thread */
 	bool freelist;			/* Whether or not aiost is on freelist */
+	struct aiost_file_group *fg;	/* File group associated with the thread */
+	struct aio_job *job;		/* Singleton job */
+};
+
+struct aiocbp {
+	TAILQ_ENTRY(aiocbp) list;
+	void *uptr;
+	struct aio_job *job;
 };
 
 /* Structure for AIO servicing pool */
 TAILQ_HEAD(aiost_list, aiost);
+TAILQ_HEAD(aiocbp_list, aiocbp);
+struct aiost_file_tree;
 struct aiosp {
 	struct aiost_list freelist;	/* Available service threads */
 	size_t nthreads_free;		/* Length of freelist */
@@ -150,13 +171,11 @@ struct aiosp {
 	size_t jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
 	size_t nthreads_total;		/* Number of total servicing threads */
-	pri_t priority;			/* Thread priority of the pool */
-};
-
-struct aiocbp {
-	TAILQ_ENTRY(aiocbp) list;
-	void *uptr;
-	struct aio_job *job;
+	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
+	kmutex_t aio_hash_mtx;		/* Protects the hash table */
+	size_t aio_hash_size;		/* Total number of buckets */
+	u_int aio_hash_mask;		/* Hash mask */
+	struct aiost_file_tree *fg_root;/* RB tree of file groups */
 };
 
 /* LIO structure */
@@ -166,7 +185,6 @@ struct lio_req {
 };
 
 /* Structure of AIO data for process */
-TAILQ_HEAD(aiocbp_list, aiocbp);
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
 	kcondvar_t aio_worker_cv;	/* Signals on a new job */
@@ -175,11 +193,7 @@ struct aioproc {
 	unsigned int jobs_count;	/* Count of the jobs */
 	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
-	kmutex_t aio_hash_mtx;		/* Protects the hash table */
-	struct aiost_list aiost_total;	/* Total list of servicing threads */
-	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
-	size_t aio_hash_size;		/* Total number of buckets */
-	u_int aio_hash_mask;		/* Hash mask */
+	struct aiosp aiosp;		/* Per-process service pool */
 };
 
 extern u_int aio_listio_max;
@@ -191,19 +205,20 @@ extern u_int aio_listio_max;
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
+int	aiosp_initialize(struct aiosp *);
+int	aiosp_destroy(struct aiosp *);
 int	aiosp_distribute_jobs(struct aiosp *);
-int	aiosp_dispense_bank(void);
-int	aiosp_enqueue_job(struct aio_job *);
-int	aiosp_suspend(struct aioproc *, struct aiocb **, int, struct timespec *,
+int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
+int	aiosp_suspend(struct aiosp *, struct aiocb **, int, struct timespec *,
 		uint32_t);
-int	aiosp_flush(struct aioproc *);
-int	aiosp_validate_conflicts(struct aioproc *, void *);
+int	aiosp_flush(struct aiosp *);
+int	aiosp_validate_conflicts(struct aiosp *, void *);
 
-void	aiocbp_destroy(struct aioproc *);
-int	aiocbp_init(struct aioproc *, u_int);
-int 	aiocbp_lookup(struct aioproc *, struct aiocbp **, void *);
-int 	aiocbp_remove(struct aioproc *, void *);
-int 	aiocbp_insert(struct aioproc *, struct aiocbp *);
+void	aiocbp_destroy(struct aiosp *);
+int	aiocbp_init(struct aiosp *, u_int);
+int 	aiocbp_lookup(struct aiosp *, struct aiocbp **, void *);
+int 	aiocbp_remove(struct aiosp *, void *);
+int 	aiocbp_insert(struct aiosp *, struct aiocbp *);
 
 
 #endif /* _KERNEL */
