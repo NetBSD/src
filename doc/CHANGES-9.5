@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.69 2025/07/08 15:27:05 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.70 2025/07/12 11:08:09 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -926,4 +926,10 @@ build.sh					1.399
 	passed on the build.sh command line and MKREPRO_TIMESTAMP
 	is set manually via -V.
 	[hgutch, ticket #1963]
+
+sbin/fsck_ffs/setup.c				1.110 (patch)
+
+	fsck_ffs: don't truncate bitmap size to unsigned int, avoids
+	crashes on filesystems with more than 2^32 blocks.
+	[mlelstv, ticket #1964]
 
