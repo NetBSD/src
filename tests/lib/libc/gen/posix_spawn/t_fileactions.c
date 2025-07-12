@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.10 2025/07/10 05:37:45 martin Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.11 2025/07/12 16:25:29 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fileactions.c,v 1.10 2025/07/10 05:37:45 martin Exp $");
+__RCSID("$NetBSD: t_fileactions.c,v 1.11 2025/07/12 16:25:29 gutteridge Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -312,7 +312,7 @@ ATF_TC(t_spawn_close_already_closed);
 ATF_TC_HEAD(t_spawn_close_already_closed, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "file actions closing closed descriptors are allowed (PR 59523");
+	    "file actions closing closed descriptors are allowed (PR 59523)");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/ls");
 }
 
@@ -331,11 +331,11 @@ ATF_TC_BODY(t_spawn_close_already_closed, tc)
 	RZ(posix_spawn_file_actions_init(&fa));
 	// known closed fd
 	RZ(posix_spawn_file_actions_addclose(&fa, fd));
-	// a random fd we know nothing about (cross fingers!
+	// a random fd we know nothing about (cross fingers!)
 	RZ(posix_spawn_file_actions_addclose(&fa, fd+1));
 	// high fd probably not ever been allocated, likely to trigger
 	// a fd_getfile() failure in the kernel, which is another
-	// path that originaly caused the fallout in PR 59523
+	// path that originally caused the fallout in PR 59523
 	RZ(posix_spawn_file_actions_addclose(&fa, 560));
 	// redirect output to /dev/null to not garble atf test results
 	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
@@ -355,7 +355,7 @@ ATF_TC_HEAD(t_spawn_close_already_closed_wait, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "file actions closing closed descriptors are allowed, "
-	    "with parent process waiting (PR 59523");
+	    "with parent process waiting (PR 59523)");
 	atf_tc_set_md_var(tc, "require.progs", "/bin/ls");
 }
 
@@ -374,11 +374,11 @@ ATF_TC_BODY(t_spawn_close_already_closed_wait, tc)
 	RZ(posix_spawn_file_actions_init(&fa));
 	// known closed fd
 	RZ(posix_spawn_file_actions_addclose(&fa, fd));
-	// a random fd we know nothing about (cross fingers!
+	// a random fd we know nothing about (cross fingers!)
 	RZ(posix_spawn_file_actions_addclose(&fa, fd+1));
 	// high fd probably not ever been allocated, likely to trigger
 	// a fd_getfile() failure in the kernel, which is another
-	// path that originaly caused the fallout in PR 59523
+	// path that originally caused the fallout in PR 59523
 	RZ(posix_spawn_file_actions_addclose(&fa, 560));
 	// redirect output to /dev/null to not garble atf test results
 	RZ(posix_spawn_file_actions_addopen(&fa, STDOUT_FILENO, "/dev/null",
