@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.235.4.1 2023/08/01 15:05:05 martin Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.235.4.2 2025/07/12 10:54:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.235.4.1 2023/08/01 15:05:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.235.4.2 2025/07/12 10:54:49 martin Exp $");
 
 #include "veriexec.h"
 
@@ -659,7 +659,7 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	uio->uio_offset = *offset;
 	if (__predict_false(vp->v_type == VDIR) &&
 	    offset == &fp->f_offset && (flags & FOF_UPDATE_OFFSET) == 0)
-		mutex_enter(&fp->f_lock);
+		mutex_exit(&fp->f_lock);
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
