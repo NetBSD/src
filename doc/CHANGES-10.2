@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.36 2025/07/08 15:25:50 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.37 2025/07/12 11:03:26 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -884,4 +884,20 @@ build.sh					1.399
 	passed on the build.sh command line and MKREPRO_TIMESTAMP
 	is set manually via -V.
 	[hgutch, ticket #1132]
+
+sys/kern/vfs_vnops.c				1.246
+
+	PR 59519: fix lock leak.
+	[bad, ticket #1133]
+
+sys/kern/vfs_vnops.c				1.245
+
+	vn_bdev_openpath(): avoid a NULL specnode pointer dereference.
+	[mlelstv, ticket #1134]
+
+sbin/fsck_ffs/setup.c				1.110
+
+	fsck_ffs: don't truncate bitmap size to unsigned int, avoids
+	crashes on filesystems with more than 2^32 blocks.
+	[mlelstv, ticket #1135]
 
