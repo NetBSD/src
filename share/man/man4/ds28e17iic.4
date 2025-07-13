@@ -1,4 +1,4 @@
-.\" $NetBSD: ds28e17iic.4,v 1.1 2025/01/23 19:02:42 brad Exp $
+.\" $NetBSD: ds28e17iic.4,v 1.2 2025/07/13 20:30:26 andvar Exp $
 .\"
 .\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -29,8 +29,8 @@ driver provides a 1-Wire to I2C bridge with a
 .Xr iic 4
 bus at the far end using the DS28E17 bridge chip.
 .Pp
-The DS28E17 will automatically detect and deal with a end device that
-uses I2C clock stretching.
+The DS28E17 will automatically detect and deal with a device at the other end 
+of the bus that uses I2C clock stretching.
 .Sh SYSCTL VARIABLES
 The following
 .Xr sysctl 3
@@ -48,12 +48,12 @@ This may be particularly noticed if end device is doing clock
 stretching.
 .It Li hw.ds28e17iic0.reportreadnostop
 If set to 1, report that an attempt to do a Read without a Stop
-occured.  The chip does not support that operation.  Read without Stop
+occurred.  The chip does not support that operation.  Read without Stop
 will be treated as a Read with a Stop with the hope that the end
 device will be able to deal with that.
 .It Li hw.ds28e17iic0.reportzerolen
 If set to 1, report that an attempt to perform a zero length read or
-zero length write occured.  The chip does not support zero length
+zero length write occurred.  The chip does not support zero length
 reads or writes.
 .It Li hw.ds28e17iic0.debug
 If the driver is compiled with
