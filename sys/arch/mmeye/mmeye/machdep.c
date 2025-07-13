@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2024/02/05 22:08:05 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2025/07/13 21:07:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2024/02/05 22:08:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2025/07/13 21:07:04 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -533,7 +533,7 @@ LoadAndReset(const char *osimage)
 	u_long csum2 = 0;
 	u_long size2;
 
-	MMTA_IMASK = 0; /* mask all externel interrupt */
+	MMTA_IMASK = 0; /* mask all external interrupts */
 
 	printf("LoadAndReset: copy start\n");
 	buf_addr = (void *)OSIMAGE_BUF_ADDR;
