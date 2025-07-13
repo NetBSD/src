@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.240 2025/03/11 14:30:28 riastradh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.241 2025/07/13 20:13:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1161,13 +1161,13 @@ __sysctl_verify_##ctl_type##_arg(c_type *arg) \
     return arg; \
 }
 
-VERIFY_FN(CTLTYPE_NODE, struct sysctlnode);
-VERIFY_FN(CTLTYPE_INT, int);
-VERIFY_FN(CTLTYPE_STRING, char);
-VERIFY_FN(CTLTYPE_QUAD, int64_t);
-VERIFY_FN(CTLTYPE_STRUCT, void);
-VERIFY_FN(CTLTYPE_BOOL, bool);
-VERIFY_FN(CTLTYPE_LONG, long);
+VERIFY_FN(CTLTYPE_NODE, struct sysctlnode)
+VERIFY_FN(CTLTYPE_INT, int)
+VERIFY_FN(CTLTYPE_STRING, char)
+VERIFY_FN(CTLTYPE_QUAD, int64_t)
+VERIFY_FN(CTLTYPE_STRUCT, void)
+VERIFY_FN(CTLTYPE_BOOL, bool)
+VERIFY_FN(CTLTYPE_LONG, long)
 #undef VERIFY_FN
 
 #define	sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, newp, ...) \
