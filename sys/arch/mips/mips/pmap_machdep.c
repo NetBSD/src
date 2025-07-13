@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.39 2025/07/13 11:27:47 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.40 2025/07/13 13:21:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.39 2025/07/13 11:27:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.40 2025/07/13 13:21:32 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -878,7 +878,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 	}
 	/*
 	 * Don't check for differences in the TLB entry modified status for
-	 * kernal mappings as they can be modified while the kernel pmap is
+	 * kernel mappings as they can be modified while the kernel pmap is
 	 * being updated, see PR59518.
 	 */
 	if (pm == pmap_kernel()) {
