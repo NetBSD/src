@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.38 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.39 2025/07/13 11:27:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.38 2022/10/26 07:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.39 2025/07/13 11:27:47 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -875,6 +875,18 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 		xpte &= ~(MIPS3_PG_WIRED|MIPS3_PG_RO);
 	} else {
 		xpte &= ~(MIPS1_PG_WIRED|MIPS1_PG_RO);
+	}
+	/*
+	 * Don't check for differences in the TLB entry modified status for
+	 * kernal mappings as they can be modified while the kernel pmap is
+	 * being updated, see PR59518.
+	 */
+	if (pm == pmap_kernel()) {
+		if (MIPS_HAS_R4K_MMU) {
+			xpte ^= (pte ^ xpte) & MIPS3_PG_D;
+		} else {
+			xpte ^= (pte ^ xpte) & MIPS1_PG_D;
+		}
 	}
 
         KASSERTMSG(pte == xpte,
