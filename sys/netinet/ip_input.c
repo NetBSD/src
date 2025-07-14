@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.402 2022/09/02 03:50:00 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.402.4.1 2025/07/14 18:41:06 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402 2022/09/02 03:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402.4.1 2025/07/14 18:41:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402 2022/09/02 03:50:00 thorpej Exp $
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <net/route.h>
 #include <net/pktqueue.h>
 #include <net/pfil.h>
@@ -1372,6 +1373,19 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		return;
 	}
+#ifdef NET_MPSAFE
+	/*
+	 * XXX workaround an inconsistency issue between address and route on
+	 * address initialization to avoid packet looping.  See doc/TODO.smpnet.
+	 */
+	if (__predict_false(rt->rt_ifp->if_type == IFT_LOOP)) {
+		rtcache_unref(rt, ro);
+		rtcache_percpu_putref(ipforward_rt_percpu);
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
+		IP_STATINC(IP_STAT_CANTFORWARD);
+		return;
+	}
+#endif
 
 	/*
 	 * Save at most 68 bytes of the packet in case
