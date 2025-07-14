@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2024/02/18 20:57:30 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2025/07/14 10:25:52 kre Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -127,7 +127,7 @@ LIBDPLIBS+=	$L ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/lib$L
 LDADD+= -lssl -lcrypto -lcrypt
 DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
 .else
-LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 .endif
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.15 2023/06/03 09:09:05 lukem Exp $
+#	$NetBSD: Makefile.libldap,v 1.16 2025/07/14 10:25:51 kre Exp $
 
 .include "../../openldap.mk"
 
@@ -31,7 +31,7 @@ CPPFLAGS+=	-DHAVE_GSSAPI
 LIBDPLIBS+=	gssapi	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 .endif
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
-LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
 
 COPTS.charray.c+=	${CC_WNO_STRINGOP_OVERFLOW}
