@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.26 2022/09/29 07:00:47 skrll Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.27 2025/07/14 06:15:55 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.26 2022/09/29 07:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.27 2025/07/14 06:15:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,7 +122,7 @@ struct ralink_tx_desc {
 };
 
 /* TODO:
- * try to scale number of descriptors swith size of memory
+ * try to scale number of descriptors with the size of memory
  * these numbers may have a significant impact on performance/memory/mbuf usage
  */
 #if RTMEMSIZE >= 64
