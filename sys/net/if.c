@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.528 2022/11/25 06:18:42 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.528.2.1 2025/07/14 18:31:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.528 2022/11/25 06:18:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.528.2.1 2025/07/14 18:31:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2418,7 +2418,9 @@ if_link_state_change_work(struct work *work, void *arg)
 	if (state == LINK_STATE_UNSET)
 		goto out;
 
+	IFNET_LOCK(ifp);
 	if_link_state_change_process(ifp, state);
+	IFNET_UNLOCK(ifp);
 
 	/* If there is a link state change to come, schedule it. */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
