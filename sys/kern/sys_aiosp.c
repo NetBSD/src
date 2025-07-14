@@ -66,11 +66,17 @@ static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
 
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
-static int		aiost_process_rw(struct aiost *);
-static int		aiost_process_sync(struct aiost *);
 static void		aiost_entry(void *);
 static void		aiost_sigsend(struct proc *, struct sigevent *);
 static void		aiost_notify_ops (struct aio_job *);
+
+static int		io_write(struct aiost *);
+static int		io_read(struct aiost *);
+static int		io_sync(struct aiost *);
+static int		io_construct(struct aio_job *, struct file **,
+				struct iovec *, struct uio *);
+static int		io_write_fallback(struct aio_job *);
+static int		io_read_fallback(struct aio_job *);
 
 /*
  * Module interface
@@ -562,10 +568,14 @@ aiost_entry(void *arg)
 
 			struct aio_job *tmp;
 			TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
-				if (job->aio_op & (AIO_READ | AIO_WRITE)) {
-					// implement and call io_read/write
+				if (job->aio_op & AIO_READ) {
+					error = io_read(st);
+				} else if (job->aio_op & AIO_WRITE) {
+					error = io_write(st);
 				} else if (job->aio_op & AIO_SYNC) {
-					// implement and call io_sync
+					error = io_sync(st);
+				} else {
+					panic("aio_process: invalid operation code\n");
 				}
 
 				mutex_enter(&job->mtx);
@@ -587,10 +597,12 @@ aiost_entry(void *arg)
 		} else {
 			job = st->job;
 			KASSERT(job != NULL);
-			if (job->aio_op & (AIO_READ | AIO_WRITE)) {
-				error = aiost_process_rw(st);
+			if (job->aio_op & AIO_READ) {
+				error = io_read_fallback(job);
+			} else if (job->aio_op & AIO_WRITE) {
+				error = io_write_fallback(job);
 			} else if (job->aio_op & AIO_SYNC) {
-				error = aiost_process_sync(st);
+				error = io_sync(st);
 			} else {
 				panic("aio_process: invalid operation code\n");
 			}
@@ -682,68 +694,88 @@ aiost_sigsend(struct proc *p, struct sigevent *sig)
 }
 
 /*
- * processes a read/write asynchronous operations
+ *
  */
 static int
-aiost_process_rw(struct aiost *aiost)
+io_write(struct aiost *aiost)
 {
-	struct aio_job *job = aiost->job;
+	return 0;
+}
+
+/*
+ *
+ */
+static int
+io_read(struct aiost *aiost)
+{
+	return 0;
+}
+
+/*
+ *
+ */
+static int
+io_construct(struct aio_job *job, struct file **fp, struct iovec *aiov,
+	struct uio *auio)
+{
 	struct aiocb *aiocbp = &job->aiocbp;
-	struct file *fp;
 	int fd = aiocbp->aio_fildes;
 	int error = 0;
 
-	struct iovec aiov;
-	struct uio auio;
-
 	if (aiocbp->aio_nbytes > SSIZE_MAX) {
 		error = SET_ERROR(EINVAL);
-		goto done;
+		return error;
 	}
 	
-	fp = fd_getfile2(job->p, fd);
-	if (fp == NULL) {
+	*fp = fd_getfile2(job->p, fd);
+	if (*fp == NULL) {
+		error = SET_ERROR(EBADF);
+		return error;
+	}
+
+	aiov->iov_base = aiocbp->aio_buf;
+	aiov->iov_len = aiocbp->aio_nbytes;
+	auio->uio_iov = aiov;
+	auio->uio_iovcnt = 1;
+	auio->uio_resid = aiocbp->aio_nbytes;
+	auio->uio_offset = aiocbp->aio_offset;
+	auio->uio_vmspace = job->p->p_vmspace;
+
+	return 0;
+}
+
+/*
+ *
+ */
+static int
+io_write_fallback(struct aio_job *job)
+{
+	struct file *fp;
+	struct iovec aiov;
+	struct uio auio;
+	struct aiocb *aiocbp;
+	int error;
+
+	error = io_construct(job, &fp, &aiov, &auio);
+	if (error) {
+		goto done;
+	}
+
+	/*
+	 * Perform write
+	 */
+	aiocbp = &job->aiocbp;
+	KASSERT(job->aio_op & AIO_WRITE);
+
+	if ((fp->f_flag & FWRITE) == 0) {
+		closef(fp);
 		error = SET_ERROR(EBADF);
 		goto done;
 	}
+	auio.uio_rw = UIO_WRITE;
+	error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
+		&auio, fp->f_cred, FOF_UPDATE_OFFSET);
 
-	aiov.iov_base = aiocbp->aio_buf;
-	aiov.iov_len = aiocbp->aio_nbytes;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_resid = aiocbp->aio_nbytes;
-	auio.uio_offset = aiocbp->aio_offset;
-	auio.uio_vmspace = job->p->p_vmspace;
-
-	if (job->aio_op & AIO_READ) {
-		/*
-		 * Perform a Read operation
-		 */
-		KASSERT((job->aio_op & AIO_WRITE) == 0);
-
-		if ((fp->f_flag & FREAD) == 0) {
-			closef(fp);
-			error = SET_ERROR(EBADF);
-			goto done;
-		}
-		auio.uio_rw = UIO_READ;
-		error = (*fp->f_ops->fo_read)(fp, &aiocbp->aio_offset,
-			&auio, fp->f_cred, FOF_UPDATE_OFFSET);
-	} else {
-		/*
-		 * Perform a Write operation
-		 */
-		KASSERT(job->aio_op & AIO_WRITE);
-	
-		if ((fp->f_flag & FWRITE) == 0) {
-			closef(fp);
-			error = SET_ERROR(EBADF);
-			goto done;
-		}
-		auio.uio_rw = UIO_WRITE;
-		error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
-			&auio, fp->f_cred, FOF_UPDATE_OFFSET);
-	}
 	closef(fp);
 	
 	/*
@@ -759,10 +791,56 @@ done:
 }
 
 /*
- * processes a sync/dsync asynchronous operations
+ *
  */
 static int
-aiost_process_sync(struct aiost *aiost)
+io_read_fallback(struct aio_job *job)
+{
+	struct file *fp;
+	struct iovec aiov;
+	struct uio auio;
+	struct aiocb *aiocbp;
+	int error;
+
+	error = io_construct(job, &fp, &aiov, &auio);
+	if (error) {
+		goto done;
+	}
+
+	/* 
+	 * Perform read
+	 */
+	aiocbp = &job->aiocbp;
+	KASSERT((job->aio_op & AIO_WRITE) == 0);
+
+	if ((fp->f_flag & FREAD) == 0) {
+		closef(fp);
+		error = SET_ERROR(EBADF);
+		goto done;
+	}
+	auio.uio_rw = UIO_READ;
+	error = (*fp->f_ops->fo_read)(fp, &aiocbp->aio_offset,
+		&auio, fp->f_cred, FOF_UPDATE_OFFSET);
+
+	closef(fp);
+	
+	/*
+	 * Store the result value
+	 */
+	job->aiocbp.aio_nbytes -= auio.uio_resid;
+	job->aiocbp._retval = (error == 0) ? job->aiocbp.aio_nbytes : -1;
+done:
+	job->aiocbp._errno = error;
+	job->aiocbp._state = JOB_DONE;
+
+	return 0;
+}
+
+/*
+ * process sync/dsync
+ */
+static int
+io_sync(struct aiost *aiost)
 {
 	struct aio_job *job = aiost->job;
 	struct aiocb *aiocbp = &job->aiocbp;
