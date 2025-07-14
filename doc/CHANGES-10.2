@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.37 2025/07/12 11:03:26 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.38 2025/07/14 18:42:13 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -900,4 +900,18 @@ sbin/fsck_ffs/setup.c				1.110
 	fsck_ffs: don't truncate bitmap size to unsigned int, avoids
 	crashes on filesystems with more than 2^32 blocks.
 	[mlelstv, ticket #1135]
+
+sys/net/if.c					1.535
+sys/net/route.c					1.238,1.239
+
+	route: do ifa_rtrequest() before rt_addaddr()
+	route: lower the priority of the workqueues
+	if: protect if_link_state_change_process with IFNET_LOCK
+	[ozaki-r, ticket #1136]
+
+sys/netinet/ip_input.c				1.405
+
+	ip: work around a possible packet loop during interface
+	address/route initialization.
+	[ozaki-r, ticket #1137]
 
