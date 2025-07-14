@@ -135,7 +135,6 @@ struct aiost_file_group {
 	struct aiost *aiost;
 	TAILQ_HEAD(, aio_job) queue;
 	size_t queue_size;
-	int refcnt;
 };
 
 /* Structure for AIO servicing thread */

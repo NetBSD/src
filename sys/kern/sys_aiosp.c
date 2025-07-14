@@ -129,6 +129,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 	TAILQ_FOREACH_SAFE(job, &sp->jobs, list, tmp) {
 		fp = fd_getfile2(job->p, job->aiocbp.aio_fildes);
 		if (fp == NULL) {
+			mutex_exit(&sp->mtx);
 			error = SET_ERROR(EBADF);
 			return error;
 		}
@@ -146,7 +147,6 @@ aiosp_distribute_jobs(struct aiosp *sp)
 				fg->fp = fp;
 				fg->vp = fp->f_vnode;
 				fg->queue_size = 0;
-				fg->refcnt = 1;
 				TAILQ_INIT(&fg->queue);
 
 				error = aiosp_worker_extract(sp, &aiost);
@@ -227,7 +227,8 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		}
 
 		if (timo <= 0) {
-			return SET_ERROR(EAGAIN);
+			error = SET_ERROR(EAGAIN);
+			return error;
 		}
 	} else {
 		timo = 0;
@@ -277,7 +278,7 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 			ops->completed++;
 		}
 
-		if (job->ops_total <= job->ops_size) {
+		if (job->ops_total >= job->ops_size) {
 			size_t old_size = job->ops_size;
 			size_t new_size = job->ops_size == 0 ? 1 :
 				(job->ops_size == 1 ? 2 :
@@ -562,7 +563,9 @@ aiost_entry(void *arg)
 			struct aio_job *tmp;
 			TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
 				if (job->aio_op & (AIO_READ | AIO_WRITE)) {
+					// implement and call io_read/write
 				} else if (job->aio_op & AIO_SYNC) {
+					// implement and call io_sync
 				}
 
 				mutex_enter(&job->mtx);
@@ -618,6 +621,26 @@ aiost_entry(void *arg)
 		sp->nthreads_free++;
 
 		mutex_exit(&sp->mtx);
+	}
+
+	if (st->fg) {
+		struct aiost_file_group *fg = st->fg;
+
+		struct aio_job *tmp;
+		TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
+			mutex_enter(&job->mtx);
+			job->completed = true;
+			mutex_exit(&job->mtx);
+
+			// CONFIRM WHETHER OR NOT THIS IS EXPECTED BEHAVIOUR
+			aiost_notify_ops(job);
+			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+
+			TAILQ_REMOVE(&fg->queue, job, list);
+			fg->queue_size--;
+		}
+
+		kmem_free(fg, sizeof(*fg)); 
 	}
 
 	mutex_enter(&sp->mtx);
@@ -806,7 +829,6 @@ aiost_terminate(struct aiost *st)
 
 	cv_destroy(&st->service_cv);
 	mutex_destroy(&st->mtx);
-	kmem_free(st, sizeof(*st));
 
 	return error;
 }
