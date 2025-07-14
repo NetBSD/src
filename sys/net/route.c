@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.235.2.2 2023/06/08 11:15:26 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.235.2.3 2025/07/14 18:31:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.235.2.2 2023/06/08 11:15:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.235.2.3 2025/07/14 18:31:54 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -479,7 +479,7 @@ rt_init(void)
 	rt_psref_class = psref_class_create("rtentry", IPL_SOFTNET);
 
 	error = workqueue_create(&rt_free_global.wq, "rt_free",
-	    rt_free_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
+	    rt_free_work, NULL, PRI_USER, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
@@ -1264,6 +1264,8 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		pserialize_read_exit(ss);
 		cv_init(&rt->rt_cv, "rtentry");
 		psref_target_init(&rt->rt_psref, rt_psref_class);
+		if (ifa->ifa_rtrequest)
+			ifa->ifa_rtrequest(req, rt, info);
 
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rc = rt_addaddr(rtbl, rt, netmask);
@@ -1276,8 +1278,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(rc);
 		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(req, rt, info);
 		if (need_to_release_ifa)
 			ifa_release(ifa, &psref_ifa);
 		ifa = NULL;
@@ -1824,7 +1824,7 @@ rt_timer_init(void)
 	LIST_INIT(&rttimer_queue_head);
 	callout_init(&rt_timer_ch, CALLOUT_MPSAFE);
 	error = workqueue_create(&rt_timer_wq, "rt_timer",
-	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
+	    rt_timer_work, NULL, PRI_USER, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
