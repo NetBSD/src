@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.158 2025/04/30 05:15:08 imil Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.159 2025/07/14 21:34:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.158 2025/04/30 05:15:08 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.159 2025/07/14 21:34:48 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -435,6 +435,9 @@ void
 cpu_kpreempt_exit(uintptr_t where)
 {
 	extern char x86_copyfunc_start, x86_copyfunc_end;
+#if defined(XENPV) && defined(i386)
+	extern char i386_calltrap_start, i386_calltrap_end;
+#endif
 	struct pcb *pcb;
 
 	KASSERT(kpreempt_disabled());
@@ -448,6 +451,12 @@ cpu_kpreempt_exit(uintptr_t where)
 	    where < (uintptr_t)&x86_copyfunc_end) {
 		pmap_load();
 	}
+#if defined(XENPV) && defined(i386)
+	else if (where >= (uintptr_t)&i386_calltrap_start &&
+	    where < (uintptr_t)&i386_calltrap_end) {
+		pmap_load();
+	}
+#endif
 
 	/* Restore cr2 only after the pmap, as pmap_load can block. */
 	pcb = lwp_getpcb(curlwp);
