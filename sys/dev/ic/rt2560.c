@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.40 2021/12/05 02:47:01 msaitoh Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.41 2025/07/15 22:15:04 andvar Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.40 2021/12/05 02:47:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.41 2025/07/15 22:15:04 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1353,7 +1353,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		/* send the frame to the 802.11 layer */
 		ieee80211_input(ic, m, ni, desc->rssi, 0);
 
-		/* give rssi to the rate adatation algorithm */
+		/* give rssi to the rate adaptation algorithm */
 		rn = (struct rt2560_node *)ni;
 		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
 

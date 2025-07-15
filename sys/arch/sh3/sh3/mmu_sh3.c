@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.15 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.16 2025/07/15 22:15:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.15 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.16 2025/07/15 22:15:03 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -146,7 +146,7 @@ sh3_tlb_update(int asid, vaddr_t va, uint32_t pte)
 	 * would update some random way, e.g. a valid way even if
 	 * there is an invalid way we could use instead.
 	 *
-	 * Nano-optimization: as invalidatation needs to loop over
+	 * Nano-optimization: as invalidation needs to loop over
 	 * ways anyway, just loop over all of them, noting if there's
 	 * either an existing entry for this VA that we can update or
 	 * an invalid way we can use.
