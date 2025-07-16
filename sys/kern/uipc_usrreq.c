@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.208 2025/03/27 11:00:50 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.209 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.208 2025/03/27 11:00:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.209 2025/07/16 19:14:13 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1483,6 +1483,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		const int fd = fdp[i];
 		atomic_dec_uint(&unp_rights);
 		fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
+		fd_set_foclose(l, fd, (flags & O_CLOFORK) != 0);
 		fd_affix(p, fp, fd);
 		/*
 		 * Done with this file pointer, replace it with a fd;

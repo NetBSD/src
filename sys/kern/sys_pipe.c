@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.167 2024/02/10 09:21:54 andvar Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.168 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.167 2024/02/10 09:21:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.168 2025/07/16 19:14:13 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	int fd, error;
 	proc_t *p;
 
-	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
+	if (flags & ~(O_CLOEXEC|O_CLOFORK|O_NONBLOCK|O_NOSIGPIPE))
 		return EINVAL;
 	p = curproc;
 	rpipe = wpipe = NULL;
@@ -240,12 +240,14 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	rf->f_pipe = rpipe;
 	rf->f_ops = &pipeops;
 	fd_set_exclose(l, fildes[0], (flags & O_CLOEXEC) != 0);
+	fd_set_foclose(l, fildes[0], (flags & O_CLOFORK) != 0);
 
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_PIPE;
 	wf->f_pipe = wpipe;
 	wf->f_ops = &pipeops;
 	fd_set_exclose(l, fildes[1], (flags & O_CLOEXEC) != 0);
+	fd_set_foclose(l, fildes[1], (flags & O_CLOFORK) != 0);
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;

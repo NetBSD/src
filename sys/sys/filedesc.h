@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.72 2025/07/11 01:11:56 kre Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.73 2025/07/16 19:14:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -108,9 +108,11 @@
  * SOCK_CLOEXEC, so that struct filedesc::fd_exclose is updated as
  * needed.  See PR kern/58822: close-on-exec is broken for dup3 and
  * opening cloning devices (fixed).
+ * Same with fd_set_foclose() for O_CLOFORK, SOCK_CLOFORK, etc.
  */
 typedef struct fdfile {
 	bool		ff_exclose;	/* :: close on exec (fd_set_exclose) */
+	bool		ff_foclose;	/* :: close on fork (fd_set_foclose) */
 	bool		ff_allocated;	/* d: descriptor slot is allocated */
 	u_int		ff_refcnt;	/* a: reference count on structure */
 	struct file	*ff_file;	/* d: pointer to file if open */
@@ -156,6 +158,7 @@ typedef struct filedesc {
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_unused;	/* unused */
 	bool		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
+	bool		fd_foclose;	/* non-zero if >0 fd with FOCLOSE */
 	/*
 	 * This structure is used when the number of open files is
 	 * <= NDFILE, and are then pointed to by the pointers above.
@@ -223,10 +226,11 @@ int	fd_getsock1(unsigned, struct socket **, file_t **);
 void	fd_putvnode(unsigned);
 void	fd_putsock(unsigned);
 int	fd_close(unsigned);
-int	fd_dup(file_t *, int, int *, bool);
+int	fd_dup(file_t *, int, int *, bool, bool);
 int	fd_dup2(file_t *, unsigned, int);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 void	fd_set_exclose(struct lwp *, int, bool);
+void	fd_set_foclose(struct lwp *, int, bool);
 int	pipe1(struct lwp *, int *, int);
 int	dodup(struct lwp *, int, int, int, register_t *);
 

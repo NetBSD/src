@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.132 2024/01/22 18:50:46 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.133 2025/07/16 19:14:14 kre Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,6 +113,9 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
 #define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
 #define	SOCK_NOSIGPIPE	0x40000000	/* don't send sigpipe */
+#ifdef _KERNEL					/*XXX temporary*/
+#define	SOCK_CLOFORK	0x80000000	/* set close on fork on socket */
+#endif						/*XXX temporary*/
 #define	SOCK_FLAGS_MASK	0xf0000000	/* flags mask */
 
 /*
@@ -503,6 +506,9 @@ struct msghdr {
 #define	MSG_NBIO	0x1000		/* use non-blocking I/O */
 #define	MSG_WAITFORONE	0x2000		/* recvmmsg() wait for one message */
 #define	MSG_NOTIFICATION 0x4000		/* SCTP notification */
+#ifdef _KERNEL					/*XXX temporary*/
+#define	MSG_CMSG_CLOFORK 0x8000		/* close on fork receiving fd */
+#endif						/*XXX temporary*/
 
 struct mmsghdr {
 	struct msghdr msg_hdr;

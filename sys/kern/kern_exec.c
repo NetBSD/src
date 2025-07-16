@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.530 2025/07/11 18:18:29 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.530 2025/07/11 18:18:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1261,7 +1261,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pax_aslr_init_vm(l, vm, epp);
 
 	cwdexec(p);
-	fd_closeexec();		/* handle close on exec */
+	fd_closeexec();		/* handle close on exec & close on fork */
 
 	if (__predict_false(ktrace_on))
 		fd_ktrexecfd();

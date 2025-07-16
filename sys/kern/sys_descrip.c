@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.51 2024/05/20 09:37:34 martin Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.52 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.51 2024/05/20 09:37:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.52 2025/07/16 19:14:13 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	if ((fp = fd_getfile(oldfd)) == NULL) {
 		return EBADF;
 	}
-	error = fd_dup(fp, 0, &newfd, false);
+	error = fd_dup(fp, 0, &newfd, false, false);
 	fd_putfile(oldfd);
 	*retval = newfd;
 	return error;
@@ -335,6 +335,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	char *kpath;
 	struct flock fl;
 	bool cloexec = false;
+	bool clofork = false;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -384,10 +385,17 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	}
 
 	switch (cmd) {
+	case F_DUPFD_CLOFORK:
+		clofork = true;
+		goto f_dupfd;
+	case F_DUPFD_CLOBOTH:
+		clofork = true;
+		/*FALLTHROUGH*/
 	case F_DUPFD_CLOEXEC:
 		cloexec = true;
 		/*FALLTHROUGH*/
 	case F_DUPFD:
+	f_dupfd:;
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >=
 		    l->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
@@ -395,18 +403,20 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 			fd_putfile(fd);
 			return EINVAL;
 		}
-		error = fd_dup(fp, newmin, &i, cloexec);
+		error = fd_dup(fp, newmin, &i, cloexec, clofork);
 		*retval = i;
 		break;
 
 	case F_GETFD:
 		dt = atomic_load_consume(&fdp->fd_dt);
-		*retval = dt->dt_ff[fd]->ff_exclose;
+		*retval = (dt->dt_ff[fd]->ff_exclose ? FD_CLOEXEC : 0) |
+		    (dt->dt_ff[fd]->ff_foclose ? FD_CLOFORK: 0);
 		break;
 
 	case F_SETFD:
-		fd_set_exclose(l, fd,
-		    ((long)SCARG(uap, arg) & FD_CLOEXEC) != 0);
+		tmp = (intptr_t)SCARG(uap, arg);
+		fd_set_exclose(l, fd, (tmp & FD_CLOEXEC) != 0);
+		fd_set_foclose(l, fd, (tmp & FD_CLOFORK) != 0);
 		break;
 
 	case F_GETNOSIGPIPE:

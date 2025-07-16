@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.186 2024/07/05 04:31:53 rin Exp $ */
+/*	$NetBSD: if_gre.c,v 1.187 2025/07/16 19:14:14 kre Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.186 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.187 2025/07/16 19:14:14 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -1016,7 +1016,7 @@ gre_fp_recv(struct gre_softc *sc)
 		return false;
 	case GRE_M_SETFP:
 		mutex_exit(&sc->sc_mtx);
-		rc = fd_dup(fp, 0, &fd, 0);
+		rc = fd_dup(fp, 0, &fd, false, false);
 		mutex_enter(&sc->sc_mtx);
 		if (rc != 0) {
 			sc->sc_msg = GRE_M_ERR;
