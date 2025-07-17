@@ -879,7 +879,7 @@ static void thread_general_worker(void)
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
                 || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                                                (unsigned char *)message,
+                                                (unsigned char *)(intptr_t)message,
                                                 messlen))
                 || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
@@ -919,7 +919,7 @@ static EVP_PKEY *shared_evp_pkey = NULL;
 
 static void thread_shared_evp_pkey(void)
 {
-    char *msg = "Hello World";
+    const char *msg = "Hello World";
     unsigned char ctbuf[256];
     unsigned char ptbuf[256];
     size_t ptlen, ctlen = sizeof(ctbuf);
@@ -938,7 +938,7 @@ static void thread_shared_evp_pkey(void)
 
         if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
                 || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
-                                                (unsigned char *)msg, strlen(msg)),
+                                                (unsigned char *)(intptr_t)msg, strlen(msg)),
                                                 0))
             goto err;
 
@@ -1110,7 +1110,7 @@ static int test_multi_load_unload_provider(void)
     return testresult;
 }
 
-static char *multi_load_provider = "legacy";
+static const char *multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code

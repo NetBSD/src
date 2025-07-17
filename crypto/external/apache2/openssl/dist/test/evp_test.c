@@ -1143,7 +1143,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
-                                                     (char *)expected->cts_mode,
+                                                     (char *)(intptr_t)expected->cts_mode,
                                                      0);
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_CIPHER_CTX_set_params(ctx_base, params)) {
@@ -3690,7 +3690,7 @@ static int rand_test_run(EVP_TEST *t)
     if (expected->digest != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
                                                 expected->digest, 0);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, (char *)(intptr_t)"HMAC", 0);
     *p = OSSL_PARAM_construct_end();
     if (!EVP_RAND_CTX_set_params(expected->ctx, params)) {
         if (t->expect_unapproved == 0) {
@@ -3707,10 +3707,10 @@ static int rand_test_run(EVP_TEST *t)
         item = expected->data + i;
 
         p = params;
-        z = item->entropy != NULL ? item->entropy : (unsigned char *)"";
+        z = item->entropy != NULL ? item->entropy : (unsigned char *)(intptr_t)"";
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                                  z, item->entropy_len);
-        z = item->nonce != NULL ? item->nonce : (unsigned char *)"";
+        z = item->nonce != NULL ? item->nonce : (unsigned char *)(intptr_t)"";
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                                  z, item->nonce_len);
         *p = OSSL_PARAM_construct_end();
@@ -3718,7 +3718,7 @@ static int rand_test_run(EVP_TEST *t)
                                             0, NULL, 0, params)))
             goto err;
 
-        z = item->pers != NULL ? item->pers : (unsigned char *)"";
+        z = item->pers != NULL ? item->pers : (unsigned char *)(intptr_t)"";
         if (!TEST_true(EVP_RAND_instantiate
                            (expected->ctx, strength,
                             expected->prediction_resistance, z,
@@ -5219,7 +5219,7 @@ start:
         pp++;
         goto start;
     } else if (strcmp(pp->key, "FIPSversion") == 0) {
-        if (prov_available("fips")) {
+        if (prov_available((char *)(intptr_t)"fips")) {
             j = fips_provider_version_match(libctx, pp->value);
             if (j < 0) {
                 TEST_info("Line %d: error matching FIPS versions\n", t->s.curr);

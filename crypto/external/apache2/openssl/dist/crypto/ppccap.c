@@ -26,6 +26,10 @@
 # include <sys/types.h>
 # include <sys/sysctl.h>
 #endif
+#if defined(__NetBSD__)
+# include <sys/param.h>
+# include <sys/sysctl.h>
+#endif
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "crypto/ppc_arch.h"
@@ -277,6 +281,20 @@ void OPENSSL_cpuid_setup(void)
     sigaction(SIGILL, &ill_act, &ill_oact);
 
 #ifndef OSSL_IMPLEMENT_GETAUXVAL
+# ifdef __NetBSD__
+    int error, val;
+    size_t len = sizeof(val);
+
+    /*
+     * If machdep.fpu_present == 0, FPU is absent and emulated by
+     * software.  In that case, using FPU instructions hurts rather
+     * than helps performance, and the software is unlikely to run in
+     * constant time so it would expose us to timing side channel
+     * attacks.  So don't do it!
+     */
+    error = sysctlbyname("machdep.fpu_present", &val, &len, NULL, 0);
+    if (error != 0 || (error == 0 && val != 0))
+# endif
     if (sigsetjmp(ill_jmp, 1) == 0) {
         OPENSSL_fpu_probe();
         OPENSSL_ppccap_P |= PPC_FPU;

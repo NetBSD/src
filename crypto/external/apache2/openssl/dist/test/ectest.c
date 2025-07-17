@@ -3097,7 +3097,7 @@ static int ec_d2i_publickey_test(void)
        goto err;
 
    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                "P-256", 0);
+                                                (char *)(intptr_t)("P-256"), 0);
    params[1] = OSSL_PARAM_construct_end();
 
    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))

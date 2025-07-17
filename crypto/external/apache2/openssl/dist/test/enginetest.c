@@ -172,8 +172,8 @@ static int test_engines(void)
         ENGINE_free(ptr);
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free(eid[loop]);
-        OPENSSL_free(ename[loop]);
+        OPENSSL_free((void *)(intptr_t)ENGINE_get_id(block[loop]));
+        OPENSSL_free((void *)(intptr_t)ENGINE_get_name(block[loop]));
     }
     to_return = 1;
 

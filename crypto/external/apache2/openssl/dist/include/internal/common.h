@@ -18,6 +18,8 @@
 # include "internal/e_os.h" /* ossl_inline in many files */
 # include "internal/nelem.h"
 
+# include <sys/param.h>
+# undef ALIGN32		/* NetBSD conflict */
 # if defined(__GNUC__) || defined(__clang__)
 #  define ossl_likely(x)     __builtin_expect(!!(x), 1)
 #  define ossl_unlikely(x)   __builtin_expect(!!(x), 0)

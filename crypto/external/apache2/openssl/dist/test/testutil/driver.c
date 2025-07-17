@@ -189,8 +189,9 @@ static int process_shared_options(void)
     OPTION_CHOICE_DEFAULT o;
     int value;
     int ret = -1;
-    char *flag_test = "";
-    char *flag_iter = "";
+    char empty[] = "";
+    char *flag_test = empty;
+    char *flag_iter = empty;
     char *testname = NULL;
 
     opt_begin();
