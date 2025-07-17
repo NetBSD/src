@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.9 2017/01/13 21:19:45 christos Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.10 2025/07/17 19:50:40 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.9 2017/01/13 21:19:45 christos Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.10 2025/07/17 19:50:40 kre Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -44,6 +44,13 @@ __RCSID("$NetBSD: t_pipe2.c,v 1.9 2017/01/13 21:19:45 christos Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/resource.h>
+
+#ifndef	FD_CLOFORK
+#define	FD_CLOFORK 0
+#endif
+#ifndef O_CLOFORK
+#define	O_CLOFORK 0
+#endif
 
 static void
 run(int flags)
@@ -67,6 +74,14 @@ run(int flags)
 	} else {
 		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOEXEC) == 0);
 		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) == 0);
+	}
+
+	if (flags & O_CLOFORK) {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) != 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) != 0);
+	} else {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) == 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) == 0);
 	}
 
 	if (flags & O_NONBLOCK) {
@@ -156,6 +171,21 @@ ATF_TC_BODY(pipe2_cloexec, tc)
 	run(O_CLOEXEC);
 }
 
+ATF_TC(pipe2_clofork);
+ATF_TC_HEAD(pipe2_clofork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A close-on-fork test of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_clofork, tc)
+{
+#if defined(O_CLOFORK) && O_CLOFORK != 0
+	run(O_CLOFORK);
+#else
+	atf_tc_skip("O_CLOFORK not yet implemented");
+#endif
+}
+
 ATF_TC(pipe2_nosigpipe);
 ATF_TC_HEAD(pipe2_nosigpipe, tc)
 {
@@ -186,6 +216,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, pipe2_consume);
 	ATF_TP_ADD_TC(tp, pipe2_nonblock);
 	ATF_TP_ADD_TC(tp, pipe2_cloexec);
+	ATF_TP_ADD_TC(tp, pipe2_clofork);
 	ATF_TP_ADD_TC(tp, pipe2_nosigpipe);
 	ATF_TP_ADD_TC(tp, pipe2_einval);
 
