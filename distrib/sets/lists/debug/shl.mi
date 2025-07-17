@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.366 2025/07/15 15:27:24 christos Exp $
+# $NetBSD: shl.mi,v 1.367 2025/07/17 19:05:48 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -104,7 +104,7 @@
 ./usr/libdata/debug/usr/lib/libdes.so.16.0.debug			comp-crypto-debug	debug,compatfile,openssl=35
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libdns.so.23.1.debug 		comp-bind-debug debug,compatfile
+./usr/libdata/debug/usr/lib/libdns.so.23.2.debug 		comp-bind-debug debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug		comp-mdns-debug	debug,compatfile,mdns
 ./usr/libdata/debug/usr/lib/libdtrace.so.3.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
