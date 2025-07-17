@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.12 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.13 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -531,13 +531,13 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	[ISCCC_R_MAXDEPTH] = "ISCCC_R_MAXDEPTH",
 };
 
-STATIC_ASSERT((DNS_R_SERVFAIL - DNS_R_NOERROR == 2),
+STATIC_ASSERT(DNS_R_SERVFAIL - DNS_R_NOERROR == 2,
 	      "DNS_R_NOERROR has wrong value");
 
-STATIC_ASSERT((DNS_R_BADVERS - DNS_R_NOERROR == 16),
+STATIC_ASSERT(DNS_R_BADVERS - DNS_R_NOERROR == 16,
 	      "DNS_R_BADVERS has wrong value");
 
-STATIC_ASSERT((ISC_R_NRESULTS < INT32_MAX), "result.h enum too big");
+STATIC_ASSERT(ISC_R_NRESULTS < INT32_MAX, "result.h enum too big");
 
 const char *
 isc_result_totext(isc_result_t result) {

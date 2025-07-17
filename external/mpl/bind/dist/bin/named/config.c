@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.18 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.19 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,7 +66,7 @@ options {\n\
 #endif /* if defined(HAVE_GEOIP2) */
 			    "\
 	heartbeat-interval 60;\n\
-	interface-interval 60;\n\
+	interface-interval 60m;\n					\
 	listen-on {any;};\n\
 	listen-on-v6 {any;};\n\
 	match-mapped-addresses no;\n\
@@ -244,6 +244,7 @@ options {\n\
 	min-transfer-rate-in 10240 5;\n\
 	multi-master no;\n\
 	notify yes;\n\
+	notify-defer 0;\n\
 	notify-delay 5;\n\
 	notify-to-soa no;\n\
 	serial-update-method increment;\n\

@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.9 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.10 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -768,7 +768,7 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 		if (default_kasp != NULL && dns_kasp_nsec3(default_kasp)) {
 			dns_kasp_setnsec3param(
 				kasp, dns_kasp_nsec3iter(default_kasp),
-				(dns_kasp_nsec3flags(default_kasp) == 0x01),
+				dns_kasp_nsec3flags(default_kasp) == 0x01,
 				dns_kasp_nsec3saltlen(default_kasp));
 		} else {
 			dns_kasp_setnsec3(kasp, false);

@@ -519,6 +519,7 @@ dns_keydata_todnskey
 dns_keyflags_fromtext
 dns_keymgr_checkds
 dns_keymgr_checkds_id
+dns_keymgr_key_may_be_purged
 dns_keymgr_offline
 dns_keymgr_rollover
 dns_keymgr_run
@@ -1416,7 +1417,6 @@ dns_zone_getmgr
 dns_zone_getminxfrratebytesin
 dns_zone_getminxfrratesecondsin
 dns_zone_getnotifyacl
-dns_zone_getnotifydelay
 dns_zone_getnotifysrc4
 dns_zone_getnotifysrc6
 dns_zone_getoptions
@@ -1484,6 +1484,7 @@ dns_zone_next
 dns_zone_notify
 dns_zone_notifyreceive
 dns_zone_nscheck
+dns_zone_prepare_shutdown
 dns_zone_ref
 dns_zone_refresh
 dns_zone_rekey
@@ -1531,6 +1532,7 @@ dns_zone_setminretrytime
 dns_zone_setminxfrratein
 dns_zone_setnodes
 dns_zone_setnotifyacl
+dns_zone_setnotifydefer
 dns_zone_setnotifydelay
 dns_zone_setnotifysrc4
 dns_zone_setnotifysrc6

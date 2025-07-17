@@ -528,10 +528,10 @@
 #define PACKAGE_NAME "BIND"
 
 /* A short hash from git */
-#define PACKAGE_SRCID "98f2a5b"
+#define PACKAGE_SRCID "c6b2e31"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "BIND 9.20.9"
+#define PACKAGE_STRING "BIND 9.20.11"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bind"
@@ -540,7 +540,7 @@
 #define PACKAGE_URL "https://www.isc.org/downloads/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.20.9"
+#define PACKAGE_VERSION "9.20.11"
 
 /* BIND 9 Extra part of the version */
 #define PACKAGE_VERSION_EXTRA ""
@@ -552,7 +552,7 @@
 #define PACKAGE_VERSION_MINOR "20"
 
 /* BIND 9 Patch part of the version */
-#define PACKAGE_VERSION_PATCH "9"
+#define PACKAGE_VERSION_PATCH "11"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -682,7 +682,7 @@
 #define VALIDATION_DEFAULT "auto"
 
 /* Version number of package */
-#define VERSION "9.20.9"
+#define VERSION "9.20.11"
 
 /* Define to enable very verbose query trace logging. */
 #define WANT_QUERYTRACE 1

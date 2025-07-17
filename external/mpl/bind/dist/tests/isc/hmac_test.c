@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: hmac_test.c,v 1.4 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,7 +124,7 @@ isc_hmac_test(isc_hmac_t *hmac_st, const void *key, size_t keylen,
 
 	assert_return_code(res, ISC_R_SUCCESS);
 
-	assert_memory_equal(hexdigest, result, (result ? strlen(result) : 0));
+	assert_memory_equal(hexdigest, result, result ? strlen(result) : 0);
 	assert_int_equal(isc_hmac_reset(hmac_st), ISC_R_SUCCESS);
 }
 

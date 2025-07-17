@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.15 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.16 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2180,9 +2180,9 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 				*optout = ((nsec3.flags &
 					    DNS_NSEC3FLAG_OPTOUT) != 0);
 				(*logit)(arg, ISC_LOG_DEBUG(3),
-					 (*optout ? "NSEC3 indicates optout"
-						  : "NSEC3 indicates secure "
-						    "range"));
+					 *optout ? "NSEC3 indicates optout"
+						 : "NSEC3 indicates secure "
+						   "range");
 			}
 			answer = ISC_R_SUCCESS;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.5 2025/05/21 14:48:06 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.6 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -704,7 +704,7 @@ ISC_RUN_TEST_IMPL(hash) {
 				      testcases[i].name2, h2);
 		}
 
-		assert_int_equal((h1 == h2), testcases[i].expect);
+		assert_int_equal(h1 == h2, testcases[i].expect);
 
 		/* Now case-sensitive */
 		h1 = dns_name_hash(n1);
@@ -717,7 +717,7 @@ ISC_RUN_TEST_IMPL(hash) {
 				      testcases[i].name2, h2);
 		}
 
-		assert_int_equal((h1 == h2), testcases[i].expect);
+		assert_int_equal(h1 == h2, testcases[i].expect);
 	}
 }
 

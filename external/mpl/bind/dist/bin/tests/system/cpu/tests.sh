@@ -54,7 +54,8 @@ ret=0
 for cpu in $(cpulist); do
   n=$((n + 1))
   echo_i "testing that limiting CPU sets to 0-${cpu} works ($n)"
-  cpulimit 0 "$cpu" "$NAMED" -g >named.run.$n 2>&1 || true
+  # intentionally fail running the named, but print number of detected cpus during it
+  cpulimit 0 "$cpu" "$NAMED" -g -c missing.conf >named.run.$n 2>&1 || true
   ncpus=$(sed -ne 's/.*found \([0-9]*\) CPU.*\([0-9]*\) worker thread.*/\1/p' named.run.$n)
   [ "$ncpus" -eq "$((cpu + 1))" ] || ret=1
 done

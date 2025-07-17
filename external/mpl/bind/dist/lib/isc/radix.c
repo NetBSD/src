@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.10 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.11 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -394,7 +394,7 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		}
 		/* I know the better way, but for now. */
 		for (j = 0; j < 8; j++) {
-			if (BIT_TEST(r, (0x80 >> j))) {
+			if (BIT_TEST(r, 0x80 >> j)) {
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: named-rrchecker.c,v 1.9 2025/01/26 16:25:10 christos Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.10 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -181,7 +181,7 @@ main(int argc, char *argv[]) {
 	specials[')'] = 1;
 	specials['"'] = 1;
 	isc_lex_setspecials(lex, specials);
-	options = ISC_LEXOPT_EOL;
+	options = ISC_LEXOPT_EOL | ISC_LEXOPT_DNSMULTILINE;
 	isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 
 	RUNTIME_CHECK(isc_lex_openstream(lex, stdin) == ISC_R_SUCCESS);

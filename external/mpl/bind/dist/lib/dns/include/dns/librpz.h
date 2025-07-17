@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.10 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.11 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -369,7 +369,7 @@ typedef struct librpz_client librpz_client_t;
  * @param mutex: pointer to the lock for the client handle
  * @param log_ctx: NULL or resolver's context log messages
  */
-typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t  *emsg,
+typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t * emsg,
 						librpz_mutex_t *lock,
 						librpz_mutex_t *unlock,
 						librpz_mutex_t *mutex_destroy,
@@ -390,7 +390,7 @@ LIBDEF_F(clist_detach)
  * @param use_expired: true to not ignore expired zones
  * @return client handle or NULL if the handle could not be created
  */
-typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t	 *emsg,
+typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t * emsg,
 						  librpz_clist_t *clist,
 						  const char	 *cstr,
 						  bool		  use_expired);
@@ -651,8 +651,8 @@ LIBDEF_F(zone_refresh)
  * @param client context
  * @return malloc'ed string or NULL after error
  */
-typedef char *(librpz_db_info_t)(librpz_emsg_t *emsg, bool license, bool cfiles,
-				 bool listens, librpz_rsp_t *rsp);
+typedef char *(librpz_db_info_t)(librpz_emsg_t * emsg, bool license,
+				 bool cfiles, bool listens, librpz_rsp_t *rsp);
 LIBDEF_F(db_info)
 
 /**
@@ -672,7 +672,7 @@ LIBDEF_F(itr_start)
  * @param rsp state from librpz_itr_start()
  * @return malloc'ed string or NULL after error
  */
-typedef char *(librpz_mf_stats_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
+typedef char *(librpz_mf_stats_t)(librpz_emsg_t * emsg, librpz_rsp_t *rsp);
 LIBDEF_F(mf_stats)
 
 /**
@@ -681,7 +681,7 @@ LIBDEF_F(mf_stats)
  * @param[in,out] rsp: state from librpz_itr_start()
  * @return malloc'ed string or NULL after error
  */
-typedef char *(librpz_vers_stats_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
+typedef char *(librpz_vers_stats_t)(librpz_emsg_t * emsg, librpz_rsp_t *rsp);
 LIBDEF_F(vers_stats)
 
 /**
@@ -691,7 +691,7 @@ LIBDEF_F(vers_stats)
  * @param[in,out] rsp state from librpz_rsp_start()
  * @return malloc'ed string or NULL after error
  */
-typedef char *(librpz_itr_zone_t)(librpz_emsg_t *emsg, bool all_zones,
+typedef char *(librpz_itr_zone_t)(librpz_emsg_t * emsg, bool all_zones,
 				  librpz_rsp_t *rsp);
 LIBDEF_F(itr_zone)
 
@@ -758,11 +758,12 @@ typedef int(librpz_domain_pton2_t)(const char *src, u_char *dst, size_t dstsiz,
 LIBDEF_F(domain_pton2)
 
 typedef union socku socku_t;
-typedef socku_t *(librpz_mk_inet_su_t)(socku_t *su, const struct in_addr *addrp,
-				       in_port_t port);
+typedef socku_t *(librpz_mk_inet_su_t)(socku_t * su,
+				       const struct in_addr *addrp,
+				       in_port_t	     port);
 LIBDEF_F(mk_inet_su)
 
-typedef socku_t *(librpz_mk_inet6_su_t)(socku_t		      *su,
+typedef socku_t *(librpz_mk_inet6_su_t)(socku_t * su,
 					const struct in6_addr *addrp,
 					uint32_t scope_id, in_port_t port);
 LIBDEF_F(mk_inet6_su)

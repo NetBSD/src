@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-ksr.c,v 1.2 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-ksr.c,v 1.3 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -498,11 +498,11 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 	dst_key_setbool(key, DST_BOOL_KSK, ksr->ksk);
 	dst_key_setbool(key, DST_BOOL_ZSK, !ksr->ksk);
 	dst_key_settime(key, DST_TIME_CREATED, ksr->now);
-	dst_key_settime(key, DST_TIME_PUBLISH, (active - prepub));
+	dst_key_settime(key, DST_TIME_PUBLISH, active - prepub);
 	dst_key_settime(key, DST_TIME_ACTIVATE, active);
 	if (ksr->ksk) {
 		dns_keymgr_settime_syncpublish(key, kasp,
-					       (inception == ksr->start));
+					       inception == ksr->start);
 	}
 
 	if (ksr->lifetime > 0) {
@@ -518,7 +518,7 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 				 ksr->retiresafety + ksr->signdelay;
 		}
 		dst_key_settime(key, DST_TIME_INACTIVE, inactive);
-		dst_key_settime(key, DST_TIME_DELETE, (inactive + remove));
+		dst_key_settime(key, DST_TIME_DELETE, inactive + remove);
 		*expiration = inactive;
 	} else {
 		*expiration = 0;

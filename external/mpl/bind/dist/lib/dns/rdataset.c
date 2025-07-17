@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.10 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.11 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -665,7 +665,7 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 	 * If we accept expired RRsets keep them for no more than 120 seconds.
 	 */
 	if (acceptexpired &&
-	    (isc_serial_le(rrsig->timeexpire, ((now + 120) & 0xffffffff)) ||
+	    (isc_serial_le(rrsig->timeexpire, (now + 120) & 0xffffffff) ||
 	     isc_serial_le(rrsig->timeexpire, now)))
 	{
 		ttl = 120;

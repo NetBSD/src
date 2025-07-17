@@ -1,4 +1,4 @@
-/*	$NetBSD: dummylib.c,v 1.2 2025/01/26 16:25:00 christos Exp $	*/
+/*	$NetBSD: dummylib.c,v 1.3 2025/07/17 19:01:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -595,9 +595,8 @@ get_cstr_zones(const char *cstr, trpz_rsp_t *trsp, size_t *pnzones) {
 			}
 
 			if (trsp->num_zones > old_zct) {
-				result = realloc(result,
-						 ((trsp->num_zones + 1) *
-						  sizeof(*result)));
+				result = realloc(result, (trsp->num_zones +
+							  1) * sizeof(*result));
 				if (result == NULL) {
 					perror("realloc");
 					exit(EXIT_FAILURE);
@@ -880,7 +879,7 @@ trpz_rsp_push(librpz_emsg_t *emsg, librpz_rsp_t *rsp) {
 	}
 
 	memmove(&(trsp->rstack[1]), &(trsp->rstack[0]),
-		(trsp->stack_idx * sizeof(trsp->rstack[0])));
+		trsp->stack_idx * sizeof(trsp->rstack[0]));
 	trsp->stack_idx++;
 
 	return true;
@@ -897,7 +896,7 @@ trpz_rsp_pop(librpz_emsg_t *emsg, librpz_result_t *result, librpz_rsp_t *rsp) {
 	}
 
 	memmove(&(trsp->rstack[0]), &(trsp->rstack[1]),
-		((trsp->stack_idx - 1) * sizeof(trsp->rstack[0])));
+		(trsp->stack_idx - 1) * sizeof(trsp->rstack[0]));
 	memmove(result, &(trsp->rstack[0].result), sizeof(*result));
 	trsp->stack_idx--;
 
@@ -918,7 +917,7 @@ trpz_rsp_pop_discard(librpz_emsg_t *emsg, librpz_rsp_t *rsp) {
 
 	if (trsp->stack_idx > 1) {
 		memmove(&(trsp->rstack[1]), &(trsp->rstack[2]),
-			((trsp->stack_idx - 2) * sizeof(trsp->rstack[0])));
+			(trsp->stack_idx - 2) * sizeof(trsp->rstack[0]));
 	}
 
 	trsp->stack_idx--;
@@ -1146,7 +1145,7 @@ domain_cmp(const char *query, const char *record, bool *wildp) {
 
 			qptr = query + strlen(query) - (cmplen - 2);
 
-			if (strncmp(qptr, rptr, (cmplen - 2)) == 0) {
+			if (strncmp(qptr, rptr, cmplen - 2) == 0) {
 				*wildp = true;
 				return 0;
 			}
@@ -1261,7 +1260,7 @@ result_supercedes_address(const trpz_result_t *new, const trpz_result_t *old) {
 		return false;
 	}
 
-	if ((new->flags &NODE_FLAG_IPV6_ADDRESS) &&
+	if ((new->flags & NODE_FLAG_IPV6_ADDRESS) &&
 	    !(old->flags & NODE_FLAG_IPV6_ADDRESS))
 	{
 		return true;

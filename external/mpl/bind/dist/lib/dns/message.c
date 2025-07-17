@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.20 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.21 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ hexdump(const char *msg, const char *msg2, void *base, size_t len) {
 		} else if (cnt % 8 == 0) {
 			printf(" |");
 		}
-		printf(" %02x %c", *p, (isprint(*p) ? *p : ' '));
+		printf(" %02x %c", *p, isprint(*p) ? *p : ' ');
 		p++;
 		cnt++;
 
@@ -2203,6 +2203,7 @@ dns_message_renderheader(dns_message_t *msg, isc_buffer_t *target) {
 	isc_region_t r;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
+	REQUIRE(msg->buffer != NULL);
 	REQUIRE(target != NULL);
 
 	isc_buffer_availableregion(target, &r);
@@ -2532,7 +2533,7 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
 		    dns_section_t section) {
 	REQUIRE(msg != NULL);
 	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
-	REQUIRE(name != NULL);
+	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(VALID_NAMED_SECTION(section));
 
 	ISC_LIST_APPEND(msg->sections[section], name, link);
@@ -2543,7 +2544,7 @@ dns_message_removename(dns_message_t *msg, dns_name_t *name,
 		       dns_section_t section) {
 	REQUIRE(msg != NULL);
 	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
-	REQUIRE(name != NULL);
+	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(VALID_NAMED_SECTION(section));
 
 	ISC_LIST_UNLINK(msg->sections[section], name, link);
@@ -3733,9 +3734,13 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg, dns_pseudosection_t section,
 		if ((ps->ttl & DNS_MESSAGEEXTFLAG_DO) != 0) {
 			ADD_STRING(target, " do");
 		}
+		if ((ps->ttl & DNS_MESSAGEEXTFLAG_CO) != 0) {
+			ADD_STRING(target, " co");
+		}
 		ADD_STRING(target, "\n");
 		mbz = ps->ttl & 0xffff;
-		mbz &= ~DNS_MESSAGEEXTFLAG_DO; /* Known Flags. */
+		/* Exclude Known Flags. */
+		mbz &= ~(DNS_MESSAGEEXTFLAG_DO | DNS_MESSAGEEXTFLAG_CO);
 		if (mbz != 0) {
 			INDENT(style);
 			ADD_STRING(target, "MBZ: ");
@@ -4158,8 +4163,12 @@ dns_message_pseudosectiontotext(dns_message_t *msg, dns_pseudosection_t section,
 		if ((ps->ttl & DNS_MESSAGEEXTFLAG_DO) != 0) {
 			ADD_STRING(target, " do");
 		}
+		if ((ps->ttl & DNS_MESSAGEEXTFLAG_CO) != 0) {
+			ADD_STRING(target, " co");
+		}
 		mbz = ps->ttl & 0xffff;
-		mbz &= ~DNS_MESSAGEEXTFLAG_DO; /* Known Flags. */
+		/* Exclude Known Flags. */
+		mbz &= ~(DNS_MESSAGEEXTFLAG_DO | DNS_MESSAGEEXTFLAG_CO);
 		if (mbz != 0) {
 			ADD_STRING(target, "; MBZ: ");
 			snprintf(buf, sizeof(buf), "0x%.4x", mbz);

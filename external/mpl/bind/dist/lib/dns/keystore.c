@@ -1,4 +1,4 @@
-/*	$NetBSD: keystore.c,v 1.2 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: keystore.c,v 1.3 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 
 #include <isc/assertions.h>
 #include <isc/buffer.h>
+#include <isc/dir.h>
 #include <isc/mem.h>
 #include <isc/time.h>
 #include <isc/util.h>
