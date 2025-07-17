@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3176 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3177 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -776,3 +776,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	macppc: Improve support for G5/G4 i2c/openpic. [macallan 20250705]
 	evbarm: Add driver for Amlogic Meson I2C controller - contributed
 		by Vincent Defert. [rjs 20250705]
+	bind: Import version 9.20.11. [christos 20250717]
