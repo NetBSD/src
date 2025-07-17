@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1006 2025/07/15 15:27:23 christos Exp $
+# $NetBSD: shl.mi,v 1.1007 2025/07/17 13:38:01 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -278,6 +278,8 @@
 ./usr/lib/libcrypto.so.14.1			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libcrypto.so.15			base-crypto-shlib	compatfile,openssl=30
 ./usr/lib/libcrypto.so.15.0			base-crypto-shlib	compatfile,openssl=30
+./usr/lib/libcrypto.so.16			base-crypto-shlib	compatfile,openssl=35
+./usr/lib/libcrypto.so.16.0			base-crypto-shlib	compatfile,openssl=35
 ./usr/lib/libcrypto_idea.so			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_rc5.so			base-obsolete		compatfile,obsolete

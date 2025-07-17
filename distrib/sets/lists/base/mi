@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1366 2025/04/09 15:51:44 christos Exp $
+# $NetBSD: mi,v 1.1367 2025/07/17 13:38:01 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1226,11 +1226,16 @@
 ./usr/lib/openssl				base-crypto-usr		compatfile
 ./usr/lib/openssl/engines			base-crypto-usr		compatfile
 ./usr/lib/openssl/engines/dasync.so		base-crypto-usr		compatfile,pic,openssl=30
+./usr/lib/openssl/engines/dasync.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/openssl/engines/devcrypto.so		base-crypto-usr		compatfile,pic,openssl=30
+./usr/lib/openssl/engines/devcrypto.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/openssl/engines/loader_attic.so	base-crypto-usr		compatfile,pic,openssl=30
+./usr/lib/openssl/engines/loader_attic.so	base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/openssl/engines/ossltest.so		base-crypto-usr		compatfile,pic,openssl=30
+./usr/lib/openssl/engines/ossltest.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/openssl/modules			base-crypto-usr		compatfile
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=30
+./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/postfix				base-postfix-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
