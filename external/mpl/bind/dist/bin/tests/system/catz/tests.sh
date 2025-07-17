@@ -85,8 +85,8 @@ n=0
 n=$((n + 1))
 echo_i "checking that catalog-bad1.example (with no version) has failed to load ($n)"
 ret=0
-wait_for_message ns2/named.run "catz: zone 'catalog-bad1.example' has no 'version' record and will not be processed" \
-  && if [ $ret -ne 0 ]; then echo_i "failed"; fi
+wait_for_message ns2/named.run "catz: zone 'catalog-bad1.example' has no 'version' record (partial match) and will not be processed" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
@@ -851,8 +851,8 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
-wait_for_message ns2/named.run "catz: adding zone 'dom-existing-forward-off.example' from catalog 'catalog1.example'" \
-  && if [ $ret -ne 0 ]; then echo_i "failed"; fi
+wait_for_message ns2/named.run "catz: adding zone 'dom-existing-forward-off.example' from catalog 'catalog1.example'" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
@@ -2445,8 +2445,8 @@ n=$((n + 1))
 echo_i "waiting for secondary to sync up ($n)"
 ret=0
 wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom17.example' deleted" \
-  && wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom18.example' deleted" \
-  && if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  && wait_for_message ns2/named.run "catz: catz_delzone_cb: zone 'dom18.example' deleted" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
@@ -2666,6 +2666,133 @@ n=$((n + 1))
 echo_i "Issuing another rndc reload command after 1 second ($n)"
 sleep 1
 rndccmd 10.53.0.4 reload || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+##########################################################################
+
+nextpart ns2/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "Adding a domain dom20.example. to primary via RNDC ($n)"
+ret=0
+# enough initial content for IXFR response when TXT record is added below
+echo "@ 3600 IN SOA . . 1 3600 3600 3600 3600" >ns1/dom20.example.db
+echo "@ 3600 IN NS invalid." >>ns1/dom20.example.db
+echo "foo 3600 IN TXT some content here" >>ns1/dom20.example.db
+echo "bar 3600 IN TXT some content here" >>ns1/dom20.example.db
+echo "xxx 3600 IN TXT some content here" >>ns1/dom20.example.db
+echo "yyy 3600 IN TXT some content here" >>ns1/dom20.example.db
+rndccmd 10.53.0.1 addzone dom20.example. in default '{ type primary; file "dom20.example.db"; allow-update { any; }; notify explicit; also-notify { 10.53.0.2; }; };' || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom20.example. is now served by primary ($n)"
+ret=0
+wait_for_soa @10.53.0.1 dom20.example. dig.out.test$n || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "Adding domain dom20.example. to catalog6 zone ($n)"
+ret=0
+$NSUPDATE -d <<END >>nsupdate.out.test$n 2>&1 || ret=1
+    server 10.53.0.1 ${PORT}
+    update add dom20.zones.catalog6.example. 3600 IN PTR dom20.example.
+    send
+END
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "waiting for secondary to sync up ($n)"
+ret=0
+start=$(date +%s)
+wait_for_message ns2/named.run "catz: adding zone 'dom20.example' from catalog 'catalog6.example'" \
+  && wait_for_message ns2/named.run "transfer of 'dom20.example/IN/default' from 10.53.0.1#${PORT}: Transfer status: success" || ret=1
+end=$(date +%s)
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that 'notify-defer 5;' worked ($n)"
+ret=0
+elapsed=$(($end - $start))
+[ $elapsed -ge 5 ] || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom20.example. is served by secondary ($n)"
+ret=0
+wait_for_soa @10.53.0.2 dom20.example. dig.out.test$n || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+nextpart ns2/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "Adding a domain dom21.example. to primary via RNDC ($n)"
+ret=0
+# enough initial content for IXFR response when TXT record is added below
+echo "@ 3600 IN SOA . . 1 3600 3600 3600 3600" >ns1/dom21.example.db
+echo "@ 3600 IN NS invalid." >>ns1/dom21.example.db
+echo "foo 3600 IN TXT some content here" >>ns1/dom21.example.db
+echo "bar 3600 IN TXT some content here" >>ns1/dom21.example.db
+echo "xxx 3600 IN TXT some content here" >>ns1/dom21.example.db
+echo "yyy 3600 IN TXT some content here" >>ns1/dom21.example.db
+rndccmd 10.53.0.1 addzone dom21.example. in default '{ type primary; file "dom21.example.db"; allow-update { any; }; notify explicit; also-notify { 10.53.0.2; }; };' || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom21.example. is now served by primary ($n)"
+ret=0
+wait_for_soa @10.53.0.1 dom21.example. dig.out.test$n || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "Adding domain dom21.example. to catalog6 zone ($n)"
+ret=0
+$NSUPDATE -d <<END >>nsupdate.out.test$n 2>&1 || ret=1
+    server 10.53.0.1 ${PORT}
+    update add dom21.zones.catalog6.example. 3600 IN PTR dom21.example.
+    send
+END
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "Sending 'rndc notify catalog6.example.' to primary via RNDC ($n)"
+ret=0
+rndccmd 10.53.0.1 notify catalog6.example. || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "waiting for secondary to sync up ($n)"
+ret=0
+start=$(date +%s)
+wait_for_message ns2/named.run "catz: adding zone 'dom21.example' from catalog 'catalog6.example'" \
+  && wait_for_message ns2/named.run "transfer of 'dom21.example/IN/default' from 10.53.0.1#${PORT}: Transfer status: success" || ret=1
+end=$(date +%s)
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that 'notify-defer 5;' was ignored because of implicit notify command ($n)"
+ret=0
+elapsed=$(($end - $start))
+[ $elapsed -lt 5 ] || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom21.example. is served by secondary ($n)"
+ret=0
+wait_for_soa @10.53.0.2 dom21.example. dig.out.test$n || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

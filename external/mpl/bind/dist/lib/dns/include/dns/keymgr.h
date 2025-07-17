@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.h,v 1.1.1.8 2025/05/21 14:40:58 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.1.1.9 2025/07/17 18:27:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -162,6 +162,19 @@ dns_keymgr_status(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
  *\li		ISC_R_FAILURE if other error occurred.
  *\li		Printable status in 'out'.
  *
+ */
+
+bool
+dns_keymgr_key_may_be_purged(const dst_key_t *key, uint32_t after,
+			     isc_stdtime_t now);
+/*%<
+ * Checks if the key files for 'key' may be removed from disk.
+ *
+ *     Requires:
+ *\li          'key' is a valid key.
+ *
+ *     Returns:
+ *\li          true if the key files may be purged, false otherwise.
  */
 
 ISC_LANG_ENDDECLS

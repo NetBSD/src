@@ -90,6 +90,8 @@ ALL_ALGORITHMS = [
     ED448,
 ]
 
+ALL_ALGORITHMS_BY_NUM = {alg.number: alg for alg in ALL_ALGORITHMS}
+
 ALGORITHM_SETS = {
     "stable": AlgorithmSet(
         default=ECDSAP256SHA256, alternative=RSASHA256, disabled=ECDSAP384SHA384

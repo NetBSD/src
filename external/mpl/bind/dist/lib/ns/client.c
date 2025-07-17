@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.18 2025/05/21 14:40:44 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.19 2025/07/17 18:27:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1342,8 +1342,8 @@ process_cookie(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	if (alwaysvalid) {
 		now = when;
 	}
-	if (isc_serial_gt(when, (now + 300)) /* In the future. */ ||
-	    isc_serial_lt(when, (now - 3600)) /* In the past. */)
+	if (isc_serial_gt(when, now + 300) /* In the future. */ ||
+	    isc_serial_lt(when, now - 3600) /* In the past. */)
 	{
 		client->attributes |= NS_CLIENTATTR_BADCOOKIE;
 		ns_stats_increment(client->manager->sctx->nsstats,
@@ -1563,6 +1563,9 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 		while (isc_buffer_remaininglength(&optbuf) >= 4) {
 			optcode = isc_buffer_getuint16(&optbuf);
 			optlen = isc_buffer_getuint16(&optbuf);
+
+			INSIST(isc_buffer_remaininglength(&optbuf) >= optlen);
+
 			/*
 			 * When returning BADVERSION, only process
 			 * DNS_OPT_NSID or DNS_OPT_COOKIE options.

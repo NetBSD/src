@@ -26,6 +26,7 @@ from isctest.kasp import (
     KeyProperties,
     KeyTimingMetadata,
 )
+from isctest.util import param
 from isctest.vars.algorithms import ECDSAP256SHA256, ECDSAP384SHA384
 
 pytestmark = pytest.mark.extra_artifacts(
@@ -78,6 +79,8 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns*/policies/*.conf",
         "ns3/legacy-keys.*",
         "ns3/dynamic-signed-inline-signing.kasp.db.signed.signed",
+        "ns4/purgekeys.conf",
+        "ns4/purgekeys2.conf",
     ]
 )
 
@@ -127,12 +130,6 @@ KASP_INHERIT_TSIG_SECRET = {
 }
 
 
-def param(*args, **kwargs):
-    if "id" not in kwargs:
-        kwargs["id"] = args[0]  # use first argument  as test ID
-    return pytest.param(*args, **kwargs)
-
-
 def autosign_properties(alg, size):
     return [
         f"ksk {lifetime['P2Y']} {alg} {size} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:omnipresent",
@@ -166,7 +163,6 @@ def check_all(server, zone, policy, ksks, zsks, zsk_missing=False, tsig=None):
         server, zone, ksks, zsks, zsk_missing=zsk_missing, tsig=tsig
     )
     isctest.kasp.check_subdomain(server, zone, ksks, zsks, tsig=tsig)
-    isctest.kasp.check_dnssec_verify(server, zone, tsig=tsig)
 
 
 def set_keytimes_default_policy(kp):
@@ -661,7 +657,7 @@ def test_kasp_case(servers, params):
     isctest.log.info(f"check test case zone {zone} policy {policy}")
 
     # First make sure the zone is signed.
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
 
     # Key properties.
     expected = isctest.kasp.policy_to_properties(ttl=ttl, keys=params["key-properties"])
@@ -679,6 +675,7 @@ def test_kasp_case(servers, params):
         ksks = [k for k in keys if k.is_ksk()]
         zsks = [k for k in keys if not k.is_ksk()]
 
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
 
     offset = params["offset"] if "offset" in params else None
@@ -759,7 +756,7 @@ def test_kasp_inherit_signed(zone, policy, server_id, alg, tsig_kind, servers):
     key1.metadata["Length"] = alg.bits
     keys = isctest.kasp.keydir_to_keylist(zone, server.identifier)
 
-    isctest.kasp.check_zone_is_signed(server, zone, tsig=tsig)
+    isctest.kasp.check_dnssec_verify(server, zone, tsig=tsig)
     isctest.kasp.check_keys(zone, keys, [key1])
     set_keytimes_default_policy(key1)
     isctest.kasp.check_keytimes(keys, [key1])
@@ -786,7 +783,7 @@ def test_kasp_inherit_view(number, dynamic, inline_signing, txt_rdata, servers):
     key1.metadata["Length"] = ECDSAP384SHA384.bits
     keys = isctest.kasp.keydir_to_keylist(zone, server.identifier)
 
-    isctest.kasp.check_zone_is_signed(server, zone, tsig=tsig)
+    isctest.kasp.check_dnssec_verify(server, zone, tsig=tsig)
     isctest.kasp.check_keys(zone, keys, [key1])
     set_keytimes_default_policy(key1)
     isctest.kasp.check_keytimes(keys, [key1])
@@ -839,7 +836,7 @@ def test_kasp_default(servers):
     ]
     expected = isctest.kasp.policy_to_properties(ttl=3600, keys=keyprops)
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     set_keytimes_default_policy(expected[0])
     isctest.kasp.check_keytimes(keys, expected)
@@ -900,6 +897,7 @@ def test_kasp_default(servers):
         watcher.wait_for_line(f"zone {zone}/IN (signed): {expectmsg}")
     # Nothing has changed.
     expected[0].properties["private"] = False
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     isctest.kasp.check_keytimes(keys, expected)
     check_all(server, zone, policy, keys, [])
@@ -911,7 +909,7 @@ def test_kasp_default(servers):
     key1 = KeyProperties.default()
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
     expected = [key1]
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     set_keytimes_default_policy(key1)
     isctest.kasp.check_keytimes(keys, expected)
@@ -930,32 +928,12 @@ def test_kasp_dynamic(servers):
     key1 = KeyProperties.default()
     expected = [key1]
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     set_keytimes_default_policy(key1)
     expected = [key1]
     isctest.kasp.check_keytimes(keys, expected)
     check_all(server, zone, policy, keys, [])
-
-    # Update zone with nsupdate.
-    def nsupdate(updates):
-        message = dns.update.UpdateMessage(zone)
-        for update in updates:
-            if update[0] == "del":
-                message.delete(update[1], update[2], update[3])
-            else:
-                assert update[0] == "add"
-                message.add(update[1], update[2], update[3], update[4])
-
-        try:
-            response = isctest.query.udp(
-                message, server.ip, server.ports.dns, timeout=3
-            )
-            assert response.rcode() == dns.rcode.NOERROR
-        except dns.exception.Timeout:
-            assert False, f"update timeout for {zone}"
-
-        isctest.log.debug(f"update of zone {zone} to server {server.ip} successful")
 
     def update_is_signed():
         parts = update.split()
@@ -966,24 +944,22 @@ def test_kasp_dynamic(servers):
             server, zone, qname, qtype, rdata, keys, []
         )
 
-    updates = [
-        ["del", f"a.{zone}.", "A", "10.0.0.1"],
-        ["add", f"a.{zone}.", 300, "A", "10.0.0.101"],
-        ["add", f"d.{zone}.", 300, "A", "10.0.0.4"],
-    ]
-    nsupdate(updates)
+    update_msg = dns.update.UpdateMessage(zone)
+    update_msg.delete(f"a.{zone}.", "A", "10.0.0.1")
+    update_msg.add(f"a.{zone}.", 300, "A", "10.0.0.101")
+    update_msg.add(f"d.{zone}.", 300, "A", "10.0.0.4")
+    server.nsupdate(update_msg)
 
     expected_updates = [f"a.{zone}. A 10.0.0.101", f"d.{zone}. A 10.0.0.4"]
     for update in expected_updates:
         isctest.run.retry_with_timeout(update_is_signed, timeout=5)
 
-    # Update zone with nsupdate (reverting the above change).
-    updates = [
-        ["add", f"a.{zone}.", 300, "A", "10.0.0.1"],
-        ["del", f"a.{zone}.", "A", "10.0.0.101"],
-        ["del", f"d.{zone}.", "A", "10.0.0.4"],
-    ]
-    nsupdate(updates)
+    # Update zone (reverting the above change).
+    update_msg = dns.update.UpdateMessage(zone)
+    update_msg.add(f"a.{zone}.", 300, "A", "10.0.0.1")
+    update_msg.delete(f"a.{zone}.", "A", "10.0.0.101")
+    update_msg.delete(f"d.{zone}.", "A", "10.0.0.4")
+    server.nsupdate(update_msg)
 
     update = f"a.{zone}. A 10.0.0.1"
     isctest.run.retry_with_timeout(update_is_signed, timeout=5)
@@ -1014,7 +990,7 @@ def test_kasp_dynamic(servers):
     key1 = KeyProperties.default()
     expected = [key1]
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     set_keytimes_default_policy(key1)
     expected = [key1]
@@ -1053,7 +1029,7 @@ def test_kasp_dynamic(servers):
     key1.metadata["DSState"] = "omnipresent"
     expected = [key1]
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3/keys")
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     check_all(server, zone, policy, keys, [])
     # Ensure no zone_resigninc for the unsigned version of the zone is triggered.
@@ -1079,7 +1055,7 @@ def test_kasp_checkds(servers):
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
     ksks = [k for k in keys if k.is_ksk()]
     zsks = [k for k in keys if k.is_zsk()]
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     check_all(server, zone, policy, ksks, zsks)
 
@@ -1123,7 +1099,7 @@ def test_kasp_checkds_doubleksk(servers):
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
     ksks = [k for k in keys if k.is_ksk()]
     zsks = [k for k in keys if k.is_zsk()]
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     check_all(server, zone, policy, ksks, zsks)
 
@@ -1196,7 +1172,7 @@ def test_kasp_checkds_csk(servers):
     ]
     expected = isctest.kasp.policy_to_properties(ttl=303, keys=policy_keys)
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
     check_all(server, zone, policy, keys, [])
 
@@ -1282,7 +1258,7 @@ def test_kasp_dnssec_keygen():
             zone,
         ]
 
-        return isctest.run.cmd(keygen_command, log_stdout=True).stdout.decode("utf-8")
+        return isctest.run.cmd(keygen_command).stdout.decode("utf-8")
 
     # check that 'dnssec-keygen -k' (configured policy) creates valid files.
     keyprops = [
@@ -1318,7 +1294,7 @@ def test_kasp_dnssec_keygen():
         str(publish),
         key.path,
     ]
-    out = isctest.run.cmd(settime, log_stdout=True).stdout.decode("utf-8")
+    out = isctest.run.cmd(settime).stdout.decode("utf-8")
 
     isctest.check.file_contents_equal(f"{key.statefile}", f"{key.statefile}.backup")
     assert key.get_metadata("Publish", file=key.privatefile) == str(publish)
@@ -1367,7 +1343,7 @@ def test_kasp_dnssec_keygen():
         str(now),
         key.path,
     ]
-    out = isctest.run.cmd(settime, log_stdout=True).stdout.decode("utf-8")
+    out = isctest.run.cmd(settime).stdout.decode("utf-8")
     isctest.kasp.check_keys("kasp", keys, expected)
     isctest.kasp.check_keytimes(keys, expected)
 
@@ -1402,7 +1378,7 @@ def test_kasp_dnssec_keygen():
         str(now),
         key.path,
     ]
-    out = isctest.run.cmd(settime, log_stdout=True).stdout.decode("utf-8")
+    out = isctest.run.cmd(settime).stdout.decode("utf-8")
     isctest.kasp.check_keys("kasp", keys, expected)
     isctest.kasp.check_keytimes(keys, expected)
 
@@ -1447,7 +1423,7 @@ def test_kasp_dnssec_keygen():
         str(soon),
         key.path,
     ]
-    out = isctest.run.cmd(settime, log_stdout=True).stdout.decode("utf-8")
+    out = isctest.run.cmd(settime).stdout.decode("utf-8")
     isctest.kasp.check_keys("kasp", keys, expected)
     isctest.kasp.check_keytimes(keys, expected)
 
@@ -1482,7 +1458,7 @@ def test_kasp_zsk_retired(servers):
     keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
     ksks = [k for k in keys if k.is_ksk()]
     zsks = [k for k in keys if not k.is_ksk()]
-    isctest.kasp.check_zone_is_signed(server, zone)
+    isctest.kasp.check_dnssec_verify(server, zone)
     isctest.kasp.check_keys(zone, keys, expected)
 
     offset = -timedelta(days=30 * 6)
@@ -1584,6 +1560,33 @@ def test_kasp_zsk_retired(servers):
         watcher.wait_for_line(f"keymgr: {zone} done")
 
     msg = f"zone {zone}/IN (signed): zone_rekey:zone_verifykeys failed: some key files are missing"
+    server.log.prohibit(msg)
+
+
+def test_kasp_purge_keys(servers):
+    zone = "purgekeys.kasp"
+    server = servers["ns4"]
+
+    tsig1 = (
+        f"{os.environ['DEFAULT_HMAC']}:keyforview1:{KASP_INHERIT_TSIG_SECRET['view1']}"
+    )
+    tsig2 = (
+        f"{os.environ['DEFAULT_HMAC']}:keyforview2:{KASP_INHERIT_TSIG_SECRET['view2']}"
+    )
+
+    isctest.kasp.check_dnssec_verify(server, zone, tsig=tsig1)
+    isctest.kasp.check_dnssec_verify(server, zone, tsig=tsig2)
+
+    # Reconfig, make sure the purged key is not an issue when verifying keys.
+    shutil.copyfile("ns4/purgekeys2.conf", "ns4/purgekeys.conf")
+    with server.watch_log_from_here() as watcher:
+        server.rndc("reconfig", log=False)
+        watcher.wait_for_line(f"keymgr: {zone} done")
+
+    msg = f"zone {zone}/IN/example1 (signed): zone_rekey:zone_verifykeys failed: some key files are missing"
+    server.log.prohibit(msg)
+
+    msg = f"zone {zone}/IN/example2 (signed): zone_rekey:zone_verifykeys failed: some key files are missing"
     server.log.prohibit(msg)
 
 

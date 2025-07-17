@@ -217,6 +217,7 @@ options {
 	no-case-compress { <address_match_element>; ... };
 	nocookie-udp-size <integer>;
 	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-defer <integer>;
 	notify-delay <integer>;
 	notify-rate <integer>;
 	notify-source ( <ipv4_address> | * );
@@ -507,6 +508,7 @@ view <string> [ <class> ] {
 	no-case-compress { <address_match_element>; ... };
 	nocookie-udp-size <integer>;
 	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-defer <integer>;
 	notify-delay <integer>;
 	notify-source ( <ipv4_address> | * );
 	notify-source-v6 ( <ipv6_address> | * );

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.14 2025/05/21 14:40:45 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.15 2025/07/17 18:27:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3433,7 +3433,7 @@ update_action(void *arg) {
 		/*
 		 * Notify secondaries of the change we just made.
 		 */
-		dns_zone_notify(zone);
+		dns_zone_notify(zone, false);
 	} else {
 		update_log(client, zone, LOGLEVEL_DEBUG, "redundant request");
 		dns_db_closeversion(db, &ver, true);

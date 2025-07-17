@@ -1,4 +1,4 @@
-/*	$NetBSD: private_test.c,v 1.1.1.2 2025/01/26 16:12:37 christos Exp $	*/
+/*	$NetBSD: private_test.c,v 1.1.1.3 2025/07/17 18:27:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -192,8 +192,10 @@ ISC_RUN_TEST_IMPL(private_nsec3_totext) {
 	const char *results[] = { "Creating NSEC3 chain 1 0 1 BEEF",
 				  "Creating NSEC3 chain 1 1 10 DADD",
 				  "Pending NSEC3 chain 1 0 20 BEAD",
+				  /* clang-format off */
 				  ("Removing NSEC3 chain 1 0 30 DEAF / "
 				   "creating NSEC chain"),
+				  /* clang-format on */
 				  "Removing NSEC3 chain 1 0 100 FEEDABEE" };
 	int ncases = 5;
 

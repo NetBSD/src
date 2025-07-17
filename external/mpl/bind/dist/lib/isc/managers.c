@@ -1,4 +1,4 @@
-/*	$NetBSD: managers.c,v 1.1.1.4 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: managers.c,v 1.1.1.5 2025/07/17 18:27:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@ isc_managers_create(isc_mem_t **mctxp, uint32_t workers,
 	REQUIRE(mctxp != NULL && *mctxp == NULL);
 	isc_mem_create(mctxp);
 	INSIST(*mctxp != NULL);
+	isc_mem_setname(*mctxp, "managers");
 
 	REQUIRE(loopmgrp != NULL && *loopmgrp == NULL);
 	isc_loopmgr_create(*mctxp, workers, loopmgrp);

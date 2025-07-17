@@ -35,41 +35,336 @@ named-rrchecker \- syntax checker for individual DNS resource records
 \fBnamed\-rrchecker\fP [\fB\-h\fP] [\fB\-o\fP origin] [\fB\-p\fP] [\fB\-u\fP] [\fB\-C\fP] [\fB\-T\fP] [\fB\-P\fP]
 .SH DESCRIPTION
 .sp
-\fBnamed\-rrchecker\fP reads a individual DNS resource record from standard
+\fBnamed\-rrchecker\fP reads a single DNS resource record (RR) from standard
 input and checks whether it is syntactically correct.
+.INDENT 0.0
+.TP
+.B The input format is a minimal subset of the DNS zone file format. The entire input must be:
+CLASS TYPE RDATA
+.UNINDENT
+.INDENT 0.0
+.IP \(bu 2
+Input must not start with an owner (domain) name
+.IP \(bu 2
+The \fICLASS\fP field is mandatory (typically \fBIN\fP).
+.IP \(bu 2
+The \fITTL\fP field \fBmust not\fP be present.
+.IP \(bu 2
+RDATA format is specific to each RRTYPE.
+.IP \(bu 2
+Leading and trailing whitespace in each field is ignored.
+.UNINDENT
+.sp
+Format details can be found in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' under \fB<rr>\fP
+specification. \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format is also accepted in any of the input fields.
+See \fI\%Examples\fP\&.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \-h
-This option prints out the help menu.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B \-o origin
-This option specifies the origin to be used when interpreting
-the record.
+This option specifies the origin to be used when interpreting names in the record:
+it defaults to root (\fI\&.\fP). The specified origin is always taken as an absolute name.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-p
 This option prints out the resulting record in canonical form. If there
-is no canonical form defined, the record is printed in unknown
+is no canonical form defined, the record is printed in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' unknown
 record format.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-u
-This option prints out the resulting record in unknown record form.
+This option prints out the resulting record in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' unknown record
+format.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-C, \-T, \-P
-These options print out the known class, standard type,
-and private type mnemonics, respectively.
+These options do not read input. They print out known classes, standard types,
+and private type mnemonics. Each item is printed on a separate line.
+The resulting list of private types may be empty
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+This option prints out the help menu.
+.UNINDENT
+.SH EXAMPLES
+.sp
+Pay close attention to the \fBecho\fP command line options \fI\-e\fP and \fI\-n\fP, as they affect whitespace in the input to \fBnamed\-rrchecker\fP\&.
+.INDENT 0.0
+.TP
+.B echo \-n \(aqIN A 192.0.2.1\(aq | named\-rrchecker
+.INDENT 7.0
+.IP \(bu 2
+Valid input is in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format with no newline at the end of the input.
+.IP \(bu 2
+Return code 0.
+.UNINDENT
+.TP
+.B echo \-e \(aq\en  \en IN\etA 192.0.2.1 \et  \en\en  \(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with leading and trailing whitespace.
+.IP \(bu 2
+Output: \fBIN        A       192.0.2.1\fP
+.IP \(bu 2
+Leading and trailing whitespace is not part of the output.
+.UNINDENT
+.UNINDENT
+.SS Relative names and origin
+.INDENT 0.0
+.TP
+.B echo \(aqIN CNAME target\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with a relative name as the CNAME target.
+.IP \(bu 2
+Output: \fBIN        CNAME   target.\fP
+.IP \(bu 2
+Relative name \fItarget\fP from the input is converted to an absolute name using the default origin \fB\&.\fP (root).
+.UNINDENT
+.TP
+.B echo \(aqIN CNAME target\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with a relative name as the CNAME target.
+.IP \(bu 2
+Output: \fBIN        CNAME   target.origin.test.\fP
+.IP \(bu 2
+Relative name \fItarget\fP from the input is converted to an absolute name using the specified origin \fBorigin.test\fP
+.UNINDENT
+.TP
+.B echo \(aqIN CNAME target.\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with an absolute name as the CNAME target.
+.IP \(bu 2
+Output: \fBIN        CNAME   target.\fP
+.IP \(bu 2
+The specified origin has no influence if \fItarget\fP from the input is already absolute.
+.UNINDENT
+.UNINDENT
+.SS Special characters
+.sp
+Special characters allowed in zone files by \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' are accepted.
+.INDENT 0.0
+.TP
+.B echo \(aqIN CNAME t\e097r\eget\e.\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with backslash escapes.
+.IP \(bu 2
+Output: \fBIN        CNAME   target\e..origin.test.\fP
+.IP \(bu 2
+\fB\e097\fP denotes an ASCII value in decimal, which, in this example, is the character \fBa\fP\&.
+.IP \(bu 2
+\fB\eg\fP is converted to a plain \fBg\fP because the \fBg\fP character does not have a special meaning and so the \fB\e\fP prefix does nothing in this case.
+.IP \(bu 2
+\fB\e.\fP denotes a literal ASCII dot (here as a part of the CNAME target name). Special meaning of \fB\&.\fP as the DNS label separator was disabled by the preceding \fB\e\fP prefix.
+.UNINDENT
+.TP
+.B echo \(aqIN CNAME @\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with \fB@\fP used as a reference to the specified origin.
+.IP \(bu 2
+Output: \fBIN        CNAME   origin.test.\fP
+.UNINDENT
+.TP
+.B echo \(aqIN CNAME \e@\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with a literal \fB@\fP character (escaped).
+.IP \(bu 2
+Output: \fBIN        CNAME   \e@.origin.test.\fP
+.UNINDENT
+.TP
+.B echo \(aqIN CNAME prefix.@\(aq | named\-rrchecker \-p \-o origin.test
+.INDENT 7.0
+.IP \(bu 2
+Valid input with \fB@\fP used as a reference to the specifed origin.
+.IP \(bu 2
+Output: \fBIN        CNAME   prefix.\e@.origin.test.\fP
+.IP \(bu 2
+\fB@\fP has special meaning only if it is free\-standing.
+.UNINDENT
+.TP
+.B echo \(aqIN A 192.0.2.1; comment\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with a trailing comment. Note the lack of whitespace before the start of the comment.
+.IP \(bu 2
+Output: \fBIN        A       192.0.2.1\fP
+.UNINDENT
+.UNINDENT
+.sp
+For multi\-line examples see the next section.
+.SS Multi\-token records
+.INDENT 0.0
+.TP
+.B echo \-e \(aqIN TXT two words \en\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid TXT RR with two unquoted words and trailing whitespace.
+.IP \(bu 2
+Output: \fBIN        TXT     \(dqtwo\(dq \(dqwords\(dq\fP
+.IP \(bu 2
+Two unquoted words in the input are treated as two \fI<character\-string>\fPs per \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-3.3.14'\fI\%RFC 1035 Section 3.3.14\fP\X'tty: link'\&.
+.IP \(bu 2
+Trailing whitespace is omitted from the last \fI<character\-string>\fP\&.
+.UNINDENT
+.TP
+.B echo \-e \(aqIN TXT \(dqtwo words\(dq \en\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid TXT RR with one \fIcharacter\-string\fP and trailing whitespace.
+.IP \(bu 2
+Output: \fBIN        TXT     \(dqtwo words\(dq\fP
+.UNINDENT
+.TP
+.B echo \-e \(aqIN TXT \(dqproblematic newline\en\(dq\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- the closing \fB\(dq\fP is not detected before the end of the line.
+.UNINDENT
+.TP
+.B echo \(aqIN TXT \(dqwith newline\e010\(dq\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with an escaped newline character inside \fIcharacter\-string\fP\&.
+.IP \(bu 2
+Output: \fBIN        TXT     \(dqwith newline\e010\(dq\fP
+.UNINDENT
+.TP
+.B echo \-e \(aqIN TXT ( two\enwords )\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid multi\-line input with line continuation allowed inside optional parentheses in the RDATA field.
+.IP \(bu 2
+Output: \fBIN        TXT     \(dqtwo\(dq \(dqwords\(dq\fP
+.UNINDENT
+.TP
+.B echo \-e \(aqIN TXT ( two\enwords ; misplaced comment )\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- comments, starting with \(dq;\(dq, are ignored by the parser, so the closing parenthesis should be before the semicolon.
+.UNINDENT
+.TP
+.B echo \-e \(aqIN TXT ( two\enwords ; a working comment\en )\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input \- the comment is terminated with a newline.
+.IP \(bu 2
+Output: \fBIN        TXT     \(dqtwo\(dq \(dqwords\(dq\fP
+.UNINDENT
+.TP
+.B echo \(aqIN HTTPS 1 . alpn=\(dqh2,h3\(dq\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid HTTPS record
+.IP \(bu 2
+Output: \fBIN        HTTPS   1 . alpn=\(dqh2,h3\(dq\fP
+.UNINDENT
+.TP
+.B echo \-e \(aqIN HTTPS ( 1 \en . \en alpn=\(dqdot\(dq)port=853\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid HTTPS record with individual sub\-fields split across multiple lines
+using \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' parentheses syntax to group data that crosses
+a line boundary.
+.IP \(bu 2
+Note the missing whitespace between the closing parenthesis and adjacent tokens.
+.IP \(bu 2
+Output: \fBIN        HTTPS   1 . alpn=\(dqdot\(dq port=853\fP
+.UNINDENT
+.UNINDENT
+.SS Unknown type handling
+.INDENT 0.0
+.TP
+.B echo \(aqIN A 192.0.2.1\(aq | named\-rrchecker \-u
+.INDENT 7.0
+.IP \(bu 2
+Valid input in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format.
+.IP \(bu 2
+Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3957.html'\fI\%RFC 3957\fP\X'tty: link' format: \fBCLASS1      TYPE1   \e# 4 C0000201\fP
+.UNINDENT
+.TP
+.B echo \(aqCLASS1 TYPE1 \e# 4 C0000201\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format.
+.IP \(bu 2
+Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format: \fBIN  A       192.0.2.1\fP
+.UNINDENT
+.TP
+.B echo \(aqIN A \e# 4 C0000201\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with class and type in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format and rdata in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format.
+.IP \(bu 2
+Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format: \fBIN  A       192.0.2.1\fP
+.UNINDENT
+.TP
+.B echo \(aqIN HTTPS 1 . key3=\e001\e000\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Valid input with \X'tty: link https://datatracker.ietf.org/doc/html/rfc9460.html'\fI\%RFC 9460\fP\X'tty: link' syntax for an unknown \fIkey3\fP field. Syntax \fB\e001\e000\fP produces two octets with values 1 and 0, respectively.
+.IP \(bu 2
+Output: \fBIN        HTTPS   1 . port=256\fP
+.IP \(bu 2
+\fIkey3\fP matches the standardized key name \fIport\fP\&.
+.IP \(bu 2
+Octets 1 and 0 were decoded as integer values in big\-endian encoding.
+.UNINDENT
+.TP
+.B echo \(aqIN HTTPS 1 . key3=\e001\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- the length of the value for \fIkey3\fP (i.e. port) does not match the known standard format for that parameter in the SVCB RRTYPE.
+.UNINDENT
+.TP
+.B echo \(aqIN HTTPS 1 . port=\e001\e000\(aq | named\-rrchecker \-p
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- the key \fIport\fP, when specified using its standard mnemonic name, \fBmust\fP use standard key\-specific syntax.
+.UNINDENT
+.UNINDENT
+.SS Meta values
+.INDENT 0.0
+.TP
+.B echo \(aqIN AXFR\(aq | named\-rrchecker
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- AXFR is a meta type, not a genuine RRTYPE.
+.UNINDENT
+.TP
+.B echo \(aqANY A 192.0.2.1\(aq | named\-rrchecker
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- ANY is meta class, not a true class.
+.UNINDENT
+.TP
+.B echo \(aqA 192.0.2.1\(aq | named\-rrchecker
+.INDENT 7.0
+.IP \(bu 2
+Invalid input \- the class field is missing, so the parser would try and fail to interpret the RRTYPE A as the class.
+.UNINDENT
+.UNINDENT
+.SH RETURN CODES
+.INDENT 0.0
+.TP
+.B 0
+The whole input was parsed as one syntactically valid resource record.
+.TP
+.B 1
+The input is not a syntactically valid resource record, or the given type is not
+supported, or either/both class and type are meta\-values, which should not appear in zone files.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link', \fI\%named(8)\fP\&.
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc3957.html'\fI\%RFC 3957\fP\X'tty: link', \fI\%named(8)\fP\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT

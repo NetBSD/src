@@ -13,7 +13,6 @@ AM_CPPFLAGS +=				\
 	$(MAXMINDDB_CFLAGS)		\
 	$(DNSTAP_CFLAGS)		\
 	$(LIBUV_CFLAGS)			\
-	$(LIBSYSTEMD_CFLAGS)		\
 	$(ZLIB_CFLAGS)
 
 if HAVE_JSON_C
@@ -108,7 +107,6 @@ named_LDADD =					\
 	$(MAXMINDDB_LIBS)			\
 	$(DNSTAP_LIBS)				\
 	$(LIBUV_LIBS)				\
-	$(LIBSYSTEMD_LIBS)			\
 	$(ZLIB_LIBS)
 
 if HAVE_JSON_C

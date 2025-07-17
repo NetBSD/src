@@ -156,6 +156,7 @@ TESTS =				\
 	redirect		\
 	resolver		\
 	rndc			\
+	rollover		\
 	rootkeysentinel		\
 	rpzextra		\
 	rrchecker		\

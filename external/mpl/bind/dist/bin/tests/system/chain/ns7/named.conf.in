@@ -28,6 +28,7 @@ options {
 	} except-from {
 		"example";
 	};
+	qname-minimization disabled;  // Regression test for GL #4652
 };
 
 trust-anchors { };

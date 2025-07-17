@@ -30,3 +30,22 @@ done
 
 cp example1.db.in example1.db
 cp example2.db.in example2.db
+
+# Regression test for GL #5315
+cp purgekeys1.conf purgekeys.conf
+cp example1.db.in purgekeys.kasp.example1.db
+cp example2.db.in purgekeys.kasp.example2.db
+
+zone="purgekeys.kasp"
+H="HIDDEN"
+O="OMNIPRESENT"
+T="now-9mo"
+# KSK omnipresent
+KSK=$($KEYGEN -fk -a 13 -L 3600 $zone 2>keygen.out.$zone.1)
+$SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" >settime.out.$zone.1 2>&1
+# ZSK omnipresent
+ZSK1=$($KEYGEN -a 13 -L 3600 $zone 2>keygen.out.$zone.2)
+$SETTIME -s -g $O -k $O $T -z $O $T "$ZSK1" >settime.out.$zone.2 2>&1
+# ZSK hidden (may be purged)
+ZSK2=$($KEYGEN -a 13 -L 3600 $zone 2>keygen.out.$zone.2)
+$SETTIME -s -g $H -k $H $T -z $H $T "$ZSK2" >settime.out.$zone.2 2>&1

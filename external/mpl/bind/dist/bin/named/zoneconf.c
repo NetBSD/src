@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.16 2025/05/21 14:40:33 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.17 2025/07/17 18:27:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1450,6 +1450,11 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		result = named_config_get(maps, "notify-delay", &obj);
 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setnotifydelay(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = named_config_get(maps, "notify-defer", &obj);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+		dns_zone_setnotifydefer(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "check-sibling", &obj);

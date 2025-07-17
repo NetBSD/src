@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.6 2025/01/26 16:12:24 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.7 2025/07/17 18:27:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -221,7 +221,7 @@ load_zone(dns_zone_t *zone) {
 	dns_zone_log(zone, ISC_LOG_INFO, "loaded serial %u", serial);
 
 	if (zone_dynamic) {
-		dns_zone_notify(zone);
+		dns_zone_notify(zone, false);
 	}
 
 cleanup:

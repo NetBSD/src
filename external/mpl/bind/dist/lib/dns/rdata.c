@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.15 2025/05/21 14:40:52 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.16 2025/07/17 18:27:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2603,7 +2603,7 @@ svcb_hashttp(isc_textregion_t *alpn) {
 				s = alpn->base;
 			}
 		}
-		if (svcb_ishttp(s, (alpn->base - s))) {
+		if (svcb_ishttp(s, alpn->base - s)) {
 			return true;
 		}
 	}

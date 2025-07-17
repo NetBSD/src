@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.16 2025/05/21 14:40:50 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.17 2025/07/17 18:27:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2497,6 +2497,8 @@ static cfg_clausedef_t zone_clauses[] = {
 	{ "multi-master", &cfg_type_boolean,
 	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "notify", &cfg_type_notifytype,
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
+	{ "notify-defer", &cfg_type_uint32,
 	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "notify-delay", &cfg_type_uint32,
 	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },

@@ -1889,8 +1889,7 @@ def changelog(
     try:
         first_version = next(versions)
     except StopIteration:
-        warn("Empty changelog. No commits were elected to be used as entry.")
-        data["versions"] = []
+        die("Empty changelog. No commits were elected to be used as entry.")
     else:
         data["versions"] = itertools.chain([first_version], versions)
 

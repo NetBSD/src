@@ -44,11 +44,11 @@ Current versions of BIND 9 are fully supported and regularly tested on the
 following systems:
 
 -  Debian 12
--  Ubuntu LTS 20.04, 22.04, 24.04
+-  Ubuntu LTS 22.04, 24.04
 -  Fedora 42
--  Red Hat Enterprise Linux / CentOS / Oracle Linux 8, 9
+-  Red Hat Enterprise Linux / CentOS / AlmaLinux 8, 9
 -  FreeBSD 13.4, 14.2
--  Alpine Linux 3.21
+-  Alpine Linux 3.22
 
 The amd64 CPU architecture is fully supported and regularly tested.
 
@@ -87,10 +87,10 @@ supported platforms.
 
 -  Platforms past or close to their respective EOL dates, such as:
 
-   -  Ubuntu 14.04, 16.04, 18.04 (Ubuntu ESM releases are not supported)
+   -  Ubuntu 14.04, 16.04, 18.04, 20.04 (Ubuntu ESM releases are not supported)
    -  Red Hat Enterprise Linux / CentOS / Oracle Linux 6, 7
    -  Debian 8 Jessie, 9 Stretch, 10 Buster, 11 Bullseye
-   -  FreeBSD 10.x, 11.x
+   -  FreeBSD 10.x, 11.x, 12.x
 
 -  Less common CPU architectures (i386, i686, mips, mipsel, sparc, ppc, and others)
 

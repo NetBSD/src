@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.1.1.9 2025/05/21 14:40:57 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.1.1.10 2025/07/17 18:27:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,8 +156,10 @@ enum {
 	DNS_SLABHEADERATTR_STALE_WINDOW = 1 << 13,
 };
 
+/* clang-format off : RemoveParentheses */
 #define DNS_SLABHEADER_GETATTR(header, attribute) \
-	(atomic_load_acquire(&(header)->attributes) & attribute)
+	(atomic_load_acquire(&(header)->attributes) & (attribute))
+/* clang-format on */
 #define DNS_SLABHEADER_SETATTR(header, attribute) \
 	atomic_fetch_or_release(&(header)->attributes, attribute)
 #define DNS_SLABHEADER_CLRATTR(header, attribute) \
