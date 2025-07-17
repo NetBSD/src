@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2119 2025/07/13 14:45:56 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2120 2025/07/17 14:46:06 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1131,35 +1131,36 @@ markus is very cooperative about it):
 - LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1t/3.0.16
-Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.0
+Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
+Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.1
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-04-16
+Date:		2025-07-16
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
-Location:	crypto/external/bsd/openssl/dist
+Location:	crypto/external/apache2/openssl/dist
 Vendor tag:	OPENSSL
 Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
-Current tag:	openssl-3-0-16
+Current tag:	openssl-3-5-1
 Notes:
-- Next update to be in crypto/external/apache2/openssl/dist, since
-  OpenSSL 3.0 was relicensed as Apache2. We might consider reverting
-  patches for idea, rc2, rc5 to retain binary compatibility with stock
-  openssl and bump major.
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - import
 - configure and build after importing in the import directory
-- check the generated files against the ones in the include directory
-  and merge changes
+- check the generated files against the ones in the include and source
+  directories and merge changes
 - copy the toplevel libFOO.ld files to our FOO.map linker files (the legacy.ld
   is in providers/), and sync the FOO.expsym files if there were changes
+  remember to add the extra sha symbol renaming stuff to libcrypto.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
   to regen assembly files
+- make sure that the lib/libcrypto/gen script is up to date with
+  util/perl/OpenSSL/stackhash.pm
+- compare the list of files in each of the libraries with the one from
+  the openssl build with ar t | sed -e 's/lib[a-z]*-lib-//' | sort -u
 - run openssl speed -evp aes-256-cbc and compare the results with the 
   autoconf build
 
