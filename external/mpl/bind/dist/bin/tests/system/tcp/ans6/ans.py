@@ -71,9 +71,9 @@ def open_connections(active_conns, count, host, port):
         else:
             queued.append(sock)
 
-    start = time.time()
+    start = time.monotonic()
     while queued:
-        now = time.time()
+        now = time.monotonic()
         time_left = OPEN_TIMEOUT - (now - start)
         if time_left <= 0:
             break

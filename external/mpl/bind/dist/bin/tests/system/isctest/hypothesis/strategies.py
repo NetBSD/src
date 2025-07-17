@@ -168,3 +168,8 @@ def _partition_bytes_to_labels(
     # NOTE: Some of the remaining bytes will usually not be assigned to any label, but we don't care.
 
     return draw(permutations(partition))
+
+
+def uint(byte_size: int):
+    max_value = 2**byte_size - 1
+    return integers(min_value=0, max_value=max_value)

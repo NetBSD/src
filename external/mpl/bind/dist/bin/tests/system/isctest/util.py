@@ -10,6 +10,7 @@
 # information regarding copyright ownership.
 
 import dns.zone
+import pytest
 
 
 def zone_contains(
@@ -40,3 +41,9 @@ def file_contents_contain(file, substr):
             if f"{substr}" in line:
                 return True
     return False
+
+
+def param(*args, **kwargs):
+    if "id" not in kwargs:
+        kwargs["id"] = args[0]  # use first argument  as test ID
+    return pytest.param(*args, **kwargs)

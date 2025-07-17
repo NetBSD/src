@@ -1,0 +1,252 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS3
+
+include "kasp.conf";
+
+options {
+        query-source address 10.53.0.3;
+        notify-source 10.53.0.3;
+        transfer-source 10.53.0.3;
+        port @PORT@;
+        pid-file "named.pid";
+        listen-on { 10.53.0.3; };
+        listen-on-v6 { none; };
+        allow-transfer { any; };
+        recursion no;
+        dnssec-validation no;
+};
+
+key rndc_key {
+        secret "1234abcd8765";
+        algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+        inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+zone "." {
+        type hint;
+        file "../../_common/root.hint.blackhole";
+};
+
+/* Manual rollover. */
+zone "manual-rollover.kasp" {
+        type primary;
+        file "manual-rollover.kasp.db";
+        dnssec-policy "manual-rollover";
+};
+
+/* RFC 8901 Multi-signer Model 2. */
+zone "multisigner-model2.kasp" {
+        type primary;
+        file "multisigner-model2.kasp.db";
+        dnssec-policy "multisigner-model2";
+        allow-update { any; };
+};
+
+/*
+ * A zone that starts with keys that have tags that are
+ * outside of the desired multi-signer key tag range.
+ */
+zone "single-to-multisigner.kasp" {
+        type primary;
+        file "single-to-multisigner.kasp.db";
+        dnssec-policy "multisigner-model2";
+        allow-update { any; };
+};
+
+/*
+ * Zones for testing enabling DNSSEC.
+ */
+zone "step1.enable-dnssec.autosign" {
+	type primary;
+	file "step1.enable-dnssec.autosign.db";
+	dnssec-policy "enable-dnssec";
+};
+zone "step2.enable-dnssec.autosign" {
+	type primary;
+	file "step2.enable-dnssec.autosign.db";
+	dnssec-policy "enable-dnssec";
+};
+zone "step3.enable-dnssec.autosign" {
+	type primary;
+	file "step3.enable-dnssec.autosign.db";
+	dnssec-policy "enable-dnssec";
+};
+zone "step4.enable-dnssec.autosign" {
+	type primary;
+	file "step4.enable-dnssec.autosign.db";
+	dnssec-policy "enable-dnssec";
+};
+
+/*
+ * Zones for testing ZSK Pre-Publication steps.
+ */
+zone "step1.zsk-prepub.autosign" {
+	type primary;
+	file "step1.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+zone "step2.zsk-prepub.autosign" {
+	type primary;
+	file "step2.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+zone "step3.zsk-prepub.autosign" {
+	type primary;
+	file "step3.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+zone "step4.zsk-prepub.autosign" {
+	type primary;
+	file "step4.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+zone "step5.zsk-prepub.autosign" {
+	type primary;
+	file "step5.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+zone "step6.zsk-prepub.autosign" {
+	type primary;
+	file "step6.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
+
+/*
+ * Zones for testing KSK Double-KSK steps.
+ */
+zone "step1.ksk-doubleksk.autosign" {
+	type primary;
+	file "step1.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step2.ksk-doubleksk.autosign" {
+	type primary;
+	file "step2.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step3.ksk-doubleksk.autosign" {
+	type primary;
+	file "step3.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step4.ksk-doubleksk.autosign" {
+	type primary;
+	file "step4.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step5.ksk-doubleksk.autosign" {
+	type primary;
+	file "step5.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step6.ksk-doubleksk.autosign" {
+	type primary;
+	file "step6.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+
+/*
+ * Zone for testing GL #2375: Three is a crowd.
+ */
+zone "three-is-a-crowd.kasp" {
+        type primary;
+        file "three-is-a-crowd.kasp.db";
+        inline-signing yes;
+        /* Use same policy as KSK rollover test zones. */
+        dnssec-policy "ksk-doubleksk";
+};
+
+/*
+ * Zones for testing CSK rollover steps.
+ */
+zone "step1.csk-roll1.autosign" {
+	type primary;
+	file "step1.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step2.csk-roll1.autosign" {
+	type primary;
+	file "step2.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step3.csk-roll1.autosign" {
+	type primary;
+	file "step3.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step4.csk-roll1.autosign" {
+	type primary;
+	file "step4.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step5.csk-roll1.autosign" {
+	type primary;
+	file "step5.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step6.csk-roll1.autosign" {
+	type primary;
+	file "step6.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step7.csk-roll1.autosign" {
+	type primary;
+	file "step7.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+zone "step8.csk-roll1.autosign" {
+	type primary;
+	file "step8.csk-roll1.autosign.db";
+	dnssec-policy "csk-roll1";
+};
+
+zone "step1.csk-roll2.autosign" {
+	type primary;
+	file "step1.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step2.csk-roll2.autosign" {
+	type primary;
+	file "step2.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step3.csk-roll2.autosign" {
+	type primary;
+	file "step3.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step4.csk-roll2.autosign" {
+	type primary;
+	file "step4.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step5.csk-roll2.autosign" {
+	type primary;
+	file "step5.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step6.csk-roll2.autosign" {
+	type primary;
+	file "step6.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step7.csk-roll2.autosign" {
+	type primary;
+	file "step7.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};

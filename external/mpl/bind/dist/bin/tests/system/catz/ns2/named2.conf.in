@@ -79,6 +79,12 @@ view "default" {
 		primaries { 10.53.0.1; };
 	};
 
+	zone "catalog6.example" {
+		type secondary;
+		file "catalog6.example.db";
+		primaries { 10.53.0.1; };
+	};
+
 	# No "version" property
 	zone "catalog-bad1.example" {
 		type secondary;

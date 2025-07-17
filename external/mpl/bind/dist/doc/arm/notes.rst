@@ -19,10 +19,10 @@ Release Notes
 Introduction
 ------------
 
-BIND 9.20 is a stable branch, suitable for production use. This
-document summarizes significant changes since the last production
-release on the 9.18 branch. Please see the :ref:`changelog` file for
-a more detailed list of changes and bug fixes.
+BIND 9.20 (Extended Support Version) is a stable branch, suitable for
+production use. This document summarizes significant changes since the
+last production release on the 9.18 branch. Please see the
+:ref:`changelog` file for a more detailed list of changes and bug fixes.
 
 Supported Platforms
 -------------------
@@ -45,6 +45,8 @@ The list of known issues affecting the latest version in the 9.20 branch can be
 found at
 https://gitlab.isc.org/isc-projects/bind9/-/wikis/Known-Issues-in-BIND-9.20
 
+.. include:: ../notes/notes-9.20.11.rst
+.. include:: ../notes/notes-9.20.10.rst
 .. include:: ../notes/notes-9.20.9.rst
 .. include:: ../notes/notes-9.20.8.rst
 .. include:: ../notes/notes-9.20.7.rst
@@ -70,12 +72,9 @@ https://www.isc.org/contact/.
 End of Life
 -----------
 
-BIND 9.20 is a stable branch, suitable for production use. After it has
-been in production use for a while it will be designated as an Extended
-Support Version (ESV). Until then, the current ESV is BIND 9.18, which
-will be supported until at least December 2025.  See
-https://kb.isc.org/docs/aa-00896 for details of ISC's software support
-policy.
+BIND 9.20 (Extended Support Version) will be supported until at least
+March, 2028. See https://kb.isc.org/docs/aa-00896 for details of
+ISC's software support policy.
 
 Thank You
 ---------

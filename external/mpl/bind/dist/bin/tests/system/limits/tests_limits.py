@@ -33,7 +33,7 @@ pytest.importorskip("dns", minversion="2.0.0")
 )
 def test_limits(name, limit):
     msg_query = dns.message.make_query(f"{name}.example.", "A")
-    res = isctest.query.tcp(msg_query, "10.53.0.1")
+    res = isctest.query.tcp(msg_query, "10.53.0.1", log_response=False)
 
     iplist = [
         f"10.0.{x}.{y}"
@@ -47,6 +47,6 @@ def test_limits(name, limit):
 
 def test_limit_exceeded():
     msg_query = dns.message.make_query("5000.example.", "A")
-    res = isctest.query.tcp(msg_query, "10.53.0.1")
+    res = isctest.query.tcp(msg_query, "10.53.0.1", log_response=False)
 
     assert res.flags & dns.flags.TC, "TC flag was not set"

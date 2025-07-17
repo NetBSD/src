@@ -73,9 +73,9 @@ def has_signed_apex_nsec(zone, response):
             has_rrsig = True
 
     if not has_nsec:
-        print("error: missing apex NSEC record in response")
+        isctest.log.error("missing apex NSEC record in response")
     if not has_rrsig:
-        print("error: missing NSEC signature in response")
+        isctest.log.error("missing NSEC signature in response")
 
     return has_nsec and has_rrsig
 
@@ -103,8 +103,7 @@ def verify_zone(zone, transfer):
     verifier = isctest.run.cmd(verify_cmd)
 
     if verifier.returncode != 0:
-        print(f"error: dnssec-verify {zone} failed")
-        sys.stderr.buffer.write(verifier.stderr)
+        isctest.log.error(f"dnssec-verify {zone} failed")
 
     return verifier.returncode == 0
 
@@ -132,7 +131,7 @@ def read_statefile(server, zone):
     ), f"expected a single DS in response for {zone} from {server.ip}, got {count}"
 
     filename = f"ns9/K{zone}+013+{keyid:05d}.state"
-    print(f"read state file {filename}")
+    isctest.log.debug(f"read state file {filename}")
 
     try:
         with open(filename, "r", encoding="utf-8") as file:
@@ -212,8 +211,7 @@ def rekey(zone):
     controller = isctest.run.cmd(rndc_cmd)
 
     if controller.returncode != 0:
-        print(f"error: rndc loadkeys {zone} failed")
-        sys.stderr.buffer.write(controller.stderr)
+        isctest.log.error(f"rndc loadkeys {zone} failed")
 
     assert controller.returncode == 0
 

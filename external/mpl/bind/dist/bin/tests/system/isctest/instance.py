@@ -18,9 +18,13 @@ import os
 from pathlib import Path
 import re
 
+import dns.message
+import dns.rcode
+
+from .log import debug, info, LogFile, WatchLogFromStart, WatchLogFromHere
 from .rndc import RNDCBinaryExecutor, RNDCException, RNDCExecutor
 from .run import perl
-from .log import info, LogFile, WatchLogFromStart, WatchLogFromHere
+from .query import udp
 
 
 class NamedPorts(NamedTuple):
@@ -155,6 +159,28 @@ class NamedInstance:
             if not ignore_errors:
                 raise
 
+        return response
+
+    def nsupdate(self, update_msg: dns.message.Message):
+        """
+        Issue a dynamic update to a server's zone.
+        """
+        # FUTURE update_msg is actually dns.update.UpdateMessage, but it not
+        # typed properly here in order to support use of this module with
+        # dnspython<2.0.0
+        zone = str(update_msg.zone[0].name)  # type: ignore[attr-defined]
+        try:
+            response = udp(
+                update_msg,
+                self.ip,
+                self.ports.dns,
+                timeout=3,
+                expected_rcode=dns.rcode.NOERROR,
+            )
+        except dns.exception.Timeout as exc:
+            msg = f"update timeout for {zone}"
+            raise dns.exception.Timeout(msg) from exc
+        debug(f"update of zone {zone} to server {self.ip} successful")
         return response
 
     def watch_log_from_start(self) -> WatchLogFromStart:

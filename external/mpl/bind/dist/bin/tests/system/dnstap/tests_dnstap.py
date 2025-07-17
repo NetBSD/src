@@ -13,35 +13,38 @@
 
 import os
 import re
-import subprocess
 
 import isctest
+import isctest.mark
 import pytest
 
 import dns.message
 
 pytest.importorskip("dns", minversion="2.0.0")
 
-pytestmark = pytest.mark.extra_artifacts(
-    [
-        "dnstap.out.*",
-        "ns*/dnstap.out*",
-        "ns2/example.db",
-    ]
-)
+pytestmark = [
+    isctest.mark.with_dnstap,
+    pytest.mark.extra_artifacts(
+        [
+            "dnstap.out.*",
+            "ns*/dnstap.out*",
+            "ns2/example.db",
+        ]
+    ),
+]
 
 
 def run_rndc(server, rndc_command):
     """
     Send the specified 'rndc_command' to 'server' with a timeout of 10 seconds
     """
-    rndc = os.getenv("RNDC")
-    port = os.getenv("CONTROLPORT")
+    rndc = isctest.vars.ALL["RNDC"]
+    port = isctest.vars.ALL["CONTROLPORT"]
 
     cmdline = [rndc, "-c", "../_common/rndc.conf", "-p", port, "-s", server]
     cmdline.extend(rndc_command)
 
-    subprocess.check_output(cmdline, stderr=subprocess.STDOUT, timeout=10)
+    isctest.run.cmd(cmdline)
 
 
 def test_dnstap_dispatch_socket_addresses():
@@ -59,8 +62,8 @@ def test_dnstap_dispatch_socket_addresses():
     os.rename(os.path.join("ns3", "dnstap.out.0"), "dnstap.out.resolver_addresses")
 
     # Read the contents of the dnstap file using dnstap-read.
-    output = subprocess.check_output(
-        [os.getenv("DNSTAPREAD"), "dnstap.out.resolver_addresses"], encoding="utf-8"
+    run = isctest.run.cmd(
+        [isctest.vars.ALL["DNSTAPREAD"], "dnstap.out.resolver_addresses"],
     )
 
     # Check whether all frames contain the expected addresses.
@@ -75,7 +78,7 @@ def test_dnstap_dispatch_socket_addresses():
     bad_frames = []
     inspected_frames = 0
     addr_regex = r"^10\.53\.0\.[0-9]+:[0-9]{1,5}$"
-    for line in output.splitlines():
+    for line in run.stdout.decode("utf-8").splitlines():
         _, _, frame_type, addr1, _, addr2, _ = line.split(" ", 6)
         # Only inspect RESOLVER_QUERY and RESOLVER_RESPONSE frames.
         if frame_type not in ("RQ", "RR"):

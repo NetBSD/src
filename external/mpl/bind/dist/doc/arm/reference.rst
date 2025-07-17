@@ -4119,15 +4119,18 @@ Periodic Task Intervals
    :tags: server
    :short: Sets the interval at which the server scans the network interface list.
 
-   The server scans the network interface list every :any:`interface-interval`
-   minutes. The default is 60 minutes; the maximum value is 28 days (40320
-   minutes). If set to 0, interface scanning only occurs when the configuration
+   The server scans the network interface list on every interval as specified by
+   :any:`interface-interval`.
+
+   If set to 0, interface scanning only occurs when the configuration
    file is loaded, or when :any:`automatic-interface-scan` is enabled and supported
    by the operating system. After the scan, the server begins listening for
    queries on any newly discovered interfaces (provided they are allowed by the
    :any:`listen-on` configuration), and stops listening on interfaces that have
    gone away. For convenience, TTL-style time-unit suffixes may be used to
    specify the value. It also accepts ISO 8601 duration formats.
+
+   The default is 60 minutes (1 hour); the maximum value is 28 days.
 
 The :any:`sortlist` Statement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4670,6 +4673,29 @@ Tuning
    when resolving a client query, before terminating the query to avoid a
    CNAME loop. Valid values are 1 to 255. The default is 11.
 
+.. namedconf:statement:: notify-defer
+   :tags: transfer, zone
+   :short: Sets the defer time (in seconds) before sending NOTIFY messages for a zone.
+
+   This sets the delay, in seconds, to wait before sending a set of NOTIFY
+   messages for a zone. Whenever a NOTIFY message is ready to be sent, sending
+   will be deferred for this duration. This can be useful, for example, when
+   for some operation needs a catalog zone is updated with new member zones
+   before these member zones are actually ready to be tranferred. The delay can
+   be tuned for the catalog zone to an amount of time after which the member
+   zones are usually known to become ready. The default is 0 seconds.
+
+   .. warning::
+      This option is not to be confused with the :any:`notify-delay` option.
+
+   .. note::
+      An implicit :option:`rndc notify` command for a zone overrides the
+      effects of this option.
+
+   .. note::
+      This options is ignored for notifies sent during the :any:`dialup`
+      process.
+
 .. namedconf:statement:: notify-delay
    :tags: transfer, zone
    :short: Sets the delay (in seconds) between sending sets of NOTIFY messages for a zone.
@@ -4682,6 +4708,9 @@ Tuning
 
    The overall rate at which NOTIFY messages are sent for all zones is
    controlled by :any:`notify-rate`.
+
+   .. warning::
+      This option is not to be confused with the :any:`notify-defer` option.
 
 .. namedconf:statement:: max-rsa-exponent-size
    :tags: dnssec, query

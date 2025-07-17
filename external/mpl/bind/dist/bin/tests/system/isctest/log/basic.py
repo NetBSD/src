@@ -11,10 +11,12 @@
 
 import logging
 from pathlib import Path
+import textwrap
 from typing import Dict, Optional
 
 
 LOG_FORMAT = "%(asctime)s %(levelname)7s:%(name)s  %(message)s"
+LOG_INDENT = 4
 
 LOGGERS = {
     "conftest": None,
@@ -77,6 +79,13 @@ def deinit_test_logger():
     LOGGERS["test"] = None
 
 
+def indent_message(msg):
+    lines = msg.splitlines()
+    first = lines[0] + "\n"
+    to_indent = "\n".join(lines[1:])
+    return first + textwrap.indent(to_indent, " " * LOG_INDENT)
+
+
 def log(lvl: int, msg: str, *args, **kwargs):
     """Log message with the most-specific logger currently available."""
     logger = LOGGERS["test"]
@@ -85,6 +94,8 @@ def log(lvl: int, msg: str, *args, **kwargs):
     if logger is None:
         logger = LOGGERS["conftest"]
     assert logger is not None
+    if "\n" in msg:
+        msg = indent_message(msg)
     logger.log(lvl, msg, *args, **kwargs)
 
 
