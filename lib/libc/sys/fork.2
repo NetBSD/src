@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork.2,v 1.26 2022/03/24 01:52:48 gutteridge Exp $
+.\"	$NetBSD: fork.2,v 1.27 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)fork.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 1, 2019
+.Dd July 8, 2025
 .Dt FORK 2
 .Os
 .Sh NAME
@@ -66,6 +66,16 @@ by the parent.
 This descriptor copying is also used by the shell to
 establish standard input and output for newly created processes
 as well as to set up pipes.
+Any file descriptors that were marked with the close-on-fork flag,
+.Dv FD_CLOFORK
+.Po see
+.Fn fcntl 2
+and
+.Dv O_CLOFORK
+in
+.Fn open 2
+.Pc ,
+will not be present in the child process, but remain open in the parent.
 .It
 The child process' resource utilizations
 are set to 0; see

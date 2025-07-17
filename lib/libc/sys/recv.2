@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.40 2025/04/03 10:27:54 riastradh Exp $
+.\"	$NetBSD: recv.2,v 1.41 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd March 19, 2018
+.Dd July 8, 2025
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -174,6 +174,7 @@ argument to a recv call is formed by
 one or more of the values:
 .Bl -column ".Dv MSG_CMSG_CLOEXEC" -offset indent
 .It Dv MSG_CMSG_CLOEXEC Ta set the close on exec property for passed file descriptors
+.It Dv MSG_CMSG_CLOFORK Ta set the close on fork property for passed file descriptors
 .It Dv MSG_OOB Ta process out-of-band data
 .It Dv MSG_PEEK Ta peek at incoming message
 .It Dv MSG_WAITALL Ta wait for full request or error

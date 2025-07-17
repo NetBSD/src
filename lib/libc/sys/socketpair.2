@@ -1,4 +1,4 @@
-.\"	$NetBSD: socketpair.2,v 1.25 2022/11/29 20:50:37 uwe Exp $
+.\"	$NetBSD: socketpair.2,v 1.26 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 29, 2022
+.Dd July 8, 2025
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -77,9 +77,11 @@ additionally be used in the
 .Fa type
 argument:
 .Pp
-.Bl -tag -width Dv -offset indent -compact
+.Bl -tag -width SOCK_NONBLOCK -offset indent -compact
 .It Dv SOCK_CLOEXEC
 Set close-on-exec flag on both the new descriptors.
+.It Dv SOCK_CLOFORK
+Set close-on-fork flag on both the new descriptors.
 .It Dv SOCK_NONBLOCK
 Set non-blocking I/O mode on both the new sockets.
 .El
@@ -105,10 +107,26 @@ The specified protocol does not support creation of socket pairs.
 The specified protocol is not supported on this machine.
 .El
 .Sh SEE ALSO
+.Xr close 2 ,
+.Xr fcntl 2 ,
 .Xr pipe 2 ,
 .Xr read 2 ,
 .Xr socket 2 ,
 .Xr write 2
+.Sh STANDARDS
+The
+.Fn socketpair
+call conforms to
+.St -p1003.1-2001 .
+Including the
+.Dv SOCK_CLOEXEC ,
+.Dv SOCK_CLOFORK ,
+and
+.Dv SOCK_NONBLOCK
+flags in the
+.Fa type
+conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn socketpair
@@ -121,6 +139,14 @@ and
 .Dv SOCK_NONBLOCK
 flags appeared in
 .Nx 6.0 .
+.Pp
+Support for the
+.Dv SOCK_CLOFORK
+flag appeared in
+.Fx 15.0 ,
+.Dx 6.5
+and
+.Nx 11.0 .
 .Sh BUGS
 This call is currently implemented only for the
 .Dv PF_LOCAL
