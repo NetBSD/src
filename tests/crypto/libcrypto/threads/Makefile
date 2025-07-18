@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2023/08/22 17:27:49 christos Exp $
+# $NetBSD: Makefile,v 1.9 2025/07/18 00:51:36 christos Exp $
 
 .include <bsd.own.mk>
 HELPER_NAME=	threadstest
@@ -11,6 +11,7 @@ COPTS.threadstest.c+=	-Wno-missing-field-initializers
 
 DPADD+=		${LIBPTHREAD} ${LIBSSL}
 LDADD+=		-lpthread -lssl
+
 
 FILESDIR=	${TESTSDIR}
 FILES=			server.pem
@@ -28,3 +29,6 @@ HELPER_SRCS=	${${HAVE_OPENSSL} == 10 :? mttest.c : threadstest.c}
 
 .PATH:		${OPENSSLSRC}/apps
 .PATH:		${OPENSSLSRC}/test/recipes/90-test_threads_data
+LIBCRYPTO!= cd ${OPENSSLSRC}/../lib/libcrypto && ${PRINTOBJDIR}
+LDADD_AFTER+=  ${LIBCRYPTO}/libcrypto.a
+DPADD_AFTER+=          ${LIBCRYPT}
