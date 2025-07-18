@@ -29,7 +29,11 @@ run_test()
 {
 	local name="${1}"
 
-	atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	if [ "$name" = "l2defpass" ]; then
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftestl3.conf" -o ./npf.plist
+	else
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	fi
 	atf_check -o ignore npftest -c npf.plist -T "${name}"
 }
 

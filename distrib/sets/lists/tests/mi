@@ -4492,6 +4492,7 @@
 ./usr/tests/net/npf/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/npf/Kyuafile				tests-net-tests		atf,rump,kyua
 ./usr/tests/net/npf/npftest.conf			tests-net-tests		atf,rump
+./usr/tests/net/npf/npftestl3.conf			tests-net-tests		atf,rump
 ./usr/tests/net/npf/t_npf				tests-net-tests		atf,rump
 ./usr/tests/net/route					tests-net-tests		compattestfile,atf
 ./usr/tests/net/route/Atffile				tests-net-tests		atf,rump

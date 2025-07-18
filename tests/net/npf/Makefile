@@ -8,5 +8,6 @@ FILESDIR=	${TESTSDIR}
 
 TESTS_SH=	t_npf
 FILES=		../../../usr.sbin/npf/npftest/npftest.conf
+FILES+=		../../../usr.sbin/npf/npftest/npftestl3.conf
 
 .include <bsd.test.mk>
