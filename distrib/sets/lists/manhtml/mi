@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2025/05/31 15:19:12 jdc Exp $
+# $NetBSD: mi,v 1.29 2025/07/18 19:11:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2200,7 +2200,8 @@
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
 ./usr/share/man/html5/ntp.conf.html		man-ntp-htmlman		html
 ./usr/share/man/html5/ntp.keys.html		man-ntp-htmlman		html
-./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	html
+./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	html,openssl=11
+./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	html,openssl=30
 ./usr/share/man/html5/pam.conf.html		man-sys-htmlman		pam,html
 ./usr/share/man/html5/passwd.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.html		man-sys-htmlman		html

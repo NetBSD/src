@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1385 2025/07/17 19:50:39 kre Exp $
+# $NetBSD: mi,v 1.1386 2025/07/18 19:11:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -1444,7 +1444,6 @@
 ./usr/tests/crypto/libcrypto/evpmac_common.txt		tests-crypto-tests	atf,compattestfile,openssl=35
 ./usr/tests/crypto/libcrypto/evpmac_poly1305.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac_poly1305.txt	tests-crypto-tests	atf,compattestfile,openssl=35
-./usr/tests/crypto/libcrypto/evpmac_poly1355.txt	tests-crypto-tests	atf,compattestfile,openssl=35
 ./usr/tests/crypto/libcrypto/evpmac_siphash.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac_siphash.txt		tests-crypto-tests	atf,compattestfile,openssl=35
 ./usr/tests/crypto/libcrypto/evpmac_sm3.txt		tests-crypto-tests	atf,compattestfile,openssl=30
