@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2023/06/03 09:09:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2025/07/19 14:47:52 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -28,7 +28,8 @@ CPPFLAGS+=-DOPENSSL_API_COMPAT=0x10100000L
 LDADD+=	-lwrap -lblocklist 
 DPADD+=	${LIBWRAP} ${LIBBLOCKLIST} 
 
-LDADD+=	-lssl -lcrypto
+LDADD+=	-lssl -lcrypto -lpthread
+DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
 
 # Overflow that appears impossible
 COPTS.syslogd.c+=        ${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION}
