@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2025/07/14 10:25:50 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2025/07/19 15:14:26 christos Exp $
 
 CPPFLAGS+=-DWITH_OPENSSL
 
@@ -8,6 +8,7 @@ PROGDPLIBS+= \
     ssh ${CRYPTOBSD}/openssh/lib \
     crypto ${CRYPTOBSD:H}/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
     crypt ${NETBSDSRCDIR}/lib/libcrypt \
-    z ${NETBSDSRCDIR}/lib/libz
+    z ${NETBSDSRCDIR}/lib/libz \
+    pthread ${NETBSDSRCDIR}/lib/libpthread
 
 .include "${.PARSEDIR}/../Makefile.inc"
