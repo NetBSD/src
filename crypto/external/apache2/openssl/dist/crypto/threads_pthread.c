@@ -111,8 +111,8 @@ static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
         pthread_mutex_unlock(&atomic_sim_lock);                 \
         return ret;                                             \
     }
-IMPL_fallback_atomic_load_n(uint32_t)
 IMPL_fallback_atomic_load_n(uint64_t)
+IMPL_fallback_atomic_load_n(uint32_t)
 IMPL_fallback_atomic_load_n(pvoid)
 
 #  define ATOMIC_LOAD_N(t, p, o) fallback_atomic_load_n_##t(p)
@@ -730,7 +730,8 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
         return 1;
@@ -757,7 +758,8 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
                         CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_add_fetch(val, op, __ATOMIC_ACQ_REL);
         return 1;
@@ -783,7 +785,8 @@ int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
 int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_and_fetch(val, op, __ATOMIC_ACQ_REL);
         return 1;
@@ -809,7 +812,8 @@ int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
 int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_or_fetch(val, op, __ATOMIC_ACQ_REL);
         return 1;
@@ -834,7 +838,8 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         __atomic_load(val, ret, __ATOMIC_ACQUIRE);
         return 1;
@@ -857,7 +862,8 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*dst), dst)) {
         __atomic_store(dst, &val, __ATOMIC_RELEASE);
         return 1;
@@ -880,7 +886,8 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         __atomic_load(val, ret, __ATOMIC_ACQUIRE);
         return 1;
