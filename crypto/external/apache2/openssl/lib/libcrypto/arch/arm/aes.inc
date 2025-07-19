@@ -1,7 +1,9 @@
 .include "arm.inc"
 
 .PATH.S: ${.PARSEDIR}
-AES_SRCS += aes-armv4.S aes_cbc.c aesv8-armx.S
+AES_SRCS += aes-armv4.S aes_cbc.c aesv8-armx.S bsaes-armv8.S \
+vpsm4-armv8.S vpsm4_ex-armv8.S sm3-armv8.S sm4_ex-armv8.S
+
 
 .if ${ARM_MAX_ARCH} >= 7
 AES_SRCS+=bsaes-armv7.S

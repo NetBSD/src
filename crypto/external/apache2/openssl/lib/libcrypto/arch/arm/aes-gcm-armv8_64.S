@@ -17,6 +17,7 @@
 .type	aes_gcm_enc_128_kernel,%function
 .align	4
 aes_gcm_enc_128_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L128_enc_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -999,6 +1000,7 @@ aes_gcm_enc_128_kernel:
 .type	aes_gcm_dec_128_kernel,%function
 .align	4
 aes_gcm_dec_128_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L128_dec_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -1991,6 +1993,7 @@ aes_gcm_dec_128_kernel:
 .type	aes_gcm_enc_192_kernel,%function
 .align	4
 aes_gcm_enc_192_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L192_enc_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -3048,6 +3051,7 @@ aes_gcm_enc_192_kernel:
 .type	aes_gcm_dec_192_kernel,%function
 .align	4
 aes_gcm_dec_192_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L192_dec_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -4115,6 +4119,7 @@ aes_gcm_dec_192_kernel:
 .type	aes_gcm_enc_256_kernel,%function
 .align	4
 aes_gcm_enc_256_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L256_enc_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -5239,6 +5244,7 @@ aes_gcm_enc_256_kernel:
 .type	aes_gcm_dec_256_kernel,%function
 .align	4
 aes_gcm_dec_256_kernel:
+	AARCH64_VALID_CALL_TARGET
 	cbz	r1, .L256_dec_ret
 	stp	r19, r20, [sp, #-112]!
 	mov	r16, r4
@@ -6393,6 +6399,7 @@ aes_gcm_dec_256_kernel:
 	mov	r0, #0x0
 	RET
 .size	aes_gcm_dec_256_kernel,.-aes_gcm_dec_256_kernel
+.section	.rodata
 .byte	71,72,65,83,72,32,102,111,114,32,65,82,77,118,56,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	2
 .align	2
