@@ -53,6 +53,18 @@ OPENSSL_madd300_probe:
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
 
+.globl	OPENSSL_brd31_probe
+.type	OPENSSL_brd31_probe,@function
+.align	4
+OPENSSL_brd31_probe:
+	xor	0,0,0
+.long	0x7C030176
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
+
+
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,@function
 .align	4
