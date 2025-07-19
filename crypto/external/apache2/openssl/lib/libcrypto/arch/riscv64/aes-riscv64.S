@@ -696,7 +696,7 @@ AES_set_encrypt_key:
     sd      x6,0(x12)
     sd      x8,8(x12)
 
-    # if bits == 128
+    # bits == 128
     # jump into loop
     beq     x11,x28,1f
 
@@ -704,7 +704,7 @@ AES_set_encrypt_key:
     srli    x15,x14,32
     sd      x14,16(x12)
 
-    # if bits == 192
+    # bits == 192
     # jump into loop
     beq     x11,x29,2f
 
@@ -995,7 +995,7 @@ AES_set_decrypt_key:
     addi    sp,sp,-16
     sd      x12,0(sp) # We need to hold onto this!
     sd      ra,8(sp)
-    jal     ra,AES_set_encrypt_key
+    call    AES_set_encrypt_key
     ld      x12,0(sp)
     ld      ra,8(sp)
     addi    sp,sp,16
