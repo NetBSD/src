@@ -1,6 +1,7 @@
-#	$NetBSD: crypto.inc,v 1.1 2025/07/17 14:25:24 christos Exp $
+#	$NetBSD: crypto.inc,v 1.2 2025/07/19 14:37:06 christos Exp $
 
 .PATH.c:	${OPENSSLSRC}/crypto
+.PATH.S:	${OPENSSLSRC}/crypto
 
 CRYPTO_SRCS += \
 asn1_dsa.c \
