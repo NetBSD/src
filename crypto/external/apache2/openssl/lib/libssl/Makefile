@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/07/17 14:26:12 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2025/07/19 11:38:39 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -40,6 +40,7 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 LIBCRYPTO!= cd ${.CURDIR}/../libcrypto && ${PRINTOBJDIR}
 .if exists(${LIBCRYPTO}/libcrypto_pic.a)
 LDADD+= ${LIBCRYPTO}/libcrypto_pic.a
+DPADD+= ${LIBCRYPTO}/libcrypto_pic.a
 .endif
 
 AFLAGS+=-DELF
