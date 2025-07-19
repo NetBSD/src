@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2025/07/14 10:25:51 kre Exp $
+# $NetBSD: Makefile.inc,v 1.10 2025/07/19 16:06:03 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libs
 DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
+DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 __subst: .USE
 	${TOOL_SED} \
