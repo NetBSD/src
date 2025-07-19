@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/09/18 15:09:30 christos Exp $
+# $NetBSD: Makefile,v 1.13 2025/07/19 14:32:41 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -176,8 +176,8 @@ aes-omac1.c \
 #CPPFLAGS+= -DEAP_FAST
 #SRCS+=	eap_fast.c
 
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
-LDADD+= -lssl -lcrypto -ldes
+DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES} ${LIBPTHREAD}
+LDADD+= -lssl -lcrypto -ldes -lpthread
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
 SRCS+= tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
