@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1424 2025/07/18 23:45:30 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1425 2025/07/19 11:16:38 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -141,7 +141,9 @@ MKGDBSERVER?=	no
 #
 # What OpenSSL is used?
 #
-.if ${MACHINE} == "amd64" 
+.if ${MACHINE} == "amd64" || \
+    ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE_CPU} == "m68k"
 HAVE_OPENSSL?=	35
 .else
 HAVE_OPENSSL?=	30
