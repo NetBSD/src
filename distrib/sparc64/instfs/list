@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.31 2025/01/09 15:15:54 martin Exp $
+#	$NetBSD: list,v 1.32 2025/07/19 18:18:49 christos Exp $
 
 SRCDIRS	bin sbin libexec external/bsd/less/bin usr.bin usr.sbin
 
@@ -79,7 +79,7 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 # SPECIAL	xz		srcdir	external/public-domain/xz/bin
 
 LIBS	libhack.o
-LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lpcap -lz -llzma -lprop -lssl -lcrypto
+LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lpcap -lz -llzma -lprop -lssl -lcrypto -lpthread
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
