@@ -38,6 +38,17 @@ __RCSID("$NetBSD: closefrom.c,v 1.4 2018/01/17 01:24:29 kamil Exp $");
 #include <unistd.h>
 
 int
+close_range(unsigned int first, unsigned int last, int flags)
+{
+	struct fclose_range_args cr = {
+		.last	= last,
+		.flags	= flags
+	};
+
+	return (fcntl(first, F_CLOSE_RANGE, &cr));
+}
+
+int
 closefrom(int fd)
 {
 

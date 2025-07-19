@@ -344,4 +344,10 @@
 /* configurable system strings */
 #define	_CS_PATH			   1
 
+#ifdef _NETBSD_SOURCE
+/* close_range(3) flags */
+#define CLOSE_RANGE_CLOEXEC	(1<<2)
+#define CLOSE_RANGE_CLOFORK	(1<<3)
+#endif
+
 #endif /* !_SYS_UNISTD_H_ */

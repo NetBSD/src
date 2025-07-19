@@ -216,6 +216,14 @@
 #define	F_DUPFD_CLOBOTH	19		/* close on exec/fork duplicated fd */
 #endif
 
+#if defined(_NETBSD_SOURCE)
+#define F_CLOSE_RANGE	20		/* close_range(3) */
+struct fclose_range_args {
+	unsigned int last;		/* last file descriptor */
+	int flags;			/* CLOSE_RANGE_* flags */
+};
+#endif
+
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
 #define	FD_CLOFORK	2		/* close-on-fork flag */

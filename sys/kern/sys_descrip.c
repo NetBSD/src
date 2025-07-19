@@ -336,6 +336,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	struct flock fl;
 	bool cloexec = false;
 	bool clofork = false;
+	struct fclose_range_args cr;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -343,6 +344,31 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	error = 0;
 
 	switch (cmd) {
+	case F_CLOSE_RANGE:
+		if (fd < 0)
+			return EINVAL;
+		error = copyin(SCARG(uap, arg), &cr, sizeof(cr));
+		if (error)
+			return error;
+		if (cr.flags & ~(CLOSE_RANGE_CLOEXEC|CLOSE_RANGE_CLOFORK))
+			return EINVAL;
+		if ((unsigned int)fd > cr.last)
+			return EINVAL;
+		cr.last = MIN(cr.last, fdp->fd_lastfile);
+		for (i = fd; i <= (int)cr.last; i++) {
+			fp = fd_getfile(i);
+			if (fp == NULL)
+				continue;
+			if (cr.flags != 0) {
+				fd_set_exclose(l, i,
+				    (cr.flags & CLOSE_RANGE_CLOEXEC) != 0);
+				fd_set_foclose(l, i,
+				    (cr.flags & CLOSE_RANGE_CLOFORK) != 0);
+				fd_putfile(i);
+			} else
+				fd_close(i);
+		}
+		return 0;
 	case F_CLOSEM:
 		if (fd < 0)
 			return EBADF;
