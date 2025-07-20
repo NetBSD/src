@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/06/22 22:39:22 christos Exp $
+# $NetBSD: Makefile,v 1.7 2025/07/20 16:47:16 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -20,5 +20,5 @@ COPTS.hxtool.c+= -Wno-error=deprecated-declarations
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
 
-LDADD+= -lcrypto -ledit -lterminfo
-DPADD+= ${LIBCRYPTO} ${LIBEDIT} ${LIBTERMINFO}
+LDADD+= -lcrypto -ledit -lterminfo -lpthread
+DPADD+= ${LIBCRYPTO} ${LIBEDIT} ${LIBTERMINFO} ${LIBPTHREAD}
