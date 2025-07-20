@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2025/07/19 11:00:44 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2025/07/20 22:48:34 christos Exp $
 
 .include <bsd.own.mk>
 
 BITS?=32
+.if ${BITS} == 32
+EXCLUDE=(*ppc64*) ;;
+.endif
 CRYPTODIST=${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 XLATE=${OPENSSLSRC}/crypto/perlasm/ppc-xlate.pl
@@ -10,7 +13,7 @@ XLATE=${OPENSSLSRC}/crypto/perlasm/ppc-xlate.pl
 regen:
 	for i in $$(find ${OPENSSLSRC} -name \*ppc\*.pl); do \
 	    case $$i in \
-	    (*ppc64*) ;; \
+	    ${EXCLUDE} \
 	    (*xlate.pl) ;; \
 	    (*sha512*) perl $$i ${BITS} sha512 > sha512; \
                       sed -e 's/bc	25,0,/bdnz+	/' \
