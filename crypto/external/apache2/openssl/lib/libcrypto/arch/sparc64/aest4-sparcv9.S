@@ -519,8 +519,8 @@ _aes128_load_deckey=_aes128_loadkey
 .align	32
 aes128_t4_cbc_encrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L128_cbc_enc_abort
+	cmp		%i2, 15
+	bleu,pn	SIZE_T_CC, .L128_cbc_enc_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f0
@@ -1743,8 +1743,8 @@ aes128_t4_xts_decrypt:
 .align	32
 aes128_t4_cbc_decrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L128_cbc_dec_abort
+	cmp		%i2, 15
+	bleu,pn		SIZE_T_CC, .L128_cbc_dec_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f12	! load ivec
@@ -2315,8 +2315,8 @@ _aes256_load_deckey=_aes192_loadkey
 .align	32
 aes256_t4_cbc_encrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L256_cbc_enc_abort
+	cmp		%i2, 15
+	bleu,pn	SIZE_T_CC, .L256_cbc_enc_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f0
@@ -2462,8 +2462,8 @@ aes256_t4_cbc_encrypt:
 .align	32
 aes192_t4_cbc_encrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L192_cbc_enc_abort
+	cmp		%i2, 15
+	bleu,pn	SIZE_T_CC, .L192_cbc_enc_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f0
@@ -3953,8 +3953,8 @@ aes192_t4_ctr32_encrypt:
 .align	32
 aes192_t4_cbc_decrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L192_cbc_dec_abort
+	cmp		%i2, 15
+	bleu,pn		SIZE_T_CC, .L192_cbc_dec_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f12	! load ivec
@@ -4221,8 +4221,8 @@ aes192_t4_cbc_decrypt:
 .align	32
 aes256_t4_cbc_decrypt:
 	save		%sp, -STACK_FRAME, %sp
-	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L256_cbc_dec_abort
+	cmp		%i2, 15
+	bleu,pn		SIZE_T_CC, .L256_cbc_dec_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f12	! load ivec
