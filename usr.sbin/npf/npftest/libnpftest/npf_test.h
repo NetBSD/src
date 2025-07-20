@@ -126,6 +126,7 @@ bool		npf_layer2_rule_test(bool);
 bool		npf_nat_test(bool);
 bool 		npf_guid_test(bool);
 bool		npf_gc_test(bool);
+bool		npf_layer2only_test(bool);
 
 int		npf_inet_pton(int, const char *, void *);
 const char *	npf_inet_ntop(int, const void *, char *, socklen_t);

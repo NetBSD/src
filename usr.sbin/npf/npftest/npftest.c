@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.29 2025/07/01 20:19:30 joe Exp $	*/
+/*	$NetBSD: npftest.c,v 1.30 2025/07/20 12:25:54 joe Exp $	*/
 
 /*
  * NPF testing framework.
@@ -68,7 +68,8 @@ describe_tests(void)
 		"rule\trule processing\n"
 		"nat\tNAT rule processing\n"
 		"guid\tUser/group filtering\n"
-		"ether\tlayer 2 rule processing\n");
+		"ether\tlayer 2 rule processing\n"
+		"l2defpass\tlayer 2 default pass on layer 3 rules\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -328,6 +329,12 @@ main(int argc, char **argv)
 		if (!testname || strcmp("ether", testname) == 0) {
 			ok = rumpns_npf_layer2_rule_test(verbose);
 			fail |= result("rules - layer 2", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("l2defpass", testname) == 0) {
+			ok = rumpns_npf_layer2only_test(verbose);
+			fail |= result(" layer 2 default pass", ok);
 			tname_matched = true;
 		}
 

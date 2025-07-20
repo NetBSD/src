@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1386 2025/07/18 19:11:13 christos Exp $
+# $NetBSD: mi,v 1.1387 2025/07/20 12:25:53 joe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4572,6 +4572,7 @@
 ./usr/tests/net/npf/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/npf/Kyuafile				tests-net-tests		atf,rump,kyua
 ./usr/tests/net/npf/npftest.conf			tests-net-tests		atf,rump
+./usr/tests/net/npf/npftestl3.conf			tests-net-tests		atf,rump
 ./usr/tests/net/npf/t_npf				tests-net-tests		atf,rump
 ./usr/tests/net/route					tests-net-tests		compattestfile,atf
 ./usr/tests/net/route/Atffile				tests-net-tests		atf,rump
