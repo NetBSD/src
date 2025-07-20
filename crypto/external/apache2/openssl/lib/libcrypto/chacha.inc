@@ -1,8 +1,8 @@
-#	$NetBSD: chacha.inc,v 1.1 2025/07/17 14:25:24 christos Exp $
+#	$NetBSD: chacha.inc,v 1.2 2025/07/20 00:32:10 christos Exp $
 
 .PATH.c:	${OPENSSLSRC}/crypto/chacha
 
-CHACHA_SRCS ?= chacha_enc.c
+CHACHA_SRCS ?= chacha_enc.c chacha_riscv.c
 
 SRCS += ${CHACHA_SRCS}
 

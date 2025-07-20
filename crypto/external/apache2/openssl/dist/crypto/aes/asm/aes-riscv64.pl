@@ -811,7 +811,7 @@ $code .= <<___;
     sd      $T0,0($KEYP)
     sd      $T2,8($KEYP)
 
-    # if bits == 128
+    # bits == 128
     # jump into loop
     beq     $BITS,$T8,1f
 
@@ -819,7 +819,7 @@ $code .= <<___;
     srli    $T5,$T4,32
     sd      $T4,16($KEYP)
 
-    # if bits == 192
+    # bits == 192
     # jump into loop
     beq     $BITS,$T9,2f
 

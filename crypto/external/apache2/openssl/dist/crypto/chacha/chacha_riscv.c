@@ -40,6 +40,9 @@
 #include "crypto/chacha.h"
 #include "crypto/riscv_arch.h"
 
+void ChaCha20_ctr32_c(unsigned char *out, const unsigned char *inp,
+                      size_t len, const unsigned int key[8],
+		      const unsigned int counter[4]);
 void ChaCha20_ctr32_v_zbb_zvkb(unsigned char *out, const unsigned char *inp,
                                size_t len, const unsigned int key[8],
                                const unsigned int counter[4]);
