@@ -246,16 +246,19 @@ case ${host} in
     *-*-darwin1[89]* | *-*-darwin2* )
       tmake_file="t-darwin-min-8 $tmake_file"
       ;;
-    *-*-darwin9* | *-*-darwin1[0-7]*)
+    *-*-darwin1[67]]*)
       tmake_file="t-darwin-min-5 $tmake_file"
       ;;
+    *-*-darwin9* | *-*-darwin1[0-5]*)
+      tmake_file="t-darwin-min-5 t-darwin-libgccs1 $tmake_file"
+      ;;
     *-*-darwin[4-8]*)
-      tmake_file="t-darwin-min-1 $tmake_file"
+      tmake_file="t-darwin-min-1 t-darwin-libgccs1 $tmake_file"
       ;;
     *)
       # Fall back to configuring for the oldest system known to work with
       # all archs and the current sources.
-      tmake_file="t-darwin-min-5 $tmake_file"
+      tmake_file="t-darwin-min-5 t-darwin-libgccs1 $tmake_file"
       echo "Warning: libgcc configured to support macOS 10.5" 1>&2
       ;;
   esac
@@ -271,7 +274,7 @@ case ${host} in
   # machine-specific sections may refine and add to this
   # configuration.
   tmake_file="$tmake_file t-freebsd t-crtstuff-pic t-libgcc-pic t-eh-dw2-dip t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver"
-  extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
+  extra_parts="crtbegin.o crtend.o crtbeginS.o crtbeginT.o crtendS.o"
   case ${target_thread_file} in
     posix)
       tmake_file="${tmake_file} t-freebsd-thread"
