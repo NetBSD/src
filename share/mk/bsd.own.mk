@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1427 2025/07/20 12:05:23 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1428 2025/07/21 21:21:34 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -102,8 +102,12 @@ MKGCCCMDS?=	no
 #
 # Build GCC with the "isl" library enabled.
 # The alpha port does not work with it, see GCC PR's 84204 and 84353.
+# Other ports don't have vector units GCC can target.
 #
-.if ${MACHINE} == "alpha"
+.if ${MACHINE} == "alpha" || \
+    ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "sh3"
 NOGCCISL=	# defined
 .endif
 
