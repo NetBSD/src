@@ -5,12 +5,12 @@
 #include "configargs.h"
 
 #define GCCPLUGIN_VERSION_MAJOR   12
-#define GCCPLUGIN_VERSION_MINOR   4
+#define GCCPLUGIN_VERSION_MINOR   5
 #define GCCPLUGIN_VERSION_PATCHLEVEL   0
 #define GCCPLUGIN_VERSION  (GCCPLUGIN_VERSION_MAJOR*1000 + GCCPLUGIN_VERSION_MINOR)
 
-static char basever[] = "12.4.0";
-static char datestamp[] = "20240620";
+static char basever[] = "12.5.0";
+static char datestamp[] = "20250711";
 static char devphase[] = "";
 static char revision[] = "";
 

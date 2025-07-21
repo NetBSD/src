@@ -300,6 +300,9 @@
 /* Define if openat is available in <fcntl.h>. */
 #define HAVE_OPENAT 1
 
+/* Define if O_NONBLOCK is defined in <fcntl.h> */
+#define HAVE_O_NONBLOCK 1
+
 /* Define if poll is available in <poll.h>. */
 #define HAVE_POLL 1
 
@@ -495,7 +498,7 @@
 #define HAVE_TRUNCATE 1
 
 /* Define to 1 if you have the <uchar.h> header file. */
-/* #undef HAVE_UCHAR_H */
+#define HAVE_UCHAR_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
@@ -903,7 +906,7 @@
 
 /* Define if C11 functions in <uchar.h> should be imported into namespace std
    in <cuchar>. */
-/* #undef _GLIBCXX_USE_C11_UCHAR_CXX11 */
+#define _GLIBCXX_USE_C11_UCHAR_CXX11 1
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
@@ -1044,11 +1047,11 @@
 
 /* Define if c8rtomb and mbrtoc8 functions in <uchar.h> should be imported
    into namespace std in <cuchar> for C++20. */
-/* #undef _GLIBCXX_USE_UCHAR_C8RTOMB_MBRTOC8_CXX20 */
+#define _GLIBCXX_USE_UCHAR_C8RTOMB_MBRTOC8_CXX20 1
 
 /* Define if c8rtomb and mbrtoc8 functions in <uchar.h> should be imported
    into namespace std in <cuchar> for -fchar8_t. */
-/* #undef _GLIBCXX_USE_UCHAR_C8RTOMB_MBRTOC8_FCHAR8_T */
+#define _GLIBCXX_USE_UCHAR_C8RTOMB_MBRTOC8_FCHAR8_T 1
 
 /* Define if utime is available in <utime.h>. */
 #define _GLIBCXX_USE_UTIME 1
