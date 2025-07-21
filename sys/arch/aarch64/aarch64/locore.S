@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2025/01/31 11:09:21 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.96 2025/07/21 16:57:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.95 2025/01/31 11:09:21 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.96 2025/07/21 16:57:10 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -696,9 +696,9 @@ print_x0:
 #ifdef VERBOSE_LOCORE
 /*
  * tinyprintf() supports only maximum 7 '%x', '%d' and '%s' formats.
- * width and any modifiers are ignored. '\n' will be replaced to '\r\n'.
+ * width and any modifiers are ignored. '\n' will be replaced with '\r\n'.
  *
- * '%x' will be always expanded 16 widths hexadicimal.
+ * '%x' implies hexadecimal with a field width of 16.
  * e.g., tinyprintf("Hello %s %x\n", "World", 0x12345)
  * outputs "Hello World 0000000000012345\r\n"
  */
