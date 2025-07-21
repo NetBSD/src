@@ -1,4 +1,4 @@
-#	$NetBSD: record.inc,v 1.1 2025/07/17 14:26:12 christos Exp $
+#	$NetBSD: record.inc,v 1.2 2025/07/21 22:21:21 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -18,4 +18,5 @@ tls13_meth.c \
 tls1_meth.c \
 tls_common.c \
 tls_multib.c \
+tls_pad.c \
 tlsany_meth.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2025/07/19 14:29:35 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2025/07/21 22:21:21 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -34,18 +34,6 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/pqueue ${OPENSSLSRC}/include/openssl
 
 .include "srcs.inc"
-#.PATH: ${OPENSSLSRC}/crypto
-#SRCS+= packet.c
-
-LIBCRYPTO!= cd ${.CURDIR}/../libcrypto && ${PRINTOBJDIR}
-.if exists(${LIBCRYPTO}/libcrypto_pic.a)
-LDADD+= ${LIBCRYPTO}/libcrypto_pic.a
-DPADD+= ${LIBCRYPTO}/libcrypto_pic.a
-# vax is always pic
-.elif exists(${LIBCRYPTO}/libcrypto.a)
-LDADD+= ${LIBCRYPTO}/libcrypto.a
-DPADD+= ${LIBCRYPTO}/libcrypto.a
-.endif
 
 AFLAGS+=-DELF
 
@@ -57,8 +45,6 @@ VERSION_MAP=	ssl.map
 
 PKGCONFIG=libssl openssl
 .include "${.CURDIR}/../../pkgconfig.mk"
-
-
 
 GENH = \
 ssl.h

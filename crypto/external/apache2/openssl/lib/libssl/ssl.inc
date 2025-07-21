@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.1 2025/07/17 14:26:12 christos Exp $
+#	$NetBSD: ssl.inc,v 1.2 2025/07/21 22:21:21 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -35,6 +35,7 @@ ssl_sess.c \
 ssl_stat.c \
 ssl_txt.c \
 ssl_utst.c \
+ssl3_cbc.c \
 t1_enc.c \
 t1_lib.c \
 t1_trce.c \
