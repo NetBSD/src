@@ -53,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-match.h"
 #include "dbgcnt.h"
 #include "tree-ssa-propagate.h"
+#include "tree-ssa-loop-niter.h"
 
 static unsigned int tree_ssa_phiopt_worker (bool, bool, bool);
 static bool two_value_replacement (basic_block, basic_block, edge, gphi *,
@@ -429,6 +430,17 @@ replace_phi_edge_with_variable (basic_block cond_block,
     edge_to_remove = EDGE_SUCC (cond_block, 1);
   else
     edge_to_remove = EDGE_SUCC (cond_block, 0);
+
+  /* If we are removing the cond on a loop exit,
+     reset number of iteration information of the loop. */
+  if (loop_exits_from_bb_p (cond_block->loop_father, cond_block))
+    {
+      auto loop = cond_block->loop_father;
+      free_numbers_of_iterations_estimates (loop);
+      loop->any_upper_bound = false;
+      loop->any_likely_upper_bound = false;
+    }
+
   if (EDGE_COUNT (edge_to_remove->dest->preds) == 1)
     {
       e->flags |= EDGE_FALLTHRU;
@@ -1310,6 +1322,9 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
 		&& jump_function_from_stmt (&arg1, stmt)))
 	empty_or_with_defined_p = false;
     }
+  /* The middle bb is not empty if there are any phi nodes. */
+  if (phi_nodes (middle_bb))
+    empty_or_with_defined_p = false;
 
   cond = last_stmt (cond_bb);
   code = gimple_cond_code (cond);
@@ -3293,7 +3308,9 @@ cond_if_else_store_replacement_1 (basic_block then_bb, basic_block else_bb,
       || else_assign == NULL
       || !gimple_assign_single_p (else_assign)
       || gimple_clobber_p (else_assign)
-      || gimple_has_volatile_ops (else_assign))
+      || gimple_has_volatile_ops (else_assign)
+      || stmt_references_abnormal_ssa_name (then_assign)
+      || stmt_references_abnormal_ssa_name (else_assign))
     return false;
 
   lhs = gimple_assign_lhs (then_assign);

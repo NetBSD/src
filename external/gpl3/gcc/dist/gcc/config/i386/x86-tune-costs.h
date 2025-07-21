@@ -1894,8 +1894,8 @@ struct processor_costs znver4_cost = {
 					   in 32bit, 64bit, 128bit, 256bit and 512bit */
   {8, 8, 8, 12, 12},			/* cost of storing SSE register
 					   in 32bit, 64bit, 128bit, 256bit and 512bit */
-  {6, 6, 6, 6, 6},			/* cost of unaligned loads.  */
-  {8, 8, 8, 8, 8},			/* cost of unaligned stores.  */
+  {6, 6, 10, 10, 12},			/* cost of unaligned loads.  */
+  {8, 8, 8, 12, 12},			/* cost of unaligned stores.  */
   2, 2, 2,				/* cost of moving XMM,YMM,ZMM
 					   register.  */
   6,					/* cost of moving SSE register to integer.  */
@@ -1944,6 +1944,157 @@ struct processor_costs znver4_cost = {
      plus/minus operations per cycle but only one multiply.  This is adjusted
      in ix86_reassociation_width.  */
   4, 4, 3, 6,				/* reassoc int, fp, vec_int, vec_fp.  */
+  znver2_memcpy,
+  znver2_memset,
+  COSTS_N_INSNS (4),			/* cond_taken_branch_cost.  */
+  COSTS_N_INSNS (2),			/* cond_not_taken_branch_cost.  */
+  "16",					/* Loop alignment.  */
+  "16",					/* Jump alignment.  */
+  "0:0:8",				/* Label alignment.  */
+  "16",					/* Func alignment.  */
+};
+
+/* This table currently replicates znver4_cost table. */
+struct processor_costs znver5_cost = {
+  {
+  /* Start of register allocator costs.  integer->integer move cost is 2. */
+
+  /* reg-reg moves are done by renaming and thus they are even cheaper than
+     1 cycle.  Because reg-reg move cost is 2 and following tables correspond
+     to doubles of latencies, we do not model this correctly.  It does not
+     seem to make practical difference to bump prices up even more.  */
+  6,					/* cost for loading QImode using
+					   movzbl.  */
+  {6, 6, 6},				/* cost of loading integer registers
+					   in QImode, HImode and SImode.
+					   Relative to reg-reg move (2).  */
+  {8, 8, 8},				/* cost of storing integer
+					   registers.  */
+  2,					/* cost of reg,reg fld/fst.  */
+  {14, 14, 17},				/* cost of loading fp registers
+					   in SFmode, DFmode and XFmode.  */
+  {12, 12, 16},				/* cost of storing fp registers
+					   in SFmode, DFmode and XFmode.  */
+  2,					/* cost of moving MMX register.  */
+  {6, 6},				/* cost of loading MMX registers
+					   in SImode and DImode.  */
+  {8, 8},				/* cost of storing MMX registers
+					   in SImode and DImode.  */
+  2, 2, 3,				/* cost of moving XMM,YMM,ZMM
+					   register.  */
+  {6, 6, 10, 10, 12},			/* cost of loading SSE registers
+					   in 32,64,128,256 and 512-bit.  */
+  {8, 8, 8, 12, 12},			/* cost of storing SSE registers
+					   in 32,64,128,256 and 512-bit.  */
+  6, 8,					/* SSE->integer and integer->SSE
+					   moves.  */
+  8, 8,					/* mask->integer and integer->mask moves */
+  {6, 6, 6},				/* cost of loading mask register
+					   in QImode, HImode, SImode.  */
+  {8, 8, 8},				/* cost if storing mask register
+					   in QImode, HImode, SImode.  */
+  2,					/* cost of moving mask register.  */
+  /* End of register allocator costs.  */
+  },
+
+  COSTS_N_INSNS (1),			/* cost of an add instruction.  */
+  /* TODO: Lea with 3 components has cost 2.  */
+  COSTS_N_INSNS (1),			/* cost of a lea instruction.  */
+  COSTS_N_INSNS (1),			/* variable shift costs.  */
+  COSTS_N_INSNS (1),			/* constant shift costs.  */
+  /* mul has latency 3, executes in 3 integer units.  */
+  {COSTS_N_INSNS (3),			/* cost of starting multiply for QI.  */
+   COSTS_N_INSNS (3),			/* 				 HI.  */
+   COSTS_N_INSNS (3),			/*				 SI.  */
+   COSTS_N_INSNS (3),			/*				 DI.  */
+   COSTS_N_INSNS (3)},			/*			other.  */
+  0,					/* cost of multiply per each bit
+					   set.  */
+  /* integer divide has latency of 8 cycles
+     plus 1 for every 9 bits of quotient.  */
+  {COSTS_N_INSNS (10),			/* cost of a divide/mod for QI.  */
+   COSTS_N_INSNS (11),			/* 			    HI.  */
+   COSTS_N_INSNS (13),			/*			    SI.  */
+   COSTS_N_INSNS (16),			/*			    DI.  */
+   COSTS_N_INSNS (16)},			/*			    other.  */
+  COSTS_N_INSNS (1),			/* cost of movsx.  */
+  COSTS_N_INSNS (1),			/* cost of movzx.  */
+  15,					/* "large" insn.  */
+  9,					/* MOVE_RATIO.  */
+  6,					/* CLEAR_RATIO */
+  {6, 6, 6},				/* cost of loading integer registers
+					   in QImode, HImode and SImode.
+					   Relative to reg-reg move (2).  */
+  {8, 8, 8},				/* cost of storing integer
+					   registers.  */
+  {6, 6, 10, 10, 12},			/* cost of loading SSE registers
+					   in 32bit, 64bit, 128bit, 256bit and 512bit */
+  {8, 8, 8, 12, 12},			/* cost of storing SSE register
+					   in 32bit, 64bit, 128bit, 256bit and 512bit */
+  {6, 6, 10, 10, 12},			/* cost of unaligned loads.  */
+  {8, 8, 8, 12, 12},			/* cost of unaligned stores.  */
+  2, 2, 2,				/* cost of moving XMM,YMM,ZMM
+					   register.  */
+  6,					/* cost of moving SSE register to integer.  */
+
+  /* TODO: gather and scatter instructions are currently disabled in
+     x86-tune.def.  In some cases they are however a win, see PR116582
+     We however need good cost model for them.  */
+  14, 10,				/* Gather load static, per_elt.  */
+  14, 20,				/* Gather store static, per_elt.  */
+  48,					/* size of l1 cache.  */
+  1024,					/* size of l2 cache.  */
+  64,					/* size of prefetch block.  */
+  /* New AMD processors never drop prefetches; if they cannot be performed
+     immediately, they are queued.  We set number of simultaneous prefetches
+     to a large constant to reflect this (it probably is not a good idea not
+     to limit number of prefetches at all, as their execution also takes some
+     time).  */
+  100,					/* number of parallel prefetches.  */
+  3,					/* Branch cost.  */
+  /* TODO x87 latencies are still based on znver4.
+     Probably not very important these days.  */
+  COSTS_N_INSNS (7),			/* cost of FADD and FSUB insns.  */
+  COSTS_N_INSNS (7),			/* cost of FMUL instruction.  */
+  /* Latency of fdiv is 8-15.  */
+  COSTS_N_INSNS (15),			/* cost of FDIV instruction.  */
+  COSTS_N_INSNS (1),			/* cost of FABS instruction.  */
+  COSTS_N_INSNS (1),			/* cost of FCHS instruction.  */
+  /* Latency of fsqrt is 4-10.  */
+  COSTS_N_INSNS (25),			/* cost of FSQRT instruction.  */
+
+  /* SSE instructions have typical throughput 4 and latency 1.  */
+  COSTS_N_INSNS (1),			/* cost of cheap SSE instruction.  */
+  /* ADDSS has throughput 2 and latency 2
+     (in some cases when source is another addition).  */
+  COSTS_N_INSNS (2),			/* cost of ADDSS/SD SUBSS/SD insns.  */
+  /* MULSS has throughput 2 and latency 3.  */
+  COSTS_N_INSNS (3),			/* cost of MULSS instruction.  */
+  COSTS_N_INSNS (3),			/* cost of MULSD instruction.  */
+  /* FMA had throughput 2 and latency 4.  */
+  COSTS_N_INSNS (4),			/* cost of FMA SS instruction.  */
+  COSTS_N_INSNS (4),			/* cost of FMA SD instruction.  */
+  /* DIVSS has throughtput 0.4 and latency 10.  */
+  COSTS_N_INSNS (10),			/* cost of DIVSS instruction.  */
+  /* DIVSD has throughtput 0.25 and latency 13.  */
+  COSTS_N_INSNS (13),			/* cost of DIVSD instruction.  */
+  /* DIVSD has throughtput 0.22 and latency 14.  */
+  COSTS_N_INSNS (14),			/* cost of SQRTSS instruction.  */
+  /* DIVSD has throughtput 0.13 and latency 20.  */
+  COSTS_N_INSNS (20),			/* cost of SQRTSD instruction.  */
+  /* Zen5 can execute:
+      - integer ops: 6 per cycle, at most 3 multiplications.
+	latency 1 for additions, 3 for multiplications (pipelined)
+
+	Setting width of 9 for multiplication is probably excessive
+	for register pressure.
+      - fp ops: 2 additions per cycle, latency 2-3
+		2 multiplicaitons per cycle, latency 3
+      - vector intger ops: 4 additions, latency 1
+			   2 multiplications, latency 4
+	We increase width to 6 for multiplications
+	in ix86_reassociation_width.  */
+  6, 6, 4, 6,				/* reassoc int, fp, vec_int, vec_fp.  */
   znver2_memcpy,
   znver2_memset,
   COSTS_N_INSNS (4),			/* cond_taken_branch_cost.  */

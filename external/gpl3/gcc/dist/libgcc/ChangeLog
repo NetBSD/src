@@ -1,3 +1,23 @@
+2025-07-11  Release Manager
+
+	* GCC 12.5.0 released.
+
+2025-07-04  Mark Mentovai  <mark@mentovai.com>
+
+	Backported from master:
+	2024-09-24  Mark Mentovai  <mark@mentovai.com>
+
+	PR target/116809
+	* config.host: Build legacy libgcc_s.1 on hosts before macOS 10.12.
+	* config/i386/t-darwin: Remove reference to legacy libgcc_s.1
+	* config/rs6000/t-darwin: Likewise.
+	* config/t-darwin-libgccs1: New file.
+
+2025-02-20  Dimitry Andric  <dimitry@andric.com>
+
+	PR target/118685
+	* config.host (*-*-freebsd*): Add crtbeginT.o to extra_parts.
+
 2024-06-20  Release Manager
 
 	* GCC 12.4.0 released.

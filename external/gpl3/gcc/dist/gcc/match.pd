@@ -3255,7 +3255,11 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
      out    (le  gt  ge  lt )
  (simplify
   (cmp:c (minmax:c @0 @1) @0)
-  (if (ANY_INTEGRAL_TYPE_P (TREE_TYPE (@0)))
+  (if (ANY_INTEGRAL_TYPE_P (TREE_TYPE (@0))
+       && (!VECTOR_TYPE_P (TREE_TYPE (@0))
+	   || (VECTOR_TYPE_P (type)
+	       && (!expand_vec_cmp_expr_p (TREE_TYPE (@0), type, cmp)
+		   || expand_vec_cmp_expr_p (TREE_TYPE (@0), type, out)))))
    (out @0 @1))))
 /* MIN (X, 5) == 0 -> X == 0
    MIN (X, 5) == 7 -> false  */
@@ -7041,7 +7045,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
    (IFN_FNMS @0 @1 @2))
   (simplify
    (negate (fmas@3 @0 @1 @2))
-   (if (single_use (@3))
+   (if (!HONOR_SIGN_DEPENDENT_ROUNDING (type) && single_use (@3))
     (IFN_FNMS @0 @1 @2))))
 
  (simplify
@@ -7055,7 +7059,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (IFN_FNMA @0 @1 @2))
  (simplify
   (negate (IFN_FMS@3 @0 @1 @2))
-   (if (single_use (@3))
+   (if (!HONOR_SIGN_DEPENDENT_ROUNDING (type) && single_use (@3))
     (IFN_FNMA @0 @1 @2)))
 
  (simplify
@@ -7069,7 +7073,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (IFN_FMS @0 @1 @2))
  (simplify
   (negate (IFN_FNMA@3 @0 @1 @2))
-  (if (single_use (@3))
+  (if (!HONOR_SIGN_DEPENDENT_ROUNDING (type) && single_use (@3))
    (IFN_FMS @0 @1 @2)))
 
  (simplify
@@ -7083,7 +7087,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (IFN_FMA @0 @1 @2))
  (simplify
   (negate (IFN_FNMS@3 @0 @1 @2))
-  (if (single_use (@3))
+  (if (!HONOR_SIGN_DEPENDENT_ROUNDING (type) && single_use (@3))
    (IFN_FMA @0 @1 @2))))
 
 /* CLZ simplifications.  */

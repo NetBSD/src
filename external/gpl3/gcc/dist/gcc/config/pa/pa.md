@@ -4908,7 +4908,7 @@
 
 (define_insn "fix_truncsfsi2"
   [(set (match_operand:SI 0 "register_operand" "=f")
-	(fix:SI (fix:SF (match_operand:SF 1 "register_operand" "f"))))]
+	(fix:SI (match_operand:SF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT"
   "{fcnvfxt,sgl,sgl|fcnv,t,sgl,w} %1,%0"
   [(set_attr "type" "fpalu")
@@ -4916,7 +4916,7 @@
 
 (define_insn "fix_truncdfsi2"
   [(set (match_operand:SI 0 "register_operand" "=f")
-	(fix:SI (fix:DF (match_operand:DF 1 "register_operand" "f"))))]
+	(fix:SI (match_operand:DF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT"
   "{fcnvfxt,dbl,sgl|fcnv,t,dbl,w} %1,%0"
   [(set_attr "type" "fpalu")
@@ -4924,7 +4924,7 @@
 
 (define_insn "fix_truncsfdi2"
   [(set (match_operand:DI 0 "register_operand" "=f")
-	(fix:DI (fix:SF (match_operand:SF 1 "register_operand" "f"))))]
+	(fix:DI (match_operand:SF 1 "register_operand" "f")))]
   "TARGET_PA_11 && ! TARGET_SOFT_FLOAT"
   "{fcnvfxt,sgl,dbl|fcnv,t,sgl,dw} %1,%0"
   [(set_attr "type" "fpalu")
@@ -4932,7 +4932,7 @@
 
 (define_insn "fix_truncdfdi2"
   [(set (match_operand:DI 0 "register_operand" "=f")
-	(fix:DI (fix:DF (match_operand:DF 1 "register_operand" "f"))))]
+	(fix:DI (match_operand:DF 1 "register_operand" "f")))]
   "TARGET_PA_11 && ! TARGET_SOFT_FLOAT"
   "{fcnvfxt,dbl,dbl|fcnv,t,dbl,dw} %1,%0"
   [(set_attr "type" "fpalu")
@@ -4972,7 +4972,7 @@
 
 (define_insn "fixuns_truncsfsi2"
   [(set (match_operand:SI 0 "register_operand" "=f")
-	(unsigned_fix:SI (fix:SF (match_operand:SF 1 "register_operand" "f"))))]
+	(unsigned_fix:SI (match_operand:SF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT && TARGET_PA_20"
   "fcnv,t,sgl,uw %1,%0"
   [(set_attr "type" "fpalu")
@@ -4980,7 +4980,7 @@
 
 (define_insn "fixuns_truncdfsi2"
   [(set (match_operand:SI 0 "register_operand" "=f")
-	(unsigned_fix:SI (fix:DF (match_operand:DF 1 "register_operand" "f"))))]
+	(unsigned_fix:SI (match_operand:DF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT && TARGET_PA_20"
   "fcnv,t,dbl,uw %1,%0"
   [(set_attr "type" "fpalu")
@@ -4988,7 +4988,7 @@
 
 (define_insn "fixuns_truncsfdi2"
   [(set (match_operand:DI 0 "register_operand" "=f")
-	(unsigned_fix:DI (fix:SF (match_operand:SF 1 "register_operand" "f"))))]
+	(unsigned_fix:DI (match_operand:SF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT && TARGET_PA_20"
   "fcnv,t,sgl,udw %1,%0"
   [(set_attr "type" "fpalu")
@@ -4996,7 +4996,7 @@
 
 (define_insn "fixuns_truncdfdi2"
   [(set (match_operand:DI 0 "register_operand" "=f")
-	(unsigned_fix:DI (fix:DF (match_operand:DF 1 "register_operand" "f"))))]
+	(unsigned_fix:DI (match_operand:DF 1 "register_operand" "f")))]
   "! TARGET_SOFT_FLOAT && TARGET_PA_20"
   "fcnv,t,dbl,udw %1,%0"
   [(set_attr "type" "fpalu")
@@ -5490,24 +5490,6 @@
 		 (zero_extend:DI (match_operand:SI 2 "register_operand" "f"))))]
   "TARGET_PA_11 && ! TARGET_SOFT_FLOAT && ! TARGET_SOFT_MULT"
   "xmpyu %1,%2,%0"
-  [(set_attr "type" "fpmuldbl")
-   (set_attr "length" "4")])
-
-(define_insn ""
-  [(set (match_operand:DI 0 "register_operand" "=f")
-	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "f"))
-		 (match_operand:DI 2 "uint32_operand" "f")))]
-  "TARGET_PA_11 && ! TARGET_SOFT_FLOAT && ! TARGET_SOFT_MULT && !TARGET_64BIT"
-  "xmpyu %1,%R2,%0"
-  [(set_attr "type" "fpmuldbl")
-   (set_attr "length" "4")])
-
-(define_insn ""
-  [(set (match_operand:DI 0 "register_operand" "=f")
-	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "f"))
-		 (match_operand:DI 2 "uint32_operand" "f")))]
-  "TARGET_PA_11 && ! TARGET_SOFT_FLOAT && ! TARGET_SOFT_MULT && TARGET_64BIT"
-  "xmpyu %1,%2R,%0"
   [(set_attr "type" "fpmuldbl")
    (set_attr "length" "4")])
 
@@ -7334,7 +7316,7 @@
 })
 
 (define_insn "indirect_goto"
-  [(unspec [(match_operand 0 "register_operand" "=r")] UNSPEC_GOTO)]
+  [(unspec [(match_operand 0 "register_operand" "r")] UNSPEC_GOTO)]
   "GET_MODE (operands[0]) == word_mode"
   "bv%* %%r0(%0)"
   [(set_attr "type" "branch")
@@ -9469,7 +9451,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
 	  (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0) (match_dup 1)))
-   (clobber (match_scratch:SI 4 "=X,r,r"))]
+   (clobber (match_scratch:SI 4 "=X,r,&r"))]
   ""
   "* return pa_output_dbra (operands, insn, which_alternative); "
 ;; Do not expect to understand this the first time through.
