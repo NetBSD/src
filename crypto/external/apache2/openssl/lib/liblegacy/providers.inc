@@ -1,8 +1,9 @@
-#	$NetBSD: providers.inc,v 1.1 2025/07/17 14:26:12 christos Exp $
+#	$NetBSD: providers.inc,v 1.2 2025/07/21 13:10:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/providers
 
 PROVIDERS_SRCS += \
+legacyprov.c \
 prov_running.c \
 
 SRCS += ${PROVIDERS_SRCS}
