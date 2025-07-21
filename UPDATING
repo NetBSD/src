@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.381 2025/06/02 00:49:03 gutteridge Exp $
+$NetBSD: UPDATING,v 1.382 2025/07/21 06:10:29 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20250721:
+	GCC 12.5 was imported and there may be weird build issues.
+	Clean any GCC build dirs if you encounter weird things.
 
 20250528:
 	Changes in the tools build require removing all config.cache
