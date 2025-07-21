@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.382 2025/07/21 06:10:29 mrg Exp $
+$NetBSD: UPDATING,v 1.383 2025/07/21 17:07:26 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -22,6 +22,11 @@ Recent changes:
 20250721:
 	GCC 12.5 was imported and there may be weird build issues.
 	Clean any GCC build dirs if you encounter weird things.
+
+20250720:
+	New openssl and old objects for tests for libcrypto may
+	cause spurious test failure, clean the src/tests/crypto/libcrypto
+	object dirs.
 
 20250528:
 	Changes in the tools build require removing all config.cache
