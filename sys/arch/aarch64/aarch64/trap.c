@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $ */
+/* $NetBSD: trap.c,v 1.52 2025/07/21 08:41:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2023 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.52 2025/07/21 08:41:03 skrll Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -70,8 +70,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>
 #include <aarch64/locore.h>
-
-#include <arm/cpufunc.h>
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
