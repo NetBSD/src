@@ -381,8 +381,13 @@
 
     emit_clobber (gen_rtx_MEM (BLKmode, hard_frame_pointer_rtx));
 
-    emit_move_insn (hard_frame_pointer_rtx, r_fp);
+    // PR64242: When r_sp is located in the frame, we must not
+    // change FP prior to reading r_sp.  Hence copy r_fp to a
+    // local register (and hope that reload won't spill it).
+    rtx r_fp_reg = copy_to_reg (r_fp);
     emit_stack_restore (SAVE_NONLOCAL, r_sp);
+
+    emit_move_insn (hard_frame_pointer_rtx, r_fp_reg);
 
     emit_use (hard_frame_pointer_rtx);
     emit_use (stack_pointer_rtx);
@@ -649,12 +654,16 @@
   [(parallel [(set (reg:MOVMODE 22)
               (mem:MOVMODE (lo_sum:PSI (reg:QI 21)
                                        (reg:HI REG_Z))))
+              (clobber (reg:QI 21))
+              (clobber (reg:HI REG_Z))
               (clobber (reg:CC REG_CC))])])
 
 (define_insn "*xload_<mode>_libgcc"
   [(set (reg:MOVMODE 22)
         (mem:MOVMODE (lo_sum:PSI (reg:QI 21)
                                  (reg:HI REG_Z))))
+   (clobber (reg:QI 21))
+   (clobber (reg:HI REG_Z))
    (clobber (reg:CC REG_CC))]
   "avr_xload_libgcc_p (<MODE>mode)
    && reload_completed"
@@ -715,12 +724,26 @@
         if (!REG_P (addr))
           src = replace_equiv_address (src, copy_to_mode_reg (PSImode, addr));
 
+        rtx dest2 = reg_overlap_mentioned_p (dest, lpm_addr_reg_rtx)
+          ? gen_reg_rtx (<MODE>mode)
+          : dest;
+
         if (!avr_xload_libgcc_p (<MODE>mode))
           /* ; No <mode> here because gen_xload8<mode>_A only iterates over ALL1.
              ; insn-emit does not depend on the mode, it's all about operands.  */
-          emit_insn (gen_xload8qi_A (dest, src));
+          emit_insn (gen_xload8qi_A (dest2, src));
         else
-          emit_insn (gen_xload<mode>_A (dest, src));
+          {
+            rtx reg_22 = gen_rtx_REG (<MODE>mode, 22);
+            if (reg_overlap_mentioned_p (dest2, reg_22)
+                || reg_overlap_mentioned_p (dest2, all_regs_rtx[21]))
+              dest2 = gen_reg_rtx (<MODE>mode);
+
+            emit_insn (gen_xload<mode>_A (dest2, src));
+          }
+
+        if (dest2 != dest)
+          emit_move_insn (dest, dest2);
 
         DONE;
       }

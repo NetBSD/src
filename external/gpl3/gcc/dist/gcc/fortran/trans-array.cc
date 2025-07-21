@@ -943,6 +943,8 @@ tree
 gfc_get_array_span (tree desc, gfc_expr *expr)
 {
   tree tmp;
+  gfc_symbol *sym = (expr && expr->expr_type == EXPR_VARIABLE) ?
+		    expr->symtree->n.sym : NULL;
 
   if (is_pointer_array (desc)
       || (get_CFI_desc (NULL, expr, &desc, NULL)
@@ -964,25 +966,47 @@ gfc_get_array_span (tree desc, gfc_expr *expr)
 	desc = build_fold_indirect_ref_loc (input_location, desc);
       tmp = gfc_conv_descriptor_span_get (desc);
     }
+  else if (UNLIMITED_POLY (expr)
+	   || (sym && UNLIMITED_POLY (sym)))
+    {
+      /* Treat unlimited polymorphic expressions separately because
+	 the element size need not be the same as the span.  Obtain
+	 the class container, which is simplified here by there being
+	 no component references.  */
+      if (sym && sym->attr.dummy)
+	{
+	  tmp = gfc_get_symbol_decl (sym);
+	  tmp = GFC_DECL_SAVED_DESCRIPTOR (tmp);
+	  if (INDIRECT_REF_P (tmp))
+	    tmp = TREE_OPERAND (tmp, 0);
+	}
+      else
+	{
+	  gcc_assert (GFC_DESCRIPTOR_TYPE_P (TREE_TYPE (desc)));
+	  tmp = TREE_OPERAND (desc, 0);
+	}
+      tmp = gfc_class_data_get (tmp);
+      tmp = gfc_conv_descriptor_span_get (tmp);
+    }
   else if (TREE_CODE (desc) == COMPONENT_REF
 	   && GFC_DESCRIPTOR_TYPE_P (TREE_TYPE (desc))
 	   && GFC_CLASS_TYPE_P (TREE_TYPE (TREE_OPERAND (desc, 0))))
     {
-      /* The descriptor is a class _data field and so use the vtable
-	 size for the receiving span field.  */
+      /* The descriptor is a class _data field. Use the vtable size
+	 since it is guaranteed to have been set and is always OK for
+	 class array descriptors that are not unlimited.  */
       tmp = gfc_get_vptr_from_expr (desc);
       tmp = gfc_vptr_size_get (tmp);
     }
-  else if (expr && expr->expr_type == EXPR_VARIABLE
-	   && expr->symtree->n.sym->ts.type == BT_CLASS
+  else if (sym && sym->ts.type == BT_CLASS
 	   && expr->ref->type == REF_COMPONENT
 	   && expr->ref->next->type == REF_ARRAY
 	   && expr->ref->next->next == NULL
-	   && CLASS_DATA (expr->symtree->n.sym)->attr.dimension)
+	   && CLASS_DATA (sym)->attr.dimension)
     {
-      /* Dummys come in sometimes with the descriptor detached from
-	 the class field or declaration.  */
-      tmp = gfc_class_vptr_get (expr->symtree->n.sym->backend_decl);
+      /* Class dummys usually require extraction from the saved
+	 descriptor, which gfc_class_vptr_get does for us.  */
+      tmp = gfc_class_vptr_get (sym->backend_decl);
       tmp = gfc_vptr_size_get (tmp);
     }
   else
@@ -2114,7 +2138,9 @@ gfc_trans_array_constructor_value (stmtblock_t * pblock, tree type,
 	      p = gfc_constructor_next (p);
 	      n++;
 	    }
-	  if (n < 4)
+	  /* Constructor with few constant elements, or element size not
+	     known at compile time (e.g. deferred-length character).  */
+	  if (n < 4 || !INTEGER_CST_P (TYPE_SIZE_UNIT (type)))
 	    {
 	      /* Scalar values.  */
 	      gfc_init_se (&se, NULL);
@@ -6282,6 +6308,8 @@ gfc_array_allocate (gfc_se * se, gfc_expr * expr, tree status, tree errmsg,
     }
   else
       gfc_add_expr_to_block (&se->pre, set_descriptor);
+
+  expr->symtree->n.sym->allocated_in_scope = 1;
 
   return true;
 }
@@ -10507,6 +10535,8 @@ gfc_alloc_allocatable_for_assignment (gfc_loopinfo *loop,
   stmtblock_t realloc_block;
   stmtblock_t alloc_block;
   stmtblock_t fblock;
+  stmtblock_t loop_pre_block;
+  gfc_ref *ref;
   gfc_ss *rss;
   gfc_ss *lss;
   gfc_array_info *linfo;
@@ -10714,6 +10744,45 @@ gfc_alloc_allocatable_for_assignment (gfc_loopinfo *loop,
     }
   else
     cond_null= gfc_evaluate_now (cond_null, &fblock);
+
+  /* If the data is null, set the descriptor bounds and offset. This suppresses
+     the maybe used uninitialized warning and forces the use of malloc because
+     the size is zero in all dimensions. Note that this block is only executed
+     if the lhs is unallocated and is only applied once in any namespace.
+     Component references are not subject to the warnings.  */
+  for (ref = expr1->ref; ref; ref = ref->next)
+    if (ref->type == REF_COMPONENT)
+      break;
+
+  if (!expr1->symtree->n.sym->allocated_in_scope && !ref)
+    {
+      gfc_start_block (&loop_pre_block);
+      for (n = 0; n < expr1->rank; n++)
+	{
+	  gfc_conv_descriptor_lbound_set (&loop_pre_block, desc,
+					  gfc_rank_cst[n],
+					  gfc_index_one_node);
+	  gfc_conv_descriptor_ubound_set (&loop_pre_block, desc,
+					  gfc_rank_cst[n],
+					  gfc_index_zero_node);
+	  gfc_conv_descriptor_stride_set (&loop_pre_block, desc,
+					  gfc_rank_cst[n],
+					  gfc_index_zero_node);
+	}
+
+      tmp = gfc_conv_descriptor_offset (desc);
+      gfc_add_modify (&loop_pre_block, tmp, gfc_index_zero_node);
+
+      tmp = fold_build2_loc (input_location, EQ_EXPR,
+			     logical_type_node, array1,
+			     build_int_cst (TREE_TYPE (array1), 0));
+      tmp = build3_v (COND_EXPR, tmp,
+		      gfc_finish_block (&loop_pre_block),
+		      build_empty_stmt (input_location));
+      gfc_prepend_expr_to_block (&loop->pre, tmp);
+
+      expr1->symtree->n.sym->allocated_in_scope = 1;
+    }
 
   tmp = build3_v (COND_EXPR, cond_null,
 		  build1_v (GOTO_EXPR, jump_label1),

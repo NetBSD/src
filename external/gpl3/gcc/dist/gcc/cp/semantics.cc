@@ -2286,9 +2286,14 @@ check_accessibility_of_qualified_id (tree decl,
 	 OBJECT_TYPE.  */
       && CLASS_TYPE_P (object_type)
       && DERIVED_FROM_P (scope, object_type))
-    /* If we are processing a `->' or `.' expression, use the type of the
-       left-hand side.  */
-    qualifying_type = object_type;
+    {
+      /* If we are processing a `->' or `.' expression, use the type of the
+	 left-hand side.  */
+      if (tree open = currently_open_class (object_type))
+	qualifying_type = open;
+      else
+	qualifying_type = object_type;
+    }
   else if (nested_name_specifier)
     {
       /* If the reference is to a non-static member of the
@@ -4702,7 +4707,10 @@ emit_associated_thunks (tree fn)
      enabling you to output all the thunks with the function itself.  */
   if (DECL_VIRTUAL_P (fn)
       /* Do not emit thunks for extern template instantiations.  */
-      && ! DECL_REALLY_EXTERN (fn))
+      && ! DECL_REALLY_EXTERN (fn)
+      /* Do not emit thunks for tentative decls, those will be processed
+	 again at_eof if really needed.  */
+      && (DECL_INTERFACE_KNOWN (fn) || !DECL_DEFER_OUTPUT (fn)))
     {
       tree thunk;
 

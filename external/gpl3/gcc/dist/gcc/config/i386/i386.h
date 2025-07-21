@@ -413,6 +413,8 @@ extern unsigned char ix86_tune_features[X86_TUNE_LAST];
 	ix86_tune_features[X86_TUNE_FUSE_CMP_AND_BRANCH_SOFLAGS]
 #define TARGET_FUSE_ALU_AND_BRANCH \
 	ix86_tune_features[X86_TUNE_FUSE_ALU_AND_BRANCH]
+#define TARGET_FUSE_MOV_AND_ALU \
+	ix86_tune_features[X86_TUNE_FUSE_MOV_AND_ALU]
 #define TARGET_OPT_AGU ix86_tune_features[X86_TUNE_OPT_AGU]
 #define TARGET_AVOID_LEA_FOR_ADDR \
 	ix86_tune_features[X86_TUNE_AVOID_LEA_FOR_ADDR]
@@ -2172,7 +2174,7 @@ extern int const svr4_dbx_register_map[FIRST_PSEUDO_REGISTER];
 #define ASM_OUTPUT_SYMBOL_REF(FILE, SYM) \
   do {							\
     const char *name					\
-      = assemble_name_resolve (XSTR (x, 0));		\
+      = assemble_name_resolve (XSTR (SYM, 0));		\
     /* In -masm=att wrap identifiers that start with $	\
        into parens.  */					\
     if (ASSEMBLER_DIALECT == ASM_ATT			\
@@ -2261,6 +2263,7 @@ enum processor_type
   PROCESSOR_ZNVER2,
   PROCESSOR_ZNVER3,
   PROCESSOR_ZNVER4,
+  PROCESSOR_ZNVER5,
   PROCESSOR_max
 };
 
@@ -2347,7 +2350,8 @@ constexpr wide_int_bitmask PTA_GOLDMONT_PLUS = PTA_GOLDMONT | PTA_RDPID
   | PTA_SGX | PTA_PTWRITE;
 constexpr wide_int_bitmask PTA_TREMONT = PTA_GOLDMONT_PLUS | PTA_CLWB
   | PTA_GFNI | PTA_MOVDIRI | PTA_MOVDIR64B | PTA_CLDEMOTE | PTA_WAITPKG;
-constexpr wide_int_bitmask PTA_ALDERLAKE = PTA_TREMONT | PTA_ADX | PTA_AVX
+constexpr wide_int_bitmask PTA_ALDERLAKE = PTA_GOLDMONT_PLUS | PTA_CLWB
+  | PTA_GFNI | PTA_MOVDIRI | PTA_MOVDIR64B | PTA_WAITPKG | PTA_ADX | PTA_AVX
   | PTA_AVX2 | PTA_BMI | PTA_BMI2 | PTA_F16C | PTA_FMA | PTA_LZCNT
   | PTA_PCONFIG | PTA_PKU | PTA_VAES | PTA_VPCLMULQDQ | PTA_SERIALIZE
   | PTA_HRESET | PTA_KL | PTA_WIDEKL | PTA_AVXVNNI;
@@ -2368,6 +2372,8 @@ constexpr wide_int_bitmask PTA_ZNVER4 = PTA_ZNVER3 | PTA_AVX512F | PTA_AVX512DQ
   | PTA_AVX512IFMA | PTA_AVX512CD | PTA_AVX512BW | PTA_AVX512VL
   | PTA_AVX512BF16 | PTA_AVX512VBMI | PTA_AVX512VBMI2 | PTA_GFNI
   | PTA_AVX512VNNI | PTA_AVX512BITALG | PTA_AVX512VPOPCNTDQ;
+constexpr wide_int_bitmask PTA_ZNVER5 = PTA_ZNVER4 | PTA_AVXVNNI
+  | PTA_MOVDIRI | PTA_MOVDIR64B | PTA_AVX512VP2INTERSECT;
 
 #ifndef GENERATOR_FILE
 
