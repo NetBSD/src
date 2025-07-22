@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cflags,v 1.2 2022/12/17 09:46:21 mrg Exp $
+#	$NetBSD: Makefile.cflags,v 1.3 2025/07/22 19:23:24 mrg Exp $
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 . if ${MACHINE_ARCH} == "i386"
@@ -23,6 +23,11 @@ CPPFLAGS+=	-DUSE_ARM_NEON
 
 .if !empty(MACHINE_ARCH:Mmips*64el) && empty(COPTS:M-march=*)
 CPPFLAGS+=	-DUSE_LOONGSON_MMI
+.endif
+
+.if !empty(MACHINE_ARCH:Mriscv*)
+# RISC-V RVV; Needs NetBSD porting.
+CPPFLAGS+=	-DUSE_RVV
 .endif
 
 CPPFLAGS+=	-DHAVE_CONFIG_H \

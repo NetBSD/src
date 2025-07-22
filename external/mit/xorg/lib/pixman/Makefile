@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2022/12/17 09:46:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2025/07/22 19:23:24 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -32,16 +32,18 @@ SRCS=					\
 	pixman-radial-gradient.c	\
 	pixman-region16.c		\
 	pixman-region32.c		\
+	pixman-region64f.c		\
 	pixman-solid-fill.c		\
 	pixman-timer.c			\
 	pixman-trap.c			\
 	pixman-utils.c
 
 SRCS+=					\
-	pixman-x86.c			\
-	pixman-mips.c			\
 	pixman-arm.c			\
-	pixman-ppc.c
+	pixman-mips.c			\
+	pixman-ppc.c			\
+	pixman-riscv.c			\
+	pixman-x86.c
 
 # XXX
 
@@ -54,20 +56,17 @@ COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 .  if defined(HAVE_LLVM)
 COPTS.pixman-mmx.c+=	-Wno-error=attributes
 .  endif
-#CPPFLAGS+=		-DUSE_X86_MMX
 MKDEPFLAGS+=		-mmmx
 . endif
 SRCS+=	pixman-sse2.c pixman-ssse3.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 COPTS.pixman-ssse3.c=	-msse3 -mssse3 -fvisibility=hidden
-#CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
 MKDEPFLAGS+=		-msse2 -msse3 -mssse3 -fvisibility=hidden
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
 SRCS+=	pixman-vmx.c
 COPTS.pixman-vmx.c=	-maltivec
-#CPPFLAGS+=		-DUSE_VMX
 MKDEPFLAGS+=		-maltivec
 .endif
 
@@ -112,19 +111,21 @@ COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float -Wa,-mhard-float
 COPTS.pixman-fast-path.c+=	-O1
 .endif
 
+.if !empty(MACHINE_ARCH:Mriscv*)
+# RISC-V RVV; Needs NetBSD porting.
+#SRCS+=	pixman-rvv.c
+.endif
+
 .include "Makefile.cflags"
 
 INCS=	pixman.h pixman-version.h
 INCSDIR=${X11INCDIR}/pixman-1
 
-# With pixman 0.28.3, HAVE_PTHREAD_SETSPECIFIC is much faster than TLS
-CPPFLAGS+=	-DHAVE_PTHREAD_SETSPECIFIC
-#CPPFLAGS+=	-DTLS=__thread
-
 LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
-PKGCONFIG=	pixman-1
-PKGDIST=	pixman
+PKGCONFIG=      pixman-1
+PKGDIST.pixman-1=       ${X11SRCDIR.pixman}/../include/pixman-1.pc
+.PATH: ${X11SRCDIR.pixman}/../include
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
