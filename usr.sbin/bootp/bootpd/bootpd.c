@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.27 2017/05/04 16:26:09 sevan Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.28 2025/07/22 21:55:15 andvar Exp $");
 #endif
 
 /*
@@ -1263,7 +1263,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 				case TAG_SUBNET_MASK:
 					/* XXX - Should preserve this if given... */
 					break;
-				} /* swtich */
+				} /* switch */
 				p += llen;
 			}
 
