@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cflags,v 1.3 2025/07/22 19:23:24 mrg Exp $
+#	$NetBSD: Makefile.cflags,v 1.4 2025/07/22 22:48:52 mrg Exp $
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 . if ${MACHINE_ARCH} == "i386"
@@ -14,6 +14,7 @@ CPPFLAGS+=		-DUSE_VMX
 .if !empty(MACHINE_ARCH:Mearm*)
 CPPFLAGS+=	-DUSE_ARM_SIMD
 CPPFLAGS+=	-DUSE_ARM_NEON
+CPPFLAGS+=	-DASM_HAVE_SYNTAX_UNIFIED
 #CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
 
