@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.75 2025/05/13 21:36:26 nia Exp $
+# $NetBSD: shl.mi,v 1.76 2025/07/22 19:23:53 mrg Exp $
 #
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		obsolete
@@ -62,7 +62,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libgbm.so.1.0.debug	xdebug-libgbm-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libglapi.so.1.0.debug	xdebug-libglapi-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.4.debug	xdebug-libpciaccess-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.3.debug	xdebug-pixman-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.4.debug	xdebug-pixman-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-atom.so.1.0.debug	xdebug-xcb-util-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-aux.so.0.0.debug	xdebug-xcb-util-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-composite.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
