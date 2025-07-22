@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2025/07/22 19:23:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.44 2025/07/22 22:35:06 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -66,8 +66,8 @@ MKDEPFLAGS+=		-msse2 -msse3 -mssse3 -fvisibility=hidden
 
 .if ${MACHINE_ARCH} == "powerpc"
 SRCS+=	pixman-vmx.c
-COPTS.pixman-vmx.c=	-maltivec
-MKDEPFLAGS+=		-maltivec
+COPTS.pixman-vmx.c=	-maltivec -mvsx
+MKDEPFLAGS+=		-maltivec -mvsx
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)
