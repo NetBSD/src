@@ -11,5 +11,15 @@ rsaz-4k-avxifma.S \
 rsaz-avx2.S \
 rsaz-x86_64.S \
 
+# Needs newer clang/llvm
+.if ${HAVE_LLVM:U} == "yes"
+COPTS.rsaz-2k-avx512.S  += -fno-integrated-as
+COPTS.rsaz-2k-avxifma.S += -fno-integrated-as
+COPTS.rsaz-3k-avx512.S  += -fno-integrated-as
+COPTS.rsaz-3k-avxifma.S += -fno-integrated-as
+COPTS.rsaz-4k-avx512.S  += -fno-integrated-as
+COPTS.rsaz-4k-avxifma.S += -fno-integrated-as
+.endif
+
 CPPFLAGS += -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_BN_ASM_GF2m
 .include "../../bn.inc"
