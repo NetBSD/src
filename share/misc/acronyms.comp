@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.411 2025/07/11 22:19:53 andvar Exp $
+$NetBSD: acronyms.comp,v 1.412 2025/07/23 21:31:27 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -603,6 +603,7 @@ EU	execution unit
 EULA	end user license agreement
 EdDSA	Edwards curve digital signature algorithm
 FAT	file allocation table
+FBL	feedback loop
 FBRAM	frame buffer random access memory
 FCIF	full common intermediate format
 FCL	fiber channel loop
