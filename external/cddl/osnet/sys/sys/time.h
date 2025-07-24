@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.15 2022/10/31 04:50:12 simonb Exp $	*/
+/*	$NetBSD: time.h,v 1.16 2025/07/24 09:04:56 hans Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -93,6 +93,7 @@ ddi_get_lbolt64(void)
 
 #else
 
+#ifndef __sun
 #ifdef __NetBSD__
 int clock_gettime(clockid_t, struct timespec *)
     __RENAME(__clock_gettime50);
@@ -109,6 +110,8 @@ static __inline hrtime_t gethrtime(void) {
 
 #define	ddi_get_lbolt()		(gethrtime() >> 23)
 #define	ddi_get_lbolt64()	(gethrtime() >> 23)
+
+#endif	/* __sun */
 
 #endif	/* _KERNEL */
 

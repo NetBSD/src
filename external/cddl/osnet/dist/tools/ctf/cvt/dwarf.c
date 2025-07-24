@@ -1521,8 +1521,10 @@ die_base_from_dwarf(dwarf_t *dw, Dwarf_Die base, Dwarf_Off off, size_t sz)
 	case DW_ATE_float:
 	case DW_ATE_complex_float:
 	case DW_ATE_imaginary_float:
-#if defined(sun)
+#if defined(DW_ATE_SUN_imaginary_floatt)
 	case DW_ATE_SUN_imaginary_float:
+#endif
+#if defined(DW_ATE_SUN_interval_float)
 	case DW_ATE_SUN_interval_float:
 #endif
 		intr->intr_type = INTR_REAL;

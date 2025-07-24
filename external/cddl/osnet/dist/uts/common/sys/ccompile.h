@@ -24,8 +24,12 @@
  * Use is subject to license terms.
  */
 
-#ifndef	_SYS_CCOMPILE_H
-#define	_SYS_CCOMPILE_H
+#ifndef	_OPENSOLARIS_SYS_CCOMPILE_H
+#define	_OPENSOLARIS_SYS_CCOMPILE_H
+
+#ifdef __sun
+#include_next <sys/ccompile.h>
+#else
 
 /*
  * This file contains definitions designed to enable different compilers
@@ -122,4 +126,6 @@ extern "C" {
 }
 #endif
 
-#endif	/* _SYS_CCOMPILE_H */
+#endif	/* __sun */
+
+#endif	/* _OPENSOLARIS_SYS_CCOMPILE_H */

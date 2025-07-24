@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2018/06/02 15:47:22 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2025/07/24 09:04:56 hans Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -35,9 +35,9 @@
 #define __HIDE_DELAY
 #include_next <sys/param.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
 #define	PAGESIZE	PAGE_SIZE
-#else
+#elif !defined(__sun)
 #define	PAGESIZE	getpagesize()
 #endif
 
