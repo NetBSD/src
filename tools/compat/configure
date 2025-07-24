@@ -4403,6 +4403,48 @@ fi
 
 fi
 
+	ac_fn_c_check_type "$LINENO" "__uint8_t" "ac_cv_type___uint8_t" "$ac_includes_default"
+if test "x$ac_cv_type___uint8_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "uint8_t" "ac_cv_type_uint8_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint8_t" = xyes; then :
+
+$as_echo "#define __uint8_t uint8_t" >>confdefs.h
+
+else
+  ac_fn_c_check_type "$LINENO" "u_int8_t" "ac_cv_type_u_int8_t" "$ac_includes_default"
+if test "x$ac_cv_type_u_int8_t" = xyes; then :
+
+$as_echo "#define uint8_t u_int8_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __uint8_t" "$LINENO" 5
+fi
+
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__int8_t" "ac_cv_type___int8_t" "$ac_includes_default"
+if test "x$ac_cv_type___int8_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "int8_t" "ac_cv_type_int8_t" "$ac_includes_default"
+if test "x$ac_cv_type_int8_t" = xyes; then :
+
+$as_echo "#define __int8_t int8_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __int8_t" "$LINENO" 5
+fi
+
+
+fi
+
 
 	ac_fn_c_check_type "$LINENO" "uint16_t" "ac_cv_type_uint16_t" "$ac_includes_default"
 if test "x$ac_cv_type_uint16_t" = xyes; then :
@@ -4433,6 +4475,48 @@ $as_echo "#define u_int16_t uint16_t" >>confdefs.h
 
 else
   as_fn_error $? "cannot find a suitable type for u_int16_t" "$LINENO" 5
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__uint16_t" "ac_cv_type___uint16_t" "$ac_includes_default"
+if test "x$ac_cv_type___uint16_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "uint16_t" "ac_cv_type_uint16_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint16_t" = xyes; then :
+
+$as_echo "#define __uint16_t uint16_t" >>confdefs.h
+
+else
+  ac_fn_c_check_type "$LINENO" "u_int16_t" "ac_cv_type_u_int16_t" "$ac_includes_default"
+if test "x$ac_cv_type_u_int16_t" = xyes; then :
+
+$as_echo "#define uint16_t u_int16_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __uint16_t" "$LINENO" 5
+fi
+
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__int16_t" "ac_cv_type___int16_t" "$ac_includes_default"
+if test "x$ac_cv_type___int16_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "int16_t" "ac_cv_type_int16_t" "$ac_includes_default"
+if test "x$ac_cv_type_int16_t" = xyes; then :
+
+$as_echo "#define __int16_t int16_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __int16_t" "$LINENO" 5
 fi
 
 
@@ -4473,6 +4557,48 @@ fi
 
 fi
 
+	ac_fn_c_check_type "$LINENO" "__uint32_t" "ac_cv_type___uint32_t" "$ac_includes_default"
+if test "x$ac_cv_type___uint32_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "uint32_t" "ac_cv_type_uint32_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint32_t" = xyes; then :
+
+$as_echo "#define __uint32_t uint32_t" >>confdefs.h
+
+else
+  ac_fn_c_check_type "$LINENO" "u_int32_t" "ac_cv_type_u_int32_t" "$ac_includes_default"
+if test "x$ac_cv_type_u_int32_t" = xyes; then :
+
+$as_echo "#define uint32_t u_int32_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __uint32_t" "$LINENO" 5
+fi
+
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__int32_t" "ac_cv_type___int32_t" "$ac_includes_default"
+if test "x$ac_cv_type___int32_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "int32_t" "ac_cv_type_int32_t" "$ac_includes_default"
+if test "x$ac_cv_type_int32_t" = xyes; then :
+
+$as_echo "#define __int32_t int32_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __int32_t" "$LINENO" 5
+fi
+
+
+fi
+
 
 	ac_fn_c_check_type "$LINENO" "uint64_t" "ac_cv_type_uint64_t" "$ac_includes_default"
 if test "x$ac_cv_type_uint64_t" = xyes; then :
@@ -4503,6 +4629,48 @@ $as_echo "#define u_int64_t uint64_t" >>confdefs.h
 
 else
   as_fn_error $? "cannot find a suitable type for u_int64_t" "$LINENO" 5
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__uint64_t" "ac_cv_type___uint64_t" "$ac_includes_default"
+if test "x$ac_cv_type___uint64_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "uint64_t" "ac_cv_type_uint64_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint64_t" = xyes; then :
+
+$as_echo "#define __uint64_t uint64_t" >>confdefs.h
+
+else
+  ac_fn_c_check_type "$LINENO" "u_int64_t" "ac_cv_type_u_int64_t" "$ac_includes_default"
+if test "x$ac_cv_type_u_int64_t" = xyes; then :
+
+$as_echo "#define uint64_t u_int64_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __uint64_t" "$LINENO" 5
+fi
+
+fi
+
+
+fi
+
+	ac_fn_c_check_type "$LINENO" "__int64_t" "ac_cv_type___int64_t" "$ac_includes_default"
+if test "x$ac_cv_type___int64_t" = xyes; then :
+
+else
+
+		ac_fn_c_check_type "$LINENO" "int64_t" "ac_cv_type_int64_t" "$ac_includes_default"
+if test "x$ac_cv_type_int64_t" = xyes; then :
+
+$as_echo "#define __int64_t int64_t" >>confdefs.h
+
+else
+  as_fn_error $? "cannot find a suitable type for __int64_t" "$LINENO" 5
 fi
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.108 2024/10/31 17:05:05 kre Exp $
+#	$NetBSD: configure.ac,v 1.109 2025/07/24 09:26:14 hans Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -158,6 +158,21 @@ AC_DEFUN([NB_CHECK_INTTYPE], [dnl
 			AC_DEFINE(u_int][$1][_t, uint][$1][_t, \
 				  [Define if you have uint][$1][_t, but not u_int][$1][_t.]),
 			AC_MSG_ERROR([cannot find a suitable type for u_int][$1][_t]))
+	])
+	AC_CHECK_TYPE(__uint][$1][_t,, [
+		AC_CHECK_TYPE(uint][$1][_t,
+			AC_DEFINE(__uint][$1][_t, uint][$1][_t, \
+			          [Define if you have uint][$1][_t, but not __uint][$1][_t.]),
+			AC_CHECK_TYPE(u_int][$1][_t,
+				AC_DEFINE(uint][$1][_t, u_int][$1][_t, \
+				          [Define if you have u_int][$1][_t, but not uint][$1][_t.]),
+				AC_MSG_ERROR([cannot find a suitable type for __uint][$1][_t])))
+	])
+	AC_CHECK_TYPE(__int][$1][_t,, [
+		AC_CHECK_TYPE(int][$1][_t,
+			AC_DEFINE(__int][$1][_t, int][$1][_t, \
+			          [Define if you have int][$1][_t, but not __int][$1][_t.]),
+			AC_MSG_ERROR([cannot find a suitable type for __int][$1][_t]))
 	])
 ])dnl NB_CHECK_INTTYPE
 
