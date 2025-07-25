@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.19 2024/03/24 16:06:37 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.20 2025/07/25 17:13:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ static int toggle_rcvar(struct menudesc *, void *);
 static int toggle_mdnsd(struct menudesc *, void *);
 static void configmenu_hdr(struct menudesc *, void *);
 static int check_root_password(void);
+static int run_bin_sh(struct menudesc *, void *);
 
 char pkgpath[STRSIZE];
 char pkgsrcpath[STRSIZE];
@@ -79,6 +80,7 @@ enum {
 	CONFIGOPT_RAIDFRAME,
 	CONFIGOPT_ADDUSER,
 	CONFIGOPT_ADD_ENTROPY,
+	CONFIGOPT_RUN_SH,
 	CONFIGOPT_LAST
 };
 
@@ -110,6 +112,7 @@ configinfo config_list[] = {
 #if CHECK_ENTROPY
 	{MSG_Configure_entropy, CONFIGOPT_ADD_ENTROPY, NULL, add_entropy, ""},
 #endif
+	{MSG_Run_bin_sh, CONFIGOPT_RUN_SH, NULL, run_bin_sh, ""},
 	{NULL,		CONFIGOPT_LAST,	NULL, NULL, NULL}
 };
 
@@ -494,6 +497,15 @@ toggle_mdnsd(struct menudesc *menu, void *arg)
 	replace("/etc/nsswitch.conf", "s/^hosts:.*/hosts:\t\t%s/", setting);
 
 	toggle_rcvar(menu, arg);
+
+	return 0;
+}
+
+static int
+run_bin_sh(struct menudesc *, void *)
+{
+	endwin();
+	system("/bin/sh -i -E");
 
 	return 0;
 }
