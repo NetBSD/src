@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3178 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3179 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -778,3 +778,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		by Vincent Defert. [rjs 20250705]
 	bind: Import version 9.20.11. [christos 20250717]
 	GCC: Updated to GCC 12.5.0.  [mrg 20250721]
+	kernel (et al): Added O_CLOFORK (etc) implementation from
+		Ricardo Branco. [kre 20250725]
