@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.47 2024/04/22 14:41:26 nia Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.48 2025/07/25 17:28:50 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1156,6 +1156,7 @@ message Sectors {Secteurs}
 message Select_medium {Sélection du média d'installation}
 message ftp {FTP}
 message http {HTTP}
+message https {HTTPS}
 message nfs {NFS}
 .if HAVE_INSTALL_IMAGE
 message cdrom {CD-ROM / DVD / install image media}	/* XXX translation */

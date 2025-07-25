@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.93 2025/07/09 21:25:35 andvar Exp $	*/
+/*	$NetBSD: defs.h,v 1.94 2025/07/25 17:28:50 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -645,6 +645,7 @@ extern char dist_tgz_postfix[SSTRSIZE];
 /* needed prototypes */
 void set_menu_numopts(int, int);
 void remove_color_options(void);
+void remove_https_options(void);
 #ifdef CHECK_ENTROPY
 bool do_add_entropy(void);
 size_t entropy_needed(void);
