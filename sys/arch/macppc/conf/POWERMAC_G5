@@ -252,5 +252,11 @@ pseudo-device	bpfilter		# packet filter
 #options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 #options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
+options 	PAX_SEGVGUARD=0 	# PaX Segmentation fault guard
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+
 # Pull in optional local configuration - always at end
 cinclude	"arch/macppc/conf/POWERMAC_G5.local"
