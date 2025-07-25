@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.56 2025/07/16 19:14:14 kre Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.57 2025/07/25 23:24:46 kre Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -125,9 +125,7 @@
 #endif
 #if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
 	defined(_NETBSD_SOURCE)
-#ifdef _KERNEL					/*XXX temporary*/
 #define	O_CLOFORK	0x08000000	/* set close on fork */
-#endif						/*XXX temporary*/
 #endif
 
 #ifdef _KERNEL
@@ -210,7 +208,6 @@
 #define	F_ADD_SEALS	16		/* set seals */
 #define	F_GET_SEALS	17		/* get seals */
 #endif
-#ifdef _KERNEL					/*XXX temporary*/
 #if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
 	defined(_NETBSD_SOURCE)
 #define	F_DUPFD_CLOFORK	18		/* close on fork duplicated fd */
@@ -218,13 +215,10 @@
 #if defined(_NETBSD_SOURCE)
 #define	F_DUPFD_CLOBOTH	19		/* close on exec/fork duplicated fd */
 #endif
-#endif						/*XXX temporary*/
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
-#ifdef _KERNEL					/*XXX temporary*/
 #define	FD_CLOFORK	2		/* close-on-fork flag */
-#endif						/*XXX temporary*/
 
 /* record locking flags (F_GETLK, F_SETLK, F_SETLKW) */
 #define	F_RDLCK		1		/* shared or read lock */
