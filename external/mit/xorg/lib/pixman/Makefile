@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2025/07/24 00:37:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.46 2025/07/26 08:49:38 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -65,9 +65,10 @@ MKDEPFLAGS+=		-msse2 -msse3 -mssse3 -fvisibility=hidden
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
-SRCS+=	pixman-vmx.c
-COPTS.pixman-vmx.c=	-maltivec -mvsx
-MKDEPFLAGS+=		-maltivec -mvsx
+# This checks for machdep.altivec and then assumes POWER7.
+#SRCS+=	pixman-vmx.c
+#COPTS.pixman-vmx.c=	-maltivec -mvsx
+#MKDEPFLAGS+=		-maltivec -mvsx
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cflags,v 1.6 2025/07/24 00:37:03 mrg Exp $
+#	$NetBSD: Makefile.cflags,v 1.7 2025/07/26 08:49:38 mrg Exp $
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 . if ${MACHINE_ARCH} == "i386"
@@ -8,7 +8,8 @@ CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
-CPPFLAGS+=		-DUSE_VMX
+# This checks for machdep.altivec and then assumes POWER7.
+#CPPFLAGS+=		-DUSE_VMX
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)
