@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.20 2025/07/25 17:13:06 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.21 2025/07/26 15:56:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -502,7 +502,7 @@ toggle_mdnsd(struct menudesc *menu, void *arg)
 }
 
 static int
-run_bin_sh(struct menudesc *, void *)
+run_bin_sh(struct menudesc *menu, void *arg)
 {
 	endwin();
 	system("/bin/sh -i -E");
