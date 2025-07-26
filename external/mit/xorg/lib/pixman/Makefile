@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2025/07/26 08:49:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.47 2025/07/26 17:04:42 skrll Exp $
 
 NOLINT=	1	# defined
 
@@ -94,8 +94,7 @@ SRCS+=		pixman-arm-neon.c			\
 		pixman-arma64-neon-asm.S		\
 		pixman-arma64-neon-asm-bilinear.S
 
-# XXX: not sure if needed?
-#AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
+AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 .endif
 
 .if !empty(MACHINE_ARCH:Mmips*64el) && empty(COPTS:M-march=*)
