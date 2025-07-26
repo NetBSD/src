@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.20 2025/07/08 19:23:50 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.21 2025/07/26 19:41:34 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -216,6 +216,14 @@ int	vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_complete_cmd(struct vdsk_softc *sc, struct scsipi_xfer *, int);
 void	vdsk_scsi_inq(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_sense(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_sense_10(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_select(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_read_toc(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_test_unit_ready(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_start_stop(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_prevent_allow_medium_removal(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_maintenance_in(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *);
@@ -631,9 +639,7 @@ vdsk_rx_vio_attr_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 			}
 
 			sc->sc_vdisk_block_size = ai->vdisk_block_size;
-			DPRINTF(("vdisk_block_size %u\n", sc->sc_vdisk_block_size));
 			sc->sc_vdisk_size = ai->vdisk_size;
-			DPRINTF(("vdisk_size %lu\n", sc->sc_vdisk_size));
 			if (sc->sc_major > 1 || sc->sc_minor >= 1)
 				sc->sc_vd_mtype = ai->vd_mtype;
 			else
@@ -1061,7 +1067,13 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			break;
 			
 		case SCSI_SYNCHRONIZE_CACHE_10:
-			DPRINTF(("SCSI_SYNCHRONIZE_CACHE_10WRITE_16\n"));
+			DPRINTF(("SCSI_SYNCHRONIZE_CACHE_10\n"));
+			/* No need to flush read-only device types */
+			if (sc->sc_vd_mtype == VD_MEDIA_TYPE_CD ||
+			    sc->sc_vd_mtype == VD_MEDIA_TYPE_DVD) {
+			  vdsk_scsi_done(xs, XS_NOERROR);
+			  return;
+			}
 			break;
 
 		case INQUIRY:
@@ -1086,42 +1098,42 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 
 		case SCSI_TEST_UNIT_READY:
 			DPRINTF(("TEST_UNIT_READY\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			vdsk_scsi_test_unit_ready(sc, xs);
 			return;
 			
 		case START_STOP:
 			DPRINTF(("START_STOP\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			vdsk_scsi_start_stop(sc, xs);
 			return;
 			
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
 			DPRINTF(("PREVENT_ALLOW_MEDIUM_REMOVAL\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			vdsk_scsi_prevent_allow_medium_removal(sc, xs);
 			return;
 			
 		case SCSI_MODE_SENSE_6:
-			DPRINTF(("SCSI_MODE_SENSE_6 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			DPRINTF(("SCSI_MODE_SENSE_6\n"));
+			vdsk_scsi_mode_sense(sc, xs);
 			return;
 
 		case SCSI_MODE_SELECT_6:
-				DPRINTF(("MODE_SELECT_6 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			DPRINTF(("MODE_SELECT_6\n"));
+			vdsk_scsi_mode_select(sc, xs);
 			return;
 
 		case SCSI_MAINTENANCE_IN:
 			DPRINTF(("MAINTENANCE_IN\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			vdsk_scsi_maintenance_in(sc, xs);
 			return;
 
 		case SCSI_MODE_SENSE_10:
-			DPRINTF(("SCSI_MODE_SENSE_10 (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			panic("SCSI_MODE_SENSE_10 (not implemented)\n");
+			vdsk_scsi_mode_sense_10(sc, xs);
 			return;
 			
 		case READ_TOC:
 			DPRINTF(("READ_TOC (not implemented)\n"));
-			vdsk_scsi_done(xs, XS_NOERROR);
+			vdsk_scsi_read_toc(sc, xs);
 			return;
 
 		default:
@@ -1351,6 +1363,63 @@ vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_mode_sense(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	struct {
+		struct scsi_mode_parameter_header_6 hdr;
+		struct scsi_general_block_descriptor blk_desc;
+	} data;
+
+	bzero(&data, sizeof(data));
+	data.hdr.blk_desc_len = sizeof(data.blk_desc);
+	_lto3b(sc->sc_vdisk_block_size, data.blk_desc.blklen);
+	bcopy(&data, xs->data, MIN(sizeof(data), xs->datalen));
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_mode_sense_10(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_mode_select(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_read_toc(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_maintenance_in(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_start_stop(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_prevent_allow_medium_removal(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_test_unit_ready(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
