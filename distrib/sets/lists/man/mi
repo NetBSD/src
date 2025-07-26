@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1807 2025/07/18 19:11:13 christos Exp $
+# $NetBSD: mi,v 1.1808 2025/07/26 14:18:13 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2163,6 +2163,7 @@
 ./usr/share/man/cat4/vinum.0			man-obsolete		obsolete
 ./usr/share/man/cat4/vio9p.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viocon.0			man-sys-catman		.cat
+./usr/share/man/cat4/viogpu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vioif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viomb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viornd.0			man-sys-catman		.cat
@@ -5748,6 +5749,7 @@
 ./usr/share/man/man4/vinum.4			man-obsolete		obsolete
 ./usr/share/man/man4/vio9p.4			man-sys-man		.man
 ./usr/share/man/man4/viocon.4			man-sys-man		.man
+./usr/share/man/man4/viogpu.4			man-sys-man		.man
 ./usr/share/man/man4/vioif.4			man-sys-man		.man
 ./usr/share/man/man4/viomb.4			man-sys-man		.man
 ./usr/share/man/man4/viornd.4			man-sys-man		.man

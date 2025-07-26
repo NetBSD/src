@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.14 2024/03/09 11:55:59 isaki Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.15 2025/07/26 14:18:14 martin Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.14 2024/03/09 11:55:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.15 2025/07/26 14:18:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,6 +446,8 @@ virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint64_t
 		 */
 		vsc->sc_bus_endian    = LITTLE_ENDIAN;
 		vsc->sc_struct_endian = LITTLE_ENDIAN;
+
+		vsc->sc_version_1 = true;
 	}
 
 	vsc->sc_active_features = negotiated;

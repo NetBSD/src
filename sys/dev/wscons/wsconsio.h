@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.129 2024/10/20 09:25:00 mlelstv Exp $ */
+/* $NetBSD: wsconsio.h,v 1.130 2025/07/26 14:18:14 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -368,6 +368,7 @@ struct wsmouse_parameters {
 #define	WSDISPLAY_TYPE_SSDFB	66	/* ssdfb(4) */
 #define	WSDISPLAY_TYPE_HOLLYWOOD 67	/* Nintendo Wii "Hollywood" SoC */
 #define	WSDISPLAY_TYPE_VC6	68	/* Broadcom VideoCore 6 */
+#define	WSDISPLAY_TYPE_VIOGPU	69	/* VirtIO GPU */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
