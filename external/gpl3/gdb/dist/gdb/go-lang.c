@@ -293,7 +293,7 @@ unpack_mangled_go_symbol (const char *mangled_name,
   while (p > buf)
     {
       int current = *(const unsigned char *) --p;
-      int current_is_digit = isdigit (current);
+      int current_is_digit = isdigit ((unsigned char)current);
 
       if (saw_digit)
 	{

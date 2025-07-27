@@ -3659,11 +3659,11 @@ value_from_history_ref (const char *h, const char **endp)
     len = 2;
 
   /* Find length of numeral string.  */
-  for (; isdigit (h[len]); len++)
+  for (; isdigit ((unsigned char)h[len]); len++)
     ;
 
   /* Make sure numeral string is not part of an identifier.  */
-  if (h[len] == '_' || isalpha (h[len]))
+  if (h[len] == '_' || isalpha ((unsigned char)h[len]))
     return NULL;
 
   /* Now collect the index value.  */

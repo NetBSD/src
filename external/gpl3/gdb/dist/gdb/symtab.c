@@ -4302,7 +4302,7 @@ operator_chars (const char *p, const char **end)
 
   /* Don't get faked out by `operator' being part of a longer
      identifier.  */
-  if (isalpha (*p) || *p == '_' || *p == '$' || *p == '\0')
+  if (isalpha ((unsigned char)*p) || *p == '_' || *p == '$' || *p == '\0')
     return *end;
 
   /* Allow some whitespace between `operator' and the operator symbol.  */
@@ -4311,11 +4311,11 @@ operator_chars (const char *p, const char **end)
 
   /* Recognize 'operator TYPENAME'.  */
 
-  if (isalpha (*p) || *p == '_' || *p == '$')
+  if (isalpha ((unsigned char)*p) || *p == '_' || *p == '$')
     {
       const char *q = p + 1;
 
-      while (isalnum (*q) || *q == '_' || *q == '$')
+      while (isalnum ((unsigned char)*q) || *q == '_' || *q == '$')
 	q++;
       *end = q;
       return p;
@@ -5087,7 +5087,7 @@ global_symbol_searcher::search () const
 	  int fix = -1;		/* -1 means ok; otherwise number of
 				    spaces needed.  */
 
-	  if (isalpha (*opname) || *opname == '_' || *opname == '$')
+	  if (isalpha ((unsigned char)*opname) || *opname == '_' || *opname == '$')
 	    {
 	      /* There should 1 space between 'operator' and 'TYPENAME'.  */
 	      if (opname[-1] != ' ' || opname[-2] == ' ')
@@ -5576,7 +5576,7 @@ rbreak_command (const char *regexp, int from_tty)
 	  local_name = (char *) alloca (colon_index + 1);
 	  memcpy (local_name, regexp, colon_index);
 	  local_name[colon_index--] = 0;
-	  while (isspace (local_name[colon_index]))
+	  while (isspace ((unsigned char)local_name[colon_index]))
 	    local_name[colon_index--] = 0;
 	  file_name = local_name;
 	  regexp = skip_spaces (colon + 1);
@@ -5794,7 +5794,7 @@ language_search_unquoted_string (const char *text, const char *p)
 {
   for (; p > text; --p)
     {
-      if (isalnum (p[-1]) || p[-1] == '_' || p[-1] == '\0')
+      if (isalnum ((unsigned char)p[-1]) || p[-1] == '_' || p[-1] == '\0')
 	continue;
       else
 	{
@@ -5814,7 +5814,7 @@ language_search_unquoted_string (const char *text, const char *p)
 		     Unfortunately we have to find it now to decide.  */
 
 		  while (t > text)
-		    if (isalnum (t[-1]) || t[-1] == '_' ||
+		    if (isalnum ((unsigned char)t[-1]) || t[-1] == '_' ||
 			t[-1] == ' '    || t[-1] == ':' ||
 			t[-1] == '('    || t[-1] == ')')
 		      --t;
@@ -6022,7 +6022,7 @@ default_collect_symbol_completion_matches_break_on
 	     which are in symbols.  */
 	  while (p > text)
 	    {
-	      if (isalnum (p[-1]) || p[-1] == '_' || p[-1] == '\0'
+	      if (isalnum ((unsigned char)p[-1]) || p[-1] == '_' || p[-1] == '\0'
 		  || p[-1] == ':' || strchr (break_on, p[-1]) != NULL)
 		--p;
 	      else

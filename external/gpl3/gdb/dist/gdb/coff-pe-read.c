@@ -190,7 +190,7 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
       int i;
 
       for (i = 0; i < forward_dll_name_len; i++)
-	forward_qualified_name[i] = tolower (forward_qualified_name[i]);
+	forward_qualified_name[i] = tolower ((unsigned char)forward_qualified_name[i]);
       msymbol = lookup_bound_minimal_symbol (forward_qualified_name.c_str ());
     }
 

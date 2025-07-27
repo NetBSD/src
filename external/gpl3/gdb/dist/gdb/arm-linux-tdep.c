@@ -1165,10 +1165,10 @@ arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 static int
 arm_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
-  return (*s == '#' || *s == '$' || isdigit (*s) /* Literal number.  */
+  return (*s == '#' || *s == '$' || isdigit ((unsigned char)*s) /* Literal number.  */
 	  || *s == '[' /* Register indirection or
 			  displacement.  */
-	  || isalpha (*s)); /* Register value.  */
+	  || isalpha ((unsigned char)*s)); /* Register value.  */
 }
 
 /* This routine is used to parse a special token in ARM's assembly.
@@ -1200,7 +1200,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
       start = tmp;
 
       /* Register name.  */
-      while (isalnum (*tmp))
+      while (isalnum ((unsigned char)*tmp))
 	++tmp;
 
       if (*tmp != ',')
@@ -1210,7 +1210,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
       regname = (char *) alloca (len + 2);
 
       offset = 0;
-      if (isdigit (*start))
+      if (isdigit ((unsigned char)*start))
 	{
 	  /* If we are dealing with a register whose name begins with a
 	     digit, it means we should prefix the name with the letter

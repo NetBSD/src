@@ -458,8 +458,8 @@ rocm_bfd_iovec_open (bfd *abfd, inferior *inferior)
   for (size_t i = 0; i < path.length (); ++i)
     if (path[i] == '%'
 	&& i < path.length () - 2
-	&& std::isxdigit (path[i + 1])
-	&& std::isxdigit (path[i + 2]))
+	&& std::isxdigit ((unsigned char)path[i + 1])
+	&& std::isxdigit ((unsigned char)path[i + 2]))
       {
 	std::string_view hex_digits = path.substr (i + 1, 2);
 	decoded_path += std::stoi (std::string (hex_digits), 0, 16);

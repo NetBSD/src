@@ -308,12 +308,12 @@ validate_trace_state_variable_name (const char *name)
 
   /* All digits in the name is reserved for value history
      references.  */
-  for (p = name; isdigit (*p); p++)
+  for (p = name; isdigit ((unsigned char)*p); p++)
     ;
   if (*p == '\0')
     error (_("$%s is not a valid trace state variable name"), name);
 
-  for (p = name; isalnum (*p) || *p == '_'; p++)
+  for (p = name; isalnum ((unsigned char)*p) || *p == '_'; p++)
     ;
   if (*p != '\0')
     error (_("$%s is not a valid trace state variable name"), name);
@@ -339,7 +339,7 @@ trace_variable_command (const char *args, int from_tty)
     error (_("Name of trace variable should start with '$'"));
 
   name_start = p;
-  while (isalnum (*p) || *p == '_')
+  while (isalnum ((unsigned char)*p) || *p == '_')
     p++;
   std::string name (name_start, p - name_start);
 

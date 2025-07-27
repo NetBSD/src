@@ -164,7 +164,7 @@ ep_parse_optional_if_clause (const char **arg)
 {
   const char *cond_string;
 
-  if (((*arg)[0] != 'i') || ((*arg)[1] != 'f') || !isspace ((*arg)[2]))
+  if (((*arg)[0] != 'i') || ((*arg)[1] != 'f') || !isspace ((unsigned char)(*arg)[2]))
     return NULL;
 
   /* Skip the "if" keyword.  */
@@ -204,7 +204,7 @@ catch_exec_command_1 (const char *arg, int from_tty,
      First, check if there's an if clause.  */
   cond_string = ep_parse_optional_if_clause (&arg);
 
-  if ((*arg != '\0') && !isspace (*arg))
+  if ((*arg != '\0') && !isspace ((unsigned char)*arg))
     error (_("Junk at end of arguments."));
 
   std::unique_ptr<exec_catchpoint> c

@@ -127,9 +127,9 @@ ia64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 static int
 ia64_linux_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
-  return ((isdigit (*s) && s[1] == '[' && s[2] == 'r') /* Displacement.  */
+  return ((isdigit ((unsigned char)*s) && s[1] == '[' && s[2] == 'r') /* Displacement.  */
 	  || *s == 'r' /* Register value.  */
-	  || isdigit (*s));  /* Literal number.  */
+	  || isdigit ((unsigned char)*s));  /* Literal number.  */
 }
 
 /* Core file support. */

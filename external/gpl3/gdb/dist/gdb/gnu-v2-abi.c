@@ -46,7 +46,7 @@ static enum ctor_kinds
 gnuv2_is_constructor_name (const char *name)
 {
   if ((name[0] == '_' && name[1] == '_'
-       && (isdigit (name[2]) || strchr ("Qt", name[2])))
+       && (isdigit ((unsigned char)name[2]) || strchr ("Qt", name[2])))
       || startswith (name, "__ct__"))
     return complete_object_ctor;
   else

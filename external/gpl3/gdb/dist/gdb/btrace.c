@@ -2881,7 +2881,7 @@ get_uint (const char **arg)
   begin = *arg;
   pos = skip_spaces (begin);
 
-  if (!isdigit (*pos))
+  if (!isdigit ((unsigned char)*pos))
     error (_("Expected positive number, got: %s."), pos);
 
   number = strtoul (pos, &end, 10);
@@ -2900,7 +2900,7 @@ get_context_size (const char **arg)
 {
   const char *pos = skip_spaces (*arg);
 
-  if (!isdigit (*pos))
+  if (!isdigit ((unsigned char)*pos))
     error (_("Expected positive number, got: %s."), pos);
 
   char *end;

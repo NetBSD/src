@@ -207,7 +207,7 @@ strip_bg_char (const char *args, int *bg_char_p)
   if (p[-1] == '&')
     {
       p--;
-      while (p > args && isspace (p[-1]))
+      while (p > args && isspace ((unsigned char)p[-1]))
 	p--;
 
       *bg_char_p = 1;
@@ -2308,12 +2308,12 @@ registers_info (const char *addr_exp, int fpregs)
 	 resembling a register following it.  */
       if (addr_exp[0] == '$')
 	addr_exp++;
-      if (isspace ((*addr_exp)) || (*addr_exp) == '\0')
+      if (isspace ((unsigned char)(*addr_exp)) || (*addr_exp) == '\0')
 	error (_("Missing register name"));
 
       /* Find the start/end of this register name/num/group.  */
       start = addr_exp;
-      while ((*addr_exp) != '\0' && !isspace ((*addr_exp)))
+      while ((*addr_exp) != '\0' && !isspace ((unsigned char)(*addr_exp)))
 	addr_exp++;
       end = addr_exp;
 

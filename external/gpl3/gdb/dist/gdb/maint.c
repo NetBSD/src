@@ -554,9 +554,9 @@ maintenance_translate_address (const char *arg, int from_tty)
   sect = NULL;
   p = arg;
 
-  if (!isdigit (*p))
+  if (!isdigit ((unsigned char)*p))
     {				/* See if we have a valid section name.  */
-      while (*p && !isspace (*p))	/* Find end of section name.  */
+      while (*p && !isspace ((unsigned char)*p))	/* Find end of section name.  */
 	p++;
       if (*p == '\000')		/* End of command?  */
 	error (_("Need to specify section name and address"));

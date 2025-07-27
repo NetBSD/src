@@ -424,7 +424,7 @@ catch_exception_event (enum exception_event_kind ex_event,
 
   cond_string = ep_parse_optional_if_clause (&arg);
 
-  if ((*arg != '\0') && !isspace (*arg))
+  if ((*arg != '\0') && !isspace ((unsigned char)*arg))
     error (_("Junk at end of arguments."));
 
   if (ex_event != EX_EVENT_THROW

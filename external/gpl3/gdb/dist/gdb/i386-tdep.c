@@ -4048,9 +4048,9 @@ int
 i386_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
   return (*s == '$' /* Literal number.  */
-	  || (isdigit (*s) && s[1] == '(' && s[2] == '%') /* Displacement.  */
+	  || (isdigit ((unsigned char)*s) && s[1] == '(' && s[2] == '%') /* Displacement.  */
 	  || (*s == '(' && s[1] == '%') /* Register indirection.  */
-	  || (*s == '%' && isalpha (s[1]))); /* Register access.  */
+	  || (*s == '%' && isalpha ((unsigned char)s[1]))); /* Register access.  */
 }
 
 /* Helper function for i386_stap_parse_special_token.
@@ -4067,7 +4067,7 @@ i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
 {
   const char *s = p->arg;
 
-  if (isdigit (*s) || *s == '-' || *s == '+')
+  if (isdigit ((unsigned char)*s) || *s == '-' || *s == '+')
     {
       bool got_minus[3];
       int i;
@@ -4139,7 +4139,7 @@ i386_stap_parse_special_token_triplet (struct gdbarch *gdbarch,
       s += 2;
       start = s;
 
-      while (isalnum (*s))
+      while (isalnum ((unsigned char)*s))
 	++s;
 
       if (*s++ != ')')
@@ -4200,7 +4200,7 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
 {
   const char *s = p->arg;
 
-  if (isdigit (*s) || *s == '(' || *s == '-' || *s == '+')
+  if (isdigit ((unsigned char)*s) || *s == '(' || *s == '-' || *s == '+')
     {
       bool offset_minus = false;
       long offset = 0;
@@ -4218,10 +4218,10 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
 	  offset_minus = true;
 	}
 
-      if (offset_minus && !isdigit (*s))
+      if (offset_minus && !isdigit ((unsigned char)*s))
 	return {};
 
-      if (isdigit (*s))
+      if (isdigit ((unsigned char)*s))
 	{
 	  char *endp;
 
@@ -4235,7 +4235,7 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
       s += 2;
       start = s;
 
-      while (isalnum (*s))
+      while (isalnum ((unsigned char)*s))
 	++s;
 
       if (*s != ',' || s[1] != '%')
@@ -4251,7 +4251,7 @@ i386_stap_parse_special_token_three_arg_disp (struct gdbarch *gdbarch,
       s += 2;
       start = s;
 
-      while (isalnum (*s))
+      while (isalnum ((unsigned char)*s))
 	++s;
 
       len_index = s - start;

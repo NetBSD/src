@@ -9781,7 +9781,7 @@ handle_command (const char *args, int from_tty)
   for (char *arg : built_argv)
     {
       wordlen = strlen (arg);
-      for (digits = 0; isdigit (arg[digits]); digits++)
+      for (digits = 0; isdigit ((unsigned char)arg[digits]); digits++)
 	{;
 	}
       allsigs = 0;

@@ -580,7 +580,7 @@ process_reference (const char **string)
   p = *string + 1;
 
   /* Read number as reference id.  */
-  while (*p && isdigit (*p))
+  while (*p && isdigit ((unsigned char)*p))
     {
       refnum = refnum * 10 + *p - '0';
       p++;
@@ -764,7 +764,7 @@ define_symbol (CORE_ADDR valu, const char *string, int desc, int type,
      deftypes we know how to handle is a local.  */
   if (!strchr ("cfFGpPrStTvVXCR", *p))
 #else
-  if (isdigit (*p) || *p == '(' || *p == '-')
+  if (isdigit ((unsigned char)*p) || *p == '(' || *p == '-')
 #endif
     deftype = 'l';
   else
@@ -1853,7 +1853,7 @@ again:
       break;
 
     case '@':
-      if (isdigit (**pp) || **pp == '(' || **pp == '-')
+      if (isdigit ((unsigned char)**pp) || **pp == '(' || **pp == '-')
 	{			/* Member (class & variable) type */
 	  /* FIXME -- we should be doing smash_to_XXX types here.  */
 

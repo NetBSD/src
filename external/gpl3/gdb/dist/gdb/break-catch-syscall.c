@@ -370,7 +370,7 @@ catch_syscall_split_args (const char *arg)
       /* Skip whitespace.  */
       arg = skip_spaces (arg);
 
-      for (i = 0; i < 127 && arg[i] && !isspace (arg[i]); ++i)
+      for (i = 0; i < 127 && arg[i] && !isspace ((unsigned char)arg[i]); ++i)
 	cur_name[i] = arg[i];
       cur_name[i] = '\0';
       arg += i;

@@ -72,7 +72,7 @@ decoded_type_name (struct type *type)
       if (s == name_buffer)
 	return name_buffer;
 
-      if (!islower (s[1]))
+      if (!islower ((unsigned char)s[1]))
 	return NULL;
 
       for (s = q = name_buffer; *s != '\0'; q += 1)

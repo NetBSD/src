@@ -76,12 +76,12 @@ parse_find_args (const char *args, ULONGEST *max_countp,
     {
       ++s;
 
-      while (*s != '\0' && *s != '/' && !isspace (*s))
+      while (*s != '\0' && *s != '/' && !isspace ((unsigned char)*s))
 	{
-	  if (isdigit (*s))
+	  if (isdigit ((unsigned char)*s))
 	    {
 	      max_count = atoi (s);
-	      while (isdigit (*s))
+	      while (isdigit ((unsigned char)*s))
 		++s;
 	      continue;
 	    }

@@ -2541,7 +2541,7 @@ redir_set_redirection (const char *s, int *inp, int *out, int *err)
   /* cmd.exe recognizes "&N" only immediately after the redirection symbol.  */
   if (*s != '&')
     {
-      while (isspace (*s))  /* skip whitespace before file name */
+      while (isspace ((unsigned char)*s))  /* skip whitespace before file name */
 	s++;
       *d++ = ' ';	    /* separate file name with a single space */
     }
@@ -2568,7 +2568,7 @@ redir_set_redirection (const char *s, int *inp, int *out, int *err)
 	    s++;
 	  *d++ = *s++;
 	}
-      else if (isspace (*s) && !quote)
+      else if (isspace ((unsigned char)*s) && !quote)
 	break;
       else
 	*d++ = *s++;
@@ -2604,7 +2604,7 @@ redirect_inferior_handles (const char *cmd_orig, char *cmd,
   int quote = 0;
   bool retval = false;
 
-  while (isspace (*s))
+  while (isspace ((unsigned char)*s))
     *d++ = *s++;
 
   while (*s)

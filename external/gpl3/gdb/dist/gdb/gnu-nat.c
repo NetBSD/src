@@ -2921,7 +2921,7 @@ set_sig_thread_cmd (const char *args, int from_tty)
 {
   struct inf *inf = cur_inf ();
 
-  if (!args || (!isdigit (*args) && strcmp (args, "none") != 0))
+  if (!args || (!isdigit ((unsigned char)*args) && strcmp (args, "none") != 0))
     error (_("Illegal argument to \"set signal-thread\" command.\n"
 	     "Should be a thread ID, or \"none\"."));
 

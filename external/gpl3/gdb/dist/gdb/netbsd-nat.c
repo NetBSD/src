@@ -317,7 +317,7 @@ nbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
       if (pid == 0)
 	error (_("No current process: you must name one."));
     }
-  else if (built_argv.count () == 1 && isdigit (built_argv[0][0]))
+  else if (built_argv.count () == 1 && isdigit ((unsigned char)built_argv[0][0]))
     pid = strtol (built_argv[0], NULL, 10);
   else
     error (_("Invalid arguments."));

@@ -1665,9 +1665,9 @@ aarch64_linux_core_read_description (struct gdbarch *gdbarch,
 static int
 aarch64_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
-  return (*s == '#' || isdigit (*s) /* Literal number.  */
+  return (*s == '#' || isdigit ((unsigned char)*s) /* Literal number.  */
 	  || *s == '[' /* Register indirection.  */
-	  || isalpha (*s)); /* Register value.  */
+	  || isalpha ((unsigned char)*s)); /* Register value.  */
 }
 
 /* This routine is used to parse a special token in AArch64's assembly.
@@ -1698,7 +1698,7 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
       start = tmp;
 
       /* Register name.  */
-      while (isalnum (*tmp))
+      while (isalnum ((unsigned char)*tmp))
 	++tmp;
 
       if (*tmp != ',')
@@ -1726,7 +1726,7 @@ aarch64_stap_parse_special_token (struct gdbarch *gdbarch,
       else if (*tmp == '+')
 	++tmp;
 
-      if (!isdigit (*tmp))
+      if (!isdigit ((unsigned char)*tmp))
 	return {};
 
       displacement = strtol (tmp, &endp, 10);

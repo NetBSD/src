@@ -268,7 +268,7 @@ ada_emit_char (int c, struct type *type, struct ui_file *stream,
      The UCHAR_MAX check is necessary because the isascii function
      requires that its argument have a value of an unsigned char,
      or EOF (EOF is obviously not printable).  */
-  if (c <= UCHAR_MAX && isascii (c) && isprint (c))
+  if (c <= UCHAR_MAX && isascii ((unsigned char)c) && isprint (c))
     {
       if (c == quoter && c == '"')
 	gdb_printf (stream, "\"\"");

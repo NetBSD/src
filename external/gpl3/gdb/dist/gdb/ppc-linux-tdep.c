@@ -1696,10 +1696,10 @@ static int
 ppc_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
   return (*s == 'i' /* Literal number.  */
-	  || (isdigit (*s) && s[1] == '('
-	      && isdigit (s[2])) /* Displacement.  */
-	  || (*s == '(' && isdigit (s[1])) /* Register indirection.  */
-	  || isdigit (*s)); /* Register value.  */
+	  || (isdigit ((unsigned char)*s) && s[1] == '('
+	      && isdigit ((unsigned char)s[2])) /* Displacement.  */
+	  || (*s == '(' && isdigit ((unsigned char)s[1])) /* Register indirection.  */
+	  || isdigit ((unsigned char)*s)); /* Register value.  */
 }
 
 /* Implementation of `gdbarch_stap_parse_special_token', as defined in
@@ -1709,7 +1709,7 @@ static expr::operation_up
 ppc_stap_parse_special_token (struct gdbarch *gdbarch,
 			      struct stap_parse_info *p)
 {
-  if (isdigit (*p->arg))
+  if (isdigit ((unsigned char)*p->arg))
     {
       /* This temporary pointer is needed because we have to do a lookahead.
 	  We could be dealing with a register displacement, and in such case
@@ -1718,7 +1718,7 @@ ppc_stap_parse_special_token (struct gdbarch *gdbarch,
       char *regname;
       int len;
 
-      while (isdigit (*s))
+      while (isdigit ((unsigned char)*s))
 	++s;
 
       if (*s == '(')

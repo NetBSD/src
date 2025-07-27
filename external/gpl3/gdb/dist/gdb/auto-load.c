@@ -979,7 +979,7 @@ execute_script_contents (struct auto_load_pspace_info *pspace_info,
       buf = name_holder.c_str ();
       for (p = buf; *p != '\0'; ++p)
 	{
-	  if (isspace (*p))
+	  if (isspace ((unsigned char)*p))
 	    break;
 	}
       /* We don't allow nameless scripts, they're not helpful to the user.  */

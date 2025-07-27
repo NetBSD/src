@@ -2736,7 +2736,7 @@ set_ext_lang_command (const char *args,
     error (_("'%s': Filename extension must begin with '.'"), ext_args.c_str ());
 
   /* Find end of first arg.  */
-  while (*end != '\0' && !isspace (*end))
+  while (*end != '\0' && !isspace ((unsigned char)*end))
     end++;
 
   if (*end == '\0')

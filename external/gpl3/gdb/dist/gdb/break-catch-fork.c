@@ -221,7 +221,7 @@ catch_fork_command_1 (const char *arg, int from_tty,
      First, check if there's an if clause.  */
   cond_string = ep_parse_optional_if_clause (&arg);
 
-  if ((*arg != '\0') && !isspace (*arg))
+  if ((*arg != '\0') && !isspace ((unsigned char)*arg))
     error (_("Junk at end of arguments."));
 
   /* If this target supports it, create a fork or vfork catchpoint

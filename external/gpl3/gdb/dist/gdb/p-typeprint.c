@@ -139,13 +139,13 @@ pascal_language::type_print_method_args (const char *physname,
     {
       gdb_puts (" (", stream);
       /* We must demangle this.  */
-      while (isdigit (physname[0]))
+      while (isdigit ((unsigned char)physname[0]))
 	{
 	  int len = 0;
 	  int i, j;
 	  char *argname;
 
-	  while (isdigit (physname[len]))
+	  while (isdigit ((unsigned char)physname[len]))
 	    {
 	      len++;
 	    }

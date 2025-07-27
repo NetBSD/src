@@ -444,7 +444,7 @@ linespec_lexer_lex_number (linespec_parser *parser, linespec_token *tokenp)
       ++(PARSER_STREAM (parser));
     }
 
-  while (isdigit (*PARSER_STREAM (parser)))
+  while (isdigit ((unsigned char)*PARSER_STREAM (parser)))
     {
       ++LS_TOKEN_STOKEN (*tokenp).length;
       ++(PARSER_STREAM (parser));
@@ -453,7 +453,7 @@ linespec_lexer_lex_number (linespec_parser *parser, linespec_token *tokenp)
   /* If the next character in the input buffer is not a space, comma,
      quote, or colon, this input does not represent a number.  */
   if (*PARSER_STREAM (parser) != '\0'
-      && !isspace (*PARSER_STREAM (parser)) && *PARSER_STREAM (parser) != ','
+      && !isspace ((unsigned char)*PARSER_STREAM (parser)) && *PARSER_STREAM (parser) != ','
       && *PARSER_STREAM (parser) != ':'
       && !strchr (linespec_quote_characters, *PARSER_STREAM (parser)))
     {
@@ -497,7 +497,7 @@ linespec_lexer_lex_keyword (const char *p)
 	      if (i == FORCE_KEYWORD_INDEX && p[len] == '\0')
 		return linespec_keywords[i];
 
-	      if (!isspace (p[len]))
+	      if (!isspace ((unsigned char)p[len]))
 		continue;
 
 	      if (i == FORCE_KEYWORD_INDEX)
@@ -509,7 +509,7 @@ linespec_lexer_lex_keyword (const char *p)
 		      int nextlen = strlen (linespec_keywords[j]);
 
 		      if (strncmp (p, linespec_keywords[j], nextlen) == 0
-			  && isspace (p[nextlen]))
+			  && isspace ((unsigned char)p[nextlen]))
 			return linespec_keywords[i];
 		    }
 		}
@@ -523,7 +523,7 @@ linespec_lexer_lex_keyword (const char *p)
 		      int nextlen = strlen (linespec_keywords[j]);
 
 		      if (strncmp (p, linespec_keywords[j], nextlen) == 0
-			  && isspace (p[nextlen]))
+			  && isspace ((unsigned char)p[nextlen]))
 			return NULL;
 		    }
 		}
@@ -748,7 +748,7 @@ linespec_lexer_lex_string (linespec_parser *parser)
 
       while (1)
 	{
-	  if (isspace (*PARSER_STREAM (parser)))
+	  if (isspace ((unsigned char)*PARSER_STREAM (parser)))
 	    {
 	      p = skip_spaces (PARSER_STREAM (parser));
 	      /* When we get here we know we've found something followed by
@@ -826,14 +826,14 @@ linespec_lexer_lex_string (linespec_parser *parser)
 		{
 		  const char *op = PARSER_STREAM (parser);
 
-		  while (op > start && isspace (op[-1]))
+		  while (op > start && isspace ((unsigned char)op[-1]))
 		    op--;
 		  if (op - start >= CP_OPERATOR_LEN)
 		    {
 		      op -= CP_OPERATOR_LEN;
 		      if (strncmp (op, CP_OPERATOR_STR, CP_OPERATOR_LEN) == 0
 			  && (op == start
-			      || !(isalnum (op[-1]) || op[-1] == '_')))
+			      || !(isalnum ((unsigned char)op[-1]) || op[-1] == '_')))
 			{
 			  /* This is an operator name.  Keep going.  */
 			  ++(PARSER_STREAM (parser));
@@ -1676,7 +1676,7 @@ linespec_parse_line_offset (const char *string)
   else
     line_offset.sign = LINE_OFFSET_NONE;
 
-  if (*string != '\0' && !isdigit (*string))
+  if (*string != '\0' && !isdigit ((unsigned char)*string))
     error (_("malformed line offset: \"%s\""), start);
 
   /* Right now, we only allow base 10 for offsets.  */
