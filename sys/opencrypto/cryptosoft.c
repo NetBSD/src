@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.64 2022/05/22 11:39:27 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.64.4.1 2025/07/27 09:35:56 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.64 2022/05/22 11:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.64.4.1 2025/07/27 09:35:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,7 +781,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			i = 1; /* We leave swcr_sessions[0] empty */
 			newnum = CRYPTO_SW_SESSIONS;
 		} else
-			newnum = swcr_sesnum *= 2;
+			newnum = swcr_sesnum * 2;
 
 		newsessions = kmem_zalloc(newnum * sizeof(struct swcr_data *),
 		    KM_NOSLEEP);
