@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.38 2025/07/14 18:42:13 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.39 2025/07/27 09:42:33 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -914,4 +914,10 @@ sys/netinet/ip_input.c				1.405
 	ip: work around a possible packet loop during interface
 	address/route initialization.
 	[ozaki-r, ticket #1137]
+
+sys/opencrypto/cryptosoft.c			1.65
+
+	opencrypto(9): avpoid a crash when hitting the current limit
+	of software sessisons.
+	[kim, ticket #1138]
 
