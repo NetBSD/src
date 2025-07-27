@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2124 2025/07/26 06:58:21 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2125 2025/07/27 19:20:05 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -508,7 +508,7 @@ When updating GDB, it is imperative to test that:
 
 Package:	binutils
 Version:	2.42
-Current Vers:	2.44
+Current Vers:	2.45
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
