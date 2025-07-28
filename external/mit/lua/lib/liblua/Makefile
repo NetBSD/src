@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2023/06/03 09:09:07 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2025/07/28 03:01:48 roy Exp $
 
 LIB=		lua
 LUA_CORE=	lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c lfunc.c lgc.c \
@@ -23,6 +23,12 @@ LINTFLAGS+=	-X 247		# pointer cast from 'pointer to struct
 				# be troublesome
 
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
+
+FILES+=			lua.pc
+FILESOWN_lua.pc=	${BINOWN}
+FILESGRP_lua.pc=	${BINGRP}
+FILESMODE_lua.pc=	${NONBINMODE}
+FILESDIR_lua.pc=	/usr/lib/pkgconfig
 
 .PATH:		${NETBSDSRCDIR}/external/mit/lua/dist/src
 
