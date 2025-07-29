@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.324.2.2 2024/09/21 12:28:46 martin Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.324.2.3 2025/07/29 09:35:28 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.324.2.2 2024/09/21 12:28:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.324.2.3 2025/07/29 09:35:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -237,7 +237,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct route iproute;
 	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia = NULL;
-	struct ifaddr *ifa;
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
@@ -254,6 +253,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	int bound;
 	bool bind_need_restore = false;
 	const struct sockaddr *sa;
+	bool need_ia4_release = false;
 
 	len = 0;
 
@@ -323,7 +323,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * If routing to interface only, short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
+		struct ifaddr *ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
 		if (ifa == NULL) {
 			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
@@ -331,8 +331,15 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		/* ia is already referenced by psref_ia */
 		ia = ifatoia(ifa);
+		need_ia4_release = true;
 
-		ifp = ia->ia_ifp;
+		/* Need a reference to keep ifp after ia4_release(ia). */
+		ifp = mifp = if_get_byindex(ia->ia_ifp->if_index, &psref);
+		if (__predict_false(ifp == NULL)) {
+			IP_STATINC(IP_STAT_NOROUTE);
+			error = ENETUNREACH;
+			goto bad;
+		}
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
 		isbroadcast = in_broadcast(dst->sin_addr, ifp);
@@ -348,6 +355,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		mtu = ifp->if_mtu;
 		ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
+		need_ia4_release = true;
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    ip->ip_dst.s_addr == INADDR_BROADCAST) {
 			isbroadcast = 0;
@@ -381,14 +389,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		if (ifa_is_destroying(rt->rt_ifa)) {
-			rtcache_unref(rt, ro);
-			rt = NULL;
-			IP_STATINC(IP_STAT_NOROUTE);
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		ifa_acquire(rt->rt_ifa, &psref_ia);
+		/*
+		 * Taking a psref of ifa via rt_ifa is racy, so use it as is, which
+		 * is safe because rt_ifa is not freed during rt is held.
+		 */
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
 		if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
@@ -445,7 +449,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		 */
 		if (in_nullhost(ip->ip_src)) {
 			struct in_ifaddr *xia;
-			struct ifaddr *xifa;
+			struct ifaddr *ifa;
 			struct psref _psref;
 
 			xia = in_get_ia_from_ifp_psref(ifp, &_psref);
@@ -454,11 +458,11 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
-			xifa = &xia->ia_ifa;
-			if (xifa->ifa_getifa != NULL) {
+			ifa = &xia->ia_ifa;
+			if (ifa->ifa_getifa != NULL) {
 				ia4_release(xia, &_psref);
 				/* FIXME ifa_getifa is NOMPSAFE */
-				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
+				xia = ifatoia((*ifa->ifa_getifa)(ifa, rdst));
 				if (xia == NULL) {
 					IP_STATINC(IP_STAT_IFNOADDR);
 					error = EADDRNOTAVAIL;
@@ -524,18 +528,22 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * of outgoing interface.
 	 */
 	if (in_nullhost(ip->ip_src)) {
-		struct ifaddr *xifa;
+		struct ifaddr *ifa;
 
-		xifa = &ia->ia_ifa;
-		if (xifa->ifa_getifa != NULL) {
-			ia4_release(ia, &psref_ia);
+		ifa = &ia->ia_ifa;
+		if (ifa->ifa_getifa != NULL) {
+			if (need_ia4_release) {
+				ia4_release(ia, &psref_ia);
+				need_ia4_release = false;
+			}
 			/* FIXME ifa_getifa is NOMPSAFE */
-			ia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
+			ia = ifatoia((*ifa->ifa_getifa)(ifa, rdst));
 			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
 			ia4_acquire(ia, &psref_ia);
+			need_ia4_release = true;
 		}
 		ip->ip_src = ia->ia_addr.sin_addr;
 	}
@@ -580,7 +588,7 @@ sendit:
 		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
 			ip->ip_id = 0;
 		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
-			ip->ip_id = ip_newid(ia);
+			ip->ip_id = ip_newid();
 		} else {
 			/*
 			 * TSO capable interfaces (typically?) increment
@@ -596,11 +604,14 @@ sendit:
 			unsigned int datasz = ntohs(ip->ip_len) - hlen;
 			unsigned int num = howmany(datasz, segsz);
 
-			ip->ip_id = ip_newid_range(ia, num);
+			ip->ip_id = ip_newid_range(num);
 		}
 	}
 	if (ia != NULL) {
-		ia4_release(ia, &psref_ia);
+		if (need_ia4_release) {
+			ia4_release(ia, &psref_ia);
+			need_ia4_release = false;
+		}
 		ia = NULL;
 	}
 
@@ -651,9 +662,9 @@ sendit:
 	 */
 	KASSERT(ia == NULL);
 	sockaddr_in_init(&usrc.sin, &ip->ip_src, 0);
-	ifa = ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia);
-	if (ifa != NULL)
-		ia = ifatoia(ifa);
+	ia = ifatoia(ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia));
+	if (ia != NULL)
+		need_ia4_release = true;
 
 	/*
 	 * Ensure we only send from a valid address.
@@ -804,7 +815,8 @@ fragment:
 	}
 
 done:
-	ia4_release(ia, &psref_ia);
+	if (need_ia4_release)
+		ia4_release(ia, &psref_ia);
 	rtcache_unref(rt, ro);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
