@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2125 2025/07/27 19:20:05 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2126 2025/07/29 15:50:56 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -149,7 +149,7 @@ Archive Site:	https://github.com/zoulasc/blocklist
 Home Page:	https://github.com/zoulasc/blocklist
 Date:		2020-06-13
 Responsible:	christos
-License:	BSD-like (2-clause) 
+License:	BSD-like (2-clause)
 Location:	external/bsd/blocklist
 Notes:
 
@@ -168,11 +168,11 @@ Notes:
 
 Package:	unbound
 Version:	1.19.1
-Current Vers:	1.19.1
+Current Vers:	1.23.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2024-02-17
+Date:		2025-07-29
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -627,7 +627,7 @@ Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
 Date:		2024-09-23
-Mailing List:	
+Mailing List:
 Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
@@ -946,11 +946,11 @@ Notes:
 
 Package:	MesaLib
 Version:	19.1.7
-Current Vers:	20.1.1
+Current Vers:	25.1.4
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
-Date:		2020-06-13
+Date:		2025-07-29
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
@@ -1161,7 +1161,7 @@ Notes:
   util/perl/OpenSSL/stackhash.pm
 - compare the list of files in each of the libraries with the one from
   the openssl build with ar t | sed -e 's/lib[a-z]*-lib-//' | sort -u
-- run openssl speed -evp aes-256-cbc and compare the results with the 
+- run openssl speed -evp aes-256-cbc and compare the results with the
   autoconf build
 
 Package:	pcc
@@ -1356,10 +1356,10 @@ original.
 
 Package:	sqlite
 Version:	3.45.1
-Current Vers:	3.45.1
+Current Vers:	3.50.3
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2024-03-01
+Date: 		2025-07-29
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
@@ -1565,11 +1565,11 @@ Notes:
 
 Package:	xz
 Version:	5.2.4
-Current Vers:	5.6.0
+Current Vers:	5.8.1
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
-Date: 		2024-02-24
+Date: 		2025-07-29
 Responsible:	joerg
 License:	public-domain
 Location:	external/public-domain/xz/dist
@@ -2154,10 +2154,11 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	3.7
+Current Vers:	3.12
 Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/grep/
+Archive Site:	https://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
+Date:		2025-07-29
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb
 License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
@@ -2422,14 +2423,14 @@ License:	MIT
 Responsible:	mrg
 Location:	external/mit/isl
 Vendor tag:	isl
-Release tag:	isl-	
+Release tag:	isl-
 Notes:
 Integer Set Library
 Prerequisite for gcc to enable additional optimizations
 
 Package:	ctftools
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Illumos
 Archive Site:	https://github.com/illumos/illumos-gate/blob/master
 		    /usr/src/cmd/ctfconvert
@@ -2437,9 +2438,9 @@ Archive Site:	https://github.com/illumos/illumos-gate/blob/master
 		    /usr/src/cmd/ctfdump
 		    /usr/src/cmd/ctfmerge
 		    /usr/src/lib/libctf
-Home Page:	
+Home Page:
 Date:		2025-04-26
-Mailing List:	
+Mailing List:
 License:	CDDL
 Responsible:	christos
 Location:	external/cddl/osnet/dist/
