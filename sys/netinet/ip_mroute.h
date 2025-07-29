@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.35 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.35.18.1 2025/07/29 09:37:01 martin Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -21,10 +21,6 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#ifdef _KERNEL
-struct sockopt; /* from <sys/socketvar.h> */
-#endif
-
 /*
  * Multicast Routing set/getsockopt commands.
  */
@@ -41,7 +37,6 @@ struct sockopt; /* from <sys/socketvar.h> */
 #define MRT_API_CONFIG		110	/* config MRT API */
 #define MRT_ADD_BW_UPCALL	111	/* create bandwidth monitor */
 #define MRT_DEL_BW_UPCALL	112	/* delete bandwidth monitor */
-
 
 /*
  * Types and macros for handling bitmaps with one bit per virtual interface.
@@ -101,6 +96,7 @@ struct mfcctl2 {
 	u_int8_t	mfcc_flags[MAXVIFS];	/* the MRT_MFC_FLAGS_* flags */
 	struct in_addr	mfcc_rp;		/* the RP address            */
 };
+
 /*
  * The advanced-API flags.
  *
@@ -196,7 +192,6 @@ struct sioc_vif_req {
 	u_long	obytes;			/* output byte count on vif */
 };
 
-
 /*
  * The kernel's multicast routing statistics.
  */
@@ -216,6 +211,26 @@ struct mrtstat {
 	u_long	mrts_upq_sockfull;	/* upcalls dropped - socket full */
 };
 
+/*
+ * Structure used to communicate from kernel to multicast router.
+ * (Note the convenient similarity to an IP packet.)
+ */
+struct igmpmsg {
+	u_int32_t unused1;
+	u_int32_t unused2;
+	u_int8_t  im_msgtype;		/* what type of message */
+#define IGMPMSG_NOCACHE		1	/* no MFC in the kernel		    */
+#define IGMPMSG_WRONGVIF	2	/* packet came from wrong interface */
+#define	IGMPMSG_WHOLEPKT	3	/* PIM pkt for user level encap.    */
+#define	IGMPMSG_BW_UPCALL	4	/* BW monitoring upcall		    */
+	u_int8_t  im_mbz;		/* must be zero */
+	u_int8_t  im_vif;		/* vif rec'd on */
+	u_int8_t  unused3;
+	struct	  in_addr im_src, im_dst;
+};
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct igmpmsg) == 20);
+#endif
 
 #ifdef _KERNEL
 
@@ -268,27 +283,6 @@ struct mfc {
 };
 
 /*
- * Structure used to communicate from kernel to multicast router.
- * (Note the convenient similarity to an IP packet.)
- */
-struct igmpmsg {
-	u_int32_t unused1;
-	u_int32_t unused2;
-	u_int8_t  im_msgtype;		/* what type of message */
-#define IGMPMSG_NOCACHE		1	/* no MFC in the kernel		    */
-#define IGMPMSG_WRONGVIF	2	/* packet came from wrong interface */
-#define	IGMPMSG_WHOLEPKT	3	/* PIM pkt for user level encap.    */
-#define	IGMPMSG_BW_UPCALL	4	/* BW monitoring upcall		    */
-	u_int8_t  im_mbz;		/* must be zero */
-	u_int8_t  im_vif;		/* vif rec'd on */
-	u_int8_t  unused3;
-	struct	  in_addr im_src, im_dst;
-};
-#ifdef __CTASSERT
-__CTASSERT(sizeof(struct igmpmsg) == 20);
-#endif
-
-/*
  * Argument structure used for pkt info. while upcall is made.
  */
 struct rtdetq {
@@ -334,6 +328,8 @@ struct bw_meter {
 	struct bw_data	bm_measured;		/* the measured bw	     */
 	struct timeval	bm_start_time;		/* abs. time		     */
 };
+
+struct sockopt; /* from <sys/socketvar.h> */
 
 int	ip_mrouter_set(struct socket *, struct sockopt *);
 int	ip_mrouter_get(struct socket *, struct sockopt *);
