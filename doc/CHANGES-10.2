@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.39 2025/07/27 09:42:33 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.40 2025/07/29 09:37:50 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -920,4 +920,37 @@ sys/opencrypto/cryptosoft.c			1.65
 	opencrypto(9): avpoid a crash when hitting the current limit
 	of software sessisons.
 	[kim, ticket #1138]
+
+libexec/httpd/CHANGES				1.55,1.56
+libexec/httpd/auth-bozo.c			1.28
+libexec/httpd/bozohttpd.8			1.93-1.97,1.99,1.100
+libexec/httpd/bozohttpd.c			1.143-1.147
+libexec/httpd/cgi-bozo.c			1.55,1.56
+libexec/httpd/content-bozo.c			1.22
+libexec/httpd/main.c				1.31
+libexec/httpd/ssl-bozo.c			1.33,1.34
+
+	httpd(8): various fixes
+	 - serve .iso as "application/octet-stream".
+	 - fix some memory leaks.
+	 - enhance documentation.
+	 - improve SSL error messages.
+	[mrg, ticket #1139]
+
+sys/netinet/in_var.h				1.105
+sys/netinet/ip_input.c				1.406
+sys/netinet/ip_mroute.c				1.166
+sys/netinet/ip_output.c				1.327-1.330
+sys/netinet/sctp_output.c			1.39
+sys/netipsec/ipsecif.c				1.24
+sys/netipsec/xform_ipip.c			1.80
+
+	inet: PR 59527: fix race conditions on route deletion.
+	[ozaki-r, ticket #1140]
+
+sys/netinet/ip_mroute.h				1.36
+
+	PR 59561: do not hide struct igmpmsg under _KERNEL.
+	The struct is documented as a communication structure with userland.
+	[kim, ticket #1141]
 
