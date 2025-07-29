@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.41 2022/11/01 19:45:35 andvar Exp $ */
+/* $NetBSD: atppc.c,v 1.42 2025/07/29 19:07:53 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.41 2022/11/01 19:45:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.42 2025/07/29 19:07:53 andvar Exp $");
 
 #include "opt_atppc.h"
 
@@ -300,7 +300,7 @@ atppc_detect_port(bus_space_tag_t iot, bus_space_handle_t ioh)
 	int rval;
 	u_int8_t ctr_sav, dtr_sav, str_sav;
 
-	/* Store writtable registers' values and test if they can be read */
+	/* Store writable registers' values and test if they can be read */
 	str_sav = bus_space_read_1(iot, ioh, ATPPC_SPP_STR);
 	ctr_sav = bus_space_read_1(iot, ioh, ATPPC_SPP_CTR);
 	dtr_sav = bus_space_read_1(iot, ioh, ATPPC_SPP_DTR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.9 2021/12/05 07:21:59 msaitoh Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.10 2025/07/29 19:07:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.9 2021/12/05 07:21:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.10 2025/07/29 19:07:53 andvar Exp $");
 
 #include "vmetwo.h"
 
@@ -267,7 +267,7 @@ vmetwo_slave_range(struct vmetwo_softc *sc, int range, vme_am_t am, struct mvmeb
 
 	/*
 	 * First, check if the range is actually enabled.
-	 * Note that bit 1 of `range' is used to indicte if we're
+	 * Note that bit 1 of `range' is used to indicate if we're
 	 * looking for an A24 range (set) or an A32 range (clear).
 	 */
 	reg = vme2_lcsr_read(sc, VME2LCSR_SLAVE_CTRL);

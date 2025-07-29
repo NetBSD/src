@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2025/05/28 06:06:53 andvar Exp $ */
+/*	$NetBSD: md.c,v 1.14 2025/07/29 19:07:53 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -891,7 +891,7 @@ sortmerge(void)
     /*
      * Step 1, squeeze out the holes that some disk formatters leave in
      *  the Map.  Also convert any "old" Map entries to the new entry
-     *  type. Also clear out our used flag which is used to indicte
+     *  type. Also clear out our used flag which is used to indicate
      *  we've mapped the partition.
      */
     map.in_use_cnt = 0;
