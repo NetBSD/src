@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.111 2024/11/10 19:01:25 riastradh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.112 2025/07/29 18:58:40 hgutch Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.111 2024/11/10 19:01:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.112 2025/07/29 18:58:40 hgutch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,7 +142,6 @@ static const struct urtwn_dev {
 	URTWN_DEV(ASUSTEK,	RTL8192CU),
 	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(ASUSTEK,	USBN10NANO),
-	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_1),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_2),
 	URTWN_DEV(AZUREWAVE,	RTL8188CU),
@@ -213,6 +212,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(ZYXEL,	RTL8192CU),
 
 	/* URTWN_RTL8188E */
+	URTWN_RTL8188E_DEV(ASUSTEK, USBN10NANO_B1),
 	URTWN_RTL8188E_DEV(DLINK, DWA125D1),
 	URTWN_RTL8188E_DEV(ELECOM, WDC150SU2M),
 	URTWN_RTL8188E_DEV(MERCUSYS, MW150USV2),
