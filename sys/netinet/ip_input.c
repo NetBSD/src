@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.402.4.1 2025/07/14 18:41:06 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.402.4.2 2025/07/29 09:35:28 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402.4.1 2025/07/14 18:41:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402.4.2 2025/07/29 09:35:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,7 +246,7 @@ static void		ipintr(void *);
 static void		ip_input(struct mbuf *, struct ifnet *);
 static void		ip_forward(struct mbuf *, int, struct ifnet *);
 static bool		ip_dooptions(struct mbuf *);
-static struct in_ifaddr *ip_rtaddr(struct in_addr, struct psref *);
+static int		ip_rtaddr(struct in_addr, struct in_addr *);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
 
 static struct in_ifaddr	*ip_match_our_address(struct ifnet *, struct ip *,
@@ -904,7 +904,6 @@ ip_dooptions(struct mbuf *m)
 		 */
 		case IPOPT_LSRR:
 		case IPOPT_SSRR: {
-			struct psref psref;
 			struct sockaddr_in ipaddr = {
 			    .sin_len = sizeof(ipaddr),
 			    .sin_family = AF_INET,
@@ -959,25 +958,29 @@ ip_dooptions(struct mbuf *m)
 			 */
 			memcpy((void *)&ipaddr.sin_addr, (void *)(cp + off),
 			    sizeof(ipaddr.sin_addr));
+			int error = -1;
 			if (opt == IPOPT_SSRR) {
-				ifa = ifa_ifwithladdr_psref(sintosa(&ipaddr),
-				    &psref);
-				if (ifa != NULL)
+				s = pserialize_read_enter();
+				ifa = ifa_ifwithladdr(sintosa(&ipaddr));
+				if (ifa != NULL) {
 					ia = ifatoia(ifa);
-				else
-					ia = NULL;
+					memcpy(cp + off, &ia->ia_addr.sin_addr,
+					    sizeof(struct in_addr));
+					error = 0;
+				}
+				pserialize_read_exit(s);
 			} else {
-				ia = ip_rtaddr(ipaddr.sin_addr, &psref);
+				struct in_addr addr;
+				error = ip_rtaddr(ipaddr.sin_addr, &addr);
+				if (error == 0)
+					memcpy(cp + off, &addr, sizeof(addr));
 			}
-			if (ia == NULL) {
+			if (error != 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
-			memcpy(cp + off, &ia->ia_addr.sin_addr,
-			    sizeof(struct in_addr));
-			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
@@ -987,7 +990,6 @@ ip_dooptions(struct mbuf *m)
 		    }
 
 		case IPOPT_RR: {
-			struct psref psref;
 			struct sockaddr_in ipaddr = {
 			    .sin_len = sizeof(ipaddr),
 			    .sin_family = AF_INET,
@@ -1017,20 +1019,26 @@ ip_dooptions(struct mbuf *m)
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
 			 */
-			ifa = ifa_ifwithaddr_psref(sintosa(&ipaddr), &psref);
-			if (ifa == NULL) {
-				ia = ip_rtaddr(ipaddr.sin_addr, &psref);
-				if (ia == NULL) {
+			s = pserialize_read_enter();
+			ifa = ifa_ifwithaddr(sintosa(&ipaddr));
+			if (ifa != NULL) {
+				ia = ifatoia(ifa);
+				memcpy(cp + off, &ia->ia_addr.sin_addr,
+				    sizeof(struct in_addr));
+				pserialize_read_exit(s);
+			} else {
+				struct in_addr addr;
+				int error;
+				pserialize_read_exit(s);
+
+				error = ip_rtaddr(ipaddr.sin_addr, &addr);
+				if (error != 0) {
 					type = ICMP_UNREACH;
 					code = ICMP_UNREACH_HOST;
 					goto bad;
 				}
-			} else {
-				ia = ifatoia(ifa);
+				memcpy(cp + off, &addr, sizeof(addr));
 			}
-			memcpy(cp + off, &ia->ia_addr.sin_addr,
-			    sizeof(struct in_addr));
-			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
 		    }
@@ -1165,10 +1173,10 @@ bad:
 
 /*
  * ip_rtaddr: given address of next destination (final or next hop),
- * return internet address info of interface to be used to get there.
+ * return internet address of interface to be used to get there.
  */
-static struct in_ifaddr *
-ip_rtaddr(struct in_addr dst, struct psref *psref)
+static int
+ip_rtaddr(struct in_addr dst, struct in_addr *ret)
 {
 	struct rtentry *rt;
 	union {
@@ -1176,6 +1184,7 @@ ip_rtaddr(struct in_addr dst, struct psref *psref)
 		struct sockaddr_in	dst4;
 	} u;
 	struct route *ro;
+	struct in_ifaddr *ia;
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
@@ -1183,14 +1192,15 @@ ip_rtaddr(struct in_addr dst, struct psref *psref)
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
 		rtcache_percpu_putref(ipforward_rt_percpu);
-		return NULL;
+		return -1;
 	}
 
-	ia4_acquire(ifatoia(rt->rt_ifa), psref);
+	ia = ifatoia(rt->rt_ifa);
+	*ret = ia->ia_addr.sin_addr;
 	rtcache_unref(rt, ro);
 	rtcache_percpu_putref(ipforward_rt_percpu);
 
-	return ifatoia(rt->rt_ifa);
+	return 0;
 }
 
 /*

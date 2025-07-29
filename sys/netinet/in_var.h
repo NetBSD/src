@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.103 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.103.2.1 2025/07/29 09:35:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -467,7 +467,7 @@ ip_randomid(void)
  * => Return the first ID.
  */
 static __inline uint16_t
-ip_newid_range(const struct in_ifaddr *ia, u_int num)
+ip_newid_range(u_int num)
 {
 	uint16_t id;
 
@@ -486,10 +486,10 @@ ip_newid_range(const struct in_ifaddr *ia, u_int num)
 }
 
 static __inline uint16_t
-ip_newid(const struct in_ifaddr *ia)
+ip_newid(void)
 {
 
-	return ip_newid_range(ia, 1);
+	return ip_newid_range(1);
 }
 
 #ifdef SYSCTLFN_PROTO
