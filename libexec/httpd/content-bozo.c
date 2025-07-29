@@ -1,9 +1,9 @@
-/*	$NetBSD: content-bozo.c,v 1.21 2022/05/31 06:34:33 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.21.2.1 2025/07/29 09:32:13 martin Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2021 Matthew R. Green
+ * Copyright (c) 1997-2023 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -198,6 +198,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".vrml",	"x-world/x-vrml",		"",		"", NULL },
 	{ ".svg",	"image/svg+xml",		"",		"", NULL },
 	{ ".mobi",	"application/x-mobipocket-ebook", "",		"", NULL },
+	{ ".iso",	"application/octet-stream",	"",		"", NULL },
 	{ NULL,		NULL,		NULL,		NULL, NULL }
 };
 

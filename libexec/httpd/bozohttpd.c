@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.142 2022/09/12 10:30:39 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.142.2.1 2025/07/29 09:32:13 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2022 Matthew R. Green
+ * Copyright (c) 1997-2024 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20220517"
+#define SERVER_SOFTWARE		"bozohttpd/20240428"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -1564,9 +1564,14 @@ bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 				*t++ = *s++;
 			break;
 		}
-		debug((httpd, DEBUG_EXPLODING,
-			"fu_%%: got s == %%, s[1]s[2] == %c%c",
-			s[1], s[2]));
+		if (&s[2] < end)
+			debug((httpd, DEBUG_EXPLODING,
+				"fu_%%: got s == %%, s[1]s[2] == %c%c",
+				s[1], s[2]));
+		else
+			debug((httpd, DEBUG_EXPLODING,
+			    "fu_%%: got s == %%, s[1] == %c s[2] is not set",
+				s[1]));
 		if (s[1] == '\0' || s[2] == '\0')
 			return bozo_http_error(httpd, 400, request,
 			    "percent hack missing two chars afterwards");
@@ -2728,6 +2733,11 @@ bozo_cleanup(bozohttpd_t *httpd, bozoprefs_t *prefs)
 	free(httpd->errorbuf);
 	free(httpd->getln_buffer);
 	free(httpd->slashdir);
+	free(httpd->bindport);
+	free(httpd->pidfile);
+	free(httpd->cgibin);
+	free(httpd->virtbase);
+	free(httpd->dynamic_content_map);
 #define bozo_unconst(x) ((void *)(uintptr_t)x)
 	free(bozo_unconst(httpd->server_software));
 	free(bozo_unconst(httpd->index_html));
