@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.92 2022/09/12 10:34:20 martin Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.92.2.1 2025/07/29 09:32:13 martin Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2022 Matthew R. Green
+.\" Copyright (c) 1997-2024 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Sep 12, 22
+.Dd November 22, 2024
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@ using the ftp facility (but see the
 .Fl s
 option for testing and the
 .Fl q
-option for supressing this.)
+option for suppressing this.)
 .Nm
 is designed to be small, simple and relatively featureless,
 hopefully increasing its security.
@@ -87,10 +87,22 @@ hopefully increasing its security.
 The following options are available:
 .Bl -tag -width xxxcgibin
 .It Fl b
-Enables daemon mode, where
+Enables stand-alone daemon mode, where
 .Nm
-detaches from the current terminal, running in the background and
-servicing HTTP requests.
+detaches from the current terminal and runs in the background
+(unless invoked with
+.Fl f ) ,
+listens on the appropriate IP address
+(see
+.Fl i Ar address )
+and TCP port
+(see
+.Fl I Ar port ) ,
+and services HTTP requests.
+.Nm
+does not use
+.Xr inetd 8
+in stand-alone daemon mode.
 .It Fl C Ar suffix cgihandler
 Adds a new CGI handler program for a particular file type.
 The
@@ -109,17 +121,17 @@ The
 .Ar cgibin
 directory is expected to contain the CGI programs to be used.
 .Nm
-looks for URL's in the form of
-.Em /cgi-bin/<scriptname>
+looks for URLs in the form of
+.Ql /cgi-bin/ Ns Ar scriptname
 where
-.Aq scriptname
+.Ar scriptname
 is a valid CGI program in the
 .Ar cgibin
 directory.
-In other words, all CGI URL's must begin with
-.Em \%/cgi-bin/ .
+In other words, all CGI URLs must begin with
+.Ql \%/cgi-bin/ .
 Note that the CGI/1.1 interface is available with
-.Em ~user
+.Ql ~user
 translation using
 .Fl E
 switch.
@@ -127,15 +139,13 @@ switch.
 Enables debug support.
 .It Fl E
 Enables CGI/1.1 interface for
-.Em ~user
+.Ql ~user
 translation.
 Note that enabling this support implies that users can run commands
 as the web server user.
 This may have security implications.
 .It Fl e
-Causes
-.Nm
-to not clear the environment when used with either the
+Do not clear the environment when used with either the
 .Fl t
 or
 .Fl U
@@ -143,50 +153,55 @@ options.
 .It Fl f
 Stops the
 .Fl b
-flag from detaching
+option from detaching
 .Nm
-from the tty and going into the background.
+from the tty and going into the background as part of stand-alone daemon mode.
 This implies the
 .Fl b
-flag.
+option.
 .It Fl G
 Get the
 .Nm
 version string, print it on standard output, and exit.
 .It Fl H
-Causes directory index mode to hide files and directories
-that start with a period, except for
+Changes directory index mode
+(see
+.Fl X
+option)
+to hide files and directories that start with a period
+.Pq Ql \&. ,
+except for
 .Pa .. .
-Also see
-.Fl X .
 .It Fl I Ar port
-Causes
-.Nm
-to use
+Use
 .Ar port
 instead of the default
 .Dq http
-port.
+port
+(usually 80, see
+.Xr services 5 ) .
 When used with the
 .Fl b
-option, it changes the bound port.
-Otherwise it forces redirections to use this port instead of the
-value obtained via
+or
+.Fl f
+options, this option changes the bound port.
+Otherwise this option forces redirections to use this port
+instead of the value obtained via
 .Xr getsockname 2 .
 .It Fl i Ar address
-Causes
+Use
 .Ar address
-to be used as the address to bind daemon mode.
-If otherwise unspecified, the address used to bind is derived from the
-.Ar myname ,
-which defaults to the name returned by
-.Xr gethostname 3 .
+as the address to bind to in stand-alone daemon mode.
+If this option is not provided, all available IP addresses
+will be listened to.
 Only the last
 .Fl i
 option is used.
 This option is only valid with the
 .Fl b
-option.
+or
+.Fl f
+options.
 .It Fl L Ar prefix script
 Adds a new Lua script for a particular prefix.
 The
@@ -199,11 +214,14 @@ Multiple
 options may be passed.
 A separate Lua state is created for each prefix.
 The Lua script can register callbacks using the
-httpd.register_handler('<name>', function) Lua function,
+.Dl httpd.register_handler('suffixpath', luafunc)
+Lua function,
 which will trigger the execution of the Lua function
-.Em function
+.Fn luafunc
 when a URL in the form
-.Em http://<hostname>/<prefix>/<name>
+.Sm off
+.Li http:// Ar hostname Li / Ar prefix Li / Ar suffixpath
+.Sm on
 is being accessed.
 The function is passed three tables as arguments, the server
 environment, the request headers, and the decoded query string
@@ -244,24 +262,28 @@ This affects the
 .Ev REMOTE_HOST
 environment variable for CGI programs and Lua scripts.
 .It Fl P Ar pidfile
-Causes
-.Nm
-to create a PID file in
+Create a PID file in
 .Ar pidfile
 when run in daemon mode with the
 .Fl b
-option.
+or
+.Fl f
+options.
 .It Fl p Ar pubdir
 Changes the default user directory for
-.Em /~user/
+.Ql /~user/
 translations from
-.Dq public_html
+.Pa public_html
 to
 .Ar pubdir .
 .It Fl q
 Quiet mode - no log entries generated.
 .It Fl R Ar readme
-When directory indexing is enabled, include the contents of the file
+When directory indexing is enabled
+(see
+.Fl X
+option),
+include the contents of the file
 .Ar readme
 in the footer of the directory index.
 .It Fl S Ar version
@@ -296,9 +318,7 @@ is normally replaced with an empty environment with this option, unless the
 .Fl e
 option is also used.
 .It Fl U Ar username
-Causes
-.Nm
-to switch to the user and the groups of
+Switch to the user and the groups of
 .Ar username
 after initialization.
 This option, like
@@ -311,7 +331,7 @@ option is given.
 .It Fl u
 Enables the transformation of Uniform Resource Locators of
 the form
-.Em /~user/
+.Ql /~user/
 into the directory
 .Pa ~user/public_html
 (but see the
@@ -343,18 +363,21 @@ See the
 section for an example of using this option.
 .It Fl X
 Enables directory indexing.
-A directory index will be generated only when the default file (i.e.
+A directory index will be generated only when the default
+index file is not present
+(i.e.,
 .Pa index.html
-normally) is not present.
+unless changed with
+.Fl x Ar index ) .
 .It Fl x Ar index
 Changes the default file read for directories from
-.Dq index.html
+.Pa index.html
 to
 .Ar index .
 .It Fl Z Ar certificate_path privatekey_path
 Sets the path to the server certificate file and the private key file
 in PEM format.
-It also causes
+This option also causes
 .Nm
 to start SSL mode.
 .It Fl z Ar ciphers
@@ -374,18 +397,21 @@ since version 20040828, they take multiple options (2 in the case of
 and 4 in the case of
 .Fl M . )
 .Ss INETD CONFIGURATION
-As
+By default
 .Nm
 uses
 .Xr inetd 8
-by default to process incoming TCP connections for HTTP requests
-(but see the
+to process incoming TCP connections for HTTP requests
+(unless stand-alone daemon mode is enabled with the
 .Fl b
-option),
+or
+.Fl f
+options),
 .Nm
 has little internal networking knowledge.
-(Indeed, you can run it on the command line with little change of
-functionality.)
+(Indeed, you can run
+.Nm
+on the command line with little change of functionality.)
 A typical
 .Xr inetd.conf 5
 entry would be:
@@ -398,7 +424,7 @@ This would serve web pages from
 .Pa /var/www
 on both IPv4 and IPv6 ports.
 The
-.Em :600
+.Ql :600
 changes the
 requests per minute to 600, up from the
 .Xr inetd 8
@@ -467,13 +493,13 @@ While
 distributed with
 .Nx
 has support for HTTP Basic Authorization enabled by default,
-in the portable distribution it is excluded.
+in the portable distribution this feature is disabled.
 Compile
 .Nm
 with
 .Dq -DDO_HTPASSWD
 on the compiler command line to enable this support.
-It may require linking with the crypt library, using
+This may require linking with the crypt library, using
 .Dq -lcrypt .
 .Ss BLOCKLIST SUPPORT
 On
@@ -491,13 +517,13 @@ Upon occurrence,
 reports two HTTP status codes to
 .Xr blocklistd 8
 as failures:
-.Em 401
+.Er 401
 (``Unauthorized'')
 and
-.Em 403
+.Er 403
 (``Forbidden'') .
 Of these,
-.Em 401
+.Er 401
 is the one received upon authorization failure with the
 HTTP Basic Authorization mechanism.
 A successful authorization decreases the counter kept by
@@ -505,7 +531,7 @@ A successful authorization decreases the counter kept by
 .Pp
 Note that the implementation of the HTTP Basic Authorization mechanism
 uses a redirection; a status code
-.Em 401
+.Er 401
 is always initially received.
 Therefore, a single authorization failure of
 .Pa .htpasswd
@@ -517,13 +543,18 @@ due to the decrease of the failure counter.
 .Nm
 has support for TLSv1.1 and TLSv1.2 protocols that are included by
 default.
-It requires linking with the crypto and ssl library, using
+This requires linking with the crypto and ssl library, using
 .Dq -lcrypto -lssl .
 To disable SSL SUPPORT compile
 .Nm
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Pp
+To have an enforced redirect, such as http to https, create a shadow
+directory root that contains a
+.Pa .bzabsredirect
+file that points to the real target.
 .Ss COMPRESSION
 .Nm
 supports a very basic form of compression.
@@ -534,34 +565,50 @@ if it exists, it is readable, the client requested gzip compression, and
 the client did not make a ranged request.
 .Sh FILES
 .Nm
-looks for a couple of special files in directories that allow certain features
-to be provided on a per-directory basis.
-The
-.Pa .htpasswd
-file is used by HTTP basic authorization.
-If a
-.Pa .bzredirect
-symbolic link is found,
+processes specific files in each directory that
+enables certain features on a per-directory basis.
+These per-directory files are:
+.Bl -tag -width .htpasswd
+.It Pa .bzabsredirect
+Symbolic link to the absolute URL pointed to by this symlink.
+This is useful to redirect to different servers.
+See
+.Sx SYMBOLIC LINK REDIRECTION .
+.It Pa .bzredirect
+Symbolic link to URL for
 .Nm
-will perform a smart redirect to the target of this symlink.
+to perform a smart redirect to the target of this symlink.
 The target is assumed to live on the same server.
 If target starts with slash then absolute redirection is performed,
-otherwise it's handled as relative.
-If a
-.Pa .bzabsredirect
-symbolic link is found,
-.Nm
-will redirect to the absolute URL pointed to by this symlink.
-This is useful to redirect to different servers.
-Two forms of redirection are supported - symbolic link without schema will use
-.Em http://
-as default i.e. link to
-.Em NetBSD.org
+otherwise it is handled as relative.
+See
+.Sx SYMBOLIC LINK REDIRECTION .
+.It Pa .bzremap
+Used by rewrite mappings; see
+.Sx REWRITE MAPPINGS .
+.It Pa .htpasswd
+Used by HTTP basic authorization; see
+.Sx HTTP BASIC AUTHORIZATION .
+.El
+.Ss SYMBOLIC LINK REDIRECTION
+Two forms of redirection are supported:
+.Bl -enum
+.It
+A symbolic link without schema will use
+.Li http://
+as default.
+E.g., a symbolic link to
+.Pa NetBSD.org
 will redirect to
-.Em http://NetBSD.org/
-Otherwise provided schema will be used i.e. symbolic link to
-.Em ftp://NetBSD.org/
-will redirect to the provided URL.
+.Lk http://NetBSD.org/ .
+.It
+A symbolic link with a schema uses the provided schema.
+E.g., a symbolic link to
+.Pa ftp://NetBSD.org/
+will redirect to
+.Lk ftp://NetBSD.org/ .
+.El
+.Ss REWRITE MAPPINGS
 If a
 .Pa .bzremap
 file is found at the root of a (virtual) server, it is expected to contain
@@ -587,10 +634,10 @@ file could look like this:
 The remap file should be short, access to it is slow and needs to happen
 on each request.
 If a request path needs to include a colon
-.Pq Li \&:
+.Pq Ql \&:
 character, it can be escaped
 with a backslash
-.Pq Li \e
+.Pq Ql \e
 The right hand side of the colon is always used verbatim, no escape sequences
 are interpreted.
 .Sh EXAMPLES
@@ -643,6 +690,7 @@ exit 1
 .Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
+.Xr services 5 ,
 .Xr inetd 8
 .Sh HISTORY
 .Nm
@@ -658,13 +706,13 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20220517.
+version 20240428.
 .Sh AUTHORS
 .An -nosplit
 .Nm
 was written by
 .An Matthew R. Green
-.Aq Mt mrg@eterna.com.au .
+.Aq Mt mrg@eterna23.net .
 .Pp
 The large list of contributors includes:
 .Bl -dash
@@ -799,7 +847,7 @@ provided several clean up fixes, and man page updates
 provided various fixes
 .It
 .An Tyler Retzlaff
-.Aq Mt rtr@eterna.com.au
+.Aq Mt rtr@eterna23.net
 provided SSL support, cgi-bin fixes and much other random other stuff
 .It
 .An rudolf
@@ -854,7 +902,9 @@ There are probably others I have forgotten (let me know if you care)
 Please send all updates to
 .Nm
 to
-.Aq Mt mrg@eterna.com.au
+.Aq Mt mrg@eterna23.net
+or
+.Aq Mt netbsd-bugs@NetBSD.org
 for inclusion in future releases.
 .Sh BUGS
 .Nm

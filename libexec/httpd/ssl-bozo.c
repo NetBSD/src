@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.32 2022/09/12 10:30:39 martin Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.32.2.1 2025/07/29 09:32:13 martin Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2020 Matthew R. Green
+ * Copyright (c) 1997-2023 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -129,6 +129,7 @@ bozo_clear_ssl_queue(bozohttpd_t *httpd)
 			    ERR_lib_error_string(sslcode),
 			    ERR_func_error_string(sslcode),
 			    ERR_reason_error_string(sslcode));
+			fputs("\n", stderr);
 		} else {
 			syslog(LOG_ERR, sslfmt,
 			    ERR_lib_error_string(sslcode),
