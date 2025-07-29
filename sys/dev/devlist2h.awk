@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.5 2021/06/30 17:34:03 riastradh Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 2025/07/29 18:52:15 hgutch Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -309,7 +309,7 @@ END {
 	printf("Maximum %s string length:  %d\n", vendor, vendormaxlen + 1)
 	printf("Maximum %s string length: %d\n", product, productmaxlen + 1)
 	printf("\nEnsure that device-specific values are sufficiently large");
-	printf("\ncheck Makefile.%s for details).\n", FILENAME);
+	printf("\n(check Makefile.%s for details).\n", FILENAME);
 
 	close(dfile)
 	close(hfile)
