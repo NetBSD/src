@@ -59,19 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aiosp.c,v 0.00 2025/05/18 12:00:00 ethan4984 Exp
 
 MODULE(MODULE_CLASS_MISC, aiosp, NULL);
 
-static size_t		aiosp_ops_expected(size_t);
-static void		aiosp_ops_init(struct aiosp_ops *);
-static void		aiosp_ops_fini(struct aiosp_ops *);
-static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
-
 static int		aiost_create(struct aiosp *, struct aiost **);
 static int		aiost_terminate(struct aiost *);
 static void		aiost_entry(void *);
 static void		aiost_sigsend(struct proc *, struct sigevent *);
-static void		aiost_notify_ops (struct aio_job *);
+static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
 
-static int		io_write(struct aiost *);
-static int		io_read(struct aiost *);
+static int		io_write(struct aiost *, struct aio_job *);
+static int		io_read(struct aiost *, struct aio_job *);
 static int		io_sync(struct aiost *);
 static int		io_construct(struct aio_job *, struct file **,
 				struct iovec *, struct uio *);
@@ -222,7 +217,7 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	struct timespec *ts, uint32_t flags)
 {
 	struct aio_job *job;
-	int error;
+	int error = 0;
 	int timo;
 	size_t target = 0;
 
@@ -248,8 +243,8 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		target = AIOSP_SUSPEND_NEXTRACT(flags);
 	}
 
-	struct aiosp_ops *ops = kmem_zalloc(sizeof(*ops), KM_SLEEP);
-	aiosp_ops_init(ops);
+	struct aiowaitgroup *wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
+	aiowaitgroup_init(wg); 
 
 	/*
 	 * We want a hash table that tracks jobs, using uptr as a key. We use
@@ -259,7 +254,7 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	 * both aiosts are assigned to both threads.
 	 */
 
-	mutex_enter(&ops->mtx);
+	mutex_enter(&wg->mtx);
 	for (int i = 0; i < nent; i++) {
 		if (aiocbp_list[i] == NULL) {
 			continue;
@@ -268,68 +263,36 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		struct aiocbp *aiocbp = NULL;
 		error = aiocbp_lookup(aiosp, &aiocbp, aiocbp_list[i]);
 		if (error) {
-			mutex_exit(&ops->mtx);
-			aiosp_ops_fini(ops);
-			kmem_free(ops, sizeof(*ops));
-			return error;
+			goto done;
 		}
 		if (aiocbp == NULL) {
 			continue;
 		}
 
 		job = aiocbp->job;
+		KASSERT(job);
 
 		mutex_enter(&job->mtx);
 		if (job->completed) {
-			ops->completed++;
+			wg->completed++;
+		} else {
+			printf("attaching to job %lx\n", (uintptr_t)&job->lk);
+			aiowaitgroup_join(wg, &job->lk);
 		}
-
-		if (job->ops_total >= job->ops_size) {
-			size_t old_size = job->ops_size;
-			size_t new_size = job->ops_size == 0 ? 1 :
-				(job->ops_size == 1 ? 2 :
-				(job->ops_size * job->ops_size));
-
-			struct aiosp_ops **new_ops = kmem_zalloc(new_size *
-				sizeof(*new_ops), KM_SLEEP);
-
-			if (job->ops && old_size) {
-				memcpy(new_ops, job->ops, 
-					job->ops_total * sizeof(*job->ops));
-				kmem_free(job->ops, old_size *
-					sizeof(*job->ops));
-			}
-
-			job->ops_size = new_size;
-			job->ops = new_ops;
-		}
-
-		job->ops[job->ops_total] = ops;
-		job->ops_total++;
-
 		mutex_exit(&job->mtx);
-		ops->total++;
 	}
 
-	for (; ops->completed < target;) {
-		//printf("waiting on ops %ld %ld\n", ops->completed, target);
-		error = cv_timedwait_sig(&ops->done_cv, &ops->mtx, timo);
+	for (; wg->completed < target;) {
+		error = aiowaitgroup_wait(wg, timo);
 		if (error) {
-			if (error == EWOULDBLOCK) {
-				error = SET_ERROR(EAGAIN);
-			}
-
-			mutex_exit(&ops->mtx);
-			aiosp_ops_fini(ops);
-			kmem_free(ops, sizeof(*ops));
-
-			return error;
+			goto done;
 		}
 	}
 
-	mutex_exit(&ops->mtx);
-	aiosp_ops_fini(ops);
-	kmem_free(ops, sizeof(*ops));
+done:
+	mutex_exit(&wg->mtx);
+	wg->refcnt--;
+	wg->active = false;
 
 	return error;
 }
@@ -348,27 +311,6 @@ aiosp_initialize(struct aiosp *sp)
 	RB_INIT(sp->fg_root);
 
 	return 0;
-}
-
-/*
- * The size of aiost->ops scales with powers of two. The size of aiost->ops will
- * only either collapse to zero upon being terminated, or continue growing, so
- * scaling by a power of two is simple enough.
- */
-static size_t
-aiosp_ops_expected(size_t total)
-{
-	if (total <= 1) {
-		return 1;
-	}
-
-	total -= 1;
-	for (int j = 0; j < ilog2(sizeof(total) * 8); j++) {
-		total |= total >> (1 << j);
-	}
-	total += 1;
-
-	return total;
 }
 
 /*
@@ -494,30 +436,68 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 }
 
 /*
- * wake up anyone waiting on the completion of this job
+ *
+ */
+static void 
+aiost_process_singleton (struct aiost *st)
+{
+	struct aio_job *job;
+
+	job = st->job;
+	KASSERT(job != NULL);
+	if (job->aio_op & AIO_READ) {
+		io_read_fallback(job);
+	} else if (job->aio_op & AIO_WRITE) {
+		io_write_fallback(job);
+	} else if (job->aio_op & AIO_SYNC) {
+		io_sync(st);
+	} else {
+		panic("aio_process: invalid operation code\n");
+	}
+
+	mutex_enter(&job->mtx);
+	job->completed = true;
+	aiowaitgrouplk_flush(&job->lk);
+	mutex_exit(&job->mtx);
+
+	aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+}
+
+/*
+ *
  */
 static void
-aiost_notify_ops (struct aio_job *job)
+aiost_process_fg (struct aiost *st)
 {
-	for (int i = 0; i < job->ops_total; i++) {
-		struct aiosp_ops *ops = job->ops[i];
-		if (ops == NULL) {
-			continue;
+	struct aiosp *sp = st->aiosp;
+	struct aiost_file_group *fg = st->fg;
+	struct aio_job *job;
+
+	struct aio_job *tmp;
+	TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
+		if (job->aio_op & AIO_READ) {
+			io_read(st, job);
+		} else if (job->aio_op & AIO_WRITE) {
+			io_write(st, job);
+		} else if (job->aio_op & AIO_SYNC) {
+			io_sync(st);
+		} else {
+			panic("aio_process: invalid operation code\n");
 		}
 
-		mutex_enter(&ops->mtx);
-		KASSERT(ops->total > ops->completed);
-		ops->completed++;
-		mutex_exit(&ops->mtx);
-		cv_signal(&ops->done_cv);
+		mutex_enter(&job->mtx);
+		job->completed = true;
+		aiowaitgrouplk_flush(&job->lk);
+		mutex_exit(&job->mtx);
+
+		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 	}
 
-	if (job->ops && job->ops_total) {
-		size_t total = aiosp_ops_expected(job->ops_total);
-		kmem_free(job->ops, total * sizeof(*job->ops));
-		job->ops_total = 0;
-		job->ops = NULL;
-	}
+	mutex_enter(&sp->mtx);
+	RB_REMOVE(aiost_file_tree, sp->fg_root, fg);
+	closef(fg->fp);
+	kmem_free(fg, sizeof(*fg));
+	mutex_exit(&sp->mtx);
 }
 
 /*
@@ -530,7 +510,6 @@ aiost_entry(void *arg)
 {
 	struct aiost *st = arg;
 	struct aiosp *sp = st->aiosp;
-	struct aio_job *job;
 	int error;
 
 	/*
@@ -563,55 +542,28 @@ aiost_entry(void *arg)
 				st->state);
 		}
 
+		// A MORE LOGICAL SOLUTION FILE GROUPS ARE JUST LISTIO INSIDE
+		// THE KERNEL (OR CAN THEY NOT BE??? HOW ABOUT ADD EXTRA
+		// FUNCTIONALITY TO THEM LIKE BEING ABLE TO DYNAMICALLY APPEND
+		// NEW OPS WHILE EVERYTHING IS IN THE MIDDLE OF BEING
+		// PROCESSED? NO IT IS NOT. IT IS ABOUT COMBINING OBJECTS THAT
+		// HAVE TO BLOCK VERSUS OBJECTS THAT DO. ALSO COMBINE AIOSP AND
+		// AIO TOGETHER THEIR SEPARATENESS IS GETTING ON MY NERVES
+		// STRIP AWAY USELESS MUMBO AI JUMBO AND MAKE WORK I SHOULD BE
+		// ABLE TO ACHIEVE CONCURRENCY ACROSS MULTIPLE FILES
+		// SIMPLIFY AND STREAMLINE DESIGN AND DOCUMENT WHEN NECESSARY 
+		// SEND AN EMAIL OFF TO JASON AND CHISTOS
+		// IMPLEMENT RANGE LOCKS #1
+
+		//printf("%d %d\n", mutex_owned(&sp->mtx), mutex_owned(&st->mtx));
+
 		if (st->fg) {
-			struct aiost_file_group *fg = st->fg;
-
-			struct aio_job *tmp;
-			TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
-				if (job->aio_op & AIO_READ) {
-					error = io_read(st);
-				} else if (job->aio_op & AIO_WRITE) {
-					error = io_write(st);
-				} else if (job->aio_op & AIO_SYNC) {
-					error = io_sync(st);
-				} else {
-					panic("aio_process: invalid operation code\n");
-				}
-
-				mutex_enter(&job->mtx);
-				job->completed = true;
-				mutex_exit(&job->mtx);
-
-				aiost_notify_ops(job);
-				aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
-
-				TAILQ_REMOVE(&fg->queue, job, list);
-				fg->queue_size--;
-			}
-
-			mutex_enter(&sp->mtx);
-			RB_REMOVE(aiost_file_tree, sp->fg_root, fg);
-			closef(fg->fp);
-			kmem_free(fg, sizeof(*fg));
-			mutex_exit(&sp->mtx);
+			aiost_process_fg(st);
 		} else {
-			job = st->job;
-			KASSERT(job != NULL);
-			if (job->aio_op & AIO_READ) {
-				error = io_read_fallback(job);
-			} else if (job->aio_op & AIO_WRITE) {
-				error = io_write_fallback(job);
-			} else if (job->aio_op & AIO_SYNC) {
-				error = io_sync(st);
-			} else {
-				panic("aio_process: invalid operation code\n");
-			}
-
-			job->completed = true;
-
-			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
-			aiost_notify_ops(job);
+			aiost_process_singleton(st);
 		}
+
+		printf("finished!!!\n");
 
 		st->state = AIOST_STATE_NONE;
 		st->job = NULL;
@@ -633,26 +585,6 @@ aiost_entry(void *arg)
 		sp->nthreads_free++;
 
 		mutex_exit(&sp->mtx);
-	}
-
-	if (st->fg) {
-		struct aiost_file_group *fg = st->fg;
-
-		struct aio_job *tmp;
-		TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
-			mutex_enter(&job->mtx);
-			job->completed = true;
-			mutex_exit(&job->mtx);
-
-			// CONFIRM WHETHER OR NOT THIS IS EXPECTED BEHAVIOUR
-			aiost_notify_ops(job);
-			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
-
-			TAILQ_REMOVE(&fg->queue, job, list);
-			fg->queue_size--;
-		}
-
-		kmem_free(fg, sizeof(*fg)); 
 	}
 
 	mutex_enter(&sp->mtx);
@@ -697,18 +629,18 @@ aiost_sigsend(struct proc *p, struct sigevent *sig)
  *
  */
 static int
-io_write(struct aiost *aiost)
+io_write(struct aiost *aiost, struct aio_job *job)
 {
-	return 0;
+	return io_write_fallback(job);
 }
 
 /*
  *
  */
 static int
-io_read(struct aiost *aiost)
+io_read(struct aiost *aiost, struct aio_job *job)
 {
-	return 0;
+	return io_read_fallback(job);
 }
 
 /*
@@ -787,6 +719,9 @@ done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
 
+	copyout(&job->aiocbp, job->aiocb_uptr, 
+		sizeof(struct aiocb));
+
 	return 0;
 }
 
@@ -832,6 +767,9 @@ io_read_fallback(struct aio_job *job)
 done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
+
+	copyout(&job->aiocbp, job->aiocb_uptr, 
+		sizeof(struct aiocb));
 
 	return 0;
 }
@@ -883,6 +821,9 @@ done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
 
+	copyout(&job->aiocbp, job->aiocb_uptr, 
+		sizeof(struct aiocb));
+
 	return 0;
 }
 
@@ -909,28 +850,6 @@ aiost_terminate(struct aiost *st)
 	mutex_destroy(&st->mtx);
 
 	return error;
-}
-
-/*
- * Initialises aiosp_ops
- */
-static void
-aiosp_ops_init(struct aiosp_ops *ops)
-{
-	ops->completed = 0;
-	ops->total = 0;
-	cv_init(&ops->done_cv, "aiodone");
-	mutex_init(&ops->mtx, MUTEX_DEFAULT, IPL_NONE);
-}
-
-/*
- * Cleans up aiosp_ops
- */
-static void
-aiosp_ops_fini(struct aiosp_ops *ops)
-{
-	cv_destroy(&ops->done_cv);
-	mutex_destroy(&ops->mtx);
 }
 
 /*
@@ -1102,4 +1021,136 @@ aiocbp_destroy(struct aiosp *aiosp)
 	aiosp->aio_hash_mask = 0;
 	aiosp->aio_hash_size = 0;
 	mutex_exit(&aiosp->aio_hash_mtx);
+}
+
+/*
+ *
+ */
+void
+aiowaitgroup_init(struct aiowaitgroup *wg)
+{
+	wg->completed = 0;
+	wg->total = 0;
+	wg->refcnt = 1;
+	wg->active = true;
+	cv_init(&wg->done_cv, "aiodone");
+	mutex_init(&wg->mtx, MUTEX_DEFAULT, IPL_NONE);
+}
+
+/*
+ *
+ */
+void
+aiowaitgroup_fini(struct aiowaitgroup *wg)
+{
+	cv_destroy(&wg->done_cv);
+	mutex_destroy(&wg->mtx);
+	kmem_free(wg, sizeof(*wg));
+}
+
+/*
+ *
+ */
+int
+aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
+{
+	int error;
+	
+	error = cv_timedwait_sig(&wg->done_cv, &wg->mtx, timo);
+	if (error) {
+		if (error == EWOULDBLOCK) {
+			error = SET_ERROR(EAGAIN);
+		}
+		return error;
+	}
+
+	return 0;
+}
+
+/*
+ *
+ */
+void
+aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
+{
+	lk->n = 0;
+	lk->s = 2;
+	lk->wgs = kmem_alloc(sizeof(*lk->wgs) * lk->s, KM_SLEEP);
+}
+
+/*
+ *
+ */
+void
+aiowaitgrouplk_fini(struct aiowaitgrouplk *lk)
+{
+	if (!lk->s) {
+		return;
+	}
+
+	kmem_free(lk->wgs, sizeof(*lk->wgs) * lk->s);
+}
+
+/*
+ *
+ */
+void
+aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
+{
+	printf("flushing %lx on %ld\n", (uintptr_t)lk, lk->n);
+
+	for (int i = 0; i < lk->n; i++) {
+		struct aiowaitgroup *wg = lk->wgs[i];
+		if (wg == NULL) {
+			continue;
+		}
+
+		mutex_enter(&wg->mtx);
+		if (wg->active == false) {
+			lk->wgs[i] = NULL;
+		}
+
+		KASSERT(wg->total > wg->completed);
+		wg->completed++;
+		if (!--wg->refcnt) {
+			mutex_exit(&wg->mtx);
+			aiowaitgroup_fini(wg);
+		} else {
+			mutex_exit(&wg->mtx);
+			cv_signal(&wg->done_cv);
+		}
+	}
+
+	if (lk->n) {
+		kmem_free(lk->wgs, lk->s * sizeof(*lk->wgs));
+
+		lk->wgs = NULL;
+		lk->s = 0;
+		lk->n = 0;
+	}
+}
+
+/*
+ *
+ */
+void
+aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
+{
+//	KASSERT(lk->n < lk->s);
+	if (lk->n == lk->s) {
+		size_t new_size = lk->s * lk->s;
+
+		void **new_wgs = kmem_zalloc(new_size * 
+			sizeof(*new_wgs), KM_SLEEP);
+
+		memcpy(new_wgs, lk->wgs, lk->n * sizeof(*lk->wgs));
+		kmem_free(lk->wgs, lk->s * sizeof(*lk->wgs));
+
+		lk->s = new_size;
+		lk->wgs = new_wgs;
+	}
+	lk->wgs[lk->n] = wg;
+	lk->n++;
+	wg->total++;
+	wg->refcnt++;
 }

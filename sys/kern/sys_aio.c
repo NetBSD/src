@@ -200,6 +200,8 @@ aio_procinit(struct proc *p)
 	}
 #endif
 
+	printf("doing this?\n");
+
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&aio->aio_worker_cv, "aiowork");
@@ -334,6 +336,8 @@ aio_worker(void *arg)
 		(void)copyout(&a_job->aiocbp, a_job->aiocb_uptr,
 		    sizeof(struct aiocb));
 
+		printf("I am looking to read this timestamp!\n");
+
 		mutex_enter(&aio->aio_mtx);
 		KASSERT(aio->curjob == a_job);
 		aio->curjob = NULL;
@@ -355,6 +359,10 @@ aio_worker(void *arg)
 			pool_put(&aio_lio_pool, lio);
 		}
 
+		mutex_destroy(&a_job->mtx);
+#ifdef AIOSP
+		aiowaitgrouplk_fini(&a_job->lk);
+#endif
 		/* Destroy the job */
 		pool_put(&aio_job_pool, a_job);
 	}
@@ -611,6 +619,9 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	a_job->aio_op |= op;
 	a_job->lio = lio;
 	mutex_init(&a_job->mtx, MUTEX_DEFAULT, IPL_NONE);
+#ifdef AIOSP
+	aiowaitgrouplk_init(&a_job->lk);
+#endif
 
 	/*
 	 * Add the job to the queue, update the counters, and
@@ -651,8 +662,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aio->jobs_count++;
 	if (lio)
 		lio->refcnt++;
-	cv_signal(&aio->aio_worker_cv);
 	mutex_exit(&aio->aio_mtx);
+	cv_signal(&aio->aio_worker_cv);
 #endif
 	/*
 	 * One would handle the errors only with aio_error() function.
@@ -794,6 +805,8 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
 	if (error)
 		return error;
 
+	printf("%d %d\n", aiocbp._state == JOB_NONE, aiocbp._state == JOB_DONE);
+
 	if (aiocbp._state == JOB_NONE)
 		return SET_ERROR(EINVAL);
 
@@ -853,6 +866,8 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
 	if (error)
 		return error;
 
+	printf("inside kernel %d %d\n", aiocbp._errno == EINPROGRESS, aiocbp._state != JOB_DONE);
+
 	if (aiocbp._errno == EINPROGRESS || aiocbp._state != JOB_DONE)
 		return SET_ERROR(EINVAL);
 
@@ -901,7 +916,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	struct aioproc *aio = p->p_aio;
 	KASSERT(aio);
 	error = aiosp_suspend(&aio->aiosp, list, nent, SCARG(uap, timeout) ?
-		&ts : NULL, AIOSP_SUSPEND_ALL);
+		&ts : NULL, AIOSP_SUSPEND_ANY);
 #else
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 #endif

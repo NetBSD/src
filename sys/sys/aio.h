@@ -91,8 +91,26 @@ struct aiocb {
 #define JOB_WIP			0x1
 #define JOB_DONE		0x2
 
+/* Structure for tracking the status of a collection of OPS */
+struct aiowaitgroup {
+	kmutex_t mtx;		/* Protects this structure */
+	kcondvar_t done_cv;	/* Signals when a job is complete */ 
+	size_t completed;	/* Keeps track of the number of completed jobs */
+	size_t total;		/* Keeps track of the number of total jobs */
+	bool active;
+	int refcnt;
+};
+
+/* */
+struct aiowaitgrouplk {
+	void **wgs;		/* Array of ops */
+	size_t s;		/* Size of ops array */
+	size_t n;		/* Total number of connected ops */
+};
+
 /* Structure of AIO job */
 struct aiost;
+struct buf;
 struct aio_job {
 	kmutex_t mtx;		/* Protects this structure */
 	int aio_op;		/* Operation code */
@@ -101,9 +119,9 @@ struct aio_job {
 	void *aiocb_uptr;	/* User-space pointer for identification of job */
 	struct proc *p;		/* Process that instantiated the job */
 	bool completed;		/* Marks the completion status of this job */
-	struct aiosp_ops **ops;	/* Array of ops */
-	size_t ops_size;	/* Size of ops array */
-	size_t ops_total;	/* Total number of connected ops */
+	struct aiowaitgrouplk lk;
+	struct buf **buf;
+	uint nbuf;
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;
 };
@@ -118,14 +136,6 @@ struct aio_job {
 
 #define AIOSP_SUSPEND_NMASK(N)		((N) & 0xffff) << 16)
 #define AIOSP_SUSPEND_NEXTRACT(FLAGS)	(((FLAGS) >> 16) & 0xffff)
-
-/* Structure for tracking the status of a collection of OPS */
-struct aiosp_ops {
-	kmutex_t mtx;		/* Protects this structure */
-	kcondvar_t done_cv;	/* Signals when a job is complete */ 
-	size_t completed;	/* Keeps track of the number of completed jobs */
-	size_t total;		/* Keeps track of the number of total jobs */
-};
 
 struct aiost;
 struct aiost_file_group {
@@ -218,6 +228,15 @@ int	aiocbp_init(struct aiosp *, u_int);
 int 	aiocbp_lookup(struct aiosp *, struct aiocbp **, void *);
 int 	aiocbp_remove(struct aiosp *, void *);
 int 	aiocbp_insert(struct aiosp *, struct aiocbp *);
+
+void	aiowaitgroup_init(struct aiowaitgroup *);
+void	aiowaitgroup_fini(struct aiowaitgroup *);
+int	aiowaitgroup_wait(struct aiowaitgroup *, int);
+void	aiowaitgroup_done(struct aiowaitgroup *);
+void	aiowaitgroup_join(struct aiowaitgroup *, struct aiowaitgrouplk *);
+void	aiowaitgrouplk_init(struct aiowaitgrouplk *);
+void	aiowaitgrouplk_fini(struct aiowaitgrouplk *);
+void	aiowaitgrouplk_flush(struct aiowaitgrouplk *);
 
 
 #endif /* _KERNEL */
