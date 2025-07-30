@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.7 2025/02/10 15:54:16 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.8 2025/07/30 22:26:03 christos Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -258,6 +258,8 @@ DEFINE_RELOCATION_TYPE_SYNONYMS()
  */
 DEFINE_MIPS_ABIS()
 
+#include <sys/exec_elf.h>
+
 /**
  ** ELF Types.
  **/
@@ -283,6 +285,7 @@ typedef uint64_t	Elf64_Xword;	/* Unsigned long integer. */
 typedef int64_t		Elf64_Sxword;	/* Signed long integer. */
 
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Capability descriptors.
  */
@@ -304,6 +307,7 @@ typedef struct {
 		Elf64_Addr	c_ptr; /* Pointer value. */
 	} c_un;
 } Elf64_Cap;
+#endif
 
 /*
  * MIPS .conflict section entries.
@@ -319,6 +323,7 @@ typedef struct {
 	Elf64_Addr	c_index;
 } Elf64_Conflict;
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Dynamic section entries.
  */
@@ -327,8 +332,8 @@ typedef struct {
 typedef struct {
 	Elf32_Sword	d_tag;	     /* Type of entry. */
 	union {
-		Elf32_Word	d_val; /* Integer value. */
 		Elf32_Addr	d_ptr; /* Pointer value. */
+		Elf32_Word	d_val; /* Integer value. */
 	} d_un;
 } Elf32_Dyn;
 
@@ -336,8 +341,8 @@ typedef struct {
 typedef struct {
 	Elf64_Sxword	d_tag;	     /* Type of entry. */
 	union {
-		Elf64_Xword	d_val; /* Integer value. */
 		Elf64_Addr	d_ptr; /* Pointer value; */
+		Elf64_Xword	d_val; /* Integer value. */
 	} d_un;
 } Elf64_Dyn;
 
@@ -382,6 +387,7 @@ typedef struct {
 	Elf64_Half      e_shnum;     /* Number of SHDR entries. */
 	Elf64_Half      e_shstrndx;  /* Index of section name string table. */
 } Elf64_Ehdr;
+#endif
 
 
 /*
@@ -415,6 +421,7 @@ DEFINE_NOTE_ENTRY_TYPES()
 /* Aliases for the ABI tag. */
 DEFINE_NOTE_ENTRY_ALIASES()
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Note descriptors.
  */
@@ -427,6 +434,7 @@ typedef	struct {
 
 typedef Elf_Note Elf32_Nhdr;	     /* 32-bit note header. */
 typedef Elf_Note Elf64_Nhdr;	     /* 64-bit note header. */
+#endif
 
 /*
  * MIPS ELF options descriptor header.
@@ -484,6 +492,7 @@ typedef struct {
 	Elf64_Addr	ri_gp_value; /* GP register value. */
 } Elf64_RegInfo;
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Program Header Table (PHDR) entries.
  */
@@ -535,6 +544,7 @@ typedef struct {
 	Elf64_Half	m_repeat;    /* Repeat count. */
 	Elf64_Half	m_stride;    /* Number of units to skip. */
 } Elf64_Move;
+#endif
 
 #define ELF32_M_SYM(I)		((I) >> 8)
 #define ELF32_M_SIZE(I)		((unsigned char) (I))
@@ -544,6 +554,7 @@ typedef struct {
 #define ELF64_M_SIZE(I)		((unsigned char) (I))
 #define ELF64_M_INFO(M, S)	(((M) << 8) + (unsigned char) (S))
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Section Header Table (SHDR) entries.
  */
@@ -598,6 +609,7 @@ typedef struct {
 	Elf64_Addr	st_value;    /* value for the symbol */
 	Elf64_Xword	st_size;     /* size of associated data */
 } Elf64_Sym;
+#endif
 
 #define ELF32_ST_BIND(I)	((I) >> 4)
 #define ELF32_ST_TYPE(I)	((I) & 0xFU)
@@ -610,6 +622,7 @@ typedef struct {
 #define ELF32_ST_VISIBILITY(O)	((O) & 0x3)
 #define ELF64_ST_VISIBILITY(O)	((O) & 0x3)
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Syminfo descriptors, containing additional symbol information.
  */
@@ -651,6 +664,7 @@ typedef struct {
 	Elf64_Xword	r_info;      /* type+section for relocation */
 	Elf64_Sxword	r_addend;    /* constant addend */
 } Elf64_Rela;
+#endif
 
 
 #define ELF32_R_SYM(I)		((I) >> 8)
@@ -662,6 +676,7 @@ typedef struct {
 #define ELF64_R_INFO(S,T)	\
 	(((Elf64_Xword) (S) << 32) + ((T) & 0xFFFFFFFFUL))
 
+#ifndef _SYS_EXEC_ELF_H_
 /*
  * Symbol versioning structures.
  */
@@ -750,5 +765,6 @@ typedef struct {
 	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
 	uint32_t	gh_shift2;	/* Bloom filter `shift' count. */
 } Elf_GNU_Hash_Header;
+#endif
 
 #endif	/* _SYS_ELFDEFINITIONS_H_ */
