@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.40 2025/07/29 09:37:50 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.41 2025/07/30 10:55:22 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -953,4 +953,12 @@ sys/netinet/ip_mroute.h				1.36
 	PR 59561: do not hide struct igmpmsg under _KERNEL.
 	The struct is documented as a communication structure with userland.
 	[kim, ticket #1141]
+
+sys/dev/usb/if_urtwn.c				1.112
+sys/dev/usb/usbdevs				1.822
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urtwn(4): add support for Asus USB-N10 Nano B1.
+	[hgutch, ticket #1142]
 
