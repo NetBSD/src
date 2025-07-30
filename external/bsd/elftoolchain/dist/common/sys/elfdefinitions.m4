@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.8 2025/07/30 22:26:03 christos Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.9 2025/07/30 22:37:05 christos Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -258,7 +258,17 @@ DEFINE_RELOCATION_TYPE_SYNONYMS()
  */
 DEFINE_MIPS_ABIS()
 
-#include <sys/exec_elf.h>
+#ifdef __NetBSD__
+/*
+ * We provide most of the structures defined below identically and the c
+ * language does not allow struct redefinitions, even if the structs are
+ * identical. We protect the struct redefinions here, but not the #defines
+ * so we get an error if the #defines are different. This is a band-aid.
+ * The reason to include the header here is to make sure that it works
+ * no matter which order the include files are specified.
+ *
+# include <sys/exec_elf.h>
+#endif
 
 /**
  ** ELF Types.
