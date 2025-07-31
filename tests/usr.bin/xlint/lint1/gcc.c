@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.5 2025/07/31 17:26:32 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.6 2025/07/31 17:30:52 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -120,8 +120,9 @@ atomic_functions(void)
 	v = __atomic_fetch_nand(pv, 0, 0);
 
 	static char c, *pc;
-	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
 	c = __atomic_load_n(pc, 0);
-	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
+	c = __atomic_exchange_n(pc, 0, 0);
+
+	/* expect+1: warning: conversion from 'unsigned long long' to 'char' may lose accuracy [132] */
 	c = __atomic_exchange_n(pv, 0, 0);
 }

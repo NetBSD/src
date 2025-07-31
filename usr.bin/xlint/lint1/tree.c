@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.686 2025/07/11 19:03:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.687 2025/07/31 17:30:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.686 2025/07/11 19:03:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.687 2025/07/31 17:30:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4602,6 +4602,40 @@ check_function_arguments(const function_call *call)
 	}
 }
 
+static bool
+is_gcc_generic_atomic(const char *name)
+{
+	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+	return strcmp(name, "__atomic_load_n") == 0
+	    || strcmp(name, "__atomic_exchange_n") == 0
+	    || strcmp(name, "__atomic_add_fetch") == 0
+	    || strcmp(name, "__atomic_sub_fetch") == 0
+	    || strcmp(name, "__atomic_and_fetch") == 0
+	    || strcmp(name, "__atomic_xor_fetch") == 0
+	    || strcmp(name, "__atomic_or_fetch") == 0
+	    || strcmp(name, "__atomic_nand_fetch") == 0
+	    || strcmp(name, "__atomic_fetch_add") == 0
+	    || strcmp(name, "__atomic_fetch_sub") == 0
+	    || strcmp(name, "__atomic_fetch_and") == 0
+	    || strcmp(name, "__atomic_fetch_xor") == 0
+	    || strcmp(name, "__atomic_fetch_or") == 0
+	    || strcmp(name, "__atomic_fetch_nand") == 0;
+}
+
+static type_t *
+return_type(const function_call *call)
+{
+	const tnode_t *func = call->func;
+	if (allow_gcc
+	    && func->tn_op == ADDR
+	    && func->u.ops.left->tn_op == NAME
+	    && is_gcc_generic_atomic(func->u.ops.left->u.sym->s_name)
+	    && call->args_len > 0
+	    && call->args[0]->tn_type->t_tspec == PTR)
+		return call->args[0]->tn_type->t_subt;
+	return func->tn_type->t_subt->t_subt;
+}
+
 tnode_t *
 build_function_call(tnode_t *func, bool sys, function_call *call)
 {
@@ -4626,7 +4660,7 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 
 	tnode_t *ntn = expr_alloc_tnode();
 	ntn->tn_op = CALL;
-	ntn->tn_type = func->tn_type->t_subt->t_subt;
+	ntn->tn_type = return_type(call);
 	ntn->tn_sys = sys;
 	ntn->u.call = call;
 	return ntn;
