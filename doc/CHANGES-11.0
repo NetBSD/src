@@ -1,0 +1,20 @@
+# $NetBSD: CHANGES-11.0,v 1.1.2.1 2025/07/31 09:38:05 martin Exp $
+
+A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
+until the 11.0 release:
+
+doc/CHANGES-11.0				created
+doc/LAST_MINUTE 				patched by hand
+doc/README.files				patched by hand
+external/gpl2/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h 				patched by hand
+
+	Welcome to 11.0_BETA!
+
+sys/arch/i386/stand/boot/boot2.c		1.90
+sys/arch/i386/stand/efiboot/boot.c		1.33
+
+	x86: boot(8): reorder the pathes tried to load the kernel
+	to avoid confusing loader messages.
+	[pgoyette, ticket #3]
+
