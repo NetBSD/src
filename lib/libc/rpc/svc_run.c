@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.29 2024/01/23 17:24:38 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.30 2025/07/31 18:17:24 joe Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.29 2024/01/23 17:24:38 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.30 2025/07/31 18:17:24 joe Exp $");
 #endif
 #endif
 
@@ -71,7 +71,7 @@ svc_run_select(void)
 	fd_set *readfds;
 	struct timeval timeout;
 	int *maxfd, fdsize;
-#ifndef RUMP_RPC		
+#ifndef RUMP_RPC
 	int probs = 0;
 #endif
 
@@ -85,6 +85,7 @@ svc_run_select(void)
 
 		maxfd = svc_fdset_getmax();
 		if (maxfd == NULL) {
+			rwlock_unlock(&svc_fd_lock);
 			warn("%s: can't get maxfd", __func__);
 			goto out;
 		}
@@ -94,6 +95,7 @@ svc_run_select(void)
 			free(readfds);
 			readfds = svc_fdset_copy(svc_fdset_get());
 			if (readfds == NULL) {
+				rwlock_unlock(&svc_fd_lock);
 				warn("%s: can't copy fdset", __func__);
 				goto out;
 			}
@@ -104,7 +106,7 @@ svc_run_select(void)
 
 		switch (select(*maxfd + 1, readfds, NULL, NULL, &timeout)) {
 		case -1:
-#ifndef RUMP_RPC		
+#ifndef RUMP_RPC
 			if ((errno == EINTR || errno == EBADF) && probs < 100) {
 				probs++;
 				continue;
@@ -134,7 +136,7 @@ svc_run_poll(void)
 {
 	struct pollfd *pfd;
 	int *maxfd, fdsize, i;
-#ifndef RUMP_RPC		
+#ifndef RUMP_RPC
 	int probs = 0;
 #endif
 
@@ -146,6 +148,7 @@ svc_run_poll(void)
 
 		maxfd = svc_pollfd_getmax();
 		if (maxfd == NULL) {
+			rwlock_unlock(&svc_fd_lock);
 			warn("can't get maxfd");
 			goto out;
 		}
@@ -155,6 +158,7 @@ svc_run_poll(void)
 			free(pfd);
 			pfd = svc_pollfd_copy(svc_pollfd_get());
 			if (pfd == NULL) {
+				rwlock_unlock(&svc_fd_lock);
 				warn("can't get pollfd");
 				goto out;
 			}
@@ -165,7 +169,7 @@ svc_run_poll(void)
 
 		switch ((i = poll(pfd, (nfds_t)*maxfd, 30 * 1000))) {
 		case -1:
-#ifndef RUMP_RPC		
+#ifndef RUMP_RPC
 			if ((errno == EINTR || errno == EBADF) && probs < 100) {
 				probs++;
 				continue;
