@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.89 2025/05/20 12:26:02 pgoyette Exp $	*/
+/*	$NetBSD: boot2.c,v 1.89.2.1 2025/07/31 09:36:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -100,12 +100,12 @@ int boot_biosdev;
 daddr_t boot_biossector;
 
 static const char * const names[][2] = {
-	{ "netbsd/kernel", "netbsd/kernel.gz" },
-	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
-	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 };
 
 #define NUMNAMES (sizeof(names)/sizeof(names[0]))
