@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3179 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3179.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -539,7 +539,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		system calls (from Shivraj Jamgade).  [christos 20240928]
 	udl(4): Add support for SANWA SUPPLY 500-KC002N USB to VGA Adapter.
 		[tsutsui 20241002]
-	kemtimedop(2): New system call, from Shivraj Jamgade (GSoC 2024).
+	semtimedop(2): New system call, from Shivraj Jamgade (GSoC 2024).
 		[christos 20241003]
 	amdzentemp(4): Add support for Zen 5.  [msaitoh 20241004]
 	evbarm: Make cemac(4) MP safe.  [skrll 20241005]
